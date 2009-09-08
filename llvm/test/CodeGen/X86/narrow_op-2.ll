@@ -1,12 +1,14 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep andb | count 2
-; RUN: llvm-as < %s | llc -march=x86-64 | grep andb | grep 254
-; RUN: llvm-as < %s | llc -march=x86-64 | grep andb | grep 253
+; RUN: llvm-as < %s | llc -march=x86-64 | FileCheck %s
 
 	%struct.bf = type { i64, i16, i16, i32 }
 @bfi = external global %struct.bf*
 
 define void @t1() nounwind ssp {
 entry:
+
+; CHECK: andb	$-2, 10(
+; CHECK: andb	$-3, 10(
+
 	%0 = load %struct.bf** @bfi, align 8
 	%1 = getelementptr %struct.bf* %0, i64 0, i32 1
 	%2 = bitcast i16* %1 to i32*

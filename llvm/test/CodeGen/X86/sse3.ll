@@ -92,8 +92,8 @@ define <8 x i16> @t7(<8 x i16> %A, <8 x i16> %B) nounwind {
 	%tmp = shufflevector <8 x i16> %A, <8 x i16> %B, <8 x i32> < i32 0, i32 0, i32 3, i32 2, i32 4, i32 6, i32 4, i32 7 >
 	ret <8 x i16> %tmp
 ; X64: 	t7:
-; X64: 		pshuflw	$176, %xmm0, %xmm0
-; X64: 		pshufhw	$200, %xmm0, %xmm0
+; X64: 		pshuflw	$-80, %xmm0, %xmm0
+; X64: 		pshufhw	$-56, %xmm0, %xmm0
 ; X64: 		ret
 }
 
@@ -120,8 +120,8 @@ define void @t8(<2 x i64>* %res, <2 x i64>* %A) nounwind {
 	store <2 x i64> %tmp15.upgrd.2, <2 x i64>* %res
 	ret void
 ; X64: 	t8:
-; X64: 		pshuflw	$198, (%rsi), %xmm0
-; X64: 		pshufhw	$198, %xmm0, %xmm0
+; X64: 		pshuflw	$-58, (%rsi), %xmm0
+; X64: 		pshufhw	$-58, %xmm0, %xmm0
 ; X64: 		movaps	%xmm0, (%rdi)
 ; X64: 		ret
 }
@@ -243,7 +243,7 @@ entry:
 ; X64: 	t15:
 ; X64: 		pextrw	$7, %xmm0, %eax
 ; X64: 		punpcklqdq	%xmm1, %xmm0
-; X64: 		pshuflw	$128, %xmm0, %xmm0
+; X64: 		pshuflw	$-128, %xmm0, %xmm0
 ; X64: 		pinsrw	$2, %eax, %xmm0
 ; X64: 		ret
 }
@@ -265,7 +265,7 @@ entry:
 ; X64: 		movd	%xmm1, %edx
 ; X64: 		pinsrw	$0, %edx, %xmm1
 ; X64: 		movzbl	%cl, %ecx
-; X64: 		andw	$65280, %ax
+; X64: 		andw	$-256, %ax
 ; X64: 		orw	%cx, %ax
 ; X64: 		movaps	%xmm1, %xmm0
 ; X64: 		pinsrw	$1, %eax, %xmm0

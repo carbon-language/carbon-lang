@@ -1,8 +1,6 @@
 ; PR1022, PR1023
-; RUN: llvm-as < %s | llc -march=x86 | \
-; RUN:   grep 3721182122 | count 2
-; RUN: llvm-as < %s | llc -march=x86 | \
-; RUN:   grep -E {movl	_?bytes2} | count 1
+; RUN: llc < %s -march=x86 | grep -- -573785174 | count 2
+; RUN: llc < %s -march=x86 | grep -E {movl	_?bytes2} | count 1
 
 @fmt = constant [4 x i8] c"%x\0A\00"            ; <[4 x i8]*> [#uses=2]
 @bytes = constant [4 x i8] c"\AA\BB\CC\DD"              ; <[4 x i8]*> [#uses=1]

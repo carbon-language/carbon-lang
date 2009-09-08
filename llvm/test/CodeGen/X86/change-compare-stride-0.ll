@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 > %t
-; RUN: grep {cmpl	\$4294966818,} %t
+; RUN: llc < %s -march=x86 > %t
+; RUN: grep {cmpl	\$-478,} %t
 ; RUN: not grep inc %t
 ; RUN: not grep {leal	1(} %t
 ; RUN: not grep {leal	-1(} %t

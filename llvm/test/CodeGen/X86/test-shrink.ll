@@ -104,10 +104,10 @@ no:
   ret void
 }
 ; CHECK-64: g64x16:
-; CHECK-64:   testw $32896, %di
+; CHECK-64:   testw $-32640, %di
 ; CHECK-64:   ret
 ; CHECK-32: g64x16:
-; CHECK-32:   testw $32896, %ax
+; CHECK-32:   testw $-32640, %ax
 ; CHECK-32:   ret
 define void @g64x16(i64 inreg %x) nounwind {
   %t = and i64 %x, 32896
@@ -121,10 +121,10 @@ no:
   ret void
 }
 ; CHECK-64: g32x16:
-; CHECK-64:   testw $32896, %di
+; CHECK-64:   testw $-32640, %di
 ; CHECK-64:   ret
 ; CHECK-32: g32x16:
-; CHECK-32:   testw $32896, %ax
+; CHECK-32:   testw $-32640, %ax
 ; CHECK-32:   ret
 define void @g32x16(i32 inreg %x) nounwind {
   %t = and i32 %x, 32896

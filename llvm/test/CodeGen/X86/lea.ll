@@ -28,7 +28,7 @@ bb2:
 	ret i32 %x_offs
 ; CHECK: test2:
 ; CHECK:	leal	-5(%rdi), %eax
-; CHECK:	andl	$4294967292, %eax
+; CHECK:	andl	$-4, %eax
 ; CHECK:	negl	%eax
 ; CHECK:	leal	-4(%rdi,%rax), %eax
 }
