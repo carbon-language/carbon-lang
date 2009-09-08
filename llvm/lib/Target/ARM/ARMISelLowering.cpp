@@ -2086,14 +2086,19 @@ static SDValue getZeroVector(EVT VT, SelectionDAG &DAG, DebugLoc dl) {
   // will be implemented with the NEON VNEG instruction.  However, VNEG does
   // not support i64 elements, so sometimes the zero vectors will need to be
   // explicitly constructed.  For those cases, and potentially other uses in
-  // the future, always build zero vectors as <4 x i32> or <2 x i32> bitcasted
+  // the future, always build zero vectors as <16 x i8> or <8 x i8> bitcasted
   // to their dest type.  This ensures they get CSE'd.
   SDValue Vec;
-  SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
-  if (VT.getSizeInBits() == 64)
-    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i32, Cst, Cst);
-  else
-    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
+  SDValue Cst = DAG.getTargetConstant(0, MVT::i8);
+  SmallVector<SDValue, 8> Ops;
+  MVT TVT;
+
+  if (VT.getSizeInBits() == 64) {
+    Ops.assign(8, Cst); TVT = MVT::v8i8;
+  } else {
+    Ops.assign(16, Cst); TVT = MVT::v16i8;
+  }
+  Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, TVT, &Ops[0], Ops.size());
 
   return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vec);
 }
@@ -2103,14 +2108,19 @@ static SDValue getZeroVector(EVT VT, SelectionDAG &DAG, DebugLoc dl) {
 static SDValue getOnesVector(EVT VT, SelectionDAG &DAG, DebugLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
 
-  // Always build ones vectors as <4 x i32> or <2 x i32> bitcasted to their dest
-  // type.  This ensures they get CSE'd.
+  // Always build ones vectors as <16 x i32> or <8 x i32> bitcasted to their
+  // dest type. This ensures they get CSE'd.
   SDValue Vec;
-  SDValue Cst = DAG.getTargetConstant(~0U, MVT::i32);
-  if (VT.getSizeInBits() == 64)
-    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i32, Cst, Cst);
-  else
-    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
+  SDValue Cst = DAG.getTargetConstant(0xFF, MVT::i8);
+  SmallVector<SDValue, 8> Ops;
+  MVT TVT;
+
+  if (VT.getSizeInBits() == 64) {
+    Ops.assign(8, Cst); TVT = MVT::v8i8;
+  } else {
+    Ops.assign(16, Cst); TVT = MVT::v16i8;
+  }
+  Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, TVT, &Ops[0], Ops.size());
 
   return DAG.getNode(ISD::BIT_CONVERT, dl, VT, Vec);
 }

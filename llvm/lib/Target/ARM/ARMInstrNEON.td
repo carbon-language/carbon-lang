@@ -1600,21 +1600,25 @@ def  VORRq    : N3VQ<0, 0, 0b10, 0b0001, 1, "vorr", v4i32, v4i32, or, 1>;
 def  VBICd    : N3V<0, 0, 0b01, 0b0001, 0, 1, (outs DPR:$dst),
                     (ins DPR:$src1, DPR:$src2), NoItinerary,
                     "vbic\t$dst, $src1, $src2", "",
-                    [(set DPR:$dst, (v2i32 (and DPR:$src1,(vnot DPR:$src2))))]>;
+                    [(set DPR:$dst, (v2i32 (and DPR:$src1,
+                                                (vnot_conv DPR:$src2))))]>;
 def  VBICq    : N3V<0, 0, 0b01, 0b0001, 1, 1, (outs QPR:$dst),
                     (ins QPR:$src1, QPR:$src2), NoItinerary,
                     "vbic\t$dst, $src1, $src2", "",
-                    [(set QPR:$dst, (v4i32 (and QPR:$src1,(vnot QPR:$src2))))]>;
+                    [(set QPR:$dst, (v4i32 (and QPR:$src1,
+                                                (vnot_conv QPR:$src2))))]>;
 
 //   VORN     : Vector Bitwise OR NOT
 def  VORNd    : N3V<0, 0, 0b11, 0b0001, 0, 1, (outs DPR:$dst),
                     (ins DPR:$src1, DPR:$src2), NoItinerary,
                     "vorn\t$dst, $src1, $src2", "",
-                    [(set DPR:$dst, (v2i32 (or DPR:$src1, (vnot DPR:$src2))))]>;
+                    [(set DPR:$dst, (v2i32 (or DPR:$src1,
+                                               (vnot_conv DPR:$src2))))]>;
 def  VORNq    : N3V<0, 0, 0b11, 0b0001, 1, 1, (outs QPR:$dst),
                     (ins QPR:$src1, QPR:$src2), NoItinerary,
                     "vorn\t$dst, $src1, $src2", "",
-                    [(set QPR:$dst, (v4i32 (or QPR:$src1, (vnot QPR:$src2))))]>;
+                    [(set QPR:$dst, (v4i32 (or QPR:$src1,
+                                               (vnot_conv QPR:$src2))))]>;
 
 //   VMVN     : Vector Bitwise NOT
 def  VMVNd    : N2V<0b11, 0b11, 0b00, 0b00, 0b01011, 0, 0,
@@ -1634,13 +1638,13 @@ def  VBSLd    : N3V<1, 0, 0b01, 0b0001, 0, 1, (outs DPR:$dst),
                     "vbsl\t$dst, $src2, $src3", "$src1 = $dst",
                     [(set DPR:$dst,
                       (v2i32 (or (and DPR:$src2, DPR:$src1),
-                                 (and DPR:$src3, (vnot DPR:$src1)))))]>;
+                                 (and DPR:$src3, (vnot_conv DPR:$src1)))))]>;
 def  VBSLq    : N3V<1, 0, 0b01, 0b0001, 1, 1, (outs QPR:$dst),
                     (ins QPR:$src1, QPR:$src2, QPR:$src3), NoItinerary,
                     "vbsl\t$dst, $src2, $src3", "$src1 = $dst",
                     [(set QPR:$dst,
                       (v4i32 (or (and QPR:$src2, QPR:$src1),
-                                 (and QPR:$src3, (vnot QPR:$src1)))))]>;
+                                 (and QPR:$src3, (vnot_conv QPR:$src1)))))]>;
 
 //   VBIF     : Vector Bitwise Insert if False
 //              like VBSL but with: "vbif\t$dst, $src3, $src1", "$src2 = $dst",
