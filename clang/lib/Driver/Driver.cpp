@@ -601,6 +601,16 @@ void Driver::BuildUniversalActions(const ArgList &Args,
     Arg *A = *it;
 
     if (A->getOption().getId() == options::OPT_arch) {
+      // Validate the option here; we don't save the type here because its
+      // particular spelling may participate in other driver choices.
+      llvm::Triple::ArchType Arch =
+        llvm::Triple::getArchTypeForDarwinArchName(A->getValue(Args));
+      if (Arch == llvm::Triple::UnknownArch) {
+        Diag(clang::diag::err_drv_invalid_arch_name)
+          << A->getAsString(Args);
+        continue;
+      }
+
       A->claim();
       if (ArchNames.insert(A->getValue(Args)))
         Archs.push_back(A->getValue(Args));
