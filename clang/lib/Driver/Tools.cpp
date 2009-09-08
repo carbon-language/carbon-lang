@@ -77,6 +77,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
     CmdArgs.push_back(DepFile);
 
     // Add an -MT option if the user didn't specify their own.
+    //
     // FIXME: This should use -MQ, when we support it.
     if (!Args.hasArg(options::OPT_MT) && !Args.hasArg(options::OPT_MQ)) {
       const char *DepTarget;
@@ -109,13 +110,13 @@ void Clang::AddPreprocessingOptions(const Driver &D,
   Args.AddLastArg(CmdArgs, options::OPT_MP);
   Args.AddAllArgs(CmdArgs, options::OPT_MT);
 
-  // FIXME: Use iterator.
-
   // Add -i* options, and automatically translate to
   // -include-pch/-include-pth for transparent PCH support. It's
   // wonky, but we include looking for .gch so we can support seamless
   // replacement into a build system already set up to be generating
   // .gch files.
+  //
+  // FIXME: Use iterator.
   for (ArgList::const_iterator
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     const Arg *A = *it;
@@ -879,8 +880,6 @@ darwin::CC1::getDependencyFileName(const ArgList &Args,
 void darwin::CC1::AddCC1Args(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   // Derived from cc1 spec.
-
-  // FIXME: -fapple-kext seems to disable this too. Investigate.
   if (!Args.hasArg(options::OPT_mkernel) && !Args.hasArg(options::OPT_static) &&
       !Args.hasArg(options::OPT_mdynamic_no_pic))
     CmdArgs.push_back("-fPIC");
@@ -888,15 +887,6 @@ void darwin::CC1::AddCC1Args(const ArgList &Args,
   // gcc has some code here to deal with when no -mmacosx-version-min
   // and no -miphoneos-version-min is present, but this never happens
   // due to tool chain specific argument translation.
-
-  // FIXME: Remove mthumb
-  // FIXME: Remove mno-thumb
-  // FIXME: Remove faltivec
-  // FIXME: Remove mno-fused-madd
-  // FIXME: Remove mlong-branch
-  // FIXME: Remove mlongcall
-  // FIXME: Remove mcpu=G4
-  // FIXME: Remove mcpu=G5
 
   if (Args.hasArg(options::OPT_g_Flag) &&
       !Args.hasArg(options::OPT_fno_eliminate_unused_debug_symbols))
@@ -1229,9 +1219,6 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
     }
   } else {
     CmdArgs.push_back("-fpreprocessed");
-
-    // FIXME: There is a spec command to remove
-    // -fpredictive-compilation args here. Investigate.
 
     for (InputInfoList::const_iterator
            it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
@@ -1618,20 +1605,16 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                 const ArgList &Args,
                                 const char *LinkingOutput) const {
   assert(Output.getType() == types::TY_Image && "Invalid linker output type.");
+
   // The logic here is derived from gcc's behavior; most of which
   // comes from specs (starting with link_command). Consult gcc for
   // more information.
-
-  // FIXME: The spec references -fdump= which seems to have
-  // disappeared?
-
   ArgStringList CmdArgs;
 
   // I'm not sure why this particular decomposition exists in gcc, but
   // we follow suite for ease of comparison.
   AddLinkArgs(Args, CmdArgs);
 
-  // FIXME: gcc has %{x} in here. How could this ever happen?  Cruft?
   Args.AddAllArgs(CmdArgs, options::OPT_d_Flag);
   Args.AddAllArgs(CmdArgs, options::OPT_s);
   Args.AddAllArgs(CmdArgs, options::OPT_t);
@@ -1641,11 +1624,6 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_e);
   Args.AddAllArgs(CmdArgs, options::OPT_m_Separate);
   Args.AddAllArgs(CmdArgs, options::OPT_r);
-
-  // FIXME: This is just being pedantically bug compatible, gcc
-  // doesn't *mean* to forward this, it just does (yay for pattern
-  // matching). It doesn't work, of course.
-  Args.AddAllArgs(CmdArgs, options::OPT_object);
 
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
