@@ -283,6 +283,16 @@ Program::Wait(unsigned secondsToWait,
 
 }
 
+bool
+Program::Kill(std::string* ErrMsg) {
+  if (Pid_ == 0) {
+    MakeErrMsg(ErrMsg, "Process not started!");
+    return true;
+  }
+
+  return (kill(Pid_, SIGKILL) == 0);
+}
+
 bool Program::ChangeStdinToBinary(){
   // Do nothing, as Unix doesn't differentiate between text and binary.
   return false;

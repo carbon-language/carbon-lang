@@ -28,11 +28,11 @@ using namespace sys;
 Program::Program() : Pid_(0), Data(0) {}
 
 Program::~Program() {
-	if (Data) {
-		HANDLE hProcess = (HANDLE) Data;
-		CloseHandle(hProcess);
-		Data = 0;
-	}
+  if (Data) {
+    HANDLE hProcess = (HANDLE) Data;
+    CloseHandle(hProcess);
+    Data = 0;
+  }
 }
 
 // This function just uses the PATH environment variable to find the program.
@@ -121,7 +121,7 @@ static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
 
 /// ArgNeedsQuotes - Check whether argument needs to be quoted when calling
 /// CreateProcess.
-static bool ArgNeedsQuotes(const char *Str) {  
+static bool ArgNeedsQuotes(const char *Str) {
   return Str[0] == '\0' || strchr(Str, ' ') != 0;
 }
 
@@ -137,7 +137,7 @@ Program::Execute(const Path& path,
     CloseHandle(Data);
     Data = 0;
   }
-  
+
   if (!path.canExecute()) {
     if (ErrMsg)
       *ErrMsg = "program not executable";
@@ -266,7 +266,7 @@ Program::Execute(const Path& path,
   }
   Pid_ = pi.dwProcessId;
   Data = pi.hProcess;
-  
+
   // Make sure these get closed no matter what.
   AutoHandle hThread(pi.hThread);
 
@@ -307,7 +307,7 @@ Program::Wait(unsigned secondsToWait,
   }
 
   HANDLE hProcess = (HANDLE) Data;
-  
+
   // Wait for the process to terminate.
   DWORD millisecondsToWait = INFINITE;
   if (secondsToWait > 0)
@@ -333,6 +333,17 @@ Program::Wait(unsigned secondsToWait,
   }
 
   return status;
+}
+
+bool
+Program::Kill(std::string* ErrMsg) {
+  if (Data == 0) {
+    MakeErrMsg(ErrMsg, "Process not started!");
+    return true;
+  }
+
+  HANDLE hProcess = reinterpret_cast<HANDLE>(Data);
+  return TerminateProcess(hProcess, 1);
 }
 
 bool Program::ChangeStdinToBinary(){
