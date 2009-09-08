@@ -50,12 +50,14 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
+#include "llvm/TypeSymbolTable.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -105,8 +107,7 @@ PreVer("preverify", "Preliminary module verification");
 static const PassInfo *const PreVerifyID = &PreVer;
 
 namespace {
-  struct VISIBILITY_HIDDEN
-     Verifier : public FunctionPass, public InstVisitor<Verifier> {
+  struct Verifier : public FunctionPass, public InstVisitor<Verifier> {
     static char ID; // Pass ID, replacement for typeid
     bool Broken;          // Is this module found to be broken?
     bool RealPass;        // Are we not being run by a PassManager?
@@ -123,6 +124,9 @@ namespace {
     /// dominance checks for the case when an instruction has an operand that is
     /// an instruction in the same block.
     SmallPtrSet<Instruction*, 16> InstsInThisBlock;
+
+    /// CheckedTypes - keep track of the types that have been checked already.
+    SmallSet<PATypeHolder, 16> CheckedTypes;
 
     Verifier()
       : FunctionPass(&ID), 
@@ -282,6 +286,7 @@ namespace {
                               bool isReturnValue, const Value *V);
     void VerifyFunctionAttrs(const FunctionType *FT, const AttrListPtr &Attrs,
                              const Value *V);
+    void VerifyType(const Type *Ty);
 
     void WriteValue(const Value *V) {
       if (!V) return;
@@ -322,6 +327,15 @@ namespace {
       WriteValue(V3);
       Broken = true;
     }
+
+    void CheckFailed(const Twine &Message, const Type* T1,
+                     const Type* T2 = 0, const Type* T3 = 0) {
+      MessagesStr << Message.str() << "\n";
+      WriteType(T1);
+      WriteType(T2);
+      WriteType(T3);
+      Broken = true;
+    }
   };
 } // End anonymous namespace
 
@@ -360,14 +374,14 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
 
   Assert1(!GV.hasDLLImportLinkage() || GV.isDeclaration(),
           "Global is marked as dllimport, but not external", &GV);
-  
+
   Assert1(!GV.hasAppendingLinkage() || isa<GlobalVariable>(GV),
           "Only global variables can have appending linkage!", &GV);
 
   if (GV.hasAppendingLinkage()) {
-    GlobalVariable &GVar = cast<GlobalVariable>(GV);
-    Assert1(isa<ArrayType>(GVar.getType()->getElementType()),
-            "Only global arrays can have appending linkage!", &GV);
+    GlobalVariable *GVar = dyn_cast<GlobalVariable>(&GV);
+    Assert1(GVar && isa<ArrayType>(GVar->getType()->getElementType()),
+            "Only global arrays can have appending linkage!", GVar);
   }
 }
 
@@ -445,6 +459,8 @@ void Verifier::visitGlobalAlias(GlobalAlias &GA) {
 }
 
 void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {
+  for (TypeSymbolTable::iterator I = ST.begin(), E = ST.end(); I != E; ++I)
+    VerifyType(I->second);
 }
 
 // VerifyParameterAttrs - Check the given attributes for an argument or return
@@ -987,11 +1003,14 @@ void Verifier::visitPHINode(PHINode &PN) {
           "PHI nodes not grouped at top of basic block!",
           &PN, PN.getParent());
 
-  // Check that all of the operands of the PHI node have the same type as the
-  // result.
-  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+  // Check that all of the values of the PHI node have the same type as the
+  // result, and that the incoming blocks are really basic blocks.
+  for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
     Assert1(PN.getType() == PN.getIncomingValue(i)->getType(),
             "PHI node operands are not the same type as the result!", &PN);
+    Assert1(PN.getOperand(PHINode::getOperandNumForIncomingBlock(i)),
+            "PHI node incoming block is not a BasicBlock!", &PN);
+  }
 
   // All other PHI node constraints are checked in the visitBasicBlock method.
 
@@ -1001,13 +1020,20 @@ void Verifier::visitPHINode(PHINode &PN) {
 void Verifier::VerifyCallSite(CallSite CS) {
   Instruction *I = CS.getInstruction();
 
-  Assert1(isa<PointerType>(CS.getCalledValue()->getType()),
-          "Called function must be a pointer!", I);
-  const PointerType *FPTy = cast<PointerType>(CS.getCalledValue()->getType());
-  Assert1(isa<FunctionType>(FPTy->getElementType()),
-          "Called function is not pointer to function type!", I);
+  const PointerType *FPTy =
+      dyn_cast<PointerType>(CS.getCalledValue()->getType());
+  if (!FPTy) {
+    CheckFailed("Called function must be a pointer!", I);
+    visitInstruction(*I);
+    return;
+  }
 
-  const FunctionType *FTy = cast<FunctionType>(FPTy->getElementType());
+  const FunctionType *FTy = dyn_cast<FunctionType>(FPTy->getElementType());
+  if (!FTy) {
+    CheckFailed("Called function is not pointer to function type!", I);
+    visitInstruction(*I);
+    return;
+  }
 
   // Verify that the correct number of arguments are being passed
   if (FTy->isVarArg())
@@ -1212,22 +1238,29 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 }
 
 void Verifier::visitLoadInst(LoadInst &LI) {
-  const Type *ElTy =
-    cast<PointerType>(LI.getOperand(0)->getType())->getElementType();
-  Assert2(ElTy == LI.getType(),
-          "Load result type does not match pointer operand type!", &LI, ElTy);
-  Assert1(ElTy != Type::getMetadataTy(LI.getContext()),
-          "Can't load metadata!", &LI);
+  const PointerType *PTy = dyn_cast<PointerType>(LI.getOperand(0)->getType());
+  Assert1(PTy, "Load operand must be a pointer.", &LI);
+  if (PTy) {
+    const Type *ElTy = PTy->getElementType();
+    Assert2(ElTy == LI.getType(),
+            "Load result type does not match pointer operand type!", &LI, ElTy);
+    Assert1(ElTy != Type::getMetadataTy(LI.getContext()),
+            "Can't load metadata!", &LI);
+  }
   visitInstruction(LI);
 }
 
 void Verifier::visitStoreInst(StoreInst &SI) {
-  const Type *ElTy =
-    cast<PointerType>(SI.getOperand(1)->getType())->getElementType();
-  Assert2(ElTy == SI.getOperand(0)->getType(),
-          "Stored value type does not match pointer operand type!", &SI, ElTy);
-  Assert1(ElTy != Type::getMetadataTy(SI.getContext()),
-          "Can't store metadata!", &SI);
+  const PointerType *PTy = dyn_cast<PointerType>(SI.getOperand(1)->getType());
+  Assert1(PTy, "Load operand must be a pointer.", &SI);
+  if (PTy) {
+    const Type *ElTy = PTy->getElementType();
+    Assert2(ElTy == SI.getOperand(0)->getType(),
+            "Stored value type does not match pointer operand type!",
+            &SI, ElTy);
+    Assert1(ElTy != Type::getMetadataTy(SI.getContext()),
+            "Can't store metadata!", &SI);
+  }
   visitInstruction(SI);
 }
 
@@ -1303,11 +1336,11 @@ void Verifier::visitInstruction(Instruction &I) {
   // instruction, it is an error!
   for (User::use_iterator UI = I.use_begin(), UE = I.use_end();
        UI != UE; ++UI) {
-    Assert1(isa<Instruction>(*UI), "Use of instruction is not an instruction!",
-            *UI);
-    Instruction *Used = cast<Instruction>(*UI);
-    Assert2(Used->getParent() != 0, "Instruction referencing instruction not"
-            " embedded in a basic block!", &I, Used);
+    if (Instruction *Used = dyn_cast<Instruction>(*UI))
+      Assert2(Used->getParent() != 0, "Instruction referencing instruction not"
+              " embedded in a basic block!", &I, Used);
+    else
+      CheckFailed("Use of instruction is not an instruction!", *UI);
   }
 
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
@@ -1357,7 +1390,9 @@ void Verifier::visitInstruction(Instruction &I) {
         // value in the predecessor basic blocks they correspond to.
         BasicBlock *UseBlock = BB;
         if (isa<PHINode>(I))
-          UseBlock = cast<BasicBlock>(I.getOperand(i+1));
+          UseBlock = dyn_cast<BasicBlock>(I.getOperand(i+1));
+        // Avoid crash. The verifier will find this module broken anyways.
+        if (!UseBlock) UseBlock = BB;
 
         if (isa<PHINode>(I) && UseBlock == OpBlock) {
           // Special case of a phi node in the normal destination or the unwind
@@ -1390,9 +1425,9 @@ void Verifier::visitInstruction(Instruction &I) {
       } else if (isa<PHINode>(I)) {
         // PHI nodes are more difficult than other nodes because they actually
         // "use" the value in the predecessor basic blocks they correspond to.
-        BasicBlock *PredBB = cast<BasicBlock>(I.getOperand(i+1));
-        Assert2(DT->dominates(OpBlock, PredBB) ||
-                !DT->isReachableFromEntry(PredBB),
+        BasicBlock *PredBB = dyn_cast<BasicBlock>(I.getOperand(i+1));
+        Assert2(PredBB && (DT->dominates(OpBlock, PredBB) ||
+                           !DT->isReachableFromEntry(PredBB)),
                 "Instruction does not dominate all uses!", Op, &I);
       } else {
         if (OpBlock == BB) {
@@ -1413,6 +1448,67 @@ void Verifier::visitInstruction(Instruction &I) {
     }
   }
   InstsInThisBlock.insert(&I);
+
+  VerifyType(I.getType());
+}
+
+/// VerifyType - Verify that a type is well formed.
+///
+void Verifier::VerifyType(const Type *Ty) {
+  // We insert complex types into CheckedTypes even if they failed verification
+  // to prevent emitting messages about them multiple times if 
+
+  switch (Ty->getTypeID()) {
+  case Type::FunctionTyID: {
+    if (!CheckedTypes.insert(Ty)) return;
+    const FunctionType *FTy = cast<FunctionType>(Ty);
+
+    const Type *RetTy = FTy->getReturnType();
+    Assert2(FunctionType::isValidReturnType(RetTy),
+            "Function type with invalid return type", RetTy, FTy);
+    VerifyType(RetTy);
+
+    for (int i = 0, e = FTy->getNumParams(); i != e; ++i) {
+      const Type *ElTy = FTy->getParamType(i);
+      Assert2(FunctionType::isValidArgumentType(ElTy),
+              "Function type with invalid parameter type", ElTy, FTy);
+      VerifyType(ElTy);
+    }
+  } break;
+  case Type::StructTyID: {
+    if (!CheckedTypes.insert(Ty)) return;
+    const StructType *STy = cast<StructType>(Ty);
+    for (int i = 0, e = STy->getNumElements(); i != e; ++i) {
+      const Type *ElTy = STy->getElementType(i);
+      Assert2(StructType::isValidElementType(ElTy),
+              "Structure type with invalid element type", ElTy, STy);
+      VerifyType(ElTy);
+    }
+  } break;
+  case Type::ArrayTyID: {
+    if (!CheckedTypes.insert(Ty)) return;
+    const ArrayType *ATy = cast<ArrayType>(Ty);
+    Assert1(ArrayType::isValidElementType(ATy->getElementType()),
+            "Array type with invalid element type", ATy);
+    VerifyType(ATy->getElementType());
+  } break;
+  case Type::PointerTyID: {
+    if (!CheckedTypes.insert(Ty)) return;
+    const PointerType *PTy = cast<PointerType>(Ty);
+    Assert1(PointerType::isValidElementType(PTy->getElementType()),
+            "Pointer type with invalid element type", PTy);
+    VerifyType(PTy->getElementType());
+  }
+  case Type::VectorTyID: {
+    if (!CheckedTypes.insert(Ty)) return;
+    const VectorType *VTy = cast<VectorType>(Ty);
+    Assert1(VectorType::isValidElementType(VTy->getElementType()),
+            "Vector type with invalid element type", VTy);
+    VerifyType(VTy->getElementType());
+  }
+  default:
+    return;
+  }
 }
 
 // Flags used by TableGen to mark intrinsic parameters with the
