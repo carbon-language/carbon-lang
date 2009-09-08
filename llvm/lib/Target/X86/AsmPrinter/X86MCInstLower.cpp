@@ -50,12 +50,12 @@ static void lower_subreg32(MCInst *MI, unsigned OpNo) {
 static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
   // Convert registers in the addr mode according to subreg64.
   for (unsigned i = 0; i != 4; ++i) {
-    if (!MI->getOperand(i).isReg()) continue;
+    if (!MI->getOperand(OpNo+i).isReg()) continue;
     
-    unsigned Reg = MI->getOperand(i).getReg();
+    unsigned Reg = MI->getOperand(OpNo+i).getReg();
     if (Reg == 0) continue;
     
-    MI->getOperand(i).setReg(getX86SubSuperRegister(Reg, MVT::i64));
+    MI->getOperand(OpNo+i).setReg(getX86SubSuperRegister(Reg, MVT::i64));
   }
 }
 
@@ -319,6 +319,42 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
     break;
   case X86::MOVZX16rm8:
     TmpInst.setOpcode(X86::MOVZX32rm8);
+    lower_subreg32(&TmpInst, 0);
+    break;
+  case X86::MOVSX16rr8:
+    TmpInst.setOpcode(X86::MOVSX32rr8);
+    lower_subreg32(&TmpInst, 0);
+    break;
+  case X86::MOVSX16rm8:
+    TmpInst.setOpcode(X86::MOVSX32rm8);
+    lower_subreg32(&TmpInst, 0);
+    break;
+  case X86::MOVZX64rr32:
+    TmpInst.setOpcode(X86::MOV32rr);
+    lower_subreg32(&TmpInst, 0);
+    break;
+  case X86::MOVZX64rm32:
+    TmpInst.setOpcode(X86::MOV32rm);
+    lower_subreg32(&TmpInst, 0);
+    break;
+  case X86::MOV64ri64i32:
+    TmpInst.setOpcode(X86::MOV32ri);
+    lower_subreg32(&TmpInst, 0);
+    break;
+  case X86::MOVZX64rr8:
+    TmpInst.setOpcode(X86::MOVZX32rr8);
+    lower_subreg32(&TmpInst, 0);
+    break;
+  case X86::MOVZX64rm8:
+    TmpInst.setOpcode(X86::MOVZX32rm8);
+    lower_subreg32(&TmpInst, 0);
+    break;
+  case X86::MOVZX64rr16:
+    TmpInst.setOpcode(X86::MOVZX32rr16);
+    lower_subreg32(&TmpInst, 0);
+    break;
+  case X86::MOVZX64rm16:
+    TmpInst.setOpcode(X86::MOVZX32rm16);
     lower_subreg32(&TmpInst, 0);
     break;
   }
