@@ -12145,7 +12145,6 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
           return BinaryOperator::Create(BO->getOpcode(), newEI0, newEI1);
         }
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-//        r25299
         // Instead of loading a vector, then doing an extract element out of it,
         // just bitcast the pointer operand, do a gep, then load the result.
         // This shrinks the vector load to a scalar load.
