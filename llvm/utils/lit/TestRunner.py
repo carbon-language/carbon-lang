@@ -192,7 +192,7 @@ def executeTclScriptInternal(test, litConfig, tmpBase, commands, cwd):
         try:
             cmds.append(TclUtil.TclExecCommand(tokens).parse_pipeline())
         except:
-            return (TestStatus.Fail, "Tcl 'exec' parse error on: %r" % ln)
+            return (Test.FAIL, "Tcl 'exec' parse error on: %r" % ln)
 
     cmd = cmds[0]
     for c in cmds[1:]:
