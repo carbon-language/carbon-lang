@@ -845,24 +845,13 @@ LValue CodeGenFunction::EmitPredefinedFunctionName(unsigned Type) {
     GlobalVarName = "__FUNCTION__.";
     break;
   case PredefinedExpr::PrettyFunction:
-    // FIXME:: Demangle C++ method names
     GlobalVarName = "__PRETTY_FUNCTION__.";
     break;
   }
 
-  // FIXME: This isn't right at all.  The logic for computing this should go
-  // into a method on PredefinedExpr.  This would allow sema and codegen to be
-  // consistent for things like sizeof(__func__) etc.
-  std::string FunctionName;
-  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(CurCodeDecl)) {
-    FunctionName = CGM.getMangledName(FD);
-  } else {
-    // Just get the mangled name; skipping the asm prefix if it
-    // exists.
-    FunctionName = CurFn->getName();
-    if (FunctionName[0] == '\01')
-      FunctionName = FunctionName.substr(1, std::string::npos);
-  }
+  std::string FunctionName =
+    PredefinedExpr::ComputeName(getContext(), (PredefinedExpr::IdentType)Type, 
+                                CurCodeDecl);
 
   GlobalVarName += FunctionName;
   llvm::Constant *C = 

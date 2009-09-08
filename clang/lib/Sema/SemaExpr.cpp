@@ -1151,17 +1151,15 @@ Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
 
   // Pre-defined identifiers are of type char[x], where x is the length of the
   // string.
-  unsigned Length;
-  if (FunctionDecl *FD = getCurFunctionDecl())
-    Length = FD->getIdentifier()->getLength();
-  else if (ObjCMethodDecl *MD = getCurMethodDecl())
-    Length = MD->getSynthesizedMethodSize();
-  else {
+  
+  Decl *currentDecl = getCurFunctionOrMethodDecl();
+  if (!currentDecl) {
     Diag(Loc, diag::ext_predef_outside_function);
-    // __PRETTY_FUNCTION__ -> "top level", the others produce an empty string.
-    Length = IT == PredefinedExpr::PrettyFunction ? strlen("top level") : 0;
+    currentDecl = Context.getTranslationUnitDecl();
   }
 
+  unsigned Length =
+    PredefinedExpr::ComputeName(Context, IT, currentDecl).length();
 
   llvm::APInt LengthI(32, Length + 1);
   QualType ResTy = Context.CharTy.getQualifiedType(QualType::Const);

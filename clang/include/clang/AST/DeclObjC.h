@@ -195,7 +195,7 @@ public:
   }
   
   Selector getSelector() const { return getDeclName().getObjCSelector(); }
-  unsigned getSynthesizedMethodSize() const;
+
   QualType getResultType() const { return MethodDeclType; }
   void setResultType(QualType T) { MethodDeclType = T; }
   

@@ -121,6 +121,7 @@ public:
   /// Creating this name is expensive, so it should be called only when
   /// performance doesn't matter.
   std::string getQualifiedNameAsString() const;
+  std::string getQualifiedNameAsString(const PrintingPolicy &Policy) const;
 
   /// declarationReplaces - Determine whether this declaration, if
   /// known to be well-formed within its context, will replace the

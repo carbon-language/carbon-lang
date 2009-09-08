@@ -216,6 +216,10 @@ FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
 //===----------------------------------------------------------------------===//
 
 std::string NamedDecl::getQualifiedNameAsString() const {
+  return getQualifiedNameAsString(getASTContext().getLangOptions());
+}
+
+std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
   std::vector<std::string> Names;
   std::string QualName;
   const DeclContext *Ctx = getDeclContext();
@@ -232,12 +236,11 @@ std::string NamedDecl::getQualifiedNameAsString() const {
     if (const ClassTemplateSpecializationDecl *Spec 
           = dyn_cast<ClassTemplateSpecializationDecl>(Ctx)) {
       const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
-      PrintingPolicy Policy(getASTContext().getLangOptions());
       std::string TemplateArgsStr
         = TemplateSpecializationType::PrintTemplateArgumentList(
                                            TemplateArgs.getFlatArgumentList(),
                                            TemplateArgs.flat_size(),
-                                           Policy);
+                                           P);
       Names.push_back(Spec->getIdentifier()->getName() + TemplateArgsStr);
     } else if (const NamedDecl *ND = dyn_cast<NamedDecl>(Ctx))
       Names.push_back(ND->getNameAsString());
@@ -258,7 +261,6 @@ std::string NamedDecl::getQualifiedNameAsString() const {
 
   return QualName;
 }
-
 
 bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
   assert(getDeclName() == OldD->getDeclName() && "Declaration name mismatch");

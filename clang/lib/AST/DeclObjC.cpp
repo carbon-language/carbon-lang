@@ -290,23 +290,6 @@ void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
                                        Context.getObjCSelType()));
 }
 
-
-
-/// getSynthesizedMethodSize - Compute size of synthesized method name
-/// as done be the rewrite.
-///
-unsigned ObjCMethodDecl::getSynthesizedMethodSize() const {
-  // syntesized method name is a concatenation of -/+[class-name selector]
-  // Get length of this name.
-  unsigned length = 3;  // _I_ or _C_
-  length += getClassInterface()->getNameAsString().size()+1; // extra for _
-  if (const ObjCCategoryImplDecl *CID = 
-      dyn_cast<ObjCCategoryImplDecl>(getDeclContext()))
-    length += CID->getNameAsString().size()+1;
-  length += getSelector().getAsString().size(); // selector name
-  return length; 
-}
-
 ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
   if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(getDeclContext()))
     return ID;

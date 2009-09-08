@@ -22,12 +22,89 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
+
+// FIXME: Maybe this should use DeclPrinter with a special "print predefined
+// expr" policy instead.
+std::string PredefinedExpr::ComputeName(ASTContext &Context, IdentType IT,
+                                        const Decl *CurrentDecl) {
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CurrentDecl)) {
+    if (IT != PrettyFunction)
+      return FD->getNameAsString();
+
+    llvm::SmallString<256> Name;
+    llvm::raw_svector_ostream Out(Name);
+
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+      if (MD->isVirtual())
+        Out << "virtual ";
+    }
+
+    PrintingPolicy Policy(Context.getLangOptions());
+    Policy.SuppressTagKind = true;
+
+    std::string Proto = FD->getQualifiedNameAsString(Policy);
+
+    const FunctionType *AFT = FD->getType()->getAsFunctionType();
+    const FunctionProtoType *FT = 0;
+    if (FD->hasWrittenPrototype())
+      FT = dyn_cast<FunctionProtoType>(AFT);
+
+    Proto += "(";
+    if (FT) {
+      llvm::raw_string_ostream POut(Proto);
+      for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
+        if (i) POut << ", ";
+        std::string Param;
+        FD->getParamDecl(i)->getType().getAsStringInternal(Param, Policy);
+        POut << Param;
+      }
+
+      if (FT->isVariadic()) {
+        if (FD->getNumParams()) POut << ", ";
+        POut << "...";
+      }
+    }
+    Proto += ")";
+
+    AFT->getResultType().getAsStringInternal(Proto, Policy);
+
+    Out << Proto;
+
+    Out.flush();
+    return Name.str().str();
+  }
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(CurrentDecl)) {
+    llvm::SmallString<256> Name;
+    llvm::raw_svector_ostream Out(Name);
+    Out << (MD->isInstanceMethod() ? '-' : '+');
+    Out << '[';
+    Out << MD->getClassInterface()->getNameAsString();
+    if (const ObjCCategoryImplDecl *CID =
+        dyn_cast<ObjCCategoryImplDecl>(MD->getDeclContext())) {
+      Out << '(';
+      Out <<  CID->getNameAsString();
+      Out <<  ')';
+    }
+    Out <<  ' ';
+    Out << MD->getSelector().getAsString();
+    Out <<  ']';
+
+    Out.flush();
+    return Name.str().str();
+  }
+  if (isa<TranslationUnitDecl>(CurrentDecl) && IT == PrettyFunction) {
+    // __PRETTY_FUNCTION__ -> "top level", the others produce an empty string.
+    return "top level";
+  }
+  return "";
+}
 
 /// getValueAsApproximateDouble - This returns the value as an inaccurate
 /// double.  Note that this may cause loss of precision, but is useful for
