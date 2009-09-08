@@ -5,11 +5,11 @@
 # Immediates
 # CHECK: addl $1, %eax
         addl $1, %eax
-# CHECK: addl $(1 + 2), %eax
+# CHECK: addl $1+2, %eax
         addl $(1+2), %eax
 # CHECK: addl $a, %eax
         addl $a, %eax
-# CHECK: addl $(1 + 2), %eax
+# CHECK: addl $1+2, %eax
         addl $1 + 2, %eax
         
 # Disambiguation
@@ -18,15 +18,15 @@
         #addl $1, 4+4
         # FIXME: Add back when we can match this.
         #addl $1, (4+4)
-# CHECK: addl $1, (4 + 4)(%eax)
+# CHECK: addl $1, 4+4(%eax)
         addl $1, 4+4(%eax)
-# CHECK: addl $1, (4 + 4)(%eax)
+# CHECK: addl $1, 4+4(%eax)
         addl $1, (4+4)(%eax)
 # CHECK: addl $1, 8(%eax)
         addl $1, 8(%eax)
 # CHECK: addl $1, 0(%eax)
         addl $1, (%eax)
-# CHECK: addl $1, (4 + 4)(,%eax)
+# CHECK: addl $1, 4+4(,%eax)
         addl $1, (4+4)(,%eax)
         
 # Indirect Memory Operands

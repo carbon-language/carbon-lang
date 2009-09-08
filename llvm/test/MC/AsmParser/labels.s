@@ -15,7 +15,7 @@ a:
 foo:    
 // CHECK: addl $24, a$b(%eax)
         addl $24, "a$b"(%eax)    
-// CHECK: addl $24, (a$b + 10)(%eax)
+// CHECK: addl $24, a$b+10(%eax)
         addl $24, ("a$b" + 10)(%eax)
         
 // CHECK: b$c = 10
@@ -52,7 +52,7 @@ foo:
 // CHECX: .lsym "a 8",1
 //        .lsym "a 8", 1
 
-// CHECK: "a 9" = (a - b)
+// CHECK: "a 9" = a-b
         .set "a 9", a - b
         
 // CHECK: .long "a 9"
