@@ -25,14 +25,19 @@
 namespace llvm {
 using namespace sys;
 
-Program::Program() : Pid_(0), Data(0) {}
+Program::Program() : Data_(0) {}
 
 Program::~Program() {
-  if (Data) {
-    HANDLE hProcess = (HANDLE) Data;
+  if (Data_) {
+    HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
     CloseHandle(hProcess);
-    Data = 0;
+    Data_ = 0;
   }
+}
+
+unsigned Program::GetPid() {
+  HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
+  return GetProcessId(hProcess);
 }
 
 // This function just uses the PATH environment variable to find the program.
@@ -132,10 +137,10 @@ Program::Execute(const Path& path,
                  const Path** redirects,
                  unsigned memoryLimit,
                  std::string* ErrMsg) {
-  if (Data) {
-    HANDLE hProcess = (HANDLE) Data;
-    CloseHandle(Data);
-    Data = 0;
+  if (Data_) {
+    HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
+    CloseHandle(Data_);
+    Data_ = 0;
   }
 
   if (!path.canExecute()) {
@@ -264,8 +269,7 @@ Program::Execute(const Path& path,
                path.str() + "'");
     return false;
   }
-  Pid_ = pi.dwProcessId;
-  Data = pi.hProcess;
+  Data_ = reinterpret_cast<void*>(pi.hProcess);
 
   // Make sure these get closed no matter what.
   AutoHandle hThread(pi.hThread);
@@ -301,12 +305,12 @@ Program::Execute(const Path& path,
 int
 Program::Wait(unsigned secondsToWait,
               std::string* ErrMsg) {
-  if (Data == 0) {
+  if (Data_ == 0) {
     MakeErrMsg(ErrMsg, "Process not started!");
     return -1;
   }
 
-  HANDLE hProcess = (HANDLE) Data;
+  HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
 
   // Wait for the process to terminate.
   DWORD millisecondsToWait = INFINITE;
@@ -337,12 +341,12 @@ Program::Wait(unsigned secondsToWait,
 
 bool
 Program::Kill(std::string* ErrMsg) {
-  if (Data == 0) {
+  if (Data_ == 0) {
     MakeErrMsg(ErrMsg, "Process not started!");
     return true;
   }
 
-  HANDLE hProcess = reinterpret_cast<HANDLE>(Data);
+  HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
   return TerminateProcess(hProcess, 1);
 }
 

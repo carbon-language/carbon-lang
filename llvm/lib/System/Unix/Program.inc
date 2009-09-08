@@ -34,9 +34,13 @@
 namespace llvm {
 using namespace sys;
 
-Program::Program() : Pid_(0) {}
+Program::Program() : Data_(0) {}
 
 Program::~Program() {}
+
+unsigned Program::GetPid() {
+  return reinterpret_cast<unsigned>(Data_);
+}
 
 // This function just uses the PATH environment variable to find the program.
 Path
@@ -209,7 +213,7 @@ Program::Execute(const Path& path,
       break;
   }
 
-  Pid_ = child;
+  Data_ = reinterpret_cast<void*>(child);
 
   return true;
 }
@@ -221,7 +225,7 @@ Program::Wait(unsigned secondsToWait,
 #ifdef HAVE_SYS_WAIT_H
   struct sigaction Act, Old;
 
-  if (Pid_ == 0) {
+  if (Data_ == 0) {
     MakeErrMsg(ErrMsg, "Process not started!");
     return -1;
   }
@@ -237,7 +241,7 @@ Program::Wait(unsigned secondsToWait,
 
   // Parent process: Wait for the child process to terminate.
   int status;
-  int child = this->Pid_;
+  pid_t child = reinterpret_cast<pid_t>(Data_);
   while (wait(&status) != child)
     if (secondsToWait && errno == EINTR) {
       // Kill the child.
@@ -285,12 +289,13 @@ Program::Wait(unsigned secondsToWait,
 
 bool
 Program::Kill(std::string* ErrMsg) {
-  if (Pid_ == 0) {
+  if (Data_ == 0) {
     MakeErrMsg(ErrMsg, "Process not started!");
     return true;
   }
 
-  return (kill(Pid_, SIGKILL) == 0);
+  pid_t pid = reinterpret_cast<pid_t>(Data_);
+  return (kill(pid, SIGKILL) == 0);
 }
 
 bool Program::ChangeStdinToBinary(){

@@ -30,9 +30,7 @@ namespace sys {
   /// @brief An abstraction for finding and executing programs.
   class Program {
     /// Opaque handle for target specific data.
-    void *Data;
-
-    unsigned Pid_;
+    void *Data_;
 
     // Noncopyable.
     Program(const Program& other);
@@ -46,7 +44,7 @@ namespace sys {
     ~Program();
 
     /// Return process ID of this program.
-    unsigned GetPid() { return Pid_; }
+    unsigned GetPid();
 
     /// This function executes the program using the \p arguments provided.  The
     /// invoked program will inherit the stdin, stdout, and stderr file
