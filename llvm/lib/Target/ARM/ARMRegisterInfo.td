@@ -61,7 +61,7 @@ def S30 : ARMFReg<30, "s30">; def S31 : ARMFReg<31, "s31">;
 
 // Aliases of the F* registers used to hold 64-bit fp values (doubles)
 def D0  : ARMReg< 0,  "d0", [S0,   S1]>;
-def D1  : ARMReg< 1,  "d1", [S2,   S3]>; 
+def D1  : ARMReg< 1,  "d1", [S2,   S3]>;
 def D2  : ARMReg< 2,  "d2", [S4,   S5]>;
 def D3  : ARMReg< 3,  "d3", [S6,   S7]>;
 def D4  : ARMReg< 4,  "d4", [S8,   S9]>;
@@ -89,7 +89,7 @@ def D30 : ARMFReg<30, "d30">; def D31 : ARMFReg<31, "d31">;
 
 // Advanced SIMD (NEON) defines 16 quad-word aliases
 def Q0  : ARMReg< 0,  "q0", [D0,   D1]>;
-def Q1  : ARMReg< 1,  "q1", [D2,   D3]>; 
+def Q1  : ARMReg< 1,  "q1", [D2,   D3]>;
 def Q2  : ARMReg< 2,  "q2", [D4,   D5]>;
 def Q3  : ARMReg< 3,  "q3", [D6,   D7]>;
 def Q4  : ARMReg< 4,  "q4", [D8,   D9]>;
@@ -269,16 +269,16 @@ def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
   }];
   let MethodBodies = [{
     // VFP2
-    static const unsigned ARM_DPR_VFP2[] = { 
-      ARM::D0,  ARM::D1,  ARM::D2,  ARM::D3, 
-      ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7, 
-      ARM::D8,  ARM::D9,  ARM::D10, ARM::D11, 
+    static const unsigned ARM_DPR_VFP2[] = {
+      ARM::D0,  ARM::D1,  ARM::D2,  ARM::D3,
+      ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7,
+      ARM::D8,  ARM::D9,  ARM::D10, ARM::D11,
       ARM::D12, ARM::D13, ARM::D14, ARM::D15 };
     // VFP3
     static const unsigned ARM_DPR_VFP3[] = {
-      ARM::D0,  ARM::D1,  ARM::D2,  ARM::D3, 
-      ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7, 
-      ARM::D8,  ARM::D9,  ARM::D10, ARM::D11, 
+      ARM::D0,  ARM::D1,  ARM::D2,  ARM::D3,
+      ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7,
+      ARM::D8,  ARM::D9,  ARM::D10, ARM::D11,
       ARM::D12, ARM::D13, ARM::D14, ARM::D15,
       ARM::D16, ARM::D17, ARM::D18, ARM::D19,
       ARM::D20, ARM::D21, ARM::D22, ARM::D23,
@@ -307,9 +307,16 @@ def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
 
 // Subset of DPR that are accessible with VFP2 (and so that also have
 // 32-bit SPR subregs).
-def DPR_VFP2 : RegisterClass<"ARM", [f64, v2f32], 64,
+def DPR_VFP2 : RegisterClass<"ARM", [f64, v2i32, v2f32], 64,
                              [D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
                               D8,  D9,  D10, D11, D12, D13, D14, D15]> {
+  let SubRegClassList = [SPR, SPR];
+}
+
+// Subset of DPR which can be used as a source of NEON scalars for 16-bit
+// operations
+def DPR_8 : RegisterClass<"ARM", [f64, v4i16, v2f32], 64,
+                          [D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7]> {
   let SubRegClassList = [SPR, SPR];
 }
 
@@ -364,4 +371,3 @@ def : SubRegSet<6, [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7,
                     Q8,  Q9,  Q10, Q11, Q12, Q13, Q14, Q15],
                    [D1,  D3,  D5,  D7,  D9,  D11, D13, D15,
                     D17, D19, D21, D23, D25, D27, D29, D31]>;
-
