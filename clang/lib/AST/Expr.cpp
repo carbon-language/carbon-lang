@@ -1092,7 +1092,7 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
 }
 
 /// isOBJCGCCandidate - Check if an expression is objc gc'able.
-///
+/// returns true, if it is; false otherwise.
 bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
   switch (getStmtClass()) {
   default:
@@ -1114,11 +1114,8 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
       if (VD->hasGlobalStorage())
         return true;
       QualType T = VD->getType();
-      // dereferencing to an object pointer is always a gc'able candidate
-      if (T->isPointerType() && 
-          T->getAs<PointerType>()->getPointeeType()->isObjCObjectPointerType())
-        return true;
-        
+      // dereferencing to a pointer is always a gc'able candidate
+      return T->isPointerType();
     }
     return false;
   }
