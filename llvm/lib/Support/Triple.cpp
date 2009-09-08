@@ -139,6 +139,40 @@ Triple::ArchType Triple::getArchTypeForLLVMName(const StringRef &Name) {
   return UnknownArch;
 }
 
+Triple::ArchType Triple::getArchTypeForDarwinArchName(const StringRef &Str) {
+  // See arch(3) and llvm-gcc's driver-driver.c. We don't implement support for
+  // archs which Darwin doesn't use.
+
+  // The matching this routine does is fairly pointless, since it is neither the
+  // complete architecture list, nor a reasonable subset. The problem is that
+  // historically the driver driver accepts this and also ties its -march=
+  // handling to the architecture name, so we need to be careful before removing
+  // support for it.
+
+  if (Str == "ppc" || Str == "ppc601" || Str == "ppc603" || Str == "ppc604" ||
+      Str == "ppc604e" || Str == "ppc750" || Str == "ppc7400" ||
+      Str == "ppc7450" || Str == "ppc970")
+    return Triple::ppc;
+
+  if (Str == "ppc64")
+    return Triple::ppc64;
+
+  if (Str == "i386" || Str == "i486" || Str == "i486SX" || Str == "pentium" ||
+      Str == "i586" || Str == "pentpro" || Str == "i686" || Str == "pentIIm3" ||
+      Str == "pentIIm5" || Str == "pentium4")
+    return Triple::x86;
+
+  if (Str == "x86_64")
+    return Triple::x86_64;
+
+  // This is derived from the driver driver.
+  if (Str == "arm" || Str == "armv4t" || Str == "armv5" || Str == "xscale" ||
+      Str == "armv6" || Str == "armv7")
+    return Triple::arm;
+
+  return Triple::UnknownArch;
+}
+
 //
 
 void Triple::Parse() const {

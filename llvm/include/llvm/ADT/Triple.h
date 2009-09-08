@@ -118,8 +118,8 @@ public:
   /// @{
   
   Triple() : Data(), Arch(InvalidArch) {}
-  explicit Triple(const StringRef &Str) : Data(Str), Arch(InvalidArch) {}
-  explicit Triple(const char *ArchStr, const char *VendorStr, const char *OSStr)
+  explicit Triple(StringRef Str) : Data(Str), Arch(InvalidArch) {}
+  explicit Triple(StringRef ArchStr, StringRef VendorStr, StringRef OSStr)
     : Data(ArchStr), Arch(InvalidArch) {
     Data += '-';
     Data += VendorStr;
@@ -258,9 +258,18 @@ public:
   /// getOSTypeName - Get the canonical name for the \arg Kind vendor.
   static const char *getOSTypeName(OSType Kind);
 
+  /// @}
+  /// @name Static helpers for converting alternate architecture names.
+  /// @{
+
   /// getArchTypeForLLVMName - The canonical type for the given LLVM
   /// architecture name (e.g., "x86").
   static ArchType getArchTypeForLLVMName(const StringRef &Str);
+
+  /// getArchTypeForDarwinArchName - Get the architecture type for a "Darwin"
+  /// architecture name, for example as accepted by "gcc -arch" (see also
+  /// arch(3)).
+  static ArchType getArchTypeForDarwinArchName(const StringRef &Str);
 
   /// @}
 };
