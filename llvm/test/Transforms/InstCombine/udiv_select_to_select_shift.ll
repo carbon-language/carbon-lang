@@ -1,7 +1,7 @@
 ; Test that this transform works:
 ; udiv X, (Select Cond, C1, C2) --> Select Cond, (shr X, C1), (shr X, C2)
 ;
-; RUN: opt %s -instcombine | llvm-dis -o %t
+; RUN: opt < %s -instcombine -S -o %t
 ; RUN:   not grep select %t
 ; RUN:   grep lshr %t | count 2
 ; RUN:   not grep udiv %t

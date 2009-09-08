@@ -1,5 +1,5 @@
 ; RUN: opt %s -simplifycfg -instcombine \
-; RUN:   -simplifycfg | llvm-dis | not grep call
+; RUN:   -simplifycfg -S | not grep call
 
 declare void @bar()
 

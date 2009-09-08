@@ -2,8 +2,8 @@
 ; disambiguating some obvious cases.  All loads should be removable in 
 ; this testcase.
 
-; RUN: opt %s -basicaa -gvn -instcombine -dce \
-; RUN: | llvm-dis | not grep load
+; RUN: opt %s -basicaa -gvn -instcombine -dce -S \
+; RUN: | not grep load
 
 @A = global i32 7
 @B = global i32 8
