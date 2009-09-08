@@ -19,7 +19,7 @@ define i32 @f2(i32 %a) {
 ; 0xcc00cc00 = 3422604288
 define i32 @f3(i32 %a) {
 ; CHECK: f3:
-; CHECK: mvn r0, #3422604288
+; CHECK: mvn r0, #-872363008
     %tmp = xor i32 4294967295, 3422604288
     ret i32 %tmp
 }

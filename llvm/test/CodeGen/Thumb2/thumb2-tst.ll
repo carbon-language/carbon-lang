@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {tst\\.w\\W*r\[0-9\],\\W*#\[0-9\]*} | grep {#187\\|#11141290\\|#3422604288\\|#1114112\\|#3722304989} | count 10
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {tst\\.w\\W*r\[0-9\],\\W*#\[0-9\]*} | \
+; RUN:     grep {#187\\|#11141290\\|#-872363008\\|#1114112\\|#-572662307} | count 10
 
 ; 0x000000bb = 187
 define i1 @f1(i32 %a) {
