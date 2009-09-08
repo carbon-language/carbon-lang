@@ -592,6 +592,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       break;
     case TargetInstrInfo::DBG_LABEL:
     case TargetInstrInfo::EH_LABEL:
+    case TargetInstrInfo::GC_LABEL:
       MCE.emitLabel(MI.getOperand(0).getImm());
       break;
     case TargetInstrInfo::IMPLICIT_DEF:
