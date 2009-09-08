@@ -2834,6 +2834,60 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                                Elidable, move(ExprArgs));
 }
 
+static bool
+CheckConstructArgumentTypes(Sema &SemaRef, SourceLocation ConstructLoc,
+                            CXXConstructExpr *E) {
+  CXXConstructorDecl *Ctor = E->getConstructor();
+  const FunctionProtoType *Proto = Ctor->getType()->getAsFunctionProtoType();
+  
+  unsigned NumArgs = E->getNumArgs();
+  unsigned NumArgsInProto = Proto->getNumArgs();
+  unsigned NumRequiredArgs = Ctor->getMinRequiredArguments();
+  
+  for (unsigned i = 0; i != NumArgsInProto; ++i) {
+    QualType ProtoArgType = Proto->getArgType(i);
+
+    Expr *Arg;
+    
+    if (i < NumRequiredArgs) {
+      Arg = E->getArg(i);
+      
+      // Pass the argument.
+      // FIXME: Do this.
+    } else {
+      // Build a default argument.
+      ParmVarDecl *Param = Ctor->getParamDecl(i);
+      
+      Sema::OwningExprResult ArgExpr = 
+        SemaRef.BuildCXXDefaultArgExpr(ConstructLoc, Ctor, Param);
+      if (ArgExpr.isInvalid())
+        return true;
+
+      Arg = ArgExpr.takeAs<Expr>();
+    }
+    
+    E->setArg(i, Arg);
+  }
+
+  // If this is a variadic call, handle args passed through "...".
+  if (Proto->isVariadic()) {
+    bool Invalid = false;
+    
+    // Promote the arguments (C99 6.5.2.2p7).
+    for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
+      Expr *Arg = E->getArg(i);
+      Invalid |= 
+        SemaRef.DefaultVariadicArgumentPromotion(Arg, 
+                                                 Sema::VariadicConstructor);
+      E->setArg(i, Arg);
+    }
+    
+    return Invalid;
+  }
+  
+  return false;
+}
+
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
 /// including handling of its default argument expressions.
 Sema::OwningExprResult
@@ -2850,19 +2904,10 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                                                                 Elidable,
                                                                 Exprs,
                                                                 NumExprs));
-  // Default arguments must be added to constructor call expression.
-  FunctionDecl *FDecl = cast<FunctionDecl>(Constructor);
-  unsigned NumArgsInProto = FDecl->param_size();
-  for (unsigned j = NumExprs; j != NumArgsInProto; j++) {
-    ParmVarDecl *Param = FDecl->getParamDecl(j);
+  
+  if (CheckConstructArgumentTypes(*this, ConstructLoc, Temp.get()))
+    return ExprError();
 
-    OwningExprResult ArgExpr = 
-      BuildCXXDefaultArgExpr(ConstructLoc, FDecl, Param);
-    if (ArgExpr.isInvalid())
-      return ExprError();
-
-    Temp->setArg(j, ArgExpr.takeAs<Expr>());
-  }
   return move(Temp);
 }
 
@@ -2879,20 +2924,9 @@ Sema::BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Constructor,
   
   ExprOwningPtr<CXXTemporaryObjectExpr> Temp(this, E);
 
-    // Default arguments must be added to constructor call expression.
-  FunctionDecl *FDecl = cast<FunctionDecl>(Constructor);
-  unsigned NumArgsInProto = FDecl->param_size();
-  for (unsigned j = Args.size(); j != NumArgsInProto; j++) {
-    ParmVarDecl *Param = FDecl->getParamDecl(j);
+  if (CheckConstructArgumentTypes(*this, TyBeginLoc, Temp.get()))
+    return ExprError();
 
-    OwningExprResult ArgExpr = BuildCXXDefaultArgExpr(TyBeginLoc, FDecl, Param);
-    if (ArgExpr.isInvalid())
-      return ExprError();
-
-    Temp->setArg(j, ArgExpr.takeAs<Expr>());
-  }
-
-  Args.release();
   return move(Temp);
 }
 

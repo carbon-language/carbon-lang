@@ -51,6 +51,18 @@ void t4()
 
   D d;
   
-  d(10, c); // expected-warning{{Line 48: cannot pass object of non-POD type 'class C' through variadic method; call will abort at runtime}}
+  d(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic method; call will abort at runtime}}
   d(10, version);
+}
+
+class E {
+  E(int, ...);
+};
+
+void t5()
+{
+  C c(10);
+  
+  E e(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic constructor; call will abort at runtime}}
+  (void)E(10, c); // expected-warning{{cannot pass object of non-POD type 'class C' through variadic constructor; call will abort at runtime}}
 }

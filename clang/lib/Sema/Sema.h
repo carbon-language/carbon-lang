@@ -3287,7 +3287,8 @@ public:
   enum VariadicCallType {
     VariadicFunction,
     VariadicBlock,
-    VariadicMethod
+    VariadicMethod,
+    VariadicConstructor
   };
   
   // DefaultVariadicArgumentPromotion - Like DefaultArgumentPromotion, but
