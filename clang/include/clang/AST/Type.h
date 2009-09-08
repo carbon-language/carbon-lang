@@ -2235,6 +2235,9 @@ inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
     return EXTQT->getObjCGCAttr();
   if (const ObjCObjectPointerType *PT = CT->getAsObjCObjectPointerType())
     return PT->getPointeeType().getObjCGCAttr(); 
+  // We most look at all pointer types, not just pointer to interface types.
+  if (const PointerType *PT = CT->getAs<PointerType>())
+    return PT->getPointeeType().getObjCGCAttr(); 
   return GCNone;
 }
 
