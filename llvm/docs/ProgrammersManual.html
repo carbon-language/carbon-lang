@@ -1654,7 +1654,7 @@ an example that prints the name of a <tt>BasicBlock</tt> and the number of
 for (Function::iterator i = func-&gt;begin(), e = func-&gt;end(); i != e; ++i)
   // <i>Print out the name of the basic block if it has one, and then the</i>
   // <i>number of instructions that it contains</i>
-  llvm::cerr &lt;&lt; "Basic block (name=" &lt;&lt; i-&gt;getName() &lt;&lt; ") has "
+  errs() &lt;&lt; "Basic block (name=" &lt;&lt; i-&gt;getName() &lt;&lt; ") has "
              &lt;&lt; i-&gt;size() &lt;&lt; " instructions.\n";
 </pre>
 </div>
@@ -1687,14 +1687,14 @@ a <tt>BasicBlock</tt>:</p>
 for (BasicBlock::iterator i = blk-&gt;begin(), e = blk-&gt;end(); i != e; ++i)
    // <i>The next statement works since operator&lt;&lt;(ostream&amp;,...)</i>
    // <i>is overloaded for Instruction&amp;</i>
-   llvm::cerr &lt;&lt; *i &lt;&lt; "\n";
+   errs() &lt;&lt; *i &lt;&lt; "\n";
 </pre>
 </div>
 
 <p>However, this isn't really the best way to print out the contents of a
 <tt>BasicBlock</tt>!  Since the ostream operators are overloaded for virtually
 anything you'll care about, you could have just invoked the print routine on the
-basic block itself: <tt>llvm::cerr &lt;&lt; *blk &lt;&lt; "\n";</tt>.</p>
+basic block itself: <tt>errs() &lt;&lt; *blk &lt;&lt; "\n";</tt>.</p>
 
 </div>
 
@@ -1720,7 +1720,7 @@ small example that shows how to dump all instructions in a function to the stand
 
 // <i>F is a pointer to a Function instance</i>
 for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-  llvm::cerr &lt;&lt; *I &lt;&lt; "\n";
+  errs() &lt;&lt; *I &lt;&lt; "\n";
 </pre>
 </div>
 
@@ -1799,7 +1799,7 @@ without actually obtaining it via iteration over some structure:</p>
 void printNextInstruction(Instruction* inst) {
   BasicBlock::iterator it(inst);
   ++it; // <i>After this line, it refers to the instruction after *inst</i>
-  if (it != inst-&gt;getParent()-&gt;end()) llvm::cerr &lt;&lt; *it &lt;&lt; "\n";
+  if (it != inst-&gt;getParent()-&gt;end()) errs() &lt;&lt; *it &lt;&lt; "\n";
 }
 </pre>
 </div>
@@ -1917,8 +1917,8 @@ Function *F = ...;
 
 for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i)
   if (Instruction *Inst = dyn_cast&lt;Instruction&gt;(*i)) {
-    llvm::cerr &lt;&lt; "F is used in instruction:\n";
-    llvm::cerr &lt;&lt; *Inst &lt;&lt; "\n";
+    errs() &lt;&lt; "F is used in instruction:\n";
+    errs() &lt;&lt; *Inst &lt;&lt; "\n";
   }
 </pre>
 </div>
