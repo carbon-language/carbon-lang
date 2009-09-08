@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep lea
+; RUN: llc < %s -march=x86 | grep lea
 
 declare i32 @foo()
 

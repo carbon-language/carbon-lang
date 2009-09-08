@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 define i1 @test1(double %X) {
         %V = fcmp one double %X, 0.000000e+00           ; <i1> [#uses=1]
         ret i1 %V

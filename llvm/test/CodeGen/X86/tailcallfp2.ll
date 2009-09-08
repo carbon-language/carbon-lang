@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -tailcallopt | grep {jmp} | grep {\\*%eax}
+; RUN: llc < %s -march=x86 -tailcallopt | grep {jmp} | grep {\\*%eax}
 
 declare i32 @putchar(i32)
 

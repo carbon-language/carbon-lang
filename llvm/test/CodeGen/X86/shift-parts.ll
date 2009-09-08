@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep shrdq
+; RUN: llc < %s -march=x86-64 | grep shrdq
 ; PR4736
 
 %0 = type { i32, i8, [35 x i8] }

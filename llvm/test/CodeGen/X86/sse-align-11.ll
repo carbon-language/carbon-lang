@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah -mtriple=i686-apple-darwin8 | grep movaps
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah -mtriple=linux | grep movups
+; RUN: llc < %s -march=x86 -mcpu=yonah -mtriple=i686-apple-darwin8 | grep movaps
+; RUN: llc < %s -march=x86 -mcpu=yonah -mtriple=linux | grep movups
 
 define <4 x float> @foo(float %a, float %b, float %c, float %d) nounwind {
 entry:

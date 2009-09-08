@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 ; PR4753
 
 ; This function has a sub-register reuse undone.

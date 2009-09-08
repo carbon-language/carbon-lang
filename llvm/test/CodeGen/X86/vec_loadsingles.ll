@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movq
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movq
 
 define <4 x float> @a(<4 x float> %a, float* nocapture %p) nounwind readonly {
 entry:

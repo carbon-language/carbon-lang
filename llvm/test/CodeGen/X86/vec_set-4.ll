@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pinsrw | count 2
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep pinsrw | count 2
 
 define <2 x i64> @test(i16 %a) nounwind {
 entry:

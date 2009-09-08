@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin9.5 -mattr=+sse41 -relocation-model=pic
+; RUN: llc < %s -mtriple=i386-apple-darwin9.5 -mattr=+sse41 -relocation-model=pic
 
 	%struct.XXActiveTextureTargets = type { i64, i64, i64, i64, i64, i64 }
 	%struct.XXAlphaTest = type { float, i16, i8, i8 }

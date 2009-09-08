@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -mattr=+sse2
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu -mattr=+sse2
 ; PR2076
 
 define void @h264_h_loop_filter_luma_mmx2(i8* %pix, i32 %stride, i32 %alpha, i32 %beta, i8* %tc0) nounwind  {

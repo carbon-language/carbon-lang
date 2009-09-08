@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i386-linux-gnu > %t
+; RUN: llc < %s -march=x86 -mtriple=i386-linux-gnu > %t
 ; RUN: grep {movswl	%gs:i@NTPOFF, %eax} %t
 ; RUN: grep {movzwl	%gs:j@NTPOFF, %eax} %t
-; RUN: llvm-as < %s | llc -march=x86-64 -mtriple=x86_64-linux-gnu > %t2
+; RUN: llc < %s -march=x86-64 -mtriple=x86_64-linux-gnu > %t2
 ; RUN: grep {movswl	%fs:i@TPOFF, %edi} %t2
 ; RUN: grep {movzwl	%fs:j@TPOFF, %edi} %t2
 

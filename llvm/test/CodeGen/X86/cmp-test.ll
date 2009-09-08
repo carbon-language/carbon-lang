@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep cmp | count 1
-; RUN: llvm-as < %s | llc -march=x86 | grep test | count 1
+; RUN: llc < %s -march=x86 | grep cmp | count 1
+; RUN: llc < %s -march=x86 | grep test | count 1
 
 define i32 @f1(i32 %X, i32* %y) {
 	%tmp = load i32* %y		; <i32> [#uses=1]

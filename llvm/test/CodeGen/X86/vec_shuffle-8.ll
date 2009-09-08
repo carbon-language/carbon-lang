@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | \
+; RUN: llc < %s -march=x86 -mattr=+sse2 | \
 ; RUN:   not grep shufps
 
 define void @test(<4 x float>* %res, <4 x float>* %A) {

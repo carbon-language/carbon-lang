@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep pslldq
+; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep pslldq
 
 define void @t() nounwind  {
 entry:

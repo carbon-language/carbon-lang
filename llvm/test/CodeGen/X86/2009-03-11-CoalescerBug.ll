@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin9 -stats |& grep regcoalescing | grep commuting
+; RUN: llc < %s -mtriple=i386-apple-darwin9 -stats |& grep regcoalescing | grep commuting
 
 @lookupTable5B = external global [64 x i32], align 32		; <[64 x i32]*> [#uses=1]
 @lookupTable3B = external global [16 x i32], align 32		; <[16 x i32]*> [#uses=1]

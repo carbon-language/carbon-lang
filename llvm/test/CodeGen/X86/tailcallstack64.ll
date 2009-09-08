@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -tailcallopt -march=x86-64 | FileCheck %s
+; RUN: llc < %s -tailcallopt -march=x86-64 | FileCheck %s
 
 ; Check that lowered arguments on the stack do not overwrite each other.
 ; Add %in1 %p1 to a different temporary register (%eax).

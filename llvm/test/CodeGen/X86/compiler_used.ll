@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin9 | grep no_dead_strip | count 1
+; RUN: llc < %s -mtriple=i386-apple-darwin9 | grep no_dead_strip | count 1
 ; We should have a .no_dead_strip directive for Z but not for X/Y.
 
 @X = internal global i8 4

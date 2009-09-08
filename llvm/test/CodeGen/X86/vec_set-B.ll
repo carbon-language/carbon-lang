@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep movaps
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep esp | count 2
+; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep movaps
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep esp | count 2
 
 ; These should both generate something like this:
 ;_test3:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx | grep movl | count 2
+; RUN: llc < %s -march=x86 -mattr=+mmx | grep movl | count 2
 
 define i64 @a(i32 %a, i32 %b) nounwind readnone {
 entry:

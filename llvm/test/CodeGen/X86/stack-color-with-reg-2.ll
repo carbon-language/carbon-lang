@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin10 -relocation-model=pic -disable-fp-elim -color-ss-with-regs | grep {movl\[\[:space:\]\]%eax, %ebx}
+; RUN: llc < %s -mtriple=i386-apple-darwin10 -relocation-model=pic -disable-fp-elim -color-ss-with-regs | grep {movl\[\[:space:\]\]%eax, %ebx}
 
 	%"struct..0$_67" = type { i32, %"struct.llvm::MachineOperand"**, %"struct.llvm::MachineOperand"* }
 	%"struct..1$_69" = type { i32 }

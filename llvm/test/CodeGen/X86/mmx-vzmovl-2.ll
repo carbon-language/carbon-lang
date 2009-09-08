@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+mmx | grep pxor
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+mmx | grep punpckldq
+; RUN: llc < %s -march=x86-64 -mattr=+mmx | grep pxor
+; RUN: llc < %s -march=x86-64 -mattr=+mmx | grep punpckldq
 
 	%struct.vS1024 = type { [8 x <4 x i32>] }
 	%struct.vS512 = type { [4 x <4 x i32>] }

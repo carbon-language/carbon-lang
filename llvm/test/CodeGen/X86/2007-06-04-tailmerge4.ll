@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-eh -asm-verbose | grep invcont131
+; RUN: llc < %s -enable-eh -asm-verbose | grep invcont131
 ; PR 1496:  tail merge was incorrectly removing this block
 
 ; ModuleID = 'report.1.bc'

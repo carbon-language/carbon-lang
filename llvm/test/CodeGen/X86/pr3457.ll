@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | not grep fstpt
+; RUN: llc < %s -mtriple=i386-apple-darwin | not grep fstpt
 ; PR3457
 ; rdar://6548010
 

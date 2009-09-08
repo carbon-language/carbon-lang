@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -mattr=+mmx,+sse2 | grep movq2dq | count 1
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -mattr=+mmx,+sse2 | grep movdq2q | count 2
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx,+sse2 | grep movq2dq | count 1
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx,+sse2 | grep movdq2q | count 2
 
 @g_v8qi = external global <8 x i8>
 

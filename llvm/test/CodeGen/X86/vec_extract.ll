@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2,-sse41 -o %t
+; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 -o %t
 ; RUN: grep movss    %t | count 3
 ; RUN: grep movhlps  %t | count 1
 ; RUN: grep pshufd   %t | count 1

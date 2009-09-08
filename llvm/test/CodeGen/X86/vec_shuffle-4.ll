@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 > %t
+; RUN: llc < %s -march=x86 -mattr=+sse2 > %t
 ; RUN: grep shuf %t | count 2
 ; RUN: not grep unpck %t
 

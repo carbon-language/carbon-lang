@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,+sse2 -o %t
+; RUN: llc < %s -march=x86 -mattr=+sse,+sse2 -o %t
 ; RUN: grep minss %t | grep CPI | count 2
 ; RUN: grep CPI   %t | not grep movss
 

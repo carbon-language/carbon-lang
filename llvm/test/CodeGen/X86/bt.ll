@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep btl | count 28
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=pentium4 | grep btl | not grep esp
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=penryn   | grep btl | not grep esp
+; RUN: llc < %s -march=x86 | grep btl | count 28
+; RUN: llc < %s -march=x86 -mcpu=pentium4 | grep btl | not grep esp
+; RUN: llc < %s -march=x86 -mcpu=penryn   | grep btl | not grep esp
 ; PR3253
 
 ; The register+memory form of the BT instruction should be usable on

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | grep align | count 1
+; RUN: llc < %s -mtriple=i386-apple-darwin | grep align | count 1
 
 @A = common global [100 x i32] zeroinitializer, align 32		; <[100 x i32]*> [#uses=1]
 

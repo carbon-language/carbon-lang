@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 >/dev/null
+; RUN: llc < %s -march=x86 >/dev/null
 ; PR4699
 
 ; Handle this extractvalue-of-extractvalue case without getting in

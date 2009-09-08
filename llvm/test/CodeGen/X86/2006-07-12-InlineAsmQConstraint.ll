@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 ; PR828
 
 target datalayout = "e-p:32:32"

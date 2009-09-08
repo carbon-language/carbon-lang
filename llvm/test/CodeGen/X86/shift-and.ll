@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86    | grep and | count 1
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep and 
+; RUN: llc < %s -march=x86    | grep and | count 1
+; RUN: llc < %s -march=x86-64 | not grep and 
 
 define i32 @t1(i32 %t, i32 %val) nounwind {
        %shamt = and i32 %t, 31

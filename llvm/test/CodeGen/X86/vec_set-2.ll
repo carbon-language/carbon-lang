@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movss | count 1
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movd | count 1
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movss | count 1
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movd | count 1
 
 define <4 x float> @test1(float %a) nounwind {
 	%tmp = insertelement <4 x float> zeroinitializer, float %a, i32 0		; <<4 x float>> [#uses=1]

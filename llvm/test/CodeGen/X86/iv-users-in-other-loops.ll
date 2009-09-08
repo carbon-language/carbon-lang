@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -o %t
+; RUN: llc < %s -march=x86-64 -o %t
 ; RUN: grep inc %t | count 1
 ; RUN: grep dec %t | count 2
 ; RUN: grep addq %t | count 13

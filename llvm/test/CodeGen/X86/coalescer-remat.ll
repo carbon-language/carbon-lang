@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep xor | count 3
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | grep xor | count 3
 
 @val = internal global i64 0		; <i64*> [#uses=1]
 @"\01LC" = internal constant [7 x i8] c"0x%lx\0A\00"		; <[7 x i8]*> [#uses=1]

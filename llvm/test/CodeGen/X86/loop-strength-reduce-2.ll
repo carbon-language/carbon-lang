@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=pic | \
+; RUN: llc < %s -march=x86 -relocation-model=pic | \
 ; RUN:   grep {, 4} | count 1
-; RUN: llvm-as < %s | llc -march=x86 | not grep lea
+; RUN: llc < %s -march=x86 | not grep lea
 ;
 ; Make sure the common loop invariant A is hoisted up to preheader,
 ; since too many registers are needed to subsume it into the addressing modes.

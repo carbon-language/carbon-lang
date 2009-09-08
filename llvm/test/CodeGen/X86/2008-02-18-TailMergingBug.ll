@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah -stats |& grep {Number of block tails merged} | grep 9
+; RUN: llc < %s -march=x86 -mcpu=yonah -stats |& grep {Number of block tails merged} | grep 9
 ; PR1909
 
 @.str = internal constant [48 x i8] c"transformed bounds: (%.2f, %.2f), (%.2f, %.2f)\0A\00"		; <[48 x i8]*> [#uses=1]

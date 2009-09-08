@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep '4{(%...)}
+; RUN: llc < %s -march=x86 | not grep '4{(%...)}
 ; This should not load or store the top part of *P.
 
 define void @test(i64* %P) nounwind  {

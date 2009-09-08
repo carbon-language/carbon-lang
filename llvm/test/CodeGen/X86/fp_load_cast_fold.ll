@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep fild | not grep ESP
+; RUN: llc < %s -march=x86 | grep fild | not grep ESP
 
 define double @short(i16* %P) {
         %V = load i16* %P               ; <i16> [#uses=1]

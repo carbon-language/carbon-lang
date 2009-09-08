@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep -v cmp
+; RUN: llc < %s -march=x86-64 | grep -v cmp
 
 define i64 @foo(i64 %x) {
   %t = icmp slt i64 %x, 1

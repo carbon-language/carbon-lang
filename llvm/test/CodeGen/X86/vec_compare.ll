@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=yonah | FileCheck %s
 
 
 define <4 x i32> @test1(<4 x i32> %A, <4 x i32> %B) nounwind {

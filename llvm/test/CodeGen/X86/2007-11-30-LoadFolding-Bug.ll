@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats |& \
+; RUN: llc < %s -march=x86 -mattr=+sse2 -stats |& \
 ; RUN:   grep {1 .*folded into instructions}
 ; Increment in loop bb.128.i adjusted to 2, to prevent loop reversal from
 ; kicking in.

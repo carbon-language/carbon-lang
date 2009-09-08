@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -x86-asm-syntax=intel | not grep {lea\[\[:space:\]\]R}
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -x86-asm-syntax=intel | not grep {lea\[\[:space:\]\]R}
 
 	%struct.AGenericCall = type { %struct.AGenericManager*, %struct.ComponentParameters*, i32* }
 	%struct.AGenericManager = type <{ i8 }>

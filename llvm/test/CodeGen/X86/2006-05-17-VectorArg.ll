@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
+; RUN: llc < %s -march=x86 -mattr=+sse2
 
 define <4 x float> @opRSQ(<4 x float> %a) nounwind {
 entry:

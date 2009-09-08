@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 ; PR2977
 define i8* @ap_php_conv_p2(){
 entry:

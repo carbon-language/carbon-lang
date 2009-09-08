@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=i386 | not grep 255
+; RUN: llc < %s -march=x86 -mcpu=i386 | not grep 255
 
 	%struct.CONSTRAINT = type { i32, i32, i32, i32 }
 	%struct.FIRST_UNION = type { %struct.anon }

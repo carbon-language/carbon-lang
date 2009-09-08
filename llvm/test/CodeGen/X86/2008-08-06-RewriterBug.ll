@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 ; PR2596
 
 @data = external global [400 x i64]		; <[400 x i64]*> [#uses=5]

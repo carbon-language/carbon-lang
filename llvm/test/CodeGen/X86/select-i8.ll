@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llc < %s -march=x86 > %t
 ; RUN: not grep movz %t
 ; RUN: not grep cmov %t
 ; RUN: grep movb %t | count 2

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=pic -disable-fp-elim -stats |& grep {Number of reloads omited}
+; RUN: llc < %s -march=x86 -relocation-model=pic -disable-fp-elim -stats |& grep {Number of reloads omited}
 
 target triple = "i386-apple-darwin9.6"
 	%struct.constraintVCGType = type { i32, i32, i32, i32 }

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep setnp
-; RUN: llvm-as < %s | llc -march=x86 -enable-unsafe-fp-math | \
+; RUN: llc < %s -march=x86 | grep setnp
+; RUN: llc < %s -march=x86 -enable-unsafe-fp-math | \
 ; RUN:   not grep setnp
 
 define i32 @test(float %f) {

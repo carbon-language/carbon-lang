@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llc < %s -march=x86-64
 ; PR4669
 declare <1 x i64> @llvm.x86.mmx.pslli.q(<1 x i64>, i32)
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 > %t
+; RUN: llc < %s -march=x86-64 > %t
 ; RUN: grep {movzbl	%\[abcd\]h,} %t | count 8
 ; RUN: grep {%\[abcd\]h} %t | not grep {%r\[\[:digit:\]\]*d}
 

@@ -1,7 +1,7 @@
 ; An integer truncation to i1 should be done with an and instruction to make
 ; sure only the LSBit survives. Test that this is the case both for a returned
 ; value and as the operand of a branch.
-; RUN: llvm-as < %s | llc -march=x86 | grep {\\(and\\)\\|\\(test.*\\\$1\\)} | \
+; RUN: llc < %s -march=x86 | grep {\\(and\\)\\|\\(test.*\\\$1\\)} | \
 ; RUN:   count 5
 
 define i1 @test1(i32 %X) zeroext {

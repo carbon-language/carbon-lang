@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -disable-fp-elim | grep subl | count 1
+; RUN: llc < %s -march=x86 -disable-fp-elim | grep subl | count 1
 
         %struct.decode_t = type { i8, i8, i8, i8, i16, i8, i8, %struct.range_t** }
         %struct.range_t = type { float, float, i32, i32, i32, [0 x i8] }

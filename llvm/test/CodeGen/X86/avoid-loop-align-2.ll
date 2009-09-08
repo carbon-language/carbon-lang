@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep align | count 3
+; RUN: llc < %s -march=x86 | grep align | count 3
 
 @x = external global i32*		; <i32**> [#uses=1]
 

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep mov
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep mov
+; RUN: llc < %s -march=x86 | not grep mov
+; RUN: llc < %s -march=x86-64 | not grep mov
 
 declare void @bar()
 

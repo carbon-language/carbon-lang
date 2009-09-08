@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movsd | count 5
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movl | count 2
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movsd | count 5
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movl | count 2
 
 @atomic = global double 0.000000e+00		; <double*> [#uses=1]
 @atomic2 = global double 0.000000e+00		; <double*> [#uses=1]

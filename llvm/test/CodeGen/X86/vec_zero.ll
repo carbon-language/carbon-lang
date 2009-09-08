@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xorps | count 2
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep xorps | count 2
 
 define void @foo(<4 x float>* %P) {
         %T = load <4 x float>* %P               ; <<4 x float>> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin10 -relocation-model=pic -disable-fp-elim -color-ss-with-regs -stats -info-output-file - > %t
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -relocation-model=pic -disable-fp-elim -color-ss-with-regs -stats -info-output-file - > %t
 ; RUN:   grep stackcoloring %t | grep "loads eliminated" 
 ; RUN:   grep stackcoloring %t | grep "stack slot refs replaced with reg refs"  | grep 5
 ; RUN:   grep asm-printer %t   | grep 181

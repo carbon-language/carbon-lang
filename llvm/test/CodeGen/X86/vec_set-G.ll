@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movss
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movss
 
 define fastcc void @t(<4 x float> %A) nounwind  {
 	%tmp41896 = extractelement <4 x float> %A, i32 0		; <float> [#uses=1]

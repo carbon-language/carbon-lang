@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep psllw
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep psrlq
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep psraw
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep psllw
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep psrlq
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep psraw
 
 define <2 x i64> @t1(<2 x i64> %b1, <2 x i64> %c) nounwind  {
 entry:

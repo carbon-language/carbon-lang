@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2,-sse41 | grep movss | count 1
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2,-sse41 | not grep pinsrw
+; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 | grep movss | count 1
+; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 | not grep pinsrw
 
 define void @test(<4 x float>* %F, i32 %I) {
 	%tmp = load <4 x float>* %F		; <<4 x float>> [#uses=1]

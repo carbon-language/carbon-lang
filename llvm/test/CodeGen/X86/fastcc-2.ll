@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -mattr=+sse2 | grep movsd
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -mattr=+sse2 | grep mov | count 1
+; RUN: llc < %s -mtriple=i686-apple-darwin -mattr=+sse2 | grep movsd
+; RUN: llc < %s -mtriple=i686-apple-darwin -mattr=+sse2 | grep mov | count 1
 
 define i32 @foo() nounwind {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 > %t
+; RUN: llc < %s -march=x86-64 > %t
 ; RUN: grep leaq %t
 ; RUN: not grep {,%rsp)} %t
 ; PR1103

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movd | count 2
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep rsp
+; RUN: llc < %s -march=x86-64 | grep movd | count 2
+; RUN: llc < %s -march=x86-64 | not grep rsp
 
 define i64 @test1(double %A) {
    %B = bitcast double %A to i64

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx
+; RUN: llc < %s -march=x86 -mattr=+mmx
 ; PR2574
 
 define void @entry(i32 %m_task_id, i32 %start_x, i32 %end_x) {; <label>:0

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
+; RUN: llc < %s -march=x86 -mattr=+sse2
 	%struct.foo = type opaque
 
 define fastcc i32 @test(%struct.foo* %v, %struct.foo* %vi) {

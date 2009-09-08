@@ -1,15 +1,15 @@
-; RUN: llvm-as < %s | llc -march=x86-64  -tailcallopt  | grep TAILCALL
+; RUN: llc < %s -march=x86-64  -tailcallopt  | grep TAILCALL
 ; Expect 2 rep;movs because of tail call byval lowering.
-; RUN: llvm-as < %s | llc -march=x86-64  -tailcallopt  | grep rep | wc -l | grep 2
+; RUN: llc < %s -march=x86-64  -tailcallopt  | grep rep | wc -l | grep 2
 ; A sequence of copyto/copyfrom virtual registers is used to deal with byval
 ; lowering appearing after moving arguments to registers. The following two
 ; checks verify that the register allocator changes those sequences to direct
 ; moves to argument register where it can (for registers that are not used in 
 ; byval lowering - not rsi, not rdi, not rcx).
 ; Expect argument 4 to be moved directly to register edx.
-; RUN: llvm-as < %s | llc -march=x86-64  -tailcallopt  | grep movl | grep {7} | grep edx
+; RUN: llc < %s -march=x86-64  -tailcallopt  | grep movl | grep {7} | grep edx
 ; Expect argument 6 to be moved directly to register r8.
-; RUN: llvm-as < %s | llc -march=x86-64  -tailcallopt  | grep movl | grep {17} | grep r8
+; RUN: llc < %s -march=x86-64  -tailcallopt  | grep movl | grep {17} | grep r8
 
 %struct.s = type { i64, i64, i64, i64, i64, i64, i64, i64,
                    i64, i64, i64, i64, i64, i64, i64, i64,

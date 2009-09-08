@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep call.*memcpy | count 2
+; RUN: llc < %s -march=x86-64 | grep call.*memcpy | count 2
 
 declare void @llvm.memcpy.i64(i8*, i8*, i64, i32)
 

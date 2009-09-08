@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llc < %s -march=x86-64
 
 	%struct.XX = type <{ i8 }>
 	%struct.YY = type { i64 }

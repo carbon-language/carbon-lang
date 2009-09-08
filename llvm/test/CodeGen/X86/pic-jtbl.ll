@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic \
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu -relocation-model=pic \
 ; RUN:   -o %t
 ; RUN: grep _GLOBAL_OFFSET_TABLE_ %t
 ; RUN: grep piclabel %t | count 3
@@ -7,7 +7,7 @@
 ; RUN: grep JTI %t | count 2
 
 ; X86-64:
-; RUN: llvm-as < %s | llc -mtriple=x86_64-pc-linux-gnu -relocation-model=pic > %t
+; RUN: llc < %s -mtriple=x86_64-pc-linux-gnu -relocation-model=pic > %t
 ; RUN: grep {LJTI1_0(%rip)} %t
 define void @bar(i32 %n.u) nounwind {
 entry:

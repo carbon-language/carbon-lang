@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep sar | count 1
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep sar
+; RUN: llc < %s -march=x86 | grep sar | count 1
+; RUN: llc < %s -march=x86-64 | not grep sar
 
 define i32 @test(i32 %f12) {
 	%tmp7.25 = lshr i32 %f12, 16		

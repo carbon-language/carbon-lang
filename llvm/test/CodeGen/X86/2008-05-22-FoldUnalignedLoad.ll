@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movups | count 2
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movups | count 2
 
 define void @a(<4 x float>* %x) nounwind  {
 entry:

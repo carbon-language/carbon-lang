@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep movl
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | grep movl
 ; rdar://6707985
 
 	%XXOO = type { %"struct.XXC::XXCC", i8*, %"struct.XXC::XXOO::$_71" }

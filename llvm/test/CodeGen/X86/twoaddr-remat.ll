@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep 59796 | count 3
+; RUN: llc < %s -march=x86 | grep 59796 | count 3
 
 	%Args = type %Value*
 	%Exec = type opaque*

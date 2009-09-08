@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 ; PR3244
 
 @g_62 = external global i16             ; <i16*> [#uses=1]

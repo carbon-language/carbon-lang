@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep mov
+; RUN: llc < %s -march=x86 | not grep mov
 
 	%struct.active_line = type { %struct.gs_fixed_point, %struct.gs_fixed_point, i32, i32, i32, %struct.line_segment*, i32, i16, i16, %struct.active_line*, %struct.active_line* }
 	%struct.gs_fixed_point = type { i32, i32 }

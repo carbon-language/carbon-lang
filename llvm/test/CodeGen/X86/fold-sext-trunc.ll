@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movslq | count 1
+; RUN: llc < %s -march=x86-64 | grep movslq | count 1
 ; PR4050
 
 	type { i64 }		; type %0

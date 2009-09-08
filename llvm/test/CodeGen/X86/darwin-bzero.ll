@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin10 | grep __bzero
+; RUN: llc < %s -mtriple=i386-apple-darwin10 | grep __bzero
 
 declare void @llvm.memset.i32(i8*, i8, i32, i32)
 

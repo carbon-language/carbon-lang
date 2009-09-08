@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 > %t
+; RUN: llc < %s -march=x86-64 > %t
 ; RUN: not grep APP %t
 ; RUN: grep bswapq %t | count 2
 ; RUN: grep bswapl %t | count 1

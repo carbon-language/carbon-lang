@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin9 | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin9 | FileCheck %s
 
 @x = common hidden global i32 0		; <i32*> [#uses=1]
 

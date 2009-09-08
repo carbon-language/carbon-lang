@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep -E {sar|shl|mov|or} | count 4
+; RUN: llc < %s | grep -E {sar|shl|mov|or} | count 4
 ; Check that the shr(shl X, 56), 48) is not mistakenly turned into
 ; a shr (X, -8) that gets subsequently "optimized away" as undef
 ; PR4254

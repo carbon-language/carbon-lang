@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse42 -disable-mmx -o %t
+; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx -o %t
 
 ; bitcast a i64 to v2i32
 

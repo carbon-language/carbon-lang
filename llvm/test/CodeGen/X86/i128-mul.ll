@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llc < %s -march=x86-64
 ; PR1198
 
 define i64 @foo(i64 %x, i64 %y) {

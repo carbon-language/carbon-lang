@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep no_dead_strip
+; RUN: llc < %s | grep no_dead_strip
 
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8.7.2"

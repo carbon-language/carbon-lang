@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin | grep weak_reference | count 2
+; RUN: llc < %s -mtriple=i686-apple-darwin | grep weak_reference | count 2
 
 @Y = global i32 (i8*)* @X               ; <i32 (i8*)**> [#uses=0]
 

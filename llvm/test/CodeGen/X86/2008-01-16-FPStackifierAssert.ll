@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -regalloc=local
+; RUN: llc < %s -march=x86 -mattr=+sse2 -regalloc=local
 
 define void @SolveCubic(double %a, double %b, double %c, double %d, i32* %solutions, double* %x) {
 entry:

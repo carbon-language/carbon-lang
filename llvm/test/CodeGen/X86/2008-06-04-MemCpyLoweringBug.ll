@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -mattr=+sse2 -disable-fp-elim | grep subl | grep 24
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+sse2 -disable-fp-elim | grep subl | grep 24
 
 	%struct.argument_t = type { i8*, %struct.argument_t*, i32, %struct.ipc_type_t*, i32, void (...)*, void (...)*, void (...)*, void (...)*, void (...)*, i8*, i8*, i8*, i8*, i8*, i32, i32, i32, %struct.routine*, %struct.argument_t*, %struct.argument_t*, %struct.argument_t*, %struct.argument_t*, %struct.argument_t*, %struct.argument_t*, %struct.argument_t*, i32, i32, i32, i32, i32, i32 }
 	%struct.ipc_type_t = type { i8*, %struct.ipc_type_t*, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i8*, i8*, i32, i32, i32, i32, i32, i32, %struct.ipc_type_t*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8* }

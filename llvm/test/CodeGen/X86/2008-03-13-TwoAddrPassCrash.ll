@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 
 define i16 @t(i32 %depth) signext nounwind  {
 entry:

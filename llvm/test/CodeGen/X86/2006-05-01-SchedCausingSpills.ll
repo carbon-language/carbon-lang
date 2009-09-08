@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah -stats |& \
+; RUN: llc < %s -march=x86 -mcpu=yonah -stats |& \
 ; RUN:   not grep {Number of register spills}
 ; END.
 

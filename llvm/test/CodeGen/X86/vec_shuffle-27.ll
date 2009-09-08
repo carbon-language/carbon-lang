@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 -o %t
+; RUN: llc < %s -march=x86 -mattr=sse41 -o %t
 ; RUN: grep addps %t | count 2
 ; RUN: grep mulps %t | count 2
 ; RUN: grep subps %t | count 2

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-unsafe-fp-math -march=x86-64 | \
+; RUN: llc < %s -enable-unsafe-fp-math -march=x86-64 | \
 ; RUN:   not egrep {addsd|subsd|xor}
 
 declare double @sin(double %f)

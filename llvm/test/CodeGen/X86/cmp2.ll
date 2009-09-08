@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep ucomisd | grep CPI | count 2
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep ucomisd | grep CPI | count 2
 
 define i32 @test(double %A) nounwind  {
  entry:

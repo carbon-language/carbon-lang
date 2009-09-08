@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 	%struct._obstack_chunk = type { i8*, %struct._obstack_chunk*, [4 x i8] }
 	%struct.obstack = type { i32, %struct._obstack_chunk*, i8*, i8*, i8*, i32, i32, %struct._obstack_chunk* (...)*, void (...)*, i8*, i8 }
 @stmt_obstack = external global %struct.obstack		; <%struct.obstack*> [#uses=1]

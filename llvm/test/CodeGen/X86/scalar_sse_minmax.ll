@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,+sse2 | \
+; RUN: llc < %s -march=x86 -mattr=+sse,+sse2 | \
 ; RUN:   grep mins | count 3
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,+sse2 | \
+; RUN: llc < %s -march=x86 -mattr=+sse,+sse2 | \
 ; RUN:   grep maxs | count 2
 
 declare i1 @llvm.isunordered.f64(double, double)

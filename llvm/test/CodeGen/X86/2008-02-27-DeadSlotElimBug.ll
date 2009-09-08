@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 
 	%struct.CompAtom = type <{ %struct.Position, float, i32 }>
 	%struct.Lattice = type { %struct.Position, %struct.Position, %struct.Position, %struct.Position, %struct.Position, %struct.Position, %struct.Position, i32, i32, i32 }

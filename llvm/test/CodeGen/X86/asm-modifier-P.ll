@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-unknown-linux-gnu -relocation-model=pic    | FileCheck %s -check-prefix=CHECK-PIC-32
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-unknown-linux-gnu -relocation-model=static | FileCheck %s -check-prefix=CHECK-STATIC-32
-; RUN: llvm-as < %s | llc -march=x86-64 -relocation-model=static | FileCheck %s -check-prefix=CHECK-STATIC-64
-; RUN: llvm-as < %s | llc -march=x86-64 -relocation-model=pic    | FileCheck %s -check-prefix=CHECK-PIC-64
+; RUN: llc < %s -march=x86 -mtriple=i686-unknown-linux-gnu -relocation-model=pic    | FileCheck %s -check-prefix=CHECK-PIC-32
+; RUN: llc < %s -march=x86 -mtriple=i686-unknown-linux-gnu -relocation-model=static | FileCheck %s -check-prefix=CHECK-STATIC-32
+; RUN: llc < %s -march=x86-64 -relocation-model=static | FileCheck %s -check-prefix=CHECK-STATIC-64
+; RUN: llc < %s -march=x86-64 -relocation-model=pic    | FileCheck %s -check-prefix=CHECK-PIC-64
 ; PR3379
 ; XFAIL: *
 

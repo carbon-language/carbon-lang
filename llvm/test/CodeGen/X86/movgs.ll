@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep gs
+; RUN: llc < %s -march=x86 | grep gs
 
 define i32 @foo() nounwind readonly {
 entry:

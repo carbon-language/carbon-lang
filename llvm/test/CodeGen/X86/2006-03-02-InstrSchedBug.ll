@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86  -stats |& \
+; RUN: llc < %s -march=x86  -stats |& \
 ; RUN:   grep asm-printer | grep 7
 
 define i32 @g(i32 %a, i32 %b) nounwind {

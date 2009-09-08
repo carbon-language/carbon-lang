@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llc < %s -march=x86
+; RUN: llc < %s -march=x86-64
 ; PR1033
 
 define i64 @test1(double %t) {

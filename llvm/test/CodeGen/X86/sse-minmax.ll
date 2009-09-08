@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | FileCheck %s
+; RUN: llc < %s -march=x86-64 | FileCheck %s
 
 ; CHECK: clampTo3k_a:
 ; CHECK: minsd

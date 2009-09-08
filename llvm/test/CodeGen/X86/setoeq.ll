@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86  | grep set | count 2
-; RUN: llvm-as < %s | llc -march=x86  | grep and
+; RUN: llc < %s -march=x86  | grep set | count 2
+; RUN: llc < %s -march=x86  | grep and
 
 define zeroext i8 @t(double %x) nounwind readnone {
 entry:

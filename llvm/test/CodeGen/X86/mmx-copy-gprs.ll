@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86-64           | grep {movq.*(%rsi), %rax}
-; RUN: llvm-as < %s | llc -march=x86 -mattr=-sse2 | grep {movl.*4(%eax),}
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep {movsd.(%eax),}
+; RUN: llc < %s -march=x86-64           | grep {movq.*(%rsi), %rax}
+; RUN: llc < %s -march=x86 -mattr=-sse2 | grep {movl.*4(%eax),}
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep {movsd.(%eax),}
 
 ; This test should use GPRs to copy the mmx value, not MMX regs.  Using mmx regs,
 ; increases the places that need to use emms.

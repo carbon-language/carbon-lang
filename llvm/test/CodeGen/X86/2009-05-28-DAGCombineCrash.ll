@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llc < %s -march=x86-64
 
 	%struct.tempsym_t = type { i8*, i8*, i8*, i8*, i32, i32, i32, i32, i32 }
 

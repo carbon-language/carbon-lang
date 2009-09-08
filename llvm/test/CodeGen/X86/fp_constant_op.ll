@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel -mcpu=i486 | \
+; RUN: llc < %s -march=x86 -x86-asm-syntax=intel -mcpu=i486 | \
 ; RUN:   grep {fadd\\|fsub\\|fdiv\\|fmul} | not grep -i ST
 
 ; Test that the load of the constant is folded into the operation.

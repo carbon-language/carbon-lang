@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 > %t
+; RUN: llc < %s -march=x86-64 > %t
 ; RUN: grep mov %t | count 8
 ; RUN: not grep implicit %t
 

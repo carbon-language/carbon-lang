@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llc < %s -march=x86-64
 
 	%struct.blktkntype = type { i32, i32 }
 	%struct.fieldstruc = type { [128 x i8], %struct.blktkntype*, i32, i32 }

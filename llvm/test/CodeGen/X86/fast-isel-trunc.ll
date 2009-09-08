@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -fast-isel -fast-isel-abort
-; RUN: llvm-as < %s | llc -march=x86-64 -fast-isel -fast-isel-abort
+; RUN: llc < %s -march=x86 -fast-isel -fast-isel-abort
+; RUN: llc < %s -march=x86-64 -fast-isel -fast-isel-abort
 
 define i8 @t1(i32 %x) signext nounwind  {
 	%tmp1 = trunc i32 %x to i8

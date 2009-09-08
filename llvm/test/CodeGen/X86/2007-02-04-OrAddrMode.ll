@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep {orl	\$1, %eax}
-; RUN: llvm-as < %s | llc -march=x86 | grep {leal	3(,%eax,8)}
+; RUN: llc < %s -march=x86 | grep {orl	\$1, %eax}
+; RUN: llc < %s -march=x86 | grep {leal	3(,%eax,8)}
 
 ;; This example can't fold the or into an LEA.
 define i32 @test(float ** %tmp2, i32 %tmp12) {

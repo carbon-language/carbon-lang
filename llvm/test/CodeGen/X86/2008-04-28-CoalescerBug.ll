@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep movl > %t
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | grep movl > %t
 ; RUN: not grep {r\[abcd\]x} %t
 ; RUN: not grep {r\[ds\]i} %t
 ; RUN: not grep {r\[bs\]p} %t

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 ; PR833
 
 @G = weak global i32 0		; <i32*> [#uses=3]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -fast-isel | grep {andb	\$1, %}
+; RUN: llc < %s -march=x86 -fast-isel | grep {andb	\$1, %}
 
 declare i64 @bar(i64)
 

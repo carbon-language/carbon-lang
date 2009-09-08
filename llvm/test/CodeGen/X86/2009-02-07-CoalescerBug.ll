@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=pic -stats |& grep {Number of valno def marked dead} | grep 1
+; RUN: llc < %s -march=x86 -relocation-model=pic -stats |& grep {Number of valno def marked dead} | grep 1
 ; rdar://6566708
 
 target triple = "i386-apple-darwin9.6"

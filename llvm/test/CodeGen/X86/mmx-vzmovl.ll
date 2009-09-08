@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+mmx | grep movd
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+mmx | grep movq
+; RUN: llc < %s -march=x86-64 -mattr=+mmx | grep movd
+; RUN: llc < %s -march=x86-64 -mattr=+mmx | grep movq
 
 define void @foo(<1 x i64>* %a, <1 x i64>* %b) nounwind {
 entry:

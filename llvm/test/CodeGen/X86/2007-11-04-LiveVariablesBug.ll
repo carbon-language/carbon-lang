@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-unknown-linux-gnu
+; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu
 ; PR1767
 
 define void @xor_sse_2(i64 %bytes, i64* %p1, i64* %p2) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx,+sse2 > %t1
+; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2 > %t1
 ; RUN: grep movzwl %t1 | count 2
 ; RUN: grep movzbl %t1 | count 2
 ; RUN: grep movd %t1 | count 4

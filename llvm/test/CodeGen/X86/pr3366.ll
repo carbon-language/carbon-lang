@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep movzbl
+; RUN: llc < %s -march=x86 | grep movzbl
 ; PR3366
 
 define void @_ada_c34002a() nounwind {

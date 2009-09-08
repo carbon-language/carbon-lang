@@ -1,10 +1,10 @@
-; RUN: llvm-as < %s | llc -relocation-model=static | grep rodata | count 3
-; RUN: llvm-as < %s | llc -relocation-model=static | grep -F "rodata.cst" | count 2
-; RUN: llvm-as < %s | llc -relocation-model=pic | grep rodata | count 2
-; RUN: llvm-as < %s | llc -relocation-model=pic | grep -F ".data.rel.ro" | count 2
-; RUN: llvm-as < %s | llc -relocation-model=pic | grep -F ".data.rel.ro.local" | count 1
-; RUN: llvm-as < %s | llc -relocation-model=pic | grep -F ".data.rel" | count 4
-; RUN: llvm-as < %s | llc -relocation-model=pic | grep -F ".data.rel.local" | count 1
+; RUN: llc < %s -relocation-model=static | grep rodata | count 3
+; RUN: llc < %s -relocation-model=static | grep -F "rodata.cst" | count 2
+; RUN: llc < %s -relocation-model=pic | grep rodata | count 2
+; RUN: llc < %s -relocation-model=pic | grep -F ".data.rel.ro" | count 2
+; RUN: llc < %s -relocation-model=pic | grep -F ".data.rel.ro.local" | count 1
+; RUN: llc < %s -relocation-model=pic | grep -F ".data.rel" | count 4
+; RUN: llc < %s -relocation-model=pic | grep -F ".data.rel.local" | count 1
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 target triple = "x86_64-unknown-linux-gnu"

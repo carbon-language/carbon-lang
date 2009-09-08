@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -tailcallopt=false | grep {movl\[\[:space:\]\]*8(%esp), %eax} | count 2
+; RUN: llc < %s -tailcallopt=false | grep {movl\[\[:space:\]\]*8(%esp), %eax} | count 2
 ; PR3122
 ; rdar://6400815
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | not grep lea
+; RUN: llc < %s -mtriple=i386-apple-darwin | not grep lea
 ; The inner loop should use [reg] addressing, not [reg+reg] addressing.
 ; rdar://6403965
 

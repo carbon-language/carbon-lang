@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -fast-isel -fast-isel-abort -march=x86
+; RUN: llc < %s -fast-isel -fast-isel-abort -march=x86
 
 define i8 @t2(i8 %a, i8 %c) nounwind {
        %tmp = shl i8 %a, %c

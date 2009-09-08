@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep mov | count 1
+; RUN: llc < %s -march=x86 | grep mov | count 1
 ; PR1874
 	
 define i32 @test(i32 %a, i32 %b) {

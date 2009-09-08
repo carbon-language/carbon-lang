@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86-64 > %t
+; RUN: llc < %s -march=x86-64 > %t
 ; RUN: grep mov %t | count 6
 ; RUN: grep {movb	%ah, (%rsi)} %t | count 3
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llc < %s -march=x86 > %t
 ; RUN: grep mov %t | count 3
 ; RUN: grep {movb	%ah, (%e} %t | count 3
 

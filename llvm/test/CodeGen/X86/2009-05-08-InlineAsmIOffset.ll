@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -relocation-model=static > %t
+; RUN: llc < %s -relocation-model=static > %t
 ; RUN: grep "1: ._pv_cpu_ops+8" %t
 ; RUN: grep "2: ._G" %t
 ; PR4152

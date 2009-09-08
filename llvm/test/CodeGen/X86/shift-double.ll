@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | \
 ; RUN:   grep {sh\[lr\]d} | count 5
 
 define i64 @test1(i64 %X, i8 %C) {

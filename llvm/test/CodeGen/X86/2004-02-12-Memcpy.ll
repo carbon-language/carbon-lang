@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-pc-linux-gnu | grep movs | count 1
+; RUN: llc < %s -march=x86 -mtriple=i686-pc-linux-gnu | grep movs | count 1
 
 @A = global [32 x i32] zeroinitializer
 @B = global [32 x i32] zeroinitializer

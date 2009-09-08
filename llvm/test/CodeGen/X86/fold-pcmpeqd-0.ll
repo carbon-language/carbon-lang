@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -mcpu=yonah  | not grep pcmpeqd
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -mcpu=yonah  | grep orps | grep CPI1_2  | count 2
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep pcmpeqd | count 1
+; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah  | not grep pcmpeqd
+; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah  | grep orps | grep CPI1_2  | count 2
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | grep pcmpeqd | count 1
 
 ; This testcase shouldn't need to spill the -1 value,
 ; so it should just use pcmpeqd to materialize an all-ones vector.

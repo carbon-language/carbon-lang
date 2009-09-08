@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse2 | grep pcmpeqd | count 4
+; RUN: llc < %s -march=x86 -mattr=sse2 | grep pcmpeqd | count 4
 
 define <4 x i32> @ioo() nounwind {
         ret <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>

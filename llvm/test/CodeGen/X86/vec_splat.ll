@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshufd
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse3 | grep movddup
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep pshufd
+; RUN: llc < %s -march=x86 -mattr=+sse3 | grep movddup
 
 define void @test_v4sf(<4 x float>* %P, <4 x float>* %Q, float %X) nounwind {
 	%tmp = insertelement <4 x float> zeroinitializer, float %X, i32 0		; <<4 x float>> [#uses=1]

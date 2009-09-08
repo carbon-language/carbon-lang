@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=pic -mtriple=i686-unknown-linux-gnu -fast-isel | grep __tls_get_addr
+; RUN: llc < %s -march=x86 -relocation-model=pic -mtriple=i686-unknown-linux-gnu -fast-isel | grep __tls_get_addr
 ; PR3654
 
 @v = thread_local global i32 0

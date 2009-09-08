@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -relocation-model=pic -disable-fp-elim
+; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=pic -disable-fp-elim
 
 	%struct..0objc_selector = type opaque
 	%struct.NSString = type opaque

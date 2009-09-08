@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep {sar.	\$5}
+; RUN: llc < %s -march=x86 | grep {sar.	\$5}
 
 @foo = global i8 127
 

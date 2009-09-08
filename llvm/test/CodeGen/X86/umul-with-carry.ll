@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep {jc} | count 1
+; RUN: llc < %s -march=x86 | grep {jc} | count 1
 ; XFAIL: *
 
 ; FIXME: umul-with-overflow not supported yet.

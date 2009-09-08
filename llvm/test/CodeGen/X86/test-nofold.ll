@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | grep {testl.*%e.x.*%e.x}
+; RUN: llc < %s -march=x86 -mcpu=yonah | grep {testl.*%e.x.*%e.x}
 ; rdar://5752025
 
 ; We don't want to fold the and into the test, because the and clobbers its

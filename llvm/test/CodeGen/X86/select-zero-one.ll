@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep cmov
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep xor
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movzbl | count 1
+; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep cmov
+; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep xor
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movzbl | count 1
 
 @r1 = weak global i32 0
 

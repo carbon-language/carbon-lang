@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | not grep lea
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | not grep lea
 
 	%struct.x = type { float, double }
 @X = global %struct.x { float 1.000000e+00, double 2.000000e+00 }, align 16		; <%struct.x*> [#uses=2]

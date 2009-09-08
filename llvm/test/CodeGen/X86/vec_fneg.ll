@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
+; RUN: llc < %s -march=x86 -mattr=+sse2
 
 define <4 x float> @t1(<4 x float> %Q) {
         %tmp15 = fsub <4 x float> < float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00 >, %Q

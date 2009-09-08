@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | grep movw | not grep {, %e}
+; RUN: llc < %s -mtriple=i386-apple-darwin | grep movw | not grep {, %e}
 
 	%struct.DBC_t = type { i32, i8*, i16, %struct.DBC_t*, i8*, i8*, i8*, i8*, i8*, %struct.DBC_t*, i32, i32, i32, i32, i8*, i8*, i8*, i8*, i8*, i32, i32, i32, i32, i32, i32, i32, i32, i16, i16, i32*, i8, i16, %struct.DRVOPT*, i16 }
 	%struct.DRVOPT = type { i16, i32, i8, %struct.DRVOPT* }

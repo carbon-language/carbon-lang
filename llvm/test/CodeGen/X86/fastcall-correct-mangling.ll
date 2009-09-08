@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-unknown-mingw32 | \
+; RUN: llc < %s -mtriple=i386-unknown-mingw32 | \
 ; RUN:   grep {@12}
 
 ; Check that a fastcall function gets correct mangling

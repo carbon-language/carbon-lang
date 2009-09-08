@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep movz
+; RUN: llc < %s -march=x86 | not grep movz
 ; PR2835
 
 @g_407 = internal global i32 0		; <i32*> [#uses=1]

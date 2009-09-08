@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -regalloc=local | grep {subl	%eax, %edx}
+; RUN: llc < %s -march=x86 -regalloc=local | grep {subl	%eax, %edx}
 
 ; Local regalloc shouldn't assume that both the uses of the
 ; sub instruction are kills, because one of them is tied

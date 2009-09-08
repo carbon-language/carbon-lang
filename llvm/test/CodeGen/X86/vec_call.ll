@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -mtriple=i686-apple-darwin8 | \
+; RUN: llc < %s -march=x86 -mattr=+sse2 -mtriple=i686-apple-darwin8 | \
 ; RUN:   grep {subl.*60}
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -mtriple=i686-apple-darwin8 | \
+; RUN: llc < %s -march=x86 -mattr=+sse2 -mtriple=i686-apple-darwin8 | \
 ; RUN:   grep {movaps.*32}
 
 

@@ -1,7 +1,7 @@
 ;; Both functions in this testcase should codegen to the same function, and
 ;; neither of them should require spilling anything to the stack.
 
-; RUN: llvm-as < %s | llc -march=x86 -stats |& \
+; RUN: llc < %s -march=x86 -stats |& \
 ; RUN:   not grep {Number of register spills}
 
 ;; This can be compiled to use three registers if the loads are not

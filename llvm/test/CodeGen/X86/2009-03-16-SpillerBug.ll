@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -stats |& grep virtregrewriter | not grep {stores unfolded}
+; RUN: llc < %s -mtriple=i386-apple-darwin -stats |& grep virtregrewriter | not grep {stores unfolded}
 ; rdar://6682365
 
 ; Do not clobber a register if another spill slot is available in it and it's marked "do not clobber".

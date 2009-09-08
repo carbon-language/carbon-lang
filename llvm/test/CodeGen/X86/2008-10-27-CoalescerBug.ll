@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats |& not grep {Number of register spills}
+; RUN: llc < %s -march=x86 -mattr=+sse2 -stats |& not grep {Number of register spills}
 
 define fastcc void @fourn(double* %data, i32 %isign) nounwind {
 entry:

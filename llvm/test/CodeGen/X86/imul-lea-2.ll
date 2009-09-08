@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep lea | count 3
-; RUN: llvm-as < %s | llc -march=x86-64 | grep shl | count 1
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep imul
+; RUN: llc < %s -march=x86-64 | grep lea | count 3
+; RUN: llc < %s -march=x86-64 | grep shl | count 1
+; RUN: llc < %s -march=x86-64 | not grep imul
 
 define i64 @t1(i64 %a) nounwind readnone {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -stats |& not grep machine-sink
+; RUN: llc < %s -march=x86 -stats |& not grep machine-sink
 ; PR3522
 
 target triple = "i386-pc-linux-gnu"

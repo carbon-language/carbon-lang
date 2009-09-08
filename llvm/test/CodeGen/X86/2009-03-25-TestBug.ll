@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -o %t
+; RUN: llc < %s -march=x86 -o %t
 ; RUN: not grep and %t
 ; RUN: not grep shr %t
 ; rdar://6661955

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc 
+; RUN: llc < %s 
 ; PR933
 
 define fastcc i1 @test() {

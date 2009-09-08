@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llc < %s -march=x86 > %t
 ; RUN: grep {fld	%%st(0)} %t
 ; PR4185
 

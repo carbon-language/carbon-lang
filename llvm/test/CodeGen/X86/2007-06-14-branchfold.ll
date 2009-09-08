@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=i686 | not grep jmp
+; RUN: llc < %s -march=x86 -mcpu=i686 | not grep jmp
 ; check that branch folding understands FP_REG_KILL is not a branch
 
 target triple = "i686-pc-linux-gnu"

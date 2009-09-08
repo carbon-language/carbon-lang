@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep orb | count 1
-; RUN: llvm-as < %s | llc -march=x86-64 | grep orb | grep 1
-; RUN: llvm-as < %s | llc -march=x86-64 | grep orl | count 1
-; RUN: llvm-as < %s | llc -march=x86-64 | grep orl | grep 16842752
+; RUN: llc < %s -march=x86-64 | grep orb | count 1
+; RUN: llc < %s -march=x86-64 | grep orb | grep 1
+; RUN: llc < %s -march=x86-64 | grep orl | count 1
+; RUN: llc < %s -march=x86-64 | grep orl | grep 16842752
 
 	%struct.bf = type { i64, i16, i16, i32 }
 @bfi = common global %struct.bf zeroinitializer, align 16

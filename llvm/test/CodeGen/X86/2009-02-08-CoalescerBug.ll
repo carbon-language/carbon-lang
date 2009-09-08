@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 ; PR3486
 
 define i32 @foo(i8 signext %p_26) nounwind {

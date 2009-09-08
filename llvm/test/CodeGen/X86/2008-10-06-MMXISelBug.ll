@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx,+sse2
+; RUN: llc < %s -march=x86 -mattr=+mmx,+sse2
 ; PR2850
 
 @tmp_V2i = common global <2 x i32> zeroinitializer		; <<2 x i32>*> [#uses=2]

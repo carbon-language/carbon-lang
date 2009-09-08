@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep mov
+; RUN: llc < %s -march=x86 | not grep mov
 ;
 ; Test the add and load are folded into the store instruction.
 

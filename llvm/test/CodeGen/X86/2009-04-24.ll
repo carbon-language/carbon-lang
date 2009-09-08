@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i386-linux-gnu -regalloc=local -relocation-model=pic > %t
+; RUN: llc < %s -march=x86 -mtriple=i386-linux-gnu -regalloc=local -relocation-model=pic > %t
 ; RUN: grep {leal.*TLSGD.*___tls_get_addr} %t
-; RUN: llvm-as < %s | llc -march=x86-64 -mtriple=x86_64-linux-gnu -regalloc=local -relocation-model=pic > %t2
+; RUN: llc < %s -march=x86-64 -mtriple=x86_64-linux-gnu -regalloc=local -relocation-model=pic > %t2
 ; RUN: grep {leaq.*TLSGD.*__tls_get_addr} %t2
 ; PR4004
 

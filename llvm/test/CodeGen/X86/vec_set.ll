@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep punpckl | count 7
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep punpckl | count 7
 
 define void @test(<8 x i16>* %b, i16 %a0, i16 %a1, i16 %a2, i16 %a3, i16 %a4, i16 %a5, i16 %a6, i16 %a7) nounwind {
         %tmp = insertelement <8 x i16> zeroinitializer, i16 %a0, i32 0          ; <<8 x i16>> [#uses=1]

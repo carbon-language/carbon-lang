@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -pre-alloc-split | grep {divsd	8} | count 1
+; RUN: llc < %s -march=x86 -mattr=+sse2 -pre-alloc-split | grep {divsd	8} | count 1
 
 @current_surfaces.b = external global i1		; <i1*> [#uses=1]
 

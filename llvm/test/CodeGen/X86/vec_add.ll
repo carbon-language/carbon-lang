@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
+; RUN: llc < %s -march=x86 -mattr=+sse2
 
 define <2 x i64> @test(<2 x i64> %a, <2 x i64> %b) {
 entry:

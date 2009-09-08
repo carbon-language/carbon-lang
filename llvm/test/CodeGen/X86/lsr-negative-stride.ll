@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llc < %s -march=x86 > %t
 ; RUN: not grep neg %t
 ; RUN: not grep sub.*esp %t
 ; RUN: not grep esi %t

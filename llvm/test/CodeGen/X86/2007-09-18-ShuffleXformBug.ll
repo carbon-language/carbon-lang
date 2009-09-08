@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep -- -86
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep -- -86
 
 define i16 @f(<4 x float>* %tmp116117.i1061.i) nounwind {
 entry:

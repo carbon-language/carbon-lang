@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=generic
+; RUN: llc < %s -march=x86 -mcpu=generic
 ; Make sure LLC doesn't crash in the stackifier due to FP PHI nodes.
 
 define void @radfg_() {

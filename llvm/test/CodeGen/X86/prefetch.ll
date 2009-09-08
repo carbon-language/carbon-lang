@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse > %t
+; RUN: llc < %s -march=x86 -mattr=+sse > %t
 ; RUN: grep prefetchnta %t
 ; RUN: grep prefetcht0 %t
 ; RUN: grep prefetcht1 %t

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=i386 -mattr=+sse2 | grep pinsrw
+; RUN: llc < %s -march=x86 -mcpu=i386 -mattr=+sse2 | grep pinsrw
 
 ; Test to make sure we actually insert the bottom element of the vector
 define <8 x i16> @a(<8 x i16> %a) nounwind  {

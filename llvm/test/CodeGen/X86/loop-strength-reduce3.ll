@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep cmp | grep 240
-; RUN: llvm-as < %s | llc -march=x86 | grep inc | count 1
+; RUN: llc < %s -march=x86 | grep cmp | grep 240
+; RUN: llc < %s -march=x86 | grep inc | count 1
 
 define i32 @foo(i32 %A, i32 %B, i32 %C, i32 %D) {
 entry:

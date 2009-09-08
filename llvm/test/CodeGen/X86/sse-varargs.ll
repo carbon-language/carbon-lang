@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xmm | grep esp
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep xmm | grep esp
 
 define i32 @t() nounwind  {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xor | grep CPI
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep xor | grep CPI
 
 define void @casin({ double, double }* sret  %agg.result, double %z.0, double %z.1) nounwind  {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -mattr=+sse2 -relocation-model=pic | grep psllw | grep pb
+; RUN: llc < %s -mtriple=i686-apple-darwin -mattr=+sse2 -relocation-model=pic | grep psllw | grep pb
 
 define void @f() nounwind  {
 entry:

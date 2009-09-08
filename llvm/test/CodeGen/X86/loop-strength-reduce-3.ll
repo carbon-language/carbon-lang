@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -relocation-model=dynamic-no-pic | \
+; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=dynamic-no-pic | \
 ; RUN:   grep {A+} | count 2
 ;
 ; Make sure the common loop invariant A is not hoisted up to preheader,

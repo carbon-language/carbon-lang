@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep mov | count 1
+; RUN: llc < %s -march=x86 | grep mov | count 1
 
 define i16 @t() signext  {
 entry:

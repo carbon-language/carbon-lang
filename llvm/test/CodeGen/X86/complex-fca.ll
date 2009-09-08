@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep mov | count 2
+; RUN: llc < %s -march=x86 | grep mov | count 2
 
 define void @ccosl({ x86_fp80, x86_fp80 }* noalias sret %agg.result, { x86_fp80, x86_fp80 } %z) nounwind {
 entry:

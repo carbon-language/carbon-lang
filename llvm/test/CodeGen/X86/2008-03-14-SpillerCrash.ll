@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-pc-linux-gnu
+; RUN: llc < %s -mtriple=i386-pc-linux-gnu
 ; PR2138
 
 	%struct.__locale_struct = type { [13 x %struct.locale_data*], i16*, i32*, i32*, [13 x i8*] }

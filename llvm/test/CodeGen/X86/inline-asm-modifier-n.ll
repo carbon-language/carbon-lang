@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep { 37}
+; RUN: llc < %s -march=x86 | grep { 37}
 ; rdar://7008959
 
 define void @bork() nounwind {

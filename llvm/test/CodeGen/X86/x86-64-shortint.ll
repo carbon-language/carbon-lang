@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep movswl
+; RUN: llc < %s | grep movswl
 
 target datalayout = "e-p:64:64"
 target triple = "x86_64-apple-darwin8"

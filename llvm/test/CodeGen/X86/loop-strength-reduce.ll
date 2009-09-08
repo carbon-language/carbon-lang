@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static | \
+; RUN: llc < %s -march=x86 -relocation-model=static | \
 ; RUN:   grep {A+} | count 2
 ;
 ; Make sure the common loop invariant A is not hoisted up to preheader,

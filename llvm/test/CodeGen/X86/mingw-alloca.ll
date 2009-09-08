@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -o %t
+; RUN: llc < %s -o %t
 ; RUN: grep __alloca %t | count 2
 ; RUN: grep -- -16 %t
 ; RUN: grep {pushl	%eax} %t

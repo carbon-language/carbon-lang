@@ -1,7 +1,7 @@
 ; Coalescing from R32 to a subset R32_. Once another register coalescer bug is
 ; fixed, the movb should go away as well.
 
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static | \
+; RUN: llc < %s -march=x86 -relocation-model=static | \
 ; RUN:   grep movl
 
 @B = external global i32		; <i32*> [#uses=2]

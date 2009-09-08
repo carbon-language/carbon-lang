@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -relocation-model=static | not grep lea
-; RUN: llvm-as < %s | llc -mtriple=x86_64-pc-linux-gnu -relocation-model=static | not grep lea
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -relocation-model=static | not grep lea
+; RUN: llc < %s -mtriple=x86_64-pc-linux-gnu -relocation-model=static | not grep lea
 
 @v = external global i32, align 8
 @v_addr = external global i32*, align 8

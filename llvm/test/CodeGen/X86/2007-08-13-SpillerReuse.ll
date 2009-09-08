@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin | grep "48(%esp)" | count 5
+; RUN: llc < %s -mtriple=i686-apple-darwin | grep "48(%esp)" | count 5
 
 	%struct..0anon = type { i32 }
 	%struct.rtvec_def = type { i32, [1 x %struct..0anon] }

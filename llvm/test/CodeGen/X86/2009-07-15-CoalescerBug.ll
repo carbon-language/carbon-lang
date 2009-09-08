@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin10
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10
 
 	%struct.ANY = type { i8* }
 	%struct.AV = type { %struct.XPVAV*, i32, i32 }

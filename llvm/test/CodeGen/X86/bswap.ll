@@ -1,8 +1,8 @@
 ; bswap should be constant folded when it is passed a constant argument
 
-; RUN: llvm-as < %s | llc -march=x86 | \
+; RUN: llc < %s -march=x86 | \
 ; RUN:   grep bswapl | count 3
-; RUN: llvm-as < %s | llc -march=x86 | grep rolw | count 1
+; RUN: llc < %s -march=x86 | grep rolw | count 1
 
 declare i16 @llvm.bswap.i16(i16)
 

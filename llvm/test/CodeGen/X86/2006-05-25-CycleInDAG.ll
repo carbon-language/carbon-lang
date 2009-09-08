@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 
 define i32 @test() {
 	br i1 false, label %cond_next33, label %cond_true12

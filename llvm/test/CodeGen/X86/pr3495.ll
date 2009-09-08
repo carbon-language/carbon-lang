@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -stats |& grep {Number of reloads omited} | grep 1
-; RUN: llvm-as < %s | llc -march=x86 -stats |& grep {Number of available reloads turned into copies} | grep 1
-; RUN: llvm-as < %s | llc -march=x86 -stats |& grep {Number of machine instrs printed} | grep 40
+; RUN: llc < %s -march=x86 -stats |& grep {Number of reloads omited} | grep 1
+; RUN: llc < %s -march=x86 -stats |& grep {Number of available reloads turned into copies} | grep 1
+; RUN: llc < %s -march=x86 -stats |& grep {Number of machine instrs printed} | grep 40
 ; PR3495
 ; The loop reversal kicks in once here, resulting in one fewer instruction.
 

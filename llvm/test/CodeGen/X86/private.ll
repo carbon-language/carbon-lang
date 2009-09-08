@@ -1,9 +1,9 @@
 ; Test to make sure that the 'private' is used correctly.
 ;
-; RUN: llvm-as < %s | llc -mtriple=x86_64-pc-linux | grep .Lfoo:
-; RUN: llvm-as < %s | llc -mtriple=x86_64-pc-linux | grep call.*\.Lfoo
-; RUN: llvm-as < %s | llc -mtriple=x86_64-pc-linux | grep .Lbaz:
-; RUN: llvm-as < %s | llc -mtriple=x86_64-pc-linux | grep movl.*\.Lbaz
+; RUN: llc < %s -mtriple=x86_64-pc-linux | grep .Lfoo:
+; RUN: llc < %s -mtriple=x86_64-pc-linux | grep call.*\.Lfoo
+; RUN: llc < %s -mtriple=x86_64-pc-linux | grep .Lbaz:
+; RUN: llc < %s -mtriple=x86_64-pc-linux | grep movl.*\.Lbaz
 
 declare void @foo()
 

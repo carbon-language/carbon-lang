@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -mattr=+mmx | grep mm0 | count 3
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -mattr=+mmx | grep esp | count 1
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -mattr=+mmx,+sse2 | grep xmm0
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -mattr=+mmx,+sse2 | grep rdi
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -mattr=+mmx,+sse2 | not grep movups
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+mmx | grep mm0 | count 3
+; RUN: llc < %s -mtriple=i386-apple-darwin -mattr=+mmx | grep esp | count 1
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx,+sse2 | grep xmm0
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx,+sse2 | grep rdi
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx,+sse2 | not grep movups
 ;
 ; On Darwin x86-32, v8i8, v4i16, v2i32 values are passed in MM[0-2].
 ; On Darwin x86-32, v1i64 values are passed in memory.

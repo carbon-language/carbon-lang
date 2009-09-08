@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | FileCheck %s
+; RUN: llc < %s -march=x86 | FileCheck %s
 
 define i32 @test1(i32 %x, i32 %n, i32 %w, i32 %v) nounwind readnone {
 entry:

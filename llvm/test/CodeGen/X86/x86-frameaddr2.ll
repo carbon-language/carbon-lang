@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep mov | count 3
+; RUN: llc < %s -march=x86 | grep mov | count 3
 
 define i8* @t() nounwind {
 entry:

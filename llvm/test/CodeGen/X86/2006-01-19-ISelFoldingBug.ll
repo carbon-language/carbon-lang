@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | \
+; RUN: llc < %s -march=x86 | \
 ; RUN:   grep shld | count 1
 ;
 ; Check that the isel does not fold the shld, which already folds a load

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep movsbl
+; RUN: llc < %s -march=x86 | grep movsbl
 
 define i32 @foo(i32 %X) nounwind  {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llc < %s -march=x86-64
 ; rdar://7066579
 
 	type { i64, i64, i64, i64, i64 }		; type %0

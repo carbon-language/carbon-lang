@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llc < %s -march=x86 > %t
 ; RUN: grep {movzbl	%\[abcd\]h,} %t | count 1
 ; RUN: grep {shll	\$3,} %t | count 1
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep lea | count 2
+; RUN: llc < %s -march=x86-64 | grep lea | count 2
 
 define zeroext i16 @t1(i32 %on_off) nounwind {
 entry:

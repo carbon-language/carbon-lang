@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep rol | count 2
+; RUN: llc < %s -march=x86-64 | grep rol | count 2
 
 define i64 @test1(i64 %x) nounwind  {
 entry:

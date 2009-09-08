@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -code-model=large -relocation-model=static | grep call | not grep rax
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -code-model=large -relocation-model=static | grep call | not grep rax
 
 @.str = internal constant [26 x i8] c"%d, %f, %d, %lld, %d, %f\0A\00"		; <[26 x i8]*> [#uses=1]
 

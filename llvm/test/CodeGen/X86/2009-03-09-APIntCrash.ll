@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llc < %s -march=x86-64
 ; PR3763
 	%struct.__block_descriptor = type { i64, i64 }
 

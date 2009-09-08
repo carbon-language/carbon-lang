@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-unknown-linux-gnu | FileCheck %s -check-prefix=LINUX
+; RUN: llc < %s -mtriple=i386-unknown-linux-gnu | FileCheck %s -check-prefix=LINUX
 
 ; PR4639
 @G1 = internal thread_local global i32 0		; <i32*> [#uses=1]

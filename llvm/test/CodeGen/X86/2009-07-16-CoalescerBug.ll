@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin10
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10
 ; rdar://7059496
 
 	%struct.brinfo = type <{ %struct.brinfo*, %struct.brinfo*, i8*, i32, i32, i32, i8, i8, i8, i8 }>

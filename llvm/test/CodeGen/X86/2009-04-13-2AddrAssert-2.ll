@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin
+; RUN: llc < %s -mtriple=i386-apple-darwin
 ; rdar://6781755
 ; PR3934
 

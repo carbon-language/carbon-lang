@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 ; PR3317
 
         %ArraySInt16 = type { %JavaObject, i8*, [0 x i16] }

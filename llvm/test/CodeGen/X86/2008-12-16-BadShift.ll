@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | not grep shrl
+; RUN: llc < %s | not grep shrl
 ; Note: this test is really trying to make sure that the shift
 ; returns the right result; shrl is most likely wrong,
 ; but if CodeGen starts legitimately using an shrl here,

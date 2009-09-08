@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -O0 -march=x86-64 -mattr=+mmx | FileCheck %s
+; RUN: llc < %s -O0 -march=x86-64 -mattr=+mmx | FileCheck %s
 ; PR4684
 
 target datalayout =

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 > %t
+; RUN: llc < %s -march=x86 -mattr=+sse2 > %t
 ; RUN: grep psllq %t | grep 32
 ; RUN: grep pslldq %t | grep 12
 ; RUN: grep psrldq %t | grep 8

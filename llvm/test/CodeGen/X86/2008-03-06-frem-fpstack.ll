@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=i386
+; RUN: llc < %s -march=x86 -mcpu=i386
 ; PR2122
 define float @func(float %a, float %b) nounwind  {
 entry:

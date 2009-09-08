@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86    -mattr=+sse2 | grep -i EDI
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+sse2 | grep -i RDI
+; RUN: llc < %s -march=x86    -mattr=+sse2 | grep -i EDI
+; RUN: llc < %s -march=x86-64 -mattr=+sse2 | grep -i RDI
 ; rdar://6573467
 
 define void @test(<16 x i8> %a, <16 x i8> %b, i32 %dummy, i8* %c) nounwind {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-linux | FileCheck %s
+; RUN: llc < %s -mtriple=i386-linux | FileCheck %s
 	%union.x = type { i64 }
 
 ; CHECK:	.globl r

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 
 define x86_fp80 @test1() {
         %tmp85 = call x86_fp80 asm sideeffect "fld0", "={st(0)}"()

@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep {jo} | count 2
-; RUN: llvm-as < %s | llc -march=x86 | grep {jb} | count 2
-; RUN: llvm-as < %s | llc -march=x86 -O0 | grep {jo} | count 2
-; RUN: llvm-as < %s | llc -march=x86 -O0 | grep {jb} | count 2
+; RUN: llc < %s -march=x86 | grep {jo} | count 2
+; RUN: llc < %s -march=x86 | grep {jb} | count 2
+; RUN: llc < %s -march=x86 -O0 | grep {jo} | count 2
+; RUN: llc < %s -march=x86 -O0 | grep {jb} | count 2
 
 @ok = internal constant [4 x i8] c"%d\0A\00"
 @no = internal constant [4 x i8] c"no\0A\00"

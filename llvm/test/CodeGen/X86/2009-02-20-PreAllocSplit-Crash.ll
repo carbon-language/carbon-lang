@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i386-apple-darwin8 -pre-alloc-split
+; RUN: llc < %s -march=x86 -mtriple=i386-apple-darwin8 -pre-alloc-split
 
 define i32 @main() nounwind {
 bb4.i.thread:

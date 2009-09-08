@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att
+; RUN: llc < %s -march=x86 -x86-asm-syntax=att
 ; PR834
 ; END.
 

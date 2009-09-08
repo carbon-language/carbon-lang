@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | \
+; RUN: llc < %s -march=x86 | \
 ; RUN:   grep {s\[ah\]\[rl\]l} | count 1
 
 define i32* @test1(i32* %P, i32 %X) {

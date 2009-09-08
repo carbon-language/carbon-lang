@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=-sse -mtriple=i686-apple-darwin8.8.0 | grep mov | count 7
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse -mtriple=i686-apple-darwin8.8.0 | grep mov | count 5
+; RUN: llc < %s -march=x86 -mattr=-sse -mtriple=i686-apple-darwin8.8.0 | grep mov | count 7
+; RUN: llc < %s -march=x86 -mattr=+sse -mtriple=i686-apple-darwin8.8.0 | grep mov | count 5
 
 	%struct.ParmT = type { [25 x i8], i8, i8* }
 @.str12 = internal constant [25 x i8] c"image\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00"		; <[25 x i8]*> [#uses=1]

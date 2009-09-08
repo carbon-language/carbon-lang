@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | grep stosl
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep movq | count 10
+; RUN: llc < %s -mtriple=i386-apple-darwin | grep stosl
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | grep movq | count 10
 
 define void @bork() nounwind {
 entry:

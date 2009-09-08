@@ -1,7 +1,7 @@
 ; This should compile to movl $2147483647, %eax + andl only.
-; RUN: llvm-as < %s | llc | grep andl
-; RUN: llvm-as < %s | llc | not grep movsd
-; RUN: llvm-as < %s | llc | grep esp | not grep add
+; RUN: llc < %s | grep andl
+; RUN: llc < %s | not grep movsd
+; RUN: llc < %s | grep esp | not grep add
 ; rdar://5736574
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"

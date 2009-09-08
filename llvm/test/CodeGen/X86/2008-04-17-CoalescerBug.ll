@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | grep xorl | grep {%e}
+; RUN: llc < %s -mtriple=i386-apple-darwin | grep xorl | grep {%e}
 ; Make sure xorl operands are 32-bit registers.
 
 	%struct.tm = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i8* }

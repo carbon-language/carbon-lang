@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep abort | count 1
+; RUN: llc < %s | grep abort | count 1
 ; Calls to abort should all be merged
 
 ; ModuleID = '5898899.c'

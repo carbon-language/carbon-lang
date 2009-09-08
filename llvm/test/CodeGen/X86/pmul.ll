@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 -stack-alignment=16 > %t
+; RUN: llc < %s -march=x86 -mattr=sse41 -stack-alignment=16 > %t
 ; RUN: grep pmul %t | count 12
 ; RUN: grep mov %t | count 12
 

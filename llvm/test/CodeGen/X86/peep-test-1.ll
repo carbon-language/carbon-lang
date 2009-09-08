@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llc < %s -march=x86 > %t
 ; RUN: grep dec %t | count 1
 ; RUN: not grep test %t
 ; RUN: not grep cmp %t

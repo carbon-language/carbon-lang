@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep punpckhwd
+; RUN: llc < %s -march=x86 -mattr=+sse2
+; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep punpckhwd
 
 declare <8 x i16> @llvm.x86.sse2.packuswb.128(<8 x i16>, <8 x i16>)
 

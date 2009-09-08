@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -mattr=+sse2 | not grep movaps
+; RUN: llc < %s -mtriple=i686-apple-darwin -mattr=+sse2 | not grep movaps
 ; PR1877
 
 @NNTOT = weak global i32 0		; <i32*> [#uses=1]

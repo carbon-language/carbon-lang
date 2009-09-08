@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xor | count 2
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep xor | count 2
 
 define <4 x i32> @t1() {
 	%tmp = xor <4 x i32> undef, undef

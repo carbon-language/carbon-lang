@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-unknown-linux-gnu | FileCheck %s -check-prefix=LINUX
+; RUN: llc < %s -mtriple=i386-unknown-linux-gnu | FileCheck %s -check-prefix=LINUX
 
 declare i32 @foo()
 @G0 = global i32 ()* @foo, section ".init_array"

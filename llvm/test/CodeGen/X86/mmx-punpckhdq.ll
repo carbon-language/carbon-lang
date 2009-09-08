@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx | grep punpckhdq | count 1
+; RUN: llc < %s -march=x86 -mattr=+mmx | grep punpckhdq | count 1
 
 define void @bork(<1 x i64>* %x) {
 entry:

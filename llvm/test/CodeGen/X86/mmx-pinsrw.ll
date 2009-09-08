@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx | grep pinsrw | count 1
+; RUN: llc < %s -march=x86 -mattr=+mmx | grep pinsrw | count 1
 ; PR2562
 
 external global i16		; <i16*>:0 [#uses=1]

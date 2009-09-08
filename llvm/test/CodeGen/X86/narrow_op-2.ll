@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | FileCheck %s
+; RUN: llc < %s -march=x86-64 | FileCheck %s
 
 	%struct.bf = type { i64, i16, i16, i32 }
 @bfi = external global %struct.bf*

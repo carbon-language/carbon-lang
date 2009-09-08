@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movlps
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movsd
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep movups
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movlps
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movsd
+; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep movups
 ; rdar://6523650
 
 	%struct.vector4_t = type { <4 x float> }

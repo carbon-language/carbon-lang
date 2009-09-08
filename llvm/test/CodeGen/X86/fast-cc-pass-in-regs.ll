@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | \
 ; RUN:   grep {mov	EDX, 1}
 ; check that fastcc is passing stuff in regs.
 

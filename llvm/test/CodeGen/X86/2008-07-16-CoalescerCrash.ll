@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin
+; RUN: llc < %s -mtriple=x86_64-apple-darwin
 
 	%struct.SV = type { i8*, i64, i64 }
 @"\01LC25" = external constant [8 x i8]		; <[8 x i8]*> [#uses=1]

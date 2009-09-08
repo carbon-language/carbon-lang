@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-pc-linux-gnu -relocation-model=pic -disable-fp-elim
-; RUN: llvm-as < %s | llc -mtriple=i386-pc-linux-gnu -relocation-model=pic -disable-fp-elim -schedule-livein-copies | not grep {Number of register spills}
+; RUN: llc < %s -mtriple=i386-pc-linux-gnu -relocation-model=pic -disable-fp-elim
+; RUN: llc < %s -mtriple=i386-pc-linux-gnu -relocation-model=pic -disable-fp-elim -schedule-livein-copies | not grep {Number of register spills}
 ; PR2134
 
 declare fastcc i8* @w_addchar(i8*, i32*, i32*, i8 signext ) nounwind 

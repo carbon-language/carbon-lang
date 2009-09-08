@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llc < %s -march=x86 > %t
 ;; This version includes 64-bit version of binary operators (in 32-bit mode).
 ;; Swap, cmp-and-swap not supported yet in this mode.
 ; ModuleID = 'Atomics.c'

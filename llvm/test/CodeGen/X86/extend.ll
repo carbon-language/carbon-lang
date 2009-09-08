@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | grep movzx | count 1
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | grep movsx | count 1
+; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | grep movzx | count 1
+; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | grep movsx | count 1
 
 @G1 = internal global i8 0              ; <i8*> [#uses=1]
 @G2 = internal global i8 0              ; <i8*> [#uses=1]

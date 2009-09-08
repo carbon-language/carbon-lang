@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep inc
-; RUN: llvm-as < %s | llc -march=x86 | grep add | grep 4
+; RUN: llc < %s -march=x86 | grep inc
+; RUN: llc < %s -march=x86 | grep add | grep 4
 
 define i32 @test(i32 %X) nounwind {
 entry:

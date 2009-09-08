@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep rodata
-; RUN: llvm-as < %s | llc -march=x86 | not grep literal
+; RUN: llc < %s -march=x86 | not grep rodata
+; RUN: llc < %s -march=x86 | not grep literal
 ;
 ; Check that no FP constants in this testcase ends up in the 
 ; constant pool.

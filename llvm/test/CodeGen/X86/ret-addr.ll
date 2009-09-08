@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -disable-fp-elim -march=x86 | not grep xor
-; RUN: llvm-as < %s | llc -disable-fp-elim -march=x86-64 | not grep xor
+; RUN: llc < %s -disable-fp-elim -march=x86 | not grep xor
+; RUN: llc < %s -disable-fp-elim -march=x86-64 | not grep xor
 
 define i8* @h() nounwind readnone optsize {
 entry:

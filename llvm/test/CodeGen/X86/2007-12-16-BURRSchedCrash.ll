@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu
 ; PR1799
 
 	%struct.c34007g__designated___XUB = type { i32, i32, i32, i32 }

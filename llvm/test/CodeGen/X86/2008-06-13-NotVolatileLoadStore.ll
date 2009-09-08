@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep movsd
-; RUN: llvm-as < %s | llc -march=x86 | grep movw
-; RUN: llvm-as < %s | llc -march=x86 | grep addw
+; RUN: llc < %s -march=x86 | not grep movsd
+; RUN: llc < %s -march=x86 | grep movw
+; RUN: llc < %s -march=x86 | grep addw
 ; These transforms are turned off for volatile loads and stores.
 ; Check that they weren't turned off for all loads and stores!
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 
 define {i64, float} @bar(i64 %a, float %b) {
         %y = add i64 %a, 7

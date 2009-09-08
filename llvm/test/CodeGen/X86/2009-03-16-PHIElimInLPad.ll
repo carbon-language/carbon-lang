@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -asm-verbose | grep -A 1 lpad | grep Llabel
+; RUN: llc < %s -march=x86 -asm-verbose | grep -A 1 lpad | grep Llabel
 ; Check that register copies in the landing pad come after the EH_LABEL
 
 declare i32 @f()

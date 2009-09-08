@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -tailcallopt | not grep TAILCALL 
+; RUN: llc < %s -march=x86 -tailcallopt | not grep TAILCALL 
 
 ; Bug 4396. This tail call can NOT be optimized.
 

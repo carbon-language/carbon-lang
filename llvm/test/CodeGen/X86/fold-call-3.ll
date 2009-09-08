@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep call | grep 560
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | grep call | grep 560
 ; rdar://6522427
 
 	%"struct.clang::Action" = type { %"struct.clang::ActionBase" }

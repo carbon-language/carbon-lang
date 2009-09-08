@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | \
 ; RUN:   grep {and	DWORD PTR} | count 2
 
 target datalayout = "e-p:32:32"

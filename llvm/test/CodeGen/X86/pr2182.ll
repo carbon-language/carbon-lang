@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep {addl	\$3, (%eax)} | count 4
+; RUN: llc < %s | grep {addl	\$3, (%eax)} | count 4
 ; PR2182
 
 target datalayout =

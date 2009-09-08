@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llc < %s -march=x86-64
 
 declare <2 x i64> @llvm.cttz.v2i64(<2 x i64>)
 declare <2 x i64> @llvm.ctlz.v2i64(<2 x i64>)

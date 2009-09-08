@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse
+; RUN: llc < %s -march=x86 -mattr=+sse
 
 define void @test(i32 %C, <4 x float>* %A, <4 x float>* %B) {
         %tmp = load <4 x float>* %A             ; <<4 x float>> [#uses=1]

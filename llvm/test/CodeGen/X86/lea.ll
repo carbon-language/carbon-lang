@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | FileCheck %s
+; RUN: llc < %s -march=x86-64 | FileCheck %s
 
 define i32 @test1(i32 %x) nounwind {
         %tmp1 = shl i32 %x, 3

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep { - 92}
+; RUN: llc < %s | grep { - 92}
 ; PR3481
 ; The offset should print as -92, not +17179869092
 

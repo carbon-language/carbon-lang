@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -relocation-model=pic | grep TLSGD | count 2
+; RUN: llc < %s -relocation-model=pic | grep TLSGD | count 2
 ; PR2137
 
 ; ModuleID = '1.c'

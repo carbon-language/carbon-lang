@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep {(%} | count 1
+; RUN: llc < %s -march=x86 | grep {(%} | count 1
 
 ; Don't duplicate the load.
 

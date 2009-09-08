@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep {shll.*3, %edi}
+; RUN: llc < %s -march=x86-64 | grep {shll.*3, %edi}
 ; PR3829
 ; The generated code should multiply by 3 (sizeof i8*) as an i32,
 ; not as an i64!

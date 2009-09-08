@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | grep mov | count 4
+; RUN: llc < %s -mtriple=i386-apple-darwin | grep mov | count 4
 
 define i16 @test(i16* %tmp179) nounwind  {
 	%tmp180 = load i16* %tmp179, align 2		; <i16> [#uses=2]

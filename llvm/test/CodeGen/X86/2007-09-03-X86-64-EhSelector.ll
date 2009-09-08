@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -enable-eh
+; RUN: llc < %s -march=x86-64 -enable-eh
 ; PR1632
 
 define void @_Z1fv() {

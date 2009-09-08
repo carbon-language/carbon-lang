@@ -1,5 +1,5 @@
 ; PR850
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att > %t
+; RUN: llc < %s -march=x86 -x86-asm-syntax=att > %t
 ; RUN: grep {movl 4(%eax),%ebp} %t
 ; RUN: grep {movl 0(%eax), %ebx} %t
 

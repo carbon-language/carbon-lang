@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep {movd.*%rdi, %xmm0}
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep xor
+; RUN: llc < %s -march=x86-64 | grep {movd.*%rdi, %xmm0}
+; RUN: llc < %s -march=x86-64 | not grep xor
 ; PR2108
 
 define <2 x i64> @doload64(i64 %x) nounwind  {

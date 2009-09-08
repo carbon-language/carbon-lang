@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movsd | count 1
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movsd | count 1
 ; rdar://6504833
 
 define float @f(i32 %x) nounwind readnone {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin10 | grep L__ZZ20
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 | grep L__ZZ20
 ; Quote should be outside of private prefix.
 ; rdar://6855766x
 

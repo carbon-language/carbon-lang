@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -asm-verbose=false -mtriple=x86_64-linux-gnu | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -mtriple=x86_64-linux-gnu | FileCheck %s
 ; PR4126
 ; PR4732
 

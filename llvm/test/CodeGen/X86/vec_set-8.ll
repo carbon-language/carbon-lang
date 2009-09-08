@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep movsd
-; RUN: llvm-as < %s | llc -march=x86-64 | grep {movd.*%rdi,.*%xmm0}
+; RUN: llc < %s -march=x86-64 | not grep movsd
+; RUN: llc < %s -march=x86-64 | grep {movd.*%rdi,.*%xmm0}
 
 define <2 x i64> @test(i64 %i) nounwind  {
 entry:

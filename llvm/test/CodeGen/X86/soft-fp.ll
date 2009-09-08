@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86    -mattr=+sse2 -soft-float | not grep xmm
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+sse2 -soft-float | not grep xmm
+; RUN: llc < %s -march=x86    -mattr=+sse2 -soft-float | not grep xmm
+; RUN: llc < %s -march=x86-64 -mattr=+sse2 -soft-float | not grep xmm
 
 	%struct.__va_list_tag = type { i32, i32, i8*, i8* }
 

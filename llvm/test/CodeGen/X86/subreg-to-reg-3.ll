@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep imull
+; RUN: llc < %s -march=x86-64 | grep imull
 
 ; Don't eliminate or coalesce away the explicit zero-extension!
 

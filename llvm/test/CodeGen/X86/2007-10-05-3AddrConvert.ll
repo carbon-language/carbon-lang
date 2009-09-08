@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep lea
+; RUN: llc < %s -march=x86 | grep lea
 
 	%struct.anon = type { [3 x double], double, %struct.node*, [64 x %struct.bnode*], [64 x %struct.bnode*] }
 	%struct.bnode = type { i16, double, [3 x double], i32, i32, [3 x double], [3 x double], [3 x double], double, %struct.bnode*, %struct.bnode* }

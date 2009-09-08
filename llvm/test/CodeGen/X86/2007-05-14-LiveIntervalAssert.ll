@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64
+; RUN: llc < %s -march=x86-64
 
 	%struct.XDesc = type <{ i32, %struct.OpaqueXDataStorageType** }>
 	%struct.OpaqueXDataStorageType = type opaque

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin -relocation-model=pic | grep {\$pb} | grep mov
+; RUN: llc < %s -mtriple=i686-apple-darwin -relocation-model=pic | grep {\$pb} | grep mov
 ;
 ; Make sure the PIC label flags2-"L1$pb" is not moved up to the preheader.
 

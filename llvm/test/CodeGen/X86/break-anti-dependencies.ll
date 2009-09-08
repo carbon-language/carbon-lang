@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86-64 -disable-post-RA-scheduler=false -break-anti-dependencies=false > %t
+; RUN: llc < %s -march=x86-64 -disable-post-RA-scheduler=false -break-anti-dependencies=false > %t
 ; RUN:   grep {%xmm0} %t | count 14
 ; RUN:   not grep {%xmm1} %t
-; RUN: llvm-as < %s | llc -march=x86-64 -disable-post-RA-scheduler=false -break-anti-dependencies > %t
+; RUN: llc < %s -march=x86-64 -disable-post-RA-scheduler=false -break-anti-dependencies > %t
 ; RUN:   grep {%xmm0} %t | count 7
 ; RUN:   grep {%xmm1} %t | count 7
 

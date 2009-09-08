@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep -A 2 {call.*f} | grep movl
+; RUN: llc < %s -march=x86 | grep -A 2 {call.*f} | grep movl
 ; Check the register copy comes after the call to f and before the call to g
 ; PR3784
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -o - | not grep 10
+; RUN: llc < %s -march=x86 -o - | not grep 10
 
 declare void @llvm.va_start(i8*) nounwind
 

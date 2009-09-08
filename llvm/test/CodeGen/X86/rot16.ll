@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llc < %s -march=x86 > %t
 ; RUN: grep rol %t | count 3
 ; RUN: grep ror %t | count 1
 ; RUN: grep shld %t | count 2

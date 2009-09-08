@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -pre-alloc-split -stats |& \
+; RUN: llc < %s -march=x86 -mattr=+sse2 -pre-alloc-split -stats |& \
 ; RUN:   grep {pre-alloc-split} | grep {Number of intervals split} | grep 1
 
 define i32 @t(i32 %arg) {

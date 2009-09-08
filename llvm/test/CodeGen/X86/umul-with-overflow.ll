@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep "\\\\\\\<mul"
+; RUN: llc < %s -march=x86 | grep "\\\\\\\<mul"
 
 declare {i32, i1} @llvm.umul.with.overflow.i32(i32 %a, i32 %b)
 define i1 @a(i32 %x) zeroext nounwind {

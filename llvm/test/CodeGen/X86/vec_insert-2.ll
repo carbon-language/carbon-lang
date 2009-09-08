@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2,-sse41 | grep {\$36,} | count 2
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2,-sse41 | grep shufps | count 2
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2,-sse41 | grep pinsrw | count 1
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2,-sse41 | grep movhpd | count 1
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+sse2,-sse41 | grep unpcklpd | count 1
+; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 | grep {\$36,} | count 2
+; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 | grep shufps | count 2
+; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 | grep pinsrw | count 1
+; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 | grep movhpd | count 1
+; RUN: llc < %s -march=x86-64 -mattr=+sse2,-sse41 | grep unpcklpd | count 1
 
 define <4 x float> @t1(float %s, <4 x float> %tmp) nounwind {
         %tmp1 = insertelement <4 x float> %tmp, float %s, i32 3

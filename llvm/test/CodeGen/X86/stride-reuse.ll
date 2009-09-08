@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep lea
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep lea
+; RUN: llc < %s -march=x86 | not grep lea
+; RUN: llc < %s -march=x86-64 | not grep lea
 
 @B = external global [1000 x float], align 32
 @A = external global [1000 x float], align 32

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -mcpu=yonah  | not grep pcmpeqd
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep pcmpeqd | count 1
+; RUN: llc < %s -mtriple=i386-apple-darwin -mcpu=yonah  | not grep pcmpeqd
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | grep pcmpeqd | count 1
 
 ; This testcase should need to spill the -1 value on x86-32,
 ; so it shouldn't use pcmpeqd to materialize an all-ones vector; it

@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep cmp | count 1
-; RUN: llvm-as < %s | llc -march=x86 | grep shr | count 1
-; RUN: llvm-as < %s | llc -march=x86 | grep xor | count 1
+; RUN: llc < %s -march=x86 | grep cmp | count 1
+; RUN: llc < %s -march=x86 | grep shr | count 1
+; RUN: llc < %s -march=x86 | grep xor | count 1
 
 define i1 @t1(i64 %x) nounwind {
 	%B = icmp slt i64 %x, 0

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep {movq	8(%rsp), %rax}
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llc < %s -march=x86-64 | grep {movq	8(%rsp), %rax}
+; RUN: llc < %s -march=x86 > %t
 ; RUN: grep {movl	8(%esp), %edx} %t
 ; RUN: grep {movl	4(%esp), %eax} %t
 

@@ -1,4 +1,4 @@
-; RUN:  llvm-as < %s | llc -mtriple=i686-pc-linux-gnu
+; RUN:  llc < %s -mtriple=i686-pc-linux-gnu
 ; PR 1779
 ; Using 'A' constraint and a tied constraint together used to crash.
 ; ModuleID = '<stdin>'

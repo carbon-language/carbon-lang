@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin8 -mattr=+sse2
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin8 -mattr=+sse2 | not grep movhlps
+; RUN: llc < %s -mtriple=x86_64-apple-darwin8 -mattr=+sse2
+; RUN: llc < %s -mtriple=x86_64-apple-darwin8 -mattr=+sse2 | not grep movhlps
 
 define void @test() nounwind {
 test.exit:

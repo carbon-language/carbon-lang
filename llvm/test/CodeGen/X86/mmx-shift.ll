@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx | grep psllq | grep 32
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+mmx | grep psllq | grep 32
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx | grep psrad
-; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+mmx | grep psrlw
+; RUN: llc < %s -march=x86 -mattr=+mmx | grep psllq | grep 32
+; RUN: llc < %s -march=x86-64 -mattr=+mmx | grep psllq | grep 32
+; RUN: llc < %s -march=x86 -mattr=+mmx | grep psrad
+; RUN: llc < %s -march=x86-64 -mattr=+mmx | grep psrlw
 
 define i64 @t1(<1 x i64> %mm1) nounwind  {
 entry:

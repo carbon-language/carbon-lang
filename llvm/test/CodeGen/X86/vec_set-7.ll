@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movsd | count 1
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movsd | count 1
 
 define <2 x i64> @test(<2 x i64>* %p) nounwind {
 	%tmp = bitcast <2 x i64>* %p to double*		

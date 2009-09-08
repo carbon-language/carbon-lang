@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep and
+; RUN: llc < %s -march=x86 | not grep and
 
 define i32 @t1(i8* %X, i32 %i) {
 entry:

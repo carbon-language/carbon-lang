@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep div
+; RUN: llc < %s -march=x86 | not grep div
 
 define i32 @test1(i32 %X) {
         %tmp1 = srem i32 %X, 255                ; <i32> [#uses=1]

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep mul | count 1
-; RUN: llvm-as < %s | llc -march=x86 | grep add | count 3
+; RUN: llc < %s -march=x86 | grep mul | count 1
+; RUN: llc < %s -march=x86 | grep add | count 3
 
 define i32 @t1(i32 %a, i32 %b) nounwind readnone {
 entry:

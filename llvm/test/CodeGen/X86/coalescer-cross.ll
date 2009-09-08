@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin10 | not grep movaps
+; RUN: llc < %s -mtriple=i386-apple-darwin10 | not grep movaps
 ; rdar://6509240
 
 	type { %struct.TValue }		; type %0

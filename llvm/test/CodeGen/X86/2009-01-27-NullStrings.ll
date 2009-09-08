@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=i686-apple-darwin | FileCheck %s
 ; CHECK: .section __TEXT,__cstring,cstring_literals
 
 @x = internal constant [1 x i8] zeroinitializer		; <[1 x i8]*> [#uses=1]

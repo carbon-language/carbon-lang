@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep and
-; RUN: llvm-as < %s | llc -march=x86-64 > %t
+; RUN: llc < %s -march=x86 | not grep and
+; RUN: llc < %s -march=x86-64 > %t
 ; RUN: not grep and %t
 ; RUN: not grep movzbq %t
 ; RUN: not grep movzwq %t

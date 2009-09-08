@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -mattr=+mmx | grep {movd	%rsi, %mm0}
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -mattr=+mmx | grep {movd	%rdi, %mm1}
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -mattr=+mmx | grep {paddusw	%mm0, %mm1}
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx | grep {movd	%rsi, %mm0}
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx | grep {movd	%rdi, %mm1}
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+mmx | grep {paddusw	%mm0, %mm1}
 
 @R = external global <1 x i64>		; <<1 x i64>*> [#uses=1]
 

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu | FileCheck %s -check-prefix=LINUX
-; RUN: llvm-as < %s | llc -mtriple=i686-apple-darwin8 | FileCheck %s -check-prefix=DARWIN
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu | FileCheck %s -check-prefix=LINUX
+; RUN: llc < %s -mtriple=i686-apple-darwin8 | FileCheck %s -check-prefix=DARWIN
 
 @a = hidden global i32 0
 @b = external global i32

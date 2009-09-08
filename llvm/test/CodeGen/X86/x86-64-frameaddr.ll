@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movq | grep rbp
+; RUN: llc < %s -march=x86-64 | grep movq | grep rbp
 
 define i64* @stack_end_address() nounwind  {
 entry:

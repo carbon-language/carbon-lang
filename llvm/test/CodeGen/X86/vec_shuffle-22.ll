@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=pentium-m -o %t
+; RUN: llc < %s -march=x86 -mcpu=pentium-m -o %t
 ; RUN: grep movlhps %t | count 1
 ; RUN: grep pshufd %t | count 1
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=core2 -o %t
+; RUN: llc < %s -march=x86 -mcpu=core2 -o %t
 ; RUN: grep movlhps %t | count 1
 ; RUN: grep movddup %t | count 1
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movup | count 2
+; RUN: llc < %s -march=x86-64 | grep movup | count 2
 
 define <4 x float> @foo(<4 x float>* %p, <4 x float> %x) nounwind {
   %t = load <4 x float>* %p, align 4

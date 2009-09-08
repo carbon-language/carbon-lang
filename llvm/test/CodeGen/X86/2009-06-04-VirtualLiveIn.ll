@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86
+; RUN: llc < %s -march=x86
 
 	type { %struct.GAP }		; type %0
 	type { i16, i8, i8 }		; type %1

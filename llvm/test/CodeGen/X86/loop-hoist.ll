@@ -1,6 +1,6 @@
 ; LSR should hoist the load from the "Arr" stub out of the loop.
 
-; RUN: llvm-as < %s | llc -relocation-model=dynamic-no-pic -mtriple=i686-apple-darwin8.7.2 | FileCheck %s
+; RUN: llc < %s -relocation-model=dynamic-no-pic -mtriple=i686-apple-darwin8.7.2 | FileCheck %s
 
 ; CHECK: _foo:
 ; CHECK:    L_Arr$non_lazy_ptr

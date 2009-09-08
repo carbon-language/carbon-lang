@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-linux-gnu | grep movb | not grep x
+; RUN: llc < %s -mtriple=x86_64-linux-gnu | grep movb | not grep x
 ; PR1734
 
 	%struct.CUMULATIVE_ARGS = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }

@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | \
+; RUN: llc < %s -march=x86 -mcpu=yonah | \
 ; RUN:   grep movsd | count 1
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | \
+; RUN: llc < %s -march=x86 -mcpu=yonah | \
 ; RUN:   grep ucomisd
 declare i1 @llvm.isunordered.f64(double, double)
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse | grep movaps
+; RUN: llc < %s -march=x86 -mattr=sse | grep movaps
 ; Test that the load is NOT folded into the intrinsic, which would zero the top
 ; elts of the loaded vector.
 

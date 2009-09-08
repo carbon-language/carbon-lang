@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc  -tailcallopt -mtriple=i686-pc-linux-gnu -relocation-model=pic | grep TAILCALL
+; RUN: llc < %s  -tailcallopt -mtriple=i686-pc-linux-gnu -relocation-model=pic | grep TAILCALL
 
 define protected fastcc i32 @tailcallee(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
 entry:

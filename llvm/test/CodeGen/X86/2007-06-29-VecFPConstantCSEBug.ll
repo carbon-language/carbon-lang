@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
+; RUN: llc < %s -march=x86 -mattr=+sse2
 
 define void @test(<4 x float>* %arg) {
 	%tmp89 = getelementptr <4 x float>* %arg, i64 3

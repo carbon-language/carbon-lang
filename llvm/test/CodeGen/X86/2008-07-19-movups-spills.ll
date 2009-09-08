@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux -realign-stack=1 -mattr=sse2 | grep movaps | count 75
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux -realign-stack=0 -mattr=sse2 | grep movaps | count 1
+; RUN: llc < %s -mtriple=i686-pc-linux -realign-stack=1 -mattr=sse2 | grep movaps | count 75
+; RUN: llc < %s -mtriple=i686-pc-linux -realign-stack=0 -mattr=sse2 | grep movaps | count 1
 ; PR2539
 
 external global <4 x float>, align 1		; <<4 x float>*>:0 [#uses=2]

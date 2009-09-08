@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | grep mov | count 1
+; RUN: llc < %s -mtriple=i386-apple-darwin | grep mov | count 1
 
 @f = external global void ()*		; <void ()**> [#uses=1]
 

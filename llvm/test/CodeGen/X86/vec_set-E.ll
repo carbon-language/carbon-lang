@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movq
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movq
 
 define <4 x float> @t(float %X) nounwind  {
 	%tmp11 = insertelement <4 x float> undef, float %X, i32 0

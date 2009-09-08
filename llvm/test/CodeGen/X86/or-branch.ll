@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86  | not grep set
+; RUN: llc < %s -march=x86  | not grep set
 
 define void @foo(i32 %X, i32 %Y, i32 %Z) nounwind {
 entry:

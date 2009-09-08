@@ -2,7 +2,7 @@
 ; overlapping live intervals. When two overlapping intervals have the same
 ; value, they can be joined though.
 ;
-; RUN: llvm-as < %s | llc -march=x86 -regalloc=linearscan | \
+; RUN: llc < %s -march=x86 -regalloc=linearscan | \
 ; RUN:   not grep {mov %\[A-Z\]\\\{2,3\\\}, %\[A-Z\]\\\{2,3\\\}}
 
 define i64 @test(i64 %x) {

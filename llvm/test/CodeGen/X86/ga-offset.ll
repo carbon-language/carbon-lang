@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: llc < %s -march=x86 > %t
 ; RUN: not grep lea %t
 ; RUN: not grep add %t
 ; RUN: grep mov %t | count 1
-; RUN: llvm-as < %s | llc -mtriple=x86_64-linux -relocation-model=static > %t
+; RUN: llc < %s -mtriple=x86_64-linux -relocation-model=static > %t
 ; RUN: not grep lea %t
 ; RUN: not grep add %t
 ; RUN: grep mov %t | count 1

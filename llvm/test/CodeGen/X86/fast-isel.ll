@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -fast-isel -fast-isel-abort -march=x86 -mattr=sse2
+; RUN: llc < %s -fast-isel -fast-isel-abort -march=x86 -mattr=sse2
 
 ; This tests very minimal fast-isel functionality.
 

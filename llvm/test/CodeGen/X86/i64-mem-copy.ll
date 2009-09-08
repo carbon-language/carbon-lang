@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64           | grep {movq.*(%rsi), %rax}
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep {movsd.*(%eax),}
+; RUN: llc < %s -march=x86-64           | grep {movq.*(%rsi), %rax}
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep {movsd.*(%eax),}
 
 ; Uses movsd to load / store i64 values if sse2 is available.
 

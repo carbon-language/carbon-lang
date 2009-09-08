@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep bsr | count 2
-; RUN: llvm-as < %s | llc -march=x86 | grep bsf
-; RUN: llvm-as < %s | llc -march=x86 | grep cmov | count 3
+; RUN: llc < %s -march=x86 | grep bsr | count 2
+; RUN: llc < %s -march=x86 | grep bsf
+; RUN: llc < %s -march=x86 | grep cmov | count 3
 
 define i32 @t1(i32 %x) nounwind  {
 	%tmp = tail call i32 @llvm.ctlz.i32( i32 %x )

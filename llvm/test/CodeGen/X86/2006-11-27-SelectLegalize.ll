@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep test.*1
+; RUN: llc < %s -march=x86 | grep test.*1
 ; PR1016
 
 define i32 @test(i32 %A, i32 %B, i32 %C) {

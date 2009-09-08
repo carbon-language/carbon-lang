@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -disable-fp-elim
-; RUN: llvm-as < %s | llc -mtriple=i386-linux        -disable-fp-elim
+; RUN: llc < %s -mtriple=i386-apple-darwin -disable-fp-elim
+; RUN: llc < %s -mtriple=i386-linux        -disable-fp-elim
 ; XFAIL: *
 ; Expected to run out of registers during allocation.
 ; PR3864

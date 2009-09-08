@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep cmp | grep 64
-; RUN: llvm-as < %s | llc -march=x86 | not grep inc
+; RUN: llc < %s -march=x86 | grep cmp | grep 64
+; RUN: llc < %s -march=x86 | not grep inc
 
 @state = external global [0 x i32]		; <[0 x i32]*> [#uses=4]
 @S = external global [0 x i32]		; <[0 x i32]*> [#uses=4]

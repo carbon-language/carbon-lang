@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin10
+; RUN: llc < %s -mtriple=i386-apple-darwin10
 ; rdar://6837009
 
 	type { %struct.pf_state*, %struct.pf_state*, %struct.pf_state*, i32 }		; type %0

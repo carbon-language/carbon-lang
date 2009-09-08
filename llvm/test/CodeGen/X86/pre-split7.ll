@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -pre-alloc-split
+; RUN: llc < %s -march=x86 -mattr=+sse2 -pre-alloc-split
 
 @object_distance = external global double, align 8		; <double*> [#uses=1]
 @axis_slope_angle = external global double, align 8		; <double*> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep {subl	\$4, %esp}
+; RUN: llc < %s -march=x86 | grep {subl	\$4, %esp}
 
 target triple = "i686-pc-linux-gnu"
 @str = internal constant [9 x i8] c"%f+%f*i\0A\00"              ; <[9 x i8]*> [#uses=1]

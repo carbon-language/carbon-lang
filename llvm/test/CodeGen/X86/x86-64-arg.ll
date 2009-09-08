@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep {movl	%edi, %eax}
+; RUN: llc < %s | grep {movl	%edi, %eax}
 ; The input value is already sign extended, don't re-extend it.
 ; This testcase corresponds to:
 ;   int test(short X) { return (int)X; }

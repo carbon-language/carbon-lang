@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -tailcallopt | grep TAILCALL
+; RUN: llc < %s -march=x86 -tailcallopt | grep TAILCALL
 define fastcc i32 @tailcallee(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
 entry:
 	ret i32 %a3

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static | not grep lea
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep lea
+; RUN: llc < %s -march=x86 -relocation-model=static | not grep lea
+; RUN: llc < %s -march=x86-64 | not grep lea
 
 ; P should be sunk into the loop and folded into the address mode. There
 ; shouldn't be any lea instructions inside the loop.

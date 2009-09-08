@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=pentium 
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah 
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah  | not grep set
+; RUN: llc < %s -march=x86 -mcpu=pentium 
+; RUN: llc < %s -march=x86 -mcpu=yonah 
+; RUN: llc < %s -march=x86 -mcpu=yonah  | not grep set
 
 define i1 @boolSel(i1 %A, i1 %B, i1 %C) nounwind {
 	%X = select i1 %A, i1 %B, i1 %C		; <i1> [#uses=1]

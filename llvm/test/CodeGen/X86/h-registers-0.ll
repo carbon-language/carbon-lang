@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep {movzbl	%\[abcd\]h,} | count 4
-; RUN: llvm-as < %s | llc -march=x86    > %t
+; RUN: llc < %s -march=x86-64 | grep {movzbl	%\[abcd\]h,} | count 4
+; RUN: llc < %s -march=x86    > %t
 ; RUN: grep {incb	%ah} %t | count 3
 ; RUN: grep {movzbl	%ah,} %t | count 3
 

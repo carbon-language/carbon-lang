@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep ret | grep 4
+; RUN: llc < %s -march=x86 | grep ret | grep 4
 
 	%struct.foo = type { [4 x i32] }
 

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc | grep {a:} | not grep ax
-; RUN: llvm-as < %s | llc | grep {b:} | not grep ax
+; RUN: llc < %s | grep {a:} | not grep ax
+; RUN: llc < %s | grep {b:} | not grep ax
 ; PR2078
 ; The clobber list says that "ax" is clobbered.  Make sure that eax isn't 
 ; allocated to the input/output register.

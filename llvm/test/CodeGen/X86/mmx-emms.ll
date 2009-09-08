@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx | grep emms
+; RUN: llc < %s -march=x86 -mattr=+mmx | grep emms
 define void @foo() {
 entry:
 	call void @llvm.x86.mmx.emms( )

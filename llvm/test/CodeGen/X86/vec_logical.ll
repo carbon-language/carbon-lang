@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 > %t
+; RUN: llc < %s -march=x86 -mattr=+sse2 > %t
 ; RUN: grep xorps %t | count 2
 ; RUN: grep andnps %t
 ; RUN: grep movaps %t | count 2

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep CPI
+; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep CPI
 
 define <2 x i64> @t1(<2 x i64> %b1, <2 x i64> %c) nounwind  {
 	%tmp1 = bitcast <2 x i64> %b1 to <8 x i16>

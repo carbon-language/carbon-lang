@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -relocation-model=static -mcpu=yonah | grep {andpd.*4(%esp), %xmm}
+; RUN: llc < %s -relocation-model=static -mcpu=yonah | grep {andpd.*4(%esp), %xmm}
 
 ; The double argument is at 4(esp) which is 16-byte aligned, allowing us to
 ; fold the load into the andpd.

@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -relocation-model=pic -mtriple=i386-linux-gnu -asm-verbose=false | not grep -F .text
-; RUN: llvm-as < %s | llc -relocation-model=pic -mtriple=i686-apple-darwin -asm-verbose=false | not grep lea
-; RUN: llvm-as < %s | llc -relocation-model=pic -mtriple=i686-apple-darwin -asm-verbose=false | grep add | count 2
-; RUN: llvm-as < %s | llc                       -mtriple=x86_64-apple-darwin | not grep 'lJTI'
+; RUN: llc < %s -relocation-model=pic -mtriple=i386-linux-gnu -asm-verbose=false | not grep -F .text
+; RUN: llc < %s -relocation-model=pic -mtriple=i686-apple-darwin -asm-verbose=false | not grep lea
+; RUN: llc < %s -relocation-model=pic -mtriple=i686-apple-darwin -asm-verbose=false | grep add | count 2
+; RUN: llc < %s                       -mtriple=x86_64-apple-darwin | not grep 'lJTI'
 ; rdar://6971437
 
 declare void @_Z3bari(i32)

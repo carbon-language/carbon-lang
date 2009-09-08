@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | not grep GOTPCREL
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep ".align.*3"
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | not grep GOTPCREL
+; RUN: llc < %s -mtriple=x86_64-apple-darwin | grep ".align.*3"
 
 	%struct.A = type { [1024 x i8] }
 @_ZN1A1aE = global %struct.A zeroinitializer, align 32		; <%struct.A*> [#uses=1]

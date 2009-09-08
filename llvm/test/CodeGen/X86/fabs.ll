@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens to the fabs instruction, not a call to fabsf
-; RUN: llvm-as < %s | llc -march=x86 -mattr=-sse2,-sse3,-sse | grep fabs\$ | \
+; RUN: llc < %s -march=x86 -mattr=-sse2,-sse3,-sse | grep fabs\$ | \
 ; RUN:   count 2
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -march=x86 -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math | \

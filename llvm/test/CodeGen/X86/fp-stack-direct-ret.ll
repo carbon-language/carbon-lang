@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep fstp
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | not grep movsd
+; RUN: llc < %s -march=x86 | not grep fstp
+; RUN: llc < %s -march=x86 -mcpu=yonah | not grep movsd
 
 declare double @foo()
 

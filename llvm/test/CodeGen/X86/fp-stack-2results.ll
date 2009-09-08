@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep fldz
-; RUN: llvm-as < %s | llc -march=x86-64 | grep fld1
+; RUN: llc < %s -march=x86 | grep fldz
+; RUN: llc < %s -march=x86-64 | grep fld1
 
 ; This is basically this code on x86-64:
 ; _Complex long double test() { return 1.0; }

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-apple-darwin | FileCheck %s
+; RUN: llc < %s -march=x86 -mtriple=i686-apple-darwin | FileCheck %s
 
 ; ModuleID = '/Volumes/MacOS9/tests/WebKit/JavaScriptCore/profiler/ProfilerServer.mm'
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-unknown-linux-gnu | grep cmpxchgl | not grep eax
+; RUN: llc < %s -mtriple=i386-unknown-linux-gnu | grep cmpxchgl | not grep eax
 ; PR4076
 
 	type { i8, i8, i8 }		; type %0

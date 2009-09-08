@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movq
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movsd
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep mov | count 3
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movq
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movsd
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep mov | count 3
 
 define <2 x i64> @t1(<2 x i64>* %ptr) nounwind  {
 	%tmp45 = bitcast <2 x i64>* %ptr to <2 x i32>*

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep lea
+; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep lea
 
 define float @foo(i32* %x, float* %y, i32 %c) nounwind {
 entry:

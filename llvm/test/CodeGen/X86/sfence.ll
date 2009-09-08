@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep sfence
+; RUN: llc < %s -march=x86 -mattr=+sse2 | grep sfence
 
 declare void @llvm.memory.barrier( i1 , i1 , i1 , i1 , i1)
 

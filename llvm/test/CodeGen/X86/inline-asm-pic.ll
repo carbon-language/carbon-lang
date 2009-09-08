@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -relocation-model=pic | grep lea
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin -relocation-model=pic | grep call
+; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=pic | grep lea
+; RUN: llc < %s -mtriple=i386-apple-darwin -relocation-model=pic | grep call
 
 @main_q = internal global i8* null		; <i8**> [#uses=1]
 

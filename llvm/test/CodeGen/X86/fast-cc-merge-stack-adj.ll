@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | \
+; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | \
 ; RUN:   grep {add	ESP, 8}
 
 target triple = "i686-pc-linux-gnu"

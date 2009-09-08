@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-apple-darwin | grep and | count 1
-; RUN: llvm-as < %s | llc -march=x86-64 -mtriple=i686-pc-linux | grep and | count 1
+; RUN: llc < %s -march=x86 -mtriple=i686-apple-darwin | grep and | count 1
+; RUN: llc < %s -march=x86-64 -mtriple=i686-pc-linux | grep and | count 1
 
 declare void @bar(<2 x i64>* %n)
 

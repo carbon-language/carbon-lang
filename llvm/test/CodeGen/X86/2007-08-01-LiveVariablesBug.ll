@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep movl
+; RUN: llc < %s -march=x86 | not grep movl
 
 define i8 @t(i8 zeroext  %x, i8 zeroext  %y) zeroext  {
 	%tmp2 = add i8 %x, 2

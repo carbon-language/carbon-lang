@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse2 | grep movsd | count 5
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse2 -O0 | grep movsd | count 5
+; RUN: llc < %s -march=x86 -mattr=sse2 | grep movsd | count 5
+; RUN: llc < %s -march=x86 -mattr=sse2 -O0 | grep movsd | count 5
 
 @x = external global double
 

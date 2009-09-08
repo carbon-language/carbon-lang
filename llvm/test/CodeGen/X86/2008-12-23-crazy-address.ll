@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static | grep {lea.*X.*esp} | count 2
+; RUN: llc < %s -march=x86 -relocation-model=static | grep {lea.*X.*esp} | count 2
 
 @X = external global [0 x i32]
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin -o %t1
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -o %t1
 ; RUN: grep GOTPCREL %t1 | count 4
 ; RUN: grep %%rip      %t1 | count 6
 ; RUN: grep movq     %t1 | count 6

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep div | count 8
+; RUN: llc < %s -march=x86-64 | grep div | count 8
 
 define void @si64(i64 %x, i64 %y, i64* %p, i64* %q) {
 	%r = sdiv i64 %x, %y

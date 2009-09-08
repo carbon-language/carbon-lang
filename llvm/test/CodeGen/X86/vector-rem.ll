@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep div | count 8
-; RUN: llvm-as < %s | llc -march=x86-64 | grep fmodf | count 4
+; RUN: llc < %s -march=x86-64 | grep div | count 8
+; RUN: llc < %s -march=x86-64 | grep fmodf | count 4
 
 define <4 x i32> @foo(<4 x i32> %t, <4 x i32> %u) {
 	%m = srem <4 x i32> %t, %u

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-unknown-linux-gnu
+; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu
 ; PR1766
 
         %struct.dentry = type { %struct.dentry_operations* }

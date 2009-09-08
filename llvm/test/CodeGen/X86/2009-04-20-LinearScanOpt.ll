@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin10.0 -relocation-model=pic -disable-fp-elim -stats |& grep {Number of registers downgraded}
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10.0 -relocation-model=pic -disable-fp-elim -stats |& grep {Number of registers downgraded}
 ; rdar://6802189
 
 ; Test if linearscan is unfavoring registers for allocation to allow more reuse

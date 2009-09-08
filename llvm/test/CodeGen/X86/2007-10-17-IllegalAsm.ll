@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-linux-gnu | grep addb | not grep x
-; RUN: llvm-as < %s | llc -mtriple=x86_64-linux-gnu | grep cmpb | not grep x
+; RUN: llc < %s -mtriple=x86_64-linux-gnu | grep addb | not grep x
+; RUN: llc < %s -mtriple=x86_64-linux-gnu | grep cmpb | not grep x
 ; PR1734
 
 target triple = "x86_64-unknown-linux-gnu"

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin | FileCheck %s
 ; PR3149
 ; Make sure the copy after inline asm is not coalesced away.
 

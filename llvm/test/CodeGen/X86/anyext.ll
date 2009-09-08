@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movzbl | count 2
+; RUN: llc < %s -march=x86-64 | grep movzbl | count 2
 
 ; Use movzbl to avoid partial-register updates.
 

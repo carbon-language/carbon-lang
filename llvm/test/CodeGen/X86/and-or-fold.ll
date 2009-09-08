@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep and | count 1
+; RUN: llc < %s -march=x86 | grep and | count 1
 
 ; The dag combiner should fold together (x&127)|(y&16711680) -> (x|y)&c1
 ; in this case.

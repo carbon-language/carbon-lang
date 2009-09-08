@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin9 -mattr=+sse2 | not grep movl
+; RUN: llc < %s -mtriple=x86_64-apple-darwin9 -mattr=+sse2 | not grep movl
 
 	%struct.dpoint = type { double, double }
 

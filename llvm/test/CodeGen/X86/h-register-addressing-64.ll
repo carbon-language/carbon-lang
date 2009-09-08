@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep {movzbl	%\[abcd\]h,} | count 7
+; RUN: llc < %s -march=x86-64 | grep {movzbl	%\[abcd\]h,} | count 7
 
 ; Use h-register extract and zero-extend.
 

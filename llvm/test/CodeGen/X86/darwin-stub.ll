@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin  |     grep stub
-; RUN: llvm-as < %s | llc -mtriple=i386-apple-darwin9 | not grep stub
+; RUN: llc < %s -mtriple=i386-apple-darwin  |     grep stub
+; RUN: llc < %s -mtriple=i386-apple-darwin9 | not grep stub
 
 @"\01LC" = internal constant [13 x i8] c"Hello World!\00"		; <[13 x i8]*> [#uses=1]
 
