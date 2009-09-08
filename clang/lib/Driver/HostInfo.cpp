@@ -66,8 +66,8 @@ public:
     return Ty;
   }
 
-  virtual ToolChain *getToolChain(const ArgList &Args,
-                                  const char *ArchName) const;
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
+                                     const char *ArchName) const;
 };
 
 DarwinHostInfo::DarwinHostInfo(const Driver &D, const llvm::Triple& Triple)
@@ -104,8 +104,8 @@ bool DarwinHostInfo::useDriverDriver() const {
   return true;
 }
 
-ToolChain *DarwinHostInfo::getToolChain(const ArgList &Args,
-                                        const char *ArchName) const {
+ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
+                                           const char *ArchName) const {
   std::string Arch;
   if (!ArchName) {
     // If we aren't looking for a specific arch, infer the default architecture
@@ -192,8 +192,8 @@ public:
     return types::lookupTypeForExtension(Ext);
   }
 
-  virtual ToolChain *getToolChain(const ArgList &Args,
-                                  const char *ArchName) const;
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
+                                     const char *ArchName) const;
 };
 
 UnknownHostInfo::UnknownHostInfo(const Driver &D, const llvm::Triple& Triple)
@@ -210,8 +210,8 @@ bool UnknownHostInfo::useDriverDriver() const {
   return false;
 }
 
-ToolChain *UnknownHostInfo::getToolChain(const ArgList &Args,
-                                         const char *ArchName) const {
+ToolChain *UnknownHostInfo::CreateToolChain(const ArgList &Args,
+                                            const char *ArchName) const {
   assert(!ArchName &&
          "Unexpected arch name on platform without driver driver support.");
 
@@ -259,8 +259,8 @@ public:
     return types::lookupTypeForExtension(Ext);
   }
 
-  virtual ToolChain *getToolChain(const ArgList &Args,
-                                  const char *ArchName) const;
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
+                                     const char *ArchName) const;
 };
 
 OpenBSDHostInfo::~OpenBSDHostInfo() {
@@ -273,8 +273,8 @@ bool OpenBSDHostInfo::useDriverDriver() const {
   return false;
 }
 
-ToolChain *OpenBSDHostInfo::getToolChain(const ArgList &Args,
-                                         const char *ArchName) const {
+ToolChain *OpenBSDHostInfo::CreateToolChain(const ArgList &Args,
+                                            const char *ArchName) const {
   assert(!ArchName &&
          "Unexpected arch name on platform without driver driver support.");
 
@@ -310,8 +310,8 @@ public:
     return types::lookupTypeForExtension(Ext);
   }
 
-  virtual ToolChain *getToolChain(const ArgList &Args,
-                                  const char *ArchName) const;
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
+                                     const char *ArchName) const;
 };
 
 AuroraUXHostInfo::~AuroraUXHostInfo() {
@@ -324,8 +324,8 @@ bool AuroraUXHostInfo::useDriverDriver() const {
   return false;
 }
 
-ToolChain *AuroraUXHostInfo::getToolChain(const ArgList &Args,
-                                          const char *ArchName) const {
+ToolChain *AuroraUXHostInfo::CreateToolChain(const ArgList &Args,
+                                             const char *ArchName) const {
   assert(!ArchName &&
          "Unexpected arch name on platform without driver driver support.");
 
@@ -359,8 +359,8 @@ public:
     return types::lookupTypeForExtension(Ext);
   }
 
-  virtual ToolChain *getToolChain(const ArgList &Args,
-                                  const char *ArchName) const;
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
+                                     const char *ArchName) const;
 };
 
 FreeBSDHostInfo::~FreeBSDHostInfo() {
@@ -373,8 +373,8 @@ bool FreeBSDHostInfo::useDriverDriver() const {
   return false;
 }
 
-ToolChain *FreeBSDHostInfo::getToolChain(const ArgList &Args,
-                                         const char *ArchName) const {
+ToolChain *FreeBSDHostInfo::CreateToolChain(const ArgList &Args,
+                                            const char *ArchName) const {
   bool Lib32 = false;
 
   assert(!ArchName &&
@@ -419,8 +419,8 @@ public:
     return types::lookupTypeForExtension(Ext);
   }
 
-  virtual ToolChain *getToolChain(const ArgList &Args,
-                                  const char *ArchName) const;
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
+                                     const char *ArchName) const;
 };
 
 DragonFlyHostInfo::~DragonFlyHostInfo() {
@@ -433,8 +433,8 @@ bool DragonFlyHostInfo::useDriverDriver() const {
   return false;
 }
 
-ToolChain *DragonFlyHostInfo::getToolChain(const ArgList &Args,
-                                           const char *ArchName) const {
+ToolChain *DragonFlyHostInfo::CreateToolChain(const ArgList &Args,
+                                              const char *ArchName) const {
   assert(!ArchName &&
          "Unexpected arch name on platform without driver driver support.");
 
@@ -468,8 +468,8 @@ public:
     return types::lookupTypeForExtension(Ext);
   }
 
-  virtual ToolChain *getToolChain(const ArgList &Args,
-                                  const char *ArchName) const;
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
+                                     const char *ArchName) const;
 };
 
 LinuxHostInfo::~LinuxHostInfo() {
@@ -482,8 +482,8 @@ bool LinuxHostInfo::useDriverDriver() const {
   return false;
 }
 
-ToolChain *LinuxHostInfo::getToolChain(const ArgList &Args,
-                                       const char *ArchName) const {
+ToolChain *LinuxHostInfo::CreateToolChain(const ArgList &Args,
+                                          const char *ArchName) const {
 
   assert(!ArchName &&
          "Unexpected arch name on platform without driver driver support.");

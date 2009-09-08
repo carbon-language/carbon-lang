@@ -207,7 +207,7 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   Host = GetHostInfo(HostTriple);
 
   // The compilation takes ownership of Args.
-  Compilation *C = new Compilation(*this, *Host->getToolChain(*Args), Args);
+  Compilation *C = new Compilation(*this, *Host->CreateToolChain(*Args), Args);
 
   // FIXME: This behavior shouldn't be here.
   if (CCCPrintOptions) {
@@ -1017,19 +1017,14 @@ void Driver::BuildJobsForAction(Compilation &C,
   }
 
   if (const BindArchAction *BAA = dyn_cast<BindArchAction>(A)) {
-    const char *ArchName = BAA->getArchName();
+    const ToolChain *TC = &C.getDefaultToolChain();
+
     std::string Arch;
-    if (!ArchName) {
-      Arch = C.getDefaultToolChain().getArchName();
-      ArchName = Arch.c_str();
-    }
-    BuildJobsForAction(C,
-                       *BAA->begin(),
-                       Host->getToolChain(C.getArgs(), ArchName),
-                       CanAcceptPipe,
-                       AtTopLevel,
-                       LinkingOutput,
-                       Result);
+    if (BAA->getArchName())
+      TC = Host->CreateToolChain(C.getArgs(), BAA->getArchName());
+
+    BuildJobsForAction(C, *BAA->begin(), TC, CanAcceptPipe, AtTopLevel,
+                       LinkingOutput, Result);
     return;
   }
 
