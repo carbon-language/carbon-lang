@@ -1591,20 +1591,33 @@ public:
   ///
   /// \param Template  A template whose specialization results in a
   /// type, e.g., a class template or template template parameter.
-  /// 
-  /// \param TagSpec The tag spec that was provided as part of the
-  /// elaborated-type-specifier, or TST_unspecified if this was not
-  /// an elaborated type.
   virtual TypeResult ActOnTemplateIdType(TemplateTy Template,
                                          SourceLocation TemplateLoc,
                                          SourceLocation LAngleLoc,
                                          ASTTemplateArgsPtr TemplateArgs,
                                          SourceLocation *TemplateArgLocs,
-                                         SourceLocation RAngleLoc,
-                        DeclSpec::TST TagSpec = DeclSpec::TST_unspecified,
-                        SourceLocation TagLoc = SourceLocation()) {
+                                         SourceLocation RAngleLoc) {
     return TypeResult();
   };
+
+  /// \brief Note that a template ID was used with a tag.
+  ///
+  /// \param Type The result of ActOnTemplateIdType.
+  ///
+  /// \param TUK Either TUK_Reference or TUK_Friend.  Declarations and
+  /// definitions are interpreted as explicit instantiations or
+  /// specializations.
+  /// 
+  /// \param TagSpec The tag keyword that was provided as part of the
+  /// elaborated-type-specifier;  either class, struct, union, or enum.
+  ///
+  /// \param TagLoc The location of the tag keyword.
+  virtual TypeResult ActOnTagTemplateIdType(TypeResult Type,
+                                            TagUseKind TUK,
+                                            DeclSpec::TST TagSpec,
+                                            SourceLocation TagLoc) {
+    return TypeResult();
+  }
 
   /// \brief Form a reference to a template-id (that will refer to a function)
   /// from a template and a list of template arguments.

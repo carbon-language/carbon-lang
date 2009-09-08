@@ -2401,10 +2401,13 @@ public:
                       SourceLocation LAngleLoc,
                       ASTTemplateArgsPtr TemplateArgs,
                       SourceLocation *TemplateArgLocs,
-                      SourceLocation RAngleLoc,
-                      DeclSpec::TST TagSpec,
-                      SourceLocation TagLoc);
-  
+                      SourceLocation RAngleLoc);
+
+  virtual TypeResult ActOnTagTemplateIdType(TypeResult Type,
+                                            TagUseKind TUK,
+                                            DeclSpec::TST TagSpec,
+                                            SourceLocation TagLoc);
+    
   OwningExprResult BuildTemplateIdExpr(TemplateName Template,
                                        SourceLocation TemplateNameLoc,
                                        SourceLocation LAngleLoc,

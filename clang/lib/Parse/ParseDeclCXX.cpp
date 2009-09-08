@@ -651,26 +651,27 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                              TemplateId->RAngleLoc, 
                                              Attr);
     } else if (TUK == Action::TUK_Reference || TUK == Action::TUK_Friend) {
-      Action::TypeResult TypeResult =
-        Actions.ActOnTemplateIdType(TemplateTy::make(TemplateId->Template),
-                                    TemplateId->TemplateNameLoc,
-                                    TemplateId->LAngleLoc,
-                                    TemplateArgsPtr,
-                                    TemplateId->getTemplateArgLocations(),
-                                    TemplateId->RAngleLoc,
-                                    TagType, StartLoc);
+      Action::TypeResult Type
+        = Actions.ActOnTemplateIdType(TemplateTy::make(TemplateId->Template),
+                                      TemplateId->TemplateNameLoc,
+                                      TemplateId->LAngleLoc,
+                                      TemplateArgsPtr,
+                                      TemplateId->getTemplateArgLocations(),
+                                      TemplateId->RAngleLoc);
+
+      Type = Actions.ActOnTagTemplateIdType(Type, TUK, TagType, StartLoc);
 
       TemplateId->Destroy();
 
-      if (TypeResult.isInvalid()) {
+      if (Type.isInvalid()) {
         DS.SetTypeSpecError();
         return;
       }
-  
+
       const char *PrevSpec = 0;
       unsigned DiagID;
       if (DS.SetTypeSpecType(DeclSpec::TST_typename, StartLoc, PrevSpec,
-                             DiagID, TypeResult.get()))
+                             DiagID, Type.get()))
         Diag(StartLoc, DiagID) << PrevSpec;
 
       return;

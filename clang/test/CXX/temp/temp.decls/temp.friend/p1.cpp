@@ -36,6 +36,11 @@ class A {
   template <typename T> friend bool iszero(const A &a) throw();
 };
 
+template <class T> class B_iterator;
+template <class T> class B {
+  friend class B_iterator<T>;
+};
+
 int calc1() {
   Num<int> left = -1;
   Num<int> right = 1;

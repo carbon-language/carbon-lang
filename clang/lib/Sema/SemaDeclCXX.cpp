@@ -3917,61 +3917,60 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
   assert(DS.isFriendSpecified());
   assert(DS.getStorageClassSpec() == DeclSpec::SCS_unspecified);
 
-  // Check to see if the decl spec was syntactically like "struct foo".
-  RecordDecl *RD = NULL;
-
-  switch (DS.getTypeSpecType()) {
-  case DeclSpec::TST_class:
-  case DeclSpec::TST_struct:
-  case DeclSpec::TST_union:
-    RD = dyn_cast_or_null<CXXRecordDecl>((Decl*) DS.getTypeRep());
-    if (!RD) return DeclPtrTy();
-
-    // The parser doesn't quite handle
-    //   friend class A {}
-    // as we'd like, because it might have been the (valid) prefix of
-    //   friend class A {} foo();
-    // So even in C++0x mode we don't want to 
-    IsDefinition |= RD->isDefinition();
-    break;
-
-  default: break;
-  }
-
-  FriendDecl::FriendUnion FU = RD;
+  // Try to convert the decl specifier to a type.
+  bool invalid = false;
+  QualType T = ConvertDeclSpecToType(DS, Loc, invalid);
+  if (invalid) return DeclPtrTy();
 
   // C++ [class.friend]p2:
   //   An elaborated-type-specifier shall be used in a friend declaration
   //   for a class.*
   //   * The class-key of the elaborated-type-specifier is required.
-  // So if we didn't get a record decl above, we're invalid in C++98 mode.
-  if (!RD) {
-    bool invalid = false;
-    QualType T = ConvertDeclSpecToType(DS, Loc, invalid);
-    if (invalid) return DeclPtrTy();
-    
+  // This is one of the rare places in Clang where it's legitimate to
+  // ask about the "spelling" of the type.
+  if (!getLangOptions().CPlusPlus0x && !isa<ElaboratedType>(T)) {
+    // If we evaluated the type to a record type, suggest putting
+    // a tag in front.
     if (const RecordType *RT = T->getAs<RecordType>()) {
-      FU = RD = cast<CXXRecordDecl>(RT->getDecl());
-      
-      // Untagged typenames are invalid prior to C++0x, but we can
-      // suggest an easy fix which should work.
-      if (!getLangOptions().CPlusPlus0x) {
-        Diag(DS.getFriendSpecLoc(), diag::err_unelaborated_friend_type)
-          << (RD->isUnion())
-          << CodeModificationHint::CreateInsertion(DS.getTypeSpecTypeLoc(),
-                                        RD->isUnion() ? " union" : " class");
-        return DeclPtrTy();
-      }
-    }else if (!getLangOptions().CPlusPlus0x) {
-      Diag(DS.getFriendSpecLoc(), diag::err_unexpected_friend)
-          << DS.getSourceRange();
+      RecordDecl *RD = RT->getDecl();
+
+      std::string InsertionText = std::string(" ") + RD->getKindName();
+
+      Diag(DS.getFriendSpecLoc(), diag::err_unelaborated_friend_type)
+        << (RD->isUnion())
+        << CodeModificationHint::CreateInsertion(DS.getTypeSpecTypeLoc(),
+                                                 InsertionText);
       return DeclPtrTy();
     }else {
-      FU = T.getTypePtr();
+      Diag(DS.getFriendSpecLoc(), diag::err_unexpected_friend)
+          << DS.getSourceRange();
+      return DeclPtrTy();      
     }
   }
 
-  assert(FU && "should have a friend decl/type by here!");
+  FriendDecl::FriendUnion FU = T.getTypePtr();
+
+  // The parser doesn't quite handle
+  //   friend class A { ... }
+  // optimally, because it might have been the (valid) prefix of
+  //   friend class A { ... } foo();
+  // So in a very particular set of circumstances, we need to adjust
+  // IsDefinition.
+  //
+  // Also, if we made a RecordDecl in ActOnTag, we want that to be the
+  // object of our friend declaration.
+  switch (DS.getTypeSpecType()) {
+  default: break;
+  case DeclSpec::TST_class:
+  case DeclSpec::TST_struct:
+  case DeclSpec::TST_union:
+    CXXRecordDecl *RD = cast_or_null<CXXRecordDecl>((Decl*) DS.getTypeRep());
+    if (RD) {
+      IsDefinition |= RD->isDefinition();
+      FU = RD;
+    }
+    break;
+  }
 
   // C++ [class.friend]p2: A class shall not be defined inside
   //   a friend declaration.
@@ -3986,11 +3985,10 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
   // But that's a silly restriction which nobody implements for
   // inner classes, and C++0x removes it anyway, so we only report
   // this (as a warning) if we're being pedantic.
-  if (!getLangOptions().CPlusPlus0x) {
-    assert(RD && "must have a record decl in C++98 mode");
-    if (RD->getDeclContext() == CurContext)
-      Diag(DS.getFriendSpecLoc(), diag::ext_friend_inner_class);
-  }
+  if (!getLangOptions().CPlusPlus0x)
+    if (const RecordType *RT = T->getAs<RecordType>())
+      if (RT->getDecl()->getDeclContext() == CurContext)
+        Diag(DS.getFriendSpecLoc(), diag::ext_friend_inner_class);
 
   FriendDecl *FD = FriendDecl::Create(Context, CurContext, Loc, FU,
                                       DS.getFriendSpecLoc());
