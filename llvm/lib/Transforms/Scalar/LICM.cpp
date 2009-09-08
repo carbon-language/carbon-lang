@@ -91,6 +91,7 @@ namespace {
       AU.addRequired<AliasAnalysis>();
       AU.addPreserved<ScalarEvolution>();
       AU.addPreserved<DominanceFrontier>();
+      AU.addPreservedID(LoopSimplifyID);
     }
 
     bool doFinalization() {

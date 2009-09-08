@@ -376,12 +376,83 @@ public:
   /// verifyLoop - Verify loop structure
   void verifyLoop() const {
 #ifndef NDEBUG
-    assert (getHeader() && "Loop header is missing");
-    assert (getLoopPreheader() && "Loop preheader is missing");
-    assert (getLoopLatch() && "Loop latch is missing");
-    for (iterator I = SubLoops.begin(), E = SubLoops.end(); I != E; ++I)
-      (*I)->verifyLoop();
+    assert(!Blocks.empty() && "Loop header is missing");
+    assert(getHeader() && "Loop header is missing");
+
+    // Sort the blocks vector so that we can use binary search to do quick
+    // lookups.
+    SmallVector<BlockT*, 128> LoopBBs(block_begin(), block_end());
+    std::sort(LoopBBs.begin(), LoopBBs.end());
+
+    // Check the individual blocks.
+    for (block_iterator I = block_begin(), E = block_end(); I != E; ++I) {
+      BlockT *BB = *I;
+      bool HasInsideLoopSuccs = false;
+      bool HasInsideLoopPreds = false;
+      SmallVector<BlockT *, 2> OutsideLoopPreds;
+
+      typedef GraphTraits<BlockT*> BlockTraits;
+      for (typename BlockTraits::ChildIteratorType SI =
+           BlockTraits::child_begin(BB), SE = BlockTraits::child_end(BB);
+           SI != SE; ++SI)
+        if (std::binary_search(LoopBBs.begin(), LoopBBs.end(), *SI)) {
+          HasInsideLoopSuccs = true;
+          break;
+        }
+      typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
+      for (typename InvBlockTraits::ChildIteratorType PI =
+           InvBlockTraits::child_begin(BB), PE = InvBlockTraits::child_end(BB);
+           PI != PE; ++PI) {
+        if (std::binary_search(LoopBBs.begin(), LoopBBs.end(), *PI))
+          HasInsideLoopPreds = true;
+        else
+          OutsideLoopPreds.push_back(*PI);
+      }
+
+      if (BB == getHeader()) {
+        assert(!OutsideLoopPreds.empty() && "Loop is unreachable!");
+      } else if (!OutsideLoopPreds.empty()) {
+        // A non-header loop shouldn't be reachable from outside the loop,
+        // though it is permitted if the predecessor is not itself actually
+        // reachable.
+        BlockT *EntryBB = BB->getParent()->begin();
+        for (df_iterator<BlockT *> NI = df_begin(EntryBB),
+             NE = df_end(EntryBB); NI != NE; ++NI)
+          for (unsigned i = 0, e = OutsideLoopPreds.size(); i != e; ++i)
+            assert(*NI != OutsideLoopPreds[i] &&
+                   "Loop has multiple entry points!");
+      }
+      assert(HasInsideLoopPreds && "Loop block has no in-loop predecessors!");
+      assert(HasInsideLoopSuccs && "Loop block has no in-loop successors!");
+      assert(BB != getHeader()->getParent()->begin() &&
+             "Loop contains function entry block!");
+    }
+
+    // Check the subloops.
+    for (iterator I = begin(), E = end(); I != E; ++I)
+      // Each block in each subloop should be contained within this loop.
+      for (block_iterator BI = (*I)->block_begin(), BE = (*I)->block_end();
+           BI != BE; ++BI) {
+        assert(std::binary_search(LoopBBs.begin(), LoopBBs.end(), *BI) &&
+               "Loop does not contain all the blocks of a subloop!");
+      }
+
+    // Check the parent loop pointer.
+    if (ParentLoop) {
+      assert(std::find(ParentLoop->begin(), ParentLoop->end(), this) !=
+               ParentLoop->end() &&
+             "Loop is not a subloop of its parent!");
+    }
 #endif
+  }
+
+  /// verifyLoop - Verify loop structure of this loop and all nested loops.
+  void verifyLoopNest() const {
+    // Verify this loop.
+    verifyLoop();
+    // Verify the subloops.
+    for (iterator I = begin(), E = end(); I != E; ++I)
+      (*I)->verifyLoopNest();
   }
 
   void print(raw_ostream &OS, unsigned Depth = 0) const {
@@ -872,6 +943,8 @@ public:
   /// runOnFunction - Calculate the natural loop information.
   ///
   virtual bool runOnFunction(Function &F);
+
+  virtual void verifyAnalysis() const;
 
   virtual void releaseMemory() { LI.releaseMemory(); }
 

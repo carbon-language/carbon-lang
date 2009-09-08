@@ -126,10 +126,10 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 /// dest go to one block instead of each going to a different block, but isn't 
 /// the standard definition of a "critical edge".
 ///
-bool SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P = 0,
-                       bool MergeIdenticalEdges = false);
+BasicBlock *SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
+                              Pass *P = 0, bool MergeIdenticalEdges = false);
 
-inline bool SplitCriticalEdge(BasicBlock *BB, succ_iterator SI, Pass *P = 0) {
+inline BasicBlock *SplitCriticalEdge(BasicBlock *BB, succ_iterator SI, Pass *P = 0) {
   return SplitCriticalEdge(BB->getTerminator(), SI.getSuccessorIndex(), P);
 }
 
@@ -143,7 +143,7 @@ inline bool SplitCriticalEdge(BasicBlock *Succ, pred_iterator PI, Pass *P = 0) {
   TerminatorInst *TI = (*PI)->getTerminator();
   for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
     if (TI->getSuccessor(i) == Succ)
-      MadeChange |= SplitCriticalEdge(TI, i, P);
+      MadeChange |= !!SplitCriticalEdge(TI, i, P);
   return MadeChange;
 }
 
@@ -151,8 +151,9 @@ inline bool SplitCriticalEdge(BasicBlock *Succ, pred_iterator PI, Pass *P = 0) {
 /// and return true, otherwise return false.  This method requires that there be
 /// an edge between the two blocks.  If P is specified, it updates the analyses
 /// described above.
-inline bool SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst, Pass *P = 0,
-                              bool MergeIdenticalEdges = false) {
+inline BasicBlock *SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst,
+                                     Pass *P = 0,
+                                     bool MergeIdenticalEdges = false) {
   TerminatorInst *TI = Src->getTerminator();
   unsigned i = 0;
   while (1) {
@@ -180,8 +181,12 @@ BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P);
 /// Preds array, which has NumPreds elements in it.  The new block is given a
 /// suffix of 'Suffix'.  This function returns the new block.
 ///
-/// This currently updates the LLVM IR, AliasAnalysis, DominatorTree and
-/// DominanceFrontier, but no other analyses.
+/// This currently updates the LLVM IR, AliasAnalysis, DominatorTree,
+/// DominanceFrontier, LoopInfo, and LCCSA but no other analyses.
+/// In particular, it does not preserve LoopSimplify (because it's
+/// complicated to handle the case where one of the edges being split
+/// is an exit of a loop with other exits).
+///
 BasicBlock *SplitBlockPredecessors(BasicBlock *BB, BasicBlock *const *Preds,
                                    unsigned NumPreds, const char *Suffix,
                                    Pass *P = 0);
