@@ -80,16 +80,13 @@ void MCExpr::dump() const {
 
 /* *** */
 
-const MCBinaryExpr * MCBinaryExpr::Create(Opcode Opc,
-                                          const MCExpr *LHS,
-                                          const MCExpr *RHS,
-                                          MCContext &Ctx) {
+const MCBinaryExpr *MCBinaryExpr::Create(Opcode Opc, const MCExpr *LHS,
+                                         const MCExpr *RHS, MCContext &Ctx) {
   return new (Ctx) MCBinaryExpr(Opc, LHS, RHS);
 }
 
-const MCUnaryExpr * MCUnaryExpr::Create(Opcode Opc,
-                                        const MCExpr *Expr,
-                                        MCContext &Ctx) {
+const MCUnaryExpr *MCUnaryExpr::Create(Opcode Opc, const MCExpr *Expr,
+                                       MCContext &Ctx) {
   return new (Ctx) MCUnaryExpr(Opc, Expr);
 }
 
