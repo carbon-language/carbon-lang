@@ -184,7 +184,7 @@ class TclExecCommand:
     def parse_redirect(self, tok, length):
         if len(tok) == length:
             arg = self.lex()
-            if next is None:
+            if arg is None:
                 raise ValueError,'Missing argument to %r redirection' % tok
         else:
             tok,arg = tok[:length],tok[length:]
@@ -310,11 +310,11 @@ class TestTclExecCommand(unittest.TestCase):
         self.assertEqual(self.parse('echo hello > a >b >>c 2> d |& e'),
                          (False, False,
                           Pipeline([Command(['echo', 'hello'],
-                                            [(('>',),'a'),
+                                            [(('>&',2),'1'),
+                                             (('>',),'a'),
                                              (('>',),'b'),
                                              (('>>',),'c'),
-                                             (('>',2),'d'),
-                                             (('>&',2),'1')]),
+                                             (('>',2),'d')]),
                                     Command(['e'], [])],
                                    False, True)))
 

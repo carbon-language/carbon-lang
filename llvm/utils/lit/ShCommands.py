@@ -1,5 +1,3 @@
-import ShUtil
-
 class Command:
     def __init__(self, args, redirects):
         self.args = list(args)
@@ -26,6 +24,7 @@ class Command:
             print >>file, quoted,
 
             # For debugging / validation.
+            import ShUtil
             dequoted = list(ShUtil.ShLexer(quoted).lex())
             if dequoted != [arg]:
                 raise NotImplementedError,'Unable to quote %r' % arg
