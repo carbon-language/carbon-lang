@@ -213,7 +213,7 @@ def executeTclScriptInternal(test, litConfig, tmpBase, commands, cwd):
             print >>sys.stdout
             return '', '', 0
 
-        command = ['/bin/sh', script]
+        command = ['/bin/bash', script]
         out,err,exitCode = executeCommand(command, cwd=cwd,
                                           env=test.config.environment)
 
