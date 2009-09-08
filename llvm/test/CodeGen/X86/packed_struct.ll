@@ -15,7 +15,7 @@ target triple = "i686-pc-linux-gnu"
 @foos = external global %struct.anon		; <%struct.anon*> [#uses=3]
 @bara = weak global [4 x <{ i32, i8 }>] zeroinitializer		; <[4 x <{ i32, i8 }>]*> [#uses=2]
 
-define i32 @foo() {
+define i32 @foo() nounwind {
 entry:
 	%tmp = load i32* getelementptr (%struct.anon* @foos, i32 0, i32 1)		; <i32> [#uses=1]
 	%tmp3 = load i32* getelementptr (%struct.anon* @foos, i32 0, i32 2)		; <i32> [#uses=1]
@@ -25,7 +25,7 @@ entry:
 	ret i32 %tmp7
 }
 
-define i8 @bar() {
+define i8 @bar() nounwind {
 entry:
 	%tmp = load i8* getelementptr ([4 x <{ i32, i8 }>]* @bara, i32 0, i32 0, i32 1)		; <i8> [#uses=1]
 	%tmp4 = load i8* getelementptr ([4 x <{ i32, i8 }>]* @bara, i32 0, i32 3, i32 1)		; <i8> [#uses=1]
