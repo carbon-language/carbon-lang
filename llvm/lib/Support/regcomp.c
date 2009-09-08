@@ -257,8 +257,8 @@ static void
 p_ere(struct parse *p, int stop)	/* character this ERE should end at */
 {
 	char c;
-	sopno prevback;
-	sopno prevfwd;
+	sopno prevback = 0;
+	sopno prevfwd = 0;
 	sopno conc;
 	int first = 1;		/* is this the first alternative? */
 
