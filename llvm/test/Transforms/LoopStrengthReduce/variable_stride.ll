@@ -1,5 +1,5 @@
 ; Check that variable strides are reduced to adds instead of multiplies.
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | not grep mul
+; RUN: opt %s -loop-reduce | llvm-dis | not grep mul
 
 declare i1 @pred(i32)
 

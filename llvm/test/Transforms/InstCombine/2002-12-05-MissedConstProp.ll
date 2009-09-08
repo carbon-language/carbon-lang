@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep add
+; RUN: opt %s -instcombine | llvm-dis | not grep add
 
 define i32 @test(i32 %A) {
         %A.neg = sub i32 0, %A          ; <i32> [#uses=1]

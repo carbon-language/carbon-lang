@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output \
+; RUN: opt %s -analyze -scalar-evolution -disable-output \
 ; RUN:   -scalar-evolution-max-iterations=0 | \
 ; RUN: grep -F "backedge-taken count is (-1 + (-1 * %j))"
 ; PR2607

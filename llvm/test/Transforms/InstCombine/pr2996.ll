@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine
+; RUN: opt %s -instcombine
 ; PR2996
 
 define void @func_53(i16 signext %p_56) nounwind {

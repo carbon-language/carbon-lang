@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep %G
+; RUN: opt %s -globalopt | llvm-dis | not grep %G
 
 @G = internal global i32 0              ; <i32*> [#uses=1]
 @H = internal global { i32* } { i32* @G }               ; <{ i32* }*> [#uses=1]

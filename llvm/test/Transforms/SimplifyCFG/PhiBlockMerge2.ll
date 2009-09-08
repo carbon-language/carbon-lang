@@ -2,7 +2,7 @@
 ; where the mergedinto block doesn't have any PHI nodes, and is in fact 
 ; dominated by the block-to-be-eliminated
 ;
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep N:
+; RUN: opt %s -simplifycfg | llvm-dis | not grep N:
 ;
 
 declare i1 @foo()

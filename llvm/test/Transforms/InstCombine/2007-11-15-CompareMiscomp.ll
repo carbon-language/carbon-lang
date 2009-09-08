@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {icmp eq i32 %In, 1}
+; RUN: opt %s -instcombine | llvm-dis | grep {icmp eq i32 %In, 1}
 ; PR1800
 
 define i1 @test(i32 %In) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis \
+; RUN: opt %s -indvars | llvm-dis \
 ; RUN:   | grep {\[%\]p.2.ip.1 = getelementptr \\\[3 x \\\[3 x double\\\]\\\]\\* \[%\]p, i64 2, i64 \[%\]tmp, i64 1}
 
 ; Indvars shouldn't expand this to

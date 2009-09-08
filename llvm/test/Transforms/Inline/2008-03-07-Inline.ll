@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -disable-output
+; RUN: opt %s -inline -disable-output
 	%struct.Demand = type { double, double }
 	%struct.branch = type { %struct.Demand, double, double, double, double, %struct.branch*, [12 x %struct.leaf*] }
 	%struct.leaf = type { %struct.Demand, double, double }

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce -disable-output
+; RUN: opt %s -loop-reduce -disable-output
 ; Test to make sure that loop-reduce never crashes on IV's 
 ; with different types but identical strides.
 

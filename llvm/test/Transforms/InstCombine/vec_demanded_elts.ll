@@ -1,12 +1,12 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:   grep {fadd float}
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:   grep {fmul float}
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:   not grep {insertelement.*0.00}
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:   not grep {call.*llvm.x86.sse.mul}
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:   not grep {call.*llvm.x86.sse.sub}
 ; END.
 

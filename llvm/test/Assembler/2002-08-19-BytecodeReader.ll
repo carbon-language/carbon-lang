@@ -1,7 +1,7 @@
 ; Testcase that seems to break the bytecode reader.  This comes from the
 ; "crafty" spec benchmark.
 ;
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | llvm-as
+; RUN: opt %s -instcombine | llvm-dis | llvm-as
 	
 %CHESS_POSITION = type { i32, i32 }
 @pawn_probes = external global i32		; <i32*> [#uses=0]

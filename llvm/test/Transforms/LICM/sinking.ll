@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -basicaa -licm | llvm-dis | FileCheck %s
+; RUN: opt %s -basicaa -licm | llvm-dis | FileCheck %s
 
 declare i32 @strlen(i8*) readonly
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unswitch -disable-output
+; RUN: opt %s -loop-unswitch -disable-output
 ; PR1559
 
 target triple = "i686-pc-linux-gnu"

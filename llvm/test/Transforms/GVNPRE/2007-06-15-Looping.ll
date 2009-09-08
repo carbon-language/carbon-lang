@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvnpre | llvm-dis
+; RUN: opt %s -gvnpre | llvm-dis
 
 define fastcc void @compute_max_score_1() {
 entry:

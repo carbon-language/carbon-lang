@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -anders-aa -argpromotion
+; RUN: opt %s -anders-aa -argpromotion
 
 declare void @llvm.gcroot(i8**, i8*)
 

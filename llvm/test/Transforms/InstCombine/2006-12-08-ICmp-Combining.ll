@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:    grep {%bothcond =}
 
 define i1 @Doit_bb(i32 %i.0) {

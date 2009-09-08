@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -aa-eval -print-all-alias-modref-info -disable-output |& grep {MustAlias:.*%R,.*%r}
+; RUN: opt %s -aa-eval -print-all-alias-modref-info -disable-output |& grep {MustAlias:.*%R,.*%r}
 ; Make sure that basicaa thinks R and r are must aliases.
 
 define i32 @test(i8 * %P) {

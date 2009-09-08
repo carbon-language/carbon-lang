@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvnpre | llvm-dis
+; RUN: opt %s -gvnpre | llvm-dis
 
 define i32 @TreeCCStreamFlush(i8* %stream) {
 entry:

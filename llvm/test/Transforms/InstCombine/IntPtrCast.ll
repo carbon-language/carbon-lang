@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | notcast
+; RUN: opt %s -instcombine | llvm-dis | notcast
 target datalayout = "e-p:32:32"
 
 define i32* @test(i32* %P) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: opt %s -instcombine -disable-output
 
 ; SimplifyDemandedBits should cope with pointer types.
 

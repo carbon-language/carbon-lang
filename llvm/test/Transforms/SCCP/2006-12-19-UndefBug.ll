@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | \
+; RUN: opt %s -sccp | llvm-dis | \
 ; RUN:   grep {ret i1 false}
 
 define i1 @foo() {

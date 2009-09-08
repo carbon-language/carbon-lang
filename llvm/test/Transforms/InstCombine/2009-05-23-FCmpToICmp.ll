@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep cmp
+; RUN: opt %s -instcombine | llvm-dis | not grep cmp
 ; rdar://6903175
 
 define i1 @f0(i32 *%a) nounwind {

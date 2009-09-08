@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis > %t
+; RUN: opt %s -instcombine | llvm-dis > %t
 ; RUN: grep select %t | count 5
 ; RUN: not grep and %t
 ; RUN: not grep or %t

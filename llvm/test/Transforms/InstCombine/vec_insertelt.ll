@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret <4 x i32> %A}
+; RUN: opt %s -instcombine | llvm-dis | grep {ret <4 x i32> %A}
 
 ; PR1286
 define <4 x i32> @test1(<4 x i32> %A) {

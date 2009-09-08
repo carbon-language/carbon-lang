@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplify-libcalls -disable-output
+; RUN: opt %s -simplify-libcalls -disable-output
 ; PR4645
 
 define i32 @main() {

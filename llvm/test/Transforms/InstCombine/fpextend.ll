@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep fpext
+; RUN: opt %s -instcombine | llvm-dis | not grep fpext
 @X = external global float 
 @Y = external global float
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis > %t
+; RUN: opt %s -simplifycfg | llvm-dis > %t
 ; RUN: not grep {^BB.tomerge} %t
 ; RUN  grep {^BB.nomerge} %t | count 2
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep bitcast
+; RUN: opt %s -instcombine | llvm-dis | not grep bitcast
 ; PR1716
 
 @.str = internal constant [4 x i8] c"%d\0A\00"		; <[4 x i8]*> [#uses=1]

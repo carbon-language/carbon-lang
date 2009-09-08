@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep sext
+; RUN: opt %s -instcombine | llvm-dis | not grep sext
 
 declare i32 @llvm.ctpop.i32(i32)
 declare i32 @llvm.ctlz.i32(i32)

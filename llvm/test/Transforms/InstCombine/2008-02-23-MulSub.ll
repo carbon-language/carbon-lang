@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep mul
+; RUN: opt %s -instcombine | llvm-dis | not grep mul
 
 define i26 @test(i26 %a) nounwind  {
 entry:

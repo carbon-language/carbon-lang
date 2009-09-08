@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i1 true}
+; RUN: opt %s -instcombine | llvm-dis | grep {ret i1 true}
 ; PR2993
 
 define i1 @foo(i32 %x) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | grep -v {ret i101 0} | \
+; RUN: opt %s -ipsccp | llvm-dis | grep -v {ret i101 0} | \
 ; RUN:    grep -v {ret i101 undef} | not grep ret
 
 

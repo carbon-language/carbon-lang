@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -mem2reg
+; RUN: opt %s -mem2reg
 
 define void @_Z3barv() {
 	%result = alloca i32		; <i32*> [#uses=1]

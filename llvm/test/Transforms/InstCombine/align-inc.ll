@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {GLOBAL.*align 16}
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {tmp = load}
+; RUN: opt %s -instcombine | llvm-dis | grep {GLOBAL.*align 16}
+; RUN: opt %s -instcombine | llvm-dis | grep {tmp = load}
 
 @GLOBAL = internal global [4 x i32] zeroinitializer
 

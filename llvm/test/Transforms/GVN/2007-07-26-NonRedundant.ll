@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn | llvm-dis
+; RUN: opt %s -gvn | llvm-dis
 
 @bsLive = external global i32		; <i32*> [#uses=2]
 

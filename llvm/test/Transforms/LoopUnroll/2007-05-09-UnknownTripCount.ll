@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unroll -unroll-count=3 | llvm-dis | grep bb72.2
+; RUN: opt %s -loop-unroll -unroll-count=3 | llvm-dis | grep bb72.2
 
 define void @foo(i32 %trips) {
 entry:

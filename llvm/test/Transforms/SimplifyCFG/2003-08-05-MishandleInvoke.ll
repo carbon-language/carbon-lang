@@ -1,6 +1,6 @@
 ; Do not remove the invoke!
 ;
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep invoke
+; RUN: opt %s -simplifycfg | llvm-dis | grep invoke
 
 define i32 @test() {
 	invoke i32 @test( )

@@ -1,7 +1,7 @@
 ; This is the test case taken from appel's book that illustrates a hard case
 ; that SCCP gets right. BB3 should be completely eliminated.
 ;
-; RUN: llvm-as < %s | opt -sccp -constprop -dce -simplifycfg | \
+; RUN: opt %s -sccp -constprop -dce -simplifycfg | \
 ; RUN:   llvm-dis | not grep BB3
 
 define i32 @testfunction(i32 %i0, i32 %j0) {

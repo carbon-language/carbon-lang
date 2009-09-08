@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {add double .sx, .sy}
+; RUN: opt %s -instcombine | llvm-dis | grep {add double .sx, .sy}
 ; The 'or' has multiple uses, make sure that this doesn't prevent instcombine
 ; from propagating the extends to the truncs.
 

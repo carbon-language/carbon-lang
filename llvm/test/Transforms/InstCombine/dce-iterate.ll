@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret double .sy}
+; RUN: opt %s -instcombine | llvm-dis | grep {ret double .sy}
 
 define internal double @ScaleObjectAdd(double %sx, double %sy, double %sz) nounwind {
 entry:

@@ -2,7 +2,7 @@
 ; This test is for Integer BitWidth >= 64 && BitWidth % 2 >= 1024.
 ;
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep mul
+; RUN: opt %s -instcombine | llvm-dis | not grep mul
 
 
 define i177 @test1(i177 %X) {

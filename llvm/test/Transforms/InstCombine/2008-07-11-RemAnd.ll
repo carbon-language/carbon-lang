@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep rem
+; RUN: opt %s -instcombine | llvm-dis | not grep rem
 ; PR2330
 
 define i32 @a(i32 %b) nounwind  {

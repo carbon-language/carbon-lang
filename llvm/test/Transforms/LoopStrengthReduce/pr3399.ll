@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis
+; RUN: opt %s -loop-reduce | llvm-dis
 ; PR3399
 
 @g_53 = external global i32		; <i32*> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep zeroinitializer
+; RUN: opt %s -instcombine | llvm-dis | not grep zeroinitializer
 
 define void @foo(i64 %A, i64 %B) {
 bb8:

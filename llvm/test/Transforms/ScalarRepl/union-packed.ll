@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | \
+; RUN: opt %s -scalarrepl | llvm-dis | \
 ; RUN:   not grep alloca
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | \
+; RUN: opt %s -scalarrepl | llvm-dis | \
 ; RUN:   grep bitcast
 
 define <4 x i32> @test(<4 x float> %X) {

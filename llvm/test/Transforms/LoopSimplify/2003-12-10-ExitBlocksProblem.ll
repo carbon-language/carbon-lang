@@ -4,7 +4,7 @@
 ;
 ; This is distilled from a monsterous crafty example.
 
-; RUN: llvm-as < %s | opt -licm -disable-output
+; RUN: opt %s -licm -disable-output
 
 
 @G = weak global i32 0		; <i32*> [#uses=7]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output \
+; RUN: opt %s -analyze -scalar-evolution -disable-output \
 ; RUN:   | grep {\{%d,+,\[^\{\}\]\*\}<bb>}
 
 ; ScalarEvolution should be able to understand the loop and eliminate the casts.

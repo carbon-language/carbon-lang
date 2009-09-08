@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep unreachable
+; RUN: opt %s -simplifycfg | llvm-dis | grep unreachable
 ; PR1796
 
 declare void @Finisher(i32) noreturn

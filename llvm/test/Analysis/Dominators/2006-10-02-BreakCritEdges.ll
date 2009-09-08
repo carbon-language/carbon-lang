@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -domtree -break-crit-edges -analyze \
+; RUN: opt %s -domtree -break-crit-edges -analyze \
 ; RUN:  -domtree | grep {3.*%brtrue }
 ; PR932
 

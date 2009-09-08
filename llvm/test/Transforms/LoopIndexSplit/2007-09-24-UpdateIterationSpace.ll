@@ -1,6 +1,6 @@
 
 ; Update loop iteraton space to eliminate condition inside loop.
-; RUN: llvm-as < %s | opt -loop-index-split | llvm-dis | not grep bothcond
+; RUN: opt %s -loop-index-split | llvm-dis | not grep bothcond
 define void @test(float* %x, i32 %ndat, float** %y, float %xcen, i32 %xmin, i32 %xmax, float %sigmal, float %contribution) {
 entry:
 	%tmp519 = icmp sgt i32 %xmin, %xmax		; <i1> [#uses=1]

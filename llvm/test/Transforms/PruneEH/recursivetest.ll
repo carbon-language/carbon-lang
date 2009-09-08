@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -prune-eh | llvm-dis | not grep invoke
+; RUN: opt %s -prune-eh | llvm-dis | not grep invoke
 
 define internal i32 @foo() {
 	invoke i32 @foo( )

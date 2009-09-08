@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl -disable-output
+; RUN: opt %s -scalarrepl -disable-output
 ; END.
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8.7.2"

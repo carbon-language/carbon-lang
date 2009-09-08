@@ -1,6 +1,6 @@
 ; Ensure constant propogation of 'not' instructions is working correctly.
 
-; RUN: llvm-as < %s | opt -constprop -die | llvm-dis | not grep xor
+; RUN: opt %s -constprop -die | llvm-dis | not grep xor
 
 define i32 @test1() {
         %R = xor i32 4, -1              ; <i32> [#uses=1]

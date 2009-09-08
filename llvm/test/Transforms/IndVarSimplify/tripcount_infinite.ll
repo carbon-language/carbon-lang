@@ -1,7 +1,7 @@
 ; These tests have an infinite trip count.  We obviously shouldn't remove the 
 ; loops!  :)
 ;
-; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | llvm-dis | grep icmp | wc -l > %t2
+; RUN: opt %s -indvars -adce -simplifycfg | llvm-dis | grep icmp | wc -l > %t2
 ; RUN: llvm-as < %s | llvm-dis | grep icmp | wc -l > %t1
 ; RUN: diff %t1 %t2
 

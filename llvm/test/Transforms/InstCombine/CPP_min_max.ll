@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:   grep select | not grep {i32\\*}
 
 ; This testcase corresponds to PR362, which notices that this horrible code

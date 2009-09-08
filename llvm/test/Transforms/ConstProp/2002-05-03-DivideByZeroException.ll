@@ -1,6 +1,6 @@
 ; Make sure that the constant propogator doesn't divide by zero!
 ;
-; RUN: llvm-as < %s | opt -constprop
+; RUN: opt %s -constprop
 ;
 
 define i32 @test() {

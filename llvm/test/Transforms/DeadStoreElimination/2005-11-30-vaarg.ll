@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -dse | llvm-dis | grep store
+; RUN: opt %s -dse | llvm-dis | grep store
 
 define double @foo(i8* %X) {
         %X_addr = alloca i8*            ; <i8**> [#uses=2]

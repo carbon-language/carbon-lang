@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {volatile store}
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {volatile load}
+; RUN: opt %s -instcombine | llvm-dis | grep {volatile store}
+; RUN: opt %s -instcombine | llvm-dis | grep {volatile load}
 
 @x = weak global i32 0		; <i32*> [#uses=2]
 

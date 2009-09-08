@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | \
+; RUN: opt %s -simplifycfg | llvm-dis | \
 ; RUN:   not grep select
 
 ;; The PHI node in this example should not be turned into a select, as we are

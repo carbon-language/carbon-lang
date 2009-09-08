@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-index-split -disable-output
+; RUN: opt %s -loop-index-split -disable-output
 	%struct.RExC_state_t = type { i32, i8*, %struct.regexp*, i8*, i8*, i8*, i32, %struct.regnode*, %struct.regnode*, i32, i32, i32, i32, i32, i32, i32, i32, i32 }
 	%struct.SV = type { i8*, i32, i32 }
 	%struct.reg_data = type { i32, i8*, [1 x i8*] }

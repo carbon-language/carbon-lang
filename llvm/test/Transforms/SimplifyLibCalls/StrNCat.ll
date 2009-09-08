@@ -1,7 +1,7 @@
 ; Test that the StrNCatOptimizer works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | \
+; RUN: opt %s -simplify-libcalls | llvm-dis | \
 ; RUN:   not grep {call.*strncat}
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | \
+; RUN: opt %s -simplify-libcalls | llvm-dis | \
 ; RUN:   grep {puts.*%arg1}
 
 ; This transformation requires the pointer size, as it assumes that size_t is

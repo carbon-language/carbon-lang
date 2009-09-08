@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {add i32}
+; RUN: opt %s -instcombine | llvm-dis | grep {add i32}
 
 define double @x(i32 %a, i32 %b) nounwind {
   %m = lshr i32 %a, 24

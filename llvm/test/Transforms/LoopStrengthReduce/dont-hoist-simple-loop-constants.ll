@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | \
+; RUN: opt %s -loop-reduce | llvm-dis | \
 ; RUN:   not grep {bitcast i32 1 to i32}
 ; END.
 ; The setlt wants to use a value that is incremented one more than the dominant

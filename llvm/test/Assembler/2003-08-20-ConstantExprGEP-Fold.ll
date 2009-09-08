@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -simplifycfg | llvm-dis | not grep br
+; RUN: opt %s -instcombine -simplifycfg | llvm-dis | not grep br
 
 @.str_1 = internal constant [6 x i8] c"_Bool\00"                ; <[6 x i8]*> [#uses=2]
 

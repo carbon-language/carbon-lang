@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -prune-eh -disable-output
+; RUN: opt %s -inline -prune-eh -disable-output
 ; PR993
 target datalayout = "e-p:32:32"
 target triple = "i386-unknown-openbsd3.9"

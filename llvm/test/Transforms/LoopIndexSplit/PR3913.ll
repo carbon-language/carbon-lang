@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-index-split | llvm-dis | not grep "icmp ne"
+; RUN: opt %s -loop-index-split | llvm-dis | not grep "icmp ne"
 
 define i32 @main() {
 entry:

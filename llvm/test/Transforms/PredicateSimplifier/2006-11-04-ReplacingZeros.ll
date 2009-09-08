@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify -disable-output
+; RUN: opt %s -predsimplify -disable-output
 
 define i32 @test_wp_B_slice(i32 %select_method) {
 entry:

@@ -1,6 +1,6 @@
 ; For PR1065. This causes an assertion in instcombine if a select with two cmp
 ; operands is encountered.
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: opt %s -instcombine -disable-output
 ; END.
 
 target datalayout = "e-p:32:32"

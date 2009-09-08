@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loopsimplify -loop-rotate -instcombine -indvars \
+; RUN: opt %s -loopsimplify -loop-rotate -instcombine -indvars \
 ; RUN:  | llvm-dis > %t
 ; RUN: not grep sext %t
 ; RUN: grep {phi i64} %t | count 1

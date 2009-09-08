@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -prune-eh | llvm-dis | not grep nounwind
+; RUN: opt %s -prune-eh | llvm-dis | not grep nounwind
 
 define weak void @f() {
 entry:

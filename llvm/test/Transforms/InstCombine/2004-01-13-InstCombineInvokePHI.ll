@@ -5,7 +5,7 @@
 ; invoke instruction, we really cannot perform this transformation at all at
 ; least without splitting the critical edge.
 ;
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: opt %s -instcombine -disable-output
 
 declare i8* @test()
 

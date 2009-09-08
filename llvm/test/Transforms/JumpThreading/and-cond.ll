@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -jump-threading -mem2reg -instcombine -simplifycfg  | llvm-dis | grep {ret i32 %v1}
+; RUN: opt %s -jump-threading -mem2reg -instcombine -simplifycfg  | llvm-dis | grep {ret i32 %v1}
 ; There should be no uncond branches left.
-; RUN: llvm-as < %s | opt -jump-threading -mem2reg -instcombine -simplifycfg  | llvm-dis | not grep {br label}
+; RUN: opt %s -jump-threading -mem2reg -instcombine -simplifycfg  | llvm-dis | not grep {br label}
 
 declare i32 @f1()
 declare i32 @f2()

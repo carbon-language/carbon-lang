@@ -1,5 +1,5 @@
 ; PR957
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | \
+; RUN: opt %s -simplifycfg | llvm-dis | \
 ; RUN:   not grep select
 
 @G = extern_weak global i32

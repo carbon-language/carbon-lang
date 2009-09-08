@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -lcssa
+; RUN: opt %s -lcssa
 
 	%struct.SetJmpMapEntry = type { i8*, i32, %struct.SetJmpMapEntry* }
 

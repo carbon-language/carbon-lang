@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {add i32}
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep sext | count 1
+; RUN: opt %s -instcombine | llvm-dis | grep {add i32}
+; RUN: opt %s -instcombine | llvm-dis | grep sext | count 1
 
 ; Should only have one sext and the add should be i32 instead of i64.
 

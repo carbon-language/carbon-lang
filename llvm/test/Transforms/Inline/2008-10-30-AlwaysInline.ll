@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | opt -always-inline | llvm-dis | not grep call 
+; RUN: opt %s -always-inline | llvm-dis | not grep call 
 
 ; Ensure that threshold doesn't disrupt always inline.
-; RUN: llvm-as < %s | opt -inline-threshold=-2000000001 -always-inline | llvm-dis | not grep call 
+; RUN: opt %s -inline-threshold=-2000000001 -always-inline | llvm-dis | not grep call 
 
 
 define internal i32 @if0() alwaysinline {

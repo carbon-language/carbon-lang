@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -licm | lli
+; RUN: opt %s -licm | lli
 
 define i32 @main() {
 entry:

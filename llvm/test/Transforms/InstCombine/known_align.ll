@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {align 1}
+; RUN: opt %s -instcombine | llvm-dis | grep {align 1}
 ; END.
 
 	%struct.p = type <{ i8, i32 }>

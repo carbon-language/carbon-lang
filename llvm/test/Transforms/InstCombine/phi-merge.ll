@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {phi i32}
+; RUN: opt %s -instcombine | llvm-dis | not grep {phi i32}
 ; PR1777
 
 declare i1 @rrr()

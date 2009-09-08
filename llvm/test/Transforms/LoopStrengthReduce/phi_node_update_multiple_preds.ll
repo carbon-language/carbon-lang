@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce -disable-output
+; RUN: opt %s -loop-reduce -disable-output
 ; LSR should not crash on this.
 
 define fastcc void @loadloop() {

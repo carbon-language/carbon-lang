@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep shl
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | notcast
+; RUN: opt %s -instcombine | llvm-dis | grep shl
+; RUN: opt %s -instcombine | llvm-dis | notcast
 
 ; This cannot be turned into a sign extending cast!
 

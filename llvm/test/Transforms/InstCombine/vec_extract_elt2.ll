@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | FileCheck %s
+; RUN: opt %s -instcombine | llvm-dis | FileCheck %s
 
 ; The load replacing the extract element must occur before the call
 ; that may modify local array a.

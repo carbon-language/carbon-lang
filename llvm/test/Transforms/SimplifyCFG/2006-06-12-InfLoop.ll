@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg -disable-output
+; RUN: opt %s -simplifycfg -disable-output
 ; END.
 
 define void @main(i32 %c) {

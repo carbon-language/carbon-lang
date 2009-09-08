@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify -simplifycfg | llvm-dis | grep pass
+; RUN: opt %s -predsimplify -simplifycfg | llvm-dis | grep pass
 
 define void @regtest(i32 %x) {
 entry:

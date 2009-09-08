@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis
+; RUN: opt %s -globalopt | llvm-dis
 ; PR1896
 
 @indirect1 = internal global void (i32)* null		; <void (i32)**> [#uses=2]

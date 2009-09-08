@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars
+; RUN: opt %s -indvars
 
 ; An invoke has a result value which is used in an "Interesting"
 ; expression inside the loop. IndVars should be able to rewrite

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -memcpyopt | llvm-dis | not grep {call.*memcpy.}
+; RUN: opt %s -memcpyopt | llvm-dis | not grep {call.*memcpy.}
 	%a = type { i32 }
 	%b = type { float }
 

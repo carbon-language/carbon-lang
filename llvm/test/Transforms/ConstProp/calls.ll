@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -constprop | llvm-dis | not grep call
+; RUN: opt %s -constprop | llvm-dis | not grep call
 
 declare double @cos(double)
 

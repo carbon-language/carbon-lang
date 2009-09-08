@@ -1,5 +1,5 @@
 ; This test makes sure that mul instructions are properly eliminated.
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep mul
+; RUN: opt %s -instcombine | llvm-dis | not grep mul
 
 define i32 @test1(i32 %A) {
         %B = mul i32 %A, 1              ; <i32> [#uses=1]

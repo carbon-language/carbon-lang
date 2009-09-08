@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {call i32 @f}
+; RUN: opt %s -instcombine | llvm-dis | grep {call i32 @f}
 
 	%struct.FRAME.nest = type { i32, i32 (i32)* }
 	%struct.__builtin_trampoline = type { [10 x i8] }

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -argpromotion | llvm-dis | grep -F {i32* byval} | count 2
+; RUN: opt %s -argpromotion | llvm-dis | grep -F {i32* byval} | count 2
 ; Argpromote + scalarrepl should change this to passing the two integers by value.
 
 	%struct.ss = type { i32, i64 }

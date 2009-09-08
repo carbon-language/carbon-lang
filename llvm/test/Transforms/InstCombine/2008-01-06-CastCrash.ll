@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: opt %s -instcombine -disable-output
 
 define <2 x i32> @f() {
 	ret <2 x i32> undef

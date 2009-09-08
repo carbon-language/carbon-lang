@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globaldce
+; RUN: opt %s -globaldce
 ;
 define internal void @func() {
         ret void

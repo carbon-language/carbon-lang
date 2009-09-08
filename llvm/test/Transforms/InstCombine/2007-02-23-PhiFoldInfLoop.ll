@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep ret
+; RUN: opt %s -instcombine | llvm-dis | grep ret
 ; PR1217
 
 target datalayout = "e-p:32:32"

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indmemrem | llvm-dis | grep bounce | grep noalias
+; RUN: opt %s -indmemrem | llvm-dis | grep bounce | grep noalias
 
 declare i8* @malloc(i32)
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis
+; RUN: opt %s -scalarrepl | llvm-dis
 ; Make sure that SROA "scalar conversion" can handle first class aggregates.
 
 define i64 @test({i32, i32} %A) {

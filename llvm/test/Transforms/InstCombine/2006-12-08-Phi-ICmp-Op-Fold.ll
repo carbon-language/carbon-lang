@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:   grep {icmp sgt}
 ; END.
 target datalayout = "e-p:32:32"

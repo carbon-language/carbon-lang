@@ -3,7 +3,7 @@
 ; nodes away allows the branches to be eliminated, performing a simple form of
 ; 'if conversion'.
 
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis > %t.xform
+; RUN: opt %s -simplifycfg | llvm-dis > %t.xform
 ; RUN:   not grep phi %t.xform 
 ; RUN:   grep ret %t.xform
 

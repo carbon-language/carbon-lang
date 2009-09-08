@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep {volatile load}
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep {volatile store}
+; RUN: opt %s -scalarrepl | llvm-dis | grep {volatile load}
+; RUN: opt %s -scalarrepl | llvm-dis | grep {volatile store}
 
 define i32 @voltest(i32 %T) {
 	%A = alloca {i32, i32}

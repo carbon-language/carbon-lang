@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -simplify-libcalls -functionattrs | \
+; RUN: opt %s -inline -simplify-libcalls -functionattrs | \
 ; RUN:   llvm-dis | grep nocapture | count 2
 ; Check that nocapture attributes are added when run after an SCC pass.
 ; PR3520

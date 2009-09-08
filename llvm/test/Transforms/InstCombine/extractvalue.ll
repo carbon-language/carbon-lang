@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep extractvalue
+; RUN: opt %s -instcombine | llvm-dis | not grep extractvalue
 
 ; Instcombine should fold various combinations of insertvalue and extractvalue
 ; together

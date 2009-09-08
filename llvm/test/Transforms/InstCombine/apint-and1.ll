@@ -1,7 +1,7 @@
 ; This test makes sure that and instructions are properly eliminated.
 ; This test is for Integer BitWidth <= 64 && BitWidth % 8 != 0.
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {and }
+; RUN: opt %s -instcombine | llvm-dis | not grep {and }
 ; END.
 
 define i39 @test0(i39 %A) {

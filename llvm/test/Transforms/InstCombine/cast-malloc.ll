@@ -1,5 +1,5 @@
 ; test that casted mallocs get converted to malloc of the right type
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:    not grep bitcast
 
 ; The target datalayout is important for this test case. We have to tell 

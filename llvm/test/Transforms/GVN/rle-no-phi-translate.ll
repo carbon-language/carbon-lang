@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep load
+; RUN: opt %s -gvn | llvm-dis | grep load
 ; FIXME: This should be promotable, but memdep/gvn don't track values
 ; path/edge sensitively enough.
 

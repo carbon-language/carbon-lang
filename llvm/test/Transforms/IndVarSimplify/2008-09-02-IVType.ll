@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep sext | count 1
+; RUN: opt %s -indvars | llvm-dis | grep sext | count 1
 ; ModuleID = '<stdin>'
 
 	%struct.App1Marker = type <{ i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }>

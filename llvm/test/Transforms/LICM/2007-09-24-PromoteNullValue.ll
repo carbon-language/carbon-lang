@@ -1,5 +1,5 @@
 ; Do not promote null value because it may be unsafe to do so.
-; RUN: llvm-as < %s | opt -licm | llvm-dis | not grep promoted
+; RUN: opt %s -licm | llvm-dis | not grep promoted
 
 define i32 @f(i32 %foo, i32 %bar, i32 %com) {
 entry:

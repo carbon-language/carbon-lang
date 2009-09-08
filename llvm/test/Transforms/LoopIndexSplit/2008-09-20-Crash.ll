@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-index-split -disable-output
+; RUN: opt %s -loop-index-split -disable-output
 ; PR 2805
 @g_330 = common global i32 0		; <i32*> [#uses=1]
 

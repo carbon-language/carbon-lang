@@ -2,7 +2,7 @@
 ; values. This used to crash, because globalopt forgot to put the new var in the
 ; same address space as the old one.
 
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis > %t
+; RUN: opt %s -globalopt | llvm-dis > %t
 ; Check that the new global values still have their address space
 ; RUN: cat %t | grep global.*addrspace
 

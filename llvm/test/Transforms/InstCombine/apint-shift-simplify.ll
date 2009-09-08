@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:    egrep {shl|lshr|ashr} | count 3
 
 define i41 @test0(i41 %A, i41 %B, i41 %C) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine
+; RUN: opt %s -instcombine
 ; PR2940
 
 define i32 @tstid() {

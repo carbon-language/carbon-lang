@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -disable-output
+; RUN: opt %s -inline -disable-output
 ; PR4123
 	%struct.S0 = type <{ i32 }>
 	%struct.S1 = type <{ i8, i8, i8, i8, %struct.S0 }>

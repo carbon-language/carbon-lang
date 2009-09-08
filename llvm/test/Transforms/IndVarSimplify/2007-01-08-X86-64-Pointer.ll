@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep {(%rdi,%rax,8)}
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep {addq.*8}
+; RUN: llc %s -o - -march=x86-64 | grep {(%rdi,%rax,8)}
+; RUN: llc %s -o - -march=x86-64 | not grep {addq.*8}
 
 define void @foo(double* %y) nounwind {
 entry:

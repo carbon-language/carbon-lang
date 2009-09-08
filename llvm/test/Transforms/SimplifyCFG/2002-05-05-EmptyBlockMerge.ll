@@ -1,6 +1,6 @@
 ; Basic block #2 should not be merged into BB #3!
 ;
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | \
+; RUN: opt %s -simplifycfg | llvm-dis | \
 ; RUN:   grep {br label}
 ;
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -lowerinvoke -enable-correct-eh-support -disable-output
+; RUN: opt %s -lowerinvoke -enable-correct-eh-support -disable-output
 
 declare fastcc i32 @ll_listnext__listiterPtr()
 

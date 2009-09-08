@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: opt %s -instcombine -disable-output
 ; PR1304
 
 define i64 @bork(<1 x i64> %vec) {

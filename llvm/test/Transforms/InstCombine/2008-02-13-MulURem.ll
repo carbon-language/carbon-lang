@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep rem
+; RUN: opt %s -instcombine | llvm-dis | grep rem
 ; PR1933
 
 define i32 @fold(i32 %a) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -reassociate -instcombine | llvm-dis |\
+; RUN: opt %s -reassociate -instcombine | llvm-dis |\
 ; RUN:   grep {ret i32 0}
 
 define i32 @f(i32 %a0, i32 %a1, i32 %a2, i32 %a3, i32 %a4) {

@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ; PR1822
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep select
+; RUN: opt %s -instcombine | llvm-dis | not grep select
 
 define i32 @test1(i32 %A, i32 %B) {
         %C = select i1 false, i32 %A, i32 %B            ; <i32> [#uses=1]

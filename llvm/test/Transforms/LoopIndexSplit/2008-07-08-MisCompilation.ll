@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-index-split -stats -disable-output | not grep "1 loop-index-split"
+; RUN: opt %s -loop-index-split -stats -disable-output | not grep "1 loop-index-split"
 ; PR 2487
 @g_6 = external global i32		; <i32*> [#uses=1]
 

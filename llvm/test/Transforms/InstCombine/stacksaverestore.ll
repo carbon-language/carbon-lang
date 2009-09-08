@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {call.*stackrestore} | count 1
+; RUN: opt %s -instcombine | llvm-dis | grep {call.*stackrestore} | count 1
 
 declare i8* @llvm.stacksave()
 declare void @llvm.stackrestore(i8*)

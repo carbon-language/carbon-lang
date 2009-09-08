@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -ssi-everything | llvm-dis | FileCheck %s
+; RUN: opt %s -ssi-everything | llvm-dis | FileCheck %s
 
 declare void @use(i32)
 declare i32 @create()

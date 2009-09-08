@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -gvnpre | llvm-dis | not grep {%z3 =}
-; RUN: llvm-as < %s | opt -gvnpre | llvm-dis | not grep {%z9 =}
+; RUN: opt %s -gvnpre | llvm-dis | not grep {%z3 =}
+; RUN: opt %s -gvnpre | llvm-dis | not grep {%z9 =}
 
 define i32 @main() {
 block1:

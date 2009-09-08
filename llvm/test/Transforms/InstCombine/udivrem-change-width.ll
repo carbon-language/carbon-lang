@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep zext
+; RUN: opt %s -instcombine | llvm-dis | not grep zext
 ; PR4548
 
 define i8 @udiv_i8(i8 %a, i8 %b) nounwind {

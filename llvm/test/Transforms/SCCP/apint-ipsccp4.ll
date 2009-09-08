@@ -1,8 +1,8 @@
 ; This test makes sure that these instructions are properly constant propagated.
 
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | not grep load
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | not grep add
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | not grep phi
+; RUN: opt %s -ipsccp | llvm-dis | not grep load
+; RUN: opt %s -ipsccp | llvm-dis | not grep add
+; RUN: opt %s -ipsccp | llvm-dis | not grep phi
 
 
 @Y = constant [2 x { i212, float }] [ { i212, float } { i212 12, float 1.0 }, 

@@ -2,8 +2,8 @@
 ; arithmatic operations.
 
 
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep mul
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep umod
+; RUN: opt %s -sccp | llvm-dis | not grep mul
+; RUN: opt %s -sccp | llvm-dis | not grep umod
 
 define i128 @test(i1 %B) {
 	br i1 %B, label %BB1, label %BB2

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-index-split -disable-output
+; RUN: opt %s -loop-index-split -disable-output
 ; Handle Exit block phis that do not have any use inside the loop.
 
 	%struct.ATOM = type { double, double, double, double, double, double, i32, double, double, double, double, i8*, i8, [9 x i8], double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, [200 x i8*], [32 x i8*], [32 x i8], i32 }

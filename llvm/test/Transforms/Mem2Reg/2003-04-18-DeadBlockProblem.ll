@@ -1,5 +1,5 @@
 ; This testcases makes sure that mem2reg can handle unreachable blocks.
-; RUN: llvm-as < %s | opt -mem2reg
+; RUN: opt %s -mem2reg
 
 define i32 @test() {
 	%X = alloca i32		; <i32*> [#uses=2]

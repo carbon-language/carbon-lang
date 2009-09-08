@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | \
+; RUN: opt %s -indvars | llvm-dis | \
 ; RUN:   grep {ret i32 152}
 
 define i32 @main() {

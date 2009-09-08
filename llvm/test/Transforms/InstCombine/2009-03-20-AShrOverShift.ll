@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ashr i32 %val, 31}
+; RUN: opt %s -instcombine | llvm-dis | grep {ashr i32 %val, 31}
 ; PR3851
 
 define i32 @foo2(i32 %val) nounwind {

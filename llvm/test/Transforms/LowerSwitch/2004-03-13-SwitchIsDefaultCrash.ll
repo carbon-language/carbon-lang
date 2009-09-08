@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -lowerswitch -disable-output
+; RUN: opt %s -lowerswitch -disable-output
 
 define void @solve() {
 entry:

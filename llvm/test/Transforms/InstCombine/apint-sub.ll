@@ -2,7 +2,7 @@
 ; even with arbitrary precision integers.
 ;
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:   grep -v {sub i19 %Cok, %Bok} | grep -v {sub i25 0, %Aok} | not grep sub
 ; END.
 

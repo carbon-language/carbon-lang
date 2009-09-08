@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep load | count 3
+; RUN: opt %s -instcombine | llvm-dis | grep load | count 3
 ; PR2471
 
 declare i32 @x(i32*)

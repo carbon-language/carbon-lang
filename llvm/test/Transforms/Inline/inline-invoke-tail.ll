@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep {tail call void @llvm.memcpy.i32}
+; RUN: opt %s -inline | llvm-dis | not grep {tail call void @llvm.memcpy.i32}
 ; PR3550
 
 define internal void @foo(i32* %p, i32* %q) {

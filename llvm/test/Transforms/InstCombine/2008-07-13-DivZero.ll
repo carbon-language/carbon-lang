@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {lshr.*3}
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {call .*%cond}
+; RUN: opt %s -instcombine | llvm-dis | grep {lshr.*3}
+; RUN: opt %s -instcombine | llvm-dis | grep {call .*%cond}
 ; PR2506
 
 ; We can simplify the operand of udiv to '8', but not the operand to the

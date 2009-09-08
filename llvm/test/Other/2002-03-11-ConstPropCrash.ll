@@ -5,7 +5,7 @@
 ;
 ; Fixed by adding new arguments to ConstantFoldTerminator
 ;
-; RUN: llvm-as < %s | opt -constprop
+; RUN: opt %s -constprop
 
 define void @build_tree(i32 %ml) {
 ; <label>:0

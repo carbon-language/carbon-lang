@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-index-split -disable-output
+; RUN: opt %s -loop-index-split -disable-output
 ; PR 2011
 	%struct.CLAUSE_HELP = type { i32, i32, i32, i32, i32*, i32, %struct.LIST_NODE*, %struct.LIST_NODE*, i32, i32, %struct.LITERAL_HELP**, i32, i32, i32, i32 }
 	%struct.LIST_NODE = type { %struct.LIST_NODE*, i8* }

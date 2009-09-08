@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {icmp eq i32 %In, 15}
+; RUN: opt %s -instcombine | llvm-dis | grep {icmp eq i32 %In, 15}
 ; PR2479
 ; (See also PR1800.)
 

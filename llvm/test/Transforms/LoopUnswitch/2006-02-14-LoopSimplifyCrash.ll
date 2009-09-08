@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unswitch -disable-output
+; RUN: opt %s -loop-unswitch -disable-output
 ; END.
 
 target datalayout = "E-p:32:32"

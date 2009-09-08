@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {16} | count 1
+; RUN: opt %s -instcombine | llvm-dis | grep {16} | count 1
 
 define i8* @bork(i8** %qux) {
   %tmp275 = load i8** %qux, align 1

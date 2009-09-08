@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep icmp
+; RUN: opt %s -instcombine | llvm-dis | grep icmp
 ; PR1646
 
 @__gthrw_pthread_cancel = alias weak i32 (i32)* @pthread_cancel		; <i32 (i32)*> [#uses=1]

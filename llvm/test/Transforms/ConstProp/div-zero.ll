@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i32 0}
+; RUN: opt %s -instcombine | llvm-dis | grep {ret i32 0}
 ; PR4424
 declare void @ext()
 

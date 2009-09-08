@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep -v {i32 8}
+; RUN: opt %s -instcombine | llvm-dis | grep -v {i32 8}
 ; PR2330
 
 define i32 @a(i32 %a) nounwind  {

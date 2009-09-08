@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt -stats -disable-output |& grep "1 globalopt - Number of global vars shrunk to booleans"
+; RUN: opt %s -globalopt -stats -disable-output |& grep "1 globalopt - Number of global vars shrunk to booleans"
 ; XFAIL: *
 
 	type { }		; type %0

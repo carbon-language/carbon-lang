@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -dse | llvm-dis | not grep DEAD
+; RUN: opt %s -dse | llvm-dis | not grep DEAD
 
 declare void @ext()
 

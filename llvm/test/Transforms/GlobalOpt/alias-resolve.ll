@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis > %t
+; RUN: opt %s -globalopt | llvm-dis > %t
 ; RUN: cat %t | grep foo1 | count 1
 ; RUN: cat %t | grep foo2 | count 4
 ; RUN: cat %t | grep bar1 | count 1

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep zext
+; RUN: opt %s -instcombine | llvm-dis | grep zext
 
 ; Never merge these two conversions, even though it's possible: this is
 ; significantly more expensive than the two conversions on some targets

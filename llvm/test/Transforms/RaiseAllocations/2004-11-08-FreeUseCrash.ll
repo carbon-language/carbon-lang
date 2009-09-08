@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -raiseallocs -disable-output
+; RUN: opt %s -raiseallocs -disable-output
 
 define void @main() {
 	%tmp.13 = call i32 (...)* @free( i32 32 )		; <i32> [#uses=1]

@@ -1,6 +1,6 @@
 ; Ensure constant propogation of logical instructions is working correctly.
 
-; RUN: llvm-as < %s | opt -constprop -die | llvm-dis | \
+; RUN: opt %s -constprop -die | llvm-dis | \
 ; RUN:   not egrep {and|or|xor}
 
 define i32 @test1() {

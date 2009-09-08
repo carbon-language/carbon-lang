@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loopsimplify
+; RUN: opt %s -loopsimplify
 
 define void @foo(i1 %C) {
 	br i1 %C, label %T, label %F

@@ -1,7 +1,7 @@
 ; This testcase is incorrectly getting completely eliminated.  There should be
 ; SOME instruction named %c here, even if it's a bitwise and.
 ;
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep %c
+; RUN: opt %s -instcombine | llvm-dis | grep %c
 ;
 define i64 @test3(i64 %A) {
         %c1 = trunc i64 %A to i8                ; <i8> [#uses=1]

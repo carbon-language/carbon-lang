@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl -disable-output
+; RUN: opt %s -scalarrepl -disable-output
 
 target datalayout = "E-p:32:32"
 

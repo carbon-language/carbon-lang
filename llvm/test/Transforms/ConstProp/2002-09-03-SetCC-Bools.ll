@@ -1,6 +1,6 @@
 ; SetCC on boolean values was not implemented!
 
-; RUN: llvm-as < %s | opt -constprop -die | llvm-dis | \
+; RUN: opt %s -constprop -die | llvm-dis | \
 ; RUN:   not grep set
 
 define i1 @test1() {

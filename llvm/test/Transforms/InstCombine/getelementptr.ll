@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | FileCheck %s
+; RUN: opt %s -instcombine | llvm-dis | FileCheck %s
 
 target datalayout = "e-p:64:64"
 %intstruct = type { i32 }

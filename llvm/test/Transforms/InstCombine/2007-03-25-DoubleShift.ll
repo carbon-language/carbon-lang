@@ -1,5 +1,5 @@
 ; PR1271
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep and
+; RUN: opt %s -instcombine | llvm-dis | grep and
 define i1 @test(i32 %tmp13) {
 entry:
 	%tmp14 = shl i32 %tmp13, 12		; <i32> [#uses=1]

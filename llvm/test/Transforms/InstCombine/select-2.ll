@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep select | count 2
+; RUN: opt %s -instcombine | llvm-dis | grep select | count 2
 
 ; Make sure instcombine don't fold select into operands. We don't want to emit
 ; select of two integers unless it's selecting 0 / 1.

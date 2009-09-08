@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -jump-threading | llvm-dis | not grep phi
+; RUN: opt %s -jump-threading | llvm-dis | not grep phi
 
 declare i8 @mcguffin()
 

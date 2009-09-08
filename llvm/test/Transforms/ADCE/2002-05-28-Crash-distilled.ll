@@ -1,6 +1,6 @@
 ; This testcase is a distilled form of: 2002-05-28-Crash.ll
 
-; RUN: llvm-as < %s | opt -adce 
+; RUN: opt %s -adce 
 
 define float @test(i32 %i) {
         %F = sitofp i32 %i to float             ; <float> [#uses=1]

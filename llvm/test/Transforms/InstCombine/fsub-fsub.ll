@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep fsub | count 2
+; RUN: opt %s -instcombine | llvm-dis | grep fsub | count 2
 ; PR4374
 
 define float @func(float %a, float %b) nounwind {

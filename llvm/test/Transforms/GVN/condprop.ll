@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep {br i1 false}
+; RUN: opt %s -gvn | llvm-dis | grep {br i1 false}
 
 @a = external global i32		; <i32*> [#uses=7]
 

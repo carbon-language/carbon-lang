@@ -1,5 +1,5 @@
 ; A very rudimentary test on AliasAnalysis::getModRefInfo.
-; RUN: llvm-as < %s | opt -print-all-alias-modref-info -aa-eval -disable-output |& \
+; RUN: opt %s -print-all-alias-modref-info -aa-eval -disable-output |& \
 ; RUN: not grep NoModRef
 
 define i32 @callee() {

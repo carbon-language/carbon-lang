@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loopsimplify -verify -licm -disable-output
+; RUN: opt %s -loopsimplify -verify -licm -disable-output
 
 define void @.subst_48() {
 entry:

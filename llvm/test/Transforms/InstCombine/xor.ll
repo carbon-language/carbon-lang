@@ -1,6 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:    not grep {xor }
 ; END.
 @G1 = global i32 0		; <i32*> [#uses=1]

@@ -1,5 +1,5 @@
 ; PR726
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | \
+; RUN: opt %s -indvars | llvm-dis | \
 ; RUN:   grep {ret i32 27}
 
 ; Make sure to compute the right exit value based on negative strides.

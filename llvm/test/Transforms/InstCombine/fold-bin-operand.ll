@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep icmp
+; RUN: opt %s -instcombine | llvm-dis | not grep icmp
 
 define i1 @f(i1 %x) {
 	%b = and i1 %x, icmp eq (i8* inttoptr (i32 1 to i8*), i8* inttoptr (i32 2 to i8*))

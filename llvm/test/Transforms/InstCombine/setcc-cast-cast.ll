@@ -1,7 +1,7 @@
 ; This test case was reduced from MultiSource/Applications/hbd. It makes sure
 ; that folding doesn't happen in case a zext is applied where a sext should have
 ; been when a setcc is used with two casts.
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:    not grep {br i1 false}
 ; END.
 

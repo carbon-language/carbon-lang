@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {insertelement <4 x float> undef}
+; RUN: opt %s -instcombine | llvm-dis | grep {insertelement <4 x float> undef}
 
 ; Instcombine should be able to prove that none of the
 ; insertelement's first operand's elements are needed.

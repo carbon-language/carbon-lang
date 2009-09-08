@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl
+; RUN: opt %s -scalarrepl
 
 define void @main() {
 	%E = alloca { { i32, float, double, i64 }, { i32, float, double, i64 } }	; <{ { i32, float, double, i64 }, { i32, float, double, i64 } }*> [#uses=1]

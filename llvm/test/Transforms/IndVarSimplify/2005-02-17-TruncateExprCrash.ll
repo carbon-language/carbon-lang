@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars -disable-output
+; RUN: opt %s -indvars -disable-output
 
 declare void @q_atomic_increment()
 

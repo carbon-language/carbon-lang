@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-rotate -disable-output
+; RUN: opt %s -loop-rotate -disable-output
 ; ModuleID = 'PhiSelfRefernce-1.bc'
 
 define void @snrm2(i32 %incx) {

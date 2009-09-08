@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loopsimplify
+; RUN: opt %s -loopsimplify
 
 ; This function should get a preheader inserted before BB3, that is jumped
 ; to by BB1 & BB2

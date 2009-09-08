@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -simplifycfg -instcombine | llvm-dis | grep 0x3FB99999A0000000 | count 2
-; RUN: llvm-as < %s | opt -simplifycfg -instcombine | llvm-dis | grep 0xBFB99999A0000000 | count 2
+; RUN: opt %s -simplifycfg -instcombine | llvm-dis | grep 0x3FB99999A0000000 | count 2
+; RUN: opt %s -simplifycfg -instcombine | llvm-dis | grep 0xBFB99999A0000000 | count 2
 ; check constant folding for 'frem'.  PR 3316.
 
 ; ModuleID = 'tt.c'

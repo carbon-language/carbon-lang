@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | grep {select i1 %ispos}
+; RUN: opt %s -simplify-libcalls | llvm-dis | grep {select i1 %ispos}
 ; PR2337
 
 define i32 @test(i32 %x) {

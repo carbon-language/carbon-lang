@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | FileCheck %s
+; RUN: opt %s -instcombine | llvm-dis | FileCheck %s
 
 ; Constant folding should fix notionally out-of-bounds indices
 ; and add inbounds keywords.

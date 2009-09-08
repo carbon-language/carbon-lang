@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep icmp | count 2
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep sitofp | count 1
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep uitofp | count 1
+; RUN: opt %s -indvars | llvm-dis | grep icmp | count 2
+; RUN: opt %s -indvars | llvm-dis | grep sitofp | count 1
+; RUN: opt %s -indvars | llvm-dis | grep uitofp | count 1
 
 define void @bar() nounwind {
 entry:

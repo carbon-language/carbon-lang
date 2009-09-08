@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output | grep {count is 2}
+; RUN: opt %s -analyze -scalar-evolution -disable-output | grep {count is 2}
 ; PR3171
 
 	%struct.Foo = type { i32 }

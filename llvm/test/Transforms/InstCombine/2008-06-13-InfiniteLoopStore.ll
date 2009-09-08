@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {store i32} | count 2
+; RUN: opt %s -instcombine | llvm-dis | grep {store i32} | count 2
 
 @g_139 = global i32 0           ; <i32*> [#uses=2]
 

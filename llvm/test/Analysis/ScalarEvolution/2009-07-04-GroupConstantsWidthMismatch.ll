@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution
+; RUN: opt %s -analyze -scalar-evolution
 ; PR4501
 
 define void @test() {

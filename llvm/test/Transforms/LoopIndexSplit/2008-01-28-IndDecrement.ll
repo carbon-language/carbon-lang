@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-index-split -disable-output -stats |& \
+; RUN: opt %s -loop-index-split -disable-output -stats |& \
 ; RUN: not grep "loop-index-split" 
 
 ; Induction variable decrement is not yet handled.

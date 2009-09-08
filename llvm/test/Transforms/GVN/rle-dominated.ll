@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep load | count 2
+; RUN: opt %s -gvn | llvm-dis | grep load | count 2
 
 define i32 @main(i32** %p) {
 block1:

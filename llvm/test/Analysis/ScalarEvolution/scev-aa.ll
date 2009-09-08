@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scev-aa -aa-eval -print-all-alias-modref-info \
+; RUN: opt %s -scev-aa -aa-eval -print-all-alias-modref-info \
 ; RUN:   |& FileCheck %s
 
 ; At the time of this writing, all of these CHECK lines are cases that

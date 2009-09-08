@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep phi | count 1
+; RUN: opt %s -loop-reduce | llvm-dis | grep phi | count 1
 
 ; This should only result in one PHI node!
 

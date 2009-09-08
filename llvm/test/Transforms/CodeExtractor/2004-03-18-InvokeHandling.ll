@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-extract -disable-output
+; RUN: opt %s -loop-extract -disable-output
 
 declare i32 @_IO_getc()
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep { sub } | count 1
+; RUN: opt %s -instcombine | llvm-dis | grep { sub } | count 1
 ; PR2047
 
 define i32 @l(i32 %a, i32 %b, i32 %c, i32 %d) {

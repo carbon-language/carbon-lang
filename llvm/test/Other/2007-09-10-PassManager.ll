@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unswitch -indvars -disable-output
+; RUN: opt %s -loop-unswitch -indvars -disable-output
 ; Require SCEV before LCSSA.
 define void @foo() {
 entry:

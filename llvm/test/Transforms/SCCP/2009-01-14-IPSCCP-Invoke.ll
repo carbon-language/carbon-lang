@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | grep {ret i32 42}
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | grep {ret i32 undef}
+; RUN: opt %s -ipsccp | llvm-dis | grep {ret i32 42}
+; RUN: opt %s -ipsccp | llvm-dis | grep {ret i32 undef}
 ; PR3325
 
 define i32 @main() {

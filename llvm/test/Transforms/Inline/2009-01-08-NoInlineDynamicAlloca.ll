@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline | llvm-dis | grep call
+; RUN: opt %s -inline | llvm-dis | grep call
 ; Do not inline calls to variable-sized alloca.
 
 @q = common global i8* null		; <i8**> [#uses=1]

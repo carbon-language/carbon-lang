@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep bitcast
+; RUN: opt %s -instcombine | llvm-dis | not grep bitcast
 
 define i19 @test1(i43 %val) {
   %t1 = bitcast i43 %val to i43 

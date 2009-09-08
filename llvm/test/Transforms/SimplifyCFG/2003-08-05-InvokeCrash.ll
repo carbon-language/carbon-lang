@@ -1,6 +1,6 @@
 ; Do not remove the invoke!
 ;
-; RUN: llvm-as < %s | opt -simplifycfg -disable-output
+; RUN: opt %s -simplifycfg -disable-output
 
 define i32 @test() {
 	%A = invoke i32 @test( )

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | grep {define void @a}
+; RUN: opt %s -globalopt | llvm-dis | grep {define void @a}
 
 define internal void @f() {
 	ret void

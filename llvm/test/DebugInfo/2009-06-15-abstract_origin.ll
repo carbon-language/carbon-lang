@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -asm-verbose -O0 | not grep ".long	0x0	## DW_AT_abstract_origin"
+; RUN: llc %s -o - -asm-verbose -O0 | not grep ".long	0x0	## DW_AT_abstract_origin"
 
 	%llvm.dbg.anchor.type = type { i32, i32 }
 	%llvm.dbg.basictype.type = type { i32, { }*, i8*, { }*, i32, i64, i64, i64, i32, i32 }

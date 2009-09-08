@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -argpromotion | llvm-dis > %t
+; RUN: opt %s -argpromotion | llvm-dis > %t
 ; RUN: cat %t | grep {define.*@callee(.*i32\\*}
 ; PR2498
 

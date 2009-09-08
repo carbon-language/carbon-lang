@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | FileCheck %s
+; RUN: opt %s -simplify-libcalls | llvm-dis | FileCheck %s
 ; PR4738
 
 ; SimplifyLibcalls shouldn't assume anything about weak symbols.

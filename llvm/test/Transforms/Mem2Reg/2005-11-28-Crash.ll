@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -mem2reg -disable-output
+; RUN: opt %s -mem2reg -disable-output
 ; PR670
 
 define void @printk(i32, ...) {

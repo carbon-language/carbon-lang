@@ -1,5 +1,5 @@
 ; PR1600
-; RUN: llvm-as < %s | opt -basicaa -gvn -instcombine | llvm-dis | \
+; RUN: opt %s -basicaa -gvn -instcombine | llvm-dis | \
 ; RUN:   grep {ret i32 0}
 ; END.
 

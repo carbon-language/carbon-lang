@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -disable-output
+; RUN: opt %s -instcombine -disable-output
 
 	%struct.Ray = type { %struct.Vec, %struct.Vec }
 	%struct.Scene = type { i32 (...)** }

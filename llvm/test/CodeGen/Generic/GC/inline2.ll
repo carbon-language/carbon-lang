@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -inline | llvm-dis | grep sample
-; RUN: llvm-as < %s | opt -inline | llvm-dis | grep example
+; RUN: opt %s -inline | llvm-dis | grep sample
+; RUN: opt %s -inline | llvm-dis | grep example
 
 	%IntArray = type { i32, [0 x i32*] }
 

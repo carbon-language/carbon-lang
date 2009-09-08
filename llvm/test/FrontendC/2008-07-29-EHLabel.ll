@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -o - | %llvmgcc -xassembler -c -o /dev/null -
+; RUN: llc %s -o - | %llvmgcc -xassembler -c -o /dev/null -
 ; PR2609
 	%struct..0._11 = type { i32 }
 	%struct..1__pthread_mutex_s = type { i32, i32, i32, i32, i32, %struct..0._11 }

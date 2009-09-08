@@ -1,6 +1,6 @@
 ; This testcase was extracted from the gzip SPEC benchmark
 ;
-; RUN: llvm-as < %s | opt -adce
+; RUN: opt %s -adce
 
 @bk = external global i32               ; <i32*> [#uses=2]
 @hufts = external global i32            ; <i32*> [#uses=1]

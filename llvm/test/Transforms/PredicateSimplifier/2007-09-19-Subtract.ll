@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify | llvm-dis | grep unreachable | count 2
+; RUN: opt %s -predsimplify | llvm-dis | grep unreachable | count 2
 ; PR1683
 
 @.str = internal constant [13 x i8] c"c36174a.adb\00\00"		; <[13 x i8]*> [#uses=1]

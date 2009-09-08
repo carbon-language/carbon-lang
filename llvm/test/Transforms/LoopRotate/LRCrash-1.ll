@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-rotate -disable-output
+; RUN: opt %s -loop-rotate -disable-output
 
 	%struct.relation = type { [4 x i16], i32, [4 x i16], i32, i32 }
 

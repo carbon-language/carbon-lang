@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -ssi-everything -disable-output
+; RUN: opt %s -ssi-everything -disable-output
 ; PR4511
 
 	%"struct.std::_Vector_base<std::basic_string<char, std::char_traits<char>, std::allocator<char> >,std::allocator<std::basic_string<char, std::char_traits<char>, std::allocator<char> > > >" = type { %"struct.std::_Vector_base<std::basic_string<char, std::char_traits<char>, std::allocator<char> >,std::allocator<std::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::_Vector_impl" }

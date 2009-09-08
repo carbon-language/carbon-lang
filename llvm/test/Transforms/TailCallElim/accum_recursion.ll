@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -tailcallelim | llvm-dis | not grep call
+; RUN: opt %s -tailcallelim | llvm-dis | not grep call
 
 define i32 @factorial(i32 %x) {
 entry:

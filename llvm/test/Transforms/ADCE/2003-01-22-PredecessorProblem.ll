@@ -1,5 +1,5 @@
 ; Testcase reduced from 197.parser by bugpoint
-; RUN: llvm-as < %s | opt -adce 
+; RUN: opt %s -adce 
 
 define void @conjunction_prune() {
 ; <label>:0

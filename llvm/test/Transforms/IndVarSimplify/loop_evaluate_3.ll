@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep {ret i32 600000}
+; RUN: opt %s -indvars | llvm-dis | grep {ret i32 600000}
 ; PR1179
 
 define i32 @foo() {

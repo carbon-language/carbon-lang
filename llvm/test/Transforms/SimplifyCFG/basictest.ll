@@ -1,6 +1,6 @@
 ; Test CFG simplify removal of branch instructions...
 ;
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep br
+; RUN: opt %s -simplifycfg | llvm-dis | not grep br
 
 define void @test1() {
         br label %BB1

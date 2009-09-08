@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {volatile store}
+; RUN: opt %s -instcombine | llvm-dis | grep {volatile store}
 
 define void @test() {
 	%votf = alloca <4 x float>		; <<4 x float>*> [#uses=1]

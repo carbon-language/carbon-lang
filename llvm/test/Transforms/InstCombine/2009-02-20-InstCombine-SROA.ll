@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -scalarrepl | llvm-dis | not grep { = alloca}
+; RUN: opt %s -instcombine -scalarrepl | llvm-dis | not grep { = alloca}
 ; rdar://6417724
 ; Instcombine shouldn't do anything to this function that prevents promoting the allocas inside it.
 

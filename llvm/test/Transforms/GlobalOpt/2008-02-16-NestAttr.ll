@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | grep { nest } | count 1
+; RUN: opt %s -globalopt | llvm-dis | grep { nest } | count 1
 	%struct.FRAME.nest = type { i32, i32 (i32)* }
 	%struct.__builtin_trampoline = type { [10 x i8] }
 @.str = internal constant [7 x i8] c"%d %d\0A\00"		; <[7 x i8]*> [#uses=1]

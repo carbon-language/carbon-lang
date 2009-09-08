@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep sdiv
+; RUN: opt %s -instcombine | llvm-dis | not grep sdiv
 ; PR2740
 
 define i1 @func_75(i32 %i2) nounwind {

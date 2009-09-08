@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-index-split -stats -disable-output |& grep "1 loop-index-split" 
+; RUN: opt %s -loop-index-split -stats -disable-output |& grep "1 loop-index-split" 
 ; PR 2869
 
 @w = external global [2 x [2 x i32]]		; <[2 x [2 x i32]]*> [#uses=5]

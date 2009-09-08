@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg -disable-output
+; RUN: opt %s -simplifycfg -disable-output
 
 define void @polnel_() {
 entry:

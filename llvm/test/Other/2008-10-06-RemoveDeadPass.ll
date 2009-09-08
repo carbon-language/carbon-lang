@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -internalize -disable-output
+; RUN: opt %s -inline -internalize -disable-output
 define void @foo() nounwind {
   ret void
 }

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | grep undef | count 1
+; RUN: opt %s -sccp | llvm-dis | grep undef | count 1
 ; PR1938
 
 define i32 @main() {

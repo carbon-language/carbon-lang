@@ -1,6 +1,6 @@
 ; Split loop. Split value is a constant and greater then exit value. 
 ; Check whether optimizer inserts proper checkfor split value or not.
-; RUN: llvm-as < %s | opt -loop-index-split | llvm-dis | grep select
+; RUN: opt %s -loop-index-split | llvm-dis | grep select
 
 @k = external global i32		; <i32*> [#uses=2]
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep callee
+; RUN: opt %s -inline | llvm-dis | not grep callee
 ; rdar://6655932
 
 ; If callee is marked alwaysinline, inline it! Even if callee has dynamic

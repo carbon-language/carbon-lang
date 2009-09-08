@@ -1,6 +1,6 @@
 ; Make sure that the constant propagator doesn't cause a sigfpe
 ;
-; RUN: llvm-as < %s | opt -constprop
+; RUN: opt %s -constprop
 ;
 
 define i32 @test() {

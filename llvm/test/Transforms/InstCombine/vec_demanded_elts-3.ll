@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep load
+; RUN: opt %s -instcombine | llvm-dis | not grep load
 ; PR4340
 
 define void @vac(<4 x float>* nocapture %a) nounwind {

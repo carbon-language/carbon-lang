@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i32 2143034560}
+; RUN: opt %s -instcombine | llvm-dis | grep {ret i32 2143034560}
 
 ; Instcombine should be able to completely fold this code.
 

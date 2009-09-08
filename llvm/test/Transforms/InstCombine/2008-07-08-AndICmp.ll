@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep icmp | count 1
+; RUN: opt %s -instcombine | llvm-dis | grep icmp | count 1
 ; PR2330
 
 define i1 @foo(i32 %a, i32 %b) nounwind {

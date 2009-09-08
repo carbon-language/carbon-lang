@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | grep {ret i32 0}
+; RUN: opt %s -sccp | llvm-dis | grep {ret i32 0}
 
 ; Test that SCCP has basic knowledge of when and/or nuke overdefined values.
 

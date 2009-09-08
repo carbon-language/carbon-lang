@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i32 %A}
-; RUN: llvm-as < %s | opt -die | llvm-dis | not grep call.*llvm.stacksave
+; RUN: opt %s -instcombine | llvm-dis | grep {ret i32 %A}
+; RUN: opt %s -die | llvm-dis | not grep call.*llvm.stacksave
 
 define i32 @test(i32 %A) {
 	%X = or i1 false, false		

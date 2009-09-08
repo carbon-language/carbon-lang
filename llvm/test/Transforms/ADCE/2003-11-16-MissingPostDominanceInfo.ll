@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -adce -simplifycfg | llvm-dis | grep call
+; RUN: opt %s -adce -simplifycfg | llvm-dis | grep call
 declare void @exit(i32)
 
 define i32 @main(i32 %argc) {

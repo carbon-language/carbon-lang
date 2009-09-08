@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -disable-output
+; RUN: opt %s -inline -disable-output
 
 declare i32 @External()
 

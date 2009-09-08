@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -sccp -simplifycfg | llvm-dis | \
+; RUN: opt %s -sccp -simplifycfg | llvm-dis | \
 ; RUN:   not grep then:
 
 define void @cprop_test11(i32* %data.1) {

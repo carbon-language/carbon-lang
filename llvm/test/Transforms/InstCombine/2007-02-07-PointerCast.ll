@@ -1,4 +1,4 @@
-;RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep zext
+;RUN: opt %s -instcombine | llvm-dis | grep zext
 
 ; Make sure the uint isn't removed.  Instcombine in llvm 1.9 was dropping the 
 ; uint cast which was causing a sign extend. This only affected code with 

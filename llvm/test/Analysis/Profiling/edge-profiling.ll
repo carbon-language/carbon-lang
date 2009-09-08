@@ -1,5 +1,5 @@
 ; Test the edge profiling instrumentation.
-; RUN: llvm-as < %s | opt -insert-edge-profiling | llvm-dis | FileCheck %s
+; RUN: opt %s -insert-edge-profiling | llvm-dis | FileCheck %s
 
 ; ModuleID = '<stdin>'
 

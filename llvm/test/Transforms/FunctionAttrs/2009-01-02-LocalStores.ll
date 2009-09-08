@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -functionattrs | llvm-dis | not grep {nocapture *%%q}
-; RUN: llvm-as < %s | opt -functionattrs | llvm-dis | grep {nocapture *%%p}
+; RUN: opt %s -functionattrs | llvm-dis | not grep {nocapture *%%q}
+; RUN: opt %s -functionattrs | llvm-dis | grep {nocapture *%%p}
 
 define i32* @a(i32** %p) {
 	%tmp = load i32** %p

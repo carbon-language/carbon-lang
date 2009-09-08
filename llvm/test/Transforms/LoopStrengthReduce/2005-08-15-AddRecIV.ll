@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce -disable-output
+; RUN: opt %s -loop-reduce -disable-output
 
 define void @try_swap() {
 entry:

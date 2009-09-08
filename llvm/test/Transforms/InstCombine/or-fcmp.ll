@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep fcmp | count 3
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep ret | grep 1
+; RUN: opt %s -instcombine | llvm-dis | grep fcmp | count 3
+; RUN: opt %s -instcombine | llvm-dis | grep ret | grep 1
 
 define zeroext i8 @t1(float %x, float %y) nounwind {
        %a = fcmp ueq float %x, %y             ; <i1> [#uses=1]

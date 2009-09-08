@@ -1,5 +1,5 @@
 ; Loop is elimianted. Save last value assignment.
-; RUN: llvm-as < %s | opt -loop-index-split -disable-output -stats |& \
+; RUN: opt %s -loop-index-split -disable-output -stats |& \
 ; RUN: grep "loop-index-split" | count 1
 
 	%struct.anon = type { i32 }

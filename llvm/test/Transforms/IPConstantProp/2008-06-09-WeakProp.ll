@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -ipconstprop | llvm-dis | grep {ret i32 %r}
+; RUN: opt %s -ipconstprop | llvm-dis | grep {ret i32 %r}
 ; Should not propagate the result of a weak function.
 ; PR2411
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i1 false}
+; RUN: opt %s -instcombine | llvm-dis | grep {ret i1 false}
 ; PR2276
 
 define i1 @f(i32 %x) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | FileCheck %s --check-prefix=CHECK
+; RUN: opt %s -indvars | llvm-dis | FileCheck %s --check-prefix=CHECK
 
 declare i1 @b()
 

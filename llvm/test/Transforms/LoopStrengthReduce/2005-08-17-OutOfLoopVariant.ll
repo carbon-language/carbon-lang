@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce -disable-output
+; RUN: opt %s -loop-reduce -disable-output
 
 define i32 @image_to_texture(i32 %indvar454) {
 loopentry.1.outer:

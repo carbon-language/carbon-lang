@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output > %t
+; RUN: opt %s -analyze -scalar-evolution -disable-output > %t
 ; RUN: grep {sext i57 \{0,+,199\}<bb> to i64} %t | count 1
 ; RUN: grep {sext i59 \{0,+,199\}<bb> to i64} %t | count 1
 

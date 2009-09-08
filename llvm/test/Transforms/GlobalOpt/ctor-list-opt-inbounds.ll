@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | FileCheck %s
+; RUN: opt %s -globalopt | llvm-dis | FileCheck %s
 
 ; Don't get fooled by the inbounds keyword; it doesn't change
 ; the computed address.

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -disable-output -loop-unroll
+; RUN: opt %s -disable-output -loop-unroll
 ; PR1770
 ; PR1947
 

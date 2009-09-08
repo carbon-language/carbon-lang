@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -O0 | grep "label" | count 8
+; RUN: llc %s -o - -O0 | grep "label" | count 8
 ; PR2614
 ; XFAIL: *
 

@@ -1,5 +1,5 @@
 ; PR1271
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:    grep {ashr i32 %.mp137, 2}
 ; END.
 

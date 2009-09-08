@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {mul i64}
+; RUN: opt %s -instcombine | llvm-dis | grep {mul i64}
 ; rdar://6762288
 
 ; Instcombine should not promote the mul to i96 because it is definitely

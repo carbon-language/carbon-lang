@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn | llvm-dis | not grep {tmp701 =}
+; RUN: opt %s -gvn | llvm-dis | not grep {tmp701 =}
 
 @img_width = external global i16		; <i16*> [#uses=2]
 

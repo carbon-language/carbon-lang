@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -lcssa | llvm-dis | \
+; RUN: opt %s -lcssa | llvm-dis | \
 ; RUN:    grep {%X.1.lcssa}
-; RUN: llvm-as < %s | opt -lcssa | llvm-dis | \
+; RUN: opt %s -lcssa | llvm-dis | \
 ; RUN:    not grep {%X.1.lcssa1}
 
 declare i1 @c1()

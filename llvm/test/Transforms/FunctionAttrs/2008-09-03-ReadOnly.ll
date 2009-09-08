@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -functionattrs | llvm-dis | grep readonly | count 2
+; RUN: opt %s -functionattrs | llvm-dis | grep readonly | count 2
 
 define i32 @f() {
 entry:

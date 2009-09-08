@@ -1,7 +1,7 @@
 ; This test makes sure that div instructions are properly eliminated.
 ; This test is for Integer BitWidth < 64 && BitWidth % 2 != 0.
 ;
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep div
+; RUN: opt %s -instcombine | llvm-dis | not grep div
 
 
 define i33 @test1(i33 %X) {

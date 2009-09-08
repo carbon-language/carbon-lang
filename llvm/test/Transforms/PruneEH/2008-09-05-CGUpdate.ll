@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -prune-eh -inline -print-callgraph \
+; RUN: opt %s -prune-eh -inline -print-callgraph \
 ; RUN:   -disable-output |& \
 ; RUN:     grep {Calls.*ce3806g__fxio__put__put_int64__4.1339} | count 2
 	%struct.FRAME.ce3806g = type { %struct.string___XUB, %struct.string___XUB, %struct.string___XUB, %struct.string___XUB }

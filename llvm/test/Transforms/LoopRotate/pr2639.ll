@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-deletion -loop-rotate -disable-output
+; RUN: opt %s -loop-deletion -loop-rotate -disable-output
 ; PR 2639
 
 	%struct.HexxagonMove = type { i8, i8, i32 }

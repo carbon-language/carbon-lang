@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | not grep {ret i32 0}
+; RUN: opt %s -deadargelim | llvm-dis | not grep {ret i32 0}
 ; PR1735
 
 define internal i32 @test(i32 %A, ...) { 

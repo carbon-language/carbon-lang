@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep -- -65536
+; RUN: opt %s -instcombine | llvm-dis | not grep -- -65536
 
 define i1 @test(i32 %tmp.124) {
         %tmp.125 = shl i32 %tmp.124, 8          ; <i32> [#uses=1]

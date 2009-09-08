@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -jump-threading | llvm-dis | not grep {br }
-; RUN: llvm-as < %s | opt -jump-threading | llvm-dis | grep {ret i32} | count 1
+; RUN: opt %s -jump-threading | llvm-dis | not grep {br }
+; RUN: opt %s -jump-threading | llvm-dis | grep {ret i32} | count 1
 
 define i32 @test(i1 %cond) {
 	br i1 undef, label %T1, label %F1

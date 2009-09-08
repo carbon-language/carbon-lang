@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep {br i1} | count 1
+; RUN: opt %s -simplifycfg | llvm-dis | grep {br i1} | count 1
 
 define void @test(i32* %P, i32* %Q, i1 %A, i1 %B) {
         br i1 %A, label %a, label %b

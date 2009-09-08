@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output
+; RUN: opt %s -analyze -scalar-evolution -disable-output
 ; PR1827
 
 declare void @use(i32)

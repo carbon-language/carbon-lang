@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -anders-aa -gvn | llvm-dis | not grep undef
+; RUN: opt %s -anders-aa -gvn | llvm-dis | not grep undef
 ; PR2160
 
 declare void @f(i32*)

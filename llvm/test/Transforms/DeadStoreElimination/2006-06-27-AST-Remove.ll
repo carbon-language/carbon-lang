@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalsmodref-aa -dse -disable-output
+; RUN: opt %s -globalsmodref-aa -dse -disable-output
 target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin8"
 	%struct.ECacheType = type { i32, i32, i32 }

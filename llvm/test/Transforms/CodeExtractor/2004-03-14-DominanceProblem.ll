@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-extract -disable-output
+; RUN: opt %s -loop-extract -disable-output
 ; This testcase is failing the loop extractor because not all exit blocks 
 ; are dominated by all of the live-outs.
 

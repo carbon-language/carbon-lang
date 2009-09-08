@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars -disable-output
+; RUN: opt %s -indvars -disable-output
 
 @fixtab = external global [29 x [29 x [2 x i32]]]               ; <[29 x [29 x [2 x i32]]]*> [#uses=1]
 

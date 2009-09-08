@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -argpromotion -mem2reg | llvm-dis | not grep alloca
+; RUN: opt %s -argpromotion -mem2reg | llvm-dis | not grep alloca
 define internal i32 @test(i32* %X, i32* %Y) {
         %A = load i32* %X               ; <i32> [#uses=1]
         %B = load i32* %Y               ; <i32> [#uses=1]

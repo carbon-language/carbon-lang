@@ -4,7 +4,7 @@
 ;
 ; Which is not valid SSA
 ;
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis
+; RUN: opt %s -simplifycfg | llvm-dis
 
 define void @test() {
 ; <label>:0

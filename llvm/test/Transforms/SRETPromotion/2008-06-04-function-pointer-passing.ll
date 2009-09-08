@@ -5,7 +5,7 @@
 
 ; We're mainly testing for opt not to crash, but we'll check to see if the sret
 ; attribute is still there for good measure.
-; RUN: llvm-as < %s | opt -sretpromotion | llvm-dis | grep sret
+; RUN: opt %s -sretpromotion | llvm-dis | grep sret
 
 %struct.S = type <{ i32, i32 }>
 

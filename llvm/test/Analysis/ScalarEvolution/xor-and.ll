@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalar-evolution -disable-output -analyze \
+; RUN: opt %s -scalar-evolution -disable-output -analyze \
 ; RUN:   | grep {\\-->  (zext i4 (-8 + (trunc i64 (8 \\* %x) to i4)) to i64)}
 
 ; ScalarEvolution shouldn't try to analyze %z into something like

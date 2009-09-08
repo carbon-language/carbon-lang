@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn -instcombine | llvm-dis | grep {ret i32 0}
+; RUN: opt %s -gvn -instcombine | llvm-dis | grep {ret i32 0}
 ; PR4189
 @G = external constant [4 x i32]
 

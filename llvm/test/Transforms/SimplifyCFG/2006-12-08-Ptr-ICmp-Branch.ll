@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis
+; RUN: opt %s -simplifycfg | llvm-dis
 ; END.
 
 ; ModuleID = '2006-12-08-Ptr-ICmp-Branch.ll'

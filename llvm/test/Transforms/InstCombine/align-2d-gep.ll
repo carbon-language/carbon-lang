@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {align 16} | count 1
+; RUN: opt %s -instcombine | llvm-dis | grep {align 16} | count 1
 
 ; A multi-dimensional array in a nested loop doing vector stores that
 ; aren't yet aligned. Instcombine can understand the addressing in the

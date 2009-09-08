@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | not grep alloca
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | not grep {7 x double}
-; RUN: llvm-as < %s | opt -scalarrepl -instcombine | llvm-dis | grep {ret double %B}
+; RUN: opt %s -scalarrepl | llvm-dis | not grep alloca
+; RUN: opt %s -scalarrepl | llvm-dis | not grep {7 x double}
+; RUN: opt %s -scalarrepl -instcombine | llvm-dis | grep {ret double %B}
 
 define double @test(double %A, double %B) {
 	%ARR = alloca [7 x i64]

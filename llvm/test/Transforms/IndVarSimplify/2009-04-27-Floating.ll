@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep icmp | grep next
+; RUN: opt %s -indvars | llvm-dis | grep icmp | grep next
 ; PR4086
 declare void @foo()
 

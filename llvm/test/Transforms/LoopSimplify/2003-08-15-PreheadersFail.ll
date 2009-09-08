@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -tailduplicate -instcombine -simplifycfg -licm -disable-output
+; RUN: opt %s -tailduplicate -instcombine -simplifycfg -licm -disable-output
 target datalayout = "e-p:32:32"
 @yy_base = external global [787 x i16]		; <[787 x i16]*> [#uses=1]
 @yy_state_ptr = external global i32*		; <i32**> [#uses=3]

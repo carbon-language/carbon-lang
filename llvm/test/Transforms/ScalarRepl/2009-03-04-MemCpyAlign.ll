@@ -1,6 +1,6 @@
 ; The store into %p should end up with a known alignment of 1, since the memcpy
 ; is only known to access it with 1-byte alignment.
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep {store i16 1, .*, align 1}
+; RUN: opt %s -scalarrepl | llvm-dis | grep {store i16 1, .*, align 1}
 ; PR3720
 
         %struct.st = type { i16 }

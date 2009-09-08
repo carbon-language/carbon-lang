@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep undef | count 1
+; RUN: opt %s -instcombine | llvm-dis | grep undef | count 1
 ; END.
 
 ; Test fold of two shuffles where the first shuffle vectors inputs are a

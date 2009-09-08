@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -tailduplicate -disable-output
+; RUN: opt %s -tailduplicate -disable-output
 
 declare void @__main()
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep br
+; RUN: opt %s -simplifycfg | llvm-dis | not grep br
 
 declare void @bar(i32)
 

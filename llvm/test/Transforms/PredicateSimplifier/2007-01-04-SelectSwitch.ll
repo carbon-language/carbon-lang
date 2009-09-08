@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify -disable-output
+; RUN: opt %s -predsimplify -disable-output
 
 define void @ercMarkCurrMBConcealed(i32 %comp) {
 entry:

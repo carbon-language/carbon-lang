@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep call | notcast
+; RUN: opt %s -instcombine | llvm-dis | grep call | notcast
 
 declare void @free(i8*)
 

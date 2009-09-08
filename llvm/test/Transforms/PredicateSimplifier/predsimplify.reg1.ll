@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify -verify
+; RUN: opt %s -predsimplify -verify
 
 define void @dgefa() {
 entry:

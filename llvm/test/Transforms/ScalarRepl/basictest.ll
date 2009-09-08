@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl -mem2reg | llvm-dis | not grep alloca
+; RUN: opt %s -scalarrepl -mem2reg | llvm-dis | not grep alloca
 
 define i32 @test() {
 	%X = alloca { i32, float }		; <{ i32, float }*> [#uses=1]

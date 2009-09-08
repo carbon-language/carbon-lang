@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn -enable-load-pre | llvm-dis | not grep {tmp3 = load}
+; RUN: opt %s -gvn -enable-load-pre | llvm-dis | not grep {tmp3 = load}
 
 @p = external global i32
 define i32 @f(i32 %n) nounwind {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -extract-blocks -disable-output
+; RUN: opt %s -extract-blocks -disable-output
 define i32 @foo() {
         br label %EB
 

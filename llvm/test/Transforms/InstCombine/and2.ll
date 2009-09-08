@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep and
+; RUN: opt %s -instcombine | llvm-dis | not grep and
 
 
 ; PR1738

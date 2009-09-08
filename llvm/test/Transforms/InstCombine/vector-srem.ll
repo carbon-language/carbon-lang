@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {srem <4 x i32>}
+; RUN: opt %s -instcombine | llvm-dis | grep {srem <4 x i32>}
 
 define <4 x i32> @foo(<4 x i32> %t, <4 x i32> %u)
 {

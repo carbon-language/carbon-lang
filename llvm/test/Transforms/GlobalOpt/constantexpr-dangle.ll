@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -globalopt | llvm-dis | \
+; RUN: opt %s -instcombine -globalopt | llvm-dis | \
 ; RUN:   grep {internal fastcc float @foo}
 
 define internal float @foo() {

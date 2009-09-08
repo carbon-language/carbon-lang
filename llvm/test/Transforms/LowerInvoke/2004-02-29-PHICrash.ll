@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -lowerinvoke -enable-correct-eh-support -disable-output
+; RUN: opt %s -lowerinvoke -enable-correct-eh-support -disable-output
 
 define void @_ZNKSt11__use_cacheISt16__numpunct_cacheIcEEclERKSt6locale() {
 entry:

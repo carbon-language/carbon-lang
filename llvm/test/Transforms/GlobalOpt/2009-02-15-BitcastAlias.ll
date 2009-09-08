@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt
+; RUN: opt %s -globalopt
 
 @g = external global i32
 

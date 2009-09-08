@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg -disable-output
+; RUN: opt %s -simplifycfg -disable-output
 
 define void @test(i32* %ldo, i1 %c, i1 %d) {
 bb9:

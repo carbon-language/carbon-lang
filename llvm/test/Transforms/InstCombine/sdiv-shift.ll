@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep div
+; RUN: opt %s -instcombine | llvm-dis | not grep div
 
 define i32 @a(i16 zeroext %x, i32 %y) nounwind {
 entry:

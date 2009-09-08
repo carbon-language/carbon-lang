@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline | llvm-dis | grep {llvm.memcpy}
+; RUN: opt %s -inline | llvm-dis | grep {llvm.memcpy}
 
 ; Inlining a byval struct should cause an explicit copy into an alloca.
 

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {%C = xor i1 %A, true}
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i1 false}
+; RUN: opt %s -instcombine | llvm-dis | grep {%C = xor i1 %A, true}
+; RUN: opt %s -instcombine | llvm-dis | grep {ret i1 false}
 ; PR2539
 
 define i1 @test1(i1 %A) {

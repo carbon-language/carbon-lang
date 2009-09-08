@@ -2,9 +2,9 @@
 ; logic operations.
 
 
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep and
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | not grep trunc
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | grep {ret i100 -1}
+; RUN: opt %s -sccp | llvm-dis | not grep and
+; RUN: opt %s -sccp | llvm-dis | not grep trunc
+; RUN: opt %s -sccp | llvm-dis | grep {ret i100 -1}
 
 define i100 @test(i133 %A) {
         %B = and i133 0, %A

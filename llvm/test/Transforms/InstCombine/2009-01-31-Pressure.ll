@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {%B = add i8 %b, %x}
+; RUN: opt %s -instcombine | llvm-dis | grep {%B = add i8 %b, %x}
 ; PR2698
 
 declare void @use1(i1)

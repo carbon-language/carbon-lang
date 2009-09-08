@@ -1,6 +1,6 @@
 ; Scalar replacement was incorrectly promoting this alloca!!
 ;
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | \
+; RUN: opt %s -scalarrepl | llvm-dis | \
 ; RUN:   sed {s/;.*//g} | grep {\\\[}
 
 define i8* @test() {

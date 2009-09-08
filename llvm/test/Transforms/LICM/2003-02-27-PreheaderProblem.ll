@@ -3,7 +3,7 @@
 ; happens because preheader insertion doesn't insert a preheader for this
 ; case... bad.
 
-; RUN: llvm-as < %s | opt -licm -loop-deletion -simplifycfg | llvm-dis | \
+; RUN: opt %s -licm -loop-deletion -simplifycfg | llvm-dis | \
 ; RUN:   not grep {br }
 
 define i32 @main(i32 %argc) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep bitcast
+; RUN: opt %s -instcombine | llvm-dis | not grep bitcast
 
 define void @f(i16 %y) {
 	ret void

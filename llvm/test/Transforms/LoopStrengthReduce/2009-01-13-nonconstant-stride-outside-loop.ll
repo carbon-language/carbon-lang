@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep phi | count 1
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep mul | count 1
+; RUN: opt %s -loop-reduce | llvm-dis | grep phi | count 1
+; RUN: opt %s -loop-reduce | llvm-dis | grep mul | count 1
 ; ModuleID = '<stdin>'
 ; Make sure examining a fuller expression outside the loop doesn't cause us to create a second
 ; IV of stride %3.

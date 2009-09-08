@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unroll -disable-output
+; RUN: opt %s -loop-unroll -disable-output
 
 define i32 @main() {
 entry:

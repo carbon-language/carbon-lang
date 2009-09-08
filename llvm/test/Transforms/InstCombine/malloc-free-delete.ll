@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i32 0}
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep malloc
+; RUN: opt %s -instcombine | llvm-dis | grep {ret i32 0}
+; RUN: opt %s -instcombine | llvm-dis | not grep malloc
 ; PR1201
 define i32 @main(i32 %argc, i8** %argv) {
         %c_19 = alloca i8*              ; <i8**> [#uses=2]

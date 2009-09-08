@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | \
+; RUN: opt %s -ipsccp | llvm-dis | \
 ; RUN:   grep -v {ret i32 0} | grep -v {ret i32 undef} | not grep ret
 
 define internal i32 @bar(i32 %A) {

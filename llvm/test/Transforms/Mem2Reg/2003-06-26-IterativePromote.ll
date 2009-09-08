@@ -1,5 +1,5 @@
 ; Promoting some values allows promotion of other values.
-; RUN: llvm-as < %s | opt -mem2reg | llvm-dis | not grep alloca
+; RUN: opt %s -mem2reg | llvm-dis | not grep alloca
 
 define i32 @test2() {
 	%result = alloca i32		; <i32*> [#uses=2]

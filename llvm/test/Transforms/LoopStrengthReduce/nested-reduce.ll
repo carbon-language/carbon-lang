@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | not grep mul
+; RUN: opt %s -loop-reduce | llvm-dis | not grep mul
 
 ; Make sure we don't get a multiply by 6 in this loop.
 

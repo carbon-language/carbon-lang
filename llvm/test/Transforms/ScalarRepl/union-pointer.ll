@@ -1,7 +1,7 @@
 ; PR892
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | \
+; RUN: opt %s -scalarrepl | llvm-dis | \
 ; RUN:   not grep alloca
-; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | grep {ret i8}
+; RUN: opt %s -scalarrepl | llvm-dis | grep {ret i8}
 
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8.7.2"

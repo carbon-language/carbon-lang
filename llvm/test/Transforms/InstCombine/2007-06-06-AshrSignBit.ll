@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ashr}
+; RUN: opt %s -instcombine | llvm-dis | grep {ashr}
 ; PR1499
 
 define void @av_cmp_q_cond_true(i32* %retval, i32* %tmp9, i64* %tmp10) {

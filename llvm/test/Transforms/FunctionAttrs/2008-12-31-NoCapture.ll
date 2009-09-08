@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -functionattrs | llvm-dis | not grep {nocapture *%%q}
-; RUN: llvm-as < %s | opt -functionattrs | llvm-dis | grep {nocapture *%%p} | count 6
+; RUN: opt %s -functionattrs | llvm-dis | not grep {nocapture *%%q}
+; RUN: opt %s -functionattrs | llvm-dis | grep {nocapture *%%p} | count 6
 @g = global i32* null		; <i32**> [#uses=1]
 
 define i32* @c1(i32* %q) {

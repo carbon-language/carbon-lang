@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl -instcombine | \
+; RUN: opt %s -scalarrepl -instcombine | \
 ; RUN:   llc -march=x86 -mcpu=yonah | not grep sub.*esp
 
 ; This checks that various insert/extract idiom work without going to the

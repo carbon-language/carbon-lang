@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine
+; RUN: opt %s -instcombine
 
 define i32 @test(i32 %X) {
         %Y = srem i32 %X, undef         ; <i32> [#uses=1]

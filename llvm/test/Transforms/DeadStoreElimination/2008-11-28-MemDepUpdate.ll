@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -dse | llvm-dis
+; RUN: opt %s -dse | llvm-dis
 ; PR3141
 	%struct.ada__tags__dispatch_table = type { [1 x i32] }
 	%struct.f393a00_1__object = type { %struct.ada__tags__dispatch_table*, i8 }

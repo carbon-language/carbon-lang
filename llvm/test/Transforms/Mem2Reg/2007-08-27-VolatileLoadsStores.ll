@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -std-compile-opts | llvm-dis | grep volatile | count 3
+; RUN: opt %s -std-compile-opts | llvm-dis | grep volatile | count 3
 ; PR1520
 ; Don't promote volatile loads/stores. This is really needed to handle setjmp/lonjmp properly.
 

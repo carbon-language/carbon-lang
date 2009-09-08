@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep xor | count 4
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep and
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep { or}
+; RUN: opt %s -instcombine | llvm-dis | grep xor | count 4
+; RUN: opt %s -instcombine | llvm-dis | not grep and
+; RUN: opt %s -instcombine | llvm-dis | not grep { or}
 
 ; PR1510
 

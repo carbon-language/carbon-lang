@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvnpre | llvm-dis
+; RUN: opt %s -gvnpre | llvm-dis
 
 define void @vorbis_lsp_to_curve() {
 entry:

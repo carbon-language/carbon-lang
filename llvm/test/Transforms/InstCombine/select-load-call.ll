@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i32 1}
+; RUN: opt %s -instcombine | llvm-dis | grep {ret i32 1}
 
 declare void @test2()
 

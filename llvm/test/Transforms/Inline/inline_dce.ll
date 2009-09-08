@@ -1,7 +1,7 @@
 ; This checks to ensure that the inline pass deletes functions if they get 
 ; inlined into all of their callers.
 
-; RUN: llvm-as < %s | opt -inline | llvm-dis | \
+; RUN: opt %s -inline | llvm-dis | \
 ; RUN:   not grep @reallysmall
 
 define internal i32 @reallysmall(i32 %A) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep CTOR
+; RUN: opt %s -globalopt | llvm-dis | not grep CTOR
 @llvm.global_ctors = appending global [10 x { i32, void ()* }] [ { i32, void ()* } { i32 65535, void ()* @CTOR1 }, { i32, void ()* } { i32 65535, void ()* @CTOR1 }, { i32, void ()* } { i32 65535, void ()* @CTOR2 }, { i32, void ()* } { i32 65535, void ()* @CTOR3 }, { i32, void ()* } { i32 65535, void ()* @CTOR4 }, { i32, void ()* } { i32 65535, void ()* @CTOR5 }, { i32, void ()* } { i32 65535, void ()* @CTOR6 }, { i32, void ()* } { i32 65535, void ()* @CTOR7 }, { i32, void ()* } { i32 65535, void ()* @CTOR8 }, { i32, void ()* } { i32 2147483647, void ()* null } ]		; <[10 x { i32, void ()* }]*> [#uses=0]
 @G = global i32 0		; <i32*> [#uses=1]
 @G2 = global i32 0		; <i32*> [#uses=1]

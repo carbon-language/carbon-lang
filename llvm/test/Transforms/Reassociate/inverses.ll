@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -reassociate -dce | llvm-dis | \
+; RUN: opt %s -reassociate -dce | llvm-dis | \
 ; RUN:   not grep {\\(and\\|sub\\)}
 
 define i32 @test1(i32 %a, i32 %b) {

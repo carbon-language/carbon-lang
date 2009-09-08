@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {add} | count 1
+; RUN: opt %s -instcombine | llvm-dis | grep {add} | count 1
 
 define i32 @foo(i32 %a) {
 entry:

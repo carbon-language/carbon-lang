@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars
+; RUN: opt %s -indvars
 ; PR4052
 ; PR4054
 

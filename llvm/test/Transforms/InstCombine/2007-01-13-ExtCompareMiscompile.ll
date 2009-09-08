@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {icmp ugt}
+; RUN: opt %s -instcombine | llvm-dis | grep {icmp ugt}
 ; PR1107
 ; PR1940
 

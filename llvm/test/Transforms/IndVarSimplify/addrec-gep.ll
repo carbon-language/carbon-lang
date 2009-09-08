@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis > %t
+; RUN: opt %s -indvars | llvm-dis > %t
 ; RUN: grep getelementptr %t | count 1
 ; RUN: grep {mul .*, 37}  %t | count 1
 ; RUN: grep {add .*, 5203}  %t | count 1

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-unswitch -disable-output
+; RUN: opt %s -loop-unswitch -disable-output
 
 define i32 @test(i32* %A, i1 %C) {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -ipsccp | llvm-dis | not grep global
+; RUN: opt %s -ipsccp | llvm-dis | not grep global
 
 @G = internal global i32 undef		; <i32*> [#uses=5]
 

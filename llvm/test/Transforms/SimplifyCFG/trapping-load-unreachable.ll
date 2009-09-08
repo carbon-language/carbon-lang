@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | grep {volatile load}
+; RUN: opt %s -simplifycfg | llvm-dis | grep {volatile load}
 ; PR2967
 
 target datalayout =

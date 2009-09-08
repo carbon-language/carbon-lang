@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -sccp | llvm-dis | grep {ret i32 1}
+; RUN: opt %s -sccp | llvm-dis | grep {ret i32 1}
 
 ; This function definitely returns 1, even if we don't know the direction
 ; of the branch.

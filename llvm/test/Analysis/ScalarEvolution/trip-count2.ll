@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output | \
+; RUN: opt %s -analyze -scalar-evolution -disable-output | \
 ; RUN:   grep {backedge-taken count is 4}
 ; PR1101
 

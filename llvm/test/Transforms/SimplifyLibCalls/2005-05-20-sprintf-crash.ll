@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplify-libcalls -disable-output
+; RUN: opt %s -simplify-libcalls -disable-output
 
 @G = constant [3 x i8] c"%s\00"		; <[3 x i8]*> [#uses=1]
 

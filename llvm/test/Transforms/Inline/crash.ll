@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -argpromotion -instcombine -disable-output
+; RUN: opt %s -inline -argpromotion -instcombine -disable-output
 
 ; This test was failing because the inliner would inline @list_DeleteElement
 ; into @list_DeleteDuplicates and then into @inf_GetBackwardPartnerLits,

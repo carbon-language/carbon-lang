@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline | llvm-dis
+; RUN: opt %s -inline | llvm-dis
 ; PR4834
 
 define i32 @main() {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg -disable-output
+; RUN: opt %s -simplifycfg -disable-output
 ; PR584
 @g_38098584 = external global i32		; <i32*> [#uses=1]
 @g_60187400 = external global i32		; <i32*> [#uses=1]

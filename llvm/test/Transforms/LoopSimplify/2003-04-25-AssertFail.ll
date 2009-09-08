@@ -1,7 +1,7 @@
 ; This testcase exposed a problem with the loop identification pass (LoopInfo).
 ; Basically, it was incorrectly calculating the loop nesting information.
 ;
-; RUN: llvm-as < %s | opt -loopsimplify
+; RUN: opt %s -loopsimplify
 
 define i32 @yylex() {
 	br label %loopentry.0

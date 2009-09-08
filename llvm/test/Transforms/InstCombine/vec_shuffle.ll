@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep vector_shuffle
+; RUN: opt %s -instcombine | llvm-dis | not grep vector_shuffle
 ; END.
 
 %T = type <4 x float>

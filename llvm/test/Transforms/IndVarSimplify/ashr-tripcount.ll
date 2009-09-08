@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis > %t
+; RUN: opt %s -indvars | llvm-dis > %t
 ; RUN: grep sext %t | count 1
 
 ; Indvars should be able to eliminate all of the sign extensions

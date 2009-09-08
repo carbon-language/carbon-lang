@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -constprop | llvm-dis | \
+; RUN: opt %s -constprop | llvm-dis | \
 ; RUN:    not grep {ret i1 false}
 
 @b = external global [2 x {  }]         ; <[2 x {  }]*> [#uses=2]

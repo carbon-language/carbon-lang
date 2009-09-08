@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -predsimplify | llvm-dis | grep -v %c
+; RUN: opt %s -predsimplify | llvm-dis | grep -v %c
 define void @foo(i8* %X, i8* %Y) {
 entry:
   %A = load i8* %X

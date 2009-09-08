@@ -1,6 +1,6 @@
 ; Test merging of blocks with phi nodes.
 ;
-; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep N:
+; RUN: opt %s -simplifycfg | llvm-dis | not grep N:
 ;
 
 define i32 @test(i1 %a) {

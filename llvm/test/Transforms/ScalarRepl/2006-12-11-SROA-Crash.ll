@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalarrepl -disable-output
+; RUN: opt %s -scalarrepl -disable-output
 ; PR1045
 
 target datalayout = "e-p:32:32"

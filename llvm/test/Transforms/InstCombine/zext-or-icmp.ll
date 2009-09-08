@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep icmp | count 1
+; RUN: opt %s -instcombine | llvm-dis | grep icmp | count 1
 
 	%struct.FooBar = type <{ i8, i8, [2 x i8], i8, i8, i8, i8, i16, i16, [4 x i8], [8 x %struct.Rock] }>
 	%struct.Rock = type { i16, i16 }

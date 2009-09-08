@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -argpromotion -disable-output
+; RUN: opt %s -argpromotion -disable-output
 
 define internal fastcc i32 @term_SharingList(i32* %Term, i32* %List) nounwind {
 entry:

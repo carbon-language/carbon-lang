@@ -1,6 +1,6 @@
 ; Exit blocks need to be updated for all nested loops...
 
-; RUN: llvm-as < %s | opt -loopsimplify
+; RUN: opt %s -loopsimplify
 
 define i32 @yyparse() {
 bb0:

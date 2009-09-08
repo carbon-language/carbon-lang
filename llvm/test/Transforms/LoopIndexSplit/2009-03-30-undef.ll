@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-index-split | llvm-dis | not grep undef
+; RUN: opt %s -loop-index-split | llvm-dis | not grep undef
 define i32 @main() {
 entry:
 	br label %header

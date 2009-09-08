@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -prune-eh -disable-output
+; RUN: opt %s -prune-eh -disable-output
 
 define internal void @callee() {
 	ret void

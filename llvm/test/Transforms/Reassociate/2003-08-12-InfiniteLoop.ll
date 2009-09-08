@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -reassociate -disable-output
+; RUN: opt %s -reassociate -disable-output
 
 define i32 @test(i32 %A.1, i32 %B.1, i32 %C.1, i32 %D.1) {
 	%tmp.16 = and i32 %A.1, %B.1		; <i32> [#uses=1]

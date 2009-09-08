@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -mergefunc -stats -disable-output |& grep {functions merged}
+; RUN: opt %s -mergefunc -stats -disable-output |& grep {functions merged}
 
 define i32 @foo1(i32 %x) {
 entry:

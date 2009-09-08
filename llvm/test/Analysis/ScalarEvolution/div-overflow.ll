@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalar-evolution -analyze -disable-output \
+; RUN: opt %s -scalar-evolution -analyze -disable-output \
 ; RUN:  | grep {\\-->  ((-128 \\* %a) /u -128)}
 
 ; Don't let ScalarEvolution fold this div away.

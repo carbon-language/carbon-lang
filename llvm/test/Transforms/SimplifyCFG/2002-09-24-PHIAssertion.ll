@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg
+; RUN: opt %s -simplifycfg
 
 define i32 @test(i32 %A, i32 %B, i1 %cond) {
 J:

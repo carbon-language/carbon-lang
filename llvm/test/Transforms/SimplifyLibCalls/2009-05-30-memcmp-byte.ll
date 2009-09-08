@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplify-libcalls -instcombine | llvm-dis | grep {ret i32 -65}
+; RUN: opt %s -simplify-libcalls -instcombine | llvm-dis | grep {ret i32 -65}
 ; PR4284
 
 define i32 @test() nounwind {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -simplifycfg -disable-output
+; RUN: opt %s -simplifycfg -disable-output
 ; PR 2777
 @g_103 = common global i32 0		; <i32*> [#uses=1]
 

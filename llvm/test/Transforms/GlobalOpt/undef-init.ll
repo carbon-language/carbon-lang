@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep store
+; RUN: opt %s -globalopt | llvm-dis | not grep store
 
 @llvm.global_ctors = appending global [1 x { i32, void ()* }] [ { i32, void ()* } { i32 65535, void ()* @_GLOBAL__I__Z3foov } ]          ; <[1 x { i32, void ()* }]*> [#uses=0]
 @X.0 = internal global i32 undef                ; <i32*> [#uses=2]

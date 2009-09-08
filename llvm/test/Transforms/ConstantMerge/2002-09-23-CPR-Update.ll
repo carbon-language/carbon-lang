@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -constmerge > /dev/null
+; RUN: opt %s -constmerge > /dev/null
 
 @foo.upgrd.1 = internal constant { i32 } { i32 7 }              ; <{ i32 }*> [#uses=1]
 @bar = internal constant { i32 } { i32 7 }              ; <{ i32 }*> [#uses=1]

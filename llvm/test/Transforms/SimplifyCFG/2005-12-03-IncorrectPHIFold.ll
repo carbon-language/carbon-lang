@@ -1,6 +1,6 @@
 ; Make sure this doesn't turn into an infinite loop
 
-; RUN: llvm-as < %s | opt -simplifycfg -constprop -simplifycfg |\
+; RUN: opt %s -simplifycfg -constprop -simplifycfg |\
 ; RUN:   llvm-dis | grep bb86
 ; END.
 	

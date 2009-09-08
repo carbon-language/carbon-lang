@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -prune-eh | llvm-dis | not grep {ret i32}
+; RUN: opt %s -prune-eh | llvm-dis | not grep {ret i32}
 
 declare void @noreturn() noreturn;
 

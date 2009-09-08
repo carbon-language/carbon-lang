@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine -mem2reg | llvm-dis | \
+; RUN: opt %s -instcombine -mem2reg | llvm-dis | \
 ; RUN:   not grep {i32 1}
 
 ; When propagating the load through the select, make sure that the load is

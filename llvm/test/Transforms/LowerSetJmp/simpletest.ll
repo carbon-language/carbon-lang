@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -lowersetjmp | llvm-dis | grep invoke
+; RUN: opt %s -lowersetjmp | llvm-dis | grep invoke
 
 	%JmpBuf = type i32
 @.str_1 = internal constant [13 x i8] c"returned %d\0A\00"		; <[13 x i8]*> [#uses=1]

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output | grep smax | count 2
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution -disable-output | grep \
+; RUN: opt %s -analyze -scalar-evolution -disable-output | grep smax | count 2
+; RUN: opt %s -analyze -scalar-evolution -disable-output | grep \
 ; RUN:     {%. smax %. smax %.}
 ; PR1614
 

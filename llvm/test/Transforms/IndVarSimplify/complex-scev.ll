@@ -1,7 +1,7 @@
 ; The i induction variable looks like a wrap-around, but it really is just
 ; a simple affine IV.  Make sure that indvars eliminates it.
 
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep phi | count 1
+; RUN: opt %s -indvars | llvm-dis | grep phi | count 1
 
 define void @foo() {
 entry:

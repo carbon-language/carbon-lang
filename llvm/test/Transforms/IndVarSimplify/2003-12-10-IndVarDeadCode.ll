@@ -1,7 +1,7 @@
 ; The induction variable canonicalization pass shouldn't leave dead
 ; instructions laying around!
 ;
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | \
+; RUN: opt %s -indvars | llvm-dis | \
 ; RUN:   not grep {#uses=0}
 
 define i32 @mul(i32 %x, i32 %y) {

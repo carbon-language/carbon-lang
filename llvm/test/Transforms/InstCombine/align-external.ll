@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | FileCheck %s
+; RUN: opt %s -instcombine | llvm-dis | FileCheck %s
 
 ; Don't assume that external global variables have their preferred
 ; alignment. They may only have the ABI minimum alignment.

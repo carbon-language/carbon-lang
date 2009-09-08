@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {store i8} | count 2
+; RUN: opt %s -instcombine | llvm-dis | grep {store i8} | count 2
 
 define i32 @a(i8* %s) nounwind  {
 entry:

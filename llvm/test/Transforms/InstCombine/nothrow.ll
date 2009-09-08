@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep call
+; RUN: opt %s -instcombine | llvm-dis | not grep call
 ; rdar://6880732
 declare double @t1(i32) readonly
 

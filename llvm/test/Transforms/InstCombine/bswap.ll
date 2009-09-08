@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:    grep {call.*llvm.bswap} | count 6
 
 define i32 @test1(i32 %i) {

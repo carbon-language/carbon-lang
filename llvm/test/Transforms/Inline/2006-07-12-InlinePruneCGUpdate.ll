@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -prune-eh -disable-output
+; RUN: opt %s -inline -prune-eh -disable-output
 ; PR827
 @_ZTV8CRjii = internal global [1 x i32 (...)*] [ i32 (...)* @_ZN8CRjii12NlFeeEPN5Jr7sE ]		; <[1 x i32 (...)*]*> [#uses=0]
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -condprop | llvm-dis | not grep phi
+; RUN: opt %s -condprop | llvm-dis | not grep phi
 
 define i32 @test(i32 %C, i1 %Val) {
         switch i32 %C, label %T1 [

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep add | count 1
+; RUN: opt %s -indvars | llvm-dis | grep add | count 1
 
 ; Indvars should be able to compute the exit value of this loop
 ; without any additional arithmetic. The only add needed should

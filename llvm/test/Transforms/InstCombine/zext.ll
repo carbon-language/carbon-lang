@@ -1,5 +1,5 @@
 ; Tests to make sure elimination of casts is working correctly
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine | llvm-dis | \
 ; RUN:   notcast {} {%c1.*}
 
 define i64 @test_sext_zext(i16 %A) {

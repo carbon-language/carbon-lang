@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars -disable-output
+; RUN: opt %s -indvars -disable-output
 ; PR 3909
 
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loopsimplify -licm -disable-output
+; RUN: opt %s -loopsimplify -licm -disable-output
 define void @main() {
 entry:
 	br i1 false, label %Out, label %loop

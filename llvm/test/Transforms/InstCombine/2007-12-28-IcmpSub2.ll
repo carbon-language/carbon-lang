@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -mem2reg -instcombine | llvm-dis | grep "ret i32 1" | count 8
+; RUN: opt %s -mem2reg -instcombine | llvm-dis | grep "ret i32 1" | count 8
 
 define i32 @test1() {
 entry:

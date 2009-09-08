@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep indvar
+; RUN: opt %s -indvars | llvm-dis | grep indvar
 
 define i32 @test() {
 ; <label>:0

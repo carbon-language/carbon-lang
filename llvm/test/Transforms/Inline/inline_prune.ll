@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | opt -inline | llvm-dis | \
+; RUN: opt %s -inline | llvm-dis | \
 ; RUN:    not grep {callee\[12\](}
-; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep mul
+; RUN: opt %s -inline | llvm-dis | not grep mul
 
 define internal i32 @callee1(i32 %A, i32 %B) {
         %cond = icmp eq i32 %A, 123             ; <i1> [#uses=1]

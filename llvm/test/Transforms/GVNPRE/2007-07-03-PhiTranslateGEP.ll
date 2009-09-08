@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvnpre | llvm-dis
+; RUN: opt %s -gvnpre | llvm-dis
 
 define i64 @foo({ i32, i32 }** %__v) {
 entry:
