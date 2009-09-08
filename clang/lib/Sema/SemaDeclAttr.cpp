@@ -1887,23 +1887,22 @@ NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II)
 /// DeclApplyPragmaWeak - A declaration (maybe definition) needs #pragma weak
 /// applied to it, possibly with an alias.
 void Sema::DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W) {
-  if (!W.getUsed()) { // only do this once
-    W.setUsed(true);
-    if (W.getAlias()) { // clone decl, impersonate __attribute(weak,alias(...))
-      IdentifierInfo *NDId = ND->getIdentifier();
-      NamedDecl *NewD = DeclClonePragmaWeak(ND, W.getAlias());
-      NewD->addAttr(::new (Context) AliasAttr(NDId->getName()));
-      NewD->addAttr(::new (Context) WeakAttr());
-      WeakTopLevelDecl.push_back(NewD);
-      // FIXME: "hideous" code from Sema::LazilyCreateBuiltin
-      // to insert Decl at TU scope, sorry.
-      DeclContext *SavedContext = CurContext;
-      CurContext = Context.getTranslationUnitDecl();
-      PushOnScopeChains(NewD, S);
-      CurContext = SavedContext;
-    } else { // just add weak to existing
-      ND->addAttr(::new (Context) WeakAttr());
-    }
+  if (W.getUsed()) return; // only do this once
+  W.setUsed(true);
+  if (W.getAlias()) { // clone decl, impersonate __attribute(weak,alias(...))
+    IdentifierInfo *NDId = ND->getIdentifier();
+    NamedDecl *NewD = DeclClonePragmaWeak(ND, W.getAlias());
+    NewD->addAttr(::new (Context) AliasAttr(NDId->getName()));
+    NewD->addAttr(::new (Context) WeakAttr());
+    WeakTopLevelDecl.push_back(NewD);
+    // FIXME: "hideous" code from Sema::LazilyCreateBuiltin
+    // to insert Decl at TU scope, sorry.
+    DeclContext *SavedContext = CurContext;
+    CurContext = Context.getTranslationUnitDecl();
+    PushOnScopeChains(NewD, S);
+    CurContext = SavedContext;
+  } else { // just add weak to existing
+    ND->addAttr(::new (Context) WeakAttr());
   }
 }
 
