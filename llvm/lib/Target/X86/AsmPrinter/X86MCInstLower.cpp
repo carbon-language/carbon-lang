@@ -134,6 +134,16 @@ MCSymbol *X86ATTAsmPrinter::GetJumpTableSymbol(const MachineOperand &MO) {
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
     break;
+    // FIXME: These probably should be a modifier on the symbol or something??
+  case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
+  case X86II::MO_GOTTPOFF:  Name += "@GOTTPOFF";  break;
+  case X86II::MO_INDNTPOFF: Name += "@INDNTPOFF"; break;
+  case X86II::MO_TPOFF:     Name += "@TPOFF";     break;
+  case X86II::MO_NTPOFF:    Name += "@NTPOFF";    break;
+  case X86II::MO_GOTPCREL:  Name += "@GOTPCREL";  break;
+  case X86II::MO_GOT:       Name += "@GOT";       break;
+  case X86II::MO_GOTOFF:    Name += "@GOTOFF";    break;
+  case X86II::MO_PLT:       Name += "@PLT";       break;
   }
   
   // Create a symbol for the name.
@@ -155,6 +165,16 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) {
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
     break;
+    // FIXME: These probably should be a modifier on the symbol or something??
+  case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
+  case X86II::MO_GOTTPOFF:  Name += "@GOTTPOFF";  break;
+  case X86II::MO_INDNTPOFF: Name += "@INDNTPOFF"; break;
+  case X86II::MO_TPOFF:     Name += "@TPOFF";     break;
+  case X86II::MO_NTPOFF:    Name += "@NTPOFF";    break;
+  case X86II::MO_GOTPCREL:  Name += "@GOTPCREL";  break;
+  case X86II::MO_GOT:       Name += "@GOT";       break;
+  case X86II::MO_GOTOFF:    Name += "@GOTOFF";    break;
+  case X86II::MO_PLT:       Name += "@PLT";       break;
   }
   
   // Create a symbol for the name.
