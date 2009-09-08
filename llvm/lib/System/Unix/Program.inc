@@ -38,7 +38,7 @@ Program::Program() : Data_(0) {}
 
 Program::~Program() {}
 
-unsigned Program::GetPid() {
+unsigned Program::GetPid() const {
   return reinterpret_cast<unsigned>(Data_);
 }
 

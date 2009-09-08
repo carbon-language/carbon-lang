@@ -35,7 +35,7 @@ Program::~Program() {
   }
 }
 
-unsigned Program::GetPid() {
+unsigned Program::GetPid() const {
   HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
   return GetProcessId(hProcess);
 }

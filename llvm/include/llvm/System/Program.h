@@ -40,7 +40,7 @@ namespace sys {
     ~Program();
 
     /// Return process ID of this program.
-    unsigned GetPid();
+    unsigned GetPid() const;
 
     /// This function executes the program using the \p arguments provided.  The
     /// invoked program will inherit the stdin, stdout, and stderr file
