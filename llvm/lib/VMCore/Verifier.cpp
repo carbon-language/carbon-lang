@@ -319,8 +319,8 @@ namespace {
       Broken = true;
     }
 
-    void CheckFailed(const Twine &Message, const Value* V1,
-                     const Type* T2, const Value* V3 = 0) {
+    void CheckFailed(const Twine &Message, const Value *V1,
+                     const Type *T2, const Value *V3 = 0) {
       MessagesStr << Message.str() << "\n";
       WriteValue(V1);
       WriteType(T2);
@@ -328,8 +328,8 @@ namespace {
       Broken = true;
     }
 
-    void CheckFailed(const Twine &Message, const Type* T1,
-                     const Type* T2 = 0, const Type* T3 = 0) {
+    void CheckFailed(const Twine &Message, const Type *T1,
+                     const Type *T2 = 0, const Type *T3 = 0) {
       MessagesStr << Message.str() << "\n";
       WriteType(T1);
       WriteType(T2);
@@ -1008,7 +1008,8 @@ void Verifier::visitPHINode(PHINode &PN) {
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
     Assert1(PN.getType() == PN.getIncomingValue(i)->getType(),
             "PHI node operands are not the same type as the result!", &PN);
-    Assert1(PN.getOperand(PHINode::getOperandNumForIncomingBlock(i)),
+    Assert1(isa<BasicBlock>(PN.getOperand(
+                PHINode::getOperandNumForIncomingBlock(i))),
             "PHI node incoming block is not a BasicBlock!", &PN);
   }
 
@@ -1020,20 +1021,13 @@ void Verifier::visitPHINode(PHINode &PN) {
 void Verifier::VerifyCallSite(CallSite CS) {
   Instruction *I = CS.getInstruction();
 
-  const PointerType *FPTy =
-      dyn_cast<PointerType>(CS.getCalledValue()->getType());
-  if (!FPTy) {
-    CheckFailed("Called function must be a pointer!", I);
-    visitInstruction(*I);
-    return;
-  }
+  Assert1(isa<PointerType>(CS.getCalledValue()->getType()),
+          "Called function must be a pointer!", I);
+  const PointerType *FPTy = cast<PointerType>(CS.getCalledValue()->getType());
 
-  const FunctionType *FTy = dyn_cast<FunctionType>(FPTy->getElementType());
-  if (!FTy) {
-    CheckFailed("Called function is not pointer to function type!", I);
-    visitInstruction(*I);
-    return;
-  }
+  Assert1(isa<FunctionType>(FPTy->getElementType()),
+          "Called function is not pointer to function type!", I);
+  const FunctionType *FTy = cast<FunctionType>(FPTy->getElementType());
 
   // Verify that the correct number of arguments are being passed
   if (FTy->isVarArg())
@@ -1240,27 +1234,23 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 void Verifier::visitLoadInst(LoadInst &LI) {
   const PointerType *PTy = dyn_cast<PointerType>(LI.getOperand(0)->getType());
   Assert1(PTy, "Load operand must be a pointer.", &LI);
-  if (PTy) {
-    const Type *ElTy = PTy->getElementType();
-    Assert2(ElTy == LI.getType(),
-            "Load result type does not match pointer operand type!", &LI, ElTy);
-    Assert1(ElTy != Type::getMetadataTy(LI.getContext()),
-            "Can't load metadata!", &LI);
-  }
+  const Type *ElTy = PTy->getElementType();
+  Assert2(ElTy == LI.getType(),
+          "Load result type does not match pointer operand type!", &LI, ElTy);
+  Assert1(ElTy != Type::getMetadataTy(LI.getContext()),
+          "Can't load metadata!", &LI);
   visitInstruction(LI);
 }
 
 void Verifier::visitStoreInst(StoreInst &SI) {
   const PointerType *PTy = dyn_cast<PointerType>(SI.getOperand(1)->getType());
   Assert1(PTy, "Load operand must be a pointer.", &SI);
-  if (PTy) {
-    const Type *ElTy = PTy->getElementType();
-    Assert2(ElTy == SI.getOperand(0)->getType(),
-            "Stored value type does not match pointer operand type!",
-            &SI, ElTy);
-    Assert1(ElTy != Type::getMetadataTy(SI.getContext()),
-            "Can't store metadata!", &SI);
-  }
+  const Type *ElTy = PTy->getElementType();
+  Assert2(ElTy == SI.getOperand(0)->getType(),
+          "Stored value type does not match pointer operand type!",
+          &SI, ElTy);
+  Assert1(ElTy != Type::getMetadataTy(SI.getContext()),
+          "Can't store metadata!", &SI);
   visitInstruction(SI);
 }
 
@@ -1339,8 +1329,10 @@ void Verifier::visitInstruction(Instruction &I) {
     if (Instruction *Used = dyn_cast<Instruction>(*UI))
       Assert2(Used->getParent() != 0, "Instruction referencing instruction not"
               " embedded in a basic block!", &I, Used);
-    else
+    else {
       CheckFailed("Use of instruction is not an instruction!", *UI);
+      return;
+    }
   }
 
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
@@ -1391,8 +1383,8 @@ void Verifier::visitInstruction(Instruction &I) {
         BasicBlock *UseBlock = BB;
         if (isa<PHINode>(I))
           UseBlock = dyn_cast<BasicBlock>(I.getOperand(i+1));
-        // Avoid crash. The verifier will find this module broken anyways.
-        if (!UseBlock) UseBlock = BB;
+        Assert2(UseBlock, "Invoke operand is PHI node with bad incoming-BB",
+                Op, &I);
 
         if (isa<PHINode>(I) && UseBlock == OpBlock) {
           // Special case of a phi node in the normal destination or the unwind
@@ -1468,7 +1460,7 @@ void Verifier::VerifyType(const Type *Ty) {
             "Function type with invalid return type", RetTy, FTy);
     VerifyType(RetTy);
 
-    for (int i = 0, e = FTy->getNumParams(); i != e; ++i) {
+    for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i) {
       const Type *ElTy = FTy->getParamType(i);
       Assert2(FunctionType::isValidArgumentType(ElTy),
               "Function type with invalid parameter type", ElTy, FTy);
@@ -1478,7 +1470,7 @@ void Verifier::VerifyType(const Type *Ty) {
   case Type::StructTyID: {
     if (!CheckedTypes.insert(Ty)) return;
     const StructType *STy = cast<StructType>(Ty);
-    for (int i = 0, e = STy->getNumElements(); i != e; ++i) {
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       const Type *ElTy = STy->getElementType(i);
       Assert2(StructType::isValidElementType(ElTy),
               "Structure type with invalid element type", ElTy, STy);
