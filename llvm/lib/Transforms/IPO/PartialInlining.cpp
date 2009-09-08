@@ -48,7 +48,8 @@ ModulePass* llvm::createPartialInliningPass() { return new PartialInliner(); }
 Function* PartialInliner::unswitchFunction(Function* F) {
   // First, verify that this function is an unswitching candidate...
   BasicBlock* entryBlock = F->begin();
-  if (!isa<BranchInst>(entryBlock->getTerminator()))
+  BranchInst *BR = dyn_cast<BranchInst>(entryBlock->getTerminator());
+  if (!BR || BR->isUnconditional())
     return 0;
   
   BasicBlock* returnBlock = 0;
