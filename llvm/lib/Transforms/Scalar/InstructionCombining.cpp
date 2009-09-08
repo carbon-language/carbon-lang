@@ -12130,48 +12130,20 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
   }
   
   if (Instruction *I = dyn_cast<Instruction>(EI.getOperand(0))) {
-    if (I->hasOneUse()) {
-      // Push extractelement into predecessor operation if legal and
-      // profitable to do so
-      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
-        bool isConstantElt = isa<ConstantInt>(EI.getOperand(1));
-        if (CheapToScalarize(BO, isConstantElt)) {
-          Value *newEI0 =
-            Builder->CreateExtractElement(BO->getOperand(0), EI.getOperand(1),
-                                          EI.getName()+".lhs");
-          Value *newEI1 =
-            Builder->CreateExtractElement(BO->getOperand(1), EI.getOperand(1),
-                                          EI.getName()+".rhs");
-          return BinaryOperator::Create(BO->getOpcode(), newEI0, newEI1);
-        }
-      } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-        // Instead of loading a vector, then doing an extract element out of it,
-        // just bitcast the pointer operand, do a gep, then load the result.
-        // This shrinks the vector load to a scalar load.
-        if (EI.getVectorOperandType()->getNumElements() != 1) {
-          unsigned AS = LI->getPointerAddressSpace();
-          Value *Ptr = Builder->CreateBitCast(I->getOperand(0),
-                                              PointerType::get(EI.getType(), AS),
-                                              I->getOperand(0)->getName());
-          Value *GEP =
-            Builder->CreateInBoundsGEP(Ptr, EI.getOperand(1),
-                                       I->getName()+".gep");
-          
-          LoadInst *Load = Builder->CreateLoad(GEP, "tmp");
-
-          // Make sure the Load goes before the load instruction in the source,
-          // not wherever the extract happens to be.
-          if (Instruction *P = dyn_cast<Instruction>(Ptr))
-            P->moveBefore(I);
-          if (Instruction *G = dyn_cast<Instruction>(GEP))
-            G->moveBefore(I);
-          Load->moveBefore(I);
-          
-          return ReplaceInstUsesWith(EI, Load);
-        }
+    // Push extractelement into predecessor operation if legal and
+    // profitable to do so
+    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
+      if (I->hasOneUse() &&
+          CheapToScalarize(BO, isa<ConstantInt>(EI.getOperand(1)))) {
+        Value *newEI0 =
+          Builder->CreateExtractElement(BO->getOperand(0), EI.getOperand(1),
+                                        EI.getName()+".lhs");
+        Value *newEI1 =
+          Builder->CreateExtractElement(BO->getOperand(1), EI.getOperand(1),
+                                        EI.getName()+".rhs");
+        return BinaryOperator::Create(BO->getOpcode(), newEI0, newEI1);
       }
-    }
-    if (InsertElementInst *IE = dyn_cast<InsertElementInst>(I)) {
+    } else if (InsertElementInst *IE = dyn_cast<InsertElementInst>(I)) {
       // Extracting the inserted element?
       if (IE->getOperand(2) == EI.getOperand(1))
         return ReplaceInstUsesWith(EI, IE->getOperand(1));
