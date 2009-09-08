@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars | llvm-dis > %t
+; RUN: opt %s -indvars -S > %t
 ; RUN: grep phi %t | count 4
 ; RUN: grep {= phi i32} %t | count 4
 ; RUN: not grep {sext i} %t

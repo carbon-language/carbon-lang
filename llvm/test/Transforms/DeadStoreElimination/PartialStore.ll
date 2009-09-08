@@ -1,4 +1,4 @@
-; RUN: opt %s -dse | llvm-dis | \
+; RUN: opt %s -dse -S | \
 ; RUN:    not grep {store i8}
 ; Ensure that the dead store is deleted in this case.  It is wholely
 ; overwritten by the second store.

@@ -1,6 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 
-; RUN: opt %s -instcombine | llvm-dis | not grep select
+; RUN: opt < %s -instcombine -S | not grep select
 
 
 define i41 @test1(i1 %C) {

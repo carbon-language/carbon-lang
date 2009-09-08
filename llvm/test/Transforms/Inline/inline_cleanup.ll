@@ -1,9 +1,9 @@
 ; Test that the inliner doesn't leave around dead allocas, and that it folds
 ; uncond branches away after it is done specializing.
 
-; RUN: opt %s -inline | llvm-dis | \
+; RUN: opt %s -inline -S | \
 ; RUN:    not grep {alloca.*uses=0}
-; RUN: opt %s -inline | llvm-dis | \
+; RUN: opt %s -inline -S | \
 ; RUN:    not grep {br label}
 @A = weak global i32 0		; <i32*> [#uses=1]
 @B = weak global i32 0		; <i32*> [#uses=1]

@@ -1,5 +1,5 @@
 ; This function contains intervening instructions which should be moved out of the way
-; RUN: opt %s -tailcallelim | llvm-dis | not grep call
+; RUN: opt %s -tailcallelim -S | not grep call
 
 define i32 @Test(i32 %X) {
 entry:

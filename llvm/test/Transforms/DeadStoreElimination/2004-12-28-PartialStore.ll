@@ -1,4 +1,4 @@
-; RUN: opt %s -dse | llvm-dis | \
+; RUN: opt %s -dse -S | \
 ; RUN:    grep {store i32 1234567}
 
 ; Do not delete stores that are only partially killed.

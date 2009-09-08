@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine -S | \
 ; RUN:    grep {call float bitcast} | count 1
 	%struct.NSObject = type { %struct.objc_class* }
  	%struct.NSArray = type { %struct.NSObject }

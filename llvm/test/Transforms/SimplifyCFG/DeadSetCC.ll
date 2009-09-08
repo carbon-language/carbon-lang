@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg | llvm-dis | \
+; RUN: opt %s -simplifycfg -S | \
 ; RUN:   not grep {icmp eq}
 
 ; Check that simplifycfg deletes a dead 'seteq' instruction when it

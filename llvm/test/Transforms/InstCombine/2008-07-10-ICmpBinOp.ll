@@ -1,5 +1,5 @@
-; RUN: opt %s -instcombine | llvm-dis | not grep add
-; RUN: opt %s -instcombine | llvm-dis | not grep mul
+; RUN: opt %s -instcombine -S | not grep add
+; RUN: opt %s -instcombine -S | not grep mul
 ; PR2330
 
 define i1 @f(i32 %x, i32 %y) nounwind {

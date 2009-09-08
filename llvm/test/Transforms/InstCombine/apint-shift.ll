@@ -1,6 +1,6 @@
 ; This test makes sure that shit instructions are properly eliminated
 ; even with arbitrary precision integers.
-; RUN: opt %s -instcombine | llvm-dis | not grep sh
+; RUN: opt < %s -instcombine -S | not grep sh
 ; END.
 
 define i47 @test1(i47 %A) {

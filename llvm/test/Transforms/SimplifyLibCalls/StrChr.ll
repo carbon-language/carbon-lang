@@ -1,5 +1,5 @@
 ; Test that the StrChrOptimizer works correctly
-; RUN: opt %s -simplify-libcalls | llvm-dis | \
+; RUN: opt %s -simplify-libcalls -S | \
 ; RUN:   not grep {call.*@strchr}
 
 ; This transformation requires the pointer size, as it assumes that size_t is

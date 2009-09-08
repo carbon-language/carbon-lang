@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars | llvm-dis | grep icmp | count 4
+; RUN: opt %s -indvars -S | grep icmp | count 4
 define void @bar() nounwind {
 entry:
 	br label %bb

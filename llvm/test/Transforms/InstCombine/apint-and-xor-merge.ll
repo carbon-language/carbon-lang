@@ -1,8 +1,8 @@
 ; This test case checks that the merge of and/xor can work on arbitrary
 ; precision integers.
 
-; RUN: opt %s -instcombine | llvm-dis | grep and | count 1
-; RUN: opt %s -instcombine | llvm-dis | grep xor | count 2
+; RUN: opt < %s -instcombine -S | grep and | count 1
+; RUN: opt < %s -instcombine -S | grep xor | count 2
 
 ; (x &z ) ^ (y & z) -> (x ^ y) & z
 define i57 @test1(i57 %x, i57 %y, i57 %z) {

@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | notcast
+; RUN: opt < %s -instcombine -S | notcast
 
 define i32 @mul(i32 %x, i32 %y) {
   %A = trunc i32 %x to i8

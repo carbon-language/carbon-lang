@@ -1,4 +1,4 @@
-; RUN: opt %s -reassociate -instcombine | llvm-dis |\
+; RUN: opt %s -reassociate -instcombine -S |\
 ; RUN:   not grep {sub i32 0}
 
 define i32 @test(i32 %X, i32 %Y, i32 %Z) {

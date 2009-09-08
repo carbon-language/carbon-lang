@@ -1,4 +1,4 @@
-; RUN: opt %s -functionattrs | llvm-dis | not grep read
+; RUN: opt %s -functionattrs -S | not grep read
 ; PR2792
 
 @g = global i32 0		; <i32*> [#uses=1]

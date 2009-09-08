@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | not grep itofp
+; RUN: opt < %s -instcombine -S | not grep itofp
 
 define i1 @test1(i8 %A) {
   %B = sitofp i8 %A to double

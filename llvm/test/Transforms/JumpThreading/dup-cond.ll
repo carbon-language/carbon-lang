@@ -1,4 +1,4 @@
-; RUN: opt %s -jump-threading -die | llvm-dis | grep icmp | count 1
+; RUN: opt %s -jump-threading -die -S | grep icmp | count 1
 
 declare void @f1()
 declare void @f2()

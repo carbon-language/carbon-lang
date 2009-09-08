@@ -1,5 +1,5 @@
-; RUN: opt %s -instcombine | llvm-dis | not grep call
-; RUN: opt %s -std-compile-opts | llvm-dis | not grep xyz
+; RUN: opt %s -instcombine -S | not grep call
+; RUN: opt %s -std-compile-opts -S | not grep xyz
 
 @.str = internal constant [4 x i8] c"xyz\00"		; <[4 x i8]*> [#uses=1]
 

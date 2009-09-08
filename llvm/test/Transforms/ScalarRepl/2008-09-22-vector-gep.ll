@@ -3,7 +3,7 @@
 ; this would not work when there was a vector involved in the struct, preventing
 ; scalarrepl from removing the alloca below.
 
-; RUN: opt %s -scalarrepl | llvm-dis > %t
+; RUN: opt %s -scalarrepl -S > %t
 ; RUN: cat %t | not grep alloca
 
 %struct.two = type <{ < 2 x i8 >, i16 }>

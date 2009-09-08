@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep bitcast | count 1
+; RUN: opt %s -instcombine -S | grep bitcast | count 1
 
 ; InstCombine can not 'load (cast P)' -> cast (load P)' if the cast changes
 ; the address space.

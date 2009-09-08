@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine -S | \
 ; RUN:   grep {ret i1 false}
 define i1 @test() {
         %X = trunc i32 320 to i1                ; <i1> [#uses=1]

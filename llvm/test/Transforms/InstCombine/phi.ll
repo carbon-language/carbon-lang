@@ -1,6 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: opt %s -instcombine | llvm-dis | not grep phi
+; RUN: opt < %s -instcombine -S | not grep phi
 
 define i32 @test1(i32 %A, i1 %b) {
 BB0:

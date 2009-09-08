@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars | llvm-dis > %t
+; RUN: opt < %s -indvars -S > %t
 ; RUN: grep add %t | count 8
 ; RUN: grep mul %t | count 7
 

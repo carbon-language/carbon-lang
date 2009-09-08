@@ -1,4 +1,4 @@
-; RUN: opt %s -dse | llvm-dis | grep {volatile load}
+; RUN: opt %s -dse -S | grep {volatile load}
 
 @g_1 = global i32 0
 

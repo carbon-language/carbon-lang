@@ -1,5 +1,5 @@
-; RUN: opt %s -instcombine | llvm-dis | grep and.*32
-; RUN: opt %s -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine -S | grep and.*32
+; RUN: opt %s -instcombine -S | \
 ; RUN:    not grep or.*153
 ; PR1014
 

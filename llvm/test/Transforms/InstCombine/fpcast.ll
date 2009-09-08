@@ -1,6 +1,6 @@
 ; Test some floating point casting cases
-; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | notcast
-; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | \
+; RUN: llvm-as %s -o - | opt -instcombine -S | notcast
+; RUN: llvm-as %s -o - | opt -instcombine -S | \
 ; RUN:   egrep {ret i8 \(-1\)\|\(255\)}
 
 define i8 @test1() {

@@ -4,7 +4,7 @@
 ;          is not done. It should be removed when code gen supports "funny"
 ;          bit widths.
 
-; RUN: opt %s -instcombine | llvm-dis | grep {add i49.*-8388608}
+; RUN: opt %s -instcombine -S | grep {add i49.*-8388608}
 
 define i49 @test5(i49 %x) {
         ;; If we have ADD(XOR(AND(X, 0xFF), 0x80), 0xF..F80), it's a sext.

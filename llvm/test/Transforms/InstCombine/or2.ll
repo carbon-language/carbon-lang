@@ -1,6 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: opt %s -instcombine | llvm-dis | grep -v xor | not grep {or }
+; RUN: opt %s -instcombine -S | grep -v xor | not grep {or }
 
 ; PR1738
 define i1 @test1(double %X, double %Y) {

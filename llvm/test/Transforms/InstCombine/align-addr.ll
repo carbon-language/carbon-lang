@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep {align 16} | count 1
+; RUN: opt %s -instcombine -S | grep {align 16} | count 1
 
 ; Instcombine should be able to prove vector alignment in the
 ; presence of a few mild address computation tricks.

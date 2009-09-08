@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg | llvm-dis | \
+; RUN: opt < %s -simplifycfg -S | \
 ; RUN:   grep switch | count 1
 
 ; Test that a switch going to a switch on the same value can be merged.   All 

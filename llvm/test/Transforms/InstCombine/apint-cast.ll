@@ -1,5 +1,5 @@
 ; Tests to make sure elimination of casts is working correctly
-; RUN: opt %s -instcombine | llvm-dis | notcast
+; RUN: opt < %s -instcombine -S | notcast
 
 define i17 @test1(i17 %a) {
         %tmp = zext i17 %a to i37               ; <i37> [#uses=2]

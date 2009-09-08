@@ -1,4 +1,4 @@
-; RUN: opt %s -argpromotion -instcombine | llvm-dis | not grep load
+; RUN: opt %s -argpromotion -instcombine -S | not grep load
 
 @G1 = constant i32 0            ; <i32*> [#uses=1]
 @G2 = constant i32* @G1         ; <i32**> [#uses=1]

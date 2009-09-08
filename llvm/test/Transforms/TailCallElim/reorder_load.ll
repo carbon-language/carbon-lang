@@ -1,4 +1,4 @@
-; RUN: llvm-as <%s | opt -tailcallelim | llvm-dis | not grep call
+; RUN: llvm-as <%s | opt -tailcallelim -S | not grep call
 ; PR4323
 
 ; Several cases where tail call elimination should move the load above the call,

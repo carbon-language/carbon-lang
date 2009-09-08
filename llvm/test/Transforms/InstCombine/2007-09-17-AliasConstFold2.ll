@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep icmp
+; RUN: opt %s -instcombine -S | grep icmp
 ; PR1678
 
 @A = alias weak void ()* @B		; <void ()*> [#uses=1]

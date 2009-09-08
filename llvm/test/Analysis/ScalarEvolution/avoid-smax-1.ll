@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars | llvm-dis > %t
+; RUN: opt %s -indvars -S > %t
 ; RUN: grep select %t | count 2
 ; RUN: grep {icmp ne i32.\* %w } %t
 

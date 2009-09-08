@@ -1,4 +1,4 @@
-; RUN: opt %s -reassociate -instcombine | llvm-dis | grep mul | count 2
+; RUN: opt < %s -reassociate -instcombine -S | grep mul | count 2
 
 ; This should have exactly 2 multiplies when we're done.
 

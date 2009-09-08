@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep call | not grep bitcast
+; RUN: opt %s -instcombine -S | grep call | not grep bitcast
 
 target datalayout = "e-p:32:32"
 target triple = "i686-pc-linux-gnu"

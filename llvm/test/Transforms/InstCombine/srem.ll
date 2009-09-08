@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep srem
+; RUN: opt %s -instcombine -S | grep srem
 
 define i64 @foo(i64 %x1, i64 %y2) {
 	%r = sdiv i64 %x1, %y2

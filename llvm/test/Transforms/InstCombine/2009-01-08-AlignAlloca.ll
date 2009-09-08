@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis > %t
+; RUN: opt %s -instcombine -S > %t
 ; RUN: grep {, align 4} %t | count 3
 ; RUN: grep {, align 8} %t | count 3
 ; rdar://6480438

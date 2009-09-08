@@ -1,4 +1,4 @@
-; RUN: opt %s -basicaa -gvn | llvm-dis | grep load
+; RUN: opt %s -basicaa -gvn -S | grep load
 
 declare noalias i32* @noalias()
 

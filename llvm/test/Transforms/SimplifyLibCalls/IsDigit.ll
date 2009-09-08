@@ -1,5 +1,5 @@
 ; Test that the IsDigitOptimizer works correctly
-; RUN: opt %s -simplify-libcalls | llvm-dis | \
+; RUN: opt %s -simplify-libcalls -S | \
 ; RUN:   not grep call
 
 declare i32 @isdigit(i32)

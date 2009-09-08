@@ -1,4 +1,4 @@
-; RUN: opt %s -ipconstprop | llvm-dis > %t
+; RUN: opt %s -ipconstprop -S > %t
 ;; Check that the 21 constants got propagated properly
 ; RUN: cat %t | grep {%M = add i32 21, 21}
 ;; Check that the second return values didn't get propagated

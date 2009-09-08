@@ -1,5 +1,5 @@
-; RUN: opt %s -simplify-libcalls | llvm-dis | grep putchar
-; RUN: opt %s -simplify-libcalls | llvm-dis | \
+; RUN: opt %s -simplify-libcalls -S | grep putchar
+; RUN: opt %s -simplify-libcalls -S | \
 ; RUN:   not grep {call.*printf}
 
 @str = internal constant [13 x i8] c"hello world\0A\00"         ; <[13 x i8]*> [#uses=1]

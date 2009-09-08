@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-unroll | llvm-dis | grep bb72.2
+; RUN: opt %s -loop-unroll -S | grep bb72.2
 
 define void @vorbis_encode_noisebias_setup() {
 entry:

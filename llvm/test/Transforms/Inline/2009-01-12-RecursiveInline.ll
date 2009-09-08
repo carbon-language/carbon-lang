@@ -1,4 +1,4 @@
-; RUN: opt %s -inline | llvm-dis | grep {call.*fib} | count 4
+; RUN: opt %s -inline -S | grep {call.*fib} | count 4
 ; First call to fib from fib is inlined, producing 2 instead of 1, total 3.
 ; Second call to fib from fib is not inlined because new body of fib exceeds
 ; inlining limit of 200.  Plus call in main = 4 total.

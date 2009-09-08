@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars | llvm-dis | not grep select
+; RUN: opt %s -indvars -S | not grep select
 
 ; This loop has backedge-taken-count zero. Indvars shouldn't expand any
 ; instructions to compute a trip count.

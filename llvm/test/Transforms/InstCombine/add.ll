@@ -1,6 +1,6 @@
 ; This test makes sure that add instructions are properly eliminated.
 
-; RUN: opt %s -instcombine | llvm-dis | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:    grep -v OK | not grep add
 
 define i32 @test1(i32 %A) {

@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg | llvm-dis | not grep bb17
+; RUN: opt %s -simplifycfg -S | not grep bb17
 ; PR1786
 
 define i32 @main() {

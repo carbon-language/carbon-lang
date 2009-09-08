@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg | llvm-dis | not grep br
+; RUN: opt %s -simplifycfg -S | not grep br
 ; END.
 
 

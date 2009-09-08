@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | \
-; RUN:   opt -predsimplify -instcombine -simplifycfg  | llvm-dis > %t
+; RUN:   opt -predsimplify -instcombine -simplifycfg  -S > %t
 ; RUN: grep -v declare %t | not grep fail
 ; RUN: grep -v declare %t | grep pass | count 3
 

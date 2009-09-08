@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -adce -simplifycfg | llvm-dis | grep "icmp s"
+; RUN: opt %s -indvars -adce -simplifycfg -S | grep "icmp s"
 ; PR1598
 
 define i32 @f(i32 %a, i32 %b, i32 %x, i32 %y) {

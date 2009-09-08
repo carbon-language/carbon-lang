@@ -1,4 +1,4 @@
-; RUN: opt %s -condprop | llvm-dis | not grep phi
+; RUN: opt < %s -condprop -S | not grep phi
 
 define i32 @foo(i1, i32, i32) {
 prologue:

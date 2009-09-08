@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | not grep extractelement
+; RUN: opt %s -instcombine -S | not grep extractelement
 
 define void @get_image() nounwind {
 entry:

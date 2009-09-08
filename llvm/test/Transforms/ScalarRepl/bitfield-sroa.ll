@@ -1,4 +1,4 @@
-; RUN: opt %s -scalarrepl | llvm-dis | not grep alloca        
+; RUN: opt %s -scalarrepl -S | not grep alloca        
 ; rdar://6532315
 %t = type { { i32, i16, i8, i8 } }
 

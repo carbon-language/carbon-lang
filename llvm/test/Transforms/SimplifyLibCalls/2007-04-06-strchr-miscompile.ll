@@ -1,5 +1,5 @@
 ; PR1307
-; RUN: opt %s -simplify-libcalls -instcombine | llvm-dis > %t
+; RUN: opt %s -simplify-libcalls -instcombine -S > %t
 ; RUN: grep {@str,.*i64 3} %t
 ; RUN: grep {@str1,.*i64 7} %t
 ; RUN: grep {ret i8.*null} %t

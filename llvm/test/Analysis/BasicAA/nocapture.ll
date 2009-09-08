@@ -1,4 +1,4 @@
-; RUN: opt %s -basicaa -gvn -instcombine | llvm-dis | grep {ret i32 0}
+; RUN: opt %s -basicaa -gvn -instcombine -S | grep {ret i32 0}
 
 declare i32* @test(i32* nocapture)
 

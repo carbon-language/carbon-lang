@@ -1,4 +1,4 @@
-; RUN: opt %s -inline -constprop | llvm-dis > %t
+; RUN: opt %s -inline -constprop -S > %t
 ; RUN: not grep test_function %t
 ; RUN: grep {ret i32 5} %t
 

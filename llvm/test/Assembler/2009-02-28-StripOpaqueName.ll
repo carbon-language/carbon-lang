@@ -1,4 +1,4 @@
-; RUN: opt %s -strip | llvm-dis | llvm-as | llvm-dis
+; RUN: opt %s -strip -S | llvm-as | llvm-dis
 
 ; Stripping the name from A should not break references to it.
 %A = type opaque

@@ -1,6 +1,6 @@
 ; This test ensures that inlining an "empty" function does not destroy the CFG
 ;
-; RUN: opt %s -inline | llvm-dis | not grep br
+; RUN: opt %s -inline -S | not grep br
 
 define i32 @func(i32 %i) {
         ret i32 %i

@@ -1,6 +1,6 @@
 ; This file contains various testcases that check to see that instcombine
 ; is narrowing computations when possible.
-; RUN: opt %s -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine -S | \
 ; RUN:    grep {ret i1 false}
 
 ; test1 - Eliminating the casts in this testcase (by narrowing the AND

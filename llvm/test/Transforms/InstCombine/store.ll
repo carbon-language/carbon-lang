@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:   grep -v {store.*,.*null} | not grep store
 
 define void @test1(i32* %P) {

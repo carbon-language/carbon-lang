@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep select
+; RUN: opt %s -instcombine -S | grep select
 ; END.
 
 target datalayout = "e-p:32:32"

@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | \
-; RUN:   opt -predsimplify -instcombine -simplifycfg | llvm-dis | \
+; RUN:   opt -predsimplify -instcombine -simplifycfg -S | \
 ; RUN:   grep -v declare | grep pass | count 2
 
 define i32 @test(i32 %x, i32 %y) {

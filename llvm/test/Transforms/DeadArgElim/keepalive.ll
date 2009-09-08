@@ -1,4 +1,4 @@
-; RUN: opt %s -deadargelim | llvm-dis > %t
+; RUN: opt %s -deadargelim -S > %t
 ; RUN: grep {define internal zeroext i32 @test1() nounwind} %t
 ; RUN: grep {define internal %Ty @test2} %t
 

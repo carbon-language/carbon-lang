@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:    grep and | count 1
 
 ; Should be optimized to one and.

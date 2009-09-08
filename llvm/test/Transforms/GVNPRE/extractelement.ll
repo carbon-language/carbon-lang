@@ -1,4 +1,4 @@
-; RUN: opt %s -gvnpre | llvm-dis | grep b.gvnpre
+; RUN: opt %s -gvnpre -S | grep b.gvnpre
 
 define i32 @extract() {
 entry:		; preds = %cond_false, %entry

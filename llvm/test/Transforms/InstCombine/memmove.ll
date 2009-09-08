@@ -1,6 +1,6 @@
 ; This test makes sure that memmove instructions are properly eliminated.
 ;
-; RUN: opt %s -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine -S | \
 ; RUN:    not grep {call void @llvm.memmove}
 
 @S = internal constant [33 x i8] c"panic: restorelist inconsistency\00"		; <[33 x i8]*> [#uses=1]

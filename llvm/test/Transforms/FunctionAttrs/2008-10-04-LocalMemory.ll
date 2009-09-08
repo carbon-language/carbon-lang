@@ -1,4 +1,4 @@
-; RUN: opt %s -functionattrs | llvm-dis | grep readnone | count 2
+; RUN: opt %s -functionattrs -S | grep readnone | count 2
 
 declare i32 @g(i32*) readnone
 

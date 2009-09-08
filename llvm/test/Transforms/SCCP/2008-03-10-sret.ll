@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s  | opt -ipsccp | llvm-dis > %t
+; RUN: llvm-as < %s  | opt -ipsccp -S > %t
 ; RUN: grep {ret i32 36} %t
 ; RUN: grep {%mrv = insertvalue %T undef, i32 18, 0} %t
 ; RUN: grep {%mrv1 = insertvalue %T %mrv, i32 17, 1} %t

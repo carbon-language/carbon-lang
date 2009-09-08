@@ -5,7 +5,7 @@
 ; of the bug that was causing the Olden Health benchmark to output incorrect
 ; results!
 ;
-; RUN: opt %s -constprop | llvm-dis > %t.1
+; RUN: opt -constprop -S > %t.1 < %s
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | opt -constprop | \
 ; RUN: llvm-dis > %t.2
 ; RUN: diff %t.1 %t.2

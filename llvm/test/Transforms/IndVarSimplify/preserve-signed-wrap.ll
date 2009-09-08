@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars | llvm-dis > %t
+; RUN: opt %s -indvars -S > %t
 ; RUN: grep sext %t | count 1
 ; RUN: grep phi %t | count 1
 ; RUN: grep {phi i64} %t

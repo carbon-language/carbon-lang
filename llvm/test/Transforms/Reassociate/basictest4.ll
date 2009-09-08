@@ -1,4 +1,4 @@
-; RUN: opt %s -reassociate -gvn -instcombine | llvm-dis | not grep add
+; RUN: opt %s -reassociate -gvn -instcombine -S | not grep add
 
 @a = weak global i32 0		; <i32*> [#uses=1]
 @b = weak global i32 0		; <i32*> [#uses=1]

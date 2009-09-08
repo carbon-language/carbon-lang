@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep urem
+; RUN: opt %s -instcombine -S | grep urem
 
 define i64 @rem_unsigned(i64 %x1, i64 %y2) {
 	%r = udiv i64 %x1, %y2

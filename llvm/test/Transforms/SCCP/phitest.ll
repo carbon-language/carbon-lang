@@ -1,4 +1,4 @@
-; RUN: opt %s -sccp -dce -simplifycfg | llvm-dis | \
+; RUN: opt %s -sccp -dce -simplifycfg -S | \
 ; RUN:   not grep br
 
 define i32 @test(i32 %param) {

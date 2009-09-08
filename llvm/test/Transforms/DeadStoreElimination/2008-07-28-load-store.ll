@@ -1,4 +1,4 @@
-; RUN: opt %s -dse | llvm-dis | not grep tmp5
+; RUN: opt %s -dse -S | not grep tmp5
 ; PR2599
 
 define void @foo({ i32, i32 }* %x) nounwind  {

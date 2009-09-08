@@ -1,7 +1,7 @@
 ; -simplifycfg is not folding blocks if there is a PHI node involved.  This 
 ; should be fixed eventually
 
-; RUN: opt %s -simplifycfg | llvm-dis | not grep br
+; RUN: opt %s -simplifycfg -S | not grep br
 
 define i32 @main(i32 %argc) {
 ; <label>:0

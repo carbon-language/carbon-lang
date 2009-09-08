@@ -3,7 +3,7 @@
 ; due to the fact that the SimplifyCFG function does not use 
 ; the ConstantFoldTerminator function.
 
-; RUN: opt %s -simplifycfg | llvm-dis | \
+; RUN: opt %s -simplifycfg -S | \
 ; RUN:   not grep {br i1 %c2}
 
 declare void @noop()

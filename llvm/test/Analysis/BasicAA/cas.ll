@@ -1,4 +1,4 @@
-; RUN: opt %s -basicaa -gvn | llvm-dis | grep load | count 1
+; RUN: opt %s -basicaa -gvn -S | grep load | count 1
 
 @flag0 = internal global i32 zeroinitializer
 @turn = internal global i32 zeroinitializer

@@ -1,5 +1,5 @@
-; RUN: opt %s -instcombine -mem2reg | llvm-dis | grep {%A = alloca} 
-; RUN: opt %s -instcombine -mem2reg | llvm-dis | \
+; RUN: opt %s -instcombine -mem2reg -S | grep {%A = alloca} 
+; RUN: opt %s -instcombine -mem2reg -S | \
 ; RUN:    not grep {%B = alloca}
 ; END.
 

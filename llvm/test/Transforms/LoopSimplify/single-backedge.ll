@@ -2,7 +2,7 @@
 ; for all loops.  This allows the -indvars pass to recognize the %IV 
 ; induction variable in this testcase.
 
-; RUN: opt %s -indvars | llvm-dis | grep indvar
+; RUN: opt %s -indvars -S | grep indvar
 
 define i32 @test(i1 %C) {
 ; <label>:0

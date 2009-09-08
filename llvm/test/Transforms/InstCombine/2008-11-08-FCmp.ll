@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis > %t
+; RUN: opt %s -instcombine -S > %t
 ; RUN: grep {icmp eq} %t
 ; RUN: grep {ret i1 false} %t | count 2
 ; RUN: grep {ret i1 true} %t | count 2

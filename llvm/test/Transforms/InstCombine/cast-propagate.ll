@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -mem2reg | llvm-dis | \
+; RUN: opt %s -instcombine -mem2reg -S | \
 ; RUN:    not grep load
 
 define i32 @test1(i32* %P) {

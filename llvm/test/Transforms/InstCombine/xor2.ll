@@ -1,6 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: opt %s -instcombine | llvm-dis | not grep {xor }
+; RUN: opt %s -instcombine -S | not grep {xor }
 
 ; PR1253
 define i1 @test0(i32 %A) {

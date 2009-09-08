@@ -1,5 +1,5 @@
 ; Simple sanity check testcase.  Both alloca's should be eliminated.
-; RUN: opt %s -mem2reg | llvm-dis | not grep alloca
+; RUN: opt %s -mem2reg -S | not grep alloca
 
 define double @testfunc(i32 %i, double %j) {
 	%I = alloca i32		; <i32*> [#uses=4]

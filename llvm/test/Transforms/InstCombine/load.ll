@@ -1,6 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: opt %s -instcombine | llvm-dis | not grep load
+; RUN: opt < %s -instcombine -S | not grep load
 
 @X = constant i32 42		; <i32*> [#uses=2]
 @X2 = constant i32 47		; <i32*> [#uses=1]

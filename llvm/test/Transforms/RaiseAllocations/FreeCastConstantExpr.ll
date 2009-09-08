@@ -1,6 +1,6 @@
 ; This situation can occur due to the funcresolve pass.
 ;
-; RUN: opt %s -raiseallocs | llvm-dis | not grep call
+; RUN: opt %s -raiseallocs -S | not grep call
 
 declare void @free(i8*)
 

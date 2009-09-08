@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | not grep sext
+; RUN: opt %s -instcombine -S | not grep sext
 ; XFAIL: *
 
 define zeroext i16 @t(i8 zeroext %on_off, i16* nocapture %puls) nounwind readonly {

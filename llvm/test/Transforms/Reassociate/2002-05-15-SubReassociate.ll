@@ -1,6 +1,6 @@
 ; With sub reassociation, constant folding can eliminate all of the constants.
 ;
-; RUN: opt %s -reassociate -constprop -instcombine -dce | llvm-dis | not grep add
+; RUN: opt %s -reassociate -constprop -instcombine -dce -S | not grep add
 
 define i32 @test(i32 %A, i32 %B) {
 	%W = add i32 5, %B		; <i32> [#uses=1]

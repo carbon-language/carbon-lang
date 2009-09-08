@@ -1,5 +1,5 @@
 ; Tests to make sure elimination of casts is working correctly
-; RUN: opt %s -instcombine | llvm-dis | FileCheck %s
+; RUN: opt %s -instcombine -S | FileCheck %s
 
 target datalayout = "p:32:32"
 

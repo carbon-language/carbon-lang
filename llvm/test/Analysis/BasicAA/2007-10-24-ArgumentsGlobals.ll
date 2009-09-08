@@ -1,4 +1,4 @@
-; RUN: opt %s -basicaa -gvn -dce | llvm-dis | grep tmp7
+; RUN: opt %s -basicaa -gvn -dce -S | grep tmp7
 
         %struct.A = type { i32 }
         %struct.B = type { %struct.A }

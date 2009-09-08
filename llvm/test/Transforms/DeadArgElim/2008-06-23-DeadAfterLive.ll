@@ -1,4 +1,4 @@
-; RUN: opt %s -deadargelim -die | llvm-dis > %t
+; RUN: opt %s -deadargelim -die -S > %t
 ; RUN: cat %t | grep 123
 
 ; This test tries to catch wrongful removal of return values for a specific case

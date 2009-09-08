@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce | llvm-dis | grep "phi double" | count 1
+; RUN: opt %s -loop-reduce -S | grep "phi double" | count 1
 
 define void @foobar(i32 %n) nounwind {
 entry:

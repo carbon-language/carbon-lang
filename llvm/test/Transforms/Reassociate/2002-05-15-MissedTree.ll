@@ -1,4 +1,4 @@
-; RUN: opt %s -reassociate -instcombine -constprop -die | llvm-dis | not grep 5
+; RUN: opt < %s -reassociate -instcombine -constprop -die -S | not grep 5
 
 define i32 @test(i32 %A, i32 %B) {
 	%W = add i32 %B, -5		; <i32> [#uses=1]

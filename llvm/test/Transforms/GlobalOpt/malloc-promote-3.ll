@@ -1,4 +1,4 @@
-; RUN: opt %s -globalopt | llvm-dis | not grep malloc
+; RUN: opt < %s -globalopt -S | not grep malloc
 
 @G = internal global i32* null          ; <i32**> [#uses=4]
 

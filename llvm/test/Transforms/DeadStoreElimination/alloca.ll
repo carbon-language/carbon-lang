@@ -1,4 +1,4 @@
-; RUN: opt %s -dse | llvm-dis | not grep DEAD
+; RUN: opt %s -dse -S | not grep DEAD
 
 define void @test(i32* %Q) {
         %P = alloca i32         ; <i32*> [#uses=1]

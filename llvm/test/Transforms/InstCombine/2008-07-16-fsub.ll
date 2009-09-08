@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep sub
+; RUN: opt %s -instcombine -S | grep sub
 ; PR2553
 
 define double @test(double %X) nounwind {

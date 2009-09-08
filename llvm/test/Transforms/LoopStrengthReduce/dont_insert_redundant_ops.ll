@@ -1,5 +1,5 @@
 ; Check that this test makes INDVAR and related stuff dead.
-; RUN: opt %s -loop-reduce | llvm-dis | grep phi | count 2
+; RUN: opt %s -loop-reduce -S | grep phi | count 2
 
 declare i1 @pred()
 

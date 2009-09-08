@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | \
+; RUN: llvm-as %s -o - | opt -instcombine -S | \
 ; RUN:    grep and
 
 define i64 @foo(i64 %tmp, i64 %tmp2) {

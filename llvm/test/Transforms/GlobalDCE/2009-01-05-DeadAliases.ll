@@ -1,5 +1,5 @@
-; RUN: opt %s -globaldce | llvm-dis | not grep @D
-; RUN: opt %s -globaldce | llvm-dis | grep @L | count 3
+; RUN: opt %s -globaldce -S | not grep @D
+; RUN: opt %s -globaldce -S | grep @L | count 3
 
 @A = global i32 0
 @D = alias internal i32* @A

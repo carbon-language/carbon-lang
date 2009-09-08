@@ -1,4 +1,4 @@
-; RUN: opt -simplify-libcalls-halfpowr %s | llvm-dis | FileCheck %s
+; RUN: opt -simplify-libcalls-halfpowr %s -S | FileCheck %s
 
 define float @__half_powrf4(float %f, float %g) nounwind readnone {
 entry:

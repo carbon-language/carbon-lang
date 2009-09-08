@@ -1,6 +1,6 @@
-; RUN: opt %s -scalarrepl | llvm-dis | \
+; RUN: opt %s -scalarrepl -S | \
 ; RUN:   not grep alloca
-; RUN: opt %s -scalarrepl | llvm-dis | \
+; RUN: opt %s -scalarrepl -S | \
 ; RUN:   grep {bitcast.*float.*i32}
 
 define i32 @test(float %X) {

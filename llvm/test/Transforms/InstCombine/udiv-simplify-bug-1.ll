@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis > %t1.ll
+; RUN: opt < %s -instcombine -S > %t1.ll
 ; RUN: grep udiv %t1.ll | count 2
 ; RUN: grep zext %t1.ll | count 2
 ; PR2274

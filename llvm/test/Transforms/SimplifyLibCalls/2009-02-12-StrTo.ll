@@ -1,4 +1,4 @@
-; RUN: opt %s -simplify-libcalls | llvm-dis > %t
+; RUN: opt %s -simplify-libcalls -S > %t
 ; RUN: grep nocapture %t | count 2
 ; RUN: grep null %t | grep nocapture | count 1
 ; RUN: grep null %t | grep call | grep readonly | count 1

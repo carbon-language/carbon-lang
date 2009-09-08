@@ -1,4 +1,4 @@
-; RUN: opt %s -tailcallelim | llvm-dis | \
+; RUN: opt %s -tailcallelim -S | \
 ; RUN:    grep {tail call void @foo}
 
 

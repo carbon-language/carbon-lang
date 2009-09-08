@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars | llvm-dis | FileCheck %s
+; RUN: opt %s -indvars -S | FileCheck %s
 ; PR4775
 
 ; Indvars shouldn't sink the alloca out of the entry block, even though

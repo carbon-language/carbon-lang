@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg -instcombine -mem2reg | llvm-dis | not grep alloca
+; RUN: opt %s -simplifycfg -instcombine -mem2reg -S | not grep alloca
 ;
 ; This tests to see if mem2reg can promote alloca instructions whose addresses
 ; are used by PHI nodes that are immediately loaded.  The LLVM C++ front-end

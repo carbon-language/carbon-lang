@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis > %t
+; RUN: opt < %s -instcombine -S > %t
 ; RUN: not grep lshr %t
 ; RUN: grep add %t | count 1
 

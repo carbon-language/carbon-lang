@@ -1,6 +1,6 @@
-; RUN: opt %s -constprop | llvm-dis | \
+; RUN: opt %s -constprop -S | \
 ; RUN:    grep {ret i32 -1}
-; RUN: opt %s -constprop | llvm-dis | \
+; RUN: opt %s -constprop -S | \
 ; RUN:    grep {ret i32 1}
 
 define i32 @test1() {

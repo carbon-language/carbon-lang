@@ -1,6 +1,6 @@
 ; both globals are write only, delete them.
 
-; RUN: opt %s -globalopt | llvm-dis | \
+; RUN: opt %s -globalopt -S | \
 ; RUN:   not grep internal
 
 @G0 = internal global [58 x i8] c"asdlfkajsdlfkajsd;lfkajds;lfkjasd;flkajsd;lkfja;sdlkfjasd\00"         ; <[58 x i8]*> [#uses=1]

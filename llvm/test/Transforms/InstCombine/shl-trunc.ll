@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep shl
+; RUN: opt %s -instcombine -S | grep shl
 
 define i1 @test(i32 %X, i8 %A) {
         %shift.upgrd.1 = zext i8 %A to i32              ; <i32> [#uses=1]

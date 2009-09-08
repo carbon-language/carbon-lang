@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | \
+; RUN: opt %s -instcombine -S | \
 ; RUN:   grep mul | count 2
 
 define <4 x float> @test(<4 x float> %V) {

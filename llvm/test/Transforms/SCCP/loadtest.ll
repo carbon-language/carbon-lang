@@ -1,7 +1,7 @@
 ; This test makes sure that these instructions are properly constant propagated.
 ;
 
-; RUN: opt %s -sccp | llvm-dis | not grep load
+; RUN: opt < %s -sccp -S | not grep load
 
 
 @X = constant i32 42		; <i32*> [#uses=1]

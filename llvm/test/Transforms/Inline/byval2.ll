@@ -1,4 +1,4 @@
-; RUN: opt %s -inline | llvm-dis | not grep {llvm.memcpy}
+; RUN: opt %s -inline -S | not grep {llvm.memcpy}
 
 ; Inlining a byval struct should NOT cause an explicit copy 
 ; into an alloca if the function is readonly

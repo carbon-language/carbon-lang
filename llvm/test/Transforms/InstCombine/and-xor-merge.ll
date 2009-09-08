@@ -1,5 +1,5 @@
-; RUN: opt %s -instcombine | llvm-dis | grep and | count 1
-; RUN: opt %s -instcombine | llvm-dis | grep xor | count 2
+; RUN: opt < %s -instcombine -S | grep and | count 1
+; RUN: opt < %s -instcombine -S | grep xor | count 2
 
 ; (x&z) ^ (y&z) -> (x^y)&z
 define i32 @test1(i32 %x, i32 %y, i32 %z) {

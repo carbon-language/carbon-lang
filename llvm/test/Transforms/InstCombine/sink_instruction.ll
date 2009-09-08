@@ -1,4 +1,4 @@
-; RUN: opt -instcombine %s | llvm-dis | FileCheck %s
+; RUN: opt -instcombine %s -S | FileCheck %s
 
 ;; This tests that the instructions in the entry blocks are sunk into each
 ;; arm of the 'if'.

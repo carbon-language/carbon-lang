@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep shufflevector
+; RUN: opt %s -instcombine -S | grep shufflevector
 ; PR2645
 
 ; instcombine shouldn't delete the shufflevector.

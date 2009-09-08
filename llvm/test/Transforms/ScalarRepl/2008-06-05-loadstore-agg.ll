@@ -3,7 +3,7 @@
 ; instruction, which was not possible before aggregrates were first class
 ; values. This checks of scalarrepl splits up the struct and array properly.
 
-; RUN: opt %s -scalarrepl | llvm-dis | not grep alloca
+; RUN: opt %s -scalarrepl -S | not grep alloca
 
 define i32 @foo() {
 	%target = alloca { i32, i32 }		; <{ i32, i32 }*> [#uses=1]

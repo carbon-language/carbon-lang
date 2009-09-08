@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis > %t
+; RUN: opt %s -instcombine -S > %t
 ; RUN: grep urem %t | count 3
 ; RUN: grep srem %t | count 1
 ; RUN: grep sub %t | count 2

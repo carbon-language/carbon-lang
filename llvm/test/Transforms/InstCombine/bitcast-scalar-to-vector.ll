@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep {ret i32 0}
+; RUN: opt %s -instcombine -S | grep {ret i32 0}
 ; PR4487
 
 ; Bitcasts between vectors and scalars are valid, despite being ill-advised.

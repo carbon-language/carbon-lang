@@ -1,7 +1,7 @@
 ; Test that PHI nodes and select instructions do not necessarily make stuff
 ; non-constant.
 
-; RUN: opt %s -globalopt | llvm-dis | not grep global
+; RUN: opt %s -globalopt -S | not grep global
 
 @X = internal global i32 4              ; <i32*> [#uses=2]
 @Y = internal global i32 5              ; <i32*> [#uses=2]

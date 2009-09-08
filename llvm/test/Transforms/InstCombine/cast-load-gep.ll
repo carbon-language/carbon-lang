@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -globaldce | llvm-dis | \
+; RUN: opt %s -instcombine -globaldce -S | \
 ; RUN:   not grep Array
 
 ; Pulling the cast out of the load allows us to eliminate the load, and then 

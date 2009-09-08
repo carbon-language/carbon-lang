@@ -1,4 +1,4 @@
-; RUN: opt %s -deadargelim -die | llvm-dis > %t
+; RUN: opt %s -deadargelim -die -S > %t
 ; RUN: cat %t | not grep DEAD
 ; RUN: cat %t | grep LIVE | count 4
 

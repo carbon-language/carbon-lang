@@ -1,4 +1,4 @@
-; RUN: opt %s -adce -simplifycfg | llvm-dis | not grep then:
+; RUN: opt %s -adce -simplifycfg -S | not grep then:
 
 define void @dead_test8(i32* %data.1, i32 %idx.1) {
 entry:

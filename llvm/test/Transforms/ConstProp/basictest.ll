@@ -1,7 +1,7 @@
 ; This is a basic sanity check for constant propogation.  The add instruction 
 ; should be eliminated.
 
-; RUN: opt %s -constprop -die | llvm-dis | not grep add
+; RUN: opt %s -constprop -die -S | not grep add
 
 define i32 @test(i1 %B) {
         br i1 %B, label %BB1, label %BB2

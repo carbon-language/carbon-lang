@@ -1,4 +1,4 @@
-; RUN: opt %s -anders-aa -gvn | llvm-dis | not grep undef
+; RUN: opt %s -anders-aa -gvn -S | not grep undef
 ; PR2169
 
 declare void @llvm.memcpy.i32(i8*, i8*, i32, i32) nounwind

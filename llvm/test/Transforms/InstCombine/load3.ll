@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep load | count 1
+; RUN: opt < %s -instcombine -S | grep load | count 1
 
 ; Instcombine should be able to do trivial CSE of loads.
 

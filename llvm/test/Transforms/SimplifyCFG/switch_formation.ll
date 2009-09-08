@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg | llvm-dis | not grep br
+; RUN: opt %s -simplifycfg -S | not grep br
 ; END.
 
 define i1 @_ZN4llvm11SetCondInst7classofEPKNS_11InstructionE({ i32, i32 }* %I) {

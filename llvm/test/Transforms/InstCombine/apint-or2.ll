@@ -1,7 +1,7 @@
 ; This test makes sure that or instructions are properly eliminated.
 ; This test is for Integer BitWidth > 64 && BitWidth <= 1024.
 ;
-; RUN: opt %s -instcombine | llvm-dis | not grep or
+; RUN: opt < %s -instcombine -S | not grep or
 
 
 define i777 @test0(i777 %X) {

@@ -5,7 +5,7 @@
 ; real benchmark (mst from Olden benchmark, MakeGraph function).  When SCCP is
 ; fixed, this should be eliminated by a single SCCP application.
 ;
-; RUN: opt %s -sccp | llvm-dis | not grep loop
+; RUN: opt %s -sccp -S | not grep loop
 
 define i32* @test() {
 bb1:

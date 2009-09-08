@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep 0.0 | count 1
+; RUN: opt %s -instcombine -S | grep 0.0 | count 1
 
 declare double @abs(double)
 

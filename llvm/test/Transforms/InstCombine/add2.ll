@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | not grep add
+; RUN: opt < %s -instcombine -S | not grep add
 
 define i64 @test1(i64 %A, i32 %B) {
         %tmp12 = zext i32 %B to i64

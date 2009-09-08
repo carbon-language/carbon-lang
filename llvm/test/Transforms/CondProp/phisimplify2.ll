@@ -1,4 +1,4 @@
-; RUN: opt %s -condprop | llvm-dis | not grep phi
+; RUN: opt < %s -condprop -S | not grep phi
 
 declare i1 @foo()
 

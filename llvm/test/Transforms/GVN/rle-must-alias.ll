@@ -1,4 +1,4 @@
-; RUN: opt %s -gvn | llvm-dis | grep {DEAD = phi i32 }
+; RUN: opt %s -gvn -S | grep {DEAD = phi i32 }
 ; XFAIL: *
 
 ; FIXME: GVN should eliminate the fully redundant %9 GEP which 

@@ -1,6 +1,6 @@
 ; There should be exactly one shift and one add left.
 ; RUN: llvm-as < %s | \
-; RUN:   opt -reassociate -instcombine | llvm-dis > %t  
+; RUN:   opt -reassociate -instcombine -S > %t  
 ; RUN: grep shl %t | count 1
 ; RUN: grep add %t | count 1
 

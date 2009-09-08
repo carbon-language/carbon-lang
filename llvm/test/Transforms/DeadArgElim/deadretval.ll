@@ -1,4 +1,4 @@
-; RUN: opt %s -deadargelim | llvm-dis | not grep DEAD
+; RUN: opt %s -deadargelim -S | not grep DEAD
 
 ; Dead arg only used by dead retval
 define internal i32 @test(i32 %DEADARG) {

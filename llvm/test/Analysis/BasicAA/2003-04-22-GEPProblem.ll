@@ -1,4 +1,4 @@
-; RUN: opt %s -gvn -instcombine | llvm-dis | grep sub
+; RUN: opt %s -gvn -instcombine -S | grep sub
 
 ; BasicAA was incorrectly concluding that P1 and P2 didn't conflict!
 

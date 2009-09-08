@@ -3,7 +3,7 @@
 
 ; If this test is successful, the function should be reduced to 'call; ret'
 
-; RUN: opt %s -simplifycfg | llvm-dis | \
+; RUN: opt %s -simplifycfg -S | \
 ; RUN:   not egrep {\\(invoke\\)|\\(br\\)}
 
 declare void @bar()

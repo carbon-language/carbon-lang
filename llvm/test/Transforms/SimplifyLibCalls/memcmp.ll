@@ -1,5 +1,5 @@
 ; Test that the memcmpOptimizer works correctly
-; RUN: opt %s -simplify-libcalls | llvm-dis | not grep {call.*memcmp}
+; RUN: opt %s -simplify-libcalls -S | not grep {call.*memcmp}
 
 @h = constant [2 x i8] c"h\00"		; <[2 x i8]*> [#uses=0]
 @hel = constant [4 x i8] c"hel\00"		; <[4 x i8]*> [#uses=0]

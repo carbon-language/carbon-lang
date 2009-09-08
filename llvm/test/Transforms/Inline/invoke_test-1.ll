@@ -1,7 +1,7 @@
 ; Test that we can inline a simple function, turning the calls in it into invoke
 ; instructions
 
-; RUN: opt %s -inline | llvm-dis | \
+; RUN: opt %s -inline -S | \
 ; RUN:   not grep {call\[^e\]}
 
 declare void @might_throw()

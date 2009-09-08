@@ -1,5 +1,5 @@
 ; distilled from 255.vortex
-; RUN: opt %s -globaldce | llvm-dis | not grep testfunc
+; RUN: opt %s -globaldce -S | not grep testfunc
 
 declare i1 ()* @getfunc()
 

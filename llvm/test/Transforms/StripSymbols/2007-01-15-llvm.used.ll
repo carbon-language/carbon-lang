@@ -1,5 +1,5 @@
-; RUN: opt %s -strip | llvm-dis | grep foo | count 2
-; RUN: opt %s -strip | llvm-dis | grep bar | count 2
+; RUN: opt %s -strip -S | grep foo | count 2
+; RUN: opt %s -strip -S | grep bar | count 2
 @llvm.used = appending global [2 x i8*] [ i8* bitcast (i32* @foo to i8*), i8* bitcast (i32 ()* @bar to i8*) ], section "llvm.metadata"		; <[2 x i8*]*> [#uses=0]
 @foo = internal constant i32 41		; <i32*> [#uses=1]
 

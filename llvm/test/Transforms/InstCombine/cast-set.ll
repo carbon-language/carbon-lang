@@ -1,7 +1,7 @@
 ; This tests for various complex cast elimination cases instcombine should
 ; handle.
 
-; RUN: opt %s -instcombine | llvm-dis | notcast
+; RUN: opt < %s -instcombine -S | notcast
 
 define i1 @test1(i32 %X) {
         %A = bitcast i32 %X to i32              ; <i32> [#uses=1]

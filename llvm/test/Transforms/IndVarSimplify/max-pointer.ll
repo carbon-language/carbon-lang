@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars | llvm-dis > %t
+; RUN: opt %s -indvars -S > %t
 ; RUN: grep {icmp ugt i8\\\*} %t | count 1
 ; RUN: grep {icmp sgt i8\\\*} %t | count 1
 

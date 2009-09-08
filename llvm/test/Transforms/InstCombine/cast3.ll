@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | not grep getelementptr
+; RUN: opt %s -instcombine -S | not grep getelementptr
 ; PR2831
 
 ; Don't raise arbitrary inttoptr+arithmetic+ptrtoint to getelementptr.

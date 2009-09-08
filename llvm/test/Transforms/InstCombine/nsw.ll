@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | FileCheck %s
+; RUN: opt %s -instcombine -S | FileCheck %s
 
 ; CHECK: define i32 @foo
 ; %y = sub i32 0, %x

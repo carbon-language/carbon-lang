@@ -1,4 +1,4 @@
-; RUN: opt %s -licm | llvm-dis | FileCheck %s
+; RUN: opt %s -licm -S | FileCheck %s
 
 @X = global i32 0		; <i32*> [#uses=1]
 

@@ -1,4 +1,4 @@
-; RUN: opt %s -deadargelim | llvm-dis > %t
+; RUN: opt %s -deadargelim -S > %t
 ; RUN: cat %t | grep nounwind | count 2
 ; RUN: cat %t | grep signext | count 2
 ; RUN: cat %t | not grep inreg

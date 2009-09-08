@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep bitcast | count 2
+; RUN: opt %s -instcombine -S | grep bitcast | count 2
 
 define i32 @b(i32* inreg  %x) signext  {
 	ret i32 0

@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars | llvm-dis > %t
+; RUN: opt %s -indvars -S > %t
 ; RUN: not grep ptrtoint %t
 ; RUN: not grep inttoptr %t
 ; RUN: grep getelementptr %t | count 1

@@ -1,5 +1,5 @@
 ; Tests to make sure elimination of casts is working correctly
-; RUN: opt %s -instcombine | llvm-dis | grep %c | notcast
+; RUN: opt %s -instcombine -S | grep %c | notcast
 
 @inbuf = external global [32832 x i8]           ; <[32832 x i8]*> [#uses=1]
 

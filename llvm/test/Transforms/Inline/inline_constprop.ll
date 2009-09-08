@@ -1,5 +1,5 @@
-; RUN: opt %s -inline | llvm-dis | not grep callee
-; RUN: opt %s -inline | llvm-dis | not grep div
+; RUN: opt %s -inline -S | not grep callee
+; RUN: opt %s -inline -S | not grep div
 
 
 define internal i32 @callee(i32 %A, i32 %B) {

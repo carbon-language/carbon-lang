@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | not grep zext
+; RUN: opt < %s -instcombine -S | not grep zext
 
 define i32 @a(i1 %x) {
 entry:

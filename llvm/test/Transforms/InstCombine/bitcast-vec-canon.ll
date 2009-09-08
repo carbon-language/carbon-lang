@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis | grep element | count 4
+; RUN: opt %s -instcombine -S | grep element | count 4
 
 define double @a(<1 x i64> %y) {
   %c = bitcast <1 x i64> %y to double

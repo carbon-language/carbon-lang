@@ -1,4 +1,4 @@
-; RUN: opt %s -argpromotion | llvm-dis | grep zeroext
+; RUN: opt %s -argpromotion -S | grep zeroext
 
 	%struct.ss = type { i32, i64 }
 

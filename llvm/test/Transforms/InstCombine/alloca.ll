@@ -1,6 +1,6 @@
 ; Zero byte allocas should be deleted.
 
-; RUN: opt %s -instcombine | llvm-dis | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:   not grep alloca
 ; END.
 

@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce | llvm-dis | grep phi | count 1
+; RUN: opt < %s -loop-reduce -S | grep phi | count 1
 
 define void @foo(i32 %n) {
 entry:

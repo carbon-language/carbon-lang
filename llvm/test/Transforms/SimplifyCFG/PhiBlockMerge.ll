@@ -1,6 +1,6 @@
 ; Test merging of blocks that only have PHI nodes in them
 ;
-; RUN: opt %s -simplifycfg | llvm-dis | not grep N:
+; RUN: opt %s -simplifycfg -S | not grep N:
 ;
 
 define i32 @test(i1 %a, i1 %b) {
