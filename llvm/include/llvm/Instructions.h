@@ -1321,7 +1321,7 @@ public:
   const Value *getIndexOperand() const { return Op<1>(); }
   
   const VectorType *getVectorOperandType() const {
-    return reinterpret_cast<const VectorType*>(Instruction::getType());
+    return reinterpret_cast<const VectorType*>(getVectorOperand()->getType());
   }
   
   
