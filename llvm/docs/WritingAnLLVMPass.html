@@ -223,12 +223,14 @@ Start out with:</p>
 <div class="doc_code"><pre>
 <b>#include</b> "<a href="http://llvm.org/doxygen/Pass_8h-source.html">llvm/Pass.h</a>"
 <b>#include</b> "<a href="http://llvm.org/doxygen/Function_8h-source.html">llvm/Function.h</a>"
+<b>#include</b> "<a href="http://llvm.org/doxygen/raw__ostream_8h.html">llvm/Support/raw_ostream.h</a>"
 </pre></div>
 
 <p>Which are needed because we are writing a <tt><a
-href="http://llvm.org/doxygen/classllvm_1_1Pass.html">Pass</a></tt>, and
+href="http://llvm.org/doxygen/classllvm_1_1Pass.html">Pass</a></tt>,
 we are operating on <tt><a
-href="http://llvm.org/doxygen/classllvm_1_1Function.html">Function</a></tt>'s.</p>
+href="http://llvm.org/doxygen/classllvm_1_1Function.html">Function</a></tt>'s,
+and we will be doing some printing.</p>
 
 <p>Next we have:</p>
 <div class="doc_code"><pre>
@@ -273,7 +275,7 @@ avoid using expensive C++ runtime information.</p>
 
 <div class="doc_code"><pre>
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
-      llvm::cerr &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
+      errs() &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
       <b>return false</b>;
     }
   };  <i>// end of struct Hello</i>
@@ -312,6 +314,7 @@ is supplied as fourth argument. </p>
 <div class="doc_code"><pre>
 <b>#include</b> "<a href="http://llvm.org/doxygen/Pass_8h-source.html">llvm/Pass.h</a>"
 <b>#include</b> "<a href="http://llvm.org/doxygen/Function_8h-source.html">llvm/Function.h</a>"
+<b>#include</b> "<a href="http://llvm.org/doxygen/raw__ostream_8h.html">llvm/Support/raw_ostream.h</a>"
 
 <b>using namespace llvm;</b>
 
@@ -322,7 +325,7 @@ is supplied as fourth argument. </p>
     Hello() : FunctionPass(&amp;ID) {}
 
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
-      llvm::cerr &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
+      errs() &lt;&lt; "<i>Hello: </i>" &lt;&lt; F.getName() &lt;&lt; "\n";
       <b>return false</b>;
     }
   };
