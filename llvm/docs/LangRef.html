@@ -2116,7 +2116,7 @@ arbitrarily change its value over its "live range".  This is true because the
 "variable" doesn't actually <em>have a live range</em>.  Instead, the value is
 logically read from arbitrary registers that happen to be around when needed,
 so the value is not neccesarily consistent over time.  In fact, %A and %C need
-to have the same semantics of the core LLVM "replace all uses with" concept
+to have the same semantics or the core LLVM "replace all uses with" concept
 would not hold.</p>
 
 <div class="doc_code">
@@ -2136,7 +2136,7 @@ can be constant folded to undef because the undef could be an SNaN, and fdiv is
 not (currently) defined on SNaN's.  However, in the second example, we can make
 a more aggressive assumption: because the undef is allowed to be an arbitrary
 value, we are allowed to assume that it could be zero.  Since a divide by zero
-is has <em>undefined behavior</em>, we are allowed to assume that the operation
+it has <em>undefined behavior</em>, we are allowed to assume that the operation
 does not execute at all.  This allows us to delete the divide and all code after
 it: since the undefined operation "can't happen", the optimizer can assume that
 it occurs in dead code.
