@@ -232,12 +232,16 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     // FALL THROUGH and handle them the same as zext/trunc.
   case Instruction::ZExt:
   case Instruction::Trunc: {
+    const Type *SrcTy = I->getOperand(0)->getType();
+    
+    unsigned SrcBitWidth;
     // Note that we handle pointer operands here because of inttoptr/ptrtoint
     // which fall through here.
-    const Type *SrcTy = I->getOperand(0)->getType();
-    unsigned SrcBitWidth = TD ?
-      TD->getTypeSizeInBits(SrcTy) :
-      SrcTy->getScalarSizeInBits();
+    if (isa<PointerType>(SrcTy))
+      SrcBitWidth = TD->getTypeSizeInBits(SrcTy);
+    else
+      SrcBitWidth = SrcTy->getScalarSizeInBits();
+    
     APInt MaskIn(Mask);
     MaskIn.zextOrTrunc(SrcBitWidth);
     KnownZero.zextOrTrunc(SrcBitWidth);
@@ -265,8 +269,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   }
   case Instruction::SExt: {
     // Compute the bits in the result that are not present in the input.
-    const IntegerType *SrcTy = cast<IntegerType>(I->getOperand(0)->getType());
-    unsigned SrcBitWidth = SrcTy->getBitWidth();
+    unsigned SrcBitWidth = I->getOperand(0)->getType()->getScalarSizeInBits();
       
     APInt MaskIn(Mask); 
     MaskIn.trunc(SrcBitWidth);
