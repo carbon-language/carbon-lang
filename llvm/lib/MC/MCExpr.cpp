@@ -20,9 +20,20 @@ void MCExpr::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     OS << cast<MCConstantExpr>(*this).getValue();
     return;
 
-  case MCExpr::SymbolRef:
-    cast<MCSymbolRefExpr>(*this).getSymbol().print(OS, MAI);
+  case MCExpr::SymbolRef: {
+    const MCSymbol &Sym = cast<MCSymbolRefExpr>(*this).getSymbol();
+    
+    // Parenthesize names that start with $ so that they don't look like
+    // absolute names.
+    if (Sym.getName()[0] == '$') {
+      OS << '(';
+      Sym.print(OS, MAI);
+      OS << ')';
+    } else {
+      Sym.print(OS, MAI);
+    }
     return;
+  }
 
   case MCExpr::Unary: {
     const MCUnaryExpr &UE = cast<MCUnaryExpr>(*this);
