@@ -1217,10 +1217,13 @@ public:
     return new(3) SelectInst(C, S1, S2, NameStr, InsertAtEnd);
   }
 
-  Value *getCondition() const { return Op<0>(); }
-  Value *getTrueValue() const { return Op<1>(); }
-  Value *getFalseValue() const { return Op<2>(); }
-
+  const Value *getCondition() const { return Op<0>(); }
+  const Value *getTrueValue() const { return Op<1>(); }
+  const Value *getFalseValue() const { return Op<2>(); }
+  Value *getCondition() { return Op<0>(); }
+  Value *getTrueValue() { return Op<1>(); }
+  Value *getFalseValue() { return Op<2>(); }
+  
   /// areInvalidOperands - Return a string if the specified operands are invalid
   /// for a select operation, otherwise return null.
   static const char *areInvalidOperands(Value *Cond, Value *True, Value *False);
@@ -1312,6 +1315,16 @@ public:
 
   virtual ExtractElementInst *clone(LLVMContext &Context) const;
 
+  Value *getVectorOperand() { return Op<0>(); }
+  Value *getIndexOperand() { return Op<1>(); }
+  const Value *getVectorOperand() const { return Op<0>(); }
+  const Value *getIndexOperand() const { return Op<1>(); }
+  
+  const VectorType *getVectorOperandType() const {
+    return reinterpret_cast<const VectorType*>(Instruction::getType());
+  }
+  
+  
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
