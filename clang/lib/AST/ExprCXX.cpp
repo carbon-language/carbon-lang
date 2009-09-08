@@ -396,15 +396,22 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
         CallExpr::hasAnyValueDependentArguments(args, numargs))),
   Constructor(D), Elidable(elidable), Args(0), NumArgs(numargs) {
     // leave room for default arguments;
-    FunctionDecl *FDecl = cast<FunctionDecl>(D);
-    unsigned NumArgsInProto = FDecl->param_size();
-    NumArgs += (NumArgsInProto - numargs);
-    if (NumArgs > 0) {
-      Args = new (C) Stmt*[NumArgs];
-      for (unsigned i = 0; i < numargs; ++i)
+    const FunctionProtoType *FTy = 
+      cast<FunctionDecl>(D)->getType()->getAsFunctionProtoType();
+    
+    unsigned NumArgsInProto = FTy->getNumArgs();
+    unsigned NumArgsToAllocate = FTy->isVariadic() ? NumArgs : NumArgsInProto;
+    if (NumArgsToAllocate) {
+      Args = new (C) Stmt*[NumArgsToAllocate];
+      
+      for (unsigned i = 0; i != NumArgs; ++i)
         Args[i] = args[i];
-      for (unsigned i = numargs; i < NumArgs; ++i)
+      
+      // Set default arguments to 0.
+      for (unsigned i = NumArgs; i != NumArgsToAllocate; ++i)
         Args[i] = 0;
+        
+      NumArgs = NumArgsToAllocate;
     }
 }
 

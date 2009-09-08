@@ -517,6 +517,16 @@ public:
 
   unsigned getNumArgs() const { return NumArgs; }
 
+  /// getArg - Return the specified argument.
+  Expr *getArg(unsigned Arg) {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    return cast<Expr>(Args[Arg]);
+  }
+  const Expr *getArg(unsigned Arg) const {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    return cast<Expr>(Args[Arg]);
+  }
+  
   /// setArg - Set the specified argument.
   void setArg(unsigned Arg, Expr *ArgExpr) {
     assert(Arg < NumArgs && "Arg access out of range!");
