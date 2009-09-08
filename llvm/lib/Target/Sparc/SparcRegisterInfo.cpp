@@ -169,13 +169,11 @@ void SparcRegisterInfo::emitEpilogue(MachineFunction &MF,
 }
 
 unsigned SparcRegisterInfo::getRARegister() const {
-  llvm_unreachable("What is the return address register");
-  return 0;
+  return SP::I7;
 }
 
 unsigned SparcRegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  llvm_unreachable("What is the frame register");
-  return SP::G1;
+  return SP::I6;
 }
 
 unsigned SparcRegisterInfo::getEHExceptionRegister() const {
@@ -189,8 +187,7 @@ unsigned SparcRegisterInfo::getEHHandlerRegister() const {
 }
 
 int SparcRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  llvm_unreachable("What is the dwarf register number");
-  return -1;
+  return SparcGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
 }
 
 #include "SparcGenRegisterInfo.inc"

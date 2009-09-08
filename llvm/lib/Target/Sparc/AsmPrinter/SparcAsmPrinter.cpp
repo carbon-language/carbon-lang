@@ -104,6 +104,8 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   O << "\t.type\t" << CurrentFnName << ", #function\n";
   O << CurrentFnName << ":\n";
+  // Emit pre-function debug information.
+  DW->BeginFunction(&MF);
 
   // Number each basic block so that we can consistently refer to them
   // in PC-relative references.
@@ -129,6 +131,9 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       ++EmittedInsts;
     }
   }
+
+  // Emit post-function debug information.
+  DW->EndFunction(&MF);
 
   // We didn't modify anything.
   return false;
