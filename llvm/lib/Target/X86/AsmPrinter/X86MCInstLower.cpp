@@ -309,9 +309,16 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // Handle the 'subreg rewriting' for the lea64_32mem operand.
     lower_lea64_32mem(&TmpInst, 1);
     break;
-      
   case X86::MOV16r0:
     TmpInst.setOpcode(X86::MOV32r0);
+    lower_subreg32(&TmpInst, 0);
+    break;
+  case X86::MOVZX16rr8:
+    TmpInst.setOpcode(X86::MOVZX32rr8);
+    lower_subreg32(&TmpInst, 0);
+    break;
+  case X86::MOVZX16rm8:
+    TmpInst.setOpcode(X86::MOVZX32rm8);
     lower_subreg32(&TmpInst, 0);
     break;
   }
