@@ -35,6 +35,12 @@ using namespace llvm;
 /// optimized based on the contradictory assumption that it is non-zero.
 /// Because instcombine aggressively folds operations with undef args anyway,
 /// this won't lose us code quality.
+///
+/// This function is defined on values with integer type, values with pointer
+/// type (but only if TD is non-null), and vectors of integers.  In the case
+/// where V is a vector, the mask, known zero, and known one values are the
+/// same width as the vector element, and the bit is set only if it is true
+/// for all of the elements in the vector.
 void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
                              APInt &KnownZero, APInt &KnownOne,
                              const TargetData *TD, unsigned Depth) {
@@ -608,6 +614,12 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
 /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
 /// this predicate to simplify operations downstream.  Mask is known to be zero
 /// for bits that V cannot have.
+///
+/// This function is defined on values with integer type, values with pointer
+/// type (but only if TD is non-null), and vectors of integers.  In the case
+/// where V is a vector, the mask, known zero, and known one values are the
+/// same width as the vector element, and the bit is set only if it is true
+/// for all of the elements in the vector.
 bool llvm::MaskedValueIsZero(Value *V, const APInt &Mask,
                              const TargetData *TD, unsigned Depth) {
   APInt KnownZero(Mask.getBitWidth(), 0), KnownOne(Mask.getBitWidth(), 0);

@@ -29,6 +29,12 @@ namespace llvm {
   /// known to be either zero or one and return them in the KnownZero/KnownOne
   /// bit sets.  This code only analyzes bits in Mask, in order to short-circuit
   /// processing.
+  ///
+  /// This function is defined on values with integer type, values with pointer
+  /// type (but only if TD is non-null), and vectors of integers.  In the case
+  /// where V is a vector, the mask, known zero, and known one values are the
+  /// same width as the vector element, and the bit is set only if it is true
+  /// for all of the elements in the vector.
   void ComputeMaskedBits(Value *V, const APInt &Mask, APInt &KnownZero,
                          APInt &KnownOne, const TargetData *TD = 0,
                          unsigned Depth = 0);
@@ -36,6 +42,12 @@ namespace llvm {
   /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
   /// this predicate to simplify operations downstream.  Mask is known to be
   /// zero for bits that V cannot have.
+  ///
+  /// This function is defined on values with integer type, values with pointer
+  /// type (but only if TD is non-null), and vectors of integers.  In the case
+  /// where V is a vector, the mask, known zero, and known one values are the
+  /// same width as the vector element, and the bit is set only if it is true
+  /// for all of the elements in the vector.
   bool MaskedValueIsZero(Value *V, const APInt &Mask, 
                          const TargetData *TD = 0, unsigned Depth = 0);
 
