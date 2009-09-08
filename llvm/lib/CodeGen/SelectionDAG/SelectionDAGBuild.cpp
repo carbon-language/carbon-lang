@@ -861,6 +861,10 @@ SDValue SelectionDAGLowering::getValue(const Value *V) {
       for (User::const_op_iterator OI = C->op_begin(), OE = C->op_end();
            OI != OE; ++OI) {
         SDNode *Val = getValue(*OI).getNode();
+        // If the operand is an empty aggregate, there are no values.
+        if (!Val) continue;
+        // Add each leaf value from the operand to the Constants list
+        // to form a flattened list of all the values.
         for (unsigned i = 0, e = Val->getNumValues(); i != e; ++i)
           Constants.push_back(SDValue(Val, i));
       }
