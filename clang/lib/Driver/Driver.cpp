@@ -601,14 +601,9 @@ void Driver::BuildUniversalActions(const ArgList &Args,
     Arg *A = *it;
 
     if (A->getOption().getId() == options::OPT_arch) {
-      const char *Name = A->getValue(Args);
-
-      // FIXME: We need to handle canonicalization of the specified
-      // arch?
-
       A->claim();
-      if (ArchNames.insert(Name))
-        Archs.push_back(Name);
+      if (ArchNames.insert(A->getValue(Args)))
+        Archs.push_back(A->getValue(Args));
     }
   }
 
