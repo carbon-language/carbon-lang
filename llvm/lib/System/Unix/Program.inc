@@ -39,7 +39,8 @@ Program::Program() : Data_(0) {}
 Program::~Program() {}
 
 unsigned Program::GetPid() const {
-  return reinterpret_cast<unsigned>(Data_);
+  uint64_t pid = reinterpret_cast<uint64_t>(Data_);
+  return static_cast<unsigned>(pid);
 }
 
 // This function just uses the PATH environment variable to find the program.
@@ -241,7 +242,8 @@ Program::Wait(unsigned secondsToWait,
 
   // Parent process: Wait for the child process to terminate.
   int status;
-  pid_t child = reinterpret_cast<pid_t>(Data_);
+  uint64_t pid = reinterpret_cast<uint64_t>(Data_);
+  pid_t child = static_cast<pid_t>(pid);
   while (wait(&status) != child)
     if (secondsToWait && errno == EINTR) {
       // Kill the child.
@@ -294,7 +296,8 @@ Program::Kill(std::string* ErrMsg) {
     return true;
   }
 
-  pid_t pid = reinterpret_cast<pid_t>(Data_);
+  uint64_t pid64 = reinterpret_cast<uint64_t>(Data_);
+  pid_t pid = static_cast<pid_t>(pid64);
   return (kill(pid, SIGKILL) == 0);
 }
 
