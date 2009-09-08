@@ -39,6 +39,13 @@ MCSymbol *X86ATTAsmPrinter::GetPICBaseSymbol() {
 }
 
 
+static void lower_subreg32(MCInst *MI, unsigned OpNo) {
+  // Convert registers in the addr mode according to subreg32.
+  unsigned Reg = MI->getOperand(OpNo).getReg();
+  if (Reg != 0)
+    MI->getOperand(OpNo).setReg(getX86SubSuperRegister(Reg, MVT::i32));
+}
+
 
 static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
   // Convert registers in the addr mode according to subreg64.
@@ -301,6 +308,11 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
   case X86::LEA64_32r:
     // Handle the 'subreg rewriting' for the lea64_32mem operand.
     lower_lea64_32mem(&TmpInst, 1);
+    break;
+      
+  case X86::MOV16r0:
+    TmpInst.setOpcode(X86::MOV32r0);
+    lower_subreg32(&TmpInst, 0);
     break;
   }
   
