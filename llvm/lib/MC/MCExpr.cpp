@@ -51,7 +51,17 @@ void MCExpr::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     
     switch (BE.getOpcode()) {
     default: assert(0 && "Invalid opcode!");
-    case MCBinaryExpr::Add:  OS <<  '+'; break;
+    case MCBinaryExpr::Add:
+      // Print "X-42" instead of "X+-42".
+      if (const MCConstantExpr *RHSC = dyn_cast<MCConstantExpr>(BE.getRHS())) {
+        if (RHSC->getValue() < 0) {
+          OS << RHSC->getValue();
+          return;
+        }
+      }
+        
+      OS <<  '+';
+      break;
     case MCBinaryExpr::And:  OS <<  '&'; break;
     case MCBinaryExpr::Div:  OS <<  '/'; break;
     case MCBinaryExpr::EQ:   OS << "=="; break;
