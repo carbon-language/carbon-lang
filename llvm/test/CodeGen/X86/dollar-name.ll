@@ -1,12 +1,13 @@
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i386-linux | grep {(\$bar)} | count 1
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i386-linux | grep {(\$qux)} | count 1
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i386-linux | grep {(\$hen)} | count 1
+; RUN: llc < %s -march=x86 -mtriple=i386-linux | FileCheck %s
 ; PR1339
 
 @"$bar" = global i32 zeroinitializer
 @"$qux" = external global i32
 
 define i32 @"$foo"() nounwind {
+; CHECK: movl	($bar),
+; CHECK: addl	($qux),
+; CHECK: call	($hen)
   %m = load i32* @"$bar"
   %n = load i32* @"$qux"
   %t = add i32 %m, %n
