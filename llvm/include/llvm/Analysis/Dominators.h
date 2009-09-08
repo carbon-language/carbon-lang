@@ -548,7 +548,9 @@ public:
       o << "DFSNumbers invalid: " << SlowQueries << " slow queries.";
     o << "\n";
 
-    PrintDomTree<NodeT>(getRootNode(), o, 1);
+    // The postdom tree can have a null root if there are no returns.
+    if (getRootNode())
+      PrintDomTree<NodeT>(getRootNode(), o, 1);
   }
 
 protected:
