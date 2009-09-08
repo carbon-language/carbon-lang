@@ -111,8 +111,6 @@ public:
   
   ValueMap<char, Type, ConstantAggregateZero> AggZeroConstants;
 
-  SmallPtrSet<const MDNode *, 8> MDNodes;
-
   typedef ValueMap<std::vector<Constant*>, ArrayType, 
     ConstantArray, true /*largekey*/> ArrayConstantsTy;
   ArrayConstantsTy ArrayConstants;
