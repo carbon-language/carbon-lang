@@ -22,7 +22,6 @@
 using namespace llvm;
 
 Module *llvm::ParseAssembly(MemoryBuffer *F,
-                            const std::string &Name,
                             Module *M,
                             SMDiagnostic &Err,
                             LLVMContext &Context) {
@@ -34,7 +33,7 @@ Module *llvm::ParseAssembly(MemoryBuffer *F,
     return LLParser(F, SM, Err, M).Run() ? 0 : M;
 
   // Otherwise create a new module.
-  OwningPtr<Module> M2(new Module(Name, Context));
+  OwningPtr<Module> M2(new Module(F->getBufferIdentifier(), Context));
   if (LLParser(F, SM, Err, M2.get()).Run())
     return 0;
   return M2.take();
@@ -50,7 +49,7 @@ Module *llvm::ParseAssemblyFile(const std::string &Filename, SMDiagnostic &Err,
     return 0;
   }
 
-  return ParseAssembly(F, Filename, 0, Err, Context);
+  return ParseAssembly(F, 0, Err, Context);
 }
 
 Module *llvm::ParseAssemblyString(const char *AsmString, Module *M,
@@ -59,5 +58,5 @@ Module *llvm::ParseAssemblyString(const char *AsmString, Module *M,
     MemoryBuffer::getMemBuffer(AsmString, AsmString+strlen(AsmString),
                                "<string>");
 
-  return ParseAssembly(F, "<string>", M, Err, Context);
+  return ParseAssembly(F, M, Err, Context);
 }

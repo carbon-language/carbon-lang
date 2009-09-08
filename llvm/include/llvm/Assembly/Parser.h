@@ -55,7 +55,6 @@ Module *ParseAssemblyString(
 /// takes ownership of the MemoryBuffer.
 Module *ParseAssembly(
     MemoryBuffer *F,     ///< The MemoryBuffer containing assembly
-    const std::string &Name, ///< The name of the original source file
     Module *M,           ///< A module to add the assembly too.
     SMDiagnostic &Err,   ///< Error result info.
     LLVMContext &Context

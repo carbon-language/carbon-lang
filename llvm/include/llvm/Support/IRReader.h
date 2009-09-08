@@ -33,7 +33,6 @@ namespace llvm {
   /// ModuleProvider. This function *always* takes ownership of the given
   /// MemoryBuffer.
   inline ModuleProvider *getIRModuleProvider(MemoryBuffer *Buffer,
-                                             const std::string &Filename,
                                              SMDiagnostic &Err,
                                              LLVMContext &Context) {
     if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
@@ -41,7 +40,7 @@ namespace llvm {
       std::string ErrMsg;
       ModuleProvider *MP = getBitcodeModuleProvider(Buffer, Context, &ErrMsg);
       if (MP == 0) {
-        Err = SMDiagnostic(Filename, -1, -1, ErrMsg, "");
+        Err = SMDiagnostic(Buffer->getBufferIdentifier(), -1, -1, ErrMsg, "");
         // ParseBitcodeFile does not take ownership of the Buffer in the
         // case of an error.
         delete Buffer;
@@ -49,7 +48,7 @@ namespace llvm {
       return MP;
     }
 
-    Module *M = ParseAssembly(Buffer, Filename, 0, Err, Context);
+    Module *M = ParseAssembly(Buffer, 0, Err, Context);
     if (M == 0)
       return 0;
     return new ExistingModuleProvider(M);
@@ -70,7 +69,7 @@ namespace llvm {
       return 0;
     }
 
-    return getIRModuleProvider(F, Filename, Err, Context);
+    return getIRModuleProvider(F, Err, Context);
   }
 
   /// If the given MemoryBuffer holds a bitcode image, return a Module
@@ -78,7 +77,6 @@ namespace llvm {
   /// a Module for it. This function *always* takes ownership of the given
   /// MemoryBuffer.
   inline Module *ParseIR(MemoryBuffer *Buffer,
-                         const std::string &Filename,
                          SMDiagnostic &Err,
                          LLVMContext &Context) {
     if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
@@ -88,11 +86,11 @@ namespace llvm {
       // ParseBitcodeFile does not take ownership of the Buffer.
       delete Buffer;
       if (M == 0)
-        Err = SMDiagnostic(Filename, -1, -1, ErrMsg, "");
+        Err = SMDiagnostic(Buffer->getBufferIdentifier(), -1, -1, ErrMsg, "");
       return M;
     }
 
-    return ParseAssembly(Buffer, Filename, 0, Err, Context);
+    return ParseAssembly(Buffer, 0, Err, Context);
   }
 
   /// If the given file holds a bitcode image, return a Module for it.
@@ -109,7 +107,7 @@ namespace llvm {
       return 0;
     }
 
-    return ParseIR(F, Filename, Err, Context);
+    return ParseIR(F, Err, Context);
   }
 
 }
