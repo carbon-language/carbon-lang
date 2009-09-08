@@ -103,7 +103,7 @@ Darwin::~Darwin() {
 
 Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -338,7 +338,7 @@ Generic_GCC::~Generic_GCC() {
 Tool &Generic_GCC::SelectTool(const Compilation &C, 
                               const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -404,7 +404,7 @@ OpenBSD::OpenBSD(const HostInfo &Host, const llvm::Triple& Triple)
 
 Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -439,7 +439,7 @@ FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple, bool Lib32)
 
 Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -480,7 +480,7 @@ AuroraUX::AuroraUX(const HostInfo &Host, const llvm::Triple& Triple)
 
 Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();
@@ -545,7 +545,7 @@ DragonFly::DragonFly(const HostInfo &Host, const llvm::Triple& Triple)
 
 Tool &DragonFly::SelectTool(const Compilation &C, const JobAction &JA) const {
   Action::ActionClass Key;
-  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getArchName()))
+  if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
     Key = Action::AnalyzeJobClass;
   else
     Key = JA.getKind();

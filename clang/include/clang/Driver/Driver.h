@@ -15,6 +15,7 @@
 #include "clang/Driver/Phases.h"
 #include "clang/Driver/Util.h"
 
+#include "llvm/ADT/Triple.h"
 #include "llvm/System/Path.h" // FIXME: Kill when CompilationInfo
                               // lands.
 #include <list>
@@ -102,7 +103,7 @@ public:
 private:
   /// Only use clang for the given architectures (only used when
   /// non-empty).
-  std::set<std::string> CCCClangArchs;
+  std::set<llvm::Triple::ArchType> CCCClangArchs;
 
   /// Certain options suppress the 'no input files' warning.
   bool SuppressMissingInputWarning : 1;
@@ -260,7 +261,7 @@ public:
   /// ShouldUseClangCompilar - Should the clang compiler be used to
   /// handle this action.
   bool ShouldUseClangCompiler(const Compilation &C, const JobAction &JA, 
-                              const std::string &ArchName) const;
+                              const llvm::Triple &ArchName) const;
 
   /// @}
 

@@ -60,12 +60,9 @@ Driver::Driver(const char *_Name, const char *_Dir,
 {
 #ifdef USE_PRODUCTION_CLANG
   // In a "production" build, only use clang on architectures we expect to work.
-  CCCClangArchs.insert("i386");
-  CCCClangArchs.insert("x86_64");
-  CCCClangArchs.insert("arm");
-  CCCClangArchs.insert("armv5");
-  CCCClangArchs.insert("armv6");
-  CCCClangArchs.insert("armv7");
+  CCCClangArchs.insert(llvm::Triple::x86);
+  CCCClangArchs.insert(llvm::Triple::x86_64);
+  CCCClangArchs.insert(llvm::Triple::arm);
 #endif
 }
 
@@ -169,23 +166,27 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
       CCCUseClangCPP = false;
     } else if (!strcmp(Opt, "clang-archs")) {
       assert(Start+1 < End && "FIXME: -ccc- argument handling.");
-      const char *Cur = *++Start;
+      llvm::StringRef Cur = *++Start;
 
       CCCClangArchs.clear();
-      for (;;) {
-        const char *Next = strchr(Cur, ',');
+      while (!Cur.empty()) {
+        std::pair<llvm::StringRef, llvm::StringRef> Split = Cur.split(',');
 
-        if (Next) {
-          if (Cur != Next)
-            CCCClangArchs.insert(std::string(Cur, Next));
-          Cur = Next + 1;
-        } else {
-          if (*Cur != '\0')
-            CCCClangArchs.insert(std::string(Cur));
-          break;
+        if (!Split.first.empty()) {
+          llvm::Triple::ArchType Arch =
+            llvm::Triple(Split.first, "", "").getArch();
+
+          if (Arch == llvm::Triple::UnknownArch) {
+            // FIXME: Error handling.
+            llvm::errs() << "invalid arch name: " << Split.first << "\n";
+            exit(1);
+          }
+
+          CCCClangArchs.insert(Arch);
         }
-      }
 
+        Cur = Split.second;
+      }
     } else if (!strcmp(Opt, "host-triple")) {
       assert(Start+1 < End && "FIXME: -ccc- argument handling.");
       HostTriple = *++Start;
@@ -1262,14 +1263,7 @@ const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
 }
 
 bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
-                                    const std::string &ArchNameStr) const {
-  // FIXME: Remove this hack.
-  const char *ArchName = ArchNameStr.c_str();
-  if (ArchNameStr == "powerpc")
-    ArchName = "ppc";
-  else if (ArchNameStr == "powerpc64")
-    ArchName = "ppc64";
-
+                                    const llvm::Triple &Triple) const {
   // Check if user requested no clang, or clang doesn't understand this type (we
   // only handle single inputs for now).
   if (!CCCUseClang || JA.size() != 1 ||
@@ -1297,8 +1291,8 @@ bool Driver::ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
 
   // Finally, don't use clang if this isn't one of the user specified archs to
   // build.
-  if (!CCCClangArchs.empty() && !CCCClangArchs.count(ArchName)) {
-    Diag(clang::diag::warn_drv_not_using_clang_arch) << ArchName;
+  if (!CCCClangArchs.empty() && !CCCClangArchs.count(Triple.getArch())) {
+    Diag(clang::diag::warn_drv_not_using_clang_arch) << Triple.getArchName();
     return false;
   }
 
