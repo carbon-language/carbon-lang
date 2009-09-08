@@ -39,9 +39,16 @@ void MCExpr::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
 
   case MCExpr::Binary: {
     const MCBinaryExpr &BE = cast<MCBinaryExpr>(*this);
-    OS << '(';
-    BE.getLHS()->print(OS, MAI);
-    OS << ' ';
+    
+    // Only print parens around the LHS if it is non-trivial.
+    if (isa<MCConstantExpr>(BE.getLHS()) || isa<MCSymbolRefExpr>(BE.getLHS())) {
+      BE.getLHS()->print(OS, MAI);
+    } else {
+      OS << '(';
+      BE.getLHS()->print(OS, MAI);
+      OS << ')';
+    }
+    
     switch (BE.getOpcode()) {
     default: assert(0 && "Invalid opcode!");
     case MCBinaryExpr::Add:  OS <<  '+'; break;
@@ -63,9 +70,15 @@ void MCExpr::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     case MCBinaryExpr::Sub:  OS <<  '-'; break;
     case MCBinaryExpr::Xor:  OS <<  '^'; break;
     }
-    OS << ' ';
-    BE.getRHS()->print(OS, MAI);
-    OS << ')';
+    
+    // Only print parens around the LHS if it is non-trivial.
+    if (isa<MCConstantExpr>(BE.getRHS()) || isa<MCSymbolRefExpr>(BE.getRHS())) {
+      BE.getRHS()->print(OS, MAI);
+    } else {
+      OS << '(';
+      BE.getRHS()->print(OS, MAI);
+      OS << ')';
+    }
     return;
   }
   }
