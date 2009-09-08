@@ -1254,9 +1254,7 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
        << DR->getDecl()->getDeclName() << RetValExp->getSourceRange();
     
     // Skip over implicit cast expressions when checking for block expressions.
-    if (ImplicitCastExpr *IcExpr = 
-          dyn_cast_or_null<ImplicitCastExpr>(RetValExp))
-      RetValExp = IcExpr->getSubExpr();
+    RetValExp = RetValExp->IgnoreParenCasts();
 
     if (BlockExpr *C = dyn_cast_or_null<BlockExpr>(RetValExp))
       if (C->hasBlockDeclRefExprs())

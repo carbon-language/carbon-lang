@@ -91,6 +91,8 @@ bptr foo5(int j) {
   if (j)
     return ^{ ^{ i=0; }(); };  // expected-error {{returning block that lives on the local stack}}
   return ^{ i=0; };  // expected-error {{returning block that lives on the local stack}}
+  return (^{ i=0; });  // expected-error {{returning block that lives on the local stack}}
+  return (void*)(^{ i=0; });  // expected-error {{returning block that lives on the local stack}}
 }
 
 int (*funcptr3[5])(long);
