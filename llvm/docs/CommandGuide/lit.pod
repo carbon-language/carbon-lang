@@ -1,0 +1,222 @@
+=pod
+
+=head1 NAME
+
+lit - LLVM Integrated Tester
+
+=head1 SYNOPSIS
+
+B<lit> [I<options>] [I<tests>]
+
+=head1 DESCRIPTION
+
+B<lit> is a portable tool for executing LLVM and Clang style test suites,
+summarizing their results, and providing indication of failures. B<lit> is
+designed to be a lightweight testing tool with as simple a user interface as
+possible.
+
+B<lit> should be run with one or more I<tests> to run specified on the command
+line. Tests can be either individual test files or directories to search for
+tests (see L<"TEST DISCOVERY">).
+
+Each specified test will be executed (potentially in parallel) and once all
+tests have been run B<lit> will print summary information on the number of tests
+which passed or failed (see L<"TEST STATUS RESULTS">). The B<lit> program will
+execute with a non-zero exit code if any tests fail.
+
+By default B<lit> will use a succinct progress display and will only print
+summary information for test failures. See L<"OUTPUT OPTIONS"> for options
+controlling the B<lit> progress display and output.
+
+B<lit> also includes a number of options for controlling how tests are exected
+(specific features may depend on the particular test format). See L<"EXECUTION
+OPTIONS"> for more information.
+
+Finally, B<lit> also supports additional options for only running a subset of
+the options specified on the command line, see L<"SELECTION OPTIONS"> for
+more information.
+
+=head1 GENERAL OPTIONS
+
+=over
+
+=item B<-h>, B<--help>
+
+Show the B<lit> help message.
+
+=item B<-j> I<N>, B<--threads>=I<N>
+
+Run I<N> tests in parallel. By default, this is automatically chose to match the
+number of detected available CPUs.
+
+=back 
+
+=head1 OUTPUT OPTIONS
+
+=over
+
+=item B<-q>, B<--quiet>
+
+Suppress any output except for test failures.
+
+=item B<-s>, B<--succinct>
+
+Show less output, for example don't show information on tests that pass.
+
+=item B<-v>, B<--verbose>
+
+Show more information on test failures, for example the entire test output
+instead of just the test result.
+
+=item B<--no-progress-bar>
+
+Do not use curses based progress bar.
+
+=back 
+
+=head1 EXECUTION OPTIONS
+
+=over
+
+=item B<--path>=I<PATH>
+
+Specify an addition I<PATH> to use when searching for executables in tests.
+
+=item B<--vg>
+
+Run individual tests under valgrind (using the memcheck tool). The
+I<--error-exitcode> argument for valgrind is used so that valgrind failures will
+cause the program to exit with a non-zero status.
+
+=item B<--vg-arg>=I<ARG>
+
+When I<--vg> is used, specify an additional argument to pass to valgrind itself.
+
+=item B<--time-tests>
+
+Track the wall time individual tests take to execute and includes the results in
+the summary output. This is useful for determining which tests in a test suite
+take the most time to execute. Note that this option is most useful with I<-j
+1>.
+
+=back
+
+=head1 SELECTION OPTIONS
+
+=over
+
+=item B<--max-tests>=I<N>
+
+Run at most I<N> tests and then terminate.
+
+=item B<--max-time>=I<N>
+
+Spend at most I<N> seconds (approximately) running tests and then terminate.
+
+=item B<--shuffle>
+
+Run the tests in a random order.
+
+=back
+
+=head1 ADDITIONAL OPTIONS
+
+=over
+
+=item B<--debug>
+
+Run B<lit> in debug mode, for debugging configuration issues and B<lit> itself.
+
+=item B<--show-suites>
+
+List the discovered test suites as part of the standard output.
+
+=item B<--no-tcl-as-sh>
+
+Run Tcl scripts internally (instead of converting to shell scripts).
+
+=back
+
+=head1 EXIT STATUS
+
+B<lit> will exit with an exit code of 1 if there are any FAIL or XPASS
+results. Otherwise, it will exit with the status 0. Other exit codes used for
+non-test related failures (for example a user error or an internal program
+error).
+
+=head1 TEST DISCOVERY
+
+The inputs passed to B<lit> can be either individual tests, or entire
+directories or hierarchies of tests to run. When B<lit> starts up, the first
+thing it does is convert the inputs into a complete list of tests to run as part
+of I<test discovery>.
+
+In the B<lit> model, every test must exist inside some I<test suite>. B<lit>
+resolves the inputs specified on the command line to test suites by searching
+upwards from the input path until it finds a I<lit.cfg> or I<lit.site.cfg>
+file. These files serve as both a marker of test suites and as configuration
+files which B<lit> loads in order to understand how to find and run the tests
+inside the test suite.
+
+Once B<lit> has mapped the inputs into test suites it traverses the list of
+inputs adding tests for individual files and recursively searching for tests in
+directories.
+
+This behavior makes it easy to specify a subset of tests to run, while still
+allowing the test suite configuration to control exactly how tests are
+interpreted. In addition, B<lit> always identifies tests by the test suite they
+are in, and their relative path inside the test suite. For appropriately
+configured projects, this allows B<lit> to provide convenient and flexible
+support for out-of-tree builds.
+
+=head1 TEST STATUS RESULTS
+
+Each test ultimately produces one of the following six results:
+
+=over
+
+=item B<PASS>
+
+The test succeeded.
+
+=item B<XFAIL>
+
+The test failed, but that is expected. This is used for test formats which allow
+specifying that a test does not currently work, but wish to leave it in the test
+suite.
+
+=item B<XPASS>
+
+The test succeeded, but it was expected to fail. This is used for tests which
+were specified as expected to fail, but are now succeeding (generally because
+the feautre they test was broken and has been fixed).
+
+=item B<FAIL>
+
+The test failed.
+
+=item B<UNRESOLVED>
+
+The test result could not be determined. For example, this occurs when the test
+could not be run, the test itself is invalid, or the test was interrupted.
+
+=item B<UNSUPPORTED>
+
+The test is not supported in this environment. This is used by test formats
+which can report unsupported tests.
+
+=back
+
+Depending on the test format tests may produce additional information about
+their status (generally only for failures). See the L<Output|"LIT OUTPUT">
+section for more information.
+
+=head1 SEE ALSO
+
+L<valgrind(1)>
+
+=head1 AUTHOR
+
+Written by Daniel Dunbar and maintained by the LLVM Team (L<http://llvm.org>).
+
+=cut
