@@ -31,3 +31,16 @@ entry:
   ret <2 x i64> %conv3.i44
 }
 
+
+; PR4908
+define void @test2(<1 x i16>* nocapture %b, i32* nocapture %c) nounwind ssp {
+entry:
+  %arrayidx = getelementptr inbounds <1 x i16>* %b, i64 undef ; <<1 x i16>*>
+  %tmp2 = load <1 x i16>* %arrayidx               ; <<1 x i16>> [#uses=1]
+  %tmp6 = bitcast <1 x i16> %tmp2 to i16          ; <i16> [#uses=1]
+  %tmp7 = zext i16 %tmp6 to i32                   ; <i32> [#uses=1]
+  %ins = or i32 0, %tmp7                          ; <i32> [#uses=1]
+  %arrayidx20 = getelementptr inbounds i32* %c, i64 undef ; <i32*> [#uses=1]
+  store i32 %ins, i32* %arrayidx20
+  ret void
+}

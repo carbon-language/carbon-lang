@@ -12080,7 +12080,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     // that element. When the elements are not identical, we cannot replace yet
     // (we do that below, but only when the index is constant).
     Constant *op0 = C->getOperand(0);
-    for (unsigned i = 1; i < C->getNumOperands(); ++i)
+    for (unsigned i = 1; i != C->getNumOperands(); ++i)
       if (C->getOperand(i) != op0) {
         op0 = 0; 
         break;
@@ -12093,8 +12093,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
   // find a previously computed scalar that was inserted into the vector.
   if (ConstantInt *IdxC = dyn_cast<ConstantInt>(EI.getOperand(1))) {
     unsigned IndexVal = IdxC->getZExtValue();
-    unsigned VectorWidth = 
-      cast<VectorType>(EI.getOperand(0)->getType())->getNumElements();
+    unsigned VectorWidth = EI.getVectorOperandType()->getNumElements();
       
     // If this is extracting an invalid index, turn this into undef, to avoid
     // crashing the code below.
@@ -12146,25 +12145,31 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
           return BinaryOperator::Create(BO->getOpcode(), newEI0, newEI1);
         }
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-        unsigned AS = LI->getPointerAddressSpace();
-        Value *Ptr = Builder->CreateBitCast(I->getOperand(0),
-                                            PointerType::get(EI.getType(), AS),
-                                            I->getOperand(0)->getName());
-        Value *GEP =
-          Builder->CreateInBoundsGEP(Ptr, EI.getOperand(1),
-                                     I->getName()+".gep");
-        
-        LoadInst *Load = Builder->CreateLoad(GEP, "tmp");
+//        r25299
+        // Instead of loading a vector, then doing an extract element out of it,
+        // just bitcast the pointer operand, do a gep, then load the result.
+        // This shrinks the vector load to a scalar load.
+        if (EI.getVectorOperandType()->getNumElements() != 1) {
+          unsigned AS = LI->getPointerAddressSpace();
+          Value *Ptr = Builder->CreateBitCast(I->getOperand(0),
+                                              PointerType::get(EI.getType(), AS),
+                                              I->getOperand(0)->getName());
+          Value *GEP =
+            Builder->CreateInBoundsGEP(Ptr, EI.getOperand(1),
+                                       I->getName()+".gep");
+          
+          LoadInst *Load = Builder->CreateLoad(GEP, "tmp");
 
-        // Make sure the Load goes before the load instruction in the source,
-        // not wherever the extract happens to be.
-        if (Instruction *P = dyn_cast<Instruction>(Ptr))
-          P->moveBefore(I);
-        if (Instruction *G = dyn_cast<Instruction>(GEP))
-          G->moveBefore(I);
-        Load->moveBefore(I);
-        
-        return ReplaceInstUsesWith(EI, Load);
+          // Make sure the Load goes before the load instruction in the source,
+          // not wherever the extract happens to be.
+          if (Instruction *P = dyn_cast<Instruction>(Ptr))
+            P->moveBefore(I);
+          if (Instruction *G = dyn_cast<Instruction>(GEP))
+            G->moveBefore(I);
+          Load->moveBefore(I);
+          
+          return ReplaceInstUsesWith(EI, Load);
+        }
       }
     }
     if (InsertElementInst *IE = dyn_cast<InsertElementInst>(I)) {
