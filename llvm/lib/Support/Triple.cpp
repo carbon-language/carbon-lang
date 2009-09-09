@@ -149,6 +149,9 @@ Triple::ArchType Triple::getArchTypeForDarwinArchName(const StringRef &Str) {
   // handling to the architecture name, so we need to be careful before removing
   // support for it.
 
+  // This code must be kept in sync with Clang's Darwin specific argument
+  // translation.
+
   if (Str == "ppc" || Str == "ppc601" || Str == "ppc603" || Str == "ppc604" ||
       Str == "ppc604e" || Str == "ppc750" || Str == "ppc7400" ||
       Str == "ppc7450" || Str == "ppc970")
