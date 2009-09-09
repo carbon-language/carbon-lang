@@ -22,6 +22,7 @@
 #include "clang/Driver/Util.h"
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -383,22 +384,19 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
          it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     const Arg *A = *it;
     if (A->getOption().matches(options::OPT_m_x86_Features_Group)) {
-      const char *Name = A->getOption().getName();
+      llvm::StringRef Name = A->getOption().getName();
 
       // Skip over "-m".
-      assert(Name[0] == '-' && Name[1] == 'm' && "Invalid feature name.");
-      Name += 2;
+      assert(Name.startswith("-m") && "Invalid feature name.");
+      Name = Name.substr(2);
 
-      bool IsNegative = memcmp(Name, "no-", 3) == 0;
+      bool IsNegative = Name.startswith("no-");
       if (IsNegative)
-        Name += 3;
+        Name = Name.substr(3);
 
       A->claim();
       CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back(MakeFormattedString(Args,
-                                            llvm::format("%c%s",
-                                                         IsNegative ? '-' : '+',
-                                                         Name)));
+      CmdArgs.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
     }
   }
 
