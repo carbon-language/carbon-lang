@@ -941,10 +941,10 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
                    PHINode *PN = dyn_cast<PHINode>(II); ++II)
                 PN->setIncomingValue(PN->getBasicBlockIndex(Switch),
                                      UndefValue::get(PN->getType()));
-              // Tell the domtree about the new block. We don't fully update
-              // the domtree here -- instead we force it to do a full
-              // recomputation after the pass is complete -- but we do need to
-              // inform it of new blocks.
+              // Tell the domtree about the new block. We don't fully update the
+              // domtree here -- instead we force it to do a full recomputation
+              // after the pass is complete -- but we do need to inform it of
+              // new blocks.
               if (DT)
                 DT->addNewBlock(Abort, NewSISucc);
               break;
@@ -960,7 +960,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
   SimplifyCode(Worklist, L);
 }
 
-/// SimplifyCode - Okay, now that we have simplified some instructions in the 
+/// SimplifyCode - Okay, now that we have simplified some instructions in the
 /// loop, walk over it and constant prop, dce, and fold control flow where
 /// possible.  Note that this is effectively a very simple loop-structure-aware
 /// optimizer.  During processing of this loop, L could very well be deleted, so
