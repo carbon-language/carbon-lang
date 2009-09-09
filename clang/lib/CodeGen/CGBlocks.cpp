@@ -185,8 +185,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
       QualType Ty = E->getType();
       if (BDRE && BDRE->isByRef()) {
-        uint64_t Align = getContext().getDeclAlignInBytes(BDRE->getDecl());
-        Types[i+5] = llvm::PointerType::get(BuildByRefType(Ty, Align), 0);
+        Types[i+5] = llvm::PointerType::get(BuildByRefType(BDRE->getDecl()), 0);
       } else
         Types[i+5] = ConvertType(Ty);
     }
@@ -464,9 +463,8 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
                                      "block.literal");
   if (E->isByRef()) {
     bool needsCopyDispose = BlockRequiresCopying(E->getType());
-    uint64_t Align = getContext().getDeclAlignInBytes(E->getDecl());
     const llvm::Type *PtrStructTy
-      = llvm::PointerType::get(BuildByRefType(E->getType(), Align), 0);
+      = llvm::PointerType::get(BuildByRefType(E->getDecl()), 0);
     // The block literal will need a copy/destroy helper.
     BlockHasCopyDispose = true;
     Ty = PtrStructTy;

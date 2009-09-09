@@ -343,8 +343,7 @@ public:
   llvm::Value *LoadBlockStruct();
 
   llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E);
-
-  const llvm::Type *BuildByRefType(QualType Ty, uint64_t Align);
+  const llvm::Type *BuildByRefType(const ValueDecl *D);
 
   void GenerateCode(const FunctionDecl *FD,
                     llvm::Function *Fn);

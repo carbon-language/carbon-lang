@@ -213,8 +213,10 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
 ///      } x
 ///
 /// Align is the alignment needed in bytes for x.
-const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
-                                                  uint64_t Align) {
+const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
+  QualType Ty = D->getType();
+  uint64_t Align = getContext().getDeclAlignInBytes(D);
+  
   const llvm::Type *LTy = ConvertType(Ty);
   bool needsCopyDispose = BlockRequiresCopying(Ty);
   std::vector<const llvm::Type *> Types(needsCopyDispose*2+5);
@@ -251,7 +253,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       const llvm::Type *LTy = ConvertTypeForMem(Ty);
       Align = getContext().getDeclAlignInBytes(&D);
       if (isByRef)
-        LTy = BuildByRefType(Ty, Align);
+        LTy = BuildByRefType(&D);
       llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
       Alloc->setName(D.getNameAsString().c_str());
       
@@ -326,6 +328,12 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (Target.useGlobalsForAutomaticVariables()) {
       DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(DeclPtr), &D);
     } else if (isByRef) {
+      // FIXME: This code is broken and will not emit debug info for the 
+      // variable. The right way to do this would be to tell LLVM that this is a
+      // byref pointer, and what the offset is. Unfortunately, right now it's
+      // not possible unless we create a DIType that corresponds to the byref
+      // struct. 
+      /*
       llvm::Value *Loc;
       bool needsCopyDispose = BlockRequiresCopying(Ty);
       Loc = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
@@ -333,6 +341,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       Loc = Builder.CreateBitCast(Loc, DeclPtr->getType());
       Loc = Builder.CreateStructGEP(Loc, needsCopyDispose*2+4, "x");
       DI->EmitDeclareOfAutoVariable(&D, Loc, Builder);
+      */
     } else
       DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
   }
