@@ -156,7 +156,7 @@ def getTestSuite(item, litConfig, cache):
         # If we didn't find a config file, keep looking.
         if not cfgpath:
             parent,base = os.path.split(path)
-            if parent == item:
+            if parent == path:
                 return (None, ())
 
             ts, relative = search(parent)
