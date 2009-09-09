@@ -504,7 +504,7 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
         return false;
     } else if (MO.isImm() &&
                !TID.OpInfo[i].isPredicate()) {
-      if (MO.getImm() > Limit || (MO.getImm() & (Scale-1)) != 0)
+      if (((unsigned)MO.getImm()) > Limit || (MO.getImm() & (Scale-1)) != 0)
         return false;
     }
   }
