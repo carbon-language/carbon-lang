@@ -355,6 +355,8 @@ bool XCoreAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
 void XCoreAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
 
+  processDebugLoc(MI->getDebugLoc());
+
   // Check for mov mnemonic
   unsigned src, dst, srcSR, dstSR;
   if (TM.getInstrInfo()->isMoveInstr(*MI, src, dst, srcSR, dstSR)) {

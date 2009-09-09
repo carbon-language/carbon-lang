@@ -408,15 +408,14 @@ bool SPUAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 ///
 void SPUAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
+  processDebugLoc(MI->getDebugLoc());
   printInstruction(MI);
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
-bool
-LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
-{
+bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   this->MF = &MF;
 
   SetupMachineFunction(MF);

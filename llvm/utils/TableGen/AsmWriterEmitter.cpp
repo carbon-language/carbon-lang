@@ -726,8 +726,6 @@ void AsmWriterEmitter::run(raw_ostream &O) {
   }
   O << "\";\n\n";
 
-  O << "  processDebugLoc(MI->getDebugLoc());\n\n";
-
   O << "\n#ifndef NO_ASM_WRITER_BOILERPLATE\n";
   
   O << "  if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {\n"
