@@ -95,3 +95,21 @@ void bad_deletes()
   delete (T*)0; // expected-warning {{deleting pointer to incomplete type}}
   ::S::delete (int*)0; // expected-error {{expected unqualified-id}}
 }
+
+struct X0 { };
+
+struct X1 {
+  operator int*();
+  operator float();
+};
+
+struct X2 {
+  operator int*();
+  operator float*();
+};
+
+void test_delete_conv(X0 x0, X1 x1, X2 x2) {
+  delete x0; // expected-error{{cannot delete}}
+  delete x1;
+  delete x2; // expected-error{{cannot delete}}
+}

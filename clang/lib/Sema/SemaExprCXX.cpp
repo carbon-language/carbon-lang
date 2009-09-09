@@ -717,9 +717,10 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
 Action::OwningExprResult
 Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                      bool ArrayForm, ExprArg Operand) {
-  // C++ 5.3.5p1: "The operand shall have a pointer type, or a class type
-  //   having a single conversion function to a pointer type. The result has
-  //   type void."
+  // C++ [expr.delete]p1:
+  //   The operand shall have a pointer type, or a class type having a single
+  //   conversion function to a pointer type. The result has type void.
+  //
   // DR599 amends "pointer type" to "pointer to object type" in both cases.
 
   FunctionDecl *OperatorDelete = 0;
@@ -728,8 +729,40 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
   if (!Ex->isTypeDependent()) {
     QualType Type = Ex->getType();
 
-    if (Type->isRecordType()) {
-      // FIXME: Find that one conversion function and amend the type.
+    if (const RecordType *Record = Type->getAs<RecordType>()) {
+      // FIXME: Inherited conversion functions!
+      llvm::SmallVector<CXXConversionDecl *, 4> ObjectPtrConversions;
+      
+      OverloadedFunctionDecl *Conversions
+        = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
+      for (OverloadedFunctionDecl::function_iterator
+             Func = Conversions->function_begin(),
+             FuncEnd = Conversions->function_end();
+           Func != FuncEnd; ++Func) {
+        // Skip over templated conversion functions; they aren't considered.
+        if (isa<FunctionTemplateDecl>(*Func))
+          continue;
+        
+        CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
+        
+        QualType ConvType = Conv->getConversionType().getNonReferenceType();
+        if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
+          if (ConvPtrType->getPointeeType()->isObjectType())
+            ObjectPtrConversions.push_back(Conv);
+      }
+      
+      if (ObjectPtrConversions.size() == 1) {
+        // We have a single conversion to a pointer-to-object type. Perform
+        // that conversion.
+        Operand.release();
+        if (PerformImplicitConversion(Ex, 
+                            ObjectPtrConversions.front()->getConversionType(), 
+                                      "converting"))
+          return ExprError();
+        
+        Operand = Owned(Ex);
+        Type = Ex->getType();
+      }
     }
 
     if (!Type->isPointerType())
