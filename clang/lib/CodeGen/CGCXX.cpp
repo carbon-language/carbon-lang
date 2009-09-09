@@ -972,7 +972,13 @@ public:
   }
 
   void AddMethod(const CXXMethodDecl *MD, bool MorallyVirtual, Index_t Offset) {
-    llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD), Ptr8Ty));
+    GlobalDecl GD;
+    if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
+      GD = GlobalDecl(Dtor, Dtor_Complete);
+    else
+      GD = GlobalDecl(MD);
+
+    llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GD, Ptr8Ty));
     // If we can find a previously allocated slot for this, reuse it.
     if (OverrideMethod(MD, m, MorallyVirtual, Offset))
       return;
