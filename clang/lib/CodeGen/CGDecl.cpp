@@ -216,6 +216,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
 const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
   QualType Ty = D->getType();
   uint64_t Align = getContext().getDeclAlignInBytes(D);
+  (void) Align;
 
   const llvm::Type *LTy = ConvertType(Ty);
   bool needsCopyDispose = BlockRequiresCopying(Ty);
