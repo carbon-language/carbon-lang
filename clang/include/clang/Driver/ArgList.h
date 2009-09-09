@@ -14,9 +14,14 @@
 
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 
 #include <list>
 #include <string>
+
+namespace llvm {
+  class Twine;
+}
 
 namespace clang {
 namespace driver {
@@ -136,7 +141,14 @@ namespace driver {
 
     /// MakeArgString - Construct a constant string pointer whose
     /// lifetime will match that of the ArgList.
-    virtual const char *MakeArgString(const char *Str) const = 0;
+    virtual const char *MakeArgString(llvm::StringRef Str) const = 0;
+    const char *MakeArgString(const char *Str) const {
+      return MakeArgString(llvm::StringRef(Str));
+    }
+    const char *MakeArgString(std::string Str) const {
+      return MakeArgString(llvm::StringRef(Str));
+    }
+    const char *MakeArgString(const llvm::Twine &Str) const;
 
     /// @}
   };
@@ -181,10 +193,10 @@ namespace driver {
 
   public:
     /// MakeIndex - Get an index for the given string(s).
-    unsigned MakeIndex(const char *String0) const;
-    unsigned MakeIndex(const char *String0, const char *String1) const;
+    unsigned MakeIndex(llvm::StringRef String0) const;
+    unsigned MakeIndex(llvm::StringRef String0, llvm::StringRef String1) const;
 
-    virtual const char *MakeArgString(const char *Str) const;
+    virtual const char *MakeArgString(llvm::StringRef Str) const;
 
     /// @}
   };
@@ -218,7 +230,7 @@ namespace driver {
     /// @name Arg Synthesis
     /// @{
 
-    virtual const char *MakeArgString(const char *Str) const;
+    virtual const char *MakeArgString(llvm::StringRef Str) const;
 
     /// MakeFlagArg - Construct a new FlagArg for the given option
     /// \arg Id.
@@ -227,17 +239,17 @@ namespace driver {
     /// MakePositionalArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
     Arg *MakePositionalArg(const Arg *BaseArg, const Option *Opt,
-                           const char *Value) const;
+                           llvm::StringRef Value) const;
 
     /// MakeSeparateArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
     Arg *MakeSeparateArg(const Arg *BaseArg, const Option *Opt,
-                         const char *Value) const;
+                         llvm::StringRef Value) const;
 
     /// MakeJoinedArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
     Arg *MakeJoinedArg(const Arg *BaseArg, const Option *Opt,
-                       const char *Value) const;
+                       llvm::StringRef Value) const;
 
     /// @}
   };

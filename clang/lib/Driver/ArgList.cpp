@@ -11,6 +11,10 @@
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/Option.h"
 
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Twine.h"
+#include "llvm/Support/raw_ostream.h"
+
 using namespace clang::driver;
 
 ArgList::ArgList(arglist_type &_Args) : Args(_Args) {
@@ -182,6 +186,12 @@ void ArgList::ClaimAllArgs(options::ID Id0) const {
   }
 }
 
+const char *ArgList::MakeArgString(const llvm::Twine &T) const {
+  llvm::SmallString<256> Str;
+  T.toVector(Str);
+  return MakeArgString(Str.str());
+}
+
 //
 
 InputArgList::InputArgList(const char **ArgBegin, const char **ArgEnd)
@@ -195,7 +205,7 @@ InputArgList::~InputArgList() {
     delete *it;
 }
 
-unsigned InputArgList::MakeIndex(const char *String0) const {
+unsigned InputArgList::MakeIndex(llvm::StringRef String0) const {
   unsigned Index = ArgStrings.size();
 
   // Tuck away so we have a reliable const char *.
@@ -205,8 +215,8 @@ unsigned InputArgList::MakeIndex(const char *String0) const {
   return Index;
 }
 
-unsigned InputArgList::MakeIndex(const char *String0,
-                                 const char *String1) const {
+unsigned InputArgList::MakeIndex(llvm::StringRef String0,
+                                 llvm::StringRef String1) const {
   unsigned Index0 = MakeIndex(String0);
   unsigned Index1 = MakeIndex(String1);
   assert(Index0 + 1 == Index1 && "Unexpected non-consecutive indices!");
@@ -214,7 +224,7 @@ unsigned InputArgList::MakeIndex(const char *String0,
   return Index0;
 }
 
-const char *InputArgList::MakeArgString(const char *Str) const {
+const char *InputArgList::MakeArgString(llvm::StringRef Str) const {
   return getArgString(MakeIndex(Str));
 }
 
@@ -232,7 +242,7 @@ DerivedArgList::~DerivedArgList() {
     delete *it;
 }
 
-const char *DerivedArgList::MakeArgString(const char *Str) const {
+const char *DerivedArgList::MakeArgString(llvm::StringRef Str) const {
   return BaseArgs.MakeArgString(Str);
 }
 
@@ -241,18 +251,18 @@ Arg *DerivedArgList::MakeFlagArg(const Arg *BaseArg, const Option *Opt) const {
 }
 
 Arg *DerivedArgList::MakePositionalArg(const Arg *BaseArg, const Option *Opt,
-                                       const char *Value) const {
+                                       llvm::StringRef Value) const {
   return new PositionalArg(Opt, BaseArgs.MakeIndex(Value), BaseArg);
 }
 
 Arg *DerivedArgList::MakeSeparateArg(const Arg *BaseArg, const Option *Opt,
-                                     const char *Value) const {
+                                     llvm::StringRef Value) const {
   return new SeparateArg(Opt, BaseArgs.MakeIndex(Opt->getName(), Value), 1,
                          BaseArg);
 }
 
 Arg *DerivedArgList::MakeJoinedArg(const Arg *BaseArg, const Option *Opt,
-                                   const char *Value) const {
+                                   llvm::StringRef Value) const {
   std::string Joined(Opt->getName());
   Joined += Value;
   return new JoinedArg(Opt, BaseArgs.MakeIndex(Joined.c_str()), BaseArg);
