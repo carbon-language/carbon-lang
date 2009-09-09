@@ -33,6 +33,8 @@ namespace tools {
                                  const InputInfo &Output,
                                  const InputInfoList &Inputs) const;
 
+    void AddX86TargetArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
+
   public:
     Clang(const ToolChain &TC) : Tool("clang", TC) {}
 

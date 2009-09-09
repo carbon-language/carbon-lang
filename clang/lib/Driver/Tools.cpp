@@ -183,6 +183,52 @@ void Clang::AddPreprocessingOptions(const Driver &D,
                        options::OPT_Xpreprocessor);
 }
 
+void Clang::AddX86TargetArgs(const ArgList &Args,
+                             ArgStringList &CmdArgs) const {
+  if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
+    // FIXME: We may need some translation here from the options gcc takes to
+    // names the LLVM backend understand?
+    CmdArgs.push_back("-mcpu");
+    CmdArgs.push_back(A->getValue(Args));
+  } else {
+    // Select default CPU.
+
+    // FIXME: Need target hooks.
+    if (memcmp(getToolChain().getOS().c_str(), "darwin", 6) == 0) {
+      if (getToolChain().getArchName() == "x86_64")
+        CmdArgs.push_back("--mcpu=core2");
+      else if (getToolChain().getArchName() == "i386")
+        CmdArgs.push_back("--mcpu=yonah");
+    } else {
+      if (getToolChain().getArchName() == "x86_64")
+        CmdArgs.push_back("--mcpu=x86-64");
+      else if (getToolChain().getArchName() == "i386")
+        CmdArgs.push_back("--mcpu=pentium4");
+    }
+  }
+
+  // FIXME: Use iterator.
+  for (ArgList::const_iterator
+         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
+    const Arg *A = *it;
+    if (A->getOption().matches(options::OPT_m_x86_Features_Group)) {
+      llvm::StringRef Name = A->getOption().getName();
+
+      // Skip over "-m".
+      assert(Name.startswith("-m") && "Invalid feature name.");
+      Name = Name.substr(2);
+
+      bool IsNegative = Name.startswith("no-");
+      if (IsNegative)
+        Name = Name.substr(3);
+
+      A->claim();
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
+    }
+  }
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          Job &Dest,
                          const InputInfo &Output,
@@ -352,52 +398,20 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // FIXME: Handle -mtune=.
   (void) Args.hasArg(options::OPT_mtune_EQ);
 
-  if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    // FIXME: We may need some translation here from the options gcc takes to
-    // names the LLVM backend understand?
-    CmdArgs.push_back("-mcpu");
-    CmdArgs.push_back(A->getValue(Args));
-  } else {
-    // Select default CPU.
-
-    // FIXME: Need target hooks.
-    if (memcmp(getToolChain().getOS().c_str(), "darwin", 6) == 0) {
-      if (getToolChain().getArchName() == "x86_64")
-        CmdArgs.push_back("--mcpu=core2");
-      else if (getToolChain().getArchName() == "i386")
-        CmdArgs.push_back("--mcpu=yonah");
-    } else {
-      if (getToolChain().getArchName() == "x86_64")
-        CmdArgs.push_back("--mcpu=x86-64");
-      else if (getToolChain().getArchName() == "i386")
-        CmdArgs.push_back("--mcpu=pentium4");
-    }
-  }
-
   if (Arg *A = Args.getLastArg(options::OPT_mcmodel_EQ)) {
     CmdArgs.push_back("-code-model");
     CmdArgs.push_back(A->getValue(Args));
   }
 
-  // FIXME: Use iterator.
-  for (ArgList::const_iterator
-         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
-    const Arg *A = *it;
-    if (A->getOption().matches(options::OPT_m_x86_Features_Group)) {
-      llvm::StringRef Name = A->getOption().getName();
+  // Add target specific cpu and features flags.
+  switch(getToolChain().getTriple().getArch()) {
+  default:
+    break;
 
-      // Skip over "-m".
-      assert(Name.startswith("-m") && "Invalid feature name.");
-      Name = Name.substr(2);
-
-      bool IsNegative = Name.startswith("no-");
-      if (IsNegative)
-        Name = Name.substr(3);
-
-      A->claim();
-      CmdArgs.push_back("-target-feature");
-      CmdArgs.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
-    }
+  case llvm::Triple::x86:
+  case llvm::Triple::x86_64:
+    AddX86TargetArgs(Args, CmdArgs);
+    break;
   }
 
   if (Args.hasFlag(options::OPT_fmath_errno,
