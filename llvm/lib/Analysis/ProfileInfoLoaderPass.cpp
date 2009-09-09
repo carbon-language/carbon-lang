@@ -168,7 +168,7 @@ unsigned LoaderPass::readEdge(ProfileInfo::Edge e, std::vector<unsigned> ECs,
       // This happens only when loading edges for optimal edge profiling.
       SpanningTree.insert(e);
     }
-    return ei++
+    return ei++;
   } else {
     return ei;
   }
