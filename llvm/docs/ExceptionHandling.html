@@ -4,7 +4,7 @@
 <head>
   <title>Exception Handling in LLVM</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta name="description" 
+  <meta name="description"
         content="Exception Handling in LLVM.">
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
@@ -56,7 +56,7 @@
 
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="introduction">Introduction</a></div> 
+<div class="doc_section"><a name="introduction">Introduction</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -295,8 +295,13 @@
   <li><tt>__cxa_begin_catch</tt> takes a exception structure reference as an
       argument and returns the value of the exception object.</li>
 
-  <li><tt>__cxa_end_catch</tt> takes a exception structure reference as an
-      argument. This function clears the exception from the exception space.
+  <li><tt>__cxa_end_catch</tt> takes no arguments. This function
+  <ul>Locates the most recently caught exception and decrements its handler
+      count.</ul>
+  <ul>Removes the exception from the "caught" stack if the handler count goes
+      to zero.</ul>
+  <ul>Destroys the exception if the handler count goes to zero, and the
+      exception was not re-thrown by throw.</ul>
       Note: a rethrow from within the catch may replace this call with
       a <tt>__cxa_rethrow</tt>.</li>
 </ul>
