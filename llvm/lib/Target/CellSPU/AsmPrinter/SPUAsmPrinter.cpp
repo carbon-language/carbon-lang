@@ -410,6 +410,10 @@ void SPUAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
   processDebugLoc(MI->getDebugLoc());
   printInstruction(MI);
+
+  if (VerboseAsm && !MI->getDebugLoc().isUnknown())
+    EmitComments(*MI);
+  O << '\n';
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()

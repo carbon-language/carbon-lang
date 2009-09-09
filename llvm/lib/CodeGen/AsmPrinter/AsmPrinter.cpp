@@ -1390,9 +1390,11 @@ void AsmPrinter::processDebugLoc(DebugLoc DL) {
     if (!DL.isUnknown()) {
       DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);
 
-      if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT)
+      if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT) {
         printLabel(DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,
                                         DICompileUnit(CurDLT.CompileUnit)));
+        O << '\n';
+      }
 
       PrevDLT = CurDLT;
     }
@@ -1594,17 +1596,16 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
     }
     }
   }
-  O << "\n\t" << MAI->getCommentString() << MAI->getInlineAsmEnd() << '\n';
+  O << "\n\t" << MAI->getCommentString() << MAI->getInlineAsmEnd();
 }
 
 /// printImplicitDef - This method prints the specified machine instruction
 /// that is an implicit def.
 void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
-  if (VerboseAsm) {
-    O.PadToColumn(MAI->getCommentColumn());
-    O << MAI->getCommentString() << " implicit-def: "
-      << TRI->getAsmName(MI->getOperand(0).getReg()) << '\n';
-  }
+  if (!VerboseAsm) return;
+  O.PadToColumn(MAI->getCommentColumn());
+  O << MAI->getCommentString() << " implicit-def: "
+    << TRI->getAsmName(MI->getOperand(0).getReg());
 }
 
 /// printLabel - This method prints a local label used by debug and
@@ -1614,7 +1615,7 @@ void AsmPrinter::printLabel(const MachineInstr *MI) const {
 }
 
 void AsmPrinter::printLabel(unsigned Id) const {
-  O << MAI->getPrivateGlobalPrefix() << "label" << Id << ":\n";
+  O << MAI->getPrivateGlobalPrefix() << "label" << Id << ':';
 }
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM
@@ -1780,34 +1781,11 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
 
 /// EmitComments - Pretty-print comments for instructions
 void AsmPrinter::EmitComments(const MachineInstr &MI) const {
-  if (!VerboseAsm ||
-      MI.getDebugLoc().isUnknown())
-    return;
+  assert(VerboseAsm && !MI.getDebugLoc().isUnknown());
   
   DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
 
   // Print source line info.
-  O.PadToColumn(MAI->getCommentColumn());
-  O << MAI->getCommentString() << " SrcLine ";
-  if (DLT.CompileUnit) {
-    std::string Str;
-    DICompileUnit CU(DLT.CompileUnit);
-    O << CU.getFilename(Str) << " ";
-  }
-  O << DLT.Line;
-  if (DLT.Col != 0) 
-    O << ":" << DLT.Col;
-}
-
-/// EmitComments - Pretty-print comments for instructions
-void AsmPrinter::EmitComments(const MCInst &MI) const {
-  if (!VerboseAsm ||
-      MI.getDebugLoc().isUnknown())
-    return;
-  
-  DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
-
-  // Print source line info
   O.PadToColumn(MAI->getCommentColumn());
   O << MAI->getCommentString() << " SrcLine ";
   if (DLT.CompileUnit) {

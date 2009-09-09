@@ -702,6 +702,10 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     printInstructionThroughMCStreamer(MI);
   else
     printInstruction(MI);
+  
+  if (VerboseAsm && !MI->getDebugLoc().isUnknown())
+    EmitComments(*MI);
+  O << '\n';
 }
 
 void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {

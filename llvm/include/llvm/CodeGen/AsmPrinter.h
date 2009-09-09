@@ -336,8 +336,6 @@ namespace llvm {
 
     /// EmitComments - Pretty-print comments for instructions
     void EmitComments(const MachineInstr &MI) const;
-    /// EmitComments - Pretty-print comments for instructions
-    void EmitComments(const MCInst &MI) const;
     /// EmitComments - Pretty-print comments for basic blocks
     void EmitComments(const MachineBasicBlock &MBB) const;
 

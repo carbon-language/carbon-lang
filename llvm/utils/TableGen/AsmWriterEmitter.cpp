@@ -323,10 +323,6 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, Record *AsmWriter) {
     }
   }
   
-  Operands.push_back(
-    AsmWriterOperand("EmitComments(*MI);\n",
-                     AsmWriterOperand::isLiteralStatementOperand));
-  AddLiteralString("\\n");
   Operands.push_back(AsmWriterOperand("return;",
                                   AsmWriterOperand::isLiteralStatementOperand));
 }

@@ -18,7 +18,6 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/DebugLoc.h"
 
 namespace llvm {
 class raw_ostream;
@@ -132,9 +131,6 @@ public:
 class MCInst {
   unsigned Opcode;
   SmallVector<MCOperand, 8> Operands;
-  
-  // FIXME: This is a hack!
-  DebugLoc Loc;
 public:
   MCInst() : Opcode(~0U) {}
   
@@ -142,9 +138,6 @@ public:
   
   unsigned getOpcode() const { return Opcode; }
 
-  void setDebugLoc(DebugLoc L) { Loc = L; }
-  DebugLoc getDebugLoc() const { return Loc; }
-  
   const MCOperand &getOperand(unsigned i) const { return Operands[i]; }
   MCOperand &getOperand(unsigned i) { return Operands[i]; }
   unsigned getNumOperands() const { return Operands.size(); }

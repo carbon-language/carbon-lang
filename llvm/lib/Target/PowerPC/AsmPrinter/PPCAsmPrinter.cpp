@@ -603,6 +603,10 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   }
 
   printInstruction(MI);
+  
+  if (VerboseAsm && !MI->getDebugLoc().isUnknown())
+    EmitComments(*MI);
+  O << '\n';
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()

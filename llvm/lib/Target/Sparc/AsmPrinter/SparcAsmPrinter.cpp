@@ -129,6 +129,11 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       // Print the assembly for the instruction.
       processDebugLoc(II->getDebugLoc());
       printInstruction(II);
+      
+      if (VerboseAsm && !II->getDebugLoc().isUnknown())
+        EmitComments(*II);
+      O << '\n';
+      
       ++EmittedInsts;
     }
   }

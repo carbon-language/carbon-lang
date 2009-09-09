@@ -279,7 +279,6 @@ bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF)
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
-      O << "\t";
       printMachineInstruction(II);
     }
 
@@ -313,10 +312,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand(opNum);
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
-      O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
-    else
-      llvm_unreachable("not implemented");
+    O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
     break;
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
@@ -368,6 +364,9 @@ void XCoreAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     return;
   }
   printInstruction(MI);
+  if (VerboseAsm && !MI->getDebugLoc().isUnknown())
+    EmitComments(*MI);
+  O << '\n';
 }
 
 bool XCoreAsmPrinter::doInitialization(Module &M) {

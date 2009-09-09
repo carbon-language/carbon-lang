@@ -42,7 +42,13 @@ PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
 }
 
 bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
+  processDebugLoc(MI->getDebugLoc());
+  
   printInstruction(MI);
+  
+  if (VerboseAsm && !MI->getDebugLoc().isUnknown())
+    EmitComments(*MI);
+  O << '\n';
   return true;
 }
 

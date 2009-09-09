@@ -1709,6 +1709,7 @@ void DwarfDebug::BeginFunction(MachineFunction *MF) {
     unsigned LabelID = RecordSourceLine(DLT.Line, DLT.Col,
                                         DICompileUnit(DLT.CompileUnit));
     Asm->printLabel(LabelID);
+    O << '\n';
   }
 
   if (TimePassesIsEnabled)
