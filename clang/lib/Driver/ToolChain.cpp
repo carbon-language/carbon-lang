@@ -22,14 +22,14 @@ ToolChain::ToolChain(const HostInfo &_Host, const llvm::Triple &_Triple)
 ToolChain::~ToolChain() {
 }
 
-llvm::sys::Path ToolChain::GetFilePath(const Compilation &C,
-                                       const char *Name) const {
+std::string ToolChain::GetFilePath(const Compilation &C,
+                                   const char *Name) const {
   return Host.getDriver().GetFilePath(Name, *this);
 
 }
 
-llvm::sys::Path ToolChain::GetProgramPath(const Compilation &C,
-                                          const char *Name,
-                                          bool WantFile) const {
+std::string ToolChain::GetProgramPath(const Compilation &C,
+                                      const char *Name,
+                                      bool WantFile) const {
   return Host.getDriver().GetProgramPath(Name, *this, WantFile);
 }

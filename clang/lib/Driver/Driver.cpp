@@ -487,19 +487,17 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   // FIXME: The following handlers should use a callback mechanism, we don't
   // know what the client would like to do.
   if (Arg *A = C.getArgs().getLastArg(options::OPT_print_file_name_EQ)) {
-    llvm::outs() << GetFilePath(A->getValue(C.getArgs()), TC).str()
-                 << "\n";
+    llvm::outs() << GetFilePath(A->getValue(C.getArgs()), TC) << "\n";
     return false;
   }
 
   if (Arg *A = C.getArgs().getLastArg(options::OPT_print_prog_name_EQ)) {
-    llvm::outs() << GetProgramPath(A->getValue(C.getArgs()), TC).str()
-                 << "\n";
+    llvm::outs() << GetProgramPath(A->getValue(C.getArgs()), TC) << "\n";
     return false;
   }
 
   if (C.getArgs().hasArg(options::OPT_print_libgcc_file_name)) {
-    llvm::outs() << GetFilePath("libgcc.a", TC).str() << "\n";
+    llvm::outs() << GetFilePath("libgcc.a", TC) << "\n";
     return false;
   }
 
@@ -1180,38 +1178,36 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   }
 }
 
-llvm::sys::Path Driver::GetFilePath(const char *Name,
-                                    const ToolChain &TC) const {
+std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
   const ToolChain::path_list &List = TC.getFilePaths();
   for (ToolChain::path_list::const_iterator
          it = List.begin(), ie = List.end(); it != ie; ++it) {
     llvm::sys::Path P(*it);
     P.appendComponent(Name);
     if (P.exists())
-      return P;
+      return P.str();
   }
 
-  return llvm::sys::Path(Name);
+  return Name;
 }
 
-llvm::sys::Path Driver::GetProgramPath(const char *Name,
-                                       const ToolChain &TC,
-                                       bool WantFile) const {
+std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
+                                   bool WantFile) const {
   const ToolChain::path_list &List = TC.getProgramPaths();
   for (ToolChain::path_list::const_iterator
          it = List.begin(), ie = List.end(); it != ie; ++it) {
     llvm::sys::Path P(*it);
     P.appendComponent(Name);
     if (WantFile ? P.exists() : P.canExecute())
-      return P;
+      return P.str();
   }
 
   // If all else failed, search the path.
   llvm::sys::Path P(llvm::sys::Program::FindProgramByName(Name));
   if (!P.empty())
-    return P;
+    return P.str();
 
-  return llvm::sys::Path(Name);
+  return Name;
 }
 
 std::string Driver::GetTemporaryPath(const char *Suffix) const {

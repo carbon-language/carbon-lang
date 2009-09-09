@@ -195,8 +195,9 @@ public:
   ///
   /// \arg TC - The tool chain for additional information on
   /// directories to search.
+  //
   // FIXME: This should be in CompilationInfo.
-  llvm::sys::Path GetFilePath(const char *Name, const ToolChain &TC) const;
+  std::string GetFilePath(const char *Name, const ToolChain &TC) const;
 
   /// GetProgramPath - Lookup \arg Name in the list of program search
   /// paths.
@@ -206,9 +207,10 @@ public:
   ///
   /// \arg WantFile - False when searching for an executable file, otherwise
   /// true.  Defaults to false.
+  //
   // FIXME: This should be in CompilationInfo.
-  llvm::sys::Path GetProgramPath(const char *Name, const ToolChain &TC,
-                                 bool WantFile = false) const;
+  std::string GetProgramPath(const char *Name, const ToolChain &TC,
+                              bool WantFile = false) const;
 
   /// HandleImmediateArgs - Handle any arguments which should be
   /// treated before building actions or binding tools.
