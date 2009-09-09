@@ -906,23 +906,22 @@ void DwarfException::BeginFunction(MachineFunction *MF) {
 /// EndFunction - Gather and emit post-function exception information.
 ///
 void DwarfException::EndFunction() {
+  if (!shouldEmitMoves && !shouldEmitTable) return;
+
   if (TimePassesIsEnabled)
     ExceptionTimer->startTimer();
 
-  if (shouldEmitMoves || shouldEmitTable) {
-    EmitLabel("eh_func_end", SubprogramCount);
-    EmitExceptionTable();
+  EmitLabel("eh_func_end", SubprogramCount);
+  EmitExceptionTable();
 
-    // Save EH frame information
-    EHFrames.push_back(
-        FunctionEHFrameInfo(getAsm()->getCurrentFunctionEHName(MF),
-                            SubprogramCount,
-                            MMI->getPersonalityIndex(),
-                            MF->getFrameInfo()->hasCalls(),
-                            !MMI->getLandingPads().empty(),
-                            MMI->getFrameMoves(),
-                            MF->getFunction()));
-  }
+  // Save EH frame information
+  EHFrames.push_back(FunctionEHFrameInfo(getAsm()->getCurrentFunctionEHName(MF),
+                                         SubprogramCount,
+                                         MMI->getPersonalityIndex(),
+                                         MF->getFrameInfo()->hasCalls(),
+                                         !MMI->getLandingPads().empty(),
+                                         MMI->getFrameMoves(),
+                                         MF->getFunction()));
 
   if (TimePassesIsEnabled)
     ExceptionTimer->stopTimer();
