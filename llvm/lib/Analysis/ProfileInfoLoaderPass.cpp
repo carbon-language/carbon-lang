@@ -61,8 +61,8 @@ namespace {
     // blocks as possbile.
     virtual void recurseBasicBlock(const BasicBlock *BB);
     virtual void readEdgeOrRemember(Edge, Edge&, unsigned &, unsigned &);
-    virtual unsigned readEdge(ProfileInfo::Edge, std::vector<unsigned>,
-                              unsigned, Function*);
+    virtual void readOrRememberEdge(ProfileInfo::Edge, unsigned,
+                                    unsigned, Function*);
 
     /// run - Load the profile information from the specified file.
     virtual bool runOnModule(Module &M);
@@ -156,21 +156,15 @@ void LoaderPass::recurseBasicBlock(const BasicBlock *BB) {
   }
 }
 
-unsigned LoaderPass::readEdge(ProfileInfo::Edge e, std::vector<unsigned> ECs,
-                              unsigned ei, Function *F) {
-  if (ei < ECs.size()) {
-    double weight = ECs[ei];
-    if (weight != ~0U) {
-      EdgeInformation[F][e] += weight;
-      DEBUG(errs()<<"--Read Edge Counter for " << e 
-                  <<" (# "<<ei<<"): "<<(unsigned)getEdgeWeight(e)<<"\n");
-    } else {
-      // This happens only when loading edges for optimal edge profiling.
-      SpanningTree.insert(e);
-    }
-    return ei++;
+void LoaderPass::readOrRememberEdge(ProfileInfo::Edge e,
+                                    unsigned weight, unsigned ei,
+                                    Function *F) {
+  if (weight != ~0U) {
+    EdgeInformation[F][e] += weight;
+    DEBUG(errs()<<"--Read Edge Counter for " << e 
+                <<" (# "<<ei<<"): "<<(unsigned)getEdgeWeight(e)<<"\n");
   } else {
-    return ei;
+    SpanningTree.insert(e);
   }
 }
 
@@ -183,15 +177,18 @@ bool LoaderPass::runOnModule(Module &M) {
     unsigned ei = 0;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
-      DEBUG(errs()<<"Working on "<<F->getNameStr()<<"\n");
-      ei = readEdge(getEdge(0,&F->getEntryBlock()), ECs, ei, F);
+      if (ei < ECs.size())
+        EdgeInformation[F][ProfileInfo::getEdge(0, &F->getEntryBlock())] +=
+          ECs[ei++];
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         // Okay, we have to add a counter of each outgoing edge.  If the
         // outgoing edge is not critical don't split it, just insert the counter
         // in the source or destination of the edge.
         TerminatorInst *TI = BB->getTerminator();
         for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
-          ei = readEdge(getEdge(BB,TI->getSuccessor(s)), ECs, ei, F);
+          if (ei < ECs.size())
+            EdgeInformation[F][ProfileInfo::getEdge(BB, TI->getSuccessor(s))] +=
+              ECs[ei++];
         }
       }
     }
@@ -208,14 +205,22 @@ bool LoaderPass::runOnModule(Module &M) {
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
       DEBUG(errs()<<"Working on "<<F->getNameStr()<<"\n");
-      ei = readEdge(getEdge(0,&F->getEntryBlock()), ECs, ei, F);
+      if (ei < ECs.size()) {
+        readOrRememberEdge(getEdge(0,&F->getEntryBlock()), ECs[ei], ei, F); 
+        ei++;
+      }
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         TerminatorInst *TI = BB->getTerminator();
         if (TI->getNumSuccessors() == 0) {
-          ei = readEdge(getEdge(BB,0), ECs, ei, F);
+          if (ei < ECs.size()) {
+            readOrRememberEdge(getEdge(BB,0), ECs[ei], ei, F); ei++;
+          }
         }
         for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
-          ei = readEdge(getEdge(BB,TI->getSuccessor(s)), ECs, ei, F);
+          if (ei < ECs.size()) {
+            readOrRememberEdge(getEdge(BB,TI->getSuccessor(s)), ECs[ei], ei, F);
+            ei++;
+          }
         }
       }
       while (SpanningTree.size() > 0) {
