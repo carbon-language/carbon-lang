@@ -106,10 +106,12 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
     if (MAI->getNeedsIndirectEncoding()) {
       Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4 |
                     dwarf::DW_EH_PE_indirect);
-      Asm->EOL("Personality (pcrel sdata4 indirect)");
+      Asm->EOL("Personality",
+               dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4 |
+               dwarf::DW_EH_PE_indirect);
     } else {
       Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-      Asm->EOL("Personality (pcrel sdata4)");
+      Asm->EOL("Personality", dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
     }
 
     PrintRelDirective(true);
@@ -121,16 +123,16 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
     Asm->EOL("Personality");
 
     Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-    Asm->EOL("LSDA Encoding (pcrel sdata4)");
+    Asm->EOL("LSDA Encoding", dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
 
     Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-    Asm->EOL("FDE Encoding (pcrel sdata4)");
+    Asm->EOL("FDE Encoding", dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
   } else {
     Asm->EmitULEB128Bytes(1);
     Asm->EOL("Augmentation Size");
 
     Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-    Asm->EOL("FDE Encoding (pcrel sdata4)");
+    Asm->EOL("FDE Encoding", dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
   }
 
   // Indicate locations of general callee saved registers in frame.
@@ -609,14 +611,14 @@ void DwarfException::EmitExceptionTable() {
 
   // Emit the header.
   Asm->EmitInt8(dwarf::DW_EH_PE_omit);
-  Asm->EOL("@LPStart format (DW_EH_PE_omit)");
+  Asm->EOL("@LPStart format", dwarf::DW_EH_PE_omit);
 
 #if 0
   if (TypeInfos.empty() && FilterIds.empty()) {
     // If there are no typeinfos or filters, there is nothing to emit, optimize
     // by specifying the "omit" encoding.
     Asm->EmitInt8(dwarf::DW_EH_PE_omit);
-    Asm->EOL("@TType format (DW_EH_PE_omit)");
+    Asm->EOL("@TType format", dwarf::DW_EH_PE_omit);
   } else {
     // Okay, we have actual filters or typeinfos to emit.  As such, we need to
     // pick a type encoding for them.  We're about to emit a list of pointers to
@@ -660,10 +662,10 @@ void DwarfException::EmitExceptionTable() {
   // FIXME: does this apply to Dwarf also? The above #if 0 implies yes?
   if (!HaveTTData) {
     Asm->EmitInt8(dwarf::DW_EH_PE_omit);
-    Asm->EOL("@TType format (DW_EH_PE_omit)");
+    Asm->EOL("@TType format", dwarf::DW_EH_PE_omit);
   } else {
     Asm->EmitInt8(dwarf::DW_EH_PE_absptr);
-    Asm->EOL("@TType format (DW_EH_PE_absptr)");
+    Asm->EOL("@TType format", dwarf::DW_EH_PE_absptr);
     Asm->EmitULEB128Bytes(TypeOffset);
     Asm->EOL("@TType base offset");
   }
@@ -672,7 +674,7 @@ void DwarfException::EmitExceptionTable() {
   // SjLj Exception handilng
   if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
     Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
-    Asm->EOL("Call site format (DW_EH_PE_udata4)");
+    Asm->EOL("Call site format", dwarf::DW_EH_PE_udata4);
     Asm->EmitULEB128Bytes(SizeSites);
     Asm->EOL("Call site table length");
 
@@ -725,7 +727,7 @@ void DwarfException::EmitExceptionTable() {
 
     // Emit the landing pad call site table.
     Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
-    Asm->EOL("Call site format (DW_EH_PE_udata4)");
+    Asm->EOL("Call site format", dwarf::DW_EH_PE_udata4);
     Asm->EmitULEB128Bytes(SizeSites);
     Asm->EOL("Call site table size");
 

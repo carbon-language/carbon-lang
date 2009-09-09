@@ -612,6 +612,14 @@ static const char *DecodeDWARFEncoding(unsigned Encoding) {
     return "omit";
   case dwarf::DW_EH_PE_pcrel:
     return "pcrel";
+  case dwarf::DW_EH_PE_udata4:
+    return "udata4";
+  case dwarf::DW_EH_PE_udata8:
+    return "udata8";
+  case dwarf::DW_EH_PE_sdata4:
+    return "sdata4";
+  case dwarf::DW_EH_PE_sdata8:
+    return "sdata8";
   case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata4:
     return "pcrel udata4";
   case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4:
