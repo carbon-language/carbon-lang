@@ -16,7 +16,7 @@ entry:
 ; LINUX:	call	.Lllvm$1.$piclabel
 ; LINUX-NEXT: .Lllvm$1.$piclabel:
 ; LINUX-NEXT:	popl
-; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref1-.Lllvm$1.$piclabel),
+; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_ + [.-.Lllvm$1.$piclabel],
 ; LINUX:	movl	dst@GOT(%eax),
 ; LINUX:	movl	ptr@GOT(%eax),
 ; LINUX:	movl	src@GOT(%eax),
@@ -38,7 +38,7 @@ entry:
 ; LINUX:	call	.Lllvm$2.$piclabel
 ; LINUX-NEXT: .Lllvm$2.$piclabel:
 ; LINUX-NEXT:	popl
-; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref2-.Lllvm$2.$piclabel), %eax
+; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_ + [.-.Lllvm$2.$piclabel], %eax
 ; LINUX:	movl	dst2@GOT(%eax),
 ; LINUX:	movl	ptr2@GOT(%eax),
 ; LINUX:	movl	src2@GOT(%eax),
@@ -58,7 +58,7 @@ entry:
 ; LINUX-NEXT: 	call	.Lllvm$3.$piclabel
 ; LINUX-NEXT: .Lllvm$3.$piclabel:
 ; LINUX-NEXT: 	popl	%ebx
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref3-.Lllvm$3.$piclabel), %ebx
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_ + [.-.Lllvm$3.$piclabel], %ebx
 ; LINUX: 	movl	$40, (%esp)
 ; LINUX: 	call	malloc@PLT
 ; LINUX: 	addl	$8, %esp
@@ -79,7 +79,7 @@ entry:
 ; LINUX: 	call	.Lllvm$4.$piclabel
 ; LINUX-NEXT: .Lllvm$4.$piclabel:
 ; LINUX: 	popl
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref4-.Lllvm$4.$piclabel),
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_ + [.-.Lllvm$4.$piclabel],
 ; LINUX: 	movl	pfoo@GOT(%esi),
 ; LINUX: 	call	afoo@PLT
 ; LINUX: 	call	*
@@ -94,7 +94,7 @@ entry:
 ; LINUX: test5:
 ; LINUX: call	.Lllvm$5.$piclabel
 ; LINUX: popl	%ebx
-; LINUX: addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref5-.Lllvm$5.$piclabel), %ebx
+; LINUX: addl	$_GLOBAL_OFFSET_TABLE_ + [.-.Lllvm$5.$piclabel], %ebx
 ; LINUX: call	foo@PLT
 }
 
@@ -116,7 +116,7 @@ entry:
 ; LINUX: 	call	.Lllvm$6.$piclabel
 ; LINUX-NEXT: .Lllvm$6.$piclabel:
 ; LINUX-NEXT: 	popl	%eax
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref6-.Lllvm$6.$piclabel), %eax
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_ + [.-.Lllvm$6.$piclabel], %eax
 ; LINUX: 	leal	dst6@GOTOFF(%eax), %ecx
 ; LINUX: 	movl	%ecx, ptr6@GOTOFF(%eax)
 ; LINUX: 	movl	src6@GOTOFF(%eax), %ecx
