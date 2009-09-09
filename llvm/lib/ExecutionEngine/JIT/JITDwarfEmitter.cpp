@@ -28,7 +28,6 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-
 using namespace llvm;
 
 JITDwarfEmitter::JITDwarfEmitter(JIT& theJit) : Jit(theJit) {}
@@ -56,7 +55,7 @@ unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F,
 
   Result = EmitEHFrame(Personalities[MMI->getPersonalityIndex()], EHFramePtr,
                        StartFunction, EndFunction, ExceptionTable);
-  
+
   return Result;
 }
 
@@ -107,11 +106,9 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
           JCE->emitULEB128Bytes(RI->getDwarfRegNum(Src.getReg(), true));
         }
         
-        int Offset = -Src.getOffset();
-        
-        JCE->emitULEB128Bytes(Offset);
+        JCE->emitULEB128Bytes(-Src.getOffset());
       } else {
-        llvm_unreachable("Machine move no supported yet.");
+        llvm_unreachable("Machine move not supported yet.");
       }
     } else if (Src.isReg() &&
       Src.getReg() == MachineLocation::VirtualFP) {
@@ -119,7 +116,7 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
         JCE->emitByte(dwarf::DW_CFA_def_cfa_register);
         JCE->emitULEB128Bytes(RI->getDwarfRegNum(Dst.getReg(), true));
       } else {
-        llvm_unreachable("Machine move no supported yet.");
+        llvm_unreachable("Machine move not supported yet.");
       }
     } else {
       unsigned Reg = RI->getDwarfRegNum(Src.getReg(), true);
@@ -466,11 +463,10 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
     GlobalVariable *GV = TypeInfos[M - 1];
     
     if (GV) {
-      if (TD->getPointerSize() == sizeof(int32_t)) {
+      if (TD->getPointerSize() == sizeof(int32_t))
         JCE->emitInt32((intptr_t)Jit.getOrEmitGlobalVariable(GV));
-      } else {
+      else
         JCE->emitInt64((intptr_t)Jit.getOrEmitGlobalVariable(GV));
-      }
     } else {
       if (TD->getPointerSize() == sizeof(int32_t))
         JCE->emitInt32(0);
@@ -508,7 +504,7 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
   JCE->emitULEB128Bytes(1);
   JCE->emitSLEB128Bytes(stackGrowth);
   JCE->emitByte(RI->getDwarfRegNum(RI->getRARegister(), true));
-  
+
   if (Personality) {
     // Augmentation Size: 3 small ULEBs of one byte each, and the personality
     // function which size is PointerSize.
@@ -524,10 +520,9 @@ JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
       JCE->emitByte(dwarf::DW_EH_PE_sdata8);
       JCE->emitInt64(((intptr_t)Jit.getPointerToGlobal(Personality)));
     }
-    
+
     JCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
     JCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-      
   } else {
     JCE->emitULEB128Bytes(1);
     JCE->emitULEB128Bytes(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
@@ -566,13 +561,19 @@ JITDwarfEmitter::EmitEHFrame(const Function* Personality,
 
   // If there is a personality and landing pads then point to the language
   // specific data area in the exception table.
-  if (MMI->getPersonalityIndex()) {
-    JCE->emitULEB128Bytes(4);
+  if (Personality) {
+    JCE->emitULEB128Bytes(PointerSize == 4 ? 4 : 8);
         
-    if (!MMI->getLandingPads().empty()) {
-      JCE->emitInt32(ExceptionTable - (unsigned char*)JCE->getCurrentPCValue());
+    if (PointerSize == 4) {
+      if (!MMI->getLandingPads().empty())
+        JCE->emitInt32(ExceptionTable-(unsigned char*)JCE->getCurrentPCValue());
+      else
+        JCE->emitInt32((int)0);
     } else {
-      JCE->emitInt32((int)0);
+      if (!MMI->getLandingPads().empty())
+        JCE->emitInt64(ExceptionTable-(unsigned char*)JCE->getCurrentPCValue());
+      else
+        JCE->emitInt64((int)0);
     }
   } else {
     JCE->emitULEB128Bytes(0);
@@ -621,7 +622,7 @@ unsigned JITDwarfEmitter::GetDwarfTableSizeInBytes(MachineFunction& F,
 
   FinalSize += GetEHFrameSizeInBytes(Personalities[MMI->getPersonalityIndex()],
                                      StartFunction);
-  
+
   return FinalSize;
 }
 
@@ -644,7 +645,7 @@ JITDwarfEmitter::GetEHFrameSizeInBytes(const Function* Personality,
   FinalSize += 3 * PointerSize;
   // If there is a personality and landing pads then point to the language
   // specific data area in the exception table.
-  if (MMI->getPersonalityIndex()) {
+  if (Personality) {
     FinalSize += MCAsmInfo::getULEB128Size(4); 
     FinalSize += PointerSize;
   } else {
