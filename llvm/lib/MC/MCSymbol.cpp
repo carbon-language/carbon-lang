@@ -39,7 +39,7 @@ static bool ShouldQuoteIdentifier(const StringRef &Str, const MCAsmInfo &MAI) {
     if ((C < 'a' || C > 'z') &&
         (C < 'A' || C > 'Z') &&
         (C < '0' || C > '9') &&
-        C != '_' && C != '$' && C != '.')
+        C != '_' && C != '$' && C != '.' && C != '@')
       return true;
   }
   return false;
