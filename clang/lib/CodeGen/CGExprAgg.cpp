@@ -184,19 +184,12 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
                                LValue::MakeAddr(CastPtr, 0));
     return;
   }
-  if (E->getCastKind() == CastExpr::CK_UserDefinedConversion) {
-    if (const CXXFunctionalCastExpr *CXXFExpr =
-          dyn_cast<CXXFunctionalCastExpr>(E))
-      CGF.EmitCXXFunctionalCastExpr(CXXFExpr);
-    else
-      if (isa<CStyleCastExpr>(E))
-        Visit(E->getSubExpr());
-    return;
-  }
 
   // FIXME: Remove the CK_Unknown check here.
   assert((E->getCastKind() == CastExpr::CK_NoOp ||
-          E->getCastKind() == CastExpr::CK_Unknown) &&
+          E->getCastKind() == CastExpr::CK_Unknown ||
+          E->getCastKind() == CastExpr::CK_UserDefinedConversion ||
+          E->getCastKind() == CastExpr::CK_ConstructorConversion) &&
          "Only no-op casts allowed!");
   assert(CGF.getContext().hasSameUnqualifiedType(E->getSubExpr()->getType(),
                                                  E->getType()) &&

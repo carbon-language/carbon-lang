@@ -550,20 +550,16 @@ public:
 /// that uses "functional" notion (C++ [expr.type.conv]). Example: @c
 /// x = int(0.5);
 class CXXFunctionalCastExpr : public ExplicitCastExpr {
-  CXXMethodDecl *TypeConversionMethod;
   SourceLocation TyBeginLoc;
   SourceLocation RParenLoc;
 public:
   CXXFunctionalCastExpr(QualType ty, QualType writtenTy,
                         SourceLocation tyBeginLoc, CastKind kind,
-                        Expr *castExpr, CXXMethodDecl *typeConversionMethod,
-                        SourceLocation rParenLoc) :
-    ExplicitCastExpr(CXXFunctionalCastExprClass, ty, kind, castExpr, writtenTy),
-    TypeConversionMethod(typeConversionMethod),
-    TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
+                        Expr *castExpr, SourceLocation rParenLoc) 
+    : ExplicitCastExpr(CXXFunctionalCastExprClass, ty, kind, castExpr, 
+                       writtenTy),
+      TyBeginLoc(tyBeginLoc), RParenLoc(rParenLoc) {}
 
-  CXXMethodDecl *getTypeConversionMethod() const
-  { return TypeConversionMethod; }
   SourceLocation getTypeBeginLoc() const { return TyBeginLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
 

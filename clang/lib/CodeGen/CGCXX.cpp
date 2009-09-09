@@ -264,28 +264,6 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
                            E->arg_begin() + 1, E->arg_end());
 }
 
-RValue
-CodeGenFunction::EmitCXXFunctionalCastExpr(const CXXFunctionalCastExpr *E) {
-  assert((E->getCastKind() == CastExpr::CK_UserDefinedConversion) &&
-         "EmitCXXFunctionalCastExpr - called with wrong cast");
-
-  CXXMethodDecl *MD = E->getTypeConversionMethod();
-  assert(MD && "EmitCXXFunctionalCastExpr - null conversion method");
-  assert(isa<CXXConversionDecl>(MD) && "EmitCXXFunctionalCastExpr - not"
-         " method decl");
-  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
-
-  const llvm::Type *Ty =
-    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
-                                   FPT->isVariadic());
-  llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
-  llvm::Value *This = EmitLValue(E->getSubExpr()).getAddress();
-  RValue RV = EmitCXXMemberCall(MD, Callee, This, 0, 0);
-  if (RV.isAggregate())
-    RV = RValue::get(RV.getAggregateAddr());
-  return RV;
-}
-
 llvm::Value *CodeGenFunction::LoadCXXThis() {
   assert(isa<CXXMethodDecl>(CurFuncDecl) &&
          "Must be in a C++ member function decl to load 'this'");

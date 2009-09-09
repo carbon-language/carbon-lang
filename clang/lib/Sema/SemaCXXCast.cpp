@@ -44,7 +44,8 @@ static void CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                                  const SourceRange &DestRange);
 static void CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                             const SourceRange &OpRange,
-                            CastExpr::CastKind &Kind);
+                            CastExpr::CastKind &Kind,
+                            CXXMethodDecl *&ConversionDecl);
 static void CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                              const SourceRange &OpRange,
                              const SourceRange &DestRange,
@@ -143,8 +144,22 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
 
   case tok::kw_static_cast: {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    if (!TypeDependent)
-      CheckStaticCast(*this, Ex, DestType, OpRange, Kind);
+    if (!TypeDependent) {
+      CXXMethodDecl *Method = 0;
+      
+      CheckStaticCast(*this, Ex, DestType, OpRange, Kind, Method);
+      
+      if (Method) {
+        OwningExprResult CastArg 
+          = BuildCXXCastArgument(OpLoc, DestType.getNonReferenceType(), 
+                                 Kind, Method, Owned(Ex));
+          if (CastArg.isInvalid())
+            return ExprError();
+          
+          Ex = CastArg.takeAs<Expr>();
+      }
+    }
+    
     return Owned(new (Context) CXXStaticCastExpr(DestType.getNonReferenceType(),
                                                  Kind, Ex, DestType, OpLoc));
   }
@@ -359,7 +374,8 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 /// implicit conversions explicit and getting rid of data loss warnings.
 void
 CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
-                const SourceRange &OpRange, CastExpr::CastKind &Kind) {
+                const SourceRange &OpRange, CastExpr::CastKind &Kind,
+                CXXMethodDecl *&ConversionDecl) {
   // This test is outside everything else because it's the only case where
   // a non-lvalue-reference target type does not lead to decay.
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
@@ -371,7 +387,6 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     Self.DefaultFunctionArrayConversion(SrcExpr);
 
   unsigned msg = diag::err_bad_cxx_cast_generic;
-  CXXMethodDecl *ConversionDecl = 0;
   if (TryStaticCast(Self, SrcExpr, DestType, /*CStyle*/false, Kind,
                     OpRange, msg, ConversionDecl)
       != TC_Success && msg != 0)
@@ -421,9 +436,16 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
   //   [...] if the declaration "T t(e);" is well-formed, [...].
   tcr = TryStaticImplicitCast(Self, SrcExpr, DestType, CStyle, OpRange, msg,
                               ConversionDecl);
-  if (tcr != TC_NotApplicable)
+  if (tcr != TC_NotApplicable) {
+    if (ConversionDecl) {
+      if (isa<CXXConstructorDecl>(ConversionDecl))
+        Kind = CastExpr::CK_ConstructorConversion;
+      else if (isa<CXXConversionDecl>(ConversionDecl))
+        Kind = CastExpr::CK_UserDefinedConversion;
+    }
     return tcr;
-
+  }
+  
   // C++ 5.2.9p6: May apply the reverse of any standard conversion, except
   // lvalue-to-rvalue, array-to-pointer, function-to-pointer, and boolean
   // conversions, subject to further restrictions.
@@ -787,10 +809,12 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                                /*ForceRValue=*/false,
                                /*InOverloadResolution=*/false);
 
-  if (ICS.ConversionKind  == ImplicitConversionSequence::UserDefinedConversion)
+  if (ICS.ConversionKind == ImplicitConversionSequence::UserDefinedConversion) {
     if (CXXMethodDecl *MD =
           dyn_cast<CXXMethodDecl>(ICS.UserDefined.ConversionFunction))
       ConversionDecl = MD;
+  }
+  
   return ICS.ConversionKind == ImplicitConversionSequence::BadConversion ?
     TC_NotApplicable : TC_Success;
 }

@@ -1834,6 +1834,12 @@ public:
                                                MultiExprArg Args,
                                                SourceLocation rParenLoc);
 
+  OwningExprResult BuildCXXCastArgument(SourceLocation CastLoc,
+                                        QualType Ty,
+                                        CastExpr::CastKind Kind,
+                                        CXXMethodDecl *Method,
+                                        ExprArg Arg);
+
   /// BuildCXXDefaultArgExpr - Creates a CXXDefaultArgExpr, instantiating
   /// the default expr if needed.
   OwningExprResult BuildCXXDefaultArgExpr(SourceLocation CallLoc,

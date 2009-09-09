@@ -224,19 +224,25 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   //
   if (NumExprs == 1) {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-    CXXMethodDecl *ConversionDecl = 0;
-    if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, ConversionDecl,
-                       /*functional-style*/true))
+    CXXMethodDecl *Method = 0;
+    if (CheckCastTypes(TypeRange, Ty, Exprs[0], Kind, Method,
+                       /*FunctionalStyle=*/true))
       return ExprError();
-    // We done't build this AST for X(i) where we are constructing an object.
-    if (!ConversionDecl || !isa<CXXConstructorDecl>(ConversionDecl)) {
-      exprs.release();
-      return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
-                                          Ty, TyBeginLoc,
-                                          CastExpr::CK_UserDefinedConversion,
-                                          Exprs[0], ConversionDecl,
-                                          RParenLoc));
+
+    exprs.release();
+    if (Method) {
+      OwningExprResult CastArg 
+        = BuildCXXCastArgument(TypeRange.getBegin(), Ty.getNonReferenceType(), 
+                               Kind, Method, Owned(Exprs[0]));
+      if (CastArg.isInvalid())
+        return ExprError();
+
+      Exprs[0] = CastArg.takeAs<Expr>();
     }
+
+    return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),
+                                                     Ty, TyBeginLoc, Kind,
+                                                     Exprs[0], RParenLoc));
   }
 
   if (const RecordType *RT = Ty->getAs<RecordType>()) {
@@ -919,30 +925,25 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     {
       FunctionDecl *FD = ICS.UserDefined.ConversionFunction;
       CastExpr::CastKind CastKind = CastExpr::CK_Unknown;
-      if (CXXConversionDecl *CV = dyn_cast<CXXConversionDecl>(FD)) {
-        // FIXME. Get actual Source Location.
-        From =
-          new (Context) CXXFunctionalCastExpr(ToType.getNonReferenceType(),
-                                            ToType, SourceLocation(),
-                                            CastExpr::CK_UserDefinedConversion,
-                                            From, CV,
-                                            SourceLocation());
+      if (isa<CXXConversionDecl>(FD))
         CastKind = CastExpr::CK_UserDefinedConversion;
-      }
-      else if (CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
-        // FIXME. Do we need to check for isLValueReferenceType?
-        DefaultFunctionArrayConversion(From);
-        OwningExprResult InitResult =
-          BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
-                                ToType.getNonReferenceType(), CD,
-                                MultiExprArg(*this, (void**)&From, 1));
-        // Take ownership of this expression.
-        From = InitResult.takeAs<Expr>();
-        CastKind = CastExpr::CK_ConstructorConversion ;
-      }
-      ImpCastExprToType(From, ToType.getNonReferenceType(),
-                        CastKind,
-                        ToType->isLValueReferenceType());
+      else if (isa<CXXConstructorDecl>(FD))
+        CastKind = CastExpr::CK_ConstructorConversion;
+      else
+        assert(0 && "Unknown conversion function kind!");
+
+      OwningExprResult CastArg 
+        = BuildCXXCastArgument(From->getLocStart(),
+                               ToType.getNonReferenceType(),
+                               CastKind, cast<CXXMethodDecl>(FD), 
+                               Owned(From));
+
+      if (CastArg.isInvalid())
+        return true;
+      
+      From = new (Context) ImplicitCastExpr(ToType.getNonReferenceType(),
+                                            CastKind, CastArg.takeAs<Expr>(), 
+                                            ToType->isLValueReferenceType());
       return false;
     }
 
@@ -1888,6 +1889,42 @@ Sema::ActOnConversionOperatorReferenceExpr(Scope *S, ExprArg Base,
   return BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, ClassNameLoc,
                                   ConvName, DeclPtrTy(), SS);
 }
+
+Sema::OwningExprResult Sema::BuildCXXCastArgument(SourceLocation CastLoc,
+                                                  QualType Ty,
+                                                  CastExpr::CastKind Kind,
+                                                  CXXMethodDecl *Method,
+                                                  ExprArg Arg) {
+  Expr *From = Arg.takeAs<Expr>();
+
+  switch (Kind) {
+  default: assert(0 && "Unhandled cast kind!");
+  case CastExpr::CK_ConstructorConversion: {
+    DefaultFunctionArrayConversion(From);
+
+    return BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method), 
+                                 MultiExprArg(*this, (void **)&From, 1));
+  }
+
+  case CastExpr::CK_UserDefinedConversion: {
+    // Create an implicit member expr to refer to the conversion operator.
+    MemberExpr *ME = 
+      new (Context) MemberExpr(From, From->getType()->isPointerType(), Method, 
+                               SourceLocation(), Method->getType());
+    
+
+    // And an implicit call expr that calls it.
+    QualType ResultType = Method->getResultType().getNonReferenceType();
+    CXXMemberCallExpr *CE =
+      new (Context) CXXMemberCallExpr(Context, ME, 0, 0, 
+                                      ResultType,
+                                      SourceLocation());
+
+    return Owned(CE);
+  }
+      
+  }
+}    
 
 Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
   Expr *FullExpr = Arg.takeAs<Expr>();

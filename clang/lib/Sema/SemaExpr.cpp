@@ -3171,25 +3171,23 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
   // If the Expr being casted is a ParenListExpr, handle it specially.
   if (isa<ParenListExpr>(castExpr))
     return ActOnCastOfParenListExpr(S, LParenLoc, RParenLoc, move(Op),castType);
-  CXXMethodDecl *ConversionDecl = 0;
+  CXXMethodDecl *Method = 0;
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr,
-                     Kind, ConversionDecl))
+                     Kind, Method))
     return ExprError();
-  if (ConversionDecl) {
-    // encounterred a c-style cast requiring a conversion function.
-    if (CXXConversionDecl *CD = dyn_cast<CXXConversionDecl>(ConversionDecl)) {
-      castExpr =
-        new (Context) CXXFunctionalCastExpr(castType.getNonReferenceType(),
-                                            castType, LParenLoc,
-                                            CastExpr::CK_UserDefinedConversion,
-                                            castExpr, CD,
-                                            RParenLoc);
-      Kind = CastExpr::CK_UserDefinedConversion;
-    }
-    // FIXME. AST for when dealing with conversion functions (FunctionDecl).
+
+  if (Method) {
+    OwningExprResult CastArg = BuildCXXCastArgument(LParenLoc, castType, Kind, 
+                                                    Method, move(Op));
+    
+    if (CastArg.isInvalid())
+      return ExprError();
+    
+    castExpr = CastArg.takeAs<Expr>();
+  } else {
+    Op.release();
   }
 
-  Op.release();
   return Owned(new (Context) CStyleCastExpr(castType.getNonReferenceType(),
                                             Kind, castExpr, castType,
                                             LParenLoc, RParenLoc));

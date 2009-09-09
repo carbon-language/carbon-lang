@@ -841,8 +841,6 @@ public:
   RValue EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
                                        const CXXMethodDecl *MD);
 
-  RValue EmitCXXFunctionalCastExpr(const CXXFunctionalCastExpr *E);
-
   RValue EmitBuiltinExpr(const FunctionDecl *FD,
                          unsigned BuiltinID, const CallExpr *E);
 
