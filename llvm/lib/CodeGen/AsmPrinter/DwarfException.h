@@ -51,6 +51,11 @@ class VISIBILITY_HIDDEN DwarfException : public Dwarf {
 
   std::vector<FunctionEHFrameInfo> EHFrames;
 
+  /// UsesLSDA - Indicates whether an FDE that uses the CIE at the given index
+  /// uses an LSDA. If so, then we need to encode that information in the CIE's
+  /// augmentation.
+  DenseMap<unsigned, bool> UsesLSDA;
+
   /// shouldEmitTable - Per-function flag to indicate if EH tables should
   /// be emitted.
   bool shouldEmitTable;
@@ -69,6 +74,8 @@ class VISIBILITY_HIDDEN DwarfException : public Dwarf {
 
   /// ExceptionTimer - Timer for the Dwarf exception writer.
   Timer *ExceptionTimer;
+
+  unsigned SizeOfEncodedValue(unsigned Encoding);
 
   /// EmitCIE - Emit a Common Information Entry (CIE). This holds information
   /// that is shared among many Frame Description Entries.  There is at least

@@ -51,6 +51,25 @@ DwarfException::~DwarfException() {
   delete ExceptionTimer;
 }
 
+unsigned DwarfException::SizeOfEncodedValue(unsigned Encoding) {
+  if (Encoding == dwarf::DW_EH_PE_omit)
+    return 0;
+
+  switch (Encoding & 0x07) {
+  case dwarf::DW_EH_PE_absptr:
+    return TD->getPointerSize();
+  case dwarf::DW_EH_PE_udata2:
+    return 2;
+  case dwarf::DW_EH_PE_udata4:
+    return 4;
+  case dwarf::DW_EH_PE_udata8:
+    return 8;
+  }
+
+  llvm_unreachable("Invalid encoded value.");
+  return 0;
+}
+
 /// EmitCIE - Emit a Common Information Entry (CIE). This holds information that
 /// is shared among many Frame Description Entries.  There is at least one CIE
 /// in every non-empty .debug_frame section.
@@ -87,7 +106,40 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
 
   // The personality presence indicates that language specific information will
   // show up in the eh frame.
-  Asm->EmitString(Personality ? "zPLR" : "zR");
+
+  // FIXME: Don't hardcode these encodings.
+  unsigned PerEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+  if (Personality && MAI->getNeedsIndirectEncoding())
+    PerEncoding |= dwarf::DW_EH_PE_indirect;
+  unsigned LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+  unsigned FDEEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+
+  char Augmentation[5] = { 0 };
+  unsigned AugmentationSize = 0;
+  char *APtr = Augmentation + 1;
+
+  if (Personality) {
+    // There is a personality function.
+    *APtr++ = 'P';
+    AugmentationSize += 1 + SizeOfEncodedValue(PerEncoding);
+  }
+
+  if (UsesLSDA[Index]) {
+    // An LSDA pointer is in the FDE augmentation.
+    *APtr++ = 'L';
+    ++AugmentationSize;
+  }
+
+  if (FDEEncoding != dwarf::DW_EH_PE_absptr) {
+    // A non-default pointer encoding for the FDE.
+    *APtr++ = 'R';
+    ++AugmentationSize;
+  }
+
+  if (APtr != Augmentation + 1)
+    Augmentation[0] = 'z';
+
+  Asm->EmitString(Augmentation);
   Asm->EOL("CIE Augmentation");
 
   // Round out reader.
@@ -98,22 +150,14 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
   Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), true));
   Asm->EOL("CIE Return Address Column");
 
+  Asm->EmitULEB128Bytes(AugmentationSize);
+  Asm->EOL("Augmentation Size");
+
+  Asm->EmitInt8(PerEncoding);
+  Asm->EOL("Personality", PerEncoding);
+
   // If there is a personality, we need to indicate the function's location.
   if (Personality) {
-    Asm->EmitULEB128Bytes(7);
-    Asm->EOL("Augmentation Size");
-
-    if (MAI->getNeedsIndirectEncoding()) {
-      Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4 |
-                    dwarf::DW_EH_PE_indirect);
-      Asm->EOL("Personality",
-               dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4 |
-               dwarf::DW_EH_PE_indirect);
-    } else {
-      Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-      Asm->EOL("Personality", dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-    }
-
     PrintRelDirective(true);
     O << MAI->getPersonalityPrefix();
     Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
@@ -122,17 +166,11 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
       O << "-" << MAI->getPCSymbol();
     Asm->EOL("Personality");
 
-    Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-    Asm->EOL("LSDA Encoding", dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    Asm->EmitInt8(LSDAEncoding);
+    Asm->EOL("LSDA Encoding", LSDAEncoding);
 
-    Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-    Asm->EOL("FDE Encoding", dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-  } else {
-    Asm->EmitULEB128Bytes(1);
-    Asm->EOL("Augmentation Size");
-
-    Asm->EmitInt8(dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
-    Asm->EOL("FDE Encoding", dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4);
+    Asm->EmitInt8(FDEEncoding);
+    Asm->EOL("FDE Encoding", FDEEncoding);
   }
 
   // Indicate locations of general callee saved registers in frame.
@@ -216,10 +254,10 @@ void DwarfException::EmitFDE(const FunctionEHFrameInfo &EHFrameInfo) {
       if (EHFrameInfo.hasLandingPads)
         EmitReference("exception", EHFrameInfo.Number, true, false);
       else {
-	if (is4Byte)
-	  Asm->EmitInt32((int)0);
-	else
-	  Asm->EmitInt64((int)0);
+        if (is4Byte)
+          Asm->EmitInt32((int)0);
+        else
+          Asm->EmitInt64((int)0);
       }
       Asm->EOL("Language Specific Data Area");
     } else {
@@ -854,19 +892,20 @@ void DwarfException::EndModule() {
   if (MAI->getExceptionHandlingType() != ExceptionHandling::Dwarf)
     return;
 
+  if (!shouldEmitMovesModule && !shouldEmitTableModule)
+    return;
+
   if (TimePassesIsEnabled)
     ExceptionTimer->startTimer();
 
-  if (shouldEmitMovesModule || shouldEmitTableModule) {
-    const std::vector<Function *> Personalities = MMI->getPersonalities();
+  const std::vector<Function *> Personalities = MMI->getPersonalities();
 
-    for (unsigned i = 0, e = Personalities.size(); i < e; ++i)
-      EmitCIE(Personalities[i], i);
+  for (unsigned i = 0, e = Personalities.size(); i < e; ++i)
+    EmitCIE(Personalities[i], i);
 
-    for (std::vector<FunctionEHFrameInfo>::iterator
-           I = EHFrames.begin(), E = EHFrames.end(); I != E; ++I)
-      EmitFDE(*I);
-  }
+  for (std::vector<FunctionEHFrameInfo>::iterator
+         I = EHFrames.begin(), E = EHFrames.end(); I != E; ++I)
+    EmitFDE(*I);
 
   if (TimePassesIsEnabled)
     ExceptionTimer->stopTimer();
@@ -924,6 +963,9 @@ void DwarfException::EndFunction() {
                                          !MMI->getLandingPads().empty(),
                                          MMI->getFrameMoves(),
                                          MF->getFunction()));
+
+  // Record if this personality index uses a landing pad.
+  UsesLSDA[MMI->getPersonalityIndex()] |= !MMI->getLandingPads().empty();
 
   if (TimePassesIsEnabled)
     ExceptionTimer->stopTimer();
