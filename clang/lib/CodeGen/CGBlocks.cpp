@@ -459,7 +459,7 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
   llvm::Value *BlockLiteral = LoadBlockStruct();
   llvm::Value *V = Builder.CreateGEP(BlockLiteral,
                                   llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                                                            offset),
+                                                         offset),
                                      "block.literal");
   if (E->isByRef()) {
     bool needsCopyDispose = BlockRequiresCopying(E->getType());
