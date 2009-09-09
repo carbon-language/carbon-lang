@@ -39,7 +39,7 @@ namespace {
         Out << "<anon>";
       }
       Out << "\n";
-      
+
       // Pass up to EmptyActions so that the symbol table is maintained right.
       return MinimalAction::ActOnDeclarator(S, D);
     }
@@ -69,16 +69,16 @@ namespace {
                                                AttributeList *AttrList) {
       Out << __FUNCTION__ << "\n";
       return MinimalAction::ActOnStartClassInterface(AtInterfaceLoc,
-                                                     ClassName, ClassLoc, 
+                                                     ClassName, ClassLoc,
                                                      SuperName, SuperLoc,
                                                      ProtoRefs, NumProtocols,
                                                      EndProtoLoc, AttrList);
     }
 
-    /// ActOnForwardClassDeclaration - 
-    /// Scope will always be top level file scope. 
+    /// ActOnForwardClassDeclaration -
+    /// Scope will always be top level file scope.
     Action::DeclPtrTy ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
-                                                   IdentifierInfo **IdentList, 
+                                                   IdentifierInfo **IdentList,
                                                    unsigned NumElts) {
       Out << __FUNCTION__ << "\n";
       return MinimalAction::ActOnForwardClassDeclaration(AtClassLoc, IdentList,
@@ -101,13 +101,13 @@ namespace {
       Out << "\n";
       return DeclPtrTy();
     }
-    
-    /// AddInitializerToDecl - This action is called immediately after 
-    /// ParseDeclarator (when an initializer is present). The code is factored 
+
+    /// AddInitializerToDecl - This action is called immediately after
+    /// ParseDeclarator (when an initializer is present). The code is factored
     /// this way to make sure we are able to handle the following:
     ///   void func() { int xx = xx; }
     /// This allows ActOnDeclarator to register "xx" prior to parsing the
-    /// initializer. The declaration above should still result in a warning, 
+    /// initializer. The declaration above should still result in a warning,
     /// since the reference to "xx" is uninitialized.
     virtual void AddInitializerToDecl(DeclPtrTy Dcl, ExprArg Init) {
       Out << __FUNCTION__ << "\n";
@@ -142,7 +142,7 @@ namespace {
     virtual void ActOnStartOfObjCMethodDef(Scope *FnBodyScope, DeclPtrTy D) {
       Out << __FUNCTION__ << "\n";
     }
-  
+
     /// ActOnFunctionDefBody - This is called when a function body has completed
     /// parsing.  Decl is the DeclTy returned by ParseStartOfFunctionDef.
     virtual DeclPtrTy ActOnFinishFunctionBody(DeclPtrTy Decl, StmtArg Body) {
@@ -155,14 +155,14 @@ namespace {
       Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
-  
+
     /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
     /// no declarator (e.g. "struct foo;") is parsed.
     virtual DeclPtrTy ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
       Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
-    
+
     /// ActOnLinkageSpec - Parsed a C++ linkage-specification that
     /// contained braces. Lang/StrSize contains the language string that
     /// was parsed at location Loc. Decls/NumDecls provides the
@@ -170,12 +170,12 @@ namespace {
     virtual DeclPtrTy ActOnLinkageSpec(SourceLocation Loc,
                                        SourceLocation LBrace,
                                        SourceLocation RBrace, const char *Lang,
-                                       unsigned StrSize, 
+                                       unsigned StrSize,
                                        DeclPtrTy *Decls, unsigned NumDecls) {
       Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
-    
+
     /// ActOnLinkageSpec - Parsed a C++ linkage-specification without
     /// braces. Lang/StrSize contains the language string that was
     /// parsed at location Loc. D is the declaration parsed.
@@ -183,16 +183,16 @@ namespace {
                                        unsigned StrSize, DeclPtrTy D) {
       return DeclPtrTy();
     }
-    
+
     //===------------------------------------------------------------------===//
     // Type Parsing Callbacks.
     //===------------------------------------------------------------------===//
-  
+
     virtual TypeResult ActOnTypeName(Scope *S, Declarator &D) {
       Out << __FUNCTION__ << "\n";
       return TypeResult();
     }
-  
+
     virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagType, TagUseKind TUK,
                                SourceLocation KWLoc, const CXXScopeSpec &SS,
                                IdentifierInfo *Name, SourceLocation NameLoc,
@@ -204,22 +204,22 @@ namespace {
       Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
-  
+
     /// Act on @defs() element found when parsing a structure.  ClassName is the
-    /// name of the referenced class.   
+    /// name of the referenced class.
     virtual void ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
                            IdentifierInfo *ClassName,
                            llvm::SmallVectorImpl<DeclPtrTy> &Decls) {
       Out << __FUNCTION__ << "\n";
     }
 
-    virtual DeclPtrTy ActOnField(Scope *S, DeclPtrTy TagD, 
+    virtual DeclPtrTy ActOnField(Scope *S, DeclPtrTy TagD,
                                  SourceLocation DeclStart,
                                  Declarator &D, ExprTy *BitfieldWidth) {
       Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
-  
+
     virtual DeclPtrTy ActOnIvar(Scope *S, SourceLocation DeclStart,
                                 DeclPtrTy IntfDecl,
                                 Declarator &D, ExprTy *BitfieldWidth,
@@ -227,14 +227,14 @@ namespace {
       Out << __FUNCTION__ << "\n";
       return DeclPtrTy();
     }
-  
+
     virtual void ActOnFields(Scope* S, SourceLocation RecLoc, DeclPtrTy TagDecl,
-                             DeclPtrTy *Fields, unsigned NumFields, 
+                             DeclPtrTy *Fields, unsigned NumFields,
                              SourceLocation LBrac, SourceLocation RBrac,
                              AttributeList *AttrList) {
       Out << __FUNCTION__ << "\n";
     }
-  
+
     virtual DeclPtrTy ActOnEnumConstant(Scope *S, DeclPtrTy EnumDecl,
                                         DeclPtrTy LastEnumConstant,
                                         SourceLocation IdLoc,IdentifierInfo *Id,
@@ -272,12 +272,12 @@ namespace {
       Out << __FUNCTION__ << "\n";
       return StmtEmpty();
     }
-  
+
     virtual OwningStmtResult ActOnExprStmt(FullExprArg Expr) {
       Out << __FUNCTION__ << "\n";
       return OwningStmtResult(*this, Expr->release());
     }
-  
+
     /// ActOnCaseStmt - Note that this handles the GNU 'case 1 ... 4' extension,
     /// which can specify an RHS value.
     virtual OwningStmtResult ActOnCaseStmt(SourceLocation CaseLoc,
@@ -303,7 +303,7 @@ namespace {
       return StmtEmpty();
     }
 
-    virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc, 
+    virtual OwningStmtResult ActOnIfStmt(SourceLocation IfLoc,
                                          FullExprArg CondVal, StmtArg ThenVal,
                                          SourceLocation ElseLoc,
                                          StmtArg ElseVal) {
@@ -329,7 +329,7 @@ namespace {
       return StmtEmpty();
     }
     virtual OwningStmtResult ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
-                                         SourceLocation WhileLoc, 
+                                         SourceLocation WhileLoc,
                                          SourceLocation LPLoc, ExprArg Cond,
                                          SourceLocation RPLoc){
       Out << __FUNCTION__ << "\n";
@@ -490,12 +490,12 @@ namespace {
       return ExprEmpty();
     }
 
-    virtual OwningExprResult ActOnCharacterConstant(const Token &) { 
+    virtual OwningExprResult ActOnCharacterConstant(const Token &) {
       Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
 
-    virtual OwningExprResult ActOnNumericConstant(const Token &) { 
+    virtual OwningExprResult ActOnNumericConstant(const Token &) {
       Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
@@ -515,7 +515,7 @@ namespace {
     }
 
     // Postfix Expressions.
-    virtual OwningExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc, 
+    virtual OwningExprResult ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
                                                  tok::TokenKind Kind,
                                                  ExprArg Input) {
       Out << __FUNCTION__ << "\n";
@@ -574,7 +574,7 @@ namespace {
       Out << __FUNCTION__ << "\n";
       return ExprEmpty();
     }
-    virtual OwningExprResult ActOnCastExpr(Scope *S, SourceLocation LParenLoc, 
+    virtual OwningExprResult ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
                                            TypeTy *Ty, SourceLocation RParenLoc,
                                            ExprArg Op) {
       Out << __FUNCTION__ << "\n";
@@ -726,8 +726,7 @@ namespace {
     }
 
     virtual void ActOnStartDelayedCXXMethodDeclaration(Scope *S,
-                                                       DeclPtrTy Method)
-    {
+                                                       DeclPtrTy Method) {
       Out << __FUNCTION__ << "\n";
     }
 

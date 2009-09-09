@@ -18,7 +18,7 @@
 #include "clang/Parse/Action.h"
 
 namespace clang {
-  
+
 /// Designator - This class is a discriminated union which holds the various
 /// different sorts of designators possible.  A Designation is an array of
 /// these.  An example of a designator are things like this:
@@ -34,7 +34,7 @@ public:
   };
 private:
   DesignatorKind Kind;
-  
+
   struct FieldDesignatorInfo {
     const IdentifierInfo *II;
     unsigned DotLoc;
@@ -50,15 +50,15 @@ private:
     unsigned LBracketLoc, EllipsisLoc;
     mutable unsigned RBracketLoc;
   };
-  
+
   union {
     FieldDesignatorInfo FieldInfo;
     ArrayDesignatorInfo ArrayInfo;
     ArrayRangeDesignatorInfo ArrayRangeInfo;
   };
-  
+
 public:
-  
+
   DesignatorKind getKind() const { return Kind; }
   bool isFieldDesignator() const { return Kind == FieldDesignator; }
   bool isArrayDesignator() const { return Kind == ArrayDesignator; }
@@ -78,7 +78,7 @@ public:
     assert(isFieldDesignator() && "Invalid accessor");
     return SourceLocation::getFromRawEncoding(FieldInfo.NameLoc);
   }
-  
+
   ActionBase::ExprTy *getArrayIndex() const {
     assert(isArrayDesignator() && "Invalid accessor");
     return ArrayInfo.Index;
@@ -92,22 +92,22 @@ public:
     assert(isArrayRangeDesignator() && "Invalid accessor");
     return ArrayRangeInfo.End;
   }
-  
+
   SourceLocation getLBracketLoc() const {
-    assert((isArrayDesignator() || isArrayRangeDesignator()) && 
+    assert((isArrayDesignator() || isArrayRangeDesignator()) &&
            "Invalid accessor");
     if (isArrayDesignator())
       return SourceLocation::getFromRawEncoding(ArrayInfo.LBracketLoc);
-    else 
+    else
       return SourceLocation::getFromRawEncoding(ArrayRangeInfo.LBracketLoc);
   }
 
   SourceLocation getRBracketLoc() const {
-    assert((isArrayDesignator() || isArrayRangeDesignator()) && 
+    assert((isArrayDesignator() || isArrayRangeDesignator()) &&
            "Invalid accessor");
     if (isArrayDesignator())
       return SourceLocation::getFromRawEncoding(ArrayInfo.RBracketLoc);
-    else 
+    else
       return SourceLocation::getFromRawEncoding(ArrayRangeInfo.RBracketLoc);
   }
 
@@ -135,10 +135,10 @@ public:
     D.ArrayInfo.RBracketLoc = 0;
     return D;
   }
-  
+
   static Designator getArrayRange(ActionBase::ExprTy *Start,
                                   ActionBase::ExprTy *End,
-                                  SourceLocation LBracketLoc, 
+                                  SourceLocation LBracketLoc,
                                   SourceLocation EllipsisLoc) {
     Designator D;
     D.Kind = ArrayRangeDesignator;
@@ -151,14 +151,14 @@ public:
   }
 
   void setRBracketLoc(SourceLocation RBracketLoc) const {
-    assert((isArrayDesignator() || isArrayRangeDesignator()) && 
+    assert((isArrayDesignator() || isArrayRangeDesignator()) &&
            "Invalid accessor");
     if (isArrayDesignator())
       ArrayInfo.RBracketLoc = RBracketLoc.getRawEncoding();
     else
       ArrayRangeInfo.RBracketLoc = RBracketLoc.getRawEncoding();
   }
-  
+
   /// ClearExprs - Null out any expression references, which prevents them from
   /// being 'delete'd later.
   void ClearExprs(Action &Actions) {
@@ -173,7 +173,7 @@ public:
       return;
     }
   }
-  
+
   /// FreeExprs - Release any unclaimed memory for the expressions in this
   /// designator.
   void FreeExprs(Action &Actions) {
@@ -190,7 +190,7 @@ public:
   }
 };
 
-  
+
 /// Designation - Represent a full designation, which is a sequence of
 /// designators.  This class is mostly a helper for InitListDesignations.
 class Designation {
@@ -198,10 +198,10 @@ class Designation {
   /// example, if the initializer were "{ A, .foo=B, C }" a Designation would
   /// exist with InitIndex=1, because element #1 has a designation.
   unsigned InitIndex;
-  
+
   /// Designators - The actual designators for this initializer.
   llvm::SmallVector<Designator, 2> Designators;
-  
+
   Designation(unsigned Idx) : InitIndex(Idx) {}
 public:
   Designation() : InitIndex(4000) {}
@@ -218,14 +218,14 @@ public:
     assert(Idx < Designators.size());
     return Designators[Idx];
   }
-  
+
   /// ClearExprs - Null out any expression references, which prevents them from
   /// being 'delete'd later.
   void ClearExprs(Action &Actions) {
     for (unsigned i = 0, e = Designators.size(); i != e; ++i)
       Designators[i].ClearExprs(Actions);
   }
-  
+
   /// FreeExprs - Release any unclaimed memory for the expressions in this
   /// designation.
   void FreeExprs(Action &Actions) {
@@ -233,7 +233,7 @@ public:
       Designators[i].FreeExprs(Actions);
   }
 };
-   
+
 } // end namespace clang
 
 #endif

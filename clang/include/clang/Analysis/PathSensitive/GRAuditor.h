@@ -1,5 +1,5 @@
 //==- GRAuditor.h - Observers of the creation of ExplodedNodes------*- C++ -*-//
-//             
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
@@ -22,14 +22,14 @@ namespace clang {
 
 class ExplodedNode;
 class GRStateManager;
-  
+
 class GRAuditor {
 public:
   virtual ~GRAuditor() {}
   virtual bool Audit(ExplodedNode* N, GRStateManager& M) = 0;
 };
-  
-  
+
+
 } // end clang namespace
 
 #endif

@@ -67,7 +67,7 @@ public:
     Inlining = NoInlining;
     DisableRedZone = 0;
     NoImplicitFloat = 0;
-  }  
+  }
 };
 
 }  // end namespace clang

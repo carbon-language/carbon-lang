@@ -34,7 +34,7 @@ typedef __builtin_va_list va_list;
 /* GCC always defines __va_copy, but does not define va_copy unless in c99 mode
  * or -ansi is not specified, since it was not part of C90.
  */
-#define __va_copy(d,s)	__builtin_va_copy(d,s)
+#define __va_copy(d,s) __builtin_va_copy(d,s)
 
 #if __STDC_VERSION__ >= 199900L || !defined(__STRICT_ANSI__)
 #define va_copy(dest, src)  __builtin_va_copy(dest, src)

@@ -13,7 +13,7 @@
 
 #include "clang/Lex/TokenConcatenation.h"
 #include "clang/Lex/Preprocessor.h"
-using namespace clang; 
+using namespace clang;
 
 
 /// StartsWithL - Return true if the spelling of this token starts with 'L'.
@@ -22,14 +22,14 @@ bool TokenConcatenation::StartsWithL(const Token &Tok) const {
     SourceManager &SM = PP.getSourceManager();
     return *SM.getCharacterData(SM.getSpellingLoc(Tok.getLocation())) == 'L';
   }
-  
+
   if (Tok.getLength() < 256) {
     char Buffer[256];
     const char *TokPtr = Buffer;
     PP.getSpelling(Tok, TokPtr);
     return TokPtr[0] == 'L';
   }
-  
+
   return PP.getSpelling(Tok)[0] == 'L';
 }
 
@@ -42,21 +42,21 @@ bool TokenConcatenation::IsIdentifierL(const Token &Tok) const {
     SourceManager &SM = PP.getSourceManager();
     return *SM.getCharacterData(SM.getSpellingLoc(Tok.getLocation())) == 'L';
   }
-  
+
   if (Tok.getLength() < 256) {
     char Buffer[256];
     const char *TokPtr = Buffer;
-    if (PP.getSpelling(Tok, TokPtr) != 1) 
+    if (PP.getSpelling(Tok, TokPtr) != 1)
       return false;
     return TokPtr[0] == 'L';
   }
-  
+
   return PP.getSpelling(Tok) == "L";
 }
 
 TokenConcatenation::TokenConcatenation(Preprocessor &pp) : PP(pp) {
   memset(TokenInfo, 0, sizeof(TokenInfo));
-  
+
   // These tokens have custom code in AvoidConcat.
   TokenInfo[tok::identifier      ] |= aci_custom;
   TokenInfo[tok::numeric_constant] |= aci_custom_firstchar;
@@ -72,7 +72,7 @@ TokenConcatenation::TokenConcatenation(Preprocessor &pp) : PP(pp) {
   TokenInfo[tok::colon           ] |= aci_custom_firstchar;
   TokenInfo[tok::hash            ] |= aci_custom_firstchar;
   TokenInfo[tok::arrow           ] |= aci_custom_firstchar;
-  
+
   // These tokens change behavior if followed by an '='.
   TokenInfo[tok::amp         ] |= aci_avoid_equal;           // &=
   TokenInfo[tok::plus        ] |= aci_avoid_equal;           // +=
@@ -130,29 +130,29 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevTok,
   // source.  If they were, it must be okay to stick them together: if there
   // were an issue, the tokens would have been lexed differently.
   if (PrevTok.getLocation().isFileID() && Tok.getLocation().isFileID() &&
-      PrevTok.getLocation().getFileLocWithOffset(PrevTok.getLength()) == 
+      PrevTok.getLocation().getFileLocWithOffset(PrevTok.getLength()) ==
         Tok.getLocation())
     return false;
-  
+
   tok::TokenKind PrevKind = PrevTok.getKind();
   if (PrevTok.getIdentifierInfo())  // Language keyword or named operator.
     PrevKind = tok::identifier;
-  
+
   // Look up information on when we should avoid concatenation with prevtok.
   unsigned ConcatInfo = TokenInfo[PrevKind];
-  
+
   // If prevtok never causes a problem for anything after it, return quickly.
   if (ConcatInfo == 0) return false;
-  
+
   if (ConcatInfo & aci_avoid_equal) {
     // If the next token is '=' or '==', avoid concatenation.
     if (Tok.is(tok::equal) || Tok.is(tok::equalequal))
       return true;
     ConcatInfo &= ~aci_avoid_equal;
   }
-  
+
   if (ConcatInfo == 0) return false;
-  
+
   // Basic algorithm: we look at the first character of the second token, and
   // determine whether it, if appended to the first token, would form (or
   // would contribute) to a larger token if concatenated.
@@ -162,10 +162,10 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevTok,
   } else {
     FirstChar = GetFirstChar(PP, Tok);
   }
-    
+
   switch (PrevKind) {
   default: assert(0 && "InitAvoidConcatTokenInfo built wrong");
-  case tok::identifier:   // id+id or id+number or id+L"foo".    
+  case tok::identifier:   // id+id or id+number or id+L"foo".
     // id+'.'... will not append.
     if (Tok.is(tok::numeric_constant))
       return GetFirstChar(PP, Tok) != '.';
@@ -173,18 +173,18 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevTok,
     if (Tok.getIdentifierInfo() || Tok.is(tok::wide_string_literal) /* ||
      Tok.is(tok::wide_char_literal)*/)
       return true;
-    
+
     // If this isn't identifier + string, we're done.
     if (Tok.isNot(tok::char_constant) && Tok.isNot(tok::string_literal))
       return false;
-    
+
     // FIXME: need a wide_char_constant!
-    
+
     // If the string was a wide string L"foo" or wide char L'f', it would
     // concat with the previous identifier into fooL"bar".  Avoid this.
     if (StartsWithL(Tok))
       return true;
-    
+
     // Otherwise, this is a narrow character or string.  If the *identifier*
     // is a literal 'L', avoid pasting L "foo" -> L"foo".
     return IsIdentifierL(PrevTok);

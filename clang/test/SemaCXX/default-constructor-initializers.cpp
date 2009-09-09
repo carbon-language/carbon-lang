@@ -46,9 +46,9 @@ Y4 y4;
 
 
 struct Z1 {
-        int& z; // expected-note {{declared at}}
-  	const int c1; // expected-note {{declared at}}
-  	volatile int v1;
+  int& z;       // expected-note {{declared at}}
+  const int c1; // expected-note {{declared at}}
+  volatile int v1;
 };
 
 Z1 z1;  // expected-error {{cannot define the implicit default constructor for 'struct Z1', because reference member 'z' cannot be default-initialized}} \

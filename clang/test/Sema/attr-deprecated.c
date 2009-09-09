@@ -21,7 +21,7 @@ int a() {
 // test if attributes propagate to variables
 extern int var;
 int w() {
-	return var; // expected-warning {{'var' is deprecated}}
+  return var; // expected-warning {{'var' is deprecated}}
 }
 
 int old_fn() __attribute__ ((deprecated));

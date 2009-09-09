@@ -17,18 +17,17 @@
 using namespace clang::driver;
 
 Option::Option(OptionClass _Kind, options::ID _ID, const char *_Name,
-               const OptionGroup *_Group, const Option *_Alias) 
+               const OptionGroup *_Group, const Option *_Alias)
   : Kind(_Kind), ID(_ID), Name(_Name), Group(_Group), Alias(_Alias),
     Unsupported(false), LinkerInput(false), NoOptAsInput(false),
     ForceSeparateRender(false), ForceJoinedRender(false),
-    DriverOption(false), NoArgumentUnused(false)
-{
+    DriverOption(false), NoArgumentUnused(false) {
 
   // Multi-level aliases are not supported, and alias options cannot
   // have groups. This just simplifies option tracking, it is not an
   // inherent limitation.
   assert((!Alias || (!Alias->Alias && !Group)) &&
-         "Multi-level aliases and aliases with groups are unsupported.");    
+         "Multi-level aliases and aliases with groups are unsupported.");
 }
 
 Option::~Option() {
@@ -59,12 +58,12 @@ void Option::dump() const {
     llvm::errs() << " Group:";
     Group->dump();
   }
-  
+
   if (Alias) {
     llvm::errs() << " Alias:";
     Alias->dump();
   }
-  
+
   if (const MultiArgOption *MOA = dyn_cast<MultiArgOption>(this))
     llvm::errs() << " NumArgs:" << MOA->getNumArgs();
 
@@ -77,10 +76,10 @@ bool Option::matches(const Option *Opt) const {
     return matches(Opt->getAlias());
   if (Alias)
     return Alias->matches(Opt);
-  
+
   if (this == Opt)
     return true;
-  
+
   if (Group)
     return Group->matches(Opt);
   return false;
@@ -93,16 +92,16 @@ bool Option::matches(options::ID Id) const {
   // the option table).
   if (Alias)
     return Alias->matches(Id);
-  
+
   if (ID == Id)
     return true;
-  
+
   if (Group)
     return Group->matches(Id);
   return false;
 }
 
-OptionGroup::OptionGroup(options::ID ID, const char *Name, 
+OptionGroup::OptionGroup(options::ID ID, const char *Name,
                          const OptionGroup *Group)
   : Option(Option::GroupClass, ID, Name, Group, 0) {
 }
@@ -130,13 +129,13 @@ Arg *UnknownOption::accept(const InputArgList &Args, unsigned &Index) const {
   return 0;
 }
 
-FlagOption::FlagOption(options::ID ID, const char *Name, 
+FlagOption::FlagOption(options::ID ID, const char *Name,
                        const OptionGroup *Group, const Option *Alias)
   : Option(Option::FlagClass, ID, Name, Group, Alias) {
 }
 
 Arg *FlagOption::accept(const InputArgList &Args, unsigned &Index) const {
-  // Matches iff this is an exact match.  
+  // Matches iff this is an exact match.
   // FIXME: Avoid strlen.
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
     return 0;
@@ -144,7 +143,7 @@ Arg *FlagOption::accept(const InputArgList &Args, unsigned &Index) const {
   return new FlagArg(this, Index++);
 }
 
-JoinedOption::JoinedOption(options::ID ID, const char *Name, 
+JoinedOption::JoinedOption(options::ID ID, const char *Name,
                            const OptionGroup *Group, const Option *Alias)
   : Option(Option::JoinedClass, ID, Name, Group, Alias) {
 }
@@ -154,30 +153,30 @@ Arg *JoinedOption::accept(const InputArgList &Args, unsigned &Index) const {
   return new JoinedArg(this, Index++);
 }
 
-CommaJoinedOption::CommaJoinedOption(options::ID ID, const char *Name, 
-                                     const OptionGroup *Group, 
+CommaJoinedOption::CommaJoinedOption(options::ID ID, const char *Name,
+                                     const OptionGroup *Group,
                                      const Option *Alias)
   : Option(Option::CommaJoinedClass, ID, Name, Group, Alias) {
 }
 
-Arg *CommaJoinedOption::accept(const InputArgList &Args, 
+Arg *CommaJoinedOption::accept(const InputArgList &Args,
                                unsigned &Index) const {
   // Always matches. We count the commas now so we can answer
   // getNumValues easily.
-  
+
   // Get the suffix string.
   // FIXME: Avoid strlen, and move to helper method?
   const char *Suffix = Args.getArgString(Index) + strlen(getName());
   return new CommaJoinedArg(this, Index++, Suffix);
 }
 
-SeparateOption::SeparateOption(options::ID ID, const char *Name, 
+SeparateOption::SeparateOption(options::ID ID, const char *Name,
                                const OptionGroup *Group, const Option *Alias)
   : Option(Option::SeparateClass, ID, Name, Group, Alias) {
 }
 
 Arg *SeparateOption::accept(const InputArgList &Args, unsigned &Index) const {
-  // Matches iff this is an exact match.  
+  // Matches iff this is an exact match.
   // FIXME: Avoid strlen.
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
     return 0;
@@ -189,15 +188,15 @@ Arg *SeparateOption::accept(const InputArgList &Args, unsigned &Index) const {
   return new SeparateArg(this, Index - 2, 1);
 }
 
-MultiArgOption::MultiArgOption(options::ID ID, const char *Name, 
-                               const OptionGroup *Group, const Option *Alias, 
+MultiArgOption::MultiArgOption(options::ID ID, const char *Name,
+                               const OptionGroup *Group, const Option *Alias,
                                unsigned _NumArgs)
   : Option(Option::MultiArgClass, ID, Name, Group, Alias), NumArgs(_NumArgs) {
   assert(NumArgs > 1  && "Invalid MultiArgOption!");
 }
 
 Arg *MultiArgOption::accept(const InputArgList &Args, unsigned &Index) const {
-  // Matches iff this is an exact match.  
+  // Matches iff this is an exact match.
   // FIXME: Avoid strlen.
   if (strlen(getName()) != strlen(Args.getArgString(Index)))
     return 0;
@@ -210,12 +209,12 @@ Arg *MultiArgOption::accept(const InputArgList &Args, unsigned &Index) const {
 }
 
 JoinedOrSeparateOption::JoinedOrSeparateOption(options::ID ID, const char *Name,
-                                               const OptionGroup *Group, 
+                                               const OptionGroup *Group,
                                                const Option *Alias)
   : Option(Option::JoinedOrSeparateClass, ID, Name, Group, Alias) {
 }
 
-Arg *JoinedOrSeparateOption::accept(const InputArgList &Args, 
+Arg *JoinedOrSeparateOption::accept(const InputArgList &Args,
                                     unsigned &Index) const {
   // If this is not an exact match, it is a joined arg.
   // FIXME: Avoid strlen.
@@ -227,17 +226,17 @@ Arg *JoinedOrSeparateOption::accept(const InputArgList &Args,
   if (Index > Args.getNumInputArgStrings())
     return 0;
 
-  return new SeparateArg(this, Index - 2, 1);  
+  return new SeparateArg(this, Index - 2, 1);
 }
 
 JoinedAndSeparateOption::JoinedAndSeparateOption(options::ID ID,
-                                                 const char *Name, 
-                                                 const OptionGroup *Group, 
+                                                 const char *Name,
+                                                 const OptionGroup *Group,
                                                  const Option *Alias)
   : Option(Option::JoinedAndSeparateClass, ID, Name, Group, Alias) {
 }
 
-Arg *JoinedAndSeparateOption::accept(const InputArgList &Args, 
+Arg *JoinedAndSeparateOption::accept(const InputArgList &Args,
                                      unsigned &Index) const {
   // Always matches.
 

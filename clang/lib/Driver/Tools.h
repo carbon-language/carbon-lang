@@ -42,9 +42,9 @@ namespace tools {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
@@ -56,9 +56,9 @@ namespace gcc {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
 
     /// RenderExtraToolArgs - Render any arguments necessary to force
@@ -66,7 +66,7 @@ namespace gcc {
     virtual void RenderExtraToolArgs(ArgStringList &CmdArgs) const = 0;
   };
 
-  
+
   class VISIBILITY_HIDDEN Preprocess : public Common {
   public:
     Preprocess(const ToolChain &TC) : Common("gcc::Preprocess", TC) {}
@@ -126,11 +126,11 @@ namespace gcc {
 namespace darwin {
   class VISIBILITY_HIDDEN CC1 : public Tool  {
   public:
-    static const char *getBaseInputName(const ArgList &Args, 
+    static const char *getBaseInputName(const ArgList &Args,
                                  const InputInfoList &Input);
-    static const char *getBaseInputStem(const ArgList &Args, 
+    static const char *getBaseInputStem(const ArgList &Args,
                                  const InputInfoList &Input);
-    static const char *getDependencyFileName(const ArgList &Args, 
+    static const char *getDependencyFileName(const ArgList &Args,
                                              const InputInfoList &Inputs);
 
   protected:
@@ -143,7 +143,7 @@ namespace darwin {
     void AddCPPOptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
                            const InputInfoList &Inputs,
                            const ArgStringList &OutputArgs) const;
-    void AddCPPUniqueOptionsArgs(const ArgList &Args, 
+    void AddCPPUniqueOptionsArgs(const ArgList &Args,
                                  ArgStringList &CmdArgs,
                                  const InputInfoList &Inputs) const;
     void AddCPPArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
@@ -162,9 +162,9 @@ namespace darwin {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
@@ -174,9 +174,9 @@ namespace darwin {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
@@ -190,9 +190,9 @@ namespace darwin {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
@@ -216,9 +216,9 @@ namespace darwin {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 
@@ -232,9 +232,9 @@ namespace darwin {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 }
@@ -251,9 +251,9 @@ namespace openbsd {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class VISIBILITY_HIDDEN Link : public Tool  {
@@ -266,9 +266,9 @@ namespace openbsd {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace openbsd
@@ -285,9 +285,9 @@ namespace freebsd {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class VISIBILITY_HIDDEN Link : public Tool  {
@@ -300,9 +300,9 @@ namespace freebsd {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace freebsd
@@ -319,9 +319,9 @@ namespace auroraux {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class VISIBILITY_HIDDEN Link : public Tool  {
@@ -334,9 +334,9 @@ namespace auroraux {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace auroraux
@@ -353,9 +353,9 @@ namespace dragonfly {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
   class VISIBILITY_HIDDEN Link : public Tool  {
@@ -368,9 +368,9 @@ namespace dragonfly {
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
                               Job &Dest,
-                              const InputInfo &Output, 
-                              const InputInfoList &Inputs, 
-                              const ArgList &TCArgs, 
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
 } // end namespace dragonfly

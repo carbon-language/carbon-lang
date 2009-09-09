@@ -32,26 +32,26 @@ template<>
 struct DOTGraphTraits<const Stmt*> : public DefaultDOTGraphTraits {
   static std::string getNodeLabel(const Stmt* Node, const Stmt* Graph,
                                   bool ShortNames) {
-    
+
 #ifndef NDEBUG
     std::string OutSStr;
     llvm::raw_string_ostream Out(OutSStr);
-    
+
     if (Node)
       Out << Node->getStmtClassName();
     else
       Out << "<NULL>";
-      
-    std::string OutStr = Out.str();    
+
+    std::string OutStr = Out.str();
     if (OutStr[0] == '\n') OutStr.erase(OutStr.begin());
-    
+
     // Process string output to make it nicer...
     for (unsigned i = 0; i != OutStr.length(); ++i)
       if (OutStr[i] == '\n') {                            // Left justify
         OutStr[i] = '\\';
         OutStr.insert(OutStr.begin()+i+1, 'l');
       }
-    
+
     return OutStr;
 #else
     return "";

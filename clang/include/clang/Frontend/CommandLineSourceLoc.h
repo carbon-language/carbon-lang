@@ -34,21 +34,21 @@ namespace llvm {
     ///
     /// Source locations are of the form filename:line:column.
     template<>
-    class parser<clang::ParsedSourceLocation> 
+    class parser<clang::ParsedSourceLocation>
       : public basic_parser<clang::ParsedSourceLocation> {
     public:
-      bool parse(Option &O, const char *ArgName, 
+      bool parse(Option &O, const char *ArgName,
                  const std::string &ArgValue,
                  clang::ParsedSourceLocation &Val);
     };
 
-    bool 
+    bool
     parser<clang::ParsedSourceLocation>::
-    parse(Option &O, const char *ArgName, const std::string &ArgValue, 
+    parse(Option &O, const char *ArgName, const std::string &ArgValue,
           clang::ParsedSourceLocation &Val) {
       using namespace clang;
 
-      const char *ExpectedFormat 
+      const char *ExpectedFormat
         = "source location must be of the form filename:line:column";
       std::string::size_type SecondColon = ArgValue.rfind(':');
       if (SecondColon == std::string::npos) {
@@ -56,7 +56,7 @@ namespace llvm {
         return true;
       }
       char *EndPtr;
-      long Column 
+      long Column
         = std::strtol(ArgValue.c_str() + SecondColon + 1, &EndPtr, 10);
       if (EndPtr != ArgValue.c_str() + ArgValue.size()) {
         std::fprintf(stderr, "%s\n", ExpectedFormat);
@@ -73,7 +73,7 @@ namespace llvm {
         std::fprintf(stderr, "%s\n", ExpectedFormat);
         return true;
       }
-      
+
       Val.FileName = ArgValue.substr(0, FirstColon);
       Val.Line = Line;
       Val.Column = Column;

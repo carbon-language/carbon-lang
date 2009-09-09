@@ -24,7 +24,7 @@ namespace options {
 #undef OPTION
   };
 }
-  
+
   class Arg;
   class InputArgList;
   class Option;
@@ -36,7 +36,7 @@ namespace options {
   /// few options will be needed at runtime; the OptTable class
   /// maintains enough information to parse command lines without
   /// instantiating Options, while letting other parts of the driver
-  /// still use Option instances where convient.  
+  /// still use Option instances where convient.
   class OptTable {
     /// The table of options which have been constructed, indexed by
     /// option::ID - 1.

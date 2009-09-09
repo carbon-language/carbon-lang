@@ -99,7 +99,7 @@ public:
       assert(isIterator() && "Ptr not an iterator!");
       return reinterpret_cast<BaseIter>(Ptr & ~0x3);
     }
-    
+
     friend class IdentifierResolver;
   public:
     iterator() : Ptr(0) {}
@@ -110,14 +110,14 @@ public:
       else
         return reinterpret_cast<NamedDecl*>(Ptr);
     }
-    
+
     bool operator==(const iterator &RHS) const {
       return Ptr == RHS.Ptr;
     }
     bool operator!=(const iterator &RHS) const {
       return Ptr != RHS.Ptr;
     }
-    
+
     // Preincrement.
     iterator& operator++() {
       if (!isIterator()) // common case.
@@ -127,7 +127,7 @@ public:
         void *InfoPtr = D->getDeclName().getFETokenInfo<void>();
         assert(!isDeclPtr(InfoPtr) && "Decl with wrong id ?");
         IdDeclInfo *Info = toIdDeclInfo(InfoPtr);
-        
+
         BaseIter I = getIterator();
         if (I != Info->decls_begin())
           *this = iterator(I-1);
@@ -138,7 +138,7 @@ public:
     }
 
     uintptr_t getAsOpaqueValue() const { return Ptr; }
-    
+
     static iterator getFromOpaqueValue(uintptr_t P) {
       iterator Result;
       Result.Ptr = P;

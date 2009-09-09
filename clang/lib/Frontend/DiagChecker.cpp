@@ -55,33 +55,33 @@ static void EmitError(Preprocessor &PP, SourceLocation Pos, const char *String){
 
 /// FindDiagnostics - Go through the comment and see if it indicates expected
 /// diagnostics. If so, then put them in a diagnostic list.
-/// 
+///
 static void FindDiagnostics(const char *CommentStart, unsigned CommentLen,
                             DiagList &ExpectedDiags,
                             Preprocessor &PP, SourceLocation Pos,
                             const char *ExpectedStr) {
   const char *CommentEnd = CommentStart+CommentLen;
   unsigned ExpectedStrLen = strlen(ExpectedStr);
-  
+
   // Find all expected-foo diagnostics in the string and add them to
   // ExpectedDiags.
   while (CommentStart != CommentEnd) {
     CommentStart = std::find(CommentStart, CommentEnd, 'e');
     if (unsigned(CommentEnd-CommentStart) < ExpectedStrLen) return;
-    
+
     // If this isn't expected-foo, ignore it.
     if (memcmp(CommentStart, ExpectedStr, ExpectedStrLen)) {
       ++CommentStart;
       continue;
     }
-    
+
     CommentStart += ExpectedStrLen;
-    
+
     // Skip whitespace.
     while (CommentStart != CommentEnd &&
            isspace(CommentStart[0]))
       ++CommentStart;
-    
+
     // Default, if we find the '{' now, is 1 time.
     int Times = 1;
     int Temp = 0;
@@ -94,12 +94,12 @@ static void FindDiagnostics(const char *CommentStart, unsigned CommentLen,
     }
     if (Temp > 0)
       Times = Temp;
-    
+
     // Skip whitespace again.
     while (CommentStart != CommentEnd &&
            isspace(CommentStart[0]))
       ++CommentStart;
-    
+
     // We should have a {{ now.
     if (CommentEnd-CommentStart < 2 ||
         CommentStart[0] != '{' || CommentStart[1] != '{') {
@@ -119,7 +119,7 @@ static void FindDiagnostics(const char *CommentStart, unsigned CommentLen,
         EmitError(PP, Pos, "cannot find end ('}}') of expected string");
         return;
       }
-      
+
       if (ExpectedEnd[1] == '}')
         break;
 
@@ -147,10 +147,10 @@ static void FindExpectedDiags(Preprocessor &PP,
   // Create a raw lexer to pull all the comments out of the main file.  We don't
   // want to look in #include'd headers for expected-error strings.
   FileID FID = PP.getSourceManager().getMainFileID();
-  
+
   // Create a lexer to lex all the tokens of the main file in raw mode.
   Lexer RawLex(FID, PP.getSourceManager(), PP.getLangOptions());
-  
+
   // Return comments as tokens, this is how we find expected diagnostics.
   RawLex.SetCommentRetentionState(true);
 
@@ -159,11 +159,11 @@ static void FindExpectedDiags(Preprocessor &PP,
   while (Tok.isNot(tok::eof)) {
     RawLex.Lex(Tok);
     if (!Tok.is(tok::comment)) continue;
-    
+
     std::string Comment = PP.getSpelling(Tok);
     if (Comment.empty()) continue;
 
-    
+
     // Find all expected errors.
     FindDiagnostics(&Comment[0], Comment.size(), ExpectedErrors, PP,
                     Tok.getLocation(), "expected-error");
@@ -182,7 +182,7 @@ static void FindExpectedDiags(Preprocessor &PP,
 /// seen diagnostics. If there's anything in it, then something unexpected
 /// happened. Print the map out in a nice format and return "true". If the map
 /// is empty and we're not going to print things, then return "false".
-/// 
+///
 static bool PrintProblem(SourceManager &SourceMgr,
                          const_diag_iterator diag_begin,
                          const_diag_iterator diag_end,
@@ -201,7 +201,7 @@ static bool PrintProblem(SourceManager &SourceMgr,
 
 /// CompareDiagLists - Compare two diagnostic lists and return the difference
 /// between them.
-/// 
+///
 static bool CompareDiagLists(SourceManager &SourceMgr,
                              const_diag_iterator d1_begin,
                              const_diag_iterator d1_end,
@@ -245,7 +245,7 @@ static bool CompareDiagLists(SourceManager &SourceMgr,
 /// CheckResults - This compares the expected results to those that
 /// were actually reported. It emits any discrepencies. Return "true" if there
 /// were problems. Return "false" otherwise.
-/// 
+///
 static bool CheckResults(Preprocessor &PP,
                          const DiagList &ExpectedErrors,
                          const DiagList &ExpectedWarnings,

@@ -20,12 +20,12 @@
 namespace clang {
 template <typename ImplClass>
 class CFGRecStmtVisitor : public CFGStmtVisitor<ImplClass,void> {
-public:  
+public:
 
   void VisitStmt(Stmt* S) {
     static_cast< ImplClass* >(this)->VisitChildren(S);
   }
-      
+
   // Defining operator() allows the visitor to be used as a C++ style functor.
   void operator()(Stmt* S) { static_cast<ImplClass*>(this)->BlockStmt_Visit(S);}
 };

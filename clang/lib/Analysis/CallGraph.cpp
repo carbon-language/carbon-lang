@@ -41,8 +41,8 @@ public:
 
   void VisitChildren(Stmt *S) {
     for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I != E;++I)
-      if (*I) 
-        static_cast<CGBuilder*>(this)->Visit(*I);    
+      if (*I)
+        static_cast<CGBuilder*>(this)->Visit(*I);
   }
 };
 }
@@ -53,7 +53,7 @@ void CGBuilder::VisitCallExpr(CallExpr *CE) {
     CallGraphNode *CalleeNode = G.getOrInsertFunction(Ent);
 
     Decl *Parent = ASTLocation::FindImmediateParent(FD, CE);
-    
+
     CallerNode->addCallee(ASTLocation(Parent, CE), CalleeNode);
   }
 }
@@ -92,7 +92,7 @@ void CallGraph::addTU(ASTUnit &AST) {
         // Set root node to 'main' function.
         if (FD->getNameAsString() == "main")
           Root = Node;
-        
+
         CGBuilder builder(*this, FD, Ent, Node);
         builder.Visit(FD->getBody());
       }
@@ -118,9 +118,9 @@ Decl *CallGraph::getDecl(CallGraphNode *Node) {
 void CallGraph::print(llvm::raw_ostream &os) {
   for (iterator I = begin(), E = end(); I != E; ++I) {
     if (I->second->hasCallee()) {
-      os << "function: " << I->first.getPrintableName() 
+      os << "function: " << I->first.getPrintableName()
          << " calls:\n";
-      for (CallGraphNode::iterator CI = I->second->begin(), 
+      for (CallGraphNode::iterator CI = I->second->begin(),
              CE = I->second->end(); CI != CE; ++CI) {
         os << "    " << CI->second->getName().c_str();
       }
@@ -139,13 +139,13 @@ void CallGraph::ViewCallGraph() const {
 
 namespace llvm {
 
-template <> 
+template <>
 struct DOTGraphTraits<CallGraph> : public DefaultDOTGraphTraits {
 
-  static std::string getNodeLabel(const CallGraphNode *Node, 
+  static std::string getNodeLabel(const CallGraphNode *Node,
                                   const CallGraph &CG, bool ShortNames) {
     return Node->getName();
-    
+
   }
 
 };

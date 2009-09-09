@@ -30,7 +30,7 @@ class EntityImpl : public llvm::FoldingSetNode {
 
   /// \brief Identifier namespace.
   unsigned IdNS;
-  
+
   /// \brief If Name is a selector, this keeps track whether it's for an
   /// instance method.
   bool IsObjCInstanceMethod;
@@ -47,7 +47,7 @@ public:
   /// \brief Get an Entity associated with the given Decl.
   /// \returns Null if an Entity cannot refer to this Decl.
   static Entity get(Decl *D, Program &Prog, ProgramImpl &ProgImpl);
-  
+
   std::string getPrintableName();
 
   void Profile(llvm::FoldingSetNodeID &ID) const {

@@ -30,7 +30,7 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro) {
     // Turn the = into ' '.
     Buf.insert(Buf.end(), Macro, Equal);
     Buf.push_back(' ');
-    
+
     // Per GCC -D semantics, the macro ends at \n if it exists.
     const char *End = strpbrk(Equal, "\n\r");
     if (End) {
@@ -40,7 +40,7 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro) {
     } else {
       End = Equal+strlen(Equal);
     }
-    
+
     Buf.insert(Buf.end(), Equal+1, End);
   } else {
     // Push "macroname 1".
@@ -62,7 +62,7 @@ static void UndefineBuiltinMacro(std::vector<char> &Buf, const char *Macro) {
 }
 
 /// Add the quoted name of an implicit include file.
-static void AddQuotedIncludePath(std::vector<char> &Buf, 
+static void AddQuotedIncludePath(std::vector<char> &Buf,
                                  const std::string &File) {
   // Implicit include paths should be resolved relative to the current
   // working directory first, and then use the regular header search
@@ -75,7 +75,7 @@ static void AddQuotedIncludePath(std::vector<char> &Buf,
   Path.makeAbsolute();
   if (!Path.exists())
     Path = File;
-    
+
   // Escape double quotes etc.
   Buf.push_back('"');
   std::string EscapedFile = Lexer::Stringify(Path.str());
@@ -85,7 +85,7 @@ static void AddQuotedIncludePath(std::vector<char> &Buf,
 
 /// AddImplicitInclude - Add an implicit #include of the specified file to the
 /// predefines buffer.
-static void AddImplicitInclude(std::vector<char> &Buf, 
+static void AddImplicitInclude(std::vector<char> &Buf,
                                const std::string &File) {
   const char *Inc = "#include ";
   Buf.insert(Buf.end(), Inc, Inc+strlen(Inc));
@@ -106,12 +106,12 @@ static void AddImplicitIncludeMacros(std::vector<char> &Buf,
 
 /// AddImplicitIncludePTH - Add an implicit #include using the original file
 ///  used to generate a PTH cache.
-static void AddImplicitIncludePTH(std::vector<char> &Buf, Preprocessor &PP, 
+static void AddImplicitIncludePTH(std::vector<char> &Buf, Preprocessor &PP,
   const std::string& ImplicitIncludePTH) {
   PTHManager *P = PP.getPTHManager();
   assert(P && "No PTHManager.");
   const char *OriginalFile = P->getOriginalSourceFile();
-  
+
   if (!OriginalFile) {
     assert(!ImplicitIncludePTH.empty());
     fprintf(stderr, "error: PTH file '%s' does not designate an original "
@@ -119,7 +119,7 @@ static void AddImplicitIncludePTH(std::vector<char> &Buf, Preprocessor &PP,
             ImplicitIncludePTH.c_str());
     exit (1);
   }
-  
+
   AddImplicitInclude(Buf, OriginalFile);
 }
 
@@ -144,7 +144,7 @@ static T PickFP(const llvm::fltSemantics *Sem, T IEEESingleVal,
 static void DefineFloatMacros(std::vector<char> &Buf, const char *Prefix,
                               const llvm::fltSemantics *Sem) {
   const char *DenormMin, *Epsilon, *Max, *Min;
-  DenormMin = PickFP(Sem, "1.40129846e-45F", "4.9406564584124654e-324", 
+  DenormMin = PickFP(Sem, "1.40129846e-45F", "4.9406564584124654e-324",
                      "3.64519953188247460253e-4951L",
                      "4.94065645841246544176568792868221e-324L",
                      "6.47517511943802511092443895822764655e-4966L");
@@ -167,7 +167,7 @@ static void DefineFloatMacros(std::vector<char> &Buf, const char *Prefix,
                "1.18973149535723176502e+4932L",
                "1.79769313486231580793728971405301e+308L",
                "1.18973149535723176508575932662800702e+4932L");
-  
+
   char MacroBuf[100];
   sprintf(MacroBuf, "__%s_DENORM_MIN__=%s", Prefix, DenormMin);
   DefineBuiltinMacro(Buf, MacroBuf);
@@ -210,7 +210,7 @@ static void DefineTypeSize(const char *MacroName, unsigned TypeWidth,
     MaxVal = (1LL << (TypeWidth - 1)) - 1;
   else
     MaxVal = ~0LL >> (64-TypeWidth);
-  
+
   // FIXME: Switch to using raw_ostream and avoid utostr().
   sprintf(MacroBuf, "%s=%s%s", MacroName, llvm::utostr(MaxVal).c_str(),
           ValSuffix);
@@ -232,17 +232,17 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   // Compiler version introspection macros.
   DefineBuiltinMacro(Buf, "__llvm__=1");   // LLVM Backend
   DefineBuiltinMacro(Buf, "__clang__=1");  // Clang Frontend
-  
+
   // Currently claim to be compatible with GCC 4.2.1-5621.
   DefineBuiltinMacro(Buf, "__GNUC_MINOR__=2");
   DefineBuiltinMacro(Buf, "__GNUC_PATCHLEVEL__=1");
   DefineBuiltinMacro(Buf, "__GNUC__=4");
   DefineBuiltinMacro(Buf, "__GXX_ABI_VERSION=1002");
   DefineBuiltinMacro(Buf, "__VERSION__=\"4.2.1 Compatible Clang Compiler\"");
-  
-  
+
+
   // Initialize language-specific preprocessor defines.
-  
+
   // These should all be defined in the preprocessor according to the
   // current language configuration.
   if (!LangOpts.Microsoft)
@@ -260,7 +260,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   // Standard conforming mode?
   if (!LangOpts.GNUMode)
     DefineBuiltinMacro(Buf, "__STRICT_ANSI__=1");
-  
+
   if (LangOpts.CPlusPlus0x)
     DefineBuiltinMacro(Buf, "__GXX_EXPERIMENTAL_CXX0X__");
 
@@ -268,7 +268,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     DefineBuiltinMacro(Buf, "__STDC_HOSTED__=0");
   else
     DefineBuiltinMacro(Buf, "__STDC_HOSTED__=1");
-  
+
   if (LangOpts.ObjC1) {
     DefineBuiltinMacro(Buf, "__OBJC__=1");
     if (LangOpts.ObjCNonFragileABI) {
@@ -279,15 +279,15 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
     if (LangOpts.getGCMode() != LangOptions::NonGC)
       DefineBuiltinMacro(Buf, "__OBJC_GC__=1");
-    
+
     if (LangOpts.NeXTRuntime)
       DefineBuiltinMacro(Buf, "__NEXT_RUNTIME__=1");
   }
-  
+
   // darwin_constant_cfstrings controls this. This is also dependent
   // on other things like the runtime I believe.  This is set even for C code.
   DefineBuiltinMacro(Buf, "__CONSTANT_CFSTRINGS__=1");
-  
+
   if (LangOpts.ObjC2)
     DefineBuiltinMacro(Buf, "OBJC_NEW_PROPERTIES");
 
@@ -301,7 +301,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     DefineBuiltinMacro(Buf, "__block=__attribute__((__blocks__(byref)))");
     DefineBuiltinMacro(Buf, "__BLOCKS__=1");
   }
-  
+
   if (LangOpts.CPlusPlus) {
     DefineBuiltinMacro(Buf, "__DEPRECATED=1");
     DefineBuiltinMacro(Buf, "__EXCEPTIONS=1");
@@ -309,32 +309,32 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     DefineBuiltinMacro(Buf, "__GXX_WEAK__=1");
     if (LangOpts.GNUMode)
       DefineBuiltinMacro(Buf, "__cplusplus=1");
-    else 
+    else
       // C++ [cpp.predefined]p1:
-      //   The name_ _cplusplusis defined to the value199711Lwhen compiling a 
+      //   The name_ _cplusplusis defined to the value199711Lwhen compiling a
       //   C++ translation unit.
       DefineBuiltinMacro(Buf, "__cplusplus=199711L");
     DefineBuiltinMacro(Buf, "__private_extern__=extern");
     // Ugly hack to work with GNU libstdc++.
     DefineBuiltinMacro(Buf, "_GNU_SOURCE=1");
   }
-  
+
   // Filter out some microsoft extensions when trying to parse in ms-compat
-  // mode. 
+  // mode.
   if (LangOpts.Microsoft) {
     DefineBuiltinMacro(Buf, "__int8=__INT8_TYPE__");
     DefineBuiltinMacro(Buf, "__int16=__INT16_TYPE__");
     DefineBuiltinMacro(Buf, "__int32=__INT32_TYPE__");
     DefineBuiltinMacro(Buf, "__int64=__INT64_TYPE__");
   }
-  
+
   if (LangOpts.Optimize)
     DefineBuiltinMacro(Buf, "__OPTIMIZE__=1");
   if (LangOpts.OptimizeSize)
     DefineBuiltinMacro(Buf, "__OPTIMIZE_SIZE__=1");
-    
+
   // Initialize target-specific preprocessor defines.
-  
+
   // Define type sizing macros based on the target properties.
   assert(TI.getCharWidth() == 8 && "Only support 8-bit char so far");
   DefineBuiltinMacro(Buf, "__CHAR_BIT__=8");
@@ -352,7 +352,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     IntMaxWidth = TI.getIntWidth();
     IntMaxSuffix = "";
   }
-  
+
   DefineTypeSize("__SCHAR_MAX__", TI.getCharWidth(), "", true, Buf);
   DefineTypeSize("__SHRT_MAX__", TI.getShortWidth(), "", true, Buf);
   DefineTypeSize("__INT_MAX__", TI.getIntWidth(), "", true, Buf);
@@ -369,7 +369,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineType("__WCHAR_TYPE__", TI.getWCharType(), Buf);
   // FIXME: TargetInfo hookize __WINT_TYPE__.
   DefineBuiltinMacro(Buf, "__WINT_TYPE__=int");
-  
+
   DefineFloatMacros(Buf, "FLT", &TI.getFloatFormat());
   DefineFloatMacros(Buf, "DBL", &TI.getDoubleFormat());
   DefineFloatMacros(Buf, "LDBL", &TI.getLongDoubleFormat());
@@ -377,39 +377,39 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   // Define a __POINTER_WIDTH__ macro for stdint.h.
   sprintf(MacroBuf, "__POINTER_WIDTH__=%d", (int)TI.getPointerWidth(0));
   DefineBuiltinMacro(Buf, MacroBuf);
-  
+
   if (!LangOpts.CharIsSigned)
-    DefineBuiltinMacro(Buf, "__CHAR_UNSIGNED__");  
+    DefineBuiltinMacro(Buf, "__CHAR_UNSIGNED__");
 
   // Define fixed-sized integer types for stdint.h
   assert(TI.getCharWidth() == 8 && "unsupported target types");
   assert(TI.getShortWidth() == 16 && "unsupported target types");
   DefineBuiltinMacro(Buf, "__INT8_TYPE__=char");
   DefineBuiltinMacro(Buf, "__INT16_TYPE__=short");
-  
+
   if (TI.getIntWidth() == 32)
     DefineBuiltinMacro(Buf, "__INT32_TYPE__=int");
   else {
     assert(TI.getLongLongWidth() == 32 && "unsupported target types");
     DefineBuiltinMacro(Buf, "__INT32_TYPE__=long long");
   }
-  
+
   // 16-bit targets doesn't necessarily have a 64-bit type.
   if (TI.getLongLongWidth() == 64)
     DefineType("__INT64_TYPE__", TI.getInt64Type(), Buf);
-  
+
   // Add __builtin_va_list typedef.
   {
     const char *VAList = TI.getVAListDeclaration();
     Buf.insert(Buf.end(), VAList, VAList+strlen(VAList));
     Buf.push_back('\n');
   }
-  
+
   if (const char *Prefix = TI.getUserLabelPrefix()) {
     sprintf(MacroBuf, "__USER_LABEL_PREFIX__=%s", Prefix);
     DefineBuiltinMacro(Buf, MacroBuf);
   }
-  
+
   // Build configuration options.  FIXME: these should be controlled by
   // command line options or something.
   DefineBuiltinMacro(Buf, "__FINITE_MATH_ONLY__=0");
@@ -452,15 +452,15 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 bool InitializePreprocessor(Preprocessor &PP,
                             const PreprocessorInitOptions& InitOpts) {
   std::vector<char> PredefineBuffer;
-  
+
   const char *LineDirective = "# 1 \"<built-in>\" 3\n";
   PredefineBuffer.insert(PredefineBuffer.end(),
                          LineDirective, LineDirective+strlen(LineDirective));
-  
+
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
   InitializePredefinedMacros(PP.getTargetInfo(), PP.getLangOptions(),
                              PredefineBuffer);
-  
+
   // Add on the predefines from the driver.  Wrap in a #line directive to report
   // that they come from the command line.
   LineDirective = "# 1 \"<command line>\" 1\n";

@@ -14,10 +14,9 @@
 
 using namespace clang::driver;
 
-Arg::Arg(ArgClass _Kind, const Option *_Opt, unsigned _Index, 
-         const Arg *_BaseArg) 
-  : Kind(_Kind), Opt(_Opt), BaseArg(_BaseArg), Index(_Index), Claimed(false)
-{
+Arg::Arg(ArgClass _Kind, const Option *_Opt, unsigned _Index,
+         const Arg *_BaseArg)
+  : Kind(_Kind), Opt(_Opt), BaseArg(_BaseArg), Index(_Index), Claimed(false) {
 }
 
 Arg::~Arg() { }
@@ -54,7 +53,7 @@ std::string Arg::getAsString(const ArgList &Args) const {
 
   ArgStringList ASL;
   render(Args, ASL);
-  for (ArgStringList::iterator 
+  for (ArgStringList::iterator
          it = ASL.begin(), ie = ASL.end(); it != ie; ++it) {
     if (it != ASL.begin())
       OS << ' ';
@@ -87,7 +86,7 @@ const char *FlagArg::getValue(const ArgList &Args, unsigned N) const {
   return 0;
 }
 
-PositionalArg::PositionalArg(const Option *Opt, unsigned Index, 
+PositionalArg::PositionalArg(const Option *Opt, unsigned Index,
                              const Arg *BaseArg)
   : Arg(PositionalClass, Opt, Index, BaseArg) {
 }
@@ -120,10 +119,10 @@ const char *JoinedArg::getValue(const ArgList &Args, unsigned N) const {
   return Args.getArgString(getIndex()) + strlen(getOption().getName());
 }
 
-CommaJoinedArg::CommaJoinedArg(const Option *Opt, unsigned Index, 
+CommaJoinedArg::CommaJoinedArg(const Option *Opt, unsigned Index,
                                const char *Str, const Arg *BaseArg)
   : Arg(CommaJoinedClass, Opt, Index, BaseArg) {
-  const char *Prev = Str;  
+  const char *Prev = Str;
   for (;; ++Str) {
     char c = *Str;
 
@@ -167,23 +166,23 @@ void SeparateArg::render(const ArgList &Args, ArgStringList &Output) const {
   }
 }
 
-const char *SeparateArg::getValue(const ArgList &Args, unsigned N) const { 
+const char *SeparateArg::getValue(const ArgList &Args, unsigned N) const {
   assert(N < getNumValues() && "Invalid index.");
   return Args.getArgString(getIndex() + 1 + N);
 }
 
-JoinedAndSeparateArg::JoinedAndSeparateArg(const Option *Opt, unsigned Index, 
+JoinedAndSeparateArg::JoinedAndSeparateArg(const Option *Opt, unsigned Index,
                                            const Arg *BaseArg)
   : Arg(JoinedAndSeparateClass, Opt, Index, BaseArg) {
 }
 
-void JoinedAndSeparateArg::render(const ArgList &Args, 
+void JoinedAndSeparateArg::render(const ArgList &Args,
                                   ArgStringList &Output) const {
   Output.push_back(Args.getArgString(getIndex()));
   Output.push_back(Args.getArgString(getIndex() + 1));
 }
 
-const char *JoinedAndSeparateArg::getValue(const ArgList &Args, 
+const char *JoinedAndSeparateArg::getValue(const ArgList &Args,
                                            unsigned N) const {
   assert(N < getNumValues() && "Invalid index.");
   if (N == 0)

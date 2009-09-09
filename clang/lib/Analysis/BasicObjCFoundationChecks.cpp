@@ -33,10 +33,10 @@ using namespace clang;
 
 static const ObjCInterfaceType* GetReceiverType(const ObjCMessageExpr* ME) {
   const Expr* Receiver = ME->getReceiver();
-  
+
   if (!Receiver)
     return NULL;
-  
+
   if (const ObjCObjectPointerType *PT =
       Receiver->getType()->getAsObjCObjectPointerType())
     return PT->getInterfaceType();
@@ -56,75 +56,75 @@ class VISIBILITY_HIDDEN APIMisuse : public BugType {
 public:
   APIMisuse(const char* name) : BugType(name, "API Misuse (Apple)") {}
 };
-  
+
 class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   APIMisuse *BT;
   BugReporter& BR;
   ASTContext &Ctx;
-      
+
   bool isNSString(const ObjCInterfaceType *T, const char* suffix);
   bool AuditNSString(ExplodedNode* N, const ObjCMessageExpr* ME);
-      
-  void Warn(ExplodedNode* N, const Expr* E, const std::string& s);  
+
+  void Warn(ExplodedNode* N, const Expr* E, const std::string& s);
   void WarnNilArg(ExplodedNode* N, const Expr* E);
-  
+
   bool CheckNilArg(ExplodedNode* N, unsigned Arg);
 
 public:
-  BasicObjCFoundationChecks(ASTContext& ctx, BugReporter& br) 
+  BasicObjCFoundationChecks(ASTContext& ctx, BugReporter& br)
     : BT(0), BR(br), Ctx(ctx) {}
-        
+
   bool Audit(ExplodedNode* N, GRStateManager&);
-  
-private:  
-  void WarnNilArg(ExplodedNode* N, const ObjCMessageExpr* ME, unsigned Arg) {    
+
+private:
+  void WarnNilArg(ExplodedNode* N, const ObjCMessageExpr* ME, unsigned Arg) {
     std::string sbuf;
     llvm::raw_string_ostream os(sbuf);
     os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
        << ME->getSelector().getAsString() << "' cannot be nil.";
-    
+
     // Lazily create the BugType object for NilArg.  This will be owned
     // by the BugReporter object 'BR' once we call BR.EmitWarning.
     if (!BT) BT = new APIMisuse("nil argument");
-    
+
     RangedBugReport *R = new RangedBugReport(*BT, os.str().c_str(), N);
     R->addRange(ME->getArg(Arg)->getSourceRange());
     BR.EmitReport(R);
   }
 };
-  
+
 } // end anonymous namespace
 
 
 GRSimpleAPICheck*
 clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx, BugReporter& BR) {
-  return new BasicObjCFoundationChecks(Ctx, BR);  
+  return new BasicObjCFoundationChecks(Ctx, BR);
 }
 
 
 
 bool BasicObjCFoundationChecks::Audit(ExplodedNode* N,
                                       GRStateManager&) {
-  
+
   const ObjCMessageExpr* ME =
     cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
 
   const ObjCInterfaceType *ReceiverType = GetReceiverType(ME);
-  
+
   if (!ReceiverType)
     return false;
-  
+
   const char* name = ReceiverType->getDecl()->getIdentifier()->getName();
-  
+
   if (!name)
     return false;
 
   if (name[0] != 'N' || name[1] != 'S')
     return false;
-      
+
   name += 2;
-  
-  // FIXME: Make all of this faster.  
+
+  // FIXME: Make all of this faster.
   if (isNSString(ReceiverType, name))
     return AuditNSString(N, ME);
 
@@ -132,7 +132,7 @@ bool BasicObjCFoundationChecks::Audit(ExplodedNode* N,
 }
 
 static inline bool isNil(SVal X) {
-  return isa<loc::ConcreteInt>(X);  
+  return isa<loc::ConcreteInt>(X);
 }
 
 //===----------------------------------------------------------------------===//
@@ -142,14 +142,14 @@ static inline bool isNil(SVal X) {
 bool BasicObjCFoundationChecks::CheckNilArg(ExplodedNode* N, unsigned Arg) {
   const ObjCMessageExpr* ME =
     cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
-  
+
   const Expr * E = ME->getArg(Arg);
-  
+
   if (isNil(N->getState()->getSVal(E))) {
     WarnNilArg(N, ME, Arg);
     return true;
   }
-  
+
   return false;
 }
 
@@ -158,35 +158,35 @@ bool BasicObjCFoundationChecks::CheckNilArg(ExplodedNode* N, unsigned Arg) {
 //===----------------------------------------------------------------------===//
 
 bool BasicObjCFoundationChecks::isNSString(const ObjCInterfaceType *T,
-                                           const char* suffix) {  
+                                           const char* suffix) {
   return !strcmp("String", suffix) || !strcmp("MutableString", suffix);
 }
 
-bool BasicObjCFoundationChecks::AuditNSString(ExplodedNode* N, 
+bool BasicObjCFoundationChecks::AuditNSString(ExplodedNode* N,
                                               const ObjCMessageExpr* ME) {
-  
+
   Selector S = ME->getSelector();
-  
+
   if (S.isUnarySelector())
     return false;
 
   // FIXME: This is going to be really slow doing these checks with
   //  lexical comparisons.
-  
+
   std::string name = S.getAsString();
   assert (!name.empty());
   const char* cstr = &name[0];
   unsigned len = name.size();
-      
+
   switch (len) {
     default:
       break;
-    case 8:      
+    case 8:
       if (!strcmp(cstr, "compare:"))
         return CheckNilArg(N, 0);
-              
+
       break;
-      
+
     case 15:
       // FIXME: Checking for initWithFormat: will not work in most cases
       //  yet because [NSString alloc] returns id, not NSString*.  We will
@@ -194,41 +194,41 @@ bool BasicObjCFoundationChecks::AuditNSString(ExplodedNode* N,
       //  to find these errors.
       if (!strcmp(cstr, "initWithFormat:"))
         return CheckNilArg(N, 0);
-      
+
       break;
-    
+
     case 16:
       if (!strcmp(cstr, "compare:options:"))
         return CheckNilArg(N, 0);
-      
+
       break;
-      
+
     case 22:
       if (!strcmp(cstr, "compare:options:range:"))
         return CheckNilArg(N, 0);
-      
+
       break;
-      
+
     case 23:
-      
+
       if (!strcmp(cstr, "caseInsensitiveCompare:"))
         return CheckNilArg(N, 0);
-      
+
       break;
 
     case 29:
       if (!strcmp(cstr, "compare:options:range:locale:"))
         return CheckNilArg(N, 0);
-    
-      break;    
-      
+
+      break;
+
     case 37:
     if (!strcmp(cstr, "componentsSeparatedByCharactersInSet:"))
       return CheckNilArg(N, 0);
-    
-    break;    
+
+    break;
   }
-  
+
   return false;
 }
 
@@ -240,7 +240,7 @@ namespace {
 
 class VISIBILITY_HIDDEN AuditCFNumberCreate : public GRSimpleAPICheck {
   APIMisuse* BT;
-  
+
   // FIXME: Either this should be refactored into GRSimpleAPICheck, or
   //   it should always be passed with a call to Audit.  The latter
   //   approach makes this class more stateless.
@@ -249,16 +249,16 @@ class VISIBILITY_HIDDEN AuditCFNumberCreate : public GRSimpleAPICheck {
   BugReporter& BR;
 
 public:
-  AuditCFNumberCreate(ASTContext& ctx, BugReporter& br) 
+  AuditCFNumberCreate(ASTContext& ctx, BugReporter& br)
   : BT(0), Ctx(ctx), II(&Ctx.Idents.get("CFNumberCreate")), BR(br){}
-  
+
   ~AuditCFNumberCreate() {}
-  
+
   bool Audit(ExplodedNode* N, GRStateManager&);
-  
+
 private:
   void AddError(const TypedRegion* R, const Expr* Ex, ExplodedNode *N,
-                uint64_t SourceSize, uint64_t TargetSize, uint64_t NumberKind);  
+                uint64_t SourceSize, uint64_t TargetSize, uint64_t NumberKind);
 };
 } // end anonymous namespace
 
@@ -289,7 +289,7 @@ namespace {
   public:
     Optional() : IsKnown(false), Val(0) {}
     Optional(const T& val) : IsKnown(true), Val(val) {}
-    
+
     bool isKnown() const { return IsKnown; }
 
     const T& getValue() const {
@@ -305,12 +305,12 @@ namespace {
 
 static Optional<uint64_t> GetCFNumberSize(ASTContext& Ctx, uint64_t i) {
   static unsigned char FixedSize[] = { 8, 16, 32, 64, 32, 64 };
-  
+
   if (i < kCFNumberCharType)
     return FixedSize[i-1];
-  
+
   QualType T;
-  
+
   switch (i) {
     case kCFNumberCharType:     T = Ctx.CharTy;     break;
     case kCFNumberShortType:    T = Ctx.ShortTy;    break;
@@ -322,11 +322,11 @@ static Optional<uint64_t> GetCFNumberSize(ASTContext& Ctx, uint64_t i) {
     case kCFNumberCFIndexType:
     case kCFNumberNSIntegerType:
     case kCFNumberCGFloatType:
-      // FIXME: We need a way to map from names to Type*.      
+      // FIXME: We need a way to map from names to Type*.
     default:
       return Optional<uint64_t>();
   }
-  
+
   return Ctx.getTypeSize(T);
 }
 
@@ -350,72 +350,72 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
     "kCFNumberNSIntegerType",
     "kCFNumberCGFloatType"
   };
-  
+
   return i <= kCFNumberCGFloatType ? Names[i-1] : "Invalid CFNumberType";
 }
 #endif
 
-bool AuditCFNumberCreate::Audit(ExplodedNode* N,GRStateManager&){  
+bool AuditCFNumberCreate::Audit(ExplodedNode* N,GRStateManager&){
   const CallExpr* CE =
     cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
-  const Expr* Callee = CE->getCallee();  
-  SVal CallV = N->getState()->getSVal(Callee);  
+  const Expr* Callee = CE->getCallee();
+  SVal CallV = N->getState()->getSVal(Callee);
   const FunctionDecl* FD = CallV.getAsFunctionDecl();
 
   if (!FD || FD->getIdentifier() != II || CE->getNumArgs()!=3)
     return false;
-  
+
   // Get the value of the "theType" argument.
   SVal TheTypeVal = N->getState()->getSVal(CE->getArg(1));
-  
+
     // FIXME: We really should allow ranges of valid theType values, and
     //   bifurcate the state appropriately.
   nonloc::ConcreteInt* V = dyn_cast<nonloc::ConcreteInt>(&TheTypeVal);
-  
+
   if (!V)
     return false;
-  
+
   uint64_t NumberKind = V->getValue().getLimitedValue();
   Optional<uint64_t> TargetSize = GetCFNumberSize(Ctx, NumberKind);
-  
+
   // FIXME: In some cases we can emit an error.
   if (!TargetSize.isKnown())
     return false;
-  
+
   // Look at the value of the integer being passed by reference.  Essentially
   // we want to catch cases where the value passed in is not equal to the
   // size of the type being created.
   SVal TheValueExpr = N->getState()->getSVal(CE->getArg(2));
-  
+
   // FIXME: Eventually we should handle arbitrary locations.  We can do this
   //  by having an enhanced memory model that does low-level typing.
   loc::MemRegionVal* LV = dyn_cast<loc::MemRegionVal>(&TheValueExpr);
 
   if (!LV)
     return false;
-  
+
   const TypedRegion* R = dyn_cast<TypedRegion>(LV->getBaseRegion());
 
   if (!R)
     return false;
 
   QualType T = Ctx.getCanonicalType(R->getValueType(Ctx));
-  
+
   // FIXME: If the pointee isn't an integer type, should we flag a warning?
   //  People can do weird stuff with pointers.
-  
-  if (!T->isIntegerType())  
+
+  if (!T->isIntegerType())
     return false;
-  
+
   uint64_t SourceSize = Ctx.getTypeSize(T);
-  
+
   // CHECK: is SourceSize == TargetSize
-  
+
   if (SourceSize == TargetSize)
     return false;
-    
+
   AddError(R, CE->getArg(2), N, SourceSize, TargetSize, NumberKind);
-  
+
   // FIXME: We can actually create an abstract "CFNumber" object that has
   //  the bits initialized to the provided values.
   return SourceSize < TargetSize;
@@ -425,23 +425,23 @@ void AuditCFNumberCreate::AddError(const TypedRegion* R, const Expr* Ex,
                                    ExplodedNode *N,
                                    uint64_t SourceSize, uint64_t TargetSize,
                                    uint64_t NumberKind) {
-  
+
   std::string sbuf;
   llvm::raw_string_ostream os(sbuf);
-  
+
   os << (SourceSize == 8 ? "An " : "A ")
      << SourceSize << " bit integer is used to initialize a CFNumber "
         "object that represents "
      << (TargetSize == 8 ? "an " : "a ")
-     << TargetSize << " bit integer. ";        
+     << TargetSize << " bit integer. ";
 
   if (SourceSize < TargetSize)
     os << (TargetSize - SourceSize)
-       << " bits of the CFNumber value will be garbage." ;   
+       << " bits of the CFNumber value will be garbage." ;
   else
     os << (SourceSize - TargetSize)
        << " bits of the input integer will be lost.";
-         
+
   // Lazily create the BugType object.  This will be owned
   // by the BugReporter object 'BR' once we call BR.EmitWarning.
   if (!BT) BT = new APIMisuse("Bad use of CFNumberCreate");
@@ -451,7 +451,7 @@ void AuditCFNumberCreate::AddError(const TypedRegion* R, const Expr* Ex,
 }
 
 GRSimpleAPICheck*
-clang::CreateAuditCFNumberCreate(ASTContext& Ctx, BugReporter& BR) {  
+clang::CreateAuditCFNumberCreate(ASTContext& Ctx, BugReporter& BR) {
   return new AuditCFNumberCreate(Ctx, BR);
 }
 
@@ -462,22 +462,22 @@ clang::CreateAuditCFNumberCreate(ASTContext& Ctx, BugReporter& BR) {
 namespace {
 class VISIBILITY_HIDDEN AuditCFRetainRelease : public GRSimpleAPICheck {
   APIMisuse *BT;
-  
+
   // FIXME: Either this should be refactored into GRSimpleAPICheck, or
   //   it should always be passed with a call to Audit.  The latter
   //   approach makes this class more stateless.
   ASTContext& Ctx;
   IdentifierInfo *Retain, *Release;
   BugReporter& BR;
-  
+
 public:
-  AuditCFRetainRelease(ASTContext& ctx, BugReporter& br) 
+  AuditCFRetainRelease(ASTContext& ctx, BugReporter& br)
   : BT(0), Ctx(ctx),
     Retain(&Ctx.Idents.get("CFRetain")), Release(&Ctx.Idents.get("CFRelease")),
     BR(br){}
-  
+
   ~AuditCFRetainRelease() {}
-  
+
   bool Audit(ExplodedNode* N, GRStateManager&);
 };
 } // end anonymous namespace
@@ -485,23 +485,23 @@ public:
 
 bool AuditCFRetainRelease::Audit(ExplodedNode* N, GRStateManager&) {
   const CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
-  
+
   // If the CallExpr doesn't have exactly 1 argument just give up checking.
   if (CE->getNumArgs() != 1)
     return false;
-  
+
   // Check if we called CFRetain/CFRelease.
   const GRState* state = N->getState();
   SVal X = state->getSVal(CE->getCallee());
   const FunctionDecl* FD = X.getAsFunctionDecl();
-  
+
   if (!FD)
     return false;
-  
-  const IdentifierInfo *FuncII = FD->getIdentifier();  
+
+  const IdentifierInfo *FuncII = FD->getIdentifier();
   if (!(FuncII == Retain || FuncII == Release))
     return false;
-  
+
   // Finally, check if the argument is NULL.
   // FIXME: We should be able to bifurcate the state here, as a successful
   // check will result in the value not being NULL afterwards.
@@ -511,7 +511,7 @@ bool AuditCFRetainRelease::Audit(ExplodedNode* N, GRStateManager&) {
   if (state->getStateManager().isEqual(state, CE->getArg(0), 0)) {
     if (!BT)
       BT = new APIMisuse("null passed to CFRetain/CFRelease");
-    
+
     const char *description = (FuncII == Retain)
                             ? "Null pointer argument in call to CFRetain"
                             : "Null pointer argument in call to CFRelease";
@@ -524,10 +524,10 @@ bool AuditCFRetainRelease::Audit(ExplodedNode* N, GRStateManager&) {
 
   return false;
 }
-    
-    
+
+
 GRSimpleAPICheck*
-clang::CreateAuditCFRetainRelease(ASTContext& Ctx, BugReporter& BR) {  
+clang::CreateAuditCFRetainRelease(ASTContext& Ctx, BugReporter& BR) {
   return new AuditCFRetainRelease(Ctx, BR);
 }
 
@@ -541,8 +541,8 @@ void clang::RegisterAppleChecks(GRExprEngine& Eng, const Decl &D) {
 
   Eng.AddCheck(CreateBasicObjCFoundationChecks(Ctx, BR),
                Stmt::ObjCMessageExprClass);
-  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, BR), Stmt::CallExprClass);  
+  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, BR), Stmt::CallExprClass);
   Eng.AddCheck(CreateAuditCFRetainRelease(Ctx, BR), Stmt::CallExprClass);
-  
+
   RegisterNSErrorChecks(BR, Eng, D);
 }

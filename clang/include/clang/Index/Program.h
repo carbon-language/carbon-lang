@@ -29,7 +29,7 @@ class Program {
   Program &operator=(const Program &); // do not implement
   friend class Entity;
   friend class GlobalSelector;
-  
+
 public:
   Program();
   ~Program();

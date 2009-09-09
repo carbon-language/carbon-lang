@@ -9,22 +9,22 @@ __declspec(noalias) __declspec(restrict) void * __cdecl xxx( void * _Memory );
 typedef __w64 unsigned long ULONG_PTR, *PULONG_PTR;
 void * __ptr64 PtrToPtr64(const void *p)
 {
-    return((void * __ptr64) (unsigned __int64) (ULONG_PTR)p );
+  return((void * __ptr64) (unsigned __int64) (ULONG_PTR)p );
 }
 void __forceinline InterlockedBitTestAndSet (long *Base, long Bit)
 {
-    __asm {
-           mov eax, Bit
-           mov ecx, Base
-           lock bts [ecx], eax
-           setc al
-    };
+  __asm {
+    mov eax, Bit
+    mov ecx, Base
+    lock bts [ecx], eax
+    setc al
+  };
 }
 
 void *_alloca(int);
 
 void foo() {
-	__declspec(align(16)) int *buffer = (int *)_alloca(9);
+  __declspec(align(16)) int *buffer = (int *)_alloca(9);
 }
 
 typedef bool (__stdcall __stdcall *blarg)(int);

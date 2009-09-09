@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file implements extra semantic analysis beyond what is enforced 
+//  This file implements extra semantic analysis beyond what is enforced
 //  by the C type system.
 //
 //===----------------------------------------------------------------------===//
@@ -32,14 +32,14 @@ using namespace clang;
 SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
                                                     unsigned ByteNo) const {
   assert(!SL->isWide() && "This doesn't work for wide strings yet");
-  
+
   // Loop over all of the tokens in this string until we find the one that
   // contains the byte we're looking for.
   unsigned TokNo = 0;
   while (1) {
     assert(TokNo < SL->getNumConcatenated() && "Invalid byte number!");
     SourceLocation StrTokLoc = SL->getStrTokenLoc(TokNo);
-   
+
     // Get the spelling of the string so that we can get the data that makes up
     // the string literal, not the identifier for the macro it is potentially
     // expanded through.
@@ -51,33 +51,33 @@ SourceLocation Sema::getLocationOfStringLiteralByte(const StringLiteral *SL,
     std::pair<const char *,const char *> Buffer =
       SourceMgr.getBufferData(LocInfo.first);
     const char *StrData = Buffer.first+LocInfo.second;
-    
+
     // Create a langops struct and enable trigraphs.  This is sufficient for
     // relexing tokens.
     LangOptions LangOpts;
     LangOpts.Trigraphs = true;
-    
+
     // Create a lexer starting at the beginning of this token.
     Lexer TheLexer(StrTokSpellingLoc, LangOpts, Buffer.first, StrData,
                    Buffer.second);
     Token TheTok;
     TheLexer.LexFromRawLexer(TheTok);
-    
+
     // Use the StringLiteralParser to compute the length of the string in bytes.
     StringLiteralParser SLP(&TheTok, 1, PP);
     unsigned TokNumBytes = SLP.GetStringLength();
-    
+
     // If the byte is in this token, return the location of the byte.
     if (ByteNo < TokNumBytes ||
         (ByteNo == TokNumBytes && TokNo == SL->getNumConcatenated())) {
-      unsigned Offset = 
+      unsigned Offset =
         StringLiteralParser::getOffsetOfStringByte(TheTok, ByteNo, PP);
-     
+
       // Now that we know the offset of the token in the spelling, use the
       // preprocessor to get the offset in the original source.
       return PP.AdvanceToTokenCharacter(StrTokLoc, Offset);
     }
-    
+
     // Move to the next string token.
     ++TokNo;
     ByteNo -= TokNumBytes;
@@ -174,7 +174,7 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
       return ExprError();
     break;
   }
-  
+
   return move(TheCallResult);
 }
 
@@ -188,7 +188,7 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   // simple names (e.g., C++ conversion functions).
   if (!FnInfo)
     return false;
-  
+
   // FIXME: This mechanism should be abstracted to be less fragile and
   // more efficient. For example, just map function ids to custom
   // handlers.
@@ -198,7 +198,7 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
     if (CheckablePrintfAttr(Format, TheCall)) {
       bool HasVAListArg = Format->getFirstArg() == 0;
       if (!HasVAListArg) {
-        if (const FunctionProtoType *Proto 
+        if (const FunctionProtoType *Proto
             = FDecl->getType()->getAsFunctionProtoType())
         HasVAListArg = !Proto->isVariadic();
       }
@@ -206,8 +206,8 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                            HasVAListArg ? 0 : Format->getFirstArg() - 1);
     }
   }
-  
-  for (const NonNullAttr *NonNull = FDecl->getAttr<NonNullAttr>(); NonNull; 
+
+  for (const NonNullAttr *NonNull = FDecl->getAttr<NonNullAttr>(); NonNull;
        NonNull = NonNull->getNext<NonNullAttr>())
     CheckNonNullArguments(NonNull, TheCall);
 
@@ -219,21 +219,21 @@ bool Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
   const FormatAttr *Format = NDecl->getAttr<FormatAttr>();
   if (!Format)
     return false;
-  
+
   const VarDecl *V = dyn_cast<VarDecl>(NDecl);
   if (!V)
     return false;
-  
+
   QualType Ty = V->getType();
   if (!Ty->isBlockPointerType())
     return false;
-  
+
   if (!CheckablePrintfAttr(Format, TheCall))
     return false;
-  
+
   bool HasVAListArg = Format->getFirstArg() == 0;
   if (!HasVAListArg) {
-    const FunctionType *FT = 
+    const FunctionType *FT =
       Ty->getAs<BlockPointerType>()->getPointeeType()->getAsFunctionType();
     if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
       HasVAListArg = !Proto->isVariadic();
@@ -260,7 +260,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
   if (TheCall->getNumArgs() < 1)
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
               << 0 << TheCall->getCallee()->getSourceRange();
-  
+
   // Inspect the first argument of the atomic builtin.  This should always be
   // a pointer type, whose element is an integral scalar or pointer type.
   // Because it is a pointer type, we don't have to worry about any implicit
@@ -269,9 +269,9 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
   if (!FirstArg->getType()->isPointerType())
     return Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer)
              << FirstArg->getType() << FirstArg->getSourceRange();
-  
+
   QualType ValType = FirstArg->getType()->getAs<PointerType>()->getPointeeType();
-  if (!ValType->isIntegerType() && !ValType->isPointerType() && 
+  if (!ValType->isIntegerType() && !ValType->isPointerType() &&
       !ValType->isBlockPointerType())
     return Diag(DRE->getLocStart(),
                 diag::err_atomic_builtin_must_be_pointer_intptr)
@@ -283,7 +283,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
 #define BUILTIN_ROW(x) \
   { Builtin::BI##x##_1, Builtin::BI##x##_2, Builtin::BI##x##_4, \
     Builtin::BI##x##_8, Builtin::BI##x##_16 }
-  
+
   static const unsigned BuiltinIndices[][5] = {
     BUILTIN_ROW(__sync_fetch_and_add),
     BUILTIN_ROW(__sync_fetch_and_sub),
@@ -291,21 +291,21 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     BUILTIN_ROW(__sync_fetch_and_and),
     BUILTIN_ROW(__sync_fetch_and_xor),
     BUILTIN_ROW(__sync_fetch_and_nand),
-    
+
     BUILTIN_ROW(__sync_add_and_fetch),
     BUILTIN_ROW(__sync_sub_and_fetch),
     BUILTIN_ROW(__sync_and_and_fetch),
     BUILTIN_ROW(__sync_or_and_fetch),
     BUILTIN_ROW(__sync_xor_and_fetch),
     BUILTIN_ROW(__sync_nand_and_fetch),
-    
+
     BUILTIN_ROW(__sync_val_compare_and_swap),
     BUILTIN_ROW(__sync_bool_compare_and_swap),
     BUILTIN_ROW(__sync_lock_test_and_set),
     BUILTIN_ROW(__sync_lock_release)
   };
-#undef BUILTIN_ROW  
-  
+#undef BUILTIN_ROW
+
   // Determine the index of the size.
   unsigned SizeIndex;
   switch (Context.getTypeSize(ValType)/8) {
@@ -318,7 +318,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     return Diag(DRE->getLocStart(), diag::err_atomic_builtin_pointer_size)
              << FirstArg->getType() << FirstArg->getSourceRange();
   }
-  
+
   // Each of these builtins has one pointer argument, followed by some number of
   // values (0, 1 or 2) followed by a potentially empty varags list of stuff
   // that we ignore.  Find out which row of BuiltinIndices to read from as well
@@ -333,14 +333,14 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
   case Builtin::BI__sync_fetch_and_and: BuiltinIndex = 3; break;
   case Builtin::BI__sync_fetch_and_xor: BuiltinIndex = 4; break;
   case Builtin::BI__sync_fetch_and_nand:BuiltinIndex = 5; break;
-      
+
   case Builtin::BI__sync_add_and_fetch: BuiltinIndex = 6; break;
   case Builtin::BI__sync_sub_and_fetch: BuiltinIndex = 7; break;
   case Builtin::BI__sync_and_and_fetch: BuiltinIndex = 8; break;
   case Builtin::BI__sync_or_and_fetch:  BuiltinIndex = 9; break;
   case Builtin::BI__sync_xor_and_fetch: BuiltinIndex =10; break;
   case Builtin::BI__sync_nand_and_fetch:BuiltinIndex =11; break;
-      
+
   case Builtin::BI__sync_val_compare_and_swap:
     BuiltinIndex = 12;
     NumFixed = 2;
@@ -355,37 +355,37 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     NumFixed = 0;
     break;
   }
-  
+
   // Now that we know how many fixed arguments we expect, first check that we
   // have at least that many.
   if (TheCall->getNumArgs() < 1+NumFixed)
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
             << 0 << TheCall->getCallee()->getSourceRange();
-  
-  
+
+
   // Get the decl for the concrete builtin from this, we can tell what the
   // concrete integer type we should convert to is.
   unsigned NewBuiltinID = BuiltinIndices[BuiltinIndex][SizeIndex];
   const char *NewBuiltinName = Context.BuiltinInfo.GetName(NewBuiltinID);
   IdentifierInfo *NewBuiltinII = PP.getIdentifierInfo(NewBuiltinName);
-  FunctionDecl *NewBuiltinDecl = 
+  FunctionDecl *NewBuiltinDecl =
     cast<FunctionDecl>(LazilyCreateBuiltin(NewBuiltinII, NewBuiltinID,
                                            TUScope, false, DRE->getLocStart()));
   const FunctionProtoType *BuiltinFT =
     NewBuiltinDecl->getType()->getAsFunctionProtoType();
   ValType = BuiltinFT->getArgType(0)->getAs<PointerType>()->getPointeeType();
-  
+
   // If the first type needs to be converted (e.g. void** -> int*), do it now.
   if (BuiltinFT->getArgType(0) != FirstArg->getType()) {
     ImpCastExprToType(FirstArg, BuiltinFT->getArgType(0), CastExpr::CK_Unknown,
                       /*isLvalue=*/false);
     TheCall->setArg(0, FirstArg);
   }
-  
+
   // Next, walk the valid ones promoting to the right type.
   for (unsigned i = 0; i != NumFixed; ++i) {
     Expr *Arg = TheCall->getArg(i+1);
-    
+
     // If the argument is an implicit cast, then there was a promotion due to
     // "...", just remove it now.
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
@@ -394,7 +394,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
       ICE->Destroy(Context);
       TheCall->setArg(i+1, Arg);
     }
-    
+
     // GCC does an implicit conversion to the pointer or integer ValType.  This
     // can fail in some cases (1i -> int**), check for this error case now.
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
@@ -402,27 +402,27 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     if (CheckCastTypes(Arg->getSourceRange(), ValType, Arg, Kind,
                        ConversionDecl))
       return true;
-    
+
     // Okay, we have something that *can* be converted to the right type.  Check
     // to see if there is a potentially weird extension going on here.  This can
     // happen when you do an atomic operation on something like an char* and
     // pass in 42.  The 42 gets converted to char.  This is even more strange
     // for things like 45.123 -> char, etc.
-    // FIXME: Do this check.  
+    // FIXME: Do this check.
     ImpCastExprToType(Arg, ValType, Kind, /*isLvalue=*/false);
     TheCall->setArg(i+1, Arg);
   }
-  
+
   // Switch the DeclRefExpr to refer to the new decl.
   DRE->setDecl(NewBuiltinDecl);
   DRE->setType(NewBuiltinDecl->getType());
-  
+
   // Set the callee in the CallExpr.
   // FIXME: This leaks the original parens and implicit casts.
   Expr *PromotedCall = DRE;
   UsualUnaryConversions(PromotedCall);
   TheCall->setCallee(PromotedCall);
-  
+
 
   // Change the result type of the call to match the result type of the decl.
   TheCall->setType(NewBuiltinDecl->getResultType());
@@ -433,7 +433,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
 /// CheckObjCString - Checks that the argument to the builtin
 /// CFString constructor is correct
 /// FIXME: GCC currently emits the following warning:
-/// "warning: input conversion stopped due to an input byte that does not 
+/// "warning: input conversion stopped due to an input byte that does not
 ///           belong to the input codeset UTF-8"
 /// Note: It might also make sense to do the UTF-16 conversion here (would
 /// simplify the backend).
@@ -446,10 +446,10 @@ bool Sema::CheckObjCString(Expr *Arg) {
       << Arg->getSourceRange();
     return true;
   }
-  
+
   const char *Data = Literal->getStrData();
   unsigned Length = Literal->getByteLength();
-  
+
   for (unsigned i = 0; i < Length; ++i) {
     if (!Data[i]) {
       Diag(getLocationOfStringLiteralByte(Literal, i),
@@ -458,7 +458,7 @@ bool Sema::CheckObjCString(Expr *Arg) {
       break;
     }
   }
-  
+
   return false;
 }
 
@@ -470,7 +470,7 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
     Diag(TheCall->getArg(2)->getLocStart(),
          diag::err_typecheck_call_too_many_args)
       << 0 /*function call*/ << Fn->getSourceRange()
-      << SourceRange(TheCall->getArg(2)->getLocStart(), 
+      << SourceRange(TheCall->getArg(2)->getLocStart(),
                      (*(TheCall->arg_end()-1))->getLocEnd());
     return true;
   }
@@ -493,17 +493,17 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
   } else {
     isVariadic = getCurMethodDecl()->isVariadic();
   }
-  
+
   if (!isVariadic) {
     Diag(Fn->getLocStart(), diag::err_va_start_used_in_non_variadic_function);
     return true;
   }
-  
+
   // Verify that the second argument to the builtin is the last argument of the
   // current function or method.
   bool SecondArgIsLastNamedArgument = false;
   const Expr *Arg = TheCall->getArg(1)->IgnoreParenCasts();
-  
+
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Arg)) {
     if (const ParmVarDecl *PV = dyn_cast<ParmVarDecl>(DR->getDecl())) {
       // FIXME: This isn't correct for methods (results in bogus warning).
@@ -518,9 +518,9 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
       SecondArgIsLastNamedArgument = PV == LastArg;
     }
   }
-  
+
   if (!SecondArgIsLastNamedArgument)
-    Diag(TheCall->getArg(1)->getLocStart(), 
+    Diag(TheCall->getArg(1)->getLocStart(),
          diag::warn_second_parameter_of_va_start_not_last_named_argument);
   return false;
 }
@@ -532,12 +532,12 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
       << 0 /*function call*/;
   if (TheCall->getNumArgs() > 2)
-    return Diag(TheCall->getArg(2)->getLocStart(), 
+    return Diag(TheCall->getArg(2)->getLocStart(),
                 diag::err_typecheck_call_too_many_args)
       << 0 /*function call*/
       << SourceRange(TheCall->getArg(2)->getLocStart(),
                      (*(TheCall->arg_end()-1))->getLocEnd());
-  
+
   Expr *OrigArg0 = TheCall->getArg(0);
   Expr *OrigArg1 = TheCall->getArg(1);
 
@@ -550,18 +550,18 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   // foo(...)".
   TheCall->setArg(0, OrigArg0);
   TheCall->setArg(1, OrigArg1);
-  
+
   if (OrigArg0->isTypeDependent() || OrigArg1->isTypeDependent())
     return false;
 
   // If the common type isn't a real floating type, then the arguments were
   // invalid for this operation.
   if (!Res->isRealFloatingType())
-    return Diag(OrigArg0->getLocStart(), 
+    return Diag(OrigArg0->getLocStart(),
                 diag::err_typecheck_call_invalid_ordered_compare)
       << OrigArg0->getType() << OrigArg1->getType()
       << SourceRange(OrigArg0->getLocStart(), OrigArg1->getLocEnd());
-  
+
   return false;
 }
 
@@ -572,23 +572,23 @@ bool Sema::SemaBuiltinUnaryFP(CallExpr *TheCall) {
     return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
       << 0 /*function call*/;
   if (TheCall->getNumArgs() > 1)
-    return Diag(TheCall->getArg(1)->getLocStart(), 
+    return Diag(TheCall->getArg(1)->getLocStart(),
                 diag::err_typecheck_call_too_many_args)
       << 0 /*function call*/
       << SourceRange(TheCall->getArg(1)->getLocStart(),
                      (*(TheCall->arg_end()-1))->getLocEnd());
 
   Expr *OrigArg = TheCall->getArg(0);
-  
+
   if (OrigArg->isTypeDependent())
     return false;
 
   // This operation requires a floating-point number
   if (!OrigArg->getType()->isRealFloatingType())
-    return Diag(OrigArg->getLocStart(), 
+    return Diag(OrigArg->getLocStart(),
                 diag::err_typecheck_call_invalid_unary_fp)
       << OrigArg->getType() << OrigArg->getSourceRange();
-  
+
   return false;
 }
 
@@ -600,7 +600,7 @@ bool Sema::SemaBuiltinStackAddress(CallExpr *TheCall) {
       !TheCall->getArg(0)->isValueDependent() &&
       !TheCall->getArg(0)->isIntegerConstantExpr(Context, &Loc))
     return Diag(Loc, diag::err_stack_const_level) << TheCall->getSourceRange();
-  
+
   return false;
 }
 
@@ -617,18 +617,18 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
       !TheCall->getArg(1)->isTypeDependent()) {
     QualType FAType = TheCall->getArg(0)->getType();
     QualType SAType = TheCall->getArg(1)->getType();
-    
+
     if (!FAType->isVectorType() || !SAType->isVectorType()) {
       Diag(TheCall->getLocStart(), diag::err_shufflevector_non_vector)
-        << SourceRange(TheCall->getArg(0)->getLocStart(), 
+        << SourceRange(TheCall->getArg(0)->getLocStart(),
                        TheCall->getArg(1)->getLocEnd());
       return ExprError();
     }
-    
+
     if (Context.getCanonicalType(FAType).getUnqualifiedType() !=
         Context.getCanonicalType(SAType).getUnqualifiedType()) {
       Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector)
-        << SourceRange(TheCall->getArg(0)->getLocStart(), 
+        << SourceRange(TheCall->getArg(0)->getLocStart(),
                        TheCall->getArg(1)->getLocEnd());
       return ExprError();
     }
@@ -706,7 +706,7 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
     if (!Arg->isIntegerConstantExpr(Result, Context))
       return Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_argument)
         << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
-    
+
     // FIXME: gcc issues a warning and rewrites these to 0. These
     // seems especially odd for the third argument since the default
     // is 3.
@@ -732,8 +732,8 @@ bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
   if (Arg->isTypeDependent())
     return false;
 
-  QualType ArgType = Arg->getType();  
-  const BuiltinType *BT = ArgType->getAsBuiltinType();  
+  QualType ArgType = Arg->getType();
+  const BuiltinType *BT = ArgType->getAsBuiltinType();
   llvm::APSInt Result(32);
   if (!BT || BT->getKind() != BuiltinType::Int)
     return Diag(TheCall->getLocStart(), diag::err_object_size_invalid_argument)
@@ -797,10 +797,10 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
     return SemaCheckStringLiteral(Expr->getSubExpr(), TheCall, HasVAListArg,
                                   format_idx, firstDataArg);
   }
-      
+
   case Stmt::DeclRefExprClass: {
     const DeclRefExpr *DR = cast<DeclRefExpr>(E);
-    
+
     // As an exception, do not flag errors for variables binding to
     // const string literals.
     if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
@@ -810,17 +810,17 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
       if (const ArrayType *AT = Context.getAsArrayType(T)) {
         isConstant = AT->getElementType().isConstant(Context);
       } else if (const PointerType *PT = T->getAs<PointerType>()) {
-        isConstant = T.isConstant(Context) && 
+        isConstant = T.isConstant(Context) &&
                      PT->getPointeeType().isConstant(Context);
       }
-        
+
       if (isConstant) {
         const VarDecl *Def = 0;
         if (const Expr *Init = VD->getDefinition(Def))
           return SemaCheckStringLiteral(Init, TheCall,
                                         HasVAListArg, format_idx, firstDataArg);
       }
-      
+
       // For vprintf* functions (i.e., HasVAListArg==true), we add a
       // special check to see if the format string is a function parameter
       // of the function calling the printf function.  If the function
@@ -843,55 +843,55 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
         if (isa<ParmVarDecl>(VD))
           return true;
     }
-        
+
     return false;
   }
 
   case Stmt::CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(E);
-    if (const ImplicitCastExpr *ICE 
+    if (const ImplicitCastExpr *ICE
           = dyn_cast<ImplicitCastExpr>(CE->getCallee())) {
       if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr())) {
         if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(DRE->getDecl())) {
           if (const FormatArgAttr *FA = FD->getAttr<FormatArgAttr>()) {
             unsigned ArgIndex = FA->getFormatIdx();
             const Expr *Arg = CE->getArg(ArgIndex - 1);
-            
-            return SemaCheckStringLiteral(Arg, TheCall, HasVAListArg, 
+
+            return SemaCheckStringLiteral(Arg, TheCall, HasVAListArg,
                                           format_idx, firstDataArg);
           }
         }
       }
     }
-    
+
     return false;
   }
   case Stmt::ObjCStringLiteralClass:
   case Stmt::StringLiteralClass: {
     const StringLiteral *StrE = NULL;
-    
+
     if (const ObjCStringLiteral *ObjCFExpr = dyn_cast<ObjCStringLiteral>(E))
       StrE = ObjCFExpr->getString();
     else
       StrE = cast<StringLiteral>(E);
-    
+
     if (StrE) {
-      CheckPrintfString(StrE, E, TheCall, HasVAListArg, format_idx, 
+      CheckPrintfString(StrE, E, TheCall, HasVAListArg, format_idx,
                         firstDataArg);
       return true;
     }
-    
+
     return false;
   }
-      
+
   default:
     return false;
   }
 }
 
 void
-Sema::CheckNonNullArguments(const NonNullAttr *NonNull, const CallExpr *TheCall)
-{
+Sema::CheckNonNullArguments(const NonNullAttr *NonNull,
+                            const CallExpr *TheCall) {
   for (NonNullAttr::iterator i = NonNull->begin(), e = NonNull->end();
        i != e; ++i) {
     const Expr *ArgExpr = TheCall->getArg(*i);
@@ -902,7 +902,7 @@ Sema::CheckNonNullArguments(const NonNullAttr *NonNull, const CallExpr *TheCall)
 }
 
 /// CheckPrintfArguments - Check calls to printf (and similar functions) for
-/// correct use of format strings.  
+/// correct use of format strings.
 ///
 ///  HasVAListArg - A predicate indicating whether the printf-like
 ///    function is passed an explicit va_arg argument (e.g., vprintf)
@@ -951,30 +951,30 @@ Sema::CheckNonNullArguments(const NonNullAttr *NonNull, const CallExpr *TheCall)
 ///
 /// For now, we ONLY do (1), (3), (5), (6), (7), and (8).
 void
-Sema::CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg, 
+Sema::CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg,
                            unsigned format_idx, unsigned firstDataArg) {
   const Expr *Fn = TheCall->getCallee();
 
-  // CHECK: printf-like function is called with no format string.  
+  // CHECK: printf-like function is called with no format string.
   if (format_idx >= TheCall->getNumArgs()) {
     Diag(TheCall->getRParenLoc(), diag::warn_printf_missing_format_string)
       << Fn->getSourceRange();
     return;
   }
-  
+
   const Expr *OrigFormatExpr = TheCall->getArg(format_idx)->IgnoreParenCasts();
-  
+
   // CHECK: format string is not a string literal.
-  // 
+  //
   // Dynamically generated format strings are difficult to
   // automatically vet at compile time.  Requiring that format strings
   // are string literals: (1) permits the checking of format strings by
   // the compiler and thereby (2) can practically remove the source of
   // many format string exploits.
 
-  // Format string can be either ObjC string (e.g. @"%d") or 
+  // Format string can be either ObjC string (e.g. @"%d") or
   // C string (e.g. "%d")
-  // ObjC string uses the same format specifiers as C string, so we can use 
+  // ObjC string uses the same format specifiers as C string, so we can use
   // the same format string checking logic for both ObjC and C strings.
   if (SemaCheckStringLiteral(OrigFormatExpr, TheCall, HasVAListArg, format_idx,
                              firstDataArg))
@@ -983,11 +983,11 @@ Sema::CheckPrintfArguments(const CallExpr *TheCall, bool HasVAListArg,
   // If there are no arguments specified, warn with -Wformat-security, otherwise
   // warn only with -Wformat-nonliteral.
   if (TheCall->getNumArgs() == format_idx+1)
-    Diag(TheCall->getArg(format_idx)->getLocStart(), 
+    Diag(TheCall->getArg(format_idx)->getLocStart(),
          diag::warn_printf_nonliteral_noargs)
       << OrigFormatExpr->getSourceRange();
   else
-    Diag(TheCall->getArg(format_idx)->getLocStart(), 
+    Diag(TheCall->getArg(format_idx)->getLocStart(),
          diag::warn_printf_nonliteral)
            << OrigFormatExpr->getSourceRange();
 }
@@ -1013,7 +1013,7 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
 
   // CHECK: empty format string?
   unsigned StrLen = FExpr->getByteLength();
-  
+
   if (StrLen == 0) {
     Diag(FExpr->getLocStart(), diag::warn_printf_empty_format_string)
       << OrigFormatExpr->getSourceRange();
@@ -1026,7 +1026,7 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
     state_OrdChr,
     state_Conversion
   } CurrentState = state_OrdChr;
-  
+
   // numConversions - The number of conversions seen so far.  This is
   //  incremented as we traverse the format string.
   unsigned numConversions = 0;
@@ -1039,17 +1039,17 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
 
   // Inspect the format string.
   unsigned StrIdx = 0;
-  
+
   // LastConversionIdx - Index within the format string where we last saw
   //  a '%' character that starts a new format conversion.
   unsigned LastConversionIdx = 0;
-  
+
   for (; StrIdx < StrLen; ++StrIdx) {
-    
+
     // Is the number of detected conversion conversions greater than
     // the number of matching data arguments?  If so, stop.
     if (!HasVAListArg && numConversions > numDataArgs) break;
-    
+
     // Handle "\0"
     if (Str[StrIdx] == '\0') {
       // The string returned by getStrData() is not null-terminated,
@@ -1059,7 +1059,7 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
         <<  OrigFormatExpr->getSourceRange();
       return;
     }
-    
+
     // Ordinary characters (not processing a format conversion).
     if (CurrentState == state_OrdChr) {
       if (Str[StrIdx] == '%') {
@@ -1071,10 +1071,10 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
 
     // Seen '%'.  Now processing a format conversion.
     switch (Str[StrIdx]) {
-    // Handle dynamic precision or width specifier.     
+    // Handle dynamic precision or width specifier.
     case '*': {
       ++numConversions;
-      
+
       if (!HasVAListArg) {
         if (numConversions > numDataArgs) {
           SourceLocation Loc = getLocationOfStringLiteralByte(FExpr, StrIdx);
@@ -1085,39 +1085,39 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
           else
             Diag(Loc, diag::warn_printf_asterisk_width_missing_arg)
               << OrigFormatExpr->getSourceRange();
-          
+
           // Don't do any more checking.  We'll just emit spurious errors.
           return;
         }
-      
+
         // Perform type checking on width/precision specifier.
         const Expr *E = TheCall->getArg(format_idx+numConversions);
         if (const BuiltinType *BT = E->getType()->getAsBuiltinType())
           if (BT->getKind() == BuiltinType::Int)
             break;
-        
+
         SourceLocation Loc = getLocationOfStringLiteralByte(FExpr, StrIdx);
-        
+
         if (Str[StrIdx-1] == '.')
           Diag(Loc, diag::warn_printf_asterisk_precision_wrong_type)
           << E->getType() << E->getSourceRange();
         else
           Diag(Loc, diag::warn_printf_asterisk_width_wrong_type)
           << E->getType() << E->getSourceRange();
-        
-        break;        
+
+        break;
       }
     }
-      
+
     // Characters which can terminate a format conversion
     // (e.g. "%d").  Characters that specify length modifiers or
     // other flags are handled by the default case below.
     //
-    // FIXME: additional checks will go into the following cases.                
+    // FIXME: additional checks will go into the following cases.
     case 'i':
     case 'd':
-    case 'o': 
-    case 'u': 
+    case 'o':
+    case 'u':
     case 'x':
     case 'X':
     case 'D':
@@ -1135,7 +1135,7 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
     case 'C':
     case 'S':
     case 's':
-    case 'p': 
+    case 'p':
       ++numConversions;
       CurrentState = state_OrdChr;
       break;
@@ -1151,21 +1151,21 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
       CurrentState = state_OrdChr;
       SourceLocation Loc = getLocationOfStringLiteralByte(FExpr,
                                                           LastConversionIdx);
-                                   
+
       Diag(Loc, diag::warn_printf_write_back)<<OrigFormatExpr->getSourceRange();
       break;
     }
-             
+
     // Handle "%@"
     case '@':
       // %@ is allowed in ObjC format strings only.
-      if(ObjCFExpr != NULL)
-        CurrentState = state_OrdChr; 
+      if (ObjCFExpr != NULL)
+        CurrentState = state_OrdChr;
       else {
         // Issue a warning: invalid format conversion.
-        SourceLocation Loc = 
+        SourceLocation Loc =
           getLocationOfStringLiteralByte(FExpr, LastConversionIdx);
-    
+
         Diag(Loc, diag::warn_printf_invalid_conversion)
           <<  std::string(Str+LastConversionIdx,
                           Str+std::min(LastConversionIdx+2, StrLen))
@@ -1173,7 +1173,7 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
       }
       ++numConversions;
       break;
-    
+
     // Handle "%%"
     case '%':
       // Sanity check: Was the first "%" character the previous one?
@@ -1181,23 +1181,23 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
       // conversion, and that the current "%" character is the start
       // of a new conversion.
       if (StrIdx - LastConversionIdx == 1)
-        CurrentState = state_OrdChr; 
+        CurrentState = state_OrdChr;
       else {
         // Issue a warning: invalid format conversion.
         SourceLocation Loc =
           getLocationOfStringLiteralByte(FExpr, LastConversionIdx);
-            
+
         Diag(Loc, diag::warn_printf_invalid_conversion)
           << std::string(Str+LastConversionIdx, Str+StrIdx)
           << OrigFormatExpr->getSourceRange();
-             
+
         // This conversion is broken.  Advance to the next format
         // conversion.
         LastConversionIdx = StrIdx;
         ++numConversions;
       }
       break;
-              
+
     default:
       // This case catches all other characters: flags, widths, etc.
       // We should eventually process those as well.
@@ -1209,21 +1209,21 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
     // Issue a warning: invalid format conversion.
     SourceLocation Loc =
       getLocationOfStringLiteralByte(FExpr, LastConversionIdx);
-    
+
     Diag(Loc, diag::warn_printf_invalid_conversion)
       << std::string(Str+LastConversionIdx,
                      Str+std::min(LastConversionIdx+2, StrLen))
       << OrigFormatExpr->getSourceRange();
     return;
   }
-  
+
   if (!HasVAListArg) {
     // CHECK: Does the number of format conversions exceed the number
     //        of data arguments?
     if (numConversions > numDataArgs) {
       SourceLocation Loc =
         getLocationOfStringLiteralByte(FExpr, LastConversionIdx);
-                                   
+
       Diag(Loc, diag::warn_printf_insufficient_data_args)
         << OrigFormatExpr->getSourceRange();
     }
@@ -1246,13 +1246,13 @@ static DeclRefExpr* EvalAddr(Expr* E);
 void
 Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                            SourceLocation ReturnLoc) {
-   
+
   // Perform checking for returned stack addresses.
   if (lhsType->isPointerType() || lhsType->isBlockPointerType()) {
     if (DeclRefExpr *DR = EvalAddr(RetValExp))
       Diag(DR->getLocStart(), diag::warn_ret_stack_addr)
        << DR->getDecl()->getDeclName() << RetValExp->getSourceRange();
-    
+
     // Skip over implicit cast expressions when checking for block expressions.
     RetValExp = RetValExp->IgnoreParenCasts();
 
@@ -1279,7 +1279,7 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
 ///
 ///  EvalAddr processes expressions that are pointers that are used as
 ///  references (and not L-values).  EvalVal handles all other values.
-///  At the base case of the recursion is a check for a DeclRefExpr* in 
+///  At the base case of the recursion is a check for a DeclRefExpr* in
 ///  the refers to a stack variable.
 ///
 ///  This implementation handles:
@@ -1296,7 +1296,7 @@ static DeclRefExpr* EvalAddr(Expr *E) {
           E->getType()->isBlockPointerType() ||
           E->getType()->isObjCQualifiedIdType()) &&
          "EvalAddr only works on pointers");
-    
+
   // Our "symbolic interpreter" is just a dispatch off the currently
   // viewed AST node.  We then recursively traverse the AST by calling
   // EvalAddr and EvalVal appropriately.
@@ -1309,28 +1309,28 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     // The only unary operator that make sense to handle here
     // is AddrOf.  All others don't make sense as pointers.
     UnaryOperator *U = cast<UnaryOperator>(E);
-    
+
     if (U->getOpcode() == UnaryOperator::AddrOf)
       return EvalVal(U->getSubExpr());
     else
       return NULL;
   }
-  
+
   case Stmt::BinaryOperatorClass: {
     // Handle pointer arithmetic.  All other binary operators are not valid
     // in this context.
     BinaryOperator *B = cast<BinaryOperator>(E);
     BinaryOperator::Opcode op = B->getOpcode();
-      
+
     if (op != BinaryOperator::Add && op != BinaryOperator::Sub)
       return NULL;
-      
+
     Expr *Base = B->getLHS();
 
     // Determine which argument is the real pointer base.  It could be
     // the RHS argument instead of the LHS.
     if (!Base->getType()->isPointerType()) Base = B->getRHS();
-      
+
     assert (Base->getType()->isPointerType());
     return EvalAddr(Base);
   }
@@ -1339,7 +1339,7 @@ static DeclRefExpr* EvalAddr(Expr *E) {
   // valid DeclRefExpr*s.  If one of them is valid, we return it.
   case Stmt::ConditionalOperatorClass: {
     ConditionalOperator *C = cast<ConditionalOperator>(E);
-    
+
     // Handle the GNU extension for missing LHS.
     if (Expr *lhsExpr = C->getLHS())
       if (DeclRefExpr* LHS = EvalAddr(lhsExpr))
@@ -1347,7 +1347,7 @@ static DeclRefExpr* EvalAddr(Expr *E) {
 
      return EvalAddr(C->getRHS());
   }
-    
+
   // For casts, we need to handle conversions from arrays to
   // pointer values, and pointer-to-pointer conversions.
   case Stmt::ImplicitCastExprClass:
@@ -1355,7 +1355,7 @@ static DeclRefExpr* EvalAddr(Expr *E) {
   case Stmt::CXXFunctionalCastExprClass: {
     Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
     QualType T = SubExpr->getType();
-    
+
     if (SubExpr->getType()->isPointerType() ||
         SubExpr->getType()->isBlockPointerType() ||
         SubExpr->getType()->isObjCQualifiedIdType())
@@ -1365,7 +1365,7 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     else
       return 0;
   }
-    
+
   // C++ casts.  For dynamic casts, static casts, and const casts, we
   // are always converting from a pointer-to-pointer, so we just blow
   // through the cast.  In the case the dynamic cast doesn't fail (and
@@ -1373,9 +1373,9 @@ static DeclRefExpr* EvalAddr(Expr *E) {
   // where we return the address of a stack variable.  For Reinterpre
   // FIXME: The comment about is wrong; we're not always converting
   // from pointer to pointer. I'm guessing that this code should also
-  // handle references to objects.  
-  case Stmt::CXXStaticCastExprClass: 
-  case Stmt::CXXDynamicCastExprClass: 
+  // handle references to objects.
+  case Stmt::CXXStaticCastExprClass:
+  case Stmt::CXXDynamicCastExprClass:
   case Stmt::CXXConstCastExprClass:
   case Stmt::CXXReinterpretCastExprClass: {
       Expr *S = cast<CXXNamedCastExpr>(E)->getSubExpr();
@@ -1384,62 +1384,62 @@ static DeclRefExpr* EvalAddr(Expr *E) {
       else
         return NULL;
   }
-    
+
   // Everything else: we simply don't reason about them.
   default:
     return NULL;
   }
 }
-  
+
 
 ///  EvalVal - This function is complements EvalAddr in the mutual recursion.
 ///   See the comments for EvalAddr for more details.
 static DeclRefExpr* EvalVal(Expr *E) {
-  
+
   // We should only be called for evaluating non-pointer expressions, or
   // expressions with a pointer type that are not used as references but instead
   // are l-values (e.g., DeclRefExpr with a pointer type).
-    
+
   // Our "symbolic interpreter" is just a dispatch off the currently
   // viewed AST node.  We then recursively traverse the AST by calling
   // EvalAddr and EvalVal appropriately.
   switch (E->getStmtClass()) {
-  case Stmt::DeclRefExprClass: 
+  case Stmt::DeclRefExprClass:
   case Stmt::QualifiedDeclRefExprClass: {
     // DeclRefExpr: the base case.  When we hit a DeclRefExpr we are looking
     //  at code that refers to a variable's name.  We check if it has local
     //  storage within the function, and if so, return the expression.
     DeclRefExpr *DR = cast<DeclRefExpr>(E);
-      
+
     if (VarDecl *V = dyn_cast<VarDecl>(DR->getDecl()))
-      if(V->hasLocalStorage() && !V->getType()->isReferenceType()) return DR;
-      
+      if (V->hasLocalStorage() && !V->getType()->isReferenceType()) return DR;
+
     return NULL;
   }
-        
+
   case Stmt::ParenExprClass:
     // Ignore parentheses.
     return EvalVal(cast<ParenExpr>(E)->getSubExpr());
-  
+
   case Stmt::UnaryOperatorClass: {
     // The only unary operator that make sense to handle here
     // is Deref.  All others don't resolve to a "name."  This includes
     // handling all sorts of rvalues passed to a unary operator.
     UnaryOperator *U = cast<UnaryOperator>(E);
-              
+
     if (U->getOpcode() == UnaryOperator::Deref)
       return EvalAddr(U->getSubExpr());
 
     return NULL;
   }
-  
+
   case Stmt::ArraySubscriptExprClass: {
     // Array subscripts are potential references to data on the stack.  We
     // retrieve the DeclRefExpr* for the array variable if it indeed
     // has local storage.
     return EvalAddr(cast<ArraySubscriptExpr>(E)->getBase());
   }
-    
+
   case Stmt::ConditionalOperatorClass: {
     // For conditional operators we need to see if either the LHS or RHS are
     // non-NULL DeclRefExpr's.  If one is non-NULL, we return it.
@@ -1452,18 +1452,18 @@ static DeclRefExpr* EvalVal(Expr *E) {
 
     return EvalVal(C->getRHS());
   }
-  
+
   // Accesses to members are potential references to data on the stack.
   case Stmt::MemberExprClass: {
     MemberExpr *M = cast<MemberExpr>(E);
-      
+
     // Check for indirect access.  We only want direct field accesses.
     if (!M->isArrow())
       return EvalVal(M->getBase());
     else
       return NULL;
   }
-    
+
   // Everything else: we simply don't reason about them.
   default:
     return NULL;
@@ -1477,7 +1477,7 @@ static DeclRefExpr* EvalVal(Expr *E) {
 /// to do what the programmer intended.
 void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
   bool EmitWarning = true;
-  
+
   Expr* LeftExprSansParen = lex->IgnoreParens();
   Expr* RightExprSansParen = rex->IgnoreParens();
 
@@ -1487,8 +1487,8 @@ void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
     if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RightExprSansParen))
       if (DRL->getDecl() == DRR->getDecl())
         EmitWarning = false;
-  
-  
+
+
   // Special case: check for comparisons against literals that can be exactly
   //  represented by APFloat.  In such cases, do not emit a warning.  This
   //  is a heuristic: often comparison against such literals are used to
@@ -1504,18 +1504,18 @@ void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
           EmitWarning = false;
     }
   }
-  
+
   // Check for comparisons with builtin types.
   if (EmitWarning)
     if (CallExpr* CL = dyn_cast<CallExpr>(LeftExprSansParen))
       if (CL->isBuiltinCall(Context))
         EmitWarning = false;
-  
+
   if (EmitWarning)
     if (CallExpr* CR = dyn_cast<CallExpr>(RightExprSansParen))
       if (CR->isBuiltinCall(Context))
         EmitWarning = false;
-  
+
   // Emit the diagnostic.
   if (EmitWarning)
     Diag(loc, diag::warn_floatingpoint_eq)

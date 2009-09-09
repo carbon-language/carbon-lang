@@ -30,31 +30,31 @@ namespace clang {
 class HeaderMap {
   HeaderMap(const HeaderMap&); // DO NOT IMPLEMENT
   void operator=(const HeaderMap&); // DO NOT IMPLEMENT
-  
+
   const llvm::MemoryBuffer *FileBuffer;
   bool NeedsBSwap;
-  
+
   HeaderMap(const llvm::MemoryBuffer *File, bool BSwap)
     : FileBuffer(File), NeedsBSwap(BSwap) {
   }
 public:
   ~HeaderMap();
-  
+
   /// HeaderMap::Create - This attempts to load the specified file as a header
   /// map.  If it doesn't look like a HeaderMap, it gives up and returns null.
   static const HeaderMap *Create(const FileEntry *FE);
-  
+
   /// LookupFile - Check to see if the specified relative filename is located in
   /// this HeaderMap.  If so, open it and return its FileEntry.
   const FileEntry *LookupFile(const char *FilenameStart,const char *FilenameEnd,
                               FileManager &FM) const;
-  
+
   /// getFileName - Return the filename of the headermap.
   const char *getFileName() const;
-  
+
   /// dump - Print the contents of this headermap to stderr.
   void dump() const;
-  
+
 private:
   unsigned getEndianAdjustedWord(unsigned X) const;
   const HMapHeader &getHeader() const;

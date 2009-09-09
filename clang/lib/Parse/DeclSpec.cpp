@@ -65,7 +65,7 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
     // parameter list there (in an effort to avoid new/delete traffic).  If it
     // is already used (consider a function returning a function pointer) or too
     // small (function taking too many arguments), go to the heap.
-    if (!TheDeclarator.InlineParamsUsed && 
+    if (!TheDeclarator.InlineParamsUsed &&
         NumArgs <= llvm::array_lengthof(TheDeclarator.InlineParams)) {
       I.Fun.ArgInfo = TheDeclarator.InlineParams;
       I.Fun.DeleteArgInfo = false;
@@ -98,10 +98,10 @@ unsigned DeclSpec::getParsedSpecifiers() const {
 
   if (TypeQualifiers != TQ_unspecified)
     Res |= PQ_TypeQualifier;
-  
+
   if (hasTypeSpecifier())
     Res |= PQ_TypeSpecifier;
-  
+
   if (FS_inline_specified || FS_virtual_specified || FS_explicit_specified)
     Res |= PQ_FunctionSpecifier;
   return Res;
@@ -114,7 +114,7 @@ template <class T> static bool BadSpecifier(T TNew, T TPrev,
   DiagID = (TNew == TPrev ? diag::ext_duplicate_declspec
             : diag::err_invalid_decl_spec_combination);
   return true;
-} 
+}
 
 const char *DeclSpec::getSpecifierName(DeclSpec::SCS S) {
   switch (S) {
@@ -209,7 +209,7 @@ bool DeclSpec::SetStorageClassSpec(SCS S, SourceLocation Loc,
   return false;
 }
 
-bool DeclSpec::SetStorageClassSpecThread(SourceLocation Loc, 
+bool DeclSpec::SetStorageClassSpecThread(SourceLocation Loc,
                                          const char *&PrevSpec,
                                          unsigned &DiagID) {
   if (SCS_thread_specified) {
@@ -238,7 +238,7 @@ bool DeclSpec::SetTypeSpecWidth(TSW W, SourceLocation Loc,
   return false;
 }
 
-bool DeclSpec::SetTypeSpecComplex(TSC C, SourceLocation Loc, 
+bool DeclSpec::SetTypeSpecComplex(TSC C, SourceLocation Loc,
                                   const char *&PrevSpec,
                                   unsigned &DiagID) {
   if (TypeSpecComplex != TSC_unspecified)
@@ -248,7 +248,7 @@ bool DeclSpec::SetTypeSpecComplex(TSC C, SourceLocation Loc,
   return false;
 }
 
-bool DeclSpec::SetTypeSpecSign(TSS S, SourceLocation Loc, 
+bool DeclSpec::SetTypeSpecSign(TSS S, SourceLocation Loc,
                                const char *&PrevSpec,
                                unsigned &DiagID) {
   if (TypeSpecSign != TSS_unspecified)
@@ -287,7 +287,7 @@ bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
   if ((TypeQualifiers & T) && !Lang.C99)
     return BadSpecifier(T, T, PrevSpec, DiagID);
   TypeQualifiers |= T;
-  
+
   switch (T) {
   default: assert(0 && "Unknown type qualifier!");
   case TQ_const:    TQ_constLoc = Loc; break;
@@ -380,7 +380,7 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
     }
     break;
   }
-  
+
   // TODO: if the implementation does not implement _Complex or _Imaginary,
   // disallow their use.  Need information about the backend.
   if (TypeSpecComplex != TSC_unspecified) {
@@ -419,9 +419,9 @@ void DeclSpec::Finish(Diagnostic &D, Preprocessor &PP) {
 
 
   // Okay, now we can infer the real type.
-  
+
   // TODO: return "auto function" and other bad things based on the real type.
-  
+
   // 'data definition has no type or storage class'?
 }
 

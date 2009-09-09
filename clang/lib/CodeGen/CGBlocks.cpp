@@ -60,14 +60,14 @@ BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
 
 llvm::Constant *BlockModule::getNSConcreteGlobalBlock() {
   if (NSConcreteGlobalBlock == 0)
-    NSConcreteGlobalBlock = CGM.CreateRuntimeVariable(PtrToInt8Ty, 
+    NSConcreteGlobalBlock = CGM.CreateRuntimeVariable(PtrToInt8Ty,
                                                       "_NSConcreteGlobalBlock");
   return NSConcreteGlobalBlock;
 }
 
 llvm::Constant *BlockModule::getNSConcreteStackBlock() {
   if (NSConcreteStackBlock == 0)
-    NSConcreteStackBlock = CGM.CreateRuntimeVariable(PtrToInt8Ty, 
+    NSConcreteStackBlock = CGM.CreateRuntimeVariable(PtrToInt8Ty,
                                                      "_NSConcreteStackBlock");
   return NSConcreteStackBlock;
 }
@@ -427,16 +427,16 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
 
   QualType ResultType = FnType->getAsFunctionType()->getResultType();
 
-  const CGFunctionInfo &FnInfo = 
+  const CGFunctionInfo &FnInfo =
     CGM.getTypes().getFunctionInfo(ResultType, Args);
-  
+
   // Cast the function pointer to the right type.
-  const llvm::Type *BlockFTy = 
+  const llvm::Type *BlockFTy =
     CGM.getTypes().GetFunctionType(FnInfo, false);
-  
+
   const llvm::Type *BlockFTyPtr = llvm::PointerType::getUnqual(BlockFTy);
   Func = Builder.CreateBitCast(Func, BlockFTyPtr);
-  
+
   // And call the block.
   return EmitCall(FnInfo, Func, Args);
 }
@@ -583,7 +583,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   // Check if we should generate debug info for this block.
   if (CGM.getDebugInfo())
     DebugInfo = CGM.getDebugInfo();
-  
+
   // Arrange for local static and local extern declarations to appear
   // to be local to this function as well, as they are directly referenced
   // in a block.
@@ -591,7 +591,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
        i != ldm.end();
        ++i) {
     const VarDecl *VD = dyn_cast<VarDecl>(i->first);
-    
+
     if (VD->getStorageClass() == VarDecl::Static || VD->hasExternalStorage())
       LocalDeclMap[VD] = i->second;
   }
@@ -609,7 +609,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   const FunctionType *BlockFunctionType = BExpr->getFunctionType();
   QualType ResultType;
   bool IsVariadic;
-  if (const FunctionProtoType *FTy = 
+  if (const FunctionProtoType *FTy =
       dyn_cast<FunctionProtoType>(BlockFunctionType)) {
     ResultType = FTy->getResultType();
     IsVariadic = FTy->isVariadic();
@@ -721,7 +721,7 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
     ImplicitParamDecl::Create(getContext(), 0, SourceLocation(), 0,
                               getContext().getPointerType(getContext().VoidTy));
   Args.push_back(std::make_pair(Src, Src->getType()));
-  
+
   const CGFunctionInfo &FI =
     CGM.getTypes().getFunctionInfo(R, Args);
 
@@ -803,7 +803,7 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
                               getContext().getPointerType(getContext().VoidTy));
 
   Args.push_back(std::make_pair(Src, Src->getType()));
-  
+
   const CGFunctionInfo &FI =
     CGM.getTypes().getFunctionInfo(R, Args);
 
@@ -887,7 +887,7 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
     ImplicitParamDecl::Create(getContext(), 0, SourceLocation(), 0,
                               getContext().getPointerType(getContext().VoidTy));
   Args.push_back(std::make_pair(Src, Src->getType()));
-  
+
   const CGFunctionInfo &FI =
     CGM.getTypes().getFunctionInfo(R, Args);
 
@@ -926,7 +926,7 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   V = Builder.CreateStructGEP(V, 6, "x");
   V = Builder.CreateBitCast(V, llvm::PointerType::get(PtrToInt8Ty, 0));
   llvm::Value *SrcObj = Builder.CreateLoad(V);
-  
+
   flag |= BLOCK_BYREF_CALLER;
 
   llvm::Value *N = llvm::ConstantInt::get(
@@ -951,7 +951,7 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
                               getContext().getPointerType(getContext().VoidTy));
 
   Args.push_back(std::make_pair(Src, Src->getType()));
-  
+
   const CGFunctionInfo &FI =
     CGM.getTypes().getFunctionInfo(R, Args);
 

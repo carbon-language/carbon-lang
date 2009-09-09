@@ -19,7 +19,7 @@ using namespace clang;
 /// SetMemberAccessSpecifier - Set the access specifier of a member.
 /// Returns true on error (when the previous member decl access specifier
 /// is different from the new member decl access specifier).
-bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl, 
+bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
                                     NamedDecl *PrevMemberDecl,
                                     AccessSpecifier LexicalAS) {
   if (!PrevMemberDecl) {
@@ -27,18 +27,18 @@ bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
     MemberDecl->setAccess(LexicalAS);
     return false;
   }
-  
+
   // C++ [class.access.spec]p3: When a member is redeclared its access
   // specifier must be same as its initial declaration.
   if (LexicalAS != AS_none && LexicalAS != PrevMemberDecl->getAccess()) {
-    Diag(MemberDecl->getLocation(), 
-         diag::err_class_redeclared_with_different_access) 
+    Diag(MemberDecl->getLocation(),
+         diag::err_class_redeclared_with_different_access)
       << MemberDecl << LexicalAS;
     Diag(PrevMemberDecl->getLocation(), diag::note_previous_access_declaration)
       << PrevMemberDecl << PrevMemberDecl->getAccess();
     return true;
   }
-  
+
   MemberDecl->setAccess(PrevMemberDecl->getAccess());
   return false;
 }
@@ -47,10 +47,9 @@ bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
 /// inaccessible. If @p NoPrivileges is true, special access rights (members
 /// and friends) are not considered.
 const CXXBaseSpecifier *Sema::FindInaccessibleBase(
-    QualType Derived, QualType Base, BasePaths &Paths, bool NoPrivileges)
-{
+    QualType Derived, QualType Base, BasePaths &Paths, bool NoPrivileges) {
   Base = Context.getCanonicalType(Base).getUnqualifiedType();
-  assert(!Paths.isAmbiguous(Base) && 
+  assert(!Paths.isAmbiguous(Base) &&
          "Can't check base class access if set of paths is ambiguous");
   assert(Paths.isRecordingPaths() &&
          "Can't check base class access without recorded paths");
@@ -105,7 +104,7 @@ const CXXBaseSpecifier *Sema::FindInaccessibleBase(
 
 /// CheckBaseClassAccess - Check that a derived class can access its base class
 /// and report an error if it can't. [class.access.base]
-bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base, 
+bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base,
                                 unsigned InaccessibleBaseID,
                                 BasePaths &Paths, SourceLocation AccessLoc,
                                 DeclarationName Name) {
@@ -116,7 +115,7 @@ bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base,
                                                Derived, Base, Paths);
 
   if (InaccessibleBase) {
-    Diag(AccessLoc, InaccessibleBaseID) 
+    Diag(AccessLoc, InaccessibleBaseID)
       << Derived << Base << Name;
 
     AccessSpecifier AS = InaccessibleBase->getAccessSpecifierAsWritten();

@@ -18,7 +18,7 @@ int main ()
   foo1(1, 0) ; // expected-warning {{missing sentinel in function call}}
   foo5(1, NULL, 2);  // OK
   foo5(1,2,NULL, 1); // OK
-  foo5(1, NULL, 2, 1);	// expected-warning {{missing sentinel in function call}}
+  foo5(1, NULL, 2, 1); // expected-warning {{missing sentinel in function call}}
 
   foo6(1,2,3,4,5,6,7); // expected-warning {{missing sentinel in function call}}
   foo6(1,NULL,3,4,5,6,7); // OK

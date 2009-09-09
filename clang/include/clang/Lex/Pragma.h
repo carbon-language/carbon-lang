@@ -37,10 +37,10 @@ class PragmaHandler {
 public:
   PragmaHandler(const IdentifierInfo *name) : Name(name) {}
   virtual ~PragmaHandler();
-  
+
   const IdentifierInfo *getName() const { return Name; }
   virtual void HandlePragma(Preprocessor &PP, Token &FirstToken) = 0;
-  
+
   /// getIfNamespace - If this is a namespace, return it.  This is equivalent to
   /// using a dynamic_cast, but doesn't require RTTI.
   virtual PragmaNamespace *getIfNamespace() { return 0; }
@@ -57,14 +57,14 @@ class PragmaNamespace : public PragmaHandler {
 public:
   PragmaNamespace(const IdentifierInfo *Name) : PragmaHandler(Name) {}
   virtual ~PragmaNamespace();
-  
+
   /// FindHandler - Check to see if there is already a handler for the
   /// specified name.  If not, return the handler for the null identifier if it
   /// exists, otherwise return null.  If IgnoreNull is true (the default) then
   /// the null handler isn't returned on failure to match.
   PragmaHandler *FindHandler(const IdentifierInfo *Name,
                              bool IgnoreNull = true) const;
-  
+
   /// AddPragma - Add a pragma to this namespace.
   ///
   void AddPragma(PragmaHandler *Handler) {
@@ -75,12 +75,12 @@ public:
   /// namespace.
   void RemovePragmaHandler(PragmaHandler *Handler);
 
-  bool IsEmpty() { 
-    return Handlers.empty(); 
+  bool IsEmpty() {
+    return Handlers.empty();
   }
 
   virtual void HandlePragma(Preprocessor &PP, Token &FirstToken);
-  
+
   virtual PragmaNamespace *getIfNamespace() { return this; }
 };
 

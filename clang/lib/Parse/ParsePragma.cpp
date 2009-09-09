@@ -37,7 +37,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
   IdentifierInfo *Name = 0;
   Action::OwningExprResult Alignment(Actions);
   SourceLocation LParenLoc = Tok.getLocation();
-  PP.Lex(Tok);  
+  PP.Lex(Tok);
   if (Tok.is(tok::numeric_constant)) {
     Alignment = Actions.ActOnNumericConstant(Tok);
     if (Alignment.isInvalid())
@@ -57,12 +57,12 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
       } else {
         PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_invalid_action);
         return;
-      }        
+      }
       PP.Lex(Tok);
-    
+
       if (Tok.is(tok::comma)) {
         PP.Lex(Tok);
-        
+
         if (Tok.is(tok::numeric_constant)) {
           Alignment = Actions.ActOnNumericConstant(Tok);
           if (Alignment.isInvalid())
@@ -72,15 +72,15 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
         } else if (Tok.is(tok::identifier)) {
           Name = Tok.getIdentifierInfo();
           PP.Lex(Tok);
-          
+
           if (Tok.is(tok::comma)) {
             PP.Lex(Tok);
-            
+
             if (Tok.isNot(tok::numeric_constant)) {
               PP.Diag(Tok.getLocation(), diag::warn_pragma_pack_malformed);
               return;
             }
-            
+
             Alignment = Actions.ActOnNumericConstant(Tok);
             if (Alignment.isInvalid())
               return;
@@ -115,7 +115,7 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP, Token &PackTok) {
 void PragmaUnusedHandler::HandlePragma(Preprocessor &PP, Token &UnusedTok) {
   // FIXME: Should we be expanding macros here? My guess is no.
   SourceLocation UnusedLoc = UnusedTok.getLocation();
-  
+
   // Lex the left '('.
   Token Tok;
   PP.Lex(Tok);
@@ -124,17 +124,17 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP, Token &UnusedTok) {
     return;
   }
   SourceLocation LParenLoc = Tok.getLocation();
-  
+
   // Lex the declaration reference(s).
   llvm::SmallVector<Token, 5> Identifiers;
   SourceLocation RParenLoc;
   bool LexID = true;
-  
+
   while (true) {
     PP.Lex(Tok);
-    
+
     if (LexID) {
-      if (Tok.is(tok::identifier)) {  
+      if (Tok.is(tok::identifier)) {
         Identifiers.push_back(Tok);
         LexID = false;
         continue;
@@ -144,18 +144,18 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP, Token &UnusedTok) {
       PP.Diag(Tok.getLocation(), diag::warn_pragma_unused_expected_var);
       return;
     }
-    
+
     // We are execting a ')' or a ','.
     if (Tok.is(tok::comma)) {
       LexID = true;
       continue;
     }
-    
+
     if (Tok.is(tok::r_paren)) {
       RParenLoc = Tok.getLocation();
       break;
     }
-    
+
     // Illegal token!
     PP.Diag(Tok.getLocation(), diag::warn_pragma_unused_expected_punc);
     return;
@@ -172,7 +172,7 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP, Token &UnusedTok) {
   assert(RParenLoc.isValid() && "Valid '#pragma unused' must have ')'");
   assert(!Identifiers.empty() && "Valid '#pragma unused' must have arguments");
 
-  // Perform the action to handle the pragma.    
+  // Perform the action to handle the pragma.
   Actions.ActOnPragmaUnused(Identifiers.data(), Identifiers.size(),
                             parser.CurScope, UnusedLoc, LParenLoc, RParenLoc);
 }
@@ -197,7 +197,7 @@ void PragmaWeakHandler::HandlePragma(Preprocessor &PP, Token &WeakTok) {
   if (Tok.is(tok::equal)) {
     PP.Lex(Tok);
     if (Tok.isNot(tok::identifier)) {
-      PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier) 
+      PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier)
           << "weak";
       return;
     }

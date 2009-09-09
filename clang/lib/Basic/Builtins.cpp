@@ -34,7 +34,7 @@ Builtin::Context::Context(const TargetInfo &Target) {
   // Get the target specific builtins from the target.
   TSRecords = 0;
   NumTSRecords = 0;
-  Target.getTargetBuiltins(TSRecords, NumTSRecords);  
+  Target.getTargetBuiltins(TSRecords, NumTSRecords);
 }
 
 /// InitializeBuiltins - Mark the identifiers for all the builtins with their
@@ -51,13 +51,13 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
   // Step #2: Register target-specific builtins.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
     if (!TSRecords[i].Suppressed &&
-        (!NoBuiltins || 
-         (TSRecords[i].Attributes && 
+        (!NoBuiltins ||
+         (TSRecords[i].Attributes &&
           !strchr(TSRecords[i].Attributes, 'f'))))
       Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
 }
 
-void 
+void
 Builtin::Context::GetBuiltinNames(llvm::SmallVectorImpl<const char *> &Names,
                                   bool NoBuiltins) {
   // Final all target-independent names
@@ -65,18 +65,18 @@ Builtin::Context::GetBuiltinNames(llvm::SmallVectorImpl<const char *> &Names,
     if (!BuiltinInfo[i].Suppressed &&
         (!NoBuiltins || !strchr(BuiltinInfo[i].Attributes, 'f')))
       Names.push_back(BuiltinInfo[i].Name);
-  
+
   // Find target-specific names.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
     if (!TSRecords[i].Suppressed &&
-        (!NoBuiltins || 
-         (TSRecords[i].Attributes && 
+        (!NoBuiltins ||
+         (TSRecords[i].Attributes &&
           !strchr(TSRecords[i].Attributes, 'f'))))
       Names.push_back(TSRecords[i].Name);
 }
 
-bool 
-Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx, 
+bool
+Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx,
                                bool &HasVAListArg) {
   const char *Printf = strpbrk(GetRecord(ID).Attributes, "pP");
   if (!Printf)

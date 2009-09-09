@@ -34,7 +34,7 @@ FixItRewriter::~FixItRewriter() {
   Diags.setClient(Client);
 }
 
-bool FixItRewriter::WriteFixedFile(const std::string &InFileName, 
+bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
                                    const std::string &OutFileName) {
   if (NumFailures > 0) {
     Diag(FullSourceLoc(), diag::warn_fixit_no_changes);
@@ -59,10 +59,10 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
     OutFile = new llvm::raw_fd_ostream(Path.c_str(), Err,
                                        llvm::raw_fd_ostream::F_Binary);
     OwnedStream.reset(OutFile);
-  }  
+  }
 
   FileID MainFileID = Rewrite.getSourceMgr().getMainFileID();
-  if (const RewriteBuffer *RewriteBuf = 
+  if (const RewriteBuffer *RewriteBuf =
         Rewrite.getRewriteBufferFor(MainFileID)) {
     *OutFile << std::string(RewriteBuf->begin(), RewriteBuf->end());
   } else {
@@ -99,7 +99,7 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
     // See if the location of the error is one that matches what the
     // user requested.
     bool AcceptableLocation = false;
-    const FileEntry *File 
+    const FileEntry *File
       = Rewrite.getSourceMgr().getFileEntryForID(
                                             Info.getLocation().getFileID());
     unsigned Line = Info.getLocation().getSpellingLineNumber();
@@ -129,14 +129,14 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
       break;
     }
 
-    if (Hint.InsertionLoc.isValid() && 
+    if (Hint.InsertionLoc.isValid() &&
         !Rewrite.isRewritable(Hint.InsertionLoc)) {
       CanRewrite = false;
       break;
     }
   }
 
-  if (!CanRewrite) { 
+  if (!CanRewrite) {
     if (Info.getNumCodeModificationHints() > 0)
       Diag(Info.getLocation(), diag::note_fixit_in_macro);
 
@@ -149,7 +149,7 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
   }
 
   bool Failed = false;
-  for (unsigned Idx = 0, Last = Info.getNumCodeModificationHints(); 
+  for (unsigned Idx = 0, Last = Info.getNumCodeModificationHints();
        Idx < Last; ++Idx) {
     const CodeModificationHint &Hint = Info.getCodeModificationHint(Idx);
     if (!Hint.RemoveRange.isValid()) {
@@ -158,15 +158,15 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
         Failed = true;
       continue;
     }
-    
+
     if (Hint.CodeToInsert.empty()) {
       // We're removing code.
       if (Rewrite.RemoveText(Hint.RemoveRange.getBegin(),
                              Rewrite.getRangeSize(Hint.RemoveRange)))
         Failed = true;
       continue;
-    } 
-      
+    }
+
     // We're replacing code.
     if (Rewrite.ReplaceText(Hint.RemoveRange.getBegin(),
                             Rewrite.getRangeSize(Hint.RemoveRange),
@@ -191,5 +191,5 @@ void FixItRewriter::Diag(FullSourceLoc Loc, unsigned DiagID) {
   Diags.setClient(Client);
   Diags.Clear();
   Diags.Report(Loc, DiagID);
-  Diags.setClient(this);  
+  Diags.setClient(this);
 }

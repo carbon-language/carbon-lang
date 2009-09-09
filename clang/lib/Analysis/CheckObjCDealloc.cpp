@@ -24,11 +24,11 @@
 
 using namespace clang;
 
-static bool scan_dealloc(Stmt* S, Selector Dealloc) {  
-  
+static bool scan_dealloc(Stmt* S, Selector Dealloc) {
+
   if (ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(S))
     if (ME->getSelector() == Dealloc)
-      if(ME->getReceiver())
+      if (ME->getReceiver())
         if (Expr* Receiver = ME->getReceiver()->IgnoreParenCasts())
           return isa<ObjCSuperExpr>(Receiver);
 
@@ -37,20 +37,20 @@ static bool scan_dealloc(Stmt* S, Selector Dealloc) {
   for (Stmt::child_iterator I = S->child_begin(), E= S->child_end(); I!=E; ++I)
     if (*I && scan_dealloc(*I, Dealloc))
       return true;
-  
+
   return false;
 }
 
-static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID, 
-                              const ObjCPropertyDecl* PD, 
-                              Selector Release, 
+static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
+                              const ObjCPropertyDecl* PD,
+                              Selector Release,
                               IdentifierInfo* SelfII,
-                              ASTContext& Ctx) {  
-  
+                              ASTContext& Ctx) {
+
   // [mMyIvar release]
   if (ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(S))
     if (ME->getSelector() == Release)
-      if(ME->getReceiver())
+      if (ME->getReceiver())
         if (Expr* Receiver = ME->getReceiver()->IgnoreParenCasts())
           if (ObjCIvarRefExpr* E = dyn_cast<ObjCIvarRefExpr>(Receiver))
             if (E->getDecl() == ID)
@@ -58,7 +58,7 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
 
   // [self setMyIvar:nil];
   if (ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(S))
-    if(ME->getReceiver())
+    if (ME->getReceiver())
       if (Expr* Receiver = ME->getReceiver()->IgnoreParenCasts())
         if (DeclRefExpr* E = dyn_cast<DeclRefExpr>(Receiver))
           if (E->getDecl()->getIdentifier() == SelfII)
@@ -66,19 +66,19 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
                 ME->getNumArgs() == 1 &&
                 ME->getArg(0)->isNullPointerConstant(Ctx))
               return true;
-  
+
   // self.myIvar = nil;
   if (BinaryOperator* BO = dyn_cast<BinaryOperator>(S))
     if (BO->isAssignmentOp())
-      if(ObjCPropertyRefExpr* PRE = 
+      if (ObjCPropertyRefExpr* PRE =
          dyn_cast<ObjCPropertyRefExpr>(BO->getLHS()->IgnoreParenCasts()))
-          if(PRE->getProperty() == PD)
-            if(BO->getRHS()->isNullPointerConstant(Ctx)) {
+          if (PRE->getProperty() == PD)
+            if (BO->getRHS()->isNullPointerConstant(Ctx)) {
               // This is only a 'release' if the property kind is not
               // 'assign'.
               return PD->getSetterKind() != ObjCPropertyDecl::Assign;;
             }
-  
+
   // Recurse to children.
   for (Stmt::child_iterator I = S->child_begin(), E= S->child_end(); I!=E; ++I)
     if (*I && scan_ivar_release(*I, ID, PD, Release, SelfII, Ctx))
@@ -91,39 +91,39 @@ void clang::CheckObjCDealloc(const ObjCImplementationDecl* D,
                              const LangOptions& LOpts, BugReporter& BR) {
 
   assert (LOpts.getGCMode() != LangOptions::GCOnly);
-  
+
   ASTContext& Ctx = BR.getContext();
   const ObjCInterfaceDecl* ID = D->getClassInterface();
-    
+
   // Does the class contain any ivars that are pointers (or id<...>)?
   // If not, skip the check entirely.
   // NOTE: This is motivated by PR 2517:
   //        http://llvm.org/bugs/show_bug.cgi?id=2517
-  
+
   bool containsPointerIvar = false;
-  
+
   for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(), E=ID->ivar_end();
        I!=E; ++I) {
-    
+
     ObjCIvarDecl* ID = *I;
     QualType T = ID->getType();
-    
+
     if (!T->isObjCObjectPointerType() ||
         ID->getAttr<IBOutletAttr>()) // Skip IBOutlets.
       continue;
-    
+
     containsPointerIvar = true;
     break;
   }
-  
+
   if (!containsPointerIvar)
     return;
-  
+
   // Determine if the class subclasses NSObject.
   IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
   IdentifierInfo* SenTestCaseII = &Ctx.Idents.get("SenTestCase");
 
-  
+
   for ( ; ID ; ID = ID->getSuperClass()) {
     IdentifierInfo *II = ID->getIdentifier();
 
@@ -137,118 +137,118 @@ void clang::CheckObjCDealloc(const ObjCImplementationDecl* D,
     if (II == SenTestCaseII)
       return;
   }
-    
+
   if (!ID)
     return;
-  
+
   // Get the "dealloc" selector.
   IdentifierInfo* II = &Ctx.Idents.get("dealloc");
-  Selector S = Ctx.Selectors.getSelector(0, &II);  
+  Selector S = Ctx.Selectors.getSelector(0, &II);
   ObjCMethodDecl* MD = 0;
-  
+
   // Scan the instance methods for "dealloc".
   for (ObjCImplementationDecl::instmeth_iterator I = D->instmeth_begin(),
        E = D->instmeth_end(); I!=E; ++I) {
-    
+
     if ((*I)->getSelector() == S) {
       MD = *I;
       break;
-    }    
+    }
   }
-  
+
   if (!MD) { // No dealloc found.
-    
-    const char* name = LOpts.getGCMode() == LangOptions::NonGC 
-                       ? "missing -dealloc" 
+
+    const char* name = LOpts.getGCMode() == LangOptions::NonGC
+                       ? "missing -dealloc"
                        : "missing -dealloc (Hybrid MM, non-GC)";
-    
+
     std::string buf;
     llvm::raw_string_ostream os(buf);
     os << "Objective-C class '" << D->getNameAsString()
        << "' lacks a 'dealloc' instance method";
-    
+
     BR.EmitBasicReport(name, os.str().c_str(), D->getLocStart());
     return;
   }
-  
+
   // dealloc found.  Scan for missing [super dealloc].
   if (MD->getBody() && !scan_dealloc(MD->getBody(), S)) {
-    
+
     const char* name = LOpts.getGCMode() == LangOptions::NonGC
                        ? "missing [super dealloc]"
                        : "missing [super dealloc] (Hybrid MM, non-GC)";
-    
+
     std::string buf;
     llvm::raw_string_ostream os(buf);
     os << "The 'dealloc' instance method in Objective-C class '"
        << D->getNameAsString()
        << "' does not send a 'dealloc' message to its super class"
            " (missing [super dealloc])";
-    
+
     BR.EmitBasicReport(name, os.str().c_str(), D->getLocStart());
     return;
-  }   
-  
+  }
+
   // Get the "release" selector.
   IdentifierInfo* RII = &Ctx.Idents.get("release");
-  Selector RS = Ctx.Selectors.getSelector(0, &RII);  
-  
+  Selector RS = Ctx.Selectors.getSelector(0, &RII);
+
   // Get the "self" identifier
   IdentifierInfo* SelfII = &Ctx.Idents.get("self");
-  
+
   // Scan for missing and extra releases of ivars used by implementations
   // of synthesized properties
   for (ObjCImplementationDecl::propimpl_iterator I = D->propimpl_begin(),
        E = D->propimpl_end(); I!=E; ++I) {
 
     // We can only check the synthesized properties
-    if((*I)->getPropertyImplementation() != ObjCPropertyImplDecl::Synthesize)
+    if ((*I)->getPropertyImplementation() != ObjCPropertyImplDecl::Synthesize)
       continue;
-    
+
     ObjCIvarDecl* ID = (*I)->getPropertyIvarDecl();
     if (!ID)
       continue;
-    
+
     QualType T = ID->getType();
     if (!T->isObjCObjectPointerType()) // Skip non-pointer ivars
       continue;
 
     const ObjCPropertyDecl* PD = (*I)->getPropertyDecl();
-    if(!PD)
+    if (!PD)
       continue;
-    
+
     // ivars cannot be set via read-only properties, so we'll skip them
-    if(PD->isReadOnly())
+    if (PD->isReadOnly())
        continue;
-              
+
     // ivar must be released if and only if the kind of setter was not 'assign'
     bool requiresRelease = PD->getSetterKind() != ObjCPropertyDecl::Assign;
-    if(scan_ivar_release(MD->getBody(), ID, PD, RS, SelfII, Ctx) 
+    if (scan_ivar_release(MD->getBody(), ID, PD, RS, SelfII, Ctx)
        != requiresRelease) {
       const char *name;
       const char* category = "Memory (Core Foundation/Objective-C)";
-      
+
       std::string buf;
       llvm::raw_string_ostream os(buf);
 
-      if(requiresRelease) {
+      if (requiresRelease) {
         name = LOpts.getGCMode() == LangOptions::NonGC
                ? "missing ivar release (leak)"
                : "missing ivar release (Hybrid MM, non-GC)";
-        
+
         os << "The '" << ID->getNameAsString()
            << "' instance variable was retained by a synthesized property but "
-              "wasn't released in 'dealloc'";        
+              "wasn't released in 'dealloc'";
       } else {
         name = LOpts.getGCMode() == LangOptions::NonGC
                ? "extra ivar release (use-after-release)"
                : "extra ivar release (Hybrid MM, non-GC)";
-        
+
         os << "The '" << ID->getNameAsString()
            << "' instance variable was not retained by a synthesized property "
               "but was released in 'dealloc'";
       }
-      
+
       BR.EmitBasicReport(name, category,
                          os.str().c_str(), (*I)->getLocation());
     }

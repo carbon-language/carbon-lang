@@ -95,7 +95,7 @@ bool Stmt::CollectingStats(bool enable) {
 
 void SwitchStmt::DoDestroy(ASTContext &Ctx) {
   // Destroy the SwitchCase statements in this switch. In the normal
-  // case, this loop will merely decrement the reference counts from 
+  // case, this loop will merely decrement the reference counts from
   // the Retain() calls in addSwitchCase();
   SwitchCase *SC = FirstCase;
   while (SC) {
@@ -103,7 +103,7 @@ void SwitchStmt::DoDestroy(ASTContext &Ctx) {
     SC->Destroy(Ctx);
     SC = Next;
   }
-  
+
   Stmt::DoDestroy(Ctx);
 }
 
@@ -187,7 +187,7 @@ std::string AsmStmt::getInputConstraint(unsigned i) const {
 
 
 void AsmStmt::setOutputsAndInputs(unsigned NumOutputs,
-                                  unsigned NumInputs, 
+                                  unsigned NumInputs,
                                   const std::string *Names,
                                   StringLiteral **Constraints,
                                   Stmt **Exprs) {
@@ -196,7 +196,7 @@ void AsmStmt::setOutputsAndInputs(unsigned NumOutputs,
   this->Names.clear();
   this->Names.insert(this->Names.end(), Names, Names + NumOutputs + NumInputs);
   this->Constraints.clear();
-  this->Constraints.insert(this->Constraints.end(), 
+  this->Constraints.insert(this->Constraints.end(),
                            Constraints, Constraints + NumOutputs + NumInputs);
   this->Exprs.clear();
   this->Exprs.insert(this->Exprs.end(), Exprs, Exprs + NumOutputs + NumInputs);
@@ -207,13 +207,13 @@ void AsmStmt::setOutputsAndInputs(unsigned NumOutputs,
 /// This returns -1 if the operand name is invalid.
 int AsmStmt::getNamedOperand(const std::string &SymbolicName) const {
   unsigned NumPlusOperands = 0;
-  
+
   // Check if this is an output operand.
   for (unsigned i = 0, e = getNumOutputs(); i != e; ++i) {
     if (getOutputName(i) == SymbolicName)
       return i;
   }
-  
+
   for (unsigned i = 0, e = getNumInputs(); i != e; ++i)
     if (getInputName(i) == SymbolicName)
       return getNumOutputs() + NumPlusOperands + i;
@@ -235,7 +235,7 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
   const char *StrStart = getAsmString()->getStrData();
   const char *StrEnd = StrStart + getAsmString()->getByteLength();
   const char *CurPtr = StrStart;
-  
+
   // "Simple" inline asms have no constraints or operands, just convert the asm
   // string to escape $'s.
   if (isSimple()) {
@@ -257,7 +257,7 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
   // CurStringPiece - The current string that we are building up as we scan the
   // asm string.
   std::string CurStringPiece;
-  
+
   while (1) {
     // Done with the string?
     if (CurPtr == StrEnd) {
@@ -265,7 +265,7 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
         Pieces.push_back(AsmStringPiece(CurStringPiece));
       return 0;
     }
-    
+
     char CurChar = *CurPtr++;
     if (CurChar == '$') {
       CurStringPiece += "$$";
@@ -274,48 +274,48 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
       CurStringPiece += CurChar;
       continue;
     }
-    
+
     // Escaped "%" character in asm string.
     if (CurPtr == StrEnd) {
       // % at end of string is invalid (no escape).
       DiagOffs = CurPtr-StrStart-1;
       return diag::err_asm_invalid_escape;
     }
-    
+
     char EscapedChar = *CurPtr++;
     if (EscapedChar == '%') {  // %% -> %
       // Escaped percentage sign.
       CurStringPiece += '%';
       continue;
     }
-    
+
     if (EscapedChar == '=') {  // %= -> Generate an unique ID.
       CurStringPiece += "${:uid}";
       continue;
     }
-    
+
     // Otherwise, we have an operand.  If we have accumulated a string so far,
     // add it to the Pieces list.
     if (!CurStringPiece.empty()) {
       Pieces.push_back(AsmStringPiece(CurStringPiece));
       CurStringPiece.clear();
     }
-    
+
     // Handle %x4 and %x[foo] by capturing x as the modifier character.
     char Modifier = '\0';
     if (isalpha(EscapedChar)) {
       Modifier = EscapedChar;
       EscapedChar = *CurPtr++;
     }
-    
+
     if (isdigit(EscapedChar)) {
       // %n - Assembler operand n
       unsigned N = 0;
-      
+
       --CurPtr;
       while (CurPtr != StrEnd && isdigit(*CurPtr))
         N = N*10 + ((*CurPtr++)-'0');
-      
+
       unsigned NumOperands =
         getNumOutputs() + getNumPlusOperands() + getNumInputs();
       if (N >= NumOperands) {
@@ -326,20 +326,20 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
       Pieces.push_back(AsmStringPiece(N, Modifier));
       continue;
     }
-    
+
     // Handle %[foo], a symbolic operand reference.
     if (EscapedChar == '[') {
       DiagOffs = CurPtr-StrStart-1;
-      
+
       // Find the ']'.
       const char *NameEnd = (const char*)memchr(CurPtr, ']', StrEnd-CurPtr);
       if (NameEnd == 0)
         return diag::err_asm_unterminated_symbolic_operand_name;
       if (NameEnd == CurPtr)
         return diag::err_asm_empty_symbolic_operand_name;
-      
+
       std::string SymbolicName(CurPtr, NameEnd);
-      
+
       int N = getNamedOperand(SymbolicName);
       if (N == -1) {
         // Verify that an operand with that name exists.
@@ -347,11 +347,11 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
         return diag::err_asm_unknown_symbolic_operand_name;
       }
       Pieces.push_back(AsmStringPiece(N, Modifier));
-      
+
       CurPtr = NameEnd+1;
       continue;
     }
-    
+
     DiagOffs = CurPtr-StrStart-1;
     return diag::err_asm_invalid_escape;
   }
@@ -509,7 +509,7 @@ Stmt::child_iterator ReturnStmt::child_end() {
 }
 
 // AsmStmt
-Stmt::child_iterator AsmStmt::child_begin() { 
+Stmt::child_iterator AsmStmt::child_begin() {
   return Exprs.empty() ? 0 : &Exprs[0];
 }
 Stmt::child_iterator AsmStmt::child_end() {

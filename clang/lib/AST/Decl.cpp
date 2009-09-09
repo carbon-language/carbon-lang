@@ -45,7 +45,7 @@ TypeLoc DeclaratorInfo::getTypeLoc() const {
 //===----------------------------------------------------------------------===//
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
- 
+
 
 TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
   return new (C) TranslationUnitDecl(C);
@@ -59,7 +59,7 @@ NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
 void NamespaceDecl::Destroy(ASTContext& C) {
   // NamespaceDecl uses "NextDeclarator" to chain namespace declarations
   // together. They are all top-level Decls.
-  
+
   this->~NamespaceDecl();
   C.Deallocate((void *)this);
 }
@@ -75,9 +75,9 @@ const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
   case VarDecl::None:          break;
   case VarDecl::Auto:          return "auto"; break;
   case VarDecl::Extern:        return "extern"; break;
-  case VarDecl::PrivateExtern: return "__private_extern__"; break; 
+  case VarDecl::PrivateExtern: return "__private_extern__"; break;
   case VarDecl::Register:      return "register"; break;
-  case VarDecl::Static:        return "static"; break; 
+  case VarDecl::Static:        return "static"; break;
   }
 
   assert(0 && "Invalid storage class");
@@ -92,13 +92,13 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 QualType ParmVarDecl::getOriginalType() const {
-  if (const OriginalParmVarDecl *PVD = 
+  if (const OriginalParmVarDecl *PVD =
       dyn_cast<OriginalParmVarDecl>(this))
     return PVD->OriginalType;
   return getType();
 }
 
-void VarDecl::setInit(ASTContext &C, Expr *I) { 
+void VarDecl::setInit(ASTContext &C, Expr *I) {
     if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>()) {
       Eval->~EvaluatedStmt();
       C.Deallocate(Eval);
@@ -109,11 +109,11 @@ void VarDecl::setInit(ASTContext &C, Expr *I) {
 
 bool VarDecl::isExternC(ASTContext &Context) const {
   if (!Context.getLangOptions().CPlusPlus)
-    return (getDeclContext()->isTranslationUnit() && 
+    return (getDeclContext()->isTranslationUnit() &&
             getStorageClass() != Static) ||
       (getDeclContext()->isFunctionOrMethod() && hasExternalStorage());
 
-  for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit(); 
+  for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit();
        DC = DC->getParent()) {
     if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
       if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
@@ -138,12 +138,12 @@ OriginalParmVarDecl *OriginalParmVarDecl::Create(
 }
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
-                                   SourceLocation L, 
+                                   SourceLocation L,
                                    DeclarationName N, QualType T,
                                    DeclaratorInfo *DInfo,
-                                   StorageClass S, bool isInline, 
+                                   StorageClass S, bool isInline,
                                    bool hasWrittenPrototype) {
-  FunctionDecl *New 
+  FunctionDecl *New
     = new (C) FunctionDecl(Function, DC, L, N, T, DInfo, S, isInline);
   New->HasWrittenPrototype = hasWrittenPrototype;
   return New;
@@ -162,7 +162,7 @@ FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
 bool FieldDecl::isAnonymousStructOrUnion() const {
   if (!isImplicit() || getDeclName())
     return false;
-  
+
   if (const RecordType *Record = getType()->getAs<RecordType>())
     return Record->getDecl()->isAnonymousStructOrUnion();
 
@@ -233,7 +233,7 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
       // scope class/struct/union. How do we handle this case?
       break;
 
-    if (const ClassTemplateSpecializationDecl *Spec 
+    if (const ClassTemplateSpecializationDecl *Spec
           = dyn_cast<ClassTemplateSpecializationDecl>(Ctx)) {
       const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
       std::string TemplateArgsStr
@@ -271,7 +271,7 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
     return cast<UsingDirectiveDecl>(this)->getNominatedNamespace() ==
            cast<UsingDirectiveDecl>(OldD)->getNominatedNamespace();
   }
-           
+
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(this))
     // For function declarations, we keep track of redeclarations.
     return FD->getPreviousDeclaration() == OldD;
@@ -283,11 +283,11 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
           = dyn_cast<FunctionTemplateDecl>(OldD))
       return FunctionTemplate->getTemplatedDecl()
                ->declarationReplaces(OldFunctionTemplate->getTemplatedDecl());
-  
+
   // For method declarations, we keep track of redeclarations.
   if (isa<ObjCMethodDecl>(this))
     return false;
-    
+
   // For non-function declarations, if the declarations are of the
   // same kind then this must be a redeclaration, or semantic analysis
   // would not have given us the new declaration.
@@ -444,11 +444,11 @@ bool FunctionDecl::isExternC(ASTContext &Context) const {
   if (!Context.getLangOptions().CPlusPlus)
     return getStorageClass() != Static && !getAttr<OverloadableAttr>();
 
-  for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit(); 
+  for (const DeclContext *DC = getDeclContext(); !DC->isTranslationUnit();
        DC = DC->getParent()) {
     if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
       if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
-        return getStorageClass() != Static && 
+        return getStorageClass() != Static &&
                !getAttr<OverloadableAttr>();
 
       break;
@@ -465,7 +465,7 @@ bool FunctionDecl::isGlobal() const {
   if (getStorageClass() == Static)
     return false;
 
-  for (const DeclContext *DC = getDeclContext(); 
+  for (const DeclContext *DC = getDeclContext();
        DC->isNamespace();
        DC = DC->getParent()) {
     if (const NamespaceDecl *Namespace = cast<NamespaceDecl>(DC)) {
@@ -485,7 +485,7 @@ bool FunctionDecl::isGlobal() const {
 /// declared at translation scope or within an extern "C" block and
 /// its name matches with the name of a builtin. The returned value
 /// will be 0 for functions that do not correspond to a builtin, a
-/// value of type \c Builtin::ID if in the target-independent range 
+/// value of type \c Builtin::ID if in the target-independent range
 /// \c [1,Builtin::First), or a target-specific builtin value.
 unsigned FunctionDecl::getBuiltinID(ASTContext &Context) const {
   if (!getIdentifier() || !getIdentifier()->getBuiltinID())
@@ -512,7 +512,7 @@ unsigned FunctionDecl::getBuiltinID(ASTContext &Context) const {
   // If the function is in an extern "C" linkage specification and is
   // not marked "overloadable", it's the real function.
   if (isa<LinkageSpecDecl>(getDeclContext()) &&
-      cast<LinkageSpecDecl>(getDeclContext())->getLanguage() 
+      cast<LinkageSpecDecl>(getDeclContext())->getLanguage()
         == LinkageSpecDecl::lang_c &&
       !getAttr<OverloadableAttr>())
     return BuiltinID;
@@ -530,14 +530,14 @@ unsigned FunctionDecl::getNumParams() const {
   if (isa<FunctionNoProtoType>(FT))
     return 0;
   return cast<FunctionProtoType>(FT)->getNumArgs();
-  
+
 }
 
 void FunctionDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
                              unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
   assert(NumParams == getNumParams() && "Parameter count mismatch!");
-  
+
   // Zero params -> null pointer.
   if (NumParams) {
     void *Mem = C.Allocate(sizeof(ParmVarDecl*)*NumParams);
@@ -586,12 +586,12 @@ bool FunctionDecl::isExternGNUInline(ASTContext &Context) const {
   return false;
 }
 
-void 
+void
 FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
   redeclarable_base::setPreviousDeclaration(PrevDecl);
 
   if (FunctionTemplateDecl *FunTmpl = getDescribedFunctionTemplate()) {
-    FunctionTemplateDecl *PrevFunTmpl 
+    FunctionTemplateDecl *PrevFunTmpl
       = PrevDecl? PrevDecl->getDescribedFunctionTemplate() : 0;
     assert((!PrevDecl || PrevFunTmpl) && "Function/function template mismatch");
     FunTmpl->setPreviousDeclaration(PrevFunTmpl);
@@ -612,7 +612,7 @@ OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
 }
 
 FunctionTemplateDecl *FunctionDecl::getPrimaryTemplate() const {
-  if (FunctionTemplateSpecializationInfo *Info 
+  if (FunctionTemplateSpecializationInfo *Info
         = TemplateOrSpecialization
             .dyn_cast<FunctionTemplateSpecializationInfo*>()) {
     return Info->Template.getPointer();
@@ -622,7 +622,7 @@ FunctionTemplateDecl *FunctionDecl::getPrimaryTemplate() const {
 
 const TemplateArgumentList *
 FunctionDecl::getTemplateSpecializationArgs() const {
-  if (FunctionTemplateSpecializationInfo *Info 
+  if (FunctionTemplateSpecializationInfo *Info
       = TemplateOrSpecialization
       .dyn_cast<FunctionTemplateSpecializationInfo*>()) {
     return Info->TemplateArguments;
@@ -630,53 +630,53 @@ FunctionDecl::getTemplateSpecializationArgs() const {
   return 0;
 }
 
-void 
+void
 FunctionDecl::setFunctionTemplateSpecialization(ASTContext &Context,
                                                 FunctionTemplateDecl *Template,
                                      const TemplateArgumentList *TemplateArgs,
                                                 void *InsertPos) {
-  FunctionTemplateSpecializationInfo *Info 
+  FunctionTemplateSpecializationInfo *Info
     = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
   if (!Info)
     Info = new (Context) FunctionTemplateSpecializationInfo;
-  
+
   Info->Function = this;
   Info->Template.setPointer(Template);
   Info->Template.setInt(TSK_ImplicitInstantiation - 1);
   Info->TemplateArguments = TemplateArgs;
   TemplateOrSpecialization = Info;
-  
+
   // Insert this function template specialization into the set of known
   // function template specialiations.
   Template->getSpecializations().InsertNode(Info, InsertPos);
 }
 
 TemplateSpecializationKind FunctionDecl::getTemplateSpecializationKind() const {
-  // For a function template specialization, query the specialization 
+  // For a function template specialization, query the specialization
   // information object.
-  FunctionTemplateSpecializationInfo *Info 
+  FunctionTemplateSpecializationInfo *Info
     = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
   if (Info)
     return Info->getTemplateSpecializationKind();
-  
+
   if (!getInstantiatedFromMemberFunction())
     return TSK_Undeclared;
-  
+
   // Find the class template specialization corresponding to this instantiation
   // of a member function.
   const DeclContext *Parent = getDeclContext();
   while (Parent && !isa<ClassTemplateSpecializationDecl>(Parent))
     Parent = Parent->getParent();
-  
+
   if (!Parent)
     return TSK_Undeclared;
 
   return cast<ClassTemplateSpecializationDecl>(Parent)->getSpecializationKind();
 }
 
-void 
+void
 FunctionDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
-  FunctionTemplateSpecializationInfo *Info 
+  FunctionTemplateSpecializationInfo *Info
     = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
   assert(Info && "Not a function template specialization");
   Info->setTemplateSpecializationKind(TSK);
@@ -714,12 +714,12 @@ void TagDecl::completeDefinition() {
 TagDecl* TagDecl::getDefinition(ASTContext& C) const {
   if (isDefinition())
     return const_cast<TagDecl *>(this);
-  
-  for (redecl_iterator R = redecls_begin(), REnd = redecls_end(); 
+
+  for (redecl_iterator R = redecls_begin(), REnd = redecls_end();
        R != REnd; ++R)
     if (R->isDefinition())
       return *R;
-  
+
   return 0;
 }
 
@@ -750,7 +750,7 @@ RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
 RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
                                SourceLocation TKL, RecordDecl* PrevDecl) {
-  
+
   RecordDecl* R = new (C) RecordDecl(Record, TK, DC, L, Id, PrevDecl, TKL);
   C.getTypeDeclType(R, PrevDecl);
   return R;
@@ -764,7 +764,7 @@ void RecordDecl::Destroy(ASTContext& C) {
 }
 
 bool RecordDecl::isInjectedClassName() const {
-  return isImplicit() && getDeclName() && getDeclContext()->isRecord() && 
+  return isImplicit() && getDeclName() && getDeclContext()->isRecord() &&
     cast<RecordDecl>(getDeclContext())->getDeclName() == getDeclName();
 }
 
@@ -788,15 +788,15 @@ void BlockDecl::Destroy(ASTContext& C) {
 
   for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
     (*I)->Destroy(C);
-  
-  C.Deallocate(ParamInfo);    
+
+  C.Deallocate(ParamInfo);
   Decl::Destroy(C);
 }
 
 void BlockDecl::setParams(ASTContext& C, ParmVarDecl **NewParamInfo,
                           unsigned NParms) {
   assert(ParamInfo == 0 && "Already has param info!");
-  
+
   // Zero params -> null pointer.
   if (NParms) {
     NumParams = NParms;

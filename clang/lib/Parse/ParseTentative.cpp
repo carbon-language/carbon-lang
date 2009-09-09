@@ -270,7 +270,7 @@ bool Parser::isCXXConditionDeclaration() {
   return TPR == TPResult::True();
 }
 
-  /// \brief Determine whether the next set of tokens contains a type-id. 
+  /// \brief Determine whether the next set of tokens contains a type-id.
   ///
   /// The context parameter states what context we're parsing right
   /// now, which affects how this routine copes with the token
@@ -288,7 +288,7 @@ bool Parser::isCXXConditionDeclaration() {
   ///   type-specifier-seq abstract-declarator[opt]
   ///
 bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
-  
+
   isAmbiguous = false;
 
   // C++ 8.2p2:
@@ -601,14 +601,14 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
       if (NextToken().is(tok::kw_new) ||    // ::new
           NextToken().is(tok::kw_delete))   // ::delete
         return TPResult::False();
-      
+
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
       return isCXXDeclarationSpecifier();
     // Otherwise, not a typename.
     return TPResult::False();
-      
+
     // decl-specifier:
     //   storage-class-specifier
     //   type-specifier
@@ -654,7 +654,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw__Complex:
   case tok::kw___attribute:
     return TPResult::True();
-    
+
     // Microsoft
   case tok::kw___declspec:
   case tok::kw___cdecl:
@@ -758,7 +758,7 @@ Parser::TPResult Parser::TryParseDeclarationSpecifier() {
     TryParseTypeofSpecifier();
   else
     ConsumeToken();
-  
+
   assert(Tok.is(tok::l_paren) && "Expected '('!");
   return TPResult::Ambiguous();
 }
@@ -880,7 +880,7 @@ Parser::TPResult Parser::TryParseParameterDeclarationClause() {
 /// If TryParseFunctionDeclarator fully parsed the function declarator, it will
 /// return TPResult::Ambiguous(), otherwise it will return either False() or
 /// Error().
-/// 
+///
 /// '(' parameter-declaration-clause ')' cv-qualifier-seq[opt]
 ///         exception-specification[opt]
 ///

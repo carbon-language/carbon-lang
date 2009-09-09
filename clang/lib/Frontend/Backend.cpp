@@ -47,9 +47,9 @@ namespace {
 
     Timer LLVMIRGeneration;
     Timer CodeGenerationTime;
-    
+
     llvm::OwningPtr<CodeGenerator> Gen;
-    
+
     llvm::Module *TheModule;
     llvm::TargetData *TheTargetData;
 
@@ -72,13 +72,13 @@ namespace {
     bool AddEmitPasses(std::string &Error);
 
     void EmitAssembly();
-    
-  public:  
-    BackendConsumer(BackendAction action, Diagnostic &Diags, 
+
+  public:
+    BackendConsumer(BackendAction action, Diagnostic &Diags,
                     const LangOptions &langopts, const CompileOptions &compopts,
                     const std::string &infile, llvm::raw_ostream* OS,
                     LLVMContext& C) :
-      Action(action), 
+      Action(action),
       CompileOpts(compopts),
       AsmOutStream(OS),
       LLVMIRGeneration("LLVM IR Generation Time"),
@@ -86,11 +86,11 @@ namespace {
       Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)),
       TheModule(0), TheTargetData(0), ModuleProvider(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {
-      
+
       if (AsmOutStream)
         FormattedOutStream.setStream(*AsmOutStream,
                                      formatted_raw_ostream::PRESERVE_STREAM);
-        
+
       // Enable -time-passes if -ftime-report is enabled.
       llvm::TimePassesIsEnabled = CompileOpts.TimePasses;
     }
@@ -105,25 +105,25 @@ namespace {
 
     virtual void Initialize(ASTContext &Ctx) {
       Context = &Ctx;
-      
+
       if (CompileOpts.TimePasses)
         LLVMIRGeneration.startTimer();
-      
+
       Gen->Initialize(Ctx);
 
       TheModule = Gen->GetModule();
       ModuleProvider = new ExistingModuleProvider(TheModule);
       TheTargetData = new llvm::TargetData(Ctx.Target.getTargetDescription());
-      
+
       if (CompileOpts.TimePasses)
         LLVMIRGeneration.stopTimer();
     }
-    
+
     virtual void HandleTopLevelDecl(DeclGroupRef D) {
       PrettyStackTraceDecl CrashInfo(*D.begin(), SourceLocation(),
                                      Context->getSourceManager(),
                                      "LLVM IR generation of declaration");
-      
+
       if (CompileOpts.TimePasses)
         LLVMIRGeneration.startTimer();
 
@@ -132,7 +132,7 @@ namespace {
       if (CompileOpts.TimePasses)
         LLVMIRGeneration.stopTimer();
     }
-    
+
     virtual void HandleTranslationUnit(ASTContext &C) {
       {
         PrettyStackTraceString CrashInfo("Per-file LLVM IR generation");
@@ -147,12 +147,12 @@ namespace {
 
       // EmitAssembly times and registers crash info itself.
       EmitAssembly();
-      
+
       // Force a flush here in case we never get released.
       if (AsmOutStream)
         FormattedOutStream.flush();
     }
-    
+
     virtual void HandleTagDeclDefinition(TagDecl *D) {
       PrettyStackTraceDecl CrashInfo(D, SourceLocation(),
                                      Context->getSourceManager(),
@@ -163,7 +163,7 @@ namespace {
     virtual void CompleteTentativeDefinition(VarDecl *D) {
       Gen->CompleteTentativeDefinition(D);
     }
-  };  
+  };
 }
 
 FunctionPassManager *BackendConsumer::getCodeGenPasses() const {
@@ -216,18 +216,18 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     if (CompileOpts.CPU.size() || CompileOpts.Features.size()) {
       SubtargetFeatures Features;
       Features.setCPU(CompileOpts.CPU);
-      for (std::vector<std::string>::iterator 
+      for (std::vector<std::string>::iterator
              it = CompileOpts.Features.begin(),
              ie = CompileOpts.Features.end(); it != ie; ++it)
         Features.AddFeature(*it);
       FeaturesStr = Features.getString();
     }
     TargetMachine *TM = TheTarget->createTargetMachine(Triple, FeaturesStr);
-    
+
     // Set register scheduler & allocation policy.
     RegisterScheduler::setDefault(createDefaultScheduler);
-    RegisterRegAlloc::setDefault(Fast ? createLocalRegisterAllocator : 
-                                 createLinearScanRegisterAllocator);  
+    RegisterRegAlloc::setDefault(Fast ? createLocalRegisterAllocator :
+                                 createLinearScanRegisterAllocator);
 
     // From llvm-gcc:
     // If there are passes we have to run on the entire module, we do codegen
@@ -254,7 +254,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     case FileModel::AsmFile:
       break;
     }
-    
+
     if (TM->addPassesToEmitFileFinish(*CodeGenPasses, (MachineCodeEmitter *)0,
                                       OptLevel)) {
       Error = "Unable to interface with target machine!\n";
@@ -292,8 +292,8 @@ void BackendConsumer::CreatePasses() {
 
   // For now we always create per module passes.
   PassManager *PM = getPerModulePasses();
-  llvm::createStandardModulePasses(PM, CompileOpts.OptimizationLevel, 
-                                   CompileOpts.OptimizeSize, 
+  llvm::createStandardModulePasses(PM, CompileOpts.OptimizationLevel,
+                                   CompileOpts.OptimizeSize,
                                    CompileOpts.UnitAtATime,
                                    CompileOpts.UnrollLoops,
                                    CompileOpts.SimplifyLibCalls,
@@ -302,12 +302,12 @@ void BackendConsumer::CreatePasses() {
 }
 
 /// EmitAssembly - Handle interaction with LLVM backend to generate
-/// actual machine code. 
+/// actual machine code.
 void BackendConsumer::EmitAssembly() {
   // Silently ignore if we weren't initialized for some reason.
   if (!TheModule || !TheTargetData)
     return;
-  
+
   TimeRegion Region(CompileOpts.TimePasses ? &CodeGenerationTime : 0);
 
   // Make sure IR generation is happy with the module. This is
@@ -337,19 +337,19 @@ void BackendConsumer::EmitAssembly() {
 
   if (PerFunctionPasses) {
     PrettyStackTraceString CrashInfo("Per-function optimization");
-    
+
     PerFunctionPasses->doInitialization();
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
       if (!I->isDeclaration())
         PerFunctionPasses->run(*I);
     PerFunctionPasses->doFinalization();
   }
-  
+
   if (PerModulePasses) {
     PrettyStackTraceString CrashInfo("Per-module optimization passes");
     PerModulePasses->run(*M);
   }
-  
+
   if (CodeGenPasses) {
     PrettyStackTraceString CrashInfo("Code generation");
     CodeGenPasses->doInitialization();

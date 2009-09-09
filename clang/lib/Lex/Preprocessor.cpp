@@ -46,7 +46,7 @@ using namespace clang;
 PreprocessorFactory::~PreprocessorFactory() {}
 
 Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
-                           TargetInfo &target, SourceManager &SM, 
+                           TargetInfo &target, SourceManager &SM,
                            HeaderSearch &Headers,
                            IdentifierInfoLookup* IILookup)
   : Diags(&diags), Features(opts), Target(target),FileMgr(Headers.getFileMgr()),
@@ -54,20 +54,20 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
     BuiltinInfo(Target), CurPPLexer(0), CurDirLookup(0), Callbacks(0) {
   ScratchBuf = new ScratchBuffer(SourceMgr);
   CounterValue = 0; // __COUNTER__ starts at 0.
-      
+
   // Clear stats.
   NumDirectives = NumDefined = NumUndefined = NumPragma = 0;
   NumIf = NumElse = NumEndif = 0;
   NumEnteredSourceFiles = 0;
   NumMacroExpanded = NumFnMacroExpanded = NumBuiltinMacroExpanded = 0;
   NumFastMacroExpanded = NumTokenPaste = NumFastTokenPaste = 0;
-  MaxIncludeStackDepth = 0; 
+  MaxIncludeStackDepth = 0;
   NumSkipped = 0;
 
   // Default to discarding comments.
   KeepComments = false;
   KeepMacroComments = false;
-  
+
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
   InMacroArgs = false;
@@ -78,11 +78,11 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   // "Poison" __VA_ARGS__, which can only appear in the expansion of a macro.
   // This gets unpoisoned where it is allowed.
   (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
-  
+
   // Initialize the pragma handlers.
   PragmaHandlers = new PragmaNamespace(0);
   RegisterBuiltinPragmas();
-  
+
   // Initialize builtin macros like __LINE__ and friends.
   RegisterBuiltinMacros();
 }
@@ -106,11 +106,11 @@ Preprocessor::~Preprocessor() {
     I->second->Destroy(BP);
     I->first->setHasMacroDefinition(false);
   }
-  
+
   // Free any cached macro expanders.
   for (unsigned i = 0, e = NumCachedTokenLexers; i != e; ++i)
     delete TokenLexerCache[i];
-  
+
   // Release pragma information.
   delete PragmaHandlers;
 
@@ -128,9 +128,9 @@ void Preprocessor::setPTHManager(PTHManager* pm) {
 void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
   llvm::errs() << tok::getTokenName(Tok.getKind()) << " '"
                << getSpelling(Tok) << "'";
-  
+
   if (!DumpFlags) return;
-  
+
   llvm::errs() << "\t";
   if (Tok.isAtStartOfLine())
     llvm::errs() << " [StartOfLine]";
@@ -143,7 +143,7 @@ void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
     llvm::errs() << " [UnClean='" << std::string(Start, Start+Tok.getLength())
                  << "']";
   }
-  
+
   llvm::errs() << "\tLoc=<";
   DumpLocation(Tok.getLocation());
   llvm::errs() << ">";
@@ -201,10 +201,10 @@ std::string Preprocessor::getSpelling(const Token &Tok) const {
   const char* TokStart = SourceMgr.getCharacterData(Tok.getLocation());
   if (!Tok.needsCleaning())
     return std::string(TokStart, TokStart+Tok.getLength());
-  
+
   std::string Result;
   Result.reserve(Tok.getLength());
-  
+
   // Otherwise, hard case, relex the characters into the string.
   for (const char *Ptr = TokStart, *End = TokStart+Tok.getLength();
        Ptr != End; ) {
@@ -230,7 +230,7 @@ std::string Preprocessor::getSpelling(const Token &Tok) const {
 unsigned Preprocessor::getSpelling(const Token &Tok,
                                    const char *&Buffer) const {
   assert((int)Tok.getLength() >= 0 && "Token character range is bogus!");
-  
+
   // If this token is an identifier, just return the string from the identifier
   // table, which is very quick.
   if (const IdentifierInfo *II = Tok.getIdentifierInfo()) {
@@ -240,10 +240,10 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
 
   // Otherwise, compute the start of the token in the input lexer buffer.
   const char *TokStart = 0;
-  
+
   if (Tok.isLiteral())
     TokStart = Tok.getLiteralData();
-  
+
   if (TokStart == 0)
     TokStart = SourceMgr.getCharacterData(Tok.getLocation());
 
@@ -252,7 +252,7 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
     Buffer = TokStart;
     return Tok.getLength();
   }
-  
+
   // Otherwise, hard case, relex the characters into the string.
   char *OutBuf = const_cast<char*>(Buffer);
   for (const char *Ptr = TokStart, *End = TokStart+Tok.getLength();
@@ -263,7 +263,7 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
   }
   assert(unsigned(OutBuf-Buffer) != Tok.getLength() &&
          "NeedsCleaning flag set on something that didn't need cleaning!");
-  
+
   return OutBuf-Buffer;
 }
 
@@ -273,15 +273,15 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
 void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
                                 SourceLocation InstantiationLoc) {
   Tok.setLength(Len);
-  
+
   const char *DestPtr;
   SourceLocation Loc = ScratchBuf->getToken(Buf, Len, DestPtr);
-  
+
   if (InstantiationLoc.isValid())
     Loc = SourceMgr.createInstantiationLoc(Loc, InstantiationLoc,
                                            InstantiationLoc, Len);
   Tok.setLocation(Loc);
-  
+
   // If this is a literal token, set the pointer data.
   if (Tok.isLiteral())
     Tok.setLiteralData(DestPtr);
@@ -290,19 +290,19 @@ void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
 
 /// AdvanceToTokenCharacter - Given a location that specifies the start of a
 /// token, return a new location that specifies a character within the token.
-SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart, 
+SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
                                                      unsigned CharNo) {
   // Figure out how many physical characters away the specified instantiation
   // character is.  This needs to take into consideration newlines and
   // trigraphs.
   const char *TokPtr = SourceMgr.getCharacterData(TokStart);
-  
+
   // If they request the first char of the token, we're trivially done.
   if (CharNo == 0 && Lexer::isObviouslySimpleCharacter(*TokPtr))
     return TokStart;
-  
+
   unsigned PhysOffset = 0;
-  
+
   // The usual case is that tokens don't contain anything interesting.  Skip
   // over the uninteresting characters.  If a token only consists of simple
   // chars, this method is extremely fast.
@@ -311,7 +311,7 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
       return TokStart.getFileLocWithOffset(PhysOffset);
     ++TokPtr, --CharNo, ++PhysOffset;
   }
-  
+
   // If we have a character that may be a trigraph or escaped newline, use a
   // lexer to parse it correctly.
   for (; CharNo; --CharNo) {
@@ -320,14 +320,14 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
     TokPtr += Size;
     PhysOffset += Size;
   }
-  
+
   // Final detail: if we end up on an escaped newline, we want to return the
   // location of the actual byte of the token.  For example foo\<newline>bar
   // advanced by 3 should return the location of b, not of \\.  One compounding
   // detail of this is that the escape may be made by a trigraph.
   if (!Lexer::isObviouslySimpleCharacter(*TokPtr))
     PhysOffset = Lexer::SkipEscapedNewLines(TokPtr)-TokPtr;
-  
+
   return TokStart.getFileLocWithOffset(PhysOffset);
 }
 
@@ -364,33 +364,33 @@ void Preprocessor::EnterMainSourceFile() {
   // information) and predefined macros aren't guaranteed to be set properly.
   assert(NumEnteredSourceFiles == 0 && "Cannot reenter the main file!");
   FileID MainFileID = SourceMgr.getMainFileID();
-  
+
   // Enter the main file source buffer.
   EnterSourceFile(MainFileID, 0);
-  
+
   // Tell the header info that the main file was entered.  If the file is later
   // #imported, it won't be re-entered.
   if (const FileEntry *FE = SourceMgr.getFileEntryForID(MainFileID))
     HeaderInfo.IncrementIncludeCount(FE);
-    
+
   std::vector<char> PrologFile;
   PrologFile.reserve(4080);
-  
+
   // FIXME: Don't make a copy.
   PrologFile.insert(PrologFile.end(), Predefines.begin(), Predefines.end());
-  
+
   // Memory buffer must end with a null byte!
   PrologFile.push_back(0);
 
   // Now that we have emitted the predefined macros, #includes, etc into
   // PrologFile, preprocess it to populate the initial preprocessor state.
-  llvm::MemoryBuffer *SB = 
+  llvm::MemoryBuffer *SB =
     llvm::MemoryBuffer::getMemBufferCopy(&PrologFile.front(),&PrologFile.back(),
                                          "<built-in>");
   assert(SB && "Cannot fail to create predefined source buffer");
   FileID FID = SourceMgr.createFileIDForMemBuffer(SB);
   assert(!FID.isInvalid() && "Could not create FileID for predefines?");
-  
+
   // Start parsing the predefines.
   EnterSourceFile(FID, 0);
 }
@@ -406,7 +406,7 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier,
                                                    const char *BufPtr) {
   assert(Identifier.is(tok::identifier) && "Not an identifier!");
   assert(Identifier.getIdentifierInfo() == 0 && "Identinfo already exists!");
-  
+
   // Look up this token, see if it is a macro, or if it is a language keyword.
   IdentifierInfo *II;
   if (BufPtr && !Identifier.needsCleaning()) {
@@ -436,7 +436,7 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier,
 void Preprocessor::HandleIdentifier(Token &Identifier) {
   assert(Identifier.getIdentifierInfo() &&
          "Can't handle identifiers without identifier info!");
-  
+
   IdentifierInfo &II = *Identifier.getIdentifierInfo();
 
   // If this identifier was poisoned, and if it was not produced from a macro
@@ -447,7 +447,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
     else
       Diag(Identifier, diag::ext_pp_bad_vaargs_use);
   }
-  
+
   // If this is a macro to be expanded, do it.
   if (MacroInfo *MI = getMacroInfo(&II)) {
     if (!DisableMacroExpansion && !Identifier.isExpandDisabled()) {

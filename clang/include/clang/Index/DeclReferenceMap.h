@@ -24,27 +24,27 @@ namespace clang {
   class NamedDecl;
 
 namespace idx {
-  
+
 /// \brief Maps NamedDecls with the ASTLocations that reference them.
 ///
 /// References are mapped and retrieved using the canonical decls.
 class DeclReferenceMap {
 public:
   explicit DeclReferenceMap(ASTContext &Ctx);
-  
+
   typedef std::multimap<NamedDecl*, ASTLocation> MapTy;
   typedef pair_value_iterator<MapTy::iterator> astlocation_iterator;
 
   astlocation_iterator refs_begin(NamedDecl *D) const;
   astlocation_iterator refs_end(NamedDecl *D) const;
   bool refs_empty(NamedDecl *D) const;
-  
+
 private:
   mutable MapTy Map;
 };
 
 } // end idx namespace
-  
+
 } // end clang namespace
 
 #endif

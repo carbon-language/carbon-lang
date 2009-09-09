@@ -21,7 +21,7 @@
 namespace clang {
   class IdentifierInfo;
   class Action;
-  
+
 /// AttributeList - Represents GCC's __attribute__ declaration. There are
 /// 4 forms of this construct...they are:
 ///
@@ -47,7 +47,7 @@ public:
                 ActionBase::ExprTy **args, unsigned numargs,
                 AttributeList *Next, bool declspec = false);
   ~AttributeList();
-  
+
   enum Kind {              // Please keep this list alphabetized.
     AT_IBOutlet,          // Clang-specific.
     AT_address_space,
@@ -102,57 +102,57 @@ public:
     IgnoredAttribute,
     UnknownAttribute
   };
-  
+
   IdentifierInfo *getName() const { return AttrName; }
   SourceLocation getLoc() const { return AttrLoc; }
   IdentifierInfo *getParameterName() const { return ParmName; }
   bool isDeclspecAttribute() const { return DeclspecAttribute; }
-  
+
   Kind getKind() const { return getKind(getName()); }
   static Kind getKind(const IdentifierInfo *Name);
-  
+
   AttributeList *getNext() const { return Next; }
   void setNext(AttributeList *N) { Next = N; }
 
   /// getNumArgs - Return the number of actual arguments to this attribute.
   unsigned getNumArgs() const { return NumArgs; }
-  
+
   /// getArg - Return the specified argument.
   ActionBase::ExprTy *getArg(unsigned Arg) const {
     assert(Arg < NumArgs && "Arg access out of range!");
     return Args[Arg];
   }
-  
+
   class arg_iterator {
     ActionBase::ExprTy** X;
     unsigned Idx;
   public:
-    arg_iterator(ActionBase::ExprTy** x, unsigned idx) : X(x), Idx(idx) {}    
+    arg_iterator(ActionBase::ExprTy** x, unsigned idx) : X(x), Idx(idx) {}
 
     arg_iterator& operator++() {
       ++Idx;
       return *this;
     }
-    
+
     bool operator==(const arg_iterator& I) const {
       assert (X == I.X &&
               "compared arg_iterators are for different argument lists");
       return Idx == I.Idx;
     }
-    
+
     bool operator!=(const arg_iterator& I) const {
       return !operator==(I);
     }
-    
+
     ActionBase::ExprTy* operator*() const {
       return X[Idx];
     }
-    
+
     unsigned getArgNum() const {
       return Idx+1;
     }
   };
-  
+
   arg_iterator arg_begin() const {
     return arg_iterator(Args, 0);
   }

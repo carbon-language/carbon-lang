@@ -17,10 +17,10 @@
 #include "clang/AST/Type.h"
 
 namespace clang {
-  
+
 #define DISPATCH(CLASS) \
   return static_cast<ImplClass*>(this)->Visit ## CLASS(static_cast<CLASS*>(T))
-  
+
 template<typename ImplClass, typename RetTy=void>
 class TypeVisitor {
 public:
@@ -28,12 +28,12 @@ public:
     // Top switch stmt: dispatch to VisitFooStmt for each FooStmt.
     switch (T->getTypeClass()) {
     default: assert(0 && "Unknown type class!");
-#define ABSTRACT_TYPE(CLASS, PARENT) 
+#define ABSTRACT_TYPE(CLASS, PARENT)
 #define TYPE(CLASS, PARENT) case Type::CLASS: DISPATCH(CLASS##Type);
 #include "clang/AST/TypeNodes.def"
     }
   }
-    
+
   // If the implementation chooses not to implement a certain visit method, fall
   // back on superclass.
 #define TYPE(CLASS, PARENT) RetTy Visit##CLASS##Type(CLASS##Type *T) {       \

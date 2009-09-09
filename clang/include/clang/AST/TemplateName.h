@@ -61,7 +61,7 @@ class OverloadedFunctionDecl;
 /// only be understood in the context of
 class TemplateName {
   typedef llvm::PointerUnion4<TemplateDecl *, OverloadedFunctionDecl *,
-                              QualifiedTemplateName *, 
+                              QualifiedTemplateName *,
                               DependentTemplateName *> StorageType;
 
   StorageType Storage;
@@ -80,25 +80,25 @@ public:
 
   /// \brief Determine whether this template name is NULL.
   bool isNull() const { return Storage.isNull(); }
-  
+
   /// \brief Retrieve the the underlying template declaration that
   /// this template name refers to, if known.
   ///
   /// \returns The template declaration that this template name refers
   /// to, if any. If the template name does not refer to a specific
-  /// declaration because it is a dependent name, or if it refers to a 
+  /// declaration because it is a dependent name, or if it refers to a
   /// set of function templates, returns NULL.
   TemplateDecl *getAsTemplateDecl() const;
 
-  /// \brief Retrieve the the underlying, overloaded function template 
+  /// \brief Retrieve the the underlying, overloaded function template
   // declarations that this template name refers to, if known.
   ///
-  /// \returns The set of overloaded function templates that this template 
-  /// name refers to, if known. If the template name does not refer to a 
+  /// \returns The set of overloaded function templates that this template
+  /// name refers to, if known. If the template name does not refer to a
   /// specific set of function templates because it is a dependent name or
   /// refers to a single template, returns NULL.
   OverloadedFunctionDecl *getAsOverloadedFunctionDecl() const;
-  
+
   /// \brief Retrieve the underlying qualified template name
   /// structure, if any.
   QualifiedTemplateName *getAsQualifiedTemplateName() const {
@@ -137,8 +137,8 @@ public:
   void *getAsVoidPointer() const { return Storage.getOpaqueValue(); }
 
   /// \brief Build a template name from a void pointer.
-  static TemplateName getFromVoidPointer(void *Ptr) { 
-    return TemplateName(Ptr); 
+  static TemplateName getFromVoidPointer(void *Ptr) {
+    return TemplateName(Ptr);
   }
 };
 
@@ -171,14 +171,14 @@ class QualifiedTemplateName : public llvm::FoldingSetNode {
 
   QualifiedTemplateName(NestedNameSpecifier *NNS, bool TemplateKeyword,
                         TemplateDecl *Template)
-    : Qualifier(NNS, TemplateKeyword? 1 : 0), 
+    : Qualifier(NNS, TemplateKeyword? 1 : 0),
       Template(reinterpret_cast<NamedDecl *>(Template)) { }
 
   QualifiedTemplateName(NestedNameSpecifier *NNS, bool TemplateKeyword,
                         OverloadedFunctionDecl *Template)
-  : Qualifier(NNS, TemplateKeyword? 1 : 0), 
+  : Qualifier(NNS, TemplateKeyword? 1 : 0),
     Template(reinterpret_cast<NamedDecl *>(Template)) { }
-  
+
 public:
   /// \brief Return the nested name specifier that qualifies this name.
   NestedNameSpecifier *getQualifier() const { return Qualifier.getPointer(); }
@@ -190,22 +190,22 @@ public:
   /// \brief The template declaration or set of overloaded functions that
   /// that qualified name refers to.
   NamedDecl *getDecl() const { return Template; }
-  
+
   /// \brief The template declaration to which this qualified name
   /// refers, or NULL if this qualified name refers to a set of overloaded
   /// function templates.
   TemplateDecl *getTemplateDecl() const;
 
   /// \brief The set of overloaded function tempaltes to which this qualified
-  /// name refers, or NULL if this qualified name refers to a single 
+  /// name refers, or NULL if this qualified name refers to a single
   /// template declaration.
   OverloadedFunctionDecl *getOverloadedFunctionDecl() const;
-  
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getQualifier(), hasTemplateKeyword(), getDecl());
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, NestedNameSpecifier *NNS, 
+  static void Profile(llvm::FoldingSetNodeID &ID, NestedNameSpecifier *NNS,
                       bool TemplateKeyword, NamedDecl *Template) {
     ID.AddPointer(NNS);
     ID.AddBoolean(TemplateKeyword);
@@ -239,11 +239,11 @@ class DependentTemplateName : public llvm::FoldingSetNode {
 
   friend class ASTContext;
 
-  DependentTemplateName(NestedNameSpecifier *Qualifier, 
+  DependentTemplateName(NestedNameSpecifier *Qualifier,
                         const IdentifierInfo *Name)
     : Qualifier(Qualifier), Name(Name), CanonicalTemplateName(this) { }
 
-  DependentTemplateName(NestedNameSpecifier *Qualifier, 
+  DependentTemplateName(NestedNameSpecifier *Qualifier,
                         const IdentifierInfo *Name,
                         TemplateName Canon)
     : Qualifier(Qualifier), Name(Name), CanonicalTemplateName(Canon) { }
@@ -260,7 +260,7 @@ public:
     Profile(ID, getQualifier(), getName());
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, NestedNameSpecifier *NNS, 
+  static void Profile(llvm::FoldingSetNodeID &ID, NestedNameSpecifier *NNS,
                       const IdentifierInfo *Name) {
     ID.AddPointer(NNS);
     ID.AddPointer(Name);

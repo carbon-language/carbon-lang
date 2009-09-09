@@ -65,7 +65,7 @@ namespace clang {
     typedef uint32_t IdentID;
 
     typedef uint32_t SelectorID;
-    
+
     /// \brief Describes the various kinds of blocks that occur within
     /// a PCH file.
     enum BlockIDs {
@@ -106,7 +106,7 @@ namespace clang {
       /// TYPE_OFFSET block to determine the offset of that type's
       /// corresponding record within the TYPES_BLOCK_ID block.
       TYPE_OFFSET = 1,
-      
+
       /// \brief Record code for the offsets of each decl.
       ///
       /// The DECL_OFFSET constant describes the record that occurs
@@ -182,7 +182,7 @@ namespace clang {
       /// \brief Record code for the array of locally-scoped external
       /// declarations.
       LOCALLY_SCOPED_EXTERNAL_DECLS = 11,
-      
+
       /// \brief Record code for the table of offsets into the
       /// Objective-C method pool.
       SELECTOR_OFFSETS = 12,
@@ -215,7 +215,7 @@ namespace clang {
       /// \brief Record code for the original file that was used to
       /// generate the precompiled header.
       ORIGINAL_FILE_NAME = 19,
-      
+
       /// \brief Record code for the sorted array of source ranges where
       /// comments were encountered in the source code.
       COMMENT_RANGES = 20
@@ -243,7 +243,7 @@ namespace clang {
       /// ControllingMacro is optional.
       SM_HEADER_FILE_INFO = 6
     };
-    
+
     /// \brief Record types used within a preprocessor block.
     enum PreprocessorRecordTypes {
       // The macros in the PP section are a PP_MACRO_* instance followed by a
@@ -257,7 +257,7 @@ namespace clang {
       /// [PP_MACRO_FUNCTION_LIKE, <ObjectLikeStuff>, IsC99Varargs, IsGNUVarars,
       ///  NumArgs, ArgIdentInfoID* ]
       PP_MACRO_FUNCTION_LIKE = 2,
-      
+
       /// \brief Describes one token.
       /// [PP_TOKEN, SLoc, Length, IdentInfoID, Kind, Flags]
       PP_TOKEN = 3
@@ -333,7 +333,7 @@ namespace clang {
       /// \brief The ObjC 'id' type.
       PREDEF_TYPE_OBJC_ID       = 26,
       /// \brief The ObjC 'Class' type.
-      PREDEF_TYPE_OBJC_CLASS    = 27     
+      PREDEF_TYPE_OBJC_CLASS    = 27
     };
 
     /// \brief The number of predefined type IDs that are reserved for
@@ -627,9 +627,9 @@ namespace clang {
       EXPR_BLOCK,
       /// \brief A BlockDeclRef record.
       EXPR_BLOCK_DECL_REF,
-      
+
       // Objective-C
-      
+
       /// \brief An ObjCStringLiteral record.
       EXPR_OBJC_STRING_LITERAL,
       /// \brief An ObjCEncodeExpr record.
@@ -650,23 +650,23 @@ namespace clang {
       EXPR_OBJC_SUPER_EXPR,
       /// \brief An ObjCIsa Expr record.
       EXPR_OBJC_ISA,
-      
-      /// \brief An ObjCForCollectionStmt record.      
+
+      /// \brief An ObjCForCollectionStmt record.
       STMT_OBJC_FOR_COLLECTION,
-      /// \brief An ObjCAtCatchStmt record.      
+      /// \brief An ObjCAtCatchStmt record.
       STMT_OBJC_CATCH,
-      /// \brief An ObjCAtFinallyStmt record.      
+      /// \brief An ObjCAtFinallyStmt record.
       STMT_OBJC_FINALLY,
-      /// \brief An ObjCAtTryStmt record.      
+      /// \brief An ObjCAtTryStmt record.
       STMT_OBJC_AT_TRY,
-      /// \brief An ObjCAtSynchronizedStmt record.      
+      /// \brief An ObjCAtSynchronizedStmt record.
       STMT_OBJC_AT_SYNCHRONIZED,
-      /// \brief An ObjCAtThrowStmt record.      
+      /// \brief An ObjCAtThrowStmt record.
       STMT_OBJC_AT_THROW,
 
       // C++
 
-      /// \brief An CXXOperatorCallExpr record.      
+      /// \brief An CXXOperatorCallExpr record.
       EXPR_CXX_OPERATOR_CALL
     };
 

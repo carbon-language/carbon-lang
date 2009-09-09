@@ -26,7 +26,7 @@
 namespace clang {
 
 class LocationContext;
-    
+
 class ProgramPoint {
 public:
   enum Kind { BlockEdgeKind,
@@ -55,12 +55,12 @@ private:
   // context insensitive analysis.
   const LocationContext *L;
   const void *Tag;
-  
+
 protected:
-  ProgramPoint(const void* P, Kind k, const LocationContext *l, 
+  ProgramPoint(const void* P, Kind k, const LocationContext *l,
                const void *tag = 0)
     : Data(P, NULL), K(k), L(l), Tag(tag) {}
-    
+
   ProgramPoint(const void* P1, const void* P2, Kind k, const LocationContext *l,
                const void *tag = 0)
     : Data(P1, P2), K(k), L(l), Tag(tag) {}
@@ -69,8 +69,8 @@ protected:
   const void* getData1() const { return Data.first; }
   const void* getData2() const { return Data.second; }
   const void *getTag() const { return Tag; }
-    
-public:    
+
+public:
   Kind getKind() const { return K; }
 
   const LocationContext *getLocationContext() const { return L; }
@@ -81,7 +81,7 @@ public:
     Profile(ID);
     return ID.ComputeHash();
   }
-  
+
   static bool classof(const ProgramPoint*) { return true; }
 
   bool operator==(const ProgramPoint & RHS) const {
@@ -91,7 +91,7 @@ public:
   bool operator!=(const ProgramPoint& RHS) const {
     return K != RHS.K || Data != RHS.Data || L != RHS.L || Tag != RHS.Tag;
   }
-    
+
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) K);
     ID.AddPointer(Data.first);
@@ -100,17 +100,17 @@ public:
     ID.AddPointer(Tag);
   }
 };
-               
+
 class BlockEntrance : public ProgramPoint {
 public:
-  BlockEntrance(const CFGBlock* B, const LocationContext *L, 
+  BlockEntrance(const CFGBlock* B, const LocationContext *L,
                 const void *tag = 0)
     : ProgramPoint(B, BlockEntranceKind, L, tag) {}
-    
+
   CFGBlock* getBlock() const {
     return const_cast<CFGBlock*>(reinterpret_cast<const CFGBlock*>(getData1()));
   }
-  
+
   Stmt* getFirstStmt() const {
     const CFGBlock* B = getBlock();
     return B->empty() ? NULL : B->front();
@@ -123,9 +123,9 @@ public:
 
 class BlockExit : public ProgramPoint {
 public:
-  BlockExit(const CFGBlock* B, const LocationContext *L) 
+  BlockExit(const CFGBlock* B, const LocationContext *L)
     : ProgramPoint(B, BlockExitKind, L) {}
-  
+
   CFGBlock* getBlock() const {
     return const_cast<CFGBlock*>(reinterpret_cast<const CFGBlock*>(getData1()));
   }
@@ -134,41 +134,41 @@ public:
     const CFGBlock* B = getBlock();
     return B->empty() ? NULL : B->back();
   }
-  
+
   Stmt* getTerminator() const {
     return getBlock()->getTerminator();
   }
-    
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == BlockExitKind;
   }
 };
-  
+
 class StmtPoint : public ProgramPoint {
 public:
-  StmtPoint(const Stmt *S, const void *p2, Kind k, const LocationContext *L, 
+  StmtPoint(const Stmt *S, const void *p2, Kind k, const LocationContext *L,
             const void *tag)
     : ProgramPoint(S, p2, k, L, tag) {}
-  
+
   const Stmt *getStmt() const { return (const Stmt*) getData1(); }
-  
+
   template <typename T>
   const T* getStmtAs() const { return llvm::dyn_cast<T>(getStmt()); }
-  
+
   static bool classof(const ProgramPoint* Location) {
     unsigned k = Location->getKind();
     return k >= PreStmtKind && k <= MaxPostStmtKind;
   }
-};  
+};
 
-  
+
 class PreStmt : public StmtPoint {
 public:
-  PreStmt(const Stmt *S, const LocationContext *L, const void *tag, 
+  PreStmt(const Stmt *S, const LocationContext *L, const void *tag,
           const Stmt *SubStmt = 0)
     : StmtPoint(S, SubStmt, PreStmtKind, L, tag) {}
 
-  const Stmt *getSubStmt() const { return (const Stmt*) getData2(); }  
+  const Stmt *getSubStmt() const { return (const Stmt*) getData2(); }
 
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PreStmtKind;
@@ -183,7 +183,7 @@ protected:
   PostStmt(const Stmt* S, const void* data, Kind k, const LocationContext *L,
            const void *tag =0)
     : StmtPoint(S, data, k, L, tag) {}
-  
+
 public:
   explicit PostStmt(const Stmt* S, const LocationContext *L,const void *tag = 0)
     : StmtPoint(S, NULL, PostStmtKind, L, tag) {}
@@ -196,15 +196,15 @@ public:
 
 class PostLocationChecksSucceed : public PostStmt {
 public:
-  PostLocationChecksSucceed(const Stmt* S, const LocationContext *L, 
+  PostLocationChecksSucceed(const Stmt* S, const LocationContext *L,
                             const void *tag = 0)
     : PostStmt(S, PostLocationChecksSucceedKind, L, tag) {}
-  
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostLocationChecksSucceedKind;
   }
 };
-  
+
 class PostStmtCustom : public PostStmt {
 public:
   PostStmtCustom(const Stmt* S,
@@ -216,22 +216,22 @@ public:
     return
       *reinterpret_cast<const std::pair<const void*, const void*>*>(getData2());
   }
-  
+
   const void* getTag() const { return getTaggedPair().first; }
-  
+
   const void* getTaggedData() const { return getTaggedPair().second; }
-    
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostStmtCustomKind;
   }
 };
-  
+
 class PostOutOfBoundsCheckFailed : public PostStmt {
 public:
-  PostOutOfBoundsCheckFailed(const Stmt* S, const LocationContext *L, 
+  PostOutOfBoundsCheckFailed(const Stmt* S, const LocationContext *L,
                              const void *tag = 0)
     : PostStmt(S, PostOutOfBoundsCheckFailedKind, L, tag) {}
-  
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostOutOfBoundsCheckFailedKind;
   }
@@ -242,38 +242,38 @@ public:
   PostUndefLocationCheckFailed(const Stmt* S, const LocationContext *L,
                                const void *tag = 0)
     : PostStmt(S, PostUndefLocationCheckFailedKind, L, tag) {}
-  
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostUndefLocationCheckFailedKind;
   }
 };
-  
+
 class PostNullCheckFailed : public PostStmt {
 public:
   PostNullCheckFailed(const Stmt* S, const LocationContext *L,
                       const void *tag = 0)
     : PostStmt(S, PostNullCheckFailedKind, L, tag) {}
-  
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostNullCheckFailedKind;
   }
 };
-  
+
 class PostLoad : public PostStmt {
 public:
   PostLoad(const Stmt* S, const LocationContext *L, const void *tag = 0)
     : PostStmt(S, PostLoadKind, L, tag) {}
-  
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostLoadKind;
   }
 };
-  
+
 class PostStore : public PostStmt {
 public:
   PostStore(const Stmt* S, const LocationContext *L, const void *tag = 0)
     : PostStmt(S, PostStoreKind, L, tag) {}
-  
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostStoreKind;
   }
@@ -283,52 +283,52 @@ class PostLValue : public PostStmt {
 public:
   PostLValue(const Stmt* S, const LocationContext *L, const void *tag = 0)
     : PostStmt(S, PostLValueKind, L, tag) {}
-  
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostLValueKind;
   }
-};  
-  
+};
+
 class PostPurgeDeadSymbols : public PostStmt {
 public:
-  PostPurgeDeadSymbols(const Stmt* S, const LocationContext *L, 
+  PostPurgeDeadSymbols(const Stmt* S, const LocationContext *L,
                        const void *tag = 0)
     : PostStmt(S, PostPurgeDeadSymbolsKind, L, tag) {}
-  
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PostPurgeDeadSymbolsKind;
   }
 };
-  
+
 class BlockEdge : public ProgramPoint {
 public:
   BlockEdge(const CFGBlock* B1, const CFGBlock* B2, const LocationContext *L)
     : ProgramPoint(B1, B2, BlockEdgeKind, L) {}
-    
+
   CFGBlock* getSrc() const {
     return const_cast<CFGBlock*>(static_cast<const CFGBlock*>(getData1()));
   }
-    
+
   CFGBlock* getDst() const {
     return const_cast<CFGBlock*>(static_cast<const CFGBlock*>(getData2()));
   }
-  
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == BlockEdgeKind;
   }
 };
 
-  
+
 } // end namespace clang
 
 
-namespace llvm { // Traits specialization for DenseMap 
-  
+namespace llvm { // Traits specialization for DenseMap
+
 template <> struct DenseMapInfo<clang::ProgramPoint> {
 
 static inline clang::ProgramPoint getEmptyKey() {
   uintptr_t x =
-   reinterpret_cast<uintptr_t>(DenseMapInfo<void*>::getEmptyKey()) & ~0x7;    
+   reinterpret_cast<uintptr_t>(DenseMapInfo<void*>::getEmptyKey()) & ~0x7;
   return clang::BlockEntrance(reinterpret_cast<clang::CFGBlock*>(x), 0);
 }
 

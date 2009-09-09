@@ -22,7 +22,7 @@ namespace driver {
   class Job;
   class JobAction;
   class ToolChain;
-  
+
   typedef llvm::SmallVector<InputInfo, 4> InputInfoList;
 
 /// Tool - Information on a specific compilation tool.
@@ -57,9 +57,9 @@ public:
   /// linker, then this is the final output name of the linked image.
   virtual void ConstructJob(Compilation &C, const JobAction &JA,
                             Job &Dest,
-                            const InputInfo &Output, 
-                            const InputInfoList &Inputs, 
-                            const ArgList &TCArgs, 
+                            const InputInfo &Output,
+                            const InputInfoList &Inputs,
+                            const ArgList &TCArgs,
                             const char *LinkingOutput) const = 0;
 };
 

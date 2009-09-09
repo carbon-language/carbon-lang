@@ -30,7 +30,7 @@ TypeSpecLoc TypeLoc::getTypeSpecLoc() const {
 
   if (const DeclaratorLoc *DL = dyn_cast<DeclaratorLoc>(this))
     return DL->getTypeSpecLoc();
-  return cast<TypeSpecLoc>(*this); 
+  return cast<TypeSpecLoc>(*this);
 }
 
 /// \brief Find the TypeSpecLoc that is part of this TypeLoc and return its
@@ -46,9 +46,9 @@ class TypeSizer : public TypeLocVisitor<TypeSizer, unsigned> {
 public:
 #define ABSTRACT_TYPELOC(CLASS)
 #define TYPELOC(CLASS, PARENT, TYPE) \
-    unsigned Visit##CLASS(CLASS TyLoc) { return TyLoc.getFullDataSize(); } 
+    unsigned Visit##CLASS(CLASS TyLoc) { return TyLoc.getFullDataSize(); }
 #include "clang/AST/TypeLocNodes.def"
-  
+
   unsigned VisitTypeLoc(TypeLoc TyLoc) {
     assert(0 && "A type loc wrapper was not handled!");
     return 0;
@@ -70,7 +70,7 @@ class NextLoc : public TypeLocVisitor<NextLoc, TypeLoc> {
 public:
 #define TYPELOC(CLASS, PARENT, TYPE)
 #define DECLARATOR_TYPELOC(CLASS, TYPE) \
-    TypeLoc Visit##CLASS(CLASS TyLoc); 
+    TypeLoc Visit##CLASS(CLASS TyLoc);
 #include "clang/AST/TypeLocNodes.def"
 
   TypeLoc VisitTypeSpecLoc(TypeLoc TyLoc) { return TypeLoc(); }
@@ -84,16 +84,16 @@ public:
 }
 
 TypeLoc NextLoc::VisitPointerLoc(PointerLoc TL) {
-  return TL.getPointeeLoc();  
+  return TL.getPointeeLoc();
 }
 TypeLoc NextLoc::VisitMemberPointerLoc(MemberPointerLoc TL) {
-  return TL.getPointeeLoc();  
+  return TL.getPointeeLoc();
 }
 TypeLoc NextLoc::VisitBlockPointerLoc(BlockPointerLoc TL) {
-  return TL.getPointeeLoc();  
+  return TL.getPointeeLoc();
 }
 TypeLoc NextLoc::VisitReferenceLoc(ReferenceLoc TL) {
-  return TL.getPointeeLoc();  
+  return TL.getPointeeLoc();
 }
 TypeLoc NextLoc::VisitFunctionLoc(FunctionLoc TL) {
   return TL.getResultLoc();
@@ -105,7 +105,7 @@ TypeLoc NextLoc::VisitArrayLoc(ArrayLoc TL) {
 /// \brief Get the next TypeLoc pointed by this TypeLoc, e.g for "int*" the
 /// TypeLoc is a PointerLoc and next TypeLoc is for "int".
 TypeLoc TypeLoc::getNextTypeLoc() const {
-  return NextLoc().Visit(*this);  
+  return NextLoc().Visit(*this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -119,7 +119,7 @@ class TypeSpecRanger : public TypeLocVisitor<TypeSpecRanger, SourceRange> {
 public:
 #define TYPELOC(CLASS, PARENT, TYPE)
 #define TYPESPEC_TYPELOC(CLASS, TYPE) \
-    SourceRange Visit##CLASS(CLASS TyLoc) { return TyLoc.getSourceRange(); } 
+    SourceRange Visit##CLASS(CLASS TyLoc) { return TyLoc.getSourceRange(); }
 #include "clang/AST/TypeLocNodes.def"
 
   SourceRange VisitTypeLoc(TypeLoc TyLoc) {
@@ -139,13 +139,13 @@ SourceRange TypeSpecLoc::getSourceRange() const {
 namespace {
 class TypeSpecChecker : public TypeLocVisitor<TypeSpecChecker, bool> {
 public:
-  bool VisitTypeSpecLoc(TypeSpecLoc TyLoc) { return true; }  
+  bool VisitTypeSpecLoc(TypeSpecLoc TyLoc) { return true; }
 };
 
 }
 
 bool TypeSpecLoc::classof(const TypeLoc *TL) {
-  return TypeSpecChecker().Visit(*TL);  
+  return TypeSpecChecker().Visit(*TL);
 }
 
 //===----------------------------------------------------------------------===//
@@ -159,7 +159,7 @@ class TypeSpecGetter : public TypeLocVisitor<TypeSpecGetter, TypeSpecLoc> {
 public:
 #define TYPELOC(CLASS, PARENT, TYPE)
 #define DECLARATOR_TYPELOC(CLASS, TYPE) \
-    TypeSpecLoc Visit##CLASS(CLASS TyLoc) { return TyLoc.getTypeSpecLoc(); } 
+    TypeSpecLoc Visit##CLASS(CLASS TyLoc) { return TyLoc.getTypeSpecLoc(); }
 #include "clang/AST/TypeLocNodes.def"
 
   TypeSpecLoc VisitTypeLoc(TypeLoc TyLoc) {
@@ -179,13 +179,13 @@ namespace {
 
 class DeclaratorLocChecker : public TypeLocVisitor<DeclaratorLocChecker, bool> {
 public:
-  bool VisitDeclaratorLoc(DeclaratorLoc TyLoc) { return true; }  
+  bool VisitDeclaratorLoc(DeclaratorLoc TyLoc) { return true; }
 };
 
 }
 
 bool DeclaratorLoc::classof(const TypeLoc *TL) {
-  return DeclaratorLocChecker().Visit(*TL);  
+  return DeclaratorLocChecker().Visit(*TL);
 }
 
 //===----------------------------------------------------------------------===//
@@ -197,13 +197,13 @@ namespace {
 class DefaultTypeSpecLocChecker :
                         public TypeLocVisitor<DefaultTypeSpecLocChecker, bool> {
 public:
-  bool VisitDefaultTypeSpecLoc(DefaultTypeSpecLoc TyLoc) { return true; }  
+  bool VisitDefaultTypeSpecLoc(DefaultTypeSpecLoc TyLoc) { return true; }
 };
 
 }
 
 bool DefaultTypeSpecLoc::classof(const TypeLoc *TL) {
-  return DefaultTypeSpecLocChecker().Visit(*TL);  
+  return DefaultTypeSpecLocChecker().Visit(*TL);
 }
 
 //===----------------------------------------------------------------------===//
@@ -214,13 +214,13 @@ namespace {
 
 class TypedefLocChecker : public TypeLocVisitor<TypedefLocChecker, bool> {
 public:
-  bool VisitTypedefLoc(TypedefLoc TyLoc) { return true; }  
+  bool VisitTypedefLoc(TypedefLoc TyLoc) { return true; }
 };
 
 }
 
 bool TypedefLoc::classof(const TypeLoc *TL) {
-  return TypedefLocChecker().Visit(*TL);  
+  return TypedefLocChecker().Visit(*TL);
 }
 
 //===----------------------------------------------------------------------===//
@@ -231,13 +231,13 @@ namespace {
 
 class PointerLocChecker : public TypeLocVisitor<PointerLocChecker, bool> {
 public:
-  bool VisitPointerLoc(PointerLoc TyLoc) { return true; }  
+  bool VisitPointerLoc(PointerLoc TyLoc) { return true; }
 };
 
 }
 
 bool PointerLoc::classof(const TypeLoc *TL) {
-  return PointerLocChecker().Visit(*TL);  
+  return PointerLocChecker().Visit(*TL);
 }
 
 //===----------------------------------------------------------------------===//
@@ -249,13 +249,13 @@ namespace {
 class BlockPointerLocChecker :
            public TypeLocVisitor<BlockPointerLocChecker, bool> {
 public:
-  bool VisitBlockPointerLoc(BlockPointerLoc TyLoc) { return true; }  
+  bool VisitBlockPointerLoc(BlockPointerLoc TyLoc) { return true; }
 };
 
 }
 
 bool BlockPointerLoc::classof(const TypeLoc *TL) {
-  return BlockPointerLocChecker().Visit(*TL);  
+  return BlockPointerLocChecker().Visit(*TL);
 }
 
 //===----------------------------------------------------------------------===//
@@ -267,13 +267,13 @@ namespace {
 class MemberPointerLocChecker :
            public TypeLocVisitor<MemberPointerLocChecker, bool> {
 public:
-  bool VisitMemberPointerLoc(MemberPointerLoc TyLoc) { return true; }  
+  bool VisitMemberPointerLoc(MemberPointerLoc TyLoc) { return true; }
 };
 
 }
 
 bool MemberPointerLoc::classof(const TypeLoc *TL) {
-  return MemberPointerLocChecker().Visit(*TL);  
+  return MemberPointerLocChecker().Visit(*TL);
 }
 
 //===----------------------------------------------------------------------===//
@@ -284,13 +284,13 @@ namespace {
 
 class ReferenceLocChecker : public TypeLocVisitor<ReferenceLocChecker, bool> {
 public:
-  bool VisitReferenceLoc(ReferenceLoc TyLoc) { return true; }  
+  bool VisitReferenceLoc(ReferenceLoc TyLoc) { return true; }
 };
 
 }
 
 bool ReferenceLoc::classof(const TypeLoc *TL) {
-  return ReferenceLocChecker().Visit(*TL);  
+  return ReferenceLocChecker().Visit(*TL);
 }
 
 //===----------------------------------------------------------------------===//
@@ -301,13 +301,13 @@ namespace {
 
 class FunctionLocChecker : public TypeLocVisitor<FunctionLocChecker, bool> {
 public:
-  bool VisitFunctionLoc(FunctionLoc TyLoc) { return true; }  
+  bool VisitFunctionLoc(FunctionLoc TyLoc) { return true; }
 };
 
 }
 
 bool FunctionLoc::classof(const TypeLoc *TL) {
-  return FunctionLocChecker().Visit(*TL);  
+  return FunctionLocChecker().Visit(*TL);
 }
 
 //===----------------------------------------------------------------------===//
@@ -318,11 +318,11 @@ namespace {
 
 class ArrayLocChecker : public TypeLocVisitor<ArrayLocChecker, bool> {
 public:
-  bool VisitArrayLoc(ArrayLoc TyLoc) { return true; }  
+  bool VisitArrayLoc(ArrayLoc TyLoc) { return true; }
 };
 
 }
 
 bool ArrayLoc::classof(const TypeLoc *TL) {
-  return ArrayLocChecker().Visit(*TL);  
+  return ArrayLocChecker().Visit(*TL);
 }

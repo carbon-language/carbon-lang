@@ -29,7 +29,7 @@ typedef llvm::DenseMap<const ObjCIvarDecl*,IVarState> IvarUsageMap;
 static void Scan(IvarUsageMap& M, const Stmt* S) {
   if (!S)
     return;
-  
+
   if (const ObjCIvarRefExpr *Ex = dyn_cast<ObjCIvarRefExpr>(S)) {
     const ObjCIvarDecl *D = Ex->getDecl();
     IvarUsageMap::iterator I = M.find(D);
@@ -37,7 +37,7 @@ static void Scan(IvarUsageMap& M, const Stmt* S) {
       I->second = Used;
     return;
   }
-  
+
   // Blocks can reference an instance variable of a class.
   if (const BlockExpr *BE = dyn_cast<BlockExpr>(S)) {
     Scan(M, BE->getBody());
@@ -51,12 +51,12 @@ static void Scan(IvarUsageMap& M, const Stmt* S) {
 static void Scan(IvarUsageMap& M, const ObjCPropertyImplDecl* D) {
   if (!D)
     return;
-  
+
   const ObjCIvarDecl* ID = D->getPropertyIvarDecl();
 
   if (!ID)
     return;
-  
+
   IvarUsageMap::iterator I = M.find(ID);
   if (I != M.end())
     I->second = Used;
@@ -71,9 +71,9 @@ void clang::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
   // Iterate over the ivars.
   for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(),
         E=ID->ivar_end(); I!=E; ++I) {
-    
+
     const ObjCIvarDecl* ID = *I;
-    
+
     // Ignore ivars that aren't private.
     if (ID->getAccessControl() != ObjCIvarDecl::Private)
       continue;
@@ -81,31 +81,31 @@ void clang::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
     // Skip IB Outlets.
     if (ID->getAttr<IBOutletAttr>())
       continue;
-    
+
     M[ID] = Unused;
   }
 
   if (M.empty())
     return;
-  
+
   // Now scan the methods for accesses.
   for (ObjCImplementationDecl::instmeth_iterator I = D->instmeth_begin(),
         E = D->instmeth_end(); I!=E; ++I)
     Scan(M, (*I)->getBody());
-  
+
   // Scan for @synthesized property methods that act as setters/getters
   // to an ivar.
   for (ObjCImplementationDecl::propimpl_iterator I = D->propimpl_begin(),
        E = D->propimpl_end(); I!=E; ++I)
-    Scan(M, *I);  
-  
+    Scan(M, *I);
+
   // Find ivars that are unused.
   for (IvarUsageMap::iterator I = M.begin(), E = M.end(); I!=E; ++I)
     if (I->second == Unused) {
       std::string sbuf;
       llvm::raw_string_ostream os(sbuf);
       os << "Instance variable '" << I->first->getNameAsString()
-         << "' in class '" << ID->getNameAsString() 
+         << "' in class '" << ID->getNameAsString()
          << "' is never used by the methods in its @implementation "
             "(although it may be used by category methods).";
 

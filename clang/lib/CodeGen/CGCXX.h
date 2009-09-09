@@ -30,7 +30,7 @@ enum CXXDtorType {
     Dtor_Complete, // Complete object dtor
     Dtor_Base      // Base object dtor
 };
-    
+
 } // end namespace clang
 
 #endif // CLANG_CODEGEN_CGCXX_H

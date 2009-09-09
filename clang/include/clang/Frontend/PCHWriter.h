@@ -98,21 +98,21 @@ private:
   /// discovery), starting at 1. An ID of zero refers to a NULL
   /// IdentifierInfo.
   llvm::DenseMap<const IdentifierInfo *, pch::IdentID> IdentifierIDs;
-  
+
   /// \brief Offsets of each of the identifier IDs into the identifier
   /// table.
   std::vector<uint32_t> IdentifierOffsets;
 
   /// \brief Map that provides the ID numbers of each Selector.
   llvm::DenseMap<Selector, pch::SelectorID> SelectorIDs;
-  
+
   /// \brief Offset of each selector within the method pool/selector
   /// table, indexed by the Selector ID (-1).
   std::vector<uint32_t> SelectorOffsets;
 
   /// \brief A vector of all Selectors (ordered by ID).
   std::vector<Selector> SelVector;
-  
+
   /// \brief Offsets of each of the macro identifiers into the
   /// bitstream.
   ///
@@ -141,7 +141,7 @@ private:
 
   /// \brief Mapping from SwitchCase statements to IDs.
   std::map<SwitchCase *, unsigned> SwitchCaseIDs;
-  
+
   /// \brief Mapping from LabelStmt statements to IDs.
   std::map<LabelStmt *, unsigned> LabelIDs;
 
@@ -163,7 +163,7 @@ private:
   void WriteMetadata(ASTContext &Context, const char *isysroot);
   void WriteLanguageOptions(const LangOptions &LangOpts);
   void WriteStatCache(MemorizeStatCalls &StatCalls, const char* isysroot);
-  void WriteSourceManagerBlock(SourceManager &SourceMgr, 
+  void WriteSourceManagerBlock(SourceManager &SourceMgr,
                                const Preprocessor &PP,
                                const char* isysroot);
   void WritePreprocessor(const Preprocessor &PP);
@@ -172,7 +172,7 @@ private:
   void WriteTypesBlock(ASTContext &Context);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);
   uint64_t WriteDeclContextVisibleBlock(ASTContext &Context, DeclContext *DC);
-  
+
   void WriteDeclsBlock(ASTContext &Context);
   void WriteMethodPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
@@ -180,12 +180,12 @@ private:
 
   unsigned ParmVarDeclAbbrev;
   void WriteDeclsBlockAbbrevs();
-  
+
 public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
   PCHWriter(llvm::BitstreamWriter &Stream);
-  
+
   /// \brief Write a precompiled header for the given semantic analysis.
   ///
   /// \param SemaRef a reference to the semantic analysis object that processed
@@ -194,9 +194,9 @@ public:
   /// \param StatCalls the object that cached all of the stat() calls made while
   /// searching for source files and headers.
   ///
-  /// \param isysroot if non-NULL, write a relocatable PCH file whose headers 
+  /// \param isysroot if non-NULL, write a relocatable PCH file whose headers
   /// are relative to the given system root.
-  void WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls, 
+  void WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                 const char* isysroot);
 
   /// \brief Emit a source location.
@@ -216,7 +216,7 @@ public:
 
   /// \brief Emit a Selector (which is a smart pointer reference)
   void AddSelectorRef(const Selector, RecordData &Record);
-  
+
   /// \brief Get the unique number used to refer to the given
   /// identifier.
   pch::IdentID getIdentifierRef(const IdentifierInfo *II);
@@ -226,7 +226,7 @@ public:
   ///
   /// The identifier must refer to a macro.
   uint64_t getMacroOffset(const IdentifierInfo *II) {
-    assert(MacroOffsets.find(II) != MacroOffsets.end() && 
+    assert(MacroOffsets.find(II) != MacroOffsets.end() &&
            "Identifier does not name a macro");
     return MacroOffsets[II];
   }

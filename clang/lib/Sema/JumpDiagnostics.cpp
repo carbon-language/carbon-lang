@@ -28,7 +28,7 @@ namespace {
 ///
 class JumpScopeChecker {
   Sema &S;
-  
+
   /// GotoScope - This is a record that we use to keep track of all of the
   /// scopes that are introduced by VLAs and other things that scope jumps like
   /// gotos.  This scope tree has nothing to do with the source scope tree,
@@ -38,17 +38,17 @@ class JumpScopeChecker {
     /// ParentScope - The index in ScopeMap of the parent scope.  This is 0 for
     /// the parent scope is the function body.
     unsigned ParentScope;
-    
+
     /// Diag - The diagnostic to emit if there is a jump into this scope.
     unsigned Diag;
-    
+
     /// Loc - Location to emit the diagnostic.
     SourceLocation Loc;
-    
+
     GotoScope(unsigned parentScope, unsigned diag, SourceLocation L)
     : ParentScope(parentScope), Diag(diag), Loc(L) {}
   };
- 
+
   llvm::SmallVector<GotoScope, 48> Scopes;
   llvm::DenseMap<Stmt*, unsigned> LabelAndGotoScopes;
   llvm::SmallVector<Stmt*, 16> Jumps;
@@ -66,15 +66,15 @@ private:
 JumpScopeChecker::JumpScopeChecker(Stmt *Body, Sema &s) : S(s) {
   // Add a scope entry for function scope.
   Scopes.push_back(GotoScope(~0U, ~0U, SourceLocation()));
-  
+
   // Build information for the top level compound statement, so that we have a
   // defined scope record for every "goto" and label.
   BuildScopeInformation(Body, 0);
-  
+
   // Check that all jumps we saw are kosher.
   VerifyJumps();
 }
-  
+
 /// GetDiagForGotoScopeDecl - If this decl induces a new goto scope, return a
 /// diagnostic that should be emitted if control goes over it. If not, return 0.
 static unsigned GetDiagForGotoScopeDecl(const Decl *D) {
@@ -89,7 +89,7 @@ static unsigned GetDiagForGotoScopeDecl(const Decl *D) {
     if (TD->getUnderlyingType()->isVariablyModifiedType())
       return diag::note_protected_by_vla_typedef;
   }
-  
+
   return 0;
 }
 
@@ -99,7 +99,7 @@ static unsigned GetDiagForGotoScopeDecl(const Decl *D) {
 /// statements, adding any labels or gotos to LabelAndGotoScopes and recursively
 /// walking the AST as needed.
 void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
-  
+
   // If we found a label, remember that it is in ParentScope scope.
   if (isa<LabelStmt>(S) || isa<DefaultStmt>(S) || isa<CaseStmt>(S)) {
     LabelAndGotoScopes[S] = ParentScope;
@@ -110,12 +110,12 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
     LabelAndGotoScopes[S] = ParentScope;
     Jumps.push_back(S);
   }
-  
+
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end(); CI != E;
        ++CI) {
     Stmt *SubStmt = *CI;
     if (SubStmt == 0) continue;
-    
+
     // FIXME: diagnose jumps past initialization: required in C++, warning in C.
     //   goto L; int X = 4;   L: ;
 
@@ -131,7 +131,7 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
           Scopes.push_back(GotoScope(ParentScope, Diag, (*I)->getLocation()));
           ParentScope = Scopes.size()-1;
         }
-      
+
         // If the decl has an initializer, walk it with the potentially new
         // scope we just installed.
         if (VarDecl *VD = dyn_cast<VarDecl>(*I))
@@ -156,10 +156,10 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
         Scopes.push_back(GotoScope(ParentScope,
                                    diag::note_protected_by_objc_catch,
                                    AC->getAtCatchLoc()));
-        // @catches are nested and it isn't 
+        // @catches are nested and it isn't
         BuildScopeInformation(AC->getCatchBody(), Scopes.size()-1);
       }
-      
+
       // Jump from the finally to the try or catch is not valid.
       if (ObjCAtFinallyStmt *AF = AT->getFinallyStmt()) {
         Scopes.push_back(GotoScope(ParentScope,
@@ -167,17 +167,17 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
                                    AF->getAtFinallyLoc()));
         BuildScopeInformation(AF, Scopes.size()-1);
       }
-      
+
       continue;
     }
-    
+
     // Disallow jumps into the protected statement of an @synchronized, but
     // allow jumps into the object expression it protects.
     if (ObjCAtSynchronizedStmt *AS = dyn_cast<ObjCAtSynchronizedStmt>(SubStmt)){
       // Recursively walk the AST for the @synchronized object expr, it is
       // evaluated in the normal scope.
       BuildScopeInformation(AS->getSynchExpr(), ParentScope);
-      
+
       // Recursively walk the AST for the @synchronized part, protected by a new
       // scope.
       Scopes.push_back(GotoScope(ParentScope,
@@ -196,7 +196,7 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
         BuildScopeInformation(TryBlock, Scopes.size()-1);
 
       // Jump from the catch into the try is not allowed either.
-      for(unsigned I = 0, E = TS->getNumHandlers(); I != E; ++I) {
+      for (unsigned I = 0, E = TS->getNumHandlers(); I != E; ++I) {
         CXXCatchStmt *CS = TS->getHandler(I);
         Scopes.push_back(GotoScope(ParentScope,
                                    diag::note_protected_by_cxx_catch,
@@ -217,14 +217,14 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
 void JumpScopeChecker::VerifyJumps() {
   while (!Jumps.empty()) {
     Stmt *Jump = Jumps.pop_back_val();
-    
-    // With a goto, 
+
+    // With a goto,
     if (GotoStmt *GS = dyn_cast<GotoStmt>(Jump)) {
       CheckJump(GS, GS->getLabel(), GS->getGotoLoc(),
                 diag::err_goto_into_protected_scope);
       continue;
     }
-    
+
     if (SwitchStmt *SS = dyn_cast<SwitchStmt>(Jump)) {
       for (SwitchCase *SC = SS->getSwitchCaseList(); SC;
            SC = SC->getNextSwitchCase()) {
@@ -236,7 +236,7 @@ void JumpScopeChecker::VerifyJumps() {
     }
 
     unsigned DiagnosticScope;
-    
+
     // We don't know where an indirect goto goes, require that it be at the
     // top level of scoping.
     if (IndirectGotoStmt *IG = dyn_cast<IndirectGotoStmt>(Jump)) {
@@ -254,12 +254,12 @@ void JumpScopeChecker::VerifyJumps() {
       // indirectly jumping to the label.
       assert(isa<AddrLabelExpr>(Jump) && "Unknown jump type");
       LabelStmt *TheLabel = cast<AddrLabelExpr>(Jump)->getLabel();
-    
+
       assert(LabelAndGotoScopes.count(TheLabel) &&
              "Referenced label didn't get added to scopes?");
       unsigned LabelScope = LabelAndGotoScopes[TheLabel];
       if (LabelScope == 0) continue; // Addr of label is ok.
-    
+
       S.Diag(Jump->getLocStart(), diag::err_addr_of_label_in_protected_scope);
       DiagnosticScope = LabelScope;
     }
@@ -282,10 +282,10 @@ void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To,
 
   assert(LabelAndGotoScopes.count(To) && "Jump didn't get added to scopes?");
   unsigned ToScope = LabelAndGotoScopes[To];
-  
+
   // Common case: exactly the same scope, which is fine.
   if (FromScope == ToScope) return;
-  
+
   // The only valid mismatch jump case happens when the jump is more deeply
   // nested inside the jump target.  Do a quick scan to see if the jump is valid
   // because valid code is more common than invalid code.
@@ -294,11 +294,11 @@ void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To,
     // If we found the jump target, then we're jumping out of our current scope,
     // which is perfectly fine.
     if (TestScope == ToScope) return;
-    
+
     // Otherwise, scan up the hierarchy.
     TestScope = Scopes[TestScope].ParentScope;
   }
-  
+
   // If we get here, then we know we have invalid code.  Diagnose the bad jump,
   // and then emit a note at each VLA being jumped out of.
   S.Diag(DiagLoc, JumpDiag);
@@ -318,7 +318,7 @@ void JumpScopeChecker::CheckJump(Stmt *From, Stmt *To,
     FromScopes.pop_back();
     ToScopes.pop_back();
   }
-  
+
   // Emit diagnostics for whatever is left in ToScopes.
   for (unsigned i = 0, e = ToScopes.size(); i != e; ++i)
     S.Diag(Scopes[ToScopes[i]].Loc, Scopes[ToScopes[i]].Diag);

@@ -22,7 +22,7 @@ using namespace clang;
 TemplateDecl *TemplateName::getAsTemplateDecl() const {
   if (TemplateDecl *Template = Storage.dyn_cast<TemplateDecl *>())
     return Template;
-  
+
   if (QualifiedTemplateName *QTN = getAsQualifiedTemplateName())
     return QTN->getTemplateDecl();
 
@@ -30,34 +30,34 @@ TemplateDecl *TemplateName::getAsTemplateDecl() const {
 }
 
 OverloadedFunctionDecl *TemplateName::getAsOverloadedFunctionDecl() const {
-  if (OverloadedFunctionDecl *Ovl 
+  if (OverloadedFunctionDecl *Ovl
         = Storage.dyn_cast<OverloadedFunctionDecl *>())
     return Ovl;
-  
+
   if (QualifiedTemplateName *QTN = getAsQualifiedTemplateName())
     return QTN->getOverloadedFunctionDecl();
-  
+
   return 0;
 }
 
 bool TemplateName::isDependent() const {
   if (TemplateDecl *Template = getAsTemplateDecl()) {
-    return isa<TemplateTemplateParmDecl>(Template) || 
+    return isa<TemplateTemplateParmDecl>(Template) ||
       Template->getDeclContext()->isDependentContext();
   }
 
   if (OverloadedFunctionDecl *Ovl = getAsOverloadedFunctionDecl())
     return Ovl->getDeclContext()->isDependentContext();
-  
+
   return true;
 }
 
-void 
+void
 TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
                     bool SuppressNNS) const {
   if (TemplateDecl *Template = Storage.dyn_cast<TemplateDecl *>())
     OS << Template->getIdentifier()->getName();
-  else if (OverloadedFunctionDecl *Ovl 
+  else if (OverloadedFunctionDecl *Ovl
              = Storage.dyn_cast<OverloadedFunctionDecl *>())
     OS << Ovl->getNameAsString();
   else if (QualifiedTemplateName *QTN = getAsQualifiedTemplateName()) {
@@ -82,12 +82,12 @@ void TemplateName::dump() const {
   print(llvm::errs(), PrintingPolicy(LO));
 }
 
-TemplateDecl *QualifiedTemplateName::getTemplateDecl() const { 
-  return dyn_cast<TemplateDecl>(Template); 
+TemplateDecl *QualifiedTemplateName::getTemplateDecl() const {
+  return dyn_cast<TemplateDecl>(Template);
 }
 
 OverloadedFunctionDecl *
 QualifiedTemplateName::getOverloadedFunctionDecl() const {
-  return dyn_cast<OverloadedFunctionDecl>(Template); 
+  return dyn_cast<OverloadedFunctionDecl>(Template);
 }
 

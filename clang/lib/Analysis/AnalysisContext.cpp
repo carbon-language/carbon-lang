@@ -45,18 +45,18 @@ Stmt *AnalysisContext::getBody() {
 const ImplicitParamDecl *AnalysisContext::getSelfDecl() const {
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
     return MD->getSelfDecl();
-  
+
   return NULL;
 }
 
 CFG *AnalysisContext::getCFG() {
-  if (!cfg) 
+  if (!cfg)
     cfg = CFG::buildCFG(getBody(), &D->getASTContext());
   return cfg;
 }
 
 ParentMap &AnalysisContext::getParentMap() {
-  if (!PM) 
+  if (!PM)
     PM = new ParentMap(getBody());
   return *PM;
 }
@@ -66,12 +66,12 @@ LiveVariables *AnalysisContext::getLiveVariables() {
     CFG *c = getCFG();
     if (!c)
       return 0;
-    
+
     liveness = new LiveVariables(D->getASTContext(), *c);
     liveness->runOnCFG(*c);
     liveness->runOnAllBlocks(*c, 0, true);
   }
-  
+
   return liveness;
 }
 
@@ -79,7 +79,7 @@ AnalysisContext *AnalysisContextManager::getContext(const Decl *D) {
   AnalysisContext *&AC = Contexts[D];
   if (!AC)
     AC = new AnalysisContext(D);
-  
+
   return AC;
 }
 
@@ -104,14 +104,14 @@ void ScopeContext::Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
 }
 
 StackFrameContext*
-LocationContextManager::getStackFrame(AnalysisContext *ctx, 
+LocationContextManager::getStackFrame(AnalysisContext *ctx,
                                       const LocationContext *parent,
                                       const Stmt *s) {
   llvm::FoldingSetNodeID ID;
   StackFrameContext::Profile(ID, ctx, parent, s);
   void *InsertPos;
 
-  StackFrameContext *f = 
+  StackFrameContext *f =
    cast_or_null<StackFrameContext>(Contexts.FindNodeOrInsertPos(ID, InsertPos));
   if (!f) {
     f = new StackFrameContext(ctx, parent, s);
@@ -126,7 +126,7 @@ ScopeContext *LocationContextManager::getScope(AnalysisContext *ctx,
   llvm::FoldingSetNodeID ID;
   ScopeContext::Profile(ID, ctx, parent, s);
   void *InsertPos;
-  
+
   ScopeContext *scope =
     cast_or_null<ScopeContext>(Contexts.FindNodeOrInsertPos(ID, InsertPos));
 

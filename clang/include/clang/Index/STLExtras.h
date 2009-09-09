@@ -48,16 +48,16 @@ public:
     return tmp;
   }
 
-  friend bool operator==(pair_value_iterator L, pair_value_iterator R) { 
+  friend bool operator==(pair_value_iterator L, pair_value_iterator R) {
     return L.I == R.I;
   }
-  friend bool operator!=(pair_value_iterator L, pair_value_iterator R) { 
+  friend bool operator!=(pair_value_iterator L, pair_value_iterator R) {
     return L.I != R.I;
   }
 };
 
 } // end idx namespace
-  
+
 } // end clang namespace
 
 #endif

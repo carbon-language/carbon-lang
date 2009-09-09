@@ -19,42 +19,39 @@ typedef void (^completion_block_t)(void);
 typedef double (^myblock)(int);
 double test(myblock I);
 
-int main()
-{
-	 __block int x = 1;
- 	__block int y = 2;
+int main() {
+  __block int x = 1;
+  __block int y = 2;
 
-	(void)^void *{ return 0; };
+  (void)^void *{ return 0; };
 
-	(void)^float(float y){ return y; };
+  (void)^float(float y){ return y; };
 
-	(void)^double (float y, double d)
-           {
-	      if (y)
-	       return d;
-	      else
-	       return y;
-	   };
+  (void)^double (float y, double d) {
+    if (y)
+      return d;
+    else
+      return y;
+  };
 
-	const char * (^chb) (int flag, const char *arg, char *arg1) = ^ const char * (int flag, const char *arg, char *arg1) {
-	  if (flag)
-	    return 0;
-	  if (flag == 1)
-	    return arg;
-          else if (flag == 2)
-	    return "";
-	  return arg1; 
-	};
+  const char * (^chb) (int flag, const char *arg, char *arg1) = ^ const char * (int flag, const char *arg, char *arg1) {
+    if (flag)
+      return 0;
+    if (flag == 1)
+      return arg;
+    else if (flag == 2)
+      return "";
+    return arg1; 
+  };
 
-	(void)^PF { return &gf; };
+  (void)^PF { return &gf; };
 
-	some_func(^ NSView * (id whatever) { return [some_object some_method_that_returns_id]; });
+  some_func(^ NSView * (id whatever) { return [some_object some_method_that_returns_id]; });
 
-	double res = test(^(int z){x = y+z; return (double)z; });	
+  double res = test(^(int z){x = y+z; return (double)z; });
 }
 
-void func()
-{
+void func() {
   completion_block_t X;
 
   completion_block_t (^blockx)(dispatch_item_t) = ^completion_block_t (dispatch_item_t item) {
@@ -66,7 +63,6 @@ void func()
   };
 
   blockx = blocky;
-
 }
 
 

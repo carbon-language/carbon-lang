@@ -49,7 +49,7 @@ namespace driver {
 
     /// The option this argument is an instance of.
     const Option *Opt;
-    
+
     /// The argument this argument was derived from (during tool chain
     /// argument translation), if any.
     const Arg *BaseArg;
@@ -66,7 +66,7 @@ namespace driver {
   protected:
     Arg(ArgClass Kind, const Option *Opt, unsigned Index,
         const Arg *BaseArg = 0);
-    
+
   public:
     Arg(const Arg &);
     virtual ~Arg();
@@ -74,12 +74,12 @@ namespace driver {
     ArgClass getKind() const { return Kind; }
     const Option &getOption() const { return *Opt; }
     unsigned getIndex() const { return Index; }
-    
+
     /// getBaseArg - Return the base argument which generated this
     /// arg; this is either the argument itself or the argument it was
     /// derived from during tool chain specific argument translation.
-    const Arg &getBaseArg() const { 
-      return BaseArg ? *BaseArg : *this; 
+    const Arg &getBaseArg() const {
+      return BaseArg ? *BaseArg : *this;
     }
     void setBaseArg(const Arg *_BaseArg) {
       BaseArg = _BaseArg;
@@ -88,14 +88,14 @@ namespace driver {
     bool isClaimed() const { return getBaseArg().Claimed; }
 
     /// claim - Set the Arg claimed bit.
-    
+
     // FIXME: We need to deal with derived arguments and set the bit
     // in the original argument; not the derived one.
     void claim() const { getBaseArg().Claimed = true; }
 
     virtual unsigned getNumValues() const = 0;
     virtual const char *getValue(const ArgList &Args, unsigned N=0) const = 0;
-    
+
     /// render - Append the argument onto the given array as strings.
     virtual void render(const ArgList &Args, ArgStringList &Output) const = 0;
 
@@ -105,7 +105,7 @@ namespace driver {
     /// (e.g., Xlinker).
     void renderAsInput(const ArgList &Args, ArgStringList &Output) const;
 
-    static bool classof(const Arg *) { return true; }    
+    static bool classof(const Arg *) { return true; }
 
     void dump() const;
 
@@ -124,8 +124,8 @@ namespace driver {
     virtual unsigned getNumValues() const { return 0; }
     virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
-    static bool classof(const Arg *A) { 
-      return A->getKind() == Arg::FlagClass; 
+    static bool classof(const Arg *A) {
+      return A->getKind() == Arg::FlagClass;
     }
     static bool classof(const FlagArg *) { return true; }
   };
@@ -140,8 +140,8 @@ namespace driver {
     virtual unsigned getNumValues() const { return 1; }
     virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
-    static bool classof(const Arg *A) { 
-      return A->getKind() == Arg::PositionalClass; 
+    static bool classof(const Arg *A) {
+      return A->getKind() == Arg::PositionalClass;
     }
     static bool classof(const PositionalArg *) { return true; }
   };
@@ -157,8 +157,8 @@ namespace driver {
     virtual unsigned getNumValues() const { return 1; }
     virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
-    static bool classof(const Arg *A) { 
-      return A->getKind() == Arg::JoinedClass; 
+    static bool classof(const Arg *A) {
+      return A->getKind() == Arg::JoinedClass;
     }
     static bool classof(const JoinedArg *) { return true; }
   };
@@ -169,7 +169,7 @@ namespace driver {
     unsigned NumValues;
 
   public:
-    SeparateArg(const Option *Opt, unsigned Index, unsigned NumValues, 
+    SeparateArg(const Option *Opt, unsigned Index, unsigned NumValues,
                 const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
@@ -177,8 +177,8 @@ namespace driver {
     virtual unsigned getNumValues() const { return NumValues; }
     virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
-    static bool classof(const Arg *A) { 
-      return A->getKind() == Arg::SeparateClass; 
+    static bool classof(const Arg *A) {
+      return A->getKind() == Arg::SeparateClass;
     }
     static bool classof(const SeparateArg *) { return true; }
   };
@@ -193,7 +193,7 @@ namespace driver {
     std::vector<std::string> Values;
 
   public:
-    CommaJoinedArg(const Option *Opt, unsigned Index, const char *Str, 
+    CommaJoinedArg(const Option *Opt, unsigned Index, const char *Str,
                    const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
@@ -201,8 +201,8 @@ namespace driver {
     virtual unsigned getNumValues() const { return Values.size(); }
     virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
-    static bool classof(const Arg *A) { 
-      return A->getKind() == Arg::CommaJoinedClass; 
+    static bool classof(const Arg *A) {
+      return A->getKind() == Arg::CommaJoinedClass;
     }
     static bool classof(const CommaJoinedArg *) { return true; }
   };
@@ -211,7 +211,7 @@ namespace driver {
   /// values.
   class JoinedAndSeparateArg : public Arg {
   public:
-    JoinedAndSeparateArg(const Option *Opt, unsigned Index, 
+    JoinedAndSeparateArg(const Option *Opt, unsigned Index,
                          const Arg *BaseArg = 0);
 
     virtual void render(const ArgList &Args, ArgStringList &Output) const;
@@ -219,8 +219,8 @@ namespace driver {
     virtual unsigned getNumValues() const { return 2; }
     virtual const char *getValue(const ArgList &Args, unsigned N=0) const;
 
-    static bool classof(const Arg *A) { 
-      return A->getKind() == Arg::JoinedAndSeparateClass; 
+    static bool classof(const Arg *A) {
+      return A->getKind() == Arg::JoinedAndSeparateClass;
     }
     static bool classof(const JoinedAndSeparateArg *) { return true; }
   };

@@ -27,7 +27,7 @@ bool PathDiagnosticMacroPiece::containsEvent() const {
   for (const_iterator I = begin(), E = end(); I!=E; ++I) {
     if (isa<PathDiagnosticEventPiece>(*I))
       return true;
-    
+
     if (PathDiagnosticMacroPiece *MP = dyn_cast<PathDiagnosticMacroPiece>(*I))
       if (MP->containsEvent())
         return true;
@@ -38,14 +38,14 @@ bool PathDiagnosticMacroPiece::containsEvent() const {
 
 static size_t GetNumCharsToLastNonPeriod(const char *s) {
   const char *start = s;
-  const char *lastNonPeriod = 0;  
+  const char *lastNonPeriod = 0;
 
   for ( ; *s != '\0' ; ++s)
     if (*s != '.') lastNonPeriod = s;
-  
+
   if (!lastNonPeriod)
     return 0;
-  
+
   return (lastNonPeriod - start) + 1;
 }
 
@@ -84,7 +84,7 @@ void PathDiagnostic::resetPath(bool deletePieces) {
   if (deletePieces)
     for (iterator I=begin(), E=end(); I!=E; ++I)
       delete &*I;
-  
+
   path.clear();
 }
 
@@ -97,7 +97,7 @@ PathDiagnostic::PathDiagnostic(const char* bugtype, const char* desc,
     Category(category, GetNumCharsToLastNonPeriod(category)) {}
 
 PathDiagnostic::PathDiagnostic(const std::string& bugtype,
-                               const std::string& desc, 
+                               const std::string& desc,
                                const std::string& category)
   : Size(0),
     BugType(bugtype, 0, GetNumCharsToLastNonPeriod(bugtype)),
@@ -106,11 +106,11 @@ PathDiagnostic::PathDiagnostic(const std::string& bugtype,
 
 void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
                                             const DiagnosticInfo &Info) {
-  
+
   // Create a PathDiagnostic with a single piece.
-  
+
   PathDiagnostic* D = new PathDiagnostic();
-  
+
   const char *LevelStr;
   switch (DiagLevel) {
   default:
@@ -124,18 +124,18 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic::Level DiagLevel,
   llvm::SmallString<100> StrC;
   StrC += LevelStr;
   Info.FormatDiagnostic(StrC);
-  
+
   PathDiagnosticPiece *P =
     new PathDiagnosticEventPiece(Info.getLocation(),
                             std::string(StrC.begin(), StrC.end()));
-  
+
   for (unsigned i = 0, e = Info.getNumRanges(); i != e; ++i)
     P->addRange(Info.getRange(i));
   for (unsigned i = 0, e = Info.getNumCodeModificationHints(); i != e; ++i)
     P->addCodeModificationHint(Info.getCodeModificationHint(i));
   D->push_front(P);
 
-  HandlePathDiagnostic(D);  
+  HandlePathDiagnostic(D);
 }
 
 //===----------------------------------------------------------------------===//
@@ -155,7 +155,7 @@ FullSourceLoc PathDiagnosticLocation::asLocation() const {
     case DeclK:
       return FullSourceLoc(D->getLocation(), const_cast<SourceManager&>(*SM));
   }
-  
+
   return FullSourceLoc(R.getBegin(), const_cast<SourceManager&>(*SM));
 }
 
@@ -178,7 +178,7 @@ PathDiagnosticRange PathDiagnosticLocation::asRange() const {
           if (DS->isSingleDecl()) {
             // Should always be the case, but we'll be defensive.
             return SourceRange(DS->getLocStart(),
-                               DS->getSingleDecl()->getLocation());            
+                               DS->getSingleDecl()->getLocation());
           }
           break;
         }
@@ -197,7 +197,7 @@ PathDiagnosticRange PathDiagnosticLocation::asRange() const {
           return SourceRange(L, L);
         }
       }
-      
+
       return S->getSourceRange();
     }
     case DeclK:
@@ -219,7 +219,7 @@ PathDiagnosticRange PathDiagnosticLocation::asRange() const {
         return PathDiagnosticRange(SourceRange(L, L), true);
       }
   }
-  
+
   return R;
 }
 

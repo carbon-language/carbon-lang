@@ -26,13 +26,13 @@ void PreprocessorLexer::LexIncludeFilename(Token &FilenameTok) {
 
   // We are now parsing a filename!
   ParsingFilename = true;
-  
+
   // Lex the filename.
   IndirectLex(FilenameTok);
 
   // We should have obtained the filename now.
   ParsingFilename = false;
-  
+
   // No filename?
   if (FilenameTok.is(tok::eom))
     PP->Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);

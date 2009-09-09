@@ -32,8 +32,8 @@ namespace clang {
   class FunctionDecl;
   class NamedDecl;
   class VarDecl;
-  
-  bool mangleName(const NamedDecl *D, ASTContext &Context, 
+
+  bool mangleName(const NamedDecl *D, ASTContext &Context,
                   llvm::raw_ostream &os);
   void mangleThunk(const FunctionDecl *FD, int64_t n, int64_t vn,
                    ASTContext &Context, llvm::raw_ostream &os);
@@ -51,4 +51,4 @@ namespace clang {
                      ASTContext &Context, llvm::raw_ostream &os);
 }
 
-#endif 
+#endif

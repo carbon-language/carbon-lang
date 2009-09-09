@@ -40,26 +40,26 @@ TemplateParameterList::Create(ASTContext &C, SourceLocation TemplateLoc,
   unsigned Size = sizeof(TemplateParameterList) + sizeof(Decl *) * NumParams;
   unsigned Align = llvm::AlignOf<TemplateParameterList>::Alignment;
   void *Mem = C.Allocate(Size, Align);
-  return new (Mem) TemplateParameterList(TemplateLoc, LAngleLoc, Params, 
+  return new (Mem) TemplateParameterList(TemplateLoc, LAngleLoc, Params,
                                          NumParams, RAngleLoc);
 }
 
 unsigned TemplateParameterList::getMinRequiredArguments() const {
   unsigned NumRequiredArgs = size();
-  iterator Param = const_cast<TemplateParameterList *>(this)->end(), 
+  iterator Param = const_cast<TemplateParameterList *>(this)->end(),
       ParamBegin = const_cast<TemplateParameterList *>(this)->begin();
   while (Param != ParamBegin) {
     --Param;
-    
+
     if (!(*Param)->isTemplateParameterPack() &&
-        !(isa<TemplateTypeParmDecl>(*Param) && 
+        !(isa<TemplateTypeParmDecl>(*Param) &&
           cast<TemplateTypeParmDecl>(*Param)->hasDefaultArgument()) &&
         !(isa<NonTypeTemplateParmDecl>(*Param) &&
           cast<NonTypeTemplateParmDecl>(*Param)->hasDefaultArgument()) &&
         !(isa<TemplateTemplateParmDecl>(*Param) &&
           cast<TemplateTemplateParmDecl>(*Param)->hasDefaultArgument()))
       break;
-        
+
     --NumRequiredArgs;
   }
 
@@ -94,7 +94,7 @@ void FunctionTemplateDecl::Destroy(ASTContext &C) {
          Spec != SpecEnd; ++Spec)
       C.Deallocate(&*Spec);
   }
-  
+
   Decl::Destroy(C);
 }
 
@@ -110,7 +110,7 @@ FunctionTemplateDecl::Common *FunctionTemplateDecl::getCommonPtr() {
   FunctionTemplateDecl *First = this;
   while (First->getPreviousDeclaration())
     First = First->getPreviousDeclaration();
-  
+
   if (First->CommonOrPrev.isNull()) {
     // FIXME: Allocate with the ASTContext
     First->CommonOrPrev = new Common;
@@ -142,7 +142,7 @@ ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
   else
     CommonPtr = new (C) Common;
 
-  return new (C) ClassTemplateDecl(DC, L, Name, Params, Decl, PrevDecl, 
+  return new (C) ClassTemplateDecl(DC, L, Name, Params, Decl, PrevDecl,
                                    CommonPtr);
 }
 
@@ -172,7 +172,7 @@ ClassTemplateDecl::findPartialSpecialization(QualType T) {
     if (Context.hasSameType(Context.getTypeDeclType(&*P), T))
       return &*P;
   }
-  
+
   return 0;
 }
 
@@ -188,21 +188,21 @@ QualType ClassTemplateDecl::getInjectedClassNameType(ASTContext &Context) {
   TemplateParameterList *Params = getTemplateParameters();
   llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
   TemplateArgs.reserve(Params->size());
-  for (TemplateParameterList::iterator Param = Params->begin(), 
-                                    ParamEnd = Params->end(); 
+  for (TemplateParameterList::iterator Param = Params->begin(),
+                                    ParamEnd = Params->end();
        Param != ParamEnd; ++Param) {
     if (isa<TemplateTypeParmDecl>(*Param)) {
       QualType ParamType = Context.getTypeDeclType(cast<TypeDecl>(*Param));
-      TemplateArgs.push_back(TemplateArgument((*Param)->getLocation(), 
+      TemplateArgs.push_back(TemplateArgument((*Param)->getLocation(),
                                               ParamType));
-    } else if (NonTypeTemplateParmDecl *NTTP = 
+    } else if (NonTypeTemplateParmDecl *NTTP =
                  dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
       Expr *E = new (Context) DeclRefExpr(NTTP, NTTP->getType(),
                                           NTTP->getLocation(),
                                           NTTP->getType()->isDependentType(),
                                           /*Value-dependent=*/true);
       TemplateArgs.push_back(TemplateArgument(E));
-    } else { 
+    } else {
       TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*Param);
       TemplateArgs.push_back(TemplateArgument(TTP->getLocation(), TTP));
     }
@@ -242,7 +242,7 @@ NonTypeTemplateParmDecl::Create(ASTContext &C, DeclContext *DC,
 
 SourceLocation NonTypeTemplateParmDecl::getDefaultArgumentLoc() const {
   return DefaultArgument? DefaultArgument->getSourceRange().getBegin()
-                        : SourceLocation(); 
+                        : SourceLocation();
 }
 
 //===----------------------------------------------------------------------===//
@@ -259,7 +259,7 @@ TemplateTemplateParmDecl::Create(ASTContext &C, DeclContext *DC,
 
 SourceLocation TemplateTemplateParmDecl::getDefaultArgumentLoc() const {
   return DefaultArgument? DefaultArgument->getSourceRange().getBegin()
-                        : SourceLocation(); 
+                        : SourceLocation();
 }
 
 //===----------------------------------------------------------------------===//
@@ -272,10 +272,10 @@ TemplateArgument::TemplateArgument(Expr *E) : Kind(Expression) {
 }
 
 /// \brief Construct a template argument pack.
-void TemplateArgument::setArgumentPack(TemplateArgument *args, unsigned NumArgs, 
+void TemplateArgument::setArgumentPack(TemplateArgument *args, unsigned NumArgs,
                                        bool CopyArgs) {
   assert(isNull() && "Must call setArgumentPack on a null argument");
-  
+
   Kind = Pack;
   Args.NumArgs = NumArgs;
   Args.CopyArgs = CopyArgs;
@@ -283,7 +283,7 @@ void TemplateArgument::setArgumentPack(TemplateArgument *args, unsigned NumArgs,
     Args.Args = args;
     return;
   }
-  
+
   // FIXME: Allocate in ASTContext
   Args.Args = new TemplateArgument[NumArgs];
   for (unsigned I = 0; I != Args.NumArgs; ++I)
@@ -301,21 +301,21 @@ void TemplateArgumentListBuilder::Append(const TemplateArgument& Arg) {
       assert(Arg.getAsType()->isCanonical() && "Type must be canonical!");
       break;
   }
-  
+
   assert(NumFlatArgs < MaxFlatArgs && "Argument list builder is full!");
-  assert(!StructuredArgs && 
+  assert(!StructuredArgs &&
          "Can't append arguments when an argument pack has been added!");
-  
+
   if (!FlatArgs)
     FlatArgs = new TemplateArgument[MaxFlatArgs];
-  
+
   FlatArgs[NumFlatArgs++] = Arg;
 }
 
 void TemplateArgumentListBuilder::BeginPack() {
   assert(!AddingToPack && "Already adding to pack!");
   assert(!StructuredArgs && "Argument list already contains a pack!");
-  
+
   AddingToPack = true;
   PackBeginIndex = NumFlatArgs;
 }
@@ -323,24 +323,24 @@ void TemplateArgumentListBuilder::BeginPack() {
 void TemplateArgumentListBuilder::EndPack() {
   assert(AddingToPack && "Not adding to pack!");
   assert(!StructuredArgs && "Argument list already contains a pack!");
-  
+
   AddingToPack = false;
 
   StructuredArgs = new TemplateArgument[MaxStructuredArgs];
-  
+
   // First copy the flat entries over to the list  (if any)
   for (unsigned I = 0; I != PackBeginIndex; ++I) {
     NumStructuredArgs++;
     StructuredArgs[I] = FlatArgs[I];
   }
-  
+
   // Next, set the pack.
   TemplateArgument *PackArgs = 0;
   unsigned NumPackArgs = NumFlatArgs - PackBeginIndex;
   if (NumPackArgs)
     PackArgs = &FlatArgs[PackBeginIndex];
-  
-  StructuredArgs[NumStructuredArgs++].setArgumentPack(PackArgs, NumPackArgs, 
+
+  StructuredArgs[NumStructuredArgs++].setArgumentPack(PackArgs, NumPackArgs,
                                                       /*CopyArgs=*/false);
 }
 
@@ -359,14 +359,14 @@ void TemplateArgumentListBuilder::ReleaseArgs() {
 TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
                                            TemplateArgumentListBuilder &Builder,
                                            bool TakeArgs)
-  : FlatArguments(Builder.getFlatArguments(), TakeArgs), 
-    NumFlatArguments(Builder.flatSize()), 
+  : FlatArguments(Builder.getFlatArguments(), TakeArgs),
+    NumFlatArguments(Builder.flatSize()),
     StructuredArguments(Builder.getStructuredArguments(), TakeArgs),
     NumStructuredArguments(Builder.structuredSize()) {
-  
+
   if (!TakeArgs)
     return;
-    
+
   if (Builder.getStructuredArguments() == Builder.getFlatArguments())
     StructuredArguments.setInt(0);
   Builder.ReleaseArgs();
@@ -385,8 +385,8 @@ ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
                                 ClassTemplateDecl *SpecializedTemplate,
                                 TemplateArgumentListBuilder &Builder,
                                 ClassTemplateSpecializationDecl *PrevDecl)
-  : CXXRecordDecl(DK, 
-                  SpecializedTemplate->getTemplatedDecl()->getTagKind(), 
+  : CXXRecordDecl(DK,
+                  SpecializedTemplate->getTemplatedDecl()->getTagKind(),
                   DC, L,
                   // FIXME: Should we use DeclarationName for the name of
                   // class template specializations?
@@ -396,17 +396,17 @@ ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
     TemplateArgs(Context, Builder, /*TakeArgs=*/true),
     SpecializationKind(TSK_Undeclared) {
 }
-                  
+
 ClassTemplateSpecializationDecl *
-ClassTemplateSpecializationDecl::Create(ASTContext &Context, 
+ClassTemplateSpecializationDecl::Create(ASTContext &Context,
                                         DeclContext *DC, SourceLocation L,
                                         ClassTemplateDecl *SpecializedTemplate,
                                         TemplateArgumentListBuilder &Builder,
                                    ClassTemplateSpecializationDecl *PrevDecl) {
   ClassTemplateSpecializationDecl *Result
-    = new (Context)ClassTemplateSpecializationDecl(Context, 
+    = new (Context)ClassTemplateSpecializationDecl(Context,
                                                    ClassTemplateSpecialization,
-                                                   DC, L, 
+                                                   DC, L,
                                                    SpecializedTemplate,
                                                    Builder,
                                                    PrevDecl);
@@ -415,16 +415,16 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context,
 }
 
 void ClassTemplateSpecializationDecl::Destroy(ASTContext &C) {
-  if (SpecializedPartialSpecialization *PartialSpec 
+  if (SpecializedPartialSpecialization *PartialSpec
         = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
     C.Deallocate(PartialSpec);
-  
+
   CXXRecordDecl::Destroy(C);
 }
 
 ClassTemplateDecl *
-ClassTemplateSpecializationDecl::getSpecializedTemplate() const { 
-  if (SpecializedPartialSpecialization *PartialSpec 
+ClassTemplateSpecializationDecl::getSpecializedTemplate() const {
+  if (SpecializedPartialSpecialization *PartialSpec
       = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
     return PartialSpec->PartialSpecialization->getSpecializedTemplate();
   return SpecializedTemplate.get<ClassTemplateDecl*>();
@@ -441,7 +441,7 @@ Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
        TemplateArgumentListBuilder &Builder,
        ClassTemplatePartialSpecializationDecl *PrevDecl) {
   ClassTemplatePartialSpecializationDecl *Result
-    = new (Context)ClassTemplatePartialSpecializationDecl(Context, 
+    = new (Context)ClassTemplatePartialSpecializationDecl(Context,
                                                           DC, L, Params,
                                                           SpecializedTemplate,
                                                           Builder, PrevDecl);

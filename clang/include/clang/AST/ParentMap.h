@@ -17,7 +17,7 @@
 namespace clang {
 class Stmt;
 class Expr;
-  
+
 class ParentMap {
   void* Impl;
 public:
@@ -30,7 +30,7 @@ public:
   const Stmt *getParent(const Stmt* S) const {
     return getParent(const_cast<Stmt*>(S));
   }
-  
+
   const Stmt *getParentIgnoreParens(const Stmt *S) const {
     return getParentIgnoreParens(const_cast<Stmt*>(S));
   }
@@ -38,13 +38,13 @@ public:
   bool hasParent(Stmt* S) const {
     return getParent(S) != 0;
   }
-  
+
   bool isConsumedExpr(Expr *E) const;
-  
+
   bool isConsumedExpr(const Expr *E) const {
     return isConsumedExpr(const_cast<Expr*>(E));
   }
 };
-  
+
 } // end clang namespace
 #endif

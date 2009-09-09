@@ -40,7 +40,7 @@
 // rdar://6709206
 // RUN: grep "5: expanded (" %t &&
 #define M4 expanded
-#define	M5() M4 ## (
+#define M5() M4 ## (
 
 5: M5()
 

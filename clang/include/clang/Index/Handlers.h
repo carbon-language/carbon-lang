@@ -63,7 +63,7 @@ class Storing : public handler_type {
   typedef typename handler_type::receiving_type receiving_type;
   typedef llvm::SmallVector<receiving_type, 8> StoreTy;
   StoreTy Store;
-  
+
 public:
   virtual void Handle(receiving_type Obj) {
     Store.push_back(Obj);

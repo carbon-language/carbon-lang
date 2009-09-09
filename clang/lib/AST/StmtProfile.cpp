@@ -28,36 +28,36 @@ namespace {
     llvm::FoldingSetNodeID &ID;
     ASTContext &Context;
     bool Canonical;
-    
+
   public:
     StmtProfiler(llvm::FoldingSetNodeID &ID, ASTContext &Context,
-                 bool Canonical) 
+                 bool Canonical)
       : ID(ID), Context(Context), Canonical(Canonical) { }
-    
+
     void VisitStmt(Stmt *S);
-    
+
 #define STMT(Node, Base) void Visit##Node(Node *S);
 #include "clang/AST/StmtNodes.def"
-    
+
     /// \brief Visit a declaration that is referenced within an expression
     /// or statement.
     void VisitDecl(Decl *D);
-    
-    /// \brief Visit a type that is referenced within an expression or 
+
+    /// \brief Visit a type that is referenced within an expression or
     /// statement.
     void VisitType(QualType T);
-    
+
     /// \brief Visit a name that occurs within an expression or statement.
     void VisitName(DeclarationName Name);
-    
+
     /// \brief Visit a nested-name-specifier that occurs within an expression
     /// or statement.
     void VisitNestedNameSpecifier(NestedNameSpecifier *NNS);
-    
+
     /// \brief Visit a template name that occurs within an expression or
     /// statement.
     void VisitTemplateName(TemplateName Name);
-    
+
     /// \brief Visit template arguments that occur within an expression or
     /// statement.
     void VisitTemplateArguments(const TemplateArgument *Args, unsigned NumArgs);
@@ -348,7 +348,7 @@ void StmtProfiler::VisitInitListExpr(InitListExpr *S) {
     VisitInitListExpr(S->getSyntacticForm());
     return;
   }
-  
+
   VisitExpr(S);
 }
 
@@ -363,7 +363,7 @@ void StmtProfiler::VisitDesignatedInitExpr(DesignatedInitExpr *S) {
       VisitName(D->getFieldName());
       continue;
     }
-    
+
     if (D->isArrayDesignator()) {
       ID.AddInteger(1);
     } else {
@@ -509,7 +509,7 @@ void StmtProfiler::VisitCXXPseudoDestructorExpr(CXXPseudoDestructorExpr *S) {
   VisitType(S->getDestroyedType());
 }
 
-void 
+void
 StmtProfiler::VisitUnresolvedFunctionNameExpr(UnresolvedFunctionNameExpr *S) {
   VisitExpr(S);
   VisitName(S->getName());
@@ -548,7 +548,7 @@ void StmtProfiler::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *S) {
       const_cast<CXXDestructorDecl *>(S->getTemporary(I)->getDestructor()));
 }
 
-void 
+void
 StmtProfiler::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *S) {
   VisitExpr(S);
   VisitType(S->getTypeAsWritten());
@@ -617,7 +617,7 @@ void StmtProfiler::VisitObjCIsaExpr(ObjCIsaExpr *S) {
 
 void StmtProfiler::VisitDecl(Decl *D) {
   ID.AddInteger(D? D->getKind() : 0);
-  
+
   if (Canonical && D) {
     if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
       ID.AddInteger(NTTP->getDepth());
@@ -625,38 +625,38 @@ void StmtProfiler::VisitDecl(Decl *D) {
       VisitType(NTTP->getType());
       return;
     }
-    
+
     if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D)) {
       // The Itanium C++ ABI uses the type of a parameter when mangling
       // expressions that involve function parameters, so we will use the
       // parameter's type for establishing function parameter identity. That
-      // way, our definition of "equivalent" (per C++ [temp.over.link]) 
+      // way, our definition of "equivalent" (per C++ [temp.over.link])
       // matches the definition of "equivalent" used for name mangling.
       VisitType(Parm->getType());
       return;
     }
-    
+
     if (TemplateTemplateParmDecl *TTP = dyn_cast<TemplateTemplateParmDecl>(D)) {
       ID.AddInteger(TTP->getDepth());
       ID.AddInteger(TTP->getIndex());
       return;
     }
-    
+
     if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
-      // The Itanium C++ ABI mangles references to a set of overloaded 
+      // The Itanium C++ ABI mangles references to a set of overloaded
       // functions using just the function name, so we do the same here.
       VisitName(Ovl->getDeclName());
       return;
     }
   }
-  
+
   ID.AddPointer(D? D->getCanonicalDecl() : 0);
 }
 
 void StmtProfiler::VisitType(QualType T) {
   if (Canonical)
     T = Context.getCanonicalType(T);
-  
+
   ID.AddPointer(T.getAsOpaquePtr());
 }
 
@@ -673,39 +673,39 @@ void StmtProfiler::VisitNestedNameSpecifier(NestedNameSpecifier *NNS) {
 void StmtProfiler::VisitTemplateName(TemplateName Name) {
   if (Canonical)
     Name = Context.getCanonicalTemplateName(Name);
-  
+
   Name.Profile(ID);
 }
 
-void StmtProfiler::VisitTemplateArguments(const TemplateArgument *Args, 
+void StmtProfiler::VisitTemplateArguments(const TemplateArgument *Args,
                                           unsigned NumArgs) {
   ID.AddInteger(NumArgs);
   for (unsigned I = 0; I != NumArgs; ++I) {
     const TemplateArgument &Arg = Args[I];
-    
+
     // Mostly repetitive with TemplateArgument::Profile!
     ID.AddInteger(Arg.getKind());
     switch (Arg.getKind()) {
       case TemplateArgument::Null:
         break;
-        
+
       case TemplateArgument::Type:
         VisitType(Arg.getAsType());
         break;
-        
+
       case TemplateArgument::Declaration:
         VisitDecl(Arg.getAsDecl());
         break;
-        
+
       case TemplateArgument::Integral:
         Arg.getAsIntegral()->Profile(ID);
         VisitType(Arg.getIntegralType());
         break;
-        
+
       case TemplateArgument::Expression:
         Visit(Arg.getAsExpr());
         break;
-        
+
       case TemplateArgument::Pack:
         VisitTemplateArguments(Arg.pack_begin(), Arg.pack_size());
         break;

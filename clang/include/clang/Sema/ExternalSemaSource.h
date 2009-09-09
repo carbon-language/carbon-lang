@@ -39,13 +39,13 @@ public:
   ///
   /// \returns a pair of Objective-C methods lists containing the
   /// instance and factory methods, respectively, with this selector.
-  virtual std::pair<ObjCMethodList, ObjCMethodList> 
-  ReadMethodPool(Selector Sel) { 
+  virtual std::pair<ObjCMethodList, ObjCMethodList>
+  ReadMethodPool(Selector Sel) {
     return std::pair<ObjCMethodList, ObjCMethodList>();
   }
-  
+
   // isa/cast/dyn_cast support
-  static bool classof(const ExternalASTSource *Source) { 
+  static bool classof(const ExternalASTSource *Source) {
     return Source->SemaSource;
   }
   static bool classof(const ExternalSemaSource *) { return true; }

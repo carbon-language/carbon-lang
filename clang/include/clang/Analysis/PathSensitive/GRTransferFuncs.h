@@ -21,66 +21,66 @@
 #include <vector>
 
 namespace clang {
-  
+
 class GRExprEngine;
 class BugReporter;
 class ObjCMessageExpr;
 class GRStmtNodeBuilderRef;
-  
+
 class GRTransferFuncs {
 public:
   GRTransferFuncs() {}
   virtual ~GRTransferFuncs() {}
-  
+
   virtual void RegisterPrinters(std::vector<GRState::Printer*>& Printers) {}
   virtual void RegisterChecks(BugReporter& BR) {}
-  
+
 
   // Calls.
-  
+
   virtual void EvalCall(ExplodedNodeSet& Dst,
                         GRExprEngine& Engine,
                         GRStmtNodeBuilder& Builder,
                         CallExpr* CE, SVal L,
                         ExplodedNode* Pred) {}
-  
+
   virtual void EvalObjCMessageExpr(ExplodedNodeSet& Dst,
                                    GRExprEngine& Engine,
                                    GRStmtNodeBuilder& Builder,
                                    ObjCMessageExpr* ME,
                                    ExplodedNode* Pred) {}
-  
+
   // Stores.
-  
+
   virtual void EvalBind(GRStmtNodeBuilderRef& B, SVal location, SVal val) {}
-  
+
   // End-of-path and dead symbol notification.
-  
+
   virtual void EvalEndPath(GRExprEngine& Engine,
                            GREndPathNodeBuilder& Builder) {}
-  
-  
+
+
   virtual void EvalDeadSymbols(ExplodedNodeSet& Dst,
                                GRExprEngine& Engine,
                                GRStmtNodeBuilder& Builder,
                                ExplodedNode* Pred,
                                Stmt* S, const GRState* state,
                                SymbolReaper& SymReaper) {}
-  
-  // Return statements.  
+
+  // Return statements.
   virtual void EvalReturn(ExplodedNodeSet& Dst,
                           GRExprEngine& Engine,
                           GRStmtNodeBuilder& Builder,
                           ReturnStmt* S,
                           ExplodedNode* Pred) {}
 
-  // Assumptions.  
+  // Assumptions.
   virtual const GRState* EvalAssume(const GRState *state,
                                     SVal Cond, bool Assumption) {
     return state;
   }
 };
-  
+
 } // end clang namespace
 
 #endif

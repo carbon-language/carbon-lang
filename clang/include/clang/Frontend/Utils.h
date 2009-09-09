@@ -57,7 +57,7 @@ void RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream* OS);
 
 /// RewriteMacrosInInput - A simple test for the TokenRewriter class.
 void DoRewriteTest(Preprocessor &PP, llvm::raw_ostream* OS);
-  
+
 /// CreatePrintParserActionsAction - Return the actions implementation that
 /// implements the -parse-print-callbacks option.
 MinimalAction *CreatePrintParserActionsAction(Preprocessor &PP,

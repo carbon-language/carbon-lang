@@ -36,7 +36,7 @@ void Preprocessor::CommitBacktrackedTokens() {
 }
 
 /// Backtrack - Make Preprocessor re-lex the tokens that were lexed since
-/// EnableBacktrackAtThisPos() was previously called. 
+/// EnableBacktrackAtThisPos() was previously called.
 void Preprocessor::Backtrack() {
   assert(!BacktrackPositions.empty()
          && "EnableBacktrackAtThisPos was not called!");

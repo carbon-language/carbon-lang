@@ -28,22 +28,22 @@ namespace clang {
 struct LineEntry {
   /// FileOffset - The offset in this file that the line entry occurs at.
   unsigned FileOffset;
-  
+
   /// LineNo - The presumed line number of this line entry: #line 4.
   unsigned LineNo;
-  
+
   /// FilenameID - The ID of the filename identified by this line entry:
   /// #line 4 "foo.c".  This is -1 if not specified.
   int FilenameID;
-  
-  /// Flags - Set the 0 if no flags, 1 if a system header, 
+
+  /// Flags - Set the 0 if no flags, 1 if a system header,
   SrcMgr::CharacteristicKind FileKind;
-  
+
   /// IncludeOffset - This is the offset of the virtual include stack location,
   /// which is manipulated by GNU linemarker directives.  If this is 0 then
   /// there is no virtual #includer.
   unsigned IncludeOffset;
-  
+
   static LineEntry get(unsigned Offs, unsigned Line, int Filename,
                        SrcMgr::CharacteristicKind FileKind,
                        unsigned IncludeOffset) {
@@ -70,7 +70,7 @@ inline bool operator<(const LineEntry &E, unsigned Offset) {
 inline bool operator<(unsigned Offset, const LineEntry &E) {
   return Offset < E.FileOffset;
 }
-  
+
 /// LineTableInfo - This class is used to hold and unique data used to
 /// represent #line information.
 class LineTableInfo {
@@ -81,22 +81,22 @@ class LineTableInfo {
   /// to string.
   llvm::StringMap<unsigned, llvm::BumpPtrAllocator> FilenameIDs;
   std::vector<llvm::StringMapEntry<unsigned>*> FilenamesByID;
-  
+
   /// LineEntries - This is a map from FileIDs to a list of line entries (sorted
   /// by the offset they occur in the file.
   std::map<unsigned, std::vector<LineEntry> > LineEntries;
 public:
   LineTableInfo() {
   }
-  
+
   void clear() {
     FilenameIDs.clear();
     FilenamesByID.clear();
     LineEntries.clear();
   }
-  
+
   ~LineTableInfo() {}
-  
+
   unsigned getLineTableFilenameID(const char *Ptr, unsigned Len);
   const char *getFilename(unsigned ID) const {
     assert(ID < FilenamesByID.size() && "Invalid FilenameID");
@@ -110,7 +110,7 @@ public:
                    unsigned LineNo, int FilenameID,
                    unsigned EntryExit, SrcMgr::CharacteristicKind FileKind);
 
-  
+
   /// FindNearestLineEntry - Find the line entry nearest to FID that is before
   /// it.  If there is no line entry before Offset in FID, return null.
   const LineEntry *FindNearestLineEntry(unsigned FID, unsigned Offset);

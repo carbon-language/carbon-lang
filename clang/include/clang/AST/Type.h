@@ -92,7 +92,7 @@ public:
     Volatile = 0x4,
     CVRFlags = Const|Restrict|Volatile
   };
-  
+
   enum GCAttrTypes {
     GCNone = 0,
     Weak,
@@ -101,23 +101,23 @@ public:
 
   // 24 bits should be enough for anyone.
   static const unsigned MaxAddressSpace = 0xffffffu;
-  
+
   QualType() {}
-  
+
   QualType(const Type *Ptr, unsigned Quals)
     : Value(const_cast<Type*>(Ptr), Quals) {}
 
   unsigned getCVRQualifiers() const { return Value.getInt(); }
   void setCVRQualifiers(unsigned Quals) { Value.setInt(Quals); }
   Type *getTypePtr() const { return Value.getPointer(); }
-  
+
   void *getAsOpaquePtr() const { return Value.getOpaqueValue(); }
   static QualType getFromOpaquePtr(void *Ptr) {
     QualType T;
     T.Value.setFromOpaqueValue(Ptr);
     return T;
   }
-  
+
   Type &operator*() const {
     return *getTypePtr();
   }
@@ -125,7 +125,7 @@ public:
   Type *operator->() const {
     return getTypePtr();
   }
-  
+
   /// isNull - Return true if this QualType doesn't point to a type yet.
   bool isNull() const {
     return getTypePtr() == 0;
@@ -142,7 +142,7 @@ public:
   }
 
   bool isConstant(ASTContext& Ctx) const;
-  
+
   /// addConst/addVolatile/addRestrict - add the specified type qual to this
   /// QualType.
   void addConst()    { Value.setInt(Value.getInt() | Const); }
@@ -163,12 +163,12 @@ public:
   QualType withConst() const { return getWithAdditionalQualifiers(Const); }
   QualType withVolatile() const { return getWithAdditionalQualifiers(Volatile);}
   QualType withRestrict() const { return getWithAdditionalQualifiers(Restrict);}
-  
+
   QualType getUnqualifiedType() const;
   bool isMoreQualifiedThan(QualType Other) const;
   bool isAtLeastAsQualifiedAs(QualType Other) const;
   QualType getNonReferenceType() const;
-  
+
   /// getDesugaredType - Return the specified type with any "sugar" removed from
   /// the type.  This takes off typedefs, typeof's etc.  If the outer level of
   /// the type is already concrete, it returns it unmodified.  This is similar
@@ -194,19 +194,19 @@ public:
   }
   void getAsStringInternal(std::string &Str,
                            const PrintingPolicy &Policy) const;
-  
+
   void dump(const char *s) const;
   void dump() const;
-  
+
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddPointer(getAsOpaquePtr());
   }
 
 public:
-  
+
   /// getAddressSpace - Return the address space of this type.
   inline unsigned getAddressSpace() const;
-  
+
   /// GCAttrTypesAttr - Returns gc attribute of this type.
   inline QualType::GCAttrTypes getObjCGCAttr() const;
 
@@ -238,7 +238,7 @@ template<> struct simplify_type<const ::clang::QualType> {
 };
 template<> struct simplify_type< ::clang::QualType>
   : public simplify_type<const ::clang::QualType> {};
-  
+
 // Teach SmallPtrSet that QualType is "basically a pointer".
 template<>
 class PointerLikeTypeTraits<clang::QualType> {
@@ -252,7 +252,7 @@ public:
   // CVR qualifiers go in low bits.
   enum { NumLowBitsAvailable = 0 };
 };
-    
+
 } // end namespace llvm
 
 namespace clang {
@@ -316,15 +316,15 @@ protected:
   virtual ~Type() {}
   virtual void Destroy(ASTContext& C);
   friend class ASTContext;
-  
+
 public:
   TypeClass getTypeClass() const { return static_cast<TypeClass>(TC); }
-  
+
   bool isCanonical() const { return CanonicalType.getTypePtr() == this; }
 
-  /// Types are partitioned into 3 broad categories (C99 6.2.5p1): 
+  /// Types are partitioned into 3 broad categories (C99 6.2.5p1):
   /// object types, function types, and incomplete types.
-  
+
   /// \brief Determines whether the type describes an object in memory.
   ///
   /// Note that this definition of object type corresponds to the C++
@@ -336,7 +336,7 @@ public:
   /// isIncompleteType - Return true if this is an incomplete type.
   /// A type that can describe objects, but which lacks information needed to
   /// determine its size (e.g. void, or a fwd declared struct). Clients of this
-  /// routine will need to determine if the size is actually required.  
+  /// routine will need to determine if the size is actually required.
   bool isIncompleteType() const;
 
   /// isIncompleteOrObjectType - Return true if this is an incomplete or object
@@ -351,13 +351,13 @@ public:
   /// isVariablyModifiedType (C99 6.7.5.2p2) - Return true for variable array
   /// types that have a non-constant expression. This does not include "[]".
   bool isVariablyModifiedType() const;
-  
+
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs and qualifiers.
 
   /// isSpecificBuiltinType - Test for a particular builtin type.
   bool isSpecificBuiltinType(unsigned K) const;
-  
+
   /// isIntegerType() does *not* include complex integers (a GCC extension).
   /// isComplexIntegerType() can be used to test for complex integers.
   bool isIntegerType() const;     // C99 6.2.5p17 (int, char, bool, enum)
@@ -366,7 +366,7 @@ public:
   bool isCharType() const;
   bool isWideCharType() const;
   bool isIntegralType() const;
-  
+
   /// Floating point categories.
   bool isRealFloatingType() const; // C99 6.2.5p10 (float, double, long double)
   /// isComplexType() does *not* include complex integers (a GCC extension).
@@ -380,7 +380,7 @@ public:
   bool isDerivedType() const;      // C99 6.2.5p20
   bool isScalarType() const;       // C99 6.2.5p21 (arithmetic + pointers)
   bool isAggregateType() const;
-  
+
   // Type Predicates: Check to see if this type is structurally the specified
   // type, ignoring typedefs and qualifiers.
   bool isFunctionType() const;
@@ -402,8 +402,8 @@ public:
   bool isVariableArrayType() const;
   bool isDependentSizedArrayType() const;
   bool isRecordType() const;
-  bool isClassType() const;   
-  bool isStructureType() const;   
+  bool isClassType() const;
+  bool isStructureType() const;
   bool isUnionType() const;
   bool isComplexIntegerType() const;            // GCC _Complex integer type.
   bool isVectorType() const;                    // GCC vector type.
@@ -422,7 +422,7 @@ public:
   bool isNullPtrType() const;                   // C++0x nullptr_t
 
   /// isDependentType - Whether this type is a dependent type, meaning
-  /// that its definition somehow depends on a template parameter 
+  /// that its definition somehow depends on a template parameter
   /// (C++ [temp.dep.type]).
   bool isDependentType() const { return Dependent; }
   bool isOverloadableType() const;
@@ -435,7 +435,7 @@ public:
 
   /// hasObjCPointerRepresentation - Whether this type can represent
   /// an objective pointer type for the purpose of GC'ability
-  bool hasObjCPointerRepresentation() const; 
+  bool hasObjCPointerRepresentation() const;
 
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs and qualifiers, and return a pointer to
@@ -462,14 +462,14 @@ public:
   const ObjCInterfaceType *getAsObjCQualifiedInterfaceType() const;
   const TemplateTypeParmType *getAsTemplateTypeParmType() const;
   const CXXRecordDecl *getCXXRecordDeclForPointerType() const;
-  
+
   // Member-template getAs<specific type>'.  This scheme will eventually
   // replace the specific getAsXXXX methods above.
   template <typename T> const T *getAs() const;
-  
+
   const TemplateSpecializationType *
     getAsTemplateSpecializationType() const;
-  
+
   /// getAsPointerToObjCInterfaceType - If this is a pointer to an ObjC
   /// interface, return the interface type, otherwise return null.
   const ObjCInterfaceType *getAsPointerToObjCInterfaceType() const;
@@ -478,11 +478,11 @@ public:
   /// element type of the array, potentially with type qualifiers missing.
   /// This method should never be used when type qualifiers are meaningful.
   const Type *getArrayElementTypeNoTypeQual() const;
-  
+
   /// getPointeeType - If this is a pointer, ObjC object pointer, or block
   /// pointer, this returns the respective pointee.
   QualType getPointeeType() const;
-  
+
   /// getDesugaredType - Return the specified type with any "sugar" removed from
   /// the type.  This takes off typedefs, typeof's etc.  If the outer level of
   /// the type is already concrete, it returns it unmodified.  This is similar
@@ -490,7 +490,7 @@ public:
   /// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
   /// concrete.
   QualType getDesugaredType(bool ForDisplay = false) const;
-  
+
   /// More type predicates useful for type checking/promotion
   bool isPromotableIntegerType() const; // C99 6.3.1.1p2
 
@@ -517,12 +517,12 @@ public:
 
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   void dump() const;
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const = 0;
   static bool classof(const Type *) { return true; }
 };
 
-/// ExtQualType - TR18037 (C embedded extensions) 6.2.5p26 
+/// ExtQualType - TR18037 (C embedded extensions) 6.2.5p26
 /// This supports all kinds of type attributes; including,
 /// address space qualified types, objective-c's __weak and
 /// __strong attributes.
@@ -537,7 +537,7 @@ class ExtQualType : public Type, public llvm::FoldingSetNode {
   unsigned AddressSpace;
   /// GC __weak/__strong attributes
   QualType::GCAttrTypes GCAttrType;
-  
+
   ExtQualType(Type *Base, QualType CanonicalPtr, unsigned AddrSpace,
               QualType::GCAttrTypes gcAttr) :
       Type(ExtQual, CanonicalPtr, Base->isDependentType()), BaseType(Base),
@@ -551,19 +551,19 @@ public:
   QualType::GCAttrTypes getObjCGCAttr() const { return GCAttrType; }
   unsigned getAddressSpace() const { return AddressSpace; }
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getBaseType(), AddressSpace, GCAttrType);
   }
-  static void Profile(llvm::FoldingSetNodeID &ID, Type *Base, 
+  static void Profile(llvm::FoldingSetNodeID &ID, Type *Base,
                       unsigned AddrSpace, QualType::GCAttrTypes gcAttr) {
     ID.AddPointer(Base);
     ID.AddInteger(AddrSpace);
     ID.AddInteger(gcAttr);
   }
-  
+
   static bool classof(const Type *T) { return T->getTypeClass() == ExtQual; }
   static bool classof(const ExtQualType *) { return true; }
 };
@@ -637,7 +637,7 @@ public:
   }
 
   bool operator==(QualifierSet& Other) { return Mask == Other.Mask; }
-  
+
 private:
   void setAddressSpace(unsigned space) {
     assert(space <= MaxAddressSpace);
@@ -668,7 +668,7 @@ class BuiltinType : public Type {
 public:
   enum Kind {
     Void,
-    
+
     Bool,     // This is bool and/or _Bool.
     Char_U,   // This is 'char' for targets where char is unsigned.
     UChar,    // This is explicitly qualified unsigned char.
@@ -679,7 +679,7 @@ public:
     ULong,
     ULongLong,
     UInt128,  // __uint128_t
-    
+
     Char_S,   // This is 'char' for targets where char is signed.
     SChar,    // This is explicitly qualified signed char.
     WChar,    // This is 'wchar_t' for C++.
@@ -688,14 +688,14 @@ public:
     Long,
     LongLong,
     Int128,   // __int128_t
-    
+
     Float, Double, LongDouble,
 
     NullPtr,  // This is the type of C++0x 'nullptr'.
 
     Overload,  // This represents the type of an overloaded function declaration.
     Dependent, // This represents the type of a type-dependent expression.
-    
+
     UndeducedAuto, // In C++0x, this represents the type of an auto variable
                    // that has not been deduced yet.
     ObjCId,    // This represents the ObjC 'id' type.
@@ -704,16 +704,16 @@ public:
 private:
   Kind TypeKind;
 public:
-  BuiltinType(Kind K) 
-    : Type(Builtin, QualType(), /*Dependent=*/(K == Dependent)), 
+  BuiltinType(Kind K)
+    : Type(Builtin, QualType(), /*Dependent=*/(K == Dependent)),
       TypeKind(K) {}
-  
+
   Kind getKind() const { return TypeKind; }
   const char *getName(const LangOptions &LO) const;
-  
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  
+
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
   static bool classof(const BuiltinType *) { return true; }
 };
@@ -728,14 +728,14 @@ private:
 public:
   FixedWidthIntType(unsigned W, bool S) : Type(FixedWidthInt, QualType(), false),
                                           Width(W), Signed(S) {}
-  
+
   unsigned getWidth() const { return Width; }
   bool isSigned() const { return Signed; }
   const char *getName() const;
-  
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  
+
   static bool classof(const Type *T) { return T->getTypeClass() == FixedWidthInt; }
   static bool classof(const FixedWidthIntType *) { return true; }
 };
@@ -746,23 +746,23 @@ public:
 class ComplexType : public Type, public llvm::FoldingSetNode {
   QualType ElementType;
   ComplexType(QualType Element, QualType CanonicalPtr) :
-    Type(Complex, CanonicalPtr, Element->isDependentType()), 
+    Type(Complex, CanonicalPtr, Element->isDependentType()),
     ElementType(Element) {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
   QualType getElementType() const { return ElementType; }
-  
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-    
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getElementType());
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Element) {
     ID.AddPointer(Element.getAsOpaquePtr());
   }
-  
+
   static bool classof(const Type *T) { return T->getTypeClass() == Complex; }
   static bool classof(const ComplexType *) { return true; }
 };
@@ -777,10 +777,10 @@ class PointerType : public Type, public llvm::FoldingSetNode {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
-  
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  
+
   QualType getPointeeType() const { return PointeeType; }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -789,7 +789,7 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Pointee) {
     ID.AddPointer(Pointee.getAsOpaquePtr());
   }
-  
+
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
   static bool classof(const PointerType *) { return true; }
 };
@@ -801,27 +801,27 @@ public:
 class BlockPointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;  // Block is some kind of pointer type
   BlockPointerType(QualType Pointee, QualType CanonicalCls) :
-    Type(BlockPointer, CanonicalCls, Pointee->isDependentType()), 
+    Type(BlockPointer, CanonicalCls, Pointee->isDependentType()),
     PointeeType(Pointee) {
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
-  
+
   // Get the pointee type. Pointee is required to always be a function type.
   QualType getPointeeType() const { return PointeeType; }
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-    
+
   void Profile(llvm::FoldingSetNodeID &ID) {
       Profile(ID, getPointeeType());
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Pointee) {
       ID.AddPointer(Pointee.getAsOpaquePtr());
   }
-    
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == BlockPointer; 
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == BlockPointer;
   }
   static bool classof(const BlockPointerType *) { return true; }
 };
@@ -861,7 +861,7 @@ class LValueReferenceType : public ReferenceType {
   }
   friend class ASTContext; // ASTContext creates these
 public:
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) {
@@ -878,7 +878,7 @@ class RValueReferenceType : public ReferenceType {
   }
   friend class ASTContext; // ASTContext creates these
 public:
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) {
@@ -907,7 +907,7 @@ public:
 
   const Type *getClass() const { return Class; }
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -939,15 +939,15 @@ public:
 private:
   /// ElementType - The element type of the array.
   QualType ElementType;
-  
+
   // NOTE: VC++ treats enums as signed, avoid using the ArraySizeModifier enum
   /// NOTE: These fields are packed into the bitfields space in the Type class.
   unsigned SizeModifier : 2;
-  
+
   /// IndexTypeQuals - Capture qualifiers in declarations like:
   /// 'int X[static restrict 4]'. For function parameters only.
   unsigned IndexTypeQuals : 3;
-  
+
 protected:
   // C++ [temp.dep.type]p1:
   //   A type is dependent if it is...
@@ -966,7 +966,7 @@ public:
     return ArraySizeModifier(SizeModifier);
   }
   unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
-  
+
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray ||
            T->getTypeClass() == ConstantArrayWithExpr ||
@@ -984,7 +984,7 @@ public:
 /// type is 'int' and the size is 404.
 class ConstantArrayType : public ArrayType {
   llvm::APInt Size; // Allows us to unique the type.
-  
+
   ConstantArrayType(QualType et, QualType can, const llvm::APInt &size,
                     ArraySizeModifier sm, unsigned tq)
     : ArrayType(ConstantArray, et, can, sm, tq),
@@ -996,11 +996,11 @@ protected:
   friend class ASTContext;  // ASTContext creates these.
 public:
   const llvm::APInt &getSize() const { return Size; }
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  
+
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getElementType(), getSize(), 
+    Profile(ID, getElementType(), getSize(),
             getSizeModifier(), getIndexTypeQualifier());
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ET,
@@ -1096,20 +1096,20 @@ class IncompleteArrayType : public ArrayType {
     : ArrayType(IncompleteArray, et, can, sm, tq) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == IncompleteArray; 
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == IncompleteArray;
   }
   static bool classof(const IncompleteArrayType *) { return true; }
-  
+
   friend class StmtIteratorBase;
-  
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getElementType(), getSizeModifier(), getIndexTypeQualifier());
   }
-  
+
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ET,
                       ArraySizeModifier SizeMod, unsigned TypeQuals) {
     ID.AddPointer(ET.getAsOpaquePtr());
@@ -1134,8 +1134,8 @@ public:
 /// }
 ///
 class VariableArrayType : public ArrayType {
-  /// SizeExpr - An assignment expression. VLA's are only permitted within 
-  /// a function block. 
+  /// SizeExpr - An assignment expression. VLA's are only permitted within
+  /// a function block.
   Stmt *SizeExpr;
   /// Brackets - The left and right array brackets.
   SourceRange Brackets;
@@ -1149,7 +1149,7 @@ class VariableArrayType : public ArrayType {
   virtual void Destroy(ASTContext& C);
 
 public:
-  Expr *getSizeExpr() const { 
+  Expr *getSizeExpr() const {
     // We use C-style casts instead of cast<> here because we do not wish
     // to have a dependency of Type.h on Stmt.h/Expr.h.
     return (Expr*) SizeExpr;
@@ -1157,17 +1157,17 @@ public:
   SourceRange getBracketsRange() const { return Brackets; }
   SourceLocation getLBracketLoc() const { return Brackets.getBegin(); }
   SourceLocation getRBracketLoc() const { return Brackets.getEnd(); }
-  
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == VariableArray; 
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == VariableArray;
   }
   static bool classof(const VariableArrayType *) { return true; }
-  
+
   friend class StmtIteratorBase;
-  
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     assert(0 && "Cannnot unique VariableArrayTypes.");
   }
@@ -1176,7 +1176,7 @@ public:
 /// DependentSizedArrayType - This type represents an array type in
 /// C++ whose size is a value-dependent expression. For example:
 /// @code
-/// template<typename T, int Size> 
+/// template<typename T, int Size>
 /// class array {
 ///   T data[Size];
 /// };
@@ -1186,14 +1186,14 @@ public:
 /// become either a ConstantArrayType or a VariableArrayType.
 class DependentSizedArrayType : public ArrayType {
   ASTContext &Context;
-  
+
   /// SizeExpr - An assignment expression that will instantiate to the
   /// size of the array.
   Stmt *SizeExpr;
   /// Brackets - The left and right array brackets.
   SourceRange Brackets;
-  
-  DependentSizedArrayType(ASTContext &Context, QualType et, QualType can, 
+
+  DependentSizedArrayType(ASTContext &Context, QualType et, QualType can,
                           Expr *e, ArraySizeModifier sm, unsigned tq,
                           SourceRange brackets)
     : ArrayType(DependentSizedArray, et, can, sm, tq),
@@ -1202,7 +1202,7 @@ class DependentSizedArrayType : public ArrayType {
   virtual void Destroy(ASTContext& C);
 
 public:
-  Expr *getSizeExpr() const { 
+  Expr *getSizeExpr() const {
     // We use C-style casts instead of cast<> here because we do not wish
     // to have a dependency of Type.h on Stmt.h/Expr.h.
     return (Expr*) SizeExpr;
@@ -1210,25 +1210,25 @@ public:
   SourceRange getBracketsRange() const { return Brackets; }
   SourceLocation getLBracketLoc() const { return Brackets.getBegin(); }
   SourceLocation getRBracketLoc() const { return Brackets.getEnd(); }
-  
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == DependentSizedArray; 
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == DependentSizedArray;
   }
   static bool classof(const DependentSizedArrayType *) { return true; }
-  
+
   friend class StmtIteratorBase;
-  
-  
+
+
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, Context, getElementType(), 
+    Profile(ID, Context, getElementType(),
             getSizeModifier(), getIndexTypeQualifier(), getSizeExpr());
   }
-  
-  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context, 
-                      QualType ET, ArraySizeModifier SizeMod, 
+
+  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+                      QualType ET, ArraySizeModifier SizeMod,
                       unsigned TypeQuals, Expr *E);
 };
 
@@ -1246,11 +1246,11 @@ class DependentSizedExtVectorType : public Type, public llvm::FoldingSetNode {
   /// ElementType - The element type of the array.
   QualType ElementType;
   SourceLocation loc;
-  
-  DependentSizedExtVectorType(ASTContext &Context, QualType ElementType, 
+
+  DependentSizedExtVectorType(ASTContext &Context, QualType ElementType,
                               QualType can, Expr *SizeExpr, SourceLocation loc)
-    : Type (DependentSizedExtVector, can, true), 
-      Context(Context), SizeExpr(SizeExpr), ElementType(ElementType), 
+    : Type (DependentSizedExtVector, can, true),
+      Context(Context), SizeExpr(SizeExpr), ElementType(ElementType),
       loc(loc) {}
   friend class ASTContext;
   virtual void Destroy(ASTContext& C);
@@ -1260,62 +1260,62 @@ public:
   QualType getElementType() const { return ElementType; }
   SourceLocation getAttributeLoc() const { return loc; }
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == DependentSizedExtVector; 
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == DependentSizedExtVector;
   }
-  static bool classof(const DependentSizedExtVectorType *) { return true; } 
+  static bool classof(const DependentSizedExtVectorType *) { return true; }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, Context, getElementType(), getSizeExpr());
   }
-  
+
   static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
                       QualType ElementType, Expr *SizeExpr);
 };
-  
+
 
 /// VectorType - GCC generic vector type. This type is created using
-/// __attribute__((vector_size(n)), where "n" specifies the vector size in 
-/// bytes. Since the constructor takes the number of vector elements, the 
+/// __attribute__((vector_size(n)), where "n" specifies the vector size in
+/// bytes. Since the constructor takes the number of vector elements, the
 /// client is responsible for converting the size into the number of elements.
 class VectorType : public Type, public llvm::FoldingSetNode {
 protected:
   /// ElementType - The element type of the vector.
   QualType ElementType;
-  
+
   /// NumElements - The number of elements in the vector.
   unsigned NumElements;
-  
+
   VectorType(QualType vecType, unsigned nElements, QualType canonType) :
-    Type(Vector, canonType, vecType->isDependentType()), 
-    ElementType(vecType), NumElements(nElements) {} 
-  VectorType(TypeClass tc, QualType vecType, unsigned nElements, 
-             QualType canonType) 
-    : Type(tc, canonType, vecType->isDependentType()), ElementType(vecType), 
-      NumElements(nElements) {} 
+    Type(Vector, canonType, vecType->isDependentType()),
+    ElementType(vecType), NumElements(nElements) {}
+  VectorType(TypeClass tc, QualType vecType, unsigned nElements,
+             QualType canonType)
+    : Type(tc, canonType, vecType->isDependentType()), ElementType(vecType),
+      NumElements(nElements) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
-    
-  QualType getElementType() const { return ElementType; }
-  unsigned getNumElements() const { return NumElements; } 
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  QualType getElementType() const { return ElementType; }
+  unsigned getNumElements() const { return NumElements; }
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getElementType(), getNumElements(), getTypeClass());
   }
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType ElementType, 
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType ElementType,
                       unsigned NumElements, TypeClass TypeClass) {
     ID.AddPointer(ElementType.getAsOpaquePtr());
     ID.AddInteger(NumElements);
     ID.AddInteger(TypeClass);
   }
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == Vector || T->getTypeClass() == ExtVector; 
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == Vector || T->getTypeClass() == ExtVector;
   }
   static bool classof(const VectorType *) { return true; }
 };
@@ -1327,7 +1327,7 @@ public:
 /// points, colors, and textures (modeled after OpenGL Shading Language).
 class ExtVectorType : public VectorType {
   ExtVectorType(QualType vecType, unsigned nElements, QualType canonType) :
-    VectorType(ExtVector, vecType, nElements, canonType) {} 
+    VectorType(ExtVector, vecType, nElements, canonType) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   static int getPointAccessorIdx(char c) {
@@ -1366,22 +1366,22 @@ public:
       case 'f': return 15;
     }
   }
-  
+
   static int getAccessorIdx(char c) {
     if (int idx = getPointAccessorIdx(c)+1) return idx-1;
     return getNumericAccessorIdx(c);
   }
-  
+
   bool isAccessorWithinNumElements(char c) const {
     if (int idx = getAccessorIdx(c)+1)
       return unsigned(idx-1) < NumElements;
     return false;
   }
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == ExtVector; 
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == ExtVector;
   }
   static bool classof(const ExtVectorType *) { return true; }
 };
@@ -1405,7 +1405,7 @@ class FunctionType : public Type {
 
   /// NoReturn - Indicates if the function type is attribute noreturn.
   unsigned NoReturn : 1;
-  
+
   // The type returned by the function.
   QualType ResultType;
 protected:
@@ -1418,11 +1418,11 @@ protected:
   bool getSubClassData() const { return SubClassData; }
   unsigned getTypeQuals() const { return TypeQuals; }
 public:
-  
+
   QualType getResultType() const { return ResultType; }
   bool getNoReturnAttr() const { return NoReturn; }
 
-  
+
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionNoProto ||
            T->getTypeClass() == FunctionProto;
@@ -1435,13 +1435,13 @@ public:
 class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
   FunctionNoProtoType(QualType Result, QualType Canonical,
                       bool NoReturn = false)
-    : FunctionType(FunctionNoProto, Result, false, 0, Canonical, 
+    : FunctionType(FunctionNoProto, Result, false, 0, Canonical,
                    /*Dependent=*/false, NoReturn) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   // No additional state past what FunctionType provides.
-  
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -1452,7 +1452,7 @@ public:
     ID.AddInteger(NoReturn);
     ID.AddPointer(ResultType.getAsOpaquePtr());
   }
-  
+
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionNoProto;
   }
@@ -1480,7 +1480,7 @@ class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
                     bool hasAnyExs, const QualType *ExArray,
                     unsigned numExs, QualType Canonical, bool NoReturn)
     : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
-                   (Result->isDependentType() || 
+                   (Result->isDependentType() ||
                     hasAnyDependentType(ArgArray, numArgs)), NoReturn),
       NumArgs(numArgs), NumExceptions(numExs), HasExceptionSpec(hasExs),
       AnyExceptionSpec(hasAnyExs) {
@@ -1528,14 +1528,14 @@ public:
     assert(i < NumExceptions && "Invalid exception number!");
     return exception_begin()[i];
   }
-  bool hasEmptyExceptionSpec() const { 
-    return hasExceptionSpec() && !hasAnyExceptionSpec() && 
+  bool hasEmptyExceptionSpec() const {
+    return hasExceptionSpec() && !hasAnyExceptionSpec() &&
       getNumExceptions() == 0;
   }
 
   bool isVariadic() const { return getSubClassData(); }
   unsigned getTypeQuals() const { return FunctionType::getTypeQuals(); }
-  
+
   typedef const QualType *arg_type_iterator;
   arg_type_iterator arg_type_begin() const {
     return reinterpret_cast<const QualType *>(this+1);
@@ -1551,7 +1551,7 @@ public:
     return exception_begin() + NumExceptions;
   }
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) {
@@ -1572,15 +1572,15 @@ public:
 class TypedefType : public Type {
   TypedefDecl *Decl;
 protected:
-  TypedefType(TypeClass tc, TypedefDecl *D, QualType can) 
+  TypedefType(TypeClass tc, TypedefDecl *D, QualType can)
     : Type(tc, can, can->isDependentType()), Decl(D) {
     assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
-  
+
   TypedefDecl *getDecl() const { return Decl; }
-  
+
   /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
   /// potentially looking through *all* consecutive typedefs.  This returns the
   /// sum of the type qualifiers, so if you have:
@@ -1588,8 +1588,8 @@ public:
   ///   typedef volatile A B;
   /// looking through the typedefs for B will give you "const volatile A".
   QualType LookThroughTypedefs() const;
-    
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == Typedef; }
@@ -1599,50 +1599,50 @@ public:
 /// TypeOfExprType (GCC extension).
 class TypeOfExprType : public Type {
   Expr *TOExpr;
-  
+
 protected:
   TypeOfExprType(Expr *E, QualType can = QualType());
   friend class ASTContext;  // ASTContext creates these.
 public:
   Expr *getUnderlyingExpr() const { return TOExpr; }
-  
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOfExpr; }
   static bool classof(const TypeOfExprType *) { return true; }
 };
 
-/// Subclass of TypeOfExprType that is used for canonical, dependent 
-/// typeof(expr) types. 
-class DependentTypeOfExprType 
+/// Subclass of TypeOfExprType that is used for canonical, dependent
+/// typeof(expr) types.
+class DependentTypeOfExprType
   : public TypeOfExprType, public llvm::FoldingSetNode {
   ASTContext &Context;
-  
+
 public:
-  DependentTypeOfExprType(ASTContext &Context, Expr *E) 
+  DependentTypeOfExprType(ASTContext &Context, Expr *E)
     : TypeOfExprType(E), Context(Context) { }
-  
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, Context, getUnderlyingExpr());
   }
-  
+
   static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
                       Expr *E);
 };
-  
+
 /// TypeOfType (GCC extension).
 class TypeOfType : public Type {
   QualType TOType;
-  TypeOfType(QualType T, QualType can) 
+  TypeOfType(QualType T, QualType can)
     : Type(TypeOf, can, T->isDependentType()), TOType(T) {
     assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
   friend class ASTContext;  // ASTContext creates these.
 public:
   QualType getUnderlyingType() const { return TOType; }
-  
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeOf; }
@@ -1652,12 +1652,12 @@ public:
 /// DecltypeType (C++0x)
 class DecltypeType : public Type {
   Expr *E;
-  
+
   // FIXME: We could get rid of UnderlyingType if we wanted to: We would have to
   // Move getDesugaredType to ASTContext so that it can call getDecltypeForExpr
   // from it.
   QualType UnderlyingType;
-  
+
 protected:
   DecltypeType(Expr *E, QualType underlyingType, QualType can = QualType());
   friend class ASTContext;  // ASTContext creates these.
@@ -1665,29 +1665,29 @@ public:
   Expr *getUnderlyingExpr() const { return E; }
   QualType getUnderlyingType() const { return UnderlyingType; }
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  
+
   static bool classof(const Type *T) { return T->getTypeClass() == Decltype; }
   static bool classof(const DecltypeType *) { return true; }
 };
-  
-/// Subclass of DecltypeType that is used for canonical, dependent 
-/// C++0x decltype types. 
+
+/// Subclass of DecltypeType that is used for canonical, dependent
+/// C++0x decltype types.
 class DependentDecltypeType : public DecltypeType, public llvm::FoldingSetNode {
   ASTContext &Context;
-  
+
 public:
   DependentDecltypeType(ASTContext &Context, Expr *E);
-  
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, Context, getUnderlyingExpr());
   }
-  
+
   static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
-                      Expr *E);  
+                      Expr *E);
 };
-  
+
 class TagType : public Type {
   /// Stores the TagDecl associated with this type. The decl will
   /// point to the TagDecl that actually defines the entity (or is a
@@ -1701,18 +1701,18 @@ class TagType : public Type {
 protected:
   TagType(TypeClass TC, TagDecl *D, QualType can);
 
-public:   
+public:
   TagDecl *getDecl() const { return decl.getPointer(); }
-  
+
   /// @brief Determines whether this type is in the process of being
-  /// defined. 
+  /// defined.
   bool isBeingDefined() const { return decl.getInt(); }
   void setBeingDefined(bool Def) { decl.setInt(Def? 1 : 0); }
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
-  static bool classof(const Type *T) { 
+  static bool classof(const Type *T) {
     return T->getTypeClass() >= TagFirst && T->getTypeClass() <= TagLast;
   }
   static bool classof(const TagType *) { return true; }
@@ -1730,20 +1730,20 @@ protected:
     : TagType(TC, reinterpret_cast<TagDecl*>(D), QualType()) { }
   friend class ASTContext;   // ASTContext creates these.
 public:
-    
+
   RecordDecl *getDecl() const {
     return reinterpret_cast<RecordDecl*>(TagType::getDecl());
   }
-  
-  // FIXME: This predicate is a helper to QualType/Type. It needs to 
+
+  // FIXME: This predicate is a helper to QualType/Type. It needs to
   // recursively check all fields for const-ness. If any field is declared
-  // const, it needs to return false. 
+  // const, it needs to return false.
   bool hasConstFields() const { return false; }
 
   // FIXME: RecordType needs to check when it is created that all fields are in
   // the same address space, and return that.
   unsigned getAddressSpace() const { return 0; }
-  
+
   static bool classof(const TagType *T);
   static bool classof(const Type *T) {
     return isa<TagType>(T) && classof(cast<TagType>(T));
@@ -1758,11 +1758,11 @@ class EnumType : public TagType {
     : TagType(Enum, reinterpret_cast<TagDecl*>(D), QualType()) { }
   friend class ASTContext;   // ASTContext creates these.
 public:
-    
+
   EnumDecl *getDecl() const {
     return reinterpret_cast<EnumDecl*>(TagType::getDecl());
   }
-  
+
   static bool classof(const TagType *T);
   static bool classof(const Type *T) {
     return isa<TagType>(T) && classof(cast<TagType>(T));
@@ -1814,7 +1814,7 @@ public:
     }
   }
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -1835,12 +1835,12 @@ class TemplateTypeParmType : public Type, public llvm::FoldingSetNode {
   unsigned ParameterPack : 1;
   IdentifierInfo *Name;
 
-  TemplateTypeParmType(unsigned D, unsigned I, bool PP, IdentifierInfo *N, 
-                       QualType Canon) 
+  TemplateTypeParmType(unsigned D, unsigned I, bool PP, IdentifierInfo *N,
+                       QualType Canon)
     : Type(TemplateTypeParm, Canon, /*Dependent=*/true),
       Depth(D), Index(I), ParameterPack(PP), Name(N) { }
 
-  TemplateTypeParmType(unsigned D, unsigned I, bool PP) 
+  TemplateTypeParmType(unsigned D, unsigned I, bool PP)
     : Type(TemplateTypeParm, QualType(this, 0), /*Dependent=*/true),
       Depth(D), Index(I), ParameterPack(PP), Name(0) { }
 
@@ -1851,16 +1851,16 @@ public:
   unsigned getIndex() const { return Index; }
   bool isParameterPack() const { return ParameterPack; }
   IdentifierInfo *getName() const { return Name; }
-  
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, Depth, Index, ParameterPack, Name);
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, unsigned Depth, 
-                      unsigned Index, bool ParameterPack, 
+  static void Profile(llvm::FoldingSetNodeID &ID, unsigned Depth,
+                      unsigned Index, bool ParameterPack,
                       IdentifierInfo *Name) {
     ID.AddInteger(Depth);
     ID.AddInteger(Index);
@@ -1868,8 +1868,8 @@ public:
     ID.AddPointer(Name);
   }
 
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == TemplateTypeParm; 
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == TemplateTypeParm;
   }
   static bool classof(const TemplateTypeParmType *T) { return true; }
 };
@@ -1883,18 +1883,18 @@ public:
 /// type will point to some other type node that represents the
 /// instantiation or class template specialization. For example, a
 /// class template specialization type of @c vector<int> will refer to
-/// a tag type for the instantiation 
+/// a tag type for the instantiation
 /// @c std::vector<int, std::allocator<int>>.
 ///
 /// Other template specialization types, for which the template name
 /// is dependent, may be canonical types. These types are always
 /// dependent.
-class TemplateSpecializationType 
+class TemplateSpecializationType
   : public Type, public llvm::FoldingSetNode {
 
   // FIXME: Currently needed for profiling expressions; can we avoid this?
   ASTContext &Context;
-    
+
     /// \brief The name of the template being specialized.
   TemplateName Template;
 
@@ -1915,7 +1915,7 @@ public:
   /// \brief Determine whether any of the given template arguments are
   /// dependent.
   static bool anyDependentTemplateArguments(const TemplateArgument *Args,
-                                            unsigned NumArgs);  
+                                            unsigned NumArgs);
 
   /// \brief Print a template argument list, including the '<' and '>'
   /// enclosing the template arguments.
@@ -1932,7 +1932,7 @@ public:
   TemplateName getTemplateName() const { return Template; }
 
   /// \brief Retrieve the template arguments.
-  const TemplateArgument *getArgs() const { 
+  const TemplateArgument *getArgs() const {
     return reinterpret_cast<const TemplateArgument *>(this + 1);
   }
 
@@ -1943,7 +1943,7 @@ public:
   /// \precondition @c isArgType(Arg)
   const TemplateArgument &getArg(unsigned Idx) const;
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -1954,8 +1954,8 @@ public:
                       const TemplateArgument *Args, unsigned NumArgs,
                       ASTContext &Context);
 
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == TemplateSpecialization; 
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == TemplateSpecialization;
   }
   static bool classof(const TemplateSpecializationType *T) { return true; }
 };
@@ -1988,7 +1988,7 @@ public:
   /// \brief Retrieve the type named by the qualified-id.
   QualType getNamedType() const { return NamedType; }
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -2001,8 +2001,8 @@ public:
     NamedType.Profile(ID);
   }
 
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == QualifiedName; 
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == QualifiedName;
   }
   static bool classof(const QualifiedNameType *T) { return true; }
 };
@@ -2023,7 +2023,7 @@ class TypenameType : public Type, public llvm::FoldingSetNode {
   /// \brief The nested name specifier containing the qualifier.
   NestedNameSpecifier *NNS;
 
-  typedef llvm::PointerUnion<const IdentifierInfo *, 
+  typedef llvm::PointerUnion<const IdentifierInfo *,
                              const TemplateSpecializationType *> NameType;
 
   /// \brief The type that this typename specifier refers to.
@@ -2031,15 +2031,15 @@ class TypenameType : public Type, public llvm::FoldingSetNode {
 
   TypenameType(NestedNameSpecifier *NNS, const IdentifierInfo *Name,
                QualType CanonType)
-    : Type(Typename, CanonType, true), NNS(NNS), Name(Name) { 
-    assert(NNS->isDependent() && 
+    : Type(Typename, CanonType, true), NNS(NNS), Name(Name) {
+    assert(NNS->isDependent() &&
            "TypenameType requires a dependent nested-name-specifier");
   }
 
   TypenameType(NestedNameSpecifier *NNS, const TemplateSpecializationType *Ty,
                QualType CanonType)
-    : Type(Typename, CanonType, true), NNS(NNS), Name(Ty) { 
-    assert(NNS->isDependent() && 
+    : Type(Typename, CanonType, true), NNS(NNS), Name(Ty) {
+    assert(NNS->isDependent() &&
            "TypenameType requires a dependent nested-name-specifier");
   }
 
@@ -2055,8 +2055,8 @@ public:
   /// This routine will return a non-NULL identifier pointer when the
   /// form of the original typename was terminated by an identifier,
   /// e.g., "typename T::type".
-  const IdentifierInfo *getIdentifier() const { 
-    return Name.dyn_cast<const IdentifierInfo *>(); 
+  const IdentifierInfo *getIdentifier() const {
+    return Name.dyn_cast<const IdentifierInfo *>();
   }
 
   /// \brief Retrieve the type named by the typename specifier as a
@@ -2065,7 +2065,7 @@ public:
     return Name.dyn_cast<const TemplateSpecializationType *>();
   }
 
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
@@ -2078,8 +2078,8 @@ public:
     ID.AddPointer(Name.getOpaqueValue());
   }
 
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == Typename; 
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == Typename;
   }
   static bool classof(const TypenameType *T) { return true; }
 };
@@ -2097,13 +2097,13 @@ class ObjCInterfaceType : public Type, public llvm::FoldingSetNode {
   llvm::SmallVector<ObjCProtocolDecl*, 4> Protocols;
 
   ObjCInterfaceType(ObjCInterfaceDecl *D,
-                    ObjCProtocolDecl **Protos, unsigned NumP) : 
-    Type(ObjCInterface, QualType(), /*Dependent=*/false), 
+                    ObjCProtocolDecl **Protos, unsigned NumP) :
+    Type(ObjCInterface, QualType(), /*Dependent=*/false),
     Decl(D), Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
   ObjCInterfaceDecl *getDecl() const { return Decl; }
-  
+
   /// getNumProtocols - Return the number of qualifying protocols in this
   /// interface type, or 0 if there are none.
   unsigned getNumProtocols() const { return Protocols.size(); }
@@ -2114,17 +2114,17 @@ public:
   qual_iterator qual_begin() const { return Protocols.begin(); }
   qual_iterator qual_end() const   { return Protocols.end(); }
   bool qual_empty() const { return Protocols.size() == 0; }
-                                     
-  virtual void getAsStringInternal(std::string &InnerString, 
+
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  
+
   void Profile(llvm::FoldingSetNodeID &ID);
-  static void Profile(llvm::FoldingSetNodeID &ID, 
+  static void Profile(llvm::FoldingSetNodeID &ID,
                       const ObjCInterfaceDecl *Decl,
                       ObjCProtocolDecl **protocols, unsigned NumProtocols);
- 
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == ObjCInterface; 
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == ObjCInterface;
   }
   static bool classof(const ObjCInterfaceType *) { return true; }
 };
@@ -2136,7 +2136,7 @@ public:
 /// alphabetical order.
 class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType; // A builtin or interface type.
-  
+
   // List of protocols for this protocol conforming object type
   // List is sorted on protocol name. No protocol is entered more than once.
   llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
@@ -2145,7 +2145,7 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
     Type(ObjCObjectPointer, QualType(), /*Dependent=*/false),
     PointeeType(T), Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
-  
+
 public:
   // Get the pointee type. Pointee will either be:
   // - a built-in type (for 'id' and 'Class').
@@ -2154,8 +2154,8 @@ public:
   //   For example: typedef NSObject T; T *var;
   QualType getPointeeType() const { return PointeeType; }
 
-  const ObjCInterfaceType *getInterfaceType() const { 
-    return PointeeType->getAsObjCInterfaceType(); 
+  const ObjCInterfaceType *getInterfaceType() const {
+    return PointeeType->getAsObjCInterfaceType();
   }
   /// getInterfaceDecl - returns an interface decl for user-defined types.
   ObjCInterfaceDecl *getInterfaceDecl() const {
@@ -2163,22 +2163,22 @@ public:
   }
   /// isObjCIdType - true for "id".
   bool isObjCIdType() const {
-    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) && 
+    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) &&
            !Protocols.size();
   }
   /// isObjCClassType - true for "Class".
   bool isObjCClassType() const {
-    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) && 
+    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) &&
            !Protocols.size();
   }
   /// isObjCQualifiedIdType - true for "id <p>".
-  bool isObjCQualifiedIdType() const { 
-    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) && 
-           Protocols.size(); 
+  bool isObjCQualifiedIdType() const {
+    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) &&
+           Protocols.size();
   }
   /// isObjCQualifiedClassType - true for "Class <p>".
   bool isObjCQualifiedClassType() const {
-    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) && 
+    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) &&
            Protocols.size();
   }
   /// qual_iterator and friends: this provides access to the (potentially empty)
@@ -2196,10 +2196,10 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, QualType T,
                       ObjCProtocolDecl **protocols, unsigned NumProtocols);
-  virtual void getAsStringInternal(std::string &InnerString, 
+  virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == ObjCObjectPointer; 
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == ObjCObjectPointer;
   }
   static bool classof(const ObjCObjectPointerType *) { return true; }
 };
@@ -2234,10 +2234,10 @@ inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
   if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CT))
     return EXTQT->getObjCGCAttr();
   if (const ObjCObjectPointerType *PT = CT->getAsObjCObjectPointerType())
-    return PT->getPointeeType().getObjCGCAttr(); 
+    return PT->getPointeeType().getObjCGCAttr();
   // We most look at all pointer types, not just pointer to interface types.
   if (const PointerType *PT = CT->getAs<PointerType>())
-    return PT->getPointeeType().getObjCGCAttr(); 
+    return PT->getPointeeType().getObjCGCAttr();
   return GCNone;
 }
 
@@ -2253,7 +2253,7 @@ inline bool QualType::getNoReturnAttr() const {
 
   return false;
 }
-  
+
 /// isMoreQualifiedThan - Determine whether this type is more
 /// qualified than the Other type. For example, "const volatile int"
 /// is more qualified than "const int", "volatile int", and
@@ -2303,20 +2303,20 @@ inline const ObjCInterfaceType *Type::getAsPointerToObjCInterfaceType() const {
     return PT->getPointeeType()->getAsObjCInterfaceType();
   return 0;
 }
-  
+
 // NOTE: All of these methods use "getUnqualifiedType" to strip off address
 // space qualifiers if present.
 inline bool Type::isFunctionType() const {
   return isa<FunctionType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isPointerType() const {
-  return isa<PointerType>(CanonicalType.getUnqualifiedType()); 
+  return isa<PointerType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isAnyPointerType() const {
   return isPointerType() || isObjCObjectPointerType();
 }
 inline bool Type::isBlockPointerType() const {
-  return isa<BlockPointerType>(CanonicalType.getUnqualifiedType()); 
+  return isa<BlockPointerType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isReferenceType() const {
   return isa<ReferenceType>(CanonicalType.getUnqualifiedType());
@@ -2417,12 +2417,12 @@ inline bool Type::isOverloadableType() const {
 
 inline bool Type::hasPointerRepresentation() const {
   return (isPointerType() || isReferenceType() || isBlockPointerType() ||
-          isObjCInterfaceType() || isObjCObjectPointerType() || 
+          isObjCInterfaceType() || isObjCObjectPointerType() ||
           isObjCQualifiedInterfaceType() || isNullPtrType());
 }
 
 inline bool Type::hasObjCPointerRepresentation() const {
-  return (isObjCInterfaceType() || isObjCObjectPointerType() || 
+  return (isObjCInterfaceType() || isObjCObjectPointerType() ||
           isObjCQualifiedInterfaceType());
 }
 
@@ -2434,13 +2434,13 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                   Diagnostic::ak_qualtype);
   return DB;
 }
-  
+
 /// Member-template getAs<specific type>'.
 template <typename T> const T *Type::getAs() const {
   // If this is directly a T type, return it.
   if (const T *Ty = dyn_cast<T>(this))
     return Ty;
-    
+
   // If the canonical form of this type isn't the right kind, reject it.
   if (!isa<T>(CanonicalType)) {
     // Look through type qualifiers
@@ -2448,11 +2448,11 @@ template <typename T> const T *Type::getAs() const {
       return CanonicalType.getUnqualifiedType()->getAs<T>();
     return 0;
   }
-    
+
   // If this is a typedef for a pointer type, strip the typedef off without
   // losing all typedef information.
   return cast<T>(getDesugaredType());
-}  
+}
 
 }  // end namespace clang
 

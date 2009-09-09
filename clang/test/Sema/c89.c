@@ -25,7 +25,7 @@ void test3(int i) {
   int A[i];        /* expected-warning {{variable length array}} */
 }
 
-int test4 = 0LL;		/* expected-warning {{long long}} */
+int test4 = 0LL;   /* expected-warning {{long long}} */
 
 /* PR1999 */
 void test5(register);

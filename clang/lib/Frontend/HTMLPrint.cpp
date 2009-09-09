@@ -26,7 +26,7 @@ using namespace clang;
 
 //===----------------------------------------------------------------------===//
 // Functional HTML pretty-printing.
-//===----------------------------------------------------------------------===//  
+//===----------------------------------------------------------------------===//
 
 namespace {
   class HTMLPrinter : public ASTConsumer {
@@ -40,7 +40,7 @@ namespace {
                 PreprocessorFactory* ppf)
       : Out(OS), Diags(D), PP(pp), PPF(ppf) {}
     virtual ~HTMLPrinter();
-    
+
     void Initialize(ASTContext &context);
   };
 }
@@ -48,7 +48,7 @@ namespace {
 ASTConsumer* clang::CreateHTMLPrinter(llvm::raw_ostream *OS,
                                       Diagnostic &D, Preprocessor *PP,
                                       PreprocessorFactory* PPF) {
-  
+
   return new HTMLPrinter(OS, D, PP, PPF);
 }
 
@@ -78,7 +78,7 @@ HTMLPrinter::~HTMLPrinter() {
   // If we have a preprocessor, relex the file and syntax highlight.
   // We might not have a preprocessor if we come from a deserialized AST file,
   // for example.
-  
+
   if (PP) html::SyntaxHighlight(R, FID, *PP);
   if (PPF) html::HighlightMacros(R, FID, *PP);
   html::EscapeText(R, FID, false, true);

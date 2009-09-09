@@ -28,10 +28,10 @@ SVal ValueManager::makeZeroVal(QualType T) {
 
   if (T->isIntegerType())
     return makeIntVal(0, T);
-  
+
   // FIXME: Handle floats.
   // FIXME: Handle structs.
-  return UnknownVal();  
+  return UnknownVal();
 }
 
 //===----------------------------------------------------------------------===//
@@ -58,14 +58,14 @@ NonLoc ValueManager::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
 SVal ValueManager::convertToArrayIndex(SVal V) {
   if (V.isUnknownOrUndef())
     return V;
-  
+
   // Common case: we have an appropriately sized integer.
   if (nonloc::ConcreteInt* CI = dyn_cast<nonloc::ConcreteInt>(&V)) {
     const llvm::APSInt& I = CI->getValue();
     if (I.getBitWidth() == ArrayIndexWidth && I.isSigned())
       return V;
   }
-  
+
   return SVator->EvalCastNL(cast<NonLoc>(V), ArrayIndexTy);
 }
 
@@ -75,24 +75,24 @@ SVal ValueManager::getRegionValueSymbolVal(const MemRegion* R, QualType T) {
     const TypedRegion* TR = cast<TypedRegion>(R);
     T = TR->getValueType(SymMgr.getContext());
   }
-  
+
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
 
   SymbolRef sym = SymMgr.getRegionValueSymbol(R, T);
-    
+
   if (Loc::IsLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
-  
+
   return nonloc::SymbolVal(sym);
 }
 
 SVal ValueManager::getConjuredSymbolVal(const Expr *E, unsigned Count) {
   QualType T = E->getType();
-  
+
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
-  
+
   SymbolRef sym = SymMgr.getConjuredSymbol(E, Count);
 
   if (Loc::IsLocType(T))
@@ -103,7 +103,7 @@ SVal ValueManager::getConjuredSymbolVal(const Expr *E, unsigned Count) {
 
 SVal ValueManager::getConjuredSymbolVal(const Expr *E, QualType T,
                                         unsigned Count) {
-  
+
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
 
@@ -122,12 +122,12 @@ SVal ValueManager::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
 
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
-    
+
   SymbolRef sym = SymMgr.getDerivedSymbol(parentSymbol, R);
-  
+
   if (Loc::IsLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
-  
+
   return nonloc::SymbolVal(sym);
 }
 

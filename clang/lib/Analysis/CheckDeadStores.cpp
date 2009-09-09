@@ -33,14 +33,14 @@ class VISIBILITY_HIDDEN DeadStoreObs : public LiveVariables::ObserverTy {
   BugReporter& BR;
   ParentMap& Parents;
   llvm::SmallPtrSet<VarDecl*, 20> Escaped;
-  
+
   enum DeadStoreKind { Standard, Enclosing, DeadIncrement, DeadInit };
-    
+
 public:
   DeadStoreObs(ASTContext &ctx, BugReporter& br, ParentMap& parents,
                llvm::SmallPtrSet<VarDecl*, 20> &escaped)
     : Ctx(ctx), BR(br), Parents(parents), Escaped(escaped) {}
-  
+
   virtual ~DeadStoreObs() {}
 
   void Report(VarDecl* V, DeadStoreKind dsk, SourceLocation L, SourceRange R) {
@@ -48,27 +48,27 @@ public:
       return;
 
     std::string name = V->getNameAsString();
-    
+
     const char* BugType = 0;
     std::string msg;
-    
+
     switch (dsk) {
       default:
         assert(false && "Impossible dead store type.");
-        
+
       case DeadInit:
         BugType = "Dead initialization";
         msg = "Value stored to '" + name +
           "' during its initialization is never read";
         break;
-        
+
       case DeadIncrement:
         BugType = "Dead increment";
       case Standard:
         if (!BugType) BugType = "Dead assignment";
         msg = "Value stored to '" + name + "' is never read";
         break;
-        
+
       case Enclosing:
         BugType = "Dead nested assignment";
         msg = "Although the value stored to '" + name +
@@ -76,10 +76,10 @@ public:
           " read from '" + name + "'";
         break;
     }
-      
-    BR.EmitBasicReport(BugType, "Dead store", msg.c_str(), L, R);      
+
+    BR.EmitBasicReport(BugType, "Dead store", msg.c_str(), L, R);
   }
-  
+
   void CheckVarDecl(VarDecl* VD, Expr* Ex, Expr* Val,
                     DeadStoreKind dsk,
                     const LiveVariables::AnalysisDataTy& AD,
@@ -87,60 +87,60 @@ public:
 
     if (VD->hasLocalStorage() && !Live(VD, AD) && !VD->getAttr<UnusedAttr>())
       Report(VD, dsk, Ex->getSourceRange().getBegin(),
-             Val->getSourceRange());      
+             Val->getSourceRange());
   }
-  
+
   void CheckDeclRef(DeclRefExpr* DR, Expr* Val, DeadStoreKind dsk,
                     const LiveVariables::AnalysisDataTy& AD,
                     const LiveVariables::ValTy& Live) {
-    
+
     if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
       CheckVarDecl(VD, DR, Val, dsk, AD, Live);
   }
-  
+
   bool isIncrement(VarDecl* VD, BinaryOperator* B) {
     if (B->isCompoundAssignmentOp())
       return true;
-    
+
     Expr* RHS = B->getRHS()->IgnoreParenCasts();
     BinaryOperator* BRHS = dyn_cast<BinaryOperator>(RHS);
-    
+
     if (!BRHS)
       return false;
-    
+
     DeclRefExpr *DR;
-    
+
     if ((DR = dyn_cast<DeclRefExpr>(BRHS->getLHS()->IgnoreParenCasts())))
       if (DR->getDecl() == VD)
         return true;
-    
+
     if ((DR = dyn_cast<DeclRefExpr>(BRHS->getRHS()->IgnoreParenCasts())))
       if (DR->getDecl() == VD)
         return true;
-    
+
     return false;
   }
-  
+
   virtual void ObserveStmt(Stmt* S,
                            const LiveVariables::AnalysisDataTy& AD,
                            const LiveVariables::ValTy& Live) {
-    
+
     // Skip statements in macros.
     if (S->getLocStart().isMacroID())
       return;
-    
-    if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {    
+
+    if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
       if (!B->isAssignmentOp()) return; // Skip non-assignments.
-      
+
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()))
         if (VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
           Expr* RHS = B->getRHS()->IgnoreParenCasts();
-          
+
           // Special case: check for assigning null to a pointer.
-          //  This is a common form of defensive programming.          
+          //  This is a common form of defensive programming.
           if (VD->getType()->isPointerType()) {
             if (IntegerLiteral* L = dyn_cast<IntegerLiteral>(RHS))
-              // FIXME: Probably should have an Expr::isNullPointerConstant.              
+              // FIXME: Probably should have an Expr::isNullPointerConstant.
               if (L->getValue() == 0)
                 return;
           }
@@ -149,19 +149,19 @@ public:
           if (DeclRefExpr* RhsDR = dyn_cast<DeclRefExpr>(RHS))
             if (VD == dyn_cast<VarDecl>(RhsDR->getDecl()))
               return;
-            
+
           // Otherwise, issue a warning.
           DeadStoreKind dsk = Parents.isConsumedExpr(B)
-                              ? Enclosing 
+                              ? Enclosing
                               : (isIncrement(VD,B) ? DeadIncrement : Standard);
-          
+
           CheckVarDecl(VD, DR, B->getRHS(), dsk, AD, Live);
-        }              
+        }
     }
     else if (UnaryOperator* U = dyn_cast<UnaryOperator>(S)) {
       if (!U->isIncrementOp())
         return;
-      
+
       // Handle: ++x within a subexpression.  The solution is not warn
       //  about preincrements to dead variables when the preincrement occurs
       //  as a subexpression.  This can lead to false negatives, e.g. "(++x);"
@@ -170,21 +170,21 @@ public:
         return;
 
       Expr *Ex = U->getSubExpr()->IgnoreParenCasts();
-      
+
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(Ex))
         CheckDeclRef(DR, U, DeadIncrement, AD, Live);
-    }    
+    }
     else if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
       // Iterate through the decls.  Warn if any initializers are complex
       // expressions that are not live (never used).
       for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
            DI != DE; ++DI) {
-        
+
         VarDecl* V = dyn_cast<VarDecl>(*DI);
 
         if (!V)
           continue;
-        
+
         if (V->hasLocalStorage())
           if (Expr* E = V->getInit()) {
             // A dead initialization is a variable that is dead after it
@@ -200,7 +200,7 @@ public:
               // due to defensive programming.
               if (E->isConstantInitializer(Ctx))
                 return;
-              
+
               // Special case: check for initializations from constant
               //  variables.
               //
@@ -211,14 +211,14 @@ public:
                 if (VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl()))
                   if (VD->hasGlobalStorage() &&
                       VD->getType().isConstQualified()) return;
-              
+
               Report(V, DeadInit, V->getLocation(), E->getSourceRange());
             }
           }
       }
   }
 };
-  
+
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -230,9 +230,9 @@ class VISIBILITY_HIDDEN FindEscaped : public CFGRecStmtDeclVisitor<FindEscaped>{
   CFG *cfg;
 public:
   FindEscaped(CFG *c) : cfg(c) {}
-  
+
   CFG& getCFG() { return *cfg; }
-  
+
   llvm::SmallPtrSet<VarDecl*, 20> Escaped;
 
   void VisitUnaryOperator(UnaryOperator* U) {
@@ -249,11 +249,11 @@ public:
   }
 };
 } // end anonymous namespace
-  
+
 
 void clang::CheckDeadStores(LiveVariables& L, BugReporter& BR) {
   FindEscaped FS(BR.getCFG());
-  FS.getCFG().VisitBlockStmts(FS);  
+  FS.getCFG().VisitBlockStmts(FS);
   DeadStoreObs A(BR.getContext(), BR, BR.getParentMap(), FS.Escaped);
   L.runOnAllBlocks(*BR.getCFG(), &A);
 }

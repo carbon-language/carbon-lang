@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines RangeConstraintManager, a class that tracks simple 
+//  This file defines RangeConstraintManager, a class that tracks simple
 //  equality and inequality constraints on symbolic values of GRState.
 //
 //===----------------------------------------------------------------------===//
@@ -66,7 +66,7 @@ public:
   // consistent (instead of comparing by pointer values) and can potentially
   // be used to speed up some of the operations in RangeSet.
   static inline bool isLess(key_type_ref lhs, key_type_ref rhs) {
-    return *lhs.first < *rhs.first || (!(*rhs.first < *lhs.first) && 
+    return *lhs.first < *rhs.first || (!(*rhs.first < *lhs.first) &&
                                        *lhs.second < *rhs.second);
   }
 };
@@ -78,7 +78,7 @@ class VISIBILITY_HIDDEN RangeSet {
   typedef llvm::ImmutableSet<Range, RangeTrait> PrimRangeSet;
   PrimRangeSet ranges; // no need to make const, since it is an
                        // ImmutableSet - this allows default operator=
-                       // to work.    
+                       // to work.
 public:
   typedef PrimRangeSet::Factory Factory;
   typedef PrimRangeSet::iterator iterator;
@@ -88,13 +88,13 @@ public:
 
   iterator begin() const { return ranges.begin(); }
   iterator end() const { return ranges.end(); }
-  
+
   bool isEmpty() const { return ranges.isEmpty(); }
-  
+
   /// Construct a new RangeSet representing '{ [from, to] }'.
   RangeSet(Factory &F, const llvm::APSInt &from, const llvm::APSInt &to)
     : ranges(F.Add(F.GetEmptySet(), Range(from, to))) {}
-  
+
   /// Profile - Generates a hash profile of this RangeSet for use
   ///  by FoldingSet.
   void Profile(llvm::FoldingSetNodeID &ID) const { ranges.Profile(ID); }
@@ -122,7 +122,7 @@ public:
   ///  value be not be equal to V.
   RangeSet AddNE(BasicValueFactory &BV, Factory &F, const llvm::APSInt &V) {
     PrimRangeSet newRanges = ranges;
-    
+
     // FIXME: We can perhaps enhance ImmutableSet to do this search for us
     // in log(N) time using the sorted property of the internal AVL tree.
     for (iterator i = begin(), e = end(); i != e; ++i) {
@@ -134,11 +134,11 @@ public:
           newRanges = F.Add(newRanges, Range(i->From(), BV.Sub1(V)));
         if (V != i->To())
           newRanges = F.Add(newRanges, Range(BV.Add1(V), i->To()));
-        // All of the ranges are non-overlapping, so we can stop.        
+        // All of the ranges are non-overlapping, so we can stop.
         break;
       }
     }
-    
+
     return newRanges;
   }
 
@@ -153,7 +153,7 @@ public:
       else if (i->To() < V)
         newRanges = F.Add(newRanges, *i);
     }
-    
+
     return newRanges;
   }
 
@@ -168,7 +168,7 @@ public:
       else if (i->To() <= V)
         newRanges = F.Add(newRanges, *i);
     }
-    
+
     return newRanges;
   }
 
@@ -181,7 +181,7 @@ public:
       else if (i->From() > V)
         newRanges = F.Add(newRanges, *i);
     }
-    
+
     return newRanges;
   }
 
@@ -208,13 +208,13 @@ public:
         isFirst = false;
       else
         os << ", ";
-      
+
       os << '[' << i->From().toString(10) << ", " << i->To().toString(10)
          << ']';
     }
-    os << " }";  
+    os << " }";
   }
-  
+
   bool operator==(const RangeSet &other) const {
     return ranges == other.ranges;
   }
@@ -227,13 +227,13 @@ namespace clang {
 template<>
 struct GRStateTrait<ConstraintRange>
   : public GRStatePartialTrait<ConstraintRangeTy> {
-  static inline void* GDMIndex() { return &ConstraintRangeIndex; }  
+  static inline void* GDMIndex() { return &ConstraintRangeIndex; }
 };
-}  
-  
+}
+
 namespace {
 class VISIBILITY_HIDDEN RangeConstraintManager : public SimpleConstraintManager{
-  RangeSet GetRange(const GRState *state, SymbolRef sym);      
+  RangeSet GetRange(const GRState *state, SymbolRef sym);
 public:
   RangeConstraintManager() {}
 
@@ -256,7 +256,7 @@ public:
                              const llvm::APSInt& V);
 
   const llvm::APSInt* getSymVal(const GRState* St, SymbolRef sym) const;
-    
+
   // FIXME: Refactor into SimpleConstraintManager?
   bool isEqual(const GRState* St, SymbolRef sym, const llvm::APSInt& V) const {
     const llvm::APSInt *i = getSymVal(St, sym);
@@ -265,7 +265,7 @@ public:
 
   const GRState* RemoveDeadBindings(const GRState* St, SymbolReaper& SymReaper);
 
-  void print(const GRState* St, llvm::raw_ostream& Out, 
+  void print(const GRState* St, llvm::raw_ostream& Out,
              const char* nl, const char *sep);
 
 private:
@@ -294,11 +294,11 @@ RangeConstraintManager::RemoveDeadBindings(const GRState* state,
   ConstraintRangeTy::Factory& CRFactory = state->get_context<ConstraintRange>();
 
   for (ConstraintRangeTy::iterator I = CR.begin(), E = CR.end(); I != E; ++I) {
-    SymbolRef sym = I.getKey();    
+    SymbolRef sym = I.getKey();
     if (SymReaper.maybeDead(sym))
       CR = CRFactory.Remove(CR, sym);
   }
-  
+
   return state->set<ConstraintRange>(CR);
 }
 
@@ -310,11 +310,11 @@ RangeSet
 RangeConstraintManager::GetRange(const GRState *state, SymbolRef sym) {
   if (ConstraintRangeTy::data_type* V = state->get<ConstraintRange>(sym))
     return *V;
-  
+
   // Lazily generate a new RangeSet representing all possible values for the
   // given symbol type.
   QualType T = state->getSymbolManager().getType(sym);
-  BasicValueFactory& BV = state->getBasicVals();  
+  BasicValueFactory& BV = state->getBasicVals();
   return RangeSet(F, BV.getMinValue(T), BV.getMaxValue(T));
 }
 
@@ -341,16 +341,16 @@ AssumeX(GE)
 // Pretty-printing.
 //===------------------------------------------------------------------------===/
 
-void RangeConstraintManager::print(const GRState* St, llvm::raw_ostream& Out, 
+void RangeConstraintManager::print(const GRState* St, llvm::raw_ostream& Out,
                                    const char* nl, const char *sep) {
-  
+
   ConstraintRangeTy Ranges = St->get<ConstraintRange>();
-  
+
   if (Ranges.isEmpty())
     return;
-  
+
   Out << nl << sep << "ranges of symbol values:";
-  
+
   for (ConstraintRangeTy::iterator I=Ranges.begin(), E=Ranges.end(); I!=E; ++I){
     Out << nl << ' ' << I.getKey() << " : ";
     I.getData().print(Out);

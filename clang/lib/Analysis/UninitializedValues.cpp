@@ -25,21 +25,21 @@ using namespace clang;
 
 //===----------------------------------------------------------------------===//
 // Dataflow initialization logic.
-//===----------------------------------------------------------------------===//      
+//===----------------------------------------------------------------------===//
 
 namespace {
 
 class VISIBILITY_HIDDEN RegisterDecls
-  : public CFGRecStmtDeclVisitor<RegisterDecls> {  
+  : public CFGRecStmtDeclVisitor<RegisterDecls> {
 
   UninitializedValues::AnalysisDataTy& AD;
 public:
   RegisterDecls(UninitializedValues::AnalysisDataTy& ad) :  AD(ad) {}
-  
+
   void VisitVarDecl(VarDecl* VD) { AD.Register(VD); }
   CFG& getCFG() { return AD.getCFG(); }
 };
-  
+
 } // end anonymous namespace
 
 void UninitializedValues::InitializeValues(const CFG& cfg) {
@@ -49,25 +49,25 @@ void UninitializedValues::InitializeValues(const CFG& cfg) {
 
 //===----------------------------------------------------------------------===//
 // Transfer functions.
-//===----------------------------------------------------------------------===//      
+//===----------------------------------------------------------------------===//
 
 namespace {
 class VISIBILITY_HIDDEN TransferFuncs
   : public CFGStmtVisitor<TransferFuncs,bool> {
-    
+
   UninitializedValues::ValTy V;
   UninitializedValues::AnalysisDataTy& AD;
 public:
   TransferFuncs(UninitializedValues::AnalysisDataTy& ad) : AD(ad) {}
-  
+
   UninitializedValues::ValTy& getVal() { return V; }
   CFG& getCFG() { return AD.getCFG(); }
-  
+
   void SetTopValue(UninitializedValues::ValTy& X) {
     X.setDeclValues(AD);
     X.resetBlkExprValues(AD);
   }
-    
+
   bool VisitDeclRefExpr(DeclRefExpr* DR);
   bool VisitBinaryOperator(BinaryOperator* B);
   bool VisitUnaryOperator(UnaryOperator* U);
@@ -76,24 +76,24 @@ public:
   bool VisitDeclStmt(DeclStmt* D);
   bool VisitConditionalOperator(ConditionalOperator* C);
   bool BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S);
-  
+
   bool Visit(Stmt *S);
   bool BlockStmt_VisitExpr(Expr* E);
-    
+
   void VisitTerminator(CFGBlock* B) { }
 };
-  
+
 static const bool Initialized = false;
-static const bool Uninitialized = true;  
+static const bool Uninitialized = true;
 
 bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
-  
+
   if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
     if (VD->isBlockVarDecl()) {
-      
+
       if (AD.Observer)
         AD.Observer->ObserveDeclRefExpr(V, AD, DR, VD);
-     
+
       // Pseudo-hack to prevent cascade of warnings.  If an accessed variable
       // is uninitialized, then we are already going to flag a warning for
       // this variable, which a "source" of uninitialized values.
@@ -103,17 +103,17 @@ bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
       if (AD.FullUninitTaint)
         return V(VD,AD);
     }
-  
+
   return Initialized;
 }
 
 static VarDecl* FindBlockVarDecl(Expr* E) {
-  
+
   // Blast through casts and parentheses to find any DeclRefExprs that
   // refer to a block VarDecl.
-  
+
   if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E->IgnoreParenCasts()))
-    if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))      
+    if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
       if (VD->isBlockVarDecl()) return VD;
 
   return NULL;
@@ -136,7 +136,7 @@ bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
   for (DeclStmt::decl_iterator I=S->decl_begin(), E=S->decl_end(); I!=E; ++I) {
     VarDecl *VD = dyn_cast<VarDecl>(*I);
     if (VD && VD->isBlockVarDecl()) {
-      if (Stmt* I = VD->getInit()) 
+      if (Stmt* I = VD->getInit())
         V(VD,AD) = AD.FullUninitTaint ? V(cast<Expr>(I),AD) : Initialized;
       else {
         // Special case for declarations of array types.  For things like:
@@ -145,20 +145,20 @@ bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
         //
         // we should treat "x" as being initialized, because the variable
         // "x" really refers to the memory block.  Clearly x[1] is
-        // uninitialized, but expressions like "(char *) x" really do refer to 
-        // an initialized value.  This simple dataflow analysis does not reason 
+        // uninitialized, but expressions like "(char *) x" really do refer to
+        // an initialized value.  This simple dataflow analysis does not reason
         // about the contents of arrays, although it could be potentially
         // extended to do so if the array were of constant size.
         if (VD->getType()->isArrayType())
           V(VD,AD) = Initialized;
-        else        
+        else
           V(VD,AD) = Uninitialized;
       }
     }
   }
   return Uninitialized; // Value is never consumed.
 }
-  
+
 bool TransferFuncs::VisitCallExpr(CallExpr* C) {
   VisitChildren(C);
   return Initialized;
@@ -172,14 +172,14 @@ bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
         return V(VD,AD) = Initialized;
       break;
     }
-    
+
     default:
       break;
   }
 
   return Visit(U->getSubExpr());
 }
-  
+
 bool
 TransferFuncs::BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   // This represents a use of the 'collection'
@@ -203,12 +203,12 @@ TransferFuncs::BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
     else
       return Visit(ElemExpr);
   }
-      
+
   V(VD,AD) = Initialized;
   return Initialized;
 }
-  
-  
+
+
 bool TransferFuncs::VisitConditionalOperator(ConditionalOperator* C) {
   Visit(C->getCond());
 
@@ -228,21 +228,21 @@ bool TransferFuncs::VisitStmt(Stmt* S) {
   // or "Initialized" to variables referenced in the other subexpressions.
   for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
     if (*I && Visit(*I) == Uninitialized) x = Uninitialized;
-  
+
   return x;
 }
-  
+
 bool TransferFuncs::Visit(Stmt *S) {
   if (AD.isTracked(static_cast<Expr*>(S))) return V(static_cast<Expr*>(S),AD);
   else return static_cast<CFGStmtVisitor<TransferFuncs,bool>*>(this)->Visit(S);
 }
 
 bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
-  bool x = static_cast<CFGStmtVisitor<TransferFuncs,bool>*>(this)->Visit(E);  
+  bool x = static_cast<CFGStmtVisitor<TransferFuncs,bool>*>(this)->Visit(E);
   if (AD.isTracked(E)) V(E,AD) = x;
   return x;
 }
-  
+
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -255,7 +255,7 @@ bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
 //  Merges take the same approach, preferring soundness.  At a confluence point,
 //  if any predecessor has a variable marked uninitialized, the value is
 //  uninitialized at the confluence point.
-//===----------------------------------------------------------------------===//      
+//===----------------------------------------------------------------------===//
 
 namespace {
   typedef StmtDeclBitVector_Types::Union Merge;
@@ -264,28 +264,28 @@ namespace {
 
 //===----------------------------------------------------------------------===//
 // Uninitialized values checker.   Scan an AST and flag variable uses
-//===----------------------------------------------------------------------===//      
+//===----------------------------------------------------------------------===//
 
 UninitializedValues_ValueTypes::ObserverTy::~ObserverTy() {}
 
 namespace {
 class VISIBILITY_HIDDEN UninitializedValuesChecker
   : public UninitializedValues::ObserverTy {
-    
+
   ASTContext &Ctx;
   Diagnostic &Diags;
   llvm::SmallPtrSet<VarDecl*,10> AlreadyWarned;
-  
+
 public:
   UninitializedValuesChecker(ASTContext &ctx, Diagnostic &diags)
     : Ctx(ctx), Diags(diags) {}
-    
+
   virtual void ObserveDeclRefExpr(UninitializedValues::ValTy& V,
                                   UninitializedValues::AnalysisDataTy& AD,
                                   DeclRefExpr* DR, VarDecl* VD) {
 
     assert ( AD.isTracked(VD) && "Unknown VarDecl.");
-    
+
     if (V(VD,AD) == Uninitialized)
       if (AlreadyWarned.insert(VD))
         Diags.Report(Ctx.getFullLoc(DR->getSourceRange().getBegin()),
@@ -297,13 +297,13 @@ public:
 namespace clang {
 void CheckUninitializedValues(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags,
                               bool FullUninitTaint) {
-  
+
   // Compute the uninitialized values information.
   UninitializedValues U(cfg);
   U.getAnalysisData().FullUninitTaint = FullUninitTaint;
   Solver S(U);
   S.runOnCFG(cfg);
-  
+
   // Scan for DeclRefExprs that use uninitialized values.
   UninitializedValuesChecker Observer(Ctx,Diags);
   U.getAnalysisData().Observer = &Observer;

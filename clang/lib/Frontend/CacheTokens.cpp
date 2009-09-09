@@ -40,19 +40,19 @@ using namespace clang::io;
 
 namespace {
 class VISIBILITY_HIDDEN PTHEntry {
-  Offset TokenData, PPCondData;  
+  Offset TokenData, PPCondData;
 
-public:  
+public:
   PTHEntry() {}
 
   PTHEntry(Offset td, Offset ppcd)
     : TokenData(td), PPCondData(ppcd) {}
-  
-  Offset getTokenOffset() const { return TokenData; }  
+
+  Offset getTokenOffset() const { return TokenData; }
   Offset getPPCondTableOffset() const { return PPCondData; }
 };
-  
-  
+
+
 class VISIBILITY_HIDDEN PTHEntryKeyVariant {
   union { const FileEntry* FE; const char* Path; };
   enum { IsFE = 0x1, IsDE = 0x2, IsNoExist = 0x0 } Kind;
@@ -66,15 +66,15 @@ public:
 
   PTHEntryKeyVariant(const char* path)
     : Path(path), Kind(IsNoExist), StatBuf(0) {}
-  
+
   bool isFile() const { return Kind == IsFE; }
-  
+
   const char* getCString() const {
     return Kind == IsFE ? FE->getName() : Path;
   }
-  
+
   unsigned getKind() const { return (unsigned) Kind; }
-  
+
   void EmitData(llvm::raw_ostream& Out) {
     switch (Kind) {
       case IsFE:
@@ -98,45 +98,45 @@ public:
         break;
     }
   }
-  
+
   unsigned getRepresentationLength() const {
     return Kind == IsNoExist ? 0 : 4 + 4 + 2 + 8 + 8;
   }
 };
-  
+
 class VISIBILITY_HIDDEN FileEntryPTHEntryInfo {
 public:
   typedef PTHEntryKeyVariant key_type;
   typedef key_type key_type_ref;
-  
+
   typedef PTHEntry data_type;
   typedef const PTHEntry& data_type_ref;
-  
+
   static unsigned ComputeHash(PTHEntryKeyVariant V) {
     return BernsteinHash(V.getCString());
   }
-  
-  static std::pair<unsigned,unsigned> 
+
+  static std::pair<unsigned,unsigned>
   EmitKeyDataLength(llvm::raw_ostream& Out, PTHEntryKeyVariant V,
                     const PTHEntry& E) {
 
     unsigned n = strlen(V.getCString()) + 1 + 1;
     ::Emit16(Out, n);
-    
+
     unsigned m = V.getRepresentationLength() + (V.isFile() ? 4 + 4 : 0);
     ::Emit8(Out, m);
 
     return std::make_pair(n, m);
   }
-  
+
   static void EmitKey(llvm::raw_ostream& Out, PTHEntryKeyVariant V, unsigned n){
     // Emit the entry kind.
     ::Emit8(Out, (unsigned) V.getKind());
     // Emit the string.
     Out.write(V.getCString(), n - 1);
   }
-  
-  static void EmitData(llvm::raw_ostream& Out, PTHEntryKeyVariant V, 
+
+  static void EmitData(llvm::raw_ostream& Out, PTHEntryKeyVariant V,
                        const PTHEntry& E, unsigned) {
 
 
@@ -146,12 +146,12 @@ public:
       ::Emit32(Out, E.getTokenOffset());
       ::Emit32(Out, E.getPPCondTableOffset());
     }
-    
+
     // Emit any other data associated with the key (i.e., stat information).
     V.EmitData(Out);
-  }        
+  }
 };
-  
+
 class OffsetOpt {
   bool valid;
   Offset off;
@@ -180,16 +180,16 @@ class VISIBILITY_HIDDEN PTHWriter {
 
   //// Get the persistent id for the given IdentifierInfo*.
   uint32_t ResolveID(const IdentifierInfo* II);
-  
+
   /// Emit a token to the PTH file.
   void EmitToken(const Token& T);
 
   void Emit8(uint32_t V) {
     Out << (unsigned char)(V);
   }
-    
+
   void Emit16(uint32_t V) { ::Emit16(Out, V); }
-  
+
   void Emit24(uint32_t V) {
     Out << (unsigned char)(V);
     Out << (unsigned char)(V >>  8);
@@ -202,13 +202,13 @@ class VISIBILITY_HIDDEN PTHWriter {
   void EmitBuf(const char *Ptr, unsigned NumBytes) {
     Out.write(Ptr, NumBytes);
   }
-  
+
   /// EmitIdentifierTable - Emits two tables to the PTH file.  The first is
   ///  a hashtable mapping from identifier strings to persistent IDs.
   ///  The second is a straight table mapping from persistent IDs to string data
   ///  (the keys of the first table).
   std::pair<Offset, Offset> EmitIdentifierTable();
-  
+
   /// EmitFileTable - Emit a table mapping from file name strings to PTH
   /// token data.
   Offset EmitFileTable() { return PM.Emit(Out); }
@@ -217,23 +217,23 @@ class VISIBILITY_HIDDEN PTHWriter {
   Offset EmitCachedSpellings();
 
 public:
-  PTHWriter(llvm::raw_fd_ostream& out, Preprocessor& pp) 
+  PTHWriter(llvm::raw_fd_ostream& out, Preprocessor& pp)
     : Out(out), PP(pp), idcount(0), CurStrOffset(0) {}
-    
+
   PTHMap &getPM() { return PM; }
   void GeneratePTH(const std::string *MainFile = 0);
 };
 } // end anonymous namespace
-  
-uint32_t PTHWriter::ResolveID(const IdentifierInfo* II) {  
+
+uint32_t PTHWriter::ResolveID(const IdentifierInfo* II) {
   // Null IdentifierInfo's map to the persistent ID 0.
   if (!II)
     return 0;
-  
+
   IDMap::iterator I = IM.find(II);
   if (I != IM.end())
     return I->second; // We've already added 1.
-    
+
   IM[II] = ++idcount; // Pre-increment since '0' is reserved for NULL.
   return idcount;
 }
@@ -242,7 +242,7 @@ void PTHWriter::EmitToken(const Token& T) {
   // Emit the token kind, flags, and length.
   Emit32(((uint32_t) T.getKind()) | ((((uint32_t) T.getFlags())) << 8)|
          (((uint32_t) T.getLength()) << 16));
-    
+
   if (!T.isLiteral()) {
     Emit32(ResolveID(T.getIdentifierInfo()));
   } else {
@@ -253,18 +253,18 @@ void PTHWriter::EmitToken(const Token& T) {
 
     // Get the string entry.
     llvm::StringMapEntry<OffsetOpt> *E = &CachedStrs.GetOrCreateValue(s, s+len);
-    
+
     // If this is a new string entry, bump the PTH offset.
     if (!E->getValue().hasOffset()) {
       E->getValue().setOffset(CurStrOffset);
       StrEntries.push_back(E);
       CurStrOffset += len + 1;
     }
-    
+
     // Emit the relative offset into the PTH file for the spelling string.
     Emit32(E->getValue().getOffset());
   }
-  
+
   // Emit the offset into the original source file of this token so that we
   // can reconstruct its SourceLocation.
   Emit32(PP.getSourceManager().getFileOffset(T.getLocation()));
@@ -275,14 +275,14 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
   // This speed up reading them back in.
   Pad(Out, 4);
   Offset off = (Offset) Out.tell();
-  
+
   // Keep track of matching '#if' ... '#endif'.
   typedef std::vector<std::pair<Offset, unsigned> > PPCondTable;
   PPCondTable PPCond;
   std::vector<unsigned> PPStartCond;
   bool ParsingPreprocessorDirective = false;
   Token Tok;
-  
+
   do {
     L.LexFromRawLexer(Tok);
   NextToken:
@@ -300,7 +300,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
       EmitToken(Tmp);
       ParsingPreprocessorDirective = false;
     }
-    
+
     if (Tok.is(tok::identifier)) {
       Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
       EmitToken(Tok);
@@ -320,39 +320,39 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
       // If we see the start of line, then we had a null directive "#".
       if (Tok.isAtStartOfLine())
         goto NextToken;
-      
+
       // Did we see 'include'/'import'/'include_next'?
       if (Tok.isNot(tok::identifier)) {
         EmitToken(Tok);
         continue;
       }
-      
+
       IdentifierInfo* II = PP.LookUpIdentifierInfo(Tok);
       Tok.setIdentifierInfo(II);
       tok::PPKeywordKind K = II->getPPKeywordID();
-      
+
       ParsingPreprocessorDirective = true;
-      
+
       switch (K) {
       case tok::pp_not_keyword:
         // Invalid directives "#foo" can occur in #if 0 blocks etc, just pass
         // them through.
       default:
         break;
-          
+
       case tok::pp_include:
       case tok::pp_import:
-      case tok::pp_include_next: {        
+      case tok::pp_include_next: {
         // Save the 'include' token.
         EmitToken(Tok);
         // Lex the next token as an include string.
         L.setParsingPreprocessorDirective(true);
-        L.LexIncludeFilename(Tok); 
+        L.LexIncludeFilename(Tok);
         L.setParsingPreprocessorDirective(false);
         assert(!Tok.isAtStartOfLine());
         if (Tok.is(tok::identifier))
           Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
-        
+
         break;
       }
       case tok::pp_if:
@@ -374,11 +374,11 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
         assert(PPCond.size() > PPStartCond.back());
         assert(PPCond[PPStartCond.back()].second == 0);
         PPCond[PPStartCond.back()].second = index;
-        PPStartCond.pop_back();        
-        // Add the new entry to PPCond.      
+        PPStartCond.pop_back();
+        // Add the new entry to PPCond.
         PPCond.push_back(std::make_pair(HashOff, index));
         EmitToken(Tok);
-        
+
         // Some files have gibberish on the same line as '#endif'.
         // Discard these tokens.
         do
@@ -386,7 +386,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
         while (Tok.isNot(tok::eof) && !Tok.isAtStartOfLine());
         // We have the next token in hand.
         // Don't immediately lex the next one.
-        goto NextToken;        
+        goto NextToken;
       }
       case tok::pp_elif:
       case tok::pp_else: {
@@ -407,7 +407,7 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
       }
       }
     }
-    
+
     EmitToken(Tok);
   }
   while (Tok.isNot(tok::eof));
@@ -435,11 +435,11 @@ PTHEntry PTHWriter::LexTokens(Lexer& L) {
 Offset PTHWriter::EmitCachedSpellings() {
   // Write each cached strings to the PTH file.
   Offset SpellingsOff = Out.tell();
-  
+
   for (std::vector<llvm::StringMapEntry<OffsetOpt>*>::iterator
        I = StrEntries.begin(), E = StrEntries.end(); I!=E; ++I)
     EmitBuf((*I)->getKeyData(), (*I)->getKeyLength()+1 /*nul included*/);
-  
+
   return SpellingsOff;
 }
 
@@ -447,12 +447,12 @@ void PTHWriter::GeneratePTH(const std::string *MainFile) {
   // Generate the prologue.
   Out << "cfe-pth";
   Emit32(PTHManager::Version);
-  
+
   // Leave 4 words for the prologue.
   Offset PrologueOffset = Out.tell();
   for (unsigned i = 0; i < 4; ++i)
     Emit32(0);
-    
+
   // Write the name of the MainFile.
   if (MainFile && !MainFile->empty()) {
     Emit16(MainFile->length());
@@ -462,17 +462,17 @@ void PTHWriter::GeneratePTH(const std::string *MainFile) {
     Emit16(0);
   }
   Emit8(0);
-  
+
   // Iterate over all the files in SourceManager.  Create a lexer
   // for each file and cache the tokens.
   SourceManager &SM = PP.getSourceManager();
   const LangOptions &LOpts = PP.getLangOptions();
-  
+
   for (SourceManager::fileinfo_iterator I = SM.fileinfo_begin(),
        E = SM.fileinfo_end(); I != E; ++I) {
     const SrcMgr::ContentCache &C = *I->second;
     const FileEntry *FE = C.Entry;
-    
+
     // FIXME: Handle files with non-absolute paths.
     llvm::sys::Path P(FE->getName());
     if (!P.isAbsolute())
@@ -488,13 +488,13 @@ void PTHWriter::GeneratePTH(const std::string *MainFile) {
 
   // Write out the identifier table.
   const std::pair<Offset,Offset> &IdTableOff = EmitIdentifierTable();
-  
+
   // Write out the cached strings table.
   Offset SpellingOff = EmitCachedSpellings();
-  
+
   // Write out the file table.
-  Offset FileTableOff = EmitFileTable();  
-  
+  Offset FileTableOff = EmitFileTable();
+
   // Finally, write the prologue.
   Out.seek(PrologueOffset);
   Emit32(IdTableOff.first);
@@ -514,20 +514,20 @@ class StatListener : public StatSysCallCache {
 public:
   StatListener(PTHMap &pm) : PM(pm) {}
   ~StatListener() {}
-  
+
   int stat(const char *path, struct stat *buf) {
     int result = ::stat(path, buf);
-    
+
     if (result != 0) // Failed 'stat'.
       PM.insert(path, PTHEntry());
     else if (S_ISDIR(buf->st_mode)) {
       // Only cache directories with absolute paths.
       if (!llvm::sys::Path(path).isAbsolute())
         return result;
-      
+
       PM.insert(PTHEntryKeyVariant(buf, path), PTHEntry());
     }
-    
+
     return result;
   }
 };
@@ -540,7 +540,7 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   const FileEntry *MainFile = SrcMgr.getFileEntryForID(SrcMgr.getMainFileID());
   llvm::sys::Path MainFilePath(MainFile->getName());
   std::string MainFileName;
-  
+
   if (!MainFilePath.isAbsolute()) {
     llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
     P.appendComponent(MainFilePath.str());
@@ -551,16 +551,16 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
 
   // Create the PTHWriter.
   PTHWriter PW(*OS, PP);
-  
+
   // Install the 'stat' system call listener in the FileManager.
   PP.getFileManager().setStatCache(new StatListener(PW.getPM()));
-  
+
   // Lex through the entire file.  This will populate SourceManager with
   // all of the header information.
   Token Tok;
   PP.EnterMainSourceFile();
   do { PP.Lex(Tok); } while (Tok.isNot(tok::eof));
-  
+
   // Generate the PTH file.
   PP.getFileManager().setStatCache(0);
   PW.GeneratePTH(&MainFileName);
@@ -579,32 +579,32 @@ class VISIBILITY_HIDDEN PTHIdentifierTableTrait {
 public:
   typedef PTHIdKey* key_type;
   typedef key_type  key_type_ref;
-  
+
   typedef uint32_t  data_type;
   typedef data_type data_type_ref;
-  
+
   static unsigned ComputeHash(PTHIdKey* key) {
     return BernsteinHash(key->II->getName());
   }
-  
-  static std::pair<unsigned,unsigned> 
-  EmitKeyDataLength(llvm::raw_ostream& Out, const PTHIdKey* key, uint32_t) {    
+
+  static std::pair<unsigned,unsigned>
+  EmitKeyDataLength(llvm::raw_ostream& Out, const PTHIdKey* key, uint32_t) {
     unsigned n = strlen(key->II->getName()) + 1;
     ::Emit16(Out, n);
     return std::make_pair(n, sizeof(uint32_t));
   }
-  
+
   static void EmitKey(llvm::raw_ostream& Out, PTHIdKey* key, unsigned n) {
     // Record the location of the key data.  This is used when generating
     // the mapping from persistent IDs to strings.
     key->FileOffset = Out.tell();
     Out.write(key->II->getName(), n);
   }
-  
+
   static void EmitData(llvm::raw_ostream& Out, PTHIdKey*, uint32_t pID,
                        unsigned) {
     ::Emit32(Out, pID);
-  }        
+  }
 };
 } // end anonymous namespace
 
@@ -623,7 +623,7 @@ std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {
 
   // Create the hashtable.
   OnDiskChainedHashTableGenerator<PTHIdentifierTableTrait> IIOffMap;
-  
+
   // Generate mapping from persistent IDs -> IdentifierInfo*.
   for (IDMap::iterator I = IM.begin(), E = IM.end(); I != E; ++I) {
     // Decrement by 1 because we are using a vector for the lookup and
@@ -631,27 +631,27 @@ std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {
     assert(I->second > 0);
     assert(I->second-1 < idcount);
     unsigned idx = I->second-1;
-    
+
     // Store the mapping from persistent ID to IdentifierInfo*
     IIDMap[idx].II = I->first;
-    
+
     // Store the reverse mapping in a hashtable.
     IIOffMap.insert(&IIDMap[idx], I->second);
   }
-  
+
   // Write out the inverse map first.  This causes the PCIDKey entries to
   // record PTH file offsets for the string data.  This is used to write
   // the second table.
   Offset StringTableOffset = IIOffMap.Emit(Out);
-  
-  // Now emit the table mapping from persistent IDs to PTH file offsets.  
+
+  // Now emit the table mapping from persistent IDs to PTH file offsets.
   Offset IDOff = Out.tell();
   Emit32(idcount);  // Emit the number of identifiers.
   for (unsigned i = 0 ; i < idcount; ++i)
     Emit32(IIDMap[i].FileOffset);
-  
+
   // Finally, release the inverse map.
   free(IIDMap);
-  
+
   return std::make_pair(IDOff, StringTableOffset);
 }

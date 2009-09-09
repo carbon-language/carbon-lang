@@ -847,7 +847,7 @@ LValue CodeGenFunction::EmitPredefinedFunctionName(unsigned Type) {
   }
 
   std::string FunctionName =
-    PredefinedExpr::ComputeName(getContext(), (PredefinedExpr::IdentType)Type, 
+    PredefinedExpr::ComputeName(getContext(), (PredefinedExpr::IdentType)Type,
                                 CurCodeDecl);
 
   GlobalVarName += FunctionName;
@@ -1073,8 +1073,7 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
 LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
                                            FieldDecl* Field,
                                            bool isUnion,
-                                           unsigned CVRQualifiers)
-{
+                                           unsigned CVRQualifiers) {
   if (Field->isBitField())
     return EmitLValueForBitfield(BaseValue, Field, CVRQualifiers);
 

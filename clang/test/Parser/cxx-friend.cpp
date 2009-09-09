@@ -6,7 +6,7 @@ class C {
 
 class A {
 public:
-	void f();
+  void f();
 };
 
 friend int x; // expected-error {{'friend' used outside of class}}

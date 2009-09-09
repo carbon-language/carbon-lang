@@ -37,16 +37,16 @@ public:
   };
 private:
   ValueKind Kind;
-  
-  struct ComplexAPSInt { 
-    APSInt Real, Imag; 
+
+  struct ComplexAPSInt {
+    APSInt Real, Imag;
     ComplexAPSInt() : Real(1), Imag(1) {}
   };
   struct ComplexAPFloat {
     APFloat Real, Imag;
     ComplexAPFloat() : Real(0.0), Imag(0.0) {}
   };
-  
+
   struct LV {
     Expr* Base;
     uint64_t Offset;
@@ -57,9 +57,9 @@ private:
     Vec() : Elts(0), NumElts(0) {}
     ~Vec() { delete[] Elts; }
   };
-  
+
   enum {
-    MaxSize = (sizeof(ComplexAPSInt) > sizeof(ComplexAPFloat) ? 
+    MaxSize = (sizeof(ComplexAPSInt) > sizeof(ComplexAPFloat) ?
                sizeof(ComplexAPSInt) : sizeof(ComplexAPFloat))
   };
 
@@ -94,7 +94,7 @@ public:
   ~APValue() {
     MakeUninit();
   }
-  
+
   ValueKind getKind() const { return Kind; }
   bool isUninit() const { return Kind == Uninitialized; }
   bool isInt() const { return Kind == Int; }
@@ -103,10 +103,10 @@ public:
   bool isComplexFloat() const { return Kind == ComplexFloat; }
   bool isLValue() const { return Kind == LValue; }
   bool isVector() const { return Kind == Vector; }
-  
+
   void print(llvm::raw_ostream &OS) const;
   void dump() const;
-  
+
   APSInt &getInt() {
     assert(isInt() && "Invalid accessor");
     return *(APSInt*)(char*)Data;
@@ -114,7 +114,7 @@ public:
   const APSInt &getInt() const {
     return const_cast<APValue*>(this)->getInt();
   }
-  
+
   APFloat &getFloat() {
     assert(isFloat() && "Invalid accessor");
     return *(APFloat*)(char*)Data;
@@ -122,7 +122,7 @@ public:
   const APFloat &getFloat() const {
     return const_cast<APValue*>(this)->getFloat();
   }
-  
+
   APValue &getVectorElt(unsigned i) const {
     assert(isVector() && "Invalid accessor");
     return ((Vec*)(char*)Data)->Elts[i];
@@ -131,7 +131,7 @@ public:
     assert(isVector() && "Invalid accessor");
     return ((Vec*)(void *)Data)->NumElts;
   }
-  
+
   APSInt &getComplexIntReal() {
     assert(isComplexInt() && "Invalid accessor");
     return ((ComplexAPSInt*)(char*)Data)->Real;
@@ -139,7 +139,7 @@ public:
   const APSInt &getComplexIntReal() const {
     return const_cast<APValue*>(this)->getComplexIntReal();
   }
-  
+
   APSInt &getComplexIntImag() {
     assert(isComplexInt() && "Invalid accessor");
     return ((ComplexAPSInt*)(char*)Data)->Imag;
@@ -147,7 +147,7 @@ public:
   const APSInt &getComplexIntImag() const {
     return const_cast<APValue*>(this)->getComplexIntImag();
   }
-  
+
   APFloat &getComplexFloatReal() {
     assert(isComplexFloat() && "Invalid accessor");
     return ((ComplexAPFloat*)(char*)Data)->Real;
@@ -172,7 +172,7 @@ public:
     assert(isLValue() && "Invalid accessor");
     return ((const LV*)(const void*)Data)->Offset;
   }
-  
+
   void setInt(const APSInt &I) {
     assert(isInt() && "Invalid accessor");
     *(APSInt*)(char*)Data = I;
@@ -189,14 +189,14 @@ public:
       ((Vec*)(char*)Data)->Elts[i] = E[i];
   }
   void setComplexInt(const APSInt &R, const APSInt &I) {
-    assert(R.getBitWidth() == I.getBitWidth() && 
+    assert(R.getBitWidth() == I.getBitWidth() &&
            "Invalid complex int (type mismatch).");
     assert(isComplexInt() && "Invalid accessor");
     ((ComplexAPSInt*)(char*)Data)->Real = R;
     ((ComplexAPSInt*)(char*)Data)->Imag = I;
   }
   void setComplexFloat(const APFloat &R, const APFloat &I) {
-    assert(&R.getSemantics() == &I.getSemantics() && 
+    assert(&R.getSemantics() == &I.getSemantics() &&
            "Invalid complex float (type mismatch).");
     assert(isComplexFloat() && "Invalid accessor");
     ((ComplexAPFloat*)(char*)Data)->Real = R;
@@ -207,9 +207,9 @@ public:
     ((LV*)(char*)Data)->Base = B;
     ((LV*)(char*)Data)->Offset = O;
   }
-  
+
   const APValue &operator=(const APValue &RHS);
-  
+
 private:
   void MakeUninit();
   void MakeInt() {
@@ -248,7 +248,7 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const APValue &V) {
   V.print(OS);
   return OS;
 }
-  
+
 } // end namespace clang.
 
 #endif

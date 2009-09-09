@@ -57,13 +57,13 @@ public:
       Data = reinterpret_cast<uintptr_t>(New) | (Data & 0x03);
     }
   }
-  
+
   ~StoredDeclsList() {
     // If this is a vector-form, free the vector.
     if (VectorTy *Vector = getAsVector())
       delete Vector;
   }
-  
+
   StoredDeclsList &operator=(const StoredDeclsList &RHS) {
     if (VectorTy *Vector = getAsVector())
       delete Vector;
@@ -74,9 +74,9 @@ public:
     }
     return *this;
   }
-  
+
   bool isNull() const { return (Data & ~0x03) == 0; }
-  
+
   NamedDecl *getAsDecl() const {
     if ((Data & 0x03) != DK_Decl)
       return 0;
@@ -135,27 +135,27 @@ public:
   DeclContext::lookup_result getLookupResult(ASTContext &Context) {
     if (isNull())
       return DeclContext::lookup_result(0, 0);
-   
+
     if (hasDeclarationIDs())
       materializeDecls(Context);
 
     // If we have a single NamedDecl, return it.
     if (getAsDecl()) {
       assert(!isNull() && "Empty list isn't allowed");
-      
+
       // Data is a raw pointer to a NamedDecl*, return it.
       void *Ptr = &Data;
       return DeclContext::lookup_result((NamedDecl**)Ptr, (NamedDecl**)Ptr+1);
     }
-    
+
     assert(getAsVector() && "Must have a vector at this point");
     VectorTy &Vector = *getAsVector();
-    
+
     // Otherwise, we have a range result.
-    return DeclContext::lookup_result((NamedDecl **)&Vector[0], 
+    return DeclContext::lookup_result((NamedDecl **)&Vector[0],
                                       (NamedDecl **)&Vector[0]+Vector.size());
   }
-  
+
   /// HandleRedeclaration - If this is a redeclaration of an existing decl,
   /// replace the old one with D and return true.  Otherwise return false.
   bool HandleRedeclaration(ASTContext &Context, NamedDecl *D) {
@@ -169,7 +169,7 @@ public:
       setOnlyValue(D);
       return true;
     }
-    
+
     // Determine if this declaration is actually a redeclaration.
     VectorTy &Vec = *getAsVector();
     for (VectorTy::iterator OD = Vec.begin(), ODEnd = Vec.end();
@@ -183,10 +183,10 @@ public:
 
     return false;
   }
-  
+
   /// AddSubsequentDecl - This is called on the second and later decl when it is
   /// not a redeclaration to merge it into the appropriate place in our list.
-  /// 
+  ///
   void AddSubsequentDecl(NamedDecl *D) {
     assert(!hasDeclarationIDs() && "Must materialize before adding decls");
 
@@ -197,7 +197,7 @@ public:
       VT->push_back(reinterpret_cast<uintptr_t>(OldD));
       Data = reinterpret_cast<uintptr_t>(VT) | DK_Decl_Vector;
     }
-    
+
     VectorTy &Vec = *getAsVector();
     if (isa<UsingDirectiveDecl>(D) ||
         D->getIdentifierNamespace() == Decl::IDNS_Tag)
@@ -217,4 +217,4 @@ typedef llvm::DenseMap<DeclarationName, StoredDeclsList> StoredDeclsMap;
 
 } // end namespace clang
 
-#endif 
+#endif

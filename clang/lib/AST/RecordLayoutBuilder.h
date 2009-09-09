@@ -22,19 +22,19 @@ namespace clang {
   class ObjCImplementationDecl;
   class ObjCInterfaceDecl;
   class RecordDecl;
-  
+
 class ASTRecordLayoutBuilder {
   ASTContext &Ctx;
 
   uint64_t Size;
   unsigned Alignment;
   llvm::SmallVector<uint64_t, 16> FieldOffsets;
-  
+
   bool Packed;
   unsigned MaxFieldAlignment;
   uint64_t NextOffset;
   bool IsUnion;
-  
+
   uint64_t NonVirtualSize;
   unsigned NonVirtualAlignment;
   const CXXRecordDecl *PrimaryBase;
@@ -45,9 +45,9 @@ class ASTRecordLayoutBuilder {
 
   llvm::SmallVector<const CXXRecordDecl *, 4> VBases;
   llvm::SmallVector<uint64_t, 4> VBaseOffsets;
-  
+
   ASTRecordLayoutBuilder(ASTContext &Ctx);
-  
+
   void Layout(const RecordDecl *D);
   void Layout(const CXXRecordDecl *D);
   void Layout(const ObjCInterfaceDecl *D,
@@ -77,23 +77,23 @@ class ASTRecordLayoutBuilder {
                           int64_t Offset,
                                  llvm::SmallSet<const CXXRecordDecl*, 32> &mark,
                      llvm::SmallSet<const CXXRecordDecl*, 32> &IndirectPrimary);
-  
+
   /// FinishLayout - Finalize record layout. Adjust record size based on the
   /// alignment.
   void FinishLayout();
-  
+
   void UpdateAlignment(unsigned NewAlignment);
 
   ASTRecordLayoutBuilder(const ASTRecordLayoutBuilder&);   // DO NOT IMPLEMENT
   void operator=(const ASTRecordLayoutBuilder&); // DO NOT IMPLEMENT
 public:
-  static const ASTRecordLayout *ComputeLayout(ASTContext &Ctx, 
+  static const ASTRecordLayout *ComputeLayout(ASTContext &Ctx,
                                               const RecordDecl *RD);
   static const ASTRecordLayout *ComputeLayout(ASTContext &Ctx,
                                               const ObjCInterfaceDecl *D,
                                             const ObjCImplementationDecl *Impl);
 };
-  
+
 } // end namespace clang
 
 #endif

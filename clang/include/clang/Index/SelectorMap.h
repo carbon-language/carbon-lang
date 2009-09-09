@@ -25,14 +25,14 @@ namespace clang {
   class ObjCMethodDecl;
 
 namespace idx {
-  
+
 /// \brief Maps NamedDecls with the ASTLocations that reference them.
 ///
 /// References are mapped and retrieved using the canonical decls.
 class SelectorMap {
 public:
   explicit SelectorMap(ASTContext &Ctx);
-  
+
   typedef std::multimap<Selector, ObjCMethodDecl *> SelMethMapTy;
   typedef std::multimap<Selector, ASTLocation> SelRefMapTy;
 
@@ -44,14 +44,14 @@ public:
 
   astlocation_iterator refs_begin(Selector Sel) const;
   astlocation_iterator refs_end(Selector Sel) const;
-  
+
 private:
   mutable SelMethMapTy SelMethMap;
   mutable SelRefMapTy SelRefMap;
 };
 
 } // end idx namespace
-  
+
 } // end clang namespace
 
 #endif

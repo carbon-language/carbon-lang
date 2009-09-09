@@ -242,7 +242,7 @@ public:
                                  CodeGenFunction &CGF) const;
 
   X86_32ABIInfo(ASTContext &Context, bool d, bool p)
-    : ABIInfo(), Context(Context), IsDarwinVectorABI(d), 
+    : ABIInfo(), Context(Context), IsDarwinVectorABI(d),
       IsSmallStructInRegABI(p) {}
 };
 }
@@ -402,7 +402,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
     // Structures with flexible arrays are always indirect.
     if (const RecordType *RT = Ty->getAsStructureType())
       if (RT->getDecl()->hasFlexibleArrayMember())
-        return ABIArgInfo::getIndirect(getIndirectArgumentAlignment(Ty, 
+        return ABIArgInfo::getIndirect(getIndirectArgumentAlignment(Ty,
                                                                     Context));
 
     // Ignore empty structs.
@@ -1035,7 +1035,7 @@ void X86_64ABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
     unsigned neededInt, neededSSE;
-    it->info = classifyArgumentType(it->type, Context, VMContext, 
+    it->info = classifyArgumentType(it->type, Context, VMContext,
                                     neededInt, neededSSE);
 
     // AMD64-ABI 3.2.3p3: If there are no registers available for any
@@ -1107,7 +1107,7 @@ static llvm::Value *EmitVAArgFromMemory(llvm::Value *VAListAddr,
 llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                       CodeGenFunction &CGF) const {
   llvm::LLVMContext &VMContext = CGF.getLLVMContext();
-  
+
   // Assume that va_list type is correct; should be pointer to LLVM type:
   // struct {
   //   i32 gp_offset;
@@ -1338,7 +1338,7 @@ class ARMABIInfo : public ABIInfo {
 
 void ARMABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
                              llvm::LLVMContext &VMContext) const {
-  FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context, 
+  FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), Context,
                                           VMContext);
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
@@ -1392,7 +1392,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
 llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                       CodeGenFunction &CGF) const {
   // FIXME: Need to handle alignment
-  const llvm::Type *BP = 
+  const llvm::Type *BP =
       llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(CGF.getLLVMContext()));
   const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
 

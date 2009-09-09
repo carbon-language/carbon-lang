@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the XML document class, which provides the means to 
+// This file implements the XML document class, which provides the means to
 // dump out the AST in a XML form that exposes type details and other fields.
 //
 //===----------------------------------------------------------------------===//
@@ -32,10 +32,9 @@ class NamedDecl;
 class FunctionDecl;
 class ASTContext;
 class LabelStmt;
- 
-//--------------------------------------------------------- 
-namespace XML
-{
+
+//---------------------------------------------------------
+namespace XML {
   // id maps:
   template<class T>
   struct IdMap : llvm::DenseMap<T, unsigned> {};
@@ -47,9 +46,8 @@ namespace XML
   struct IdMap<std::string> : std::map<std::string, unsigned> {};
 }
 
-//--------------------------------------------------------- 
-class DocumentXML
-{
+//---------------------------------------------------------
+class DocumentXML {
 public:
   DocumentXML(const std::string& rootName, llvm::raw_ostream& out);
 
@@ -62,24 +60,22 @@ public:
   DocumentXML& addSubNode(const std::string& name);   // also enters the sub node, returns *this
   DocumentXML& toParent();                            // returns *this
 
-  void addAttribute(const char* pName, const QualType& pType);  
+  void addAttribute(const char* pName, const QualType& pType);
   void addAttribute(const char* pName, bool value);
 
   template<class T>
-  void addAttribute(const char* pName, const T* value)
-  {
+  void addAttribute(const char* pName, const T* value)   {
     addPtrAttribute(pName, value);
   }
 
   template<class T>
-  void addAttribute(const char* pName, T* value)
-  {
+  void addAttribute(const char* pName, T* value) {
     addPtrAttribute(pName, value);
   }
 
   template<class T>
   void addAttribute(const char* pName, const T& value);
-  
+
   template<class T>
   void addAttributeOptional(const char* pName, const T& value);
 
@@ -114,7 +110,7 @@ private:
   void Indent();
 
   // forced pointer dispatch:
-  void addPtrAttribute(const char* pName, const Type* pType);  
+  void addPtrAttribute(const char* pName, const Type* pType);
   void addPtrAttribute(const char* pName, const NamedDecl* D);
   void addPtrAttribute(const char* pName, const DeclContext* D);
   void addPtrAttribute(const char* pName, const NamespaceDecl* D);    // disambiguation
@@ -141,42 +137,37 @@ private:
 
 //--------------------------------------------------------- inlines
 
-inline void DocumentXML::initialize(ASTContext &Context) 
-{ 
-  Ctx = &Context; 
+inline void DocumentXML::initialize(ASTContext &Context) {
+  Ctx = &Context;
 }
 
-//--------------------------------------------------------- 
+//---------------------------------------------------------
 template<class T>
-inline void DocumentXML::addAttribute(const char* pName, const T& value)
-{
+inline void DocumentXML::addAttribute(const char* pName, const T& value) {
   Out << ' ' << pName << "=\"" << value << "\"";
 }
 
-//--------------------------------------------------------- 
-inline void DocumentXML::addPtrAttribute(const char* pName, const char* text)
-{
+//---------------------------------------------------------
+inline void DocumentXML::addPtrAttribute(const char* pName, const char* text) {
   Out << ' ' << pName << "=\"" << text << "\"";
 }
 
-//--------------------------------------------------------- 
-inline void DocumentXML::addAttribute(const char* pName, bool value)
-{
+//---------------------------------------------------------
+inline void DocumentXML::addAttribute(const char* pName, bool value) {
   addPtrAttribute(pName, value ? "1" : "0");
 }
 
-//--------------------------------------------------------- 
+//---------------------------------------------------------
 template<class T>
-inline void DocumentXML::addAttributeOptional(const char* pName, const T& value)
-{
-  if (!isDefault(value))
-  {
+inline void DocumentXML::addAttributeOptional(const char* pName,
+                                              const T& value) {
+  if (!isDefault(value)) {
     addAttribute(pName, value);
   }
 }
 
-//--------------------------------------------------------- 
+//---------------------------------------------------------
 
-} //namespace clang 
+} //namespace clang
 
 #endif //LLVM_CLANG_DOCUMENTXML_H

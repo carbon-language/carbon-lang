@@ -36,7 +36,7 @@ class MultipleIncludeOpt {
   /// to false, that way any tokens before the first #ifdef or after the last
   /// #endif can be easily detected.
   bool DidMacroExpansion;
-  
+
   /// TheMacro - The controlling macro for a file, if valid.
   ///
   const IdentifierInfo *TheMacro;
@@ -46,7 +46,7 @@ public:
     DidMacroExpansion = false;
     TheMacro = 0;
   }
-  
+
   /// Invalidate - Permenantly mark this file as not being suitable for the
   /// include-file optimization.
   void Invalidate() {
@@ -55,19 +55,19 @@ public:
     ReadAnyTokens = true;
     TheMacro = 0;
   }
-  
+
   /// getHasReadAnyTokensVal - This is used for the #ifndef hande-shake at the
   /// top of the file when reading preprocessor directives.  Otherwise, reading
   /// the "ifndef x" would count as reading tokens.
   bool getHasReadAnyTokensVal() const { return ReadAnyTokens; }
-  
+
   // If a token is read, remember that we have seen a side-effect in this file.
   void ReadToken() { ReadAnyTokens = true; }
-  
+
   /// ExpandedMacro - When a macro is expanded with this lexer as the current
   /// buffer, this method is called to disable the MIOpt if needed.
   void ExpandedMacro() { DidMacroExpansion = true; }
-  
+
   /// EnterTopLevelIFNDEF - When entering a top-level #ifndef directive (or the
   /// "#if !defined" equivalent) without any preceding tokens, this method is
   /// called.
@@ -80,14 +80,14 @@ public:
     // If the macro is already set, this is after the top-level #endif.
     if (TheMacro)
       return Invalidate();
-    
+
     // If we have already expanded a macro by the end of the #ifndef line, then
     // there is a macro expansion *in* the #ifndef line.  This means that the
     // condition could evaluate differently when subsequently #included.  Reject
     // this.
     if (DidMacroExpansion)
       return Invalidate();
-    
+
     // Remember that we're in the #if and that we have the macro.
     ReadAnyTokens = true;
     TheMacro = M;
@@ -100,7 +100,7 @@ public:
     /// there is a chunk of the file not guarded by the controlling macro.
     Invalidate();
   }
-  
+
   /// ExitTopLevelConditional - This method is called when the lexer exits the
   /// top-level conditional.
   void ExitTopLevelConditional() {
@@ -108,12 +108,12 @@ public:
     // back to "not having read any tokens" so we can detect anything after the
     // #endif.
     if (!TheMacro) return Invalidate();
-    
+
     // At this point, we haven't "read any tokens" but we do have a controlling
     // macro.
     ReadAnyTokens = false;
   }
-  
+
   /// GetControllingMacroAtEndOfFile - Once the entire file has been lexed, if
   /// there is a controlling macro, return it.
   const IdentifierInfo *GetControllingMacroAtEndOfFile() const {

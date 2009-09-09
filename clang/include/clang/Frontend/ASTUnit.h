@@ -43,7 +43,7 @@ class ASTUnit {
   ASTUnit(const ASTUnit&); // do not implement
   ASTUnit &operator=(const ASTUnit &); // do not implement
   ASTUnit();
-  
+
 public:
   ~ASTUnit();
 
@@ -52,13 +52,13 @@ public:
 
   const Preprocessor &getPreprocessor() const { return *PP.get(); }
         Preprocessor &getPreprocessor()       { return *PP.get(); }
-              
+
   const ASTContext &getASTContext() const { return *Ctx.get(); }
         ASTContext &getASTContext()       { return *Ctx.get(); }
 
   const Diagnostic &getDiagnostic() const { return *Diags.get(); }
         Diagnostic &getDiagnostic()       { return *Diags.get(); }
-        
+
   FileManager &getFileManager();
   const std::string &getOriginalSourceFileName();
 

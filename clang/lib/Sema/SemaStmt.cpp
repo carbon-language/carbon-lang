@@ -52,10 +52,10 @@ Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg,
                                            SourceLocation StartLoc,
                                            SourceLocation EndLoc) {
   DeclGroupRef DG = dg.getAsVal<DeclGroupRef>();
-  
+
   // If we have an invalid decl, just return an error.
   if (DG.isNull()) return StmtError();
-  
+
   return Owned(new (Context) DeclStmt(DG, StartLoc, EndLoc));
 }
 
@@ -67,12 +67,12 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   // Ignore expressions that have void type.
   if (E->getType()->isVoidType())
     return;
-  
+
   SourceLocation Loc;
   SourceRange R1, R2;
   if (!E->isUnusedResultAWarning(Loc, R1, R2))
     return;
-  
+
   // Okay, we have an unused result.  Depending on what the base expression is,
   // we might want to make a more specific diagnostic.  Check for one of these
   // cases now.
@@ -80,7 +80,7 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   E = E->IgnoreParens();
   if (isa<ObjCImplicitSetterGetterRefExpr>(E))
     DiagID = diag::warn_unused_property_expr;
-  
+
   Diag(Loc, DiagID) << R1 << R2;
 }
 
@@ -101,7 +101,7 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
     // We found the end of the list or a statement.  Scan for another declstmt.
     for (; i != NumElts && !isa<DeclStmt>(Elts[i]); ++i)
       /*empty*/;
-    
+
     if (i != NumElts) {
       Decl *D = *cast<DeclStmt>(Elts[i])->decl_begin();
       Diag(D->getLocation(), diag::ext_mixed_decls_code);
@@ -112,7 +112,7 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
     // Ignore statements that are last in a statement expression.
     if (isStmtExpr && i == NumElts - 1)
       continue;
-    
+
     DiagnoseUnusedExprResult(Elts[i]);
   }
 
@@ -126,9 +126,9 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, ExprArg lhsval,
   assert((lhsval.get() != 0) && "missing expression in case statement");
 
   // C99 6.8.4.2p3: The expression shall be an integer constant.
-  // However, GCC allows any evaluatable integer expression. 
+  // However, GCC allows any evaluatable integer expression.
   Expr *LHSVal = static_cast<Expr*>(lhsval.get());
-  if (!LHSVal->isTypeDependent() && !LHSVal->isValueDependent() && 
+  if (!LHSVal->isTypeDependent() && !LHSVal->isValueDependent() &&
       VerifyIntegerConstantExpression(LHSVal))
     return StmtError();
 
@@ -163,7 +163,7 @@ void Sema::ActOnCaseStmtBody(StmtTy *caseStmt, StmtArg subStmt) {
 }
 
 Action::OwningStmtResult
-Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc, 
+Sema::ActOnDefaultStmt(SourceLocation DefaultLoc, SourceLocation ColonLoc,
                        StmtArg subStmt, Scope *CurScope) {
   Stmt *SubStmt = subStmt.takeAs<Stmt>();
 
@@ -210,7 +210,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
                   StmtArg ThenVal, SourceLocation ElseLoc,
                   StmtArg ElseVal) {
   OwningExprResult CondResult(CondVal.release());
-  
+
   Expr *condExpr = CondResult.takeAs<Expr>();
 
   assert(condExpr && "ActOnIfStmt(): missing expression");
@@ -220,12 +220,12 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
     // Take ownership again until we're past the error checking.
     CondResult = condExpr;
     QualType condType = condExpr->getType();
-    
+
     if (getLangOptions().CPlusPlus) {
       if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
         return StmtError();
     } else if (!condType->isScalarType()) // C99 6.8.4.1p1
-      return StmtError(Diag(IfLoc, 
+      return StmtError(Diag(IfLoc,
                             diag::err_typecheck_statement_requires_scalar)
                        << condType << condExpr->getSourceRange());
   }
@@ -237,14 +237,14 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
   // this helps prevent bugs due to typos, such as
   // if (condition);
   //   do_stuff();
-  if (!ElseVal.get()) { 
+  if (!ElseVal.get()) {
     if (NullStmt* stmt = dyn_cast<NullStmt>(thenStmt))
       Diag(stmt->getSemiLoc(), diag::warn_empty_if_body);
   }
 
   Stmt *elseStmt = ElseVal.takeAs<Stmt>();
   DiagnoseUnusedExprResult(elseStmt);
-  
+
   CondResult.release();
   return Owned(new (Context) IfStmt(IfLoc, condExpr, thenStmt,
                                     ElseLoc, elseStmt));
@@ -264,9 +264,9 @@ Sema::ActOnStartOfSwitchStmt(ExprArg cond) {
     // of this section. Integral promotions are performed.
     if (!Cond->isTypeDependent()) {
       QualType Ty = Cond->getType();
-      
+
       // FIXME: Handle class types.
-      
+
       // If the type is wrong a diagnostic will be emitted later at
       // ActOnFinishSwitchStmt.
       if (Ty->isIntegralType() || Ty->isEnumeralType()) {
@@ -290,19 +290,19 @@ Sema::ActOnStartOfSwitchStmt(ExprArg cond) {
 /// the specified diagnostic.
 void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
                                               unsigned NewWidth, bool NewSign,
-                                              SourceLocation Loc, 
+                                              SourceLocation Loc,
                                               unsigned DiagID) {
   // Perform a conversion to the promoted condition type if needed.
   if (NewWidth > Val.getBitWidth()) {
     // If this is an extension, just do it.
     llvm::APSInt OldVal(Val);
     Val.extend(NewWidth);
-    
+
     // If the input was signed and negative and the output is unsigned,
     // warn.
     if (!NewSign && OldVal.isSigned() && OldVal.isNegative())
       Diag(Loc, DiagID) << OldVal.toString(10) << Val.toString(10);
-    
+
     Val.setIsSigned(NewSign);
   } else if (NewWidth < Val.getBitWidth()) {
     // If this is a truncation, check for overflow.
@@ -313,7 +313,7 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
     ConvVal.setIsSigned(Val.isSigned());
     if (ConvVal != Val)
       Diag(Loc, DiagID) << Val.toString(10) << ConvVal.toString(10);
-    
+
     // Regardless of whether a diagnostic was emitted, really do the
     // truncation.
     Val.trunc(NewWidth);
@@ -323,7 +323,7 @@ void Sema::ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &Val,
     // overflow as well: unsigned(INTMIN)
     llvm::APSInt OldVal(Val);
     Val.setIsSigned(NewSign);
-    
+
     if (Val.isNegative())  // Sign bit changes meaning.
       Diag(Loc, DiagID) << OldVal.toString(10) << Val.toString(10);
   }
@@ -369,12 +369,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   assert(SS == (SwitchStmt*)Switch.get() && "switch stack missing push/pop!");
 
   SS->setBody(BodyStmt, SwitchLoc);
-  getSwitchStack().pop_back(); 
+  getSwitchStack().pop_back();
 
   Expr *CondExpr = SS->getCond();
   QualType CondType = CondExpr->getType();
 
-  if (!CondExpr->isTypeDependent() && 
+  if (!CondExpr->isTypeDependent() &&
       !CondType->isIntegerType()) { // C99 6.8.4.2p1
     Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer)
       << CondType << CondExpr->getSourceRange();
@@ -383,29 +383,29 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
 
   // Get the bitwidth of the switched-on value before promotions.  We must
   // convert the integer case values to this width before comparison.
-  bool HasDependentValue 
+  bool HasDependentValue
     = CondExpr->isTypeDependent() || CondExpr->isValueDependent();
-  unsigned CondWidth 
+  unsigned CondWidth
     = HasDependentValue? 0
                        : static_cast<unsigned>(Context.getTypeSize(CondType));
   bool CondIsSigned = CondType->isSignedIntegerType();
-  
+
   // Accumulate all of the case values in a vector so that we can sort them
   // and detect duplicates.  This vector contains the APInt for the case after
   // it has been converted to the condition type.
   typedef llvm::SmallVector<std::pair<llvm::APSInt, CaseStmt*>, 64> CaseValsTy;
   CaseValsTy CaseVals;
-  
+
   // Keep track of any GNU case ranges we see.  The APSInt is the low value.
   std::vector<std::pair<llvm::APSInt, CaseStmt*> > CaseRanges;
-  
+
   DefaultStmt *TheDefaultStmt = 0;
-  
+
   bool CaseListIsErroneous = false;
-  
+
   for (SwitchCase *SC = SS->getSwitchCaseList(); SC && !HasDependentValue;
        SC = SC->getNextSwitchCase()) {
-    
+
     if (DefaultStmt *DS = dyn_cast<DefaultStmt>(SC)) {
       if (TheDefaultStmt) {
         Diag(DS->getDefaultLoc(), diag::err_multiple_default_labels_defined);
@@ -418,10 +418,10 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
         CaseListIsErroneous = true;
       }
       TheDefaultStmt = DS;
-      
+
     } else {
       CaseStmt *CS = cast<CaseStmt>(SC);
-      
+
       // We already verified that the expression has a i-c-e value (C99
       // 6.8.4.2p3) - get that value now.
       Expr *Lo = CS->getLHS();
@@ -430,9 +430,9 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
         HasDependentValue = true;
         break;
       }
-        
+
       llvm::APSInt LoVal = Lo->EvaluateAsInt(Context);
-      
+
       // Convert the value to the same width/sign as the condition.
       ConvertIntegerToTypeWarnOnOverflow(LoVal, CondWidth, CondIsSigned,
                                          CS->getLHS()->getLocStart(),
@@ -442,16 +442,16 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
       // cast.
       ImpCastExprToType(Lo, CondType);
       CS->setLHS(Lo);
-      
+
       // If this is a case range, remember it in CaseRanges, otherwise CaseVals.
       if (CS->getRHS()) {
-        if (CS->getRHS()->isTypeDependent() || 
+        if (CS->getRHS()->isTypeDependent() ||
             CS->getRHS()->isValueDependent()) {
           HasDependentValue = true;
           break;
         }
         CaseRanges.push_back(std::make_pair(LoVal, CS));
-      } else 
+      } else
         CaseVals.push_back(std::make_pair(LoVal, CS));
     }
   }
@@ -466,7 +466,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
           // If we have a duplicate, report it.
           Diag(CaseVals[i+1].second->getLHS()->getLocStart(),
                diag::err_duplicate_case) << CaseVals[i].first.toString(10);
-          Diag(CaseVals[i].second->getLHS()->getLocStart(), 
+          Diag(CaseVals[i].second->getLHS()->getLocStart(),
                diag::note_duplicate_case_prev);
           // FIXME: We really want to remove the bogus case stmt from the
           // substmt, but we have no way to do this right now.
@@ -474,31 +474,31 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
         }
       }
     }
-  
+
     // Detect duplicate case ranges, which usually don't exist at all in
     // the first place.
     if (!CaseRanges.empty()) {
       // Sort all the case ranges by their low value so we can easily detect
       // overlaps between ranges.
       std::stable_sort(CaseRanges.begin(), CaseRanges.end());
-      
+
       // Scan the ranges, computing the high values and removing empty ranges.
       std::vector<llvm::APSInt> HiVals;
       for (unsigned i = 0, e = CaseRanges.size(); i != e; ++i) {
         CaseStmt *CR = CaseRanges[i].second;
         Expr *Hi = CR->getRHS();
         llvm::APSInt HiVal = Hi->EvaluateAsInt(Context);
-        
+
         // Convert the value to the same width/sign as the condition.
         ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned,
                                            CR->getRHS()->getLocStart(),
                                            diag::warn_case_value_overflow);
-        
+
         // If the LHS is not the same type as the condition, insert an implicit
         // cast.
         ImpCastExprToType(Hi, CondType);
         CR->setRHS(Hi);
-        
+
         // If the low value is bigger than the high value, the case is empty.
         if (CaseRanges[i].first > HiVal) {
           Diag(CR->getLHS()->getLocStart(), diag::warn_case_empty_range)
@@ -510,7 +510,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
         }
         HiVals.push_back(HiVal);
       }
-      
+
       // Rescan the ranges, looking for overlap with singleton values and other
       // ranges.  Since the range list is sorted, we only need to compare case
       // ranges with their neighbors.
@@ -518,12 +518,12 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
         llvm::APSInt &CRLo = CaseRanges[i].first;
         llvm::APSInt &CRHi = HiVals[i];
         CaseStmt *CR = CaseRanges[i].second;
-        
+
         // Check to see whether the case range overlaps with any
         // singleton cases.
         CaseStmt *OverlapStmt = 0;
         llvm::APSInt OverlapVal(32);
-        
+
         // Find the smallest value >= the lower bound.  If I is in the
         // case range, then we have overlap.
         CaseValsTy::iterator I = std::lower_bound(CaseVals.begin(),
@@ -533,26 +533,26 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
           OverlapVal  = I->first;   // Found overlap with scalar.
           OverlapStmt = I->second;
         }
-        
+
         // Find the smallest value bigger than the upper bound.
         I = std::upper_bound(I, CaseVals.end(), CRHi, CaseCompareFunctor());
         if (I != CaseVals.begin() && (I-1)->first >= CRLo) {
           OverlapVal  = (I-1)->first;      // Found overlap with scalar.
           OverlapStmt = (I-1)->second;
         }
-        
+
         // Check to see if this case stmt overlaps with the subsequent
         // case range.
         if (i && CRLo <= HiVals[i-1]) {
           OverlapVal  = HiVals[i-1];       // Found overlap with range.
           OverlapStmt = CaseRanges[i-1].second;
         }
-        
+
         if (OverlapStmt) {
           // If we have a duplicate, report it.
           Diag(CR->getLHS()->getLocStart(), diag::err_duplicate_case)
             << OverlapVal.toString(10);
-          Diag(OverlapStmt->getLHS()->getLocStart(), 
+          Diag(OverlapStmt->getLHS()->getLocStart(),
                diag::note_duplicate_case_prev);
           // FIXME: We really want to remove the bogus case stmt from the
           // substmt, but we have no way to do this right now.
@@ -581,7 +581,7 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, StmtArg Body) {
     DefaultFunctionArrayConversion(condExpr);
     CondArg = condExpr;
     QualType condType = condExpr->getType();
-    
+
     if (getLangOptions().CPlusPlus) {
       if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
         return StmtError();
@@ -593,7 +593,7 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, StmtArg Body) {
 
   Stmt *bodyStmt = Body.takeAs<Stmt>();
   DiagnoseUnusedExprResult(bodyStmt);
-  
+
   CondArg.release();
   return Owned(new (Context) WhileStmt(condExpr, bodyStmt, WhileLoc));
 }
@@ -609,12 +609,12 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
     DefaultFunctionArrayConversion(condExpr);
     Cond = condExpr;
     QualType condType = condExpr->getType();
-    
+
     if (getLangOptions().CPlusPlus) {
       if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
         return StmtError();
     } else if (!condType->isScalarType()) // C99 6.8.5p2
-      return StmtError(Diag(DoLoc, 
+      return StmtError(Diag(DoLoc,
                             diag::err_typecheck_statement_requires_scalar)
                        << condType << condExpr->getSourceRange());
   }
@@ -664,7 +664,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
                             diag::err_typecheck_statement_requires_scalar)
         << SecondType << Second->getSourceRange());
   }
-  
+
   DiagnoseUnusedExprResult(First);
   DiagnoseUnusedExprResult(Third);
   DiagnoseUnusedExprResult(Body);
@@ -707,9 +707,9 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
                    diag::err_selector_element_not_lvalue)
           << First->getSourceRange());
 
-      FirstType = static_cast<Expr*>(First)->getType();        
+      FirstType = static_cast<Expr*>(First)->getType();
     }
-    if (!FirstType->isObjCObjectPointerType() && 
+    if (!FirstType->isObjCObjectPointerType() &&
         !FirstType->isBlockPointerType())
         Diag(ForLoc, diag::err_selector_element_type)
           << FirstType << First->getSourceRange();
@@ -832,8 +832,8 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     // we have a non-void block with an expression, continue checking
     QualType RetValType = RetValExp->getType();
 
-    // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
-    // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
+    // C99 6.8.6.4p3(136): The return statement is not an assignment. The
+    // overlap restriction of subclause 6.5.16.1 does not apply to the case of
     // function return.
 
     // In C++ the return statement is handled via a copy initialization.
@@ -890,7 +890,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
     FnRetType = MD->getResultType();
   else // If we don't have a function/method context, bail.
     return StmtError();
-    
+
   if (FnRetType->isVoidType()) {
     if (RetValExp) {// C99 6.8.6.4p1 (ext_ since GCC warns)
       unsigned D = diag::ext_return_has_expr;
@@ -905,7 +905,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
           << CurDecl->getDeclName() << isa<ObjCMethodDecl>(CurDecl)
           << RetValExp->getSourceRange();
       }
-      
+
       RetValExp = MaybeCreateCXXExprWithTemporaries(RetValExp, true);
     }
     return Owned(new (Context) ReturnStmt(ReturnLoc, RetValExp));
@@ -926,8 +926,8 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
   if (!FnRetType->isDependentType() && !RetValExp->isTypeDependent()) {
     // we have a non-void function with an expression, continue checking
 
-    // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
-    // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
+    // C99 6.8.6.4p3(136): The return statement is not an assignment. The
+    // overlap restriction of subclause 6.5.16.1 does not apply to the case of
     // function return.
 
     // C++0x 12.8p15: When certain criteria are met, an implementation is
@@ -1009,7 +1009,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
   StringLiteral **Clobbers = reinterpret_cast<StringLiteral**>(clobbers.get());
 
   llvm::SmallVector<TargetInfo::ConstraintInfo, 4> OutputConstraintInfos;
-  
+
   // The parser verifies that there is a string literal here.
   if (AsmString->isWide())
     return StmtError(Diag(AsmString->getLocStart(),diag::err_asm_wide_character)
@@ -1021,7 +1021,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    TargetInfo::ConstraintInfo Info(Literal->getStrData(), 
+    TargetInfo::ConstraintInfo Info(Literal->getStrData(),
                                     Literal->getByteLength(),
                                     Names[i]);
     if (!Context.Target.validateOutputConstraint(Info))
@@ -1036,7 +1036,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                   diag::err_asm_invalid_lvalue_in_output)
         << OutputExpr->getSourceRange());
     }
-    
+
     OutputConstraintInfos.push_back(Info);
   }
 
@@ -1048,7 +1048,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       return StmtError(Diag(Literal->getLocStart(),diag::err_asm_wide_character)
         << Literal->getSourceRange());
 
-    TargetInfo::ConstraintInfo Info(Literal->getStrData(), 
+    TargetInfo::ConstraintInfo Info(Literal->getStrData(),
                                     Literal->getByteLength(),
                                     Names[i]);
     if (!Context.Target.validateInputConstraint(OutputConstraintInfos.data(),
@@ -1073,13 +1073,13 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       if (InputExpr->getType()->isVoidType()) {
         return StmtError(Diag(InputExpr->getLocStart(),
                               diag::err_asm_invalid_type_in_input)
-          << InputExpr->getType() << Info.getConstraintStr() 
+          << InputExpr->getType() << Info.getConstraintStr()
           << InputExpr->getSourceRange());
       }
     }
-    
+
     DefaultFunctionArrayConversion(Exprs[i]);
-    
+
     InputConstraintInfos.push_back(Info);
   }
 
@@ -1117,16 +1117,16 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     DeleteStmt(NS);
     return StmtError();
   }
-  
+
   // Validate tied input operands for type mismatches.
   for (unsigned i = 0, e = InputConstraintInfos.size(); i != e; ++i) {
     TargetInfo::ConstraintInfo &Info = InputConstraintInfos[i];
-    
+
     // If this is a tied constraint, verify that the output and input have
     // either exactly the same type, or that they are int/ptr operands with the
     // same size (int/long, int*/long, are ok etc).
     if (!Info.hasTiedOperand()) continue;
-    
+
     unsigned TiedTo = Info.getTiedOperand();
     Expr *OutputExpr = Exprs[TiedTo];
     Expr *InputExpr = Exprs[i+NumOutputs];
@@ -1134,11 +1134,11 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     QualType OutTy = OutputExpr->getType();
     if (Context.hasSameType(InTy, OutTy))
       continue;  // All types can be tied to themselves.
-    
+
     // Int/ptr operands have some special cases that we allow.
     if ((OutTy->isIntegerType() || OutTy->isPointerType()) &&
         (InTy->isIntegerType() || InTy->isPointerType())) {
-      
+
       // They are ok if they are the same size.  Tying void* to int is ok if
       // they are the same size, for example.  This also allows tying void* to
       // int*.
@@ -1146,7 +1146,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       uint64_t InSize = Context.getTypeSize(InTy);
       if (OutSize == InSize)
         continue;
-      
+
       // If the smaller input/output operand is not mentioned in the asm string,
       // then we can promote it and the asm string won't notice.  Check this
       // case now.
@@ -1154,7 +1154,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
       for (unsigned p = 0, e = Pieces.size(); p != e; ++p) {
         AsmStmt::AsmStringPiece &Piece = Pieces[p];
         if (!Piece.isOperand()) continue;
-        
+
         // If this is a reference to the input and if the input was the smaller
         // one, then we have to reject this asm.
         if (Piece.getOperandNo() == i+NumOutputs) {
@@ -1173,7 +1173,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
           }
         }
       }
-      
+
       // If the smaller value wasn't mentioned in the asm string, and if the
       // output was a register, just extend the shorter one to the size of the
       // larger one.
@@ -1181,7 +1181,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
           OutputConstraintInfos[TiedTo].allowsRegister())
         continue;
     }
-    
+
     Diag(InputExpr->getLocStart(),
          diag::err_asm_tying_incompatible_types)
       << InTy << OutTy << OutputExpr->getSourceRange()
@@ -1189,7 +1189,7 @@ Sema::OwningStmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     DeleteStmt(NS);
     return StmtError();
   }
-  
+
   return Owned(NS);
 }
 
@@ -1199,18 +1199,18 @@ Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
                            StmtArg Body, StmtArg catchList) {
   Stmt *CatchList = catchList.takeAs<Stmt>();
   ParmVarDecl *PVD = cast_or_null<ParmVarDecl>(Parm.getAs<Decl>());
-  
+
   // PVD == 0 implies @catch(...).
   if (PVD) {
     // If we already know the decl is invalid, reject it.
     if (PVD->isInvalidDecl())
       return StmtError();
-    
+
     if (!PVD->getType()->isObjCObjectPointerType())
-      return StmtError(Diag(PVD->getLocation(), 
+      return StmtError(Diag(PVD->getLocation(),
                        diag::err_catch_param_not_objc_type));
     if (PVD->getType()->isObjCQualifiedIdType())
-      return StmtError(Diag(PVD->getLocation(), 
+      return StmtError(Diag(PVD->getLocation(),
                        diag::err_illegal_qualifiers_on_catch_parm));
   }
 
@@ -1271,8 +1271,8 @@ Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
       return StmtError(Diag(AtLoc, diag::error_objc_synchronized_expects_object)
                        << SyncExpr->getType() << SyncExpr->getSourceRange());
   }
-  
-  return Owned(new (Context) ObjCAtSynchronizedStmt(AtLoc, 
+
+  return Owned(new (Context) ObjCAtSynchronizedStmt(AtLoc,
                                                     SynchExpr.takeAs<Stmt>(),
                                                     SynchBody.takeAs<Stmt>()));
 }
@@ -1307,12 +1307,12 @@ public:
     else
       return getTypeSpecStartLoc() < y.getTypeSpecStartLoc();
   }
-  
+
   bool operator==(const TypeWithHandler& other) const {
     return t.getTypePtr() == other.t.getTypePtr()
         && t.getCVRQualifiers() == other.t.getCVRQualifiers();
   }
-  
+
   QualType getQualType() const { return t; }
   CXXCatchStmt *getCatchStmt() const { return stmt; }
   SourceLocation getTypeSpecStartLoc() const {
@@ -1331,17 +1331,17 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, StmtArg TryBlock,
   Stmt **Handlers = reinterpret_cast<Stmt**>(RawHandlers.get());
 
   llvm::SmallVector<TypeWithHandler, 8> TypesWithHandlers;
-  
-  for(unsigned i = 0; i < NumHandlers; ++i) {
+
+  for (unsigned i = 0; i < NumHandlers; ++i) {
     CXXCatchStmt *Handler = llvm::cast<CXXCatchStmt>(Handlers[i]);
     if (!Handler->getExceptionDecl()) {
       if (i < NumHandlers - 1)
         return StmtError(Diag(Handler->getLocStart(),
                               diag::err_early_catch_all));
-      
+
       continue;
     }
-    
+
     const QualType CaughtType = Handler->getCaughtType();
     const QualType CanonicalCaughtType = Context.getCanonicalType(CaughtType);
     TypesWithHandlers.push_back(TypeWithHandler(CanonicalCaughtType, Handler));
@@ -1350,11 +1350,11 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, StmtArg TryBlock,
   // Detect handlers for the same type as an earlier one.
   if (NumHandlers > 1) {
     llvm::array_pod_sort(TypesWithHandlers.begin(), TypesWithHandlers.end());
-    
+
     TypeWithHandler prev = TypesWithHandlers[0];
     for (unsigned i = 1; i < TypesWithHandlers.size(); ++i) {
       TypeWithHandler curr = TypesWithHandlers[i];
-      
+
       if (curr == prev) {
         Diag(curr.getTypeSpecStartLoc(),
              diag::warn_exception_caught_by_earlier_handler)
@@ -1363,11 +1363,11 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, StmtArg TryBlock,
              diag::note_previous_exception_handler)
           << prev.getCatchStmt()->getCaughtType().getAsString();
       }
-      
+
       prev = curr;
     }
   }
-  
+
   // FIXME: We should detect handlers that cannot catch anything because an
   // earlier handler catches a superclass. Need to find a method that is not
   // quadratic for this.

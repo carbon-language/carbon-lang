@@ -22,8 +22,8 @@ namespace clang {
 class SimpleConstraintManager : public ConstraintManager {
 public:
   SimpleConstraintManager() {}
-  virtual ~SimpleConstraintManager();  
-  
+  virtual ~SimpleConstraintManager();
+
   //===------------------------------------------------------------------===//
   // Common implementation for the interface provided by ConstraintManager.
   //===------------------------------------------------------------------===//
@@ -38,16 +38,16 @@ public:
 
   const GRState *AssumeSymInt(const GRState *state, bool Assumption,
                               const SymIntExpr *SE);
-  
+
   const GRState *AssumeInBound(const GRState *state, SVal Idx, SVal UpperBound,
                                bool Assumption);
-  
+
 protected:
-  
+
   //===------------------------------------------------------------------===//
   // Interface that subclasses must implement.
   //===------------------------------------------------------------------===//
-  
+
   virtual const GRState *AssumeSymNE(const GRState *state, SymbolRef sym,
                                      const llvm::APSInt& V) = 0;
 
@@ -65,13 +65,13 @@ protected:
 
   virtual const GRState *AssumeSymGE(const GRState *state, SymbolRef sym,
                                      const llvm::APSInt& V) = 0;
-  
+
   //===------------------------------------------------------------------===//
   // Internal implementation.
   //===------------------------------------------------------------------===//
-  
+
   const GRState *AssumeAux(const GRState *state, Loc Cond,bool Assumption);
-  
+
   const GRState *AssumeAux(const GRState *state, NonLoc Cond, bool Assumption);
 };
 

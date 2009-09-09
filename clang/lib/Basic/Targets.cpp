@@ -111,11 +111,11 @@ static void getDarwinOSXDefines(std::vector<char> &Defs,
                                 const llvm::Triple &Triple) {
   if (Triple.getOS() != llvm::Triple::Darwin)
     return;
-  
+
   // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
   unsigned Maj, Min, Rev;
   Triple.getDarwinNumber(Maj, Min, Rev);
-  
+
   char MacOSXStr[] = "1000";
   if (Maj >= 4 && Maj <= 13) { // 10.0-10.9
     // darwin7 -> 1030, darwin8 -> 1040, darwin9 -> 1050, etc.
@@ -132,11 +132,11 @@ static void getDarwinIPhoneOSDefines(std::vector<char> &Defs,
                                      const llvm::Triple &Triple) {
   if (Triple.getOS() != llvm::Triple::Darwin)
     return;
-  
+
   // Figure out which "darwin number" the target triple is.  "darwin9" -> 10.5.
   unsigned Maj, Min, Rev;
   Triple.getDarwinNumber(Maj, Min, Rev);
-  
+
   // When targetting iPhone OS, interpret the minor version and
   // revision as the iPhone OS version
   char iPhoneOSStr[] = "10000";
@@ -155,7 +155,7 @@ static void getDarwinIPhoneOSDefines(std::vector<char> &Defs,
 static void GetDarwinLanguageOptions(LangOptions &Opts,
                                      const llvm::Triple &Triple) {
   Opts.NeXTRuntime = true;
-  
+
   if (Triple.getOS() != llvm::Triple::Darwin)
     return;
 
@@ -183,7 +183,7 @@ protected:
     getDarwinDefines(Defines, Opts);
     getDarwinOSXDefines(Defines, Triple);
   }
-  
+
   /// getDefaultLangOptions - Allow the target to specify default settings for
   /// various language options.  These may be overridden by command line
   /// options.
@@ -204,7 +204,7 @@ public:
   virtual const char *getUnicodeStringSection() const {
     return "__TEXT,__ustring";
   }
-  
+
   virtual std::string isValidSectionSpecifier(const llvm::StringRef &SR) const {
     // Let MCSectionMachO validate this.
     llvm::StringRef Segment, Section;
@@ -230,7 +230,7 @@ protected:
     DefineStd(Defs, "unix", Opts);
   }
 public:
-  DragonFlyBSDTargetInfo(const std::string &triple) 
+  DragonFlyBSDTargetInfo(const std::string &triple)
     : OSTargetInfo<Target>(triple) {}
 };
 
@@ -258,7 +258,7 @@ protected:
     Define(Defs, "__ELF__", "1");
   }
 public:
-  FreeBSDTargetInfo(const std::string &triple) 
+  FreeBSDTargetInfo(const std::string &triple)
     : OSTargetInfo<Target>(triple) {
       this->UserLabelPrefix = "";
     }
@@ -279,7 +279,7 @@ protected:
       Define(Defs, "_REENTRANT", "1");
   }
 public:
-  LinuxTargetInfo(const std::string& triple) 
+  LinuxTargetInfo(const std::string& triple)
     : OSTargetInfo<Target>(triple) {
     this->UserLabelPrefix = "";
   }
@@ -299,7 +299,7 @@ protected:
       Define(Defs, "_POSIX_THREADS", "1");
   }
 public:
-  NetBSDTargetInfo(const std::string &triple) 
+  NetBSDTargetInfo(const std::string &triple)
     : OSTargetInfo<Target>(triple) {
       this->UserLabelPrefix = "";
     }
@@ -320,7 +320,7 @@ protected:
       Define(Defs, "_POSIX_THREADS", "1");
   }
 public:
-  OpenBSDTargetInfo(const std::string &triple) 
+  OpenBSDTargetInfo(const std::string &triple)
     : OSTargetInfo<Target>(triple) {}
 };
 
@@ -337,14 +337,14 @@ protected:
     Define(Defs, "__SVR4");
   }
 public:
-  SolarisTargetInfo(const std::string& triple) 
+  SolarisTargetInfo(const std::string& triple)
     : OSTargetInfo<Target>(triple) {
     this->UserLabelPrefix = "";
     this->WCharType = this->SignedLong;
     // FIXME: WIntType should be SignedLong
   }
 };
-} // end anonymous namespace. 
+} // end anonymous namespace.
 
 /// GetWindowsLanguageOptions - Set the default language options for Windows.
 static void GetWindowsLanguageOptions(LangOptions &Opts,
@@ -609,12 +609,12 @@ public:
   virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  const std::string &Name,
                                  bool Enabled) const;
-  virtual void getDefaultFeatures(const std::string &CPU, 
+  virtual void getDefaultFeatures(const std::string &CPU,
                                   llvm::StringMap<bool> &Features) const;
   virtual void HandleTargetFeatures(const llvm::StringMap<bool> &Features);
 };
 
-void X86TargetInfo::getDefaultFeatures(const std::string &CPU, 
+void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
                                        llvm::StringMap<bool> &Features) const {
   // FIXME: This should not be here.
   Features["3dnow"] = false;
@@ -658,7 +658,7 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
     setFeatureEnabled(Features, "sse4", true);
   else if (CPU == "k6" || CPU == "winchip-c6")
     setFeatureEnabled(Features, "mmx", true);
-  else if (CPU == "k6-2" || CPU == "k6-3" || CPU == "athlon" || 
+  else if (CPU == "k6-2" || CPU == "k6-3" || CPU == "athlon" ||
            CPU == "athlon-tbird" || CPU == "winchip2" || CPU == "c3") {
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "3dnow", true);
@@ -667,14 +667,14 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
     setFeatureEnabled(Features, "3dnowa", true);
   } else if (CPU == "k8" || CPU == "opteron" || CPU == "athlon64" ||
            CPU == "athlon-fx") {
-    setFeatureEnabled(Features, "sse2", true); 
+    setFeatureEnabled(Features, "sse2", true);
     setFeatureEnabled(Features, "3dnowa", true);
   } else if (CPU == "c3-2")
     setFeatureEnabled(Features, "sse", true);
 }
 
 bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
-                                      const std::string &Name, 
+                                      const std::string &Name,
                                       bool Enabled) const {
   // FIXME: This *really* should not be here.
   if (!Features.count(Name) && Name != "sse4")
@@ -688,13 +688,13 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     else if (Name == "sse2")
       Features["mmx"] = Features["sse"] = Features["sse2"] = true;
     else if (Name == "sse3")
-      Features["mmx"] = Features["sse"] = Features["sse2"] = 
+      Features["mmx"] = Features["sse"] = Features["sse2"] =
         Features["sse3"] = true;
     else if (Name == "ssse3")
-      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] = 
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = true;
     else if (Name == "sse4")
-      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] = 
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] = true;
     else if (Name == "3dnow")
       Features["3dnowa"] = true;
@@ -702,16 +702,16 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["3dnow"] = Features["3dnowa"] = true;
   } else {
     if (Name == "mmx")
-      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] = 
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
     else if (Name == "sse")
-      Features["sse"] = Features["sse2"] = Features["sse3"] = 
+      Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
     else if (Name == "sse2")
-      Features["sse2"] = Features["sse3"] = Features["ssse3"] = 
+      Features["sse2"] = Features["sse3"] = Features["ssse3"] =
         Features["sse41"] = Features["sse42"] = false;
     else if (Name == "sse3")
-      Features["sse3"] = Features["ssse3"] = Features["sse41"] = 
+      Features["sse3"] = Features["ssse3"] = Features["sse41"] =
         Features["sse42"] = false;
     else if (Name == "ssse3")
       Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
@@ -963,7 +963,7 @@ public:
 namespace {
 class DarwinX86_64TargetInfo : public DarwinTargetInfo<X86_64TargetInfo> {
 public:
-  DarwinX86_64TargetInfo(const std::string& triple) 
+  DarwinX86_64TargetInfo(const std::string& triple)
       : DarwinTargetInfo<X86_64TargetInfo>(triple) {
     Int64Type = SignedLongLong;
   }
@@ -973,7 +973,7 @@ public:
 namespace {
 class OpenBSDX86_64TargetInfo : public OpenBSDTargetInfo<X86_64TargetInfo> {
 public:
-  OpenBSDX86_64TargetInfo(const std::string& triple) 
+  OpenBSDX86_64TargetInfo(const std::string& triple)
       : OpenBSDTargetInfo<X86_64TargetInfo>(triple) {
     IntMaxType = SignedLongLong;
     UIntMaxType = UnsignedLongLong;
@@ -1089,7 +1089,7 @@ public:
 
 
 namespace {
-class DarwinARMTargetInfo : 
+class DarwinARMTargetInfo :
   public DarwinTargetInfo<ARMTargetInfo> {
 protected:
   virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
@@ -1099,7 +1099,7 @@ protected:
   }
 
 public:
-  DarwinARMTargetInfo(const std::string& triple) 
+  DarwinARMTargetInfo(const std::string& triple)
     : DarwinTargetInfo<ARMTargetInfo>(triple) {}
 };
 } // end anonymous namespace.
@@ -1244,7 +1244,7 @@ namespace {
       Define(Defines, "__pic16");
       Define(Defines, "rom", "__attribute__((address_space(1)))");
       Define(Defines, "ram", "__attribute__((address_space(0)))");
-      Define(Defines, "_section(SectName)", 
+      Define(Defines, "_section(SectName)",
              "__attribute__((section(SectName)))");
       Define(Defines, "_address(Addr)",
              "__attribute__((section(\"Address=\"#Addr)))");
@@ -1255,7 +1255,7 @@ namespace {
     }
     virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                    unsigned &NumRecords) const {}
-    virtual const char *getVAListDeclaration() const { 
+    virtual const char *getVAListDeclaration() const {
       return "";
     }
     virtual const char *getClobbers() const {
@@ -1480,12 +1480,12 @@ namespace {
 
 namespace {
 
-  // LLVM and Clang cannot be used directly to output native binaries for 
-  // target, but is used to compile C code to llvm bitcode with correct 
+  // LLVM and Clang cannot be used directly to output native binaries for
+  // target, but is used to compile C code to llvm bitcode with correct
   // type and alignment information.
-  // 
-  // TCE uses the llvm bitcode as input and uses it for generating customized 
-  // target processor and program binary. TCE co-design environment is 
+  //
+  // TCE uses the llvm bitcode as input and uses it for generating customized
+  // target processor and program binary. TCE co-design environment is
   // publicly available in http://tce.cs.tut.fi
 
   class TCETargetInfo : public TargetInfo{

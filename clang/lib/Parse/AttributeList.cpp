@@ -21,7 +21,7 @@ AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
                              AttributeList *n, bool declspec)
   : AttrName(aName), AttrLoc(aLoc), ParmName(pName), ParmLoc(pLoc),
     NumArgs(numArgs), Next(n), DeclspecAttribute(declspec) {
-  
+
   if (numArgs == 0)
     Args = 0;
   else {
@@ -32,12 +32,12 @@ AttributeList::AttributeList(IdentifierInfo *aName, SourceLocation aLoc,
 
 AttributeList::~AttributeList() {
   if (Args) {
-    // FIXME: before we delete the vector, we need to make sure the Expr's 
+    // FIXME: before we delete the vector, we need to make sure the Expr's
     // have been deleted. Since ActionBase::ExprTy is "void", we are dependent
     // on the actions module for actually freeing the memory. The specific
-    // hooks are ActOnDeclarator, ActOnTypeName, ActOnParamDeclaratorType, 
-    // ParseField, ParseTag. Once these routines have freed the expression, 
-    // they should zero out the Args slot (to indicate the memory has been 
+    // hooks are ActOnDeclarator, ActOnTypeName, ActOnParamDeclaratorType,
+    // ParseField, ParseTag. Once these routines have freed the expression,
+    // they should zero out the Args slot (to indicate the memory has been
     // freed). If any element of the vector is non-null, we should assert.
     delete [] Args;
   }
@@ -54,7 +54,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     Str += 2;
     Len -= 4;
   }
-  
+
   // FIXME: Hand generating this is neither smart nor efficient.
   switch (Len) {
   case 4:
@@ -103,7 +103,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "deprecated", 10)) return AT_deprecated;
     if (!memcmp(Str, "visibility", 10)) return AT_visibility;
     if (!memcmp(Str, "destructor", 10)) return AT_destructor;
-    if (!memcmp(Str, "format_arg", 10)) return AT_format_arg; 
+    if (!memcmp(Str, "format_arg", 10)) return AT_format_arg;
     if (!memcmp(Str, "gnu_inline", 10)) return AT_gnu_inline;
     break;
   case 11:
@@ -136,13 +136,13 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   case 19:
     if (!memcmp(Str, "ns_returns_retained", 19)) return AT_ns_returns_retained;
     if (!memcmp(Str, "cf_returns_retained", 19)) return AT_cf_returns_retained;
-    break;            
+    break;
   case 20:
     if (!memcmp(Str, "reqd_work_group_size", 20)) return AT_reqd_wg_size;
   case 22:
     if (!memcmp(Str, "no_instrument_function", 22))
       return AT_no_instrument_function;
     break;
-  }  
+  }
   return UnknownAttribute;
 }

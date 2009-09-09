@@ -11,6 +11,6 @@ class P {
 
 class N : M,P {
   N() {}
-	   // FIXME. No access violation is reported in method call or member access.
+  // FIXME. No access violation is reported in method call or member access.
   int PR() { return iP + PPR(); }
 };

@@ -14,9 +14,9 @@ using namespace clang::driver;
 
 Job::~Job() {}
 
-Command::Command(const Action &_Source, const char *_Executable, 
+Command::Command(const Action &_Source, const char *_Executable,
                  const ArgStringList &_Arguments)
-  : Job(CommandClass), Source(_Source), Executable(_Executable), 
+  : Job(CommandClass), Source(_Source), Executable(_Executable),
     Arguments(_Arguments) {
 }
 
@@ -30,4 +30,4 @@ void Job::addCommand(Command *C) {
   else
     cast<JobList>(this)->addJob(C);
 }
-    
+

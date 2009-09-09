@@ -31,19 +31,20 @@ struct N : M , P, Q {
   float f1;
   int i1;
   float d1;
-  void PR() { printf("f1 = %f d1 = %f i1 = %d ld = %f \n", f1,d1,i1, ld); 
-	      MPR();
-	      PPR();
-              QPR();
-	      printf("iQ = %d\n", iQ);
-	      printf("iP = %d\n", iP);
-              printf("iM = %d\n", iM);
-	      // FIXME. We don't yet support this syntax.
-	      // printf("iQ = %d\n", (*this).iQ);
-	      printf("iQ = %d\n", this->iQ);
-	      printf("iP = %d\n", this->iP);
-              printf("iM = %d\n", this->iM);
-            }
+  void PR() {
+    printf("f1 = %f d1 = %f i1 = %d ld = %f \n", f1,d1,i1, ld); 
+    MPR();
+    PPR();
+    QPR();
+    printf("iQ = %d\n", iQ);
+    printf("iP = %d\n", iP);
+    printf("iM = %d\n", iM);
+    // FIXME. We don't yet support this syntax.
+    // printf("iQ = %d\n", (*this).iQ);
+    printf("iQ = %d\n", this->iQ);
+    printf("iP = %d\n", this->iP);
+    printf("iM = %d\n", this->iM);
+  }
   float ld;
   float ff;
   M arr_m[3];

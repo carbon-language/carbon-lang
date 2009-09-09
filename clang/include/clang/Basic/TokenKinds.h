@@ -29,7 +29,7 @@ enum TokenKind {
 /// PPKeywordKind - This provides a namespace for preprocessor keywords which
 /// start with a '#' at the beginning of the line.
 enum PPKeywordKind {
-#define PPKEYWORD(X) pp_##X, 
+#define PPKEYWORD(X) pp_##X,
 #include "clang/Basic/TokenKinds.def"
   NUM_PP_KEYWORDS
 };

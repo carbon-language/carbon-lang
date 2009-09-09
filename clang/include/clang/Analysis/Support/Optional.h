@@ -17,7 +17,7 @@
 #define LLVM_CLANG_ANALYSIS_OPTIONAL
 
 namespace clang {
-  
+
 template<typename T>
 class Optional {
   const T x;
@@ -25,15 +25,15 @@ class Optional {
 public:
   explicit Optional() : hasVal(false) {}
   Optional(const T &y) : x(y), hasVal(true) {}
-  
+
   static inline Optional create(const T* y) {
     return y ? Optional(*y) : Optional();
   }
-  
+
   const T* getPointer() const { assert(hasVal); return &x; }
-  
+
   operator bool() const { return hasVal; }
-  const T* operator->() const { return getPointer(); } 
+  const T* operator->() const { return getPointer(); }
   const T& operator*() const { assert(hasVal); return x; }
 };
 } //end clang namespace
@@ -46,7 +46,7 @@ struct simplify_type<const ::clang::Optional<T> > {
     return Val.getPointer();
   }
 };
-  
+
 template <typename T>
 struct simplify_type< ::clang::Optional<T> >
   : public simplify_type<const ::clang::Optional<T> > {};

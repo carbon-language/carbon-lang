@@ -6,11 +6,11 @@
 
 extern "C" int printf(...);
 struct S {
-	operator int();
+  operator int();
 };
 
 S::operator int() {
-	return 10;
+  return 10;
 }
 
 
@@ -42,51 +42,51 @@ Y y;
 int count=0;
 class O { // ...
 public: 
-	operator int(){ return ++iO; }
-        O() : iO(count++) {}
-	int iO;
+  operator int(){ return ++iO; }
+  O() : iO(count++) {}
+  int iO;
 };
 
-void g(O a, O b)
-{
-        int i = (a) ? 1+a : 0; 
-        int j = (a&&b) ? a+b : i; 
-        if (a) { }
-	printf("i = %d j = %d a.iO = %d b.iO = %d\n", i, j, a.iO, b.iO);
+void g(O a, O b) {
+  int i = (a) ? 1+a : 0; 
+  int j = (a&&b) ? a+b : i; 
+  if (a) { }
+  printf("i = %d j = %d a.iO = %d b.iO = %d\n", i, j, a.iO, b.iO);
 }
 
 int main() {
-    int c = X(Z(y)); // OK: y.operator Z().operator X().operator int()
-    printf("c = %d\n", c);
-    float f = X(Z(y));
-    printf("f = %f\n", f);
-    int i = x;
-    printf("i = %d float = %f\n", i, float(x));
-    i = int(X(Z(y)));
-    f = float(X(Z(y)));
-    printf("i = %d float = %f\n", i,f);
-    f = (float)x;
-    i = (int)x;
-    printf("i = %d float = %f\n", i,f);
+  int c = X(Z(y)); // OK: y.operator Z().operator X().operator int()
+  printf("c = %d\n", c);
+  float f = X(Z(y));
+  printf("f = %f\n", f);
+  int i = x;
+  printf("i = %d float = %f\n", i, float(x));
+  i = int(X(Z(y)));
+  f = float(X(Z(y)));
+  printf("i = %d float = %f\n", i,f);
+  f = (float)x;
+  i = (int)x;
+  printf("i = %d float = %f\n", i,f);
 
-    int d = (X)((Z)y);
-    printf("d = %d\n", d);
+  int d = (X)((Z)y);
+  printf("d = %d\n", d);
 
-    int e = (int)((X)((Z)y));
-    printf("e = %d\n", e);
-    O o1, o2;
-    g(o1, o2);
+  int e = (int)((X)((Z)y));
+  printf("e = %d\n", e);
+  O o1, o2;
+  g(o1, o2);
 }
-// CHECK-LP64: .globl  __ZN1ScviEv
+
+// CHECK-LP64: .globl __ZN1ScviEv
 // CHECK-LP64-NEXT: __ZN1ScviEv:
-// CHECK-LP64: call	__ZN1Ycv1ZEv
-// CHECK-LP64: call	__ZN1Zcv1XEv
-// CHECK-LP64: call	__ZN1XcviEv
-// CHECK-LP64: call	__ZN1XcvfEv
+// CHECK-LP64: call __ZN1Ycv1ZEv
+// CHECK-LP64: call __ZN1Zcv1XEv
+// CHECK-LP64: call __ZN1XcviEv
+// CHECK-LP64: call __ZN1XcvfEv
 
 // CHECK-LP32: .globl  __ZN1ScviEv
 // CHECK-LP32-NEXT: __ZN1ScviEv:
-// CHECK-LP32: call	L__ZN1Ycv1ZEv
-// CHECK-LP32: call	L__ZN1Zcv1XEv
-// CHECK-LP32: call	L__ZN1XcviEv
-// CHECK-LP32: call	L__ZN1XcvfEv
+// CHECK-LP32: call L__ZN1Ycv1ZEv
+// CHECK-LP32: call L__ZN1Zcv1XEv
+// CHECK-LP32: call L__ZN1XcviEv
+// CHECK-LP32: call L__ZN1XcvfEv

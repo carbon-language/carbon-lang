@@ -41,11 +41,11 @@ namespace clang {
 
     /// Class - The record decl of the class that the base is a base of.
     const CXXRecordDecl *Class;
-    
+
     /// SubobjectNumber - Identifies which base class subobject (of type
-    /// @c Base->getType()) this base path element refers to. This 
+    /// @c Base->getType()) this base path element refers to. This
     /// value is only valid if @c !Base->isVirtual(), because there
-    /// is no base numbering for the zero or one virtual bases of a 
+    /// is no base numbering for the zero or one virtual bases of a
     /// given type.
     int SubobjectNumber;
   };
@@ -107,7 +107,7 @@ namespace clang {
     /// while the element contains the number of non-virtual base
     /// class subobjects for that class type. The key of the map is
     /// the cv-unqualified canonical type of the base class subobject.
-    std::map<QualType, std::pair<bool, unsigned>, QualTypeOrdering> 
+    std::map<QualType, std::pair<bool, unsigned>, QualTypeOrdering>
       ClassSubobjects;
 
     /// FindAmbiguities - Whether Sema::IsDerivedFrom should try find
@@ -145,7 +145,7 @@ namespace clang {
   public:
     typedef std::list<BasePath>::const_iterator paths_iterator;
     typedef NamedDecl **decl_iterator;
-    
+
     /// BasePaths - Construct a new BasePaths structure to record the
     /// paths for a derived-to-base search.
     explicit BasePaths(bool FindAmbiguities = true,
@@ -153,8 +153,7 @@ namespace clang {
                        bool DetectVirtual = true)
       : FindAmbiguities(FindAmbiguities), RecordPaths(RecordPaths),
         DetectVirtual(DetectVirtual), DetectedVirtual(0), DeclsFound(0),
-        NumDeclsFound(0)
-    {}
+        NumDeclsFound(0) { }
 
     ~BasePaths() { delete [] DeclsFound; }
 
@@ -208,22 +207,22 @@ namespace clang {
       LK_NamedMember,
       LK_OverriddenMember
     };
-    
+
     /// MemberLookupCriteria - Constructs member lookup criteria to
     /// search for a base class of type Base.
-    explicit MemberLookupCriteria(QualType Base) 
+    explicit MemberLookupCriteria(QualType Base)
       : Kind(LK_Base), Base(Base) { }
 
     /// MemberLookupCriteria - Constructs member lookup criteria to
     /// search for a class member with the given Name.
-    explicit MemberLookupCriteria(DeclarationName Name, 
+    explicit MemberLookupCriteria(DeclarationName Name,
                                   Sema::LookupNameKind NameKind,
-                                  unsigned IDNS) 
+                                  unsigned IDNS)
       : Kind(LK_NamedMember), Name(Name), NameKind(NameKind), IDNS(IDNS) { }
 
     explicit MemberLookupCriteria(CXXMethodDecl *MD)
       : Kind(LK_OverriddenMember), Method(MD) { }
-    
+
     /// Kind - The kind of lookup we're doing.
     /// LK_Base if we are looking for a base class (whose
     /// type is Base). LK_NamedMember if we are looking for a named member of
@@ -240,7 +239,7 @@ namespace clang {
 
     Sema::LookupNameKind NameKind;
     unsigned IDNS;
-    
+
     CXXMethodDecl *Method;
   };
 }

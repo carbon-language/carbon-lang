@@ -2,5 +2,5 @@
 // rdar://6757323
 // foo \
 
-#define	blork 32
+#define blork 32
 

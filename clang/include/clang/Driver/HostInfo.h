@@ -22,7 +22,7 @@ namespace driver {
 
 /// HostInfo - Config information about a particular host which may interact
 /// with driver behavior.
-/// 
+///
 /// The host information is used for controlling the parts of the driver which
 /// interact with the platform the driver is ostensibly being run from. For
 /// testing purposes, the HostInfo used by the driver may differ from the actual
@@ -38,7 +38,7 @@ public:
   virtual ~HostInfo();
 
   const Driver &getDriver() const { return TheDriver; }
-  
+
   const llvm::Triple& getTriple() const { return Triple; }
   std::string getArchName() const { return Triple.getArchName(); }
   std::string getPlatformName() const { return Triple.getVendorName(); }
@@ -64,23 +64,23 @@ public:
 
   // FIXME: Pin down exactly what the HostInfo is allowed to use Args
   // for here. Currently this is for -m32 / -m64 defaulting.
-  virtual ToolChain *CreateToolChain(const ArgList &Args, 
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName=0) const = 0;
 };
 
 const HostInfo *createAuroraUXHostInfo(const Driver &D,
                                        const llvm::Triple& Triple);
-const HostInfo *createDarwinHostInfo(const Driver &D, 
+const HostInfo *createDarwinHostInfo(const Driver &D,
                                      const llvm::Triple& Triple);
-const HostInfo *createOpenBSDHostInfo(const Driver &D, 
+const HostInfo *createOpenBSDHostInfo(const Driver &D,
                                       const llvm::Triple& Triple);
-const HostInfo *createFreeBSDHostInfo(const Driver &D, 
+const HostInfo *createFreeBSDHostInfo(const Driver &D,
                                       const llvm::Triple& Triple);
-const HostInfo *createDragonFlyHostInfo(const Driver &D, 
+const HostInfo *createDragonFlyHostInfo(const Driver &D,
                                         const llvm::Triple& Triple);
-const HostInfo *createLinuxHostInfo(const Driver &D, 
+const HostInfo *createLinuxHostInfo(const Driver &D,
                                     const llvm::Triple& Triple);
-const HostInfo *createUnknownHostInfo(const Driver &D, 
+const HostInfo *createUnknownHostInfo(const Driver &D,
                                       const llvm::Triple& Triple);
 
 } // end namespace driver

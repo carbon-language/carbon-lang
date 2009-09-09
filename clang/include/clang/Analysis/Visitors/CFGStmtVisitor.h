@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the CFGStmtVisitor interface, which extends 
+//  This file defines the CFGStmtVisitor interface, which extends
 //  StmtVisitor.  This interface is useful for visiting statements in a CFG
 //  where some statements have implicit control-flow and thus should
 //  be treated specially.
@@ -24,7 +24,7 @@ namespace clang {
 
 #define DISPATCH_CASE(CLASS) \
 case Stmt::CLASS ## Class: return \
-static_cast<ImplClass*>(this)->BlockStmt_Visit ## CLASS(static_cast<CLASS*>(S));  
+static_cast<ImplClass*>(this)->BlockStmt_Visit ## CLASS(static_cast<CLASS*>(S));
 
 #define DEFAULT_BLOCKSTMT_VISIT(CLASS) RetTy BlockStmt_Visit ## CLASS(CLASS *S)\
 { return\
@@ -36,40 +36,40 @@ class CFGStmtVisitor : public StmtVisitor<ImplClass,RetTy> {
   Stmt* CurrentBlkStmt;
 
   struct NullifyStmt {
-    Stmt*& S;  
-    
+    Stmt*& S;
+
     NullifyStmt(Stmt*& s) : S(s) {}
     ~NullifyStmt() { S = NULL; }
   };
-  
+
 public:
-  CFGStmtVisitor() : CurrentBlkStmt(NULL) {}  
-  
+  CFGStmtVisitor() : CurrentBlkStmt(NULL) {}
+
   Stmt* getCurrentBlkStmt() const { return CurrentBlkStmt; }
-  
+
   RetTy Visit(Stmt* S) {
-    if (S == CurrentBlkStmt || 
+    if (S == CurrentBlkStmt ||
         !static_cast<ImplClass*>(this)->getCFG().isBlkExpr(S))
       return StmtVisitor<ImplClass,RetTy>::Visit(S);
     else
       return RetTy();
   }
-  
+
   /// BlockVisit_XXX - Visitor methods for visiting the "root" statements in
-  /// CFGBlocks.  Root statements are the statements that appear explicitly in 
+  /// CFGBlocks.  Root statements are the statements that appear explicitly in
   /// the list of statements in a CFGBlock.  For substatements, or when there
   /// is no implementation provided for a BlockStmt_XXX method, we default
   /// to using StmtVisitor's Visit method.
   RetTy BlockStmt_Visit(Stmt* S) {
     CurrentBlkStmt = S;
     NullifyStmt cleanup(CurrentBlkStmt);
-    
+
     switch (S->getStmtClass()) {
 
       DISPATCH_CASE(StmtExpr)
       DISPATCH_CASE(ConditionalOperator)
       DISPATCH_CASE(ObjCForCollectionStmt)
-        
+
       case Stmt::BinaryOperatorClass: {
         BinaryOperator* B = cast<BinaryOperator>(S);
         if (B->isLogicalOp())
@@ -78,40 +78,40 @@ public:
           return static_cast<ImplClass*>(this)->BlockStmt_VisitComma(B);
         // Fall through.
       }
-      
+
       default:
         if (isa<Expr>(S))
-          return 
+          return
             static_cast<ImplClass*>(this)->BlockStmt_VisitExpr(cast<Expr>(S));
         else
-          return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(S);                             
+          return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(S);
     }
   }
 
   DEFAULT_BLOCKSTMT_VISIT(StmtExpr)
   DEFAULT_BLOCKSTMT_VISIT(ConditionalOperator)
-  
+
   RetTy BlockStmt_VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
     return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(S);
   }
-  
+
   RetTy BlockStmt_VisitImplicitControlFlowExpr(Expr* E) {
     return static_cast<ImplClass*>(this)->BlockStmt_VisitExpr(E);
   }
-  
+
   RetTy BlockStmt_VisitExpr(Expr* E) {
     return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(E);
   }
-  
+
   RetTy BlockStmt_VisitStmt(Stmt* S) {
     return static_cast<ImplClass*>(this)->Visit(S);
   }
 
   RetTy BlockStmt_VisitLogicalOp(BinaryOperator* B) {
-    return 
+    return
      static_cast<ImplClass*>(this)->BlockStmt_VisitImplicitControlFlowExpr(B);
   }
-  
+
   RetTy BlockStmt_VisitComma(BinaryOperator* B) {
     return
      static_cast<ImplClass*>(this)->BlockStmt_VisitImplicitControlFlowExpr(B);
@@ -120,21 +120,21 @@ public:
   //===--------------------------------------------------------------------===//
   // Utility methods.  Not called by default (but subclasses may use them).
   //===--------------------------------------------------------------------===//
-    
+
   /// VisitChildren: Call "Visit" on each child of S.
   void VisitChildren(Stmt* S) {
-    
+
     switch (S->getStmtClass()) {
       default:
         break;
-        
+
       case Stmt::StmtExprClass: {
         CompoundStmt* CS = cast<StmtExpr>(S)->getSubStmt();
         if (CS->body_empty()) return;
         static_cast<ImplClass*>(this)->Visit(CS->body_back());
         return;
       }
-        
+
       case Stmt::BinaryOperatorClass: {
         BinaryOperator* B = cast<BinaryOperator>(S);
         if (B->getOpcode() != BinaryOperator::Comma) break;
@@ -142,12 +142,12 @@ public:
         return;
       }
     }
-        
+
     for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I != E;++I)
-      if (*I) static_cast<ImplClass*>(this)->Visit(*I);    
+      if (*I) static_cast<ImplClass*>(this)->Visit(*I);
   }
-};  
-      
+};
+
 #undef DEFAULT_BLOCKSTMT_VISIT
 #undef DISPATCH_CASE
 

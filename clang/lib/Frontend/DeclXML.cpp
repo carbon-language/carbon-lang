@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the XML document class, which provides the means to 
+// This file implements the XML document class, which provides the means to
 // dump out the AST in a XML form that exposes type details and other fields.
 //
 //===----------------------------------------------------------------------===//
@@ -18,22 +18,18 @@
 
 namespace clang {
 
-//--------------------------------------------------------- 
-class DocumentXML::DeclPrinter : public DeclVisitor<DocumentXML::DeclPrinter>
-{
+//---------------------------------------------------------
+class DocumentXML::DeclPrinter : public DeclVisitor<DocumentXML::DeclPrinter> {
   DocumentXML& Doc;
 
-  void addSubNodes(FunctionDecl* FD)
-  {
-    for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) 
-    {
+  void addSubNodes(FunctionDecl* FD) {
+    for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
       Visit(FD->getParamDecl(i));
       Doc.toParent();
     }
   }
 
-  void addSubNodes(RecordDecl* RD)
-  {
+  void addSubNodes(RecordDecl* RD) {
     for (RecordDecl::field_iterator i = RD->field_begin(),
                                     e = RD->field_end(); i != e; ++i) {
       Visit(*i);
@@ -41,8 +37,7 @@ class DocumentXML::DeclPrinter : public DeclVisitor<DocumentXML::DeclPrinter>
     }
   }
 
-  void addSubNodes(EnumDecl* ED)
-  {
+  void addSubNodes(EnumDecl* ED) {
     for (EnumDecl::enumerator_iterator i = ED->enumerator_begin(),
                                        e = ED->enumerator_end(); i != e; ++i) {
       Visit(*i);
@@ -50,54 +45,37 @@ class DocumentXML::DeclPrinter : public DeclVisitor<DocumentXML::DeclPrinter>
     }
   }
 
-  void addSubNodes(EnumConstantDecl* ECD)
-  {
-    if (ECD->getInitExpr()) 
-    {
+  void addSubNodes(EnumConstantDecl* ECD) {
+    if (ECD->getInitExpr())
       Doc.PrintStmt(ECD->getInitExpr());
-    }
   }
 
-  void addSubNodes(FieldDecl* FdD)
-  {
+  void addSubNodes(FieldDecl* FdD)  {
     if (FdD->isBitField())
-    {
       Doc.PrintStmt(FdD->getBitWidth());
-    }
   }
 
-  void addSubNodes(VarDecl* V)
-  {
-    if (V->getInit()) 
-    {
+  void addSubNodes(VarDecl* V) {
+    if (V->getInit())
       Doc.PrintStmt(V->getInit());
-    }
   }
 
-  void addSubNodes(ParmVarDecl* argDecl)
-  {
+  void addSubNodes(ParmVarDecl* argDecl) {
     if (argDecl->getDefaultArg())
-    {
       Doc.PrintStmt(argDecl->getDefaultArg());
-    }
   }
 
-  void addSpecialAttribute(const char* pName, EnumDecl* ED)
-  {
+  void addSpecialAttribute(const char* pName, EnumDecl* ED) {
     const QualType& enumType = ED->getIntegerType();
     if (!enumType.isNull())
-    {
       Doc.addAttribute(pName, enumType);
-    }
   }
 
-  void addIdAttribute(LinkageSpecDecl* ED)
-  {
+  void addIdAttribute(LinkageSpecDecl* ED) {
     Doc.addAttribute("id", ED);
   }
 
-  void addIdAttribute(NamedDecl* ND)
-  {
+  void addIdAttribute(NamedDecl* ND) {
     Doc.addAttribute("id", ND);
   }
 
@@ -107,11 +85,11 @@ public:
 #define NODE_XML( CLASS, NAME )          \
   void Visit##CLASS(CLASS* T)            \
   {                                      \
-    Doc.addSubNode(NAME);         
+    Doc.addSubNode(NAME);
 
 #define ID_ATTRIBUTE_XML                  addIdAttribute(T);
-#define ATTRIBUTE_XML( FN, NAME )         Doc.addAttribute(NAME, T->FN); 
-#define ATTRIBUTE_OPT_XML( FN, NAME )     Doc.addAttributeOptional(NAME, T->FN); 
+#define ATTRIBUTE_XML( FN, NAME )         Doc.addAttribute(NAME, T->FN);
+#define ATTRIBUTE_OPT_XML( FN, NAME )     Doc.addAttributeOptional(NAME, T->FN);
 #define ATTRIBUTE_FILE_LOCATION_XML       Doc.addLocation(T->getLocation());
 #define ATTRIBUTE_SPECIAL_XML( FN, NAME ) addSpecialAttribute(NAME, T);
 
@@ -120,14 +98,14 @@ public:
     const char* pAttributeName = NAME;  \
     const bool optional = false;             \
     switch (T->FN) {                    \
-      default: assert(0 && "unknown enum value"); 
+      default: assert(0 && "unknown enum value");
 
 #define ATTRIBUTE_ENUM_OPT_XML( FN, NAME )  \
   {                                     \
     const char* pAttributeName = NAME;  \
     const bool optional = true;              \
     switch (T->FN) {                    \
-      default: assert(0 && "unknown enum value"); 
+      default: assert(0 && "unknown enum value");
 
 #define ENUM_XML( VALUE, NAME )         case VALUE: if ((!optional) || NAME[0]) Doc.addAttribute(pAttributeName, NAME); break;
 #define END_ENUM_XML                    } }
@@ -141,12 +119,10 @@ public:
 };
 
 
-//--------------------------------------------------------- 
-void DocumentXML::writeDeclToXML(Decl *D)
-{
+//---------------------------------------------------------
+void DocumentXML::writeDeclToXML(Decl *D) {
   DeclPrinter(*this).Visit(D);
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) 
-  {
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (Stmt *Body = FD->getBody()) {
       addSubNode("Body");
       PrintStmt(Body);
@@ -156,6 +132,6 @@ void DocumentXML::writeDeclToXML(Decl *D)
   toParent();
 }
 
-//--------------------------------------------------------- 
+//---------------------------------------------------------
 } // NS clang
 

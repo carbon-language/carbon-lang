@@ -67,40 +67,40 @@ public:
   /// \brief Popular the vector with the names of all of the builtins.
   void GetBuiltinNames(llvm::SmallVectorImpl<const char *> &Names,
                        bool NoBuiltins);
-  
+
   /// Builtin::GetName - Return the identifier name for the specified builtin,
   /// e.g. "__builtin_abs".
   const char *GetName(unsigned ID) const {
     return GetRecord(ID).Name;
   }
-  
+
   /// GetTypeString - Get the type descriptor string for the specified builtin.
   const char *GetTypeString(unsigned ID) const {
     return GetRecord(ID).Type;
   }
-  
+
   /// isConst - Return true if this function has no side effects and doesn't
   /// read memory.
   bool isConst(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 'c') != 0;
   }
-  
+
   /// isNoThrow - Return true if we know this builtin never throws an exception.
   bool isNoThrow(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 'n') != 0;
   }
-  
+
   /// isNoReturn - Return true if we know this builtin never returns.
   bool isNoReturn(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 'r') != 0;
   }
-  
+
   /// isLibFunction - Return true if this is a builtin for a libc/libm function,
   /// with a "__builtin_" prefix (e.g. __builtin_abs).
   bool isLibFunction(unsigned ID) const {
     return strchr(GetRecord(ID).Attributes, 'F') != 0;
   }
-  
+
   /// \brief Determines whether this builtin is a predefined libc/libm
   /// function, such as "malloc", where we know the signature a
   /// priori.
@@ -124,7 +124,7 @@ public:
   bool hasVAListUse(unsigned ID) const {
     return strpbrk(GetRecord(ID).Type, "Aa") != 0;
   }
-  
+
   /// isConstWithoutErrno - Return true if this function has no side
   /// effects and doesn't read memory, except for possibly errno. Such
   /// functions can be const when the MathErrno lang option is

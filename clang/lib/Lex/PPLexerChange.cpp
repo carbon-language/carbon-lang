@@ -31,7 +31,7 @@ PPCallbacks::~PPCallbacks() {}
 bool Preprocessor::isInPrimaryFile() const {
   if (IsFileLexer())
     return IncludeMacroStack.empty();
-  
+
   // If there are any stacked lexers, we're in a #include.
   assert(IsFileLexer(IncludeMacroStack[0]) &&
          "Top level include stack isn't our primary lexer?");
@@ -47,7 +47,7 @@ bool Preprocessor::isInPrimaryFile() const {
 PreprocessorLexer *Preprocessor::getCurrentFileLexer() const {
   if (IsFileLexer())
     return CurPPLexer;
-  
+
   // Look for a stacked lexer.
   for (unsigned i = IncludeMacroStack.size(); i != 0; --i) {
     const IncludeStackInfo& ISI = IncludeMacroStack[i-1];
@@ -68,7 +68,7 @@ PreprocessorLexer *Preprocessor::getCurrentFileLexer() const {
 void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir) {
   assert(CurTokenLexer == 0 && "Cannot #include a file inside a macro!");
   ++NumEnteredSourceFiles;
-  
+
   if (MaxIncludeStackDepth < IncludeMacroStack.size())
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
@@ -77,13 +77,13 @@ void Preprocessor::EnterSourceFile(FileID FID, const DirectoryLookup *CurDir) {
       return EnterSourceFileWithPTH(PL, CurDir);
   }
   EnterSourceFileWithLexer(new Lexer(FID, *this), CurDir);
-}  
+}
 
 /// EnterSourceFileWithLexer - Add a source file to the top of the include stack
 ///  and start lexing tokens from it instead of the current buffer.
-void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer, 
+void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
                                             const DirectoryLookup *CurDir) {
-    
+
   // Add the current lexer to the include stack.
   if (CurPPLexer || CurTokenLexer)
     PushIncludeMacroStack();
@@ -91,12 +91,12 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
   CurLexer.reset(TheLexer);
   CurPPLexer = TheLexer;
   CurDirLookup = CurDir;
-  
+
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks && !CurLexer->Is_PragmaLexer) {
     SrcMgr::CharacteristicKind FileType =
        SourceMgr.getFileCharacteristic(CurLexer->getFileLoc());
-    
+
     Callbacks->FileChanged(CurLexer->getFileLoc(),
                            PPCallbacks::EnterFile, FileType);
   }
@@ -104,9 +104,9 @@ void Preprocessor::EnterSourceFileWithLexer(Lexer *TheLexer,
 
 /// EnterSourceFileWithPTH - Add a source file to the top of the include stack
 /// and start getting tokens from it using the PTH cache.
-void Preprocessor::EnterSourceFileWithPTH(PTHLexer *PL, 
+void Preprocessor::EnterSourceFileWithPTH(PTHLexer *PL,
                                           const DirectoryLookup *CurDir) {
-  
+
   if (CurPPLexer || CurTokenLexer)
     PushIncludeMacroStack();
 
@@ -130,7 +130,7 @@ void Preprocessor::EnterMacro(Token &Tok, SourceLocation ILEnd,
                               MacroArgs *Args) {
   PushIncludeMacroStack();
   CurDirLookup = 0;
-  
+
   if (NumCachedTokenLexers == 0) {
     CurTokenLexer.reset(new TokenLexer(Tok, ILEnd, Args, *this));
   } else {
@@ -174,18 +174,18 @@ void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks,
 bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   assert(!CurTokenLexer &&
          "Ending a file when currently in a macro!");
-  
+
   // See if this file had a controlling macro.
   if (CurPPLexer) {  // Not ending a macro, ignore it.
-    if (const IdentifierInfo *ControllingMacro = 
+    if (const IdentifierInfo *ControllingMacro =
           CurPPLexer->MIOpt.GetControllingMacroAtEndOfFile()) {
       // Okay, this has a controlling macro, remember in HeaderFileInfo.
-      if (const FileEntry *FE = 
+      if (const FileEntry *FE =
             SourceMgr.getFileEntryForID(CurPPLexer->getFileID()))
         HeaderInfo.SetFileControllingMacro(FE, ControllingMacro);
     }
   }
-  
+
   // If this is a #include'd file, pop it off the include stack and continue
   // lexing the #includer file.
   if (!IncludeMacroStack.empty()) {
@@ -197,7 +197,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
       SrcMgr::CharacteristicKind FileType =
         SourceMgr.getFileCharacteristic(CurPPLexer->getSourceLocation());
       Callbacks->FileChanged(CurPPLexer->getSourceLocation(),
-                             PPCallbacks::ExitFile, FileType); 
+                             PPCallbacks::ExitFile, FileType);
     }
 
     // Client should lex another token.
@@ -210,21 +210,21 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   // actually typed, which is goodness.
   if (CurLexer) {
     const char *EndPos = CurLexer->BufferEnd;
-    if (EndPos != CurLexer->BufferStart && 
+    if (EndPos != CurLexer->BufferStart &&
         (EndPos[-1] == '\n' || EndPos[-1] == '\r')) {
       --EndPos;
-      
+
       // Handle \n\r and \r\n:
-      if (EndPos != CurLexer->BufferStart && 
+      if (EndPos != CurLexer->BufferStart &&
           (EndPos[-1] == '\n' || EndPos[-1] == '\r') &&
           EndPos[-1] != EndPos[0])
         --EndPos;
     }
-    
+
     Result.startToken();
     CurLexer->BufferPtr = EndPos;
     CurLexer->FormTokenWithChars(Result, EndPos, tok::eof);
-    
+
     // We're done with the #included file.
     CurLexer.reset();
   } else {
@@ -232,12 +232,12 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     CurPTHLexer->getEOF(Result);
     CurPTHLexer.reset();
   }
-  
+
   CurPPLexer = 0;
 
   // This is the end of the top-level file.  If the diag::pp_macro_not_used
   // diagnostic is enabled, look for macros that have not been used.
-  if (getDiagnostics().getDiagnosticLevel(diag::pp_macro_not_used) != 
+  if (getDiagnostics().getDiagnosticLevel(diag::pp_macro_not_used) !=
         Diagnostic::Ignored) {
     for (macro_iterator I = macro_begin(), E = macro_end(); I != E; ++I)
       if (!I->second->isUsed())
@@ -267,15 +267,15 @@ bool Preprocessor::HandleEndOfTokenLexer(Token &Result) {
 /// state of the top-of-stack lexer is unknown.
 void Preprocessor::RemoveTopOfLexerStack() {
   assert(!IncludeMacroStack.empty() && "Ran out of stack entries to load");
-  
+
   if (CurTokenLexer) {
     // Delete or cache the now-dead macro expander.
     if (NumCachedTokenLexers == TokenLexerCacheSize)
       CurTokenLexer.reset();
     else
       TokenLexerCache[NumCachedTokenLexers++] = CurTokenLexer.take();
-  }   
-  
+  }
+
   PopIncludeMacroStack();
 }
 
@@ -285,7 +285,7 @@ void Preprocessor::RemoveTopOfLexerStack() {
 void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
   assert(CurTokenLexer && !CurPPLexer &&
          "Pasted comment can only be formed from macro");
-  
+
   // We handle this by scanning for the closest real lexer, switching it to
   // raw mode and preprocessor mode.  This will cause it to return \n as an
   // explicit EOM token.
@@ -294,7 +294,7 @@ void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
   for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
     IncludeStackInfo &ISI = *(IncludeMacroStack.end()-i-1);
     if (ISI.ThePPLexer == 0) continue;  // Scan for a real lexer.
-    
+
     // Once we find a real lexer, mark it as raw mode (disabling macro
     // expansions) and preprocessor mode (return EOM).  We know that the lexer
     // was *not* in raw mode before, because the macro that the comment came
@@ -307,12 +307,12 @@ void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
     FoundLexer->ParsingPreprocessorDirective = true;
     break;
   }
-  
+
   // Okay, we either found and switched over the lexer, or we didn't find a
   // lexer.  In either case, finish off the macro the comment came from, getting
   // the next token.
   if (!HandleEndOfTokenLexer(Tok)) Lex(Tok);
-  
+
   // Discarding comments as long as we don't have EOF or EOM.  This 'comments
   // out' the rest of the line, including any tokens that came from other macros
   // that were active, as in:
@@ -321,22 +321,22 @@ void Preprocessor::HandleMicrosoftCommentPaste(Token &Tok) {
   // which should lex to 'a' only: 'b' and 'c' should be removed.
   while (Tok.isNot(tok::eom) && Tok.isNot(tok::eof))
     Lex(Tok);
-  
+
   // If we got an eom token, then we successfully found the end of the line.
   if (Tok.is(tok::eom)) {
     assert(FoundLexer && "Can't get end of line without an active lexer");
     // Restore the lexer back to normal mode instead of raw mode.
     FoundLexer->LexingRawMode = false;
-    
+
     // If the lexer was already in preprocessor mode, just return the EOM token
     // to finish the preprocessor line.
     if (LexerWasInPPMode) return;
-    
+
     // Otherwise, switch out of PP mode and return the next lexed token.
     FoundLexer->ParsingPreprocessorDirective = false;
     return Lex(Tok);
   }
-  
+
   // If we got an EOF token, then we reached the end of the token stream but
   // didn't find an explicit \n.  This can only happen if there was no lexer
   // active (an active lexer would return EOM at EOF if there was no \n in

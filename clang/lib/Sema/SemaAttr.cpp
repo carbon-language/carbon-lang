@@ -32,8 +32,8 @@ namespace {
     /// Stack - Entries in the #pragma pack stack, consisting of saved
     /// alignments and optional names.
     stack_ty Stack;
-    
-  public:  
+
+  public:
     PragmaPackStack() : Alignment(0) {}
 
     void setAlignment(unsigned A) { Alignment = A; }
@@ -56,14 +56,14 @@ namespace {
 bool PragmaPackStack::pop(IdentifierInfo *Name) {
   if (Stack.empty())
     return false;
-  
+
   // If name is empty just pop top.
   if (!Name) {
     Alignment = Stack.back().first;
     Stack.pop_back();
     return true;
-  } 
-  
+  }
+
   // Otherwise, find the named record.
   for (unsigned i = Stack.size(); i != 0; ) {
     --i;
@@ -74,7 +74,7 @@ bool PragmaPackStack::pop(IdentifierInfo *Name) {
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -93,8 +93,8 @@ unsigned Sema::getPragmaPackAlignment() const {
   return 0;
 }
 
-void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name, 
-                           ExprTy *alignment, SourceLocation PragmaLoc, 
+void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
+                           ExprTy *alignment, SourceLocation PragmaLoc,
                            SourceLocation LParenLoc, SourceLocation RParenLoc) {
   Expr *Alignment = static_cast<Expr *>(alignment);
 
@@ -102,7 +102,7 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
   unsigned AlignmentVal = 0;
   if (Alignment) {
     llvm::APSInt Val;
-    
+
     // pack(0) is like pack(), which just works out since that is what
     // we use 0 for in PackAttr.
     if (!Alignment->isIntegerConstantExpr(Val, Context) ||
@@ -115,12 +115,12 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
 
     AlignmentVal = (unsigned) Val.getZExtValue();
   }
-  
+
   if (PackContext == 0)
     PackContext = new PragmaPackStack();
-  
+
   PragmaPackStack *Context = static_cast<PragmaPackStack*>(PackContext);
-  
+
   switch (Kind) {
   case Action::PPK_Default: // pack([n])
     Context->setAlignment(AlignmentVal);
@@ -140,15 +140,15 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
     Context->push(Name);
     // Set the new alignment if specified.
     if (Alignment)
-      Context->setAlignment(AlignmentVal);    
+      Context->setAlignment(AlignmentVal);
     break;
 
   case Action::PPK_Pop: // pack(pop [, id] [,  n])
     // MSDN, C/C++ Preprocessor Reference > Pragma Directives > pack:
     // "#pragma pack(pop, identifier, n) is undefined"
     if (Alignment && Name)
-      Diag(PragmaLoc, diag::warn_pragma_pack_pop_identifer_and_alignment);    
-    
+      Diag(PragmaLoc, diag::warn_pragma_pack_pop_identifer_and_alignment);
+
     // Do the pop.
     if (!Context->pop(Name)) {
       // If a name was specified then failure indicates the name
@@ -178,7 +178,7 @@ void Sema::ActOnPragmaUnused(const Token *Identifiers, unsigned NumIdentifiers,
 
   for (unsigned i = 0; i < NumIdentifiers; ++i) {
     const Token &Tok = Identifiers[i];
-    IdentifierInfo *Name = Tok.getIdentifierInfo();    
+    IdentifierInfo *Name = Tok.getIdentifierInfo();
     const LookupResult &Lookup = LookupParsedName(curScope, NULL, Name,
                                                   LookupOrdinaryName,
                                                   false, true,
@@ -187,18 +187,18 @@ void Sema::ActOnPragmaUnused(const Token *Identifiers, unsigned NumIdentifiers,
 
     NamedDecl *ND = Lookup.getAsDecl();
 
-    if (!ND) {      
+    if (!ND) {
       Diag(PragmaLoc, diag::warn_pragma_unused_undeclared_var)
         << Name << SourceRange(Tok.getLocation());
       continue;
     }
-      
+
     if (!isa<VarDecl>(ND) || !cast<VarDecl>(ND)->hasLocalStorage()) {
       Diag(PragmaLoc, diag::warn_pragma_unused_expected_localvar)
         << Name << SourceRange(Tok.getLocation());
       continue;
     }
-    
+
     ND->addAttr(::new (Context) UnusedAttr());
   }
 }

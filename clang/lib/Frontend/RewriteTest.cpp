@@ -30,8 +30,8 @@ void clang::DoRewriteTest(Preprocessor &PP, llvm::raw_ostream* OS) {
     Rewriter.AddTokenBefore(I, "<i>");
     Rewriter.AddTokenAfter(I, "</i>");
   }
-  
-  
+
+
   // Print out the output.
   for (TokenRewriter::token_iterator I = Rewriter.token_begin(),
        E = Rewriter.token_end(); I != E; ++I)

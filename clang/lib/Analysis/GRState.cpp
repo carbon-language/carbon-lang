@@ -27,7 +27,7 @@ GRStateManager::~GRStateManager() {
   for (std::vector<GRState::Printer*>::iterator I=Printers.begin(),
         E=Printers.end(); I!=E; ++I)
     delete *I;
-  
+
   for (GDMContextsTy::iterator I=GDMContexts.begin(), E=GDMContexts.end();
        I!=E; ++I)
     I->second.second(I->second.first);
@@ -59,13 +59,13 @@ GRStateManager::RemoveDeadBindings(const GRState* state, Stmt* Loc,
 const GRState *GRState::unbindLoc(Loc LV) const {
   Store OldStore = getStore();
   Store NewStore = getStateManager().StoreMgr->Remove(OldStore, LV);
-  
+
   if (NewStore == OldStore)
     return this;
-  
+
   GRState NewSt = *this;
   NewSt.St = NewStore;
-  return getStateManager().getPersistentState(NewSt);    
+  return getStateManager().getPersistentState(NewSt);
 }
 
 SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
@@ -87,7 +87,7 @@ SVal GRState::getSValAsScalarOrLoc(const MemRegion *R) const {
 
 const GRState *GRState::BindExpr(const Stmt* Ex, SVal V, bool Invalidate) const{
   Environment NewEnv = getStateManager().EnvMgr.BindExpr(Env, Ex, V,
-                                                         Invalidate);  
+                                                         Invalidate);
   if (NewEnv == Env)
     return this;
 
@@ -98,7 +98,7 @@ const GRState *GRState::BindExpr(const Stmt* Ex, SVal V, bool Invalidate) const{
 
 const GRState* GRStateManager::getInitialState(const LocationContext *InitLoc) {
   GRState State(this,
-                EnvMgr.getInitialEnvironment(InitLoc->getAnalysisContext()), 
+                EnvMgr.getInitialEnvironment(InitLoc->getAnalysisContext()),
                 StoreMgr->getInitialStore(InitLoc),
                 GDMFactory.GetEmptyMap());
 
@@ -106,16 +106,16 @@ const GRState* GRStateManager::getInitialState(const LocationContext *InitLoc) {
 }
 
 const GRState* GRStateManager::getPersistentState(GRState& State) {
-  
+
   llvm::FoldingSetNodeID ID;
-  State.Profile(ID);  
+  State.Profile(ID);
   void* InsertPos;
-  
+
   if (GRState* I = StateSet.FindNodeOrInsertPos(ID, InsertPos))
     return I;
-  
+
   GRState* I = (GRState*) Alloc.Allocate<GRState>();
-  new (I) GRState(State);  
+  new (I) GRState(State);
   StateSet.InsertNode(I, InsertPos);
   return I;
 }
@@ -131,32 +131,32 @@ const GRState* GRState::makeWithStore(Store store) const {
 //===----------------------------------------------------------------------===//
 
 void GRState::print(llvm::raw_ostream& Out, const char* nl,
-                    const char* sep) const {  
+                    const char* sep) const {
   // Print the store.
   GRStateManager &Mgr = getStateManager();
   Mgr.getStoreManager().print(getStore(), Out, nl, sep);
-  
+
   CFG &C = *getAnalysisContext().getCFG();
-  
+
   // Print Subexpression bindings.
   bool isFirst = true;
-  
-  for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {    
+
+  for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
     if (C.isBlkExpr(I.getKey()))
       continue;
-    
+
     if (isFirst) {
       Out << nl << nl << "Sub-Expressions:" << nl;
       isFirst = false;
     }
     else { Out << nl; }
-    
+
     Out << " (" << (void*) I.getKey() << ") ";
     LangOptions LO; // FIXME.
     I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
     Out << " : " << I.getData();
   }
-  
+
   // Print block-expression bindings.
   isFirst = true;
 
@@ -169,15 +169,15 @@ void GRState::print(llvm::raw_ostream& Out, const char* nl,
       isFirst = false;
     }
     else { Out << nl; }
-    
+
     Out << " (" << (void*) I.getKey() << ") ";
     LangOptions LO; // FIXME.
     I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
     Out << " : " << I.getData();
   }
-  
+
   Mgr.getConstraintManager().print(this, Out, nl, sep);
-  
+
   // Print checker-specific data.
   for (std::vector<Printer*>::iterator I = Mgr.Printers.begin(),
                                        E = Mgr.Printers.end(); I != E; ++I) {
@@ -205,23 +205,23 @@ void*
 GRStateManager::FindGDMContext(void* K,
                                void* (*CreateContext)(llvm::BumpPtrAllocator&),
                                void (*DeleteContext)(void*)) {
-  
+
   std::pair<void*, void (*)(void*)>& p = GDMContexts[K];
   if (!p.first) {
     p.first = CreateContext(Alloc);
     p.second = DeleteContext;
   }
-  
+
   return p.first;
 }
 
 const GRState* GRStateManager::addGDM(const GRState* St, void* Key, void* Data){
   GRState::GenericDataMap M1 = St->getGDM();
   GRState::GenericDataMap M2 = GDMFactory.Add(M1, Key, Data);
-  
+
   if (M1 == M2)
     return St;
-  
+
   GRState NewSt = *St;
   NewSt.GDM = M2;
   return getPersistentState(NewSt);
@@ -240,14 +240,14 @@ class VISIBILITY_HIDDEN ScanReachableSymbols : public SubRegionMap::Visitor  {
   SymbolVisitor &visitor;
   llvm::OwningPtr<SubRegionMap> SRM;
 public:
-  
+
   ScanReachableSymbols(const GRState *st, SymbolVisitor& v)
     : state(st), visitor(v) {}
-  
+
   bool scan(nonloc::CompoundVal val);
   bool scan(SVal val);
   bool scan(const MemRegion *R);
-    
+
   // From SubRegionMap::Visitor.
   bool Visit(const MemRegion* Parent, const MemRegion* SubRegion) {
     return scan(SubRegion);
@@ -262,44 +262,44 @@ bool ScanReachableSymbols::scan(nonloc::CompoundVal val) {
 
   return true;
 }
-    
+
 bool ScanReachableSymbols::scan(SVal val) {
   if (loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&val))
     return scan(X->getRegion());
 
   if (SymbolRef Sym = val.getAsSymbol())
     return visitor.VisitSymbol(Sym);
-  
+
   if (nonloc::CompoundVal *X = dyn_cast<nonloc::CompoundVal>(&val))
     return scan(*X);
-  
+
   return true;
 }
-  
+
 bool ScanReachableSymbols::scan(const MemRegion *R) {
   if (isa<MemSpaceRegion>(R) || visited.count(R))
     return true;
-  
+
   visited.insert(R);
 
   // If this is a symbolic region, visit the symbol for the region.
   if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
     if (!visitor.VisitSymbol(SR->getSymbol()))
       return false;
-  
+
   // If this is a subregion, also visit the parent regions.
   if (const SubRegion *SR = dyn_cast<SubRegion>(R))
     if (!scan(SR->getSuperRegion()))
       return false;
-  
+
   // Now look at the binding to this region (if any).
   if (!scan(state->getSValAsScalarOrLoc(R)))
     return false;
-  
+
   // Now look at the subregions.
   if (!SRM.get())
    SRM.reset(state->getStateManager().getStoreManager().getSubRegionMap(state));
-  
+
   return SRM->iterSubRegions(R, *this);
 }
 
@@ -314,21 +314,21 @@ bool GRState::scanReachableSymbols(SVal val, SymbolVisitor& visitor) const {
 
 bool GRStateManager::isEqual(const GRState* state, const Expr* Ex,
                              const llvm::APSInt& Y) {
-  
+
   SVal V = state->getSVal(Ex);
-  
+
   if (loc::ConcreteInt* X = dyn_cast<loc::ConcreteInt>(&V))
     return X->getValue() == Y;
 
   if (nonloc::ConcreteInt* X = dyn_cast<nonloc::ConcreteInt>(&V))
     return X->getValue() == Y;
-    
+
   if (SymbolRef Sym = V.getAsSymbol())
     return ConstraintMgr->isEqual(state, Sym, Y);
 
   return false;
 }
-  
+
 bool GRStateManager::isEqual(const GRState* state, const Expr* Ex, uint64_t x) {
   return isEqual(state, Ex, getBasicVals().getValue(x, Ex->getType()));
 }

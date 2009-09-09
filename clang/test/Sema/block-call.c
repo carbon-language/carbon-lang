@@ -5,51 +5,47 @@ int (^IFP) ();
 int (^II) (int);
 int main() {
   int (*FPL) (int) = FP; // C doesn't consider this an error.
-  
+
   // For Blocks, the ASTContext::typesAreBlockCompatible() makes sure this is an error.
   int (^PFR) (int) = IFP; // OK
-	PFR = II;	// OK
+  PFR = II;       // OK
 
-	int (^IFP) () = PFR; // OK
-
-
-	const int (^CIC) () = IFP; // expected-error {{incompatible block pointer types initializing 'int (^)()', expected 'int const (^)()'}}
+  int (^IFP) () = PFR; // OK
 
 
-	const int (^CICC) () = CIC;
+  const int (^CIC) () = IFP; // expected-error {{incompatible block pointer types initializing 'int (^)()', expected 'int const (^)()'}}
 
-	int * const (^IPCC) () = 0;
+  const int (^CICC) () = CIC;
 
-	int * const (^IPCC1) () = IPCC; 
+  int * const (^IPCC) () = 0;
 
-	int * (^IPCC2) () = IPCC;	// expected-error {{incompatible block pointer types initializing 'int *const (^)()', expected 'int *(^)()'}}
+  int * const (^IPCC1) () = IPCC;
 
-	int (^IPCC3) (const int) = PFR;
+  int * (^IPCC2) () = IPCC;       // expected-error {{incompatible block pointer types initializing 'int *const (^)()', expected 'int *(^)()'}}
 
+  int (^IPCC3) (const int) = PFR;
 
-	int (^IPCC4) (int, char (^CArg) (double));
+  int (^IPCC4) (int, char (^CArg) (double));
 
+  int (^IPCC5) (int, char (^CArg) (double)) = IPCC4;
 
-	int (^IPCC5) (int, char (^CArg) (double)) = IPCC4;
+  int (^IPCC6) (int, char (^CArg) (float))  = IPCC4; // expected-error {{incompatible block pointer types initializing 'int (^)(int, char (^)(double))', expected 'int (^)(int, char (^)(float))'}}
 
-	int (^IPCC6) (int, char (^CArg) (float))  = IPCC4; // expected-error {{incompatible block pointer types initializing 'int (^)(int, char (^)(double))', expected 'int (^)(int, char (^)(float))'}}
-
-	IPCC2 = 0;
-	IPCC2 = 1; // expected-error {{invalid conversion assigning integer 'int', expected block pointer 'int *(^)()'}}
-	int (^x)() = 0;
-	int (^y)() = 3;   // expected-error {{invalid conversion initializing integer 'int', expected block pointer 'int (^)()'}}
-	int a = 1;
-	int (^z)() = a+4;   // expected-error {{invalid conversion initializing integer 'int', expected block pointer 'int (^)()'}}
+  IPCC2 = 0;
+  IPCC2 = 1; // expected-error {{invalid conversion assigning integer 'int', expected block pointer 'int *(^)()'}}
+  int (^x)() = 0;
+  int (^y)() = 3;   // expected-error {{invalid conversion initializing integer 'int', expected block pointer 'int (^)()'}}
+  int a = 1;
+  int (^z)() = a+4;   // expected-error {{invalid conversion initializing integer 'int', expected block pointer 'int (^)()'}}
 }
 
 int blah() {
-	int (^IFP) (float);
-	char (^PCP)(double, double, char);
+  int (^IFP) (float);
+  char (^PCP)(double, double, char);
 
-	IFP(1.0);
-	IFP (1.0, 2.0);	// expected-error {{too many arguments to block call}}
+  IFP(1.0);
+  IFP (1.0, 2.0); // expected-error {{too many arguments to block call}}
 
-	char ch = PCP(1.0, 2.0, 'a');
-	return PCP(1.0, 2.0);	// expected-error {{too few arguments to block}}
+  char ch = PCP(1.0, 2.0, 'a');
+  return PCP(1.0, 2.0);   // expected-error {{too few arguments to block}}
 }
-

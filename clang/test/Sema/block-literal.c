@@ -12,34 +12,34 @@ void takeblock(T);
 int takeintint(int (^C)(int)) { return C(4); }
 
 T somefunction() {
-	if (^{ })
-	  nothing();
+  if (^{ })
+    nothing();
 
-	noop = ^{};
+  noop = ^{};
 
-	noop = ^{printf("\nClosure\n"); };
+  noop = ^{printf("\nClosure\n"); };
 
-	I(^{ });
+  I(^{ });
 
-	return ^{printf("\nClosure\n"); };
+  return ^{printf("\nClosure\n"); };
 }
 void test2() {
-	int x = 4;
+  int x = 4;
 
-	takeblock(^{ printf("%d\n", x); });
+  takeblock(^{ printf("%d\n", x); });
 
   while (1) {
-	  takeblock(^{ 
-      break;  // expected-error {{'break' statement not in loop or switch statement}}
-	    continue; // expected-error {{'continue' statement not in loop statement}}
-	    while(1) break;  // ok
-      goto foo; // expected-error {{goto not allowed}}
-    });
+    takeblock(^{ 
+        break;  // expected-error {{'break' statement not in loop or switch statement}}
+        continue; // expected-error {{'continue' statement not in loop statement}}
+        while(1) break;  // ok
+        goto foo; // expected-error {{goto not allowed}}
+      });
     break;
-	}
+  }
 
-foo:
-	takeblock(^{ x = 4; });  // expected-error {{variable is not assignable (missing __block type specifier)}}
+  foo:
+  takeblock(^{ x = 4; });  // expected-error {{variable is not assignable (missing __block type specifier)}}
   __block y = 7;    // expected-warning {{type specifier missing, defaults to 'int'}}
   takeblock(^{ y = 8; });
 }
@@ -59,11 +59,11 @@ void myfunc(int (^block)(int)) {}
 void myfunc3(const int *x);
 
 void test5() {
-    int a;
+  int a;
 
-    myfunc(^(int abcd) {
-        myfunc3(&a);
-        return 1;
+  myfunc(^(int abcd) {
+      myfunc3(&a);
+      return 1;
     });
 }
 

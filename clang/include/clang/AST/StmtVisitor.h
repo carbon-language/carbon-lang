@@ -20,17 +20,17 @@
 #include "clang/AST/StmtObjC.h"
 
 namespace clang {
-  
+
 #define DISPATCH(NAME, CLASS) \
   return static_cast<ImplClass*>(this)->Visit ## NAME(static_cast<CLASS*>(S))
-  
+
 /// StmtVisitor - This class implements a simple visitor for Stmt subclasses.
 /// Since Expr derives from Stmt, this also includes support for visiting Exprs.
 template<typename ImplClass, typename RetTy=void>
 class StmtVisitor {
 public:
   RetTy Visit(Stmt *S) {
-    
+
     // If we have a binary expr, dispatch to the subcode of the binop.  A smart
     // optimizer (e.g. LLVM) will fold this comparison into the switch stmt
     // below.
@@ -53,7 +53,7 @@ public:
       case BinaryOperator::GE:        DISPATCH(BinGE,        BinaryOperator);
       case BinaryOperator::EQ:        DISPATCH(BinEQ,        BinaryOperator);
       case BinaryOperator::NE:        DISPATCH(BinNE,        BinaryOperator);
-        
+
       case BinaryOperator::And:       DISPATCH(BinAnd,       BinaryOperator);
       case BinaryOperator::Xor:       DISPATCH(BinXor,       BinaryOperator);
       case BinaryOperator::Or :       DISPATCH(BinOr,        BinaryOperator);
@@ -101,7 +101,7 @@ public:
       case UnaryOperator::OffsetOf:     DISPATCH(UnaryOffsetOf,  UnaryOperator);
       }
     }
-    
+
     // Top switch stmt: dispatch to VisitFooStmt for each FooStmt.
     switch (S->getStmtClass()) {
     default: assert(0 && "Unknown stmt kind!");
@@ -110,7 +110,7 @@ public:
 #include "clang/AST/StmtNodes.def"
     }
   }
-  
+
   // If the implementation chooses not to implement a certain visit method, fall
   // back on VisitExpr or whatever else is the superclass.
 #define STMT(CLASS, PARENT)                                   \
@@ -127,7 +127,7 @@ public:
   BINOP_FALLBACK(Mul)   BINOP_FALLBACK(Div)  BINOP_FALLBACK(Rem)
   BINOP_FALLBACK(Add)   BINOP_FALLBACK(Sub)  BINOP_FALLBACK(Shl)
   BINOP_FALLBACK(Shr)
-  
+
   BINOP_FALLBACK(LT)    BINOP_FALLBACK(GT)   BINOP_FALLBACK(LE)
   BINOP_FALLBACK(GE)    BINOP_FALLBACK(EQ)   BINOP_FALLBACK(NE)
   BINOP_FALLBACK(And)   BINOP_FALLBACK(Xor)  BINOP_FALLBACK(Or)
@@ -148,7 +148,7 @@ public:
   CAO_FALLBACK(ShrAssign) CAO_FALLBACK(AndAssign) CAO_FALLBACK(OrAssign)
   CAO_FALLBACK(XorAssign)
 #undef CAO_FALLBACK
-  
+
   // If the implementation doesn't implement unary operator methods, fall back
   // on VisitUnaryOperator.
 #define UNARYOP_FALLBACK(NAME) \
@@ -158,13 +158,13 @@ public:
   UNARYOP_FALLBACK(PostInc)   UNARYOP_FALLBACK(PostDec)
   UNARYOP_FALLBACK(PreInc)    UNARYOP_FALLBACK(PreDec)
   UNARYOP_FALLBACK(AddrOf)    UNARYOP_FALLBACK(Deref)
-  
+
   UNARYOP_FALLBACK(Plus)      UNARYOP_FALLBACK(Minus)
   UNARYOP_FALLBACK(Not)       UNARYOP_FALLBACK(LNot)
   UNARYOP_FALLBACK(Real)      UNARYOP_FALLBACK(Imag)
   UNARYOP_FALLBACK(Extension) UNARYOP_FALLBACK(OffsetOf)
 #undef UNARYOP_FALLBACK
-  
+
   // Base case, ignore it. :)
   RetTy VisitStmt(Stmt *Node) { return RetTy(); }
 };

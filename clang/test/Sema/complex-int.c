@@ -44,9 +44,8 @@ TestPairs(7); TestPairs(8);
 // rdar://6097730
 void test3(_Complex int *x) {
   *x = ~*x;
-}		
+}
 
 void test4(_Complex float *x) {
   *x = ~*x;
-}		
-
+}

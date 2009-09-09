@@ -55,8 +55,8 @@ void MemSpaceRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ID.AddInteger((unsigned)getKind());
 }
 
-void StringRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, 
-                                 const StringLiteral* Str, 
+void StringRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
+                                 const StringLiteral* Str,
                                  const MemRegion* superRegion) {
   ID.AddInteger((unsigned) StringRegionKind);
   ID.AddPointer(Str);
@@ -114,7 +114,7 @@ void SymbolicRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 }
 
 void ElementRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
-                                  QualType ElementType, SVal Idx, 
+                                  QualType ElementType, SVal Idx,
                                   const MemRegion* superRegion) {
   ID.AddInteger(MemRegion::ElementRegionKind);
   ID.Add(ElementType);
@@ -182,7 +182,7 @@ void ObjCIvarRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << "ivar{" << superRegion << ',' << getDecl()->getNameAsString() << '}';
 }
 
-void StringRegion::dumpToStream(llvm::raw_ostream& os) const {  
+void StringRegion::dumpToStream(llvm::raw_ostream& os) const {
   Str->printPretty(os, 0, PrintingPolicy(getContext().getLangOptions()));
 }
 
@@ -206,8 +206,8 @@ void RegionRawOffset::dumpToStream(llvm::raw_ostream& os) const {
 // MemRegionManager methods.
 //===----------------------------------------------------------------------===//
 
-MemSpaceRegion* MemRegionManager::LazyAllocate(MemSpaceRegion*& region) {  
-  if (!region) {  
+MemSpaceRegion* MemRegionManager::LazyAllocate(MemSpaceRegion*& region) {
+  if (!region) {
     region = (MemSpaceRegion*) A.Allocate<MemSpaceRegion>();
     new (region) MemSpaceRegion(this);
   }
@@ -249,13 +249,13 @@ StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str) {
 
 VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,
                                           const LocationContext *LC) {
-  
+
   // FIXME: Once we implement scope handling, we will need to properly lookup
   // 'D' to the proper LocationContext.  For now, just strip down to the
   // StackFrame.
   while (!isa<StackFrameContext>(LC))
     LC = LC->getParent();
-  
+
   return getRegion<VarRegion>(D, LC);
 }
 
@@ -320,12 +320,12 @@ AllocaRegion* MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
 const MemSpaceRegion *MemRegion::getMemorySpace() const {
   const MemRegion *R = this;
   const SubRegion* SR = dyn_cast<SubRegion>(this);
-  
+
   while (SR) {
     R = SR->getSuperRegion();
     SR = dyn_cast<SubRegion>(R);
   }
-  
+
   return dyn_cast<MemSpaceRegion>(R);
 }
 
@@ -365,7 +365,7 @@ bool MemRegion::hasGlobalsStorage() const {
 bool MemRegion::hasParametersStorage() const {
   if (const MemSpaceRegion *MS = getMemorySpace())
     return MS == getMemRegionManager()->getStackArgumentsRegion();
-  
+
   return false;
 }
 
@@ -385,7 +385,7 @@ bool MemRegion::hasGlobalsOrParametersStorage() const {
 const MemRegion *MemRegion::getBaseRegion() const {
   const MemRegion *R = this;
   while (true) {
-    if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {      
+    if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
       // FIXME: generalize.  Essentially we want to strip away ElementRegions
       // that were layered on a symbolic region because of casts.  We only
       // want to strip away ElementRegions, however, where the index is 0.
@@ -418,27 +418,27 @@ RegionRawOffset ElementRegion::getAsRawOffset() const {
   const ElementRegion *ER = this;
   const MemRegion *superR = NULL;
   ASTContext &C = getContext();
-  
+
   // FIXME: Handle multi-dimensional arrays.
 
   while (ER) {
     superR = ER->getSuperRegion();
-    
+
     // FIXME: generalize to symbolic offsets.
     SVal index = ER->getIndex();
     if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&index)) {
       // Update the offset.
       int64_t i = CI->getValue().getSExtValue();
-      
+
       if (i != 0) {
         QualType elemType = ER->getElementType();
-        
+
         // If we are pointing to an incomplete type, go no further.
         if (!IsCompleteType(C, elemType)) {
           superR = ER;
           break;
         }
-        
+
         int64_t size = (int64_t) (C.getTypeSize(elemType) / 8);
         offset += (i * size);
       }
@@ -447,10 +447,10 @@ RegionRawOffset ElementRegion::getAsRawOffset() const {
       ER = dyn_cast<ElementRegion>(superR);
       continue;
     }
-    
+
     return NULL;
   }
-  
+
   assert(superR && "super region cannot be NULL");
   return RegionRawOffset(superR, offset);
 }

@@ -308,7 +308,7 @@ struct test5_D  : virtual test5_B1, virtual test5_B21, virtual test5_B31 {
 // CHECK-LP32-NEXT: .space 4
 // CHECK-LP32: .long 8
 // CHECK-LP32 .space 4
-// CHECK-LP32 .space 4				FIXME
+// CHECK-LP32 .space 4                       FIXME
 // CHECK-LP32: .long 4
 // CHECK-LP32-NEXT: .space 4
 // CHECK-LP32-NEXT: .space 4

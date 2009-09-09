@@ -38,7 +38,7 @@ class AnalysisManager : public BugReporterData {
   ConstraintManagerCreator CreateConstraintMgr;
 
   enum AnalysisScope { ScopeTU, ScopeDecl } AScope;
-      
+
   bool DisplayedFunction;
   bool VisualizeEGDot;
   bool VisualizeEGUbi;
@@ -55,13 +55,13 @@ class AnalysisManager : public BugReporterData {
   bool TrimGraph;
 
 public:
-  AnalysisManager(Decl *d, ASTContext &ctx, Diagnostic &diags, 
+  AnalysisManager(Decl *d, ASTContext &ctx, Diagnostic &diags,
                   const LangOptions &lang, PathDiagnosticClient *pd,
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr,
-                  bool displayProgress, bool vizdot, bool vizubi, 
+                  bool displayProgress, bool vizdot, bool vizubi,
                   bool purge, bool eager, bool trim)
-    : Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd), 
+    : Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
       CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
       AScope(ScopeDecl), DisplayedFunction(!displayProgress),
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
@@ -69,15 +69,15 @@ public:
 
     EntryContext = ContextMgr.getContext(d);
   }
-    
-  AnalysisManager(ASTContext &ctx, Diagnostic &diags, 
+
+  AnalysisManager(ASTContext &ctx, Diagnostic &diags,
                   const LangOptions &lang, PathDiagnosticClient *pd,
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr,
-                  bool displayProgress, bool vizdot, bool vizubi, 
+                  bool displayProgress, bool vizdot, bool vizubi,
                   bool purge, bool eager, bool trim)
 
-    : Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd), 
+    : Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
       CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
       AScope(ScopeDecl), DisplayedFunction(!displayProgress),
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
@@ -90,17 +90,17 @@ public:
     EntryContext = ContextMgr.getContext(D);
     DisplayedFunction = false;
   }
-    
-  const Decl *getCodeDecl() const { 
+
+  const Decl *getCodeDecl() const {
     assert (AScope == ScopeDecl);
     return EntryContext->getDecl();
   }
-    
+
   Stmt *getBody() const {
     assert (AScope == ScopeDecl);
     return EntryContext->getBody();
   }
-    
+
   StoreManagerCreator getStoreManagerCreator() {
     return CreateStoreMgr;
   };
@@ -108,11 +108,11 @@ public:
   ConstraintManagerCreator getConstraintManagerCreator() {
     return CreateConstraintMgr;
   }
-    
+
   virtual CFG *getCFG() {
     return EntryContext->getCFG();
   }
-    
+
   virtual ParentMap &getParentMap() {
     return EntryContext->getParentMap();
   }
@@ -120,31 +120,31 @@ public:
   virtual LiveVariables *getLiveVariables() {
     return EntryContext->getLiveVariables();
   }
-    
+
   virtual ASTContext &getASTContext() {
     return Ctx;
   }
-    
+
   virtual SourceManager &getSourceManager() {
     return getASTContext().getSourceManager();
   }
-    
+
   virtual Diagnostic &getDiagnostic() {
     return Diags;
   }
-    
+
   const LangOptions &getLangOptions() const {
     return LangInfo;
   }
-    
+
   virtual PathDiagnosticClient *getPathDiagnosticClient() {
-    return PD.get();      
+    return PD.get();
   }
 
   StackFrameContext *getEntryStackFrame() {
     return LocCtxMgr.getStackFrame(EntryContext, 0, 0);
   }
-    
+
   bool shouldVisualizeGraphviz() const { return VisualizeEGDot; }
 
   bool shouldVisualizeUbigraph() const { return VisualizeEGUbi; }

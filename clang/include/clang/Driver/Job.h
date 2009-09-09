@@ -46,7 +46,7 @@ public:
   /// either a piped job or a job list.
   void addCommand(Command *C);
 
-  static bool classof(const Job *) { return true; }      
+  static bool classof(const Job *) { return true; }
 };
 
   /// Command - An executable path/name and argument vector to
@@ -63,7 +63,7 @@ class Command : public Job {
   ArgStringList Arguments;
 
 public:
-  Command(const Action &_Source, const char *_Executable, 
+  Command(const Action &_Source, const char *_Executable,
           const ArgStringList &_Arguments);
 
   /// getSource - Return the Action which caused the creation of this job.
@@ -73,8 +73,8 @@ public:
 
   const ArgStringList &getArguments() const { return Arguments; }
 
-  static bool classof(const Job *J) { 
-    return J->getKind() == CommandClass; 
+  static bool classof(const Job *J) {
+    return J->getKind() == CommandClass;
   }
   static bool classof(const Command *) { return true; }
 };
@@ -97,15 +97,15 @@ public:
   void addCommand(Command *C) { Commands.push_back(C); }
 
   const list_type &getCommands() const { return Commands; }
-  
+
   size_type size() const { return Commands.size(); }
   iterator begin() { return Commands.begin(); }
   const_iterator begin() const { return Commands.begin(); }
   iterator end() { return Commands.end(); }
   const_iterator end() const { return Commands.end(); }
 
-  static bool classof(const Job *J) { 
-    return J->getKind() == PipedJobClass; 
+  static bool classof(const Job *J) {
+    return J->getKind() == PipedJobClass;
   }
   static bool classof(const PipedJob *) { return true; }
 };
@@ -133,13 +133,13 @@ public:
   const_iterator begin() const { return Jobs.begin(); }
   iterator end() { return Jobs.end(); }
   const_iterator end() const { return Jobs.end(); }
-  
-  static bool classof(const Job *J) { 
-    return J->getKind() == JobListClass; 
+
+  static bool classof(const Job *J) {
+    return J->getKind() == JobListClass;
   }
   static bool classof(const JobList *) { return true; }
 };
-    
+
 } // end namespace driver
 } // end namespace clang
 

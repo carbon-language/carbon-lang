@@ -9,11 +9,10 @@ typedef struct {
 } foo;
 
 static void FASTCALL
-reduced(char b, double c, foo* d, double e, int f)
-{
+reduced(char b, double c, foo* d, double e, int f) {
 }
 
 int
 main(void) {
-	reduced(0, 0.0, 0, 0.0, 0);
+  reduced(0, 0.0, 0, 0.0, 0);
 }

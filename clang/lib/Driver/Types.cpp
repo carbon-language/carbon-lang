@@ -35,38 +35,38 @@ static Info &getInfo(unsigned id) {
   return TypeInfos[id - 1];
 }
 
-const char *types::getTypeName(ID Id) { 
-  return getInfo(Id).Name; 
+const char *types::getTypeName(ID Id) {
+  return getInfo(Id).Name;
 }
 
-types::ID types::getPreprocessedType(ID Id) { 
-  return getInfo(Id).PreprocessedType; 
+types::ID types::getPreprocessedType(ID Id) {
+  return getInfo(Id).PreprocessedType;
 }
 
-const char *types::getTypeTempSuffix(ID Id) { 
-  return getInfo(Id).TempSuffix; 
+const char *types::getTypeTempSuffix(ID Id) {
+  return getInfo(Id).TempSuffix;
 }
 
-bool types::onlyAssembleType(ID Id) { 
-  return strchr(getInfo(Id).Flags, 'a'); 
+bool types::onlyAssembleType(ID Id) {
+  return strchr(getInfo(Id).Flags, 'a');
 }
 
-bool types::onlyPrecompileType(ID Id) { 
-  return strchr(getInfo(Id).Flags, 'p'); 
+bool types::onlyPrecompileType(ID Id) {
+  return strchr(getInfo(Id).Flags, 'p');
 }
 
-bool types::canTypeBeUserSpecified(ID Id) { 
-  return strchr(getInfo(Id).Flags, 'u'); 
+bool types::canTypeBeUserSpecified(ID Id) {
+  return strchr(getInfo(Id).Flags, 'u');
 }
 
-bool types::appendSuffixForType(ID Id) { 
-  return strchr(getInfo(Id).Flags, 'A'); 
+bool types::appendSuffixForType(ID Id) {
+  return strchr(getInfo(Id).Flags, 'A');
 }
 
-bool types::canLipoType(ID Id) { 
+bool types::canLipoType(ID Id) {
   return (Id == TY_Nothing ||
           Id == TY_Image ||
-          Id == TY_Object); 
+          Id == TY_Object);
 }
 
 bool types::isAcceptedByClang(ID Id) {
@@ -154,7 +154,7 @@ types::ID types::lookupTypeForTypeSpecifier(const char *Name) {
 
   for (unsigned i=0; i<numTypes; ++i) {
     types::ID Id = (types::ID) (i + 1);
-    if (canTypeBeUserSpecified(Id) && 
+    if (canTypeBeUserSpecified(Id) &&
         memcmp(Name, getInfo(Id).Name, N + 1) == 0)
       return Id;
   }
@@ -164,25 +164,25 @@ types::ID types::lookupTypeForTypeSpecifier(const char *Name) {
 
 // FIXME: Why don't we just put this list in the defs file, eh.
 
-unsigned types::getNumCompilationPhases(ID Id) {  
+unsigned types::getNumCompilationPhases(ID Id) {
   if (Id == TY_Object)
     return 1;
-    
+
   unsigned N = 0;
   if (getPreprocessedType(Id) != TY_INVALID)
     N += 1;
-  
+
   if (onlyAssembleType(Id))
     return N + 2; // assemble, link
   if (onlyPrecompileType(Id))
     return N + 1; // precompile
-  
+
   return N + 3; // compile, assemble, link
 }
 
 phases::ID types::getCompilationPhase(ID Id, unsigned N) {
   assert(N < getNumCompilationPhases(Id) && "Invalid index.");
-  
+
   if (Id == TY_Object)
     return phases::Link;
 
@@ -202,6 +202,6 @@ phases::ID types::getCompilationPhase(ID Id, unsigned N) {
     return phases::Compile;
   if (N == 1)
     return phases::Assemble;
-  
+
   return phases::Link;
 }

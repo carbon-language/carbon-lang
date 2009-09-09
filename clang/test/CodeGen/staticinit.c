@@ -2,9 +2,9 @@
 // RUN: grep "g.b = internal global i8. getelementptr" %t &&
 
 struct AStruct { 
-	int i;
-	char *s;
-	double d;
+  int i;
+  char *s;
+  double d;
 };
 
 void f() {

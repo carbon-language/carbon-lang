@@ -49,12 +49,12 @@ typedef StoreManager* (*StoreManagerCreator)(GRStateManager&);
 //===----------------------------------------------------------------------===//
 // GRStateTrait - Traits used by the Generic Data Map of a GRState.
 //===----------------------------------------------------------------------===//
-  
+
 template <typename T> struct GRStatePartialTrait;
 
 template <typename T> struct GRStateTrait {
   typedef typename T::data_type data_type;
-  static inline void* GDMIndex() { return &T::TagInt; }   
+  static inline void* GDMIndex() { return &T::TagInt; }
   static inline void* MakeVoidPtr(data_type D) { return (void*) D; }
   static inline data_type MakeData(void* const* P) {
     return P ? (data_type) *P : (data_type) 0;
@@ -66,19 +66,19 @@ template <typename T> struct GRStateTrait {
 //===----------------------------------------------------------------------===//
 
 class GRStateManager;
-  
+
 /// GRState - This class encapsulates the actual data values for
 ///  for a "state" in our symbolic value tracking.  It is intended to be
 ///  used as a functional object; that is once it is created and made
 ///  "persistent" in a FoldingSet its values will never change.
 class GRState : public llvm::FoldingSetNode {
-public: 
+public:
   typedef llvm::ImmutableSet<llvm::APSInt*>                IntSetTy;
-  typedef llvm::ImmutableMap<void*, void*>                 GenericDataMap;  
-  
+  typedef llvm::ImmutableMap<void*, void*>                 GenericDataMap;
+
 private:
   void operator=(const GRState& R) const;
-  
+
   friend class GRStateManager;
 
   GRStateManager *StateMgr;
@@ -88,9 +88,9 @@ private:
   // FIXME: Make these private.
 public:
   GenericDataMap   GDM;
-  
+
 public:
-  
+
   /// This ctor is used when creating the first GRState object.
   GRState(GRStateManager *mgr, const Environment& env,
           Store st, GenericDataMap gdm)
@@ -98,7 +98,7 @@ public:
       Env(env),
       St(st),
       GDM(gdm) {}
-  
+
   /// Copy ctor - We must explicitly define this or else the "Next" ptr
   ///  in FoldingSetNode will also get copied.
   GRState(const GRState& RHS)
@@ -107,33 +107,33 @@ public:
       Env(RHS.Env),
       St(RHS.St),
       GDM(RHS.GDM) {}
-  
+
   /// getStateManager - Return the GRStateManager associated with this state.
   GRStateManager &getStateManager() const {
     return *StateMgr;
   }
-  
+
   /// getAnalysisContext - Return the AnalysisContext associated with this
   /// state.
   AnalysisContext &getAnalysisContext() const {
     return Env.getAnalysisContext();
   }
-  
+
   /// getEnvironment - Return the environment associated with this state.
   ///  The environment is the mapping from expressions to values.
   const Environment& getEnvironment() const { return Env; }
-  
+
   /// getStore - Return the store associated with this state.  The store
   ///  is a mapping from locations to values.
   Store getStore() const { return St; }
-  
+
   void setStore(Store s) { St = s; }
-  
+
   /// getGDM - Return the generic data map associated with this state.
   GenericDataMap getGDM() const { return GDM; }
-  
+
   void setGDM(GenericDataMap gdm) { GDM = gdm; }
-  
+
   /// Profile - Profile the contents of a GRState object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const GRState* V) {
@@ -148,19 +148,19 @@ public:
   void Profile(llvm::FoldingSetNodeID& ID) const {
     Profile(ID, this);
   }
-  
+
   SVal LookupExpr(Expr* E) const {
     return Env.LookupExpr(E);
   }
-  
+
   /// makeWithStore - Return a GRState with the same values as the current
   /// state with the exception of using the specified Store.
   const GRState *makeWithStore(Store store) const;
-    
+
   BasicValueFactory &getBasicVals() const;
   SymbolManager &getSymbolManager() const;
   GRTransferFuncs &getTransferFuncs() const;
-    
+
   //==---------------------------------------------------------------------==//
   // Constraints on values.
   //==---------------------------------------------------------------------==//
@@ -193,12 +193,12 @@ public:
   // FIXME: (a) should probably disappear since it is redundant with (b).
   //  (i.e., (b) could just be set to NULL).
   //
-  
+
   const GRState *assume(SVal condition, bool assumption) const;
-  
-  const GRState *assumeInBound(SVal idx, SVal upperBound, 
+
+  const GRState *assumeInBound(SVal idx, SVal upperBound,
                                bool assumption) const;
-  
+
   //==---------------------------------------------------------------------==//
   // Utility methods for getting regions.
   //==---------------------------------------------------------------------==//
@@ -208,67 +208,67 @@ public:
   //==---------------------------------------------------------------------==//
   // Binding and retrieving values to/from the environment and symbolic store.
   //==---------------------------------------------------------------------==//
-  
+
   /// BindCompoundLiteral - Return the state that has the bindings currently
   ///  in 'state' plus the bindings for the CompoundLiteral.  'R' is the region
   ///  for the compound literal and 'BegInit' and 'EndInit' represent an
   ///  array of initializer values.
   const GRState* bindCompoundLiteral(const CompoundLiteralExpr* CL,
                                      SVal V) const;
-  
+
   const GRState *BindExpr(const Stmt *S, SVal V, bool Invalidate = true) const;
-    
+
   const GRState *bindDecl(const VarDecl *VD, const LocationContext *LC,
                           SVal V) const;
-  
+
   const GRState *bindDeclWithNoInit(const VarDecl *VD,
-                                    const LocationContext *LC) const;  
-  
+                                    const LocationContext *LC) const;
+
   const GRState *bindLoc(Loc location, SVal V) const;
-  
+
   const GRState *bindLoc(SVal location, SVal V) const;
-  
+
   const GRState *unbindLoc(Loc LV) const;
 
   /// Get the lvalue for a variable reference.
   SVal getLValue(const VarDecl *D, const LocationContext *LC) const;
-  
+
   /// Get the lvalue for a StringLiteral.
   SVal getLValue(const StringLiteral *literal) const;
-  
+
   SVal getLValue(const CompoundLiteralExpr *literal) const;
-  
+
   /// Get the lvalue for an ivar reference.
   SVal getLValue(const ObjCIvarDecl *decl, SVal base) const;
-  
+
   /// Get the lvalue for a field reference.
   SVal getLValue(SVal Base, const FieldDecl *decl) const;
-  
+
   /// Get the lvalue for an array index.
   SVal getLValue(QualType ElementType, SVal Base, SVal Idx) const;
-  
+
   const llvm::APSInt *getSymVal(SymbolRef sym) const;
 
   SVal getSVal(const Stmt* Ex) const;
-  
+
   SVal getSValAsScalarOrLoc(const Stmt *Ex) const;
-  
+
   SVal getSVal(Loc LV, QualType T = QualType()) const;
-  
+
   SVal getSVal(const MemRegion* R) const;
-  
+
   SVal getSValAsScalarOrLoc(const MemRegion *R) const;
-  
+
   bool scanReachableSymbols(SVal val, SymbolVisitor& visitor) const;
 
   template <typename CB> CB scanReachableSymbols(SVal val) const;
-  
+
   //==---------------------------------------------------------------------==//
   // Accessing the Generic Data Map (GDM).
   //==---------------------------------------------------------------------==//
 
   void* const* FindGDM(void* K) const;
-  
+
   template<typename T>
   const GRState *add(typename GRStateTrait<T>::key_type K) const;
 
@@ -277,31 +277,31 @@ public:
   get() const {
     return GRStateTrait<T>::MakeData(FindGDM(GRStateTrait<T>::GDMIndex()));
   }
-  
+
   template<typename T>
   typename GRStateTrait<T>::lookup_type
   get(typename GRStateTrait<T>::key_type key) const {
     void* const* d = FindGDM(GRStateTrait<T>::GDMIndex());
     return GRStateTrait<T>::Lookup(GRStateTrait<T>::MakeData(d), key);
   }
-  
+
   template <typename T>
   typename GRStateTrait<T>::context_type get_context() const;
-    
-  
+
+
   template<typename T>
   const GRState *remove(typename GRStateTrait<T>::key_type K) const;
 
   template<typename T>
   const GRState *remove(typename GRStateTrait<T>::key_type K,
                         typename GRStateTrait<T>::context_type C) const;
-  
+
   template<typename T>
   const GRState *set(typename GRStateTrait<T>::data_type D) const;
-  
+
   template<typename T>
   const GRState *set(typename GRStateTrait<T>::key_type K,
-                     typename GRStateTrait<T>::value_type E) const;  
+                     typename GRStateTrait<T>::value_type E) const;
 
   template<typename T>
   const GRState *set(typename GRStateTrait<T>::key_type K,
@@ -313,7 +313,7 @@ public:
     void* const* d = FindGDM(GRStateTrait<T>::GDMIndex());
     return GRStateTrait<T>::Contains(GRStateTrait<T>::MakeData(d), key);
   }
-  
+
   // State pretty-printing.
   class Printer {
   public:
@@ -321,55 +321,55 @@ public:
     virtual void Print(llvm::raw_ostream& Out, const GRState* state,
                        const char* nl, const char* sep) = 0;
   };
-  
+
   // Pretty-printing.
   void print(llvm::raw_ostream& Out, const char *nl = "\n",
-             const char *sep = "") const;  
+             const char *sep = "") const;
 
-  void printStdErr() const; 
-  
-  void printDOT(llvm::raw_ostream& Out) const;  
-  
+  void printStdErr() const;
+
+  void printDOT(llvm::raw_ostream& Out) const;
+
   // Tags used for the Generic Data Map.
   struct NullDerefTag {
     static int TagInt;
     typedef const SVal* data_type;
   };
 };
-  
+
 class GRStateSet {
   typedef llvm::SmallPtrSet<const GRState*,5> ImplTy;
-  ImplTy Impl;  
+  ImplTy Impl;
 public:
   GRStateSet() {}
 
   inline void Add(const GRState* St) {
     Impl.insert(St);
   }
-  
+
   typedef ImplTy::const_iterator iterator;
-  
+
   inline unsigned size() const { return Impl.size();  }
   inline bool empty()    const { return Impl.empty(); }
-  
+
   inline iterator begin() const { return Impl.begin(); }
   inline iterator end() const { return Impl.end();   }
-  
+
   class AutoPopulate {
     GRStateSet& S;
     unsigned StartSize;
     const GRState* St;
   public:
-    AutoPopulate(GRStateSet& s, const GRState* st) 
+    AutoPopulate(GRStateSet& s, const GRState* st)
       : S(s), StartSize(S.size()), St(st) {}
-    
+
     ~AutoPopulate() {
       if (StartSize == S.size())
         S.Add(St);
     }
   };
-};  
-  
+};
+
 //===----------------------------------------------------------------------===//
 // GRStateManager - Factory object for GRStates.
 //===----------------------------------------------------------------------===//
@@ -377,21 +377,21 @@ public:
 class GRStateManager {
   friend class GRExprEngine;
   friend class GRState;
-  
+
 private:
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StoreMgr;
   llvm::OwningPtr<ConstraintManager>   ConstraintMgr;
-  
+
   GRState::GenericDataMap::Factory     GDMFactory;
-  
+
   typedef llvm::DenseMap<void*,std::pair<void*,void (*)(void*)> > GDMContextsTy;
   GDMContextsTy GDMContexts;
-    
+
   /// Printers - A set of printer objects used for pretty-printing a GRState.
   ///  GRStateManager owns these objects.
   std::vector<GRState::Printer*> Printers;
-  
+
   /// StateSet - FoldingSet containing all the states created for analyzing
   ///  a particular function.  This is used to unique states.
   llvm::FoldingSet<GRState> StateSet;
@@ -401,36 +401,36 @@ private:
 
   /// Alloc - A BumpPtrAllocator to allocate states.
   llvm::BumpPtrAllocator& Alloc;
-  
+
   /// CurrentStmt - The block-level statement currently being visited.  This
   ///  is set by GRExprEngine.
   Stmt* CurrentStmt;
-  
+
   /// TF - Object that represents a bundle of transfer functions
   ///  for manipulating and creating SVals.
   GRTransferFuncs* TF;
 
 public:
-  
+
   GRStateManager(ASTContext& Ctx,
                  StoreManagerCreator CreateStoreManager,
                  ConstraintManagerCreator CreateConstraintManager,
                  llvm::BumpPtrAllocator& alloc)
-    : EnvMgr(alloc), 
-      GDMFactory(alloc), 
-      ValueMgr(alloc, Ctx, *this), 
+    : EnvMgr(alloc),
+      GDMFactory(alloc),
+      ValueMgr(alloc, Ctx, *this),
       Alloc(alloc) {
     StoreMgr.reset((*CreateStoreManager)(*this));
     ConstraintMgr.reset((*CreateConstraintManager)(*this));
   }
-  
+
   ~GRStateManager();
 
   const GRState *getInitialState(const LocationContext *InitLoc);
-        
+
   ASTContext &getContext() { return ValueMgr.getContext(); }
   const ASTContext &getContext() const { return ValueMgr.getContext(); }
-                 
+
   GRTransferFuncs& getTransferFuncs() { return *TF; }
 
   BasicValueFactory &getBasicVals() {
@@ -439,17 +439,17 @@ public:
   const BasicValueFactory& getBasicVals() const {
     return ValueMgr.getBasicValueFactory();
   }
-                 
+
   SymbolManager &getSymbolManager() {
     return ValueMgr.getSymbolManager();
   }
   const SymbolManager &getSymbolManager() const {
     return ValueMgr.getSymbolManager();
   }
-  
+
   ValueManager &getValueManager() { return ValueMgr; }
   const ValueManager &getValueManager() const { return ValueMgr; }
-  
+
   llvm::BumpPtrAllocator& getAllocator() { return Alloc; }
 
   MemRegionManager& getRegionManager() {
@@ -458,11 +458,11 @@ public:
   const MemRegionManager& getRegionManager() const {
     return ValueMgr.getRegionManager();
   }
-  
+
   StoreManager& getStoreManager() { return *StoreMgr; }
   ConstraintManager& getConstraintManager() { return *ConstraintMgr; }
 
-  const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc, 
+  const GRState* RemoveDeadBindings(const GRState* St, Stmt* Loc,
                                     SymbolReaper& SymReaper);
 
 public:
@@ -470,10 +470,10 @@ public:
   SVal ArrayToPointer(Loc Array) {
     return StoreMgr->ArrayToPointer(Array);
   }
-  
+
   // Methods that manipulate the GDM.
   const GRState* addGDM(const GRState* St, void* Key, void* Data);
-  
+
   // Methods that query & manipulate the Store.
 
   void iterBindings(const GRState* state, StoreManager::BindingsHandler& F) {
@@ -484,7 +484,7 @@ public:
 
   bool isEqual(const GRState* state, const Expr* Ex, const llvm::APSInt& V);
   bool isEqual(const GRState* state, const Expr* Ex, uint64_t);
-  
+
   //==---------------------------------------------------------------------==//
   // Generic Data Map methods.
   //==---------------------------------------------------------------------==//
@@ -502,21 +502,21 @@ public:
   // The templated methods below use the GRStateTrait<T> class
   // to resolve keys into the GDM and to return data values to clients.
   //
-  
-  // Trait based GDM dispatch.  
+
+  // Trait based GDM dispatch.
   template <typename T>
   const GRState* set(const GRState* st, typename GRStateTrait<T>::data_type D) {
     return addGDM(st, GRStateTrait<T>::GDMIndex(),
                   GRStateTrait<T>::MakeVoidPtr(D));
   }
-  
+
   template<typename T>
   const GRState* set(const GRState* st,
                      typename GRStateTrait<T>::key_type K,
                      typename GRStateTrait<T>::value_type V,
                      typename GRStateTrait<T>::context_type C) {
-    
-    return addGDM(st, GRStateTrait<T>::GDMIndex(), 
+
+    return addGDM(st, GRStateTrait<T>::GDMIndex(),
      GRStateTrait<T>::MakeVoidPtr(GRStateTrait<T>::Set(st->get<T>(), K, V, C)));
   }
 
@@ -532,22 +532,22 @@ public:
   const GRState* remove(const GRState* st,
                         typename GRStateTrait<T>::key_type K,
                         typename GRStateTrait<T>::context_type C) {
-    
-    return addGDM(st, GRStateTrait<T>::GDMIndex(), 
+
+    return addGDM(st, GRStateTrait<T>::GDMIndex(),
      GRStateTrait<T>::MakeVoidPtr(GRStateTrait<T>::Remove(st->get<T>(), K, C)));
   }
-  
+
 
   void* FindGDMContext(void* index,
                        void* (*CreateContext)(llvm::BumpPtrAllocator&),
                        void  (*DeleteContext)(void*));
-  
+
   template <typename T>
   typename GRStateTrait<T>::context_type get_context() {
     void* p = FindGDMContext(GRStateTrait<T>::GDMIndex(),
                              GRStateTrait<T>::CreateContext,
                              GRStateTrait<T>::DeleteContext);
-    
+
     return GRStateTrait<T>::MakeContext(p);
   }
 
@@ -559,7 +559,7 @@ public:
     ConstraintMgr->EndPath(St);
   }
 };
-  
+
 
 //===----------------------------------------------------------------------===//
 // Out-of-line method definitions for GRState.
@@ -577,13 +577,13 @@ inline const GRState *GRState::assume(SVal Cond, bool Assumption) const {
 inline const GRState *GRState::assumeInBound(SVal Idx, SVal UpperBound,
                                              bool Assumption) const {
   return getStateManager().ConstraintMgr->AssumeInBound(this, Idx, UpperBound, Assumption);
-} 
+}
 
 inline const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,
                                             SVal V) const {
   return getStateManager().StoreMgr->BindCompoundLiteral(this, CL, V);
 }
-  
+
 inline const GRState *GRState::bindDecl(const VarDecl* VD,
                                         const LocationContext *LC,
                                         SVal IVal) const {
@@ -594,7 +594,7 @@ inline const GRState *GRState::bindDeclWithNoInit(const VarDecl* VD,
                                                   const LocationContext *LC) const {
   return getStateManager().StoreMgr->BindDeclWithNoInit(this, VD, LC);
 }
-  
+
 inline const GRState *GRState::bindLoc(Loc LV, SVal V) const {
   return getStateManager().StoreMgr->Bind(this, LV, V);
 }
@@ -602,7 +602,7 @@ inline const GRState *GRState::bindLoc(Loc LV, SVal V) const {
 inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
   return !isa<Loc>(LV) ? this : bindLoc(cast<Loc>(LV), V);
 }
-  
+
 inline SVal GRState::getLValue(const VarDecl* VD,
                                const LocationContext *LC) const {
   return getStateManager().StoreMgr->getLValueVar(this, VD, LC);
@@ -611,7 +611,7 @@ inline SVal GRState::getLValue(const VarDecl* VD,
 inline SVal GRState::getLValue(const StringLiteral *literal) const {
   return getStateManager().StoreMgr->getLValueString(this, literal);
 }
-  
+
 inline SVal GRState::getLValue(const CompoundLiteralExpr *literal) const {
   return getStateManager().StoreMgr->getLValueCompoundLiteral(this, literal);
 }
@@ -619,19 +619,19 @@ inline SVal GRState::getLValue(const CompoundLiteralExpr *literal) const {
 inline SVal GRState::getLValue(const ObjCIvarDecl *D, SVal Base) const {
   return getStateManager().StoreMgr->getLValueIvar(this, D, Base);
 }
-  
+
 inline SVal GRState::getLValue(SVal Base, const FieldDecl* D) const {
   return getStateManager().StoreMgr->getLValueField(this, Base, D);
 }
-  
+
 inline SVal GRState::getLValue(QualType ElementType, SVal Base, SVal Idx) const{
   return getStateManager().StoreMgr->getLValueElement(this, ElementType, Base, Idx);
 }
-  
+
 inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {
   return getStateManager().getSymVal(this, sym);
 }
-  
+
 inline SVal GRState::getSVal(const Stmt* Ex) const {
   return Env.GetSVal(Ex, getStateManager().ValueMgr);
 }
@@ -642,7 +642,7 @@ inline SVal GRState::getSValAsScalarOrLoc(const Stmt *S) const {
     if (Loc::IsLocType(T) || T->isIntegerType())
       return getSVal(S);
   }
-    
+
   return UnknownVal();
 }
 
@@ -653,7 +653,7 @@ inline SVal GRState::getSVal(Loc LV, QualType T) const {
 inline SVal GRState::getSVal(const MemRegion* R) const {
   return getStateManager().StoreMgr->Retrieve(this, loc::MemRegionVal(R)).getSVal();
 }
-  
+
 inline BasicValueFactory &GRState::getBasicVals() const {
   return getStateManager().getBasicVals();
 }
@@ -661,7 +661,7 @@ inline BasicValueFactory &GRState::getBasicVals() const {
 inline SymbolManager &GRState::getSymbolManager() const {
   return getStateManager().getSymbolManager();
 }
-  
+
 inline GRTransferFuncs &GRState::getTransferFuncs() const {
   return getStateManager().getTransferFuncs();
 }
@@ -670,12 +670,12 @@ template<typename T>
 const GRState *GRState::add(typename GRStateTrait<T>::key_type K) const {
   return getStateManager().add<T>(this, K, get_context<T>());
 }
-  
+
 template <typename T>
 typename GRStateTrait<T>::context_type GRState::get_context() const {
   return getStateManager().get_context<T>();
 }
-  
+
 template<typename T>
 const GRState *GRState::remove(typename GRStateTrait<T>::key_type K) const {
   return getStateManager().remove<T>(this, K, get_context<T>());
@@ -686,25 +686,25 @@ const GRState *GRState::remove(typename GRStateTrait<T>::key_type K,
                                typename GRStateTrait<T>::context_type C) const {
   return getStateManager().remove<T>(this, K, C);
 }
-  
+
 template<typename T>
 const GRState *GRState::set(typename GRStateTrait<T>::data_type D) const {
   return getStateManager().set<T>(this, D);
 }
-  
+
 template<typename T>
 const GRState *GRState::set(typename GRStateTrait<T>::key_type K,
                             typename GRStateTrait<T>::value_type E) const {
   return getStateManager().set<T>(this, K, E, get_context<T>());
 }
-  
+
 template<typename T>
 const GRState *GRState::set(typename GRStateTrait<T>::key_type K,
                             typename GRStateTrait<T>::value_type E,
                             typename GRStateTrait<T>::context_type C) const {
   return getStateManager().set<T>(this, K, E, C);
 }
-  
+
 template <typename CB>
 CB GRState::scanReachableSymbols(SVal val) const {
   CB cb(this);

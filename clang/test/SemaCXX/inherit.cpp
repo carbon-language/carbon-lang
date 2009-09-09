@@ -10,7 +10,7 @@ class B3 : virtual virtual A { }; // expected-error{{duplicate 'virtual' in base
 class C : public B1, private B2 { };
 
 
-class D;		// expected-note {{forward declaration of 'class D'}}
+class D;                // expected-note {{forward declaration of 'class D'}}
 
 class E : public D { }; // expected-error{{base class has incomplete type}}
 

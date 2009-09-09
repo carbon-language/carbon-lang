@@ -40,27 +40,27 @@ namespace {
     CodeGeneratorImpl(Diagnostic &diags, const std::string& ModuleName,
                       const CompileOptions &CO, llvm::LLVMContext& C)
       : Diags(diags), CompileOpts(CO), M(new llvm::Module(ModuleName, C)) {}
-    
+
     virtual ~CodeGeneratorImpl() {}
-    
+
     virtual llvm::Module* GetModule() {
       return M.get();
     }
-    
+
     virtual llvm::Module* ReleaseModule() {
       return M.take();
     }
-    
+
     virtual void Initialize(ASTContext &Context) {
       Ctx = &Context;
-      
+
       M->setTargetTriple(Ctx->Target.getTriple().getTriple());
       M->setDataLayout(Ctx->Target.getTargetDescription());
       TD.reset(new llvm::TargetData(Ctx->Target.getTargetDescription()));
       Builder.reset(new CodeGen::CodeGenModule(Context, CompileOpts,
                                                *M, *TD, Diags));
     }
-    
+
     virtual void HandleTopLevelDecl(DeclGroupRef DG) {
       // Make sure to emit all elements of a Decl.
       for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
@@ -94,7 +94,7 @@ namespace {
   };
 }
 
-CodeGenerator *clang::CreateLLVMCodeGen(Diagnostic &Diags, 
+CodeGenerator *clang::CreateLLVMCodeGen(Diagnostic &Diags,
                                         const std::string& ModuleName,
                                         const CompileOptions &CO,
                                         llvm::LLVMContext& C) {

@@ -14,14 +14,13 @@ void f() {
 
 // <rdar://problem/6502934>
 typedef enum Foo {
-	A = 0,
-	B = 1
+  A = 0,
+  B = 1
 } Foo;
-	
-	
+
 void bar() {
-	Foo myvar = A;
-	myvar = B;
+  Foo myvar = A;
+  myvar = B;
 }
 
 /// PR3688

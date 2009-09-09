@@ -30,7 +30,7 @@ class TypeLoc {
 protected:
   QualType Ty;
   void *Data;
-  
+
   TypeLoc(QualType ty, void *data) : Ty(ty), Data(data) { }
   static TypeLoc Create(QualType ty, void *data) { return TypeLoc(ty,data); }
   friend class DeclaratorInfo;
@@ -86,7 +86,7 @@ public:
 class DeclaratorLoc : public TypeLoc  {
 public:
   /// \brief Find the TypeSpecLoc that is part of this DeclaratorLoc.
-  TypeSpecLoc getTypeSpecLoc() const;  
+  TypeSpecLoc getTypeSpecLoc() const;
 
   static bool classof(const TypeLoc *TL);
   static bool classof(const DeclaratorLoc *TL) { return true; }
@@ -98,7 +98,7 @@ class DefaultTypeSpecLoc : public TypeSpecLoc {
   struct Info {
     SourceLocation StartLoc;
   };
-  
+
 public:
   SourceLocation getStartLoc() const {
     return static_cast<Info*>(Data)->StartLoc;
@@ -137,7 +137,7 @@ public:
   SourceRange getSourceRange() const {
     return SourceRange(getNameLoc(), getNameLoc());
   }
-  
+
   /// \brief Returns the size of the type source info data block that is
   /// specific to this type.
   unsigned getLocalDataSize() const { return sizeof(Info); }
@@ -445,7 +445,7 @@ class TypeLocVisitor {
 #define TYPELOC(CLASS, PARENT, TYPE)                              \
     RetTy Visit##TYPE(TYPE *) {                                   \
       return Impl->Visit##CLASS(reinterpret_cast<CLASS&>(TyLoc)); \
-    } 
+    }
 #include "clang/AST/TypeLocNodes.def"
   };
 

@@ -17,7 +17,7 @@ using namespace clang;
 
 /// HandleDiagnostic - Store the errors, warnings, and notes that are
 /// reported.
-/// 
+///
 void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic::Level Level,
                                             const DiagnosticInfo &Info) {
   llvm::SmallString<100> StrC;

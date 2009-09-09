@@ -101,7 +101,7 @@ private:
   /// CXXSpecialName, returns a pointer to it. Otherwise, returns
   /// a NULL pointer.
   CXXSpecialName *getAsCXXSpecialName() const {
-    if (getNameKind() >= CXXConstructorName && 
+    if (getNameKind() >= CXXConstructorName &&
         getNameKind() <= CXXConversionFunctionName)
       return reinterpret_cast<CXXSpecialName *>(Ptr & ~PtrMask);
     return 0;
@@ -116,16 +116,16 @@ private:
 
   // Construct a declaration name from the name of a C++ constructor,
   // destructor, or conversion function.
-  DeclarationName(CXXSpecialName *Name) 
-    : Ptr(reinterpret_cast<uintptr_t>(Name)) { 
+  DeclarationName(CXXSpecialName *Name)
+    : Ptr(reinterpret_cast<uintptr_t>(Name)) {
     assert((Ptr & PtrMask) == 0 && "Improperly aligned CXXSpecialName");
     Ptr |= StoredDeclarationNameExtra;
   }
 
   // Construct a declaration name from the name of a C++ overloaded
   // operator.
-  DeclarationName(CXXOperatorIdName *Name) 
-    : Ptr(reinterpret_cast<uintptr_t>(Name)) { 
+  DeclarationName(CXXOperatorIdName *Name)
+    : Ptr(reinterpret_cast<uintptr_t>(Name)) {
     assert((Ptr & PtrMask) == 0 && "Improperly aligned CXXOperatorId");
     Ptr |= StoredDeclarationNameExtra;
   }
@@ -145,8 +145,8 @@ public:
   DeclarationName() : Ptr(0) { }
 
   // Construct a declaration name from an IdentifierInfo *.
-  DeclarationName(const IdentifierInfo *II) 
-    : Ptr(reinterpret_cast<uintptr_t>(II)) { 
+  DeclarationName(const IdentifierInfo *II)
+    : Ptr(reinterpret_cast<uintptr_t>(II)) {
     assert((Ptr & PtrMask) == 0 && "Improperly aligned IdentifierInfo");
   }
 
@@ -158,8 +158,8 @@ public:
 
   // operator bool() - Evaluates true when this declaration name is
   // non-empty.
-  operator bool() const { 
-    return ((Ptr & PtrMask) != 0) || 
+  operator bool() const {
+    return ((Ptr & PtrMask) != 0) ||
            (reinterpret_cast<IdentifierInfo *>(Ptr & ~PtrMask));
   }
 
@@ -171,10 +171,10 @@ public:
   bool isObjCOneArgSelector() const {
     return getStoredNameKind() == StoredObjCOneArgSelector;
   }
-  
+
   /// getNameKind - Determine what kind of name this is.
   NameKind getNameKind() const;
-  
+
 
   /// getName - Retrieve the human-readable string for this name.
   std::string getAsString() const;
@@ -182,7 +182,7 @@ public:
   /// getAsIdentifierInfo - Retrieve the IdentifierInfo * stored in
   /// this declaration name, or NULL if this declaration name isn't a
   /// simple identifier.
-  IdentifierInfo *getAsIdentifierInfo() const { 
+  IdentifierInfo *getAsIdentifierInfo() const {
     if (isIdentifier())
       return reinterpret_cast<IdentifierInfo *>(Ptr);
     return 0;
@@ -201,7 +201,7 @@ public:
     N.Ptr = P;
     return N;
   }
-  
+
   /// getCXXNameType - If this name is one of the C++ names (of a
   /// constructor, destructor, or conversion function), return the
   /// type associated with that name.
@@ -310,13 +310,13 @@ public:
   /// getCXXSpecialName - Returns a declaration name for special kind
   /// of C++ name, e.g., for a constructor, destructor, or conversion
   /// function.
-  DeclarationName getCXXSpecialName(DeclarationName::NameKind Kind, 
+  DeclarationName getCXXSpecialName(DeclarationName::NameKind Kind,
                                     CanQualType Ty);
 
   /// getCXXOperatorName - Get the name of the overloadable C++
   /// operator corresponding to Op.
   DeclarationName getCXXOperatorName(OverloadedOperatorKind Op);
-};  
+};
 
 /// Insertion operator for diagnostics.  This allows sending DeclarationName's
 /// into a diagnostic with <<.
@@ -326,8 +326,8 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                   Diagnostic::ak_declarationname);
   return DB;
 }
-  
-  
+
+
 }  // end namespace clang
 
 namespace llvm {
@@ -345,7 +345,7 @@ struct DenseMapInfo<clang::DeclarationName> {
 
   static unsigned getHashValue(clang::DeclarationName);
 
-  static inline bool 
+  static inline bool
   isEqual(clang::DeclarationName LHS, clang::DeclarationName RHS) {
     return LHS == RHS;
   }

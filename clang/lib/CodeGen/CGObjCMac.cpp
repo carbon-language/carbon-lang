@@ -104,7 +104,7 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                                                unsigned CVRQualifiers,
                                                llvm::Value *Offset) {
   // Compute (type*) ( (char *) BaseValue + Offset)
-  llvm::Type *I8Ptr = 
+  llvm::Type *I8Ptr =
       llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(CGF.getLLVMContext()));
   QualType IvarTy = Ivar->getType();
   const llvm::Type *LTy = CGF.CGM.getTypes().ConvertTypeForMem(IvarTy);
@@ -939,8 +939,7 @@ protected:
 
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) :
-    CGM(cgm), VMContext(cgm.getLLVMContext())
-    { }
+    CGM(cgm), VMContext(cgm.getLLVMContext()) { }
 
   virtual llvm::Constant *GenerateConstantString(const ObjCStringLiteral *SL);
 
@@ -1402,8 +1401,7 @@ static bool hasObjCExceptionAttribute(ASTContext &Context,
 /* *** CGObjCMac Public Interface *** */
 
 CGObjCMac::CGObjCMac(CodeGen::CodeGenModule &cgm) : CGObjCCommonMac(cgm),
-                                                    ObjCTypes(cgm)
-{
+                                                    ObjCTypes(cgm) {
   ObjCABI = 1;
   EmitImageInfo();
 }
@@ -2689,8 +2687,7 @@ void CGObjCMac::EmitThrowStmt(CodeGen::CodeGenFunction &CGF,
 /// object: objc_read_weak (id *src)
 ///
 llvm::Value * CGObjCMac::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
-                                          llvm::Value *AddrWeakObj)
-{
+                                          llvm::Value *AddrWeakObj) {
   const llvm::Type* DestTy =
     cast<llvm::PointerType>(AddrWeakObj->getType())->getElementType();
   AddrWeakObj = CGF.Builder.CreateBitCast(AddrWeakObj,
@@ -2705,8 +2702,7 @@ llvm::Value * CGObjCMac::EmitObjCWeakRead(CodeGen::CodeGenFunction &CGF,
 /// objc_assign_weak (id src, id *dst)
 ///
 void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
-                                   llvm::Value *src, llvm::Value *dst)
-{
+                                   llvm::Value *src, llvm::Value *dst) {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
@@ -2726,8 +2722,7 @@ void CGObjCMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 /// objc_assign_global (id src, id *dst)
 ///
 void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
-                                     llvm::Value *src, llvm::Value *dst)
-{
+                                     llvm::Value *src, llvm::Value *dst) {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
@@ -2747,8 +2742,7 @@ void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
 /// objc_assign_ivar (id src, id *dst)
 ///
 void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
-                                   llvm::Value *src, llvm::Value *dst)
-{
+                                   llvm::Value *src, llvm::Value *dst) {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
@@ -2768,8 +2762,7 @@ void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
 /// objc_assign_strongCast (id src, id *dst)
 ///
 void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
-                                         llvm::Value *src, llvm::Value *dst)
-{
+                                         llvm::Value *src, llvm::Value *dst) {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
@@ -3055,10 +3048,10 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
     if (RD) {
       if (Field->isBitField()) {
         CodeGenTypes::BitFieldInfo Info = CGM.getTypes().getBitFieldInfo(Field);
-        
-        const llvm::Type *Ty = 
+
+        const llvm::Type *Ty =
           CGM.getTypes().ConvertTypeForMemRecursive(Field->getType());
-        uint64_t TypeSize = 
+        uint64_t TypeSize =
           CGM.getTypes().getTargetData().getTypeAllocSize(Ty);
         FieldOffset = Info.FieldNo * TypeSize;
       } else
@@ -3516,8 +3509,7 @@ void CGObjCMac::FinishModule() {
 
 CGObjCNonFragileABIMac::CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm)
   : CGObjCCommonMac(cgm),
-    ObjCTypes(cgm)
-{
+    ObjCTypes(cgm) {
   ObjCEmptyCacheVar = ObjCEmptyVtableVar = NULL;
   ObjCABI = 2;
 }
@@ -3525,8 +3517,7 @@ CGObjCNonFragileABIMac::CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm)
 /* *** */
 
 ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
-  : VMContext(cgm.getLLVMContext()), CGM(cgm)
-{
+  : VMContext(cgm.getLLVMContext()), CGM(cgm) {
   CodeGen::CodeGenTypes &Types = CGM.getTypes();
   ASTContext &Ctx = CGM.getContext();
 
@@ -3612,8 +3603,7 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
 }
 
 ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
-  : ObjCCommonTypesHelper(cgm)
-{
+  : ObjCCommonTypesHelper(cgm) {
   // struct _objc_method_description {
   //   SEL name;
   //   char *types;
@@ -3666,7 +3656,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   llvm::PATypeHolder ProtocolListTyHolder = llvm::OpaqueType::get(VMContext);
 
   const llvm::Type *T =
-    llvm::StructType::get(VMContext, 
+    llvm::StructType::get(VMContext,
                           llvm::PointerType::getUnqual(ProtocolListTyHolder),
                           LongTy,
                           llvm::ArrayType::get(ProtocolTyHolder, 0),
@@ -3835,8 +3825,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
 }
 
 ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModule &cgm)
-  : ObjCCommonTypesHelper(cgm)
-{
+  : ObjCCommonTypesHelper(cgm) {
   // struct _method_list_t {
   //   uint32_t entsize;  // sizeof(struct _objc_method)
   //   uint32_t method_count;
@@ -3908,7 +3897,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   uint32_t alignment;
   //   uint32_t size;
   // }
-  IvarnfABITy = llvm::StructType::get(VMContext, 
+  IvarnfABITy = llvm::StructType::get(VMContext,
                                       llvm::PointerType::getUnqual(LongTy),
                                       Int8PtrTy,
                                       Int8PtrTy,
@@ -5056,7 +5045,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   Name += '_';
   std::string SelName(Sel.getAsString());
   // Replace all ':' in selector name with '_'  ouch!
-  for(unsigned i = 0; i < SelName.size(); i++)
+  for (unsigned i = 0; i < SelName.size(); i++)
     if (SelName[i] == ':')
       SelName[i] = '_';
   Name += SelName;
@@ -5277,8 +5266,8 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
 /// objc_assign_ivar (id src, id *dst)
 ///
 void CGObjCNonFragileABIMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
-                                                llvm::Value *src, llvm::Value *dst)
-{
+                                                llvm::Value *src,
+                                                llvm::Value *dst) {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
@@ -5299,8 +5288,7 @@ void CGObjCNonFragileABIMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
 ///
 void CGObjCNonFragileABIMac::EmitObjCStrongCastAssign(
   CodeGen::CodeGenFunction &CGF,
-  llvm::Value *src, llvm::Value *dst)
-{
+  llvm::Value *src, llvm::Value *dst) {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
@@ -5337,8 +5325,7 @@ void CGObjCNonFragileABIMac::EmitGCMemmoveCollectable(
 ///
 llvm::Value * CGObjCNonFragileABIMac::EmitObjCWeakRead(
   CodeGen::CodeGenFunction &CGF,
-  llvm::Value *AddrWeakObj)
-{
+  llvm::Value *AddrWeakObj) {
   const llvm::Type* DestTy =
     cast<llvm::PointerType>(AddrWeakObj->getType())->getElementType();
   AddrWeakObj = CGF.Builder.CreateBitCast(AddrWeakObj, ObjCTypes.PtrObjectPtrTy);
@@ -5352,8 +5339,7 @@ llvm::Value * CGObjCNonFragileABIMac::EmitObjCWeakRead(
 /// objc_assign_weak (id src, id *dst)
 ///
 void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
-                                                llvm::Value *src, llvm::Value *dst)
-{
+                                                llvm::Value *src, llvm::Value *dst) {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
@@ -5373,8 +5359,7 @@ void CGObjCNonFragileABIMac::EmitObjCWeakAssign(CodeGen::CodeGenFunction &CGF,
 /// objc_assign_global (id src, id *dst)
 ///
 void CGObjCNonFragileABIMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
-                                                  llvm::Value *src, llvm::Value *dst)
-{
+                                                  llvm::Value *src, llvm::Value *dst) {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);

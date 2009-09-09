@@ -4,37 +4,37 @@ void donotwarn();
 int (^IFP) ();
 int (^II) (int);
 int test1() {
-  int (^PFR) (int) = 0;	// OK
-  PFR = II;	// OK
+  int (^PFR) (int) = 0; // OK
+  PFR = II;             // OK
 
-  if (PFR == II)	// OK
+  if (PFR == II)        // OK
     donotwarn();
 
-  if (PFR == IFP) // OK
+  if (PFR == IFP)       // OK
     donotwarn();
 
   if (PFR == (int (^) (int))IFP) // OK
     donotwarn();
 
-  if (PFR == 0) // OK
+  if (PFR == 0)         // OK
     donotwarn();
 
-  if (PFR)	// OK
+  if (PFR)              // OK
     donotwarn();
 
-  if (!PFR)	// OK
+  if (!PFR)             // OK
     donotwarn();
 
-  return PFR != IFP;	// OK
+  return PFR != IFP;    // OK
 }
 
 int test2(double (^S)()) {
   double (^I)(int)  = (void*) S;
-  (void*)I = (void *)S; 	// expected-error {{assignment to cast is illegal, lvalue casts are not supported}}
+  (void*)I = (void *)S; // expected-error {{assignment to cast is illegal, lvalue casts are not supported}}
 
   void *pv = I;
 
-  pv = S;		
+  pv = S;
 
   I(1);
 
@@ -114,7 +114,7 @@ void test11(int i) {
 
 void (^test12f)(void);
 void test12() {
-  test12f = ^test12f;	// expected-error {{type name requires a specifier or qualifier}} expected-error {{expected expression}}
+  test12f = ^test12f;  // expected-error {{type name requires a specifier or qualifier}} expected-error {{expected expression}}
 }
 
 // rdar://6808730
@@ -144,7 +144,7 @@ void foo(long (^comp)()) {
 
 void (^test15f)(void);
 void test15() {
-  foo(^{ return LESS; });	// expected-error {{incompatible block pointer types passing 'int (^)(void)', expected 'long (^)()'}}
+  foo(^{ return LESS; }); // expected-error {{incompatible block pointer types passing 'int (^)(void)', expected 'long (^)()'}}
 }
 
 __block int test16i;  // expected-error {{__block attribute not allowed, only allowed on local variables}}

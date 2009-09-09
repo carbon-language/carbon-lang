@@ -47,7 +47,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags,
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Warn);
   else
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Ignore);
-  
+
   // FIXME: -Wfatal-errors / -Wfatal-errors=foo
 
   for (unsigned i = 0, e = Warnings.size(); i != e; ++i) {
@@ -55,7 +55,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags,
     const char *OptStart = &Opt[0];
     const char *OptEnd = OptStart+Opt.size();
     assert(*OptEnd == 0 && "Expect null termination for lower-bound search");
-    
+
     // Check to see if this warning starts with "no-", if so, this is a negative
     // form of the option.
     bool isPositive = true;
@@ -74,7 +74,7 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags,
       Diags.setSuppressSystemWarnings(!isPositive);
       continue;
     }
-    
+
     // -Werror/-Wno-error is a special case, not controlled by the option table.
     // It also has the "specifier" form of -Werror=foo and -Werror-foo.
     if (OptEnd-OptStart >= 5 && memcmp(OptStart, "error", 5) == 0) {
@@ -88,21 +88,21 @@ bool clang::ProcessWarningOptions(Diagnostic &Diags,
         }
         Specifier = OptStart+6;
       }
-      
+
       if (Specifier == 0) {
         Diags.setWarningsAsErrors(isPositive);
         continue;
       }
-      
+
       // -Werror=foo maps foo to Error, -Wno-error=foo maps it to Warning.
       Mapping = isPositive ? diag::MAP_ERROR : diag::MAP_WARNING_NO_WERROR;
       OptStart = Specifier;
     }
-    
+
     if (Diags.setDiagnosticGroupMapping(OptStart, Mapping))
       Diags.Report(FullSourceLoc(), diag::warn_unknown_warning_option)
         << ("-W" + Opt);
   }
-  
+
   return false;
 }

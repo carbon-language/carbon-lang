@@ -144,12 +144,11 @@ int xx_sizecheck[(sizeof(xx) / sizeof(char)) == 5? 1 : -1];
 static char const yy[5] = "test";
 static char const zz[3] = "test"; // expected-warning{{initializer-string for char array is too long}}
 
-void charArrays()
-{
-	static char const test[] = "test";
-        int test_sizecheck[(sizeof(test) / sizeof(char)) == 5? 1 : -1];
-	static char const test2[] = { "weird stuff" };
-	static char const test3[] = { "test", "excess stuff" }; // expected-warning{{excess elements in char array initializer}}
+void charArrays() {
+  static char const test[] = "test";
+  int test_sizecheck[(sizeof(test) / sizeof(char)) == 5? 1 : -1];
+  static char const test2[] = { "weird stuff" };
+  static char const test3[] = { "test", "excess stuff" }; // expected-warning{{excess elements in char array initializer}}
 
   char* cp[] = { "Hello" };
 
@@ -230,15 +229,15 @@ int noNamedImplicitCheck[sizeof(noNamedImplicit) == 3 * sizeof(*noNamedImplicit)
 
 // ptrs are constant
 struct soft_segment_descriptor {
-	long ssd_base;
+  long ssd_base;
 };
 static int dblfault_tss;
 
 union uniao { int ola; } xpto[1];
 
 struct soft_segment_descriptor gdt_segs[] = {
-	{(long) &dblfault_tss},
-	{ (long)xpto},
+  {(long) &dblfault_tss},
+  { (long)xpto},
 };
 
 static void sppp_ipv6cp_up();

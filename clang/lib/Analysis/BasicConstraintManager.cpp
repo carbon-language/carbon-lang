@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines BasicConstraintManager, a class that tracks simple 
+//  This file defines BasicConstraintManager, a class that tracks simple
 //  equality and inequality constraints on symbolic values of GRState.
 //
 //===----------------------------------------------------------------------===//
@@ -27,22 +27,22 @@ namespace { class VISIBILITY_HIDDEN ConstEq {}; }
 
 typedef llvm::ImmutableMap<SymbolRef,GRState::IntSetTy> ConstNotEqTy;
 typedef llvm::ImmutableMap<SymbolRef,const llvm::APSInt*> ConstEqTy;
-  
+
 static int ConstEqIndex = 0;
 static int ConstNotEqIndex = 0;
 
 namespace clang {
 template<>
 struct GRStateTrait<ConstNotEq> : public GRStatePartialTrait<ConstNotEqTy> {
-  static inline void* GDMIndex() { return &ConstNotEqIndex; }  
+  static inline void* GDMIndex() { return &ConstNotEqIndex; }
 };
 
 template<>
 struct GRStateTrait<ConstEq> : public GRStatePartialTrait<ConstEqTy> {
-  static inline void* GDMIndex() { return &ConstEqIndex; }  
+  static inline void* GDMIndex() { return &ConstEqIndex; }
 };
-}  
-  
+}
+
 namespace {
 // BasicConstraintManager only tracks equality and inequality constraints of
 // constants and integer variables.
@@ -50,7 +50,7 @@ class VISIBILITY_HIDDEN BasicConstraintManager
   : public SimpleConstraintManager {
   GRState::IntSetTy::Factory ISetFactory;
 public:
-  BasicConstraintManager(GRStateManager& statemgr) 
+  BasicConstraintManager(GRStateManager& statemgr)
     : ISetFactory(statemgr.getAllocator()) {}
 
   const GRState* AssumeSymNE(const GRState* state, SymbolRef sym,
@@ -83,7 +83,7 @@ public:
 
   const GRState* RemoveDeadBindings(const GRState* state, SymbolReaper& SymReaper);
 
-  void print(const GRState* state, llvm::raw_ostream& Out, 
+  void print(const GRState* state, llvm::raw_ostream& Out,
              const char* nl, const char *sep);
 };
 
@@ -133,7 +133,7 @@ const GRState *BasicConstraintManager::AssumeSymEQ(const GRState *state,
 // These logic will be handled in another ConstraintManager.
 const GRState *BasicConstraintManager::AssumeSymLT(const GRState *state,
                                                    SymbolRef sym,
-                                                   const llvm::APSInt& V) {  
+                                                   const llvm::APSInt& V) {
   // Is 'V' the smallest possible value?
   if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isUnsigned())) {
     // sym cannot be any value less than 'V'.  This path is infeasible.
@@ -167,14 +167,14 @@ const GRState *BasicConstraintManager::AssumeSymGE(const GRState *state,
     bool isFeasible = *X >= V;
     return isFeasible ? state : NULL;
   }
-  
+
   // Sym is not a constant, but it is worth looking to see if V is the
   // maximum integer value.
   if (V == llvm::APSInt::getMaxValue(V.getBitWidth(), V.isUnsigned())) {
     // If we know that sym != V, then this condition is infeasible since
-    // there is no other value greater than V.    
+    // there is no other value greater than V.
     bool isFeasible = !isNotEqual(state, sym, V);
-    
+
     // If the path is still feasible then as a consequence we know that
     // 'sym == V' because we cannot have 'sym > V' (no larger values).
     // Add this constraint.
@@ -193,20 +193,20 @@ BasicConstraintManager::AssumeSymLE(const GRState* state, SymbolRef sym,
     bool isFeasible = *X <= V;
     return isFeasible ? state : NULL;
   }
-  
+
   // Sym is not a constant, but it is worth looking to see if V is the
   // minimum integer value.
   if (V == llvm::APSInt::getMinValue(V.getBitWidth(), V.isUnsigned())) {
     // If we know that sym != V, then this condition is infeasible since
-    // there is no other value less than V.    
+    // there is no other value less than V.
     bool isFeasible = !isNotEqual(state, sym, V);
-    
+
     // If the path is still feasible then as a consequence we know that
     // 'sym == V' because we cannot have 'sym < V' (no smaller values).
     // Add this constraint.
     return isFeasible ? AddEQ(state, sym, V) : NULL;
   }
-    
+
   return state;
 }
 
@@ -222,10 +222,10 @@ const GRState* BasicConstraintManager::AddNE(const GRState* state, SymbolRef sym
   // First, retrieve the NE-set associated with the given symbol.
   ConstNotEqTy::data_type* T = state->get<ConstNotEq>(sym);
   GRState::IntSetTy S = T ? *T : ISetFactory.GetEmptySet();
-  
+
   // Now add V to the NE set.
   S = ISetFactory.Add(S, &V);
-  
+
   // Create a new state with the old binding replaced.
   return state->set<ConstNotEq>(sym, S);
 }
@@ -236,7 +236,7 @@ const llvm::APSInt* BasicConstraintManager::getSymVal(const GRState* state,
   return T ? *T : NULL;
 }
 
-bool BasicConstraintManager::isNotEqual(const GRState* state, SymbolRef sym, 
+bool BasicConstraintManager::isNotEqual(const GRState* state, SymbolRef sym,
                                         const llvm::APSInt& V) const {
 
   // Retrieve the NE-set associated with the given symbol.
@@ -273,14 +273,14 @@ BasicConstraintManager::RemoveDeadBindings(const GRState* state,
   ConstNotEqTy::Factory& CNEFactory = state->get_context<ConstNotEq>();
 
   for (ConstNotEqTy::iterator I = CNE.begin(), E = CNE.end(); I != E; ++I) {
-    SymbolRef sym = I.getKey();    
+    SymbolRef sym = I.getKey();
     if (SymReaper.maybeDead(sym)) CNE = CNEFactory.Remove(CNE, sym);
   }
-  
+
   return state->set<ConstNotEq>(CNE);
 }
 
-void BasicConstraintManager::print(const GRState* state, llvm::raw_ostream& Out, 
+void BasicConstraintManager::print(const GRState* state, llvm::raw_ostream& Out,
                                    const char* nl, const char *sep) {
   // Print equality constraints.
 
@@ -293,23 +293,23 @@ void BasicConstraintManager::print(const GRState* state, llvm::raw_ostream& Out,
   }
 
   // Print != constraints.
-  
+
   ConstNotEqTy CNE = state->get<ConstNotEq>();
-  
+
   if (!CNE.isEmpty()) {
     Out << nl << sep << "'!=' constraints:";
-  
+
     for (ConstNotEqTy::iterator I = CNE.begin(), EI = CNE.end(); I!=EI; ++I) {
       Out << nl << " $" << I.getKey() << " : ";
       bool isFirst = true;
-    
-      GRState::IntSetTy::iterator J = I.getData().begin(), 
-                                  EJ = I.getData().end();      
-      
-      for ( ; J != EJ; ++J) {        
+
+      GRState::IntSetTy::iterator J = I.getData().begin(),
+                                  EJ = I.getData().end();
+
+      for ( ; J != EJ; ++J) {
         if (isFirst) isFirst = false;
         else Out << ", ";
-      
+
         Out << (*J)->getSExtValue(); // Hack: should print to raw_ostream.
       }
     }

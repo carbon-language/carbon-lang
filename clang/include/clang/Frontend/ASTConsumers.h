@@ -38,9 +38,9 @@ class LangOptions;
 // implementation is still incomplete.
 ASTConsumer *CreateASTPrinter(llvm::raw_ostream *OS);
 
-// AST XML-printer: prints out the AST in a XML format 
+// AST XML-printer: prints out the AST in a XML format
 // The output is intended to be in a format such that
-// clang or any other tool could re-parse the output back into the same AST, 
+// clang or any other tool could re-parse the output back into the same AST,
 // but the implementation is still incomplete.
 ASTConsumer *CreateASTPrinterXML(llvm::raw_ostream *OS);
 

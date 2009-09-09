@@ -8,31 +8,30 @@ int eli(float b); // expected-note {{previous declaration is here}}
 int b(int c) {return 1;}
 
 int foo();
-int foo()
-{
-    int eli(int (int)); // expected-error {{conflicting types for 'eli'}}
-    eli(b); // expected-error{{incompatible type passing}}
-	return 0;	
+int foo() {
+  int eli(int (int)); // expected-error {{conflicting types for 'eli'}}
+  eli(b); // expected-error{{incompatible type passing}}
+  return 0;
 }
 
 int bar();
 int bar(int i) // expected-note {{previous definition is here}}
 {
-	return 0;
+  return 0;
 }
 int bar() // expected-error {{redefinition of 'bar'}} 
 {
-	return 0;
+  return 0;
 }
 
 int foobar(int); // note {{previous declaration is here}}
 int foobar() // error {{conflicting types for 'foobar'}}
 {
-	return 0;
+  return 0;
 }
 
 int wibble(); // expected-note {{previous declaration is here}}
 float wibble() // expected-error {{conflicting types for 'wibble'}}
 {
-	return 0.0f;
+  return 0.0f;
 }

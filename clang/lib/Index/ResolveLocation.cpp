@@ -119,7 +119,7 @@ StmtLocResolver::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *Node) {
   Nodes.push_back(Node->getArg(0));
   Nodes.push_back(Node->getCallee());
   Nodes.push_back(Node->getArg(1));
-  
+
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
     RangePos RP = CheckRange(Nodes[i]);
     if (RP == AfterLoc)
@@ -201,9 +201,9 @@ ASTLocation DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
     if (RP == ContainsLoc)
       return Visit(*I);
   }
-  
+
   // We didn't find the location in the parameters and we didn't get passed it.
-  
+
   if (!D->isThisDeclarationADefinition())
     return ASTLocation(D);
 
@@ -214,7 +214,7 @@ ASTLocation DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
          I = D->decls_begin(), E = D->decls_end(); I != E; ++I) {
     if (isa<ParmVarDecl>(*I))
       continue; // We already searched through the parameters.
-    
+
     RangePos RP = CheckRange(*I);
     if (RP == AfterLoc)
       break;
@@ -223,7 +223,7 @@ ASTLocation DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
   }
 
   // We didn't find a declaration that corresponds to the source location.
-  
+
   // Finally, search through the body of the function.
   Stmt *Body = D->getBody();
   assert(Body && "Expected definition");
@@ -325,10 +325,10 @@ LocResolverBase::RangePos LocResolverBase::CheckRange(SourceRange Range) {
                                                Ctx.getLangOptions());
   Range.setEnd(Range.getEnd().getFileLocWithOffset(TokSize-1));
 
-  SourceManager &SourceMgr = Ctx.getSourceManager(); 
+  SourceManager &SourceMgr = Ctx.getSourceManager();
   if (SourceMgr.isBeforeInTranslationUnit(Range.getEnd(), Loc))
     return BeforeLoc;
-  
+
   if (SourceMgr.isBeforeInTranslationUnit(Loc, Range.getBegin()))
     return AfterLoc;
 
@@ -367,6 +367,6 @@ void LocResolverBase::print(Stmt *Node) {
 ASTLocation idx::ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc) {
   if (Loc.isInvalid())
     return ASTLocation();
-  
+
   return DeclLocResolver(Ctx, Loc).Visit(Ctx.getTranslationUnitDecl());
 }

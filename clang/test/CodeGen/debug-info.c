@@ -24,14 +24,14 @@ char xpto[];
 
 // PR3427
 struct foo {
-	int a;
-	void *ptrs[];
+  int a;
+  void *ptrs[];
 };
 struct foo bar;
 
 // PR4143
 struct foo2 {
-        enum bar *bar;
+  enum bar *bar;
 };
 
 struct foo2 foo2;

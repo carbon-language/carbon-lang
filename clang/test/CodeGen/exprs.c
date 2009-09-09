@@ -48,9 +48,9 @@ int ola() {
 
 // this one shouldn't fold as well
 void eMaisUma() {
-	double t[1];
-	if (*t)
-		return;
+  double t[1];
+  if (*t)
+    return;
 }
 
 // rdar://6520707

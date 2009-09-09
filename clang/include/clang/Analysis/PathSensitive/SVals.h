@@ -38,35 +38,35 @@ class TypedRegion;
 class MemRegionManager;
 class GRStateManager;
 class ValueManager;
-  
+
 class SVal {
 public:
   enum BaseKind { UndefinedKind, UnknownKind, LocKind, NonLocKind };
   enum { BaseBits = 2, BaseMask = 0x3 };
-  
+
 protected:
   void* Data;
   unsigned Kind;
-  
+
 protected:
   SVal(const void* d, bool isLoc, unsigned ValKind)
   : Data(const_cast<void*>(d)),
     Kind((isLoc ? LocKind : NonLocKind) | (ValKind << BaseBits)) {}
-  
+
   explicit SVal(BaseKind k, void* D = NULL)
     : Data(D), Kind(k) {}
-  
+
 public:
   SVal() : Data(0), Kind(0) {}
   ~SVal() {};
-  
+
   /// BufferTy - A temporary buffer to hold a set of SVals.
   typedef llvm::SmallVector<SVal,5> BufferTy;
-  
+
   inline unsigned getRawKind() const { return Kind; }
   inline BaseKind getBaseKind() const { return (BaseKind) (Kind & BaseMask); }
   inline unsigned getSubKind() const { return (Kind & ~BaseMask) >> BaseBits; }
-  
+
   inline void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) getRawKind());
     ID.AddPointer(reinterpret_cast<void*>(Data));
@@ -75,7 +75,7 @@ public:
   inline bool operator==(const SVal& R) const {
     return getRawKind() == R.getRawKind() && Data == R.Data;
   }
-    
+
   inline bool operator!=(const SVal& R) const {
     return !(*this == R);
   }
@@ -91,25 +91,25 @@ public:
   inline bool isUnknownOrUndef() const {
     return getRawKind() <= UnknownKind;
   }
-  
+
   inline bool isValid() const {
     return getRawKind() > UnknownKind;
   }
-  
+
   bool isZeroConstant() const;
 
   /// hasConjuredSymbol - If this SVal wraps a conjured symbol, return true;
   bool hasConjuredSymbol() const;
 
   /// getAsFunctionDecl - If this SVal is a MemRegionVal and wraps a
-  /// CodeTextRegion wrapping a FunctionDecl, return that FunctionDecl. 
+  /// CodeTextRegion wrapping a FunctionDecl, return that FunctionDecl.
   /// Otherwise return 0.
   const FunctionDecl* getAsFunctionDecl() const;
-  
-  /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and 
+
+  /// getAsLocSymbol - If this SVal is a location (subclasses Loc) and
   ///  wraps a symbol, return that SymbolRef.  Otherwise return a SymbolData*
   SymbolRef getAsLocSymbol() const;
-  
+
   /// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.
   ///  Otherwise return a SymbolRef where 'isValid()' returns false.
   SymbolRef getAsSymbol() const;
@@ -119,7 +119,7 @@ public:
   const SymExpr *getAsSymbolicExpression() const;
 
   const MemRegion *getAsRegion() const;
-  
+
   void dumpToStream(llvm::raw_ostream& OS) const;
   void dump() const;
 
@@ -130,14 +130,14 @@ public:
   public:
     symbol_iterator() {}
     symbol_iterator(const SymExpr* SE);
-    
+
     symbol_iterator& operator++();
     SymbolRef operator*();
-      
+
     bool operator==(const symbol_iterator& X) const;
     bool operator!=(const symbol_iterator& X) const;
   };
-  
+
   symbol_iterator symbol_begin() const {
     const SymExpr *SE = getAsSymbolicExpression();
     if (SE)
@@ -145,9 +145,9 @@ public:
     else
       return symbol_iterator();
   }
-  
+
   symbol_iterator symbol_end() const { return symbol_iterator(); }
-  
+
   // Implement isa<T> support.
   static inline bool classof(const SVal*) { return true; }
 };
@@ -155,24 +155,24 @@ public:
 class UnknownVal : public SVal {
 public:
   UnknownVal() : SVal(UnknownKind) {}
-  
+
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == UnknownKind;
-  }  
+  }
 };
 
 class UndefinedVal : public SVal {
 public:
   UndefinedVal() : SVal(UndefinedKind) {}
   UndefinedVal(void* D) : SVal(UndefinedKind, D) {}
-  
+
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == UndefinedKind;
   }
-  
-  void* getData() const { return Data; }  
+
+  void* getData() const { return Data; }
 };
-  
+
 class DefinedSVal : public SVal {
 protected:
   DefinedSVal(const void* d, bool isLoc, unsigned ValKind)
@@ -181,16 +181,16 @@ public:
   // Implement isa<T> support.
   static inline bool classof(const SVal *V) {
     return !V->isUnknownOrUndef();
-  }    
+  }
 };
 
 class NonLoc : public DefinedSVal {
 protected:
   NonLoc(unsigned SubKind, const void* d) : DefinedSVal(d, false, SubKind) {}
-  
+
 public:
   void dumpToStream(llvm::raw_ostream& Out) const;
-  
+
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == NonLocKind;
@@ -207,45 +207,45 @@ public:
 
   Loc(const Loc& X) : DefinedSVal(X.Data, true, X.getSubKind()) {}
   Loc& operator=(const Loc& X) { memcpy(this, &X, sizeof(Loc)); return *this; }
-    
+
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == LocKind;
   }
-  
+
   static inline bool IsLocType(QualType T) {
     return T->isAnyPointerType() || T->isBlockPointerType();
   }
 };
-  
+
 //==------------------------------------------------------------------------==//
 //  Subclasses of NonLoc.
 //==------------------------------------------------------------------------==//
 
 namespace nonloc {
-  
+
 enum Kind { ConcreteIntKind, SymbolValKind, SymExprValKind,
             LocAsIntegerKind, CompoundValKind, LazyCompoundValKind };
 
 class SymbolVal : public NonLoc {
 public:
   SymbolVal(SymbolRef sym) : NonLoc(SymbolValKind, sym) {}
-  
+
   SymbolRef getSymbol() const {
     return (const SymbolData*) Data;
   }
-  
+
   static inline bool classof(const SVal* V) {
-    return V->getBaseKind() == NonLocKind && 
+    return V->getBaseKind() == NonLocKind &&
            V->getSubKind() == SymbolValKind;
   }
-  
+
   static inline bool classof(const NonLoc* V) {
     return V->getSubKind() == SymbolValKind;
   }
 };
 
-class SymExprVal : public NonLoc {    
+class SymExprVal : public NonLoc {
 public:
   SymExprVal(const SymExpr *SE)
     : NonLoc(SymExprValKind, reinterpret_cast<const void*>(SE)) {}
@@ -253,12 +253,12 @@ public:
   const SymExpr *getSymbolicExpression() const {
     return reinterpret_cast<SymExpr*>(Data);
   }
-  
+
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == NonLocKind &&
            V->getSubKind() == SymExprValKind;
   }
-  
+
   static inline bool classof(const NonLoc* V) {
     return V->getSubKind() == SymExprValKind;
   }
@@ -267,30 +267,30 @@ public:
 class ConcreteInt : public NonLoc {
 public:
   ConcreteInt(const llvm::APSInt& V) : NonLoc(ConcreteIntKind, &V) {}
-  
+
   const llvm::APSInt& getValue() const {
     return *static_cast<llvm::APSInt*>(Data);
   }
-  
+
   // Transfer functions for binary/unary operations on ConcreteInts.
   SVal evalBinOp(ValueManager &ValMgr, BinaryOperator::Opcode Op,
                  const ConcreteInt& R) const;
-  
+
   ConcreteInt evalComplement(ValueManager &ValMgr) const;
-  
+
   ConcreteInt evalMinus(ValueManager &ValMgr) const;
-  
+
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == NonLocKind &&
            V->getSubKind() == ConcreteIntKind;
   }
-  
+
   static inline bool classof(const NonLoc* V) {
     return V->getSubKind() == ConcreteIntKind;
   }
 };
-  
+
 class LocAsInteger : public NonLoc {
   friend class clang::ValueManager;
 
@@ -298,28 +298,28 @@ class LocAsInteger : public NonLoc {
     NonLoc(LocAsIntegerKind, &data) {
       assert (isa<Loc>(data.first));
     }
-  
+
 public:
-    
+
   Loc getLoc() const {
     return cast<Loc>(((std::pair<SVal, uintptr_t>*) Data)->first);
   }
-  
+
   const Loc& getPersistentLoc() const {
     const SVal& V = ((std::pair<SVal, uintptr_t>*) Data)->first;
     return cast<Loc>(V);
-  }    
-  
+  }
+
   unsigned getNumBits() const {
     return ((std::pair<SVal, unsigned>*) Data)->second;
   }
-  
+
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == NonLocKind &&
            V->getSubKind() == LocAsIntegerKind;
   }
-  
+
   static inline bool classof(const NonLoc* V) {
     return V->getSubKind() == LocAsIntegerKind;
   }
@@ -334,10 +334,10 @@ public:
   const CompoundValData* getValue() const {
     return static_cast<CompoundValData*>(Data);
   }
-  
+
   typedef llvm::ImmutableList<SVal>::iterator iterator;
   iterator begin() const;
-  iterator end() const;  
+  iterator end() const;
 
   static bool classof(const SVal* V) {
     return V->getBaseKind() == NonLocKind && V->getSubKind() == CompoundValKind;
@@ -347,7 +347,7 @@ public:
     return V->getSubKind() == CompoundValKind;
   }
 };
-  
+
 class LazyCompoundVal : public NonLoc {
   friend class clang::ValueManager;
 
@@ -359,16 +359,16 @@ public:
   }
   const GRState *getState() const;
   const TypedRegion *getRegion() const;
-  
+
   static bool classof(const SVal *V) {
-    return V->getBaseKind() == NonLocKind && 
+    return V->getBaseKind() == NonLocKind &&
            V->getSubKind() == LazyCompoundValKind;
   }
   static bool classof(const NonLoc *V) {
     return V->getSubKind() == LazyCompoundValKind;
   }
 };
-  
+
 } // end namespace clang::nonloc
 
 //==------------------------------------------------------------------------==//
@@ -376,27 +376,27 @@ public:
 //==------------------------------------------------------------------------==//
 
 namespace loc {
-  
+
 enum Kind { GotoLabelKind, MemRegionKind, ConcreteIntKind };
 
 class GotoLabel : public Loc {
 public:
   GotoLabel(LabelStmt* Label) : Loc(GotoLabelKind, Label) {}
-  
+
   LabelStmt* getLabel() const {
     return static_cast<LabelStmt*>(Data);
   }
-  
+
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == LocKind &&
            V->getSubKind() == GotoLabelKind;
   }
-  
+
   static inline bool classof(const Loc* V) {
     return V->getSubKind() == GotoLabelKind;
-  } 
+  }
 };
-  
+
 
 class MemRegionVal : public Loc {
 public:
@@ -405,37 +405,37 @@ public:
   const MemRegion* getRegion() const {
     return static_cast<MemRegion*>(Data);
   }
-  
+
   const MemRegion* getBaseRegion() const;
-  
+
   template <typename REGION>
   const REGION* getRegionAs() const {
     return llvm::dyn_cast<REGION>(getRegion());
-  }  
-  
+  }
+
   inline bool operator==(const MemRegionVal& R) const {
     return getRegion() == R.getRegion();
   }
-  
+
   inline bool operator!=(const MemRegionVal& R) const {
     return getRegion() != R.getRegion();
   }
-  
+
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == LocKind &&
            V->getSubKind() == MemRegionKind;
   }
-  
+
   static inline bool classof(const Loc* V) {
     return V->getSubKind() == MemRegionKind;
-  }    
+  }
 };
 
 class ConcreteInt : public Loc {
 public:
   ConcreteInt(const llvm::APSInt& V) : Loc(ConcreteIntKind, &V) {}
-  
+
   const llvm::APSInt& getValue() const {
     return *static_cast<llvm::APSInt*>(Data);
   }
@@ -443,20 +443,20 @@ public:
   // Transfer functions for binary/unary operations on ConcreteInts.
   SVal EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
                  const ConcreteInt& R) const;
-      
+
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
     return V->getBaseKind() == LocKind &&
            V->getSubKind() == ConcreteIntKind;
   }
-  
+
   static inline bool classof(const Loc* V) {
     return V->getSubKind() == ConcreteIntKind;
   }
 };
-  
+
 } // end clang::loc namespace
-} // end clang namespace  
+} // end clang namespace
 
 namespace llvm {
 static inline llvm::raw_ostream& operator<<(llvm::raw_ostream& os,

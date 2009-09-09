@@ -30,12 +30,12 @@ namespace  {
     SourceManager *SM;
     FILE *F;
     unsigned IndentLevel;
-    
+
     /// MaxDepth - When doing a normal dump (not dumpAll) we only want to dump
     /// the first few levels of an AST.  This keeps track of how many ast levels
     /// are left.
     unsigned MaxDepth;
-    
+
     /// LastLocFilename/LastLocLine - Keep track of the last location we print
     /// out so that we can print out deltas from then on out.
     const char *LastLocFilename;
@@ -47,18 +47,18 @@ namespace  {
       LastLocFilename = "";
       LastLocLine = ~0U;
     }
-    
+
     void DumpSubTree(Stmt *S) {
       // Prune the recursion if not using dump all.
       if (MaxDepth == 0) return;
-      
+
       ++IndentLevel;
       if (S) {
         if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
           VisitDeclStmt(DS);
-        else {        
+        else {
           Visit(S);
-          
+
           // Print out children.
           Stmt::child_iterator CI = S->child_begin(), CE = S->child_end();
           if (CI != CE) {
@@ -75,14 +75,14 @@ namespace  {
       }
       --IndentLevel;
     }
-    
+
     void DumpDeclarator(Decl *D);
-    
+
     void Indent() const {
       for (int i = 0, e = IndentLevel; i < e; ++i)
         fprintf(F, "  ");
     }
-    
+
     void DumpType(QualType T) {
       fprintf(F, "'%s'", T.getAsString().c_str());
 
@@ -90,7 +90,7 @@ namespace  {
         // If the type is directly a typedef, strip off typedefness to give at
         // least one level of concreteness.
         if (TypedefType *TDT = dyn_cast<TypedefType>(T)) {
-          QualType Simplified = 
+          QualType Simplified =
             TDT->LookThroughTypedefs().getQualifiedType(T.getCVRQualifiers());
           fprintf(F, ":'%s'", Simplified.getAsString().c_str());
         }
@@ -108,13 +108,13 @@ namespace  {
     }
     void DumpSourceRange(const Stmt *Node);
     void DumpLocation(SourceLocation Loc);
-    
+
     // Stmts.
     void VisitStmt(Stmt *Node);
     void VisitDeclStmt(DeclStmt *Node);
     void VisitLabelStmt(LabelStmt *Node);
     void VisitGotoStmt(GotoStmt *Node);
-    
+
     // Exprs
     void VisitExpr(Expr *Node);
     void VisitCastExpr(CastExpr *Node);
@@ -142,7 +142,7 @@ namespace  {
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *Node);
     void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *Node);
     void DumpCXXTemporary(CXXTemporary *Temporary);
-    
+
     // ObjC
     void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
     void VisitObjCMessageExpr(ObjCMessageExpr* Node);
@@ -162,7 +162,7 @@ namespace  {
 
 void StmtDumper::DumpLocation(SourceLocation Loc) {
   SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
-  
+
   if (SpellingLoc.isInvalid()) {
     fprintf(stderr, "<invalid sloc>");
     return;
@@ -188,11 +188,11 @@ void StmtDumper::DumpLocation(SourceLocation Loc) {
 void StmtDumper::DumpSourceRange(const Stmt *Node) {
   // Can't translate locations if a SourceManager isn't available.
   if (SM == 0) return;
-  
+
   // TODO: If the parent expression is available, we can print a delta vs its
   // location.
   SourceRange R = Node->getSourceRange();
-  
+
   fprintf(stderr, " <");
   DumpLocation(R.getBegin());
   if (R.getBegin() != R.getEnd()) {
@@ -200,7 +200,7 @@ void StmtDumper::DumpSourceRange(const Stmt *Node) {
     DumpLocation(R.getEnd());
   }
   fprintf(stderr, ">");
-    
+
   // <t2.c:123:421[blah], t2.c:412:321>
 
 }
@@ -226,15 +226,15 @@ void StmtDumper::DumpDeclarator(Decl *D) {
     // Emit storage class for vardecls.
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
       if (V->getStorageClass() != VarDecl::None)
-        fprintf(F, "%s ", 
+        fprintf(F, "%s ",
                 VarDecl::getStorageClassSpecifierString(V->getStorageClass()));
     }
-    
+
     std::string Name = VD->getNameAsString();
-    VD->getType().getAsStringInternal(Name, 
+    VD->getType().getAsStringInternal(Name,
                           PrintingPolicy(VD->getASTContext().getLangOptions()));
     fprintf(F, "%s", Name.c_str());
-    
+
     // If this is a vardecl with an initializer, emit it.
     if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
       if (V->getInit()) {
@@ -321,15 +321,15 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
   case Decl::ObjCInterface: fprintf(F,"ObjCInterface"); break;
   case Decl::ObjCClass: fprintf(F,"ObjCClass"); break;
   }
-  
-  fprintf(F, "='%s' %p", Node->getDecl()->getNameAsString().c_str(), 
+
+  fprintf(F, "='%s' %p", Node->getDecl()->getNameAsString().c_str(),
           (void*)Node->getDecl());
 }
 
 void StmtDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   DumpExpr(Node);
 
-  fprintf(F, " %sDecl='%s' %p", Node->getDecl()->getDeclKindName(), 
+  fprintf(F, " %sDecl='%s' %p", Node->getDecl()->getDeclKindName(),
           Node->getDecl()->getNameAsString().c_str(), (void*)Node->getDecl());
   if (Node->isFreeIvar())
     fprintf(F, " isFreeIvar");
@@ -370,7 +370,7 @@ void StmtDumper::VisitStringLiteral(StringLiteral *Str) {
     switch (char C = Str->getStrData()[i]) {
     default:
       if (isprint(C))
-        fputc(C, F); 
+        fputc(C, F);
       else
         fprintf(F, "\\%03o", C);
       break;
@@ -401,7 +401,7 @@ void StmtDumper::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *Node) {
 void StmtDumper::VisitMemberExpr(MemberExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " %s%s %p", Node->isArrow() ? "->" : ".",
-          Node->getMemberDecl()->getNameAsString().c_str(), 
+          Node->getMemberDecl()->getNameAsString().c_str(),
           (void*)Node->getMemberDecl());
 }
 void StmtDumper::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
@@ -459,7 +459,7 @@ void StmtDumper::VisitCXXThisExpr(CXXThisExpr *Node) {
 
 void StmtDumper::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *Node) {
   DumpExpr(Node);
-  fprintf(F, " functional cast to %s", 
+  fprintf(F, " functional cast to %s",
           Node->getTypeAsWritten().getAsString().c_str());
 }
 
@@ -503,21 +503,21 @@ void StmtDumper::VisitObjCMessageExpr(ObjCMessageExpr* Node) {
 
 void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
   DumpExpr(Node);
- 
+
   fprintf(F, " ");
   DumpType(Node->getEncodedType());
 }
 
 void StmtDumper::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
   DumpExpr(Node);
-  
+
   fprintf(F, " ");
   fprintf(F, "%s", Node->getSelector().getAsString().c_str());
 }
 
 void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
   DumpExpr(Node);
-  
+
   fprintf(F, " ");
   fprintf(F, "%s", Node->getProtocol()->getNameAsString().c_str());
 }
@@ -525,17 +525,17 @@ void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
 void StmtDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
   DumpExpr(Node);
 
-  fprintf(F, " Kind=PropertyRef Property=\"%s\"", 
+  fprintf(F, " Kind=PropertyRef Property=\"%s\"",
           Node->getProperty()->getNameAsString().c_str());
 }
 
 void StmtDumper::VisitObjCImplicitSetterGetterRefExpr(
                                         ObjCImplicitSetterGetterRefExpr *Node) {
   DumpExpr(Node);
-  
+
   ObjCMethodDecl *Getter = Node->getGetterMethod();
   ObjCMethodDecl *Setter = Node->getSetterMethod();
-  fprintf(F, " Kind=MethodRef Getter=\"%s\" Setter=\"%s\"", 
+  fprintf(F, " Kind=MethodRef Getter=\"%s\" Setter=\"%s\"",
           Getter->getSelector().getAsString().c_str(),
           Setter ? Setter->getSelector().getAsString().c_str() : "(null)");
 }

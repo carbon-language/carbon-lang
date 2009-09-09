@@ -31,7 +31,7 @@ CL foo() {
       return (float)1.0;
     else
       if (2)
-	return (double)2.0;
+        return (double)2.0;
     return 1;
   };
   char *(^B)(void) = ^{
@@ -66,7 +66,7 @@ int foo3() {
     Boolean (*value_equal)(uintptr_t, uintptr_t) = 0;
             
     cb.isEqual = ^(const CFBasicHash *table, uintptr_t stack_value_or_key1, uintptr_t stack_value_or_key2, Boolean is_key) {
-    	return (Boolean)(uintptr_t)INVOKE_CALLBACK2(value_equal, (uintptr_t)stack_value_or_key1, (uintptr_t)stack_value_or_key2);
+      return (Boolean)(uintptr_t)INVOKE_CALLBACK2(value_equal, (uintptr_t)stack_value_or_key1, (uintptr_t)stack_value_or_key2);
     };
 }
 

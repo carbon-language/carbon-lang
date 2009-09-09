@@ -63,16 +63,16 @@ DeclReferenceMap::DeclReferenceMap(ASTContext &Ctx) {
 DeclReferenceMap::astlocation_iterator
 DeclReferenceMap::refs_begin(NamedDecl *D) const {
   NamedDecl *Prim = cast<NamedDecl>(D->getCanonicalDecl());
-  return astlocation_iterator(Map.lower_bound(Prim));  
+  return astlocation_iterator(Map.lower_bound(Prim));
 }
 
 DeclReferenceMap::astlocation_iterator
 DeclReferenceMap::refs_end(NamedDecl *D) const {
   NamedDecl *Prim = cast<NamedDecl>(D->getCanonicalDecl());
-  return astlocation_iterator(Map.upper_bound(Prim));  
+  return astlocation_iterator(Map.upper_bound(Prim));
 }
 
 bool DeclReferenceMap::refs_empty(NamedDecl *D) const {
   NamedDecl *Prim = cast<NamedDecl>(D->getCanonicalDecl());
-  return refs_begin(Prim) == refs_end(Prim);  
+  return refs_begin(Prim) == refs_end(Prim);
 }

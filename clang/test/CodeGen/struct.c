@@ -70,8 +70,7 @@ typedef struct {
   int length;
 } range;
 extern range f6();
-void f7()
-{
+void f7() {
   range r = f6();
 }
 
@@ -81,27 +80,23 @@ typedef struct {
   range range2;
 } rangepair;
 
-void f8()
-{
+void f8() {
   rangepair p;
 
   range r = p.range1;
 }
 
-void f9(range *p)
-{
+void f9(range *p) {
   range r = *p;
 }
 
-void f10(range *p)
-{
+void f10(range *p) {
   range r = p[0];
 }
 
 /* _Bool types */
 
-struct _w
-{
+struct _w {
   short a,b;
   short c,d;
   short e,f;
@@ -113,27 +108,24 @@ struct _w
 } ws;
 
 /* Implicit casts (due to typedefs) */
-typedef struct _a
-{
+typedef struct _a {
   int a;
 } a;
 
-void f11()
-{
-    struct _a a1;
-    a a2;
+void f11() {
+  struct _a a1;
+  a a2;
     
-    a1 = a2;
-    a2 = a1;
+  a1 = a2;
+  a2 = a1;
 }
 
 /* Implicit casts (due to const) */
-void f12()
-{
-	struct _a a1;
-	const struct _a a2;
-	
-	a1 = a2;
+void f12() {
+  struct _a a1;
+  const struct _a a2;
+
+  a1 = a2;
 }
 
 /* struct initialization */
@@ -147,8 +139,7 @@ struct a15 {char a; int b[];} c15;
 int a16(void) {c15.a = 1;}
 
 /* compound literals */
-void f13()
-{
+void f13() {
   a13 x; x = (a13){1,2};
 }
 

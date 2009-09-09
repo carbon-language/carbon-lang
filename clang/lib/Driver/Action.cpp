@@ -29,16 +29,16 @@ const char *Action::getClassName(ActionClass AC) {
   case LinkJobClass: return "linker";
   case LipoJobClass: return "lipo";
   }
-  
+
   assert(0 && "invalid class");
   return 0;
 }
 
-InputAction::InputAction(const Arg &_Input, types::ID _Type) 
+InputAction::InputAction(const Arg &_Input, types::ID _Type)
   : Action(InputClass, _Type), Input(_Input) {
 }
 
-BindArchAction::BindArchAction(Action *Input, const char *_ArchName) 
+BindArchAction::BindArchAction(Action *Input, const char *_ArchName)
   : Action(BindArchClass, Input, Input->getType()), ArchName(_ArchName) {
 }
 
@@ -46,7 +46,7 @@ JobAction::JobAction(ActionClass Kind, Action *Input, types::ID Type)
   : Action(Kind, Input, Type) {
 }
 
-JobAction::JobAction(ActionClass Kind, const ActionList &Inputs, types::ID Type) 
+JobAction::JobAction(ActionClass Kind, const ActionList &Inputs, types::ID Type)
   : Action(Kind, Inputs, Type) {
 }
 
@@ -70,10 +70,10 @@ AssembleJobAction::AssembleJobAction(Action *Input, types::ID OutputType)
   : JobAction(AssembleJobClass, Input, OutputType) {
 }
 
-LinkJobAction::LinkJobAction(ActionList &Inputs, types::ID Type) 
+LinkJobAction::LinkJobAction(ActionList &Inputs, types::ID Type)
   : JobAction(LinkJobClass, Inputs, Type) {
 }
 
-LipoJobAction::LipoJobAction(ActionList &Inputs, types::ID Type)     
+LipoJobAction::LipoJobAction(ActionList &Inputs, types::ID Type)
   : JobAction(LipoJobClass, Inputs, Type) {
 }

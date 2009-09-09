@@ -35,8 +35,8 @@ namespace clang {
     virtual void InitializeSema(Sema &S) {}
 
     // isa/cast/dyn_cast support
-    static bool classof(const ASTConsumer *Consumer) { 
-      return Consumer->SemaConsumer; 
+    static bool classof(const ASTConsumer *Consumer) {
+      return Consumer->SemaConsumer;
     }
     static bool classof(const SemaConsumer *) { return true; }
   };

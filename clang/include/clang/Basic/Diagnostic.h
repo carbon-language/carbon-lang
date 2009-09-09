@@ -30,7 +30,7 @@ namespace clang {
   class LangOptions;
   class PartialDiagnostic;
   class SourceRange;
-  
+
   // Import the diagnostic enums themselves.
   namespace diag {
     // Start position for diagnostics.
@@ -46,7 +46,7 @@ namespace clang {
     };
 
     class CustomDiagInfo;
-    
+
     /// diag::kind - All of the diagnostics that can be emitted by the frontend.
     typedef unsigned kind;
 
@@ -57,7 +57,7 @@ namespace clang {
       NUM_BUILTIN_COMMON_DIAGNOSTICS
 #undef DIAG
     };
-      
+
     /// Enum values that allow the client to map NOTEs, WARNINGs, and EXTENSIONs
     /// to either MAP_IGNORE (nothing), MAP_WARNING (emit a warning), MAP_ERROR
     /// (emit as an error).  It allows clients to map errors to
@@ -69,13 +69,13 @@ namespace clang {
       MAP_WARNING = 2,     //< Map this diagnostic to a warning.
       MAP_ERROR   = 3,     //< Map this diagnostic to an error.
       MAP_FATAL   = 4,     //< Map this diagnostic to a fatal error.
-      
+
       /// Map this diagnostic to "warning", but make it immune to -Werror.  This
       /// happens when you specify -Wno-error=foo.
       MAP_WARNING_NO_WERROR = 5
     };
   }
-  
+
 /// \brief Annotates a diagnostic with some code that should be
 /// inserted, removed, or replaced to fix the problem.
 ///
@@ -104,7 +104,7 @@ public:
 
   /// \brief Create a code modification hint that inserts the given
   /// code string at a specific location.
-  static CodeModificationHint CreateInsertion(SourceLocation InsertionLoc, 
+  static CodeModificationHint CreateInsertion(SourceLocation InsertionLoc,
                                               const std::string &Code) {
     CodeModificationHint Hint;
     Hint.InsertionLoc = InsertionLoc;
@@ -122,7 +122,7 @@ public:
 
   /// \brief Create a code modification hint that replaces the given
   /// source range with the given code string.
-  static CodeModificationHint CreateReplacement(SourceRange RemoveRange, 
+  static CodeModificationHint CreateReplacement(SourceRange RemoveRange,
                                                 const std::string &Code) {
     CodeModificationHint Hint;
     Hint.RemoveRange = RemoveRange;
@@ -142,13 +142,13 @@ public:
   enum Level {
     Ignored, Note, Warning, Error, Fatal
   };
-  
+
   /// ExtensionHandling - How do we handle otherwise-unmapped extension?  This
   /// is controlled by -pedantic and -pedantic-errors.
   enum ExtensionHandling {
     Ext_Ignore, Ext_Warn, Ext_Error
   };
-  
+
   enum ArgumentKind {
     ak_std_string,      // std::string
     ak_c_string,        // const char *
@@ -161,10 +161,10 @@ public:
     ak_nestednamespec   // NestedNameSpecifier *
   };
 
-private: 
+private:
   unsigned char AllExtensionsSilenced; // Used by __extension__
   bool IgnoreAllWarnings;        // Ignore all warnings: -w
-  bool WarningsAsErrors;         // Treat warnings like errors: 
+  bool WarningsAsErrors;         // Treat warnings like errors:
   bool SuppressSystemWarnings;   // Suppress warnings in system headers.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
   DiagnosticClient *Client;
@@ -183,7 +183,7 @@ private:
   /// fatal error is emitted, and is sticky.
   bool ErrorOccurred;
   bool FatalErrorOccurred;
-  
+
   /// LastDiagLevel - This is the level of the last diagnostic emitted.  This is
   /// used to emit continuation diagnostics with the same level as the
   /// diagnostic that they follow.
@@ -209,16 +209,16 @@ private:
 public:
   explicit Diagnostic(DiagnosticClient *client = 0);
   ~Diagnostic();
-  
+
   //===--------------------------------------------------------------------===//
   //  Diagnostic characterization methods, used by a client to customize how
   //
-  
+
   DiagnosticClient *getClient() { return Client; };
   const DiagnosticClient *getClient() const { return Client; };
-    
 
-  /// pushMappings - Copies the current DiagMappings and pushes the new copy 
+
+  /// pushMappings - Copies the current DiagMappings and pushes the new copy
   /// onto the top of the stack.
   void pushMappings();
 
@@ -234,12 +234,12 @@ public:
   /// ignored.  If this and WarningsAsErrors are both set, then this one wins.
   void setIgnoreAllWarnings(bool Val) { IgnoreAllWarnings = Val; }
   bool getIgnoreAllWarnings() const { return IgnoreAllWarnings; }
-  
+
   /// setWarningsAsErrors - When set to true, any warnings reported are issued
   /// as errors.
   void setWarningsAsErrors(bool Val) { WarningsAsErrors = Val; }
   bool getWarningsAsErrors() const { return WarningsAsErrors; }
-  
+
   /// setSuppressSystemWarnings - When set to true mask warnings that
   /// come from system headers.
   void setSuppressSystemWarnings(bool Val) { SuppressSystemWarnings = Val; }
@@ -251,14 +251,14 @@ public:
   void setExtensionHandlingBehavior(ExtensionHandling H) {
     ExtBehavior = H;
   }
-  
+
   /// AllExtensionsSilenced - This is a counter bumped when an __extension__
   /// block is encountered.  When non-zero, all extension diagnostics are
   /// entirely silenced, no matter how they are mapped.
   void IncrementAllExtensionsSilenced() { ++AllExtensionsSilenced; }
   void DecrementAllExtensionsSilenced() { --AllExtensionsSilenced; }
   bool hasAllExtensionsSilenced() { return AllExtensionsSilenced != 0; }
-  
+
   /// setDiagnosticMapping - This allows the client to specify that certain
   /// warnings are ignored.  Notes can never be mapped, errors can only be
   /// mapped to fatal, and WARNINGs and EXTENSIONs can be mapped arbitrarily.
@@ -269,7 +269,7 @@ public:
            "Cannot map errors!");
     setDiagnosticMappingInternal(Diag, Map, true);
   }
-  
+
   /// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
   /// "unknown-pragmas" to have the specified mapping.  This returns true and
   /// ignores the request if "Group" was unknown, false otherwise.
@@ -280,13 +280,13 @@ public:
 
   unsigned getNumErrors() const { return NumErrors; }
   unsigned getNumDiagnostics() const { return NumDiagnostics; }
-  
+
   /// getCustomDiagID - Return an ID for a diagnostic with the specified message
   /// and level.  If this is the first request for this diagnosic, it is
   /// registered and created, otherwise the existing ID is returned.
   unsigned getCustomDiagID(Level L, const char *Message);
-  
-  
+
+
   /// ConvertArgToString - This method converts a diagnostic argument (as an
   /// intptr_t) into the string that represents it.
   void ConvertArgToString(ArgumentKind Kind, intptr_t Val,
@@ -296,12 +296,12 @@ public:
     ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen, Output,
                   ArgToStringCookie);
   }
-  
+
   void SetArgToStringFn(ArgToStringFnTy Fn, void *Cookie) {
     ArgToStringFn = Fn;
     ArgToStringCookie = Cookie;
   }
-  
+
   //===--------------------------------------------------------------------===//
   // Diagnostic classification and reporting interfaces.
   //
@@ -309,7 +309,7 @@ public:
   /// getDescription - Given a diagnostic ID, return a description of the
   /// issue.
   const char *getDescription(unsigned DiagID) const;
-  
+
   /// isNoteWarningOrExtension - Return true if the unmapped diagnostic
   /// level of the specified diagnostic ID is a Warning or Extension.
   /// This only works on builtin diagnostics, not custom ones, and is not legal to
@@ -319,12 +319,12 @@ public:
   /// \brief Determine whether the given built-in diagnostic ID is a
   /// Note.
   static bool isBuiltinNote(unsigned DiagID);
-  
+
   /// isBuiltinExtensionDiag - Determine whether the given built-in diagnostic
   /// ID is for an extension of some sort.
   ///
   static bool isBuiltinExtensionDiag(unsigned DiagID);
-  
+
   /// getWarningOptionForDiag - Return the lowest-level warning option that
   /// enables the specified diagnostic.  If there is no -Wfoo flag that controls
   /// the diagnostic, this returns null.
@@ -343,8 +343,8 @@ public:
   /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
   /// object, classify the specified diagnostic ID into a Level, consumable by
   /// the DiagnosticClient.
-  Level getDiagnosticLevel(unsigned DiagID) const;  
-  
+  Level getDiagnosticLevel(unsigned DiagID) const;
+
   /// Report - Issue the message to the client.  @c DiagID is a member of the
   /// @c diag::kind enum.  This actually returns aninstance of DiagnosticBuilder
   /// which emits the diagnostics (through @c ProcessDiag) when it is destroyed.
@@ -354,7 +354,7 @@ public:
 
   /// \brief Clear out the current diagnostic.
   void Clear() { CurDiagID = ~0U; }
-  
+
 private:
   /// getDiagnosticMappingInfo - Return the mapping info currently set for the
   /// specified builtin diagnostic.  This returns the high bit encoding, or zero
@@ -363,7 +363,7 @@ private:
     const DiagMappings &currentMappings = DiagMappingsStack.back();
     return (diag::Mapping)((currentMappings[Diag/2] >> (Diag & 1)*4) & 15);
   }
-  
+
   void setDiagnosticMappingInternal(unsigned DiagId, unsigned Map,
                                     bool isUser) const {
     if (isUser) Map |= 8;  // Set the high bit for user mappings.
@@ -372,7 +372,7 @@ private:
     Slot &= ~(15 << Shift);
     Slot |= Map << Shift;
   }
-  
+
   /// getDiagnosticLevel - This is an internal implementation helper used when
   /// DiagClass is already known.
   Level getDiagnosticLevel(unsigned DiagID, unsigned DiagClass) const;
@@ -389,7 +389,7 @@ private:
   /// CurDiagLoc - This is the location of the current diagnostic that is in
   /// flight.
   FullSourceLoc CurDiagLoc;
-  
+
   /// CurDiagID - This is the ID of the current diagnostic that is in flight.
   /// This is set to ~0U when there is no diagnostic in flight.
   unsigned CurDiagID;
@@ -400,7 +400,7 @@ private:
     /// than that almost certainly has to be simplified anyway.
     MaxArguments = 10
   };
-  
+
   /// NumDiagArgs - This contains the number of entries in Arguments.
   signed char NumDiagArgs;
   /// NumRanges - This is the number of ranges in the DiagRanges array.
@@ -413,7 +413,7 @@ private:
   /// values, with one for each argument.  This specifies whether the argument
   /// is in DiagArgumentsStr or in DiagArguments.
   unsigned char DiagArgumentsKind[MaxArguments];
-  
+
   /// DiagArgumentsStr - This holds the values of each string argument for the
   /// current diagnostic.  This value is only used when the corresponding
   /// ArgumentKind is ak_std_string.
@@ -424,11 +424,11 @@ private:
   /// mangled into an intptr_t and the intepretation depends on exactly what
   /// sort of argument kind it is.
   intptr_t DiagArgumentsVal[MaxArguments];
-  
+
   /// DiagRanges - The list of ranges added to this diagnostic.  It currently
   /// only support 10 ranges, could easily be extended if needed.
   const SourceRange *DiagRanges[10];
-  
+
   enum { MaxCodeModificationHints = 3 };
 
   /// CodeModificationHints - If valid, provides a hint with some code
@@ -461,14 +461,14 @@ private:
 class DiagnosticBuilder {
   mutable Diagnostic *DiagObj;
   mutable unsigned NumArgs, NumRanges, NumCodeModificationHints;
-  
+
   void operator=(const DiagnosticBuilder&); // DO NOT IMPLEMENT
   friend class Diagnostic;
   explicit DiagnosticBuilder(Diagnostic *diagObj)
-    : DiagObj(diagObj), NumArgs(0), NumRanges(0), 
+    : DiagObj(diagObj), NumArgs(0), NumRanges(0),
       NumCodeModificationHints(0) {}
 
-public:  
+public:
   /// Copy constructor.  When copied, this "takes" the diagnostic info from the
   /// input and neuters it.
   DiagnosticBuilder(const DiagnosticBuilder &D) {
@@ -485,7 +485,7 @@ public:
 
   /// \brief Create an empty DiagnosticBuilder object that represents
   /// no actual diagnostic.
-  explicit DiagnosticBuilder(SuppressKind) 
+  explicit DiagnosticBuilder(SuppressKind)
     : DiagObj(0), NumArgs(0), NumRanges(0), NumCodeModificationHints(0) { }
 
   /// \brief Force the diagnostic builder to emit the diagnostic now.
@@ -522,7 +522,7 @@ public:
   /// Destructor - The dtor emits the diagnostic if it hasn't already
   /// been emitted.
   ~DiagnosticBuilder() { Emit(); }
-  
+
   /// Operator bool: conversion of DiagnosticBuilder to bool always returns
   /// true.  This allows is to be used in boolean error contexts like:
   /// return Diag(...);
@@ -536,7 +536,7 @@ public:
       DiagObj->DiagArgumentsStr[NumArgs++] = S;
     }
   }
-  
+
   void AddTaggedVal(intptr_t V, Diagnostic::ArgumentKind Kind) const {
     assert(NumArgs < Diagnostic::MaxArguments &&
            "Too many arguments to diagnostic!");
@@ -545,14 +545,14 @@ public:
       DiagObj->DiagArgumentsVal[NumArgs++] = V;
     }
   }
-  
+
   void AddSourceRange(const SourceRange &R) const {
-    assert(NumRanges < 
+    assert(NumRanges <
            sizeof(DiagObj->DiagRanges)/sizeof(DiagObj->DiagRanges[0]) &&
            "Too many arguments to diagnostic!");
     if (DiagObj)
       DiagObj->DiagRanges[NumRanges++] = &R;
-  }    
+  }
 
   void AddCodeModificationHint(const CodeModificationHint &Hint) const {
     assert(NumCodeModificationHints < Diagnostic::MaxCodeModificationHints &&
@@ -597,7 +597,7 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                   Diagnostic::ak_identifierinfo);
   return DB;
 }
-  
+
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            const SourceRange &R) {
   DB.AddSourceRange(R);
@@ -623,7 +623,7 @@ inline DiagnosticBuilder Diagnostic::Report(FullSourceLoc Loc, unsigned DiagID){
 //===----------------------------------------------------------------------===//
 // DiagnosticInfo
 //===----------------------------------------------------------------------===//
-  
+
 /// DiagnosticInfo - This is a little helper class (which is basically a smart
 /// pointer that forward info from Diagnostic) that allows clients to enquire
 /// about the currently in-flight diagnostic.
@@ -631,74 +631,74 @@ class DiagnosticInfo {
   const Diagnostic *DiagObj;
 public:
   explicit DiagnosticInfo(const Diagnostic *DO) : DiagObj(DO) {}
-  
+
   const Diagnostic *getDiags() const { return DiagObj; }
   unsigned getID() const { return DiagObj->CurDiagID; }
   const FullSourceLoc &getLocation() const { return DiagObj->CurDiagLoc; }
-  
+
   unsigned getNumArgs() const { return DiagObj->NumDiagArgs; }
-  
+
   /// getArgKind - Return the kind of the specified index.  Based on the kind
   /// of argument, the accessors below can be used to get the value.
   Diagnostic::ArgumentKind getArgKind(unsigned Idx) const {
     assert(Idx < getNumArgs() && "Argument index out of range!");
     return (Diagnostic::ArgumentKind)DiagObj->DiagArgumentsKind[Idx];
   }
-  
+
   /// getArgStdStr - Return the provided argument string specified by Idx.
   const std::string &getArgStdStr(unsigned Idx) const {
     assert(getArgKind(Idx) == Diagnostic::ak_std_string &&
            "invalid argument accessor!");
     return DiagObj->DiagArgumentsStr[Idx];
   }
-  
+
   /// getArgCStr - Return the specified C string argument.
   const char *getArgCStr(unsigned Idx) const {
     assert(getArgKind(Idx) == Diagnostic::ak_c_string &&
            "invalid argument accessor!");
     return reinterpret_cast<const char*>(DiagObj->DiagArgumentsVal[Idx]);
   }
-  
+
   /// getArgSInt - Return the specified signed integer argument.
   int getArgSInt(unsigned Idx) const {
     assert(getArgKind(Idx) == Diagnostic::ak_sint &&
            "invalid argument accessor!");
     return (int)DiagObj->DiagArgumentsVal[Idx];
   }
-  
+
   /// getArgUInt - Return the specified unsigned integer argument.
   unsigned getArgUInt(unsigned Idx) const {
     assert(getArgKind(Idx) == Diagnostic::ak_uint &&
            "invalid argument accessor!");
     return (unsigned)DiagObj->DiagArgumentsVal[Idx];
   }
-  
+
   /// getArgIdentifier - Return the specified IdentifierInfo argument.
   const IdentifierInfo *getArgIdentifier(unsigned Idx) const {
     assert(getArgKind(Idx) == Diagnostic::ak_identifierinfo &&
            "invalid argument accessor!");
     return reinterpret_cast<IdentifierInfo*>(DiagObj->DiagArgumentsVal[Idx]);
   }
-  
+
   /// getRawArg - Return the specified non-string argument in an opaque form.
   intptr_t getRawArg(unsigned Idx) const {
     assert(getArgKind(Idx) != Diagnostic::ak_std_string &&
            "invalid argument accessor!");
     return DiagObj->DiagArgumentsVal[Idx];
   }
-  
-  
+
+
   /// getNumRanges - Return the number of source ranges associated with this
   /// diagnostic.
   unsigned getNumRanges() const {
     return DiagObj->NumDiagRanges;
   }
-  
+
   const SourceRange &getRange(unsigned Idx) const {
     assert(Idx < DiagObj->NumDiagRanges && "Invalid diagnostic range index!");
     return *DiagObj->DiagRanges[Idx];
   }
-  
+
   unsigned getNumCodeModificationHints() const {
     return DiagObj->NumCodeModificationHints;
   }
@@ -708,7 +708,7 @@ public:
   }
 
   const CodeModificationHint *getCodeModificationHints() const {
-    return DiagObj->NumCodeModificationHints? 
+    return DiagObj->NumCodeModificationHints?
              &DiagObj->CodeModificationHints[0] : 0;
   }
 
@@ -717,20 +717,20 @@ public:
   /// array.
   void FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const;
 };
-  
+
 /// DiagnosticClient - This is an abstract interface implemented by clients of
 /// the front-end, which formats and prints fully processed diagnostics.
 class DiagnosticClient {
 public:
   virtual ~DiagnosticClient();
-  
+
   /// setLangOptions - This is set by clients of diagnostics when they know the
   /// language parameters of the diagnostics that may be sent through.  Note
   /// that this can change over time if a DiagClient has multiple languages sent
   /// through it.  It may also be set to null (e.g. when processing command line
   /// options).
   virtual void setLangOptions(const LangOptions *LO) {}
-  
+
   /// IncludeInDiagnosticCounts - This method (whose default implementation
   ///  returns true) indicates whether the diagnostics handled by this
   ///  DiagnosticClient should be included in the number of diagnostics

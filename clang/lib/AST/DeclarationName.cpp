@@ -23,7 +23,7 @@ namespace clang {
 /// CXXSpecialName - Records the type associated with one of the
 /// "special" kinds of declaration names in C++, e.g., constructors,
 /// destructors, and conversion functions.
-class CXXSpecialName 
+class CXXSpecialName
   : public DeclarationNameExtra, public llvm::FoldingSetNode {
 public:
   /// Type - The type associated with this declaration name.
@@ -40,7 +40,7 @@ public:
 };
 
 /// CXXOperatorIdName - Contains extra information for the name of an
-/// overloaded operator in C++, such as "operator+. 
+/// overloaded operator in C++, such as "operator+.
 class CXXOperatorIdName : public DeclarationNameExtra {
 public:
   /// FETokenInfo - Extra information associated with this operator
@@ -93,13 +93,13 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
 
   case StoredDeclarationNameExtra:
     switch (getExtra()->ExtraKindOrNumArgs) {
-    case DeclarationNameExtra::CXXConstructor: 
+    case DeclarationNameExtra::CXXConstructor:
       return CXXConstructorName;
 
-    case DeclarationNameExtra::CXXDestructor: 
+    case DeclarationNameExtra::CXXDestructor:
       return CXXDestructorName;
 
-    case DeclarationNameExtra::CXXConversionFunction: 
+    case DeclarationNameExtra::CXXConversionFunction:
       return CXXConversionFunctionName;
 
     case DeclarationNameExtra::CXXUsingDirective:
@@ -107,7 +107,7 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
 
     default:
       // Check if we have one of the CXXOperator* enumeration values.
-      if (getExtra()->ExtraKindOrNumArgs < 
+      if (getExtra()->ExtraKindOrNumArgs <
             DeclarationNameExtra::CXXUsingDirective)
         return CXXOperatorName;
 
@@ -159,7 +159,7 @@ std::string DeclarationName::getAsString() const {
     };
     const char *OpName = OperatorNames[getCXXOverloadedOperator()];
     assert(OpName && "not an overloaded operator");
-      
+
     std::string Result = "operator";
     if (OpName[0] >= 'a' && OpName[0] <= 'z')
       Result += ' ';
@@ -193,7 +193,7 @@ QualType DeclarationName::getCXXNameType() const {
 
 OverloadedOperatorKind DeclarationName::getCXXOverloadedOperator() const {
   if (CXXOperatorIdName *CXXOp = getAsCXXOperatorIdName()) {
-    unsigned value 
+    unsigned value
       = CXXOp->ExtraKindOrNumArgs - DeclarationNameExtra::CXXConversionFunction;
     return static_cast<OverloadedOperatorKind>(value);
   } else {
@@ -276,7 +276,7 @@ DeclarationNameTable::DeclarationNameTable() {
   // Initialize the overloaded operator names.
   CXXOperatorNames = new CXXOperatorIdName[NUM_OVERLOADED_OPERATORS];
   for (unsigned Op = 0; Op < NUM_OVERLOADED_OPERATORS; ++Op) {
-    CXXOperatorNames[Op].ExtraKindOrNumArgs 
+    CXXOperatorNames[Op].ExtraKindOrNumArgs
       = Op + DeclarationNameExtra::CXXConversionFunction;
     CXXOperatorNames[Op].FETokenInfo = 0;
   }
@@ -296,18 +296,18 @@ DeclarationNameTable::~DeclarationNameTable() {
   delete [] CXXOperatorNames;
 }
 
-DeclarationName 
-DeclarationNameTable::getCXXSpecialName(DeclarationName::NameKind Kind, 
+DeclarationName
+DeclarationNameTable::getCXXSpecialName(DeclarationName::NameKind Kind,
                                         CanQualType Ty) {
   assert(Kind >= DeclarationName::CXXConstructorName &&
          Kind <= DeclarationName::CXXConversionFunctionName &&
          "Kind must be a C++ special name kind");
-  llvm::FoldingSet<CXXSpecialName> *SpecialNames 
+  llvm::FoldingSet<CXXSpecialName> *SpecialNames
     = static_cast<llvm::FoldingSet<CXXSpecialName>*>(CXXSpecialNamesImpl);
 
   DeclarationNameExtra::ExtraKind EKind;
   switch (Kind) {
-  case DeclarationName::CXXConstructorName: 
+  case DeclarationName::CXXConstructorName:
     EKind = DeclarationNameExtra::CXXConstructor;
     assert(Ty.getCVRQualifiers() == 0 &&"Constructor type must be unqualified");
     break;
@@ -340,12 +340,12 @@ DeclarationNameTable::getCXXSpecialName(DeclarationName::NameKind Kind,
   return DeclarationName(SpecialName);
 }
 
-DeclarationName 
+DeclarationName
 DeclarationNameTable::getCXXOperatorName(OverloadedOperatorKind Op) {
   return DeclarationName(&CXXOperatorNames[(unsigned)Op]);
 }
 
-unsigned 
+unsigned
 llvm::DenseMapInfo<clang::DeclarationName>::
 getHashValue(clang::DeclarationName N) {
   return DenseMapInfo<void*>::getHashValue(N.getAsOpaquePtr());

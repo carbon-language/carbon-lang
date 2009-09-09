@@ -8,8 +8,8 @@ extern "C" int printf(...);
 
 
 struct C {
-	C() : iC(6) {}
-	int iC;
+  C() : iC(6) {}
+  int iC;
 };
 
 int foo() {
@@ -18,23 +18,23 @@ int foo() {
 
 class X { // ...
 public: 
-	X(int) {}
-	X(const X&, int i = 1, int j = 2, int k = foo()) {
-		printf("X(const X&, %d, %d, %d)\n", i, j, k);
-	}
+  X(int) {}
+  X(const X&, int i = 1, int j = 2, int k = foo()) {
+    printf("X(const X&, %d, %d, %d)\n", i, j, k);
+  }
 };
 
-int main()
-{
-	X a(1);
-	X b(a, 2);
-	X c = b;
-	X d(a, 5, 6);
+int main() {
+  X a(1);
+  X b(a, 2);
+  X c = b;
+  X d(a, 5, 6);
 }
-// CHECK-LP64: call	__ZN1XC1ERK1Xiii
-// CHECK-LP64: call	__ZN1XC1ERK1Xiii
-// CHECK-LP64: call	__ZN1XC1ERK1Xiii
 
-// CHECK-LP32: call	L__ZN1XC1ERK1Xiii
-// CHECK-LP32: call	L__ZN1XC1ERK1Xiii
-// CHECK-LP32: call	L__ZN1XC1ERK1Xiii
+// CHECK-LP64: call __ZN1XC1ERK1Xiii
+// CHECK-LP64: call __ZN1XC1ERK1Xiii
+// CHECK-LP64: call __ZN1XC1ERK1Xiii
+
+// CHECK-LP32: call L__ZN1XC1ERK1Xiii
+// CHECK-LP32: call L__ZN1XC1ERK1Xiii
+// CHECK-LP32: call L__ZN1XC1ERK1Xiii

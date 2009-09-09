@@ -35,7 +35,7 @@ HeaderFileInfo::getControllingMacro(ExternalIdentifierLookup *External) {
 HeaderSearch::HeaderSearch(FileManager &FM) : FileMgr(FM), FrameworkMap(64) {
   SystemDirIdx = 0;
   NoCurDirSearch = false;
- 
+
   ExternalLookup = 0;
   NumIncluded = 0;
   NumMultiIncludeFileOptzn = 0;
@@ -47,7 +47,7 @@ HeaderSearch::~HeaderSearch() {
   for (unsigned i = 0, e = HeaderMaps.size(); i != e; ++i)
     delete HeaderMaps[i].second;
 }
-                           
+
 void HeaderSearch::PrintStats() {
   fprintf(stderr, "\n*** HeaderSearch Stats:\n");
   fprintf(stderr, "%d files tracked.\n", (int)FileInfo.size());
@@ -61,11 +61,11 @@ void HeaderSearch::PrintStats() {
   fprintf(stderr, "  %d #import/#pragma once files.\n", NumOnceOnlyFiles);
   fprintf(stderr, "  %d included exactly once.\n", NumSingleIncludedFiles);
   fprintf(stderr, "  %d max times a file is included.\n", MaxNumIncludes);
-  
+
   fprintf(stderr, "  %d #include/#include_next/#import.\n", NumIncluded);
   fprintf(stderr, "    %d #includes skipped due to"
           " the multi-include optimization.\n", NumMultiIncludeFileOptzn);
-  
+
   fprintf(stderr, "%d framework lookups.\n", NumFrameworkLookups);
   fprintf(stderr, "%d subframework lookups.\n", NumSubFrameworkLookups);
 }
@@ -79,15 +79,15 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE) {
     for (unsigned i = 0, e = HeaderMaps.size(); i != e; ++i)
       // Pointer equality comparison of FileEntries works because they are
       // already uniqued by inode.
-      if (HeaderMaps[i].first == FE) 
+      if (HeaderMaps[i].first == FE)
         return HeaderMaps[i].second;
   }
-  
+
   if (const HeaderMap *HM = HeaderMap::Create(FE)) {
     HeaderMaps.push_back(std::make_pair(FE, HM));
     return HM;
   }
-    
+
   return 0;
 }
 
@@ -121,10 +121,10 @@ const FileEntry *DirectoryLookup::LookupFile(const char *FilenameStart,
     TmpDir.append(FilenameStart, FilenameEnd);
     return HS.getFileMgr().getFile(TmpDir.begin(), TmpDir.end());
   }
-  
+
   if (isFramework())
     return DoFrameworkLookup(FilenameStart, FilenameEnd, HS);
-  
+
   assert(isHeaderMap() && "Unknown directory lookup");
   return getHeaderMap()->LookupFile(FilenameStart, FilenameEnd,HS.getFileMgr());
 }
@@ -136,63 +136,63 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(const char *FilenameStart,
                                                     const char *FilenameEnd,
                                                     HeaderSearch &HS) const {
   FileManager &FileMgr = HS.getFileMgr();
-  
+
   // Framework names must have a '/' in the filename.
   const char *SlashPos = std::find(FilenameStart, FilenameEnd, '/');
   if (SlashPos == FilenameEnd) return 0;
-  
+
   // Find out if this is the home for the specified framework, by checking
   // HeaderSearch.  Possible answer are yes/no and unknown.
-  const DirectoryEntry *&FrameworkDirCache = 
+  const DirectoryEntry *&FrameworkDirCache =
     HS.LookupFrameworkCache(FilenameStart, SlashPos);
-  
+
   // If it is known and in some other directory, fail.
   if (FrameworkDirCache && FrameworkDirCache != getFrameworkDir())
     return 0;
-  
+
   // Otherwise, construct the path to this framework dir.
-  
+
   // FrameworkName = "/System/Library/Frameworks/"
   llvm::SmallString<1024> FrameworkName;
   FrameworkName += getFrameworkDir()->getName();
   if (FrameworkName.empty() || FrameworkName.back() != '/')
     FrameworkName.push_back('/');
-  
+
   // FrameworkName = "/System/Library/Frameworks/Cocoa"
   FrameworkName.append(FilenameStart, SlashPos);
-  
+
   // FrameworkName = "/System/Library/Frameworks/Cocoa.framework/"
   FrameworkName += ".framework/";
-  
+
   // If the cache entry is still unresolved, query to see if the cache entry is
   // still unresolved.  If so, check its existence now.
   if (FrameworkDirCache == 0) {
     HS.IncrementFrameworkLookupCount();
-    
+
     // If the framework dir doesn't exist, we fail.
     // FIXME: It's probably more efficient to query this with FileMgr.getDir.
-    if (!llvm::sys::Path(std::string(FrameworkName.begin(), 
+    if (!llvm::sys::Path(std::string(FrameworkName.begin(),
                                      FrameworkName.end())).exists())
       return 0;
-    
+
     // Otherwise, if it does, remember that this is the right direntry for this
     // framework.
     FrameworkDirCache = getFrameworkDir();
   }
-  
+
   // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
   unsigned OrigSize = FrameworkName.size();
-  
+
   FrameworkName += "Headers/";
   FrameworkName.append(SlashPos+1, FilenameEnd);
   if (const FileEntry *FE = FileMgr.getFile(FrameworkName.begin(),
                                             FrameworkName.end())) {
     return FE;
   }
-  
+
   // Check "/System/Library/Frameworks/Cocoa.framework/PrivateHeaders/file.h"
   const char *Private = "Private";
-  FrameworkName.insert(FrameworkName.begin()+OrigSize, Private, 
+  FrameworkName.insert(FrameworkName.begin()+OrigSize, Private,
                        Private+strlen(Private));
   return FileMgr.getFile(FrameworkName.begin(), FrameworkName.end());
 }
@@ -209,7 +209,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(const char *FilenameStart,
 /// non-null, indicates where the #including file is, in case a relative search
 /// is needed.
 const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
-                                          const char *FilenameEnd, 
+                                          const char *FilenameEnd,
                                           bool isAngled,
                                           const DirectoryLookup *FromDir,
                                           const DirectoryLookup *&CurDir,
@@ -220,11 +220,11 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
 
     // If this was an #include_next "/absolute/file", fail.
     if (FromDir) return 0;
-    
+
     // Otherwise, just return the file.
     return FileMgr.getFile(FilenameStart, FilenameEnd);
   }
-  
+
   // Step #0, unless disabled, check to see if the file is in the #includer's
   // directory.  This has to be based on CurFileEnt, not CurDir, because
   // CurFileEnt could be a #include of a subdirectory (#include "foo/bar.h") and
@@ -249,17 +249,17 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
       return FE;
     }
   }
-  
+
   CurDir = 0;
 
   // If this is a system #include, ignore the user #include locs.
   unsigned i = isAngled ? SystemDirIdx : 0;
-  
+
   // If this is a #include_next request, start searching after the directory the
   // file was found in.
   if (FromDir)
     i = FromDir-&SearchDirs[0];
-  
+
   // Cache all of the lookups performed by this method.  Many headers are
   // multiply included, and the "pragma once" optimization prevents them from
   // being relex/pp'd, but they would still have to search through a
@@ -279,23 +279,23 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
     // start point value.
     CacheLookup.first = i+1;
   }
-  
+
   // Check each directory in sequence to see if it contains this file.
   for (; i != SearchDirs.size(); ++i) {
-    const FileEntry *FE = 
+    const FileEntry *FE =
       SearchDirs[i].LookupFile(FilenameStart, FilenameEnd, *this);
     if (!FE) continue;
-    
+
     CurDir = &SearchDirs[i];
-    
+
     // This file is a system header or C++ unfriendly if the dir is.
     getFileInfo(FE).DirInfo = CurDir->getDirCharacteristic();
-    
+
     // Remember this location for the next lookup we do.
     CacheLookup.second = i;
     return FE;
   }
-  
+
   // Otherwise, didn't find it. Remember we didn't find this.
   CacheLookup.second = SearchDirs.size();
   return 0;
@@ -311,20 +311,20 @@ LookupSubframeworkHeader(const char *FilenameStart,
                          const char *FilenameEnd,
                          const FileEntry *ContextFileEnt) {
   assert(ContextFileEnt && "No context file?");
-  
+
   // Framework names must have a '/' in the filename.  Find it.
   const char *SlashPos = std::find(FilenameStart, FilenameEnd, '/');
   if (SlashPos == FilenameEnd) return 0;
-  
+
   // Look up the base framework name of the ContextFileEnt.
   const char *ContextName = ContextFileEnt->getName();
-    
+
   // If the context info wasn't a framework, couldn't be a subframework.
   const char *FrameworkPos = strstr(ContextName, ".framework/");
   if (FrameworkPos == 0)
     return 0;
-  
-  llvm::SmallString<1024> FrameworkName(ContextName, 
+
+  llvm::SmallString<1024> FrameworkName(ContextName,
                                         FrameworkPos+strlen(".framework/"));
 
   // Append Frameworks/HIToolbox.framework/
@@ -334,28 +334,28 @@ LookupSubframeworkHeader(const char *FilenameStart,
 
   llvm::StringMapEntry<const DirectoryEntry *> &CacheLookup =
     FrameworkMap.GetOrCreateValue(FilenameStart, SlashPos);
-  
+
   // Some other location?
   if (CacheLookup.getValue() &&
       CacheLookup.getKeyLength() == FrameworkName.size() &&
       memcmp(CacheLookup.getKeyData(), &FrameworkName[0],
              CacheLookup.getKeyLength()) != 0)
     return 0;
-  
+
   // Cache subframework.
   if (CacheLookup.getValue() == 0) {
     ++NumSubFrameworkLookups;
-    
+
     // If the framework dir doesn't exist, we fail.
     const DirectoryEntry *Dir = FileMgr.getDirectory(FrameworkName.begin(),
                                                      FrameworkName.end());
     if (Dir == 0) return 0;
-    
+
     // Otherwise, if it does, remember that this is the right direntry for this
     // framework.
     CacheLookup.setValue(Dir);
   }
-  
+
   const FileEntry *FE = 0;
 
   // Check ".../Frameworks/HIToolbox.framework/Headers/HIToolbox.h"
@@ -364,7 +364,7 @@ LookupSubframeworkHeader(const char *FilenameStart,
   HeadersFilename.append(SlashPos+1, FilenameEnd);
   if (!(FE = FileMgr.getFile(HeadersFilename.begin(),
                              HeadersFilename.end()))) {
-    
+
     // Check ".../Frameworks/HIToolbox.framework/PrivateHeaders/HIToolbox.h"
     HeadersFilename = FrameworkName;
     HeadersFilename += "PrivateHeaders/";
@@ -372,7 +372,7 @@ LookupSubframeworkHeader(const char *FilenameStart,
     if (!(FE = FileMgr.getFile(HeadersFilename.begin(), HeadersFilename.end())))
       return 0;
   }
-  
+
   // This file is a system header or C++ unfriendly if the old file is.
   //
   // Note that the temporary 'DirInfo' is required here, as either call to
@@ -394,7 +394,7 @@ HeaderFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
   if (FE->getUID() >= FileInfo.size())
     FileInfo.resize(FE->getUID()+1);
   return FileInfo[FE->getUID()];
-}  
+}
 
 void HeaderSearch::setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID) {
   if (UID >= FileInfo.size())
@@ -410,13 +410,13 @@ bool HeaderSearch::ShouldEnterIncludeFile(const FileEntry *File, bool isImport){
 
   // Get information about this file.
   HeaderFileInfo &FileInfo = getFileInfo(File);
-  
+
   // If this is a #import directive, check that we have not already imported
   // this header.
   if (isImport) {
     // If this has already been imported, don't import it again.
     FileInfo.isImport = true;
-    
+
     // Has this already been #import'ed or #include'd?
     if (FileInfo.NumIncludes) return false;
   } else {
@@ -425,19 +425,19 @@ bool HeaderSearch::ShouldEnterIncludeFile(const FileEntry *File, bool isImport){
     if (FileInfo.isImport)
       return false;
   }
-  
+
   // Next, check to see if the file is wrapped with #ifndef guards.  If so, and
   // if the macro that guards it is defined, we know the #include has no effect.
-  if (const IdentifierInfo *ControllingMacro 
+  if (const IdentifierInfo *ControllingMacro
       = FileInfo.getControllingMacro(ExternalLookup))
     if (ControllingMacro->hasMacroDefinition()) {
       ++NumMultiIncludeFileOptzn;
       return false;
     }
-  
+
   // Increment the number of times this file has been included.
   ++FileInfo.NumIncludes;
-  
+
   return true;
 }
 

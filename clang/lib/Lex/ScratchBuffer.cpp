@@ -38,16 +38,16 @@ SourceLocation ScratchBuffer::getToken(const char *Buf, unsigned Len,
   // Prefix the token with a \n, so that it looks like it is the first thing on
   // its own virtual line in caret diagnostics.
   CurBuffer[BytesUsed++] = '\n';
-  
+
   // Return a pointer to the character data.
   DestPtr = CurBuffer+BytesUsed;
-  
+
   // Copy the token data into the buffer.
   memcpy(CurBuffer+BytesUsed, Buf, Len);
 
   // Remember that we used these bytes.
   BytesUsed += Len+1;
-  
+
   // Add a NUL terminator to the token.  This keeps the tokens separated, in
   // case they get relexed, and puts them on their own virtual lines in case a
   // diagnostic points to one.
@@ -62,8 +62,8 @@ void ScratchBuffer::AllocScratchBuffer(unsigned RequestLen) {
   // support gigantic tokens, which almost certainly won't happen. :)
   if (RequestLen < ScratchBufSize)
     RequestLen = ScratchBufSize;
-  
-  llvm::MemoryBuffer *Buf = 
+
+  llvm::MemoryBuffer *Buf =
     llvm::MemoryBuffer::getNewMemBuffer(RequestLen, "<scratch space>");
   FileID FID = SourceMgr.createFileIDForMemBuffer(Buf);
   BufferStartLoc = SourceMgr.getLocForStartOfFile(FID);

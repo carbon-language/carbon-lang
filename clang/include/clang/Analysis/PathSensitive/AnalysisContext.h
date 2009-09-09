@@ -27,7 +27,7 @@ class CFG;
 class LiveVariables;
 class ParentMap;
 class ImplicitParamDecl;
-  
+
 /// AnalysisContext contains the context data for the function or method under
 /// analysis.
 class AnalysisContext {
@@ -47,7 +47,7 @@ public:
   CFG *getCFG();
   ParentMap &getParentMap();
   LiveVariables *getLiveVariables();
-  
+
   /// Return the ImplicitParamDecl* associated with 'self' if this
   /// AnalysisContext wraps an ObjCMethodDecl.  Returns NULL otherwise.
   const ImplicitParamDecl *getSelfDecl() const;
@@ -58,7 +58,7 @@ class AnalysisContextManager {
   ContextMap Contexts;
 public:
   ~AnalysisContextManager();
-  
+
   AnalysisContext *getContext(const Decl *D);
 };
 
@@ -87,10 +87,10 @@ public:
 
   CFG *getCFG() const { return getAnalysisContext()->getCFG(); }
 
-  LiveVariables *getLiveVariables() const { 
+  LiveVariables *getLiveVariables() const {
     return getAnalysisContext()->getLiveVariables();
   }
-  
+
   const ImplicitParamDecl *getSelfDecl() const {
     return Ctx->getSelfDecl();
   }
@@ -120,8 +120,8 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
                       const LocationContext *parent, const Stmt *s);
 
-  static bool classof(const LocationContext* Ctx) { 
-    return Ctx->getKind() == StackFrame; 
+  static bool classof(const LocationContext* Ctx) {
+    return Ctx->getKind() == StackFrame;
   }
 };
 
@@ -140,8 +140,8 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
                       const LocationContext *parent, const Stmt *s);
 
-  static bool classof(const LocationContext* Ctx) { 
-    return Ctx->getKind() == Scope; 
+  static bool classof(const LocationContext* Ctx) {
+    return Ctx->getKind() == Scope;
   }
 };
 
@@ -156,6 +156,6 @@ public:
   ScopeContext *getScope(AnalysisContext *ctx, const LocationContext *parent,
                          const Stmt *s);
 };
-  
+
 } // end clang namespace
 #endif

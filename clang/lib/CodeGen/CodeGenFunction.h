@@ -166,20 +166,20 @@ public:
   /// this behavior for branches?
   void EmitBranchThroughCleanup(llvm::BasicBlock *Dest);
 
-  /// PushConditionalTempDestruction - Should be called before a conditional 
+  /// PushConditionalTempDestruction - Should be called before a conditional
   /// part of an expression is emitted. For example, before the RHS of the
   /// expression below is emitted:
-  /// 
+  ///
   /// b && f(T());
   ///
   /// This is used to make sure that any temporaryes created in the conditional
   /// branch are only destroyed if the branch is taken.
   void PushConditionalTempDestruction();
-  
-  /// PopConditionalTempDestruction - Should be called after a conditional 
+
+  /// PopConditionalTempDestruction - Should be called after a conditional
   /// part of an expression has been emitted.
   void PopConditionalTempDestruction();
-  
+
 private:
   CGDebugInfo* DebugInfo;
 
@@ -261,37 +261,37 @@ private:
   /// CXXThisDecl - When parsing an C++ function, this will hold the implicit
   /// 'this' declaration.
   ImplicitParamDecl *CXXThisDecl;
-  
+
   /// CXXLiveTemporaryInfo - Holds information about a live C++ temporary.
   struct CXXLiveTemporaryInfo {
     /// Temporary - The live temporary.
     const CXXTemporary *Temporary;
-    
+
     /// ThisPtr - The pointer to the temporary.
     llvm::Value *ThisPtr;
-    
+
     /// DtorBlock - The destructor block.
     llvm::BasicBlock *DtorBlock;
-    
+
     /// CondPtr - If this is a conditional temporary, this is the pointer to
     /// the condition variable that states whether the destructor should be
     /// called or not.
     llvm::Value *CondPtr;
-    
+
     CXXLiveTemporaryInfo(const CXXTemporary *temporary,
                          llvm::Value *thisptr, llvm::BasicBlock *dtorblock,
                          llvm::Value *condptr)
-      : Temporary(temporary), ThisPtr(thisptr), DtorBlock(dtorblock), 
+      : Temporary(temporary), ThisPtr(thisptr), DtorBlock(dtorblock),
       CondPtr(condptr) { }
   };
-  
+
   llvm::SmallVector<CXXLiveTemporaryInfo, 4> LiveTemporaries;
 
-  /// ConditionalTempDestructionStack - Contains the number of live temporaries 
+  /// ConditionalTempDestructionStack - Contains the number of live temporaries
   /// when PushConditionalTempDestruction was called. This is used so that
   /// we know how many temporaries were created by a certain expression.
   llvm::SmallVector<size_t, 4> ConditionalTempDestructionStack;
-  
+
 public:
   CodeGenFunction(CodeGenModule &cgm);
 
@@ -368,32 +368,32 @@ public:
                                 bool Extern, int64_t nv, int64_t v);
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD);
-  
+
   void SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
                                     const FunctionDecl *FD,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args);
-  
+
   void SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
                                    const FunctionDecl *FD,
                                    llvm::Function *Fn,
                                    const FunctionArgList &Args);
-  
+
   void SynthesizeDefaultConstructor(const CXXConstructorDecl *CD,
                                     const FunctionDecl *FD,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args);
-  
+
   void SynthesizeDefaultDestructor(const CXXDestructorDecl *CD,
                                     const FunctionDecl *FD,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args);
-  
+
   /// EmitDtorEpilogue - Emit all code that comes at the end of class's
-  /// destructor. This is to call destructors on members and base classes 
+  /// destructor. This is to call destructors on members and base classes
   /// in reverse order of their construction.
   void EmitDtorEpilogue(const CXXDestructorDecl *DD);
-  
+
   /// EmitFunctionProlog - Emit the target specific LLVM code to load the
   /// arguments for the given function. This is also responsible for naming the
   /// LLVM function arguments.
@@ -559,42 +559,42 @@ public:
   /// LoadCXXThis - Load the value of 'this'. This function is only valid while
   /// generating code for an C++ member function.
   llvm::Value *LoadCXXThis();
-  
+
   /// AddressCXXOfBaseClass - This function will add the necessary delta
   /// to the load of 'this' and returns address of the base class.
-  // FIXME. This currently only does a derived to non-virtual base conversion. 
+  // FIXME. This currently only does a derived to non-virtual base conversion.
   // Other kinds of conversions will come later.
   llvm::Value *AddressCXXOfBaseClass(llvm::Value *ThisValue,
-                                     const CXXRecordDecl *ClassDecl, 
+                                     const CXXRecordDecl *ClassDecl,
                                      const CXXRecordDecl *BaseClassDecl);
-  
-  void EmitClassAggrMemberwiseCopy(llvm::Value *DestValue, 
+
+  void EmitClassAggrMemberwiseCopy(llvm::Value *DestValue,
                                    llvm::Value *SrcValue,
                                    const ArrayType *Array,
                                    const CXXRecordDecl *BaseClassDecl,
                                    QualType Ty);
 
-  void EmitClassAggrCopyAssignment(llvm::Value *DestValue, 
+  void EmitClassAggrCopyAssignment(llvm::Value *DestValue,
                                    llvm::Value *SrcValue,
                                    const ArrayType *Array,
                                    const CXXRecordDecl *BaseClassDecl,
                                    QualType Ty);
 
   void EmitClassMemberwiseCopy(llvm::Value *DestValue, llvm::Value *SrcValue,
-                               const CXXRecordDecl *ClassDecl, 
+                               const CXXRecordDecl *ClassDecl,
                                const CXXRecordDecl *BaseClassDecl,
                                QualType Ty);
-  
+
   void EmitClassCopyAssignment(llvm::Value *DestValue, llvm::Value *SrcValue,
-                               const CXXRecordDecl *ClassDecl, 
+                               const CXXRecordDecl *ClassDecl,
                                const CXXRecordDecl *BaseClassDecl,
                                QualType Ty);
-  
-  void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type, 
+
+  void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type,
                               llvm::Value *This,
                               CallExpr::const_arg_iterator ArgBeg,
                               CallExpr::const_arg_iterator ArgEnd);
-  
+
   void EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
                                   const ArrayType *Array,
                                   llvm::Value *This);
@@ -602,16 +602,16 @@ public:
   void EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
                                  const ArrayType *Array,
                                  llvm::Value *This);
-  
+
   void EmitCXXDestructorCall(const CXXDestructorDecl *D, CXXDtorType Type,
                              llvm::Value *This);
-  
+
   void PushCXXTemporary(const CXXTemporary *Temporary, llvm::Value *Ptr);
   void PopCXXTemporary();
-  
+
   llvm::Value *EmitCXXNewExpr(const CXXNewExpr *E);
   void EmitCXXDeleteExpr(const CXXDeleteExpr *E);
-  
+
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
@@ -621,7 +621,7 @@ public:
   /// This function can be called with a null (unreachable) insert point.
   void EmitDecl(const Decl &D);
 
-  /// EmitBlockVarDecl - Emit a block variable declaration. 
+  /// EmitBlockVarDecl - Emit a block variable declaration.
   ///
   /// This function can be called with a null (unreachable) insert point.
   void EmitBlockVarDecl(const VarDecl &D);
@@ -799,7 +799,7 @@ public:
   LValue EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E);
   LValue EmitCXXConstructLValue(const CXXConstructExpr *E);
   LValue EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E);
-  
+
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
   LValue EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E);
@@ -822,13 +822,13 @@ public:
                   llvm::Value *Callee,
                   const CallArgList &Args,
                   const Decl *TargetDecl = 0);
-  
+
   RValue EmitCall(llvm::Value *Callee, QualType FnType,
                   CallExpr::const_arg_iterator ArgBeg,
                   CallExpr::const_arg_iterator ArgEnd,
                   const Decl *TargetDecl = 0);
   RValue EmitCallExpr(const CallExpr *E);
-  
+
   llvm::Value *BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *&This,
                                 const llvm::Type *Ty);
   RValue EmitCXXMemberCall(const CXXMethodDecl *MD,
@@ -840,10 +840,10 @@ public:
 
   RValue EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
                                        const CXXMethodDecl *MD);
-  
+
   RValue EmitCXXFunctionalCastExpr(const CXXFunctionalCastExpr *E);
-  
-  RValue EmitBuiltinExpr(const FunctionDecl *FD, 
+
+  RValue EmitBuiltinExpr(const FunctionDecl *FD,
                          unsigned BuiltinID, const CallExpr *E);
 
   RValue EmitBlockCallExpr(const CallExpr *E);
@@ -873,7 +873,7 @@ public:
   /// expression. Will emit a temporary variable if E is not an LValue.
   RValue EmitReferenceBindingToExpr(const Expr* E, QualType DestType,
                                     bool IsInitializer = false);
-  
+
   //===--------------------------------------------------------------------===//
   //                           Expression Emission
   //===--------------------------------------------------------------------===//
@@ -946,20 +946,20 @@ public:
   /// with the C++ runtime so that its destructor will be called at exit.
   void EmitCXXGlobalDtorRegistration(const CXXDestructorDecl *Dtor,
                                      llvm::Constant *DeclPtr);
-  
-  /// GenerateCXXGlobalInitFunc - Generates code for initializing global 
+
+  /// GenerateCXXGlobalInitFunc - Generates code for initializing global
   /// variables.
   void GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                  const VarDecl **Decls,
                                  unsigned NumDecls);
-  
+
   void EmitCXXConstructExpr(llvm::Value *Dest, const CXXConstructExpr *E);
-  
+
   RValue EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
-                                    llvm::Value *AggLoc = 0, 
+                                    llvm::Value *AggLoc = 0,
                                     bool IsAggLocVolatile = false,
                                     bool IsInitializer = false);
-                                  
+
   //===--------------------------------------------------------------------===//
   //                             Internal Helpers
   //===--------------------------------------------------------------------===//
@@ -1004,7 +1004,7 @@ private:
   void ExpandTypeToArgs(QualType Ty, RValue Src,
                         llvm::SmallVector<llvm::Value*, 16> &Args);
 
-  llvm::Value* EmitAsmInput(const AsmStmt &S, 
+  llvm::Value* EmitAsmInput(const AsmStmt &S,
                             const TargetInfo::ConstraintInfo &Info,
                             const Expr *InputExpr, std::string &ConstraintStr);
 
@@ -1017,9 +1017,9 @@ private:
 
   /// EmitCallArg - Emit a single call argument.
   RValue EmitCallArg(const Expr *E, QualType ArgType);
-  
+
   /// EmitCallArgs - Emit call arguments for a function.
-  /// The CallArgTypeInfo parameter is used for iterating over the known 
+  /// The CallArgTypeInfo parameter is used for iterating over the known
   /// argument types of the function being called.
   template<typename T>
   void EmitCallArgs(CallArgList& Args, const T* CallArgTypeInfo,
@@ -1034,21 +1034,21 @@ private:
         QualType ArgType = *I;
 
         assert(getContext().getCanonicalType(ArgType.getNonReferenceType()).
-               getTypePtr() == 
-               getContext().getCanonicalType(Arg->getType()).getTypePtr() && 
+               getTypePtr() ==
+               getContext().getCanonicalType(Arg->getType()).getTypePtr() &&
                "type mismatch in call argument!");
-        
-        Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType), 
+
+        Args.push_back(std::make_pair(EmitCallArg(*Arg, ArgType),
                                       ArgType));
       }
-      
-      // Either we've emitted all the call args, or we have a call to a 
+
+      // Either we've emitted all the call args, or we have a call to a
       // variadic function.
-      assert((Arg == ArgEnd || CallArgTypeInfo->isVariadic()) && 
+      assert((Arg == ArgEnd || CallArgTypeInfo->isVariadic()) &&
              "Extra arguments in non-variadic function!");
-      
+
     }
-    
+
     // If we still have any arguments, emit them using the type of the argument.
     for (; Arg != ArgEnd; ++Arg) {
       QualType ArgType = Arg->getType();
@@ -1057,7 +1057,7 @@ private:
     }
   }
 };
-  
+
 
 }  // end namespace CodeGen
 }  // end namespace clang

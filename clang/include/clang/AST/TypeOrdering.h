@@ -37,7 +37,7 @@ namespace llvm {
   template<> struct DenseMapInfo<clang::QualType> {
     static inline clang::QualType getEmptyKey() { return clang::QualType(); }
 
-    static inline clang::QualType getTombstoneKey() { 
+    static inline clang::QualType getTombstoneKey() {
       using clang::QualType;
       return QualType::getFromOpaquePtr(reinterpret_cast<clang::Type *>(-1));
     }
@@ -51,11 +51,11 @@ namespace llvm {
       return LHS == RHS;
     }
 
-    static bool isPod() { 
+    static bool isPod() {
       // QualType isn't *technically* a POD type. However, we can get
       // away with calling it a POD type since its copy constructor,
       // copy assignment operator, and destructor are all trivial.
-      return true; 
+      return true;
     }
   };
 }

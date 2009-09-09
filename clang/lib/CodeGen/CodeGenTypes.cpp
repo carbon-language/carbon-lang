@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is the code that handles AST -> LLVM type lowering. 
+// This is the code that handles AST -> LLVM type lowering.
 //
 //===----------------------------------------------------------------------===//
 
@@ -34,8 +34,8 @@ CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
 }
 
 CodeGenTypes::~CodeGenTypes() {
-  for(llvm::DenseMap<const Type *, CGRecordLayout *>::iterator
-        I = CGRecordLayouts.begin(), E = CGRecordLayouts.end();
+  for (llvm::DenseMap<const Type *, CGRecordLayout *>::iterator
+         I = CGRecordLayouts.begin(), E = CGRecordLayouts.end();
       I != E; ++I)
     delete I->second;
   CGRecordLayouts.clear();
@@ -65,7 +65,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
 
 const llvm::Type *CodeGenTypes::ConvertTypeRecursive(QualType T) {
   T = Context.getCanonicalType(T);
-  
+
   // See if type is already cached.
   llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator
     I = TypeCache.find(T.getTypePtr());
@@ -75,7 +75,7 @@ const llvm::Type *CodeGenTypes::ConvertTypeRecursive(QualType T) {
     return I->second.get();
 
   const llvm::Type *ResultType = ConvertNewType(T);
-  TypeCache.insert(std::make_pair(T.getTypePtr(), 
+  TypeCache.insert(std::make_pair(T.getTypePtr(),
                                   llvm::PATypeHolder(ResultType)));
   return ResultType;
 }
@@ -94,15 +94,15 @@ const llvm::Type *CodeGenTypes::ConvertTypeForMemRecursive(QualType T) {
 /// memory representation is usually i8 or i32, depending on the target.
 const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
   const llvm::Type *R = ConvertType(T);
-  
+
   // If this is a non-bool type, don't map it.
   if (R != llvm::Type::getInt1Ty(getLLVMContext()))
     return R;
-    
+
   // Otherwise, return an integer of the target-specified size.
   return llvm::IntegerType::get(getLLVMContext(),
                                 (unsigned)Context.getTypeSize(T));
-  
+
 }
 
 // Code to verify a given function type is complete, i.e. the return type
@@ -124,15 +124,15 @@ static const TagType *VerifyFuncTypeComplete(const Type* T) {
 /// replace the 'opaque' type we previously made for it if applicable.
 void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
   const Type *Key = Context.getTagDeclType(TD).getTypePtr();
-  llvm::DenseMap<const Type*, llvm::PATypeHolder>::iterator TDTI = 
+  llvm::DenseMap<const Type*, llvm::PATypeHolder>::iterator TDTI =
     TagDeclTypes.find(Key);
   if (TDTI == TagDeclTypes.end()) return;
-  
+
   // Remember the opaque LLVM type for this tagdecl.
   llvm::PATypeHolder OpaqueHolder = TDTI->second;
   assert(isa<llvm::OpaqueType>(OpaqueHolder.get()) &&
          "Updating compilation of an already non-opaque type?");
-  
+
   // Remove it from TagDeclTypes so that it will be regenerated.
   TagDeclTypes.erase(TDTI);
 
@@ -163,7 +163,7 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
   }
 }
 
-static const llvm::Type* getTypeForFormat(llvm::LLVMContext &VMContext, 
+static const llvm::Type* getTypeForFormat(llvm::LLVMContext &VMContext,
                                           const llvm::fltSemantics &format) {
   if (&format == &llvm::APFloat::IEEEsingle)
     return llvm::Type::getFloatTy(VMContext);
@@ -181,7 +181,7 @@ static const llvm::Type* getTypeForFormat(llvm::LLVMContext &VMContext,
 
 const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   const clang::Type &Ty = *Context.getCanonicalType(T);
-  
+
   switch (Ty.getTypeClass()) {
 #define TYPE(Class, Base)
 #define ABSTRACT_TYPE(Class, Base)
@@ -204,7 +204,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::Bool:
       // Note that we always return bool as i1 for use as a scalar type.
       return llvm::Type::getInt1Ty(getLLVMContext());
-      
+
     case BuiltinType::Char_S:
     case BuiltinType::Char_U:
     case BuiltinType::SChar:
@@ -222,13 +222,13 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::Char32:
       return llvm::IntegerType::get(getLLVMContext(),
         static_cast<unsigned>(Context.getTypeSize(T)));
-      
+
     case BuiltinType::Float:
     case BuiltinType::Double:
     case BuiltinType::LongDouble:
-      return getTypeForFormat(getLLVMContext(),   
+      return getTypeForFormat(getLLVMContext(),
                               Context.getFloatTypeSemantics(T));
-          
+
     case BuiltinType::UInt128:
     case BuiltinType::Int128:
       return llvm::IntegerType::get(getLLVMContext(), 128);
@@ -236,10 +236,10 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     break;
   }
   case Type::FixedWidthInt:
-    return llvm::IntegerType::get(getLLVMContext(), 
+    return llvm::IntegerType::get(getLLVMContext(),
                                   cast<FixedWidthIntType>(T)->getWidth());
   case Type::Complex: {
-    const llvm::Type *EltTy = 
+    const llvm::Type *EltTy =
       ConvertTypeRecursive(cast<ComplexType>(Ty).getElementType());
     return llvm::StructType::get(TheModule.getContext(), EltTy, EltTy, NULL);
   }
@@ -258,7 +258,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     PointersToResolve.push_back(std::make_pair(ETy, PointeeType));
     return llvm::PointerType::get(PointeeType, ETy.getAddressSpace());
   }
-    
+
   case Type::VariableArray: {
     const VariableArrayType &A = cast<VariableArrayType>(Ty);
     assert(A.getIndexTypeQualifier() == 0 &&
@@ -305,7 +305,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(&Ty);
     return GetFunctionType(getFunctionInfo(FNPT), true);
   }
-  
+
   case Type::ExtQual:
     return
       ConvertTypeRecursive(QualType(cast<ExtQualType>(Ty).getBaseType(), 0));
@@ -319,12 +319,12 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
         T = llvm::OpaqueType::get(getLLVMContext());
     return T;
   }
-      
+
   case Type::ObjCObjectPointer: {
     // Protocol qualifications do not influence the LLVM type, we just return a
     // pointer to the underlying interface type. We don't need to worry about
     // recursive conversion.
-    const llvm::Type *T = 
+    const llvm::Type *T =
       ConvertTypeRecursive(cast<ObjCObjectPointerType>(Ty).getPointeeType());
     return llvm::PointerType::getUnqual(T);
   }
@@ -333,10 +333,10 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   case Type::Enum: {
     const TagDecl *TD = cast<TagType>(Ty).getDecl();
     const llvm::Type *Res = ConvertTagDeclType(TD);
-    
+
     std::string TypeName(TD->getKindName());
     TypeName += '.';
-    
+
     // Name the codegen type after the typedef name
     // if there is no tag type name available
     if (TD->getIdentifier())
@@ -345,8 +345,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       TypeName += TdT->getDecl()->getNameAsString();
     else
       TypeName += "anon";
-    
-    TheModule.addTypeName(TypeName, Res);  
+
+    TheModule.addTypeName(TypeName, Res);
     return Res;
   }
 
@@ -365,7 +365,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     QualType ETy = cast<MemberPointerType>(Ty).getPointeeType();
     if (ETy->isFunctionType()) {
       return llvm::StructType::get(TheModule.getContext(),
-                                   ConvertType(Context.getPointerDiffType()), 
+                                   ConvertType(Context.getPointerDiffType()),
                                    ConvertType(Context.getPointerDiffType()),
                                    NULL);
     } else
@@ -375,7 +375,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   case Type::TemplateSpecialization:
     assert(false && "Dependent types can't get here");
   }
-  
+
   // FIXME: implement.
   return llvm::OpaqueType::get(getLLVMContext());
 }
@@ -395,18 +395,18 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
       }
     }
   }
-    
+
   // TagDecl's are not necessarily unique, instead use the (clang)
   // type connected to the decl.
-  const Type *Key = 
+  const Type *Key =
     Context.getTagDeclType(TD).getTypePtr();
-  llvm::DenseMap<const Type*, llvm::PATypeHolder>::iterator TDTI = 
+  llvm::DenseMap<const Type*, llvm::PATypeHolder>::iterator TDTI =
     TagDeclTypes.find(Key);
-  
+
   // If we've already compiled this tag type, use the previous definition.
   if (TDTI != TagDeclTypes.end())
     return TDTI->second;
-  
+
   // If this is still a forward definition, just define an opaque type to use
   // for this tagged decl.
   if (!TD->isDefinition()) {
@@ -414,14 +414,14 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
     TagDeclTypes.insert(std::make_pair(Key, ResultType));
     return ResultType;
   }
-  
+
   // Okay, this is a definition of a type.  Compile the implementation now.
-  
+
   if (TD->isEnum()) {
     // Don't bother storing enums in TagDeclTypes.
     return ConvertTypeRecursive(cast<EnumDecl>(TD)->getIntegerType());
   }
-  
+
   // This decl could well be recursive.  In this case, insert an opaque
   // definition of this type, which the recursive uses will get.  We will then
   // refine this opaque version later.
@@ -430,30 +430,30 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   // type.  This will later be refined to the actual type.
   llvm::PATypeHolder ResultHolder = llvm::OpaqueType::get(getLLVMContext());
   TagDeclTypes.insert(std::make_pair(Key, ResultHolder));
-  
+
   const llvm::Type *ResultType;
   const RecordDecl *RD = cast<const RecordDecl>(TD);
 
   // Layout fields.
-  CGRecordLayout *Layout = 
+  CGRecordLayout *Layout =
     CGRecordLayoutBuilder::ComputeLayout(*this, RD);
-    
+
   CGRecordLayouts[Key] = Layout;
   ResultType = Layout->getLLVMType();
-  
+
   // Refine our Opaque type to ResultType.  This can invalidate ResultType, so
   // make sure to read the result out of the holder.
   cast<llvm::OpaqueType>(ResultHolder.get())
     ->refineAbstractTypeTo(ResultType);
-  
+
   return ResultHolder.get();
-}  
+}
 
 /// getLLVMFieldNo - Return llvm::StructType element number
 /// that corresponds to the field FD.
 unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
   assert(!FD->isBitField() && "Don't use getLLVMFieldNo on bit fields!");
-  
+
   llvm::DenseMap<const FieldDecl*, unsigned>::iterator I = FieldInfo.find(FD);
   assert (I != FieldInfo.end()  && "Unable to find field info");
   return I->second;
@@ -481,11 +481,11 @@ void CodeGenTypes::addBitFieldInfo(const FieldDecl *FD, unsigned FieldNo,
 /// getCGRecordLayout - Return record layout info for the given llvm::Type.
 const CGRecordLayout &
 CodeGenTypes::getCGRecordLayout(const TagDecl *TD) const {
-  const Type *Key = 
+  const Type *Key =
     Context.getTagDeclType(TD).getTypePtr();
   llvm::DenseMap<const Type*, CGRecordLayout *>::iterator I
     = CGRecordLayouts.find(Key);
-  assert (I != CGRecordLayouts.end() 
+  assert (I != CGRecordLayouts.end()
           && "Unable to find record layout information for type");
   return *I->second;
 }

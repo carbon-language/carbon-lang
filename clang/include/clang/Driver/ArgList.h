@@ -65,17 +65,17 @@ namespace driver {
 
     const_iterator begin() const { return Args.begin(); }
     const_iterator end() const { return Args.end(); }
-    
+
     const_reverse_iterator rbegin() const { return Args.rbegin(); }
     const_reverse_iterator rend() const { return Args.rend(); }
 
     /// hasArg - Does the arg list contain any option matching \arg Id.
     ///
     /// \arg Claim Whether the argument should be claimed, if it exists.
-    bool hasArg(options::ID Id, bool Claim=true) const { 
+    bool hasArg(options::ID Id, bool Claim=true) const {
       return getLastArg(Id, Claim) != 0;
     }
-    bool hasArg(options::ID Id0, options::ID Id1, bool Claim=true) const { 
+    bool hasArg(options::ID Id0, options::ID Id1, bool Claim=true) const {
       return getLastArg(Id0, Id1, Claim) != 0;
     }
 
@@ -105,15 +105,15 @@ namespace driver {
 
     /// AddAllArgs - Render all arguments matching the given ids.
     void AddAllArgs(ArgStringList &Output, options::ID Id0) const;
-    void AddAllArgs(ArgStringList &Output, options::ID Id0, 
+    void AddAllArgs(ArgStringList &Output, options::ID Id0,
                     options::ID Id1) const;
-    void AddAllArgs(ArgStringList &Output, options::ID Id0, options::ID Id1, 
+    void AddAllArgs(ArgStringList &Output, options::ID Id0, options::ID Id1,
                     options::ID Id2) const;
 
     /// AddAllArgValues - Render the argument values of all arguments
     /// matching the given ids.
     void AddAllArgValues(ArgStringList &Output, options::ID Id0) const;
-    void AddAllArgValues(ArgStringList &Output, options::ID Id0, 
+    void AddAllArgValues(ArgStringList &Output, options::ID Id0,
                          options::ID Id1) const;
 
     /// AddAllArgsTranslated - Render all the arguments matching the
@@ -123,7 +123,7 @@ namespace driver {
     /// \param Joined - If true, render the argument as joined with
     /// the option specifier.
     void AddAllArgsTranslated(ArgStringList &Output, options::ID Id0,
-                              const char *Translation, 
+                              const char *Translation,
                               bool Joined = false) const;
 
     /// ClaimAllArgs - Claim all arguments which match the given
@@ -168,8 +168,8 @@ namespace driver {
     InputArgList(const ArgList &);
     ~InputArgList();
 
-    virtual const char *getArgString(unsigned Index) const { 
-      return ArgStrings[Index]; 
+    virtual const char *getArgString(unsigned Index) const {
+      return ArgStrings[Index];
     }
 
     /// getNumInputArgStrings - Return the number of original input
@@ -212,7 +212,7 @@ namespace driver {
     ~DerivedArgList();
 
     virtual const char *getArgString(unsigned Index) const {
-      return BaseArgs.getArgString(Index); 
+      return BaseArgs.getArgString(Index);
     }
 
     /// @name Arg Synthesis
@@ -226,17 +226,17 @@ namespace driver {
 
     /// MakePositionalArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
-    Arg *MakePositionalArg(const Arg *BaseArg, const Option *Opt, 
+    Arg *MakePositionalArg(const Arg *BaseArg, const Option *Opt,
                            const char *Value) const;
 
     /// MakeSeparateArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
-    Arg *MakeSeparateArg(const Arg *BaseArg, const Option *Opt, 
+    Arg *MakeSeparateArg(const Arg *BaseArg, const Option *Opt,
                          const char *Value) const;
 
     /// MakeJoinedArg - Construct a new Positional arg for the
     /// given option \arg Id, with the provided \arg Value.
-    Arg *MakeJoinedArg(const Arg *BaseArg, const Option *Opt, 
+    Arg *MakeJoinedArg(const Arg *BaseArg, const Option *Opt,
                        const char *Value) const;
 
     /// @}

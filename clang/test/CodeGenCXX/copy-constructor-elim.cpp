@@ -7,9 +7,9 @@ extern "C" int printf(...);
 
 
 struct C {
-	C() : iC(6) {printf("C()\n"); }
-	C(const C& c) { printf("C(const C& c)\n"); }
-	int iC;
+  C() : iC(6) {printf("C()\n"); }
+  C(const C& c) { printf("C(const C& c)\n"); }
+  int iC;
 };
 
 C foo() {
@@ -18,10 +18,10 @@ C foo() {
 
 class X { // ...
 public: 
-	X(int) {}
-	X(const X&, int i = 1, int j = 2, C c = foo()) {
-		printf("X(const X&, %d, %d, %d)\n", i, j, c.iC);
-	}
+  X(int) {}
+  X(const X&, int i = 1, int j = 2, C c = foo()) {
+    printf("X(const X&, %d, %d, %d)\n", i, j, c.iC);
+  }
 };
 
 
@@ -33,12 +33,11 @@ S::S() { printf("S()\n"); }
 
 void Call(S) {};
 
-int main()
-{
-	X a(1);
-	X b(a, 2);
-	X c = b;
-	X d(a, 5, 6);
-        S s;
-        Call(s);
+int main() {
+  X a(1);
+  X b(a, 2);
+  X c = b;
+  X d(a, 5, 6);
+  S s;
+  Call(s);
 }

@@ -34,7 +34,7 @@ Action::DeclPtrTy Action::ActOnUsingDirective(Scope *CurScope,
                                               SourceLocation IdentLoc,
                                               IdentifierInfo *NamespcName,
                                               AttributeList *AttrList) {
-  
+
   // FIXME: Parser seems to assume that Action::ActOn* takes ownership over
   // passed AttributeList, however other actions don't free it, is it
   // temporary state or bug?
@@ -52,7 +52,7 @@ Action::DeclPtrTy Action::ActOnUsingDeclaration(Scope *CurScope,
                                                 OverloadedOperatorKind Op,
                                                 AttributeList *AttrList,
                                                 bool IsTypeName) {
-  
+
   // FIXME: Parser seems to assume that Action::ActOn* takes ownership over
   // passed AttributeList, however other actions don't free it, is it
   // temporary state or bug?
@@ -67,11 +67,11 @@ void PrettyStackTraceActionsDecl::print(llvm::raw_ostream &OS) const {
     OS << ": ";
   }
   OS << Message;
-  
+
   std::string Name = Actions.getDeclName(TheDecl);
   if (!Name.empty())
     OS << " '" << Name << '\'';
-  
+
   OS << '\n';
 }
 
@@ -81,7 +81,7 @@ namespace {
   struct TypeNameInfo {
     TypeNameInfo *Prev;
     bool isTypeName;
-    
+
     TypeNameInfo(bool istypename, TypeNameInfo *prev) {
       isTypeName = istypename;
       Prev = prev;
@@ -90,13 +90,13 @@ namespace {
 
   struct TypeNameInfoTable {
     llvm::RecyclingAllocator<llvm::BumpPtrAllocator, TypeNameInfo> Allocator;
-    
+
     void AddEntry(bool isTypename, IdentifierInfo *II) {
       TypeNameInfo *TI = Allocator.Allocate<TypeNameInfo>();
       new (TI) TypeNameInfo(isTypename, II->getFETokenInfo<TypeNameInfo>());
       II->setFETokenInfo(TI);
     }
-    
+
     void DeleteEntry(TypeNameInfo *Entry) {
       Entry->~TypeNameInfo();
       Allocator.Deallocate(Entry);
@@ -108,7 +108,7 @@ static TypeNameInfoTable *getTable(void *TP) {
   return static_cast<TypeNameInfoTable*>(TP);
 }
 
-MinimalAction::MinimalAction(Preprocessor &pp) 
+MinimalAction::MinimalAction(Preprocessor &pp)
   : Idents(pp.getIdentifierTable()), PP(pp) {
   TypeNameInfoTablePtr = new TypeNameInfoTable();
 }
@@ -127,9 +127,9 @@ void MinimalAction::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
     TNIT.AddEntry(true, &Idents.get("__int128_t"));
     TNIT.AddEntry(true, &Idents.get("__uint128_t"));
   }
-  
+
   if (PP.getLangOptions().ObjC1) {
-    // Recognize the ObjC built-in type identifiers as types. 
+    // Recognize the ObjC built-in type identifiers as types.
     TNIT.AddEntry(true, &Idents.get("id"));
     TNIT.AddEntry(true, &Idents.get("SEL"));
     TNIT.AddEntry(true, &Idents.get("Class"));
@@ -159,12 +159,12 @@ bool MinimalAction::isCurrentClassName(const IdentifierInfo &, Scope *,
   return false;
 }
 
-TemplateNameKind 
+TemplateNameKind
 MinimalAction::isTemplateName(Scope *S,
                               const IdentifierInfo &II,
                               SourceLocation IdLoc,
                               const CXXScopeSpec *SS,
-                              TypeTy *ObjectType,                              
+                              TypeTy *ObjectType,
                               bool EnteringScope,
                               TemplateTy &TemplateDecl) {
   return TNK_Non_template;
@@ -176,10 +176,10 @@ MinimalAction::isTemplateName(Scope *S,
 Action::DeclPtrTy
 MinimalAction::ActOnDeclarator(Scope *S, Declarator &D) {
   IdentifierInfo *II = D.getIdentifier();
-  
+
   // If there is no identifier associated with this declarator, bail out.
   if (II == 0) return DeclPtrTy();
-  
+
   TypeNameInfo *weCurrentlyHaveTypeInfo = II->getFETokenInfo<TypeNameInfo>();
   bool isTypeName =
     D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef;
@@ -190,10 +190,10 @@ MinimalAction::ActOnDeclarator(Scope *S, Declarator &D) {
   if (weCurrentlyHaveTypeInfo || isTypeName) {
     // Allocate and add the 'TypeNameInfo' "decl".
     getTable(TypeNameInfoTablePtr)->AddEntry(isTypeName, II);
-  
+
     // Remember that this needs to be removed when the scope is popped.
     S->AddDecl(DeclPtrTy::make(II));
-  } 
+  }
   return DeclPtrTy();
 }
 
@@ -212,15 +212,15 @@ MinimalAction::ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   return DeclPtrTy();
 }
 
-/// ActOnForwardClassDeclaration - 
-/// Scope will always be top level file scope. 
+/// ActOnForwardClassDeclaration -
+/// Scope will always be top level file scope.
 Action::DeclPtrTy
 MinimalAction::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                 IdentifierInfo **IdentList, unsigned NumElts) {
   for (unsigned i = 0; i != NumElts; ++i) {
     // Allocate and add the 'TypeNameInfo' "decl".
     getTable(TypeNameInfoTablePtr)->AddEntry(true, IdentList[i]);
-  
+
     // Remember that this needs to be removed when the scope is popped.
     TUScope->AddDecl(DeclPtrTy::make(IdentList[i]));
   }
@@ -231,17 +231,17 @@ MinimalAction::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
 /// out-of-scope, they are removed from the IdentifierInfo::FETokenInfo field.
 void MinimalAction::ActOnPopScope(SourceLocation Loc, Scope *S) {
   TypeNameInfoTable &Table = *getTable(TypeNameInfoTablePtr);
-  
+
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
     IdentifierInfo &II = *(*I).getAs<IdentifierInfo>();
     TypeNameInfo *TI = II.getFETokenInfo<TypeNameInfo>();
     assert(TI && "This decl didn't get pushed??");
-    
+
     if (TI) {
       TypeNameInfo *Next = TI->Prev;
       Table.DeleteEntry(TI);
-      
+
       II.setFETokenInfo(Next);
     }
   }

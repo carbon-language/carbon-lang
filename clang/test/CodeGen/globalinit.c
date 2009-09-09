@@ -37,7 +37,7 @@ static int a = { 1 };
 
 // References to enums.
 enum {
-	EnumA, EnumB
+  EnumA, EnumB
 };
 
 int c[] = { EnumA, EnumB };

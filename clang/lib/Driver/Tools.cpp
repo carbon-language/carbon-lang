@@ -38,7 +38,7 @@ static const char *MakeFormattedString(const ArgList &Args,
   return Args.MakeArgString(Str.c_str());
 }
 
-void Clang::AddPreprocessingOptions(const Driver &D, 
+void Clang::AddPreprocessingOptions(const Driver &D,
                                     const ArgList &Args,
                                     ArgStringList &CmdArgs,
                                     const InputInfo &Output,
@@ -131,25 +131,25 @@ void Clang::AddPreprocessingOptions(const Driver &D,
         P.appendSuffix("pch");
         if (P.exists())
           FoundPCH = true;
-        else 
+        else
           P.eraseSuffix();
       }
 
       if (!FoundPCH) {
         P.appendSuffix("pth");
-        if (P.exists()) 
+        if (P.exists())
           FoundPTH = true;
         else
           P.eraseSuffix();
-      } 
-      
+      }
+
       if (!FoundPCH && !FoundPTH) {
         P.appendSuffix("gch");
         if (P.exists()) {
           FoundPCH = D.CCCUsePCH;
           FoundPTH = !D.CCCUsePCH;
         }
-        else 
+        else
           P.eraseSuffix();
       }
 
@@ -266,8 +266,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
     // Add -Xanalyzer arguments when running as analyzer.
     Args.AddAllArgValues(CmdArgs, options::OPT_Xanalyzer);
-  } 
-  
+  }
+
   // Perform argument translation for LLVM backend. This
   // takes some care in reconciling with llvm-gcc. The
   // issue is that llvm-gcc translates these options based on
@@ -358,7 +358,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   } else {
     // Select default CPU.
-    
+
     // FIXME: Need target hooks.
     if (memcmp(getToolChain().getOS().c_str(), "darwin", 6) == 0) {
       if (getToolChain().getArchName() == "x86_64")
@@ -388,7 +388,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       // Skip over "-m".
       assert(Name[0] == '-' && Name[1] == 'm' && "Invalid feature name.");
       Name += 2;
-      
+
       bool IsNegative = memcmp(Name, "no-", 3) == 0;
       if (IsNegative)
         Name += 3;
@@ -396,7 +396,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       A->claim();
       CmdArgs.push_back("-target-feature");
       CmdArgs.push_back(MakeFormattedString(Args,
-                                            llvm::format("%c%s", 
+                                            llvm::format("%c%s",
                                                          IsNegative ? '-' : '+',
                                                          Name)));
     }
@@ -428,7 +428,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_P);
   Args.AddLastArg(CmdArgs, options::OPT_mmacosx_version_min_EQ);
   Args.AddLastArg(CmdArgs, options::OPT_miphoneos_version_min_EQ);
-  Args.AddLastArg(CmdArgs, options::OPT_print_ivar_layout);  
+  Args.AddLastArg(CmdArgs, options::OPT_print_ivar_layout);
 
   // Special case debug options to only pass -g to clang. This is
   // wrong.
@@ -489,7 +489,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (Args.hasArg(options::OPT__relocatable_pch, true))
     CmdArgs.push_back("--relocatable-pch");
-                      
+
    if (Arg *A = Args.getLastArg(options::OPT_fconstant_string_class_EQ)) {
      CmdArgs.push_back("-fconstant-string-class");
      CmdArgs.push_back(A->getValue(Args));
@@ -592,18 +592,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fsigned-bitfields is default, and clang doesn't yet support
   // --funsigned-bitfields.
-  if (!Args.hasFlag(options::OPT_fsigned_bitfields, 
+  if (!Args.hasFlag(options::OPT_fsigned_bitfields,
                     options::OPT_funsigned_bitfields))
     D.Diag(clang::diag::warn_drv_clang_unsupported)
       << Args.getLastArg(options::OPT_funsigned_bitfields)->getAsString(Args);
 
   // -fdiagnostics-fixit-info is default, only pass non-default.
-  if (!Args.hasFlag(options::OPT_fdiagnostics_fixit_info, 
+  if (!Args.hasFlag(options::OPT_fdiagnostics_fixit_info,
                     options::OPT_fno_diagnostics_fixit_info))
     CmdArgs.push_back("-fno-diagnostics-fixit-info");
 
   // Enable -fdiagnostics-show-option by default.
-  if (Args.hasFlag(options::OPT_fdiagnostics_show_option, 
+  if (Args.hasFlag(options::OPT_fdiagnostics_show_option,
                    options::OPT_fno_diagnostics_show_option))
     CmdArgs.push_back("-fdiagnostics-show-option");
   if (!Args.hasFlag(options::OPT_fcolor_diagnostics,
@@ -615,7 +615,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fdollars-in-identifiers default varies depending on platform and
   // language; only pass if specified.
-  if (Arg *A = Args.getLastArg(options::OPT_fdollars_in_identifiers, 
+  if (Arg *A = Args.getLastArg(options::OPT_fdollars_in_identifiers,
                                options::OPT_fno_dollars_in_identifiers)) {
     if (A->getOption().matches(options::OPT_fdollars_in_identifiers))
       CmdArgs.push_back("-fdollars-in-identifiers=1");
@@ -625,13 +625,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -funit-at-a-time is default, and we don't support -fno-unit-at-a-time for
   // practical purposes.
-  if (Arg *A = Args.getLastArg(options::OPT_funit_at_a_time, 
+  if (Arg *A = Args.getLastArg(options::OPT_funit_at_a_time,
                                options::OPT_fno_unit_at_a_time)) {
     if (A->getOption().matches(options::OPT_fno_unit_at_a_time))
       D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
 
-  if (Arg *A = Args.getLastArg(options::OPT_traditional, 
+  if (Arg *A = Args.getLastArg(options::OPT_traditional,
                                options::OPT_traditional_cpp))
     D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
 
@@ -1027,8 +1027,7 @@ void darwin::CC1::AddCPPOptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
 
 void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args,
                                           ArgStringList &CmdArgs,
-                                          const InputInfoList &Inputs) const
-{
+                                          const InputInfoList &Inputs) const {
   const Driver &D = getToolChain().getHost().getDriver();
 
   // Derived from cpp_unique_options.
@@ -1877,8 +1876,7 @@ void auroraux::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                      Job &Dest, const InputInfo &Output,
                                      const InputInfoList &Inputs,
                                      const ArgList &Args,
-                                     const char *LinkingOutput) const
-{
+                                     const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
@@ -2006,8 +2004,7 @@ void openbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                      Job &Dest, const InputInfo &Output,
                                      const InputInfoList &Inputs,
                                      const ArgList &Args,
-                                     const char *LinkingOutput) const
-{
+                                     const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
@@ -2135,8 +2132,7 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                      Job &Dest, const InputInfo &Output,
                                      const InputInfoList &Inputs,
                                      const ArgList &Args,
-                                     const char *LinkingOutput) const
-{
+                                     const char *LinkingOutput) const {
   ArgStringList CmdArgs;
 
   // When building 32-bit code on FreeBSD/amd64, we have to explicitly

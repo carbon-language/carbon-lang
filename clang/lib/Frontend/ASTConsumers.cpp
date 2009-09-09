@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/ASTConsumers.h"
-#include "clang/Frontend/DocumentXML.h" 
+#include "clang/Frontend/DocumentXML.h"
 #include "clang/Frontend/PathDiagnosticClients.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
@@ -37,11 +37,11 @@ namespace {
   class ASTPrinter : public ASTConsumer {
     llvm::raw_ostream &Out;
     bool Dump;
-    
+
   public:
-    ASTPrinter(llvm::raw_ostream* o = NULL, bool Dump = false) 
+    ASTPrinter(llvm::raw_ostream* o = NULL, bool Dump = false)
       : Out(o? *o : llvm::errs()), Dump(Dump) { }
-    
+
     virtual void HandleTranslationUnit(ASTContext &Context) {
       PrintingPolicy Policy = Context.PrintingPolicy;
       Policy.Dump = Dump;
@@ -63,21 +63,19 @@ namespace {
 
   public:
     ASTPrinterXML(llvm::raw_ostream& o) : Doc("CLANG_XML", o) {}
-    
+
     void Initialize(ASTContext &Context) {
       Doc.initialize(Context);
     }
 
     virtual void HandleTranslationUnit(ASTContext &Ctx) {
       Doc.addSubNode("TranslationUnit");
-      for (DeclContext::decl_iterator 
+      for (DeclContext::decl_iterator
              D = Ctx.getTranslationUnitDecl()->decls_begin(),
              DEnd = Ctx.getTranslationUnitDecl()->decls_end();
-           D != DEnd; 
+           D != DEnd;
            ++D)
-      {
         Doc.PrintDecl(*D);
-      }
       Doc.toParent();
       Doc.finalize();
     }
@@ -88,9 +86,9 @@ namespace {
 ASTConsumer *clang::CreateASTPrinterXML(llvm::raw_ostream* out) {
   return new ASTPrinterXML(out ? *out : llvm::outs());
 }
- 
-ASTConsumer *clang::CreateASTDumper() { 
-  return new ASTPrinter(0, true); 
+
+ASTConsumer *clang::CreateASTDumper() {
+  return new ASTPrinter(0, true);
 }
 
 //===----------------------------------------------------------------------===//
@@ -108,7 +106,7 @@ namespace {
       for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I)
         HandleTopLevelSingleDecl(*I);
     }
-    
+
     void HandleTopLevelSingleDecl(Decl *D);
   };
 }
@@ -116,7 +114,7 @@ namespace {
 void ASTViewer::HandleTopLevelSingleDecl(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     FD->print(llvm::errs());
-    
+
     if (FD->getBodyIfAvailable()) {
       llvm::errs() << '\n';
       FD->getBodyIfAvailable()->viewAST();
@@ -124,10 +122,10 @@ void ASTViewer::HandleTopLevelSingleDecl(Decl *D) {
     }
     return;
   }
-  
+
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
     MD->print(llvm::errs());
-    
+
     if (MD->getBody()) {
       llvm::errs() << '\n';
       MD->getBody()->viewAST();
@@ -157,7 +155,7 @@ public:
 };
 }  // end anonymous namespace
 
-void DeclContextPrinter::PrintDeclContext(const DeclContext* DC, 
+void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
                                           unsigned Indentation) {
   // Print DeclContext name.
   switch (DC->getDeclKind()) {
@@ -231,7 +229,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     // Print the parameters.
     Out << "(";
     bool PrintComma = false;
-    for (FunctionDecl::param_const_iterator I = FD->param_begin(), 
+    for (FunctionDecl::param_const_iterator I = FD->param_begin(),
            E = FD->param_end(); I != E; ++I) {
       if (PrintComma)
         Out << ", ";
@@ -254,7 +252,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     // Print the parameters.
     Out << "(";
     bool PrintComma = false;
-    for (FunctionDecl::param_const_iterator I = D->param_begin(), 
+    for (FunctionDecl::param_const_iterator I = D->param_begin(),
            E = D->param_end(); I != E; ++I) {
       if (PrintComma)
         Out << ", ";
@@ -284,7 +282,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     // Print the parameters.
     Out << "(";
     bool PrintComma = false;
-    for (FunctionDecl::param_const_iterator I = D->param_begin(), 
+    for (FunctionDecl::param_const_iterator I = D->param_begin(),
            E = D->param_end(); I != E; ++I) {
       if (PrintComma)
         Out << ", ";
@@ -354,7 +352,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     case Decl::CXXRecord:
     case Decl::ObjCMethod:
     case Decl::ObjCInterface:
-    case Decl::ObjCCategory: 
+    case Decl::ObjCCategory:
     case Decl::ObjCProtocol:
     case Decl::ObjCImplementation:
     case Decl::ObjCCategoryImpl:
@@ -416,8 +414,8 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     }
   }
 }
-ASTConsumer *clang::CreateDeclContextPrinter() { 
-  return new DeclContextPrinter(); 
+ASTConsumer *clang::CreateDeclContextPrinter() {
+  return new DeclContextPrinter();
 }
 
 //===----------------------------------------------------------------------===//
@@ -428,7 +426,7 @@ class InheritanceViewer : public ASTConsumer {
   const std::string clsname;
 public:
   InheritanceViewer(const std::string& cname) : clsname(cname) {}
-  
+
   void HandleTranslationUnit(ASTContext &C) {
     for (ASTContext::type_iterator I=C.types_begin(),E=C.types_end(); I!=E; ++I)
       if (RecordType *T = dyn_cast<RecordType>(*I)) {
@@ -436,12 +434,12 @@ public:
           // FIXME: This lookup needs to be generalized to handle namespaces and
           // (when we support them) templates.
           if (D->getNameAsString() == clsname) {
-            D->viewInheritance(C);      
+            D->viewInheritance(C);
           }
         }
       }
   }
-}; 
+};
 }
 
 ASTConsumer *clang::CreateInheritanceViewer(const std::string& clsname) {

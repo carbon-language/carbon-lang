@@ -40,7 +40,7 @@ void SourceLocation::print(llvm::raw_ostream &OS, const SourceManager &SM)const{
     OS << "<invalid loc>";
     return;
   }
-  
+
   if (isFileID()) {
     PresumedLoc PLoc = SM.getPresumedLoc(*this);
     // The instantiation and spelling pos is identical for file locs.
@@ -48,7 +48,7 @@ void SourceLocation::print(llvm::raw_ostream &OS, const SourceManager &SM)const{
        << ':' << PLoc.getColumn();
     return;
   }
-  
+
   SM.getInstantiationLoc(*this).print(OS, SM);
 
   OS << " <Spelling=";

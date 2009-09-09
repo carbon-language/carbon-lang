@@ -62,7 +62,7 @@ public:
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
-  
+
   void VisitStmt(Stmt *S) {
     CGF.ErrorUnsupported(S, "aggregate expression");
   }
@@ -75,18 +75,18 @@ public:
   void VisitUnaryDeref(UnaryOperator *E) { EmitAggLoadOfLValue(E); }
   void VisitStringLiteral(StringLiteral *E) { EmitAggLoadOfLValue(E); }
   void VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
-    EmitAggLoadOfLValue(E); 
+    EmitAggLoadOfLValue(E);
   }
   void VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
     EmitAggLoadOfLValue(E);
   }
   void VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
-    EmitAggLoadOfLValue(E); 
+    EmitAggLoadOfLValue(E);
   }
   void VisitPredefinedExpr(const PredefinedExpr *E) {
-    EmitAggLoadOfLValue(E); 
+    EmitAggLoadOfLValue(E);
   }
-  
+
   // Operators.
   void VisitCastExpr(CastExpr *E);
   void VisitCallExpr(const CallExpr *E);
@@ -101,7 +101,7 @@ public:
   }
   void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
   void VisitObjCImplicitSetterGetterRefExpr(ObjCImplicitSetterGetterRefExpr *E);
-  
+
   void VisitConditionalOperator(const ConditionalOperator *CO);
   void VisitChooseExpr(const ChooseExpr *CE);
   void VisitInitListExpr(InitListExpr *E);
@@ -185,18 +185,18 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     return;
   }
   if (E->getCastKind() == CastExpr::CK_UserDefinedConversion) {
-    if (const CXXFunctionalCastExpr *CXXFExpr = 
+    if (const CXXFunctionalCastExpr *CXXFExpr =
           dyn_cast<CXXFunctionalCastExpr>(E))
       CGF.EmitCXXFunctionalCastExpr(CXXFExpr);
-    else 
+    else
       if (isa<CStyleCastExpr>(E))
         Visit(E->getSubExpr());
     return;
   }
-  
+
   // FIXME: Remove the CK_Unknown check here.
-  assert((E->getCastKind() == CastExpr::CK_NoOp || 
-          E->getCastKind() == CastExpr::CK_Unknown) && 
+  assert((E->getCastKind() == CastExpr::CK_NoOp ||
+          E->getCastKind() == CastExpr::CK_Unknown) &&
          "Only no-op casts allowed!");
   assert(CGF.getContext().hasSameUnqualifiedType(E->getSubExpr()->getType(),
                                                  E->getType()) &&
@@ -209,7 +209,7 @@ void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
     EmitAggLoadOfLValue(E);
     return;
   }
-  
+
   RValue RV = CGF.EmitCallExpr(E);
   EmitFinalDestCopy(E, RV);
 }
@@ -259,21 +259,21 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     if (!AggLoc)
       AggLoc = CGF.CreateTempAlloca(CGF.ConvertType(E->getRHS()->getType()));
     CGF.EmitAggExpr(E->getRHS(), AggLoc, VolatileDest);
-    CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(), 
+    CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(),
                             RValue::getAggregate(AggLoc, VolatileDest));
   } else if (LHS.isKVCRef()) {
     llvm::Value *AggLoc = DestPtr;
     if (!AggLoc)
       AggLoc = CGF.CreateTempAlloca(CGF.ConvertType(E->getRHS()->getType()));
     CGF.EmitAggExpr(E->getRHS(), AggLoc, VolatileDest);
-    CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(), 
+    CGF.EmitObjCPropertySet(LHS.getKVCRefExpr(),
                             RValue::getAggregate(AggLoc, VolatileDest));
   } else {
     bool RequiresGCollection = false;
     if (CGF.getContext().getLangOptions().NeXTRuntime) {
       QualType LHSTy = E->getLHS()->getType();
       if (const RecordType *FDTTy = LHSTy.getTypePtr()->getAs<RecordType>())
-        RequiresGCollection = FDTTy->getDecl()->hasObjectMember(); 
+        RequiresGCollection = FDTTy->getDecl()->hasObjectMember();
     }
     // Codegen the RHS so that it stores directly into the LHS.
     CGF.EmitAggExpr(E->getRHS(), LHS.getAddress(), LHS.isVolatileQualified(),
@@ -286,27 +286,27 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *LHSBlock = CGF.createBasicBlock("cond.true");
   llvm::BasicBlock *RHSBlock = CGF.createBasicBlock("cond.false");
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
-  
+
   llvm::Value *Cond = CGF.EvaluateExprAsBool(E->getCond());
   Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
-  
+
   CGF.PushConditionalTempDestruction();
   CGF.EmitBlock(LHSBlock);
-  
+
   // Handle the GNU extension for missing LHS.
   assert(E->getLHS() && "Must have LHS for aggregate value");
 
   Visit(E->getLHS());
   CGF.PopConditionalTempDestruction();
   CGF.EmitBranch(ContBlock);
-  
+
   CGF.PushConditionalTempDestruction();
   CGF.EmitBlock(RHSBlock);
-  
+
   Visit(E->getRHS());
   CGF.PopConditionalTempDestruction();
   CGF.EmitBranch(ContBlock);
-  
+
   CGF.EmitBlock(ContBlock);
 }
 
@@ -328,16 +328,16 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
 
 void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
   llvm::Value *Val = DestPtr;
-  
+
   if (!Val) {
     // Create a temporary variable.
     Val = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(E->getType()), "tmp");
 
     // FIXME: volatile
     CGF.EmitAggExpr(E->getSubExpr(), Val, false);
-  } else 
+  } else
     Visit(E->getSubExpr());
-  
+
   // Don't make this a live temporary if we're emitting an initializer expr.
   if (!IsInitializer)
     CGF.PushCXXTemporary(E->getTemporary(), Val);
@@ -346,7 +346,7 @@ void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
 void
 AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   llvm::Value *Val = DestPtr;
-  
+
   if (!Val) {
     // Create a temporary variable.
     Val = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(E->getType()), "tmp");
@@ -392,7 +392,7 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
 
 void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 #if 0
-  // FIXME: Disabled while we figure out what to do about 
+  // FIXME: Disabled while we figure out what to do about
   // test/CodeGen/bitfield.c
   //
   // If we can, prefer a copy from a global; this is a lot less code for long
@@ -420,7 +420,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       cast<llvm::PointerType>(DestPtr->getType());
     const llvm::ArrayType *AType =
       cast<llvm::ArrayType>(APType->getElementType());
-    
+
     uint64_t NumInitElements = E->getNumInits();
 
     if (E->getNumInits() > 0) {
@@ -435,7 +435,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     uint64_t NumArrayElements = AType->getNumElements();
     QualType ElementType = CGF.getContext().getCanonicalType(E->getType());
     ElementType = CGF.getContext().getAsArrayType(ElementType)->getElementType();
-    
+
     unsigned CVRqualifier = ElementType.getCVRQualifiers();
 
     for (uint64_t i = 0; i != NumArrayElements; ++i) {
@@ -449,9 +449,9 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     }
     return;
   }
-  
+
   assert(E->getType()->isRecordType() && "Only support structs/unions here!");
-  
+
   // Do struct initialization; this code just sets each individual member
   // to the approprate value.  This makes bitfield support automatic;
   // the disadvantage is that the generated code is more difficult for
@@ -465,7 +465,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     // specified by the initializer list.
     if (!E->getInitializedFieldInUnion()) {
       // Empty union; we have nothing to do.
-      
+
 #ifndef NDEBUG
       // Make sure that it's really an empty and not a failure of
       // semantic analysis.
@@ -491,7 +491,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
     return;
   }
-  
+
   // Here we iterate over the fields; this makes it simpler to both
   // default-initialize fields and skip over unnamed fields.
   for (RecordDecl::field_iterator Field = SD->field_begin(),
@@ -528,13 +528,13 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 /// true, DestPtr cannot be 0.
 void CodeGenFunction::EmitAggExpr(const Expr *E, llvm::Value *DestPtr,
                                   bool VolatileDest, bool IgnoreResult,
-                                  bool IsInitializer, 
+                                  bool IsInitializer,
                                   bool RequiresGCollection) {
   assert(E && hasAggregateLLVMType(E->getType()) &&
          "Invalid aggregate expression to emit");
   assert ((DestPtr != 0 || VolatileDest == false)
           && "volatile aggregate can't be 0");
-  
+
   AggExprEmitter(*this, DestPtr, VolatileDest, IgnoreResult, IsInitializer,
                  RequiresGCollection)
     .Visit(const_cast<Expr*>(E));
@@ -550,7 +550,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                                         llvm::Value *SrcPtr, QualType Ty,
                                         bool isVolatile) {
   assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
-  
+
   // Aggregate assignment turns into llvm.memcpy.  This is almost valid per
   // C99 6.5.16.1p3, which states "If the value being stored in an object is
   // read from another object that overlaps in anyway the storage of the first
@@ -567,14 +567,14 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
   if (SrcPtr->getType() != BP)
     SrcPtr = Builder.CreateBitCast(SrcPtr, BP, "tmp");
-  
+
   // Get size and alignment info for this aggregate.
   std::pair<uint64_t, unsigned> TypeInfo = getContext().getTypeInfo(Ty);
-  
+
   // FIXME: Handle variable sized types.
   const llvm::Type *IntPtr =
           llvm::IntegerType::get(VMContext, LLVMPointerWidth);
-  
+
   // FIXME: If we have a volatile struct, the optimizer can remove what might
   // appear to be `extra' memory ops:
   //
@@ -591,6 +591,6 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                       DestPtr, SrcPtr,
                       // TypeInfo.first describes size in bits.
                       llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
-                      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 
+                      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
                                              TypeInfo.second/8));
 }

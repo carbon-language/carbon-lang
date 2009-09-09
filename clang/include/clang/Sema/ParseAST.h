@@ -28,7 +28,7 @@ namespace clang {
   /// \param CompleteTranslationUnit When true, the parsed file is
   /// considered to be a complete translation unit, and any
   /// end-of-translation-unit wrapup will be performed.
-  void ParseAST(Preprocessor &pp, ASTConsumer *C, 
+  void ParseAST(Preprocessor &pp, ASTConsumer *C,
                 ASTContext &Ctx, bool PrintStats = false,
                 bool CompleteTranslationUnit = true);
 

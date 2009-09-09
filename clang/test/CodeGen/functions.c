@@ -3,11 +3,11 @@
 int g();
 
 int foo(int i) {
-	return g(i);
+  return g(i);
 }
 
 int g(int i) {
-	return g(i);
+  return g(i);
 }
 
 // rdar://6110827

@@ -30,8 +30,8 @@ void ObjCListBase::Destroy(ASTContext &Ctx) {
 void ObjCListBase::set(void *const* InList, unsigned Elts, ASTContext &Ctx) {
   assert(List == 0 && "Elements already set!");
   if (Elts == 0) return;  // Setting to an empty list is a noop.
-  
-  
+
+
   List = new (Ctx) void*[Elts];
   NumElts = Elts;
   memcpy(List, InList, sizeof(void*)*Elts);
@@ -83,15 +83,15 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
   for (prop_iterator I = prop_begin(), E = prop_end(); I != E; ++I)
     if ((*I)->getIdentifier() == PropertyId)
       return *I;
-  
+
   const ObjCProtocolDecl *PID = dyn_cast<ObjCProtocolDecl>(this);
   if (PID) {
-    for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(), 
+    for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(),
          E = PID->protocol_end(); I != E; ++I)
       if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
         return P;
   }
-  
+
   if (const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(this)) {
     // Look through categories.
     for (ObjCCategoryDecl *Category = OID->getCategoryList();
@@ -151,11 +151,11 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
                                                 bool isInstance) const {
   const ObjCInterfaceDecl* ClassDecl = this;
   ObjCMethodDecl *MethodDecl = 0;
-  
+
   while (ClassDecl != NULL) {
     if ((MethodDecl = ClassDecl->getMethod(Sel, isInstance)))
       return MethodDecl;
-      
+
     // Didn't find one yet - look through protocols.
     const ObjCList<ObjCProtocolDecl> &Protocols =
       ClassDecl->getReferencedProtocols();
@@ -163,13 +163,13 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
          E = Protocols.end(); I != E; ++I)
       if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
         return MethodDecl;
-    
+
     // Didn't find one yet - now look through categories.
     ObjCCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
       if ((MethodDecl = CatDecl->getMethod(Sel, isInstance)))
         return MethodDecl;
-        
+
       // Didn't find one yet - look through protocols.
       const ObjCList<ObjCProtocolDecl> &Protocols =
         CatDecl->getReferencedProtocols();
@@ -191,7 +191,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
 //===----------------------------------------------------------------------===//
 
 ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
-                                       SourceLocation beginLoc, 
+                                       SourceLocation beginLoc,
                                        SourceLocation endLoc,
                                        Selector SelInfo, QualType T,
                                        DeclContext *contextDecl,
@@ -201,14 +201,14 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                        ImplementationControl impControl) {
   return new (C) ObjCMethodDecl(beginLoc, endLoc,
                                   SelInfo, T, contextDecl,
-                                  isInstance, 
+                                  isInstance,
                                   isVariadic, isSynthesized, impControl);
 }
 
 void ObjCMethodDecl::Destroy(ASTContext &C) {
   if (Body) Body->Destroy(C);
   if (SelfDecl) SelfDecl->Destroy(C);
-  
+
   for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
 
@@ -267,7 +267,7 @@ ObjCMethodDecl *ObjCMethodDecl::getCanonicalDecl() {
   return this;
 }
 
-void ObjCMethodDecl::createImplicitParams(ASTContext &Context, 
+void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
                                           const ObjCInterfaceDecl *OID) {
   QualType selfTy;
   if (isInstanceMethod()) {
@@ -282,11 +282,11 @@ void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
   } else // we have a factory method.
     selfTy = Context.getObjCClassType();
 
-  setSelfDecl(ImplicitParamDecl::Create(Context, this, SourceLocation(), 
+  setSelfDecl(ImplicitParamDecl::Create(Context, this, SourceLocation(),
                                         &Context.Idents.get("self"), selfTy));
 
-  setCmdDecl(ImplicitParamDecl::Create(Context, this, SourceLocation(), 
-                                       &Context.Idents.get("_cmd"), 
+  setCmdDecl(ImplicitParamDecl::Create(Context, this, SourceLocation(),
+                                       &Context.Idents.get("_cmd"),
                                        Context.getObjCSelType()));
 }
 
@@ -310,7 +310,7 @@ ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
 ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
                                              DeclContext *DC,
                                              SourceLocation atLoc,
-                                             IdentifierInfo *Id, 
+                                             IdentifierInfo *Id,
                                              SourceLocation ClassLoc,
                                              bool ForwardDecl, bool isInternal){
   return new (C) ObjCInterfaceDecl(DC, atLoc, Id, ClassLoc, ForwardDecl,
@@ -326,13 +326,13 @@ ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
     ClassLoc(CLoc) {
 }
 
-void ObjCInterfaceDecl::Destroy(ASTContext &C) {  
+void ObjCInterfaceDecl::Destroy(ASTContext &C) {
   for (ivar_iterator I = ivar_begin(), E = ivar_end(); I != E; ++I)
     if (*I) (*I)->Destroy(C);
-  
+
   IVars.Destroy(C);
   // FIXME: CategoryList?
-  
+
   // FIXME: Because there is no clear ownership
   //  role between ObjCInterfaceDecls and the ObjCPropertyDecls that they
   //  reference, we destroy ObjCPropertyDecls in ~TranslationUnit.
@@ -391,7 +391,7 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
   // 1st, look up the class.
   const ObjCList<ObjCProtocolDecl> &Protocols =
   IDecl->getReferencedProtocols();
-  
+
   for (ObjCList<ObjCProtocolDecl>::iterator PI = Protocols.begin(),
        E = Protocols.end(); PI != E; ++PI) {
     if (getASTContext().ProtocolCompatibleWithProtocol(lProto, *PI))
@@ -402,11 +402,11 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
     // object. This IMO, should be a bug.
     // FIXME: Treat this as an extension, and flag this as an error when GCC
     // extensions are not enabled.
-    if (RHSIsQualifiedID && 
+    if (RHSIsQualifiedID &&
         getASTContext().ProtocolCompatibleWithProtocol(*PI, lProto))
       return true;
   }
-  
+
   // 2nd, look up the category.
   if (lookupCategory)
     for (ObjCCategoryDecl *CDecl = IDecl->getCategoryList(); CDecl;
@@ -416,13 +416,13 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
         if (getASTContext().ProtocolCompatibleWithProtocol(lProto, *PI))
           return true;
     }
-  
+
   // 3rd, look up the super class(s)
   if (IDecl->getSuperClass())
     return
   IDecl->getSuperClass()->ClassImplementsProtocol(lProto, lookupCategory,
                                                   RHSIsQualifiedID);
-  
+
   return false;
 }
 
@@ -451,7 +451,7 @@ ObjCAtDefsFieldDecl
 
 void ObjCAtDefsFieldDecl::Destroy(ASTContext& C) {
   this->~ObjCAtDefsFieldDecl();
-  C.Deallocate((void *)this); 
+  C.Deallocate((void *)this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -459,7 +459,7 @@ void ObjCAtDefsFieldDecl::Destroy(ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
-                                           SourceLocation L, 
+                                           SourceLocation L,
                                            IdentifierInfo *Id) {
   return new (C) ObjCProtocolDecl(DC, L, Id);
 }
@@ -478,7 +478,7 @@ ObjCProtocolDecl *ObjCProtocolDecl::lookupProtocolNamed(IdentifierInfo *Name) {
   for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
     if ((PDecl = (*I)->lookupProtocolNamed(Name)))
       return PDecl;
-      
+
   return NULL;
 }
 
@@ -487,10 +487,10 @@ ObjCProtocolDecl *ObjCProtocolDecl::lookupProtocolNamed(IdentifierInfo *Name) {
 ObjCMethodDecl *ObjCProtocolDecl::lookupMethod(Selector Sel,
                                                bool isInstance) const {
   ObjCMethodDecl *MethodDecl = NULL;
-  
+
   if ((MethodDecl = getMethod(Sel, isInstance)))
     return MethodDecl;
-  
+
   for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
     if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
       return MethodDecl;
@@ -501,7 +501,7 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupMethod(Selector Sel,
 // ObjCClassDecl
 //===----------------------------------------------------------------------===//
 
-ObjCClassDecl::ObjCClassDecl(DeclContext *DC, SourceLocation L, 
+ObjCClassDecl::ObjCClassDecl(DeclContext *DC, SourceLocation L,
                              ObjCInterfaceDecl *const *Elts, unsigned nElts,
                              ASTContext &C)
   : Decl(ObjCClass, DC, L) {
@@ -517,7 +517,7 @@ ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 void ObjCClassDecl::Destroy(ASTContext &C) {
-  
+
   // FIXME: There is no clear ownership policy now for referenced
   //  ObjCInterfaceDecls.  Some of them can be forward declarations that
   //  are never later defined (in which case the ObjCClassDecl owns them)
@@ -525,7 +525,7 @@ void ObjCClassDecl::Destroy(ASTContext &C) {
   //  we should have separate objects for forward declarations and definitions,
   //  obviating this problem.  Because of this situation, referenced
   //  ObjCInterfaceDecls are destroyed in ~TranslationUnit.
-  
+
   ForwardDecls.Destroy(C);
   Decl::Destroy(C);
 }
@@ -538,14 +538,14 @@ ObjCForwardProtocolDecl::
 ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
                         ObjCProtocolDecl *const *Elts, unsigned nElts,
                         ASTContext &C)
-: Decl(ObjCForwardProtocol, DC, L) { 
+: Decl(ObjCForwardProtocol, DC, L) {
   ReferencedProtocols.set(Elts, nElts, C);
 }
 
 
 ObjCForwardProtocolDecl *
 ObjCForwardProtocolDecl::Create(ASTContext &C, DeclContext *DC,
-                                SourceLocation L, 
+                                SourceLocation L,
                                 ObjCProtocolDecl *const *Elts,
                                 unsigned NumElts) {
   return new (C) ObjCForwardProtocolDecl(DC, L, Elts, NumElts, C);
@@ -649,7 +649,7 @@ FindPropertyImplDecl(IdentifierInfo *Id) const {
 //===----------------------------------------------------------------------===//
 
 ObjCImplementationDecl *
-ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC, 
+ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L,
                                ObjCInterfaceDecl *ClassInterface,
                                ObjCInterfaceDecl *SuperDecl) {
@@ -663,7 +663,7 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
 ObjCCompatibleAliasDecl *
 ObjCCompatibleAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                 SourceLocation L,
-                                IdentifierInfo *Id, 
+                                IdentifierInfo *Id,
                                 ObjCInterfaceDecl* AliasedClass) {
   return new (C) ObjCCompatibleAliasDecl(DC, L, Id, AliasedClass);
 }

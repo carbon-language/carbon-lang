@@ -41,7 +41,7 @@ Selector GlobalSelector::getSelector(ASTContext &AST) const {
 std::string GlobalSelector::getPrintableName() const {
   if (isInvalid())
     return "<< Invalid >>";
-  
+
   Selector GlobSel = Selector(reinterpret_cast<uintptr_t>(Val));
   return GlobSel.getAsString();
 }
@@ -67,7 +67,7 @@ GlobalSelector GlobalSelector::get(Selector Sel, Program &Prog) {
   return GlobalSelector(GlobSel.getAsOpaquePtr());
 }
 
-unsigned 
+unsigned
 llvm::DenseMapInfo<GlobalSelector>::getHashValue(GlobalSelector Sel) {
   return DenseMapInfo<void*>::getHashValue(Sel.getAsOpaquePtr());
 }

@@ -109,9 +109,9 @@ static void AddCXXOperatorKeyword(const char *Keyword, unsigned KWLen,
   Info.setIsCPlusPlusOperatorKeyword();
 }
 
-/// AddObjCKeyword - Register an Objective-C @keyword like "class" "selector" or 
+/// AddObjCKeyword - Register an Objective-C @keyword like "class" "selector" or
 /// "property".
-static void AddObjCKeyword(tok::ObjCKeywordKind ObjCID, 
+static void AddObjCKeyword(tok::ObjCKeywordKind ObjCID,
                            const char *Name, unsigned NameLen,
                            IdentifierTable &Table) {
   Table.get(Name, Name+NameLen).setObjCKeywordID(ObjCID);
@@ -144,13 +144,13 @@ tok::PPKeywordKind IdentifierInfo::getPPKeywordID() const {
   // the first and third character.  For preprocessor ID's there are no
   // collisions (if there were, the switch below would complain about duplicate
   // case values).  Note that this depends on 'if' being null terminated.
-  
+
 #define HASH(LEN, FIRST, THIRD) \
   (LEN << 5) + (((FIRST-'a') + (THIRD-'a')) & 31)
 #define CASE(LEN, FIRST, THIRD, NAME) \
   case HASH(LEN, FIRST, THIRD): \
     return memcmp(Name, #NAME, LEN) ? tok::pp_not_keyword : tok::pp_ ## NAME
-    
+
   unsigned Len = getLength();
   if (Len < 2) return tok::pp_not_keyword;
   const char *Name = getName();
@@ -179,7 +179,7 @@ tok::PPKeywordKind IdentifierInfo::getPPKeywordID() const {
 
   CASE( 8, 'u', 'a', unassert);
   CASE(12, 'i', 'c', include_next);
-      
+
   CASE(16, '_', 'i', __include_macros);
 #undef CASE
 #undef HASH
@@ -198,7 +198,7 @@ void IdentifierTable::PrintStats() const {
   unsigned NumEmptyBuckets = NumBuckets-NumIdentifiers;
   unsigned AverageIdentifierSize = 0;
   unsigned MaxIdentifierLength = 0;
-  
+
   // TODO: Figure out maximum times an identifier had to probe for -stats.
   for (llvm::StringMap<IdentifierInfo*, llvm::BumpPtrAllocator>::const_iterator
        I = HashTable.begin(), E = HashTable.end(); I != E; ++I) {
@@ -207,7 +207,7 @@ void IdentifierTable::PrintStats() const {
     if (MaxIdentifierLength < IdLen)
       MaxIdentifierLength = IdLen;
   }
-  
+
   fprintf(stderr, "\n*** Identifier Table Stats:\n");
   fprintf(stderr, "# Identifiers:   %d\n", NumIdentifiers);
   fprintf(stderr, "# Empty Buckets: %d\n", NumEmptyBuckets);
@@ -216,7 +216,7 @@ void IdentifierTable::PrintStats() const {
   fprintf(stderr, "Ave identifier length: %f\n",
           (AverageIdentifierSize/(double)NumIdentifiers));
   fprintf(stderr, "Max identifier length: %d\n", MaxIdentifierLength);
-  
+
   // Compute statistics about the memory allocated for identifiers.
   HashTable.getAllocator().PrintStats();
 }
@@ -232,42 +232,42 @@ unsigned llvm::DenseMapInfo<clang::Selector>::getHashValue(clang::Selector S) {
 namespace clang {
 /// MultiKeywordSelector - One of these variable length records is kept for each
 /// selector containing more than one keyword. We use a folding set
-/// to unique aggregate names (keyword selectors in ObjC parlance). Access to 
+/// to unique aggregate names (keyword selectors in ObjC parlance). Access to
 /// this class is provided strictly through Selector.
-class MultiKeywordSelector 
+class MultiKeywordSelector
   : public DeclarationNameExtra, public llvm::FoldingSetNode {
   MultiKeywordSelector(unsigned nKeys) {
     ExtraKindOrNumArgs = NUM_EXTRA_KINDS + nKeys;
   }
-public:  
+public:
   // Constructor for keyword selectors.
   MultiKeywordSelector(unsigned nKeys, IdentifierInfo **IIV) {
     assert((nKeys > 1) && "not a multi-keyword selector");
     ExtraKindOrNumArgs = NUM_EXTRA_KINDS + nKeys;
-    
+
     // Fill in the trailing keyword array.
     IdentifierInfo **KeyInfo = reinterpret_cast<IdentifierInfo **>(this+1);
     for (unsigned i = 0; i != nKeys; ++i)
       KeyInfo[i] = IIV[i];
-  }  
-  
+  }
+
   // getName - Derive the full selector name and return it.
   std::string getName() const;
-    
+
   unsigned getNumArgs() const { return ExtraKindOrNumArgs - NUM_EXTRA_KINDS; }
-  
+
   typedef IdentifierInfo *const *keyword_iterator;
   keyword_iterator keyword_begin() const {
     return reinterpret_cast<keyword_iterator>(this+1);
   }
-  keyword_iterator keyword_end() const { 
-    return keyword_begin()+getNumArgs(); 
+  keyword_iterator keyword_end() const {
+    return keyword_begin()+getNumArgs();
   }
   IdentifierInfo *getIdentifierInfoForSlot(unsigned i) const {
     assert(i < getNumArgs() && "getIdentifierInfoForSlot(): illegal index");
     return keyword_begin()[i];
   }
-  static void Profile(llvm::FoldingSetNodeID &ID, 
+  static void Profile(llvm::FoldingSetNodeID &ID,
                       keyword_iterator ArgTys, unsigned NumArgs) {
     ID.AddInteger(NumArgs);
     for (unsigned i = 0; i != NumArgs; ++i)
@@ -287,7 +287,7 @@ unsigned Selector::getNumArgs() const {
     return 1;
   // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
   MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
-  return SI->getNumArgs(); 
+  return SI->getNumArgs();
 }
 
 IdentifierInfo *Selector::getIdentifierInfoForSlot(unsigned argIndex) const {
@@ -308,16 +308,16 @@ std::string MultiKeywordSelector::getName() const {
       Length += (*I)->getLength();
     ++Length;  // :
   }
-  
+
   Result.reserve(Length);
-  
+
   for (keyword_iterator I = keyword_begin(), E = keyword_end(); I != E; ++I) {
     if (*I)
       Result.insert(Result.end(), (*I)->getName(),
                     (*I)->getName()+(*I)->getLength());
     Result.push_back(':');
   }
-  
+
   return Result;
 }
 
@@ -327,7 +327,7 @@ std::string Selector::getAsString() const {
 
   if (InfoPtr & ArgFlags) {
     IdentifierInfo *II = getAsIdentifierInfo();
-    
+
     // If the number of arguments is 0 then II is guaranteed to not be null.
     if (getNumArgs() == 0)
       return II->getName();
@@ -336,7 +336,7 @@ std::string Selector::getAsString() const {
     Res += ":";
     return Res;
   }
-  
+
   // We have a multiple keyword selector (no embedded flags).
   return reinterpret_cast<MultiKeywordSelector *>(InfoPtr)->getName();
 }
@@ -357,9 +357,9 @@ static SelectorTableImpl &getSelectorTableImpl(void *P) {
 Selector SelectorTable::getSelector(unsigned nKeys, IdentifierInfo **IIV) {
   if (nKeys < 2)
     return Selector(IIV[0], nKeys);
-  
+
   SelectorTableImpl &SelTabImpl = getSelectorTableImpl(Impl);
-    
+
   // Unique selector, to guarantee there is one per name.
   llvm::FoldingSetNodeID ID;
   MultiKeywordSelector::Profile(ID, IIV, nKeys);
@@ -368,12 +368,12 @@ Selector SelectorTable::getSelector(unsigned nKeys, IdentifierInfo **IIV) {
   if (MultiKeywordSelector *SI =
         SelTabImpl.Table.FindNodeOrInsertPos(ID, InsertPos))
     return Selector(SI);
-  
+
   // MultiKeywordSelector objects are not allocated with new because they have a
   // variable size array (for parameter types) at the end of them.
   unsigned Size = sizeof(MultiKeywordSelector) + nKeys*sizeof(IdentifierInfo *);
   MultiKeywordSelector *SI =
-    (MultiKeywordSelector*)SelTabImpl.Allocator.Allocate(Size, 
+    (MultiKeywordSelector*)SelTabImpl.Allocator.Allocate(Size,
                                          llvm::alignof<MultiKeywordSelector>());
   new (SI) MultiKeywordSelector(nKeys, IIV);
   SelTabImpl.Table.InsertNode(SI, InsertPos);

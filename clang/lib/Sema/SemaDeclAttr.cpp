@@ -437,9 +437,9 @@ static void HandleMallocAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
-  
+
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(d)) {
-    QualType RetTy = FD->getResultType();  
+    QualType RetTy = FD->getResultType();
     if (RetTy->isAnyPointerType() || RetTy->isBlockPointerType()) {
       d->addAttr(::new (S.Context) MallocAttr());
       return;
@@ -989,7 +989,7 @@ static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     S.Diag(ArgExpr->getLocStart(), diag::err_attribute_not_string) << "section";
     return;
   }
-  
+
   std::string SectionStr(SE->getStrData(), SE->getByteLength());
 
   // If the target wants to validate the section specifier, make it happen.
@@ -998,10 +998,10 @@ static void HandleSectionAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     D->addAttr(::new (S.Context) SectionAttr(SectionStr));
     return;
   }
-  
+
   S.Diag(SE->getLocStart(), diag::err_attribute_section_invalid_for_target)
     << Error;
-  
+
 }
 
 static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1277,7 +1277,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       NumArgs++;
     }
   }
-  
+
   if (Idx.getZExtValue() < FirstIdx || Idx.getZExtValue() > NumArgs) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds)
       << "format" << 2 << IdxExpr->getSourceRange();
@@ -1288,7 +1288,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   unsigned ArgIdx = Idx.getZExtValue() - 1;
 
   if (HasImplicitThisParam) ArgIdx--;
-  
+
   // make sure the format string is really a string
   QualType Ty = getFunctionOrMethodArgType(d, ArgIdx);
 
@@ -1867,8 +1867,7 @@ void Sema::ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *Attr
 
 /// DeclClonePragmaWeak - clone existing decl (maybe definition),
 /// #pragma weak needs a non-definition decl and source may not have one
-NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II)
-{
+NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II) {
   assert(isa<FunctionDecl>(ND) || isa<VarDecl>(ND));
   NamedDecl *NewD = 0;
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {

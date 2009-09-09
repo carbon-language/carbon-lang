@@ -75,13 +75,13 @@ public:
   static bool isImmediateParent(Decl *D, Stmt *Node);
   static Decl *FindImmediateParent(Decl *D, Stmt *Node);
 
-  friend bool operator==(const ASTLocation &L, const ASTLocation &R) { 
+  friend bool operator==(const ASTLocation &L, const ASTLocation &R) {
     return L.D == R.D && L.Stm == R.Stm;
   }
-  friend bool operator!=(const ASTLocation &L, const ASTLocation &R) { 
+  friend bool operator!=(const ASTLocation &L, const ASTLocation &R) {
     return !(L == R);
   }
-  
+
   void print(llvm::raw_ostream &OS) const;
 };
 
@@ -89,13 +89,13 @@ public:
 /// ASTLocation originated from.
 class TULocation : public ASTLocation {
   TranslationUnit *TU;
-  
+
 public:
   TULocation(TranslationUnit *tu, ASTLocation astLoc)
     : ASTLocation(astLoc), TU(tu) {
     assert(tu && "Passed null translation unit");
   }
-  
+
   TranslationUnit *getTU() const { return TU; }
 };
 

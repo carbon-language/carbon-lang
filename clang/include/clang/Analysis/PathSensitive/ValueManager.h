@@ -25,15 +25,15 @@
 
 namespace llvm { class BumpPtrAllocator; }
 
-namespace clang {  
+namespace clang {
 
 class GRStateManager;
-  
+
 class ValueManager {
 
-  ASTContext &Context;  
+  ASTContext &Context;
   BasicValueFactory BasicVals;
-  
+
   /// SymMgr - Object that manages the symbol information.
   SymbolManager SymMgr;
 
@@ -41,12 +41,12 @@ class ValueManager {
   llvm::OwningPtr<SValuator> SVator;
 
   MemRegionManager MemMgr;
-  
+
   GRStateManager &StateMgr;
-  
+
   const QualType ArrayIndexTy;
   const unsigned ArrayIndexWidth;
-  
+
 public:
   ValueManager(llvm::BumpPtrAllocator &alloc, ASTContext &context,
                GRStateManager &stateMgr)
@@ -54,40 +54,39 @@ public:
                  SymMgr(context, BasicVals, alloc),
                  MemMgr(context, alloc), StateMgr(stateMgr),
                  ArrayIndexTy(context.IntTy),
-                 ArrayIndexWidth(context.getTypeSize(ArrayIndexTy))  
-  {
+                 ArrayIndexWidth(context.getTypeSize(ArrayIndexTy)) {
     // FIXME: Generalize later.
     SVator.reset(clang::CreateSimpleSValuator(*this));
   }
 
   // Accessors to submanagers.
-  
+
   ASTContext &getContext() { return Context; }
   const ASTContext &getContext() const { return Context; }
-  
+
   GRStateManager &getStateManager() { return StateMgr; }
-  
+
   BasicValueFactory &getBasicValueFactory() { return BasicVals; }
   const BasicValueFactory &getBasicValueFactory() const { return BasicVals; }
-  
+
   SymbolManager &getSymbolManager() { return SymMgr; }
   const SymbolManager &getSymbolManager() const { return SymMgr; }
-                 
+
   SValuator &getSValuator() { return *SVator.get(); }
 
   MemRegionManager &getRegionManager() { return MemMgr; }
   const MemRegionManager &getRegionManager() const { return MemMgr; }
-  
+
   // Forwarding methods to SymbolManager.
-  
+
   const SymbolConjured* getConjuredSymbol(const Stmt* E, QualType T,
                                           unsigned VisitCount,
                                           const void* SymbolTag = 0) {
     return SymMgr.getConjuredSymbol(E, T, VisitCount, SymbolTag);
   }
-  
+
   const SymbolConjured* getConjuredSymbol(const Expr* E, unsigned VisitCount,
-                                          const void* SymbolTag = 0) {    
+                                          const void* SymbolTag = 0) {
     return SymMgr.getConjuredSymbol(E, VisitCount, SymbolTag);
   }
 
@@ -96,24 +95,24 @@ public:
 
   /// getRegionValueSymbolVal - make a unique symbol for value of R.
   SVal getRegionValueSymbolVal(const MemRegion *R, QualType T = QualType());
-  
+
   SVal getRegionValueSymbolValOrUnknown(const MemRegion *R, QualType T) {
-    return SymMgr.canSymbolicate(T) ? getRegionValueSymbolVal(R, T) 
-                                    : UnknownVal();    
+    return SymMgr.canSymbolicate(T) ? getRegionValueSymbolVal(R, T)
+                                    : UnknownVal();
   }
-  
-  SVal getConjuredSymbolVal(const Expr *E, unsigned Count);  
+
+  SVal getConjuredSymbolVal(const Expr *E, unsigned Count);
   SVal getConjuredSymbolVal(const Expr* E, QualType T, unsigned Count);
 
   SVal getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
                                       const TypedRegion *R);
-  
+
   SVal getFunctionPointer(const FunctionDecl* FD);
 
   NonLoc makeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals) {
     return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
   }
-  
+
   NonLoc makeLazyCompoundVal(const GRState *state, const TypedRegion *R) {
     return nonloc::LazyCompoundVal(BasicVals.getLazyCompoundValData(state, R));
   }
@@ -121,11 +120,11 @@ public:
   NonLoc makeZeroArrayIndex() {
     return nonloc::ConcreteInt(BasicVals.getValue(0, ArrayIndexTy));
   }
-  
+
   NonLoc makeArrayIndex(uint64_t idx) {
     return nonloc::ConcreteInt(BasicVals.getValue(idx, ArrayIndexTy));
   }
-  
+
   SVal convertToArrayIndex(SVal V);
 
   nonloc::ConcreteInt makeIntVal(const IntegerLiteral* I) {
@@ -136,7 +135,7 @@ public:
   nonloc::ConcreteInt makeIntVal(const llvm::APSInt& V) {
     return nonloc::ConcreteInt(BasicVals.getValue(V));
   }
-  
+
   loc::ConcreteInt makeIntLocVal(const llvm::APSInt &v) {
     return loc::ConcreteInt(BasicVals.getValue(v));
   }
@@ -170,10 +169,10 @@ public:
 
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                     const llvm::APSInt& rhs, QualType T);
-  
+
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                     const SymExpr *rhs, QualType T);
-  
+
   NonLoc makeTruthVal(bool b, QualType T) {
     return nonloc::ConcreteInt(BasicVals.getTruthValue(b, T));
   }

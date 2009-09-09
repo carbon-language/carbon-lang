@@ -69,10 +69,10 @@ Action::TypeResult Parser::ParseTypeName(SourceRange *Range) {
 ///          typespec
 ///          typequal
 ///          storageclass
-///          
+///
 /// FIXME: The GCC grammar/code for this construct implies we need two
-/// token lookahead. Comment from gcc: "If they start with an identifier 
-/// which is followed by a comma or close parenthesis, then the arguments 
+/// token lookahead. Comment from gcc: "If they start with an identifier
+/// which is followed by a comma or close parenthesis, then the arguments
 /// start with that identifier; otherwise they are an expression list."
 ///
 /// At the moment, I am not doing 2 token lookahead. I am also unaware of
@@ -82,9 +82,9 @@ Action::TypeResult Parser::ParseTypeName(SourceRange *Range) {
 
 AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
   assert(Tok.is(tok::kw___attribute) && "Not an attribute list!");
-  
+
   AttributeList *CurrAttr = 0;
-  
+
   while (Tok.is(tok::kw___attribute)) {
     ConsumeToken();
     if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
@@ -99,8 +99,8 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
     // Parse the attribute-list. e.g. __attribute__(( weak, alias("__f") ))
     while (Tok.is(tok::identifier) || isDeclarationSpecifier() ||
            Tok.is(tok::comma)) {
-           
-      if (Tok.is(tok::comma)) { 
+
+      if (Tok.is(tok::comma)) {
         // allows for empty/non-empty attributes. ((__vector_size__(16),,,,))
         ConsumeToken();
         continue;
@@ -108,26 +108,26 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
       // we have an identifier or declaration specifier (const, int, etc.)
       IdentifierInfo *AttrName = Tok.getIdentifierInfo();
       SourceLocation AttrNameLoc = ConsumeToken();
-      
+
       // check if we have a "paramterized" attribute
       if (Tok.is(tok::l_paren)) {
         ConsumeParen(); // ignore the left paren loc for now
-        
+
         if (Tok.is(tok::identifier)) {
           IdentifierInfo *ParmName = Tok.getIdentifierInfo();
           SourceLocation ParmLoc = ConsumeToken();
-          
-          if (Tok.is(tok::r_paren)) { 
+
+          if (Tok.is(tok::r_paren)) {
             // __attribute__(( mode(byte) ))
             ConsumeParen(); // ignore the right paren loc for now
-            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 
+            CurrAttr = new AttributeList(AttrName, AttrNameLoc,
                                          ParmName, ParmLoc, 0, 0, CurrAttr);
           } else if (Tok.is(tok::comma)) {
             ConsumeToken();
             // __attribute__(( format(printf, 1, 2) ))
             ExprVector ArgExprs(Actions);
             bool ArgExprsOk = true;
-            
+
             // now parse the non-empty comma separated list of expressions
             while (1) {
               OwningExprResult ArgExpr(ParseAssignmentExpression());
@@ -144,7 +144,7 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
             }
             if (ArgExprsOk && Tok.is(tok::r_paren)) {
               ConsumeParen(); // ignore the right paren loc for now
-              CurrAttr = new AttributeList(AttrName, AttrNameLoc, ParmName, 
+              CurrAttr = new AttributeList(AttrName, AttrNameLoc, ParmName,
                            ParmLoc, ArgExprs.take(), ArgExprs.size(), CurrAttr);
             }
           }
@@ -154,7 +154,7 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
           // parse a possibly empty comma separated list of expressions
             // __attribute__(( nonnull() ))
             ConsumeParen(); // ignore the right paren loc for now
-            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 
+            CurrAttr = new AttributeList(AttrName, AttrNameLoc,
                                          0, SourceLocation(), 0, 0, CurrAttr);
             break;
           case tok::kw_char:
@@ -174,7 +174,7 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
             // If it's a builtin type name, eat it and expect a rparen
             // __attribute__(( vec_type_hint(char) ))
             ConsumeToken();
-            CurrAttr = new AttributeList(AttrName, AttrNameLoc, 
+            CurrAttr = new AttributeList(AttrName, AttrNameLoc,
                                          0, SourceLocation(), 0, 0, CurrAttr);
             if (Tok.is(tok::r_paren))
               ConsumeParen();
@@ -183,7 +183,7 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
             // __attribute__(( aligned(16) ))
             ExprVector ArgExprs(Actions);
             bool ArgExprsOk = true;
-            
+
             // now parse the list of expressions
             while (1) {
               OwningExprResult ArgExpr(ParseAssignmentExpression());
@@ -209,7 +209,7 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
           }
         }
       } else {
-        CurrAttr = new AttributeList(AttrName, AttrNameLoc, 
+        CurrAttr = new AttributeList(AttrName, AttrNameLoc,
                                      0, SourceLocation(), 0, 0, CurrAttr);
       }
     }
@@ -322,7 +322,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclaration(unsigned Context,
   default:
     return ParseSimpleDeclaration(Context, DeclEnd);
   }
-  
+
   // This routine returns a DeclGroup, if the thing we parsed only contains a
   // single decl, convert it now.
   return Actions.ConvertDeclToDeclGroup(SingleDecl);
@@ -341,7 +341,7 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
   // Parse the common declaration-specifiers piece.
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS);
-  
+
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
   if (Tok.is(tok::semi)) {
@@ -349,24 +349,24 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
     DeclPtrTy TheDecl = Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
-  
+
   Declarator DeclaratorInfo(DS, (Declarator::TheContext)Context);
   ParseDeclarator(DeclaratorInfo);
-  
+
   DeclGroupPtrTy DG =
     ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
 
   DeclEnd = Tok.getLocation();
-  
+
   // If the client wants to check what comes after the declaration, just return
   // immediately without checking anything!
   if (!RequireSemi) return DG;
-  
+
   if (Tok.is(tok::semi)) {
     ConsumeToken();
     return DG;
   }
-  
+
   Diag(Tok, diag::err_expected_semi_declaration);
   // Skip to end of block or statement
   SkipUntil(tok::r_brace, true, true);
@@ -406,27 +406,27 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
       SkipUntil(tok::semi, true, true);
       return DeclPtrTy();
     }
-    
+
     D.setAsmLabel(AsmLabel.release());
     D.SetRangeEnd(Loc);
   }
-  
+
   // If attributes are present, parse them.
   if (Tok.is(tok::kw___attribute)) {
     SourceLocation Loc;
     AttributeList *AttrList = ParseAttributes(&Loc);
     D.AddAttributes(AttrList, Loc);
   }
-  
+
   // Inform the current actions module that we just parsed this declarator.
-  DeclPtrTy ThisDecl = TemplateInfo.TemplateParams? 
+  DeclPtrTy ThisDecl = TemplateInfo.TemplateParams?
       Actions.ActOnTemplateDeclarator(CurScope,
                              Action::MultiTemplateParamsArg(Actions,
                                           TemplateInfo.TemplateParams->data(),
                                           TemplateInfo.TemplateParams->size()),
                                     D)
     : Actions.ActOnDeclarator(CurScope, D);
-  
+
   // Parse declarator '=' initializer.
   if (Tok.is(tok::equal)) {
     ConsumeToken();
@@ -467,7 +467,7 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
                                             CommaLocs.data(), RParenLoc);
     }
   } else {
-    bool TypeContainsUndeducedAuto = 
+    bool TypeContainsUndeducedAuto =
       D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto;
     Actions.ActOnUninitializedDecl(ThisDecl, TypeContainsUndeducedAuto);
   }
@@ -492,25 +492,25 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
   // Declarators may be grouped together ("int X, *Y, Z();"). Remember the decls
   // that we parse together here.
   llvm::SmallVector<DeclPtrTy, 8> DeclsInGroup;
-  
+
   // At this point, we know that it is not a function definition.  Parse the
   // rest of the init-declarator-list.
   while (1) {
     DeclPtrTy ThisDecl = ParseDeclarationAfterDeclarator(D);
     if (ThisDecl.get())
       DeclsInGroup.push_back(ThisDecl);
-    
+
     // If we don't have a comma, it is either the end of the list (a ';') or an
     // error, bail out.
     if (Tok.isNot(tok::comma))
       break;
-    
+
     // Consume the comma.
     ConsumeToken();
-    
+
     // Parse the next declarator.
     D.clear();
-    
+
     // Accept attributes in an init-declarator.  In the first declarator in a
     // declaration, these would be part of the declspec.  In subsequent
     // declarators, they become part of the declarator itself, so that they
@@ -523,10 +523,10 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
       AttributeList *AttrList = ParseAttributes(&Loc);
       D.AddAttributes(AttrList, Loc);
     }
-    
+
     ParseDeclarator(D);
   }
-  
+
   return Actions.FinalizeDeclaratorGroup(CurScope, D.getDeclSpec(),
                                          DeclsInGroup.data(),
                                          DeclsInGroup.size());
@@ -542,13 +542,13 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
   /// specifier-qualifier-list is a subset of declaration-specifiers.  Just
   /// parse declaration-specifiers and complain about extra stuff.
   ParseDeclarationSpecifiers(DS);
-  
+
   // Validate declspec for type-name.
   unsigned Specs = DS.getParsedSpecifiers();
   if (Specs == DeclSpec::PQ_None && !DS.getNumProtocolQualifiers() &&
       !DS.getAttributes())
     Diag(Tok, diag::err_typename_requires_specqual);
-  
+
   // Issue diagnostic and remove storage class if present.
   if (Specs & DeclSpec::PQ_StorageClassSpecifier) {
     if (DS.getStorageClassSpecLoc().isValid())
@@ -557,7 +557,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
       Diag(DS.getThreadSpecLoc(), diag::err_typename_invalid_storageclass);
     DS.ClearStorageClassSpecs();
   }
-  
+
   // Issue diagnostic and remove function specfier if present.
   if (Specs & DeclSpec::PQ_FunctionSpecifier) {
     if (DS.isInlineSpecified())
@@ -608,7 +608,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                               const ParsedTemplateInfo &TemplateInfo,
                               AccessSpecifier AS) {
   assert(Tok.is(tok::identifier) && "should have identifier");
-  
+
   SourceLocation Loc = Tok.getLocation();
   // If we see an identifier that is not a type name, we normally would
   // parse it as the identifer being declared.  However, when a typename
@@ -623,7 +623,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
   // next token is obviously invalid for a type.  Parse these as a case
   // with an invalid type specifier.
   assert(!DS.hasTypeSpecifier() && "Type specifier checked above");
-  
+
   // Since we know that this either implicit int (which is rare) or an
   // error, we'd do lookahead to try to do better recovery.
   if (isValidAfterIdentifierInDeclarator(NextToken())) {
@@ -632,7 +632,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
     // identifier in the declarator.
     return false;
   }
-  
+
   // Otherwise, if we don't consume this token, we are going to emit an
   // error anyway.  Try to recover from various common problems.  Check
   // to see if this was a reference to a tag name without a tag specified.
@@ -642,7 +642,7 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
   if (SS == 0) {
     const char *TagName = 0;
     tok::TokenKind TagKind = tok::unknown;
-  
+
     switch (Actions.isTagName(*Tok.getIdentifierInfo(), CurScope)) {
       default: break;
       case DeclSpec::TST_enum:  TagName="enum"  ;TagKind=tok::kw_enum  ;break;
@@ -650,12 +650,12 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
       case DeclSpec::TST_struct:TagName="struct";TagKind=tok::kw_struct;break;
       case DeclSpec::TST_class: TagName="class" ;TagKind=tok::kw_class ;break;
     }
-  
+
     if (TagName) {
       Diag(Loc, diag::err_use_of_tag_name_without_tag)
         << Tok.getIdentifierInfo() << TagName
         << CodeModificationHint::CreateInsertion(Tok.getLocation(),TagName);
-      
+
       // Parse this as a tag as if the missing tag were present.
       if (TagKind == tok::kw_enum)
         ParseEnumSpecifier(Loc, DS, AS);
@@ -664,20 +664,20 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
       return true;
     }
   }
-  
+
   // Since this is almost certainly an invalid type name, emit a
   // diagnostic that says it, eat the token, and mark the declspec as
   // invalid.
   SourceRange R;
   if (SS) R = SS->getRange();
-  
+
   Diag(Loc, diag::err_unknown_typename) << Tok.getIdentifierInfo() << R;
   const char *PrevSpec;
   unsigned DiagID;
   DS.SetTypeSpecType(DeclSpec::TST_error, Loc, PrevSpec, DiagID);
   DS.SetRangeEnd(Tok.getLocation());
   ConsumeToken();
-  
+
   // TODO: Could inject an invalid typedef decl in an enclosing scope to
   // avoid rippling error messages on subsequent uses of the same type,
   // could be useful if #include was forgotten.
@@ -719,13 +719,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     SourceLocation Loc = Tok.getLocation();
 
     switch (Tok.getKind()) {
-    default: 
+    default:
     DoneWithDeclSpec:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(Diags, PP);
       return;
-        
+
     case tok::coloncolon: // ::foo::bar
       // Annotate C++ scope specifiers.  If we get one, loop.
       if (TryAnnotateCXXScopeToken(true))
@@ -738,13 +738,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       // We are looking for a qualified typename.
       Token Next = NextToken();
-      if (Next.is(tok::annot_template_id) && 
+      if (Next.is(tok::annot_template_id) &&
           static_cast<TemplateIdAnnotation *>(Next.getAnnotationValue())
             ->Kind == TNK_Type_template) {
         // We have a qualified template-id, e.g., N::A<int>
         CXXScopeSpec SS;
         ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true);
-        assert(Tok.is(tok::annot_template_id) && 
+        assert(Tok.is(tok::annot_template_id) &&
                "ParseOptionalCXXScopeSpecifier not working");
         AnnotateTemplateIdTokenAsType(&SS);
         continue;
@@ -771,26 +771,26 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // If the referenced identifier is not a type, then this declspec is
       // erroneous: We already checked about that it has no type specifier, and
       // C++ doesn't have implicit int.  Diagnose it as a typo w.r.t. to the
-      // typename.  
+      // typename.
       if (TypeRep == 0) {
         ConsumeToken();   // Eat the scope spec so the identifier is current.
         if (ParseImplicitInt(DS, &SS, TemplateInfo, AS)) continue;
         goto DoneWithDeclSpec;
       }
-      
+
       ConsumeToken(); // The C++ scope.
 
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
                                      DiagID, TypeRep);
       if (isInvalid)
         break;
-      
+
       DS.SetRangeEnd(Tok.getLocation());
       ConsumeToken(); // The typename.
 
       continue;
     }
-        
+
     case tok::annot_typename: {
       if (Tok.getAnnotationValue())
         isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec,
@@ -799,38 +799,38 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         DS.SetTypeSpecError();
       DS.SetRangeEnd(Tok.getAnnotationEndLoc());
       ConsumeToken(); // The typename
-      
+
       // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
       // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
       // Objective-C interface.  If we don't have Objective-C or a '<', this is
       // just a normal reference to a typedef name.
       if (!Tok.is(tok::less) || !getLang().ObjC1)
         continue;
-      
+
       SourceLocation EndProtoLoc;
       llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
       ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
       DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size());
-      
+
       DS.SetRangeEnd(EndProtoLoc);
       continue;
     }
-        
+
       // typedef-name
     case tok::identifier: {
       // In C++, check to see if this is a scope specifier like foo::bar::, if
       // so handle it as such.  This is important for ctor parsing.
       if (getLang().CPlusPlus && TryAnnotateCXXScopeToken(true))
         continue;
-      
+
       // This identifier can only be a typedef name if we haven't already seen
       // a type-specifier.  Without this check we misparse:
       //  typedef int X; struct Y { short X; };  as 'short int'.
       if (DS.hasTypeSpecifier())
         goto DoneWithDeclSpec;
-      
+
       // It has to be available as a typedef too!
-      TypeTy *TypeRep = Actions.getTypeName(*Tok.getIdentifierInfo(), 
+      TypeTy *TypeRep = Actions.getTypeName(*Tok.getIdentifierInfo(),
                                             Tok.getLocation(), CurScope);
 
       // If this is not a typedef name, don't parse it as part of the declspec,
@@ -844,11 +844,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // being defined and the next token is a '(', then this is a
       // constructor declaration. We're done with the decl-specifiers
       // and will treat this token as an identifier.
-      if (getLang().CPlusPlus && 
-          (CurScope->isClassScope() || 
-           (CurScope->isTemplateParamScope() && 
+      if (getLang().CPlusPlus &&
+          (CurScope->isClassScope() ||
+           (CurScope->isTemplateParamScope() &&
             CurScope->getParent()->isClassScope())) &&
-          Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope) && 
+          Actions.isCurrentClassName(*Tok.getIdentifierInfo(), CurScope) &&
           NextToken().getKind() == tok::l_paren)
         goto DoneWithDeclSpec;
 
@@ -856,7 +856,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                      DiagID, TypeRep);
       if (isInvalid)
         break;
-      
+
       DS.SetRangeEnd(Tok.getLocation());
       ConsumeToken(); // The identifier
 
@@ -866,12 +866,12 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // just a normal reference to a typedef name.
       if (!Tok.is(tok::less) || !getLang().ObjC1)
         continue;
-      
+
       SourceLocation EndProtoLoc;
       llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
       ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
       DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size());
-      
+
       DS.SetRangeEnd(EndProtoLoc);
 
       // Need to support trailing type qualifiers (e.g. "id<p> const").
@@ -881,7 +881,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       // type-name
     case tok::annot_template_id: {
-      TemplateIdAnnotation *TemplateId 
+      TemplateIdAnnotation *TemplateId
         = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
       if (TemplateId->Kind != TNK_Type_template) {
         // This template-id does not refer to a type name, so we're
@@ -904,7 +904,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw___declspec:
       DS.AddAttributes(ParseMicrosoftDeclSpec());
       continue;
-      
+
     // Microsoft single token adornments.
     case tok::kw___forceinline:
       // FIXME: Add handling here!
@@ -958,7 +958,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw___thread:
       isInvalid = DS.SetStorageClassSpecThread(Loc, PrevSpec, DiagID);
       break;
-          
+
     // function-specifier
     case tok::kw_inline:
       isInvalid = DS.SetFunctionSpecInline(Loc, PrevSpec, DiagID);
@@ -980,7 +980,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         isInvalid = true;
       }
       break;
-      
+
     // type-specifier
     case tok::kw_short:
       isInvalid = DS.SetTypeSpecWidth(DeclSpec::TSW_short, Loc, PrevSpec,
@@ -1111,7 +1111,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // but we support it.
       if (DS.hasTypeSpecifier() || !getLang().ObjC1)
         goto DoneWithDeclSpec;
-        
+
       {
         SourceLocation EndProtoLoc;
         llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
@@ -1201,7 +1201,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
     if (NextToken().is(tok::kw_new) ||    // ::new
         NextToken().is(tok::kw_delete))   // ::delete
       return false;
-    
+
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
@@ -1209,7 +1209,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
                                         TemplateInfo);
     // Otherwise, not a type specifier.
     return false;
-      
+
   // simple-type-specifier:
   case tok::annot_typename: {
     if (Tok.getAnnotationValue())
@@ -1219,19 +1219,19 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
       DS.SetTypeSpecError();
     DS.SetRangeEnd(Tok.getAnnotationEndLoc());
     ConsumeToken(); // The typename
-    
+
     // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
     // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
     // Objective-C interface.  If we don't have Objective-C or a '<', this is
     // just a normal reference to a typedef name.
     if (!Tok.is(tok::less) || !getLang().ObjC1)
       return true;
-    
+
     SourceLocation EndProtoLoc;
     llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
     ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
     DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size());
-    
+
     DS.SetRangeEnd(EndProtoLoc);
     return true;
   }
@@ -1342,7 +1342,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
   case tok::kw_decltype:
     ParseDecltypeSpecifier(DS);
     return true;
-      
+
   // C++0x auto support.
   case tok::kw_auto:
     if (!getLang().CPlusPlus0x)
@@ -1400,11 +1400,11 @@ ParseStructDeclaration(DeclSpec &DS,
     ConsumeToken();
     return ParseStructDeclaration(DS, Fields);
   }
-  
+
   // Parse the common specifier-qualifiers-list piece.
   SourceLocation DSStart = Tok.getLocation();
   ParseSpecifierQualifierList(DS);
-  
+
   // If there are no declarators, this is a free-standing declaration
   // specifier. Let the actions module cope with it.
   if (Tok.is(tok::semi)) {
@@ -1416,12 +1416,12 @@ ParseStructDeclaration(DeclSpec &DS,
   Fields.push_back(FieldDeclarator(DS));
   while (1) {
     FieldDeclarator &DeclaratorInfo = Fields.back();
-    
+
     /// struct-declarator: declarator
     /// struct-declarator: declarator[opt] ':' constant-expression
     if (Tok.isNot(tok::colon))
       ParseDeclarator(DeclaratorInfo.D);
-    
+
     if (Tok.is(tok::colon)) {
       ConsumeToken();
       OwningExprResult Res(ParseConstantExpression());
@@ -1473,9 +1473,9 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   PrettyStackTraceActionsDecl CrashInfo(TagDecl, RecordLoc, Actions,
                                         PP.getSourceManager(),
                                         "parsing struct/union body");
-  
+
   SourceLocation LBraceLoc = ConsumeBrace();
-  
+
   ParseScope StructScope(this, Scope::ClassScope|Scope::DeclScope);
   Actions.ActOnTagStartDefinition(CurScope, TagDecl);
 
@@ -1491,7 +1491,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   // While we still have something to read, read the declarations in the struct.
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
     // Each iteration of this loop reads one struct-declaration.
-    
+
     // Check for extraneous top-level semicolon.
     if (Tok.is(tok::semi)) {
       Diag(Tok, diag::ext_extra_struct_semi)
@@ -1505,7 +1505,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     FieldDeclarators.clear();
     if (!Tok.is(tok::at)) {
       ParseStructDeclaration(DS, FieldDeclarators);
-      
+
       // Convert them all to fields.
       for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
         FieldDeclarator &FD = FieldDeclarators[i];
@@ -1539,12 +1539,12 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
         continue;
       }
       llvm::SmallVector<DeclPtrTy, 16> Fields;
-      Actions.ActOnDefs(CurScope, TagDecl, Tok.getLocation(), 
+      Actions.ActOnDefs(CurScope, TagDecl, Tok.getLocation(),
                         Tok.getIdentifierInfo(), Fields);
       FieldDecls.insert(FieldDecls.end(), Fields.begin(), Fields.end());
       ConsumeToken();
       ExpectAndConsume(tok::r_paren, diag::err_expected_rparen);
-    } 
+    }
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();
@@ -1557,9 +1557,9 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
       SkipUntil(tok::r_brace, true, true);
     }
   }
-  
+
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
-  
+
   AttributeList *AttrList = 0;
   // If attributes exist after struct contents, parse them.
   if (Tok.is(tok::kw___attribute))
@@ -1607,16 +1607,16 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       }
     }
   }
-  
+
   // Must have either 'enum name' or 'enum {...}'.
   if (Tok.isNot(tok::identifier) && Tok.isNot(tok::l_brace)) {
     Diag(Tok, diag::err_expected_ident_lbrace);
-    
+
     // Skip the rest of this declarator, up until the comma or semicolon.
     SkipUntil(tok::comma, true);
     return;
   }
-  
+
   // If an identifier is present, consume and remember it.
   IdentifierInfo *Name = 0;
   SourceLocation NameLoc;
@@ -1624,7 +1624,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     Name = Tok.getIdentifierInfo();
     NameLoc = ConsumeToken();
   }
-  
+
   // There are three options here.  If we have 'enum foo;', then this is a
   // forward declaration.  If we have 'enum foo {...' then this is a
   // definition. Otherwise we have something like 'enum foo xyz', a reference.
@@ -1645,10 +1645,10 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
                                        StartLoc, SS, Name, NameLoc, Attr, AS,
                                        Action::MultiTemplateParamsArg(Actions),
                                        Owned);
-  
+
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);
-  
+
   // TODO: semantic analysis on the declspec for enums.
   const char *PrevSpec = 0;
   unsigned DiagID;
@@ -1673,20 +1673,20 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
   Actions.ActOnTagStartDefinition(CurScope, EnumDecl);
 
   SourceLocation LBraceLoc = ConsumeBrace();
-  
+
   // C does not allow an empty enumerator-list, C++ does [dcl.enum].
   if (Tok.is(tok::r_brace) && !getLang().CPlusPlus)
     Diag(Tok, diag::ext_empty_struct_union_enum) << "enum";
-  
+
   llvm::SmallVector<DeclPtrTy, 32> EnumConstantDecls;
 
   DeclPtrTy LastEnumConstDecl;
-  
+
   // Parse the enumerator-list.
   while (Tok.is(tok::identifier)) {
     IdentifierInfo *Ident = Tok.getIdentifierInfo();
     SourceLocation IdentLoc = ConsumeToken();
-    
+
     SourceLocation EqualLoc;
     OwningExprResult AssignedVal(Actions);
     if (Tok.is(tok::equal)) {
@@ -1695,7 +1695,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
       if (AssignedVal.isInvalid())
         SkipUntil(tok::comma, tok::r_brace, true, true);
     }
-    
+
     // Install the enumerator constant into EnumDecl.
     DeclPtrTy EnumConstDecl = Actions.ActOnEnumConstant(CurScope, EnumDecl,
                                                         LastEnumConstDecl,
@@ -1704,18 +1704,18 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
                                                         AssignedVal.release());
     EnumConstantDecls.push_back(EnumConstDecl);
     LastEnumConstDecl = EnumConstDecl;
-    
+
     if (Tok.isNot(tok::comma))
       break;
     SourceLocation CommaLoc = ConsumeToken();
-    
-    if (Tok.isNot(tok::identifier) && 
+
+    if (Tok.isNot(tok::identifier) &&
         !(getLang().C99 || getLang().CPlusPlus0x))
       Diag(CommaLoc, diag::ext_enumerator_list_comma)
         << getLang().CPlusPlus
         << CodeModificationHint::CreateRemoval((SourceRange(CommaLoc)));
   }
-  
+
   // Eat the }.
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
 
@@ -1727,7 +1727,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
   Actions.ActOnEnumBody(StartLoc, LBraceLoc, RBraceLoc, EnumDecl,
                         EnumConstantDecls.data(), EnumConstantDecls.size(),
                         CurScope, Attr);
-  
+
   EnumScope.Exit();
   Actions.ActOnTagFinishDefinition(CurScope, EnumDecl, RBraceLoc);
 }
@@ -1750,7 +1750,7 @@ bool Parser::isTypeQualifier() const {
 bool Parser::isTypeSpecifierQualifier() {
   switch (Tok.getKind()) {
   default: return false;
-      
+
   case tok::identifier:   // foo::bar
   case tok::kw_typename:  // typename T::type
     // Annotate typenames and C++ scope specifiers.  If we get one, just
@@ -1771,12 +1771,12 @@ bool Parser::isTypeSpecifierQualifier() {
       return isTypeSpecifierQualifier();
     // Otherwise, not a type specifier.
     return false;
-      
+
     // GNU attributes support.
   case tok::kw___attribute:
     // GNU typeof support.
   case tok::kw_typeof:
-  
+
     // type-specifiers
   case tok::kw_short:
   case tok::kw_long:
@@ -1797,14 +1797,14 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw__Decimal32:
   case tok::kw__Decimal64:
   case tok::kw__Decimal128:
-    
+
     // struct-or-union-specifier (C99) or class-specifier (C++)
   case tok::kw_class:
   case tok::kw_struct:
   case tok::kw_union:
     // enum-specifier
   case tok::kw_enum:
-    
+
     // type-qualifier
   case tok::kw_const:
   case tok::kw_volatile:
@@ -1813,11 +1813,11 @@ bool Parser::isTypeSpecifierQualifier() {
     // typedef-name
   case tok::annot_typename:
     return true;
-      
+
     // GNU ObjC bizarre protocol extension: <proto1,proto2> with implicit 'id'.
   case tok::less:
     return getLang().ObjC1;
-  
+
   case tok::kw___cdecl:
   case tok::kw___stdcall:
   case tok::kw___fastcall:
@@ -1832,7 +1832,7 @@ bool Parser::isTypeSpecifierQualifier() {
 bool Parser::isDeclarationSpecifier() {
   switch (Tok.getKind()) {
   default: return false;
-    
+
   case tok::identifier:   // foo::bar
     // Unfortunate hack to support "Class.factoryMethod" notation.
     if (getLang().ObjC1 && NextToken().is(tok::period))
@@ -1850,14 +1850,14 @@ bool Parser::isDeclarationSpecifier() {
     if (NextToken().is(tok::kw_new) ||    // ::new
         NextToken().is(tok::kw_delete))   // ::delete
       return false;
-    
+
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
       return isDeclarationSpecifier();
     // Otherwise, not a declaration specifier.
     return false;
-      
+
     // storage-class-specifier
   case tok::kw_typedef:
   case tok::kw_extern:
@@ -1866,7 +1866,7 @@ bool Parser::isDeclarationSpecifier() {
   case tok::kw_auto:
   case tok::kw_register:
   case tok::kw___thread:
-    
+
     // type-specifiers
   case tok::kw_short:
   case tok::kw_long:
@@ -1888,14 +1888,14 @@ bool Parser::isDeclarationSpecifier() {
   case tok::kw__Decimal32:
   case tok::kw__Decimal64:
   case tok::kw__Decimal128:
-  
+
     // struct-or-union-specifier (C99) or class-specifier (C++)
   case tok::kw_class:
   case tok::kw_struct:
   case tok::kw_union:
     // enum-specifier
   case tok::kw_enum:
-    
+
     // type-qualifier
   case tok::kw_const:
   case tok::kw_volatile:
@@ -1911,15 +1911,15 @@ bool Parser::isDeclarationSpecifier() {
 
     // GNU typeof support.
   case tok::kw_typeof:
-    
+
     // GNU attributes.
   case tok::kw___attribute:
     return true;
-  
+
     // GNU ObjC bizarre protocol extension: <proto1,proto2> with implicit 'id'.
   case tok::less:
     return getLang().ObjC1;
-    
+
   case tok::kw___declspec:
   case tok::kw___cdecl:
   case tok::kw___stdcall:
@@ -2035,7 +2035,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
        Tok.is(tok::annot_cxxscope))) {
     CXXScopeSpec SS;
     if (ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, true)) {
-      if(Tok.isNot(tok::star)) {
+      if (Tok.isNot(tok::star)) {
         // The scope spec really belongs to the direct-declarator.
         D.getCXXScopeSpec() = SS;
         if (DirectDeclParser)
@@ -2093,7 +2093,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
                     SourceLocation());
     else
       // Remember that we parsed a Block type, and remember the type-quals.
-      D.AddTypeInfo(DeclaratorChunk::getBlockPointer(DS.getTypeQualifiers(), 
+      D.AddTypeInfo(DeclaratorChunk::getBlockPointer(DS.getTypeQualifiers(),
                                                      Loc, DS.TakeAttributes()),
                     SourceLocation());
   } else {
@@ -2178,10 +2178,10 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 ///         qualified-id            [TODO]
 ///
 ///       unqualified-id: [C++ 5.1]
-///         identifier 
+///         identifier
 ///         operator-function-id
 ///         conversion-function-id  [TODO]
-///          '~' class-name         
+///          '~' class-name
 ///         template-id
 ///
 void Parser::ParseDirectDeclarator(Declarator &D) {
@@ -2191,7 +2191,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     if (D.mayHaveIdentifier()) {
       // ParseDeclaratorInternal might already have parsed the scope.
       bool afterCXXScope = D.getCXXScopeSpec().isSet() ||
-        ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec(), /*ObjectType=*/0, 
+        ParseOptionalCXXScopeSpecifier(D.getCXXScopeSpec(), /*ObjectType=*/0,
                                        true);
       if (afterCXXScope) {
         // Change the declaration context for name lookup, until this function
@@ -2203,7 +2203,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         assert(Tok.getIdentifierInfo() && "Not an identifier?");
 
         // If this identifier is the name of the current class, it's a
-        // constructor name. 
+        // constructor name.
         if (!D.getDeclSpec().hasTypeSpecifier() &&
             Actions.isCurrentClassName(*Tok.getIdentifierInfo(),CurScope)) {
           CXXScopeSpec *SS = afterCXXScope? &D.getCXXScopeSpec() : 0;
@@ -2216,7 +2216,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         ConsumeToken();
         goto PastIdentifier;
       } else if (Tok.is(tok::annot_template_id)) {
-        TemplateIdAnnotation *TemplateId 
+        TemplateIdAnnotation *TemplateId
           = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
 
         // FIXME: Could this template-id name a constructor?
@@ -2305,11 +2305,11 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
     D.SetIdentifier(0, Tok.getLocation());
     D.setInvalidType(true);
   }
-  
+
  PastIdentifier:
   assert(D.isPastIdentifier() &&
          "Haven't past the location of the identifier yet?");
-  
+
   while (1) {
     if (Tok.is(tok::l_paren)) {
       // The paren may be part of a C++ direct initializer, eg. "int x(1);".
@@ -2333,7 +2333,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 
 /// ParseParenDeclarator - We parsed the declarator D up to a paren.  This is
 /// only called before the identifier, so these are most likely just grouping
-/// parens for precedence.  If we find that these are actually function 
+/// parens for precedence.  If we find that these are actually function
 /// parameter parens in an abstract-declarator, we call ParseFunctionDeclarator.
 ///
 ///       direct-declarator:
@@ -2347,7 +2347,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
 void Parser::ParseParenDeclarator(Declarator &D) {
   SourceLocation StartLoc = ConsumeParen();
   assert(!D.isPastIdentifier() && "Should be called before passing identifier");
-  
+
   // Eat any attributes before we look at whether this is a grouping or function
   // declarator paren.  If this is a grouping paren, the attribute applies to
   // the type being built up, for example:
@@ -2362,7 +2362,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
   bool RequiresArg = false;
   if (Tok.is(tok::kw___attribute)) {
     AttrList = ParseAttributes();
-    
+
     // We require that the argument list (if this is a non-grouping paren) be
     // present even if the attribute list was empty.
     RequiresArg = true;
@@ -2373,13 +2373,13 @@ void Parser::ParseParenDeclarator(Declarator &D) {
        Tok.is(tok::kw___ptr64)) {
     AttrList = ParseMicrosoftTypeAttributes(AttrList);
   }
-  
+
   // If we haven't past the identifier yet (or where the identifier would be
   // stored, if this is an abstract declarator), then this is probably just
   // grouping parens. However, if this could be an abstract-declarator, then
   // this could also be the start of function arguments (consider 'void()').
   bool isGrouping;
-  
+
   if (!D.mayOmitIdentifier()) {
     // If this can't be an abstract-declarator, this *must* be a grouping
     // paren, because we haven't seen the identifier yet.
@@ -2394,7 +2394,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // Otherwise, this is a grouping paren, e.g. 'int (*X)' or 'int(X)'.
     isGrouping = true;
   }
-  
+
   // If this is a grouping paren, handle:
   // direct-declarator: '(' declarator ')'
   // direct-declarator: '(' attributes declarator ')'
@@ -2412,7 +2412,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     D.SetRangeEnd(Loc);
     return;
   }
-  
+
   // Okay, if this wasn't a grouping paren, it must be the start of a function
   // argument list.  Recognize that this declarator will never have an
   // identifier (and remember where it would have been), then call into
@@ -2458,7 +2458,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                      bool RequiresArg) {
   // lparen is already consumed!
   assert(D.isPastIdentifier() && "Should not call before identifier!");
-  
+
   // This parameter list may be empty.
   if (Tok.is(tok::r_paren)) {
     if (RequiresArg) {
@@ -2524,9 +2524,9 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       return ParseFunctionDeclaratorIdentifierList(LParenLoc, D);
     }
   }
-  
+
   // Finally, a normal, non-empty parameter type list.
-  
+
   // Build up an array of information about the parsed arguments.
   llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
 
@@ -2534,7 +2534,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
   // function prototype scope, including parameter declarators.
   ParseScope PrototypeScope(this,
                             Scope::FunctionPrototypeScope|Scope::DeclScope);
-  
+
   bool IsVariadic = false;
   SourceLocation EllipsisLoc;
   while (1) {
@@ -2543,9 +2543,9 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       EllipsisLoc = ConsumeToken();     // Consume the ellipsis.
       break;
     }
-    
+
     SourceLocation DSStart = Tok.getLocation();
-    
+
     // Parse the declaration-specifiers.
     DeclSpec DS;
 
@@ -2555,7 +2555,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       AttrList = 0;  // Only apply the attributes to the first parameter.
     }
     ParseDeclarationSpecifiers(DS);
-    
+
     // Parse the declarator.  This is "PrototypeContext", because we must
     // accept either 'declarator' or 'abstract-declarator' here.
     Declarator ParmDecl(DS, Declarator::PrototypeContext);
@@ -2567,10 +2567,10 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
       AttributeList *AttrList = ParseAttributes(&Loc);
       ParmDecl.AddAttributes(AttrList, Loc);
     }
-    
+
     // Remember this parsed parameter in ParamInfo.
     IdentifierInfo *ParmII = ParmDecl.getIdentifier();
-    
+
     // DefArgToks is used when the parsing of default arguments needs
     // to be delayed.
     CachedTokens *DefArgToks = 0;
@@ -2584,7 +2584,7 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     } else {
       // Otherwise, we have something.  Add it and let semantic analysis try
       // to grok it and add the result to the ParamInfo we are building.
-      
+
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
       DeclPtrTy Param = Actions.ActOnParamDeclarator(CurScope, ParmDecl);
@@ -2605,18 +2605,18 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
           // FIXME: Can we use a smart pointer for Toks?
           DefArgToks = new CachedTokens;
 
-          if (!ConsumeAndStoreUntil(tok::comma, tok::r_paren, *DefArgToks, 
+          if (!ConsumeAndStoreUntil(tok::comma, tok::r_paren, *DefArgToks,
                                     tok::semi, false)) {
             delete DefArgToks;
             DefArgToks = 0;
             Actions.ActOnParamDefaultArgumentError(Param);
           } else
-            Actions.ActOnParamUnparsedDefaultArgument(Param, EqualLoc, 
+            Actions.ActOnParamUnparsedDefaultArgument(Param, EqualLoc,
                                                 (*DefArgToks)[1].getLocation());
         } else {
           // Consume the '='.
           ConsumeToken();
-        
+
           OwningExprResult DefArgResult(ParseAssignmentExpression());
           if (DefArgResult.isInvalid()) {
             Actions.ActOnParamDefaultArgumentError(Param);
@@ -2628,22 +2628,22 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
           }
         }
       }
-      
-      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
-                                          ParmDecl.getIdentifierLoc(), Param, 
+
+      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
+                                          ParmDecl.getIdentifierLoc(), Param,
                                           DefArgToks));
     }
 
     // If the next token is a comma, consume it and keep reading arguments.
     if (Tok.isNot(tok::comma)) break;
-    
+
     // Consume the comma.
     ConsumeToken();
   }
-  
+
   // Leave prototype scope.
   PrototypeScope.Exit();
-  
+
   // If we have the closing ')', eat it.
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
   SourceLocation EndLoc = RParenLoc;
@@ -2698,7 +2698,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
   // Build up an array of information about the parsed arguments.
   llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
   llvm::SmallSet<const IdentifierInfo*, 16> ParamsSoFar;
-  
+
   // If there was no identifier specified for the declarator, either we are in
   // an abstract-declarator, or we are in a parameter declarator which was found
   // to be abstract.  In abstract-declarators, identifier lists are not valid:
@@ -2712,13 +2712,13 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
   ParamInfo.push_back(DeclaratorChunk::ParamInfo(Tok.getIdentifierInfo(),
                                                  Tok.getLocation(),
                                                  DeclPtrTy()));
-  
+
   ConsumeToken();  // eat the first identifier.
-  
+
   while (Tok.is(tok::comma)) {
     // Eat the comma.
     ConsumeToken();
-    
+
     // If this isn't an identifier, report the error and skip until ')'.
     if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_expected_ident);
@@ -2731,7 +2731,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
     // Reject 'typedef int y; int test(x, y)', but continue parsing.
     if (Actions.getTypeName(*ParmII, Tok.getLocation(), CurScope))
       Diag(Tok, diag::err_unexpected_typedef_ident) << ParmII;
-    
+
     // Verify that the argument identifier has not already been mentioned.
     if (!ParamsSoFar.insert(ParmII)) {
       Diag(Tok, diag::err_param_redefinition) << ParmII;
@@ -2741,7 +2741,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
                                                      Tok.getLocation(),
                                                      DeclPtrTy()));
     }
-    
+
     // Eat the identifier.
     ConsumeToken();
   }
@@ -2769,7 +2769,7 @@ void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
 /// [C99]   direct-declarator '[' type-qual-list[opt] '*' ']'
 void Parser::ParseBracketDeclarator(Declarator &D) {
   SourceLocation StartLoc = ConsumeBracket();
-  
+
   // C array syntax has many features, but by-far the most common is [] and [4].
   // This code does a fast path to handle some of the most obvious cases.
   if (Tok.getKind() == tok::r_square) {
@@ -2791,33 +2791,33 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     // If there was an error parsing the assignment-expression, recover.
     if (ExprRes.isInvalid())
       ExprRes.release();  // Deallocate expr, just use [].
-    
+
     // Remember that we parsed a array type, and remember its features.
     D.AddTypeInfo(DeclaratorChunk::getArray(0, false, 0, ExprRes.release(),
                                             StartLoc, EndLoc),
                   EndLoc);
     return;
   }
-  
+
   // If valid, this location is the position where we read the 'static' keyword.
   SourceLocation StaticLoc;
   if (Tok.is(tok::kw_static))
     StaticLoc = ConsumeToken();
-  
+
   // If there is a type-qualifier-list, read it now.
   // Type qualifiers in an array subscript are a C99 feature.
   DeclSpec DS;
   ParseTypeQualifierListOpt(DS, false /*no attributes*/);
-  
+
   // If we haven't already read 'static', check to see if there is one after the
   // type-qualifier-list.
   if (!StaticLoc.isValid() && Tok.is(tok::kw_static))
     StaticLoc = ConsumeToken();
-  
+
   // Handle "direct-declarator [ type-qual-list[opt] * ]".
   bool isStar = false;
   OwningExprResult NumElements(Actions);
-  
+
   // Handle the case where we have '[*]' as the array size.  However, a leading
   // star could be the start of an expression, for example 'X[*p + 4]'.  Verify
   // the the token after the star is a ']'.  Since stars in arrays are
@@ -2835,7 +2835,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     // of assignment-expr.  The only difference is that assignment-expr allows
     // things like '=' and '*='.  Sema rejects these in C89 mode because they
     // are not i-c-e's, so we don't need to distinguish between the two here.
-    
+
     // Parse the constant-expression or assignment-expression now (depending
     // on dialect).
     if (getLang().CPlusPlus)
@@ -2843,7 +2843,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     else
       NumElements = ParseAssignmentExpression();
   }
-  
+
   // If there was an error parsing the assignment-expression, recover.
   if (NumElements.isInvalid()) {
     D.setInvalidType(true);
@@ -2885,7 +2885,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     DS.SetRangeEnd(Tok.getLocation());
   else
     DS.SetRangeEnd(CastRange.getEnd());
-  
+
   if (isCastExpr) {
     if (!CastTy) {
       DS.SetTypeSpecError();

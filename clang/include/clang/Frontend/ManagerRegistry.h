@@ -43,7 +43,7 @@ public:
 class RegisterConstraintManager {
 public:
   RegisterConstraintManager(ConstraintManagerCreator CMC) {
-    assert(ManagerRegistry::ConstraintMgrCreator == 0 
+    assert(ManagerRegistry::ConstraintMgrCreator == 0
            && "ConstraintMgrCreator already set!");
     ManagerRegistry::ConstraintMgrCreator = CMC;
   }

@@ -77,7 +77,7 @@ static Info OptionInfos[] = {
   { "<input>", "d", 0, 0, Option::InputClass, OPT_INVALID, OPT_INVALID, 0 },
   // The UnknownOption info
   { "<unknown>", "", 0, 0, Option::UnknownClass, OPT_INVALID, OPT_INVALID, 0 },
-  
+
 #define OPTION(NAME, ID, KIND, GROUP, ALIAS, FLAGS, PARAM, \
                HELPTEXT, METAVAR)   \
   { NAME, FLAGS, HELPTEXT, METAVAR, \
@@ -124,10 +124,10 @@ OptTable::OptTable() : Options(new Option*[numOptions]) {
       assert(0 && "Options are not in order!");
     }
   }
-#endif  
+#endif
 }
 
-OptTable::~OptTable() { 
+OptTable::~OptTable() {
   for (unsigned i = 0; i < numOptions; ++i)
     delete Options[i];
   delete[] Options;
@@ -168,7 +168,7 @@ const Option *OptTable::getOption(options::ID id) const {
 
 Option *OptTable::constructOption(options::ID id) const {
   Info &info = getInfo(id);
-  const OptionGroup *Group = 
+  const OptionGroup *Group =
     cast_or_null<OptionGroup>(getOption((options::ID) info.GroupID));
   const Option *Alias = getOption((options::ID) info.AliasID);
 
@@ -199,10 +199,10 @@ Option *OptTable::constructOption(options::ID id) const {
   for (const char *s = info.Flags; *s; ++s) {
     switch (*s) {
     default: assert(0 && "Invalid option flag.");
-    case 'J': 
+    case 'J':
       assert(info.Kind == Option::SeparateClass && "Invalid option.");
       Opt->setForceJoinedRender(true); break;
-    case 'S': 
+    case 'S':
       assert(info.Kind == Option::JoinedClass && "Invalid option.");
       Opt->setForceSeparateRender(true); break;
     case 'd': Opt->setDriverOption(true); break;

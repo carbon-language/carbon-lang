@@ -34,10 +34,10 @@ class GRStmtNodeBuilderRef {
 
 private:
   friend class GRExprEngine;
-  
+
   GRStmtNodeBuilderRef(); // do not implement
   void operator=(const GRStmtNodeBuilderRef&); // do not implement
-  
+
   GRStmtNodeBuilderRef(ExplodedNodeSet &dst,
                        GRStmtNodeBuilder &builder,
                        GRExprEngine& eng,
@@ -47,12 +47,12 @@ private:
   : Dst(dst), B(builder), Eng(eng), Pred(pred),
     state(st), stmt(s), OldSize(Dst.size()), AutoCreateNode(auto_create_node),
     OldSink(B.BuildSinks), OldTag(B.Tag), OldHasGen(B.HasGeneratedNode) {}
-  
+
 public:
 
   ~GRStmtNodeBuilderRef() {
     // Handle the case where no nodes where generated.  Auto-generate that
-    // contains the updated state if we aren't generating sinks.  
+    // contains the updated state if we aren't generating sinks.
     if (!B.BuildSinks && Dst.size() == OldSize && !B.HasGeneratedNode) {
       if (AutoCreateNode)
         B.MakeNode(Dst, const_cast<Stmt*>(stmt), Pred, state);
@@ -62,14 +62,14 @@ public:
   }
 
   const GRState *getState() { return state; }
-  
+
   GRStateManager& getStateManager() {
     return Eng.getStateManager();
   }
-  
+
   ExplodedNode* MakeNode(const GRState* state) {
-    return B.MakeNode(Dst, const_cast<Stmt*>(stmt), Pred, state);    
-  }    
+    return B.MakeNode(Dst, const_cast<Stmt*>(stmt), Pred, state);
+  }
 };
 
 } // end clang namespace

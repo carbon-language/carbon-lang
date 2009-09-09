@@ -31,15 +31,15 @@ public:
     /// FnScope - This indicates that the scope corresponds to a function, which
     /// means that labels are set here.
     FnScope       = 0x01,
-    
+
     /// BreakScope - This is a while,do,switch,for, etc that can have break
     /// stmts embedded into it.
     BreakScope    = 0x02,
-    
+
     /// ContinueScope - This is a while,do,for, which can have continue
     /// stmt embedded into it.
     ContinueScope = 0x04,
-    
+
     /// DeclScope - This is a scope that can contain a declaration.  Some scopes
     /// just contain loop constructs but don't contain decls.
     DeclScope = 0x08,
@@ -49,7 +49,7 @@ public:
 
     /// ClassScope - The scope of a struct/union/class definition.
     ClassScope = 0x20,
-    
+
     /// BlockScope - This is a scope that corresponds to a block object.
     /// Blocks serve as top-level scopes for some objects like labels, they
     /// also prevent things like break and continue.  BlockScopes have the
@@ -65,7 +65,7 @@ public:
     /// FunctionPrototypeScope - This is a scope that corresponds to the
     /// parameters within a function prototype.
     FunctionPrototypeScope = 0x100,
-    
+
     /// AtCatchScope - This is a scope that corresponds to the Objective-C
     /// @catch statement.
     AtCatchScope = 0x200
@@ -74,15 +74,15 @@ private:
   /// The parent scope for this scope.  This is null for the translation-unit
   /// scope.
   Scope *AnyParent;
-  
+
   /// Depth - This is the depth of this scope.  The translation-unit scope has
   /// depth 0.
   unsigned Depth : 16;
-  
+
   /// Flags - This contains a set of ScopeFlags, which indicates how the scope
   /// interrelates with other control flow statements.
   unsigned Flags : 10;
-  
+
   /// WithinElse - Whether this scope is part of the "else" branch in
   /// its parent ControlScope.
   bool WithinElse : 1;
@@ -90,7 +90,7 @@ private:
   /// FnParent - If this scope has a parent scope that is a function body, this
   /// pointer is non-null and points to it.  This is used for label processing.
   Scope *FnParent;
-  
+
   /// BreakParent/ContinueParent - This is a direct link to the immediately
   /// preceeding BreakParent/ContinueParent if this scope is not one, or null if
   /// there is no containing break/continue scope.
@@ -119,7 +119,7 @@ private:
   /// implement these semantics.
   typedef llvm::SmallPtrSet<Action::DeclPtrTy, 32> DeclSetTy;
   DeclSetTy DeclsInScope;
-  
+
   /// Entity - The entity with which this scope is associated. For
   /// example, the entity of a class scope is the class itself, the
   /// entity of a function scope is a function, etc. This field is
@@ -151,9 +151,9 @@ public:
   ///
   const Scope *getFnParent() const { return FnParent; }
   Scope *getFnParent() { return FnParent; }
-  
+
   /// getContinueParent - Return the closest scope that a continue statement
-  /// would be affected by.  If the closest scope is a closure scope, we know 
+  /// would be affected by.  If the closest scope is a closure scope, we know
   /// that there is no loop *inside* the closure.
   Scope *getContinueParent() {
     if (ContinueParent && !ContinueParent->isBlockScope())
@@ -164,9 +164,9 @@ public:
   const Scope *getContinueParent() const {
     return const_cast<Scope*>(this)->getContinueParent();
   }
-  
+
   /// getBreakParent - Return the closest scope that a break statement
-  /// would be affected by.  If the closest scope is a block scope, we know 
+  /// would be affected by.  If the closest scope is a block scope, we know
   /// that there is no loop *inside* the block.
   Scope *getBreakParent() {
     if (BreakParent && !BreakParent->isBlockScope())
@@ -176,16 +176,16 @@ public:
   const Scope *getBreakParent() const {
     return const_cast<Scope*>(this)->getBreakParent();
   }
- 
+
   Scope *getControlParent() { return ControlParent; }
   const Scope *getControlParent() const { return ControlParent; }
-  
+
   Scope *getBlockParent() { return BlockParent; }
-  const Scope *getBlockParent() const { return BlockParent; }  
+  const Scope *getBlockParent() const { return BlockParent; }
 
   Scope *getTemplateParamParent() { return TemplateParamParent; }
-  const Scope *getTemplateParamParent() const { return TemplateParamParent; }  
- 
+  const Scope *getTemplateParamParent() const { return TemplateParamParent; }
+
   typedef DeclSetTy::iterator decl_iterator;
   decl_iterator decl_begin() const { return DeclsInScope.begin(); }
   decl_iterator decl_end()   const { return DeclsInScope.end(); }
@@ -222,7 +222,7 @@ public:
     }
     return false;
   }
-  
+
   /// isTemplateParamScope - Return true if this scope is a C++
   /// template parameter scope.
   bool isTemplateParamScope() const {
@@ -275,7 +275,7 @@ public:
     AnyParent = Parent;
     Depth = AnyParent ? AnyParent->Depth+1 : 0;
     Flags = ScopeFlags;
-    
+
     if (AnyParent) {
       FnParent       = AnyParent->FnParent;
       BreakParent    = AnyParent->BreakParent;
@@ -291,7 +291,7 @@ public:
       TemplateParamParent = 0;
       WithinElse = false;
     }
-    
+
     // If this scope is a function or contains breaks/continues, remember it.
     if (Flags & FnScope)            FnParent = this;
     if (Flags & BreakScope)         BreakParent = this;
@@ -304,7 +304,7 @@ public:
     Entity = 0;
   }
 };
-    
+
 }  // end namespace clang
 
 #endif

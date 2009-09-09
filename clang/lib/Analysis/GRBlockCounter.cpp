@@ -1,5 +1,5 @@
 //==- GRBlockCounter.h - ADT for counting block visits -------------*- C++ -*-//
-//             
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source

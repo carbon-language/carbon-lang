@@ -35,22 +35,22 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::Function:  // void X();
   case Decl::Record:    // struct/union/class X;
   case Decl::Enum:      // enum X;
-  case Decl::EnumConstant: // enum ? { X = ? } 
+  case Decl::EnumConstant: // enum ? { X = ? }
   case Decl::CXXRecord: // struct/union/class X; [C++]
     // None of these decls require codegen support.
     return;
-    
+
   case Decl::Var: {
     const VarDecl &VD = cast<VarDecl>(D);
-    assert(VD.isBlockVarDecl() && 
+    assert(VD.isBlockVarDecl() &&
            "Should not see file-scope variables inside a function!");
     return EmitBlockVarDecl(VD);
   }
-        
+
   case Decl::Typedef: {   // typedef int X;
     const TypedefDecl &TD = cast<TypedefDecl>(D);
     QualType Ty = TD.getUnderlyingType();
-    
+
     if (Ty->isVariablyModifiedType())
       EmitVLASize(Ty);
   }
@@ -62,7 +62,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
 void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
   if (D.hasAttr<AsmLabelAttr>())
     CGM.ErrorUnsupported(&D, "__asm__");
-  
+
   switch (D.getStorageClass()) {
   case VarDecl::None:
   case VarDecl::Auto:
@@ -98,22 +98,22 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
       ContextName = CurFn->getName();
     else
       assert(0 && "Unknown context for block var decl");
-    
+
     Name = ContextName + Separator + D.getNameAsString();
   }
 
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   return new llvm::GlobalVariable(CGM.getModule(), LTy,
                                   Ty.isConstant(getContext()), Linkage,
-                                  CGM.EmitNullConstant(D.getType()), Name, 0, 
+                                  CGM.EmitNullConstant(D.getType()), Name, 0,
                                   D.isThreadSpecified(), Ty.getAddressSpace());
 }
 
-void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) { 
+void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
-  
-  llvm::GlobalVariable *GV = 
+
+  llvm::GlobalVariable *GV =
     CreateStaticBlockVarDecl(D, ".", llvm::GlobalValue::InternalLinkage);
 
   // Store into LocalDeclMap before generating initializer to handle
@@ -143,7 +143,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
       // in the LLVM type system.)
       if (GV->getType() != Init->getType()) {
         llvm::GlobalVariable *OldGV = GV;
-        
+
         GV = new llvm::GlobalVariable(CGM.getModule(), Init->getType(),
                                       OldGV->isConstant(),
                                       OldGV->getLinkage(), Init, "",
@@ -154,13 +154,13 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
         GV->takeName(OldGV);
 
         // Replace all uses of the old global with the new global
-        llvm::Constant *NewPtrForOldDecl = 
+        llvm::Constant *NewPtrForOldDecl =
           llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
         OldGV->replaceAllUsesWith(NewPtrForOldDecl);
 
         // Erase the old global, since it is no longer used.
         OldGV->eraseFromParent();
-      } 
+      }
 
       GV->setInitializer(Init);
     }
@@ -170,14 +170,14 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>()) {
     SourceManager &SM = CGM.getContext().getSourceManager();
     llvm::Constant *Ann =
-      CGM.EmitAnnotateAttr(GV, AA, 
+      CGM.EmitAnnotateAttr(GV, AA,
                            SM.getInstantiationLineNumber(D.getLocation()));
     CGM.AddAnnotation(Ann);
   }
 
   if (const SectionAttr *SA = D.getAttr<SectionAttr>())
     GV->setSection(SA->getName());
-  
+
   if (D.hasAttr<UsedAttr>())
     CGM.AddUsedGlobal(GV);
 
@@ -198,7 +198,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
     DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(GV), &D);
   }
 }
-  
+
 /// BuildByRefType - This routine changes a __block variable declared as T x
 ///   into:
 ///
@@ -216,7 +216,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
 const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
   QualType Ty = D->getType();
   uint64_t Align = getContext().getDeclAlignInBytes(D);
-  
+
   const llvm::Type *LTy = ConvertType(Ty);
   bool needsCopyDispose = BlockRequiresCopying(Ty);
   std::vector<const llvm::Type *> Types(needsCopyDispose*2+5);
@@ -256,7 +256,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         LTy = BuildByRefType(&D);
       llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
       Alloc->setName(D.getNameAsString().c_str());
-      
+
       if (isByRef)
         Align = std::max(Align, unsigned(Target.getPointerAlign(0) / 8));
       Alloc->setAlignment(Align);
@@ -265,11 +265,11 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       // Targets that don't support recursion emit locals as globals.
       const char *Class =
         D.getStorageClass() == VarDecl::Register ? ".reg." : ".auto.";
-      DeclPtr = CreateStaticBlockVarDecl(D, Class, 
+      DeclPtr = CreateStaticBlockVarDecl(D, Class,
                                          llvm::GlobalValue
                                          ::InternalLinkage);
     }
-    
+
     // FIXME: Can this happen?
     if (Ty->isVariablyModifiedType())
       EmitVLASize(Ty);
@@ -281,26 +281,26 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       const llvm::Type *LTy =
         llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
       llvm::Value *Stack = CreateTempAlloca(LTy, "saved_stack");
-      
+
       llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stacksave);
       llvm::Value *V = Builder.CreateCall(F);
-      
+
       Builder.CreateStore(V, Stack);
 
       DidCallStackSave = true;
-      
+
       {
         // Push a cleanup block and restore the stack there.
         CleanupScope scope(*this);
-      
+
         V = Builder.CreateLoad(Stack, "tmp");
         llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stackrestore);
         Builder.CreateCall(F, V);
       }
     }
-    
+
     // Get the element type.
-    const llvm::Type *LElemTy = ConvertTypeForMem(Ty);    
+    const llvm::Type *LElemTy = ConvertTypeForMem(Ty);
     const llvm::Type *LElemPtrTy =
       llvm::PointerType::get(LElemTy, D.getType().getAddressSpace());
 
@@ -309,7 +309,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     // Downcast the VLA size expression
     VLASize = Builder.CreateIntCast(VLASize, llvm::Type::getInt32Ty(VMContext),
                                     false, "tmp");
-    
+
     // Allocate memory for the array.
     llvm::Value *VLA = Builder.CreateAlloca(llvm::Type::getInt8Ty(VMContext),
                                             VLASize, "vla");
@@ -323,16 +323,16 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   // Emit debug info for local var declaration.
   if (CGDebugInfo *DI = getDebugInfo()) {
     assert(HaveInsertPoint() && "Unexpected unreachable point!");
-    
+
     DI->setLocation(D.getLocation());
     if (Target.useGlobalsForAutomaticVariables()) {
       DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(DeclPtr), &D);
     } else if (isByRef) {
-      // FIXME: This code is broken and will not emit debug info for the 
+      // FIXME: This code is broken and will not emit debug info for the
       // variable. The right way to do this would be to tell LLVM that this is a
       // byref pointer, and what the offset is. Unfortunately, right now it's
       // not possible unless we create a DIType that corresponds to the byref
-      // struct. 
+      // struct.
       /*
       llvm::Value *Loc;
       bool needsCopyDispose = BlockRequiresCopying(Ty);
@@ -369,7 +369,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       EmitStoreOfScalar(RV.getScalarVal(), Loc, false, Ty);
     } else if (!hasAggregateLLVMType(Init->getType())) {
       llvm::Value *V = EmitScalarExpr(Init);
-      EmitStoreOfScalar(V, Loc, D.getType().isVolatileQualified(), 
+      EmitStoreOfScalar(V, Loc, D.getType().isVolatileQualified(),
                         D.getType());
     } else if (Init->getType()->isAnyComplexType()) {
       EmitComplexExprIntoAddr(Init, Loc, D.getType().isVolatileQualified());
@@ -377,7 +377,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       EmitAggExpr(Init, Loc, D.getType().isVolatileQualified());
     }
   }
-  
+
   if (isByRef) {
     const llvm::PointerType *PtrToInt8Ty
       = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
@@ -448,19 +448,19 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
         const CXXDestructorDecl *D = ClassDecl->getDestructor(getContext());
         assert(D && "EmitLocalBlockVarDecl - destructor is nul");
         assert(!Ty->getAs<ArrayType>() && "FIXME - destruction of arrays NYI");
-        
+
         CleanupScope scope(*this);
         EmitCXXDestructorCall(D, Dtor_Complete, DeclPtr);
       }
   }
-    
+
   // Handle the cleanup attribute
   if (const CleanupAttr *CA = D.getAttr<CleanupAttr>()) {
     const FunctionDecl *FD = CA->getFunctionDecl();
-    
+
     llvm::Constant* F = CGM.GetAddrOfFunction(GlobalDecl(FD));
     assert(F && "Could not find function!");
-  
+
     CleanupScope scope(*this);
 
     const CGFunctionInfo &Info = CGM.getTypes().getFunctionInfo(FD);
@@ -469,15 +469,15 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     // the type of the pointer. An example of this is
     // void f(void* arg);
     // __attribute__((cleanup(f))) void *g;
-    // 
+    //
     // To fix this we insert a bitcast here.
     QualType ArgTy = Info.arg_begin()->type;
     DeclPtr = Builder.CreateBitCast(DeclPtr, ConvertType(ArgTy));
-    
+
     CallArgList Args;
-    Args.push_back(std::make_pair(RValue::get(DeclPtr), 
+    Args.push_back(std::make_pair(RValue::get(DeclPtr),
                                   getContext().getPointerType(D.getType())));
-    
+
     EmitCall(Info, F, Args);
   }
 
@@ -489,14 +489,14 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   }
 }
 
-/// Emit an alloca (or GlobalValue depending on target) 
+/// Emit an alloca (or GlobalValue depending on target)
 /// for the specified parameter and set up LocalDeclMap.
 void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
   // FIXME: Why isn't ImplicitParamDecl a ParmVarDecl?
   assert((isa<ParmVarDecl>(D) || isa<ImplicitParamDecl>(D)) &&
          "Invalid argument to EmitParmDecl");
   QualType Ty = D.getType();
-  
+
   llvm::Value *DeclPtr;
   if (!Ty->isConstantSizeType()) {
     // Variable sized values always are passed by-reference.
@@ -510,7 +510,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
       Name += ".addr";
       DeclPtr = CreateTempAlloca(LTy);
       DeclPtr->setName(Name.c_str());
-      
+
       // Store the initial value into the alloca.
       EmitStoreOfScalar(Arg, DeclPtr, Ty.isVolatileQualified(), Ty);
     } else {

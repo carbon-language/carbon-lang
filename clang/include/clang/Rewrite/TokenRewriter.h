@@ -24,7 +24,7 @@ namespace clang {
   class Token;
   class LangOptions;
   class ScratchBuffer;
-  
+
   class TokenRewriter {
     /// TokenList - This is the list of raw tokens that make up this file.  Each
     /// of these tokens has a unique SourceLocation, which is a FileID.
@@ -32,17 +32,17 @@ namespace clang {
 
     /// TokenRefTy - This is the type used to refer to a token in the TokenList.
     typedef std::list<Token>::iterator TokenRefTy;
-    
+
     /// TokenAtLoc - This map indicates which token exists at a specific
     /// SourceLocation.  Since each token has a unique SourceLocation, this is a
     /// one to one map.  The token can return its own location directly, to map
     /// backwards.
     std::map<SourceLocation, TokenRefTy> TokenAtLoc;
-    
+
     /// ScratchBuf - This is the buffer that we create scratch tokens from.
     ///
     llvm::OwningPtr<ScratchBuffer> ScratchBuf;
-    
+
     TokenRewriter(const TokenRewriter&);  // DO NOT IMPLEMENT
     void operator=(const TokenRewriter&); // DO NOT IMPLEMENT.
   public:
@@ -50,30 +50,30 @@ namespace clang {
     /// specified FileID.
     TokenRewriter(FileID FID, SourceManager &SM, const LangOptions &LO);
     ~TokenRewriter();
-    
+
     typedef std::list<Token>::const_iterator token_iterator;
     token_iterator token_begin() const { return TokenList.begin(); }
     token_iterator token_end() const { return TokenList.end(); }
-    
-    
+
+
     token_iterator AddTokenBefore(token_iterator I, const char *Val);
     token_iterator AddTokenAfter(token_iterator I, const char *Val) {
       assert(I != token_end() && "Cannot insert after token_end()!");
       return AddTokenBefore(++I, Val);
     }
-    
+
   private:
     /// RemapIterator - Convert from token_iterator (a const iterator) to
     /// TokenRefTy (a non-const iterator).
     TokenRefTy RemapIterator(token_iterator I);
-    
+
     /// AddToken - Add the specified token into the Rewriter before the other
     /// position.
     TokenRefTy AddToken(const Token &T, TokenRefTy Where);
   };
-  
-  
-  
+
+
+
 } // end namespace clang
 
 #endif

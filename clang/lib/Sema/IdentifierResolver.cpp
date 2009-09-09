@@ -32,7 +32,7 @@ class IdentifierResolver::IdDeclInfoMap {
   // New vectors are added when the current one is full.
   std::list< std::vector<IdDeclInfo> > IDIVecs;
   unsigned int CurIndex;
-  
+
 public:
   IdDeclInfoMap() : CurIndex(VECTOR_SIZE) {}
 
@@ -75,7 +75,7 @@ void IdentifierResolver::IdDeclInfo::RemoveDecl(NamedDecl *D) {
   assert(0 && "Didn't find this decl on its identifier's chain!");
 }
 
-bool 
+bool
 IdentifierResolver::IdDeclInfo::ReplaceDecl(NamedDecl *Old, NamedDecl *New) {
   for (DeclsTy::iterator I = Decls.end(); I != Decls.begin(); --I) {
     if (Old == *(I-1)) {
@@ -108,7 +108,7 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
 
   if (Ctx->isFunctionOrMethod()) {
     // Ignore the scopes associated within transparent declaration contexts.
-    while (S->getEntity() && 
+    while (S->getEntity() &&
            ((DeclContext *)S->getEntity())->isTransparentContext())
       S = S->getParent();
 
@@ -200,14 +200,14 @@ void IdentifierResolver::RemoveDecl(NamedDecl *D) {
     Name.setFETokenInfo(NULL);
     return;
   }
-  
+
   return toIdDeclInfo(Ptr)->RemoveDecl(D);
 }
 
 bool IdentifierResolver::ReplaceDecl(NamedDecl *Old, NamedDecl *New) {
-  assert(Old->getDeclName() == New->getDeclName() && 
+  assert(Old->getDeclName() == New->getDeclName() &&
          "Cannot replace a decl with another decl of a different name");
-  
+
   DeclarationName Name = Old->getDeclName();
   void *Ptr = Name.getFETokenInfo<void>();
 
@@ -222,7 +222,7 @@ bool IdentifierResolver::ReplaceDecl(NamedDecl *Old, NamedDecl *New) {
     return false;
   }
 
-  return toIdDeclInfo(Ptr)->ReplaceDecl(Old, New);  
+  return toIdDeclInfo(Ptr)->ReplaceDecl(Old, New);
 }
 
 /// begin - Returns an iterator for decls with name 'Name'.
@@ -243,7 +243,7 @@ IdentifierResolver::begin(DeclarationName Name) {
   return end();
 }
 
-void IdentifierResolver::AddDeclToIdentifierChain(IdentifierInfo *II, 
+void IdentifierResolver::AddDeclToIdentifierChain(IdentifierInfo *II,
                                                   NamedDecl *D) {
   void *Ptr = II->getFETokenInfo<void>();
 

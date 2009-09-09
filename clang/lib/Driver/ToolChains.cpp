@@ -68,7 +68,7 @@ Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
     Path += "/x86_64";
     getFilePaths().push_back(Path);
   }
-  
+
   Path = getHost().getDriver().Dir;
   Path += "/../lib/gcc/";
   Path += getToolChainDir();
@@ -142,16 +142,16 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args) const {
   // more opaque. For now, we follow gcc closely solely for the
   // purpose of easily achieving feature parity & testability. Once we
   // have something that works, we should reevaluate each translation
-  // and try to push it down into tool specific logic.  
+  // and try to push it down into tool specific logic.
 
-  Arg *OSXVersion = 
+  Arg *OSXVersion =
     Args.getLastArg(options::OPT_mmacosx_version_min_EQ, false);
   Arg *iPhoneVersion =
-    Args.getLastArg(options::OPT_miphoneos_version_min_EQ, false);  
+    Args.getLastArg(options::OPT_miphoneos_version_min_EQ, false);
   if (OSXVersion && iPhoneVersion) {
     getHost().getDriver().Diag(clang::diag::err_drv_argument_not_allowed_with)
           << OSXVersion->getAsString(Args)
-          << iPhoneVersion->getAsString(Args); 
+          << iPhoneVersion->getAsString(Args);
   } else if (!OSXVersion && !iPhoneVersion) {
     // Chose the default version based on the arch.
     //
@@ -171,7 +171,7 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args) const {
       DAL->append(DAL->MakeJoinedArg(0, O, Version));
     }
   }
-  
+
   for (ArgList::iterator it = Args.begin(), ie = Args.end(); it != ie; ++it) {
     Arg *A = *it;
 
@@ -184,7 +184,7 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args) const {
       // interface for this.
       unsigned Prev, Index = Prev = A->getIndex() + 1;
       Arg *XarchArg = Opts.ParseOneArg(Args, Index);
-      
+
       // If the argument parsing failed or more than one argument was
       // consumed, the -Xarch_ argument's parameter tried to consume
       // extra arguments. Emit an error and ignore.
@@ -193,7 +193,7 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args) const {
       // driver behavior; that isn't going to work in our model. We
       // use isDriverOption() as an approximation, although things
       // like -O4 are going to slip through.
-      if (!XarchArg || Index > Prev + 1 || 
+      if (!XarchArg || Index > Prev + 1 ||
           XarchArg->getOption().isDriverOption()) {
        getHost().getDriver().Diag(clang::diag::err_drv_invalid_Xarch_argument)
           << A->getAsString(Args);
@@ -202,7 +202,7 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args) const {
 
       XarchArg->setBaseArg(A);
       A = XarchArg;
-    } 
+    }
 
     // Sob. These is strictly gcc compatible for the time being. Apple
     // gcc translates options twice, which means that self-expanding
@@ -219,7 +219,7 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args) const {
       DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_static)));
       DAL->append(DAL->MakeFlagArg(A, Opts.getOption(options::OPT_static)));
       break;
-      
+
     case options::OPT_dependency_file:
       DAL->append(DAL->MakeSeparateArg(A, Opts.getOption(options::OPT_MF),
                                        A->getValue(Args)));
@@ -292,10 +292,10 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args) const {
                                     "core2"));
 
   return DAL;
-} 
+}
 
 bool Darwin::IsMathErrnoDefault() const {
-  return false; 
+  return false;
 }
 
 bool Darwin::IsUnwindTablesDefault() const {
@@ -319,13 +319,12 @@ const char *Darwin::GetForcedPicModel() const {
 /// command line options.
 
 Generic_GCC::Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple)
-  : ToolChain(Host, Triple) 
-{
+  : ToolChain(Host, Triple) {
   std::string Path(getHost().getDriver().Dir);
   Path += "/../libexec";
   getProgramPaths().push_back(Path);
 
-  getProgramPaths().push_back(getHost().getDriver().Dir);  
+  getProgramPaths().push_back(getHost().getDriver().Dir);
 }
 
 Generic_GCC::~Generic_GCC() {
@@ -335,7 +334,7 @@ Generic_GCC::~Generic_GCC() {
     delete it->second;
 }
 
-Tool &Generic_GCC::SelectTool(const Compilation &C, 
+Tool &Generic_GCC::SelectTool(const Compilation &C,
                               const JobAction &JA) const {
   Action::ActionClass Key;
   if (getHost().getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
@@ -361,7 +360,7 @@ Tool &Generic_GCC::SelectTool(const Compilation &C,
       T = new tools::gcc::Assemble(*this); break;
     case Action::LinkJobClass:
       T = new tools::gcc::Link(*this); break;
-      
+
       // This is a bit ungeneric, but the only platform using a driver
       // driver is Darwin.
     case Action::LipoJobClass:
@@ -373,7 +372,7 @@ Tool &Generic_GCC::SelectTool(const Compilation &C,
 }
 
 bool Generic_GCC::IsMathErrnoDefault() const {
-  return true; 
+  return true;
 }
 
 bool Generic_GCC::IsUnwindTablesDefault() const {
@@ -469,7 +468,7 @@ AuroraUX::AuroraUX(const HostInfo &Host, const llvm::Triple& Triple)
 
   Path += "/../libexec";
   getProgramPaths().push_back(Path);
-  getProgramPaths().push_back(getHost().getDriver().Dir);  
+  getProgramPaths().push_back(getHost().getDriver().Dir);
 
   getFilePaths().push_back(getHost().getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
@@ -536,7 +535,7 @@ DragonFly::DragonFly(const HostInfo &Host, const llvm::Triple& Triple)
 
   Path += "/../libexec";
   getProgramPaths().push_back(Path);
-  getProgramPaths().push_back(getHost().getDriver().Dir);  
+  getProgramPaths().push_back(getHost().getDriver().Dir);
 
   getFilePaths().push_back(getHost().getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");

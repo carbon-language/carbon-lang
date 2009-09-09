@@ -30,7 +30,7 @@ namespace clang {
     ExtensionRAIIObject(Diagnostic &diags) : Diags(diags) {
       Diags.IncrementAllExtensionsSilenced();
     }
-    
+
     ~ExtensionRAIIObject() {
       Diags.DecrementAllExtensionsSilenced();
     }

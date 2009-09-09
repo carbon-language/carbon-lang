@@ -28,9 +28,9 @@ using namespace clang;
 /// \brief Computes the set of declarations referenced by these base
 /// paths.
 void BasePaths::ComputeDeclsFound() {
-  assert(NumDeclsFound == 0 && !DeclsFound && 
+  assert(NumDeclsFound == 0 && !DeclsFound &&
          "Already computed the set of declarations");
-  
+
   std::set<NamedDecl *> Decls;
   for (BasePaths::paths_iterator Path = begin(), PathEnd = end();
        Path != PathEnd; ++Path)
@@ -127,24 +127,24 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths) {
 /// behavior of this lookup, e.g., whether it finds ambiguities,
 /// records paths, or attempts to detect the use of virtual base
 /// classes.
-bool Sema::LookupInBases(CXXRecordDecl *Class, 
+bool Sema::LookupInBases(CXXRecordDecl *Class,
                          const MemberLookupCriteria& Criteria,
                          BasePaths &Paths) {
   bool FoundPath = false;
 
   for (CXXRecordDecl::base_class_const_iterator BaseSpec = Class->bases_begin(),
-                                             BaseSpecEnd = Class->bases_end(); 
+                                             BaseSpecEnd = Class->bases_end();
        BaseSpec != BaseSpecEnd; ++BaseSpec) {
     // Find the record of the base class subobjects for this type.
     QualType BaseType = Context.getCanonicalType(BaseSpec->getType());
     BaseType = BaseType.getUnqualifiedType();
 
-    // If a base class of the class template depends on a template-parameter, 
+    // If a base class of the class template depends on a template-parameter,
     // the base class scope is not examined during unqualified name lookup.
     // [temp.dep]p3.
     if (BaseType->isDependentType())
       continue;
-    
+
     // Determine whether we need to visit this base class at all,
     // updating the count of subobjects appropriately.
     std::pair<bool, unsigned>& Subobjects = Paths.ClassSubobjects[BaseType];
@@ -174,7 +174,7 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
       Paths.ScratchPath.push_back(Element);
     }
 
-    CXXRecordDecl *BaseRecord 
+    CXXRecordDecl *BaseRecord
       = cast<CXXRecordDecl>(BaseSpec->getType()->getAs<RecordType>()->getDecl());
 
     // Either look at the base class type or look into the base class
@@ -183,7 +183,7 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
     bool FoundPathToThisBase = false;
     switch (Criteria.Kind) {
     case MemberLookupCriteria::LK_Base:
-      FoundPathToThisBase 
+      FoundPathToThisBase
         = (Context.getCanonicalType(BaseSpec->getType()) == Criteria.Base);
       break;
     case MemberLookupCriteria::LK_NamedMember:
@@ -198,19 +198,19 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
       }
       break;
     case MemberLookupCriteria::LK_OverriddenMember:
-      Paths.ScratchPath.Decls = 
+      Paths.ScratchPath.Decls =
         BaseRecord->lookup(Criteria.Method->getDeclName());
       while (Paths.ScratchPath.Decls.first != Paths.ScratchPath.Decls.second) {
-        if (CXXMethodDecl *MD = 
+        if (CXXMethodDecl *MD =
               dyn_cast<CXXMethodDecl>(*Paths.ScratchPath.Decls.first)) {
           OverloadedFunctionDecl::function_iterator MatchedDecl;
-          if (MD->isVirtual() && 
+          if (MD->isVirtual() &&
               !IsOverload(Criteria.Method, MD, MatchedDecl)) {
             FoundPathToThisBase = true;
             break;
           }
         }
-        
+
         ++Paths.ScratchPath.Decls.first;
       }
       break;
@@ -296,27 +296,27 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
   bool StillOkay = IsDerivedFrom(Derived, Base, Paths);
   assert(StillOkay && "Can only be used with a derived-to-base conversion");
   (void)StillOkay;
-  
+
   // Build up a textual representation of the ambiguous paths, e.g.,
   // D -> B -> A, that will be used to illustrate the ambiguous
   // conversions in the diagnostic. We only print one of the paths
   // to each base class subobject.
   std::string PathDisplayStr = getAmbiguousPathsDisplayString(Paths);
-  
+
   Diag(Loc, AmbigiousBaseConvID)
     << Derived << Base << PathDisplayStr << Range << Name;
   return true;
 }
 
-bool 
+bool
 Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
                                    SourceLocation Loc, SourceRange Range) {
-  return CheckDerivedToBaseConversion(Derived, Base, 
+  return CheckDerivedToBaseConversion(Derived, Base,
                                       diag::err_conv_to_inaccessible_base,
                                       diag::err_ambiguous_derived_to_base_conv,
                                       Loc, Range, DeclarationName());
 }
-                                      
+
 
 /// @brief Builds a string representing ambiguous paths from a
 /// specific derived class to different subobjects of the same base
@@ -333,16 +333,16 @@ Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
 std::string Sema::getAmbiguousPathsDisplayString(BasePaths &Paths) {
   std::string PathDisplayStr;
   std::set<unsigned> DisplayedPaths;
-  for (BasePaths::paths_iterator Path = Paths.begin(); 
+  for (BasePaths::paths_iterator Path = Paths.begin();
        Path != Paths.end(); ++Path) {
     if (DisplayedPaths.insert(Path->back().SubobjectNumber).second) {
       // We haven't displayed a path to this particular base
       // class subobject yet.
       PathDisplayStr += "\n    ";
       PathDisplayStr += Paths.getOrigin().getAsString();
-      for (BasePath::const_iterator Element = Path->begin(); 
+      for (BasePath::const_iterator Element = Path->begin();
            Element != Path->end(); ++Element)
-        PathDisplayStr += " -> " + Element->Base->getType().getAsString(); 
+        PathDisplayStr += " -> " + Element->Base->getType().getAsString();
     }
   }
 

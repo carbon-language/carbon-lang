@@ -64,13 +64,13 @@ struct B1 {
 };
 
 struct F : public A1, public B1, private virtual V { 
-  F()  : A1(), V() {  }	// expected-warning {{base class 'struct A1' will be initialized after}} \
-			// expected-note {{base 'struct V'}}
+  F()  : A1(), V() {  } // expected-warning {{base class 'struct A1' will be initialized after}} \
+                        // expected-note {{base 'struct V'}}
 };
 
 struct X : public virtual A, virtual V, public virtual B {
-  X(): A(), V(), B() {}	// expected-warning {{base class 'struct A' will be initialized after}} \
-			// expected-note {{base 'struct V'}}
+  X(): A(), V(), B() {} // expected-warning {{base class 'struct A' will be initialized after}} \
+                        // expected-note {{base 'struct V'}}
 };
 
 class Anon {

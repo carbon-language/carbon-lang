@@ -15,7 +15,7 @@ void t4() {
   unsigned long long a;
   struct reg { unsigned long long a, b; } b;
 
-	__asm__ volatile ("":: "m"(a), "m"(b));
+  __asm__ volatile ("":: "m"(a), "m"(b));
 }
 
 // PR3417

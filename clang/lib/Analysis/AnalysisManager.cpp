@@ -17,12 +17,12 @@
 using namespace clang;
 
 void AnalysisManager::DisplayFunction() {
-      
+
   if (DisplayedFunction)
     return;
-  
+
   DisplayedFunction = true;
-  
+
   // FIXME: Is getCodeDecl() always a named decl?
   if (isa<FunctionDecl>(getCodeDecl()) ||
       isa<ObjCMethodDecl>(getCodeDecl())) {

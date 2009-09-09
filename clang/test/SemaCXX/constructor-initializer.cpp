@@ -94,18 +94,18 @@ struct Current : Derived {
                            Derived::V(), // expected-note {{base 'Derived::V'}}
                            ::NonExisting(), // expected-error {{member initializer 'NonExisting' does not name a non-static data member or}}
                            INT::NonExisting()  {} // expected-error {{expected a class or namespace}} \
-						  // expected-error {{member initializer 'NonExisting' does not name a non-static data member or}}
+                                                  // expected-error {{member initializer 'NonExisting' does not name a non-static data member or}}
 };
 
                         // FIXME. This is bad message!
-struct M { 		// expected-note {{candidate function}}	\
-			 // expected-note {{candidate function}}
-  M(int i, int j);	// expected-note {{candidate function}} \
-			// // expected-note {{candidate function}}
+struct M {              // expected-note {{candidate function}} \
+                        // expected-note {{candidate function}}
+  M(int i, int j);      // expected-note {{candidate function}} \
+                        // // expected-note {{candidate function}}
 };
 
 struct N : M  {
-  N() : M(1), 	// expected-error {{no matching constructor for initialization of 'M'}}
+  N() : M(1),        // expected-error {{no matching constructor for initialization of 'M'}}
         m1(100) {  } // expected-error {{no matching constructor for initialization of 'm1'}}
   M m1;
 };
@@ -116,7 +116,7 @@ struct P : M  { // expected-error {{default constructor for 'struct M' is missin
 };
 
 struct Q {
-  Q() : f1(1,2),	// expected-error {{Too many arguments for member initializer 'f1'}}
+  Q() : f1(1,2),       // expected-error {{Too many arguments for member initializer 'f1'}}
         pf(0.0)  { }   // expected-error {{incompatible type passing 'double', expected 'float *'}}
   float f1;
 

@@ -51,7 +51,7 @@ class FixItRewriter : public DiagnosticClient {
   unsigned NumFailures;
 
   /// \brief Locations at which we should perform fix-its.
-  /// 
+  ///
   /// When empty, perform fix-it modifications everywhere.
   llvm::SmallVector<RequestedSourceLocation, 4> FixItLocations;
 
@@ -72,7 +72,7 @@ public:
   /// \brief Write the modified source file.
   ///
   /// \returns true if there was an error, false otherwise.
-  bool WriteFixedFile(const std::string &InFileName, 
+  bool WriteFixedFile(const std::string &InFileName,
                       const std::string &OutFileName = std::string());
 
   /// IncludeInDiagnosticCounts - This method (whose default implementation

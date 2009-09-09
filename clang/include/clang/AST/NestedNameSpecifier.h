@@ -81,8 +81,8 @@ private:
 
   /// \brief Copy constructor used internally to clone nested name
   /// specifiers.
-  NestedNameSpecifier(const NestedNameSpecifier &Other) 
-    : llvm::FoldingSetNode(Other), Prefix(Other.Prefix), 
+  NestedNameSpecifier(const NestedNameSpecifier &Other)
+    : llvm::FoldingSetNode(Other), Prefix(Other.Prefix),
       Specifier(Other.Specifier) {
   }
 
@@ -90,7 +90,7 @@ private:
 
   /// \brief Either find or insert the given nested name specifier
   /// mockup in the given context.
-  static NestedNameSpecifier *FindOrInsert(ASTContext &Context, 
+  static NestedNameSpecifier *FindOrInsert(ASTContext &Context,
                                            const NestedNameSpecifier &Mockup);
 
 public:
@@ -99,18 +99,18 @@ public:
   /// The prefix must be dependent, since nested name specifiers
   /// referencing an identifier are only permitted when the identifier
   /// cannot be resolved.
-  static NestedNameSpecifier *Create(ASTContext &Context, 
-                                     NestedNameSpecifier *Prefix, 
+  static NestedNameSpecifier *Create(ASTContext &Context,
+                                     NestedNameSpecifier *Prefix,
                                      IdentifierInfo *II);
 
   /// \brief Builds a nested name specifier that names a namespace.
-  static NestedNameSpecifier *Create(ASTContext &Context, 
-                                     NestedNameSpecifier *Prefix, 
+  static NestedNameSpecifier *Create(ASTContext &Context,
+                                     NestedNameSpecifier *Prefix,
                                      NamespaceDecl *NS);
 
   /// \brief Builds a nested name specifier that names a type.
-  static NestedNameSpecifier *Create(ASTContext &Context, 
-                                     NestedNameSpecifier *Prefix, 
+  static NestedNameSpecifier *Create(ASTContext &Context,
+                                     NestedNameSpecifier *Prefix,
                                      bool Template, Type *T);
 
   /// \brief Builds a specifier that consists of just an identifier.
@@ -120,7 +120,7 @@ public:
   /// nested name specifier, e.g., in "x->Base::f", the "x" has a dependent
   /// type.
   static NestedNameSpecifier *Create(ASTContext &Context, IdentifierInfo *II);
-  
+
   /// \brief Returns the nested name specifier representing the global
   /// scope.
   static NestedNameSpecifier *GlobalSpecifier(ASTContext &Context);
@@ -135,10 +135,10 @@ public:
   NestedNameSpecifier *getPrefix() const { return Prefix.getPointer(); }
 
   /// \brief Determine what kind of nested name specifier is stored.
-  SpecifierKind getKind() const { 
+  SpecifierKind getKind() const {
     if (Specifier == 0)
       return Global;
-    return (SpecifierKind)Prefix.getInt(); 
+    return (SpecifierKind)Prefix.getInt();
   }
 
   /// \brief Retrieve the identifier stored in this nested name
@@ -149,7 +149,7 @@ public:
 
     return 0;
   }
-  
+
   /// \brief Retrieve the namespace stored in this nested name
   /// specifier.
   NamespaceDecl *getAsNamespace() const {
@@ -161,7 +161,7 @@ public:
 
   /// \brief Retrieve the type stored in this nested name specifier.
   Type *getAsType() const {
-    if (Prefix.getInt() == TypeSpec || 
+    if (Prefix.getInt() == TypeSpec ||
         Prefix.getInt() == TypeSpecWithTemplate)
       return (Type *)Specifier;
 
@@ -192,11 +192,11 @@ public:
 /// into a diagnostic with <<.
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            NestedNameSpecifier *NNS) {
-  DB.AddTaggedVal(reinterpret_cast<intptr_t>(NNS), 
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(NNS),
                   Diagnostic::ak_nestednamespec);
   return DB;
 }
-  
+
 }
 
 #endif

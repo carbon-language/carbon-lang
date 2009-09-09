@@ -37,13 +37,13 @@ public:
   typedef std::map<Entity, TUSetTy> MapTy;
   typedef std::map<GlobalSelector, TUSetTy> SelMapTy;
 
-  explicit Indexer(Program &prog, FileManager &FM) : 
+  explicit Indexer(Program &prog, FileManager &FM) :
     Prog(prog), FileMgr(FM) { }
 
   Program &getProgram() const { return Prog; }
 
   FileManager &getFileManager() const { return FileMgr; }
-  
+
   /// \brief Find all Entities and map them to the given translation unit.
   void IndexAST(TranslationUnit *TU);
 
@@ -55,7 +55,7 @@ public:
 private:
   Program &Prog;
   FileManager &FileMgr;
-  
+
   MapTy Map;
   CtxTUMapTy CtxTUMap;
   SelMapTy SelMap;

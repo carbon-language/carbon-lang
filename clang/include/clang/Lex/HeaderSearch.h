@@ -30,17 +30,17 @@ class IdentifierInfo;
 struct HeaderFileInfo {
   /// isImport - True if this is a #import'd or #pragma once file.
   bool isImport : 1;
-  
+
   /// DirInfo - Keep track of whether this is a system header, and if so,
   /// whether it is C++ clean or not.  This can be set by the include paths or
   /// by #pragma gcc system_header.  This is an instance of
   /// SrcMgr::CharacteristicKind.
   unsigned DirInfo : 2;
-  
+
   /// NumIncludes - This is the number of times the file has been included
   /// already.
   unsigned short NumIncludes;
-  
+
   /// ControllingMacro - If this file has a #ifndef XXX (or equivalent) guard
   /// that protects the entire contents of the file, this is the identifier
   /// for the macro that controls whether or not it has any effect.
@@ -51,14 +51,14 @@ struct HeaderFileInfo {
   /// external storage.
   const IdentifierInfo *ControllingMacro;
 
-  /// \brief The ID number of the controlling macro. 
+  /// \brief The ID number of the controlling macro.
   ///
   /// This ID number will be non-zero when there is a controlling
   /// macro whose IdentifierInfo may not yet have been loaded from
   /// external storage.
   unsigned ControllingMacroID;
 
-  HeaderFileInfo() 
+  HeaderFileInfo()
     : isImport(false), DirInfo(SrcMgr::C_User),
       NumIncludes(0), ControllingMacro(0), ControllingMacroID(0) {}
 
@@ -71,7 +71,7 @@ struct HeaderFileInfo {
 /// file referenced by a #include or #include_next, (sub-)framework lookup, etc.
 class HeaderSearch {
   FileManager &FileMgr;
-  
+
   /// #include search path information.  Requests for #include "x" search the
   /// directory of the #including file first, then each directory in SearchDirs
   /// consequtively. Requests for <x> search the current dir first, then each
@@ -81,7 +81,7 @@ class HeaderSearch {
   std::vector<DirectoryLookup> SearchDirs;
   unsigned SystemDirIdx;
   bool NoCurDirSearch;
-  
+
   /// FileInfo - This contains all of the preprocessor-specific data about files
   /// that are included.  The vector is indexed by the FileEntry's UID.
   ///
@@ -94,13 +94,13 @@ class HeaderSearch {
   /// ignored.  The second value is the entry in SearchDirs that satisfied the
   /// query.
   llvm::StringMap<std::pair<unsigned, unsigned> > LookupFileCache;
-  
-  
+
+
   /// FrameworkMap - This is a collection mapping a framework or subframework
   /// name like "Carbon" to the Carbon.framework directory.
   llvm::StringMap<const DirectoryEntry *> FrameworkMap;
 
-  /// HeaderMaps - This is a mapping from FileEntry -> HeaderMap, uniquing 
+  /// HeaderMaps - This is a mapping from FileEntry -> HeaderMap, uniquing
   /// headermaps.  This vector owns the headermap.
   std::vector<std::pair<const FileEntry*, const HeaderMap*> > HeaderMaps;
 
@@ -114,7 +114,7 @@ class HeaderSearch {
   unsigned NumFrameworkLookups, NumSubFrameworkLookups;
 
   // HeaderSearch doesn't support default or copy construction.
-  explicit HeaderSearch();  
+  explicit HeaderSearch();
   explicit HeaderSearch(const HeaderSearch&);
   void operator=(const HeaderSearch&);
 public:
@@ -132,12 +132,12 @@ public:
     NoCurDirSearch = noCurDirSearch;
     //LookupFileCache.clear();
   }
-  
+
   /// ClearFileInfo - Forget everything we know about headers so far.
   void ClearFileInfo() {
     FileInfo.clear();
   }
-  
+
   void SetExternalLookup(ExternalIdentifierLookup *EIL) {
     ExternalLookup = EIL;
   }
@@ -155,7 +155,7 @@ public:
                               const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
                               const FileEntry *CurFileEnt);
-  
+
   /// LookupSubframeworkHeader - Look up a subframework for the specified
   /// #include file.  For example, if #include'ing <HIToolbox/HIToolbox.h> from
   /// within ".../Carbon.framework/Headers/Carbon.h", check to see if HIToolbox
@@ -164,7 +164,7 @@ public:
   const FileEntry *LookupSubframeworkHeader(const char *FilenameStart,
                                             const char *FilenameEnd,
                                             const FileEntry *RelativeFileEnt);
-  
+
   /// LookupFrameworkCache - Look up the specified framework name in our
   /// framework cache, returning the DirectoryEntry it is in if we know,
   /// otherwise, return null.
@@ -172,19 +172,19 @@ public:
                                               const char *FWNameEnd) {
     return FrameworkMap.GetOrCreateValue(FWNameStart, FWNameEnd).getValue();
   }
-  
+
   /// ShouldEnterIncludeFile - Mark the specified file as a target of of a
   /// #include, #include_next, or #import directive.  Return false if #including
   /// the file will have no effect or true if we should include it.
   bool ShouldEnterIncludeFile(const FileEntry *File, bool isImport);
-  
-  
+
+
   /// getFileDirFlavor - Return whether the specified file is a normal header,
   /// a system header, or a C++ friendly system header.
   SrcMgr::CharacteristicKind getFileDirFlavor(const FileEntry *File) {
     return (SrcMgr::CharacteristicKind)getFileInfo(File).DirInfo;
   }
-    
+
   /// MarkFileIncludeOnce - Mark the specified file as a "once only" file, e.g.
   /// due to #pragma once.
   void MarkFileIncludeOnce(const FileEntry *File) {
@@ -196,13 +196,13 @@ public:
   void MarkFileSystemHeader(const FileEntry *File) {
     getFileInfo(File).DirInfo = SrcMgr::C_System;
   }
-  
+
   /// IncrementIncludeCount - Increment the count for the number of times the
   /// specified FileEntry has been entered.
   void IncrementIncludeCount(const FileEntry *File) {
     ++getFileInfo(File).NumIncludes;
   }
-  
+
   /// SetFileControllingMacro - Mark the specified file as having a controlling
   /// macro.  This is used by the multiple-include optimization to eliminate
   /// no-op #includes.
@@ -210,11 +210,11 @@ public:
                                const IdentifierInfo *ControllingMacro) {
     getFileInfo(File).ControllingMacro = ControllingMacro;
   }
-  
+
   /// CreateHeaderMap - This method returns a HeaderMap for the specified
   /// FileEntry, uniquing them through the the 'HeaderMaps' datastructure.
   const HeaderMap *CreateHeaderMap(const FileEntry *FE);
-  
+
   void IncrementFrameworkLookupCount() { ++NumFrameworkLookups; }
 
   typedef std::vector<HeaderFileInfo>::iterator header_file_iterator;
@@ -223,10 +223,10 @@ public:
 
   // Used by PCHReader.
   void setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID);
-  
+
   void PrintStats();
 private:
-      
+
   /// getFileInfo - Return the HeaderFileInfo structure for the specified
   /// FileEntry.
   HeaderFileInfo &getFileInfo(const FileEntry *FE);

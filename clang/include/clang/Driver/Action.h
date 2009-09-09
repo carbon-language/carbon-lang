@@ -26,7 +26,7 @@ namespace clang {
 namespace driver {
   class Arg;
 
-/// Action - Represent an abstract compilation step to perform. 
+/// Action - Represent an abstract compilation step to perform.
 ///
 /// An action represents an edge in the compilation graph; typically
 /// it is a job to transform an input using some tool.
@@ -63,15 +63,15 @@ private:
 
   /// The output type of this action.
   types::ID Type;
-  
+
   ActionList Inputs;
 
 protected:
   Action(ActionClass _Kind, types::ID _Type) : Kind(_Kind), Type(_Type) {}
-  Action(ActionClass _Kind, Action *Input, types::ID _Type) 
+  Action(ActionClass _Kind, Action *Input, types::ID _Type)
     : Kind(_Kind), Type(_Type), Inputs(&Input, &Input + 1) {}
-  Action(ActionClass _Kind, const ActionList &_Inputs, types::ID _Type) 
-    : Kind(_Kind), Type(_Type), Inputs(_Inputs) {}  
+  Action(ActionClass _Kind, const ActionList &_Inputs, types::ID _Type)
+    : Kind(_Kind), Type(_Type), Inputs(_Inputs) {}
 public:
   virtual ~Action();
 
@@ -90,7 +90,7 @@ public:
   const_iterator begin() const { return Inputs.begin(); }
   const_iterator end() const { return Inputs.end(); }
 
-  static bool classof(const Action *) { return true; }    
+  static bool classof(const Action *) { return true; }
 };
 
 class InputAction : public Action {
@@ -100,8 +100,8 @@ public:
 
   const Arg &getInputArg() const { return Input; }
 
-  static bool classof(const Action *A) { 
-    return A->getKind() == InputClass; 
+  static bool classof(const Action *A) {
+    return A->getKind() == InputClass;
   }
   static bool classof(const InputAction *) { return true; }
 };
@@ -116,8 +116,8 @@ public:
 
   const char *getArchName() const { return ArchName; }
 
-  static bool classof(const Action *A) { 
-    return A->getKind() == BindArchClass; 
+  static bool classof(const Action *A) {
+    return A->getKind() == BindArchClass;
   }
   static bool classof(const BindArchAction *) { return true; }
 };
@@ -128,9 +128,9 @@ protected:
   JobAction(ActionClass Kind, const ActionList &Inputs, types::ID Type);
 
 public:
-  static bool classof(const Action *A) { 
+  static bool classof(const Action *A) {
     return (A->getKind() >= JobClassFirst &&
-            A->getKind() <= JobClassLast); 
+            A->getKind() <= JobClassLast);
   }
   static bool classof(const JobAction *) { return true; }
 };
@@ -139,7 +139,7 @@ class PreprocessJobAction : public JobAction {
 public:
   PreprocessJobAction(Action *Input, types::ID OutputType);
 
-  static bool classof(const Action *A) { 
+  static bool classof(const Action *A) {
     return A->getKind() == PreprocessJobClass;
   }
   static bool classof(const PreprocessJobAction *) { return true; }
@@ -149,7 +149,7 @@ class PrecompileJobAction : public JobAction {
 public:
   PrecompileJobAction(Action *Input, types::ID OutputType);
 
-  static bool classof(const Action *A) { 
+  static bool classof(const Action *A) {
     return A->getKind() == PrecompileJobClass;
   }
   static bool classof(const PrecompileJobAction *) { return true; }
@@ -159,7 +159,7 @@ class AnalyzeJobAction : public JobAction {
 public:
   AnalyzeJobAction(Action *Input, types::ID OutputType);
 
-  static bool classof(const Action *A) { 
+  static bool classof(const Action *A) {
     return A->getKind() == AnalyzeJobClass;
   }
   static bool classof(const AnalyzeJobAction *) { return true; }
@@ -169,7 +169,7 @@ class CompileJobAction : public JobAction {
 public:
   CompileJobAction(Action *Input, types::ID OutputType);
 
-  static bool classof(const Action *A) { 
+  static bool classof(const Action *A) {
     return A->getKind() == CompileJobClass;
   }
   static bool classof(const CompileJobAction *) { return true; }
@@ -179,7 +179,7 @@ class AssembleJobAction : public JobAction {
 public:
   AssembleJobAction(Action *Input, types::ID OutputType);
 
-  static bool classof(const Action *A) { 
+  static bool classof(const Action *A) {
     return A->getKind() == AssembleJobClass;
   }
   static bool classof(const AssembleJobAction *) { return true; }
@@ -189,7 +189,7 @@ class LinkJobAction : public JobAction {
 public:
   LinkJobAction(ActionList &Inputs, types::ID Type);
 
-  static bool classof(const Action *A) { 
+  static bool classof(const Action *A) {
     return A->getKind() == LinkJobClass;
   }
   static bool classof(const LinkJobAction *) { return true; }
@@ -199,7 +199,7 @@ class LipoJobAction : public JobAction {
 public:
   LipoJobAction(ActionList &Inputs, types::ID Type);
 
-  static bool classof(const Action *A) { 
+  static bool classof(const Action *A) {
     return A->getKind() == LipoJobClass;
   }
   static bool classof(const LipoJobAction *) { return true; }

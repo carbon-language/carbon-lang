@@ -29,10 +29,10 @@ void InitHeaderSearch::AddPath(const llvm::StringRef &Path,
                                bool IgnoreSysRoot) {
   assert(!Path.empty() && "can't handle empty path here");
   FileManager &FM = Headers.getFileMgr();
-  
+
   // Compute the actual path, taking into consideration -isysroot.
   llvm::SmallString<256> MappedPath;
-  
+
   // Handle isysroot.
   if (Group == System && !IgnoreSysRoot) {
     // FIXME: Portability.  This should be a sys::Path interface, this doesn't
@@ -40,7 +40,7 @@ void InitHeaderSearch::AddPath(const llvm::StringRef &Path,
     if (isysroot.size() != 1 || isysroot[0] != '/') // Add isysroot if present.
       MappedPath.append(isysroot.begin(), isysroot.end());
   }
-  
+
   MappedPath.append(Path.begin(), Path.end());
 
   // Compute the DirectoryLookup type.
@@ -51,15 +51,15 @@ void InitHeaderSearch::AddPath(const llvm::StringRef &Path,
     Type = SrcMgr::C_System;
   else
     Type = SrcMgr::C_ExternCSystem;
-  
-  
+
+
   // If the directory exists, add it.
   if (const DirectoryEntry *DE = FM.getDirectory(MappedPath.str())) {
     IncludeGroup[Group].push_back(DirectoryLookup(DE, Type, isUserSupplied,
                                                   isFramework));
     return;
   }
-  
+
   // Check to see if this is an apple-style headermap (which are not allowed to
   // be frameworks).
   if (!isFramework) {
@@ -71,7 +71,7 @@ void InitHeaderSearch::AddPath(const llvm::StringRef &Path,
       }
     }
   }
-  
+
   if (Verbose)
     llvm::errs() << "ignoring nonexistent directory \""
                  << MappedPath.str() << "\"\n";
@@ -251,9 +251,9 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
   llvm::SmallPtrSet<const HeaderMap *, 8> SeenHeaderMaps;
   for (unsigned i = 0; i != SearchList.size(); ++i) {
     unsigned DirToRemove = i;
-    
+
     const DirectoryLookup &CurEntry = SearchList[i];
-    
+
     if (CurEntry.isNormalDir()) {
       // If this isn't the first time we've seen this dir, remove it.
       if (SeenDirs.insert(CurEntry.getDir()))
@@ -268,7 +268,7 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
       if (SeenHeaderMaps.insert(CurEntry.getHeaderMap()))
         continue;
     }
-    
+
     // If we have a normal #include dir/framework/headermap that is shadowed
     // later in the chain by a system include location, we actually want to
     // ignore the user's request and drop the user dir... keeping the system
@@ -281,13 +281,13 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
       unsigned FirstDir;
       for (FirstDir = 0; ; ++FirstDir) {
         assert(FirstDir != i && "Didn't find dupe?");
-        
+
         const DirectoryLookup &SearchEntry = SearchList[FirstDir];
 
         // If these are different lookup types, then they can't be the dupe.
         if (SearchEntry.getLookupType() != CurEntry.getLookupType())
           continue;
-        
+
         bool isSame;
         if (CurEntry.isNormalDir())
           isSame = SearchEntry.getDir() == CurEntry.getDir();
@@ -297,11 +297,11 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
           assert(CurEntry.isHeaderMap() && "Not a headermap or normal dir?");
           isSame = SearchEntry.getHeaderMap() == CurEntry.getHeaderMap();
         }
-        
+
         if (isSame)
           break;
       }
-      
+
       // If the first dir in the search path is a non-system dir, zap it
       // instead of the system one.
       if (SearchList[FirstDir].getDirCharacteristic() == SrcMgr::C_User)
@@ -315,7 +315,7 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList,
         fprintf(stderr, "  as it is a non-system directory that duplicates"
                 " a system directory\n");
     }
-    
+
     // This is reached if the current entry is a duplicate.  Remove the
     // DirToRemove (usually the current dir).
     SearchList.erase(SearchList.begin()+DirToRemove);
@@ -334,11 +334,11 @@ void InitHeaderSearch::Realize() {
                     IncludeGroup[After].end());
   RemoveDuplicates(SearchList, Verbose);
   RemoveDuplicates(IncludeGroup[Quoted], Verbose);
-  
+
   // Prepend QUOTED list on the search list.
-  SearchList.insert(SearchList.begin(), IncludeGroup[Quoted].begin(), 
+  SearchList.insert(SearchList.begin(), IncludeGroup[Quoted].begin(),
                     IncludeGroup[Quoted].end());
-  
+
 
   bool DontSearchCurDir = false;  // TODO: set to true if -I- is set?
   Headers.SetSearchPaths(SearchList, IncludeGroup[Quoted].size(),

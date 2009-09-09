@@ -56,7 +56,7 @@ class Compilation {
   ArgStringList ResultFiles;
 
 public:
-  Compilation(const Driver &D, const ToolChain &DefaultToolChain, 
+  Compilation(const Driver &D, const ToolChain &DefaultToolChain,
               InputArgList *Args);
   ~Compilation();
 
@@ -83,8 +83,8 @@ public:
 
   /// addTempFile - Add a file to remove on exit, and returns its
   /// argument.
-  const char *addTempFile(const char *Name) { 
-    TempFiles.push_back(Name); 
+  const char *addTempFile(const char *Name) {
+    TempFiles.push_back(Name);
     return Name;
   }
 
@@ -99,7 +99,7 @@ public:
   ///
   /// \param IssueErrors - Report failures as errors.
   /// \return Whether all files were removed successfully.
-  bool CleanupFileList(const ArgStringList &Files, 
+  bool CleanupFileList(const ArgStringList &Files,
                        bool IssueErrors=false) const;
 
   /// PrintJob - Print one job in -### format.
@@ -108,7 +108,7 @@ public:
   /// \param J - The job to print.
   /// \param Terminator - A string to print at the end of the line.
   /// \param Quote - Should separate arguments be quoted.
-  void PrintJob(llvm::raw_ostream &OS, const Job &J, 
+  void PrintJob(llvm::raw_ostream &OS, const Job &J,
                 const char *Terminator, bool Quote) const;
 
   /// ExecuteCommand - Execute an actual command.

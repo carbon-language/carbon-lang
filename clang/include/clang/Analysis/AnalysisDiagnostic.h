@@ -13,7 +13,7 @@
 #include "clang/Basic/Diagnostic.h"
 
 namespace clang {
-  namespace diag { 
+  namespace diag {
     enum {
 #define DIAG(ENUM,FLAGS,DEFAULT_MAPPING,DESC,GROUP,SFINAE) ENUM,
 #define ANALYSISSTART

@@ -11,7 +11,7 @@
 
 using namespace clang::driver;
 
-Tool::Tool(const char *_Name, const ToolChain &TC) : Name(_Name), 
+Tool::Tool(const char *_Name, const ToolChain &TC) : Name(_Name),
                                                      TheToolChain(TC) {
 }
 

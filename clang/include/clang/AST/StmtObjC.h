@@ -27,47 +27,47 @@ class ObjCForCollectionStmt : public Stmt {
   SourceLocation ForLoc;
   SourceLocation RParenLoc;
 public:
-  ObjCForCollectionStmt(Stmt *Elem, Expr *Collect, Stmt *Body, 
+  ObjCForCollectionStmt(Stmt *Elem, Expr *Collect, Stmt *Body,
                         SourceLocation FCL, SourceLocation RPL);
-  explicit ObjCForCollectionStmt(EmptyShell Empty) : 
+  explicit ObjCForCollectionStmt(EmptyShell Empty) :
     Stmt(ObjCForCollectionStmtClass, Empty) { }
-  
+
   Stmt *getElement() { return SubExprs[ELEM]; }
-  Expr *getCollection() { 
-    return reinterpret_cast<Expr*>(SubExprs[COLLECTION]); 
+  Expr *getCollection() {
+    return reinterpret_cast<Expr*>(SubExprs[COLLECTION]);
   }
   Stmt *getBody() { return SubExprs[BODY]; }
-  
+
   const Stmt *getElement() const { return SubExprs[ELEM]; }
-  const Expr *getCollection() const { 
+  const Expr *getCollection() const {
     return reinterpret_cast<Expr*>(SubExprs[COLLECTION]);
   }
   const Stmt *getBody() const { return SubExprs[BODY]; }
-  
+
   void setElement(Stmt *S) { SubExprs[ELEM] = S; }
-  void setCollection(Expr *E) { 
+  void setCollection(Expr *E) {
     SubExprs[COLLECTION] = reinterpret_cast<Stmt*>(E);
   }
   void setBody(Stmt *S) { SubExprs[BODY] = S; }
-  
+
   SourceLocation getForLoc() const { return ForLoc; }
   void setForLoc(SourceLocation Loc) { ForLoc = Loc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation Loc) { RParenLoc = Loc; }
-  
-  virtual SourceRange getSourceRange() const { 
-    return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd()); 
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd());
   }
-  static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == ObjCForCollectionStmtClass; 
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjCForCollectionStmtClass;
   }
   static bool classof(const ObjCForCollectionStmt *) { return true; }
-  
+
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-};  
-  
+};
+
 /// ObjCAtCatchStmt - This represents objective-c's @catch statement.
 class ObjCAtCatchStmt : public Stmt {
 private:
@@ -78,95 +78,95 @@ private:
 
 public:
   ObjCAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
-                  ParmVarDecl *catchVarDecl, 
+                  ParmVarDecl *catchVarDecl,
                   Stmt *atCatchStmt, Stmt *atCatchList);
 
-  explicit ObjCAtCatchStmt(EmptyShell Empty) : 
+  explicit ObjCAtCatchStmt(EmptyShell Empty) :
     Stmt(ObjCAtCatchStmtClass, Empty) { }
-  
+
   const Stmt *getCatchBody() const { return SubExprs[BODY]; }
   Stmt *getCatchBody() { return SubExprs[BODY]; }
   void setCatchBody(Stmt *S) { SubExprs[BODY] = S; }
-  
+
   const ObjCAtCatchStmt *getNextCatchStmt() const {
     return static_cast<const ObjCAtCatchStmt*>(SubExprs[NEXT_CATCH]);
   }
-  ObjCAtCatchStmt *getNextCatchStmt() { 
+  ObjCAtCatchStmt *getNextCatchStmt() {
     return static_cast<ObjCAtCatchStmt*>(SubExprs[NEXT_CATCH]);
   }
   void setNextCatchStmt(Stmt *S) { SubExprs[NEXT_CATCH] = S; }
-  
-  const ParmVarDecl *getCatchParamDecl() const { 
-    return ExceptionDecl; 
+
+  const ParmVarDecl *getCatchParamDecl() const {
+    return ExceptionDecl;
   }
-  ParmVarDecl *getCatchParamDecl() { 
-    return ExceptionDecl; 
+  ParmVarDecl *getCatchParamDecl() {
+    return ExceptionDecl;
   }
   void setCatchParamDecl(ParmVarDecl *D) { ExceptionDecl = D; }
-  
+
   SourceLocation getAtCatchLoc() const { return AtCatchLoc; }
   void setAtCatchLoc(SourceLocation Loc) { AtCatchLoc = Loc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation Loc) { RParenLoc = Loc; }
-  
-  virtual SourceRange getSourceRange() const { 
-    return SourceRange(AtCatchLoc, SubExprs[BODY]->getLocEnd()); 
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(AtCatchLoc, SubExprs[BODY]->getLocEnd());
   }
 
   bool hasEllipsis() const { return getCatchParamDecl() == 0; }
-  
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtCatchStmtClass;
   }
   static bool classof(const ObjCAtCatchStmt *) { return true; }
-  
+
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 };
-  
-/// ObjCAtFinallyStmt - This represent objective-c's @finally Statement 
+
+/// ObjCAtFinallyStmt - This represent objective-c's @finally Statement
 class ObjCAtFinallyStmt : public Stmt {
   Stmt *AtFinallyStmt;
-  SourceLocation AtFinallyLoc;    
+  SourceLocation AtFinallyLoc;
 public:
   ObjCAtFinallyStmt(SourceLocation atFinallyLoc, Stmt *atFinallyStmt)
-  : Stmt(ObjCAtFinallyStmtClass), 
+  : Stmt(ObjCAtFinallyStmtClass),
     AtFinallyStmt(atFinallyStmt), AtFinallyLoc(atFinallyLoc) {}
 
-  explicit ObjCAtFinallyStmt(EmptyShell Empty) : 
+  explicit ObjCAtFinallyStmt(EmptyShell Empty) :
     Stmt(ObjCAtFinallyStmtClass, Empty) { }
-  
+
   const Stmt *getFinallyBody() const { return AtFinallyStmt; }
   Stmt *getFinallyBody() { return AtFinallyStmt; }
   void setFinallyBody(Stmt *S) { AtFinallyStmt = S; }
-  
-  virtual SourceRange getSourceRange() const { 
-    return SourceRange(AtFinallyLoc, AtFinallyStmt->getLocEnd()); 
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(AtFinallyLoc, AtFinallyStmt->getLocEnd());
   }
-  
+
   SourceLocation getAtFinallyLoc() const { return AtFinallyLoc; }
   void setAtFinallyLoc(SourceLocation Loc) { AtFinallyLoc = Loc; }
-  
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtFinallyStmtClass;
   }
   static bool classof(const ObjCAtFinallyStmt *) { return true; }
-  
+
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 };
-  
-/// ObjCAtTryStmt - This represent objective-c's over-all 
+
+/// ObjCAtTryStmt - This represent objective-c's over-all
 /// @try ... @catch ... @finally statement.
 class ObjCAtTryStmt : public Stmt {
 private:
   enum { TRY, CATCH, FINALLY, END_EXPR };
-  Stmt* SubStmts[END_EXPR]; 
-  
-  SourceLocation AtTryLoc;      
+  Stmt* SubStmts[END_EXPR];
+
+  SourceLocation AtTryLoc;
 public:
-  ObjCAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt, 
-                Stmt *atCatchStmt, 
+  ObjCAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt,
+                Stmt *atCatchStmt,
                 Stmt *atFinallyStmt)
   : Stmt(ObjCAtTryStmtClass) {
       SubStmts[TRY] = atTryStmt;
@@ -174,41 +174,41 @@ public:
       SubStmts[FINALLY] = atFinallyStmt;
       AtTryLoc = atTryLoc;
     }
-  explicit ObjCAtTryStmt(EmptyShell Empty) : 
+  explicit ObjCAtTryStmt(EmptyShell Empty) :
     Stmt(ObjCAtTryStmtClass, Empty) { }
-    
+
   SourceLocation getAtTryLoc() const { return AtTryLoc; }
   void setAtTryLoc(SourceLocation Loc) { AtTryLoc = Loc; }
-  
+
   const Stmt *getTryBody() const { return SubStmts[TRY]; }
   Stmt *getTryBody() { return SubStmts[TRY]; }
   void setTryBody(Stmt *S) { SubStmts[TRY] = S; }
-  
-  const ObjCAtCatchStmt *getCatchStmts() const { 
-    return dyn_cast_or_null<ObjCAtCatchStmt>(SubStmts[CATCH]); 
+
+  const ObjCAtCatchStmt *getCatchStmts() const {
+    return dyn_cast_or_null<ObjCAtCatchStmt>(SubStmts[CATCH]);
   }
-  ObjCAtCatchStmt *getCatchStmts() { 
-    return dyn_cast_or_null<ObjCAtCatchStmt>(SubStmts[CATCH]); 
+  ObjCAtCatchStmt *getCatchStmts() {
+    return dyn_cast_or_null<ObjCAtCatchStmt>(SubStmts[CATCH]);
   }
   void setCatchStmts(Stmt *S) { SubStmts[CATCH] = S; }
-  
-  const ObjCAtFinallyStmt *getFinallyStmt() const { 
-    return dyn_cast_or_null<ObjCAtFinallyStmt>(SubStmts[FINALLY]); 
+
+  const ObjCAtFinallyStmt *getFinallyStmt() const {
+    return dyn_cast_or_null<ObjCAtFinallyStmt>(SubStmts[FINALLY]);
   }
-  ObjCAtFinallyStmt *getFinallyStmt() { 
-    return dyn_cast_or_null<ObjCAtFinallyStmt>(SubStmts[FINALLY]); 
+  ObjCAtFinallyStmt *getFinallyStmt() {
+    return dyn_cast_or_null<ObjCAtFinallyStmt>(SubStmts[FINALLY]);
   }
   void setFinallyStmt(Stmt *S) { SubStmts[FINALLY] = S; }
 
-  virtual SourceRange getSourceRange() const { 
-    return SourceRange(AtTryLoc, SubStmts[TRY]->getLocEnd()); 
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(AtTryLoc, SubStmts[TRY]->getLocEnd());
   }
-    
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtTryStmtClass;
   }
   static bool classof(const ObjCAtTryStmt *) { return true; }
-    
+
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 };
@@ -223,7 +223,7 @@ private:
   enum { SYNC_EXPR, SYNC_BODY, END_EXPR };
   Stmt* SubStmts[END_EXPR];
   SourceLocation AtSynchronizedLoc;
-  
+
 public:
   ObjCAtSynchronizedStmt(SourceLocation atSynchronizedLoc, Stmt *synchExpr,
                          Stmt *synchBody)
@@ -232,41 +232,41 @@ public:
     SubStmts[SYNC_BODY] = synchBody;
     AtSynchronizedLoc = atSynchronizedLoc;
   }
-  explicit ObjCAtSynchronizedStmt(EmptyShell Empty) : 
+  explicit ObjCAtSynchronizedStmt(EmptyShell Empty) :
     Stmt(ObjCAtSynchronizedStmtClass, Empty) { }
-  
+
   SourceLocation getAtSynchronizedLoc() const { return AtSynchronizedLoc; }
   void setAtSynchronizedLoc(SourceLocation Loc) { AtSynchronizedLoc = Loc; }
-  
+
   const CompoundStmt *getSynchBody() const {
     return reinterpret_cast<CompoundStmt*>(SubStmts[SYNC_BODY]);
   }
-  CompoundStmt *getSynchBody() { 
-    return reinterpret_cast<CompoundStmt*>(SubStmts[SYNC_BODY]); 
+  CompoundStmt *getSynchBody() {
+    return reinterpret_cast<CompoundStmt*>(SubStmts[SYNC_BODY]);
   }
   void setSynchBody(Stmt *S) { SubStmts[SYNC_BODY] = S; }
-  
-  const Expr *getSynchExpr() const { 
-    return reinterpret_cast<Expr*>(SubStmts[SYNC_EXPR]); 
+
+  const Expr *getSynchExpr() const {
+    return reinterpret_cast<Expr*>(SubStmts[SYNC_EXPR]);
   }
-  Expr *getSynchExpr() { 
-    return reinterpret_cast<Expr*>(SubStmts[SYNC_EXPR]); 
+  Expr *getSynchExpr() {
+    return reinterpret_cast<Expr*>(SubStmts[SYNC_EXPR]);
   }
   void setSynchExpr(Stmt *S) { SubStmts[SYNC_EXPR] = S; }
-  
-  virtual SourceRange getSourceRange() const { 
-    return SourceRange(AtSynchronizedLoc, getSynchBody()->getLocEnd()); 
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(AtSynchronizedLoc, getSynchBody()->getLocEnd());
   }
-  
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtSynchronizedStmtClass;
   }
   static bool classof(const ObjCAtSynchronizedStmt *) { return true; }
-  
+
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 };
-  
+
 /// ObjCAtThrowStmt - This represents objective-c's @throw statement.
 class ObjCAtThrowStmt : public Stmt {
   Stmt *Throw;
@@ -276,28 +276,28 @@ public:
   : Stmt(ObjCAtThrowStmtClass), Throw(throwExpr) {
     AtThrowLoc = atThrowLoc;
   }
-  explicit ObjCAtThrowStmt(EmptyShell Empty) : 
+  explicit ObjCAtThrowStmt(EmptyShell Empty) :
     Stmt(ObjCAtThrowStmtClass, Empty) { }
-  
+
   const Expr *getThrowExpr() const { return reinterpret_cast<Expr*>(Throw); }
   Expr *getThrowExpr() { return reinterpret_cast<Expr*>(Throw); }
   void setThrowExpr(Stmt *S) { Throw = S; }
-  
+
   SourceLocation getThrowLoc() { return AtThrowLoc; }
   void setThrowLoc(SourceLocation Loc) { AtThrowLoc = Loc; }
-  
+
   virtual SourceRange getSourceRange() const {
     if (Throw)
-      return SourceRange(AtThrowLoc, Throw->getLocEnd()); 
-    else 
+      return SourceRange(AtThrowLoc, Throw->getLocEnd());
+    else
       return SourceRange(AtThrowLoc);
   }
-  
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCAtThrowStmtClass;
   }
   static bool classof(const ObjCAtThrowStmt *) { return true; }
-  
+
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 };

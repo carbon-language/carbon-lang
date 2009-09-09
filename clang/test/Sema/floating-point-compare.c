@@ -13,11 +13,11 @@ int f3(float x) {
 }
 
 int f4(float x) {
-	return x == 0.0; // no-warning {{comparing}}
+  return x == 0.0; // no-warning {{comparing}}
 }
 
 int f5(float x) {
-	return x == __builtin_inf(); // no-warning
+  return x == __builtin_inf(); // no-warning
 }
 
 int f7(float x) {

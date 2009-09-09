@@ -30,28 +30,28 @@ break;
 #define DEFAULT_DISPATCH_VARDECL(CLASS) void Visit##CLASS(CLASS* D)\
   { static_cast<ImplClass*>(this)->VisitVarDecl(D); }
 
-  
+
 namespace clang {
 template <typename ImplClass>
 class CFGRecStmtDeclVisitor : public CFGRecStmtVisitor<ImplClass> {
-public:  
+public:
 
   void VisitDeclRefExpr(DeclRefExpr* DR) {
-    static_cast<ImplClass*>(this)->VisitDecl(DR->getDecl()); 
+    static_cast<ImplClass*>(this)->VisitDecl(DR->getDecl());
   }
-  
+
   void VisitDeclStmt(DeclStmt* DS) {
     for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
         DI != DE; ++DI) {
       Decl* D = *DI;
-      static_cast<ImplClass*>(this)->VisitDecl(D); 
+      static_cast<ImplClass*>(this)->VisitDecl(D);
       // Visit the initializer.
       if (VarDecl* VD = dyn_cast<VarDecl>(D))
         if (Expr* I = VD->getInit())
           static_cast<ImplClass*>(this)->Visit(I);
     }
   }
-    
+
   void VisitDecl(Decl* D) {
     switch (D->getKind()) {
         DISPATCH_CASE(Function,FunctionDecl)
@@ -67,7 +67,7 @@ public:
         assert(false && "Subtype of ScopedDecl not handled.");
     }
   }
-  
+
   DEFAULT_DISPATCH(VarDecl)
   DEFAULT_DISPATCH(FunctionDecl)
   DEFAULT_DISPATCH_VARDECL(OriginalParmVarDecl)

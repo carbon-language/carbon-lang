@@ -40,14 +40,14 @@ static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
                                const ObjCMethodDecl *MethAncestor,
                                BugReporter &BR, ASTContext &Ctx,
                                const ObjCImplementationDecl *ID) {
-    
+
   QualType ResDerived  = MethDerived->getResultType();
-  QualType ResAncestor = MethAncestor->getResultType(); 
-  
+  QualType ResAncestor = MethAncestor->getResultType();
+
   if (!AreTypesCompatible(ResDerived, ResAncestor, Ctx)) {
     std::string sbuf;
     llvm::raw_string_ostream os(sbuf);
-    
+
     os << "The Objective-C class '"
        << MethDerived->getClassInterface()->getNameAsString()
        << "', which is derived from class '"
@@ -63,7 +63,7 @@ static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
        << ResAncestor.getAsString()
        << "'.  These two types are incompatible, and may result in undefined "
           "behavior for clients of these classes.";
-    
+
     BR.EmitBasicReport("Incompatible instance method return type",
                        os.str().c_str(), MethDerived->getLocStart());
   }
@@ -71,23 +71,23 @@ static void CompareReturnTypes(const ObjCMethodDecl *MethDerived,
 
 void clang::CheckObjCInstMethSignature(const ObjCImplementationDecl* ID,
                                        BugReporter& BR) {
-  
+
   const ObjCInterfaceDecl* D = ID->getClassInterface();
   const ObjCInterfaceDecl* C = D->getSuperClass();
 
   if (!C)
     return;
-  
+
   ASTContext& Ctx = BR.getContext();
-  
+
   // Build a DenseMap of the methods for quick querying.
   typedef llvm::DenseMap<Selector,ObjCMethodDecl*> MapTy;
   MapTy IMeths;
   unsigned NumMethods = 0;
-  
+
   for (ObjCImplementationDecl::instmeth_iterator I=ID->instmeth_begin(),
-       E=ID->instmeth_end(); I!=E; ++I) {    
-    
+       E=ID->instmeth_end(); I!=E; ++I) {
+
     ObjCMethodDecl* M = *I;
     IMeths[M->getSelector()] = M;
     ++NumMethods;
@@ -101,19 +101,19 @@ void clang::CheckObjCInstMethSignature(const ObjCImplementationDecl* ID,
 
       ObjCMethodDecl* M = *I;
       Selector S = M->getSelector();
-      
+
       MapTy::iterator MI = IMeths.find(S);
 
       if (MI == IMeths.end() || MI->second == 0)
         continue;
-      
+
       --NumMethods;
       ObjCMethodDecl* MethDerived = MI->second;
       MI->second = 0;
-      
+
       CompareReturnTypes(MethDerived, M, BR, Ctx, ID);
     }
-    
+
     C = C->getSuperClass();
   }
 }

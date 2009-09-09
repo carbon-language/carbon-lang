@@ -26,9 +26,7 @@
 using namespace clang::driver;
 
 HostInfo::HostInfo(const Driver &D, const llvm::Triple &_Triple)
-  : TheDriver(D), Triple(_Triple)
-{
-
+  : TheDriver(D), Triple(_Triple) {
 }
 
 HostInfo::~HostInfo() {

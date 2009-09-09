@@ -49,9 +49,9 @@ namespace CodeGen {
   /// FunctionArgList - Type for representing both the decl and type
   /// of parameters to a function. The decl must be either a
   /// ParmVarDecl or ImplicitParamDecl.
-  typedef llvm::SmallVector<std::pair<const VarDecl*, QualType>, 
+  typedef llvm::SmallVector<std::pair<const VarDecl*, QualType>,
                             16> FunctionArgList;
-  
+
   /// CGFunctionInfo - Class to encapsulate the information about a
   /// function definition.
   class CGFunctionInfo : public llvm::FoldingSetNode {
@@ -67,7 +67,7 @@ namespace CodeGen {
     typedef const ArgInfo *const_arg_iterator;
     typedef ArgInfo *arg_iterator;
 
-    CGFunctionInfo(QualType ResTy, 
+    CGFunctionInfo(QualType ResTy,
                    const llvm::SmallVector<QualType, 16> &ArgTys);
     ~CGFunctionInfo() { delete[] Args; }
 
@@ -89,7 +89,7 @@ namespace CodeGen {
         it->type.Profile(ID);
     }
     template<class Iterator>
-    static void Profile(llvm::FoldingSetNodeID &ID, 
+    static void Profile(llvm::FoldingSetNodeID &ID,
                         QualType ResTy,
                         Iterator begin,
                         Iterator end) {

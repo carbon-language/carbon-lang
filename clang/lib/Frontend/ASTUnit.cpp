@@ -38,38 +38,38 @@ class VISIBILITY_HIDDEN PCHInfoCollector : public PCHReaderListener {
   std::string &TargetTriple;
   std::string &Predefines;
   unsigned &Counter;
-  
+
   unsigned NumHeaderInfos;
-  
+
 public:
   PCHInfoCollector(LangOptions &LangOpt, HeaderSearch &HSI,
                    std::string &TargetTriple, std::string &Predefines,
                    unsigned &Counter)
     : LangOpt(LangOpt), HSI(HSI), TargetTriple(TargetTriple),
       Predefines(Predefines), Counter(Counter), NumHeaderInfos(0) {}
-  
+
   virtual bool ReadLanguageOptions(const LangOptions &LangOpts) {
     LangOpt = LangOpts;
     return false;
   }
-  
+
   virtual bool ReadTargetTriple(const std::string &Triple) {
     TargetTriple = Triple;
     return false;
   }
-  
-  virtual bool ReadPredefinesBuffer(const char *PCHPredef, 
+
+  virtual bool ReadPredefinesBuffer(const char *PCHPredef,
                                     unsigned PCHPredefLen,
                                     FileID PCHBufferID,
                                     std::string &SuggestedPredefines) {
     Predefines = PCHPredef;
     return false;
   }
-  
+
   virtual void ReadHeaderFileInfo(const HeaderFileInfo &HFI) {
     HSI.setHeaderFileInfoForUID(HFI, NumHeaderInfos++);
   }
-  
+
   virtual void ReadCounter(unsigned Value) {
     Counter = Value;
   }
@@ -88,7 +88,7 @@ FileManager &ASTUnit::getFileManager() {
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   FileManager &FileMgr,
                                   std::string *ErrMsg) {
-  
+
   llvm::OwningPtr<ASTUnit> AST(new ASTUnit());
 
   AST->DiagClient.reset(new TextDiagnosticBuffer());
@@ -96,12 +96,12 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
 
   AST->HeaderInfo.reset(new HeaderSearch(FileMgr));
   AST->SourceMgr.reset(new SourceManager());
-  
+
   Diagnostic &Diags = *AST->Diags.get();
   SourceManager &SourceMgr = *AST->SourceMgr.get();
 
   // Gather Info for preprocessor construction later on.
-  
+
   LangOptions LangInfo;
   HeaderSearch &HeaderInfo = *AST->HeaderInfo.get();
   std::string TargetTriple;
@@ -118,16 +118,16 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   switch (Reader->ReadPCH(Filename)) {
   case PCHReader::Success:
     break;
-    
+
   case PCHReader::Failure:
   case PCHReader::IgnorePCH:
     if (ErrMsg)
       *ErrMsg = "Could not load PCH file";
     return NULL;
   }
-  
+
   // PCH loaded successfully. Now create the preprocessor.
-  
+
   // Get information about the target being compiled for.
   AST->Target.reset(TargetInfo::CreateTargetInfo(TargetTriple));
   AST->PP.reset(new Preprocessor(Diags, LangInfo, *AST->Target.get(),
@@ -137,7 +137,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   PP.setPredefines(Predefines);
   PP.setCounterValue(Counter);
   Reader->setPreprocessor(PP);
-  
+
   // Create and initialize the ASTContext.
 
   AST->Ctx.reset(new ASTContext(LangInfo,
@@ -149,14 +149,14 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                 /* FreeMemory = */ true,
                                 /* size_reserve = */0));
   ASTContext &Context = *AST->Ctx.get();
-  
+
   Reader->InitializeContext(Context);
-  
+
   // Attach the PCH reader to the AST context as an external AST
   // source, so that declarations will be deserialized from the
   // PCH file as needed.
   Source.reset(Reader.take());
   Context.setExternalSource(Source);
 
-  return AST.take(); 
+  return AST.take();
 }

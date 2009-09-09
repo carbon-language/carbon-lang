@@ -56,8 +56,7 @@ Driver::Driver(const char *_Name, const char *_Dir,
     CCCUseClangCXX(true),
 #endif
     CCCUseClangCPP(true), CCCUsePCH(true),
-    SuppressMissingInputWarning(false)
-{
+    SuppressMissingInputWarning(false) {
 #ifdef USE_PRODUCTION_CLANG
   // In a "production" build, only use clang on architectures we expect to work.
   CCCClangArchs.insert(llvm::Triple::x86);

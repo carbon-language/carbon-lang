@@ -32,37 +32,37 @@ class VISIBILITY_HIDDEN NSErrorCheck : public BugType {
   const bool isNSErrorWarning;
   IdentifierInfo * const II;
   GRExprEngine &Eng;
-  
+
   void CheckSignature(const ObjCMethodDecl& MD, QualType& ResultTy,
                       llvm::SmallVectorImpl<VarDecl*>& ErrorParams);
-  
+
   void CheckSignature(const FunctionDecl& MD, QualType& ResultTy,
                       llvm::SmallVectorImpl<VarDecl*>& ErrorParams);
 
   bool CheckNSErrorArgument(QualType ArgTy);
   bool CheckCFErrorArgument(QualType ArgTy);
-  
+
   void CheckParamDeref(const VarDecl *V, const LocationContext *LC,
                        const GRState *state, BugReporter& BR);
-  
+
   void EmitRetTyWarning(BugReporter& BR, const Decl& CodeDecl);
-  
+
 public:
   NSErrorCheck(const Decl &D, bool isNSError, GRExprEngine& eng)
-    : BugType(isNSError ? "NSError** null dereference" 
+    : BugType(isNSError ? "NSError** null dereference"
                         : "CFErrorRef* null dereference",
               "Coding conventions (Apple)"),
     CodeDecl(D),
-    isNSErrorWarning(isNSError), 
+    isNSErrorWarning(isNSError),
     II(&eng.getContext().Idents.get(isNSErrorWarning ? "NSError":"CFErrorRef")),
     Eng(eng) {}
-  
+
   void FlushReports(BugReporter& BR);
-};  
-  
+};
+
 } // end anonymous namespace
 
-void clang::RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng, 
+void clang::RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng,
                                   const Decl &D) {
   BR.Register(new NSErrorCheck(D, true, Eng));
   BR.Register(new NSErrorCheck(D, false, Eng));
@@ -71,7 +71,7 @@ void clang::RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng,
 void NSErrorCheck::FlushReports(BugReporter& BR) {
   // Get the analysis engine and the exploded analysis graph.
   ExplodedGraph& G = Eng.getGraph();
-  
+
   // Get the ASTContext, which is useful for querying type information.
   ASTContext &Ctx = BR.getContext();
 
@@ -84,17 +84,17 @@ void NSErrorCheck::FlushReports(BugReporter& BR) {
     CheckSignature(*FD, ResultTy, ErrorParams);
   else
     return;
-  
+
   if (ErrorParams.empty())
     return;
-  
+
   if (ResultTy == Ctx.VoidTy) EmitRetTyWarning(BR, CodeDecl);
-  
-  for (ExplodedGraph::roots_iterator RI=G.roots_begin(), RE=G.roots_end(); 
+
+  for (ExplodedGraph::roots_iterator RI=G.roots_begin(), RE=G.roots_end();
        RI!=RE; ++RI) {
     // Scan the parameters for an implicit null dereference.
     for (llvm::SmallVectorImpl<VarDecl*>::iterator I=ErrorParams.begin(),
-          E=ErrorParams.end(); I!=E; ++I)    
+          E=ErrorParams.end(); I!=E; ++I)
         CheckParamDeref(*I, (*RI)->getLocationContext(), (*RI)->getState(), BR);
   }
 }
@@ -102,17 +102,17 @@ void NSErrorCheck::FlushReports(BugReporter& BR) {
 void NSErrorCheck::EmitRetTyWarning(BugReporter& BR, const Decl& CodeDecl) {
   std::string sbuf;
   llvm::raw_string_ostream os(sbuf);
-  
+
   if (isa<ObjCMethodDecl>(CodeDecl))
     os << "Method";
   else
-    os << "Function";      
-  
+    os << "Function";
+
   os << " accepting ";
   os << (isNSErrorWarning ? "NSError**" : "CFErrorRef*");
   os << " should have a non-void return value to indicate whether or not an "
         "error occurred";
-  
+
   BR.EmitBasicReport(isNSErrorWarning
                      ? "Bad return type when passing NSError**"
                      : "Bad return type when passing CFError*",
@@ -125,11 +125,11 @@ NSErrorCheck::CheckSignature(const ObjCMethodDecl& M, QualType& ResultTy,
                              llvm::SmallVectorImpl<VarDecl*>& ErrorParams) {
 
   ResultTy = M.getResultType();
-  
-  for (ObjCMethodDecl::param_iterator I=M.param_begin(), 
+
+  for (ObjCMethodDecl::param_iterator I=M.param_begin(),
        E=M.param_end(); I!=E; ++I)  {
 
-    QualType T = (*I)->getType();    
+    QualType T = (*I)->getType();
 
     if (isNSErrorWarning) {
       if (CheckNSErrorArgument(T)) ErrorParams.push_back(*I);
@@ -142,14 +142,14 @@ NSErrorCheck::CheckSignature(const ObjCMethodDecl& M, QualType& ResultTy,
 void
 NSErrorCheck::CheckSignature(const FunctionDecl& F, QualType& ResultTy,
                              llvm::SmallVectorImpl<VarDecl*>& ErrorParams) {
-  
+
   ResultTy = F.getResultType();
-  
-  for (FunctionDecl::param_const_iterator I = F.param_begin(), 
+
+  for (FunctionDecl::param_const_iterator I = F.param_begin(),
                                           E = F.param_end(); I != E; ++I)  {
-    
-    QualType T = (*I)->getType();    
-    
+
+    QualType T = (*I)->getType();
+
     if (isNSErrorWarning) {
       if (CheckNSErrorArgument(T)) ErrorParams.push_back(*I);
     }
@@ -160,31 +160,31 @@ NSErrorCheck::CheckSignature(const FunctionDecl& F, QualType& ResultTy,
 
 
 bool NSErrorCheck::CheckNSErrorArgument(QualType ArgTy) {
-  
+
   const PointerType* PPT = ArgTy->getAs<PointerType>();
   if (!PPT)
     return false;
-  
+
   const ObjCObjectPointerType* PT =
     PPT->getPointeeType()->getAsObjCObjectPointerType();
 
   if (!PT)
     return false;
-  
+
   const ObjCInterfaceDecl *ID = PT->getInterfaceDecl();
-  
+
   // FIXME: Can ID ever be NULL?
   if (ID)
     return II == ID->getIdentifier();
-  
+
   return false;
 }
 
 bool NSErrorCheck::CheckCFErrorArgument(QualType ArgTy) {
-  
+
   const PointerType* PPT = ArgTy->getAs<PointerType>();
   if (!PPT) return false;
-  
+
   const TypedefType* TT = PPT->getPointeeType()->getAsTypedefType();
   if (!TT) return false;
 
@@ -195,24 +195,24 @@ void NSErrorCheck::CheckParamDeref(const VarDecl *Param,
                                    const LocationContext *LC,
                                    const GRState *rootState,
                                    BugReporter& BR) {
-  
+
   SVal ParamL = rootState->getLValue(Param, LC);
   const MemRegion* ParamR = cast<loc::MemRegionVal>(ParamL).getRegionAs<VarRegion>();
   assert (ParamR && "Parameters always have VarRegions.");
   SVal ParamSVal = rootState->getSVal(ParamR);
-  
+
   // FIXME: For now assume that ParamSVal is symbolic.  We need to generalize
   // this later.
   SymbolRef ParamSym = ParamSVal.getAsLocSymbol();
   if (!ParamSym)
     return;
-  
+
   // Iterate over the implicit-null dereferences.
   for (GRExprEngine::null_deref_iterator I=Eng.implicit_null_derefs_begin(),
        E=Eng.implicit_null_derefs_end(); I!=E; ++I) {
-    
+
     const GRState *state = (*I)->getState();
-    const SVal* X = state->get<GRState::NullDerefTag>();    
+    const SVal* X = state->get<GRState::NullDerefTag>();
 
     if (!X || X->getAsSymbol() != ParamSym)
       continue;
@@ -221,14 +221,14 @@ void NSErrorCheck::CheckParamDeref(const VarDecl *Param,
     std::string sbuf;
     llvm::raw_string_ostream os(sbuf);
       os << "Potential null dereference.  According to coding standards ";
-    
+
     if (isNSErrorWarning)
       os << "in 'Creating and Returning NSError Objects' the parameter '";
     else
       os << "documented in CoreFoundation/CFError.h the parameter '";
-    
+
     os << Param->getNameAsString() << "' may be null.";
-    
+
     BugReport *report = new BugReport(*this, os.str().c_str(), *I);
     // FIXME: Notable symbols are now part of the report.  We should
     //  add support for notable symbols in BugReport.

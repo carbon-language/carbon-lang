@@ -14,7 +14,7 @@ typedef struct mark_header_tag {
 } mark_header_t;
 int is_rar_archive(int fd) {
         const mark_header_t rar_hdr[2] = {{0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00}, {'U', 'n', 'i', 'q', 'u', 'E', '!'}};
-	foo(rar_hdr);
+        foo(rar_hdr);
 
         return 0;
 }

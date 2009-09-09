@@ -1,8 +1,8 @@
 // RUN: clang-cc -fsyntax-only -verify %s 
 
-struct S {	// expected-note {{candidate function}} 
-   S (S);	// expected-error {{copy constructor must pass its first argument by reference}} \\
-                // expected-note {{candidate function}}
+struct S { // expected-note {{candidate function}} 
+   S (S);  // expected-error {{copy constructor must pass its first argument by reference}} \\
+           // expected-note {{candidate function}}
 };
 
 S f();

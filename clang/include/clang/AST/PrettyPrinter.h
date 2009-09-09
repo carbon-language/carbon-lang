@@ -34,7 +34,7 @@ public:
 /// declarations should be printed.
 struct PrintingPolicy {
   /// \brief Create a default printing policy for C.
-  PrintingPolicy(const LangOptions &LO) 
+  PrintingPolicy(const LangOptions &LO)
     : Indentation(2), LangOpts(LO), SuppressSpecifiers(false),
       SuppressTag(false), SuppressTagKind(false), SuppressScope(false),
       Dump(false), ConstantArraySizeAsWritten(false) { }

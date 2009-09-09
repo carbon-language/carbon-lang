@@ -30,32 +30,32 @@ class SVal;
 class ConstraintManager {
 public:
   virtual ~ConstraintManager();
-  virtual const GRState *Assume(const GRState *state, SVal Cond, 
+  virtual const GRState *Assume(const GRState *state, SVal Cond,
                                 bool Assumption) = 0;
 
-  virtual const GRState *AssumeInBound(const GRState *state, SVal Idx, 
+  virtual const GRState *AssumeInBound(const GRState *state, SVal Idx,
                                        SVal UpperBound, bool Assumption) = 0;
-  
+
   std::pair<const GRState*, const GRState*> AssumeDual(const GRState *state,
                                                        DefinedSVal Cond) {
     return std::make_pair(Assume(state, Cond, true),
-                          Assume(state, Cond, false));    
+                          Assume(state, Cond, false));
   }
 
   virtual const llvm::APSInt* getSymVal(const GRState *state,
                                         SymbolRef sym) const = 0;
 
-  virtual bool isEqual(const GRState *state, SymbolRef sym, 
+  virtual bool isEqual(const GRState *state, SymbolRef sym,
                        const llvm::APSInt& V) const = 0;
 
   virtual const GRState *RemoveDeadBindings(const GRState *state,
                                             SymbolReaper& SymReaper) = 0;
 
-  virtual void print(const GRState *state, llvm::raw_ostream& Out, 
+  virtual void print(const GRState *state, llvm::raw_ostream& Out,
                      const char* nl, const char *sep) = 0;
 
   virtual void EndPath(const GRState *state) {}
-  
+
   /// canReasonAbout - Not all ConstraintManagers can accurately reason about
   ///  all SVal values.  This method returns true if the ConstraintManager can
   ///  reasonably handle a given SVal value.  This is typically queried by

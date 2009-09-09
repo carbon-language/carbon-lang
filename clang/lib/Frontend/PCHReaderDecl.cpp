@@ -94,7 +94,7 @@ void PCHDeclReader::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
 
 void PCHDeclReader::VisitNamedDecl(NamedDecl *ND) {
   VisitDecl(ND);
-  ND->setDeclName(Reader.ReadDeclarationName(Record, Idx));  
+  ND->setDeclName(Reader.ReadDeclarationName(Record, Idx));
 }
 
 void PCHDeclReader::VisitTypeDecl(TypeDecl *TD) {
@@ -163,9 +163,9 @@ public:
 
 #define ABSTRACT_TYPELOC(CLASS)
 #define TYPELOC(CLASS, PARENT, TYPE) \
-    void Visit##CLASS(CLASS TyLoc); 
+    void Visit##CLASS(CLASS TyLoc);
 #include "clang/AST/TypeLocNodes.def"
-  
+
   void VisitTypeLoc(TypeLoc TyLoc) {
     assert(0 && "A type loc wrapper was not handled!");
   }
@@ -447,10 +447,10 @@ void PCHDeclReader::VisitBlockDecl(BlockDecl *BD) {
   Params.reserve(NumParams);
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
-  BD->setParams(*Reader.getContext(), Params.data(), NumParams);  
+  BD->setParams(*Reader.getContext(), Params.data(), NumParams);
 }
 
-std::pair<uint64_t, uint64_t> 
+std::pair<uint64_t, uint64_t>
 PCHDeclReader::VisitDeclContext(DeclContext *DC) {
   uint64_t LexicalOffset = Record[Idx++];
   uint64_t VisibleOffset = Record[Idx++];
@@ -464,13 +464,13 @@ PCHDeclReader::VisitDeclContext(DeclContext *DC) {
 /// \brief Reads attributes from the current stream position.
 Attr *PCHReader::ReadAttributes() {
   unsigned Code = DeclsCursor.ReadCode();
-  assert(Code == llvm::bitc::UNABBREV_RECORD && 
+  assert(Code == llvm::bitc::UNABBREV_RECORD &&
          "Expected unabbreviated record"); (void)Code;
-  
+
   RecordData Record;
   unsigned Idx = 0;
   unsigned RecCode = DeclsCursor.ReadRecord(Code, Record);
-  assert(RecCode == pch::DECL_ATTR && "Expected attribute record"); 
+  assert(RecCode == pch::DECL_ATTR && "Expected attribute record");
   (void)RecCode;
 
 #define SIMPLE_ATTR(Name)                       \
@@ -501,12 +501,12 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(AnalyzerNoReturn);
     STRING_ATTR(Annotate);
     STRING_ATTR(AsmLabel);
-    
+
     case Attr::Blocks:
       New = ::new (*Context) BlocksAttr(
                                   (BlocksAttr::BlocksAttrTypes)Record[Idx++]);
       break;
-      
+
     case Attr::Cleanup:
       New = ::new (*Context) CleanupAttr(
                                   cast<FunctionDecl>(GetDecl(Record[Idx++])));
@@ -519,7 +519,7 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(Deprecated);
     UNSIGNED_ATTR(Destructor);
     SIMPLE_ATTR(FastCall);
-    
+
     case Attr::Format: {
       std::string Type = ReadString(Record, Idx);
       unsigned FormatIdx = Record[Idx++];
@@ -527,13 +527,13 @@ Attr *PCHReader::ReadAttributes() {
       New = ::new (*Context) FormatAttr(Type, FormatIdx, FirstArg);
       break;
     }
-        
+
     case Attr::FormatArg: {
       unsigned FormatIdx = Record[Idx++];
       New = ::new (*Context) FormatArgAttr(FormatIdx);
       break;
     }
-        
+
     case Attr::Sentinel: {
       int sentinel = Record[Idx++];
       int nullPos = Record[Idx++];
@@ -542,7 +542,7 @@ Attr *PCHReader::ReadAttributes() {
     }
 
     SIMPLE_ATTR(GNUInline);
-    
+
     case Attr::IBOutletKind:
       New = ::new (*Context) IBOutletAttr();
       break;
@@ -552,7 +552,7 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(NoInline);
     SIMPLE_ATTR(NoReturn);
     SIMPLE_ATTR(NoThrow);
-    
+
     case Attr::NonNull: {
       unsigned Size = Record[Idx++];
       llvm::SmallVector<unsigned, 16> ArgNums;
@@ -561,7 +561,7 @@ Attr *PCHReader::ReadAttributes() {
       New = ::new (*Context) NonNullAttr(ArgNums.data(), Size);
       break;
     }
-        
+
     case Attr::ReqdWorkGroupSize: {
       unsigned X = Record[Idx++];
       unsigned Y = Record[Idx++];
@@ -585,7 +585,7 @@ Attr *PCHReader::ReadAttributes() {
     SIMPLE_ATTR(Unavailable);
     SIMPLE_ATTR(Unused);
     SIMPLE_ATTR(Used);
-    
+
     case Attr::Visibility:
       New = ::new (*Context) VisibilityAttr(
                               (VisibilityAttr::VisibilityTypes)Record[Idx++]);
@@ -624,7 +624,7 @@ Attr *PCHReader::ReadAttributes() {
 
 /// \brief Note that we have loaded the declaration with the given
 /// Index.
-/// 
+///
 /// This routine notes that this declaration has already been loaded,
 /// so that future GetDecl calls will return this declaration rather
 /// than trying to load a new declaration.
@@ -656,7 +656,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
 
   // Note that we are loading a declaration record.
   LoadingTypeOrDecl Loading(*this);
-  
+
   DeclsCursor.JumpToBit(Offset);
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
@@ -689,11 +689,11 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
                                  0, llvm::APSInt());
     break;
   case pch::DECL_FUNCTION:
-    D = FunctionDecl::Create(*Context, 0, SourceLocation(), DeclarationName(), 
+    D = FunctionDecl::Create(*Context, 0, SourceLocation(), DeclarationName(),
                              QualType(), 0);
     break;
   case pch::DECL_OBJC_METHOD:
-    D = ObjCMethodDecl::Create(*Context, SourceLocation(), SourceLocation(), 
+    D = ObjCMethodDecl::Create(*Context, SourceLocation(), SourceLocation(),
                                Selector(), QualType(), 0);
     break;
   case pch::DECL_OBJC_INTERFACE:
@@ -707,7 +707,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = ObjCProtocolDecl::Create(*Context, 0, SourceLocation(), 0);
     break;
   case pch::DECL_OBJC_AT_DEFS_FIELD:
-    D = ObjCAtDefsFieldDecl::Create(*Context, 0, SourceLocation(), 0, 
+    D = ObjCAtDefsFieldDecl::Create(*Context, 0, SourceLocation(), 0,
                                     QualType(), 0);
     break;
   case pch::DECL_OBJC_CLASS:
@@ -733,11 +733,11 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   case pch::DECL_OBJC_PROPERTY_IMPL:
     D = ObjCPropertyImplDecl::Create(*Context, 0, SourceLocation(),
-                                     SourceLocation(), 0, 
+                                     SourceLocation(), 0,
                                      ObjCPropertyImplDecl::Dynamic, 0);
     break;
   case pch::DECL_FIELD:
-    D = FieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 0, 
+    D = FieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 0,
                           false);
     break;
   case pch::DECL_VAR:
@@ -750,7 +750,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
 
   case pch::DECL_PARM_VAR:
-    D = ParmVarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 
+    D = ParmVarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
                             VarDecl::None, 0);
     break;
   case pch::DECL_ORIGINAL_PARM_VAR:

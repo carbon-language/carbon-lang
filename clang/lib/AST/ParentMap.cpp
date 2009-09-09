@@ -32,7 +32,7 @@ ParentMap::ParentMap(Stmt* S) : Impl(0) {
   if (S) {
     MapTy *M = new MapTy();
     BuildParentMap(*M, S);
-    Impl = M;    
+    Impl = M;
   }
 }
 
@@ -54,16 +54,16 @@ Stmt *ParentMap::getParentIgnoreParens(Stmt *S) const {
 bool ParentMap::isConsumedExpr(Expr* E) const {
   Stmt *P = getParent(E);
   Stmt *DirectChild = E;
-  
+
   // Ignore parents that are parentheses or casts.
   while (P && (isa<ParenExpr>(P) || isa<CastExpr>(P))) {
     DirectChild = P;
     P = getParent(P);
   }
-  
+
   if (!P)
     return false;
-  
+
   switch (P->getStmtClass()) {
     default:
       return isa<Expr>(P);
@@ -78,7 +78,7 @@ bool ParentMap::isConsumedExpr(Expr* E) const {
     case Stmt::ForStmtClass:
       return DirectChild == cast<ForStmt>(P)->getCond();
     case Stmt::WhileStmtClass:
-      return DirectChild == cast<WhileStmt>(P)->getCond();      
+      return DirectChild == cast<WhileStmt>(P)->getCond();
     case Stmt::DoStmtClass:
       return DirectChild == cast<DoStmt>(P)->getCond();
     case Stmt::IfStmtClass:

@@ -69,7 +69,7 @@ class VISIBILITY_HIDDEN Darwin : public ToolChain {
   const char *getMacosxVersionMin() const;
 
 public:
-  Darwin(const HostInfo &Host, const llvm::Triple& Triple, 
+  Darwin(const HostInfo &Host, const llvm::Triple& Triple,
          const unsigned (&DarwinVersion)[3],
          const unsigned (&GCCVersion)[3],
          bool IsIPhone);
@@ -95,7 +95,7 @@ public:
     return IPhoneOSVersionMin.c_str();
   }
 
-  const std::string &getToolChainDir() const { 
+  const std::string &getToolChainDir() const {
     return ToolChainDir;
   }
 
@@ -114,7 +114,7 @@ public:
   /// Darwin_GCC - Generic Darwin tool chain using gcc.
 class VISIBILITY_HIDDEN Darwin_GCC : public Generic_GCC {
 public:
-  Darwin_GCC(const HostInfo &Host, const llvm::Triple& Triple) 
+  Darwin_GCC(const HostInfo &Host, const llvm::Triple& Triple)
     : Generic_GCC(Host, Triple) {}
 
   virtual const char *GetDefaultRelocationModel() const { return "pic"; }

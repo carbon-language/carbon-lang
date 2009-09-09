@@ -16,7 +16,7 @@
 #define LLVM_CLANG_ANALYSIS_SAVERESTORE
 
 namespace clang {
-  
+
 // SaveAndRestore - A utility class that uses RAII to save and restore
 //  the value of a variable.
 template<typename T>
@@ -24,7 +24,7 @@ struct SaveAndRestore {
   SaveAndRestore(T& x) : X(x), old_value(x) {}
   ~SaveAndRestore() { X = old_value; }
   T get() { return old_value; }
-private:  
+private:
   T& X;
   T old_value;
 };
@@ -39,6 +39,6 @@ private:
   bool& X;
   const bool old_value;
 };
-  
+
 }
 #endif

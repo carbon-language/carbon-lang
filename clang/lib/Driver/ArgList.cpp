@@ -31,13 +31,13 @@ Arg *ArgList::getLastArg(options::ID Id, bool Claim) const {
       return *it;
     }
   }
-  
+
   return 0;
 }
 
 Arg *ArgList::getLastArg(options::ID Id0, options::ID Id1, bool Claim) const {
   Arg *Res, *A0 = getLastArg(Id0, false), *A1 = getLastArg(Id1, false);
-  
+
   if (A0 && A1)
     Res = A0->getIndex() > A1->getIndex() ? A0 : A1;
   else
@@ -102,7 +102,7 @@ void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0) const {
   }
 }
 
-void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0, 
+void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0,
                          options::ID Id1) const {
   // FIXME: Make fast.
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
@@ -114,7 +114,7 @@ void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0,
   }
 }
 
-void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0, 
+void ArgList::AddAllArgs(ArgStringList &Output, options::ID Id0,
                          options::ID Id1, options::ID Id2) const {
   // FIXME: Make fast.
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
@@ -139,7 +139,7 @@ void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0) const {
   }
 }
 
-void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0, 
+void ArgList::AddAllArgValues(ArgStringList &Output, options::ID Id0,
                               options::ID Id1) const {
   // FIXME: Make fast.
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
@@ -184,9 +184,8 @@ void ArgList::ClaimAllArgs(options::ID Id0) const {
 
 //
 
-InputArgList::InputArgList(const char **ArgBegin, const char **ArgEnd) 
-  : ArgList(ActualArgs), NumInputArgStrings(ArgEnd - ArgBegin) 
-{
+InputArgList::InputArgList(const char **ArgBegin, const char **ArgEnd)
+  : ArgList(ActualArgs), NumInputArgStrings(ArgEnd - ArgBegin) {
   ArgStrings.append(ArgBegin, ArgEnd);
 }
 
@@ -206,7 +205,7 @@ unsigned InputArgList::MakeIndex(const char *String0) const {
   return Index;
 }
 
-unsigned InputArgList::MakeIndex(const char *String0, 
+unsigned InputArgList::MakeIndex(const char *String0,
                                  const char *String1) const {
   unsigned Index0 = MakeIndex(String0);
   unsigned Index1 = MakeIndex(String1);
@@ -223,13 +222,12 @@ const char *InputArgList::MakeArgString(const char *Str) const {
 
 DerivedArgList::DerivedArgList(InputArgList &_BaseArgs, bool _OnlyProxy)
   : ArgList(_OnlyProxy ? _BaseArgs.getArgs() : ActualArgs),
-    BaseArgs(_BaseArgs), OnlyProxy(_OnlyProxy)
-{
+    BaseArgs(_BaseArgs), OnlyProxy(_OnlyProxy) {
 }
 
 DerivedArgList::~DerivedArgList() {
   // We only own the arguments we explicitly synthesized.
-  for (iterator it = SynthesizedArgs.begin(), ie = SynthesizedArgs.end(); 
+  for (iterator it = SynthesizedArgs.begin(), ie = SynthesizedArgs.end();
        it != ie; ++it)
     delete *it;
 }
@@ -242,18 +240,18 @@ Arg *DerivedArgList::MakeFlagArg(const Arg *BaseArg, const Option *Opt) const {
   return new FlagArg(Opt, BaseArgs.MakeIndex(Opt->getName()), BaseArg);
 }
 
-Arg *DerivedArgList::MakePositionalArg(const Arg *BaseArg, const Option *Opt, 
+Arg *DerivedArgList::MakePositionalArg(const Arg *BaseArg, const Option *Opt,
                                        const char *Value) const {
   return new PositionalArg(Opt, BaseArgs.MakeIndex(Value), BaseArg);
 }
 
-Arg *DerivedArgList::MakeSeparateArg(const Arg *BaseArg, const Option *Opt, 
+Arg *DerivedArgList::MakeSeparateArg(const Arg *BaseArg, const Option *Opt,
                                      const char *Value) const {
-  return new SeparateArg(Opt, BaseArgs.MakeIndex(Opt->getName(), Value), 1, 
+  return new SeparateArg(Opt, BaseArgs.MakeIndex(Opt->getName(), Value), 1,
                          BaseArg);
 }
 
-Arg *DerivedArgList::MakeJoinedArg(const Arg *BaseArg, const Option *Opt, 
+Arg *DerivedArgList::MakeJoinedArg(const Arg *BaseArg, const Option *Opt,
                                    const char *Value) const {
   std::string Joined(Opt->getName());
   Joined += Value;

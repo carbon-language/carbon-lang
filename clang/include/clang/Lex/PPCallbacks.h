@@ -23,18 +23,18 @@ namespace clang {
   class Token;
   class IdentifierInfo;
   class MacroInfo;
-    
+
 /// PPCallbacks - This interface provides a way to observe the actions of the
 /// preprocessor as it does its thing.  Clients can define their hooks here to
 /// implement preprocessor level tools.
 class PPCallbacks {
 public:
   virtual ~PPCallbacks();
-  
+
   enum FileChangeReason {
     EnterFile, ExitFile, SystemHeaderPragma, RenameFile
   };
-  
+
   /// FileChanged - This callback is invoked whenever a source file is
   /// entered or exited.  The SourceLocation indicates the new location, and
   /// EnteringFile indicates whether this is because we are entering a new
@@ -43,25 +43,25 @@ public:
   virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
                            SrcMgr::CharacteristicKind FileType) {
   }
-  
+
   /// Ident - This callback is invoked when a #ident or #sccs directive is read.
   ///
   virtual void Ident(SourceLocation Loc, const std::string &str) {
   }
-  
+
   /// PragmaComment - This callback is invoked when a #pragma comment directive
   /// is read.
   ///
-  virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind, 
+  virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
                              const std::string &Str) {
   }
-  
+
   /// MacroExpands - This is called by
   /// Preprocessor::HandleMacroExpandedIdentifier when a macro invocation is
   /// found.
   virtual void MacroExpands(const Token &Id, const MacroInfo* MI) {
   }
-  
+
   /// MacroDefined - This hook is called whenever a macro definition is seen.
   virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI) {
   }
@@ -76,7 +76,7 @@ public:
 class PPChainedCallbacks : public PPCallbacks {
   PPCallbacks *First, *Second;
 
-public:  
+public:
   PPChainedCallbacks(PPCallbacks *_First, PPCallbacks *_Second)
     : First(_First), Second(_Second) {}
   ~PPChainedCallbacks() {
@@ -89,23 +89,23 @@ public:
     First->FileChanged(Loc, Reason, FileType);
     Second->FileChanged(Loc, Reason, FileType);
   }
-  
+
   virtual void Ident(SourceLocation Loc, const std::string &str) {
     First->Ident(Loc, str);
     Second->Ident(Loc, str);
   }
-  
-  virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind, 
+
+  virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
                              const std::string &Str) {
     First->PragmaComment(Loc, Kind, Str);
     Second->PragmaComment(Loc, Kind, Str);
   }
-  
+
   virtual void MacroExpands(const Token &Id, const MacroInfo* MI) {
     First->MacroExpands(Id, MI);
     Second->MacroExpands(Id, MI);
   }
-  
+
   virtual void MacroDefined(const IdentifierInfo *II, const MacroInfo *MI) {
     First->MacroDefined(II, MI);
     Second->MacroDefined(II, MI);

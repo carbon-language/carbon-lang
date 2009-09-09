@@ -17,9 +17,9 @@ long double globalLongDouble = 1;
 long double globalLongDoubleArray[5] = { 1.0, 2.0 };
 
 struct Struct {
-	int member1;
-	float member2;
-	char *member3; 
+  int member1;
+  float member2;
+  char *member3; 
 };
 
 struct Struct globalStruct = { 1, 2.0f, "foobar"};

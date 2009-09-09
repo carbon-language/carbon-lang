@@ -39,10 +39,10 @@ void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
 
   unsigned BOffset = SM.getFileOffset(B);
   unsigned EOffset = SM.getFileOffset(E);
-  
+
   // Include the whole end token in the range.
   EOffset += Lexer::MeasureTokenLength(E, R.getSourceMgr(), R.getLangOpts());
-  
+
   HighlightRange(R.getEditBuffer(FID), BOffset, EOffset,
                  SM.getBufferData(FID).first, StartTag, EndTag);
 }
@@ -55,11 +55,11 @@ void html::HighlightRange(RewriteBuffer &RB, unsigned B, unsigned E,
   // Insert the tag at the absolute start/end of the range.
   RB.InsertTextAfter(B, StartTag);
   RB.InsertTextBefore(E, EndTag);
-  
+
   // Scan the range to see if there is a \r or \n.  If so, and if the line is
   // not blank, insert tags on that line as well.
   bool HadOpenTag = true;
-  
+
   unsigned LastNonWhiteSpace = B;
   for (unsigned i = B; i != E; ++i) {
     switch (BufferStart[i]) {
@@ -69,7 +69,7 @@ void html::HighlightRange(RewriteBuffer &RB, unsigned B, unsigned E,
       // to insert a close tag at the first non-whitespace before the newline.
       if (HadOpenTag)
         RB.InsertTextBefore(LastNonWhiteSpace+1, EndTag);
-        
+
       // Instead of inserting an open tag immediately after the newline, we
       // wait until we see a non-whitespace character.  This prevents us from
       // inserting tags around blank lines, and also allows the open tag to
@@ -83,14 +83,14 @@ void html::HighlightRange(RewriteBuffer &RB, unsigned B, unsigned E,
     case '\v':
       // Ignore whitespace.
       break;
-    
+
     default:
       // If there is no tag open, do it now.
       if (!HadOpenTag) {
         RB.InsertTextAfter(i, StartTag);
         HadOpenTag = true;
       }
-        
+
       // Remember this character.
       LastNonWhiteSpace = i;
       break;
@@ -100,13 +100,13 @@ void html::HighlightRange(RewriteBuffer &RB, unsigned B, unsigned E,
 
 void html::EscapeText(Rewriter &R, FileID FID,
                       bool EscapeSpaces, bool ReplaceTabs) {
-  
+
   const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FID);
   const char* C = Buf->getBufferStart();
   const char* FileEnd = Buf->getBufferEnd();
-  
+
   assert (C <= FileEnd);
-  
+
   RewriteBuffer &RB = R.getEditBuffer(FID);
 
   unsigned ColNo = 0;
@@ -117,7 +117,7 @@ void html::EscapeText(Rewriter &R, FileID FID,
     case '\r':
       ColNo = 0;
       break;
-      
+
     case ' ':
       if (EscapeSpaces)
         RB.ReplaceText(FilePos, 1, "&nbsp;");
@@ -127,7 +127,7 @@ void html::EscapeText(Rewriter &R, FileID FID,
       RB.ReplaceText(FilePos, 1, "<hr>");
       ColNo = 0;
       break;
-        
+
     case '\t': {
       if (!ReplaceTabs)
         break;
@@ -145,12 +145,12 @@ void html::EscapeText(Rewriter &R, FileID FID,
       RB.ReplaceText(FilePos, 1, "&lt;");
       ++ColNo;
       break;
-      
+
     case '>':
       RB.ReplaceText(FilePos, 1, "&gt;");
       ++ColNo;
       break;
-      
+
     case '&':
       RB.ReplaceText(FilePos, 1, "&amp;");
       ++ColNo;
@@ -161,23 +161,23 @@ void html::EscapeText(Rewriter &R, FileID FID,
 
 std::string html::EscapeText(const std::string& s, bool EscapeSpaces,
                              bool ReplaceTabs) {
-  
+
   unsigned len = s.size();
   std::string Str;
   llvm::raw_string_ostream os(Str);
-  
+
   for (unsigned i = 0 ; i < len; ++i) {
-    
+
     char c = s[i];
     switch (c) {
     default:
       os << c; break;
-      
+
     case ' ':
       if (EscapeSpaces) os << "&nbsp;";
       else os << ' ';
       break;
-      
+
     case '\t':
       if (ReplaceTabs) {
         if (EscapeSpaces)
@@ -187,17 +187,17 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces,
           for (unsigned i = 0; i < 4; ++i)
             os << " ";
       }
-      else 
+      else
         os << c;
-      
+
       break;
-      
+
     case '<': os << "&lt;"; break;
     case '>': os << "&gt;"; break;
     case '&': os << "&amp;"; break;
     }
   }
-  
+
   return os.str();
 }
 
@@ -209,7 +209,7 @@ static void AddLineNumber(RewriteBuffer &RB, unsigned LineNo,
   OS << "<tr><td class=\"num\" id=\"LN"
      << LineNo << "\">"
      << LineNo << "</td><td class=\"line\">";
-  
+
   if (B == E) { // Handle empty lines.
     OS << " </td></tr>";
     RB.InsertTextBefore(B, OS.str());
@@ -226,44 +226,44 @@ void html::AddLineNumbers(Rewriter& R, FileID FID) {
   const char* FileEnd = Buf->getBufferEnd();
   const char* C = FileBeg;
   RewriteBuffer &RB = R.getEditBuffer(FID);
-  
+
   assert (C <= FileEnd);
-  
+
   unsigned LineNo = 0;
   unsigned FilePos = 0;
-  
-  while (C != FileEnd) {    
-    
+
+  while (C != FileEnd) {
+
     ++LineNo;
     unsigned LineStartPos = FilePos;
     unsigned LineEndPos = FileEnd - FileBeg;
-    
+
     assert (FilePos <= LineEndPos);
     assert (C < FileEnd);
-    
+
     // Scan until the newline (or end-of-file).
-    
+
     while (C != FileEnd) {
       char c = *C;
       ++C;
-      
+
       if (c == '\n') {
         LineEndPos = FilePos++;
         break;
       }
-      
+
       ++FilePos;
     }
-    
+
     AddLineNumber(RB, LineNo, LineStartPos, LineEndPos);
   }
-  
+
   // Add one big table tag that surrounds all of the code.
   RB.InsertTextBefore(0, "<table class=\"code\">\n");
   RB.InsertTextAfter(FileEnd - FileBeg, "</table>");
 }
 
-void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, FileID FID, 
+void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, FileID FID,
                                              const char *title) {
 
   const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FID);
@@ -277,10 +277,10 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, FileID FID,
   llvm::raw_string_ostream os(s);
   os << "<!doctype html>\n" // Use HTML 5 doctype
         "<html>\n<head>\n";
-  
+
   if (title)
     os << "<title>" << html::EscapeText(title) << "</title>\n";
-  
+
   os << "<style type=\"text/css\">\n"
       " body { color:#000000; background-color:#ffffff }\n"
       " body { font-family:Helvetica, sans-serif; font-size:10pt }\n"
@@ -341,7 +341,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, FileID FID,
   // Generate header
   R.InsertTextBefore(StartLoc, os.str());
   // Generate footer
-  
+
   R.InsertTextAfter(EndLoc, "</body></html>\n");
 }
 
@@ -355,16 +355,16 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
   const SourceManager &SM = PP.getSourceManager();
   Lexer L(FID, SM, PP.getLangOptions());
   const char *BufferStart = L.getBufferStart();
-  
-  // Inform the preprocessor that we want to retain comments as tokens, so we 
+
+  // Inform the preprocessor that we want to retain comments as tokens, so we
   // can highlight them.
   L.SetCommentRetentionState(true);
- 
+
   // Lex all the tokens in raw mode, to avoid entering #includes or expanding
   // macros.
   Token Tok;
   L.LexFromRawLexer(Tok);
-  
+
   while (Tok.isNot(tok::eof)) {
     // Since we are lexing unexpanded tokens, all tokens are from the main
     // FileID.
@@ -376,7 +376,7 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
       // Fill in Result.IdentifierInfo, looking up the identifier in the
       // identifier table.
       IdentifierInfo *II = PP.LookUpIdentifierInfo(Tok, BufferStart+TokOffs);
-        
+
       // If this is a pp-identifier, for a keyword, highlight it as such.
       if (II->getTokenID() != tok::identifier)
         HighlightRange(RB, TokOffs, TokOffs+TokLen, BufferStart,
@@ -400,7 +400,7 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
       // If this is a preprocessor directive, all tokens to end of line are too.
       if (!Tok.isAtStartOfLine())
         break;
-        
+
       // Eat all of the tokens until we get to the next one at the start of
       // line.
       unsigned TokEnd = TokOffs+TokLen;
@@ -409,16 +409,16 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, Preprocessor &PP) {
         TokEnd = SM.getFileOffset(Tok.getLocation())+Tok.getLength();
         L.LexFromRawLexer(Tok);
       }
-      
+
       // Find end of line.  This is a hack.
       HighlightRange(RB, TokOffs, TokEnd, BufferStart,
                      "<span class='directive'>", "</span>");
-      
+
       // Don't skip the next token.
       continue;
     }
     }
-    
+
     L.LexFromRawLexer(Tok);
   }
 }
@@ -442,15 +442,15 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
   // Re-lex the raw token stream into a token buffer.
   const SourceManager &SM = PP.getSourceManager();
   std::vector<Token> TokenStream;
-  
+
   Lexer L(FID, SM, PP.getLangOptions());
-  
+
   // Lex all the tokens in raw mode, to avoid entering #includes or expanding
   // macros.
   while (1) {
     Token Tok;
     L.LexFromRawLexer(Tok);
-    
+
     // If this is a # at the start of a line, discard it from the token stream.
     // We don't want the re-preprocess step to see #defines, #includes or other
     // preprocessor directives.
@@ -461,7 +461,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     // it will not produce an error.
     if (Tok.is(tok::hashhash))
       Tok.setKind(tok::unknown);
-    
+
     // If this raw token is an identifier, the raw lexer won't have looked up
     // the corresponding identifier info for it.  Do this now so that it will be
     // macro expanded when we re-preprocess it.
@@ -469,30 +469,30 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
       // Change the kind of this identifier to the appropriate token kind, e.g.
       // turning "for" into a keyword.
       Tok.setKind(PP.LookUpIdentifierInfo(Tok)->getTokenID());
-    }    
-      
+    }
+
     TokenStream.push_back(Tok);
-    
+
     if (Tok.is(tok::eof)) break;
   }
-  
+
   // Temporarily change the diagnostics object so that we ignore any generated
   // diagnostics from this pass.
   IgnoringDiagClient TmpDC;
   Diagnostic TmpDiags(&TmpDC);
-  
+
   Diagnostic *OldDiags = &PP.getDiagnostics();
   PP.setDiagnostics(TmpDiags);
-  
+
   // Inform the preprocessor that we don't want comments.
   PP.SetCommentRetentionState(false, false);
 
   // Enter the tokens we just lexed.  This will cause them to be macro expanded
   // but won't enter sub-files (because we removed #'s).
   PP.EnterTokenStream(&TokenStream[0], TokenStream.size(), false, false);
-  
+
   TokenConcatenation ConcatInfo(PP);
-  
+
   // Lex all the tokens.
   Token Tok;
   PP.Lex(Tok);
@@ -502,13 +502,13 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
       PP.Lex(Tok);
       continue;
     }
-    
+
     // Okay, we have the first token of a macro expansion: highlight the
     // instantiation by inserting a start tag before the macro instantiation and
     // end tag after it.
     std::pair<SourceLocation, SourceLocation> LLoc =
       SM.getInstantiationRange(Tok.getLocation());
-    
+
     // Ignore tokens whose instantiation location was not the main file.
     if (SM.getFileID(LLoc.first) != FID) {
       PP.Lex(Tok);
@@ -520,11 +520,11 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
 
     std::string Expansion = EscapeText(PP.getSpelling(Tok));
     unsigned LineLen = Expansion.size();
-    
+
     Token PrevTok = Tok;
     // Okay, eat this token, getting the next one.
     PP.Lex(Tok);
-    
+
     // Skip all the rest of the tokens that are part of this macro
     // instantiation.  It would be really nice to pop up a window with all the
     // spelling of the tokens or something.
@@ -535,23 +535,23 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
         Expansion += "<br>";
         LineLen = 0;
       }
-      
+
       LineLen -= Expansion.size();
-      
+
       // If the tokens were already space separated, or if they must be to avoid
       // them being implicitly pasted, add a space between them.
       if (Tok.hasLeadingSpace() ||
           ConcatInfo.AvoidConcat(PrevTok, Tok))
         Expansion += ' ';
-      
+
       // Escape any special characters in the token text.
       Expansion += EscapeText(PP.getSpelling(Tok));
       LineLen += Expansion.size();
-      
+
       PrevTok = Tok;
       PP.Lex(Tok);
     }
-    
+
 
     // Insert the expansion as the end tag, so that multi-line macros all get
     // highlighted.
@@ -567,7 +567,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
 
 void html::HighlightMacros(Rewriter &R, FileID FID,
                            PreprocessorFactory &PPF) {
-  
+
   llvm::OwningPtr<Preprocessor> PP(PPF.CreatePreprocessor());
   HighlightMacros(R, FID, *PP);
 }

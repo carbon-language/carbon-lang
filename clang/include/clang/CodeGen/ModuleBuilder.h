@@ -26,13 +26,13 @@ namespace clang {
   class Diagnostic;
   class LangOptions;
   class CompileOptions;
-  
+
   class CodeGenerator : public ASTConsumer {
   public:
     virtual llvm::Module* GetModule() = 0;
-    virtual llvm::Module* ReleaseModule() = 0;    
+    virtual llvm::Module* ReleaseModule() = 0;
   };
-  
+
   CodeGenerator *CreateLLVMCodeGen(Diagnostic &Diags,
                                    const std::string &ModuleName,
                                    const CompileOptions &CO,

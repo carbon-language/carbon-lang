@@ -40,8 +40,8 @@ private:
   void OutputDependencyFile();
 
 public:
-  DependencyFileCallback(const Preprocessor *_PP, 
-                         llvm::raw_ostream *_OS, 
+  DependencyFileCallback(const Preprocessor *_PP,
+                         llvm::raw_ostream *_OS,
                          const std::vector<std::string> &_Targets,
                          bool _IncludeSystemHeaders,
                          bool _PhonyTarget)
@@ -67,8 +67,8 @@ void clang::AttachDependencyFileGen(Preprocessor *PP, llvm::raw_ostream *OS,
                                     bool PhonyTarget) {
   assert(!Targets.empty() && "Target required for dependency generation");
 
-  DependencyFileCallback *PPDep = 
-    new DependencyFileCallback(PP, OS, Targets, IncludeSystemHeaders, 
+  DependencyFileCallback *PPDep =
+    new DependencyFileCallback(PP, OS, Targets, IncludeSystemHeaders,
                                PhonyTarget);
   PP->setPPCallbacks(PPDep);
 }
@@ -91,16 +91,16 @@ void DependencyFileCallback::FileChanged(SourceLocation Loc,
                                          SrcMgr::CharacteristicKind FileType) {
   if (Reason != PPCallbacks::EnterFile)
     return;
-  
+
   // Dependency generation really does want to go all the way to the
   // file entry for a source location to find out what is depended on.
   // We do not want #line markers to affect dependency generation!
   SourceManager &SM = PP->getSourceManager();
-  
+
   const FileEntry *FE =
     SM.getFileEntryForID(SM.getFileID(SM.getInstantiationLoc(Loc)));
   if (FE == 0) return;
-  
+
   const char *Filename = FE->getName();
   if (!FileMatchesDepCriteria(Filename, FileType))
     return;
@@ -138,7 +138,7 @@ void DependencyFileCallback::OutputDependencyFile() {
 
   *OS << ':';
   Columns += 1;
-  
+
   // Now add each dependency in the order it was seen, but avoiding
   // duplicates.
   for (std::vector<std::string>::iterator I = Files.begin(),

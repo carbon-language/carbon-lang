@@ -26,10 +26,10 @@ protected:
   struct DeclLink : public llvm::PointerIntPair<decl_type *, 1, bool> {
     DeclLink(decl_type *D, bool isLatest)
       : llvm::PointerIntPair<decl_type *, 1, bool>(D, isLatest) { }
-    
+
     typedef llvm::PointerIntPair<decl_type *, 1, bool> base_type;
 
-    bool NextIsPrevious() const { return base_type::getInt() == false; }         
+    bool NextIsPrevious() const { return base_type::getInt() == false; }
     bool NextIsLatest() const { return base_type::getInt() == true; }
     decl_type *getNext() const { return base_type::getPointer(); }
   };
@@ -69,7 +69,7 @@ public:
     return const_cast<decl_type *>(
                  static_cast<const decl_type*>(this))->getPreviousDeclaration();
   }
-  
+
   /// \brief Return the first declaration of this declaration or itself if this
   /// is the only declaration.
   decl_type *getFirstDeclaration() {
@@ -91,7 +91,7 @@ public:
       assert(First->RedeclLink.NextIsLatest() && "Expected first");
     } else {
       // Make this first.
-      First = static_cast<decl_type*>(this); 
+      First = static_cast<decl_type*>(this);
     }
 
     // First one will point to this one as latest.
@@ -131,10 +131,10 @@ public:
       return tmp;
     }
 
-    friend bool operator==(redecl_iterator x, redecl_iterator y) { 
+    friend bool operator==(redecl_iterator x, redecl_iterator y) {
       return x.Current == y.Current;
     }
-    friend bool operator!=(redecl_iterator x, redecl_iterator y) { 
+    friend bool operator!=(redecl_iterator x, redecl_iterator y) {
       return x.Current != y.Current;
     }
   };

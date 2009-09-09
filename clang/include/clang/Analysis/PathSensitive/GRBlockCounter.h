@@ -1,5 +1,5 @@
 //==- GRBlockCounter.h - ADT for counting block visits -------------*- C++ -*-//
-//             
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
@@ -24,27 +24,27 @@ namespace clang {
 
 class GRBlockCounter {
   void* Data;
-  
-  GRBlockCounter(void* D) : Data(D) {}  
+
+  GRBlockCounter(void* D) : Data(D) {}
 
 public:
   GRBlockCounter() : Data(0) {}
-  
+
   unsigned getNumVisited(unsigned BlockID) const;
-  
+
   class Factory {
     void* F;
   public:
     Factory(llvm::BumpPtrAllocator& Alloc);
     ~Factory();
-    
+
     GRBlockCounter GetEmptyCounter();
     GRBlockCounter IncrementCount(GRBlockCounter BC, unsigned BlockID);
   };
-  
+
   friend class Factory;
 };
 
 } // end clang namespace
-  
+
 #endif

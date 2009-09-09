@@ -28,8 +28,8 @@ using namespace clang;
 enum {
   HMAP_HeaderMagicNumber = ('h' << 24) | ('m' << 16) | ('a' << 8) | 'p',
   HMAP_HeaderVersion = 1,
-  
-  HMAP_EmptyBucketKey = 0 
+
+  HMAP_EmptyBucketKey = 0
 };
 
 namespace clang {
@@ -58,7 +58,7 @@ struct HMapHeader {
 /// linear probing based on this function.
 static inline unsigned HashHMapKey(const char *S, const char *End) {
   unsigned Result = 0;
-  
+
   for (; S != End; S++)
     Result += tolower(*S) * 13;
   return Result;
@@ -78,27 +78,27 @@ const HeaderMap *HeaderMap::Create(const FileEntry *FE) {
   // If the file is too small to be a header map, ignore it.
   unsigned FileSize = FE->getSize();
   if (FileSize <= sizeof(HMapHeader)) return 0;
-  
-  llvm::OwningPtr<const llvm::MemoryBuffer> FileBuffer( 
+
+  llvm::OwningPtr<const llvm::MemoryBuffer> FileBuffer(
     llvm::MemoryBuffer::getFile(FE->getName(), 0, FE->getSize()));
   if (FileBuffer == 0) return 0;  // Unreadable file?
   const char *FileStart = FileBuffer->getBufferStart();
 
   // We know the file is at least as big as the header, check it now.
   const HMapHeader *Header = reinterpret_cast<const HMapHeader*>(FileStart);
-  
+
   // Sniff it to see if it's a headermap by checking the magic number and
   // version.
   bool NeedsByteSwap;
-  if (Header->Magic == HMAP_HeaderMagicNumber && 
+  if (Header->Magic == HMAP_HeaderMagicNumber &&
       Header->Version == HMAP_HeaderVersion)
     NeedsByteSwap = false;
   else if (Header->Magic == llvm::ByteSwap_32(HMAP_HeaderMagicNumber) &&
            Header->Version == llvm::ByteSwap_16(HMAP_HeaderVersion))
     NeedsByteSwap = true;  // Mixed endianness headermap.
-  else 
+  else
     return 0;  // Not a header map.
-  
+
   if (Header->Reserved != 0) return 0;
 
   // Okay, everything looks good, create the header map.
@@ -137,11 +137,11 @@ const HMapHeader &HeaderMap::getHeader() const {
 HMapBucket HeaderMap::getBucket(unsigned BucketNo) const {
   HMapBucket Result;
   Result.Key = HMAP_EmptyBucketKey;
-  
-  const HMapBucket *BucketArray = 
+
+  const HMapBucket *BucketArray =
     reinterpret_cast<const HMapBucket*>(FileBuffer->getBufferStart() +
                                         sizeof(HMapHeader));
-  
+
   const HMapBucket *BucketPtr = BucketArray+BucketNo;
   if ((char*)(BucketPtr+1) > FileBuffer->getBufferEnd()) {
     Result.Prefix = 0;
@@ -161,11 +161,11 @@ HMapBucket HeaderMap::getBucket(unsigned BucketNo) const {
 const char *HeaderMap::getString(unsigned StrTabIdx) const {
   // Add the start of the string table to the idx.
   StrTabIdx += getEndianAdjustedWord(getHeader().StringsOffset);
-  
+
   // Check for invalid index.
   if (StrTabIdx >= FileBuffer->getBufferSize())
     return 0;
-  
+
   // Otherwise, we have a valid pointer into the file.  Just return it.  We know
   // that the "string" can not overrun the end of the file, because the buffer
   // is nul terminated by virtue of being a MemoryBuffer.
@@ -191,15 +191,15 @@ static bool StringsEqualWithoutCase(const char *S1, const char *S2,
 void HeaderMap::dump() const {
   const HMapHeader &Hdr = getHeader();
   unsigned NumBuckets = getEndianAdjustedWord(Hdr.NumBuckets);
-  
-  fprintf(stderr, "Header Map %s:\n  %d buckets, %d entries\n", 
+
+  fprintf(stderr, "Header Map %s:\n  %d buckets, %d entries\n",
           getFileName(), NumBuckets,
           getEndianAdjustedWord(Hdr.NumEntries));
-  
+
   for (unsigned i = 0; i != NumBuckets; ++i) {
     HMapBucket B = getBucket(i);
     if (B.Key == HMAP_EmptyBucketKey) continue;
-    
+
     const char *Key    = getString(B.Key);
     const char *Prefix = getString(B.Prefix);
     const char *Suffix = getString(B.Suffix);
@@ -219,22 +219,22 @@ const FileEntry *HeaderMap::LookupFile(const char *FilenameStart,
   // Don't probe infinitely.
   if (NumBuckets & (NumBuckets-1))
     return 0;
-  
+
   // Linearly probe the hash table.
   for (unsigned Bucket = HashHMapKey(FilenameStart, FilenameEnd);; ++Bucket) {
     HMapBucket B = getBucket(Bucket & (NumBuckets-1));
     if (B.Key == HMAP_EmptyBucketKey) return 0; // Hash miss.
-    
+
     // See if the key matches.  If not, probe on.
     const char *Key = getString(B.Key);
     unsigned BucketKeyLen = strlen(Key);
     if (BucketKeyLen != unsigned(FilenameEnd-FilenameStart))
       continue;
-    
+
     // See if the actual strings equal.
     if (!StringsEqualWithoutCase(FilenameStart, Key, BucketKeyLen))
       continue;
-    
+
     // If so, we have a match in the hash table.  Construct the destination
     // path.
     llvm::SmallString<1024> DestPath;

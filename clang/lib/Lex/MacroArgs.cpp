@@ -23,18 +23,18 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
                              unsigned NumToks, bool VarargsElided) {
   assert(MI->isFunctionLike() &&
          "Can't have args for an object-like macro!");
-  
+
   // Allocate memory for the MacroArgs object with the lexer tokens at the end.
   MacroArgs *Result = (MacroArgs*)malloc(sizeof(MacroArgs) +
                                          NumToks*sizeof(Token));
   // Construct the macroargs object.
   new (Result) MacroArgs(NumToks, VarargsElided);
-  
+
   // Copy the actual unexpanded tokens to immediately after the result ptr.
   if (NumToks)
     memcpy(const_cast<Token*>(Result->getUnexpArgument(0)),
            UnexpArgTokens, NumToks*sizeof(Token));
-  
+
   return Result;
 }
 
@@ -98,7 +98,7 @@ bool MacroArgs::ArgNeedsPreexpansion(const Token *ArgTok,
 const std::vector<Token> &
 MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
   assert(Arg < NumUnexpArgTokens && "Invalid argument number!");
-  
+
   // If we have already computed this, return it.
   if (PreExpArgTokens.empty())
     PreExpArgTokens.resize(NumUnexpArgTokens);
@@ -108,12 +108,12 @@ MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
 
   const Token *AT = getUnexpArgument(Arg);
   unsigned NumToks = getArgLength(AT)+1;  // Include the EOF.
-  
+
   // Otherwise, we have to pre-expand this argument, populating Result.  To do
   // this, we set up a fake TokenLexer to lex from the unexpanded argument
   // list.  With this installed, we lex expanded tokens until we hit the EOF
   // token at the end of the unexp list.
-  PP.EnterTokenStream(AT, NumToks, false /*disable expand*/, 
+  PP.EnterTokenStream(AT, NumToks, false /*disable expand*/,
                       false /*owns tokens*/);
 
   // Lex all of the macro-expanded tokens into Result.
@@ -122,7 +122,7 @@ MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
     Token &Tok = Result.back();
     PP.Lex(Tok);
   } while (Result.back().isNot(tok::eof));
-  
+
   // Pop the token stream off the top of the stack.  We know that the internal
   // pointer inside of it is to the "end" of the token stream, but the stack
   // will not otherwise be popped until the next token is lexed.  The problem is
@@ -145,18 +145,18 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
   Tok.setKind(tok::string_literal);
 
   const Token *ArgTokStart = ArgToks;
-  
+
   // Stringify all the tokens.
   llvm::SmallString<128> Result;
   Result += "\"";
-  
+
   bool isFirst = true;
   for (; ArgToks->isNot(tok::eof); ++ArgToks) {
     const Token &Tok = *ArgToks;
     if (!isFirst && (Tok.hasLeadingSpace() || Tok.isAtStartOfLine()))
       Result += ' ';
     isFirst = false;
-    
+
     // If this is a string or character constant, escape the token as specified
     // by 6.10.3.2p2.
     if (Tok.is(tok::string_literal) ||       // "foo"
@@ -171,18 +171,18 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
       Result.resize(CurStrLen+Tok.getLength());
       const char *BufPtr = &Result[CurStrLen];
       unsigned ActualTokLen = PP.getSpelling(Tok, BufPtr);
-      
+
       // If getSpelling returned a pointer to an already uniqued version of the
       // string instead of filling in BufPtr, memcpy it onto our string.
       if (BufPtr != &Result[CurStrLen])
         memcpy(&Result[CurStrLen], BufPtr, ActualTokLen);
-      
+
       // If the token was dirty, the spelling may be shorter than the token.
       if (ActualTokLen != Tok.getLength())
         Result.resize(CurStrLen+ActualTokLen);
     }
   }
-  
+
   // If the last character of the string is a \, and if it isn't escaped, this
   // is an invalid string literal, diagnose it as specified in C99.
   if (Result.back() == '\\') {
@@ -199,27 +199,27 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
     }
   }
   Result += '"';
-  
+
   // If this is the charify operation and the result is not a legal character
   // constant, diagnose it.
   if (Charify) {
     // First step, turn double quotes into single quotes:
     Result[0] = '\'';
     Result[Result.size()-1] = '\'';
-    
+
     // Check for bogus character.
     bool isBad = false;
     if (Result.size() == 3)
       isBad = Result[1] == '\'';   // ''' is not legal. '\' already fixed above.
     else
       isBad = (Result.size() != 4 || Result[1] != '\\');  // Not '\x'
-    
+
     if (isBad) {
       PP.Diag(ArgTokStart[0], diag::err_invalid_character_to_charify);
       Result = "' '";  // Use something arbitrary, but legal.
     }
   }
-  
+
   PP.CreateString(&Result[0], Result.size(), Tok);
   return Tok;
 }

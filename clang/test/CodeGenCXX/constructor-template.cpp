@@ -21,7 +21,7 @@ struct B {
 // PR4853
 template <typename T> class List {
 public:
-  List(){ }	// List<BinomialNode<int>*>::List() remains undefined.
+  List(){ }     // List<BinomialNode<int>*>::List() remains undefined.
   ~List() {}
 };
 
@@ -47,7 +47,7 @@ int main() {
 
 // CHECK-LP64: __ZN4ListIP12BinomialNodeIiEED1Ev:
 // CHECK-LP64: __ZN4ListIP12BinomialNodeIiEED2Ev:
-// CHECK-LP64:	__ZN4NodeIP12BinomialNodeIiEEC1Ev:
+// CHECK-LP64: __ZN4NodeIP12BinomialNodeIiEEC1Ev:
 // CHECK-LP64: __ZN4ListIP12BinomialNodeIiEEC1Ev:
 
 // CHECK-LP32: __ZN4ListIP12BinomialNodeIiEED1Ev:

@@ -44,15 +44,15 @@ Boolean         DebugDisplayOSStatusMsg(OSStatus status, const char *statusStr, 
 #define AssertNoErr(err){ DebugDisplayOSStatusMsg((err), #err, __FILE__, __LINE__); }
 #define RequireNoErr(err, action){ if( DebugDisplayOSStatusMsg((err), #err, __FILE__, __LINE__) ) { action }}
 
-void DebugStop(const char *format,...);	/* Not an abort function. */
+void DebugStop(const char *format,...); /* Not an abort function. */
 
 int main(int argc, char *argv[]) {
-	CFStringRef     cfString;
-	OSStatus        status = noErr;
-	cfString = CFStringCreateWithCString(0, "hello", kCFStringEncodingUTF8);
-	RequireAction(cfString != 0, return memFullErr;) //no - warning
-        printf("cfstring %p\n", cfString);
-Exit:
-	CFRelease(cfString);
-	return 0;
+  CFStringRef     cfString;
+  OSStatus        status = noErr;
+  cfString = CFStringCreateWithCString(0, "hello", kCFStringEncodingUTF8);
+  RequireAction(cfString != 0, return memFullErr;) //no - warning
+    printf("cfstring %p\n", cfString);
+  Exit:
+  CFRelease(cfString);
+  return 0;
 }

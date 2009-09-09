@@ -23,10 +23,10 @@ static inline VariableArrayType* FindVA(Type* t) {
     if (VariableArrayType* vat = dyn_cast<VariableArrayType>(vt))
       if (vat->getSizeExpr())
         return vat;
-    
+
     t = vt->getElementType().getTypePtr();
   }
-  
+
   return NULL;
 }
 
@@ -39,20 +39,20 @@ void StmtIteratorBase::NextVA() {
 
   if (p)
     return;
-  
+
   if (inDecl()) {
-    if (VarDecl* VD = dyn_cast<VarDecl>(decl)) 
+    if (VarDecl* VD = dyn_cast<VarDecl>(decl))
       if (VD->Init)
         return;
-    
+
     NextDecl();
   }
   else if (inDeclGroup()) {
-    if (VarDecl* VD = dyn_cast<VarDecl>(*DGI)) 
+    if (VarDecl* VD = dyn_cast<VarDecl>(*DGI))
       if (VD->Init)
         return;
-    
-    NextDecl();  
+
+    NextDecl();
   }
   else {
     assert (inSizeOfTypeVA());
@@ -63,10 +63,10 @@ void StmtIteratorBase::NextVA() {
 
 void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
   assert (getVAPtr() == NULL);
-  
+
   if (inDecl()) {
     assert (decl);
-    
+
     // FIXME: SIMPLIFY AWAY.
     if (ImmediateAdvance)
       decl = 0;
@@ -75,10 +75,10 @@ void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
   }
   else {
     assert (inDeclGroup());
-    
+
     if (ImmediateAdvance)
       ++DGI;
-    
+
     for ( ; DGI != DGE; ++DGI)
       if (HandleDecl(*DGI))
         return;
@@ -88,18 +88,18 @@ void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
 }
 
 bool StmtIteratorBase::HandleDecl(Decl* D) {
-    
-  if (VarDecl* VD = dyn_cast<VarDecl>(D)) {        
+
+  if (VarDecl* VD = dyn_cast<VarDecl>(D)) {
     if (VariableArrayType* VAPtr = FindVA(VD->getType().getTypePtr())) {
       setVAPtr(VAPtr);
       return true;
     }
-        
+
     if (VD->getInit())
       return true;
   }
   else if (TypedefDecl* TD = dyn_cast<TypedefDecl>(D)) {
-    if (VariableArrayType* VAPtr = 
+    if (VariableArrayType* VAPtr =
         FindVA(TD->getUnderlyingType().getTypePtr())) {
       setVAPtr(VAPtr);
       return true;
@@ -110,7 +110,7 @@ bool StmtIteratorBase::HandleDecl(Decl* D) {
       return true;
   }
 
-  return false;  
+  return false;
 }
 
 StmtIteratorBase::StmtIteratorBase(Decl* d)
@@ -130,19 +130,19 @@ StmtIteratorBase::StmtIteratorBase(VariableArrayType* t)
 }
 
 Stmt*& StmtIteratorBase::GetDeclExpr() const {
-  
+
   if (VariableArrayType* VAPtr = getVAPtr()) {
     assert (VAPtr->SizeExpr);
     return VAPtr->SizeExpr;
   }
 
   assert (inDecl() || inDeclGroup());
-  
+
   if (inDeclGroup()) {
     VarDecl* VD = cast<VarDecl>(*DGI);
     return *VD->getInitAddress();
   }
-  
+
   assert (inDecl());
 
   if (VarDecl* VD = dyn_cast<VarDecl>(decl)) {

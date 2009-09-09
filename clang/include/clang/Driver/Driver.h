@@ -55,11 +55,11 @@ public:
 public:
   /// The name the driver was invoked as.
   std::string Name;
-  
+
   /// The path the driver executable was in, as invoked from the
   /// command line.
   std::string Dir;
-  
+
   /// Default host triple.
   std::string DefaultHostTriple;
 
@@ -75,7 +75,7 @@ public:
 
   /// Whether the driver should follow g++ like behavior.
   bool CCCIsCXX : 1;
-  
+
   /// Echo commands while executing (in -v style).
   bool CCCEcho : 1;
 
@@ -107,7 +107,7 @@ private:
 
   /// Certain options suppress the 'no input files' warning.
   bool SuppressMissingInputWarning : 1;
-  
+
   std::list<std::string> TempFiles;
   std::list<std::string> ResultFiles;
 
@@ -243,7 +243,7 @@ public:
   /// \param BaseInput - The original input file that this action was
   /// triggered by.
   /// \param AtTopLevel - Whether this is a "top-level" action.
-  const char *GetNamedOutputPath(Compilation &C, 
+  const char *GetNamedOutputPath(Compilation &C,
                                  const JobAction &JA,
                                  const char *BaseInput,
                                  bool AtTopLevel) const;
@@ -253,14 +253,14 @@ public:
   ///
   /// GCC goes to extra lengths here to be a bit more robust.
   std::string GetTemporaryPath(const char *Suffix) const;
-                        
+
   /// GetHostInfo - Construct a new host info object for the given
   /// host triple.
   const HostInfo *GetHostInfo(const char *HostTriple) const;
 
   /// ShouldUseClangCompilar - Should the clang compiler be used to
   /// handle this action.
-  bool ShouldUseClangCompiler(const Compilation &C, const JobAction &JA, 
+  bool ShouldUseClangCompiler(const Compilation &C, const JobAction &JA,
                               const llvm::Triple &ArchName) const;
 
   /// @}
@@ -272,7 +272,7 @@ public:
   /// \return True if the entire string was parsed (9.2), or all
   /// groups were parsed (10.3.5extrastuff). HadExtra is true if all
   /// groups were parsed but extra characters remain at the end.
-  static bool GetReleaseVersion(const char *Str, unsigned &Major, 
+  static bool GetReleaseVersion(const char *Str, unsigned &Major,
                                 unsigned &Minor, unsigned &Micro,
                                 bool &HadExtra);
 };

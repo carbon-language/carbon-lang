@@ -50,7 +50,7 @@ template <typename T, typename U> struct B { };
 
 // Template parameter shadowing
 template<typename T, // expected-note{{template parameter is declared here}}
-	 typename T> // expected-error{{declaration of 'T' shadows template parameter}}
+         typename T> // expected-error{{declaration of 'T' shadows template parameter}}
   void shadow1();
 
 template<typename T> // expected-note{{template parameter is declared here}}

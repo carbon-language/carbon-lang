@@ -52,7 +52,7 @@ public:
                         unsigned messageLength = 0,
                         bool useColors = false)
     : OS(os), LangOpts(0),
-      LastCaretDiagnosticWasNote(false), ShowColumn(showColumn), 
+      LastCaretDiagnosticWasNote(false), ShowColumn(showColumn),
       CaretDiagnostics(caretDiagnistics), ShowLocation(showLocation),
       PrintRangeInfo(printRangeInfo),
       PrintDiagnosticOption(printDiagnosticOption),
@@ -63,7 +63,7 @@ public:
   void setLangOptions(const LangOptions *LO) {
     LangOpts = LO;
   }
-  
+
   void PrintIncludeStack(SourceLocation Loc, const SourceManager &SM);
 
   void HighlightRange(const SourceRange &R,
@@ -72,13 +72,13 @@ public:
                       std::string &CaretLine,
                       const std::string &SourceLine);
 
-  void EmitCaretDiagnostic(SourceLocation Loc, 
+  void EmitCaretDiagnostic(SourceLocation Loc,
                            SourceRange *Ranges, unsigned NumRanges,
                            SourceManager &SM,
                            const CodeModificationHint *Hints,
                            unsigned NumHints,
                            unsigned Columns);
-  
+
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
 };

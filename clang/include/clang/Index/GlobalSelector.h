@@ -44,19 +44,19 @@ public:
 
   /// \brief Get a GlobalSelector for the ASTContext-specific selector.
   static GlobalSelector get(Selector Sel, Program &Prog);
-  
+
   void *getAsOpaquePtr() const { return Val; }
-  
+
   static GlobalSelector getFromOpaquePtr(void *Ptr) {
     return GlobalSelector(Ptr);
   }
 
-  friend bool operator==(const GlobalSelector &LHS, const GlobalSelector &RHS) { 
+  friend bool operator==(const GlobalSelector &LHS, const GlobalSelector &RHS) {
     return LHS.getAsOpaquePtr() == RHS.getAsOpaquePtr();
   }
-  
+
   // For use in a std::map.
-  friend bool operator< (const GlobalSelector &LHS, const GlobalSelector &RHS) { 
+  friend bool operator< (const GlobalSelector &LHS, const GlobalSelector &RHS) {
     return LHS.getAsOpaquePtr() < RHS.getAsOpaquePtr();
   }
 
@@ -66,7 +66,7 @@ public:
     return GlobalSelector((void*)-2);
   }
 };
-  
+
 } // namespace idx
 
 } // namespace clang
@@ -86,7 +86,7 @@ struct DenseMapInfo<clang::idx::GlobalSelector> {
 
   static unsigned getHashValue(clang::idx::GlobalSelector);
 
-  static inline bool 
+  static inline bool
   isEqual(clang::idx::GlobalSelector LHS, clang::idx::GlobalSelector RHS) {
     return LHS == RHS;
   }

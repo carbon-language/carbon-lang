@@ -25,7 +25,7 @@ namespace {
 class EntityIndexer : public EntityHandler {
   TranslationUnit *TU;
   Indexer::MapTy &Map;
-  
+
 public:
   EntityIndexer(TranslationUnit *tu, Indexer::MapTy &map) : TU(tu), Map(map) { }
 
@@ -64,7 +64,7 @@ void Indexer::IndexAST(TranslationUnit *TU) {
   CtxTUMap[&Ctx] = TU;
   EntityIndexer Idx(TU, Map);
   Prog.FindEntities(Ctx, Idx);
-  
+
   SelectorIndexer SelIdx(Prog, TU, SelMap);
   SelIdx.Visit(Ctx.getTranslationUnitDecl());
 }
@@ -84,7 +84,7 @@ void Indexer::GetTranslationUnitsFor(Entity Ent,
   MapTy::iterator I = Map.find(Ent);
   if (I == Map.end())
     return;
-  
+
   TUSetTy &Set = I->second;
   for (TUSetTy::iterator I = Set.begin(), E = Set.end(); I != E; ++I)
     Handler.Handle(*I);
@@ -97,7 +97,7 @@ void Indexer::GetTranslationUnitsFor(GlobalSelector Sel,
   SelMapTy::iterator I = SelMap.find(Sel);
   if (I == SelMap.end())
     return;
-  
+
   TUSetTy &Set = I->second;
   for (TUSetTy::iterator I = Set.begin(), E = Set.end(); I != E; ++I)
     Handler.Handle(*I);

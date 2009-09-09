@@ -50,7 +50,7 @@ class Entity {
   explicit Entity(Decl *D);
   explicit Entity(EntityImpl *impl) : Val(impl) { }
   friend class EntityGetter;
-  
+
 public:
   Entity() { }
 
@@ -79,7 +79,7 @@ public:
 
   bool isValid() const { return !Val.isNull(); }
   bool isInvalid() const { return !isValid(); }
-  
+
   void *getAsOpaquePtr() const { return Val.getOpaqueValue(); }
   static Entity getFromOpaquePtr(void *Ptr) {
     Entity Ent;
@@ -87,12 +87,12 @@ public:
     return Ent;
   }
 
-  friend bool operator==(const Entity &LHS, const Entity &RHS) { 
+  friend bool operator==(const Entity &LHS, const Entity &RHS) {
     return LHS.getAsOpaquePtr() == RHS.getAsOpaquePtr();
   }
-  
+
   // For use in a std::map.
-  friend bool operator < (const Entity &LHS, const Entity &RHS) { 
+  friend bool operator < (const Entity &LHS, const Entity &RHS) {
     return LHS.getAsOpaquePtr() < RHS.getAsOpaquePtr();
   }
 
@@ -110,7 +110,7 @@ public:
     return Ent;
   }
 };
-  
+
 } // namespace idx
 
 } // namespace clang
@@ -130,7 +130,7 @@ struct DenseMapInfo<clang::idx::Entity> {
 
   static unsigned getHashValue(clang::idx::Entity);
 
-  static inline bool 
+  static inline bool
   isEqual(clang::idx::Entity LHS, clang::idx::Entity RHS) {
     return LHS == RHS;
   }

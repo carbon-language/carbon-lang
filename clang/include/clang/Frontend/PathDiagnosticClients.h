@@ -23,12 +23,12 @@ namespace clang {
 class PathDiagnosticClient;
 class Preprocessor;
 class PreprocessorFactory;
-  
+
 class PathDiagnosticClientFactory {
 public:
   PathDiagnosticClientFactory() {}
   virtual ~PathDiagnosticClientFactory() {}
-  
+
   virtual const char *getName() const = 0;
 
   virtual PathDiagnosticClient*
@@ -39,12 +39,12 @@ PathDiagnosticClient*
 CreateHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP = 0,
                            PreprocessorFactory* PPF = 0,
                            llvm::SmallVectorImpl<std::string>* FilesMade = 0);
-  
+
 PathDiagnosticClientFactory*
 CreateHTMLDiagnosticClientFactory(const std::string& prefix,
                                   Preprocessor* PP = 0,
                                   PreprocessorFactory* PPF = 0);
-  
+
 PathDiagnosticClient*
 CreatePlistDiagnosticClient(const std::string& prefix, Preprocessor* PP,
                             PreprocessorFactory* PPF,

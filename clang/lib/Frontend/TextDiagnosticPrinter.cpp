@@ -436,7 +436,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
 /// greater than or equal to Idx or, if no such character exists,
 /// returns the end of the string.
 static unsigned skipWhitespace(unsigned Idx,
-			       const llvm::SmallVectorImpl<char> &Str,
+                               const llvm::SmallVectorImpl<char> &Str,
                                unsigned Length) {
   while (Idx < Length && isspace(Str[Idx]))
     ++Idx;
@@ -536,7 +536,7 @@ unsigned findEndOfWord(unsigned Start,
 /// \returns true if word-wrapping was required, or false if the
 /// string fit on the first line.
 static bool PrintWordWrapped(llvm::raw_ostream &OS,
-			     const llvm::SmallVectorImpl<char> &Str,
+                             const llvm::SmallVectorImpl<char> &Str,
                              unsigned Columns,
                              unsigned Column = 0,
                              unsigned Indentation = WordWrapIndentation) {

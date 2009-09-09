@@ -11,11 +11,11 @@ _Bool t = &t;
 
 
 union bar {
-	int i;
+  int i;
 };
 
 struct foo {
-	unsigned ptr;
+  unsigned ptr;
 };
 
 union bar u[1];

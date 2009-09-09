@@ -91,7 +91,7 @@ void APValue::print(llvm::raw_ostream &OS) const {
     return;
   case Vector:
     OS << "Vector: " << getVectorElt(0);
-    for (unsigned i = 1; i != getVectorLength(); ++i) 
+    for (unsigned i = 1; i != getVectorLength(); ++i)
       OS << ", " << getVectorElt(i);
     return;
   case ComplexInt:

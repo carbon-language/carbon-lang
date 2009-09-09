@@ -22,13 +22,13 @@
 using namespace clang;
 
 NestedNameSpecifier *
-NestedNameSpecifier::FindOrInsert(ASTContext &Context, 
+NestedNameSpecifier::FindOrInsert(ASTContext &Context,
                                   const NestedNameSpecifier &Mockup) {
   llvm::FoldingSetNodeID ID;
   Mockup.Profile(ID);
 
   void *InsertPos = 0;
-  NestedNameSpecifier *NNS 
+  NestedNameSpecifier *NNS
     = Context.NestedNameSpecifiers.FindNodeOrInsertPos(ID, InsertPos);
   if (!NNS) {
     NNS = new (Context, 4) NestedNameSpecifier(Mockup);
@@ -39,7 +39,7 @@ NestedNameSpecifier::FindOrInsert(ASTContext &Context,
 }
 
 NestedNameSpecifier *
-NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix, 
+NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
                             IdentifierInfo *II) {
   assert(II && "Identifier cannot be NULL");
   assert((!Prefix || Prefix->isDependent()) && "Prefix must be dependent");
@@ -52,10 +52,10 @@ NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
 }
 
 NestedNameSpecifier *
-NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix, 
+NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix,
                             NamespaceDecl *NS) {
   assert(NS && "Namespace cannot be NULL");
-  assert((!Prefix || 
+  assert((!Prefix ||
           (Prefix->getAsType() == 0 && Prefix->getAsIdentifier() == 0)) &&
          "Broken nested name specifier");
   NestedNameSpecifier Mockup;
@@ -115,8 +115,8 @@ bool NestedNameSpecifier::isDependent() const {
 
 /// \brief Print this nested name specifier to the given output
 /// stream.
-void 
-NestedNameSpecifier::print(llvm::raw_ostream &OS, 
+void
+NestedNameSpecifier::print(llvm::raw_ostream &OS,
                            const PrintingPolicy &Policy) const {
   if (getPrefix())
     getPrefix()->print(OS, Policy);
@@ -144,26 +144,26 @@ NestedNameSpecifier::print(llvm::raw_ostream &OS,
     PrintingPolicy InnerPolicy(Policy);
     InnerPolicy.SuppressTagKind = true;
     InnerPolicy.SuppressScope = true;
-    
+
     // Nested-name-specifiers are intended to contain minimally-qualified
     // types. An actual QualifiedNameType will not occur, since we'll store
     // just the type that is referred to in the nested-name-specifier (e.g.,
     // a TypedefType, TagType, etc.). However, when we are dealing with
-    // dependent template-id types (e.g., Outer<T>::template Inner<U>), 
+    // dependent template-id types (e.g., Outer<T>::template Inner<U>),
     // the type requires its own nested-name-specifier for uniqueness, so we
     // suppress that nested-name-specifier during printing.
-    assert(!isa<QualifiedNameType>(T) && 
+    assert(!isa<QualifiedNameType>(T) &&
            "Qualified name type in nested-name-specifier");
     if (const TemplateSpecializationType *SpecType
           = dyn_cast<TemplateSpecializationType>(T)) {
-      // Print the template name without its corresponding 
+      // Print the template name without its corresponding
       // nested-name-specifier.
       SpecType->getTemplateName().print(OS, InnerPolicy, true);
-      
+
       // Print the template argument list.
       TypeStr = TemplateSpecializationType::PrintTemplateArgumentList(
-                                                          SpecType->getArgs(), 
-                                                       SpecType->getNumArgs(), 
+                                                          SpecType->getArgs(),
+                                                       SpecType->getNumArgs(),
                                                                  InnerPolicy);
     } else {
       // Print the type normally
