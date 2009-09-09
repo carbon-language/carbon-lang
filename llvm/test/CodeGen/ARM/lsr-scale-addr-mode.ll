@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | grep lsl | grep -F {lsl #2\]}
+; RUN: llc < %s -march=arm | grep lsl | grep -F {lsl #2\]}
 ; Should use scaled addressing mode.
 
 define void @sintzero(i32* %a) nounwind {

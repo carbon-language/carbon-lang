@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llc < %s -march=ppc32
 ; PR2986
 @argc = external global i32		; <i32*> [#uses=1]
 @buffer = external global [32 x i8], align 4		; <[32 x i8]*> [#uses=1]

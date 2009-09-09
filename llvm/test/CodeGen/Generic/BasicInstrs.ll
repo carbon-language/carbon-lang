@@ -1,7 +1,7 @@
 ; New testcase, this contains a bunch of simple instructions that should be
 ; handled by a code generator.
 
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define i32 @add(i32 %A, i32 %B) {
 	%R = add i32 %A, %B		; <i32> [#uses=1]

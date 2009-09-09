@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define float @t(i64 %u_arg) {
         %u = bitcast i64 %u_arg to i64          ; <i64> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -O0
+; RUN: llc < %s -O0
 	
 %struct.cl_perfunc_opts = type { i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i32, i32, i32, i32, i32, i32, i32 }
 @cl_pf_opts = external global %struct.cl_perfunc_opts		; <%struct.cl_perfunc_opts*> [#uses=2]

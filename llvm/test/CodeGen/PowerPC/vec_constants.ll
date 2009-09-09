@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | not grep CPI
+; RUN: llc < %s -march=ppc32 -mcpu=g5 | not grep CPI
 
 define void @test1(<4 x i32>* %P1, <4 x i32>* %P2, <4 x float>* %P3) {
 	%tmp = load <4 x i32>* %P1		; <<4 x i32>> [#uses=1]

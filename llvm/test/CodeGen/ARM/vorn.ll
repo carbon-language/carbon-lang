@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
+; RUN: llc < %s -march=arm -mattr=+neon > %t
 ; RUN: grep vorn %t | count 8
 ; Note: function names do not include "vorn" to allow simple grep for opcodes
 

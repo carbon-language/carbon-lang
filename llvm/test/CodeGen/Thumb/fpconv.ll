@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb
+; RUN: llc < %s -march=thumb
 
 define float @f1(double %x) {
 entry:

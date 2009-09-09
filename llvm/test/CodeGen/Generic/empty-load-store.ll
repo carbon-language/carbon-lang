@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 ; PR2612
 
 @current_foo = internal global {  } zeroinitializer

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | not grep r11
+; RUN: llc < %s | not grep r11
 
 target triple = "thumb-linux-gnueabi"
 	%struct.__sched_param = type { i32 }

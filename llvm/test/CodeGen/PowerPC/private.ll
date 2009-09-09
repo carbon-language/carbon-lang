@@ -1,11 +1,11 @@
 ; Test to make sure that the 'private' is used correctly.
 ;
-; RUN: llvm-as < %s | llc -mtriple=powerpc-unknown-linux-gnu > %t
+; RUN: llc < %s -mtriple=powerpc-unknown-linux-gnu > %t
 ; RUN: grep .Lfoo: %t
 ; RUN: grep bl.*\.Lfoo %t
 ; RUN: grep .Lbaz: %t
 ; RUN: grep lis.*\.Lbaz %t
-; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin > %t
+; RUN: llc < %s -mtriple=powerpc-apple-darwin > %t
 ; RUN: grep L_foo: %t
 ; RUN: grep bl.*\L_foo %t
 ; RUN: grep L_baz: %t

@@ -1,7 +1,7 @@
 ; Test inlined function handling. This test case is copied from 
 ; 2009-06-12-InlineFunctStart.ll with one change. In function main, the bb1
 ; does not have llvm.dbg.stoppiont intrinsic before llvm.dbg.func.start.
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 ; RUN: llc %s -o - -O0
 	%llvm.dbg.anchor.type = type { i32, i32 }
 	%llvm.dbg.basictype.type = type { i32, { }*, i8*, { }*, i32, i64, i64, i64, i32, i32 }

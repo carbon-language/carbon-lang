@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=thumb | grep mul | count 3
-; RUN: llvm-as < %s | llc -march=thumb | grep lsl | count 1
+; RUN: llc < %s -march=thumb | grep mul | count 3
+; RUN: llc < %s -march=thumb | grep lsl | count 1
 
 define i32 @f1(i32 %u) {
     %tmp = mul i32 %u, %u

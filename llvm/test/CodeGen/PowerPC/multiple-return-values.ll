@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32
-; RUN: llvm-as < %s | llc -march=ppc64
+; RUN: llc < %s -march=ppc32
+; RUN: llc < %s -march=ppc64
 
 define {i64, float} @bar(i64 %a, float %b) {
         %y = add i64 %a, 7

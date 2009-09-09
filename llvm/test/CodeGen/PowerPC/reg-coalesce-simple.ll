@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32  | not grep or
+; RUN: llc < %s -march=ppc32  | not grep or
 
 %struct.foo = type { i32, i32, [0 x i8] }
 

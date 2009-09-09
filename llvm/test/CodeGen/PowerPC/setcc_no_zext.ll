@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwinm
+; RUN: llc < %s -march=ppc32 | not grep rlwinm
 
 define i32 @setcc_one_or_zero(i32* %a) {
 entry:

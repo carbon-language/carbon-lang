@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
 ; RUN:   grep {ldr.*\\\[.*\],} | count 1
 
 define i32 @test(i32 %a, i32 %b, i32 %c) {

@@ -1,10 +1,10 @@
 ; Make sure this testcase codegens to the ctpop instruction
-; RUN: llvm-as < %s | llc -march=alpha -mcpu=ev67 | grep -i ctpop
-; RUN: llvm-as < %s | llc -march=alpha -mattr=+CIX | \
+; RUN: llc < %s -march=alpha -mcpu=ev67 | grep -i ctpop
+; RUN: llc < %s -march=alpha -mattr=+CIX | \
 ; RUN:   grep -i ctpop
-; RUN: llvm-as < %s | llc -march=alpha -mcpu=ev6 | \
+; RUN: llc < %s -march=alpha -mcpu=ev6 | \
 ; RUN:   not grep -i ctpop
-; RUN: llvm-as < %s | llc -march=alpha -mattr=-CIX | \
+; RUN: llc < %s -march=alpha -mattr=-CIX | \
 ; RUN:   not grep -i ctpop
 
 declare i64 @llvm.ctpop.i64(i64)

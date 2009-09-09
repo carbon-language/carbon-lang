@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llc < %s -march=ppc32
 
 define void @main() {
         %shamt = add i8 0, 1            ; <i8> [#uses=1]

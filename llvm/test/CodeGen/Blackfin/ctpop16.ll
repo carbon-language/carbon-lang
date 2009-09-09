@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin
+; RUN: llc < %s -march=bfin
 
 declare i16 @llvm.ctpop.i16(i16)
 

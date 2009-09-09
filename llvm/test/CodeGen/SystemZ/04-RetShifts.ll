@@ -1,9 +1,9 @@
-; RUN: llvm-as < %s | llc -march=systemz | grep sra   | count 6
-; RUN: llvm-as < %s | llc -march=systemz | grep srag  | count 3
-; RUN: llvm-as < %s | llc -march=systemz | grep srl   | count 6
-; RUN: llvm-as < %s | llc -march=systemz | grep srlg  | count 3
-; RUN: llvm-as < %s | llc -march=systemz | grep sll   | count 6
-; RUN: llvm-as < %s | llc -march=systemz | grep sllg  | count 3
+; RUN: llc < %s -march=systemz | grep sra   | count 6
+; RUN: llc < %s -march=systemz | grep srag  | count 3
+; RUN: llc < %s -march=systemz | grep srl   | count 6
+; RUN: llc < %s -march=systemz | grep srlg  | count 3
+; RUN: llc < %s -march=systemz | grep sll   | count 6
+; RUN: llc < %s -march=systemz | grep sllg  | count 3
 
 define signext i32 @foo1(i32 %a, i32 %idx) nounwind readnone {
 entry:

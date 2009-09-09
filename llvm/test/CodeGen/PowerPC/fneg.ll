@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep fneg
+; RUN: llc < %s -march=ppc32 | not grep fneg
 
 define double @test1(double %a, double %b, double %c, double %d) {
 entry:

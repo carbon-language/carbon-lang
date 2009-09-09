@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llc < %s -march=c
 
 ; Test const pointer refs & forward references
 

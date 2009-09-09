@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=systemz | grep lcgr | count 1
+; RUN: llc < %s -march=systemz | grep lcgr | count 1
 
 define i64 @foo(i64 %a) {
 entry:

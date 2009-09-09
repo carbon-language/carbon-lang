@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -o %t
+; RUN: llc < %s -march=ppc32 -o %t
 ; RUN: grep slwi %t
 ; RUN: not grep addi %t
 ; RUN: not grep rlwinm %t

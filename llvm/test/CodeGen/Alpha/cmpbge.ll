@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=alpha | grep cmpbge | count 2
+; RUN: llc < %s -march=alpha | grep cmpbge | count 2
 
 define i1 @test1(i64 %A, i64 %B) {
         %C = and i64 %A, 255            ; <i64> [#uses=1]

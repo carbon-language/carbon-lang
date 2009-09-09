@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | grep fldd | count 4
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | grep fstd
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | grep fmrrd
+; RUN: llc < %s -march=arm -mattr=+neon | grep fldd | count 4
+; RUN: llc < %s -march=arm -mattr=+neon | grep fstd
+; RUN: llc < %s -march=arm -mattr=+neon | grep fmrrd
 
 define void @t1(<2 x i32>* %r, <4 x i16>* %a, <4 x i16>* %b) nounwind {
 entry:

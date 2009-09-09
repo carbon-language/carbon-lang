@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm
+; RUN: llc < %s -march=arm
 ; PR3954
 
 define void @foo(...) nounwind {

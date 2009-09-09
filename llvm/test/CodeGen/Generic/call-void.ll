@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define void @foo() {
         ret void

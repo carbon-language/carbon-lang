@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -march=sparc -mattr=v9 -enable-sparc-v9-insts
-; RUN: llvm-as < %s | llc -march=sparc -mattr=-v9 | \
+; RUN: llc < %s -march=sparc -mattr=-v9 | \
 ; RUN:   not grep popc
 ; RUN: llvm-as < %s | \
 ; RUN:   llc -march=sparc -mattr=v9 -enable-sparc-v9-insts | grep popc

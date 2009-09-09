@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=thumb | grep bne | count 1
-; RUN: llvm-as < %s | llc -march=thumb | grep beq | count 1
+; RUN: llc < %s -march=thumb | grep bne | count 1
+; RUN: llc < %s -march=thumb | grep beq | count 1
 
 define i32 @f1(float %X, float %Y) {
 	%tmp = fcmp uno float %X, %Y

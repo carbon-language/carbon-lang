@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep ldrb | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep ldrh | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep ldrsb | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep ldrsh | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep ldrb | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep ldrh | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep ldrsb | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep ldrsh | count 1
 
 define i32 @test1(i8* %v.pntr.s0.u1) {
     %tmp.u = load i8* %v.pntr.s0.u1

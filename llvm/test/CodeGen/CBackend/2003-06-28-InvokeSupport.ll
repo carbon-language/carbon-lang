@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llc < %s -march=c
 
 declare i32 @callee(i32, i32)
 

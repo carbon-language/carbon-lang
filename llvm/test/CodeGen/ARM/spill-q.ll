@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=armv7-elf -mattr=+neon | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-elf -mattr=+neon | FileCheck %s
 ; PR4789
 
 %bar = type { float, float, float }

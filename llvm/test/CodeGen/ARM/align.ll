@@ -1,9 +1,9 @@
-; RUN: llvm-as < %s | llc -march=arm | grep align.*1 | count 1
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi | \
+; RUN: llc < %s -march=arm | grep align.*1 | count 1
+; RUN: llc < %s -mtriple=arm-linux-gnueabi | \
 ; RUN:   grep align.*2 | count 2
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi | \
+; RUN: llc < %s -mtriple=arm-linux-gnueabi | \
 ; RUN:   grep align.*3 | count 2
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin | \
+; RUN: llc < %s -mtriple=arm-apple-darwin | \
 ; RUN:   grep align.*2 | count 4
 
 @a = global i1 true

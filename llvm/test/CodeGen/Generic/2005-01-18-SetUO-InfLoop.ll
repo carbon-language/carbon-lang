@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define void @intersect_pixel() {
 entry:

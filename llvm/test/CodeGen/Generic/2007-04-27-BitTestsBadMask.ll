@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep je | count 3
-; RUN: llvm-as < %s | llc -march=x86-64 | grep 4297064449
+; RUN: llc < %s -march=x86 | grep je | count 3
+; RUN: llc < %s -march=x86-64 | grep 4297064449
 ; PR 1325+
 
 define i32 @foo(i8 %bar) {

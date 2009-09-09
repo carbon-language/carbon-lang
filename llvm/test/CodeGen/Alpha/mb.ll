@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=alpha | grep mb
+; RUN: llc < %s -march=alpha | grep mb
 
 declare void @llvm.memory.barrier( i1 , i1 , i1 , i1 , i1)
 

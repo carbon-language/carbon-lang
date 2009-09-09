@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 ;; Date:     Jul 8, 2003.
 ;; From:     test/Programs/MultiSource/Olden-perimeter

@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens to the ornot instruction
-; RUN: llvm-as < %s | llc -march=alpha | grep ornot
+; RUN: llc < %s -march=alpha | grep ornot
 
 define i64 @bar(i64 %x, i64 %y) {
 entry:

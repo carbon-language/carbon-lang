@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -O0
+; RUN: llc < %s -O0
 ; PR 1323
 
 ; ModuleID = 'test.bc'

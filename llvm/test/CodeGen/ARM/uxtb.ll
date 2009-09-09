@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=armv6-apple-darwin | \
+; RUN: llc < %s -mtriple=armv6-apple-darwin | \
 ; RUN:   grep uxt | count 10
 
 define i32 @test1(i32 %x) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah
+; RUN: llc < %s -march=x86 -mcpu=yonah
 
 ; The vload was getting memoized to the previous scalar load!
 

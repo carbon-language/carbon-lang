@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
+; RUN: llc < %s -march=arm -mattr=+neon > %t
 ; RUN: grep {vpadal\\.s8} %t | count 2
 ; RUN: grep {vpadal\\.s16} %t | count 2
 ; RUN: grep {vpadal\\.s32} %t | count 2

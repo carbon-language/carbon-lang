@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c | \
+; RUN: llc < %s -march=c | \
 ; RUN:   grep __BITCAST | count 14
 
 define i32 @test1(float %F) {

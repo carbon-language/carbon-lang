@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs
+; RUN: llc < %s -march=bfin -verify-machineinstrs
 
 ; This somewhat contrived function heavily exercises register classes
 ; It can trick -join-cross-class-copies into making illegal joins

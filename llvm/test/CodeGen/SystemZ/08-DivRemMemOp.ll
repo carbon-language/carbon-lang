@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc | grep {dsgf.%} | count 2
-; RUN: llvm-as < %s | llc | grep {dsg.%}  | count 2
-; RUN: llvm-as < %s | llc | grep {dl.%}   | count 2
-; RUN: llvm-as < %s | llc | grep dlg      | count 2
+; RUN: llc < %s | grep {dsgf.%} | count 2
+; RUN: llc < %s | grep {dsg.%}  | count 2
+; RUN: llc < %s | grep {dl.%}   | count 2
+; RUN: llc < %s | grep dlg      | count 2
 
 target datalayout = "E-p:64:64:64-i1:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128"
 target triple = "s390x-unknown-linux-gnu"

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | not grep r1
+; RUN: llc < %s -march=ppc32 -mcpu=g5 | not grep r1
 
 define double @test1(double %X) {
         %Y = fptosi double %X to i64            ; <i64> [#uses=1]

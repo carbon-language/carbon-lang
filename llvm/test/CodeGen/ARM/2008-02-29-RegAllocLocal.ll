@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -regalloc=local
+; RUN: llc < %s -mtriple=arm-apple-darwin -regalloc=local
 ; PR1925
 
 	%"struct.kc::impl_Ccode_option" = type { %"struct.kc::impl_abstract_phylum" }

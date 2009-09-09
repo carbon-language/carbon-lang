@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=xcore > %t1.s
+; RUN: llc < %s -march=xcore > %t1.s
 ; RUN: grep "bl powf" %t1.s | count 1
 ; RUN: grep "bl pow" %t1.s | count 2
 declare double @llvm.pow.f64(double, double)

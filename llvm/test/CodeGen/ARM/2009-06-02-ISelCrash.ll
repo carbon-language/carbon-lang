@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -relocation-model=pic -mattr=+v6,+vfp2
+; RUN: llc < %s -mtriple=arm-apple-darwin -relocation-model=pic -mattr=+v6,+vfp2
 
 @"\01LC" = external constant [15 x i8]		; <[15 x i8]*> [#uses=1]
 

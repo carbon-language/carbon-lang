@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | grep swp
+; RUN: llc < %s -march=arm | grep swp
 ; PR4091
 
 define void @foo(i32 %i, i32* %p) nounwind {

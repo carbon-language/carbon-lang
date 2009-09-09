@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
         %lldb.compile_unit = type { i32, i16, i16, i8*, i8*, i8*, {  }* }
 @d.compile_unit7 = external global %lldb.compile_unit           ; <%lldb.compile_unit*> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm
+; RUN: llc < %s -march=arm
 
 declare i32 @printf(i8*, ...)
 

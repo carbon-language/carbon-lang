@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define i64 @test_imm(i64 %X) {
         %Y = ashr i64 %X, 17            ; <i64> [#uses=1]

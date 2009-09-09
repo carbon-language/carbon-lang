@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 ; pr4843
 define <4 x i16> @v2regbug(<4 x i16>* %B) nounwind {
 ;CHECK: v2regbug:

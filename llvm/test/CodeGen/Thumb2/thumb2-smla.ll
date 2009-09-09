@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
 ; RUN:   grep smlabt | count 1
 
 define i32 @f3(i32 %a, i16 %x, i32 %y) {

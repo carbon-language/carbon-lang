@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep movt | grep #1234
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep movt | grep #1234
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep movt | grep #1234
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep movt | grep #1234
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep mov  | grep movt
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep movt | grep #1234
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep movt | grep #1234
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep movt | grep #1234
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep movt | grep #1234
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep mov  | grep movt
 
 define i32 @t2MOVTi16_ok_1(i32 %a) {
     %1 = and i32 %a, 65535

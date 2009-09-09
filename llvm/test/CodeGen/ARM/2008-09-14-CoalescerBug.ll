@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin
+; RUN: llc < %s -mtriple=arm-apple-darwin
 
 @"\01LC1" = external constant [288 x i8]		; <[288 x i8]*> [#uses=1]
 

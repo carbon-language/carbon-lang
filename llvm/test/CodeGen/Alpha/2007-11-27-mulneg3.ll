@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=alpha
+; RUN: llc < %s -march=alpha
 
 ;FIXME: this should produce no mul inst.  But not crashing will have to do for now
 

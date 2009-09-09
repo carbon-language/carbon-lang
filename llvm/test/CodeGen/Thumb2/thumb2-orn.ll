@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orn\\W*r\[0-9\]*,\\W*r\[0-9\]*,\\W*r\[0-9\]*$} | count 4
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orn\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*lsl\\W*#5$} | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orn\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*lsr\\W*#6$} | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orn\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*asr\\W*#7$} | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orn\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*ror\\W*#8$} | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep {orn\\W*r\[0-9\]*,\\W*r\[0-9\]*,\\W*r\[0-9\]*$} | count 4
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep {orn\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*lsl\\W*#5$} | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep {orn\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*lsr\\W*#6$} | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep {orn\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*asr\\W*#7$} | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep {orn\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*ror\\W*#8$} | count 1
 
 define i32 @f1(i32 %a, i32 %b) {
     %tmp = xor i32 %b, 4294967295

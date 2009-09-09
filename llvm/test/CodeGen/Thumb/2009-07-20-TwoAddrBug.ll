@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv6-apple-darwin10
+; RUN: llc < %s -mtriple=thumbv6-apple-darwin10
 
 @Time.2535 = external global i64		; <i64*> [#uses=2]
 

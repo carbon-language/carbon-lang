@@ -1,6 +1,6 @@
 ; Test to make sure that the 'private' is used correctly.
 ;
-; RUN: llvm-as < %s | llc -march=alpha > %t
+; RUN: llc < %s -march=alpha > %t
 ; RUN: grep \\\$foo: %t
 ; RUN: grep bsr.*\\\$\\\$foo %t
 ; RUN: grep \\\$baz: %t

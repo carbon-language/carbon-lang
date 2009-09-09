@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define void @foo(i32 %inTextSize) {
 entry:

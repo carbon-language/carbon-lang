@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 ; PR1011	
 %struct.mng_data = type { i8* (%struct.mng_data*, i32)*, i32, i32, i32, i8, i8, i32, i32, i32, i32, i32 }
 

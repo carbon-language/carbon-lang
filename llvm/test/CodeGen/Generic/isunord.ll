@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 declare i1 @llvm.isunordered.f64(double, double)
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=bfin -verify-machineinstrs | FileCheck %s
 
 ; CHECK: .section .rodata
 ; CHECK: JTI1_0:

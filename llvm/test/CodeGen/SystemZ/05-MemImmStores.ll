@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -mattr=+z10 | grep mvghi | count 1
-; RUN: llvm-as < %s | llc -mattr=+z10 | grep mvhi  | count 1
-; RUN: llvm-as < %s | llc -mattr=+z10 | grep mvhhi | count 1
-; RUN: llvm-as < %s | llc | grep mvi   | count 2
-; RUN: llvm-as < %s | llc | grep mviy  | count 1
+; RUN: llc < %s -mattr=+z10 | grep mvghi | count 1
+; RUN: llc < %s -mattr=+z10 | grep mvhi  | count 1
+; RUN: llc < %s -mattr=+z10 | grep mvhhi | count 1
+; RUN: llc < %s | grep mvi   | count 2
+; RUN: llc < %s | grep mviy  | count 1
 
 target datalayout = "E-p:64:64:64-i1:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128"
 target triple = "s390x-unknown-linux-gnu"

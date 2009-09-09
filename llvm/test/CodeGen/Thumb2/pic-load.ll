@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin9 -relocation-model=pic | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -relocation-model=pic | FileCheck %s
 
 	%struct.anon = type { void ()* }
 	%struct.one_atexit_routine = type { %struct.anon, i32, i8* }

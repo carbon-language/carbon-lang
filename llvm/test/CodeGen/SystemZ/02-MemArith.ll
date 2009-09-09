@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=systemz | FileCheck %s
+; RUN: llc < %s -march=systemz | FileCheck %s
 
 define i32 @foo1(i32 %a, i32 *%b, i64 %idx) signext {
 ; CHECK: foo1:

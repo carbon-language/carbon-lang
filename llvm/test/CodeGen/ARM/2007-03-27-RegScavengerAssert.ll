@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi
 ; PR1279
 
 	%struct.rtx_def = type { i16, i8, i8, %struct.u }

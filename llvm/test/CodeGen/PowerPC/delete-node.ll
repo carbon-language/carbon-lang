@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llc < %s -march=ppc32
 
 ; The DAGCombiner leaves behind a dead node in this testcase. Currently
 ; ISel is ignoring dead nodes, though it would be preferable for

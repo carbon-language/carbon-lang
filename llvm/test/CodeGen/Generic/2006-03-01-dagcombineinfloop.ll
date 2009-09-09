@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 ; Infinite loop in the dag combiner, reduced from 176.gcc.	
 %struct._obstack_chunk = type { i8*, %struct._obstack_chunk*, [4 x i8] }
 	%struct.anon = type { i32 }

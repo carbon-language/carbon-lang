@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep slwi
+; RUN: llc < %s -march=ppc32 | not grep slwi
 
 define i32 @test1(i64 %a) {
         %tmp29 = lshr i64 %a, 24                ; <i64> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc64
+; RUN: llc < %s -march=ppc64
 
 define fastcc i8* @page_rec_get_next(i8* %rec) nounwind  {
 entry:

@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens to the zapnot instruction
-; RUN: llvm-as < %s | llc -march=alpha | grep zapnot
+; RUN: llc < %s -march=alpha | grep zapnot
 
 define i64 @bar(i64 %x) {
 entry:

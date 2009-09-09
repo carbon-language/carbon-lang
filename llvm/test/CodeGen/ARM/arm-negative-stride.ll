@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | grep {str r1, \\\[r.*, -r.*, lsl #2\}
+; RUN: llc < %s -march=arm | grep {str r1, \\\[r.*, -r.*, lsl #2\}
 
 define void @test(i32* %P, i32 %A, i32 %i) nounwind {
 entry:

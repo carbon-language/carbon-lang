@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 ;; Register allocation is doing a very poor job on this routine from yyparse
 ;; in Burg:

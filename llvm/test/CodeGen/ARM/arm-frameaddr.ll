@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin  | grep mov | grep r7
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi | grep mov | grep r11
+; RUN: llc < %s -mtriple=arm-apple-darwin  | grep mov | grep r7
+; RUN: llc < %s -mtriple=arm-linux-gnueabi | grep mov | grep r11
 ; PR4344
 ; PR4416
 

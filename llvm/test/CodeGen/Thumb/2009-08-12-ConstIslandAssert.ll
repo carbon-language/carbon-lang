@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv6-apple-darwin
+; RUN: llc < %s -mtriple=thumbv6-apple-darwin
 
 	%struct.BF_KEY = type { [18 x i32], [1024 x i32] }
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep 4294967295 | count 28
+; RUN: llc < %s -march=ppc32 | grep 4294967295 | count 28
 
 ; These static initializers are too big to hand off to assemblers
 ; as monolithic blobs.

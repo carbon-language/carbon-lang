@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=pic16 | FileCheck %s
+; RUN: llc < %s -march=pic16 | FileCheck %s
 
 @G1 = global i32 4712, section "Address=412"
 ; CHECK: @G1.412.idata.0.# IDATA 412

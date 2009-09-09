@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5
+; RUN: llc < %s -march=ppc32 -mcpu=g5
 
 ; Test that causes a abort in expanding a bit convert due to a missing support
 ; for widening.

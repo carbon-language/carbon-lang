@@ -1,6 +1,6 @@
 ; Test to make sure that the 'private' is used correctly.
 ;
-; RUN: llvm-as < %s | llc  -march=sparc > %t
+; RUN: llc < %s  -march=sparc > %t
 ; RUN: grep .foo: %t
 ; RUN: grep call.*\.foo %t
 ; RUN: grep .baz: %t

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llc < %s -march=c
 
 global i32* bitcast (float* @2 to i32*)   ;; Forward numeric reference
 global float* @2                       ;; Duplicate forward numeric reference

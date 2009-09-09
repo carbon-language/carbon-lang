@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi | not grep r3
+; RUN: llc < %s -mtriple=arm-linux-gnueabi | not grep r3
 ; PR4059
 
 define i32 @f(i64 %z, i32 %a, double %b) {

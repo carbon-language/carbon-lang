@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep mfcr
+; RUN: llc < %s -march=ppc32 | not grep mfcr
 
 define void @foo(i32 %X, i32 %Y, i32 %Z) {
 entry:

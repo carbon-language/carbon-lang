@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=systemz | grep lghi  | count 2
-; RUN: llvm-as < %s | llc -march=systemz | grep llill | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llilh | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep lgfi  | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llilf | count 2
+; RUN: llc < %s -march=systemz | grep lghi  | count 2
+; RUN: llc < %s -march=systemz | grep llill | count 1
+; RUN: llc < %s -march=systemz | grep llilh | count 1
+; RUN: llc < %s -march=systemz | grep lgfi  | count 1
+; RUN: llc < %s -march=systemz | grep llilf | count 2
 
 
 define i32 @foo1() {

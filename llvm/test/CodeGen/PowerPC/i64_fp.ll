@@ -1,21 +1,21 @@
 ; fcfid and fctid should be generated when the 64bit feature is enabled, but not
 ; otherwise.
 
-; RUN: llvm-as < %s | llc -march=ppc32 -mattr=+64bit | \
+; RUN: llc < %s -march=ppc32 -mattr=+64bit | \
 ; RUN:   grep fcfid
-; RUN: llvm-as < %s | llc -march=ppc32 -mattr=+64bit | \
+; RUN: llc < %s -march=ppc32 -mattr=+64bit | \
 ; RUN:   grep fctidz
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | \
+; RUN: llc < %s -march=ppc32 -mcpu=g5 | \
 ; RUN:   grep fcfid
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | \
+; RUN: llc < %s -march=ppc32 -mcpu=g5 | \
 ; RUN:   grep fctidz
-; RUN: llvm-as < %s | llc -march=ppc32 -mattr=-64bit | \
+; RUN: llc < %s -march=ppc32 -mattr=-64bit | \
 ; RUN:   not grep fcfid
-; RUN: llvm-as < %s | llc -march=ppc32 -mattr=-64bit | \
+; RUN: llc < %s -march=ppc32 -mattr=-64bit | \
 ; RUN:   not grep fctidz
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g4 | \
+; RUN: llc < %s -march=ppc32 -mcpu=g4 | \
 ; RUN:   not grep fcfid
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g4 | \
+; RUN: llc < %s -march=ppc32 -mcpu=g4 | \
 ; RUN:   not grep fctidz
 
 define double @X(double %Y) {

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vadduhm
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vsubuhm
+; RUN: llc < %s -march=ppc32 -mcpu=g5 | grep vadduhm
+; RUN: llc < %s -march=ppc32 -mcpu=g5 | grep vsubuhm
 
 define <4 x i32> @test() nounwind {
 	ret <4 x i32> < i32 4293066722, i32 4293066722, i32 4293066722, i32 4293066722>

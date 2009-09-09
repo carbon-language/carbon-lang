@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 ; Test that llvm.memcpy works with a i64 length operand on all targets.
 
 declare void @llvm.memcpy.i64(i8*, i8*, i64, i32)

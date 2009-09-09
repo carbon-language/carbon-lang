@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi | \
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
 ; RUN:     grep {i(tpoff)}
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi | \
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
 ; RUN:     grep {__aeabi_read_tp}
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi \
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi \
 ; RUN:     -relocation-model=pic | grep {__tls_get_addr}
 
 

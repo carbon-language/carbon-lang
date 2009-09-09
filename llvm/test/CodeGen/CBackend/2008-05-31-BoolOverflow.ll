@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c | grep {llvm_cbe_t.*&1}
+; RUN: llc < %s -march=c | grep {llvm_cbe_t.*&1}
 define i32 @test(i32 %r) {
   %s = icmp eq i32 %r, 0
   %t = add i1 %s, %s

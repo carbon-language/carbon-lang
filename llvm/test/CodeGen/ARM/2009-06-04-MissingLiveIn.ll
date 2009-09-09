@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -mattr=+v6
+; RUN: llc < %s -mtriple=arm-apple-darwin -mattr=+v6
 
 	%struct.anon = type { i16, i16 }
 	%struct.cab_archive = type { i32, i16, i16, i16, i16, i8, %struct.cab_folder*, %struct.cab_file* }

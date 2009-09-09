@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=powerpc64-apple-darwin9 -regalloc=local -relocation-model=pic
+; RUN: llc < %s -mtriple=powerpc64-apple-darwin9 -regalloc=local -relocation-model=pic
 
 	%struct.NSError = type opaque
 	%struct.NSManagedObjectContext = type opaque

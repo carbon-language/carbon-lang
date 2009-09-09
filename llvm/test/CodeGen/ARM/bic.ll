@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | grep {bic\\W*r\[0-9\]*,\\W*r\[0-9\]*,\\W*r\[0-9\]*} | count 2
+; RUN: llc < %s -march=arm | grep {bic\\W*r\[0-9\]*,\\W*r\[0-9\]*,\\W*r\[0-9\]*} | count 2
 
 define i32 @f1(i32 %a, i32 %b) {
     %tmp = xor i32 %b, 4294967295

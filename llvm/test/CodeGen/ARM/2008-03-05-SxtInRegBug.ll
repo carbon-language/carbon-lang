@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | not grep 255
+; RUN: llc < %s -march=arm -mattr=+v6 | not grep 255
 
 define i32 @main(i32 %argc, i8** %argv) {
 entry:

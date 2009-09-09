@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=-neon
+; RUN: llc < %s -march=arm -mattr=-neon
 
 ; Example that requires splitting and expanding a vector shift.
 define <2 x i64> @update(<2 x i64> %val) nounwind readnone {

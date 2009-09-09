@@ -1,11 +1,11 @@
-; RUN: llvm-as < %s | llc -march=systemz | grep lghi  | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llill | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llilh | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llihl | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llihh | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep lgfi  | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llilf | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llihf | count 1
+; RUN: llc < %s -march=systemz | grep lghi  | count 1
+; RUN: llc < %s -march=systemz | grep llill | count 1
+; RUN: llc < %s -march=systemz | grep llilh | count 1
+; RUN: llc < %s -march=systemz | grep llihl | count 1
+; RUN: llc < %s -march=systemz | grep llihh | count 1
+; RUN: llc < %s -march=systemz | grep lgfi  | count 1
+; RUN: llc < %s -march=systemz | grep llilf | count 1
+; RUN: llc < %s -march=systemz | grep llihf | count 1
 
 
 define i64 @foo1() {

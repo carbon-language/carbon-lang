@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb | grep cmp | count 1
+; RUN: llc < %s -march=thumb | grep cmp | count 1
 
 
 define i1 @t1(i64 %x) {

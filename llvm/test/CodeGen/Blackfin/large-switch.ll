@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin
+; RUN: llc < %s -march=bfin
 
 ; The switch expansion uses a dynamic shl, and it produces a jumptable
 

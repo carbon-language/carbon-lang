@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -enable-ppc32-regscavenger
+; RUN: llc < %s -march=ppc32 -enable-ppc32-regscavenger
 
 	%struct._cpp_strbuf = type { i8*, i32, i32 }
 	%struct.cpp_string = type { i32, i8* }

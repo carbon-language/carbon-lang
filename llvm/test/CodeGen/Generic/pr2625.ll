@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 ; PR2625
 
 define i32 @main({ i32, { i32 } }*) {

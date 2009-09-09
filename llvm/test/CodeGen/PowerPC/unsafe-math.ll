@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep fmul | count 2
-; RUN: llvm-as < %s | llc -march=ppc32 -enable-unsafe-fp-math | \
+; RUN: llc < %s -march=ppc32 | grep fmul | count 2
+; RUN: llc < %s -march=ppc32 -enable-unsafe-fp-math | \
 ; RUN:   grep fmul | count 1
 
 define double @foo(double %X) {

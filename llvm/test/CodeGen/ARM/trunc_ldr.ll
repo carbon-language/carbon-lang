@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm | grep ldrb.*7 | count 1
-; RUN: llvm-as < %s | llc -march=arm | grep ldrsb.*7 | count 1
+; RUN: llc < %s -march=arm | grep ldrb.*7 | count 1
+; RUN: llc < %s -march=arm | grep ldrsb.*7 | count 1
 
 	%struct.A = type { i8, i8, i8, i8, i16, i8, i8, %struct.B** }
 	%struct.B = type { float, float, i32, i32, i32, [0 x i8] }

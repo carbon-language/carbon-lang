@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2
+; RUN: llc < %s -march=arm -mattr=+vfp2
 
 declare void @bar(i64 %x, i64 %y)
 

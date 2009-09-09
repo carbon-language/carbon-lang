@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | grep rev16
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | grep revsh
+; RUN: llc < %s -march=arm -mattr=+v6 | grep rev16
+; RUN: llc < %s -march=arm -mattr=+v6 | grep revsh
 
 define i32 @test1(i32 %X) {
         %tmp1 = lshr i32 %X, 8          ; <i32> [#uses=3]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs
+; RUN: llc < %s -march=bfin -verify-machineinstrs
 
 ; LocalRewriter can forget to transfer a <def,dead> flag when setting up call
 ; argument registers. This then causes register scavenger asserts.

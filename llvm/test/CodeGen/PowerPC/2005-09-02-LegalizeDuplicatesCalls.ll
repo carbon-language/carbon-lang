@@ -1,6 +1,6 @@
 ; This function should have exactly one call to fixdfdi, no more!
 
-; RUN: llvm-as < %s | llc -march=ppc32 -mattr=-64bit | \
+; RUN: llc < %s -march=ppc32 -mattr=-64bit | \
 ; RUN:    grep {bl .*fixdfdi} | count 1
 
 define double @test2(double %tmp.7705) {

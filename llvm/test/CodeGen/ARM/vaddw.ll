@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i16> @vaddws8(<8 x i16>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vaddws8:

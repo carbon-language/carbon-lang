@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc > %t
+; RUN: llc < %s > %t
 @i1_l = external global i1		; <i1*> [#uses=1]
 @i1_s = external global i1		; <i1*> [#uses=1]
 @i2_l = external global i2		; <i2*> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c | grep volatile
+; RUN: llc < %s -march=c | grep volatile
 
 define void @test(i32* %P) {
         %X = volatile load i32* %P              ; <i32> [#uses=1]

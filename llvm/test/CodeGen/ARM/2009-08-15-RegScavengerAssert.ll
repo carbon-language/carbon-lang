@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm
+; RUN: llc < %s -march=arm
 ; PR4716
 
 define arm_aapcscc void @_start() nounwind naked {

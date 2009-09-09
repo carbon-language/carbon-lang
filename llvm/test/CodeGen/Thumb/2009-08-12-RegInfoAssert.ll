@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv6-apple-darwin
+; RUN: llc < %s -mtriple=thumbv6-apple-darwin
 
 	%struct.vorbis_comment = type { i8**, i32*, i32, i8* }
 @.str16 = external constant [2 x i8], align 1     ; <[2 x i8]*> [#uses=1]

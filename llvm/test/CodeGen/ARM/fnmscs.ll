@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | FileCheck %s
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon,+neonfp | FileCheck %s
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon,-neonfp | FileCheck %s
-; RUN: llvm-as < %s | llc -march=arm -mcpu=cortex-a8 | FileCheck %s
-; RUN: llvm-as < %s | llc -march=arm -mcpu=cortex-a9 | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon,+neonfp | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon,-neonfp | FileCheck %s
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s
 
 define float @test1(float %acc, float %a, float %b) nounwind {
 ; CHECK: fnmscs s2, s1, s0 

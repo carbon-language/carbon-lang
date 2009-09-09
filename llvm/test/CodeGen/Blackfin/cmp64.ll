@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin
+; RUN: llc < %s -march=bfin
 
 ; This test tries to use a JustCC register as a data operand for MOVEcc.  It
 ; calls copyRegToReg(JustCC -> DP), failing because JustCC can only be copied to

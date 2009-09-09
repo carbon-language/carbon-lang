@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=systemz | grep ngr   | count 4
-; RUN: llvm-as < %s | llc -march=systemz | grep llilh | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llihl | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llihh | count 1
+; RUN: llc < %s -march=systemz | grep ngr   | count 4
+; RUN: llc < %s -march=systemz | grep llilh | count 1
+; RUN: llc < %s -march=systemz | grep llihl | count 1
+; RUN: llc < %s -march=systemz | grep llihh | count 1
 
 define i64 @foo1(i64 %a, i64 %b) {
 entry:

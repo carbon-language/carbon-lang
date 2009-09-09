@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -asm-verbose | grep {frame size} | grep -v 0x0
+; RUN: llc < %s -asm-verbose | grep {frame size} | grep -v 0x0
 
 declare void @llvm.gcroot(i8** %value, i8* %tag)
 declare void @g() gc "ocaml"

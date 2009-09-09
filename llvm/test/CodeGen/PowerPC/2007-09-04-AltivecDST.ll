@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc64 | grep dst | count 4
+; RUN: llc < %s -march=ppc64 | grep dst | count 4
 
 define hidden void @_Z4borkPc(i8* %image) {
 entry:

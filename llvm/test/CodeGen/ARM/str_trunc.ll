@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=arm | \
+; RUN: llc < %s -march=arm | \
 ; RUN:   grep strb | count 1
-; RUN: llvm-as < %s | llc -march=arm | \
+; RUN: llc < %s -march=arm | \
 ; RUN:   grep strh | count 1
 
 define void @test1(i32 %v, i16* %ptr) {

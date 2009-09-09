@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep srwi
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwimi
+; RUN: llc < %s -march=ppc32 | grep srwi
+; RUN: llc < %s -march=ppc32 | not grep rlwimi
 
 define i32 @baz(i64 %a) {
         %tmp29 = lshr i64 %a, 24                ; <i64> [#uses=1]

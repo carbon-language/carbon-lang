@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin  | FileCheck %s -check-prefix=DARWIN
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnu     | FileCheck %s -check-prefix=ELF
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi | FileCheck %s -check-prefix=GNUEABI
+; RUN: llc < %s -mtriple=arm-apple-darwin  | FileCheck %s -check-prefix=DARWIN
+; RUN: llc < %s -mtriple=arm-linux-gnu     | FileCheck %s -check-prefix=ELF
+; RUN: llc < %s -mtriple=arm-linux-gnueabi | FileCheck %s -check-prefix=GNUEABI
 
 ; DARWIN: .section	__DATA,__mod_init_func,mod_init_funcs
 ; DARWIN: .section	__DATA,__mod_term_func,mod_term_funcs

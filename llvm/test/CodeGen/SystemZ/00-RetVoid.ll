@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=systemz
+; RUN: llc < %s -march=systemz
 
 define void @foo() {
 entry:

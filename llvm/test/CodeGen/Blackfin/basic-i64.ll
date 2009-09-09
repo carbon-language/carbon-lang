@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs
+; RUN: llc < %s -march=bfin -verify-machineinstrs
 
 define i64 @add(i64 %A, i64 %B) {
 	%R = add i64 %A, %B		; <i64> [#uses=1]

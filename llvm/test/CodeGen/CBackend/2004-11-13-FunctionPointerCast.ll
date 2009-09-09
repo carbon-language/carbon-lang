@@ -1,7 +1,7 @@
 ; The CBE should not emit code that casts the function pointer.  This causes
 ; GCC to get testy and insert trap instructions instead of doing the right
 ; thing. :(
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llc < %s -march=c
 
 declare void @external(i8*)
 

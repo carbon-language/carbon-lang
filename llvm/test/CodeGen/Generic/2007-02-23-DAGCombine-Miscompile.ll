@@ -1,5 +1,5 @@
 ; PR1219
-; RUN: llvm-as < %s | llc -march=x86 | grep {movl	\$1, %eax}
+; RUN: llc < %s -march=x86 | grep {movl	\$1, %eax}
 
 define i32 @test(i1 %X) {
 old_entry1:

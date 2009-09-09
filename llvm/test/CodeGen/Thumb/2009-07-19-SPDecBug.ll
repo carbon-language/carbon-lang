@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv6-elf | not grep "subs sp"
+; RUN: llc < %s -mtriple=thumbv6-elf | not grep "subs sp"
 ; PR4567
 
 define arm_apcscc i8* @__gets_chk(i8* %s, i32 %slen) nounwind {

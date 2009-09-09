@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=sparc | \
+; RUN: llc < %s -march=sparc | \
 ; RUN:   grep xnor | count 2
 
 define i32 @test1(i32 %X, i32 %Y) {

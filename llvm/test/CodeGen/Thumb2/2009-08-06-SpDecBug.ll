@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-none-linux-gnueabi | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-none-linux-gnueabi | FileCheck %s
 ; PR4659
 ; PR4682
 

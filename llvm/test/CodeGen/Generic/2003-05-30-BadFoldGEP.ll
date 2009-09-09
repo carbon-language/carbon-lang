@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 ;; Date:     May 28, 2003.
 ;; From:     test/Programs/External/SPEC/CINT2000/254.gap.llvm.bc

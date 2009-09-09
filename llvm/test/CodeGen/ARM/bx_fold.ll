@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm
-; RUN: llvm-as < %s | llc -march=arm | not grep bx
+; RUN: llc < %s -march=arm
+; RUN: llc < %s -march=arm | not grep bx
 
 define void @test(i32 %Ptr, i8* %L) {
 entry:

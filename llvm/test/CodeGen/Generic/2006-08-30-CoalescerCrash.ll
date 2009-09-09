@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc	
+; RUN: llc < %s	
 %struct.CUMULATIVE_ARGS = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }
 	%struct.VEC_edge = type { i32, i32, [1 x %struct.edge_def*] }
 	%struct._obstack_chunk = type { i8*, %struct._obstack_chunk*, [4 x i8] }

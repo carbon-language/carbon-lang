@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin
+; RUN: llc < %s -mtriple=arm-apple-darwin
 
 define void @gcov_exit() nounwind {
 entry:

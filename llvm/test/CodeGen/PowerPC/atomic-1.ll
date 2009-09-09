@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep lwarx  | count 3
-; RUN: llvm-as < %s | llc -march=ppc32 | grep stwcx. | count 4
+; RUN: llc < %s -march=ppc32 | grep lwarx  | count 3
+; RUN: llc < %s -march=ppc32 | grep stwcx. | count 4
 
 define i32 @exchange_and_add(i32* %mem, i32 %val) nounwind  {
 	%tmp = call i32 @llvm.atomic.load.add.i32( i32* %mem, i32 %val )

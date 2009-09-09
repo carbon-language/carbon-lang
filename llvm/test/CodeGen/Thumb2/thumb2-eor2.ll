@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep "eor "  | grep {#187\\|#11141290\\|#-872363008\\|#1114112\\|#-572662307} | count 5
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep "eor "  | grep {#187\\|#11141290\\|#-872363008\\|#1114112\\|#-572662307} | count 5
 
 ; 0x000000bb = 187
 define i32 @f1(i32 %a) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-correct-eh-support
+; RUN: llc < %s -enable-correct-eh-support
 
 define i32 @test() {
         unwind

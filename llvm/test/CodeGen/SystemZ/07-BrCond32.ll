@@ -1,9 +1,9 @@
-; RUN: llvm-as < %s | llc | grep je  | count 1
-; RUN: llvm-as < %s | llc | grep jne | count 1
-; RUN: llvm-as < %s | llc | grep jhe | count 2
-; RUN: llvm-as < %s | llc | grep jle | count 2
-; RUN: llvm-as < %s | llc | grep jh  | count 4
-; RUN: llvm-as < %s | llc | grep jl  | count 4
+; RUN: llc < %s | grep je  | count 1
+; RUN: llc < %s | grep jne | count 1
+; RUN: llc < %s | grep jhe | count 2
+; RUN: llc < %s | grep jle | count 2
+; RUN: llc < %s | grep jh  | count 4
+; RUN: llc < %s | grep jl  | count 4
 
 
 target datalayout = "E-p:64:64:64-i1:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128"

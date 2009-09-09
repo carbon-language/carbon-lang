@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vclz8(<8 x i8>* %A) nounwind {
 ;CHECK: vclz8:

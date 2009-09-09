@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | \
+; RUN: llc < %s -march=arm -mattr=+v6 | \
 ; RUN:   grep pkhbt | count 5
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6 | \
+; RUN: llc < %s -march=arm -mattr=+v6 | \
 ; RUN:   grep pkhtb | count 4
 
 define i32 @test1(i32 %X, i32 %Y) {

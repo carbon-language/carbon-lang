@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep mflr | count 1
+; RUN: llc < %s | grep mflr | count 1
 
 target datalayout = "e-p:32:32"
 target triple = "powerpc-apple-darwin8"

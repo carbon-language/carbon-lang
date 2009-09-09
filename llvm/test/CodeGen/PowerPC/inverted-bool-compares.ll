@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep xori
+; RUN: llc < %s -march=ppc32 | not grep xori
 
 define i32 @test(i1 %B, i32* %P) {
         br i1 %B, label %T, label %F

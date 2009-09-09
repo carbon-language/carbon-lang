@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=arm | grep "subs r" | count 2
-; RUN: llvm-as < %s | llc -march=arm | grep "adc r"
-; RUN: llvm-as < %s | llc -march=arm | grep "sbc r"  | count 2
+; RUN: llc < %s -march=arm | grep "subs r" | count 2
+; RUN: llc < %s -march=arm | grep "adc r"
+; RUN: llc < %s -march=arm | grep "sbc r"  | count 2
 
 define i64 @f1(i64 %a, i64 %b) {
 entry:

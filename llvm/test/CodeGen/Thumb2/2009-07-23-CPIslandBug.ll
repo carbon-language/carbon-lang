@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin9 -mattr=+vfp2,+thumb2
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mattr=+vfp2,+thumb2
 ; rdar://7083961
 
 define arm_apcscc i32 @value(i64 %b1, i64 %b2) nounwind readonly {

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | not grep mullw
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vmsumuhm
+; RUN: llc < %s -march=ppc32 -mcpu=g5 | not grep mullw
+; RUN: llc < %s -march=ppc32 -mcpu=g5 | grep vmsumuhm
 
 define <4 x i32> @test_v4i32(<4 x i32>* %X, <4 x i32>* %Y) {
 	%tmp = load <4 x i32>* %X		; <<4 x i32>> [#uses=1]

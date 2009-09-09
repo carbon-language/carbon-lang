@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=systemz | grep ngr  | count 6
+; RUN: llc < %s -march=systemz | grep ngr  | count 6
 
 define i32 @foo1(i32 %a, i32 %b) {
 entry:

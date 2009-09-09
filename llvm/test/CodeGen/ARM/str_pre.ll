@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | \
+; RUN: llc < %s -march=arm | \
 ; RUN:   grep {str.*\\!} | count 2
 
 define void @test1(i32* %X, i32* %A, i32** %dest) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin8  | not grep slwi
+; RUN: llc < %s -mtriple=powerpc-apple-darwin8  | not grep slwi
 
 define i32 @test(i32 %A, i32 %B) {
 	%C = sub i32 %B, %A

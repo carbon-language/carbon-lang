@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm | grep add | grep lsl
-; RUN: llvm-as < %s | llc -march=arm | grep bic | grep asr
+; RUN: llc < %s -march=arm | grep add | grep lsl
+; RUN: llc < %s -march=arm | grep bic | grep asr
 
 
 define i32 @test1(i32 %X, i32 %Y, i8 %sh) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep fnabs
+; RUN: llc < %s -march=ppc32 | grep fnabs
 
 declare double @fabs(double)
 

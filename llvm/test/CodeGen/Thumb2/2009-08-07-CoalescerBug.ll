@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=armv7-eabi -mattr=+vfp2
+; RUN: llc < %s -mtriple=armv7-eabi -mattr=+vfp2
 ; PR4686
 
 	%a = type { i32 (...)** }

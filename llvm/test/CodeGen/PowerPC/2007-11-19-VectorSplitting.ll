@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc 
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g3
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5
+; RUN: llc < %s 
+; RUN: llc < %s -march=ppc32 -mcpu=g3
+; RUN: llc < %s -march=ppc32 -mcpu=g5
 ; PR1811
 
 define void @execute_shader(<4 x float>* %OUT, <4 x float>* %IN, <4 x float>*

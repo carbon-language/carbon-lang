@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
+; RUN: llc < %s -march=arm -mattr=+neon > %t
 ; RUN: grep vmvn %t | count 8
 ; Note: function names do not include "vmvn" to allow simple grep for opcodes
 

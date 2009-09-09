@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llc < %s -march=ppc32
 
 define void @img2buf(i32 %symbol_size_in_bytes, i16* %ui16) {
         %tmp93 = load i16* null         ; <i16> [#uses=1]

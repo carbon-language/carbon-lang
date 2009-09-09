@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 ; PR1845
 
 define void @boolVectorSelect(<4 x i1>* %boolVectorPtr) {

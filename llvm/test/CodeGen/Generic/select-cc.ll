@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 ; PR2504
 
 define <2 x double> @vector_select(<2 x double> %x, <2 x double> %y) nounwind  {

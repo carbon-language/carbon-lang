@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 > %t
+; RUN: llc < %s -march=arm -mattr=+vfp2 > %t
 ; RUN: grep movmi %t
 ; RUN: grep moveq %t
 ; RUN: grep movgt %t

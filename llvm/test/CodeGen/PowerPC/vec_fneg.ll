@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5 | grep vsubfp
+; RUN: llc < %s -march=ppc32 -mcpu=g5 | grep vsubfp
 
 define void @t(<4 x float>* %A) {
 	%tmp2 = load <4 x float>* %A

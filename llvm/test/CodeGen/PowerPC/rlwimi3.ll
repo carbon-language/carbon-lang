@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -stats |& \
+; RUN: llc < %s -march=ppc32 -stats |& \
 ; RUN:   grep {Number of machine instrs printed} | grep 12
 
 define i16 @Trans16Bit(i32 %srcA, i32 %srcB, i32 %alpha) {

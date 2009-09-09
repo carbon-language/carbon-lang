@@ -1,5 +1,5 @@
 ; PR918
-; RUN: llvm-as < %s | llc -march=c | not grep {l_structtype_s l_fixarray_array3}
+; RUN: llc < %s -march=c | not grep {l_structtype_s l_fixarray_array3}
 
 %structtype_s = type { i32 }
 %fixarray_array3 = type [3 x %structtype_s]

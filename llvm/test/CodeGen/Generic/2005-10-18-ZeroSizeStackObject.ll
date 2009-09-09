@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define void @test() {
         %X = alloca {  }                ; <{  }*> [#uses=0]

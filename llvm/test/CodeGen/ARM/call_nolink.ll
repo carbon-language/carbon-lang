@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi | \
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
 ; RUN:   not grep {bx lr}
 
 	%struct.anon = type { i32 (i32, i32, i32)*, i32, i32, [3 x i32], i8*, i8*, i8* }

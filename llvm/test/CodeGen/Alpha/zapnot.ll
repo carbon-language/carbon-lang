@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens to the bic instruction
-; RUN: llvm-as < %s | llc -march=alpha | grep zapnot
+; RUN: llc < %s -march=alpha | grep zapnot
 
 
 define i16 @foo(i64 %y) zeroext {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin
+; RUN: llc < %s -march=bfin
 @i248_l = external global i248		; <i248*> [#uses=1]
 @i248_s = external global i248		; <i248*> [#uses=1]
 

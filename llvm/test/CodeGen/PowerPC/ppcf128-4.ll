@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llc < %s -march=ppc32
 
 define ppc_fp128 @__floatditf(i64 %u) nounwind  {
 entry:

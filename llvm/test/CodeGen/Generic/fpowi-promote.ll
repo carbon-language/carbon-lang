@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=i386
+; RUN: llc < %s
+; RUN: llc < %s -march=x86 -mcpu=i386
 
 ; PR1239
 

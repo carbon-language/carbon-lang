@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=armv6-apple-darwin
+; RUN: llc < %s -mtriple=armv6-apple-darwin
 
 	type { i32, i32, %struct.D_Sym**, [3 x %struct.D_Sym*] }		; type %0
 	type { i32, %struct.D_Reduction** }		; type %1

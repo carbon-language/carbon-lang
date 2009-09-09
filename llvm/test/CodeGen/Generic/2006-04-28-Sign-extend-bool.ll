@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define i32 @test(i32 %tmp93) {
         %tmp98 = shl i32 %tmp93, 31             ; <i32> [#uses=1]

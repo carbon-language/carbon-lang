@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 ;; Date:     May 28, 2003.
 ;; From:     test/Programs/SingleSource/richards_benchmark.c

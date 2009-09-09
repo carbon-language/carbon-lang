@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define i8 @test1(double %X) {
 	%tmp.1 = fptosi double %X to i8		; <i8> [#uses=1]

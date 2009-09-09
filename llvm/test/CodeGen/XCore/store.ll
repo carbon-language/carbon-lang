@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=xcore > %t1.s
+; RUN: llc < %s -march=xcore > %t1.s
 ; RUN: not grep add %t1.s
 ; RUN: not grep ldaw %t1.s
 ; RUN: not grep lda16 %t1.s

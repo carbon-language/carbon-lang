@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin > %t
+; RUN: llc < %s -march=bfin > %t
 
 ; The DAG combiner may sometimes create illegal i16 SETCC operations when run
 ; after LegalizeOps. Try to tease out all the optimizations in

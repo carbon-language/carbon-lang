@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs > %t
+; RUN: llc < %s -march=bfin -verify-machineinstrs > %t
 
 define i32 @foo(i32 %A, i32 %B, i32 %C) {
 entry:

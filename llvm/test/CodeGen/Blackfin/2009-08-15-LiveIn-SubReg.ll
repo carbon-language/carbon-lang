@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs
+; RUN: llc < %s -march=bfin -verify-machineinstrs
 ; XFAIL: *
 
 ; When joining live intervals of sub-registers, an MBB live-in list is not

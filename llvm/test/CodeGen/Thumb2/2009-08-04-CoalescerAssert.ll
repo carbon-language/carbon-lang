@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-none-linux-gnueabi
+; RUN: llc < %s -mtriple=thumbv7-none-linux-gnueabi
 ; PR4681
 
 	%struct.FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct.FILE*, i32, i32, i32, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i8*, i8*, i32, i32, [40 x i8] }

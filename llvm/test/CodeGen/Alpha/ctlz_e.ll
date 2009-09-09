@@ -1,5 +1,5 @@
 ; Make sure this testcase does not use ctpop
-; RUN: llvm-as < %s | llc -march=alpha | not grep -i ctpop 
+; RUN: llc < %s -march=alpha | not grep -i ctpop 
 
 declare i64 @llvm.ctlz.i64(i64)
 

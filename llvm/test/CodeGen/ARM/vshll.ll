@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
+; RUN: llc < %s -march=arm -mattr=+neon > %t
 ; RUN: grep {vshll\\.s8} %t | count 1
 ; RUN: grep {vshll\\.s16} %t | count 1
 ; RUN: grep {vshll\\.s32} %t | count 1

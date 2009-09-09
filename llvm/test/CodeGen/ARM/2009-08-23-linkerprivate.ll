@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-apple-darwin | FileCheck %s
+; RUN: llc < %s -march=arm -mtriple=arm-apple-darwin | FileCheck %s
 
 ; ModuleID = '/Volumes/MacOS9/tests/WebKit/JavaScriptCore/profiler/ProfilerServer.mm'
 

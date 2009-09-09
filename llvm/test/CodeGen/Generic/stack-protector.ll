@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -o - | grep {__stack_chk_guard}
-; RUN: llvm-as < %s | llc -o - | grep {__stack_chk_fail}
+; RUN: llc < %s -o - | grep {__stack_chk_guard}
+; RUN: llc < %s -o - | grep {__stack_chk_fail}
 
 @"\01LC" = internal constant [11 x i8] c"buf == %s\0A\00"		; <[11 x i8]*> [#uses=1]
 

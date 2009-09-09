@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin > %t
+; RUN: llc < %s -march=bfin > %t
 
 define i1 @add(i1 %A, i1 %B) {
 	%R = add i1 %A, %B		; <i1> [#uses=1]

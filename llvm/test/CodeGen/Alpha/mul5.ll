@@ -1,5 +1,5 @@
 ; Make sure this testcase does not use mulq
-; RUN: llvm-as < %s | llc -march=alpha | not grep -i mul
+; RUN: llc < %s -march=alpha | not grep -i mul
 
 define i64 @foo1(i64 %x) {
 entry:

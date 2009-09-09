@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens the bsr instruction
-; RUN: llvm-as < %s | llc -march=alpha | grep bsr
+; RUN: llc < %s -march=alpha | grep bsr
 
 define internal i64 @abc(i32 %x) {
         %tmp.2 = add i32 %x, -1         ; <i32> [#uses=1]

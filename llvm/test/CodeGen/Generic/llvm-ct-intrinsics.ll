@@ -1,5 +1,5 @@
 ; Make sure this testcase is supported by all code generators
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 declare i64 @llvm.ctpop.i64(i64)
 

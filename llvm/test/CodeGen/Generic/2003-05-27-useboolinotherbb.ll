@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define void @QRiterate(double %tmp.212) {
         %tmp.213 = fcmp une double %tmp.212, 0.000000e+00               ; <i1> [#uses=1]

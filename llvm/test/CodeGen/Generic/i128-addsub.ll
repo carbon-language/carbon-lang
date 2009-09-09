@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define void @test_add(i64 %AL, i64 %AH, i64 %BL, i64 %BH, i64* %RL, i64* %RH) {
 entry:

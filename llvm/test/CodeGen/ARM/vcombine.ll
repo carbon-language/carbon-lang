@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon
+; RUN: llc < %s -march=arm -mattr=+neon
 
 define <16 x i8> @vcombine8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 	%tmp1 = load <8 x i8>* %A

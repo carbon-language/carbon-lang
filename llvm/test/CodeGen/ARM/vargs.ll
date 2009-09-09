@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm
+; RUN: llc < %s -march=arm
 @str = internal constant [43 x i8] c"Hello World %d %d %d %d %d %d %d %d %d %d\0A\00"           ; <[43 x i8]*> [#uses=1]
 
 define i32 @main() {

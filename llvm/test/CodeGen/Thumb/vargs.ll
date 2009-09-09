@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=thumb
-; RUN: llvm-as < %s | llc -mtriple=thumb-linux | grep pop | count 1
-; RUN: llvm-as < %s | llc -mtriple=thumb-darwin | grep pop | count 2
+; RUN: llc < %s -march=thumb
+; RUN: llc < %s -mtriple=thumb-linux | grep pop | count 1
+; RUN: llc < %s -mtriple=thumb-darwin | grep pop | count 2
 
 @str = internal constant [4 x i8] c"%d\0A\00"           ; <[4 x i8]*> [#uses=1]
 

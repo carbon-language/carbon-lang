@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc64
+; RUN: llc < %s -march=ppc64
 
         %struct.TCMalloc_SpinLock = type { i32 }
 

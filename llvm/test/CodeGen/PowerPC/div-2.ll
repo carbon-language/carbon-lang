@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep srawi 
-; RUN: llvm-as < %s | llc -march=ppc32 | grep blr
+; RUN: llc < %s -march=ppc32 | not grep srawi 
+; RUN: llc < %s -march=ppc32 | grep blr
 
 define i32 @test1(i32 %X) {
         %Y = and i32 %X, 15             ; <i32> [#uses=1]

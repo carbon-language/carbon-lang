@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define double @fneg(double %X) {
         %Y = fsub double -0.000000e+00, %X               ; <double> [#uses=1]

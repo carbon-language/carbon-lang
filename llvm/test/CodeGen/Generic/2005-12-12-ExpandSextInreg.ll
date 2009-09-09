@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define i64 @test(i64 %A) {
         %B = trunc i64 %A to i8         ; <i8> [#uses=1]

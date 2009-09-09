@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin
+; RUN: llc < %s -march=bfin
 
 ; Assertion failed: (width < BitWidth && "Invalid APInt Truncate request"),
 ; function trunc, file APInt.cpp, line 956.

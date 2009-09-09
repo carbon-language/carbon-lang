@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-linux-gnueabi | FileCheck %s -check-prefix=CHECK-NOT-PIC
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-linux-gnueabi -relocation-model=pic | FileCheck %s -check-prefix=CHECK-PIC
+; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi | FileCheck %s -check-prefix=CHECK-NOT-PIC
+; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi -relocation-model=pic | FileCheck %s -check-prefix=CHECK-PIC
 
 @i = external thread_local global i32		; <i32*> [#uses=2]
 

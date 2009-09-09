@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32
+; RUN: llc < %s -march=ppc32
 ; PR3011
 
 define <2 x double> @vector_select(<2 x double> %x, <2 x double> %y) nounwind  {

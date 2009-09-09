@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6
+; RUN: llc < %s -march=arm -mattr=+v6
 
 define i32 @test1(i32 %tmp54) {
 	%tmp56 = tail call i32 asm "uxtb16 $0,$1", "=r,r"( i32 %tmp54 )		; <i32> [#uses=1]

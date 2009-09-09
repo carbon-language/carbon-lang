@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=armv6-apple-darwin
+; RUN: llc < %s -mtriple=armv6-apple-darwin
 
 	%struct.rtunion = type { i64 }
 	%struct.rtx_def = type { i16, i8, i8, [1 x %struct.rtunion] }

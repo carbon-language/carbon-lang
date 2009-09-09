@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=xcore > %t1.s
+; RUN: llc < %s -march=xcore > %t1.s
 ; RUN: grep "bl log2f" %t1.s | count 1
 ; RUN: grep "bl log2" %t1.s | count 2
 declare double @llvm.log2.f64(double)

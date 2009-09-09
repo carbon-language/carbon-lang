@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=xcore > %t1.s
+; RUN: llc < %s -march=xcore > %t1.s
 ; RUN: grep "bl __misaligned_load" %t1.s | count 1
 ; RUN: grep ld16s %t1.s | count 2
 ; RUN: grep ldw %t1.s | count 2

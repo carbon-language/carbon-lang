@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnu | grep {str.*\\!}
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnu | grep {ldr.*\\\[.*\], #+4}
+; RUN: llc < %s -mtriple=arm-linux-gnu | grep {str.*\\!}
+; RUN: llc < %s -mtriple=arm-linux-gnu | grep {ldr.*\\\[.*\], #+4}
 
 @b = external global i64*
 

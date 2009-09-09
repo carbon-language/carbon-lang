@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 ; This caused a problem because the argument of a call was defined by
 ; the return value of another call that appears later in the code.

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | not grep 1_0
+; RUN: llc < %s | not grep 1_0
 ; This used to create an extra branch to 'entry', LBB1_0.
 
 ; ModuleID = 'bug.bc'

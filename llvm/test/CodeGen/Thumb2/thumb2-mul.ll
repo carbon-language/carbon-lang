@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
 
 define i32 @f1(i32 %a, i32 %b, i32 %c) {
 ; CHECK: f1:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc64 | grep lwzx
+; RUN: llc < %s -march=ppc64 | grep lwzx
 
         %struct.__db_region = type { %struct.__mutex_t, [4 x i8], %struct.anon, i32, [1 x i32] }
         %struct.__mutex_t = type { i32 }

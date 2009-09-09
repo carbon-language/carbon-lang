@@ -1,18 +1,18 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
+; RUN: llc < %s -march=arm -mattr=+vfp2 | \
 ; RUN:   grep fabs | count 2
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
+; RUN: llc < %s -march=arm -mattr=+vfp2 | \
 ; RUN:   grep fmscs | count 1
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
+; RUN: llc < %s -march=arm -mattr=+vfp2 | \
 ; RUN:   grep fcvt | count 2
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
+; RUN: llc < %s -march=arm -mattr=+vfp2 | \
 ; RUN:   grep fuito | count 2
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
+; RUN: llc < %s -march=arm -mattr=+vfp2 | \
 ; RUN:   grep fto.i | count 4
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
+; RUN: llc < %s -march=arm -mattr=+vfp2 | \
 ; RUN:   grep bmi | count 1
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
+; RUN: llc < %s -march=arm -mattr=+vfp2 | \
 ; RUN:   grep bgt | count 1
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
+; RUN: llc < %s -march=arm -mattr=+vfp2 | \
 ; RUN:   grep fcmpezs | count 1
 
 define void @test(float* %P, double* %D) {

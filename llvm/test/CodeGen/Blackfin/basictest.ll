@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs
+; RUN: llc < %s -march=bfin -verify-machineinstrs
 
 define void @void(i32, i32) {
         add i32 0, 0            ; <i32>:3 [#uses=2]

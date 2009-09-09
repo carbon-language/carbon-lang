@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c | grep {\\* *volatile *\\*}
+; RUN: llc < %s -march=c | grep {\\* *volatile *\\*}
 
 @G = external global void ()*           ; <void ()**> [#uses=2]
 

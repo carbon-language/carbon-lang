@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -pre-RA-sched=default
-; RUN: llvm-as < %s | llc -pre-RA-sched=list-burr
-; RUN: llvm-as < %s | llc -pre-RA-sched=fast
+; RUN: llc < %s -pre-RA-sched=default
+; RUN: llc < %s -pre-RA-sched=list-burr
+; RUN: llc < %s -pre-RA-sched=fast
 ; PR859
 
 ; The top-down schedulers are excluded here because they don't yet support

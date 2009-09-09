@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=alpha | not grep cmovlt
-; RUN: llvm-as < %s | llc -march=alpha | grep cmoveq
+; RUN: llc < %s -march=alpha | not grep cmovlt
+; RUN: llc < %s -march=alpha | grep cmoveq
 
 define i64 @cmov_lt(i64 %a, i64 %c) {
 entry:

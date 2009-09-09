@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=arm | FileCheck %s -check-prefix=GENERIC
-; RUN: llvm-as < %s | llc -mtriple=armv6-apple-darwin | FileCheck %s -check-prefix=DARWIN_V6
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v7a | FileCheck %s -check-prefix=V7
+; RUN: llc < %s -march=arm | FileCheck %s -check-prefix=GENERIC
+; RUN: llc < %s -mtriple=armv6-apple-darwin | FileCheck %s -check-prefix=DARWIN_V6
+; RUN: llc < %s -march=arm -mattr=+v7a | FileCheck %s -check-prefix=V7
 
 ; rdar://7113725
 

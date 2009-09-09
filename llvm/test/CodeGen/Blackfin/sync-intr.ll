@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=bfin -verify-machineinstrs | FileCheck %s
 
 define void @f() nounwind {
 entry:

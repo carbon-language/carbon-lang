@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc | grep caml.*__frametable
-; RUN: llvm-as < %s | llc -march=x86 | grep {movl	.0}
+; RUN: llc < %s | grep caml.*__frametable
+; RUN: llc < %s -march=x86 | grep {movl	.0}
 
 %struct.obj = type { i8*, %struct.obj* }
 

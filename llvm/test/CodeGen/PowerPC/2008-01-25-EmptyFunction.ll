@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep nop
+; RUN: llc < %s -march=ppc32 | grep nop
 target triple = "powerpc-apple-darwin8"
 
 

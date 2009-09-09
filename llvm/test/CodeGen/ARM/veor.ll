@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
+; RUN: llc < %s -march=arm -mattr=+neon > %t
 ; RUN: grep veor %t | count 8
 ; Note: function names do not include "veor" to allow simple grep for opcodes
 

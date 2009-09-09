@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=msp430
+; RUN: llc < %s -march=msp430
 
 define i16 @test(double %d) nounwind {
 entry:

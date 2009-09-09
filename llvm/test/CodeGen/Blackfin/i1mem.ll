@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs
+; RUN: llc < %s -march=bfin -verify-machineinstrs
 @i1_l = external global i1		; <i1*> [#uses=1]
 @i1_s = external global i1		; <i1*> [#uses=1]
 

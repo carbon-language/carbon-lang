@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | grep {mov r0, r0, lsr #31}
+; RUN: llc < %s -march=arm | grep {mov r0, r0, lsr #31}
 
 define i32 @test1(i32 %X) {
 entry:

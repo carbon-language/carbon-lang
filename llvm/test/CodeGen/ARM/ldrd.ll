@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -mtriple=armv6-apple-darwin | grep ldrd
-; RUN: llvm-as < %s | llc -mtriple=armv5-apple-darwin | not grep ldrd
-; RUN: llvm-as < %s | llc -mtriple=armv6-eabi | not grep ldrd
+; RUN: llc < %s -mtriple=armv6-apple-darwin | grep ldrd
+; RUN: llc < %s -mtriple=armv5-apple-darwin | not grep ldrd
+; RUN: llc < %s -mtriple=armv6-eabi | not grep ldrd
 ; rdar://r6949835
 
 @b = external global i64*

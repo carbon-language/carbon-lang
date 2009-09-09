@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin9.5
+; RUN: llc < %s -mtriple=powerpc-apple-darwin9.5
 ; rdar://6499616
 
 	%llvm.dbg.anchor.type = type { i32, i32 }

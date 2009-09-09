@@ -1,11 +1,11 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep add | grep #255
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep add | grep #256
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep add | grep #257
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep add | grep #4094
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep add | grep #4095
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep add | grep #4096
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep add
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep add | grep lsl | grep #8
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep add | grep #255
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep add | grep #256
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep add | grep #257
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep add | grep #4094
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep add | grep #4095
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep add | grep #4096
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep add
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep add | grep lsl | grep #8
 
 define i32 @t2ADDrc_255(i32 %lhs) {
     %Rd = add i32 %lhs, 255;

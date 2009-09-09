@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=armv6-eabi -mattr=+vfp2 -float-abi=hard
+; RUN: llc < %s -mtriple=armv6-eabi -mattr=+vfp2 -float-abi=hard
 ; PR4419
 
 define float @__ieee754_acosf(float %x) nounwind {

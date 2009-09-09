@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llc < %s -march=c
 @.str15 = external global [2 x i8]
 
 define <4 x i32> @foo(<4 x i32> %a, i32 %b) {

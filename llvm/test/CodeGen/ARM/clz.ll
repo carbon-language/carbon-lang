@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v5t | grep clz
+; RUN: llc < %s -march=arm -mattr=+v5t | grep clz
 
 declare i32 @llvm.ctlz.i32(i32)
 

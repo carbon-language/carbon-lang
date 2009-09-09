@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin
+; RUN: llc < %s -mtriple=arm-linux-gnueabi
+; RUN: llc < %s -mtriple=arm-apple-darwin
 
 define double @f(i32 %a1, i32 %a2, i32 %a3, i32 %a4, i32 %a5, double %b) {
         %tmp = call double @g(i32 %a2, i32 %a3, i32 %a4, i32 %a5, double %b)

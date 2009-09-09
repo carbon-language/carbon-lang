@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm
-; RUN: llvm-as < %s | llc -mtriple=arm-linux
+; RUN: llc < %s -march=arm
+; RUN: llc < %s -mtriple=arm-linux
 
 define void @foo(<8 x float>* %f, <8 x float>* %g, <4 x i64>* %y)
 {

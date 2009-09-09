@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=thumb | not grep {ldr sp}
-; RUN: llvm-as < %s | llc -mtriple=thumb-apple-darwin | \
+; RUN: llc < %s -march=thumb | not grep {ldr sp}
+; RUN: llc < %s -mtriple=thumb-apple-darwin | \
 ; RUN:   not grep {sub.*r7}
-; RUN: llvm-as < %s | llc -march=thumb | grep 4294967280
+; RUN: llc < %s -march=thumb | grep 4294967280
 
 	%struct.state = type { i32, %struct.info*, float**, i32, i32, i32, i32, i32, i32, i32, i32, i32, i64, i64, i64, i64, i64, i64, i8* }
 	%struct.info = type { i32, i32, i32, i32, i32, i32, i32, i8* }

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=alpha | grep .weak.*f
-; RUN: llvm-as < %s | llc -march=alpha | grep .weak.*h
+; RUN: llc < %s -march=alpha | grep .weak.*f
+; RUN: llc < %s -march=alpha | grep .weak.*h
 
 define weak i32 @f() {
 entry:

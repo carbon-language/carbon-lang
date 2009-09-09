@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define arm_apcscc <8 x i8> @test_vrev64D8(<8 x i8>* %A) nounwind {
 ;CHECK: test_vrev64D8:

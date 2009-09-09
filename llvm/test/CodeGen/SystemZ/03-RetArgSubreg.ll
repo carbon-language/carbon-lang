@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=systemz | grep lgr   | count 2
-; RUN: llvm-as < %s | llc -march=systemz | grep nihf  | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep lgfr  | count 1
+; RUN: llc < %s -march=systemz | grep lgr   | count 2
+; RUN: llc < %s -march=systemz | grep nihf  | count 1
+; RUN: llc < %s -march=systemz | grep lgfr  | count 1
 
 
 define i32 @foo(i32 %a, i32 %b) {

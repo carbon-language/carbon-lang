@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -mattr=+v6,+vfp2 | grep stm | count 2
+; RUN: llc < %s -mtriple=arm-apple-darwin -mattr=+v6,+vfp2 | grep stm | count 2
 
 @"\01LC" = internal constant [32 x i8] c"Boolean Not: %d %d %d %d %d %d\0A\00", section "__TEXT,__cstring,cstring_literals"		; <[32 x i8]*> [#uses=1]
 @"\01LC1" = internal constant [26 x i8] c"Bitwise Not: %d %d %d %d\0A\00", section "__TEXT,__cstring,cstring_literals"		; <[26 x i8]*> [#uses=1]

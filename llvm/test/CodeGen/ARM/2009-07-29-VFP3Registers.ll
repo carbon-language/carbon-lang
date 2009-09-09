@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=armv7-apple-darwin10 -mattr=+vfp3
+; RUN: llc < %s -mtriple=armv7-apple-darwin10 -mattr=+vfp3
 
 @a = external global double		; <double*> [#uses=1]
 

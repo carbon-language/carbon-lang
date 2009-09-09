@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=thumb
-; RUN: llvm-as < %s | llc -march=thumb | grep add | count 1
+; RUN: llc < %s -march=thumb
+; RUN: llc < %s -march=thumb | grep add | count 1
 
 define void @f1() {
 	%c = alloca i8, align 1

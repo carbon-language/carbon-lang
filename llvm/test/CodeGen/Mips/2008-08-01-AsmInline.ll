@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=mips -o %t
+; RUN: llc < %s -march=mips -o %t
 ; RUN: grep mfhi  %t | count 1
 ; RUN: grep mflo  %t | count 1
 ; RUN: grep multu %t | count 1

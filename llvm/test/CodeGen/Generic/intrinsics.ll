@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 ;; SQRT
 declare float @llvm.sqrt.f32(float)

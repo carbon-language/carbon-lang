@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep add
-; RUN: llvm-as < %s | llc -march=x86 | not grep adc
+; RUN: llc < %s -march=x86 | grep add
+; RUN: llc < %s -march=x86 | not grep adc
 
 define i64 @test(i64 %A, i32 %B) {
         %tmp12 = zext i32 %B to i64             ; <i64> [#uses=1]

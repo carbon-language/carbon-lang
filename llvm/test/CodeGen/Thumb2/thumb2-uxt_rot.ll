@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep uxtb | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep uxtab | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep uxth | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep uxtb | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep uxtab | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep uxth | count 1
 
 define i8 @test1(i32 %A.u) zeroext {
     %B.u = trunc i32 %A.u to i8

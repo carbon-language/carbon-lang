@@ -1,10 +1,10 @@
-; RUN: llvm-as < %s | llc -march=arm | grep moveq | count 1
-; RUN: llvm-as < %s | llc -march=arm | grep movgt | count 1
-; RUN: llvm-as < %s | llc -march=arm | grep movlt | count 3
-; RUN: llvm-as < %s | llc -march=arm | grep movle | count 1
-; RUN: llvm-as < %s | llc -march=arm | grep movls | count 1
-; RUN: llvm-as < %s | llc -march=arm | grep movhi | count 1
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
+; RUN: llc < %s -march=arm | grep moveq | count 1
+; RUN: llc < %s -march=arm | grep movgt | count 1
+; RUN: llc < %s -march=arm | grep movlt | count 3
+; RUN: llc < %s -march=arm | grep movle | count 1
+; RUN: llc < %s -march=arm | grep movls | count 1
+; RUN: llc < %s -march=arm | grep movhi | count 1
+; RUN: llc < %s -march=arm -mattr=+vfp2 | \
 ; RUN:   grep fcpydmi | count 1
 
 define i32 @f1(i32 %a.s) {

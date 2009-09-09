@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin
+; RUN: llc < %s -mtriple=powerpc-apple-darwin
 
 	%struct.HDescriptor = type <{ i32, i32 }>
 

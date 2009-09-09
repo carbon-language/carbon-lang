@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 ; PR1133
 define void @test(i32* %X) nounwind  {
 entry:

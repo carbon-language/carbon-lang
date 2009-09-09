@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -relocation-model=pic | \
+; RUN: llc < %s -mtriple=arm-apple-darwin -relocation-model=pic | \
 ; RUN:   not grep LPC9
 
 	%struct.B = type { i32 }

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs > %t
+; RUN: llc < %s -march=bfin -verify-machineinstrs > %t
 
 	%IntList = type %struct.intlist*
 	%ReadFn = type i32 ()*

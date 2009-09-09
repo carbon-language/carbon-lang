@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define void @foo(double %a, double %b, float* %fp) {
 	%c = fadd double %a, %b

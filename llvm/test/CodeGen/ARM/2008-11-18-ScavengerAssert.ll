@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2
+; RUN: llc < %s -march=arm -mattr=+v6,+vfp2
 
 define hidden i64 @__muldi3(i64 %u, i64 %v) nounwind {
 entry:

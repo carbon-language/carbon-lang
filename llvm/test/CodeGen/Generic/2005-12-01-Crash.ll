@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 @str = external global [36 x i8]		; <[36 x i8]*> [#uses=0]
 @str.upgrd.1 = external global [29 x i8]		; <[29 x i8]*> [#uses=0]
 @str1 = external global [29 x i8]		; <[29 x i8]*> [#uses=0]

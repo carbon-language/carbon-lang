@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | FileCheck %s
+; RUN: llc < %s -march=arm | FileCheck %s
 
 define i32 @t1(i32 %v) nounwind readnone {
 entry:

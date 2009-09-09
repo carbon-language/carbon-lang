@@ -1,10 +1,10 @@
 ; Test various forms of calls.
 
-; RUN: llvm-as < %s | llc -march=ppc32 | \
+; RUN: llc < %s -march=ppc32 | \
 ; RUN:   grep {bl } | count 2
-; RUN: llvm-as < %s | llc -march=ppc32 | \
+; RUN: llc < %s -march=ppc32 | \
 ; RUN:   grep {bctrl} | count 1
-; RUN: llvm-as < %s | llc -march=ppc32 | \
+; RUN: llc < %s -march=ppc32 | \
 ; RUN:   grep {bla } | count 1
 
 declare void @foo()

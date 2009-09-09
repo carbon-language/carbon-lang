@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi | \
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
 ; RUN:     grep {__aeabi_read_tp}
 
 define i8* @test() {

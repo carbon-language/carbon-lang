@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=cellspu
+; RUN: llc < %s -march=cellspu
 
 declare {i16, i1} @llvm.smul.with.overflow.i16(i16 %a, i16 %b)
 define i1 @a(i16 %x) zeroext nounwind {

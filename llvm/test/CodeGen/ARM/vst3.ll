@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define void @vst3i8(i8* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vst3i8:

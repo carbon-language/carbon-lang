@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mcpu=g5
+; RUN: llc < %s -march=ppc32 -mcpu=g5
 
 define void @test(<4 x float>*, { { i16, i16, i32 } }*) {
 xOperationInitMasks.exit:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin
+; RUN: llc < %s -march=bfin
 
 define i16 @and(i16 %A, i16 %B) {
 	%R = and i16 %A, %B		; <i16> [#uses=1]

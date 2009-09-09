@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=armv6-elf
+; RUN: llc < %s -mtriple=armv6-elf
 ; PR4528
 
 define arm_aapcscc i32 @file_read_actor(i32 %desc, i32 %page, i32 %offset, i32 %size) nounwind optsize {

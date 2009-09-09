@@ -1,7 +1,7 @@
 ; PR1164
-; RUN: llvm-as < %s | llc -march=c | grep {llvm_cbe_A = \\*llvm_cbe_G;}
-; RUN: llvm-as < %s | llc -march=c | grep {llvm_cbe_B = \\*(&ltmp_0_1);}
-; RUN: llvm-as < %s | llc -march=c | grep {return (((unsigned int )(((unsigned int )llvm_cbe_A) + ((unsigned int )llvm_cbe_B))));}
+; RUN: llc < %s -march=c | grep {llvm_cbe_A = \\*llvm_cbe_G;}
+; RUN: llc < %s -march=c | grep {llvm_cbe_B = \\*(&ltmp_0_1);}
+; RUN: llc < %s -march=c | grep {return (((unsigned int )(((unsigned int )llvm_cbe_A) + ((unsigned int )llvm_cbe_B))));}
 
 @G = global i32 123
 @ltmp_0_1 = global i32 123

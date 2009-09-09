@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=xcore > %t1.s
+; RUN: llc < %s -march=xcore > %t1.s
 ; RUN: grep "bl __powidf2" %t1.s | count 1
 ; RUN: grep "bl __powisf2" %t1.s | count 1
 declare double @llvm.powi.f64(double, i32)

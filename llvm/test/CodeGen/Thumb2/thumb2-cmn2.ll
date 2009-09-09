@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep "cmn\\.w "  | grep {#187\\|#11141290\\|#-872363008\\|#1114112} | count 4
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep "cmn\\.w "  | grep {#187\\|#11141290\\|#-872363008\\|#1114112} | count 4
 
 ; -0x000000bb = 4294967109
 define i1 @f1(i32 %a) {

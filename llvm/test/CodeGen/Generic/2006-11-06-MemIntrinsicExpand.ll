@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | not grep adc
+; RUN: llc < %s -march=x86 | not grep adc
 ; PR987
 
 declare void @llvm.memcpy.i64(i8*, i8*, i64, i32)

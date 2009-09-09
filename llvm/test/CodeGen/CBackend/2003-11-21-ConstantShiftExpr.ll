@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llc < %s -march=c
 @y = weak global i8 0           ; <i8*> [#uses=1]
 
 define i32 @testcaseshr() {

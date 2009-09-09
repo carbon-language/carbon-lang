@@ -1,10 +1,10 @@
-; RUN: llvm-as < %s | llc -march=thumb | grep beq | count 1
-; RUN: llvm-as < %s | llc -march=thumb | grep bgt | count 1
-; RUN: llvm-as < %s | llc -march=thumb | grep blt | count 3
-; RUN: llvm-as < %s | llc -march=thumb | grep ble | count 1
-; RUN: llvm-as < %s | llc -march=thumb | grep bls | count 1
-; RUN: llvm-as < %s | llc -march=thumb | grep bhi | count 1
-; RUN: llvm-as < %s | llc -march=thumb | grep __ltdf2
+; RUN: llc < %s -march=thumb | grep beq | count 1
+; RUN: llc < %s -march=thumb | grep bgt | count 1
+; RUN: llc < %s -march=thumb | grep blt | count 3
+; RUN: llc < %s -march=thumb | grep ble | count 1
+; RUN: llc < %s -march=thumb | grep bls | count 1
+; RUN: llc < %s -march=thumb | grep bhi | count 1
+; RUN: llc < %s -march=thumb | grep __ltdf2
 
 define i32 @f1(i32 %a.s) {
 entry:

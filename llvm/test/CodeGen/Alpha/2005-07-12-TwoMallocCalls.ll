@@ -1,5 +1,5 @@
 ; There should be exactly two calls here (memset and malloc), no more.
-; RUN: llvm-as < %s | llc -march=alpha | grep jsr | count 2
+; RUN: llc < %s -march=alpha | grep jsr | count 2
 
 %typedef.bc_struct = type opaque
 declare void @llvm.memset.i64(i8*, i8, i64, i32)

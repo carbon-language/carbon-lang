@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2
+; RUN: llc < %s -march=thumb -mattr=+thumb2
 
 define i1 @test1(i64 %poscnt, i32 %work) {
 entry:

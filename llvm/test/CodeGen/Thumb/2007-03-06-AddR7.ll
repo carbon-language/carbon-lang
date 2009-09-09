@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=thumb
-; RUN: llvm-as < %s | llc -mtriple=thumb-apple-darwin -relocation-model=pic \
+; RUN: llc < %s -march=thumb
+; RUN: llc < %s -mtriple=thumb-apple-darwin -relocation-model=pic \
 ; RUN:   -mattr=+v6,+vfp2 | not grep {add r., r7, #2 \\* 4}
 
 	%struct.__fooAllocator = type opaque

@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm
-; RUN: llvm-as < %s | llc -march=arm | grep bx | count 1
+; RUN: llc < %s -march=arm
+; RUN: llc < %s -march=arm | grep bx | count 1
 
 define i32 @t1(i32 %a, i32 %b) {
 	%tmp2 = icmp eq i32 %a, 0

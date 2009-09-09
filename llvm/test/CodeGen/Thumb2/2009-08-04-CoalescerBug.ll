@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin -mattr=+neon,+neonfp -relocation-model=pic -disable-fp-elim
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+neon,+neonfp -relocation-model=pic -disable-fp-elim
 
 	type { %struct.GAP }		; type %0
 	type { i16, i8, i8 }		; type %1

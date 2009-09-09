@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi
 ; PR1406
 
 	%struct.AVClass = type { i8*, i8* (i8*)*, %struct.AVOption* }

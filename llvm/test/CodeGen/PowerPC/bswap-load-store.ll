@@ -1,11 +1,11 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | \
+; RUN: llc < %s -march=ppc32 | \
 ; RUN:   grep {stwbrx\\|lwbrx\\|sthbrx\\|lhbrx} | count 4
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwinm
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwimi
-; RUN: llvm-as < %s | llc -march=ppc64 | \
+; RUN: llc < %s -march=ppc32 | not grep rlwinm
+; RUN: llc < %s -march=ppc32 | not grep rlwimi
+; RUN: llc < %s -march=ppc64 | \
 ; RUN:   grep {stwbrx\\|lwbrx\\|sthbrx\\|lhbrx} | count 4
-; RUN: llvm-as < %s | llc -march=ppc64 | not grep rlwinm
-; RUN: llvm-as < %s | llc -march=ppc64 | not grep rlwimi
+; RUN: llc < %s -march=ppc64 | not grep rlwinm
+; RUN: llc < %s -march=ppc64 | not grep rlwimi
 
 define void @STWBRX(i32 %i, i8* %ptr, i32 %off) {
         %tmp1 = getelementptr i8* %ptr, i32 %off                ; <i8*> [#uses=1]

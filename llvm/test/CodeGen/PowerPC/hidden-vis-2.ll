@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin9 | grep non_lazy_ptr | count 6
+; RUN: llc < %s -mtriple=powerpc-apple-darwin9 | grep non_lazy_ptr | count 6
 
 @x = external hidden global i32		; <i32*> [#uses=1]
 @y = extern_weak hidden global i32	; <i32*> [#uses=1]

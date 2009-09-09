@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs
+; RUN: llc < %s -march=bfin -verify-machineinstrs
 @.str_1 = external constant [42 x i8]		; <[42 x i8]*> [#uses=1]
 
 declare i32 @printf(i8*, ...)

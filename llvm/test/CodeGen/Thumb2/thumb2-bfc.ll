@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep "bfc " | count 3
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep "bfc " | count 3
 
 ; 4278190095 = 0xff00000f
 define i32 @f1(i32 %a) {

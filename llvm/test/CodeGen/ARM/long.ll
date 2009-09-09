@@ -1,13 +1,13 @@
-; RUN: llvm-as < %s | llc -march=arm -asm-verbose | \
+; RUN: llc < %s -march=arm -asm-verbose | \
 ; RUN:   grep -- {-2147483648} | count 3
-; RUN: llvm-as < %s | llc -march=arm | grep mvn | count 3
-; RUN: llvm-as < %s | llc -march=arm | grep adds | count 1
-; RUN: llvm-as < %s | llc -march=arm | grep adc | count 1
-; RUN: llvm-as < %s | llc -march=arm | grep {subs } | count 1
-; RUN: llvm-as < %s | llc -march=arm | grep sbc | count 1
-; RUN: llvm-as < %s | llc -march=arm | \
+; RUN: llc < %s -march=arm | grep mvn | count 3
+; RUN: llc < %s -march=arm | grep adds | count 1
+; RUN: llc < %s -march=arm | grep adc | count 1
+; RUN: llc < %s -march=arm | grep {subs } | count 1
+; RUN: llc < %s -march=arm | grep sbc | count 1
+; RUN: llc < %s -march=arm | \
 ; RUN:   grep smull | count 1
-; RUN: llvm-as < %s | llc -march=arm | \
+; RUN: llc < %s -march=arm | \
 ; RUN:   grep umull | count 1
 
 define i64 @f1() {

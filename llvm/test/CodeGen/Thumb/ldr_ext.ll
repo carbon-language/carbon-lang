@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=thumb | FileCheck %s -check-prefix=V5
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+v6 | FileCheck %s -check-prefix=V6
+; RUN: llc < %s -march=thumb | FileCheck %s -check-prefix=V5
+; RUN: llc < %s -march=thumb -mattr=+v6 | FileCheck %s -check-prefix=V6
 
 ; rdar://7176514
 

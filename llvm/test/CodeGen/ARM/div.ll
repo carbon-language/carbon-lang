@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm > %t
+; RUN: llc < %s -march=arm > %t
 ; RUN: grep __divsi3  %t
 ; RUN: grep __udivsi3 %t
 ; RUN: grep __modsi3  %t

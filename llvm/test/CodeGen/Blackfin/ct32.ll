@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin
+; RUN: llc < %s -march=bfin
 
 declare i32 @llvm.ctlz.i32(i32)
 declare i32 @llvm.cttz.i32(i32)

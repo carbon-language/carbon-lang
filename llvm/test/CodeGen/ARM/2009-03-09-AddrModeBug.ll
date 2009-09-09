@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm
+; RUN: llc < %s -march=arm
 
 	%struct.hit_t = type { %struct.v_t, double }
 	%struct.node_t = type { %struct.hit_t, %struct.hit_t, i32 }

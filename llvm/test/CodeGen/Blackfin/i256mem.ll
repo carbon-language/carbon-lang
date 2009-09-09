@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs
+; RUN: llc < %s -march=bfin -verify-machineinstrs
 @i17_l = external global i17		; <i17*> [#uses=1]
 @i17_s = external global i17		; <i17*> [#uses=1]
 

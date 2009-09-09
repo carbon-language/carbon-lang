@@ -1,5 +1,5 @@
 ; PR925
-; RUN: llvm-as < %s | llc -march=x86 | \
+; RUN: llc < %s -march=x86 | \
 ; RUN:   grep mov.*str1 | count 1
 
 target datalayout = "e-p:32:32"

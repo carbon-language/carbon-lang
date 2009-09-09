@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin
+; RUN: llc < %s -mtriple=powerpc-apple-darwin
 
 define fastcc i64 @nonzero_bits1() nounwind  {
 entry:

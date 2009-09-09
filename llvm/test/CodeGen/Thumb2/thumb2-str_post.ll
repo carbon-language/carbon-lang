@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
 ; RUN:   grep {strh .*\\\[.*\], #-4} | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
 ; RUN:   grep {str .*\\\[.*\],} | count 1
 
 define i16 @test1(i32* %X, i16* %A) {

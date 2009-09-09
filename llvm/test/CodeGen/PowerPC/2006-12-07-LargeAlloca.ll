@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=ppc64
-; RUN: llvm-as < %s | llc -march=ppc32
-; RUN: llvm-as < %s | llc 
+; RUN: llc < %s -march=ppc64
+; RUN: llc < %s -march=ppc32
+; RUN: llc < %s 
 
 define void @bitap() {
 entry:

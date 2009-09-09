@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm
+; RUN: llc < %s -march=arm
 
 define void @execute_shader(<4 x float>* %OUT, <4 x float>* %IN, <4 x float>* %CONST) {
 entry:

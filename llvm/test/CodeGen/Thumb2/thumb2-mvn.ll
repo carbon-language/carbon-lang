@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin | FileCheck %s
 
 ; 0x000000bb = 187
 define i32 @f1(i32 %a) {

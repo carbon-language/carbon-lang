@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin -relocation-model=pic | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -relocation-model=pic | FileCheck %s
 
 ; Thumb2 target should reorder the bb's in order to use tbb / tbh.
 

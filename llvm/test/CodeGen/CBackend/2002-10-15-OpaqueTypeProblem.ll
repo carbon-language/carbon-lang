@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llc < %s -march=c
 
 %MPI_Comm = type %struct.Comm*
 %struct.Comm = type opaque

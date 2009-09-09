@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | not grep {str.*\\!}
+; RUN: llc < %s -march=arm | not grep {str.*\\!}
 
 	%struct.shape_edge_t = type { %struct.shape_edge_t*, %struct.shape_edge_t*, i32, i32, i32, i32 }
 	%struct.shape_path_t = type { %struct.shape_edge_t*, %struct.shape_edge_t*, i32, i32, i32, i32, i32, i32 }

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin9 -mattr=+neon,+neonfp
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mattr=+neon,+neonfp
 ; rdar://7117307
 
 	%struct.Hosp = type { i32, i32, i32, %struct.List, %struct.List, %struct.List, %struct.List }

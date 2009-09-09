@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=powerpc64-apple-darwin
+; RUN: llc < %s -mtriple=powerpc64-apple-darwin
 
 declare void @cxa_atexit_check_1(i8*)
 

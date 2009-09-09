@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin | grep ldmia
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin | grep stmia
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin | grep ldrb
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin | grep ldrh
+; RUN: llc < %s -mtriple=arm-apple-darwin | grep ldmia
+; RUN: llc < %s -mtriple=arm-apple-darwin | grep stmia
+; RUN: llc < %s -mtriple=arm-apple-darwin | grep ldrb
+; RUN: llc < %s -mtriple=arm-apple-darwin | grep ldrh
 
 	%struct.x = type { i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8 }
 @src = external global %struct.x

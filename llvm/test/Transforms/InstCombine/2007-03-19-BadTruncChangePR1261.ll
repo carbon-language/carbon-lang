@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o - | opt -instcombine -S | grep zext
+; RUN: opt < %s -instcombine -S | grep zext
 ; PR1261. 
 
 define i16 @test(i31 %zzz) {

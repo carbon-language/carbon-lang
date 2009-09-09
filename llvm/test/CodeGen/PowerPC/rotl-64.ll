@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc64 | grep rldicl
-; RUN: llvm-as < %s | llc -march=ppc64 | grep rldcl
+; RUN: llc < %s -march=ppc64 | grep rldicl
+; RUN: llc < %s -march=ppc64 | grep rldcl
 ; PR1613
 
 define i64 @t1(i64 %A) {

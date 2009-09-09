@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v6,+vfp2 | \
+; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | \
 ; RUN:   grep fcmpes
 
 define void @test3(float* %glob, i32 %X) {

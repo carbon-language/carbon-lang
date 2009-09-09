@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | \
+; RUN: llc < %s -march=ppc32 | \
 ; RUN:   egrep {fn?madd|fn?msub} | count 8
 
 define double @test_FMADD1(double %A, double %B, double %C) {

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin9 | not grep non_lazy_ptr
+; RUN: llc < %s -mtriple=powerpc-apple-darwin9 | not grep non_lazy_ptr
 
 @x = weak hidden global i32 0		; <i32*> [#uses=1]
 

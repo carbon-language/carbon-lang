@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc64
+; RUN: llc < %s -march=ppc64
 
 define i128 @__fixsfdi(float %a) {
 entry:

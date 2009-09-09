@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c
+; RUN: llc < %s -march=c
 
 ; This testcase fails because the C backend does not arrange to output the 
 ; contents of a structure type before it outputs the structure type itself.

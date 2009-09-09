@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc64 -enable-ppc64-regscavenger
+; RUN: llc < %s -march=ppc64 -enable-ppc64-regscavenger
 @.str242 = external constant [3 x i8]		; <[3 x i8]*> [#uses=1]
 
 define fastcc void @ParseContent(i8* %buf, i32 %bufsize) {

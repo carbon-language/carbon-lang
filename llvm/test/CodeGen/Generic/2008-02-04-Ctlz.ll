@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 @.str = internal constant [14 x i8] c"%lld %d %d %d\00"
 

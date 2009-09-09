@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge | grep bl.*baz | count 1
-; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge | grep bl.*quux | count 1
-; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge -enable-eh | grep bl.*baz | count 1
-; RUN: llvm-as < %s | llc -march=arm -enable-tail-merge -enable-eh | grep bl.*quux | count 1
+; RUN: llc < %s -march=arm -enable-tail-merge | grep bl.*baz | count 1
+; RUN: llc < %s -march=arm -enable-tail-merge | grep bl.*quux | count 1
+; RUN: llc < %s -march=arm -enable-tail-merge -enable-eh | grep bl.*baz | count 1
+; RUN: llc < %s -march=arm -enable-tail-merge -enable-eh | grep bl.*quux | count 1
 ; Check that calls to baz and quux are tail-merged.
 ; PR1628
 

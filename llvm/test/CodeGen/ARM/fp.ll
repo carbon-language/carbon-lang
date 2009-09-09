@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 > %t
+; RUN: llc < %s -march=arm -mattr=+vfp2 > %t
 ; RUN: grep fmsr %t | count 4
 ; RUN: grep fsitos %t
 ; RUN: grep fmrs %t | count 2

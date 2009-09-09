@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
 ; RUN:   grep sxtb | count 2
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
 ; RUN:   grep sxtb | grep ror | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
 ; RUN:   grep sxtab | count 1
 
 define i32 @test0(i8 %A) {

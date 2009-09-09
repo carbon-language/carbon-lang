@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
 ; RUN:   grep smulbt | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
 ; RUN:   grep smultt | count 1
 
 @x = weak global i16 0          ; <i16*> [#uses=1]

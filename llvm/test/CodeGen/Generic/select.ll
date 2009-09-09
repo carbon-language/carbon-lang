@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 %Domain = type { i8*, i32, i32*, i32, i32, i32*, %Domain* }
 @AConst = constant i32 123              ; <i32*> [#uses=1]

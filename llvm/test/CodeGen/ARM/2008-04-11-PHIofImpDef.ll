@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin
+; RUN: llc < %s -mtriple=arm-apple-darwin
 
 declare void @foo(i8*, i8*, i32, i32, i32, i32, i32, i32, i32)
 

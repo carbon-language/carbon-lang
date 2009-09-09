@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep 68719476738
+; RUN: llc < %s | grep 68719476738
 
 define void @test() {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin -mattr=+vfp2
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+vfp2
 
 define arm_apcscc float @t1(i32 %v0) nounwind {
 entry:

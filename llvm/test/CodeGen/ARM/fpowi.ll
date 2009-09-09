@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-linux-gnueabi | grep powidf2
+; RUN: llc < %s -mtriple=arm-linux-gnueabi | grep powidf2
 ; PR1287
 
 ; ModuleID = '<stdin>'

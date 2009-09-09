@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
+; RUN: llc < %s -march=arm -mattr=+neon > %t
 ; RUN: grep {vrecps\\.f32} %t | count 2
 
 define <2 x float> @vrecpsf32(<2 x float>* %A, <2 x float>* %B) nounwind {

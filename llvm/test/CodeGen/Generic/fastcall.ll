@@ -1,5 +1,5 @@
 ; Test fastcc works. Test from bug 2770.
-; RUN: llvm-as < %s | llc -relocation-model=pic
+; RUN: llc < %s -relocation-model=pic
 
 
 %struct.__gcov_var = type {  i32 }

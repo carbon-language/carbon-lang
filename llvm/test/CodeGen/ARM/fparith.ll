@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 > %t
+; RUN: llc < %s -march=arm -mattr=+vfp2 > %t
 ; RUN: grep fadds %t
 ; RUN: grep faddd %t
 ; RUN: grep fmuls %t

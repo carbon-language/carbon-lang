@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc64
+; RUN: llc < %s -march=ppc64
 ; PR1596
 
 	%struct._obstack_chunk = type { i8* }

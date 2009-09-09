@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep {foo bar":}
+; RUN: llc < %s | grep {foo bar":}
 
 target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin8.2.0"

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi | \
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
 ; RUN:     grep {tbss}
 
 %struct.anon = type { i32, i32 }

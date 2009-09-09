@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep mr
+; RUN: llc < %s -march=ppc32 | not grep mr
 
 define i32 @test(i32 %Y, i32 %X) {
 entry:

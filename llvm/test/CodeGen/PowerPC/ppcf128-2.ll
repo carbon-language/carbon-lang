@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc64
+; RUN: llc < %s -march=ppc64
 
 define i64 @__fixtfdi(ppc_fp128 %a) nounwind  {
 entry:

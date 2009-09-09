@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -stats |& \
+; RUN: llc < %s -march=arm -stats |& \
 ; RUN:   grep {3 .*Number of machine instrs printed}
 
 ;; Integer absolute value, should produce something as good as: ARM:

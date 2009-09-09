@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 ; PR4136
 
 target datalayout = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"

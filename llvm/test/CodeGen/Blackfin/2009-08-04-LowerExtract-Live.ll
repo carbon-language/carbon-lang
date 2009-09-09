@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -join-liveintervals=0 -verify-machineinstrs
+; RUN: llc < %s -march=bfin -join-liveintervals=0 -verify-machineinstrs
 
 ; Provoke an error in LowerSubregsPass::LowerExtract where the live range of a
 ; super-register is illegally extended.

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c | not grep extern.*msg
+; RUN: llc < %s -march=c | not grep extern.*msg
 ; PR472
 
 @msg = internal global [6 x i8] c"hello\00"             ; <[6 x i8]*> [#uses=1]

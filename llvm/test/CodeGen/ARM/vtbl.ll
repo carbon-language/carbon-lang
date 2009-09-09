@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 %struct.__builtin_neon_v8qi2 = type { <8 x i8>, <8 x i8> }
 %struct.__builtin_neon_v8qi3 = type { <8 x i8>,  <8 x i8>, <8 x i8> }

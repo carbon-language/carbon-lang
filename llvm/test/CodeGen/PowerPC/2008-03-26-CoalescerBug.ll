@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin
+; RUN: llc < %s -mtriple=powerpc-apple-darwin
 
 define i32 @t(i64 %byteStart, i32 %activeIndex) nounwind  {
 entry:

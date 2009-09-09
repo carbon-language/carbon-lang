@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb | grep r0 | count 1
+; RUN: llc < %s -march=thumb | grep r0 | count 1
 
 define i32 @a(i32 %x, i32 %y) nounwind readnone {
 entry:

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin -verify-machineinstrs
+; RUN: llc < %s -march=bfin -verify-machineinstrs
 
 ; These functions have just the right size to annoy the register scavenger: They
 ; use all the scratch registers, but not all the callee-saved registers.

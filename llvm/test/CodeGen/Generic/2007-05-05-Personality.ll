@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -enable-eh -o - | grep zPLR
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu -enable-eh -o - | grep zPLR
 
 @error = external global i8		; <i8*> [#uses=2]
 

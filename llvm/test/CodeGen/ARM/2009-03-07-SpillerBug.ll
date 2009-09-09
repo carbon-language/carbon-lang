@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=armv6-apple-darwin9 -mattr=+vfp2
+; RUN: llc < %s -mtriple=armv6-apple-darwin9 -mattr=+vfp2
 ; rdar://6653182
 
 	%struct.ggBRDF = type { i32 (...)** }

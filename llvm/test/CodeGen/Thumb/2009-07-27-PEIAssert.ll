@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv6-apple-darwin -relocation-model=pic -disable-fp-elim
+; RUN: llc < %s -mtriple=thumbv6-apple-darwin -relocation-model=pic -disable-fp-elim
 
 	%struct.LinkList = type { i32, %struct.LinkList* }
 	%struct.List = type { i32, i32* }

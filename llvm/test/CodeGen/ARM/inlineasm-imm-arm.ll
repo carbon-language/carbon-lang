@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm
+; RUN: llc < %s -march=arm
 
 ; Test ARM-mode "I" constraint, for any Data Processing immediate.
 define i32 @testI(i32 %x) {

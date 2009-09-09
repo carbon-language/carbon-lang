@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens to the eqv instruction
-; RUN: llvm-as < %s | llc -march=alpha | grep eqv
+; RUN: llc < %s -march=alpha | grep eqv
 
 define i64 @bar(i64 %x, i64 %y) {
 entry:

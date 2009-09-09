@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=arm | \
+; RUN: llc < %s -march=arm | \
 ; RUN:   grep {mov r0, #0} | count 1
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
+; RUN: llc < %s -march=arm -mattr=+vfp2 | \
 ; RUN:   grep {flds.*\\\[} | count 1
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | \
+; RUN: llc < %s -march=arm -mattr=+vfp2 | \
 ; RUN:   grep {fsts.*\\\[} | count 1
 
 define float @f1(float %a) {

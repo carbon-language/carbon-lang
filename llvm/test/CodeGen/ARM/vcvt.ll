@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <2 x i32> @vcvt_f32tos32(<2 x float>* %A) nounwind {
 ;CHECK: vcvt_f32tos32:

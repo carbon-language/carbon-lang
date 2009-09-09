@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=systemz | grep lcr | count 1
+; RUN: llc < %s -march=systemz | grep lcr | count 1
 
 define i32 @foo(i32 %a) {
 entry:

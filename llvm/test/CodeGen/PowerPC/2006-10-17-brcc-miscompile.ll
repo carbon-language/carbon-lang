@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | grep xor 
+; RUN: llc < %s -march=ppc32 | grep xor 
 
 target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin8.7.0"

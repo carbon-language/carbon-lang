@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin
+; RUN: llc < %s -march=bfin
 
 declare i64 @llvm.ctlz.i64(i64)
 declare i64 @llvm.cttz.i64(i64)

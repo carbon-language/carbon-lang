@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vabas8(<8 x i8>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
 ;CHECK: vabas8:

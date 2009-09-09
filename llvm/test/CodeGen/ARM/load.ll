@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm > %t
+; RUN: llc < %s -march=arm > %t
 ; RUN: grep ldrsb %t
 ; RUN: grep ldrb %t
 ; RUN: grep ldrsh %t

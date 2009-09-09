@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=arm | grep {mov lr, pc}
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v5t | grep blx
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi\
+; RUN: llc < %s -march=arm | grep {mov lr, pc}
+; RUN: llc < %s -march=arm -mattr=+v5t | grep blx
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi\
 ; RUN:   -relocation-model=pic | grep {PLT}
 
 @t = weak global i32 ()* null           ; <i32 ()**> [#uses=1]

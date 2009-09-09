@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=alpha
+; RUN: llc < %s -march=alpha
 
 target datalayout = "e-p:64:64"
 target triple = "alphaev67-unknown-linux-gnu"

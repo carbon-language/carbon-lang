@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=vfp2 | not grep fmdrr
-; RUN: llvm-as < %s | llc -march=arm -mattr=vfp2 | not grep fmrrd
+; RUN: llc < %s -march=arm -mattr=vfp2 | not grep fmdrr
+; RUN: llc < %s -march=arm -mattr=vfp2 | not grep fmrrd
 
 ; naive codegen for this is:
 ; _i:

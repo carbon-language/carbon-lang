@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=xcore > %t1.s
+; RUN: llc < %s -march=xcore > %t1.s
 ; RUN: grep "bl sqrtf" %t1.s | count 1
 ; RUN: grep "bl sqrt" %t1.s | count 2
 declare double @llvm.sqrt.f64(double)

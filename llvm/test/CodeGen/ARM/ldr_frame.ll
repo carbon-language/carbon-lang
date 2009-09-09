@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm | not grep mov
+; RUN: llc < %s -march=arm | not grep mov
 
 define i32 @f1() {
 	%buf = alloca [32 x i32], align 4

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-eh
+; RUN: llc < %s -enable-eh
 
 target triple = "i686-pc-linux-gnu"
 

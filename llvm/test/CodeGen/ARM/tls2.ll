@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi | \
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
 ; RUN:     grep {i(gottpoff)}
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi | \
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
 ; RUN:     grep {ldr r., \[pc, r.\]}
-; RUN: llvm-as < %s | llc -march=arm -mtriple=arm-linux-gnueabi \
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi \
 ; RUN:     -relocation-model=pic | grep {__tls_get_addr}
 
 @i = external thread_local global i32		; <i32*> [#uses=2]

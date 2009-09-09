@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=xcore > %t1.s
+; RUN: llc < %s -march=xcore > %t1.s
 ;; This caused a compilation failure since the
 ;; address arithmetic was folded into the LDWSP instruction,
 ;; resulting in a negative offset which eliminateFrameIndex was

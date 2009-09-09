@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 ; PR2885
 
 ;; NOTE: This generates bad debug info in this case! But that's better than

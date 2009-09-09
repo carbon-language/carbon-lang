@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin | FileCheck %s
+; RUN: llc < %s -march=bfin | FileCheck %s
 
 declare i64 @llvm.readcyclecounter()
 

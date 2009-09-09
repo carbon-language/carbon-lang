@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep 168
+; RUN: llc < %s | grep 168
 
 target datalayout = "E-p:64:64:64-i8:8:16-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128-a0:16:16"
 target triple = "s390x-linux"

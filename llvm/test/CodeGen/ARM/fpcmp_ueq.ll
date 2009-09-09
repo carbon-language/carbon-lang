@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm | grep moveq 
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 | grep movvs
+; RUN: llc < %s -march=arm | grep moveq 
+; RUN: llc < %s -march=arm -mattr=+vfp2 | grep movvs
 
 define i32 @f7(float %a, float %b) {
 entry:

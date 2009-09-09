@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin | FileCheck %s
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin -relocation-model=pic | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -relocation-model=pic | FileCheck %s
 
 define void @bar(i32 %n.u) {
 entry:

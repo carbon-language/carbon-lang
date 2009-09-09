@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c | grep {packed}
+; RUN: llc < %s -march=c | grep {packed}
 
 	%struct.p = type <{ i16 }>
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -mattr=+altivec
+; RUN: llc < %s -march=ppc32 -mattr=+altivec
 
 	%struct.XATest = type { float, i16, i8, i8 }
 	%struct.XArrayRange = type { i8, i8, i8, i8 }

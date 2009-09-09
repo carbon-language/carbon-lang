@@ -1,10 +1,10 @@
-; RUN: llvm-as < %s | llc -march=arm
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v5TE
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v5TE | \
+; RUN: llc < %s -march=arm
+; RUN: llc < %s -march=arm -mattr=+v5TE
+; RUN: llc < %s -march=arm -mattr=+v5TE | \
 ; RUN:   grep smulbt | count 1
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v5TE | \
+; RUN: llc < %s -march=arm -mattr=+v5TE | \
 ; RUN:   grep smultt | count 1
-; RUN: llvm-as < %s | llc -march=arm -mattr=+v5TE | \
+; RUN: llc < %s -march=arm -mattr=+v5TE | \
 ; RUN:   grep smlabt | count 1
 
 @x = weak global i16 0          ; <i16*> [#uses=1]

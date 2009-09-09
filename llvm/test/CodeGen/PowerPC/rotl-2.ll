@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=ppc32  | grep rlwinm | count 4
-; RUN: llvm-as < %s | llc -march=ppc32  | grep rlwnm | count 2
-; RUN: llvm-as < %s | llc -march=ppc32  | not grep or
+; RUN: llc < %s -march=ppc32  | grep rlwinm | count 4
+; RUN: llc < %s -march=ppc32  | grep rlwnm | count 2
+; RUN: llc < %s -march=ppc32  | not grep or
 
 define i32 @rotl32(i32 %A, i8 %Amt) nounwind {
 	%shift.upgrd.1 = zext i8 %Amt to i32		; <i32> [#uses=1]

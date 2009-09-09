@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
+; RUN: llc < %s -march=arm -mattr=+neon > %t
 ; RUN: grep {vrshrn\\.i16} %t | count 1
 ; RUN: grep {vrshrn\\.i32} %t | count 1
 ; RUN: grep {vrshrn\\.i64} %t | count 1

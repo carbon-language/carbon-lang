@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin
+; RUN: llc < %s -mtriple=arm-apple-darwin
 
 	%struct.Decoders = type { i32**, i16***, i16****, i16***, i16**, i8**, i8** }
 @decoders = external global %struct.Decoders		; <%struct.Decoders*> [#uses=1]

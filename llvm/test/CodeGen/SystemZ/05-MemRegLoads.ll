@@ -1,10 +1,10 @@
-; RUN: llvm-as < %s | llc -march=systemz | not grep aghi
-; RUN: llvm-as < %s | llc -march=systemz | grep llgf | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llgh | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep llgc | count 1
-; RUN: llvm-as < %s | llc -march=systemz | grep lgf  | count 2
-; RUN: llvm-as < %s | llc -march=systemz | grep lgh  | count 2
-; RUN: llvm-as < %s | llc -march=systemz | grep lgb  | count 1
+; RUN: llc < %s -march=systemz | not grep aghi
+; RUN: llc < %s -march=systemz | grep llgf | count 1
+; RUN: llc < %s -march=systemz | grep llgh | count 1
+; RUN: llc < %s -march=systemz | grep llgc | count 1
+; RUN: llc < %s -march=systemz | grep lgf  | count 2
+; RUN: llc < %s -march=systemz | grep lgh  | count 2
+; RUN: llc < %s -march=systemz | grep lgb  | count 1
 
 
 target datalayout = "E-p:64:64:64-i1:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128"

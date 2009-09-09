@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep mov | count 3
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep mvn | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep it  | count 3
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep mov | count 3
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep mvn | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep it  | count 3
 
 define i32 @t1(i32 %a, i32 %b, i32 %c) nounwind {
         %tmp1 = icmp sgt i32 %c, 10

@@ -1,5 +1,5 @@
 ; This shouldn't crash
-; RUN: llvm-as < %s | llc -march=alpha
+; RUN: llc < %s -march=alpha
 
 @.str_4 = external global [44 x i8]             ; <[44 x i8]*> [#uses=0]
 

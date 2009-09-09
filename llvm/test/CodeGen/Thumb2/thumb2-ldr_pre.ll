@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
 ; RUN:   grep {ldr.*\\!} | count 3
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | \
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | \
 ; RUN:   grep {ldrsb.*\\!} | count 1
 
 define i32* @test1(i32* %X, i32* %dest) {

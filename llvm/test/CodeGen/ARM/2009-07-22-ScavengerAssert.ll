@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=armv6-apple-darwin10
+; RUN: llc < %s -mtriple=armv6-apple-darwin10
 
 	%struct.cli_ac_alt = type { i8, i8*, i16, i16, %struct.cli_ac_alt* }
 	%struct.cli_ac_node = type { i8, i8, %struct.cli_ac_patt*, %struct.cli_ac_node**, %struct.cli_ac_node* }

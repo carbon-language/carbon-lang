@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc
+; RUN: llc < %s
 
 define i32 @bar(i32 %x) {
         ret i32 0

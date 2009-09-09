@@ -4,7 +4,7 @@
 ; this testcase for example, which caused the CBE to mangle one, screwing
 ; everything up.  :(  Test that this does not happen anymore.
 ;
-; RUN: llvm-as < %s | llc -march=c | not grep _memcpy
+; RUN: llc < %s -march=c | not grep _memcpy
 
 declare void @llvm.memcpy.i32(i8*, i8*, i32, i32)
 

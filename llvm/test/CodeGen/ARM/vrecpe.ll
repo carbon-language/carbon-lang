@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
+; RUN: llc < %s -march=arm -mattr=+neon > %t
 ; RUN: grep {vrecpe\\.u32} %t | count 2
 ; RUN: grep {vrecpe\\.f32} %t | count 2
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=c | not grep -- --65535
+; RUN: llc < %s -march=c | not grep -- --65535
 ; PR596
 
 target datalayout = "e-p:32:32"

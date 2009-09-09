@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=ppc32
-; RUN: llvm-as < %s | llc -march=ppc64
+; RUN: llc < %s -march=ppc32
+; RUN: llc < %s -march=ppc64
 
 ; This testcase is invalid (the alignment specified for memcpy is 
 ; greater than the alignment guaranteed for Qux or C.0.1173, but it

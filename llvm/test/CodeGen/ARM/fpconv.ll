@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+vfp2 > %t
+; RUN: llc < %s -march=arm -mattr=+vfp2 > %t
 ; RUN: grep fcvtsd %t
 ; RUN: grep fcvtds %t
 ; RUN: grep ftosizs %t
@@ -9,7 +9,7 @@
 ; RUN: grep fsitod %t
 ; RUN: grep fuitos %t
 ; RUN: grep fuitod %t
-; RUN: llvm-as < %s | llc -march=arm > %t
+; RUN: llc < %s -march=arm > %t
 ; RUN: grep truncdfsf2 %t
 ; RUN: grep extendsfdf2 %t
 ; RUN: grep fixsfsi %t

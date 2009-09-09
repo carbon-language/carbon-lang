@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=bfin
+; RUN: llc < %s -march=bfin
 
 define i8 @add(i8 %A, i8 %B) {
 	%R = add i8 %A, %B		; <i8> [#uses=1]

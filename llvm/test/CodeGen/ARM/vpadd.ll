@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=arm -mattr=+neon > %t
+; RUN: llc < %s -march=arm -mattr=+neon > %t
 ; RUN: grep {vpadd\\.i8} %t | count 1
 ; RUN: grep {vpadd\\.i16} %t | count 1
 ; RUN: grep {vpadd\\.i32} %t | count 1

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -mattr=+v6,+vfp2
+; RUN: llc < %s -mtriple=arm-apple-darwin -mattr=+v6,+vfp2
 
 define fastcc i8* @read_sleb128(i8* %p, i32* %val) {
 	br label %bb

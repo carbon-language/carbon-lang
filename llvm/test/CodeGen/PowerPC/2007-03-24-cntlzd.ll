@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc64 -mcpu=g5 | grep cntlzd
+; RUN: llc < %s -march=ppc64 -mcpu=g5 | grep cntlzd
 
 define i32 @_ZNK4llvm5APInt17countLeadingZerosEv(i64 *%t) {
         %tmp19 = load i64* %t
