@@ -1398,8 +1398,8 @@ static const char *GetArmArchForMCpu(llvm::StringRef Value) {
   return 0;
 }
 
-void darwin::Link::AddDarwinArch(const ArgList &Args,
-                                 ArgStringList &CmdArgs) const {
+void darwin::DarwinTool::AddDarwinArch(const ArgList &Args,
+                                       ArgStringList &CmdArgs) const {
   // Derived from darwin_arch spec.
   CmdArgs.push_back("-arch");
 
@@ -1433,8 +1433,8 @@ void darwin::Link::AddDarwinArch(const ArgList &Args,
   }
 }
 
-void darwin::Link::AddDarwinSubArch(const ArgList &Args,
-                                    ArgStringList &CmdArgs) const {
+void darwin::DarwinTool::AddDarwinSubArch(const ArgList &Args,
+                                          ArgStringList &CmdArgs) const {
   // Derived from darwin_subarch spec, not sure what the distinction
   // exists for but at least for this chain it is the same.
   AddDarwinArch(Args, CmdArgs);

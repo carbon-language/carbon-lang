@@ -124,7 +124,20 @@ namespace gcc {
 } // end namespace gcc
 
 namespace darwin {
-  class VISIBILITY_HIDDEN CC1 : public Tool  {
+  class VISIBILITY_HIDDEN DarwinTool : public Tool {
+  protected:
+    void AddDarwinArch(const ArgList &Args, ArgStringList &CmdArgs) const;
+    void AddDarwinSubArch(const ArgList &Args, ArgStringList &CmdArgs) const;
+
+    const toolchains::Darwin &getDarwinToolChain() const {
+      return reinterpret_cast<const toolchains::Darwin&>(getToolChain());
+    }
+
+  public:
+    DarwinTool(const char *Name, const ToolChain &TC) : Tool(Name, TC) {};
+  };
+
+  class VISIBILITY_HIDDEN CC1 : public DarwinTool  {
   public:
     static const char *getBaseInputName(const ArgList &Args,
                                  const InputInfoList &Input);
@@ -149,7 +162,7 @@ namespace darwin {
     void AddCPPArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
   public:
-    CC1(const char *Name, const ToolChain &TC) : Tool(Name, TC) {}
+    CC1(const char *Name, const ToolChain &TC) : DarwinTool(Name, TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return true; }
@@ -180,9 +193,9 @@ namespace darwin {
                               const char *LinkingOutput) const;
   };
 
-  class VISIBILITY_HIDDEN Assemble : public Tool  {
+  class VISIBILITY_HIDDEN Assemble : public DarwinTool  {
   public:
-    Assemble(const ToolChain &TC) : Tool("darwin::Assemble", TC) {}
+    Assemble(const ToolChain &TC) : DarwinTool("darwin::Assemble", TC) {}
 
     virtual bool acceptsPipedInput() const { return true; }
     virtual bool canPipeOutput() const { return false; }
@@ -196,19 +209,11 @@ namespace darwin {
                               const char *LinkingOutput) const;
   };
 
-  class VISIBILITY_HIDDEN Link : public Tool  {
-    void AddDarwinArch(const ArgList &Args, ArgStringList &CmdArgs) const;
-    void AddDarwinSubArch(const ArgList &Args, ArgStringList &CmdArgs) const;
+  class VISIBILITY_HIDDEN Link : public DarwinTool  {
     void AddLinkArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
-    const toolchains::Darwin &getDarwinToolChain() const {
-      return reinterpret_cast<const toolchains::Darwin&>(getToolChain());
-    }
-
   public:
-    Link(const ToolChain &TC)
-      : Tool("darwin::Link", TC) {
-    }
+    Link(const ToolChain &TC) : DarwinTool("darwin::Link", TC) {}
 
     virtual bool acceptsPipedInput() const { return false; }
     virtual bool canPipeOutput() const { return false; }
@@ -222,9 +227,9 @@ namespace darwin {
                               const char *LinkingOutput) const;
   };
 
-  class VISIBILITY_HIDDEN Lipo : public Tool  {
+  class VISIBILITY_HIDDEN Lipo : public DarwinTool  {
   public:
-    Lipo(const ToolChain &TC) : Tool("darwin::Lipo", TC) {}
+    Lipo(const ToolChain &TC) : DarwinTool("darwin::Lipo", TC) {}
 
     virtual bool acceptsPipedInput() const { return false; }
     virtual bool canPipeOutput() const { return false; }
