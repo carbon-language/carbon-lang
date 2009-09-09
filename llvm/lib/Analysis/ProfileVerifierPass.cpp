@@ -12,16 +12,20 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "profile-verifier"
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/InstIterator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
 #include <set>
 using namespace llvm;
 
-static cl::opt<bool,true>
+static cl::opt<bool,false>
 ProfileVerifierDisableAssertions("profile-verifier-noassert",
      cl::desc("Disable assertions"));
 
@@ -39,6 +43,7 @@ namespace {
 
     ProfileInfo *PI;
     std::set<const BasicBlock*> BBisVisited;
+    std::set<const Function*>   FisVisited;
     bool DisableAssertions;
 
     // When debugging is enabled, the verifier prints a whole slew of debug
@@ -52,8 +57,11 @@ namespace {
   public:
     static char ID; // Class identification, replacement for typeinfo
 
-    explicit ProfileVerifierPass (bool da = false) : FunctionPass(&ID), 
-                                                     DisableAssertions(da) {
+    explicit ProfileVerifierPass () : FunctionPass(&ID) {
+      DisableAssertions = ProfileVerifierDisableAssertions;
+    }
+    explicit ProfileVerifierPass (bool da) : FunctionPass(&ID), 
+                                             DisableAssertions(da) {
     }
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -67,8 +75,9 @@ namespace {
 
     /// run - Verify the profile information.
     bool runOnFunction(Function &F);
-    void recurseBasicBlock(const BasicBlock *BB);
+    void recurseBasicBlock(const BasicBlock*);
 
+    bool   exitReachable(const Function*);
     double ReadOrAssert(ProfileInfo::Edge);
     void   CheckValue(bool, const char*, DetailedBlockInfo*);
   };
@@ -96,10 +105,10 @@ void ProfileVerifierPass::printDebugInfo(const BasicBlock *BB) {
   for ( pred_const_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
         bbi != bbe; ++bbi ) {
     if (ProcessedPreds.insert(*bbi).second) {
-      double EdgeWeight = PI->getEdgeWeight(PI->getEdge(*bbi,BB));
+      ProfileInfo::Edge E = PI->getEdge(*bbi,BB);
+      double EdgeWeight = PI->getEdgeWeight(E);
       if (EdgeWeight == ProfileInfo::MissingValue) { EdgeWeight = 0; }
-      errs()<<"calculated in-edge ("<<(*bbi)->getNameStr()<<","<<BB->getNameStr()
-            <<"): "<<EdgeWeight<<"\n";
+      errs() << "calculated in-edge " << E << ": " << EdgeWeight << "\n";
       inWeight += EdgeWeight;
       inCount++;
     }
@@ -110,10 +119,10 @@ void ProfileVerifierPass::printDebugInfo(const BasicBlock *BB) {
   for ( succ_const_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
         bbi != bbe; ++bbi ) {
     if (ProcessedSuccs.insert(*bbi).second) {
-      double EdgeWeight = PI->getEdgeWeight(PI->getEdge(BB,*bbi));
+      ProfileInfo::Edge E = PI->getEdge(BB,*bbi);
+      double EdgeWeight = PI->getEdgeWeight(E);
       if (EdgeWeight == ProfileInfo::MissingValue) { EdgeWeight = 0; }
-      errs()<<"calculated out-edge ("<<BB->getNameStr()<<","<<(*bbi)->getNameStr()
-            <<"): "<<EdgeWeight<<"\n";
+      errs() << "calculated out-edge " << E << ": " << EdgeWeight << "\n";
       outWeight += EdgeWeight;
       outCount++;
     }
@@ -137,7 +146,7 @@ void ProfileVerifierPass::debugEntry (DetailedBlockInfo *DI) {
   errs() << "inWeight="  << DI->inWeight   << ",";
   errs() << "inCount="   << DI->inCount    << ",";
   errs() << "outWeight=" << DI->outWeight  << ",";
-  errs() << "outCount="  << DI->outCount   << ",";
+  errs() << "outCount="  << DI->outCount   << "\n";
   if (!PrintedDebugTree) {
     PrintedDebugTree = true;
     printDebugInfo(&(DI->BB->getParent()->getEntryBlock()));
@@ -158,30 +167,50 @@ static bool Equals(double A, double B) {
   return false; 
 }
 
+bool ProfileVerifierPass::exitReachable(const Function *F) {
+  if (!F) return false;
+
+  if (FisVisited.count(F)) return false;
+
+  Function *Exit = F->getParent()->getFunction("exit");
+  if (Exit == F) {
+    return true;
+  }
+
+  FisVisited.insert(F);
+  bool exits = false;
+  for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
+    if (const CallInst *CI = dyn_cast<CallInst>(&*I)) {
+      exits |= exitReachable(CI->getCalledFunction());
+      if (exits) break;
+    }
+  }
+  return exits;
+}
+
+#define ASSERTMESSAGE(M) \
+    errs() << (M) << "\n"; \
+    if (!DisableAssertions) assert(0 && (M));
+
 double ProfileVerifierPass::ReadOrAssert(ProfileInfo::Edge E) {
-  const char *Message = "ASSERT:Edge has missing value";
   double EdgeWeight = PI->getEdgeWeight(E);
   if (EdgeWeight == ProfileInfo::MissingValue) {
-    if (DisableAssertions) {
-      errs() << Message << "\n";
-      return 0;
-    } else { 
-      assert(0 && Message);
-      return 0;
-    }
+    errs() << "Edge " << E << " in Function " 
+           << E.first->getParent()->getNameStr() << ": ";
+    ASSERTMESSAGE("ASSERT:Edge has missing value");
+    return 0;
   } else {
     return EdgeWeight;
   }
 }
 
-void ProfileVerifierPass::CheckValue(bool Error, const char *Message, DetailedBlockInfo *DI) {
+void ProfileVerifierPass::CheckValue(bool Error, const char *Message,
+                                     DetailedBlockInfo *DI) {
   if (Error) {
     DEBUG(debugEntry(DI));
-    if (DisableAssertions) {
-      errs() << Message << "\n";
-    } else { 
-      assert(0 && Message);
-    }
+    errs() << "Block " << DI->BB->getNameStr() << " in Function " 
+           << DI->BB->getParent()->getNameStr() << ": ";
+    ASSERTMESSAGE(Message);
   }
   return;
 }
@@ -194,8 +223,8 @@ void ProfileVerifierPass::recurseBasicBlock(const BasicBlock *BB) {
   DI.BB = BB;
   DI.outCount = DI.inCount = DI.inWeight = DI.outWeight = 0;
   std::set<const BasicBlock*> ProcessedPreds;
-  for ( pred_const_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
-        bbi != bbe; ++bbi ) {
+  for (pred_const_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
+       bbi != bbe; ++bbi) {
     if (ProcessedPreds.insert(*bbi).second) {
       DI.inWeight += ReadOrAssert(PI->getEdge(*bbi,BB));
       DI.inCount++;
@@ -203,8 +232,8 @@ void ProfileVerifierPass::recurseBasicBlock(const BasicBlock *BB) {
   }
 
   std::set<const BasicBlock*> ProcessedSuccs;
-  for ( succ_const_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
-        bbi != bbe; ++bbi ) {
+  for (succ_const_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
+       bbi != bbe; ++bbi) {
     if (ProcessedSuccs.insert(*bbi).second) {
       DI.outWeight += ReadOrAssert(PI->getEdge(BB,*bbi));
       DI.outCount++;
@@ -212,14 +241,56 @@ void ProfileVerifierPass::recurseBasicBlock(const BasicBlock *BB) {
   }
 
   DI.BBWeight = PI->getExecutionCount(BB);
-  CheckValue(DI.BBWeight == ProfileInfo::MissingValue, "ASSERT:BasicBlock has missing value", &DI);
+  CheckValue(DI.BBWeight == ProfileInfo::MissingValue,
+             "ASSERT:BasicBlock has missing value", &DI);
 
-  if (DI.inCount > 0) {
-    CheckValue(!Equals(DI.inWeight,DI.BBWeight), "ASSERT:inWeight and BBWeight do not match", &DI);
+  // Check if this block is a setjmp target.
+  bool isSetJmpTarget = false;
+  if (DI.outWeight > DI.inWeight) {
+    for (BasicBlock::const_iterator i = BB->begin(), ie = BB->end();
+         i != ie; ++i) {
+      if (const CallInst *CI = dyn_cast<CallInst>(&*i)) {
+        Function *F = CI->getCalledFunction();
+        if (F && (F->getNameStr() == "_setjmp")) {
+          isSetJmpTarget = true; break;
+        }
+      }
+    }
   }
-  if (DI.outCount > 0) {
-    CheckValue(!Equals(DI.outWeight,DI.BBWeight), "ASSERT:outWeight and BBWeight do not match", &DI);
+  // Check if this block is eventually reaching exit.
+  bool isExitReachable = false;
+  if (DI.inWeight > DI.outWeight) {
+    for (BasicBlock::const_iterator i = BB->begin(), ie = BB->end();
+         i != ie; ++i) {
+      if (const CallInst *CI = dyn_cast<CallInst>(&*i)) {
+        FisVisited.clear();
+        isExitReachable |= exitReachable(CI->getCalledFunction());
+        if (isExitReachable) break;
+      }
+    }
   }
+
+  if (DI.inCount > 0 && DI.outCount == 0) {
+     // If this is a block with no successors.
+    if (!isSetJmpTarget) {
+      CheckValue(!Equals(DI.inWeight,DI.BBWeight), 
+                 "ASSERT:inWeight and BBWeight do not match", &DI);
+    }
+  } else if (DI.inCount == 0 && DI.outCount > 0) {
+    // If this is a block with no predecessors.
+    if (!isExitReachable)
+      CheckValue(!Equals(DI.BBWeight,DI.outWeight), 
+                 "ASSERT:BBWeight and outWeight do not match", &DI);
+  } else {
+    // If this block has successors and predecessors.
+    if (DI.inWeight > DI.outWeight && !isExitReachable)
+      CheckValue(!Equals(DI.inWeight,DI.outWeight), 
+                 "ASSERT:inWeight and outWeight do not match", &DI);
+    if (DI.inWeight < DI.outWeight && !isSetJmpTarget)
+      CheckValue(!Equals(DI.inWeight,DI.outWeight), 
+                 "ASSERT:inWeight and outWeight do not match", &DI);
+  }
+
 
   // mark as visited and recurse into subnodes
   BBisVisited.insert(BB);
@@ -233,7 +304,7 @@ bool ProfileVerifierPass::runOnFunction(Function &F) {
   PI = &getAnalysis<ProfileInfo>();
 
   if (PI->getExecutionCount(&F) == ProfileInfo::MissingValue) {
-    DEBUG(errs()<<"Function "<<F.getNameStr()<<" has no profile\n");
+    DEBUG(errs() << "Function " << F.getNameStr() << " has no profile\n");
     return false;
   }
 
