@@ -298,7 +298,13 @@ Program::Kill(std::string* ErrMsg) {
 
   uint64_t pid64 = reinterpret_cast<uint64_t>(Data_);
   pid_t pid = static_cast<pid_t>(pid64);
-  return (kill(pid, SIGKILL) == 0);
+
+  if (kill(pid, SIGKILL) != 0) {
+    MakeErrMsg(ErrMsg, "The process couldn't be killed!");
+    return true;
+  }
+
+  return false;
 }
 
 bool Program::ChangeStdinToBinary(){

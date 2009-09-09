@@ -347,7 +347,12 @@ Program::Kill(std::string* ErrMsg) {
   }
 
   HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
-  return TerminateProcess(hProcess, 1);
+  if (TerminateProcess(hProcess, 1) == 0) {
+    MakeErrMsg(ErrMsg, "The process couldn't be killed!");
+    return true;
+  }
+
+  return false;
 }
 
 bool Program::ChangeStdinToBinary(){
