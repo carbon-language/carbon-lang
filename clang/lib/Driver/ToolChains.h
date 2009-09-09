@@ -33,7 +33,8 @@ public:
   Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple);
   ~Generic_GCC();
 
-  virtual DerivedArgList *TranslateArgs(InputArgList &Args) const;
+  virtual DerivedArgList *TranslateArgs(InputArgList &Args,
+                                        const char *BoundArch) const;
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 
@@ -101,7 +102,8 @@ public:
 
   bool isIPhone() const { return IsIPhone; }
 
-  virtual DerivedArgList *TranslateArgs(InputArgList &Args) const;
+  virtual DerivedArgList *TranslateArgs(InputArgList &Args,
+                                        const char *BoundArch) const;
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 

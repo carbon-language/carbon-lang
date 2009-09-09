@@ -49,7 +49,7 @@ const DerivedArgList &Compilation::getArgsForToolChain(const ToolChain *TC,
 
   DerivedArgList *&Entry = TCArgs[std::make_pair(TC, BoundArch)];
   if (!Entry)
-    Entry = TC->TranslateArgs(*Args);
+    Entry = TC->TranslateArgs(*Args, BoundArch);
 
   return *Entry;
 }

@@ -133,7 +133,8 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
   return *T;
 }
 
-DerivedArgList *Darwin::TranslateArgs(InputArgList &Args) const {
+DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
+                                      const char *BoundArch) const {
   DerivedArgList *DAL = new DerivedArgList(Args, false);
   const OptTable &Opts = getHost().getDriver().getOpts();
 
@@ -389,7 +390,8 @@ const char *Generic_GCC::GetForcedPicModel() const {
   return 0;
 }
 
-DerivedArgList *Generic_GCC::TranslateArgs(InputArgList &Args) const {
+DerivedArgList *Generic_GCC::TranslateArgs(InputArgList &Args,
+                                           const char *BoundArch) const {
   return new DerivedArgList(Args, true);
 }
 
