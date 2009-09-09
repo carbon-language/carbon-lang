@@ -33,6 +33,7 @@ class TestingProgressDisplay:
     def update(self, test):
         # Avoid locking overhead in quiet mode
         if self.opts.quiet and not test.result.isFailure:
+            self.completed += 1
             return
 
         # Output lock.
