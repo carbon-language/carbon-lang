@@ -1284,10 +1284,12 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Derived from asm spec.
-  CmdArgs.push_back("-arch");
-  CmdArgs.push_back(Args.MakeArgString(getToolChain().getArchName().c_str()));
+  AddDarwinArch(Args, CmdArgs);
 
-  CmdArgs.push_back("-force_cpusubtype_ALL");
+  if (!getDarwinToolChain().isIPhone() ||
+      Args.hasArg(options::OPT_force__cpusubtype__ALL))
+    CmdArgs.push_back("-force_cpusubtype_ALL");
+
   if (getToolChain().getTriple().getArch() != llvm::Triple::x86_64 &&
       (Args.hasArg(options::OPT_mkernel) ||
        Args.hasArg(options::OPT_static) ||
@@ -1409,9 +1411,6 @@ void darwin::DarwinTool::AddDarwinArch(const ArgList &Args,
     break;
 
   case llvm::Triple::arm: {
-    // FIXME: gcc isn't actually following this, it looks like the arch is
-    // getting forced somewhere else (translation?).
-
     if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
       if (const char *Arch = GetArmArchForMArch(A->getValue(Args))) {
         CmdArgs.push_back(Arch);
