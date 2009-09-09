@@ -554,3 +554,16 @@ void pr4781(unsigned long *raw1) {
   }
 }
 
+// <rdar://problem/7185647> - 'self' should be treated as being non-null
+// upon entry to an objective-c method.
+@interface RDar7185647
+- (id)foo;
+@end
+@implementation RDar7185647
+- (id) foo {
+  if (self)
+    return self;
+  *((int *) 0x0) = 0xDEADBEEF; // no-warning
+  return self;
+}
+@end

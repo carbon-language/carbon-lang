@@ -198,11 +198,15 @@ void GRExprEngine::AddCheck(GRSimpleAPICheck *A) {
 const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
   const GRState *state = StateMgr.getInitialState(InitLoc);
 
-  // Precondition: the first argument of 'main' is an integer guaranteed
-  //  to be > 0.
+  // Preconditions.
+
   // FIXME: It would be nice if we had a more general mechanism to add
   // such preconditions.  Some day.
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(InitLoc->getDecl()))
+  const Decl *D = InitLoc->getDecl();
+  
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // Precondition: the first argument of 'main' is an integer guaranteed
+    //  to be > 0.
     if (strcmp(FD->getIdentifier()->getName(), "main") == 0 &&
         FD->getNumParams() > 0) {
       const ParmVarDecl *PD = FD->getParamDecl(0);
@@ -218,7 +222,21 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
             state = newState;
         }
     }
-
+  }
+  else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {    
+    // Precondition: 'self' is always non-null upon entry to an Objective-C
+    // method.
+    const ImplicitParamDecl *SelfD = MD->getSelfDecl();
+    const MemRegion *R = state->getRegion(SelfD, InitLoc);
+    SVal V = state->getSVal(loc::MemRegionVal(R));
+    
+    if (const Loc *LV = dyn_cast<Loc>(&V)) {
+      // Assume that the pointer value in 'self' is non-null.
+      state = state->assume(*LV, true);
+      assert(state && "'self' cannot be null");
+    }
+  }
+  
   return state;
 }
 
