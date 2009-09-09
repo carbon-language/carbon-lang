@@ -97,8 +97,7 @@ namespace sys {
       ///< it doesn't.
       std::string* ErrMsg = 0 ///< If non-zero, provides a pointer to a string
       ///< instance in which error messages will be returned. If the string
-      ///< is non-empty upon return an error occurred while invoking the
-      ///< program.
+      ///< is non-empty upon return an error occurred while waiting.
       );
 
     /// This function terminates the program.
@@ -108,7 +107,7 @@ namespace sys {
     bool Kill
     ( std::string* ErrMsg = 0 ///< If non-zero, provides a pointer to a string
       ///< instance in which error messages will be returned. If the string
-      ///< is non-empty upon return an error occurred while invoking the
+      ///< is non-empty upon return an error occurred while killing the
       ///< program.
       );
 
