@@ -32,6 +32,10 @@ namespace sys {
     /// Opaque handle for target specific data.
     void *Data_;
 
+    // Noncopyable.
+    Program(const Program& other);
+    Program& operator=(const Program& other);
+
     /// @name Methods
     /// @{
   public:
