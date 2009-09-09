@@ -17,6 +17,7 @@
 #include "clang/Driver/Option.h"
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
 
@@ -281,16 +282,79 @@ DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
     }
   }
 
-  // FIXME: Actually, gcc always adds this, but it is filtered for
-  // duplicates somewhere. This also changes the order of things, so
-  // look it up.
-  if (getArchName() == "x86_64")
-    if (!Args.hasArg(options::OPT_m64, false))
+  if (getTriple().getArch() == llvm::Triple::x86 ||
+      getTriple().getArch() == llvm::Triple::x86_64)
+    if (!Args.hasArg(options::OPT_mtune_EQ, false))
+      DAL->append(DAL->MakeJoinedArg(0, Opts.getOption(options::OPT_mtune_EQ),
+                                     "core2"));
+
+  // Add the arch options based on the particular spelling of -arch, to match
+  // how the driver driver works.
+  if (BoundArch) {
+    llvm::StringRef Name = BoundArch;
+    const Option *MCpu = Opts.getOption(options::OPT_mcpu_EQ);
+    const Option *MArch = Opts.getOption(options::OPT_march_EQ);
+
+    // This code must be kept in sync with LLVM's getArchTypeForDarwinArch,
+    // which defines the list of which architectures we accept.
+    if (Name == "ppc")
+      ;
+    else if (Name == "ppc601")
+      DAL->append(DAL->MakeJoinedArg(0, MCpu, "601"));
+    else if (Name == "ppc603")
+      DAL->append(DAL->MakeJoinedArg(0, MCpu, "603"));
+    else if (Name == "ppc604")
+      DAL->append(DAL->MakeJoinedArg(0, MCpu, "604"));
+    else if (Name == "ppc604e")
+      DAL->append(DAL->MakeJoinedArg(0, MCpu, "604e"));
+    else if (Name == "ppc750")
+      DAL->append(DAL->MakeJoinedArg(0, MCpu, "750"));
+    else if (Name == "ppc7400")
+      DAL->append(DAL->MakeJoinedArg(0, MCpu, "7400"));
+    else if (Name == "ppc7450")
+      DAL->append(DAL->MakeJoinedArg(0, MCpu, "7450"));
+    else if (Name == "ppc970")
+      DAL->append(DAL->MakeJoinedArg(0, MCpu, "970"));
+
+    else if (Name == "ppc64")
       DAL->append(DAL->MakeFlagArg(0, Opts.getOption(options::OPT_m64)));
 
-  if (!Args.hasArg(options::OPT_mtune_EQ, false))
-    DAL->append(DAL->MakeJoinedArg(0, Opts.getOption(options::OPT_mtune_EQ),
-                                    "core2"));
+    else if (Name == "i386")
+      ;
+    else if (Name == "i486")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "i486"));
+    else if (Name == "i586")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "i586"));
+    else if (Name == "i686")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "i686"));
+    else if (Name == "pentium")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "pentium"));
+    else if (Name == "pentium2")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "pentium2"));
+    else if (Name == "pentpro")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "pentiumpro"));
+    else if (Name == "pentIIm3")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "pentium2"));
+
+    else if (Name == "x86_64")
+      DAL->append(DAL->MakeFlagArg(0, Opts.getOption(options::OPT_m64)));
+
+    else if (Name == "arm")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "armv4t"));
+    else if (Name == "armv4t")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "armv4t"));
+    else if (Name == "armv5")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "armv5tej"));
+    else if (Name == "xscale")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "xscale"));
+    else if (Name == "armv6")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "armv6k"));
+    else if (Name == "armv7")
+      DAL->append(DAL->MakeJoinedArg(0, MArch, "armv7a"));
+
+    else
+      llvm::llvm_unreachable("invalid Darwin arch");
+  }
 
   return DAL;
 }
