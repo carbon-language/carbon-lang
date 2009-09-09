@@ -132,13 +132,18 @@ public:
 class MCInst {
   unsigned Opcode;
   SmallVector<MCOperand, 8> Operands;
+  
+  // FIXME: This is a hack!
+  DebugLoc Loc;
 public:
   MCInst() : Opcode(~0U) {}
   
   void setOpcode(unsigned Op) { Opcode = Op; }
   
   unsigned getOpcode() const { return Opcode; }
-  DebugLoc getDebugLoc() const { return DebugLoc(); }
+
+  void setDebugLoc(DebugLoc L) { Loc = L; }
+  DebugLoc getDebugLoc() const { return Loc; }
   
   const MCOperand &getOperand(unsigned i) const { return Operands[i]; }
   MCOperand &getOperand(unsigned i) { return Operands[i]; }

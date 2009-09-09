@@ -267,6 +267,7 @@ MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
 void X86ATTAsmPrinter::
 printInstructionThroughMCStreamer(const MachineInstr *MI) {
   MCInst TmpInst;
+  TmpInst.setDebugLoc(MI->getDebugLoc());
   switch (MI->getOpcode()) {
   case TargetInstrInfo::DBG_LABEL:
   case TargetInstrInfo::EH_LABEL:
