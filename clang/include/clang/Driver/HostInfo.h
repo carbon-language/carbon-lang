@@ -69,7 +69,7 @@ public:
 };
 
 const HostInfo *createAuroraUXHostInfo(const Driver &D,
-				       const llvm::Triple& Triple);
+                                       const llvm::Triple& Triple);
 const HostInfo *createDarwinHostInfo(const Driver &D, 
                                      const llvm::Triple& Triple);
 const HostInfo *createOpenBSDHostInfo(const Driver &D, 

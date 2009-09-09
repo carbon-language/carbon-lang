@@ -584,7 +584,7 @@ namespace clang {
     //  Either way, a classic C-style hard cast resolves any issue.
      static ASTMultiPtr* hack(moving::ASTMultiMover<Destroyer> & source) {
        return (ASTMultiPtr*)source.operator->();
-	}
+     }
 #endif
 
     ASTMultiPtr(ASTMultiPtr&); // DO NOT IMPLEMENT
