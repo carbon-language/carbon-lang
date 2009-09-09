@@ -139,7 +139,7 @@ def tADDrPCi : T1I<(outs tGPR:$dst), (ins i32imm:$rhs), IIC_iALUi,
 
 // ADD rd, sp, #imm8
 def tADDrSPi : T1I<(outs tGPR:$dst), (ins GPR:$sp, i32imm:$rhs), IIC_iALUi,
-                  "add $dst, $sp, $rhs * 4 @ addrspi", []>;
+                  "add $dst, $sp, $rhs * 4", []>;
 
 // ADD sp, sp, #imm7
 def tADDspi : TIt<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs), IIC_iALUi,
@@ -395,7 +395,7 @@ def tADDrr : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs), IIC_iALUr,
 
 let neverHasSideEffects = 1 in
 def tADDhirr : T1pIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
-                     "add", " $dst, $rhs @ addhirr", []>;
+                     "add", " $dst, $rhs", []>;
 
 // And register
 let isCommutable = 1 in
@@ -499,11 +499,11 @@ def tMOVSr      : T1I<(outs tGPR:$dst), (ins tGPR:$src), IIC_iMOVr,
 
 // FIXME: Make these predicable.
 def tMOVgpr2tgpr : T1I<(outs tGPR:$dst), (ins GPR:$src), IIC_iMOVr,
-                       "mov $dst, $src\t@ hir2lor", []>;
+                       "mov $dst, $src", []>;
 def tMOVtgpr2gpr : T1I<(outs GPR:$dst), (ins tGPR:$src), IIC_iMOVr,
-                       "mov $dst, $src\t@ lor2hir", []>;
+                       "mov $dst, $src", []>;
 def tMOVgpr2gpr  : T1I<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVr,
-                       "mov $dst, $src\t@ hir2hir", []>;
+                       "mov $dst, $src", []>;
 } // neverHasSideEffects
 
 // multiply register
