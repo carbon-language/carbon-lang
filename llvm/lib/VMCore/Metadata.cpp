@@ -115,7 +115,11 @@ void MDNode::dropAllReferences() {
 }
 
 MDNode::~MDNode() {
-  getType()->getContext().pImpl->MDNodeSet.RemoveNode(this);
+  {
+    LLVMContextImpl *pImpl = getType()->getContext().pImpl;
+    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
+    pImpl->MDNodeSet.RemoveNode(this);
+  }
   dropAllReferences();
 }
 
