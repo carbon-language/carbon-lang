@@ -322,11 +322,13 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, Record *AsmWriter) {
       LastEmitted = VarEnd;
     }
   }
-
+  
   Operands.push_back(
     AsmWriterOperand("EmitComments(*MI);\n",
                      AsmWriterOperand::isLiteralStatementOperand));
   AddLiteralString("\\n");
+  Operands.push_back(AsmWriterOperand("return;",
+                                  AsmWriterOperand::isLiteralStatementOperand));
 }
 
 /// MatchesAllButOneOp - If this instruction is exactly identical to the
@@ -449,10 +451,6 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
 
     Command = "    " + Inst->Operands[0].getCode() + "\n";
 
-    // If this is the last operand, emit a return.
-    if (Inst->Operands.size() == 1)
-      Command += "    return;\n";
-    
     // Check to see if we already have 'Command' in UniqueOperandCommands.
     // If not, add it.
     bool FoundIt = false;
@@ -523,14 +521,6 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
       // Okay, everything in this command set has the same next operand.  Add it
       // to UniqueOperandCommands and remember that it was consumed.
       std::string Command = "    " + FirstInst->Operands[Op].getCode() + "\n";
-      
-      // If this is the last operand, emit a return after the code.
-      if (FirstInst->Operands.size() == Op+1 &&
-          // Don't early-out too soon.  Other instructions in this
-          // group may have more operands.
-          FirstInst->Operands.size() == MaxSize) {
-        Command += "    return;\n";
-      }
       
       UniqueOperandCommands[CommandIdx] += Command;
       InstOpsUsed[CommandIdx]++;
@@ -633,17 +623,8 @@ void AsmWriterEmitter::run(raw_ostream &O) {
 
   std::vector<std::vector<std::string> > TableDrivenOperandPrinters;
   
-  bool isFirst = true;
   while (1) {
     std::vector<std::string> UniqueOperandCommands;
-
-    // For the first operand check, add a default value for instructions with
-    // just opcode strings to use.
-    if (isFirst) {
-      UniqueOperandCommands.push_back("    return;\n");
-      isFirst = false;
-    }
-
     std::vector<unsigned> InstIdxs;
     std::vector<unsigned> NumInstOpsHandled;
     FindUniqueOperandCommands(UniqueOperandCommands, InstIdxs,
