@@ -31,8 +31,9 @@ Compilation::~Compilation() {
   delete Args;
 
   // Free any derived arg lists.
-  for (llvm::DenseMap<const ToolChain*, DerivedArgList*>::iterator
-         it = TCArgs.begin(), ie = TCArgs.end(); it != ie; ++it)
+  for (llvm::DenseMap<std::pair<const ToolChain*, const char*>,
+                      DerivedArgList*>::iterator it = TCArgs.begin(),
+         ie = TCArgs.end(); it != ie; ++it)
     delete it->second;
 
   // Free the actions, if built.
@@ -41,11 +42,12 @@ Compilation::~Compilation() {
     delete *it;
 }
 
-const DerivedArgList &Compilation::getArgsForToolChain(const ToolChain *TC) {
+const DerivedArgList &Compilation::getArgsForToolChain(const ToolChain *TC,
+                                                       const char *BoundArch) {
   if (!TC)
     TC = &DefaultToolChain;
 
-  DerivedArgList *&Entry = TCArgs[TC];
+  DerivedArgList *&Entry = TCArgs[std::make_pair(TC, BoundArch)];
   if (!Entry)
     Entry = TC->TranslateArgs(*Args);
 

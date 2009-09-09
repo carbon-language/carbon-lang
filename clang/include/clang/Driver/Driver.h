@@ -229,6 +229,7 @@ public:
   void BuildJobsForAction(Compilation &C,
                           const Action *A,
                           const ToolChain *TC,
+                          const char *BoundArch,
                           bool CanAcceptPipe,
                           bool AtTopLevel,
                           const char *LinkingOutput,

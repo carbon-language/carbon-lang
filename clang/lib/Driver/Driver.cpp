@@ -948,6 +948,7 @@ void Driver::BuildJobs(Compilation &C) const {
 
     InputInfo II;
     BuildJobsForAction(C, A, &C.getDefaultToolChain(),
+                       /*BoundArch*/0,
                        /*CanAcceptPipe*/ true,
                        /*AtTopLevel*/ true,
                        /*LinkingOutput*/ LinkingOutput,
@@ -1001,6 +1002,7 @@ void Driver::BuildJobs(Compilation &C) const {
 void Driver::BuildJobsForAction(Compilation &C,
                                 const Action *A,
                                 const ToolChain *TC,
+                                const char *BoundArch,
                                 bool CanAcceptPipe,
                                 bool AtTopLevel,
                                 const char *LinkingOutput,
@@ -1032,8 +1034,8 @@ void Driver::BuildJobsForAction(Compilation &C,
     if (BAA->getArchName())
       TC = Host->CreateToolChain(C.getArgs(), BAA->getArchName());
 
-    BuildJobsForAction(C, *BAA->begin(), TC, CanAcceptPipe, AtTopLevel,
-                       LinkingOutput, Result);
+    BuildJobsForAction(C, *BAA->begin(), TC, BAA->getArchName(),
+                       CanAcceptPipe, AtTopLevel, LinkingOutput, Result);
     return;
   }
 
@@ -1061,10 +1063,8 @@ void Driver::BuildJobsForAction(Compilation &C,
   for (ActionList::const_iterator it = Inputs->begin(), ie = Inputs->end();
        it != ie; ++it) {
     InputInfo II;
-    BuildJobsForAction(C, *it, TC, TryToUsePipeInput,
-                       /*AtTopLevel*/false,
-                       LinkingOutput,
-                       II);
+    BuildJobsForAction(C, *it, TC, BoundArch, TryToUsePipeInput,
+                       /*AtTopLevel*/false, LinkingOutput, II);
     InputInfos.push_back(II);
   }
 
@@ -1125,7 +1125,7 @@ void Driver::BuildJobsForAction(Compilation &C,
     llvm::errs() << "], output: " << Result.getAsString() << "\n";
   } else {
     T.ConstructJob(C, *JA, *Dest, Result, InputInfos,
-                   C.getArgsForToolChain(TC), LinkingOutput);
+                   C.getArgsForToolChain(TC, BoundArch), LinkingOutput);
   }
 }
 

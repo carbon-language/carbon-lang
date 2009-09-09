@@ -47,7 +47,8 @@ class Compilation {
   JobList Jobs;
 
   /// Cache of translated arguments for a particular tool chain.
-  llvm::DenseMap<const ToolChain*, DerivedArgList*> TCArgs;
+  llvm::DenseMap<std::pair<const ToolChain*, const char*>,
+                 DerivedArgList*> TCArgs;
 
   /// Temporary files which should be removed on exit.
   ArgStringList TempFiles;
@@ -79,7 +80,10 @@ public:
   /// getArgsForToolChain - Return the derived argument list for the
   /// tool chain \arg TC (or the default tool chain, if TC is not
   /// specified).
-  const DerivedArgList &getArgsForToolChain(const ToolChain *TC = 0);
+  ///
+  /// \param BoundArch - The bound architecture name, or 0.
+  const DerivedArgList &getArgsForToolChain(const ToolChain *TC,
+                                            const char *BoundArch);
 
   /// addTempFile - Add a file to remove on exit, and returns its
   /// argument.
