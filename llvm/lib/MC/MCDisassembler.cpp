@@ -8,9 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCDisassembler.h"
+using namespace llvm;
 
-llvm::MCDisassembler::MCDisassembler() {
+MCDisassembler::MCDisassembler() {
 }
   
-llvm::MCDisassembler::~MCDisassembler() {
+MCDisassembler::~MCDisassembler() {
 }
