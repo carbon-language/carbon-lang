@@ -519,12 +519,9 @@ static ARMCC::CondCodes IntCCToARMCC(ISD::CondCode CC) {
   }
 }
 
-/// FPCCToARMCC - Convert a DAG fp condition code to an ARM CC. It
-/// returns true if the operands should be inverted to form the proper
-/// comparison.
-static bool FPCCToARMCC(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
+/// FPCCToARMCC - Convert a DAG fp condition code to an ARM CC.
+static void FPCCToARMCC(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
                         ARMCC::CondCodes &CondCode2) {
-  bool Invert = false;
   CondCode2 = ARMCC::AL;
   switch (CC) {
   default: llvm_unreachable("Unknown FP condition!");
@@ -535,7 +532,7 @@ static bool FPCCToARMCC(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
   case ISD::SETGE:
   case ISD::SETOGE: CondCode = ARMCC::GE; break;
   case ISD::SETOLT: CondCode = ARMCC::MI; break;
-  case ISD::SETOLE: CondCode = ARMCC::GT; Invert = true; break;
+  case ISD::SETOLE: CondCode = ARMCC::LS; break;
   case ISD::SETONE: CondCode = ARMCC::MI; CondCode2 = ARMCC::GT; break;
   case ISD::SETO:   CondCode = ARMCC::VC; break;
   case ISD::SETUO:  CondCode = ARMCC::VS; break;
@@ -549,7 +546,6 @@ static bool FPCCToARMCC(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
   case ISD::SETNE:
   case ISD::SETUNE: CondCode = ARMCC::NE; break;
   }
-  return Invert;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1814,8 +1810,7 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
   }
 
   ARMCC::CondCodes CondCode, CondCode2;
-  if (FPCCToARMCC(CC, CondCode, CondCode2))
-    std::swap(TrueVal, FalseVal);
+  FPCCToARMCC(CC, CondCode, CondCode2);
 
   SDValue ARMCC = DAG.getConstant(CondCode, MVT::i32);
   SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
@@ -1851,9 +1846,7 @@ static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG,
 
   assert(LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::f64);
   ARMCC::CondCodes CondCode, CondCode2;
-  if (FPCCToARMCC(CC, CondCode, CondCode2))
-    // Swap the LHS/RHS of the comparison if needed.
-    std::swap(LHS, RHS);
+  FPCCToARMCC(CC, CondCode, CondCode2);
 
   SDValue Cmp = getVFPCmp(LHS, RHS, DAG, dl);
   SDValue ARMCC = DAG.getConstant(CondCode, MVT::i32);
