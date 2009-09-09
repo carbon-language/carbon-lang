@@ -76,20 +76,10 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   if (Op.isReg()) {
     O << '%';
     unsigned Reg = Op.getReg();
-#if 0
-    if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
-      EVT VT = (strcmp(Modifier+6,"64") == 0) ?
-      EVT::i64 : ((strcmp(Modifier+6, "32") == 0) ? EVT::i32 :
-                  ((strcmp(Modifier+6,"16") == 0) ? EVT::i16 : EVT::i8));
-      Reg = getX86SubSuperRegister(Reg, VT);
-    }
-#endif
     O << TRI->getAsmName(Reg);
     return;
   } else if (Op.isImm()) {
-    //if (!Modifier || (strcmp(Modifier, "debug") && strcmp(Modifier, "mem")))
-    O << '$';
-    O << Op.getImm();
+    O << '$' << Op.getImm();
     return;
   } else if (Op.isExpr()) {
     O << '$';
@@ -101,7 +91,6 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 }
 
 void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
-
   const MCOperand &BaseReg  = MI->getOperand(Op);
   const MCOperand &IndexReg = MI->getOperand(Op+2);
   const MCOperand &DispSpec = MI->getOperand(Op+3);
@@ -110,20 +99,12 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
     int64_t DispVal = DispSpec.getImm();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
       O << DispVal;
-  } else if (DispSpec.isExpr()) {
-    DispSpec.getExpr()->print(O, MAI);
   } else {
-    llvm_unreachable("non-immediate displacement for LEA?");
-    //assert(DispSpec.isGlobal() || DispSpec.isCPI() ||
-    //       DispSpec.isJTI() || DispSpec.isSymbol());
-    //printOperand(MI, Op+3, "mem");
+    assert(DispSpec.isExpr() && "non-immediate displacement for LEA?");
+    DispSpec.getExpr()->print(O, MAI);
   }
   
   if (IndexReg.getReg() || BaseReg.getReg()) {
-    // There are cases where we can end up with ESP/RSP in the indexreg slot.
-    // If this happens, swap the base/index register to support assemblers that
-    // don't work when the index is *SP.
-    // FIXME: REMOVE THIS.
     assert(IndexReg.getReg() != X86::ESP && IndexReg.getReg() != X86::RSP);
     
     O << '(';
