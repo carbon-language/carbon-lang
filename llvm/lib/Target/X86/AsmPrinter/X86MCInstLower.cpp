@@ -112,11 +112,9 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
 }
 
 MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
-  std::string Name = MO.getSymbolName();
-  if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
+  std::string Name = Mang->makeNameProper(MO.getSymbolName());
+  if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
     Name += "$stub";
-  }
-  
   
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
@@ -129,7 +127,7 @@ MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
     Name = "__imp_" + Name;
     break;
   case X86II::MO_DARWIN_STUB:
-    FnStubs[Name] = MO.getSymbolName();
+    FnStubs[Name] = Mang->makeNameProper(MO.getSymbolName());
     break;
     // FIXME: These probably should be a modifier on the symbol or something??
   case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
