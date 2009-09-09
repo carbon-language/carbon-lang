@@ -576,7 +576,7 @@ void DwarfException::EmitExceptionTable() {
   const unsigned TypeInfoSize = TD->getPointerSize(); // DW_EH_PE_absptr
   unsigned SizeTypes = TypeInfos.size() * TypeInfoSize;
 
-  unsigned TypeOffset = sizeof(int8_t) + // Call site format
+  unsigned TypeOffset = sizeof(int8_t) +   // Call site format
     MCAsmInfo::getULEB128Size(SizeSites) + // Call-site table length
     SizeSites + SizeActions + SizeTypes;
 
@@ -851,16 +851,18 @@ void DwarfException::EmitExceptionTable() {
 void DwarfException::EndModule() {
   if (MAI->getExceptionHandlingType() != ExceptionHandling::Dwarf)
     return;
+
   if (TimePassesIsEnabled)
     ExceptionTimer->startTimer();
 
   if (shouldEmitMovesModule || shouldEmitTableModule) {
     const std::vector<Function *> Personalities = MMI->getPersonalities();
-    for (unsigned i = 0; i < Personalities.size(); ++i)
+
+    for (unsigned i = 0, e = Personalities.size(); i < e; ++i)
       EmitCIE(Personalities[i], i);
 
-    for (std::vector<FunctionEHFrameInfo>::iterator I = EHFrames.begin(),
-           E = EHFrames.end(); I != E; ++I)
+    for (std::vector<FunctionEHFrameInfo>::iterator
+           I = EHFrames.begin(), E = EHFrames.end(); I != E; ++I)
       EmitFDE(*I);
   }
 
@@ -882,7 +884,7 @@ void DwarfException::BeginFunction(MachineFunction *MF) {
     MMI->TidyLandingPads();
 
     // If any landing pads survive, we need an EH table.
-    if (MMI->getLandingPads().size())
+    if (!MMI->getLandingPads().empty())
       shouldEmitTable = true;
 
     // See if we need frame move info.
