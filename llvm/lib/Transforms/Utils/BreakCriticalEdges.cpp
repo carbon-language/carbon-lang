@@ -21,6 +21,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
@@ -44,6 +45,7 @@ namespace {
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
       AU.addPreserved<LoopInfo>();
+      AU.addPreserved<ProfileInfo>();
 
       // No loop canonicalization guarantees are broken by this pass.
       AU.addPreservedID(LoopSimplifyID);
@@ -336,6 +338,11 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
              "SplitCriticalEdge doesn't know how to update LCCSA form "
              "without LoopSimplify!");
     }
+  }
+
+  // Update ProfileInfo if it is around.
+  if (ProfileInfo *PI = P->getAnalysisIfAvailable<ProfileInfo>()) {
+    PI->splitEdge(TIBB,DestBB,NewBB,MergeIdenticalEdges);
   }
 
   return NewBB;

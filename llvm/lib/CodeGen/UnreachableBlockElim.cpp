@@ -26,6 +26,7 @@
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
+#include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -44,6 +45,10 @@ namespace {
   public:
     static char ID; // Pass identification, replacement for typeid
     UnreachableBlockElim() : FunctionPass(&ID) {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addPreserved<ProfileInfo>();
+    }
   };
 }
 char UnreachableBlockElim::ID = 0;
@@ -79,8 +84,11 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
     }
 
   // Actually remove the blocks now.
-  for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i)
+  ProfileInfo *PI = getAnalysisIfAvailable<ProfileInfo>();
+  for (unsigned i = 0, e = DeadBlocks.size(); i != e; ++i) {
+    if (PI) PI->removeBlock(DeadBlocks[i]);
     DeadBlocks[i]->eraseFromParent();
+  }
 
   return DeadBlocks.size();
 }
