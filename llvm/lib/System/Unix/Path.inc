@@ -57,6 +57,10 @@
 #include <dlfcn.h>
 #endif
 
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+
 // Put in a hack for Cygwin which falsely reports that the mkdtemp function
 // is available when it is not.
 #ifdef __CYGWIN__
@@ -336,7 +340,17 @@ getprogpath(char ret[PATH_MAX], const char *bin)
 /// GetMainExecutable - Return the path to the main executable, given the
 /// value of argv[0] from program startup.
 Path Path::GetMainExecutable(const char *argv0, void *MainAddr) {
-#if defined(__FreeBSD__)
+#if defined(__APPLE__)
+  // On OS X the executable path is saved to the stack by dyld. Reading it
+  // from there is much faster than calling dladdr, especially for large
+  // binaries with symbols.
+  char exe_path[MAXPATHLEN];
+  uint32_t size = sizeof(exe_path);
+  if (_NSGetExecutablePath(exe_path, &size) == 0) {
+    char link_path[MAXPATHLEN];
+    return Path(std::string(realpath(exe_path, link_path)));
+  }
+#elif defined(__FreeBSD__)
   char exe_path[PATH_MAX];
 
   if (getprogpath(exe_path, argv0) != NULL)
