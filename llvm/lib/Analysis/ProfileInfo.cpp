@@ -17,7 +17,9 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Format.h"
 #include <set>
 using namespace llvm;
 
@@ -80,6 +82,87 @@ double ProfileInfo::getExecutionCount(const Function *F) {
   double Count = getExecutionCount(&F->getEntryBlock());
   if (Count != MissingValue) FunctionInformation[F] = Count;
   return Count;
+}
+
+/// Replaces all occurences of RmBB in the ProfilingInfo with DestBB.
+/// This checks all edges of the function the blocks reside in and replaces the
+/// occurences of RmBB with DestBB.
+void ProfileInfo::replaceAllUses(const BasicBlock *RmBB, 
+                                 const BasicBlock *DestBB) {
+  DEBUG(errs() << "Replacing " << RmBB->getNameStr()
+               << " with " << DestBB->getNameStr() << "\n");
+  const Function *F = DestBB->getParent();
+  std::map<const Function*, EdgeWeights>::iterator J =
+    EdgeInformation.find(F);
+  if (J == EdgeInformation.end()) return;
+
+  for (EdgeWeights::iterator I = J->second.begin(), E = J->second.end();
+       I != E; ++I) {
+    Edge e = I->first;
+    Edge newedge; bool foundedge = false;
+    if (e.first == RmBB) {
+      newedge = getEdge(DestBB, e.second);
+      foundedge = true;
+    }
+    if (e.second == RmBB) {
+      newedge = getEdge(e.first, DestBB);
+      foundedge = true;
+    }
+    if (foundedge) {
+      double w = getEdgeWeight(e);
+      EdgeInformation[F][newedge] = w;
+      DEBUG(errs() << "Replacing " << e << " with " << newedge  << "\n");
+      J->second.erase(e);
+    }
+  }
+}
+
+/// Splits an edge in the ProfileInfo and redirects flow over NewBB.
+/// Since its possible that there is more than one edge in the CFG from FristBB
+/// to SecondBB its necessary to redirect the flow proporionally.
+void ProfileInfo::splitEdge(const BasicBlock *FirstBB,
+                            const BasicBlock *SecondBB,
+                            const BasicBlock *NewBB,
+                            bool MergeIdenticalEdges) {
+  const Function *F = FirstBB->getParent();
+  std::map<const Function*, EdgeWeights>::iterator J =
+    EdgeInformation.find(F);
+  if (J == EdgeInformation.end()) return;
+
+  // Generate edges and read current weight.
+  Edge e  = getEdge(FirstBB, SecondBB);
+  Edge n1 = getEdge(FirstBB, NewBB);
+  Edge n2 = getEdge(NewBB, SecondBB);
+  EdgeWeights &ECs = J->second;
+  double w = ECs[e];
+
+  int succ_count = 0;
+  if (!MergeIdenticalEdges) {
+    // First count the edges from FristBB to SecondBB, if there is more than
+    // one, only slice out a proporional part for NewBB.
+    for(succ_const_iterator BBI = succ_begin(FirstBB), BBE = succ_end(FirstBB);
+        BBI != BBE; ++BBI) {
+      if (*BBI == SecondBB) succ_count++;  
+    }
+    // When the NewBB is completely new, increment the count by one so that
+    // the counts are properly distributed.
+    if (getExecutionCount(NewBB) == ProfileInfo::MissingValue) succ_count++;
+  } else {
+    // When the edges are merged anyway, then redirect all flow.
+    succ_count = 1;
+  }
+
+  // We know now how many edges there are from FirstBB to SecondBB, reroute a
+  // proportional part of the edge weight over NewBB.
+  double neww = w / succ_count;
+  ECs[n1] += neww;
+  ECs[n2] += neww;
+  BlockInformation[F][NewBB] += neww;
+  if (succ_count == 1) {
+    ECs.erase(e);
+  } else {
+    ECs[e] -= neww;
+  }
 }
 
 raw_ostream& llvm::operator<<(raw_ostream &O, ProfileInfo::Edge E) {

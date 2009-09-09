@@ -102,7 +102,26 @@ namespace llvm {
     //===------------------------------------------------------------------===//
     /// Analysis Update Methods
     ///
+    void removeBlock(const BasicBlock *BB) {
+      std::map<const Function*, BlockCounts>::iterator J =
+        BlockInformation.find(BB->getParent());
+      if (J == BlockInformation.end()) return;
 
+      J->second.erase(BB);
+    }
+
+    void removeEdge(Edge e) {
+      std::map<const Function*, EdgeWeights>::iterator J =
+        EdgeInformation.find(getFunction(e));
+      if (J == EdgeInformation.end()) return;
+
+      J->second.erase(e);
+    }
+
+    void splitEdge(const BasicBlock *FirstBB, const BasicBlock *SecondBB,
+                   const BasicBlock *NewBB, bool MergeIdenticalEdges = false);
+
+    void replaceAllUses(const BasicBlock *RmBB, const BasicBlock *DestBB);
   };
 
   /// createProfileLoaderPass - This function returns a Pass that loads the
