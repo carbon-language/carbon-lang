@@ -1704,25 +1704,22 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-lgomp");
 
   // FIXME: Derive these correctly.
-  const char *TCDir = getDarwinToolChain().getToolChainDir().c_str();
+  llvm::StringRef TCDir = getDarwinToolChain().getToolChainDir();
   if (getToolChain().getArchName() == "x86_64") {
-    CmdArgs.push_back(MakeFormattedString(Args,
-                                          llvm::format("-L/usr/lib/gcc/%s/x86_64", TCDir)));
+    CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir +
+                                         "/x86_64"));
     // Intentionally duplicated for (temporary) gcc bug compatibility.
-    CmdArgs.push_back(MakeFormattedString(Args,
-                                          llvm::format("-L/usr/lib/gcc/%s/x86_64", TCDir)));
+    CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir +
+                                         "/x86_64"));
   }
-  CmdArgs.push_back(MakeFormattedString(Args,
-                                        llvm::format("-L/usr/lib/%s", TCDir)));
-  CmdArgs.push_back(MakeFormattedString(Args,
-                                        llvm::format("-L/usr/lib/gcc/%s", TCDir)));
+  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/" + TCDir));
+  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir));
   // Intentionally duplicated for (temporary) gcc bug compatibility.
-  CmdArgs.push_back(MakeFormattedString(Args,
-                                        llvm::format("-L/usr/lib/gcc/%s", TCDir)));
-  CmdArgs.push_back(MakeFormattedString(Args,
-                                        llvm::format("-L/usr/lib/gcc/%s/../../../%s", TCDir, TCDir)));
-  CmdArgs.push_back(MakeFormattedString(Args,
-                                        llvm::format("-L/usr/lib/gcc/%s/../../..", TCDir)));
+  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir));
+  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir +
+                                       "/../../../" + TCDir));
+  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir +
+                                       "/../../.."));
 
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
