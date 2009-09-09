@@ -93,3 +93,37 @@ bb6:                                              ; preds = %bb2
 return:                                             ; preds = %bb8, %bb
   ret void
 }
+
+; This function requires special handling to preserve LCSSA form.
+; PR4934
+
+define void @pnp_check_irq() nounwind noredzone {
+entry:
+  %conv56 = trunc i64 undef to i32                ; <i32> [#uses=1]
+  br label %while.cond.i
+
+while.cond.i:                                     ; preds = %while.cond.i.backedge, %entry
+  %call.i25 = call i8* @pci_get_device() nounwind noredzone ; <i8*> [#uses=2]
+  br i1 undef, label %if.then65, label %while.body.i
+
+while.body.i:                                     ; preds = %while.cond.i
+  br i1 undef, label %if.then31.i.i, label %while.cond.i.backedge
+
+while.cond.i.backedge:                            ; preds = %if.then31.i.i, %while.body.i
+  br label %while.cond.i
+
+if.then31.i.i:                                    ; preds = %while.body.i
+  switch i32 %conv56, label %while.cond.i.backedge [
+    i32 14, label %if.then42.i.i
+    i32 15, label %if.then42.i.i
+  ]
+
+if.then42.i.i:                                    ; preds = %if.then31.i.i, %if.then31.i.i
+  %call.i25.lcssa48 = phi i8* [ %call.i25, %if.then31.i.i ], [ %call.i25, %if.then31.i.i ] ; <i8*> [#uses=0]
+  unreachable
+
+if.then65:                                        ; preds = %while.cond.i
+  unreachable
+}
+
+declare i8* @pci_get_device() noredzone

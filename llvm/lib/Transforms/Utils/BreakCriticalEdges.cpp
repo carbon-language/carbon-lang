@@ -117,6 +117,38 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
   return false;
 }
 
+/// CreatePHIsForSplitLoopExit - When a loop exit edge is split, LCSSA form
+/// may require new PHIs in the new exit block. This function inserts the
+/// new PHIs, as needed.  Preds is a list of preds inside the loop, SplitBB
+/// is the new loop exit block, and DestBB is the old loop exit, now the
+/// successor of SplitBB.
+static void CreatePHIsForSplitLoopExit(SmallVectorImpl<BasicBlock *> &Preds,
+                                       BasicBlock *SplitBB,
+                                       BasicBlock *DestBB) {
+  // SplitBB shouldn't have anything non-trivial in it yet.
+  assert(SplitBB->getFirstNonPHI() == SplitBB->getTerminator() &&
+         "SplitBB has non-PHI nodes!");
+
+  // For each PHI in the destination block...
+  for (BasicBlock::iterator I = DestBB->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+    unsigned Idx = PN->getBasicBlockIndex(SplitBB);
+    Value *V = PN->getIncomingValue(Idx);
+    // If the input is a PHI which already satisfies LCSSA, don't create
+    // a new one.
+    if (const PHINode *VP = dyn_cast<PHINode>(V))
+      if (VP->getParent() == SplitBB)
+        continue;
+    // Otherwise a new PHI is needed. Create one and populate it.
+    PHINode *NewPN = PHINode::Create(PN->getType(), "split",
+                                     SplitBB->getTerminator());
+    for (unsigned i = 0, e = Preds.size(); i != e; ++i)
+      NewPN->addIncoming(V, Preds[i]);
+    // Update the original PHI.
+    PN->setIncomingValue(Idx, NewPN);
+  }
+}
+
 /// SplitCriticalEdge - If this edge is a critical edge, insert a new node to
 /// split the critical edge.  This will update DominatorTree and
 /// DominatorFrontier  information if it is available, thus calling this pass
@@ -285,6 +317,16 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
       // the loop, to maintain a LoopSimplify guarantee.
       if (!TIL->contains(DestBB) &&
           P->mustPreserveAnalysisID(LoopSimplifyID)) {
+        assert(!TIL->contains(NewBB) &&
+               "Split point for loop exit is contained in loop!");
+
+        // Update LCSSA form in the newly created exit block.
+        if (P->mustPreserveAnalysisID(LCSSAID)) {
+          SmallVector<BasicBlock *, 1> OrigPred;
+          OrigPred.push_back(TIBB);
+          CreatePHIsForSplitLoopExit(OrigPred, NewBB, DestBB);
+        }
+
         // For each unique exit block...
         SmallVector<BasicBlock *, 4> ExitBlocks;
         TIL->getExitBlocks(ExitBlocks);
@@ -292,41 +334,26 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
           // Collect all the preds that are inside the loop, and note
           // whether there are any preds outside the loop.
           SmallVector<BasicBlock *, 4> Preds;
-          bool AllPredsInLoop = false;
+          bool HasPredOutsideOfLoop = false;
           BasicBlock *Exit = ExitBlocks[i];
           for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit);
                I != E; ++I)
             if (TIL->contains(*I))
               Preds.push_back(*I);
             else
-              AllPredsInLoop = true;
+              HasPredOutsideOfLoop = true;
           // If there are any preds not in the loop, we'll need to split
           // the edges. The Preds.empty() check is needed because a block
           // may appear multiple times in the list. We can't use
           // getUniqueExitBlocks above because that depends on LoopSimplify
           // form, which we're in the process of restoring!
-          if (Preds.empty() || !AllPredsInLoop) continue;
-          BasicBlock *NewBB = SplitBlockPredecessors(Exit,
-                                                     Preds.data(), Preds.size(),
-                                                     "split", P);
-          // Update LCSSA form by creating new PHIs in the new exit blocks
-          // as needed.
-          if (P->mustPreserveAnalysisID(LCSSAID))
-            for (BasicBlock::iterator I = Exit->begin();
-                 PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-              unsigned Idx = PN->getBasicBlockIndex(NewBB);
-              Value *V = PN->getIncomingValue(Idx);
-              // If the PHI is already suitable, don't create a new one.
-              if (PHINode *VP = dyn_cast<PHINode>(V))
-                if (VP->getParent() == NewBB)
-                  continue;
-              // A new PHI is needed. Create one and populate it.
-              PHINode *NewPN =
-                PHINode::Create(PN->getType(), "split", NewBB->getTerminator());
-              for (unsigned i = 0, e = Preds.size(); i != e; ++i)
-                NewPN->addIncoming(V, Preds[i]);
-              PN->setIncomingValue(Idx, NewPN);
-            }
+          if (!Preds.empty() && HasPredOutsideOfLoop) {
+            BasicBlock *NewExitBB =
+              SplitBlockPredecessors(Exit, Preds.data(), Preds.size(),
+                                     "split", P);
+            if (P->mustPreserveAnalysisID(LCSSAID))
+              CreatePHIsForSplitLoopExit(Preds, NewExitBB, Exit);
+          }
         }
       }
       // LCSSA form was updated above for the case where LoopSimplify is
