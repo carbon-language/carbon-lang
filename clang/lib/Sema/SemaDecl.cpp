@@ -985,8 +985,14 @@ void Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     //   unknown size and therefore be incomplete at one point in a 
     //   translation unit and complete later on; [...]
     else if (Old->getType()->isIncompleteArrayType() && 
-             New->getType()->isArrayType())
-      MergedT = New->getType();
+             New->getType()->isArrayType()) {
+      CanQual<ArrayType> OldArray 
+        = Context.getCanonicalType(Old->getType())->getAs<ArrayType>();
+      CanQual<ArrayType> NewArray 
+        = Context.getCanonicalType(New->getType())->getAs<ArrayType>();
+      if (OldArray->getElementType() == NewArray->getElementType())
+        MergedT = New->getType();
+    }
   } else {
     MergedT = Context.mergeTypes(New->getType(), Old->getType());
   }
