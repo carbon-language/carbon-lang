@@ -104,25 +104,27 @@ namespace llvm {
     static char ID; // Pass identification, replacement for typeid
     LiveIntervals() : MachineFunctionPass(&ID) {}
 
-    static MachineInstrIndex getBaseIndex(MachineInstrIndex index) {
+    MachineInstrIndex getBaseIndex(MachineInstrIndex index) {
       return MachineInstrIndex(index, MachineInstrIndex::LOAD);
     }
-    static MachineInstrIndex getBoundaryIndex(MachineInstrIndex index) {
+    MachineInstrIndex getBoundaryIndex(MachineInstrIndex index) {
       return MachineInstrIndex(index,
         (MachineInstrIndex::Slot)(MachineInstrIndex::NUM - 1));
     }
-    static MachineInstrIndex getLoadIndex(MachineInstrIndex index) {
+    MachineInstrIndex getLoadIndex(MachineInstrIndex index) {
       return MachineInstrIndex(index, MachineInstrIndex::LOAD);
     }
-    static MachineInstrIndex getUseIndex(MachineInstrIndex index) {
+    MachineInstrIndex getUseIndex(MachineInstrIndex index) {
       return MachineInstrIndex(index, MachineInstrIndex::USE);
     }
-    static MachineInstrIndex getDefIndex(MachineInstrIndex index) {
+    MachineInstrIndex getDefIndex(MachineInstrIndex index) {
       return MachineInstrIndex(index, MachineInstrIndex::DEF);
     }
-    static MachineInstrIndex getStoreIndex(MachineInstrIndex index) {
+    MachineInstrIndex getStoreIndex(MachineInstrIndex index) {
       return MachineInstrIndex(index, MachineInstrIndex::STORE);
     }
+
+    
 
     MachineInstrIndex getNextSlot(MachineInstrIndex m) const {
       return m.nextSlot();

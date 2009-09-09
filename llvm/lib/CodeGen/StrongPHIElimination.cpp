@@ -785,15 +785,14 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
     if (RegHandled.insert(I->first).second) {
       LiveInterval& Int = LI.getOrCreateInterval(I->first);
       MachineInstrIndex instrIdx = LI.getInstructionIndex(I->second);
-      if (Int.liveAt(LiveIntervals::getDefIndex(instrIdx)))
-        Int.removeRange(LiveIntervals::getDefIndex(instrIdx),
+      if (Int.liveAt(LI.getDefIndex(instrIdx)))
+        Int.removeRange(LI.getDefIndex(instrIdx),
                         LI.getNextSlot(LI.getMBBEndIdx(I->second->getParent())),
                         true);
       
       LiveRange R = LI.addLiveRangeToEndOfBlock(I->first, I->second);
       R.valno->setCopy(I->second);
-      R.valno->def =
-                  LiveIntervals::getDefIndex(LI.getInstructionIndex(I->second));
+      R.valno->def = LI.getDefIndex(LI.getInstructionIndex(I->second));
     }
   }
 }
@@ -819,7 +818,7 @@ void StrongPHIElimination::InsertCopies(MachineDomTreeNode* MDTN,
         // Remove the live range for the old vreg.
         LiveInterval& OldInt = LI.getInterval(I->getOperand(i).getReg());
         LiveInterval::iterator OldLR = OldInt.FindLiveRangeContaining(
-                  LiveIntervals::getUseIndex(LI.getInstructionIndex(I)));
+                  LI.getUseIndex(LI.getInstructionIndex(I)));
         if (OldLR != OldInt.end())
           OldInt.removeRange(*OldLR, true);
         
@@ -832,7 +831,7 @@ void StrongPHIElimination::InsertCopies(MachineDomTreeNode* MDTN,
         FirstVN->setHasPHIKill(false);
         if (I->getOperand(i).isKill())
           FirstVN->addKill(
-                 LiveIntervals::getUseIndex(LI.getInstructionIndex(I)));
+                 LI.getUseIndex(LI.getInstructionIndex(I)));
         
         LiveRange LR (LI.getMBBStartIdx(I->getParent()),
                       LI.getNextSlot(LI.getUseIndex(LI.getInstructionIndex(I))),
@@ -970,14 +969,14 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
           LiveInterval& Int = LI.getOrCreateInterval(I->first);
           MachineInstrIndex instrIdx =
                      LI.getInstructionIndex(--SI->second->getFirstTerminator());
-          if (Int.liveAt(LiveIntervals::getDefIndex(instrIdx)))
-            Int.removeRange(LiveIntervals::getDefIndex(instrIdx),
+          if (Int.liveAt(LI.getDefIndex(instrIdx)))
+            Int.removeRange(LI.getDefIndex(instrIdx),
                             LI.getNextSlot(LI.getMBBEndIdx(SI->second)), true);
 
           LiveRange R = LI.addLiveRangeToEndOfBlock(I->first,
                                             --SI->second->getFirstTerminator());
           R.valno->setCopy(--SI->second->getFirstTerminator());
-          R.valno->def = LiveIntervals::getDefIndex(instrIdx);
+          R.valno->def = LI.getDefIndex(instrIdx);
           
           DEBUG(errs() << "Renaming failed: " << SI->first << " -> "
                        << I->first << "\n");

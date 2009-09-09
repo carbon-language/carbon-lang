@@ -492,7 +492,7 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     
     // Once we've found it, extend its VNInfo to our instruction.
     MachineInstrIndex DefIndex = LIs->getInstructionIndex(Walker);
-    DefIndex = LiveIntervals::getDefIndex(DefIndex);
+    DefIndex = LIs->getDefIndex(DefIndex);
     MachineInstrIndex EndIndex = LIs->getMBBEndIdx(MBB);
     
     RetVNI = NewVNs[Walker];
@@ -529,11 +529,11 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     }
 
     MachineInstrIndex UseIndex = LIs->getInstructionIndex(Walker);
-    UseIndex = LiveIntervals::getUseIndex(UseIndex);
+    UseIndex = LIs->getUseIndex(UseIndex);
     MachineInstrIndex EndIndex;
     if (IsIntraBlock) {
       EndIndex = LIs->getInstructionIndex(UseI);
-      EndIndex = LiveIntervals::getUseIndex(EndIndex);
+      EndIndex = LIs->getUseIndex(EndIndex);
     } else
       EndIndex = LIs->getMBBEndIdx(MBB);
 
@@ -589,12 +589,12 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     }
 
     MachineInstrIndex StartIndex = LIs->getInstructionIndex(Walker);
-    StartIndex = foundDef ? LiveIntervals::getDefIndex(StartIndex) :
-                            LiveIntervals::getUseIndex(StartIndex);
+    StartIndex = foundDef ? LIs->getDefIndex(StartIndex) :
+                            LIs->getUseIndex(StartIndex);
     MachineInstrIndex EndIndex;
     if (IsIntraBlock) {
       EndIndex = LIs->getInstructionIndex(UseI);
-      EndIndex = LiveIntervals::getUseIndex(EndIndex);
+      EndIndex = LIs->getUseIndex(EndIndex);
     } else
       EndIndex = LIs->getMBBEndIdx(MBB);
 
@@ -694,7 +694,7 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
   MachineInstrIndex EndIndex;
   if (IsIntraBlock) {
     EndIndex = LIs->getInstructionIndex(UseI);
-    EndIndex = LiveIntervals::getUseIndex(EndIndex);
+    EndIndex = LIs->getUseIndex(EndIndex);
   } else
     EndIndex = LIs->getMBBEndIdx(MBB);
   LI->addRange(LiveRange(StartIndex, LIs->getNextSlot(EndIndex), RetVNI));
@@ -734,7 +734,7 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
     Defs[(*DI).getParent()].insert(&*DI);
     
     MachineInstrIndex DefIdx = LIs->getInstructionIndex(&*DI);
-    DefIdx = LiveIntervals::getDefIndex(DefIdx);
+    DefIdx = LIs->getDefIndex(DefIdx);
     
     assert(DI->getOpcode() != TargetInstrInfo::PHI &&
            "Following NewVN isPHIDef flag incorrect. Fix me!");
@@ -770,7 +770,7 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
   for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(LI->reg),
        DE = MRI->def_end(); DI != DE; ++DI) {
     MachineInstrIndex DefIdx = LIs->getInstructionIndex(&*DI);
-    DefIdx = LiveIntervals::getDefIndex(DefIdx);
+    DefIdx = LIs->getDefIndex(DefIdx);
     
     if (LI->liveAt(DefIdx)) continue;
     
@@ -815,8 +815,7 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
       if (DefIdx == ~0U) continue;
       if (MI->isRegTiedToUseOperand(DefIdx)) {
         VNInfo* NextVN =
-          CurrLI->findDefinedVNInfoForRegInt(
-            LiveIntervals::getDefIndex(*KI));
+          CurrLI->findDefinedVNInfoForRegInt(LIs->getDefIndex(*KI));
         if (NextVN == OldVN) continue;
         Stack.push_back(NextVN);
       }
@@ -850,8 +849,8 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
     MachineOperand& MO = I.getOperand();
     MachineInstrIndex InstrIdx = LIs->getInstructionIndex(&*I);
     
-    if ((MO.isUse() && NewLI.liveAt(LiveIntervals::getUseIndex(InstrIdx))) ||
-        (MO.isDef() && NewLI.liveAt(LiveIntervals::getDefIndex(InstrIdx))))
+    if ((MO.isUse() && NewLI.liveAt(LIs->getUseIndex(InstrIdx))) ||
+        (MO.isDef() && NewLI.liveAt(LIs->getDefIndex(InstrIdx))))
       OpsToChange.push_back(std::make_pair(&*I, I.getOperandNo()));
   }
   
@@ -895,7 +894,7 @@ bool PreAllocSplitting::Rematerialize(unsigned VReg, VNInfo* ValNo,
   
   ReconstructLiveInterval(CurrLI);
   MachineInstrIndex RematIdx = LIs->getInstructionIndex(prior(RestorePt));
-  RematIdx = LiveIntervals::getDefIndex(RematIdx);
+  RematIdx = LIs->getDefIndex(RematIdx);
   RenumberValno(CurrLI->findDefinedVNInfoForRegInt(RematIdx));
   
   ++NumSplits;
@@ -1154,7 +1153,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
   
   if (!FoldedRestore) {
     MachineInstrIndex RestoreIdx = LIs->getInstructionIndex(prior(RestorePt));
-    RestoreIdx = LiveIntervals::getDefIndex(RestoreIdx);
+    RestoreIdx = LIs->getDefIndex(RestoreIdx);
     RenumberValno(CurrLI->findDefinedVNInfoForRegInt(RestoreIdx));
   }
   
@@ -1242,7 +1241,7 @@ bool PreAllocSplitting::removeDeadSpills(SmallPtrSet<LiveInterval*, 8>& split) {
     for (MachineRegisterInfo::use_iterator UI = MRI->use_begin((*LI)->reg),
          UE = MRI->use_end(); UI != UE; ++UI) {
       MachineInstrIndex index = LIs->getInstructionIndex(&*UI);
-      index = LiveIntervals::getUseIndex(index);
+      index = LIs->getUseIndex(index);
       
       const LiveRange* LR = (*LI)->getLiveRangeContaining(index);
       VNUseCount[LR->valno].insert(&*UI);
