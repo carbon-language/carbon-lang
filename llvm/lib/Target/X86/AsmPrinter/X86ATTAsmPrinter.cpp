@@ -41,7 +41,7 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 static cl::opt<bool> NewAsmPrinter("experimental-asm-printer",
-                                   cl::Hidden, cl::init(false));
+                                   cl::Hidden, cl::init(true));
 
 //===----------------------------------------------------------------------===//
 // Primitive Helper Functions.
