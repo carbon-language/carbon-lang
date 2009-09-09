@@ -42,7 +42,7 @@ NestedNameSpecifier *
 NestedNameSpecifier::Create(ASTContext &Context, NestedNameSpecifier *Prefix, 
                             IdentifierInfo *II) {
   assert(II && "Identifier cannot be NULL");
-  assert(Prefix && Prefix->isDependent() && "Prefix must be dependent");
+  assert((!Prefix || Prefix->isDependent()) && "Prefix must be dependent");
 
   NestedNameSpecifier Mockup;
   Mockup.Prefix.setPointer(Prefix);

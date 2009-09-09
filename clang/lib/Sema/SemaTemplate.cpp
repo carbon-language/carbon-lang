@@ -1229,7 +1229,7 @@ Sema::ActOnMemberTemplateIdReferenceExpr(Scope *S, ExprArg Base,
   else if (OverloadedFunctionDecl *Ovl = Template.getAsOverloadedFunctionDecl())
     Name = Ovl->getDeclName();
   else
-    assert(false && "Cannot support dependent template names yet");
+    Name = Template.getAsDependentTemplateName()->getName();
   
   // Translate the parser's template argument list in our AST format.
   llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
@@ -1287,11 +1287,6 @@ Sema::ActOnDependentTemplateName(SourceLocation TemplateKWLoc,
     return Template;
   }
 
-  // FIXME: We need to be able to create a dependent template name with just
-  // an identifier, to handle the x->template f<T> case.
-  assert(!ObjectType && 
-      "Cannot handle dependent template names without a nested-name-specifier");
-  
   NestedNameSpecifier *Qualifier 
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   return TemplateTy::make(Context.getDependentTemplateName(Qualifier, &Name));

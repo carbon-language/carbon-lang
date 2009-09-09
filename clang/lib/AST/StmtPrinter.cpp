@@ -493,12 +493,10 @@ void StmtPrinter::VisitTemplateIdRefExpr(TemplateIdRefExpr *Node) {
   if (Node->getQualifier())
     Node->getQualifier()->print(OS, Policy);
   Node->getTemplateName().print(OS, Policy, true);
-  OS << '<';
   OS << TemplateSpecializationType::PrintTemplateArgumentList(
                                                       Node->getTemplateArgs(),
                                                    Node->getNumTemplateArgs(),
                                                               Policy);
-  OS << '>';
 }
 
 void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
@@ -1154,7 +1152,18 @@ void StmtPrinter::VisitCXXUnresolvedMemberExpr(CXXUnresolvedMemberExpr *Node) {
   OS << (Node->isArrow() ? "->" : ".");
   if (NestedNameSpecifier *Qualifier = Node->getQualifier())
     Qualifier->print(OS, Policy);
+  else if (Node->hasExplicitTemplateArgumentList())
+    // FIXME: Track use of "template" keyword explicitly?
+    OS << "template ";
+  
   OS << Node->getMember().getAsString();
+  
+  if (Node->hasExplicitTemplateArgumentList()) {
+    OS << TemplateSpecializationType::PrintTemplateArgumentList(
+                                                    Node->getTemplateArgs(),
+                                                    Node->getNumTemplateArgs(),
+                                                    Policy);
+  }
 }
 
 static const char *getTypeTraitName(UnaryTypeTrait UTT) {

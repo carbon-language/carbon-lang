@@ -3319,7 +3319,8 @@ TemplateName ASTContext::getQualifiedTemplateName(NestedNameSpecifier *NNS,
 /// template name such as \c MetaFun::template apply.
 TemplateName ASTContext::getDependentTemplateName(NestedNameSpecifier *NNS, 
                                                   const IdentifierInfo *Name) {
-  assert(NNS->isDependent() && "Nested name specifier must be dependent");
+  assert((!NNS || NNS->isDependent()) && 
+         "Nested name specifier must be dependent");
 
   llvm::FoldingSetNodeID ID;
   DependentTemplateName::Profile(ID, NNS, Name);

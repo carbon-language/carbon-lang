@@ -523,6 +523,77 @@ Stmt::child_iterator CXXUnresolvedConstructExpr::child_end() {
   return child_iterator(reinterpret_cast<Stmt **>(this + 1) + NumArgs);
 }
 
+CXXUnresolvedMemberExpr::CXXUnresolvedMemberExpr(ASTContext &C, 
+                                                 Expr *Base, bool IsArrow, 
+                                                 SourceLocation OperatorLoc,
+                                                 NestedNameSpecifier *Qualifier,
+                                                 SourceRange QualifierRange,
+                                          NamedDecl *FirstQualifierFoundInScope,
+                                                 DeclarationName Member,
+                                                 SourceLocation MemberLoc,
+                                                 bool HasExplicitTemplateArgs,
+                                                 SourceLocation LAngleLoc,
+                                           const TemplateArgument *TemplateArgs,
+                                                 unsigned NumTemplateArgs,
+                                                 SourceLocation RAngleLoc)
+  : Expr(CXXUnresolvedMemberExprClass, C.DependentTy, true, true),
+    Base(Base), IsArrow(IsArrow), 
+    HasExplicitTemplateArgumentList(HasExplicitTemplateArgs),
+    OperatorLoc(OperatorLoc),
+    Qualifier(Qualifier), QualifierRange(QualifierRange),
+    FirstQualifierFoundInScope(FirstQualifierFoundInScope),
+    Member(Member), MemberLoc(MemberLoc)
+{
+  if (HasExplicitTemplateArgumentList) {
+    ExplicitTemplateArgumentList *ETemplateArgs 
+      = getExplicitTemplateArgumentList();
+    ETemplateArgs->LAngleLoc = LAngleLoc;
+    ETemplateArgs->RAngleLoc = RAngleLoc;
+    ETemplateArgs->NumTemplateArgs = NumTemplateArgs;
+    
+    TemplateArgument *SavedTemplateArgs = ETemplateArgs->getTemplateArgs();
+    for (unsigned I = 0; I < NumTemplateArgs; ++I)
+      new (SavedTemplateArgs + I) TemplateArgument(TemplateArgs[I]);            
+  }
+}
+
+CXXUnresolvedMemberExpr *
+CXXUnresolvedMemberExpr::Create(ASTContext &C, 
+                                Expr *Base, bool IsArrow, 
+                                SourceLocation OperatorLoc,
+                                NestedNameSpecifier *Qualifier,
+                                SourceRange QualifierRange,
+                                NamedDecl *FirstQualifierFoundInScope,
+                                DeclarationName Member,
+                                SourceLocation MemberLoc,
+                                bool HasExplicitTemplateArgs,
+                                SourceLocation LAngleLoc,
+                                const TemplateArgument *TemplateArgs,
+                                unsigned NumTemplateArgs,
+                                SourceLocation RAngleLoc)
+{
+  if (!HasExplicitTemplateArgs)
+    return new (C) CXXUnresolvedMemberExpr(C, Base, IsArrow, OperatorLoc,
+                                           Qualifier, QualifierRange,
+                                           FirstQualifierFoundInScope,
+                                           Member, MemberLoc);
+  
+  void *Mem = C.Allocate(sizeof(CXXUnresolvedMemberExpr) +
+                         sizeof(ExplicitTemplateArgumentList) + 
+                         sizeof(TemplateArgument) * NumTemplateArgs,
+                         llvm::alignof<CXXUnresolvedMemberExpr>());
+  return new (Mem) CXXUnresolvedMemberExpr(C, Base, IsArrow, OperatorLoc,
+                                           Qualifier, QualifierRange,
+                                           FirstQualifierFoundInScope,
+                                           Member,
+                                           MemberLoc,
+                                           HasExplicitTemplateArgs,
+                                           LAngleLoc,
+                                           TemplateArgs,
+                                           NumTemplateArgs,
+                                           RAngleLoc);
+}
+
 Stmt::child_iterator CXXUnresolvedMemberExpr::child_begin() {
   return child_iterator(&Base);
 }

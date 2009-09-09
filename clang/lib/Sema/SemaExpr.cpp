@@ -2029,14 +2029,17 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
           FirstQualifierInScope = FindFirstQualifierInScope(S, Qualifier);
       }
       
-      return Owned(new (Context) CXXUnresolvedMemberExpr(Context,
-                                                         BaseExpr, true, 
-                                                         OpLoc,
-                                                         Qualifier,
+      return Owned(CXXUnresolvedMemberExpr::Create(Context, BaseExpr, true, 
+                                                   OpLoc, Qualifier,
                                             SS? SS->getRange() : SourceRange(),
-                                                         FirstQualifierInScope,
-                                                         MemberName,
-                                                         MemberLoc));
+                                                   FirstQualifierInScope,
+                                                   MemberName,
+                                                   MemberLoc,
+                                                   HasExplicitTemplateArgs,
+                                                   LAngleLoc,
+                                                   ExplicitTemplateArgs,
+                                                   NumExplicitTemplateArgs,
+                                                   RAngleLoc));
     }
     else if (const PointerType *PT = BaseType->getAs<PointerType>())
       BaseType = PT->getPointeeType();
@@ -2067,14 +2070,19 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
             FirstQualifierInScope = FindFirstQualifierInScope(S, Qualifier);
         }
         
-        return Owned(new (Context) CXXUnresolvedMemberExpr(Context,
-                                                           BaseExpr, false, 
-                                                           OpLoc, 
-                                                           Qualifier,
+        return Owned(CXXUnresolvedMemberExpr::Create(Context,
+                                                     BaseExpr, false, 
+                                                     OpLoc, 
+                                                     Qualifier,
                                             SS? SS->getRange() : SourceRange(),
-                                                         FirstQualifierInScope,
-                                                           MemberName,
-                                                           MemberLoc));
+                                                     FirstQualifierInScope,
+                                                     MemberName,
+                                                     MemberLoc,
+                                                     HasExplicitTemplateArgs,
+                                                     LAngleLoc,
+                                                     ExplicitTemplateArgs,
+                                                     NumExplicitTemplateArgs,
+                                                     RAngleLoc));
       }
     }
   }

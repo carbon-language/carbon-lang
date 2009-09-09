@@ -918,8 +918,10 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       ConsumeParen();
       break;
     }
-    case tok::arrow:       // postfix-expression: p-e '->' identifier
-    case tok::period: {    // postfix-expression: p-e '.' identifier
+    case tok::arrow:
+    case tok::period: {
+      // postfix-expression: p-e '->' template[opt] id-expression
+      // postfix-expression: p-e '.' template[opt] id-expression
       tok::TokenKind OpKind = Tok.getKind();
       SourceLocation OpLoc = ConsumeToken();  // Eat the "." or "->" token.
 

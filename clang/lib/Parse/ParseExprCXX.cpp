@@ -76,7 +76,9 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
     if (HasScopeSpecifier) {
       // C++ [basic.lookup.classref]p5:
       //   If the qualified-id has the form
+      //
       //       ::class-name-or-namespace-name::...
+      //
       //   the class-name-or-namespace-name is looked up in global scope as a
       //   class-name or namespace-name.
       //

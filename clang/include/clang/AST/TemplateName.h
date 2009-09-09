@@ -217,7 +217,7 @@ public:
 /// resolved prior to template instantiation.
 ///
 /// This kind of template name refers to a dependent template name,
-/// including its nested name specifier. For example,
+/// including its nested name specifier (if any). For example,
 /// DependentTemplateName can refer to "MetaFun::template apply",
 /// where "MetaFun::" is the nested name specifier and "apply" is the
 /// template name referenced. The "template" keyword is implied.

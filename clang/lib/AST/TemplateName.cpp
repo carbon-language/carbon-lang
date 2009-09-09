@@ -67,7 +67,7 @@ TemplateName::print(llvm::raw_ostream &OS, const PrintingPolicy &Policy,
       OS << "template ";
     OS << QTN->getDecl()->getNameAsString();
   } else if (DependentTemplateName *DTN = getAsDependentTemplateName()) {
-    if (!SuppressNNS)
+    if (!SuppressNNS && DTN->getQualifier())
       DTN->getQualifier()->print(OS, Policy);
     OS << "template ";
     // FIXME: Shouldn't we have a more general kind of name?

@@ -1407,8 +1407,12 @@ class CXXUnresolvedMemberExpr : public Expr {
   
   /// \brief Whether this member expression used the '->' operator or
   /// the '.' operator.
-  bool IsArrow;
+  bool IsArrow : 1;
 
+  /// \brief Whether this member expression has explicitly-specified template
+  /// arguments.
+  bool HasExplicitTemplateArgumentList : 1;
+  
   /// \brief The location of the '->' or '.' operator.
   SourceLocation OperatorLoc;
 
@@ -1435,6 +1439,36 @@ class CXXUnresolvedMemberExpr : public Expr {
   /// \brief The location of the member name.
   SourceLocation MemberLoc;
   
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name, if any.
+  ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() {
+    if (!HasExplicitTemplateArgumentList)
+      return 0;
+    
+    return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+  }
+  
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name, if any.
+  const ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() const {
+    return const_cast<CXXUnresolvedMemberExpr *>(this)
+             ->getExplicitTemplateArgumentList();
+  }
+  
+  CXXUnresolvedMemberExpr(ASTContext &C, 
+                          Expr *Base, bool IsArrow, 
+                          SourceLocation OperatorLoc,
+                          NestedNameSpecifier *Qualifier,
+                          SourceRange QualifierRange,
+                          NamedDecl *FirstQualifierFoundInScope,
+                          DeclarationName Member,
+                          SourceLocation MemberLoc,
+                          bool HasExplicitTemplateArgs,
+                          SourceLocation LAngleLoc,
+                          const TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs,
+                          SourceLocation RAngleLoc);
+  
 public:
   CXXUnresolvedMemberExpr(ASTContext &C, 
                           Expr *Base, bool IsArrow, 
@@ -1444,12 +1478,28 @@ public:
                           NamedDecl *FirstQualifierFoundInScope,
                           DeclarationName Member,
                           SourceLocation MemberLoc)
-    : Expr(CXXUnresolvedMemberExprClass, C.DependentTy, true, true),
-      Base(Base), IsArrow(IsArrow), OperatorLoc(OperatorLoc),
-      Qualifier(Qualifier), QualifierRange(QualifierRange),
-      FirstQualifierFoundInScope(FirstQualifierFoundInScope),
-      Member(Member), MemberLoc(MemberLoc) { }
-
+  : Expr(CXXUnresolvedMemberExprClass, C.DependentTy, true, true),
+    Base(Base), IsArrow(IsArrow), HasExplicitTemplateArgumentList(false),
+    OperatorLoc(OperatorLoc),
+    Qualifier(Qualifier), QualifierRange(QualifierRange),
+    FirstQualifierFoundInScope(FirstQualifierFoundInScope),
+    Member(Member), MemberLoc(MemberLoc) { }
+  
+  static CXXUnresolvedMemberExpr *
+  Create(ASTContext &C, 
+         Expr *Base, bool IsArrow, 
+         SourceLocation OperatorLoc,
+         NestedNameSpecifier *Qualifier,
+         SourceRange QualifierRange,
+         NamedDecl *FirstQualifierFoundInScope,
+         DeclarationName Member,
+         SourceLocation MemberLoc,
+         bool HasExplicitTemplateArgs,
+         SourceLocation LAngleLoc,
+         const TemplateArgument *TemplateArgs,
+         unsigned NumTemplateArgs,
+         SourceLocation RAngleLoc);
+         
   /// \brief Retrieve the base object of this member expressions,
   /// e.g., the \c x in \c x.m.
   Expr *getBase() { return cast<Expr>(Base); }
@@ -1497,10 +1547,57 @@ public:
   SourceLocation getMemberLoc() const { return MemberLoc; }
   void setMemberLoc(SourceLocation L) { MemberLoc = L; }
 
+  /// \brief Determines whether this member expression actually had a C++
+  /// template argument list explicitly specified, e.g., x.f<int>.
+  bool hasExplicitTemplateArgumentList() { 
+    return HasExplicitTemplateArgumentList; 
+  }
+  
+  /// \brief Retrieve the location of the left angle bracket following the 
+  /// member name ('<'), if any.
+  SourceLocation getLAngleLoc() const { 
+    if (!HasExplicitTemplateArgumentList)
+      return SourceLocation();
+    
+    return getExplicitTemplateArgumentList()->LAngleLoc;
+  }
+  
+  /// \brief Retrieve the template arguments provided as part of this
+  /// template-id.
+  const TemplateArgument *getTemplateArgs() const { 
+    if (!HasExplicitTemplateArgumentList)
+      return 0;   
+    
+    return getExplicitTemplateArgumentList()->getTemplateArgs();
+  }
+  
+  /// \brief Retrieve the number of template arguments provided as part of this
+  /// template-id.
+  unsigned getNumTemplateArgs() const { 
+    if (!HasExplicitTemplateArgumentList)
+      return 0;   
+    
+    return getExplicitTemplateArgumentList()->NumTemplateArgs;
+  }
+  
+  /// \brief Retrieve the location of the right angle bracket following the 
+  /// template arguments ('>').
+  SourceLocation getRAngleLoc() const { 
+    if (!HasExplicitTemplateArgumentList)
+      return SourceLocation();
+    
+    return getExplicitTemplateArgumentList()->RAngleLoc;
+  }
+  
   virtual SourceRange getSourceRange() const {
+    if (HasExplicitTemplateArgumentList)
+      return SourceRange(Base->getSourceRange().getBegin(),
+                         getRAngleLoc());
+    
     return SourceRange(Base->getSourceRange().getBegin(),
                        MemberLoc);
   }
+  
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CXXUnresolvedMemberExprClass;
   }

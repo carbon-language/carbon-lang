@@ -261,7 +261,8 @@ public:
   /// By default, transforms the template name by transforming the declarations
   /// and nested-name-specifiers that occur within the template name. 
   /// Subclasses may override this function to provide alternate behavior.
-  TemplateName TransformTemplateName(TemplateName Name);
+  TemplateName TransformTemplateName(TemplateName Name,
+                                     QualType ObjectType = QualType());
   
   /// \brief Transform the given template argument.
   ///
@@ -567,7 +568,8 @@ public:
   /// template name. Subclasses may override this routine to provide different
   /// behavior.
   TemplateName RebuildTemplateName(NestedNameSpecifier *Qualifier,
-                                   const IdentifierInfo &II);
+                                   const IdentifierInfo &II,
+                                   QualType ObjectType);
   
   
   /// \brief Build a new compound statement.
@@ -1510,16 +1512,58 @@ public:
     SS.setRange(QualifierRange);
     SS.setScopeRep(Qualifier);
         
-    Base = SemaRef.BuildMemberReferenceExpr(/*Scope=*/0,
+    return SemaRef.BuildMemberReferenceExpr(/*Scope=*/0,
                                             move(Base), OperatorLoc, OpKind,
                                             MemberLoc,
                                             Name,
                                     /*FIXME?*/Sema::DeclPtrTy::make((Decl*)0),
                                             &SS,
                                             FirstQualifierInScope);
-    return move(Base);
   }
 
+  /// \brief Build a new member reference expression with explicit template
+  /// arguments.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  OwningExprResult RebuildCXXUnresolvedMemberExpr(ExprArg BaseE,
+                                                  bool IsArrow,
+                                                  SourceLocation OperatorLoc,
+                                                NestedNameSpecifier *Qualifier,
+                                                  SourceRange QualifierRange,
+                                                  TemplateName Template,
+                                                SourceLocation TemplateNameLoc,
+                                              NamedDecl *FirstQualifierInScope,
+                                                  SourceLocation LAngleLoc,
+                                          const TemplateArgument *TemplateArgs,
+                                                  unsigned NumTemplateArgs,
+                                                  SourceLocation RAngleLoc) {
+    OwningExprResult Base = move(BaseE);
+    tok::TokenKind OpKind = IsArrow? tok::arrow : tok::period;
+    
+    CXXScopeSpec SS;
+    SS.setRange(QualifierRange);
+    SS.setScopeRep(Qualifier);
+    
+    // FIXME: We're going to end up looking up the template based on its name,
+    // twice! Also, duplicates part of Sema::ActOnMemberTemplateIdReferenceExpr.
+    DeclarationName Name;
+    if (TemplateDecl *ActualTemplate = Template.getAsTemplateDecl())
+      Name = ActualTemplate->getDeclName();
+    else if (OverloadedFunctionDecl *Ovl 
+               = Template.getAsOverloadedFunctionDecl())
+      Name = Ovl->getDeclName();
+    else
+      Name = Template.getAsDependentTemplateName()->getName();
+          
+      return SemaRef.BuildMemberReferenceExpr(/*Scope=*/0, move(Base), 
+                                              OperatorLoc, OpKind,
+                                              TemplateNameLoc, Name, true,
+                                              LAngleLoc, TemplateArgs,
+                                              NumTemplateArgs, RAngleLoc,
+                                              Sema::DeclPtrTy(), &SS);
+  }
+  
   /// \brief Build a new Objective-C @encode expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -1746,7 +1790,8 @@ TreeTransform<Derived>::TransformDeclarationName(DeclarationName Name,
 
 template<typename Derived>
 TemplateName 
-TreeTransform<Derived>::TransformTemplateName(TemplateName Name) {
+TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
+                                              QualType ObjectType) {
   if (QualifiedTemplateName *QTN = Name.getAsQualifiedTemplateName()) {
     NestedNameSpecifier *NNS 
       = getDerived().TransformNestedNameSpecifier(QTN->getQualifier(),
@@ -1789,14 +1834,14 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name) {
     NestedNameSpecifier *NNS 
       = getDerived().TransformNestedNameSpecifier(DTN->getQualifier(),
                         /*FIXME:*/SourceRange(getDerived().getBaseLocation()));
-    if (!NNS)
+    if (!NNS && DTN->getQualifier())
       return TemplateName();
     
     if (!getDerived().AlwaysRebuild() &&
         NNS == DTN->getQualifier())
       return Name;
     
-    return getDerived().RebuildTemplateName(NNS, *DTN->getName());
+    return getDerived().RebuildTemplateName(NNS, *DTN->getName(), ObjectType);
   }
   
   if (TemplateDecl *Template = Name.getAsTemplateDecl()) {
@@ -4195,6 +4240,9 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
   if (Base.isInvalid())
     return SemaRef.ExprError();
   
+  // FIXME: The first qualifier found might be a template type parameter,
+  // in which case there is no transformed declaration to refer to (it might
+  // refer to a built-in type!).
   NamedDecl *FirstQualifierInScope
     = cast_or_null<NamedDecl>(
               getDerived().TransformDecl(E->getFirstQualifierFoundInScope()));
@@ -4214,21 +4262,60 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
   if (!Name)
     return SemaRef.ExprError();
   
-  if (!getDerived().AlwaysRebuild() &&
-      Base.get() == E->getBase() &&
-      Qualifier == E->getQualifier() &&
-      Name == E->getMember() &&
-      FirstQualifierInScope == E->getFirstQualifierFoundInScope())
-    return SemaRef.Owned(E->Retain()); 
+  if (!E->hasExplicitTemplateArgumentList()) {
+    // This is a reference to a member without an explicitly-specified
+    // template argument list. Optimize for this common case.
+    if (!getDerived().AlwaysRebuild() &&
+        Base.get() == E->getBase() &&
+        Qualifier == E->getQualifier() &&
+        Name == E->getMember() &&
+        FirstQualifierInScope == E->getFirstQualifierFoundInScope())
+      return SemaRef.Owned(E->Retain()); 
+    
+    return getDerived().RebuildCXXUnresolvedMemberExpr(move(Base),
+                                                       E->isArrow(),
+                                                       E->getOperatorLoc(),
+                                                       Qualifier,
+                                                       E->getQualifierRange(),
+                                                       Name,
+                                                       E->getMemberLoc(),
+                                                       FirstQualifierInScope);
+  }
+
+  // FIXME: This is an ugly hack, which forces the same template name to
+  // be looked up multiple times. Yuck!
+  // FIXME: This also won't work for, e.g., x->template operator+<int>
+  TemplateName OrigTemplateName
+    = SemaRef.Context.getDependentTemplateName(0, Name.getAsIdentifierInfo());
+  
+  TemplateName Template 
+    = getDerived().TransformTemplateName(OrigTemplateName, 
+                                       QualType::getFromOpaquePtr(ObjectType));
+  if (Template.isNull())
+    return SemaRef.ExprError();
+  
+  llvm::SmallVector<TemplateArgument, 4> TransArgs;
+  for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
+    TemplateArgument TransArg 
+    = getDerived().TransformTemplateArgument(E->getTemplateArgs()[I]);
+    if (TransArg.isNull())
+      return SemaRef.ExprError();
+    
+    TransArgs.push_back(TransArg);
+  }
   
   return getDerived().RebuildCXXUnresolvedMemberExpr(move(Base),
                                                      E->isArrow(),
                                                      E->getOperatorLoc(),
                                                      Qualifier,
                                                      E->getQualifierRange(),
-                                                     Name,
+                                                     Template,
                                                      E->getMemberLoc(),
-                                                     FirstQualifierInScope);
+                                                     FirstQualifierInScope,
+                                                     E->getLAngleLoc(),
+                                                     TransArgs.data(),
+                                                     TransArgs.size(),
+                                                     E->getRAngleLoc());
 }
 
 template<typename Derived>
@@ -4643,33 +4730,18 @@ TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
 template<typename Derived>
 TemplateName 
 TreeTransform<Derived>::RebuildTemplateName(NestedNameSpecifier *Qualifier,
-                                            const IdentifierInfo &II) {
-  if (Qualifier->isDependent())
-    return SemaRef.Context.getDependentTemplateName(Qualifier, &II);
-  
-  // Somewhat redundant with ActOnDependentTemplateName.
+                                            const IdentifierInfo &II,
+                                            QualType ObjectType) {
   CXXScopeSpec SS;
   SS.setRange(SourceRange(getDerived().getBaseLocation()));
-  SS.setScopeRep(Qualifier);
-  Sema::TemplateTy Template;
-  TemplateNameKind TNK = SemaRef.isTemplateName(0, II,
-                                     /*FIXME:*/getDerived().getBaseLocation(),
-                                                &SS, 
-                                                /*FIXME:ObjectType=*/0, false,
-                                                Template);
-  if (TNK == TNK_Non_template) {
-    SemaRef.Diag(getDerived().getBaseLocation(), 
-                 diag::err_template_kw_refers_to_non_template)
-      << &II;
-    return TemplateName();
-  } else if (TNK == TNK_Function_template) {
-    SemaRef.Diag(getDerived().getBaseLocation(), 
-                 diag::err_template_kw_refers_to_non_template)
-      << &II;
-    return TemplateName();
-  }
-  
-  return Template.getAsVal<TemplateName>();  
+  SS.setScopeRep(Qualifier);  
+  return getSema().ActOnDependentTemplateName(
+                                      /*FIXME:*/getDerived().getBaseLocation(),
+                                              II,
+                                      /*FIXME:*/getDerived().getBaseLocation(),
+                                              SS,
+                                              ObjectType.getAsOpaquePtr())
+           .template getAsVal<TemplateName>();
 }
  
 template<typename Derived>
