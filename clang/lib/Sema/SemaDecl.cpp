@@ -3283,6 +3283,8 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
     //   thereof), the object shall be default-initialized; if the
     //   object is of const-qualified type, the underlying class type
     //   shall have a user-declared default constructor.
+    //
+    // FIXME: Diagnose the "user-declared default constructor" bit.
     if (getLangOptions().CPlusPlus) {
       QualType InitType = Type;
       if (const ArrayType *Array = Context.getAsArrayType(Type))
@@ -3303,12 +3305,18 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
                                                  IK_Default,
                                                  ConstructorArgs);
           
-          if (!Constructor || 
-              InitializeVarWithConstructor(Var, Constructor, InitType, 
-                                           move_arg(ConstructorArgs)))
+          // FIXME: Location info for the variable initialization?
+          if (!Constructor)
             Var->setInvalidDecl();
-          else
+          else {
+            // FIXME: Cope with initialization of arrays
+            if (!Constructor->isTrivial() &&
+                InitializeVarWithConstructor(Var, Constructor, InitType, 
+                                             move_arg(ConstructorArgs)))
+              Var->setInvalidDecl();
+            
             FinalizeVarWithDestructor(Var, InitType);
+          }
         }
       }
     }
