@@ -18,7 +18,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ProfileInfo.h"
-#include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
@@ -114,8 +113,8 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
   NumEdgesInserted = 0;
 
   std::vector<Constant*> Initializer(NumEdges);
-  Constant* Zero = ConstantInt::get(Int32, 0);
-  Constant* Uncounted = ConstantInt::get(Int32, ProfileInfoLoader::Uncounted);
+  Constant* zeroc = ConstantInt::get(Int32, 0);
+  Constant* minusonec = ConstantInt::get(Int32, ProfileInfo::MissingValue);
 
   // Instrument all of the edges not in MST...
   unsigned i = 0;
@@ -145,9 +144,9 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
     if (!std::binary_search(MST.begin(), MST.end(), edge)) {
       printEdgeCounter(edge,entry,i);
       IncrementCounterInBlock(entry, i, Counters); NumEdgesInserted++;
-      Initializer[i++] = (Zero);
+      Initializer[i++] = (zeroc);
     } else{
-      Initializer[i++] = (Uncounted);
+      Initializer[i++] = (minusonec);
     }
 
     // InsertedBlocks contains all blocks that were inserted for splitting an
@@ -168,9 +167,9 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
         if (!std::binary_search(MST.begin(), MST.end(), edge)) {
           printEdgeCounter(edge,BB,i);
           IncrementCounterInBlock(BB, i, Counters); NumEdgesInserted++;
-          Initializer[i++] = (Zero);
+          Initializer[i++] = (zeroc);
         } else{
-          Initializer[i++] = (Uncounted);
+          Initializer[i++] = (minusonec);
         }
       }
       for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
@@ -196,9 +195,9 @@ bool OptimalEdgeProfiler::runOnModule(Module &M) {
             printEdgeCounter(edge,Succ,i);
             IncrementCounterInBlock(Succ, i, Counters); NumEdgesInserted++;
           }
-          Initializer[i++] = (Zero);
+          Initializer[i++] = (zeroc);
         } else {
-          Initializer[i++] = (Uncounted);
+          Initializer[i++] = (minusonec);
         }
       }
     }
