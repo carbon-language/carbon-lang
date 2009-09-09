@@ -1891,11 +1891,17 @@ public:
 
   CXXConstructorDecl *
   PerformInitializationByConstructor(QualType ClassType,
-                                     Expr **Args, unsigned NumArgs,
+                                     MultiExprArg ArgsPtr,
                                      SourceLocation Loc, SourceRange Range,
                                      DeclarationName InitEntity,
-                                     InitializationKind Kind);
+                                     InitializationKind Kind,
+                       ASTOwningVector<&ActionBase::DeleteExpr> &ConvertedArgs);
 
+  bool CompleteConstructorCall(CXXConstructorDecl *Constructor,
+                               MultiExprArg ArgsPtr,
+                               SourceLocation Loc,                                    
+                      ASTOwningVector<&ActionBase::DeleteExpr> &ConvertedArgs);
+    
   /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual OwningExprResult ActOnCXXNamedCast(SourceLocation OpLoc,
                                              tok::TokenKind Kind,

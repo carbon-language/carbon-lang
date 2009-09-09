@@ -781,10 +781,24 @@ Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
   if (FieldType->isDependentType()) {
     // Can't check init for dependent type.
   } else if (FieldType->getAs<RecordType>()) {
-    if (!HasDependentArg)
-      C = PerformInitializationByConstructor(
-            FieldType, (Expr **)Args, NumArgs, IdLoc,
-            SourceRange(IdLoc, RParenLoc), Member->getDeclName(), IK_Direct);
+    if (!HasDependentArg) {
+      ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+
+      C = PerformInitializationByConstructor(FieldType, 
+                                             MultiExprArg(*this, 
+                                                          (void**)Args, 
+                                                          NumArgs), 
+                                             IdLoc,
+                                             SourceRange(IdLoc, RParenLoc), 
+                                             Member->getDeclName(), IK_Direct,
+                                             ConstructorArgs);
+      
+      if (C) {
+        // Take over the constructor arguments as our own.
+        NumArgs = ConstructorArgs.size();
+        Args = (Expr **)ConstructorArgs.take();
+      }
+    }
   } else if (NumArgs != 1 && NumArgs != 0) {
     return Diag(IdLoc, diag::err_mem_initializer_mismatch)
                 << Member->getDeclName() << SourceRange(IdLoc, RParenLoc);
@@ -884,9 +898,19 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
   if (!BaseType->isDependentType() && !HasDependentArg) {
     DeclarationName Name = Context.DeclarationNames.getCXXConstructorName(
                                             Context.getCanonicalType(BaseType));
-    C = PerformInitializationByConstructor(BaseType, (Expr **)Args, NumArgs,
+    ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+
+    C = PerformInitializationByConstructor(BaseType, 
+                                           MultiExprArg(*this, 
+                                                        (void**)Args, NumArgs),
                                            IdLoc, SourceRange(IdLoc, RParenLoc),
-                                           Name, IK_Direct);
+                                           Name, IK_Direct,
+                                           ConstructorArgs);
+    if (C) {
+      // Take over the constructor arguments as our own.
+      NumArgs = ConstructorArgs.size();
+      Args = (Expr **)ConstructorArgs.take();
+    }
   }
 
   return new (Context) CXXBaseOrMemberInitializer(BaseType, (Expr **)Args,
@@ -2812,79 +2836,28 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             MultiExprArg ExprArgs) {
   bool Elidable = false;
 
-  // [class.copy]p15:
-  // Whenever a temporary class object is copied using a copy constructor, and
-  // this object and the copy have the same cv-unqualified type, an
-  // implementation is permitted to treat the original and the copy as two
-  // different ways of referring to the same object and not perform a copy at
-  //all, even if the class copy constructor or destructor have side effects.
+  // C++ [class.copy]p15:
+  //   Whenever a temporary class object is copied using a copy constructor, and
+  //   this object and the copy have the same cv-unqualified type, an
+  //   implementation is permitted to treat the original and the copy as two
+  //   different ways of referring to the same object and not perform a copy at
+  //   all, even if the class copy constructor or destructor have side effects.
 
   // FIXME: Is this enough?
-  if (Constructor->isCopyConstructor(Context) && ExprArgs.size() == 1) {
+  if (Constructor->isCopyConstructor(Context)) {
     Expr *E = ((Expr **)ExprArgs.get())[0];
     while (CXXBindTemporaryExpr *BE = dyn_cast<CXXBindTemporaryExpr>(E))
       E = BE->getSubExpr();
-
+    if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
+      if (ICE->getCastKind() == CastExpr::CK_NoOp)
+        E = ICE->getSubExpr();
+    
     if (isa<CallExpr>(E) || isa<CXXTemporaryObjectExpr>(E))
       Elidable = true;
   }
 
   return BuildCXXConstructExpr(ConstructLoc, DeclInitType, Constructor,
                                Elidable, move(ExprArgs));
-}
-
-static bool
-CheckConstructArgumentTypes(Sema &SemaRef, SourceLocation ConstructLoc,
-                            CXXConstructExpr *E) {
-  CXXConstructorDecl *Ctor = E->getConstructor();
-  const FunctionProtoType *Proto = Ctor->getType()->getAsFunctionProtoType();
-
-  unsigned NumArgs = E->getNumArgs();
-  unsigned NumArgsInProto = Proto->getNumArgs();
-  unsigned NumRequiredArgs = Ctor->getMinRequiredArguments();
-
-  for (unsigned i = 0; i != NumArgsInProto; ++i) {
-    QualType ProtoArgType = Proto->getArgType(i);
-
-    Expr *Arg;
-
-    if (i < NumRequiredArgs) {
-      Arg = E->getArg(i);
-
-      // Pass the argument.
-      // FIXME: Do this.
-    } else {
-      // Build a default argument.
-      ParmVarDecl *Param = Ctor->getParamDecl(i);
-
-      Sema::OwningExprResult ArgExpr =
-        SemaRef.BuildCXXDefaultArgExpr(ConstructLoc, Ctor, Param);
-      if (ArgExpr.isInvalid())
-        return true;
-
-      Arg = ArgExpr.takeAs<Expr>();
-    }
-
-    E->setArg(i, Arg);
-  }
-
-  // If this is a variadic call, handle args passed through "...".
-  if (Proto->isVariadic()) {
-    bool Invalid = false;
-
-    // Promote the arguments (C99 6.5.2.2p7).
-    for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
-      Expr *Arg = E->getArg(i);
-      Invalid |=
-        SemaRef.DefaultVariadicArgumentPromotion(Arg,
-                                                 Sema::VariadicConstructor);
-      E->setArg(i, Arg);
-    }
-
-    return Invalid;
-  }
-
-  return false;
 }
 
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
@@ -2896,18 +2869,8 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
   unsigned NumExprs = ExprArgs.size();
   Expr **Exprs = (Expr **)ExprArgs.release();
 
-  ExprOwningPtr<CXXConstructExpr> Temp(this,
-                                       CXXConstructExpr::Create(Context,
-                                                                DeclInitType,
-                                                                Constructor,
-                                                                Elidable,
-                                                                Exprs,
-                                                                NumExprs));
-
-  if (CheckConstructArgumentTypes(*this, ConstructLoc, Temp.get()))
-    return ExprError();
-
-  return move(Temp);
+  return Owned(CXXConstructExpr::Create(Context, DeclInitType, Constructor,
+                                        Elidable, Exprs, NumExprs));
 }
 
 Sema::OwningExprResult
@@ -2916,17 +2879,12 @@ Sema::BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Constructor,
                                   SourceLocation TyBeginLoc,
                                   MultiExprArg Args,
                                   SourceLocation RParenLoc) {
-  CXXTemporaryObjectExpr *E
-    = new (Context) CXXTemporaryObjectExpr(Context, Constructor, Ty, TyBeginLoc,
-                                           (Expr **)Args.get(),
-                                           Args.size(), RParenLoc);
+  unsigned NumExprs = Args.size();
+  Expr **Exprs = (Expr **)Args.release();
 
-  ExprOwningPtr<CXXTemporaryObjectExpr> Temp(this, E);
-
-  if (CheckConstructArgumentTypes(*this, TyBeginLoc, Temp.get()))
-    return ExprError();
-
-  return move(Temp);
+  return Owned(new (Context) CXXTemporaryObjectExpr(Context, Constructor, Ty, 
+                                                    TyBeginLoc, Exprs,
+                                                    NumExprs, RParenLoc));
 }
 
 
@@ -3025,20 +2983,23 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
   }
 
   if (VDecl->getType()->isRecordType()) {
+    ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+    
     CXXConstructorDecl *Constructor
       = PerformInitializationByConstructor(DeclInitType,
-                                           (Expr **)Exprs.get(), NumExprs,
+                                           move(Exprs),
                                            VDecl->getLocation(),
                                            SourceRange(VDecl->getLocation(),
                                                        RParenLoc),
                                            VDecl->getDeclName(),
-                                           IK_Direct);
+                                           IK_Direct,
+                                           ConstructorArgs);
     if (!Constructor)
       RealDecl->setInvalidDecl();
     else {
       VDecl->setCXXDirectInitializer(true);
       if (InitializeVarWithConstructor(VDecl, Constructor, DeclInitType,
-                                       move(Exprs)))
+                                       move_arg(ConstructorArgs)))
         RealDecl->setInvalidDecl();
       FinalizeVarWithDestructor(VDecl, DeclInitType);
     }
@@ -3061,31 +3022,41 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
                        /*DirectInit=*/true);
 }
 
-/// PerformInitializationByConstructor - Perform initialization by
-/// constructor (C++ [dcl.init]p14), which may occur as part of
-/// direct-initialization or copy-initialization. We are initializing
-/// an object of type @p ClassType with the given arguments @p
-/// Args. @p Loc is the location in the source code where the
-/// initializer occurs (e.g., a declaration, member initializer,
-/// functional cast, etc.) while @p Range covers the whole
-/// initialization. @p InitEntity is the entity being initialized,
-/// which may by the name of a declaration or a type. @p Kind is the
-/// kind of initialization we're performing, which affects whether
-/// explicit constructors will be considered. When successful, returns
-/// the constructor that will be used to perform the initialization;
-/// when the initialization fails, emits a diagnostic and returns
-/// null.
+/// \brief Perform initialization by constructor (C++ [dcl.init]p14), which 
+/// may occur as part of direct-initialization or copy-initialization. 
+///
+/// \param ClassType the type of the object being initialized, which must have
+/// class type.
+///
+/// \param ArgsPtr the arguments provided to initialize the object
+///
+/// \param Loc the source location where the initialization occurs
+///
+/// \param Range the source range that covers the entire initialization
+///
+/// \param InitEntity the name of the entity being initialized, if known
+///
+/// \param Kind the type of initialization being performed
+///
+/// \param ConvertedArgs a vector that will be filled in with the 
+/// appropriately-converted arguments to the constructor (if initialization
+/// succeeded).
+///
+/// \returns the constructor used to initialize the object, if successful.
+/// Otherwise, emits a diagnostic and returns NULL.
 CXXConstructorDecl *
 Sema::PerformInitializationByConstructor(QualType ClassType,
-                                         Expr **Args, unsigned NumArgs,
+                                         MultiExprArg ArgsPtr,
                                          SourceLocation Loc, SourceRange Range,
                                          DeclarationName InitEntity,
-                                         InitializationKind Kind) {
+                                         InitializationKind Kind,
+                      ASTOwningVector<&ActionBase::DeleteExpr> &ConvertedArgs) {
   const RecordType *ClassRec = ClassType->getAs<RecordType>();
   assert(ClassRec && "Can only initialize a class type here");
-
+  Expr **Args = (Expr **)ArgsPtr.get();
+  unsigned NumArgs = ArgsPtr.size();
+    
   // C++ [dcl.init]p14:
-  //
   //   If the initialization is direct-initialization, or if it is
   //   copy-initialization where the cv-unqualified version of the
   //   source type is the same class as, or a derived class of, the
@@ -3133,8 +3104,9 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Loc, Best)) {
   case OR_Success:
-    // We found a constructor. Return it.
-    return cast<CXXConstructorDecl>(Best->Function);
+    // We found a constructor. Break out so that we can convert the arguments 
+    // appropriately.
+    break;
 
   case OR_No_Viable_Function:
     if (InitEntity)
@@ -3167,7 +3139,84 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
     return 0;
   }
 
-  return 0;
+  // Convert the arguments, fill in default arguments, etc.
+  CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Best->Function);
+  if (CompleteConstructorCall(Constructor, move(ArgsPtr), Loc, ConvertedArgs))
+    return 0;
+  
+  return Constructor;
+}
+
+/// \brief Given a constructor and the set of arguments provided for the
+/// constructor, convert the arguments and add any required default arguments
+/// to form a proper call to this constructor.
+///
+/// \returns true if an error occurred, false otherwise.
+bool 
+Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
+                              MultiExprArg ArgsPtr,
+                              SourceLocation Loc,                                    
+                     ASTOwningVector<&ActionBase::DeleteExpr> &ConvertedArgs) {
+  // FIXME: This duplicates a lot of code from Sema::ConvertArgumentsForCall.
+  unsigned NumArgs = ArgsPtr.size();
+  Expr **Args = (Expr **)ArgsPtr.get();
+
+  const FunctionProtoType *Proto 
+    = Constructor->getType()->getAs<FunctionProtoType>();
+  assert(Proto && "Constructor without a prototype?");
+  unsigned NumArgsInProto = Proto->getNumArgs();
+  unsigned NumArgsToCheck = NumArgs;
+  
+  // If too few arguments are available, we'll fill in the rest with defaults.
+  if (NumArgs < NumArgsInProto) {
+    NumArgsToCheck = NumArgsInProto;
+    ConvertedArgs.reserve(NumArgsInProto);
+  } else {
+    ConvertedArgs.reserve(NumArgs);
+    if (NumArgs > NumArgsInProto)
+      NumArgsToCheck = NumArgsInProto;
+  }
+  
+  // Convert arguments
+  for (unsigned i = 0; i != NumArgsToCheck; i++) {
+    QualType ProtoArgType = Proto->getArgType(i);
+    
+    Expr *Arg;
+    if (i < NumArgs) {
+      Arg = Args[i];
+      
+      // Pass the argument.
+      if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
+        return true;
+      
+      Args[i] = 0;
+    } else {
+      ParmVarDecl *Param = Constructor->getParamDecl(i);
+      
+      OwningExprResult DefArg = BuildCXXDefaultArgExpr(Loc, Constructor, Param);
+      if (DefArg.isInvalid())
+        return true;
+      
+      Arg = DefArg.takeAs<Expr>();
+    }
+    
+    ConvertedArgs.push_back(Arg);
+  }
+  
+  // If this is a variadic call, handle args passed through "...".
+  if (Proto->isVariadic()) {
+    // Promote the arguments (C99 6.5.2.2p7).
+    for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
+      Expr *Arg = Args[i];
+      if (DefaultVariadicArgumentPromotion(Arg, VariadicConstructor))
+        return true;
+      
+      ConvertedArgs.push_back(Arg);
+      Args[i] = 0;
+    }
+  }
+  
+  return false;
 }
 
 /// CompareReferenceRelationship - Compare the two types T1 and T2 to
@@ -3330,9 +3379,10 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       return false;
     } else {
       // Perform the conversion.
-      // FIXME: Binding to a subobject of the lvalue is going to require more
-      // AST annotation than this.
-      ImpCastExprToType(Init, T1, CastExpr::CK_Unknown, /*isLvalue=*/true);
+      CastExpr::CastKind CK = CastExpr::CK_NoOp;
+      if (DerivedToBase)
+        CK = CastExpr::CK_DerivedToBase;
+      ImpCastExprToType(Init, T1, CK, /*isLvalue=*/true);
     }
   }
 
@@ -3489,9 +3539,10 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       ICS->Standard.RRefBinding = isRValRef;
       ICS->Standard.CopyConstructor = 0;
     } else {
-      // FIXME: Binding to a subobject of the rvalue is going to require more
-      // AST annotation than this.
-      ImpCastExprToType(Init, T1, CastExpr::CK_Unknown, /*isLvalue=*/false);
+      CastExpr::CastKind CK = CastExpr::CK_NoOp;
+      if (DerivedToBase)
+        CK = CastExpr::CK_DerivedToBase;
+      ImpCastExprToType(Init, T1, CK, /*isLvalue=*/false);
     }
     return false;
   }

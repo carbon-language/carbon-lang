@@ -250,20 +250,23 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
 
     if (NumExprs > 1 || !Record->hasTrivialConstructor() ||
         !Record->hasTrivialDestructor()) {
+      ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+      
       CXXConstructorDecl *Constructor
-        = PerformInitializationByConstructor(Ty, Exprs, NumExprs,
+        = PerformInitializationByConstructor(Ty, move(exprs),
                                              TypeRange.getBegin(),
                                              SourceRange(TypeRange.getBegin(),
                                                          RParenLoc),
                                              DeclarationName(),
-                                             IK_Direct);
+                                             IK_Direct,
+                                             ConstructorArgs);
 
       if (!Constructor)
         return ExprError();
 
       OwningExprResult Result =
         BuildCXXTemporaryObjectExpr(Constructor, Ty, TyBeginLoc,
-                                    move(exprs), RParenLoc);
+                                    move_arg(ConstructorArgs), RParenLoc);
       if (Result.isInvalid())
         return ExprError();
 
@@ -439,14 +442,22 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     // Skip all the checks.
   } else if ((RT = AllocType->getAs<RecordType>()) &&
              !AllocType->isAggregateType()) {
+    ASTOwningVector<&ActionBase::DeleteExpr> ConvertedConstructorArgs(*this);
+
     Constructor = PerformInitializationByConstructor(
-                      AllocType, ConsArgs, NumConsArgs,
+                      AllocType, move(ConstructorArgs),
                       TypeLoc,
                       SourceRange(TypeLoc, ConstructorRParen),
                       RT->getDecl()->getDeclName(),
-                      NumConsArgs != 0 ? IK_Direct : IK_Default);
+                      NumConsArgs != 0 ? IK_Direct : IK_Default,
+                      ConvertedConstructorArgs);
     if (!Constructor)
       return ExprError();
+
+    // Take the converted constructor arguments and use them for the new 
+    // expression.
+    NumConsArgs = ConvertedConstructorArgs.size();
+    ConsArgs = (Expr **)ConvertedConstructorArgs.take();
   } else {
     if (!Init) {
       // FIXME: Check that no subpart is const.
@@ -1900,10 +1911,15 @@ Sema::OwningExprResult Sema::BuildCXXCastArgument(SourceLocation CastLoc,
   switch (Kind) {
   default: assert(0 && "Unhandled cast kind!");
   case CastExpr::CK_ConstructorConversion: {
-    DefaultFunctionArrayConversion(From);
-
+    ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+    
+    if (CompleteConstructorCall(cast<CXXConstructorDecl>(Method),
+                                MultiExprArg(*this, (void **)&From, 1),
+                                CastLoc, ConstructorArgs))
+      return ExprError();
+                                
     return BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method), 
-                                 MultiExprArg(*this, (void **)&From, 1));
+                                 move_arg(ConstructorArgs));
   }
 
   case CastExpr::CK_UserDefinedConversion: {

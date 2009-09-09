@@ -3278,7 +3278,6 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
     }
 
     // C++ [dcl.init]p9:
-    //
     //   If no initializer is specified for an object, and the object
     //   is of (possibly cv-qualified) non-POD class type (or array
     //   thereof), the object shall be default-initialized; if the
@@ -3290,28 +3289,26 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
         InitType = Array->getElementType();
       if ((!Var->hasExternalStorage() && !Var->isExternC(Context)) &&
           InitType->isRecordType() && !InitType->isDependentType()) {
-        CXXRecordDecl *RD =
-          cast<CXXRecordDecl>(InitType->getAs<RecordType>()->getDecl());
-        CXXConstructorDecl *Constructor = 0;
         if (!RequireCompleteType(Var->getLocation(), InitType,
-                                    diag::err_invalid_incomplete_type_use))
-          Constructor
-            = PerformInitializationByConstructor(InitType, 0, 0,
+                                 diag::err_invalid_incomplete_type_use)) {
+          ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+
+          CXXConstructorDecl *Constructor
+            = PerformInitializationByConstructor(InitType, 
+                                                 MultiExprArg(*this, 0, 0),
                                                  Var->getLocation(),
                                                SourceRange(Var->getLocation(),
                                                            Var->getLocation()),
                                                  Var->getDeclName(),
-                                                 IK_Default);
-        if (!Constructor)
-          Var->setInvalidDecl();
-        else {
-          if (!RD->hasTrivialConstructor() || !RD->hasTrivialDestructor()) {
-            if (InitializeVarWithConstructor(Var, Constructor, InitType,
-                                             MultiExprArg(*this)))
-              Var->setInvalidDecl();
-          }
-
-          FinalizeVarWithDestructor(Var, InitType);
+                                                 IK_Default,
+                                                 ConstructorArgs);
+          
+          if (!Constructor || 
+              InitializeVarWithConstructor(Var, Constructor, InitType, 
+                                           move_arg(ConstructorArgs)))
+            Var->setInvalidDecl();
+          else
+            FinalizeVarWithDestructor(Var, InitType);
         }
       }
     }

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/PCHWriter.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
@@ -110,6 +111,7 @@ namespace {
 
     // C++ Statements
     void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+    void VisitCXXConstructExpr(CXXConstructExpr *E);
   };
 }
 
@@ -772,6 +774,16 @@ void PCHStmtWriter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   VisitCallExpr(E);
   Record.push_back(E->getOperator());
   Code = pch::EXPR_CXX_OPERATOR_CALL;
+}
+
+void PCHStmtWriter::VisitCXXConstructExpr(CXXConstructExpr *E) {
+  VisitExpr(E);
+  Writer.AddDeclRef(E->getConstructor(), Record);
+  Record.push_back(E->isElidable());
+  Record.push_back(E->getNumArgs());
+  for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
+    Writer.WriteSubStmt(E->getArg(I));
+  Code = pch::EXPR_CXX_CONSTRUCT;
 }
 
 //===----------------------------------------------------------------------===//

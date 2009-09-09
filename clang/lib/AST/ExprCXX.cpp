@@ -392,24 +392,22 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
        (T->isDependentType() ||
         CallExpr::hasAnyValueDependentArguments(args, numargs))),
   Constructor(D), Elidable(elidable), Args(0), NumArgs(numargs) {
-    // leave room for default arguments;
-    const FunctionProtoType *FTy =
-      cast<FunctionDecl>(D)->getType()->getAsFunctionProtoType();
+    if (NumArgs) {
+      Args = new (C) Stmt*[NumArgs];
 
-    unsigned NumArgsInProto = FTy->getNumArgs();
-    unsigned NumArgsToAllocate = FTy->isVariadic() ? NumArgs : NumArgsInProto;
-    if (NumArgsToAllocate) {
-      Args = new (C) Stmt*[NumArgsToAllocate];
-
-      for (unsigned i = 0; i != NumArgs; ++i)
+      for (unsigned i = 0; i != NumArgs; ++i) {
+        assert(args[i] && "NULL argument in CXXConstructExpr");
         Args[i] = args[i];
-
-      // Set default arguments to 0.
-      for (unsigned i = NumArgs; i != NumArgsToAllocate; ++i)
-        Args[i] = 0;
-
-      NumArgs = NumArgsToAllocate;
+      }
     }
+}
+
+CXXConstructExpr::CXXConstructExpr(EmptyShell Empty, ASTContext &C, 
+                                   unsigned numargs)
+  : Expr(CXXConstructExprClass, Empty), Args(0), NumArgs(numargs) 
+{
+  if (NumArgs)
+    Args = new (C) Stmt*[NumArgs];
 }
 
 void CXXConstructExpr::DoDestroy(ASTContext &C) {

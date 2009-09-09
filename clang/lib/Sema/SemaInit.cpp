@@ -172,18 +172,23 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
         if (RD->hasTrivialConstructor() && RD->hasTrivialDestructor())
           return false;
 
+        ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+
         CXXConstructorDecl *Constructor
-        = PerformInitializationByConstructor(DeclType, &Init, 1,
-                                             InitLoc, Init->getSourceRange(),
-                                             InitEntity,
-                                             DirectInit? IK_Direct : IK_Copy);
+          = PerformInitializationByConstructor(DeclType, 
+                                               MultiExprArg(*this, 
+                                                            (void **)&Init, 1),
+                                               InitLoc, Init->getSourceRange(),
+                                               InitEntity,
+                                               DirectInit? IK_Direct : IK_Copy,
+                                               ConstructorArgs);
         if (!Constructor)
           return true;
 
         OwningExprResult InitResult =
           BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                                 DeclType, Constructor,
-                                MultiExprArg(*this, (void**)&Init, 1));
+                                move_arg(ConstructorArgs));
         if (InitResult.isInvalid())
           return true;
 
@@ -1810,13 +1815,28 @@ bool Sema::CheckValueInitialization(QualType Type, SourceLocation Loc) {
       //    constructor (12.1), then the default constructor for T is
       //    called (and the initialization is ill-formed if T has no
       //    accessible default constructor);
-      if (ClassDecl->hasUserDeclaredConstructor())
-        // FIXME: Eventually, we'll need to put the constructor decl into the
-        // AST.
-        return PerformInitializationByConstructor(Type, 0, 0, Loc,
-                                                  SourceRange(Loc),
-                                                  DeclarationName(),
-                                                  IK_Direct);
+      if (ClassDecl->hasUserDeclaredConstructor()) {
+        ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+
+        CXXConstructorDecl *Constructor
+          = PerformInitializationByConstructor(Type, 
+                                               MultiExprArg(*this, 0, 0),
+                                               Loc, SourceRange(Loc),
+                                               DeclarationName(),
+                                               IK_Direct,
+                                               ConstructorArgs);
+        if (!Constructor)
+          return true;
+        
+        OwningExprResult Init
+          = BuildCXXConstructExpr(Loc, Type, Constructor,
+                                  move_arg(ConstructorArgs));
+        if (Init.isInvalid())
+          return true;
+        
+        // FIXME: Actually perform the value-initialization!
+        return false;
+      }
     }
   }
 

@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/PCHReader.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtVisitor.h"
 using namespace clang;
 
@@ -115,6 +116,7 @@ namespace {
     unsigned VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
 
     unsigned VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
+    unsigned VisitCXXConstructExpr(CXXConstructExpr *E);
   };
 }
 
@@ -847,6 +849,14 @@ unsigned PCHStmtReader::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   return num;
 }
 
+unsigned PCHStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {
+  VisitExpr(E);
+  E->setConstructor(cast<CXXConstructorDecl>(Reader.GetDecl(Record[Idx++])));
+  E->setElidable(Record[Idx++]);  
+  for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I)
+    E->setArg(I, cast<Expr>(StmtStack[StmtStack.size() - N + I]));
+  return E->getNumArgs();
+}
 
 // Within the bitstream, expressions are stored in Reverse Polish
 // Notation, with each of the subexpressions preceding the
@@ -1150,6 +1160,11 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
 
     case pch::EXPR_CXX_OPERATOR_CALL:
       S = new (Context) CXXOperatorCallExpr(*Context, Empty);
+      break;
+        
+    case pch::EXPR_CXX_CONSTRUCT:
+      S = new (Context) CXXConstructExpr(Empty, *Context,
+                                      Record[PCHStmtReader::NumExprFields + 2]);
       break;
     }
 

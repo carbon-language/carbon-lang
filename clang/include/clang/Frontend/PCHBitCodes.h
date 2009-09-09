@@ -627,7 +627,7 @@ namespace clang {
       EXPR_BLOCK,
       /// \brief A BlockDeclRef record.
       EXPR_BLOCK_DECL_REF,
-
+      
       // Objective-C
 
       /// \brief An ObjCStringLiteral record.
@@ -666,8 +666,10 @@ namespace clang {
 
       // C++
 
-      /// \brief An CXXOperatorCallExpr record.
-      EXPR_CXX_OPERATOR_CALL
+      /// \brief A CXXOperatorCallExpr record.
+      EXPR_CXX_OPERATOR_CALL,
+      /// \brief A CXXConstructExpr record.
+      EXPR_CXX_CONSTRUCT
     };
 
     /// \brief The kinds of designators that can occur in a

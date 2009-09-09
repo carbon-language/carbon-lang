@@ -497,16 +497,22 @@ protected:
   virtual void DoDestroy(ASTContext &C);
 
 public:
+  /// \brief Construct an empty C++ construction expression that will store
+  /// \p numargs arguments.
+  CXXConstructExpr(EmptyShell Empty, ASTContext &C, unsigned numargs);
+  
   static CXXConstructExpr *Create(ASTContext &C, QualType T,
                                   CXXConstructorDecl *D, bool Elidable,
                                   Expr **Args, unsigned NumArgs);
 
 
   CXXConstructorDecl* getConstructor() const { return Constructor; }
-
+  void setConstructor(CXXConstructorDecl *C) { Constructor = C; }
+  
   /// \brief Whether this construction is elidable.
   bool isElidable() const { return Elidable; }
-
+  void setElidable(bool E) { Elidable = E; }
+  
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;
 
