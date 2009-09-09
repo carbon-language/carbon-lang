@@ -980,6 +980,13 @@ void Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   if (getLangOptions().CPlusPlus) {
     if (Context.hasSameType(New->getType(), Old->getType()))
       MergedT = New->getType();
+    // C++ [basic.types]p7:
+    //   [...] The declared type of an array object might be an array of 
+    //   unknown size and therefore be incomplete at one point in a 
+    //   translation unit and complete later on; [...]
+    else if (Old->getType()->isIncompleteArrayType() && 
+             New->getType()->isArrayType())
+      MergedT = New->getType();
   } else {
     MergedT = Context.mergeTypes(New->getType(), Old->getType());
   }
