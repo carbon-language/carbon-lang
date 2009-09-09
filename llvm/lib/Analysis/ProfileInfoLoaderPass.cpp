@@ -159,8 +159,12 @@ void LoaderPass::recurseBasicBlock(const BasicBlock *BB) {
 void LoaderPass::readOrRememberEdge(ProfileInfo::Edge e,
                                     unsigned weight, unsigned ei,
                                     Function *F) {
-  if (weight != ~0U) {
-    EdgeInformation[F][e] += weight;
+  if (weight != ProfileInfoLoader::Uncounted) {
+    // Here the data realm changes from the unsigned of the file to the double
+    // of the ProfileInfo. This conversion is save because we know that
+    // everything thats representable in unsinged is also representable in
+    // double.
+    EdgeInformation[F][e] += (double)weight;
     DEBUG(errs()<<"--Read Edge Counter for " << e 
                 <<" (# "<<ei<<"): "<<(unsigned)getEdgeWeight(e)<<"\n");
   } else {
@@ -178,8 +182,12 @@ bool LoaderPass::runOnModule(Module &M) {
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
       if (ei < ECs.size())
+        // Here the data realm changes from the unsigned of the file to the
+        // double of the ProfileInfo. This conversion is save because we know
+        // that everything thats representable in unsinged is also
+        // representable in double.
         EdgeInformation[F][ProfileInfo::getEdge(0, &F->getEntryBlock())] +=
-          ECs[ei++];
+          (double)ECs[ei++];
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         // Okay, we have to add a counter of each outgoing edge.  If the
         // outgoing edge is not critical don't split it, just insert the counter
@@ -187,8 +195,10 @@ bool LoaderPass::runOnModule(Module &M) {
         TerminatorInst *TI = BB->getTerminator();
         for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
           if (ei < ECs.size())
+            // Here the data realm changes from the unsigned of the file to
+            // the double of the ProfileInfo.
             EdgeInformation[F][ProfileInfo::getEdge(BB, TI->getSuccessor(s))] +=
-              ECs[ei++];
+              (double)ECs[ei++];
         }
       }
     }
@@ -264,7 +274,11 @@ bool LoaderPass::runOnModule(Module &M) {
       if (F->isDeclaration()) continue;
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
         if (bi < BCs.size())
-          BlockInformation[F][BB] = BCs[bi++];
+          // Here the data realm changes from the unsigned of the file to the
+          // double of the ProfileInfo. This conversion is save because we know
+          // that everything thats representable in unsinged is also
+          // representable in double.
+          BlockInformation[F][BB] = (double)BCs[bi++];
     }
     if (bi != BCs.size()) {
       errs() << "WARNING: profile information is inconsistent with "
@@ -279,7 +293,11 @@ bool LoaderPass::runOnModule(Module &M) {
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
       if (fi < FCs.size())
-        FunctionInformation[F] = FCs[fi++];
+        // Here the data realm changes from the unsigned of the file to the
+        // double of the ProfileInfo. This conversion is save because we know
+        // that everything thats representable in unsinged is also
+        // representable in double.
+        FunctionInformation[F] = (double)FCs[fi++];
     }
     if (fi != FCs.size()) {
       errs() << "WARNING: profile information is inconsistent with "
