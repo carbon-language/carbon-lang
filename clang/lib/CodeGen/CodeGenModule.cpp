@@ -743,7 +743,7 @@ void CodeGenModule::DeferredCopyAssignmentToEmit(GlobalDecl CopyAssignDecl) {
     if (!BaseClassDecl->hasTrivialCopyAssignment() &&
         !BaseClassDecl->hasUserDeclaredCopyAssignment() &&
         BaseClassDecl->hasConstCopyAssignment(getContext(), MD))
-      GetAddrOfFunction(GlobalDecl(MD), 0);
+      GetAddrOfFunction(MD, 0);
   }
 
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
@@ -761,7 +761,7 @@ void CodeGenModule::DeferredCopyAssignmentToEmit(GlobalDecl CopyAssignDecl) {
       if (!FieldClassDecl->hasTrivialCopyAssignment() &&
           !FieldClassDecl->hasUserDeclaredCopyAssignment() &&
           FieldClassDecl->hasConstCopyAssignment(getContext(), MD))
-          GetAddrOfFunction(GlobalDecl(MD), 0);
+          GetAddrOfFunction(MD, 0);
     }
   }
   DeferredDeclsToEmit.push_back(CopyAssignDecl);
@@ -919,7 +919,7 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
     // later.
     const char *MangledName = getMangledName(D);
     if (GlobalDeclMap.count(MangledName) == 0) {
-      DeferredDecls[MangledName] = GlobalDecl(D);
+      DeferredDecls[MangledName] = D;
       return;
     }
   }
@@ -1640,10 +1640,11 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     if (cast<FunctionDecl>(D)->getDescribedFunctionTemplate())
       return;
 
-    // Fall through
-
+    EmitGlobal(cast<FunctionDecl>(D));
+    break;
+      
   case Decl::Var:
-    EmitGlobal(GlobalDecl(cast<VarDecl>(D)));
+    EmitGlobal(cast<VarDecl>(D));
     break;
 
   // C++ Decls

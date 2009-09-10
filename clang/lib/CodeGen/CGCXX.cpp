@@ -227,7 +227,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
              = dyn_cast<CXXDestructorDecl>(MD))
     Callee = CGM.GetAddrOfFunction(GlobalDecl(Destructor, Dtor_Complete), Ty);
   else
-    Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
+    Callee = CGM.GetAddrOfFunction(MD, Ty);
 
   return EmitCXXMemberCall(MD, Callee, This,
                            CE->arg_begin(), CE->arg_end());
@@ -256,7 +256,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
   const llvm::Type *Ty =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
-  llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), Ty);
+  llvm::Constant *Callee = CGM.GetAddrOfFunction(MD, Ty);
 
   llvm::Value *This = EmitLValue(E->getArg(0)).getAddress();
 
@@ -576,8 +576,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // Emit the call to new.
   RValue RV =
     EmitCall(CGM.getTypes().getFunctionInfo(NewFTy->getResultType(), NewArgs),
-             CGM.GetAddrOfFunction(GlobalDecl(NewFD)),
-             NewArgs, NewFD);
+             CGM.GetAddrOfFunction(NewFD), NewArgs, NewFD);
 
   // If an allocation function is declared with an empty exception specification
   // it returns null to indicate failure to allocate storage. [expr.new]p13.
@@ -699,7 +698,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   // Emit the call to delete.
   EmitCall(CGM.getTypes().getFunctionInfo(DeleteFTy->getResultType(),
                                           DeleteArgs),
-           CGM.GetAddrOfFunction(GlobalDecl(DeleteFD)),
+           CGM.GetAddrOfFunction(DeleteFD),
            DeleteArgs, DeleteFD);
 
   EmitBlock(DeleteEnd);
@@ -900,7 +899,7 @@ public:
          mi != e; ++mi) {
       const CXXMethodDecl *OMD = *mi;
       llvm::Constant *om;
-      om = CGM.GetAddrOfFunction(GlobalDecl(OMD), Ptr8Ty);
+      om = CGM.GetAddrOfFunction(OMD, Ptr8Ty);
       om = llvm::ConstantExpr::getBitCast(om, Ptr8Ty);
 
       for (Index_t i = 0, e = submethods.size();
@@ -964,8 +963,7 @@ public:
            ++mi)
         if (mi->isVirtual()) {
           const CXXMethodDecl *MD = *mi;
-          llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GlobalDecl(MD),
-                                                         Ptr8Ty));
+          llvm::Constant *m = wrap(CGM.GetAddrOfFunction(MD, Ptr8Ty));
           OverrideMethod(MD, m, MorallyVirtual, Offset);
         }
     }
@@ -1440,7 +1438,7 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
     const llvm::Type *LTy =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
-    llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), LTy);
+    llvm::Constant *Callee = CGM.GetAddrOfFunction(MD, LTy);
 
     CallArgList CallArgs;
     // Push the this (Dest) ptr.
@@ -1532,7 +1530,7 @@ void CodeGenFunction::EmitClassCopyAssignment(
   const llvm::Type *LTy =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
-  llvm::Constant *Callee = CGM.GetAddrOfFunction(GlobalDecl(MD), LTy);
+  llvm::Constant *Callee = CGM.GetAddrOfFunction(MD, LTy);
 
   CallArgList CallArgs;
   // Push the this (Dest) ptr.

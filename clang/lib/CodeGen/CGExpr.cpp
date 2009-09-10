@@ -744,7 +744,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       LV.SetGlobalObjCRef(LV, true);
     return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
-    llvm::Value* V = CGM.GetAddrOfFunction(GlobalDecl(FD));
+    llvm::Value* V = CGM.GetAddrOfFunction(FD);
     if (!FD->hasPrototype()) {
       if (const FunctionProtoType *Proto =
               FD->getType()->getAsFunctionProtoType()) {
