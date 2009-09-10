@@ -599,19 +599,22 @@ void DwarfException::EmitExceptionTable() {
   const unsigned LandingPadSize = SizeOfEncodedValue(dwarf::DW_EH_PE_udata4);
   unsigned SizeSites;
 
-  bool HaveTTData = (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj)
-    ? (!TypeInfos.empty() || !FilterIds.empty()) : true;
+  bool IsSJLJ = MAI->getExceptionHandlingType() == ExceptionHandling::SjLj;
 
-  if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
+  bool HaveTTData = IsSJLJ ? (!TypeInfos.empty() || !FilterIds.empty()) : true;
+
+  if (IsSJLJ)
     SizeSites = 0;
-  } else
+  else
     SizeSites = CallSites.size() *
       (SiteStartSize + SiteLengthSize + LandingPadSize);
+
   for (unsigned i = 0, e = CallSites.size(); i < e; ++i) {
     SizeSites += MCAsmInfo::getULEB128Size(CallSites[i].Action);
-    if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj)
+    if (IsSJLJ)
       SizeSites += MCAsmInfo::getULEB128Size(i);
   }
+
   // Type infos.
   const unsigned TypeInfoSize = TD->getPointerSize(); // DW_EH_PE_absptr
   unsigned SizeTypes = TypeInfos.size() * TypeInfoSize;
@@ -640,7 +643,7 @@ void DwarfException::EmitExceptionTable() {
   }
 
   EmitLabel("exception", SubprogramCount);
-  if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
+  if (IsSJLJ) {
     SmallString<16> LSDAName;
     raw_svector_ostream(LSDAName) << MAI->getPrivateGlobalPrefix() <<
       "_LSDA_" << Asm->getFunctionNumber();
@@ -710,7 +713,7 @@ void DwarfException::EmitExceptionTable() {
 #endif
 
   // SjLj Exception handilng
-  if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
+  if (IsSJLJ) {
     Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
     Asm->EOL("Call site format", dwarf::DW_EH_PE_udata4);
     Asm->EmitULEB128Bytes(SizeSites);
