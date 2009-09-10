@@ -295,15 +295,17 @@
   <li><tt>__cxa_begin_catch</tt> takes a exception structure reference as an
       argument and returns the value of the exception object.</li>
 
-  <li><tt>__cxa_end_catch</tt> takes no arguments. This function
-  <ul>Locates the most recently caught exception and decrements its handler
-      count.</ul>
-  <ul>Removes the exception from the "caught" stack if the handler count goes
-      to zero.</ul>
-  <ul>Destroys the exception if the handler count goes to zero, and the
-      exception was not re-thrown by throw.</ul>
-      Note: a rethrow from within the catch may replace this call with
-      a <tt>__cxa_rethrow</tt>.</li>
+  <li><tt>__cxa_end_catch</tt> takes no arguments. This function:
+    <p><ol>
+      <li>Locates the most recently caught exception and decrements its handler
+          count,</li>
+      <li>Removes the exception from the "caught" stack if the handler count
+          goes to zero, and</li>
+      <li>Destroys the exception if the handler count goes to zero, and the
+          exception was not re-thrown by throw.</li>
+    </ol></p>
+    <p>Note: a rethrow from within the catch may replace this call with
+       a <tt>__cxa_rethrow</tt>.</p></li>
 </ul>
 
 </div>
