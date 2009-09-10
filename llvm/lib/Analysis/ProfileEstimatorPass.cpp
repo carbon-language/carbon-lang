@@ -55,7 +55,7 @@ namespace {
     /// run - Estimate the profile information from the specified file.
     virtual bool runOnFunction(Function &F);
 
-    virtual void recurseBasicBlock(BasicBlock *BB);
+    BasicBlock *recurseBasicBlock(BasicBlock *BB);
 
     void inline printEdgeWeight(Edge);
   };
@@ -86,9 +86,8 @@ static double ignoreMissing(double w) {
   return w;
 }
 
-static void inline printEdgeError(BasicBlock *V1, BasicBlock *V2) {
-  DEBUG(errs() << "-- Edge (" <<(V1)->getName() << "," << (V2)->getName() \
-               << ") is not calculated, returning\n");
+static void inline printEdgeError(ProfileInfo::Edge e) {
+  DEBUG(errs() << "-- Edge " << e << " is not calculated, returning\n");
 }
 
 void inline ProfileEstimatorPass::printEdgeWeight(Edge E) {
@@ -98,10 +97,10 @@ void inline ProfileEstimatorPass::printEdgeWeight(Edge E) {
 
 // recurseBasicBlock() - This calculates the ProfileInfo estimation for a
 // single block and then recurses into the successors.
-void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
+BasicBlock* ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
 
   // Break the recursion if this BasicBlock was already visited.
-  if (BBisVisited.find(BB) != BBisVisited.end()) return;
+  if (BBisVisited.find(BB) != BBisVisited.end()) return 0;
 
   // Check if incoming edges are calculated already, if BB is header allow
   // backedges that are uncalculated for now.
@@ -112,17 +111,18 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
   std::set<BasicBlock*> ProcessedPreds;
   for ( pred_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
         bbi != bbe; ++bbi ) {
+    Edge edge = getEdge(*bbi,BB);
+    double w = getEdgeWeight(edge);
     if (ProcessedPreds.insert(*bbi).second) {
-      Edge edge = getEdge(*bbi,BB);
-      BBWeight += ignoreMissing(getEdgeWeight(edge));
+      BBWeight += ignoreMissing(w);
     }
-    if (BBisHeader && BBLoop == LI->getLoopFor(*bbi)) {
-      printEdgeError(*bbi,BB);
+    if (BBisHeader && BBLoop->contains(*bbi)) {
+      printEdgeError(edge);
       continue;
     }
-    if (BBisVisited.find(*bbi) == BBisVisited.end()) {
-      printEdgeError(*bbi,BB);
-      return;
+    if (w == MissingValue) {
+      printEdgeError(edge);
+      return BB;
     }
   }
   if (getExecutionCount(BB) != MissingValue) {
@@ -143,15 +143,31 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
   if (BBisHeader) {
     double incoming = BBWeight;
     // Subtract the flow leaving the loop.
+    std::set<Edge> ProcessedExits;
     for (SmallVector<Edge, 8>::iterator ei = ExitEdges.begin(),
          ee = ExitEdges.end(); ei != ee; ++ei) {
-      double w = getEdgeWeight(*ei);
-      if (w == MissingValue) {
-        Edges.push_back(*ei);
-      } else {
-        incoming -= w;
+      if (ProcessedExits.insert(*ei).second) {
+        double w = getEdgeWeight(*ei);
+        if (w == MissingValue) {
+          Edges.push_back(*ei);
+        } else {
+          incoming -= w;
+        }
       }
     }
+    // If no exit edges, create one:
+    if (Edges.size() == 0) {
+      BasicBlock *Latch = BBLoop->getLoopLatch();
+      if (Latch) {
+        Edge edge = getEdge(Latch,0);
+        EdgeInformation[BB->getParent()][edge] = BBWeight;
+        printEdgeWeight(edge);
+        edge = getEdge(Latch, BB);
+        EdgeInformation[BB->getParent()][edge] = BBWeight * ExecCount;
+        printEdgeWeight(edge);
+      }
+    }
+
     // Distribute remaining weight onto the exit edges.
     for (SmallVector<Edge, 8>::iterator ei = Edges.begin(), ee = Edges.end();
          ei != ee; ++ei) {
@@ -197,11 +213,16 @@ void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
 
   // Mark this Block visited and recurse into successors.
   BBisVisited.insert(BB);
+  BasicBlock *Uncalculated = 0;
   for ( succ_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
-        bbi != bbe;
-        ++bbi ) {
-    recurseBasicBlock(*bbi);
+        bbi != bbe; ++bbi ) {
+    BasicBlock* ret = recurseBasicBlock(*bbi);
+    if (!Uncalculated) 
+      Uncalculated = ret;
   }
+  if (BBisVisited.find(Uncalculated) != BBisVisited.end())
+    return 0;
+  return Uncalculated;
 }
 
 bool ProfileEstimatorPass::runOnFunction(Function &F) {
@@ -222,26 +243,19 @@ bool ProfileEstimatorPass::runOnFunction(Function &F) {
 
   Edge edge = getEdge(0,entry);
   EdgeInformation[&F][edge] = 1; printEdgeWeight(edge);
-  recurseBasicBlock(entry);
-
-  // In case something went wrong, clear all results, not profiling info is
-  // available.
-  if (BBisVisited.size() != F.size()) {
-    DEBUG(errs() << "-- could not estimate profile, using default profile\n");
-    FunctionInformation.erase(&F);
-    BlockInformation[&F].clear();
-    for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB) {
+  BasicBlock *BB = entry;
+  while (BB) {
+    BB = recurseBasicBlock(BB);
+    if (BB) {
       for (pred_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
            bbi != bbe; ++bbi) {
         Edge e = getEdge(*bbi,BB);
-        EdgeInformation[&F][e] = 1; 
-        printEdgeWeight(e);
-      }
-      for (succ_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
-           bbi != bbe; ++bbi) {
-        Edge e = getEdge(BB,*bbi);
-        EdgeInformation[&F][e] = 1;
-        printEdgeWeight(e);
+        double w = getEdgeWeight(e);
+        if (w == MissingValue) {
+          EdgeInformation[&F][e] = 0;
+          errs() << "Assuming edge weight: ";
+          printEdgeWeight(e);
+        }
       }
     }
   }

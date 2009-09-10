@@ -223,17 +223,28 @@ void ProfileVerifierPass::recurseBasicBlock(const BasicBlock *BB) {
   DI.BB = BB;
   DI.outCount = DI.inCount = DI.inWeight = DI.outWeight = 0;
   std::set<const BasicBlock*> ProcessedPreds;
-  for (pred_const_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
-       bbi != bbe; ++bbi) {
-    if (ProcessedPreds.insert(*bbi).second) {
-      DI.inWeight += ReadOrAssert(PI->getEdge(*bbi,BB));
+  pred_const_iterator bpi = pred_begin(BB), bpe = pred_end(BB);
+  if (bpi == bpe) {
+    DI.inWeight += ReadOrAssert(PI->getEdge(0,BB));
+    DI.inCount++;
+  }
+  for (;bpi != bpe; ++bpi) {
+    if (ProcessedPreds.insert(*bpi).second) {
+      DI.inWeight += ReadOrAssert(PI->getEdge(*bpi,BB));
       DI.inCount++;
     }
   }
 
   std::set<const BasicBlock*> ProcessedSuccs;
-  for (succ_const_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
-       bbi != bbe; ++bbi) {
+  succ_const_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
+  if (bbi == bbe) {
+    double w = PI->getEdgeWeight(PI->getEdge(BB,0));
+    if (w != ProfileInfo::MissingValue) {
+      DI.outWeight += w;
+      DI.outCount++;
+    }
+  }
+  for (;bbi != bbe; ++bbi) {
     if (ProcessedSuccs.insert(*bbi).second) {
       DI.outWeight += ReadOrAssert(PI->getEdge(BB,*bbi));
       DI.outCount++;
