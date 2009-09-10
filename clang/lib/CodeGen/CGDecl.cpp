@@ -223,8 +223,11 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
   std::vector<const llvm::Type *> Types(needsCopyDispose*2+5);
   const llvm::PointerType *PtrToInt8Ty
     = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+  
+  llvm::PATypeHolder ByRefTypeHolder = llvm::OpaqueType::get(VMContext);
+  
   Types[0] = PtrToInt8Ty;
-  Types[1] = PtrToInt8Ty;
+  Types[1] = llvm::PointerType::getUnqual(ByRefTypeHolder);
   Types[2] = llvm::Type::getInt32Ty(VMContext);
   Types[3] = llvm::Type::getInt32Ty(VMContext);
   if (needsCopyDispose) {
@@ -235,7 +238,14 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
   assert((Align <= unsigned(Target.getPointerAlign(0))/8)
          && "Can't align more than pointer yet");
   Types[needsCopyDispose*2 + 4] = LTy;
-  return llvm::StructType::get(VMContext, Types, false);
+  
+  const llvm::Type *T = llvm::StructType::get(VMContext, Types, false);
+  
+  cast<llvm::OpaqueType>(ByRefTypeHolder.get())->refineAbstractTypeTo(T);
+  CGM.getModule().addTypeName("struct.__block_byref_" + D->getNameAsString(), 
+                              ByRefTypeHolder.get());
+  
+  return ByRefTypeHolder.get();
 }
 
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
@@ -413,8 +423,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "isa");
     Builder.CreateStore(V, isa_field);
 
-    V = Builder.CreateBitCast(DeclPtr, PtrToInt8Ty, "forwarding");
-    Builder.CreateStore(V, forwarding_field);
+    Builder.CreateStore(DeclPtr, forwarding_field);
 
     V = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), flags);
     Builder.CreateStore(V, flags_field);
