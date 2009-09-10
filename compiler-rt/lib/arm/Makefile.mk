@@ -1,4 +1,4 @@
-#===- lib/Makefile.mk --------------------------------------*- Makefile -*--===#
+#===- lib/arm/Makefile.mk ----------------------------------*- Makefile -*--===#
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,12 +7,14 @@
 #
 #===------------------------------------------------------------------------===#
 
-Dir := lib
-SubDirs := i386 ppc x86_64 arm
+Dir := lib/arm
+SubDirs := 
+OnlyArchs := armv6 armv7
 
+AsmSources := $(foreach file,$(wildcard $(Dir)/*.S),$(notdir $(file)))
 Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))
-ObjNames := $(Sources:%.c=%.o)
-Target := Generic
+ObjNames := $(Sources:%.c=%.o) $(AsmSources:%.S=%.o)
+Target := Optimized
 
 # FIXME: use automatic dependencies?
 Dependencies := $(wildcard $(Dir)/*.h)
