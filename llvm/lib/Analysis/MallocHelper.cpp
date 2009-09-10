@@ -69,12 +69,14 @@ static bool isBitCastOfMallocCall(const BitCastInst* BCI) {
 /// instruction is a bitcast of the result of a malloc call.
 CallInst* llvm::extractMallocCallFromBitCast(Value* I) {
   BitCastInst *BCI = dyn_cast<BitCastInst>(I);
-  return (isBitCastOfMallocCall(BCI)) ? cast<CallInst>(BCI->getOperand(0)) : NULL;
+  return (isBitCastOfMallocCall(BCI)) ? cast<CallInst>(BCI->getOperand(0))
+                                      : NULL;
 }
 
 const CallInst* llvm::extractMallocCallFromBitCast(const Value* I) {
   const BitCastInst *BCI = dyn_cast<BitCastInst>(I);
-  return (isBitCastOfMallocCall(BCI)) ? cast<CallInst>(BCI->getOperand(0)) : NULL;
+  return (isBitCastOfMallocCall(BCI)) ? cast<CallInst>(BCI->getOperand(0))
+                                      : NULL;
 }
 
 static bool isArrayMallocHelper(const CallInst *CI) {
