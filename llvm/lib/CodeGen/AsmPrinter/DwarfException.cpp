@@ -918,28 +918,28 @@ void DwarfException::EndModule() {
 /// BeginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
 void DwarfException::BeginFunction(MachineFunction *MF) {
+  if (!MMI || !MAI->doesSupportExceptionHandling()) return;
+
   if (TimePassesIsEnabled)
     ExceptionTimer->startTimer();
 
   this->MF = MF;
   shouldEmitTable = shouldEmitMoves = false;
 
-  if (MMI && MAI->doesSupportExceptionHandling()) {
-    // Map all labels and get rid of any dead landing pads.
-    MMI->TidyLandingPads();
+  // Map all labels and get rid of any dead landing pads.
+  MMI->TidyLandingPads();
 
-    // If any landing pads survive, we need an EH table.
-    if (!MMI->getLandingPads().empty())
-      shouldEmitTable = true;
+  // If any landing pads survive, we need an EH table.
+  if (!MMI->getLandingPads().empty())
+    shouldEmitTable = true;
 
-    // See if we need frame move info.
-    if (!MF->getFunction()->doesNotThrow() || UnwindTablesMandatory)
-      shouldEmitMoves = true;
+  // See if we need frame move info.
+  if (!MF->getFunction()->doesNotThrow() || UnwindTablesMandatory)
+    shouldEmitMoves = true;
 
-    if (shouldEmitMoves || shouldEmitTable)
-      // Assumes in correct section after the entry point.
-      EmitLabel("eh_func_begin", ++SubprogramCount);
-  }
+  if (shouldEmitMoves || shouldEmitTable)
+    // Assumes in correct section after the entry point.
+    EmitLabel("eh_func_begin", ++SubprogramCount);
 
   shouldEmitTableModule |= shouldEmitTable;
   shouldEmitMovesModule |= shouldEmitMoves;
