@@ -1,5 +1,5 @@
 // RUN: clang-cc -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s &&
-// RUN: grep objc_assign_strongCast %t | count 7 &&
+// RUN: grep objc_assign_strongCast %t | count 8 &&
 // RUN: true
 
 struct Slice {
@@ -13,6 +13,14 @@ typedef struct Slice Slice;
     void *__strong * IvarItem;
 }
 @end
+
+typedef void (^observer_block_t)(id object);
+@interface Observer  {
+@public
+    observer_block_t block;
+}
+@end
+
 
 void foo (int i) {
     // storing into an array of strong pointer types.
@@ -32,4 +40,7 @@ void foo (int i) {
     islice->IvarItem = 0;
     // Storing into an ivar of an array of strong pointer types.
     islice->IvarItem[i] = (void*)0;
+
+    Observer *observer;
+    observer->block = 0;
 }

@@ -3391,7 +3391,7 @@ QualType::GCAttrTypes ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
     // (or pointers to them) be treated as though they were declared
     // as __strong.
     if (GCAttrs == QualType::GCNone) {
-      if (Ty->isObjCObjectPointerType())
+      if (Ty->isObjCObjectPointerType() || Ty->isBlockPointerType())
         GCAttrs = QualType::Strong;
       else if (Ty->isPointerType())
         return getObjCGCAttrKind(Ty->getAs<PointerType>()->getPointeeType());
