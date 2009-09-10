@@ -214,12 +214,18 @@ let Defs = [RBP,RSP], Uses = [RBP,RSP], mayLoad = 1, neverHasSideEffects = 1 in
 def LEAVE64  : I<0xC9, RawFrm,
                  (outs), (ins), "leave", []>;
 let Defs = [RSP], Uses = [RSP], neverHasSideEffects=1 in {
-let mayLoad = 1 in
+let mayLoad = 1 in {
 def POP64r   : I<0x58, AddRegFrm,
                  (outs GR64:$reg), (ins), "pop{q}\t$reg", []>;
-let mayStore = 1 in
+def POP64rmr: I<0x8F, MRM0r, (outs GR64:$reg), (ins), "pop{q}\t$reg", []>;
+def POP64rmm: I<0x8F, MRM0m, (outs i64mem:$dst), (ins), "pop{q}\t$dst", []>;
+}
+let mayStore = 1 in {
 def PUSH64r  : I<0x50, AddRegFrm,
                  (outs), (ins GR64:$reg), "push{q}\t$reg", []>;
+def PUSH64rmr: I<0xFF, MRM6r, (outs), (ins GR64:$reg), "push{q}\t$reg", []>;
+def PUSH64rmm: I<0xFF, MRM6m, (outs), (ins i64mem:$src), "push{q}\t$src", []>;
+}
 }
 
 let Defs = [RSP], Uses = [RSP], neverHasSideEffects = 1, mayStore = 1 in {
