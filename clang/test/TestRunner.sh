@@ -9,7 +9,6 @@
 #     %s - Replaced with the input name of the program, or the program to
 #          execute, as appropriate.
 #     %S - Replaced with the directory where the input file resides
-#     %prcontext - prcontext.tcl script
 #     %t - temporary file name (derived from testcase name)
 #
 
@@ -85,7 +84,6 @@ grep 'RUN:' $FILENAME | \
       -e "s| clang-cc | $CLANGCC |g" \
       -e "s|%s|$SUBST|g" \
       -e "s|%S|$FILEDIR|g" \
-      -e "s|%prcontext|prcontext.tcl|g" \
       -e "s|%t|$TEMPOUTPUT|g" > $SCRIPT
 
 IS_XFAIL=0
