@@ -251,9 +251,10 @@ public:
 } // end anonymous namespace
 
 
-void clang::CheckDeadStores(LiveVariables& L, BugReporter& BR) {
-  FindEscaped FS(BR.getCFG());
+void clang::CheckDeadStores(CFG &cfg, LiveVariables &L, ParentMap &pmap, 
+                            BugReporter& BR) {
+  FindEscaped FS(&cfg);
   FS.getCFG().VisitBlockStmts(FS);
-  DeadStoreObs A(BR.getContext(), BR, BR.getParentMap(), FS.Escaped);
-  L.runOnAllBlocks(*BR.getCFG(), &A);
+  DeadStoreObs A(BR.getContext(), BR, pmap, FS.Escaped);
+  L.runOnAllBlocks(cfg, &A);
 }

@@ -119,9 +119,13 @@ public:
 
   CFG &getCFG() const { return *getLocationContext()->getCFG(); }
 
-  const GRState* getState() const {
-    return State;
+  ParentMap &getParentMap() const {return getLocationContext()->getParentMap();}
+
+  LiveVariables &getLiveVariables() const { 
+    return *getLocationContext()->getLiveVariables(); 
   }
+
+  const GRState* getState() const { return State; }
 
   template <typename T>
   const T* getLocationAs() const { return llvm::dyn_cast<T>(&Location); }

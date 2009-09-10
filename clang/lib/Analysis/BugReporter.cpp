@@ -36,14 +36,6 @@ BugReporterContext::~BugReporterContext() {
     if ((*I)->isOwnedByReporterContext()) delete *I;
 }
 
-const Decl& BugReporterContext::getCodeDecl() {
-  return *BR.getEngine().getAnalysisManager().getCodeDecl();
-}
-
-const CFG& BugReporterContext::getCFG() {
-  return *BR.getEngine().getAnalysisManager().getCFG();
-}
-
 //===----------------------------------------------------------------------===//
 // Helper routines for walking the ExplodedGraph and fetching statements.
 //===----------------------------------------------------------------------===//
@@ -158,11 +150,9 @@ public:
   PathDiagnosticLocation ExecutionContinues(llvm::raw_string_ostream& os,
                                             const ExplodedNode* N);
 
-  ParentMap& getParentMap() {
-    if (PM.get() == 0)
-      PM.reset(new ParentMap(getCodeDecl().getBody()));
-    return *PM.get();
-  }
+  Decl const &getCodeDecl() { return R->getEndNode()->getCodeDecl(); }
+
+  ParentMap& getParentMap() { return R->getEndNode()->getParentMap(); }
 
   const Stmt *getParent(const Stmt *S) {
     return getParentMap().getParent(S);

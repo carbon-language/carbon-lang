@@ -32,7 +32,8 @@ class ObjCImplementationDecl;
 class LangOptions;
 class GRExprEngine;
 
-void CheckDeadStores(LiveVariables& L, BugReporter& BR);
+void CheckDeadStores(CFG &cfg, LiveVariables &L, ParentMap &map, 
+                     BugReporter& BR);
 
 void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
                               bool FullUninitTaint=false);

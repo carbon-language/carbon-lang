@@ -22,9 +22,7 @@
 namespace clang {
 
 class AnalysisManager : public BugReporterData {
-  AnalysisContextManager ContextMgr;
-  AnalysisContext *EntryContext;
-
+  AnalysisContextManager AnaCtxMgr;
   LocationContextManager LocCtxMgr;
 
   ASTContext &Ctx;
@@ -55,22 +53,7 @@ class AnalysisManager : public BugReporterData {
   bool TrimGraph;
 
 public:
-  AnalysisManager(Decl *d, ASTContext &ctx, Diagnostic &diags,
-                  const LangOptions &lang, PathDiagnosticClient *pd,
-                  StoreManagerCreator storemgr,
-                  ConstraintManagerCreator constraintmgr,
-                  bool displayProgress, bool vizdot, bool vizubi,
-                  bool purge, bool eager, bool trim)
-    : Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
-      CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
-      AScope(ScopeDecl), DisplayedFunction(!displayProgress),
-      VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
-      EagerlyAssume(eager), TrimGraph(trim) {
-
-    EntryContext = ContextMgr.getContext(d);
-  }
-
-  AnalysisManager(ASTContext &ctx, Diagnostic &diags,
+  AnalysisManager(ASTContext &ctx, Diagnostic &diags, 
                   const LangOptions &lang, PathDiagnosticClient *pd,
                   StoreManagerCreator storemgr,
                   ConstraintManagerCreator constraintmgr,
@@ -81,25 +64,7 @@ public:
       CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
       AScope(ScopeDecl), DisplayedFunction(!displayProgress),
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
-      EagerlyAssume(eager), TrimGraph(trim) {
-
-    EntryContext = 0;
-  }
-
-  void setEntryContext(Decl *D) {
-    EntryContext = ContextMgr.getContext(D);
-    DisplayedFunction = false;
-  }
-
-  const Decl *getCodeDecl() const {
-    assert (AScope == ScopeDecl);
-    return EntryContext->getDecl();
-  }
-
-  Stmt *getBody() const {
-    assert (AScope == ScopeDecl);
-    return EntryContext->getBody();
-  }
+      EagerlyAssume(eager), TrimGraph(trim) {}
 
   StoreManagerCreator getStoreManagerCreator() {
     return CreateStoreMgr;
@@ -107,18 +72,6 @@ public:
 
   ConstraintManagerCreator getConstraintManagerCreator() {
     return CreateConstraintMgr;
-  }
-
-  virtual CFG *getCFG() {
-    return EntryContext->getCFG();
-  }
-
-  virtual ParentMap &getParentMap() {
-    return EntryContext->getParentMap();
-  }
-
-  virtual LiveVariables *getLiveVariables() {
-    return EntryContext->getLiveVariables();
   }
 
   virtual ASTContext &getASTContext() {
@@ -141,10 +94,6 @@ public:
     return PD.get();
   }
 
-  StackFrameContext *getEntryStackFrame() {
-    return LocCtxMgr.getStackFrame(EntryContext, 0, 0);
-  }
-
   bool shouldVisualizeGraphviz() const { return VisualizeEGDot; }
 
   bool shouldVisualizeUbigraph() const { return VisualizeEGUbi; }
@@ -159,7 +108,23 @@ public:
 
   bool shouldEagerlyAssume() const { return EagerlyAssume; }
 
-  void DisplayFunction();
+  void DisplayFunction(Decl *D);
+
+  CFG *getCFG(Decl const *D) {
+    return AnaCtxMgr.getContext(D)->getCFG();
+  }
+
+  LiveVariables *getLiveVariables(Decl const *D) {
+    return AnaCtxMgr.getContext(D)->getLiveVariables();
+  }
+
+  ParentMap &getParentMap(Decl const *D) {
+    return AnaCtxMgr.getContext(D)->getParentMap();
+  }
+
+  StackFrameContext *getStackFrame(Decl const *D) {
+    return LocCtxMgr.getStackFrame(AnaCtxMgr.getContext(D), 0, 0);
+  }
 };
 
 }

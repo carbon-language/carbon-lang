@@ -91,6 +91,10 @@ public:
     return getAnalysisContext()->getLiveVariables();
   }
 
+  ParentMap &getParentMap() const { 
+    return getAnalysisContext()->getParentMap();
+  }
+
   const ImplicitParamDecl *getSelfDecl() const {
     return Ctx->getSelfDecl();
   }

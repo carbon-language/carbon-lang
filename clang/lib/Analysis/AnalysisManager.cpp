@@ -16,7 +16,7 @@
 
 using namespace clang;
 
-void AnalysisManager::DisplayFunction() {
+void AnalysisManager::DisplayFunction(Decl *D) {
 
   if (DisplayedFunction)
     return;
@@ -24,12 +24,12 @@ void AnalysisManager::DisplayFunction() {
   DisplayedFunction = true;
 
   // FIXME: Is getCodeDecl() always a named decl?
-  if (isa<FunctionDecl>(getCodeDecl()) ||
-      isa<ObjCMethodDecl>(getCodeDecl())) {
-    const NamedDecl *ND = cast<NamedDecl>(getCodeDecl());
+  if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
+    const NamedDecl *ND = cast<NamedDecl>(D);
     SourceManager &SM = getASTContext().getSourceManager();
     llvm::errs() << "ANALYZE: "
                  << SM.getPresumedLoc(ND->getLocation()).getFilename()
                  << ' ' << ND->getNameAsString() << '\n';
   }
 }
+

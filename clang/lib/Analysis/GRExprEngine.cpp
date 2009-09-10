@@ -262,7 +262,8 @@ void GRExprEngine::ProcessStmt(Stmt* S, GRStmtNodeBuilder& builder) {
     Builder->setAuditor(BatchAuditor.get());
 
   // Create the cleaned state.
-  SymbolReaper SymReaper(*AMgr.getLiveVariables(), SymMgr);
+  SymbolReaper SymReaper(Builder->getBasePredecessor()->getLiveVariables(), 
+                         SymMgr);
   CleanedState = AMgr.shouldPurgeDead()
     ? StateMgr.RemoveDeadBindings(EntryNode->getState(), CurrentStmt, SymReaper)
     : EntryNode->getState();
@@ -1670,7 +1671,8 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, ExplodedNode* Pred,
 static std::pair<const void*,const void*> EagerlyAssumeTag
   = std::pair<const void*,const void*>(&EagerlyAssumeTag,0);
 
-void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src, Expr *Ex) {
+void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
+                                     Expr *Ex) {
   for (ExplodedNodeSet::iterator I=Src.begin(), E=Src.end(); I!=E; ++I) {
     ExplodedNode *Pred = *I;
 
@@ -1713,9 +1715,8 @@ void GRExprEngine::EvalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
 // Transfer function: Objective-C ivar references.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitObjCIvarRefExpr(ObjCIvarRefExpr* Ex,
-                                            ExplodedNode* Pred, ExplodedNodeSet& Dst,
-                                            bool asLValue) {
+void GRExprEngine::VisitObjCIvarRefExpr(ObjCIvarRefExpr* Ex, ExplodedNode* Pred,
+                                        ExplodedNodeSet& Dst, bool asLValue) {
 
   Expr* Base = cast<Expr>(Ex->getBase());
   ExplodedNodeSet Tmp;
@@ -1738,7 +1739,7 @@ void GRExprEngine::VisitObjCIvarRefExpr(ObjCIvarRefExpr* Ex,
 //===----------------------------------------------------------------------===//
 
 void GRExprEngine::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S,
-                                              ExplodedNode* Pred, ExplodedNodeSet& Dst) {
+                                     ExplodedNode* Pred, ExplodedNodeSet& Dst) {
 
   // ObjCForCollectionStmts are processed in two places.  This method
   // handles the case where an ObjCForCollectionStmt* occurs as one of the
@@ -1786,7 +1787,7 @@ void GRExprEngine::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S,
 }
 
 void GRExprEngine::VisitObjCForCollectionStmtAux(ObjCForCollectionStmt* S,
-                                                 ExplodedNode* Pred, ExplodedNodeSet& Dst,
+                                       ExplodedNode* Pred, ExplodedNodeSet& Dst,
                                                  SVal ElementV) {
 
 
@@ -1845,7 +1846,7 @@ void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, ExplodedNode* Pred,
 void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
                                               ObjCMessageExpr::arg_iterator AI,
                                               ObjCMessageExpr::arg_iterator AE,
-                                              ExplodedNode* Pred, ExplodedNodeSet& Dst) {
+                                     ExplodedNode* Pred, ExplodedNodeSet& Dst) {
   if (AI == AE) {
 
     // Process the receiver.
@@ -1854,7 +1855,8 @@ void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
       ExplodedNodeSet Tmp;
       Visit(Receiver, Pred, Tmp);
 
-      for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
+      for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE;
+           ++NI)
         VisitObjCMessageExprDispatchHelper(ME, *NI, Dst);
 
       return;
@@ -1869,7 +1871,7 @@ void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
 
   ++AI;
 
-  for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
+  for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end();NI != NE;++NI)
     VisitObjCMessageExprArgHelper(ME, AI, AE, *NI, Dst);
 }
 
@@ -1910,7 +1912,7 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
 
       // Check if the receiver was nil and the return value a struct.
       if (RetTy->isRecordType()) {
-        if (BR.getParentMap().isConsumedExpr(ME)) {
+        if (Pred->getParentMap().isConsumedExpr(ME)) {
           // The [0 ...] expressions will return garbage.  Flag either an
           // explicit or implicit error.  Because of the structure of this
           // function we currently do not bifurfacte the state graph at
@@ -1929,7 +1931,7 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
       else {
         ASTContext& Ctx = getContext();
         if (RetTy != Ctx.VoidTy) {
-          if (BR.getParentMap().isConsumedExpr(ME)) {
+          if (Pred->getParentMap().isConsumedExpr(ME)) {
             // sizeof(void *)
             const uint64_t voidPtrSize = Ctx.getTypeSize(Ctx.VoidPtrTy);
             // sizeof(return type)

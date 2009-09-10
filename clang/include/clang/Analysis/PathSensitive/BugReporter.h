@@ -282,9 +282,6 @@ public:
   virtual PathDiagnosticClient* getPathDiagnosticClient() = 0;
   virtual ASTContext& getASTContext() = 0;
   virtual SourceManager& getSourceManager() = 0;
-  virtual CFG* getCFG() = 0;
-  virtual ParentMap& getParentMap() = 0;
-  virtual LiveVariables* getLiveVariables() = 0;
 };
 
 class BugReporter {
@@ -327,12 +324,6 @@ public:
   ASTContext& getContext() { return D.getASTContext(); }
 
   SourceManager& getSourceManager() { return D.getSourceManager(); }
-
-  CFG* getCFG() { return D.getCFG(); }
-
-  ParentMap& getParentMap() { return D.getParentMap(); }
-
-  LiveVariables* getLiveVariables() { return D.getLiveVariables(); }
 
   virtual void GeneratePathDiagnostic(PathDiagnostic& PD,
                                       BugReportEquivClass& EQ) {}
@@ -457,8 +448,6 @@ public:
     return BR.getSourceManager();
   }
 
-  const Decl &getCodeDecl();
-  const CFG &getCFG();
   virtual BugReport::NodeResolver& getNodeResolver() = 0;
 };
 

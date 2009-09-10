@@ -45,7 +45,7 @@ static ExplodedNode::Auditor* CreateUbiViz();
 //===----------------------------------------------------------------------===//
 
 namespace {
-  typedef void (*CodeAction)(AnalysisManager& Mgr);
+  typedef void (*CodeAction)(AnalysisManager& Mgr, Decl *D);
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -223,10 +223,23 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
 }
 
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
-  if (!TranslationUnitActions.empty()) {
-    for (Actions::iterator I = TranslationUnitActions.begin(),
+  // Find the entry function definition.
+  FunctionDecl *FD = 0;
+  TranslationUnitDecl *TU = Ctx->getTranslationUnitDecl();
+  for (DeclContext::decl_iterator I = TU->decls_begin(), E = TU->decls_end();
+       I != E; ++I) {
+    if (FunctionDecl *fd = dyn_cast<FunctionDecl>(*I))
+      if (fd->isThisDeclarationADefinition() &&
+          fd->getNameAsString() == Opts.AnalyzeSpecificFunction) {
+        FD = fd;
+        break;
+      }
+  }
+
+  if(!TranslationUnitActions.empty()) {
+    for (Actions::iterator I = TranslationUnitActions.begin(), 
          E = TranslationUnitActions.end(); I != E; ++I)
-      (*I)(*Mgr);
+      (*I)(*Mgr, FD);  
   }
 
   if (!ObjCImplementationActions.empty()) {
@@ -245,7 +258,7 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
   Mgr.reset(NULL);
 }
 
-void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
+void AnalysisConsumer::HandleCode(Decl *D, Stmt* Body, Actions& actions) {
 
   // Don't run the actions if an error has occured with parsing the file.
   if (Diags.hasErrorOccurred())
@@ -257,41 +270,40 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
       !Ctx->getSourceManager().isFromMainFile(D->getLocation()))
     return;
 
-  Mgr->setEntryContext(D);
-
   // Dispatch on the actions.
   for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
-    (*I)(*Mgr);
+    (*I)(*Mgr, D);  
 }
 
 //===----------------------------------------------------------------------===//
 // Analyses
 //===----------------------------------------------------------------------===//
 
-static void ActionWarnDeadStores(AnalysisManager& mgr) {
-  if (LiveVariables* L = mgr.getLiveVariables()) {
+static void ActionWarnDeadStores(AnalysisManager& mgr, Decl *D) {
+  if (LiveVariables *L = mgr.getLiveVariables(D)) {
     BugReporter BR(mgr);
-    CheckDeadStores(*L, BR);
+    CheckDeadStores(*mgr.getCFG(D), *L, mgr.getParentMap(D), BR);
   }
 }
 
-static void ActionWarnUninitVals(AnalysisManager& mgr) {
-  if (CFG* c = mgr.getCFG())
+static void ActionWarnUninitVals(AnalysisManager& mgr, Decl *D) {
+  if (CFG* c = mgr.getCFG(D))
     CheckUninitializedValues(*c, mgr.getASTContext(), mgr.getDiagnostic());
 }
 
 
-static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
+static void ActionGRExprEngine(AnalysisManager& mgr, Decl *D, 
+                               GRTransferFuncs* tf,
                                bool StandardWarnings = true) {
 
 
   llvm::OwningPtr<GRTransferFuncs> TF(tf);
 
   // Display progress.
-  mgr.DisplayFunction();
+  mgr.DisplayFunction(D);
 
   // Construct the analysis engine.
-  LiveVariables* L = mgr.getLiveVariables();
+  LiveVariables* L = mgr.getLiveVariables(D);
   if (!L) return;
 
   GRExprEngine Eng(mgr);
@@ -300,7 +312,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
 
   if (StandardWarnings) {
     Eng.RegisterInternalChecks();
-    RegisterAppleChecks(Eng, *mgr.getCodeDecl());
+    RegisterAppleChecks(Eng, *D);
   }
 
   // Set the graph auditor.
@@ -311,7 +323,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   }
 
   // Execute the worklist algorithm.
-  Eng.ExecuteWorkList(mgr.getEntryStackFrame());
+  Eng.ExecuteWorkList(mgr.getStackFrame(D));
 
   // Release the auditor (if any) so that it doesn't monitor the graph
   // created BugReporter.
@@ -325,82 +337,79 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
   Eng.getBugReporter().FlushReports();
 }
 
-static void ActionCheckerCFRefAux(AnalysisManager& mgr, bool GCEnabled,
-                                  bool StandardWarnings) {
+static void ActionCheckerCFRefAux(AnalysisManager& mgr, Decl *D,
+                                  bool GCEnabled, bool StandardWarnings) {
 
   GRTransferFuncs* TF = MakeCFRefCountTF(mgr.getASTContext(),
                                          GCEnabled,
                                          mgr.getLangOptions());
 
-  ActionGRExprEngine(mgr, TF, StandardWarnings);
+  ActionGRExprEngine(mgr, D, TF, StandardWarnings);
 }
 
-static void ActionCheckerCFRef(AnalysisManager& mgr) {
+static void ActionCheckerCFRef(AnalysisManager& mgr, Decl *D) {
 
  switch (mgr.getLangOptions().getGCMode()) {
    default:
      assert (false && "Invalid GC mode.");
    case LangOptions::NonGC:
-     ActionCheckerCFRefAux(mgr, false, true);
+     ActionCheckerCFRefAux(mgr, D, false, true);
      break;
 
    case LangOptions::GCOnly:
-     ActionCheckerCFRefAux(mgr, true, true);
+     ActionCheckerCFRefAux(mgr, D, true, true);
      break;
 
    case LangOptions::HybridGC:
-     ActionCheckerCFRefAux(mgr, false, true);
-     ActionCheckerCFRefAux(mgr, true, false);
+     ActionCheckerCFRefAux(mgr, D, false, true);
+     ActionCheckerCFRefAux(mgr, D, true, false);
      break;
  }
 }
 
-static void ActionDisplayLiveVariables(AnalysisManager& mgr) {
-  if (LiveVariables* L = mgr.getLiveVariables()) {
-    mgr.DisplayFunction();
+static void ActionDisplayLiveVariables(AnalysisManager& mgr, Decl *D) {
+  if (LiveVariables* L = mgr.getLiveVariables(D)) {
+    mgr.DisplayFunction(D);
     L->dumpBlockLiveness(mgr.getSourceManager());
   }
 }
 
-static void ActionCFGDump(AnalysisManager& mgr) {
-  if (CFG* c = mgr.getCFG()) {
-    mgr.DisplayFunction();
+static void ActionCFGDump(AnalysisManager& mgr, Decl *D) {
+  if (CFG* c = mgr.getCFG(D)) {
+    mgr.DisplayFunction(D);
     c->dump(mgr.getLangOptions());
   }
 }
 
-static void ActionCFGView(AnalysisManager& mgr) {
-  if (CFG* c = mgr.getCFG()) {
-    mgr.DisplayFunction();
+static void ActionCFGView(AnalysisManager& mgr, Decl *D) {
+  if (CFG* c = mgr.getCFG(D)) {
+    mgr.DisplayFunction(D);
     c->viewCFG(mgr.getLangOptions());
   }
 }
 
-static void ActionSecuritySyntacticChecks(AnalysisManager &mgr) {
+static void ActionSecuritySyntacticChecks(AnalysisManager &mgr, Decl *D) {
   BugReporter BR(mgr);
-  CheckSecuritySyntaxOnly(mgr.getCodeDecl(), BR);
+  CheckSecuritySyntaxOnly(D, BR);
 }
 
-static void ActionWarnObjCDealloc(AnalysisManager& mgr) {
+static void ActionWarnObjCDealloc(AnalysisManager& mgr, Decl *D) {
   if (mgr.getLangOptions().getGCMode() == LangOptions::GCOnly)
     return;
 
   BugReporter BR(mgr);
-
-  CheckObjCDealloc(cast<ObjCImplementationDecl>(mgr.getCodeDecl()),
-                   mgr.getLangOptions(), BR);
+  CheckObjCDealloc(cast<ObjCImplementationDecl>(D), mgr.getLangOptions(), BR);  
 }
 
-static void ActionWarnObjCUnusedIvars(AnalysisManager& mgr) {
+static void ActionWarnObjCUnusedIvars(AnalysisManager& mgr, Decl *D) {
   BugReporter BR(mgr);
-  CheckObjCUnusedIvar(cast<ObjCImplementationDecl>(mgr.getCodeDecl()), BR);
+  CheckObjCUnusedIvar(cast<ObjCImplementationDecl>(D), BR);  
 }
 
-static void ActionWarnObjCMethSigs(AnalysisManager& mgr) {
+static void ActionWarnObjCMethSigs(AnalysisManager& mgr, Decl *D) {
   BugReporter BR(mgr);
 
-  CheckObjCInstMethSignature(cast<ObjCImplementationDecl>(mgr.getCodeDecl()),
-                             BR);
+  CheckObjCInstMethSignature(cast<ObjCImplementationDecl>(D), BR);
 }
 
 //===----------------------------------------------------------------------===//

@@ -2641,7 +2641,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
   }
 
   if (!L.isValid()) {
-    const Decl &D = BRC.getCodeDecl();
+    const Decl &D = EndN->getCodeDecl();
     L = PathDiagnosticLocation(D.getBodyRBrace(), SMgr);
   }
 
@@ -2660,7 +2660,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
     // FIXME: Per comments in rdar://6320065, "create" only applies to CF
     // ojbects.  Only "copy", "alloc", "retain" and "new" transfer ownership
     // to the caller for NS objects.
-    ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BRC.getCodeDecl());
+    ObjCMethodDecl& MD = cast<ObjCMethodDecl>(EndN->getCodeDecl());
     os << " is returned from a method whose name ('"
        << MD.getSelector().getAsString()
     << "') does not contain 'copy' or otherwise starts with"
@@ -2668,7 +2668,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
     " in the Memory Management Guide for Cocoa (object leaked)";
   }
   else if (RV->getKind() == RefVal::ErrorGCLeakReturned) {
-    ObjCMethodDecl& MD = cast<ObjCMethodDecl>(BRC.getCodeDecl());
+    ObjCMethodDecl& MD = cast<ObjCMethodDecl>(EndN->getCodeDecl());
     os << " and returned from method '" << MD.getSelector().getAsString()
        << "' is potentially leaked when using garbage collection.  Callers "
           "of this method do not expect a returned object with a +1 retain "
@@ -3186,7 +3186,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
 
   // Any leaks or other errors?
   if (X.isReturnedOwned() && X.getCount() == 0) {
-    const Decl *CD = Eng.getAnalysisManager().getCodeDecl();
+    Decl const *CD = &Pred->getCodeDecl();
     if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
       const RetainSummary &Summ = *Summaries.getMethodSummary(MD);
       RetEffect RE = Summ.getRetEffect();
@@ -3229,7 +3229,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
     }
   }
   else if (X.isReturnedNotOwned()) {
-    const Decl *CD = Eng.getAnalysisManager().getCodeDecl();
+    Decl const *CD = &Pred->getCodeDecl();
     if (const ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(CD)) {
       const RetainSummary &Summ = *Summaries.getMethodSummary(MD);
       if (Summ.getRetEffect().isOwned()) {
