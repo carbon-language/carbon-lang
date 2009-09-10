@@ -29,7 +29,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 // CGPassManager
 //
-/// CGPassManager manages FPPassManagers and CalLGraphSCCPasses.
+/// CGPassManager manages FPPassManagers and CallGraphSCCPasses.
 
 namespace {
 
