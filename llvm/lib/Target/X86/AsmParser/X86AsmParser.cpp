@@ -12,6 +12,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmLexer.h"
 #include "llvm/MC/MCAsmParser.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/SourceMgr.h"
@@ -39,7 +40,9 @@ private:
   bool ParseOperand(X86Operand &Op);
 
   bool ParseMemOperand(X86Operand &Op);
-  
+
+  bool ParseDirectiveWord(unsigned Size, SMLoc L);
+
   /// @name Auto-generated Match Functions
   /// {  
 
@@ -57,6 +60,8 @@ public:
     : TargetAsmParser(T), Parser(_Parser) {}
 
   virtual bool ParseInstruction(const StringRef &Name, MCInst &Inst);
+
+  virtual bool ParseDirective(AsmToken DirectiveID);
 };
   
 } // end anonymous namespace
@@ -430,6 +435,38 @@ bool X86ATTAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
 
   Error(Loc, "unrecognized instruction");
   return true;
+}
+
+bool X86ATTAsmParser::ParseDirective(AsmToken DirectiveID) {
+  StringRef IDVal = DirectiveID.getIdentifier();
+  if (IDVal == ".word")
+    return ParseDirectiveWord(2, DirectiveID.getLoc());
+  return true;
+}
+
+/// ParseDirectiveWord
+///  ::= .word [ expression (, expression)* ]
+bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    for (;;) {
+      const MCExpr *Value;
+      if (getParser().ParseExpression(Value))
+        return true;
+
+      getParser().getStreamer().EmitValue(Value, Size);
+
+      if (getLexer().is(AsmToken::EndOfStatement))
+        break;
+      
+      // FIXME: Improve diagnostic.
+      if (getLexer().isNot(AsmToken::Comma))
+        return Error(L, "unexpected token in directive");
+      getLexer().Lex();
+    }
+  }
+
+  getLexer().Lex();
+  return false;
 }
 
 // Force static initialization.

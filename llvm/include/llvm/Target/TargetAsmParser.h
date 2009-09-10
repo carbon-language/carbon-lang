@@ -10,6 +10,8 @@
 #ifndef LLVM_TARGET_TARGETPARSER_H
 #define LLVM_TARGET_TARGETPARSER_H
 
+#include "llvm/MC/MCAsmLexer.h"
+
 namespace llvm {
 class MCAsmParser;
 class MCInst;
@@ -44,6 +46,18 @@ public:
   /// \param Inst [out] - On success, the parsed instruction.
   /// \return True on failure.
   virtual bool ParseInstruction(const StringRef &Name, MCInst &Inst) = 0;
+
+  /// ParseDirective - Parse a target specific assembler directive
+  ///
+  /// The parser is positioned following the directive name.  The target
+  /// specific directive parser should parse the entire directive doing or
+  /// recording any target specific work, or return true and do nothing if the
+  /// directive is not target specific. If the directive is specific for
+  /// the target, the entire line is parsed up to and including the
+  /// end-of-statement token and false is returned.
+  ///
+  /// \param ID - the identifier token of the directive.
+  virtual bool ParseDirective(AsmToken DirectiveID) = 0;
 };
 
 } // End llvm namespace

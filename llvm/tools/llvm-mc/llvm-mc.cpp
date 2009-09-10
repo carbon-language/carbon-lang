@@ -16,6 +16,7 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCAsmLexer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Support/CommandLine.h"

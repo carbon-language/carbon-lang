@@ -591,10 +591,9 @@ bool AsmParser::ParseStatement() {
     if (IDVal == ".asciz")
       return ParseDirectiveAscii(true);
 
-    // FIXME: Target hooks for size? Also for "word", "hword".
     if (IDVal == ".byte")
       return ParseDirectiveValue(1);
-    if (IDVal == ".short" || IDVal == ".word")
+    if (IDVal == ".short")
       return ParseDirectiveValue(2);
     if (IDVal == ".long")
       return ParseDirectiveValue(4);
@@ -684,6 +683,10 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveLine(IDLoc);
     if (IDVal == ".loc")
       return ParseDirectiveLoc(IDLoc);
+
+    // Target hook for parsing target specific directives.
+    if (!getTargetParser().ParseDirective(ID))
+      return false;
 
     Warning(IDLoc, "ignoring directive for now");
     EatToEndOfStatement();
