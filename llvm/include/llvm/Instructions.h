@@ -1033,6 +1033,18 @@ public:
                           BasicBlock *InsertAtEnd) {
     return new(1) CallInst(F, NameStr, InsertAtEnd);
   }
+  /// CreateMalloc - Generate the IR for a call to malloc:
+  /// 1. Compute the malloc call's argument as the specified type's size,
+  ///    possibly multiplied by the array size if the array size is not
+  ///    constant 1.
+  /// 2. Call malloc with that argument.
+  /// 3. Bitcast the result of the malloc call to the specified type.
+  static Value *CreateMalloc(Instruction *I,
+                             const Type *AllocTy, const Type *IntPtrTy,
+                             Value *ArraySize = 0, const Twine &NameStr = "");
+  static Value *CreateMalloc(BasicBlock *InsertAtEnd,
+                             const Type *AllocTy, const Type *IntPtrTy,
+                             Value *ArraySize = 0, const Twine &NameStr = "");
 
   ~CallInst();
 
