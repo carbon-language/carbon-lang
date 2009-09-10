@@ -188,7 +188,7 @@ Value* llvm::getMallocArraySize(CallInst* CI) {
 
   Constant* CO = dyn_cast<Constant>(MallocArg);
   BinaryOperator* BO = dyn_cast<BinaryOperator>(MallocArg);
-  assert(isConstantOne(ElementSize) || CO || BO &&
+  assert((isConstantOne(ElementSize) || CO || BO) &&
          "getMallocArraySize and malformed malloc IR");
       
   if (isConstantOne(ElementSize))

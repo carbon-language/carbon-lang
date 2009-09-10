@@ -462,7 +462,7 @@ static Value *checkArraySize(Value *Amt, const Type *IntPtrTy) {
 static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
                            const Type *AllocTy, const Type *IntPtrTy,
                            Value *ArraySize, const Twine &NameStr) {
-  assert((!InsertBefore && InsertAtEnd || InsertBefore && !InsertAtEnd) &&
+  assert(((!InsertBefore && InsertAtEnd) || (InsertBefore && !InsertAtEnd)) &&
          "createMalloc needs only InsertBefore or InsertAtEnd");
   const PointerType *AllocPtrType = dyn_cast<PointerType>(AllocTy);
   assert(AllocPtrType && "CreateMalloc passed a non-pointer allocation type");
@@ -473,7 +473,7 @@ static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
   Value *AllocSize = ConstantExpr::getSizeOf(AllocPtrType->getElementType());
   AllocSize = ConstantExpr::getTruncOrBitCast(cast<Constant>(AllocSize), 
                                               IntPtrTy);
-  if (!IsConstantOne(ArraySize))
+  if (!IsConstantOne(ArraySize)) {
     if (IsConstantOne(AllocSize)) {
       AllocSize = ArraySize;         // Operand * 1 = Operand
     } else if (Constant *CO = dyn_cast<Constant>(ArraySize)) {
@@ -483,13 +483,14 @@ static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
       AllocSize = ConstantExpr::getMul(Scale, cast<Constant>(AllocSize));
     } else {
       Value *Scale = ArraySize;
-      if (Scale->getType() != IntPtrTy)
+      if (Scale->getType() != IntPtrTy) {
         if (InsertBefore)
           Scale = CastInst::CreateIntegerCast(Scale, IntPtrTy, false /*ZExt*/,
                                               "", InsertBefore);
         else
           Scale = CastInst::CreateIntegerCast(Scale, IntPtrTy, false /*ZExt*/,
                                               "", InsertAtEnd);
+      }
       // Multiply type size by the array size...
       if (InsertBefore)
         AllocSize = BinaryOperator::CreateMul(Scale, AllocSize,
@@ -498,6 +499,7 @@ static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
         AllocSize = BinaryOperator::CreateMul(Scale, AllocSize,
                                               "", InsertAtEnd);
     }
+  }
 
   // Create the call to Malloc.
   BasicBlock* BB = InsertBefore ? InsertBefore->getParent() : InsertAtEnd;
