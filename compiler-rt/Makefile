@@ -64,6 +64,9 @@ $(ActiveLibOpt): $(OptimizedInputs) $(ActiveObjPath)/.dir
 	  $(Verb) $(Lipo) -create -output $$@ $(OptimizedInputs))
 .PRECIOUS: $(ActiveObjPath)/.dir
 
+# Add to default "alias" target.
+$(ActiveConfig):: $(ActiveLibGen) $(ActiveLibOpt)
+
 # Add to target lists.
 all:: $(ActiveConfig) $(ActiveLibGen) $(ActiveLibOpt)
 
