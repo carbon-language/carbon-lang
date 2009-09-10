@@ -650,14 +650,6 @@ substitutions</a></div>
     <dd>The target triplet that corresponds to the current host machine (the one
     running the test cases). This should probably be called "host".<dd>
 
-    <dt><b>prcontext</b> (%prcontext)</dt>
-    <dd>Path to the prcontext tcl script that prints some context around a 
-    line that matches a pattern. This isn't strictly necessary as the test suite
-    is run with its PATH altered to include the test/Scripts directory where
-    the prcontext script is located. Note that this script is similar to 
-    <tt>grep -C</tt> but you should use the <tt>prcontext</tt> script because
-    not all platforms support <tt>grep -C</tt>.</dd>
-
     <dt><b>llvmgcc</b> (%llvmgcc)</dt>
     <dd>The full path to the <tt>llvm-gcc</tt> executable as specified in the
     configured LLVM environment</dd>

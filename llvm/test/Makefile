@@ -133,7 +133,6 @@ site.exp: FORCE
 	@echo 'set TARGETS_TO_BUILD "$(TARGETS_TO_BUILD)"' >> site.tmp
 	@echo 'set llvmgcc_langs "$(LLVMGCC_LANGS)"' >> site.tmp
 	@echo 'set llvmgcc_version "$(LLVMGCC_VERSION)"' >> site.tmp
-	@echo 'set prcontext "$(TCLSH) $(LLVM_SRC_ROOT)/test/Scripts/prcontext.tcl"' >> site.tmp
 	@echo 'set llvmtoolsdir "$(ToolDir)"' >>site.tmp
 	@echo 'set llvmlibsdir "$(LibDir)"' >>site.tmp
 	@echo 'set srcroot "$(LLVM_SRC_ROOT)"' >>site.tmp
