@@ -2784,7 +2784,7 @@ void CGObjCMac::EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
                                          QualType Ty) {
   // Get size info for this aggregate.
   std::pair<uint64_t, unsigned> TypeInfo = CGM.getContext().getTypeInfo(Ty);
-  unsigned long size = TypeInfo.second/8;
+  unsigned long size = TypeInfo.first/8;
   SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, ObjCTypes.Int8PtrTy);
   DestPtr = CGF.Builder.CreateBitCast(DestPtr, ObjCTypes.Int8PtrTy);
   llvm::Value *N = llvm::ConstantInt::get(ObjCTypes.LongTy, size);
@@ -5311,7 +5311,7 @@ void CGObjCNonFragileABIMac::EmitGCMemmoveCollectable(
   QualType Ty) {
   // Get size info for this aggregate.
   std::pair<uint64_t, unsigned> TypeInfo = CGM.getContext().getTypeInfo(Ty);
-  unsigned long size = TypeInfo.second/8;
+  unsigned long size = TypeInfo.first/8;
   SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, ObjCTypes.Int8PtrTy);
   DestPtr = CGF.Builder.CreateBitCast(DestPtr, ObjCTypes.Int8PtrTy);
   llvm::Value *N = llvm::ConstantInt::get(ObjCTypes.LongTy, size);
