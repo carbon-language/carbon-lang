@@ -317,6 +317,15 @@ def MOV64mi32 : RIi32<0xC7, MRM0m, (outs), (ins i64mem:$dst, i64i32imm:$src),
                       "mov{q}\t{$src, $dst|$dst, $src}",
                       [(store i64immSExt32:$src, addr:$dst)]>;
 
+def MOV64o8a : RIi8<0xA0, RawFrm, (outs), (ins i8imm:$src),
+                      "mov{q}\t{$src, %rax|%rax, $src}", []>;
+def MOV64o32a : RIi32<0xA1, RawFrm, (outs), (ins i32imm:$src),
+                       "mov{q}\t{$src, %rax|%rax, $src}", []>;
+def MOV64ao8 : RIi8<0xA2, RawFrm, (outs i8imm:$dst), (ins),
+                       "mov{q}\t{%rax, $dst|$dst, %rax}", []>;
+def MOV64ao32 : RIi32<0xA3, RawFrm, (outs i32imm:$dst), (ins),
+                       "mov{q}\t{%rax, $dst|$dst, %rax}", []>;
+
 // Sign/Zero extenders
 
 // MOVSX64rr8 always has a REX prefix and it has an 8-bit register

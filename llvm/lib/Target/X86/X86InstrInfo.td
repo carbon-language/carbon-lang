@@ -908,6 +908,20 @@ def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
                    [(store (i32 imm:$src), addr:$dst)]>;
 
+def MOV8o8a : Ii8 <0xA0, RawFrm, (outs), (ins i8imm:$src),
+                   "mov{b}\t{$src, %al|%al, $src}", []>;
+def MOV16o16a : Ii16 <0xA1, RawFrm, (outs), (ins i16imm:$src),
+                      "mov{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+def MOV32o32a : Ii32 <0xA1, RawFrm, (outs), (ins i32imm:$src),
+                      "mov{l}\t{$src, %eax|%eax, $src}", []>;
+
+def MOV8ao8 : Ii8 <0xA2, RawFrm, (outs i8imm:$dst), (ins),
+                   "mov{b}\t{%al, $dst|$dst, %al}", []>;
+def MOV16ao16 : Ii16 <0xA3, RawFrm, (outs i16imm:$dst), (ins),
+                      "mov{w}\t{%ax, $dst|$dst, %ax}", []>, OpSize;
+def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs i32imm:$dst), (ins),
+                      "mov{l}\t{%eax, $dst|$dst, %eax}", []>;
+
 let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
 def MOV8rm  : I<0x8A, MRMSrcMem, (outs GR8 :$dst), (ins i8mem :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}",
