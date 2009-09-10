@@ -39,6 +39,15 @@ static const char *MakeFormattedString(const ArgList &Args,
   return Args.MakeArgString(Str.str());
 }
 
+/// CheckPreprocessingOptions - Perform some validation of preprocessing
+/// arguments that is shared with gcc.
+static void CheckPreprocessingOptions(const Driver &D, const ArgList &Args) {
+  if (Arg *A = Args.getLastArg(options::OPT_C, options::OPT_CC))
+    if (!Args.hasArg(options::OPT_E))
+      D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+        << A->getAsString(Args) << "-E";
+}
+
 void Clang::AddPreprocessingOptions(const Driver &D,
                                     const ArgList &Args,
                                     ArgStringList &CmdArgs,
@@ -46,13 +55,10 @@ void Clang::AddPreprocessingOptions(const Driver &D,
                                     const InputInfoList &Inputs) const {
   Arg *A;
 
-  if ((A = Args.getLastArg(options::OPT_C)) ||
-      (A = Args.getLastArg(options::OPT_CC))) {
-    if (!Args.hasArg(options::OPT_E))
-      D.Diag(clang::diag::err_drv_argument_only_allowed_with)
-        << A->getAsString(Args) << "-E";
-    A->render(Args, CmdArgs);
-  }
+  CheckPreprocessingOptions(D, Args);
+
+  Args.AddLastArg(CmdArgs, options::OPT_C);
+  Args.AddLastArg(CmdArgs, options::OPT_CC);
 
   // Handle dependency file generation.
   if ((A = Args.getLastArg(options::OPT_M)) ||
@@ -1042,14 +1048,12 @@ void darwin::CC1::AddCPPUniqueOptionsArgs(const ArgList &Args,
                                           const InputInfoList &Inputs) const {
   const Driver &D = getToolChain().getHost().getDriver();
 
+  CheckPreprocessingOptions(D, Args);
+
   // Derived from cpp_unique_options.
-  Arg *A;
-  if ((A = Args.getLastArg(options::OPT_C)) ||
-      (A = Args.getLastArg(options::OPT_CC))) {
-    if (!Args.hasArg(options::OPT_E))
-      D.Diag(clang::diag::err_drv_argument_only_allowed_with)
-        << A->getAsString(Args) << "-E";
-  }
+  // -{C,CC} only with -E is checked in CheckPreprocessingOptions().
+  Args.AddLastArg(CmdArgs, options::OPT_C);
+  Args.AddLastArg(CmdArgs, options::OPT_CC);
   if (!Args.hasArg(options::OPT_Q))
     CmdArgs.push_back("-quiet");
   Args.AddAllArgs(CmdArgs, options::OPT_nostdinc);
