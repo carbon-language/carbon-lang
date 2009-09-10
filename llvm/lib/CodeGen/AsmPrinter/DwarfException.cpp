@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains support for writing dwarf exception info into asm files.
+// This file contains support for writing DWARF exception info into asm files.
 //
 //===----------------------------------------------------------------------===//
 
@@ -34,7 +34,7 @@
 using namespace llvm;
 
 static TimerGroup &getDwarfTimerGroup() {
-  static TimerGroup DwarfTimerGroup("Dwarf Exception");
+  static TimerGroup DwarfTimerGroup("DWARF Exception");
   return DwarfTimerGroup;
 }
 
@@ -44,7 +44,7 @@ DwarfException::DwarfException(raw_ostream &OS, AsmPrinter *A,
     shouldEmitTableModule(false), shouldEmitMovesModule(false),
     ExceptionTimer(0) {
   if (TimePassesIsEnabled)
-    ExceptionTimer = new Timer("Dwarf Exception Writer",
+    ExceptionTimer = new Timer("DWARF Exception Writer",
                                getDwarfTimerGroup());
 }
 
@@ -68,7 +68,7 @@ unsigned DwarfException::SizeOfEncodedValue(unsigned Encoding) {
     return 8;
   }
 
-  llvm_unreachable("Invalid encoded value.");
+  assert(0 && "Invalid encoded value.");
   return 0;
 }
 
@@ -548,10 +548,10 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
 ///     site, each type ID is checked for a match to the current exception.  If
 ///     it matches then the exception and type id are passed on to the landing
 ///     pad.  Otherwise the next action is looked up.  This chain is terminated
-///     with a next action of zero.  If no type id is found the the frame is
+///     with a next action of zero.  If no type id is found then the frame is
 ///     unwound and handling continues.
 ///  3. Type ID table contains references to all the C++ typeinfo for all
-///     catches in the function.  This tables is reversed indexed base 1.
+///     catches in the function.  This tables is reverse indexed base 1.
 void DwarfException::EmitExceptionTable() {
   const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
@@ -572,11 +572,12 @@ void DwarfException::EmitExceptionTable() {
   // landing pad site.
   SmallVector<ActionEntry, 32> Actions;
   SmallVector<unsigned, 64> FirstActions;
-  unsigned SizeActions = ComputeActionsTable(LandingPads, Actions, FirstActions);
+  unsigned SizeActions = ComputeActionsTable(LandingPads, Actions,
+                                             FirstActions);
 
   // Invokes and nounwind calls have entries in PadMap (due to being bracketed
   // by try-range labels when lowered).  Ordinary calls do not, so appropriate
-  // try-ranges for them need be deduced when using Dwarf exception handling.
+  // try-ranges for them need be deduced when using DWARF exception handling.
   RangeMapType PadMap;
   for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
     const LandingPadInfo *LandingPad = LandingPads[i];
@@ -598,11 +599,9 @@ void DwarfException::EmitExceptionTable() {
   const unsigned SiteStartSize  = SizeOfEncodedValue(dwarf::DW_EH_PE_udata4);
   const unsigned SiteLengthSize = SizeOfEncodedValue(dwarf::DW_EH_PE_udata4);
   const unsigned LandingPadSize = SizeOfEncodedValue(dwarf::DW_EH_PE_udata4);
-  unsigned SizeSites;
-
   bool IsSJLJ = MAI->getExceptionHandlingType() == ExceptionHandling::SjLj;
-
   bool HaveTTData = IsSJLJ ? (!TypeInfos.empty() || !FilterIds.empty()) : true;
+  unsigned SizeSites;
 
   if (IsSJLJ)
     SizeSites = 0;
@@ -622,6 +621,8 @@ void DwarfException::EmitExceptionTable() {
   unsigned TypeFormatSize;
 
   if (!HaveTTData) {
+    // For SjLj exceptions, if there is no TypeInfo, then we just explicitly say
+    // that we're omitting that bit.
     TTypeFormat = dwarf::DW_EH_PE_omit;
     TypeFormatSize = SizeOfEncodedValue(dwarf::DW_EH_PE_absptr);
   } else {
@@ -631,12 +632,15 @@ void DwarfException::EmitExceptionTable() {
     // mode, this reference will require a relocation by the dynamic linker.
     //
     // Because of this, we have a couple of options:
+    // 
     //   1) If we are in -static mode, we can always use an absolute reference
     //      from the LSDA, because the static linker will resolve it.
+    //      
     //   2) Otherwise, if the LSDA section is writable, we can output the direct
     //      reference to the typeinfo and allow the dynamic linker to relocate
     //      it.  Since it is in a writable section, the dynamic linker won't
     //      have a problem.
+    //      
     //   3) Finally, if we're in PIC mode and the LDSA section isn't writable,
     //      we need to use some form of indirection.  For example, on Darwin,
     //      we can output a statically-relocatable reference to a dyld stub. The
@@ -709,8 +713,6 @@ void DwarfException::EmitExceptionTable() {
   Asm->EmitInt8(dwarf::DW_EH_PE_omit);
   Asm->EOL("@LPStart format", dwarf::DW_EH_PE_omit);
 
-  // For SjLj exceptions, if there is no TypeInfo, then we just explicitly
-  // say that we're omitting that bit.
   Asm->EmitInt8(TTypeFormat);
   Asm->EOL("@TType format", TTypeFormat);
 
@@ -719,7 +721,7 @@ void DwarfException::EmitExceptionTable() {
     Asm->EOL("@TType base offset");
   }
 
-  // SjLj Exception handilng
+  // SjLj Exception handling
   if (IsSJLJ) {
     Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
     Asm->EOL("Call site format", dwarf::DW_EH_PE_udata4);
@@ -763,15 +765,7 @@ void DwarfException::EmitExceptionTable() {
     //   * The first action record for that call site.
     //
     // A missing entry in the call-site table indicates that a call is not
-    // supposed to throw. Such calls include:
-    //
-    //   * Calls to destructors within cleanup code. C++ semantics forbids these
-    //     calls to throw.
-    //   * Calls to intrinsic routines in the standard library which are known
-    //     not to throw (sin, memcpy, et al).
-    //
-    // If the runtime does not find the call-site entry for a given call, it
-    // will call `terminate()'.
+    // supposed to throw.
 
     // Emit the landing pad call site table.
     Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
@@ -910,8 +904,8 @@ void DwarfException::EndModule() {
 
   const std::vector<Function *> Personalities = MMI->getPersonalities();
 
-  for (unsigned i = 0, e = Personalities.size(); i < e; ++i)
-    EmitCIE(Personalities[i], i);
+  for (unsigned I = 0, E = Personalities.size(); I < E; ++I)
+    EmitCIE(Personalities[I], I);
 
   for (std::vector<FunctionEHFrameInfo>::iterator
          I = EHFrames.begin(), E = EHFrames.end(); I != E; ++I)
@@ -921,8 +915,8 @@ void DwarfException::EndModule() {
     ExceptionTimer->stopTimer();
 }
 
-/// BeginFunction - Gather pre-function exception information.  Assumes being
-/// emitted immediately after the function entry point.
+/// BeginFunction - Gather pre-function exception information. Assumes it's
+/// being emitted immediately after the function entry point.
 void DwarfException::BeginFunction(MachineFunction *MF) {
   if (TimePassesIsEnabled)
     ExceptionTimer->startTimer();
