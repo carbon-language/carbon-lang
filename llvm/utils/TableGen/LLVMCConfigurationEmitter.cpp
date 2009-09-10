@@ -89,7 +89,7 @@ void checkNumberOfArguments (const DagInit* d, unsigned min_arguments) {
 
 // isDagEmpty - is this DAG marked with an empty marker?
 bool isDagEmpty (const DagInit* d) {
-  return d->getOperator()->getAsString() == "empty";
+  return d->getOperator()->getAsString() == "empty_dag_marker";
 }
 
 // EscapeVariableName - Escape commas and other symbols not allowed
