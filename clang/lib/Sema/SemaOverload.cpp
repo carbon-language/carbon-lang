@@ -4878,9 +4878,11 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
   OverloadCandidateSet CandidateSet;
   const RecordType *BaseRecord = Base->getType()->getAs<RecordType>();
 
-  DeclContext::lookup_const_iterator Oper, OperEnd;
-  for (llvm::tie(Oper, OperEnd)
-         = BaseRecord->getDecl()->lookup(OpName); Oper != OperEnd; ++Oper)
+  LookupResult R = LookupQualifiedName(BaseRecord->getDecl(), OpName, 
+                                       LookupOrdinaryName);
+
+  for (LookupResult::iterator Oper = R.begin(), OperEnd = R.end();
+       Oper != OperEnd; ++Oper)
     AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Base, 0, 0, CandidateSet,
                        /*SuppressUserConversions=*/false);
 
@@ -4903,14 +4905,14 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
 
   case OR_Ambiguous:
     Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
-      << "operator->" << Base->getSourceRange();
+      << "->" << Base->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     return ExprError();
 
   case OR_Deleted:
     Diag(OpLoc,  diag::err_ovl_deleted_oper)
       << Best->Function->isDeleted()
-      << "operator->" << Base->getSourceRange();
+      << "->" << Base->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
     return ExprError();
   }
