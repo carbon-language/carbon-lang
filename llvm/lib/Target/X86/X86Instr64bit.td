@@ -1003,6 +1003,10 @@ def XOR64mi32 : RIi32<0x81, MRM6m, (outs), (ins i64mem:$dst, i64i32imm:$src),
                       "xor{q}\t{$src, $dst|$dst, $src}",
              [(store (xor (loadi64 addr:$dst), i64immSExt32:$src), addr:$dst),
               (implicit EFLAGS)]>;
+              
+def XOR64i32 : RIi32<0x35, RawFrm, (outs), (ins i32imm:$src),
+                     "xor{q}\t{$src, %rax|%rax, $src}", []>;
+
 } // Defs = [EFLAGS]
 
 //===----------------------------------------------------------------------===//

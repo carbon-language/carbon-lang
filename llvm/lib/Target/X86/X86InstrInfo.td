@@ -1895,6 +1895,13 @@ let isTwoAddress = 0 in {
                      "xor{l}\t{$src, $dst|$dst, $src}",
                  [(store (xor (load addr:$dst), i32immSExt8:$src), addr:$dst),
                   (implicit EFLAGS)]>;
+                  
+  def XOR8i8 : Ii8 <0x34, RawFrm, (outs), (ins i8imm:$src),
+                   "xor{b}\t{$src, %al|%al, $src}", []>;
+  def XOR16i16 : Ii16 <0x35, RawFrm, (outs), (ins i16imm:$src),
+                        "xor{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+  def XOR32i32 : Ii32 <0x35, RawFrm, (outs), (ins i32imm:$src),
+                        "xor{l}\t{$src, %eax|%eax, $src}", []>;
 } // isTwoAddress = 0
 } // Defs = [EFLAGS]
 
