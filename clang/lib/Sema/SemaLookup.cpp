@@ -636,6 +636,15 @@ static bool isNamespaceOrTranslationUnitScope(Scope *S) {
   return false;
 }
 
+// Find the next outer declaration context corresponding to this scope.
+static DeclContext *findOuterContext(Scope *S) {
+  for (S = S->getParent(); S; S = S->getParent())
+    if (S->getEntity())
+      return static_cast<DeclContext *>(S->getEntity())->getPrimaryContext();
+  
+  return 0;
+}
+
 std::pair<bool, Sema::LookupResult>
 Sema::CppLookupName(Scope *S, DeclarationName Name,
                     LookupNameKind NameKind, bool RedeclarationOnly) {
@@ -694,29 +703,22 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
     }
     if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity())) {
       LookupResult R;
-      // Perform member lookup into struct.
-      // FIXME: In some cases, we know that every name that could be found by
-      // this qualified name lookup will also be on the identifier chain. For
-      // example, inside a class without any base classes, we never need to
-      // perform qualified lookup because all of the members are on top of the
-      // identifier chain.
-      if (isa<RecordDecl>(Ctx)) {
+      
+      DeclContext *OuterCtx = findOuterContext(S);
+      for (; Ctx && Ctx->getPrimaryContext() != OuterCtx; 
+           Ctx = Ctx->getLookupParent()) {
+        if (Ctx->isFunctionOrMethod())
+          continue;
+        
+        // Perform qualified name lookup into this context.
+        // FIXME: In some cases, we know that every name that could be found by
+        // this qualified name lookup will also be on the identifier chain. For
+        // example, inside a class without any base classes, we never need to
+        // perform qualified lookup because all of the members are on top of the
+        // identifier chain.
         R = LookupQualifiedName(Ctx, Name, NameKind, RedeclarationOnly);
         if (R)
           return std::make_pair(true, R);
-      }
-      if (Ctx->getParent() != Ctx->getLexicalParent()
-          || isa<CXXMethodDecl>(Ctx)) {
-        // It is out of line defined C++ method or struct, we continue
-        // doing name lookup in parent context. Once we will find namespace
-        // or translation-unit we save it for possible checking
-        // using-directives later.
-        for (OutOfLineCtx = Ctx; OutOfLineCtx && !OutOfLineCtx->isFileContext();
-             OutOfLineCtx = OutOfLineCtx->getParent()) {
-          R = LookupQualifiedName(OutOfLineCtx, Name, NameKind, RedeclarationOnly);
-          if (R)
-            return std::make_pair(true, R);
-        }
       }
     }
   }

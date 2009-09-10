@@ -146,3 +146,13 @@ struct HasAnotherMemberType : HasMemberType1, HasMemberType2 {
 struct UsesAmbigMemberType : HasMemberType1, HasMemberType2 {
   type t; // expected-error{{member 'type' found in multiple base classes of different types}}
 };
+
+struct X0 {
+  struct Inner {
+    static const int m;
+  };
+  
+  static const int n = 17;
+};
+
+const int X0::Inner::m = n;

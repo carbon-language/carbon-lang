@@ -565,6 +565,12 @@ public:
     return const_cast<DeclContext*>(this)->getLexicalParent();
   }
 
+  DeclContext *getLookupParent();
+  
+  const DeclContext *getLookupParent() const {
+    return const_cast<DeclContext*>(this)->getLookupParent();
+  }
+  
   ASTContext &getParentASTContext() const {
     return cast<Decl>(this)->getASTContext();
   }
