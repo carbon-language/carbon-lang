@@ -594,14 +594,13 @@ void DwarfException::EmitExceptionTable() {
   // Final tallies.
 
   // Call sites.
-  const unsigned SiteStartSize  = sizeof(int32_t); // DW_EH_PE_udata4
-  const unsigned SiteLengthSize = sizeof(int32_t); // DW_EH_PE_udata4
-  const unsigned LandingPadSize = sizeof(int32_t); // DW_EH_PE_udata4
+  const unsigned SiteStartSize  = SizeOfEncodedValue(dwarf::DW_EH_PE_udata4);
+  const unsigned SiteLengthSize = SizeOfEncodedValue(dwarf::DW_EH_PE_udata4);
+  const unsigned LandingPadSize = SizeOfEncodedValue(dwarf::DW_EH_PE_udata4);
   unsigned SizeSites;
 
   bool HaveTTData = (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj)
     ? (!TypeInfos.empty() || !FilterIds.empty()) : true;
-
 
   if (MAI->getExceptionHandlingType() == ExceptionHandling::SjLj) {
     SizeSites = 0;
