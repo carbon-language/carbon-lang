@@ -42,6 +42,7 @@ namespace {
     std::string Filename;
     std::set<Edge> SpanningTree;
     std::set<const BasicBlock*> BBisUnvisited;
+    unsigned ReadCount;
   public:
     static char ID; // Class identification, replacement for typeinfo
     explicit LoaderPass(const std::string &filename = "")
@@ -61,8 +62,7 @@ namespace {
     // blocks as possbile.
     virtual void recurseBasicBlock(const BasicBlock *BB);
     virtual void readEdgeOrRemember(Edge, Edge&, unsigned &, unsigned &);
-    virtual void readOrRememberEdge(ProfileInfo::Edge, unsigned,
-                                    unsigned, Function*);
+    virtual void readEdge(ProfileInfo::Edge, std::vector<unsigned>&);
 
     /// run - Load the profile information from the specified file.
     virtual bool runOnModule(Module &M);
@@ -156,15 +156,20 @@ void LoaderPass::recurseBasicBlock(const BasicBlock *BB) {
   }
 }
 
-void LoaderPass::readOrRememberEdge(ProfileInfo::Edge e,
-                                    unsigned weight, unsigned ei,
-                                    Function *F) {
-  if (weight != ~0U) {
-    EdgeInformation[F][e] += weight;
-    DEBUG(errs()<<"--Read Edge Counter for " << e 
-                <<" (# "<<ei<<"): "<<(unsigned)getEdgeWeight(e)<<"\n");
-  } else {
-    SpanningTree.insert(e);
+void LoaderPass::readEdge(ProfileInfo::Edge e,
+                          std::vector<unsigned> &ECs) {
+  if (ReadCount < ECs.size()) {
+    double weight = ECs[ReadCount++];
+    if (weight != ~0U) {
+      EdgeInformation[getFunction(e)][e] += weight;
+      DEBUG(errs() << "--Read Edge Counter for " << e
+                   << " (# "<< (ReadCount-1) << "): "
+                   << (unsigned)getEdgeWeight(e) << "\n");
+    } else {
+      // This happens only if reading optimal profiling information, not when
+      // reading regular profiling information.
+      SpanningTree.insert(e);
+    }
   }
 }
 
@@ -172,55 +177,44 @@ bool LoaderPass::runOnModule(Module &M) {
   ProfileInfoLoader PIL("profile-loader", Filename, M);
 
   EdgeInformation.clear();
-  std::vector<unsigned> ECs = PIL.getRawEdgeCounts();
-  if (ECs.size() > 0) {
-    unsigned ei = 0;
+  std::vector<unsigned> Counters = PIL.getRawEdgeCounts();
+  if (Counters.size() > 0) {
+    ReadCount = 0;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
-      if (ei < ECs.size())
-        EdgeInformation[F][ProfileInfo::getEdge(0, &F->getEntryBlock())] +=
-          ECs[ei++];
+      DEBUG(errs()<<"Working on "<<F->getNameStr()<<"\n");
+      readEdge(getEdge(0,&F->getEntryBlock()), Counters);
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         // Okay, we have to add a counter of each outgoing edge.  If the
         // outgoing edge is not critical don't split it, just insert the counter
         // in the source or destination of the edge.
         TerminatorInst *TI = BB->getTerminator();
         for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
-          if (ei < ECs.size())
-            EdgeInformation[F][ProfileInfo::getEdge(BB, TI->getSuccessor(s))] +=
-              ECs[ei++];
+          readEdge(getEdge(BB,TI->getSuccessor(s)), Counters);
         }
       }
     }
-    if (ei != ECs.size()) {
+    if (ReadCount != Counters.size()) {
       errs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
-    NumEdgesRead = ei;
+    NumEdgesRead = ReadCount;
   }
 
-  ECs = PIL.getRawOptimalEdgeCounts();
-  if (ECs.size() > 0) {
-    unsigned ei = 0;
+  Counters = PIL.getRawOptimalEdgeCounts();
+  if (Counters.size() > 0) {
+    ReadCount = 0;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
       DEBUG(errs()<<"Working on "<<F->getNameStr()<<"\n");
-      if (ei < ECs.size()) {
-        readOrRememberEdge(getEdge(0,&F->getEntryBlock()), ECs[ei], ei, F); 
-        ei++;
-      }
+      readEdge(getEdge(0,&F->getEntryBlock()), Counters);
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         TerminatorInst *TI = BB->getTerminator();
         if (TI->getNumSuccessors() == 0) {
-          if (ei < ECs.size()) {
-            readOrRememberEdge(getEdge(BB,0), ECs[ei], ei, F); ei++;
-          }
+          readEdge(getEdge(BB,0), Counters);
         }
         for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
-          if (ei < ECs.size()) {
-            readOrRememberEdge(getEdge(BB,TI->getSuccessor(s)), ECs[ei], ei, F);
-            ei++;
-          }
+          readEdge(getEdge(BB,TI->getSuccessor(s)), Counters);
         }
       }
       while (SpanningTree.size() > 0) {
@@ -249,39 +243,39 @@ bool LoaderPass::runOnModule(Module &M) {
 #endif
       }
     }
-    if (ei != ECs.size()) {
+    if (ReadCount != Counters.size()) {
       errs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
-    NumEdgesRead = ei;
+    NumEdgesRead = ReadCount;
   }
 
   BlockInformation.clear();
-  std::vector<unsigned> BCs = PIL.getRawBlockCounts();
-  if (BCs.size() > 0) {
-    unsigned bi = 0;
+  Counters = PIL.getRawBlockCounts();
+  if (Counters.size() > 0) {
+    ReadCount = 0;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-        if (bi < BCs.size())
-          BlockInformation[F][BB] = BCs[bi++];
+        if (ReadCount < Counters.size())
+          BlockInformation[F][BB] = Counters[ReadCount++];
     }
-    if (bi != BCs.size()) {
+    if (ReadCount != Counters.size()) {
       errs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
   }
 
   FunctionInformation.clear();
-  std::vector<unsigned> FCs = PIL.getRawFunctionCounts();
-  if (FCs.size() > 0) {
-    unsigned fi = 0;
+  Counters = PIL.getRawFunctionCounts();
+  if (Counters.size() > 0) {
+    ReadCount = 0;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
-      if (fi < FCs.size())
-        FunctionInformation[F] = FCs[fi++];
+      if (ReadCount < Counters.size())
+        FunctionInformation[F] = Counters[ReadCount++];
     }
-    if (fi != FCs.size()) {
+    if (ReadCount != Counters.size()) {
       errs() << "WARNING: profile information is inconsistent with "
              << "the current program!\n";
     }
