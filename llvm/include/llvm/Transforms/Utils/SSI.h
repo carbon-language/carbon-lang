@@ -81,6 +81,7 @@ namespace llvm {
       SmallVector<SmallVector<Instruction *, 1>, 0> value_stack;
 
       void insertSigmaFunctions(SmallVectorImpl<Instruction *> &value);
+      void insertSigma(TerminatorInst *TI, Instruction *I, unsigned pos);
       void insertPhiFunctions(SmallVectorImpl<Instruction *> &value);
       void renameInit(SmallVectorImpl<Instruction *> &value);
       void rename(BasicBlock *BB);
@@ -91,8 +92,6 @@ namespace llvm {
 
       unsigned getPositionPhi(PHINode *PN);
       unsigned getPositionSigma(PHINode *PN);
-
-      unsigned isUsedInTerminator(CmpInst *CI);
 
       void init(SmallVectorImpl<Instruction *> &value);
       void clean();

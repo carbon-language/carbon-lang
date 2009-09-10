@@ -80,36 +80,43 @@ void SSI::insertSigmaFunctions(SmallVectorImpl<Instruction *> &value) {
     if (!needConstruction[i])
       continue;
 
-    bool need = false;
     for (Value::use_iterator begin = value[i]->use_begin(), end =
          value[i]->use_end(); begin != end; ++begin) {
       // Test if the Use of the Value is in a comparator
-      CmpInst *CI = dyn_cast<CmpInst>(begin);
-      if (CI && isUsedInTerminator(CI)) {
-        // Basic Block of the Instruction
-        BasicBlock *BB = CI->getParent();
-        // Last Instruction of the Basic Block
-        const TerminatorInst *TI = BB->getTerminator();
-
-        for (unsigned j = 0, e = TI->getNumSuccessors(); j < e; ++j) {
-          // Next Basic Block
-          BasicBlock *BB_next = TI->getSuccessor(j);
-          if (BB_next != BB &&
-              BB_next->getSinglePredecessor() != NULL &&
-              dominateAny(BB_next, value[i])) {
-            PHINode *PN = PHINode::Create(
-                value[i]->getType(), SSI_SIG, BB_next->begin());
-            PN->addIncoming(value[i], BB);
-            sigmas.insert(std::make_pair(PN, i));
-            created.insert(PN);
-            need = true;
-            defsites[i].push_back(BB_next);
-            ++NumSigmaInserted;
+      if (CmpInst *CI = dyn_cast<CmpInst>(begin)) {
+        // Iterates through all uses of CmpInst
+        for (Value::use_iterator begin_ci = CI->use_begin(), end_ci =
+             CI->use_end(); begin_ci != end_ci; ++begin_ci) {
+          // Test if any use of CmpInst is in a Terminator
+          if (TerminatorInst *TI = dyn_cast<TerminatorInst>(begin_ci)) {
+            insertSigma(TI, value[i], i);
           }
         }
       }
     }
-    needConstruction[i] = need;
+  }
+}
+
+/// Inserts Sigma Functions in every BasicBlock successor to Terminator
+/// Instruction TI. All inserted Sigma Function are related to Instruction I.
+///
+void SSI::insertSigma(TerminatorInst *TI, Instruction *I, unsigned pos) {
+  // Basic Block of the Terminator Instruction
+  BasicBlock *BB = TI->getParent();
+  for (unsigned i = 0, e = TI->getNumSuccessors(); i < e; ++i) {
+    // Next Basic Block
+    BasicBlock *BB_next = TI->getSuccessor(i);
+    if (BB_next != BB &&
+        BB_next->getSinglePredecessor() != NULL &&
+        dominateAny(BB_next, I)) {
+      PHINode *PN = PHINode::Create(I->getType(), SSI_SIG, BB_next->begin());
+      PN->addIncoming(I, BB);
+      sigmas.insert(std::make_pair(PN, pos));
+      created.insert(PN);
+      needConstruction[pos] = true;
+      defsites[pos].push_back(BB_next);
+      ++NumSigmaInserted;
+    }
   }
 }
 
@@ -369,20 +376,6 @@ unsigned SSI::getPositionSigma(PHINode *PN) {
     return UNSIGNED_INFINITE;
   else
     return val->second;
-}
-
-/// Return true if the the Comparison Instruction is an operator
-/// of the Terminator instruction of its Basic Block.
-///
-unsigned SSI::isUsedInTerminator(CmpInst *CI) {
-  TerminatorInst *TI = CI->getParent()->getTerminator();
-  if (TI->getNumOperands() == 0) {
-    return false;
-  } else if (CI == TI->getOperand(0)) {
-    return true;
-  } else {
-    return false;
-  }
 }
 
 /// Initializes
