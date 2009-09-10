@@ -153,6 +153,11 @@ $(ActiveObjPath)/%.o: $(ActiveSrcPath)/%.s $(Dependencies) $(ActiveObjPath)/.dir
 	$(Verb) $(CC) -c -o $$@ $(ActiveFlags) $$<
 .PRECIOUS: $(ActiveObjPath)/.dir
 
+$(ActiveObjPath)/%.o: $(ActiveSrcPath)/%.S $(Dependencies) $(ActiveObjPath)/.dir
+	$(Summary) "  ASSEMBLE:  $(ActiveConfig)/$(ActiveArch): $$<"
+	$(Verb) $(CC) -c -o $$@ $(ActiveFlags) $$<
+.PRECIOUS: $(ActiveObjPath)/.dir
+
 $(ActiveObjPath)/%.o: $(ActiveSrcPath)/%.c $(Dependencies) $(ActiveObjPath)/.dir
 	$(Summary) "  COMPILE:   $(ActiveConfig)/$(ActiveArch): $$<"
 	$(Verb) $(CC) -c -o $$@ $(ActiveFlags) $$<

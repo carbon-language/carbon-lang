@@ -11,9 +11,9 @@ Dir := lib/ppc
 SubDirs := 
 OnlyArchs := ppc
 
-AsmSources := $(foreach file,$(wildcard $(Dir)/*.s),$(notdir $(file)))
+AsmSources := $(foreach file,$(wildcard $(Dir)/*.S),$(notdir $(file)))
 Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))
-ObjNames := $(Sources:%.c=%.o) $(AsmSources:%.s=%.o)
+ObjNames := $(Sources:%.c=%.o) $(AsmSources:%.S=%.o)
 Target := Optimized
 
 # FIXME: use automatic dependencies?
