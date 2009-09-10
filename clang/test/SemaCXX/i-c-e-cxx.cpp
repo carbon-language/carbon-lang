@@ -4,3 +4,7 @@
 
 const int c = 10;
 int ar[c];
+
+struct X0 {
+  static const int value = static_cast<int>(4.0);
+};

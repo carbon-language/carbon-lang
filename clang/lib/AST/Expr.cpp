@@ -1464,7 +1464,10 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   }
   case Expr::ImplicitCastExprClass:
   case Expr::CStyleCastExprClass:
-  case Expr::CXXFunctionalCastExprClass: {
+  case Expr::CXXFunctionalCastExprClass:
+  case Expr::CXXStaticCastExprClass:
+  case Expr::CXXReinterpretCastExprClass:
+  case Expr::CXXConstCastExprClass: {
     const Expr *SubExpr = cast<CastExpr>(E)->getSubExpr();
     if (SubExpr->getType()->isIntegralType())
       return CheckICE(SubExpr, Ctx);
