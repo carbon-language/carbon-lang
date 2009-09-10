@@ -200,6 +200,68 @@ void Clang::AddPreprocessingOptions(const Driver &D,
                        options::OPT_Xpreprocessor);
 }
 
+static llvm::StringRef getARMTargetCPU(const ArgList &Args) {
+  // FIXME: Check the relative priority of these options against gcc. Also, what
+  // happens if the -mcpu and -march mismatch?
+
+  // If we have -mcpu=, use that.
+  if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
+    return A->getValue(Args);
+
+  // Otherwise, if we have -march= choose the base CPU for that arch.
+  if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
+    llvm::StringRef MArch = A->getValue(Args);
+
+    if (MArch == "armv2" || MArch == "armv2a")
+      return "arm2";
+    if (MArch == "armv3")
+      return "arm6";
+    if (MArch == "armv3m")
+      return "arm7m";
+    if (MArch == "armv4" || MArch == "armv4t")
+      return "arm7tdmi";
+    if (MArch == "armv5" || MArch == "armv5t")
+      return "arm10tdmi";
+    if (MArch == "armv5e" || MArch == "armv5te")
+      return "arm1026ejs";
+    if (MArch == "armv5tej")
+      return "arm926ejs";
+    if (MArch == "armv6" || MArch == "armv6k")
+      return "arm1136jf-s";
+    if (MArch == "armv6j")
+      return "arm1136j-s";
+    if (MArch == "armv6z" || MArch == "armv6zk")
+      return "arm1176jzf-s";
+    if (MArch == "armv6t2")
+      return "arm1156t2-s";
+    if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
+      return "cortex-a8";
+    if (MArch == "armv7r" || MArch == "armv7-r")
+      return "cortex-r4";
+    if (MArch == "armv7m" || MArch == "armv7-m")
+      return "cortex-m3";
+    if (MArch == "ep9312")
+      return "ep9312";
+    if (MArch == "iwmmxt")
+      return "iwmmxt";
+    if (MArch == "xscale")
+      return "xscale";
+  }
+
+  // Otherwise return the most base CPU LLVM supports.
+  return "arm7tdmi";
+}
+
+void Clang::AddARMTargetArgs(const ArgList &Args,
+                             ArgStringList &CmdArgs) const {
+  // Set the CPU based on -march= and -mcpu=.
+  CmdArgs.push_back(Args.MakeArgString("-mcpu=" + getARMTargetCPU(Args)));
+
+  // FIXME: Set the "neon" feature.
+  // FIXME: Set -soft-float.
+  // FIXME: Set -float-abi=hard.
+}
+
 void Clang::AddX86TargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
@@ -425,6 +487,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Add target specific cpu and features flags.
   switch(getToolChain().getTriple().getArch()) {
   default:
+    break;
+
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    AddARMTargetArgs(Args, CmdArgs);
     break;
 
   case llvm::Triple::x86:
