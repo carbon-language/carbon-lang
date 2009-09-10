@@ -70,23 +70,31 @@ namespace CodeGen {
 /// GlobalDecl - represents a global declaration. This can either be a
 /// CXXConstructorDecl and the constructor type (Base, Complete).
 /// a CXXDestructorDecl and the destructor type (Base, Complete) or
-// a regular VarDecl or a FunctionDecl.
+/// a VarDecl, a FunctionDecl or a BlockDecl.
 class GlobalDecl {
-  llvm::PointerIntPair<const ValueDecl*, 2> Value;
+  llvm::PointerIntPair<const Decl*, 2> Value;
 
+  void init(const Decl *D) {
+    assert(!isa<CXXConstructorDecl>(D) && "Use other ctor with ctor decls!");
+    assert(!isa<CXXDestructorDecl>(D) && "Use other ctor with dtor decls!");
+    assert(isa<VarDecl>(D) || isa<FunctionDecl>(D)
+           && "Invalid decl type passed to GlobalDecl ctor!");
+
+    Value.setPointer(D);
+  }
+  
 public:
   GlobalDecl() {}
 
-  explicit GlobalDecl(const ValueDecl *VD) : Value(VD, 0) {
-    assert(!isa<CXXConstructorDecl>(VD) && "Use other ctor with ctor decls!");
-    assert(!isa<CXXDestructorDecl>(VD) && "Use other ctor with dtor decls!");
-  }
+  GlobalDecl(const VarDecl *D) { init(D);}
+  GlobalDecl(const FunctionDecl *D) { init(D); }
+  
   GlobalDecl(const CXXConstructorDecl *D, CXXCtorType Type)
   : Value(D, Type) {}
   GlobalDecl(const CXXDestructorDecl *D, CXXDtorType Type)
   : Value(D, Type) {}
 
-  const ValueDecl *getDecl() const { return Value.getPointer(); }
+  const Decl *getDecl() const { return Value.getPointer(); }
 
   CXXCtorType getCtorType() const {
     assert(isa<CXXConstructorDecl>(getDecl()) && "Decl is not a ctor!");

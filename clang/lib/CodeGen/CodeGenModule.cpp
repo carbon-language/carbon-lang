@@ -141,7 +141,7 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
 }
 
 const char *CodeGenModule::getMangledName(const GlobalDecl &GD) {
-  const NamedDecl *ND = GD.getDecl();
+  const NamedDecl *ND = cast<NamedDecl>(GD.getDecl());
 
   if (const CXXConstructorDecl *D = dyn_cast<CXXConstructorDecl>(ND))
     return getMangledCXXCtorName(D, GD.getCtorType());
@@ -545,7 +545,7 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
 }
 
 void CodeGenModule::EmitGlobal(GlobalDecl GD) {
-  const ValueDecl *Global = GD.getDecl();
+  const ValueDecl *Global = cast<ValueDecl>(GD.getDecl());
 
   // If this is an alias definition (which otherwise looks like a declaration)
   // emit it now.
@@ -594,7 +594,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
 }
 
 void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
-  const ValueDecl *D = GD.getDecl();
+  const ValueDecl *D = cast<ValueDecl>(GD.getDecl());
 
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
     EmitCXXConstructor(CD, GD.getCtorType());
@@ -810,7 +810,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
                                                  const llvm::Type *Ty) {
   // If there was no specific requested type, just convert it now.
   if (!Ty)
-    Ty = getTypes().ConvertType(GD.getDecl()->getType());
+    Ty = getTypes().ConvertType(cast<ValueDecl>(GD.getDecl())->getType());
   return GetOrCreateLLVMFunction(getMangledName(GD), Ty, GD);
 }
 
@@ -1643,7 +1643,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     // Fall through
 
   case Decl::Var:
-    EmitGlobal(GlobalDecl(cast<ValueDecl>(D)));
+    EmitGlobal(GlobalDecl(cast<VarDecl>(D)));
     break;
 
   // C++ Decls
