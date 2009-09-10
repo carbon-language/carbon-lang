@@ -1312,8 +1312,62 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   }
 
   switch (E->getStmtClass()) {
-  default:
+#define STMT(Node, Base) case Expr::Node##Class:
+#define EXPR(Node, Base)
+#include "clang/AST/StmtNodes.def"
+  case Expr::PredefinedExprClass:
+  case Expr::FloatingLiteralClass:
+  case Expr::ImaginaryLiteralClass:
+  case Expr::StringLiteralClass:
+  case Expr::ArraySubscriptExprClass:
+  case Expr::MemberExprClass:
+  case Expr::CompoundAssignOperatorClass:
+  case Expr::CompoundLiteralExprClass:
+  case Expr::ExtVectorElementExprClass:
+  case Expr::InitListExprClass:
+  case Expr::DesignatedInitExprClass:
+  case Expr::ImplicitValueInitExprClass:
+  case Expr::ParenListExprClass:
+  case Expr::VAArgExprClass:
+  case Expr::AddrLabelExprClass:
+  case Expr::StmtExprClass:
+  case Expr::GNUNullExprClass:
+  case Expr::CXXMemberCallExprClass:
+  case Expr::CXXDynamicCastExprClass:
+  case Expr::CXXTypeidExprClass:
+  case Expr::CXXNullPtrLiteralExprClass:
+  case Expr::CXXThisExprClass:
+  case Expr::CXXThrowExprClass:
+  case Expr::CXXConditionDeclExprClass: // FIXME: is this correct?
+  case Expr::CXXNewExprClass:
+  case Expr::CXXDeleteExprClass:
+  case Expr::CXXPseudoDestructorExprClass:
+  case Expr::UnresolvedFunctionNameExprClass:
+  case Expr::UnresolvedDeclRefExprClass:
+  case Expr::TemplateIdRefExprClass:
+  case Expr::CXXConstructExprClass:
+  case Expr::CXXBindTemporaryExprClass:
+  case Expr::CXXExprWithTemporariesClass:
+  case Expr::CXXTemporaryObjectExprClass:
+  case Expr::CXXUnresolvedConstructExprClass:
+  case Expr::CXXUnresolvedMemberExprClass:
+  case Expr::ObjCStringLiteralClass:
+  case Expr::ObjCEncodeExprClass:
+  case Expr::ObjCMessageExprClass:
+  case Expr::ObjCSelectorExprClass:
+  case Expr::ObjCProtocolExprClass:
+  case Expr::ObjCIvarRefExprClass:
+  case Expr::ObjCPropertyRefExprClass:
+  case Expr::ObjCImplicitSetterGetterRefExprClass:
+  case Expr::ObjCSuperExprClass:
+  case Expr::ObjCIsaExprClass:
+  case Expr::ShuffleVectorExprClass:
+  case Expr::BlockExprClass:
+  case Expr::BlockDeclRefExprClass:
+  case Expr::NoStmtClass:
+  case Expr::ExprClass:
     return ICEDiag(2, E->getLocStart());
+      
   case Expr::ParenExprClass:
     return CheckICE(cast<ParenExpr>(E)->getSubExpr(), Ctx);
   case Expr::IntegerLiteralClass:
@@ -1362,8 +1416,14 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::UnaryOperatorClass: {
     const UnaryOperator *Exp = cast<UnaryOperator>(E);
     switch (Exp->getOpcode()) {
-    default:
+    case UnaryOperator::PostInc:
+    case UnaryOperator::PostDec:
+    case UnaryOperator::PreInc:
+    case UnaryOperator::PreDec:
+    case UnaryOperator::AddrOf:
+    case UnaryOperator::Deref:
       return ICEDiag(2, E->getLocStart());
+        
     case UnaryOperator::Extension:
     case UnaryOperator::LNot:
     case UnaryOperator::Plus:
@@ -1391,8 +1451,21 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::BinaryOperatorClass: {
     const BinaryOperator *Exp = cast<BinaryOperator>(E);
     switch (Exp->getOpcode()) {
-    default:
+    case BinaryOperator::PtrMemD:
+    case BinaryOperator::PtrMemI:
+    case BinaryOperator::Assign:
+    case BinaryOperator::MulAssign:
+    case BinaryOperator::DivAssign:
+    case BinaryOperator::RemAssign:
+    case BinaryOperator::AddAssign:
+    case BinaryOperator::SubAssign:
+    case BinaryOperator::ShlAssign:
+    case BinaryOperator::ShrAssign:
+    case BinaryOperator::AndAssign:
+    case BinaryOperator::XorAssign:
+    case BinaryOperator::OrAssign:
       return ICEDiag(2, E->getLocStart());
+        
     case BinaryOperator::Mul:
     case BinaryOperator::Div:
     case BinaryOperator::Rem:
@@ -1462,9 +1535,12 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     }
     }
   }
+  case Expr::CastExprClass:
   case Expr::ImplicitCastExprClass:
+  case Expr::ExplicitCastExprClass:
   case Expr::CStyleCastExprClass:
   case Expr::CXXFunctionalCastExprClass:
+  case Expr::CXXNamedCastExprClass:
   case Expr::CXXStaticCastExprClass:
   case Expr::CXXReinterpretCastExprClass:
   case Expr::CXXConstCastExprClass: {
@@ -1517,6 +1593,9 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     return CheckICE(cast<ChooseExpr>(E)->getChosenSubExpr(Ctx), Ctx);
   }
   }
+  
+  // Silence a GCC warning
+  return ICEDiag(2, E->getLocStart());
 }
 
 bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
