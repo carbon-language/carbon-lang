@@ -91,3 +91,13 @@ Y Outer<X>::Inner1<Y>::ReallyInner::value3 = Y();
 template<typename X>
 template<typename Y>
 Y Outer<X>::Inner1<Y*>::ReallyInner::value4; // expected-error{{Outer<X>::Inner1<Y *>::ReallyInner::}}
+
+
+template<typename T>
+struct X0 { };
+
+template<typename T>
+struct X0<T*> {
+  template<typename U>
+  void f(U u = T()) { }
+};

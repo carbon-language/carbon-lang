@@ -1858,11 +1858,19 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
 }
 
 void Sema::ActOnReenterTemplateScope(Scope *S, DeclPtrTy TemplateD) {
-  TemplateDecl *Template = TemplateD.getAs<TemplateDecl>();
-  if (!Template)
+  Decl *D = TemplateD.getAs<Decl>();
+  if (!D)
+    return;
+  
+  TemplateParameterList *Params = 0;
+  if (TemplateDecl *Template = dyn_cast<TemplateDecl>(D))
+    Params = Template->getTemplateParameters();
+  else if (ClassTemplatePartialSpecializationDecl *PartialSpec
+           = dyn_cast<ClassTemplatePartialSpecializationDecl>(D))
+    Params = PartialSpec->getTemplateParameters();
+  else
     return;
 
-  TemplateParameterList *Params = Template->getTemplateParameters();
   for (TemplateParameterList::iterator Param = Params->begin(),
                                     ParamEnd = Params->end();
        Param != ParamEnd; ++Param) {
