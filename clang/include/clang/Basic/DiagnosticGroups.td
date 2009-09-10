@@ -59,6 +59,7 @@ def NonNull : DiagGroup<"nonnull">;
 def : DiagGroup<"nonportable-cfstrings">;
 def : DiagGroup<"old-style-definition">;
 def : DiagGroup<"overflow">;
+def : DiagGroup<"overloaded-virtual">;
 def : DiagGroup<"packed">;
 def Parentheses : DiagGroup<"parentheses">;
 def PointerArith : DiagGroup<"pointer-arith">;
