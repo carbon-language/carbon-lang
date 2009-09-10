@@ -203,15 +203,15 @@ public:
     AggZeroConstants.freeConstants();
     NullPtrConstants.freeConstants();
     UndefValueConstants.freeConstants();
-    for (FoldingSet<MDNode>::iterator I=MDNodeSet.begin(), 
-           E =MDNodeSet.end(); I != E; ++I)
+    for (FoldingSet<MDNode>::iterator I = MDNodeSet.begin(), 
+           E = MDNodeSet.end(); I != E; ++I)
       I->dropAllReferences();
-    for (IntMapTy::iterator I=IntConstants.begin(), E=IntConstants.end(); 
+    for (IntMapTy::iterator I = IntConstants.begin(), E = IntConstants.end(); 
          I != E; ++I) {
       if (I->second->use_empty())
         delete I->second;
     }
-    for (FPMapTy::iterator I=FPConstants.begin(), E=FPConstants.end(); 
+    for (FPMapTy::iterator I = FPConstants.begin(), E = FPConstants.end(); 
          I != E; ++I) {
       if (I->second->use_empty())
         delete I->second;
