@@ -730,6 +730,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   // Default to -fno-builtin-str{cat,cpy} on Darwin for ARM.
+  //
+  // FIXME: This is disabled until clang-cc supports -fno-builtin-foo. PR4941.
+#if 0
   if (getToolChain().getTriple().getOS() == llvm::Triple::Darwin &&
       (getToolChain().getTriple().getArch() == llvm::Triple::arm ||
        getToolChain().getTriple().getArch() == llvm::Triple::thumb)) {
@@ -738,6 +741,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (!Args.hasArg(options::OPT_fbuiltin_strcpy))
       CmdArgs.push_back("-fno-builtin-strcpy");
   }
+#endif
 
   if (Arg *A = Args.getLastArg(options::OPT_traditional,
                                options::OPT_traditional_cpp))
