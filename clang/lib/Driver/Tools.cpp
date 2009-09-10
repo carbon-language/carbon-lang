@@ -200,9 +200,11 @@ void Clang::AddPreprocessingOptions(const Driver &D,
                        options::OPT_Xpreprocessor);
 }
 
+/// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targetting.
+//
+// FIXME: tblgen this.
 static llvm::StringRef getARMTargetCPU(const ArgList &Args) {
-  // FIXME: Check the relative priority of these options against gcc. Also, what
-  // happens if the -mcpu and -march mismatch?
+  // FIXME: Warn on inconsistent use of -mcpu and -march.
 
   // If we have -mcpu=, use that.
   if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
@@ -250,6 +252,57 @@ static llvm::StringRef getARMTargetCPU(const ArgList &Args) {
 
   // Otherwise return the most base CPU LLVM supports.
   return "arm7tdmi";
+}
+
+/// getLLVMArchNameForARM - Get the LLVM arch name to use for a particular
+/// CPU.
+//
+// FIXME: This is redundant with -mcpu, why does LLVM use this.
+// FIXME: tblgen this, or kill it!
+static const char *getLLVMArchNameForARM(llvm::StringRef CPU, bool Thumb) {
+  if (CPU == "arm7tdmi" || CPU == "arm7tdmi-s" || CPU == "arm710t" ||
+      CPU == "arm720t" || CPU == "arm9" || CPU == "arm9tdmi" ||
+      CPU == "arm920" || CPU == "arm920t" || CPU == "arm922t" ||
+      CPU == "arm940t" || CPU == "ep9312")
+    return Thumb ? "thumbv4t" : "armv4t";
+
+  if (CPU == "arm10tdmi" || CPU == "arm1020t")
+    return Thumb ? "thumb5" : "armv5";
+
+  if (CPU == "arm9e" || CPU == "arm926ej-s" || CPU == "arm946e-s" ||
+      CPU == "arm966e-s" || CPU == "arm968e-s" || CPU == "arm10e" ||
+      CPU == "arm1020e" || CPU == "arm1022e" || CPU == "xscale" ||
+      CPU == "iwmmxt")
+    return Thumb ? "thumbv5e" : "armv5e";
+
+  if (CPU == "arm1136j-s" || CPU == "arm1136jf-s" || CPU == "arm1176jz-s" ||
+      CPU == "arm1176jzf-s" || CPU == "mpcorenovfp" || CPU == "mpcore")
+    return Thumb ? "thumbv6" : "armv6";
+
+  if (CPU == "arm1156t2-s" || CPU == "arm1156t2f-s")
+    return Thumb ? "thumbv6t2" : "armv6t2";
+
+  if (CPU == "cortex-a8" || CPU == "cortex-a9")
+    return Thumb ? "thumbv7" : "armv7";
+
+  return Thumb ? "thumb" : "arm";
+}
+
+/// getLLVMTriple - Get the LLVM triple to use for a particular toolchain, which
+/// may depend on command line arguments.
+static std::string getLLVMTriple(const ToolChain &TC, const ArgList &Args) {
+  switch (TC.getTriple().getArch()) {
+  default:
+    return TC.getTripleString();
+
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb: {
+    llvm::Triple Triple = TC.getTriple();
+    Triple.setArchName(getLLVMArchNameForARM(getARMTargetCPU(Args),
+                                             /*FIXME:Thumb=*/false));
+    return Triple.getTriple();
+  }
+  }
 }
 
 void Clang::AddARMTargetArgs(const ArgList &Args,
@@ -320,8 +373,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   assert(Inputs.size() == 1 && "Unable to handle multiple inputs.");
 
   CmdArgs.push_back("-triple");
+
   const char *TripleStr =
-    Args.MakeArgString(getToolChain().getTripleString());
+    Args.MakeArgString(getLLVMTriple(getToolChain(), Args));
   CmdArgs.push_back(TripleStr);
 
   if (isa<AnalyzeJobAction>(JA)) {
@@ -1091,7 +1145,7 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
     for (ArgList::const_iterator it = Args.begin(),
            ie = Args.end(); it != ie; ++it) {
       const Arg *A = *it;
-      if (A->getOption().matches(options::OPT_f_Group) || 
+      if (A->getOption().matches(options::OPT_f_Group) ||
           A->getOption().matches(options::OPT_fsyntax_only)) {
         if (!A->getOption().matches(options::OPT_fbuiltin_strcat) &&
             !A->getOption().matches(options::OPT_fbuiltin_strcpy)) {
