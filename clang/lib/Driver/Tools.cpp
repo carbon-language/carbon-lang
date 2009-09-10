@@ -48,6 +48,17 @@ static void CheckPreprocessingOptions(const Driver &D, const ArgList &Args) {
         << A->getAsString(Args) << "-E";
 }
 
+/// CheckCodeGenerationOptions - Perform some validation of code generation
+/// arguments that is shared with gcc.
+static void CheckCodeGenerationOptions(const Driver &D, const ArgList &Args) {
+  // In gcc, only ARM checks this, but it seems reasonable to check universally.
+  if (Args.hasArg(options::OPT_static))
+    if (const Arg *A = Args.getLastArg(options::OPT_dynamic,
+                                       options::OPT_mdynamic_no_pic))
+      D.Diag(clang::diag::err_drv_argument_not_allowed_with)
+        << A->getAsString(Args) << "-static";
+}
+
 void Clang::AddPreprocessingOptions(const Driver &D,
                                     const ArgList &Args,
                                     ArgStringList &CmdArgs,
@@ -320,6 +331,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // Add -Xanalyzer arguments when running as analyzer.
     Args.AddAllArgValues(CmdArgs, options::OPT_Xanalyzer);
   }
+
+  CheckCodeGenerationOptions(D, Args);
 
   // Perform argument translation for LLVM backend. This
   // takes some care in reconciling with llvm-gcc. The
@@ -897,6 +910,10 @@ darwin::CC1::getDependencyFileName(const ArgList &Args,
 
 void darwin::CC1::AddCC1Args(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
+  const Driver &D = getToolChain().getHost().getDriver();
+
+  CheckCodeGenerationOptions(D, Args);
+
   // Derived from cc1 spec.
   if (!Args.hasArg(options::OPT_mkernel) && !Args.hasArg(options::OPT_static) &&
       !Args.hasArg(options::OPT_mdynamic_no_pic))
