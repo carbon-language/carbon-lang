@@ -59,6 +59,7 @@ def false;
 // Boolean operators.
 def and;
 def or;
+def not;
 
 // Primitive tests.
 def switch_on;
