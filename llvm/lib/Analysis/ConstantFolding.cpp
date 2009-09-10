@@ -1,4 +1,4 @@
-//===-- ConstantFolding.cpp - Analyze constant folding possibilities ------===//
+//===-- ConstantFolding.cpp - Fold instructions into constants ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This family of functions determines the possibility of performing constant
-// folding.
+// This file defines routines for folding instructions into constants.
+//
+// Also, to supplement the basic VMCore ConstantExpr simplifications,
+// this file defines some additional folding routines that can make use of
+// TargetData information. These functions cannot go in VMCore due to library
+// dependency issues.
 //
 //===----------------------------------------------------------------------===//
 
