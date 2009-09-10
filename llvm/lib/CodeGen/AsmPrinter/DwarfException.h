@@ -75,6 +75,7 @@ class VISIBILITY_HIDDEN DwarfException : public Dwarf {
   /// ExceptionTimer - Timer for the Dwarf exception writer.
   Timer *ExceptionTimer;
 
+  /// SizeOfEncodedValue - Return the size of the encoding in bytes.
   unsigned SizeOfEncodedValue(unsigned Encoding);
 
   /// EmitCIE - Emit a Common Information Entry (CIE). This holds information

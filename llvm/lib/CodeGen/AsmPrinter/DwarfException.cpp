@@ -51,6 +51,7 @@ DwarfException::~DwarfException() {
   delete ExceptionTimer;
 }
 
+/// SizeOfEncodedValue - Return the size of the encoding in bytes.
 unsigned DwarfException::SizeOfEncodedValue(unsigned Encoding) {
   if (Encoding == dwarf::DW_EH_PE_omit)
     return 0;
