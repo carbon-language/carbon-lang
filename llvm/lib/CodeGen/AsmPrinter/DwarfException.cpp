@@ -617,53 +617,11 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Type infos.
-  // FIXME: Don't hardcode. Should be TType's format encoding size.
-  unsigned TypeInfoSize = SizeOfEncodedValue(dwarf::DW_EH_PE_absptr);
-  unsigned SizeTypes = TypeInfos.size() * TypeInfoSize;
-
-  unsigned TypeOffset = sizeof(int8_t) +   // Call site format
-    MCAsmInfo::getULEB128Size(SizeSites) + // Call-site table length
-    SizeSites + SizeActions + SizeTypes;
-
-  unsigned TotalSize = sizeof(int8_t) + // LPStart format
-                       sizeof(int8_t) + // TType format
-       (HaveTTData ?
-          MCAsmInfo::getULEB128Size(TypeOffset) : 0) + // TType base offset
-                       TypeOffset;
-
-  unsigned SizeAlign = (4 - TotalSize) & 3;
-
-  // Begin the exception table.
   const MCSection *LSDASection = Asm->getObjFileLowering().getLSDASection();
-  Asm->OutStreamer.SwitchSection(LSDASection);
-  Asm->EmitAlignment(2, 0, 0, false);
-  O << "GCC_except_table" << SubprogramCount << ":\n";
+  unsigned TTypeFormat;
 
-  for (unsigned i = 0; i != SizeAlign; ++i) {
-    Asm->EmitInt8(0);
-    Asm->EOL("Padding");
-  }
-
-  EmitLabel("exception", SubprogramCount);
-  if (IsSJLJ) {
-    SmallString<16> LSDAName;
-    raw_svector_ostream(LSDAName) << MAI->getPrivateGlobalPrefix() <<
-      "_LSDA_" << Asm->getFunctionNumber();
-    O << LSDAName.str() << ":\n";
-  }
-
-  // Emit the header.
-  Asm->EmitInt8(dwarf::DW_EH_PE_omit);
-  Asm->EOL("@LPStart format", dwarf::DW_EH_PE_omit);
-
-  // For SjLj exceptions, if there is no TypeInfo, then we just explicitly
-  // say that we're omitting that bit.
-  // FIXME: does this apply to Dwarf also? The above #if 0 implies yes?
   if (!HaveTTData) {
-    // If there are no typeinfos or filters, there is nothing to emit, optimize
-    // by specifying the "omit" encoding.
-    Asm->EmitInt8(dwarf::DW_EH_PE_omit);
-    Asm->EOL("@TType format", dwarf::DW_EH_PE_omit);
+    TTypeFormat = dwarf::DW_EH_PE_omit;
   } else {
     // Okay, we have actual filters or typeinfos to emit.  As such, we need to
     // pick a type encoding for them.  We're about to emit a list of pointers to
@@ -689,19 +647,61 @@ void DwarfException::EmitExceptionTable() {
     // somewhere.  This predicate should be moved to a shared location that is
     // in target-independent code.
     //
-    unsigned TTypeFormat;
-
     if (LSDASection->getKind().isWriteable() ||
         Asm->TM.getRelocationModel() == Reloc::Static)
       TTypeFormat = dwarf::DW_EH_PE_absptr;
     else
       TTypeFormat = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
         dwarf::DW_EH_PE_sdata4;
+  }
 
-    Asm->EmitInt8(TTypeFormat);
-    Asm->EOL("@TType format", TTypeFormat);
+  // Begin the exception table.
+  Asm->OutStreamer.SwitchSection(LSDASection);
+  Asm->EmitAlignment(2, 0, 0, false);
 
-    Asm->EmitULEB128Bytes(TypeOffset);
+  O << "GCC_except_table" << SubprogramCount << ":\n";
+  EmitLabel("exception", SubprogramCount);
+
+  if (IsSJLJ) {
+    SmallString<16> LSDAName;
+    raw_svector_ostream(LSDAName) << MAI->getPrivateGlobalPrefix() <<
+      "_LSDA_" << Asm->getFunctionNumber();
+    O << LSDAName.str() << ":\n";
+  }
+
+  // Emit the header.
+  Asm->EmitInt8(dwarf::DW_EH_PE_omit);
+  Asm->EOL("@LPStart format", dwarf::DW_EH_PE_omit);
+
+  // For SjLj exceptions, if there is no TypeInfo, then we just explicitly
+  // say that we're omitting that bit.
+  Asm->EmitInt8(TTypeFormat);
+  Asm->EOL("@TType format", TTypeFormat);
+
+  if (HaveTTData) {
+    unsigned TypeFormatSize = SizeOfEncodedValue(TTypeFormat);
+    unsigned SizeTypes = TypeInfos.size() * TypeFormatSize;
+    unsigned BeforeOffset = 2;
+    unsigned TypeOffset = sizeof(int8_t) +   // Call site format
+      MCAsmInfo::getULEB128Size(SizeSites) + // Call-site table length
+      SizeSites + SizeActions + SizeTypes;
+    unsigned Offset = TypeOffset;
+    unsigned LastOffset = 0;
+
+    while (Offset != LastOffset) {
+      LastOffset = Offset;
+      unsigned Size = MCAsmInfo::getULEB128Size(Offset);
+      unsigned Pad = BeforeOffset + Size + TypeOffset;
+
+      if (Pad % TypeFormatSize)
+        Pad = TypeFormatSize - (Pad % TypeFormatSize);
+      else
+        Pad = 0;
+
+      Offset = TypeOffset + Pad;
+    }
+
+    Asm->EmitULEB128Bytes(Offset);
     Asm->EOL("@TType base offset");
   }
 
