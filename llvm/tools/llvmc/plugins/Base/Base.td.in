@@ -166,6 +166,7 @@ def CompilationGraph : CompilationGraph<[
     Edge<"root", "llvm_gcc_m">,
     Edge<"root", "llvm_gcc_mxx">,
     Edge<"root", "llvm_as">,
+    Edge<"root", "llc">,
 
     Edge<"llvm_gcc_c", "llc">,
     Edge<"llvm_gcc_cpp", "llc">,
