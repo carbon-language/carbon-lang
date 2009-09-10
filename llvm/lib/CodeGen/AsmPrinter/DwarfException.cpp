@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -616,7 +617,8 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Type infos.
-  const unsigned TypeInfoSize = TD->getPointerSize(); // DW_EH_PE_absptr
+  // FIXME: Don't hardcode. Should be TType's format encoding size.
+  unsigned TypeInfoSize = SizeOfEncodedValue(dwarf::DW_EH_PE_absptr);
   unsigned SizeTypes = TypeInfos.size() * TypeInfoSize;
 
   unsigned TypeOffset = sizeof(int8_t) +   // Call site format
@@ -654,8 +656,10 @@ void DwarfException::EmitExceptionTable() {
   Asm->EmitInt8(dwarf::DW_EH_PE_omit);
   Asm->EOL("@LPStart format", dwarf::DW_EH_PE_omit);
 
-#if 0
-  if (TypeInfos.empty() && FilterIds.empty()) {
+  // For SjLj exceptions, if there is no TypeInfo, then we just explicitly
+  // say that we're omitting that bit.
+  // FIXME: does this apply to Dwarf also? The above #if 0 implies yes?
+  if (!HaveTTData) {
     // If there are no typeinfos or filters, there is nothing to emit, optimize
     // by specifying the "omit" encoding.
     Asm->EmitInt8(dwarf::DW_EH_PE_omit);
@@ -681,36 +685,25 @@ void DwarfException::EmitExceptionTable() {
     //      need to tell the personality function of the unwinder to indirect
     //      through the dyld stub.
     //
-    // FIXME: When this is actually implemented, we'll have to emit the stubs
+    // FIXME: When (3) is actually implemented, we'll have to emit the stubs
     // somewhere.  This predicate should be moved to a shared location that is
     // in target-independent code.
     //
-    if (LSDASection->isWritable() ||
-        Asm->TM.getRelocationModel() == Reloc::Static) {
-      Asm->EmitInt8(DW_EH_PE_absptr);
-      Asm->EOL("TType format (DW_EH_PE_absptr)");
-    } else {
-      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
-      Asm->EOL("TType format (DW_EH_PE_pcrel | DW_EH_PE_indirect"
-               " | DW_EH_PE_sdata4)");
-    }
-    Asm->EmitULEB128Bytes(TypeOffset);
-    Asm->EOL("TType base offset");
-  }
-#else
-  // For SjLj exceptions, if there is no TypeInfo, then we just explicitly
-  // say that we're omitting that bit.
-  // FIXME: does this apply to Dwarf also? The above #if 0 implies yes?
-  if (!HaveTTData) {
-    Asm->EmitInt8(dwarf::DW_EH_PE_omit);
-    Asm->EOL("@TType format", dwarf::DW_EH_PE_omit);
-  } else {
-    Asm->EmitInt8(dwarf::DW_EH_PE_absptr);
-    Asm->EOL("@TType format", dwarf::DW_EH_PE_absptr);
+    unsigned TTypeFormat;
+
+    if (LSDASection->getKind().isWriteable() ||
+        Asm->TM.getRelocationModel() == Reloc::Static)
+      TTypeFormat = dwarf::DW_EH_PE_absptr;
+    else
+      TTypeFormat = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+        dwarf::DW_EH_PE_sdata4;
+
+    Asm->EmitInt8(TTypeFormat);
+    Asm->EOL("@TType format", TTypeFormat);
+
     Asm->EmitULEB128Bytes(TypeOffset);
     Asm->EOL("@TType base offset");
   }
-#endif
 
   // SjLj Exception handilng
   if (IsSJLJ) {
