@@ -400,12 +400,6 @@ static llvm::cl::opt<bool>
 PThread("pthread", llvm::cl::desc("Support POSIX threads in generated code"),
          llvm::cl::init(false));
 
-static llvm::cl::opt<bool>
-ObjCSenderDispatch("fobjc-sender-dependent-dispatch",
-                   llvm::cl::desc("Enable sender-dependent dispatch for"
-                                  "Objective-C messages"),
-                   llvm::cl::init(false));
-
 /// InitializeBaseLanguage - Handle the -x foo options.
 static void InitializeBaseLanguage() {
   if (LangObjC)
@@ -837,8 +831,6 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
 
   if (ObjCNonFragileABI)
     Options.ObjCNonFragileABI = 1;
-
-  Options.ObjCSenderDispatch = ObjCSenderDispatch;
 
   if (EmitAllDecls)
     Options.EmitAllDecls = 1;
