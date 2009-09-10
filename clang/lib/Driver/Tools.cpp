@@ -254,38 +254,38 @@ static llvm::StringRef getARMTargetCPU(const ArgList &Args) {
   return "arm7tdmi";
 }
 
-/// getLLVMArchNameForARM - Get the LLVM arch name to use for a particular
+/// getLLVMArchSuffixForARM - Get the LLVM arch name to use for a particular
 /// CPU.
 //
 // FIXME: This is redundant with -mcpu, why does LLVM use this.
 // FIXME: tblgen this, or kill it!
-static const char *getLLVMArchNameForARM(llvm::StringRef CPU, bool Thumb) {
+static const char *getLLVMArchSuffixForARM(llvm::StringRef CPU) {
   if (CPU == "arm7tdmi" || CPU == "arm7tdmi-s" || CPU == "arm710t" ||
       CPU == "arm720t" || CPU == "arm9" || CPU == "arm9tdmi" ||
       CPU == "arm920" || CPU == "arm920t" || CPU == "arm922t" ||
       CPU == "arm940t" || CPU == "ep9312")
-    return Thumb ? "thumbv4t" : "armv4t";
+    return "v4t";
 
   if (CPU == "arm10tdmi" || CPU == "arm1020t")
-    return Thumb ? "thumb5" : "armv5";
+    return "v5";
 
   if (CPU == "arm9e" || CPU == "arm926ej-s" || CPU == "arm946e-s" ||
       CPU == "arm966e-s" || CPU == "arm968e-s" || CPU == "arm10e" ||
       CPU == "arm1020e" || CPU == "arm1022e" || CPU == "xscale" ||
       CPU == "iwmmxt")
-    return Thumb ? "thumbv5e" : "armv5e";
+    return "v5e";
 
   if (CPU == "arm1136j-s" || CPU == "arm1136jf-s" || CPU == "arm1176jz-s" ||
       CPU == "arm1176jzf-s" || CPU == "mpcorenovfp" || CPU == "mpcore")
-    return Thumb ? "thumbv6" : "armv6";
+    return "v6";
 
   if (CPU == "arm1156t2-s" || CPU == "arm1156t2f-s")
-    return Thumb ? "thumbv6t2" : "armv6t2";
+    return "v6t2";
 
   if (CPU == "cortex-a8" || CPU == "cortex-a9")
-    return Thumb ? "thumbv7" : "armv7";
+    return "v7";
 
-  return Thumb ? "thumb" : "arm";
+  return "";
 }
 
 /// getLLVMTriple - Get the LLVM triple to use for a particular toolchain, which
@@ -298,8 +298,10 @@ static std::string getLLVMTriple(const ToolChain &TC, const ArgList &Args) {
   case llvm::Triple::arm:
   case llvm::Triple::thumb: {
     llvm::Triple Triple = TC.getTriple();
-    Triple.setArchName(getLLVMArchNameForARM(getARMTargetCPU(Args),
-                                             /*FIXME:Thumb=*/false));
+    // FIXME: Thumb!
+    std::string ArchName = "arm";
+    ArchName += getLLVMArchSuffixForARM (getARMTargetCPU(Args));
+    Triple.setArchName(ArchName);
     return Triple.getTriple();
   }
   }
