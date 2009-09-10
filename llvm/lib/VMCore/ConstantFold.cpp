@@ -1329,6 +1329,14 @@ static ICmpInst::Predicate evaluateICmpRelation(LLVMContext &Context,
             // ordering of the resultant pointers.
             unsigned i = 1;
 
+            // The logic below assumes that the result of the comparison
+            // can be determined by finding the first index that differs.
+            // This doesn't work if there is over-indexing in any
+            // subsequent indices, so check for that case first.
+            if (!CE1->isGEPWithNoNotionalOverIndexing() ||
+                !CE2->isGEPWithNoNotionalOverIndexing())
+               return ICmpInst::BAD_ICMP_PREDICATE; // Might be equal.
+
             // Compare all of the operands the GEP's have in common.
             gep_type_iterator GTI = gep_type_begin(CE1);
             for (;i != CE1->getNumOperands() && i != CE2->getNumOperands();

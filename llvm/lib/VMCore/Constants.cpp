@@ -28,6 +28,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/System/RWMutex.h"
 #include "llvm/System/Threading.h"
@@ -650,6 +651,31 @@ bool ConstantExpr::isCast() const {
 
 bool ConstantExpr::isCompare() const {
   return getOpcode() == Instruction::ICmp || getOpcode() == Instruction::FCmp;
+}
+
+bool ConstantExpr::isGEPWithNoNotionalOverIndexing() const {
+  if (getOpcode() != Instruction::GetElementPtr) return false;
+
+  gep_type_iterator GEPI = gep_type_begin(this), E = gep_type_end(this);
+  User::const_op_iterator OI = next(this->op_begin());
+
+  // Skip the first index, as it has no static limit.
+  ++GEPI;
+  ++OI;
+
+  // The remaining indices must be compile-time known integers within the
+  // bounds of the corresponding notional static array types.
+  for (; GEPI != E; ++GEPI, ++OI) {
+    ConstantInt *CI = dyn_cast<ConstantInt>(*OI);
+    if (!CI) return false;
+    if (const ArrayType *ATy = dyn_cast<ArrayType>(*GEPI))
+      if (CI->getValue().getActiveBits() > 64 ||
+          CI->getZExtValue() >= ATy->getNumElements())
+        return false;
+  }
+
+  // All the indices checked out.
+  return true;
 }
 
 bool ConstantExpr::hasIndices() const {

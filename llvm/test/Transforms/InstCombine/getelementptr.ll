@@ -459,3 +459,12 @@ define i8* @test36() nounwind {
 ; CHECK: ret i8* getelementptr ([11 x i8]* @array, i64 1676976733973595601, i64 4)
 }
 
+; Instcombine shouldn't assume that gep(A,0,1) != gep(A,1,0).
+@A37 = external constant [1 x i8]
+define i1 @test37() nounwind {
+; CHECK: @test37
+; CHECK: ret i1 icmp eq (i8* getelementptr ([1 x i8]* @A37, i64 0, i64 1), i8* getelementptr ([1 x i8]* @A37, i64 1, i64 0))
+  %t = icmp eq i8* getelementptr ([1 x i8]* @A37, i64 0, i64 1),
+                   getelementptr ([1 x i8]* @A37, i64 1, i64 0)
+  ret i1 %t
+}
