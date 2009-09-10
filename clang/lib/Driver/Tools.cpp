@@ -662,6 +662,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
 
+  // Default to -fno-builtin-str{cat,cpy} on Darwin for ARM.
+  if (getToolChain().getTriple().getOS() == llvm::Triple::Darwin &&
+      (getToolChain().getTriple().getArch() == llvm::Triple::arm ||
+       getToolChain().getTriple().getArch() == llvm::Triple::thumb)) {
+    if (!Args.hasArg(options::OPT_fbuiltin_strcat))
+      CmdArgs.push_back("-fno-builtin-strcat");
+    if (!Args.hasArg(options::OPT_fbuiltin_strcpy))
+      CmdArgs.push_back("-fno-builtin-strcpy");
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_traditional,
                                options::OPT_traditional_cpp))
     D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
@@ -919,6 +929,14 @@ void darwin::CC1::AddCC1Args(const ArgList &Args,
       !Args.hasArg(options::OPT_mdynamic_no_pic))
     CmdArgs.push_back("-fPIC");
 
+  if (getToolChain().getTriple().getArch() == llvm::Triple::arm ||
+      getToolChain().getTriple().getArch() == llvm::Triple::thumb) {
+    if (!Args.hasArg(options::OPT_fbuiltin_strcat))
+      CmdArgs.push_back("-fno-builtin-strcat");
+    if (!Args.hasArg(options::OPT_fbuiltin_strcpy))
+      CmdArgs.push_back("-fno-builtin-strcpy");
+  }
+
   // gcc has some code here to deal with when no -mmacosx-version-min
   // and no -miphoneos-version-min is present, but this never happens
   // due to tool chain specific argument translation.
@@ -991,7 +1009,28 @@ void darwin::CC1::AddCC1OptionsArgs(const ArgList &Args, ArgStringList &CmdArgs,
   Args.AddLastArg(CmdArgs, options::OPT_p);
 
   // The driver treats -fsyntax-only specially.
-  Args.AddAllArgs(CmdArgs, options::OPT_f_Group, options::OPT_fsyntax_only);
+  if (getToolChain().getTriple().getArch() == llvm::Triple::arm ||
+      getToolChain().getTriple().getArch() == llvm::Triple::thumb) {
+    // Removes -fbuiltin-str{cat,cpy}; these aren't recognized by cc1 but are
+    // used to inhibit the default -fno-builtin-str{cat,cpy}.
+    //
+    // FIXME: Should we grow a better way to deal with "removing" args?
+    //
+    // FIXME: Use iterator.
+    for (ArgList::const_iterator it = Args.begin(),
+           ie = Args.end(); it != ie; ++it) {
+      const Arg *A = *it;
+      if (A->getOption().matches(options::OPT_f_Group) || 
+          A->getOption().matches(options::OPT_fsyntax_only)) {
+        if (!A->getOption().matches(options::OPT_fbuiltin_strcat) &&
+            !A->getOption().matches(options::OPT_fbuiltin_strcpy)) {
+          A->claim();
+          A->render(Args, CmdArgs);
+        }
+      }
+    }
+  } else
+    Args.AddAllArgs(CmdArgs, options::OPT_f_Group, options::OPT_fsyntax_only);
 
   Args.AddAllArgs(CmdArgs, options::OPT_undef);
   if (Args.hasArg(options::OPT_Qn))
