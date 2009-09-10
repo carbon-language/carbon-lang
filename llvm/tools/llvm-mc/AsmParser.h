@@ -67,6 +67,8 @@ public:
 
   virtual MCContext &getContext() { return Ctx; }
 
+  virtual MCStreamer &getStreamer() { return Out; }
+
   virtual void Warning(SMLoc L, const Twine &Meg);
 
   virtual bool Error(SMLoc L, const Twine &Msg);

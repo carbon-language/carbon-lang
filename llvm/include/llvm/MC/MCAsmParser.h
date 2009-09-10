@@ -16,6 +16,7 @@ namespace llvm {
 class MCAsmLexer;
 class MCContext;
 class MCExpr;
+class MCStreamer;
 class MCValue;
 class SMLoc;
 class Twine;
@@ -34,6 +35,9 @@ public:
   virtual MCAsmLexer &getLexer() = 0;
 
   virtual MCContext &getContext() = 0;
+
+  /// getSteamer - Return the output streamer for the assembler.
+  virtual MCStreamer &getStreamer() = 0;
 
   /// Warning - Emit a warning at the location \arg L, with the message \arg
   /// Msg.
