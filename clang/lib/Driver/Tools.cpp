@@ -319,6 +319,22 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
 void Clang::AddX86TargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
+  // FIXME: This needs to change to use a clang-cc option, and set the attribute
+  // on functions.
+  if (!Args.hasFlag(options::OPT_mred_zone,
+                    options::OPT_mno_red_zone,
+                    true) ||
+      Args.hasArg(options::OPT_mkernel) ||
+      Args.hasArg(options::OPT_fapple_kext))
+    CmdArgs.push_back("--disable-red-zone");
+
+  // FIXME: This needs to change to use a clang-cc option, and set the attribute
+  // on functions.
+  if (Args.hasFlag(options::OPT_msoft_float,
+                   options::OPT_mno_soft_float,
+                   false))
+    CmdArgs.push_back("--no-implicit-float");
+
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
     // FIXME: We may need some translation here from the options gcc takes to
     // names the LLVM backend understand?
@@ -521,16 +537,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--unwind-tables=1");
   else
     CmdArgs.push_back("--unwind-tables=0");
-  if (!Args.hasFlag(options::OPT_mred_zone,
-                    options::OPT_mno_red_zone,
-                    true) ||
-      Args.hasArg(options::OPT_mkernel) ||
-      Args.hasArg(options::OPT_fapple_kext))
-    CmdArgs.push_back("--disable-red-zone");
-  if (Args.hasFlag(options::OPT_msoft_float,
-                   options::OPT_mno_soft_float,
-                   false))
-    CmdArgs.push_back("--no-implicit-float");
 
   // FIXME: Handle -mtune=.
   (void) Args.hasArg(options::OPT_mtune_EQ);
