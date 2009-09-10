@@ -850,6 +850,9 @@ public:
   void AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
                                       Expr *From, QualType ToType,
                                       OverloadCandidateSet &CandidateSet);
+  void AddAllConversionCandidate(CXXRecordDecl *ClassDecl, Expr *From, 
+                                 QualType ToType, bool AllowExplicit,
+                                 OverloadCandidateSet &CandidateSet);
   void AddSurrogateCandidate(CXXConversionDecl *Conversion,
                              const FunctionProtoType *Proto,
                              Expr *Object, Expr **Args, unsigned NumArgs,

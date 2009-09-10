@@ -1331,6 +1331,51 @@ static void GetFunctionAndTemplate(AnyFunctionDecl Orig, T *&Function,
     Function = cast<T>(Orig);
 }
 
+void
+Sema::AddAllConversionCandidate(CXXRecordDecl *ClassDecl, Expr *From, 
+                                QualType ToType, bool AllowExplicit,
+                                OverloadCandidateSet &CandidateSet) {
+  for (CXXRecordDecl::base_class_iterator VBase = ClassDecl->vbases_begin(),
+       E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
+    AddAllConversionCandidate(BaseClassDecl, From, ToType, AllowExplicit,
+                              CandidateSet);
+  }
+  for (CXXRecordDecl::base_class_iterator Base =
+        ClassDecl->bases_begin(),
+        E = ClassDecl->bases_end(); Base != E; ++Base) {
+    if (Base->isVirtual())
+      continue;
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    AddAllConversionCandidate(BaseClassDecl, From, ToType, AllowExplicit,
+                              CandidateSet);
+  }
+  
+  OverloadedFunctionDecl *Conversions 
+    = ClassDecl->getConversionFunctions();
+
+  for (OverloadedFunctionDecl::function_iterator Func 
+        = Conversions->function_begin();
+       Func != Conversions->function_end(); ++Func) {
+    CXXConversionDecl *Conv;
+    FunctionTemplateDecl *ConvTemplate;
+    GetFunctionAndTemplate(*Func, Conv, ConvTemplate);
+    if (ConvTemplate)
+      Conv = dyn_cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
+    else 
+      Conv = dyn_cast<CXXConversionDecl>(*Func);
+    
+    if (AllowExplicit || !Conv->isExplicit()) {
+      if (ConvTemplate)
+        AddTemplateConversionCandidate(ConvTemplate, From, ToType, 
+                                       CandidateSet);
+      else
+        AddConversionCandidate(Conv, From, ToType, CandidateSet);
+    }
+  }  
+}
 
 /// Determines whether there is a user-defined conversion sequence
 /// (C++ [over.ics.user]) that converts expression From to the type
@@ -1406,31 +1451,10 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
   } else if (const RecordType *FromRecordType
                = From->getType()->getAs<RecordType>()) {
     if (CXXRecordDecl *FromRecordDecl
-          = dyn_cast<CXXRecordDecl>(FromRecordType->getDecl())) {
-      // Add all of the conversion functions as candidates.
-      // FIXME: Look for conversions in base classes!
-      OverloadedFunctionDecl *Conversions
-        = FromRecordDecl->getConversionFunctions();
-      for (OverloadedFunctionDecl::function_iterator Func
-             = Conversions->function_begin();
-           Func != Conversions->function_end(); ++Func) {
-        CXXConversionDecl *Conv;
-        FunctionTemplateDecl *ConvTemplate;
-        GetFunctionAndTemplate(*Func, Conv, ConvTemplate);
-        if (ConvTemplate)
-          Conv = dyn_cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
-        else
-          Conv = dyn_cast<CXXConversionDecl>(*Func);
-
-        if (AllowExplicit || !Conv->isExplicit()) {
-          if (ConvTemplate)
-            AddTemplateConversionCandidate(ConvTemplate, From, ToType,
-                                           CandidateSet);
-          else
-            AddConversionCandidate(Conv, From, ToType, CandidateSet);
-        }
-      }
-    }
+          = dyn_cast<CXXRecordDecl>(FromRecordType->getDecl())) 
+    // Add all of the conversion functions as candidates.
+    AddAllConversionCandidate(FromRecordDecl, From, ToType, AllowExplicit,
+                              CandidateSet);
   }
 
   OverloadCandidateSet::iterator Best;
