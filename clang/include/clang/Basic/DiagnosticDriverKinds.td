@@ -53,6 +53,8 @@ def err_drv_command_failed : Error<
   "%0 command failed with exit code %1 (use -v to see invocation)">;
 def err_drv_command_signalled : Error<
   "%0 command failed due to signal %1 (use -v to see invocation)">;
+def err_drv_invalid_mfloat_abi : Error<
+  "invalid float ABI '%0'">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;
@@ -68,5 +70,7 @@ def warn_drv_not_using_clang_arch : Warning<
   "not using the clang compiler for the '%0' architecture">;
 def warn_drv_clang_unsupported : Warning<
   "the clang compiler does not support '%0'">;
+def warn_drv_assuming_mfloat_abi_is : Warning<
+  "unknown platform, assuming -mfloat-abi=%0">;
 
 }

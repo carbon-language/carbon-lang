@@ -516,6 +516,8 @@ OPTION("-mconstant-cfstrings", mconstant_cfstrings, Flag, clang_ignored_m_Group,
 OPTION("-mcpu=", mcpu_EQ, Joined, m_Group, INVALID, "d", 0, 0, 0)
 OPTION("-mdynamic-no-pic", mdynamic_no_pic, Joined, m_Group, INVALID, "q", 0, 0, 0)
 OPTION("-mfix-and-continue", mfix_and_continue, Flag, clang_ignored_m_Group, INVALID, "", 0, 0, 0)
+OPTION("-mfloat-abi=", mfloat_abi_EQ, Joined, m_Group, INVALID, "", 0, 0, 0)
+OPTION("-mhard-float", mhard_float, Flag, m_Group, INVALID, "", 0, 0, 0)
 OPTION("-miphoneos-version-min=", miphoneos_version_min_EQ, Joined, m_Group, INVALID, "", 0, 0, 0)
 OPTION("-mkernel", mkernel, Flag, m_Group, INVALID, "", 0, 0, 0)
 OPTION("-mllvm", mllvm, Separate, INVALID, INVALID, "", 0, 0, 0)
