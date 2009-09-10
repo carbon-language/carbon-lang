@@ -615,25 +615,12 @@ FastISel::SelectFNeg(User *I) {
   unsigned OpReg = getRegForValue(BinaryOperator::getFNegArgument(I));
   if (OpReg == 0) return false;
 
-  // Bitcast the value to integer, twiddle the sign bit with xor,
-  // and then bitcast it back to floating-point.
+  // Twiddle the sign bit with xor.
   EVT VT = TLI.getValueType(I->getType());
   if (VT.getSizeInBits() > 64) return false;
-  EVT IntVT = EVT::getIntegerVT(I->getContext(), VT.getSizeInBits());
-
-  unsigned IntReg = FastEmit_r(VT.getSimpleVT(), IntVT.getSimpleVT(),
-                               ISD::BIT_CONVERT, OpReg);
-  if (IntReg == 0)
-    return false;
-
-  unsigned IntResultReg = FastEmit_ri_(IntVT.getSimpleVT(), ISD::XOR, IntReg,
-                                       UINT64_C(1) << (VT.getSizeInBits()-1),
-                                       IntVT.getSimpleVT());
-  if (IntResultReg == 0)
-    return false;
-
-  unsigned ResultReg = FastEmit_r(IntVT.getSimpleVT(), VT.getSimpleVT(),
-                                  ISD::BIT_CONVERT, IntResultReg);
+  unsigned ResultReg = FastEmit_ri_(VT.getSimpleVT(), ISD::XOR, OpReg,
+                                    UINT64_C(1) << (VT.getSizeInBits()-1),
+                                    VT.getSimpleVT());
   if (ResultReg == 0)
     return false;
 
