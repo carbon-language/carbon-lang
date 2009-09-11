@@ -67,6 +67,9 @@ def ext_flexible_array_init : Extension<
 // Declarations.
 def ext_vla : Extension<
   "variable length arrays are a C99 feature, accepted as an extension">;
+def err_vla_cxx : Error<
+  "variable length arrays are not permitted in C++">;
+  
 def ext_anon_param_requires_type_specifier : Extension<
   "type specifier required for unnamed parameter, defaults to int">;
 def err_bad_variable_name : Error<
@@ -2135,6 +2138,9 @@ def err_objc_array_of_interfaces : Error<
   "array of interface %0 is invalid (probably should be an array of pointers)">;
 def ext_c99_array_usage : Extension<
   "use of C99-specific array features, accepted as an extension">;
+def err_c99_array_usage_cxx : Error<
+  "C99-specific array features are not permitted in C++">;
+  
 def err_invalid_protocol_qualifiers : Error<
   "invalid protocol qualifiers on non-ObjC type">;
 def warn_ivar_use_hidden : Warning<

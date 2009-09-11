@@ -593,9 +593,11 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     if (ArraySize && !ArraySize->isTypeDependent() &&
         !ArraySize->isValueDependent() &&
         !ArraySize->isIntegerConstantExpr(Context))
-      Diag(Loc, diag::ext_vla);
+      Diag(Loc, getLangOptions().CPlusPlus? diag::err_vla_cxx : diag::ext_vla);
     else if (ASM != ArrayType::Normal || Quals != 0)
-      Diag(Loc, diag::ext_c99_array_usage);
+      Diag(Loc, 
+           getLangOptions().CPlusPlus? diag::err_c99_array_usage_cxx
+                                     : diag::ext_c99_array_usage);
   }
 
   return T;

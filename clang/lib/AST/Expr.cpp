@@ -1331,7 +1331,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::VAArgExprClass:
   case Expr::AddrLabelExprClass:
   case Expr::StmtExprClass:
-  case Expr::GNUNullExprClass:
   case Expr::CXXMemberCallExprClass:
   case Expr::CXXDynamicCastExprClass:
   case Expr::CXXTypeidExprClass:
@@ -1367,6 +1366,10 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::NoStmtClass:
   case Expr::ExprClass:
     return ICEDiag(2, E->getLocStart());
+      
+  case Expr::GNUNullExprClass:
+    // GCC considers the GNU __null value to be an integral constant expression.
+    return NoDiag();
       
   case Expr::ParenExprClass:
     return CheckICE(cast<ParenExpr>(E)->getSubExpr(), Ctx);

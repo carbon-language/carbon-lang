@@ -326,24 +326,30 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     Skip = 1;
   }
 
+  // Every dimension shall be of constant size.
+  if (D.getNumTypeObjects() > 0 && 
+      D.getTypeObject(0).Kind == DeclaratorChunk::Array) {
+    for (unsigned I = 1, N = D.getNumTypeObjects(); I < N; ++I) {
+      if (D.getTypeObject(I).Kind != DeclaratorChunk::Array)
+        break;
+
+      DeclaratorChunk::ArrayTypeInfo &Array = D.getTypeObject(I).Arr;
+      if (Expr *NumElts = (Expr *)Array.NumElts) {
+        if (!NumElts->isTypeDependent() && !NumElts->isValueDependent() &&
+            !NumElts->isIntegerConstantExpr(Context)) {
+          Diag(D.getTypeObject(I).Loc, diag::err_new_array_nonconst)
+            << NumElts->getSourceRange();
+          return ExprError();
+        }
+      }
+    }
+  }
+  
   //FIXME: Store DeclaratorInfo in CXXNew expression.
   DeclaratorInfo *DInfo = 0;
   QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, &DInfo, Skip);
   if (D.isInvalidType())
     return ExprError();
-
-  // Every dimension shall be of constant size.
-  unsigned i = 1;
-  QualType ElementType = AllocType;
-  while (const ArrayType *Array = Context.getAsArrayType(ElementType)) {
-    if (!Array->isConstantArrayType()) {
-      Diag(D.getTypeObject(i).Loc, diag::err_new_array_nonconst)
-        << static_cast<Expr*>(D.getTypeObject(i).Arr.NumElts)->getSourceRange();
-      return ExprError();
-    }
-    ElementType = Array->getElementType();
-    ++i;
-  }
 
   return BuildCXXNew(StartLoc, UseGlobal,
                      PlacementLParen,
