@@ -458,6 +458,10 @@ def ADD64mi32 : RIi32<0x81, MRM0m, (outs), (ins i64mem:$dst, i64i32imm :$src2),
                 (implicit EFLAGS)]>;
 
 let Uses = [EFLAGS] in {
+
+def ADC64i32 : RI<0x15, RawFrm, (outs), (ins i32imm:$src),
+                  "adc{q}\t{$src, %rax|%rax, $src}", []>;
+
 let isTwoAddress = 1 in {
 let isCommutable = 1 in
 def ADC64rr  : RI<0x11, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
@@ -513,6 +517,9 @@ def SUB64ri32 : RIi32<0x81, MRM5r, (outs GR64:$dst),
                        (implicit EFLAGS)]>;
 } // isTwoAddress
 
+def SUB64i32 : RI<0x2D, RawFrm, (outs), (ins i32imm:$src),
+                  "sub{q}\t{$src, %rax|%rax, $src}", []>;
+
 // Memory-Register Subtraction
 def SUB64mr  : RI<0x29, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
                   "sub{q}\t{$src2, $dst|$dst, $src2}",
@@ -548,6 +555,9 @@ def SBB64ri32 : RIi32<0x81, MRM3r, (outs GR64:$dst), (ins GR64:$src1, i64i32imm:
                       "sbb{q}\t{$src2, $dst|$dst, $src2}",
                       [(set GR64:$dst, (sube GR64:$src1, i64immSExt32:$src2))]>;
 } // isTwoAddress
+
+def SBB64i32 : RI<0x1D, RawFrm, (outs), (ins i32imm:$src),
+                  "sbb{q}\t{$src, %rax|%rax, $src}", []>;
 
 def SBB64mr  : RI<0x19, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
                   "sbb{q}\t{$src2, $dst|$dst, $src2}",
@@ -969,6 +979,9 @@ def OR64mi32 : RIi32<0x81, MRM1m, (outs), (ins i64mem:$dst, i64i32imm:$src),
                      "or{q}\t{$src, $dst|$dst, $src}",
               [(store (or (loadi64 addr:$dst), i64immSExt32:$src), addr:$dst),
                (implicit EFLAGS)]>;
+
+def OR64i32 : RIi32<0x0D, RawFrm, (outs), (ins i32imm:$src),
+                    "or{q}\t{$src, %rax|%rax, $src}", []>;
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in

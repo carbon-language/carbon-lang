@@ -1786,6 +1786,13 @@ let isTwoAddress = 0 in {
                  "or{l}\t{$src, $dst|$dst, $src}",
                  [(store (or (load addr:$dst), i32immSExt8:$src), addr:$dst),
                   (implicit EFLAGS)]>;
+                  
+  def OR8i8 : Ii8 <0x0C, RawFrm, (outs), (ins i8imm:$src),
+                   "or{b}\t{$src, %al|%al, $src}", []>;
+  def OR16i16 : Ii16 <0x0D, RawFrm, (outs), (ins i16imm:$src),
+                      "or{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+  def OR32i32 : Ii32 <0x0D, RawFrm, (outs), (ins i32imm:$src),
+                      "or{l}\t{$src, %eax|%eax, $src}", []>;
 } // isTwoAddress = 0
 
 
@@ -2539,6 +2546,13 @@ let isTwoAddress = 0 in {
   def ADC32mi8 : Ii8<0x83, MRM2m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
                      "adc{l}\t{$src2, $dst|$dst, $src2}",
                [(store (adde (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
+
+  def ADC8i8 : Ii8<0x14, RawFrm, (outs), (ins i8imm:$src),
+                   "adc{b}\t{$src, %al|%al, $src}", []>;
+  def ADC16i16 : Ii16<0x15, RawFrm, (outs), (ins i16imm:$src),
+                      "adc{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+  def ADC32i32 : Ii32<0x15, RawFrm, (outs), (ins i32imm:$src),
+                      "adc{l}\t{$src, %eax|%eax, $src}", []>;
 }
 } // Uses = [EFLAGS]
 
@@ -2638,6 +2652,13 @@ let isTwoAddress = 0 in {
                      [(store (sub (load addr:$dst), i32immSExt8:$src2),
                              addr:$dst),
                       (implicit EFLAGS)]>;
+                      
+  def SUB8i8 : Ii8<0x2C, RawFrm, (outs), (ins i8imm:$src),
+                   "sub{b}\t{$src, %al|%al, $src}", []>;
+  def SUB16i16 : Ii16<0x2D, RawFrm, (outs), (ins i16imm:$src),
+                      "sub{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+  def SUB32i32 : Ii32<0x2D, RawFrm, (outs), (ins i32imm:$src),
+                      "sub{l}\t{$src, %eax|%eax, $src}", []>;
 }
 
 let Uses = [EFLAGS] in {
@@ -2682,6 +2703,13 @@ let isTwoAddress = 0 in {
   def SBB32mi8 : Ii8<0x83, MRM3m, (outs), (ins i32mem:$dst, i32i8imm :$src2), 
                      "sbb{l}\t{$src2, $dst|$dst, $src2}",
                [(store (sube (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
+               
+  def SBB8i8 : Ii8<0x1C, RawFrm, (outs), (ins i8imm:$src),
+                   "sbb{b}\t{$src, %al|%al, $src}", []>;
+  def SBB16i16 : Ii16<0x1D, RawFrm, (outs), (ins i16imm:$src),
+                      "sbb{w}\t{$src, %ax|%ax, $src}", []>, OpSize;
+  def SBB32i32 : Ii32<0x1D, RawFrm, (outs), (ins i32imm:$src),
+                      "sbb{l}\t{$src, %eax|%eax, $src}", []>;
 }
 def SBB8rm   : I<0x1A, MRMSrcMem, (outs GR8:$dst), (ins GR8:$src1, i8mem:$src2),
                     "sbb{b}\t{$src2, $dst|$dst, $src2}",
