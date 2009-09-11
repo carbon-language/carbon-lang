@@ -1,5 +1,5 @@
-; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: llvm-as -o - %s | llc -march=cellspu -mattr=large_mem > %t2.s
+; RUN: llc < %s -march=cellspu > %t1.s
+; RUN: llc < %s -march=cellspu -mattr=large_mem > %t2.s
 ; RUN: grep bisl    %t1.s | count 7
 ; RUN: grep ila     %t1.s | count 1
 ; RUN: grep rotqby  %t1.s | count 6

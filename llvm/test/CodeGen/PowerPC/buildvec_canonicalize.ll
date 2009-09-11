@@ -1,11 +1,9 @@
 ; There should be exactly one vxor here.
-; RUN: llvm-as < %s | \
-; RUN:   llc -march=ppc32 -mcpu=g5 --enable-unsafe-fp-math | \
+; RUN: llc < %s -march=ppc32 -mcpu=g5 --enable-unsafe-fp-math | \
 ; RUN:   grep vxor | count 1
 
 ; There should be exactly one vsplti here.
-; RUN: llvm-as < %s | \
-; RUN:   llc -march=ppc32 -mcpu=g5 --enable-unsafe-fp-math | \
+; RUN: llc < %s -march=ppc32 -mcpu=g5 --enable-unsafe-fp-math | \
 ; RUN:   grep vsplti | count 1
 
 define void @VXOR(<4 x float>* %P1, <4 x i32>* %P2, <4 x float>* %P3) {

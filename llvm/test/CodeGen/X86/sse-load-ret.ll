@@ -1,7 +1,5 @@
-; RUN: llvm-as < %s | \
-; RUN:   llc -march=x86 -mcpu=yonah | not grep movss
-; RUN: llvm-as < %s | \
-; RUN:   llc -march=x86 -mcpu=yonah | not grep xmm
+; RUN: llc < %s -march=x86 -mcpu=yonah | not grep movss
+; RUN: llc < %s -march=x86 -mcpu=yonah | not grep xmm
 
 define double @test1(double* %P) {
         %X = load double* %P            ; <double> [#uses=1]

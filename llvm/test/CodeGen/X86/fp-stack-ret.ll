@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | \
-; RUN:   llc -mtriple=i686-apple-darwin8 -mcpu=yonah -march=x86 > %t
+; RUN: llc < %s -mtriple=i686-apple-darwin8 -mcpu=yonah -march=x86 > %t
 ; RUN: grep fldl %t | count 1
 ; RUN: not grep xmm %t
 ; RUN: grep {sub.*esp} %t | count 1

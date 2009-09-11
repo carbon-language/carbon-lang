@@ -1,4 +1,4 @@
-; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
+; RUN: llc < %s -march=cellspu > %t1.s
 ; RUN: grep lqa        %t1.s | count 13
 ; RUN: grep ilhu       %t1.s | count 15
 ; RUN: grep ila        %t1.s | count 1

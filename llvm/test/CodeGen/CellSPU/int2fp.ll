@@ -1,4 +1,4 @@
-; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
+; RUN: llc < %s -march=cellspu > %t1.s
 ; RUN: grep csflt %t1.s | count 5
 ; RUN: grep cuflt %t1.s | count 1
 ; RUN: grep xshw  %t1.s | count 2

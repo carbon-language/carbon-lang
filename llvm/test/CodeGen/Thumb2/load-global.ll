@@ -1,11 +1,7 @@
-; RUN: llvm-as < %s | \
-; RUN:   llc -mtriple=thumbv7-apple-darwin -relocation-model=static | FileCheck %s -check-prefix=STATIC
-; RUN: llvm-as < %s | \
-; RUN:   llc -mtriple=thumbv7-apple-darwin -relocation-model=dynamic-no-pic | FileCheck %s -check-prefix=DYNAMIC
-; RUN: llvm-as < %s | \
-; RUN:   llc -mtriple=thumbv7-apple-darwin -relocation-model=pic | FileCheck %s -check-prefix=PIC
-; RUN: llvm-as < %s | \
-; RUN:   llc -mtriple=thumbv7-linux-gnueabi -relocation-model=pic | FileCheck %s -check-prefix=LINUX
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -relocation-model=static | FileCheck %s -check-prefix=STATIC
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -relocation-model=dynamic-no-pic | FileCheck %s -check-prefix=DYNAMIC
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -relocation-model=pic | FileCheck %s -check-prefix=PIC
+; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi -relocation-model=pic | FileCheck %s -check-prefix=LINUX
 
 @G = external global i32
 

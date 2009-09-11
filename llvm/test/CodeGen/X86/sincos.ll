@@ -1,9 +1,7 @@
 ; Make sure this testcase codegens to the sin and cos instructions, not calls
-; RUN: llvm-as < %s | \
-; RUN:   llc -march=x86 -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math  | \
+; RUN: llc < %s -march=x86 -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math  | \
 ; RUN:   grep sin\$ | count 3
-; RUN: llvm-as < %s | \
-; RUN:   llc -march=x86 -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math  | \
+; RUN: llc < %s -march=x86 -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math  | \
 ; RUN:   grep cos\$ | count 3
 
 declare float  @sinf(float)

@@ -1,9 +1,7 @@
-; RUN: llvm-as < %s | \
-; RUN:   llc -march=sparc -mattr=v9 -enable-sparc-v9-insts
+; RUN: llc < %s -march=sparc -mattr=v9 -enable-sparc-v9-insts
 ; RUN: llc < %s -march=sparc -mattr=-v9 | \
 ; RUN:   not grep popc
-; RUN: llvm-as < %s | \
-; RUN:   llc -march=sparc -mattr=v9 -enable-sparc-v9-insts | grep popc
+; RUN: llc < %s -march=sparc -mattr=v9 -enable-sparc-v9-insts | grep popc
 
 declare i32 @llvm.ctpop.i32(i32)
 

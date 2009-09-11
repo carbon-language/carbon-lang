@@ -1,5 +1,5 @@
-; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: llvm-as -o - %s | llc -march=cellspu -mattr=large_mem > %t2.s
+; RUN: llc < %s -march=cellspu > %t1.s
+; RUN: llc < %s -march=cellspu -mattr=large_mem > %t2.s
 ; RUN: grep -w il  %t1.s | count 3
 ; RUN: grep ilhu   %t1.s | count 8
 ; RUN: grep -w ilh %t1.s | count 5

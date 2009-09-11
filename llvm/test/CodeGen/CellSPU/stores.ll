@@ -1,4 +1,4 @@
-; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
+; RUN: llc < %s -march=cellspu > %t1.s
 ; RUN: grep {stqd.*0(\$3)}      %t1.s | count 4
 ; RUN: grep {stqd.*16(\$3)}     %t1.s | count 4
 ; RUN: grep 16256               %t1.s | count 2

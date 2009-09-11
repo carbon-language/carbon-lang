@@ -1,5 +1,5 @@
-; RUN: llvm-as %s -o - | llc -march=x86 -mattr=+sse2 -mcpu=yonah | not grep movd
-; RUN: llvm-as %s -o - | llc -march=x86-64 -mattr=+sse2 -mcpu=core2 | not grep movd
+; RUN: llc < %s -march=x86 -mattr=+sse2 -mcpu=yonah | not grep movd
+; RUN: llc < %s -march=x86-64 -mattr=+sse2 -mcpu=core2 | not grep movd
 
 define i32 @t(<2 x i64>* %val) nounwind  {
 	%tmp2 = load <2 x i64>* %val, align 16		; <<2 x i64>> [#uses=1]

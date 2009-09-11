@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s | \
-; RUN:   llc -march=x86 -relocation-model=static | not grep {subl.*%esp}
+; RUN: llc < %s -march=x86 -relocation-model=static | not grep {subl.*%esp}
 
 @A = external global i16*		; <i16**> [#uses=1]
 @B = external global i32		; <i32*> [#uses=1]

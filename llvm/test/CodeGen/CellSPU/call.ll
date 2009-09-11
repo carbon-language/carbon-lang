@@ -1,4 +1,4 @@
-; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
+; RUN: llc < %s -march=cellspu > %t1.s
 ; RUN: grep brsl    %t1.s | count 1
 ; RUN: grep brasl   %t1.s | count 1
 ; RUN: grep stqd    %t1.s | count 80
