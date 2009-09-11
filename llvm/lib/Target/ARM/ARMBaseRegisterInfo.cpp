@@ -164,42 +164,46 @@ ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 const TargetRegisterClass* const *
 ARMBaseRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
   static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
+    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
+    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
+    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
 
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass,
     0
   };
 
   static const TargetRegisterClass * const ThumbCalleeSavedRegClasses[] = {
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::tGPRRegClass,
-    &ARM::tGPRRegClass,&ARM::tGPRRegClass,&ARM::tGPRRegClass,
+    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
+    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::tGPRRegisterClass,
+    ARM::tGPRRegisterClass,ARM::tGPRRegisterClass,ARM::tGPRRegisterClass,
 
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass,
     0
   };
 
   static const TargetRegisterClass * const DarwinCalleeSavedRegClasses[] = {
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass, &ARM::GPRRegClass,
+    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
+    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
+    ARM::GPRRegisterClass, ARM::GPRRegisterClass,
 
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass,
     0
   };
 
   static const TargetRegisterClass * const DarwinThumbCalleeSavedRegClasses[] ={
-    &ARM::GPRRegClass,  &ARM::tGPRRegClass, &ARM::tGPRRegClass,
-    &ARM::tGPRRegClass, &ARM::tGPRRegClass, &ARM::GPRRegClass,
-    &ARM::GPRRegClass,  &ARM::GPRRegClass,
+    ARM::GPRRegisterClass,  ARM::tGPRRegisterClass, ARM::tGPRRegisterClass,
+    ARM::tGPRRegisterClass, ARM::tGPRRegisterClass, ARM::GPRRegisterClass,
+    ARM::GPRRegisterClass,  ARM::GPRRegisterClass,
 
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
-    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    ARM::DPRRegisterClass, ARM::DPRRegisterClass,
     0
   };
 
@@ -245,7 +249,7 @@ bool ARMBaseRegisterInfo::isReservedReg(const MachineFunction &MF,
 
 const TargetRegisterClass *
 ARMBaseRegisterInfo::getPointerRegClass(unsigned Kind) const {
-  return &ARM::GPRRegClass;
+  return ARM::GPRRegisterClass;
 }
 
 /// getAllocationOrder - Returns the register allocation order for a specified
@@ -536,7 +540,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       }
     }
 
-    if (CSRegClasses[i] == &ARM::GPRRegClass) {
+    if (CSRegClasses[i] == ARM::GPRRegisterClass) {
       if (Spilled) {
         NumGPRSpills++;
 
@@ -680,7 +684,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
           }
         } else {
           // Reserve a slot closest to SP or frame pointer.
-          const TargetRegisterClass *RC = &ARM::GPRRegClass;
+          const TargetRegisterClass *RC = ARM::GPRRegisterClass;
           RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),
                                                            RC->getAlignment()));
         }
@@ -1068,10 +1072,10 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // If the offset we have is too large to fit into the instruction, we need
   // to form it with a series of ADDri's.  Do this by taking 8-bit chunks
   // out of 'Offset'.
-  unsigned ScratchReg = findScratchRegister(RS, &ARM::GPRRegClass, AFI);
+  unsigned ScratchReg = findScratchRegister(RS, ARM::GPRRegisterClass, AFI);
   if (ScratchReg == 0)
     // No register is "free". Scavenge a register.
-    ScratchReg = RS->scavengeRegister(&ARM::GPRRegClass, II, SPAdj);
+    ScratchReg = RS->scavengeRegister(ARM::GPRRegisterClass, II, SPAdj);
   int PIdx = MI.findFirstPredOperandIdx();
   ARMCC::CondCodes Pred = (PIdx == -1)
     ? ARMCC::AL : (ARMCC::CondCodes)MI.getOperand(PIdx).getImm();

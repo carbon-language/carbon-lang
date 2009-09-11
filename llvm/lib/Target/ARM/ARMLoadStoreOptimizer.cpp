@@ -942,7 +942,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         // First advance to the instruction just before the start of the chain.
         AdvanceRS(MBB, MemOps);
         // Find a scratch register.
-        unsigned Scratch = RS->FindUnusedReg(&ARM::GPRRegClass);
+        unsigned Scratch = RS->FindUnusedReg(ARM::GPRRegisterClass);
         // Process the load / store instructions.
         RS->forward(prior(MBBI));
 
