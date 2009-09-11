@@ -175,8 +175,8 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   // FIXME: The cast here is a huge hack.
   if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(StartLoc);
-    if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
-      DI->EmitFunctionStart(CGM.getMangledName(FD), RetTy, CurFn, Builder);
+    if (isa<FunctionDecl>(D)) {
+      DI->EmitFunctionStart(CGM.getMangledName(GD), RetTy, CurFn, Builder);
     } else {
       // Just use LLVM function name.
 
