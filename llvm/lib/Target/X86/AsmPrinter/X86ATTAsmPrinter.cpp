@@ -318,12 +318,30 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       Name = "__imp_" + Name;
     
     if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
-        MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE)
-      GVStubs[Name] = Mang->getMangledName(GV);
-    else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
+        MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE) {
+      SmallString<128> NameStr;
+      Mang->getNameWithPrefix(NameStr, GV, true);
+      NameStr += "$non_lazy_ptr";
+      MCSymbol *Sym = OutContext.GetOrCreateSymbol(NameStr.str());
+      MCSymbol *&StubSym = GVStubs[Sym];
+      if (StubSym == 0) {
+        NameStr.clear();
+        Mang->getNameWithPrefix(NameStr, GV, false);
+        StubSym = OutContext.GetOrCreateSymbol(NameStr.str());
+      }
+    } else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
       HiddenGVStubs[Name] = Mang->getMangledName(GV);
-    else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      FnStubs.insert(OutContext.GetOrCreateSymbol(Name));
+    } else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
+      SmallString<128> NameStr;
+      Mang->getNameWithPrefix(NameStr, GV, true);
+      NameStr += "$stub";
+      MCSymbol *Sym = OutContext.GetOrCreateSymbol(NameStr.str());
+      MCSymbol *&StubSym = FnStubs[Sym];
+      if (StubSym == 0) {
+        NameStr.clear();
+        Mang->getNameWithPrefix(NameStr, GV, false);
+        StubSym = OutContext.GetOrCreateSymbol(NameStr.str());
+      }
     }
     
     // If the name begins with a dollar-sign, enclose it in parens.  We do this
@@ -340,7 +358,11 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     std::string Name = Mang->makeNameProper(MO.getSymbolName());
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
       Name += "$stub";
-      FnStubs.insert(OutContext.GetOrCreateSymbol(Name));
+      MCSymbol *&StubSym = FnStubs[OutContext.GetOrCreateSymbol(Name)];
+      if (StubSym == 0) {
+        Name.erase(Name.end()-5, Name.end());
+        StubSym = OutContext.GetOrCreateSymbol(Name);
+      }
     }
     
     // If the name begins with a dollar-sign, enclose it in parens.  We do this
@@ -868,10 +890,21 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     if (MAI->doesSupportExceptionHandling() && MMI && !Subtarget->is64Bit()) {
       const std::vector<Function*> &Personalities = MMI->getPersonalities();
       for (unsigned i = 0, e = Personalities.size(); i != e; ++i) {
-        if (Personalities[i])
-          GVStubs[Mang->getMangledName(Personalities[i], "$non_lazy_ptr",
-                                       true /*private label*/)] = 
-            Mang->getMangledName(Personalities[i]);
+        if (Personalities[i] == 0)
+          continue;
+        
+        SmallString<128> Name;
+        Mang->getNameWithPrefix(Name, Personalities[i], true /*private label*/);
+        Name += "$non_lazy_ptr";
+        MCSymbol *NLPName = OutContext.GetOrCreateSymbol(Name.str());
+
+        MCSymbol *&StubName = GVStubs[NLPName];
+        if (StubName != 0) continue;
+        
+
+        Name.clear();
+        Mang->getNameWithPrefix(Name, Personalities[i], false);
+        StubName = OutContext.GetOrCreateSymbol(Name.str());
       }
     }
 
@@ -885,17 +918,12 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
                                   5, SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
       // FIXME: This iteration order is unstable!!
-      for (SmallPtrSet<MCSymbol*, 16>::iterator I = FnStubs.begin(),
+      for (DenseMap<MCSymbol*, MCSymbol*>::iterator I = FnStubs.begin(),
            E = FnStubs.end(); I != E; ++I) {
-        MCSymbol *Sym = *I;
-        Sym->print(O, MAI);
-        
+        I->first->print(O, MAI);
         O << ":\n" << "\t.indirect_symbol ";
-
         // Get the MCSymbol without the $stub suffix.
-        Sym = OutContext.GetOrCreateSymbol(StringRef(Sym->getName()).substr(0,
-                                                     Sym->getName().size()-5));
-        Sym->print(O, MAI);
+        I->second->print(O, MAI);
         O << "\n\thlt ; hlt ; hlt ; hlt ; hlt\n";
       }
       O << '\n';
@@ -908,10 +936,14 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
                                   MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
                                   SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
-      for (StringMap<std::string>::iterator I = GVStubs.begin(),
-           E = GVStubs.end(); I != E; ++I)
-        O << I->getKeyData() << ":\n\t.indirect_symbol "
-          << I->second << "\n\t.long\t0\n";
+      // FIXME: This iteration order is unstable!!
+      for (DenseMap<MCSymbol*, MCSymbol*>::iterator I = GVStubs.begin(),
+           E = GVStubs.end(); I != E; ++I) {
+        I->first->print(O, MAI);
+        O << ":\n\t.indirect_symbol ";
+        I->second->print(O, MAI);
+        O << "\n\t.long\t0\n";
+      }
     }
 
     if (!HiddenGVStubs.empty()) {

@@ -70,10 +70,18 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
     break;
   }
   case X86II::MO_DARWIN_NONLAZY:
-  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
+  case X86II::MO_DARWIN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
-    GVStubs[Name.str()] = StringRef(Name.data(), Name.size()-13);
-    break;
+    MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
+    MCSymbol *&StubSym = GVStubs[Sym];
+    if (StubSym == 0) {
+      Name.clear();
+      Mang->getNameWithPrefix(Name, GV, false);
+      StubSym = OutContext.GetOrCreateSymbol(Name.str());
+    }
+    return Sym;
+    
+  }
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
     Name += "$non_lazy_ptr";
     HiddenGVStubs[Name.str()] = StringRef(Name.data(), Name.size()-13);
@@ -81,7 +89,12 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
     MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
-    FnStubs.insert(Sym);
+    MCSymbol *&StubSym = FnStubs[Sym];
+    if (StubSym == 0) {
+      Name.clear();
+      Mang->getNameWithPrefix(Name, GV, false);
+      StubSym = OutContext.GetOrCreateSymbol(Name.str());
+    }
     return Sym;
   }
   // FIXME: These probably should be a modifier on the symbol or something??
@@ -119,7 +132,11 @@ MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
     MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
-    FnStubs.insert(Sym);
+    MCSymbol *&StubSym = FnStubs[Sym];
+    if (StubSym == 0) {
+      Name.erase(Name.end()-5, Name.end());
+      StubSym = OutContext.GetOrCreateSymbol(Name.str());
+    }
     return Sym;
   }
   // FIXME: These probably should be a modifier on the symbol or something??
