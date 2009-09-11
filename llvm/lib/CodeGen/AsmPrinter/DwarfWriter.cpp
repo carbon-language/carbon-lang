@@ -51,6 +51,8 @@ void DwarfWriter::BeginModule(Module *M,
 void DwarfWriter::EndModule() {
   DE->EndModule();
   DD->EndModule();
+  delete DD; DD = 0;
+  delete DE; DE = 0;
 }
 
 /// BeginFunction - Gather pre-function debug information.  Assumes being
