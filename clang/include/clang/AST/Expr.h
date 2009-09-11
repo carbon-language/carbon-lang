@@ -363,7 +363,8 @@ private:
   IdentType Type;
 public:
   PredefinedExpr(SourceLocation l, QualType type, IdentType IT)
-    : Expr(PredefinedExprClass, type), Loc(l), Type(IT) {}
+    : Expr(PredefinedExprClass, type, type->isDependentType(), 
+           type->isDependentType()), Loc(l), Type(IT) {}
 
   /// \brief Construct an empty predefined expression.
   explicit PredefinedExpr(EmptyShell Empty)

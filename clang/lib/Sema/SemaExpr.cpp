@@ -1157,12 +1157,17 @@ Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
     currentDecl = Context.getTranslationUnitDecl();
   }
 
-  unsigned Length =
-    PredefinedExpr::ComputeName(Context, IT, currentDecl).length();
+  QualType ResTy;
+  if (cast<DeclContext>(currentDecl)->isDependentContext()) {
+    ResTy = Context.DependentTy;
+  } else {
+    unsigned Length =
+      PredefinedExpr::ComputeName(Context, IT, currentDecl).length();
 
-  llvm::APInt LengthI(32, Length + 1);
-  QualType ResTy = Context.CharTy.getQualifiedType(QualType::Const);
-  ResTy = Context.getConstantArrayType(ResTy, LengthI, ArrayType::Normal, 0);
+    llvm::APInt LengthI(32, Length + 1);
+    ResTy = Context.CharTy.getQualifiedType(QualType::Const);
+    ResTy = Context.getConstantArrayType(ResTy, LengthI, ArrayType::Normal, 0);
+  }
   return Owned(new (Context) PredefinedExpr(Loc, ResTy, IT));
 }
 
