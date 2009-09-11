@@ -170,13 +170,12 @@ void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
   // If the global is anonymous or not led with \1, then add the appropriate
   // prefix.
   if (!GV->hasName() || GV->getName()[0] != '\1') {
-    OutName.append(Prefix, Prefix+strlen(Prefix));
-    
     if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
       OutName.append(PrivatePrefix, PrivatePrefix+strlen(PrivatePrefix));
     else if (GV->hasLinkerPrivateLinkage())
       OutName.append(LinkerPrivatePrefix,
                      LinkerPrivatePrefix+strlen(LinkerPrivatePrefix));;
+    OutName.append(Prefix, Prefix+strlen(Prefix));
   }
 
   // If the global has a name, just append it now.
