@@ -35,6 +35,7 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
     HasTrivialCopyConstructor(true), HasTrivialCopyAssignment(true),
     HasTrivialDestructor(true), Bases(0), NumBases(0), VBases(0), NumVBases(0),
     Conversions(DC, DeclarationName()),
+    VisibleConversions(DC, DeclarationName()),
     TemplateOrInstantiation() { }
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
@@ -280,6 +281,89 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
   //   A POD-struct is an aggregate class that [...] has no user-defined copy
   //   assignment operator [...].
   PlainOldData = false;
+}
+
+/// getVisibleConversionFunctions - get all conversion functions visible
+/// in current class; including conversion function templates.
+OverloadedFunctionDecl *
+CXXRecordDecl::getVisibleConversionFunctions(ASTContext &Context,
+                                             CXXRecordDecl *RD) {
+  // If visible conversion list is already evaluated, return it.
+  if (RD == this &&
+      VisibleConversions.function_begin() != VisibleConversions.function_end())
+    return &VisibleConversions;
+    
+  QualType ClassType = Context.getTypeDeclType(this);
+  if (const RecordType *Record = ClassType->getAs<RecordType>()) {
+    OverloadedFunctionDecl *Conversions
+      = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
+    for (OverloadedFunctionDecl::function_iterator
+         Func = Conversions->function_begin(),
+         FuncEnd = Conversions->function_end();
+         Func != FuncEnd; ++Func) {
+      if (FunctionTemplateDecl *ConversionTemplate = 
+            dyn_cast<FunctionTemplateDecl>(*Func)) {
+        RD->addVisibleConversionFunction(Context, ConversionTemplate);
+        continue;
+      }
+      CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
+      bool Candidate = true;
+      // Only those conversions not exact match of conversions in current
+      // class are candidateconversion routines.
+      if (RD != this) {
+        OverloadedFunctionDecl *TopConversions = RD->getConversionFunctions();
+        QualType ConvType = Context.getCanonicalType(Conv->getType());
+        for (OverloadedFunctionDecl::function_iterator
+             TFunc = TopConversions->function_begin(),
+             TFuncEnd = TopConversions->function_end();
+             TFunc != TFuncEnd; ++TFunc) {
+          CXXConversionDecl *TopConv = cast<CXXConversionDecl>(*TFunc);
+          QualType TConvType = Context.getCanonicalType(TopConv->getType());
+          if (ConvType == TConvType) {
+            Candidate = false;
+            break;
+          }
+        }
+      }
+      if (Candidate) {
+        if (FunctionTemplateDecl *ConversionTemplate
+              = Conv->getDescribedFunctionTemplate())
+          RD->addVisibleConversionFunction(Context, ConversionTemplate);
+        else if (!Conv->getPrimaryTemplate()) // ignore specializations
+          RD->addVisibleConversionFunction(Context, Conv);
+      }
+    }
+  }
+  
+  for (CXXRecordDecl::base_class_iterator VBase = vbases_begin(),
+       E = vbases_end(); VBase != E; ++VBase) {
+    CXXRecordDecl *VBaseClassDecl
+      = cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
+    VBaseClassDecl->getVisibleConversionFunctions(Context, RD);
+  }
+  for (CXXRecordDecl::base_class_iterator Base = bases_begin(),
+       E = bases_end(); Base != E; ++Base) {
+    if (Base->isVirtual())
+      continue;
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    BaseClassDecl->getVisibleConversionFunctions(Context, RD);
+  }
+  return &VisibleConversions;
+}
+
+void CXXRecordDecl::addVisibleConversionFunction(ASTContext &Context,
+                                          CXXConversionDecl *ConvDecl) {
+  assert(!ConvDecl->getDescribedFunctionTemplate() &&
+         "Conversion function templates should cast to FunctionTemplateDecl.");
+  VisibleConversions.addOverload(ConvDecl);
+}
+
+void CXXRecordDecl::addVisibleConversionFunction(ASTContext &Context,
+                                          FunctionTemplateDecl *ConvDecl) {
+  assert(isa<CXXConversionDecl>(ConvDecl->getTemplatedDecl()) &&
+         "Function template is not a conversion function template");
+  VisibleConversions.addOverload(ConvDecl);
 }
 
 void CXXRecordDecl::addConversionFunction(ASTContext &Context,

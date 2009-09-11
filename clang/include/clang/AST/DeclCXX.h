@@ -367,9 +367,15 @@ class CXXRecordDecl : public RecordDecl {
   /// Conversions - Overload set containing the conversion functions
   /// of this C++ class (but not its inherited conversion
   /// functions). Each of the entries in this overload set is a
-  /// CXXConversionDecl.
+  /// CXXConversionDecl. 
   OverloadedFunctionDecl Conversions;
 
+  /// VisibleConversions - Overload set containing the conversion functions
+  /// of this C++ class and all those inherited conversion functions that
+  /// are visible in this class. Each of the entries in this overload set is
+  /// a CXXConversionDecl or a FunctionTemplateDecl.
+  OverloadedFunctionDecl VisibleConversions;
+  
   /// \brief The template or declaration that this declaration
   /// describes or was instantiated from, respectively.
   ///
@@ -570,6 +576,20 @@ public:
     return &Conversions;
   }
 
+  /// getVisibleConversionFunctions - get all conversion functions visible
+  /// in current class; including conversion function templates.
+  OverloadedFunctionDecl *getVisibleConversionFunctions(ASTContext &Context,
+                                                        CXXRecordDecl *RD);
+  /// addVisibleConversionFunction - Add a new conversion function to the
+  /// list of visible conversion functions.
+  void addVisibleConversionFunction(ASTContext &Context, 
+                                    CXXConversionDecl *ConvDecl);
+  
+  /// \brief Add a new conversion function template to the list of visible
+  /// conversion functions.
+  void addVisibleConversionFunction(ASTContext &Context,
+                                    FunctionTemplateDecl *ConvDecl);
+  
   /// addConversionFunction - Add a new conversion function to the
   /// list of conversion functions.
   void addConversionFunction(ASTContext &Context, CXXConversionDecl *ConvDecl);

@@ -736,11 +736,11 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     QualType Type = Ex->getType();
 
     if (const RecordType *Record = Type->getAs<RecordType>()) {
-      // FIXME: Inherited conversion functions!
       llvm::SmallVector<CXXConversionDecl *, 4> ObjectPtrConversions;
+      CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
+      OverloadedFunctionDecl *Conversions = 
+        RD->getVisibleConversionFunctions(Context, RD);
       
-      OverloadedFunctionDecl *Conversions
-        = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
       for (OverloadedFunctionDecl::function_iterator
              Func = Conversions->function_begin(),
              FuncEnd = Conversions->function_end();
