@@ -1184,7 +1184,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       Context.getObjCEncodingForType((*iter)->getType(), TypeStr);
       IvarTypes.push_back(MakeConstantString(TypeStr));
       // Get the offset
-      uint64_t Offset;
+      uint64_t Offset = 0;
       uint64_t BaseOffset = ComputeIvarBaseOffset(CGM, ClassDecl, *iter);
       if (CGM.getContext().getLangOptions().ObjCNonFragileABI) {
         Offset = BaseOffset - superInstanceSize;
