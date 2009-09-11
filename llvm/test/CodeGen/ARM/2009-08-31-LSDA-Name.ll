@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin9 -march=arm -f | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-darwin9 -march=arm | FileCheck %s
 
 %struct.A = type { i32* }
 
