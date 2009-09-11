@@ -2206,6 +2206,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       unsigned MinAlign = I->second.second;
       if (Align < MinAlign)
         return NULL;
+      bool NarrowToMOV32rm = false;
       if (Size) {
         unsigned RCSize =  MI->getDesc().OpInfo[i].getRegClass(&RI)->getSize();
         if (Size < RCSize) {
@@ -2216,7 +2217,10 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
           // If this is a 64-bit load, but the spill slot is 32, then we can do
           // a 32-bit load which is implicitly zero-extended. This likely is due
           // to liveintervalanalysis remat'ing a load from stack slot.
+          if (MI->getOperand(0).getSubReg() || MI->getOperand(1).getSubReg())
+            return NULL;
           Opcode = X86::MOV32rm;
+          NarrowToMOV32rm = true;
         }
       }
 
@@ -2224,6 +2228,18 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
         NewMI = FuseTwoAddrInst(MF, Opcode, MOs, MI, *this);
       else
         NewMI = FuseInst(MF, Opcode, i, MOs, MI, *this);
+
+      if (NarrowToMOV32rm) {
+        // If this is the special case where we use a MOV32rm to load a 32-bit
+        // value and zero-extend the top bits. Change the destination register
+        // to a 32-bit one.
+        unsigned DstReg = NewMI->getOperand(0).getReg();
+        if (TargetRegisterInfo::isPhysicalRegister(DstReg))
+          NewMI->getOperand(0).setReg(RI.getSubReg(DstReg,
+                                                   4/*x86_subreg_32bit*/));
+        else
+          NewMI->getOperand(0).setSubReg(4/*x86_subreg_32bit*/);
+      }
       return NewMI;
     }
   }
