@@ -2021,7 +2021,7 @@ Classifications</a> </div>
    Undefined values may be of any type (other than label or void) and be used
    anywhere a constant is permitted.</p>
 
-<p>Undefined values are useful, because it indicates to the compiler that the
+<p>Undefined values are useful because they indicate to the compiler that the
    program is well defined no matter what value is used.  This gives the
    compiler more freedom to optimize.  Here are some examples of (potentially
    surprising) transformations that are valid (in pseudo IR):</p>
@@ -2058,10 +2058,11 @@ Unsafe:
 <p>These logical operations have bits that are not always affected by the input.
 For example, if "%X" has a zero bit, then the output of the 'and' operation will
 always be a zero, no matter what the corresponding bit from the undef is.  As
-such, it is unsafe to optimizer or assume that the result of the and is undef.
-However, it is safe to assume that all bits of the undef are 0, and optimize the
-and to 0.  Likewise, it is safe to assume that all the bits of the undef operand
-to the or could be set, allowing the or to be folded to -1.</p>
+such, it is unsafe to optimize or assume that the result of the and is undef.
+However, it is safe to assume that all bits of the undef could be 0, and 
+optimize the and to 0.  Likewise, it is safe to assume that all the bits of 
+the undef operand to the or could be set, allowing the or to be folded to 
+-1.</p>
 
 <div class="doc_code">
 <pre>
