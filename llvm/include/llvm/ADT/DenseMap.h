@@ -17,10 +17,11 @@
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/DenseMapInfo.h"
+#include <iterator>
+#include <new>
+#include <utility>
 #include <cassert>
 #include <cstring>
-#include <utility>
-#include <new>
 
 namespace llvm {
 
@@ -423,7 +424,9 @@ private:
 };
 
 template<typename KeyT, typename ValueT, typename KeyInfoT, typename ValueInfoT>
-class DenseMapIterator {
+class DenseMapIterator : 
+      public std::iterator<std::forward_iterator_tag, std::pair<KeyT, ValueT>,
+                          ptrdiff_t> {
   typedef std::pair<KeyT, ValueT> BucketT;
 protected:
   const BucketT *Ptr, *End;
