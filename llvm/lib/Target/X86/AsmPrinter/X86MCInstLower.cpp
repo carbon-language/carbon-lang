@@ -92,9 +92,9 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
 }
 
 MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
-  std::string Name = Mang->makeNameProper(MO.getSymbolName());
-  if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
-    Name += "$stub";
+  SmallString<256> Name;
+  Name += MAI->getGlobalPrefix();
+  Name += MO.getSymbolName();
   
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
@@ -102,12 +102,16 @@ MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
   case X86II::MO_GOT_ABSOLUTE_ADDRESS:   // Doesn't modify symbol name.
   case X86II::MO_PIC_BASE_OFFSET:        // Doesn't modify symbol name.
     break;
-  case X86II::MO_DLLIMPORT:
+  case X86II::MO_DLLIMPORT: {
     // Handle dllimport linkage.
-    Name = "__imp_" + Name;
+    const char *Prefix = "__imp_";
+    Name.insert(Name.begin(), Prefix, Prefix+strlen(Prefix));
     break;
+  }
   case X86II::MO_DARWIN_STUB:
-    FnStubs[Name] = Mang->makeNameProper(MO.getSymbolName());
+    // Insert: FnStub["_foo$stub"] = "_foo";
+    Name += "$stub";
+    FnStubs[Name.str()] = StringRef(Name.data(), Name.size()-5);
     break;
     // FIXME: These probably should be a modifier on the symbol or something??
   case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
@@ -121,7 +125,7 @@ MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
   case X86II::MO_PLT:       Name += "@PLT";       break;
   }
   
-  return OutContext.GetOrCreateSymbol(Name);
+  return OutContext.GetOrCreateSymbol(Name.str());
 }
 
 MCSymbol *X86ATTAsmPrinter::GetJumpTableSymbol(const MachineOperand &MO) {
