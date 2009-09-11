@@ -194,9 +194,10 @@ public:
   //  (i.e., (b) could just be set to NULL).
   //
 
-  const GRState *assume(SVal condition, bool assumption) const;
+  const GRState *Assume(DefinedOrUnknownSVal cond, bool assumption) const;
 
-  const GRState *assumeInBound(SVal idx, SVal upperBound,
+  const GRState *AssumeInBound(DefinedOrUnknownSVal idx,
+                               DefinedOrUnknownSVal upperBound,
                                bool assumption) const;
 
   //==---------------------------------------------------------------------==//
@@ -570,13 +571,24 @@ inline const VarRegion* GRState::getRegion(const VarDecl *D,
   return getStateManager().getRegionManager().getVarRegion(D, LC);
 }
 
-inline const GRState *GRState::assume(SVal Cond, bool Assumption) const {
-  return getStateManager().ConstraintMgr->Assume(this, Cond, Assumption);
+inline const GRState *GRState::Assume(DefinedOrUnknownSVal Cond,
+                                      bool Assumption) const {
+  if (Cond.isUnknown())
+    return this;
+  
+  return getStateManager().ConstraintMgr->Assume(this, cast<DefinedSVal>(Cond),
+                                                 Assumption);
 }
 
-inline const GRState *GRState::assumeInBound(SVal Idx, SVal UpperBound,
+inline const GRState *GRState::AssumeInBound(DefinedOrUnknownSVal Idx,
+                                             DefinedOrUnknownSVal UpperBound,
                                              bool Assumption) const {
-  return getStateManager().ConstraintMgr->AssumeInBound(this, Idx, UpperBound, Assumption);
+  if (Idx.isUnknown() || UpperBound.isUnknown())
+    return this;
+
+  ConstraintManager &CM = *getStateManager().ConstraintMgr;
+  return CM.AssumeInBound(this, cast<DefinedSVal>(Idx),
+                           cast<DefinedSVal>(UpperBound), Assumption);
 }
 
 inline const GRState *GRState::bindCompoundLiteral(const CompoundLiteralExpr* CL,

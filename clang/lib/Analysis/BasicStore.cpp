@@ -530,9 +530,9 @@ Store BasicStoreManager::getInitialStore(const LocationContext *InitLoc) {
       // Initialize globals and parameters to symbolic values.
       // Initialize local variables to undefined.
       const MemRegion *R = ValMgr.getRegionManager().getVarRegion(VD, InitLoc);
-      SVal X = R->hasGlobalsOrParametersStorage()
-               ? ValMgr.getRegionValueSymbolVal(R)
-               : UndefinedVal();
+      SVal X = UndefinedVal();
+      if (R->hasGlobalsOrParametersStorage())
+        X = ValMgr.getRegionValueSymbolVal(R);
 
       St = BindInternal(St, ValMgr.makeLoc(R), X);
     }

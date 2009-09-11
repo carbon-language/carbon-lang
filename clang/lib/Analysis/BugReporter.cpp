@@ -1259,8 +1259,11 @@ SourceLocation BugReport::getLocation() const {
   if (EndNode)
     if (const Stmt* S = GetCurrentOrPreviousStmt(EndNode)) {
       // For member expressions, return the location of the '.' or '->'.
-      if (const MemberExpr* ME = dyn_cast<MemberExpr>(S))
+      if (const MemberExpr *ME = dyn_cast<MemberExpr>(S))
         return ME->getMemberLoc();
+      // For binary operators, return the location of the operator.
+      if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S))
+        return B->getOperatorLoc();
 
       return S->getLocStart();
     }

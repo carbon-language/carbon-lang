@@ -232,11 +232,11 @@ static void registerFindLastStore(BugReporterContext& BRC, const MemRegion *R,
 }
 
 class VISIBILITY_HIDDEN TrackConstraintBRVisitor : public BugReporterVisitor {
-  SVal Constraint;
+  DefinedSVal Constraint;
   const bool Assumption;
   bool isSatisfied;
 public:
-  TrackConstraintBRVisitor(SVal constraint, bool assumption)
+  TrackConstraintBRVisitor(DefinedSVal constraint, bool assumption)
   : Constraint(constraint), Assumption(assumption), isSatisfied(false) {}
 
   PathDiagnosticPiece* VisitNode(const ExplodedNode *N,
@@ -247,14 +247,14 @@ public:
 
     // Check if in the previous state it was feasible for this constraint
     // to *not* be true.
-    if (PrevN->getState()->assume(Constraint, !Assumption)) {
+    if (PrevN->getState()->Assume(Constraint, !Assumption)) {
 
       isSatisfied = true;
 
       // As a sanity check, make sure that the negation of the constraint
       // was infeasible in the current state.  If it is feasible, we somehow
       // missed the transition point.
-      if (N->getState()->assume(Constraint, !Assumption))
+      if (N->getState()->Assume(Constraint, !Assumption))
         return NULL;
 
       // We found the transition point for the constraint.  We now need to
@@ -295,7 +295,8 @@ public:
 };
 } // end anonymous namespace
 
-static void registerTrackConstraint(BugReporterContext& BRC, SVal Constraint,
+static void registerTrackConstraint(BugReporterContext& BRC,
+                                    DefinedSVal Constraint,
                                     bool Assumption) {
   BRC.addVisitor(new TrackConstraintBRVisitor(Constraint, Assumption));
 }

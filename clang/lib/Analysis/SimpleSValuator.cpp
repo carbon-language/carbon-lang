@@ -97,8 +97,6 @@ SVal SimpleSValuator::EvalCastL(Loc val, QualType castTy) {
   //   can be introduced by the frontend for corner cases, e.g
   //   casting from va_list* to __builtin_va_list&.
   //
-  assert(!val.isUnknownOrUndef());
-
   if (Loc::IsLocType(castTy) || castTy->isReferenceType())
     return val;
 
@@ -202,10 +200,6 @@ static SVal EvalEquality(ValueManager &ValMgr, Loc lhs, Loc rhs, bool isEqual,
 SVal SimpleSValuator::EvalBinOpNN(BinaryOperator::Opcode op,
                                   NonLoc lhs, NonLoc rhs,
                                   QualType resultTy)  {
-
-  assert(!lhs.isUnknownOrUndef());
-  assert(!rhs.isUnknownOrUndef());
-
   // Handle trivial case where left-side and right-side are the same.
   if (lhs == rhs)
     switch (op) {

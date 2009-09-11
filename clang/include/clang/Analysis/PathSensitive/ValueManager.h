@@ -91,23 +91,27 @@ public:
   }
 
   /// makeZeroVal - Construct an SVal representing '0' for the specified type.
-  SVal makeZeroVal(QualType T);
+  DefinedOrUnknownSVal makeZeroVal(QualType T);
 
   /// getRegionValueSymbolVal - make a unique symbol for value of R.
-  SVal getRegionValueSymbolVal(const MemRegion *R, QualType T = QualType());
+  DefinedOrUnknownSVal getRegionValueSymbolVal(const MemRegion *R,
+                                               QualType T = QualType());
 
-  SVal getRegionValueSymbolValOrUnknown(const MemRegion *R, QualType T) {
-    return SymMgr.canSymbolicate(T) ? getRegionValueSymbolVal(R, T)
-                                    : UnknownVal();
+  DefinedOrUnknownSVal getRegionValueSymbolValOrUnknown(const MemRegion *R,
+                                                        QualType T) {
+    if (SymMgr.canSymbolicate(T))
+      return getRegionValueSymbolVal(R, T);
+    return UnknownVal();
   }
 
-  SVal getConjuredSymbolVal(const Expr *E, unsigned Count);
-  SVal getConjuredSymbolVal(const Expr* E, QualType T, unsigned Count);
+  DefinedOrUnknownSVal getConjuredSymbolVal(const Expr *E, unsigned Count);
+  DefinedOrUnknownSVal getConjuredSymbolVal(const Expr *E, QualType T,
+                                            unsigned Count);
 
-  SVal getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
-                                      const TypedRegion *R);
+  DefinedOrUnknownSVal getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
+                                                      const TypedRegion *R);
 
-  SVal getFunctionPointer(const FunctionDecl* FD);
+  DefinedSVal getFunctionPointer(const FunctionDecl *FD);
 
   NonLoc makeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals) {
     return nonloc::CompoundVal(BasicVals.getCompoundValData(T, Vals));
@@ -144,7 +148,7 @@ public:
     return nonloc::ConcreteInt(BasicVals.getValue(V, isUnsigned));
   }
 
-  SVal makeIntVal(uint64_t X, QualType T) {
+  DefinedSVal makeIntVal(uint64_t X, QualType T) {
     if (Loc::IsLocType(T))
       return loc::ConcreteInt(BasicVals.getValue(X, T));
 

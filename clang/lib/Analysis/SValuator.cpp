@@ -46,6 +46,13 @@ SVal SValuator::EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
   return EvalBinOpNN(Op, cast<NonLoc>(L), cast<NonLoc>(R), T);
 }
 
+DefinedOrUnknownSVal SValuator::EvalEQ(const GRState *ST,
+                                       DefinedOrUnknownSVal L,
+                                       DefinedOrUnknownSVal R) {
+  return cast<DefinedOrUnknownSVal>(EvalBinOp(ST, BinaryOperator::EQ, L, R,
+                                              ValMgr.getContext().IntTy));
+}
+
 SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
                                           QualType castTy, QualType originalTy){
 
@@ -145,4 +152,12 @@ DispatchCast:
   return CastResult(state,
                     isa<Loc>(val) ? EvalCastL(cast<Loc>(val), castTy)
                                   : EvalCastNL(cast<NonLoc>(val), castTy));
+}
+
+SValuator::DefinedOrUnknownCastResult
+SValuator::EvalCast(DefinedOrUnknownSVal V, const GRState *ST,
+                    QualType castTy, QualType originalType) {
+  SValuator::CastResult X = EvalCast((SVal) V, ST, castTy, originalType);
+  return DefinedOrUnknownCastResult(X.getState(),
+                                    cast<DefinedOrUnknownSVal>(X.getSVal()));
 }

@@ -56,11 +56,8 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
 }
 
 const GRState *SimpleConstraintManager::Assume(const GRState *state,
-                                               SVal Cond, bool Assumption) {
-  if (Cond.isUnknown()) {
-    return state;
-  }
-
+                                               DefinedSVal Cond,
+                                               bool Assumption) {
   if (isa<NonLoc>(Cond))
     return Assume(state, cast<NonLoc>(Cond), Assumption);
   else
@@ -226,8 +223,8 @@ const GRState *SimpleConstraintManager::AssumeSymInt(const GRState *state,
 }
 
 const GRState *SimpleConstraintManager::AssumeInBound(const GRState *state,
-                                                      SVal Idx,
-                                                      SVal UpperBound,
+                                                      DefinedSVal Idx,
+                                                      DefinedSVal UpperBound,
                                                       bool Assumption) {
 
   // Only support ConcreteInt for now.

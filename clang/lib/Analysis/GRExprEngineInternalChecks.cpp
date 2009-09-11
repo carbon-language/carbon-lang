@@ -126,7 +126,7 @@ public:
       os << "The receiver in the message expression is 'nil' and results in the"
             " returned value (of type '"
          << ME->getType().getAsString()
-         << "') to be garbage or otherwise undefined.";
+         << "') to be garbage or otherwise undefined";
 
       BuiltinBugReport *R = new BuiltinBugReport(*this, os.str().c_str(), *I);
       R->addRange(ME->getReceiver()->getSourceRange());
@@ -161,7 +161,7 @@ public:
       << ME->getType().getAsString()
       << "' and of size "
       << Eng.getContext().getTypeSize(ME->getType()) / 8
-      << " bytes) to be garbage or otherwise undefined.";
+      << " bytes) to be garbage or otherwise undefined";
 
       BuiltinBugReport *R = new BuiltinBugReport(*this, os.str().c_str(), *I);
       R->addRange(ME->getReceiver()->getSourceRange());
@@ -206,11 +206,66 @@ public:
 
 class VISIBILITY_HIDDEN UndefResult : public BuiltinBug {
 public:
-  UndefResult(GRExprEngine* eng) : BuiltinBug(eng,"Undefined result",
-                             "Result of operation is undefined.") {}
+  UndefResult(GRExprEngine* eng)
+    : BuiltinBug(eng,"Undefined or garbage result",
+                 "Result of operation is garbage or undefined") {}
 
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
-    Emit(BR, Eng.undef_results_begin(), Eng.undef_results_end());
+    for (GRExprEngine::undef_result_iterator I=Eng.undef_results_begin(),
+         E = Eng.undef_results_end(); I!=E; ++I) {
+      
+      ExplodedNode *N = *I;
+      const Stmt *S = N->getLocationAs<PostStmt>()->getStmt();        
+      BuiltinBugReport *report = NULL;
+      
+      if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S)) {
+        llvm::SmallString<256> sbuf;
+        llvm::raw_svector_ostream OS(sbuf);
+        const GRState *ST = N->getState();
+        const Expr *Ex;
+
+        if (ST->getSVal(B->getLHS()).isUndef()) {
+          Ex = B->getLHS()->IgnoreParenCasts();
+          OS << "The left operand of the '";
+        }
+        else {
+          assert(ST->getSVal(B->getRHS()).isUndef());
+          Ex = B->getRHS()->IgnoreParenCasts();
+          OS << "The right operand of the '";
+        }
+                
+        OS << BinaryOperator::getOpcodeStr(B->getOpcode())
+           << "' expression is an undefined "
+              "or otherwise garbage value";
+        
+        // FIXME: Use StringRefs to pass string information.
+        report = new BuiltinBugReport(*this, OS.str().str().c_str(), N);
+        report->addRange(Ex->getSourceRange());
+      }
+      else {
+        report = new BuiltinBugReport(*this, 
+                                      "Expression evaluates to an uninitialized"
+                                      " or undefined value", N);
+      }
+
+      BR.EmitReport(report);
+    }
+  }
+  
+  void registerInitialVisitors(BugReporterContext& BRC,
+                               const ExplodedNode* N,
+                               BuiltinBugReport *R) {
+    
+    const Stmt *S = N->getLocationAs<StmtPoint>()->getStmt();
+    const Stmt *X = S;
+    
+    if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S)) {
+      const GRState *ST = N->getState();
+      X = ST->getSVal(B->getLHS()).isUndef()
+          ? B->getLHS()->IgnoreParenCasts() : B->getRHS()->IgnoreParenCasts();
+    }
+    
+    registerTrackNullOrUndefValue(BRC, X, N);
   }
 };
 
@@ -245,7 +300,7 @@ public:
 class VISIBILITY_HIDDEN BadArg : public BuiltinBug {
 public:
   BadArg(GRExprEngine* eng=0) : BuiltinBug(eng,"Uninitialized argument",
-    "Pass-by-value argument in function call is undefined.") {}
+    "Pass-by-value argument in function call is undefined") {}
 
   BadArg(GRExprEngine* eng, const char* d)
     : BuiltinBug(eng,"Uninitialized argument", d) {}
@@ -362,8 +417,8 @@ public:
 
 class VISIBILITY_HIDDEN RetUndef : public BuiltinBug {
 public:
-  RetUndef(GRExprEngine* eng) : BuiltinBug(eng, "Uninitialized return value",
-              "Uninitialized or undefined value returned to caller.") {}
+  RetUndef(GRExprEngine* eng) : BuiltinBug(eng, "Garbage return value",
+              "Undefined or garbage value returned to caller") {}
 
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     Emit(BR, Eng.ret_undef_begin(), Eng.ret_undef_end());
@@ -401,8 +456,9 @@ class VISIBILITY_HIDDEN UndefBranch : public BuiltinBug {
 
 public:
   UndefBranch(GRExprEngine *eng)
-    : BuiltinBug(eng,"Use of uninitialized value",
-                 "Branch condition evaluates to an uninitialized value.") {}
+    : BuiltinBug(eng,"Use of garbage value",
+                 "Branch condition evaluates to an undefined or garbage value")
+       {}
 
   void FlushReportsImpl(BugReporter& BR, GRExprEngine& Eng) {
     for (GRExprEngine::undef_branch_iterator I=Eng.undef_branches_begin(),

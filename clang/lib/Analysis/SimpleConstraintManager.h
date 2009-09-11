@@ -30,7 +30,8 @@ public:
 
   bool canReasonAbout(SVal X) const;
 
-  const GRState *Assume(const GRState *state, SVal Cond, bool Assumption);
+  const GRState *Assume(const GRState *state, DefinedSVal Cond,
+                        bool Assumption);
 
   const GRState *Assume(const GRState *state, Loc Cond, bool Assumption);
 
@@ -39,7 +40,8 @@ public:
   const GRState *AssumeSymInt(const GRState *state, bool Assumption,
                               const SymIntExpr *SE);
 
-  const GRState *AssumeInBound(const GRState *state, SVal Idx, SVal UpperBound,
+  const GRState *AssumeInBound(const GRState *state, DefinedSVal Idx,
+                               DefinedSVal UpperBound,
                                bool Assumption);
 
 protected:

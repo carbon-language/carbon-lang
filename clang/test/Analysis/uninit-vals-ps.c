@@ -22,7 +22,7 @@ int f2() {
   
   int x;
   
-  if (x+1)  // expected-warning{{Branch}}
+  if (x+1)  // expected-warning{{The left operand of the '+' expression is an undefined or otherwise garbage value}}
     return 1;
     
   return 2;  
@@ -31,13 +31,13 @@ int f2() {
 int f2_b() {
   int x;
   
-  return ((x+1)+2+((x))) + 1 ? 1 : 2; // expected-warning{{Branch}}
+  return ((1+x)+2+((x))) + 1 ? 1 : 2; // expected-warning{{The right operand of the '+' expression is an undefined or otherwise garbage value}}
 }
 
 int f3(void) {
   int i;
   int *p = &i;
-  if (*p > 0) // expected-warning{{Branch condition evaluates to an uninitialized value}}
+  if (*p > 0) // expected-warning{{The left operand of the '>' expression is an undefined or otherwise garbage value}}
     return 0;
   else
     return 1;
@@ -61,7 +61,7 @@ int f5(void) {
 int ret_uninit() {
   int i;
   int *p = &i;
-  return *p;  // expected-warning{{Uninitialized or undefined value returned to caller.}}
+  return *p;  // expected-warning{{Undefined or garbage value returned to caller}}
 }
 
 // <rdar://problem/6451816>

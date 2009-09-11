@@ -134,7 +134,7 @@ public:
   ///  taking a dereference on a symbolic pointer that MUST be NULL.
   ErrorNodes ExplicitNullDeref;
 
-  /// UnitDeref - Nodes in the ExplodedGraph that result from
+  /// UndefDeref - Nodes in the ExplodedGraph that result from
   ///  taking a dereference on an undefined value.
   ErrorNodes UndefDeref;
 
@@ -596,9 +596,8 @@ public:
                  SVal LHS, SVal RHS, QualType T) {
     return SVator.EvalBinOp(ST, Op, LHS, RHS, T);
   }
-
+  
 protected:
-
   void EvalCall(ExplodedNodeSet& Dst, CallExpr* CE, SVal L, ExplodedNode* Pred);
 
   void EvalObjCMessageExpr(ExplodedNodeSet& Dst, ObjCMessageExpr* ME, ExplodedNode* Pred) {

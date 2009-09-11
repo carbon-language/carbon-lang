@@ -22,7 +22,7 @@ using namespace llvm;
 // Utility methods for constructing SVals.
 //===----------------------------------------------------------------------===//
 
-SVal ValueManager::makeZeroVal(QualType T) {
+DefinedOrUnknownSVal ValueManager::makeZeroVal(QualType T) {
   if (Loc::IsLocType(T))
     return makeNull();
 
@@ -69,7 +69,8 @@ SVal ValueManager::convertToArrayIndex(SVal V) {
   return SVator->EvalCastNL(cast<NonLoc>(V), ArrayIndexTy);
 }
 
-SVal ValueManager::getRegionValueSymbolVal(const MemRegion* R, QualType T) {
+DefinedOrUnknownSVal ValueManager::getRegionValueSymbolVal(const MemRegion* R,
+                                                           QualType T) {
 
   if (T.isNull()) {
     const TypedRegion* TR = cast<TypedRegion>(R);
@@ -87,7 +88,7 @@ SVal ValueManager::getRegionValueSymbolVal(const MemRegion* R, QualType T) {
   return nonloc::SymbolVal(sym);
 }
 
-SVal ValueManager::getConjuredSymbolVal(const Expr *E, unsigned Count) {
+DefinedOrUnknownSVal ValueManager::getConjuredSymbolVal(const Expr *E, unsigned Count) {
   QualType T = E->getType();
 
   if (!SymbolManager::canSymbolicate(T))
@@ -101,9 +102,10 @@ SVal ValueManager::getConjuredSymbolVal(const Expr *E, unsigned Count) {
   return nonloc::SymbolVal(sym);
 }
 
-SVal ValueManager::getConjuredSymbolVal(const Expr *E, QualType T,
-                                        unsigned Count) {
-
+DefinedOrUnknownSVal ValueManager::getConjuredSymbolVal(const Expr *E,
+                                                        QualType T,
+                                                        unsigned Count) {
+  
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
 
@@ -116,8 +118,9 @@ SVal ValueManager::getConjuredSymbolVal(const Expr *E, QualType T,
 }
 
 
-SVal ValueManager::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
-                                                  const TypedRegion *R) {
+DefinedOrUnknownSVal
+ValueManager::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
+                                             const TypedRegion *R) {
   QualType T = R->getValueType(R->getContext());
 
   if (!SymbolManager::canSymbolicate(T))
@@ -131,7 +134,7 @@ SVal ValueManager::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
   return nonloc::SymbolVal(sym);
 }
 
-SVal ValueManager::getFunctionPointer(const FunctionDecl* FD) {
+DefinedSVal ValueManager::getFunctionPointer(const FunctionDecl* FD) {
   CodeTextRegion *R  = MemMgr.getCodeTextRegion(FD);
   return loc::MemRegionVal(R);
 }

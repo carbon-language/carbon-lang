@@ -152,14 +152,6 @@ public:
   static inline bool classof(const SVal*) { return true; }
 };
 
-class UnknownVal : public SVal {
-public:
-  UnknownVal() : SVal(UnknownKind) {}
-
-  static inline bool classof(const SVal* V) {
-    return V->getBaseKind() == UnknownKind;
-  }
-};
 
 class UndefinedVal : public SVal {
 public:
@@ -173,10 +165,46 @@ public:
   void* getData() const { return Data; }
 };
 
-class DefinedSVal : public SVal {
+class DefinedOrUnknownSVal : public SVal {
+private:
+  // Do not implement.  We want calling these methods to be a compiler
+  // error since they are tautologically false.
+  bool isUndef() const;
+  bool isValid() const;
+  
+protected:
+  explicit DefinedOrUnknownSVal(const void* d, bool isLoc, unsigned ValKind)
+    : SVal(d, isLoc, ValKind) {}
+  
+  explicit DefinedOrUnknownSVal(BaseKind k, void *D = NULL)
+    : SVal(k, D) {}
+  
+public:
+    // Implement isa<T> support.
+  static inline bool classof(const SVal *V) {
+    return !V->isUndef();
+  }
+};
+  
+class UnknownVal : public DefinedOrUnknownSVal {
+public:
+  UnknownVal() : DefinedOrUnknownSVal(UnknownKind) {}
+  
+  static inline bool classof(const SVal *V) {
+    return V->getBaseKind() == UnknownKind;
+  }
+};
+  
+class DefinedSVal : public DefinedOrUnknownSVal {
+private:
+  // Do not implement.  We want calling these methods to be a compiler
+  // error since they are tautologically true/false.
+  bool isUnknown() const;
+  bool isUnknownOrUndef() const;
+  bool isValid() const;  
 protected:
   DefinedSVal(const void* d, bool isLoc, unsigned ValKind)
-    : SVal(d, isLoc, ValKind) {}
+    : DefinedOrUnknownSVal(d, isLoc, ValKind) {}
 public:
   // Implement isa<T> support.
   static inline bool classof(const SVal *V) {

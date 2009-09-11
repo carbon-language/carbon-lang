@@ -30,11 +30,11 @@ class SVal;
 class ConstraintManager {
 public:
   virtual ~ConstraintManager();
-  virtual const GRState *Assume(const GRState *state, SVal Cond,
+  virtual const GRState *Assume(const GRState *state, DefinedSVal Cond,
                                 bool Assumption) = 0;
 
-  virtual const GRState *AssumeInBound(const GRState *state, SVal Idx,
-                                       SVal UpperBound, bool Assumption) = 0;
+  virtual const GRState *AssumeInBound(const GRState *state, DefinedSVal Idx,
+                                       DefinedSVal UpperBound, bool Assumption) = 0;
 
   std::pair<const GRState*, const GRState*> AssumeDual(const GRState *state,
                                                        DefinedSVal Cond) {
