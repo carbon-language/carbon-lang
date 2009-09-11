@@ -82,10 +82,17 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
     return Sym;
     
   }
-  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
-    HiddenGVStubs[Name.str()] = StringRef(Name.data(), Name.size()-13);
+    MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
+    MCSymbol *&StubSym = HiddenGVStubs[Sym];
+    if (StubSym == 0) {
+      Name.clear();
+      Mang->getNameWithPrefix(Name, GV, false);
+      StubSym = OutContext.GetOrCreateSymbol(Name.str());
+    }
     break;
+  }
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
     MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());

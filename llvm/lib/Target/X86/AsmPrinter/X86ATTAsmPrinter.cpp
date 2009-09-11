@@ -330,7 +330,16 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
         StubSym = OutContext.GetOrCreateSymbol(NameStr.str());
       }
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
-      HiddenGVStubs[Name] = Mang->getMangledName(GV);
+      SmallString<128> NameStr;
+      Mang->getNameWithPrefix(NameStr, GV, true);
+      NameStr += "$non_lazy_ptr";
+      MCSymbol *Sym = OutContext.GetOrCreateSymbol(NameStr.str());
+      MCSymbol *&StubSym = HiddenGVStubs[Sym];
+      if (StubSym == 0) {
+        NameStr.clear();
+        Mang->getNameWithPrefix(NameStr, GV, false);
+        StubSym = OutContext.GetOrCreateSymbol(NameStr.str());
+      }
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
       SmallString<128> NameStr;
       Mang->getNameWithPrefix(NameStr, GV, true);
@@ -949,10 +958,13 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     if (!HiddenGVStubs.empty()) {
       OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
       EmitAlignment(2);
-      for (StringMap<std::string>::iterator I = HiddenGVStubs.begin(),
-           E = HiddenGVStubs.end(); I != E; ++I)
-        O << I->getKeyData() << ":\n" << MAI->getData32bitsDirective()
-          << I->second << '\n';
+      for (DenseMap<MCSymbol*, MCSymbol*>::iterator I = HiddenGVStubs.begin(),
+           E = HiddenGVStubs.end(); I != E; ++I) {
+        I->first->print(O, MAI);
+        O << ":\n" << MAI->getData32bitsDirective();
+        I->second->print(O, MAI);
+        O << '\n';
+      }
     }
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
