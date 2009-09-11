@@ -558,7 +558,8 @@ void AsmWriterEmitter::run(raw_ostream &O) {
 
   for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
          E = Target.inst_end(); I != E; ++I)
-    if (!I->second.AsmString.empty())
+    if (!I->second.AsmString.empty() &&
+        I->second.TheDef->getName() != "PHI")
       Instructions.push_back(AsmWriterInst(I->second, AsmWriter));
 
   // Get the instruction numbering.
