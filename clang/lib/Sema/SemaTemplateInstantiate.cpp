@@ -820,11 +820,28 @@ Sema::InstantiateClassTemplateSpecialization(
   ClassTemplateSpec = cast<ClassTemplateSpecializationDecl>(
                                          ClassTemplateSpec->getCanonicalDecl());
 
-  // We can only instantiate something that hasn't already been
-  // instantiated or specialized. Fail without any diagnostics: our
-  // caller will provide an error message.
-  if (ClassTemplateSpec->getSpecializationKind() != TSK_Undeclared)
+  // Check whether we have already instantiated or specialized this class
+  // template specialization.
+  if (ClassTemplateSpec->getSpecializationKind() != TSK_Undeclared) {
+    if (ClassTemplateSpec->getSpecializationKind() == 
+          TSK_ExplicitInstantiationDeclaration &&
+        TSK == TSK_ExplicitInstantiationDefinition) {
+      // An explicit instantiation definition follows an explicit instantiation
+      // declaration (C++0x [temp.explicit]p10); go ahead and perform the
+      // explicit instantiation.
+      ClassTemplateSpec->setSpecializationKind(TSK);
+      InstantiateClassTemplateSpecializationMembers(
+                        /*FIXME?*/ClassTemplateSpec->getPointOfInstantiation(), 
+                                  ClassTemplateSpec,
+                                  TSK);
+      return false;
+    }
+    
+    // We can only instantiate something that hasn't already been
+    // instantiated or specialized. Fail without any diagnostics: our
+    // caller will provide an error message.    
     return true;
+  }
 
   ClassTemplateDecl *Template = ClassTemplateSpec->getSpecializedTemplate();
   CXXRecordDecl *Pattern = 0;

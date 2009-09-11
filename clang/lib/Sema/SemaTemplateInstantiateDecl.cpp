@@ -1031,6 +1031,9 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   // Instantiate the function body.
   OwningStmtResult Body = SubstStmt(Pattern, TemplateArgs);
 
+  if (Body.isInvalid())
+    Function->setInvalidDecl();
+  
   ActOnFinishFunctionBody(DeclPtrTy::make(Function), move(Body),
                           /*IsInstantiation=*/true);
 

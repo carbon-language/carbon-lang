@@ -6123,6 +6123,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     // Implicit instantiation of static data members of class templates.
     // FIXME: distinguish between implicit instantiations (which we need to
     // actually instantiate) and explicit specializations.
+    // FIXME: extern templates
     if (Var->isStaticDataMember() &&
         Var->getInstantiatedFromStaticDataMember())
       PendingImplicitInstantiations.push_back(std::make_pair(Var, Loc));

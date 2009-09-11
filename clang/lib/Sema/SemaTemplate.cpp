@@ -2977,7 +2977,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                                   Converted, 0);
       Specialization->setLexicalDeclContext(CurContext);
       CurContext->addDecl(Specialization);
-      return DeclPtrTy::make(Specialization);
+      return DeclPtrTy::make(PrevDecl);
     }
 
     // If we have already (implicitly) instantiated this
@@ -2985,14 +2985,19 @@ Sema::ActOnExplicitInstantiation(Scope *S,
     if (PrevDecl->getSpecializationKind() == TSK_ImplicitInstantiation)
       SpecializationRequiresInstantiation = false;
 
-    // Since the only prior class template specialization with these
-    // arguments was referenced but not declared, reuse that
-    // declaration node as our own, updating its source location to
-    // reflect our new declaration.
-    Specialization = PrevDecl;
-    Specialization->setLocation(TemplateNameLoc);
-    PrevDecl = 0;
-  } else {
+    if (PrevDecl->getSpecializationKind() == TSK_ImplicitInstantiation ||
+        PrevDecl->getSpecializationKind() == TSK_Undeclared) {
+      // Since the only prior class template specialization with these
+      // arguments was referenced but not declared, reuse that
+      // declaration node as our own, updating its source location to
+      // reflect our new declaration.
+      Specialization = PrevDecl;
+      Specialization->setLocation(TemplateNameLoc);
+      PrevDecl = 0;
+    }
+  } 
+  
+  if (!Specialization) {
     // Create a new class template specialization declaration node for
     // this explicit specialization.
     Specialization
@@ -3000,10 +3005,17 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                              ClassTemplate->getDeclContext(),
                                                 TemplateNameLoc,
                                                 ClassTemplate,
-                                                Converted, 0);
+                                                Converted, PrevDecl);
 
-    ClassTemplate->getSpecializations().InsertNode(Specialization,
-                                                   InsertPos);
+    if (PrevDecl) {
+      // Remove the previous declaration from the folding set, since we want
+      // to introduce a new declaration.
+      ClassTemplate->getSpecializations().RemoveNode(PrevDecl);
+      ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
+    } 
+    
+    // Insert the new specialization.
+    ClassTemplate->getSpecializations().InsertNode(Specialization, InsertPos);
   }
 
   // Build the fully-sugared type for this explicit instantiation as
