@@ -164,46 +164,42 @@ ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 const TargetRegisterClass* const *
 ARMBaseRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
   static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
-    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
-    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
-    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
+    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
+    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
+    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
 
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
     0
   };
 
   static const TargetRegisterClass * const ThumbCalleeSavedRegClasses[] = {
-    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
-    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::tGPRRegisterClass,
-    ARM::tGPRRegisterClass,ARM::tGPRRegisterClass,ARM::tGPRRegisterClass,
+    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
+    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::tGPRRegClass,
+    &ARM::tGPRRegClass,&ARM::tGPRRegClass,&ARM::tGPRRegClass,
 
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
     0
   };
 
   static const TargetRegisterClass * const DarwinCalleeSavedRegClasses[] = {
-    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
-    ARM::GPRRegisterClass, ARM::GPRRegisterClass, ARM::GPRRegisterClass,
-    ARM::GPRRegisterClass, ARM::GPRRegisterClass,
+    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
+    &ARM::GPRRegClass, &ARM::GPRRegClass, &ARM::GPRRegClass,
+    &ARM::GPRRegClass, &ARM::GPRRegClass,
 
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
     0
   };
 
   static const TargetRegisterClass * const DarwinThumbCalleeSavedRegClasses[] ={
-    ARM::GPRRegisterClass,  ARM::tGPRRegisterClass, ARM::tGPRRegisterClass,
-    ARM::tGPRRegisterClass, ARM::tGPRRegisterClass, ARM::GPRRegisterClass,
-    ARM::GPRRegisterClass,  ARM::GPRRegisterClass,
+    &ARM::GPRRegClass,  &ARM::tGPRRegClass, &ARM::tGPRRegClass,
+    &ARM::tGPRRegClass, &ARM::tGPRRegClass, &ARM::GPRRegClass,
+    &ARM::GPRRegClass,  &ARM::GPRRegClass,
 
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass, ARM::DPRRegisterClass,
-    ARM::DPRRegisterClass, ARM::DPRRegisterClass,
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
+    &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass, &ARM::DPRRegClass,
     0
   };
 
