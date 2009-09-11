@@ -1776,7 +1776,7 @@ bool BinaryOperator::isFNeg(const Value *V) {
   if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
     if (Bop->getOpcode() == Instruction::FSub)
       if (Constant* C = dyn_cast<Constant>(Bop->getOperand(0)))
-      return C->isNegativeZeroValue();
+        return C->isNegativeZeroValue();
   return false;
 }
 
