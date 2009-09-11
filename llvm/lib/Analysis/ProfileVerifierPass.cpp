@@ -199,7 +199,7 @@ double ProfileVerifierPass::ReadOrAssert(ProfileInfo::Edge E) {
   double EdgeWeight = PI->getEdgeWeight(E);
   if (EdgeWeight == ProfileInfo::MissingValue) {
     errs() << "Edge " << E << " in Function " 
-           << ProfileInfo.getFunction(E)->getNameStr() << ": ";
+           << ProfileInfo::getFunction(E)->getNameStr() << ": ";
     ASSERTMESSAGE("ASSERT:Edge has missing value");
     return 0;
   } else {
