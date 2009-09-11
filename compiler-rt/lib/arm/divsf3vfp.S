@@ -1,0 +1,23 @@
+//===-- divsf3vfp.S - Implement divsf3vfp ---------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+
+//
+// extern float __divsf3vfp(float a, float b);
+//
+// Divides two single precision floating point numbers using the Darwin
+// calling convention where single arguments are passsed like 32-bit ints.
+//
+	.globl ___divsf3vfp
+___divsf3vfp:
+	fmsr	s14, r0		// move first param from r0 into float register
+	fmsr	s15, r1		// move second param from r1 into float register
+	fdivs	s13, s14, s15
+	fmrs	r0, s13		// move result back to r0
+	bx	lr

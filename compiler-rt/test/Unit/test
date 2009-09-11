@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 
 ARCHS='<host>'
+REMOTE=0
 if test `uname` = "Darwin"; then
-  ARCHS="i386 x86_64 ppc"
-  LIBS="-lSystem"
+  if test "$1" = "armv6"; then
+    ARCHS="armv6"
+	LIBS="-lSystem"
+	REMOTE=1
+	mkdir -p remote
+  else
+    ARCHS="i386 x86_64 ppc"
+    LIBS="-lSystem"
+  fi
 else
   LIBS="-lc -lm"
 fi
@@ -30,20 +38,30 @@ for ARCH in $ARCHS; do
       # this test requires an extra compiler option
       EXTRA="-fnested-functions"
     fi
-    if gcc $CFLAGS $FILE ../../Release/libcompiler_rt.Optimized.a $LIBS $EXTRA
-    then
-      echo "Testing $FILE for $ARCH"
-      if ./a.out
+	if test $REMOTE
+	then 
+      if gcc $CFLAGS $FILE ../../Release/libcompiler_rt.Optimized.a $LIBS $EXTRA -o ./remote/$FILE.exe
       then
-        rm ./a.out
+        echo "Built $FILE.exe for $ARCH"
+	  else
+        echo "$FILE failed to compile"
+	  fi
+	else
+      if gcc $CFLAGS $FILE ../../Release/libcompiler_rt.Optimized.a $LIBS $EXTRA
+      then
+        echo "Testing $FILE for $ARCH"
+        if ./a.out
+        then
+          rm ./a.out
+        else
+          echo "fail"
+          exit 1
+        fi
       else
-        echo "fail"
+        echo "$FILE failed to compile"
         exit 1
       fi
-    else
-      echo "$FILE failed to compile"
-      exit 1
-    fi
+	fi
   done
 done
 echo "pass"
