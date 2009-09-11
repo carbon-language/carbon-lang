@@ -964,7 +964,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
       OutStreamer.SwitchSection(TheSection);
 
       std::vector<std::pair<MCSymbol*, MCSymbol*> > Stubs
-        = GetSortedStubs(FnStubs);
+        = GetSortedStubs(GVStubs);
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
         Stubs[i].first->print(O, MAI);
         O << ":\n\t.indirect_symbol ";
@@ -978,7 +978,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
       EmitAlignment(2);
 
       std::vector<std::pair<MCSymbol*, MCSymbol*> > Stubs
-        = GetSortedStubs(FnStubs);
+        = GetSortedStubs(HiddenGVStubs);
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
         Stubs[i].first->print(O, MAI);
         O << ":\n" << MAI->getData32bitsDirective();
