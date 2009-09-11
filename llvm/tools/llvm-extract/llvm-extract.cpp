@@ -15,10 +15,12 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/IRReader.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -57,6 +59,10 @@ static cl::opt<std::string>
 ExtractGlobal("glob", cl::desc("Specify global to extract"), cl::init(""),
               cl::value_desc("global"));
 
+static cl::opt<bool>
+OutputAssembly("S",
+               cl::desc("Write output as LLVM assembly"), cl::Hidden);
+
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -66,19 +72,12 @@ int main(int argc, char **argv) {
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, "llvm extractor\n");
 
+  SMDiagnostic Err;
   std::auto_ptr<Module> M;
-  
-  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename);
-  if (Buffer == 0) {
-    errs() << argv[0] << ": Error reading file '" + InputFilename + "'\n";
-    return 1;
-  } else {
-    M.reset(ParseBitcodeFile(Buffer, Context));
-  }
-  delete Buffer;
-  
+  M.reset(ParseIRFile(InputFilename, Err, Context));
+
   if (M.get() == 0) {
-    errs() << argv[0] << ": bitcode didn't read correctly.\n";
+    Err.Print(argv[0], errs());
     return 1;
   }
 
@@ -111,17 +110,22 @@ int main(int argc, char **argv) {
   Passes.add(createDeadTypeEliminationPass());   // Remove dead types...
   Passes.add(createStripDeadPrototypesPass());   // Remove dead func decls
 
+  // Make sure that the Output file gets unlinked from the disk if we get a
+  // SIGINT
+  sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
   std::string ErrorInfo;
-  std::auto_ptr<raw_fd_ostream>
-  Out(new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                         raw_fd_ostream::F_Binary));
+  raw_fd_ostream Out(OutputFilename.c_str(), ErrorInfo,
+                     raw_fd_ostream::F_Binary);
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
     return 1;
   }
 
-  if (Force || !CheckBitcodeOutputToConsole(*Out, true))
-    Passes.add(createBitcodeWriterPass(*Out));
+  if (OutputAssembly)
+    Passes.add(createPrintModulePass(&Out));
+  else if (Force || !CheckBitcodeOutputToConsole(Out, true))
+    Passes.add(createBitcodeWriterPass(Out));
 
   Passes.run(*M.get());
 

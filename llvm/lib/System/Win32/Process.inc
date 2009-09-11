@@ -120,15 +120,19 @@ void Process::PreventCoreFiles() {
 }
 
 bool Process::StandardInIsUserInput() {
-  return GetFileType((HANDLE)_get_osfhandle(0)) == FILE_TYPE_CHAR;
+  return FileDescriptorIsDisplayed(0);
 }
 
 bool Process::StandardOutIsDisplayed() {
-  return GetFileType((HANDLE)_get_osfhandle(1)) == FILE_TYPE_CHAR;
+  return FileDescriptorIsDisplayed(1);
 }
 
 bool Process::StandardErrIsDisplayed() {
-  return GetFileType((HANDLE)_get_osfhandle(2)) == FILE_TYPE_CHAR;
+  return FileDescriptorIsDisplayed(2);
+}
+
+bool Process::FileDescriptorIsDisplayed(int fd) {
+  return GetFileType((HANDLE)_get_osfhandle(fd)) == FILE_TYPE_CHAR;
 }
 
 unsigned Process::StandardOutColumns() {

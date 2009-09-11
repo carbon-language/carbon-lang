@@ -454,6 +454,10 @@ raw_ostream &raw_fd_ostream::resetColor() {
   return *this;
 }
 
+bool raw_fd_ostream::is_displayed() const {
+  return sys::Process::FileDescriptorIsDisplayed(FD);
+}
+
 //===----------------------------------------------------------------------===//
 //  raw_stdout/err_ostream
 //===----------------------------------------------------------------------===//

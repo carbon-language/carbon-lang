@@ -20,8 +20,7 @@ using namespace llvm;
 
 bool llvm::CheckBitcodeOutputToConsole(raw_ostream &stream_to_check,
                                        bool print_warning) {
-  if (&stream_to_check == &outs() &&
-      sys::Process::StandardOutIsDisplayed()) {
+  if (stream_to_check.is_displayed()) {
     if (print_warning) {
       errs() << "WARNING: You're attempting to print out a bitcode file.\n"
              << "This is inadvisable as it may cause display problems. If\n"

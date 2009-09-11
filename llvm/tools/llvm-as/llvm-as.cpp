@@ -94,7 +94,12 @@ int main(int argc, char **argv) {
       OutputFilename += ".bc";
     }
   }
-  
+
+  // Make sure that the Out file gets unlinked from the disk if we get a
+  // SIGINT.
+  if (OutputFilename != "-")
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
   std::string ErrorInfo;
   std::auto_ptr<raw_ostream> Out
   (new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
@@ -103,12 +108,6 @@ int main(int argc, char **argv) {
     errs() << ErrorInfo << '\n';
     return 1;
   }
-  
-  
-  // Make sure that the Out file gets unlinked from the disk if we get a
-  // SIGINT.
-  if (OutputFilename != "-")
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   if (!DisableOutput)
     if (Force || !CheckBitcodeOutputToConsole(*Out, true))

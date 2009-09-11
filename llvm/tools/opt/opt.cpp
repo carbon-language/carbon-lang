@@ -362,6 +362,10 @@ int main(int argc, char **argv) {
     // FIXME: outs() is not binary!
     raw_ostream *Out = &outs();  // Default to printing to stdout...
     if (OutputFilename != "-") {
+      // Make sure that the Output file gets unlinked from the disk if we get a
+      // SIGINT
+      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
       std::string ErrorInfo;
       Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
                                raw_fd_ostream::F_Binary);
@@ -370,10 +374,6 @@ int main(int argc, char **argv) {
         delete Out;
         return 1;
       }
-
-      // Make sure that the Output file gets unlinked from the disk if we get a
-      // SIGINT
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
     }
 
     // If the output is set to be emitted to standard out, and standard out is a

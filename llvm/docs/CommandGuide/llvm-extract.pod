@@ -45,6 +45,10 @@ Print a summary of command line options.
 Specify the output filename.  If filename is "-" (the default), then
 B<llvm-extract> sends its output to standard output.
 
+=item B<-S>
+
+Write output in LLVM intermediate language (instead of bitcode).
+
 =back
 
 =head1 EXIT STATUS

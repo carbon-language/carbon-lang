@@ -89,7 +89,12 @@ int main(int argc, char **argv) {
         OutputFilename = IFN+".ll";
     }
   }
-  
+
+  // Make sure that the Out file gets unlinked from the disk if we get a
+  // SIGINT.
+  if (OutputFilename != "-")
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
   std::string ErrorInfo;
   std::auto_ptr<raw_fd_ostream> 
   Out(new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
@@ -98,11 +103,6 @@ int main(int argc, char **argv) {
     errs() << ErrorInfo << '\n';
     return 1;
   }
-
-  // Make sure that the Out file gets unlinked from the disk if we get a
-  // SIGINT.
-  if (OutputFilename != "-")
-    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   // All that llvm-dis does is write the assembly to a file.
   if (!DontPrint) {
