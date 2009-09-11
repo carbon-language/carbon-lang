@@ -141,10 +141,12 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   Ptr->eraseFromParent();
 }
 
-void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
+void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args,
                                     SourceLocation StartLoc) {
+  const Decl *D = GD.getDecl();
+  
   DidCallStackSave = false;
   CurCodeDecl = CurFuncDecl = D;
   FnRetTy = RetTy;
@@ -199,8 +201,10 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   }
 }
 
-void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
+void CodeGenFunction::GenerateCode(GlobalDecl GD,
                                    llvm::Function *Fn) {
+  const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
+  
   // Check if we should generate debug info for this function.
   if (CGM.getDebugInfo() && !FD->hasAttr<NoDebugAttr>())
     DebugInfo = CGM.getDebugInfo();
@@ -230,7 +234,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
 
   // FIXME: Support CXXTryStmt here, too.
   if (const CompoundStmt *S = FD->getCompoundBody()) {
-    StartFunction(FD, FD->getResultType(), Fn, Args, S->getLBracLoc());
+    StartFunction(GD, FD->getResultType(), Fn, Args, S->getLBracLoc());
     if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD))
       EmitCtorPrologue(CD);
     EmitStmt(S);
@@ -246,19 +250,20 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
       if (CD->isCopyConstructor(getContext())) {
         assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
                "bogus constructor is being synthesize");
-        SynthesizeCXXCopyConstructor(CD, FD, Fn, Args);
+        SynthesizeCXXCopyConstructor(GD, FD, Fn, Args);
       }
       else {
         assert(!ClassDecl->hasUserDeclaredConstructor() &&
                "bogus constructor is being synthesize");
-        SynthesizeDefaultConstructor(CD, FD, Fn, Args);
+        SynthesizeDefaultConstructor(GD, FD, Fn, Args);
       }
     }
-  else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD))
-         SynthesizeDefaultDestructor(DD, FD, Fn, Args);
-  else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
-         if (MD->isCopyAssignment())
-           SynthesizeCXXCopyAssignment(MD, FD, Fn, Args);
+  else if (isa<CXXDestructorDecl>(FD))
+    SynthesizeDefaultDestructor(GD, FD, Fn, Args);
+  else if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
+    if (MD->isCopyAssignment())
+      SynthesizeCXXCopyAssignment(MD, FD, Fn, Args);
+  }
 
   // Destroy the 'this' declaration.
   if (CXXThisDecl)

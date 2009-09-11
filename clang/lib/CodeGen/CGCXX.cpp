@@ -114,7 +114,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
 void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                                 const VarDecl **Decls,
                                                 unsigned NumDecls) {
-  StartFunction(0, getContext().VoidTy, Fn, FunctionArgList(),
+  StartFunction(GlobalDecl(), getContext().VoidTy, Fn, FunctionArgList(),
                 SourceLocation());
 
   for (unsigned i = 0; i != NumDecls; ++i) {
@@ -714,7 +714,7 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *D,
 
   llvm::Function *Fn = GetAddrOfCXXConstructor(D, Type);
 
-  CodeGenFunction(*this).GenerateCode(D, Fn);
+  CodeGenFunction(*this).GenerateCode(GlobalDecl(D, Type), Fn);
 
   SetFunctionDefinitionAttributes(D, Fn);
   SetLLVMFunctionAttributesForDefinition(D, Fn);
@@ -750,7 +750,7 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *D,
                                       CXXDtorType Type) {
   llvm::Function *Fn = GetAddrOfCXXDestructor(D, Type);
 
-  CodeGenFunction(*this).GenerateCode(D, Fn);
+  CodeGenFunction(*this).GenerateCode(GlobalDecl(D, Type), Fn);
 
   SetFunctionDefinitionAttributes(D, Fn);
   SetLLVMFunctionAttributesForDefinition(D, Fn);
@@ -1548,12 +1548,14 @@ void CodeGenFunction::EmitClassCopyAssignment(
 
 /// SynthesizeDefaultConstructor - synthesize a default constructor
 void
-CodeGenFunction::SynthesizeDefaultConstructor(const CXXConstructorDecl *CD,
+CodeGenFunction::SynthesizeDefaultConstructor(GlobalDecl GD,
                                               const FunctionDecl *FD,
                                               llvm::Function *Fn,
                                               const FunctionArgList &Args) {
-  StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
-  EmitCtorPrologue(CD);
+  const CXXConstructorDecl *Ctor = cast<CXXConstructorDecl>(GD.getDecl());
+  
+  StartFunction(GD, FD->getResultType(), Fn, Args, SourceLocation());
+  EmitCtorPrologue(Ctor);
   FinishFunction();
 }
 
@@ -1572,14 +1574,15 @@ CodeGenFunction::SynthesizeDefaultConstructor(const CXXConstructorDecl *CD,
 /// Virtual base class subobjects shall be copied only once by the
 /// implicitly-defined copy constructor
 
-void CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
+void CodeGenFunction::SynthesizeCXXCopyConstructor(GlobalDecl GD,
                                        const FunctionDecl *FD,
                                        llvm::Function *Fn,
                                        const FunctionArgList &Args) {
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
+  const CXXConstructorDecl *Ctor = cast<CXXConstructorDecl>(GD.getDecl());
+  const CXXRecordDecl *ClassDecl = Ctor->getParent();
   assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
          "SynthesizeCXXCopyConstructor - copy constructor has definition already");
-  StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
+  StartFunction(GD, Ctor->getResultType(), Fn, Args, SourceLocation());
 
   FunctionArgList::const_iterator i = Args.begin();
   const VarDecl *ThisArg = i->first;
@@ -2003,17 +2006,19 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
   }
 }
 
-void CodeGenFunction::SynthesizeDefaultDestructor(const CXXDestructorDecl *CD,
+void CodeGenFunction::SynthesizeDefaultDestructor(GlobalDecl GD,
                                                   const FunctionDecl *FD,
                                                   llvm::Function *Fn,
                                                   const FunctionArgList &Args) {
 
-  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
+  const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(GD.getDecl());
+  
+  const CXXRecordDecl *ClassDecl = Dtor->getParent();
   assert(!ClassDecl->hasUserDeclaredDestructor() &&
          "SynthesizeDefaultDestructor - destructor has user declaration");
   (void) ClassDecl;
 
-  StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
-  EmitDtorEpilogue(CD);
+  StartFunction(GD, Dtor->getResultType(), Fn, Args, SourceLocation());
+  EmitDtorEpilogue(Dtor);
   FinishFunction();
 }

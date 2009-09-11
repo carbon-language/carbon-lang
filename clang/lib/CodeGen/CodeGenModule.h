@@ -17,6 +17,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclObjC.h"
 #include "CGBlocks.h"
 #include "CGCall.h"
 #include "CGCXX.h"
@@ -74,11 +75,9 @@ namespace CodeGen {
 class GlobalDecl {
   llvm::PointerIntPair<const Decl*, 2> Value;
 
-  void init(const Decl *D) {
+  void Init(const Decl *D) {
     assert(!isa<CXXConstructorDecl>(D) && "Use other ctor with ctor decls!");
     assert(!isa<CXXDestructorDecl>(D) && "Use other ctor with dtor decls!");
-    assert(isa<VarDecl>(D) || isa<FunctionDecl>(D)
-           && "Invalid decl type passed to GlobalDecl ctor!");
 
     Value.setPointer(D);
   }
@@ -86,9 +85,11 @@ class GlobalDecl {
 public:
   GlobalDecl() {}
 
-  GlobalDecl(const VarDecl *D) { init(D);}
-  GlobalDecl(const FunctionDecl *D) { init(D); }
-  
+  GlobalDecl(const VarDecl *D) { Init(D);}
+  GlobalDecl(const FunctionDecl *D) { Init(D); }
+  GlobalDecl(const BlockDecl *D) { Init(D); }
+  GlobalDecl(const ObjCMethodDecl *D) { Init(D); }
+
   GlobalDecl(const CXXConstructorDecl *D, CXXCtorType Type)
   : Value(D, Type) {}
   GlobalDecl(const CXXDestructorDecl *D, CXXDtorType Type)

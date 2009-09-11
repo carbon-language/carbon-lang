@@ -345,9 +345,8 @@ public:
   llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E);
   const llvm::Type *BuildByRefType(const ValueDecl *D);
 
-  void GenerateCode(const FunctionDecl *FD,
-                    llvm::Function *Fn);
-  void StartFunction(const Decl *D, QualType RetTy,
+  void GenerateCode(GlobalDecl GD, llvm::Function *Fn);
+  void StartFunction(GlobalDecl GD, QualType RetTy,
                      llvm::Function *Fn,
                      const FunctionArgList &Args,
                      SourceLocation StartLoc);
@@ -369,7 +368,7 @@ public:
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD);
 
-  void SynthesizeCXXCopyConstructor(const CXXConstructorDecl *CD,
+  void SynthesizeCXXCopyConstructor(GlobalDecl GD,
                                     const FunctionDecl *FD,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args);
@@ -379,12 +378,12 @@ public:
                                    llvm::Function *Fn,
                                    const FunctionArgList &Args);
 
-  void SynthesizeDefaultConstructor(const CXXConstructorDecl *CD,
+  void SynthesizeDefaultConstructor(GlobalDecl GD,
                                     const FunctionDecl *FD,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args);
 
-  void SynthesizeDefaultDestructor(const CXXDestructorDecl *CD,
+  void SynthesizeDefaultDestructor(GlobalDecl GD,
                                     const FunctionDecl *FD,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args);
