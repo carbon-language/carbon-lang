@@ -1386,6 +1386,13 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee, QualType CalleeType,
   CallArgList Args;
   EmitCallArgs(Args, FnType->getAsFunctionProtoType(), ArgBeg, ArgEnd);
 
-  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args),
+  // FIXME: We should not need to do this, it should be part of the function
+  // type.
+  unsigned CallingConvention = 0;
+  if (const llvm::Function *F =
+      dyn_cast<llvm::Function>(Callee->stripPointerCasts()))
+    CallingConvention = F->getCallingConv();
+  return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args,
+                                                 CallingConvention),
                   Callee, Args, TargetDecl);
 }

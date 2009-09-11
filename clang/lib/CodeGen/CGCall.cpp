@@ -851,9 +851,9 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   }
 
   CS.setAttributes(Attrs);
-  if (const llvm::Function *F =
-        dyn_cast<llvm::Function>(Callee->stripPointerCasts()))
-    CS.setCallingConv(F->getCallingConv());
+  llvm::CallingConv::ID CC =
+    static_cast<llvm::CallingConv::ID>(CallInfo.getCallingConvention());
+  CS.setCallingConv(CC);
 
   // If the call doesn't return, finish the basic block and clear the
   // insertion point; this allows the rest of IRgen to discard

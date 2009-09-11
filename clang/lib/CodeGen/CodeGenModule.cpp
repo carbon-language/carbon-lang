@@ -343,12 +343,9 @@ void CodeGenModule::SetLLVMFunctionAttributes(const Decl *D,
   F->setAttributes(llvm::AttrListPtr::get(AttributeList.begin(),
                                         AttributeList.size()));
 
-  // Set the appropriate calling convention for the Function.
-  if (D->hasAttr<FastCallAttr>())
-    F->setCallingConv(llvm::CallingConv::X86_FastCall);
-
-  if (D->hasAttr<StdCallAttr>())
-    F->setCallingConv(llvm::CallingConv::X86_StdCall);
+  llvm::CallingConv::ID CC =
+    static_cast<llvm::CallingConv::ID>(Info.getCallingConvention());
+  F->setCallingConv(CC);
 }
 
 void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
