@@ -1,4 +1,4 @@
-; RUN: opt %s -scalarrepl -disable-output
+; RUN: opt < %s -scalarrepl -disable-output
 
 target datalayout = "E-p:32:32"
 	%struct.rtx_def = type { [2 x i8], i32, [1 x %union.rtunion_def] }

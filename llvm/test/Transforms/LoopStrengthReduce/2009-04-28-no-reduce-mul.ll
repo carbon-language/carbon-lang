@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce -S \
+; RUN: opt < %s -loop-reduce -S \
 ; RUN:   | grep {getelementptr.*%lsr.iv.*%lsr.iv.*<i32\\*>}
 ; The multiply in bb2 must not be reduced to an add, as the sext causes the
 ; %1 argument to become negative after a while.

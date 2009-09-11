@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-index-split -disable-output 
+; RUN: opt < %s -loop-index-split -disable-output 
 
         %struct._edit_script = type { %struct._edit_script*, i32, i8 }
 

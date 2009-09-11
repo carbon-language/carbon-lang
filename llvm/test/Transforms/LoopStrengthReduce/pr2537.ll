@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce -disable-output
+; RUN: opt < %s -loop-reduce -disable-output
 ; PR 2537
 
 define void @a() {

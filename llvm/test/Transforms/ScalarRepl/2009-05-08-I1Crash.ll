@@ -1,4 +1,4 @@
-; RUN: opt %s -scalarrepl | llvm-dis
+; RUN: opt < %s -scalarrepl | llvm-dis
 ; PR4146
 
  %wrapper = type { i1 }

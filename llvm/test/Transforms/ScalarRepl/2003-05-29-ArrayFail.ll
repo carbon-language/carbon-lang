@@ -1,4 +1,4 @@
-; RUN: opt %s -scalarrepl -instcombine -S | not grep alloca
+; RUN: opt < %s -scalarrepl -instcombine -S | not grep alloca
 
 ; Test that an array is not incorrectly deconstructed.
 

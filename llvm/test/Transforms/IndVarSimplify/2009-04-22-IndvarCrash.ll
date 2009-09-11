@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars
+; RUN: opt < %s -indvars
 ; rdar://6817574
 
 define i32 @t1() nounwind ssp {

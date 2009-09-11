@@ -2,7 +2,7 @@
 ; node in the exception destination, and the inlined function contains an 
 ; unwind instruction.
 
-; RUN: opt %s -inline -disable-output
+; RUN: opt < %s -inline -disable-output
 
 define linkonce void @foo() {
         unwind

@@ -1,4 +1,4 @@
-; RUN: opt %s -postdomtree -analyze | grep entry
+; RUN: opt < %s -postdomtree -analyze | grep entry
 ; PR932
 
 define void @foo(i1 %x) {

@@ -1,4 +1,4 @@
-; RUN: opt %s -argpromotion -S | \
+; RUN: opt < %s -argpromotion -S | \
 ; RUN:   grep {load i32\\* %A}
 
 define internal i32 @callee(i1 %C, i32* %P) {

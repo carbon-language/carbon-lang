@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce -S | \
+; RUN: opt < %s -loop-reduce -S | \
 ; RUN:   grep {add i32 %lsr.iv.next, 1}
 ;
 ; Make sure that the use of the IV outside of the loop (the store) uses the 

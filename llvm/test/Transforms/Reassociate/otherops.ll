@@ -1,6 +1,6 @@
 ; Reassociation should apply to Add, Mul, And, Or, & Xor
 ;
-; RUN: opt %s -reassociate -constprop -instcombine -die -S | not grep 12
+; RUN: opt < %s -reassociate -constprop -instcombine -die -S | not grep 12
 
 define i32 @test_mul(i32 %arg) {
 	%tmp1 = mul i32 12, %arg		; <i32> [#uses=1]

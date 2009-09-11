@@ -1,8 +1,8 @@
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:   grep shufflevec | count 1
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:   not grep insertelement
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:   not grep extractelement
 ; END.
 

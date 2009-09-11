@@ -1,4 +1,4 @@
-; RUN: opt %s -globaldce
+; RUN: opt < %s -globaldce
 ;
 define internal void @func() {
         ret void

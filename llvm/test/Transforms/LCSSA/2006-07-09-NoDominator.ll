@@ -1,4 +1,4 @@
-; RUN: opt %s -lcssa
+; RUN: opt < %s -lcssa
 
 	%struct.SetJmpMapEntry = type { i8*, i32, %struct.SetJmpMapEntry* }
 

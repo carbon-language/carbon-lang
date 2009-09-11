@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine
+; RUN: opt < %s -instcombine
 ; PR2940
 
 define i32 @tstid() {

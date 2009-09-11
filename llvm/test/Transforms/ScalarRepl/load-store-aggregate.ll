@@ -2,7 +2,7 @@
 ; are directly loaded from or stored to (using the first class aggregates
 ; feature).
 
-; RUN: opt %s -scalarrepl -S > %t
+; RUN: opt < %s -scalarrepl -S > %t
 ; RUN: cat %t | not grep alloca
 
 %struct.foo = type { i32, i32 }

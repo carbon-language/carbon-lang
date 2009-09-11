@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:   grep call | not grep bitcast
 
 target datalayout = "e-p:32:32"

@@ -1,6 +1,6 @@
 ; This file contains various testcases that require tracking whether bits are
 ; set or cleared by various instructions.
-; RUN: opt %s -instcombine -instcombine -S |\
+; RUN: opt < %s -instcombine -instcombine -S |\
 ; RUN:   not grep %ELIM
 
 ; Reduce down to a single XOR

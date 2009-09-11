@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:    grep {%bothcond =}
 
 define i1 @Doit_bb(i32 %i.0) {

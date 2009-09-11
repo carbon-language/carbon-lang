@@ -1,6 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: opt %s -instcombine -S | not grep icmp
+; RUN: opt < %s -instcombine -S | not grep icmp
 ; END.
 	
 @X = external global i32                ; <i32*> [#uses=2]

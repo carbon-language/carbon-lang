@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -disable-output
+; RUN: opt < %s -instcombine -disable-output
 
 ; This example caused instcombine to spin into an infinite loop.
 

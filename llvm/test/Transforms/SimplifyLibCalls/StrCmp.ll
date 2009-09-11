@@ -1,5 +1,5 @@
 ; Test that the StrCmpOptimizer works correctly
-; RUN: opt %s -simplify-libcalls -S | \
+; RUN: opt < %s -simplify-libcalls -S | \
 ; RUN:   not grep {call.*strcmp}
 
 @hello = constant [6 x i8] c"hello\00"		; <[6 x i8]*> [#uses=1]

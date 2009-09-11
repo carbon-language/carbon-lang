@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars
+; RUN: opt < %s -indvars
 ; PR4052
 ; PR4054
 

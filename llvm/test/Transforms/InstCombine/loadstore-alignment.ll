@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | grep {, align 16} | count 14
+; RUN: opt < %s -instcombine -S | grep {, align 16} | count 14
 
 @x = external global <2 x i64>, align 16
 @xx = external global [13 x <2 x i64>], align 16

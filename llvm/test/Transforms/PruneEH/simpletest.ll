@@ -1,4 +1,4 @@
-; RUN: opt %s -prune-eh -S | not grep invoke
+; RUN: opt < %s -prune-eh -S | not grep invoke
 
 declare void @nounwind() nounwind
 

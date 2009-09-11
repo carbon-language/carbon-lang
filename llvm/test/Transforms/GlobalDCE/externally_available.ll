@@ -1,4 +1,4 @@
-; RUN: opt %s -globaldce -S | not grep test_
+; RUN: opt < %s -globaldce -S | not grep test_
 
 ; test_function should not be emitted to the .s file.
 define available_externally i32 @test_function() {

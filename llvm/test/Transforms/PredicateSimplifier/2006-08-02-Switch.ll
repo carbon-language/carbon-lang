@@ -1,4 +1,4 @@
-; RUN: opt %s -predsimplify -disable-output
+; RUN: opt < %s -predsimplify -disable-output
 
 define fastcc void @_ov_splice(i32 %n1, i32 %n2, i32 %ch2) {
 entry:

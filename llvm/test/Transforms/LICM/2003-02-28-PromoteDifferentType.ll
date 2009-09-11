@@ -1,6 +1,6 @@
 ; Test that hoisting is disabled for pointers of different types...
 ;
-; RUN: opt %s -licm
+; RUN: opt < %s -licm
 
 define void @test(i32* %P) {
 	br label %Loop

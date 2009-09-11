@@ -1,4 +1,4 @@
-; RUN: opt %s -simplify-libcalls -S | FileCheck %s
+; RUN: opt < %s -simplify-libcalls -S | FileCheck %s
 ; PR4738
 
 ; SimplifyLibcalls shouldn't assume anything about weak symbols.

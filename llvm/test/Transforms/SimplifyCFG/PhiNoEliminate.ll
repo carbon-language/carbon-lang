@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg -S | \
+; RUN: opt < %s -simplifycfg -S | \
 ; RUN:   not grep select
 
 ;; The PHI node in this example should not be turned into a select, as we are

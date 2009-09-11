@@ -1,8 +1,8 @@
 ; Test that the StrCatOptimizer works correctly
 ; PR3661
-; RUN: opt %s -simplify-libcalls -S | \
+; RUN: opt < %s -simplify-libcalls -S | \
 ; RUN:   not grep {call.*strcat}
-; RUN: opt %s -simplify-libcalls -S | \
+; RUN: opt < %s -simplify-libcalls -S | \
 ; RUN:   grep {puts.*%arg1}
 
 ; This transformation requires the pointer size, as it assumes that size_t is

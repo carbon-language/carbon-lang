@@ -1,4 +1,4 @@
-; RUN: opt %s -deadargelim -disable-output
+; RUN: opt < %s -deadargelim -disable-output
 
 define internal void @build_delaunay({ i32 }* sret  %agg.result) {
         ret void

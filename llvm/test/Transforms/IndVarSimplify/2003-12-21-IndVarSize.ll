@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -S | grep indvar | not grep i32
+; RUN: opt < %s -indvars -S | grep indvar | not grep i32
 
 @G = global i64 0               ; <i64*> [#uses=1]
 

@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -S > %t
+; RUN: opt < %s -indvars -S > %t
 ; RUN: grep {%exitcond = icmp eq i64 %indvar.next, %n} %t
 ; RUN: grep {getelementptr i8\\* %A, i64 %indvar} %t
 ; RUN: grep getelementptr %t | count 1

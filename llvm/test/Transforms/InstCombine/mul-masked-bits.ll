@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | grep ashr
+; RUN: opt < %s -instcombine -S | grep ashr
 
 define i32 @foo(i32 %x, i32 %y) {
   %a = and i32 %x, 7

@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg -S | grep {volatile load}
+; RUN: opt < %s -simplifycfg -S | grep {volatile load}
 ; PR2967
 
 target datalayout =

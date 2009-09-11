@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-unswitch -disable-output
+; RUN: opt < %s -loop-unswitch -disable-output
 
 	%struct.BLEND_MAP = type { i16, i16, i16, i32, %struct.BLEND_MAP_ENTRY* }
 	%struct.BLEND_MAP_ENTRY = type { float, i8, { [5 x float], [4 x i8] } }

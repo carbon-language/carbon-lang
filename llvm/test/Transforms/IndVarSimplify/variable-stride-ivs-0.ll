@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -instcombine -S | \
+; RUN: opt < %s -indvars -instcombine -S | \
 ; RUN:   grep {store i32 0}
 ; Test that -indvars can reduce variable stride IVs.  If it can reduce variable
 ; stride iv's, it will make %iv. and %m.0.0 isomorphic to each other without 

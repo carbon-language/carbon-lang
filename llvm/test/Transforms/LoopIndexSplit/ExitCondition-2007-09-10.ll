@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-index-split -disable-output 
+; RUN: opt < %s -loop-index-split -disable-output 
 
 @k = external global i32		; <i32*> [#uses=2]
 

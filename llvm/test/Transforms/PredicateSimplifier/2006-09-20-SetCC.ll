@@ -1,4 +1,4 @@
-; RUN: opt %s -predsimplify -S | grep br | grep return.i.bb8_crit_edge | grep false
+; RUN: opt < %s -predsimplify -S | grep br | grep return.i.bb8_crit_edge | grep false
 @str = external global [4 x i8]		; <[4 x i8]*> [#uses=1]
 
 declare i32 @sprintf(i8*, i8*, ...)

@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-unroll -loopsimplify -disable-output
+; RUN: opt < %s -loop-unroll -loopsimplify -disable-output
 
 define void @print_board() {
 entry:

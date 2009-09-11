@@ -1,4 +1,4 @@
-; RUN: opt %s -dse -S | not grep DEAD
+; RUN: opt < %s -dse -S | not grep DEAD
 
 declare void @ext()
 

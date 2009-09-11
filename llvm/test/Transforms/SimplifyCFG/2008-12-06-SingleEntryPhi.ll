@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg | llvm-dis
+; RUN: opt < %s -simplifycfg | llvm-dis
 define i32 @test() {
 entry:
 	br label %T

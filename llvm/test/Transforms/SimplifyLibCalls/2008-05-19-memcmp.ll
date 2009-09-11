@@ -1,4 +1,4 @@
-; RUN: opt %s -simplify-libcalls -S | grep i32
+; RUN: opt < %s -simplify-libcalls -S | grep i32
 ; PR2341
 
 @_2E_str = external constant [5 x i8]		; <[5 x i8]*> [#uses=1]

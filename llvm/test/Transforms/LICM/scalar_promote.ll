@@ -1,4 +1,4 @@
-; RUN: opt %s  -licm -S | FileCheck %s
+; RUN: opt < %s  -licm -S | FileCheck %s
 @X = global i32 7		; <i32*> [#uses=4]
 
 define void @test1(i32 %i) {

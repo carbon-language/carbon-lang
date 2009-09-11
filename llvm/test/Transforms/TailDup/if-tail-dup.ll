@@ -1,4 +1,4 @@
-; RUN: opt %s -tailduplicate | \
+; RUN: opt < %s -tailduplicate | \
 ; RUN:   llc -march=x86 -o %t
 ; RUN: grep {\\\<je\\\>} %t
 ; RUN: not grep jmp %t

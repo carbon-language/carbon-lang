@@ -1,4 +1,4 @@
-; RUN: opt %s -basicaa -licm -disable-output
+; RUN: opt < %s -basicaa -licm -disable-output
 
 ;%MoveArray = external global [64 x ulong]
 

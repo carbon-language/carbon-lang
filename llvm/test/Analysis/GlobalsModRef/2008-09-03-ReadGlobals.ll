@@ -1,4 +1,4 @@
-; RUN: opt %s -globalsmodref-aa -gvn -S | grep call | count 2
+; RUN: opt < %s -globalsmodref-aa -gvn -S | grep call | count 2
 
 @g = internal global i32 0		; <i32*> [#uses=2]
 

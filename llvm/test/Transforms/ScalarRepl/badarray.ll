@@ -1,4 +1,4 @@
-; RUN: opt %s -scalarrepl -instcombine -S | not grep alloca
+; RUN: opt < %s -scalarrepl -instcombine -S | not grep alloca
 ; PR3466
 
 define i32 @test() {

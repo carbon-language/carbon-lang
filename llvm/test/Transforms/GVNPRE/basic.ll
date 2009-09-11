@@ -1,5 +1,5 @@
-; RUN: opt %s -gvnpre -S | not grep {%z3 =}
-; RUN: opt %s -gvnpre -S | not grep {%z9 =}
+; RUN: opt < %s -gvnpre -S | not grep {%z3 =}
+; RUN: opt < %s -gvnpre -S | not grep {%z9 =}
 
 define i32 @main() {
 block1:

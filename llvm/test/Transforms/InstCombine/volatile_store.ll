@@ -1,5 +1,5 @@
-; RUN: opt %s -instcombine -S | grep {volatile store}
-; RUN: opt %s -instcombine -S | grep {volatile load}
+; RUN: opt < %s -instcombine -S | grep {volatile store}
+; RUN: opt < %s -instcombine -S | grep {volatile load}
 
 @x = weak global i32 0		; <i32*> [#uses=2]
 

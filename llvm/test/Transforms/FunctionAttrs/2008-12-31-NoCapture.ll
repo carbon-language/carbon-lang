@@ -1,5 +1,5 @@
-; RUN: opt %s -functionattrs -S | not grep {nocapture *%%q}
-; RUN: opt %s -functionattrs -S | grep {nocapture *%%p} | count 6
+; RUN: opt < %s -functionattrs -S | not grep {nocapture *%%q}
+; RUN: opt < %s -functionattrs -S | grep {nocapture *%%p} | count 6
 @g = global i32* null		; <i32**> [#uses=1]
 
 define i32* @c1(i32* %q) {

@@ -1,4 +1,4 @@
-; RUN: opt %s -anders-aa -gvn -S | not grep undef
+; RUN: opt < %s -anders-aa -gvn -S | not grep undef
 ; PR2160
 
 declare void @f(i32*)

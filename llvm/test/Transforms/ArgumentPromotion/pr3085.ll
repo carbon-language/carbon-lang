@@ -1,4 +1,4 @@
-; RUN: opt %s -disable-output -loop-extract-single -loop-rotate -loop-reduce -argpromotion
+; RUN: opt < %s -disable-output -loop-extract-single -loop-rotate -loop-reduce -argpromotion
 ; PR 3085
 
 	%struct.Lit = type { i8 }

@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | not grep {call.*llvm.memset}
+; RUN: opt < %s -instcombine -S | not grep {call.*llvm.memset}
 
 declare void @llvm.memset.i32(i8*, i8, i32, i32)
 

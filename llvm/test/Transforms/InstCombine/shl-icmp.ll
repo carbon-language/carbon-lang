@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -stats -disable-output |& \
+; RUN: opt < %s -instcombine -stats -disable-output |& \
 ; RUN:   grep {Number of insts combined} | grep 5
 
 define i8 @t1(i8 zeroext %x, i8 zeroext %y) zeroext nounwind {

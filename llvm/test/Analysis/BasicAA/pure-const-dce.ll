@@ -1,6 +1,6 @@
-; RUN: opt %s -basicaa -gvn -S | grep TestConst | count 2
-; RUN: opt %s -basicaa -gvn -S | grep TestPure  | count 3
-; RUN: opt %s -basicaa -gvn -S | grep TestNone  | count 4
+; RUN: opt < %s -basicaa -gvn -S | grep TestConst | count 2
+; RUN: opt < %s -basicaa -gvn -S | grep TestPure  | count 3
+; RUN: opt < %s -basicaa -gvn -S | grep TestNone  | count 4
 @g = global i32 0		; <i32*> [#uses=1]
 
 define i32 @test() {

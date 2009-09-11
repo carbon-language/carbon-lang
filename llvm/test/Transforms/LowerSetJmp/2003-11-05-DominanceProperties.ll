@@ -1,4 +1,4 @@
-; RUN: opt %s -lowersetjmp -disable-output
+; RUN: opt < %s -lowersetjmp -disable-output
 
 	%struct.jmpenv = type { i32, i8 }
 

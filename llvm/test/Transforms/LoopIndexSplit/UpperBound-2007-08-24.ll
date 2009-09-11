@@ -1,6 +1,6 @@
 ; Split loop. Split value is a constant and greater then exit value. 
 ; Check whether optimizer inserts proper checkfor split value or not.
-; RUN: opt %s -loop-index-split -S | grep select
+; RUN: opt < %s -loop-index-split -S | grep select
 
 @k = external global i32		; <i32*> [#uses=2]
 

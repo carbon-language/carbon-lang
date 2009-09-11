@@ -1,4 +1,4 @@
-; RUN: opt %s -postdomfrontier -disable-output
+; RUN: opt < %s -postdomfrontier -disable-output
 
 define void @args_out_of_range() {
 entry:

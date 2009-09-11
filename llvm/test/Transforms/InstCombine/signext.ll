@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:    not grep {(and\|xor\|add\|shl\|shr)}
 ; END.
 

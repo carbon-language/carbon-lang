@@ -1,4 +1,4 @@
-; RUN: opt %s -tailduplicate -disable-output
+; RUN: opt < %s -tailduplicate -disable-output
 ; PR4662
 
 define void @a() {

@@ -1,7 +1,7 @@
-; RUN: opt %s -simplifycfg -instcombine -S | grep 0x7FF8000000000000 | count 7
-; RUN: opt %s -simplifycfg -instcombine -S | grep 0x7FF00000FFFFFFFF | count 5
-; RUN: opt %s -simplifycfg -instcombine -S | grep {0\\.0} | count 3
-; RUN: opt %s -simplifycfg -instcombine -S | grep {3\\.5} | count 1
+; RUN: opt < %s -simplifycfg -instcombine -S | grep 0x7FF8000000000000 | count 7
+; RUN: opt < %s -simplifycfg -instcombine -S | grep 0x7FF00000FFFFFFFF | count 5
+; RUN: opt < %s -simplifycfg -instcombine -S | grep {0\\.0} | count 3
+; RUN: opt < %s -simplifycfg -instcombine -S | grep {3\\.5} | count 1
 ;
 
 ; ModuleID = 'apf.c'

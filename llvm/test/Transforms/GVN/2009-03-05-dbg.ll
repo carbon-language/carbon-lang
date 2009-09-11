@@ -1,4 +1,4 @@
-; RUN: opt %s -gvn -disable-output
+; RUN: opt < %s -gvn -disable-output
 	%llvm.dbg.compile_unit.type = type { i32, { }*, i32, i8*, i8*, i8*, i1, i1, i8*, i32 }
 @llvm.dbg.compile_unit298 = external constant %llvm.dbg.compile_unit.type		; <%llvm.dbg.compile_unit.type*> [#uses=1]
 

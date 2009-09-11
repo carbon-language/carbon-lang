@@ -11,7 +11,7 @@
 ;  return !s;
 ;}
 ;
-; RUN: opt %s -adce
+; RUN: opt < %s -adce
 
 define i32 @rx_bitset_empty(i32 %size, i32* %set) {
 bb1:

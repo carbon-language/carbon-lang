@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:    grep {ret i32 %.toremerge} | count 2
 ;; Simple sinking tests
 

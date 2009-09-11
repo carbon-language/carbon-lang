@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce -S | grep ugt
+; RUN: opt < %s -loop-reduce -S | grep ugt
 ; PR2535
 
 @.str = internal constant [4 x i8] c"%d\0A\00"

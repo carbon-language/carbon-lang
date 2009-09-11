@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -disable-output
+; RUN: opt < %s -indvars -disable-output
 
 define void @main() {
 entry:

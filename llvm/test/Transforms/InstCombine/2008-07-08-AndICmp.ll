@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | grep icmp | count 1
+; RUN: opt < %s -instcombine -S | grep icmp | count 1
 ; PR2330
 
 define i1 @foo(i32 %a, i32 %b) nounwind {

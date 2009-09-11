@@ -1,4 +1,4 @@
-; RUN: opt %s -globalopt
+; RUN: opt < %s -globalopt
 
 @g = external global i32
 

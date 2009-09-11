@@ -1,6 +1,6 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:    not grep {xor }
 ; END.
 @G1 = global i32 0		; <i32*> [#uses=1]

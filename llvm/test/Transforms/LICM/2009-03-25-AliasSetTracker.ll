@@ -1,5 +1,5 @@
 
-; RUN: opt %s -licm -loop-index-split -instcombine -disable-output
+; RUN: opt < %s -licm -loop-index-split -instcombine -disable-output
 
 	%struct.FILE = type { i32, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, i8*, %struct._IO_marker*, %struct.FILE*, i32, i32, i32, i16, i8, [1 x i8], i8*, i64, i8*, i8*, i8*, i8*, i32, i32, [40 x i8] }
 	%struct._IO_marker = type { %struct._IO_marker*, %struct.FILE*, i32 }

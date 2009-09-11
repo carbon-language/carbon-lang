@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -S | grep indvar
+; RUN: opt < %s -indvars -S | grep indvar
 @G = global i32* null           ; <i32**> [#uses=1]
 @Array = external global [40 x i32]             ; <[40 x i32]*> [#uses=1]
 

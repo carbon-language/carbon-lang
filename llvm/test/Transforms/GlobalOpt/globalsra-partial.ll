@@ -1,6 +1,6 @@
 ; In this case, the global can only be broken up by one level.
 
-; RUN: opt %s -globalopt -S | not grep 12345
+; RUN: opt < %s -globalopt -S | not grep 12345
 
 @G = internal global { i32, [4 x float] } zeroinitializer               ; <{ i32, [4 x float] }*> [#uses=3]
 

@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-extract -disable-output
+; RUN: opt < %s -loop-extract -disable-output
 
 %struct.node_t = type { double*, %struct.node_t*, %struct.node_t**, double**, double*, i32, i32 }
 %struct.table_t = type { [1 x %struct.node_t**], [1 x %struct.node_t**] }

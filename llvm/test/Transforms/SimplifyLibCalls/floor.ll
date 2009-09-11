@@ -1,4 +1,4 @@
-; RUN: opt %s -simplify-libcalls -S > %t
+; RUN: opt < %s -simplify-libcalls -S > %t
 ; RUN: not grep {call.*floor(} %t
 ; RUN: grep {call.*floorf(} %t
 ; RUN: not grep {call.*ceil(} %t

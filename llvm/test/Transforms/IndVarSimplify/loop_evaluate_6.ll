@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -loop-deletion -S | grep phi | count 1
+; RUN: opt < %s -indvars -loop-deletion -S | grep phi | count 1
 ; XFAIL: *
 
 ; Indvars can't evaluate this loop, because ScalarEvolution can't compute

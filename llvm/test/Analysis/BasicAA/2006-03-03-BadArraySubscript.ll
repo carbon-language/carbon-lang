@@ -1,4 +1,4 @@
-; RUN: opt %s -aa-eval -disable-output |& grep {2 no alias respon}
+; RUN: opt < %s -aa-eval -disable-output |& grep {2 no alias respon}
 ; TEST that A[1][0] may alias A[0][i].
 
 define void @test(i32 %N) {

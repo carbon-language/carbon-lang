@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | not grep bitcast
+; RUN: opt < %s -instcombine -S | not grep bitcast
 
 define void @f(i16 %y) {
 	ret void

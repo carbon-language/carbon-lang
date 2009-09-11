@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg -adce -S | \
+; RUN: opt < %s -simplifycfg -adce -S | \
 ; RUN:   not grep {call void @f1}
 ; END.
 

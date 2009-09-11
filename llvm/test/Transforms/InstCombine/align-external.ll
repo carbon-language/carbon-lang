@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | FileCheck %s
+; RUN: opt < %s -instcombine -S | FileCheck %s
 
 ; Don't assume that external global variables have their preferred
 ; alignment. They may only have the ABI minimum alignment.

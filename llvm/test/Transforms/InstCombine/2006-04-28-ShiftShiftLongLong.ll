@@ -1,5 +1,5 @@
-; RUN: opt %s -instcombine -S | grep shl
-; RUN: opt %s -instcombine -S | notcast
+; RUN: opt < %s -instcombine -S | grep shl
+; RUN: opt < %s -instcombine -S | notcast
 
 ; This cannot be turned into a sign extending cast!
 

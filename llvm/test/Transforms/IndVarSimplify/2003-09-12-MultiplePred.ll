@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -S | grep indvar
+; RUN: opt < %s -indvars -S | grep indvar
 
 define i32 @test() {
 ; <label>:0

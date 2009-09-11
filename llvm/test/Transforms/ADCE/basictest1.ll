@@ -1,4 +1,4 @@
-; RUN: opt %s -adce -simplifycfg | llvm-dis	
+; RUN: opt < %s -adce -simplifycfg | llvm-dis	
 %FILE = type { i32, i8*, i8*, i8, i8, i32, i32, i32 }
 	%spec_fd_t = type { i32, i32, i32, i8* }
 @__iob = external global [20 x %FILE]		; <[20 x %FILE]*> [#uses=1]

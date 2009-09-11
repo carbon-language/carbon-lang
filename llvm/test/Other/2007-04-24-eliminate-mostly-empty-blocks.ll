@@ -1,4 +1,4 @@
-;RUN: opt %s -codegenprepare -disable-output
+;RUN: opt < %s -codegenprepare -disable-output
 
 define void @foo() {
 entry:

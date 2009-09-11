@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | grep { i32 \[%\]sd, \[\[:alnum:\]\]* \\?1\\>} | count 4
+; RUN: opt < %s -instcombine -S | grep { i32 \[%\]sd, \[\[:alnum:\]\]* \\?1\\>} | count 4
 
 ; Instcombine normally would fold the sdiv into the comparison,
 ; making "icmp slt i32 %h, 2", but in this case the sdiv has

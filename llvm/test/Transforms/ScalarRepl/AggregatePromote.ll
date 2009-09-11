@@ -1,4 +1,4 @@
-; RUN: opt %s -scalarrepl -S | \
+; RUN: opt < %s -scalarrepl -S | \
 ; RUN:   not grep alloca
 
 target datalayout = "E-p:32:32"

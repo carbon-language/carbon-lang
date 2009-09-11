@@ -1,5 +1,5 @@
 ; Test that the ToAsciiOptimizer works correctly
-; RUN: opt %s -simplify-libcalls -S | \
+; RUN: opt < %s -simplify-libcalls -S | \
 ; RUN:   not grep {call.*@ffs}
 
 @non_const = external global i32		; <i32*> [#uses=1]

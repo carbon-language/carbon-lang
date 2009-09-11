@@ -1,4 +1,4 @@
-; RUN: opt %s -predsimplify -disable-output
+; RUN: opt < %s -predsimplify -disable-output
 
 define void @safe_strcpy(i32 %size1) {
 entry:

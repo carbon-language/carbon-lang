@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg -S | not grep unreachable
+; RUN: opt < %s -simplifycfg -S | not grep unreachable
 
 define void @test1(i1 %C, i1* %BP) {
         br i1 %C, label %T, label %F

@@ -1,4 +1,4 @@
-; RUN: opt %s -gvn -disable-output
+; RUN: opt < %s -gvn -disable-output
 ; PR3775
 
 ; ModuleID = 'bugpoint-reduced-simplified.bc'

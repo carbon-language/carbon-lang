@@ -1,4 +1,4 @@
-; RUN: opt %s -analyze -scalar-evolution 2>/dev/null
+; RUN: opt < %s -analyze -scalar-evolution 2>/dev/null
 ; PR2433
 
 define i32 @main1(i32 %argc, i8** %argv) nounwind  {

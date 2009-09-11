@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:   grep {add float}
 
         %V = type <4 x float>

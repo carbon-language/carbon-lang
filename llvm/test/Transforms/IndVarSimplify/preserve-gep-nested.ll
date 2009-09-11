@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -S > %t
+; RUN: opt < %s -indvars -S > %t
 ; Exactly one getelementptr for each load+store.
 ; RUN: grep getelementptr %t | count 6
 ; Each getelementptr using %struct.Q* %s as a base and not i8*.

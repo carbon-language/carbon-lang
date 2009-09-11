@@ -1,4 +1,4 @@
-; RUN: opt %s -gvnpre | llvm-dis
+; RUN: opt < %s -gvnpre | llvm-dis
 
 define void @strength_test5(i32* %data) {
 entry:

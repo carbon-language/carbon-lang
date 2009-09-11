@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | FileCheck %s
+; RUN: opt < %s -instcombine -S | FileCheck %s
 
 ; CHECK: define i32 @foo
 ; CHECK: sdiv i32 %x, 8

@@ -1,5 +1,5 @@
 ; Ignore stderr, we expect warnings there
-; RUN: opt %s -instcombine 2> /dev/null -S | \
+; RUN: opt < %s -instcombine 2> /dev/null -S | \
 ; RUN:    grep call | notcast
 ; END.
 

@@ -1,5 +1,5 @@
 ; Check that the index of 'P[outer]' is pulled out of the loop.
-; RUN: opt %s -loop-reduce -S | \
+; RUN: opt < %s -loop-reduce -S | \
 ; RUN:   not grep {getelementptr.*%outer.*%INDVAR}
 
 declare i1 @pred()

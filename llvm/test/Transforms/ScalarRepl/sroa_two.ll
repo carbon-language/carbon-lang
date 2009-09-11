@@ -1,4 +1,4 @@
-; RUN: opt %s -scalarrepl | llvm-dis
+; RUN: opt < %s -scalarrepl | llvm-dis
 
 define i32 @test(i32 %X) {
 	%Arr = alloca [2 x i32]		; <[2 x i32]*> [#uses=3]

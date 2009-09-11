@@ -1,6 +1,6 @@
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:   grep icmp | count 1
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:   grep {icmp ugt} | count 1
 ; END.
 

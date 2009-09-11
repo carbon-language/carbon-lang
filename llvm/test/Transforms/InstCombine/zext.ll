@@ -1,5 +1,5 @@
 ; Tests to make sure elimination of casts is working correctly
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:   notcast {} {%c1.*}
 
 define i64 @test_sext_zext(i16 %A) {

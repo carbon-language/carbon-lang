@@ -1,5 +1,5 @@
 ; Loop is elimianted
-; RUN: opt %s -loop-index-split -disable-output -stats |& \
+; RUN: opt < %s -loop-index-split -disable-output -stats |& \
 ; RUN: grep "loop-index-split" | count 1
 	%struct.anon = type { i32 }
 @S1 = external global i32		; <i32*> [#uses=1]

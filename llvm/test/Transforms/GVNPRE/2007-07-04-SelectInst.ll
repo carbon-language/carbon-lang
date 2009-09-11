@@ -1,4 +1,4 @@
-; RUN: opt %s -gvnpre | llvm-dis
+; RUN: opt < %s -gvnpre | llvm-dis
 
 define void @set_depth_values(i32 %level) {
 cond_true90:		; preds = %cond_next84

@@ -1,5 +1,5 @@
 ; Test the edge profiling instrumentation.
-; RUN: opt %s -insert-edge-profiling -S | FileCheck %s
+; RUN: opt < %s -insert-edge-profiling -S | FileCheck %s
 
 ; ModuleID = '<stdin>'
 

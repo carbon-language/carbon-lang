@@ -1,4 +1,4 @@
-; RUN: opt %s -adce -simplifycfg -S | grep call
+; RUN: opt < %s -adce -simplifycfg -S | grep call
 declare void @exit(i32)
 
 define i32 @main(i32 %argc) {

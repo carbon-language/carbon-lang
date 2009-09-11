@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:   grep select | not grep {i32\\*}
 
 ; This testcase corresponds to PR362, which notices that this horrible code

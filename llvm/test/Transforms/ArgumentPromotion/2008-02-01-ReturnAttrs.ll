@@ -1,4 +1,4 @@
-; RUN: opt %s -argpromotion -S | grep nounwind | count 2
+; RUN: opt < %s -argpromotion -S | grep nounwind | count 2
 
 define internal i32 @deref(i32* %x) nounwind {
 entry:

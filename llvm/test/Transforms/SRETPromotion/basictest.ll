@@ -1,4 +1,4 @@
-; RUN: opt %s -sretpromotion -S > %t
+; RUN: opt < %s -sretpromotion -S > %t
 ; RUN: cat %t | grep sret | count 1
 
 ; This function is promotable

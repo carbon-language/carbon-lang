@@ -1,5 +1,5 @@
-; RUN: opt %s -inline -S | grep sample
-; RUN: opt %s -inline -S | grep example
+; RUN: opt < %s -inline -S | grep sample
+; RUN: opt < %s -inline -S | grep example
 
 	%IntArray = type { i32, [0 x i32*] }
 

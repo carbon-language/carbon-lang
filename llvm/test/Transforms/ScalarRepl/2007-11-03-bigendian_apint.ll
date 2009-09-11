@@ -1,4 +1,4 @@
-; RUN: opt %s -scalarrepl -S | not grep shr
+; RUN: opt < %s -scalarrepl -S | not grep shr
 
 %struct.S = type { i16 }
 

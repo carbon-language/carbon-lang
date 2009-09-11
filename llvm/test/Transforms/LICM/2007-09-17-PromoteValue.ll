@@ -2,7 +2,7 @@
 ; Do not promote getelementptr because it may exposes load from a null pointer 
 ; and store from a null pointer  which are covered by 
 ; icmp eq %struct.decision* null, null condition.
-; RUN: opt %s -licm -S | not grep promoted
+; RUN: opt < %s -licm -S | not grep promoted
 	%struct.decision = type { i8, %struct.decision* }
 
 define i32 @main() {

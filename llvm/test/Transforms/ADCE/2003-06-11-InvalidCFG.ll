@@ -1,4 +1,4 @@
-; RUN: opt %s -adce -disable-output
+; RUN: opt < %s -adce -disable-output
 
 @G = external global i32*               ; <i32**> [#uses=1]
 

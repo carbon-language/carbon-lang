@@ -1,4 +1,4 @@
-; RUN: opt %s -tailduplicate | llc
+; RUN: opt < %s -tailduplicate | llc
 ; PR2323
 
 define i32 @func_27(i32 %p_28) nounwind  {

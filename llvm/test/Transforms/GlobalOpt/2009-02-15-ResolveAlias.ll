@@ -1,4 +1,4 @@
-; RUN: opt %s -globalopt -S | grep {define void @a}
+; RUN: opt < %s -globalopt -S | grep {define void @a}
 
 define internal void @f() {
 	ret void

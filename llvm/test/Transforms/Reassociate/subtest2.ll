@@ -1,6 +1,6 @@
 ; With sub reassociation, constant folding can eliminate the uses of %a.
 ;
-; RUN: opt %s -reassociate -instcombine -S | grep %a | count 1
+; RUN: opt < %s -reassociate -instcombine -S | grep %a | count 1
 ; PR2047
 
 define i32 @test(i32 %a, i32 %b, i32 %c) nounwind  {

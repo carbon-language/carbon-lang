@@ -1,4 +1,4 @@
-; RUN: opt %s -scalarrepl -S | not grep alloca
+; RUN: opt < %s -scalarrepl -S | not grep alloca
 	%llvm.dbg.anchor.type = type { i32, i32 }
 	%llvm.dbg.basictype.type = type { i32, { }*, i8*, { }*, i32, i64, i64, i64, i32, i32 }
 	%llvm.dbg.compile_unit.type = type { i32, { }*, i32, i8*, i8*, i8*, i1, i1, i8* }

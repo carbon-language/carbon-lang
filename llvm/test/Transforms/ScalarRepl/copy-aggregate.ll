@@ -1,4 +1,4 @@
-; RUN: opt %s -scalarrepl -S | not grep alloca
+; RUN: opt < %s -scalarrepl -S | not grep alloca
 ; PR3290
 
 ;; Store of integer to whole alloca struct.

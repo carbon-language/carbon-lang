@@ -1,7 +1,7 @@
 ; Make sure that functions are removed successfully if they are referred to by
 ; a global that is dead.  Make sure any globals they refer to die as well.
 
-; RUN: opt %s -globaldce -S | not grep foo
+; RUN: opt < %s -globaldce -S | not grep foo
 
 ;; Unused, kills %foo
 @b = internal global i32 ()* @foo               ; <i32 ()**> [#uses=0]

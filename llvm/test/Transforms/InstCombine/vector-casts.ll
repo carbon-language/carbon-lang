@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | FileCheck %s
+; RUN: opt < %s -instcombine -S | FileCheck %s
 
 ; This turns into a&1 != 0
 define <2 x i1> @test1(<2 x i64> %a) {

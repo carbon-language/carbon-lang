@@ -1,5 +1,5 @@
 ; PR1692
-; RUN: opt %s -loop-index-split -disable-output 
+; RUN: opt < %s -loop-index-split -disable-output 
 	%struct.CLAUSE_HELP = type { i32, i32, i32, i32, i32*, i32, %struct.LIST_NODE*, %struct.LIST_NODE*, i32, i32, %struct.LITERAL_HELP**, i32, i32, i32, i32 }
 	%struct.LIST_NODE = type { %struct.LIST_NODE*, i8* }
 	%struct.LITERAL_HELP = type { i32, i32, i32, %struct.CLAUSE_HELP*, %struct.term* }

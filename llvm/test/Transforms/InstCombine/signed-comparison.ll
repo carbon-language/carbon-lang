@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S > %t
+; RUN: opt < %s -instcombine -S > %t
 ; RUN: not grep zext %t
 ; RUN: not grep slt %t
 ; RUN: grep {icmp ult} %t

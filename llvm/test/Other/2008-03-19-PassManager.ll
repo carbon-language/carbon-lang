@@ -1,5 +1,5 @@
 ; PR 2034
-; RUN: opt %s -anders-aa -instcombine  -gvn -disable-output
+; RUN: opt < %s -anders-aa -instcombine  -gvn -disable-output
 	%struct.FULL = type { i32, i32, [1000 x float*] }
 
 define i32 @sgesl(%struct.FULL* %a, i32* %ipvt, float* %b, i32 %job) {

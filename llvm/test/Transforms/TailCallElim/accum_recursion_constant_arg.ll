@@ -3,7 +3,7 @@
 ; go out to the anonymous users of the demo script for "suggesting" 
 ; optimizations that should be done.  :)
 
-; RUN: opt %s -tailcallelim -S | not grep call
+; RUN: opt < %s -tailcallelim -S | not grep call
 
 define i32 @mul(i32 %x, i32 %y) {
 entry:

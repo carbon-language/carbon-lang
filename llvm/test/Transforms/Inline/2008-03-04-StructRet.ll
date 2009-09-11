@@ -1,4 +1,4 @@
-; RUN: opt %s -inline -disable-output
+; RUN: opt < %s -inline -disable-output
 	%struct.Benchmark = type { i32 (...)** }
 	%struct.Complex = type { double, double }
 	%struct.ComplexBenchmark = type { %struct.Benchmark }

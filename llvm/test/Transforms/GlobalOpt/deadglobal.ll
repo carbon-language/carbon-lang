@@ -1,4 +1,4 @@
-; RUN: opt %s -globalopt -S | not grep internal
+; RUN: opt < %s -globalopt -S | not grep internal
 
 @G = internal global i32 123            ; <i32*> [#uses=1]
 

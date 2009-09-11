@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | FileCheck %s
+; RUN: opt < %s -instcombine -S | FileCheck %s
 
 target datalayout = "e-p:64:64"
 %intstruct = type { i32 }

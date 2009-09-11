@@ -1,4 +1,4 @@
-; RUN: opt %s -mergefunc -S > %t
+; RUN: opt < %s -mergefunc -S > %t
 ; RUN: grep {define weak} %t | count 2
 ; RUN: grep {call} %t | count 2
 

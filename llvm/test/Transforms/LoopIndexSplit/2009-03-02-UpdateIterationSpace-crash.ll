@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-index-split -disable-output
+; RUN: opt < %s -loop-index-split -disable-output
 	%struct.CGPoint = type { double, double }
 	%struct.IBCFMutableDictionary = type { %struct.NSMutableArray, %struct.__CFDictionary*, %struct.NSSortDescriptor*, %struct.NSSortDescriptor* }
 	%struct.IBInspectorMode = type opaque

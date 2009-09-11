@@ -1,4 +1,4 @@
-; RUN: opt %s -sccp -S | \
+; RUN: opt < %s -sccp -S | \
 ; RUN:   grep {ret i1 false}
 
 define i1 @foo() {

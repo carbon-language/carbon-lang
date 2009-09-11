@@ -1,6 +1,6 @@
-; RUN: opt %s -lcssa -S | \
+; RUN: opt < %s -lcssa -S | \
 ; RUN:   grep {X3.lcssa = phi i32}
-; RUN: opt %s -lcssa -S | \
+; RUN: opt < %s -lcssa -S | \
 ; RUN:   grep {X4 = add i32 3, %X3.lcssa}
 
 define void @lcssa(i1 %S2) {

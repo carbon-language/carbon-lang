@@ -1,4 +1,4 @@
-; RUN: opt %s -scalarrepl | llvm-dis
+; RUN: opt < %s -scalarrepl | llvm-dis
 ; PR3304
 
        %struct.c37304a__vrec = type { i8, %struct.c37304a__vrec___disc___XVN }

@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg -disable-output
+; RUN: opt < %s -simplifycfg -disable-output
 
 define i1 @foo() {
 	%X = invoke i1 @foo( )

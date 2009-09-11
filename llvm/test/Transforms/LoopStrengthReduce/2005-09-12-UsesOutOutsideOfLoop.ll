@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce -disable-output
+; RUN: opt < %s -loop-reduce -disable-output
 
 define void @main() {
 entry:

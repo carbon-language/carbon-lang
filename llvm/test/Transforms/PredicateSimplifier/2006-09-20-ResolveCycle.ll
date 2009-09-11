@@ -1,4 +1,4 @@
-; RUN: opt %s -predsimplify -disable-output
+; RUN: opt < %s -predsimplify -disable-output
 
 define void @gs_image_next() {
 entry:

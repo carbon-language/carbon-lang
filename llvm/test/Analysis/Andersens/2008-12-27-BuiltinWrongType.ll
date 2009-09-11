@@ -1,4 +1,4 @@
-; RUN: opt %s -anders-aa
+; RUN: opt < %s -anders-aa
 ; PR3262
 
 @.str15 = external global [3 x i8]              ; <[3 x i8]*> [#uses=1]

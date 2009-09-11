@@ -1,4 +1,4 @@
-; RUN: opt %s -lowerinvoke -enable-correct-eh-support -disable-output
+; RUN: opt < %s -lowerinvoke -enable-correct-eh-support -disable-output
 
 declare void @ll_listnext__listiterPtr()
 

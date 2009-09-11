@@ -1,6 +1,6 @@
 ; Do not remove the invoke!
 ;
-; RUN: opt %s -simplifycfg -S | grep invoke
+; RUN: opt < %s -simplifycfg -S | grep invoke
 
 define i32 @test() {
 	invoke i32 @test( )

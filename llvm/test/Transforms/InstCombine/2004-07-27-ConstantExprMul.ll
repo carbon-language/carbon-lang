@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -disable-output
+; RUN: opt < %s -instcombine -disable-output
 
 @p = weak global i32 0          ; <i32*> [#uses=1]
 

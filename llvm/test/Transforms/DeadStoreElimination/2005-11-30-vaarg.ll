@@ -1,4 +1,4 @@
-; RUN: opt %s -dse -S | grep store
+; RUN: opt < %s -dse -S | grep store
 
 define double @foo(i8* %X) {
         %X_addr = alloca i8*            ; <i8**> [#uses=2]

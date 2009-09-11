@@ -1,4 +1,4 @@
-; RUN: opt %s -gvnpre | llvm-dis
+; RUN: opt < %s -gvnpre | llvm-dis
 
 define void @_Z4sortI3Lit16LessThan_defaultIS0_EEvPT_iT0_() {
 entry:

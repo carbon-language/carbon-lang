@@ -1,4 +1,4 @@
-; RUN: opt %s -aa-eval -print-all-alias-modref-info \
+; RUN: opt < %s -aa-eval -print-all-alias-modref-info \
 ; RUN:   |& grep {MayAlias:	double\\* \[%\]p.0.i.0, double\\* \[%\]p3\$}
 ; PR4267
 

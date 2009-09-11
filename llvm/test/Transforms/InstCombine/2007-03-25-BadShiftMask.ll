@@ -1,5 +1,5 @@
 ; PR1271
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:    grep {icmp eq i32 .tmp.*, 2146435072}
 %struct..0anon = type { i32, i32 }
 %struct..1anon = type { double }

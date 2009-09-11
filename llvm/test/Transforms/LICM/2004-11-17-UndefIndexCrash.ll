@@ -1,4 +1,4 @@
-; RUN: opt %s -licm -disable-output
+; RUN: opt < %s -licm -disable-output
 	%struct.roadlet = type { i8*, %struct.vehicle*, [8 x %struct.roadlet*], [8 x %struct.roadlet* (%struct.roadlet*, %struct.vehicle*, i32)*] }
 	%struct.vehicle = type { %struct.roadlet*, i8*, i32, i32, %union.._631., i32 }
 	%union.._631. = type { i32 }

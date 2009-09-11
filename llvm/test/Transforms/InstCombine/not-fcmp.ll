@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | grep "fcmp uge"
+; RUN: opt < %s -instcombine -S | grep "fcmp uge"
 ; PR1570
 
 define i1 @f(float %X, float %Y) {

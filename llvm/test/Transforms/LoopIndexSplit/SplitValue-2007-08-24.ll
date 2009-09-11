@@ -1,5 +1,5 @@
 ; Split loop. Save last value. Split value is off by one in this example.
-; RUN: opt %s -loop-index-split -disable-output -stats |& \
+; RUN: opt < %s -loop-index-split -disable-output -stats |& \
 ; RUN: grep "loop-index-split" | count 1
 
 @k = external global i32		; <i32*> [#uses=2]

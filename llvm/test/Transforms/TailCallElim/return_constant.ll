@@ -1,7 +1,7 @@
 ; Though this case seems to be fairly unlikely to occur in the wild, someone
 ; plunked it into the demo script, so maybe they care about it.
 ;
-; RUN: opt %s -tailcallelim -S | not grep call
+; RUN: opt < %s -tailcallelim -S | not grep call
 
 define i32 @aaa(i32 %c) {
 entry:

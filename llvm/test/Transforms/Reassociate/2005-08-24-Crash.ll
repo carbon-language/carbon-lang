@@ -1,4 +1,4 @@
-; RUN: opt %s -reassociate -disable-output
+; RUN: opt < %s -reassociate -disable-output
 
 define void @test(i32 %a, i32 %b, i32 %c, i32 %d) {
 	%tmp.2 = xor i32 %a, %b		; <i32> [#uses=1]

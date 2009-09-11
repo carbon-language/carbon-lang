@@ -1,4 +1,4 @@
-; RUN: opt %s -analyze -scalar-evolution
+; RUN: opt < %s -analyze -scalar-evolution
 ; PR4501
 
 define void @test() {

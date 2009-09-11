@@ -1,4 +1,4 @@
-; RUN: opt %s -predsimplify -verify
+; RUN: opt < %s -predsimplify -verify
 
 define void @dgefa() {
 entry:

@@ -1,6 +1,6 @@
 ; With reassociation, constant folding can eliminate the +/- 30 constants.
 ;
-; RUN: opt %s -reassociate -constprop -instcombine -die -S | not grep 30
+; RUN: opt < %s -reassociate -constprop -instcombine -die -S | not grep 30
 
 define i32 @test(i32 %reg109, i32 %reg1111) {
 	%reg115 = add i32 %reg109, -30		; <i32> [#uses=1]

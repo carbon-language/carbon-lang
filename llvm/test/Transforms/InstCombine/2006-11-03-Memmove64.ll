@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | \
+; RUN: opt < %s -instcombine -S | \
 ; RUN:    not grep memmove.i32
 ; Instcombine was trying to turn this into a memmove.i32
 

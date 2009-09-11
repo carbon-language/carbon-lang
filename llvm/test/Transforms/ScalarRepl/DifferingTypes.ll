@@ -1,7 +1,7 @@
 ; This is a feature test.  Hopefully one day this will be implemented.  The 
 ; generated code should perform the appropriate masking operations required 
 ; depending on the endianness of the target...
-; RUN: opt %s -scalarrepl -S | \
+; RUN: opt < %s -scalarrepl -S | \
 ; RUN:   not grep alloca
 
 define i32 @testfunc(i32 %i, i8 %j) {

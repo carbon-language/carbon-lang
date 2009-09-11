@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -S > %t
+; RUN: opt < %s -indvars -S > %t
 ; RUN: not grep sext %t
 ; RUN: grep phi %t | count 1
 

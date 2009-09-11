@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine | llvm-dis
+; RUN: opt < %s -instcombine | llvm-dis
 ; rdar://5771353
 
 define float @test(float %x, x86_fp80 %y) nounwind readonly  {

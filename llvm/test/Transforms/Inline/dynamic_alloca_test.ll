@@ -3,9 +3,9 @@
 ; Functions with dynamic allocas can only be inlined into functions that
 ; already have dynamic allocas.
 
-; RUN: opt %s -inline -S | \
+; RUN: opt < %s -inline -S | \
 ; RUN:   grep llvm.stacksave
-; RUN: opt %s -inline -S | not grep callee
+; RUN: opt < %s -inline -S | not grep callee
 
 
 declare void @ext(i32*)

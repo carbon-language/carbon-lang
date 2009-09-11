@@ -1,4 +1,4 @@
-; RUN: opt %s -ipsccp -S | \
+; RUN: opt < %s -ipsccp -S | \
 ; RUN:   grep -v {ret i32 0} | grep -v {ret i32 undef} | not grep ret
 
 define internal i32 @bar(i32 %A) {

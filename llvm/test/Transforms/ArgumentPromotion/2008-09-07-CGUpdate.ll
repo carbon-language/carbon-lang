@@ -1,4 +1,4 @@
-; RUN: opt %s -inline -argpromotion -disable-output
+; RUN: opt < %s -inline -argpromotion -disable-output
 
 define internal fastcc i32 @hash(i32* %ts, i32 %mod) nounwind {
 entry:

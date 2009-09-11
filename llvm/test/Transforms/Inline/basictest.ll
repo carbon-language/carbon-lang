@@ -1,4 +1,4 @@
-; RUN: opt %s -inline -disable-output -print-function 2> /dev/null
+; RUN: opt < %s -inline -disable-output -print-function 2> /dev/null
 
 define i32 @func(i32 %i) {
         ret i32 %i

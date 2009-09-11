@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-index-split -stats -disable-output | not grep "loop-index-split"
+; RUN: opt < %s -loop-index-split -stats -disable-output | not grep "loop-index-split"
 ;PR2294
 @g_2 = external global i16		; <i16*> [#uses=4]
 @g_5 = external global i32		; <i32*> [#uses=1]

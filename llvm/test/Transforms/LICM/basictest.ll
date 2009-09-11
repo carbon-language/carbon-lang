@@ -1,4 +1,4 @@
-; RUN: opt %s -licm | llvm-dis
+; RUN: opt < %s -licm | llvm-dis
 
 define void @testfunc(i32 %i) {
 ; <label>:0

@@ -1,4 +1,4 @@
-; RUN: opt %s -globalopt -S | not grep global_variable42
+; RUN: opt < %s -globalopt -S | not grep global_variable42
 ; XFAIL: *
 
 	%llvm.dbg.anchor.type = type { i32, i32 }

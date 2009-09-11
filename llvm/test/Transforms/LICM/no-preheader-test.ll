@@ -1,5 +1,5 @@
 ; Test that LICM works when there is not a loop-preheader
-; RUN: opt %s -licm | llvm-dis
+; RUN: opt < %s -licm | llvm-dis
 
 define void @testfunc(i32 %i.s, i1 %ifcond) {
 	br i1 %ifcond, label %Then, label %Else

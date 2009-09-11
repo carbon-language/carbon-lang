@@ -1,4 +1,4 @@
-; RUN: opt %s -jump-threading -loop-rotate -instcombine -indvars -loop-unroll -simplifycfg -S > %t
+; RUN: opt < %s -jump-threading -loop-rotate -instcombine -indvars -loop-unroll -simplifycfg -S > %t
 ; RUN: grep {volatile store} %t | count 3
 ; RUN: not grep {br label} %t
 

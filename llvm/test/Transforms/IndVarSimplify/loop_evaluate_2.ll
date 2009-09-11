@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -loop-deletion -simplifycfg | opt \
+; RUN: opt < %s -indvars -loop-deletion -simplifycfg | opt \
 ; RUN:     -analyze -loops | not grep "^Loop Containing" 
 ; PR1179
 

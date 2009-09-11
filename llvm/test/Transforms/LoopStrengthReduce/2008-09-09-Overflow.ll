@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce -S | grep phi | count 2
+; RUN: opt < %s -loop-reduce -S | grep phi | count 2
 ; PR 2779
 @g_19 = common global i32 0		; <i32*> [#uses=3]
 @"\01LC" = internal constant [4 x i8] c"%d\0A\00"		; <[4 x i8]*> [#uses=1]

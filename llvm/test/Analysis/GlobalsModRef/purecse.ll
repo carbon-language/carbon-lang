@@ -1,5 +1,5 @@
 ; Test that pure functions are cse'd away
-; RUN: opt %s -globalsmodref-aa -gvn -instcombine | \
+; RUN: opt < %s -globalsmodref-aa -gvn -instcombine | \
 ; RUN: llvm-dis | not grep sub
 
 define i32 @pure(i32 %X) {

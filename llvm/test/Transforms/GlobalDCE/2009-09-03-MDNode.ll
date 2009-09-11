@@ -1,4 +1,4 @@
-; RUN: opt %s -globaldce | llc -O0 -o /dev/null
+; RUN: opt < %s -globaldce | llc -O0 -o /dev/null
 
 %struct..0__pthread_mutex_s = type { i32, i32, i32, i32, i32, i32, %struct.__pthread_list_t }
 %"struct.__gnu_cxx::_ConvertibleConcept<unsigned int,unsigned int>" = type { i32 }

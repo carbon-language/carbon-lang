@@ -1,6 +1,6 @@
 ; This test checks to make sure phi nodes are updated properly
 ;
-; RUN: opt %s -tailduplicate -disable-output
+; RUN: opt < %s -tailduplicate -disable-output
 
 define i32 @test(i1 %c, i32 %X, i32 %Y) {
 	br label %L

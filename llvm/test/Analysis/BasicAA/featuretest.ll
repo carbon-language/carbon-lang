@@ -1,7 +1,7 @@
 ; This testcase tests for various features the basicaa test should be able to 
 ; determine, as noted in the comments.
 
-; RUN: opt %s -basicaa -gvn -instcombine -dce -S | not grep REMOVE
+; RUN: opt < %s -basicaa -gvn -instcombine -dce -S | not grep REMOVE
 
 @Global = external global { i32 }
 

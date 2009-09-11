@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -S | grep printd | grep 1206807378
+; RUN: opt < %s -indvars -S | grep printd | grep 1206807378
 ; PR1798
 
 declare void @printd(i32)

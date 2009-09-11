@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | not grep load
+; RUN: opt < %s -instcombine -S | not grep load
 ; PR4340
 
 define void @vac(<4 x float>* nocapture %a) nounwind {

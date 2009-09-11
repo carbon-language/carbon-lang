@@ -1,4 +1,4 @@
-; RUN: opt %s -dse -scalarrepl -instcombine | \
+; RUN: opt < %s -dse -scalarrepl -instcombine | \
 ; RUN:   llvm-dis | not grep {ret i32 undef}
 
 define i32 @test(double %__x) {

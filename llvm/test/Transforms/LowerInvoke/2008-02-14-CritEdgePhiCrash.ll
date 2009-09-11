@@ -1,4 +1,4 @@
-; RUN: opt %s -lowerinvoke -enable-correct-eh-support -disable-output
+; RUN: opt < %s -lowerinvoke -enable-correct-eh-support -disable-output
 ; PR2029
 define i32 @main(i32 %argc, i8** %argv) {
 bb470:

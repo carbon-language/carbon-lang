@@ -1,5 +1,5 @@
 ; PR1600
-; RUN: opt %s -basicaa -gvn -instcombine -S | \
+; RUN: opt < %s -basicaa -gvn -instcombine -S | \
 ; RUN:   grep {ret i32 0}
 ; END.
 

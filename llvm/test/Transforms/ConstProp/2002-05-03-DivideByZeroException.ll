@@ -1,6 +1,6 @@
 ; Make sure that the constant propogator doesn't divide by zero!
 ;
-; RUN: opt %s -constprop
+; RUN: opt < %s -constprop
 ;
 
 define i32 @test() {

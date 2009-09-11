@@ -1,4 +1,4 @@
-; RUN: opt %s -predsimplify -verify
+; RUN: opt < %s -predsimplify -verify
 target datalayout = "e-p:32:32"
 target triple = "i686-pc-linux-gnu"
 deplibs = [ "c", "crtend" ]

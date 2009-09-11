@@ -1,6 +1,6 @@
 ; PR714
 ; Update loop iteraton space to eliminate condition inside loop.
-; RUN: opt %s -loop-index-split -S | not grep bothcond
+; RUN: opt < %s -loop-index-split -S | not grep bothcond
 
 define void @test(float* %x, i32 %ndat, float** %y, float %xcen, i32 %xmin, i32 %xmax, float %sigmal, float %contribution) {
 entry:

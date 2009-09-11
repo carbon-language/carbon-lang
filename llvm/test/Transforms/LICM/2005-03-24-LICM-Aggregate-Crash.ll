@@ -1,4 +1,4 @@
-; RUN: opt %s -licm -disable-output
+; RUN: opt < %s -licm -disable-output
 
 define void @test({ i32 }* %P) {
 	br label %Loop

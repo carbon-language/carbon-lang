@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-index-split -stats | not grep "loop-index-split"
+; RUN: opt < %s -loop-index-split -stats | not grep "loop-index-split"
 ; PR3029
 
 @g_138 = common global i32 0		; <i32*> [#uses=3]

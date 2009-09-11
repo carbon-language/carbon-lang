@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg -S | \
+; RUN: opt < %s -simplifycfg -S | \
 ; RUN:   not grep switch
 
 ; Test normal folding

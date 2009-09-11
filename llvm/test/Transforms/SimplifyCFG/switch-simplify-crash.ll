@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg -disable-output
+; RUN: opt < %s -simplifycfg -disable-output
 
 define void @NewExtractNames() {
 entry:

@@ -1,4 +1,4 @@
-; RUN: opt %s -anders-aa -aa-eval 2>/dev/null
+; RUN: opt < %s -anders-aa -aa-eval 2>/dev/null
 
 define void @test1() {
 	%X = malloc i32*

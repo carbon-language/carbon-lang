@@ -1,4 +1,4 @@
-; RUN: opt %s -predsimplify -disable-output
+; RUN: opt < %s -predsimplify -disable-output
 
 	%struct.cube_struct = type { i32, i32, i32, i32*, i32*, i32*, i32*, i32*, i32*, i32*, i32**, i32**, i32*, i32*, i32, i32, i32*, i32, i32 }
 @cube = external global %struct.cube_struct		; <%struct.cube_struct*> [#uses=2]

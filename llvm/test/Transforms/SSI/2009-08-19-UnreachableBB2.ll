@@ -1,4 +1,4 @@
-; RUN: opt %s -ssi-everything -disable-output
+; RUN: opt < %s -ssi-everything -disable-output
 
 define void @foo() {
 entry:

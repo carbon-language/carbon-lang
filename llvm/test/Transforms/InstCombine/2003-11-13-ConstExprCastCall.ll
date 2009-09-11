@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | grep call | notcast
+; RUN: opt < %s -instcombine -S | grep call | notcast
 
 declare void @free(i8*)
 

@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-unswitch -disable-output
+; RUN: opt < %s -loop-unswitch -disable-output
 
 define void @sort_Eq(i32* %S2) {
 entry:

@@ -1,4 +1,4 @@
-; RUN: opt %s -gvn -S | not grep tmp2
+; RUN: opt < %s -gvn -S | not grep tmp2
 ; PR2213
 
 define i32* @f(i8* %x) {

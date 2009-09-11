@@ -1,4 +1,4 @@
-; RUN: opt %s -analyze -postdomfrontier \
+; RUN: opt < %s -analyze -postdomfrontier \
 ; RUN:   -disable-verify
 ; ModuleID = '2006-09-26-PostDominanceFrontier.bc'
 target datalayout = "e-p:64:64"

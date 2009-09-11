@@ -1,4 +1,4 @@
-; RUN: opt %s -inline -prune-eh -disable-output
+; RUN: opt < %s -inline -prune-eh -disable-output
 define void @f2() {
     invoke void @f6()
         to label %ok1 unwind label %lpad1

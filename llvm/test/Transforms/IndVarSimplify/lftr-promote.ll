@@ -1,4 +1,4 @@
-; RUN: opt %s -indvars -S | grep add | count 1
+; RUN: opt < %s -indvars -S | grep add | count 1
 
 ; Indvars should be able to compute the exit value of this loop
 ; without any additional arithmetic. The only add needed should

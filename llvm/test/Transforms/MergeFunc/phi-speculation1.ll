@@ -1,4 +1,4 @@
-; RUN: opt %s -mergefunc -stats -disable-output |& not grep {functions merged}
+; RUN: opt < %s -mergefunc -stats -disable-output |& not grep {functions merged}
 
 define i32 @foo1(i32 %x) {
 entry:

@@ -1,6 +1,6 @@
 ; Tests to make sure elimination of casts is working correctly
 ; This test is for Integer BitWidth > 64 && BitWidth <= 1024.
-; RUN: opt %s -instcombine -S | notcast {} {%c1.*}
+; RUN: opt < %s -instcombine -S | notcast {} {%c1.*}
 
 define i1024 @test_sext_zext(i77 %A) {
     %c1 = zext i77 %A to i533

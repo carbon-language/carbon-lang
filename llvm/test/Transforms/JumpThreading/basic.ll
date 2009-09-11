@@ -1,6 +1,6 @@
-; RUN: opt %s -jump-threading -simplifycfg -mem2reg -S | grep {ret i32 %v1}
+; RUN: opt < %s -jump-threading -simplifycfg -mem2reg -S | grep {ret i32 %v1}
 ; There should be no uncond branches left.
-; RUN: opt %s -jump-threading -simplifycfg -mem2reg -S | not grep {br label}
+; RUN: opt < %s -jump-threading -simplifycfg -mem2reg -S | not grep {br label}
 
 declare i32 @f1()
 declare i32 @f2()

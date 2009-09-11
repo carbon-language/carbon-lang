@@ -1,4 +1,4 @@
-; RUN: opt %s -memcpyopt -S | not grep {call.*memcpy.}
+; RUN: opt < %s -memcpyopt -S | not grep {call.*memcpy.}
 	%a = type { i32 }
 	%b = type { float }
 

@@ -1,5 +1,5 @@
 ; Check that this test makes INDVAR and related stuff dead.
-; RUN: opt %s -loop-reduce -S | not grep INDVAR
+; RUN: opt < %s -loop-reduce -S | not grep INDVAR
 
 declare i1 @pred()
 

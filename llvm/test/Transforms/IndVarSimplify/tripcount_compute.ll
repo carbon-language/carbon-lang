@@ -3,7 +3,7 @@
 ; the exit value of the loop will be for some value, allowing us to substitute
 ; it directly into users outside of the loop, making the loop dead.
 ;
-; RUN: opt %s -indvars -loop-deletion -simplifycfg -S | not grep br
+; RUN: opt < %s -indvars -loop-deletion -simplifycfg -S | not grep br
 
 define i32 @linear_setne() {
 entry:

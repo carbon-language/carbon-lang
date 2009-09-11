@@ -1,4 +1,4 @@
-; RUN: opt %s -inline -S | grep call | count 1
+; RUN: opt < %s -inline -S | grep call | count 1
 
 define i32 @fn2() noinline {
   ret i32 1

@@ -1,4 +1,4 @@
-; RUN: opt %s -globalopt -S | \
+; RUN: opt < %s -globalopt -S | \
 ; RUN:   grep {call void @Actual}
 
 ; Check that a comparison does not prevent an indirect call from being made 

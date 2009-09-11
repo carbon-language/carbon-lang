@@ -1,4 +1,4 @@
-; RUN: opt %s -tailcallelim -S | not grep call
+; RUN: opt < %s -tailcallelim -S | not grep call
 
 define i32 @factorial(i32 %x) {
 entry:

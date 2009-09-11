@@ -1,4 +1,4 @@
-; RUN: opt %s -gvnpre | llvm-dis
+; RUN: opt < %s -gvnpre | llvm-dis
 
 @.str1 = external constant [4 x i8]		; <[4 x i8]*> [#uses=1]
 @.str2 = external constant [5 x i8]		; <[5 x i8]*> [#uses=1]

@@ -1,5 +1,5 @@
-; RUN: opt %s -instcombine -S | notcast
-; RUN: opt %s -instcombine -S | not grep {icmp s}
+; RUN: opt < %s -instcombine -S | notcast
+; RUN: opt < %s -instcombine -S | not grep {icmp s}
 ; PR1940
 
 define i1 @test1(i8 %A, i8 %B) {

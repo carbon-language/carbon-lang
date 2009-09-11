@@ -1,4 +1,4 @@
-; RUN: opt %s  -inline-threshold=0 -inline -S | not grep call 
+; RUN: opt < %s  -inline-threshold=0 -inline -S | not grep call 
 
 define i32 @fn2() alwaysinline {
   ret i32 1

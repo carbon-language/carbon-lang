@@ -1,4 +1,4 @@
-; RUN: opt %s -gvn -S | grep load
+; RUN: opt < %s -gvn -S | grep load
 ; FIXME: This should be promotable, but memdep/gvn don't track values
 ; path/edge sensitively enough.
 

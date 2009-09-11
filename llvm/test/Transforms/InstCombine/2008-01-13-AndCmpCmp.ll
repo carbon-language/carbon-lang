@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | grep and
+; RUN: opt < %s -instcombine -S | grep and
 ; PR1907
 
 define i1 @test(i32 %c84.17) {

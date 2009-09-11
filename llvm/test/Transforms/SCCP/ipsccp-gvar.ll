@@ -1,4 +1,4 @@
-; RUN: opt %s -ipsccp -S | not grep global
+; RUN: opt < %s -ipsccp -S | not grep global
 
 @G = internal global i32 undef		; <i32*> [#uses=5]
 

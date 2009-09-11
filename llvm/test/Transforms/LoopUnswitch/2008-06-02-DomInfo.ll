@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-unswitch -instcombine -gvn -disable-output
+; RUN: opt < %s -loop-unswitch -instcombine -gvn -disable-output
 ; PR2372
 target triple = "i386-pc-linux-gnu"
 

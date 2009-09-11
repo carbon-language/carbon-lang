@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce -S | \
+; RUN: opt < %s -loop-reduce -S | \
 ; RUN:   not grep {bitcast i32 1 to i32}
 ; END.
 ; The setlt wants to use a value that is incremented one more than the dominant

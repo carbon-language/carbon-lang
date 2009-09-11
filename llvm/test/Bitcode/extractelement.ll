@@ -1,4 +1,4 @@
-; RUN: opt %s -constprop | llvm-dis
+; RUN: opt < %s -constprop | llvm-dis
 ; PR3465
 
 define double @test() {

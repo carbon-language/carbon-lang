@@ -1,4 +1,4 @@
-; RUN: opt %s -lowerinvoke -disable-output -enable-correct-eh-support
+; RUN: opt < %s -lowerinvoke -disable-output -enable-correct-eh-support
 
 
 define i32 @foo() {

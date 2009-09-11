@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce -S | not grep mul
+; RUN: opt < %s -loop-reduce -S | not grep mul
 
 ; Make sure we don't get a multiply by 6 in this loop.
 

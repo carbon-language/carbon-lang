@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -globalopt -S | \
+; RUN: opt < %s -instcombine -globalopt -S | \
 ; RUN:   grep {internal fastcc float @foo}
 
 define internal float @foo() {

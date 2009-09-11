@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce -S | grep phi | count 1
+; RUN: opt < %s -loop-reduce -S | grep phi | count 1
 
 ; This testcase should have ONE stride 18 indvar, the other use should have a
 ; loop invariant value (B) added to it inside of the loop, instead of having

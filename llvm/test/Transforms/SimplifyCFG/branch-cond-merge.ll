@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg -instcombine \
+; RUN: opt < %s -simplifycfg -instcombine \
 ; RUN:   -simplifycfg -S | not grep call
 
 declare void @bar()

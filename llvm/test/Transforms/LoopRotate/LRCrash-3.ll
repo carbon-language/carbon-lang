@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-rotate -disable-output
+; RUN: opt < %s -loop-rotate -disable-output
 
 define void @_ZN9Classfile4readEv() {
 entry:

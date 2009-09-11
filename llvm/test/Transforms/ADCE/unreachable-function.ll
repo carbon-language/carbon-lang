@@ -1,4 +1,4 @@
-; RUN: opt %s -adce -disable-output
+; RUN: opt < %s -adce -disable-output
 
 define void @test() {
 	unreachable

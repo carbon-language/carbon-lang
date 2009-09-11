@@ -1,4 +1,4 @@
-; RUN: opt %s -loop-reduce -S | grep mul | count 1
+; RUN: opt < %s -loop-reduce -S | grep mul | count 1
 ; LSR should not make two copies of the Q*L expression in the preheader!
 
 define i8 @test(i8* %A, i8* %B, i32 %L, i32 %Q, i32 %N.s) {

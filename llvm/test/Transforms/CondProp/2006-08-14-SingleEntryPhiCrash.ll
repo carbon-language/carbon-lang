@@ -1,4 +1,4 @@
-; RUN: opt %s -condprop -disable-output
+; RUN: opt < %s -condprop -disable-output
 ; PR877
 target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin9.0.0d1"

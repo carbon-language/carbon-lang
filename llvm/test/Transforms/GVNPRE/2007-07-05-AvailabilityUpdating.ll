@@ -1,4 +1,4 @@
-; RUN: opt %s -gvnpre -S | grep tmp114115.gvnpre
+; RUN: opt < %s -gvnpre -S | grep tmp114115.gvnpre
 
 	%struct.AV = type { %struct.XPVAV*, i32, i32 }
 	%struct.CLONE_PARAMS = type { %struct.AV*, i32, %struct.PerlInterpreter* }

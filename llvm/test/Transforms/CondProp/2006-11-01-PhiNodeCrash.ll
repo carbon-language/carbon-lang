@@ -1,4 +1,4 @@
-; RUN: opt %s -condprop -disable-output
+; RUN: opt < %s -condprop -disable-output
 ; PR979
 
 target datalayout = "e-p:32:32"

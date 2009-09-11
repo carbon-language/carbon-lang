@@ -1,4 +1,4 @@
-; RUN: opt %s -globaldce
+; RUN: opt < %s -globaldce
 ;
 
 @X = global void ()* @func              ; <void ()**> [#uses=0]

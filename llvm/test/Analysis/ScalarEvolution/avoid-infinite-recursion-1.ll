@@ -1,4 +1,4 @@
-; RUN: opt %s -iv-users
+; RUN: opt < %s -iv-users
 ; PR4538
 
 ; ModuleID = 'bugpoint-reduced-simplified.bc'

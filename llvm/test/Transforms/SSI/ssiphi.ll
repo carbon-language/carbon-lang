@@ -1,4 +1,4 @@
-; RUN: opt %s -ssi-everything -S | FileCheck %s
+; RUN: opt < %s -ssi-everything -S | FileCheck %s
 
 declare void @use(i32)
 declare i32 @create()

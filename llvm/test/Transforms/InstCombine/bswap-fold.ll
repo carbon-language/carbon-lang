@@ -1,5 +1,5 @@
-; RUN: opt %s -instcombine -S | grep ret | count 6
-; RUN: opt %s -instcombine -S | not grep call.*bswap
+; RUN: opt < %s -instcombine -S | grep ret | count 6
+; RUN: opt < %s -instcombine -S | not grep call.*bswap
 
 define i1 @test1(i16 %tmp2) {
         %tmp10 = call i16 @llvm.bswap.i16( i16 %tmp2 )          ; <i16> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: opt %s -basicaa -gvn -instcombine |\
+; RUN: opt < %s -basicaa -gvn -instcombine |\
 ; RUN:   llvm-dis | grep {ret i32 0}
 
 declare void @foo(i32*)

@@ -1,4 +1,4 @@
-; RUN: opt %s -condprop -S | \
+; RUN: opt < %s -condprop -S | \
 ; RUN:    not grep {br label}
 
         %llvm.dbg.anchor.type = type { i32, i32 }

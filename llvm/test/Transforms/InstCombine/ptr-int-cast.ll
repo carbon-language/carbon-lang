@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S > %t
+; RUN: opt < %s -instcombine -S > %t
 
 define i1 @test1(i32 *%x) nounwind {
 entry:
