@@ -516,8 +516,8 @@ static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
   MCall->setTailCall();
 
   // Create a cast instruction to convert to the right type...
-  const Type* VoidT = Type::getVoidTy(BB->getContext());
-  assert(MCall->getType() != VoidT && "Malloc has void return type");
+  assert(MCall->getType() != Type::getVoidTy(BB->getContext()) &&
+         "Malloc has void return type");
   Value *MCast;
   if (InsertBefore)
     MCast = new BitCastInst(MCall, AllocPtrType, NameStr, InsertBefore);
