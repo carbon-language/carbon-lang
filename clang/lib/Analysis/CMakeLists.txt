@@ -12,6 +12,7 @@ add_clang_library(clangAnalysis
   CFG.cpp
   CFRefCount.cpp
   CallGraph.cpp
+  CallInliner.cpp
   CheckDeadStores.cpp
   CheckNSError.cpp
   CheckObjCDealloc.cpp
