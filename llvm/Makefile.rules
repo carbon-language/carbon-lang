@@ -345,7 +345,7 @@ endif
 
 # IF REQUIRES_RTTI=1 is specified then don't disable run-time type id
 ifndef REQUIRES_RTTI
-#  CXX.Flags += -fno-rtti
+  CXX.Flags += -fno-rtti
 endif
 
 ifdef ENABLE_COVERAGE
