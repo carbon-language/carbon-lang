@@ -149,4 +149,11 @@ typedef union
     long double f;
 } long_double_bits;
 
+
+/* for test cases that are only applicable to */
+/* architectures with 80-bit long doubles */
+#if __i386__ || __x86_64__
+  #define HAS_80_BIT_LONG_DOUBLE 1
+#endif
+
 #endif /* INT_LIB_H */

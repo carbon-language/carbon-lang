@@ -11,11 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if !_ARCH_PPC
-
 #include "int_lib.h"
 #include <stdio.h>
 
+#if HAS_80_BIT_LONG_DOUBLE
 // Returns: convert a to a long double, rounding toward even.
 
 // Assumption: long double is a IEEE 80 bit floating point type padded to 128 bits
@@ -38,12 +37,11 @@ int test__floatdixf(di_int a, long double expected)
 char assumption_1[sizeof(di_int) == 2*sizeof(si_int)] = {0};
 char assumption_2[sizeof(di_int)*CHAR_BIT == 64] = {0};
 char assumption_3[sizeof(long double)*CHAR_BIT == 128] = {0};
-
 #endif
 
 int main()
 {
-#if !_ARCH_PPC
+#if HAS_80_BIT_LONG_DOUBLE
     if (test__floatdixf(0, 0.0))
         return 1;
 

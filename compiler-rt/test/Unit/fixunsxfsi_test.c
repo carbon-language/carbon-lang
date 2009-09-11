@@ -11,11 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if !_ARCH_PPC
-
 #include "int_lib.h"
 #include <stdio.h>
 
+#if HAS_80_BIT_LONG_DOUBLE
 // Returns: convert a to a unsigned int, rounding toward zero.
 //          Negative values all become zero.
 
@@ -39,12 +38,11 @@ int test__fixunsxfsi(long double a, su_int expected)
 
 char assumption_2[sizeof(su_int)*CHAR_BIT == 32] = {0};
 char assumption_3[sizeof(long double)*CHAR_BIT == 128] = {0};
-
 #endif
 
 int main()
 {
-#if !_ARCH_PPC
+#if HAS_80_BIT_LONG_DOUBLE
     if (test__fixunsxfsi(0.0, 0))
         return 1;
 
