@@ -78,10 +78,12 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
     Name += "$non_lazy_ptr";
     HiddenGVStubs[Name.str()] = StringRef(Name.data(), Name.size()-13);
     break;
-  case X86II::MO_DARWIN_STUB:
+  case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
-    FnStubs[Name.str()] = StringRef(Name.data(), Name.size()-5);
-    break;
+    MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
+    FnStubs.insert(Sym);
+    return Sym;
+  }
   // FIXME: These probably should be a modifier on the symbol or something??
   case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
   case X86II::MO_GOTTPOFF:  Name += "@GOTTPOFF";  break;
@@ -114,12 +116,13 @@ MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
     Name.insert(Name.begin(), Prefix, Prefix+strlen(Prefix));
     break;
   }
-  case X86II::MO_DARWIN_STUB:
-    // Insert: FnStub["_foo$stub"] = "_foo";
+  case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
-    FnStubs[Name.str()] = StringRef(Name.data(), Name.size()-5);
-    break;
-    // FIXME: These probably should be a modifier on the symbol or something??
+    MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
+    FnStubs.insert(Sym);
+    return Sym;
+  }
+  // FIXME: These probably should be a modifier on the symbol or something??
   case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
   case X86II::MO_GOTTPOFF:  Name += "@GOTTPOFF";  break;
   case X86II::MO_INDNTPOFF: Name += "@INDNTPOFF"; break;

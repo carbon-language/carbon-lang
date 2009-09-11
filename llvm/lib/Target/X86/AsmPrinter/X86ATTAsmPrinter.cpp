@@ -24,8 +24,10 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -320,8 +322,9 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       GVStubs[Name] = Mang->getMangledName(GV);
     else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
       HiddenGVStubs[Name] = Mang->getMangledName(GV);
-    else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
-      FnStubs[Name] = Mang->getMangledName(GV);
+    else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
+      FnStubs.insert(OutContext.GetOrCreateSymbol(Name));
+    }
     
     // If the name begins with a dollar-sign, enclose it in parens.  We do this
     // to avoid having it look like an integer immediate to the assembler.
@@ -336,8 +339,8 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   case MachineOperand::MO_ExternalSymbol: {
     std::string Name = Mang->makeNameProper(MO.getSymbolName());
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      FnStubs[Name+"$stub"] = Name;
       Name += "$stub";
+      FnStubs.insert(OutContext.GetOrCreateSymbol(Name));
     }
     
     // If the name begins with a dollar-sign, enclose it in parens.  We do this
@@ -881,10 +884,20 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
                                   MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
                                   5, SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
-      for (StringMap<std::string>::iterator I = FnStubs.begin(),
-           E = FnStubs.end(); I != E; ++I)
-        O << I->getKeyData() << ":\n" << "\t.indirect_symbol " << I->second
-          << "\n\thlt ; hlt ; hlt ; hlt ; hlt\n";
+      // FIXME: This iteration order is unstable!!
+      for (SmallPtrSet<MCSymbol*, 16>::iterator I = FnStubs.begin(),
+           E = FnStubs.end(); I != E; ++I) {
+        MCSymbol *Sym = *I;
+        Sym->print(O, MAI);
+        
+        O << ":\n" << "\t.indirect_symbol ";
+
+        // Get the MCSymbol without the $stub suffix.
+        Sym = OutContext.GetOrCreateSymbol(StringRef(Sym->getName()).substr(0,
+                                                     Sym->getName().size()-5));
+        Sym->print(O, MAI);
+        O << "\n\thlt ; hlt ; hlt ; hlt ; hlt\n";
+      }
       O << '\n';
     }
 
