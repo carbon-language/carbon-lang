@@ -34,7 +34,7 @@ namespace {
       public FunctionPass, public ProfileInfo {
     double ExecCount;
     LoopInfo *LI;
-    std::set<BasicBlock*>  BBisVisited;
+    std::set<BasicBlock*>  BBToVisit;
     std::map<Loop*,double> LoopExitWeights;
   public:
     static char ID; // Class identification, replacement for typeinfo
@@ -55,7 +55,7 @@ namespace {
     /// run - Estimate the profile information from the specified file.
     virtual bool runOnFunction(Function &F);
 
-    BasicBlock *recurseBasicBlock(BasicBlock *BB);
+    virtual void recurseBasicBlock(BasicBlock *BB);
 
     void inline printEdgeWeight(Edge);
   };
@@ -86,8 +86,8 @@ static double ignoreMissing(double w) {
   return w;
 }
 
-static void inline printEdgeError(ProfileInfo::Edge e) {
-  DEBUG(errs() << "-- Edge " << e << " is not calculated, returning\n");
+static void inline printEdgeError(ProfileInfo::Edge e, const char *M) {
+  DEBUG(errs() << "-- Edge " << e << " is not calculated, " << M << "\n");
 }
 
 void inline ProfileEstimatorPass::printEdgeWeight(Edge E) {
@@ -97,32 +97,45 @@ void inline ProfileEstimatorPass::printEdgeWeight(Edge E) {
 
 // recurseBasicBlock() - This calculates the ProfileInfo estimation for a
 // single block and then recurses into the successors.
-BasicBlock* ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
+// The algorithm preserves the flow condition, meaning that the sum of the
+// weight of the incoming edges must be equal the block weight which must in
+// turn be equal to the sume of the weights of the outgoing edges.
+// Since the flow of an block is deterimined from the current state of the
+// flow, once an edge has a flow assigned this flow is never changed again,
+// otherwise it would be possible to violate the flow condition in another
+// block.
+void ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
 
   // Break the recursion if this BasicBlock was already visited.
-  if (BBisVisited.find(BB) != BBisVisited.end()) return 0;
+  if (BBToVisit.find(BB) == BBToVisit.end()) return;
 
-  // Check if incoming edges are calculated already, if BB is header allow
-  // backedges that are uncalculated for now.
+  // Read the LoopInfo for this block.
   bool  BBisHeader = LI->isLoopHeader(BB);
   Loop* BBLoop     = LI->getLoopFor(BB);
 
+  // To get the block weight, read all incoming edges.
   double BBWeight = 0;
   std::set<BasicBlock*> ProcessedPreds;
   for ( pred_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
         bbi != bbe; ++bbi ) {
+    // If this block was not considered already, add weight.
     Edge edge = getEdge(*bbi,BB);
     double w = getEdgeWeight(edge);
     if (ProcessedPreds.insert(*bbi).second) {
       BBWeight += ignoreMissing(w);
     }
+    // If this block is a loop header and the predecessor is contained in this
+    // loop, thus the edge is a backedge, continue and do not check if the
+    // value is valid.
     if (BBisHeader && BBLoop->contains(*bbi)) {
-      printEdgeError(edge);
+      printEdgeError(edge, "but is backedge, continueing");
       continue;
     }
+    // If the edges value is missing (and this is no loop header, and this is
+    // no backedge) return, this block is currently non estimatable.
     if (w == MissingValue) {
-      printEdgeError(edge);
-      return BB;
+      printEdgeError(edge, "returning");
+      return;
     }
   }
   if (getExecutionCount(BB) != MissingValue) {
@@ -136,10 +149,22 @@ BasicBlock* ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
     BBLoop->getExitEdges(ExitEdges);
   }
 
-  // If block is an loop header, first subtract all weights from edges that
-  // exit this loop, then distribute remaining weight on to the edges exiting
-  // this loop. Finally the weight of the block is increased, to simulate
-  // several executions of this loop.
+  // If this is a loop header, consider the following:
+  // Exactly the flow that is entering this block, must exit this block too. So
+  // do the following: 
+  // *) get all the exit edges, read the flow that is already leaving this
+  // loop, remember the edges that do not have any flow on them right now.
+  // (The edges that have already flow on them are most likely exiting edges of
+  // other loops, do not touch those flows because the previously caclulated
+  // loopheaders would not be exact anymore.)
+  // *) In case there is not a single exiting edge left, create one at the loop
+  // latch to prevent the flow from building up in the loop.
+  // *) Take the flow that is not leaving the loop already and distribute it on
+  // the remaining exiting edges.
+  // (This ensures that all flow that enters the loop also leaves it.)
+  // *) Increase the flow into the loop by increasing the weight of this block.
+  // There is at least one incoming backedge that will bring us this flow later
+  // on. (So that the flow condition in this node is valid again.)
   if (BBisHeader) {
     double incoming = BBWeight;
     // Subtract the flow leaving the loop.
@@ -167,7 +192,6 @@ BasicBlock* ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
         printEdgeWeight(edge);
       }
     }
-
     // Distribute remaining weight onto the exit edges.
     for (SmallVector<Edge, 8>::iterator ei = Edges.begin(), ee = Edges.end();
          ei != ee; ++ei) {
@@ -178,15 +202,17 @@ BasicBlock* ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
     BBWeight *= (ExecCount+1);
   }
 
-  // Remove from current flow of block all the successor edges that already
-  // have some flow on them.
+  BlockInformation[BB->getParent()][BB] = BBWeight;
+  // Up until now we considered only the loop exiting edges, now we have a
+  // definite block weight and must ditribute this onto the outgoing edges.
+  // Since there may be already flow attached to some of the edges, read this
+  // flow first and remember the edges that have still now flow attached.
   Edges.clear();
   std::set<BasicBlock*> ProcessedSuccs;
 
-  // Otherwise consider weight of outgoing edges and store them for
-  // distribution of remaining weight. In case the block has no successors
-  // create a (BB,0) edge.
   succ_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
+  // Also check for (BB,0) edges that may already contain some flow. (But only
+  // in case there are no successors.)
   if (bbi == bbe) {
     Edge edge = getEdge(BB,0);
     EdgeInformation[BB->getParent()][edge] = BBWeight;
@@ -204,35 +230,36 @@ BasicBlock* ProfileEstimatorPass::recurseBasicBlock(BasicBlock *BB) {
     }
   }
 
-  // Distribute remaining flow onto the outgoing edges.
+  // Finally we know what flow is still not leaving the block, distribute this
+  // flow onto the empty edges.
   for (SmallVector<Edge, 8>::iterator ei = Edges.begin(), ee = Edges.end();
        ei != ee; ++ei) {
     EdgeInformation[BB->getParent()][*ei] += BBWeight/Edges.size();
     printEdgeWeight(*ei);
   }
 
-  // Mark this Block visited and recurse into successors.
-  BBisVisited.insert(BB);
-  BasicBlock *Uncalculated = 0;
-  for ( succ_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
-        bbi != bbe; ++bbi ) {
-    BasicBlock* ret = recurseBasicBlock(*bbi);
-    if (!Uncalculated) 
-      Uncalculated = ret;
+  // This block is visited, mark this before the recursion.
+  BBToVisit.erase(BB);
+
+  // Recurse into successors.
+  for (succ_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
+       bbi != bbe; ++bbi) {
+    recurseBasicBlock(*bbi);
   }
-  if (BBisVisited.find(Uncalculated) != BBisVisited.end())
-    return 0;
-  return Uncalculated;
 }
 
 bool ProfileEstimatorPass::runOnFunction(Function &F) {
   if (F.isDeclaration()) return false;
 
+  // Fetch LoopInfo and clear ProfileInfo for this function.
   LI = &getAnalysis<LoopInfo>();
   FunctionInformation.erase(&F);
   BlockInformation[&F].clear();
   EdgeInformation[&F].clear();
-  BBisVisited.clear();
+
+  // Mark all blocks as to visit.
+  for (Function::iterator bi = F.begin(), be = F.end(); bi != be; ++bi)
+    BBToVisit.insert(bi);
 
   DEBUG(errs() << "Working on function " << F.getNameStr() << "\n");
 
@@ -240,20 +267,39 @@ bool ProfileEstimatorPass::runOnFunction(Function &F) {
   // (0,entry) is inserted with the starting weight of 1.
   BasicBlock *entry = &F.getEntryBlock();
   BlockInformation[&F][entry] = 1;
-
   Edge edge = getEdge(0,entry);
-  EdgeInformation[&F][edge] = 1; printEdgeWeight(edge);
-  BasicBlock *BB = entry;
-  while (BB) {
-    BB = recurseBasicBlock(BB);
-    if (BB) {
+  EdgeInformation[&F][edge] = 1;
+  printEdgeWeight(edge);
+
+  // Since recurseBasicBlock() maybe returns with a block which was not fully
+  // estimated, use recurseBasicBlock() until everything is calculated. 
+  recurseBasicBlock(entry);
+  while (BBToVisit.size() > 0) {
+    // Remember number of open blocks, this is later used to check if progress
+    // was made.
+    unsigned size = BBToVisit.size();
+
+    // Try to calculate all blocks in turn.
+    for (std::set<BasicBlock*>::iterator bi = BBToVisit.begin(),
+         be = BBToVisit.end(); bi != be; ++bi) {
+      recurseBasicBlock(*bi);
+      // If at least one block was finished, break because iterator may be
+      // invalid.
+      if (BBToVisit.size() < size) break;
+    }
+
+    // If there was not a single block resovled, make some assumptions.
+    if (BBToVisit.size() == size) {
+      BasicBlock *BB = *(BBToVisit.begin());
+      // Since this BB was not calculated because of missing incoming edges,
+      // set these edges to zero.
       for (pred_iterator bbi = pred_begin(BB), bbe = pred_end(BB);
            bbi != bbe; ++bbi) {
         Edge e = getEdge(*bbi,BB);
         double w = getEdgeWeight(e);
         if (w == MissingValue) {
           EdgeInformation[&F][e] = 0;
-          errs() << "Assuming edge weight: ";
+          DEBUG(errs() << "Assuming edge weight: ");
           printEdgeWeight(e);
         }
       }

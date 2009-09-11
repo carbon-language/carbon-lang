@@ -153,7 +153,7 @@ void ProfileVerifierPass::debugEntry (DetailedBlockInfo *DI) {
   }
 }
 
-// compare with relative error
+// This compares A and B but considering maybe small differences.
 static bool Equals(double A, double B) { 
   double maxRelativeError = 0.0000001;
   if (A == B)
@@ -167,6 +167,9 @@ static bool Equals(double A, double B) {
   return false; 
 }
 
+// This checks if the function "exit" is reachable from an given function
+// via calls, this is necessary to check if a profile is valid despite the
+// counts not fitting exactly.
 bool ProfileVerifierPass::exitReachable(const Function *F) {
   if (!F) return false;
 
@@ -196,7 +199,7 @@ double ProfileVerifierPass::ReadOrAssert(ProfileInfo::Edge E) {
   double EdgeWeight = PI->getEdgeWeight(E);
   if (EdgeWeight == ProfileInfo::MissingValue) {
     errs() << "Edge " << E << " in Function " 
-           << E.first->getParent()->getNameStr() << ": ";
+           << ProfileInfo.getFunction(E)->getNameStr() << ": ";
     ASSERTMESSAGE("ASSERT:Edge has missing value");
     return 0;
   } else {
@@ -215,15 +218,23 @@ void ProfileVerifierPass::CheckValue(bool Error, const char *Message,
   return;
 }
 
+// This calculates the Information for a block and then recurses into the
+// successors.
 void ProfileVerifierPass::recurseBasicBlock(const BasicBlock *BB) {
 
+  // Break the recursion by remembering all visited blocks.
   if (BBisVisited.find(BB) != BBisVisited.end()) return;
 
+  // Use a data structure to store all the information, this can then be handed
+  // to debug printers.
   DetailedBlockInfo DI;
   DI.BB = BB;
   DI.outCount = DI.inCount = DI.inWeight = DI.outWeight = 0;
+
+  // Read predecessors.
   std::set<const BasicBlock*> ProcessedPreds;
   pred_const_iterator bpi = pred_begin(BB), bpe = pred_end(BB);
+  // If there are none, check for (0,BB) edge.
   if (bpi == bpe) {
     DI.inWeight += ReadOrAssert(PI->getEdge(0,BB));
     DI.inCount++;
@@ -235,14 +246,16 @@ void ProfileVerifierPass::recurseBasicBlock(const BasicBlock *BB) {
     }
   }
 
+  // Read successors.
   std::set<const BasicBlock*> ProcessedSuccs;
   succ_const_iterator bbi = succ_begin(BB), bbe = succ_end(BB);
-  if (bbi == bbe) {
-    double w = PI->getEdgeWeight(PI->getEdge(BB,0));
-    if (w != ProfileInfo::MissingValue) {
-      DI.outWeight += w;
-      DI.outCount++;
-    }
+  // If there is an (0,BB) edge, consider it too. (This is done not only when
+  // there are no successors, but every time; not every function contains
+  // return blocks with no successors (think loop latch as return block)).
+  double w = PI->getEdgeWeight(PI->getEdge(BB,0));
+  if (w != ProfileInfo::MissingValue) {
+    DI.outWeight += w;
+    DI.outCount++;
   }
   for (;bbi != bbe; ++bbi) {
     if (ProcessedSuccs.insert(*bbi).second) {
@@ -251,6 +264,7 @@ void ProfileVerifierPass::recurseBasicBlock(const BasicBlock *BB) {
     }
   }
 
+  // Read block weight.
   DI.BBWeight = PI->getExecutionCount(BB);
   CheckValue(DI.BBWeight == ProfileInfo::MissingValue,
              "ASSERT:BasicBlock has missing value", &DI);
@@ -303,7 +317,7 @@ void ProfileVerifierPass::recurseBasicBlock(const BasicBlock *BB) {
   }
 
 
-  // mark as visited and recurse into subnodes
+  // Mark this block as visited, rescurse into successors.
   BBisVisited.insert(BB);
   for ( succ_const_iterator bbi = succ_begin(BB), bbe = succ_end(BB); 
         bbi != bbe; ++bbi ) {
@@ -314,14 +328,11 @@ void ProfileVerifierPass::recurseBasicBlock(const BasicBlock *BB) {
 bool ProfileVerifierPass::runOnFunction(Function &F) {
   PI = &getAnalysis<ProfileInfo>();
 
-  if (PI->getExecutionCount(&F) == ProfileInfo::MissingValue) {
-    DEBUG(errs() << "Function " << F.getNameStr() << " has no profile\n");
-    return false;
-  }
-
+  // Prepare global variables.
   PrintedDebugTree = false;
   BBisVisited.clear();
 
+  // Fetch entry block and recurse into it.
   const BasicBlock *entry = &F.getEntryBlock();
   recurseBasicBlock(entry);
 
