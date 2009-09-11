@@ -1097,7 +1097,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
       // the set of specializations.
       Decl = ClassTemplateSpecializationDecl::Create(Context,
                                     ClassTemplate->getDeclContext(),
-                                    TemplateLoc,
+                                    ClassTemplate->getLocation(),
                                     ClassTemplate,
                                     Converted, 0);
       ClassTemplate->getSpecializations().InsertNode(Decl, InsertPos);
@@ -3026,6 +3026,8 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   // just put it into the declaration context directly.
   Specialization->setLexicalDeclContext(CurContext);
   CurContext->addDecl(Specialization);
+
+  Specialization->setPointOfInstantiation(TemplateNameLoc);
 
   // C++ [temp.explicit]p3:
   //   A definition of a class template or class member template

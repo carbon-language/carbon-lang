@@ -1784,10 +1784,8 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
     if (ClassTemplateSpecializationDecl *ClassTemplateSpec
           = dyn_cast<ClassTemplateSpecializationDecl>(Record->getDecl())) {
       if (ClassTemplateSpec->getSpecializationKind() == TSK_Undeclared) {
-        // Update the class template specialization's location to
-        // refer to the point of instantiation.
         if (Loc.isValid())
-          ClassTemplateSpec->setLocation(Loc);
+          ClassTemplateSpec->setPointOfInstantiation(Loc);
         return InstantiateClassTemplateSpecialization(ClassTemplateSpec,
                                                       TSK_ImplicitInstantiation,
                                                       /*Complain=*/diag != 0);

@@ -5,15 +5,13 @@
 // Tests that this form is accepted by the compiler but does not follow
 // the elaborated lookup rules of [basic.lookup.elab].
 
-template <typename> class Ident {};
+template <typename> class Ident {}; // expected-note {{previous use is here}}
 
 namespace A {
   template <typename> void Ident();
 
   class Ident<int> AIdent; // expected-error {{refers to a function template}}
-
-  // FIXME: this note should be on the template declaration, not the point of instantiation
-  class ::Ident<int> AnotherIdent; // expected-note {{previous use is here}}
+  class ::Ident<int> AnotherIdent;
 }
 
 class Ident<int> GlobalIdent;

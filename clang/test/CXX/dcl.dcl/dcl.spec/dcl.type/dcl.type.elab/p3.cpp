@@ -16,7 +16,7 @@ class A1 {
   friend enum A; // expected-error {{ISO C++ forbids forward references to 'enum' types}}
 };
 
-template <class T> struct B {
+template <class T> struct B { // expected-note {{previous use is here}}
   class Member {}; // expected-note 2 {{previous use is here}}
 };
 
@@ -31,8 +31,7 @@ template <> struct B<A> {
   };
 };
 
-// FIXME: this note should be on the template declaration, not the point of instantiation
-void b1(struct B<float>); // expected-note {{previous use is here}}
+void b1(struct B<float>);
 void b2(class B<float>);
 void b3(union B<float>); // expected-error {{use of 'B<float>' with tag type that does not match previous declaration}}
 //void b4(enum B<float>); // this just doesn't parse; you can't template an enum directly

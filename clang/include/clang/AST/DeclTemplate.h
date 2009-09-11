@@ -906,6 +906,9 @@ class ClassTemplateSpecializationDecl
   /// \brief The template arguments used to describe this specialization.
   TemplateArgumentList TemplateArgs;
 
+  /// \brief The point where this template was instantiated (if any)
+  SourceLocation PointOfInstantiation;
+
   /// \brief The kind of specialization this declaration refers to.
   /// Really a value of type TemplateSpecializationKind.
   unsigned SpecializationKind : 3;
@@ -947,6 +950,16 @@ public:
 
   void setSpecializationKind(TemplateSpecializationKind TSK) {
     SpecializationKind = TSK;
+  }
+
+  /// \brief Get the point of instantiation (if any), or null if none.
+  SourceLocation getPointOfInstantiation() const {
+    return PointOfInstantiation;
+  }
+
+  void setPointOfInstantiation(SourceLocation Loc) {
+    assert(Loc.isValid() && "point of instantiation must be valid!");
+    PointOfInstantiation = Loc;
   }
 
   /// \brief If this class template specialization is an instantiation of

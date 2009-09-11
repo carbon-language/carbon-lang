@@ -895,7 +895,7 @@ Sema::InstantiateClassTemplateSpecialization(
   // Note that this is an instantiation.
   ClassTemplateSpec->setSpecializationKind(TSK);
 
-  bool Result = InstantiateClass(ClassTemplateSpec->getLocation(),
+  bool Result = InstantiateClass(ClassTemplateSpec->getPointOfInstantiation(),
                                  ClassTemplateSpec, Pattern,
                               getTemplateInstantiationArgs(ClassTemplateSpec),
                                  TSK,
