@@ -1776,7 +1776,7 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
           CallerCode += ", " + TargetOpcodes[j];
         }
         for (unsigned j = 0, e = TargetVTs.size(); j != e; ++j) {
-          CalleeCode += ", EVT VT" + utostr(j);
+          CalleeCode += ", MVT::SimpleValueType VT" + utostr(j);
           CallerCode += ", " + TargetVTs[j];
         }
         for (std::set<std::string>::iterator
