@@ -6122,6 +6122,6 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
 
     D->setUsed(true);
     return;
-}
+  }
 }
 
