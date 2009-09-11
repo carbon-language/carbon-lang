@@ -27,11 +27,24 @@ void A::h(A* a)
 
 struct B {
   virtual void f() __attribute__((deprecated));
+  void g();
 };
+
+void B::g() {
+  f();
+  B::f(); // expected-warning{{'f' is deprecated}}
+}
 
 struct C : B {
   virtual void f();
+  void g();
 };
+
+void C::g() {
+  f();
+  C::f();
+  B::f(); // expected-warning{{'f' is deprecated}}
+}
 
 void f(B* b, C *c) {
   b->f();

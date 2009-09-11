@@ -1002,7 +1002,16 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
           MarkDeclarationReferenced(Loc, D);
           if (PerformObjectMemberConversion(This, D))
             return ExprError();
-          if (DiagnoseUseOfDecl(D, Loc))
+          
+          bool ShouldCheckUse = true;
+          if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+            // Don't diagnose the use of a virtual member function unless it's
+            // explicitly qualified.
+            if (MD->isVirtual() && (!SS || !SS->isSet()))
+              ShouldCheckUse = false;
+          }
+          
+          if (ShouldCheckUse && DiagnoseUseOfDecl(D, Loc))
             return ExprError();
           return Owned(BuildMemberExpr(Context, This, true, SS, D,
                                        Loc, MemberType));
