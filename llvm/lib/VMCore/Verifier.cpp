@@ -638,6 +638,18 @@ void Verifier::visitFunction(Function &F) {
     Assert1(pred_begin(Entry) == pred_end(Entry),
             "Entry block to function must not have predecessors!", Entry);
   }
+  
+  // If this function is actually an intrinsic, verify that it is only used in
+  // direct call/invokes, never having its "address taken".
+  if (F.getIntrinsicID()) {
+    for (Value::use_iterator UI = F.use_begin(), E = F.use_end(); UI != E;++UI){
+      User *U = cast<User>(UI);
+      if ((isa<CallInst>(U) || isa<InvokeInst>(U)) && UI.getOperandNo() == 0)
+        continue;  // Direct calls/invokes are ok.
+      
+      Assert1(0, "Invalid user of intrinsic instruction!", U); 
+    }
+  }
 }
 
 // verifyBasicBlock - Verify that a basic block is well formed...
