@@ -98,14 +98,24 @@ QualType ParmVarDecl::getOriginalType() const {
   return getType();
 }
 
-void VarDecl::setInit(ASTContext &C, Expr *I) {
-    if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>()) {
-      Eval->~EvaluatedStmt();
-      C.Deallocate(Eval);
-    }
+SourceRange ParmVarDecl::getDefaultArgRange() const {
+  if (const Expr *E = getInit())
+    return E->getSourceRange();
+  
+  if (const Expr *E = getUninstantiatedDefaultArg())
+    return E->getSourceRange();
+    
+  return SourceRange();
+}
 
-    Init = I;
+void VarDecl::setInit(ASTContext &C, Expr *I) {
+  if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>()) {
+    Eval->~EvaluatedStmt();
+    C.Deallocate(Eval);
   }
+
+  Init = I;
+}
 
 bool VarDecl::isExternC(ASTContext &Context) const {
   if (!Context.getLangOptions().CPlusPlus)

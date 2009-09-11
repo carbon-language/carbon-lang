@@ -648,11 +648,17 @@ public:
     Init = reinterpret_cast<Stmt *>(defarg);
   }
 
+  /// \brief Retrieve the source range that covers the entire default
+  /// argument.
+  SourceRange getDefaultArgRange() const;  
   void setUninstantiatedDefaultArg(Expr *arg) {
     Init = reinterpret_cast<UninstantiatedDefaultArgument *>(arg);
   }
   Expr *getUninstantiatedDefaultArg() {
     return (Expr *)Init.get<UninstantiatedDefaultArgument *>();
+  }
+  const Expr *getUninstantiatedDefaultArg() const {
+    return (const Expr *)Init.get<UninstantiatedDefaultArgument *>();
   }
 
   /// hasDefaultArg - Determines whether this parameter has a default argument,

@@ -703,6 +703,13 @@ def err_param_default_argument_references_this : Error<
 def err_param_default_argument_nonfunc : Error<
   "default arguments can only be specified for parameters in a function "
   "declaration">;
+def err_param_default_argument_template_redecl : Error<
+  "default arguments cannot be added to a function template that has already "
+  "been declared">;
+def err_param_default_argument_member_template_redecl : Error<
+  "default arguments cannot be added to an out-of-line definition of a member "
+  "of a %select{class template|class template partial specialization|nested "
+  "class in a template}0">;
 def err_defining_default_ctor : Error<
   "cannot define the implicit default constructor for %0, because %select{base class|member}1 "
   "%2 does not have any default constructor">;

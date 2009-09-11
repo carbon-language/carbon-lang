@@ -24,19 +24,7 @@ int f1(int i, int i, int j) { // expected-error {{redefinition of parameter 'i'}
 int x;
 void g(int x, int y = x); // expected-error {{default argument references parameter 'x'}}
 
-void h()
-{
-   int i;
-   extern void h2(int x = sizeof(i)); // expected-error {{default argument references local variable 'i' of enclosing function}}
-}
-
 void g2(int x, int y, int z = x + y); // expected-error {{default argument references parameter 'x'}} expected-error {{default argument references parameter 'y'}}
-
-void nondecl(int (*f)(int x = 5)) // {expected-error {{default arguments can only be specified}}}
-{
-  void (*f2)(int = 17)  // {expected-error {{default arguments can only be specified}}}
-    = (void (*)(int = 42))f; // {expected-error {{default arguments can only be specified}}}
-}
 
 class X {
   void f(X* x = this); // expected-error{{invalid use of 'this' outside of a nonstatic member function}}
@@ -82,10 +70,6 @@ struct Y {
   };
 
   static int b; 
-
-  int (*f)(int = 17); // expected-error{{default arguments can only be specified for parameters in a function declaration}}
-
-  void mem8(int (*fp)(int) = (int (*)(int = 17))0); // expected-error{{default arguments can only be specified for parameters in a function declaration}}
 }; 
 
 int Y::mem3(int i = b) { return i; } // OK; use X::b

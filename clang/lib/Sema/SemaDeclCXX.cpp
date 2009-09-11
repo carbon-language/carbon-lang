@@ -241,7 +241,6 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
   bool Invalid = false;
 
   // C++ [dcl.fct.default]p4:
-  //
   //   For non-template functions, default arguments can be added in
   //   later declarations of a function in the same
   //   scope. Declarations in different scopes have completely
@@ -253,19 +252,71 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
   //   arguments supplied in this or previous declarations. A
   //   default argument shall not be redefined by a later
   //   declaration (not even to the same value).
+  //
+  // C++ [dcl.fct.default]p6:
+  //   Except for member functions of class templates, the default arguments 
+  //   in a member function definition that appears outside of the class 
+  //   definition are added to the set of default arguments provided by the 
+  //   member function declaration in the class definition.
   for (unsigned p = 0, NumParams = Old->getNumParams(); p < NumParams; ++p) {
     ParmVarDecl *OldParam = Old->getParamDecl(p);
     ParmVarDecl *NewParam = New->getParamDecl(p);
 
-    if (OldParam->getDefaultArg() && NewParam->getDefaultArg()) {
+    if (OldParam->hasDefaultArg() && NewParam->hasDefaultArg()) {
       Diag(NewParam->getLocation(),
            diag::err_param_default_argument_redefinition)
-        << NewParam->getDefaultArg()->getSourceRange();
-      Diag(OldParam->getLocation(), diag::note_previous_definition);
+        << NewParam->getDefaultArgRange();
+      
+      // Look for the function declaration where the default argument was
+      // actually written, which may be a declaration prior to Old.
+      for (FunctionDecl *Older = Old->getPreviousDeclaration();
+           Older; Older = Older->getPreviousDeclaration()) {
+        if (!Older->getParamDecl(p)->hasDefaultArg())
+          break;
+        
+        OldParam = Older->getParamDecl(p);
+      }        
+      
+      Diag(OldParam->getLocation(), diag::note_previous_definition)
+        << OldParam->getDefaultArgRange();
       Invalid = true;
     } else if (OldParam->getDefaultArg()) {
       // Merge the old default argument into the new parameter
       NewParam->setDefaultArg(OldParam->getDefaultArg());
+    } else if (NewParam->hasDefaultArg()) {
+      if (New->getDescribedFunctionTemplate()) {
+        // Paragraph 4, quoted above, only applies to non-template functions.
+        Diag(NewParam->getLocation(),
+             diag::err_param_default_argument_template_redecl)
+          << NewParam->getDefaultArgRange();
+        Diag(Old->getLocation(), diag::note_template_prev_declaration)
+          << false;
+      } else if (New->getDeclContext()->isDependentContext()) {
+        // C++ [dcl.fct.default]p6 (DR217):
+        //   Default arguments for a member function of a class template shall 
+        //   be specified on the initial declaration of the member function 
+        //   within the class template.
+        //
+        // Reading the tea leaves a bit in DR217 and its reference to DR205 
+        // leads me to the conclusion that one cannot add default function 
+        // arguments for an out-of-line definition of a member function of a 
+        // dependent type.
+        int WhichKind = 2;
+        if (CXXRecordDecl *Record 
+              = dyn_cast<CXXRecordDecl>(New->getDeclContext())) {
+          if (Record->getDescribedClassTemplate())
+            WhichKind = 0;
+          else if (isa<ClassTemplatePartialSpecializationDecl>(Record))
+            WhichKind = 1;
+          else
+            WhichKind = 2;
+        }
+        
+        Diag(NewParam->getLocation(), 
+             diag::err_param_default_argument_member_template_redecl)
+          << WhichKind
+          << NewParam->getDefaultArgRange();
+      }
     }
   }
 

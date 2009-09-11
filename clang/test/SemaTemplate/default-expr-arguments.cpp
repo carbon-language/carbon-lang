@@ -45,5 +45,26 @@ template<typename T> struct G {
 
 void s(G<int> flags = 10) { }
 
+// Test default arguments
+template<typename T>
+struct X0 {
+  void f(T = T()); // expected-error{{no matching}}
+};
 
+template<typename U>
+void X0<U>::f(U) { }
 
+void test_x0(X0<int> xi) {
+  xi.f();
+  xi.f(17);
+}
+
+struct NotDefaultConstructible { // expected-note{{candidate}}
+  NotDefaultConstructible(int); // expected-note{{candidate}}
+};
+
+void test_x0_not_default_constructible(X0<NotDefaultConstructible> xn) {
+  xn.f(NotDefaultConstructible(17));
+  xn.f(42);
+  xn.f(); // expected-note{{in instantiation of default function argument}}
+}
