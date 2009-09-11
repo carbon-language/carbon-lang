@@ -926,6 +926,10 @@ public:
 
   virtual void Destroy(ASTContext& C);
 
+  virtual void getNameForDiagnostic(std::string &S,
+                                    const PrintingPolicy &Policy,
+                                    bool Qualified) const;
+
   /// \brief Retrieve the template that this specialization specializes.
   ClassTemplateDecl *getSpecializedTemplate() const;
 

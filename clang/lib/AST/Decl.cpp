@@ -404,6 +404,18 @@ void FunctionDecl::Destroy(ASTContext& C) {
   Decl::Destroy(C);
 }
 
+void FunctionDecl::getNameForDiagnostic(std::string &S,
+                                        const PrintingPolicy &Policy,
+                                        bool Qualified) const {
+  NamedDecl::getNameForDiagnostic(S, Policy, Qualified);
+  const TemplateArgumentList *TemplateArgs = getTemplateSpecializationArgs();
+  if (TemplateArgs)
+    S += TemplateSpecializationType::PrintTemplateArgumentList(
+                                         TemplateArgs->getFlatArgumentList(),
+                                         TemplateArgs->flat_size(),
+                                                               Policy);
+    
+}
 
 Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
   for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {

@@ -422,6 +422,19 @@ void ClassTemplateSpecializationDecl::Destroy(ASTContext &C) {
   CXXRecordDecl::Destroy(C);
 }
 
+void
+ClassTemplateSpecializationDecl::getNameForDiagnostic(std::string &S,
+                                                  const PrintingPolicy &Policy,
+                                                      bool Qualified) const {
+  NamedDecl::getNameForDiagnostic(S, Policy, Qualified);
+
+  const TemplateArgumentList &TemplateArgs = getTemplateArgs();
+  S += TemplateSpecializationType::PrintTemplateArgumentList(
+                                       TemplateArgs.getFlatArgumentList(),
+                                       TemplateArgs.flat_size(),
+                                                             Policy);
+}
+
 ClassTemplateDecl *
 ClassTemplateSpecializationDecl::getSpecializedTemplate() const {
   if (SpecializedPartialSpecialization *PartialSpec

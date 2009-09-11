@@ -123,6 +123,24 @@ public:
   std::string getQualifiedNameAsString() const;
   std::string getQualifiedNameAsString(const PrintingPolicy &Policy) const;
 
+  /// getNameForDiagnostic - Appends a human-readable name for this
+  /// declaration into the given string.
+  ///
+  /// This is the method invoked by Sema when displaying a NamedDecl
+  /// in a diagnostic.  It does not necessarily produce the same
+  /// result as getNameAsString(); for example, class template
+  /// specializations are printed with their template arguments.
+  ///
+  /// TODO: use an API that doesn't require so many temporary strings
+  virtual void getNameForDiagnostic(std::string &S,
+                                    const PrintingPolicy &Policy,
+                                    bool Qualified) const {
+    if (Qualified)
+      S += getQualifiedNameAsString(Policy);
+    else
+      S += getNameAsString();
+  }
+
   /// declarationReplaces - Determine whether this declaration, if
   /// known to be well-formed within its context, will replace the
   /// declaration OldD if introduced into scope. A declaration will
@@ -838,6 +856,10 @@ public:
                               DeclaratorInfo *DInfo,
                               StorageClass S = None, bool isInline = false,
                               bool hasWrittenPrototype = true);
+
+  virtual void getNameForDiagnostic(std::string &S,
+                                    const PrintingPolicy &Policy,
+                                    bool Qualified) const;
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getLocation(), EndRangeLoc);
