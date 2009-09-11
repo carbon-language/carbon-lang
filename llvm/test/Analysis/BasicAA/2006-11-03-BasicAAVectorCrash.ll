@@ -1,4 +1,4 @@
-; RUN: llvm-as  < %s | opt -licm -disable-output
+; RUN: opt < %s -licm -disable-output
 target datalayout = "E-p:32:32"
 target triple = "powerpc-apple-darwin8.7.0"
 

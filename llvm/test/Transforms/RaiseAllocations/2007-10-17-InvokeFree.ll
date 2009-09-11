@@ -1,4 +1,4 @@
-; RUN: llvm-as <%s | opt -raiseallocs -stats -disable-output |&  \
+; RUN: opt < %s -raiseallocs -stats -disable-output |&  \
 ; RUN:  not grep {Number of allocations raised}
 define void @foo() {
 entry:

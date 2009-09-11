@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s  | opt -loop-rotate -loop-unswitch -disable-output
+; RUN: opt < %s -loop-rotate -loop-unswitch -disable-output
 
 define i32 @stringSearch_Clib(i32 %count) {
 entry:

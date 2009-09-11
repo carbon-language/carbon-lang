@@ -1,4 +1,4 @@
-; RUN: llvm-as <%s | opt -tailcallelim -S | grep call | count 3
+; RUN: opt < %s -tailcallelim -S | grep call | count 3
 ; PR4323
 
 ; Several cases where tail call elimination should not move the load above the

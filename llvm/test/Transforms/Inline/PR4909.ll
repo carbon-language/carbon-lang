@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -partial-inliner -disable-output
+; RUN: opt < %s -partial-inliner -disable-output
 
 define i32 @f() {
 entry:

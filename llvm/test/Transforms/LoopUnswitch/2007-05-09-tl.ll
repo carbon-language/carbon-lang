@@ -1,5 +1,5 @@
+; RUN: opt < %s -loop-unswitch -disable-output
 ; PR1333
-; RUN: llvm-as < %s |  opt -loop-unswitch -disable-output
 
 define void @pp_cxx_expression() {
 entry:

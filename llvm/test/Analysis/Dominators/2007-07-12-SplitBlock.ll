@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s |  opt -loop-rotate -licm -loop-unswitch -disable-output
+; RUN: opt < %s -loop-rotate -licm -loop-unswitch -disable-output
 
 define i32 @main(i32 %argc, i8** %argv) {
 entry:

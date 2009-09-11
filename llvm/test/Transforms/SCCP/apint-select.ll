@@ -1,4 +1,4 @@
-; RUN:  llvm-as < %s | opt -sccp -S | not grep select
+; RUN: opt < %s -sccp -S | not grep select
 
 @A = constant i32 10
 
