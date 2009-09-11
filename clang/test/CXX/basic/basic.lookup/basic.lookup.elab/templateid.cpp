@@ -11,7 +11,9 @@ namespace A {
   template <typename> void Ident();
 
   class Ident<int> AIdent; // expected-error {{refers to a function template}}
-  class ::Ident<int> AnotherIdent;
+
+  // FIXME: this note should be on the template declaration, not the point of instantiation
+  class ::Ident<int> AnotherIdent; // expected-note {{previous use is here}}
 }
 
 class Ident<int> GlobalIdent;

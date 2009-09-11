@@ -1159,9 +1159,10 @@ Sema::TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
 
     if (!isAcceptableTagRedeclaration(D, TagKind, TagLoc, *Id)) {
       Diag(TagLoc, diag::err_use_with_wrong_tag)
-        << Id
+        << Type
         << CodeModificationHint::CreateReplacement(SourceRange(TagLoc),
                                                    D->getKindName());
+      Diag(D->getLocation(), diag::note_previous_use);
     }
   }
 
@@ -3058,9 +3059,13 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                  AttributeList *Attr) {
 
   bool Owned = false;
+  bool IsDependent = false;
   DeclPtrTy TagD = ActOnTag(S, TagSpec, Action::TUK_Reference,
                             KWLoc, SS, Name, NameLoc, Attr, AS_none,
-                            MultiTemplateParamsArg(*this, 0, 0), Owned);
+                            MultiTemplateParamsArg(*this, 0, 0),
+                            Owned, IsDependent);
+  assert(!IsDependent && "explicit instantiation of dependent name not yet handled");
+
   if (!TagD)
     return true;
 
@@ -3121,6 +3126,28 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   // should be available for clients that want to see all of the declarations in
   // the source code.
   return TagD;
+}
+
+Sema::TypeResult
+Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
+                        const CXXScopeSpec &SS, IdentifierInfo *Name,
+                        SourceLocation TagLoc, SourceLocation NameLoc) {
+  // This has to hold, because SS is expected to be defined.
+  assert(Name && "Expected a name in a dependent tag");
+
+  NestedNameSpecifier *NNS
+    = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
+  if (!NNS)
+    return true;
+
+  QualType T = CheckTypenameType(NNS, *Name, SourceRange(TagLoc, NameLoc));
+  if (T.isNull())
+    return true;
+
+  TagDecl::TagKind TagKind = TagDecl::getTagKindForTypeSpec(TagSpec);
+  QualType ElabType = Context.getElaboratedType(T, TagKind);
+
+  return ElabType.getAsOpaquePtr();
 }
 
 Sema::TypeResult

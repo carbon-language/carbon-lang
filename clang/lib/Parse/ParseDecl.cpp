@@ -1641,10 +1641,12 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   else
     TUK = Action::TUK_Reference;
   bool Owned = false;
+  bool IsDependent = false;
   DeclPtrTy TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TUK,
                                        StartLoc, SS, Name, NameLoc, Attr, AS,
                                        Action::MultiTemplateParamsArg(Actions),
-                                       Owned);
+                                       Owned, IsDependent);
+  assert(!IsDependent && "didn't expect dependent enum");
 
   if (Tok.is(tok::l_brace))
     ParseEnumBody(StartLoc, TagDecl);

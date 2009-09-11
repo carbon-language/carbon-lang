@@ -522,8 +522,32 @@ public:
                              IdentifierInfo *Name, SourceLocation NameLoc,
                              AttributeList *Attr, AccessSpecifier AS,
                              MultiTemplateParamsArg TemplateParameterLists,
-                             bool &OwnedDecl) {
+                             bool &OwnedDecl, bool &IsDependent) {
     return DeclPtrTy();
+  }
+
+  /// Acts on a reference to a dependent tag name.  This arises in
+  /// cases like:
+  ///
+  ///    template <class T> class A;
+  ///    template <class T> class B {
+  ///      friend class A<T>::M;  // here
+  ///    };
+  ///
+  /// \param TagSpec an instance of DeclSpec::TST corresponding to the
+  /// tag specifier.
+  ///
+  /// \param TUK the tag use kind (either TUK_Friend or TUK_Reference)
+  ///
+  /// \param SS the scope specifier (always defined)
+  virtual TypeResult ActOnDependentTag(Scope *S,
+                                       unsigned TagSpec,
+                                       TagUseKind TUK,
+                                       const CXXScopeSpec &SS,
+                                       IdentifierInfo *Name,
+                                       SourceLocation KWLoc,
+                                       SourceLocation NameLoc) {
+    return TypeResult();
   }
 
   /// Act on @defs() element found when parsing a structure.  ClassName is the

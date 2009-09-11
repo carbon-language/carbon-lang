@@ -391,6 +391,10 @@ namespace {
                                   IdentifierInfo *Name,
                                   SourceLocation Loc, SourceRange TypeRange);
 
+    /// \brief Check for tag mismatches when instantiating an
+    /// elaborated type.
+    QualType RebuildElaboratedType(QualType T, ElaboratedType::TagKind Tag);
+
     Sema::OwningExprResult TransformPredefinedExpr(PredefinedExpr *E);
     Sema::OwningExprResult TransformDeclRefExpr(DeclRefExpr *E);
 
@@ -451,7 +455,33 @@ TemplateInstantiator::RebuildExceptionDecl(VarDecl *ExceptionDecl,
   return Var;
 }
 
-Sema::OwningExprResult
+QualType
+TemplateInstantiator::RebuildElaboratedType(QualType T,
+                                            ElaboratedType::TagKind Tag) {
+  if (const TagType *TT = T->getAs<TagType>()) {
+    TagDecl* TD = TT->getDecl();
+
+    // FIXME: this location is very wrong;  we really need typelocs.
+    SourceLocation TagLocation = TD->getTagKeywordLoc();
+
+    // FIXME: type might be anonymous.
+    IdentifierInfo *Id = TD->getIdentifier();
+
+    // TODO: should we even warn on struct/class mismatches for this?  Seems
+    // like it's likely to produce a lot of spurious errors.
+    if (!SemaRef.isAcceptableTagRedeclaration(TD, Tag, TagLocation, *Id)) {
+      SemaRef.Diag(TagLocation, diag::err_use_with_wrong_tag)
+        << Id
+        << CodeModificationHint::CreateReplacement(SourceRange(TagLocation),
+                                                   TD->getKindName());
+      SemaRef.Diag(TD->getLocation(), diag::note_previous_use);
+    }
+  }
+
+  return TreeTransform<TemplateInstantiator>::RebuildElaboratedType(T, Tag);
+}
+
+Sema::OwningExprResult 
 TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
   if (!E->isTypeDependent())
     return SemaRef.Owned(E->Retain());

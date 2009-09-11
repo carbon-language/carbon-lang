@@ -3988,7 +3988,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                IdentifierInfo *Name, SourceLocation NameLoc,
                                AttributeList *Attr, AccessSpecifier AS,
                                MultiTemplateParamsArg TemplateParameterLists,
-                               bool &OwnedDecl) {
+                               bool &OwnedDecl, bool &IsDependent) {
   // If this is not a definition, it must have a name.
   assert((Name != 0 || TUK == TUK_Definition) &&
          "Nameless record must be a definition!");
@@ -4032,6 +4032,16 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     if (SS.isInvalid()) {
       Name = 0;
       goto CreateNewDecl;
+    }
+
+    // If this is a friend or a reference to a class in a dependent
+    // context, don't try to make a decl for it.
+    if (TUK == TUK_Friend || TUK == TUK_Reference) {
+      DC = computeDeclContext(SS, false);
+      if (!DC) {
+        IsDependent = true;
+        return DeclPtrTy();
+      }
     }
 
     if (RequireCompleteDeclContext(SS))

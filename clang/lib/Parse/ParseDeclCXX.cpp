@@ -619,7 +619,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   }
 
   // Create the tag portion of the class or class template.
-  Action::DeclResult TagOrTempResult;
+  Action::DeclResult TagOrTempResult = true; // invalid
+  Action::TypeResult TypeResult = true; // invalid
   TemplateParameterLists *TemplateParams = TemplateInfo.TemplateParams;
 
   // FIXME: When TUK == TUK_Reference and we have a template-id, we need
@@ -651,7 +652,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                              TemplateId->RAngleLoc,
                                              Attr);
     } else if (TUK == Action::TUK_Reference || TUK == Action::TUK_Friend) {
-      Action::TypeResult Type
+      TypeResult
         = Actions.ActOnTemplateIdType(TemplateTy::make(TemplateId->Template),
                                       TemplateId->TemplateNameLoc,
                                       TemplateId->LAngleLoc,
@@ -659,23 +660,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                       TemplateId->getTemplateArgLocations(),
                                       TemplateId->RAngleLoc);
 
-      Type = Actions.ActOnTagTemplateIdType(Type, TUK, TagType, StartLoc);
-
-      TemplateId->Destroy();
-
-      if (Type.isInvalid()) {
-        DS.SetTypeSpecError();
-        return;
-      }
-
-      const char *PrevSpec = 0;
-      unsigned DiagID;
-      if (DS.SetTypeSpecType(DeclSpec::TST_typename, StartLoc, PrevSpec,
-                             DiagID, Type.get()))
-        Diag(StartLoc, DiagID) << PrevSpec;
-
-      return;
-
+      TypeResult = Actions.ActOnTagTemplateIdType(TypeResult, TUK,
+                                                  TagType, StartLoc);
     } else {
       // This is an explicit specialization or a class template
       // partial specialization.
@@ -746,13 +732,21 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       // FIXME: Diagnose this particular error.
     }
 
+    bool IsDependent = false;
+
     // Declaration or definition of a class type
     TagOrTempResult = Actions.ActOnTag(CurScope, TagType, TUK, StartLoc, SS,
                                        Name, NameLoc, Attr, AS,
                                   Action::MultiTemplateParamsArg(Actions,
                                     TemplateParams? &(*TemplateParams)[0] : 0,
                                     TemplateParams? TemplateParams->size() : 0),
-                                       Owned);
+                                       Owned, IsDependent);
+
+    // If ActOnTag said the type was dependent, try again with the
+    // less common call.
+    if (IsDependent)
+      TypeResult = Actions.ActOnDependentTag(CurScope, TagType, TUK,
+                                             SS, Name, StartLoc, NameLoc);      
   }
 
   // Parse the optional base clause (C++ only).
@@ -771,15 +765,23 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     Diag(Tok, diag::err_expected_lbrace);
   }
 
-  if (TagOrTempResult.isInvalid()) {
+  void *Result;
+  if (!TypeResult.isInvalid()) {
+    TagType = DeclSpec::TST_typename;
+    Result = TypeResult.get();
+    Owned = false;
+  } else if (!TagOrTempResult.isInvalid()) {
+    Result = TagOrTempResult.get().getAs<void>();
+  } else {
     DS.SetTypeSpecError();
     return;
   }
 
   const char *PrevSpec = 0;
   unsigned DiagID;
+
   if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, DiagID,
-                         TagOrTempResult.get().getAs<void>(), Owned))
+                         Result, Owned))
     Diag(StartLoc, DiagID) << PrevSpec;
 }
 

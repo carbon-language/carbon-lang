@@ -609,7 +609,15 @@ public:
                              IdentifierInfo *Name, SourceLocation NameLoc,
                              AttributeList *Attr, AccessSpecifier AS,
                              MultiTemplateParamsArg TemplateParameterLists,
-                             bool &OwnedDecl);
+                             bool &OwnedDecl, bool &IsDependent);
+
+  virtual TypeResult ActOnDependentTag(Scope *S,
+                                       unsigned TagSpec,
+                                       TagUseKind TUK,
+                                       const CXXScopeSpec &SS,
+                                       IdentifierInfo *Name,
+                                       SourceLocation TagLoc,
+                                       SourceLocation NameLoc);
 
   virtual void ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,
