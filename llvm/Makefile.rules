@@ -343,8 +343,8 @@ ifdef REQUIRES_FRAME_POINTER
   LD.Flags  := $(filter-out -fomit-frame-pointer,$(LD.Flags))
 endif
 
-# IF REQUIRES_RTTI=1 is specified then don't disable run-time type id
-ifndef REQUIRES_RTTI
+# If REQUIRES_RTTI=1 is specified then don't disable run-time type id.
+ifeq ($(REQUIRES_RTTI), 1)
   CXX.Flags := $(filter-out -fno-rtti,$(CXX.Flags))
   CXXFLAGS := $(filter-out -fno-rtti,$(CXXFLAGS))
 endif
