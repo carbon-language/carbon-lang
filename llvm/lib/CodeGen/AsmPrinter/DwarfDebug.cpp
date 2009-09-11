@@ -494,6 +494,10 @@ void DwarfDebug::AddSourceLine(DIE *Die, const DISubprogram *SP) {
   // If there is no compile unit specified, don't add a line #.
   if (SP->getCompileUnit().isNull())
     return;
+  // If the line number is 0, don't add it.
+  if (SP->getLineNumber() == 0)
+    return;
+
 
   unsigned Line = SP->getLineNumber();
   unsigned FileID = FindCompileUnit(SP->getCompileUnit()).getID();
@@ -2393,6 +2397,8 @@ void DwarfDebug::EmitDebugLines() {
       const SrcLineInfo &LineInfo = LineInfos[i];
       unsigned LabelID = MMI->MappedLabel(LineInfo.getLabelID());
       if (!LabelID) continue;
+
+      if (LineInfo.getLine() == 0) continue;
 
       if (!Asm->isVerbose())
         Asm->EOL();
