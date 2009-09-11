@@ -85,7 +85,7 @@ void g18(void) {
   static int *p[] = { &g19 };
 }
 
-// RUN: grep '@g20.l0 = internal global %.truct.g20_s1 { %.truct.g20_s0\* null, %.truct.g20_s0\*\* getelementptr (%.truct.g20_s1\* @g20.l0, i32 0, i32 0) }' %t &&
+// RUN: grep '@g20.l0 = internal global %.truct.g20_s1 { %.truct.g20_s0\* null, %.truct.g20_s0\*\* getelementptr inbounds (%.truct.g20_s1\* @g20.l0, i32 0, i32 0) }' %t &&
 
 struct g20_s0;
 struct g20_s1 {
