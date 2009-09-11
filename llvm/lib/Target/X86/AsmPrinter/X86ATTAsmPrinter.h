@@ -236,6 +236,7 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   FMFInfoMap FunctionInfoMap;
 
   void DecorateCygMingName(std::string &Name, const GlobalValue *GV);
+  void DecorateCygMingName(SmallVectorImpl<char> &Name, const GlobalValue *GV);
 };
 
 } // end namespace llvm

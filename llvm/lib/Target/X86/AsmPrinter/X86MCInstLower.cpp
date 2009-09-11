@@ -39,26 +39,6 @@ MCSymbol *X86ATTAsmPrinter::GetPICBaseSymbol() {
 }
 
 
-static void lower_subreg32(MCInst *MI, unsigned OpNo) {
-  // Convert registers in the addr mode according to subreg32.
-  unsigned Reg = MI->getOperand(OpNo).getReg();
-  if (Reg != 0)
-    MI->getOperand(OpNo).setReg(getX86SubSuperRegister(Reg, MVT::i32));
-}
-
-
-static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
-  // Convert registers in the addr mode according to subreg64.
-  for (unsigned i = 0; i != 4; ++i) {
-    if (!MI->getOperand(OpNo+i).isReg()) continue;
-    
-    unsigned Reg = MI->getOperand(OpNo+i).getReg();
-    if (Reg == 0) continue;
-    
-    MI->getOperand(OpNo+i).setReg(getX86SubSuperRegister(Reg, MVT::i64));
-  }
-}
-
 /// LowerGlobalAddressOperand - Lower an MO_GlobalAddress operand to an
 /// MCOperand.
 MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
@@ -264,6 +244,28 @@ MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
   return MCOperand::CreateExpr(Expr);
 }
 
+
+
+static void lower_subreg32(MCInst *MI, unsigned OpNo) {
+  // Convert registers in the addr mode according to subreg32.
+  unsigned Reg = MI->getOperand(OpNo).getReg();
+  if (Reg != 0)
+    MI->getOperand(OpNo).setReg(getX86SubSuperRegister(Reg, MVT::i32));
+}
+
+static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
+  // Convert registers in the addr mode according to subreg64.
+  for (unsigned i = 0; i != 4; ++i) {
+    if (!MI->getOperand(OpNo+i).isReg()) continue;
+    
+    unsigned Reg = MI->getOperand(OpNo+i).getReg();
+    if (Reg == 0) continue;
+    
+    MI->getOperand(OpNo+i).setReg(getX86SubSuperRegister(Reg, MVT::i64));
+  }
+}
+
+
 void X86ATTAsmPrinter::
 printInstructionThroughMCStreamer(const MachineInstr *MI) {
   MCInst TmpInst;
@@ -345,9 +347,9 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
     TmpInst.addOperand(MCOp);
   }
   
+  // Handle a few special cases to eliminate operand modifiers.
   switch (TmpInst.getOpcode()) {
-  case X86::LEA64_32r:
-    // Handle the 'subreg rewriting' for the lea64_32mem operand.
+  case X86::LEA64_32r: // Handle 'subreg rewriting' for the lea64_32mem operand.
     lower_lea64_32mem(&TmpInst, 1);
     break;
   case X86::MOV16r0:

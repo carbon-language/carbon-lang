@@ -23,8 +23,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -36,6 +34,8 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
@@ -94,23 +94,23 @@ static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
 
 /// DecorateCygMingName - Query FunctionInfoMap and use this information for
 /// various name decorations for Cygwin and MingW.
-void X86ATTAsmPrinter::DecorateCygMingName(std::string &Name,
+void X86ATTAsmPrinter::DecorateCygMingName(SmallVectorImpl<char> &Name,
                                            const GlobalValue *GV) {
   assert(Subtarget->isTargetCygMing() && "This is only for cygwin and mingw");
   
   const Function *F = dyn_cast<Function>(GV);
   if (!F) return;
-
+  
   // Save function name for later type emission.
   if (F->isDeclaration())
-    CygMingStubs.insert(Name);
+    CygMingStubs.insert(StringRef(Name.data(), Name.size()));
   
   // We don't want to decorate non-stdcall or non-fastcall functions right now
   CallingConv::ID CC = F->getCallingConv();
   if (CC != CallingConv::X86_StdCall && CC != CallingConv::X86_FastCall)
     return;
-
-
+  
+  
   const X86MachineFunctionInfo *Info;
   
   FMFInfoMap::const_iterator info_item = FunctionInfoMap.find(F);
@@ -121,32 +121,30 @@ void X86ATTAsmPrinter::DecorateCygMingName(std::string &Name,
   } else {
     Info = &info_item->second;
   }
-
+  
+  if (Info->getDecorationStyle() == None) return;
   const FunctionType *FT = F->getFunctionType();
-  switch (Info->getDecorationStyle()) {
-  case None:
-    break;
-  case StdCall:
-    // "Pure" variadic functions do not receive @0 suffix.
-    if (!FT->isVarArg() || (FT->getNumParams() == 0) ||
-        (FT->getNumParams() == 1 && F->hasStructRetAttr()))
-      Name += '@' + utostr_32(Info->getBytesToPopOnReturn());
-    break;
-  case FastCall:
-    // "Pure" variadic functions do not receive @0 suffix.
-    if (!FT->isVarArg() || (FT->getNumParams() == 0) ||
-        (FT->getNumParams() == 1 && F->hasStructRetAttr()))
-      Name += '@' + utostr_32(Info->getBytesToPopOnReturn());
 
-    if (Name[0] == '_') {
+  // "Pure" variadic functions do not receive @0 suffix.
+  if (!FT->isVarArg() || FT->getNumParams() == 0 ||
+      (FT->getNumParams() == 1 && F->hasStructRetAttr()))
+    raw_svector_ostream(Name) << '@' << Info->getBytesToPopOnReturn();
+  
+  if (Info->getDecorationStyle() == FastCall) {
+    if (Name[0] == '_')
       Name[0] = '@';
-    } else {
-      Name = '@' + Name;
-    }
-    break;
-  default:
-    llvm_unreachable("Unsupported DecorationStyle");
-  }
+    else
+      Name.insert(Name.begin(), '@');
+  }    
+}
+
+/// DecorateCygMingName - Query FunctionInfoMap and use this information for
+/// various name decorations for Cygwin and MingW.
+void X86ATTAsmPrinter::DecorateCygMingName(std::string &Name,
+                                           const GlobalValue *GV) {
+  SmallString<128> NameStr(Name.begin(), Name.end());
+  DecorateCygMingName(NameStr, GV);
+  Name.assign(NameStr.begin(), NameStr.end());
 }
 
 void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
