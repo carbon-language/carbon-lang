@@ -881,6 +881,22 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     O << "\t.size\t" << name << ", " << Size << '\n';
 }
 
+static int SortSymbolPair(const void *LHS, const void *RHS) {
+  MCSymbol *LHSS = ((const std::pair<MCSymbol*, MCSymbol*>*)LHS)->first;
+  MCSymbol *RHSS = ((const std::pair<MCSymbol*, MCSymbol*>*)LHS)->first;
+  return LHSS->getName().compare(RHSS->getName());
+}
+
+/// GetSortedStubs - Return the entries from a DenseMap in a deterministic
+/// sorted orer.
+static std::vector<std::pair<MCSymbol*, MCSymbol*> >
+GetSortedStubs(const DenseMap<MCSymbol*, MCSymbol*> &Map) {
+  assert(!Map.empty());
+  std::vector<std::pair<MCSymbol*, MCSymbol*> > List(Map.begin(), Map.end());
+  qsort(&List[0], List.size(), sizeof(List[0]), SortSymbolPair);
+  return List;
+}
+
 bool X86ATTAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -926,13 +942,14 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
                                   MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
                                   5, SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
-      // FIXME: This iteration order is unstable!!
-      for (DenseMap<MCSymbol*, MCSymbol*>::iterator I = FnStubs.begin(),
-           E = FnStubs.end(); I != E; ++I) {
-        I->first->print(O, MAI);
+
+      std::vector<std::pair<MCSymbol*, MCSymbol*> > Stubs
+        = GetSortedStubs(FnStubs);
+      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+        Stubs[i].first->print(O, MAI);
         O << ":\n" << "\t.indirect_symbol ";
         // Get the MCSymbol without the $stub suffix.
-        I->second->print(O, MAI);
+        Stubs[i].second->print(O, MAI);
         O << "\n\thlt ; hlt ; hlt ; hlt ; hlt\n";
       }
       O << '\n';
@@ -945,12 +962,13 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
                                   MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
                                   SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
-      // FIXME: This iteration order is unstable!!
-      for (DenseMap<MCSymbol*, MCSymbol*>::iterator I = GVStubs.begin(),
-           E = GVStubs.end(); I != E; ++I) {
-        I->first->print(O, MAI);
+
+      std::vector<std::pair<MCSymbol*, MCSymbol*> > Stubs
+        = GetSortedStubs(FnStubs);
+      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+        Stubs[i].first->print(O, MAI);
         O << ":\n\t.indirect_symbol ";
-        I->second->print(O, MAI);
+        Stubs[i].second->print(O, MAI);
         O << "\n\t.long\t0\n";
       }
     }
@@ -958,11 +976,13 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     if (!HiddenGVStubs.empty()) {
       OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
       EmitAlignment(2);
-      for (DenseMap<MCSymbol*, MCSymbol*>::iterator I = HiddenGVStubs.begin(),
-           E = HiddenGVStubs.end(); I != E; ++I) {
-        I->first->print(O, MAI);
+
+      std::vector<std::pair<MCSymbol*, MCSymbol*> > Stubs
+        = GetSortedStubs(FnStubs);
+      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+        Stubs[i].first->print(O, MAI);
         O << ":\n" << MAI->getData32bitsDirective();
-        I->second->print(O, MAI);
+        Stubs[i].second->print(O, MAI);
         O << '\n';
       }
     }
