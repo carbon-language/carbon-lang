@@ -1032,9 +1032,8 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
       return LookupResult::CreateLookupResult(Context, I, E);
 
   // If this isn't a C++ class, we aren't allowed to look into base
-  // classes, we're done, or the lookup context is dependent, we're done.
-  if (RedeclarationOnly || !isa<CXXRecordDecl>(LookupCtx) ||
-      LookupCtx->isDependentContext())
+  // classes, we're done.
+  if (RedeclarationOnly || !isa<CXXRecordDecl>(LookupCtx))
     return LookupResult::CreateLookupResult(Context, 0);
 
   // Perform lookup into our base classes.

@@ -139,9 +139,12 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
     QualType BaseType = Context.getCanonicalType(BaseSpec->getType());
     BaseType = BaseType.getUnqualifiedType();
 
-    // If a base class of the class template depends on a template-parameter,
-    // the base class scope is not examined during unqualified name lookup.
-    // [temp.dep]p3.
+    // C++ [temp.dep]p3:
+    //   In the definition of a class template or a member of a class template,
+    //   if a base class of the class template depends on a template-parameter,
+    //   the base class scope is not examined during unqualified name lookup 
+    //   either at the point of definition of the class template or member or 
+    //   during an instantiation of the class tem- plate or member.
     if (BaseType->isDependentType())
       continue;
 
