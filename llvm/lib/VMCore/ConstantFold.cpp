@@ -12,9 +12,8 @@
 // ConstantExpr::get* methods to automatically fold constants when possible.
 //
 // The current constant folding implementation is implemented in two pieces: the
-// template-based folder for simple primitive constants like ConstantInt, and
-// the special case hackery that we use to symbolically evaluate expressions
-// that use ConstantExprs.
+// pieces that don't need TargetData, and the pieces that do. This is to avoid
+// a dependence in VMCore on Target.
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,6 +23,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalAlias.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
@@ -1673,8 +1673,28 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
   return 0;
 }
 
+/// isInBoundsIndices - Test whether the given sequence of *normalized* indices
+/// is "inbounds".
+static bool isInBoundsIndices(Constant *const *Idxs, size_t NumIdx) {
+  // No indices means nothing that could be out of bounds.
+  if (NumIdx == 0) return true;
+
+  // If the first index is zero, it's in bounds.
+  if (Idxs[0]->isNullValue()) return true;
+
+  // If the first index is one and all the rest are zero, it's in bounds,
+  // by the one-past-the-end rule.
+  if (!cast<ConstantInt>(Idxs[0])->isOne())
+    return false;
+  for (unsigned i = 1, e = NumIdx; i != e; ++i)
+    if (!Idxs[i]->isNullValue())
+      return false;
+  return true;
+}
+
 Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context, 
                                           const Constant *C,
+                                          bool inBounds,
                                           Constant* const *Idxs,
                                           unsigned NumIdx) {
   if (NumIdx == 0 ||
@@ -1746,9 +1766,13 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
 
         NewIndices.push_back(Combined);
         NewIndices.insert(NewIndices.end(), Idxs+1, Idxs+NumIdx);
-        return ConstantExpr::getGetElementPtr(CE->getOperand(0),
-                                              &NewIndices[0],
-                                              NewIndices.size());
+        return (inBounds && cast<GEPOperator>(CE)->isInBounds()) ?
+          ConstantExpr::getInBoundsGetElementPtr(CE->getOperand(0),
+                                                 &NewIndices[0],
+                                                 NewIndices.size()) :
+          ConstantExpr::getGetElementPtr(CE->getOperand(0),
+                                         &NewIndices[0],
+                                         NewIndices.size());
       }
     }
 
@@ -1764,7 +1788,10 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
           if (const ArrayType *CAT =
         dyn_cast<ArrayType>(cast<PointerType>(C->getType())->getElementType()))
             if (CAT->getElementType() == SAT->getElementType())
-              return ConstantExpr::getGetElementPtr(
+              return inBounds ?
+                ConstantExpr::getInBoundsGetElementPtr(
+                      (Constant*)CE->getOperand(0), Idxs, NumIdx) :
+                ConstantExpr::getGetElementPtr(
                       (Constant*)CE->getOperand(0), Idxs, NumIdx);
     }
 
@@ -1789,5 +1816,71 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
       return ConstantExpr::getIntToPtr(Base, CE->getType());
     }
   }
+
+  // Check to see if any array indices are not within the corresponding
+  // notional array bounds. If so, try to determine if they can be factored
+  // out into preceding dimensions.
+  bool Unknown = false;
+  SmallVector<Constant *, 8> NewIdxs;
+  const Type *Ty = C->getType();
+  const Type *Prev = 0;
+  for (unsigned i = 0; i != NumIdx;
+       Prev = Ty, Ty = cast<CompositeType>(Ty)->getTypeAtIndex(Idxs[i]), ++i) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Idxs[i])) {
+      if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty))
+        if (ATy->getNumElements() <= INT64_MAX &&
+            ATy->getNumElements() != 0 &&
+            CI->getSExtValue() >= (int64_t)ATy->getNumElements()) {
+          if (isa<SequentialType>(Prev)) {
+            // It's out of range, but we can factor it into the prior
+            // dimension.
+            NewIdxs.resize(NumIdx);
+            ConstantInt *Factor = ConstantInt::get(CI->getType(),
+                                                   ATy->getNumElements());
+            NewIdxs[i] = ConstantExpr::getSRem(CI, Factor);
+
+            Constant *PrevIdx = Idxs[i-1];
+            Constant *Div = ConstantExpr::getSDiv(CI, Factor);
+
+            // Before adding, extend both operands to i64 to avoid
+            // overflow trouble.
+            if (PrevIdx->getType() != Type::getInt64Ty(Context))
+              PrevIdx = ConstantExpr::getSExt(PrevIdx,
+                                              Type::getInt64Ty(Context));
+            if (Div->getType() != Type::getInt64Ty(Context))
+              Div = ConstantExpr::getSExt(Div,
+                                          Type::getInt64Ty(Context));
+
+            NewIdxs[i-1] = ConstantExpr::getAdd(PrevIdx, Div);
+          } else {
+            // It's out of range, but the prior dimension is a struct
+            // so we can't do anything about it.
+            Unknown = true;
+          }
+        }
+    } else {
+      // We don't know if it's in range or not.
+      Unknown = true;
+    }
+  }
+
+  // If we did any factoring, start over with the adjusted indices.
+  if (!NewIdxs.empty()) {
+    for (unsigned i = 0; i != NumIdx; ++i)
+      if (!NewIdxs[i]) NewIdxs[i] = Idxs[i];
+    return inBounds ?
+      ConstantExpr::getGetElementPtr(const_cast<Constant*>(C),
+                                     NewIdxs.data(), NewIdxs.size()) :
+      ConstantExpr::getInBoundsGetElementPtr(const_cast<Constant*>(C),
+                                             NewIdxs.data(), NewIdxs.size());
+  }
+
+  // If all indices are known integers and normalized, we can do a simple
+  // check for the "inbounds" property.
+  if (!Unknown && !inBounds &&
+      isa<GlobalVariable>(C) && isInBoundsIndices(Idxs, NumIdx))
+    return ConstantExpr::getInBoundsGetElementPtr(const_cast<Constant*>(C),
+                                                  Idxs, NumIdx);
+
   return 0;
 }

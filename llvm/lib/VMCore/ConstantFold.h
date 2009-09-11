@@ -64,6 +64,7 @@ namespace llvm {
                                            const Constant *C1, 
                                            const Constant *C2);
   Constant *ConstantFoldGetElementPtr(LLVMContext &Context, const Constant *C,
+                                      bool inBounds,
                                       Constant* const *Idxs, unsigned NumIdx);
 } // End llvm namespace
 

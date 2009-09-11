@@ -207,12 +207,8 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
   if (Offset != 0)
     return 0;
 
-  // If the base is the start of a GlobalVariable and all the array indices
-  // remain in their static bounds, the GEP is inbounds. We can check that
-  // all indices are in bounds by just checking the first index only
-  // because we've just normalized all the indices.
-  Constant *C = isa<GlobalVariable>(Ptr) && NewIdxs[0]->isNullValue() ?
-    ConstantExpr::getInBoundsGetElementPtr(Ptr, &NewIdxs[0], NewIdxs.size()) :
+  // Create a GEP.
+  Constant *C =
     ConstantExpr::getGetElementPtr(Ptr, &NewIdxs[0], NewIdxs.size());
   assert(cast<PointerType>(C->getType())->getElementType() == Ty &&
          "Computed GetElementPtr has unexpected type!");

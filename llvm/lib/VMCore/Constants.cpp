@@ -1489,7 +1489,8 @@ Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
          "GEP indices invalid!");
 
   if (Constant *FC = ConstantFoldGetElementPtr(
-                              ReqTy->getContext(), C, (Constant**)Idxs, NumIdx))
+                              ReqTy->getContext(), C, /*inBounds=*/false,
+                              (Constant**)Idxs, NumIdx))
     return FC;          // Fold a few common cases...
 
   assert(isa<PointerType>(C->getType()) &&
@@ -1518,7 +1519,8 @@ Constant *ConstantExpr::getInBoundsGetElementPtrTy(const Type *ReqTy,
          "GEP indices invalid!");
 
   if (Constant *FC = ConstantFoldGetElementPtr(
-                              ReqTy->getContext(), C, (Constant**)Idxs, NumIdx))
+                              ReqTy->getContext(), C, /*inBounds=*/true,
+                              (Constant**)Idxs, NumIdx))
     return FC;          // Fold a few common cases...
 
   assert(isa<PointerType>(C->getType()) &&

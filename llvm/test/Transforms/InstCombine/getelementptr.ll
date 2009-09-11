@@ -222,7 +222,7 @@ define i1 @test22() {
                            getelementptr (i32* @B, i64 2) 
         ret i1 %C
 ; CHECK: @test22
-; CHECK: icmp ult (i32* getelementptr (i32* @A, i64 1), i32* getelementptr (i32* @B, i64 2))
+; CHECK: icmp ult (i32* getelementptr inbounds (i32* @A, i64 1), i32* getelementptr (i32* @B, i64 2))
 }
 
 
@@ -463,7 +463,7 @@ define i8* @test36() nounwind {
 @A37 = external constant [1 x i8]
 define i1 @test37() nounwind {
 ; CHECK: @test37
-; CHECK: ret i1 icmp eq (i8* getelementptr ([1 x i8]* @A37, i64 0, i64 1), i8* getelementptr ([1 x i8]* @A37, i64 1, i64 0))
+; CHECK: ret i1 true
   %t = icmp eq i8* getelementptr ([1 x i8]* @A37, i64 0, i64 1),
                    getelementptr ([1 x i8]* @A37, i64 1, i64 0)
   ret i1 %t
