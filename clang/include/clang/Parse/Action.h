@@ -1202,11 +1202,19 @@ public:
     return DeclPtrTy();
   }
 
-  /// ActOnFriendDecl - This action is called when a friend declaration is
-  /// encountered.
-  virtual DeclPtrTy ActOnFriendDecl(Scope *S,
-                        llvm::PointerUnion<const DeclSpec*,Declarator*> D,
-                                    bool IsDefinition) {
+  /// ActOnFriendFunctionDecl - Parsed a friend function declarator.
+  /// The name is actually a slight misnomer, because the declarator
+  /// is not necessarily a function declarator.
+  virtual DeclPtrTy ActOnFriendFunctionDecl(Scope *S,
+                                            Declarator &D,
+                                            bool IsDefinition,
+                                            MultiTemplateParamsArg TParams) {
+    return DeclPtrTy();
+  }
+
+  /// ActOnFriendTypeDecl - Parsed a friend type declaration.
+  virtual DeclPtrTy ActOnFriendTypeDecl(Scope *S,
+                                        const DeclSpec &DS) {
     return DeclPtrTy();
   }
 

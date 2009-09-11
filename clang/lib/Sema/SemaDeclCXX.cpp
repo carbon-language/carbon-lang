@@ -4008,18 +4008,8 @@ Sema::DeclPtrTy Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
   return DeclPtrTy::make(Decl);
 }
 
-Sema::DeclPtrTy Sema::ActOnFriendDecl(Scope *S,
-                       llvm::PointerUnion<const DeclSpec*,Declarator*> DU,
-                                      bool IsDefinition) {
-  if (DU.is<Declarator*>())
-    return ActOnFriendFunctionDecl(S, *DU.get<Declarator*>(), IsDefinition);
-  else
-    return ActOnFriendTypeDecl(S, *DU.get<const DeclSpec*>(), IsDefinition);
-}
-
 Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
-                                          const DeclSpec &DS,
-                                          bool IsDefinition) {
+                                          const DeclSpec &DS) {
   SourceLocation Loc = DS.getSourceRange().getBegin();
 
   assert(DS.isFriendSpecified());
@@ -4056,17 +4046,13 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
     }
   }
 
+  bool IsDefinition = false;
   FriendDecl::FriendUnion FU = T.getTypePtr();
 
-  // The parser doesn't quite handle
-  //   friend class A { ... }
-  // optimally, because it might have been the (valid) prefix of
-  //   friend class A { ... } foo();
-  // So in a very particular set of circumstances, we need to adjust
-  // IsDefinition.
-  //
-  // Also, if we made a RecordDecl in ActOnTag, we want that to be the
-  // object of our friend declaration.
+  // We want to do a few things differently if the type was declared with
+  // a tag:  specifically, we want to use the associated RecordDecl as
+  // the object of our friend declaration, and we want to disallow
+  // class definitions.
   switch (DS.getTypeSpecType()) {
   default: break;
   case DeclSpec::TST_class:
@@ -4106,9 +4092,13 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
   return DeclPtrTy::make(FD);
 }
 
-Sema::DeclPtrTy Sema::ActOnFriendFunctionDecl(Scope *S,
-                                              Declarator &D,
-                                              bool IsDefinition) {
+Sema::DeclPtrTy
+Sema::ActOnFriendFunctionDecl(Scope *S,
+                              Declarator &D,
+                              bool IsDefinition,
+                              MultiTemplateParamsArg TemplateParams) {
+  // FIXME: do something with template parameters
+
   const DeclSpec &DS = D.getDeclSpec();
 
   assert(DS.isFriendSpecified());

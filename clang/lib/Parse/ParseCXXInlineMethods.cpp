@@ -34,7 +34,7 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D,
   DeclPtrTy FnD;
   if (D.getDeclSpec().isFriendSpecified())
     // FIXME: Friend templates
-    FnD = Actions.ActOnFriendDecl(CurScope, &D, /*IsDefinition*/ true);
+    FnD = Actions.ActOnFriendFunctionDecl(CurScope, D, true, move(TemplateParams));
   else // FIXME: pass template information through
     FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D,
                                            move(TemplateParams), 0, 0);

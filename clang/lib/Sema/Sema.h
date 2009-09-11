@@ -2245,12 +2245,9 @@ public:
                                                  ExprArg AssertExpr,
                                                  ExprArg AssertMessageExpr);
 
-  virtual DeclPtrTy ActOnFriendDecl(Scope *S,
-                          llvm::PointerUnion<const DeclSpec*,Declarator*> D,
-                                    bool IsDefinition);
-  DeclPtrTy ActOnFriendTypeDecl(Scope *S, const DeclSpec& DS,
-                                bool IsDefinition);
-  DeclPtrTy ActOnFriendFunctionDecl(Scope *S, Declarator& D, bool IsDefinition);
+  DeclPtrTy ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS);
+  DeclPtrTy ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
+                                    MultiTemplateParamsArg TemplateParams);
 
   QualType CheckConstructorDeclarator(Declarator &D, QualType R,
                                       FunctionDecl::StorageClass& SC);

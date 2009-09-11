@@ -1019,7 +1019,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate)
         return;
       
-      Actions.ActOnFriendDecl(CurScope, &DS, /*IsDefinition*/ false);
+      Actions.ActOnFriendTypeDecl(CurScope, DS);
     } else
       Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
 
@@ -1122,15 +1122,17 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // this call will *not* return the created decl; It will return null.
     // See Sema::ActOnCXXMemberDeclarator for details.
 
+    Action::MultiTemplateParamsArg TemplateParams(Actions,
+        TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->data() : 0,
+        TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->size() : 0);
+
     DeclPtrTy ThisDecl;
     if (DS.isFriendSpecified()) {
-      // TODO: handle initializers, bitfields, 'delete', friend templates
-      ThisDecl = Actions.ActOnFriendDecl(CurScope, &DeclaratorInfo,
-                                         /*IsDefinition*/ false);
+      // TODO: handle initializers, bitfields, 'delete'
+      ThisDecl = Actions.ActOnFriendFunctionDecl(CurScope, DeclaratorInfo,
+                                                 /*IsDefinition*/ false,
+                                                 move(TemplateParams));
     } else {
-      Action::MultiTemplateParamsArg TemplateParams(Actions,
-          TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->data() : 0,
-          TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->size() : 0);
       ThisDecl = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
                                                   DeclaratorInfo,
                                                   move(TemplateParams),
