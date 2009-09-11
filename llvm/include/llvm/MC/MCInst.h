@@ -132,7 +132,7 @@ class MCInst {
   unsigned Opcode;
   SmallVector<MCOperand, 8> Operands;
 public:
-  MCInst() : Opcode(~0U) {}
+  MCInst() : Opcode(0) {}
   
   void setOpcode(unsigned Op) { Opcode = Op; }
   
