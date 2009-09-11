@@ -307,6 +307,7 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
     TmpInst.addOperand(MCOperand::CreateExpr(MCSymbolRefExpr::Create(PICBase,
                                                                  OutContext)));
     printInstruction(&TmpInst);
+    O << '\n';
     
     // Emit the label.
     OutStreamer.EmitLabel(PICBase);
