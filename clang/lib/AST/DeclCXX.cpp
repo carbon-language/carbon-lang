@@ -288,11 +288,16 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
 OverloadedFunctionDecl *
 CXXRecordDecl::getVisibleConversionFunctions(ASTContext &Context,
                                              CXXRecordDecl *RD) {
-  // If visible conversion list is already evaluated, return it.
-  if (RD == this &&
-      VisibleConversions.function_begin() != VisibleConversions.function_end())
-    return &VisibleConversions;
-    
+  if (RD == this) {
+    // If root class, all conversions are visible.
+    if (RD->bases_begin() == RD->bases_end())
+      return &Conversions;
+    // If visible conversion list is already evaluated, return it.
+    if (VisibleConversions.function_begin() 
+        != VisibleConversions.function_end())
+      return &VisibleConversions;
+  }
+      
   QualType ClassType = Context.getTypeDeclType(this);
   if (const RecordType *Record = ClassType->getAs<RecordType>()) {
     OverloadedFunctionDecl *Conversions
