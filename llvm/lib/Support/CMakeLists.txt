@@ -16,6 +16,7 @@ add_llvm_library(LLVMSupport
   IsNAN.cpp
   ManagedStatic.cpp
   MemoryBuffer.cpp
+  MemoryObject.cpp
   PluginLoader.cpp
   PrettyStackTrace.cpp
   Regex.cpp
