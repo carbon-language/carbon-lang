@@ -4,6 +4,10 @@ template<typename T>
 class X0 {
 public:
   void f(T t);
+  
+  struct Inner {
+    void g(T t);
+  };
 };
 
 template<typename T>
@@ -11,10 +15,16 @@ void X0<T>::f(T t) {
   t = 17;
 }
 
-// FIXME: Later, we'll want to write an explicit template
-// declaration (extern template) for X0<int*>, then try to
-// call X0<int*>::f. The translation unit should succeed, 
-// because we're not allowed to instantiate the out-of-line
-// definition of X0<T>::f. For now, this is just a parsing
-// test.
 extern template class X0<int>;
+
+extern template class X0<int*>;
+
+template<typename T>
+void X0<T>::Inner::g(T t) {
+  t = 17;
+}
+
+void test_intptr(X0<int*> xi, X0<int*>::Inner xii) {
+  xi.f(0);
+  xii.g(0);
+}
