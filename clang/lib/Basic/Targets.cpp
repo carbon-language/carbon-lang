@@ -1558,6 +1558,7 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
     return NULL;
 
   case llvm::Triple::arm:
+  case llvm::Triple::thumb:
     switch (os) {
     case llvm::Triple::Darwin:
       return new DarwinARMTargetInfo(T);

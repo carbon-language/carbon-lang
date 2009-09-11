@@ -1551,6 +1551,7 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
     return *(TheABIInfo = new X86_64ABIInfo());
 
   case llvm::Triple::arm:
+  case llvm::Triple::thumb:
     // FIXME: Support for OABI?
     return *(TheABIInfo = new ARMABIInfo());
 

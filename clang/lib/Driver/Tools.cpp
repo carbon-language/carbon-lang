@@ -297,11 +297,20 @@ static std::string getLLVMTriple(const ToolChain &TC, const ArgList &Args) {
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb: {
+    // FIXME: Factor into subclasses.
     llvm::Triple Triple = TC.getTriple();
-    // FIXME: Thumb!
+
+    // Thumb2 is the default for V7 on Darwin.
+    //
+    // FIXME: Thumb should just be another -target-feaure, not in the triple.
+    llvm::StringRef Suffix = getLLVMArchSuffixForARM(getARMTargetCPU(Args));
+    bool ThumbDefault =
+      (Suffix == "v7" && TC.getTriple().getOS() == llvm::Triple::Darwin);
     std::string ArchName = "arm";
-    ArchName += getLLVMArchSuffixForARM (getARMTargetCPU(Args));
-    Triple.setArchName(ArchName);
+    if (Args.hasFlag(options::OPT_mthumb, options::OPT_mno_thumb, ThumbDefault))
+      ArchName = "thumb";
+    Triple.setArchName(ArchName + Suffix.str());
+
     return Triple.getTriple();
   }
   }
