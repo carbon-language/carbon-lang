@@ -1,5 +1,5 @@
-; RUN: opt %s -simplifycfg  -S | grep select
-; RUN: opt %s -simplifycfg  -S | grep br | count 2
+; RUN: opt < %s -simplifycfg  -S | grep select
+; RUN: opt < %s -simplifycfg  -S | grep br | count 2
 
 define i32 @t2(i32 %a, i32 %b, i32 %c) nounwind  {
 entry:

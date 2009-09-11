@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg -S | not grep br
+; RUN: opt < %s -simplifycfg -S | not grep br
 
 
         %llvm.dbg.anchor.type = type { i32, i32 }

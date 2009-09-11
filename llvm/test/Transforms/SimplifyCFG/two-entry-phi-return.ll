@@ -1,4 +1,4 @@
-; RUN: opt %s -simplifycfg -S | not grep br
+; RUN: opt < %s -simplifycfg -S | not grep br
 
 define i1 @qux(i8* %m, i8* %n, i8* %o, i8* %p) nounwind  {
 entry:

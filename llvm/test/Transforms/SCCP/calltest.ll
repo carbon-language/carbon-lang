@@ -1,5 +1,4 @@
-; RUN: opt %s -sccp -loop-deletion -simplifycfg -S | \
-; RUN:   not grep br
+; RUN: opt < %s -sccp -loop-deletion -simplifycfg -S | not grep br
 
 ; No matter how hard you try, sqrt(1.0) is always 1.0.  This allows the
 ; optimizer to delete this loop.

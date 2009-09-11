@@ -1,5 +1,4 @@
-; RUN: opt %s -simplifycfg -S | not grep br
-; END.
+; RUN: opt < %s -simplifycfg -S | not grep br
 
 define i1 @_ZN4llvm11SetCondInst7classofEPKNS_11InstructionE({ i32, i32 }* %I) {
 entry:
