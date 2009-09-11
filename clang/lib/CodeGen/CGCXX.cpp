@@ -832,9 +832,12 @@ private:
   llvm::DenseMap<const CXXMethodDecl *, Index_t> Index;
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCall;
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCallOffset;
-  typedef llvm::DenseMap<const CXXMethodDecl *,
-                         std::pair<Index_t, Index_t> > Thunks_t;
+  typedef std::pair<Index_t, Index_t>  CallOffset;
+  typedef llvm::DenseMap<const CXXMethodDecl *, CallOffset> Thunks_t;
   Thunks_t Thunks;
+  typedef llvm::DenseMap<const CXXMethodDecl *,
+                         std::pair<CallOffset, CallOffset> > CovariantThunks_t;
+  CovariantThunks_t CovariantThunks;
   std::vector<Index_t> VCalls;
   typedef CXXRecordDecl::method_iterator method_iter;
   // FIXME: Linkage should follow vtable
@@ -907,6 +910,15 @@ public:
         // FIXME: begin_overridden_methods might be too lax, covariance */
         if (submethods[i] != om)
           continue;
+        QualType nc_oret = OMD->getType()->getAsFunctionType()->getResultType();
+        CanQualType oret = CGM.getContext().getCanonicalType(nc_oret);
+        QualType nc_ret = MD->getType()->getAsFunctionType()->getResultType();
+        CanQualType ret = CGM.getContext().getCanonicalType(nc_ret);
+        CallOffset ReturnOffset = std::make_pair(0, 0);
+        if (oret != ret) {
+          // FIXME: calculate offsets for covariance
+          ReturnOffset = std::make_pair(42,42);
+        }
         Index[MD] = i;
         submethods[i] = m;
 
@@ -922,8 +934,13 @@ public:
             VCalls[idx-1] = -VCallOffset[OMD] + Offset/8;
           }
           VCall[MD] = idx;
-          // FIXME: 0?
-          Thunks[MD] = std::make_pair(0, -((idx+extra+2)*LLVMPointerWidth/8));
+          CallOffset ThisOffset;
+          // FIXME: calculate non-virtual offset
+          ThisOffset = std::make_pair(0, -((idx+extra+2)*LLVMPointerWidth/8));
+          if (ReturnOffset.first || ReturnOffset.second)
+            CovariantThunks[MD] = std::make_pair(ThisOffset, ReturnOffset);
+          else
+            Thunks[MD] = ThisOffset;
           return true;
         }
 #if 0
@@ -950,6 +967,19 @@ public:
       submethods[idx] = CGM.BuildThunk(MD, Extern, nv_O, v_O);
     }
     Thunks.clear();
+    for (CovariantThunks_t::iterator i = CovariantThunks.begin(),
+           e = CovariantThunks.end();
+         i != e; ++i) {
+      const CXXMethodDecl *MD = i->first;
+      Index_t idx = Index[MD];
+      Index_t nv_t = i->second.first.first;
+      Index_t v_t = i->second.first.second;
+      Index_t nv_r = i->second.second.first;
+      Index_t v_r = i->second.second.second;
+      submethods[idx] = CGM.BuildCovariantThunk(MD, Extern, nv_t, v_t, nv_r,
+                                                v_r);
+    }
+    CovariantThunks.clear();
   }
 
   void OverrideMethods(std::vector<std::pair<const CXXRecordDecl *,
@@ -1261,6 +1291,41 @@ llvm::Constant *CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   return Fn;
 }
 
+llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
+                                                        const CXXMethodDecl *MD,
+                                                        bool Extern,
+                                                        int64_t nv_t,
+                                                        int64_t v_t,
+                                                        int64_t nv_r,
+                                                        int64_t v_r) {
+  QualType R = MD->getType()->getAsFunctionType()->getResultType();
+
+  FunctionArgList Args;
+  ImplicitParamDecl *ThisDecl =
+    ImplicitParamDecl::Create(getContext(), 0, SourceLocation(), 0,
+                              MD->getThisType(getContext()));
+  Args.push_back(std::make_pair(ThisDecl, ThisDecl->getType()));
+  for (FunctionDecl::param_const_iterator i = MD->param_begin(),
+         e = MD->param_end();
+       i != e; ++i) {
+    ParmVarDecl *D = *i;
+    Args.push_back(std::make_pair(D, D->getType()));
+  }
+  IdentifierInfo *II
+    = &CGM.getContext().Idents.get("__thunk_named_foo_");
+  FunctionDecl *FD = FunctionDecl::Create(getContext(),
+                                          getContext().getTranslationUnitDecl(),
+                                          SourceLocation(), II, R, 0,
+                                          Extern
+                                            ? FunctionDecl::Extern
+                                            : FunctionDecl::Static,
+                                          false, true);
+  StartFunction(FD, R, Fn, Args, SourceLocation());
+  // FIXME: generate body
+  FinishFunction();
+  return Fn;
+}
+
 llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
                                           int64_t nv, int64_t v) {
   llvm::SmallString<256> OutName;
@@ -1279,6 +1344,32 @@ llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
   llvm::Function *Fn = llvm::Function::Create(FTy, linktype, Out.str(),
                                               &getModule());
   CodeGenFunction(*this).GenerateThunk(Fn, MD, Extern, nv, v);
+  // Fn = Builder.CreateBitCast(Fn, Ptr8Ty);
+  llvm::Constant *m = llvm::ConstantExpr::getBitCast(Fn, Ptr8Ty);
+  return m;
+}
+
+llvm::Constant *CodeGenModule::BuildCovariantThunk(const CXXMethodDecl *MD,
+                                                   bool Extern, int64_t nv_t,
+                                                   int64_t v_t, int64_t nv_r,
+                                                   int64_t v_r) {
+  llvm::SmallString<256> OutName;
+  llvm::raw_svector_ostream Out(OutName);
+  mangleCovariantThunk(MD, nv_t, v_t, nv_r, v_r, getContext(), Out);
+  llvm::GlobalVariable::LinkageTypes linktype;
+  linktype = llvm::GlobalValue::WeakAnyLinkage;
+  if (!Extern)
+    linktype = llvm::GlobalValue::InternalLinkage;
+  llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
+  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+  const llvm::FunctionType *FTy =
+    getTypes().GetFunctionType(getTypes().getFunctionInfo(MD),
+                               FPT->isVariadic());
+
+  llvm::Function *Fn = llvm::Function::Create(FTy, linktype, Out.str(),
+                                              &getModule());
+  CodeGenFunction(*this).GenerateCovariantThunk(Fn, MD, Extern, nv_t, v_t, nv_r,
+                                               v_r);
   // Fn = Builder.CreateBitCast(Fn, Ptr8Ty);
   llvm::Constant *m = llvm::ConstantExpr::getBitCast(Fn, Ptr8Ty);
   return m;

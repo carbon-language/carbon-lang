@@ -247,6 +247,10 @@ public:
   /// BuildThunk - Build a thunk for the given method
   llvm::Constant *BuildThunk(const CXXMethodDecl *MD, bool Extern, int64_t nv,
                              int64_t v);
+  /// BuildCoVariantThunk - Build a thunk for the given method
+  llvm::Constant *BuildCovariantThunk(const CXXMethodDecl *MD, bool Extern,
+                                      int64_t nv_t, int64_t v_t,
+                                      int64_t nv_r, int64_t v_r);
 
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
   /// literal, properly padded to match the literal type. If only the address of
