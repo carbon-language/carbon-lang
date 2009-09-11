@@ -193,12 +193,12 @@ namespace {
       return TypeResult();
     }
 
-    virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagType, TagUseKind TUK,
+    virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                SourceLocation KWLoc, const CXXScopeSpec &SS,
                                IdentifierInfo *Name, SourceLocation NameLoc,
                                AttributeList *Attr, AccessSpecifier AS,
-                               MultiTemplateParamsArg TemplateParamLists,
-                               bool &Owned) {
+                               MultiTemplateParamsArg TemplateParameterLists,
+                               bool &OwnedDecl, bool &IsDependent) {
       // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
       // is (struct/union/enum/class).
       Out << __FUNCTION__ << "\n";
