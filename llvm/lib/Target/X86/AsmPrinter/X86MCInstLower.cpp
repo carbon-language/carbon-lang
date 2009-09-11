@@ -44,15 +44,16 @@ MCSymbol *X86ATTAsmPrinter::GetPICBaseSymbol() {
 MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
   const GlobalValue *GV = MO.getGlobal();
   
-  const char *Suffix = "";
-  if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
-    Suffix = "$stub";
-  else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
-           MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
-           MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
-    Suffix = "$non_lazy_ptr";
+  bool isImplicitlyPrivate = false;
+  if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB ||
+      MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
+      MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
+      MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
+    isImplicitlyPrivate = true;
   
-  std::string Name = Mang->getMangledName(GV, Suffix, Suffix[0] != '\0');
+  SmallString<128> Name;
+  Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
+  
   if (Subtarget->isTargetCygMing())
     DecorateCygMingName(Name, GV);
   
@@ -62,19 +63,24 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
   case X86II::MO_GOT_ABSOLUTE_ADDRESS:   // Doesn't modify symbol name.
   case X86II::MO_PIC_BASE_OFFSET:        // Doesn't modify symbol name.
     break;
-  case X86II::MO_DLLIMPORT:
+  case X86II::MO_DLLIMPORT: {
     // Handle dllimport linkage.
-    Name = "__imp_" + Name;
+    const char *Prefix = "__imp_";
+    Name.insert(Name.begin(), Prefix, Prefix+strlen(Prefix));
     break;
+  }
   case X86II::MO_DARWIN_NONLAZY:
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
-    GVStubs[Name] = Mang->getMangledName(GV);
+    Name += "$non_lazy_ptr";
+    GVStubs[Name.str()] = StringRef(Name.data(), Name.size()-13);
     break;
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
-    HiddenGVStubs[Name] = Mang->getMangledName(GV);
+    Name += "$non_lazy_ptr";
+    HiddenGVStubs[Name.str()] = StringRef(Name.data(), Name.size()-13);
     break;
   case X86II::MO_DARWIN_STUB:
-    FnStubs[Name] = Mang->getMangledName(GV);
+    Name += "$stub";
+    FnStubs[Name.str()] = StringRef(Name.data(), Name.size()-5);
     break;
   // FIXME: These probably should be a modifier on the symbol or something??
   case X86II::MO_TLSGD:     Name += "@TLSGD";     break;
@@ -88,11 +94,11 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
   case X86II::MO_PLT:       Name += "@PLT";       break;
   }
   
-  return OutContext.GetOrCreateSymbol(Name);
+  return OutContext.GetOrCreateSymbol(Name.str());
 }
 
 MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
-  SmallString<256> Name;
+  SmallString<128> Name;
   Name += MAI->getGlobalPrefix();
   Name += MO.getSymbolName();
   
