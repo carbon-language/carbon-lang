@@ -12,11 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Mangler.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Module.h"
+#include "llvm/Function.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 static char HexDigit(int V) {
@@ -157,6 +158,51 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
   // Must mangle the global into a unique ID.
   return makeNameProper("__unnamed_" + utostr(ID) + Suffix, PrefixTy);
 }
+
+
+/// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
+/// and the specified global variable's name.  If the global variable doesn't
+/// have a name, this fills in a unique name for the global.
+void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
+                                const GlobalValue *GV,
+                                bool isImplicitlyPrivate) {
+   
+  // If the global is anonymous or not led with \1, then add the appropriate
+  // prefix.
+  if (!GV->hasName() || GV->getName()[0] != '\1') {
+    OutName.append(Prefix, Prefix+strlen(Prefix));
+    
+    if (GV->hasPrivateLinkage() || isImplicitlyPrivate)
+      OutName.append(PrivatePrefix, PrivatePrefix+strlen(PrivatePrefix));
+    else if (GV->hasLinkerPrivateLinkage())
+      OutName.append(LinkerPrivatePrefix,
+                     LinkerPrivatePrefix+strlen(LinkerPrivatePrefix));;
+  }
+
+  // If the global has a name, just append it now.
+  if (GV->hasName()) {
+    StringRef Name = GV->getName();
+    
+    // Strip off the prefix marker if present.
+    if (Name[0] != '\1')
+      OutName.append(Name.begin(), Name.end());
+    else
+      OutName.append(Name.begin()+1, Name.end());
+    return;
+  }
+  
+  // If the global variable doesn't have a name, return a unique name for the
+  // global based on a numbering.
+  
+  // Get the ID for the global, assigning a new one if we haven't got one
+  // already.
+  unsigned &ID = AnonGlobalIDs[GV];
+  if (ID == 0) ID = NextAnonGlobalID++;
+  
+  // Must mangle the global into a unique ID.
+  raw_svector_ostream(OutName) << "__unnamed_" << ID;
+}
+
 
 Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix,
                  const char *linkerPrivatePrefix)

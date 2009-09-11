@@ -23,6 +23,7 @@ class Type;
 class Module;
 class Value;
 class GlobalValue;
+template <typename T> class SmallVectorImpl; 
 
 class Mangler {
 public:
@@ -104,6 +105,12 @@ public:
   ///
   std::string makeNameProper(const std::string &x,
                              ManglerPrefixTy PrefixTy = Mangler::Default);
+  
+  /// getNameWithPrefix - Fill OutName with the name of the appropriate prefix
+  /// and the specified global variable's name.  If the global variable doesn't
+  /// have a name, this fills in a unique name for the global.
+  void getNameWithPrefix(SmallVectorImpl<char> &OutName, const GlobalValue *GV,
+                         bool isImplicitlyPrivate);
 };
 
 } // End llvm namespace
