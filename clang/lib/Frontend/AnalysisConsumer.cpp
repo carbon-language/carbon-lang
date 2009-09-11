@@ -412,6 +412,28 @@ static void ActionWarnObjCMethSigs(AnalysisManager& mgr, Decl *D) {
   CheckObjCInstMethSignature(cast<ObjCImplementationDecl>(D), BR);
 }
 
+static void ActionInlineCall(AnalysisManager &mgr, Decl *D) {
+  if (!D)
+    return;
+
+  llvm::OwningPtr<GRTransferFuncs> TF(CreateCallInliner(mgr.getASTContext()));
+
+  // Construct the analysis engine.
+  GRExprEngine Eng(mgr);
+
+  Eng.setTransferFunctions(TF.get());
+  
+  Eng.RegisterInternalChecks();
+  RegisterAppleChecks(Eng, *D);
+
+  // Execute the worklist algorithm.
+  Eng.ExecuteWorkList(mgr.getStackFrame(D));
+  
+  // Visualize the exploded graph.
+  if (mgr.shouldVisualizeGraphviz())
+    Eng.ViewGraph(mgr.shouldTrimGraph());
+}
+
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//
