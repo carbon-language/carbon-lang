@@ -1137,6 +1137,10 @@ public:
   /// represents.
   void setTemplateSpecializationKind(TemplateSpecializationKind TSK);
 
+  /// \brief Determine whether this is or was instantiated from an out-of-line 
+  /// definition of a member function.
+  bool isOutOfLine() const;
+                       
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= FunctionFirst && D->getKind() <= FunctionLast;

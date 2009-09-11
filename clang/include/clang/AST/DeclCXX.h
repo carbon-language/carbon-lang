@@ -757,7 +757,7 @@ public:
     return isVirtualAsWritten() ||
       (begin_overridden_methods() != end_overridden_methods());
   }
-
+  
   ///
   void addOverriddenMethod(const CXXMethodDecl *MD);
 

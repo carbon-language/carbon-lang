@@ -344,7 +344,6 @@ CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                isStatic, isInline);
 }
 
-
 typedef llvm::DenseMap<const CXXMethodDecl*,
                        std::vector<const CXXMethodDecl *> *>
                        OverriddenMethodsMapTy;

@@ -704,6 +704,30 @@ FunctionDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
   Info->setTemplateSpecializationKind(TSK);
 }
 
+bool FunctionDecl::isOutOfLine() const {
+  // FIXME: Should we restrict this to member functions?
+  if (Decl::isOutOfLine())
+    return true;
+  
+  // If this function was instantiated from a member function of a 
+  // class template, check whether that member function was defined out-of-line.
+  if (FunctionDecl *FD = getInstantiatedFromMemberFunction()) {
+    const FunctionDecl *Definition;
+    if (FD->getBody(Definition))
+      return Definition->isOutOfLine();
+  }
+  
+  // If this function was instantiated from a function template,
+  // check whether that function template was defined out-of-line.
+  if (FunctionTemplateDecl *FunTmpl = getPrimaryTemplate()) {
+    const FunctionDecl *Definition;
+    if (FunTmpl->getTemplatedDecl()->getBody(Definition))
+      return Definition->isOutOfLine();
+  }
+  
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//
