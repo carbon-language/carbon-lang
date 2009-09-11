@@ -60,6 +60,9 @@ namespace CodeGen {
       ABIArgInfo info;
     };
 
+    /// The LLVM::CallingConv to use for this function.
+    unsigned CallingConvention;
+
     unsigned NumArgs;
     ArgInfo *Args;
 
@@ -67,7 +70,8 @@ namespace CodeGen {
     typedef const ArgInfo *const_arg_iterator;
     typedef ArgInfo *arg_iterator;
 
-    CGFunctionInfo(QualType ResTy,
+    CGFunctionInfo(unsigned CallingConvention,
+                   QualType ResTy,
                    const llvm::SmallVector<QualType, 16> &ArgTys);
     ~CGFunctionInfo() { delete[] Args; }
 
@@ -78,21 +82,26 @@ namespace CodeGen {
 
     unsigned  arg_size() const { return NumArgs; }
 
+    unsigned getCallingConvention() const { return CallingConvention; }
+
     QualType getReturnType() const { return Args[0].type; }
 
     ABIArgInfo &getReturnInfo() { return Args[0].info; }
     const ABIArgInfo &getReturnInfo() const { return Args[0].info; }
 
     void Profile(llvm::FoldingSetNodeID &ID) {
+      ID.AddInteger(getCallingConvention());
       getReturnType().Profile(ID);
       for (arg_iterator it = arg_begin(), ie = arg_end(); it != ie; ++it)
         it->type.Profile(ID);
     }
     template<class Iterator>
     static void Profile(llvm::FoldingSetNodeID &ID,
+                        unsigned CallingConvention,
                         QualType ResTy,
                         Iterator begin,
                         Iterator end) {
+      ID.AddInteger(CallingConvention);
       ResTy.Profile(ID);
       for (; begin != end; ++begin)
         begin->Profile(ID);

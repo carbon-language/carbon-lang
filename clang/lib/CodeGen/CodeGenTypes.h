@@ -172,21 +172,28 @@ public:
   /// replace the 'opaque' type we previously made for it if applicable.
   void UpdateCompletedType(const TagDecl *TD);
 
-  /// getFunctionInfo - Get the CGFunctionInfo for this function signature.
-  const CGFunctionInfo &getFunctionInfo(QualType RetTy,
-                                        const llvm::SmallVector<QualType,16>
-                                        &ArgTys);
-
+private:
   const CGFunctionInfo &getFunctionInfo(const FunctionNoProtoType *FTNP);
   const CGFunctionInfo &getFunctionInfo(const FunctionProtoType *FTP);
+
+public:
+  /// getFunctionInfo - Get the function info for the specified function decl.
   const CGFunctionInfo &getFunctionInfo(const FunctionDecl *FD);
   const CGFunctionInfo &getFunctionInfo(const CXXMethodDecl *MD);
   const CGFunctionInfo &getFunctionInfo(const ObjCMethodDecl *MD);
+
+  /// getFunctionInfo - Get the function info for a function described by a
+  /// return type and argument types. If the calling convention is not
+  /// specified, the "C" calling convention will be used.
   const CGFunctionInfo &getFunctionInfo(QualType ResTy,
-                                        const CallArgList &Args);
-public:
+                                        const CallArgList &Args,
+                                        unsigned CallingConvention = 0);
   const CGFunctionInfo &getFunctionInfo(QualType ResTy,
-                                        const FunctionArgList &Args);
+                                        const FunctionArgList &Args,
+                                        unsigned CallingConvention = 0);
+  const CGFunctionInfo &getFunctionInfo(QualType RetTy,
+                                  const llvm::SmallVector<QualType, 16> &ArgTys,
+                                        unsigned CallingConvention = 0);
 
 public:  // These are internal details of CGT that shouldn't be used externally.
   /// addFieldInfo - Assign field number to field FD.

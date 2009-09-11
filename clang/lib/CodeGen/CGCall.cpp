@@ -35,8 +35,10 @@ using namespace CodeGen;
 
 const
 CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionNoProtoType *FTNP) {
+  // FIXME: Set calling convention correctly, it needs to be associated with the
+  // type somehow.
   return getFunctionInfo(FTNP->getResultType(),
-                         llvm::SmallVector<QualType, 16>());
+                         llvm::SmallVector<QualType, 16>(), 0);
 }
 
 const
@@ -45,7 +47,20 @@ CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionProtoType *FTP) {
   // FIXME: Kill copy.
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
     ArgTys.push_back(FTP->getArgType(i));
-  return getFunctionInfo(FTP->getResultType(), ArgTys);
+  // FIXME: Set calling convention correctly, it needs to be associated with the
+  // type somehow.
+  return getFunctionInfo(FTP->getResultType(), ArgTys, 0);
+}
+
+static unsigned getCallingConventionForDecl(const Decl *D) {
+  // Set the appropriate calling convention for the Function.
+  if (D->hasAttr<StdCallAttr>())
+    return llvm::CallingConv::X86_StdCall;
+
+  if (D->hasAttr<FastCallAttr>())
+    return llvm::CallingConv::X86_FastCall;
+
+  return llvm::CallingConv::C;
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
@@ -57,7 +72,8 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
   const FunctionProtoType *FTP = MD->getType()->getAsFunctionProtoType();
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
     ArgTys.push_back(FTP->getArgType(i));
-  return getFunctionInfo(FTP->getResultType(), ArgTys);
+  return getFunctionInfo(FTP->getResultType(), ArgTys,
+                         getCallingConventionForDecl(MD));
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
@@ -65,10 +81,19 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
     if (MD->isInstance())
       return getFunctionInfo(MD);
 
+  unsigned CallingConvention = getCallingConventionForDecl(FD);
   const FunctionType *FTy = FD->getType()->getAsFunctionType();
-  if (const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FTy))
-    return getFunctionInfo(FTP);
-  return getFunctionInfo(cast<FunctionNoProtoType>(FTy));
+  if (const FunctionNoProtoType *FNTP = dyn_cast<FunctionNoProtoType>(FTy))
+    return getFunctionInfo(FNTP->getResultType(), 
+                           llvm::SmallVector<QualType, 16>(),
+                           CallingConvention);
+  
+  const FunctionProtoType *FPT = cast<FunctionProtoType>(FTy);
+  llvm::SmallVector<QualType, 16> ArgTys;
+  // FIXME: Kill copy.
+  for (unsigned i = 0, e = FPT->getNumArgs(); i != e; ++i)
+    ArgTys.push_back(FPT->getArgType(i));
+  return getFunctionInfo(FPT->getResultType(), ArgTys, CallingConvention);
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {
@@ -79,34 +104,39 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const ObjCMethodDecl *MD) {
   for (ObjCMethodDecl::param_iterator i = MD->param_begin(),
          e = MD->param_end(); i != e; ++i)
     ArgTys.push_back((*i)->getType());
-  return getFunctionInfo(MD->getResultType(), ArgTys);
+  return getFunctionInfo(MD->getResultType(), ArgTys,
+                         getCallingConventionForDecl(MD));
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
-                                                    const CallArgList &Args) {
+                                                    const CallArgList &Args,
+                                                    unsigned CallingConvention){
   // FIXME: Kill copy.
   llvm::SmallVector<QualType, 16> ArgTys;
   for (CallArgList::const_iterator i = Args.begin(), e = Args.end();
        i != e; ++i)
     ArgTys.push_back(i->second);
-  return getFunctionInfo(ResTy, ArgTys);
+  return getFunctionInfo(ResTy, ArgTys, CallingConvention);
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
-                                                  const FunctionArgList &Args) {
+                                                    const FunctionArgList &Args,
+                                                    unsigned CallingConvention){
   // FIXME: Kill copy.
   llvm::SmallVector<QualType, 16> ArgTys;
   for (FunctionArgList::const_iterator i = Args.begin(), e = Args.end();
        i != e; ++i)
     ArgTys.push_back(i->second);
-  return getFunctionInfo(ResTy, ArgTys);
+  return getFunctionInfo(ResTy, ArgTys, CallingConvention);
 }
 
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
-                               const llvm::SmallVector<QualType, 16> &ArgTys) {
+                                  const llvm::SmallVector<QualType, 16> &ArgTys,
+                                                    unsigned CallingConvention){
   // Lookup or create unique function info.
   llvm::FoldingSetNodeID ID;
-  CGFunctionInfo::Profile(ID, ResTy, ArgTys.begin(), ArgTys.end());
+  CGFunctionInfo::Profile(ID, CallingConvention, ResTy,
+                          ArgTys.begin(), ArgTys.end());
 
   void *InsertPos = 0;
   CGFunctionInfo *FI = FunctionInfos.FindNodeOrInsertPos(ID, InsertPos);
@@ -114,7 +144,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
     return *FI;
 
   // Construct the function info.
-  FI = new CGFunctionInfo(ResTy, ArgTys);
+  FI = new CGFunctionInfo(CallingConvention, ResTy, ArgTys);
   FunctionInfos.InsertNode(FI, InsertPos);
 
   // Compute ABI information.
@@ -123,8 +153,11 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
   return *FI;
 }
 
-CGFunctionInfo::CGFunctionInfo(QualType ResTy,
-                               const llvm::SmallVector<QualType, 16> &ArgTys) {
+CGFunctionInfo::CGFunctionInfo(unsigned _CallingConvention,
+                               QualType ResTy,
+                               const llvm::SmallVector<QualType, 16> &ArgTys) 
+  : CallingConvention(_CallingConvention)
+{
   NumArgs = ArgTys.size();
   Args = new ArgInfo[1 + NumArgs];
   Args[0].type = ResTy;
