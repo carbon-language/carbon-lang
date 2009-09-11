@@ -1014,10 +1014,13 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   if (Tok.is(tok::semi)) {
     ConsumeToken();
 
-    // FIXME: Friend templates?
-    if (DS.isFriendSpecified())
+    if (DS.isFriendSpecified()) {
+      // FIXME: Friend templates are ignored for now.
+      if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate)
+        return;
+      
       Actions.ActOnFriendDecl(CurScope, &DS, /*IsDefinition*/ false);
-    else
+    } else
       Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
 
     return;
