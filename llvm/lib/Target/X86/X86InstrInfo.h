@@ -603,7 +603,7 @@ private:
                                      MachineInstr* MI,
                                      unsigned OpNum,
                                      const SmallVectorImpl<MachineOperand> &MOs,
-                                     unsigned Alignment) const;
+                                     unsigned Size, unsigned Alignment) const;
 };
 
 } // End llvm namespace
