@@ -111,6 +111,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     } else {
       IDecl->setLocation(AtInterfaceLoc);
       IDecl->setForwardDecl(false);
+      IDecl->setClassLoc(ClassLoc);
     }
   } else {
     IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc,
@@ -1141,7 +1142,10 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
     if (!IDecl) {  // Not already seen?  Make a forward decl.
       IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc,
-                                        IdentList[i], SourceLocation(), true);
+                                        IdentList[i],
+                                        // FIXME: need to get the 'real'
+                                        // identifier loc from the parser.
+                                        AtClassLoc, true);
       PushOnScopeChains(IDecl, TUScope);
     }
 
