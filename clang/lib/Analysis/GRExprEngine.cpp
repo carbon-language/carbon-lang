@@ -1537,7 +1537,7 @@ bool GRExprEngine::EvalBuiltinFunction(const FunctionDecl *FD, CallExpr *CE,
   if (!FD)
     return false;
 
-  unsigned id = FD->getBuiltinID(getContext());
+  unsigned id = FD->getBuiltinID();
   if (!id)
     return false;
 

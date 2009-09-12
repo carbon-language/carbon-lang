@@ -323,7 +323,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
   // values (0, 1 or 2) followed by a potentially empty varags list of stuff
   // that we ignore.  Find out which row of BuiltinIndices to read from as well
   // as the number of fixed args.
-  unsigned BuiltinID = FDecl->getBuiltinID(Context);
+  unsigned BuiltinID = FDecl->getBuiltinID();
   unsigned BuiltinIndex, NumFixed = 1;
   switch (BuiltinID) {
   default: assert(0 && "Unknown overloaded atomic builtin!");

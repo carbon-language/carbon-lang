@@ -2879,7 +2879,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   if (Ovl || FunctionTemplate ||
       (getLangOptions().CPlusPlus && (FDecl || UnqualifiedName))) {
     // We don't perform ADL for implicit declarations of builtins.
-    if (FDecl && FDecl->getBuiltinID(Context) && FDecl->isImplicit())
+    if (FDecl && FDecl->getBuiltinID() && FDecl->isImplicit())
       ADL = false;
 
     // We don't perform ADL in C.
@@ -2999,7 +2999,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     if (CheckFunctionCall(FDecl, TheCall.get()))
       return ExprError();
 
-    if (unsigned BuiltinID = FDecl->getBuiltinID(Context))
+    if (unsigned BuiltinID = FDecl->getBuiltinID())
       return CheckBuiltinFunctionCall(BuiltinID, TheCall.take());
   } else if (NDecl) {
     if (CheckBlockCall(NDecl, TheCall.get()))

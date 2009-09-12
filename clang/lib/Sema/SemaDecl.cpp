@@ -879,7 +879,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 
   // A function that has already been declared has been redeclared or defined
   // with a different type- show appropriate diagnostic
-  if (unsigned BuiltinID = Old->getBuiltinID(Context)) {
+  if (unsigned BuiltinID = Old->getBuiltinID()) {
     // The user has declared a builtin function with an incompatible
     // signature.
     if (Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) {
@@ -3602,7 +3602,7 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   }
 
   // Builtin functions cannot be defined.
-  if (unsigned BuiltinID = FD->getBuiltinID(Context)) {
+  if (unsigned BuiltinID = FD->getBuiltinID()) {
     if (!Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) {
       Diag(FD->getLocation(), diag::err_builtin_definition) << FD;
       FD->setInvalidDecl();
@@ -3859,7 +3859,7 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
 
   // If this is a built-in function, map its builtin attributes to
   // actual attributes.
-  if (unsigned BuiltinID = FD->getBuiltinID(Context)) {
+  if (unsigned BuiltinID = FD->getBuiltinID()) {
     // Handle printf-formatting attributes.
     unsigned FormatIdx;
     bool HasVAListArg;

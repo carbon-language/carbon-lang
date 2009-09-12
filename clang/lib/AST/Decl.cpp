@@ -502,7 +502,8 @@ bool FunctionDecl::isGlobal() const {
 /// will be 0 for functions that do not correspond to a builtin, a
 /// value of type \c Builtin::ID if in the target-independent range
 /// \c [1,Builtin::First), or a target-specific builtin value.
-unsigned FunctionDecl::getBuiltinID(ASTContext &Context) const {
+unsigned FunctionDecl::getBuiltinID() const {
+  ASTContext &Context = getASTContext();
   if (!getIdentifier() || !getIdentifier()->getBuiltinID())
     return 0;
 

@@ -974,7 +974,7 @@ public:
 
   virtual FunctionDecl *getCanonicalDecl();
 
-  unsigned getBuiltinID(ASTContext &Context) const;
+  unsigned getBuiltinID() const;
 
   unsigned getNumParmVarDeclsFromType() const;
 

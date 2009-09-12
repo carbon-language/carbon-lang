@@ -325,7 +325,7 @@ unsigned CallExpr::isBuiltinCall(ASTContext &Context) const {
   if (!FDecl->getIdentifier())
     return 0;
 
-  return FDecl->getBuiltinID(Context);
+  return FDecl->getBuiltinID();
 }
 
 QualType CallExpr::getCallReturnType() const {

@@ -1202,7 +1202,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
     if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CE->getSubExpr())) {
       TargetDecl = DRE->getDecl();
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(TargetDecl))
-        if (unsigned builtinID = FD->getBuiltinID(getContext()))
+        if (unsigned builtinID = FD->getBuiltinID())
           return EmitBuiltinExpr(FD, builtinID, E);
     }
   }
