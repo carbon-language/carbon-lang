@@ -841,11 +841,15 @@ LValue CodeGenFunction::EmitPredefinedFunctionName(unsigned Type) {
     break;
   }
 
+  llvm::StringRef FnName = CurFn->getName();
+  if (FnName.startswith("\01"))
+    FnName = FnName.substr(1);
+  GlobalVarName += FnName;
+
   std::string FunctionName =
     PredefinedExpr::ComputeName(getContext(), (PredefinedExpr::IdentType)Type,
                                 CurCodeDecl);
 
-  GlobalVarName += FunctionName;
   llvm::Constant *C =
     CGM.GetAddrOfConstantCString(FunctionName, GlobalVarName.c_str());
   return LValue::MakeAddr(C, 0);
