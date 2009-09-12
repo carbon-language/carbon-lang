@@ -818,6 +818,10 @@ def SCAS8 : I<0xAE, RawFrm, (outs), (ins), "scas{b}", []>;
 def SCAS16 : I<0xAF, RawFrm, (outs), (ins), "scas{w}", []>, OpSize;
 def SCAS32 : I<0xAF, RawFrm, (outs), (ins), "scas{l}", []>;
 
+def CMPS8 : I<0xA6, RawFrm, (outs), (ins), "cmps{b}", []>;
+def CMPS16 : I<0xA7, RawFrm, (outs), (ins), "cmps{w}", []>, OpSize;
+def CMPS32 : I<0xA7, RawFrm, (outs), (ins), "cmps{l}", []>;
+
 let Defs = [RAX, RDX] in
 def RDTSC : I<0x31, RawFrm, (outs), (ins), "rdtsc", [(X86rdtsc)]>,
             TB;
