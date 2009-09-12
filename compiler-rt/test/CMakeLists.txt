@@ -8,6 +8,7 @@ TARGET_LINK_LIBRARIES( ${CompilerRT_LIBRARY} )
 
 SET( TEST_TARGET_LIBRARIES ${CompilerRT_LIBRARY}-Common )
 
+INCLUDE( MacroAddCheckTest )
 # create tests
 # MACRO_ADD_CHECK_TEST( foo foo.c ${TEST_TARGET_LIBRARIES} )
 

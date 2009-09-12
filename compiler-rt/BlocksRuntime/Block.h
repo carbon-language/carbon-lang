@@ -33,26 +33,31 @@
 #   endif
 #endif
 
+#include <config.h>
+
+#if defined( HAVE_AVAILABILITY_MACROS_H ) && defined( HAVE_TARGET_CONDITIONALS_H )
 #include <AvailabilityMacros.h>
 #include <TargetConditionals.h>
+#endif /* HAVE_AVAILABILITY_MACROS_H and HAVE_TARGET_CONDITIONALS_H. */
 
 #if __cplusplus
 extern "C" {
 #endif
 
-// Create a heap based copy of a Block or simply add a reference to an existing one.
-// This must be paired with Block_release to recover memory, even when running
-// under Objective-C Garbage Collection.
+/* Create a heap based copy of a Block or simply add a reference to an existing one.
+ * This must be paired with Block_release to recover memory, even when running
+ * under Objective-C Garbage Collection.
+ */
 BLOCK_EXPORT void *_Block_copy(const void *aBlock);
 
-// Lose the reference, and if heap based and last reference, recover the memory
+/* Lose the reference, and if heap based and last reference, recover the memory. */
 BLOCK_EXPORT void _Block_release(const void *aBlock);
 
 #if __cplusplus
 }
 #endif
 
-// Type correct macros
+/* Type correct macros. */
 
 #define Block_copy(...) ((__typeof(__VA_ARGS__))_Block_copy((const void *)(__VA_ARGS__)))
 #define Block_release(...) _Block_release((const void *)(__VA_ARGS__))

@@ -33,8 +33,12 @@
 #   endif
 #endif
 
+#include <config.h>
+
+#if defined( HAVE_AVAILABILITY_MACROS_H ) && defined( HAVE_TARGET_CONDITIONALS_H )
 #include <AvailabilityMacros.h>
 #include <TargetConditionals.h>
+#endif /* HAVE_AVAILABILITY_MACROS_H and HAVE_TARGET_CONDITIONALS_H. */
 
 #include <stdbool.h>
 
@@ -43,18 +47,18 @@ extern "C" {
 #endif
 
 
-
 enum {
     BLOCK_REFCOUNT_MASK =     (0xffff),
     BLOCK_NEEDS_FREE =        (1 << 24),
     BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
-    BLOCK_HAS_CTOR =          (1 << 26), /* helpers have C++ code */
+    BLOCK_HAS_CTOR =          (1 << 26), /* Helpers have C++ code. */
     BLOCK_IS_GC =             (1 << 27),
     BLOCK_IS_GLOBAL =         (1 << 28),
-    BLOCK_HAS_DESCRIPTOR =    (1 << 29),
+    BLOCK_HAS_DESCRIPTOR =    (1 << 29)
 };
 
-/* revised new layout */
+
+/* Revised new layout. */
 struct Block_descriptor {
     unsigned long int reserved;
     unsigned long int size;
@@ -62,15 +66,15 @@ struct Block_descriptor {
     void (*dispose)(void *);
 };
 
+
 struct Block_layout {
     void *isa;
     int flags;
     int reserved; 
     void (*invoke)(void *, ...);
     struct Block_descriptor *descriptor;
-    /* imported variables */
+    /* Imported variables. */
 };
-
 
 
 struct Block_byref {
@@ -83,6 +87,7 @@ struct Block_byref {
     /* long shared[0]; */
 };
 
+
 struct Block_byref_header {
     void *isa;
     struct Block_byref *forwarding;
@@ -91,15 +96,15 @@ struct Block_byref_header {
 };
 
 
-/* Runtime support functions used by compiler when generating copy/dispose helpers */
+/* Runtime support functions used by compiler when generating copy/dispose helpers. */
 
 enum {
-    /* see function implementation for a more complete description of these fields and combinations */
+    /* See function implementation for a more complete description of these fields and combinations */
     BLOCK_FIELD_IS_OBJECT   =  3,  /* id, NSObject, __attribute__((NSObject)), block, ... */
     BLOCK_FIELD_IS_BLOCK    =  7,  /* a block variable */
     BLOCK_FIELD_IS_BYREF    =  8,  /* the on stack structure holding the __block variable */
     BLOCK_FIELD_IS_WEAK     = 16,  /* declared __weak, only used in byref copy helpers */
-    BLOCK_BYREF_CALLER      = 128, /* called from __block (byref) copy/dispose support routines. */
+    BLOCK_BYREF_CALLER      = 128  /* called from __block (byref) copy/dispose support routines. */
 };
 
 /* Runtime entry point called by compiler when assigning objects inside copy helper routines */
@@ -114,7 +119,7 @@ BLOCK_EXPORT void _Block_object_dispose(const void *object, const int flags);
 
 /* Other support functions */
 
-/* runtime entry to get total size of a closure */
+/* Runtime entry to get total size of a closure */
 BLOCK_EXPORT unsigned long int Block_size(void *block_basic);
 
 
@@ -158,7 +163,7 @@ BLOCK_EXPORT const char *_Block_dump(const void *block);
 struct Block_basic {
     void *isa;
     int Block_flags;  /* int32_t */
-    int Block_size; /* XXX should be packed into Block_flags */
+    int Block_size;  /* XXX should be packed into Block_flags */
     void (*Block_invoke)(void *);
     void (*Block_copy)(void *dst, void *src);  /* iff BLOCK_HAS_COPY_DISPOSE */
     void (*Block_dispose)(void *);             /* iff BLOCK_HAS_COPY_DISPOSE */
