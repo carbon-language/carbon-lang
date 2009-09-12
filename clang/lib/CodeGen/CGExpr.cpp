@@ -716,15 +716,10 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       if (!NonGCable)
         attr = getContext().getObjCGCAttrKind(E->getType());
       if (VD->hasAttr<BlocksAttr>()) {
-        bool needsCopyDispose = BlockRequiresCopying(VD->getType());
-        const llvm::Type *PtrStructTy = V->getType();
-        const llvm::Type *Ty = PtrStructTy;
-        Ty = llvm::PointerType::get(Ty, 0);
         V = Builder.CreateStructGEP(V, 1, "forwarding");
-        V = Builder.CreateBitCast(V, Ty);
         V = Builder.CreateLoad(V, false);
-        V = Builder.CreateBitCast(V, PtrStructTy);
-        V = Builder.CreateStructGEP(V, needsCopyDispose*2 + 4, "x");
+        V = Builder.CreateStructGEP(V, getByRefValueLLVMField(VD),
+                                    VD->getNameAsString());
       }
       if (VD->getType()->isReferenceType())
         V = Builder.CreateLoad(V, "tmp");

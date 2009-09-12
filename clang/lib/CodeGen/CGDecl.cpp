@@ -224,41 +224,76 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
     return Info.first;
   
   QualType Ty = D->getType();
-  uint64_t Align = getContext().getDeclAlignInBytes(D);
-  (void) Align;
 
-  const llvm::Type *LTy = ConvertType(Ty);
-  bool needsCopyDispose = BlockRequiresCopying(Ty);
-  std::vector<const llvm::Type *> Types(needsCopyDispose*2+5);
-  const llvm::PointerType *PtrToInt8Ty
-    = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+  std::vector<const llvm::Type *> Types;
   
+  const llvm::PointerType *Int8PtrTy
+    = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+
   llvm::PATypeHolder ByRefTypeHolder = llvm::OpaqueType::get(VMContext);
   
-  Types[0] = PtrToInt8Ty;
-  Types[1] = llvm::PointerType::getUnqual(ByRefTypeHolder);
-  Types[2] = llvm::Type::getInt32Ty(VMContext);
-  Types[3] = llvm::Type::getInt32Ty(VMContext);
-  if (needsCopyDispose) {
-    Types[4] = PtrToInt8Ty;
-    Types[5] = PtrToInt8Ty;
+  // void *__isa;
+  Types.push_back(Int8PtrTy);
+  
+  // void *__forwarding;
+  Types.push_back(llvm::PointerType::getUnqual(ByRefTypeHolder));
+  
+  // int32_t __flags;
+  Types.push_back(llvm::Type::getInt32Ty(VMContext));
+    
+  // int32_t __size;
+  Types.push_back(llvm::Type::getInt32Ty(VMContext));
+
+  bool HasCopyAndDispose = BlockRequiresCopying(Ty);
+  if (HasCopyAndDispose) {
+    /// void *__copy_helper;
+    Types.push_back(Int8PtrTy);
+    
+    /// void *__destroy_helper;
+    Types.push_back(Int8PtrTy);
   }
-  // FIXME: Align this on at least an Align boundary, assert if we can't.
-  assert((Align <= unsigned(Target.getPointerAlign(0))/8)
-         && "Can't align more than pointer yet");
+
+  bool Packed = false;
+  unsigned Align = getContext().getDeclAlignInBytes(D);
+  if (Align > Target.getPointerAlign(0) / 8) {
+    // We have to insert padding.
+    
+    // The struct above has 2 32-bit integers.
+    unsigned CurrentOffsetInBytes = 4 * 2;
+    
+    // And either 2 or 4 pointers.
+    CurrentOffsetInBytes += (HasCopyAndDispose ? 4 : 2) *
+      CGM.getTargetData().getTypeAllocSize(Int8PtrTy);
+    
+    // Align the offset.
+    unsigned AlignedOffsetInBytes = 
+      llvm::RoundUpToAlignment(CurrentOffsetInBytes, Align);
+    
+    unsigned NumPaddingBytes = AlignedOffsetInBytes - CurrentOffsetInBytes;
+    assert(NumPaddingBytes > 0 && "Can't append any padding!");
+    
+    const llvm::Type *Ty = llvm::Type::getInt8Ty(VMContext);
+    if (NumPaddingBytes > 1)
+      Ty = llvm::ArrayType::get(Ty, NumPaddingBytes);
+    
+    Types.push_back(Ty);
+
+    // We want a packed struct.
+    Packed = true;
+  }
+
+  // T x;
+  Types.push_back(ConvertType(Ty));
   
-  unsigned FieldNumber = needsCopyDispose*2 + 4;
-  
-  Types[FieldNumber] = LTy;
-  
-  const llvm::Type *T = llvm::StructType::get(VMContext, Types, false);
+  const llvm::Type *T = llvm::StructType::get(VMContext, Types, Packed);
   
   cast<llvm::OpaqueType>(ByRefTypeHolder.get())->refineAbstractTypeTo(T);
   CGM.getModule().addTypeName("struct.__block_byref_" + D->getNameAsString(), 
                               ByRefTypeHolder.get());
   
   Info.first = ByRefTypeHolder.get();
-  Info.second = FieldNumber;
+  
+  Info.second = Types.size() - 1;
   
   return Info.first;
 }

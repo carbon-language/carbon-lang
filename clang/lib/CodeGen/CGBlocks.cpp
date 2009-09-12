@@ -227,11 +227,9 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
             NoteForHelper[helpersize].flag = BLOCK_FIELD_IS_BYREF |
               // FIXME: Someone double check this.
               (VD->getType().isObjCGCWeak() ? BLOCK_FIELD_IS_WEAK : 0);
-            const llvm::Type *Ty = Types[i+5];
             llvm::Value *Loc = LocalDeclMap[VD];
             Loc = Builder.CreateStructGEP(Loc, 1, "forwarding");
             Loc = Builder.CreateLoad(Loc, false);
-            Loc = Builder.CreateBitCast(Loc, Ty);
             Builder.CreateStore(Loc, Addr);
             ++helpersize;
             continue;
