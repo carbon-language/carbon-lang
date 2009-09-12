@@ -91,7 +91,7 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
       Mang->getNameWithPrefix(Name, GV, false);
       StubSym = OutContext.GetOrCreateSymbol(Name.str());
     }
-    break;
+    return Sym;
   }
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
