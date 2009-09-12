@@ -814,6 +814,10 @@ let Defs = [ECX,EDI], Uses = [EAX,ECX,EDI] in
 def REP_STOSD : I<0xAB, RawFrm, (outs), (ins), "{rep;stosl|rep stosd}",
                   [(X86rep_stos i32)]>, REP;
 
+def SCAS8 : I<0xAE, RawFrm, (outs), (ins), "scas{b}", []>;
+def SCAS16 : I<0xAF, RawFrm, (outs), (ins), "scas{w}", []>, OpSize;
+def SCAS32 : I<0xAF, RawFrm, (outs), (ins), "scas{l}", []>;
+
 let Defs = [RAX, RDX] in
 def RDTSC : I<0x31, RawFrm, (outs), (ins), "rdtsc", [(X86rdtsc)]>,
             TB;
