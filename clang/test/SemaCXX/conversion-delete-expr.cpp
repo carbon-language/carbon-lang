@@ -43,7 +43,6 @@ void f2 (D2 d)
 }
 
 // Test4
-
 struct B3 {
   operator const int *();
 };
@@ -69,7 +68,6 @@ struct X {
 void f4(X x) { delete x; delete x; }
 
 // Test6
-
 struct X1 {
    operator int();
    operator int*();
@@ -77,6 +75,36 @@ struct X1 {
 };
 
 void f5(X1 x) { delete x; } // FIXME. May have to issue error here too.
+
+// Test7
+struct Base {
+   operator int*();
+};
+
+struct Derived : Base {
+   operator int*() const; // not the same function as Base's non-const operator int()
+};
+
+void foo6(const Derived cd) {
+	// FIXME. overload resolution must select Derived::operator int*() const;
+	delete cd;	// expected-error {{cannot delete expression of type 'struct Derived const'}}
+}
+
+// Test8
+struct BB {
+   template<typename T> operator T*() const;
+};
+
+struct DD : BB {
+   template<typename T> operator T*() const; // hides base conversion
+   operator int *() const;
+};
+
+void foo7 (DD d)
+{
+	// FIXME. We select DD::operator int *() const; g++ issues ambiguity error. Investigate.
+	delete d;
+}
 
 
 

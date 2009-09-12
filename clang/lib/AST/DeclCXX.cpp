@@ -33,7 +33,8 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
     Aggregate(true), PlainOldData(true), Empty(true), Polymorphic(false),
     Abstract(false), HasTrivialConstructor(true),
     HasTrivialCopyConstructor(true), HasTrivialCopyAssignment(true),
-    HasTrivialDestructor(true), Bases(0), NumBases(0), VBases(0), NumVBases(0),
+    HasTrivialDestructor(true), ComputedVisibleConversions(false),
+    Bases(0), NumBases(0), VBases(0), NumVBases(0),
     Conversions(DC, DeclarationName()),
     VisibleConversions(DC, DeclarationName()),
     TemplateOrInstantiation() { }
@@ -283,22 +284,12 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
   PlainOldData = false;
 }
 
-/// getVisibleConversionFunctions - get all conversion functions visible
-/// in current class; including conversion function templates.
-OverloadedFunctionDecl *
-CXXRecordDecl::getVisibleConversionFunctions(ASTContext &Context,
-                                             CXXRecordDecl *RD) {
-  if (RD == this) {
-    // If root class, all conversions are visible.
-    if (RD->bases_begin() == RD->bases_end())
-      return &Conversions;
-    // If visible conversion list is already evaluated, return it.
-    if (VisibleConversions.function_begin() 
-        != VisibleConversions.function_end())
-      return &VisibleConversions;
-  }
-      
-  QualType ClassType = Context.getTypeDeclType(this);
+/// getNestedVisibleConversionFunctions - imports unique conversion 
+/// functions from base classes into the visible conversion function
+/// list of the class 'RD'. This is a private helper method.
+void
+CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD) {
+  QualType ClassType = getASTContext().getTypeDeclType(this);
   if (const RecordType *Record = ClassType->getAs<RecordType>()) {
     OverloadedFunctionDecl *Conversions
       = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
@@ -306,24 +297,36 @@ CXXRecordDecl::getVisibleConversionFunctions(ASTContext &Context,
          Func = Conversions->function_begin(),
          FuncEnd = Conversions->function_end();
          Func != FuncEnd; ++Func) {
-      if (FunctionTemplateDecl *ConversionTemplate = 
-            dyn_cast<FunctionTemplateDecl>(*Func)) {
-        RD->addVisibleConversionFunction(Context, ConversionTemplate);
-        continue;
-      }
-      CXXConversionDecl *Conv = cast<CXXConversionDecl>(*Func);
+      NamedDecl *Conv = Func->get();
       bool Candidate = true;
       // Only those conversions not exact match of conversions in current
       // class are candidateconversion routines.
+      // FIXME. This is a O(n^2) algorithm. 
       if (RD != this) {
         OverloadedFunctionDecl *TopConversions = RD->getConversionFunctions();
-        QualType ConvType = Context.getCanonicalType(Conv->getType());
+        QualType ConvType;
+        FunctionDecl *FD;
+        if (FunctionTemplateDecl *ConversionTemplate = 
+              dyn_cast<FunctionTemplateDecl>(Conv))
+          FD = ConversionTemplate->getTemplatedDecl();
+        else
+          FD = cast<FunctionDecl>(Conv);
+        ConvType = getASTContext().getCanonicalType(FD->getType());
+        
         for (OverloadedFunctionDecl::function_iterator
              TFunc = TopConversions->function_begin(),
              TFuncEnd = TopConversions->function_end();
              TFunc != TFuncEnd; ++TFunc) {
-          CXXConversionDecl *TopConv = cast<CXXConversionDecl>(*TFunc);
-          QualType TConvType = Context.getCanonicalType(TopConv->getType());
+          
+          NamedDecl *TopConv = TFunc->get();
+          FunctionDecl *TFD;
+          QualType TConvType;
+          if (FunctionTemplateDecl *TConversionTemplate =
+                dyn_cast<FunctionTemplateDecl>(TopConv))
+            TFD = TConversionTemplate->getTemplatedDecl();
+          else 
+            TFD = cast<FunctionDecl>(TopConv);
+          TConvType = getASTContext().getCanonicalType(TFD->getType());
           if (ConvType == TConvType) {
             Candidate = false;
             break;
@@ -331,11 +334,11 @@ CXXRecordDecl::getVisibleConversionFunctions(ASTContext &Context,
         }
       }
       if (Candidate) {
-        if (FunctionTemplateDecl *ConversionTemplate
-              = Conv->getDescribedFunctionTemplate())
-          RD->addVisibleConversionFunction(Context, ConversionTemplate);
-        else if (!Conv->getPrimaryTemplate()) // ignore specializations
-          RD->addVisibleConversionFunction(Context, Conv);
+        if (FunctionTemplateDecl *ConversionTemplate =
+              dyn_cast<FunctionTemplateDecl>(Conv))
+          RD->addVisibleConversionFunction(ConversionTemplate);
+        else
+          RD->addVisibleConversionFunction(cast<CXXConversionDecl>(Conv));
       }
     }
   }
@@ -344,7 +347,7 @@ CXXRecordDecl::getVisibleConversionFunctions(ASTContext &Context,
        E = vbases_end(); VBase != E; ++VBase) {
     CXXRecordDecl *VBaseClassDecl
       = cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
-    VBaseClassDecl->getVisibleConversionFunctions(Context, RD);
+    VBaseClassDecl->getNestedVisibleConversionFunctions(RD);
   }
   for (CXXRecordDecl::base_class_iterator Base = bases_begin(),
        E = bases_end(); Base != E; ++Base) {
@@ -352,19 +355,33 @@ CXXRecordDecl::getVisibleConversionFunctions(ASTContext &Context,
       continue;
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    BaseClassDecl->getVisibleConversionFunctions(Context, RD);
+    BaseClassDecl->getNestedVisibleConversionFunctions(RD);
   }
+}
+
+/// getVisibleConversionFunctions - get all conversion functions visible
+/// in current class; including conversion function templates.
+OverloadedFunctionDecl *
+CXXRecordDecl::getVisibleConversionFunctions() {
+  // If root class, all conversions are visible.
+  if (bases_begin() == bases_end())
+    return &Conversions;
+  // If visible conversion list is already evaluated, return it.
+  if (ComputedVisibleConversions)
+    return &VisibleConversions;
+  getNestedVisibleConversionFunctions(this);
+  ComputedVisibleConversions = true;
   return &VisibleConversions;
 }
 
-void CXXRecordDecl::addVisibleConversionFunction(ASTContext &Context,
+void CXXRecordDecl::addVisibleConversionFunction(
                                           CXXConversionDecl *ConvDecl) {
   assert(!ConvDecl->getDescribedFunctionTemplate() &&
          "Conversion function templates should cast to FunctionTemplateDecl.");
   VisibleConversions.addOverload(ConvDecl);
 }
 
-void CXXRecordDecl::addVisibleConversionFunction(ASTContext &Context,
+void CXXRecordDecl::addVisibleConversionFunction(
                                           FunctionTemplateDecl *ConvDecl) {
   assert(isa<CXXConversionDecl>(ConvDecl->getTemplatedDecl()) &&
          "Function template is not a conversion function template");

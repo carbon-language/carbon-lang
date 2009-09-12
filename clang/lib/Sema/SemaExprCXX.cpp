@@ -739,7 +739,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       llvm::SmallVector<CXXConversionDecl *, 4> ObjectPtrConversions;
       CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
       OverloadedFunctionDecl *Conversions = 
-        RD->getVisibleConversionFunctions(Context, RD);
+        RD->getVisibleConversionFunctions();
       
       for (OverloadedFunctionDecl::function_iterator
              Func = Conversions->function_begin(),

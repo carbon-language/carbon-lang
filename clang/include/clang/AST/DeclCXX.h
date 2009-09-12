@@ -351,6 +351,10 @@ class CXXRecordDecl : public RecordDecl {
   ///   type (or array thereof), each such class has a trivial destructor.
   bool HasTrivialDestructor : 1;
 
+  /// ComputedVisibleConversions - True when visible conversion functions are
+  /// already computed and are available.
+  bool ComputedVisibleConversions : 1;
+  
   /// Bases - Base classes of this class.
   /// FIXME: This is wasted space for a union.
   CXXBaseSpecifier *Bases;
@@ -386,7 +390,9 @@ class CXXRecordDecl : public RecordDecl {
   /// RecordDecl from which the member class was instantiated.
   llvm::PointerUnion<ClassTemplateDecl*, CXXRecordDecl*>
     TemplateOrInstantiation;
-
+  
+  void getNestedVisibleConversionFunctions(CXXRecordDecl *RD);
+  
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id,
@@ -578,17 +584,14 @@ public:
 
   /// getVisibleConversionFunctions - get all conversion functions visible
   /// in current class; including conversion function templates.
-  OverloadedFunctionDecl *getVisibleConversionFunctions(ASTContext &Context,
-                                                        CXXRecordDecl *RD);
+  OverloadedFunctionDecl *getVisibleConversionFunctions();
   /// addVisibleConversionFunction - Add a new conversion function to the
   /// list of visible conversion functions.
-  void addVisibleConversionFunction(ASTContext &Context, 
-                                    CXXConversionDecl *ConvDecl);
+  void addVisibleConversionFunction(CXXConversionDecl *ConvDecl);
   
   /// \brief Add a new conversion function template to the list of visible
   /// conversion functions.
-  void addVisibleConversionFunction(ASTContext &Context,
-                                    FunctionTemplateDecl *ConvDecl);
+  void addVisibleConversionFunction(FunctionTemplateDecl *ConvDecl);
   
   /// addConversionFunction - Add a new conversion function to the
   /// list of conversion functions.
