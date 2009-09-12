@@ -28,23 +28,38 @@
 #include <string.h>
 #include <stdint.h>
 
-#if !TARGET_OS_WIN32
+#if TARGET_OS_MAC
 #include <libkern/OSAtomic.h>
-#else
+#elif TARGET_OS_WIN32
 #define _CRT_SECURE_NO_WARNINGS 1
 #include <windows.h>
-static __inline bool OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst) 
-{ 
-    // fixme barrier is overkill -- see objc-os.h
+static __inline bool OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst)
+{
+    /* fixme barrier is overkill -- see objc-os.h */
     long original = InterlockedCompareExchange(dst, newl, oldl);
     return (original == oldl);
 }
 
-static __inline bool OSAtomicCompareAndSwapInt(int oldi, int newi, int volatile *dst) 
-{ 
-    // fixme barrier is overkill -- see objc-os.h
+static __inline bool OSAtomicCompareAndSwapInt(int oldi, int newi, int volatile *dst)
+{
+    /* fixme barrier is overkill -- see objc-os.h */
     int original = InterlockedCompareExchange(dst, newi, oldi);
     return (original == oldi);
+}
+/* check to see if the GCC atomic built-ins are available.  if we're on
+ * a 64-bit system, make sure we have an 8-byte atomic function
+ * available.
+ */
+#elif __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 && \
+      ((__SIZEOF_LONG__ != 8) || __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8)
+static __inline bool OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst)
+{
+  return __sync_bool_compare_and_swap(dst, oldl, newl);
+}
+
+static __inline bool OSAtomicCompareAndSwapInt(int oldi, int newi, int volatile *dst)
+{
+  return __sync_bool_compare_and_swap(dst, oldi, newi);
 }
 #endif
 
