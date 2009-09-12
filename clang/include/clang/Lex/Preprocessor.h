@@ -25,6 +25,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
 #include <vector>
 
@@ -186,7 +187,7 @@ class Preprocessor {
   TokenLexer *TokenLexerCache[TokenLexerCacheSize];
 
 private:  // Cached tokens state.
-  typedef std::vector<Token> CachedTokensTy;
+  typedef llvm::SmallVector<Token, 1> CachedTokensTy;
 
   /// CachedTokens - Cached tokens are stored here when we do backtracking or
   /// lookahead. They are "lexed" by the CachingLex() method.
