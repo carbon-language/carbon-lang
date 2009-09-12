@@ -45,13 +45,12 @@ MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
   return Ctx.GetOrCreateSymbol(Name.str());
 }
 
-MCOperand X86MCInstLower::LowerMBBOperand(const MachineOperand &MO) const {
+MCSymbol *X86MCInstLower::GetMBBSymbol(unsigned MBBID) const {
   SmallString<60> Name;
   raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix() << "BB"
-      << AsmPrinter.getFunctionNumber() << '_' << MO.getMBB()->getNumber();
+      << AsmPrinter.getFunctionNumber() << '_' << MBBID;
 
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-  return MCOperand::CreateExpr(MCSymbolRefExpr::Create(Sym, Ctx));
+  return Ctx.GetOrCreateSymbol(Name.str());
 }
 
 
@@ -320,7 +319,8 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = MCOperand::CreateImm(MO.getImm());
       break;
     case MachineOperand::MO_MachineBasicBlock:
-      MCOp = LowerMBBOperand(MO);
+      MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
+                              GetMBBSymbol(MO.getMBB()->getNumber()), Ctx));
       break;
     case MachineOperand::MO_GlobalAddress:
       MCOp = LowerSymbolOperand(MO, GetGlobalAddressSymbol(MO));
