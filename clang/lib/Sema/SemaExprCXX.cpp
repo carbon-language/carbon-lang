@@ -1094,7 +1094,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     ImpCastExprToType(From, FromType);
     break;
 
-  case ICK_Pointer_Conversion:
+  case ICK_Pointer_Conversion: {
     if (SCS.IncompatibleObjC) {
       // Diagnose incompatible Objective-C conversions
       Diag(From->getSourceRange().getBegin(),
@@ -1103,18 +1103,21 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
         << From->getSourceRange();
     }
 
-    if (CheckPointerConversion(From, ToType))
+    
+    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    if (CheckPointerConversion(From, ToType, Kind))
       return true;
-    ImpCastExprToType(From, ToType);
+    ImpCastExprToType(From, ToType, Kind);
     break;
-
-    case ICK_Pointer_Member: {
-      CastExpr::CastKind Kind = CastExpr::CK_Unknown;
-      if (CheckMemberPointerConversion(From, ToType, Kind))
-        return true;
-      ImpCastExprToType(From, ToType, Kind);
-      break;
-    }
+  }
+  
+  case ICK_Pointer_Member: {
+    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
+    if (CheckMemberPointerConversion(From, ToType, Kind))
+      return true;
+    ImpCastExprToType(From, ToType, Kind);
+    break;
+  }
   case ICK_Boolean_Conversion:
     FromType = Context.BoolTy;
     ImpCastExprToType(From, FromType);

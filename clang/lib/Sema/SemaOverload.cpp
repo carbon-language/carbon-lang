@@ -1135,7 +1135,8 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
 /// conversions for which IsPointerConversion has already returned
 /// true. It returns true and produces a diagnostic if there was an
 /// error, or returns false otherwise.
-bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
+bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
+                                  CastExpr::CastKind &Kind) {
   QualType FromType = From->getType();
 
   if (const PointerType *FromPtrType = FromType->getAs<PointerType>())
@@ -1147,9 +1148,13 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
           ToPointeeType->isRecordType()) {
         // We must have a derived-to-base conversion. Check an
         // ambiguous or inaccessible conversion.
-        return CheckDerivedToBaseConversion(FromPointeeType, ToPointeeType,
-                                            From->getExprLoc(),
-                                            From->getSourceRange());
+        if (CheckDerivedToBaseConversion(FromPointeeType, ToPointeeType,
+                                         From->getExprLoc(),
+                                         From->getSourceRange()))
+          return true;
+        
+        // The conversion was successful.
+        Kind = CastExpr::CK_DerivedToBase;
       }
     }
   if (const ObjCObjectPointerType *FromPtrType =

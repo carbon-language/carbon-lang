@@ -763,7 +763,8 @@ public:
                            QualType& ConvertedType, bool &IncompatibleObjC);
   bool isObjCPointerConversion(QualType FromType, QualType ToType,
                                QualType& ConvertedType, bool &IncompatibleObjC);
-  bool CheckPointerConversion(Expr *From, QualType ToType);
+  bool CheckPointerConversion(Expr *From, QualType ToType, 
+                              CastExpr::CastKind &Kind);
   bool IsMemberPointerConversion(Expr *From, QualType FromType, QualType ToType,
                                  QualType &ConvertedType);
   bool CheckMemberPointerConversion(Expr *From, QualType ToType,
