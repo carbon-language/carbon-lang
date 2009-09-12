@@ -292,6 +292,16 @@ private:
   /// we know how many temporaries were created by a certain expression.
   llvm::SmallVector<size_t, 4> ConditionalTempDestructionStack;
 
+
+  /// ByrefValueInfoMap - For each __block variable, contains a pair of the LLVM
+  /// type as well as the field number that contains the actual data.
+  llvm::DenseMap<const ValueDecl *, std::pair<const llvm::Type *, 
+                                              unsigned> > ByRefValueInfo;
+  
+  /// getByrefValueFieldNumber - Given a declaration, returns the LLVM field
+  /// number that holds the value.
+  unsigned getByRefValueLLVMField(const ValueDecl *VD) const;
+  
 public:
   CodeGenFunction(CodeGenModule &cgm);
 

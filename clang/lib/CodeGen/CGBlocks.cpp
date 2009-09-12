@@ -442,10 +442,10 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
 }
 
 llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
-  uint64_t &offset = BlockDecls[E->getDecl()];
+  const ValueDecl *VD = E->getDecl();
+  
+  uint64_t &offset = BlockDecls[VD];
 
-  const llvm::Type *Ty;
-  Ty = CGM.getTypes().ConvertType(E->getDecl()->getType());
 
   // See if we have already allocated an offset for this variable.
   if (offset == 0) {
@@ -462,20 +462,23 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
                                                          offset),
                                      "block.literal");
   if (E->isByRef()) {
-    bool needsCopyDispose = BlockRequiresCopying(E->getType());
     const llvm::Type *PtrStructTy
-      = llvm::PointerType::get(BuildByRefType(E->getDecl()), 0);
+      = llvm::PointerType::get(BuildByRefType(VD), 0);
     // The block literal will need a copy/destroy helper.
     BlockHasCopyDispose = true;
-    Ty = PtrStructTy;
+    
+    const llvm::Type *Ty = PtrStructTy;
     Ty = llvm::PointerType::get(Ty, 0);
     V = Builder.CreateBitCast(V, Ty);
     V = Builder.CreateLoad(V, false);
     V = Builder.CreateStructGEP(V, 1, "forwarding");
     V = Builder.CreateLoad(V, false);
     V = Builder.CreateBitCast(V, PtrStructTy);
-    V = Builder.CreateStructGEP(V, needsCopyDispose*2 + 4, "x");
+    V = Builder.CreateStructGEP(V, getByRefValueLLVMField(VD), 
+                                VD->getNameAsString());
   } else {
+    const llvm::Type *Ty = CGM.getTypes().ConvertType(VD->getType());
+
     Ty = llvm::PointerType::get(Ty, 0);
     V = Builder.CreateBitCast(V, Ty);
   }

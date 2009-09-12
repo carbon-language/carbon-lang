@@ -199,6 +199,12 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   }
 }
 
+unsigned CodeGenFunction::getByRefValueLLVMField(const ValueDecl *VD) const {
+  assert(ByRefValueInfo.count(VD) && "Did not find value!");
+  
+  return ByRefValueInfo.find(VD)->second.second;
+}
+
 /// BuildByRefType - This routine changes a __block variable declared as T x
 ///   into:
 ///
@@ -212,8 +218,11 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
 ///        T x;
 ///      } x
 ///
-/// Align is the alignment needed in bytes for x.
 const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
+  std::pair<const llvm::Type *, unsigned> &Info = ByRefValueInfo[D];
+  if (Info.first)
+    return Info.first;
+  
   QualType Ty = D->getType();
   uint64_t Align = getContext().getDeclAlignInBytes(D);
   (void) Align;
@@ -237,7 +246,10 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
   // FIXME: Align this on at least an Align boundary, assert if we can't.
   assert((Align <= unsigned(Target.getPointerAlign(0))/8)
          && "Can't align more than pointer yet");
-  Types[needsCopyDispose*2 + 4] = LTy;
+  
+  unsigned FieldNumber = needsCopyDispose*2 + 4;
+  
+  Types[FieldNumber] = LTy;
   
   const llvm::Type *T = llvm::StructType::get(VMContext, Types, false);
   
@@ -245,7 +257,10 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
   CGM.getModule().addTypeName("struct.__block_byref_" + D->getNameAsString(), 
                               ByRefTypeHolder.get());
   
-  return ByRefTypeHolder.get();
+  Info.first = ByRefTypeHolder.get();
+  Info.second = FieldNumber;
+  
+  return Info.first;
 }
 
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
@@ -371,10 +386,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
   if (Init) {
     llvm::Value *Loc = DeclPtr;
-    if (isByRef) {
-      bool needsCopyDispose = BlockRequiresCopying(Ty);
-      Loc = Builder.CreateStructGEP(DeclPtr, needsCopyDispose*2+4, "x");
-    }
+    if (isByRef)
+      Loc = Builder.CreateStructGEP(DeclPtr, getByRefValueLLVMField(&D), 
+                                    D.getNameAsString());
+
     if (Ty->isReferenceType()) {
       RValue RV = EmitReferenceBindingToExpr(Init, Ty, /*IsInitializer=*/true);
       EmitStoreOfScalar(RV.getScalarVal(), Loc, false, Ty);
