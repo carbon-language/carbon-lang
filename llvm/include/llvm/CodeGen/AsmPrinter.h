@@ -46,6 +46,7 @@ namespace llvm {
   class MCContext;
   class MCSection;
   class MCStreamer;
+  class MCSymbol;
   class DwarfWriter;
   class Mangler;
   class MCAsmInfo;
@@ -345,6 +346,16 @@ namespace llvm {
     /// instructions, do not use this function outside of llvm-mc.
     virtual void printMCInst(const MCInst *MI);
 
+    /// GetMBBSymbol - Return the MCSymbol corresponding to the specified basic
+    /// block label.
+    MCSymbol *GetMBBSymbol(unsigned MBBID) const;
+    
+    /// printBasicBlockLabel - This method prints the label for the specified
+    /// MachineBasicBlock
+    void printBasicBlockLabel(const MachineBasicBlock *MBB,
+                              bool printAlign = false,
+                              bool printColon = false,
+                              bool printComment = true) const;
   protected:
     /// EmitZeros - Emit a block of zeros.
     ///
@@ -375,13 +386,7 @@ namespace llvm {
     /// that is an implicit def.
     virtual void printImplicitDef(const MachineInstr *MI) const;
     
-    /// printBasicBlockLabel - This method prints the label for the specified
-    /// MachineBasicBlock
-    virtual void printBasicBlockLabel(const MachineBasicBlock *MBB,
-                                      bool printAlign = false,
-                                      bool printColon = false,
-                                      bool printComment = true) const;
-                                      
+    
     /// printPICJumpTableSetLabel - This method prints a set label for the
     /// specified MachineBasicBlock for a jumptable entry.
     virtual void printPICJumpTableSetLabel(unsigned uid,

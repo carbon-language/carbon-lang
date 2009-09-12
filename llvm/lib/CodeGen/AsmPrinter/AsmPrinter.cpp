@@ -28,6 +28,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -1634,6 +1635,15 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
   return true;
 }
 
+MCSymbol *AsmPrinter::GetMBBSymbol(unsigned MBBID) const {
+  SmallString<60> Name;
+  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "BB"
+    << getFunctionNumber() << '_' << MBBID;
+  
+  return OutContext.GetOrCreateSymbol(Name.str());
+}
+
+
 /// printBasicBlockLabel - This method prints the label for the specified
 /// MachineBasicBlock
 void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
@@ -1646,8 +1656,8 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
       EmitAlignment(Log2_32(Align));
   }
 
-  O << MAI->getPrivateGlobalPrefix() << "BB" << getFunctionNumber() << '_'
-    << MBB->getNumber();
+  GetMBBSymbol(MBB->getNumber())->print(O, MAI);
+  
   if (printColon)
     O << ':';
   if (printComment) {
