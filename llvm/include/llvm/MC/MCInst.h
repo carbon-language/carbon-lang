@@ -31,7 +31,6 @@ class MCOperand {
     kInvalid,                 ///< Uninitialized.
     kRegister,                ///< Register operand.
     kImmediate,               ///< Immediate operand.
-    kMBBLabel,                ///< Basic block label.
     kExpr                     ///< Relocatable immediate operand.
   };
   unsigned char Kind;
@@ -40,10 +39,6 @@ class MCOperand {
     unsigned RegVal;
     int64_t ImmVal;
     const MCExpr *ExprVal;
-    struct {
-      unsigned FunctionNo;
-      unsigned BlockNo;
-    } MBBLabel;
   };
 public:
   
@@ -53,7 +48,6 @@ public:
   bool isValid() const { return Kind != kInvalid; }
   bool isReg() const { return Kind == kRegister; }
   bool isImm() const { return Kind == kImmediate; }
-  bool isMBBLabel() const { return Kind == kMBBLabel; }
   bool isExpr() const { return Kind == kExpr; }
   
   /// getReg - Returns the register number.
@@ -77,15 +71,6 @@ public:
     ImmVal = Val;
   }
   
-  unsigned getMBBLabelFunction() const {
-    assert(isMBBLabel() && "This is not a machine basic block");
-    return MBBLabel.FunctionNo; 
-  }
-  unsigned getMBBLabelBlock() const {
-    assert(isMBBLabel() && "This is not a machine basic block");
-    return MBBLabel.BlockNo; 
-  }
-
   const MCExpr *getExpr() const {
     assert(isExpr() && "This is not an expression");
     return ExprVal;
@@ -105,13 +90,6 @@ public:
     MCOperand Op;
     Op.Kind = kImmediate;
     Op.ImmVal = Val;
-    return Op;
-  }
-  static MCOperand CreateMBBLabel(unsigned Fn, unsigned MBB) {
-    MCOperand Op;
-    Op.Kind = kMBBLabel;
-    Op.MBBLabel.FunctionNo = Fn;
-    Op.MBBLabel.BlockNo = MBB;
     return Op;
   }
   static MCOperand CreateExpr(const MCExpr *Val) {

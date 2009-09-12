@@ -21,9 +21,6 @@ void MCOperand::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     OS << "Reg:" << getReg();
   else if (isImm())
     OS << "Imm:" << getImm();
-  else if (isMBBLabel())
-    OS << "MBB:(" << getMBBLabelFunction() << ","
-       << getMBBLabelBlock() << ")";
   else if (isExpr()) {
     OS << "Expr:(";
     getExpr()->print(OS, MAI);
