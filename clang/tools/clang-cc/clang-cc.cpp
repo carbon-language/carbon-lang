@@ -881,59 +881,61 @@ MacOSVersionMin("mmacosx-version-min",
 // something like powerpc-apple-darwin9 to powerpc-apple-darwin7
 
 // FIXME: We should have the driver do this instead.
-static void HandleMacOSVersionMin(std::string &Triple) {
-  std::string::size_type DarwinDashIdx = Triple.find("-darwin");
-  if (DarwinDashIdx == std::string::npos) {
+static void HandleMacOSVersionMin(llvm::Triple &Triple) {
+  if (Triple.getOS() != llvm::Triple::Darwin) {
     fprintf(stderr,
             "-mmacosx-version-min only valid for darwin (Mac OS X) targets\n");
     exit(1);
   }
-  unsigned DarwinNumIdx = DarwinDashIdx + strlen("-darwin");
-
-  // Remove the number.
-  Triple.resize(DarwinNumIdx);
-
+  
   // Validate that MacOSVersionMin is a 'version number', starting with 10.[3-9]
-  bool MacOSVersionMinIsInvalid = false;
-  int VersionNum = 0;
   if (MacOSVersionMin.size() < 4 ||
       MacOSVersionMin.substr(0, 3) != "10." ||
       !isdigit(MacOSVersionMin[3])) {
-    MacOSVersionMinIsInvalid = true;
-  } else {
-    const char *Start = MacOSVersionMin.c_str()+3;
-    char *End = 0;
-    VersionNum = (int)strtol(Start, &End, 10);
-
-    // The version number must be in the range 0-9.
-    MacOSVersionMinIsInvalid = (unsigned)VersionNum > 9;
-
-    // Turn MacOSVersionMin into a darwin number: e.g. 10.3.9 is 3 -> 7.
-    Triple += llvm::itostr(VersionNum+4);
-
-    if (End[0] == '.' && isdigit(End[1]) && End[2] == '\0') {   // 10.4.7 is ok.
-      // Add the period piece (.7) to the end of the triple.  This gives us
-      // something like ...-darwin8.7
-      Triple += End;
-    } else if (End[0] != '\0') { // "10.4" is ok.  10.4x is not.
-      MacOSVersionMinIsInvalid = true;
-    }
-  }
-
-  if (MacOSVersionMinIsInvalid) {
     fprintf(stderr,
         "-mmacosx-version-min=%s is invalid, expected something like '10.4'.\n",
             MacOSVersionMin.c_str());
     exit(1);
   }
-  else if (VersionNum <= 4 &&
-           !strncmp(Triple.c_str(), "x86_64", strlen("x86_64"))) {
+  
+  unsigned VersionNum = MacOSVersionMin[3]-'0';
+
+  if (VersionNum <= 4 && Triple.getArch() == llvm::Triple::x86_64) {
     fprintf(stderr,
-        "-mmacosx-version-min=%s is invalid with -arch x86_64.\n",
+            "-mmacosx-version-min=%s is invalid with -arch x86_64.\n",
             MacOSVersionMin.c_str());
     exit(1);
   }
 
+  
+  llvm::SmallString<16> NewDarwinString;
+  NewDarwinString += "darwin";
+  
+  // Turn MacOSVersionMin into a darwin number: e.g. 10.3.9 is 3 -> darwin7.
+  VersionNum += 4;
+  if (VersionNum > 9) {
+    NewDarwinString += '1';
+    VersionNum -= 10;
+  }
+  NewDarwinString += (VersionNum+'0');
+
+  if (MacOSVersionMin.size() == 4) {
+    // "10.4" is ok.
+  } else if (MacOSVersionMin.size() == 6 &&
+             MacOSVersionMin[4] == '.' &&
+             isdigit(MacOSVersionMin[5])) {   // 10.4.7 is ok.
+    // Add the period piece (.7) to the end of the triple.  This gives us
+    // something like ...-darwin8.7
+    NewDarwinString += '.';
+    NewDarwinString += MacOSVersionMin[5];
+  } else { // "10.4" is ok.  10.4x is not.
+    fprintf(stderr,
+        "-mmacosx-version-min=%s is invalid, expected something like '10.4'.\n",
+            MacOSVersionMin.c_str());
+    exit(1);
+  }
+
+  Triple.setOSName(NewDarwinString.str());
 }
 
 static llvm::cl::opt<std::string>
@@ -946,67 +948,45 @@ IPhoneOSVersionMin("miphoneos-version-min",
 // number in the minor version and revision.
 
 // FIXME: We should have the driver do this instead.
-static void HandleIPhoneOSVersionMin(std::string &Triple) {
-  std::string::size_type DarwinDashIdx = Triple.find("-darwin");
-  if (DarwinDashIdx == std::string::npos) {
+static void HandleIPhoneOSVersionMin(llvm::Triple &Triple) {
+  if (Triple.getOS() != llvm::Triple::Darwin) {
     fprintf(stderr,
-            "-miphoneos-version-min only valid for darwin (Mac OS X) targets\n");
+           "-miphoneos-version-min only valid for darwin (Mac OS X) targets\n");
     exit(1);
   }
-  unsigned DarwinNumIdx = DarwinDashIdx + strlen("-darwin");
 
-  // Remove the number.
-  Triple.resize(DarwinNumIdx);
-
-  // Validate that IPhoneOSVersionMin is a 'version number', starting with [2-9].[0-9]
-  bool IPhoneOSVersionMinIsInvalid = false;
-  int VersionNum = 0;
-  if (IPhoneOSVersionMin.size() < 3 ||
-      !isdigit(IPhoneOSVersionMin[0])) {
-    IPhoneOSVersionMinIsInvalid = true;
-  } else {
-    const char *Start = IPhoneOSVersionMin.c_str();
-    char *End = 0;
-    VersionNum = (int)strtol(Start, &End, 10);
-
-    // The version number must be in the range 0-9.
-    IPhoneOSVersionMinIsInvalid = (unsigned)VersionNum > 9;
-
-    // Turn IPhoneOSVersionMin into a darwin number: e.g. 2.0 is 2 -> 9.2.
-    Triple += "9." + llvm::itostr(VersionNum);
-
-    if (End[0] == '.' && isdigit(End[1]) && End[2] == '\0') {   // 2.2 is ok.
-      // Add the period piece (.2) to the end of the triple.  This gives us
-      // something like ...-darwin9.2.2
-      Triple += End;
-    } else if (End[0] != '\0') { // "2.2" is ok.  2x is not.
-      IPhoneOSVersionMinIsInvalid = true;
-    }
-  }
-
-  if (IPhoneOSVersionMinIsInvalid) {
+  // Validate that IPhoneOSVersionMin is a 'version number', starting with
+  // [2-9].[0-9]
+  if (IPhoneOSVersionMin.size() != 3 || !isdigit(IPhoneOSVersionMin[0]) ||
+      IPhoneOSVersionMin[1] != '.' || !isdigit(IPhoneOSVersionMin[2])) {
     fprintf(stderr,
-            "-miphoneos-version-min=%s is invalid, expected something like '2.0'.\n",
+       "-miphoneos-version-min=%s is invalid, expected something like '2.0'.\n",
             IPhoneOSVersionMin.c_str());
     exit(1);
   }
+  
+  // Turn IPhoneOSVersionMin into a darwin number: e.g. 2.0 is 2 -> 9.2.0
+  llvm::SmallString<16> NewDarwinString;
+  NewDarwinString += "darwin9.";
+  NewDarwinString += IPhoneOSVersionMin;
+  Triple.setOSName(NewDarwinString.str());
 }
 
 /// CreateTargetTriple - Process the various options that affect the target
 /// triple and build a final aggregate triple that we are compiling for.
-static std::string CreateTargetTriple() {
+static llvm::Triple CreateTargetTriple() {
   // Initialize base triple.  If a -triple option has been specified, use
   // that triple.  Otherwise, default to the host triple.
-  std::string Triple = TargetTriple;
-  if (Triple.empty())
-    Triple = llvm::sys::getHostTriple();
+  llvm::Triple Triple(TargetTriple);
+  if (Triple.getTriple().empty())
+    Triple = llvm::Triple(llvm::sys::getHostTriple());
 
   // If -mmacosx-version-min=10.3.9 is specified, change the triple from being
   // something like powerpc-apple-darwin9 to powerpc-apple-darwin7
   if (!MacOSVersionMin.empty())
     HandleMacOSVersionMin(Triple);
   else if (!IPhoneOSVersionMin.empty())
-    HandleIPhoneOSVersionMin(Triple);;
+    HandleIPhoneOSVersionMin(Triple);
 
   return Triple;
 }
@@ -2252,12 +2232,13 @@ int main(int argc, char **argv) {
   }
 
   // Get information about the target being compiled for.
-  std::string Triple = CreateTargetTriple();
-  llvm::OwningPtr<TargetInfo> Target(TargetInfo::CreateTargetInfo(Triple));
+  llvm::Triple Triple = CreateTargetTriple();
+  llvm::OwningPtr<TargetInfo> 
+  Target(TargetInfo::CreateTargetInfo(Triple.getTriple()));
 
   if (Target == 0) {
     Diags.Report(FullSourceLoc(), diag::err_fe_unknown_triple)
-      << Triple.c_str();
+      << Triple.getTriple().c_str();
     return 1;
   }
 
