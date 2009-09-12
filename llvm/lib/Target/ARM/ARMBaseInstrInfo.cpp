@@ -613,6 +613,7 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 
   if (DestRC != SrcRC) {
     // Allow DPR / DPR_VFP2 / DPR_8 cross-class copies
+    // Allow QPR / QPR_VFP2 cross-class copies
     if (DestRC == ARM::DPRRegisterClass) {
       if (SrcRC == ARM::DPR_VFP2RegisterClass ||
           SrcRC == ARM::DPR_8RegisterClass) {
@@ -628,6 +629,10 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
           SrcRC == ARM::DPR_VFP2RegisterClass) {
       } else
         return false;
+    } else if ((DestRC == ARM::QPRRegisterClass &&
+                SrcRC == ARM::QPR_VFP2RegisterClass) ||
+               (DestRC == ARM::QPR_VFP2RegisterClass &&
+                SrcRC == ARM::QPRRegisterClass)) {
     } else
       return false;
   }
@@ -643,7 +648,8 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
              (DestRC == ARM::DPR_8RegisterClass)) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYD), DestReg)
                    .addReg(SrcReg));
-  } else if (DestRC == ARM::QPRRegisterClass) {
+  } else if (DestRC == ARM::QPRRegisterClass ||
+             DestRC == ARM::QPR_VFP2RegisterClass) {
     BuildMI(MBB, I, DL, get(ARM::VMOVQ), DestReg).addReg(SrcReg);
   } else {
     return false;
@@ -674,7 +680,8 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addImm(0));
   } else {
-    assert(RC == ARM::QPRRegisterClass && "Unknown regclass!");
+    assert((RC == ARM::QPRRegisterClass ||
+            RC == ARM::QPR_VFP2RegisterClass) && "Unknown regclass!");
     // FIXME: Neon instructions should support predicates
     BuildMI(MBB, I, DL, get(ARM::VSTRQ)).addReg(SrcReg, getKillRegState(isKill))
       .addFrameIndex(FI).addImm(0);
@@ -700,7 +707,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FLDS), DestReg)
                    .addFrameIndex(FI).addImm(0));
   } else {
-    assert(RC == ARM::QPRRegisterClass && "Unknown regclass!");
+    assert((RC == ARM::QPRRegisterClass ||
+            RC == ARM::QPR_VFP2RegisterClass) && "Unknown regclass!");
     // FIXME: Neon instructions should support predicates
     BuildMI(MBB, I, DL, get(ARM::VLDRQ), DestReg).addFrameIndex(FI).addImm(0);
   }

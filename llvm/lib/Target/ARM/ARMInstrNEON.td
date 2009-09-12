@@ -2115,9 +2115,11 @@ def : Pat<(extractelt (v4i32 QPR:$src), imm:$lane),
                              (DSubReg_i32_reg imm:$lane))),
                      (SubReg_i32_lane imm:$lane))>;
 def : Pat<(extractelt (v2f32 DPR:$src1), imm:$src2),
-          (EXTRACT_SUBREG DPR:$src1, (SSubReg_f32_reg imm:$src2))>;
+          (EXTRACT_SUBREG (COPY_TO_REGCLASS DPR:$src1, DPR_VFP2),
+                          (SSubReg_f32_reg imm:$src2))>;
 def : Pat<(extractelt (v4f32 QPR:$src1), imm:$src2),
-          (EXTRACT_SUBREG QPR:$src1, (SSubReg_f32_reg imm:$src2))>;
+          (EXTRACT_SUBREG (COPY_TO_REGCLASS QPR:$src1, QPR_VFP2),
+                          (SSubReg_f32_reg imm:$src2))>;
 //def : Pat<(extractelt (v2i64 QPR:$src1), imm:$src2),
 //          (EXTRACT_SUBREG QPR:$src1, (DSubReg_f64_reg imm:$src2))>;
 def : Pat<(extractelt (v2f64 QPR:$src1), imm:$src2),
@@ -2163,9 +2165,11 @@ def : Pat<(insertelt (v4i32 QPR:$src1), GPR:$src2, imm:$lane),
                   (DSubReg_i32_reg imm:$lane)))>;
 
 def : Pat<(v2f32 (insertelt DPR:$src1, SPR:$src2, imm:$src3)),
-          (INSERT_SUBREG DPR:$src1, SPR:$src2, (SSubReg_f32_reg imm:$src3))>;
+          (INSERT_SUBREG (COPY_TO_REGCLASS DPR:$src1, DPR_VFP2),
+                         SPR:$src2, (SSubReg_f32_reg imm:$src3))>;
 def : Pat<(v4f32 (insertelt QPR:$src1, SPR:$src2, imm:$src3)),
-          (INSERT_SUBREG QPR:$src1, SPR:$src2, (SSubReg_f32_reg imm:$src3))>;
+          (INSERT_SUBREG (COPY_TO_REGCLASS QPR:$src1, QPR_VFP2),
+                         SPR:$src2, (SSubReg_f32_reg imm:$src3))>;
 
 //def : Pat<(v2i64 (insertelt QPR:$src1, DPR:$src2, imm:$src3)),
 //          (INSERT_SUBREG QPR:$src1, DPR:$src2, (DSubReg_f64_reg imm:$src3))>;
