@@ -273,6 +273,8 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
     assert(NumPaddingBytes > 0 && "Can't append any padding!");
     
     const llvm::Type *Ty = llvm::Type::getInt8Ty(VMContext);
+    // FIXME: We need a sema error for alignment larger than the minimum of the
+    // maximal stack alignmint and the alignment of malloc on the system.
     if (NumPaddingBytes > 1)
       Ty = llvm::ArrayType::get(Ty, NumPaddingBytes);
     
