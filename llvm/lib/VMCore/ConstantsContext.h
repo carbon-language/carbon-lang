@@ -437,8 +437,11 @@ struct ConvertConstantType<ConstantExpr, Type> {
     case Instruction::GetElementPtr:
       // Make everyone now use a constant of the new type...
       std::vector<Value*> Idx(OldC->op_begin()+1, OldC->op_end());
-      New = ConstantExpr::getGetElementPtrTy(NewTy, OldC->getOperand(0),
-                                             &Idx[0], Idx.size());
+      New = cast<GEPOperator>(OldC)->isInBounds() ?
+        ConstantExpr::getInBoundsGetElementPtrTy(NewTy, OldC->getOperand(0),
+                                                 &Idx[0], Idx.size()) :
+        ConstantExpr::getGetElementPtrTy(NewTy, OldC->getOperand(0),
+                                         &Idx[0], Idx.size());
       break;
     }
 
