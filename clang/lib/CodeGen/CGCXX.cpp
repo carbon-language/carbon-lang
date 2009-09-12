@@ -993,20 +993,19 @@ public:
            ++mi)
         if (mi->isVirtual()) {
           const CXXMethodDecl *MD = *mi;
-          llvm::Constant *m = wrap(CGM.GetAddrOfFunction(MD, Ptr8Ty));
+          llvm::Constant *m = wrap(CGM.GetAddrOfFunction(MD));
           OverrideMethod(MD, m, MorallyVirtual, Offset);
         }
     }
   }
 
   void AddMethod(const CXXMethodDecl *MD, bool MorallyVirtual, Index_t Offset) {
-    GlobalDecl GD;
+    llvm::Constant *m = 0;
     if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
-      GD = GlobalDecl(Dtor, Dtor_Complete);
+      m = wrap(CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete));
     else
-      GD = GlobalDecl(MD);
+      m = wrap(CGM.GetAddrOfFunction(MD));
 
-    llvm::Constant *m = wrap(CGM.GetAddrOfFunction(GD, Ptr8Ty));
     // If we can find a previously allocated slot for this, reuse it.
     if (OverrideMethod(MD, m, MorallyVirtual, Offset))
       return;
