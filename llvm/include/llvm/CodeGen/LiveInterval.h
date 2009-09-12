@@ -155,25 +155,25 @@ namespace llvm {
         index |= PHI_BIT;
     }
     
-    MachineInstrIndex nextSlot() const {
+    MachineInstrIndex nextSlot_() const {
       assert((index & PHI_BIT) == ((index + 1) & PHI_BIT) &&
              "Index out of bounds.");
       return MachineInstrIndex(index + 1);
     }
 
-    MachineInstrIndex nextIndex() const {
+    MachineInstrIndex nextIndex_() const {
       assert((index & PHI_BIT) == ((index + NUM) & PHI_BIT) &&
              "Index out of bounds.");
       return MachineInstrIndex(index + NUM);
     }
 
-    MachineInstrIndex prevSlot() const {
+    MachineInstrIndex prevSlot_() const {
       assert((index & PHI_BIT) == ((index - 1) & PHI_BIT) &&
              "Index out of bounds.");
       return MachineInstrIndex(index - 1);
     }
 
-    MachineInstrIndex prevIndex() const {
+    MachineInstrIndex prevIndex_() const {
       assert((index & PHI_BIT) == ((index - NUM) & PHI_BIT) &&
              "Index out of bounds.");
       return MachineInstrIndex(index - NUM);

@@ -122,24 +122,22 @@ namespace llvm {
     }
     MachineInstrIndex getStoreIndex(MachineInstrIndex index) {
       return MachineInstrIndex(index, MachineInstrIndex::STORE);
-    }
-
-    
+    }    
 
     MachineInstrIndex getNextSlot(MachineInstrIndex m) const {
-      return m.nextSlot();
+      return m.nextSlot_();
     }
 
     MachineInstrIndex getNextIndex(MachineInstrIndex m) const {
-      return m.nextIndex();
+      return m.nextIndex_();
     }
 
     MachineInstrIndex getPrevSlot(MachineInstrIndex m) const {
-      return m.prevSlot();
+      return m.prevSlot_();
     }
 
     MachineInstrIndex getPrevIndex(MachineInstrIndex m) const {
-      return m.prevIndex();
+      return m.prevIndex_();
     }
 
     static float getSpillWeight(bool isDef, bool isUse, unsigned loopDepth) {
@@ -240,14 +238,14 @@ namespace llvm {
     /// hasGapBeforeInstr - Return true if the previous instruction slot,
     /// i.e. Index - InstrSlots::NUM, is not occupied.
     bool hasGapBeforeInstr(MachineInstrIndex Index) {
-      Index = getBaseIndex(Index.prevIndex());
+      Index = getBaseIndex(getPrevIndex(Index));
       return getInstructionFromIndex(Index) == 0;
     }
 
     /// hasGapAfterInstr - Return true if the successive instruction slot,
     /// i.e. Index + InstrSlots::Num, is not occupied.
     bool hasGapAfterInstr(MachineInstrIndex Index) {
-      Index = getBaseIndex(Index.nextIndex());
+      Index = getBaseIndex(getNextIndex(Index));
       return getInstructionFromIndex(Index) == 0;
     }
 
@@ -256,15 +254,15 @@ namespace llvm {
     /// away from the index (but before any index that's occupied).
     MachineInstrIndex findGapBeforeInstr(MachineInstrIndex Index,
                                          bool Furthest = false) {
-      Index = getBaseIndex(Index.prevIndex());
+      Index = getBaseIndex(getPrevIndex(Index));
       if (getInstructionFromIndex(Index))
         return MachineInstrIndex();  // No gap!
       if (!Furthest)
         return Index;
-      MachineInstrIndex PrevIndex = getBaseIndex(Index.prevIndex());
+      MachineInstrIndex PrevIndex = getBaseIndex(getPrevIndex(Index));
       while (getInstructionFromIndex(Index)) {
         Index = PrevIndex;
-        PrevIndex = getBaseIndex(Index.prevIndex());
+        PrevIndex = getBaseIndex(getPrevIndex(Index));
       }
       return Index;
     }
@@ -272,7 +270,7 @@ namespace llvm {
     /// InsertMachineInstrInMaps - Insert the specified machine instruction
     /// into the instruction index map at the given index.
     void InsertMachineInstrInMaps(MachineInstr *MI, MachineInstrIndex Index) {
-      i2miMap_[Index.index / MachineInstrIndex::NUM] = MI;
+      i2miMap_[Index.getVecIndex()] = MI;
       Mi2IndexMap::iterator it = mi2iMap_.find(MI);
       assert(it == mi2iMap_.end() && "Already in map!");
       mi2iMap_[MI] = Index;
