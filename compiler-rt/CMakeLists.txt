@@ -42,7 +42,7 @@ SET( Configurations
  )
 
 # BlocksRuntime - some random cruft that got thrown in at the last minute, ignoring for now.
-# ADD_SUBDIRECTORY( BlocksRuntime )
+ADD_SUBDIRECTORY( BlocksRuntime )
 
 ADD_SUBDIRECTORY( lib )
 
