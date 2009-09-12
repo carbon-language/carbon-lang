@@ -167,7 +167,7 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, MachineInstrIndex New
   ranges.erase(next(I), MergeTo);
 
   // Update kill info.
-  ValNo->removeKills(OldEnd, I->end.prevSlot());
+  ValNo->removeKills(OldEnd, I->end.prevSlot_());
 
   // If the newly formed range now touches the range after it and if they have
   // the same value number, merge the two ranges into one range.

@@ -278,7 +278,7 @@ void LiveIntervals::computeNumbering() {
     MachineInstrIndex StartIdx = MIIndex;
 
     // Insert an empty slot at the beginning of each block.
-    MIIndex = MIIndex.nextIndex();
+    MIIndex = getNextIndex(MIIndex);
     i2miMap_.push_back(0);
 
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
@@ -295,14 +295,14 @@ void LiveIntervals::computeNumbering() {
         inserted = inserted; // Avoid compiler warning if assertions turned off.
         i2miMap_.push_back(0);
 
-        MIIndex = MIIndex.nextIndex();
+        MIIndex = getNextIndex(MIIndex);
       }
 
       bool inserted = mi2iMap_.insert(std::make_pair(I, MIIndex)).second;
       assert(inserted && "multiple MachineInstr -> index mappings");
       inserted = true;
       i2miMap_.push_back(I);
-      MIIndex = MIIndex.nextIndex();
+      MIIndex = getNextIndex(MIIndex);
       FunctionSize++;
       
       // Insert max(1, numdefs) empty slots after every instruction.
@@ -310,7 +310,7 @@ void LiveIntervals::computeNumbering() {
       if (Slots == 0)
         Slots = 1;
       while (Slots--) {
-        MIIndex = MIIndex.nextIndex();
+        MIIndex = getNextIndex(MIIndex);
         i2miMap_.push_back(0);
       }
 
@@ -327,11 +327,11 @@ void LiveIntervals::computeNumbering() {
       inserted = inserted; // Avoid compiler warning if assertions turned off.
       i2miMap_.push_back(0);
  
-      MIIndex = MIIndex.nextIndex();
+      MIIndex = getNextIndex(MIIndex);
     }
     
     // Set the MBB2IdxMap entry for this MBB.
-    MBB2IdxMap[MBB->getNumber()] = std::make_pair(StartIdx, MIIndex.prevSlot());
+    MBB2IdxMap[MBB->getNumber()] = std::make_pair(StartIdx, getPrevSlot(MIIndex));
     Idx2MBBMap.push_back(std::make_pair(StartIdx, MBB));
   }
 
@@ -365,7 +365,7 @@ void LiveIntervals::computeNumbering() {
         // Remap the ending index in the same way that we remapped the start,
         // except for the final step where we always map to the immediately
         // following instruction.
-        index = (LI->end.prevSlot()).getVecIndex();
+        index = (getPrevSlot(LI->end)).getVecIndex();
         offset  = LI->end.getSlot();
         if (LI->end.isLoad()) {
           // VReg dies at end of block.
@@ -373,7 +373,7 @@ void LiveIntervals::computeNumbering() {
                   std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), LI->end);
           --I;
           
-          LI->end = getMBBEndIdx(I->second).nextSlot();
+          LI->end = getNextSlot(getMBBEndIdx(I->second));
         } else {
           unsigned idx = index;
           while (index < OldI2MI.size() && !OldI2MI[index]) ++index;
@@ -414,7 +414,7 @@ void LiveIntervals::computeNumbering() {
         // Remap the VNInfo kill indices, which works the same as
         // the end indices above.
         for (size_t i = 0; i < vni->kills.size(); ++i) {
-          unsigned index = vni->kills[i].prevSlot().getVecIndex();
+          unsigned index = getPrevSlot(vni->kills[i]).getVecIndex();
           MachineInstrIndex::Slot offset = vni->kills[i].getSlot();
 
           if (vni->kills[i].isLoad()) {
@@ -552,11 +552,11 @@ bool LiveIntervals::conflictsWithPhysRegDef(const LiveInterval &li,
   for (LiveInterval::Ranges::const_iterator
          I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
     for (MachineInstrIndex index = getBaseIndex(I->start),
-           end = getBaseIndex(I->end.prevSlot()).nextIndex(); index != end;
-         index = index.nextIndex()) {
+           end = getNextIndex(getBaseIndex(getPrevSlot(I->end))); index != end;
+         index = getNextIndex(index)) {
       // skip deleted instructions
       while (index != end && !getInstructionFromIndex(index))
-        index = index.nextIndex();
+        index = getNextIndex(index);
       if (index == end) break;
 
       MachineInstr *MI = getInstructionFromIndex(index);
@@ -593,15 +593,15 @@ bool LiveIntervals::conflictsWithPhysRegRef(LiveInterval &li,
   for (LiveInterval::Ranges::const_iterator
          I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
     for (MachineInstrIndex index = getBaseIndex(I->start),
-           end = getBaseIndex(I->end.prevSlot()).nextIndex(); index != end;
-         index = index.nextIndex()) {
+           end = getNextIndex(getBaseIndex(getPrevSlot(I->end))); index != end;
+         index = getNextIndex(index)) {
       // Skip deleted instructions.
       MachineInstr *MI = 0;
       while (index != end) {
         MI = getInstructionFromIndex(index);
         if (MI)
           break;
-        index = index.nextIndex();
+        index = getNextIndex(index);
       }
       if (index == end) break;
 
@@ -676,9 +676,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // FIXME: what about dead vars?
       MachineInstrIndex killIdx;
       if (vi.Kills[0] != mi)
-        killIdx = getUseIndex(getInstructionIndex(vi.Kills[0])).nextSlot();
+        killIdx = getNextSlot(getUseIndex(getInstructionIndex(vi.Kills[0])));
       else
-        killIdx = defIndex.nextSlot();
+        killIdx = getNextSlot(defIndex);
 
       // If the kill happens after the definition, we have an intra-block
       // live range.
@@ -697,7 +697,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // of the defining block, potentially live across some blocks, then is
     // live into some number of blocks, but gets killed.  Start by adding a
     // range that goes from this definition to the end of the defining block.
-    LiveRange NewLR(defIndex, getMBBEndIdx(mbb).nextSlot(), ValNo);
+    LiveRange NewLR(defIndex, getNextSlot(getMBBEndIdx(mbb)), ValNo);
     DEBUG(errs() << " +" << NewLR);
     interval.addRange(NewLR);
 
@@ -707,7 +707,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     for (SparseBitVector<>::iterator I = vi.AliveBlocks.begin(), 
              E = vi.AliveBlocks.end(); I != E; ++I) {
       LiveRange LR(getMBBStartIdx(*I),
-                   getMBBEndIdx(*I).nextSlot(),  // MBB ends at -1.
+                   getNextSlot(getMBBEndIdx(*I)),  // MBB ends at -1.
                    ValNo);
       interval.addRange(LR);
       DEBUG(errs() << " +" << LR);
@@ -718,7 +718,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     for (unsigned i = 0, e = vi.Kills.size(); i != e; ++i) {
       MachineInstr *Kill = vi.Kills[i];
       MachineInstrIndex killIdx =
-        getUseIndex(getInstructionIndex(Kill)).nextSlot();
+        getNextSlot(getUseIndex(getInstructionIndex(Kill)));
       LiveRange LR(getMBBStartIdx(Kill->getParent()),
                    killIdx, ValNo);
       interval.addRange(LR);
@@ -743,7 +743,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       if (MO.isEarlyClobber())
         RedefIndex = getUseIndex(MIIdx);
 
-      const LiveRange *OldLR = interval.getLiveRangeContaining(RedefIndex.prevSlot());
+      const LiveRange *OldLR =
+        interval.getLiveRangeContaining(getPrevSlot(RedefIndex));
       VNInfo *OldValNo = OldLR->valno;
 
       // Delete the initial value, which should be short and continuous,
@@ -776,8 +777,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
       if (MO.isDead())
-        interval.addRange(LiveRange(RedefIndex,
-                                    RedefIndex.nextSlot(), OldValNo));
+        interval.addRange(
+          LiveRange(RedefIndex, getNextSlot(RedefIndex), OldValNo));
 
       DEBUG({
           errs() << " RESULT: ";
@@ -796,7 +797,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         MachineInstr *Killer = vi.Kills[0];
         MachineInstrIndex Start = getMBBStartIdx(Killer->getParent());
         MachineInstrIndex End =
-          getUseIndex(getInstructionIndex(Killer)).nextSlot();
+          getNextSlot(getUseIndex(getInstructionIndex(Killer)));
         DEBUG({
             errs() << " Removing [" << Start << "," << End << "] from: ";
             interval.print(errs(), tri_);
@@ -845,7 +846,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         CopyMI = mi;
       ValNo = interval.getNextValue(defIndex, CopyMI, true, VNInfoAllocator);
       
-      MachineInstrIndex killIndex = getMBBEndIdx(mbb).nextSlot();
+      MachineInstrIndex killIndex = getNextSlot(getMBBEndIdx(mbb));
       LiveRange LR(defIndex, killIndex, ValNo);
       interval.addRange(LR);
       ValNo->addKill(terminatorGaps[mbb]);
@@ -882,21 +883,21 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // [defSlot(def), defSlot(def)+1)
   if (MO.isDead()) {
     DEBUG(errs() << " dead");
-    end = start.nextSlot();
+    end = getNextSlot(start);
     goto exit;
   }
 
   // If it is not dead on definition, it must be killed by a
   // subsequent instruction. Hence its interval is:
   // [defSlot(def), useSlot(kill)+1)
-  baseIndex = baseIndex.nextIndex();
+  baseIndex = getNextIndex(baseIndex);
   while (++mi != MBB->end()) {
     while (baseIndex.getVecIndex() < i2miMap_.size() &&
            getInstructionFromIndex(baseIndex) == 0)
-      baseIndex = baseIndex.nextIndex();
+      baseIndex = getNextIndex(baseIndex);
     if (mi->killsRegister(interval.reg, tri_)) {
       DEBUG(errs() << " killed");
-      end = getUseIndex(baseIndex).nextSlot();
+      end = getNextSlot(getUseIndex(baseIndex));
       goto exit;
     } else {
       int DefIdx = mi->findRegisterDefOperandIdx(interval.reg, false, tri_);
@@ -912,20 +913,20 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
           // it. Hence its interval is:
           // [defSlot(def), defSlot(def)+1)
           DEBUG(errs() << " dead");
-          end = start.nextSlot();
+          end = getNextSlot(start);
         }
         goto exit;
       }
     }
     
-    baseIndex = baseIndex.nextIndex();
+    baseIndex = getNextIndex(baseIndex);
   }
   
   // The only case we should have a dead physreg here without a killing or
   // instruction where we know it's dead is if it is live-in to the function
   // and never used. Another possible case is the implicit use of the
   // physical register has been deleted by two-address pass.
-  end = start.nextSlot();
+  end = getNextSlot(start);
 
 exit:
   assert(start < end && "did not find end of interval?");
@@ -986,14 +987,14 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   MachineInstrIndex start = baseIndex;
   while (baseIndex.getVecIndex() < i2miMap_.size() && 
          getInstructionFromIndex(baseIndex) == 0)
-    baseIndex = baseIndex.nextIndex();
+    baseIndex = getNextIndex(baseIndex);
   MachineInstrIndex end = baseIndex;
   bool SeenDefUse = false;
   
   while (mi != MBB->end()) {
     if (mi->killsRegister(interval.reg, tri_)) {
       DEBUG(errs() << " killed");
-      end = getUseIndex(baseIndex).nextSlot();
+      end = getNextSlot(getUseIndex(baseIndex));
       SeenDefUse = true;
       break;
     } else if (mi->modifiesRegister(interval.reg, tri_)) {
@@ -1002,17 +1003,17 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
       // it. Hence its interval is:
       // [defSlot(def), defSlot(def)+1)
       DEBUG(errs() << " dead");
-      end = getDefIndex(start).nextSlot();
+      end = getNextSlot(getDefIndex(start));
       SeenDefUse = true;
       break;
     }
 
-    baseIndex = baseIndex.nextIndex();
+    baseIndex = getNextIndex(baseIndex);
     ++mi;
     if (mi != MBB->end()) {
       while (baseIndex.getVecIndex() < i2miMap_.size() && 
              getInstructionFromIndex(baseIndex) == 0)
-        baseIndex = baseIndex.nextIndex();
+        baseIndex = getNextIndex(baseIndex);
     }
   }
 
@@ -1020,7 +1021,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   if (!SeenDefUse) {
     if (isAlias) {
       DEBUG(errs() << " dead");
-      end = getDefIndex(MIIdx).nextSlot();
+      end = getNextSlot(getDefIndex(MIIdx));
     } else {
       DEBUG(errs() << " live through");
       end = baseIndex;
@@ -1071,7 +1072,7 @@ void LiveIntervals::computeIntervals() {
     // Skip over empty initial indices.
     while (MIIndex.getVecIndex() < i2miMap_.size() &&
            getInstructionFromIndex(MIIndex) == 0)
-      MIIndex = MIIndex.nextIndex();
+      MIIndex = getNextIndex(MIIndex);
     
     for (; MI != miEnd; ++MI) {
       DEBUG(errs() << MIIndex << "\t" << *MI);
@@ -1095,12 +1096,12 @@ void LiveIntervals::computeIntervals() {
         Slots = 1;
 
       while (Slots--)
-        MIIndex = MIIndex.nextIndex();
+        MIIndex = getNextIndex(MIIndex);
       
       // Skip over empty indices.
       while (MIIndex.getVecIndex() < i2miMap_.size() &&
              getInstructionFromIndex(MIIndex) == 0)
-        MIIndex = MIIndex.nextIndex();
+        MIIndex = getNextIndex(MIIndex);
     }
   }
 
@@ -1708,14 +1709,14 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
 
     if (HasUse) {
       if (CreatedNewVReg) {
-        LiveRange LR(getLoadIndex(index), getUseIndex(index).nextSlot(),
+        LiveRange LR(getLoadIndex(index), getNextSlot(getUseIndex(index)),
                      nI.getNextValue(MachineInstrIndex(), 0, false,
                                      VNInfoAllocator));
         DEBUG(errs() << " +" << LR);
         nI.addRange(LR);
       } else {
         // Extend the split live interval to this def / use.
-        MachineInstrIndex End = getUseIndex(index).nextSlot();
+        MachineInstrIndex End = getNextSlot(getUseIndex(index));
         LiveRange LR(nI.ranges[nI.ranges.size()-1].end, End,
                      nI.getValNumInfo(nI.getNumValNums()-1));
         DEBUG(errs() << " +" << LR);
@@ -1792,7 +1793,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
   bool AllCanFold = true;
   unsigned NewVReg = 0;
   MachineInstrIndex start = getBaseIndex(I->start);
-  MachineInstrIndex end = getBaseIndex(I->end.prevSlot()).nextIndex();
+  MachineInstrIndex end = getNextIndex(getBaseIndex(getPrevSlot(I->end)));
 
   // First collect all the def / use in this live range that will be rewritten.
   // Make sure they are sorted according to instruction index.
@@ -2351,7 +2352,7 @@ addIntervalsForSpills(const LiveInterval &li,
             if (FoundUse) {
               // Also folded uses, do not issue a load.
               eraseRestoreInfo(Id, index, VReg, RestoreMBBs, RestoreIdxes);
-              nI.removeRange(getLoadIndex(index),getUseIndex(index).nextSlot());
+              nI.removeRange(getLoadIndex(index), getNextSlot(getUseIndex(index)));
             }
             nI.removeRange(getDefIndex(index), getStoreIndex(index));
           }
@@ -2432,7 +2433,7 @@ addIntervalsForSpills(const LiveInterval &li,
       // If folding is not possible / failed, then tell the spiller to issue a
       // load / rematerialization for us.
       if (Folded)
-        nI.removeRange(getLoadIndex(index), getUseIndex(index).nextSlot());
+        nI.removeRange(getLoadIndex(index), getNextSlot(getUseIndex(index)));
       else
         vrm.addRestorePoint(VReg, MI);
     }
@@ -2534,7 +2535,7 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
     if (pli.liveAt(Index)) {
       vrm.addEmergencySpill(SpillReg, MI);
       MachineInstrIndex StartIdx = getLoadIndex(Index);
-      MachineInstrIndex EndIdx = getStoreIndex(Index).nextSlot();
+      MachineInstrIndex EndIdx = getNextSlot(getStoreIndex(Index));
       if (pli.isInOneLiveRange(StartIdx, EndIdx)) {
         pli.removeRange(StartIdx, EndIdx);
         Cut = true;
@@ -2554,8 +2555,7 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
           continue;
         LiveInterval &spli = getInterval(*AS);
         if (spli.liveAt(Index))
-          spli.removeRange(getLoadIndex(Index),
-                           getStoreIndex(Index).nextSlot());
+          spli.removeRange(getLoadIndex(Index), getNextSlot(getStoreIndex(Index)));
       }
     }
   }
@@ -2572,7 +2572,7 @@ LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
   VN->kills.push_back(terminatorGaps[startInst->getParent()]);
   LiveRange LR(
     MachineInstrIndex(getInstructionIndex(startInst), MachineInstrIndex::DEF),
-    getMBBEndIdx(startInst->getParent()).nextSlot(), VN);
+    getNextSlot(getMBBEndIdx(startInst->getParent())), VN);
   Interval.addRange(LR);
   
   return LR;
