@@ -1107,6 +1107,8 @@ static llvm::Value *EmitVAArgFromMemory(llvm::Value *VAListAddr,
 llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                       CodeGenFunction &CGF) const {
   llvm::LLVMContext &VMContext = CGF.getLLVMContext();
+  const llvm::Type *i32Ty = llvm::Type::getInt32Ty(VMContext);
+  const llvm::Type *DoubleTy = llvm::Type::getDoubleTy(VMContext);
 
   // Assume that va_list type is correct; should be pointer to LLVM type:
   // struct {
@@ -1143,7 +1145,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     gp_offset = CGF.Builder.CreateLoad(gp_offset_p, "gp_offset");
     InRegs =
       CGF.Builder.CreateICmpULE(gp_offset,
-                                llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
+                                llvm::ConstantInt::get(i32Ty,
                                                        48 - neededInt * 8),
                                 "fits_in_gp");
   }
@@ -1153,7 +1155,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     fp_offset = CGF.Builder.CreateLoad(fp_offset_p, "fp_offset");
     llvm::Value *FitsInFP =
       CGF.Builder.CreateICmpULE(fp_offset,
-                                llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
+                                llvm::ConstantInt::get(i32Ty,
                                                        176 - neededSSE * 16),
                                 "fits_in_fp");
     InRegs = InRegs ? CGF.Builder.CreateAnd(InRegs, FitsInFP) : FitsInFP;
@@ -1222,13 +1224,11 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
       llvm::Value *RegAddrLo = CGF.Builder.CreateGEP(RegAddr, fp_offset);
       llvm::Value *RegAddrHi =
         CGF.Builder.CreateGEP(RegAddrLo,
-                            llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 16));
+                            llvm::ConstantInt::get(i32Ty, 16));
       const llvm::Type *DblPtrTy =
-        llvm::PointerType::getUnqual(llvm::Type::getDoubleTy(VMContext));
-      const llvm::StructType *ST = llvm::StructType::get(VMContext,
-                                                         llvm::Type::getDoubleTy(VMContext),
-                                                         llvm::Type::getDoubleTy(VMContext),
-                                                         NULL);
+        llvm::PointerType::getUnqual(DoubleTy);
+      const llvm::StructType *ST = llvm::StructType::get(VMContext, DoubleTy,
+                                                         DoubleTy, NULL);
       llvm::Value *V, *Tmp = CGF.CreateTempAlloca(ST);
       V = CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegAddrLo,
                                                            DblPtrTy));
@@ -1245,14 +1245,12 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   // l->gp_offset = l->gp_offset + num_gp * 8
   // l->fp_offset = l->fp_offset + num_fp * 16.
   if (neededInt) {
-    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                                 neededInt * 8);
+    llvm::Value *Offset = llvm::ConstantInt::get(i32Ty, neededInt * 8);
     CGF.Builder.CreateStore(CGF.Builder.CreateAdd(gp_offset, Offset),
                             gp_offset_p);
   }
   if (neededSSE) {
-    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                                 neededSSE * 16);
+    llvm::Value *Offset = llvm::ConstantInt::get(i32Ty, neededSSE * 16);
     CGF.Builder.CreateStore(CGF.Builder.CreateAdd(fp_offset, Offset),
                             fp_offset_p);
   }
@@ -1275,7 +1273,10 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return ResAddr;
 }
 
-// ABI Info for PIC16
+// PIC16 ABI Implementation
+
+namespace {
+
 class PIC16ABIInfo : public ABIInfo {
   ABIArgInfo classifyReturnType(QualType RetTy,
                                 ASTContext &Context,
@@ -1296,8 +1297,9 @@ class PIC16ABIInfo : public ABIInfo {
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
-
 };
+
+}
 
 ABIArgInfo PIC16ABIInfo::classifyReturnType(QualType RetTy,
                                             ASTContext &Context,
@@ -1320,6 +1322,10 @@ llvm::Value *PIC16ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return 0;
 }
 
+// ARM ABI Implementation
+
+namespace {
+
 class ARMABIInfo : public ABIInfo {
   ABIArgInfo classifyReturnType(QualType RetTy,
                                 ASTContext &Context,
@@ -1335,6 +1341,8 @@ class ARMABIInfo : public ABIInfo {
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
 };
+
+}
 
 void ARMABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
                              llvm::LLVMContext &VMContext) const {
@@ -1428,7 +1436,10 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
   }
 }
 
+// SystemZ ABI Implementation
+
 namespace {
+
 class SystemZABIInfo : public ABIInfo {
   bool isPromotableIntegerType(QualType Ty) const;
 
@@ -1450,6 +1461,7 @@ class SystemZABIInfo : public ABIInfo {
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
 };
+
 }
 
 bool SystemZABIInfo::isPromotableIntegerType(QualType Ty) const {
@@ -1481,7 +1493,7 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 
 ABIArgInfo SystemZABIInfo::classifyReturnType(QualType RetTy,
                                               ASTContext &Context,
-                                            llvm::LLVMContext &VMContext) const {
+                                           llvm::LLVMContext &VMContext) const {
   if (RetTy->isVoidType()) {
     return ABIArgInfo::getIgnore();
   } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
@@ -1494,7 +1506,7 @@ ABIArgInfo SystemZABIInfo::classifyReturnType(QualType RetTy,
 
 ABIArgInfo SystemZABIInfo::classifyArgumentType(QualType Ty,
                                                 ASTContext &Context,
-                                            llvm::LLVMContext &VMContext) const {
+                                           llvm::LLVMContext &VMContext) const {
   if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
     return ABIArgInfo::getIndirect(0);
   } else {
@@ -1530,6 +1542,17 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
   default:
     return *(TheABIInfo = new DefaultABIInfo);
 
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    // FIXME: Support for OABI?
+    return *(TheABIInfo = new ARMABIInfo());
+
+  case llvm::Triple::pic16:
+    return *(TheABIInfo = new PIC16ABIInfo());
+
+  case llvm::Triple::systemz:
+    return *(TheABIInfo = new SystemZABIInfo());
+
   case llvm::Triple::x86:
     if (Triple.getOS() == llvm::Triple::Darwin)
       return *(TheABIInfo = new X86_32ABIInfo(Context, true, true));
@@ -1549,16 +1572,5 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
 
   case llvm::Triple::x86_64:
     return *(TheABIInfo = new X86_64ABIInfo());
-
-  case llvm::Triple::arm:
-  case llvm::Triple::thumb:
-    // FIXME: Support for OABI?
-    return *(TheABIInfo = new ARMABIInfo());
-
-  case llvm::Triple::pic16:
-    return *(TheABIInfo = new PIC16ABIInfo());
-
-  case llvm::Triple::systemz:
-    return *(TheABIInfo = new SystemZABIInfo());
   }
 }
