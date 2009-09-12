@@ -669,8 +669,16 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy,
     CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseClassTy->getDecl());
     
     Value *Src = Visit(const_cast<Expr*>(E));
+
+    // FIXME: This should be true, but that leads to a failure in virt.cpp
+    bool NullCheckValue = false;
+    
+    // We always assume that 'this' is never null.
+    if (isa<CXXThisExpr>(E))
+      NullCheckValue = false;
+    
     return CGF.GetAddressCXXOfBaseClass(Src, DerivedClassDecl, BaseClassDecl,
-                                        /*NullCheckValue=*/true);
+                                        NullCheckValue);
   }
 
   }
