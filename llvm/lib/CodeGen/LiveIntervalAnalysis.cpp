@@ -717,7 +717,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // block to the 'use' slot of the killing instruction.
     for (unsigned i = 0, e = vi.Kills.size(); i != e; ++i) {
       MachineInstr *Kill = vi.Kills[i];
-      MachineInstrIndex killIdx = getUseIndex(getInstructionIndex(Kill)).nextSlot();
+      MachineInstrIndex killIdx =
+        getUseIndex(getInstructionIndex(Kill)).nextSlot();
       LiveRange LR(getMBBStartIdx(Kill->getParent()),
                    killIdx, ValNo);
       interval.addRange(LR);
@@ -775,7 +776,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
       if (MO.isDead())
-        interval.addRange(LiveRange(RedefIndex, RedefIndex.nextSlot(), OldValNo));
+        interval.addRange(LiveRange(RedefIndex,
+                                    RedefIndex.nextSlot(), OldValNo));
 
       DEBUG({
           errs() << " RESULT: ";
@@ -793,7 +795,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         VNInfo *VNI = interval.getValNumInfo(0);
         MachineInstr *Killer = vi.Kills[0];
         MachineInstrIndex Start = getMBBStartIdx(Killer->getParent());
-        MachineInstrIndex End = getUseIndex(getInstructionIndex(Killer)).nextSlot();
+        MachineInstrIndex End =
+          getUseIndex(getInstructionIndex(Killer)).nextSlot();
         DEBUG({
             errs() << " Removing [" << Start << "," << End << "] from: ";
             interval.print(errs(), tri_);
@@ -2348,7 +2351,7 @@ addIntervalsForSpills(const LiveInterval &li,
             if (FoundUse) {
               // Also folded uses, do not issue a load.
               eraseRestoreInfo(Id, index, VReg, RestoreMBBs, RestoreIdxes);
-              nI.removeRange(getLoadIndex(index), getUseIndex(index).nextSlot());
+              nI.removeRange(getLoadIndex(index),getUseIndex(index).nextSlot());
             }
             nI.removeRange(getDefIndex(index), getStoreIndex(index));
           }
@@ -2551,7 +2554,8 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
           continue;
         LiveInterval &spli = getInterval(*AS);
         if (spli.liveAt(Index))
-          spli.removeRange(getLoadIndex(Index), getStoreIndex(Index).nextSlot());
+          spli.removeRange(getLoadIndex(Index),
+                           getStoreIndex(Index).nextSlot());
       }
     }
   }
