@@ -60,8 +60,13 @@ namespace CodeGen {
       ABIArgInfo info;
     };
 
-    /// The LLVM::CallingConv to use for this function.
+    /// The LLVM::CallingConv to use for this function (as specified by the
+    /// user).
     unsigned CallingConvention;
+
+    /// The LLVM::CallingConv to actually use for this function, which may
+    /// depend on the ABI.
+    unsigned EffectiveCallingConvention;
 
     unsigned NumArgs;
     ArgInfo *Args;
@@ -82,7 +87,18 @@ namespace CodeGen {
 
     unsigned  arg_size() const { return NumArgs; }
 
+    /// getCallingConvention - Return the user specified calling
+    /// convention.
     unsigned getCallingConvention() const { return CallingConvention; }
+
+    /// getEffectiveCallingConvention - Return the actual calling convention to
+    /// use, which may depend on the ABI.
+    unsigned getEffectiveCallingConvention() const {
+      return EffectiveCallingConvention;
+    }
+    void setEffectiveCallingConvention(unsigned Value) {
+      EffectiveCallingConvention = Value;
+    }
 
     QualType getReturnType() const { return Args[0].type; }
 

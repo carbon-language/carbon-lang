@@ -156,7 +156,8 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
 CGFunctionInfo::CGFunctionInfo(unsigned _CallingConvention,
                                QualType ResTy,
                                const llvm::SmallVector<QualType, 16> &ArgTys) 
-  : CallingConvention(_CallingConvention)
+  : CallingConvention(_CallingConvention),
+    EffectiveCallingConvention(_CallingConvention)
 {
   NumArgs = ArgTys.size();
   Args = new ArgInfo[1 + NumArgs];
@@ -404,9 +405,12 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI, bool IsVariadic) {
 
 void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
                                            const Decl *TargetDecl,
-                                           AttributeListType &PAL) {
+                                           AttributeListType &PAL, 
+                                           unsigned &CallingConv) {
   unsigned FuncAttrs = 0;
   unsigned RetAttrs = 0;
+
+  CallingConv = FI.getEffectiveCallingConvention();
 
   // FIXME: handle sseregparm someday...
   if (TargetDecl) {
@@ -835,8 +839,9 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
 
   llvm::BasicBlock *InvokeDest = getInvokeDest();
+  unsigned CallingConv;
   CodeGen::AttributeListType AttributeList;
-  CGM.ConstructAttributeList(CallInfo, TargetDecl, AttributeList);
+  CGM.ConstructAttributeList(CallInfo, TargetDecl, AttributeList, CallingConv);
   llvm::AttrListPtr Attrs = llvm::AttrListPtr::get(AttributeList.begin(),
                                                    AttributeList.end());
 
@@ -851,9 +856,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   }
 
   CS.setAttributes(Attrs);
-  llvm::CallingConv::ID CC =
-    static_cast<llvm::CallingConv::ID>(CallInfo.getCallingConvention());
-  CS.setCallingConv(CC);
+  CS.setCallingConv(static_cast<llvm::CallingConv::ID>(CallingConv));
 
   // If the call doesn't return, finish the basic block and clear the
   // insertion point; this allows the rest of IRgen to discard

@@ -384,9 +384,19 @@ public:
   /// as a return type.
   bool ReturnTypeUsesSret(const CGFunctionInfo &FI);
 
+  /// ConstructAttributeList - Get the LLVM attributes and calling convention to
+  /// use for a particular function type.
+  ///
+  /// \param Info - The function type information.
+  /// \param TargetDecl - The decl these attributes are being constructed
+  /// for. If supplied the attributes applied to this decl may contribute to the
+  /// function attributes and calling convention.
+  /// \param PAL [out] - On return, the attribute list to use.
+  /// \param CallingConv [out] - On return, the LLVM calling convention to use.
   void ConstructAttributeList(const CGFunctionInfo &Info,
                               const Decl *TargetDecl,
-                              AttributeListType &PAL);
+                              AttributeListType &PAL,
+                              unsigned &CallingConv);
 
   const char *getMangledName(const GlobalDecl &D);
 
