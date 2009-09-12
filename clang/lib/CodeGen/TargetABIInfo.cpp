@@ -1327,6 +1327,22 @@ llvm::Value *PIC16ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
 namespace {
 
 class ARMABIInfo : public ABIInfo {
+public:
+  enum ABIKind {
+    APCS = 0,
+    AAPCS = 1,
+    AAPCS_VFP
+  };
+
+private:
+  ABIKind Kind;
+
+public:
+  ARMABIInfo(ABIKind _Kind) : Kind(_Kind) {}
+
+private:
+  ABIKind getABIKind() const { return Kind; }
+
   ABIArgInfo classifyReturnType(QualType RetTy,
                                 ASTContext &Context,
                                 llvm::LLVMContext &VMCOntext) const;
@@ -1351,6 +1367,21 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it) {
     it->info = classifyArgumentType(it->type, Context, VMContext);
+  }
+
+  // ARM always overrides the calling convention.
+  switch (getABIKind()) {
+  case APCS:
+    FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_APCS);
+    break;
+
+  case AAPCS:
+    FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_AAPCS);
+    break;
+
+  case AAPCS_VFP:
+    FI.setEffectiveCallingConvention(llvm::CallingConv::ARM_AAPCS_VFP);
+    break;
   }
 }
 
@@ -1544,8 +1575,14 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
-    // FIXME: Support for OABI?
-    return *(TheABIInfo = new ARMABIInfo());
+    // FIXME: We should get this from the target, we also need a -target-abi
+    // because the user should have some control over this.
+    //
+    // FIXME: We want to know the float calling convention as well.
+    if (Triple.getOS() == llvm::Triple::Darwin)
+      return *(TheABIInfo = new ARMABIInfo(ARMABIInfo::APCS));
+
+    return *(TheABIInfo = new ARMABIInfo(ARMABIInfo::AAPCS));
 
   case llvm::Triple::pic16:
     return *(TheABIInfo = new PIC16ABIInfo());
