@@ -17,6 +17,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -293,47 +294,48 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD) {
   if (const RecordType *Record = ClassType->getAs<RecordType>()) {
     OverloadedFunctionDecl *Conversions
       = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
+    llvm::SmallPtrSet<QualType, 8> TopConversionsTypeSet;
+    bool inTopClass = (RD == this);
+    if (!inTopClass && 
+        (Conversions->function_begin() != Conversions->function_end())) {
+      // populate the TypeSet with the type of current class's conversions.
+      OverloadedFunctionDecl *TopConversions = RD->getConversionFunctions();
+      for (OverloadedFunctionDecl::function_iterator
+           TFunc = TopConversions->function_begin(),
+           TFuncEnd = TopConversions->function_end();
+           TFunc != TFuncEnd; ++TFunc) {
+        NamedDecl *TopConv = TFunc->get();
+        QualType TConvType;
+        if (FunctionTemplateDecl *TConversionTemplate =
+            dyn_cast<FunctionTemplateDecl>(TopConv))
+          TConvType = 
+            getASTContext().getCanonicalType(
+                          TConversionTemplate->getTemplatedDecl()->getType());
+        else 
+          TConvType = 
+            getASTContext().getCanonicalType(
+                                        cast<FunctionDecl>(TopConv)->getType());
+        TopConversionsTypeSet.insert(TConvType);
+      }
+    }
+    
     for (OverloadedFunctionDecl::function_iterator
          Func = Conversions->function_begin(),
          FuncEnd = Conversions->function_end();
          Func != FuncEnd; ++Func) {
       NamedDecl *Conv = Func->get();
-      bool Candidate = true;
       // Only those conversions not exact match of conversions in current
       // class are candidateconversion routines.
-      // FIXME. This is a O(n^2) algorithm. 
-      if (RD != this) {
-        OverloadedFunctionDecl *TopConversions = RD->getConversionFunctions();
-        QualType ConvType;
-        FunctionDecl *FD;
-        if (FunctionTemplateDecl *ConversionTemplate = 
-              dyn_cast<FunctionTemplateDecl>(Conv))
-          FD = ConversionTemplate->getTemplatedDecl();
-        else
-          FD = cast<FunctionDecl>(Conv);
-        ConvType = getASTContext().getCanonicalType(FD->getType());
-        
-        for (OverloadedFunctionDecl::function_iterator
-             TFunc = TopConversions->function_begin(),
-             TFuncEnd = TopConversions->function_end();
-             TFunc != TFuncEnd; ++TFunc) {
-          
-          NamedDecl *TopConv = TFunc->get();
-          FunctionDecl *TFD;
-          QualType TConvType;
-          if (FunctionTemplateDecl *TConversionTemplate =
-                dyn_cast<FunctionTemplateDecl>(TopConv))
-            TFD = TConversionTemplate->getTemplatedDecl();
-          else 
-            TFD = cast<FunctionDecl>(TopConv);
-          TConvType = getASTContext().getCanonicalType(TFD->getType());
-          if (ConvType == TConvType) {
-            Candidate = false;
-            break;
-          }
-        }
-      }
-      if (Candidate) {
+      QualType ConvType;
+      if (FunctionTemplateDecl *ConversionTemplate = 
+            dyn_cast<FunctionTemplateDecl>(Conv))
+        ConvType = 
+          getASTContext().getCanonicalType(
+                            ConversionTemplate->getTemplatedDecl()->getType());
+      else
+        ConvType = 
+          getASTContext().getCanonicalType(cast<FunctionDecl>(Conv)->getType());
+      if (inTopClass || !TopConversionsTypeSet.count(ConvType)) {
         if (FunctionTemplateDecl *ConversionTemplate =
               dyn_cast<FunctionTemplateDecl>(Conv))
           RD->addVisibleConversionFunction(ConversionTemplate);
