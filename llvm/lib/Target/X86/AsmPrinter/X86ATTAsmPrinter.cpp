@@ -883,7 +883,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
 static int SortSymbolPair(const void *LHS, const void *RHS) {
   MCSymbol *LHSS = ((const std::pair<MCSymbol*, MCSymbol*>*)LHS)->first;
-  MCSymbol *RHSS = ((const std::pair<MCSymbol*, MCSymbol*>*)LHS)->first;
+  MCSymbol *RHSS = ((const std::pair<MCSymbol*, MCSymbol*>*)RHS)->first;
   return LHSS->getName().compare(RHSS->getName());
 }
 
