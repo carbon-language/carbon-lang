@@ -1,5 +1,5 @@
 ; RUN: llc < %s -fast-isel -fast-isel-abort -march=x86-64 | FileCheck %s
-; RUN: llc < %s -fast-isel -march=x86 | grep xor | count 2
+; RUN: llc < %s -fast-isel -march=x86 -mattr=+sse2 | grep xor | count 2
 
 ; CHECK: doo:
 ; CHECK: xor
