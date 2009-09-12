@@ -1153,30 +1153,51 @@ LValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator* E) {
 /// all the reasons that casts are permitted with aggregate result, including
 /// noop aggregate casts, and cast from scalar to union.
 LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
-  // If this is an aggregate-to-aggregate cast, just use the input's address as
-  // the lvalue.
-  if (E->getCastKind() == CastExpr::CK_NoOp ||
-      E->getCastKind() == CastExpr::CK_ConstructorConversion ||
-      E->getCastKind() == CastExpr::CK_UserDefinedConversion)
+  switch (E->getCastKind()) {
+  default:
+    // If this is an lvalue cast, treat it as a no-op.
+    // FIXME: We shouldn't need to check for this explicitly!
+    if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
+      if (ICE->isLvalueCast())
+        return EmitLValue(E->getSubExpr());
+    
+    assert(0 && "Unhandled cast!");
+      
+  case CastExpr::CK_NoOp:
+  case CastExpr::CK_ConstructorConversion:
+  case CastExpr::CK_UserDefinedConversion:
     return EmitLValue(E->getSubExpr());
+  
+  case CastExpr::CK_DerivedToBase: {
+    const RecordType *DerivedClassTy = 
+      E->getSubExpr()->getType()->getAs<RecordType>();
+    CXXRecordDecl *DerivedClassDecl = 
+      cast<CXXRecordDecl>(DerivedClassTy->getDecl());
 
-  // If this is an lvalue cast, treat it as a no-op.
-  // FIXME: We shouldn't need to check for this explicitly!
-  if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
-    if (ICE->isLvalueCast())
-      return EmitLValue(E->getSubExpr());
+    const RecordType *BaseClassTy = E->getType()->getAs<RecordType>();
+    CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseClassTy->getDecl());
+    
+    LValue LV = EmitLValue(E->getSubExpr());
+    
+    // Perform the derived-to-base conversion
+    llvm::Value *Base = 
+      GetAddressCXXOfBaseClass(LV.getAddress(), DerivedClassDecl, 
+                               BaseClassDecl, /*NullCheckValue=*/false);
+    
+    return LValue::MakeAddr(Base, E->getType().getCVRQualifiers(),
+                            getContext().getObjCGCAttrKind(E->getType()),
+                            E->getType().getAddressSpace());
+  }
 
-  // Otherwise, we must have a cast from scalar to union.
-  assert(E->getCastKind() == CastExpr::CK_ToUnion &&
-         "Expected scalar-to-union cast");
+  case CastExpr::CK_ToUnion: {
+    llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
+    EmitAnyExpr(E->getSubExpr(), Temp, false);
 
-  // Casts are only lvalues when the source and destination types are the same.
-  llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
-  EmitAnyExpr(E->getSubExpr(), Temp, false);
-
-  return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
-                          getContext().getObjCGCAttrKind(E->getType()),
-                          E->getType().getAddressSpace());
+    return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
+                            getContext().getObjCGCAttrKind(E->getType()),
+                            E->getType().getAddressSpace());
+    }
+  }
 }
 
 //===--------------------------------------------------------------------===//
