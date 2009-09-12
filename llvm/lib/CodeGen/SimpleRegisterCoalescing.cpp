@@ -53,11 +53,6 @@ EnableJoining("join-liveintervals",
               cl::init(true));
 
 static cl::opt<bool>
-NewHeuristic("new-coalescer-heuristic",
-             cl::desc("Use new coalescer heuristic"),
-             cl::init(false), cl::Hidden);
-
-static cl::opt<bool>
 DisableCrossClassJoin("disable-cross-class-join",
                cl::desc("Avoid coalescing cross register class copies"),
                cl::init(false), cl::Hidden);
@@ -734,28 +729,6 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   ReMatDefs.insert(DefMI);
   ++NumReMats;
   return true;
-}
-
-/// isBackEdgeCopy - Returns true if CopyMI is a back edge copy.
-///
-bool SimpleRegisterCoalescing::isBackEdgeCopy(MachineInstr *CopyMI,
-                                              unsigned DstReg) const {
-  MachineBasicBlock *MBB = CopyMI->getParent();
-  const MachineLoop *L = loopInfo->getLoopFor(MBB);
-  if (!L)
-    return false;
-  if (MBB != L->getLoopLatch())
-    return false;
-
-  LiveInterval &LI = li_->getInterval(DstReg);
-  MachineInstrIndex DefIdx = li_->getInstructionIndex(CopyMI);
-  LiveInterval::const_iterator DstLR =
-    LI.FindLiveRangeContaining(li_->getDefIndex(DefIdx));
-  if (DstLR == LI.end())
-    return false;
-  if (DstLR->valno->kills.size() == 1 && DstLR->valno->kills[0].isPHIIndex())
-    return true;
-  return false;
 }
 
 /// UpdateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
@@ -1631,9 +1604,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         unsigned JoinPReg = SrcIsPhys ? SrcReg : DstReg;
         const TargetRegisterClass *RC = mri_->getRegClass(JoinVReg);
         unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
-        if (TheCopy.isBackEdge)
-          Threshold *= 2; // Favors back edge copies.
-
         unsigned Length = li_->getApproximateInstructionCount(JoinVInt);
         float Ratio = 1.0 / Threshold;
         if (Length > Threshold &&
@@ -1749,28 +1719,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   // be allocate a register from GR64_ABCD.
   if (NewRC)
     mri_->setRegClass(DstReg, NewRC);
-
-  if (NewHeuristic) {
-    // Add all copies that define val# in the source interval into the queue.
-    for (LiveInterval::const_vni_iterator i = ResSrcInt->vni_begin(),
-           e = ResSrcInt->vni_end(); i != e; ++i) {
-      const VNInfo *vni = *i;
-      // FIXME: Do isPHIDef and isDefAccurate both need to be tested?
-      if (vni->def == MachineInstrIndex() || vni->isUnused() || vni->isPHIDef() ||
-          !vni->isDefAccurate())
-        continue;
-      MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
-      unsigned NewSrcReg, NewDstReg, NewSrcSubIdx, NewDstSubIdx;
-      if (CopyMI &&
-          JoinedCopies.count(CopyMI) == 0 &&
-          tii_->isMoveInstr(*CopyMI, NewSrcReg, NewDstReg,
-                            NewSrcSubIdx, NewDstSubIdx)) {
-        unsigned LoopDepth = loopInfo->getLoopDepth(CopyMBB);
-        JoinQueue->push(CopyRec(CopyMI, LoopDepth,
-                                isBackEdgeCopy(CopyMI, DstReg)));
-      }
-    }
-  }
 
   // Remember to delete the copy instruction.
   JoinedCopies.insert(CopyMI);
@@ -2382,25 +2330,6 @@ namespace {
   };
 }
 
-/// getRepIntervalSize - Returns the size of the interval that represents the
-/// specified register.
-template<class SF>
-unsigned JoinPriorityQueue<SF>::getRepIntervalSize(unsigned Reg) {
-  return Rc->getRepIntervalSize(Reg);
-}
-
-/// CopyRecSort::operator - Join priority queue sorting function.
-///
-bool CopyRecSort::operator()(CopyRec left, CopyRec right) const {
-  // Inner loops first.
-  if (left.LoopDepth > right.LoopDepth)
-    return false;
-  else if (left.LoopDepth == right.LoopDepth)
-    if (left.isBackEdge && !right.isBackEdge)
-      return false;
-  return true;
-}
-
 void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
                                                std::vector<CopyRec> &TryAgain) {
   DEBUG(errs() << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
@@ -2408,7 +2337,6 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
   std::vector<CopyRec> VirtCopies;
   std::vector<CopyRec> PhysCopies;
   std::vector<CopyRec> ImpDefCopies;
-  unsigned LoopDepth = loopInfo->getLoopDepth(MBB);
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
        MII != E;) {
     MachineInstr *Inst = MII++;
@@ -2427,20 +2355,13 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
 
     bool SrcIsPhys = TargetRegisterInfo::isPhysicalRegister(SrcReg);
     bool DstIsPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
-    if (NewHeuristic) {
-      JoinQueue->push(CopyRec(Inst, LoopDepth, isBackEdgeCopy(Inst, DstReg)));
-    } else {
-      if (li_->hasInterval(SrcReg) && li_->getInterval(SrcReg).empty())
-        ImpDefCopies.push_back(CopyRec(Inst, 0, false));
-      else if (SrcIsPhys || DstIsPhys)
-        PhysCopies.push_back(CopyRec(Inst, 0, false));
-      else
-        VirtCopies.push_back(CopyRec(Inst, 0, false));
-    }
+    if (li_->hasInterval(SrcReg) && li_->getInterval(SrcReg).empty())
+      ImpDefCopies.push_back(CopyRec(Inst, 0));
+    else if (SrcIsPhys || DstIsPhys)
+      PhysCopies.push_back(CopyRec(Inst, 0));
+    else
+      VirtCopies.push_back(CopyRec(Inst, 0));
   }
-
-  if (NewHeuristic)
-    return;
 
   // Try coalescing implicit copies first, followed by copies to / from
   // physical registers, then finally copies from virtual registers to
@@ -2471,9 +2392,6 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
 void SimpleRegisterCoalescing::joinIntervals() {
   DEBUG(errs() << "********** JOINING INTERVALS ***********\n");
 
-  if (NewHeuristic)
-    JoinQueue = new JoinPriorityQueue<CopyRecSort>(this);
-
   std::vector<CopyRec> TryAgainList;
   if (loopInfo->empty()) {
     // If there are no loops in the function, join intervals in function order.
@@ -2503,49 +2421,23 @@ void SimpleRegisterCoalescing::joinIntervals() {
   
   // Joining intervals can allow other intervals to be joined.  Iteratively join
   // until we make no progress.
-  if (NewHeuristic) {
-    SmallVector<CopyRec, 16> TryAgain;
-    bool ProgressMade = true;
-    while (ProgressMade) {
-      ProgressMade = false;
-      while (!JoinQueue->empty()) {
-        CopyRec R = JoinQueue->pop();
-        bool Again = false;
-        bool Success = JoinCopy(R, Again);
-        if (Success)
-          ProgressMade = true;
-        else if (Again)
-          TryAgain.push_back(R);
-      }
+  bool ProgressMade = true;
+  while (ProgressMade) {
+    ProgressMade = false;
 
-      if (ProgressMade) {
-        while (!TryAgain.empty()) {
-          JoinQueue->push(TryAgain.back());
-          TryAgain.pop_back();
-        }
-      }
-    }
-  } else {
-    bool ProgressMade = true;
-    while (ProgressMade) {
-      ProgressMade = false;
+    for (unsigned i = 0, e = TryAgainList.size(); i != e; ++i) {
+      CopyRec &TheCopy = TryAgainList[i];
+      if (!TheCopy.MI)
+        continue;
 
-      for (unsigned i = 0, e = TryAgainList.size(); i != e; ++i) {
-        CopyRec &TheCopy = TryAgainList[i];
-        if (TheCopy.MI) {
-          bool Again = false;
-          bool Success = JoinCopy(TheCopy, Again);
-          if (Success || !Again) {
-            TheCopy.MI = 0;   // Mark this one as done.
-            ProgressMade = true;
-          }
-        }
+      bool Again = false;
+      bool Success = JoinCopy(TheCopy, Again);
+      if (Success || !Again) {
+        TheCopy.MI = 0;   // Mark this one as done.
+        ProgressMade = true;
       }
     }
   }
-
-  if (NewHeuristic)
-    delete JoinQueue;  
 }
 
 /// Return true if the two specified registers belong to different register
