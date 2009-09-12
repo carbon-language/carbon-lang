@@ -114,7 +114,7 @@ class CodeGenModule : public BlockModule {
   CodeGenModule(const CodeGenModule&);  // DO NOT IMPLEMENT
   void operator=(const CodeGenModule&); // DO NOT IMPLEMENT
 
-  typedef std::vector< std::pair<llvm::Constant*, int> > CtorList;
+  typedef std::vector<std::pair<llvm::Constant*, int> > CtorList;
 
   ASTContext &Context;
   const LangOptions &Features;
