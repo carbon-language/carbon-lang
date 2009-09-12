@@ -839,6 +839,7 @@ def SYSENTER : I<0x34, RawFrm,
 def SYSEXIT  : I<0x35, RawFrm,
                  (outs), (ins), "sysexit", []>, TB;
 
+def WAIT : I<0x9B, RawFrm, (outs), (ins), "wait", []>;
 
 
 //===----------------------------------------------------------------------===//
