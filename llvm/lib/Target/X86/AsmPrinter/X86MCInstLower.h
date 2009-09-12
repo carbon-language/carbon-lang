@@ -10,7 +10,6 @@
 #ifndef X86_MCINSTLOWER_H
 #define X86_MCINSTLOWER_H
 
-
 namespace llvm {
   class MCContext;
   class MCInst;
@@ -22,10 +21,13 @@ namespace llvm {
   class X86ATTAsmPrinter;
   class X86Subtarget;
   
+/// X86MCInstLower - This class is used to lower an MachineInstr into an MCInst.
 class X86MCInstLower {
   MCContext &Ctx;
   Mangler *Mang;
   X86ATTAsmPrinter &AsmPrinter;
+
+  const X86Subtarget &getSubtarget() const;
 public:
   X86MCInstLower(MCContext &ctx, Mangler *mang, X86ATTAsmPrinter &asmprinter)
     : Ctx(ctx), Mang(mang), AsmPrinter(asmprinter) {}
@@ -33,9 +35,6 @@ public:
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
   MCSymbol *GetPICBaseSymbol() const;
-
-private:
-  const X86Subtarget &getSubtarget() const;
   
   MCOperand LowerMBBOperand(const MachineOperand &MO) const;
   MCSymbol *GetGlobalAddressSymbol(const MachineOperand &MO) const;

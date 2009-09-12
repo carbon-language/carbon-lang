@@ -78,7 +78,6 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
   case X86II::MO_NO_FLAG:                // No flag.
-  case X86II::MO_GOT_ABSOLUTE_ADDRESS:   // Doesn't modify symbol name.
   case X86II::MO_PIC_BASE_OFFSET:        // Doesn't modify symbol name.
     break;
   case X86II::MO_DLLIMPORT: {
@@ -268,29 +267,9 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
     // Subtract the pic base.
     Expr = MCBinaryExpr::CreateSub(Expr, 
-                                   MCSymbolRefExpr::Create(GetPICBaseSymbol(),
-                                                           Ctx),
+                               MCSymbolRefExpr::Create(GetPICBaseSymbol(), Ctx),
                                    Ctx);
     break;
-  case X86II::MO_GOT_ABSOLUTE_ADDRESS: {
-    // For this, we want to print something like:
-    //   MYSYMBOL + (. - PICBASE)
-    // However, we can't generate a ".", so just emit a new label here and refer
-    // to it.  We know that this operand flag occurs at most once per function.
-    SmallString<64> Name;
-    raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix()
-      << "picbaseref" << AsmPrinter.getFunctionNumber();
-    MCSymbol *DotSym = Ctx.GetOrCreateSymbol(Name.str());
-// FIXME: This instruction should be lowered before we get here...    
-    AsmPrinter.OutStreamer.EmitLabel(DotSym);
-
-    const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, Ctx);
-    const MCExpr *PICBase = MCSymbolRefExpr::Create(GetPICBaseSymbol(),
-                                                    Ctx);
-    DotExpr = MCBinaryExpr::CreateSub(DotExpr, PICBase, Ctx);
-    Expr = MCBinaryExpr::CreateAdd(Expr, DotExpr, Ctx);
-    break;      
-  }
   }
   
   if (!MO.isJTI() && MO.getOffset())
@@ -460,7 +439,45 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
     TmpInst.getOperand(0) = MCOperand::CreateReg(MI->getOperand(0).getReg());
     printInstruction(&TmpInst);
     return;
-    }
+  }
+      
+  case X86::ADD32ri: {
+    // Lower the MO_GOT_ABSOLUTE_ADDRESS form of ADD32ri.
+    if (MI->getOperand(2).getTargetFlags() != X86II::MO_GOT_ABSOLUTE_ADDRESS)
+      break;
+    
+    // Okay, we have something like:
+    //  EAX = ADD32ri EAX, MO_GOT_ABSOLUTE_ADDRESS(@MYGLOBAL)
+    
+    // For this, we want to print something like:
+    //   MYGLOBAL + (. - PICBASE)
+    // However, we can't generate a ".", so just emit a new label here and refer
+    // to it.  We know that this operand flag occurs at most once per function.
+    SmallString<64> Name;
+    raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
+      << "picbaseref" << getFunctionNumber();
+    MCSymbol *DotSym = OutContext.GetOrCreateSymbol(Name.str());
+    OutStreamer.EmitLabel(DotSym);
+    
+    // Now that we have emitted the label, lower the complex operand expression.
+    MCSymbol *OpSym = MCInstLowering.GetExternalSymbolSymbol(MI->getOperand(2));
+    
+    const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
+    const MCExpr *PICBase =
+      MCSymbolRefExpr::Create(MCInstLowering.GetPICBaseSymbol(), OutContext);
+    DotExpr = MCBinaryExpr::CreateSub(DotExpr, PICBase, OutContext);
+    
+    DotExpr = MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(OpSym,OutContext), 
+                                      DotExpr, OutContext);
+    
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::ADD32ri);
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
+    TmpInst.addOperand(MCOperand::CreateExpr(DotExpr));
+    printInstruction(&TmpInst);
+    return;
+  }
   }
   
   MCInst TmpInst;
