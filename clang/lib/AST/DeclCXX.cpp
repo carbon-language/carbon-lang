@@ -388,15 +388,13 @@ void CXXRecordDecl::addVisibleConversionFunction(
   VisibleConversions.addOverload(ConvDecl);
 }
 
-void CXXRecordDecl::addConversionFunction(ASTContext &Context,
-                                          CXXConversionDecl *ConvDecl) {
+void CXXRecordDecl::addConversionFunction(CXXConversionDecl *ConvDecl) {
   assert(!ConvDecl->getDescribedFunctionTemplate() &&
          "Conversion function templates should cast to FunctionTemplateDecl.");
   Conversions.addOverload(ConvDecl);
 }
 
-void CXXRecordDecl::addConversionFunction(ASTContext &Context,
-                                          FunctionTemplateDecl *ConvDecl) {
+void CXXRecordDecl::addConversionFunction(FunctionTemplateDecl *ConvDecl) {
   assert(isa<CXXConversionDecl>(ConvDecl->getTemplatedDecl()) &&
          "Function template is not a conversion function template");
   Conversions.addOverload(ConvDecl);

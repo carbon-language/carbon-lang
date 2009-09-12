@@ -2321,9 +2321,9 @@ Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
     assert(Conversion->isInvalidDecl() && "Conversion should not get here.");
   } else if (FunctionTemplateDecl *ConversionTemplate
                = Conversion->getDescribedFunctionTemplate())
-    ClassDecl->addConversionFunction(Context, ConversionTemplate);
+    ClassDecl->addConversionFunction(ConversionTemplate);
   else if (!Conversion->getPrimaryTemplate()) // ignore specializations
-    ClassDecl->addConversionFunction(Context, Conversion);
+    ClassDecl->addConversionFunction(Conversion);
 
   return DeclPtrTy::make(Conversion);
 }
