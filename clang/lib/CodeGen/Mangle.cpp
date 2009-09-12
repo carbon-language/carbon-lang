@@ -897,8 +897,6 @@ namespace clang {
   void mangleThunk(const FunctionDecl *FD, int64_t nv, int64_t v,
                    ASTContext &Context, llvm::raw_ostream &os) {
     // FIXME: Hum, we might have to thunk these, fix.
-    assert(!isa<CXXConstructorDecl>(FD) &&
-           "Use mangleCXXCtor for constructor decls!");
     assert(!isa<CXXDestructorDecl>(FD) &&
            "Use mangleCXXDtor for destructor decls!");
 
@@ -913,8 +911,6 @@ namespace clang {
                             int64_t nv_r, int64_t v_r, ASTContext &Context,
                             llvm::raw_ostream &os) {
     // FIXME: Hum, we might have to thunk these, fix.
-    assert(!isa<CXXConstructorDecl>(FD) &&
-           "Use mangleCXXCtor for constructor decls!");
     assert(!isa<CXXDestructorDecl>(FD) &&
            "Use mangleCXXDtor for destructor decls!");
 
