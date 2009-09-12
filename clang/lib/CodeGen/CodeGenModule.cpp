@@ -561,7 +561,7 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     // In C++, if this is marked "extern", defer code generation.
     if (getLangOptions().CPlusPlus && !VD->getInit() &&
         (VD->getStorageClass() == VarDecl::Extern ||
-         VD->isExternC(getContext())))
+         VD->isExternC()))
       return;
 
     // In C, if this isn't a definition, defer code generation.

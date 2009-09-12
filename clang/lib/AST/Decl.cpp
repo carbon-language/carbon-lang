@@ -117,7 +117,8 @@ void VarDecl::setInit(ASTContext &C, Expr *I) {
   Init = I;
 }
 
-bool VarDecl::isExternC(ASTContext &Context) const {
+bool VarDecl::isExternC() const {
+  ASTContext &Context = getASTContext();
   if (!Context.getLangOptions().CPlusPlus)
     return (getDeclContext()->isTranslationUnit() &&
             getStorageClass() != Static) ||
@@ -444,13 +445,15 @@ void FunctionDecl::setBody(Stmt *B) {
     EndRangeLoc = B->getLocEnd();
 }
 
-bool FunctionDecl::isMain(ASTContext &Context) const {
+bool FunctionDecl::isMain() const {
+  ASTContext &Context = getASTContext();
   return !Context.getLangOptions().Freestanding &&
     getDeclContext()->getLookupContext()->isTranslationUnit() &&
     getIdentifier() && getIdentifier()->isStr("main");
 }
 
-bool FunctionDecl::isExternC(ASTContext &Context) const {
+bool FunctionDecl::isExternC() const {
+  ASTContext &Context = getASTContext();
   // In C, any non-static, non-overloadable function has external
   // linkage.
   if (!Context.getLangOptions().CPlusPlus)

@@ -573,7 +573,7 @@ public:
 
   /// \brief Determines whether this variable is a variable with
   /// external, C linkage.
-  bool isExternC(ASTContext &Context) const;
+  bool isExternC() const;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -961,11 +961,11 @@ public:
 
   /// \brief Determines whether this is a function "main", which is
   /// the entry point into an executable program.
-  bool isMain(ASTContext &Context) const;
+  bool isMain() const;
 
   /// \brief Determines whether this function is a function with
   /// external, C linkage.
-  bool isExternC(ASTContext &Context) const;
+  bool isExternC() const;
 
   /// \brief Determines whether this is a global function.
   bool isGlobal() const;

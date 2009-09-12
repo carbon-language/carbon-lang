@@ -2239,7 +2239,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   // If this is a locally-scoped extern C variable, update the map of
   // such variables.
-  if (CurContext->isFunctionOrMethod() && NewVD->isExternC(Context) &&
+  if (CurContext->isFunctionOrMethod() && NewVD->isExternC() &&
       !NewVD->isInvalidDecl())
     RegisterLocallyScopedExternCDecl(NewVD, PrevDecl, S);
 
@@ -2329,7 +2329,7 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
     NewVD->setType(FixedTy);
   }
 
-  if (!PrevDecl && NewVD->isExternC(Context)) {
+  if (!PrevDecl && NewVD->isExternC()) {
     // Since we did not find anything by this name and we're declaring
     // an extern "C" variable, look for a non-visible extern "C"
     // declaration with the same name.
@@ -2779,7 +2779,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   // If this is a locally-scoped extern C function, update the
   // map of such names.
-  if (CurContext->isFunctionOrMethod() && NewFD->isExternC(Context)
+  if (CurContext->isFunctionOrMethod() && NewFD->isExternC()
       && !NewFD->isInvalidDecl())
     RegisterLocallyScopedExternCDecl(NewFD, PrevDecl, S);
 
@@ -2820,7 +2820,8 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
     return NewFD->setInvalidDecl();
   }
 
-  if (NewFD->isMain(Context)) CheckMain(NewFD);
+  if (NewFD->isMain()) 
+    CheckMain(NewFD);
 
   // Semantic checking for this function declaration (in isolation).
   if (getLangOptions().CPlusPlus) {
@@ -2877,7 +2878,7 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
     NewFD->setC99InlineDefinition(true);
 
   // Check for a previous declaration of this name.
-  if (!PrevDecl && NewFD->isExternC(Context)) {
+  if (!PrevDecl && NewFD->isExternC()) {
     // Since we did not find anything by this name and we're declaring
     // an extern "C" function, look for a non-visible extern "C"
     // declaration with the same name.
@@ -3289,7 +3290,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
       QualType InitType = Type;
       if (const ArrayType *Array = Context.getAsArrayType(Type))
         InitType = Array->getElementType();
-      if ((!Var->hasExternalStorage() && !Var->isExternC(Context)) &&
+      if ((!Var->hasExternalStorage() && !Var->isExternC()) &&
           InitType->isRecordType() && !InitType->isDependentType()) {
         if (!RequireCompleteType(Var->getLocation(), InitType,
                                  diag::err_invalid_incomplete_type_use)) {
@@ -3623,7 +3624,7 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
   //   definition itself provides a prototype. The aim is to detect
   //   global functions that fail to be declared in header files.
   if (!FD->isInvalidDecl() && FD->isGlobal() && !isa<CXXMethodDecl>(FD) &&
-      !FD->isMain(Context)) {
+      !FD->isMain()) {
     bool MissingPrototype = true;
     for (const FunctionDecl *Prev = FD->getPreviousDeclaration();
          Prev; Prev = Prev->getPreviousDeclaration()) {
@@ -3697,7 +3698,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
 
   if (FD) {
     FD->setBody(Body);
-    if (FD->isMain(Context))
+    if (FD->isMain())
       // C and C++ allow for main to automagically return 0.
       // Implements C++ [basic.start.main]p5 and C99 5.1.2.2.3.
       FD->setHasImplicitReturnZero(true);
