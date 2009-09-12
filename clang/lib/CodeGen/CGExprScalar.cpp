@@ -468,11 +468,13 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     // The source value may be an integer, or a pointer.
     if (isa<llvm::PointerType>(Src->getType())) {
       // Some heavy lifting for derived to base conversion.
+      // FIXME: This should be handled by EmitCast.
       if (const CXXRecordDecl *ClassDecl =
             SrcType->getCXXRecordDeclForPointerType())
         if (const CXXRecordDecl *BaseClassDecl =
               DstType->getCXXRecordDeclForPointerType())
-          Src = CGF.AddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl);
+          Src = CGF.GetAddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl,
+                                             /*NullCheckValue=*/false);
       return Builder.CreateBitCast(Src, DstTy, "conv");
     }
     assert(SrcType->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");

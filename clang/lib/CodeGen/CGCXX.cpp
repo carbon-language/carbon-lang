@@ -1498,8 +1498,10 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
                         const CXXRecordDecl *ClassDecl,
                         const CXXRecordDecl *BaseClassDecl, QualType Ty) {
   if (ClassDecl) {
-    Dest = AddressCXXOfBaseClass(Dest, ClassDecl, BaseClassDecl);
-    Src = AddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl) ;
+    Dest = GetAddressCXXOfBaseClass(Dest, ClassDecl, BaseClassDecl,
+                                    /*NullCheckValue=*/false);
+    Src = GetAddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl,
+                                   /*NullCheckValue=*/false);
   }
   if (BaseClassDecl->hasTrivialCopyConstructor()) {
     EmitAggregateCopy(Dest, Src, Ty);
@@ -1535,8 +1537,10 @@ void CodeGenFunction::EmitClassCopyAssignment(
                                         const CXXRecordDecl *BaseClassDecl,
                                         QualType Ty) {
   if (ClassDecl) {
-    Dest = AddressCXXOfBaseClass(Dest, ClassDecl, BaseClassDecl);
-    Src = AddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl) ;
+    Dest = GetAddressCXXOfBaseClass(Dest, ClassDecl, BaseClassDecl,
+                                    /*NullCheckValue=*/false);
+    Src = GetAddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl,
+                                   /*NullCheckValue=*/false);
   }
   if (BaseClassDecl->hasTrivialCopyAssignment()) {
     EmitAggregateCopy(Dest, Src, Ty);
@@ -1774,8 +1778,9 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       Type *BaseType = Member->getBaseClass();
       CXXRecordDecl *BaseClassDecl =
         cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
-      llvm::Value *V = AddressCXXOfBaseClass(LoadOfThis, ClassDecl,
-                                             BaseClassDecl);
+      llvm::Value *V = GetAddressCXXOfBaseClass(LoadOfThis, ClassDecl,
+                                                BaseClassDecl,
+                                                /*NullCheckValue=*/false);
       EmitCXXConstructorCall(Member->getConstructor(),
                              Ctor_Complete, V,
                              Member->const_arg_begin(),
@@ -1858,8 +1863,9 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       if (CXXConstructorDecl *BaseCX =
             BaseClassDecl->getDefaultConstructor(getContext())) {
         LoadOfThis = LoadCXXThis();
-        llvm::Value *V = AddressCXXOfBaseClass(LoadOfThis, ClassDecl,
-                                               BaseClassDecl);
+        llvm::Value *V = GetAddressCXXOfBaseClass(LoadOfThis, ClassDecl,
+                                                  BaseClassDecl,
+                                                  /*NullCheckValue=*/false);
         EmitCXXConstructorCall(BaseCX, Ctor_Complete, V, 0, 0);
       }
     }
@@ -1954,8 +1960,9 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
       CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(RT->getDecl());
       if (BaseClassDecl->hasTrivialDestructor())
         continue;
-      llvm::Value *V = AddressCXXOfBaseClass(LoadCXXThis(),
-                                             ClassDecl,BaseClassDecl);
+      llvm::Value *V = GetAddressCXXOfBaseClass(LoadCXXThis(),
+                                                ClassDecl, BaseClassDecl,
+                                                /*NullCheckValue=*/false);
       EmitCXXDestructorCall(BaseClassDecl->getDestructor(getContext()),
                             Dtor_Complete, V);
     }
@@ -2022,8 +2029,9 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
     return;
   for (int i = DestructedBases.size() -1; i >= 0; --i) {
     CXXRecordDecl *BaseClassDecl = DestructedBases[i];
-    llvm::Value *V = AddressCXXOfBaseClass(LoadCXXThis(),
-                                           ClassDecl,BaseClassDecl);
+    llvm::Value *V = GetAddressCXXOfBaseClass(LoadCXXThis(),
+                                              ClassDecl,BaseClassDecl, 
+                                              /*NullCheckValue=*/false);
     EmitCXXDestructorCall(BaseClassDecl->getDestructor(getContext()),
                           Dtor_Complete, V);
   }

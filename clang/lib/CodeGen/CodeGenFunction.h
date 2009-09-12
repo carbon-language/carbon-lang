@@ -573,13 +573,14 @@ public:
   /// generating code for an C++ member function.
   llvm::Value *LoadCXXThis();
 
-  /// AddressCXXOfBaseClass - This function will add the necessary delta
+  /// GetAddressCXXOfBaseClass - This function will add the necessary delta
   /// to the load of 'this' and returns address of the base class.
   // FIXME. This currently only does a derived to non-virtual base conversion.
   // Other kinds of conversions will come later.
-  llvm::Value *AddressCXXOfBaseClass(llvm::Value *ThisValue,
-                                     const CXXRecordDecl *ClassDecl,
-                                     const CXXRecordDecl *BaseClassDecl);
+  llvm::Value *GetAddressCXXOfBaseClass(llvm::Value *BaseValue,
+                                        const CXXRecordDecl *ClassDecl,
+                                        const CXXRecordDecl *BaseClassDecl,
+                                        bool NullCheckValue);
 
   void EmitClassAggrMemberwiseCopy(llvm::Value *DestValue,
                                    llvm::Value *SrcValue,
