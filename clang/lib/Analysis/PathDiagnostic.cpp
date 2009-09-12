@@ -207,7 +207,7 @@ PathDiagnosticRange PathDiagnosticLocation::asRange() const {
         // FIXME: We would like to always get the function body, even
         // when it needs to be de-serialized, but getting the
         // ASTContext here requires significant changes.
-        if (Stmt *Body = FD->getBodyIfAvailable()) {
+        if (Stmt *Body = FD->getBody()) {
           if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Body))
             return CS->getSourceRange();
           else

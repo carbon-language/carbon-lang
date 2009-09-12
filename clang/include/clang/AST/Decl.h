@@ -886,10 +886,6 @@ public:
     return getBody(Definition);
   }
 
-  /// \brief If the function has a body that is immediately available,
-  /// return it.
-  Stmt *getBodyIfAvailable() const;
-
   /// isThisDeclarationADefinition - Returns whether this specific
   /// declaration of the function is also a definition. This does not
   /// determine whether the function has been defined (e.g., in a

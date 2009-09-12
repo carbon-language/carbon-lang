@@ -115,9 +115,9 @@ void ASTViewer::HandleTopLevelSingleDecl(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     FD->print(llvm::errs());
 
-    if (FD->getBodyIfAvailable()) {
+    if (Stmt *Body = FD->getBody()) {
       llvm::errs() << '\n';
-      FD->getBodyIfAvailable()->viewAST();
+      Body->viewAST();
       llvm::errs() << '\n';
     }
     return;

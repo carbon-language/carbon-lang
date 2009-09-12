@@ -438,16 +438,6 @@ Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
   return 0;
 }
 
-Stmt *FunctionDecl::getBodyIfAvailable() const {
-  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
-    if (I->Body && !I->Body.isOffset()) {
-      return I->Body.get(0);
-    }
-  }
-
-  return 0;
-}
-
 void FunctionDecl::setBody(Stmt *B) {
   Body = B;
   if (B)
