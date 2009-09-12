@@ -79,7 +79,7 @@ Type* TypeSymbolTable::remove(iterator Entry) {
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  errs() << " Removing Value: " << Result->getName() << "\n";
+  errs() << " Removing Value: " << Result->getDescription() << "\n";
 #endif
 
   tmap.erase(Entry);
