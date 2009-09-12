@@ -466,17 +466,9 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   // some native types (like Obj-C id) may map to a pointer type.
   if (isa<llvm::PointerType>(DstTy)) {
     // The source value may be an integer, or a pointer.
-    if (isa<llvm::PointerType>(Src->getType())) {
-      // Some heavy lifting for derived to base conversion.
-      // FIXME: This should be handled by EmitCast.
-      if (const CXXRecordDecl *ClassDecl =
-            SrcType->getCXXRecordDeclForPointerType())
-        if (const CXXRecordDecl *BaseClassDecl =
-              DstType->getCXXRecordDeclForPointerType())
-          Src = CGF.GetAddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl,
-                                             /*NullCheckValue=*/false);
+    if (isa<llvm::PointerType>(Src->getType()))
       return Builder.CreateBitCast(Src, DstTy, "conv");
-    }
+
     assert(SrcType->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");
     // First, convert to the correct width so that we control the kind of
     // extension.
@@ -665,6 +657,22 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy,
   }
   case CastExpr::CK_NullToMemberPointer:
     return CGF.CGM.EmitNullConstant(DestTy);
+      
+  case CastExpr::CK_DerivedToBase: {
+    const RecordType *DerivedClassTy = 
+      E->getType()->getAs<PointerType>()->getPointeeType()->getAs<RecordType>();
+    CXXRecordDecl *DerivedClassDecl = 
+      cast<CXXRecordDecl>(DerivedClassTy->getDecl());
+
+    const RecordType *BaseClassTy = 
+      DestTy->getAs<PointerType>()->getPointeeType()->getAs<RecordType>();
+    CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseClassTy->getDecl());
+    
+    Value *Src = Visit(const_cast<Expr*>(E));
+    return CGF.GetAddressCXXOfBaseClass(Src, DerivedClassDecl, BaseClassDecl,
+                                        /*NullCheckValue=*/true);
+  }
+
   }
 
   // Handle cases where the source is an non-complex type.
