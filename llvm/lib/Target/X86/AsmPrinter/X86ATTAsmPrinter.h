@@ -45,6 +45,8 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   virtual const char *getPassName() const {
     return "X86 AT&T-Style Assembly Printer";
   }
+  
+  const X86Subtarget &getSubtarget() const { return *Subtarget; }
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
@@ -64,12 +66,6 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   
   // New MCInst printing stuff.
   void printInstruction(const MCInst *MI);
-  MCSymbol *GetPICBaseSymbol();
-  MCSymbol *GetGlobalAddressSymbol(const MachineOperand &MO);
-  MCSymbol *GetExternalSymbolSymbol(const MachineOperand &MO);
-  MCSymbol *GetJumpTableSymbol(const MachineOperand &MO);
-  MCSymbol *GetConstantPoolIndexSymbol(const MachineOperand &MO);
-  MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym);
 
 
   virtual void printMCInst(const MCInst *MI) { printInstruction(MI); }

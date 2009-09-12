@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-
+#include "X86MCInstLower.h"
 #include "X86ATTAsmPrinter.h"
 #include "X86MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -24,24 +24,32 @@
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
-MCSymbol *X86ATTAsmPrinter::GetPICBaseSymbol() {
+
+const X86Subtarget &X86MCInstLower::getSubtarget() const {
+  return AsmPrinter.getSubtarget();
+}
+
+
+MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
   // FIXME: the actual label generated doesn't matter here!  Just mangle in
   // something unique (the function number) with Private prefix.
   SmallString<60> Name;
   
-  if (Subtarget->isTargetDarwin()) {
-    raw_svector_ostream(Name) << 'L' << getFunctionNumber() << "$pb";
+  if (getSubtarget().isTargetDarwin()) {
+    raw_svector_ostream(Name) << 'L' << AsmPrinter.getFunctionNumber() << "$pb";
   } else {
-    assert(Subtarget->isTargetELF() && "Don't know how to print PIC label!");
-    raw_svector_ostream(Name) << ".Lllvm$" << getFunctionNumber()<<".$piclabel";
+    assert(getSubtarget().isTargetELF() && "Don't know how to print PIC label!");
+    raw_svector_ostream(Name) << ".Lllvm$" << AsmPrinter.getFunctionNumber()
+       << ".$piclabel";
   }
-  return OutContext.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateSymbol(Name.str());
 }
 
 
 /// LowerGlobalAddressOperand - Lower an MO_GlobalAddress operand to an
 /// MCOperand.
-MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
+MCSymbol *X86MCInstLower::
+GetGlobalAddressSymbol(const MachineOperand &MO) const {
   const GlobalValue *GV = MO.getGlobal();
   
   bool isImplicitlyPrivate = false;
@@ -54,8 +62,8 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
   SmallString<128> Name;
   Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
   
-  if (Subtarget->isTargetCygMing())
-    DecorateCygMingName(Name, GV);
+  if (getSubtarget().isTargetCygMing())
+    AsmPrinter.DecorateCygMingName(Name, GV);
   
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
@@ -72,35 +80,34 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
   case X86II::MO_DARWIN_NONLAZY:
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
-    MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
-    MCSymbol *&StubSym = GVStubs[Sym];
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+    MCSymbol *&StubSym = AsmPrinter.GVStubs[Sym];
     if (StubSym == 0) {
       Name.clear();
       Mang->getNameWithPrefix(Name, GV, false);
-      StubSym = OutContext.GetOrCreateSymbol(Name.str());
+      StubSym = Ctx.GetOrCreateSymbol(Name.str());
     }
     return Sym;
-    
   }
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
-    MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
-    MCSymbol *&StubSym = HiddenGVStubs[Sym];
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+    MCSymbol *&StubSym = AsmPrinter.HiddenGVStubs[Sym];
     if (StubSym == 0) {
       Name.clear();
       Mang->getNameWithPrefix(Name, GV, false);
-      StubSym = OutContext.GetOrCreateSymbol(Name.str());
+      StubSym = Ctx.GetOrCreateSymbol(Name.str());
     }
     return Sym;
   }
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
-    MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
-    MCSymbol *&StubSym = FnStubs[Sym];
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+    MCSymbol *&StubSym = AsmPrinter.FnStubs[Sym];
     if (StubSym == 0) {
       Name.clear();
       Mang->getNameWithPrefix(Name, GV, false);
-      StubSym = OutContext.GetOrCreateSymbol(Name.str());
+      StubSym = Ctx.GetOrCreateSymbol(Name.str());
     }
     return Sym;
   }
@@ -116,12 +123,13 @@ MCSymbol *X86ATTAsmPrinter::GetGlobalAddressSymbol(const MachineOperand &MO) {
   case X86II::MO_PLT:       Name += "@PLT";       break;
   }
   
-  return OutContext.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateSymbol(Name.str());
 }
 
-MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
+MCSymbol *X86MCInstLower::
+GetExternalSymbolSymbol(const MachineOperand &MO) const {
   SmallString<128> Name;
-  Name += MAI->getGlobalPrefix();
+  Name += AsmPrinter.MAI->getGlobalPrefix();
   Name += MO.getSymbolName();
   
   switch (MO.getTargetFlags()) {
@@ -138,11 +146,11 @@ MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
   }
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
-    MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.str());
-    MCSymbol *&StubSym = FnStubs[Sym];
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
+    MCSymbol *&StubSym = AsmPrinter.FnStubs[Sym];
     if (StubSym == 0) {
       Name.erase(Name.end()-5, Name.end());
-      StubSym = OutContext.GetOrCreateSymbol(Name.str());
+      StubSym = Ctx.GetOrCreateSymbol(Name.str());
     }
     return Sym;
   }
@@ -158,13 +166,13 @@ MCSymbol *X86ATTAsmPrinter::GetExternalSymbolSymbol(const MachineOperand &MO) {
   case X86II::MO_PLT:       Name += "@PLT";       break;
   }
   
-  return OutContext.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateSymbol(Name.str());
 }
 
-MCSymbol *X86ATTAsmPrinter::GetJumpTableSymbol(const MachineOperand &MO) {
+MCSymbol *X86MCInstLower::GetJumpTableSymbol(const MachineOperand &MO) const {
   SmallString<256> Name;
-  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "JTI"
-    << getFunctionNumber() << '_' << MO.getIndex();
+  raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix() << "JTI"
+    << AsmPrinter.getFunctionNumber() << '_' << MO.getIndex();
   
   switch (MO.getTargetFlags()) {
   default:
@@ -187,15 +195,15 @@ MCSymbol *X86ATTAsmPrinter::GetJumpTableSymbol(const MachineOperand &MO) {
   }
   
   // Create a symbol for the name.
-  return OutContext.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateSymbol(Name.str());
 }
 
 
-MCSymbol *X86ATTAsmPrinter::
-GetConstantPoolIndexSymbol(const MachineOperand &MO) {
+MCSymbol *X86MCInstLower::
+GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
   SmallString<256> Name;
-  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "CPI"
-  << getFunctionNumber() << '_' << MO.getIndex();
+  raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix() << "CPI"
+    << AsmPrinter.getFunctionNumber() << '_' << MO.getIndex();
   
   switch (MO.getTargetFlags()) {
   default:
@@ -218,14 +226,14 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) {
   }
   
   // Create a symbol for the name.
-  return OutContext.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateSymbol(Name.str());
 }
 
-MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
-                                               MCSymbol *Sym) {
+MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
+                                             MCSymbol *Sym) const {
   // FIXME: We would like an efficient form for this, so we don't have to do a
   // lot of extra uniquing.
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, OutContext);
+  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
   
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
@@ -251,8 +259,8 @@ MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
     // Subtract the pic base.
     Expr = MCBinaryExpr::CreateSub(Expr, 
                                    MCSymbolRefExpr::Create(GetPICBaseSymbol(),
-                                                           OutContext),
-                                   OutContext);
+                                                           Ctx),
+                                   Ctx);
     break;
   case X86II::MO_GOT_ABSOLUTE_ADDRESS: {
     // For this, we want to print something like:
@@ -260,24 +268,25 @@ MCOperand X86ATTAsmPrinter::LowerSymbolOperand(const MachineOperand &MO,
     // However, we can't generate a ".", so just emit a new label here and refer
     // to it.  We know that this operand flag occurs at most once per function.
     SmallString<64> Name;
-    raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "picbaseref"
-      << getFunctionNumber();
-    MCSymbol *DotSym = OutContext.GetOrCreateSymbol(Name.str());
-    OutStreamer.EmitLabel(DotSym);
+    raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix()
+      << "picbaseref" << AsmPrinter.getFunctionNumber();
+    MCSymbol *DotSym = Ctx.GetOrCreateSymbol(Name.str());
+// FIXME: This instruction should be lowered before we get here...    
+    AsmPrinter.OutStreamer.EmitLabel(DotSym);
 
-    const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
+    const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, Ctx);
     const MCExpr *PICBase = MCSymbolRefExpr::Create(GetPICBaseSymbol(),
-                                                    OutContext);
-    DotExpr = MCBinaryExpr::CreateSub(DotExpr, PICBase, OutContext);
-    Expr = MCBinaryExpr::CreateAdd(Expr, DotExpr, OutContext);
+                                                    Ctx);
+    DotExpr = MCBinaryExpr::CreateSub(DotExpr, PICBase, Ctx);
+    Expr = MCBinaryExpr::CreateAdd(Expr, DotExpr, Ctx);
     break;      
   }
   }
   
   if (!MO.isJTI() && MO.getOffset())
-    Expr = MCBinaryExpr::CreateAdd(Expr, MCConstantExpr::Create(MO.getOffset(),
-                                                                OutContext),
-                                   OutContext);
+    Expr = MCBinaryExpr::CreateAdd(Expr,
+                                   MCConstantExpr::Create(MO.getOffset(), Ctx),
+                                   Ctx);
   return MCOperand::CreateExpr(Expr);
 }
 
@@ -303,9 +312,107 @@ static void lower_lea64_32mem(MCInst *MI, unsigned OpNo) {
 }
 
 
+
+void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
+  OutMI.setOpcode(MI->getOpcode());
+  
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    
+    MCOperand MCOp;
+    switch (MO.getType()) {
+    default:
+      MI->dump();
+      llvm_unreachable("unknown operand type");
+    case MachineOperand::MO_Register:
+      MCOp = MCOperand::CreateReg(MO.getReg());
+      break;
+    case MachineOperand::MO_Immediate:
+      MCOp = MCOperand::CreateImm(MO.getImm());
+      break;
+    case MachineOperand::MO_MachineBasicBlock:
+// FIXME: Kill MBBLabel operand type!
+      MCOp = MCOperand::CreateMBBLabel(AsmPrinter.getFunctionNumber(), 
+                                       MO.getMBB()->getNumber());
+      break;
+    case MachineOperand::MO_GlobalAddress:
+      MCOp = LowerSymbolOperand(MO, GetGlobalAddressSymbol(MO));
+      break;
+    case MachineOperand::MO_ExternalSymbol:
+      MCOp = LowerSymbolOperand(MO, GetExternalSymbolSymbol(MO));
+      break;
+    case MachineOperand::MO_JumpTableIndex:
+      MCOp = LowerSymbolOperand(MO, GetJumpTableSymbol(MO));
+      break;
+    case MachineOperand::MO_ConstantPoolIndex:
+      MCOp = LowerSymbolOperand(MO, GetConstantPoolIndexSymbol(MO));
+      break;
+    }
+    
+    OutMI.addOperand(MCOp);
+  }
+  
+  // Handle a few special cases to eliminate operand modifiers.
+  switch (OutMI.getOpcode()) {
+  case X86::LEA64_32r: // Handle 'subreg rewriting' for the lea64_32mem operand.
+    lower_lea64_32mem(&OutMI, 1);
+    break;
+  case X86::MOV16r0:
+    OutMI.setOpcode(X86::MOV32r0);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOVZX16rr8:
+    OutMI.setOpcode(X86::MOVZX32rr8);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOVZX16rm8:
+    OutMI.setOpcode(X86::MOVZX32rm8);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOVSX16rr8:
+    OutMI.setOpcode(X86::MOVSX32rr8);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOVSX16rm8:
+    OutMI.setOpcode(X86::MOVSX32rm8);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOVZX64rr32:
+    OutMI.setOpcode(X86::MOV32rr);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOVZX64rm32:
+    OutMI.setOpcode(X86::MOV32rm);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOV64ri64i32:
+    OutMI.setOpcode(X86::MOV32ri);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOVZX64rr8:
+    OutMI.setOpcode(X86::MOVZX32rr8);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOVZX64rm8:
+    OutMI.setOpcode(X86::MOVZX32rm8);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOVZX64rr16:
+    OutMI.setOpcode(X86::MOVZX32rr16);
+    lower_subreg32(&OutMI, 0);
+    break;
+  case X86::MOVZX64rm16:
+    OutMI.setOpcode(X86::MOVZX32rm16);
+    lower_subreg32(&OutMI, 0);
+    break;
+  }
+}
+
+
+
 void X86ATTAsmPrinter::
 printInstructionThroughMCStreamer(const MachineInstr *MI) {
-  MCInst TmpInst;
+  X86MCInstLower MCInstLowering(OutContext, Mang, *this);
   switch (MI->getOpcode()) {
   case TargetInstrInfo::DBG_LABEL:
   case TargetInstrInfo::EH_LABEL:
@@ -320,6 +427,7 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
     printImplicitDef(MI);
     return;
   case X86::MOVPC32r: {
+    MCInst TmpInst;
     // This is a pseudo op for a two instruction sequence with a label, which
     // looks like:
     //     call "L1$pb"
@@ -327,7 +435,7 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
     //     popl %esi
     
     // Emit the call.
-    MCSymbol *PICBase = GetPICBaseSymbol();
+    MCSymbol *PICBase = MCInstLowering.GetPICBaseSymbol();
     TmpInst.setOpcode(X86::CALLpcrel32);
     // FIXME: We would like an efficient form for this, so we don't have to do a
     // lot of extra uniquing.
@@ -347,98 +455,9 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
     }
   }
   
-  TmpInst.setOpcode(MI->getOpcode());
+  MCInst TmpInst;
+  MCInstLowering.Lower(MI, TmpInst);
   
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    
-    MCOperand MCOp;
-    switch (MO.getType()) {
-    default:
-      O.flush();
-      errs() << "Cannot lower operand #" << i << " of :" << *MI;
-      llvm_unreachable("Unimp");
-    case MachineOperand::MO_Register:
-      MCOp = MCOperand::CreateReg(MO.getReg());
-      break;
-    case MachineOperand::MO_Immediate:
-      MCOp = MCOperand::CreateImm(MO.getImm());
-      break;
-    case MachineOperand::MO_MachineBasicBlock:
-      MCOp = MCOperand::CreateMBBLabel(getFunctionNumber(), 
-                                       MO.getMBB()->getNumber());
-      break;
-    case MachineOperand::MO_GlobalAddress:
-      MCOp = LowerSymbolOperand(MO, GetGlobalAddressSymbol(MO));
-      break;
-    case MachineOperand::MO_ExternalSymbol:
-      MCOp = LowerSymbolOperand(MO, GetExternalSymbolSymbol(MO));
-      break;
-    case MachineOperand::MO_JumpTableIndex:
-      MCOp = LowerSymbolOperand(MO, GetJumpTableSymbol(MO));
-      break;
-    case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = LowerSymbolOperand(MO, GetConstantPoolIndexSymbol(MO));
-      break;
-    }
-    
-    TmpInst.addOperand(MCOp);
-  }
-  
-  // Handle a few special cases to eliminate operand modifiers.
-  switch (TmpInst.getOpcode()) {
-  case X86::LEA64_32r: // Handle 'subreg rewriting' for the lea64_32mem operand.
-    lower_lea64_32mem(&TmpInst, 1);
-    break;
-  case X86::MOV16r0:
-    TmpInst.setOpcode(X86::MOV32r0);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  case X86::MOVZX16rr8:
-    TmpInst.setOpcode(X86::MOVZX32rr8);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  case X86::MOVZX16rm8:
-    TmpInst.setOpcode(X86::MOVZX32rm8);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  case X86::MOVSX16rr8:
-    TmpInst.setOpcode(X86::MOVSX32rr8);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  case X86::MOVSX16rm8:
-    TmpInst.setOpcode(X86::MOVSX32rm8);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  case X86::MOVZX64rr32:
-    TmpInst.setOpcode(X86::MOV32rr);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  case X86::MOVZX64rm32:
-    TmpInst.setOpcode(X86::MOV32rm);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  case X86::MOV64ri64i32:
-    TmpInst.setOpcode(X86::MOV32ri);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  case X86::MOVZX64rr8:
-    TmpInst.setOpcode(X86::MOVZX32rr8);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  case X86::MOVZX64rm8:
-    TmpInst.setOpcode(X86::MOVZX32rm8);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  case X86::MOVZX64rr16:
-    TmpInst.setOpcode(X86::MOVZX32rr16);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  case X86::MOVZX64rm16:
-    TmpInst.setOpcode(X86::MOVZX32rm16);
-    lower_subreg32(&TmpInst, 0);
-    break;
-  }
   
   printInstruction(&TmpInst);
 }
