@@ -1,7 +1,7 @@
 /*
  * Check that we can compile helloworld
  * RUN: llvmc %s -o %t
- * RUN: ./%t | grep hello
+ * RUN: %abs_tmp | grep hello
  */
 
 #include <stdio.h>

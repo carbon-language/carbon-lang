@@ -1,6 +1,6 @@
 // Check that we can compile files of different types together.
 // RUN: llvmc %s %p/../test_data/together.c -o %t
-// RUN: ./%t | grep hello
+// RUN: %abs_tmp | grep hello
 
 extern "C" void test();
 

@@ -1,7 +1,7 @@
 /*
  * Check that the 'sink' options work.
  * RUN: llvmc -v -Wall %s -o %t |& grep "Wall"
- * RUN: ./%t | grep hello
+ * RUN: %abs_tmp | grep hello
  */
 
 #include <stdio.h>

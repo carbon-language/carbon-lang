@@ -1,7 +1,7 @@
 /*
  * Check that the -opt switch works.
  * RUN: llvmc %s -opt -o %t
- * RUN: ./%t | grep hello
+ * RUN: %abs_tmp | grep hello
  */
 
 #include <stdio.h>
