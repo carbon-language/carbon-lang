@@ -107,7 +107,8 @@ PreVer("preverify", "Preliminary module verification");
 static const PassInfo *const PreVerifyID = &PreVer;
 
 namespace {
-  struct Verifier : public FunctionPass, public InstVisitor<Verifier> {
+  struct Verifier : public FunctionPass, public InstVisitor<Verifier>,
+                    public AbstractTypeUser {
     static char ID; // Pass ID, replacement for typeid
     bool Broken;          // Is this module found to be broken?
     bool RealPass;        // Are we not being run by a PassManager?
@@ -126,7 +127,7 @@ namespace {
     SmallPtrSet<Instruction*, 16> InstsInThisBlock;
 
     /// CheckedTypes - keep track of the types that have been checked already.
-    SmallSet<PATypeHolder, 16> CheckedTypes;
+    SmallSet<const Type *, 16> CheckedTypes;
 
     Verifier()
       : FunctionPass(&ID), 
@@ -336,6 +337,13 @@ namespace {
       WriteType(T3);
       Broken = true;
     }
+
+    // Abstract type user interface.
+    void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
+      CheckedTypes.erase(OldTy);
+    }
+    void typeBecameConcrete(const DerivedType *AbsTy) {}
+    void dump() const {}
   };
 } // End anonymous namespace
 
