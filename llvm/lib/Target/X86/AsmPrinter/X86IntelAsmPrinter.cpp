@@ -214,6 +214,11 @@ static void PrintRegName(raw_ostream &O, StringRef RegName) {
     O << (char)toupper(RegName[i]);
 }
 
+void X86IntelAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
+                                      const char *Modifier) {
+  printOp(MI->getOperand(OpNo), Modifier);
+}
+
 void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
                                  const char *Modifier) {
   switch (MO.getType()) {
@@ -226,7 +231,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
                     ((strcmp(Modifier,"subreg16") == 0) ? MVT::i16 :MVT::i8));
       Reg = getX86SubSuperRegister(Reg, VT);
     }
-    PrintRegName(O, TRI->getAsmName(Reg));
+    PrintRegName(O, getRegisterName(Reg));
     return;
   }
   case MachineOperand::MO_Immediate:
@@ -399,7 +404,7 @@ bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,
     break;
   }
 
-  PrintRegName(O, TRI->getAsmName(Reg));
+  PrintRegName(O, getRegisterName(Reg));
   return false;
 }
 

@@ -48,7 +48,7 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 //===----------------------------------------------------------------------===//
 
 void X86ATTAsmPrinter::printMCInst(const MCInst *MI) {
-  X86ATTInstPrinter(O, MAI, TRI).printInstruction(MI);
+  X86ATTInstPrinter(O, MAI).printInstruction(MI);
 }
 
 void X86ATTAsmPrinter::PrintPICBaseSymbol() const {

@@ -19,7 +19,6 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Target/TargetRegisterInfo.h"  // FIXME: REMOVE.
 using namespace llvm;
 
 // Include the auto-generated portion of the assembly writer.
@@ -70,7 +69,7 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
-    O << '%' << TRI->getAsmName(Op.getReg());
+    O << '%' << getRegisterName(Op.getReg());
     return;
   } else if (Op.isImm()) {
     O << '$' << Op.getImm();
