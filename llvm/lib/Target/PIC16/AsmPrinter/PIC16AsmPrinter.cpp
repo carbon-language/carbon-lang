@@ -131,10 +131,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
 
   switch (MO.getType()) {
     case MachineOperand::MO_Register:
-      if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
-        O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
-      else
-        llvm_unreachable("not implemented");
+      O << getRegisterName(MO.getReg());
       return;
 
     case MachineOperand::MO_Immediate:

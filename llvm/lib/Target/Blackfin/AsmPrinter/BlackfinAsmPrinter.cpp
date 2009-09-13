@@ -172,7 +172,7 @@ void BlackfinAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   case MachineOperand::MO_Register:
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            "Virtual registers should be already mapped!");
-    O << RI.get(MO.getReg()).AsmName;
+    O << getRegisterName(MO.getReg());
     break;
 
   case MachineOperand::MO_Immediate:

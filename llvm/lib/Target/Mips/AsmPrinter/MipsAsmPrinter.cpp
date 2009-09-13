@@ -189,9 +189,9 @@ void MipsAsmPrinter::emitFrameDirective(MachineFunction &MF) {
   unsigned stackSize = MF.getFrameInfo()->getStackSize();
 
 
-  O << "\t.frame\t" << '$' << LowercaseString(RI.get(stackReg).AsmName)
+  O << "\t.frame\t" << '$' << LowercaseString(getRegisterName(stackReg))
                     << ',' << stackSize << ','
-                    << '$' << LowercaseString(RI.get(returnReg).AsmName)
+                    << '$' << LowercaseString(getRegisterName(returnReg))
                     << '\n';
 }
 
@@ -314,7 +314,6 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
 
 void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand(opNum);
-  const TargetRegisterInfo  &RI = *TM.getRegisterInfo();
   bool closeP = false;
 
   if (MO.getTargetFlags())
@@ -337,13 +336,9 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     break;
   }
 
-  switch (MO.getType()) 
-  {
+  switch (MO.getType()) {
     case MachineOperand::MO_Register:
-      if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
-        O << '$' << LowercaseString (RI.get(MO.getReg()).AsmName);
-      else
-        O << '$' << MO.getReg();
+      O << '$' << LowercaseString(getRegisterName(MO.getReg()));
       break;
 
     case MachineOperand::MO_Immediate:

@@ -163,9 +163,7 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   const MachineOperand &MO = MI->getOperand(OpNum);
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    assert (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
-            "Virtual registers should be already mapped!");
-    O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
+    O << getRegisterName(MO.getReg());
     return;
   case MachineOperand::MO_Immediate:
     if (!Modifier || strcmp(Modifier, "nohash"))

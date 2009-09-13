@@ -75,7 +75,7 @@ void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum)
   if (MO.getType() == MachineOperand::MO_Register) {
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            "Not physreg??");
-    O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
+    O << getRegisterName(MO.getReg());
   } else if (MO.isImm()) {
     O << MO.getImm();
     assert(MO.getImm() < (1 << 30));
@@ -86,11 +86,9 @@ void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum)
 
 
 void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
-  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
-
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    O << RI.get(MO.getReg()).AsmName;
+    O << getRegisterName(MO.getReg());
     return;
 
   case MachineOperand::MO_Immediate:

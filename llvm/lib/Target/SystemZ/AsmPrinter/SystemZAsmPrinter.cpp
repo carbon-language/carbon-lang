@@ -223,7 +223,7 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
         assert(0 && "Invalid subreg modifier");
     }
 
-    O << '%' << TRI->getAsmName(Reg);
+    O << '%' << getRegisterName(Reg);
     return;
   }
   case MachineOperand::MO_Immediate:

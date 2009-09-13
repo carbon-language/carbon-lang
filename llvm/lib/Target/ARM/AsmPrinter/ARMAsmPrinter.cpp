@@ -314,15 +314,15 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
         unsigned DRegLo = TRI->getSubReg(Reg, 5); // arm_dsubreg_0
         unsigned DRegHi = TRI->getSubReg(Reg, 6); // arm_dsubreg_1
         O << '{'
-          << TRI->getAsmName(DRegLo) << ',' << TRI->getAsmName(DRegHi)
+          << getRegisterName(DRegLo) << ',' << getRegisterName(DRegHi)
           << '}';
       } else if (Modifier && strcmp(Modifier, "lane") == 0) {
         unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);
         unsigned DReg = TRI->getMatchingSuperReg(Reg, RegNum & 1 ? 0 : 1,
                                                  &ARM::DPRRegClass);
-        O << TRI->getAsmName(DReg) << '[' << (RegNum & 1) << ']';
+        O << getRegisterName(DReg) << '[' << (RegNum & 1) << ']';
       } else {
-        O << TRI->getAsmName(Reg);
+        O << getRegisterName(Reg);
       }
     } else
       llvm_unreachable("not implemented");
@@ -428,8 +428,7 @@ void ARMAsmPrinter::printSORegOperand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO2 = MI->getOperand(Op+1);
   const MachineOperand &MO3 = MI->getOperand(Op+2);
 
-  assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
-  O << TRI->getAsmName(MO1.getReg());
+  O << getRegisterName(MO1.getReg());
 
   // Print the shift opc.
   O << ", "
@@ -437,8 +436,7 @@ void ARMAsmPrinter::printSORegOperand(const MachineInstr *MI, int Op) {
     << " ";
 
   if (MO2.getReg()) {
-    assert(TargetRegisterInfo::isPhysicalRegister(MO2.getReg()));
-    O << TRI->getAsmName(MO2.getReg());
+    O << getRegisterName(MO2.getReg());
     assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);
   } else {
     O << "#" << ARM_AM::getSORegOffset(MO3.getImm());
@@ -455,7 +453,7 @@ void ARMAsmPrinter::printAddrMode2Operand(const MachineInstr *MI, int Op) {
     return;
   }
 
-  O << "[" << TRI->getAsmName(MO1.getReg());
+  O << "[" << getRegisterName(MO1.getReg());
 
   if (!MO2.getReg()) {
     if (ARM_AM::getAM2Offset(MO3.getImm()))  // Don't print +0.
@@ -468,7 +466,7 @@ void ARMAsmPrinter::printAddrMode2Operand(const MachineInstr *MI, int Op) {
 
   O << ", "
     << (char)ARM_AM::getAM2Op(MO3.getImm())
-    << TRI->getAsmName(MO2.getReg());
+    << getRegisterName(MO2.getReg());
 
   if (unsigned ShImm = ARM_AM::getAM2Offset(MO3.getImm()))
     O << ", "
@@ -491,7 +489,7 @@ void ARMAsmPrinter::printAddrMode2OffsetOperand(const MachineInstr *MI, int Op){
   }
 
   O << (char)ARM_AM::getAM2Op(MO2.getImm())
-    << TRI->getAsmName(MO1.getReg());
+    << getRegisterName(MO1.getReg());
 
   if (unsigned ShImm = ARM_AM::getAM2Offset(MO2.getImm()))
     O << ", "
@@ -505,12 +503,12 @@ void ARMAsmPrinter::printAddrMode3Operand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO3 = MI->getOperand(Op+2);
 
   assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
-  O << "[" << TRI->getAsmName(MO1.getReg());
+  O << "[" << getRegisterName(MO1.getReg());
 
   if (MO2.getReg()) {
     O << ", "
       << (char)ARM_AM::getAM3Op(MO3.getImm())
-      << TRI->getAsmName(MO2.getReg())
+      << getRegisterName(MO2.getReg())
       << "]";
     return;
   }
@@ -528,7 +526,7 @@ void ARMAsmPrinter::printAddrMode3OffsetOperand(const MachineInstr *MI, int Op){
 
   if (MO1.getReg()) {
     O << (char)ARM_AM::getAM3Op(MO2.getImm())
-      << TRI->getAsmName(MO1.getReg());
+      << getRegisterName(MO1.getReg());
     return;
   }
 
@@ -588,13 +586,13 @@ void ARMAsmPrinter::printAddrMode5Operand(const MachineInstr *MI, int Op,
     return;
   } else if (Modifier && strcmp(Modifier, "base") == 0) {
     // Used for FSTM{D|S} and LSTM{D|S} operations.
-    O << TRI->getAsmName(MO1.getReg());
+    O << getRegisterName(MO1.getReg());
     if (ARM_AM::getAM5WBFlag(MO2.getImm()))
       O << "!";
     return;
   }
 
-  O << "[" << TRI->getAsmName(MO1.getReg());
+  O << "[" << getRegisterName(MO1.getReg());
 
   if (unsigned ImmOffs = ARM_AM::getAM5Offset(MO2.getImm())) {
     O << ", #"
@@ -610,13 +608,13 @@ void ARMAsmPrinter::printAddrMode6Operand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO3 = MI->getOperand(Op+2);
 
   // FIXME: No support yet for specifying alignment.
-  O << "[" << TRI->getAsmName(MO1.getReg()) << "]";
+  O << "[" << getRegisterName(MO1.getReg()) << "]";
 
   if (ARM_AM::getAM6WBFlag(MO3.getImm())) {
     if (MO2.getReg() == 0)
       O << "!";
     else
-      O << ", " << TRI->getAsmName(MO2.getReg());
+      O << ", " << getRegisterName(MO2.getReg());
   }
 }
 
@@ -629,7 +627,7 @@ void ARMAsmPrinter::printAddrModePCOperand(const MachineInstr *MI, int Op,
 
   const MachineOperand &MO1 = MI->getOperand(Op);
   assert(TargetRegisterInfo::isPhysicalRegister(MO1.getReg()));
-  O << "[pc, +" << TRI->getAsmName(MO1.getReg()) << "]";
+  O << "[pc, +" << getRegisterName(MO1.getReg()) << "]";
 }
 
 void
@@ -663,8 +661,8 @@ void
 ARMAsmPrinter::printThumbAddrModeRROperand(const MachineInstr *MI, int Op) {
   const MachineOperand &MO1 = MI->getOperand(Op);
   const MachineOperand &MO2 = MI->getOperand(Op+1);
-  O << "[" << TRI->getAsmName(MO1.getReg());
-  O << ", " << TRI->getAsmName(MO2.getReg()) << "]";
+  O << "[" << getRegisterName(MO1.getReg());
+  O << ", " << getRegisterName(MO2.getReg()) << "]";
 }
 
 void
@@ -679,9 +677,9 @@ ARMAsmPrinter::printThumbAddrModeRI5Operand(const MachineInstr *MI, int Op,
     return;
   }
 
-  O << "[" << TRI->getAsmName(MO1.getReg());
+  O << "[" << getRegisterName(MO1.getReg());
   if (MO3.getReg())
-    O << ", " << TRI->getAsmName(MO3.getReg());
+    O << ", " << getRegisterName(MO3.getReg());
   else if (unsigned ImmOffs = MO2.getImm()) {
     O << ", #" << ImmOffs;
     if (Scale > 1)
@@ -706,7 +704,7 @@ ARMAsmPrinter::printThumbAddrModeS4Operand(const MachineInstr *MI, int Op) {
 void ARMAsmPrinter::printThumbAddrModeSPOperand(const MachineInstr *MI,int Op) {
   const MachineOperand &MO1 = MI->getOperand(Op);
   const MachineOperand &MO2 = MI->getOperand(Op+1);
-  O << "[" << TRI->getAsmName(MO1.getReg());
+  O << "[" << getRegisterName(MO1.getReg());
   if (unsigned ImmOffs = MO2.getImm())
     O << ", #" << ImmOffs << " * 4";
   O << "]";
@@ -724,7 +722,7 @@ void ARMAsmPrinter::printT2SOOperand(const MachineInstr *MI, int OpNum) {
 
   unsigned Reg = MO1.getReg();
   assert(TargetRegisterInfo::isPhysicalRegister(Reg));
-  O << TRI->getAsmName(Reg);
+  O << getRegisterName(Reg);
 
   // Print the shift opc.
   O << ", "
@@ -740,7 +738,7 @@ void ARMAsmPrinter::printT2AddrModeImm12Operand(const MachineInstr *MI,
   const MachineOperand &MO1 = MI->getOperand(OpNum);
   const MachineOperand &MO2 = MI->getOperand(OpNum+1);
 
-  O << "[" << TRI->getAsmName(MO1.getReg());
+  O << "[" << getRegisterName(MO1.getReg());
 
   unsigned OffImm = MO2.getImm();
   if (OffImm)  // Don't print +0.
@@ -753,7 +751,7 @@ void ARMAsmPrinter::printT2AddrModeImm8Operand(const MachineInstr *MI,
   const MachineOperand &MO1 = MI->getOperand(OpNum);
   const MachineOperand &MO2 = MI->getOperand(OpNum+1);
 
-  O << "[" << TRI->getAsmName(MO1.getReg());
+  O << "[" << getRegisterName(MO1.getReg());
 
   int32_t OffImm = (int32_t)MO2.getImm();
   // Don't print +0.
@@ -769,7 +767,7 @@ void ARMAsmPrinter::printT2AddrModeImm8s4Operand(const MachineInstr *MI,
   const MachineOperand &MO1 = MI->getOperand(OpNum);
   const MachineOperand &MO2 = MI->getOperand(OpNum+1);
 
-  O << "[" << TRI->getAsmName(MO1.getReg());
+  O << "[" << getRegisterName(MO1.getReg());
 
   int32_t OffImm = (int32_t)MO2.getImm() / 4;
   // Don't print +0.
@@ -797,10 +795,10 @@ void ARMAsmPrinter::printT2AddrModeSoRegOperand(const MachineInstr *MI,
   const MachineOperand &MO2 = MI->getOperand(OpNum+1);
   const MachineOperand &MO3 = MI->getOperand(OpNum+2);
 
-  O << "[" << TRI->getAsmName(MO1.getReg());
+  O << "[" << getRegisterName(MO1.getReg());
 
   assert(MO2.getReg() && "Invalid so_reg load / store address!");
-  O << ", " << TRI->getAsmName(MO2.getReg());
+  O << ", " << getRegisterName(MO2.getReg());
 
   unsigned ShAmt = MO3.getImm();
   if (ShAmt) {
@@ -952,7 +950,7 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
 }
 
 void ARMAsmPrinter::printTBAddrMode(const MachineInstr *MI, int OpNum) {
-  O << "[pc, " << TRI->getAsmName(MI->getOperand(OpNum).getReg());
+  O << "[pc, " << getRegisterName(MI->getOperand(OpNum).getReg());
   if (MI->getOpcode() == ARM::t2TBH)
     O << ", lsl #1";
   O << ']';
@@ -972,7 +970,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
     default: return true;  // Unknown modifier.
     case 'a': // Print as a memory address.
       if (MI->getOperand(OpNum).isReg()) {
-        O << "[" << TRI->getAsmName(MI->getOperand(OpNum).getReg()) << "]";
+        O << "[" << getRegisterName(MI->getOperand(OpNum).getReg()) << "]";
         return false;
       }
       // Fallthrough

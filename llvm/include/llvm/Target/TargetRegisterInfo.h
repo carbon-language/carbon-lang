@@ -368,12 +368,6 @@ public:
     return get(RegNo).SuperRegs;
   }
 
-  /// getAsmName - Return the symbolic target-specific name for the
-  /// specified physical register.
-  const char *getAsmName(unsigned RegNo) const {
-    return get(RegNo).AsmName;
-  }
-
   /// getName - Return the human-readable symbolic target-specific name for the
   /// specified physical register.
   const char *getName(unsigned RegNo) const {

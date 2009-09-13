@@ -315,7 +315,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand(opNum);
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
+    O << getRegisterName(MO.getReg());
     break;
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
@@ -359,11 +359,8 @@ void XCoreAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   // Check for mov mnemonic
   unsigned src, dst, srcSR, dstSR;
   if (TM.getInstrInfo()->isMoveInstr(*MI, src, dst, srcSR, dstSR)) {
-    O << "\tmov ";
-    O << TM.getRegisterInfo()->get(dst).AsmName;
-    O << ", ";
-    O << TM.getRegisterInfo()->get(src).AsmName;
-    O << "\n";
+    O << "\tmov " << getRegisterName(dst) << ", ";
+    O << getRegisterName(src) << '\n';
     return;
   }
   printInstruction(MI);

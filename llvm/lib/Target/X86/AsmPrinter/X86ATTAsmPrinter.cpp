@@ -441,8 +441,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   switch (MO.getType()) {
   default: llvm_unreachable("unknown operand type!");
   case MachineOperand::MO_Register: {
-    assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
-           "Virtual registers should not make it this far!");
     O << '%';
     unsigned Reg = MO.getReg();
     if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
@@ -451,7 +449,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                     ((strcmp(Modifier+6,"16") == 0) ? MVT::i16 : MVT::i8));
       Reg = getX86SubSuperRegister(Reg, VT);
     }
-    O << TRI->getAsmName(Reg);
+    O << X86ATTInstPrinter::getRegisterName(Reg);
     return;
   }
 
@@ -611,7 +609,7 @@ bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode) {
     break;
   }
 
-  O << '%'<< TRI->getAsmName(Reg);
+  O << '%' << X86ATTInstPrinter::getRegisterName(Reg);
   return false;
 }
 

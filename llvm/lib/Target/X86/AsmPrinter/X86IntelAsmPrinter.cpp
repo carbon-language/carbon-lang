@@ -223,7 +223,6 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
                                  const char *Modifier) {
   switch (MO.getType()) {
   case MachineOperand::MO_Register: {
-    assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()));
     unsigned Reg = MO.getReg();
     if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
       EVT VT = (strcmp(Modifier,"subreg64") == 0) ?
