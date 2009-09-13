@@ -84,10 +84,6 @@ namespace llvm {
     /// is "l" on Darwin, currently used for some ObjC metadata.
     const char *LinkerPrivateGlobalPrefix;   // Defaults to ""
     
-    /// JumpTableSpecialLabelPrefix - If not null, a extra (dead) label is
-    /// emitted before jump tables with the specified prefix.
-    const char *JumpTableSpecialLabelPrefix; // Default to null.
-    
     /// GlobalVarAddrPrefix/Suffix - If these are nonempty, these strings
     /// will enclose any GlobalVariable (that isn't a function)
     ///
@@ -368,9 +364,6 @@ namespace llvm {
     }
     const char *getLinkerPrivateGlobalPrefix() const {
       return LinkerPrivateGlobalPrefix;
-    }
-    const char *getJumpTableSpecialLabelPrefix() const {
-      return JumpTableSpecialLabelPrefix;
     }
     const char *getGlobalVarAddrPrefix() const {
       return GlobalVarAddrPrefix;
