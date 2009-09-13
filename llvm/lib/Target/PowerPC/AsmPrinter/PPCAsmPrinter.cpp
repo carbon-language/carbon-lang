@@ -120,7 +120,7 @@ namespace {
     /// machine instruction was sufficiently described to print it, otherwise it
     /// returns false.
     void printInstruction(const MachineInstr *MI);
-    const char *getRegisterName(unsigned RegNo) const;
+    static const char *getRegisterName(unsigned RegNo);
 
 
     void printMachineInstruction(const MachineInstr *MI);

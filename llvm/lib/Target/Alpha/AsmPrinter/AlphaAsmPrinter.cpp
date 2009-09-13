@@ -49,7 +49,7 @@ namespace {
       return "Alpha Assembly Printer";
     }
     void printInstruction(const MachineInstr *MI);
-    const char *getRegisterName(unsigned RegNo) const;
+    static const char *getRegisterName(unsigned RegNo);
 
     void printOp(const MachineOperand &MO, bool IsCallOp = false);
     void printOperand(const MachineInstr *MI, int opNum);

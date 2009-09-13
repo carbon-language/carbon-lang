@@ -38,7 +38,7 @@ struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
   /// machine instruction was sufficiently described to print it, otherwise it
   /// returns false.
   void printInstruction(const MachineInstr *MI);
-  const char *getRegisterName(unsigned RegNo) const;
+  static const char *getRegisterName(unsigned RegNo);
 
 
   // This method is used by the tablegen'erated instruction printer.

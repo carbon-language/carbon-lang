@@ -804,7 +804,7 @@ void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
   "/// from the register set description.  This returns the assembler name\n"
   "/// for the specified register.\n"
   "const char *" << Target.getName() << ClassName
-  << "::getRegisterName(unsigned RegNo) const {\n"
+  << "::getRegisterName(unsigned RegNo) {\n"
   << "  assert(RegNo && RegNo < " << (Registers.size()+1)
   << " && \"Invalid register number!\");\n"
   << "\n"
