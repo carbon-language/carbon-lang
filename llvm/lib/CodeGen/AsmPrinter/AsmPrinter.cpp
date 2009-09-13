@@ -1606,7 +1606,7 @@ void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
   if (!VerboseAsm) return;
   O.PadToColumn(MAI->getCommentColumn());
   O << MAI->getCommentString() << " implicit-def: "
-    << TRI->getAsmName(MI->getOperand(0).getReg());
+    << TRI->getName(MI->getOperand(0).getReg());
 }
 
 /// printLabel - This method prints a local label used by debug and
