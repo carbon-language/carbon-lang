@@ -11,7 +11,7 @@
 //
 // extern uint32_t __bswapsi2(uint32_t);
 //
-// Reverse all the bits in a 32-bit integer.
+// Reverse all the bytes in a 32-bit integer.
 //
 		.globl ___bswapsi2
 ___bswapsi2:
