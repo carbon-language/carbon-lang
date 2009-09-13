@@ -267,6 +267,7 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   // If we have an AsmPrinter, use that to print.
   if (Printer) {
     Printer->printMCInst(&Inst);
+    OS << '\n';
 
     // Show the encoding if we have a code emitter.
     if (Emitter) {
