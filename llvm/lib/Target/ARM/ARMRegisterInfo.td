@@ -18,8 +18,8 @@ class ARMReg<bits<4> num, string n, list<Register> subregs = []> : Register<n> {
   let SubRegs = subregs;
 }
 
-class ARMFReg<bits<5> num, string n> : Register<n> {
-  field bits<5> Num;
+class ARMFReg<bits<6> num, string n> : Register<n> {
+  field bits<6> Num;
   let Namespace = "ARM";
 }
 
@@ -58,6 +58,7 @@ def S24 : ARMFReg<24, "s24">; def S25 : ARMFReg<25, "s25">;
 def S26 : ARMFReg<26, "s26">; def S27 : ARMFReg<27, "s27">;
 def S28 : ARMFReg<28, "s28">; def S29 : ARMFReg<29, "s29">;
 def S30 : ARMFReg<30, "s30">; def S31 : ARMFReg<31, "s31">;
+def SDummy : ARMFReg<63, "sINVALID">;
 
 // Aliases of the F* registers used to hold 64-bit fp values (doubles)
 def D0  : ARMReg< 0,  "d0", [S0,   S1]>;
@@ -253,6 +254,17 @@ def SPR : RegisterClass<"ARM", [f32], 32, [S0, S1, S2, S3, S4, S5, S6, S7, S8,
   S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20, S21, S22,
   S23, S24, S25, S26, S27, S28, S29, S30, S31]>;
 
+// Subset of SPR which can be used as a source of NEON scalars for 16-bit
+// operations
+def SPR_8 : RegisterClass<"ARM", [f32], 32,
+                          [S0, S1,  S2,  S3,  S4,  S5,  S6,  S7,
+                           S8, S9, S10, S11, S12, S13, S14, S15]>;
+
+// Dummy f32 regclass to represent impossible subreg indices.
+def SPR_INVALID : RegisterClass<"ARM", [f32], 32, [SDummy]> {
+  let CopyCost = -1;
+}
+
 // Scalar double precision floating point / generic 64-bit vector register
 // class.
 // ARM requires only word alignment for double. It's more performant if it
@@ -262,7 +274,7 @@ def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
                          D8,  D9,  D10, D11, D12, D13, D14, D15,
                          D16, D17, D18, D19, D20, D21, D22, D23,
                          D24, D25, D26, D27, D28, D29, D30, D31]> {
-  let SubRegClassList = [SPR, SPR];
+  let SubRegClassList = [SPR_INVALID, SPR_INVALID];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -317,14 +329,22 @@ def DPR_VFP2 : RegisterClass<"ARM", [f64, v2i32, v2f32], 64,
 // operations
 def DPR_8 : RegisterClass<"ARM", [f64, v4i16, v2f32], 64,
                           [D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7]> {
-  let SubRegClassList = [SPR, SPR];
+  let SubRegClassList = [SPR_8, SPR_8];
 }
 
 // Generic 128-bit vector register class.
 def QPR : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], 128,
                         [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7,
                          Q8,  Q9,  Q10, Q11, Q12, Q13, Q14, Q15]> {
-  let SubRegClassList = [SPR, SPR, SPR, SPR, DPR, DPR];
+  let SubRegClassList = [SPR_INVALID, SPR_INVALID, SPR_INVALID, SPR_INVALID,
+                         DPR, DPR];
+}
+
+// Subset of QPR that have 32-bit SPR subregs.
+def QPR_VFP2 : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
+                             128,
+                             [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7]> {
+  let SubRegClassList = [SPR, SPR, SPR, SPR, DPR_VFP2, DPR_VFP2];
 }
 
 // Subset of QPR that have 32-bit SPR subregs.
