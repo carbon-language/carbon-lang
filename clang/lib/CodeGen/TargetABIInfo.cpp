@@ -50,26 +50,29 @@ void ABIArgInfo::dump() const {
   fprintf(stderr, ")\n");
 }
 
-static bool isEmptyRecord(ASTContext &Context, QualType T);
+static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays);
 
 /// isEmptyField - Return true iff a the field is "empty", that is it
 /// is an unnamed bit-field or an (array of) empty record(s).
-static bool isEmptyField(ASTContext &Context, const FieldDecl *FD) {
+static bool isEmptyField(ASTContext &Context, const FieldDecl *FD,
+                         bool AllowArrays) {
   if (FD->isUnnamedBitfield())
     return true;
 
   QualType FT = FD->getType();
-  // Constant arrays of empty records count as empty, strip them off.
-  while (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT))
-    FT = AT->getElementType();
 
-  return isEmptyRecord(Context, FT);
+    // Constant arrays of empty records count as empty, strip them off.
+  if (AllowArrays)
+    while (const ConstantArrayType *AT = Context.getAsConstantArrayType(FT))
+      FT = AT->getElementType();
+
+  return isEmptyRecord(Context, FT, AllowArrays);
 }
 
 /// isEmptyRecord - Return true iff a structure contains only empty
 /// fields. Note that a structure with a flexible array member is not
 /// considered empty.
-static bool isEmptyRecord(ASTContext &Context, QualType T) {
+static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays) {
   const RecordType *RT = T->getAs<RecordType>();
   if (!RT)
     return 0;
@@ -78,7 +81,7 @@ static bool isEmptyRecord(ASTContext &Context, QualType T) {
     return false;
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i)
-    if (!isEmptyField(Context, *i))
+    if (!isEmptyField(Context, *i, AllowArrays))
       return false;
   return true;
 }
@@ -107,7 +110,7 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
     QualType FT = FD->getType();
 
     // Ignore empty fields.
-    if (isEmptyField(Context, FD))
+    if (isEmptyField(Context, FD, true))
       continue;
 
     // If we already found an element then this isn't a single-element
@@ -286,7 +289,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
     const FieldDecl *FD = *i;
 
     // Empty fields are ignored.
-    if (isEmptyField(Context, FD))
+    if (isEmptyField(Context, FD, true))
       continue;
 
     // Check fields recursively.
@@ -1388,10 +1391,10 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI, ASTContext &Context,
 ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
                                             ASTContext &Context,
                                           llvm::LLVMContext &VMContext) const {
-  if (!CodeGenFunction::hasAggregateLLVMType(Ty)) {
+  if (!CodeGenFunction::hasAggregateLLVMType(Ty))
     return (Ty->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
-  }
+
   // FIXME: This is kind of nasty... but there isn't much choice because the ARM
   // backend doesn't support byval.
   // FIXME: This doesn't handle alignment > 64 bits.
@@ -1410,22 +1413,126 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
   return ABIArgInfo::getCoerce(STy);
 }
 
+static bool isIntegerLikeType(QualType Ty,
+                              ASTContext &Context,
+                              llvm::LLVMContext &VMContext) {
+  // APCS, C Language Calling Conventions, Non-Simple Return Values: A structure
+  // is called integer-like if its size is less than or equal to one word, and
+  // the offset of each of its addressable sub-fields is zero.
+
+  uint64_t Size = Context.getTypeSize(Ty);
+
+  // Check that the type fits in a word.
+  if (Size > 32)
+    return false;
+
+  // FIXME: Handle vector types!
+  if (Ty->isVectorType())
+    return false;
+
+  // If this is a builtin or pointer type then it is ok.
+  if (Ty->getAsBuiltinType() || Ty->isPointerType())
+    return true;
+
+  // Complex types "should" be ok by the definition above, but they are not.
+  if (Ty->isAnyComplexType())
+    return false;
+
+  // Single element and zero sized arrays should be allowed, by the definition
+  // above, but they are not.
+
+  // Otherwise, it must be a record type.
+  const RecordType *RT = Ty->getAs<RecordType>();
+  if (!RT) return false;
+
+  // Ignore records with flexible arrays.
+  const RecordDecl *RD = RT->getDecl();
+  if (RD->hasFlexibleArrayMember())
+    return false;
+
+  // Check that all sub-fields are at offset 0, and are themselves "integer
+  // like".
+  const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
+
+  bool HadField = false;
+  unsigned idx = 0;
+  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+       i != e; ++i, ++idx) {
+    const FieldDecl *FD = *i;
+
+    // Check if this field is at offset 0.
+    uint64_t Offset = Layout.getFieldOffset(idx);
+    if (Offset != 0) {
+      // Allow padding bit-fields, but only if they are all at the end of the
+      // structure (despite the wording above, this matches gcc).
+      if (FD->isBitField() && 
+          !FD->getBitWidth()->EvaluateAsInt(Context).getZExtValue()) {
+        for (; i != e; ++i)
+          if (!i->isBitField() ||
+              i->getBitWidth()->EvaluateAsInt(Context).getZExtValue())
+            return false;
+
+        // All remaining fields are padding, allow this.
+        return true;
+      }
+
+      return false;
+    }
+
+    if (!isIntegerLikeType(FD->getType(), Context, VMContext))
+      return false;
+    
+    // Only allow at most one field in a structure. Again this doesn't match the
+    // wording above, but follows gcc.
+    if (!RD->isUnion()) {
+      if (HadField)
+        return false;
+
+      HadField = true;
+    }
+  }
+
+  return true;
+}
+
 ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
                                           ASTContext &Context,
                                           llvm::LLVMContext &VMContext) const {
-  if (RetTy->isVoidType()) {
+  if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
-  } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
-    // Aggregates <= 4 bytes are returned in r0; other aggregates
-    // are returned indirectly.
-    uint64_t Size = Context.getTypeSize(RetTy);
-    if (Size <= 32)
-      return ABIArgInfo::getCoerce(llvm::Type::getInt32Ty(VMContext));
-    return ABIArgInfo::getIndirect(0);
-  } else {
+
+  if (!CodeGenFunction::hasAggregateLLVMType(RetTy))
     return (RetTy->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+
+  // Are we following APCS?
+  if (getABIKind() == APCS) {
+    if (isEmptyRecord(Context, RetTy, false))
+      return ABIArgInfo::getIgnore();
+
+    // Integer like structures are returned in r0.
+    if (isIntegerLikeType(RetTy, Context, VMContext)) {
+      // Return in the smallest viable integer type.
+      uint64_t Size = Context.getTypeSize(RetTy);
+      if (Size <= 8)
+        return ABIArgInfo::getCoerce(llvm::Type::getInt8Ty(VMContext));
+      if (Size <= 16)
+        return ABIArgInfo::getCoerce(llvm::Type::getInt16Ty(VMContext));
+      return ABIArgInfo::getCoerce(llvm::Type::getInt32Ty(VMContext));
+    }
+
+    // Otherwise return in memory.
+    return ABIArgInfo::getIndirect(0);
   }
+
+  // Otherwise this is an AAPCS variant.
+
+  // Aggregates <= 4 bytes are returned in r0; other aggregates
+  // are returned indirectly.
+  uint64_t Size = Context.getTypeSize(RetTy);
+  if (Size <= 32)
+    return ABIArgInfo::getCoerce(llvm::Type::getInt32Ty(VMContext));
+  return ABIArgInfo::getIndirect(0);
 }
 
 llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
