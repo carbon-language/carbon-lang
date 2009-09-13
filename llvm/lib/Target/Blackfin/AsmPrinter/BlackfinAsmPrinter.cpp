@@ -167,7 +167,6 @@ bool BlackfinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 void BlackfinAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand (opNum);
-  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&

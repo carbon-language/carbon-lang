@@ -150,7 +150,6 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand (opNum);
-  const TargetRegisterInfo &RI = *TM.getRegisterInfo();
   bool CloseParen = false;
   if (MI->getOpcode() == SP::SETHIi && !MO.isReg() && !MO.isImm()) {
     O << "%hi(";
