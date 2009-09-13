@@ -575,61 +575,61 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
 
 void X86IntelAsmPrinter::EmitString(const ConstantArray *CVA) const {
   unsigned NumElts = CVA->getNumOperands();
-  if (NumElts) {
-    // ML does not have escape sequences except '' for '.  It also has a maximum
-    // string length of 255.
-    unsigned len = 0;
-    bool inString = false;
-    for (unsigned i = 0; i < NumElts; i++) {
-      int n = cast<ConstantInt>(CVA->getOperand(i))->getZExtValue() & 255;
-      if (len == 0)
-        O << "\tdb ";
+  if (NumElts == 0) return;
+  
+  // ML does not have escape sequences except '' for '.  It also has a maximum
+  // string length of 255.
+  unsigned len = 0;
+  bool inString = false;
+  for (unsigned i = 0; i < NumElts; i++) {
+    int n = cast<ConstantInt>(CVA->getOperand(i))->getZExtValue() & 255;
+    if (len == 0)
+      O << "\tdb ";
 
-      if (n >= 32 && n <= 127) {
-        if (!inString) {
-          if (len > 0) {
-            O << ",'";
-            len += 2;
-          } else {
-            O << "'";
-            len++;
-          }
-          inString = true;
-        }
-        if (n == '\'') {
-          O << "'";
-          len++;
-        }
-        O << char(n);
-      } else {
-        if (inString) {
-          O << "'";
-          len++;
-          inString = false;
-        }
+    if (n >= 32 && n <= 127) {
+      if (!inString) {
         if (len > 0) {
-          O << ",";
+          O << ",'";
+          len += 2;
+        } else {
+          O << "'";
           len++;
         }
-        O << n;
-        len += 1 + (n > 9) + (n > 99);
+        inString = true;
       }
-
-      if (len > 60) {
-        if (inString) {
-          O << "'";
-          inString = false;
-        }
-        O << "\n";
-        len = 0;
-      }
-    }
-
-    if (len > 0) {
-      if (inString)
+      if (n == '\'') {
         O << "'";
-      O << "\n";
+        len++;
+      }
+      O << char(n);
+    } else {
+      if (inString) {
+        O << "'";
+        len++;
+        inString = false;
+      }
+      if (len > 0) {
+        O << ",";
+        len++;
+      }
+      O << n;
+      len += 1 + (n > 9) + (n > 99);
     }
+
+    if (len > 60) {
+      if (inString) {
+        O << "'";
+        inString = false;
+      }
+      O << "\n";
+      len = 0;
+    }
+  }
+
+  if (len > 0) {
+    if (inString)
+      O << "'";
+    O << "\n";
   }
 }
 
