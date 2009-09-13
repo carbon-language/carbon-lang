@@ -2808,42 +2808,6 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
   if (NewFD->isMain()) 
     CheckMain(NewFD);
 
-  // Semantic checking for this function declaration (in isolation).
-  if (getLangOptions().CPlusPlus) {
-    // C++-specific checks.
-    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD)) {
-      CheckConstructor(Constructor);
-    } else if (isa<CXXDestructorDecl>(NewFD)) {
-      CXXRecordDecl *Record = cast<CXXRecordDecl>(NewFD->getParent());
-      QualType ClassType = Context.getTypeDeclType(Record);
-      if (!ClassType->isDependentType()) {
-        DeclarationName Name
-          = Context.DeclarationNames.getCXXDestructorName(
-                                        Context.getCanonicalType(ClassType));
-        if (NewFD->getDeclName() != Name) {
-          Diag(NewFD->getLocation(), diag::err_destructor_name);
-          return NewFD->setInvalidDecl();
-        }
-      }
-      Record->setUserDeclaredDestructor(true);
-      // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
-      // user-defined destructor.
-      Record->setPOD(false);
-
-      // C++ [class.dtor]p3: A destructor is trivial if it is an implicitly-
-      // declared destructor.
-      // FIXME: C++0x: don't do this for "= default" destructors
-      Record->setHasTrivialDestructor(false);
-    } else if (CXXConversionDecl *Conversion
-               = dyn_cast<CXXConversionDecl>(NewFD))
-      ActOnConversionDeclarator(Conversion);
-
-    // Extra checking for C++ overloaded operators (C++ [over.oper]).
-    if (NewFD->isOverloadedOperator() &&
-        CheckOverloadedOperatorDeclaration(NewFD))
-      return NewFD->setInvalidDecl();
-  }
-
   // Check for a previous declaration of this name.
   if (!PrevDecl && NewFD->isExternC()) {
     // Since we did not find anything by this name and we're declaring
@@ -2911,11 +2875,47 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
     }
   }
 
-  // In C++, check default arguments now that we have merged decls. Unless
-  // the lexical context is the class, because in this case this is done
-  // during delayed parsing anyway.
-  if (getLangOptions().CPlusPlus && !CurContext->isRecord())
-    CheckCXXDefaultArguments(NewFD);
+  // Semantic checking for this function declaration (in isolation).
+  if (getLangOptions().CPlusPlus) {
+    // C++-specific checks.
+    if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(NewFD)) {
+      CheckConstructor(Constructor);
+    } else if (isa<CXXDestructorDecl>(NewFD)) {
+      CXXRecordDecl *Record = cast<CXXRecordDecl>(NewFD->getParent());
+      QualType ClassType = Context.getTypeDeclType(Record);
+      if (!ClassType->isDependentType()) {
+        DeclarationName Name
+          = Context.DeclarationNames.getCXXDestructorName(
+                                        Context.getCanonicalType(ClassType));
+        if (NewFD->getDeclName() != Name) {
+          Diag(NewFD->getLocation(), diag::err_destructor_name);
+          return NewFD->setInvalidDecl();
+        }
+      }
+      Record->setUserDeclaredDestructor(true);
+      // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
+      // user-defined destructor.
+      Record->setPOD(false);
+
+      // C++ [class.dtor]p3: A destructor is trivial if it is an implicitly-
+      // declared destructor.
+      // FIXME: C++0x: don't do this for "= default" destructors
+      Record->setHasTrivialDestructor(false);
+    } else if (CXXConversionDecl *Conversion
+               = dyn_cast<CXXConversionDecl>(NewFD))
+      ActOnConversionDeclarator(Conversion);
+
+    // Extra checking for C++ overloaded operators (C++ [over.oper]).
+    if (NewFD->isOverloadedOperator() &&
+        CheckOverloadedOperatorDeclaration(NewFD))
+      return NewFD->setInvalidDecl();
+    
+    // In C++, check default arguments now that we have merged decls. Unless
+    // the lexical context is the class, because in this case this is done
+    // during delayed parsing anyway.
+    if (!CurContext->isRecord())
+      CheckCXXDefaultArguments(NewFD);
+  }
 }
 
 void Sema::CheckMain(FunctionDecl* FD) {

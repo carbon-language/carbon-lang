@@ -64,3 +64,14 @@ struct Flip {
   operator Flop() const;
 };
 Flop flop = Flip(); // expected-error {{cannot initialize 'flop' with an rvalue of type 'struct Flip'}}
+
+// This tests that we don't add the second conversion declaration to the list of user conversions
+struct C {
+  operator const char *() const;
+};
+
+C::operator const char*() const { return 0; }
+
+void f(const C& c) {
+  const char* v = c;
+}
