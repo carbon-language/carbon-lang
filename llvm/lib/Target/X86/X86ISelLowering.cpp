@@ -9324,15 +9324,39 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 
   // Not found as a standard register?
   if (Res.second == 0) {
-    // GCC calls "st(0)" just plain "st".
+    // Map st(0) -> st(7) -> ST0
+    if (Constraint.size() == 7 && Constraint[0] == '{' &&
+        tolower(Constraint[1]) == 's' &&
+        tolower(Constraint[2]) == 't' &&
+        Constraint[3] == '(' &&
+        (Constraint[4] >= '0' && Constraint[4] <= '7') &&
+        Constraint[5] == ')' &&
+        Constraint[6] == '}') {
+      
+      Res.first = X86::ST0+Constraint[4]-'0';
+      Res.second = X86::RFP80RegisterClass;
+      return Res;
+    }
+    
+    // GCC allows "st(0)" to be called just plain "st".
     if (StringsEqualNoCase("{st}", Constraint)) {
       Res.first = X86::ST0;
       Res.second = X86::RFP80RegisterClass;
+      return Res;
     }
+
+    // flags -> EFLAGS
+    if (StringsEqualNoCase("{flags}", Constraint)) {
+      Res.first = X86::EFLAGS;
+      Res.second = X86::CCRRegisterClass;
+      return Res;
+    }
+    
     // 'A' means EAX + EDX.
     if (Constraint == "A") {
       Res.first = X86::EAX;
       Res.second = X86::GR32_ADRegisterClass;
+      return Res;
     }
     return Res;
   }
