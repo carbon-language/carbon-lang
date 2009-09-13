@@ -70,9 +70,7 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
-    O << '%';
-    unsigned Reg = Op.getReg();
-    O << TRI->getAsmName(Reg);
+    O << '%' << TRI->getAsmName(Op.getReg());
     return;
   } else if (Op.isImm()) {
     O << '$' << Op.getImm();

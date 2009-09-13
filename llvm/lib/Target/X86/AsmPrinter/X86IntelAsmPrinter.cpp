@@ -149,6 +149,11 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unsupported linkage type!");
+  case Function::LinkOnceAnyLinkage:
+  case Function::LinkOnceODRLinkage:
+  case Function::WeakAnyLinkage:
+  case Function::WeakODRLinkage:
+      
   case Function::PrivateLinkage:
   case Function::LinkerPrivateLinkage:
   case Function::InternalLinkage:
@@ -204,21 +209,24 @@ void X86IntelAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
   }
 }
 
+static void PrintRegName(raw_ostream &O, StringRef RegName) {
+  for (unsigned i = 0, e = RegName.size(); i != e; ++i)
+    O << (char)toupper(RegName[i]);
+}
+
 void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
                                  const char *Modifier) {
   switch (MO.getType()) {
   case MachineOperand::MO_Register: {
-    if (TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
-      unsigned Reg = MO.getReg();
-      if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
-        EVT VT = (strcmp(Modifier,"subreg64") == 0) ?
-          MVT::i64 : ((strcmp(Modifier, "subreg32") == 0) ? MVT::i32 :
-                      ((strcmp(Modifier,"subreg16") == 0) ? MVT::i16 :MVT::i8));
-        Reg = getX86SubSuperRegister(Reg, VT);
-      }
-      O << TRI->getName(Reg);
-    } else
-      O << "reg" << MO.getReg();
+    assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()));
+    unsigned Reg = MO.getReg();
+    if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
+      EVT VT = (strcmp(Modifier,"subreg64") == 0) ?
+        MVT::i64 : ((strcmp(Modifier, "subreg32") == 0) ? MVT::i32 :
+                    ((strcmp(Modifier,"subreg16") == 0) ? MVT::i16 :MVT::i8));
+      Reg = getX86SubSuperRegister(Reg, VT);
+    }
+    PrintRegName(O, TRI->getAsmName(Reg));
     return;
   }
   case MachineOperand::MO_Immediate:
@@ -391,7 +399,7 @@ bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,
     break;
   }
 
-  O << TRI->getName(Reg);
+  PrintRegName(O, TRI->getAsmName(Reg));
   return false;
 }
 
