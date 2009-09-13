@@ -1,19 +1,11 @@
 load_lib llvm.exp
 
-# 'false.c' is really C++, so it must be treated differently.
-set special_file "$srcdir/$subdir/false.c"
-
 if [ llvm_gcc_supports c ] then {
-    # tcl seems to lack 'filter' which would've made this easier...
-    set temp [glob -nocomplain $srcdir/$subdir/*.{c}]
-    set c_files [list]
-    foreach f $temp { if {$f != $special_file} {lappend c_files $f}}
-
-    RunLLVMTests [lsort $c_files]
+    RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{c}]]
 }
 
 if [ llvm_gcc_supports c++ ] then {
-    RunLLVMTests [lsort [concat [glob -nocomplain $srcdir/$subdir/*.{cpp}] $special_file]]
+    RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{cpp}]]
 }
 
 if [ llvm_gcc_supports objc ] then {
