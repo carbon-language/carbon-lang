@@ -1,6 +1,6 @@
 // Check that multivalued options work.
 // The dummy tool and graph are required to silence warnings.
-// RUN: tblgen -I $srcroot/include --gen-llvmc %s -o %t
+// RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: grep cl::multi_val(2) %t | count 1
 
 include "llvm/CompilerDriver/Common.td"

@@ -1,6 +1,6 @@
 // Check the fix for PR4159.
 // http://llvm.org/bugs/show_bug.cgi?id=4159
-// RUN: tblgen -I $srcroot/include --gen-llvmc %s -o %t
+// RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: grep unique_name %t
 
 include "llvm/CompilerDriver/Common.td"

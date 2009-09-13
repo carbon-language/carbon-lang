@@ -1,5 +1,5 @@
 // Check that tools without associated actions are accepted.
-// RUN: tblgen -I $srcroot/include --gen-llvmc %s | grep dummy_tool
+// RUN: tblgen -I %p/../../include --gen-llvmc %s | grep dummy_tool
 
 include "llvm/CompilerDriver/Common.td"
 

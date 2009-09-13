@@ -1,5 +1,5 @@
 // Check that multiple compilation graphs are allowed.
-// RUN: tblgen -I $srcroot/include --gen-llvmc %s
+// RUN: tblgen -I %p/../../include --gen-llvmc %s
 
 include "llvm/CompilerDriver/Common.td"
 

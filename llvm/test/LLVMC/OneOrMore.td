@@ -1,6 +1,6 @@
 // Check that (one_or_more) and (zero_or_one) properties work.
 // The dummy tool and graph are required to silence warnings.
-// RUN: tblgen -I $srcroot/include --gen-llvmc %s -o %t
+// RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: grep cl::ZeroOrOne %t | count 1
 // RUN: grep cl::OneOrMore %t | count 1
 

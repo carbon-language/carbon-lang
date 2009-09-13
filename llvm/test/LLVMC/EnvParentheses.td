@@ -1,6 +1,6 @@
 // Check the fix for PR4157.
 // http://llvm.org/bugs/show_bug.cgi?id=4157
-// RUN: tblgen -I $srcroot/include --gen-llvmc %s -o %t
+// RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: not grep {)));} %t
 
 include "llvm/CompilerDriver/Common.td"

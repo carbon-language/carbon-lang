@@ -1,5 +1,5 @@
 // Check that hooks with arguments work.
-// RUN: tblgen -I $srcroot/include --gen-llvmc %s -o %t
+// RUN: tblgen -I %p/../../include --gen-llvmc %s -o %t
 // RUN: grep {Hook(const char\\* Arg0, const char\\* Arg1, const char\\* Arg2);} %t | count 1
 // RUN: grep "/path" %t | count 1
 // RUN: grep "VARIABLE" %t | count 1
