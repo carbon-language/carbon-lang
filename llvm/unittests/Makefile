@@ -9,13 +9,6 @@
 
 LEVEL = ..
 
-include $(LEVEL)/Makefile.config
-
-LIBRARYNAME = UnitTestMain
-BUILD_ARCHIVE = 1
-CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/include
-CPP.Flags += -Wno-variadic-macros
-
 PARALLEL_DIRS = ADT ExecutionEngine Support VMCore
 
 include $(LEVEL)/Makefile.common

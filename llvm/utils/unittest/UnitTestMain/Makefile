@@ -1,4 +1,4 @@
-##===- utils/unittest/Makefile -----------------------------*- Makefile -*-===##
+##===- utils/unittest/UnitTestMain/Makefile ----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,7 +7,13 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-PARALLEL_DIRS = googletest UnitTestMain
+LEVEL = ../../..
+
+include $(LEVEL)/Makefile.config
+
+LIBRARYNAME = UnitTestMain
+BUILD_ARCHIVE = 1
+CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/include
+CPP.Flags += -Wno-variadic-macros
 
 include $(LEVEL)/Makefile.common
