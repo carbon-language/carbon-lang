@@ -35,6 +35,9 @@ namespace llvm {
     void run(raw_ostream &o);
 
 private:
+    void EmitPrintInstruction(raw_ostream &o);
+    void EmitGetRegisterName(raw_ostream &o);
+    
     AsmWriterInst *getAsmWriterInstByID(unsigned ID) const {
       assert(ID < NumberedInstructions.size());
       std::map<const CodeGenInstruction*, AsmWriterInst*>::const_iterator I =
