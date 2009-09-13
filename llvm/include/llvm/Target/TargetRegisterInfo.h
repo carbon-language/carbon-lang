@@ -41,7 +41,6 @@ class RegScavenger;
 /// of AX.
 ///
 struct TargetRegisterDesc {
-  const char     *AsmName;      // Assembly language name for the register
   const char     *Name;         // Printable name for the reg (for debugging)
   const unsigned *AliasSet;     // Register Alias Set, described above
   const unsigned *SubRegs;      // Sub-register set, described above

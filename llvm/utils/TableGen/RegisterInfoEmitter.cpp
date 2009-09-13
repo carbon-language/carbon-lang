@@ -767,7 +767,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   }
 
   OS<<"\n  const TargetRegisterDesc RegisterDescriptors[] = { // Descriptors\n";
-  OS << "    { \"NOREG\",\t\"NOREG\",\t0,\t0,\t0 },\n";
+  OS << "    { \"NOREG\",\t0,\t0,\t0 },\n";
 
   // Now that register alias and sub-registers sets have been emitted, emit the
   // register descriptors now.
@@ -775,11 +775,6 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     const CodeGenRegister &Reg = Registers[i];
     OS << "    { \"";
-    if (!Reg.TheDef->getValueAsString("AsmName").empty())
-      OS << Reg.TheDef->getValueAsString("AsmName");
-    else
-      OS << Reg.getName();
-    OS << "\",\t\"";
     OS << Reg.getName() << "\",\t";
     if (RegisterAliases.count(Reg.TheDef))
       OS << Reg.getName() << "_AliasSet,\t";
