@@ -1,4 +1,5 @@
-// RUN: clang-cc -emit-llvm -o - 
+// RUN: clang-cc -emit-llvm -o - -triple x86_64-apple-darwin10 &&
+// RUN: clang-cc -emit-llvm -o - -triple i386-apple-darwin10 
 typedef int __attribute__((aligned(32)))  ai;
 
 void f() {
@@ -9,3 +10,10 @@ void f() {
   }();
 }
 
+void g() {
+  __block double a = 10;
+
+  ^{
+    a = 20;
+  }();
+}
