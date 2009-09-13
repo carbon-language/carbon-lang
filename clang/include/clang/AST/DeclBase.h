@@ -443,7 +443,8 @@ public:
     unsigned mask
       = (IdentifierNamespace & (IDNS_TagFriend | IDNS_OrdinaryFriend));
     if (!mask) return FOK_None;
-    return (mask & (IDNS_Tag | IDNS_Ordinary) ? FOK_Declared : FOK_Undeclared);
+    return (IdentifierNamespace & (IDNS_Tag | IDNS_Ordinary) ? 
+              FOK_Declared : FOK_Undeclared);
   }
 
   // Implement isa/cast/dyncast/etc.
