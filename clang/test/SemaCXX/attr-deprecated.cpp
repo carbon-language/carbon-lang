@@ -54,3 +54,13 @@ void f(B* b, C *c) {
   c->C::f();
   c->B::f(); // expected-warning{{'f' is deprecated}}
 }
+
+struct D {
+  virtual void f() __attribute__((deprecated));
+};
+
+void D::f() { }
+
+void f(D* d) {
+  d->f();
+}

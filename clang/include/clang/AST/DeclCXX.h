@@ -776,8 +776,13 @@ public:
   bool isInstance() const { return !isStatic(); }
 
   bool isVirtual() const {
-    return isVirtualAsWritten() ||
-      (begin_overridden_methods() != end_overridden_methods());
+    CXXMethodDecl *CD = 
+      cast<CXXMethodDecl>(const_cast<CXXMethodDecl*>(this)->getCanonicalDecl());
+
+    if (CD->isVirtualAsWritten())
+      return true;
+    
+    return (CD->begin_overridden_methods() != CD->end_overridden_methods());
   }
   
   ///
