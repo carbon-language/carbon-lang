@@ -411,7 +411,7 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // lot of extra uniquing.
     TmpInst.addOperand(MCOperand::CreateExpr(MCSymbolRefExpr::Create(PICBase,
                                                                  OutContext)));
-    printInstruction(&TmpInst);
+    printMCInst(&TmpInst);
     O << '\n';
     
     // Emit the label.
@@ -420,7 +420,7 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // popl $reg
     TmpInst.setOpcode(X86::POP32r);
     TmpInst.getOperand(0) = MCOperand::CreateReg(MI->getOperand(0).getReg());
-    printInstruction(&TmpInst);
+    printMCInst(&TmpInst);
     return;
   }
       
@@ -458,7 +458,7 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
     TmpInst.addOperand(MCOperand::CreateExpr(DotExpr));
-    printInstruction(&TmpInst);
+    printMCInst(&TmpInst);
     return;
   }
   }
@@ -467,5 +467,6 @@ printInstructionThroughMCStreamer(const MachineInstr *MI) {
   MCInstLowering.Lower(MI, TmpInst);
   
   
-  printInstruction(&TmpInst);
+  printMCInst(&TmpInst);
 }
+

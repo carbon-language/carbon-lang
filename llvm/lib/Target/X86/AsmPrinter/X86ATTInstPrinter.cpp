@@ -13,12 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "asm-printer"
+#include "X86ATTInstPrinter.h"
 #include "llvm/MC/MCInst.h"
-#include "X86ATTAsmPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Target/TargetRegisterInfo.h"  // FIXME: REMOVE.
 using namespace llvm;
 
 // Include the auto-generated portion of the assembly writer.
@@ -27,7 +28,7 @@ using namespace llvm;
 #include "X86GenAsmWriter.inc"
 #undef MachineInstr
 
-void X86ATTAsmPrinter::printSSECC(const MCInst *MI, unsigned Op) {
+void X86ATTInstPrinter::printSSECC(const MCInst *MI, unsigned Op) {
   switch (MI->getOperand(Op).getImm()) {
   default: llvm_unreachable("Invalid ssecc argument!");
   case 0: O << "eq"; break;
@@ -42,16 +43,16 @@ void X86ATTAsmPrinter::printSSECC(const MCInst *MI, unsigned Op) {
 }
 
 
-void X86ATTAsmPrinter::printPICLabel(const MCInst *MI, unsigned Op) {
+void X86ATTInstPrinter::printPICLabel(const MCInst *MI, unsigned Op) {
   llvm_unreachable("This is only used for MOVPC32r,"
-                   "should lower before asm printing!");
+                   "should lower before instruction printing!");
 }
 
 
 /// print_pcrel_imm - This is used to print an immediate value that ends up
 /// being encoded as a pc-relative value.  These print slightly differently, for
 /// example, a $ is not emitted.
-void X86ATTAsmPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
+void X86ATTInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
   const MCOperand &Op = MI->getOperand(OpNo);
   
   if (Op.isImm())
@@ -63,7 +64,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
 }
 
 
-void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
+void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                     const char *Modifier) {
   assert(Modifier == 0 && "Modifiers should not be used");
   
@@ -85,7 +86,7 @@ void X86ATTAsmPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   O << "<<UNKNOWN OPERAND KIND>>";
 }
 
-void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
+void X86ATTInstPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
   const MCOperand &BaseReg  = MI->getOperand(Op);
   const MCOperand &IndexReg = MI->getOperand(Op+2);
   const MCOperand &DispSpec = MI->getOperand(Op+3);
@@ -100,8 +101,6 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
   }
   
   if (IndexReg.getReg() || BaseReg.getReg()) {
-    assert(IndexReg.getReg() != X86::ESP && IndexReg.getReg() != X86::RSP);
-    
     O << '(';
     if (BaseReg.getReg())
       printOperand(MI, Op);
@@ -117,7 +116,7 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
   }
 }
 
-void X86ATTAsmPrinter::printMemReference(const MCInst *MI, unsigned Op) {
+void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op) {
   const MCOperand &Segment = MI->getOperand(Op+4);
   if (Segment.getReg()) {
     printOperand(MI, Op+4);

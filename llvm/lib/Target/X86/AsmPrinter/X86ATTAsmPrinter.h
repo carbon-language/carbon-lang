@@ -29,7 +29,6 @@ namespace llvm {
 class MachineJumpTableInfo;
 class MCContext;
 class MCInst;
-class MCOperand;
 class MCStreamer;
 class MCSymbol;
 
@@ -63,62 +62,11 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
 
   void printInstructionThroughMCStreamer(const MachineInstr *MI);
 
-  
-  // New MCInst printing stuff.
-  void printInstruction(const MCInst *MI);
 
-
-  virtual void printMCInst(const MCInst *MI) { printInstruction(MI); }
+  // FIXME: REMOVE.
+  virtual void printMCInst(const MCInst *MI);
 
   void printSymbolOperand(const MachineOperand &MO);
-  void printOperand(const MCInst *MI, unsigned OpNo,
-                    const char *Modifier = 0);
-  void printMemReference(const MCInst *MI, unsigned Op);
-  void printLeaMemReference(const MCInst *MI, unsigned Op);
-  void printSSECC(const MCInst *MI, unsigned Op);
-  void printPICLabel(const MCInst *MI, unsigned Op);
-  void print_pcrel_imm(const MCInst *MI, unsigned OpNo);
-  
-  void printopaquemem(const MCInst *MI, unsigned OpNo) {
-    printMemReference(MI, OpNo);
-  }
-  
-  void printi8mem(const MCInst *MI, unsigned OpNo) {
-    printMemReference(MI, OpNo);
-  }
-  void printi16mem(const MCInst *MI, unsigned OpNo) {
-    printMemReference(MI, OpNo);
-  }
-  void printi32mem(const MCInst *MI, unsigned OpNo) {
-    printMemReference(MI, OpNo);
-  }
-  void printi64mem(const MCInst *MI, unsigned OpNo) {
-    printMemReference(MI, OpNo);
-  }
-  void printi128mem(const MCInst *MI, unsigned OpNo) {
-    printMemReference(MI, OpNo);
-  }
-  void printf32mem(const MCInst *MI, unsigned OpNo) {
-    printMemReference(MI, OpNo);
-  }
-  void printf64mem(const MCInst *MI, unsigned OpNo) {
-    printMemReference(MI, OpNo);
-  }
-  void printf80mem(const MCInst *MI, unsigned OpNo) {
-    printMemReference(MI, OpNo);
-  }
-  void printf128mem(const MCInst *MI, unsigned OpNo) {
-    printMemReference(MI, OpNo);
-  }
-  void printlea32mem(const MCInst *MI, unsigned OpNo) {
-    printLeaMemReference(MI, OpNo);
-  }
-  void printlea64mem(const MCInst *MI, unsigned OpNo) {
-    printLeaMemReference(MI, OpNo);
-  }
-  void printlea64_32mem(const MCInst *MI, unsigned OpNo) {
-    printLeaMemReference(MI, OpNo);
-  }
   
   
 

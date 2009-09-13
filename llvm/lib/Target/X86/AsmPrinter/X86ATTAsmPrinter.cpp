@@ -15,6 +15,7 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "X86ATTAsmPrinter.h"
+#include "X86ATTInstPrinter.h"
 #include "X86MCInstLower.h"
 #include "X86.h"
 #include "X86COFF.h"
@@ -45,6 +46,10 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 //===----------------------------------------------------------------------===//
 // Primitive Helper Functions.
 //===----------------------------------------------------------------------===//
+
+void X86ATTAsmPrinter::printMCInst(const MCInst *MI) {
+  X86ATTInstPrinter(O, MAI, TRI).printInstruction(MI);
+}
 
 void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
   // FIXME: Gross const cast hack.

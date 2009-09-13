@@ -198,7 +198,7 @@ def ATTAsmParser : AsmParser {
 // The X86 target supports two different syntaxes for emitting machine code.
 // This is controlled by the -x86-asm-syntax={att|intel}
 def ATTAsmWriter : AsmWriter {
-  string AsmWriterClassName  = "ATTAsmPrinter";
+  string AsmWriterClassName  = "ATTInstPrinter";
   int Variant = 0;
 }
 def IntelAsmWriter : AsmWriter {
