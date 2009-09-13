@@ -222,4 +222,5 @@ Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix,
   markCharAcceptable('_');
   markCharAcceptable('$');
   markCharAcceptable('.');
+  markCharAcceptable('@');
 }

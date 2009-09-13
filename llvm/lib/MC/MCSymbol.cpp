@@ -16,16 +16,27 @@ using namespace llvm;
 const MCSection *MCSymbol::AbsolutePseudoSection =
   reinterpret_cast<const MCSection *>(1);
 
-/// ShouldQuoteIdentifier - Return true if the identifier \arg Str needs quotes
-/// for this assembler.
-static bool ShouldQuoteIdentifier(const StringRef &Str, const MCAsmInfo &MAI) {
-  // If the assembler doesn't support quotes, never use them.
-  if (!MAI.doesAllowQuotesInName())
+static bool isAcceptableChar(char C) {
+  if ((C < 'a' || C > 'z') &&
+      (C < 'A' || C > 'Z') &&
+      (C < '0' || C > '9') &&
+      C != '_' && C != '$' && C != '.' && C != '@')
     return false;
-  
-  // If empty, we need quotes.
-  if (Str.empty())
-    return true;
+  return true;
+}
+
+static char HexDigit(int V) {
+  return V < 10 ? V+'0' : V+'A'-10;
+}
+
+static void MangleLetter(raw_ostream &OS, unsigned char C) {
+  OS << '_' << HexDigit(C >> 4) << HexDigit(C & 15) << '_';
+}
+
+/// NameNeedsEscaping - Return true if the identifier \arg Str needs quotes
+/// for this assembler.
+static bool NameNeedsEscaping(const StringRef &Str, const MCAsmInfo &MAI) {
+  assert(!Str.empty() && "Cannot create an empty MCSymbol");
   
   // If the first character is a number, we need quotes.
   if (Str[0] >= '0' && Str[0] <= '9')
@@ -33,23 +44,42 @@ static bool ShouldQuoteIdentifier(const StringRef &Str, const MCAsmInfo &MAI) {
 
   // If any of the characters in the string is an unacceptable character, force
   // quotes.
-  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
-    char C = Str[i];
-  
-    if ((C < 'a' || C > 'z') &&
-        (C < 'A' || C > 'Z') &&
-        (C < '0' || C > '9') &&
-        C != '_' && C != '$' && C != '.' && C != '@')
+  for (unsigned i = 0, e = Str.size(); i != e; ++i)
+    if (!isAcceptableChar(Str[i]))
       return true;
-  }
   return false;
 }
 
+static void PrintMangledName(raw_ostream &OS, StringRef Str) {
+  // The first character is not allowed to be a number.
+  if (Str[0] >= '0' && Str[0] <= '9') {
+    MangleLetter(OS, Str[0]);
+    Str = Str.substr(1);
+  }
+  
+  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
+    if (!isAcceptableChar(Str[i]))
+      MangleLetter(OS, Str[i]);
+    else
+      OS << Str[i];
+  }
+}
+
+
 void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
-  if (!MAI || ShouldQuoteIdentifier(getName(), *MAI))
-    OS << '"' << getName() << '"';
-  else
+  if (MAI == 0 || !NameNeedsEscaping(getName(), *MAI)) {
     OS << getName();
+    return;
+  }
+
+  // On darwin and other systems that allow quoted names, just do that.
+  if (MAI->doesAllowQuotesInName()) {
+    OS << '"' << getName() << '"';
+    return;
+  }
+  
+  // Otherwise, we have to mangle the name.
+  PrintMangledName(OS, getName());
 }
 
 void MCSymbol::dump() const {
