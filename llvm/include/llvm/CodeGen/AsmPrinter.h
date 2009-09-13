@@ -350,12 +350,11 @@ namespace llvm {
     /// block label.
     MCSymbol *GetMBBSymbol(unsigned MBBID) const;
     
-    /// printBasicBlockLabel - This method prints the label for the specified
-    /// MachineBasicBlock
-    void printBasicBlockLabel(const MachineBasicBlock *MBB,
-                              bool printAlign = false,
-                              bool printColon = false,
-                              bool printComment = true) const;
+    /// EmitBasicBlockStart - This method prints the label for the specified
+    /// MachineBasicBlock, an alignment (if present) and a comment describing
+    /// it if appropriate.
+    void EmitBasicBlockStart(const MachineBasicBlock *MBB,
+                              bool printColon = true) const;
   protected:
     /// EmitZeros - Emit a block of zeros.
     ///

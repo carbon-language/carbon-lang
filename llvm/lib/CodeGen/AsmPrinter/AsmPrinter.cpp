@@ -1644,22 +1644,20 @@ MCSymbol *AsmPrinter::GetMBBSymbol(unsigned MBBID) const {
 }
 
 
-/// printBasicBlockLabel - This method prints the label for the specified
-/// MachineBasicBlock
-void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
-                                      bool printAlign, bool printColon,
-                                      bool printComment) const {
-  if (printAlign) {
-    unsigned Align = MBB->getAlignment();
-    if (Align)
-      EmitAlignment(Log2_32(Align));
-  }
+/// EmitBasicBlockStart - This method prints the label for the specified
+/// MachineBasicBlock, an alignment (if present) and a comment describing
+/// it if appropriate.
+void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB,
+                                     bool PrintColon) const {
+  if (unsigned Align = MBB->getAlignment())
+    EmitAlignment(Log2_32(Align));
 
   GetMBBSymbol(MBB->getNumber())->print(O, MAI);
   
-  if (printColon)
+  if (PrintColon)
     O << ':';
-  if (printComment) {
+  
+  if (VerboseAsm) {
     if (const BasicBlock *BB = MBB->getBasicBlock())
       if (BB->hasName()) {
         O.PadToColumn(MAI->getCommentColumn());
@@ -1667,8 +1665,7 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
         WriteAsOperand(O, BB, /*PrintType=*/false);
       }
 
-    if (printColon)
-      EmitComments(*MBB);
+    EmitComments(*MBB);
   }
 }
 

@@ -126,7 +126,7 @@ bool MSP430AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       // This is an entry block or a block that's only reachable via a
       // fallthrough edge. In non-VerboseAsm mode, don't print the label.
     } else {
-      printBasicBlockLabel(I, true, true, VerboseAsm);
+      EmitBasicBlockStart(I);
       O << '\n';
     }
 

@@ -170,7 +170,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block if there are any predecessors.
     if (!I->pred_empty()) {
-      printBasicBlockLabel(I, true, true);
+      EmitBasicBlockStart(I);
       O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();

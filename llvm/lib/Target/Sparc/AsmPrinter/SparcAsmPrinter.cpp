@@ -122,7 +122,7 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (I != MF.begin()) {
-      printBasicBlockLabel(I, true, true);
+      EmitBasicBlockStart(I);
       O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();

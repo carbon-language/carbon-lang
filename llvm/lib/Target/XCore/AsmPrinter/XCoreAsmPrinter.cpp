@@ -273,7 +273,7 @@ bool XCoreAsmPrinter::runOnMachineFunction(MachineFunction &MF)
 
     // Print a label for the basic block.
     if (I != MF.begin()) {
-      printBasicBlockLabel(I, true , true);
+      EmitBasicBlockStart(I);
       O << '\n';
     }
 

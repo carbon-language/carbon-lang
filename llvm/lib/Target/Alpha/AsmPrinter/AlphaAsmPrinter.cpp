@@ -170,7 +170,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     if (I != MF.begin()) {
-      printBasicBlockLabel(I, true, true);
+      EmitBasicBlockStart(I);
       O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
