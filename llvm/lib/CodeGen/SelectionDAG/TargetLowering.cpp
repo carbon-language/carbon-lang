@@ -2346,7 +2346,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
     
     for (TargetRegisterClass::iterator I = RC->begin(), E = RC->end(); 
          I != E; ++I) {
-      if (StringsEqualNoCase(RegName, RI->get(*I).AsmName))
+      if (StringsEqualNoCase(RegName, RI->getName(*I)))
         return std::make_pair(*I, RC);
     }
   }
