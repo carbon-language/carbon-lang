@@ -66,7 +66,7 @@ endif
 ifneq ($(RUNTEST),)
 check-local:: site.exp
 	( $(ULIMIT) \
-	  PATH="$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(PATH)" \
+	  PATH="$(LLVMToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$(LLVMGCCDIR)/bin:$(PATH)" \
 	  $(RUNTEST) $(RUNTESTFLAGS) )
 else
 check-local:: site.exp
@@ -78,6 +78,7 @@ check-local-lit:: lit.site.cfg
 	  $(LLVM_SRC_ROOT)/utils/lit/lit.py \
 		--path "$(LLVMToolDir)" \
 		--path "$(LLVM_SRC_ROOT)/test/Scripts" \
+		--path "$(LLVMGCCDIR)/bin" \
 		$(LIT_ARGS) $(LIT_TESTSUITE) )
 
 ifdef TESTONE
