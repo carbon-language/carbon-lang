@@ -225,7 +225,6 @@ void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
                    cast_or_null<FunctionDecl>(Reader.GetDecl(Record[Idx++])));
   FD->setStorageClass((FunctionDecl::StorageClass)Record[Idx++]);
   FD->setInline(Record[Idx++]);
-  FD->setC99InlineDefinition(Record[Idx++]);
   FD->setVirtualAsWritten(Record[Idx++]);
   FD->setPure(Record[Idx++]);
   FD->setHasInheritedPrototype(Record[Idx++]);

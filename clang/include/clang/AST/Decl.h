@@ -793,7 +793,6 @@ private:
   // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
   unsigned SClass : 2;
   bool IsInline : 1;
-  bool C99InlineDefinition : 1;
   bool IsVirtualAsWritten : 1;
   bool IsPure : 1;
   bool HasInheritedPrototype : 1;
@@ -835,7 +834,7 @@ protected:
     : DeclaratorDecl(DK, DC, L, N, T, DInfo),
       DeclContext(DK),
       ParamInfo(0), Body(),
-      SClass(S), IsInline(isInline), C99InlineDefinition(false),
+      SClass(S), IsInline(isInline), 
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false),
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
       IsCopyAssignment(false),
@@ -1019,24 +1018,8 @@ public:
   bool isInline() const { return IsInline; }
   void setInline(bool I) { IsInline = I; }
 
-  /// \brief Whether this function is an "inline definition" as
-  /// defined by C99.
-  bool isC99InlineDefinition() const { return C99InlineDefinition; }
-  void setC99InlineDefinition(bool I) { C99InlineDefinition = I; }
-
-  /// \brief Determines whether this function has a gnu_inline
-  /// attribute that affects its semantics.
-  ///
-  /// The gnu_inline attribute only introduces GNU inline semantics
-  /// when all of the inline declarations of the function are marked
-  /// gnu_inline.
-  bool hasActiveGNUInlineAttribute(ASTContext &Context) const;
-
-  /// \brief Determines whether this function is a GNU "extern
-  /// inline", which is roughly the opposite of a C99 "extern inline"
-  /// function.
-  bool isExternGNUInline(ASTContext &Context) const;
-
+  bool isInlineDefinitionExternallyVisible() const;
+                       
   /// isOverloadedOperator - Whether this function declaration
   /// represents an C++ overloaded operator, e.g., "operator+".
   bool isOverloadedOperator() const {

@@ -225,7 +225,6 @@ void PCHDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
   Record.push_back(D->isInline());
-  Record.push_back(D->isC99InlineDefinition());
   Record.push_back(D->isVirtualAsWritten());
   Record.push_back(D->isPure());
   Record.push_back(D->hasInheritedPrototype());

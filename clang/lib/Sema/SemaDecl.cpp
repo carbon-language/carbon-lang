@@ -917,24 +917,9 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
   MergeAttributes(New, Old, Context);
 
   // Merge the storage class.
-  if (Old->getStorageClass() != FunctionDecl::Extern)
+  if (Old->getStorageClass() != FunctionDecl::Extern &&
+      Old->getStorageClass() != FunctionDecl::None)
     New->setStorageClass(Old->getStorageClass());
-
-  // Merge "inline"
-  if (Old->isInline())
-    New->setInline(true);
-
-  // If this function declaration by itself qualifies as a C99 inline
-  // definition (C99 6.7.4p6), but the previous definition did not,
-  // then the function is not a C99 inline definition.
-  if (New->isC99InlineDefinition() && !Old->isC99InlineDefinition())
-    New->setC99InlineDefinition(false);
-  else if (Old->isC99InlineDefinition() && !New->isC99InlineDefinition()) {
-    // Mark all preceding definitions as not being C99 inline definitions.
-    for (const FunctionDecl *Prev = Old; Prev;
-         Prev = Prev->getPreviousDeclaration())
-      const_cast<FunctionDecl *>(Prev)->setC99InlineDefinition(false);
-  }
 
   // Merge "pure" flag.
   if (Old->isPure())
@@ -2858,24 +2843,6 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
         CheckOverloadedOperatorDeclaration(NewFD))
       return NewFD->setInvalidDecl();
   }
-
-  // C99 6.7.4p6:
-  //   [... ] For a function with external linkage, the following
-  //   restrictions apply: [...] If all of the file scope declarations
-  //   for a function in a translation unit include the inline
-  //   function specifier without extern, then the definition in that
-  //   translation unit is an inline definition. An inline definition
-  //   does not provide an external definition for the function, and
-  //   does not forbid an external definition in another translation
-  //   unit.
-  //
-  // Here we determine whether this function, in isolation, would be a
-  // C99 inline definition. MergeCompatibleFunctionDecls looks at
-  // previous declarations.
-  if (NewFD->isInline() && getLangOptions().C99 &&
-      NewFD->getStorageClass() == FunctionDecl::None &&
-      NewFD->getDeclContext()->getLookupContext()->isTranslationUnit())
-    NewFD->setC99InlineDefinition(true);
 
   // Check for a previous declaration of this name.
   if (!PrevDecl && NewFD->isExternC()) {

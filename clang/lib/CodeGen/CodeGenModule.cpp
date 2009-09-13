@@ -269,34 +269,19 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
   if (!FD->isInline())
     return External;
 
-  // If the inline function explicitly has the GNU inline attribute on it, or if
-  // this is C89 mode, we use to GNU semantics.
-  if (!Features.C99 && !Features.CPlusPlus) {
-    // extern inline in GNU mode is like C99 inline.
-    if (FD->getStorageClass() == FunctionDecl::Extern)
-      return CodeGenModule::GVA_C99Inline;
-    // Normal inline is a strong symbol.
-    return CodeGenModule::GVA_StrongExternal;
-  } else if (FD->hasActiveGNUInlineAttribute(Context)) {
-    // GCC in C99 mode seems to use a different decision-making
-    // process for extern inline, which factors in previous
-    // declarations.
-    if (FD->isExternGNUInline(Context))
-      return CodeGenModule::GVA_C99Inline;
-    // Normal inline is a strong symbol.
-    return External;
+  if (!Features.CPlusPlus || FD->hasAttr<GNUInlineAttr>()) {
+    // GNU or C99 inline semantics. Determine whether this symbol should be
+    // externally visible.
+    if (FD->isInlineDefinitionExternallyVisible())
+      return External;
+
+    // C99 inline semantics, where the symbol is not externally visible.
+    return CodeGenModule::GVA_C99Inline;
   }
 
-  // The definition of inline changes based on the language.  Note that we
-  // have already handled "static inline" above, with the GVA_Internal case.
-  if (Features.CPlusPlus)  // inline and extern inline.
-    return CodeGenModule::GVA_CXXInline;
-
-  assert(Features.C99 && "Must be in C99 mode if not in C89 or C++ mode");
-  if (FD->isC99InlineDefinition())
-    return CodeGenModule::GVA_C99Inline;
-
-  return CodeGenModule::GVA_StrongExternal;
+  // C++ inline semantics
+  assert(Features.CPlusPlus && "Must be in C++ mode");
+  return CodeGenModule::GVA_CXXInline;
 }
 
 /// SetFunctionDefinitionAttributes - Set attributes for a global.

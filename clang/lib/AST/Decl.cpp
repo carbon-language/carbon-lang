@@ -580,25 +580,64 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
   return NumRequiredArgs;
 }
 
-bool FunctionDecl::hasActiveGNUInlineAttribute(ASTContext &Context) const {
-  if (!isInline() || !hasAttr<GNUInlineAttr>())
+/// \brief For an inline function definition in C, determine whether the 
+/// definition will be externally visible.
+///
+/// Inline function definitions are always available for inlining optimizations.
+/// However, depending on the language dialect, declaration specifiers, and
+/// attributes, the definition of an inline function may or may not be
+/// "externally" visible to other translation units in the program.
+///
+/// In C99, inline definitions are not externally visible by default. However,
+/// if even one of the globa-scope declarations is marked "extern inline", the
+/// inline definition becomes externally visible (C99 6.7.4p6).
+///
+/// In GNU89 mode, or if the gnu_inline attribute is attached to the function
+/// definition, we use the GNU semantics for inline, which are nearly the 
+/// opposite of C99 semantics. In particular, "inline" by itself will create 
+/// an externally visible symbol, but "extern inline" will not create an 
+/// externally visible symbol.
+bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
+  assert(isThisDeclarationADefinition() && "Must have the function definition");
+  assert(isInline() && "Function must be inline");
+  
+  if (!getASTContext().getLangOptions().C99 || hasAttr<GNUInlineAttr>()) {
+    // GNU inline semantics. Based on a number of examples, we came up with the
+    // following heuristic: if the "inline" keyword is present on a
+    // declaration of the function but "extern" is not present on that
+    // declaration, then the symbol is externally visible. Otherwise, the GNU
+    // "extern inline" semantics applies and the symbol is not externally
+    // visible.
+    for (redecl_iterator Redecl = redecls_begin(), RedeclEnd = redecls_end();
+         Redecl != RedeclEnd;
+         ++Redecl) {
+      if (Redecl->isInline() && Redecl->getStorageClass() != Extern)
+        return true;
+    }
+    
+    // GNU "extern inline" semantics; no externally visible symbol.
     return false;
-
-  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I)
-    if (I->isInline() && !I->hasAttr<GNUInlineAttr>())
-      return false;
-
-  return true;
-}
-
-bool FunctionDecl::isExternGNUInline(ASTContext &Context) const {
-  if (!hasActiveGNUInlineAttribute(Context))
-    return false;
-
-  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I)
-    if (I->getStorageClass() == Extern && I->hasAttr<GNUInlineAttr>())
-      return true;
-
+  }
+  
+  // C99 6.7.4p6:
+  //   [...] If all of the file scope declarations for a function in a 
+  //   translation unit include the inline function specifier without extern, 
+  //   then the definition in that translation unit is an inline definition.
+  for (redecl_iterator Redecl = redecls_begin(), RedeclEnd = redecls_end();
+       Redecl != RedeclEnd;
+       ++Redecl) {
+    // Only consider file-scope declarations in this test.
+    if (!Redecl->getLexicalDeclContext()->isTranslationUnit())
+      continue;
+    
+    if (!Redecl->isInline() || Redecl->getStorageClass() == Extern) 
+      return true; // Not an inline definition
+  }
+  
+  // C99 6.7.4p6:
+  //   An inline definition does not provide an external definition for the 
+  //   function, and does not forbid an external definition in another 
+  //   translation unit.
   return false;
 }
 
