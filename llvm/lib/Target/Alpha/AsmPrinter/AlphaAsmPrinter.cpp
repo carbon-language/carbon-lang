@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -95,7 +96,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB());
+    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     return;
 
   case MachineOperand::MO_ConstantPoolIndex:

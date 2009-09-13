@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -170,7 +171,7 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB());
+    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     return;
   case MachineOperand::MO_GlobalAddress: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");

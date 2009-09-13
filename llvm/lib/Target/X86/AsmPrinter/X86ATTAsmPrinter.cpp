@@ -424,7 +424,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB(), false, false, false);
+    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     return;
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol:
@@ -550,7 +550,9 @@ void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
 
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
-  printBasicBlockLabel(MBB, false, false, false);
+  
+  GetMBBSymbol(MBB->getNumber())->print(O, MAI);
+  
   if (Subtarget->isPICStyleRIPRel())
     O << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << uid << '\n';
@@ -581,10 +583,10 @@ void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
     O << MAI->getPrivateGlobalPrefix() << getFunctionNumber()
       << '_' << uid << "_set_" << MBB->getNumber();
   } else if (Subtarget->isPICStyleGOT()) {
-    printBasicBlockLabel(MBB, false, false, false);
+    GetMBBSymbol(MBB->getNumber())->print(O, MAI);
     O << "@GOTOFF";
   } else
-    printBasicBlockLabel(MBB, false, false, false);
+    GetMBBSymbol(MBB->getNumber())->print(O, MAI);
 }
 
 bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode) {

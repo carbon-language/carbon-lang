@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -163,14 +164,14 @@ void SystemZAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   O << '\n';
 }
 
-void SystemZAsmPrinter::printPCRelImmOperand(const MachineInstr *MI, int OpNum) {
+void SystemZAsmPrinter::printPCRelImmOperand(const MachineInstr *MI, int OpNum){
   const MachineOperand &MO = MI->getOperand(OpNum);
   switch (MO.getType()) {
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB(), false, false, VerboseAsm);
+    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     return;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
@@ -227,7 +228,7 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB());
+    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     return;
   case MachineOperand::MO_JumpTableIndex:
     O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'

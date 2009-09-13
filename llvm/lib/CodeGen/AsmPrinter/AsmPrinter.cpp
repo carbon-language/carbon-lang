@@ -416,12 +416,12 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
   // If we're emitting non-PIC code, then emit the entries as direct
   // references to the target basic blocks.
   if (!isPIC) {
-    printBasicBlockLabel(MBB, false, false, false);
+    GetMBBSymbol(MBB->getNumber())->print(O, MAI);
   } else if (MAI->getSetDirective()) {
     O << MAI->getPrivateGlobalPrefix() << getFunctionNumber()
       << '_' << uid << "_set_" << MBB->getNumber();
   } else {
-    printBasicBlockLabel(MBB, false, false, false);
+    GetMBBSymbol(MBB->getNumber())->print(O, MAI);
     // If the arch uses custom Jump Table directives, don't calc relative to
     // JT
     if (!HadJTEntryDirective) 
@@ -1571,8 +1571,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
           ++OpNo;  // Skip over the ID number.
 
           if (Modifier[0]=='l')  // labels are target independent
-            printBasicBlockLabel(MI->getOperand(OpNo).getMBB(), 
-                                 false, false, false);
+            GetMBBSymbol(MI->getOperand(OpNo).getMBB()
+                           ->getNumber())->print(O, MAI);
           else {
             AsmPrinter *AP = const_cast<AsmPrinter*>(this);
             if ((OpFlags & 7) == 4) {
@@ -1647,8 +1647,7 @@ MCSymbol *AsmPrinter::GetMBBSymbol(unsigned MBBID) const {
 /// printBasicBlockLabel - This method prints the label for the specified
 /// MachineBasicBlock
 void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
-                                      bool printAlign, 
-                                      bool printColon,
+                                      bool printAlign, bool printColon,
                                       bool printComment) const {
   if (printAlign) {
     unsigned Align = MBB->getAlignment();
@@ -1682,7 +1681,7 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
   
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
-  printBasicBlockLabel(MBB, false, false, false);
+  GetMBBSymbol(MBB->getNumber())->print(O, MAI);
   O << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
     << '_' << uid << '\n';
 }
@@ -1695,7 +1694,7 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << '_' << uid2
     << "_set_" << MBB->getNumber() << ',';
-  printBasicBlockLabel(MBB, false, false, false);
+  GetMBBSymbol(MBB->getNumber())->print(O, MAI);
   O << '-' << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
     << '_' << uid << '_' << uid2 << '\n';
 }

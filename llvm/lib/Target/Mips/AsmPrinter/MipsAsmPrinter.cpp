@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h" 
 #include "llvm/Target/TargetMachine.h"
@@ -348,7 +349,7 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       break;
 
     case MachineOperand::MO_MachineBasicBlock:
-      printBasicBlockLabel(MO.getMBB());
+      GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
       return;
 
     case MachineOperand::MO_GlobalAddress:

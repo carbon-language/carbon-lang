@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -171,7 +172,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       break;
     }
     case MachineOperand::MO_MachineBasicBlock:
-      printBasicBlockLabel(MO.getMBB());
+      GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
       return;
 
     default:

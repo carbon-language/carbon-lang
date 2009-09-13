@@ -26,8 +26,9 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/DwarfWriter.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -274,7 +275,7 @@ void X86IntelAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo){
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB(), false, false, false);
+    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     return;
     
   case MachineOperand::MO_GlobalAddress: {
@@ -362,7 +363,7 @@ void X86IntelAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
 
   O << MAI->getSetDirective() << ' ' << MAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
-  printBasicBlockLabel(MBB, false, false, false);
+  GetMBBSymbol(MBB->getNumber())->print(O, MAI);
   O << '-' << "\"L" << getFunctionNumber() << "$pb\"'\n";
 }
 

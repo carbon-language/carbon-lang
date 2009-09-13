@@ -31,9 +31,10 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -403,7 +404,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     llvm_unreachable("printOp() does not handle immediate values");
 
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB());
+    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     return;
   case MachineOperand::MO_JumpTableIndex:
     O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()

@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -318,7 +319,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MO.getImm();
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB());
+    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     break;
   case MachineOperand::MO_GlobalAddress:
     O << Mang->getMangledName(MO.getGlobal());

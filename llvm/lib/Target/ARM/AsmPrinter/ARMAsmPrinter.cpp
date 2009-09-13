@@ -28,6 +28,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
@@ -330,7 +331,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     break;
   }
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB());
+    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     return;
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
@@ -893,11 +894,11 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
         << '_' << JTI << '_' << MO2.getImm()
         << "_set_" << MBB->getNumber();
     else if (TM.getRelocationModel() == Reloc::PIC_) {
-      printBasicBlockLabel(MBB, false, false, false);
+      GetMBBSymbol(MBB->getNumber())->print(O, MAI);
       O << '-' << MAI->getPrivateGlobalPrefix() << "JTI"
         << getFunctionNumber() << '_' << JTI << '_' << MO2.getImm();
     } else {
-      printBasicBlockLabel(MBB, false, false, false);
+      GetMBBSymbol(MBB->getNumber())->print(O, MAI);
     }
     if (i != e-1)
       O << '\n';
@@ -929,12 +930,12 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
       O << MAI->getData16bitsDirective();
     if (ByteOffset || HalfWordOffset) {
       O << '(';
-      printBasicBlockLabel(MBB, false, false, false);
+      GetMBBSymbol(MBB->getNumber())->print(O, MAI);
       O << "-" << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
         << '_' << JTI << '_' << MO2.getImm() << ")/2";
     } else {
       O << "\tb.w ";
-      printBasicBlockLabel(MBB, false, false, false);
+      GetMBBSymbol(MBB->getNumber())->print(O, MAI);
     }
     if (i != e-1)
       O << '\n';

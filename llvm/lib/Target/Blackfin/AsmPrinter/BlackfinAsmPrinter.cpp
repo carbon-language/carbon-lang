@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -176,7 +177,7 @@ void BlackfinAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MO.getImm();
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB(), false, false, false);
+    GetMBBSymbol(MO.getMBB()->getNumber())->print(O, MAI);
     return;
   case MachineOperand::MO_GlobalAddress:
     O << Mang->getMangledName(MO.getGlobal());
