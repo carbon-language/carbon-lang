@@ -135,6 +135,7 @@ site.exp: FORCE
 	@echo 'set llvmgcc_version "$(LLVMGCC_VERSION)"' >> site.tmp
 	@echo 'set llvmtoolsdir "$(ToolDir)"' >>site.tmp
 	@echo 'set llvmlibsdir "$(LibDir)"' >>site.tmp
+	@echo 'set llvm_bindings "$(BINDINGS_TO_BUILD)"' >> site.tmp
 	@echo 'set srcroot "$(LLVM_SRC_ROOT)"' >>site.tmp
 	@echo 'set objroot "$(LLVM_OBJ_ROOT)"' >>site.tmp
 	@echo 'set srcdir "$(LLVM_SRC_ROOT)/test"' >>site.tmp
