@@ -70,6 +70,9 @@ else( MSVC )
     CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
 endif( MSVC )
 
+set(LLVM_TARGET_ARCH "host"
+  CACHE STRING "Set target to use for LLVM JIT or use \"host\" for automatic detection.")
+
 option(LLVM_ENABLE_THREADS "Use threads if available." ON)
 
 if( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )

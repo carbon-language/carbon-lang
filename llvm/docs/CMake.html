@@ -273,6 +273,13 @@
   option is available only on some 64-bits unix systems. Defaults to
   OFF.</dd>
 
+  <dt><b>LLVM_TARGET_ARCH</b>:STRING</dt>
+  <dd>LLVM target to use for native code generation. This is required
+    for JIT generation. It defaults to "host", meaning that it shall
+    pick the architecture of the machine where LLVM is being built. If
+    you are cross-compiling, set it to the target architecture
+    name.</dd>
+
   <dt><b>LLVM_TABLEGEN</b>:STRING</dt>
   <dd>Full path to a native TableGen executable (usually
     named <i>tblgen</i>). This is intented for cross-compiling: if the
@@ -310,6 +317,9 @@
     examples including toolchain files. Go directly to
     <a href="http://www.vtk.org/Wiki/CMake_Cross_Compiling#Information_how_to_set_up_various_cross_compiling_toolchains">this
     section</a> for a quick solution.</p>
+
+<p>Also see the <a href="#llvmvars">LLVM-specific variables</a>
+  section for variables used when cross-compiling.</p>
 
 </div>
 

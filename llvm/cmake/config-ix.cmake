@@ -92,13 +92,18 @@ get_target_triple(LLVM_HOSTTRIPLE)
 message(STATUS "LLVM_HOSTTRIPLE: ${LLVM_HOSTTRIPLE}")
 
 # Determine the native architecture.
-# FIXME: this will have to change for cross-compiling.
-string(REGEX MATCH "^[^-]*" LLVM_NATIVE_ARCH ${LLVM_HOSTTRIPLE})
+string(TOLOWER "${LLVM_TARGET_ARCH}" LLVM_NATIVE_ARCH)
+if( LLVM_NATIVE_ARCH STREQUAL "host" )
+  string(REGEX MATCH "^[^-]*" LLVM_NATIVE_ARCH ${LLVM_HOSTTRIPLE})
+endif ()
+
 if (LLVM_NATIVE_ARCH MATCHES "i[2-6]86")
   set(LLVM_NATIVE_ARCH X86)
-elseif (LLVM_NATIVE_ARCH STREQUAL amd64)
+elseif (LLVM_NATIVE_ARCH STREQUAL "x86")
   set(LLVM_NATIVE_ARCH X86)
-elseif (LLVM_NATIVE_ARCH STREQUAL x86_64)
+elseif (LLVM_NATIVE_ARCH STREQUAL "amd64")
+  set(LLVM_NATIVE_ARCH X86)
+elseif (LLVM_NATIVE_ARCH STREQUAL "x86_64")
   set(LLVM_NATIVE_ARCH X86)
 elseif (LLVM_NATIVE_ARCH MATCHES "sparc")
   set(LLVM_NATIVE_ARCH Sparc)
