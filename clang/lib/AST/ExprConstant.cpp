@@ -46,8 +46,12 @@ struct EvalInfo {
   /// EvalResult - Contains information about the evaluation.
   Expr::EvalResult &EvalResult;
 
-  EvalInfo(ASTContext &ctx, Expr::EvalResult& evalresult) : Ctx(ctx),
-           EvalResult(evalresult) {}
+  /// AnyLValue - Stack based LValue results are not discarded.
+  bool AnyLValue;
+
+  EvalInfo(ASTContext &ctx, Expr::EvalResult& evalresult,
+           bool anylvalue = false)
+    : Ctx(ctx), EvalResult(evalresult), AnyLValue(anylvalue) {}
 };
 
 
@@ -189,7 +193,7 @@ APValue LValueExprEvaluator::VisitDeclRefExpr(DeclRefExpr *E) {
   if (isa<FunctionDecl>(E->getDecl())) {
     return APValue(E, 0);
   } else if (VarDecl* VD = dyn_cast<VarDecl>(E->getDecl())) {
-    if (!VD->hasGlobalStorage())
+    if (!Info.AnyLValue && !VD->hasGlobalStorage())
       return APValue();
     if (!VD->getType()->isReferenceType())
       return APValue(E, 0);
@@ -209,9 +213,9 @@ APValue LValueExprEvaluator::VisitBlockExpr(BlockExpr *E) {
 }
 
 APValue LValueExprEvaluator::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
-  if (E->isFileScope())
-    return APValue(E, 0);
-  return APValue();
+  if (!Info.AnyLValue && !E->isFileScope())
+    return APValue();
+  return APValue(E, 0);
 }
 
 APValue LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
@@ -1782,6 +1786,12 @@ bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
 
 bool Expr::EvaluateAsLValue(EvalResult &Result, ASTContext &Ctx) const {
   EvalInfo Info(Ctx, Result);
+
+  return EvaluateLValue(this, Result.Val, Info) && !Result.HasSideEffects;
+}
+
+bool Expr::EvaluateAsAnyLValue(EvalResult &Result, ASTContext &Ctx) const {
+  EvalInfo Info(Ctx, Result, true);
 
   return EvaluateLValue(this, Result.Val, Info) && !Result.HasSideEffects;
 }

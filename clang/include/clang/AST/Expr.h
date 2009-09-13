@@ -248,8 +248,13 @@ public:
   /// must be called on an expression that constant folds to an integer.
   llvm::APSInt EvaluateAsInt(ASTContext &Ctx) const;
 
-  /// EvaluateAsLValue - Evaluate an expression to see if it's a valid LValue.
+  /// EvaluateAsLValue - Evaluate an expression to see if it's a lvalue
+  /// with link time known address.
   bool EvaluateAsLValue(EvalResult &Result, ASTContext &Ctx) const;
+
+  /// EvaluateAsAnyLValue - The same as EvaluateAsLValue, except that it
+  /// also succeeds on stack based, immutable address lvalues.
+  bool EvaluateAsAnyLValue(EvalResult &Result, ASTContext &Ctx) const;
 
   /// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
   /// integer constant expression with the value zero, or if this is one that is
