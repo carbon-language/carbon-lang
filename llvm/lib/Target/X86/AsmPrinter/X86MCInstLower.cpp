@@ -34,14 +34,8 @@ MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
   // FIXME: the actual label generated doesn't matter here!  Just mangle in
   // something unique (the function number) with Private prefix.
   SmallString<60> Name;
-  
-  if (getSubtarget().isTargetDarwin()) {
-    raw_svector_ostream(Name) << 'L' << AsmPrinter.getFunctionNumber() << "$pb";
-  } else {
-    assert(getSubtarget().isTargetELF() && "Don't know how to print PIC label!");
-    raw_svector_ostream(Name) << ".Lllvm$" << AsmPrinter.getFunctionNumber()
-       << ".$piclabel";
-  }
+  raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix()
+    << AsmPrinter.getFunctionNumber() << "$pb";
   return Ctx.GetOrCreateSymbol(Name.str());
 }
 

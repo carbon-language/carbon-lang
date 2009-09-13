@@ -13,10 +13,10 @@ entry:
     
 ; LINUX:    test1:
 ; LINUX: .LBB1_0:
-; LINUX:	call	.Lllvm$1.$piclabel
-; LINUX-NEXT: .Lllvm$1.$piclabel:
+; LINUX:	call	.L1$pb
+; LINUX-NEXT: .L1$pb:
 ; LINUX-NEXT:	popl
-; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref1-.Lllvm$1.$piclabel),
+; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref1-.L1$pb),
 ; LINUX:	movl	dst@GOT(%eax),
 ; LINUX:	movl	ptr@GOT(%eax),
 ; LINUX:	movl	src@GOT(%eax),
@@ -35,10 +35,10 @@ entry:
     ret void
     
 ; LINUX: test2:
-; LINUX:	call	.Lllvm$2.$piclabel
-; LINUX-NEXT: .Lllvm$2.$piclabel:
+; LINUX:	call	.L2$pb
+; LINUX-NEXT: .L2$pb:
 ; LINUX-NEXT:	popl
-; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref2-.Lllvm$2.$piclabel), %eax
+; LINUX:	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref2-.L2$pb), %eax
 ; LINUX:	movl	dst2@GOT(%eax),
 ; LINUX:	movl	ptr2@GOT(%eax),
 ; LINUX:	movl	src2@GOT(%eax),
@@ -55,10 +55,10 @@ entry:
 ; LINUX: test3:
 ; LINUX: 	pushl	%ebx
 ; LINUX-NEXT: 	subl	$8, %esp
-; LINUX-NEXT: 	call	.Lllvm$3.$piclabel
-; LINUX-NEXT: .Lllvm$3.$piclabel:
+; LINUX-NEXT: 	call	.L3$pb
+; LINUX-NEXT: .L3$pb:
 ; LINUX-NEXT: 	popl	%ebx
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref3-.Lllvm$3.$piclabel), %ebx
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref3-.L3$pb), %ebx
 ; LINUX: 	movl	$40, (%esp)
 ; LINUX: 	call	malloc@PLT
 ; LINUX: 	addl	$8, %esp
@@ -76,10 +76,10 @@ entry:
     call void(...)* %tmp1()
     ret void
 ; LINUX: test4:
-; LINUX: 	call	.Lllvm$4.$piclabel
-; LINUX-NEXT: .Lllvm$4.$piclabel:
+; LINUX: 	call	.L4$pb
+; LINUX-NEXT: .L4$pb:
 ; LINUX: 	popl
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref4-.Lllvm$4.$piclabel),
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref4-.L4$pb),
 ; LINUX: 	movl	pfoo@GOT(%esi),
 ; LINUX: 	call	afoo@PLT
 ; LINUX: 	call	*
@@ -92,9 +92,9 @@ entry:
     call void(...)* @foo()
     ret void
 ; LINUX: test5:
-; LINUX: call	.Lllvm$5.$piclabel
+; LINUX: call	.L5$pb
 ; LINUX: popl	%ebx
-; LINUX: addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref5-.Lllvm$5.$piclabel), %ebx
+; LINUX: addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref5-.L5$pb), %ebx
 ; LINUX: call	foo@PLT
 }
 
@@ -113,10 +113,10 @@ entry:
     ret void
     
 ; LINUX: test6:
-; LINUX: 	call	.Lllvm$6.$piclabel
-; LINUX-NEXT: .Lllvm$6.$piclabel:
+; LINUX: 	call	.L6$pb
+; LINUX-NEXT: .L6$pb:
 ; LINUX-NEXT: 	popl	%eax
-; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref6-.Lllvm$6.$piclabel), %eax
+; LINUX: 	addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref6-.L6$pb), %eax
 ; LINUX: 	leal	dst6@GOTOFF(%eax), %ecx
 ; LINUX: 	movl	%ecx, ptr6@GOTOFF(%eax)
 ; LINUX: 	movl	src6@GOTOFF(%eax), %ecx
@@ -124,3 +124,86 @@ entry:
 ; LINUX: 	ret
 }
 
+
+;; Test constant pool references.
+define double @test7(i32 %a.u) nounwind {
+entry:
+    %tmp = icmp eq i32 %a.u,0
+    %retval = select i1 %tmp, double 4.561230e+02, double 1.234560e+02
+    ret double %retval
+
+; LINUX: .LCPI7_0:
+
+; LINUX: test7:
+; LINUX:    call .L7$pb
+; LINUX: .L7$pb:
+; LINUX:    addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref7-.L7$pb), 
+; LINUX:    fldl	.LCPI7_0@GOTOFF(
+}
+
+
+;; Test jump table references.
+define void @test8(i32 %n.u) nounwind {
+entry:
+    switch i32 %n.u, label %bb12 [i32 1, label %bb i32 2, label %bb6 i32 4, label %bb7 i32 5, label %bb8 i32 6, label %bb10 i32 7, label %bb1 i32 8, label %bb3 i32 9, label %bb4 i32 10, label %bb9 i32 11, label %bb2 i32 12, label %bb5 i32 13, label %bb11 ]
+bb:
+    tail call void(...)* @foo1()
+    ret void
+bb1:
+    tail call void(...)* @foo2()
+    ret void
+bb2:
+    tail call void(...)* @foo6()
+    ret void
+bb3:
+    tail call void(...)* @foo3()
+    ret void
+bb4:
+    tail call void(...)* @foo4()
+    ret void
+bb5:
+    tail call void(...)* @foo5()
+    ret void
+bb6:
+    tail call void(...)* @foo1()
+    ret void
+bb7:
+    tail call void(...)* @foo2()
+    ret void
+bb8:
+    tail call void(...)* @foo6()
+    ret void
+bb9:
+    tail call void(...)* @foo3()
+    ret void
+bb10:
+    tail call void(...)* @foo4()
+    ret void
+bb11:
+    tail call void(...)* @foo5()
+    ret void
+bb12:
+    tail call void(...)* @foo6()
+    ret void
+    
+; LINUX: test8:
+; LINUX:   call	.L8$pb
+; LINUX: .L8$pb:
+; LINUX:   addl	$_GLOBAL_OFFSET_TABLE_+(.Lpicbaseref8-.L8$pb),
+; LINUX:   addl	.LJTI8_0@GOTOFF(
+; LINUX:   jmpl	*%ecx
+
+; LINUX: .LJTI8_0:
+; LINUX:   .long	 .LBB8_2@GOTOFF
+; LINUX:   .long	 .LBB8_2@GOTOFF
+; LINUX:   .long	 .LBB8_7@GOTOFF
+; LINUX:   .long	 .LBB8_3@GOTOFF
+; LINUX:   .long	 .LBB8_7@GOTOFF
+}
+
+declare void @foo1(...)
+declare void @foo2(...)
+declare void @foo6(...)
+declare void @foo3(...)
+declare void @foo4(...)
+declare void @foo5(...)
