@@ -31,8 +31,6 @@ const X86Subtarget &X86MCInstLower::getSubtarget() const {
 
 
 MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
-  // FIXME: the actual label generated doesn't matter here!  Just mangle in
-  // something unique (the function number) with Private prefix.
   SmallString<60> Name;
   raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix()
     << AsmPrinter.getFunctionNumber() << "$pb";
