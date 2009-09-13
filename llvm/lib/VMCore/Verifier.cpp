@@ -107,8 +107,33 @@ PreVer("preverify", "Preliminary module verification");
 static const PassInfo *const PreVerifyID = &PreVer;
 
 namespace {
-  struct Verifier : public FunctionPass, public InstVisitor<Verifier>,
-                    public AbstractTypeUser {
+  struct TypeSet : public AbstractTypeUser {
+    SmallSet<const Type *, 16> Types;
+
+    /// Insert a type into the set of types.
+    bool insert(const Type *Ty) {
+      bool Inserted = Types.insert(Ty);
+      if (!Inserted)
+        return false;
+
+      if (Ty->isAbstract())
+        Ty->addAbstractTypeUser(this);
+      return true;
+    }
+
+    // Abstract type user interface.
+
+    /// Remove types from the set when refined. Do not insert the type it was
+    /// refined to because that type hasn't been verified yet.
+    void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
+      Types.erase(OldTy);
+      OldTy->removeAbstractTypeUser(this);
+    }
+    void typeBecameConcrete(const DerivedType *AbsTy) {}
+    void dump() const {}
+  };
+
+  struct Verifier : public FunctionPass, public InstVisitor<Verifier> {
     static char ID; // Pass ID, replacement for typeid
     bool Broken;          // Is this module found to be broken?
     bool RealPass;        // Are we not being run by a PassManager?
@@ -126,8 +151,8 @@ namespace {
     /// an instruction in the same block.
     SmallPtrSet<Instruction*, 16> InstsInThisBlock;
 
-    /// CheckedTypes - keep track of the types that have been checked already.
-    SmallSet<const Type *, 16> CheckedTypes;
+    /// Types - keep track of the types that have been checked already.
+    TypeSet Types;
 
     Verifier()
       : FunctionPass(&ID), 
@@ -337,13 +362,6 @@ namespace {
       WriteType(T3);
       Broken = true;
     }
-
-    // Abstract type user interface.
-    void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-      CheckedTypes.erase(OldTy);
-    }
-    void typeBecameConcrete(const DerivedType *AbsTy) {}
-    void dump() const {}
   };
 } // End anonymous namespace
 
@@ -1467,7 +1485,7 @@ void Verifier::visitInstruction(Instruction &I) {
 /// VerifyType - Verify that a type is well formed.
 ///
 void Verifier::VerifyType(const Type *Ty) {
-  if (!CheckedTypes.insert(Ty)) return;
+  if (!Types.insert(Ty)) return;
 
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
