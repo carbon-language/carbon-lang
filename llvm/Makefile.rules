@@ -19,11 +19,10 @@
 #--------------------------------------------------------------------
 # Define the various target sets
 #--------------------------------------------------------------------
-RecursiveTargets := all clean clean-all install uninstall install-bytecode \
-                    unitcheck
+RecursiveTargets := all clean clean-all install uninstall install-bytecode
 LocalTargets     := all-local clean-local clean-all-local check-local \
                     install-local printvars uninstall-local \
-		    install-bytecode-local
+		    install-bytecode-local unittests
 TopLevelTargets  := check dist dist-check dist-clean dist-gzip dist-bzip2 \
                     dist-zip unittests
 UserTargets      := $(RecursiveTargets) $(LocalTargets) $(TopLevelTargets)
@@ -801,7 +800,6 @@ clean-all:: $(addsuffix /.makeclean-all,$(PARALLEL_DIRS))
 install  :: $(addsuffix /.makeinstall  ,$(PARALLEL_DIRS))
 uninstall:: $(addsuffix /.makeuninstall,$(PARALLEL_DIRS))
 install-bytecode  :: $(addsuffix /.makeinstall-bytecode,$(PARALLEL_DIRS))
-unitcheck:: $(addsuffix /.makeunitcheck,$(PARALLEL_DIRS))
 
 ParallelTargets := $(foreach T,$(RecursiveTargets),%/.make$(T))
 
@@ -1621,7 +1619,7 @@ unittests::
 	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/unittests" ; then \
 	  if test -f "$(PROJ_OBJ_ROOT)/unittests/Makefile" ; then \
 	    $(EchoCmd) Running unittests test suite ; \
-	    $(MAKE) -C $(PROJ_OBJ_ROOT)/unittests unitcheck; \
+	    $(MAKE) -C $(PROJ_OBJ_ROOT)/unittests ; \
 	  else \
 	    $(EchoCmd) No Makefile in unittests directory ; \
 	  fi ; \

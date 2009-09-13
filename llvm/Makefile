@@ -24,7 +24,7 @@ ifeq ($(BUILD_DIRS_ONLY),1)
   OPTIONAL_DIRS :=
 else
   DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-config \
-          tools runtime docs unittests
+          tools runtime docs
   OPTIONAL_DIRS := examples projects bindings
 endif
 

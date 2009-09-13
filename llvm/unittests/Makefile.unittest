@@ -30,8 +30,6 @@ $(LLVMUnitTestExe): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
           $(StripWarnMsg)
 
 all:: $(LLVMUnitTestExe)
-
-unitcheck:: $(LLVMUnitTestExe)
 	$(LLVMUnitTestExe)
 
 endif
