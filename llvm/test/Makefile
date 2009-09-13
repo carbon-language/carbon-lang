@@ -52,8 +52,6 @@ ifndef RUNLLVM2CPP
 IGNORE_TESTS += llvm2cpp.exp
 endif
 
-IGNORE_TESTS += $(filter-out $(BINDINGS_TO_BUILD:=.exp),$(ALL_BINDINGS:=.exp))
-
 ifdef IGNORE_TESTS
 RUNTESTFLAGS += --ignore "$(strip $(IGNORE_TESTS))"
 endif
