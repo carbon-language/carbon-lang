@@ -30,7 +30,6 @@ MCAsmInfo::MCAsmInfo() {
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".";
   LinkerPrivateGlobalPrefix = "";
-  JumpTableSpecialLabelPrefix = 0;
   GlobalVarAddrPrefix = "";
   GlobalVarAddrSuffix = "";
   FunctionAddrPrefix = "";
