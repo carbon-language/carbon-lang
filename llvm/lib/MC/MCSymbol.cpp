@@ -65,6 +65,23 @@ static void PrintMangledName(raw_ostream &OS, StringRef Str) {
   }
 }
 
+/// PrintMangledQuotedName - On systems that support quoted symbols, we still
+/// have to escape some (obscure) characters like " and \n which would break the
+/// assembler's lexing.
+static void PrintMangledQuotedName(raw_ostream &OS, StringRef Str) {
+  OS << '"';
+
+  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
+    if (Str[i] == '"')
+      OS << "_QQ_";
+    else if (Str[i] == '\n')
+      OS << "_NL_";
+    else
+      OS << Str[i];
+  }
+  OS << '"';
+}
+
 
 void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
   if (MAI == 0 || !NameNeedsEscaping(getName(), *MAI)) {
@@ -72,14 +89,17 @@ void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     return;
   }
 
-  // On darwin and other systems that allow quoted names, just do that.
-  if (MAI->doesAllowQuotesInName()) {
-    OS << '"' << getName() << '"';
-    return;
-  }
-  
-  // Otherwise, we have to mangle the name.
-  PrintMangledName(OS, getName());
+  // On systems that do not allow quoted names, print with mangling.
+  if (!MAI->doesAllowQuotesInName())
+    return PrintMangledName(OS, getName());
+
+  // If the string contains a double quote or newline, we still have to mangle
+  // it.
+  if (getName().find('"') != std::string::npos ||
+      getName().find('\n') != std::string::npos)
+    return PrintMangledQuotedName(OS, getName());
+    
+  OS << '"' << getName() << '"';
 }
 
 void MCSymbol::dump() const {
