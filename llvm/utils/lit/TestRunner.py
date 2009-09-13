@@ -294,6 +294,8 @@ def parseIntegratedTestScript(test, xfailHasColon, requireAndAnd):
                           ('%S', os.path.dirname(sourcepath)),
                           ('%p', os.path.dirname(sourcepath)),
                           ('%t', tmpBase + '.tmp'),
+                          # FIXME: Remove this once we kill DejaGNU.
+                          ('%abs_tmp', tmpBase + '.tmp'),
                           ('#_MARKER_#', '%')])
 
     # Collect the test lines from the script.
