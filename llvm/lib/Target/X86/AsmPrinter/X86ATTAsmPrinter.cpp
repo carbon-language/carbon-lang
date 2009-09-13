@@ -15,6 +15,7 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "X86ATTAsmPrinter.h"
+#include "X86MCInstLower.h"
 #include "X86.h"
 #include "X86COFF.h"
 #include "X86MachineFunctionInfo.h"
@@ -46,14 +47,9 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 //===----------------------------------------------------------------------===//
 
 void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
-  // FIXME: the actual label generated doesn't matter here!  Just mangle in
-  // something unique (the function number) with Private prefix.
-  if (Subtarget->isTargetDarwin())
-    O << "\"L" << getFunctionNumber() << "$pb\"";
-  else {
-    assert(Subtarget->isTargetELF() && "Don't know how to print PIC label!");
-    O << ".Lllvm$" << getFunctionNumber() << ".$piclabel";
-  }
+  // FIXME: Gross const cast hack.
+  X86ATTAsmPrinter *AP = const_cast<X86ATTAsmPrinter*>(this);
+  X86MCInstLower(OutContext, 0, *AP).GetPICBaseSymbol()->print(O, MAI);
 }
 
 static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,

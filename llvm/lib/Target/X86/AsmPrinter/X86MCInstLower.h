@@ -10,6 +10,8 @@
 #ifndef X86_MCINSTLOWER_H
 #define X86_MCINSTLOWER_H
 
+#include "llvm/Support/Compiler.h"
+
 namespace llvm {
   class MCContext;
   class MCInst;
@@ -22,7 +24,7 @@ namespace llvm {
   class X86Subtarget;
   
 /// X86MCInstLower - This class is used to lower an MachineInstr into an MCInst.
-class X86MCInstLower {
+class VISIBILITY_HIDDEN X86MCInstLower {
   MCContext &Ctx;
   Mangler *Mang;
   X86ATTAsmPrinter &AsmPrinter;
