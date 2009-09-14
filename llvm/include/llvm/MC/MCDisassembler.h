@@ -22,7 +22,7 @@ class raw_ostream;
 class MCDisassembler {
 public:
   /// Constructor     - Performs initial setup for the disassembler.
-  MCDisassembler();
+  MCDisassembler() {}
   
   virtual ~MCDisassembler();
   

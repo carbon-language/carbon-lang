@@ -1,4 +1,4 @@
-//===-- lib/MC/MCDisassembler.cpp - Disassembler interface ------*- C++ -*-===//
+//===-- MCInstPrinter.cpp - Convert an MCInst to target assembly syntax ---===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCInstPrinter.h"
 using namespace llvm;
 
-MCDisassembler::~MCDisassembler() {
+MCInstPrinter::~MCInstPrinter() {
 }
