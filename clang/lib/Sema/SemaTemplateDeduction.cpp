@@ -39,7 +39,11 @@ namespace clang {
     /// \brief Within template argument deduction from a function call,
     /// we are matching in a case where we can perform template argument
     /// deduction from a template-id of a derived class of the argument type.
-    TDF_DerivedClass = 0x04
+    TDF_DerivedClass = 0x04,
+    /// \brief Allow non-dependent types to differ, e.g., when performing
+    /// template argument deduction from a function call where conversions
+    /// may apply.
+    TDF_SkipNonDependent = 0x08
   };
 }
 
@@ -378,8 +382,14 @@ DeduceTemplateArguments(ASTContext &Context,
   }
 
   // If the parameter type is not dependent, there is nothing to deduce.
-  if (!Param->isDependentType())
+  if (!Param->isDependentType()) {
+    if (!(TDF & TDF_SkipNonDependent) && Param != Arg) {
+      
+      return Sema::TDK_NonDeducedMismatch;
+    }
+    
     return Sema::TDK_Success;
+  }
 
   // C++ [temp.deduct.type]p9:
   //   A template type argument T, a template template argument TT or a
@@ -1368,7 +1378,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     //   In general, the deduction process attempts to find template argument
     //   values that will make the deduced A identical to A (after the type A
     //   is transformed as described above). [...]
-    unsigned TDF = 0;
+    unsigned TDF = TDF_SkipNonDependent;
 
     //     - If the original P is a reference type, the deduced A (i.e., the
     //       type referred to by the reference) can be more cv-qualified than
