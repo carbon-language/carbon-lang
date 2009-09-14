@@ -1214,7 +1214,8 @@ public:
 
   /// ActOnFriendTypeDecl - Parsed a friend type declaration.
   virtual DeclPtrTy ActOnFriendTypeDecl(Scope *S,
-                                        const DeclSpec &DS) {
+                                        const DeclSpec &DS,
+                                        bool IsTemplate) {
     return DeclPtrTy();
   }
 

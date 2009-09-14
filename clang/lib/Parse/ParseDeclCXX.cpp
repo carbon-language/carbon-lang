@@ -1015,11 +1015,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     ConsumeToken();
 
     if (DS.isFriendSpecified()) {
-      // FIXME: Friend templates are ignored for now.
-      if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate)
-        return;
-      
-      Actions.ActOnFriendTypeDecl(CurScope, DS);
+      bool IsTemplate = TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate;
+      Actions.ActOnFriendTypeDecl(CurScope, DS, IsTemplate);
     } else
       Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
 

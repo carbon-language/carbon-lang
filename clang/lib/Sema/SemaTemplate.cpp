@@ -556,13 +556,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (CheckTemplateDeclScope(S, TemplateParams))
     return true;
 
-  TagDecl::TagKind Kind;
-  switch (TagSpec) {
-  default: assert(0 && "Unknown tag type!");
-  case DeclSpec::TST_struct: Kind = TagDecl::TK_struct; break;
-  case DeclSpec::TST_union:  Kind = TagDecl::TK_union; break;
-  case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
-  }
+  TagDecl::TagKind Kind = TagDecl::getTagKindForTypeSpec(TagSpec);
+  assert(Kind != TagDecl::TK_enum && "can't build template of enumerated type");
 
   // There is no such thing as an unnamed class template.
   if (!Name) {
@@ -657,6 +652,13 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // FIXME: If we had a scope specifier, we better have a previous template
   // declaration!
 
+  // If this is a friend declaration of an undeclared template,
+  // create the template in the innermost namespace scope.
+  if (TUK == TUK_Friend && !PrevClassTemplate) {
+    while (!SemanticContext->isFileContext())
+      SemanticContext = SemanticContext->getParent();
+  }
+
   CXXRecordDecl *NewClass =
     CXXRecordDecl::Create(Context, Kind, SemanticContext, NameLoc, Name, KWLoc,
                           PrevClassTemplate?
@@ -678,7 +680,11 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   (void)T;
 
   // Set the access specifier.
-  SetMemberAccessSpecifier(NewTemplate, PrevClassTemplate, AS);
+  if (TUK == TUK_Friend)
+    NewTemplate->setObjectOfFriendDecl(/* PreviouslyDeclared = */
+                                       PrevClassTemplate != NULL);
+  else 
+    SetMemberAccessSpecifier(NewTemplate, PrevClassTemplate, AS);
 
   // Set the lexical context of these templates
   NewClass->setLexicalDeclContext(CurContext);
@@ -690,7 +696,23 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (Attr)
     ProcessDeclAttributeList(S, NewClass, Attr);
 
-  PushOnScopeChains(NewTemplate, S);
+  if (TUK != TUK_Friend)
+    PushOnScopeChains(NewTemplate, S);
+  else {
+    // We might be replacing an existing declaration in the lookup tables;
+    // if so, borrow its access specifier.
+    if (PrevClassTemplate)
+      NewTemplate->setAccess(PrevClassTemplate->getAccess());
+
+    // Friend templates are visible in fairly strange ways.
+    if (!CurContext->isDependentContext()) {
+      DeclContext *DC = SemanticContext->getLookupContext();
+      DC->makeDeclVisibleInContext(NewTemplate, /* Recoverable = */ false);
+      if (Scope *EnclosingScope = getScopeForDeclContext(S, DC))
+        PushOnScopeChains(NewTemplate, EnclosingScope,
+                          /* AddToContext = */ false);      
+    }
+  }
 
   if (Invalid) {
     NewTemplate->setInvalidDecl();

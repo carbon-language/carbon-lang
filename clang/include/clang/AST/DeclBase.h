@@ -419,7 +419,8 @@ public:
   /// same entity may not (and probably don't) share this property.
   void setObjectOfFriendDecl(bool PreviouslyDeclared) {
     unsigned OldNS = IdentifierNamespace;
-    assert((OldNS == IDNS_Tag || OldNS == IDNS_Ordinary)
+    assert((OldNS == IDNS_Tag || OldNS == IDNS_Ordinary ||
+            OldNS == (IDNS_Tag | IDNS_Ordinary))
            && "unsupported namespace for undeclared friend");
     if (!PreviouslyDeclared) IdentifierNamespace = 0;
 

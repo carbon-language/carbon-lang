@@ -4009,11 +4009,34 @@ Sema::DeclPtrTy Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
 }
 
 Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
-                                          const DeclSpec &DS) {
+                                          const DeclSpec &DS,
+                                          bool IsTemplate) {
   SourceLocation Loc = DS.getSourceRange().getBegin();
 
   assert(DS.isFriendSpecified());
   assert(DS.getStorageClassSpec() == DeclSpec::SCS_unspecified);
+
+  // Handle friend templates specially.
+  if (IsTemplate) {
+    Decl *D;
+    switch (DS.getTypeSpecType()) {
+    default:
+      // FIXME: implement this
+      assert(false && "unelaborated type templates are currently unimplemented!");
+    case DeclSpec::TST_class:
+    case DeclSpec::TST_union:
+    case DeclSpec::TST_struct:
+      D = (Decl*) DS.getTypeRep();
+    }
+
+    ClassTemplateDecl *Temp = cast<ClassTemplateDecl>(D);
+    FriendDecl *FD = FriendDecl::Create(Context, CurContext, Loc, Temp,
+                                        DS.getFriendSpecLoc());
+    FD->setAccess(AS_public);
+    CurContext->addDecl(FD);
+
+    return DeclPtrTy::make(FD);
+  }
 
   // Try to convert the decl specifier to a type.
   bool invalid = false;
