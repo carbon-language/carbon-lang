@@ -1395,6 +1395,10 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
     return (Ty->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 
+  // Ignore empty records.
+  if (isEmptyRecord(Context, Ty, true))
+    return ABIArgInfo::getIgnore();
+
   // FIXME: This is kind of nasty... but there isn't much choice because the ARM
   // backend doesn't support byval.
   // FIXME: This doesn't handle alignment > 64 bits.

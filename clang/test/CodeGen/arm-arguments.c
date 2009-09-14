@@ -84,3 +84,11 @@ struct s13 f13(void) {}
 // AAPCS: define arm_aapcscc i32 @f14()
 union u14 { float f0; };
 union u14 f14(void) {}
+
+// APCS-GNU: define arm_apcscc void @f15()
+// AAPCS: define arm_aapcscc void @f15()
+void f15(struct s7 a0) {}
+
+// APCS-GNU: define arm_apcscc void @f16()
+// AAPCS: define arm_aapcscc void @f16()
+void f16(struct s8 a0) {}
