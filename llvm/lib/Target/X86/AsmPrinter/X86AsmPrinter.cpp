@@ -17,6 +17,7 @@
 #include "X86.h"
 #include "X86ATTAsmPrinter.h"
 #include "X86IntelAsmPrinter.h"
+#include "X86ATTInstPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
@@ -34,8 +35,23 @@ static AsmPrinter *createX86CodePrinterPass(formatted_raw_ostream &o,
   return new X86ATTAsmPrinter(o, tm, tai, verbose);
 }
 
+
+static MCInstPrinter *createX86MCInstPrinter(const Target &T,
+                                             unsigned SyntaxVariant,
+                                             const MCAsmInfo &MAI,
+                                             raw_ostream &O) {
+  if (SyntaxVariant == 0)
+    return new X86ATTInstPrinter(O, MAI);
+  
+  // Don't support intel syntax instprinter yet.
+  return 0;
+}
+
 // Force static initialization.
 extern "C" void LLVMInitializeX86AsmPrinter() { 
   TargetRegistry::RegisterAsmPrinter(TheX86_32Target, createX86CodePrinterPass);
   TargetRegistry::RegisterAsmPrinter(TheX86_64Target, createX86CodePrinterPass);
+  
+  TargetRegistry::RegisterMCInstPrinter(TheX86_32Target,createX86MCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheX86_64Target,createX86MCInstPrinter);
 }

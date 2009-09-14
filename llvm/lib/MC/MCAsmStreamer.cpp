@@ -9,12 +9,12 @@
 
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -28,12 +28,12 @@ namespace {
 class MCAsmStreamer : public MCStreamer {
   raw_ostream &OS;
   const MCAsmInfo &MAI;
-  AsmPrinter *Printer;
+  MCInstPrinter *InstPrinter;
   MCCodeEmitter *Emitter;
 public:
   MCAsmStreamer(MCContext &Context, raw_ostream &_OS, const MCAsmInfo &tai,
-                AsmPrinter *_Printer, MCCodeEmitter *_Emitter)
-    : MCStreamer(Context), OS(_OS), MAI(tai), Printer(_Printer),
+                MCInstPrinter *_Printer, MCCodeEmitter *_Emitter)
+    : MCStreamer(Context), OS(_OS), MAI(tai), InstPrinter(_Printer),
       Emitter(_Emitter) {}
   ~MCAsmStreamer() {}
 
@@ -265,8 +265,8 @@ void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(CurSection && "Cannot emit contents before setting section!");
 
   // If we have an AsmPrinter, use that to print.
-  if (Printer) {
-    Printer->printMCInst(&Inst);
+  if (InstPrinter) {
+    InstPrinter->printInst(&Inst);
     OS << '\n';
 
     // Show the encoding if we have a code emitter.
@@ -300,7 +300,7 @@ void MCAsmStreamer::Finish() {
 }
     
 MCStreamer *llvm::createAsmStreamer(MCContext &Context, raw_ostream &OS,
-                                    const MCAsmInfo &MAI, AsmPrinter *AP,
+                                    const MCAsmInfo &MAI, MCInstPrinter *IP,
                                     MCCodeEmitter *CE) {
-  return new MCAsmStreamer(Context, OS, MAI, AP, CE);
+  return new MCAsmStreamer(Context, OS, MAI, IP, CE);
 }

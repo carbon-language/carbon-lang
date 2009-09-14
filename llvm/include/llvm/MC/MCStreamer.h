@@ -17,12 +17,12 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
-  class AsmPrinter;
   class MCAsmInfo;
   class MCCodeEmitter;
   class MCContext;
   class MCExpr;
   class MCInst;
+  class MCInstPrinter;
   class MCSection;
   class MCSymbol;
   class StringRef;
@@ -217,10 +217,9 @@ namespace llvm {
   /// createAsmStreamer - Create a machine code streamer which will print out
   /// assembly for the native target, suitable for compiling with a native
   /// assembler.
-  ///
-  /// \arg AP - If given, an AsmPrinter to use for printing instructions.
   MCStreamer *createAsmStreamer(MCContext &Ctx, raw_ostream &OS,
-                                const MCAsmInfo &MAI, AsmPrinter *AP = 0,
+                                const MCAsmInfo &MAI,
+                                MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0);
 
   // FIXME: These two may end up getting rolled into a single

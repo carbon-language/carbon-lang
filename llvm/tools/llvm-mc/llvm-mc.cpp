@@ -12,13 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/MCAsmLexer.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCAsmLexer.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -29,6 +29,7 @@
 #include "llvm/System/Signals.h"
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/TargetMachine.h"  // FIXME.
 #include "llvm/Target/TargetSelect.h"
 #include "AsmParser.h"
 using namespace llvm;
@@ -243,7 +244,7 @@ static int AssembleInput(const char *ProgName) {
     return 1;
   }
 
-  OwningPtr<AsmPrinter> AP;
+  OwningPtr<MCInstPrinter> IP;
   OwningPtr<MCCodeEmitter> CE;
   OwningPtr<MCStreamer> Str;
 
@@ -251,10 +252,12 @@ static int AssembleInput(const char *ProgName) {
   assert(MAI && "Unable to create target asm info!");
 
   if (FileType == OFT_AssemblyFile) {
-    AP.reset(TheTarget->createAsmPrinter(*Out, *TM, MAI, true));
+    // FIXME: Syntax Variant should be selectable somehow?
+    unsigned SyntaxVariant = 0;
+    IP.reset(TheTarget->createMCInstPrinter(SyntaxVariant, *MAI, *Out));
     if (ShowEncoding)
       CE.reset(TheTarget->createCodeEmitter(*TM));
-    Str.reset(createAsmStreamer(Ctx, *Out, *MAI, AP.get(), CE.get()));
+    Str.reset(createAsmStreamer(Ctx, *Out, *MAI, IP.get(), CE.get()));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     CE.reset(TheTarget->createCodeEmitter(*TM));

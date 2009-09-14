@@ -30,9 +30,11 @@ namespace llvm {
   class Module;
   class MCAsmInfo;
   class MCDisassembler;
+  class MCInstPrinter;
   class TargetAsmParser;
   class TargetMachine;
   class formatted_raw_ostream;
+  class raw_ostream;
 
   /// Target - Wrapper for Target specific information.
   ///
@@ -60,6 +62,10 @@ namespace llvm {
     typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &T,
                                                 MCAsmParser &P);
     typedef const MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T);
+    typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
+                                                  unsigned SyntaxVariant,
+                                                  const MCAsmInfo &MAI,
+                                                  raw_ostream &O);
     typedef MCCodeEmitter *(*CodeEmitterCtorTy)(const Target &T,
                                                 TargetMachine &TM);
 
@@ -99,6 +105,11 @@ namespace llvm {
     /// MCDisassembler, if registered.
     MCDisassemblerCtorTy MCDisassemblerCtorFn;
 
+    
+    /// MCInstPrinterCtorFn - Construction function for this target's 
+    /// MCInstPrinter, if registered.
+    MCInstPrinterCtorTy MCInstPrinterCtorFn;
+    
     /// CodeEmitterCtorFn - Construction function for this target's CodeEmitter,
     /// if registered.
     CodeEmitterCtorTy CodeEmitterCtorFn;
@@ -134,6 +145,9 @@ namespace llvm {
     
     /// hasMCDisassembler - Check if this target has a disassembler.
     bool hasMCDisassembler() const { return MCDisassemblerCtorFn != 0; }
+
+    /// hasMCInstPrinter - Check if this target has an instruction printer.
+    bool hasMCInstPrinter() const { return MCInstPrinterCtorFn != 0; }
 
     /// hasCodeEmitter - Check if this target supports instruction encoding.
     bool hasCodeEmitter() const { return CodeEmitterCtorFn != 0; }
@@ -193,6 +207,15 @@ namespace llvm {
       return MCDisassemblerCtorFn(*this);
     }
 
+    MCInstPrinter *createMCInstPrinter(unsigned SyntaxVariant,
+                                       const MCAsmInfo &MAI,
+                                       raw_ostream &O) const {
+      if (!MCInstPrinterCtorFn)
+        return 0;
+      return MCInstPrinterCtorFn(*this, SyntaxVariant, MAI, O);
+    }
+    
+    
     /// createCodeEmitter - Create a target specific code emitter.
     MCCodeEmitter *createCodeEmitter(TargetMachine &TM) const {
       if (!CodeEmitterCtorFn)
@@ -364,6 +387,12 @@ namespace llvm {
         T.MCDisassemblerCtorFn = Fn;
     }
 
+    static void RegisterMCInstPrinter(Target &T,
+                                      Target::MCInstPrinterCtorTy Fn) {
+      if (!T.MCInstPrinterCtorFn)
+        T.MCInstPrinterCtorFn = Fn;
+    }
+    
     /// RegisterCodeEmitter - Register a MCCodeEmitter implementation for the
     /// given target.
     /// 
