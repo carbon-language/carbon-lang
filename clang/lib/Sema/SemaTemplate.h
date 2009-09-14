@@ -86,6 +86,19 @@ namespace clang {
       return *TemplateArgumentLists.front();
     }
   };
+  
+  /// \brief The context in which partial ordering of function templates occurs.
+  enum TemplatePartialOrderingContext {
+    /// \brief Partial ordering of function templates for a function call.
+    TPOC_Call,
+    /// \brief Partial ordering of function templates for a call to a 
+    /// conversion function.
+    TPOC_Conversion,
+    /// \brief Partial ordering of function templates in other contexts, e.g.,
+    /// taking the address of a function template or matching a function 
+    /// template specialization to a function template.
+    TPOC_Other
+  };
 }
 
 #endif // LLVM_CLANG_SEMA_TEMPLATE_H

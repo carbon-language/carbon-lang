@@ -2730,7 +2730,7 @@ public:
 
   FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                                    FunctionTemplateDecl *FT2,
-                                                   bool isCallContext);
+                                           TemplatePartialOrderingContext TPOC);
 
   void MarkDeducedTemplateParameters(const TemplateArgumentList &TemplateArgs,
                                      llvm::SmallVectorImpl<bool> &Deduced);

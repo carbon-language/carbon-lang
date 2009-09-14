@@ -3708,7 +3708,7 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
     if (FunctionTemplateDecl *BetterTemplate
           = getMoreSpecializedTemplate(Cand1.Function->getPrimaryTemplate(),
                                        Cand2.Function->getPrimaryTemplate(),
-                                       true))
+                                       TPOC_Call))
       return BetterTemplate == Cand1.Function->getPrimaryTemplate();
 
   //   -- the context is an initialization by user-defined conversion
@@ -4029,7 +4029,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     for (++M; M != MEnd; ++M)
       if (getMoreSpecializedTemplate((*M)->getPrimaryTemplate(),
                                      (*Best)->getPrimaryTemplate(),
-                                     false)
+                                     TPOC_Other)
             == (*M)->getPrimaryTemplate())
         Best = M;
 
@@ -4040,7 +4040,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       if (M != Best &&
           getMoreSpecializedTemplate((*M)->getPrimaryTemplate(),
                                      (*Best)->getPrimaryTemplate(),
-                                     false)
+                                     TPOC_Other)
            != (*Best)->getPrimaryTemplate()) {
         Ambiguous = true;
         break;

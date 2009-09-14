@@ -959,10 +959,6 @@ def unsup_template_partial_spec_ordering : Error<
   "partial ordering of class template partial specializations is not yet "
   "supported">;
 
-def unsup_function_template_partial_ordering : Warning<
-  "partial ordering of function templates is unsupported; overload resolution "
-  "may result in an ambiguity that would not occur with a conforming compiler">;
-  
 // C++ Template Instantiation
 def err_template_recursion_depth_exceeded : Error<
   "recursive template instantiation exceeded maximum depth of %0">,
