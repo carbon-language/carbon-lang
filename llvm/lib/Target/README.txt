@@ -1653,6 +1653,7 @@ entry:
 
 Instcombine should be able to optimize away the loads (and thus the globals).
 
+See also PR4973
 
 //===---------------------------------------------------------------------===//
 
