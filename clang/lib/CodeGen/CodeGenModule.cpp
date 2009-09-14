@@ -1256,7 +1256,8 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
 
 /// getBuiltinLibFunction - Given a builtin id for a function like
 /// "__builtin_fabsf", return a Function* for "fabsf".
-llvm::Value *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
+llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
+                                                  unsigned BuiltinID) {
   assert((Context.BuiltinInfo.isLibFunction(BuiltinID) ||
           Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID)) &&
          "isn't a lib fn");
@@ -1276,8 +1277,7 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
 
   // Unique the name through the identifier table.
   Name = getContext().Idents.get(Name).getName();
-  // FIXME: param attributes for sext/zext etc.
-  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl());
+  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl(FD));
 }
 
 llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,

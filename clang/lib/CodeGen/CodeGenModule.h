@@ -303,7 +303,8 @@ public:
 
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
-  llvm::Value *getBuiltinLibFunction(unsigned BuiltinID);
+  llvm::Value *getBuiltinLibFunction(const FunctionDecl *FD,
+                                     unsigned BuiltinID);
 
   llvm::Function *getMemCpyFn();
   llvm::Function *getMemMoveFn();

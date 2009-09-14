@@ -556,7 +556,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   // that function.
   if (getContext().BuiltinInfo.isLibFunction(BuiltinID) ||
       getContext().BuiltinInfo.isPredefinedLibFunction(BuiltinID))
-    return EmitCall(CGM.getBuiltinLibFunction(BuiltinID),
+    return EmitCall(CGM.getBuiltinLibFunction(FD, BuiltinID),
                     E->getCallee()->getType(), E->arg_begin(),
                     E->arg_end());
 
