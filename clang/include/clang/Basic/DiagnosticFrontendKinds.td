@@ -11,6 +11,7 @@ let Component = "Frontend" in {
 
 def err_fe_unknown_triple : Error<
   "unknown target triple '%0', please use -triple or -arch">;
+def err_fe_unknown_target_abi : Error<"unknown target ABI '%0'">;
 def err_fe_error_reading : Error<"error reading '%0'">;
 def err_fe_error_reading_stdin : Error<"error reading stdin">;
 def err_fe_error_backend : Error<"error in backend: %0">, DefaultFatal;

@@ -352,6 +352,13 @@ public:
                                   llvm::StringMap<bool> &Features) const {
   }
 
+  /// setABI - Use the specific ABI.
+  ///
+  /// \return - False on error (invalid ABI name).
+  virtual bool setABI(const std::string &Name) {
+    return false;
+  }
+
   /// setFeatureEnabled - Enable or disable a specific target feature,
   /// the feature name must be valid.
   ///

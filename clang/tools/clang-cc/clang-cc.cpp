@@ -663,6 +663,10 @@ static llvm::cl::opt<bool>
 NoElideConstructors("fno-elide-constructors",
                     llvm::cl::desc("Disable C++ copy constructor elision"));
 
+static llvm::cl::opt<std::string>
+TargetABI("target-abi",
+          llvm::cl::desc("Target a particular ABI type"));
+
 
 // It might be nice to add bounds to the CommandLine library directly.
 struct OptLevelParser : public llvm::cl::parser<unsigned> {
@@ -2240,6 +2244,15 @@ int main(int argc, char **argv) {
     Diags.Report(FullSourceLoc(), diag::err_fe_unknown_triple)
       << Triple.getTriple().c_str();
     return 1;
+  }
+
+  // Set the target ABI if specified.
+  if (!TargetABI.empty()) {
+    if (!Target->setABI(TargetABI)) {
+      Diags.Report(FullSourceLoc(), diag::err_fe_unknown_target_abi)
+        << TargetABI;
+      return 1;
+    }
   }
 
   if (!InheritanceViewCls.empty())  // C++ visualization?
