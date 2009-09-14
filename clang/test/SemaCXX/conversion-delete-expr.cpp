@@ -74,7 +74,7 @@ struct X1 {
    template<typename T> operator T*() const; // converts to any pointer!
 };
 
-void f5(X1 x) { delete x; } // FIXME. May have to issue error here too.
+void f5(X1 x) { delete x; }  // OK. In selecting a conversion to pointer function, template convesions are skipped.
 
 // Test7
 struct Base {
@@ -102,7 +102,7 @@ struct DD : BB {
 
 void foo7 (DD d)
 {
-	// FIXME. We select DD::operator int *() const; g++ issues ambiguity error. Investigate.
+        // OK. In selecting a conversion to pointer function, template convesions are skipped.
 	delete d;
 }
 
