@@ -218,7 +218,7 @@ def err_dup_implementation_category : Error<
 def err_conflicting_ivar_type : Error<
   "instance variable %0 has conflicting type: %1 vs %2">;
 def err_conflicting_ivar_bitwidth : Error<
-  "instance variable %0 has conflicting bitfield width">;
+  "instance variable %0 has conflicting bit-field width">;
 def err_conflicting_ivar_name : Error<
   "conflicting instance variable names: %0 vs %1">;
 def err_inconsistant_ivar_count : Error<
@@ -1167,7 +1167,7 @@ def err_bitfield_has_zero_width : Error<"named bit-field %0 has zero width">;
 def err_bitfield_width_exceeds_type_size : Error<
   "size of bit-field %0 exceeds size of its type (%1 bits)">;
 def err_anon_bitfield_width_exceeds_type_size : Error<
-  "size of anonymous bitfield exceeds size of its type (%0 bits)">;
+  "size of anonymous bit-field exceeds size of its type (%0 bits)">;
 
 def err_redefinition_of_label : Error<"redefinition of label '%0'">;
 def err_undeclared_label_use : Error<"use of undeclared label '%0'">;
@@ -1261,7 +1261,7 @@ def err_sizeof_incomplete_type : Error<
 def err_alignof_incomplete_type : Error<
   "invalid application of '__alignof' to an incomplete type %0">;
 def err_sizeof_alignof_bitfield : Error<
-  "invalid application of '%select{sizeof|__alignof}0' to bitfield">;
+  "invalid application of '%select{sizeof|__alignof}0' to bit-field">;
 def err_offsetof_record_type : Error<
   "offsetof requires struct, union, or class type, %0 invalid">;
 def err_offsetof_array_type : Error<"offsetof requires array type, %0 invalid">;
