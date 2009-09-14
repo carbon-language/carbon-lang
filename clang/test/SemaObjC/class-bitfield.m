@@ -20,7 +20,7 @@
 }
 @end
 
-@interface WithBitfields: Base {
+@interface WithBitFields: Base {
   void *isa; // expected-note {{previous definition is here}}
   unsigned a: 5;
   signed b: 4;
@@ -28,10 +28,10 @@
 }
 @end
 
-@implementation WithBitfields {
+@implementation WithBitFields {
   char *isa;  // expected-error {{instance variable 'isa' has conflicting type: 'char *' vs 'void *'}}
   unsigned a: 5;  
   signed b: 4; 
-  int c: 3;  // expected-error {{instance variable 'c' has conflicting bitfield width}}
+  int c: 3;  // expected-error {{instance variable 'c' has conflicting bit-field width}}
 }
 @end

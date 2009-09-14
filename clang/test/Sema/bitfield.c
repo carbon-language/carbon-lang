@@ -21,7 +21,7 @@ struct a {
   int g : (_Bool)1;
   
   // PR4017  
-  char : 10;      // expected-error {{size of anonymous bitfield exceeds size of its type (8 bits)}}
+  char : 10;      // expected-error {{size of anonymous bit-field exceeds size of its type (8 bits)}}
   unsigned : -2;  // expected-error {{anonymous bit-field has negative width (-2)}}
   float : 12;     // expected-error {{anonymous bit-field has non-integral type 'float'}}
 };
