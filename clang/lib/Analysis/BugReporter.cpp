@@ -1196,7 +1196,16 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
 //===----------------------------------------------------------------------===//
 // Methods for BugType and subclasses.
 //===----------------------------------------------------------------------===//
-BugType::~BugType() {}
+BugType::~BugType() {
+  // Free up the equivalence class objects.  Observe that we get a pointer to
+  // the object first before incrementing the iterator, as destroying the
+  // node before doing so means we will read from freed memory.
+  for (iterator I = begin(), E = end(); I !=E; ) {
+    BugReportEquivClass *EQ = &*I;
+    ++I;
+    delete EQ;
+  }
+}
 void BugType::FlushReports(BugReporter &BR) {}
 
 //===----------------------------------------------------------------------===//
@@ -1319,9 +1328,6 @@ void BugReporter::FlushReports() {
     }
 
     // Delete the BugType object.
-
-    // FIXME: this will *not* delete the BugReportEquivClasses, since FoldingSet
-    // only deletes the buckets, not the nodes themselves.
     delete BT;
   }
 
