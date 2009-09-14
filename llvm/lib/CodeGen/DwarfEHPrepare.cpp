@@ -219,29 +219,40 @@ bool DwarfEHPrepare::NormalizeLandingPads() {
 /// at runtime if there is no such exception: using unwind to throw a new
 /// exception is currently not supported.
 bool DwarfEHPrepare::LowerUnwinds() {
-  bool Changed = false;
+  SmallVector<TerminatorInst*, 16> UnwindInsts;
 
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
     TerminatorInst *TI = I->getTerminator();
-    if (!isa<UnwindInst>(TI))
-      continue;
+    if (isa<UnwindInst>(TI))
+      UnwindInsts.push_back(TI);
+  }
+
+  if (UnwindInsts.empty()) return false;
+
+  // Find the rewind function if we didn't already.
+  if (!RewindFunction) {
+    LLVMContext &Ctx = UnwindInsts[0]->getContext();
+    std::vector<const Type*>
+      Params(1, PointerType::getUnqual(Type::getInt8Ty(Ctx)));
+    FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
+                                          Params, false);
+    const char *RewindName = TLI->getLibcallName(RTLIB::UNWIND_RESUME);
+    RewindFunction = F->getParent()->getOrInsertFunction(RewindName, FTy);
+  }
+
+  bool Changed = false;
+
+  for (SmallVectorImpl<TerminatorInst*>::iterator
+         I = UnwindInsts.begin(), E = UnwindInsts.end(); I != E; ++I) {
+    TerminatorInst *TI = *I;
 
     // Replace the unwind instruction with a call to _Unwind_Resume (or the
     // appropriate target equivalent) followed by an UnreachableInst.
 
-    // Find the rewind function if we didn't already.
-    if (!RewindFunction) {
-      std::vector<const Type*> Params(1,
-                     PointerType::getUnqual(Type::getInt8Ty(TI->getContext())));
-      FunctionType *FTy = FunctionType::get(Type::getVoidTy(TI->getContext()),
-                                            Params, false);
-      const char *RewindName = TLI->getLibcallName(RTLIB::UNWIND_RESUME);
-      RewindFunction = F->getParent()->getOrInsertFunction(RewindName, FTy);
-    }
-
     // Create the call...
     CallInst *CI = CallInst::Create(RewindFunction,
-				    CreateReadOfExceptionValue(I), "", TI);
+				    CreateReadOfExceptionValue(TI->getParent()),
+                                    "", TI);
     CI->setCallingConv(TLI->getLibcallCallingConv(RTLIB::UNWIND_RESUME));
     // ...followed by an UnreachableInst.
     new UnreachableInst(TI->getContext(), TI);
