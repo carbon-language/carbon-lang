@@ -529,12 +529,6 @@ describe the location of the characters corresponding to the token and the
 location where the token was used (i.e. the macro instantiation point or the 
 location of the _Pragma itself).</p>
 
-<p>For efficiency, we only track one level of macro instantiations: if a token was
-produced by multiple instantiations, we only track the source and ultimate
-destination.  Though we could track the intermediate instantiation points, this
-would require extra bookkeeping and no known client would benefit substantially
-from this.</p>
-
 <p>The Clang front-end inherently depends on the location of a token being
 tracked correctly.  If it is ever incorrect, the front-end may get confused and
 die.  The reason for this is that the notion of the 'spelling' of a Token in
