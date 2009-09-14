@@ -380,32 +380,32 @@ public:
                                          int64_t nv_t, int64_t v_t,
                                          int64_t nv_r, int64_t v_r);
 
-  void EmitCtorPrologue(const CXXConstructorDecl *CD);
+  void EmitCtorPrologue(const CXXConstructorDecl *CD, CXXCtorType Type);
 
-  void SynthesizeCXXCopyConstructor(GlobalDecl GD,
-                                    const FunctionDecl *FD,
+  void SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
+                                    CXXCtorType Type,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args);
 
   void SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
-                                   const FunctionDecl *FD,
                                    llvm::Function *Fn,
                                    const FunctionArgList &Args);
 
-  void SynthesizeDefaultConstructor(GlobalDecl GD,
-                                    const FunctionDecl *FD,
+  void SynthesizeDefaultConstructor(const CXXConstructorDecl *Ctor,
+                                    CXXCtorType Type,
                                     llvm::Function *Fn,
                                     const FunctionArgList &Args);
 
-  void SynthesizeDefaultDestructor(GlobalDecl GD,
-                                    const FunctionDecl *FD,
-                                    llvm::Function *Fn,
-                                    const FunctionArgList &Args);
+  void SynthesizeDefaultDestructor(const CXXDestructorDecl *Dtor,
+                                   CXXDtorType Type,
+                                   llvm::Function *Fn,
+                                   const FunctionArgList &Args);
 
   /// EmitDtorEpilogue - Emit all code that comes at the end of class's
   /// destructor. This is to call destructors on members and base classes
   /// in reverse order of their construction.
-  void EmitDtorEpilogue(const CXXDestructorDecl *DD);
+  void EmitDtorEpilogue(const CXXDestructorDecl *Dtor,
+                        CXXDtorType Type);
 
   /// EmitFunctionProlog - Emit the target specific LLVM code to load the
   /// arguments for the given function. This is also responsible for naming the

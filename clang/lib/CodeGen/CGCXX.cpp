@@ -1578,14 +1578,13 @@ void CodeGenFunction::EmitClassCopyAssignment(
 
 /// SynthesizeDefaultConstructor - synthesize a default constructor
 void
-CodeGenFunction::SynthesizeDefaultConstructor(GlobalDecl GD,
-                                              const FunctionDecl *FD,
+CodeGenFunction::SynthesizeDefaultConstructor(const CXXConstructorDecl *Ctor,
+                                              CXXCtorType Type,
                                               llvm::Function *Fn,
                                               const FunctionArgList &Args) {
-  const CXXConstructorDecl *Ctor = cast<CXXConstructorDecl>(GD.getDecl());
-  
-  StartFunction(GD, FD->getResultType(), Fn, Args, SourceLocation());
-  EmitCtorPrologue(Ctor);
+  StartFunction(GlobalDecl(Ctor, Type), Ctor->getResultType(), Fn, Args, 
+                SourceLocation());
+  EmitCtorPrologue(Ctor, Type);
   FinishFunction();
 }
 
@@ -1604,15 +1603,16 @@ CodeGenFunction::SynthesizeDefaultConstructor(GlobalDecl GD,
 /// Virtual base class subobjects shall be copied only once by the
 /// implicitly-defined copy constructor
 
-void CodeGenFunction::SynthesizeCXXCopyConstructor(GlobalDecl GD,
-                                       const FunctionDecl *FD,
-                                       llvm::Function *Fn,
-                                       const FunctionArgList &Args) {
-  const CXXConstructorDecl *Ctor = cast<CXXConstructorDecl>(GD.getDecl());
+void 
+CodeGenFunction::SynthesizeCXXCopyConstructor(const CXXConstructorDecl *Ctor,
+                                              CXXCtorType Type,
+                                              llvm::Function *Fn,
+                                              const FunctionArgList &Args) {
   const CXXRecordDecl *ClassDecl = Ctor->getParent();
   assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
          "SynthesizeCXXCopyConstructor - copy constructor has definition already");
-  StartFunction(GD, Ctor->getResultType(), Fn, Args, SourceLocation());
+  StartFunction(GlobalDecl(Ctor, Type), Ctor->getResultType(), Fn, Args, 
+                SourceLocation());
 
   FunctionArgList::const_iterator i = Args.begin();
   const VarDecl *ThisArg = i->first;
@@ -1693,14 +1693,13 @@ void CodeGenFunction::SynthesizeCXXCopyConstructor(GlobalDecl GD,
 ///   if the subobject is of scalar type, the built-in assignment operator is
 ///   used.
 void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
-                                                  const FunctionDecl *FD,
                                                   llvm::Function *Fn,
                                                   const FunctionArgList &Args) {
 
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
   assert(!ClassDecl->hasUserDeclaredCopyAssignment() &&
          "SynthesizeCXXCopyAssignment - copy assignment has user declaration");
-  StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
+  StartFunction(CD, CD->getResultType(), Fn, Args, SourceLocation());
 
   FunctionArgList::const_iterator i = Args.begin();
   const VarDecl *ThisArg = i->first;
@@ -1767,7 +1766,8 @@ void CodeGenFunction::SynthesizeCXXCopyAssignment(const CXXMethodDecl *CD,
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.
 /// FIXME: This needs to take a CXXCtorType.
-void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
+void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
+                                       CXXCtorType CtorType) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
   // FIXME: Add vbase initialization
   llvm::Value *LoadOfThis = 0;
@@ -1785,7 +1785,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
                                                 BaseClassDecl,
                                                 /*NullCheckValue=*/false);
       EmitCXXConstructorCall(Member->getConstructor(),
-                             Ctor_Complete, V,
+                             CtorType, V,
                              Member->const_arg_begin(),
                              Member->const_arg_end());
     } else {
@@ -1924,7 +1924,8 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
 /// destructor. This is to call destructors on members and base classes
 /// in reverse order of their construction.
 /// FIXME: This needs to take a CXXDtorType.
-void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
+void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD,
+                                       CXXDtorType DtorType) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(DD->getDeclContext());
   assert(!ClassDecl->getNumVBases() &&
          "FIXME: Destruction of virtual bases not supported");
@@ -1967,7 +1968,7 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
                                                 ClassDecl, BaseClassDecl,
                                                 /*NullCheckValue=*/false);
       EmitCXXDestructorCall(BaseClassDecl->getDestructor(getContext()),
-                            Dtor_Complete, V);
+                            DtorType, V);
     }
   }
   if (DD->getNumBaseOrMemberDestructions() || DD->isTrivial())
@@ -2040,19 +2041,18 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
   }
 }
 
-void CodeGenFunction::SynthesizeDefaultDestructor(GlobalDecl GD,
-                                                  const FunctionDecl *FD,
+void CodeGenFunction::SynthesizeDefaultDestructor(const CXXDestructorDecl *Dtor,
+                                                  CXXDtorType DtorType,
                                                   llvm::Function *Fn,
                                                   const FunctionArgList &Args) {
 
-  const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(GD.getDecl());
-  
   const CXXRecordDecl *ClassDecl = Dtor->getParent();
   assert(!ClassDecl->hasUserDeclaredDestructor() &&
          "SynthesizeDefaultDestructor - destructor has user declaration");
   (void) ClassDecl;
 
-  StartFunction(GD, Dtor->getResultType(), Fn, Args, SourceLocation());
-  EmitDtorEpilogue(Dtor);
+  StartFunction(GlobalDecl(Dtor, DtorType), Dtor->getResultType(), Fn, Args, 
+                SourceLocation());
+  EmitDtorEpilogue(Dtor, DtorType);
   FinishFunction();
 }
