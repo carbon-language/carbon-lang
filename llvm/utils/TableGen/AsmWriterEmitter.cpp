@@ -777,7 +777,7 @@ void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
   << "  assert(RegNo && RegNo < " << (Registers.size()+1)
   << " && \"Invalid register number!\");\n"
   << "\n"
-  << "  static const unsigned RegAsmOffset[] = {\n    ";
+  << "  static const unsigned RegAsmOffset[] = {";
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     const CodeGenRegister &Reg = Registers[i];
 
@@ -786,7 +786,7 @@ void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
       AsmName = Reg.getName();
     
     
-    if ((i % 16) == 0)
+    if ((i % 14) == 0)
       O << "\n    ";
     
     O << StringTable.GetOrAddStringOffset(AsmName) << ", ";
