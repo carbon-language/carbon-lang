@@ -509,7 +509,8 @@ void DerivedType::dropAllTypeUses() {
 
     // Change the rest of the types to be Int32Ty's.  It doesn't matter what we
     // pick so long as it doesn't point back to this type.  We choose something
-    // concrete to avoid overhead for adding to AbstracTypeUser lists and stuff.
+    // concrete to avoid overhead for adding to AbstractTypeUser lists and
+    // stuff.
     for (unsigned i = 1, e = NumContainedTys; i != e; ++i)
       ContainedTys[i] = Type::getInt32Ty(getContext());
   }
@@ -1046,7 +1047,7 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
   // refined, that we will not continue using a dead reference...
   //
   PATypeHolder NewTy(NewType);
-  // Any PATypeHolders referring to this type will now automatically forward o
+  // Any PATypeHolders referring to this type will now automatically forward to
   // the type we are resolved to.
   ForwardType = NewType;
   if (NewType->isAbstract())
