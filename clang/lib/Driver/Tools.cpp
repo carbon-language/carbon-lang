@@ -320,6 +320,32 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getHost().getDriver();
 
+  // Select the ABI to use.
+  //
+  // FIXME: Support -meabi.
+  const char *ABIName = 0;
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
+    ABIName = A->getValue(Args);
+  } else {
+    // Select the default based on the platform.
+    switch (getToolChain().getTriple().getOS()) {
+      // FIXME: Is this right for non-Darwin and non-Linux?
+    default:
+      ABIName = "aapcs";
+      break;
+
+    case llvm::Triple::Darwin:
+      ABIName = "apcs-gnu";
+      break;
+
+    case llvm::Triple::Linux:
+      ABIName = "aapcs-linux";
+      break;
+    }
+  }
+  CmdArgs.push_back("-target-abi");
+  CmdArgs.push_back(ABIName);
+
   // Set the CPU based on -march= and -mcpu=.
   CmdArgs.push_back(Args.MakeArgString("-mcpu=" + getARMTargetCPU(Args)));
 
