@@ -27,6 +27,8 @@ using namespace llvm;
 #include "X86GenAsmWriter.inc"
 #undef MachineInstr
 
+void X86ATTInstPrinter::printInst(const MCInst *MI) { printInstruction(MI); }
+
 void X86ATTInstPrinter::printSSECC(const MCInst *MI, unsigned Op) {
   switch (MI->getOperand(Op).getImm()) {
   default: llvm_unreachable("Invalid ssecc argument!");
@@ -55,7 +57,7 @@ void X86ATTInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
     O << Op.getImm();
   else {
     assert(Op.isExpr() && "unknown pcrel immediate operand");
-    Op.getExpr()->print(O, MAI);
+    Op.getExpr()->print(O, &MAI);
   }
 }
 
@@ -71,7 +73,7 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     O << '$';
-    Op.getExpr()->print(O, MAI);
+    Op.getExpr()->print(O, &MAI);
   }
 }
 
@@ -86,7 +88,7 @@ void X86ATTInstPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
       O << DispVal;
   } else {
     assert(DispSpec.isExpr() && "non-immediate displacement for LEA?");
-    DispSpec.getExpr()->print(O, MAI);
+    DispSpec.getExpr()->print(O, &MAI);
   }
   
   if (IndexReg.getReg() || BaseReg.getReg()) {

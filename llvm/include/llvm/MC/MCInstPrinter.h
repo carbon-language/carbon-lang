@@ -13,13 +13,17 @@
 namespace llvm {
 class MCInst;
 class raw_ostream;
+class MCAsmInfo;
+
   
 /// MCInstPrinter - This is an instance of a target assembly language printer
 /// that converts an MCInst to valid target assembly syntax.
 class MCInstPrinter {
+protected:
   raw_ostream &O;
+  const MCAsmInfo &MAI;
 public:
-  MCInstPrinter(raw_ostream &o) : O(o) {}
+  MCInstPrinter(raw_ostream &o, const MCAsmInfo &mai) : O(o), MAI(mai) {}
   
   virtual ~MCInstPrinter();
   
