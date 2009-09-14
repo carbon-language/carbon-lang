@@ -608,11 +608,14 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
       if (!RD->hasTrivialDestructor()) {
         const CXXDestructorDecl *Dtor = RD->getDestructor(getContext());
         if (Dtor->isVirtual()) {
-          ErrorUnsupported(E, "delete expression with virtual destructor");
-          return;
-        }
-
-        EmitCXXDestructorCall(Dtor, Dtor_Complete, Ptr);
+          const llvm::Type *Ty =
+            CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(Dtor),
+                                           /*isVariadic=*/false);
+          
+          llvm::Value *Callee = BuildVirtualCall(Dtor, Ptr, Ty);
+          EmitCXXMemberCall(Dtor, Callee, Ptr, 0, 0);
+        } else 
+          EmitCXXDestructorCall(Dtor, Dtor_Complete, Ptr);
       }
     }
   }
