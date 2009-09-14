@@ -57,7 +57,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -108,17 +108,26 @@ static const PassInfo *const PreVerifyID = &PreVer;
 
 namespace {
   struct TypeSet : public AbstractTypeUser {
-    SmallSet<const Type *, 16> Types;
+    SmallSetVector<const Type *, 16> Types;
 
     /// Insert a type into the set of types.
     bool insert(const Type *Ty) {
-      bool Inserted = Types.insert(Ty);
-      if (!Inserted)
+      if (!Types.insert(Ty))
         return false;
-
       if (Ty->isAbstract())
         Ty->addAbstractTypeUser(this);
       return true;
+    }
+
+    // Remove ourselves as abstract type listeners for any types that remain
+    // abstract when the TypeSet is destroyed.
+    ~TypeSet() {
+      for (SmallSetVector<const Type *, 16>::iterator I = Types.begin(),
+             E = Types.end(); I != E; ++I) {
+        const Type *Ty = *I;
+        if (Ty->isAbstract())
+          Ty->removeAbstractTypeUser(this);
+      }
     }
 
     // Abstract type user interface.
@@ -126,7 +135,7 @@ namespace {
     /// Remove types from the set when refined. Do not insert the type it was
     /// refined to because that type hasn't been verified yet.
     void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-      Types.erase(OldTy);
+      Types.remove(OldTy);
       OldTy->removeAbstractTypeUser(this);
     }
     void typeBecameConcrete(const DerivedType *AbsTy) {}
