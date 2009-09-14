@@ -33,7 +33,7 @@ void t5() {
 void t6() {
   int array[1] = { 0 };
   signed char subscript = 0;
-  int val = array[subscript]; // expected-warning{{array subscript is of type 'char'}}
+  int val = array[subscript]; // no warning for explicit signed char
 }
 
 void t7() {
@@ -53,7 +53,7 @@ typedef signed char SignedCharTy;
 void t9() {
   int array[1] = { 0 };
   SignedCharTy subscript = 0;
-  int val = array[subscript]; // expected-warning{{array subscript is of type 'char'}}
+  int val = array[subscript]; // no warning for explicit signed char
 }
 
 typedef unsigned char UnsignedCharTy;
