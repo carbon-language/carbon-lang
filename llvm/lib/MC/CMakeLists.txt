@@ -11,6 +11,7 @@ add_llvm_library(LLVMMC
   MCDisassembler.cpp
   MCExpr.cpp
   MCInst.cpp
+  MCInstPrinter.cpp
   MCMachOStreamer.cpp
   MCNullStreamer.cpp
   MCSection.cpp
