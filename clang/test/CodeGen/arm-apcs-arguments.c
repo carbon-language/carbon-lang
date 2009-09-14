@@ -1,5 +1,5 @@
 // RUX: iphone-llvm-gcc -arch armv7 -flto -S -o - %s | FileCheck %s
-// RUN: clang-cc -triple armv7-apple-darwin9 -emit-llvm -w -o - %s | FileCheck %s
+// RUN: clang-cc -triple armv7-apple-darwin9 -target-abi=apcs-gnu -emit-llvm -w -o - %s | FileCheck %s
 
 // CHECK: define arm_apcscc signext i8 @f0()
 char f0(void) {

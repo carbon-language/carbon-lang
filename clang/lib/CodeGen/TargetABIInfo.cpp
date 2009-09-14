@@ -1682,11 +1682,8 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
-    // FIXME: We should get this from the target, we also need a -target-abi
-    // because the user should have some control over this.
-    //
     // FIXME: We want to know the float calling convention as well.
-    if (Triple.getOS() == llvm::Triple::Darwin)
+    if (strcmp(getContext().Target.getABI(), "apcs-gnu") == 0)
       return *(TheABIInfo = new ARMABIInfo(ARMABIInfo::APCS));
 
     return *(TheABIInfo = new ARMABIInfo(ARMABIInfo::AAPCS));

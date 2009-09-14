@@ -352,6 +352,11 @@ public:
                                   llvm::StringMap<bool> &Features) const {
   }
 
+  /// getABI - Get the ABI in use.
+  virtual const char *getABI() const {
+    return "";
+  }
+
   /// setABI - Use the specific ABI.
   ///
   /// \return - False on error (invalid ABI name).

@@ -991,8 +991,13 @@ class ARMTargetInfo : public TargetInfo {
     Armv7a,
     XScale
   } ArmArch;
+
+  std::string ABI;
+
 public:
-  ARMTargetInfo(const std::string& triple) : TargetInfo(triple) {
+  ARMTargetInfo(const std::string& triple)
+    : TargetInfo(triple), ABI("aapcs-linux")
+  {
     // FIXME: Are the defaults correct for ARM?
     DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
                          "i64:32:32-f32:32:32-f64:32:32-"
@@ -1016,7 +1021,10 @@ public:
       ArmArch = Armv6;
     }
   }
+  virtual const char *getABI() const { return ABI.c_str(); }
   virtual bool setABI(const std::string &Name) {
+    ABI = Name;
+
     // The defaults (above) are for AAPCS, check if we need to change them.
     //
     // FIXME: We need support for -meabi... we could just mangle it into the
