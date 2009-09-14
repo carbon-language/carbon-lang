@@ -1394,7 +1394,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
      iter = TypedSelectors.begin(), iterEnd = TypedSelectors.end();
      iter != iterEnd ; ++iter) {
     Elements.push_back(ExportUniqueString(iter->first.first, ".objc_sel_name"));
-    Elements.push_back(ExportUniqueString(iter->first.second,
+    Elements.push_back(MakeConstantString(iter->first.second,
                                           ".objc_sel_types"));
     Selectors.push_back(llvm::ConstantStruct::get(SelStructTy, Elements));
     Elements.clear();
