@@ -41,46 +41,38 @@ void X86ATTInstPrinter::printSSECC(const MCInst *MI, unsigned Op) {
   }
 }
 
-
 void X86ATTInstPrinter::printPICLabel(const MCInst *MI, unsigned Op) {
   llvm_unreachable("This is only used for MOVPC32r,"
                    "should lower before instruction printing!");
 }
-
 
 /// print_pcrel_imm - This is used to print an immediate value that ends up
 /// being encoded as a pc-relative value.  These print slightly differently, for
 /// example, a $ is not emitted.
 void X86ATTInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
   const MCOperand &Op = MI->getOperand(OpNo);
-  
   if (Op.isImm())
     O << Op.getImm();
-  else if (Op.isExpr())
+  else {
+    assert(Op.isExpr() && "unknown pcrel immediate operand");
     Op.getExpr()->print(O, MAI);
-  else
-    llvm_unreachable("Unknown pcrel immediate operand");
+  }
 }
 
-
 void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
-                                    const char *Modifier) {
+                                     const char *Modifier) {
   assert(Modifier == 0 && "Modifiers should not be used");
   
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
     O << '%' << getRegisterName(Op.getReg());
-    return;
   } else if (Op.isImm()) {
     O << '$' << Op.getImm();
-    return;
-  } else if (Op.isExpr()) {
+  } else {
+    assert(Op.isExpr() && "unknown operand kind in printOperand");
     O << '$';
     Op.getExpr()->print(O, MAI);
-    return;
   }
-  
-  O << "<<UNKNOWN OPERAND KIND>>";
 }
 
 void X86ATTInstPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
@@ -114,8 +106,8 @@ void X86ATTInstPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
 }
 
 void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op) {
-  const MCOperand &Segment = MI->getOperand(Op+4);
-  if (Segment.getReg()) {
+  // If this has a segment register, print it.
+  if (MI->getOperand(Op+4).getReg()) {
     printOperand(MI, Op+4);
     O << ':';
   }
