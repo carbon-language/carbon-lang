@@ -1778,6 +1778,15 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
   if (RD->hasTrivialDestructor())
     return Owned(E);
 
+  if (CallExpr *CE = dyn_cast<CallExpr>(E)) {
+    QualType Ty = CE->getCallee()->getType();
+    if (const PointerType *PT = Ty->getAs<PointerType>())
+      Ty = PT->getPointeeType();
+    
+    const FunctionType *FTy = Ty->getAsFunctionType();
+    if (FTy->getResultType()->isReferenceType())
+      return Owned(E);
+  }
   CXXTemporary *Temp = CXXTemporary::Create(Context,
                                             RD->getDestructor(Context));
   ExprTemporaries.push_back(Temp);

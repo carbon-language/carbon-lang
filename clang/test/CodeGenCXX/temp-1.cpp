@@ -63,9 +63,21 @@ struct E {
 };
 
 // RUN: grep "call void @_ZN1EC1Ev" %t | count 3 &&
-// RUN: grep "call void @_ZN1ED1Ev" %t | count 5 
+// RUN: grep "call void @_ZN1ED1Ev" %t | count 5 &&
 void f5() {
   E() + E();
   !E();
+}
+
+struct F {
+  F();
+  ~F();
+  F& f();
+};
+
+// RUN: grep "call void @_ZN1FC1Ev" %t | count 1 &&
+// RUN: grep "call void @_ZN1FD1Ev" %t | count 1 
+void f6() {
+  F().f();
 }
 

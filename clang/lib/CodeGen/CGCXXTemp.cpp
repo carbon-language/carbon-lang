@@ -54,7 +54,13 @@ void CodeGenFunction::PopCXXTemporary() {
   assert(!CleanupInfo.EndBlock &&
          "Should not have an end block for temporary cleanup!");
 
-  EmitBlock(Info.DtorBlock);
+  llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
+  if (CurBB && !CurBB->getTerminator() &&
+      Info.DtorBlock->getNumUses() == 0) {
+    CurBB->getInstList().splice(CurBB->end(), Info.DtorBlock->getInstList());
+    delete Info.DtorBlock;
+  } else
+    EmitBlock(Info.DtorBlock);
 
   llvm::BasicBlock *CondEnd = 0;
 
