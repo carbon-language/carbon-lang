@@ -107,8 +107,9 @@ PreVer("preverify", "Preliminary module verification");
 static const PassInfo *const PreVerifyID = &PreVer;
 
 namespace {
-  struct TypeSet : public AbstractTypeUser {
-    SmallSetVector<const Type *, 16> Types;
+  class TypeSet : public AbstractTypeUser {
+  public:
+    TypeSet() {}
 
     /// Insert a type into the set of types.
     bool insert(const Type *Ty) {
@@ -138,8 +139,20 @@ namespace {
       Types.remove(OldTy);
       OldTy->removeAbstractTypeUser(this);
     }
-    void typeBecameConcrete(const DerivedType *AbsTy) {}
+
+    /// Stop listening for changes to a type which is no longer abstract.
+    void typeBecameConcrete(const DerivedType *AbsTy) {
+      AbsTy->removeAbstractTypeUser(this);
+    }
+
     void dump() const {}
+
+  private:
+    SmallSetVector<const Type *, 16> Types;
+
+    // Disallow copying.
+    TypeSet(const TypeSet &);
+    TypeSet &operator=(const TypeSet &);
   };
 
   struct Verifier : public FunctionPass, public InstVisitor<Verifier> {
