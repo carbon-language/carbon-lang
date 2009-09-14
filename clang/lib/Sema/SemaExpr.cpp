@@ -1809,7 +1809,9 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
     return ExprError(Diag(LLoc, diag::err_typecheck_subscript_not_integer)
                      << IndexExpr->getSourceRange());
 
-  if (IndexExpr->getType()->isCharType() && !IndexExpr->isTypeDependent())
+  QualType IndexTy = Context.getCanonicalType(IndexExpr->getType());
+  if ((IndexTy == Context.CharTy || IndexTy == Context.SignedCharTy)
+      && !IndexExpr->isTypeDependent())
     Diag(LLoc, diag::warn_subscript_is_char) << IndexExpr->getSourceRange();
 
   // C99 6.5.2.1p1: "shall have type "pointer to *object* type". Similarly,

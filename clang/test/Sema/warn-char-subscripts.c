@@ -29,3 +29,36 @@ void t5() {
   int *array = 0;
   int val = array[returnsChar()]; // expected-warning{{array subscript is of type 'char'}}
 }
+
+void t6() {
+  int array[1] = { 0 };
+  signed char subscript = 0;
+  int val = array[subscript]; // expected-warning{{array subscript is of type 'char'}}
+}
+
+void t7() {
+  int array[1] = { 0 };
+  unsigned char subscript = 0;
+  int val = array[subscript]; // no warning for unsigned char
+}
+
+typedef char CharTy;
+void t8() {
+  int array[1] = { 0 };
+  CharTy subscript = 0;
+  int val = array[subscript]; // expected-warning{{array subscript is of type 'char'}}
+}
+
+typedef signed char SignedCharTy;
+void t9() {
+  int array[1] = { 0 };
+  SignedCharTy subscript = 0;
+  int val = array[subscript]; // expected-warning{{array subscript is of type 'char'}}
+}
+
+typedef unsigned char UnsignedCharTy;
+void t10() {
+  int array[1] = { 0 };
+  UnsignedCharTy subscript = 0;
+  int val = array[subscript]; // no warning for unsigned char
+}
