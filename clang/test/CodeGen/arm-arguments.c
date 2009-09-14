@@ -70,3 +70,17 @@ struct s11 f11(void) {}
 // AAPCS: define arm_aapcscc i32 @f12()
 union u12 { char f0; short f1; int f2; };
 union u12 f12(void) {}
+
+// APCS-GNU: define arm_apcscc void @f13(
+// APCS-GNU: struct.s13* noalias sret
+
+// FIXME: This should return a float.
+// AAPCS-FIXME: define arm_aapcscc float @f13()
+struct s13 { float f0; };
+struct s13 f13(void) {}
+
+// APCS-GNU: define arm_apcscc void @f14(
+// APCS-GNU: struct.s13* noalias sret
+// AAPCS: define arm_aapcscc i32 @f14()
+union u14 { float f0; };
+union u14 f14(void) {}

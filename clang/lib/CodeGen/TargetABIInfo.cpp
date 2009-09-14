@@ -1430,6 +1430,10 @@ static bool isIntegerLikeType(QualType Ty,
   if (Ty->isVectorType())
     return false;
 
+  // Float types are never treated as "integer like".
+  if (Ty->isRealFloatingType())
+    return false;
+
   // If this is a builtin or pointer type then it is ok.
   if (Ty->getAsBuiltinType() || Ty->isPointerType())
     return true;
