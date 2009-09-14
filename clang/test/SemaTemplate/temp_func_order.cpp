@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-
 template<typename T>
 int &f0(T);
 
@@ -83,4 +82,14 @@ float &f6(const T&, U&);
 void test_f6(int i, const int ic) {
   int &ir = f6(i, i);
   float &fr = f6(ic, ic);
+}
+
+struct CrazyFun {
+  template<typename T, typename U> operator A<T, U>();
+  template<typename T> operator A<T, T>();
+};
+
+void fun(CrazyFun cf) {
+  A<int, float> aif = cf;
+  A<int, int> aii = cf;  
 }

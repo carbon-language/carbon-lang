@@ -3711,7 +3711,8 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
     if (FunctionTemplateDecl *BetterTemplate
           = getMoreSpecializedTemplate(Cand1.Function->getPrimaryTemplate(),
                                        Cand2.Function->getPrimaryTemplate(),
-                                       TPOC_Call))
+                       isa<CXXConversionDecl>(Cand1.Function)? TPOC_Conversion 
+                                                             : TPOC_Call))
       return BetterTemplate == Cand1.Function->getPrimaryTemplate();
 
   //   -- the context is an initialization by user-defined conversion
