@@ -252,6 +252,13 @@ def getTestsInSuite(ts, path_in_suite, litConfig,
     # Otherwise we have a directory to search for tests, start by getting the
     # local configuration.
     lc = getLocalConfig(ts, path_in_suite, litConfig, localConfigCache)
+
+    # Search for tests.
+    for res in lc.test_format.getTestsInDirectory(ts, path_in_suite,
+                                                  litConfig, lc):
+        yield res
+
+    # Search subdirectories.
     for filename in os.listdir(source_path):
         # FIXME: This doesn't belong here?
         if filename == 'Output' or filename in lc.excludes:
@@ -270,11 +277,6 @@ def getTestsInSuite(ts, path_in_suite, litConfig,
                                            litConfig, testSuiteCache,
                                            localConfigCache):
                     yield res
-        else:
-            # Otherwise add tests for matching suffixes.
-            base,ext = os.path.splitext(filename)
-            if ext in lc.suffixes:
-                yield Test.Test(ts, path_in_suite + (filename,), lc)
 
 def runTests(numThreads, litConfig, provider, display):
     # If only using one testing thread, don't use threads at all; this lets us

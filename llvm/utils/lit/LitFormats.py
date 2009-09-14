@@ -1,2 +1,2 @@
-from ShTest import ShTest
-from TclTest import TclTest
+from TestFormats import GoogleTest, ShTest, TclTest
+
