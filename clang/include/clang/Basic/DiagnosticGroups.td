@@ -106,6 +106,7 @@ def : DiagGroup<"variadic-macros">;
 def VectorConversions : DiagGroup<"vector-conversions">;      // clang specific
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
 def : DiagGroup<"write-strings">;
+def CharSubscript : DiagGroup<"char-subscripts">;
 
 // Aggregation warning settings.
 
@@ -142,7 +143,8 @@ def Most : DiagGroup<"most", [
     UnusedVariable,
     VectorConversions,
     VolatileRegisterVar,
-    Reorder
+    Reorder,
+    CharSubscript
  ]>;
 
 // -Wall is -Wmost -Wparentheses
