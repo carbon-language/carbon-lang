@@ -16,12 +16,67 @@
 #include "CodeGenTarget.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
-#include <sstream>
-#include <iostream>
 using namespace llvm;
+
+/// StringToOffsetTable - This class uniques a bunch of nul-terminated strings
+/// and keeps track of their offset in a massive contiguous string allocation.
+/// It can then output this string blob and use indexes into the string to
+/// reference each piece.
+class StringToOffsetTable {
+  StringMap<unsigned> StringOffset;
+  std::string AggregateString;
+public:
+
+  unsigned GetOrAddStringOffset(StringRef Str) {
+    unsigned &Entry = StringOffset[Str];
+    if (Entry == 0) {
+      // Add the string to the aggregate if this is the first time found.
+      Entry = AggregateString.size();
+      AggregateString.append(Str.begin(), Str.end());
+      AggregateString += '\0';
+    }
+    
+    return Entry;
+  }
+  
+  void EmitString(raw_ostream &O) {
+    O << "    \"";
+    unsigned CharsPrinted = 0;
+    EscapeString(AggregateString);
+    for (unsigned i = 0, e = AggregateString.size(); i != e; ++i) {
+      if (CharsPrinted > 70) {
+        O << "\"\n    \"";
+        CharsPrinted = 0;
+      }
+      O << AggregateString[i];
+      ++CharsPrinted;
+      
+      // Print escape sequences all together.
+      if (AggregateString[i] != '\\')
+        continue;
+      
+      assert(i+1 < AggregateString.size() && "Incomplete escape sequence!");
+      if (isdigit(AggregateString[i+1])) {
+        assert(isdigit(AggregateString[i+2]) && 
+               isdigit(AggregateString[i+3]) &&
+               "Expected 3 digit octal escape!");
+        O << AggregateString[++i];
+        O << AggregateString[++i];
+        O << AggregateString[++i];
+        CharsPrinted += 3;
+      } else {
+        O << AggregateString[++i];
+        ++CharsPrinted;
+      }
+    }
+    O << "\"";
+  }
+};
+
 
 static bool isIdentChar(char C) {
   return (C >= 'a' && C <= 'z') ||
@@ -569,10 +624,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     CGIAWIMap.insert(std::make_pair(Instructions[i].CGI, &Instructions[i]));
 
   // Build an aggregate string, and build a table of offsets into it.
-  std::map<std::string, unsigned> StringOffset;
-  std::string AggregateString;
-  AggregateString.push_back(0);  // "\0"
-  AggregateString.push_back(0);  // "\0"
+  StringToOffsetTable StringTable;
   
   /// OpcodeInfo - This encodes the index of the string to use for the first
   /// chunk of the output as well as indices used for operand printing.
@@ -584,32 +636,28 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     unsigned Idx;
     if (AWI == 0) {
       // Something not handled by the asmwriter printer.
-      Idx = 0;
+      Idx = ~0U;
     } else if (AWI->Operands[0].OperandType != 
                         AsmWriterOperand::isLiteralTextOperand ||
                AWI->Operands[0].Str.empty()) {
       // Something handled by the asmwriter printer, but with no leading string.
-      Idx = 1;
+      Idx = StringTable.GetOrAddStringOffset("");
     } else {
-      unsigned &Entry = StringOffset[AWI->Operands[0].Str];
-      if (Entry == 0) {
-        // Add the string to the aggregate if this is the first time found.
-        MaxStringIdx = Entry = AggregateString.size();
-        std::string Str = AWI->Operands[0].Str;
-        UnescapeString(Str);
-        AggregateString += Str;
-        AggregateString += '\0';
-      }
-      Idx = Entry;
-
+      std::string Str = AWI->Operands[0].Str;
+      UnescapeString(Str);
+      Idx = StringTable.GetOrAddStringOffset(Str);
+      MaxStringIdx = std::max(MaxStringIdx, Idx);
+      
       // Nuke the string from the operand list.  It is now handled!
       AWI->Operands.erase(AWI->Operands.begin());
     }
-    OpcodeInfo.push_back(Idx);
+    
+    // Bias offset by one since we want 0 as a sentinel.
+    OpcodeInfo.push_back(Idx+1);
   }
   
   // Figure out how many bits we used for the string index.
-  unsigned AsmStrBits = Log2_32_Ceil(MaxStringIdx+1);
+  unsigned AsmStrBits = Log2_32_Ceil(MaxStringIdx+2);
   
   // To reduce code size, we compactify common instructions into a few bits
   // in the opcode-indexed table.
@@ -672,34 +720,9 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   O << "  };\n\n";
   
   // Emit the string itself.
-  O << "  const char *AsmStrs = \n    \"";
-  unsigned CharsPrinted = 0;
-  EscapeString(AggregateString);
-  for (unsigned i = 0, e = AggregateString.size(); i != e; ++i) {
-    if (CharsPrinted > 70) {
-      O << "\"\n    \"";
-      CharsPrinted = 0;
-    }
-    O << AggregateString[i];
-    ++CharsPrinted;
-    
-    // Print escape sequences all together.
-    if (AggregateString[i] == '\\') {
-      assert(i+1 < AggregateString.size() && "Incomplete escape sequence!");
-      if (isdigit(AggregateString[i+1])) {
-        assert(isdigit(AggregateString[i+2]) && isdigit(AggregateString[i+3]) &&
-               "Expected 3 digit octal escape!");
-        O << AggregateString[++i];
-        O << AggregateString[++i];
-        O << AggregateString[++i];
-        CharsPrinted += 3;
-      } else {
-        O << AggregateString[++i];
-        ++CharsPrinted;
-      }
-    }
-  }
-  O << "\";\n\n";
+  O << "  const char *AsmStrs = \n";
+  StringTable.EmitString(O);
+  O << ";\n\n";
 
   O << "\n#ifndef NO_ASM_WRITER_BOILERPLATE\n";
   
@@ -722,7 +745,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   O << "  // Emit the opcode for the instruction.\n"
     << "  unsigned Bits = OpInfo[MI->getOpcode()];\n"
     << "  assert(Bits != 0 && \"Cannot print this instruction.\");\n"
-    << "  O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ");\n\n";
+    << "  O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ")-1;\n\n";
 
   // Output the table driven operand information.
   BitsLeft = 32-AsmStrBits;
