@@ -2216,7 +2216,9 @@ void CFRefCount::RegisterChecks(BugReporter& BR) {
     name = "Leak of returned object";
   }
 
+  // Leaks should not be reported if they are post-dominated by a sink.
   leakAtReturn = new LeakAtReturn(this, name);
+  leakAtReturn->setSuppressOnSink(true);
   BR.Register(leakAtReturn);
 
   // Second, register leaks within a function/method.
@@ -2230,7 +2232,9 @@ void CFRefCount::RegisterChecks(BugReporter& BR) {
     name = "Leak";
   }
 
+  // Leaks should not be reported if they are post-dominated by sinks.
   leakWithinFunction = new LeakWithinFunction(this, name);
+  leakWithinFunction->setSuppressOnSink(true);
   BR.Register(leakWithinFunction);
 
   // Save the reference to the BugReporter.

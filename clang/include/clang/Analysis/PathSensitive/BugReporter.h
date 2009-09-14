@@ -189,13 +189,21 @@ private:
   const std::string Category;
   llvm::FoldingSet<BugReportEquivClass> EQClasses;
   friend class BugReporter;
+  bool SuppressonSink;
 public:
-  BugType(const char *name, const char* cat) : Name(name), Category(cat) {}
+  BugType(const char *name, const char* cat)
+    : Name(name), Category(cat), SuppressonSink(false) {}
   virtual ~BugType();
 
   // FIXME: Should these be made strings as well?
   const std::string& getName() const { return Name; }
   const std::string& getCategory() const { return Category; }
+  
+  /// isSuppressOnSink - Returns true if bug reports associated with this bug
+  ///  type should be suppressed if the end node of the report is post-dominated
+  ///  by a sink node.
+  bool isSuppressOnSink() const { return SuppressonSink; }
+  void setSuppressOnSink(bool x) { SuppressonSink = x; }
 
   virtual void FlushReports(BugReporter& BR);
 

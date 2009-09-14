@@ -1639,34 +1639,131 @@ void BugReporter::EmitReport(BugReport* R) {
     EQ->AddReport(R);
 }
 
+
+//===----------------------------------------------------------------------===//
+// Emitting reports in equivalence classes.
+//===----------------------------------------------------------------------===//
+
+namespace {
+struct VISIBILITY_HIDDEN FRIEC_WLItem {
+  const ExplodedNode *N;
+  ExplodedNode::const_succ_iterator I, E;
+  
+  FRIEC_WLItem(const ExplodedNode *n)
+  : N(n), I(N->succ_begin()), E(N->succ_end()) {}
+};  
+}
+
+static BugReport *FindReportInEquivalenceClass(BugReportEquivClass& EQ) {
+  BugReportEquivClass::iterator I = EQ.begin(), E = EQ.end();
+  assert(I != E);
+  BugReport *R = *I;
+  BugType& BT = R->getBugType();
+  
+  if (!BT.isSuppressOnSink())
+    return R;
+  
+  // For bug reports that should be suppressed when all paths are post-dominated
+  // by a sink node, iterate through the reports in the equivalence class
+  // until we find one that isn't post-dominated (if one exists).  We use a
+  // DFS traversal of the ExplodedGraph to find a non-sink node.  We could write
+  // this as a recursive function, but we don't want to risk blowing out the
+  // stack for very long paths.
+  for (; I != E; ++I) {
+    R = *I;
+    const ExplodedNode *N = R->getEndNode();
+
+    if (!N)
+      continue;
+
+    if (N->isSink()) {
+      assert(false &&
+           "BugType::isSuppressSink() should not be 'true' for sink end nodes");
+      return R;
+    }
+    
+    if (N->succ_empty())
+      return R;
+    
+    // At this point we know that 'N' is not a sink and it has at least one
+    // successor.  Use a DFS worklist to find a non-sink end-of-path node.    
+    typedef FRIEC_WLItem WLItem;
+    typedef llvm::SmallVector<WLItem, 10> DFSWorkList;
+    llvm::DenseMap<const ExplodedNode *, unsigned> Visited;
+    
+    DFSWorkList WL;
+    WL.push_back(N);
+    Visited[N] = 1;
+    
+    while (!WL.empty()) {
+      WLItem &WI = WL.back();
+      assert(!WI.N->succ_empty());
+            
+      for (; WI.I != WI.E; ++WI.I) {
+        const ExplodedNode *Succ = *WI.I;        
+        // End-of-path node?
+        if (Succ->succ_empty()) {
+          // If we found an end-of-path node that is not a sink, then return
+          // this report.
+          if (!Succ->isSink())
+            return R;
+         
+          // Found a sink?  Continue on to the next successor.
+          continue;
+        }
+        
+        // Mark the successor as visited.  If it hasn't been explored,
+        // enqueue it to the DFS worklist.
+        unsigned &mark = Visited[Succ];
+        if (!mark) {
+          mark = 1;
+          WL.push_back(Succ);
+          break;
+        }
+      }
+      
+      if (&WL.back() == &WI)
+        WL.pop_back();
+    }
+  }
+  
+  // If we reach here, the end nodes for all reports in the equiavalence
+  // class are post-dominated by a sink node.
+  return NULL;
+}
+
 void BugReporter::FlushReport(BugReportEquivClass& EQ) {
-  assert(!EQ.Reports.empty());
-  BugReport &R = **EQ.begin();
+  BugReport *R = FindReportInEquivalenceClass(EQ);
+
+  if (!R)
+    return;
+  
   PathDiagnosticClient* PD = getPathDiagnosticClient();
 
   // FIXME: Make sure we use the 'R' for the path that was actually used.
   // Probably doesn't make a difference in practice.
-  BugType& BT = R.getBugType();
+  BugType& BT = R->getBugType();
 
   llvm::OwningPtr<PathDiagnostic>
-    D(new PathDiagnostic(R.getBugType().getName(),
+    D(new PathDiagnostic(R->getBugType().getName(),
                          !PD || PD->useVerboseDescription()
-                         ? R.getDescription() : R.getShortDescription(),
+                         ? R->getDescription() : R->getShortDescription(),
                          BT.getCategory()));
 
   GeneratePathDiagnostic(*D.get(), EQ);
 
   // Get the meta data.
-  std::pair<const char**, const char**> Meta = R.getExtraDescriptiveText();
-  for (const char** s = Meta.first; s != Meta.second; ++s) D->addMeta(*s);
+  std::pair<const char**, const char**> Meta = R->getExtraDescriptiveText();
+  for (const char** s = Meta.first; s != Meta.second; ++s)
+    D->addMeta(*s);
 
   // Emit a summary diagnostic to the regular Diagnostics engine.
   const SourceRange *Beg = 0, *End = 0;
-  R.getRanges(Beg, End);
+  R->getRanges(Beg, End);
   Diagnostic& Diag = getDiagnostic();
-  FullSourceLoc L(R.getLocation(), getSourceManager());
+  FullSourceLoc L(R->getLocation(), getSourceManager());
   unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
-                                            R.getShortDescription().c_str());
+                                            R->getShortDescription().c_str());
 
   switch (End-Beg) {
     default: assert(0 && "Don't handle this many ranges yet!");
@@ -1682,7 +1779,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
 
   if (D->empty()) {
     PathDiagnosticPiece* piece =
-      new PathDiagnosticEventPiece(L, R.getDescription());
+      new PathDiagnosticEventPiece(L, R->getDescription());
 
     for ( ; Beg != End; ++Beg) piece->addRange(*Beg);
     D->push_back(piece);
