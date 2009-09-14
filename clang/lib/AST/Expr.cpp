@@ -1061,12 +1061,18 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
   //   void takeclosure(void (^C)(void));
   //   void func() { int x = 1; takeclosure(^{ x = 7; }); }
   //
-  if (isa<BlockDeclRefExpr>(this)) {
-    const BlockDeclRefExpr *BDR = cast<BlockDeclRefExpr>(this);
+  if (const BlockDeclRefExpr *BDR = dyn_cast<BlockDeclRefExpr>(this)) {
     if (!BDR->isByRef() && isa<VarDecl>(BDR->getDecl()))
       return MLV_NotBlockQualified;
   }
-
+  
+  // Assigning to an 'implicit' property?
+  if (const ObjCImplicitSetterGetterRefExpr* Expr = 
+        dyn_cast<ObjCImplicitSetterGetterRefExpr>(this)) {
+    if (Expr->getSetterMethod() == 0)
+      return MLV_NoSetterProperty;
+  }
+  
   QualType CT = Ctx.getCanonicalType(getType());
 
   if (CT.isConstQualified())
@@ -1081,13 +1087,6 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
       return MLV_ConstQualified;
   }
 
-  // Assigning to an 'implicit' property?
-  else if (isa<ObjCImplicitSetterGetterRefExpr>(this)) {
-    const ObjCImplicitSetterGetterRefExpr* Expr =
-      cast<ObjCImplicitSetterGetterRefExpr>(this);
-    if (Expr->getSetterMethod() == 0)
-      return MLV_NoSetterProperty;
-  }
   return MLV_Valid;
 }
 

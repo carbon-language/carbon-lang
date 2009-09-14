@@ -19,3 +19,26 @@ void f0(A *a, B* b) {
   b.ok = 20;
 }
 
+typedef struct {
+  int i1, i2;
+} NSRect;
+
+NSRect NSMakeRect();
+
+@interface NSWindow 
+{
+    NSRect _frame;
+}
+- (NSRect)frame;
+@end
+
+@interface NSWindow (Category)
+-(void)methodToMakeClangCrash;
+@end
+
+@implementation NSWindow (Category)
+-(void)methodToMakeClangCrash
+{
+ self.frame =  NSMakeRect(); // expected-error {{setter method is needed to assign to object using property assignment syntax}}
+}
+@end
