@@ -1648,15 +1648,12 @@ MCSymbol *AsmPrinter::GetMBBSymbol(unsigned MBBID) const {
 /// EmitBasicBlockStart - This method prints the label for the specified
 /// MachineBasicBlock, an alignment (if present) and a comment describing
 /// it if appropriate.
-void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB,
-                                     bool PrintColon) const {
+void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   if (unsigned Align = MBB->getAlignment())
     EmitAlignment(Log2_32(Align));
 
   GetMBBSymbol(MBB->getNumber())->print(O, MAI);
-  
-  if (PrintColon)
-    O << ':';
+  O << ':';
   
   if (VerboseAsm) {
     if (const BasicBlock *BB = MBB->getBasicBlock())
