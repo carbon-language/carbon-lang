@@ -2732,8 +2732,9 @@ public:
                                                    FunctionTemplateDecl *FT2,
                                            TemplatePartialOrderingContext TPOC);
 
-  void MarkDeducedTemplateParameters(const TemplateArgumentList &TemplateArgs,
-                                     llvm::SmallVectorImpl<bool> &Deduced);
+  void MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
+                                  bool OnlyDeduced,
+                                  llvm::SmallVectorImpl<bool> &Deduced);
 
   //===--------------------------------------------------------------------===//
   // C++ Template Instantiation

@@ -2720,7 +2720,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     // will never be used.
     llvm::SmallVector<bool, 8> DeducibleParams;
     DeducibleParams.resize(TemplateParams->size());
-    MarkDeducedTemplateParameters(Partial->getTemplateArgs(), DeducibleParams);
+    MarkUsedTemplateParameters(Partial->getTemplateArgs(), true, 
+                               DeducibleParams);
     unsigned NumNonDeducible = 0;
     for (unsigned I = 0, N = DeducibleParams.size(); I != N; ++I)
       if (!DeducibleParams[I])
