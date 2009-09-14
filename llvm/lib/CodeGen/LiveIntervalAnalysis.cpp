@@ -49,19 +49,20 @@ using namespace llvm;
 static cl::opt<bool> DisableReMat("disable-rematerialization", 
                                   cl::init(false), cl::Hidden);
 
-static cl::opt<bool> SplitAtBB("split-intervals-at-bb", 
-                               cl::init(true), cl::Hidden);
-static cl::opt<int> SplitLimit("split-limit",
-                               cl::init(-1), cl::Hidden);
-
 static cl::opt<bool> EnableAggressiveRemat("aggressive-remat", cl::Hidden);
 
 static cl::opt<bool> EnableFastSpilling("fast-spill",
                                         cl::init(false), cl::Hidden);
 
-STATISTIC(numIntervals, "Number of original intervals");
-STATISTIC(numFolds    , "Number of loads/stores folded into instructions");
-STATISTIC(numSplits   , "Number of intervals split");
+static cl::opt<bool> EarlyCoalescing("early-coalescing", cl::init(false));
+
+static cl::opt<int> CoalescingLimit("early-coalescing-limit",
+                                    cl::init(-1), cl::Hidden);
+
+STATISTIC(numIntervals , "Number of original intervals");
+STATISTIC(numFolds     , "Number of loads/stores folded into instructions");
+STATISTIC(numSplits    , "Number of intervals split");
+STATISTIC(numCoalescing, "Number of early coalescing performed");
 
 char LiveIntervals::ID = 0;
 static RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
@@ -96,12 +97,13 @@ void LiveIntervals::releaseMemory() {
   i2miMap_.clear();
   r2iMap_.clear();
   terminatorGaps.clear();
+  phiJoinCopies.clear();
 
   // Release VNInfo memroy regions after all VNInfo objects are dtor'd.
   VNInfoAllocator.Reset();
-  while (!ClonedMIs.empty()) {
-    MachineInstr *MI = ClonedMIs.back();
-    ClonedMIs.pop_back();
+  while (!CloneMIs.empty()) {
+    MachineInstr *MI = CloneMIs.back();
+    CloneMIs.pop_back();
     mf_->DeleteMachineInstr(MI);
   }
 }
@@ -264,6 +266,7 @@ void LiveIntervals::computeNumbering() {
   mi2iMap_.clear();
   i2miMap_.clear();
   terminatorGaps.clear();
+  phiJoinCopies.clear();
   
   FunctionSize = 0;
   
@@ -518,6 +521,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   processImplicitDefs();
   computeNumbering();
   computeIntervals();
+  performEarlyCoalescing();
 
   numIntervals += getNumIntervals();
 
@@ -533,6 +537,10 @@ void LiveIntervals::print(raw_ostream &OS, const Module* ) const {
     OS << "\n";
   }
 
+  printInstrs(OS);
+}
+
+void LiveIntervals::printInstrs(raw_ostream &OS) const {
   OS << "********** MACHINEINSTRS **********\n";
 
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
@@ -543,6 +551,10 @@ void LiveIntervals::print(raw_ostream &OS, const Module* ) const {
       OS << getInstructionIndex(mii) << '\t' << *mii;
     }
   }
+}
+
+void LiveIntervals::dumpInstrs() const {
+  printInstrs(errs());
 }
 
 /// conflictsWithPhysRegDef - Returns true if the specified register
@@ -626,7 +638,7 @@ bool LiveIntervals::conflictsWithPhysRegRef(LiveInterval &li,
 }
 
 
-void LiveIntervals::printRegName(unsigned reg) const {
+static void printRegName(unsigned reg, const TargetRegisterInfo* tri_) {
   if (TargetRegisterInfo::isPhysicalRegister(reg))
     errs() << tri_->getName(reg);
   else
@@ -641,7 +653,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                                              LiveInterval &interval) {
   DEBUG({
       errs() << "\t\tregister: ";
-      printRegName(interval.reg);
+      printRegName(interval.reg, tri_);
     });
 
   // Virtual registers may be defined multiple times (due to phi
@@ -789,12 +801,10 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // first redefinition of the vreg that we have seen, go back and change
       // the live range in the PHI block to be a different value number.
       if (interval.containsOneValue()) {
-        assert(vi.Kills.size() == 1 &&
-               "PHI elimination vreg should have one kill, the PHI itself!");
-
         // Remove the old range that we now know has an incorrect number.
         VNInfo *VNI = interval.getValNumInfo(0);
         MachineInstr *Killer = vi.Kills[0];
+        phiJoinCopies.push_back(Killer);
         MachineInstrIndex Start = getMBBStartIdx(Killer->getParent());
         MachineInstrIndex End =
           getNextSlot(getUseIndex(getInstructionIndex(Killer)));
@@ -805,7 +815,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
           });
         interval.removeRange(Start, End);        
         assert(interval.ranges.size() == 1 &&
-               "newly discovered PHI interval has >1 ranges.");
+               "Newly discovered PHI interval has >1 ranges.");
         MachineBasicBlock *killMBB = getMBBFromIndex(interval.endIndex());
         VNI->addKill(terminatorGaps[killMBB]);
         VNI->setHasPHIKill(true);
@@ -835,7 +845,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       MachineInstrIndex defIndex = getDefIndex(MIIdx);
       if (MO.isEarlyClobber())
         defIndex = getUseIndex(MIIdx);
-      
+
       VNInfo *ValNo;
       MachineInstr *CopyMI = NULL;
       unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
@@ -868,7 +878,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // lifetime must end somewhere in its defining basic block.
   DEBUG({
       errs() << "\t\tregister: ";
-      printRegName(interval.reg);
+      printRegName(interval.reg, tri_);
     });
 
   MachineInstrIndex baseIndex = MIIdx;
@@ -977,7 +987,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
                                          LiveInterval &interval, bool isAlias) {
   DEBUG({
       errs() << "\t\tlivein register: ";
-      printRegName(interval.reg);
+      printRegName(interval.reg, tri_);
     });
 
   // Look for kills, if it reaches a def before it's killed, then it shouldn't
@@ -1037,6 +1047,138 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   interval.addRange(LR);
   LR.valno->addKill(end);
   DEBUG(errs() << " +" << LR << '\n');
+}
+
+bool
+LiveIntervals::isProfitableToCoalesce(LiveInterval &DstInt, LiveInterval &SrcInt,
+                                   SmallVector<MachineInstr*,16> &IdentCopies,
+                                   SmallVector<MachineInstr*,16> &OtherCopies,
+                                   bool &HaveConflict) {
+  HaveConflict = false;
+
+  unsigned NumIdent = 0;
+  unsigned NumSources = 0;
+  for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(SrcInt.reg),
+         re = mri_->reg_end(); ri != re; ++ri) {
+    MachineOperand &O = ri.getOperand();
+    if (!O.isDef())
+      continue;
+
+    ++NumSources;
+    MachineInstr *MI = &*ri;
+    unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+    if (!tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
+      continue;
+    if (SrcReg != DstInt.reg) {
+      OtherCopies.push_back(MI);
+      HaveConflict |= DstInt.liveAt(getInstructionIndex(MI));
+    } else {
+      IdentCopies.push_back(MI);
+      ++NumIdent;
+    }
+  }
+
+  return NumSources >= 5 && (((float)NumIdent) / NumSources) > 0.20F;
+}
+
+void LiveIntervals::performEarlyCoalescing() {
+  if (!EarlyCoalescing)
+    return;
+
+  /// Perform early coalescing: eliminate copies which feed into phi joins
+  /// and whose sources are defined by the phi joins.
+  for (unsigned i = 0, e = phiJoinCopies.size(); i != e; ++i) {
+    MachineInstr *Join = phiJoinCopies[i];
+    if (CoalescingLimit != -1 && (int)numCoalescing == CoalescingLimit)
+      break;
+
+    unsigned PHISrc, PHIDst, SrcSubReg, DstSubReg;
+    bool isMove= tii_->isMoveInstr(*Join, PHISrc, PHIDst, SrcSubReg, DstSubReg);
+#ifndef NDEBUG
+    assert(isMove && "PHI join instruction must be a move!");
+#else
+    isMove = isMove;
+#endif
+
+    LiveInterval &DstInt = getInterval(PHIDst);
+    LiveInterval &SrcInt = getInterval(PHISrc);
+    SmallVector<MachineInstr*, 16> IdentCopies;
+    SmallVector<MachineInstr*, 16> OtherCopies;
+    bool HaveConflict;
+    if (!isProfitableToCoalesce(DstInt, SrcInt, IdentCopies, OtherCopies,
+                                HaveConflict))
+      continue;
+
+    DEBUG(errs() << "PHI Join: " << *Join);
+    assert(DstInt.containsOneValue() && "PHI join should have just one val#!");
+    VNInfo *VNI = DstInt.getValNumInfo(0);
+    VNInfo *NewVNI = HaveConflict
+      ? 0 : SrcInt.getNextValue(VNI->def, 0, false, VNInfoAllocator);
+    // Now let's eliminate all the would-be identity copies.
+    for (unsigned i = 0, e = IdentCopies.size(); i != e; ++i) {
+      MachineInstr *PHICopy = IdentCopies[i];
+      DEBUG(errs() << "Coalescing: " << *PHICopy);
+
+      MachineBasicBlock *PHIMBB = PHICopy->getParent();
+      MachineInstrIndex MIIndex = getInstructionIndex(PHICopy);
+      MachineInstrIndex DefIndex = getDefIndex(MIIndex);
+      LiveRange *SLR = SrcInt.getLiveRangeContaining(DefIndex);
+      MachineInstrIndex StartIndex = HaveConflict
+        ? SLR->start : getMBBStartIdx(PHIMBB);
+      MachineInstrIndex EndIndex = SLR->end;
+
+      // Delete val# defined by the now identity copy and add the range from
+      // beginning of the mbb to the end of the range.
+      SrcInt.removeValNo(SLR->valno);
+      if (HaveConflict) {
+        DEBUG(errs() << "  added range [" << StartIndex << ','
+                     << EndIndex << "] to reg" << DstInt.reg << '\n');
+        DstInt.addRange(LiveRange(StartIndex, EndIndex, VNI));
+        // FIXME: Update uses of src to dst in this range?
+      } else {
+        DEBUG(errs() << "  added range [" << StartIndex << ','
+                     << SLR->start << "] to reg" << SrcInt.reg << '\n');
+        SrcInt.addRange(LiveRange(StartIndex, EndIndex, NewVNI));
+        if (PHICopy->killsRegister(PHIDst))
+          EndIndex = DefIndex;
+        DstInt.removeRange(StartIndex, EndIndex);
+      }
+      RemoveMachineInstrFromMaps(PHICopy);
+      PHICopy->eraseFromParent();
+    }
+    if (HaveConflict) {
+      // First unset the kill. 
+      for (unsigned i = 0, e = Join->getNumOperands(); i != e; ++i) {
+        MachineOperand &O = Join->getOperand(i);
+        if (!O.isReg() || O.getReg() != PHISrc)
+          continue;
+        if (O.isKill())
+          O.setIsKill(false);
+      }
+      MachineInstrIndex MIIndex = getInstructionIndex(Join);
+      MachineInstrIndex UseIndex = getUseIndex(MIIndex);
+      MachineInstrIndex DefIndex = getDefIndex(MIIndex);
+      LiveRange *SLR = SrcInt.getLiveRangeContaining(UseIndex);
+      LiveRange *DLR = DstInt.getLiveRangeContaining(DefIndex);
+      SrcInt.addRange(LiveRange(DLR->start, DLR->end, SLR->valno));
+    } else {
+      SrcInt.MergeValueInAsValue(DstInt, VNI, NewVNI);
+
+      // Change all references of phi source to destination.
+      for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(PHIDst),
+             re = mri_->reg_end(); ri != re; ) {
+        MachineOperand &O = ri.getOperand();
+        ++ri;
+        O.setReg(PHISrc);
+      }
+      removeInterval(DstInt.reg);
+
+      RemoveMachineInstrFromMaps(Join);
+      Join->eraseFromParent();
+    }
+
+    ++numCoalescing;
+  }
 }
 
 /// computeIntervals - computes the live intervals for virtual
@@ -2230,9 +2372,7 @@ addIntervalsForSpills(const LiveInterval &li,
     return NewLIs;
   }
 
-  bool TrySplit = SplitAtBB && !intervalIsInOneMBB(li);
-  if (SplitLimit != -1 && (int)numSplits >= SplitLimit)
-    TrySplit = false;
+  bool TrySplit = !intervalIsInOneMBB(li);
   if (TrySplit)
     ++numSplits;
   bool NeedStackSlot = false;
@@ -2251,7 +2391,7 @@ addIntervalsForSpills(const LiveInterval &li,
       ReMatOrigDefs[VN] = ReMatDefMI;
       // Original def may be modified so we have to make a copy here.
       MachineInstr *Clone = mf_->CloneMachineInstr(ReMatDefMI);
-      ClonedMIs.push_back(Clone);
+      CloneMIs.push_back(Clone);
       ReMatDefs[VN] = Clone;
 
       bool CanDelete = true;

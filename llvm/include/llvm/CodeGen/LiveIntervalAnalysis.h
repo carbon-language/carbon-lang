@@ -65,9 +65,6 @@ namespace llvm {
     AliasAnalysis *aa_;
     LiveVariables* lv_;
 
-
-    
-
     /// Special pool allocator for VNInfo's (LiveInterval val#).
     ///
     BumpPtrAllocator VNInfoAllocator;
@@ -94,9 +91,14 @@ namespace llvm {
 
     DenseMap<MachineBasicBlock*, MachineInstrIndex> terminatorGaps;
 
+    /// phiJoinCopies - Copy instructions which are PHI joins.
+    SmallVector<MachineInstr*, 16> phiJoinCopies;
+
+    /// allocatableRegs_ - A bit vector of allocatable registers.
     BitVector allocatableRegs_;
 
-    std::vector<MachineInstr*> ClonedMIs;
+    /// CloneMIs - A list of clones as result of re-materialization.
+    std::vector<MachineInstr*> CloneMIs;
 
     typedef LiveInterval::InstrSlots InstrSlots;
 
@@ -430,7 +432,14 @@ namespace llvm {
   private:      
     /// computeIntervals - Compute live intervals.
     void computeIntervals();
-    
+
+    bool isProfitableToCoalesce(LiveInterval &DstInt, LiveInterval &SrcInt,
+                                SmallVector<MachineInstr*,16> &IdentCopies,
+                                SmallVector<MachineInstr*,16> &OtherCopies,
+                                bool &HaveConflict);
+
+    void performEarlyCoalescing();
+
     /// handleRegisterDef - update intervals for a register def
     /// (calls handlePhysicalRegisterDef and
     /// handleVirtualRegisterDef)
@@ -560,7 +569,8 @@ namespace llvm {
 
     static LiveInterval* createInterval(unsigned Reg);
 
-    void printRegName(unsigned reg) const;
+    void printInstrs(raw_ostream &O) const;
+    void dumpInstrs() const;
   };
 } // End llvm namespace
 

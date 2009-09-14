@@ -584,7 +584,6 @@ namespace llvm {
     /// for the Value number.
     VNInfo *createValueCopy(const VNInfo *orig,
                             BumpPtrAllocator &VNInfoAllocator) {
-
       VNInfo *VNI =
         static_cast<VNInfo*>(VNInfoAllocator.Allocate((unsigned)sizeof(VNInfo),
                                                       alignof<VNInfo>()));
