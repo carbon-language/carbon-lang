@@ -34,7 +34,7 @@ install(DIRECTORY include
   )
 
 SET( Achitectures
- i386 ppc x86_64
+ i386 x86_64 ppc arm
  )
 
 SET( Configurations
