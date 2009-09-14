@@ -75,3 +75,21 @@ C::operator const char*() const { return 0; }
 void f(const C& c) {
   const char* v = c;
 }
+
+// Test. Conversion in base class is visible in derived class.
+class XB { 
+public:
+  operator int();
+};
+
+class Yb : public XB { 
+public:
+  operator char();
+};
+
+void f(Yb& a) {
+  if (a) { } // expected-error {{value of type 'class Yb' is not contextually convertible to 'bool'}}
+  int i = a; // OK. calls XB::operator int();
+  char ch = a;  // OK. calls Yb::operator char();
+}
+

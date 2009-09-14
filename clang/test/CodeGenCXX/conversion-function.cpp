@@ -77,12 +77,31 @@ int main() {
   g(o1, o2);
 }
 
+// Test. Conversion in base class is visible in derived class.
+class XB {
+public:
+  operator int();
+};
+
+class Yb : public XB {
+public:
+  operator char();
+};
+
+void f(Yb& a) {
+  int i = a; // OK. calls XB::operator int();
+  char ch = a;  // OK. calls Yb::operator char();
+}
+
+
 // CHECK-LP64: .globl __ZN1ScviEv
 // CHECK-LP64-NEXT: __ZN1ScviEv:
 // CHECK-LP64: call __ZN1Ycv1ZEv
 // CHECK-LP64: call __ZN1Zcv1XEv
 // CHECK-LP64: call __ZN1XcviEv
 // CHECK-LP64: call __ZN1XcvfEv
+// CHECK-LP64: call __ZN2XBcviEv
+// CHECK-LP64: call __ZN2YbcvcEv
 
 // CHECK-LP32: .globl  __ZN1ScviEv
 // CHECK-LP32-NEXT: __ZN1ScviEv:
@@ -90,3 +109,5 @@ int main() {
 // CHECK-LP32: call L__ZN1Zcv1XEv
 // CHECK-LP32: call L__ZN1XcviEv
 // CHECK-LP32: call L__ZN1XcvfEv
+// CHECK-LP32: call L__ZN2XBcviEv
+// CHECK-LP32: call L__ZN2YbcvcEv

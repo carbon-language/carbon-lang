@@ -1412,9 +1412,8 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
     if (CXXRecordDecl *FromRecordDecl
          = dyn_cast<CXXRecordDecl>(FromRecordType->getDecl())) {
       // Add all of the conversion functions as candidates.
-      // FIXME: Look for conversions in base classes!
       OverloadedFunctionDecl *Conversions
-        = FromRecordDecl->getConversionFunctions();
+        = FromRecordDecl->getVisibleConversionFunctions();
       for (OverloadedFunctionDecl::function_iterator Func
              = Conversions->function_begin();
            Func != Conversions->function_end(); ++Func) {
@@ -2427,7 +2426,11 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   Candidate.Viable = true;
   Candidate.Conversions.resize(1);
   Candidate.Conversions[0] = TryObjectArgumentInitialization(From, Conversion);
-
+  // Conversion functions to a different type in the base class is visible in 
+  // the derived class.  So, a derived to base conversion should not participate
+  // in overload resolution. 
+  if (Candidate.Conversions[0].Standard.Second == ICK_Derived_To_Base)
+    Candidate.Conversions[0].Standard.Second = ICK_Identity;
   if (Candidate.Conversions[0].ConversionKind
       == ImplicitConversionSequence::BadConversion) {
     Candidate.Viable = false;
