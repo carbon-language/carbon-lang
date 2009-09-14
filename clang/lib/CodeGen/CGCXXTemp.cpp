@@ -111,6 +111,31 @@ CodeGenFunction::EmitCXXExprWithTemporaries(const CXXExprWithTemporaries *E,
   return RV;
 }
 
+LValue CodeGenFunction::EmitCXXExprWithTemporariesLValue(
+                                              const CXXExprWithTemporaries *E) {
+  // If we shouldn't destroy the temporaries, just emit the
+  // child expression.
+  if (!E->shouldDestroyTemporaries())
+    return EmitLValue(E->getSubExpr());
+  
+  // Keep track of the current cleanup stack depth.
+  size_t CleanupStackDepth = CleanupEntries.size();
+  (void) CleanupStackDepth;
+
+  unsigned OldNumLiveTemporaries = LiveTemporaries.size();
+
+  LValue LV = EmitLValue(E->getSubExpr());
+
+  // Pop temporaries.
+  while (LiveTemporaries.size() > OldNumLiveTemporaries)
+    PopCXXTemporary();
+
+  assert(CleanupEntries.size() == CleanupStackDepth &&
+         "Cleanup size mismatch!");
+
+  return LV;
+}
+
 void
 CodeGenFunction::PushConditionalTempDestruction() {
   // Store the current number of live temporaries.

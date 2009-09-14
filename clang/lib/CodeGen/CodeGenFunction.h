@@ -813,7 +813,8 @@ public:
   LValue EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E);
   LValue EmitCXXConstructLValue(const CXXConstructExpr *E);
   LValue EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E);
-
+  LValue EmitCXXExprWithTemporariesLValue(const CXXExprWithTemporaries *E);
+  
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
   LValue EmitObjCPropertyRefLValue(const ObjCPropertyRefExpr *E);
