@@ -43,7 +43,7 @@ LIT_TESTSUITE := .
 endif
 
 ifdef VG
-VALGRIND := valgrind --tool=memcheck --quiet --trace-children=yes --error-exitcode=3 --leak-check=full
+VALGRIND := valgrind --tool=memcheck --quiet --trace-children=yes --error-exitcode=3 --leak-check=full $(VALGRIND_EXTRA_ARGS)
 endif
 
 IGNORE_TESTS :=
