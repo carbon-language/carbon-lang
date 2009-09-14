@@ -994,8 +994,11 @@ class ARMTargetInfo : public TargetInfo {
 public:
   ARMTargetInfo(const std::string& triple) : TargetInfo(triple) {
     // FIXME: Are the defaults correct for ARM?
-    DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
-                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:64:64";
+    DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
+                         "i64:32:32-f32:32:32-f64:32:32-"
+                         "v64:64:64-v128:128:128-a0:0:32");
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
     if (triple.find("armv7-") == 0)
       ArmArch = Armv7a;
     else if (triple.find("arm-") == 0 || triple.find("armv6-") == 0)
@@ -1012,6 +1015,25 @@ public:
       // re-evaluated when codegen is brought up.
       ArmArch = Armv6;
     }
+  }
+  virtual bool setABI(const std::string &Name) {
+    // The defaults (above) are for AAPCS, check if we need to change them.
+    //
+    // FIXME: We need support for -meabi... we could just mangle it into the
+    // name.
+    if (Name == "apcs-gnu") {
+      DoubleAlign = LongLongAlign = 32;
+      SizeType = UnsignedLong;
+
+      // FIXME: Override "preferred align" for double and long long.
+    } else if (Name == "aapcs") {
+      // FIXME: Enumerated types are variable width in straight AAPCS.
+    } else if (Name == "aapcs-linux") {
+      ;
+    } else
+      return false;
+
+    return true;
   }
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defs) const {
