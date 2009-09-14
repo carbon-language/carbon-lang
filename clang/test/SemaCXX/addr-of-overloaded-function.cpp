@@ -35,10 +35,12 @@ void g_test() {
 
 template<typename T> T h1(T);
 template<typename R, typename A1> R h1(A1);
-int h2(char);
+int h1(char);
 
-void h(int (*fp)(int));
+void ha(int (*fp)(int));
+void hb(int (*fp)(double));
 
 void h_test() {
-  h(h1);
+  ha(h1);
+  hb(h1);
 }
