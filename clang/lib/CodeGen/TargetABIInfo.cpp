@@ -1527,11 +1527,21 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
 
   // Otherwise this is an AAPCS variant.
 
+  if (isEmptyRecord(Context, RetTy, true))
+    return ABIArgInfo::getIgnore();
+
   // Aggregates <= 4 bytes are returned in r0; other aggregates
   // are returned indirectly.
   uint64_t Size = Context.getTypeSize(RetTy);
-  if (Size <= 32)
+  if (Size <= 32) {
+    // Return in the smallest viable integer type.
+    if (Size <= 8)
+      return ABIArgInfo::getCoerce(llvm::Type::getInt8Ty(VMContext));
+    if (Size <= 16)
+      return ABIArgInfo::getCoerce(llvm::Type::getInt16Ty(VMContext));
     return ABIArgInfo::getCoerce(llvm::Type::getInt32Ty(VMContext));
+  }
+
   return ABIArgInfo::getIndirect(0);
 }
 
