@@ -4062,7 +4062,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     // diagnostic below. FIXME: we could perform the quadratic
     // algorithm here, pruning the result set to limit the number of
     // candidates output later.
-     RemainingMatches.append(Matches.begin(), Matches.end());
+    RemainingMatches.append(Matches.begin(), Matches.end());
   }
 
   // [...] After such eliminations, if any, there shall remain exactly one
