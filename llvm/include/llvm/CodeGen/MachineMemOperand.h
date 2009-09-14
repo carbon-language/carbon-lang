@@ -51,10 +51,13 @@ public:
   MachineMemOperand(const Value *v, unsigned int f, int64_t o, uint64_t s,
                     unsigned int a);
 
-  /// getValue - Return the base address of the memory access.
-  /// Special values are PseudoSourceValue::FPRel, PseudoSourceValue::SPRel,
-  /// and the other PseudoSourceValue members which indicate references to
-  /// frame/stack pointer relative references and other special references.
+  /// getValue - Return the base address of the memory access. This may either
+  /// be a normal LLVM IR Value, or one of the special values used in CodeGen.
+  /// Special values are those obtained via
+  /// PseudoSourceValue::getFixedStack(int), PseudoSourceValue::getStack, and
+  /// other PseudoSourceValue member functions which return objects which stand
+  /// for frame/stack pointer relative references and other special references
+  /// which are not representable in the high-level IR.
   const Value *getValue() const { return V; }
 
   /// getFlags - Return the raw flags of the source value, \see MemOperandFlags.
