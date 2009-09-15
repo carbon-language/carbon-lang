@@ -971,17 +971,34 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       return true;
     break;
 
-  case ImplicitConversionSequence::UserDefinedConversion:
-    {
+  case ImplicitConversionSequence::UserDefinedConversion: {
+    
       FunctionDecl *FD = ICS.UserDefined.ConversionFunction;
       CastExpr::CastKind CastKind = CastExpr::CK_Unknown;
-      if (isa<CXXConversionDecl>(FD))
+      QualType BeforeToType;
+      if (const CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(FD)) {
         CastKind = CastExpr::CK_UserDefinedConversion;
-      else if (isa<CXXConstructorDecl>(FD))
+        
+        // If the user-defined conversion is specified by a conversion function,
+        // the initial standard conversion sequence converts the source type to
+        // the implicit object parameter of the conversion function.
+        BeforeToType = Context.getTagDeclType(Conv->getParent());
+      } else if (const CXXConstructorDecl *Ctor = 
+                  dyn_cast<CXXConstructorDecl>(FD)) {
         CastKind = CastExpr::CK_ConstructorConversion;
+
+        // If the user-defined conversion is specified by a constructor, the 
+        // initial standard conversion sequence converts the source type to the
+        // type required by the argument of the constructor
+        BeforeToType = Ctor->getParamDecl(0)->getType();
+      }    
       else
         assert(0 && "Unknown conversion function kind!");
 
+      if (PerformImplicitConversion(From, BeforeToType, 
+                                    ICS.UserDefined.Before, "converting"))
+        return true;
+    
       OwningExprResult CastArg 
         = BuildCXXCastArgument(From->getLocStart(),
                                ToType.getNonReferenceType(),
