@@ -383,6 +383,11 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
            "Bit extraction didn't work?");
     MI.getOperand(FrameRegIdx+1).ChangeToImmediate(ThisImmVal);
   } else {
+
+    // AddrMode4 cannot handle any offset.
+    if (AddrMode == ARMII::AddrMode4)
+      return false;
+
     // AddrModeT2_so cannot handle any offset. If there is no offset
     // register then we change to an immediate version.
     unsigned NewOpc = Opcode;
