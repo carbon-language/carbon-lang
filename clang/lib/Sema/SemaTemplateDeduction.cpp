@@ -151,7 +151,18 @@ DeduceNonTypeTemplateArgument(ASTContext &Context,
     return Sema::TDK_Success;
   }
 
-  // FIXME: Compare the expressions for equality!
+  if (Deduced[NTTP->getIndex()].getKind() == TemplateArgument::Expression) {
+    // Compare the expressions for equality
+    llvm::FoldingSetNodeID ID1, ID2;
+    Deduced[NTTP->getIndex()].getAsExpr()->Profile(ID1, Context, true);
+    Value->Profile(ID2, Context, true);
+    if (ID1 == ID2)
+      return Sema::TDK_Success;
+   
+    // FIXME: Fill in argument mismatch information
+    return Sema::TDK_NonDeducedMismatch;
+  }
+
   return Sema::TDK_Success;
 }
 

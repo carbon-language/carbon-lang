@@ -843,6 +843,9 @@ Sema::InstantiateClassTemplateSpecialization(
     return true;
   }
 
+  if (ClassTemplateSpec->isInvalidDecl())
+    return true;
+  
   ClassTemplateDecl *Template = ClassTemplateSpec->getSpecializedTemplate();
   CXXRecordDecl *Pattern = 0;
 
