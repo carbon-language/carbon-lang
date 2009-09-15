@@ -1,5 +1,5 @@
 # Clang version information
-set(CLANG_VERSION 1.0)
+set(CLANG_VERSION 1.1)
 
 macro(add_clang_library name)
   set(srcs ${ARGN})
@@ -59,3 +59,4 @@ add_subdirectory(tools)
 
 # TODO: docs.
 add_subdirectory(test)
+
