@@ -38,6 +38,12 @@ writes its output to the standard output.
 
 =over
 
+=item B<-f>
+
+Enable binary output on terminals.  Normally, B<opt> will refuse to
+write raw bitcode output if the output stream is a terminal. With this option,
+B<opt> will write raw bitcode regardless of the output device.
+
 =item B<-help>
 
 Print a summary of command line options. 
