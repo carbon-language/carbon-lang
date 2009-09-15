@@ -46,3 +46,8 @@ void test_X1(X1<int> xi) {
   Outer<int> oi(xi);
   Outer<float> of(xi);
 }
+
+// PR4655
+template<class C> struct A {};
+template <> struct A<int>{A(const A<int>&);};
+struct B { A<int> x; B(B& a) : x(a.x) {} };
