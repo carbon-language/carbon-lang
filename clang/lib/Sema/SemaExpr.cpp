@@ -5064,8 +5064,8 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     return QualType();
   } else if (ConditionalOperator *CO = dyn_cast<ConditionalOperator>(op)) {
     // FIXME: Can LHS ever be null here?
-    if (!CheckAddressOfOperand(CO->getLHS(), OpLoc).isNull())
-      return CheckAddressOfOperand(CO->getRHS(), OpLoc);
+    if (!CheckAddressOfOperand(CO->getTrueExpr(), OpLoc).isNull())
+      return CheckAddressOfOperand(CO->getFalseExpr(), OpLoc);
   } else if (dcl) { // C99 6.5.3.2p1
     // We have an lvalue with a decl. Make sure the decl is not declared
     // with the register storage-class specifier.
