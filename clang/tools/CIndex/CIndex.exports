@@ -17,6 +17,7 @@ _clang_createTranslationUnit
 _clang_isDeclaration
 _clang_isReference
 _clang_isDefinition
+_clang_isInvalid
 _clang_getCursorSpelling
 _clang_getCursorKindSpelling
 _clang_getTranslationUnitSpelling

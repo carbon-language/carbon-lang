@@ -5,8 +5,11 @@
 #include <string.h>
 
 static void PrintCursor(CXCursor Cursor) {
-  printf("%s => %s ", clang_getCursorKindSpelling(Cursor.kind),
-                       clang_getCursorSpelling(Cursor));
+  if (clang_isInvalid(Cursor.kind))
+    printf("Invalid Cursor => %s\n", clang_getCursorKindSpelling(Cursor.kind));
+  else
+    printf("%s => %s ", clang_getCursorKindSpelling(Cursor.kind),
+                        clang_getCursorSpelling(Cursor));
 }
 
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) 
@@ -47,8 +50,10 @@ int main(int argc, char **argv) {
     /* methodSignature - returns a cursor of type ObjCInstanceMethodDecl */
     C = clang_getCursor(TU, "/System/Library/Frameworks/Foundation.framework/Headers/NSInvocation.h", 22, 1);
     PrintCursor(C);
+    C = clang_getCursor(TU, "Large.m", 5, 18);
+    PrintCursor(C);
   } else if (argc == 3) {
-    enum CXCursorKind K = CXCursor_Invalid;
+    enum CXCursorKind K = CXCursor_NotImplemented;
     
     if (!strcmp(argv[2], "all")) {
       clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);

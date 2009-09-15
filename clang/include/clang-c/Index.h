@@ -37,8 +37,6 @@ typedef void *CXDecl;    /* A specific declaration within a translation unit. */
 
 /* Cursors represent declarations, definitions, and references. */
 enum CXCursorKind {
- CXCursor_Invalid                       = 0,
- 
  /* Declarations */
  CXCursor_FirstDecl                     = 1,
  CXCursor_TypedefDecl                   = 2,
@@ -76,7 +74,14 @@ enum CXCursorKind {
  CXCursor_ObjCMessageRef                = 42,
  CXCursor_ObjCSelectorRef               = 43,
  CXCursor_ObjCClassRef                  = 44,
- CXCursor_LastRef                       = 44
+ CXCursor_LastRef                       = 44,
+ 
+ /* Error conditions */
+ CXCursor_FirstInvalid                  = 70,
+ CXCursor_InvalidFile                   = 70,
+ CXCursor_NoDeclFound                   = 71,
+ CXCursor_NotImplemented                = 72,
+ CXCursor_LastInvalid                   = 72
 };
 
 /* A cursor into the CXTranslationUnit. */
@@ -172,6 +177,7 @@ enum CXCursorKind clang_getCursorKind(CXCursor);
 unsigned clang_isDeclaration(enum CXCursorKind);
 unsigned clang_isReference(enum CXCursorKind);
 unsigned clang_isDefinition(enum CXCursorKind);
+unsigned clang_isInvalid(enum CXCursorKind);
 
 unsigned clang_getCursorLine(CXCursor);
 unsigned clang_getCursorColumn(CXCursor);

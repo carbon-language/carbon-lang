@@ -265,10 +265,6 @@ CXEntity clang_getEntity(const char *URI)
 //
 // CXDecl Operations.
 //
-CXCursor clang_getCursorFromDecl(CXDecl)
-{
-  return CXCursor();
-}
 CXEntity clang_getEntityFromDecl(CXDecl)
 {
   return 0;
@@ -347,6 +343,9 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind)
    case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
    case CXCursor_ObjCProtocolRef: return "ObjCProtocolRef";
    case CXCursor_ObjCClassRef: return "ObjCClassRef";
+   case CXCursor_InvalidFile: return "InvalidFile";
+   case CXCursor_NoDeclFound: return "NoDeclFound";
+   case CXCursor_NotImplemented: return "NotImplemented";
    default: return "<not implemented>";
   }
 }
@@ -370,7 +369,7 @@ static enum CXCursorKind TranslateKind(Decl *D) {
     }
     default: break;
   }
-  return CXCursor_Invalid;
+  return CXCursor_NotImplemented;
 }
 //
 // CXCursor Operations.
@@ -383,19 +382,37 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   
   FileManager &FMgr = CXXUnit->getFileManager();
   const FileEntry *File = FMgr.getFile(source_name, 
-                                       source_name+strlen(source_name));
-  assert(File && "clang_getCursor(): FileManager returned 0");
-  
+                                       source_name+strlen(source_name));  
+  if (!File) {
+    CXCursor C = { CXCursor_InvalidFile, 0 };
+    return C;
+  }
   SourceLocation SLoc = 
     CXXUnit->getSourceManager().getLocation(File, line, column);
                                                                 
   ASTLocation ALoc = ResolveLocationInAST(CXXUnit->getASTContext(), SLoc);
   
   Decl *Dcl = ALoc.getDecl();
-  assert(Dcl && "clang_getCursor(): ASTLocation has a null decl");
-  
-  CXCursor C = { TranslateKind(Dcl), Dcl };
+  if (Dcl) {  
+    CXCursor C = { TranslateKind(Dcl), Dcl };
+    return C;
+  }
+  CXCursor C = { CXCursor_NoDeclFound, 0 };
   return C;
+}
+
+CXCursor clang_getCursorFromDecl(CXDecl AnonDecl)
+{
+  assert(AnonDecl && "Passed null CXDecl");
+  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
+  
+  CXCursor C = { TranslateKind(ND), ND };
+  return C;
+}
+
+unsigned clang_isInvalid(enum CXCursorKind K)
+{
+  return K >= CXCursor_FirstInvalid && K <= CXCursor_LastInvalid;
 }
 
 unsigned clang_isDeclaration(enum CXCursorKind K)
