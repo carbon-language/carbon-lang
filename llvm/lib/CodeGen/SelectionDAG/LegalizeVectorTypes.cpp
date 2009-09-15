@@ -170,8 +170,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_LOAD(LoadSDNode *N) {
                                DAG.getUNDEF(N->getBasePtr().getValueType()),
                                N->getSrcValue(), N->getSrcValueOffset(),
                                N->getMemoryVT().getVectorElementType(),
-                               N->isVolatile(), N->getAlignment(),
-                               N->getOriginalAlignment());
+                               N->isVolatile(), N->getOriginalAlignment());
 
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
@@ -361,8 +360,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo){
 
   return DAG.getStore(N->getChain(), dl, GetScalarizedVector(N->getOperand(1)),
                       N->getBasePtr(), N->getSrcValue(), N->getSrcValueOffset(),
-                      N->isVolatile(), N->getAlignment(),
-                      N->getOriginalAlignment());
+                      N->isVolatile(), N->getOriginalAlignment());
 }
 
 
@@ -716,23 +714,21 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
   const Value *SV = LD->getSrcValue();
   int SVOffset = LD->getSrcValueOffset();
   EVT MemoryVT = LD->getMemoryVT();
-  unsigned Alignment = LD->getAlignment();
-  unsigned OrigAlignment = LD->getOriginalAlignment();
+  unsigned Alignment = LD->getOriginalAlignment();
   bool isVolatile = LD->isVolatile();
 
   EVT LoMemVT, HiMemVT;
   GetSplitDestVTs(MemoryVT, LoMemVT, HiMemVT);
 
   Lo = DAG.getLoad(ISD::UNINDEXED, dl, ExtType, LoVT, Ch, Ptr, Offset,
-                   SV, SVOffset, LoMemVT, isVolatile, Alignment, OrigAlignment);
+                   SV, SVOffset, LoMemVT, isVolatile, Alignment);
 
   unsigned IncrementSize = LoMemVT.getSizeInBits()/8;
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                     DAG.getIntPtrConstant(IncrementSize));
   SVOffset += IncrementSize;
-  Alignment = MinAlign(Alignment, IncrementSize);
   Hi = DAG.getLoad(ISD::UNINDEXED, dl, ExtType, HiVT, Ch, Ptr, Offset,
-                   SV, SVOffset, HiMemVT, isVolatile, Alignment, OrigAlignment);
+                   SV, SVOffset, HiMemVT, isVolatile, Alignment);
 
   // Build a factor node to remember that this load is independent of the
   // other one.
@@ -1081,8 +1077,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
   SDValue Ptr = N->getBasePtr();
   int SVOffset = N->getSrcValueOffset();
   EVT MemoryVT = N->getMemoryVT();
-  unsigned Alignment = N->getAlignment();
-  unsigned OrigAlignment = N->getOriginalAlignment();
+  unsigned Alignment = N->getOriginalAlignment();
   bool isVol = N->isVolatile();
   SDValue Lo, Hi;
   GetSplitVector(N->getOperand(1), Lo, Hi);
@@ -1097,21 +1092,19 @@ SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
                            LoMemVT, isVol, Alignment);
   else
     Lo = DAG.getStore(Ch, dl, Lo, Ptr, N->getSrcValue(), SVOffset,
-                      isVol, Alignment, OrigAlignment);
+                      isVol, Alignment);
 
   // Increment the pointer to the other half.
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                     DAG.getIntPtrConstant(IncrementSize));
+  SVOffset += IncrementSize;
 
   if (isTruncating)
-    Hi = DAG.getTruncStore(Ch, dl, Hi, Ptr,
-                           N->getSrcValue(), SVOffset+IncrementSize,
-                           HiMemVT,
-                           isVol, MinAlign(Alignment, IncrementSize));
+    Hi = DAG.getTruncStore(Ch, dl, Hi, Ptr, N->getSrcValue(), SVOffset,
+                           HiMemVT, isVol, Alignment);
   else
-    Hi = DAG.getStore(Ch, dl, Hi, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
-                      isVol, MinAlign(Alignment, IncrementSize),
-                      OrigAlignment);
+    Hi = DAG.getStore(Ch, dl, Hi, Ptr, N->getSrcValue(), SVOffset,
+                      isVol, Alignment);
 
   return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Lo, Hi);
 }

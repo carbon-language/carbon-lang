@@ -2815,7 +2815,7 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
                             DAG.getNode(ISD::ADD, getCurDebugLoc(),
                                         PtrVT, Ptr,
                                         DAG.getConstant(Offsets[i], PtrVT)),
-                            SV, Offsets[i], isVolatile, Alignment, Alignment);
+                            SV, Offsets[i], isVolatile, Alignment);
     Values[i] = L;
     Chains[i] = L.getValue(1);
   }
@@ -2864,8 +2864,7 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
                              DAG.getNode(ISD::ADD, getCurDebugLoc(),
                                          PtrVT, Ptr,
                                          DAG.getConstant(Offsets[i], PtrVT)),
-                             PtrV, Offsets[i],
-                             isVolatile, Alignment, Alignment);
+                             PtrV, Offsets[i], isVolatile, Alignment);
 
   DAG.setRoot(DAG.getNode(ISD::TokenFactor, getCurDebugLoc(),
                           MVT::Other, &Chains[0], NumValues));

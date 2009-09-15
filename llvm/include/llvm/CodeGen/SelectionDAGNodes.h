@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/DebugLoc.h"
@@ -1518,23 +1519,22 @@ private:
 
   //! SVOffset - Memory location offset. Note that base is defined in MemSDNode
   int SVOffset;
-
-  //! OrigAlign - The original alignment of this MemSDNode in the case where
-  // this node was created by legalize from a MemSDNode with known alignment.
-  unsigned OrigAlign;
-
 public:
   MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, EVT MemoryVT,
-            const Value *srcValue, int SVOff,
-            unsigned alignment, bool isvolatile, unsigned oalign);
+            const Value *srcValue, int SVOff, unsigned alignment,
+            bool isvolatile);
 
   MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, const SDValue *Ops,
             unsigned NumOps, EVT MemoryVT, const Value *srcValue, int SVOff,
-            unsigned alignment, bool isvolatile, unsigned oalign);
+            unsigned alignment, bool isvolatile);
 
   /// Returns alignment and volatility of the memory access
-  unsigned getAlignment() const { return (1u << (SubclassData >> 6)) >> 1; }
-  unsigned getOriginalAlignment() const { return OrigAlign; }
+  unsigned getOriginalAlignment() const { 
+    return (1u << (SubclassData >> 6)) >> 1; 
+  }
+  unsigned getAlignment() const {
+    return MinAlign(getOriginalAlignment(), SVOffset);
+  }
   bool isVolatile() const { return (SubclassData >> 5) & 1; }
 
   /// getRawSubclassData - Return the SubclassData value, which contains an
@@ -1605,14 +1605,14 @@ public:
                SDValue Cmp, SDValue Swp, const Value* SrcVal,
                unsigned Align=0)
     : MemSDNode(Opc, dl, VTL, MemVT, SrcVal, /*SVOffset=*/0,
-                Align, /*isVolatile=*/true, /* OrigAlign=*/0) {
+                Align, /*isVolatile=*/true) {
     InitOperands(Ops, Chain, Ptr, Cmp, Swp);
   }
   AtomicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTL, EVT MemVT,
                SDValue Chain, SDValue Ptr,
                SDValue Val, const Value* SrcVal, unsigned Align=0)
     : MemSDNode(Opc, dl, VTL, MemVT, SrcVal, /*SVOffset=*/0,
-                Align, /*isVolatile=*/true, /* OrigAlign=*/0) {
+                Align, /*isVolatile=*/true) {
     InitOperands(Ops, Chain, Ptr, Val);
   }
 
@@ -1653,8 +1653,7 @@ public:
                      const SDValue *Ops, unsigned NumOps,
                      EVT MemoryVT, const Value *srcValue, int SVO,
                      unsigned Align, bool Vol, bool ReadMem, bool WriteMem)
-    : MemSDNode(Opc, dl, VTs, Ops, NumOps, MemoryVT, srcValue, SVO, Align, Vol,
-                /* OrigAlign=*/0),
+    : MemSDNode(Opc, dl, VTs, Ops, NumOps, MemoryVT, srcValue, SVO, Align, Vol),
       ReadMem(ReadMem), WriteMem(WriteMem) {
   }
 
@@ -2269,9 +2268,8 @@ class LSBaseSDNode : public MemSDNode {
 public:
   LSBaseSDNode(ISD::NodeType NodeTy, DebugLoc dl, SDValue *Operands,
                unsigned numOperands, SDVTList VTs, ISD::MemIndexedMode AM,
-               EVT VT, const Value *SV, int SVO, unsigned Align, bool Vol,
-               unsigned OAlign)
-    : MemSDNode(NodeTy, dl, VTs, VT, SV, SVO, Align, Vol, OAlign) {
+               EVT VT, const Value *SV, int SVO, unsigned Align, bool Vol)
+    : MemSDNode(NodeTy, dl, VTs, VT, SV, SVO, Align, Vol) {
     assert(Align != 0 && "Loads and stores should have non-zero aligment");
     SubclassData |= AM << 2;
     assert(getAddressingMode() == AM && "MemIndexedMode encoding error!");
@@ -2309,10 +2307,9 @@ class LoadSDNode : public LSBaseSDNode {
   friend class SelectionDAG;
   LoadSDNode(SDValue *ChainPtrOff, DebugLoc dl, SDVTList VTs,
              ISD::MemIndexedMode AM, ISD::LoadExtType ETy, EVT LVT,
-             const Value *SV, int O=0, unsigned Align=0, bool Vol=false,
-             unsigned OAlign=0)
+             const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::LOAD, dl, ChainPtrOff, 3,
-                   VTs, AM, LVT, SV, O, Align, Vol, OAlign) {
+                   VTs, AM, LVT, SV, O, Align, Vol) {
     SubclassData |= (unsigned short)ETy;
     assert(getExtensionType() == ETy && "LoadExtType encoding error!");
   }
@@ -2339,10 +2336,9 @@ class StoreSDNode : public LSBaseSDNode {
   friend class SelectionDAG;
   StoreSDNode(SDValue *ChainValuePtrOff, DebugLoc dl, SDVTList VTs,
               ISD::MemIndexedMode AM, bool isTrunc, EVT SVT,
-              const Value *SV, int O=0, unsigned Align=0, bool Vol=false,
-              unsigned OAlign=0)
+              const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::STORE, dl, ChainValuePtrOff, 4,
-                   VTs, AM, SVT, SV, O, Align, Vol, OAlign) {
+                   VTs, AM, SVT, SV, O, Align, Vol) {
     SubclassData |= (unsigned short)isTrunc;
     assert(isTruncatingStore() == isTrunc && "isTrunc encoding error!");
   }

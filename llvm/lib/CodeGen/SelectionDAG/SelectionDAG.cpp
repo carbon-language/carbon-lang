@@ -432,12 +432,14 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     const LoadSDNode *LD = cast<LoadSDNode>(N);
     ID.AddInteger(LD->getMemoryVT().getRawBits());
     ID.AddInteger(LD->getRawSubclassData());
+    ID.AddInteger(LD->getSrcValueOffset());
     break;
   }
   case ISD::STORE: {
     const StoreSDNode *ST = cast<StoreSDNode>(N);
     ID.AddInteger(ST->getMemoryVT().getRawBits());
     ID.AddInteger(ST->getRawSubclassData());
+    ID.AddInteger(ST->getSrcValueOffset());
     break;
   }
   case ISD::ATOMIC_CMP_SWAP:
@@ -3646,12 +3648,9 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, DebugLoc dl,
                       ISD::LoadExtType ExtType, EVT VT, SDValue Chain,
                       SDValue Ptr, SDValue Offset,
                       const Value *SV, int SVOffset, EVT EVT,
-                      bool isVolatile, unsigned Alignment,
-                      unsigned OrigAlignment) {
+                      bool isVolatile, unsigned Alignment) {
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(VT);
-  if (OrigAlignment == 0)
-    OrigAlignment = Alignment;
 
   if (VT == EVT) {
     ExtType = ISD::NON_EXTLOAD;
@@ -3682,12 +3681,13 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, DebugLoc dl,
   AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
   ID.AddInteger(EVT.getRawBits());
   ID.AddInteger(encodeMemSDNodeFlags(ExtType, AM, isVolatile, Alignment));
+  ID.AddInteger(SVOffset);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<LoadSDNode>();
   new (N) LoadSDNode(Ops, dl, VTs, AM, ExtType, EVT, SV, SVOffset,
-                     Alignment, isVolatile, OrigAlignment);
+                     Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -3696,11 +3696,10 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, DebugLoc dl,
 SDValue SelectionDAG::getLoad(EVT VT, DebugLoc dl,
                               SDValue Chain, SDValue Ptr,
                               const Value *SV, int SVOffset,
-                              bool isVolatile, unsigned Alignment,
-                              unsigned OrigAlignment) {
+                              bool isVolatile, unsigned Alignment) {
   SDValue Undef = getUNDEF(Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, dl, ISD::NON_EXTLOAD, VT, Chain, Ptr, Undef,
-                 SV, SVOffset, VT, isVolatile, Alignment, OrigAlignment);
+                 SV, SVOffset, VT, isVolatile, Alignment);
 }
 
 SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
@@ -3727,14 +3726,11 @@ SelectionDAG::getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
 
 SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
                                SDValue Ptr, const Value *SV, int SVOffset,
-                               bool isVolatile, unsigned Alignment,
-                               unsigned OrigAlignment) {
+                               bool isVolatile, unsigned Alignment) {
   EVT VT = Val.getValueType();
 
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(VT);
-  if (OrigAlignment == 0)
-    OrigAlignment = Alignment;
 
   SDVTList VTs = getVTList(MVT::Other);
   SDValue Undef = getUNDEF(Ptr.getValueType());
@@ -3744,12 +3740,13 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
   ID.AddInteger(VT.getRawBits());
   ID.AddInteger(encodeMemSDNodeFlags(false, ISD::UNINDEXED,
                                      isVolatile, Alignment));
+  ID.AddInteger(SVOffset);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<StoreSDNode>();
   new (N) StoreSDNode(Ops, dl, VTs, ISD::UNINDEXED, false,
-                      VT, SV, SVOffset, Alignment, isVolatile, OrigAlignment);
+                      VT, SV, SVOffset, Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -3779,6 +3776,7 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
   ID.AddInteger(SVT.getRawBits());
   ID.AddInteger(encodeMemSDNodeFlags(true, ISD::UNINDEXED,
                                      isVolatile, Alignment));
+  ID.AddInteger(SVOffset);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
@@ -4976,25 +4974,24 @@ GlobalAddressSDNode::GlobalAddressSDNode(unsigned Opc, const GlobalValue *GA,
 
 MemSDNode::MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, EVT memvt,
                      const Value *srcValue, int SVO, unsigned alignment,
-                     bool vol, unsigned origAlign)
- : SDNode(Opc, dl, VTs), MemoryVT(memvt), SrcValue(srcValue), SVOffset(SVO),
-   OrigAlign(origAlign) {
+                     bool vol)
+ : SDNode(Opc, dl, VTs), MemoryVT(memvt), SrcValue(srcValue), SVOffset(SVO) {
   SubclassData = encodeMemSDNodeFlags(0, ISD::UNINDEXED, vol, alignment);
   assert(isPowerOf2_32(alignment) && "Alignment is not a power of 2!");
-  assert(getAlignment() == alignment && "Alignment representation error!");
-  assert(isVolatile() == vol && "Volatile representation error!");
+  assert(getOriginalAlignment() == alignment && "Alignment encoding error!");
+  assert(isVolatile() == vol && "Volatile encoding error!");
 }
 
 MemSDNode::MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs,
                      const SDValue *Ops, unsigned NumOps, EVT memvt, 
                      const Value *srcValue, int SVO, unsigned alignment, 
-                     bool vol, unsigned origAlign)
+                     bool vol)
    : SDNode(Opc, dl, VTs, Ops, NumOps),
-     MemoryVT(memvt), SrcValue(srcValue), SVOffset(SVO), OrigAlign(origAlign) {
+     MemoryVT(memvt), SrcValue(srcValue), SVOffset(SVO) {
   SubclassData = encodeMemSDNodeFlags(0, ISD::UNINDEXED, vol, alignment);
   assert(isPowerOf2_32(alignment) && "Alignment is not a power of 2!");
-  assert(getAlignment() == alignment && "Alignment representation error!");
-  assert(isVolatile() == vol && "Volatile representation error!");
+  assert(getOriginalAlignment() == alignment && "Alignment encoding error!");
+  assert(isVolatile() == vol && "Volatile encoding error!");
 }
 
 /// getMemOperand - Return a MachineMemOperand object describing the memory
