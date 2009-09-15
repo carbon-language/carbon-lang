@@ -1991,9 +1991,15 @@ Sema::OwningExprResult Sema::BuildCXXCastArgument(SourceLocation CastLoc,
   }
 
   case CastExpr::CK_UserDefinedConversion: {
+    assert(!From->getType()->isPointerType() && "Arg can't have pointer type!");
+  
+    // Cast to base if needed.
+    if (PerformObjectArgumentInitialization(From, Method))
+      return ExprError();
+    
     // Create an implicit member expr to refer to the conversion operator.
     MemberExpr *ME = 
-      new (Context) MemberExpr(From, From->getType()->isPointerType(), Method, 
+      new (Context) MemberExpr(From, /*IsArrow=*/false, Method, 
                                SourceLocation(), Method->getType());
     
 

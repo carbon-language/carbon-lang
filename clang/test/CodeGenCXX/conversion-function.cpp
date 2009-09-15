@@ -79,11 +79,13 @@ int main() {
 
 // Test. Conversion in base class is visible in derived class.
 class XB {
+  int a;
 public:
   operator int();
 };
 
 class Yb : public XB {
+  double b;
 public:
   operator char();
 };
