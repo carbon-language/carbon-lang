@@ -1041,10 +1041,10 @@ void PMDataManager::dumpPassInfo(Pass *P, enum PassDebuggingString S1,
     errs() << "' on Module '"  << Msg << "'...\n";
     break;
   case ON_LOOP_MSG:
-    errs() << "' on Loop " << Msg << "'...\n";
+    errs() << "' on Loop '" << Msg << "'...\n";
     break;
   case ON_CG_MSG:
-    errs() << "' on Call Graph " << Msg << "'...\n";
+    errs() << "' on Call Graph '" << Msg << "'...\n";
     break;
   default:
     break;
