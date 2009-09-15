@@ -143,6 +143,24 @@ class FpI_<dag outs, dag ins, FPFormat fp, list<dag> pattern>
   let Pattern = pattern;
 }
 
+// Templates for instructions that use a 16- or 32-bit segmented address as
+//  their only operand: lcall (FAR CALL) and ljmp (FAR JMP)
+//
+//   Iseg16 - 16-bit segment selector, 16-bit offset
+//   Iseg32 - 16-bit segment selector, 32-bit offset
+
+class Iseg16 <bits<8> o, Format f, dag outs, dag ins, string asm, 
+              list<dag> pattern> : X86Inst<o, f, NoImm, outs, ins, asm> {
+  let Pattern = pattern;
+  let CodeSize = 3;
+}
+
+class Iseg32 <bits<8> o, Format f, dag outs, dag ins, string asm, 
+              list<dag> pattern> : X86Inst<o, f, NoImm, outs, ins, asm> {
+  let Pattern = pattern;
+  let CodeSize = 3;
+}
+
 // SSE1 Instruction Templates:
 // 
 //   SSI   - SSE1 instructions with XS prefix.

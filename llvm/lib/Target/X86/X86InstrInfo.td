@@ -584,9 +584,17 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
                      [(brind GR32:$dst)]>;
   def JMP32m     : I<0xFF, MRM4m, (outs), (ins i32mem:$dst), "jmp{l}\t{*}$dst",
                      [(brind (loadi32 addr:$dst))]>;
-  def FARJMP16   : I<0xFF, MRM5m, (outs), (ins opaque32mem:$dst), 
+                     
+  def FARJMP16i  : Iseg16<0xEA, RawFrm, (outs), 
+                          (ins i16imm:$seg, i16imm:$off),
+                          "ljmp{w}\t$seg, $off", []>, OpSize;
+  def FARJMP32i  : Iseg32<0xEA, RawFrm, (outs),
+                          (ins i16imm:$seg, i32imm:$off),
+                          "ljmp{l}\t$seg, $off", []>;                     
+
+  def FARJMP16m  : I<0xFF, MRM5m, (outs), (ins opaque32mem:$dst), 
                      "ljmp{w}\t{*}$dst", []>, OpSize;
-  def FARJMP32   : I<0xFF, MRM5m, (outs), (ins opaque48mem:$dst),
+  def FARJMP32m  : I<0xFF, MRM5m, (outs), (ins opaque48mem:$dst),
                      "ljmp{l}\t{*}$dst", []>;
 }
 
@@ -669,9 +677,16 @@ let isCall = 1 in
     def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst, variable_ops),
                         "call\t{*}$dst", [(X86call (loadi32 addr:$dst))]>;
   
-    def FARCALL16   : I<0xFF, MRM3m, (outs), (ins opaque32mem:$dst),
+    def FARCALL16i  : Iseg16<0x9A, RawFrm, (outs), 
+                             (ins i16imm:$seg, i16imm:$off),
+                             "lcall{w}\t$seg, $off", []>, OpSize;
+    def FARCALL32i  : Iseg32<0x9A, RawFrm, (outs),
+                             (ins i16imm:$seg, i32imm:$off),
+                             "lcall{l}\t$seg, $off", []>;
+                             
+    def FARCALL16m  : I<0xFF, MRM3m, (outs), (ins opaque32mem:$dst),
                         "lcall{w}\t{*}$dst", []>, OpSize;
-    def FARCALL32   : I<0xFF, MRM3m, (outs), (ins opaque48mem:$dst),
+    def FARCALL32m  : I<0xFF, MRM3m, (outs), (ins opaque48mem:$dst),
                         "lcall{l}\t{*}$dst", []>;
   }
 
