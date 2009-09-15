@@ -18,9 +18,7 @@
 
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -105,11 +103,8 @@ int main(int argc, char **argv) {
   }
 
   // All that llvm-dis does is write the assembly to a file.
-  if (!DontPrint) {
-    PassManager Passes;
-    Passes.add(createPrintModulePass(Out.get()));
-    Passes.run(*M.get());
-  }
+  if (!DontPrint)
+    *Out << *M;
 
   return 0;
 }
