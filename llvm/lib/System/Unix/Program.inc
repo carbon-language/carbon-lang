@@ -34,15 +34,6 @@
 namespace llvm {
 using namespace sys;
 
-Program::Program() : Data_(0) {}
-
-Program::~Program() {}
-
-unsigned Program::GetPid() const {
-  uint64_t pid = reinterpret_cast<uint64_t>(Data_);
-  return static_cast<unsigned>(pid);
-}
-
 // This function just uses the PATH environment variable to find the program.
 Path
 Program::FindProgramByName(const std::string& progName) {
@@ -214,7 +205,7 @@ Program::Execute(const Path& path,
       break;
   }
 
-  Data_ = reinterpret_cast<void*>(child);
+  Pid_ = child;
 
   return true;
 }
@@ -226,7 +217,7 @@ Program::Wait(unsigned secondsToWait,
 #ifdef HAVE_SYS_WAIT_H
   struct sigaction Act, Old;
 
-  if (Data_ == 0) {
+  if (Pid_ == 0) {
     MakeErrMsg(ErrMsg, "Process not started!");
     return -1;
   }
@@ -242,8 +233,7 @@ Program::Wait(unsigned secondsToWait,
 
   // Parent process: Wait for the child process to terminate.
   int status;
-  uint64_t pid = reinterpret_cast<uint64_t>(Data_);
-  pid_t child = static_cast<pid_t>(pid);
+  pid_t child = Pid_;
   while (wait(&status) != child)
     if (secondsToWait && errno == EINTR) {
       // Kill the child.
@@ -291,15 +281,12 @@ Program::Wait(unsigned secondsToWait,
 
 bool
 Program::Kill(std::string* ErrMsg) {
-  if (Data_ == 0) {
+  if (Pid_ == 0) {
     MakeErrMsg(ErrMsg, "Process not started!");
     return true;
   }
 
-  uint64_t pid64 = reinterpret_cast<uint64_t>(Data_);
-  pid_t pid = static_cast<pid_t>(pid64);
-
-  if (kill(pid, SIGKILL) != 0) {
+  if (kill(Pid_, SIGKILL) != 0) {
     MakeErrMsg(ErrMsg, "The process couldn't be killed!");
     return true;
   }
