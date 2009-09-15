@@ -160,10 +160,12 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
 
   // If there is a personality, we need to indicate the function's location.
   if (Personality) {
-    PrintRelDirective(true);
+    O << MAI->getData32bitsDirective();
+    
     O << MAI->getPersonalityPrefix();
     Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
     O << MAI->getPersonalitySuffix();
+    
     if (strcmp(MAI->getPersonalitySuffix(), "+4@GOTPCREL"))
       O << "-" << MAI->getPCSymbol();
     Asm->EOL("Personality");
