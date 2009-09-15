@@ -47,7 +47,7 @@ struct X86AddressMode {
 
   unsigned Scale;
   unsigned IndexReg;
-  unsigned Disp;
+  int Disp;
   GlobalValue *GV;
   unsigned GVOpFlags;
 
