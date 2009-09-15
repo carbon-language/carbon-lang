@@ -440,6 +440,11 @@ def GR64 : RegisterClass<"X86", [i64], 64,
   }];
 }
 
+// Segment registers for use by MOV instructions (and others) that have a
+//   segment register as one operand.  Always contain a 16-bit segment
+//   descriptor.
+def SEGMENT_REG : RegisterClass<"X86", [i16], 16, [CS, DS, SS, ES, FS, GS]> {
+}
 
 // GR8_ABCD_L, GR8_ABCD_H, GR16_ABCD, GR32_ABCD, GR64_ABCD - Subclasses of
 // GR8, GR16, GR32, and GR64 which contain just the "a" "b", "c", and "d"

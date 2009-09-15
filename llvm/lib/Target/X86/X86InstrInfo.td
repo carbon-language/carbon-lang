@@ -946,6 +946,16 @@ def MOV16ao16 : Ii16 <0xA3, RawFrm, (outs i16imm:$dst), (ins),
 def MOV32ao32 : Ii32 <0xA3, RawFrm, (outs i32imm:$dst), (ins),
                       "mov{l}\t{%eax, $dst|$dst, %eax}", []>;
 
+// Moves to and from segment registers
+def MOV16rs : I<0x8C, MRMDestReg, (outs GR16:$dst), (ins SEGMENT_REG:$src),
+                "mov{w}\t{$src, $dst|$dst, $src}", []>;
+def MOV16ms : I<0x8C, MRMDestMem, (outs i16mem:$dst), (ins SEGMENT_REG:$src),
+                "mov{w}\t{$src, $dst|$dst, $src}", []>;
+def MOV16sr : I<0x8E, MRMSrcReg, (outs SEGMENT_REG:$dst), (ins GR16:$src),
+                "mov{w}\t{$src, $dst|$dst, $src}", []>;
+def MOV16sm : I<0x8E, MRMSrcMem, (outs SEGMENT_REG:$dst), (ins i16mem:$src),
+                "mov{w}\t{$src, $dst|$dst, $src}", []>;
+
 let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
 def MOV8rm  : I<0x8A, MRMSrcMem, (outs GR8 :$dst), (ins i8mem :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}",

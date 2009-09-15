@@ -330,6 +330,16 @@ def MOV64ao8 : RIi8<0xA2, RawFrm, (outs i8imm:$dst), (ins),
 def MOV64ao32 : RIi32<0xA3, RawFrm, (outs i32imm:$dst), (ins),
                        "mov{q}\t{%rax, $dst|$dst, %rax}", []>;
 
+// Moves to and from segment registers
+def MOV64rs : RI<0x8C, MRMDestReg, (outs GR64:$dst), (ins SEGMENT_REG:$src),
+                 "mov{w}\t{$src, $dst|$dst, $src}", []>;
+def MOV64ms : RI<0x8C, MRMDestMem, (outs i64mem:$dst), (ins SEGMENT_REG:$src),
+                 "mov{w}\t{$src, $dst|$dst, $src}", []>;
+def MOV64sr : RI<0x8E, MRMSrcReg, (outs SEGMENT_REG:$dst), (ins GR64:$src),
+                 "mov{w}\t{$src, $dst|$dst, $src}", []>;
+def MOV64sm : RI<0x8E, MRMSrcMem, (outs SEGMENT_REG:$dst), (ins i64mem:$src),
+                 "mov{w}\t{$src, $dst|$dst, $src}", []>;
+
 // Sign/Zero extenders
 
 // MOVSX64rr8 always has a REX prefix and it has an 8-bit register
