@@ -10,18 +10,19 @@ B<llc> [I<options>] [I<filename>]
 
 =head1 DESCRIPTION
 
-The B<llc> command compiles LLVM bitcode into assembly language for a
+The B<llc> command compiles LLVM source inputs into assembly language for a
 specified architecture.  The assembly language output can then be passed through
 a native assembler and linker to generate a native executable.
 
 The choice of architecture for the output assembly code is automatically
-determined from the input bitcode file, unless the B<-march> option is used to
-override the default.
+determined from the input file, unless the B<-march> option is used to override
+the default.
 
 =head1 OPTIONS
 
-If I<filename> is - or omitted, B<llc> reads LLVM bitcode from standard input.
-Otherwise, it will read LLVM bitcode from I<filename>.
+If I<filename> is - or omitted, B<llc> reads from standard input.  Otherwise, it
+will from I<filename>.  Inputs can be in either the LLVM assembly language
+format (.ll) or the LLVM bitcode format (.bc).
 
 If the B<-o> option is omitted, then B<llc> will send its output to standard
 output if the input is from standard input.  If the B<-o> option specifies -,
@@ -55,13 +56,13 @@ B<llvm-extract> will write raw bitcode regardless of the output device.
 
 =item B<-mtriple>=I<target triple>
 
-Override the target triple specified in the input bitcode file with the 
-specified string.
+Override the target triple specified in the input file with the specified
+string.
 
 =item B<-march>=I<arch>
 
 Specify the architecture for which to generate assembly, overriding the target
-encoded in the bitcode file.  See the output of B<llc --help> for a list of
+encoded in the input file.  See the output of B<llc --help> for a list of
 valid architectures.  By default this is inferred from the target triple or
 autodetected to the current architecture.
 
