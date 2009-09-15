@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/GlobalAlias.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Operator.h"
@@ -103,6 +104,17 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     else
       KnownZero.clear();
     KnownOne.clear();
+    return;
+  }
+  // A weak GlobalAlias is totally unknown. A non-weak GlobalAlias has
+  // the bits of its aliasee.
+  if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
+    if (GA->mayBeOverridden()) {
+      KnownZero.clear(); KnownOne.clear();
+    } else {
+      ComputeMaskedBits(GA->getAliasee(), Mask, KnownZero, KnownOne,
+                        TD, Depth+1);
+    }
     return;
   }
 
