@@ -3243,6 +3243,12 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
     Expr *Arg;
     if (i < NumArgs) {
       Arg = Args[i];
+      
+      // Pass the argument.
+      if (PerformCopyInitialization(Arg, ProtoArgType, "passing"))
+        return true;
+      
+      Args[i] = 0;
     } else {
       ParmVarDecl *Param = Constructor->getParamDecl(i);
       
