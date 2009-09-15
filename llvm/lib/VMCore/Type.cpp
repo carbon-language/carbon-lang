@@ -364,11 +364,10 @@ const IntegerType *Type::getInt64Ty(LLVMContext &C) {
 bool FunctionType::isValidReturnType(const Type *RetTy) {
   if (RetTy->isFirstClassType()) {
     if (const PointerType *PTy = dyn_cast<PointerType>(RetTy))
-      return PTy->getElementType() != Type::getMetadataTy(RetTy->getContext());
+      return PTy->getElementType()->getTypeID() != MetadataTyID;
     return true;
   }
-  if (RetTy == Type::getVoidTy(RetTy->getContext()) ||
-      RetTy == Type::getMetadataTy(RetTy->getContext()) ||
+  if (RetTy->getTypeID() == VoidTyID || RetTy->getTypeID() == MetadataTyID ||
       isa<OpaqueType>(RetTy))
     return true;
   
@@ -389,8 +388,7 @@ bool FunctionType::isValidReturnType(const Type *RetTy) {
 bool FunctionType::isValidArgumentType(const Type *ArgTy) {
   if ((!ArgTy->isFirstClassType() && !isa<OpaqueType>(ArgTy)) ||
       (isa<PointerType>(ArgTy) &&
-       cast<PointerType>(ArgTy)->getElementType() == 
-            Type::getMetadataTy(ArgTy->getContext())))
+       cast<PointerType>(ArgTy)->getElementType()->getTypeID() == MetadataTyID))
     return false;
 
   return true;
@@ -829,13 +827,12 @@ ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
 }
 
 bool ArrayType::isValidElementType(const Type *ElemTy) {
-  if (ElemTy == Type::getVoidTy(ElemTy->getContext()) ||
-      ElemTy == Type::getLabelTy(ElemTy->getContext()) ||
-      ElemTy == Type::getMetadataTy(ElemTy->getContext()))
+  if (ElemTy->getTypeID() == VoidTyID || ElemTy->getTypeID() == LabelTyID ||
+      ElemTy->getTypeID() == MetadataTyID || isa<FunctionType>(ElemTy))
     return false;
 
   if (const PointerType *PTy = dyn_cast<PointerType>(ElemTy))
-    if (PTy->getElementType() == Type::getMetadataTy(ElemTy->getContext()))
+    if (PTy->getElementType()->getTypeID() == MetadataTyID)
       return false;
 
   return true;
@@ -909,13 +906,12 @@ StructType *StructType::get(LLVMContext &Context, const Type *type, ...) {
 }
 
 bool StructType::isValidElementType(const Type *ElemTy) {
-  if (ElemTy == Type::getVoidTy(ElemTy->getContext()) ||
-      ElemTy == Type::getLabelTy(ElemTy->getContext()) ||
-      ElemTy == Type::getMetadataTy(ElemTy->getContext()))
+  if (ElemTy->getTypeID() == VoidTyID || ElemTy->getTypeID() == LabelTyID ||
+      ElemTy->getTypeID() == MetadataTyID || isa<FunctionType>(ElemTy))
     return false;
 
   if (const PointerType *PTy = dyn_cast<PointerType>(ElemTy))
-    if (PTy->getElementType() == Type::getMetadataTy(ElemTy->getContext()))
+    if (PTy->getElementType()->getTypeID() == MetadataTyID)
       return false;
 
   return true;
@@ -928,7 +924,7 @@ bool StructType::isValidElementType(const Type *ElemTy) {
 
 PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
   assert(ValueType && "Can't get a pointer to <null> type!");
-  assert(ValueType != Type::getVoidTy(ValueType->getContext()) &&
+  assert(ValueType->getTypeID() != VoidTyID &&
          "Pointer to void is not valid, use i8* instead!");
   assert(isValidElementType(ValueType) && "Invalid type for pointer element!");
   PointerValType PVT(ValueType, AddressSpace);
@@ -955,12 +951,12 @@ PointerType *Type::getPointerTo(unsigned addrs) const {
 }
 
 bool PointerType::isValidElementType(const Type *ElemTy) {
-  if (ElemTy == Type::getVoidTy(ElemTy->getContext()) ||
-      ElemTy == Type::getLabelTy(ElemTy->getContext()))
+  if (ElemTy->getTypeID() == VoidTyID ||
+      ElemTy->getTypeID() == LabelTyID)
     return false;
 
   if (const PointerType *PTy = dyn_cast<PointerType>(ElemTy))
-    if (PTy->getElementType() == Type::getMetadataTy(ElemTy->getContext()))
+    if (PTy->getElementType()->getTypeID() == MetadataTyID)
       return false;
 
   return true;
