@@ -237,6 +237,33 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     addQRTypeForNEON(MVT::v4i32);
     addQRTypeForNEON(MVT::v2i64);
 
+    // v2f64 is legal so that QR subregs can be extracted as f64 elements, but
+    // neither Neon nor VFP support any arithmetic operations on it.
+    setOperationAction(ISD::FADD, MVT::v2f64, Expand);
+    setOperationAction(ISD::FSUB, MVT::v2f64, Expand);
+    setOperationAction(ISD::FMUL, MVT::v2f64, Expand);
+    setOperationAction(ISD::FDIV, MVT::v2f64, Expand);
+    setOperationAction(ISD::FREM, MVT::v2f64, Expand);
+    setOperationAction(ISD::FCOPYSIGN, MVT::v2f64, Expand);
+    setOperationAction(ISD::VSETCC, MVT::v2f64, Expand);
+    setOperationAction(ISD::FNEG, MVT::v2f64, Expand);
+    setOperationAction(ISD::FABS, MVT::v2f64, Expand);
+    setOperationAction(ISD::FSQRT, MVT::v2f64, Expand);
+    setOperationAction(ISD::FSIN, MVT::v2f64, Expand);
+    setOperationAction(ISD::FCOS, MVT::v2f64, Expand);
+    setOperationAction(ISD::FPOWI, MVT::v2f64, Expand);
+    setOperationAction(ISD::FPOW, MVT::v2f64, Expand);
+    setOperationAction(ISD::FLOG, MVT::v2f64, Expand);
+    setOperationAction(ISD::FLOG2, MVT::v2f64, Expand);
+    setOperationAction(ISD::FLOG10, MVT::v2f64, Expand);
+    setOperationAction(ISD::FEXP, MVT::v2f64, Expand);
+    setOperationAction(ISD::FEXP2, MVT::v2f64, Expand);
+    setOperationAction(ISD::FCEIL, MVT::v2f64, Expand);
+    setOperationAction(ISD::FTRUNC, MVT::v2f64, Expand);
+    setOperationAction(ISD::FRINT, MVT::v2f64, Expand);
+    setOperationAction(ISD::FNEARBYINT, MVT::v2f64, Expand);
+    setOperationAction(ISD::FFLOOR, MVT::v2f64, Expand);
+
     setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
     setTargetDAGCombine(ISD::SHL);
     setTargetDAGCombine(ISD::SRL);
