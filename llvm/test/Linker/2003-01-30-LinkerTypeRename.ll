@@ -3,7 +3,7 @@
 
 ; RUN: echo {%Ty = type opaque @GV = external global %Ty*} | llvm-as > %t.1.bc
 ; RUN: llvm-as < %s > %t.2.bc
-; RUN: llvm-link %t.1.bc %t.2.bc | llvm-dis | grep {%Ty } | not grep opaque
+; RUN: llvm-link %t.1.bc %t.2.bc -S | grep {%Ty } | not grep opaque
 
 %Ty = type i32
 

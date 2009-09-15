@@ -4,7 +4,7 @@
 ; RUN: echo { define linkonce void @foo() \{ ret void \} } | \
 ; RUN:   llvm-as -o %t.2.bc
 ; RUN: llvm-as %s -o %t.1.bc
-; RUN: llvm-link %t.1.bc %t.2.bc | llvm-dis | grep foo | grep linkonce
+; RUN: llvm-link %t.1.bc %t.2.bc -S | grep foo | grep linkonce
 
 declare void @foo()
 
