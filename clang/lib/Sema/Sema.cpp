@@ -230,10 +230,14 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
   }
 
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(Expr)) {
-    ImpCast->setType(Ty);
-    ImpCast->setLvalueCast(isLvalue);
-  } else
-    Expr = new (Context) ImplicitCastExpr(Ty, Kind, Expr, isLvalue);
+    if (ImpCast->getCastKind() == Kind) {
+      ImpCast->setType(Ty);
+      ImpCast->setLvalueCast(isLvalue);
+      return;
+    }
+  }
+
+  Expr = new (Context) ImplicitCastExpr(Ty, Kind, Expr, isLvalue);
 }
 
 void Sema::DeleteExpr(ExprTy *E) {
