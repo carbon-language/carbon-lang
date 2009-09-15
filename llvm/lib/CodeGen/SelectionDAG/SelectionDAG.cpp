@@ -3682,7 +3682,6 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, DebugLoc dl,
   AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
   ID.AddInteger(EVT.getRawBits());
   ID.AddInteger(encodeMemSDNodeFlags(ExtType, AM, isVolatile, Alignment));
-  ID.AddInteger(OrigAlignment);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
@@ -3745,7 +3744,6 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
   ID.AddInteger(VT.getRawBits());
   ID.AddInteger(encodeMemSDNodeFlags(false, ISD::UNINDEXED,
                                      isVolatile, Alignment));
-  ID.AddInteger(OrigAlignment);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
