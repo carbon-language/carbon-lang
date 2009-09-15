@@ -279,5 +279,22 @@ void CallGraphNode::removeOneAbstractEdgeTo(CallGraphNode *Callee) {
   }
 }
 
+/// replaceCallEdge - This method replaces the edge in the node for the
+/// specified call site with a new one.  Note that this method takes linear
+/// time, so it should be used sparingly.
+void CallGraphNode::replaceCallEdge(CallSite CS,
+                                    CallSite NewCS, CallGraphNode *NewNode){
+  for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
+    assert(I != CalledFunctions.end() && "Cannot find callsite to remove!");
+    if (I->first == CS.getInstruction()) {
+      I->second->DropRef();
+      I->first = NewCS.getInstruction();
+      I->second = NewNode;
+      NewNode->AddRef();
+      return;
+    }
+  }
+}
+
 // Enuse that users of CallGraph.h also link with this file
 DEFINING_FILE_FOR(CallGraph)
