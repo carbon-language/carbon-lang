@@ -736,7 +736,6 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     QualType Type = Ex->getType();
 
     if (const RecordType *Record = Type->getAs<RecordType>()) {
-      OverloadCandidateSet CandidateSet;
       llvm::SmallVector<CXXConversionDecl *, 4> ObjectPtrConversions;
       CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
       OverloadedFunctionDecl *Conversions = 
@@ -755,32 +754,27 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         QualType ConvType = Conv->getConversionType().getNonReferenceType();
         if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
           if (ConvPtrType->getPointeeType()->isObjectType())
-            AddConversionCandidate(Conv, Ex, ConvType, CandidateSet);
+            ObjectPtrConversions.push_back(Conv);
       }
-      OverloadCandidateSet::iterator Best;
-      switch (BestViableFunction(CandidateSet, Ex->getLocStart(), Best)) {
-        case OR_Success:
-          {
-            Operand.release();
-            CXXConversionDecl *Conversion
-              = cast<CXXConversionDecl>(Best->Function);
-            if (PerformImplicitConversion(Ex, 
-                                          Conversion->getConversionType(), 
-                                          "converting"))
-              return ExprError();
-            
-            Operand = Owned(Ex);
-            Type = Ex->getType();
-            break;
-          }
-        case OR_No_Viable_Function:
-        case OR_Deleted:
-          break;  // Will issue error below.
-        case OR_Ambiguous:
-          Diag(StartLoc, diag::err_ambiguous_delete_operand)
-                  << Type << Ex->getSourceRange();
-          PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
-          return ExprError();
+      if (ObjectPtrConversions.size() == 1) {
+        // We have a single conversion to a pointer-to-object type. Perform
+        // that conversion.
+        Operand.release();
+        if (!PerformImplicitConversion(Ex, 
+                            ObjectPtrConversions.front()->getConversionType(), 
+                                      "converting")) {
+          Operand = Owned(Ex);
+          Type = Ex->getType();
+        }
+      }
+      else if (ObjectPtrConversions.size() > 1) {
+        Diag(StartLoc, diag::err_ambiguous_delete_operand)
+              << Type << Ex->getSourceRange();
+        for (unsigned i= 0; i < ObjectPtrConversions.size(); i++) {
+          CXXConversionDecl *Conv = ObjectPtrConversions[i];
+          Diag(Conv->getLocation(), diag::err_ovl_candidate);
+        }
+        return ExprError();
       }
     }
 

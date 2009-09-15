@@ -36,15 +36,15 @@ void g() {
 }
 
 struct Base {
-   operator int*() const; // expected-note {{candidate function}}
+   operator int*() const; 
 };
 
 struct Derived : Base {
-   operator int*(); // expected-note {{candidate function}}
+   operator int*(); 
 };
 
 void foo(const Derived cd, Derived d) {
-        int *pi = cd;
-        int *ppi = d; // expected-error {{ambiguity in initializing value of type 'int *' with initializer of type 'struct Derived'}}
+        int *pi = cd;	// expected-error {{incompatible type initializing 'struct Derived const', expected 'int *'}}
+        int *ppi = d; 
 
 }

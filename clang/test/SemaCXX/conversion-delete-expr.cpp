@@ -78,19 +78,18 @@ void f5(X1 x) { delete x; }  // OK. In selecting a conversion to pointer functio
 
 // Test7
 struct Base {
-   operator int*();	// expected-note {{candidate function}}
+   operator int*();	
 };
 
 struct Derived : Base {
    // not the same function as Base's non-const operator int()
-   operator int*() const;  // expected-note {{candidate function}}
+   operator int*() const;
 };
 
 void foo6(const Derived cd, Derived d) {
 	// overload resolution selects Derived::operator int*() const;
 	delete cd;
-
-	delete d;	// expected-error {{ambiguous conversion of delete expression of type 'struct Derived' to a pointer}}
+	delete d;	
 }
 
 // Test8

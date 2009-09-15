@@ -314,7 +314,7 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD) {
         else 
           TConvType = 
             getASTContext().getCanonicalType(
-                                        cast<FunctionDecl>(TopConv)->getType());
+                        cast<CXXConversionDecl>(TopConv)->getConversionType());
         TopConversionsTypeSet.insert(TConvType);
       }
     }
@@ -334,7 +334,8 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD) {
                             ConversionTemplate->getTemplatedDecl()->getType());
       else
         ConvType = 
-          getASTContext().getCanonicalType(cast<FunctionDecl>(Conv)->getType());
+          getASTContext().getCanonicalType(
+                          cast<CXXConversionDecl>(Conv)->getConversionType());
       if (inTopClass || !TopConversionsTypeSet.count(ConvType)) {
         if (FunctionTemplateDecl *ConversionTemplate =
               dyn_cast<FunctionTemplateDecl>(Conv))
