@@ -544,7 +544,7 @@ public:
   ///
   SDValue getLoad(EVT VT, DebugLoc dl, SDValue Chain, SDValue Ptr,
                     const Value *SV, int SVOffset, bool isVolatile=false,
-                    unsigned Alignment=0);
+                    unsigned Alignment=0, unsigned OrigAlignment=0);
   SDValue getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
                        SDValue Chain, SDValue Ptr, const Value *SV,
                        int SVOffset, EVT EVT, bool isVolatile=false,
@@ -552,16 +552,16 @@ public:
   SDValue getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
                            SDValue Offset, ISD::MemIndexedMode AM);
   SDValue getLoad(ISD::MemIndexedMode AM, DebugLoc dl, ISD::LoadExtType ExtType,
-                    EVT VT, SDValue Chain,
-                    SDValue Ptr, SDValue Offset,
-                    const Value *SV, int SVOffset, EVT EVT,
-                    bool isVolatile=false, unsigned Alignment=0);
+                  EVT VT, SDValue Chain, SDValue Ptr, SDValue Offset,
+                  const Value *SV, int SVOffset, EVT EVT,
+                  bool isVolatile=false, unsigned Alignment=0,
+                  unsigned OrigAlignment=0);
 
   /// getStore - Helper function to build ISD::STORE nodes.
   ///
   SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                      const Value *SV, int SVOffset, bool isVolatile=false,
-                     unsigned Alignment=0);
+                     unsigned Alignment=0, unsigned OrigAlignment=0);
   SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                           const Value *SV, int SVOffset, EVT TVT,
                           bool isVolatile=false, unsigned Alignment=0);
