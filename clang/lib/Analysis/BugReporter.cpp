@@ -1727,7 +1727,7 @@ static BugReport *FindReportInEquivalenceClass(BugReportEquivClass& EQ) {
     }
   }
   
-  // If we reach here, the end nodes for all reports in the equiavalence
+  // If we reach here, the end nodes for all reports in the equivalence
   // class are post-dominated by a sink node.
   return NULL;
 }
