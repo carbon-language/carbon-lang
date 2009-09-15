@@ -337,7 +337,7 @@ bool SROA::performScalarRepl(Function &F) {
 /// predicate, do SROA now.
 void SROA::DoScalarReplacement(AllocationInst *AI, 
                                std::vector<AllocationInst*> &WorkList) {
-  DEBUG(errs() << "Found inst to SROA: " << *AI);
+  DEBUG(errs() << "Found inst to SROA: " << *AI << '\n');
   SmallVector<AllocaInst*, 32> ElementAllocas;
   if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
     ElementAllocas.reserve(ST->getNumContainedTypes());
