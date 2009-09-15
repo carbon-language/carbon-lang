@@ -2428,7 +2428,8 @@ def ADD32rm  : I<0x03, MRMSrcMem, (outs GR32:$dst),
                  [(set GR32:$dst, (add GR32:$src1, (load addr:$src2))),
                   (implicit EFLAGS)]>;
                   
-// Register-Register Addition
+// Register-Register Addition - Equivalent to the normal rr forms (ADD8rr, 
+//   ADD16rr, and ADD32rr), but differently encoded.
 def ADD8mrmrr: I<0x02, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
                  "add{b}\t{$src2, $dst|$dst, $src2}", []>;
 def ADD16mrmrr: I<0x03, MRMSrcReg,(outs GR16:$dst),(ins GR16:$src1, GR16:$src2),
