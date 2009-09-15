@@ -107,7 +107,9 @@ FunctionPass *llvm::createDwarfEHPass(const TargetLowering *tli, bool fast) {
 
 /// NormalizeLandingPads - Normalize and discover landing pads, noting them
 /// in the LandingPads set.  A landing pad is normal if the only CFG edges
-/// that end at it are unwind edges from invoke instructions.
+/// that end at it are unwind edges from invoke instructions. If we inlined
+/// through an invoke we could have a normal branch from the previous
+/// unwind block through to the landing pad for the original invoke.
 /// Abnormal landing pads are fixed up by redirecting all unwind edges to
 /// a new basic block which falls through to the original.
 bool DwarfEHPrepare::NormalizeLandingPads() {
@@ -132,6 +134,7 @@ bool DwarfEHPrepare::NormalizeLandingPads() {
         break;
       }
     }
+    
     if (OnlyUnwoundTo) {
       // Only unwind edges lead to the landing pad.  Remember the landing pad.
       LandingPads.insert(LPad);
