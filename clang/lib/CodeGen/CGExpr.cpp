@@ -246,7 +246,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::CompoundLiteralExprClass:
     return EmitCompoundLiteralLValue(cast<CompoundLiteralExpr>(E));
   case Expr::ConditionalOperatorClass:
-    return EmitConditionalOperator(cast<ConditionalOperator>(E));
+    return EmitConditionalOperatorLValue(cast<ConditionalOperator>(E));
   case Expr::ChooseExprClass:
     return EmitLValue(cast<ChooseExpr>(E)->getChosenSubExpr(getContext()));
   case Expr::ImplicitCastExprClass:
@@ -1135,10 +1135,44 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
   return Result;
 }
 
-LValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator* E) {
-  if (E->isLvalue(getContext()) == Expr::LV_Valid)
-    return EmitUnsupportedLValue(E, "conditional operator");
+LValue 
+CodeGenFunction::EmitConditionalOperatorLValue(const ConditionalOperator* E) {
+  if (E->isLvalue(getContext()) == Expr::LV_Valid) {
+    llvm::BasicBlock *LHSBlock = createBasicBlock("cond.true");
+    llvm::BasicBlock *RHSBlock = createBasicBlock("cond.false");
+    llvm::BasicBlock *ContBlock = createBasicBlock("cond.end");
+    
+    llvm::Value *Cond = EvaluateExprAsBool(E->getCond());
+    Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
+    
+    EmitBlock(LHSBlock);
 
+    LValue LHS = EmitLValue(E->getLHS());
+    if (!LHS.isSimple())
+      return EmitUnsupportedLValue(E, "conditional operator");
+
+    llvm::Value *Temp = CreateTempAlloca(LHS.getAddress()->getType(), 
+                                         "condtmp");
+    
+    Builder.CreateStore(LHS.getAddress(), Temp);
+    EmitBranch(ContBlock);
+    
+    EmitBlock(RHSBlock);
+    LValue RHS = EmitLValue(E->getRHS());
+    if (!RHS.isSimple())
+      return EmitUnsupportedLValue(E, "conditional operator");
+
+    Builder.CreateStore(RHS.getAddress(), Temp);
+    EmitBranch(ContBlock);
+
+    EmitBlock(ContBlock);
+    
+    Temp = Builder.CreateLoad(Temp, "lv");
+    return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
+                            getContext().getObjCGCAttrKind(E->getType()),
+                            E->getType().getAddressSpace());
+  }
+  
   // ?: here should be an aggregate.
   assert((hasAggregateLLVMType(E->getType()) &&
           !E->getType()->isAnyComplexType()) &&
@@ -1150,7 +1184,6 @@ LValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator* E) {
   return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
                           getContext().getObjCGCAttrKind(E->getType()),
                           E->getType().getAddressSpace());
-
 }
 
 /// EmitCastLValue - Casts are never lvalues.  If a cast is needed by the code

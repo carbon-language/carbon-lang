@@ -794,7 +794,7 @@ public:
   LValue EmitExtVectorElementExpr(const ExtVectorElementExpr *E);
   LValue EmitMemberExpr(const MemberExpr *E);
   LValue EmitCompoundLiteralLValue(const CompoundLiteralExpr *E);
-  LValue EmitConditionalOperator(const ConditionalOperator *E);
+  LValue EmitConditionalOperatorLValue(const ConditionalOperator *E);
   LValue EmitCastLValue(const CastExpr *E);
 
   llvm::Value *EmitIvarOffset(const ObjCInterfaceDecl *Interface,
