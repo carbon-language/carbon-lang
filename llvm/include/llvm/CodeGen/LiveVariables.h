@@ -155,7 +155,7 @@ private:   // Intermediate data structures
   MachineInstr *FindLastPartialDef(unsigned Reg, unsigned &PartDefReg);
 
   /// hasRegisterUseBelow - Return true if the specified register is used after
-  /// the current instruction and before it's next definition.
+  /// the current instruction and before its next definition.
   bool hasRegisterUseBelow(unsigned Reg, MachineBasicBlock::iterator I,
                            MachineBasicBlock *MBB);
 

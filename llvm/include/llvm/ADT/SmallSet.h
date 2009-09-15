@@ -30,7 +30,7 @@ namespace llvm {
 template <typename T, unsigned N>
 class SmallSet {
   /// Use a SmallVector to hold the elements here (even though it will never
-  /// reach it's 'large' stage) to avoid calling the default ctors of elements
+  /// reach its 'large' stage) to avoid calling the default ctors of elements
   /// we will never use.
   SmallVector<T, N> Vector;
   std::set<T> Set;

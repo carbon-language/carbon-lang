@@ -65,7 +65,7 @@ public:
                                   const Type *NewTy) = 0;
 
   /// The other case which AbstractTypeUsers must be aware of is when a type
-  /// makes the transition from being abstract (where it has clients on it's
+  /// makes the transition from being abstract (where it has clients on its
   /// AbstractTypeUsers list) to concrete (where it does not).  This method
   /// notifies ATU's when this occurs for a type.
   ///

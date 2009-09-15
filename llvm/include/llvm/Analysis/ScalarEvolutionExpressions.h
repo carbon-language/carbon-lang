@@ -575,7 +575,7 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   /// SCEVUnknown - This means that we are dealing with an entirely unknown SCEV
-  /// value, and only represent it as it's LLVM Value.  This is the "bottom"
+  /// value, and only represent it as its LLVM Value.  This is the "bottom"
   /// value for the analysis.
   ///
   class SCEVUnknown : public SCEV {

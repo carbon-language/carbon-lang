@@ -732,7 +732,7 @@ public:
     for (typename InvBlockTraits::ChildIteratorType I =
          InvBlockTraits::child_begin(BB), E = InvBlockTraits::child_end(BB);
          I != E; ++I)
-      if (DT.dominates(BB, *I))   // If BB dominates it's predecessor...
+      if (DT.dominates(BB, *I))   // If BB dominates its predecessor...
         TodoStack.push_back(*I);
 
     if (TodoStack.empty()) return 0;  // No backedges to this block...
@@ -758,7 +758,7 @@ public:
         if (LoopT *SubLoop =
             const_cast<LoopT *>(getLoopFor(X)))
           if (SubLoop->getHeader() == X && isNotAlreadyContainedIn(SubLoop, L)){
-            // Remove the subloop from it's current parent...
+            // Remove the subloop from its current parent...
             assert(SubLoop->ParentLoop && SubLoop->ParentLoop != L);
             LoopT *SLP = SubLoop->ParentLoop;  // SubLoopParent
             typename std::vector<LoopT *>::iterator I =

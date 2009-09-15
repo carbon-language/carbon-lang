@@ -27,7 +27,7 @@ class TimerGroup;
 class raw_ostream;
 
 /// Timer - This class is used to track the amount of time spent between
-/// invocations of it's startTimer()/stopTimer() methods.  Given appropriate OS
+/// invocations of its startTimer()/stopTimer() methods.  Given appropriate OS
 /// support it can also keep track of the RSS of the program at various points.
 /// By default, the Timer will print the amount of time it has captured to
 /// standard error when the laster timer is destroyed, otherwise it is printed
