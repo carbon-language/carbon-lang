@@ -566,6 +566,10 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
   def RETI   : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "ret\t$amt",
                     [(X86retflag timm:$amt)]>;
+  def LRET   : I   <0xCB, RawFrm, (outs), (ins),
+                    "lret", []>;
+  def LRETI  : Ii16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
+                    "lret\t$amt", []>;
 }
 
 // All branches are RawFrm, Void, Branch, and Terminators
