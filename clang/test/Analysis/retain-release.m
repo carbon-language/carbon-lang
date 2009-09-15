@@ -1028,3 +1028,39 @@ CFDateRef returnsRetainedCFDate()  {
 }
 @end
 
+//===----------------------------------------------------------------------===//
+// Test that leaks post-dominated by "panic" functions are not reported.
+//
+// <rdar://problem/5905851> do not report a leak when post-dominated by a call
+// to a noreturn or panic function
+//===----------------------------------------------------------------------===//
+
+void panic() __attribute__((noreturn));
+
+void test_panic_negative() {
+  signed z = 1;
+  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z);  // expected-warning{{leak}}
+}
+
+void test_panic_positive() {
+  signed z = 1;
+  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z); // no-warning
+  panic();
+}
+
+void test_panic_neg_2(int x) {
+  signed z = 1;
+  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z); // expected-warning{{leak}}
+  if (x)
+    panic();
+}
+
+void test_panic_pos_2(int x) {
+  signed z = 1;
+  CFNumberRef value = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &z); // no-warning
+  if (x)
+    panic();  
+  if (!x)
+    panic();
+}
+

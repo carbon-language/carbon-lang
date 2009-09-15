@@ -567,3 +567,45 @@ void pr4781(unsigned long *raw1) {
   return self;
 }
 @end
+
+// Test reasoning of __builtin_offsetof;
+struct test_offsetof_A {
+  int x;
+  int y;
+};
+struct test_offsetof_B {
+  int w;
+  int z;
+};
+void test_offsetof_1() {
+  if (__builtin_offsetof(struct test_offsetof_A, x) ==
+      __builtin_offsetof(struct test_offsetof_B, w))
+    return;
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning
+}
+void test_offsetof_2() {
+  if (__builtin_offsetof(struct test_offsetof_A, y) ==
+      __builtin_offsetof(struct test_offsetof_B, z))
+    return;
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning
+}
+void test_offsetof_3() {
+  if (__builtin_offsetof(struct test_offsetof_A, y) -
+      __builtin_offsetof(struct test_offsetof_A, x)
+      ==
+      __builtin_offsetof(struct test_offsetof_B, z) -
+      __builtin_offsetof(struct test_offsetof_B, w))
+    return;
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning
+}
+void test_offsetof_4() {
+  if (__builtin_offsetof(struct test_offsetof_A, y) ==
+      __builtin_offsetof(struct test_offsetof_B, w))
+    return;
+  int *p = 0;
+  *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
+}
+

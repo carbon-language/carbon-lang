@@ -2430,10 +2430,15 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
       return;
     }
 
-      // FIXME: Just report "Unknown" for OffsetOf.
-    case UnaryOperator::OffsetOf:
-      Dst.Add(Pred);
+    case UnaryOperator::OffsetOf: {
+      const APSInt &IV = U->EvaluateAsInt(getContext());
+      assert(IV.getBitWidth() == getContext().getTypeSize(U->getType()));
+      assert(U->getType()->isIntegerType());
+      assert(IV.isSigned() == U->getType()->isSignedIntegerType());
+      SVal X = ValMgr.makeIntVal(IV);      
+      MakeNode(Dst, U, Pred, GetState(Pred)->BindExpr(U, X));
       return;
+    }
 
     case UnaryOperator::Plus: assert (!asLValue);  // FALL-THROUGH.
     case UnaryOperator::Extension: {
