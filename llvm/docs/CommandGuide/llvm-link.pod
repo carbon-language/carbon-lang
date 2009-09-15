@@ -42,6 +42,10 @@ B<llvm-link> will write raw bitcode regardless of the output device.
 Specify the output file name.  If F<filename> is C<->, then B<llvm-link> will
 write its output to standard output.
 
+=item B<-S>
+
+Write output in LLVM intermediate language (instead of bitcode).
+
 =item B<-d>
 
 If specified, B<llvm-link> prints a human-readable version of the output

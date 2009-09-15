@@ -41,6 +41,10 @@ static cl::opt<bool>
 Force("f", cl::desc("Enable binary output on terminals"));
 
 static cl::opt<bool>
+OutputAssembly("S",
+         cl::desc("Write output as LLVM assembly"), cl::Hidden);
+
+static cl::opt<bool>
 Verbose("v", cl::desc("Print information about actions taken"));
 
 static cl::opt<bool>
@@ -116,7 +120,7 @@ int main(int argc, char **argv) {
   // TODO: Iterate over the -l list and link in any modules containing
   // global symbols that have not been resolved so far.
 
-  if (DumpAsm) errs() << "Here's the assembly:\n" << *Composite.get();
+  if (DumpAsm) errs() << "Here's the assembly:\n" << *Composite;
 
   std::string ErrorInfo;
   std::auto_ptr<raw_ostream> 
@@ -132,13 +136,15 @@ int main(int argc, char **argv) {
   if (OutputFilename != "-")
     sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
-  if (verifyModule(*Composite.get())) {
+  if (verifyModule(*Composite)) {
     errs() << argv[0] << ": linked module is broken!\n";
     return 1;
   }
 
   if (Verbose) errs() << "Writing bitcode...\n";
-  if (Force || !CheckBitcodeOutputToConsole(*Out, true))
+  if (OutputAssembly) {
+    *Out << *Composite;
+  } else if (Force || !CheckBitcodeOutputToConsole(*Out, true))
     WriteBitcodeToFile(Composite.get(), *Out);
 
   return 0;
