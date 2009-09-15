@@ -222,25 +222,32 @@ public:
         llvm::SmallString<256> sbuf;
         llvm::raw_svector_ostream OS(sbuf);
         const GRState *ST = N->getState();
-        const Expr *Ex;
+        const Expr *Ex = NULL; 
 
         if (ST->getSVal(B->getLHS()).isUndef()) {
           Ex = B->getLHS()->IgnoreParenCasts();
           OS << "The left operand of the '";
         }
-        else {
-          assert(ST->getSVal(B->getRHS()).isUndef());
+        else if (ST->getSVal(B->getRHS()).isUndef()) {
           Ex = B->getRHS()->IgnoreParenCasts();
           OS << "The right operand of the '";
         }
-                
-        OS << BinaryOperator::getOpcodeStr(B->getOpcode())
-           << "' expression is an undefined "
-              "or otherwise garbage value";
-        
+      
+        if (Ex) {                  
+          OS << BinaryOperator::getOpcodeStr(B->getOpcode())
+             << "' expression is an undefined "
+                "or otherwise garbage value";
+        }          
+        else {
+          // We KNOW that the result was undefined.
+          OS << "The result of the '"
+             << BinaryOperator::getOpcodeStr(B->getOpcode())
+             << "' expression is undefined";
+        }
+      
         // FIXME: Use StringRefs to pass string information.
         report = new BuiltinBugReport(*this, OS.str().str().c_str(), N);
-        report->addRange(Ex->getSourceRange());
+        if (Ex) report->addRange(Ex->getSourceRange());
       }
       else {
         report = new BuiltinBugReport(*this, 
