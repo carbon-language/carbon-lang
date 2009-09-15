@@ -1873,10 +1873,10 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
     for (unsigned i = 0; i != NumIdx; ++i)
       if (!NewIdxs[i]) NewIdxs[i] = Idxs[i];
     return inBounds ?
-      ConstantExpr::getGetElementPtr(const_cast<Constant*>(C),
-                                     NewIdxs.data(), NewIdxs.size()) :
       ConstantExpr::getInBoundsGetElementPtr(const_cast<Constant*>(C),
-                                             NewIdxs.data(), NewIdxs.size());
+                                             NewIdxs.data(), NewIdxs.size()) :
+      ConstantExpr::getGetElementPtr(const_cast<Constant*>(C),
+                                     NewIdxs.data(), NewIdxs.size());
   }
 
   // If all indices are known integers and normalized, we can do a simple
