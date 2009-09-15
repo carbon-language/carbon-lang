@@ -734,6 +734,15 @@ public:
     return NULL;
   }
 
+  /// OverloadingResult - Capture the result of performing overload
+  /// resolution.
+  enum OverloadingResult {
+    OR_Success,             ///< Overload resolution succeeded.
+    OR_No_Viable_Function,  ///< No viable function found.
+    OR_Ambiguous,           ///< Ambiguous candidates found.
+    OR_Deleted              ///< Overload resoltuion refers to a deleted function.
+  };
+
 
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T);
@@ -770,7 +779,7 @@ public:
   bool CheckMemberPointerConversion(Expr *From, QualType ToType,
                                     CastExpr::CastKind &Kind);
   bool IsQualificationConversion(QualType FromType, QualType ToType);
-  bool IsUserDefinedConversion(Expr *From, QualType ToType,
+  OverloadingResult IsUserDefinedConversion(Expr *From, QualType ToType,
                                UserDefinedConversionSequence& User,
                                OverloadCandidateSet& Conversions,
                                bool AllowConversionFunctions,
@@ -807,15 +816,6 @@ public:
   bool PerformContextuallyConvertToBool(Expr *&From);
 
   bool PerformObjectMemberConversion(Expr *&From, NamedDecl *Member);
-
-  /// OverloadingResult - Capture the result of performing overload
-  /// resolution.
-  enum OverloadingResult {
-    OR_Success,             ///< Overload resolution succeeded.
-    OR_No_Viable_Function,  ///< No viable function found.
-    OR_Ambiguous,           ///< Ambiguous candidates found.
-    OR_Deleted              ///< Overload resoltuion refers to a deleted function.
-  };
 
   // Members have to be NamespaceDecl* or TranslationUnitDecl*.
   // TODO: make this is a typesafe union.

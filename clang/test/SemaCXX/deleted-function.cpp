@@ -18,7 +18,7 @@ void ov(double) = delete; // expected-note {{candidate function has been explici
 struct WithDel {
   WithDel() = delete; // expected-note {{candidate function has been explicitly deleted}}
   void fn() = delete; // expected-note {{function has been explicitly marked deleted here}}
-  operator int() = delete;
+  operator int() = delete; 
   void operator +(int) = delete;
 
   int i = delete; // expected-error {{only functions can have deleted definitions}}

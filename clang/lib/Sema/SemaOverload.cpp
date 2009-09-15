@@ -417,7 +417,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
            IsUserDefinedConversion(From, ToType, ICS.UserDefined,
                                    Conversions,
                                    !SuppressUserConversions, AllowExplicit,
-                                   ForceRValue)) {
+                                   ForceRValue) == OR_Success) {
     ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
     // C++ [over.ics.user]p4:
     //   A conversion of an expression of class type to the same class
@@ -1355,7 +1355,8 @@ static void GetFunctionAndTemplate(AnyFunctionDecl Orig, T *&Function,
 ///
 /// \param ForceRValue  true if the expression should be treated as an rvalue
 /// for overload resolution.
-bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
+Sema::OverloadingResult Sema::IsUserDefinedConversion(
+                                   Expr *From, QualType ToType,
                                    UserDefinedConversionSequence& User,
                                    OverloadCandidateSet& CandidateSet,
                                    bool AllowConversionFunctions,
@@ -1458,7 +1459,7 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
         User.After.FromTypePtr
           = ThisType->getAs<PointerType>()->getPointeeType().getAsOpaquePtr();
         User.After.ToTypePtr = ToType.getAsOpaquePtr();
-        return true;
+        return OR_Success;
       } else if (CXXConversionDecl *Conversion
                    = dyn_cast<CXXConversionDecl>(Best->Function)) {
         // C++ [over.ics.user]p1:
@@ -1480,24 +1481,25 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
         //   user-defined conversion sequence (see 13.3.3 and
         //   13.3.3.1).
         User.After = Best->FinalConversion;
-        return true;
+        return OR_Success;
       } else {
         assert(false && "Not a constructor or conversion function?");
-        return false;
+        return OR_No_Viable_Function;
       }
 
     case OR_No_Viable_Function:
+      return OR_No_Viable_Function;
     case OR_Deleted:
       // No conversion here! We're done.
-      return false;
+      return OR_Deleted;
 
     case OR_Ambiguous:
       // FIXME: See C++ [over.best.ics]p10 for the handling of
       // ambiguous conversion sequences.
-      return false;
+      return OR_Ambiguous;
     }
 
-  return false;
+  return OR_No_Viable_Function;
 }
 
 /// CompareImplicitConversionSequences - Compare two implicit
@@ -2100,10 +2102,9 @@ bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
     return false;
 
     OverloadCandidateSet CandidateSet;
-    IsUserDefinedConversion(From, Context.BoolTy, ICS.UserDefined,
+    if (IsUserDefinedConversion(From, Context.BoolTy, ICS.UserDefined,
                             CandidateSet,
-                            true, true, false);
-    if (CandidateSet.begin() == CandidateSet.end())
+                            true, true, false) != OR_Ambiguous)
       return  Diag(From->getSourceRange().getBegin(),
                    diag::err_typecheck_bool_condition)
                     << From->getType() << From->getSourceRange();

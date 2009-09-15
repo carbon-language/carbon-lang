@@ -70,11 +70,23 @@ static bool CheckSingleInitializer(Expr *&Init, QualType DeclType,
 
   if (S.getLangOptions().CPlusPlus) {
     // FIXME: I dislike this error message. A lot.
-    if (S.PerformImplicitConversion(Init, DeclType, "initializing", DirectInit))
-      return S.Diag(Init->getSourceRange().getBegin(),
-                    diag::err_typecheck_convert_incompatible)
-        << DeclType << Init->getType() << "initializing"
-        << Init->getSourceRange();
+    if (S.PerformImplicitConversion(Init, DeclType, 
+                                    "initializing", DirectInit)) {
+      ImplicitConversionSequence ICS;
+      OverloadCandidateSet CandidateSet;
+      if (S.IsUserDefinedConversion(Init, DeclType, ICS.UserDefined,
+                              CandidateSet,
+                              true, false, false) != S.OR_Ambiguous)
+        return S.Diag(Init->getSourceRange().getBegin(),
+                      diag::err_typecheck_convert_incompatible)
+                      << DeclType << Init->getType() << "initializing"
+                      << Init->getSourceRange();
+      S.Diag(Init->getSourceRange().getBegin(),
+             diag::err_typecheck_convert_ambiguous)
+            << DeclType << Init->getType() << Init->getSourceRange();
+      S.PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+      return true;
+    }
     return false;
   }
 

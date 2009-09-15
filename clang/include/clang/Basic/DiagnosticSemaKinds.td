@@ -1643,6 +1643,8 @@ def warn_value_always_false : Warning<"%0 is always false in this context">;
 // FIXME: %2 is an english string here.
 def err_typecheck_convert_incompatible : Error<
   "incompatible type %2 %1, expected %0">;
+def err_typecheck_convert_ambiguous : Error<
+  "ambiguity in initializing value of type %0 with initializer of type %1">;
 def err_cannot_initialize_decl_noname : Error<
   "cannot initialize a value of type %0 with an %select{rvalue|lvalue}1 "
   "of type %2">;
