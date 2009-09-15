@@ -350,10 +350,11 @@ struct ConstantCreator {
   }
 };
 
-template<class ConstantClass, class TypeClass>
-struct ConvertConstantType {
-  static void convert(ConstantClass *OldC, const TypeClass *NewTy) {
-    llvm_unreachable("This type cannot be converted!");
+template<class ConstantClass>
+struct ConstantKeyData {
+  typedef void ValType;
+  static ValType getValType(ConstantClass *C) {
+    llvm_unreachable("Unknown Constant type!");
   }
 };
 
@@ -404,50 +405,18 @@ struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
 };
 
 template<>
-struct ConvertConstantType<ConstantExpr, Type> {
-  static void convert(ConstantExpr *OldC, const Type *NewTy) {
-    Constant *New;
-    switch (OldC->getOpcode()) {
-    case Instruction::Trunc:
-    case Instruction::ZExt:
-    case Instruction::SExt:
-    case Instruction::FPTrunc:
-    case Instruction::FPExt:
-    case Instruction::UIToFP:
-    case Instruction::SIToFP:
-    case Instruction::FPToUI:
-    case Instruction::FPToSI:
-    case Instruction::PtrToInt:
-    case Instruction::IntToPtr:
-    case Instruction::BitCast:
-      New = ConstantExpr::getCast(OldC->getOpcode(), OldC->getOperand(0), 
-                                  NewTy);
-      break;
-    case Instruction::Select:
-      New = ConstantExpr::getSelectTy(NewTy, OldC->getOperand(0),
-                                      OldC->getOperand(1),
-                                      OldC->getOperand(2));
-      break;
-    default:
-      assert(OldC->getOpcode() >= Instruction::BinaryOpsBegin &&
-             OldC->getOpcode() <  Instruction::BinaryOpsEnd);
-      New = ConstantExpr::getTy(NewTy, OldC->getOpcode(), OldC->getOperand(0),
-                                OldC->getOperand(1));
-      break;
-    case Instruction::GetElementPtr:
-      // Make everyone now use a constant of the new type...
-      std::vector<Value*> Idx(OldC->op_begin()+1, OldC->op_end());
-      New = cast<GEPOperator>(OldC)->isInBounds() ?
-        ConstantExpr::getInBoundsGetElementPtrTy(NewTy, OldC->getOperand(0),
-                                                 &Idx[0], Idx.size()) :
-        ConstantExpr::getGetElementPtrTy(NewTy, OldC->getOperand(0),
-                                         &Idx[0], Idx.size());
-      break;
-    }
-
-    assert(New != OldC && "Didn't replace constant??");
-    OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();    // This constant is now dead, destroy it.
+struct ConstantKeyData<ConstantExpr> {
+  typedef ExprMapKeyType ValType;
+  static ValType getValType(ConstantExpr *CE) {
+    std::vector<Constant*> Operands;
+    Operands.reserve(CE->getNumOperands());
+    for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
+      Operands.push_back(cast<Constant>(CE->getOperand(i)));
+    return ExprMapKeyType(CE->getOpcode(), Operands,
+        CE->isCompare() ? CE->getPredicate() : 0,
+        CE->getRawSubclassOptionalData(),
+        CE->hasIndices() ?
+          CE->getIndices() : SmallVector<unsigned, 4>());
   }
 };
 
@@ -460,56 +429,46 @@ struct ConstantCreator<ConstantAggregateZero, Type, ValType> {
 };
 
 template<>
-struct ConvertConstantType<ConstantVector, VectorType> {
-  static void convert(ConstantVector *OldC, const VectorType *NewTy) {
-    // Make everyone now use a constant of the new type...
-    std::vector<Constant*> C;
-    for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
-      C.push_back(cast<Constant>(OldC->getOperand(i)));
-    Constant *New = ConstantVector::get(NewTy, C);
-    assert(New != OldC && "Didn't replace constant??");
-    OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();    // This constant is now dead, destroy it.
+struct ConstantKeyData<ConstantVector> {
+  typedef std::vector<Constant*> ValType;
+  static ValType getValType(ConstantVector *CP) {
+    std::vector<Constant*> Elements;
+    Elements.reserve(CP->getNumOperands());
+    for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
+      Elements.push_back(CP->getOperand(i));
+    return Elements;
   }
 };
 
 template<>
-struct ConvertConstantType<ConstantAggregateZero, Type> {
-  static void convert(ConstantAggregateZero *OldC, const Type *NewTy) {
-    // Make everyone now use a constant of the new type...
-    Constant *New = ConstantAggregateZero::get(NewTy);
-    assert(New != OldC && "Didn't replace constant??");
-    OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();     // This constant is now dead, destroy it.
+struct ConstantKeyData<ConstantAggregateZero> {
+  typedef char ValType;
+  static ValType getValType(ConstantAggregateZero *C) {
+    return 0;
   }
 };
 
 template<>
-struct ConvertConstantType<ConstantArray, ArrayType> {
-  static void convert(ConstantArray *OldC, const ArrayType *NewTy) {
-    // Make everyone now use a constant of the new type...
-    std::vector<Constant*> C;
-    for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
-      C.push_back(cast<Constant>(OldC->getOperand(i)));
-    Constant *New = ConstantArray::get(NewTy, C);
-    assert(New != OldC && "Didn't replace constant??");
-    OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();    // This constant is now dead, destroy it.
+struct ConstantKeyData<ConstantArray> {
+  typedef std::vector<Constant*> ValType;
+  static ValType getValType(ConstantArray *CA) {
+    std::vector<Constant*> Elements;
+    Elements.reserve(CA->getNumOperands());
+    for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+      Elements.push_back(cast<Constant>(CA->getOperand(i)));
+    return Elements;
   }
 };
 
 template<>
-struct ConvertConstantType<ConstantStruct, StructType> {
-  static void convert(ConstantStruct *OldC, const StructType *NewTy) {
-    // Make everyone now use a constant of the new type...
-    std::vector<Constant*> C;
-    for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
-      C.push_back(cast<Constant>(OldC->getOperand(i)));
-    Constant *New = ConstantStruct::get(NewTy, C);
-    assert(New != OldC && "Didn't replace constant??");
-
-    OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();    // This constant is now dead, destroy it.
+struct ConstantKeyData<ConstantStruct> {
+  typedef std::vector<Constant*> ValType;
+  static ValType getValType(ConstantStruct *CS) {
+    std::vector<Constant*> Elements;
+    Elements.reserve(CS->getNumOperands());
+    for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i)
+      Elements.push_back(cast<Constant>(CS->getOperand(i)));
+    return Elements;
   }
 };
 
@@ -522,13 +481,10 @@ struct ConstantCreator<ConstantPointerNull, PointerType, ValType> {
 };
 
 template<>
-struct ConvertConstantType<ConstantPointerNull, PointerType> {
-  static void convert(ConstantPointerNull *OldC, const PointerType *NewTy) {
-    // Make everyone now use a constant of the new type...
-    Constant *New = ConstantPointerNull::get(NewTy);
-    assert(New != OldC && "Didn't replace constant??");
-    OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();     // This constant is now dead, destroy it.
+struct ConstantKeyData<ConstantPointerNull> {
+  typedef char ValType;
+  static ValType getValType(ConstantPointerNull *C) {
+    return 0;
   }
 };
 
@@ -541,13 +497,10 @@ struct ConstantCreator<UndefValue, Type, ValType> {
 };
 
 template<>
-struct ConvertConstantType<UndefValue, Type> {
-  static void convert(UndefValue *OldC, const Type *NewTy) {
-    // Make everyone now use a constant of the new type.
-    Constant *New = UndefValue::get(NewTy);
-    assert(New != OldC && "Didn't replace constant??");
-    OldC->uncheckedReplaceAllUsesWith(New);
-    OldC->destroyConstant();     // This constant is now dead, destroy it.
+struct ConstantKeyData<UndefValue> {
+  typedef char ValType;
+  static ValType getValType(UndefValue *C) {
+    return 0;
   }
 };
 
@@ -555,10 +508,11 @@ template<class ValType, class TypeClass, class ConstantClass,
          bool HasLargeKey = false /*true for arrays and structs*/ >
 class ValueMap : public AbstractTypeUser {
 public:
-  typedef std::pair<const Type*, ValType> MapKey;
-  typedef std::map<MapKey, Constant *> MapTy;
-  typedef std::map<Constant*, typename MapTy::iterator> InverseMapTy;
-  typedef std::map<const Type*, typename MapTy::iterator> AbstractTypeMapTy;
+  typedef std::pair<const TypeClass*, ValType> MapKey;
+  typedef std::map<MapKey, ConstantClass *> MapTy;
+  typedef std::map<ConstantClass *, typename MapTy::iterator> InverseMapTy;
+  typedef std::map<const DerivedType*, typename MapTy::iterator>
+    AbstractTypeMapTy;
 private:
   /// Map - This is the main map from the element descriptor to the Constants.
   /// This is the primary way we avoid creating two of the same shape
@@ -599,7 +553,7 @@ public:
   /// I->second == 0, and should be filled in.
   /// NOTE: This function is not locked.  It is the caller's responsibility
   // to enforce proper synchronization.
-  typename MapTy::iterator InsertOrGetItem(std::pair<MapKey, Constant *>
+  typename MapTy::iterator InsertOrGetItem(std::pair<MapKey, ConstantClass *>
                                  &InsertVal,
                                  bool &Exists) {
     std::pair<typename MapTy::iterator, bool> IP = Map.insert(InsertVal);
@@ -619,7 +573,7 @@ private:
       
     typename MapTy::iterator I =
       Map.find(MapKey(static_cast<const TypeClass*>(CP->getRawType()),
-                      getValType(CP)));
+                      ConstantKeyData<ConstantClass>::getValType(CP)));
     if (I == Map.end() || I->second != CP) {
       // FIXME: This should not use a linear scan.  If this gets to be a
       // performance problem, someone should look at this.
@@ -629,6 +583,22 @@ private:
     return I;
   }
     
+  void AddAbstractTypeUser(const Type *Ty, typename MapTy::iterator I) {
+    // If the type of the constant is abstract, make sure that an entry
+    // exists for it in the AbstractTypeMap.
+    if (Ty->isAbstract()) {
+      const DerivedType *DTy = static_cast<const DerivedType *>(Ty);
+      typename AbstractTypeMapTy::iterator TI = AbstractTypeMap.find(DTy);
+
+      if (TI == AbstractTypeMap.end()) {
+        // Add ourselves to the ATU list of the type.
+        cast<DerivedType>(DTy)->addAbstractTypeUser(this);
+
+        AbstractTypeMap.insert(TI, std::make_pair(DTy, I));
+      }
+    }
+  }
+
   ConstantClass* Create(const TypeClass *Ty, const ValType &V,
                         typename MapTy::iterator I) {
     ConstantClass* Result =
@@ -640,19 +610,7 @@ private:
     if (HasLargeKey)  // Remember the reverse mapping if needed.
       InverseMap.insert(std::make_pair(Result, I));
 
-    // If the type of the constant is abstract, make sure that an entry
-    // exists for it in the AbstractTypeMap.
-    if (Ty->isAbstract()) {
-      typename AbstractTypeMapTy::iterator TI = 
-                                               AbstractTypeMap.find(Ty);
-
-      if (TI == AbstractTypeMap.end()) {
-        // Add ourselves to the ATU list of the type.
-        cast<DerivedType>(Ty)->addAbstractTypeUser(this);
-
-        AbstractTypeMap.insert(TI, std::make_pair(Ty, I));
-      }
-    }
+    AddAbstractTypeUser(Ty, I);
       
     return Result;
   }
@@ -668,7 +626,7 @@ public:
     typename MapTy::iterator I = Map.find(Lookup);
     // Is it in the map?  
     if (I != Map.end())
-      Result = static_cast<ConstantClass *>(I->second);
+      Result = I->second;
         
     if (!Result) {
       // If no preexisting value, create one now...
@@ -676,6 +634,43 @@ public:
     }
         
     return Result;
+  }
+
+  void UpdateAbstractTypeMap(const DerivedType *Ty,
+                             typename MapTy::iterator I) {
+    assert(AbstractTypeMap.count(Ty) &&
+           "Abstract type not in AbstractTypeMap?");
+    typename MapTy::iterator &ATMEntryIt = AbstractTypeMap[Ty];
+    if (ATMEntryIt == I) {
+      // Yes, we are removing the representative entry for this type.
+      // See if there are any other entries of the same type.
+      typename MapTy::iterator TmpIt = ATMEntryIt;
+
+      // First check the entry before this one...
+      if (TmpIt != Map.begin()) {
+        --TmpIt;
+        if (TmpIt->first.first != Ty) // Not the same type, move back...
+          ++TmpIt;
+      }
+
+      // If we didn't find the same type, try to move forward...
+      if (TmpIt == ATMEntryIt) {
+        ++TmpIt;
+        if (TmpIt == Map.end() || TmpIt->first.first != Ty)
+          --TmpIt;   // No entry afterwards with the same type
+      }
+
+      // If there is another entry in the map of the same abstract type,
+      // update the AbstractTypeMap entry now.
+      if (TmpIt != ATMEntryIt) {
+        ATMEntryIt = TmpIt;
+      } else {
+        // Otherwise, we are removing the last instance of this type
+        // from the table.  Remove from the ATM, and from user list.
+        cast<DerivedType>(Ty)->removeAbstractTypeUser(this);
+        AbstractTypeMap.erase(Ty);
+      }
+    }
   }
 
   void remove(ConstantClass *CP) {
@@ -689,47 +684,13 @@ public:
       
     // Now that we found the entry, make sure this isn't the entry that
     // the AbstractTypeMap points to.
-    const TypeClass *Ty = static_cast<const TypeClass *>(I->first.first);
-    if (Ty->isAbstract()) {
-      assert(AbstractTypeMap.count(Ty) &&
-             "Abstract type not in AbstractTypeMap?");
-      typename MapTy::iterator &ATMEntryIt = AbstractTypeMap[Ty];
-      if (ATMEntryIt == I) {
-        // Yes, we are removing the representative entry for this type.
-        // See if there are any other entries of the same type.
-        typename MapTy::iterator TmpIt = ATMEntryIt;
-
-        // First check the entry before this one...
-        if (TmpIt != Map.begin()) {
-          --TmpIt;
-          if (TmpIt->first.first != Ty) // Not the same type, move back...
-            ++TmpIt;
-        }
-
-        // If we didn't find the same type, try to move forward...
-        if (TmpIt == ATMEntryIt) {
-          ++TmpIt;
-          if (TmpIt == Map.end() || TmpIt->first.first != Ty)
-            --TmpIt;   // No entry afterwards with the same type
-        }
-
-        // If there is another entry in the map of the same abstract type,
-        // update the AbstractTypeMap entry now.
-        if (TmpIt != ATMEntryIt) {
-          ATMEntryIt = TmpIt;
-        } else {
-          // Otherwise, we are removing the last instance of this type
-          // from the table.  Remove from the ATM, and from user list.
-          cast<DerivedType>(Ty)->removeAbstractTypeUser(this);
-          AbstractTypeMap.erase(Ty);
-        }
-      }
-    }
+    const TypeClass *Ty = I->first.first;
+    if (Ty->isAbstract())
+      UpdateAbstractTypeMap(static_cast<const DerivedType *>(Ty), I);
 
     Map.erase(I);
   }
 
-    
   /// MoveConstantToNewSlot - If we are about to change C to be the element
   /// specified by I, update our internal data structures to reflect this
   /// fact.
@@ -765,8 +726,7 @@ public:
     
   void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
     sys::SmartScopedLock<true> Lock(ValueMapLock);
-    typename AbstractTypeMapTy::iterator I =
-      AbstractTypeMap.find(cast<Type>(OldTy));
+    typename AbstractTypeMapTy::iterator I = AbstractTypeMap.find(OldTy);
 
     assert(I != AbstractTypeMap.end() &&
            "Abstract type not in AbstractTypeMap?");
@@ -775,12 +735,39 @@ public:
     // leaving will remove() itself, causing the AbstractTypeMapEntry to be
     // eliminated eventually.
     do {
-      ConvertConstantType<ConstantClass,
-                          TypeClass>::convert(
-                              static_cast<ConstantClass *>(I->second->second),
-                                              cast<TypeClass>(NewTy));
+      ConstantClass *C = I->second->second;
+      MapKey Key(cast<TypeClass>(NewTy),
+                 ConstantKeyData<ConstantClass>::getValType(C));
 
-      I = AbstractTypeMap.find(cast<Type>(OldTy));
+      std::pair<typename MapTy::iterator, bool> IP =
+        Map.insert(std::make_pair(Key, C));
+      if (IP.second) {
+        // The map didn't previously have an appropriate constant in the
+        // new type.
+        
+        // Remove the old entry.
+        typename MapTy::iterator OldI =
+          Map.find(MapKey(cast<TypeClass>(OldTy), IP.first->first.second));
+        assert(OldI != Map.end() && "Constant not in map!");
+        UpdateAbstractTypeMap(OldTy, OldI);
+        Map.erase(OldI);
+
+        // Set the constant's type. This is done in place!
+        setType(C, NewTy);
+
+        // Update the inverse map so that we know that this constant is now
+        // located at descriptor I.
+        if (HasLargeKey)
+          InverseMap[C] = IP.first;
+
+        AddAbstractTypeUser(NewTy, IP.first);
+      } else {
+        // The map already had an appropriate constant in the new type, so
+        // there's no longer a need for the old constant.
+        C->uncheckedReplaceAllUsesWith(IP.first->second);
+        C->destroyConstant();    // This constant is now dead, destroy it.
+      }
+      I = AbstractTypeMap.find(OldTy);
     } while (I != AbstractTypeMap.end());
   }
 

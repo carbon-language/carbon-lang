@@ -42,6 +42,9 @@ using namespace llvm;
 
 AbstractTypeUser::~AbstractTypeUser() {}
 
+void AbstractTypeUser::setType(Value *V, const Type *NewTy) {
+  V->VTy = NewTy;
+}
 
 //===----------------------------------------------------------------------===//
 //                         Type Class Implementation

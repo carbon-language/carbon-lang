@@ -878,8 +878,6 @@ bool ConstantFP::isValueValidForType(const Type *Ty, const APFloat& Val) {
 //===----------------------------------------------------------------------===//
 //                      Factory Function Implementation
 
-static char getValType(ConstantAggregateZero *CPZ) { return 0; }
-
 ConstantAggregateZero* ConstantAggregateZero::get(const Type* Ty) {
   assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) &&
          "Cannot create an aggregate zero of non-aggregate type!");
@@ -1008,11 +1006,6 @@ Constant *ConstantVector::getSplatValue() {
 //---- ConstantPointerNull::get() implementation...
 //
 
-static char getValType(ConstantPointerNull *) {
-  return 0;
-}
-
-
 ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
   // Implicitly locked.
   return Ty->getContext().pImpl->NullPtrConstants.getOrCreate(Ty, 0);
@@ -1030,10 +1023,6 @@ void ConstantPointerNull::destroyConstant() {
 //---- UndefValue::get() implementation...
 //
 
-static char getValType(UndefValue *) {
-  return 0;
-}
-
 UndefValue *UndefValue::get(const Type *Ty) {
   // Implicitly locked.
   return Ty->getContext().pImpl->UndefValueConstants.getOrCreate(Ty, 0);
@@ -1049,18 +1038,6 @@ void UndefValue::destroyConstant() {
 
 //---- ConstantExpr::get() implementations...
 //
-
-static ExprMapKeyType getValType(ConstantExpr *CE) {
-  std::vector<Constant*> Operands;
-  Operands.reserve(CE->getNumOperands());
-  for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
-    Operands.push_back(cast<Constant>(CE->getOperand(i)));
-  return ExprMapKeyType(CE->getOpcode(), Operands,
-      CE->isCompare() ? CE->getPredicate() : 0,
-      CE->getRawSubclassOptionalData(),
-      CE->hasIndices() ?
-        CE->getIndices() : SmallVector<unsigned, 4>());
-}
 
 /// This is a utility function to handle folding of casts and lookup of the
 /// cast in the ExprConstants map. It is used by the various get* methods below.
@@ -1878,15 +1855,6 @@ const char *ConstantExpr::getOpcodeName() const {
 /// work, but would be really slow because it would have to unique each updated
 /// array instance.
 
-static std::vector<Constant*> getValType(ConstantArray *CA) {
-  std::vector<Constant*> Elements;
-  Elements.reserve(CA->getNumOperands());
-  for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
-    Elements.push_back(cast<Constant>(CA->getOperand(i)));
-  return Elements;
-}
-
-
 void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                 Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
@@ -1895,7 +1863,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   LLVMContext &Context = getType()->getContext();
   LLVMContextImpl *pImpl = Context.pImpl;
 
-  std::pair<LLVMContextImpl::ArrayConstantsTy::MapKey, Constant*> Lookup;
+  std::pair<LLVMContextImpl::ArrayConstantsTy::MapKey, ConstantArray*> Lookup;
   Lookup.first.first = getType();
   Lookup.second = this;
 
@@ -1973,14 +1941,6 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   destroyConstant();
 }
 
-static std::vector<Constant*> getValType(ConstantStruct *CS) {
-  std::vector<Constant*> Elements;
-  Elements.reserve(CS->getNumOperands());
-  for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i)
-    Elements.push_back(cast<Constant>(CS->getOperand(i)));
-  return Elements;
-}
-
 void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                  Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
@@ -1989,7 +1949,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   unsigned OperandToUpdate = U-OperandList;
   assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
 
-  std::pair<LLVMContextImpl::StructConstantsTy::MapKey, Constant*> Lookup;
+  std::pair<LLVMContextImpl::StructConstantsTy::MapKey, ConstantStruct*> Lookup;
   Lookup.first.first = getType();
   Lookup.second = this;
   std::vector<Constant*> &Values = Lookup.first.second;
@@ -2047,14 +2007,6 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   
   // Delete the old constant!
   destroyConstant();
-}
-
-static std::vector<Constant*> getValType(ConstantVector *CP) {
-  std::vector<Constant*> Elements;
-  Elements.reserve(CP->getNumOperands());
-  for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
-    Elements.push_back(CP->getOperand(i));
-  return Elements;
 }
 
 void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,

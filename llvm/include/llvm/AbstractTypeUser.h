@@ -31,6 +31,7 @@
 
 namespace llvm {
 
+class Value;
 class Type;
 class DerivedType;
 template<typename T> struct simplify_type;
@@ -55,6 +56,12 @@ template<typename T> struct simplify_type;
 class AbstractTypeUser {
 protected:
   virtual ~AbstractTypeUser();                        // Derive from me
+
+  /// setType - It's normally not possible to change a Value's type in place,
+  /// but an AbstractTypeUser subclass that knows what its doing can be
+  /// permitted to do so with care.
+  void setType(Value *V, const Type *NewTy);
+
 public:
 
   /// refineAbstractType - The callback method invoked when an abstract type is
