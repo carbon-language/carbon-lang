@@ -66,7 +66,7 @@ $(DST_HTML_DIR)%.html: %.pod $(DST_HTML_DIR)/.dir
 	  --podpath=. --infile=$< --outfile=$@ --title=$*
 
 $(DST_MAN_DIR)%.1: %.pod $(DST_MAN_DIR)/.dir
-	pod2man --release "clang 1.0" --center="Clang Tools Documentation" $< $@
+	pod2man --release "clang 1.1" --center="Clang Tools Documentation" $< $@
 
 $(DST_PS_DIR)%.ps: $(DST_MAN_DIR)%.1 $(DST_PS_DIR)/.dir
 	groff -Tps -man $< > $@

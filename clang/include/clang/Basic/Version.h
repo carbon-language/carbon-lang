@@ -18,7 +18,7 @@
 #define CLANG_VERSION_MAJOR 1
 
 /// \brief Clang minor version
-#define CLANG_VERSION_MINOR 0
+#define CLANG_VERSION_MINOR 1
 
 /// \brief Clang patchlevel version
 // #define CLANG_VERSION_PATCHLEVEL 1
