@@ -2157,7 +2157,8 @@ int main(int argc, char **argv) {
     ClangFrontendTimer = new llvm::Timer("Clang front-end time");
 
   if (Verbose)
-    llvm::errs() << "clang-cc version 1.0 based upon " << PACKAGE_STRING
+    llvm::errs() << "clang-cc version " CLANG_VERSION_STRING
+                 << " based upon " << PACKAGE_STRING
                  << " hosted on " << llvm::sys::getHostTriple() << "\n";
 
   // If no input was specified, read from stdin.
