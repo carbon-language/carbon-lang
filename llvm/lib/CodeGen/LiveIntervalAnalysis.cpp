@@ -1052,23 +1052,19 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
 bool
 LiveIntervals::isProfitableToCoalesce(LiveInterval &DstInt, LiveInterval &SrcInt,
                                    SmallVector<MachineInstr*,16> &IdentCopies,
-                                   SmallVector<MachineInstr*,16> &OtherCopies,
-                                   bool &HaveConflict) {
-  HaveConflict = false;
-
+                                   SmallVector<MachineInstr*,16> &OtherCopies) {
+  bool HaveConflict = false;
   unsigned NumIdent = 0;
-  unsigned NumSources = 0;
   for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(SrcInt.reg),
          re = mri_->reg_end(); ri != re; ++ri) {
     MachineOperand &O = ri.getOperand();
     if (!O.isDef())
       continue;
 
-    ++NumSources;
     MachineInstr *MI = &*ri;
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
     if (!tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
-      continue;
+      return false;
     if (SrcReg != DstInt.reg) {
       OtherCopies.push_back(MI);
       HaveConflict |= DstInt.liveAt(getInstructionIndex(MI));
@@ -1078,7 +1074,9 @@ LiveIntervals::isProfitableToCoalesce(LiveInterval &DstInt, LiveInterval &SrcInt
     }
   }
 
-  return NumSources >= 5 && (((float)NumIdent) / NumSources) > 0.20F;
+  if (!HaveConflict)
+    return false; // Let coalescer handle it
+  return IdentCopies.size() > OtherCopies.size();
 }
 
 void LiveIntervals::performEarlyCoalescing() {
@@ -1104,78 +1102,78 @@ void LiveIntervals::performEarlyCoalescing() {
     LiveInterval &SrcInt = getInterval(PHISrc);
     SmallVector<MachineInstr*, 16> IdentCopies;
     SmallVector<MachineInstr*, 16> OtherCopies;
-    bool HaveConflict;
-    if (!isProfitableToCoalesce(DstInt, SrcInt, IdentCopies, OtherCopies,
-                                HaveConflict))
+    if (!isProfitableToCoalesce(DstInt, SrcInt, IdentCopies, OtherCopies))
       continue;
 
     DEBUG(errs() << "PHI Join: " << *Join);
     assert(DstInt.containsOneValue() && "PHI join should have just one val#!");
     VNInfo *VNI = DstInt.getValNumInfo(0);
-    VNInfo *NewVNI = HaveConflict
-      ? 0 : SrcInt.getNextValue(VNI->def, 0, false, VNInfoAllocator);
-    // Now let's eliminate all the would-be identity copies.
-    for (unsigned i = 0, e = IdentCopies.size(); i != e; ++i) {
-      MachineInstr *PHICopy = IdentCopies[i];
-      DEBUG(errs() << "Coalescing: " << *PHICopy);
 
-      MachineBasicBlock *PHIMBB = PHICopy->getParent();
+    // Change the non-identity copies to directly target the phi destination.
+    for (unsigned i = 0, e = OtherCopies.size(); i != e; ++i) {
+      MachineInstr *PHICopy = OtherCopies[i];
+      DEBUG(errs() << "Moving: " << *PHICopy);
+
       MachineInstrIndex MIIndex = getInstructionIndex(PHICopy);
       MachineInstrIndex DefIndex = getDefIndex(MIIndex);
       LiveRange *SLR = SrcInt.getLiveRangeContaining(DefIndex);
-      MachineInstrIndex StartIndex = HaveConflict
-        ? SLR->start : getMBBStartIdx(PHIMBB);
+      MachineInstrIndex StartIndex = SLR->start;
       MachineInstrIndex EndIndex = SLR->end;
 
       // Delete val# defined by the now identity copy and add the range from
       // beginning of the mbb to the end of the range.
       SrcInt.removeValNo(SLR->valno);
-      if (HaveConflict) {
-        DEBUG(errs() << "  added range [" << StartIndex << ','
-                     << EndIndex << "] to reg" << DstInt.reg << '\n');
-        DstInt.addRange(LiveRange(StartIndex, EndIndex, VNI));
-        // FIXME: Update uses of src to dst in this range?
-      } else {
-        DEBUG(errs() << "  added range [" << StartIndex << ','
-                     << SLR->start << "] to reg" << SrcInt.reg << '\n');
-        SrcInt.addRange(LiveRange(StartIndex, EndIndex, NewVNI));
-        if (PHICopy->killsRegister(PHIDst))
-          EndIndex = DefIndex;
+      DEBUG(errs() << "  added range [" << StartIndex << ','
+            << EndIndex << "] to reg" << DstInt.reg << '\n');
+      if (DstInt.liveAt(StartIndex))
         DstInt.removeRange(StartIndex, EndIndex);
+      VNInfo *NewVNI = DstInt.getNextValue(DefIndex, PHICopy, true,
+                                           VNInfoAllocator);
+      NewVNI->setHasPHIKill(true);
+      DstInt.addRange(LiveRange(StartIndex, EndIndex, NewVNI));
+      for (unsigned j = 0, ee = PHICopy->getNumOperands(); j != ee; ++j) {
+        MachineOperand &MO = PHICopy->getOperand(j);
+        if (!MO.isReg() || MO.getReg() != PHISrc)
+          continue;
+        MO.setReg(PHIDst);
       }
+    }
+
+    // Now let's eliminate all the would-be identity copies.
+    for (unsigned i = 0, e = IdentCopies.size(); i != e; ++i) {
+      MachineInstr *PHICopy = IdentCopies[i];
+      DEBUG(errs() << "Coalescing: " << *PHICopy);
+
+      MachineInstrIndex MIIndex = getInstructionIndex(PHICopy);
+      MachineInstrIndex DefIndex = getDefIndex(MIIndex);
+      LiveRange *SLR = SrcInt.getLiveRangeContaining(DefIndex);
+      MachineInstrIndex StartIndex = SLR->start;
+      MachineInstrIndex EndIndex = SLR->end;
+
+      // Delete val# defined by the now identity copy and add the range from
+      // beginning of the mbb to the end of the range.
+      SrcInt.removeValNo(SLR->valno);
       RemoveMachineInstrFromMaps(PHICopy);
       PHICopy->eraseFromParent();
+      DEBUG(errs() << "  added range [" << StartIndex << ','
+            << EndIndex << "] to reg" << DstInt.reg << '\n');
+      DstInt.addRange(LiveRange(StartIndex, EndIndex, VNI));
     }
-    if (HaveConflict) {
-      // First unset the kill. 
-      for (unsigned i = 0, e = Join->getNumOperands(); i != e; ++i) {
-        MachineOperand &O = Join->getOperand(i);
-        if (!O.isReg() || O.getReg() != PHISrc)
-          continue;
-        if (O.isKill())
-          O.setIsKill(false);
-      }
-      MachineInstrIndex MIIndex = getInstructionIndex(Join);
-      MachineInstrIndex UseIndex = getUseIndex(MIIndex);
-      MachineInstrIndex DefIndex = getDefIndex(MIIndex);
-      LiveRange *SLR = SrcInt.getLiveRangeContaining(UseIndex);
-      LiveRange *DLR = DstInt.getLiveRangeContaining(DefIndex);
-      SrcInt.addRange(LiveRange(DLR->start, DLR->end, SLR->valno));
-    } else {
-      SrcInt.MergeValueInAsValue(DstInt, VNI, NewVNI);
 
-      // Change all references of phi source to destination.
-      for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(PHIDst),
-             re = mri_->reg_end(); ri != re; ) {
-        MachineOperand &O = ri.getOperand();
-        ++ri;
-        O.setReg(PHISrc);
-      }
-      removeInterval(DstInt.reg);
-
-      RemoveMachineInstrFromMaps(Join);
-      Join->eraseFromParent();
-    }
+    // Remove the phi join and update the phi block liveness.
+    MachineInstrIndex MIIndex = getInstructionIndex(Join);
+    MachineInstrIndex UseIndex = getUseIndex(MIIndex);
+    MachineInstrIndex DefIndex = getDefIndex(MIIndex);
+    LiveRange *SLR = SrcInt.getLiveRangeContaining(UseIndex);
+    LiveRange *DLR = DstInt.getLiveRangeContaining(DefIndex);
+    DLR->valno->setCopy(0);
+    DLR->valno->setIsDefAccurate(false);
+    DstInt.addRange(LiveRange(SLR->start, SLR->end, DLR->valno));
+    SrcInt.removeRange(SLR->start, SLR->end);
+    assert(SrcInt.empty());
+    removeInterval(PHISrc);
+    RemoveMachineInstrFromMaps(Join);
+    Join->eraseFromParent();
 
     ++numCoalescing;
   }
