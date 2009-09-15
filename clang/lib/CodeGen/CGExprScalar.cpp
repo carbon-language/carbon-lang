@@ -625,6 +625,12 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy,
 
   switch (Kind) {
   default:
+    // FIXME: Assert here.
+    // assert(0 && "Unhandled cast kind!");
+    break;
+  case CastExpr::CK_Unknown:
+    // FIXME: We should really assert here - Unknown casts should never get
+    // as far as to codegen.
     break;
   case CastExpr::CK_BitCast: {
     Value *Src = Visit(const_cast<Expr*>(E));
@@ -685,6 +691,16 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy,
                                         NullCheckValue);
   }
 
+  case CastExpr::CK_IntegralToPointer: {
+    Value *Src = Visit(const_cast<Expr*>(E));
+    return Builder.CreateIntToPtr(Src, ConvertType(DestTy));
+  }
+
+  case CastExpr::CK_PointerToIntegral: {
+    Value *Src = Visit(const_cast<Expr*>(E));
+    return Builder.CreatePtrToInt(Src, ConvertType(DestTy));
+  }
+  
   }
 
   // Handle cases where the source is an non-complex type.

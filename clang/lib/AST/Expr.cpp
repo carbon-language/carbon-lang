@@ -422,6 +422,10 @@ const char *CastExpr::getCastKindName() const {
     return "UserDefinedConversion";
   case CastExpr::CK_ConstructorConversion:
     return "ConstructorConversion";
+  case CastExpr::CK_IntegralToPointer:
+    return "IntegralToPointer";
+  case CastExpr::CK_PointerToIntegral:
+    return "PointerToIntegral";
   }
 
   assert(0 && "Unhandled cast kind!");

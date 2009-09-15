@@ -185,9 +185,9 @@ public:
 /// @c reinterpret_cast<int>(VoidPtr).
 class CXXReinterpretCastExpr : public CXXNamedCastExpr {
 public:
-  CXXReinterpretCastExpr(QualType ty, Expr *op, QualType writtenTy,
-                         SourceLocation l)
-    : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, CK_BitCast, op,
+  CXXReinterpretCastExpr(QualType ty, CastKind kind, Expr *op, 
+                         QualType writtenTy, SourceLocation l)
+    : CXXNamedCastExpr(CXXReinterpretCastExprClass, ty, kind, op,
                        writtenTy, l) {}
 
   static bool classof(const Stmt *T) {

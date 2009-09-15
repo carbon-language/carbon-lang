@@ -1368,7 +1368,13 @@ public:
     CK_UserDefinedConversion,
 
     /// CK_ConstructorConversion - Conversion by constructor
-    CK_ConstructorConversion
+    CK_ConstructorConversion,
+    
+    /// CK_IntegralToPointer - Integral to pointer
+    CK_IntegralToPointer,
+    
+    /// CK_PointerToIntegral - Pointer to integral
+    CK_PointerToIntegral
   };
 
   struct CastInfo {

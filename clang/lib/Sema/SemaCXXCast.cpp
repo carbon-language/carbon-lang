@@ -41,7 +41,8 @@ static void CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                            const SourceRange &DestRange);
 static void CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                                  const SourceRange &OpRange,
-                                 const SourceRange &DestRange);
+                                 const SourceRange &DestRange,
+                                 CastExpr::CastKind &Kind);
 static void CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
                             const SourceRange &OpRange,
                             CastExpr::CastKind &Kind,
@@ -135,13 +136,14 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
     return Owned(new (Context)CXXDynamicCastExpr(DestType.getNonReferenceType(),
                                                  Kind, Ex, DestType, OpLoc));
   }
-  case tok::kw_reinterpret_cast:
+  case tok::kw_reinterpret_cast: {
+    CastExpr::CastKind Kind = CastExpr::CK_Unknown;
     if (!TypeDependent)
-      CheckReinterpretCast(*this, Ex, DestType, OpRange, DestRange);
+      CheckReinterpretCast(*this, Ex, DestType, OpRange, DestRange, Kind);
     return Owned(new (Context) CXXReinterpretCastExpr(
                                   DestType.getNonReferenceType(),
-                                  Ex, DestType, OpLoc));
-
+                                  Kind, Ex, DestType, OpLoc));
+  }
   case tok::kw_static_cast: {
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
     if (!TypeDependent) {
@@ -355,11 +357,11 @@ CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 /// char *bytes = reinterpret_cast\<char*\>(int_ptr);
 void
 CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
-                     const SourceRange &OpRange, const SourceRange &DestRange) {
+                     const SourceRange &OpRange, const SourceRange &DestRange,
+                     CastExpr::CastKind &Kind) {
   if (!DestType->isLValueReferenceType())
     Self.DefaultFunctionArrayConversion(SrcExpr);
 
-  CastExpr::CastKind Kind = CastExpr::CK_Unknown;
   unsigned msg = diag::err_bad_cxx_cast_generic;
   if (TryReinterpretCast(Self, SrcExpr, DestType, /*CStyle*/false, Kind,
                          OpRange, msg)
@@ -950,6 +952,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
       msg = diag::err_bad_reinterpret_cast_small_int;
       return TC_Failed;
     }
+    Kind = CastExpr::CK_PointerToIntegral;
     return TC_Success;
   }
 
@@ -982,6 +985,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
       msg = diag::err_bad_reinterpret_cast_small_int;
       return TC_Failed;
     }
+    Kind = CastExpr::CK_PointerToIntegral;
     return TC_Success;
   }
 
@@ -989,6 +993,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     assert(destIsPtr && "One type must be a pointer");
     // C++ 5.2.10p5: A value of integral or enumeration type can be explicitly
     //   converted to a pointer.
+    Kind = CastExpr::CK_IntegralToPointer;
     return TC_Success;
   }
 
