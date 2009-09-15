@@ -592,9 +592,10 @@ CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
     return false;
 
   // Is it a reference to our class type?
-  QualType PointeeType
+  CanQualType PointeeType
     = Context.getCanonicalType(ParamRefType->getPointeeType());
-  QualType ClassTy = Context.getTagDeclType(getParent());
+  CanQualType ClassTy 
+    = Context.getCanonicalType(Context.getTagDeclType(getParent()));
   if (PointeeType.getUnqualifiedType() != ClassTy)
     return false;
 
