@@ -30,10 +30,6 @@ MCAsmInfo::MCAsmInfo() {
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".";
   LinkerPrivateGlobalPrefix = "";
-  GlobalVarAddrPrefix = "";
-  GlobalVarAddrSuffix = "";
-  FunctionAddrPrefix = "";
-  FunctionAddrSuffix = "";
   PersonalityPrefix = "";
   PersonalitySuffix = "";
   NeedsIndirectEncoding = false;

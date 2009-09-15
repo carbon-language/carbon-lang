@@ -84,18 +84,6 @@ namespace llvm {
     /// is "l" on Darwin, currently used for some ObjC metadata.
     const char *LinkerPrivateGlobalPrefix;   // Defaults to ""
     
-    /// GlobalVarAddrPrefix/Suffix - If these are nonempty, these strings
-    /// will enclose any GlobalVariable (that isn't a function)
-    ///
-    const char *GlobalVarAddrPrefix;         // Defaults to ""
-    const char *GlobalVarAddrSuffix;         // Defaults to ""
-
-    /// FunctionAddrPrefix/Suffix - If these are nonempty, these strings
-    /// will enclose any GlobalVariable that points to a function.
-    ///
-    const char *FunctionAddrPrefix;          // Defaults to ""
-    const char *FunctionAddrSuffix;          // Defaults to ""
-
     /// PersonalityPrefix/Suffix - If these are nonempty, these strings will
     /// enclose any personality function in the common frame section.
     /// 
@@ -364,18 +352,6 @@ namespace llvm {
     }
     const char *getLinkerPrivateGlobalPrefix() const {
       return LinkerPrivateGlobalPrefix;
-    }
-    const char *getGlobalVarAddrPrefix() const {
-      return GlobalVarAddrPrefix;
-    }
-    const char *getGlobalVarAddrSuffix() const {
-      return GlobalVarAddrSuffix;
-    }
-    const char *getFunctionAddrPrefix() const {
-      return FunctionAddrPrefix;
-    }
-    const char *getFunctionAddrSuffix() const {
-      return FunctionAddrSuffix;
     }
     const char *getPersonalityPrefix() const {
       return PersonalityPrefix;

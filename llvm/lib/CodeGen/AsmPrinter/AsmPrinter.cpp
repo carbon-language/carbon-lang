@@ -514,16 +514,7 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
 /// generate the appropriate value.
 const std::string &AsmPrinter::getGlobalLinkName(const GlobalVariable *GV,
                                                  std::string &LinkName) const {
-  if (isa<Function>(GV)) {
-    LinkName += MAI->getFunctionAddrPrefix();
-    LinkName += Mang->getMangledName(GV);
-    LinkName += MAI->getFunctionAddrSuffix();
-  } else {
-    LinkName += MAI->getGlobalVarAddrPrefix();
-    LinkName += Mang->getMangledName(GV);
-    LinkName += MAI->getGlobalVarAddrSuffix();
-  }  
-  
+  LinkName += Mang->getMangledName(GV);
   return LinkName;
 }
 
@@ -838,18 +829,8 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     O << CI->getZExtValue();
   } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
     // This is a constant address for a global variable or function. Use the
-    // name of the variable or function as the address value, possibly
-    // decorating it with GlobalVarAddrPrefix/Suffix or
-    // FunctionAddrPrefix/Suffix (these all default to "" )
-    if (isa<Function>(GV)) {
-      O << MAI->getFunctionAddrPrefix()
-        << Mang->getMangledName(GV)
-        << MAI->getFunctionAddrSuffix();
-    } else {
-      O << MAI->getGlobalVarAddrPrefix()
-        << Mang->getMangledName(GV)
-        << MAI->getGlobalVarAddrSuffix();
-    }
+    // name of the variable or function as the address value.
+    O << Mang->getMangledName(GV);
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     const TargetData *TD = TM.getTargetData();
     unsigned Opcode = CE->getOpcode();    
