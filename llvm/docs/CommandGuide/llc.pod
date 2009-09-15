@@ -48,12 +48,6 @@ Generate code at different optimization levels. These correspond to the I<-O0>,
 I<-O1>, I<-O2>, I<-O3>, and I<-O4> optimization levels used by B<llvm-gcc> and
 B<clang>.
 
-=item B<-f>
-
-Enable binary output on terminals.  Normally, B<llvm-extract> will refuse to
-write raw bitcode output if the output stream is a terminal. With this option,
-B<llvm-extract> will write raw bitcode regardless of the output device.
-
 =item B<-mtriple>=I<target triple>
 
 Override the target triple specified in the input file with the specified
