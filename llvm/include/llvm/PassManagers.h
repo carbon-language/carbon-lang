@@ -380,6 +380,11 @@ protected:
   // then PMT_Last active pass mangers.
   std::map<AnalysisID, Pass *> *InheritedAnalysis[PMT_Last];
 
+  
+  /// isPassDebuggingExecutionsOrMore - Return true if -debug-pass=Executions
+  /// or higher is specified.
+  bool isPassDebuggingExecutionsOrMore() const;
+  
 private:
   void dumpAnalysisUsage(const StringRef &Msg, const Pass *P,
                            const AnalysisUsage::VectorType &Set) const;

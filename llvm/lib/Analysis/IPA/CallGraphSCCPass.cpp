@@ -317,7 +317,20 @@ bool CGPassManager::runOnModule(Module &M) {
          PassNo != e; ++PassNo) {
       Pass *P = getContainedPass(PassNo);
 
-      dumpPassInfo(P, EXECUTION_MSG, ON_CG_MSG, "");
+      // If we're in -debug-pass=Executions mode, construct the SCC node list,
+      // otherwise avoid constructing this string as it is expensive.
+      if (isPassDebuggingExecutionsOrMore()) {
+        std::string Functions;
+#ifndef NDEBUG
+        raw_string_ostream OS(Functions);
+        for (unsigned i = 0, e = CurSCC.size(); i != e; ++i) {
+          if (i) OS << ", ";
+          CurSCC[i]->print(OS);
+        }
+        OS.flush();
+#endif
+        dumpPassInfo(P, EXECUTION_MSG, ON_CG_MSG, Functions);
+      }
       dumpRequiredSet(P);
 
       initializeAnalysisImpl(P);

@@ -67,6 +67,15 @@ PassDebugging("debug-pass", cl::Hidden,
                              clEnumValEnd));
 } // End of llvm namespace
 
+/// isPassDebuggingExecutionsOrMore - Return true if -debug-pass=Executions
+/// or higher is specified.
+bool PMDataManager::isPassDebuggingExecutionsOrMore() const {
+  return PassDebugging >= Executions;
+}
+
+
+
+
 void PassManagerPrettyStackEntry::print(raw_ostream &OS) const {
   if (V == 0 && M == 0)
     OS << "Releasing pass '";
@@ -1044,7 +1053,7 @@ void PMDataManager::dumpPassInfo(Pass *P, enum PassDebuggingString S1,
     errs() << "' on Loop '" << Msg << "'...\n";
     break;
   case ON_CG_MSG:
-    errs() << "' on Call Graph '" << Msg << "'...\n";
+    errs() << "' on Call Graph Nodes '" << Msg << "'...\n";
     break;
   default:
     break;
@@ -1076,10 +1085,10 @@ void PMDataManager::dumpAnalysisUsage(const StringRef &Msg, const Pass *P,
     return;
   errs() << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
   for (unsigned i = 0; i != Set.size(); ++i) {
-    if (i) errs() << ",";
-    errs() << " " << Set[i]->getPassName();
+    if (i) errs() << ',';
+    errs() << ' ' << Set[i]->getPassName();
   }
-  errs() << "\n";
+  errs() << '\n';
 }
 
 /// Add RequiredPass into list of lower level passes required by pass P.
