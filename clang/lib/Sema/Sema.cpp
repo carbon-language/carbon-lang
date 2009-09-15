@@ -210,7 +210,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
 /// If there is already an implicit cast, merge into the existing one.
 /// If isLvalue, the result of the cast is an lvalue.
 void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
-                             const CastExpr::CastInfo &Info, bool isLvalue) {
+                             CastExpr::CastKind Kind, bool isLvalue) {
   QualType ExprTy = Context.getCanonicalType(Expr->getType());
   QualType TypeTy = Context.getCanonicalType(Ty);
 
@@ -233,8 +233,7 @@ void Sema::ImpCastExprToType(Expr *&Expr, QualType Ty,
     ImpCast->setType(Ty);
     ImpCast->setLvalueCast(isLvalue);
   } else
-    Expr = new (Context) ImplicitCastExpr(Ty, Info, Expr,
-                                          isLvalue);
+    Expr = new (Context) ImplicitCastExpr(Ty, Kind, Expr, isLvalue);
 }
 
 void Sema::DeleteExpr(ExprTy *E) {

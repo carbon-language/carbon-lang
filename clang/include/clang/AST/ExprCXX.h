@@ -113,9 +113,9 @@ private:
   SourceLocation Loc; // the location of the casting op
 
 protected:
-  CXXNamedCastExpr(StmtClass SC, QualType ty, const CastInfo &info, Expr *op,
+  CXXNamedCastExpr(StmtClass SC, QualType ty, CastKind kind, Expr *op,
                    QualType writtenTy, SourceLocation l)
-    : ExplicitCastExpr(SC, ty, info, op, writtenTy), Loc(l) {}
+    : ExplicitCastExpr(SC, ty, kind, op, writtenTy), Loc(l) {}
 
 public:
   const char *getCastName() const;
@@ -149,9 +149,9 @@ public:
 /// @c static_cast<int>(1.0).
 class CXXStaticCastExpr : public CXXNamedCastExpr {
 public:
-  CXXStaticCastExpr(QualType ty, const CastInfo &info, Expr *op,
+  CXXStaticCastExpr(QualType ty, CastKind kind, Expr *op,
                     QualType writtenTy, SourceLocation l)
-    : CXXNamedCastExpr(CXXStaticCastExprClass, ty, info, op, writtenTy, l) {}
+    : CXXNamedCastExpr(CXXStaticCastExprClass, ty, kind, op, writtenTy, l) {}
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXStaticCastExprClass;

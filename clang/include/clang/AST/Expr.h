@@ -1377,20 +1377,11 @@ public:
     CK_PointerToIntegral
   };
 
-  struct CastInfo {
-    const CastKind Kind;
-
-    // FIXME: This should assert that the CastKind does not require extra
-    // information.
-    CastInfo(CastKind Kind)
-      : Kind(Kind) { }
-  };
-
 private:
   CastKind Kind;
   Stmt *Op;
 protected:
-  CastExpr(StmtClass SC, QualType ty, const CastInfo &info, Expr *op) :
+  CastExpr(StmtClass SC, QualType ty, const CastKind kind, Expr *op) :
     Expr(SC, ty,
          // Cast expressions are type-dependent if the type is
          // dependent (C++ [temp.dep.expr]p3).
@@ -1398,7 +1389,7 @@ protected:
          // Cast expressions are value-dependent if the type is
          // dependent or if the subexpression is value-dependent.
          ty->isDependentType() || (op && op->isValueDependent())),
-    Kind(info.Kind), Op(op) {}
+    Kind(kind), Op(op) {}
 
   /// \brief Construct an empty cast.
   CastExpr(StmtClass SC, EmptyShell Empty)
@@ -1451,8 +1442,8 @@ class ImplicitCastExpr : public CastExpr {
   bool LvalueCast;
 
 public:
-  ImplicitCastExpr(QualType ty, const CastInfo &info, Expr *op, bool Lvalue) :
-    CastExpr(ImplicitCastExprClass, ty, info, op), LvalueCast(Lvalue) { }
+  ImplicitCastExpr(QualType ty, CastKind kind, Expr *op, bool Lvalue) :
+    CastExpr(ImplicitCastExprClass, ty, kind, op), LvalueCast(Lvalue) { }
 
   /// \brief Construct an empty implicit cast.
   explicit ImplicitCastExpr(EmptyShell Shell)
@@ -1497,9 +1488,9 @@ class ExplicitCastExpr : public CastExpr {
   QualType TypeAsWritten;
 
 protected:
-  ExplicitCastExpr(StmtClass SC, QualType exprTy, const CastInfo &info,
+  ExplicitCastExpr(StmtClass SC, QualType exprTy, CastKind kind,
                    Expr *op, QualType writtenTy)
-    : CastExpr(SC, exprTy, info, op), TypeAsWritten(writtenTy) {}
+    : CastExpr(SC, exprTy, kind, op), TypeAsWritten(writtenTy) {}
 
   /// \brief Construct an empty explicit cast.
   ExplicitCastExpr(StmtClass SC, EmptyShell Shell)
