@@ -740,17 +740,29 @@ static void LookThroughSetCC(SDValue &LHS, SDValue &RHS,
   }
 }
 
-static SDValue LowerGLOBALADDRESS(SDValue Op, SelectionDAG &DAG) {
+SDValue SparcTargetLowering::LowerGlobalAddress(SDValue Op, 
+                                                SelectionDAG &DAG) {
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   // FIXME there isn't really any debug info here
   DebugLoc dl = Op.getDebugLoc();
   SDValue GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
   SDValue Hi = DAG.getNode(SPISD::Hi, dl, MVT::i32, GA);
   SDValue Lo = DAG.getNode(SPISD::Lo, dl, MVT::i32, GA);
-  return DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
+
+  if (getTargetMachine().getRelocationModel() != Reloc::PIC_) 
+    return DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
+  
+  SDValue GlobalBase = DAG.getNode(SPISD::GLOBAL_BASE_REG, dl,
+                                   getPointerTy());
+  SDValue RelAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
+  SDValue AbsAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, 
+                                GlobalBase, RelAddr);
+  return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(), 
+                     AbsAddr, NULL, 0);
 }
 
-static SDValue LowerCONSTANTPOOL(SDValue Op, SelectionDAG &DAG) {
+SDValue SparcTargetLowering::LowerConstantPool(SDValue Op,
+                                               SelectionDAG &DAG) {
   ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
   // FIXME there isn't really any debug info here
   DebugLoc dl = Op.getDebugLoc();
@@ -758,7 +770,16 @@ static SDValue LowerCONSTANTPOOL(SDValue Op, SelectionDAG &DAG) {
   SDValue CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment());
   SDValue Hi = DAG.getNode(SPISD::Hi, dl, MVT::i32, CP);
   SDValue Lo = DAG.getNode(SPISD::Lo, dl, MVT::i32, CP);
-  return DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
+  if (getTargetMachine().getRelocationModel() != Reloc::PIC_) 
+    return DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
+
+  SDValue GlobalBase = DAG.getNode(SPISD::GLOBAL_BASE_REG, dl, 
+                                   getPointerTy());
+  SDValue RelAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, Lo, Hi);
+  SDValue AbsAddr = DAG.getNode(ISD::ADD, dl, MVT::i32,
+                                GlobalBase, RelAddr);
+  return DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(), 
+                     AbsAddr, NULL, 0);
 }
 
 static SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) {
@@ -912,8 +933,8 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::FRAMEADDR:  return SDValue();
   case ISD::GlobalTLSAddress:
     llvm_unreachable("TLS not implemented for Sparc.");
-  case ISD::GlobalAddress:      return LowerGLOBALADDRESS(Op, DAG);
-  case ISD::ConstantPool:       return LowerCONSTANTPOOL(Op, DAG);
+  case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
+  case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
   case ISD::BR_CC:              return LowerBR_CC(Op, DAG);
@@ -1054,5 +1075,5 @@ SparcTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
 
 /// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned SparcTargetLowering::getFunctionAlignment(const Function *) const {
-  return 4;
+  return 2;
 }

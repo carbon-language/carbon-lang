@@ -35,7 +35,8 @@ namespace llvm {
       ITOF,        // Int to FP within a FP register.
 
       CALL,        // A call instruction.
-      RET_FLAG     // Return with a flag operand.
+      RET_FLAG,    // Return with a flag operand.
+      GLOBAL_BASE_REG // Global base reg for PIC
     };
   }
 
@@ -96,6 +97,9 @@ namespace llvm {
                   CallingConv::ID CallConv, bool isVarArg,
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   DebugLoc dl, SelectionDAG &DAG);
+
+    SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG);
   };
 } // end namespace llvm
 

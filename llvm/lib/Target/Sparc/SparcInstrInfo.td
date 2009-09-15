@@ -134,6 +134,10 @@ def call          : SDNode<"SPISD::CALL", SDT_SPCall,
 def retflag       : SDNode<"SPISD::RET_FLAG", SDTNone,
                            [SDNPHasChain, SDNPOptInFlag]>;
 
+def getPCX        : Operand<i32> {
+  let PrintMethod = "printGetPCX";
+}  
+
 //===----------------------------------------------------------------------===//
 // SPARC Flag Conditions
 //===----------------------------------------------------------------------===//
@@ -206,6 +210,11 @@ multiclass F3_12np<string OpcStr, bits<6> Op3Val> {
 // Pseudo instructions.
 class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
    : InstSP<outs, ins, asmstr, pattern>;
+
+// GETPCX for PIC
+let Defs = [O7], Uses = [O7] in {
+  def GETPCX : Pseudo<(outs getPCX:$getpcseq), (ins), "$getpcseq", [] >;
+}
 
 let Defs = [O6], Uses = [O6] in {
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
@@ -431,18 +440,23 @@ def LEA_ADDri   : F3_2<2, 0b000000,
                    (outs IntRegs:$dst), (ins MEMri:$addr),
                    "add ${addr:arith}, $dst",
                    [(set IntRegs:$dst, ADDRri:$addr)]>;
-                   
-defm ADDCC  : F3_12<"addcc", 0b010000, addc>;
+
+let Defs = [ICC] in                   
+  defm ADDCC  : F3_12<"addcc", 0b010000, addc>;
+
 defm ADDX  : F3_12<"addx", 0b001000, adde>;
 
 // Section B.15 - Subtract Instructions, p. 110
 defm SUB    : F3_12  <"sub"  , 0b000100, sub>;
 defm SUBX   : F3_12  <"subx" , 0b001100, sube>;
-defm SUBCC  : F3_12  <"subcc", 0b010100, SPcmpicc>;
 
-def SUBXCCrr: F3_1<2, 0b011100, 
-                   (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
-                   "subxcc $b, $c, $dst", []>;
+let Defs = [ICC] in {
+  defm SUBCC  : F3_12  <"subcc", 0b010100, SPcmpicc>;
+
+  def SUBXCCrr: F3_1<2, 0b011100, 
+                (outs IntRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
+                "subxcc $b, $c, $dst", []>;
+}
 
 // Section B.18 - Multiply Instructions, p. 113
 defm UMUL : F3_12np<"umul", 0b001010>;
@@ -471,11 +485,12 @@ let isBarrier = 1 in
   def BA   : BranchSP<0b1000, (ins brtarget:$dst),
                       "ba $dst",
                       [(br bb:$dst)]>;
-                      
+
 // FIXME: the encoding for the JIT should look at the condition field.
-def BCOND : BranchSP<0, (ins brtarget:$dst, CCOp:$cc),
-                     "b$cc $dst",
-                     [(SPbricc bb:$dst, imm:$cc)]>;
+let Uses = [ICC] in
+  def BCOND : BranchSP<0, (ins brtarget:$dst, CCOp:$cc),
+                         "b$cc $dst",
+                        [(SPbricc bb:$dst, imm:$cc)]>;
 
 
 // Section B.22 - Branch on Floating-point Condition Codes Instructions, p. 121
@@ -489,9 +504,10 @@ class FPBranchSP<bits<4> cc, dag ins, string asmstr, list<dag> pattern>
 }
 
 // FIXME: the encoding for the JIT should look at the condition field.
-def FBCOND  : FPBranchSP<0, (ins brtarget:$dst, CCOp:$cc),
-                      "fb$cc $dst",
-                      [(SPbrfcc bb:$dst, imm:$cc)]>;
+let Uses = [FCC] in
+  def FBCOND  : FPBranchSP<0, (ins brtarget:$dst, CCOp:$cc),
+                              "fb$cc $dst",
+                              [(SPbrfcc bb:$dst, imm:$cc)]>;
 
 
 // Section B.24 - Call and Link Instruction, p. 125
@@ -633,15 +649,16 @@ def FDIVD  : F3_3<2, 0b110100, 0b001001110,
 // Note 2: the result of a FCMP is not available until the 2nd cycle
 // after the instr is retired, but there is no interlock. This behavior
 // is modelled with a forced noop after the instruction.
-def FCMPS  : F3_3<2, 0b110101, 0b001010001,
-                  (outs), (ins FPRegs:$src1, FPRegs:$src2),
-                  "fcmps $src1, $src2\n\tnop",
-                  [(SPcmpfcc FPRegs:$src1, FPRegs:$src2)]>;
-def FCMPD  : F3_3<2, 0b110101, 0b001010010,
-                  (outs), (ins DFPRegs:$src1, DFPRegs:$src2),
-                  "fcmpd $src1, $src2\n\tnop",
-                  [(SPcmpfcc DFPRegs:$src1, DFPRegs:$src2)]>;
-
+let Defs = [FCC] in {
+  def FCMPS  : F3_3<2, 0b110101, 0b001010001,
+                   (outs), (ins FPRegs:$src1, FPRegs:$src2),
+                   "fcmps $src1, $src2\n\tnop",
+                   [(SPcmpfcc FPRegs:$src1, FPRegs:$src2)]>;
+  def FCMPD  : F3_3<2, 0b110101, 0b001010010,
+                   (outs), (ins DFPRegs:$src1, DFPRegs:$src2),
+                   "fcmpd $src1, $src2\n\tnop",
+                   [(SPcmpfcc DFPRegs:$src1, DFPRegs:$src2)]>;
+}
 
 //===----------------------------------------------------------------------===//
 // V9 Instructions

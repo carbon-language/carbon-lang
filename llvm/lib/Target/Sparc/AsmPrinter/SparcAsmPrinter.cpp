@@ -75,11 +75,13 @@ namespace {
                        unsigned AsmVariant, const char *ExtraCode);
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                              unsigned AsmVariant, const char *ExtraCode);
+
+    void emitFunctionHeader(const MachineFunction &MF);
+    bool printGetPCX(const MachineInstr *MI, unsigned OpNo);
   };
 } // end of anonymous namespace
 
 #include "SparcGenAsmWriter.inc"
-
 
 /// runOnMachineFunction - This uses the printInstruction()
 /// method to print assembly for each instruction.
@@ -96,17 +98,9 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // BBs the same name. (If you have a better way, please let me know!)
 
   O << "\n\n";
-
-  // Print out the label for the function.
-  const Function *F = MF.getFunction();
-  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
-  EmitAlignment(MF.getAlignment(), F);
-  O << "\t.globl\t" << CurrentFnName << '\n';
-
-  printVisibility(CurrentFnName, F->getVisibility());
-
-  O << "\t.type\t" << CurrentFnName << ", #function\n";
-  O << CurrentFnName << ":\n";
+  emitFunctionHeader(MF);
+  
+  
   // Emit pre-function debug information.
   DW->BeginFunction(&MF);
 
@@ -145,8 +139,42 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   DW->EndFunction(&MF);
 
   // We didn't modify anything.
+  O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
   return false;
 }
+
+void SparcAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
+  const Function *F = MF.getFunction();
+  OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
+  EmitAlignment(MF.getAlignment(), F);
+  
+  switch (F->getLinkage()) {
+  default: llvm_unreachable("Unknown linkage type");
+  case Function::PrivateLinkage:
+  case Function::InternalLinkage:
+    // Function is internal.
+    break;
+  case Function::DLLExportLinkage:
+  case Function::ExternalLinkage:
+    // Function is externally visible
+    O << "\t.global\t" << CurrentFnName << '\n';
+    break;
+  case Function::LinkerPrivateLinkage:
+  case Function::LinkOnceAnyLinkage:
+  case Function::LinkOnceODRLinkage:
+  case Function::WeakAnyLinkage:
+  case Function::WeakODRLinkage:
+    // Function is weak
+    O << "\t.weak\t" << CurrentFnName << '\n' ;
+    break;
+  }
+  
+  printVisibility(CurrentFnName, F->getVisibility());
+  
+  O << "\t.type\t" << CurrentFnName << ", #function\n";
+  O << CurrentFnName << ":\n";
+}
+
 
 void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand (opNum);
@@ -213,6 +241,36 @@ void SparcAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
   } else {
     printOperand(MI, opNum+1);
   }
+}
+
+bool SparcAsmPrinter::printGetPCX(const MachineInstr *MI, unsigned opNum) {
+  std::string operand = "";
+  const MachineOperand &MO = MI->getOperand(opNum);
+  switch (MO.getType()) {
+  default: assert(0 && "Operand is not a register ");
+  case MachineOperand::MO_Register:
+    assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+           "Operand is not a physical register ");
+    operand = "%" + LowercaseString(getRegisterName(MO.getReg()));
+    break;
+  }
+
+  unsigned bbNum = NumberForBB[MI->getParent()->getBasicBlock()];
+
+  O << '\n' << ".LLGETPCH" << bbNum << ":\n";
+  O << "\tcall\t.LLGETPC" << bbNum << '\n' ;
+
+  O << "\t  sethi\t"
+    << "%hi(_GLOBAL_OFFSET_TABLE_+(.-.LLGETPCH" << bbNum << ")), "  
+    << operand << '\n' ;
+
+  O << ".LLGETPC" << bbNum << ":\n" ;
+  O << "\tor\t" << operand  
+    << ", %lo(_GLOBAL_OFFSET_TABLE_+(.-.LLGETPCH" << bbNum << ")), "
+    << operand << '\n';
+  O << "\tadd\t" << operand << ", %o7, " << operand << '\n'; 
+  
+  return true;
 }
 
 void SparcAsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {

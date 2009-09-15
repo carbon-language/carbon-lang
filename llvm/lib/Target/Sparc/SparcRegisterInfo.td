@@ -16,6 +16,10 @@ class SparcReg<string n> : Register<n> {
   let Namespace = "SP";
 }
 
+class SparcCtrlReg<string n>: Register<n> {
+  let Namespace = "SP";
+}
+
 // Registers are identified with 5-bit ID numbers.
 // Ri - 32-bit integer registers
 class Ri<bits<5> num, string n> : SparcReg<n> {
@@ -30,6 +34,10 @@ class Rd<bits<5> num, string n, list<Register> subregs> : SparcReg<n> {
   let Num = num;
   let SubRegs = subregs;
 }
+
+// Control Registers
+def ICC : SparcCtrlReg<"ICC">;
+def FCC : SparcCtrlReg<"FCC">;
 
 // Integer registers
 def G0 : Ri< 0, "G0">, DwarfRegNum<[0]>;
@@ -46,7 +54,7 @@ def O2 : Ri<10, "O2">, DwarfRegNum<[10]>;
 def O3 : Ri<11, "O3">, DwarfRegNum<[11]>;
 def O4 : Ri<12, "O4">, DwarfRegNum<[12]>;
 def O5 : Ri<13, "O5">, DwarfRegNum<[13]>; 
-def O6 : Ri<14, "O6">, DwarfRegNum<[14]>;
+def O6 : Ri<14, "SP">, DwarfRegNum<[14]>;
 def O7 : Ri<15, "O7">, DwarfRegNum<[15]>;
 def L0 : Ri<16, "L0">, DwarfRegNum<[16]>;
 def L1 : Ri<17, "L1">, DwarfRegNum<[17]>;
@@ -62,7 +70,7 @@ def I2 : Ri<26, "I2">, DwarfRegNum<[26]>;
 def I3 : Ri<27, "I3">, DwarfRegNum<[27]>;
 def I4 : Ri<28, "I4">, DwarfRegNum<[28]>;
 def I5 : Ri<29, "I5">, DwarfRegNum<[29]>; 
-def I6 : Ri<30, "I6">, DwarfRegNum<[30]>;
+def I6 : Ri<30, "FP">, DwarfRegNum<[30]>;
 def I7 : Ri<31, "I7">, DwarfRegNum<[31]>;
 
 // Floating-point registers

@@ -17,8 +17,10 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "SparcGenInstrInfo.inc"
+#include "SparcMachineFunctionInfo.h"
 using namespace llvm;
 
 SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
@@ -234,4 +236,26 @@ MachineInstr *SparcInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   }
 
   return NewMI;
+}
+
+unsigned SparcInstrInfo::getGlobalBaseReg(MachineFunction *MF) const
+{
+  SparcMachineFunctionInfo *SparcFI = MF->getInfo<SparcMachineFunctionInfo>();
+  unsigned GlobalBaseReg = SparcFI->getGlobalBaseReg();
+  if (GlobalBaseReg != 0)
+    return GlobalBaseReg;
+
+  // Insert the set of GlobalBaseReg into the first MBB of the function
+  MachineBasicBlock &FirstMBB = MF->front();
+  MachineBasicBlock::iterator MBBI = FirstMBB.begin();
+  MachineRegisterInfo &RegInfo = MF->getRegInfo();
+
+  GlobalBaseReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
+
+
+  DebugLoc dl = DebugLoc::getUnknownLoc();
+
+  BuildMI(FirstMBB, MBBI, dl, get(SP::GETPCX), GlobalBaseReg);
+  SparcFI->setGlobalBaseReg(GlobalBaseReg);
+  return GlobalBaseReg;
 }

@@ -97,6 +97,8 @@ public:
                                               MachineInstr* LoadMI) const {
     return 0;
   }
+
+  unsigned getGlobalBaseReg(MachineFunction *MF) const;
 };
 
 }
