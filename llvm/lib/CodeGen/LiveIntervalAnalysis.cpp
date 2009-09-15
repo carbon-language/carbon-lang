@@ -637,13 +637,14 @@ bool LiveIntervals::conflictsWithPhysRegRef(LiveInterval &li,
   return false;
 }
 
-
+#ifndef NDEBUG
 static void printRegName(unsigned reg, const TargetRegisterInfo* tri_) {
   if (TargetRegisterInfo::isPhysicalRegister(reg))
     errs() << tri_->getName(reg);
   else
     errs() << "%reg" << reg;
 }
+#endif
 
 void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                                              MachineBasicBlock::iterator mi,
