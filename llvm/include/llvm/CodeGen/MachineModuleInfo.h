@@ -54,6 +54,17 @@ class MachineFunction;
 class Module;
 class PointerType;
 class StructType;
+  
+  
+/// MachineModuleInfoImpl - This class can be derived from and used by targets
+/// to hold private target-specific information for each Module.  Objects of
+/// type are accessed/created with MMI::getInfo and destroyed when the
+/// MachineModuleInfo is destroyed.
+struct MachineModuleInfoImpl {
+  virtual ~MachineModuleInfoImpl();
+};
+  
+  
 
 //===----------------------------------------------------------------------===//
 /// LandingPadInfo - This structure is used to retain landing pad info for
@@ -80,7 +91,10 @@ struct LandingPadInfo {
 /// schemes and reformated for specific use.
 ///
 class MachineModuleInfo : public ImmutablePass {
-private:
+  /// TargetMMI - This is the target-specific implementation of
+  /// MachineModuleInfoImpl, which lets them accumulate whatever info they want.
+  MachineModuleInfoImpl *TargetMMI;
+
   // LabelIDList - One entry per assigned label.  Normally the entry is equal to
   // the list index(+1).  If the entry is zero then the label has been deleted.
   // Any other value indicates the label has been deleted by is mapped to
@@ -132,14 +146,9 @@ public:
   MachineModuleInfo();
   ~MachineModuleInfo();
   
-  /// doInitialization - Initialize the state for a new module.
-  ///
   bool doInitialization();
-  
-  /// doFinalization - Tear down the state after completion of a module.
-  ///
   bool doFinalization();
-  
+
   /// BeginFunction - Begin gathering function meta information.
   ///
   void BeginFunction(MachineFunction *MF);
@@ -148,6 +157,24 @@ public:
   ///
   void EndFunction();
 
+  /// getInfo - Keep track of various per-function pieces of information for
+  /// backends that would like to do so.
+  ///
+  template<typename Ty>
+  Ty *getInfo() {
+    if (TargetMMI == 0)
+      TargetMMI = new Ty(*this);
+    
+    assert((void*)dynamic_cast<Ty*>(TargetMMI) == (void*)TargetMMI &&
+           "Invalid concrete type or multiple inheritence for getInfo");
+    return static_cast<Ty*>(TargetMMI);
+  }
+  
+  template<typename Ty>
+  const Ty *getInfo() const {
+    return const_cast<MachineModuleInfo*>(this)->getInfo<Ty>();
+  }
+  
   /// AnalyzeModule - Scan the module for global debug information.
   ///
   void AnalyzeModule(Module &M);

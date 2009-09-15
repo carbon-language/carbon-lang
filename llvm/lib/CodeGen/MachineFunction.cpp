@@ -73,6 +73,9 @@ FunctionPass *llvm::createMachineFunctionPrinterPass(raw_ostream &OS,
 // MachineFunction implementation
 //===---------------------------------------------------------------------===//
 
+// Out of line virtual method.
+MachineFunctionInfo::~MachineFunctionInfo() {}
+
 void ilist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
   MBB->getParent()->DeleteMachineBasicBlock(MBB);
 }

@@ -63,7 +63,7 @@ private:
 /// of type are accessed/created with MF::getInfo and destroyed when the
 /// MachineFunction is destroyed.
 struct MachineFunctionInfo {
-  virtual ~MachineFunctionInfo() {}
+  virtual ~MachineFunctionInfo();
 };
 
 class MachineFunction {
@@ -159,8 +159,8 @@ public:
   ///
   void setAlignment(unsigned A) { Alignment = A; }
 
-  /// MachineFunctionInfo - Keep track of various per-function pieces of
-  /// information for backends that would like to do so.
+  /// getInfo - Keep track of various per-function pieces of information for
+  /// backends that would like to do so.
   ///
   template<typename Ty>
   Ty *getInfo() {
