@@ -435,8 +435,7 @@ namespace llvm {
 
     bool isProfitableToCoalesce(LiveInterval &DstInt, LiveInterval &SrcInt,
                                 SmallVector<MachineInstr*,16> &IdentCopies,
-                                SmallVector<MachineInstr*,16> &OtherCopies,
-                                bool &HaveConflict);
+                                SmallVector<MachineInstr*,16> &OtherCopies);
 
     void performEarlyCoalescing();
 
