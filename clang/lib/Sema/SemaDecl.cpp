@@ -521,18 +521,6 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   return New;
 }
 
-/// GetStdNamespace - This method gets the C++ "std" namespace. This is where
-/// everything from the standard library is defined.
-NamespaceDecl *Sema::GetStdNamespace() {
-  if (!StdNamespace) {
-    IdentifierInfo *StdIdent = &PP.getIdentifierTable().get("std");
-    DeclContext *Global = Context.getTranslationUnitDecl();
-    Decl *Std = LookupQualifiedName(Global, StdIdent, LookupNamespaceName);
-    StdNamespace = dyn_cast_or_null<NamespaceDecl>(Std);
-  }
-  return StdNamespace;
-}
-
 /// MergeTypeDefDecl - We just parsed a typedef 'New' which has the
 /// same name and scope as a previous declaration 'Old'.  Figure out
 /// how to resolve this situation, merging decls or emitting
@@ -3990,7 +3978,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   DeclContext *SearchDC = CurContext;
   DeclContext *DC = CurContext;
   NamedDecl *PrevDecl = 0;
-
+  bool isStdBadAlloc = false;
   bool Invalid = false;
 
   if (Name && SS.isNotEmpty()) {
@@ -4067,6 +4055,19 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     PrevDecl = 0;
   }
 
+  if (getLangOptions().CPlusPlus && Name && DC && StdNamespace &&
+      DC->Equals(StdNamespace) && Name->isStr("bad_alloc")) {
+    // This is a declaration of or a reference to "std::bad_alloc".
+    isStdBadAlloc = true;
+    
+    if (!PrevDecl && StdBadAlloc) {
+      // std::bad_alloc has been implicitly declared (but made invisible to
+      // name lookup). Fill in this implicit declaration as the previous 
+      // declaration, so that the declarations get chained appropriately.
+      PrevDecl = StdBadAlloc;
+    }
+  }
+      
   if (PrevDecl) {
     // Check whether the previous declaration is usable.
     (void)DiagnoseUseOfDecl(PrevDecl, NameLoc);
@@ -4253,11 +4254,14 @@ CreateNewDecl:
 
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // struct X { int A; } D;    D should chain to X.
-    if (getLangOptions().CPlusPlus)
+    if (getLangOptions().CPlusPlus) {
       // FIXME: Look for a way to use RecordDecl for simple structs.
       New = CXXRecordDecl::Create(Context, Kind, SearchDC, Loc, Name, KWLoc,
                                   cast_or_null<CXXRecordDecl>(PrevDecl));
-    else
+      
+      if (isStdBadAlloc && (!StdBadAlloc || StdBadAlloc->isImplicit()))
+        StdBadAlloc = cast<CXXRecordDecl>(New);
+    } else
       New = RecordDecl::Create(Context, Kind, SearchDC, Loc, Name, KWLoc,
                                cast_or_null<RecordDecl>(PrevDecl));
   }

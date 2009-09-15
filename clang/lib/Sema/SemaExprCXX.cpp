@@ -61,8 +61,7 @@ Sema::ActOnCXXOperatorFunctionIdExpr(Scope *S, SourceLocation OperatorLoc,
 Action::OwningExprResult
 Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
                      bool isType, void *TyOrExpr, SourceLocation RParenLoc) {
-  NamespaceDecl *StdNs = GetStdNamespace();
-  if (!StdNs)
+  if (!StdNamespace)
     return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
 
   if (isType)
@@ -70,7 +69,8 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
     TyOrExpr = GetTypeFromParser(TyOrExpr).getAsOpaquePtr();
 
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
-  Decl *TypeInfoDecl = LookupQualifiedName(StdNs, TypeInfoII, LookupTagName);
+  Decl *TypeInfoDecl = LookupQualifiedName(StdNamespace, TypeInfoII, 
+                                           LookupTagName);
   RecordDecl *TypeInfoRecordDecl = dyn_cast_or_null<RecordDecl>(TypeInfoDecl);
   if (!TypeInfoRecordDecl)
     return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
@@ -661,12 +661,49 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
 void Sema::DeclareGlobalNewDelete() {
   if (GlobalNewDeleteDeclared)
     return;
+  
+  // C++ [basic.std.dynamic]p2:
+  //   [...] The following allocation and deallocation functions (18.4) are 
+  //   implicitly declared in global scope in each translation unit of a 
+  //   program
+  //   
+  //     void* operator new(std::size_t) throw(std::bad_alloc);
+  //     void* operator new[](std::size_t) throw(std::bad_alloc); 
+  //     void  operator delete(void*) throw(); 
+  //     void  operator delete[](void*) throw();
+  //
+  //   These implicit declarations introduce only the function names operator 
+  //   new, operator new[], operator delete, operator delete[].
+  //
+  // Here, we need to refer to std::bad_alloc, so we will implicitly declare
+  // "std" or "bad_alloc" as necessary to form the exception specification.
+  // However, we do not make these implicit declarations visible to name
+  // lookup.
+  if (!StdNamespace) {
+    // The "std" namespace has not yet been defined, so build one implicitly.
+    StdNamespace = NamespaceDecl::Create(Context, 
+                                         Context.getTranslationUnitDecl(),
+                                         SourceLocation(),
+                                         &PP.getIdentifierTable().get("std"));
+    StdNamespace->setImplicit(true);
+  }
+  
+  if (!StdBadAlloc) {
+    // The "std::bad_alloc" class has not yet been declared, so build it
+    // implicitly.
+    StdBadAlloc = CXXRecordDecl::Create(Context, TagDecl::TK_class, 
+                                        StdNamespace, 
+                                        SourceLocation(), 
+                                      &PP.getIdentifierTable().get("bad_alloc"), 
+                                        SourceLocation(), 0);
+    StdBadAlloc->setImplicit(true);
+  }
+  
   GlobalNewDeleteDeclared = true;
 
   QualType VoidPtr = Context.getPointerType(Context.VoidTy);
   QualType SizeT = Context.getSizeType();
 
-  // FIXME: Exception specifications are not added.
   DeclareGlobalAllocationFunction(
       Context.DeclarationNames.getCXXOperatorName(OO_New),
       VoidPtr, SizeT);
@@ -700,7 +737,19 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
     }
   }
 
-  QualType FnType = Context.getFunctionType(Return, &Argument, 1, false, 0);
+  QualType BadAllocType;
+  bool HasBadAllocExceptionSpec 
+    = (Name.getCXXOverloadedOperator() == OO_New ||
+       Name.getCXXOverloadedOperator() == OO_Array_New);
+  if (HasBadAllocExceptionSpec) {
+    assert(StdBadAlloc && "Must have std::bad_alloc declared");
+    BadAllocType = Context.getTypeDeclType(StdBadAlloc);
+  }
+  
+  QualType FnType = Context.getFunctionType(Return, &Argument, 1, false, 0,
+                                            true, false,
+                                            HasBadAllocExceptionSpec? 1 : 0,
+                                            &BadAllocType);
   FunctionDecl *Alloc =
     FunctionDecl::Create(Context, GlobalCtx, SourceLocation(), Name,
                          FnType, /*DInfo=*/0, FunctionDecl::None, false, true);

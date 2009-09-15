@@ -305,10 +305,13 @@ public:
   /// For example, user-defined classes, built-in "id" type, etc.
   Scope *TUScope;
 
-  /// The C++ "std" namespace, where the standard library resides. Cached here
-  /// by GetStdNamespace
+  /// \brief The C++ "std" namespace, where the standard library resides.
   NamespaceDecl *StdNamespace;
 
+  /// \brief The C++ "std::bad_alloc" class, which is defined by the C++
+  /// standard library.
+  CXXRecordDecl *StdBadAlloc;
+  
   /// A flag to remember whether the implicit forms of operator new and delete
   /// have been declared.
   bool GlobalNewDeleteDeclared;
@@ -1336,8 +1339,6 @@ public:
                            bool &IncompleteImpl);
   void WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethod,
                                    ObjCMethodDecl *IntfMethod);
-
-  NamespaceDecl *GetStdNamespace();
 
   bool isPropertyReadonly(ObjCPropertyDecl *PropertyDecl,
                           ObjCInterfaceDecl *IDecl);

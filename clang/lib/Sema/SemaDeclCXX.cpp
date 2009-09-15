@@ -2374,6 +2374,21 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
       Diag(PrevDecl->getLocation(), diag::note_previous_definition);
       Namespc->setInvalidDecl();
       // Continue on to push Namespc as current DeclContext and return it.
+    } else if (II->isStr("std") && 
+               CurContext->getLookupContext()->isTranslationUnit()) {
+      // This is the first "real" definition of the namespace "std", so update
+      // our cache of the "std" namespace to point at this definition.
+      if (StdNamespace) {
+        // We had already defined a dummy namespace "std". Link this new 
+        // namespace definition to the dummy namespace "std".
+        StdNamespace->setNextNamespace(Namespc);
+        StdNamespace->setLocation(IdentLoc);
+        Namespc->setOriginalNamespace(StdNamespace->getOriginalNamespace());
+      }
+      
+      // Make our StdNamespace cache point at the first real definition of the
+      // "std" namespace.
+      StdNamespace = Namespc;
     }
 
     PushOnScopeChains(Namespc, DeclRegionScope);
