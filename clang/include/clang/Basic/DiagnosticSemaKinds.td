@@ -1558,6 +1558,8 @@ def err_array_size_not_integral : Error<
 def err_new_uninitialized_const : Error<
   "must provide an initializer if the allocated object is 'const'">;
 def err_delete_operand : Error<"cannot delete expression of type %0">;
+def err_ambiguous_delete_operand : Error<"ambiguous conversion of delete "
+                                         "expression of type %0 to a pointer">;
 def warn_delete_incomplete : Warning<
   "deleting pointer to incomplete type %0 may cause undefined behaviour">;
 def err_decrement_bool : Error<"cannot decrement expression of type bool">;

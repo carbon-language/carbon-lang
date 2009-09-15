@@ -104,12 +104,12 @@ struct X1 {
 };
 
 struct X2 {
-  operator int*();
-  operator float*();
+  operator int*(); // expected-note {{candidate function}}
+  operator float*(); // expected-note {{candidate function}}
 };
 
 void test_delete_conv(X0 x0, X1 x1, X2 x2) {
   delete x0; // expected-error{{cannot delete}}
   delete x1;
-  delete x2; // expected-error{{cannot delete}}
+  delete x2; // expected-error{{ambiguous conversion of delete expression of type 'struct X2' to a pointer}}
 }

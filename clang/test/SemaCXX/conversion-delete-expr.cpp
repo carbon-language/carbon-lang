@@ -2,16 +2,16 @@
 
 // Test1
 struct B {
-  operator char *();
+  operator char *(); // expected-note {{candidate function}}
 };
 
 struct D : B {
-  operator int *();
+  operator int *(); // expected-note {{candidate function}}
 };
 
 void f (D d)
 {
-   delete d; // expected-error {{cannot delete expression of type 'struct D'}}
+   delete d; // expected-error {{ambiguous conversion of delete expression of type 'struct D' to a pointer}}
 }
 
 // Test2
@@ -30,25 +30,25 @@ void f1 (D1 d)
 
 // Test3
 struct B2 {
-  operator const int *();
+  operator const int *();	// expected-note {{candidate function}}
 };
 
 struct D2 : B2 {
-  operator int *();
+  operator int *();	// expected-note {{candidate function}}
 };
 
 void f2 (D2 d)
 {
-   delete d; // expected-error {{cannot delete expression of type 'struct D2'}}
+   delete d; // expected-error {{ambiguous conversion of delete expression of type 'struct D2' to a pointer}}
 }
 
 // Test4
 struct B3 {
-  operator const int *();
+  operator const int *();	// expected-note {{candidate function}}
 };
 
 struct A3 {
-  operator const int *();
+  operator const int *();	// expected-note {{candidate function}}
 };
 
 struct D3 : A3, B3 {
@@ -56,7 +56,7 @@ struct D3 : A3, B3 {
 
 void f3 (D3 d)
 {
-   delete d; // expected-error {{cannot delete expression of type 'struct D3'}}
+   delete d; // expected-error {{mbiguous conversion of delete expression of type 'struct D3' to a pointer}}
 }
 
 // Test5
@@ -78,16 +78,19 @@ void f5(X1 x) { delete x; }  // OK. In selecting a conversion to pointer functio
 
 // Test7
 struct Base {
-   operator int*();
+   operator int*();	// expected-note {{candidate function}}
 };
 
 struct Derived : Base {
-   operator int*() const; // not the same function as Base's non-const operator int()
+   // not the same function as Base's non-const operator int()
+   operator int*() const;  // expected-note {{candidate function}}
 };
 
-void foo6(const Derived cd) {
-	// FIXME. overload resolution must select Derived::operator int*() const;
-	delete cd;	// expected-error {{cannot delete expression of type 'struct Derived const'}}
+void foo6(const Derived cd, Derived d) {
+	// overload resolution selects Derived::operator int*() const;
+	delete cd;
+
+	delete d;	// expected-error {{ambiguous conversion of delete expression of type 'struct Derived' to a pointer}}
 }
 
 // Test8
@@ -105,7 +108,3 @@ void foo7 (DD d)
         // OK. In selecting a conversion to pointer function, template convesions are skipped.
 	delete d;
 }
-
-
-
-
