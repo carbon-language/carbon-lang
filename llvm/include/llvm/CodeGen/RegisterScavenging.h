@@ -121,7 +121,7 @@ private:
   /// isReserved - Returns true if a register is reserved. It is never "unused".
   bool isReserved(unsigned Reg) const { return ReservedRegs.test(Reg); }
 
-  /// isUsed / isUsed - Test if a register is currently being used.
+  /// isUsed / isUnused - Test if a register is currently being used.
   ///
   bool isUsed(unsigned Reg) const   { return !RegsAvailable.test(Reg); }
   bool isUnused(unsigned Reg) const { return RegsAvailable.test(Reg); }
