@@ -33,6 +33,10 @@ entry:
 }
 
 
+; x86's 32-bit cmov doesn't clobber the high 32 bits of the destination
+; if the condition is false. An explicit zero-extend (movl) is needed
+; after the cmov.
+
 declare void @bar(i64) nounwind
 
 define void @test3(i64 %a, i64 %b, i1 %p) nounwind {
