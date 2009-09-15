@@ -84,8 +84,8 @@ void raw_ostream::SetBuffered() {
 void raw_ostream::SetBufferAndMode(char *BufferStart, size_t Size, 
                                     BufferKind Mode) {
   assert(((Mode == Unbuffered && BufferStart == 0 && Size == 0) || 
-          (Mode != Unbuffered && BufferStart && Size >= 64)) &&
-         "stream must be unbuffered, or have >= 64 bytes of buffer");
+          (Mode != Unbuffered && BufferStart && Size)) &&
+         "stream must be unbuffered or have at least one byte");
   // Make sure the current buffer is free of content (we can't flush here; the
   // child buffer management logic will be in write_impl).
   assert(GetNumBytesInBuffer() == 0 && "Current buffer is non-empty!");

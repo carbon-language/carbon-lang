@@ -41,7 +41,7 @@ private:
   ///  1. Unbuffered (BufferMode == Unbuffered)
   ///  1. Uninitialized (BufferMode != Unbuffered && OutBufStart == 0).
   ///  2. Buffered (BufferMode != Unbuffered && OutBufStart != 0 &&
-  ///               OutBufEnd - OutBufStart >= 64).
+  ///               OutBufEnd - OutBufStart >= 1).
   ///
   /// If buffered, then the raw_ostream owns the buffer if (BufferMode ==
   /// InternalBuffer); otherwise the buffer has been set via SetBuffer and is
