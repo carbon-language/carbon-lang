@@ -457,6 +457,11 @@ def ADD64rm     : RI<0x03, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:
                      "add{q}\t{$src2, $dst|$dst, $src2}",
                      [(set GR64:$dst, (add GR64:$src1, (load addr:$src2))),
                       (implicit EFLAGS)]>;
+
+// Register-Register Addition
+def ADD64mrmrr  : RI<0x03, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                     "add{l}\t{$src2, $dst|$dst, $src2}", []>;
+
 } // isTwoAddress
 
 // Memory-Register Addition

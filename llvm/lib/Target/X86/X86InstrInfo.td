@@ -2427,6 +2427,14 @@ def ADD32rm  : I<0x03, MRMSrcMem, (outs GR32:$dst),
                  "add{l}\t{$src2, $dst|$dst, $src2}",
                  [(set GR32:$dst, (add GR32:$src1, (load addr:$src2))),
                   (implicit EFLAGS)]>;
+                  
+// Register-Register Addition
+def ADD8mrmrr: I<0x02, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src1, GR8:$src2),
+                 "add{b}\t{$src2, $dst|$dst, $src2}", []>;
+def ADD16mrmrr: I<0x03, MRMSrcReg,(outs GR16:$dst),(ins GR16:$src1, GR16:$src2),
+                  "add{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize;
+def ADD32mrmrr: I<0x03, MRMSrcReg,(outs GR16:$dst),(ins GR16:$src1, GR16:$src2),
+                  "add{l}\t{$src2, $dst|$dst, $src2}", []>;
 
 // Register-Integer Addition
 def ADD8ri    : Ii8<0x80, MRM0r, (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2),
