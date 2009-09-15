@@ -761,6 +761,8 @@ def err_ovl_ambiguous_member_call : Error<
 def err_ovl_deleted_member_call : Error<
   "call to %select{unavailable|deleted}0 member function %1">;
 def err_ovl_candidate : Note<"candidate function">;
+def err_ovl_template_candidate : Note<
+  "candidate function template specialization %0">;
 def err_ovl_candidate_deleted : Note<
   "candidate function has been explicitly %select{made unavailable|deleted}0">;
 def err_ovl_builtin_candidate : Note<"built-in candidate function %0">;

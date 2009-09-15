@@ -3831,6 +3831,13 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
           // Deleted or "unavailable" function.
           Diag(Cand->Function->getLocation(), diag::err_ovl_candidate_deleted)
             << Cand->Function->isDeleted();
+        } else if (FunctionTemplateDecl *FunTmpl 
+                     = Cand->Function->getPrimaryTemplate()) {
+          // Function template specialization
+          // FIXME: Give a better reason!
+          Diag(Cand->Function->getLocation(), diag::err_ovl_template_candidate)
+            << getTemplateArgumentBindingsText(FunTmpl->getTemplateParameters(),
+                              *Cand->Function->getTemplateSpecializationArgs());
         } else {
           // Normal function
           // FIXME: Give a better reason!
