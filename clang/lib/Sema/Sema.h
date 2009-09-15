@@ -772,6 +772,7 @@ public:
   bool IsQualificationConversion(QualType FromType, QualType ToType);
   bool IsUserDefinedConversion(Expr *From, QualType ToType,
                                UserDefinedConversionSequence& User,
+                               OverloadCandidateSet& Conversions,
                                bool AllowConversionFunctions,
                                bool AllowExplicit, bool ForceRValue);
 

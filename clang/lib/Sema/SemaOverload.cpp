@@ -410,10 +410,12 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
                             bool AllowExplicit, bool ForceRValue,
                             bool InOverloadResolution) {
   ImplicitConversionSequence ICS;
+  OverloadCandidateSet Conversions;
   if (IsStandardConversion(From, ToType, InOverloadResolution, ICS.Standard))
     ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
   else if (getLangOptions().CPlusPlus &&
            IsUserDefinedConversion(From, ToType, ICS.UserDefined,
+                                   Conversions,
                                    !SuppressUserConversions, AllowExplicit,
                                    ForceRValue)) {
     ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
@@ -1355,9 +1357,9 @@ static void GetFunctionAndTemplate(AnyFunctionDecl Orig, T *&Function,
 /// for overload resolution.
 bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
                                    UserDefinedConversionSequence& User,
+                                   OverloadCandidateSet& CandidateSet,
                                    bool AllowConversionFunctions,
                                    bool AllowExplicit, bool ForceRValue) {
-  OverloadCandidateSet CandidateSet;
   if (const RecordType *ToRecordType = ToType->getAs<RecordType>()) {
     if (CXXRecordDecl *ToRecordDecl
           = dyn_cast<CXXRecordDecl>(ToRecordType->getDecl())) {
@@ -2097,9 +2099,19 @@ bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
   if (!PerformImplicitConversion(From, Context.BoolTy, ICS, "converting"))
     return false;
 
-  return Diag(From->getSourceRange().getBegin(),
-              diag::err_typecheck_bool_condition)
-    << From->getType() << From->getSourceRange();
+    OverloadCandidateSet CandidateSet;
+    IsUserDefinedConversion(From, Context.BoolTy, ICS.UserDefined,
+                            CandidateSet,
+                            true, true, false);
+    if (CandidateSet.begin() == CandidateSet.end())
+      return  Diag(From->getSourceRange().getBegin(),
+                   diag::err_typecheck_bool_condition)
+                    << From->getType() << From->getSourceRange();
+    Diag(From->getSourceRange().getBegin(),
+         diag::err_typecheck_ambiguous_bool_condition)
+          << From->getType() << From->getSourceRange();
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+    return true;
 }
 
 /// AddOverloadCandidate - Adds the given function to the set of

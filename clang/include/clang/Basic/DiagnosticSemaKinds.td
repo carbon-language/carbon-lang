@@ -1619,6 +1619,8 @@ def err_type_defined_in_condition : Error<
   "types may not be defined in conditions">;
 def err_typecheck_bool_condition : Error<
   "value of type %0 is not contextually convertible to 'bool'">;
+def err_typecheck_ambiguous_bool_condition : Error<
+  "conversion from %0 to 'bool' is ambiguous">;
 def err_expected_class_or_namespace : Error<"expected a class or namespace">;
 def err_invalid_declarator_scope : Error<
   "definition or redeclaration of %0 not in a namespace enclosing %1">;

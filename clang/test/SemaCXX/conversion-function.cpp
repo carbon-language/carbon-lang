@@ -79,16 +79,16 @@ void f(const C& c) {
 // Test. Conversion in base class is visible in derived class.
 class XB { 
 public:
-  operator int();
+  operator int(); // expected-note {{candidate function}}
 };
 
 class Yb : public XB { 
 public:
-  operator char();
+  operator char(); // expected-note {{candidate function}}
 };
 
 void f(Yb& a) {
-  if (a) { } // expected-error {{value of type 'class Yb' is not contextually convertible to 'bool'}}
+  if (a) { } // expected-error {{conversion from 'class Yb' to 'bool' is ambiguous}}
   int i = a; // OK. calls XB::operator int();
   char ch = a;  // OK. calls Yb::operator char();
 }
