@@ -995,11 +995,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       From = 
         new (Context) ImplicitCastExpr(CastArgType, CastKind, 
                                        CastArg.takeAs<Expr>(), 
-                                       CastArgType->isLValueReferenceType());
-      if (PerformImplicitConversion(From, ToType.getNonReferenceType(),
-                                    ICS.UserDefined.After, "converting"))
-        return true;
-      
+                                       CastArgType->isLValueReferenceType());      
       return false;
     }
 
