@@ -383,7 +383,8 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
 
    // Check for pointer->pointer cast
   if (SubExpr->getType()->isPointerType() ||
-      SubExpr->getType()->isObjCObjectPointerType()) {
+      SubExpr->getType()->isObjCObjectPointerType() ||
+      SubExpr->getType()->isNullPtrType()) {
     APValue Result;
     if (EvaluatePointer(SubExpr, Result, Info))
       return Result;

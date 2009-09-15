@@ -308,6 +308,10 @@ public:
     return 0;
   }
 
+  Value *VisitCXXNullPtrLiteralExpr(const CXXNullPtrLiteralExpr *E) {
+    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+  }
+    
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
     if (CGF.getContext().getLangOptions().OverflowChecking

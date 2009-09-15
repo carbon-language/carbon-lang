@@ -229,6 +229,12 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       return getTypeForFormat(getLLVMContext(),
                               Context.getFloatTypeSemantics(T));
 
+    case BuiltinType::NullPtr: {
+      // Model std::nullptr_t as i8*
+      const llvm::Type *Ty = llvm::IntegerType::get(getLLVMContext(), 8);
+      return llvm::PointerType::getUnqual(Ty);
+    }
+        
     case BuiltinType::UInt128:
     case BuiltinType::Int128:
       return llvm::IntegerType::get(getLLVMContext(), 128);
