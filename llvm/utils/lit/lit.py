@@ -264,19 +264,28 @@ def getTestsInSuite(ts, path_in_suite, litConfig,
         if filename == 'Output' or filename in lc.excludes:
             continue
 
-        filepath = os.path.join(source_path, filename)
-        if os.path.isdir(filepath):
-            # If this directory contains a test suite, reload it.
-            if dirContainsTestSuite(filepath):
-                for res in getTests(filepath, litConfig,
-                                    testSuiteCache, localConfigCache):
-                    yield res
-            else:
-                # Otherwise, continue loading from inside this test suite.
-                for res in getTestsInSuite(ts, path_in_suite + (filename,),
-                                           litConfig, testSuiteCache,
-                                           localConfigCache):
-                    yield res
+        # Ignore non-directories.
+        file_sourcepath = os.path.join(source_path, filename)
+        if not os.path.isdir(file_sourcepath):
+            continue
+        
+        # Check for nested test suites, first in the execpath in case there is a
+        # site configuration and then in the source path.
+        file_execpath = ts.getExecPath(path_in_suite + (filename,))
+        if dirContainsTestSuite(file_execpath):
+            subiter = getTests(file_execpath, litConfig,
+                               testSuiteCache, localConfigCache)
+        elif dirContainsTestSuite(file_sourcepath):
+            subiter = getTests(file_sourcepath, litConfig,
+                               testSuiteCache, localConfigCache)
+        else:
+            # Otherwise, continue loading from inside this test suite.
+            subiter = getTestsInSuite(ts, path_in_suite + (filename,),
+                                      litConfig, testSuiteCache,
+                                      localConfigCache)
+        
+        for res in subiter:
+            yield res
 
 def runTests(numThreads, litConfig, provider, display):
     # If only using one testing thread, don't use threads at all; this lets us
