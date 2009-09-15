@@ -1244,6 +1244,9 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   if (!Specialization)
     return TDK_SubstitutionFailure;
 
+  assert(Specialization->getPrimaryTemplate()->getCanonicalDecl() == 
+         FunctionTemplate->getCanonicalDecl());
+  
   // If the template argument list is owned by the function template
   // specialization, release it.
   if (Specialization->getTemplateSpecializationArgs() == DeducedArgumentList)

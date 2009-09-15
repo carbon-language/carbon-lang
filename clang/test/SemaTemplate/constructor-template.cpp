@@ -26,3 +26,23 @@ void test_X0(int i, float f) {
   
   X0 x0g(f, &i); // expected-error{{no matching constructor}}
 }
+
+template<typename T>
+struct X1 {
+  X1(const X1&);
+  template<typename U> X1(const X1<U>&);
+};
+
+template<typename T>
+struct Outer {
+  typedef X1<T> A;
+  
+  A alloc;
+  
+  explicit Outer(const A& a) : alloc(a) { }
+};
+
+void test_X1(X1<int> xi) {
+  Outer<int> oi(xi);
+  Outer<float> of(xi);
+}
