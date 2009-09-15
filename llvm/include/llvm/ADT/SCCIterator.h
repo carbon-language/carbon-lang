@@ -22,7 +22,7 @@
 #define LLVM_ADT_SCCITERATOR_H
 
 #include "llvm/ADT/GraphTraits.h"
-#include <map>
+#include "llvm/ADT/DenseMap.h"
 #include <vector>
 
 namespace llvm {
@@ -48,7 +48,7 @@ class scc_iterator
   // visitNum is the global counter.
   // nodeVisitNumbers are per-node visit numbers, also used as DFS flags.
   unsigned visitNum;
-  std::map<NodeType *, unsigned> nodeVisitNumbers;
+  DenseMap<NodeType *, unsigned> nodeVisitNumbers;
 
   // SCCNodeStack - Stack holding nodes of the SCC.
   std::vector<NodeType *> SCCNodeStack;
