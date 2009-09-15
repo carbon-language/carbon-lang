@@ -18,7 +18,7 @@
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/Support/Compiler.h"
-
+#include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
 /// \brief Determine whether the declaration found is acceptable as the name
@@ -537,7 +537,8 @@ Sema::ActOnTemplateParameterList(unsigned Depth,
     Diag(ExportLoc, diag::note_template_export_unsupported);
 
   return TemplateParameterList::Create(Context, TemplateLoc, LAngleLoc,
-                                       (Decl**)Params, NumParams, RAngleLoc);
+                                       (NamedDecl**)Params, NumParams, 
+                                       RAngleLoc);
 }
 
 Sema::DeclResult
@@ -3422,4 +3423,79 @@ QualType Sema::RebuildTypeInCurrentInstantiation(QualType T, SourceLocation Loc,
 
   CurrentInstantiationRebuilder Rebuilder(*this, Loc, Name);
   return Rebuilder.TransformType(T);
+}
+
+/// \brief Produces a formatted string that describes the binding of
+/// template parameters to template arguments.
+std::string
+Sema::getTemplateArgumentBindingsText(const TemplateParameterList *Params,
+                                      const TemplateArgumentList &Args) {
+  std::string Result;
+
+  if (!Params || Params->size() == 0)
+    return Result;
+  
+  for (unsigned I = 0, N = Params->size(); I != N; ++I) {
+    if (I == 0)
+      Result += "[with ";
+    else
+      Result += ", ";
+    
+    if (const IdentifierInfo *Id = Params->getParam(I)->getIdentifier()) {
+      Result += Id->getName();
+    } else {
+      Result += '$';
+      Result += llvm::utostr(I);
+    }
+    
+    Result += " = ";
+    
+    switch (Args[I].getKind()) {
+      case TemplateArgument::Null:
+        Result += "<no value>";
+        break;
+        
+      case TemplateArgument::Type: {
+        std::string TypeStr;
+        Args[I].getAsType().getAsStringInternal(TypeStr, 
+                                                Context.PrintingPolicy);
+        Result += TypeStr;
+        break;
+      }
+        
+      case TemplateArgument::Declaration: {
+        bool Unnamed = true;
+        if (NamedDecl *ND = dyn_cast_or_null<NamedDecl>(Args[I].getAsDecl())) {
+          if (ND->getDeclName()) {
+            Unnamed = false;
+            Result += ND->getNameAsString();
+          }
+        }
+        
+        if (Unnamed) {
+          Result += "<anonymous>";
+        }
+        break;
+      }
+        
+      case TemplateArgument::Integral: {
+        Result += Args[I].getAsIntegral()->toString(10);
+        break;
+      }
+        
+      case TemplateArgument::Expression: {
+        assert(false && "No expressions in deduced template arguments!");
+        Result += "<expression>";
+        break;
+      }
+        
+      case TemplateArgument::Pack:
+        // FIXME: Format template argument packs
+        Result += "<template argument pack>";
+        break;        
+    }
+  }
+  
+  Result += ']';
+  return Result;
 }

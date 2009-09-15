@@ -888,17 +888,50 @@ Sema::InstantiateClassTemplateSpecialization(
     //      specialized than all of the other matching
     //      specializations, then the use of the class template is
     //      ambiguous and the program is ill-formed.
-    // FIXME: Implement partial ordering of class template partial
-    // specializations.
-    Diag(ClassTemplateSpec->getLocation(),
-         diag::unsup_template_partial_spec_ordering);
+    llvm::SmallVector<MatchResult, 4>::iterator Best = Matched.begin();
+    for (llvm::SmallVector<MatchResult, 4>::iterator P = Best + 1,
+                                                  PEnd = Matched.end();
+         P != PEnd; ++P) {
+      if (getMoreSpecializedPartialSpecialization(P->first, Best->first) 
+            == P->first)
+        Best = P;
+    }
+    
+    // Determine if the best partial specialization is more specialized than
+    // the others.
+    bool Ambiguous = false;
+    for (llvm::SmallVector<MatchResult, 4>::iterator P = Matched.begin(),
+                                                  PEnd = Matched.end();
+         P != PEnd; ++P) {
+      if (P != Best &&
+          getMoreSpecializedPartialSpecialization(P->first, Best->first)
+            != Best->first) {
+        Ambiguous = true;
+        break;
+      }
+    }
+     
+    if (Ambiguous) {
+      // Partial ordering did not produce a clear winner. Complain.
+      ClassTemplateSpec->setInvalidDecl();
+      Diag(ClassTemplateSpec->getPointOfInstantiation(),
+           diag::err_partial_spec_ordering_ambiguous)
+        << ClassTemplateSpec;
+      
+      // Print the matching partial specializations.
+      for (llvm::SmallVector<MatchResult, 4>::iterator P = Matched.begin(),
+                                                    PEnd = Matched.end();
+           P != PEnd; ++P)
+        Diag(P->first->getLocation(), diag::note_partial_spec_match)
+          << getTemplateArgumentBindingsText(P->first->getTemplateParameters(),
+                                             *P->second);
 
-    // FIXME: Temporary hack to fall back to the primary template
-    ClassTemplateDecl *OrigTemplate = Template;
-    while (OrigTemplate->getInstantiatedFromMemberTemplate())
-      OrigTemplate = OrigTemplate->getInstantiatedFromMemberTemplate();
-
-    Pattern = OrigTemplate->getTemplatedDecl();
+      return true;
+    }
+    
+    // Instantiate using the best class template partial specialization.
+    Pattern = Best->first;
+    ClassTemplateSpec->setInstantiationOf(Best->first, Best->second);
   } else {
     //   -- If no matches are found, the instantiation is generated
     //      from the primary template.

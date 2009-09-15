@@ -25,7 +25,7 @@ using namespace clang;
 
 TemplateParameterList::TemplateParameterList(SourceLocation TemplateLoc,
                                              SourceLocation LAngleLoc,
-                                             Decl **Params, unsigned NumParams,
+                                             NamedDecl **Params, unsigned NumParams,
                                              SourceLocation RAngleLoc)
   : TemplateLoc(TemplateLoc), LAngleLoc(LAngleLoc), RAngleLoc(RAngleLoc),
     NumParams(NumParams) {
@@ -35,9 +35,10 @@ TemplateParameterList::TemplateParameterList(SourceLocation TemplateLoc,
 
 TemplateParameterList *
 TemplateParameterList::Create(ASTContext &C, SourceLocation TemplateLoc,
-                              SourceLocation LAngleLoc, Decl **Params,
+                              SourceLocation LAngleLoc, NamedDecl **Params,
                               unsigned NumParams, SourceLocation RAngleLoc) {
-  unsigned Size = sizeof(TemplateParameterList) + sizeof(Decl *) * NumParams;
+  unsigned Size = sizeof(TemplateParameterList) 
+                + sizeof(NamedDecl *) * NumParams;
   unsigned Align = llvm::AlignOf<TemplateParameterList>::Alignment;
   void *Mem = C.Allocate(Size, Align);
   return new (Mem) TemplateParameterList(TemplateLoc, LAngleLoc, Params,

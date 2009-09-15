@@ -2568,6 +2568,10 @@ public:
   QualType RebuildTypeInCurrentInstantiation(QualType T, SourceLocation Loc,
                                              DeclarationName Name);
 
+  std::string
+  getTemplateArgumentBindingsText(const TemplateParameterList *Params,
+                                  const TemplateArgumentList &Args);
+  
   /// \brief Describes the result of template argument deduction.
   ///
   /// The TemplateDeductionResult enumeration describes the result of
@@ -2732,7 +2736,11 @@ public:
   FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                                    FunctionTemplateDecl *FT2,
                                            TemplatePartialOrderingContext TPOC);
-
+  ClassTemplatePartialSpecializationDecl *
+  getMoreSpecializedPartialSpecialization(
+                                  ClassTemplatePartialSpecializationDecl *PS1,
+                                  ClassTemplatePartialSpecializationDecl *PS2);
+  
   void MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
                                   bool OnlyDeduced,
                                   llvm::SmallVectorImpl<bool> &Deduced);

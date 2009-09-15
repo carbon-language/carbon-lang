@@ -955,9 +955,9 @@ def warn_partial_specs_not_deducible : Warning<
     "deduced; this partial specialization will never be used">;
 def note_partial_spec_unused_parameter : Note<
     "non-deducible template parameter %0">;
-def unsup_template_partial_spec_ordering : Error<
-  "partial ordering of class template partial specializations is not yet "
-  "supported">;
+def err_partial_spec_ordering_ambiguous : Error<
+    "ambiguous partial specializations of %0">;
+def note_partial_spec_match : Note<"partial specialization matches %0">;
 
 // C++ Template Instantiation
 def err_template_recursion_depth_exceeded : Error<

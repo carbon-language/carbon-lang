@@ -797,12 +797,12 @@ TemplateDeclInstantiator::SubstTemplateParams(TemplateParameterList *L) {
   bool Invalid = false;
 
   unsigned N = L->size();
-  typedef llvm::SmallVector<Decl*,8> ParamVector;
+  typedef llvm::SmallVector<NamedDecl *, 8> ParamVector;
   ParamVector Params;
   Params.reserve(N);
   for (TemplateParameterList::iterator PI = L->begin(), PE = L->end();
        PI != PE; ++PI) {
-    Decl *D = Visit(*PI);
+    NamedDecl *D = cast_or_null<NamedDecl>(Visit(*PI));
     Params.push_back(D);
     Invalid = Invalid || !D;
   }

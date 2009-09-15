@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 template<typename T>
-struct is_pointer { // expected-error{{partial ordering}}
+struct is_pointer {
   static const bool value = false;
 };
 
@@ -16,7 +16,7 @@ struct is_pointer<const T*> {
 
 int array0[is_pointer<int>::value? -1 : 1];
 int array1[is_pointer<int*>::value? 1 : -1];
-int array2[is_pointer<const int*>::value? 1 : -1]; // expected-error{{negative}}
+int array2[is_pointer<const int*>::value? 1 : -1];
 
 template<typename T>
 struct is_lvalue_reference {

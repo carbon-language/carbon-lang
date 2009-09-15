@@ -49,38 +49,38 @@ class TemplateParameterList {
   unsigned NumParams;
 
   TemplateParameterList(SourceLocation TemplateLoc, SourceLocation LAngleLoc,
-                        Decl **Params, unsigned NumParams,
+                        NamedDecl **Params, unsigned NumParams,
                         SourceLocation RAngleLoc);
 
 public:
   static TemplateParameterList *Create(ASTContext &C,
                                        SourceLocation TemplateLoc,
                                        SourceLocation LAngleLoc,
-                                       Decl **Params,
+                                       NamedDecl **Params,
                                        unsigned NumParams,
                                        SourceLocation RAngleLoc);
 
   /// iterator - Iterates through the template parameters in this list.
-  typedef Decl** iterator;
+  typedef NamedDecl** iterator;
 
   /// const_iterator - Iterates through the template parameters in this list.
-  typedef Decl* const* const_iterator;
+  typedef NamedDecl* const* const_iterator;
 
-  iterator begin() { return reinterpret_cast<Decl **>(this + 1); }
+  iterator begin() { return reinterpret_cast<NamedDecl **>(this + 1); }
   const_iterator begin() const {
-    return reinterpret_cast<Decl * const *>(this + 1);
+    return reinterpret_cast<NamedDecl * const *>(this + 1);
   }
   iterator end() { return begin() + NumParams; }
   const_iterator end() const { return begin() + NumParams; }
 
   unsigned size() const { return NumParams; }
 
-  Decl* getParam(unsigned Idx) {
+  NamedDecl* getParam(unsigned Idx) {
     assert(Idx < size() && "Template parameter index out-of-range");
     return begin()[Idx];
   }
 
-  const Decl* getParam(unsigned Idx) const {
+  const NamedDecl* getParam(unsigned Idx) const {
     assert(Idx < size() && "Template parameter index out-of-range");
     return begin()[Idx];
   }

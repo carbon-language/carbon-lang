@@ -949,7 +949,8 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
     if (Deduced[I].isNull()) {
       Decl *Param
-        = const_cast<Decl *>(Partial->getTemplateParameters()->getParam(I));
+        = const_cast<NamedDecl *>(
+                                Partial->getTemplateParameters()->getParam(I));
       if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param))
         Info.Param = TTP;
       else if (NonTypeTemplateParmDecl *NTTP
@@ -976,7 +977,7 @@ Sema::DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
   ClassTemplateDecl *ClassTemplate = Partial->getSpecializedTemplate();
   const TemplateArgumentList &PartialTemplateArgs = Partial->getTemplateArgs();
   for (unsigned I = 0, N = PartialTemplateArgs.flat_size(); I != N; ++I) {
-    Decl *Param = const_cast<Decl *>(
+    Decl *Param = const_cast<NamedDecl *>(
                     ClassTemplate->getTemplateParameters()->getParam(I));
     TemplateArgument InstArg
       = Subst(PartialTemplateArgs[I],
@@ -1199,7 +1200,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
   for (unsigned I = 0, N = Deduced.size(); I != N; ++I) {
     if (Deduced[I].isNull()) {
       Info.Param = makeTemplateParameter(
-                            const_cast<Decl *>(TemplateParams->getParam(I)));
+                            const_cast<NamedDecl *>(TemplateParams->getParam(I)));
       return TDK_Incomplete;
     }
 
@@ -1796,7 +1797,7 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
 }
                                     
                                      
-/// \brief Returns the more specialization function template according
+/// \brief Returns the more specialized function template according
 /// to the rules of function template partial ordering (C++ [temp.func.order]).
 ///
 /// \param FT1 the first function template
@@ -1806,13 +1807,12 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
 /// \param TPOC the context in which we are performing partial ordering of
 /// function templates.
 ///
-/// \returns the more specialization function template. If neither
+/// \returns the more specialized function template. If neither
 /// template is more specialized, returns NULL.
 FunctionTemplateDecl *
 Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                  FunctionTemplateDecl *FT2,
                                  TemplatePartialOrderingContext TPOC) {
-  // FIXME: Implement this
   llvm::SmallVector<DeductionQualifierComparison, 4> QualifierComparisons;
   bool Better1 = isAtLeastAsSpecializedAs(*this, FT1, FT2, TPOC, 0);
   bool Better2 = isAtLeastAsSpecializedAs(*this, FT2, FT1, TPOC, 
@@ -1867,6 +1867,70 @@ Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
     return FT2;
   else
     return 0;
+}
+
+/// \brief Returns the more specialized class template partial specialization
+/// according to the rules of partial ordering of class template partial
+/// specializations (C++ [temp.class.order]).
+///
+/// \param PS1 the first class template partial specialization
+///
+/// \param PS2 the second class template partial specialization
+///
+/// \returns the more specialized class template partial specialization. If
+/// neither partial specialization is more specialized, returns NULL.
+ClassTemplatePartialSpecializationDecl *
+Sema::getMoreSpecializedPartialSpecialization(
+                                  ClassTemplatePartialSpecializationDecl *PS1,
+                                  ClassTemplatePartialSpecializationDecl *PS2) {
+  // C++ [temp.class.order]p1:
+  //   For two class template partial specializations, the first is at least as
+  //   specialized as the second if, given the following rewrite to two 
+  //   function templates, the first function template is at least as 
+  //   specialized as the second according to the ordering rules for function 
+  //   templates (14.6.6.2):
+  //     - the first function template has the same template parameters as the
+  //       first partial specialization and has a single function parameter 
+  //       whose type is a class template specialization with the template 
+  //       arguments of the first partial specialization, and
+  //     - the second function template has the same template parameters as the
+  //       second partial specialization and has a single function parameter 
+  //       whose type is a class template specialization with the template 
+  //       arguments of the second partial specialization.
+  //
+  // Rather than synthesize function templates, we merely perform the 
+  // equivalent partial ordering by performing deduction directly on the
+  // template arguments of the class template partial specializations. This
+  // computation is slightly simpler than the general problem of function
+  // template partial ordering, because class template partial specializations
+  // are more constrained. We know that every template parameter is deduc
+  llvm::SmallVector<TemplateArgument, 4> Deduced;
+  Sema::TemplateDeductionInfo Info(Context);
+  
+  // Determine whether PS1 is at least as specialized as PS2
+  Deduced.resize(PS2->getTemplateParameters()->size());
+  bool Better1 = !DeduceTemplateArgumentsDuringPartialOrdering(Context,
+                                                  PS2->getTemplateParameters(),
+                                                  Context.getTypeDeclType(PS2),
+                                                  Context.getTypeDeclType(PS1),
+                                                               Info,
+                                                               Deduced,
+                                                               0);
+
+  // Determine whether PS2 is at least as specialized as PS1
+  Deduced.resize(PS1->getTemplateParameters()->size());
+  bool Better2 = !DeduceTemplateArgumentsDuringPartialOrdering(Context,
+                                                  PS1->getTemplateParameters(),
+                                                  Context.getTypeDeclType(PS1),
+                                                  Context.getTypeDeclType(PS2),
+                                                               Info,
+                                                               Deduced,
+                                                               0);
+  
+  if (Better1 == Better2)
+    return 0;
+  
+  return Better1? PS1 : PS2;
 }
 
 static void
