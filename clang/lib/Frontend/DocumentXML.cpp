@@ -48,7 +48,7 @@ void DocumentXML::Indent() {
 
 //---------------------------------------------------------
 DocumentXML& DocumentXML::toParent() {
-  assert(NodeStack.size() > 1 && "to much backtracking");
+  assert(NodeStack.size() > 1 && "too much backtracking");
 
   if (HasCurrentNodeSubNodes) {
     Indent();
