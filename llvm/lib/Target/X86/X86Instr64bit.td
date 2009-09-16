@@ -1541,6 +1541,14 @@ def ATOMUMAX64: I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
                [(set GR64:$dst, (atomic_load_umax_64 addr:$ptr, GR64:$val))]>;
 }
 
+// Segmentation support instructions
+
+// i16mem operand in LAR64rm and GR32 operand in LAR32rr is not a typo.
+def LAR64rm : RI<0x02, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src), 
+                 "lar{q}\t{$src, $dst|$dst, $src}", []>, TB;
+def LAR64rr : RI<0x02, MRMSrcReg, (outs GR64:$dst), (ins GR32:$src),
+                 "lar{q}\t{$src, $dst|$dst, $src}", []>, TB;
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//

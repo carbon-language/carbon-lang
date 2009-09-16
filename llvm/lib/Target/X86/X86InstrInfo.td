@@ -3672,6 +3672,19 @@ def ATOMSWAP6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                "#ATOMSWAP6432 PSEUDO!", []>;
 }
 
+// Segmentation support instructions.
+
+def LAR16rm : I<0x02, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src), 
+                "lar{w}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
+def LAR16rr : I<0x02, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
+                "lar{w}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
+
+// i16mem operand in LAR32rm and GR32 operand in LAR32rr is not a typo.
+def LAR32rm : I<0x02, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src), 
+                "lar{l}\t{$src, $dst|$dst, $src}", []>, TB;
+def LAR32rr : I<0x02, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
+                "lar{l}\t{$src, $dst|$dst, $src}", []>, TB;
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
