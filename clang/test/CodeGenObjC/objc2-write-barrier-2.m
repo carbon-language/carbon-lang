@@ -14,12 +14,12 @@ id W, *X, **Y;
 
 void func(id a, id *b, id **c) {
    static id w, *x, **y;
-   W = a;  /* { dg-warning "global\\/static variable assignment" } */
-   w = a;  /* { dg-warning "global\\/static variable assignment" } */
-   X = b;  /* { dg-warning "global\\/static variable assignment" } */
-   x = b;  /* { dg-warning "global\\/static variable assignment" } */
-   Y = c;  /* { dg-warning "global\\/static variable assignment" } */
-   y = c;  /* { dg-warning "global\\/static variable assignment" } */
+   W = a;  
+   w = a;
+   X = b;
+   x = b; 
+   Y = c;
+   y = c; 
 }
 
 // Instances
@@ -32,9 +32,9 @@ void func(id a, id *b, id **c) {
 @implementation something
 - (void)amethod {
     id badIdea = *somefunc2();
-    w = badIdea;   /* { dg-warning "instance variable assignment" } */
-    x = &badIdea;  /* { dg-warning "instance variable assignment" } */
-    y = &x;        /* { dg-warning "instance variable assignment" } */
+    w = badIdea;
+    x = &badIdea;
+    y = &x;
 }
 @end
 
@@ -45,8 +45,8 @@ typedef struct {
 
 void funct2(AStruct *aptr) {
     id **ppptr = somefunc();
-    aptr->alfred = 0;  /* { dg-warning "strong\\-cast assignment" } */
-    **ppptr = aptr->alfred;       /* { dg-warning "strong\\-cast assignment" } */
-    *ppptr = somefunc2();         /* { dg-warning "strong\\-cast assignment" } */
+    aptr->alfred = 0;
+    **ppptr = aptr->alfred;
+    *ppptr = somefunc2(); 
 }
 
