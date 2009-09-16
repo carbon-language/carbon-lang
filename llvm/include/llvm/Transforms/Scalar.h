@@ -329,6 +329,11 @@ FunctionPass *createSimplifyHalfPowrLibCallsPass();
 //
 FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
 
+//===----------------------------------------------------------------------===//
+//
+// CodeGenLICM - This pass performs late LICM; hoisting constants out of loops.
+//
+Pass *createCodeGenLICMPass();
   
 //===----------------------------------------------------------------------===//
 //
