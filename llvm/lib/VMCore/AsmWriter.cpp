@@ -678,6 +678,8 @@ void SlotTracker::processFunction() {
   
   ST_DEBUG("Inserting Instructions:\n");
   
+  Metadata &TheMetadata = TheFunction->getContext().getMetadata();
+
   // Add all of the basic blocks and instructions with no names.
   for (Function::const_iterator BB = TheFunction->begin(),
        E = TheFunction->end(); BB != E; ++BB) {
@@ -691,9 +693,17 @@ void SlotTracker::processFunction() {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) 
         if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
           CreateMetadataSlot(N);
+      
+      // Process metadata attached with this instruction.
+      const Metadata::MDMapTy *MDs = TheMetadata.getMDs(I);
+      if (MDs)
+	for (Metadata::MDMapTy::const_iterator MI = MDs->begin(), 
+	       ME = MDs->end(); MI != ME; ++MI)
+	  if (MDNode *MDN = dyn_cast_or_null<MDNode>(MI->second))
+	    CreateMetadataSlot(MDN);
     }
   }
-  
+
   FunctionProcessed = true;
   
   ST_DEBUG("end processFunction!\n");
@@ -1255,6 +1265,7 @@ class AssemblyWriter {
   // Each MDNode is assigned unique MetadataIDNo.
   std::map<const MDNode *, unsigned> MDNodes;
   unsigned MetadataIDNo;
+
 public:
   inline AssemblyWriter(formatted_raw_ostream &o, SlotTracker &Mac,
                         const Module *M,
@@ -1979,6 +1990,11 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << ", align " << cast<StoreInst>(I).getAlignment();
   }
 
+  // Print DebugInfo
+  Metadata &TheMetadata = I.getContext().getMetadata();
+  unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
+  if (const MDNode *Dbg = TheMetadata.getMD(MDDbgKind, &I))
+    Out << ", dbg !" << Machine.getMetadataSlot(Dbg);
   printInfoComment(I);
 }
 

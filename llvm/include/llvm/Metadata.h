@@ -312,9 +312,11 @@ public:
 /// ID values are 1 or higher. This ID is set by RegisterMDKind.
 typedef unsigned MDKindID;
 class Metadata {
-private:
+public:
   typedef std::pair<MDKindID, WeakVH> MDPairTy;
   typedef SmallVector<MDPairTy, 2> MDMapTy;
+
+private:
   typedef DenseMap<const Instruction *, MDMapTy> MDStoreTy;
 
   /// MetadataStore - Collection of metadata used in this context.
@@ -324,7 +326,6 @@ private:
   StringMap<unsigned> MDHandlerNames;
 
 public:
-
   /// RegisterMDKind - Register a new metadata kind and return its ID.
   /// A metadata kind can be registered only once. 
   MDKindID RegisterMDKind(const char *Name);
@@ -336,6 +337,9 @@ public:
   /// getMD - Get the metadata of given kind attached with an Instruction.
   /// If the metadata is not found then return 0.
   MDNode *getMD(MDKindID Kind, const Instruction *Inst);
+
+  /// getMDs - Get the metadata attached with an Instruction.
+  const MDMapTy *getMDs(const Instruction *Inst);
 
   /// setMD - Attach the metadata of given kind with an Instruction.
   void setMD(MDKindID Kind, MDNode *Node, Instruction *Inst);

@@ -308,6 +308,15 @@ MDNode *Metadata::getMD(MDKindID MDKind, const Instruction *Inst) {
   return Node;
 }
 
+/// getMDs - Get the metadata attached with an Instruction.
+const Metadata::MDMapTy *Metadata::getMDs(const Instruction *Inst) {
+  MDStoreTy::iterator I = MetadataStore.find(Inst);
+  if (I == MetadataStore.end())
+    return NULL;
+  
+  return &(I->second);
+}
+
 /// ValueIsDeleted - This handler is used to update metadata store
 /// when a value is deleted.
 void Metadata::ValueIsDeleted(const Instruction *Inst) {
