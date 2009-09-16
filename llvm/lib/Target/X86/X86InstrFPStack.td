@@ -317,10 +317,7 @@ def FICOMP32m: FPI<0xDA, MRM3m, (outs), (ins i32mem:$src), "ficomp{l}\t$src">;
 def FCOM64m  : FPI<0xDC, MRM2m, (outs), (ins f64mem:$src), "fcom\t$src">;
 def FCOMP64m : FPI<0xDC, MRM3m, (outs), (ins f64mem:$src), "fcomp\t$src">;
 
-def FLD64m   : FPI<0xDD, MRM0m, (outs), (ins f64mem:$src), "fld\t$src">;
 def FISTTP32m: FPI<0xDD, MRM1m, (outs i32mem:$dst), (ins), "fisttp{l}\t$dst">;
-def FST64m   : FPI<0xDD, MRM2m, (outs f64mem:$dst), (ins), "fst\t$dst">;
-def FSTP64m  : FPI<0xDD, MRM3m, (outs f64mem:$dst), (ins), "fld\t$dst">;
 def FRSTORm  : FPI<0xDD, MRM4m, (outs f32mem:$dst), (ins), "frstor\t$dst">;
 def FSAVEm   : FPI<0xDD, MRM6m, (outs f32mem:$dst), (ins), "fsave\t$dst">;
 def FSTSWm   : FPI<0xDD, MRM7m, (outs f32mem:$dst), (ins), "fstsw\t$dst">;
@@ -329,9 +326,7 @@ def FICOM16m : FPI<0xDE, MRM2m, (outs), (ins i16mem:$src), "ficom{w}\t$src">;
 def FICOMP16m: FPI<0xDE, MRM3m, (outs), (ins i16mem:$src), "ficomp{w}\t$src">;
 
 def FBLDm    : FPI<0xDF, MRM4m, (outs), (ins f32mem:$src), "fbld\t$src">;
-def FILD64m  : FPI<0xDF, MRM5m, (outs), (ins i64mem:$src), "fild{q}\t$src">;
 def FBSTPm   : FPI<0xDF, MRM6m, (outs f32mem:$dst), (ins), "fbstp\t$dst">;
-def FISTP64m : FPI<0xDF, MRM7m, (outs i64mem:$dst), (ins), "fistp{q}\t$dst">;
 
 // Floating point cmovs.
 multiclass FPCMov<PatLeaf cc> {
