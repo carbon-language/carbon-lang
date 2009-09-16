@@ -509,13 +509,6 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
     }
 }
 
-/// EmitExternalGlobal - Emit the external reference to a global variable.
-/// Should be overridden if an indirect reference should be used.
-void AsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
-  O << Mang->getMangledName(GV);
-}
-
-
 
 //===----------------------------------------------------------------------===//
 /// LEB 128 number encoding.

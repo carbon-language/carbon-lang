@@ -159,10 +159,6 @@ namespace llvm {
     ///
     bool isVerbose() const { return VerboseAsm; }
 
-    /// EmitExternalGlobal - Emit the external reference to a global variable.
-    /// Should be overridden if an indirect reference should be used.
-    virtual void EmitExternalGlobal(const GlobalVariable *GV);
-
     /// getCurrentFunctionEHName - Called to return the CurrentFnEHName.
     /// 
     std::string getCurrentFunctionEHName(const MachineFunction *MF) const;

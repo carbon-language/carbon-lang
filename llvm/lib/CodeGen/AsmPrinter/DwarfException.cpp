@@ -163,7 +163,7 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
     O << MAI->getData32bitsDirective();
     
     O << MAI->getPersonalityPrefix();
-    Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
+    O << Asm->Mang->getMangledName(Personality);
     O << MAI->getPersonalitySuffix();
     
     if (strcmp(MAI->getPersonalitySuffix(), "+4@GOTPCREL"))
