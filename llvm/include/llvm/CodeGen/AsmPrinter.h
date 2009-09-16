@@ -134,11 +134,6 @@ namespace llvm {
     ///
     bool VerboseAsm;
 
-    /// ExuberantAsm - Emit many more comments in assembly output if
-    /// this is true.
-    ///
-    bool ExuberantAsm;
-
     /// Private state for PrintSpecial()
     // Assign a unique ID to this machine instruction.
     mutable const MachineInstr *LastMI;
