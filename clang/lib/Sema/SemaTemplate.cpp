@@ -940,7 +940,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
           = cast<ClassTemplateSpecializationDecl>(Record->getDecl());
         // If the nested name specifier refers to an explicit specialization,
         // we don't need a template<> header.
-        // FIXME: revisit this approach once we cope with specialization
+        // FIXME: revisit this approach once we cope with specializations
         // properly.
         if (SpecDecl->getSpecializationKind() == TSK_ExplicitSpecialization)
           continue;
