@@ -872,8 +872,7 @@ void DwarfException::EmitExceptionTable() {
     PrintRelDirective();
 
     if (GV) {
-      std::string GLN;
-      O << Asm->getGlobalLinkName(GV, GLN);
+      O << Asm->Mang->getMangledName(GV);
     } else {
       O << "0x0";
     }

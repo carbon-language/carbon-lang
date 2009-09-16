@@ -509,20 +509,10 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
     }
 }
 
-/// getGlobalLinkName - Returns the asm/link name of of the specified
-/// global variable.  Should be overridden by each target asm printer to
-/// generate the appropriate value.
-const std::string &AsmPrinter::getGlobalLinkName(const GlobalVariable *GV,
-                                                 std::string &LinkName) const {
-  LinkName += Mang->getMangledName(GV);
-  return LinkName;
-}
-
 /// EmitExternalGlobal - Emit the external reference to a global variable.
 /// Should be overridden if an indirect reference should be used.
 void AsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
-  std::string GLN;
-  O << getGlobalLinkName(GV, GLN);
+  O << Mang->getMangledName(GV);
 }
 
 

@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Mangler.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/System/Path.h"
@@ -1501,9 +1502,8 @@ void DwarfDebug::ConstructGlobalVariableDIE(MDNode *N) {
   // Add address.
   DIEBlock *Block = new DIEBlock();
   AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-  std::string GLN;
   AddObjectLabel(Block, 0, dwarf::DW_FORM_udata,
-                 Asm->getGlobalLinkName(DI_GV.getGlobal(), GLN));
+                 Asm->Mang->getMangledName(DI_GV.getGlobal()));
   AddBlock(VariableDie, dwarf::DW_AT_location, 0, Block);
 
   // Add to map.
