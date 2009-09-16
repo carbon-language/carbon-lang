@@ -83,7 +83,7 @@ void RecursivelyDeleteDeadPHINode(PHINode *PN);
 /// between them, moving the instructions in the predecessor into BB.  This
 /// deletes the predecessor block.
 ///
-void MergeBasicBlockIntoOnlyPred(BasicBlock *BB);
+void MergeBasicBlockIntoOnlyPred(BasicBlock *BB, Pass *P = 0);
     
   
 /// SimplifyCFG - This function is used to do simplification of a CFG.  For
