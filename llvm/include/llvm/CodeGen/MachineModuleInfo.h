@@ -60,7 +60,8 @@ class StructType;
 /// to hold private target-specific information for each Module.  Objects of
 /// type are accessed/created with MMI::getInfo and destroyed when the
 /// MachineModuleInfo is destroyed.
-struct MachineModuleInfoImpl {
+class MachineModuleInfoImpl {
+public:
   virtual ~MachineModuleInfoImpl();
 };
   
