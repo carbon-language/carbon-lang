@@ -133,6 +133,12 @@ const MCSymbolRefExpr *MCSymbolRefExpr::Create(const MCSymbol *Sym,
   return new (Ctx) MCSymbolRefExpr(Sym);
 }
 
+const MCSymbolRefExpr *MCSymbolRefExpr::Create(const StringRef &Name,
+                                               MCContext &Ctx) {
+  return Create(Ctx.GetOrCreateSymbol(Name), Ctx);
+}
+
+
 /* *** */
 
 bool MCExpr::EvaluateAsAbsolute(MCContext &Ctx, int64_t &Res) const {

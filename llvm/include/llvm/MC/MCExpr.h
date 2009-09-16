@@ -19,6 +19,7 @@ class MCContext;
 class MCSymbol;
 class MCValue;
 class raw_ostream;
+class StringRef;
 
 /// MCExpr - Base class for the full range of assembler expressions which are
 /// needed for parsing.
@@ -119,7 +120,10 @@ public:
   /// @{
 
   static const MCSymbolRefExpr *Create(const MCSymbol *Symbol, MCContext &Ctx);
-
+  static const MCSymbolRefExpr *Create(const StringRef &Name, MCContext &Ctx);
+  
+  
+  
   /// @}
   /// @name Accessors
   /// @{
