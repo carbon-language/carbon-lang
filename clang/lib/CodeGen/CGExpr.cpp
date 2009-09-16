@@ -737,8 +737,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     LValue LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
                                  getContext().getObjCGCAttrKind(E->getType()),
                                  E->getType().getAddressSpace());
-    if (LV.isObjCStrong())
-      LV.SetGlobalObjCRef(LV, true);
+    LV.SetGlobalObjCRef(LV, true);
     return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
     llvm::Value* V = CGM.GetAddrOfFunction(FD);
