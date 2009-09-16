@@ -372,6 +372,10 @@ ObjCEnableGC("fobjc-gc",
              llvm::cl::desc("Enable Objective-C garbage collection"));
 
 static llvm::cl::opt<bool>
+ObjCEnableNewGCAPI("fobjc-newgc-api",
+             llvm::cl::desc("Enable Objective-C garbage collection's new API"));
+
+static llvm::cl::opt<bool>
 ObjCEnableGCBitmapPrint("print-ivar-layout",
              llvm::cl::desc("Enable Objective-C Ivar layout bitmap print trace"));
 
@@ -507,6 +511,9 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK){
     Options.setGCMode(LangOptions::GCOnly);
   else if (ObjCEnableGC)
     Options.setGCMode(LangOptions::HybridGC);
+
+  if (ObjCEnableNewGCAPI)
+    Options.ObjCNewGCAPI = 1;
 
   if (ObjCEnableGCBitmapPrint)
     Options.ObjCGCBitmapPrint = 1;

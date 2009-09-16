@@ -694,6 +694,37 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
   Builder.CreateStore(Vec, Dst.getExtVectorAddr(), Dst.isVolatileQualified());
 }
 
+// setObjCGCLValueClass - sets class of he lvalue for the purpose of
+// generating write-barries API. It is currently a global, ivar,
+// or neither.
+static
+void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E, LValue &LV) {
+  if (Ctx.getLangOptions().getGCMode() == LangOptions::NonGC ||
+      !Ctx.getLangOptions().ObjCNewGCAPI)
+    return;
+  
+  if (const DeclRefExpr *Exp = dyn_cast<DeclRefExpr>(E)) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(Exp->getDecl())) {
+      if ((VD->isBlockVarDecl() && !VD->hasLocalStorage()) ||
+          VD->isFileVarDecl())
+        LV.SetGlobalObjCRef(LV, true);
+    }
+  }
+  else if (const UnaryOperator *Exp = dyn_cast<UnaryOperator>(E))
+    setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
+  else if (const ParenExpr *Exp = dyn_cast<ParenExpr>(E))
+    setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
+  else if (const ImplicitCastExpr *Exp = dyn_cast<ImplicitCastExpr>(E))
+    setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
+  else if (const CStyleCastExpr *Exp = dyn_cast<CStyleCastExpr>(E))
+    setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
+  else if (const ArraySubscriptExpr *Exp = dyn_cast<ArraySubscriptExpr>(E))
+    setObjCGCLValueClass(Ctx, Exp->getBase(), LV);
+  else if (const MemberExpr *Exp = dyn_cast<MemberExpr>(E)) {
+    setObjCGCLValueClass(Ctx, Exp->getBase(), LV);
+  }
+}
+
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const VarDecl *VD = dyn_cast<VarDecl>(E->getDecl());
 
@@ -729,6 +760,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
                             E->getType().getAddressSpace());
     }
     LValue::SetObjCNonGC(LV, NonGCable);
+    setObjCGCLValueClass(getContext(), E, LV);
     return LV;
   } else if (VD && VD->isFileVarDecl()) {
     llvm::Value *V = CGM.GetAddrOfGlobalVar(VD);
@@ -737,7 +769,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     LValue LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
                                  getContext().getObjCGCAttrKind(E->getType()),
                                  E->getType().getAddressSpace());
-    LV.SetGlobalObjCRef(LV, true);
+    setObjCGCLValueClass(getContext(), E, LV);
     return LV;
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
     llvm::Value* V = CGM.GetAddrOfFunction(FD);
@@ -937,8 +969,10 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
                                getContext().getObjCGCAttrKind(T),
                                E->getBase()->getType().getAddressSpace());
   if (getContext().getLangOptions().ObjC1 &&
-      getContext().getLangOptions().getGCMode() != LangOptions::NonGC)
+      getContext().getLangOptions().getGCMode() != LangOptions::NonGC) {
     LValue::SetObjCNonGC(LV, !E->isOBJCGCCandidate(getContext()));
+    setObjCGCLValueClass(getContext(), E, LV);
+  }
   return LV;
 }
 
@@ -1042,6 +1076,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
                                        CVRQualifiers);
   LValue::SetObjCIvar(MemExpLV, isIvar);
   LValue::SetObjCNonGC(MemExpLV, isNonGC);
+  setObjCGCLValueClass(getContext(), E, MemExpLV);
   return MemExpLV;
 }
 
