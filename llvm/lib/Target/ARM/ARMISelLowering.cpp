@@ -99,6 +99,14 @@ void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
     AddPromotedToType (ISD::XOR, VT.getSimpleVT(),
                        PromotedBitwiseVT.getSimpleVT());
   }
+
+  // Neon does not support vector divide/remainder operations.
+  setOperationAction(ISD::SDIV, VT.getSimpleVT(), Expand);
+  setOperationAction(ISD::UDIV, VT.getSimpleVT(), Expand);
+  setOperationAction(ISD::FDIV, VT.getSimpleVT(), Expand);
+  setOperationAction(ISD::SREM, VT.getSimpleVT(), Expand);
+  setOperationAction(ISD::UREM, VT.getSimpleVT(), Expand);
+  setOperationAction(ISD::FREM, VT.getSimpleVT(), Expand);
 }
 
 void ARMTargetLowering::addDRTypeForNEON(EVT VT) {
