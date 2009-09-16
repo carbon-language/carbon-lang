@@ -241,7 +241,8 @@ bool X86ATTAsmParser::ParseRegister(X86Operand &Op) {
   getLexer().Lex(); // Eat percent token.
 
   const AsmToken &Tok = getLexer().getTok();
-  assert(TokPercent.is(AsmToken::Identifier) && "Invalid token kind!");
+  if (Tok.isNot(AsmToken::Identifier))
+    return Error(Tok.getLoc(), "invalid register name");
 
   // FIXME: Validate register for the current architecture; we have to do
   // validation later, so maybe there is no need for this here.
