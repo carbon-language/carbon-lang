@@ -4,7 +4,7 @@ static void (*fp0)(void) __attribute__((noreturn));
 
 static void __attribute__((noreturn)) f0(void) {
   fatal();
-} // expected-error {{function declared 'noreturn' should not return}}
+} // expected-warning {{function declared 'noreturn' should not return}}
 
 // On K&R
 int f1() __attribute__((noreturn));

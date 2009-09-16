@@ -2078,7 +2078,8 @@ def warn_noreturn_function_has_return_expr : Warning<
   "function %0 declared 'noreturn' should not return">, DefaultError,
   InGroup<DiagGroup<"invalid-noreturn">>;
 def warn_falloff_noreturn_function : Warning<
-  "function declared 'noreturn' should not return">, DefaultError,
+  "function declared 'noreturn' should not return">,
+   // FIXME: turn back on in 2010 :-): DefaultError,
   InGroup<DiagGroup<"invalid-noreturn">>;
 def err_noreturn_block_has_return_expr : Error<
   "block declared 'noreturn' should not return">;
