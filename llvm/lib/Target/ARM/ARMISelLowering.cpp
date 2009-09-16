@@ -272,6 +272,12 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FNEARBYINT, MVT::v2f64, Expand);
     setOperationAction(ISD::FFLOOR, MVT::v2f64, Expand);
 
+    // Neon does not support some operations on v1i64 and v2i64 types.
+    setOperationAction(ISD::MUL, MVT::v1i64, Expand);
+    setOperationAction(ISD::MUL, MVT::v2i64, Expand);
+    setOperationAction(ISD::VSETCC, MVT::v1i64, Expand);
+    setOperationAction(ISD::VSETCC, MVT::v2i64, Expand);
+
     setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
     setTargetDAGCombine(ISD::SHL);
     setTargetDAGCombine(ISD::SRL);
