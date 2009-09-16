@@ -60,3 +60,7 @@ if(PYTHONINTERP_FOUND)
     DEPENDS clang clang-cc index-test
     COMMENT "Running Clang regression tests")
 endif()  
+
+# Produce LIT site configuration file.
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
