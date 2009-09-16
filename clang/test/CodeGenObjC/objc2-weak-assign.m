@@ -9,6 +9,10 @@ __weak id* a1[20];
 id* __weak a2[30];
 id** __weak a3[40];
 
+void foo (__weak id *param) {
+ *param = 0;
+}
+
 int main()
 {
 	*x = 0;

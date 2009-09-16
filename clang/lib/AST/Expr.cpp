@@ -1117,8 +1117,10 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
       if (VD->hasGlobalStorage())
         return true;
       QualType T = VD->getType();
-      // dereferencing to a pointer is always a gc'able candidate
-      return T->isPointerType();
+      // dereferencing to a  pointer is always a gc'able candidate,
+      // unless it is __weak.
+      return T->isPointerType() && 
+             (Ctx.getObjCGCAttrKind(T) != QualType::Weak);
     }
     return false;
   }
