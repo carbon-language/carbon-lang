@@ -15,6 +15,7 @@
 #include "llvm/Metadata.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
+#include "llvm/Instruction.h"
 #include "SymbolTableListTraitsImpl.h"
 using namespace llvm;
 
@@ -250,4 +251,75 @@ void NamedMDNode::dropAllReferences() {
 
 NamedMDNode::~NamedMDNode() {
   dropAllReferences();
+}
+
+//===----------------------------------------------------------------------===//
+//Metadata implementation
+//
+
+/// RegisterMDKind - Register a new metadata kind and return its ID.
+/// A metadata kind can be registered only once. 
+MDKindID Metadata::RegisterMDKind(const char *Name) {
+  MDKindID Count = MDHandlerNames.size();
+  StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
+  assert(I == MDHandlerNames.end() && "Already registered MDKind!");
+  MDHandlerNames[Name] = Count + 1;
+  return Count + 1;
+}
+
+/// getMDKind - Return metadata kind. If the requested metadata kind
+/// is not registered then return 0.
+MDKindID Metadata::getMDKind(const char *Name) {
+  StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
+  if (I == MDHandlerNames.end())
+    return 0;
+
+  return I->getValue();
+}
+
+/// setMD - Attach the metadata of given kind with an Instruction.
+void Metadata::setMD(MDKindID MDKind, MDNode *Node, Instruction *Inst) {
+  MDStoreTy::iterator I = MetadataStore.find(Inst);
+  Inst->HasMetadata = true;
+  if (I == MetadataStore.end()) {
+    MDMapTy Info;
+    Info.push_back(std::make_pair(MDKind, Node));
+    MetadataStore.insert(std::make_pair(Inst, Info));
+    return;
+  }
+  
+  MDMapTy &Info = I->second;
+  Info.push_back(std::make_pair(MDKind, Node));
+  return;
+}
+
+/// getMD - Get the metadata of given kind attached with an Instruction.
+/// If the metadata is not found then return 0.
+MDNode *Metadata::getMD(MDKindID MDKind, const Instruction *Inst) {
+  MDNode *Node = NULL;
+  MDStoreTy::iterator I = MetadataStore.find(Inst);
+  if (I == MetadataStore.end())
+    return Node;
+  
+  MDMapTy &Info = I->second;
+  for (MDMapTy::iterator I = Info.begin(), E = Info.end(); I != E; ++I)
+    if (I->first == MDKind)
+      Node = dyn_cast_or_null<MDNode>(I->second);
+  return Node;
+}
+
+/// ValueIsDeleted - This handler is used to update metadata store
+/// when a value is deleted.
+void Metadata::ValueIsDeleted(const Instruction *Inst) {
+  // Find Metadata handles for this instruction.
+  MDStoreTy::iterator I = MetadataStore.find(Inst);
+  if (I == MetadataStore.end())
+    return;
+  MDMapTy &Info = I->second;
+  
+  // FIXME : Give all metadata handlers a chance to adjust.
+  
+  // Remove the entries for this instruction.
+  Info.clear();
+  MetadataStore.erase(Inst);
 }

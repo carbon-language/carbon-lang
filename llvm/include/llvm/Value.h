@@ -42,6 +42,7 @@ class raw_ostream;
 class AssemblyAnnotationWriter;
 class ValueHandleBase;
 class LLVMContext;
+class Metadata;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
@@ -63,6 +64,7 @@ class LLVMContext;
 class Value {
   const unsigned char SubclassID;   // Subclass identifier (for isa/dyn_cast)
   unsigned char HasValueHandle : 1; // Has a ValueHandle pointing to this?
+  unsigned char HasMetadata : 1;    // Has a metadata attached to this ?
 protected:
   /// SubclassOptionalData - This member is similar to SubclassData, however it
   /// is for holding information which may be used to aid optimization, but
@@ -81,6 +83,7 @@ private:
   friend class ValueSymbolTable; // Allow ValueSymbolTable to directly mod Name.
   friend class SymbolTable;      // Allow SymbolTable to directly poke Name.
   friend class ValueHandleBase;
+  friend class Metadata;
   friend class AbstractTypeUser;
   ValueName *Name;
 

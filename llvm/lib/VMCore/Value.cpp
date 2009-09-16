@@ -60,6 +60,11 @@ Value::Value(const Type *ty, unsigned scid)
 }
 
 Value::~Value() {
+  if (HasMetadata) {
+    LLVMContext &Context = getContext();
+    Context.pImpl->TheMetadata.ValueIsDeleted(this);
+  }
+    
   // Notify all ValueHandles (if present) that this value is going away.
   if (HasValueHandle)
     ValueHandleBase::ValueIsDeleted(this);

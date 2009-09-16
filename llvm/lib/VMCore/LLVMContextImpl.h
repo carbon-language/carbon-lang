@@ -179,6 +179,7 @@ public:
   typedef DenseMap<Value*, ValueHandleBase*> ValueHandlesTy;
   ValueHandlesTy ValueHandles;
   
+  Metadata TheMetadata;
   LLVMContextImpl(LLVMContext &C) : TheTrueVal(0), TheFalseVal(0),
     VoidTy(C, Type::VoidTyID),
     LabelTy(C, Type::LabelTyID),
