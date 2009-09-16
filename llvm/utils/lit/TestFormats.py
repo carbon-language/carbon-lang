@@ -89,3 +89,56 @@ class ShTest(FileBasedTest):
 class TclTest(FileBasedTest):
     def execute(self, test, litConfig):
         return TestRunner.executeTclTest(test, litConfig)
+
+###
+
+import re
+import tempfile
+
+class SyntaxCheckTest:
+    # FIXME: Refactor into generic test for running some command on a directory
+    # of inputs.
+
+    def __init__(self, compiler, dir, recursive, pattern, extra_cxx_args=[]):
+        self.compiler = str(compiler)
+        self.dir = str(dir)
+        self.recursive = bool(recursive)
+        self.pattern = re.compile(pattern)
+        self.extra_cxx_args = list(extra_cxx_args)
+
+    def getTestsInDirectory(self, testSuite, path_in_suite,
+                            litConfig, localConfig):
+        for dirname,subdirs,filenames in os.walk(self.dir):
+            if not self.recursive:
+                subdirs[:] = []
+
+            for filename in filenames:
+                if (not self.pattern.match(filename) or
+                    filename in localConfig.excludes):
+                    continue
+
+                path = os.path.join(dirname,filename)
+                suffix = path[len(self.dir):]
+                if suffix.startswith(os.sep):
+                    suffix = suffix[1:]
+                test = Test.Test(testSuite,
+                                 path_in_suite + tuple(suffix.split(os.sep)),
+                                 localConfig)
+                # FIXME: Hack?
+                test.source_path = path
+                yield test
+
+    def execute(self, test, litConfig):
+        tmp = tempfile.NamedTemporaryFile(suffix='.cpp')
+        print >>tmp, '#include "%s"' % test.source_path
+        tmp.flush()
+
+        cmd = [self.compiler, '-x', 'c++', '-fsyntax-only', tmp.name]
+        cmd.extend(self.extra_cxx_args)
+        out, err, exitCode = TestRunner.executeCommand(cmd)
+
+        diags = out + err
+        if not exitCode and not diags.strip():
+            return Test.PASS,''
+
+        return Test.FAIL, diags
