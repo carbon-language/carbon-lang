@@ -732,11 +732,9 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
-  const TargetData *TD = TM.getTargetData();
-
   if (!GVar->hasInitializer())
     return;   // External global require no code
-
+  
   // Check to see if this is a special global used by LLVM, if so, emit it.
   if (EmitSpecialLLVMGlobal(GVar)) {
     if (Subtarget->isTargetDarwin() &&
@@ -748,6 +746,8 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     }
     return;
   }
+  
+  const TargetData *TD = TM.getTargetData();
 
   std::string name = Mang->getMangledName(GVar);
   Constant *C = GVar->getInitializer();
