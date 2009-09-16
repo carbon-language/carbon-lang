@@ -138,16 +138,6 @@ public:
   ///  taking a dereference on an undefined value.
   ErrorNodes UndefDeref;
 
-  /// ImplicitBadDivides - Nodes in the ExplodedGraph that result from
-  ///  evaluating a divide or modulo operation where the denominator
-  ///  MAY be zero.
-  ErrorNodes ImplicitBadDivides;
-
-  /// ExplicitBadDivides - Nodes in the ExplodedGraph that result from
-  ///  evaluating a divide or modulo operation where the denominator
-  ///  MUST be zero or undefined.
-  ErrorNodes ExplicitBadDivides;
-
   /// ImplicitBadSizedVLA - Nodes in the ExplodedGraph that result from
   ///  constructing a zero-sized VLA where the size may be zero.
   ErrorNodes ImplicitBadSizedVLA;
@@ -255,14 +245,6 @@ public:
     return N->isSink() && UndefDeref.count(const_cast<ExplodedNode*>(N)) != 0;
   }
 
-  bool isImplicitBadDivide(const ExplodedNode* N) const {
-    return N->isSink() && ImplicitBadDivides.count(const_cast<ExplodedNode*>(N)) != 0;
-  }
-
-  bool isExplicitBadDivide(const ExplodedNode* N) const {
-    return N->isSink() && ExplicitBadDivides.count(const_cast<ExplodedNode*>(N)) != 0;
-  }
-
   bool isNoReturnCall(const ExplodedNode* N) const {
     return N->isSink() && NoReturnCalls.count(const_cast<ExplodedNode*>(N)) != 0;
   }
@@ -333,24 +315,6 @@ public:
   typedef ErrorNodes::iterator undef_deref_iterator;
   undef_deref_iterator undef_derefs_begin() { return UndefDeref.begin(); }
   undef_deref_iterator undef_derefs_end() { return UndefDeref.end(); }
-
-  typedef ErrorNodes::iterator bad_divide_iterator;
-
-  bad_divide_iterator explicit_bad_divides_begin() {
-    return ExplicitBadDivides.begin();
-  }
-
-  bad_divide_iterator explicit_bad_divides_end() {
-    return ExplicitBadDivides.end();
-  }
-
-  bad_divide_iterator implicit_bad_divides_begin() {
-    return ImplicitBadDivides.begin();
-  }
-
-  bad_divide_iterator implicit_bad_divides_end() {
-    return ImplicitBadDivides.end();
-  }
 
   typedef ErrorNodes::iterator undef_result_iterator;
   undef_result_iterator undef_results_begin() { return UndefResults.begin(); }

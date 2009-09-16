@@ -2973,8 +2973,6 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
         GraphPrintCheckerState->isUndefDeref(N) ||
         GraphPrintCheckerState->isUndefStore(N) ||
         GraphPrintCheckerState->isUndefControlFlow(N) ||
-        GraphPrintCheckerState->isExplicitBadDivide(N) ||
-        GraphPrintCheckerState->isImplicitBadDivide(N) ||
         GraphPrintCheckerState->isUndefResult(N) ||
         GraphPrintCheckerState->isBadCall(N) ||
         GraphPrintCheckerState->isUndefArg(N))
@@ -3042,10 +3040,6 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<ExplodedNode*> :
             Out << "\\|Dereference of undefialied value.\\l";
           else if (GraphPrintCheckerState->isUndefStore(N))
             Out << "\\|Store to Undefined Loc.";
-          else if (GraphPrintCheckerState->isExplicitBadDivide(N))
-            Out << "\\|Explicit divide-by zero or undefined value.";
-          else if (GraphPrintCheckerState->isImplicitBadDivide(N))
-            Out << "\\|Implicit divide-by zero or undefined value.";
           else if (GraphPrintCheckerState->isUndefResult(N))
             Out << "\\|Result of operation is undefined.";
           else if (GraphPrintCheckerState->isNoReturnCall(N))
