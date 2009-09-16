@@ -208,15 +208,12 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res) {
     Res = MCUnaryExpr::CreateLNot(Res, getContext());
     return false;
   case AsmToken::String:
-  case AsmToken::Identifier: {
+  case AsmToken::Identifier:
     // This is a label, this should be parsed as part of an expression, to
     // handle things like LFOO+4.
-    MCSymbol *Sym = CreateSymbol(Lexer.getTok().getIdentifier());
-    
-    Res = MCSymbolRefExpr::Create(Sym, getContext());
+    Res = MCSymbolRefExpr::Create(Lexer.getTok().getIdentifier(), getContext());
     Lexer.Lex(); // Eat identifier.
     return false;
-  }
   case AsmToken::Integer:
     Res = MCConstantExpr::Create(Lexer.getTok().getIntVal(), getContext());
     Lexer.Lex(); // Eat token.
