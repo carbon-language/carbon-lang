@@ -1081,6 +1081,8 @@ def CMP64rr : RI<0x39, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
                  "cmp{q}\t{$src2, $src1|$src1, $src2}",
                  [(X86cmp GR64:$src1, GR64:$src2),
                   (implicit EFLAGS)]>;
+def CMP64mrmrr : RI<0x3B, MRMSrcReg, (outs), (ins GR64:$src1, GR64:$src2),
+                    "cmp{q}\t{$src2, $src1|$src1, $src2}", []>;
 def CMP64mr : RI<0x39, MRMDestMem, (outs), (ins i64mem:$src1, GR64:$src2),
                  "cmp{q}\t{$src2, $src1|$src1, $src2}",
                  [(X86cmp (loadi64 addr:$src1), GR64:$src2),
