@@ -39,7 +39,6 @@ unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F,
                                                unsigned char* EndFunction) {
   const TargetMachine& TM = F.getTarget();
   TD = TM.getTargetData();
-  needsIndirectEncoding = TM.getMCAsmInfo()->getNeedsIndirectEncoding();
   stackGrowthDirection = TM.getFrameInfo()->getStackGrowthDirection();
   RI = TM.getRegisterInfo();
   JCE = &jce;
@@ -608,7 +607,6 @@ unsigned JITDwarfEmitter::GetDwarfTableSizeInBytes(MachineFunction& F,
                                          unsigned char* EndFunction) {
   const TargetMachine& TM = F.getTarget();
   TD = TM.getTargetData();
-  needsIndirectEncoding = TM.getMCAsmInfo()->getNeedsIndirectEncoding();
   stackGrowthDirection = TM.getFrameInfo()->getStackGrowthDirection();
   RI = TM.getRegisterInfo();
   JCE = &jce;

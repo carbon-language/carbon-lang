@@ -32,7 +32,6 @@ class JITDwarfEmitter {
   const TargetRegisterInfo* RI;
   MachineModuleInfo* MMI;
   JIT& Jit;
-  bool needsIndirectEncoding;
   bool stackGrowthDirection;
   
   unsigned char* EmitExceptionTable(MachineFunction* MF,
