@@ -694,6 +694,11 @@ let isCall = 1 in
                         "lcall{l}\t{*}$dst", []>;
   }
 
+// Constructing a stack frame.
+
+def ENTER : I<0xC8, RawFrm, (outs), (ins i16imm:$len, i8imm:$lvl),
+              "enter\t$len, $lvl", []>;
+
 // Tail call stuff.
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
