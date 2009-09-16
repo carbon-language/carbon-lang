@@ -55,7 +55,8 @@ public:
   SMLoc getLoc() const;
   
   StringRef LexUntilEndOfStatement();
-  
+
+  bool isAtStartOfComment(char Char);
 
   /// EnterIncludeFile - Enter the specified file. This returns true on failure.
   bool EnterIncludeFile(const std::string &Filename);

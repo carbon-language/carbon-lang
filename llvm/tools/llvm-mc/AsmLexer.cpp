@@ -232,17 +232,21 @@ AsmToken AsmLexer::LexQuote() {
 StringRef AsmLexer::LexUntilEndOfStatement() {
   TokStart = CurPtr;
 
-  while (*CurPtr != ';' &&  // End of statement marker.
+  while (!isAtStartOfComment(*CurPtr) && // Start of line comment.
+	  *CurPtr != ';' &&  // End of statement marker.
          *CurPtr != '\n' &&
          *CurPtr != '\r' &&
          (*CurPtr != 0 || CurPtr != CurBuf->getBufferEnd())) {
-    // check for start of line comment.
-    for (const char *p = MAI.getCommentString(); *p != 0; ++p)
-      if (*CurPtr == *p)
-        break;
     ++CurPtr;
   }
   return StringRef(TokStart, CurPtr-TokStart);
+}
+
+bool AsmLexer::isAtStartOfComment(char Char) {
+  for (const char *p = MAI.getCommentString(); *p != 0; ++p)
+    if (Char == *p)
+        return true;
+  return false;
 }
 
 AsmToken AsmLexer::LexToken() {
@@ -250,9 +254,8 @@ AsmToken AsmLexer::LexToken() {
   // This always consumes at least one character.
   int CurChar = getNextChar();
   
-  for (const char *p = MAI.getCommentString(); *p != 0; ++p)
-    if (CurChar == *p)
-      return LexLineComment();
+  if (isAtStartOfComment(CurChar))
+    return LexLineComment();
 
   switch (CurChar) {
   default:
