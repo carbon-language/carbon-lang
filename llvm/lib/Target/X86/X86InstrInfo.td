@@ -3684,6 +3684,12 @@ def LAR32rm : I<0x02, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
                 "lar{l}\t{$src, $dst|$dst, $src}", []>, TB;
 def LAR32rr : I<0x02, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
                 "lar{l}\t{$src, $dst|$dst, $src}", []>, TB;
+                
+// String manipulation instructions
+
+def LODSB : I<0xAC, RawFrm, (outs), (ins), "lodsb", []>;
+def LODSW : I<0xAD, RawFrm, (outs), (ins), "lodsw", []>, OpSize;
+def LODSD : I<0xAD, RawFrm, (outs), (ins), "lodsd", []>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

@@ -1548,6 +1548,10 @@ def LAR64rm : RI<0x02, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
                  "lar{q}\t{$src, $dst|$dst, $src}", []>, TB;
 def LAR64rr : RI<0x02, MRMSrcReg, (outs GR64:$dst), (ins GR32:$src),
                  "lar{q}\t{$src, $dst|$dst, $src}", []>, TB;
+                 
+// String manipulation instructions
+
+def LODSQ : RI<0xAD, RawFrm, (outs), (ins), "lodsq", []>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
