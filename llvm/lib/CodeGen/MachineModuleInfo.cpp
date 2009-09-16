@@ -39,7 +39,7 @@ MachineModuleInfoImpl::~MachineModuleInfoImpl() {}
 
 MachineModuleInfo::MachineModuleInfo()
 : ImmutablePass(&ID)
-, TargetMMI(0)
+, ObjFileMMI(0)
 , CallsEHReturn(0)
 , CallsUnwindInit(0)
 , DbgInfoAvailable(false) {
@@ -48,7 +48,7 @@ MachineModuleInfo::MachineModuleInfo()
 }
 
 MachineModuleInfo::~MachineModuleInfo() {
-  delete TargetMMI;
+  delete ObjFileMMI;
 }
 
 /// doInitialization - Initialize the state for a new module.

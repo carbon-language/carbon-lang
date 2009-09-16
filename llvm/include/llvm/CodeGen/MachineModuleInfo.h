@@ -91,9 +91,10 @@ struct LandingPadInfo {
 /// schemes and reformated for specific use.
 ///
 class MachineModuleInfo : public ImmutablePass {
-  /// TargetMMI - This is the target-specific implementation of
-  /// MachineModuleInfoImpl, which lets them accumulate whatever info they want.
-  MachineModuleInfoImpl *TargetMMI;
+  /// ObjFileMMI - This is the object-file-format-specific implementation of
+  /// MachineModuleInfoImpl, which lets targets accumulate whatever info they
+  /// want.
+  MachineModuleInfoImpl *ObjFileMMI;
 
   // LabelIDList - One entry per assigned label.  Normally the entry is equal to
   // the list index(+1).  If the entry is zero then the label has been deleted.
@@ -161,18 +162,18 @@ public:
   /// backends that would like to do so.
   ///
   template<typename Ty>
-  Ty *getInfo() {
-    if (TargetMMI == 0)
-      TargetMMI = new Ty(*this);
+  Ty *getObjFileInfo() {
+    if (ObjFileMMI == 0)
+      ObjFileMMI = new Ty(*this);
     
-    assert((void*)dynamic_cast<Ty*>(TargetMMI) == (void*)TargetMMI &&
+    assert((void*)dynamic_cast<Ty*>(ObjFileMMI) == (void*)ObjFileMMI &&
            "Invalid concrete type or multiple inheritence for getInfo");
-    return static_cast<Ty*>(TargetMMI);
+    return static_cast<Ty*>(ObjFileMMI);
   }
   
   template<typename Ty>
-  const Ty *getInfo() const {
-    return const_cast<MachineModuleInfo*>(this)->getInfo<Ty>();
+  const Ty *getObjFileInfo() const {
+    return const_cast<MachineModuleInfo*>(this)->getObjFileInfo<Ty>();
   }
   
   /// AnalyzeModule - Scan the module for global debug information.
