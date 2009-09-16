@@ -187,7 +187,8 @@ const char *clang_getCursorSpelling(CXCursor);
 const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); /* for debug */
 
 /*
- * If CXCursorKind == Cursor_Reference, then this will return the referenced declaration.
+ * If CXCursorKind == Cursor_Reference, then this will return the referenced
+ * declaration.
  * If CXCursorKind == Cursor_Declaration, then this will return the declaration.
  */
 CXDecl clang_getCursorDecl(CXCursor);
