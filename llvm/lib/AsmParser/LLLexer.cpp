@@ -530,6 +530,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(asm);
   KEYWORD(sideeffect);
   KEYWORD(gc);
+  KEYWORD(dbg);
 
   KEYWORD(ccc);
   KEYWORD(fastcc);

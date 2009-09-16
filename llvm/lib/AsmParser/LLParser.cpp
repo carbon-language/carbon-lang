@@ -2624,6 +2624,23 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
     
     if (ParseInstruction(Inst, BB, PFS)) return true;
     
+    // Parse optional debug info
+    if (Lex.getKind() == lltok::comma) {
+      Lex.Lex();
+      if (Lex.getKind() == lltok::kw_dbg) {
+	Lex.Lex();
+	if (Lex.getKind() != lltok::Metadata)
+	  return TokError("Expected '!' here");
+	Lex.Lex();
+	MetadataBase *N = 0;
+	if (ParseMDNode(N)) return true;
+	Metadata &TheMetadata = M->getContext().getMetadata();
+	unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
+	if (!MDDbgKind)
+	  MDDbgKind = TheMetadata.RegisterMDKind("dbg");
+	TheMetadata.setMD(MDDbgKind, cast<MDNode>(N), Inst);
+      }
+    }
     BB->getInstList().push_back(Inst);
 
     // Set the name on the instruction.
