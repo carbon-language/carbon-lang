@@ -10313,8 +10313,8 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
   return CS.getInstruction();
 }
 
-/// FoldPHIArgBinOpIntoPHI - If we have something like phi [add (a,b), add(c,d)]
-/// and if a/b/c/d and the add's all have a single use, turn this into two phi's
+/// FoldPHIArgBinOpIntoPHI - If we have something like phi [add (a,b), add(a,c)]
+/// and if a/b/c and the add's all have a single use, turn this into a phi
 /// and a single binop.
 Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
@@ -10326,8 +10326,7 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   const Type *LHSType = LHSVal->getType();
   const Type *RHSType = RHSVal->getType();
   
-  // Scan to see if all operands are the same opcode, all have one use, and all
-  // kill their operands (i.e. the operands have one use).
+  // Scan to see if all operands are the same opcode, and all have one use.
   for (unsigned i = 1; i != PN.getNumIncomingValues(); ++i) {
     Instruction *I = dyn_cast<Instruction>(PN.getIncomingValue(i));
     if (!I || I->getOpcode() != Opc || !I->hasOneUse() ||
@@ -10347,6 +10346,13 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
     if (I->getOperand(0) != LHSVal) LHSVal = 0;
     if (I->getOperand(1) != RHSVal) RHSVal = 0;
   }
+
+  // If both LHS and RHS would need a PHI, don't do this transformation,
+  // because it would increase the number of PHIs entering the block,
+  // which leads to higher register pressure. This is especially
+  // bad when the PHIs are in the header of a loop.
+  if (!LHSVal && !RHSVal)
+    return 0;
   
   // Otherwise, this is safe to transform!
   
@@ -10403,11 +10409,11 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
   bool AllBasePointersAreAllocas = true;
 
   // We don't want to replace this phi if the replacement would require
-  // more than one phi.
+  // more than one phi, which leads to higher register pressure. This is
+  // especially bad when the PHIs are in the header of a loop.
   bool NeededPhi = false;
   
-  // Scan to see if all operands are the same opcode, all have one use, and all
-  // kill their operands (i.e. the operands have one use).
+  // Scan to see if all operands are the same opcode, and all have one use.
   for (unsigned i = 1; i != PN.getNumIncomingValues(); ++i) {
     GetElementPtrInst *GEP= dyn_cast<GetElementPtrInst>(PN.getIncomingValue(i));
     if (!GEP || !GEP->hasOneUse() || GEP->getType() != FirstInst->getType() ||
