@@ -463,3 +463,19 @@ Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
   Context.getTypeDeclType(Result, PrevDecl);
   return Result;
 }
+
+//===----------------------------------------------------------------------===//
+// FriendTemplateDecl Implementation
+//===----------------------------------------------------------------------===//
+
+FriendTemplateDecl *FriendTemplateDecl::Create(ASTContext &Context,
+                                               DeclContext *DC,
+                                               SourceLocation L,
+                                               unsigned NParams,
+                                               TemplateParameterList **Params,
+                                               FriendUnion Friend,
+                                               SourceLocation FLoc) {
+  FriendTemplateDecl *Result
+    = new (Context) FriendTemplateDecl(DC, L, NParams, Params, Friend, FLoc);
+  return Result;
+}

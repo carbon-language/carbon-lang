@@ -1011,12 +1011,15 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   DeclSpec DS;
   ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class);
 
+  Action::MultiTemplateParamsArg TemplateParams(Actions,
+      TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->data() : 0,
+      TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->size() : 0);
+
   if (Tok.is(tok::semi)) {
     ConsumeToken();
 
     if (DS.isFriendSpecified()) {
-      bool IsTemplate = TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate;
-      Actions.ActOnFriendTypeDecl(CurScope, DS, IsTemplate);
+      Actions.ActOnFriendTypeDecl(CurScope, DS, move(TemplateParams));
     } else
       Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
 
@@ -1118,10 +1121,6 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // NOTE: If Sema is the Action module and declarator is an instance field,
     // this call will *not* return the created decl; It will return null.
     // See Sema::ActOnCXXMemberDeclarator for details.
-
-    Action::MultiTemplateParamsArg TemplateParams(Actions,
-        TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->data() : 0,
-        TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->size() : 0);
 
     DeclPtrTy ThisDecl;
     if (DS.isFriendSpecified()) {

@@ -1227,6 +1227,85 @@ public:
   virtual void Destroy(ASTContext& C);
 };
 
+/// Declaration of a friend template.  For example:
+///
+/// template <typename T> class A {
+///   friend class MyVector<T>; // not a friend template
+///   template <typename U> friend class B; // friend template
+///   template <typename U> friend class Foo<T>::Nested; // friend template
+class FriendTemplateDecl : public Decl {
+public:
+  typedef llvm::PointerUnion<NamedDecl*,Type*> FriendUnion;
+
+private:
+  // The number of template parameters;  always non-zero.
+  unsigned NumParams;
+
+  // The parameter list.
+  TemplateParameterList **Params;
+
+  // The declaration that's a friend of this class.
+  FriendUnion Friend;
+
+  // Location of the 'friend' specifier.
+  SourceLocation FriendLoc;
+
+
+  FriendTemplateDecl(DeclContext *DC, SourceLocation Loc,
+                     unsigned NParams, 
+                     TemplateParameterList **Params,
+                     FriendUnion Friend,
+                     SourceLocation FriendLoc)
+    : Decl(Decl::FriendTemplate, DC, Loc),
+      NumParams(NParams),
+      Params(Params),
+      Friend(Friend),
+      FriendLoc(FriendLoc)
+  {}
+
+public:
+  static FriendTemplateDecl *Create(ASTContext &Context,
+                                    DeclContext *DC, SourceLocation Loc,
+                                    unsigned NParams, 
+                                    TemplateParameterList **Params,
+                                    FriendUnion Friend,
+                                    SourceLocation FriendLoc);
+
+  /// If this friend declaration names a templated type (or
+  /// a dependent member type of a templated type), return that
+  /// type;  otherwise return null.
+  Type *getFriendType() const {
+    return Friend.dyn_cast<Type*>();
+  }
+
+  /// If this friend declaration names a templated function (or
+  /// a member function of a templated type), return that type;
+  /// otherwise return null.
+  NamedDecl *getFriendDecl() const {
+    return Friend.dyn_cast<NamedDecl*>();
+  }
+
+  /// Retrieves the location of the 'friend' keyword.
+  SourceLocation getFriendLoc() const {
+    return FriendLoc;
+  }
+
+  TemplateParameterList *getTemplateParameterList(unsigned i) const {
+    assert(i <= NumParams);
+    return Params[i];
+  }
+
+  unsigned getNumTemplateParameters() const {
+    return NumParams;
+  }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) {
+    return D->getKind() == Decl::FriendTemplate;
+  }
+  static bool classof(const FriendTemplateDecl *D) { return true; }
+};
+
 /// Implementation of inline functions that require the template declarations
 inline AnyFunctionDecl::AnyFunctionDecl(FunctionTemplateDecl *FTD)
   : Function(FTD) { }

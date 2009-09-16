@@ -324,6 +324,8 @@ def err_qualified_friend_not_found : Error<
 def err_introducing_special_friend : Error<
   "must use a qualified name when declaring a %select{constructor|"
   "destructor|conversion operator}0 as a friend">;
+def err_tagless_friend_type_template : Error<
+  "friend type templates must use an elaborated type">;
 
 def err_abstract_type_in_decl : Error<
   "%select{return|parameter|variable|field}0 type %1 is an abstract class">;

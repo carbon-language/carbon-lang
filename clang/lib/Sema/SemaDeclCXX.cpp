@@ -4023,40 +4023,57 @@ Sema::DeclPtrTy Sema::ActOnStaticAssertDeclaration(SourceLocation AssertLoc,
   return DeclPtrTy::make(Decl);
 }
 
+/// Handle a friend type declaration.  This works in tandem with
+/// ActOnTag.
+///
+/// Notes on friend class templates:
+///
+/// We generally treat friend class declarations as if they were
+/// declaring a class.  So, for example, the elaborated type specifier
+/// in a friend declaration is required to obey the restrictions of a
+/// class-head (i.e. no typedefs in the scope chain), template
+/// parameters are required to match up with simple template-ids, &c.
+/// However, unlike when declaring a template specialization, it's
+/// okay to refer to a template specialization without an empty
+/// template parameter declaration, e.g.
+///   friend class A<T>::B<unsigned>;
+/// We permit this as a special case; if there are any template
+/// parameters present at all, require proper matching, i.e.
+///   template <> template <class T> friend class A<int>::B;
 Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
                                           const DeclSpec &DS,
-                                          bool IsTemplate) {
+                                          MultiTemplateParamsArg TempParams) {
   SourceLocation Loc = DS.getSourceRange().getBegin();
 
   assert(DS.isFriendSpecified());
   assert(DS.getStorageClassSpec() == DeclSpec::SCS_unspecified);
 
-  // Handle friend templates specially.
-  if (IsTemplate) {
-    Decl *D;
-    switch (DS.getTypeSpecType()) {
-    default:
-      // FIXME: implement this
-      assert(false && "unelaborated type templates are currently unimplemented!");
-    case DeclSpec::TST_class:
-    case DeclSpec::TST_union:
-    case DeclSpec::TST_struct:
-      D = (Decl*) DS.getTypeRep();
-    }
-
-    ClassTemplateDecl *Temp = cast<ClassTemplateDecl>(D);
-    FriendDecl *FD = FriendDecl::Create(Context, CurContext, Loc, Temp,
-                                        DS.getFriendSpecLoc());
-    FD->setAccess(AS_public);
-    CurContext->addDecl(FD);
-
-    return DeclPtrTy::make(FD);
-  }
-
-  // Try to convert the decl specifier to a type.
+  // Try to convert the decl specifier to a type.  This works for
+  // friend templates because ActOnTag never produces a ClassTemplateDecl
+  // for a TUK_Friend.
   bool invalid = false;
   QualType T = ConvertDeclSpecToType(DS, Loc, invalid);
   if (invalid) return DeclPtrTy();
+
+  // This is definitely an error in C++98.  It's probably meant to
+  // be forbidden in C++0x, too, but the specification is just
+  // poorly written.
+  //
+  // The problem is with declarations like the following:
+  //   template <T> friend A<T>::foo;
+  // where deciding whether a class C is a friend or not now hinges
+  // on whether there exists an instantiation of A that causes
+  // 'foo' to equal C.  There are restrictions on class-heads
+  // (which we declare (by fiat) elaborated friend declarations to
+  // be) that makes this tractable.
+  //
+  // FIXME: handle "template <> friend class A<T>;", which
+  // is possibly well-formed?  Who even knows?
+  if (TempParams.size() && !isa<ElaboratedType>(T)) {
+    Diag(Loc, diag::err_tagless_friend_type_template)
+      << DS.getSourceRange();
+    return DeclPtrTy();
+  }
 
   // C++ [class.friend]p2:
   //   An elaborated-type-specifier shall be used in a friend declaration
@@ -4085,7 +4102,6 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
   }
 
   bool IsDefinition = false;
-  FriendDecl::FriendUnion FU = T.getTypePtr();
 
   // We want to do a few things differently if the type was declared with
   // a tag:  specifically, we want to use the associated RecordDecl as
@@ -4097,10 +4113,8 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
   case DeclSpec::TST_struct:
   case DeclSpec::TST_union:
     CXXRecordDecl *RD = cast_or_null<CXXRecordDecl>((Decl*) DS.getTypeRep());
-    if (RD) {
+    if (RD)
       IsDefinition |= RD->isDefinition();
-      FU = RD;
-    }
     break;
   }
 
@@ -4122,12 +4136,20 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
       if (RT->getDecl()->getDeclContext() == CurContext)
         Diag(DS.getFriendSpecLoc(), diag::ext_friend_inner_class);
 
-  FriendDecl *FD = FriendDecl::Create(Context, CurContext, Loc, FU,
-                                      DS.getFriendSpecLoc());
-  FD->setAccess(AS_public);
-  CurContext->addDecl(FD);
+  Decl *D;
+  if (TempParams.size())
+    D = FriendTemplateDecl::Create(Context, CurContext, Loc,
+                                   TempParams.size(),
+                                 (TemplateParameterList**) TempParams.release(),
+                                   T.getTypePtr(),
+                                   DS.getFriendSpecLoc());
+  else
+    D = FriendDecl::Create(Context, CurContext, Loc, T.getTypePtr(),
+                           DS.getFriendSpecLoc());
+  D->setAccess(AS_public);
+  CurContext->addDecl(D);
 
-  return DeclPtrTy::make(FD);
+  return DeclPtrTy::make(D);
 }
 
 Sema::DeclPtrTy

@@ -2248,7 +2248,8 @@ public:
                                                  ExprArg AssertExpr,
                                                  ExprArg AssertMessageExpr);
 
-  DeclPtrTy ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS, bool IsTemplate);
+  DeclPtrTy ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
+                                MultiTemplateParamsArg TemplateParams);
   DeclPtrTy ActOnFriendFunctionDecl(Scope *S, Declarator &D, bool IsDefinition,
                                     MultiTemplateParamsArg TemplateParams);
 

@@ -127,6 +127,7 @@ DECL(ObjCForwardProtocol, Decl)
 DECL(ObjCClass, Decl)
 DECL(FileScopeAsm, Decl)
 DECL(Friend, Decl)
+DECL(FriendTemplate, Decl)
 DECL(StaticAssert, Decl)
 LAST_DECL(Block, Decl)
 

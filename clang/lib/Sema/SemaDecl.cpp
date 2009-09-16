@@ -3957,7 +3957,11 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           = MatchTemplateParametersToScopeSpecifier(KWLoc, SS,
                         (TemplateParameterList**)TemplateParameterLists.get(),
                                               TemplateParameterLists.size())) {
-      if (TemplateParams->size() > 0) {
+      if (TUK == TUK_Friend) {
+        // When declaring a friend template, we do want to match the
+        // template parameters to the scope specifier, but don't go so far
+        // as to try to declare a new template.
+      } else if (TemplateParams->size() > 0) {
         // This is a declaration or definition of a class template (which may
         // be a member of another template).
         OwnedDecl = false;
