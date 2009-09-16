@@ -660,6 +660,12 @@ def JNO : IBr<0x81, (ins brtarget:$dst), "jno\t$dst",
               [(X86brcond bb:$dst, X86_COND_NO, EFLAGS)]>, TB;
 } // Uses = [EFLAGS]
 
+// Loop instructions
+
+def LOOP   : I<0xE2, RawFrm, (ins brtarget8:$dst), (outs), "loop\t$dst", []>;
+def LOOPE  : I<0xE1, RawFrm, (ins brtarget8:$dst), (outs), "loope\t$dst", []>;
+def LOOPNE : I<0xE0, RawFrm, (ins brtarget8:$dst), (outs), "loopne\t$dst", []>;
+
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
 //
