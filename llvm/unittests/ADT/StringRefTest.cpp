@@ -14,18 +14,29 @@ using namespace llvm;
 
 namespace {
 
+std::ostream &operator<<(std::ostream &OS, const StringRef &S) {
+  OS << S;
+  return OS;
+}
+
+std::ostream &operator<<(std::ostream &OS,
+                         const std::pair<StringRef, StringRef> &P) {
+  OS << "(" << P.first << ", " << P.second << ")";
+  return OS;
+}
+
 TEST(StringRefTest, Construction) {
-  EXPECT_TRUE(StringRef() == "");
-  EXPECT_TRUE(StringRef("hello") == "hello");
-  EXPECT_TRUE(StringRef("hello world", 5) == "hello");
-  EXPECT_TRUE(StringRef(std::string("hello")) == "hello");
+  EXPECT_EQ("", StringRef());
+  EXPECT_EQ("hello", StringRef("hello"));
+  EXPECT_EQ("hello", StringRef("hello world", 5));
+  EXPECT_EQ("hello", StringRef(std::string("hello")));
 }
 
 TEST(StringRefTest, Iteration) {
   StringRef S("hello");
   const char *p = "hello";
   for (const char *it = S.begin(), *ie = S.end(); it != ie; ++it, ++p)
-    EXPECT_TRUE(*p == *it);
+    EXPECT_EQ(*it, *p);
 }
 
 TEST(StringRefTest, StringOps) {
@@ -41,7 +52,7 @@ TEST(StringRefTest, StringOps) {
 }
 
 TEST(StringRefTest, Operators) {
-  EXPECT_TRUE(StringRef() == "");
+  EXPECT_EQ("", StringRef());
   EXPECT_TRUE(StringRef("aab") < StringRef("aad"));
   EXPECT_FALSE(StringRef("aab") < StringRef("aab"));
   EXPECT_TRUE(StringRef("aab") <= StringRef("aab"));
@@ -50,58 +61,95 @@ TEST(StringRefTest, Operators) {
   EXPECT_FALSE(StringRef("aab") > StringRef("aab"));
   EXPECT_TRUE(StringRef("aab") >= StringRef("aab"));
   EXPECT_FALSE(StringRef("aaa") >= StringRef("aab"));
-  EXPECT_TRUE(StringRef("aab") == StringRef("aab"));
+  EXPECT_EQ(StringRef("aab"), StringRef("aab"));
   EXPECT_FALSE(StringRef("aab") == StringRef("aac"));
   EXPECT_FALSE(StringRef("aab") != StringRef("aab"));
   EXPECT_TRUE(StringRef("aab") != StringRef("aac"));
   EXPECT_EQ('a', StringRef("aab")[1]);
 }
 
-TEST(StringRefTest, Utilities) {
+TEST(StringRefTest, Substr) {
   StringRef Str("hello");
-  EXPECT_TRUE(Str.substr(3) == "lo");
-  EXPECT_TRUE(Str.substr(100) == "");
-  EXPECT_TRUE(Str.substr(0, 100) == "hello");
-  EXPECT_TRUE(Str.substr(4, 10) == "o");
+  EXPECT_EQ("lo", Str.substr(3));
+  EXPECT_EQ("", Str.substr(100));
+  EXPECT_EQ("hello", Str.substr(0, 100));
+  EXPECT_EQ("o", Str.substr(4, 10));
+}
 
-  EXPECT_TRUE(Str.slice(2, 3) == "l");
-  EXPECT_TRUE(Str.slice(1, 4) == "ell");
-  EXPECT_TRUE(Str.slice(2, 100) == "llo");
-  EXPECT_TRUE(Str.slice(2, 1) == "");
-  EXPECT_TRUE(Str.slice(10, 20) == "");
+TEST(StringRefTest, Slice) {
+  StringRef Str("hello");
+  EXPECT_EQ("l", Str.slice(2, 3));
+  EXPECT_EQ("ell", Str.slice(1, 4));
+  EXPECT_EQ("llo", Str.slice(2, 100));
+  EXPECT_EQ("", Str.slice(2, 1));
+  EXPECT_EQ("", Str.slice(10, 20));
+}
 
-  EXPECT_TRUE(Str.split('X') == std::make_pair(StringRef("hello"), 
-                                               StringRef("")));
-  EXPECT_TRUE(Str.split('e') == std::make_pair(StringRef("h"), 
-                                               StringRef("llo")));
-  EXPECT_TRUE(Str.split('h') == std::make_pair(StringRef(""), 
-                                               StringRef("ello")));
-  EXPECT_TRUE(Str.split('o') == std::make_pair(StringRef("hell"), 
-                                               StringRef("")));
+TEST(StringRefTest, Split) {
+  StringRef Str("hello");
+  EXPECT_EQ(std::make_pair(StringRef("hello"), StringRef("")),
+            Str.split('X'));
+  EXPECT_EQ(std::make_pair(StringRef("h"), StringRef("llo")),
+            Str.split('e'));
+  EXPECT_EQ(std::make_pair(StringRef(""), StringRef("ello")),
+            Str.split('h'));
+  EXPECT_EQ(std::make_pair(StringRef("he"), StringRef("lo")),
+            Str.split('l'));
+  EXPECT_EQ(std::make_pair(StringRef("hell"), StringRef("")),
+            Str.split('o'));
 
+  EXPECT_EQ(std::make_pair(StringRef("hello"), StringRef("")),
+            Str.rsplit('X'));
+  EXPECT_EQ(std::make_pair(StringRef("h"), StringRef("llo")),
+            Str.rsplit('e'));
+  EXPECT_EQ(std::make_pair(StringRef(""), StringRef("ello")),
+            Str.rsplit('h'));
+  EXPECT_EQ(std::make_pair(StringRef("hel"), StringRef("o")),
+            Str.rsplit('l'));
+  EXPECT_EQ(std::make_pair(StringRef("hell"), StringRef("")),
+            Str.rsplit('o'));
+}
+
+TEST(StringRefTest, StartsWith) {
+  StringRef Str("hello");
   EXPECT_TRUE(Str.startswith("he"));
   EXPECT_FALSE(Str.startswith("helloworld"));
   EXPECT_FALSE(Str.startswith("hi"));
+}
 
+TEST(StringRefTest, Find) {
+  StringRef Str("hello");
+  EXPECT_EQ(2U, Str.find('l'));
+  EXPECT_EQ(StringRef::npos, Str.find('z'));
+  EXPECT_EQ(StringRef::npos, Str.find("helloworld"));
+  EXPECT_EQ(0U, Str.find("hello"));
+  EXPECT_EQ(1U, Str.find("ello"));
+  EXPECT_EQ(StringRef::npos, Str.find("zz"));
+
+  EXPECT_EQ(3U, Str.rfind('l'));
+  EXPECT_EQ(StringRef::npos, Str.rfind('z'));
+  EXPECT_EQ(StringRef::npos, Str.rfind("helloworld"));
+  EXPECT_EQ(0U, Str.rfind("hello"));
+  EXPECT_EQ(1U, Str.rfind("ello"));
+  EXPECT_EQ(StringRef::npos, Str.rfind("zz"));
+}
+
+TEST(StringRefTest, Count) {
+  StringRef Str("hello");
+  EXPECT_EQ(2U, Str.count('l'));
+  EXPECT_EQ(1U, Str.count('o'));
+  EXPECT_EQ(0U, Str.count('z'));
+  EXPECT_EQ(0U, Str.count("helloworld"));
+  EXPECT_EQ(1U, Str.count("hello"));
+  EXPECT_EQ(1U, Str.count("ello"));
+  EXPECT_EQ(0U, Str.count("zz"));
+}
+
+TEST(StringRefTest, Misc) {
   std::string Storage;
   raw_string_ostream OS(Storage);
   OS << StringRef("hello");
   EXPECT_EQ("hello", OS.str());
-
-  EXPECT_TRUE(Str.find('l') == 2);
-  EXPECT_TRUE(Str.find('z') == StringRef::npos);
-  EXPECT_TRUE(Str.find("helloworld") == StringRef::npos);
-  EXPECT_TRUE(Str.find("hello") == 0);
-  EXPECT_TRUE(Str.find("ello") == 1);
-  EXPECT_TRUE(Str.find("zz") == StringRef::npos);
-
-  EXPECT_TRUE(Str.count('l') == 2);
-  EXPECT_TRUE(Str.count('o') == 1);
-  EXPECT_TRUE(Str.count('z') == 0);
-  EXPECT_TRUE(Str.count("helloworld") == 0);
-  EXPECT_TRUE(Str.count("hello") == 1);
-  EXPECT_TRUE(Str.count("ello") == 1);
-  EXPECT_TRUE(Str.count("zz") == 0);
 }
 
 } // end anonymous namespace

@@ -147,7 +147,7 @@ namespace llvm {
     /// @name String Searching
     /// @{
 
-    /// find - Search for the character \arg C in the string.
+    /// find - Search for the first character \arg C in the string.
     ///
     /// \return - The index of the first occurence of \arg C, or npos if not
     /// found.
@@ -158,7 +158,7 @@ namespace llvm {
       return npos;
     }
 
-    /// find - Search for the string \arg Str in the string.
+    /// find - Search for the first string \arg Str in the string.
     ///
     /// \return - The index of the first occurence of \arg Str, or npos if not
     /// found.
@@ -169,6 +169,35 @@ namespace llvm {
       for (size_t i = 0, e = Length - N + 1; i != e; ++i)
         if (substr(i, N).equals(Str))
           return i;
+      return npos;
+    }
+
+    /// rfind - Search for the last character \arg C in the string.
+    ///
+    /// \return - The index of the last occurence of \arg C, or npos if not
+    /// found.
+    size_t rfind(char C) const {
+      for (size_t i = Length, e = 0; i != e;) {
+        --i;
+        if (Data[i] == C)
+          return i;
+      }
+      return npos;
+    }
+
+    /// rfind - Search for the last string \arg Str in the string.
+    ///
+    /// \return - The index of the last occurence of \arg Str, or npos if not
+    /// found.
+    size_t rfind(const StringRef &Str) const {
+      size_t N = Str.size();
+      if (N > Length)
+        return npos;
+      for (size_t i = Length - N + 1, e = 0; i != e;) {
+        --i;
+        if (substr(i, N).equals(Str))
+          return i;
+      }
       return npos;
     }
 
@@ -240,6 +269,23 @@ namespace llvm {
     /// \return - The split substrings.
     std::pair<StringRef, StringRef> split(char Separator) const {
       size_t Idx = find(Separator);
+      if (Idx == npos)
+        return std::make_pair(*this, StringRef());
+      return std::make_pair(slice(0, Idx), slice(Idx+1, npos));
+    }
+
+    /// rsplit - Split into two substrings around the last occurence of a
+    /// separator character.
+    ///
+    /// If \arg Separator is in the string, then the result is a pair (LHS, RHS)
+    /// such that (*this == LHS + Separator + RHS) is true and RHS is
+    /// minimal. If \arg Separator is not in the string, then the result is a
+    /// pair (LHS, RHS) where (*this == LHS) and (RHS == "").
+    ///
+    /// \param Separator - The character to split on.
+    /// \return - The split substrings.
+    std::pair<StringRef, StringRef> rsplit(char Separator) const {
+      size_t Idx = rfind(Separator);
       if (Idx == npos)
         return std::make_pair(*this, StringRef());
       return std::make_pair(slice(0, Idx), slice(Idx+1, npos));
