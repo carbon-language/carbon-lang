@@ -692,7 +692,7 @@ QualType Sema::BuildFunctionType(QualType T,
       Invalid = true;
     }
 
-    ParamTypes[Idx] = ParamType;
+    ParamTypes[Idx] = adjustFunctionParamType(ParamType);
   }
 
   if (Invalid)
@@ -1020,8 +1020,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
           ParmVarDecl *Param = FTI.ArgInfo[i].Param.getAs<ParmVarDecl>();
-          if (Param)
-            ArgTys.push_back(Param->getType());
+          if (Param) {
+            QualType ArgTy = adjustFunctionParamType(Param->getType());
+
+            ArgTys.push_back(ArgTy);
+          }
         }
         SourceTy = Context.getFunctionType(SourceTy, ArgTys.data(),
                                            ArgTys.size(),
@@ -1144,7 +1147,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
             }
           }
 
-          ArgTys.push_back(ArgTy);
+          ArgTys.push_back(adjustFunctionParamType(ArgTy));
         }
 
         llvm::SmallVector<QualType, 4> Exceptions;

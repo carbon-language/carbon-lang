@@ -3605,6 +3605,19 @@ public:
   void DiagnoseMissingMember(SourceLocation MemberLoc, DeclarationName Member,
                              NestedNameSpecifier *NNS, SourceRange Range);
 
+  /// adjustFunctionParamType - Converts the type of a function parameter to a
+  // type that can be passed as an argument type to
+  /// ASTContext::getFunctionType.
+  ///
+  /// C++ [dcl.fct]p3: "...Any cv-qualifier modifying a parameter type is
+  /// deleted. Such cv-qualifiers affect only the definition of the parameter 
+  /// within the body of the function; they do not affect the function type. 
+  QualType adjustFunctionParamType(QualType T) const {
+    if (!Context.getLangOptions().CPlusPlus)
+      return T;
+
+    return T.getUnqualifiedType();
+  }
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
 private:

@@ -1643,6 +1643,12 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
                                      unsigned TypeQuals, bool hasExceptionSpec,
                                      bool hasAnyExceptionSpec, unsigned NumExs,
                                      const QualType *ExArray, bool NoReturn) {
+  if (LangOpts.CPlusPlus) {
+    for (unsigned i = 0; i != NumArgs; ++i)
+      assert(!ArgArray[i].getCVRQualifiers() && 
+             "C++ arguments can't have toplevel CVR qualifiers!");
+  }
+  
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
