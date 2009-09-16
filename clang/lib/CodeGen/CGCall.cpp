@@ -492,7 +492,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       break;
 
     case ABIArgInfo::Indirect:
-      Attributes |= llvm::Attribute::ByVal;
+      if (AI.getIndirectByVal())
+        Attributes |= llvm::Attribute::ByVal;
+
       Attributes |=
         llvm::Attribute::constructAlignmentFromInt(AI.getIndirectAlign());
       // byval disables readnone and readonly.

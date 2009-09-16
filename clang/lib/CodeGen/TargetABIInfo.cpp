@@ -86,6 +86,27 @@ static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays) {
   return true;
 }
 
+/// hasNonTrivialDestructorOrCopyConstructor - Determine if a type has either
+/// a non-trivial destructor or a non-trivial copy constructor.
+static bool hasNonTrivialDestructorOrCopyConstructor(const RecordType *RT) {
+  const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
+  if (!RD)
+    return false;
+  
+  return !RD->hasTrivialDestructor() || !RD->hasTrivialCopyConstructor();
+}
+
+/// isRecordWithNonTrivialDestructorOrCopyConstructor - Determine if a type is
+/// a record type with either a non-trivial destructor or a non-trivial copy
+/// constructor.
+static bool isRecordWithNonTrivialDestructorOrCopyConstructor(QualType T) {
+  const RecordType *RT = T->getAs<RecordType>();
+  if (!RT)
+    return false;
+
+  return hasNonTrivialDestructorOrCopyConstructor(RT);
+}
+
 /// isSingleElementStruct - Determine if a structure is a "single
 /// element struct", i.e. it has exactly one non-empty field or
 /// exactly one field which is itself a single element
@@ -717,6 +738,12 @@ void X86_64ABIInfo::classify(QualType Ty,
     if (Size > 128)
       return;
 
+    // AMD64-ABI 3.2.3p2: Rule 2. If a C++ object has either a non-trivial
+    // copy constructor or a non-trivial destructor, it is passed by invisible
+    // reference.
+    if (hasNonTrivialDestructorOrCopyConstructor(RT))
+      return;
+    
     const RecordDecl *RD = RT->getDecl();
 
     // Assume variable sized types are passed in memory.
@@ -830,8 +857,10 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty,
     return (Ty->isPromotableIntegerType() ?
             ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 
+  bool ByVal = !isRecordWithNonTrivialDestructorOrCopyConstructor(Ty);
+
   // FIXME: Set alignment correctly.
-  return ABIArgInfo::getIndirect(0);
+  return ABIArgInfo::getIndirect(0, ByVal);
 }
 
 ABIArgInfo X86_64ABIInfo::classifyReturnType(QualType RetTy,

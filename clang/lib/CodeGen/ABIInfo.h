@@ -72,11 +72,12 @@ namespace clang {
     Kind TheKind;
     const llvm::Type *TypeData;
     unsigned UIntData;
+    bool BoolData;
 
     ABIArgInfo(Kind K, const llvm::Type *TD=0,
-               unsigned UI=0) : TheKind(K),
-                                TypeData(TD),
-                                UIntData(UI) {}
+               unsigned UI=0, bool B = false) 
+      : TheKind(K), TypeData(TD), UIntData(UI), BoolData(B) {}
+
   public:
     ABIArgInfo() : TheKind(Direct), TypeData(0), UIntData(0) {}
 
@@ -92,8 +93,8 @@ namespace clang {
     static ABIArgInfo getCoerce(const llvm::Type *T) {
       return ABIArgInfo(Coerce, T);
     }
-    static ABIArgInfo getIndirect(unsigned Alignment) {
-      return ABIArgInfo(Indirect, 0, Alignment);
+    static ABIArgInfo getIndirect(unsigned Alignment, bool ByVal = true) {
+      return ABIArgInfo(Indirect, 0, Alignment, ByVal);
     }
     static ABIArgInfo getExpand() {
       return ABIArgInfo(Expand);
@@ -113,12 +114,17 @@ namespace clang {
       return TypeData;
     }
 
-    // ByVal accessors
+    // Indirect accessors
     unsigned getIndirectAlign() const {
       assert(TheKind == Indirect && "Invalid kind!");
       return UIntData;
     }
 
+    bool getIndirectByVal() const {
+      assert(TheKind == Indirect && "Invalid kind!");
+      return BoolData;
+    }
+    
     void dump() const;
   };
 
