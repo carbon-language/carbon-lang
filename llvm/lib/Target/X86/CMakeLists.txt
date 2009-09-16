@@ -26,6 +26,7 @@ set(sources
   X86RegisterInfo.cpp
   X86Subtarget.cpp
   X86TargetMachine.cpp
+  X86TargetObjectFile.cpp
   X86FastISel.cpp
   )
 
