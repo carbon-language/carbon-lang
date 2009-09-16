@@ -17,9 +17,11 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -75,20 +77,22 @@ unsigned DwarfException::SizeOfEncodedValue(unsigned Encoding) {
 /// EmitCIE - Emit a Common Information Entry (CIE). This holds information that
 /// is shared among many Frame Description Entries.  There is at least one CIE
 /// in every non-empty .debug_frame section.
-void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
+void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
   // Size and sign of stack growth.
   int stackGrowth =
     Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
     TargetFrameInfo::StackGrowsUp ?
     TD->getPointerSize() : -TD->getPointerSize();
 
+  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
+  
   // Begin eh frame section.
-  Asm->OutStreamer.SwitchSection(Asm->getObjFileLowering().getEHFrameSection());
+  Asm->OutStreamer.SwitchSection(TLOF.getEHFrameSection());
 
   if (MAI->is_EHSymbolPrivate())
     O << MAI->getPrivateGlobalPrefix();
-
   O << "EH_frame" << Index << ":\n";
+  
   EmitLabel("section_eh_frame", Index);
 
   // Define base labels.
@@ -107,11 +111,22 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
   Asm->EOL("CIE Version");
 
   // The personality presence indicates that language specific information will
-  // show up in the eh frame.
-
-  // FIXME: Don't hardcode these encodings.
+  // show up in the eh frame.  Find out how we are supposed to lower the
+  // personality function reference:
+  const MCExpr *PersonalityRef = 0;
+  bool IsPersonalityIndirect = false, IsPersonalityPCRel = false;
+  if (PersonalityFn) {
+    // FIXME: HANDLE STATIC CODEGEN MODEL HERE.
+    
+    // In non-static mode, ask the object file how to represent this reference.
+    PersonalityRef =
+      TLOF.getSymbolForDwarfGlobalReference(PersonalityFn, Asm->Mang,
+                                            IsPersonalityIndirect,
+                                            IsPersonalityPCRel);
+  }
+  
   unsigned PerEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
-  if (Personality && MAI->getNeedsIndirectEncoding())
+  if (IsPersonalityIndirect)
     PerEncoding |= dwarf::DW_EH_PE_indirect;
   unsigned LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
   unsigned FDEEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
@@ -120,7 +135,7 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
   unsigned AugmentationSize = 0;
   char *APtr = Augmentation + 1;
 
-  if (Personality) {
+  if (PersonalityRef) {
     // There is a personality function.
     *APtr++ = 'P';
     AugmentationSize += 1 + SizeOfEncodedValue(PerEncoding);
@@ -159,15 +174,27 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
   Asm->EOL("Personality", PerEncoding);
 
   // If there is a personality, we need to indicate the function's location.
-  if (Personality) {
+  if (PersonalityRef) {
+    // If the reference to the personality function symbol is not already
+    // pc-relative, then we need to subtract our current address from it.  Do
+    // this by emitting a label and subtracting it from the expression we
+    // already have.  This is equivalent to emitting "foo - .", but we have to
+    // emit the label for "." directly.
+    if (!IsPersonalityPCRel) {
+      SmallString<64> Name;
+      raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
+         << "personalityref_addr" << Asm->getFunctionNumber() << "_" << Index;
+      MCSymbol *DotSym = Asm->OutContext.GetOrCreateSymbol(Name.str());
+      Asm->OutStreamer.EmitLabel(DotSym);
+      
+      PersonalityRef =  
+        MCBinaryExpr::CreateSub(PersonalityRef,
+                                MCSymbolRefExpr::Create(DotSym,Asm->OutContext),
+                                Asm->OutContext);
+    }
+    
     O << MAI->getData32bitsDirective();
-    
-    O << MAI->getPersonalityPrefix();
-    O << Asm->Mang->getMangledName(Personality);
-    O << MAI->getPersonalitySuffix();
-    
-    if (strcmp(MAI->getPersonalitySuffix(), "+4@GOTPCREL"))
-      O << "-" << MAI->getPCSymbol();
+    PersonalityRef->print(O, MAI);
     Asm->EOL("Personality");
 
     Asm->EmitInt8(LSDAEncoding);
@@ -185,8 +212,7 @@ void DwarfException::EmitCIE(const Function *Personality, unsigned Index) {
   // On Darwin the linker honors the alignment of eh_frame, which means it must
   // be 8-byte on 64-bit targets to match what gcc does.  Otherwise you get
   // holes which confuse readers of eh_frame.
-  Asm->EmitAlignment(TD->getPointerSize() == sizeof(int32_t) ? 2 : 3,
-                     0, 0, false);
+  Asm->EmitAlignment(TD->getPointerSize() == 4 ? 2 : 3, 0, 0, false);
   EmitLabel("eh_frame_common_end", Index);
 
   Asm->EOL();

@@ -18,6 +18,7 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/Target/TargetData.h"
@@ -275,6 +276,30 @@ TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
   return DataSection;
 }
 
+/// getSymbolForDwarfGlobalReference - Return an MCExpr to use for a
+/// pc-relative reference to the specified global variable from exception
+/// handling information.  In addition to the symbol, this returns
+/// by-reference:
+///
+/// IsIndirect - True if the returned symbol is actually a stub that contains
+///    the address of the symbol, false if the symbol is the global itself.
+///
+/// IsPCRel - True if the symbol reference is already pc-relative, false if
+///    the caller needs to subtract off the address of the reference from the
+///    symbol.
+///
+const MCExpr *TargetLoweringObjectFile::
+getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                 bool &IsIndirect, bool &IsPCRel) const {
+  // The generic implementation of this just returns a direct reference to the
+  // symbol.
+  IsIndirect = false;
+  IsPCRel    = false;
+  
+  SmallString<128> Name;
+  Mang->getNameWithPrefix(Name, GV, false);
+  return MCSymbolRefExpr::Create(Name.str(), getContext());
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -929,6 +954,19 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
   return true;
 }
 
+const MCExpr *TargetLoweringObjectFileMachO::
+getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                 bool &IsIndirect, bool &IsPCRel) const {
+  // The mach-o version of this method defaults to returning a stub reference.
+  IsIndirect = true;
+  IsPCRel    = false;
+  
+  SmallString<128> Name;
+  Mang->getNameWithPrefix(Name, GV, true);
+  Name += "$non_lazy_ptr";
+  return MCSymbolRefExpr::Create(Name.str(), getContext());
+}
+
 
 //===----------------------------------------------------------------------===//
 //                                  COFF
@@ -1046,3 +1084,4 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
   return getDataSection();
 }
+

@@ -57,14 +57,6 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple) {
   // Leopard and above support aligned common symbols.
   COMMDirectiveTakesAlignment = Triple.getDarwinMajorNumber() >= 9;
 
-  if (is64Bit) {
-    PersonalityPrefix = "";
-    PersonalitySuffix = "+4@GOTPCREL";
-  } else {
-    PersonalityPrefix = "L";
-    PersonalitySuffix = "$non_lazy_ptr";
-  }
-
   CommentString = "##";
   PCSymbol = ".";
 

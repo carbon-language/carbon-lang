@@ -16,6 +16,7 @@
 #include "X86InstrBuilder.h"
 #include "X86ISelLowering.h"
 #include "X86TargetMachine.h"
+#include "X86TargetObjectFile.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -36,7 +37,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -63,6 +63,8 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
   switch (TM.getSubtarget<X86Subtarget>().TargetType) {
   default: llvm_unreachable("unknown subtarget type");
   case X86Subtarget::isDarwin:
+    if (TM.getSubtarget<X86Subtarget>().is64Bit())
+      return new X8664_MachoTargetObjectFile();
     return new TargetLoweringObjectFileMachO();
   case X86Subtarget::isELF:
     return new TargetLoweringObjectFileELF();

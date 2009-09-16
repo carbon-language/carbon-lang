@@ -20,9 +20,8 @@ MCAsmInfoDarwin::MCAsmInfoDarwin() {
   // Syntax:
   GlobalPrefix = "_";
   PrivateGlobalPrefix = "L";
-  LinkerPrivateGlobalPrefix = "l";  // Marker for some ObjC metadata
+  LinkerPrivateGlobalPrefix = "l";
   NeedsSet = true;
-  NeedsIndirectEncoding = true;
   AllowQuotesInName = true;
   HasSingleParameterDotFile = false;
 

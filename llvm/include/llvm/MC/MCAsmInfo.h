@@ -84,17 +84,6 @@ namespace llvm {
     /// is "l" on Darwin, currently used for some ObjC metadata.
     const char *LinkerPrivateGlobalPrefix;   // Defaults to ""
     
-    /// PersonalityPrefix/Suffix - If these are nonempty, these strings will
-    /// enclose any personality function in the common frame section.
-    /// 
-    const char *PersonalityPrefix;           // Defaults to ""
-    const char *PersonalitySuffix;           // Defaults to ""
-
-    /// NeedsIndirectEncoding - If set, we need to set the indirect encoding bit
-    /// for EH in Dwarf.
-    /// 
-    bool NeedsIndirectEncoding;              // Defaults to false
-
     /// InlineAsmStart/End - If these are nonempty, they contain a directive to
     /// emit before and after an inline assembly statement.
     const char *InlineAsmStart;              // Defaults to "#APP\n"
@@ -352,15 +341,6 @@ namespace llvm {
     }
     const char *getLinkerPrivateGlobalPrefix() const {
       return LinkerPrivateGlobalPrefix;
-    }
-    const char *getPersonalityPrefix() const {
-      return PersonalityPrefix;
-    }
-    const char *getPersonalitySuffix() const {
-      return PersonalitySuffix;
-    }
-    bool getNeedsIndirectEncoding() const {
-      return NeedsIndirectEncoding;
     }
     const char *getInlineAsmStart() const {
       return InlineAsmStart;

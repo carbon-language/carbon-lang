@@ -26,6 +26,7 @@ namespace llvm {
   class StringRef;
   class TargetMachine;
   class MCAsmInfo;
+  class MCExpr;
   
 class TargetLoweringObjectFile {
   MCContext *Ctx;
@@ -173,6 +174,22 @@ public:
     return 0;
   }
   
+  /// getSymbolForDwarfGlobalReference - Return an MCExpr to use for a
+  /// pc-relative reference to the specified global variable from exception
+  /// handling information.  In addition to the symbol, this returns
+  /// by-reference:
+  ///
+  /// IsIndirect - True if the returned symbol is actually a stub that contains
+  ///    the address of the symbol, false if the symbol is the global itself.
+  ///
+  /// IsPCRel - True if the symbol reference is already pc-relative, false if
+  ///    the caller needs to subtract off the address of the reference from the
+  ///    symbol.
+  ///
+  virtual const MCExpr *
+  getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                   bool &IsIndirect, bool &IsPCRel) const;
+  
 protected:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
@@ -298,6 +315,12 @@ public:
   const MCSection *getNonLazySymbolPointerSection() const {
     return NonLazySymbolPointerSection;
   }
+  
+  /// getSymbolForDwarfGlobalReference - The mach-o version of this method
+  /// defaults to returning a stub reference.
+  virtual const MCExpr *
+  getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                   bool &IsIndirect, bool &IsPCRel) const;
 };
 
 
