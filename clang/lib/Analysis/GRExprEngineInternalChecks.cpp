@@ -194,8 +194,7 @@ public:
 class VISIBILITY_HIDDEN DivZero : public BuiltinBug {
 public:
   DivZero(GRExprEngine* eng = 0)
-    : BuiltinBug(eng,"Division-by-zero",
-                 "Division by zero or undefined value.") {}
+    : BuiltinBug(eng,"Division by zero") {}
 
   void registerInitialVisitors(BugReporterContext& BRC,
                                const ExplodedNode* N,
@@ -222,24 +221,26 @@ public:
         llvm::SmallString<256> sbuf;
         llvm::raw_svector_ostream OS(sbuf);
         const GRState *ST = N->getState();
-        const Expr *Ex = NULL; 
+        const Expr *Ex = NULL;
+        bool isLeft = true;
 
         if (ST->getSVal(B->getLHS()).isUndef()) {
           Ex = B->getLHS()->IgnoreParenCasts();
-          OS << "The left operand of the '";
+          isLeft = true;
         }
         else if (ST->getSVal(B->getRHS()).isUndef()) {
           Ex = B->getRHS()->IgnoreParenCasts();
-          OS << "The right operand of the '";
+          isLeft = false;
         }
-      
-        if (Ex) {                  
-          OS << BinaryOperator::getOpcodeStr(B->getOpcode())
-             << "' expression is an undefined "
-                "or otherwise garbage value";
+                
+        if (Ex) {
+          OS << "The " << (isLeft ? "left" : "right")
+             << " operand of the '"
+             << BinaryOperator::getOpcodeStr(B->getOpcode())
+             << "' expression is a garbage value";
         }          
         else {
-          // We KNOW that the result was undefined.
+          // Neither operand was undefined, but the result is undefined.
           OS << "The result of the '"
              << BinaryOperator::getOpcodeStr(B->getOpcode())
              << "' expression is undefined";
@@ -268,8 +269,10 @@ public:
     
     if (const BinaryOperator *B = dyn_cast<BinaryOperator>(S)) {
       const GRState *ST = N->getState();
-      X = ST->getSVal(B->getLHS()).isUndef()
-          ? B->getLHS()->IgnoreParenCasts() : B->getRHS()->IgnoreParenCasts();
+      if (ST->getSVal(B->getLHS()).isUndef())
+        X = B->getLHS();
+      else if (ST->getSVal(B->getRHS()).isUndef())
+        X = B->getRHS();
     }
     
     registerTrackNullOrUndefValue(BRC, X, N);
@@ -766,22 +769,11 @@ void CheckBadDiv::PreVisitBinaryOperator(CheckerContext &C,
       !B->getRHS()->getType()->isScalarType())
     return;
 
-  // Check for divide by undefined.
   SVal Denom = C.getState()->getSVal(B->getRHS());
-
-  if (Denom.isUndef()) {
-    if (ExplodedNode *N = C.GenerateNode(B, true)) {
-      if (!BT)
-        BT = new DivZero();
-
-      C.EmitReport(new BuiltinBugReport(*BT, BT->getDescription().c_str(), N));
-    }
-    return;
-  }
-
-  // Handle the case where 'Denom' is UnknownVal.
   const DefinedSVal *DV = dyn_cast<DefinedSVal>(&Denom);
 
+  // Divide-by-undefined handled in the generic checking for uses of
+  // undefined values.
   if (!DV)
     return;
 
