@@ -77,6 +77,12 @@ void ARMTargetLowering::addTypeForNEON(EVT VT, EVT PromotedLdStVT,
     setOperationAction(ISD::VSETCC, VT.getSimpleVT(), Custom);
   if (ElemTy == MVT::i8 || ElemTy == MVT::i16)
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT.getSimpleVT(), Custom);
+  if (ElemTy != MVT::i32) {
+    setOperationAction(ISD::SINT_TO_FP, VT.getSimpleVT(), Expand);
+    setOperationAction(ISD::UINT_TO_FP, VT.getSimpleVT(), Expand);
+    setOperationAction(ISD::FP_TO_SINT, VT.getSimpleVT(), Expand);
+    setOperationAction(ISD::FP_TO_UINT, VT.getSimpleVT(), Expand);
+  }
   setOperationAction(ISD::BUILD_VECTOR, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::VECTOR_SHUFFLE, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::CONCAT_VECTORS, VT.getSimpleVT(), Custom);
