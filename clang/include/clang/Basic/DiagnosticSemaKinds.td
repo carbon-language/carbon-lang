@@ -1518,6 +1518,15 @@ def ext_cast_fn_obj : Extension<
   "cast between pointer-to-function and pointer-to-object is an extension">;
 def err_bad_reinterpret_cast_small_int : Error<
   "cast from pointer to smaller type %2 loses information">;
+def err_bad_cxx_cast_vector_to_scalar_different_size : Error<
+  "%select{||reinterpret_cast||C-style cast|}0 from vector %1 " 
+  "to scalar %2 of different size">;
+def err_bad_cxx_cast_scalar_to_vector_different_size : Error<
+  "%select{||reinterpret_cast||C-style cast|}0 from scalar %1 " 
+  "to vector %2 of different size">;
+def err_bad_cxx_cast_vector_to_vector_different_size : Error<
+  "%select{||reinterpret_cast||C-style cast|}0 from vector %1 " 
+  "to vector %2 of different size">;
 def err_bad_lvalue_to_rvalue_cast : Error<
   "cannot cast from lvalue of type %1 to rvalue reference type %2; types are "
   "not compatible">;

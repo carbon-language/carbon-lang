@@ -956,6 +956,32 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     return TC_Success;
   }
 
+  bool destIsVector = DestType->isVectorType();
+  bool srcIsVector = SrcType->isVectorType();
+  if (srcIsVector || destIsVector) {
+    bool srcIsScalar = SrcType->isIntegralType() && !SrcType->isEnumeralType();
+    bool destIsScalar = 
+      DestType->isIntegralType() && !DestType->isEnumeralType();
+    
+    // Check if this is a cast between a vector and something else.
+    if (!(srcIsScalar && destIsVector) && !(srcIsVector && destIsScalar) &&
+        !(srcIsVector && destIsVector))
+      return TC_NotApplicable;
+
+    // If both types have the same size, we can successfully cast.
+    if (Self.Context.getTypeSize(SrcType) == Self.Context.getTypeSize(DestType))
+      return TC_Success;
+    
+    if (destIsScalar)
+      msg = diag::err_bad_cxx_cast_vector_to_scalar_different_size;
+    else if (srcIsScalar)
+      msg = diag::err_bad_cxx_cast_scalar_to_vector_different_size;
+    else
+      msg = diag::err_bad_cxx_cast_vector_to_vector_different_size;
+    
+    return TC_Failed;
+  }
+  
   bool destIsPtr = DestType->isPointerType();
   bool srcIsPtr = SrcType->isPointerType();
   if (!destIsPtr && !srcIsPtr) {
