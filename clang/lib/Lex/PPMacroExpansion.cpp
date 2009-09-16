@@ -622,9 +622,9 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Result = "??? ??? ?? ??:??:?? ????\n";
     }
     TmpBuffer[0] = '"';
-    strcpy(TmpBuffer+1, Result);
-    unsigned Len = strlen(TmpBuffer);
-    TmpBuffer[Len] = '"';  // Replace the newline with a quote.
+    unsigned Len = strlen(Result);
+    memcpy(TmpBuffer+1, Result, Len-1); // Copy string without the newline.
+    TmpBuffer[Len] = '"';
     Tok.setKind(tok::string_literal);
     CreateString(TmpBuffer, Len+1, Tok, Tok.getLocation());
   } else if (II == Ident__COUNTER__) {
