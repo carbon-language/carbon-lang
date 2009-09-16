@@ -379,9 +379,9 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, LLVMContext &Context,
     return ConstantFoldCompareInstOperands(CI->getPredicate(),
                                            Ops.data(), Ops.size(), 
                                            Context, TD);
-  else
-    return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                    Ops.data(), Ops.size(), Context, TD);
+  
+  return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
+                                  Ops.data(), Ops.size(), Context, TD);
 }
 
 /// ConstantFoldConstantExpression - Attempt to fold the constant expression
@@ -398,9 +398,8 @@ Constant *llvm::ConstantFoldConstantExpression(ConstantExpr *CE,
     return ConstantFoldCompareInstOperands(CE->getPredicate(),
                                            Ops.data(), Ops.size(), 
                                            Context, TD);
-  else 
-    return ConstantFoldInstOperands(CE->getOpcode(), CE->getType(),
-                                    Ops.data(), Ops.size(), Context, TD);
+  return ConstantFoldInstOperands(CE->getOpcode(), CE->getType(),
+                                  Ops.data(), Ops.size(), Context, TD);
 }
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
