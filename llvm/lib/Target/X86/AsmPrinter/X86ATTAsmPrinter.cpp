@@ -31,6 +31,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
@@ -320,7 +321,9 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       Mang->getNameWithPrefix(NameStr, GV, true);
       NameStr += "$non_lazy_ptr";
       MCSymbol *Sym = OutContext.GetOrCreateSymbol(NameStr.str());
-      MCSymbol *&StubSym = GVStubs[Sym];
+      
+      const MCSymbol *&StubSym = 
+        MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(Sym);
       if (StubSym == 0) {
         NameStr.clear();
         Mang->getNameWithPrefix(NameStr, GV, false);
@@ -331,7 +334,8 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       Mang->getNameWithPrefix(NameStr, GV, true);
       NameStr += "$non_lazy_ptr";
       MCSymbol *Sym = OutContext.GetOrCreateSymbol(NameStr.str());
-      MCSymbol *&StubSym = HiddenGVStubs[Sym];
+      const MCSymbol *&StubSym =
+        MMI->getObjFileInfo<MachineModuleInfoMachO>().getHiddenGVStubEntry(Sym);
       if (StubSym == 0) {
         NameStr.clear();
         Mang->getNameWithPrefix(NameStr, GV, false);
@@ -342,7 +346,8 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       Mang->getNameWithPrefix(NameStr, GV, true);
       NameStr += "$stub";
       MCSymbol *Sym = OutContext.GetOrCreateSymbol(NameStr.str());
-      MCSymbol *&StubSym = FnStubs[Sym];
+      const MCSymbol *&StubSym =
+        MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
       if (StubSym == 0) {
         NameStr.clear();
         Mang->getNameWithPrefix(NameStr, GV, false);
@@ -364,7 +369,9 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     std::string Name = Mang->makeNameProper(MO.getSymbolName());
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
       Name += "$stub";
-      MCSymbol *&StubSym = FnStubs[OutContext.GetOrCreateSymbol(Name)];
+      MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name);
+      const MCSymbol *&StubSym =
+        MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
       if (StubSym == 0) {
         Name.erase(Name.end()-5, Name.end());
         StubSym = OutContext.GetOrCreateSymbol(Name);
@@ -872,27 +879,14 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     O << "\t.size\t" << name << ", " << Size << '\n';
 }
 
-static int SortSymbolPair(const void *LHS, const void *RHS) {
-  MCSymbol *LHSS = ((const std::pair<MCSymbol*, MCSymbol*>*)LHS)->first;
-  MCSymbol *RHSS = ((const std::pair<MCSymbol*, MCSymbol*>*)RHS)->first;
-  return LHSS->getName().compare(RHSS->getName());
-}
-
-/// GetSortedStubs - Return the entries from a DenseMap in a deterministic
-/// sorted orer.
-static std::vector<std::pair<MCSymbol*, MCSymbol*> >
-GetSortedStubs(const DenseMap<MCSymbol*, MCSymbol*> &Map) {
-  assert(!Map.empty());
-  std::vector<std::pair<MCSymbol*, MCSymbol*> > List(Map.begin(), Map.end());
-  qsort(&List[0], List.size(), sizeof(List[0]), SortSymbolPair);
-  return List;
-}
-
 bool X86ATTAsmPrinter::doFinalization(Module &M) {
   if (Subtarget->isTargetDarwin()) {
     // All darwin targets use mach-o.
     TargetLoweringObjectFileMachO &TLOFMacho = 
       static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+    
+    MachineModuleInfoMachO &MMIMacho =
+      MMI->getObjFileInfo<MachineModuleInfoMachO>();
     
     // Add the (possibly multiple) personalities to the set of global value
     // stubs.  Only referenced functions get into the Personalities list.
@@ -907,18 +901,18 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
         Name += "$non_lazy_ptr";
         MCSymbol *NLPName = OutContext.GetOrCreateSymbol(Name.str());
 
-        MCSymbol *&StubName = GVStubs[NLPName];
-        if (StubName != 0) continue;
-        
-
+        const MCSymbol *&StubName = MMIMacho.getGVStubEntry(NLPName);
         Name.clear();
         Mang->getNameWithPrefix(Name, Personalities[i], false);
         StubName = OutContext.GetOrCreateSymbol(Name.str());
       }
     }
 
-    // Output stubs for dynamically-linked functions
-    if (!FnStubs.empty()) {
+    // Output stubs for dynamically-linked functions.
+    MachineModuleInfoMachO::SymbolListTy Stubs;
+
+    Stubs = MMIMacho.GetFnStubList();
+    if (!Stubs.empty()) {
       const MCSection *TheSection = 
         TLOFMacho.getMachOSection("__IMPORT", "__jump_table",
                                   MCSectionMachO::S_SYMBOL_STUBS |
@@ -927,8 +921,6 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
                                   5, SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
 
-      std::vector<std::pair<MCSymbol*, MCSymbol*> > Stubs
-        = GetSortedStubs(FnStubs);
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
         Stubs[i].first->print(O, MAI);
         O << ":\n" << "\t.indirect_symbol ";
@@ -937,38 +929,40 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
         O << "\n\thlt ; hlt ; hlt ; hlt ; hlt\n";
       }
       O << '\n';
+      
+      Stubs.clear();
     }
 
     // Output stubs for external and common global variables.
-    if (!GVStubs.empty()) {
+    Stubs = MMIMacho.GetGVStubList();
+    if (!Stubs.empty()) {
       const MCSection *TheSection = 
         TLOFMacho.getMachOSection("__IMPORT", "__pointers",
                                   MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
                                   SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
 
-      std::vector<std::pair<MCSymbol*, MCSymbol*> > Stubs
-        = GetSortedStubs(GVStubs);
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
         Stubs[i].first->print(O, MAI);
         O << ":\n\t.indirect_symbol ";
         Stubs[i].second->print(O, MAI);
         O << "\n\t.long\t0\n";
       }
+      Stubs.clear();
     }
 
-    if (!HiddenGVStubs.empty()) {
+    Stubs = MMIMacho.GetHiddenGVStubList();
+    if (!Stubs.empty()) {
       OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
       EmitAlignment(2);
 
-      std::vector<std::pair<MCSymbol*, MCSymbol*> > Stubs
-        = GetSortedStubs(HiddenGVStubs);
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
         Stubs[i].first->print(O, MAI);
         O << ":\n" << MAI->getData32bitsDirective();
         Stubs[i].second->print(O, MAI);
         O << '\n';
       }
+      Stubs.clear();
     }
 
     // Funny Darwin hack: This flag tells the linker that no global symbols

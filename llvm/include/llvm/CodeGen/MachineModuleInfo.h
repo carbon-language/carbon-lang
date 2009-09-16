@@ -163,17 +163,17 @@ public:
   /// backends that would like to do so.
   ///
   template<typename Ty>
-  Ty *getObjFileInfo() {
+  Ty &getObjFileInfo() {
     if (ObjFileMMI == 0)
       ObjFileMMI = new Ty(*this);
     
     assert((void*)dynamic_cast<Ty*>(ObjFileMMI) == (void*)ObjFileMMI &&
            "Invalid concrete type or multiple inheritence for getInfo");
-    return static_cast<Ty*>(ObjFileMMI);
+    return *static_cast<Ty*>(ObjFileMMI);
   }
   
   template<typename Ty>
-  const Ty *getObjFileInfo() const {
+  const Ty &getObjFileInfo() const {
     return const_cast<MachineModuleInfo*>(this)->getObjFileInfo<Ty>();
   }
   

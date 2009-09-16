@@ -15,6 +15,7 @@
 #include "X86MCInstLower.h"
 #include "X86ATTAsmPrinter.h"
 #include "X86MCAsmInfo.h"
+#include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -27,6 +28,11 @@ using namespace llvm;
 
 const X86Subtarget &X86MCInstLower::getSubtarget() const {
   return AsmPrinter.getSubtarget();
+}
+
+MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
+  assert(getSubtarget().isTargetDarwin() &&"Can only get MachO info on darwin");
+  return AsmPrinter.MMI->getObjFileInfo<MachineModuleInfoMachO>(); 
 }
 
 
@@ -72,7 +78,8 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-    MCSymbol *&StubSym = AsmPrinter.GVStubs[Sym];
+
+    const MCSymbol *&StubSym = getMachOMMI().getGVStubEntry(Sym);
     if (StubSym == 0) {
       Name.clear();
       Mang->getNameWithPrefix(Name, GV, false);
@@ -83,7 +90,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: {
     Name += "$non_lazy_ptr";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-    MCSymbol *&StubSym = AsmPrinter.HiddenGVStubs[Sym];
+    const MCSymbol *&StubSym = getMachOMMI().getHiddenGVStubEntry(Sym);
     if (StubSym == 0) {
       Name.clear();
       Mang->getNameWithPrefix(Name, GV, false);
@@ -94,7 +101,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-    MCSymbol *&StubSym = AsmPrinter.FnStubs[Sym];
+    const MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
     if (StubSym == 0) {
       Name.clear();
       Mang->getNameWithPrefix(Name, GV, false);
@@ -138,7 +145,8 @@ GetExternalSymbolSymbol(const MachineOperand &MO) const {
   case X86II::MO_DARWIN_STUB: {
     Name += "$stub";
     MCSymbol *Sym = Ctx.GetOrCreateSymbol(Name.str());
-    MCSymbol *&StubSym = AsmPrinter.FnStubs[Sym];
+    const MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
+
     if (StubSym == 0) {
       Name.erase(Name.end()-5, Name.end());
       StubSym = Ctx.GetOrCreateSymbol(Name.str());

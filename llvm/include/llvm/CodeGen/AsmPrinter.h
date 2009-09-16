@@ -76,10 +76,11 @@ namespace llvm {
     ///
     MachineLoopInfo *LI;
 
-  protected:
+  public:
     /// MMI - If available, this is a pointer to the current MachineModuleInfo.
     MachineModuleInfo *MMI;
     
+  protected:
     /// DW - If available, this is a pointer to the current dwarf writer.
     DwarfWriter *DW;
 

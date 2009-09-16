@@ -38,18 +38,19 @@ namespace llvm {
     
     virtual void Anchor();  // Out of line virtual method.
   public:
+    MachineModuleInfoMachO(const MachineModuleInfo &) {}
     
     const MCSymbol *&getFnStubEntry(const MCSymbol *Sym) {
       assert(Sym && "Key cannot be null");
       return FnStubs[Sym];
     }
 
-    const MCSymbol *&getGVStubsEntry(const MCSymbol *Sym) {
+    const MCSymbol *&getGVStubEntry(const MCSymbol *Sym) {
       assert(Sym && "Key cannot be null");
       return GVStubs[Sym];
     }
 
-    const MCSymbol *&getHiddenGVStubsEntry(const MCSymbol *Sym) {
+    const MCSymbol *&getHiddenGVStubEntry(const MCSymbol *Sym) {
       assert(Sym && "Key cannot be null");
       return HiddenGVStubs[Sym];
     }

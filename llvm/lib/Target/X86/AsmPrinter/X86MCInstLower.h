@@ -18,6 +18,7 @@ namespace llvm {
   class MCOperand;
   class MCSymbol;
   class MachineInstr;
+  class MachineModuleInfoMachO;
   class MachineOperand;
   class Mangler;
   class X86ATTAsmPrinter;
@@ -43,6 +44,9 @@ public:
   MCSymbol *GetJumpTableSymbol(const MachineOperand &MO) const;
   MCSymbol *GetConstantPoolIndexSymbol(const MachineOperand &MO) const;
   MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;
+  
+private:
+  MachineModuleInfoMachO &getMachOMMI() const;
 };
 
 }
