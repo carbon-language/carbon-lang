@@ -17,6 +17,7 @@
 /// \brief Clang major version
 #define CLANG_VERSION_MAJOR 1
 
+// FIXME: Updates to this file must also update CMakeLists.txt and VER.
 /// \brief Clang minor version
 #define CLANG_VERSION_MINOR 1
 
