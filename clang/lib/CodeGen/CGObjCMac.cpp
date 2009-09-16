@@ -129,7 +129,6 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
 
   LValue LV = LValue::MakeAddr(V, IvarTy.getCVRQualifiers()|CVRQualifiers,
                                CGF.CGM.getContext().getObjCGCAttrKind(IvarTy));
-  LValue::SetObjCIvar(LV, true);
   return LV;
 }
 

@@ -492,17 +492,9 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     // load of a __strong object.
     llvm::Value *LvalueDst = Dst.getAddress();
     llvm::Value *src = Src.getScalarVal();
-#if 0
-    // FIXME: We cannot positively determine if we have an 'ivar' assignment,
-    // object assignment or an unknown assignment. For now, generate call to
-    // objc_assign_strongCast assignment which is a safe, but consevative
-    // assumption.
     if (Dst.isObjCIvar())
       CGM.getObjCRuntime().EmitObjCIvarAssign(*this, src, LvalueDst);
-    else
-      CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
-#endif
-    if (Dst.isGlobalObjCRef())
+    else if (Dst.isGlobalObjCRef())
       CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
     else
       CGM.getObjCRuntime().EmitObjCStrongCastAssign(*this, src, LvalueDst);
@@ -703,6 +695,10 @@ void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E, LValue &LV) {
       !Ctx.getLangOptions().ObjCNewGCAPI)
     return;
   
+  if (isa<ObjCIvarRefExpr>(E)) {
+    LV.SetObjCIvar(LV, true);
+    return;
+  }
   if (const DeclRefExpr *Exp = dyn_cast<DeclRefExpr>(E)) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(Exp->getDecl())) {
       if ((VD->isBlockVarDecl() && !VD->hasLocalStorage()) ||
@@ -1033,7 +1029,6 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   bool isUnion = false;
-  bool isIvar = false;
   bool isNonGC = false;
   Expr *BaseExpr = E->getBase();
   llvm::Value *BaseValue = NULL;
@@ -1057,8 +1052,6 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     CVRQualifiers = BaseExpr->getType().getCVRQualifiers();
   } else {
     LValue BaseLV = EmitLValue(BaseExpr);
-    if (BaseLV.isObjCIvar())
-      isIvar = true;
     if (BaseLV.isNonGC())
       isNonGC = true;
     // FIXME: this isn't right for bitfields.
@@ -1074,7 +1067,6 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   assert(Field && "No code generation for non-field member references");
   LValue MemExpLV = EmitLValueForField(BaseValue, Field, isUnion,
                                        CVRQualifiers);
-  LValue::SetObjCIvar(MemExpLV, isIvar);
   LValue::SetObjCNonGC(MemExpLV, isNonGC);
   setObjCGCLValueClass(getContext(), E, MemExpLV);
   return MemExpLV;
@@ -1425,7 +1417,10 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
     CVRQualifiers = ObjectTy.getCVRQualifiers();
   }
 
-  return EmitLValueForIvar(ObjectTy, BaseValue, E->getDecl(), CVRQualifiers);
+  LValue LV = 
+    EmitLValueForIvar(ObjectTy, BaseValue, E->getDecl(), CVRQualifiers);
+  setObjCGCLValueClass(getContext(), E, LV);
+  return LV;
 }
 
 LValue
