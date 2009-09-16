@@ -16,6 +16,7 @@
 #include "SelectionDAGBuild.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/ANalysis/DebugInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
@@ -370,12 +371,25 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
                                         BasicBlock::iterator Begin,
                                         BasicBlock::iterator End) {
   SDL->setCurrentBasicBlock(BB);
+  Metadata &TheMetadata = LLVMBB->getParent()->getContext().getMetadata();
+  MDKindID MDDbgKind = TheMetadata.getMDKind("dbg");
 
   // Lower all of the non-terminator instructions. If a call is emitted
   // as a tail call, cease emitting nodes for this block.
-  for (BasicBlock::iterator I = Begin; I != End && !SDL->HasTailCall; ++I)
+  for (BasicBlock::iterator I = Begin; I != End && !SDL->HasTailCall; ++I) {
+    if (MDDbgKind) {
+      // Update DebugLoc if debug information is attached with this 
+      // instruction.
+      if (MDNode *Dbg = 
+	  dyn_cast_or_null<MDNode>(TheMetadata.getMD(MDDbgKind, I))) {
+	DILocation DILoc(Dbg);
+	DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
+	SDL->setCurDebugLoc(Loc);
+      }
+    }
     if (!isa<TerminatorInst>(I))
       SDL->visit(*I);
+  }
 
   if (!SDL->HasTailCall) {
     // Ensure that all instructions which are used outside of their defining
@@ -640,6 +654,9 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
 #endif
                                 );
 
+  Metadata &TheMetadata = Fn.getContext().getMetadata();
+  MDKindID MDDbgKind = TheMetadata.getMDKind("dbg");
+
   // Iterate over all basic blocks in the function.
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     BasicBlock *LLVMBB = &*I;
@@ -722,6 +739,18 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
       FastIS->startNewBlock(BB);
       // Do FastISel on as many instructions as possible.
       for (; BI != End; ++BI) {
+	if (MDDbgKind) {
+	  // Update DebugLoc if debug information is attached with this 
+	  // instruction.
+	  if (MDNode *Dbg = 
+	      dyn_cast_or_null<MDNode>(TheMetadata.getMD(MDDbgKind, BI))) {
+	    DILocation DILoc(Dbg);
+	    DebugLoc Loc = ExtractDebugLocation(DILoc,
+						MF.getDebugLocInfo());
+	    FastIS->setCurDebugLoc(Loc);
+	  }
+	}
+
         // Just before the terminator instruction, insert instructions to
         // feed PHI nodes in successor blocks.
         if (isa<TerminatorInst>(BI))
