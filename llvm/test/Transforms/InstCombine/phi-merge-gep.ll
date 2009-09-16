@@ -2,7 +2,8 @@
 ; RUN: grep {= getelementptr} %t | count 20
 ; RUN: grep {= phi} %t | count 13
 
-; Don't push the geps through these phis; they have multiple uses!
+; Don't push the geps through these phis, because they would require
+; two phis each, which burdens the loop with high register pressure.
 
 define void @foo(float* %Ar, float* %Ai, i64 %As, float* %Cr, float* %Ci, i64 %Cs, i64 %n) nounwind {
 entry:
