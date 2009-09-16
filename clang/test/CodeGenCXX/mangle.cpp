@@ -83,5 +83,10 @@ struct S;
 // RUN: grep "_Z1fM1SKFvvE" %t | count 1 &&
 void f(void (S::*)() const) {}
 
-// RUN: grep "_Z1fM1SFvvE" %t | count 1
+// RUN: grep "_Z1fM1SFvvE" %t | count 1 &&
 void f(void (S::*)()) {}
+
+// RUN: grep "_Z1fi" %t | count 1 &&
+void f(const int) { }
+
+// RUN: true
