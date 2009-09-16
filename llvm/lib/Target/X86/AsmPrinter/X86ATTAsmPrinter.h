@@ -63,8 +63,7 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   void printInstructionThroughMCStreamer(const MachineInstr *MI);
 
 
-  // FIXME: REMOVE.
-  virtual void printMCInst(const MCInst *MI);
+  void printMCInst(const MCInst *MI);
 
   void printSymbolOperand(const MachineOperand &MO);
   

@@ -321,12 +321,6 @@ namespace llvm {
     /// EmitComments - Pretty-print comments for basic blocks
     void EmitComments(const MachineBasicBlock &MBB) const;
 
-    /// printMCInst - Print an MCInst for this target.
-    ///
-    /// Note, this is only a temporary hack to allow the MCStreamer to print
-    /// instructions, do not use this function outside of llvm-mc.
-    virtual void printMCInst(const MCInst *MI);
-
     /// GetMBBSymbol - Return the MCSymbol corresponding to the specified basic
     /// block label.
     MCSymbol *GetMBBSymbol(unsigned MBBID) const;
