@@ -1210,6 +1210,29 @@ namespace llvm {
   }
 
   /// ExtractDebugLocation - Extract debug location information 
+  /// from DILocation.
+  DebugLoc ExtractDebugLocation(DILocation &Loc,
+                                DebugLocTracker &DebugLocInfo) {
+    DebugLoc DL;
+    MDNode *Context = Loc.getScope().getNode();
+
+    // If this location is already tracked then use it.
+    DebugLocTuple Tuple(Context, Loc.getLineNumber(),
+			Loc.getColumnNumber());
+    DenseMap<DebugLocTuple, unsigned>::iterator II
+      = DebugLocInfo.DebugIdMap.find(Tuple);
+    if (II != DebugLocInfo.DebugIdMap.end())
+      return DebugLoc::get(II->second);
+
+    // Add a new location entry.
+    unsigned Id = DebugLocInfo.DebugLocations.size();
+    DebugLocInfo.DebugLocations.push_back(Tuple);
+    DebugLocInfo.DebugIdMap[Tuple] = Id;
+    
+    return DebugLoc::get(Id);
+  }
+
+  /// ExtractDebugLocation - Extract debug location information 
   /// from llvm.dbg.func_start intrinsic.
   DebugLoc ExtractDebugLocation(DbgFuncStartInst &FSI,
                                 DebugLocTracker &DebugLocInfo) {

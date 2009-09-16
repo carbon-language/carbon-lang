@@ -670,6 +670,11 @@ namespace llvm {
                                 DebugLocTracker &DebugLocInfo);
 
   /// ExtractDebugLocation - Extract debug location information 
+  /// from DILocation.
+  DebugLoc ExtractDebugLocation(DILocation &Loc,
+                                DebugLocTracker &DebugLocInfo);
+
+  /// ExtractDebugLocation - Extract debug location information 
   /// from llvm.dbg.func_start intrinsic.
   DebugLoc ExtractDebugLocation(DbgFuncStartInst &FSI,
                                 DebugLocTracker &DebugLocInfo);
