@@ -20,6 +20,7 @@
 #include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
+#include "llvm/Metadata.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ConstantFolder.h"
@@ -60,35 +61,38 @@ template<bool preserveNames = true, typename T = ConstantFolder,
 class IRBuilder : public Inserter {
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
+  MDKindID MDKind;
+  MDNode *CurLocation;
   LLVMContext &Context;
   T Folder;
 public:
   IRBuilder(LLVMContext &C, const T &F, const Inserter &I = Inserter())
-    : Inserter(I), Context(C), Folder(F) {
+    : Inserter(I), MDKind(0), CurLocation(0), Context(C), Folder(F) {
     ClearInsertionPoint(); 
   }
   
-  explicit IRBuilder(LLVMContext &C) : Context(C), Folder(C) {
+  explicit IRBuilder(LLVMContext &C) 
+    : MDKind(0), CurLocation(0), Context(C), Folder(C) {
     ClearInsertionPoint();
   }
   
   explicit IRBuilder(BasicBlock *TheBB, const T &F)
-      : Context(TheBB->getContext()), Folder(F) {
+    : MDKind(0), CurLocation(0), Context(TheBB->getContext()), Folder(F) {
     SetInsertPoint(TheBB);
   }
   
   explicit IRBuilder(BasicBlock *TheBB)
-      : Context(TheBB->getContext()), Folder(Context) {
+    : MDKind(0), CurLocation(0), Context(TheBB->getContext()), Folder(Context) {
     SetInsertPoint(TheBB);
   }
   
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F)
-      : Context(TheBB->getContext()), Folder(F) {
+    : MDKind(0), CurLocation(0), Context(TheBB->getContext()), Folder(F) {
     SetInsertPoint(TheBB, IP);
   }
   
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP)
-      : Context(TheBB->getContext()), Folder(Context) {
+    : MDKind(0), CurLocation(0), Context(TheBB->getContext()), Folder(Context) {
     SetInsertPoint(TheBB, IP);
   }
 
@@ -127,10 +131,24 @@ public:
     InsertPt = IP;
   }
 
+  /// SetCurrentLocation - This specifies the location information used
+  /// by debugging information.
+  void SetCurrentLocation(MDNode *L) {
+    if (MDKind == 0) {
+      Context.getMetadata().RegisterMDKind("dbg");
+      MDKind = Context.getMetadata().getMDKind("dbg");
+    }
+    CurLocation = L;
+  }
+
+  MDNode *getCurrentLocation() const { return CurLocation; }
+  
   /// Insert - Insert and return the specified instruction.
   template<typename InstTy>
   InstTy *Insert(InstTy *I, const Twine &Name = "") const {
     this->InsertHelper(I, Name, BB, InsertPt);
+    if (CurLocation)
+      Context.getMetadata().setMD(MDKind, CurLocation, I);
     return I;
   }
 
