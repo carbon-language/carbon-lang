@@ -152,6 +152,11 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
 
   void emitFunctionHeader(const MachineFunction &MF);
 
+  // Necessary for Darwin to print out the appropriate types of linker stubs.
+  DenseMap<MCSymbol*, MCSymbol*> FnStubs;  // Darwin $stub stubs.
+  DenseMap<MCSymbol*, MCSymbol*> GVStubs;  // Darwin $non_lazy_ptr stub.
+  DenseMap<MCSymbol*, MCSymbol*> HiddenGVStubs;  // Darwin $non_lazy_ptr stub.
+
   // Necessary for dllexport support
   StringSet<> CygMingStubs, DLLExportedFns, DLLExportedGVs;
 
