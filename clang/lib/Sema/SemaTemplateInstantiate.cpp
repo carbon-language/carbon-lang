@@ -429,7 +429,7 @@ Decl *TemplateInstantiator::TransformDecl(Decl *D) {
       "Reducing depth of template template parameters is not yet implemented");
   }
 
-  return SemaRef.FindInstantiatedDecl(cast<NamedDecl>(D));
+  return SemaRef.FindInstantiatedDecl(cast<NamedDecl>(D), TemplateArgs);
 }
 
 Decl *TemplateInstantiator::TransformDefinition(Decl *D) {
@@ -533,7 +533,8 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
     if (Arg.getKind() == TemplateArgument::Declaration) {
       ValueDecl *VD = cast<ValueDecl>(Arg.getAsDecl());
 
-      VD = cast_or_null<ValueDecl>(getSema().FindInstantiatedDecl(VD));
+      VD = cast_or_null<ValueDecl>(
+                              getSema().FindInstantiatedDecl(VD, TemplateArgs));
       if (!VD)
         return SemaRef.ExprError();
 
@@ -562,7 +563,7 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
                                               E->getSourceRange().getBegin()));
   }
 
-  NamedDecl *InstD = SemaRef.FindInstantiatedDecl(D);
+  NamedDecl *InstD = SemaRef.FindInstantiatedDecl(D, TemplateArgs);
   if (!InstD)
     return SemaRef.ExprError();
 

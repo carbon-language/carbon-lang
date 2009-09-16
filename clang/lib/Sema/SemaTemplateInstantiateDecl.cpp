@@ -491,7 +491,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
     return 0;
 
   // Build the instantiated method declaration.
-  DeclContext *DC = SemaRef.FindInstantiatedContext(D->getDeclContext());
+  DeclContext *DC = SemaRef.FindInstantiatedContext(D->getDeclContext(),
+                                                    TemplateArgs);
   FunctionDecl *Function =
       FunctionDecl::Create(SemaRef.Context, DC, D->getLocation(),
                            D->getDeclName(), T, D->getDeclaratorInfo(),
@@ -1176,9 +1177,10 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
 
       // Is this an anonymous union?
       if (FieldDecl *UnionInit = Init->getAnonUnionMember())
-        Member = cast<FieldDecl>(FindInstantiatedDecl(UnionInit));
+        Member = cast<FieldDecl>(FindInstantiatedDecl(UnionInit, TemplateArgs));
       else
-        Member = cast<FieldDecl>(FindInstantiatedDecl(Init->getMember()));
+        Member = cast<FieldDecl>(FindInstantiatedDecl(Init->getMember(),
+                                                      TemplateArgs));
 
       NewInit = BuildMemberInitializer(Member, (Expr **)NewArgs.data(),
                                        NewArgs.size(),
@@ -1333,9 +1335,10 @@ static NamedDecl *findInstantiationOf(ASTContext &Ctx,
 /// within the current instantiation.
 ///
 /// \returns NULL if there was an error
-DeclContext *Sema::FindInstantiatedContext(DeclContext* DC) {
+DeclContext *Sema::FindInstantiatedContext(DeclContext* DC,
+                          const MultiLevelTemplateArgumentList &TemplateArgs) {
   if (NamedDecl *D = dyn_cast<NamedDecl>(DC)) {
-    Decl* ID = FindInstantiatedDecl(D);
+    Decl* ID = FindInstantiatedDecl(D, TemplateArgs);
     return cast_or_null<DeclContext>(ID);
   } else return DC;
 }
@@ -1366,7 +1369,8 @@ DeclContext *Sema::FindInstantiatedContext(DeclContext* DC) {
 /// X<T>::<Kind>::KnownValue) to its instantiation
 /// (X<int>::<Kind>::KnownValue). InstantiateCurrentDeclRef() performs
 /// this mapping from within the instantiation of X<int>.
-NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D) {
+NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D,
+                          const MultiLevelTemplateArgumentList &TemplateArgs) {
   if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
     // Transform all of the elements of the overloaded function set.
     OverloadedFunctionDecl *Result
@@ -1376,7 +1380,8 @@ NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D) {
                                                 FEnd = Ovl->function_end();
          F != FEnd; ++F) {
       Result->addOverload(
-                  AnyFunctionDecl::getFromNamedDecl(FindInstantiatedDecl(*F)));
+        AnyFunctionDecl::getFromNamedDecl(FindInstantiatedDecl(*F,
+                                                               TemplateArgs)));
     }
 
     return Result;
@@ -1389,29 +1394,68 @@ NamedDecl *Sema::FindInstantiatedDecl(NamedDecl *D) {
     return cast<NamedDecl>(CurrentInstantiationScope->getInstantiationOf(D));
   }
 
-  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D))
-    if (ClassTemplateDecl *ClassTemplate
-          = Record->getDescribedClassTemplate()) {
-      // When the declaration D was parsed, it referred to the current
-      // instantiation. Therefore, look through the current context,
-      // which contains actual instantiations, to find the
-      // instantiation of the "current instantiation" that D refers
-      // to. Alternatively, we could just instantiate the
-      // injected-class-name with the current template arguments, but
-      // such an instantiation is far more expensive.
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D)) {
+    if (!Record->isDependentContext())
+      return D;
+    
+    // If the RecordDecl is actually the injected-class-name or a "templated"
+    // declaration for a class template or class template partial 
+    // specialization, substitute into the injected-class-name of the
+    // class template or partial specialization to find the new DeclContext.
+    QualType T;
+    ClassTemplateDecl *ClassTemplate = Record->getDescribedClassTemplate();
+    
+    if (ClassTemplate) {
+      T = ClassTemplate->getInjectedClassNameType(Context);
+    } else if (ClassTemplatePartialSpecializationDecl *PartialSpec
+                 = dyn_cast<ClassTemplatePartialSpecializationDecl>(Record)) {
+      T = Context.getTypeDeclType(Record);
+      ClassTemplate = PartialSpec->getSpecializedTemplate();
+    }
+    
+    if (!T.isNull()) {
+      // Substitute into the injected-class-name to get the type corresponding
+      // to the instantiation we want. This substitution should never fail,
+      // since we know we can instantiate the injected-class-name or we wouldn't
+      // have gotten to the injected-class-name!
+      // FIXME: Can we use the CurrentInstantiationScope to avoid this extra
+      // instantiation in the common case?
+      T = SubstType(T, TemplateArgs, SourceLocation(), DeclarationName());
+      assert(!T.isNull() && "Instantiation of injected-class-name cannot fail.");
+    
+      if (!T->isDependentType()) {
+        assert(T->isRecordType() && "Instantiation must produce a record type");
+        return T->getAs<RecordType>()->getDecl();
+      }
+    
+      // We are performing "partial" template instantiation to create the 
+      // member declarations for the members of a class template 
+      // specialization. Therefore, D is actually referring to something in 
+      // the current instantiation. Look through the current context,
+      // which contains actual instantiations, to find the instantiation of 
+      // the "current instantiation" that D refers to.
       for (DeclContext *DC = CurContext; !DC->isFileContext();
            DC = DC->getParent()) {
         if (ClassTemplateSpecializationDecl *Spec
               = dyn_cast<ClassTemplateSpecializationDecl>(DC))
-          if (isInstantiationOf(ClassTemplate, Spec->getSpecializedTemplate()))
+          if (isInstantiationOf(ClassTemplate, 
+                                Spec->getSpecializedTemplate()))
             return Spec;
       }
 
       assert(false &&
              "Unable to find declaration for the current instantiation");
+      return Record;
     }
+    
+    // Fall through to deal with other dependent record types (e.g.,
+    // anonymous unions in class templates).
+  }
 
-  ParentDC = FindInstantiatedContext(ParentDC);
+  if (!ParentDC->isDependentContext())
+    return D;
+  
+  ParentDC = FindInstantiatedContext(ParentDC, TemplateArgs);
   if (!ParentDC)
     return 0;
 

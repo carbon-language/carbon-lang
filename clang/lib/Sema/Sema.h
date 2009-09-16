@@ -3103,8 +3103,10 @@ public:
                                   const CXXConstructorDecl *Tmpl,
                             const MultiLevelTemplateArgumentList &TemplateArgs);
 
-  NamedDecl *FindInstantiatedDecl(NamedDecl *D);
-  DeclContext *FindInstantiatedContext(DeclContext *DC);
+  NamedDecl *FindInstantiatedDecl(NamedDecl *D,
+                          const MultiLevelTemplateArgumentList &TemplateArgs);
+  DeclContext *FindInstantiatedContext(DeclContext *DC,
+                          const MultiLevelTemplateArgumentList &TemplateArgs);
 
   // Objective-C declarations.
   virtual DeclPtrTy ActOnStartClassInterface(SourceLocation AtInterfaceLoc,

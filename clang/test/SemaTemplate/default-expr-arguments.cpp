@@ -68,3 +68,13 @@ void test_x0_not_default_constructible(X0<NotDefaultConstructible> xn) {
   xn.f(42);
   xn.f(); // expected-note{{in instantiation of default function argument}}
 }
+
+template<typename T>
+struct X1 {
+  typedef T value_type;
+  X1(const value_type& value = value_type());
+};
+
+void test_X1() {
+  X1<int> x1;
+}
