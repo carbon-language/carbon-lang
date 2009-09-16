@@ -623,10 +623,17 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--debug-pass=Arguments");
   // FIXME: set --inline-threshhold=50 if (optimize_size || optimize
   // < 3)
-  if (Args.hasFlag(options::OPT_funwind_tables,
-                   options::OPT_fno_unwind_tables,
-                   (getToolChain().IsUnwindTablesDefault() &&
-                    !Args.hasArg(options::OPT_mkernel))))
+
+  // This is a coarse approximation of what llvm-gcc actually does, both
+  // -fasynchronous-unwind-tables and -fnon-call-exceptions interact in more
+  // complicated ways.
+  bool AsynchronousUnwindTables =
+    Args.hasFlag(options::OPT_fasynchronous_unwind_tables,
+                 options::OPT_fno_asynchronous_unwind_tables,
+                 getToolChain().IsUnwindTablesDefault() &&
+                 !Args.hasArg(options::OPT_mkernel));
+  if (Args.hasFlag(options::OPT_funwind_tables, options::OPT_fno_unwind_tables,
+                   AsynchronousUnwindTables))
     CmdArgs.push_back("--unwind-tables=1");
   else
     CmdArgs.push_back("--unwind-tables=0");
