@@ -148,12 +148,20 @@ public:
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const { return TargetType == isELF; }
+  
   bool isTargetWindows() const { return TargetType == isWindows; }
   bool isTargetMingw() const { return TargetType == isMingw; }
+  bool isTargetCygwin() const { return TargetType == isCygwin; }
   bool isTargetCygMing() const {
     return TargetType == isMingw || TargetType == isCygwin;
   }
-  bool isTargetCygwin() const { return TargetType == isCygwin; }
+  
+  /// isTargetCOFF - Return true if this is any COFF/Windows target variant.
+  bool isTargetCOFF() const {
+    return TargetType == isMingw || TargetType == isCygwin ||
+           TargetType == isWindows;
+  }
+  
   bool isTargetWin64() const {
     return Is64Bit && (TargetType == isMingw || TargetType == isWindows);
   }

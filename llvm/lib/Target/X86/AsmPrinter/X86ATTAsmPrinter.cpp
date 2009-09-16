@@ -889,13 +889,6 @@ GetSortedStubs(const DenseMap<MCSymbol*, MCSymbol*> &Map) {
 }
 
 bool X86ATTAsmPrinter::doFinalization(Module &M) {
-  // Print out module-level global variables here.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    if (I->hasDLLExportLinkage())
-      DLLExportedGVs.insert(Mang->getMangledName(I));
-  }
-
   if (Subtarget->isTargetDarwin()) {
     // All darwin targets use mach-o.
     TargetLoweringObjectFileMachO &TLOFMacho = 
@@ -903,7 +896,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     
     // Add the (possibly multiple) personalities to the set of global value
     // stubs.  Only referenced functions get into the Personalities list.
-    if (MAI->doesSupportExceptionHandling() && MMI && !Subtarget->is64Bit()) {
+    if (!Subtarget->is64Bit()) {
       const std::vector<Function*> &Personalities = MMI->getPersonalities();
       for (unsigned i = 0, e = Personalities.size(); i != e; ++i) {
         if (Personalities[i] == 0)
@@ -984,37 +977,46 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
     O << "\t.subsections_via_symbols\n";
-  } else if (Subtarget->isTargetCygMing()) {
-    // Emit type information for external functions
-    for (StringSet<>::iterator i = CygMingStubs.begin(), e = CygMingStubs.end();
-         i != e; ++i) {
-      O << "\t.def\t " << i->getKeyData()
+  }  
+  
+  if (Subtarget->isTargetCOFF()) {
+    for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+         I != E; ++I)
+      if (I->hasDLLExportLinkage())
+        DLLExportedGVs.insert(Mang->getMangledName(I));
+    
+    if (Subtarget->isTargetCygMing()) {
+      // Emit type information for external functions
+      for (StringSet<>::iterator i = CygMingStubs.begin(), e = CygMingStubs.end();
+           i != e; ++i) {
+        O << "\t.def\t " << i->getKeyData()
         << ";\t.scl\t" << COFF::C_EXT
         << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
         << ";\t.endef\n";
+      }
+    }
+  
+    // Output linker support code for dllexported globals on windows.
+    if (!DLLExportedGVs.empty() || !DLLExportedFns.empty()) {
+      // dllexport symbols only exist on coff targets.
+      TargetLoweringObjectFileCOFF &TLOFCOFF = 
+        static_cast<TargetLoweringObjectFileCOFF&>(getObjFileLowering());
+      
+      OutStreamer.SwitchSection(TLOFCOFF.getCOFFSection(".section .drectve",
+                                                        true,
+                                                   SectionKind::getMetadata()));
+    
+      for (StringSet<>::iterator i = DLLExportedGVs.begin(),
+           e = DLLExportedGVs.end(); i != e; ++i)
+        O << "\t.ascii \" -export:" << i->getKeyData() << ",data\"\n";
+    
+      for (StringSet<>::iterator i = DLLExportedFns.begin(),
+           e = DLLExportedFns.end();
+           i != e; ++i)
+        O << "\t.ascii \" -export:" << i->getKeyData() << "\"\n";
     }
   }
-  
-  
-  // Output linker support code for dllexported globals on windows.
-  if (!DLLExportedGVs.empty() || !DLLExportedFns.empty()) {
-    // dllexport symbols only exist on coff targets.
-    TargetLoweringObjectFileCOFF &TLOFMacho = 
-      static_cast<TargetLoweringObjectFileCOFF&>(getObjFileLowering());
-    
-    OutStreamer.SwitchSection(TLOFMacho.getCOFFSection(".section .drectve",true,
-                                                 SectionKind::getMetadata()));
-  
-    for (StringSet<>::iterator i = DLLExportedGVs.begin(),
-         e = DLLExportedGVs.end(); i != e; ++i)
-      O << "\t.ascii \" -export:" << i->getKeyData() << ",data\"\n";
-  
-    for (StringSet<>::iterator i = DLLExportedFns.begin(),
-         e = DLLExportedFns.end();
-         i != e; ++i)
-      O << "\t.ascii \" -export:" << i->getKeyData() << "\"\n";
-  }
-  
+
   // Do common shutdown.
   return AsmPrinter::doFinalization(M);
 }
