@@ -10,8 +10,9 @@
 LEVEL = ../../../..
 include $(LEVEL)/Makefile.common
 
-# FIXME: Get version from a common place.
-HeaderDir := $(PROJ_OBJ_ROOT)/$(BuildMode)/lib/clang/1.1/include
+CLANG_VERSION := $(shell cat $(PROJ_SRC_DIR)/../../VER)
+
+HeaderDir := $(PROJ_OBJ_ROOT)/$(BuildMode)/lib/clang/$(CLANG_VERSION)/include
 
 HEADERS := $(notdir $(wildcard $(PROJ_SRC_DIR)/*.h))
 
@@ -25,7 +26,7 @@ $(OBJHEADERS): $(HeaderDir)/%.h: $(PROJ_SRC_DIR)/%.h $(HeaderDir)/.dir
 # Hook into the standard Makefile rules.
 all-local:: $(OBJHEADERS)
 
-PROJ_headers := $(DESTDIR)$(PROJ_prefix)/lib/clang/1.1/include
+PROJ_headers := $(DESTDIR)$(PROJ_prefix)/lib/clang/$(CLANG_VERSION)/include
 
 INSTHEADERS := $(addprefix $(PROJ_headers)/, $(HEADERS))
 
@@ -37,4 +38,3 @@ $(INSTHEADERS): $(PROJ_headers)/%.h: $(HeaderDir)/%.h | $(PROJ_headers)
 	$(Echo) Installing compiler include file: $(notdir $<)
 
 install-local:: $(INSTHEADERS)
-

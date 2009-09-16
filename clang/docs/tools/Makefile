@@ -21,6 +21,7 @@ SRC_DOC_DIR=
 DST_HTML_DIR=html/
 DST_MAN_DIR=man/man1/
 DST_PS_DIR=ps/
+CLANG_VERSION := trunk
 
 # If we are in BUILD_FOR_WEBSITE mode, default to the all target.
 all:: html man ps
@@ -38,6 +39,8 @@ else
 # Otherwise, if not in BUILD_FOR_WEBSITE mode, use the project info.
 LEVEL := ../../../..
 include $(LEVEL)/Makefile.common
+
+CLANG_VERSION := $(shell cat $(PROJ_SRC_DIR)/../../VER)
 
 SRC_DOC_DIR=$(PROJ_SRC_DIR)/
 DST_HTML_DIR=$(PROJ_OBJ_DIR)/
@@ -66,7 +69,7 @@ $(DST_HTML_DIR)%.html: %.pod $(DST_HTML_DIR)/.dir
 	  --podpath=. --infile=$< --outfile=$@ --title=$*
 
 $(DST_MAN_DIR)%.1: %.pod $(DST_MAN_DIR)/.dir
-	pod2man --release "clang 1.1" --center="Clang Tools Documentation" $< $@
+	pod2man --release "clang $(CLANG_VERSION)" --center="Clang Tools Documentation" $< $@
 
 $(DST_PS_DIR)%.ps: $(DST_MAN_DIR)%.1 $(DST_PS_DIR)/.dir
 	groff -Tps -man $< > $@

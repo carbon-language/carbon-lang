@@ -1,4 +1,5 @@
 # Clang version information
+# FIXME: get from a file called ./VER
 set(CLANG_VERSION 1.1)
 
 macro(add_clang_library name)
