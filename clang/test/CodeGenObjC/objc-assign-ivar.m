@@ -1,5 +1,5 @@
 // RUN: clang-cc -fnext-runtime -fobjc-gc -fobjc-newgc-api -emit-llvm -o %t %s &&
-// RUN: grep -F '@objc_assign_ivar' %t  | count 11 &&
+// RUN: grep -F '@objc_assign_ivar' %t  | count 14 &&
 // RUN: true
 
 typedef struct {
@@ -22,6 +22,9 @@ typedef struct {
   id nsobject;
   NSString *stringArray[10];
   struct_with_ids_t inner;
+
+  Foo *obj[20];
+  short idx[5];
 }
 @end
 
@@ -42,6 +45,10 @@ void testIvars() {
   ASSIGNTEST(foo->inner.elementArray[0], IvarAssigns);                  // objc_assign_ivar
   ASSIGNTEST(foo->inner.cfElement, IvarAssigns);                        // objc_assign_ivar
   ASSIGNTEST(foo->inner.cfElementArray[0], IvarAssigns);                // objc_assign_ivar
-
+  int counter=1;
+  ASSIGNTEST(foo->obj[5], IvarAssigns);                 // objc_assign_ivar
+  ASSIGNTEST(foo->obj[++counter], IvarAssigns);         // objc_assign_ivar
+  foo->idx[++counter] = 15;
+  ASSIGNTEST(foo->obj[foo->idx[2]], IvarAssigns);       // objc_assign_ivar
 }
 
