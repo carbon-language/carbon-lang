@@ -1974,8 +1974,17 @@ def SHL16ri  : Ii8<0xC1, MRM4r, (outs GR16:$dst), (ins GR16:$src1, i8imm:$src2),
 def SHL32ri  : Ii8<0xC1, MRM4r, (outs GR32:$dst), (ins GR32:$src1, i8imm:$src2),
                    "shl{l}\t{$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (shl GR32:$src1, (i8 imm:$src2)))]>;
-// NOTE: We don't use shifts of a register by one, because 'add reg,reg' is
-// cheaper.
+
+// NOTE: We don't include patterns for shifts of a register by one, because
+// 'add reg,reg' is cheaper.
+
+def SHL8r1   : I<0xD0, MRM4r, (outs GR8:$dst), (ins GR8:$src1),
+                 "shl{b}\t$dst", []>;
+def SHL16r1  : I<0xD1, MRM4r, (outs GR16:$dst), (ins GR16:$src1),
+                 "shl{w}\t$dst", []>, OpSize;
+def SHL32r1  : I<0xD1, MRM4r, (outs GR32:$dst), (ins GR32:$src1),
+                 "shl{l}\t$dst", []>;
+
 } // isConvertibleToThreeAddress = 1
 
 let isTwoAddress = 0 in {

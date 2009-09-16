@@ -752,8 +752,10 @@ let isConvertibleToThreeAddress = 1 in   // Can transform into LEA.
 def SHL64ri  : RIi8<0xC1, MRM4r, (outs GR64:$dst), (ins GR64:$src1, i8imm:$src2),
                     "shl{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (shl GR64:$src1, (i8 imm:$src2)))]>;
-// NOTE: We don't use shifts of a register by one, because 'add reg,reg' is
-// cheaper.
+// NOTE: We don't include patterns for shifts of a register by one, because
+// 'add reg,reg' is cheaper.
+def SHL64r1  : RI<0xD1, MRM4r, (outs GR64:$dst), (ins GR64:$src1),
+                 "shr{q}\t$dst", []>;
 } // isTwoAddress
 
 let Uses = [CL] in
