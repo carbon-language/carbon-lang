@@ -38,7 +38,8 @@ MachineModuleInfoMachO::SymbolListTy
 MachineModuleInfoMachO::GetSortedStubs(const DenseMap<const MCSymbol*, 
                                                       const MCSymbol*> &Map) {
   MachineModuleInfoMachO::SymbolListTy List(Map.begin(), Map.end());
-  qsort(&List[0], List.size(), sizeof(List[0]), SortSymbolPair);
+  if (!List.empty())
+    qsort(&List[0], List.size(), sizeof(List[0]), SortSymbolPair);
   return List;
 }
 
