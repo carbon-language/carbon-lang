@@ -34,8 +34,8 @@ static inline unsigned ByteSwap(unsigned Var, bool Really) {
 
 static unsigned AddCounts(unsigned A, unsigned B) {
   // If either value is undefined, use the other.
-  if (A == ~0U) return B;
-  if (B == ~0U) return A;
+  if (A == ProfileInfoLoader::Uncounted) return B;
+  if (B == ProfileInfoLoader::Uncounted) return A;
   return A + B;
 }
 
@@ -64,7 +64,7 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
   // Make sure we have enough space... The space is initialised to -1 to
   // facitiltate the loading of missing values for OptimalEdgeProfiling.
   if (Data.size() < NumEntries)
-    Data.resize(NumEntries, ~0U);
+    Data.resize(NumEntries, ProfileInfoLoader::Uncounted);
 
   // Accumulate the data we just read into the data.
   if (!ShouldByteSwap) {
@@ -77,6 +77,8 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
     }
   }
 }
+
+const unsigned ProfileInfoLoader::Uncounted = ~0U;
 
 // ProfileInfoLoader ctor - Read the specified profiling data file, exiting the
 // program if the file is invalid or broken.

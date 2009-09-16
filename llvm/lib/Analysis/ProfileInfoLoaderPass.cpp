@@ -160,8 +160,13 @@ void LoaderPass::readEdge(ProfileInfo::Edge e,
                           std::vector<unsigned> &ECs) {
   if (ReadCount < ECs.size()) {
     double weight = ECs[ReadCount++];
-    if (weight != ~0U) {
-      EdgeInformation[getFunction(e)][e] += weight;
+    if (weight != ProfileInfoLoader::Uncounted) {
+      // Here the data realm changes from the unsigned of the file to the
+      // double of the ProfileInfo. This conversion is save because we know
+      // that everything thats representable in unsinged is also representable
+      // in double.
+      EdgeInformation[getFunction(e)][e] += (double)weight;
+
       DEBUG(errs() << "--Read Edge Counter for " << e
                    << " (# "<< (ReadCount-1) << "): "
                    << (unsigned)getEdgeWeight(e) << "\n");
@@ -185,9 +190,6 @@ bool LoaderPass::runOnModule(Module &M) {
       DEBUG(errs()<<"Working on "<<F->getNameStr()<<"\n");
       readEdge(getEdge(0,&F->getEntryBlock()), Counters);
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-        // Okay, we have to add a counter of each outgoing edge.  If the
-        // outgoing edge is not critical don't split it, just insert the counter
-        // in the source or destination of the edge.
         TerminatorInst *TI = BB->getTerminator();
         for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s) {
           readEdge(getEdge(BB,TI->getSuccessor(s)), Counters);
@@ -258,7 +260,11 @@ bool LoaderPass::runOnModule(Module &M) {
       if (F->isDeclaration()) continue;
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
         if (ReadCount < Counters.size())
-          BlockInformation[F][BB] = Counters[ReadCount++];
+          // Here the data realm changes from the unsigned of the file to the
+          // double of the ProfileInfo. This conversion is save because we know
+          // that everything thats representable in unsinged is also
+          // representable in double.
+          BlockInformation[F][BB] = (double)Counters[ReadCount++];
     }
     if (ReadCount != Counters.size()) {
       errs() << "WARNING: profile information is inconsistent with "
@@ -273,7 +279,11 @@ bool LoaderPass::runOnModule(Module &M) {
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
       if (F->isDeclaration()) continue;
       if (ReadCount < Counters.size())
-        FunctionInformation[F] = Counters[ReadCount++];
+        // Here the data realm changes from the unsigned of the file to the
+        // double of the ProfileInfo. This conversion is save because we know
+        // that everything thats representable in unsinged is also
+        // representable in double.
+        FunctionInformation[F] = (double)Counters[ReadCount++];
     }
     if (ReadCount != Counters.size()) {
       errs() << "WARNING: profile information is inconsistent with "

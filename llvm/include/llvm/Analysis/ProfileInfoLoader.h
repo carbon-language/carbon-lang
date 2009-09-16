@@ -42,6 +42,8 @@ public:
   ProfileInfoLoader(const char *ToolName, const std::string &Filename,
                     Module &M);
 
+  static const unsigned Uncounted;
+
   unsigned getNumExecutions() const { return CommandLines.size(); }
   const std::string &getExecution(unsigned i) const { return CommandLines[i]; }
 
