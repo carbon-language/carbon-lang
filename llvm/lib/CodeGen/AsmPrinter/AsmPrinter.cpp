@@ -212,21 +212,13 @@ bool AsmPrinter::doFinalization(Module &M) {
   return false;
 }
 
-std::string 
-AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF) const {
-  assert(MF && "No machine function?");
-  return Mang->getMangledName(MF->getFunction(), ".eh",
-                              MAI->is_EHSymbolPrivate());
-}
-
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   // What's my mangled name?
   CurrentFnName = Mang->getMangledName(MF.getFunction());
   IncrementFunctionNumber();
 
-  if (VerboseAsm) {
+  if (VerboseAsm)
     LI = &getAnalysis<MachineLoopInfo>();
-  }
 }
 
 namespace {

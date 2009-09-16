@@ -154,10 +154,6 @@ namespace llvm {
     ///
     bool isVerbose() const { return VerboseAsm; }
 
-    /// getCurrentFunctionEHName - Called to return the CurrentFnEHName.
-    /// 
-    std::string getCurrentFunctionEHName(const MachineFunction *MF) const;
-
     /// getFunctionNumber - Return a unique ID for the current function.
     ///
     unsigned getFunctionNumber() const { return FunctionNumber; }

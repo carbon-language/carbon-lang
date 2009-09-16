@@ -960,9 +960,12 @@ void DwarfException::EndFunction() {
   EmitLabel("eh_func_end", SubprogramCount);
   EmitExceptionTable();
 
+  std::string FunctionEHName =
+    Asm->Mang->getMangledName(MF->getFunction(), ".eh",
+                              Asm->MAI->is_EHSymbolPrivate());
+  
   // Save EH frame information
-  EHFrames.push_back(FunctionEHFrameInfo(getAsm()->getCurrentFunctionEHName(MF),
-                                         SubprogramCount,
+  EHFrames.push_back(FunctionEHFrameInfo(FunctionEHName, SubprogramCount,
                                          MMI->getPersonalityIndex(),
                                          MF->getFrameInfo()->hasCalls(),
                                          !MMI->getLandingPads().empty(),
