@@ -1734,55 +1734,36 @@ static llvm::raw_ostream *ComputeOutFile(const std::string &InFile,
   return Ret;
 }
 
-/// ProcessInputFile - Process a single input file with the specified state.
-///
-static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
-                             const std::string &InFile, ProgActions PA,
-                             const llvm::StringMap<bool> &Features,
-                             llvm::LLVMContext& Context) {
-  llvm::OwningPtr<llvm::raw_ostream> OS;
-  llvm::OwningPtr<ASTConsumer> Consumer;
-  bool ClearSourceMgr = false;
-  FixItRewriter *FixItRewrite = 0;
-  bool CompleteTranslationUnit = true;
-  llvm::sys::Path OutPath;
-
+static ASTConsumer *CreateConsumerAction(Preprocessor &PP,
+                                         const std::string &InFile,
+                                         ProgActions PA,
+                                         llvm::OwningPtr<llvm::raw_ostream> &OS,
+                                         llvm::sys::Path &OutPath,
+                                         const llvm::StringMap<bool> &Features,
+                                         llvm::LLVMContext& Context) {
   switch (PA) {
   default:
-    fprintf(stderr, "Unexpected program action!\n");
-    HadErrors = true;
-    return;
+    return 0;
 
   case ASTPrint:
     OS.reset(ComputeOutFile(InFile, 0, false, OutPath));
-    Consumer.reset(CreateASTPrinter(OS.get()));
-    break;
+    return CreateASTPrinter(OS.get());
 
   case ASTPrintXML:
     OS.reset(ComputeOutFile(InFile, "xml", false, OutPath));
-    Consumer.reset(CreateASTPrinterXML(OS.get()));
-    break;
+    return CreateASTPrinterXML(OS.get());
 
   case ASTDump:
-    Consumer.reset(CreateASTDumper());
-    break;
+    return CreateASTDumper();
 
   case ASTView:
-    Consumer.reset(CreateASTViewer());
-    break;
+    return CreateASTViewer();
 
   case PrintDeclContext:
-    Consumer.reset(CreateDeclContextPrinter());
-    break;
-
-  case EmitHTML:
-    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
-    Consumer.reset(CreateHTMLPrinter(OS.get(), PP.getDiagnostics(), &PP, &PPF));
-    break;
+    return CreateDeclContextPrinter();
 
   case InheritanceView:
-    Consumer.reset(CreateInheritanceViewer(InheritanceViewCls));
-    break;
+    return CreateInheritanceViewer(InheritanceViewCls);
 
   case EmitAssembly:
   case EmitLLVM:
@@ -1804,11 +1785,57 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
 
     CompileOptions Opts;
     InitializeCompileOptions(Opts, PP.getLangOptions(), Features);
-    Consumer.reset(CreateBackendConsumer(Act, PP.getDiagnostics(),
-                                         PP.getLangOptions(), Opts, InFile,
-                                         OS.get(), Context));
-    break;
+    return CreateBackendConsumer(Act, PP.getDiagnostics(), PP.getLangOptions(),
+                                 Opts, InFile, OS.get(), Context);
   }
+
+  case RewriteObjC:
+    OS.reset(ComputeOutFile(InFile, "cpp", true, OutPath));
+    return CreateObjCRewriter(InFile, OS.get(), PP.getDiagnostics(),
+                              PP.getLangOptions(), SilenceRewriteMacroWarning);
+
+  case RewriteBlocks:
+    return CreateBlockRewriter(InFile, PP.getDiagnostics(),
+                               PP.getLangOptions());
+  }
+}
+
+/// ProcessInputFile - Process a single input file with the specified state.
+///
+static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
+                             const std::string &InFile, ProgActions PA,
+                             const llvm::StringMap<bool> &Features,
+                             llvm::LLVMContext& Context) {
+  llvm::OwningPtr<llvm::raw_ostream> OS;
+  llvm::OwningPtr<ASTConsumer> Consumer;
+  bool ClearSourceMgr = false;
+  FixItRewriter *FixItRewrite = 0;
+  bool CompleteTranslationUnit = true;
+  llvm::sys::Path OutPath;
+
+  switch (PA) {
+  default:
+    Consumer.reset(CreateConsumerAction(PP, InFile, PA, OS, OutPath,
+                                        Features, Context));
+
+    if (!Consumer.get()) {
+      fprintf(stderr, "Unexpected program action!\n");
+      HadErrors = true;
+      return;
+    }
+
+    break;;
+
+  case EmitHTML:
+    OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
+    Consumer.reset(CreateHTMLPrinter(OS.get(), PP.getDiagnostics(), &PP, &PPF));
+    break;
+
+  case RunAnalysis:
+    Consumer.reset(CreateAnalysisConsumer(PP.getDiagnostics(), &PP, &PPF,
+                                          PP.getLangOptions(), OutputFile,
+                                          ReadAnalyzerOptions()));
+    break;
 
   case GeneratePCH:
     if (RelocatablePCH.getValue() && !isysroot.getNumOccurrences()) {
@@ -1823,25 +1850,6 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       Consumer.reset(CreatePCHGenerator(PP, OS.get()));
     CompleteTranslationUnit = false;
     break;
-
-  case RewriteObjC:
-    OS.reset(ComputeOutFile(InFile, "cpp", true, OutPath));
-    Consumer.reset(CreateObjCRewriter(InFile, OS.get(), PP.getDiagnostics(),
-                                      PP.getLangOptions(),
-                                      SilenceRewriteMacroWarning));
-    break;
-
-  case RewriteBlocks:
-    Consumer.reset(CreateBlockRewriter(InFile, PP.getDiagnostics(),
-                                       PP.getLangOptions()));
-    break;
-
-  case RunAnalysis: {
-    Consumer.reset(CreateAnalysisConsumer(PP.getDiagnostics(), &PP, &PPF,
-                                          PP.getLangOptions(), OutputFile,
-                                          ReadAnalyzerOptions()));
-    break;
-  }
 
   case DumpRawTokens: {
     llvm::TimeRegion Timer(ClangFrontendTimer);
