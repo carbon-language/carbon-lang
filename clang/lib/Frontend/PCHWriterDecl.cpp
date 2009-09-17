@@ -529,6 +529,69 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
   ParmVarDeclAbbrev = Stream.EmitAbbrev(Abv);
 }
 
+/// isRequiredDecl - Check if this is a "required" Decl, which must be seen by
+/// consumers of the AST.
+///
+/// Such decls will always be deserialized from the PCH file, so we would like
+/// this to be as restrictive as possible. Currently the predicate is driven by
+/// code generation requirements, if other clients have a different notion of
+/// what is "required" then we may have to consider an alternate scheme where
+/// clients can iterate over the top-level decls and get information on them,
+/// without necessary deserializing them. We could explicitly require such
+/// clients to use a separate API call to "realize" the decl. This should be
+/// relatively painless since they would presumably only do it for top-level
+/// decls.
+//
+// FIXME: This predicate is essentially IRgen's predicate to determine whether a
+// declaration can be deferred. Merge them somehow.
+static bool isRequiredDecl(const Decl *D, ASTContext &Context) {
+  // File scoped assembly must be seen.
+  if (isa<FileScopeAsmDecl>(D))
+    return true;
+
+  // Otherwise if this isn't a function or a file scoped variable it doesn't
+  // need to be seen.
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (!VD->isFileVarDecl())
+      return false;
+  } else if (!isa<FunctionDecl>(D))
+    return false;
+
+  // Aliases and used decls must be seen.
+  if (D->hasAttr<AliasAttr>() || D->hasAttr<UsedAttr>())
+    return true;
+
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // Forward declarations don't need to be seen.
+    if (!FD->isThisDeclarationADefinition())
+      return false;
+
+    // Constructors and destructors must be seen.
+    if (FD->hasAttr<ConstructorAttr>() || FD->hasAttr<DestructorAttr>())
+      return true;
+
+    // Otherwise, this is required unless it is static.
+    //
+    // FIXME: Inlines.
+    return FD->getStorageClass() != FunctionDecl::Static;
+  } else {
+    const VarDecl *VD = cast<VarDecl>(D);
+
+    // In C++, this doesn't need to be seen if it is marked "extern".
+    if (Context.getLangOptions().CPlusPlus && !VD->getInit() &&
+        (VD->getStorageClass() == VarDecl::Extern ||
+         VD->isExternC()))
+      return false;
+
+    // In C, this doesn't need to be seen unless it is a definition.
+    if (!Context.getLangOptions().CPlusPlus && !VD->getInit())
+      return false;
+
+    // Otherwise, this is required unless it is static.
+    return VD->getStorageClass() != VarDecl::Static;
+  }
+}
+
 /// \brief Write a block containing all of the declarations.
 void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
   // Enter the declarations block.
@@ -595,9 +658,11 @@ void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
     // Flush any expressions that were written as part of this declaration.
     FlushStmts();
 
-    // Note external declarations so that we can add them to a record
-    // in the PCH file later.
-    if (isa<FileScopeAsmDecl>(D))
+    // Note "external" declarations so that we can add them to a record in the
+    // PCH file later.
+    //
+    // FIXME: This should be renamed, the predicate is much more complicated.
+    if (isRequiredDecl(D, Context))
       ExternalDefinitions.push_back(ID);
   }
 
