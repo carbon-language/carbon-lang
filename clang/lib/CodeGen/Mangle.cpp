@@ -35,6 +35,8 @@ namespace {
     unsigned StructorType;
     CXXCtorType CtorType;
 
+    llvm::DenseMap<uintptr_t, unsigned> Substitutions;
+    
   public:
     CXXNameMangler(ASTContext &C, llvm::raw_ostream &os)
       : Context(C), Out(os), Structor(0), StructorType(0) { }
@@ -53,6 +55,9 @@ namespace {
     void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type);
 
   private:
+    bool mangleSubstitution(QualType T);
+    void addSubstitution(QualType T);
+    
     bool mangleFunctionDecl(const FunctionDecl *FD);
 
     void mangleFunctionEncoding(const FunctionDecl *FD);
@@ -521,20 +526,33 @@ void CXXNameMangler::mangleType(QualType T) {
   // Only operate on the canonical type!
   T = Context.getCanonicalType(T);
 
-  //  <type> ::= <CV-qualifiers> <type>
-  mangleCVQualifiers(T.getCVRQualifiers());
+  bool IsSubstitutable = !isa<BuiltinType>(T);
+  if (IsSubstitutable && mangleSubstitution(T))
+    return;
 
-  switch (T->getTypeClass()) {
+  if (unsigned CVRQualifiers = T.getCVRQualifiers()) {
+    //  <type> ::= <CV-qualifiers> <type>
+    mangleCVQualifiers(CVRQualifiers);
+
+    mangleType(T.getUnqualifiedType());
+  } else {
+    switch (T->getTypeClass()) {
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define NON_CANONICAL_TYPE(CLASS, PARENT) \
-  case Type::CLASS: \
-    llvm::llvm_unreachable("can't mangle non-canonical type " #CLASS "Type"); \
-    return;
+    case Type::CLASS: \
+      llvm::llvm_unreachable("can't mangle non-canonical type " #CLASS "Type"); \
+      return;
 #define TYPE(CLASS, PARENT) \
-  case Type::CLASS: \
-    return mangleType(static_cast<CLASS##Type*>(T.getTypePtr()));
+    case Type::CLASS: \
+      mangleType(static_cast<CLASS##Type*>(T.getTypePtr())); \
+      break;
 #include "clang/AST/TypeNodes.def"
+    }
   }
+
+  // Add the substitution.
+  if (IsSubstitutable)
+    addSubstitution(T);
 }
 
 void CXXNameMangler::mangleType(const BuiltinType *T) {
@@ -866,6 +884,52 @@ void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
     Out << 'E';
     break;
   }
+}
+
+// <substitution> ::= S <seq-id> _
+//                ::= S_
+bool CXXNameMangler::mangleSubstitution(QualType T) {
+  uintptr_t TypePtr = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
+
+  llvm::DenseMap<uintptr_t, unsigned>::iterator I = 
+    Substitutions.find(TypePtr);
+  if (I == Substitutions.end())
+    return false;
+  
+  unsigned SeqID = I->second;
+  if (SeqID == 0)
+    Out << "S_";
+  else {
+    SeqID--;
+    
+    // <seq-id> is encoded in base-36, using digits and upper case letters.
+    char Buffer[10];
+    char *BufferPtr = Buffer + 9;
+    
+    *BufferPtr = 0;
+    if (SeqID == 0) *--BufferPtr = '0';
+    
+    while (SeqID) {
+      assert(BufferPtr > Buffer && "Buffer overflow!");
+      
+      unsigned char c = static_cast<unsigned char>(SeqID) % 36;
+      
+      *--BufferPtr =  (c < 10 ? '0' + c : 'A' + c - 10);
+      SeqID /= 36;
+    }
+    
+    Out << 'S' << BufferPtr << '_';
+  }
+  
+  return true;
+}
+
+void CXXNameMangler::addSubstitution(QualType T) {
+  uintptr_t TypePtr = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
+  unsigned SeqID = Substitutions.size();
+  
+  assert(!Substitutions.count(TypePtr) && "Substitution already exists!");
+  Substitutions[TypePtr] = SeqID;  
 }
 
 namespace clang {
