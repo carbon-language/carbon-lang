@@ -1,5 +1,11 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
+template<typename T>
+class C { C(int a0 = 0); };
+
+template<>
+C<char>::C(int a0);
+
 struct S { };
 
 template<typename T> void f1(T a, T b = 10) { } // expected-error{{cannot initialize 'b' with an rvalue of type 'int'}}

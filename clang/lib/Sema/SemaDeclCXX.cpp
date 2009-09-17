@@ -280,9 +280,13 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
       Diag(OldParam->getLocation(), diag::note_previous_definition)
         << OldParam->getDefaultArgRange();
       Invalid = true;
-    } else if (OldParam->getDefaultArg()) {
+    } else if (OldParam->hasDefaultArg()) {
       // Merge the old default argument into the new parameter
-      NewParam->setDefaultArg(OldParam->getDefaultArg());
+      if (OldParam->hasUninstantiatedDefaultArg())
+        NewParam->setUninstantiatedDefaultArg(
+                                      OldParam->getUninstantiatedDefaultArg());
+      else
+        NewParam->setDefaultArg(OldParam->getDefaultArg());
     } else if (NewParam->hasDefaultArg()) {
       if (New->getDescribedFunctionTemplate()) {
         // Paragraph 4, quoted above, only applies to non-template functions.

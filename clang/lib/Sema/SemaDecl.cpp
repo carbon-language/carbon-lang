@@ -2684,7 +2684,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (D.getCXXScopeSpec().isSet() && !NewFD->isInvalidDecl()) {
     // An out-of-line member function declaration must also be a
     // definition (C++ [dcl.meaning]p1).
-    if (!IsFunctionDefinition && !isFriend) {
+    // FIXME: Find a better way to recognize out-of-line specializations!
+    if (!IsFunctionDefinition && !isFriend &&
+        !(TemplateParamLists.size() && !FunctionTemplate)) {
       Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
         << D.getCXXScopeSpec().getRange();
       NewFD->setInvalidDecl();
