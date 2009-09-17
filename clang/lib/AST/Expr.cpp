@@ -1069,14 +1069,14 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
     if (!BDR->isByRef() && isa<VarDecl>(BDR->getDecl()))
       return MLV_NotBlockQualified;
   }
-  
+
   // Assigning to an 'implicit' property?
-  if (const ObjCImplicitSetterGetterRefExpr* Expr = 
+  if (const ObjCImplicitSetterGetterRefExpr* Expr =
         dyn_cast<ObjCImplicitSetterGetterRefExpr>(this)) {
     if (Expr->getSetterMethod() == 0)
       return MLV_NoSetterProperty;
   }
-  
+
   QualType CT = Ctx.getCanonicalType(getType());
 
   if (CT.isConstQualified())
@@ -1119,7 +1119,7 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
       QualType T = VD->getType();
       // dereferencing to a  pointer is always a gc'able candidate,
       // unless it is __weak.
-      return T->isPointerType() && 
+      return T->isPointerType() &&
              (Ctx.getObjCGCAttrKind(T) != QualType::Weak);
     }
     return false;
@@ -1371,11 +1371,11 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::NoStmtClass:
   case Expr::ExprClass:
     return ICEDiag(2, E->getLocStart());
-      
+
   case Expr::GNUNullExprClass:
     // GCC considers the GNU __null value to be an integral constant expression.
     return NoDiag();
-      
+
   case Expr::ParenExprClass:
     return CheckICE(cast<ParenExpr>(E)->getSubExpr(), Ctx);
   case Expr::IntegerLiteralClass:
@@ -1431,7 +1431,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     case UnaryOperator::AddrOf:
     case UnaryOperator::Deref:
       return ICEDiag(2, E->getLocStart());
-        
+
     case UnaryOperator::Extension:
     case UnaryOperator::LNot:
     case UnaryOperator::Plus:
@@ -1473,7 +1473,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     case BinaryOperator::XorAssign:
     case BinaryOperator::OrAssign:
       return ICEDiag(2, E->getLocStart());
-        
+
     case BinaryOperator::Mul:
     case BinaryOperator::Div:
     case BinaryOperator::Rem:
@@ -1601,7 +1601,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     return CheckICE(cast<ChooseExpr>(E)->getChosenSubExpr(Ctx), Ctx);
   }
   }
-  
+
   // Silence a GCC warning
   return ICEDiag(2, E->getLocStart());
 }

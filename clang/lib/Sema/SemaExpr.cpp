@@ -1002,7 +1002,7 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
           MarkDeclarationReferenced(Loc, D);
           if (PerformObjectMemberConversion(This, D))
             return ExprError();
-          
+
           bool ShouldCheckUse = true;
           if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
             // Don't diagnose the use of a virtual member function unless it's
@@ -1010,7 +1010,7 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
             if (MD->isVirtual() && (!SS || !SS->isSet()))
               ShouldCheckUse = false;
           }
-          
+
           if (ShouldCheckUse && DiagnoseUseOfDecl(D, Loc))
             return ExprError();
           return Owned(BuildMemberExpr(Context, This, true, SS, D,
@@ -1809,7 +1809,7 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
     return ExprError(Diag(LLoc, diag::err_typecheck_subscript_not_integer)
                      << IndexExpr->getSourceRange());
 
-  if ((IndexExpr->getType()->isSpecificBuiltinType(BuiltinType::Char_S) || 
+  if ((IndexExpr->getType()->isSpecificBuiltinType(BuiltinType::Char_S) ||
        IndexExpr->getType()->isSpecificBuiltinType(BuiltinType::Char_U))
          && !IndexExpr->isTypeDependent())
     Diag(LLoc, diag::warn_subscript_is_char) << IndexExpr->getSourceRange();
@@ -2168,7 +2168,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       if (MD->isVirtual() && (!SS || !SS->isSet()))
         ShouldCheckUse = false;
     }
-    
+
     // Check the use of this field
     if (ShouldCheckUse && DiagnoseUseOfDecl(MemberDecl, MemberLoc))
       return ExprError();
@@ -3204,12 +3204,12 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc, TypeTy *Ty,
     return ExprError();
 
   if (Method) {
-    OwningExprResult CastArg = BuildCXXCastArgument(LParenLoc, castType, Kind, 
+    OwningExprResult CastArg = BuildCXXCastArgument(LParenLoc, castType, Kind,
                                                     Method, move(Op));
-    
+
     if (CastArg.isInvalid())
       return ExprError();
-    
+
     castExpr = CastArg.takeAs<Expr>();
   } else {
     Op.release();
@@ -6143,4 +6143,3 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     return;
   }
 }
-
