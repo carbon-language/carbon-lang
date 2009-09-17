@@ -249,14 +249,20 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   //         ::= <unscoped-template-name> <template-args>
   //         ::= <local-name>
   //
-  if (ND->getDeclContext()->isTranslationUnit() ||
-      isStdNamespace(ND->getDeclContext())) {
+  const DeclContext *DC = ND->getDeclContext();
+  while (isa<LinkageSpecDecl>(DC)) {
+    assert(cast<LinkageSpecDecl>(DC)->getLanguage() == 
+           LinkageSpecDecl::lang_cxx && "Unexpected linkage decl!");
+    DC = DC->getParent();
+  }
+  
+  if (DC->isTranslationUnit() || isStdNamespace(DC)) {
     const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND);
     if (FD && FD->getPrimaryTemplate()) 
       mangleUnscopedTemplateName(FD);
     else
       mangleUnscopedName(ND);
-  } else if (isa<FunctionDecl>(ND->getDeclContext()))
+  } else if (isa<FunctionDecl>(DC))
     mangleLocalName(ND);
   else
     mangleNestedName(ND);

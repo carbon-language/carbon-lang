@@ -99,3 +99,8 @@ void g() {
   // CHECK: @_Z3ft2IcEvT_PFvS0_ES2_
   ft2<char>(1, 0, 0);
 }
+
+extern "C++" {
+  // CHECK: @_Z1hv
+ void h() { } 
+}
