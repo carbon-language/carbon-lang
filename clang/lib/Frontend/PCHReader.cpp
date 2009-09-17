@@ -2129,9 +2129,9 @@ void PCHReader::StartTranslationUnit(ASTConsumer *Consumer) {
     return;
 
   for (unsigned I = 0, N = ExternalDefinitions.size(); I != N; ++I) {
-    Decl *D = GetDecl(ExternalDefinitions[I]);
-    DeclGroupRef DG(D);
-    Consumer->HandleTopLevelDecl(DG);
+    // Force deserialization of this decl, which will cause it to be passed to
+    // the consumer (or queued).
+    GetDecl(ExternalDefinitions[I]);
   }
 
   for (unsigned I = 0, N = InterestingDecls.size(); I != N; ++I) {

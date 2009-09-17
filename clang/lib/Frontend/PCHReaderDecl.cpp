@@ -640,6 +640,8 @@ inline void PCHReader::LoadedDecl(unsigned Index, Decl *D) {
 /// code generation, e.g., inline function definitions, Objective-C
 /// declarations with metadata, etc.
 static bool isConsumerInterestedIn(Decl *D) {
+  if (isa<FileScopeAsmDecl>(D))
+    return true;
   if (VarDecl *Var = dyn_cast<VarDecl>(D))
     return Var->isFileVarDecl() && Var->getInit();
   if (FunctionDecl *Func = dyn_cast<FunctionDecl>(D))
@@ -794,4 +796,3 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
 
   return D;
 }
-
