@@ -1029,33 +1029,42 @@ class ARMTargetInfo : public TargetInfo {
    static const char * const GCCRegNames[];
 
   std::string ABI;
+  bool IsThumb;
 
 public:
-  ARMTargetInfo(const std::string& triple)
-    : TargetInfo(triple), ABI("aapcs-linux")
+  ARMTargetInfo(const std::string &TripleStr)
+    : TargetInfo(TripleStr), ABI("aapcs-linux"), IsThumb(false)
   {
-    // FIXME: Are the defaults correct for ARM?
+    llvm::Triple Triple(TripleStr);
+
     DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
                          "i64:32:32-f32:32:32-f64:32:32-"
                          "v64:64:64-v128:128:128-a0:0:32");
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
-    if (triple.find("armv7-") == 0)
+
+    // FIXME: This shouldn't be done this way, we should use features to
+    // indicate the arch. See lib/Driver/Tools.cpp.
+    llvm::StringRef Version(""), Arch = Triple.getArchName();
+    if (Arch.startswith("arm"))
+      Version = Arch.substr(3);
+    else if (Arch.startswith("thumb"))
+      Version = Arch.substr(5);
+    if (Version == "v7")
       ArmArch = Armv7a;
-    else if (triple.find("arm-") == 0 || triple.find("armv6-") == 0)
+    else if (Version.empty() || Version == "v6" || Version == "v6t2")
       ArmArch = Armv6;
-    else if (triple.find("armv5-") == 0)
+    else if (Version == "v5")
       ArmArch = Armv5;
-    else if (triple.find("armv4t-") == 0)
+    else if (Version == "v4t")
       ArmArch = Armv4t;
-    else if (triple.find("xscale-") == 0)
+    else if (Arch == "xscale" || Arch == "thumbv5e")
       ArmArch = XScale;
-    else if (triple.find("armv") == 0) {
-      // FIXME: fuzzy match for other random weird arm triples.  This is useful
-      // for the static analyzer and other clients, but probably should be
-      // re-evaluated when codegen is brought up.
+    else
       ArmArch = Armv6;
-    }
+
+    if (Arch.startswith("thumb"))
+      IsThumb = true;
   }
   virtual const char *getABI() const { return ABI.c_str(); }
   virtual bool setABI(const std::string &Name) {
@@ -1089,6 +1098,9 @@ public:
     Define(Defs, "__LITTLE_ENDIAN__");
 
     // Subtarget options.
+    //
+    // FIXME: Neither THUMB_INTERWORK nor SOFTFP is not being set correctly
+    // here.
     if (ArmArch == Armv7a) {
       Define(Defs, "__ARM_ARCH_7A__");
       Define(Defs, "__THUMB_INTERWORK__");
@@ -1107,9 +1119,22 @@ public:
       Define(Defs, "__XSCALE__");
       Define(Defs, "__SOFTFP__");
     }
+
     Define(Defs, "__ARMEL__");
+
+    if (IsThumb) {
+      Define(Defs, "__THUMBEL__");
+      Define(Defs, "__thumb__");
+      if (ArmArch == Armv7a)
+        Define(Defs, "__thumb2__");
+    }
+
+    // Note, this is always on in gcc, even though it doesn't make sense.
     Define(Defs, "__APCS_32__");
+    // FIXME: This should be conditional on VFP instruction support.
     Define(Defs, "__VFP_FP__");
+
+    Define(Defs, "__USING_SJLJ_EXCEPTIONS__");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
