@@ -224,9 +224,11 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
 void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD,
   bool IsVirtualBase) {
   const ASTRecordLayout &BaseInfo = Ctx.getASTRecordLayout(RD);
+  if (!Bases.empty()) {
     assert(BaseInfo.getDataSize() > 0 &&
            "FIXME: Handle empty classes.");
-
+  }
+  
   unsigned BaseAlign = BaseInfo.getNonVirtualAlign();
   uint64_t BaseSize = BaseInfo.getNonVirtualSize();
 
