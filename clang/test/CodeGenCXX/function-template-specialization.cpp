@@ -1,4 +1,4 @@
-// RUN: clang-cc -emit-llvm %s -o %t && FileCheck %s --input-file=%t
+// RUN: clang-cc -emit-llvm %s -o - | FileCheck %s
 template<typename T, typename U>
 T* next(T* ptr, const U& diff);
 
@@ -23,6 +23,6 @@ T* next(T* ptr, const U& diff);
 void test2(int *iptr, double *dptr, int diff) {
   iptr = next(iptr, diff);
   // FIXME: should be "_Z4nextIdiEPT_S1_RKT0_"
-  // RUN: grep "_Z4nextIiiEPT_S0_RKT0_" %t
+  // CHECK: _Z4nextIiiEPT_S0_RKT0_
   dptr = next(dptr, diff);
 }
