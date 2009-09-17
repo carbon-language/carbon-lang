@@ -46,7 +46,6 @@ add_llvm_library(LLVMCodeGen
   RegAllocLinearScan.cpp
   RegAllocLocal.cpp
   RegAllocPBQP.cpp
-  RegAllocSimple.cpp
   RegisterCoalescer.cpp
   RegisterScavenging.cpp
   ScheduleDAG.cpp

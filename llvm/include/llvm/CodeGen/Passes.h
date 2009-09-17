@@ -87,12 +87,6 @@ namespace llvm {
   ///
   FunctionPass *createRegisterAllocator();
 
-  /// SimpleRegisterAllocation Pass - This pass converts the input machine code
-  /// from SSA form to use explicit registers by spilling every register.  Wow,
-  /// great policy huh?
-  ///
-  FunctionPass *createSimpleRegisterAllocator();
-
   /// LocalRegisterAllocation Pass - This pass register allocates the input code
   /// a basic block at a time, yielding code better than the simple register
   /// allocator, but not as good as a global allocator.
