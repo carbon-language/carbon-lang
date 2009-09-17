@@ -547,14 +547,15 @@ static void removeRange(LiveInterval &li,
       if (!li_->hasInterval(*SR))
         continue;
       LiveInterval &sli = li_->getInterval(*SR);
+      MachineInstrIndex RemoveStart = Start;
       MachineInstrIndex RemoveEnd = Start;
       while (RemoveEnd != End) {
-        LiveInterval::iterator LR = sli.FindLiveRangeContaining(Start);
+        LiveInterval::iterator LR = sli.FindLiveRangeContaining(RemoveStart);
         if (LR == sli.end())
           break;
         RemoveEnd = (LR->end < End) ? LR->end : End;
-        sli.removeRange(Start, RemoveEnd, true);
-        Start = RemoveEnd;
+        sli.removeRange(RemoveStart, RemoveEnd, true);
+        RemoveStart = RemoveEnd;
       }
     }
   }
