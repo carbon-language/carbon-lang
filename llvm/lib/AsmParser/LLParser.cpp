@@ -1025,6 +1025,28 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
   return false;
 }
 
+/// ParseOptionalDbgInfo
+///   ::= /* empty */
+///   ::= 'dbg' !42
+bool LLParser::ParseOptionalDbgInfo() {
+
+  if (!EatIfPresent(lltok::kw_dbg))
+    return false;
+  if (Lex.getKind() != lltok::Metadata)
+    return TokError("Expected '!' here");
+  Lex.Lex();
+  MetadataBase *Node;
+  if (ParseMDNode(Node)) return true;
+  
+  Metadata &TheMetadata = M->getContext().getMetadata();
+  unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
+  if (!MDDbgKind)
+    MDDbgKind = TheMetadata.RegisterMDKind("dbg");
+  MDsOnInst.push_back(std::make_pair(MDDbgKind, cast<MDNode>(Node)));
+  
+  return false;
+}
+
 /// ParseOptionalAlignment
 ///   ::= /* empty */
 ///   ::= 'align' 4
@@ -1039,16 +1061,23 @@ bool LLParser::ParseOptionalAlignment(unsigned &Alignment) {
   return false;
 }
 
-/// ParseOptionalCommaAlignment
-///   ::= /* empty */
-///   ::= ',' 'align' 4
-bool LLParser::ParseOptionalCommaAlignment(unsigned &Alignment) {
-  Alignment = 0;
-  if (!EatIfPresent(lltok::comma))
-    return false;
-  return ParseToken(lltok::kw_align, "expected 'align'") ||
-         ParseUInt32(Alignment);
+/// ParseOptionalInfo
+///   ::= OptionalInfo (',' OptionalInfo)+
+bool LLParser::ParseOptionalInfo(unsigned &Alignment) {
+
+  // FIXME: Handle customized metadata info attached with an instruction.
+  do {
+    if (Lex.getKind() == lltok::kw_dbg) {
+      if (ParseOptionalDbgInfo()) return true;
+    } else if (Lex.getKind() == lltok::kw_align) {
+      if (ParseOptionalAlignment(Alignment)) return true;
+    } else
+      return true;
+  } while (EatIfPresent(lltok::comma));
+  
+  return false;
 }
+
 
 /// ParseIndexList
 ///    ::=  (',' uint32)+
@@ -2621,26 +2650,18 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
       if (ParseToken(lltok::equal, "expected '=' after instruction name"))
         return true;
     }
-    
+
     if (ParseInstruction(Inst, BB, PFS)) return true;
-    
-    // Parse optional debug info
-    if (Lex.getKind() == lltok::comma) {
-      Lex.Lex();
-      if (Lex.getKind() == lltok::kw_dbg) {
-	Lex.Lex();
-	if (Lex.getKind() != lltok::Metadata)
-	  return TokError("Expected '!' here");
-	Lex.Lex();
-	MetadataBase *N = 0;
-	if (ParseMDNode(N)) return true;
-	Metadata &TheMetadata = M->getContext().getMetadata();
-	unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
-	if (!MDDbgKind)
-	  MDDbgKind = TheMetadata.RegisterMDKind("dbg");
-	TheMetadata.setMD(MDDbgKind, cast<MDNode>(N), Inst);
-      }
-    }
+    if (EatIfPresent(lltok::comma))
+      ParseOptionalDbgInfo();
+
+    // Set metadata attached with this instruction.
+    Metadata &TheMetadata = M->getContext().getMetadata();
+    for (SmallVector<std::pair<MDKindID, MDNode *>, 2>::iterator 
+	   MDI = MDsOnInst.begin(), MDE = MDsOnInst.end(); MDI != MDE; ++MDI) 
+      TheMetadata.setMD(MDI->first, MDI->second, Inst);
+    MDsOnInst.clear();
+
     BB->getInstList().push_back(Inst);
 
     // Set the name on the instruction.
@@ -2820,41 +2841,55 @@ bool LLParser::ParseCmpPredicate(unsigned &P, unsigned Opc) {
 //===----------------------------------------------------------------------===//
 
 /// ParseRet - Parse a return instruction.
-///   ::= 'ret' void
-///   ::= 'ret' TypeAndValue
-///   ::= 'ret' TypeAndValue (',' TypeAndValue)+  [[obsolete: LLVM 3.0]]
+///   ::= 'ret' void (',' 'dbg' !1)
+///   ::= 'ret' TypeAndValue (',' 'dbg' !1)
+///   ::= 'ret' TypeAndValue (',' TypeAndValue)+  (',' 'dbg' !1) 
+///         [[obsolete: LLVM 3.0]]
 bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
                         PerFunctionState &PFS) {
   PATypeHolder Ty(Type::getVoidTy(Context));
   if (ParseType(Ty, true /*void allowed*/)) return true;
   
   if (Ty == Type::getVoidTy(Context)) {
+    if (EatIfPresent(lltok::comma))
+      if (ParseOptionalDbgInfo()) return true;
     Inst = ReturnInst::Create(Context);
     return false;
   }
   
   Value *RV;
   if (ParseValue(Ty, RV, PFS)) return true;
-  
-  // The normal case is one return value.
-  if (Lex.getKind() == lltok::comma) {
-    // FIXME: LLVM 3.0 remove MRV support for 'ret i32 1, i32 2', requiring use
-    // of 'ret {i32,i32} {i32 1, i32 2}'
-    SmallVector<Value*, 8> RVs;
-    RVs.push_back(RV);
-    
-    while (EatIfPresent(lltok::comma)) {
-      if (ParseTypeAndValue(RV, PFS)) return true;
-      RVs.push_back(RV);
-    }
 
-    RV = UndefValue::get(PFS.getFunction().getReturnType());
-    for (unsigned i = 0, e = RVs.size(); i != e; ++i) {
-      Instruction *I = InsertValueInst::Create(RV, RVs[i], i, "mrv");
-      BB->getInstList().push_back(I);
-      RV = I;
+  if (EatIfPresent(lltok::comma)) {
+    // Parse optional 'dbg'
+    if (Lex.getKind() == lltok::kw_dbg) {
+      if (ParseOptionalDbgInfo()) return true;
+    } else {
+      // The normal case is one return value.
+      // FIXME: LLVM 3.0 remove MRV support for 'ret i32 1, i32 2', requiring use
+      // of 'ret {i32,i32} {i32 1, i32 2}'
+      SmallVector<Value*, 8> RVs;
+      RVs.push_back(RV);
+      
+      do {
+	// If optional 'dbg' is seen then this is the end of MRV.
+	if (Lex.getKind() == lltok::kw_dbg)
+	  break;
+	if (ParseTypeAndValue(RV, PFS)) return true;
+	RVs.push_back(RV);
+      } while (EatIfPresent(lltok::comma));
+
+      RV = UndefValue::get(PFS.getFunction().getReturnType());
+      for (unsigned i = 0, e = RVs.size(); i != e; ++i) {
+	Instruction *I = InsertValueInst::Create(RV, RVs[i], i, "mrv");
+	BB->getInstList().push_back(I);
+	RV = I;
+      }
     }
   }
+  if (EatIfPresent(lltok::comma))
+    if (ParseOptionalDbgInfo()) return true;
+
   Inst = ReturnInst::Create(Context, RV);
   return false;
 }
@@ -3393,8 +3428,8 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
 //===----------------------------------------------------------------------===//
 
 /// ParseAlloc
-///   ::= 'malloc' Type (',' TypeAndValue)? (',' OptionalAlignment)?
-///   ::= 'alloca' Type (',' TypeAndValue)? (',' OptionalAlignment)?
+///   ::= 'malloc' Type (',' TypeAndValue)? (',' OptionalInfo)?
+///   ::= 'alloca' Type (',' TypeAndValue)? (',' OptionalInfo)?
 bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
                           unsigned Opc) {
   PATypeHolder Ty(Type::getVoidTy(Context));
@@ -3404,11 +3439,12 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
   if (ParseType(Ty)) return true;
 
   if (EatIfPresent(lltok::comma)) {
-    if (Lex.getKind() == lltok::kw_align) {
-      if (ParseOptionalAlignment(Alignment)) return true;
-    } else if (ParseTypeAndValue(Size, SizeLoc, PFS) ||
-               ParseOptionalCommaAlignment(Alignment)) {
-      return true;
+    if (Lex.getKind() == lltok::kw_align || Lex.getKind() == lltok::kw_dbg) {
+      if (ParseOptionalInfo(Alignment)) return true;
+    } else {
+      if (ParseTypeAndValue(Size, SizeLoc, PFS)) return true;
+      if (EatIfPresent(lltok::comma))
+	if (ParseOptionalInfo(Alignment)) return true;
     }
   }
 
@@ -3434,14 +3470,15 @@ bool LLParser::ParseFree(Instruction *&Inst, PerFunctionState &PFS) {
 }
 
 /// ParseLoad
-///   ::= 'volatile'? 'load' TypeAndValue (',' 'align' i32)?
+///   ::= 'volatile'? 'load' TypeAndValue (',' OptionalInfo)?
 bool LLParser::ParseLoad(Instruction *&Inst, PerFunctionState &PFS,
                          bool isVolatile) {
   Value *Val; LocTy Loc;
-  unsigned Alignment;
-  if (ParseTypeAndValue(Val, Loc, PFS) ||
-      ParseOptionalCommaAlignment(Alignment))
-    return true;
+  unsigned Alignment = 0;
+  if (ParseTypeAndValue(Val, Loc, PFS)) return true;
+  
+  if (EatIfPresent(lltok::comma))
+    if (ParseOptionalInfo(Alignment)) return true;
 
   if (!isa<PointerType>(Val->getType()) ||
       !cast<PointerType>(Val->getType())->getElementType()->isFirstClassType())
@@ -3456,12 +3493,14 @@ bool LLParser::ParseLoad(Instruction *&Inst, PerFunctionState &PFS,
 bool LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS,
                           bool isVolatile) {
   Value *Val, *Ptr; LocTy Loc, PtrLoc;
-  unsigned Alignment;
+  unsigned Alignment = 0;
   if (ParseTypeAndValue(Val, Loc, PFS) ||
       ParseToken(lltok::comma, "expected ',' after store operand") ||
-      ParseTypeAndValue(Ptr, PtrLoc, PFS) ||
-      ParseOptionalCommaAlignment(Alignment))
+      ParseTypeAndValue(Ptr, PtrLoc, PFS))
     return true;
+
+  if (EatIfPresent(lltok::comma))
+    if (ParseOptionalInfo(Alignment)) return true;
   
   if (!isa<PointerType>(Ptr->getType()))
     return Error(PtrLoc, "store operand must be a pointer");
