@@ -1,20 +1,20 @@
-// RUN: clang-cc -emit-llvm %s -o %t -triple=x86_64-apple-darwin9 && 
+// RUN: clang-cc -emit-llvm %s -o - -triple=x86_64-apple-darwin9 | FileCheck %s
 
 struct X {};
 
-// RUN: grep "define void @_Z1f1XS_" %t | count 1 &&
+// CHECK: define void @_Z1f1XS_
 void f(X, X) { }
 
-// RUN: grep "define void @_Z1fR1XS0_" %t | count 1 &&
+// CHECK: define void @_Z1fR1XS0_
 void f(X&, X&) { }
 
-// RUN: grep "define void @_Z1fRK1XS1_" %t | count 1 &&
+// CHECK: define void @_Z1fRK1XS1_
 void f(const X&, const X&) { }
 
 typedef void T();
 struct S {};
 
-// RUN: grep "define void @_Z1fPFvvEM1SFvvE" %t | count 1 &&
+// CHECK: define void @_Z1fPFvvEM1SFvvE
 void f(T*, T (S::*)) {}
 
 // RUN: true
