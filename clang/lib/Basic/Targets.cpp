@@ -520,7 +520,7 @@ const TargetInfo::GCCRegAlias PPCTargetInfo::GCCRegAliases[] = {
   { { "fr7" }, "f7" },
   { { "fr8" }, "f8" },
   { { "fr9" }, "f9" },
-  { { "fr10" }, "f00" },
+  { { "fr10" }, "f10" },
   { { "fr11" }, "f11" },
   { { "fr12" }, "f12" },
   { { "fr13" }, "f13" },
