@@ -380,7 +380,8 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
 
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
-  const llvm::FunctionType *impType = Types.GetFunctionType(FnInfo, false);
+  const llvm::FunctionType *impType =
+    Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
   llvm::Value *ReceiverClass = 0;
   if (isCategoryImpl) {
@@ -478,7 +479,8 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
 
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
-  const llvm::FunctionType *impType = Types.GetFunctionType(FnInfo, false);
+  const llvm::FunctionType *impType =
+    Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
   llvm::Value *imp;
   // For sender-aware dispatch, we pass the sender as the third argument to a

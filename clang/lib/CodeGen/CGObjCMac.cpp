@@ -1530,9 +1530,8 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
 
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs);
-  // In 64bit ABI, type must be assumed VARARG. In 32bit abi,
-  // it seems not to matter.
-  const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo, (ObjCABI == 2));
+  const llvm::FunctionType *FTy =
+    Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
   llvm::Constant *Fn = NULL;
   if (CGM.ReturnTypeUsesSret(FnInfo)) {
