@@ -33,6 +33,10 @@
 #include <map>
 #include <cmath>
 #include <cstring>
+// Some platforms may need malloc.h for alloca.
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
 
 #ifdef HAVE_FFI_CALL
 #ifdef HAVE_FFI_H
@@ -269,7 +273,7 @@ GenericValue Interpreter::callExternalFunction(Function *F,
   } else {
     RawFn = RF->second;
   }
-  
+
   FunctionsLock->release();
 
   GenericValue Result;
@@ -334,7 +338,7 @@ GenericValue lle_X_sprintf(const FunctionType *FT,
 
   // printf should return # chars printed.  This is completely incorrect, but
   // close enough for now.
-  GenericValue GV; 
+  GenericValue GV;
   GV.IntVal = APInt(32, strlen(FmtStr));
   while (1) {
     switch (*FmtStr) {
@@ -566,4 +570,3 @@ void Interpreter::initializeExternalFunctions() {
   FuncNames["lle_X_scanf"]        = lle_X_scanf;
   FuncNames["lle_X_fprintf"]      = lle_X_fprintf;
 }
-
