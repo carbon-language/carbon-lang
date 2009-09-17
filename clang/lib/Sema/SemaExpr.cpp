@@ -4339,7 +4339,8 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   // Sanity-check shift operands
   llvm::APSInt Right;
   // Check right/shifter operand
-  if (rex->isIntegerConstantExpr(Right, Context)) {
+  if (!rex->isValueDependent() &&
+      rex->isIntegerConstantExpr(Right, Context)) {
     if (Right.isNegative())
       Diag(Loc, diag::warn_shift_negative) << rex->getSourceRange();
     else {
