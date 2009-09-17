@@ -15,6 +15,8 @@ def err_fe_unknown_target_abi : Error<"unknown target ABI '%0'">;
 def err_fe_error_reading : Error<"error reading '%0'">;
 def err_fe_error_reading_stdin : Error<"error reading stdin">;
 def err_fe_error_backend : Error<"error in backend: %0">, DefaultFatal;
+def err_fe_invalid_ast_file : Error<"invalid AST file: '%0'">, DefaultFatal;
+def err_fe_invalid_ast_action : Error<"invalid action for AST input">, DefaultFatal;
 
 def note_fixit_applied : Note<"FIX-IT applied suggested code changes">;
 def note_fixit_in_macro : Note<

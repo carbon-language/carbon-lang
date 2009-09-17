@@ -24,6 +24,7 @@
 
 #include "clang/Frontend/AnalysisConsumer.h"
 #include "clang/Frontend/ASTConsumers.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompileOptions.h"
 #include "clang/Frontend/FixItRewriter.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
@@ -318,7 +319,8 @@ enum LangKind {
   langkind_objc_cpp,
   langkind_objcxx,
   langkind_objcxx_cpp,
-  langkind_ocl
+  langkind_ocl,
+  langkind_ast
 };
 
 static llvm::cl::opt<LangKind>
@@ -347,6 +349,8 @@ BaseLang("x", llvm::cl::desc("Base language to compile"),
                                "C++ header"),
                     clEnumValN(langkind_objcxx, "objective-c++-header",
                                "Objective-C++ header"),
+                    clEnumValN(langkind_ast, "ast",
+                               "Clang AST"),
                     clEnumValEnd));
 
 static llvm::cl::opt<bool>
@@ -402,7 +406,9 @@ static LangKind GetLanguage(llvm::StringRef Filename) {
     return BaseLang;
 
   llvm::StringRef Ext = Filename.rsplit('.').second;
-  if (Ext == "c")
+  if (Ext == "ast")
+    return langkind_ast;
+  else if (Ext == "c")
     return langkind_c;
   else if (Ext == "S" || Ext == "s")
     return langkind_asm_cpp;
@@ -687,6 +693,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
     switch (LK) {
+    case langkind_ast: assert(0 && "Invalid call for AST inputs");
     case lang_unspecified: assert(0 && "Unknown base language");
     case langkind_ocl:
       LangStd = lang_c99;
@@ -2116,6 +2123,65 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   }
 }
 
+/// ProcessInputFile - Process a single AST input file with the specified state.
+///
+static void ProcessASTInputFile(const std::string &InFile, ProgActions PA,
+                                const llvm::StringMap<bool> &Features,
+                                Diagnostic &Diags, FileManager &FileMgr,
+                                llvm::LLVMContext& Context) {
+  // FIXME: This is manufactoring its own diags and source manager, we should
+  // reuse ours.
+  std::string Error;
+  llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, FileMgr,
+                                                        &Error));
+  if (!AST) {
+    Diags.Report(FullSourceLoc(), diag::err_fe_invalid_ast_file) << Error;
+    return;
+  }
+
+  Preprocessor &PP = AST->getPreprocessor();
+
+  llvm::OwningPtr<llvm::raw_ostream> OS;
+  llvm::sys::Path OutPath;
+  llvm::OwningPtr<ASTConsumer> Consumer(CreateConsumerAction(PP, InFile, PA, OS,
+                                                             OutPath, Features,
+                                                             Context));
+
+  if (!Consumer.get()) {
+    Diags.Report(FullSourceLoc(), diag::err_fe_invalid_ast_action);
+    return;
+  }
+
+  // Stream the input AST to the consumer.
+  Consumer->Initialize(AST->getASTContext());
+  AST->getASTContext()
+    .getExternalSource()->StartTranslationUnit(Consumer.get());
+  Consumer->HandleTranslationUnit(AST->getASTContext());
+
+  // FIXME: Tentative decls and #pragma weak aren't going to get handled
+  // correctly here.
+
+  // Release the consumer and the AST, in that order since the consumer may
+  // perform actions in its destructor which require the context.
+  if (DisableFree) {
+    Consumer.take();
+    AST.take();
+  } else {
+    Consumer.reset();
+    AST.reset();
+  }
+
+  // Always delete the output stream because we don't want to leak file
+  // handles.  Also, we don't want to try to erase an open file.
+  OS.reset();
+
+  if ((HadErrors || (PP.getDiagnostics().getNumErrors() != 0)) &&
+      !OutPath.isEmpty()) {
+    // If we had errors, try to erase the output file.
+    OutPath.eraseFromDisk();
+  }
+}
+
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 
@@ -2258,6 +2324,14 @@ int main(int argc, char **argv) {
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
 
+    LangKind LK = GetLanguage(InFile);
+    // AST inputs are handled specially.
+    if (LK == langkind_ast) {
+      ProcessASTInputFile(InFile, ProgAction, Features,
+                          Diags, FileMgr, Context);
+      continue;
+    }
+
     /// Create a SourceManager object.  This tracks and owns all the file
     /// buffers allocated to a translation unit.
     if (!SourceMgr)
@@ -2269,7 +2343,6 @@ int main(int argc, char **argv) {
     LangOptions LangInfo;
     DiagClient->setLangOptions(&LangInfo);
 
-    LangKind LK = GetLanguage(InFile);
     InitializeLangOptions(LangInfo, LK);
     InitializeLanguageStandard(LangInfo, LK, Target.get(), Features);
 
