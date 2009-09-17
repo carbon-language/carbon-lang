@@ -44,8 +44,8 @@ static inline const Type *checkType(const Type *Ty) {
 }
 
 Value::Value(const Type *ty, unsigned scid)
-  : SubclassID(scid), HasValueHandle(0), SubclassOptionalData(0),
-    SubclassData(0), VTy(checkType(ty)),
+  : SubclassID(scid), HasValueHandle(0), HasMetadata(0),
+    SubclassOptionalData(0), SubclassData(0), VTy(checkType(ty)),
     UseList(0), Name(0) {
   if (isa<CallInst>(this) || isa<InvokeInst>(this))
     assert((VTy->isFirstClassType() ||
