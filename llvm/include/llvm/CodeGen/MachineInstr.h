@@ -208,7 +208,7 @@ public:
   }
 
   /// findRegisterUseOperandIdx() - Returns the operand index that is a use of
-  /// the specific register or -1 if it is not found. It further tightening
+  /// the specific register or -1 if it is not found. It further tightens
   /// the search criteria to a use that kills the register if isKill is true.
   int findRegisterUseOperandIdx(unsigned Reg, bool isKill = false,
                                 const TargetRegisterInfo *TRI = NULL) const;
