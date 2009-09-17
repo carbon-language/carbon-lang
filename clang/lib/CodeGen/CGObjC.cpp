@@ -92,8 +92,10 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
                                             isCategoryImpl,
                                             Receiver,
                                             isClassMessage,
-                                            Args);
+                                            Args,
+                                            E->getMethodDecl());
   }
+
   return Runtime.GenerateMessageSend(*this, E->getType(), E->getSelector(),
                                      Receiver, isClassMessage, Args,
                                      E->getMethodDecl());

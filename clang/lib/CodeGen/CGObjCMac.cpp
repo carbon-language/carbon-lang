@@ -934,6 +934,7 @@ protected:
                                         QualType Arg0Ty,
                                         bool IsSuper,
                                         const CallArgList &CallArgs,
+                                        const ObjCMethodDecl *OMD,
                                         const ObjCCommonTypesHelper &ObjCTypes);
 
 public:
@@ -1091,7 +1092,8 @@ public:
                            bool isCategoryImpl,
                            llvm::Value *Receiver,
                            bool IsClassMessage,
-                           const CallArgList &CallArgs);
+                           const CallArgList &CallArgs,
+                           const ObjCMethodDecl *Method);
 
   virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *ID);
@@ -1313,7 +1315,8 @@ public:
                            bool isCategoryImpl,
                            llvm::Value *Receiver,
                            bool IsClassMessage,
-                           const CallArgList &CallArgs);
+                           const CallArgList &CallArgs,
+                           const ObjCMethodDecl *Method);
 
   virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *ID);
@@ -1447,7 +1450,8 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                     bool isCategoryImpl,
                                     llvm::Value *Receiver,
                                     bool IsClassMessage,
-                                    const CodeGen::CallArgList &CallArgs) {
+                                    const CodeGen::CallArgList &CallArgs,
+                                    const ObjCMethodDecl *Method) {
   // Create and init a super structure; this is a (receiver, class)
   // pair we will pass to objc_msgSendSuper.
   llvm::Value *ObjCSuper =
@@ -1489,7 +1493,7 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   return EmitLegacyMessageSend(CGF, ResultType,
                                EmitSelector(CGF.Builder, Sel),
                                ObjCSuper, ObjCTypes.SuperPtrCTy,
-                               true, CallArgs, ObjCTypes);
+                               true, CallArgs, Method, ObjCTypes);
 }
 
 /// Generate code for a message send expression.
@@ -1503,18 +1507,19 @@ CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
   return EmitLegacyMessageSend(CGF, ResultType,
                                EmitSelector(CGF.Builder, Sel),
                                Receiver, CGF.getContext().getObjCIdType(),
-                               false, CallArgs, ObjCTypes);
+                               false, CallArgs, Method, ObjCTypes);
 }
 
-CodeGen::RValue CGObjCCommonMac::EmitLegacyMessageSend(
-  CodeGen::CodeGenFunction &CGF,
-  QualType ResultType,
-  llvm::Value *Sel,
-  llvm::Value *Arg0,
-  QualType Arg0Ty,
-  bool IsSuper,
-  const CallArgList &CallArgs,
-  const ObjCCommonTypesHelper &ObjCTypes) {
+CodeGen::RValue
+CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
+                                       QualType ResultType,
+                                       llvm::Value *Sel,
+                                       llvm::Value *Arg0,
+                                       QualType Arg0Ty,
+                                       bool IsSuper,
+                                       const CallArgList &CallArgs,
+                                       const ObjCMethodDecl *Method,
+                                       const ObjCCommonTypesHelper &ObjCTypes) {
   CallArgList ActualArgs;
   if (!IsSuper)
     Arg0 = CGF.Builder.CreateBitCast(Arg0, ObjCTypes.ObjectPtrTy, "tmp");
@@ -5080,18 +5085,18 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
 }
 
 /// Generate code for a message send expression in the nonfragile abi.
-CodeGen::RValue CGObjCNonFragileABIMac::GenerateMessageSend(
-  CodeGen::CodeGenFunction &CGF,
-  QualType ResultType,
-  Selector Sel,
-  llvm::Value *Receiver,
-  bool IsClassMessage,
-  const CallArgList &CallArgs,
-  const ObjCMethodDecl *Method) {
+CodeGen::RValue
+CGObjCNonFragileABIMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
+                                            QualType ResultType,
+                                            Selector Sel,
+                                            llvm::Value *Receiver,
+                                            bool IsClassMessage,
+                                            const CallArgList &CallArgs,
+                                            const ObjCMethodDecl *Method) {
   return LegacyDispatchedSelector(Sel)
     ? EmitLegacyMessageSend(CGF, ResultType, EmitSelector(CGF.Builder, Sel),
                             Receiver, CGF.getContext().getObjCIdType(),
-                            false, CallArgs, ObjCTypes)
+                            false, CallArgs, Method, ObjCTypes)
     : EmitMessageSend(CGF, ResultType, Sel,
                       Receiver, CGF.getContext().getObjCIdType(),
                       false, CallArgs);
@@ -5199,7 +5204,8 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                                  bool isCategoryImpl,
                                                  llvm::Value *Receiver,
                                                  bool IsClassMessage,
-                                                 const CodeGen::CallArgList &CallArgs) {
+                                                 const CodeGen::CallArgList &CallArgs,
+                                                 const ObjCMethodDecl *Method) {
   // ...
   // Create and init a super structure; this is a (receiver, class)
   // pair we will pass to objc_msgSendSuper.
@@ -5236,8 +5242,7 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   return (LegacyDispatchedSelector(Sel))
     ? EmitLegacyMessageSend(CGF, ResultType,EmitSelector(CGF.Builder, Sel),
                             ObjCSuper, ObjCTypes.SuperPtrCTy,
-                            true, CallArgs,
-                            ObjCTypes)
+                            true, CallArgs, Method, ObjCTypes)
     : EmitMessageSend(CGF, ResultType, Sel,
                       ObjCSuper, ObjCTypes.SuperPtrCTy,
                       true, CallArgs);

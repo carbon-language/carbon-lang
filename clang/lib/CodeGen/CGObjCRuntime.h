@@ -116,6 +116,9 @@ public:
   virtual void GenerateClass(const ObjCImplementationDecl *OID) = 0;
 
   /// Generate an Objective-C message send operation.
+  ///
+  /// \param Method - The method being called, this may be null if synthesizing
+  /// a property setter or getter.
   virtual CodeGen::RValue
   GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                       QualType ResultType,
@@ -123,11 +126,14 @@ public:
                       llvm::Value *Receiver,
                       bool IsClassMessage,
                       const CallArgList &CallArgs,
-                      const ObjCMethodDecl *Method=0) = 0;
+                      const ObjCMethodDecl *Method = 0) = 0;
 
   /// Generate an Objective-C message send operation to the super
   /// class initiated in a method for Class and with the given Self
   /// object.
+  ///
+  /// \param Method - The method being called, this may be null if synthesizing
+  /// a property setter or getter.
   virtual CodeGen::RValue
   GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                            QualType ResultType,
@@ -136,7 +142,8 @@ public:
                            bool isCategoryImpl,
                            llvm::Value *Self,
                            bool IsClassMessage,
-                           const CallArgList &CallArgs) = 0;
+                           const CallArgList &CallArgs,
+                           const ObjCMethodDecl *Method = 0) = 0;
 
   /// Emit the code to return the named protocol as an object, as in a
   /// @protocol expression.

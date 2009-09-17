@@ -139,7 +139,8 @@ public:
                            bool isCategoryImpl,
                            llvm::Value *Receiver,
                            bool IsClassMessage,
-                           const CallArgList &CallArgs);
+                           const CallArgList &CallArgs,
+                           const ObjCMethodDecl *Method);
   virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *OID);
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel);
@@ -364,7 +365,8 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
                                     bool isCategoryImpl,
                                     llvm::Value *Receiver,
                                     bool IsClassMessage,
-                                    const CallArgList &CallArgs) {
+                                    const CallArgList &CallArgs,
+                                    const ObjCMethodDecl *Method) {
   llvm::Value *cmd = GetSelector(CGF.Builder, Sel);
 
   CallArgList ActualArgs;
@@ -1530,7 +1532,7 @@ llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD,
   std::string FunctionName = SymbolNameForMethod(ClassName, CategoryName,
       MethodName, isClassMethod);
 
-  llvm::Function *Method 
+  llvm::Function *Method
     = llvm::Function::Create(MethodTy,
                              llvm::GlobalValue::InternalLinkage,
                              FunctionName,
