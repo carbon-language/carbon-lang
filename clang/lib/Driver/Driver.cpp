@@ -803,10 +803,19 @@ void Driver::BuildActions(const ArgList &Args, ActionList &Actions) const {
     if (InitialPhase > FinalPhase) {
       // Claim here to avoid the more general unused warning.
       InputArg->claim();
-      Diag(clang::diag::warn_drv_input_file_unused)
-        << InputArg->getAsString(Args)
-        << getPhaseName(InitialPhase)
-        << FinalPhaseArg->getOption().getName();
+
+      // Special case '-E' warning on a previously preprocessed file to make
+      // more sense.
+      if (InitialPhase == phases::Compile && FinalPhase == phases::Preprocess &&
+          getPreprocessedType(InputType) == types::TY_INVALID)
+        Diag(clang::diag::warn_drv_preprocessed_input_file_unused)
+          << InputArg->getAsString(Args)
+          << FinalPhaseArg->getOption().getName();
+      else
+        Diag(clang::diag::warn_drv_input_file_unused)
+          << InputArg->getAsString(Args)
+          << getPhaseName(InitialPhase)
+          << FinalPhaseArg->getOption().getName();
       continue;
     }
 

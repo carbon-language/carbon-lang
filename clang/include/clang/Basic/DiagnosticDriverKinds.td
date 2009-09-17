@@ -58,6 +58,8 @@ def err_drv_invalid_mfloat_abi : Error<
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;
+def warn_drv_preprocessed_input_file_unused : Warning<
+  "%0: previously preprocessed input unused when '%1' is present">;
 def warn_drv_unused_argument : Warning<
   "argument unused during compilation: '%0'">;
 def warn_drv_pipe_ignored_with_save_temps : Warning<
