@@ -350,13 +350,6 @@ BaseLang("x", llvm::cl::desc("Base language to compile"),
                     clEnumValEnd));
 
 static llvm::cl::opt<bool>
-LangObjC("ObjC", llvm::cl::desc("Set base language to Objective-C"),
-         llvm::cl::Hidden);
-static llvm::cl::opt<bool>
-LangObjCXX("ObjC++", llvm::cl::desc("Set base language to Objective-C++"),
-           llvm::cl::Hidden);
-
-static llvm::cl::opt<bool>
 ObjCExclusiveGC("fobjc-gc-only",
                 llvm::cl::desc("Use GC exclusively for Objective-C related "
                                "memory management"));
@@ -404,14 +397,6 @@ static llvm::cl::opt<bool>
 PThread("pthread", llvm::cl::desc("Support POSIX threads in generated code"),
          llvm::cl::init(false));
 
-/// InitializeBaseLanguage - Handle the -x foo options.
-static void InitializeBaseLanguage() {
-  if (LangObjC)
-    BaseLang = langkind_objc;
-  else if (LangObjCXX)
-    BaseLang = langkind_objcxx;
-}
-
 static LangKind GetLanguage(const std::string &Filename) {
   if (BaseLang != langkind_unspecified)
     return BaseLang;
@@ -424,15 +409,9 @@ static LangKind GetLanguage(const std::string &Filename) {
   }
 
   std::string Ext = std::string(Filename.begin()+DotPos+1, Filename.end());
-  // C header: .h
-  // C++ header: .hh or .H;
-  // assembler no preprocessing: .s
-  // assembler: .S
   if (Ext == "c")
     return langkind_c;
-  else if (Ext == "S" ||
-           // If the compiler is run on a .s file, preprocess it as .S
-           Ext == "s")
+  else if (Ext == "S" || Ext == "s")
     return langkind_asm_cpp;
   else if (Ext == "i")
     return langkind_c_cpp;
@@ -2289,7 +2268,6 @@ int main(int argc, char **argv) {
     LangOptions LangInfo;
     DiagClient->setLangOptions(&LangInfo);
 
-    InitializeBaseLanguage();
     LangKind LK = GetLanguage(InFile);
     InitializeLangOptions(LangInfo, LK);
     InitializeLanguageStandard(LangInfo, LK, Target.get(), Features);
