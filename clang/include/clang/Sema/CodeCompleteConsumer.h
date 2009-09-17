@@ -43,7 +43,7 @@ public:
     /// \brief Describes the kind of result generated.
     enum ResultKind {
       RK_Declaration = 0, //< Refers to a declaration
-      RK_Keyword,        //< Refers to a keyword or symbol.
+      RK_Keyword          //< Refers to a keyword or symbol.
     };
     
     /// \brief The kind of result stored here.
