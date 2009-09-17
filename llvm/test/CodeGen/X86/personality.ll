@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin9 | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=i386-apple-darwin9 | FileCheck %s -check-prefix=X32
 ; PR1632
 
 define void @_Z1fv() {
@@ -39,3 +40,10 @@ declare void @__cxa_end_catch()
 
 ; X64: Leh_frame_common_begin:
 ; X64: .long	___gxx_personality_v0@GOTPCREL+4
+
+; X32: .section	__IMPORT,__pointers,non_lazy_symbol_pointers
+; X32: L___gxx_personality_v0$non_lazy_ptr:
+; X32:   .indirect_symbol ___gxx_personality_v0
+; ....
+; X32: Leh_frame_common_begin:
+; X32: .long	L___gxx_personality_v0$non_lazy_ptr-
