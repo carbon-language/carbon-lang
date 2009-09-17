@@ -4000,32 +4000,35 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_selector_i32:
   case Intrinsic::eh_selector_i64: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-    EVT VT = (Intrinsic == Intrinsic::eh_selector_i32 ? MVT::i32 : MVT::i64);
 
-    if (MMI) {
-      if (CurMBB->isLandingPad())
-        AddCatchInfo(I, MMI, CurMBB);
-      else {
+    if (CurMBB->isLandingPad())
+      AddCatchInfo(I, MMI, CurMBB);
+    else {
 #ifndef NDEBUG
-        FuncInfo.CatchInfoLost.insert(&I);
+      FuncInfo.CatchInfoLost.insert(&I);
 #endif
-        // FIXME: Mark exception selector register as live in.  Hack for PR1508.
-        unsigned Reg = TLI.getExceptionSelectorRegister();
-        if (Reg) CurMBB->addLiveIn(Reg);
-      }
-
-      // Insert the EHSELECTION instruction.
-      SDVTList VTs = DAG.getVTList(VT, MVT::Other);
-      SDValue Ops[2];
-      Ops[0] = getValue(I.getOperand(1));
-      Ops[1] = getRoot();
-      SDValue Op = DAG.getNode(ISD::EHSELECTION, dl, VTs, Ops, 2);
-      setValue(&I, Op);
-      DAG.setRoot(Op.getValue(1));
-    } else {
-      setValue(&I, DAG.getConstant(0, VT));
+      // FIXME: Mark exception selector register as live in.  Hack for PR1508.
+      unsigned Reg = TLI.getExceptionSelectorRegister();
+      if (Reg) CurMBB->addLiveIn(Reg);
     }
 
+    // Insert the EHSELECTION instruction.
+    SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
+    SDValue Ops[2];
+    Ops[0] = getValue(I.getOperand(1));
+    Ops[1] = getRoot();
+    SDValue Op = DAG.getNode(ISD::EHSELECTION, dl, VTs, Ops, 2);
+
+    DAG.setRoot(Op.getValue(1));
+
+    MVT::SimpleValueType VT =
+      (Intrinsic == Intrinsic::eh_selector_i32 ? MVT::i32 : MVT::i64);
+    if (Op.getValueType().getSimpleVT() < VT)
+      Op = DAG.getNode(ISD::ZERO_EXTEND, dl, VT, Op);
+    else if (Op.getValueType().getSimpleVT() < VT)
+      Op = DAG.getNode(ISD::TRUNCATE, dl, VT, Op);
+    
+    setValue(&I, Op);
     return 0;
   }
 
