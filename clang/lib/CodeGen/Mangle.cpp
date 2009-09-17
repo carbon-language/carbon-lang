@@ -93,8 +93,8 @@ namespace {
     void mangleCXXCtorType(CXXCtorType T);
     void mangleCXXDtorType(CXXDtorType T);
 
-    void mangleTemplateArgs(const TemplateArgumentList &L);
-    void mangleTemplateArg(const TemplateArgument &A);
+    void mangleTemplateArgumentList(const TemplateArgumentList &L);
+    void mangleTemplateArgument(const TemplateArgument &A);
   };
 }
 
@@ -252,10 +252,9 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   if (ND->getDeclContext()->isTranslationUnit() ||
       isStdNamespace(ND->getDeclContext())) {
     const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND);
-    if (FD && FD->getPrimaryTemplate()) {
+    if (FD && FD->getPrimaryTemplate()) 
       mangleUnscopedTemplateName(FD);
-      mangleTemplateArgs(*FD->getTemplateSpecializationArgs());
-    } else
+    else
       mangleUnscopedName(ND);
   } else if (isa<FunctionDecl>(ND->getDeclContext()))
     mangleLocalName(ND);
@@ -386,6 +385,12 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
   case DeclarationName::CXXUsingDirective:
     assert(false && "Can't mangle a using directive name!");
     break;
+  }
+
+  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
+    if (const TemplateArgumentList *TemplateArgs
+          = Function->getTemplateSpecializationArgs())
+      mangleTemplateArgumentList(*TemplateArgs);
   }
 }
 
@@ -710,7 +715,7 @@ void CXXNameMangler::mangleType(const TagType *T) {
   // If this is a class template specialization, mangle the template arguments.
   if (ClassTemplateSpecializationDecl *Spec
       = dyn_cast<ClassTemplateSpecializationDecl>(T->getDecl()))
-    mangleTemplateArgs(Spec->getTemplateArgs());
+    mangleTemplateArgumentList(Spec->getTemplateArgs());
 }
 
 // <type>       ::= <array-type>
@@ -872,20 +877,20 @@ void CXXNameMangler::mangleCXXDtorType(CXXDtorType T) {
   }
 }
 
-void CXXNameMangler::mangleTemplateArgs(const TemplateArgumentList &L) {
+void CXXNameMangler::mangleTemplateArgumentList(const TemplateArgumentList &L) {
   // <template-args> ::= I <template-arg>+ E
   Out << "I";
 
   for (unsigned i = 0, e = L.size(); i != e; ++i) {
     const TemplateArgument &A = L[i];
 
-    mangleTemplateArg(A);
+    mangleTemplateArgument(A);
   }
 
   Out << "E";
 }
 
-void CXXNameMangler::mangleTemplateArg(const TemplateArgument &A) {
+void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
   // <template-arg> ::= <type>              # type or template
   //                ::= X <expression> E    # expression
   //                ::= <expr-primary>      # simple expressions
@@ -927,11 +932,6 @@ bool CXXNameMangler::mangleSubstitution(const NamedDecl *ND) {
 }
 
 bool CXXNameMangler::mangleSubstitution(QualType T) {
-  if (!T.getCVRQualifiers()) {
-    if (const RecordType *RT = dyn_cast<RecordType>(T))
-      return mangleSubstitution(RT->getDecl());
-  }
-  
   uintptr_t TypePtr = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
 
   return mangleSubstitution(TypePtr);
@@ -972,13 +972,6 @@ bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
 }
 
 void CXXNameMangler::addSubstitution(QualType T) {
-  if (!T.getCVRQualifiers()) {
-    if (const RecordType *RT = dyn_cast<RecordType>(T)) {
-      addSubstitution(RT->getDecl());
-      return;
-    }
-  }
-  
   uintptr_t TypePtr = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
   addSubstitution(TypePtr);
 }
