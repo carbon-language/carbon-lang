@@ -55,9 +55,7 @@ namespace {
     void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type);
 
   private:
-    bool mangleSubstitution(const NamedDecl *ND) {
-      return mangleSubstitution(reinterpret_cast<uintptr_t>(ND));
-    }
+    bool mangleSubstitution(const NamedDecl *ND);
     bool mangleSubstitution(QualType T);
     bool mangleSubstitution(uintptr_t Ptr);
     
@@ -432,6 +430,10 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
   //           ::= # empty
   //           ::= <substitution>
   // FIXME: We only handle mangling of namespaces and classes at the moment.
+
+  if (mangleSubstitution(cast<NamedDecl>(DC)))
+    return;
+  
   if (!DC->getParent()->isTranslationUnit())
     manglePrefix(DC->getParent());
 
@@ -444,6 +446,8 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
     } else
       mangleSourceName(Record->getIdentifier());
   }
+  
+  addSubstitution(cast<NamedDecl>(DC));
 }
 
 void
@@ -922,6 +926,11 @@ void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
 
 // <substitution> ::= S <seq-id> _
 //                ::= S_
+
+bool CXXNameMangler::mangleSubstitution(const NamedDecl *ND) {
+  return mangleSubstitution(reinterpret_cast<uintptr_t>(ND));
+}
+
 bool CXXNameMangler::mangleSubstitution(QualType T) {
   uintptr_t TypePtr = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
 

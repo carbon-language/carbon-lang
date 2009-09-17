@@ -2,19 +2,25 @@
 
 struct X {};
 
-// CHECK: define void @_Z1f1XS_
+// CHECK: define void @_Z1f1XS_(
 void f(X, X) { }
 
-// CHECK: define void @_Z1fR1XS0_
+// CHECK: define void @_Z1fR1XS0_(
 void f(X&, X&) { }
 
-// CHECK: define void @_Z1fRK1XS1_
+// CHECK: define void @_Z1fRK1XS1_(
 void f(const X&, const X&) { }
 
 typedef void T();
 struct S {};
 
-// CHECK: define void @_Z1fPFvvEM1SFvvE
+// CHECK: define void @_Z1fPFvvEM1SFvvE(
 void f(T*, T (S::*)) {}
 
-// RUN: true
+namespace A {
+  struct A { };
+  struct B { };
+};
+
+// CHECK: define void @_Z1fN1A1AENS_1BE(
+void f(A::A a, A::B b) { }
