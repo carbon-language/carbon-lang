@@ -3,4 +3,4 @@
 config.clang_obj_root = "@CLANG_BINARY_DIR@"
 
 # Let the main config do the real work.
-lit.load_config(config, "@LLVM_SOURCE_DIR@/lit.cfg")
+lit.load_config(config, "@CLANG_SOURCE_DIR@/test/lit.cfg")
