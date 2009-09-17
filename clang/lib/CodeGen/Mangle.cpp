@@ -216,10 +216,15 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   //   2. Destructors.
   //   3. Conversion operator functions, e.g. operator int.
   bool MangleReturnType = false;
-  if (FD->getPrimaryTemplate() &&
-      !(isa<CXXConstructorDecl>(FD) || isa<CXXDestructorDecl>(FD) ||
-        isa<CXXConversionDecl>(FD)))
-    MangleReturnType = true;
+  if (FunctionTemplateDecl *PrimaryTemplate = FD->getPrimaryTemplate()) {
+    if (!(isa<CXXConstructorDecl>(FD) || isa<CXXDestructorDecl>(FD) ||
+          isa<CXXConversionDecl>(FD)))
+      MangleReturnType = true;
+    
+    // Mangle the type of the primary template.
+    FD = PrimaryTemplate->getTemplatedDecl();
+  }
+
   mangleBareFunctionType(FD->getType()->getAsFunctionType(), MangleReturnType);
 }
 
@@ -744,7 +749,6 @@ void CXXNameMangler::mangleType(const TemplateTypeParmType *T) {
 }
 
 // FIXME: <type> ::= <template-template-param> <template-args>
-// FIXME: <type> ::= <substitution> # See Compression below
 
 // <type> ::= P <type>   # pointer-to
 void CXXNameMangler::mangleType(const PointerType *T) {
