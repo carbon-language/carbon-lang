@@ -704,13 +704,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (types::getPreprocessedType(InputType) != types::TY_INVALID)
     AddPreprocessingOptions(D, Args, CmdArgs, Output, Inputs);
 
-  // Manually translate -O to -O1 and -O4 to -O3; let clang reject
+  // Manually translate -O to -O2 and -O4 to -O3; let clang reject
   // others.
   if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
     if (A->getOption().getId() == options::OPT_O4)
       CmdArgs.push_back("-O3");
     else if (A->getValue(Args)[0] == '\0')
-      CmdArgs.push_back("-O1");
+      CmdArgs.push_back("-O2");
     else
       A->render(Args, CmdArgs);
   }
