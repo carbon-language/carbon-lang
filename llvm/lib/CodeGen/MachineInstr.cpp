@@ -652,7 +652,7 @@ bool MachineInstr::isDebugLabel() const {
 }
 
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of
-/// the specific register or -1 if it is not found. It further tightening
+/// the specific register or -1 if it is not found. It further tightens
 /// the search criteria to a use that kills the register if isKill is true.
 int MachineInstr::findRegisterUseOperandIdx(unsigned Reg, bool isKill,
                                           const TargetRegisterInfo *TRI) const {
