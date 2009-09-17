@@ -478,71 +478,71 @@ void PPCTargetInfo::getGCCRegNames(const char * const *&Names,
 const TargetInfo::GCCRegAlias PPCTargetInfo::GCCRegAliases[] = {
   // While some of these aliases do map to different registers
   // they still share the same register name.
-  { { "0" }, "r0" }, 
-  { { "1"}, "r1" }, 
-  { { "2" }, "r2" }, 
-  { { "3" }, "r3" }, 
-  { { "4" }, "r4" }, 
-  { { "5" }, "r5" }, 
-  { { "6" }, "r6" }, 
-  { { "7" }, "r7" }, 
-  { { "8" }, "r8" }, 
-  { { "9" }, "r9" }, 
-  { { "10" }, "r10" }, 
-  { { "11" }, "r11" }, 
-  { { "12" }, "r12" }, 
-  { { "13" }, "r13" }, 
-  { { "14" }, "r14" }, 
-  { { "15" }, "r15" }, 
-  { { "16" }, "r16" }, 
-  { { "17" }, "r17" }, 
-  { { "18" }, "r18" }, 
-  { { "19" }, "r19" }, 
-  { { "20" }, "r20" }, 
-  { { "21" }, "r21" }, 
-  { { "22" }, "r22" }, 
-  { { "23" }, "r23" }, 
-  { { "24" }, "r24" }, 
-  { { "25" }, "r25" }, 
-  { { "26" }, "r26" }, 
-  { { "27" }, "r27" }, 
-  { { "28" }, "r28" }, 
-  { { "29" }, "r29" }, 
-  { { "30" }, "r30" }, 
-  { { "31" }, "r31" }, 
-  { { "fr0" }, "f0" }, 
-  { { "fr1" }, "f1" }, 
-  { { "fr2" }, "f2" }, 
-  { { "fr3" }, "f3" }, 
-  { { "fr4" }, "f4" }, 
-  { { "fr5" }, "f5" }, 
-  { { "fr6" }, "f6" }, 
-  { { "fr7" }, "f7" }, 
-  { { "fr8" }, "f8" }, 
-  { { "fr9" }, "f9" }, 
-  { { "fr10" }, "f00" }, 
-  { { "fr11" }, "f11" }, 
-  { { "fr12" }, "f12" }, 
-  { { "fr13" }, "f13" }, 
-  { { "fr14" }, "f14" }, 
-  { { "fr15" }, "f15" }, 
-  { { "fr16" }, "f16" }, 
-  { { "fr17" }, "f17" }, 
-  { { "fr18" }, "f18" }, 
-  { { "fr19" }, "f19" }, 
-  { { "fr20" }, "f20" }, 
-  { { "fr21" }, "f21" }, 
-  { { "fr22" }, "f22" }, 
-  { { "fr23" }, "f23" }, 
-  { { "fr24" }, "f24" }, 
-  { { "fr25" }, "f25" }, 
-  { { "fr26" }, "f26" }, 
-  { { "fr27" }, "f27" }, 
-  { { "fr28" }, "f28" }, 
-  { { "fr29" }, "f29" }, 
-  { { "fr30" }, "f30" }, 
-  { { "fr31" }, "f31" }, 
-  { { "cc" }, "cr0" }, 
+  { { "0" }, "r0" },
+  { { "1"}, "r1" },
+  { { "2" }, "r2" },
+  { { "3" }, "r3" },
+  { { "4" }, "r4" },
+  { { "5" }, "r5" },
+  { { "6" }, "r6" },
+  { { "7" }, "r7" },
+  { { "8" }, "r8" },
+  { { "9" }, "r9" },
+  { { "10" }, "r10" },
+  { { "11" }, "r11" },
+  { { "12" }, "r12" },
+  { { "13" }, "r13" },
+  { { "14" }, "r14" },
+  { { "15" }, "r15" },
+  { { "16" }, "r16" },
+  { { "17" }, "r17" },
+  { { "18" }, "r18" },
+  { { "19" }, "r19" },
+  { { "20" }, "r20" },
+  { { "21" }, "r21" },
+  { { "22" }, "r22" },
+  { { "23" }, "r23" },
+  { { "24" }, "r24" },
+  { { "25" }, "r25" },
+  { { "26" }, "r26" },
+  { { "27" }, "r27" },
+  { { "28" }, "r28" },
+  { { "29" }, "r29" },
+  { { "30" }, "r30" },
+  { { "31" }, "r31" },
+  { { "fr0" }, "f0" },
+  { { "fr1" }, "f1" },
+  { { "fr2" }, "f2" },
+  { { "fr3" }, "f3" },
+  { { "fr4" }, "f4" },
+  { { "fr5" }, "f5" },
+  { { "fr6" }, "f6" },
+  { { "fr7" }, "f7" },
+  { { "fr8" }, "f8" },
+  { { "fr9" }, "f9" },
+  { { "fr10" }, "f00" },
+  { { "fr11" }, "f11" },
+  { { "fr12" }, "f12" },
+  { { "fr13" }, "f13" },
+  { { "fr14" }, "f14" },
+  { { "fr15" }, "f15" },
+  { { "fr16" }, "f16" },
+  { { "fr17" }, "f17" },
+  { { "fr18" }, "f18" },
+  { { "fr19" }, "f19" },
+  { { "fr20" }, "f20" },
+  { { "fr21" }, "f21" },
+  { { "fr22" }, "f22" },
+  { { "fr23" }, "f23" },
+  { { "fr24" }, "f24" },
+  { { "fr25" }, "f25" },
+  { { "fr26" }, "f26" },
+  { { "fr27" }, "f27" },
+  { { "fr28" }, "f28" },
+  { { "fr29" }, "f29" },
+  { { "fr30" }, "f30" },
+  { { "fr31" }, "f31" },
+  { { "cc" }, "cr0" },
 };
 
 void PPCTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
@@ -1025,6 +1025,9 @@ class ARMTargetInfo : public TargetInfo {
     XScale
   } ArmArch;
 
+   static const TargetInfo::GCCRegAlias GCCRegAliases[];
+   static const char * const GCCRegNames[];
+
   std::string ABI;
 
 public:
@@ -1118,17 +1121,9 @@ public:
     return "typedef char* __builtin_va_list;";
   }
   virtual void getGCCRegNames(const char * const *&Names,
-                              unsigned &NumNames) const {
-    // FIXME: Implement.
-    Names = 0;
-    NumNames = 0;
-  }
+                              unsigned &NumNames) const;
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
-                                unsigned &NumAliases) const {
-    // FIXME: Implement.
-    Aliases = 0;
-    NumAliases = 0;
-  }
+                                unsigned &NumAliases) const;
   virtual bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &Info) const {
     // FIXME: Check if this is complete
@@ -1148,6 +1143,43 @@ public:
     return "";
   }
 };
+
+const char * const ARMTargetInfo::GCCRegNames[] = {
+  "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
+};
+
+void ARMTargetInfo::getGCCRegNames(const char * const *&Names,
+                                       unsigned &NumNames) const {
+  Names = GCCRegNames;
+  NumNames = llvm::array_lengthof(GCCRegNames);
+}
+
+const TargetInfo::GCCRegAlias ARMTargetInfo::GCCRegAliases[] = {
+
+  { { "a1" }, "r0" },
+  { { "a2" }, "r1" },
+  { { "a3" }, "r2" },
+  { { "a4" }, "r3" },
+  { { "v1" }, "r4" },
+  { { "v2" }, "r5" },
+  { { "v3" }, "r6" },
+  { { "v4" }, "r7" },
+  { { "v5" }, "r8" },
+  { { "v6", "rfp" }, "r9" },
+  { { "sl" }, "r10" },
+  { { "fp" }, "r11" },
+  { { "ip" }, "r12" },
+  { { "sp" }, "r13" },
+  { { "lr" }, "r14" },
+  { { "pc" }, "r15" },
+};
+
+void ARMTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                       unsigned &NumAliases) const {
+  Aliases = GCCRegAliases;
+  NumAliases = llvm::array_lengthof(GCCRegAliases);
+}
 } // end anonymous namespace.
 
 
