@@ -42,6 +42,7 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class ASTConsumer;
+  class CodeCompleteConsumer;
   class Preprocessor;
   class Decl;
   class DeclContext;
@@ -177,6 +178,9 @@ public:
 
   /// \brief Source of additional semantic information.
   ExternalSemaSource *ExternalSource;
+
+  /// \brief Code-completion consumer.
+  CodeCompleteConsumer *CodeCompleter;
 
   /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
@@ -3618,6 +3622,23 @@ public:
 
     return T.getUnqualifiedType();
   }
+
+  /// \name Code completion
+  //@{
+private:
+  friend class CodeCompleteConsumer;
+  
+  void setCodeCompleteConsumer(CodeCompleteConsumer *CCC);
+  
+public:
+  virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,
+                                               SourceLocation OpLoc,
+                                               bool IsArrow);
+  
+  virtual void CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
+                                       bool EnteringContext);
+  //@}
+  
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
 private:

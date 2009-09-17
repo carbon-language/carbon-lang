@@ -166,6 +166,7 @@ private:
   bool IgnoreAllWarnings;        // Ignore all warnings: -w
   bool WarningsAsErrors;         // Treat warnings like errors:
   bool SuppressSystemWarnings;   // Suppress warnings in system headers.
+  bool SuppressAllDiagnostics;   // Suppress all diagnostics.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
   DiagnosticClient *Client;
 
@@ -245,6 +246,14 @@ public:
   void setSuppressSystemWarnings(bool Val) { SuppressSystemWarnings = Val; }
   bool getSuppressSystemWarnings() const { return SuppressSystemWarnings; }
 
+  /// \brief Suppress all diagnostics, to silence the front end when we 
+  /// know that we don't want any more diagnostics to be passed along to the
+  /// client
+  void setSuppressAllDiagnostics(bool Val = true) { 
+    SuppressAllDiagnostics = Val; 
+  }
+  bool getSuppressAllDiagnostics() const { return SuppressAllDiagnostics; }
+  
   /// setExtensionHandlingBehavior - This controls whether otherwise-unmapped
   /// extension diagnostics are mapped onto ignore/warning/error.  This
   /// corresponds to the GCC -pedantic and -pedantic-errors option.

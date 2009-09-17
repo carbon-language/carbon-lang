@@ -935,6 +935,14 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
         ParseOptionalCXXScopeSpecifier(SS, ObjectType, false);
       }
 
+      if (Tok.is(tok::code_completion)) {
+        // Code completion for a member access expression.
+        Actions.CodeCompleteMemberReferenceExpr(CurScope, LHS.get(),
+                                                OpLoc, OpKind == tok::arrow);
+        
+        ConsumeToken();
+      }
+      
       if (Tok.is(tok::identifier)) {
         if (!LHS.isInvalid())
           LHS = Actions.ActOnMemberReferenceExpr(CurScope, move(LHS), OpLoc,

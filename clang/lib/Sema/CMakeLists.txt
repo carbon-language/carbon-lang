@@ -1,6 +1,7 @@
 set(LLVM_NO_RTTI 1)
 
 add_clang_library(clangSema
+  CodeCompleteConsumer.cpp
   IdentifierResolver.cpp
   JumpDiagnostics.cpp
   ParseAST.cpp
@@ -10,6 +11,7 @@ add_clang_library(clangSema
   SemaCXXCast.cpp
   SemaCXXScopeSpec.cpp
   SemaChecking.cpp
+  SemaCodeComplete.cpp
   SemaDecl.cpp
   SemaDeclAttr.cpp
   SemaDeclCXX.cpp

@@ -38,6 +38,7 @@
 #include "clang/Frontend/Utils.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/CodeGen/ModuleBuilder.h"
+#include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/ParseAST.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/ASTConsumer.h"
@@ -212,6 +213,17 @@ OutputFile("o",
  llvm::cl::value_desc("path"),
  llvm::cl::desc("Specify output file"));
 
+
+static llvm::cl::opt<int>
+DumpCodeCompletion("code-completion-dump",
+                   llvm::cl::value_desc("N"),
+                   llvm::cl::desc("Dump code-completion information at $$N$$"));
+
+/// \brief Buld a new code-completion consumer that prints the results of
+/// code completion to standard output.
+static CodeCompleteConsumer *BuildPrintingCodeCompleter(Sema &S, void *) {
+  return new PrintingCodeCompleteConsumer(S, llvm::outs());
+}
 
 //===----------------------------------------------------------------------===//
 // PTH.
@@ -2046,12 +2058,29 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     if (InitializeSourceManager(PP, InFile))
       return;
   }
-
-
+  
   // If we have an ASTConsumer, run the parser with it.
-  if (Consumer)
+  if (Consumer) {
+    CodeCompleteConsumer *(*CreateCodeCompleter)(Sema &, void *) = 0;
+    void *CreateCodeCompleterData = 0;
+    
+    if (DumpCodeCompletion) {
+      // To dump code-completion information, we chop off the file at the
+      // location of the string $$N$$, where N is the value provided to
+      // -code-completion-dump, and then tell the lexer to return a 
+      // code-completion token before it hits the end of the file.
+      // FIXME: Find $$N$$ in the main file buffer
+      
+      PP.SetMainFileEofCodeCompletion();
+      
+      // Set up the creation routine for code-completion.
+      CreateCodeCompleter = BuildPrintingCodeCompleter;
+    }
+
     ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats,
-             CompleteTranslationUnit);
+             CompleteTranslationUnit,
+             CreateCodeCompleter, CreateCodeCompleterData);
+  }
 
   if (PA == RunPreprocessorOnly) {    // Just lex as fast as we can, no output.
     llvm::TimeRegion Timer(ClangFrontendTimer);

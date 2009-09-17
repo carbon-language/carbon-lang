@@ -1,5 +1,6 @@
 set(CLANG_TEST_DIRECTORIES
   "Analysis"
+  "CodeCompletion"
   "CodeGen"
   "CodeGenCXX"
   "CodeGenObjC"

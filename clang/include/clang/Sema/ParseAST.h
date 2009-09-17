@@ -18,7 +18,9 @@ namespace clang {
   class Preprocessor;
   class ASTConsumer;
   class ASTContext;
-
+  class CodeCompleteConsumer;
+  class Sema;
+  
   /// \brief Parse the entire file specified, notifying the ASTConsumer as
   /// the file is parsed.
   ///
@@ -30,7 +32,9 @@ namespace clang {
   /// end-of-translation-unit wrapup will be performed.
   void ParseAST(Preprocessor &pp, ASTConsumer *C,
                 ASTContext &Ctx, bool PrintStats = false,
-                bool CompleteTranslationUnit = true);
+                bool CompleteTranslationUnit = true,
+            CodeCompleteConsumer *(CreateCodeCompleter)(Sema &, void *Data) = 0,
+                void *CreateCodeCompleterData = 0);
 
 }  // end namespace clang
 

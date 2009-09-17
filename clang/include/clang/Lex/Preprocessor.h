@@ -92,6 +92,10 @@ class Preprocessor {
   bool DisableMacroExpansion : 1;  // True if macro expansion is disabled.
   bool InMacroArgs : 1;            // True if parsing fn macro invocation args.
 
+  /// \brief True if the end-of-file of the main file should be treated as
+  /// a code-completion token.
+  bool IsMainFileEofCodeCompletion : 1;
+
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
   IdentifierTable Identifiers;
@@ -259,6 +263,12 @@ public:
     Callbacks = C;
   }
 
+  /// \brief Note that, for the main source file, the end-of-file should be
+  /// treated as a code-completion token.
+  void SetMainFileEofCodeCompletion() {
+    IsMainFileEofCodeCompletion = true;
+  }
+  
   /// getMacroInfo - Given an identifier, return the MacroInfo it is #defined to
   /// or null if it isn't #define'd.
   MacroInfo *getMacroInfo(IdentifierInfo *II) const {

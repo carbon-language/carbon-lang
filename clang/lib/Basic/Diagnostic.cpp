@@ -196,6 +196,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   IgnoreAllWarnings = false;
   WarningsAsErrors = false;
   SuppressSystemWarnings = false;
+  SuppressAllDiagnostics = false;
   ExtBehavior = Ext_Ignore;
 
   ErrorOccurred = false;
@@ -424,6 +425,9 @@ bool Diagnostic::setDiagnosticGroupMapping(const char *Group,
 bool Diagnostic::ProcessDiag() {
   DiagnosticInfo Info(this);
 
+  if (SuppressAllDiagnostics)
+    return false;
+  
   // Figure out the diagnostic level of this message.
   Diagnostic::Level DiagLevel;
   unsigned DiagID = Info.getID();

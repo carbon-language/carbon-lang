@@ -71,6 +71,7 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   // Macro expansion is enabled.
   DisableMacroExpansion = false;
   InMacroArgs = false;
+  IsMainFileEofCodeCompletion = false;
   NumCachedTokenLexers = 0;
 
   CachedLexPos = 0;
@@ -368,6 +369,13 @@ void Preprocessor::EnterMainSourceFile() {
   // Enter the main file source buffer.
   EnterSourceFile(MainFileID, 0);
 
+  if (IsMainFileEofCodeCompletion) {
+    // Tell our newly-created lexer that it should treat its end-of-file as
+    // a code-completion token.
+    IsMainFileEofCodeCompletion = false;
+    static_cast<Lexer *>(getCurrentFileLexer())->SetEofIsCodeCompletion();
+  }
+  
   // Tell the header info that the main file was entered.  If the file is later
   // #imported, it won't be re-entered.
   if (const FileEntry *FE = SourceMgr.getFileEntryForID(MainFileID))

@@ -13,6 +13,7 @@
 
 #include "clang/Sema/ParseAST.h"
 #include "Sema.h"
+#include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/AST/ASTConsumer.h"
@@ -33,7 +34,9 @@ using namespace clang;
 ///
 void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
                      ASTContext &Ctx, bool PrintStats,
-                     bool CompleteTranslationUnit) {
+                     bool CompleteTranslationUnit,
+                CodeCompleteConsumer *(CreateCodeCompleter)(Sema &, void *Data),
+                     void *CreateCodeCompleterData) {
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
     Decl::CollectingStats(true);
@@ -60,6 +63,10 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
     External->StartTranslationUnit(Consumer);
   }
 
+  CodeCompleteConsumer *CodeCompleter = 0;
+  if (CreateCodeCompleter)
+    CodeCompleter = CreateCodeCompleter(S, CreateCodeCompleterData);
+  
   Parser::DeclGroupPtrTy ADecl;
 
   while (!P.ParseTopLevelDecl(ADecl)) {  // Not end of file.
@@ -78,6 +85,9 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
 
   Consumer->HandleTranslationUnit(Ctx);
 
+  if (CreateCodeCompleter)
+    delete CodeCompleter;
+  
   if (PrintStats) {
     fprintf(stderr, "\nSTATISTICS:\n");
     P.getActions().PrintStats();

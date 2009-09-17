@@ -2185,6 +2185,49 @@ public:
                                     SourceLocation AliasNameLoc) {
     return;
   }
+  
+  /// \name Code completion actions
+  ///
+  /// These actions are used to signal that a code-completion token has been
+  /// found at a point in the grammar where the Action implementation is
+  /// likely to be able to provide a list of possible completions, e.g.,
+  /// after the "." or "->" of a member access expression.
+  ///
+  //@{
+  
+  /// \brief Code completion for a member access expression.
+  ///
+  /// This code completion action is invoked when the code-completion token
+  /// is found after the "." or "->" of a member access expression.
+  ///
+  /// \param S the scope in which the member access expression occurs.
+  ///
+  /// \param Base the base expression (e.g., the x in "x.foo") of the member
+  /// access.
+  ///
+  /// \param OpLoc the location of the "." or "->" operator.
+  ///
+  /// \param IsArrow true when the operator is "->", false when it is ".".
+  virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,
+                                               SourceLocation OpLoc,
+                                               bool IsArrow) {
+  }
+  
+  /// \brief Code completion for a C++ nested-name-specifier that precedes a
+  /// qualified-id of some form.
+  ///
+  /// This code completion action is invoked when the code-completion token
+  /// is found after the "::" of a nested-name-specifier.
+  ///
+  /// \param S the scope in which the nested-name-specifier occurs.
+  /// 
+  /// \param SS the scope specifier ending with "::".
+  ///
+  /// \parameter EnteringContext whether we're entering the context of this
+  /// scope specifier.
+  virtual void CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
+                                       bool EnteringContext) { }
+  //@}
 };
 
 /// MinimalAction - Minimal actions are used by light-weight clients of the

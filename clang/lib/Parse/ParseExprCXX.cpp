@@ -85,6 +85,13 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       // To implement this, we clear out the object type as soon as we've
       // seen a leading '::' or part of a nested-name-specifier.
       ObjectType = 0;
+      
+      if (Tok.is(tok::code_completion)) {
+        // Code completion for a nested-name-specifier, where the code
+        // code completion token follows the '::'.
+        Actions.CodeCompleteQualifiedId(CurScope, SS, EnteringContext);
+        ConsumeToken();
+      }
     }
 
     // nested-name-specifier:

@@ -39,7 +39,8 @@ class Lexer : public PreprocessorLexer {
   SourceLocation FileLoc;        // Location for start of file.
   LangOptions Features;          // Features enabled by this language (cache).
   bool Is_PragmaLexer;           // True if lexer for _Pragma handling.
-
+  bool IsEofCodeCompletion;      // True if EOF is treated as a code-completion.
+  
   //===--------------------------------------------------------------------===//
   // Context-specific lexing flags set by the preprocessor.
   //
@@ -178,6 +179,15 @@ public:
     ExtendedTokenMode = Mode ? 1 : 0;
   }
 
+  /// \brief Specify that end-of-file is to be considered a code-completion
+  /// token.
+  ///
+  /// When in this mode, the end-of-file token will be immediately preceded
+  /// by a code-completion token.
+  void SetEofIsCodeCompletion() {
+    IsEofCodeCompletion = true;
+  }
+  
   const char *getBufferStart() const { return BufferStart; }
 
   /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
