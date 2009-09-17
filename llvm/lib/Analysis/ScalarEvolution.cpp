@@ -2972,8 +2972,20 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       const SCEV *LHS = getSCEV(U->getOperand(0));
       const APInt &CIVal = CI->getValue();
       if (GetMinTrailingZeros(LHS) >=
-          (CIVal.getBitWidth() - CIVal.countLeadingZeros()))
-        return getAddExpr(LHS, getSCEV(U->getOperand(1)));
+          (CIVal.getBitWidth() - CIVal.countLeadingZeros())) {
+        // Build a plain add SCEV.
+        const SCEV *S = getAddExpr(LHS, getSCEV(CI));
+        // If the LHS of the add was an addrec and it has no-wrap flags,
+        // transfer the no-wrap flags, since an or won't introduce a wrap.
+        if (const SCEVAddRecExpr *NewAR = dyn_cast<SCEVAddRecExpr>(S)) {
+          const SCEVAddRecExpr *OldAR = cast<SCEVAddRecExpr>(LHS);
+          if (OldAR->hasNoUnsignedWrap())
+            const_cast<SCEVAddRecExpr *>(NewAR)->setHasNoUnsignedWrap(true);
+          if (OldAR->hasNoSignedWrap())
+            const_cast<SCEVAddRecExpr *>(NewAR)->setHasNoSignedWrap(true);
+        }
+        return S;
+      }
     }
     break;
   case Instruction::Xor:
@@ -4795,7 +4807,8 @@ ScalarEvolution::isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
 /// CouldNotCompute if an intermediate computation overflows.
 const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
                                         const SCEV *End,
-                                        const SCEV *Step) {
+                                        const SCEV *Step,
+                                        bool NoWrap) {
   const Type *Ty = Start->getType();
   const SCEV *NegOne = getIntegerSCEV(-1, Ty);
   const SCEV *Diff = getMinusSCEV(End, Start);
@@ -4805,15 +4818,17 @@ const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
   // the division will effectively round up.
   const SCEV *Add = getAddExpr(Diff, RoundUp);
 
-  // Check Add for unsigned overflow.
-  // TODO: More sophisticated things could be done here.
-  const Type *WideTy = IntegerType::get(getContext(),
-                                        getTypeSizeInBits(Ty) + 1);
-  const SCEV *EDiff = getZeroExtendExpr(Diff, WideTy);
-  const SCEV *ERoundUp = getZeroExtendExpr(RoundUp, WideTy);
-  const SCEV *OperandExtendedAdd = getAddExpr(EDiff, ERoundUp);
-  if (getZeroExtendExpr(Add, WideTy) != OperandExtendedAdd)
-    return getCouldNotCompute();
+  if (!NoWrap) {
+    // Check Add for unsigned overflow.
+    // TODO: More sophisticated things could be done here.
+    const Type *WideTy = IntegerType::get(getContext(),
+                                          getTypeSizeInBits(Ty) + 1);
+    const SCEV *EDiff = getZeroExtendExpr(Diff, WideTy);
+    const SCEV *ERoundUp = getZeroExtendExpr(RoundUp, WideTy);
+    const SCEV *OperandExtendedAdd = getAddExpr(EDiff, ERoundUp);
+    if (getZeroExtendExpr(Add, WideTy) != OperandExtendedAdd)
+      return getCouldNotCompute();
+  }
 
   return getUDivExpr(Add, Step);
 }
@@ -4831,6 +4846,10 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
   if (!AddRec || AddRec->getLoop() != L)
     return getCouldNotCompute();
 
+  // Check to see if we have a flag which makes analysis easy.
+  bool NoWrap = isSigned ? AddRec->hasNoSignedWrap() :
+                           AddRec->hasNoUnsignedWrap();
+
   if (AddRec->isAffine()) {
     // FORNOW: We only support unit strides.
     unsigned BitWidth = getTypeSizeInBits(AddRec->getType());
@@ -4843,7 +4862,10 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     if (CStep->isOne()) {
       // With unit stride, the iteration never steps past the limit value.
     } else if (CStep->getValue()->getValue().isStrictlyPositive()) {
-      if (const SCEVConstant *CLimit = dyn_cast<SCEVConstant>(RHS)) {
+      if (NoWrap) {
+        // We know the iteration won't step past the maximum value for its type.
+        ;
+      } else if (const SCEVConstant *CLimit = dyn_cast<SCEVConstant>(RHS)) {
         // Test whether a positive iteration iteration can step past the limit
         // value and past the maximum value for its type in a single step.
         if (isSigned) {
@@ -4896,11 +4918,11 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
 
     // Finally, we subtract these two values and divide, rounding up, to get
     // the number of times the backedge is executed.
-    const SCEV *BECount = getBECount(Start, End, Step);
+    const SCEV *BECount = getBECount(Start, End, Step, NoWrap);
 
     // The maximum backedge count is similar, except using the minimum start
     // value and the maximum end value.
-    const SCEV *MaxBECount = getBECount(MinStart, MaxEnd, Step);
+    const SCEV *MaxBECount = getBECount(MinStart, MaxEnd, Step, NoWrap);
 
     return BackedgeTakenInfo(BECount, MaxBECount);
   }

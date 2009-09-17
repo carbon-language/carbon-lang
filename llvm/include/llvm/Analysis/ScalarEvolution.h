@@ -253,7 +253,8 @@ namespace llvm {
     /// CouldNotCompute if an intermediate computation overflows.
     const SCEV *getBECount(const SCEV *Start,
                            const SCEV *End,
-                           const SCEV *Step);
+                           const SCEV *Step,
+                           bool NoWrap);
 
     /// getBackedgeTakenInfo - Return the BackedgeTakenInfo for the given
     /// loop, lazily computing new values if the loop hasn't been analyzed
