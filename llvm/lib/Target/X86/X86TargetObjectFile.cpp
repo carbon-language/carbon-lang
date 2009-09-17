@@ -15,6 +15,7 @@ using namespace llvm;
 
 const MCExpr *X8664_MachoTargetObjectFile::
 getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                 MachineModuleInfo *MMI,
                                  bool &IsIndirect, bool &IsPCRel) const {
   
   // On Darwin/X86-64, we can reference dwarf symbols with foo@GOTPCREL+4, which

@@ -18,15 +18,16 @@
 #include "llvm/MC/SectionKind.h"
 
 namespace llvm {
+  class MachineModuleInfo;
   class Mangler;
+  class MCAsmInfo;
+  class MCExpr;
   class MCSection;
   class MCSectionMachO;
   class MCContext;
   class GlobalValue;
   class StringRef;
   class TargetMachine;
-  class MCAsmInfo;
-  class MCExpr;
   
 class TargetLoweringObjectFile {
   MCContext *Ctx;
@@ -188,6 +189,7 @@ public:
   ///
   virtual const MCExpr *
   getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                   MachineModuleInfo *MMI,
                                    bool &IsIndirect, bool &IsPCRel) const;
   
 protected:
@@ -320,6 +322,7 @@ public:
   /// defaults to returning a stub reference.
   virtual const MCExpr *
   getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                   MachineModuleInfo *MMI,
                                    bool &IsIndirect, bool &IsPCRel) const;
 };
 

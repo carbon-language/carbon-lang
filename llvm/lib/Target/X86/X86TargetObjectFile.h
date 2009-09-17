@@ -21,6 +21,7 @@ namespace llvm {
 
     virtual const MCExpr *
     getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                     MachineModuleInfo *MMI,
                                      bool &IsIndirect, bool &IsPCRel) const;
   };
 } // end namespace llvm

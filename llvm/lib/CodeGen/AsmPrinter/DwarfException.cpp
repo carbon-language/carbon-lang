@@ -121,6 +121,7 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
     // In non-static mode, ask the object file how to represent this reference.
     PersonalityRef =
       TLOF.getSymbolForDwarfGlobalReference(PersonalityFn, Asm->Mang,
+                                            Asm->MMI,
                                             IsPersonalityIndirect,
                                             IsPersonalityPCRel);
   }

@@ -290,6 +290,7 @@ TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
 ///
 const MCExpr *TargetLoweringObjectFile::
 getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                 MachineModuleInfo *MMI,
                                  bool &IsIndirect, bool &IsPCRel) const {
   // The generic implementation of this just returns a direct reference to the
   // symbol.
@@ -956,6 +957,7 @@ shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler *Mang) const {
 
 const MCExpr *TargetLoweringObjectFileMachO::
 getSymbolForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
+                                 MachineModuleInfo *MMI,
                                  bool &IsIndirect, bool &IsPCRel) const {
   // The mach-o version of this method defaults to returning a stub reference.
   IsIndirect = true;
