@@ -63,6 +63,8 @@ namespace {
     void mangleFunctionEncoding(const FunctionDecl *FD);
     void mangleName(const NamedDecl *ND);
     void mangleUnqualifiedName(const NamedDecl *ND);
+    void mangleUnscopedName(const NamedDecl *ND);
+    void mangleUnscopedTemplateName(const FunctionDecl *ND);
     void mangleSourceName(const IdentifierInfo *II);
     void mangleLocalName(const NamedDecl *ND);
     void mangleNestedName(const NamedDecl *ND);
@@ -233,19 +235,34 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   //  <name> ::= <nested-name>
   //         ::= <unscoped-name>
   //         ::= <unscoped-template-name> <template-args>
-  //         ::= <local-name>     # See Scope Encoding below
+  //         ::= <local-name>
   //
-  //  <unscoped-name> ::= <unqualified-name>
-  //                  ::= St <unqualified-name>   # ::std::
-  if (ND->getDeclContext()->isTranslationUnit())
-    mangleUnqualifiedName(ND);
-  else if (isStdNamespace(ND->getDeclContext())) {
-    Out << "St";
-    mangleUnqualifiedName(ND);
+  if (ND->getDeclContext()->isTranslationUnit() ||
+      isStdNamespace(ND->getDeclContext())) {
+    const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND);
+    if (FD && FD->getPrimaryTemplate()) 
+      mangleUnscopedTemplateName(FD);
+    else
+      mangleUnscopedName(ND);
   } else if (isa<FunctionDecl>(ND->getDeclContext()))
     mangleLocalName(ND);
   else
     mangleNestedName(ND);
+}
+
+void CXXNameMangler::mangleUnscopedName(const NamedDecl *ND) {
+  //  <unscoped-name> ::= <unqualified-name>
+  //                  ::= St <unqualified-name>   # ::std::
+  if (isStdNamespace(ND->getDeclContext()))
+    Out << "St";
+  
+  mangleUnqualifiedName(ND);
+}
+
+void CXXNameMangler::mangleUnscopedTemplateName(const FunctionDecl *FD) {
+  //     <unscoped-template-name> ::= <unscoped-name>
+  //                              ::= <substitution>
+  mangleUnscopedName(FD);
 }
 
 void CXXNameMangler::mangleCalloffset(int64_t nv, int64_t v) {
