@@ -397,18 +397,11 @@ static llvm::cl::opt<bool>
 PThread("pthread", llvm::cl::desc("Support POSIX threads in generated code"),
          llvm::cl::init(false));
 
-static LangKind GetLanguage(const std::string &Filename) {
+static LangKind GetLanguage(llvm::StringRef Filename) {
   if (BaseLang != langkind_unspecified)
     return BaseLang;
 
-  std::string::size_type DotPos = Filename.rfind('.');
-
-  if (DotPos == std::string::npos) {
-    BaseLang = langkind_c;  // Default to C if no extension.
-    return langkind_c;
-  }
-
-  std::string Ext = std::string(Filename.begin()+DotPos+1, Filename.end());
+  llvm::StringRef Ext = Filename.rsplit('.').second;
   if (Ext == "c")
     return langkind_c;
   else if (Ext == "S" || Ext == "s")
