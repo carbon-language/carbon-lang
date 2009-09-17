@@ -55,8 +55,17 @@ namespace {
     void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type);
 
   private:
+    bool mangleSubstitution(const NamedDecl *ND) {
+      return mangleSubstitution(reinterpret_cast<uintptr_t>(ND));
+    }
     bool mangleSubstitution(QualType T);
+    bool mangleSubstitution(uintptr_t Ptr);
+    
+    void addSubstitution(const NamedDecl *ND) {
+      addSubstitution(reinterpret_cast<uintptr_t>(ND));
+    }
     void addSubstitution(QualType T);
+    void addSubstitution(uintptr_t Ptr);
     
     bool mangleFunctionDecl(const FunctionDecl *FD);
 
@@ -912,8 +921,12 @@ void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
 bool CXXNameMangler::mangleSubstitution(QualType T) {
   uintptr_t TypePtr = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
 
+  return mangleSubstitution(TypePtr);
+}
+
+bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
   llvm::DenseMap<uintptr_t, unsigned>::iterator I = 
-    Substitutions.find(TypePtr);
+    Substitutions.find(Ptr);
   if (I == Substitutions.end())
     return false;
   
@@ -947,10 +960,14 @@ bool CXXNameMangler::mangleSubstitution(QualType T) {
 
 void CXXNameMangler::addSubstitution(QualType T) {
   uintptr_t TypePtr = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
+  addSubstitution(TypePtr);
+}
+
+void CXXNameMangler::addSubstitution(uintptr_t Ptr) {
   unsigned SeqID = Substitutions.size();
   
-  assert(!Substitutions.count(TypePtr) && "Substitution already exists!");
-  Substitutions[TypePtr] = SeqID;  
+  assert(!Substitutions.count(Ptr) && "Substitution already exists!");
+  Substitutions[Ptr] = SeqID;  
 }
 
 namespace clang {
