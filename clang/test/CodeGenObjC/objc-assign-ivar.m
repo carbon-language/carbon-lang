@@ -1,4 +1,4 @@
-// RUN: clang-cc -fnext-runtime -fobjc-gc -fobjc-newgc-api -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin10 -fobjc-gc -fobjc-newgc-api -emit-llvm -o %t %s &&
 // RUN: grep -F '@objc_assign_ivar' %t  | count 14 &&
 // RUN: true
 
@@ -51,4 +51,3 @@ void testIvars() {
   foo->idx[++counter] = 15;
   ASSIGNTEST(foo->obj[foo->idx[2]], IvarAssigns);       // objc_assign_ivar
 }
-
