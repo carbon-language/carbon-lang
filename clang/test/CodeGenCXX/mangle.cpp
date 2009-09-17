@@ -88,9 +88,14 @@ void f(void (S::*)()) {}
 // CHECK: define void @_Z1fi
 void f(const int) { }
 
-// CHECK: define linkonce_odr void @_Z2tfIidEvT0_T_
-template<typename T, typename U> void tf(U u, T t) { }
+template<typename T, typename U> void ft1(U u, T t) { }
+
+template<typename T> void ft2(T t, void (*)(T), void (*)(T)) { }
 
 void g() {
-  tf<int, double>(1, 0);
+  // CHECK: @_Z3ft1IidEvT0_T_
+  ft1<int, double>(1, 0);
+  
+  // CHECK: @_Z3ft2IcEvT_PFvS0_ES2_
+  ft2<char>(1, 0, 0);
 }

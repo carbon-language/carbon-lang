@@ -8,12 +8,10 @@ T* next(T* ptr, const U& diff) {
 }
 
 void test(int *iptr, float *fptr, int diff) {
-  // FIXME: should be "_Z4nextIiiEPT_S1_RKT0_"
-  // CHECK: _Z4nextIiiEPT_S0_RKT0_
+  // CHECK: _Z4nextIiiEPT_S1_RKT0_
   iptr = next(iptr, diff);
-  // FIXME: should be "_Z4nextIfiEPT_S1_RKT0_"
-  // CHECK: _Z4nextIfiEPT_S0_RKT0_
-  
+
+  // CHECK: _Z4nextIfiEPT_S1_RKT0_
   fptr = next(fptr, diff);
 }
 
@@ -22,7 +20,7 @@ T* next(T* ptr, const U& diff);
 
 void test2(int *iptr, double *dptr, int diff) {
   iptr = next(iptr, diff);
-  // FIXME: should be "_Z4nextIdiEPT_S1_RKT0_"
-  // CHECK: _Z4nextIiiEPT_S0_RKT0_
+
+  // CHECK: _Z4nextIdiEPT_S1_RKT0_
   dptr = next(dptr, diff);
 }

@@ -276,7 +276,11 @@ void CXXNameMangler::mangleUnscopedName(const NamedDecl *ND) {
 void CXXNameMangler::mangleUnscopedTemplateName(const FunctionDecl *FD) {
   //     <unscoped-template-name> ::= <unscoped-name>
   //                              ::= <substitution>
+  if (mangleSubstitution(FD))
+    return;
+  
   mangleUnscopedName(FD);
+  addSubstitution(FD);
 }
 
 void CXXNameMangler::mangleCalloffset(int64_t nv, int64_t v) {
