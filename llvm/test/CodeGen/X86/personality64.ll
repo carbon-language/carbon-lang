@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -enable-eh
+; RUN: llc < %s -mtriple=x86_64-apple-darwin9 | FileCheck %s -check-prefix=X64
 ; PR1632
 
 define void @_Z1fv() {
@@ -36,3 +36,6 @@ declare i64 @llvm.eh.selector.i64(i8*, i8*, ...)
 declare void @__gxx_personality_v0()
 
 declare void @__cxa_end_catch()
+
+; X64: Leh_frame_common_begin:
+; X64: .long	___gxx_personality_v0@GOTPCREL+4
