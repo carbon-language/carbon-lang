@@ -692,6 +692,14 @@ APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value)
   normalize(rmNearestTiesToEven, lfExactlyZero);
 }
 
+APFloat::APFloat(const fltSemantics &ourSemantics) {
+  assertArithmeticOK(ourSemantics);
+  initialize(&ourSemantics);
+  category = fcZero;
+  sign = false;
+}
+
+
 APFloat::APFloat(const fltSemantics &ourSemantics,
                  fltCategory ourCategory, bool negative, unsigned type)
 {

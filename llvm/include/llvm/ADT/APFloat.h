@@ -173,6 +173,7 @@ namespace llvm {
     };
 
     // Constructors.
+    APFloat(const fltSemantics &); // Default construct to 0.0
     APFloat(const fltSemantics &, const StringRef &);
     APFloat(const fltSemantics &, integerPart);
     APFloat(const fltSemantics &, fltCategory, bool negative, unsigned type=0);
