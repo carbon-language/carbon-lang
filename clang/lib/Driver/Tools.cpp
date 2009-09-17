@@ -512,10 +512,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     } else if (JA.getType() == types::TY_LLVMBC) {
       CmdArgs.push_back("-emit-llvm-bc");
     } else if (JA.getType() == types::TY_PP_Asm) {
-      if (Inputs[0].getType() == types::TY_AST)
-        CmdArgs.push_back("-compile-ast");
-      else
-        CmdArgs.push_back("-S");
+      CmdArgs.push_back("-S");
     } else if (JA.getType() == types::TY_AST) {
       CmdArgs.push_back("-emit-pch");
     }
