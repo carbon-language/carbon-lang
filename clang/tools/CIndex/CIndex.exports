@@ -1,4 +1,5 @@
 _clang_createIndex
+_clang_disposeIndex
 _clang_getCursor
 _clang_getCursorColumn
 _clang_getCursorDecl
@@ -14,6 +15,7 @@ _clang_getURI
 _clang_loadDeclaration
 _clang_loadTranslationUnit
 _clang_createTranslationUnit
+_clang_disposeTranslationUnit
 _clang_isDeclaration
 _clang_isReference
 _clang_isDefinition

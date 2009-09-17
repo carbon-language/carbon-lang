@@ -190,6 +190,12 @@ CXIndex clang_createIndex()
   return new Indexer(*new Program(), *new FileManager());
 }
 
+void clang_disposeIndex(CXIndex CIdx)
+{
+  assert(CIdx && "Passed null CXIndex");
+  delete static_cast<Indexer *>(CIdx);
+}
+
 // FIXME: need to pass back error info.
 CXTranslationUnit clang_createTranslationUnit(
   CXIndex CIdx, const char *ast_filename) 
@@ -200,6 +206,13 @@ CXTranslationUnit clang_createTranslationUnit(
   std::string ErrMsg;
   
   return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getFileManager(), &ErrMsg);
+}
+
+void clang_disposeTranslationUnit(
+  CXTranslationUnit CTUnit) 
+{
+  assert(CTUnit && "Passed null CXTranslationUnit");
+  delete static_cast<ASTUnit *>(CTUnit);
 }
 
 const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit)
