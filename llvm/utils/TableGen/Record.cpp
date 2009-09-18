@@ -1384,11 +1384,11 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const Record &R) {
 /// getValueInit - Return the initializer for a value with the specified name,
 /// or throw an exception if the field does not exist.
 ///
-Init *Record::getValueInit(const std::string &FieldName) const {
+Init *Record::getValueInit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     throw "Record `" + getName() + "' does not have a field named `" +
-      FieldName + "'!\n";
+      FieldName.str() + "'!\n";
   return R->getValue();
 }
 
@@ -1397,15 +1397,15 @@ Init *Record::getValueInit(const std::string &FieldName) const {
 /// value as a string, throwing an exception if the field does not exist or if
 /// the value is not a string.
 ///
-std::string Record::getValueAsString(const std::string &FieldName) const {
+std::string Record::getValueAsString(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     throw "Record `" + getName() + "' does not have a field named `" +
-          FieldName + "'!\n";
+          FieldName.str() + "'!\n";
 
   if (const StringInit *SI = dynamic_cast<const StringInit*>(R->getValue()))
     return SI->getValue();
-  throw "Record `" + getName() + "', field `" + FieldName +
+  throw "Record `" + getName() + "', field `" + FieldName.str() +
         "' does not have a string initializer!";
 }
 
@@ -1413,15 +1413,15 @@ std::string Record::getValueAsString(const std::string &FieldName) const {
 /// its value as a BitsInit, throwing an exception if the field does not exist
 /// or if the value is not the right type.
 ///
-BitsInit *Record::getValueAsBitsInit(const std::string &FieldName) const {
+BitsInit *Record::getValueAsBitsInit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     throw "Record `" + getName() + "' does not have a field named `" +
-          FieldName + "'!\n";
+          FieldName.str() + "'!\n";
 
   if (BitsInit *BI = dynamic_cast<BitsInit*>(R->getValue()))
     return BI;
-  throw "Record `" + getName() + "', field `" + FieldName +
+  throw "Record `" + getName() + "', field `" + FieldName.str() +
         "' does not have a BitsInit initializer!";
 }
 
@@ -1429,15 +1429,15 @@ BitsInit *Record::getValueAsBitsInit(const std::string &FieldName) const {
 /// its value as a ListInit, throwing an exception if the field does not exist
 /// or if the value is not the right type.
 ///
-ListInit *Record::getValueAsListInit(const std::string &FieldName) const {
+ListInit *Record::getValueAsListInit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     throw "Record `" + getName() + "' does not have a field named `" +
-          FieldName + "'!\n";
+          FieldName.str() + "'!\n";
 
   if (ListInit *LI = dynamic_cast<ListInit*>(R->getValue()))
     return LI;
-  throw "Record `" + getName() + "', field `" + FieldName +
+  throw "Record `" + getName() + "', field `" + FieldName.str() +
         "' does not have a list initializer!";
 }
 
@@ -1446,14 +1446,14 @@ ListInit *Record::getValueAsListInit(const std::string &FieldName) const {
 /// not exist or if the value is not the right type.
 ///
 std::vector<Record*> 
-Record::getValueAsListOfDefs(const std::string &FieldName) const {
+Record::getValueAsListOfDefs(StringRef FieldName) const {
   ListInit *List = getValueAsListInit(FieldName);
   std::vector<Record*> Defs;
   for (unsigned i = 0; i < List->getSize(); i++) {
     if (DefInit *DI = dynamic_cast<DefInit*>(List->getElement(i))) {
       Defs.push_back(DI->getDef());
     } else {
-      throw "Record `" + getName() + "', field `" + FieldName +
+      throw "Record `" + getName() + "', field `" + FieldName.str() +
             "' list is not entirely DefInit!";
     }
   }
@@ -1464,15 +1464,15 @@ Record::getValueAsListOfDefs(const std::string &FieldName) const {
 /// value as an int64_t, throwing an exception if the field does not exist or if
 /// the value is not the right type.
 ///
-int64_t Record::getValueAsInt(const std::string &FieldName) const {
+int64_t Record::getValueAsInt(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     throw "Record `" + getName() + "' does not have a field named `" +
-          FieldName + "'!\n";
+          FieldName.str() + "'!\n";
 
   if (IntInit *II = dynamic_cast<IntInit*>(R->getValue()))
     return II->getValue();
-  throw "Record `" + getName() + "', field `" + FieldName +
+  throw "Record `" + getName() + "', field `" + FieldName.str() +
         "' does not have an int initializer!";
 }
 
@@ -1481,14 +1481,14 @@ int64_t Record::getValueAsInt(const std::string &FieldName) const {
 /// not exist or if the value is not the right type.
 ///
 std::vector<int64_t> 
-Record::getValueAsListOfInts(const std::string &FieldName) const {
+Record::getValueAsListOfInts(StringRef FieldName) const {
   ListInit *List = getValueAsListInit(FieldName);
   std::vector<int64_t> Ints;
   for (unsigned i = 0; i < List->getSize(); i++) {
     if (IntInit *II = dynamic_cast<IntInit*>(List->getElement(i))) {
       Ints.push_back(II->getValue());
     } else {
-      throw "Record `" + getName() + "', field `" + FieldName +
+      throw "Record `" + getName() + "', field `" + FieldName.str() +
             "' does not have a list of ints initializer!";
     }
   }
@@ -1499,15 +1499,15 @@ Record::getValueAsListOfInts(const std::string &FieldName) const {
 /// value as a Record, throwing an exception if the field does not exist or if
 /// the value is not the right type.
 ///
-Record *Record::getValueAsDef(const std::string &FieldName) const {
+Record *Record::getValueAsDef(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     throw "Record `" + getName() + "' does not have a field named `" +
-      FieldName + "'!\n";
+      FieldName.str() + "'!\n";
 
   if (DefInit *DI = dynamic_cast<DefInit*>(R->getValue()))
     return DI->getDef();
-  throw "Record `" + getName() + "', field `" + FieldName +
+  throw "Record `" + getName() + "', field `" + FieldName.str() +
         "' does not have a def initializer!";
 }
 
@@ -1515,15 +1515,15 @@ Record *Record::getValueAsDef(const std::string &FieldName) const {
 /// value as a bit, throwing an exception if the field does not exist or if
 /// the value is not the right type.
 ///
-bool Record::getValueAsBit(const std::string &FieldName) const {
+bool Record::getValueAsBit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     throw "Record `" + getName() + "' does not have a field named `" +
-      FieldName + "'!\n";
+      FieldName.str() + "'!\n";
 
   if (BitInit *BI = dynamic_cast<BitInit*>(R->getValue()))
     return BI->getValue();
-  throw "Record `" + getName() + "', field `" + FieldName +
+  throw "Record `" + getName() + "', field `" + FieldName.str() +
         "' does not have a bit initializer!";
 }
 
@@ -1531,27 +1531,27 @@ bool Record::getValueAsBit(const std::string &FieldName) const {
 /// value as an Dag, throwing an exception if the field does not exist or if
 /// the value is not the right type.
 ///
-DagInit *Record::getValueAsDag(const std::string &FieldName) const {
+DagInit *Record::getValueAsDag(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     throw "Record `" + getName() + "' does not have a field named `" +
-      FieldName + "'!\n";
+      FieldName.str() + "'!\n";
 
   if (DagInit *DI = dynamic_cast<DagInit*>(R->getValue()))
     return DI;
-  throw "Record `" + getName() + "', field `" + FieldName +
+  throw "Record `" + getName() + "', field `" + FieldName.str() +
         "' does not have a dag initializer!";
 }
 
-std::string Record::getValueAsCode(const std::string &FieldName) const {
+std::string Record::getValueAsCode(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     throw "Record `" + getName() + "' does not have a field named `" +
-      FieldName + "'!\n";
+      FieldName.str() + "'!\n";
   
   if (const CodeInit *CI = dynamic_cast<const CodeInit*>(R->getValue()))
     return CI->getValue();
-  throw "Record `" + getName() + "', field `" + FieldName +
+  throw "Record `" + getName() + "', field `" + FieldName.str() +
     "' does not have a code initializer!";
 }
 

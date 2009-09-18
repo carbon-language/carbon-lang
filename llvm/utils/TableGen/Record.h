@@ -1248,24 +1248,24 @@ public:
   const std::vector<RecordVal> &getValues() const { return Values; }
   const std::vector<Record*>   &getSuperClasses() const { return SuperClasses; }
 
-  bool isTemplateArg(const std::string &Name) const {
+  bool isTemplateArg(StringRef Name) const {
     for (unsigned i = 0, e = TemplateArgs.size(); i != e; ++i)
       if (TemplateArgs[i] == Name) return true;
     return false;
   }
 
-  const RecordVal *getValue(const std::string &Name) const {
+  const RecordVal *getValue(StringRef Name) const {
     for (unsigned i = 0, e = Values.size(); i != e; ++i)
       if (Values[i].getName() == Name) return &Values[i];
     return 0;
   }
-  RecordVal *getValue(const std::string &Name) {
+  RecordVal *getValue(StringRef Name) {
     for (unsigned i = 0, e = Values.size(); i != e; ++i)
       if (Values[i].getName() == Name) return &Values[i];
     return 0;
   }
 
-  void addTemplateArg(const std::string &Name) {
+  void addTemplateArg(StringRef Name) {
     assert(!isTemplateArg(Name) && "Template arg already defined!");
     TemplateArgs.push_back(Name);
   }
@@ -1275,7 +1275,7 @@ public:
     Values.push_back(RV);
   }
 
-  void removeValue(const std::string &Name) {
+  void removeValue(StringRef Name) {
     assert(getValue(Name) && "Cannot remove an entry that does not exist!");
     for (unsigned i = 0, e = Values.size(); i != e; ++i)
       if (Values[i].getName() == Name) {
@@ -1292,7 +1292,7 @@ public:
     return false;
   }
 
-  bool isSubClassOf(const std::string &Name) const {
+  bool isSubClassOf(StringRef Name) const {
     for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
       if (SuperClasses[i]->getName() == Name)
         return true;
@@ -1323,67 +1323,67 @@ public:
   /// getValueInit - Return the initializer for a value with the specified name,
   /// or throw an exception if the field does not exist.
   ///
-  Init *getValueInit(const std::string &FieldName) const;
+  Init *getValueInit(StringRef FieldName) const;
 
   /// getValueAsString - This method looks up the specified field and returns
   /// its value as a string, throwing an exception if the field does not exist
   /// or if the value is not a string.
   ///
-  std::string getValueAsString(const std::string &FieldName) const;
+  std::string getValueAsString(StringRef FieldName) const;
 
   /// getValueAsBitsInit - This method looks up the specified field and returns
   /// its value as a BitsInit, throwing an exception if the field does not exist
   /// or if the value is not the right type.
   ///
-  BitsInit *getValueAsBitsInit(const std::string &FieldName) const;
+  BitsInit *getValueAsBitsInit(StringRef FieldName) const;
 
   /// getValueAsListInit - This method looks up the specified field and returns
   /// its value as a ListInit, throwing an exception if the field does not exist
   /// or if the value is not the right type.
   ///
-  ListInit *getValueAsListInit(const std::string &FieldName) const;
+  ListInit *getValueAsListInit(StringRef FieldName) const;
 
   /// getValueAsListOfDefs - This method looks up the specified field and
   /// returns its value as a vector of records, throwing an exception if the
   /// field does not exist or if the value is not the right type.
   ///
-  std::vector<Record*> getValueAsListOfDefs(const std::string &FieldName) const;
+  std::vector<Record*> getValueAsListOfDefs(StringRef FieldName) const;
 
   /// getValueAsListOfInts - This method looks up the specified field and returns
   /// its value as a vector of integers, throwing an exception if the field does
   /// not exist or if the value is not the right type.
   ///
-  std::vector<int64_t> getValueAsListOfInts(const std::string &FieldName) const;
+  std::vector<int64_t> getValueAsListOfInts(StringRef FieldName) const;
   
   /// getValueAsDef - This method looks up the specified field and returns its
   /// value as a Record, throwing an exception if the field does not exist or if
   /// the value is not the right type.
   ///
-  Record *getValueAsDef(const std::string &FieldName) const;
+  Record *getValueAsDef(StringRef FieldName) const;
 
   /// getValueAsBit - This method looks up the specified field and returns its
   /// value as a bit, throwing an exception if the field does not exist or if
   /// the value is not the right type.
   ///
-  bool getValueAsBit(const std::string &FieldName) const;
+  bool getValueAsBit(StringRef FieldName) const;
 
   /// getValueAsInt - This method looks up the specified field and returns its
   /// value as an int64_t, throwing an exception if the field does not exist or
   /// if the value is not the right type.
   ///
-  int64_t getValueAsInt(const std::string &FieldName) const;
+  int64_t getValueAsInt(StringRef FieldName) const;
 
   /// getValueAsDag - This method looks up the specified field and returns its
   /// value as an Dag, throwing an exception if the field does not exist or if
   /// the value is not the right type.
   ///
-  DagInit *getValueAsDag(const std::string &FieldName) const;
+  DagInit *getValueAsDag(StringRef FieldName) const;
   
   /// getValueAsCode - This method looks up the specified field and returns
   /// its value as the string data in a CodeInit, throwing an exception if the
   /// field does not exist or if the value is not a code object.
   ///
-  std::string getValueAsCode(const std::string &FieldName) const;
+  std::string getValueAsCode(StringRef FieldName) const;
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const Record &R);
