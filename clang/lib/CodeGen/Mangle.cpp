@@ -262,8 +262,13 @@ static const NamedDecl *isTemplate(const NamedDecl *ND,
     }
   }
 
-  // FIXME: Check if we have a class template.
-
+  // Check if we have a class template.
+  if (const ClassTemplateSpecializationDecl *Spec =
+        dyn_cast<ClassTemplateSpecializationDecl>(ND)) {
+    TemplateArgs = &Spec->getTemplateArgs();
+    return Spec;
+  }
+    
   return 0;
 }
 
@@ -507,16 +512,7 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
     return;
 
   manglePrefix(DC->getParent());
-
-  if (const NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(DC))
-    mangleSourceName(Namespace->getIdentifier());
-  else if (const RecordDecl *Record = dyn_cast<RecordDecl>(DC)) {
-    if (const ClassTemplateSpecializationDecl *D =
-        dyn_cast<ClassTemplateSpecializationDecl>(Record)) {
-      mangleType(QualType(D->getTypeForDecl(), 0));
-    } else
-      mangleSourceName(Record->getIdentifier());
-  }
+  mangleUnqualifiedName(cast<NamedDecl>(DC));
   
   addSubstitution(cast<NamedDecl>(DC));
 }
