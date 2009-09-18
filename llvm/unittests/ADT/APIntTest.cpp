@@ -175,11 +175,11 @@ TEST(APIntTest, fromString) {
   EXPECT_EQ(APInt(32, 3), APInt(32,  "+11", 2));
   EXPECT_EQ(APInt(32, 4), APInt(32, "+100", 2));
 
-  EXPECT_EQ(APInt(32, -0LL), APInt(32,   "-0", 2));
-  EXPECT_EQ(APInt(32, -1LL), APInt(32,   "-1", 2));
-  EXPECT_EQ(APInt(32, -2LL), APInt(32,  "-10", 2));
-  EXPECT_EQ(APInt(32, -3LL), APInt(32,  "-11", 2));
-  EXPECT_EQ(APInt(32, -4LL), APInt(32, "-100", 2));
+  EXPECT_EQ(APInt(32, uint64_t(-0LL)), APInt(32,   "-0", 2));
+  EXPECT_EQ(APInt(32, uint64_t(-1LL)), APInt(32,   "-1", 2));
+  EXPECT_EQ(APInt(32, uint64_t(-2LL)), APInt(32,  "-10", 2));
+  EXPECT_EQ(APInt(32, uint64_t(-3LL)), APInt(32,  "-11", 2));
+  EXPECT_EQ(APInt(32, uint64_t(-4LL)), APInt(32, "-100", 2));
 
 
   EXPECT_EQ(APInt(32,  0), APInt(32,  "0",  8));
