@@ -1,4 +1,4 @@
-// RUN: clang-cc -fnext-runtime -fobjc-gc -fobjc-newgc-api -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin10 -fnext-runtime -fobjc-gc -fobjc-newgc-api -emit-llvm -o %t %s &&
 // RUN: grep -F '@objc_assign_global' %t  | count 7 &&
 // RUN: grep -F '@objc_assign_ivar' %t  | count 5 &&
 // RUN: grep -F '@objc_assign_strongCast' %t  | count 8 &&
