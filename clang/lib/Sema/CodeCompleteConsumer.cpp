@@ -174,7 +174,15 @@ void CodeCompleteConsumer::ResultSet::MaybeAddResult(Result R) {
         continue;
       
       // The newly-added result is hidden by an entry in the shadow map.
-      R.Hidden = true;
+      if (Completer.canHiddenResultBeFound(R.Declaration, I->second.first)) {
+        // Note that this result was hidden.
+        R.Hidden = true;
+      } else {
+        // This result was hidden and cannot be found; don't bother adding
+        // it.
+        return;
+      }
+      
       break;
     }
   }
@@ -418,6 +426,35 @@ namespace {
       return false;
     }
   };
+}
+
+/// \brief Determines whether the given hidden result could be found with
+/// some extra work, e.g., by qualifying the name.
+///
+/// \param Hidden the declaration that is hidden by the currenly \p Visible
+/// declaration.
+///
+/// \param Visible the declaration with the same name that is already visible.
+///
+/// \returns true if the hidden result can be found by some mechanism,
+/// false otherwise.
+bool CodeCompleteConsumer::canHiddenResultBeFound(NamedDecl *Hidden, 
+                                                  NamedDecl *Visible) {
+  // In C, there is no way to refer to a hidden name.
+  if (!getSema().getLangOptions().CPlusPlus)
+    return false;
+  
+  DeclContext *HiddenCtx = Hidden->getDeclContext()->getLookupContext();
+  
+  // There is no way to qualify a name declared in a function or method.
+  if (HiddenCtx->isFunctionOrMethod())
+    return false;
+
+  // If the hidden and visible declarations are in different name-lookup
+  // contexts, then we can qualify the name of the hidden declaration.
+  // FIXME: Optionally compute the string needed to refer to the hidden
+  // name.
+  return HiddenCtx != Visible->getDeclContext()->getLookupContext();
 }
 
 void 

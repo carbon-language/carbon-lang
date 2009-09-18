@@ -204,6 +204,14 @@ public:
   bool IsClassOrStruct(NamedDecl *ND) const;
   bool IsUnion(NamedDecl *ND) const;
   //@}
+  
+  /// \name Utility functions
+  ///
+  //@{
+  
+  bool canHiddenResultBeFound(NamedDecl *Hidden, NamedDecl *Visible);
+  
+  //@}
 };
   
 /// \brief A simple code-completion consumer that prints the results it 

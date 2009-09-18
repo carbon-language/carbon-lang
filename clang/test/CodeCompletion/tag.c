@@ -11,5 +11,4 @@ void test() {
   enum X { x };
   // CHECK-CC1: X : 0
   // CHECK-CC1: Y : 2
-  // CHECK-CC1: X : 2 (Hidden)
   enum
