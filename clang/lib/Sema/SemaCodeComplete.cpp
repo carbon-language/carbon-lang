@@ -101,4 +101,10 @@ void Sema::CodeCompleteNamespaceAliasDecl(Scope *S)  {
   CodeCompleter->CodeCompleteNamespaceAliasDecl(S);
 }
 
+void Sema::CodeCompleteOperatorName(Scope *S) {
+  if (!CodeCompleter)
+    return;
+  
+  CodeCompleter->CodeCompleteOperatorName(S);
+}
 

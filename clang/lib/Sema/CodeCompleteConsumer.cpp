@@ -175,6 +175,28 @@ void CodeCompleteConsumer::CodeCompleteNamespaceAliasDecl(Scope *S) {
   ProcessCodeCompleteResults(Results.data(), Results.size());  
 }
 
+void CodeCompleteConsumer::CodeCompleteOperatorName(Scope *S) {
+  ResultSet Results(*this, &CodeCompleteConsumer::IsType);
+  
+  // Add the names of overloadable operators.
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly)      \
+  if (strcmp(Spelling, "?"))                                                  \
+    Results.MaybeAddResult(Result(Spelling, 0));
+#include "clang/Basic/OperatorKinds.def"
+  
+  // Add any type names visible from the current scope
+  unsigned NextRank = CollectLookupResults(S, 0, Results);
+  
+  // Add any type specifiers
+  AddTypeSpecifierResults(0, Results);
+  
+  // Add any nested-name-specifiers
+  Results.setFilter(&CodeCompleteConsumer::IsNestedNameSpecifier);
+  CollectLookupResults(S, NextRank + 1, Results);
+
+  ProcessCodeCompleteResults(Results.data(), Results.size());  
+}
+
 void CodeCompleteConsumer::ResultSet::MaybeAddResult(Result R) {
   if (R.Kind != Result::RK_Declaration) {
     // For non-declaration results, just add the result.
@@ -208,7 +230,7 @@ void CodeCompleteConsumer::ResultSet::MaybeAddResult(Result R) {
 
   if (const IdentifierInfo *Id = R.Declaration->getIdentifier()) {
     // __va_list_tag is a freak of nature. Find it and skip it.
-    if (Id->isStr("__va_list_tag"))
+    if (Id->isStr("__va_list_tag") || Id->isStr("__builtin_va_list"))
       return;
 
     // FIXME: Should we filter out other names in the implementation's
@@ -522,6 +544,12 @@ bool CodeCompleteConsumer::IsNamespaceOrAlias(NamedDecl *ND) const {
   return isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND);
 }
 
+/// \brief Brief determines whether the given declaration is a namespace or
+/// namespace alias.
+bool CodeCompleteConsumer::IsType(NamedDecl *ND) const {
+  return isa<TypeDecl>(ND);
+}
+
 namespace {
   struct VISIBILITY_HIDDEN SortCodeCompleteResult {
     typedef CodeCompleteConsumer::Result Result;
@@ -586,6 +614,53 @@ bool CodeCompleteConsumer::canHiddenResultBeFound(NamedDecl *Hidden,
   // FIXME: Optionally compute the string needed to refer to the hidden
   // name.
   return HiddenCtx != Visible->getDeclContext()->getLookupContext();
+}
+
+/// \brief Add type specifiers for the current language as keyword results.
+void CodeCompleteConsumer::AddTypeSpecifierResults(unsigned Rank, 
+                                                   ResultSet &Results) {
+  Results.MaybeAddResult(Result("short", Rank));
+  Results.MaybeAddResult(Result("long", Rank));
+  Results.MaybeAddResult(Result("signed", Rank));
+  Results.MaybeAddResult(Result("unsigned", Rank));
+  Results.MaybeAddResult(Result("void", Rank));
+  Results.MaybeAddResult(Result("char", Rank));
+  Results.MaybeAddResult(Result("int", Rank));
+  Results.MaybeAddResult(Result("float", Rank));
+  Results.MaybeAddResult(Result("double", Rank));
+  Results.MaybeAddResult(Result("enum", Rank));
+  Results.MaybeAddResult(Result("struct", Rank));
+  Results.MaybeAddResult(Result("union", Rank));
+
+  if (getSema().getLangOptions().C99) {
+    // C99-specific
+    Results.MaybeAddResult(Result("_Complex", Rank));
+    Results.MaybeAddResult(Result("_Imaginary", Rank));
+    Results.MaybeAddResult(Result("_Bool", Rank));
+  }
+  
+  if (getSema().getLangOptions().CPlusPlus) {
+    // C++-specific
+    Results.MaybeAddResult(Result("bool", Rank));
+    Results.MaybeAddResult(Result("class", Rank));
+    Results.MaybeAddResult(Result("typename", Rank));
+    Results.MaybeAddResult(Result("wchar_t", Rank));
+    
+    if (getSema().getLangOptions().CPlusPlus0x) {
+      Results.MaybeAddResult(Result("char16_t", Rank));
+      Results.MaybeAddResult(Result("char32_t", Rank));
+      Results.MaybeAddResult(Result("decltype", Rank));
+    }
+  }
+  
+  // GNU extensions
+  if (getSema().getLangOptions().GNUMode) {
+    // FIXME: Enable when we actually support decimal floating point.
+    //    Results.MaybeAddResult(Result("_Decimal32", Rank));
+    //    Results.MaybeAddResult(Result("_Decimal64", Rank));
+    //    Results.MaybeAddResult(Result("_Decimal128", Rank));
+    Results.MaybeAddResult(Result("typeof", Rank));
+  }
 }
 
 void 

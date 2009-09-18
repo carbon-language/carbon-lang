@@ -2270,6 +2270,14 @@ public:
   ///
   /// \param S the scope in which the namespace alias declaration occurs.
   virtual void CodeCompleteNamespaceAliasDecl(Scope *S) { }
+  
+  /// \brief Code completion for an operator name.
+  ///
+  /// This code completion action is invoked when the code-completion token is
+  /// found after the keyword "operator".
+  ///
+  /// \param S the scope in which the operator keyword occurs.
+  virtual void CodeCompleteOperatorName(Scope *S) { }
   //@}
 };
 

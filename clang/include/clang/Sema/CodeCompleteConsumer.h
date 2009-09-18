@@ -219,7 +219,15 @@ public:
   /// found after "namespace identifier = ".
   ///
   /// \param S the scope in which the namespace alias declaration occurs.
-  virtual void CodeCompleteNamespaceAliasDecl(Scope *S);  
+  virtual void CodeCompleteNamespaceAliasDecl(Scope *S);
+  
+  /// \brief Code completion for an operator name.
+  ///
+  /// This code completion action is invoked when the code-completion token is
+  /// found after the keyword "operator".
+  ///
+  /// \param S the scope in which the operator keyword occurs.
+  virtual void CodeCompleteOperatorName(Scope *S);
   //@}
   
   /// \name Name lookup functions
@@ -248,14 +256,14 @@ public:
   bool IsUnion(NamedDecl *ND) const;
   bool IsNamespace(NamedDecl *ND) const;
   bool IsNamespaceOrAlias(NamedDecl *ND) const;
+  bool IsType(NamedDecl *ND) const;
   //@}
   
   /// \name Utility functions
   ///
-  //@{
-  
+  //@{  
   bool canHiddenResultBeFound(NamedDecl *Hidden, NamedDecl *Visible);
-  
+  void AddTypeSpecifierResults(unsigned Rank, ResultSet &Results);
   //@}
 };
   

@@ -835,6 +835,18 @@ Parser::TryParseOperatorFunctionId(SourceLocation *EndLoc) {
       *EndLoc = Loc;
     return OO_Subscript;
 
+  case tok::code_completion: {
+    // Code completion for the operator name.
+    Actions.CodeCompleteOperatorName(CurScope);
+    
+    // Consume the 'operator' token, then replace the code-completion token
+    // with an 'operator' token and try again.
+    SourceLocation OperatorLoc = ConsumeToken();
+    Tok.setLocation(OperatorLoc);
+    Tok.setKind(tok::kw_operator);
+    return TryParseOperatorFunctionId(EndLoc);
+  }
+      
   default:
     return OO_None;
   }

@@ -3642,6 +3642,7 @@ public:
   virtual void CodeCompleteUsingDirective(Scope *S);
   virtual void CodeCompleteNamespaceDecl(Scope *S);
   virtual void CodeCompleteNamespaceAliasDecl(Scope *S);
+  virtual void CodeCompleteOperatorName(Scope *S);
   //@}
   
   //===--------------------------------------------------------------------===//
