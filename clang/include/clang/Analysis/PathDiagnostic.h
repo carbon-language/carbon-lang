@@ -17,6 +17,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/FoldingSet.h"
 
 #include <vector>
 #include <deque>
@@ -24,12 +25,17 @@
 #include <algorithm>
 
 namespace clang {
-
+    
+class Stmt;
+class Decl;
+class Preprocessor;
+  
 //===----------------------------------------------------------------------===//
 // High-level interface for handlers of path-sensitive diagnostics.
 //===----------------------------------------------------------------------===//
 
 class PathDiagnostic;
+    
 class Stmt;
 class Decl;
 class Preprocessor;
@@ -38,12 +44,9 @@ class PathDiagnosticClient : public DiagnosticClient  {
 public:
   PathDiagnosticClient() {}
   virtual ~PathDiagnosticClient() {}
-
   virtual void SetPreprocessor(Preprocessor *PP) {}
-
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 const DiagnosticInfo &Info);
-
   virtual void HandlePathDiagnostic(const PathDiagnostic* D) = 0;
 
   enum PathGenerationScheme { Minimal, Extensive };
@@ -125,6 +128,8 @@ public:
   void flatten();
 
   const SourceManager& getManager() const { assert(isValid()); return *SM; }
+  
+  void Profile(llvm::FoldingSetNodeID &ID) const;
 };
 
 class PathDiagnosticLocationPair {
@@ -141,6 +146,11 @@ public:
   void flatten() {
     Start.flatten();
     End.flatten();
+  }
+  
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    Start.Profile(ID);
+    End.Profile(ID);
   }
 };
 
@@ -220,6 +230,8 @@ public:
   static inline bool classof(const PathDiagnosticPiece* P) {
     return true;
   }
+  
+  virtual void Profile(llvm::FoldingSetNodeID &ID) const;
 };
 
 class PathDiagnosticSpotPiece : public PathDiagnosticPiece {
@@ -238,6 +250,8 @@ public:
 
   PathDiagnosticLocation getLocation() const { return Pos; }
   virtual void flattenLocations() { Pos.flatten(); }
+  
+  virtual void Profile(llvm::FoldingSetNodeID &ID) const;
 };
 
 class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
@@ -317,6 +331,8 @@ public:
   static inline bool classof(const PathDiagnosticPiece* P) {
     return P->getKind() == ControlFlow;
   }
+  
+  virtual void Profile(llvm::FoldingSetNodeID &ID) const;
 };
 
 class PathDiagnosticMacroPiece : public PathDiagnosticSpotPiece {
@@ -347,12 +363,14 @@ public:
   static inline bool classof(const PathDiagnosticPiece* P) {
     return P->getKind() == Macro;
   }
+  
+  virtual void Profile(llvm::FoldingSetNodeID &ID) const;
 };
 
 /// PathDiagnostic - PathDiagnostic objects represent a single path-sensitive
 ///  diagnostic.  It represents an ordered-collection of PathDiagnosticPieces,
 ///  each which represent the pieces of the path.
-class PathDiagnostic {
+class PathDiagnostic : public llvm::FoldingSetNode {
   std::deque<PathDiagnosticPiece*> path;
   unsigned Size;
   std::string BugType;
@@ -386,11 +404,13 @@ public:
   }
 
   void push_front(PathDiagnosticPiece* piece) {
+    assert(piece);
     path.push_front(piece);
     ++Size;
   }
 
   void push_back(PathDiagnosticPiece* piece) {
+    assert(piece);
     path.push_back(piece);
     ++Size;
   }
@@ -480,8 +500,8 @@ public:
   void flattenLocations() {
     for (iterator I = begin(), E = end(); I != E; ++I) I->flattenLocations();
   }
-};
-
-
+  
+  void Profile(llvm::FoldingSetNodeID &ID) const;
+};  
 } //end clang namespace
 #endif

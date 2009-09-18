@@ -239,4 +239,66 @@ void PathDiagnosticLocation::flatten() {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// FoldingSet profiling methods.
+//===----------------------------------------------------------------------===//
 
+void PathDiagnosticLocation::Profile(llvm::FoldingSetNodeID &ID) const {
+  ID.AddInteger((unsigned) K);
+  switch (K) {
+    case RangeK:
+      ID.AddInteger(R.getBegin().getRawEncoding());
+      ID.AddInteger(R.getEnd().getRawEncoding());
+      break;      
+    case SingleLocK:
+      ID.AddInteger(R.getBegin().getRawEncoding());
+      break;
+    case StmtK:
+      ID.Add(S);
+      break;
+    case DeclK:
+      ID.Add(D);
+      break;
+  }
+  return;
+}
+
+void PathDiagnosticPiece::Profile(llvm::FoldingSetNodeID &ID) const {
+  ID.AddInteger((unsigned) getKind());
+  ID.AddString(str);
+  // FIXME: Add profiling support for code hints.
+  ID.AddInteger((unsigned) getDisplayHint());
+  for (range_iterator I = ranges_begin(), E = ranges_end(); I != E; ++I) {
+    ID.AddInteger(I->getBegin().getRawEncoding());
+    ID.AddInteger(I->getEnd().getRawEncoding());
+  }  
+}
+
+void PathDiagnosticSpotPiece::Profile(llvm::FoldingSetNodeID &ID) const {
+  PathDiagnosticPiece::Profile(ID);
+  ID.Add(Pos);
+}
+
+void PathDiagnosticControlFlowPiece::Profile(llvm::FoldingSetNodeID &ID) const {
+  PathDiagnosticPiece::Profile(ID);
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    ID.Add(*I);
+}
+
+void PathDiagnosticMacroPiece::Profile(llvm::FoldingSetNodeID &ID) const {
+  PathDiagnosticSpotPiece::Profile(ID);
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    ID.Add(**I);
+}
+
+void PathDiagnostic::Profile(llvm::FoldingSetNodeID &ID) const {
+  ID.AddInteger(Size);
+  ID.AddString(BugType);
+  ID.AddString(Desc);
+  ID.AddString(Category);
+  for (const_iterator I = begin(), E = end(); I != E; ++I)
+    ID.Add(*I);
+  
+  for (meta_iterator I = meta_begin(), E = meta_end(); I != E; ++I)
+    ID.AddString(*I);
+}
