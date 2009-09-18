@@ -252,6 +252,21 @@ static bool isStdNamespace(const DeclContext *DC) {
   return NS->getOriginalNamespace()->getIdentifier()->isStr("std");
 }
 
+static const NamedDecl *isTemplate(const NamedDecl *ND, 
+                                   const TemplateArgumentList *&TemplateArgs) {
+  // Check if we have a function template.
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)){
+    if (FD->getPrimaryTemplate()) {
+      TemplateArgs = FD->getTemplateSpecializationArgs();
+      return FD;
+    }
+  }
+
+  // FIXME: Check if we have a class template.
+
+  return 0;
+}
+
 void CXXNameMangler::mangleName(const NamedDecl *ND) {
   //  <name> ::= <nested-name>
   //         ::= <unscoped-name>
@@ -266,16 +281,14 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   }
   
   if (DC->isTranslationUnit() || isStdNamespace(DC)) {
-    // Check if we have a function template.
-    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)){
-      if (FD->getPrimaryTemplate()) {
-        mangleUnscopedTemplateName(FD);
-        mangleTemplateArgumentList(*FD->getTemplateSpecializationArgs());
-        return;
-      }
+    // Check if we have a template.
+    const TemplateArgumentList *TemplateArgs = 0;
+    if (const NamedDecl *TD = isTemplate(ND, TemplateArgs)) {
+      mangleUnscopedTemplateName(TD);
+      mangleTemplateArgumentList(*TemplateArgs);
+      return;
     }
 
-    // FIXME: Check if we have a class template.
     mangleUnscopedName(ND);
     return;
   }
@@ -446,10 +459,11 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND) {
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(ND))
     mangleCVQualifiers(Method->getTypeQualifiers());
   
-  const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND);
-  if (FD && FD->getPrimaryTemplate()) {
-    mangleTemplatePrefix(FD);
-    mangleTemplateArgumentList(*FD->getTemplateSpecializationArgs());
+  // Check if we have a template.
+  const TemplateArgumentList *TemplateArgs = 0;
+  if (const NamedDecl *TD = isTemplate(ND, TemplateArgs)) { 
+    mangleTemplatePrefix(TD);
+    mangleTemplateArgumentList(*TemplateArgs);
   } else {
     manglePrefix(ND->getDeclContext());
     mangleUnqualifiedName(ND);
