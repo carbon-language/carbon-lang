@@ -982,7 +982,6 @@ SelectionDAGISel::FinishBasicBlock() {
   
   // If we generated any switch lowering information, build and codegen any
   // additional DAGs necessary.
-  SmallSet<unsigned, 4> Processed;
   for (unsigned i = 0, e = SDL->SwitchCases.size(); i != e; ++i) {
     // Set the current basic block to the mbb we wish to insert the code into
     BB = SDL->SwitchCases[i].ThisBB;
@@ -1005,18 +1004,12 @@ SelectionDAGISel::FinishBasicBlock() {
         for (unsigned pn = 0; ; ++pn) {
           assert(pn != SDL->PHINodesToUpdate.size() &&
                  "Didn't find PHI entry!");
-          if (SDL->PHINodesToUpdate[pn].first != Phi)
-            continue;
-          if (!Processed.insert(pn))
-            // Already processed, done. We can't have the value from more than
-            // one edges.
+          if (SDL->PHINodesToUpdate[pn].first == Phi) {
+            Phi->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[pn].
+                                                      second, false));
+            Phi->addOperand(MachineOperand::CreateMBB(SDL->SwitchCases[i].ThisBB));
             break;
-          Phi->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[pn].
-                                                    second, false));
-          assert(BB->isPred(SDL->SwitchCases[i].ThisBB) &&
-                 "phi value cannot come from a bb that is not a predecessor!");
-          Phi->addOperand(MachineOperand::CreateMBB(SDL->SwitchCases[i].ThisBB));
-          break;
+          }
         }
       }
       
