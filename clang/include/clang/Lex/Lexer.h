@@ -184,8 +184,8 @@ public:
   ///
   /// When in this mode, the end-of-file token will be immediately preceded
   /// by a code-completion token.
-  void SetEofIsCodeCompletion() {
-    IsEofCodeCompletion = true;
+  void SetEofIsCodeCompletion(bool Val = true) {
+    IsEofCodeCompletion = Val;
   }
   
   const char *getBufferStart() const { return BufferStart; }
