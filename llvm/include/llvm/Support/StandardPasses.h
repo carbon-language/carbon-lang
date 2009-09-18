@@ -80,6 +80,8 @@ namespace llvm {
     }
   }
 
+  /// createStandardModulePasses - Add the standard module passes.  This is
+  /// expected to be run after the standard function passes.
   static inline void createStandardModulePasses(PassManager *PM,
                                                 unsigned OptimizationLevel,
                                                 bool OptimizeSize,
@@ -91,70 +93,71 @@ namespace llvm {
     if (OptimizationLevel == 0) {
       if (InliningPass)
         PM->add(InliningPass);
-    } else {
-      if (UnitAtATime)
-        PM->add(createRaiseAllocationsPass());    // call %malloc -> malloc inst
-      PM->add(createCFGSimplificationPass());     // Clean up disgusting code
-       // Kill useless allocas
-      PM->add(createPromoteMemoryToRegisterPass());
-      if (UnitAtATime) {
-        PM->add(createGlobalOptimizerPass());     // Optimize out global vars
-        PM->add(createGlobalDCEPass());           // Remove unused fns and globs
-        // IP Constant Propagation
-        PM->add(createIPConstantPropagationPass());
-        PM->add(createDeadArgEliminationPass());  // Dead argument elimination
-      }
-      PM->add(createInstructionCombiningPass());  // Clean up after IPCP & DAE
-      PM->add(createCFGSimplificationPass());     // Clean up after IPCP & DAE
-      if (UnitAtATime) {
-        if (HaveExceptions)
-          PM->add(createPruneEHPass());           // Remove dead EH info
-        PM->add(createFunctionAttrsPass());       // Set readonly/readnone attrs
-      }
-      if (InliningPass)
-        PM->add(InliningPass);
-      if (OptimizationLevel > 2)
-        PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
-      if (SimplifyLibCalls)
-        PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
-      PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
-      PM->add(createJumpThreadingPass());         // Thread jumps.
-      PM->add(createCFGSimplificationPass());     // Merge & remove BBs
-      PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
-      PM->add(createInstructionCombiningPass());  // Combine silly seq's
-      PM->add(createCondPropagationPass());       // Propagate conditionals
-      PM->add(createTailCallEliminationPass());   // Eliminate tail calls
-      PM->add(createCFGSimplificationPass());     // Merge & remove BBs
-      PM->add(createReassociatePass());           // Reassociate expressions
-      PM->add(createLoopRotatePass());            // Rotate Loop
-      PM->add(createLICMPass());                  // Hoist loop invariants
-      PM->add(createLoopUnswitchPass(OptimizeSize));
-      PM->add(createInstructionCombiningPass());  
-      PM->add(createIndVarSimplifyPass());        // Canonicalize indvars
-      PM->add(createLoopDeletionPass());          // Delete dead loops
-      if (UnrollLoops)
-        PM->add(createLoopUnrollPass());          // Unroll small loops
-      PM->add(createInstructionCombiningPass());  // Clean up after the unroller
-      PM->add(createGVNPass());                   // Remove redundancies
-      PM->add(createMemCpyOptPass());             // Remove memcpy / form memset
-      PM->add(createSCCPPass());                  // Constant prop with SCCP
-    
-      // Run instcombine after redundancy elimination to exploit opportunities
-      // opened up by them.
-      PM->add(createInstructionCombiningPass());
-      PM->add(createCondPropagationPass());       // Propagate conditionals
-      PM->add(createDeadStoreEliminationPass());  // Delete dead stores
-      PM->add(createAggressiveDCEPass());         // Delete dead instructions
-      PM->add(createCFGSimplificationPass());     // Merge & remove BBs
-
-      if (UnitAtATime) {
-        PM->add(createStripDeadPrototypesPass()); // Get rid of dead prototypes
-        PM->add(createDeadTypeEliminationPass()); // Eliminate dead types
-      }
-
-      if (OptimizationLevel > 1 && UnitAtATime)
-        PM->add(createConstantMergePass());       // Merge dup global constants
+      return;
     }
+    
+    if (UnitAtATime)
+      PM->add(createRaiseAllocationsPass());    // call %malloc -> malloc inst
+    PM->add(createCFGSimplificationPass());     // Clean up disgusting code
+    // Kill useless allocas
+    PM->add(createPromoteMemoryToRegisterPass());
+    if (UnitAtATime) {
+      PM->add(createGlobalOptimizerPass());     // Optimize out global vars
+      PM->add(createGlobalDCEPass());           // Remove unused fns and globs
+      // IP Constant Propagation
+      PM->add(createIPConstantPropagationPass());
+      PM->add(createDeadArgEliminationPass());  // Dead argument elimination
+    }
+    PM->add(createInstructionCombiningPass());  // Clean up after IPCP & DAE
+    PM->add(createCFGSimplificationPass());     // Clean up after IPCP & DAE
+    if (UnitAtATime) {
+      if (HaveExceptions)
+        PM->add(createPruneEHPass());           // Remove dead EH info
+      PM->add(createFunctionAttrsPass());       // Set readonly/readnone attrs
+    }
+    if (InliningPass)
+      PM->add(InliningPass);
+    if (OptimizationLevel > 2)
+      PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
+    if (SimplifyLibCalls)
+      PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
+    PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
+    PM->add(createJumpThreadingPass());         // Thread jumps.
+    PM->add(createCFGSimplificationPass());     // Merge & remove BBs
+    PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
+    PM->add(createInstructionCombiningPass());  // Combine silly seq's
+    PM->add(createCondPropagationPass());       // Propagate conditionals
+    PM->add(createTailCallEliminationPass());   // Eliminate tail calls
+    PM->add(createCFGSimplificationPass());     // Merge & remove BBs
+    PM->add(createReassociatePass());           // Reassociate expressions
+    PM->add(createLoopRotatePass());            // Rotate Loop
+    PM->add(createLICMPass());                  // Hoist loop invariants
+    PM->add(createLoopUnswitchPass(OptimizeSize));
+    PM->add(createInstructionCombiningPass());  
+    PM->add(createIndVarSimplifyPass());        // Canonicalize indvars
+    PM->add(createLoopDeletionPass());          // Delete dead loops
+    if (UnrollLoops)
+      PM->add(createLoopUnrollPass());          // Unroll small loops
+    PM->add(createInstructionCombiningPass());  // Clean up after the unroller
+    PM->add(createGVNPass());                   // Remove redundancies
+    PM->add(createMemCpyOptPass());             // Remove memcpy / form memset
+    PM->add(createSCCPPass());                  // Constant prop with SCCP
+  
+    // Run instcombine after redundancy elimination to exploit opportunities
+    // opened up by them.
+    PM->add(createInstructionCombiningPass());
+    PM->add(createCondPropagationPass());       // Propagate conditionals
+    PM->add(createDeadStoreEliminationPass());  // Delete dead stores
+    PM->add(createAggressiveDCEPass());         // Delete dead instructions
+    PM->add(createCFGSimplificationPass());     // Merge & remove BBs
+
+    if (UnitAtATime) {
+      PM->add(createStripDeadPrototypesPass()); // Get rid of dead prototypes
+      PM->add(createDeadTypeEliminationPass()); // Eliminate dead types
+    }
+
+    if (OptimizationLevel > 1 && UnitAtATime)
+      PM->add(createConstantMergePass());       // Merge dup global constants
   }
 
   static inline void addOnePass(PassManager *PM, Pass *P, bool AndVerify) {
