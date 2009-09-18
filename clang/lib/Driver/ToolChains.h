@@ -91,6 +91,10 @@ public:
     Res[2] = DarwinVersion[1];
   }
 
+  /// getMacosxVersionMin - Get the effective -mmacosx-version-min, which is
+  /// either the -mmacosx-version-min, or the current version if unspecified.
+  void getMacosxVersionMin(const ArgList &Args, unsigned (&Res)[3]) const;
+
   const char *getMacosxVersionStr() const {
     return MacosxVersionMin.c_str();
   }

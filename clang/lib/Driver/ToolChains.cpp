@@ -154,6 +154,21 @@ void Darwin::AddLinkSearchPathArgs(const ArgList &Args,
                                        "/../../.."));
 }
 
+void Darwin::getMacosxVersionMin(const ArgList &Args,
+                                 unsigned (&Res)[3]) const {
+  if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ)) {
+    bool HadExtra;
+    if (!Driver::GetReleaseVersion(A->getValue(Args), Res[0], Res[1], Res[2],
+                                   HadExtra) ||
+        HadExtra) {
+      const Driver &D = getHost().getDriver();
+      D.Diag(clang::diag::err_drv_invalid_version_number)
+        << A->getAsString(Args);
+    }
+  } else
+    return getMacosxVersion(Res);
+}
+
 DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,
                                       const char *BoundArch) const {
   DerivedArgList *DAL = new DerivedArgList(Args, false);

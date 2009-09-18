@@ -1929,19 +1929,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Output.getFilename());
 
   unsigned MacosxVersionMin[3];
-  if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ)) {
-    bool HadExtra;
-    if (!Driver::GetReleaseVersion(A->getValue(Args), MacosxVersionMin[0],
-                                   MacosxVersionMin[1], MacosxVersionMin[2],
-                                   HadExtra) ||
-        HadExtra) {
-      const Driver &D = getToolChain().getHost().getDriver();
-      D.Diag(clang::diag::err_drv_invalid_version_number)
-        << A->getAsString(Args);
-    }
-  } else {
-    getDarwinToolChain().getMacosxVersion(MacosxVersionMin);
-  }
+  getDarwinToolChain().getMacosxVersionMin(Args, MacosxVersionMin);
 
   if (!Args.hasArg(options::OPT_A) &&
       !Args.hasArg(options::OPT_nostdlib) &&
