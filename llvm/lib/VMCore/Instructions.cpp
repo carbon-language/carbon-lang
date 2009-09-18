@@ -460,19 +460,20 @@ static Value *checkArraySize(Value *Amt, const Type *IntPtrTy) {
 }
 
 static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
-                           const Type *AllocTy, const Type *IntPtrTy,
+                           const Type *IntPtrTy, const Type *AllocTy,
                            Value *ArraySize, const Twine &NameStr) {
   assert(((!InsertBefore && InsertAtEnd) || (InsertBefore && !InsertAtEnd)) &&
-         "createMalloc needs only InsertBefore or InsertAtEnd");
-  const PointerType *AllocPtrType = dyn_cast<PointerType>(AllocTy);
-  assert(AllocPtrType && "CreateMalloc passed a non-pointer allocation type");
-  
+         "createMalloc needs either InsertBefore or InsertAtEnd");
+
+  // malloc(type) becomes: 
+  //       bitcast (i8* malloc(typeSize)) to type*
+  // malloc(type, arraySize) becomes:
+  //       bitcast (i8 *malloc(typeSize*arraySize)) to type*
+  Value *AllocSize = ConstantExpr::getSizeOf(AllocTy);
+  AllocSize = ConstantExpr::getTruncOrBitCast(cast<Constant>(AllocSize),
+                                              IntPtrTy);
   ArraySize = checkArraySize(ArraySize, IntPtrTy);
 
-  // malloc(type) becomes i8 *malloc(size)
-  Value *AllocSize = ConstantExpr::getSizeOf(AllocPtrType->getElementType());
-  AllocSize = ConstantExpr::getTruncOrBitCast(cast<Constant>(AllocSize), 
-                                              IntPtrTy);
   if (!IsConstantOne(ArraySize)) {
     if (IsConstantOne(AllocSize)) {
       AllocSize = ArraySize;         // Operand * 1 = Operand
@@ -482,47 +483,41 @@ static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
       // Malloc arg is constant product of type size and array size
       AllocSize = ConstantExpr::getMul(Scale, cast<Constant>(AllocSize));
     } else {
-      Value *Scale = ArraySize;
-      if (Scale->getType() != IntPtrTy) {
-        if (InsertBefore)
-          Scale = CastInst::CreateIntegerCast(Scale, IntPtrTy, false /*ZExt*/,
-                                              "", InsertBefore);
-        else
-          Scale = CastInst::CreateIntegerCast(Scale, IntPtrTy, false /*ZExt*/,
-                                              "", InsertAtEnd);
-      }
       // Multiply type size by the array size...
       if (InsertBefore)
-        AllocSize = BinaryOperator::CreateMul(Scale, AllocSize,
-                                              "", InsertBefore);
+        AllocSize = BinaryOperator::CreateMul(ArraySize, AllocSize,
+                                              "mallocsize", InsertBefore);
       else
-        AllocSize = BinaryOperator::CreateMul(Scale, AllocSize,
-                                              "", InsertAtEnd);
+        AllocSize = BinaryOperator::CreateMul(ArraySize, AllocSize,
+                                              "mallocsize", InsertAtEnd);
     }
   }
 
+  assert(AllocSize->getType() == IntPtrTy && "malloc arg is wrong size");
   // Create the call to Malloc.
   BasicBlock* BB = InsertBefore ? InsertBefore->getParent() : InsertAtEnd;
   Module* M = BB->getParent()->getParent();
   const Type *BPTy = PointerType::getUnqual(Type::getInt8Ty(BB->getContext()));
   // prototype malloc as "void *malloc(size_t)"
-  Constant *MallocFunc = M->getOrInsertFunction("malloc", BPTy, 
-                                                IntPtrTy, NULL);
+  Constant *MallocF = M->getOrInsertFunction("malloc", BPTy, IntPtrTy, NULL);
+  if (!cast<Function>(MallocF)->doesNotAlias(0))
+    cast<Function>(MallocF)->setDoesNotAlias(0);
+  const PointerType *AllocPtrType = PointerType::getUnqual(AllocTy);
   CallInst *MCall = NULL;
-  if (InsertBefore) 
-    MCall = CallInst::Create(MallocFunc, AllocSize, NameStr, InsertBefore);
-  else
-    MCall = CallInst::Create(MallocFunc, AllocSize, NameStr, InsertAtEnd);
+  Value    *MCast = NULL;
+  if (InsertBefore) {
+    MCall = CallInst::Create(MallocF, AllocSize, "malloccall", InsertBefore);
+    // Create a cast instruction to convert to the right type...
+    MCast = new BitCastInst(MCall, AllocPtrType, NameStr, InsertBefore);
+  } else {
+    MCall = CallInst::Create(MallocF, AllocSize, "malloccall", InsertAtEnd);
+    // Create a cast instruction to convert to the right type...
+    MCast = new BitCastInst(MCall, AllocPtrType, NameStr);
+  }
   MCall->setTailCall();
-
-  // Create a cast instruction to convert to the right type...
   assert(MCall->getType() != Type::getVoidTy(BB->getContext()) &&
          "Malloc has void return type");
-  Value *MCast;
-  if (InsertBefore)
-    MCast = new BitCastInst(MCall, AllocPtrType, NameStr, InsertBefore);
-  else
-    MCast = new BitCastInst(MCall, AllocPtrType, NameStr);
+
   return MCast;
 }
 
@@ -532,11 +527,10 @@ static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
 ///    constant 1.
 /// 2. Call malloc with that argument.
 /// 3. Bitcast the result of the malloc call to the specified type.
-Value *CallInst::CreateMalloc(Instruction *InsertBefore,
-                              const Type *AllocTy, const Type *IntPtrTy,
-                              Value *ArraySize, const Twine &NameStr) {
-  return createMalloc(InsertBefore, NULL, AllocTy,
-                      IntPtrTy, ArraySize, NameStr);
+Value *CallInst::CreateMalloc(Instruction *InsertBefore, const Type *IntPtrTy,
+                              const Type *AllocTy, Value *ArraySize,
+                              const Twine &Name) {
+  return createMalloc(InsertBefore, NULL, IntPtrTy, AllocTy, ArraySize, Name);
 }
 
 /// CreateMalloc - Generate the IR for a call to malloc:
@@ -547,11 +541,10 @@ Value *CallInst::CreateMalloc(Instruction *InsertBefore,
 /// 3. Bitcast the result of the malloc call to the specified type.
 /// Note: This function does not add the bitcast to the basic block, that is the
 /// responsibility of the caller.
-Value *CallInst::CreateMalloc(BasicBlock *InsertAtEnd,
-                              const Type *AllocTy, const Type *IntPtrTy,
-                              Value *ArraySize, const Twine &NameStr) {
-  return createMalloc(NULL, InsertAtEnd, AllocTy, 
-                      IntPtrTy, ArraySize, NameStr);
+Value *CallInst::CreateMalloc(BasicBlock *InsertAtEnd, const Type *IntPtrTy,
+                              const Type *AllocTy, Value *ArraySize, 
+                              const Twine &Name) {
+  return createMalloc(NULL, InsertAtEnd, IntPtrTy, AllocTy, ArraySize, Name);
 }
 
 //===----------------------------------------------------------------------===//

@@ -108,8 +108,12 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
   // Loop over all of the instructions, looking for malloc or free instructions
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I) {
     if (MallocInst *MI = dyn_cast<MallocInst>(I)) {
-      Value *MCast = CallInst::CreateMalloc(I, MI->getType(), IntPtrTy,
-                                            MI->getOperand(0));
+      Value *ArraySize = MI->getOperand(0);
+      if (ArraySize->getType() != IntPtrTy)
+        ArraySize = CastInst::CreateIntegerCast(ArraySize, IntPtrTy,
+                                                false /*ZExt*/, "", I);
+      Value *MCast = CallInst::CreateMalloc(I, IntPtrTy,
+                                            MI->getAllocatedType(), ArraySize);
 
       // Replace all uses of the old malloc inst with the cast inst
       MI->replaceAllUsesWith(MCast);

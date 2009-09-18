@@ -16,6 +16,7 @@
 #include "llvm/Function.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Module.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
@@ -375,6 +376,27 @@ bool Instruction::isCommutative(unsigned op) {
   }
 }
 
+// Code here matches isMalloc from MallocHelper, which is not in VMCore.
+static bool isMalloc(const Value* I) {
+  const CallInst *CI = dyn_cast<CallInst>(I);
+  if (!CI) {
+  	const BitCastInst *BCI = dyn_cast<BitCastInst>(I);
+	if (!BCI) return false;
+
+    CI = dyn_cast<CallInst>(BCI->getOperand(0));
+  }
+
+  if (!CI) return false;
+
+  const Module* M = CI->getParent()->getParent()->getParent();
+  Constant *MallocFunc = M->getFunction("malloc");
+
+  if (CI->getOperand(0) != MallocFunc)
+    return false;
+
+  return true;
+}
+
 bool Instruction::isSafeToSpeculativelyExecute() const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     if (Constant *C = dyn_cast<Constant>(getOperand(i)))
@@ -400,7 +422,7 @@ bool Instruction::isSafeToSpeculativelyExecute() const {
   case Load: {
     if (cast<LoadInst>(this)->isVolatile())
       return false;
-    if (isa<AllocationInst>(getOperand(0)))
+    if (isa<AllocationInst>(getOperand(0)) || isMalloc(getOperand(0)))
       return true;
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(getOperand(0)))
       return !GV->hasExternalWeakLinkage();

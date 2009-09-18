@@ -16,11 +16,10 @@
 #define LLVM_ANALYSIS_MALLOCHELPER_H
 
 namespace llvm {
-class BitCastInst;
 class CallInst;
-class Instruction;
+class LLVMContext;
 class PointerType;
-class Twine;
+class TargetData;
 class Type;
 class Value;
 
@@ -31,7 +30,6 @@ class Value;
 /// isMalloc - Returns true if the the value is either a malloc call or a
 /// bitcast of the result of a malloc call
 bool isMalloc(const Value* I);
-bool isMalloc(Value* I);
 
 /// extractMallocCall - Returns the corresponding CallInst if the instruction
 /// is a malloc call.  Since CallInst::CreateMalloc() only creates calls, we
@@ -54,8 +52,9 @@ CallInst* extractMallocCallFromBitCast(Value* I);
 /// Otherwise it returns NULL.
 /// The unique bitcast is needed to determine the type/size of the array
 /// allocation.
-CallInst* isArrayMalloc(Value* I);
-const CallInst* isArrayMalloc(const Value* I);
+CallInst* isArrayMalloc(Value* I, LLVMContext &Context, const TargetData* TD);
+const CallInst* isArrayMalloc(const Value* I, LLVMContext &Context,
+                              const TargetData* TD);
 
 /// getMallocType - Returns the PointerType resulting from the malloc call.
 /// This PointerType is the result type of the call's only bitcast use.
@@ -79,7 +78,8 @@ const Type* getMallocAllocatedType(const CallInst* CI);
 ///  1. The malloc call's allocated type cannot be determined.
 ///  2. IR wasn't created by a call to CallInst::CreateMalloc() with a non-NULL
 ///     ArraySize.
-Value* getMallocArraySize(CallInst* CI);
+Value* getMallocArraySize(CallInst* CI, LLVMContext &Context,
+                          const TargetData* TD);
 
 } // End llvm namespace
 

@@ -1143,6 +1143,16 @@ void Verifier::visitCallInst(CallInst &CI) {
   if (Function *F = CI.getCalledFunction())
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
       visitIntrinsicFunctionCall(ID, CI);
+
+  // Code here matches isMalloc from MallocHelper, which is not in VMCore.
+  const Module* M = CI.getParent()->getParent()->getParent();
+  Constant *MallocFunc = M->getFunction("malloc");
+
+  if (CI.getOperand(0) == MallocFunc) {
+    const PointerType *PTy =
+        PointerType::getUnqual(Type::getInt8Ty(CI.getParent()->getContext()));
+    Assert1(CI.getType() == PTy, "Malloc call must return i8*", &CI);
+  }
 }
 
 void Verifier::visitInvokeInst(InvokeInst &II) {
