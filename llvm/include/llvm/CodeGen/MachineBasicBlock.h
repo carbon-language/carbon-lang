@@ -149,6 +149,10 @@ public:
     return (unsigned)Predecessors.size();
   }
   bool                 pred_empty() const { return Predecessors.empty(); }
+  bool                 isPred(MachineBasicBlock *MBB) const {
+    return std::find(pred_begin(), pred_end(), MBB) != pred_end();
+  }
+
   succ_iterator        succ_begin()       { return Successors.begin();   }
   const_succ_iterator  succ_begin() const { return Successors.begin();   }
   succ_iterator        succ_end()         { return Successors.end();     }
@@ -165,6 +169,9 @@ public:
     return (unsigned)Successors.size();
   }
   bool                 succ_empty() const { return Successors.empty();   }
+  bool                 isSucc(MachineBasicBlock *MBB) const {
+    return std::find(succ_begin(), succ_end(), MBB) != succ_end();
+  }
 
   // LiveIn management methods.
 
