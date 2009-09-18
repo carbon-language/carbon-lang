@@ -26,6 +26,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/UniqueVector.h"
@@ -152,8 +153,8 @@ bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
         // Writes memory.  Just give up.
         return false;
 
-      if (isa<MallocInst>(I))
-        // MallocInst claims not to write memory!  PR3754.
+      if (isa<MallocInst>(I) || isMalloc(I))
+        // malloc claims not to write memory!  PR3754.
         return false;
 
       // If this instruction may read memory, remember that.
@@ -247,8 +248,11 @@ bool FunctionAttrs::IsFunctionMallocLike(Function *F,
     if (Instruction *RVI = dyn_cast<Instruction>(RetVal))
       switch (RVI->getOpcode()) {
         // Extend the analysis by looking upwards.
-        case Instruction::GetElementPtr:
         case Instruction::BitCast:
+          if (isMalloc(RVI))
+            break;
+          // fall through
+        case Instruction::GetElementPtr:
           FlowsToReturn.insert(RVI->getOperand(0));
           continue;
         case Instruction::Select: {
@@ -267,6 +271,8 @@ bool FunctionAttrs::IsFunctionMallocLike(Function *F,
         case Instruction::Malloc:
           break;
         case Instruction::Call:
+          if (isMalloc(RVI))
+            break;
         case Instruction::Invoke: {
           CallSite CS(RVI);
           if (CS.paramHasAttr(0, Attribute::NoAlias))

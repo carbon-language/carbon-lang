@@ -1853,7 +1853,13 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'm':
-        if (Name == "memcmp") {
+        if (Name == "malloc") {
+          if (FTy->getNumParams() != 1 ||
+              !isa<PointerType>(FTy->getReturnType()))
+            continue;
+          setDoesNotThrow(F);
+          setDoesNotAlias(F, 0);
+        } else if (Name == "memcmp") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))

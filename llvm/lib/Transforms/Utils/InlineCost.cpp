@@ -13,6 +13,7 @@
 
 
 #include "llvm/Transforms/Utils/InlineCost.h"
+#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/CallingConv.h"
 #include "llvm/IntrinsicInst.h"
@@ -51,7 +52,7 @@ unsigned InlineCostAnalyzer::FunctionInfo::
       // Unfortunately, we don't know the pointer that may get propagated here,
       // so we can't make this decision.
       if (Inst.mayReadFromMemory() || Inst.mayHaveSideEffects() ||
-          isa<AllocationInst>(Inst))
+          isa<AllocationInst>(Inst) || isMalloc(&Inst)) 
         continue;
 
       bool AllOperandsConstant = true;

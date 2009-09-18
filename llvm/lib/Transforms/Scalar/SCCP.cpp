@@ -30,6 +30,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CallSite.h"
@@ -400,7 +401,12 @@ private:
   void visitStoreInst     (Instruction &I);
   void visitLoadInst      (LoadInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
-  void visitCallInst      (CallInst &I) { visitCallSite(CallSite::get(&I)); }
+  void visitCallInst      (CallInst &I) { 
+    if (isMalloc(&I))
+      markOverdefined(&I);
+    else
+      visitCallSite(CallSite::get(&I));
+  }
   void visitInvokeInst    (InvokeInst &II) {
     visitCallSite(CallSite::get(&II));
     visitTerminatorInst(II);

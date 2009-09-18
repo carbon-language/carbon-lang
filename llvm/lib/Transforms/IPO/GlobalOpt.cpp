@@ -24,6 +24,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
@@ -939,6 +940,138 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   return NewGV;
 }
 
+/// OptimizeGlobalAddressOfMalloc - This function takes the specified global
+/// variable, and transforms the program as if it always contained the result of
+/// the specified malloc.  Because it is always the result of the specified
+/// malloc, there is no reason to actually DO the malloc.  Instead, turn the
+/// malloc into a global, and any loads of GV as uses of the new global.
+static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
+                                                     CallInst *CI,
+                                                     BitCastInst *BCI,
+                                                     LLVMContext &Context,
+                                                     TargetData* TD) {
+  const Type *IntPtrTy = TD->getIntPtrType(Context);
+  
+  DEBUG(errs() << "PROMOTING MALLOC GLOBAL: " << *GV << "  MALLOC = " << *CI);
+
+  ConstantInt *NElements = cast<ConstantInt>(getMallocArraySize(CI,
+                                                                Context, TD));
+  if (NElements->getZExtValue() != 1) {
+    // If we have an array allocation, transform it to a single element
+    // allocation to make the code below simpler.
+    Type *NewTy = ArrayType::get(getMallocAllocatedType(CI),
+                                 NElements->getZExtValue());
+    Value* NewM = CallInst::CreateMalloc(CI, IntPtrTy, NewTy);
+    Instruction* NewMI = cast<Instruction>(NewM);
+    Value* Indices[2];
+    Indices[0] = Indices[1] = Constant::getNullValue(IntPtrTy);
+    Value *NewGEP = GetElementPtrInst::Create(NewMI, Indices, Indices + 2,
+                                              NewMI->getName()+".el0", CI);
+    BCI->replaceAllUsesWith(NewGEP);
+    BCI->eraseFromParent();
+    CI->eraseFromParent();
+    BCI = cast<BitCastInst>(NewMI);
+    CI = extractMallocCallFromBitCast(NewMI);
+  }
+
+  // Create the new global variable.  The contents of the malloc'd memory is
+  // undefined, so initialize with an undef value.
+  // FIXME: This new global should have the alignment returned by malloc.  Code
+  // could depend on malloc returning large alignment (on the mac, 16 bytes) but
+  // this would only guarantee some lower alignment.
+  const Type *MAT = getMallocAllocatedType(CI);
+  Constant *Init = UndefValue::get(MAT);
+  GlobalVariable *NewGV = new GlobalVariable(*GV->getParent(), 
+                                             MAT, false,
+                                             GlobalValue::InternalLinkage, Init,
+                                             GV->getName()+".body",
+                                             GV,
+                                             GV->isThreadLocal());
+  
+  // Anything that used the malloc now uses the global directly.
+  BCI->replaceAllUsesWith(NewGV);
+
+  Constant *RepValue = NewGV;
+  if (NewGV->getType() != GV->getType()->getElementType())
+    RepValue = ConstantExpr::getBitCast(RepValue, 
+                                        GV->getType()->getElementType());
+
+  // If there is a comparison against null, we will insert a global bool to
+  // keep track of whether the global was initialized yet or not.
+  GlobalVariable *InitBool =
+    new GlobalVariable(Context, Type::getInt1Ty(Context), false,
+                       GlobalValue::InternalLinkage,
+                       ConstantInt::getFalse(Context), GV->getName()+".init",
+                       GV->isThreadLocal());
+  bool InitBoolUsed = false;
+
+  // Loop over all uses of GV, processing them in turn.
+  std::vector<StoreInst*> Stores;
+  while (!GV->use_empty())
+    if (LoadInst *LI = dyn_cast<LoadInst>(GV->use_back())) {
+      while (!LI->use_empty()) {
+        Use &LoadUse = LI->use_begin().getUse();
+        if (!isa<ICmpInst>(LoadUse.getUser()))
+          LoadUse = RepValue;
+        else {
+          ICmpInst *ICI = cast<ICmpInst>(LoadUse.getUser());
+          // Replace the cmp X, 0 with a use of the bool value.
+          Value *LV = new LoadInst(InitBool, InitBool->getName()+".val", ICI);
+          InitBoolUsed = true;
+          switch (ICI->getPredicate()) {
+          default: llvm_unreachable("Unknown ICmp Predicate!");
+          case ICmpInst::ICMP_ULT:
+          case ICmpInst::ICMP_SLT:
+            LV = ConstantInt::getFalse(Context);   // X < null -> always false
+            break;
+          case ICmpInst::ICMP_ULE:
+          case ICmpInst::ICMP_SLE:
+          case ICmpInst::ICMP_EQ:
+            LV = BinaryOperator::CreateNot(LV, "notinit", ICI);
+            break;
+          case ICmpInst::ICMP_NE:
+          case ICmpInst::ICMP_UGE:
+          case ICmpInst::ICMP_SGE:
+          case ICmpInst::ICMP_UGT:
+          case ICmpInst::ICMP_SGT:
+            break;  // no change.
+          }
+          ICI->replaceAllUsesWith(LV);
+          ICI->eraseFromParent();
+        }
+      }
+      LI->eraseFromParent();
+    } else {
+      StoreInst *SI = cast<StoreInst>(GV->use_back());
+      // The global is initialized when the store to it occurs.
+      new StoreInst(ConstantInt::getTrue(Context), InitBool, SI);
+      SI->eraseFromParent();
+    }
+
+  // If the initialization boolean was used, insert it, otherwise delete it.
+  if (!InitBoolUsed) {
+    while (!InitBool->use_empty())  // Delete initializations
+      cast<Instruction>(InitBool->use_back())->eraseFromParent();
+    delete InitBool;
+  } else
+    GV->getParent()->getGlobalList().insert(GV, InitBool);
+
+
+  // Now the GV is dead, nuke it and the malloc.
+  GV->eraseFromParent();
+  BCI->eraseFromParent();
+  CI->eraseFromParent();
+
+  // To further other optimizations, loop over all users of NewGV and try to
+  // constant prop them.  This will promote GEP instructions with constant
+  // indices into GEP constant-exprs, which will allow global-opt to hack on it.
+  ConstantPropUsersOf(NewGV, Context);
+  if (RepValue != NewGV)
+    ConstantPropUsersOf(RepValue, Context);
+
+  return NewGV;
+}
+
 /// ValueIsOnlyUsedLocallyOrStoredToOneGlobal - Scan the use-list of V checking
 /// to make sure that there are no complex uses of V.  We permit simple things
 /// like dereferencing the pointer, but not storing through the address, unless
@@ -1086,7 +1219,7 @@ static bool LoadUsesSimpleEnoughForHeapSRA(Value *V,
 /// AllGlobalLoadUsesSimpleEnoughForHeapSRA - If all users of values loaded from
 /// GV are simple enough to perform HeapSRA, return true.
 static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
-                                                    MallocInst *MI) {
+                                                    Instruction *StoredVal) {
   SmallPtrSet<PHINode*, 32> LoadUsingPHIs;
   SmallPtrSet<PHINode*, 32> LoadUsingPHIsPerLoad;
   for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E; 
@@ -1110,7 +1243,7 @@ static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
       Value *InVal = PN->getIncomingValue(op);
       
       // PHI of the stored value itself is ok.
-      if (InVal == MI) continue;
+      if (InVal == StoredVal) continue;
       
       if (PHINode *InPN = dyn_cast<PHINode>(InVal)) {
         // One of the PHIs in our set is (optimistically) ok.
@@ -1444,6 +1577,191 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
   return cast<GlobalVariable>(FieldGlobals[0]);
 }
 
+/// PerformHeapAllocSRoA - CI is an allocation of an array of structures.  Break
+/// it up into multiple allocations of arrays of the fields.
+static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV,
+                                            CallInst *CI, BitCastInst* BCI, 
+                                            LLVMContext &Context,
+                                            TargetData *TD){
+  DEBUG(errs() << "SROA HEAP ALLOC: " << *GV << "  MALLOC CALL = " << *CI 
+               << " BITCAST = " << *BCI << '\n');
+  const Type* MAT = getMallocAllocatedType(CI);
+  const StructType *STy = cast<StructType>(MAT);
+
+  // There is guaranteed to be at least one use of the malloc (storing
+  // it into GV).  If there are other uses, change them to be uses of
+  // the global to simplify later code.  This also deletes the store
+  // into GV.
+  ReplaceUsesOfMallocWithGlobal(BCI, GV);
+  
+  // Okay, at this point, there are no users of the malloc.  Insert N
+  // new mallocs at the same place as CI, and N globals.
+  std::vector<Value*> FieldGlobals;
+  std::vector<Value*> FieldMallocs;
+  
+  for (unsigned FieldNo = 0, e = STy->getNumElements(); FieldNo != e;++FieldNo){
+    const Type *FieldTy = STy->getElementType(FieldNo);
+    const PointerType *PFieldTy = PointerType::getUnqual(FieldTy);
+    
+    GlobalVariable *NGV =
+      new GlobalVariable(*GV->getParent(),
+                         PFieldTy, false, GlobalValue::InternalLinkage,
+                         Constant::getNullValue(PFieldTy),
+                         GV->getName() + ".f" + Twine(FieldNo), GV,
+                         GV->isThreadLocal());
+    FieldGlobals.push_back(NGV);
+    
+    Value *NMI = CallInst::CreateMalloc(CI, TD->getIntPtrType(Context), FieldTy,
+                                        getMallocArraySize(CI, Context, TD),
+                                        BCI->getName() + ".f" + Twine(FieldNo));
+    FieldMallocs.push_back(NMI);
+    new StoreInst(NMI, NGV, BCI);
+  }
+  
+  // The tricky aspect of this transformation is handling the case when malloc
+  // fails.  In the original code, malloc failing would set the result pointer
+  // of malloc to null.  In this case, some mallocs could succeed and others
+  // could fail.  As such, we emit code that looks like this:
+  //    F0 = malloc(field0)
+  //    F1 = malloc(field1)
+  //    F2 = malloc(field2)
+  //    if (F0 == 0 || F1 == 0 || F2 == 0) {
+  //      if (F0) { free(F0); F0 = 0; }
+  //      if (F1) { free(F1); F1 = 0; }
+  //      if (F2) { free(F2); F2 = 0; }
+  //    }
+  Value *RunningOr = 0;
+  for (unsigned i = 0, e = FieldMallocs.size(); i != e; ++i) {
+    Value *Cond = new ICmpInst(BCI, ICmpInst::ICMP_EQ, FieldMallocs[i],
+                              Constant::getNullValue(FieldMallocs[i]->getType()),
+                                  "isnull");
+    if (!RunningOr)
+      RunningOr = Cond;   // First seteq
+    else
+      RunningOr = BinaryOperator::CreateOr(RunningOr, Cond, "tmp", BCI);
+  }
+
+  // Split the basic block at the old malloc.
+  BasicBlock *OrigBB = BCI->getParent();
+  BasicBlock *ContBB = OrigBB->splitBasicBlock(BCI, "malloc_cont");
+  
+  // Create the block to check the first condition.  Put all these blocks at the
+  // end of the function as they are unlikely to be executed.
+  BasicBlock *NullPtrBlock = BasicBlock::Create(Context, "malloc_ret_null",
+                                                OrigBB->getParent());
+  
+  // Remove the uncond branch from OrigBB to ContBB, turning it into a cond
+  // branch on RunningOr.
+  OrigBB->getTerminator()->eraseFromParent();
+  BranchInst::Create(NullPtrBlock, ContBB, RunningOr, OrigBB);
+  
+  // Within the NullPtrBlock, we need to emit a comparison and branch for each
+  // pointer, because some may be null while others are not.
+  for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
+    Value *GVVal = new LoadInst(FieldGlobals[i], "tmp", NullPtrBlock);
+    Value *Cmp = new ICmpInst(*NullPtrBlock, ICmpInst::ICMP_NE, GVVal, 
+                              Constant::getNullValue(GVVal->getType()),
+                              "tmp");
+    BasicBlock *FreeBlock = BasicBlock::Create(Context, "free_it",
+                                               OrigBB->getParent());
+    BasicBlock *NextBlock = BasicBlock::Create(Context, "next",
+                                               OrigBB->getParent());
+    BranchInst::Create(FreeBlock, NextBlock, Cmp, NullPtrBlock);
+
+    // Fill in FreeBlock.
+    new FreeInst(GVVal, FreeBlock);
+    new StoreInst(Constant::getNullValue(GVVal->getType()), FieldGlobals[i],
+                  FreeBlock);
+    BranchInst::Create(NextBlock, FreeBlock);
+    
+    NullPtrBlock = NextBlock;
+  }
+  
+  BranchInst::Create(ContBB, NullPtrBlock);
+  
+  // CI and BCI are no longer needed, remove them.
+  BCI->eraseFromParent();
+  CI->eraseFromParent();
+
+  /// InsertedScalarizedLoads - As we process loads, if we can't immediately
+  /// update all uses of the load, keep track of what scalarized loads are
+  /// inserted for a given load.
+  DenseMap<Value*, std::vector<Value*> > InsertedScalarizedValues;
+  InsertedScalarizedValues[GV] = FieldGlobals;
+  
+  std::vector<std::pair<PHINode*, unsigned> > PHIsToRewrite;
+  
+  // Okay, the malloc site is completely handled.  All of the uses of GV are now
+  // loads, and all uses of those loads are simple.  Rewrite them to use loads
+  // of the per-field globals instead.
+  for (Value::use_iterator UI = GV->use_begin(), E = GV->use_end(); UI != E;) {
+    Instruction *User = cast<Instruction>(*UI++);
+    
+    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      RewriteUsesOfLoadForHeapSRoA(LI, InsertedScalarizedValues, PHIsToRewrite,
+                                   Context);
+      continue;
+    }
+    
+    // Must be a store of null.
+    StoreInst *SI = cast<StoreInst>(User);
+    assert(isa<ConstantPointerNull>(SI->getOperand(0)) &&
+           "Unexpected heap-sra user!");
+    
+    // Insert a store of null into each global.
+    for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
+      const PointerType *PT = cast<PointerType>(FieldGlobals[i]->getType());
+      Constant *Null = Constant::getNullValue(PT->getElementType());
+      new StoreInst(Null, FieldGlobals[i], SI);
+    }
+    // Erase the original store.
+    SI->eraseFromParent();
+  }
+
+  // While we have PHIs that are interesting to rewrite, do it.
+  while (!PHIsToRewrite.empty()) {
+    PHINode *PN = PHIsToRewrite.back().first;
+    unsigned FieldNo = PHIsToRewrite.back().second;
+    PHIsToRewrite.pop_back();
+    PHINode *FieldPN = cast<PHINode>(InsertedScalarizedValues[PN][FieldNo]);
+    assert(FieldPN->getNumIncomingValues() == 0 &&"Already processed this phi");
+
+    // Add all the incoming values.  This can materialize more phis.
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      Value *InVal = PN->getIncomingValue(i);
+      InVal = GetHeapSROAValue(InVal, FieldNo, InsertedScalarizedValues,
+                               PHIsToRewrite, Context);
+      FieldPN->addIncoming(InVal, PN->getIncomingBlock(i));
+    }
+  }
+  
+  // Drop all inter-phi links and any loads that made it this far.
+  for (DenseMap<Value*, std::vector<Value*> >::iterator
+       I = InsertedScalarizedValues.begin(), E = InsertedScalarizedValues.end();
+       I != E; ++I) {
+    if (PHINode *PN = dyn_cast<PHINode>(I->first))
+      PN->dropAllReferences();
+    else if (LoadInst *LI = dyn_cast<LoadInst>(I->first))
+      LI->dropAllReferences();
+  }
+  
+  // Delete all the phis and loads now that inter-references are dead.
+  for (DenseMap<Value*, std::vector<Value*> >::iterator
+       I = InsertedScalarizedValues.begin(), E = InsertedScalarizedValues.end();
+       I != E; ++I) {
+    if (PHINode *PN = dyn_cast<PHINode>(I->first))
+      PN->eraseFromParent();
+    else if (LoadInst *LI = dyn_cast<LoadInst>(I->first))
+      LI->eraseFromParent();
+  }
+  
+  // The old global is now dead, remove it.
+  GV->eraseFromParent();
+
+  ++NumHeapSRA;
+  return cast<GlobalVariable>(FieldGlobals[0]);
+}
+
 /// TryToOptimizeStoreOfMallocToGlobal - This function is called when we see a
 /// pointer global variable with a single value stored it that is a malloc or
 /// cast of malloc.
@@ -1533,6 +1851,99 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
   return false;
 }  
 
+/// TryToOptimizeStoreOfMallocToGlobal - This function is called when we see a
+/// pointer global variable with a single value stored it that is a malloc or
+/// cast of malloc.
+static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
+                                               CallInst *CI,
+                                               BitCastInst *BCI,
+                                               Module::global_iterator &GVI,
+                                               TargetData *TD,
+                                               LLVMContext &Context) {
+  // If we can't figure out the type being malloced, then we can't optimize.
+  const Type *AllocTy = getMallocAllocatedType(CI);
+  assert(AllocTy);
+
+  // If this is a malloc of an abstract type, don't touch it.
+  if (!AllocTy->isSized())
+    return false;
+
+  // We can't optimize this global unless all uses of it are *known* to be
+  // of the malloc value, not of the null initializer value (consider a use
+  // that compares the global's value against zero to see if the malloc has
+  // been reached).  To do this, we check to see if all uses of the global
+  // would trap if the global were null: this proves that they must all
+  // happen after the malloc.
+  if (!AllUsesOfLoadedValueWillTrapIfNull(GV))
+    return false;
+
+  // We can't optimize this if the malloc itself is used in a complex way,
+  // for example, being stored into multiple globals.  This allows the
+  // malloc to be stored into the specified global, loaded setcc'd, and
+  // GEP'd.  These are all things we could transform to using the global
+  // for.
+  {
+    SmallPtrSet<PHINode*, 8> PHIs;
+    if (!ValueIsOnlyUsedLocallyOrStoredToOneGlobal(BCI, GV, PHIs))
+      return false;
+  }  
+
+  // If we have a global that is only initialized with a fixed size malloc,
+  // transform the program to use global memory instead of malloc'd memory.
+  // This eliminates dynamic allocation, avoids an indirection accessing the
+  // data, and exposes the resultant global to further GlobalOpt.
+  if (ConstantInt *NElements =
+              dyn_cast<ConstantInt>(getMallocArraySize(CI, Context, TD))) {
+    // Restrict this transformation to only working on small allocations
+    // (2048 bytes currently), as we don't want to introduce a 16M global or
+    // something.
+    if (TD && 
+        NElements->getZExtValue() * TD->getTypeAllocSize(AllocTy) < 2048) {
+      GVI = OptimizeGlobalAddressOfMalloc(GV, CI, BCI, Context, TD);
+      return true;
+    }
+  }
+  
+  // If the allocation is an array of structures, consider transforming this
+  // into multiple malloc'd arrays, one for each field.  This is basically
+  // SRoA for malloc'd memory.
+
+  // If this is an allocation of a fixed size array of structs, analyze as a
+  // variable size array.  malloc [100 x struct],1 -> malloc struct, 100
+  if (!isArrayMalloc(CI, Context, TD))
+    if (const ArrayType *AT = dyn_cast<ArrayType>(AllocTy))
+      AllocTy = AT->getElementType();
+  
+  if (const StructType *AllocSTy = dyn_cast<StructType>(AllocTy)) {
+    // This the structure has an unreasonable number of fields, leave it
+    // alone.
+    if (AllocSTy->getNumElements() <= 16 && AllocSTy->getNumElements() != 0 &&
+        AllGlobalLoadUsesSimpleEnoughForHeapSRA(GV, BCI)) {
+
+      // If this is a fixed size array, transform the Malloc to be an alloc of
+      // structs.  malloc [100 x struct],1 -> malloc struct, 100
+      if (const ArrayType *AT = dyn_cast<ArrayType>(getMallocAllocatedType(CI))) {
+        Value* NumElements = ConstantInt::get(Type::getInt32Ty(Context),
+                                              AT->getNumElements());
+        Value* NewMI = CallInst::CreateMalloc(CI, TD->getIntPtrType(Context),
+                                              AllocSTy, NumElements,
+                                              BCI->getName());
+        Value *Cast = new BitCastInst(NewMI, getMallocType(CI), "tmp", CI);
+        BCI->replaceAllUsesWith(Cast);
+        BCI->eraseFromParent();
+        CI->eraseFromParent();
+        BCI = cast<BitCastInst>(NewMI);
+        CI = extractMallocCallFromBitCast(NewMI);
+      }
+      
+      GVI = PerformHeapAllocSRoA(GV, CI, BCI, Context, TD);
+      return true;
+    }
+  }
+  
+  return false;
+}  
+
 // OptimizeOnceStoredGlobal - Try to optimize globals based on the knowledge
 // that only one value (besides its initializer) is ever stored to the global.
 static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
@@ -1558,6 +1969,16 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
     } else if (MallocInst *MI = dyn_cast<MallocInst>(StoredOnceVal)) {
       if (TryToOptimizeStoreOfMallocToGlobal(GV, MI, GVI, TD, Context))
         return true;
+    } else if (CallInst *CI = extractMallocCall(StoredOnceVal)) {
+      if (getMallocAllocatedType(CI)) {
+        BitCastInst* BCI = NULL;
+        for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end();
+             UI != E; )
+          BCI = dyn_cast<BitCastInst>(cast<Instruction>(*UI++));
+        if (BCI &&
+            TryToOptimizeStoreOfMallocToGlobal(GV, CI, BCI, GVI, TD, Context))
+          return true;
+      }
     }
   }
 
