@@ -413,7 +413,8 @@ namespace llvm {
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                  MachineBasicBlock *MBB) const;
+                                                         MachineBasicBlock *MBB,
+                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
 
  
     /// getTargetNodeName - This method returns the name of a target specific

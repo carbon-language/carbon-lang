@@ -90,7 +90,8 @@ namespace llvm {
     getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const;
 
     MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                   MachineBasicBlock *BB) const;
+                                                   MachineBasicBlock *BB,
+                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
 
   private:
     SDValue LowerCCCCallTo(SDValue Chain, SDValue Callee,

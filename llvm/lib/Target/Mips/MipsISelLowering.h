@@ -131,7 +131,8 @@ namespace llvm {
                   DebugLoc dl, SelectionDAG &DAG);
 
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                   MachineBasicBlock *MBB) const;
+                                                         MachineBasicBlock *MBB,
+                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
 
     // Inline asm support
     ConstraintType getConstraintType(const std::string &Constraint) const;

@@ -15,12 +15,13 @@
 #ifndef SCHEDULEDAGINSTRS_H
 #define SCHEDULEDAGINSTRS_H
 
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallSet.h"
 #include <map>
 
 namespace llvm {
@@ -166,7 +167,8 @@ namespace llvm {
     virtual void ComputeOperandLatency(SUnit *Def, SUnit *Use,
                                        SDep& dep) const;
 
-    virtual MachineBasicBlock *EmitSchedule();
+    virtual MachineBasicBlock*
+    EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*>*);
 
     /// StartBlock - Prepare to perform scheduling in the given block.
     ///

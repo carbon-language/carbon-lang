@@ -461,7 +461,8 @@ namespace llvm {
     /// EmitSchedule - Insert MachineInstrs into the MachineBasicBlock
     /// according to the order specified in Sequence.
     ///
-    virtual MachineBasicBlock *EmitSchedule() = 0;
+    virtual MachineBasicBlock*
+    EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*>*) = 0;
 
     void dumpSchedule() const;
 

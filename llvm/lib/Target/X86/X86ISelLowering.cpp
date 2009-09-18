@@ -7831,7 +7831,8 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
 
 MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                               MachineBasicBlock *BB) const {
+                                               MachineBasicBlock *BB,
+                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
   case X86::CMOV_GR8:

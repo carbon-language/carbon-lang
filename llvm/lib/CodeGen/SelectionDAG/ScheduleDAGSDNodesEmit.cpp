@@ -470,7 +470,8 @@ ScheduleDAGSDNodes::EmitCopyToRegClassNode(SDNode *Node,
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
 void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
-                                  DenseMap<SDValue, unsigned> &VRBaseMap) {
+                                  DenseMap<SDValue, unsigned> &VRBaseMap,
+                         DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
   // If machine instruction
   if (Node->isMachineOpcode()) {
     unsigned Opc = Node->getMachineOpcode();
@@ -531,7 +532,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     if (II.usesCustomDAGSchedInsertionHook()) {
       // Insert this instruction into the basic block using a target
       // specific inserter which may returns a new basic block.
-      BB = TLI->EmitInstrWithCustomInserter(MI, BB);
+      BB = TLI->EmitInstrWithCustomInserter(MI, BB, EM);
       InsertPos = BB->end();
     } else {
       BB->insert(InsertPos, MI);
@@ -652,7 +653,8 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
 }
 
 /// EmitSchedule - Emit the machine code in scheduled order.
-MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
+MachineBasicBlock *ScheduleDAGSDNodes::
+EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
   DenseMap<SDValue, unsigned> VRBaseMap;
   DenseMap<SUnit*, unsigned> CopyVRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
@@ -676,10 +678,11 @@ MachineBasicBlock *ScheduleDAGSDNodes::EmitSchedule() {
          N = N->getFlaggedNode())
       FlaggedNodes.push_back(N);
     while (!FlaggedNodes.empty()) {
-      EmitNode(FlaggedNodes.back(), SU->OrigNode != SU, SU->isCloned,VRBaseMap);
+      EmitNode(FlaggedNodes.back(), SU->OrigNode != SU, SU->isCloned,
+               VRBaseMap, EM);
       FlaggedNodes.pop_back();
     }
-    EmitNode(SU->getNode(), SU->OrigNode != SU, SU->isCloned, VRBaseMap);
+    EmitNode(SU->getNode(), SU->OrigNode != SU, SU->isCloned, VRBaseMap, EM);
   }
 
   return BB;

@@ -778,7 +778,8 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
 
 MachineBasicBlock*
 SystemZTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                   MachineBasicBlock *BB) const {
+                                                   MachineBasicBlock *BB,
+                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
   const SystemZInstrInfo &TII = *TM.getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
   assert((MI->getOpcode() == SystemZ::Select32  ||

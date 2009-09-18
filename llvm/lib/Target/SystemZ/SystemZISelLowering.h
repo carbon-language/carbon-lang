@@ -86,7 +86,8 @@ namespace llvm {
 
 
     MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                   MachineBasicBlock *BB) const;
+                                                   MachineBasicBlock *BB,
+                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
 
   private:
     SDValue LowerCCCCallTo(SDValue Chain, SDValue Callee,

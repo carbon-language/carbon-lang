@@ -59,7 +59,8 @@ namespace llvm {
                                                 unsigned Depth = 0) const;
 
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                   MachineBasicBlock *MBB) const;
+                                                         MachineBasicBlock *MBB,
+                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
 
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 

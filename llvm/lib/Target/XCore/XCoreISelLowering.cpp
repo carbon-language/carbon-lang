@@ -981,7 +981,8 @@ XCoreTargetLowering::LowerReturn(SDValue Chain,
 
 MachineBasicBlock *
 XCoreTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                 MachineBasicBlock *BB) const {
+                                                 MachineBasicBlock *BB,
+                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
   const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
   assert((MI->getOpcode() == XCore::SELECT_CC) &&

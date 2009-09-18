@@ -751,6 +751,7 @@ void SelectionDAGLowering::clear() {
   NodeMap.clear();
   PendingLoads.clear();
   PendingExports.clear();
+  EdgeMapping.clear();
   DAG.clear();
   CurDebugLoc = DebugLoc::getUnknownLoc();
   HasTailCall = false;

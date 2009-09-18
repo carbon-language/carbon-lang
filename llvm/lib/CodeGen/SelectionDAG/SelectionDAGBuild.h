@@ -345,8 +345,14 @@ public:
   /// BitTestCases - Vector of BitTestBlock structures used to communicate
   /// SwitchInst code generation information.
   std::vector<BitTestBlock> BitTestCases;
-  
+
+  /// PHINodesToUpdate - A list of phi instructions whose operand list will
+  /// be updated after processing the current basic block.
   std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
+
+  /// EdgeMapping - If an edge from CurMBB to any MBB is changed (e.g. due to
+  /// scheduler custom lowering), track the change here.
+  DenseMap<MachineBasicBlock*, MachineBasicBlock*> EdgeMapping;
 
   // Emit PHI-node-operand constants only once even if used by multiple
   // PHI nodes.

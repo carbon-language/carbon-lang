@@ -240,7 +240,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
       MachineInstr *MI = prior(I);
       if (isSchedulingBoundary(MI, Fn)) {
         Scheduler.Run(MBB, I, Current, CurrentCount);
-        Scheduler.EmitSchedule();
+        Scheduler.EmitSchedule(0);
         Current = MI;
         CurrentCount = Count - 1;
         Scheduler.Observe(MI, CurrentCount);
@@ -252,7 +252,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     assert((MBB->begin() == Current || CurrentCount != 0) &&
            "Instruction count mismatch!");
     Scheduler.Run(MBB, MBB->begin(), Current, CurrentCount);
-    Scheduler.EmitSchedule();
+    Scheduler.EmitSchedule(0);
 
     // Clean up register live-range state.
     Scheduler.FinishBlock();

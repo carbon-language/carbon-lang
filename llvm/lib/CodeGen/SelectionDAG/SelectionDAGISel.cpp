@@ -154,7 +154,8 @@ namespace llvm {
 // insert.  The specified MachineInstr is created but not inserted into any
 // basic blocks, and the scheduler passes ownership of it to this method.
 MachineBasicBlock *TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                 MachineBasicBlock *MBB) const {
+                                                         MachineBasicBlock *MBB,
+                   DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
 #ifndef NDEBUG
   errs() << "If a target marks an instruction with "
           "'usesCustomDAGSchedInserter', it must implement "
@@ -620,9 +621,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   // inserted into.
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("Instruction Creation", GroupName);
-    BB = Scheduler->EmitSchedule();
+    BB = Scheduler->EmitSchedule(&SDL->EdgeMapping);
   } else {
-    BB = Scheduler->EmitSchedule();
+    BB = Scheduler->EmitSchedule(&SDL->EdgeMapping);
   }
 
   // Free the scheduler state.
@@ -984,20 +985,25 @@ SelectionDAGISel::FinishBasicBlock() {
   // additional DAGs necessary.
   for (unsigned i = 0, e = SDL->SwitchCases.size(); i != e; ++i) {
     // Set the current basic block to the mbb we wish to insert the code into
-    BB = SDL->SwitchCases[i].ThisBB;
+    MachineBasicBlock *ThisBB = BB = SDL->SwitchCases[i].ThisBB;
     SDL->setCurrentBasicBlock(BB);
     
     // Emit the code
     SDL->visitSwitchCase(SDL->SwitchCases[i]);
     CurDAG->setRoot(SDL->getRoot());
     CodeGenAndEmitDAG();
-    SDL->clear();
     
     // Handle any PHI nodes in successors of this chunk, as if we were coming
     // from the original BB before switch expansion.  Note that PHI nodes can
     // occur multiple times in PHINodesToUpdate.  We have to be very careful to
     // handle them the right number of times.
     while ((BB = SDL->SwitchCases[i].TrueBB)) {  // Handle LHS and RHS.
+      // If new BB's are created during scheduling, the edges may have been
+      // updated.
+      DenseMap<MachineBasicBlock*, MachineBasicBlock*>::iterator EI =
+        SDL->EdgeMapping.find(BB);
+      if (EI != SDL->EdgeMapping.end())
+        ThisBB = EI->second;
       for (MachineBasicBlock::iterator Phi = BB->begin();
            Phi != BB->end() && Phi->getOpcode() == TargetInstrInfo::PHI; ++Phi){
         // This value for this PHI node is recorded in PHINodesToUpdate, get it.
@@ -1007,7 +1013,7 @@ SelectionDAGISel::FinishBasicBlock() {
           if (SDL->PHINodesToUpdate[pn].first == Phi) {
             Phi->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[pn].
                                                       second, false));
-            Phi->addOperand(MachineOperand::CreateMBB(SDL->SwitchCases[i].ThisBB));
+            Phi->addOperand(MachineOperand::CreateMBB(ThisBB));
             break;
           }
         }
@@ -1022,6 +1028,7 @@ SelectionDAGISel::FinishBasicBlock() {
       SDL->SwitchCases[i].FalseBB = 0;
     }
     assert(SDL->SwitchCases[i].TrueBB == 0 && SDL->SwitchCases[i].FalseBB == 0);
+    SDL->clear();
   }
   SDL->SwitchCases.clear();
 

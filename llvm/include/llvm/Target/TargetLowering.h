@@ -1441,7 +1441,8 @@ public:
   // insert.  The specified MachineInstr is created but not inserted into any
   // basic blocks, and the scheduler passes ownership of it to this method.
   virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                  MachineBasicBlock *MBB) const;
+                                                         MachineBasicBlock *MBB,
+                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
 
   //===--------------------------------------------------------------------===//
   // Addressing mode description hooks (used by LSR etc).

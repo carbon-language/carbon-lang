@@ -113,9 +113,11 @@ namespace llvm {
     /// register number for the results of the node.
     ///
     void EmitNode(SDNode *Node, bool IsClone, bool HasClone,
-                  DenseMap<SDValue, unsigned> &VRBaseMap);
+                  DenseMap<SDValue, unsigned> &VRBaseMap,
+                  DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
     
-    virtual MachineBasicBlock *EmitSchedule();
+    virtual MachineBasicBlock *
+    EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM);
 
     /// Schedule - Order nodes according to selected style, filling
     /// in the Sequence member.
