@@ -169,6 +169,10 @@ namespace llvm {
     /// call this implementation.
     bool doInitialization(Module &M);
 
+    /// EmitEndOfAsmFile - This virtual method can be overridden by targets that
+    /// want to emit something at the end of their file.
+    virtual void EmitEndOfAsmFile(Module &M) {}
+    
     /// doFinalization - Shut down the asmprinter.  If you override this in your
     /// pass, you must make sure to call it explicitly.
     bool doFinalization(Module &M);
