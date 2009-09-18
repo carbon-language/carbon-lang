@@ -768,6 +768,7 @@ private:
   llvm::DenseMap<const CXXMethodDecl *, Index_t> Index;
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCall;
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCallOffset;
+  llvm::DenseMap<const CXXRecordDecl *, Index_t> VBIndex;
   typedef std::pair<Index_t, Index_t>  CallOffset;
   typedef llvm::DenseMap<const CXXMethodDecl *, CallOffset> Thunks_t;
   Thunks_t Thunks;
@@ -792,6 +793,8 @@ public:
   }
 
   llvm::DenseMap<const CXXMethodDecl *, Index_t> &getIndex() { return Index; }
+  llvm::DenseMap<const CXXRecordDecl *, Index_t> &getVBIndex()
+    { return VBIndex; }
 
   llvm::Constant *wrap(Index_t i) {
     llvm::Constant *m;
@@ -805,7 +808,7 @@ public:
 
   void GenerateVBaseOffsets(std::vector<llvm::Constant *> &offsets,
                             const CXXRecordDecl *RD, uint64_t Offset) {
-    for (CXXRecordDecl::base_class_const_iterator i =RD->bases_begin(),
+    for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
            e = RD->bases_end(); i != e; ++i) {
       const CXXRecordDecl *Base =
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
@@ -814,6 +817,8 @@ public:
         int64_t BaseOffset = -(Offset/8) + BLayout.getVBaseClassOffset(Base)/8;
         llvm::Constant *m = wrap(BaseOffset);
         m = wrap((0?700:0) + BaseOffset);
+        VBIndex[Base] = -(offsets.size()*LLVMPointerWidth/8)
+          - 3*LLVMPointerWidth/8;
         offsets.push_back(m);
       }
       GenerateVBaseOffsets(offsets, Base, Offset);
@@ -822,6 +827,27 @@ public:
 
   void StartNewTable() {
     SeenVBase.clear();
+  }
+
+  Index_t VBlookup(CXXRecordDecl *D, CXXRecordDecl *B);
+
+  /// getVbaseOffset - Returns the index into the vtable for the virtual base
+  /// offset for the given (B) virtual base of the derived class D.
+  Index_t getVbaseOffset(QualType qB, QualType qD) {
+    qD = qD->getAs<PointerType>()->getPointeeType();
+    qB = qB->getAs<PointerType>()->getPointeeType();
+    CXXRecordDecl *D = cast<CXXRecordDecl>(qD->getAs<RecordType>()->getDecl());
+    CXXRecordDecl *B = cast<CXXRecordDecl>(qB->getAs<RecordType>()->getDecl());
+    if (D != Class)
+      return VBlookup(D, B);
+    llvm::DenseMap<const CXXRecordDecl *, Index_t>::iterator i;
+    i = VBIndex.find(B);
+    if (i != VBIndex.end())
+      return i->second;
+    // FIXME: temporal botch, is this data here, by the time we need it?
+
+    // FIXME: Locate the containing virtual base first.
+    return 42;
   }
 
   bool OverrideMethod(const CXXMethodDecl *MD, llvm::Constant *m,
@@ -853,7 +879,7 @@ public:
         CallOffset ReturnOffset = std::make_pair(0, 0);
         if (oret != ret) {
           // FIXME: calculate offsets for covariance
-          ReturnOffset = std::make_pair(42,42);
+          ReturnOffset = std::make_pair(42,getVbaseOffset(oret, ret));
         }
         Index[MD] = i;
         submethods[i] = m;
@@ -1132,32 +1158,73 @@ private:
   typedef llvm::DenseMap<const CXXRecordDecl *, ElTy *> MapTy;
   // FIXME: Move to Context.
   static MapTy IndexFor;
+
+  typedef llvm::DenseMap<const CXXRecordDecl *, Index_t> VBElTy;
+  typedef llvm::DenseMap<const CXXRecordDecl *, VBElTy *> VBMapTy;
+  // FIXME: Move to Context.
+  static VBMapTy VBIndexFor;
 public:
   VtableInfo(CodeGenModule &cgm) : CGM(cgm) { }
-  void register_index(const CXXRecordDecl *RD, const ElTy &e) {
+  void RegisterIndex(const CXXRecordDecl *RD, const ElTy &e) {
     assert(IndexFor.find(RD) == IndexFor.end() && "Don't compute vtbl twice");
     // We own a copy of this, it will go away shortly.
-    new ElTy (e);
     IndexFor[RD] = new ElTy (e);
+  }
+  void RegisterVBIndex(const CXXRecordDecl *RD, const VBElTy &e) {
+    assert(VBIndexFor.find(RD) == VBIndexFor.end() && "Don't compute vtbl twice");
+    // We own a copy of this, it will go away shortly.
+    VBIndexFor[RD] = new VBElTy (e);
   }
   Index_t lookup(const CXXMethodDecl *MD) {
     const CXXRecordDecl *RD = MD->getParent();
     MapTy::iterator I = IndexFor.find(RD);
     if (I == IndexFor.end()) {
       std::vector<llvm::Constant *> methods;
+      // FIXME: This seems expensive.  Can we do a partial job to get
+      // just this data.
       VtableBuilder b(methods, RD, CGM);
       b.GenerateVtableForBase(RD);
       b.GenerateVtableForVBases(RD);
-      register_index(RD, b.getIndex());
+      RegisterIndex(RD, b.getIndex());
       I = IndexFor.find(RD);
     }
     assert(I->second->find(MD)!=I->second->end() && "Can't find vtable index");
     return (*I->second)[MD];
   }
+  Index_t VBlookup(const CXXRecordDecl *RD, const CXXRecordDecl *BD) {
+    VBMapTy::iterator I = VBIndexFor.find(RD);
+    if (I == VBIndexFor.end()) {
+      std::vector<llvm::Constant *> methods;
+      // FIXME: This seems expensive.  Can we do a partial job to get
+      // just this data.
+      VtableBuilder b(methods, RD, CGM);
+      b.GenerateVtableForBase(RD);
+      b.GenerateVtableForVBases(RD);
+      RegisterVBIndex(RD, b.getVBIndex());
+      I = VBIndexFor.find(RD);
+    }
+    assert(I->second->find(BD)!=I->second->end() && "Can't find vtable index");
+    return (*I->second)[BD];
+  }
 };
+
+// FIXME: move to Context
+static VtableInfo *vtableinfo;
+
+VtableBuilder::Index_t VtableBuilder::VBlookup(CXXRecordDecl *D,
+                                               CXXRecordDecl *B) {
+  if (vtableinfo == 0)
+    vtableinfo = new VtableInfo(CGM);
+
+  return vtableinfo->VBlookup(D, B);
+}
+
 
 // FIXME: Move to Context.
 VtableInfo::MapTy VtableInfo::IndexFor;
+
+// FIXME: Move to Context.
+VtableInfo::VBMapTy VtableInfo::VBIndexFor;
 
 llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
@@ -1190,9 +1257,6 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
                                               AddressPoint*LLVMPointerWidth/8));
   return vtable;
 }
-
-// FIXME: move to Context
-static VtableInfo *vtableinfo;
 
 llvm::Constant *CodeGenFunction::GenerateThunk(llvm::Function *Fn,
                                                const CXXMethodDecl *MD,
