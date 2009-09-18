@@ -765,14 +765,16 @@ static void AddFunctionParameterChunks(ASTContext &Context,
 /// \brief Add template parameter chunks to the given code completion string.
 static void AddTemplateParameterChunks(ASTContext &Context,
                                        TemplateDecl *Template,
-                                       CodeCompletionString *Result) {
+                                       CodeCompletionString *Result,
+                                       unsigned MaxParameters = 0) {
   CodeCompletionString *CCStr = Result;
   bool FirstParameter = true;
   
   TemplateParameterList *Params = Template->getTemplateParameters();
-  for (TemplateParameterList::iterator P = Params->begin(), 
-                                    PEnd = Params->end();
-       P != PEnd; ++P) {
+  TemplateParameterList::iterator PEnd = Params->end();
+  if (MaxParameters)
+    PEnd = Params->begin() + MaxParameters;
+  for (TemplateParameterList::iterator P = Params->begin(); P != PEnd; ++P) {
     bool HasDefaultArg = false;
     std::string PlaceholderStr;
     if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*P)) {
@@ -850,13 +852,51 @@ CodeCompleteConsumer::CreateCodeCompletionString(Result R) {
   }
   
   if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(ND)) {
-    // FIXME: We treat these like functions for now, but it would be far
-    // better if we computed the template parameters that are non-deduced from
-    // a call, then printed only those template parameters in "<...>" before
-    // printing the function call arguments.
     CodeCompletionString *Result = new CodeCompletionString;
     FunctionDecl *Function = FunTmpl->getTemplatedDecl();
     Result->AddTextChunk(Function->getNameAsString().c_str());
+    
+    // Figure out which template parameters are deduced (or have default
+    // arguments).
+    llvm::SmallVector<bool, 16> Deduced;
+    getSema().MarkDeducedTemplateParameters(FunTmpl, Deduced);
+    unsigned LastDeducibleArgument;
+    for (LastDeducibleArgument = Deduced.size(); LastDeducibleArgument > 0;
+         --LastDeducibleArgument) {
+      if (!Deduced[LastDeducibleArgument - 1]) {
+        // C++0x: Figure out if the template argument has a default. If so,
+        // the user doesn't need to type this argument.
+        // FIXME: We need to abstract template parameters better!
+        bool HasDefaultArg = false;
+        NamedDecl *Param = FunTmpl->getTemplateParameters()->getParam(
+                                                    LastDeducibleArgument - 1);
+        if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(Param))
+          HasDefaultArg = TTP->hasDefaultArgument();
+        else if (NonTypeTemplateParmDecl *NTTP 
+                   = dyn_cast<NonTypeTemplateParmDecl>(Param))
+          HasDefaultArg = NTTP->hasDefaultArgument();
+        else {
+          assert(isa<TemplateTemplateParmDecl>(Param));
+          HasDefaultArg 
+            = cast<TemplateTemplateParmDecl>(Param)->hasDefaultArgument();
+        }
+        
+        if (!HasDefaultArg)
+          break;
+      }
+    }
+    
+    if (LastDeducibleArgument) {
+      // Some of the function template arguments cannot be deduced from a
+      // function call, so we introduce an explicit template argument list
+      // containing all of the arguments up to the first deducible argument.
+      Result->AddTextChunk("<");
+      AddTemplateParameterChunks(getSema().Context, FunTmpl, Result, 
+                                 LastDeducibleArgument);
+      Result->AddTextChunk(">");
+    }
+    
+    // Add the function parameters
     Result->AddTextChunk("(");
     AddFunctionParameterChunks(getSema().Context, Function, Result);
     Result->AddTextChunk(")");

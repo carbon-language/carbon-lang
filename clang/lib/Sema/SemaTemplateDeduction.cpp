@@ -2199,3 +2199,18 @@ Sema::MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
   for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
     ::MarkUsedTemplateParameters(*this, TemplateArgs[I], OnlyDeduced, Used);
 }
+
+/// \brief Marks all of the template parameters that will be deduced by a
+/// call to the given function template.
+void Sema::MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
+                                         llvm::SmallVectorImpl<bool> &Deduced) {
+  TemplateParameterList *TemplateParams 
+    = FunctionTemplate->getTemplateParameters();
+  Deduced.clear();
+  Deduced.resize(TemplateParams->size());
+  
+  FunctionDecl *Function = FunctionTemplate->getTemplatedDecl();
+  for (unsigned I = 0, N = Function->getNumParams(); I != N; ++I)
+    ::MarkUsedTemplateParameters(*this, Function->getParamDecl(I)->getType(),
+                                 true, Deduced);
+}

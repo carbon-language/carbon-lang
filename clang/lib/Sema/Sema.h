@@ -2750,8 +2750,10 @@ public:
   
   void MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
                                   bool OnlyDeduced,
-                                  llvm::SmallVectorImpl<bool> &Deduced);
-
+                                  llvm::SmallVectorImpl<bool> &Used);
+  void MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
+                                     llvm::SmallVectorImpl<bool> &Deduced);
+  
   //===--------------------------------------------------------------------===//
   // C++ Template Instantiation
   //
