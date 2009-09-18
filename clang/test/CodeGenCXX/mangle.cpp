@@ -95,9 +95,8 @@ template<typename T> void ft2(T t, void (*)(T), void (*)(T)) { }
 template<typename T, typename U = S1<T> > struct S4 { };
 template<typename T> void ft3(S4<T>*) {  }
 
-extern "C++" {
-  // CHECK: @_Z1hv
- void h() { } 
+namespace NS {
+  template<typename T> void ft1(T) { }
 }
 
 void g() {
@@ -109,4 +108,13 @@ void g() {
   
   // CHECK: @_Z3ft3IiEvP2S4IT_2S1IS1_EE
   ft3<int>(0);
+  
+  // CHECK: @_ZN2NS3ft1IiEEvT_
+  NS::ft1<int>(1);
 }
+
+extern "C++" {
+  // CHECK: @_Z1hv
+ void h() { } 
+}
+

@@ -82,6 +82,7 @@ namespace {
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs);
     void manglePrefix(const DeclContext *DC);
+    void mangleTemplatePrefix(const DeclContext *DC);
     void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
     void mangleCVQualifiers(unsigned Quals);
     void mangleType(QualType T);
@@ -265,17 +266,27 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   }
   
   if (DC->isTranslationUnit() || isStdNamespace(DC)) {
-    const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND);
-    if (FD && FD->getPrimaryTemplate()) 
-      mangleUnscopedTemplateName(FD);
-    else
-      mangleUnscopedName(ND);
-  } else if (isa<FunctionDecl>(DC))
-    mangleLocalName(ND);
-  else
-    mangleNestedName(ND);
-}
+    // Check if we have a function template.
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)){
+      if (FD->getPrimaryTemplate()) {
+        mangleUnscopedTemplateName(FD);
+        mangleTemplateArgumentList(*FD->getTemplateSpecializationArgs());
+        return;
+      }
+    }
 
+    // FIXME: Check if we have a class template.
+    mangleUnscopedName(ND);
+    return;
+  }
+  
+  if (isa<FunctionDecl>(DC)) {
+    mangleLocalName(ND);
+    return;
+  }
+  
+  mangleNestedName(ND);
+}
 void CXXNameMangler::mangleName(const TemplateDecl *TD, 
                                 const TemplateArgument *TemplateArgs,
                                 unsigned NumTemplateArgs) {
@@ -418,12 +429,6 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
     assert(false && "Can't mangle a using directive name!");
     break;
   }
-
-  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
-    if (const TemplateArgumentList *TemplateArgs
-          = Function->getTemplateSpecializationArgs())
-      mangleTemplateArgumentList(*TemplateArgs);
-  }
 }
 
 void CXXNameMangler::mangleSourceName(const IdentifierInfo *II) {
@@ -436,15 +441,24 @@ void CXXNameMangler::mangleSourceName(const IdentifierInfo *II) {
 void CXXNameMangler::mangleNestedName(const NamedDecl *ND) {
   // <nested-name> ::= N [<CV-qualifiers>] <prefix> <unqualified-name> E
   //               ::= N [<CV-qualifiers>] <template-prefix> <template-args> E
-  // FIXME: no template support
+  // FIXME: no class template support
   Out << 'N';
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(ND))
     mangleCVQualifiers(Method->getTypeQualifiers());
-  manglePrefix(ND->getDeclContext());
-  mangleUnqualifiedName(ND);
+  
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND);
+  if (FD && FD->getPrimaryTemplate()) {
+    // FIXME: Call mangleTemplatePrefix.
+    manglePrefix(FD->getDeclContext());
+    mangleUnqualifiedName(FD);
+    mangleTemplateArgumentList(*FD->getTemplateSpecializationArgs());
+  } else {
+    manglePrefix(ND->getDeclContext());
+    mangleUnqualifiedName(ND);
+  }
+  
   Out << 'E';
 }
-
 void CXXNameMangler::mangleNestedName(const TemplateDecl *TD, 
                                       const TemplateArgument *TemplateArgs,
                                       unsigned NumTemplateArgs) {
@@ -476,7 +490,7 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
 
   if (mangleSubstitution(cast<NamedDecl>(DC)))
     return;
-  
+
   if (!DC->getParent()->isTranslationUnit())
     manglePrefix(DC->getParent());
 
@@ -491,6 +505,14 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
   }
   
   addSubstitution(cast<NamedDecl>(DC));
+}
+
+void CXXNameMangler::mangleTemplatePrefix(const DeclContext *DC) {
+  // <template-prefix> ::= <prefix> <template unqualified-name>
+  //                   ::= <template-param>
+  //                   ::= <substitution>
+
+  // FIXME: Implement!
 }
 
 void
