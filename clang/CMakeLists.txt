@@ -14,6 +14,13 @@ string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
   ${CLANG_VERSION_DATA})
 message(STATUS "Clang version: ${CLANG_VERSION}")
 
+# Add appropriate flags for GCC
+if (CMAKE_COMPILER_IS_GNUCXX)
+  # FIXME: Turn off exceptions, RTTI:
+  # -fno-exceptions -fno-rtti
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-common -Woverloaded-virtual -pedantic -Wno-long-long -Wall -W -Wno-unused-parameter -Wwrite-strings")
+endif ()
+
 macro(add_clang_library name)
   set(srcs ${ARGN})
   if(MSVC_IDE OR XCODE)
