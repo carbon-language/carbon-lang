@@ -99,8 +99,6 @@ namespace llvm {
     if (UnitAtATime)
       PM->add(createRaiseAllocationsPass());    // call %malloc -> malloc inst
     PM->add(createCFGSimplificationPass());     // Clean up disgusting code
-    // Kill useless allocas
-    PM->add(createPromoteMemoryToRegisterPass());
     if (UnitAtATime) {
       PM->add(createGlobalOptimizerPass());     // Optimize out global vars
       PM->add(createGlobalDCEPass());           // Remove unused fns and globs
