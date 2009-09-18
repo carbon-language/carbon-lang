@@ -15,5 +15,4 @@ namespace N {
 // CHECK-CC1: A : 0
 // CHECK-CC1: B : 0
 // CHECK-CC1: M : 0
-// CHECK-CC1: template : 0
 N::

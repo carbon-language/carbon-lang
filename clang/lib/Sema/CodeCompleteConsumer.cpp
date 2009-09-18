@@ -116,9 +116,22 @@ CodeCompleteConsumer::CodeCompleteMemberReferenceExpr(Scope *S,
     NextRank = CollectMemberLookupResults(Record->getDecl(), NextRank, Results);
 
     if (getSema().getLangOptions().CPlusPlus) {
-      if (!Results.empty())
+      if (!Results.empty()) {
         // The "template" keyword can follow "->" or "." in the grammar.
-        Results.MaybeAddResult(Result("template", NextRank++));
+        // However, we only want to suggest the template keyword if something
+        // is dependent.
+        bool IsDependent = BaseType->isDependentType();
+        if (!IsDependent) {
+          for (Scope *DepScope = S; DepScope; DepScope = DepScope->getParent())
+            if (DeclContext *Ctx = (DeclContext *)DepScope->getEntity()) {
+              IsDependent = Ctx->isDependentContext();
+              break;
+            }
+        }
+        
+        if (IsDependent)
+          Results.MaybeAddResult(Result("template", NextRank++));
+      }
 
       // We could have the start of a nested-name-specifier. Add those
       // results as well.
@@ -177,8 +190,9 @@ CodeCompleteConsumer::CodeCompleteQualifiedId(Scope *S,
   ResultSet Results(*this);
   unsigned NextRank = CollectMemberLookupResults(Ctx, 0, Results);
   
-  // The "template" keyword can follow "::" in the grammar
-  if (!Results.empty())
+  // The "template" keyword can follow "::" in the grammar, but only
+  // put it into the grammar if the nested-name-specifier is dependent.
+  if (!Results.empty() && NNS->isDependent())
     Results.MaybeAddResult(Result("template", NextRank));
   
   ProcessCodeCompleteResults(Results.data(), Results.size());
