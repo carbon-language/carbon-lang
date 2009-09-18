@@ -2174,6 +2174,97 @@ let isTwoAddress = 0 in {
 }
 
 // Rotate instructions
+
+def RCL8r1 : I<0xD0, MRM2r, (outs GR8:$dst), (ins GR8:$src),
+               "rcl{b}\t{1, $dst|$dst, 1}", []>;
+def RCL8m1 : I<0xD0, MRM2m, (outs i8mem:$dst), (ins i8mem:$src),
+               "rcl{b}\t{1, $dst|$dst, 1}", []>;
+let Uses = [CL] in {
+def RCL8rCL : I<0xD2, MRM2r, (outs GR8:$dst), (ins GR8:$src),
+                "rcl{b}\t{%cl, $dst|$dst, CL}", []>;
+def RCL8mCL : I<0xD2, MRM2m, (outs i8mem:$dst), (ins i8mem:$src),
+                "rcl{b}\t{%cl, $dst|$dst, CL}", []>;
+}
+def RCL8ri : Ii8<0xC0, MRM2r, (outs GR8:$dst), (ins GR8:$src, i8imm:$cnt),
+                 "rcl{b}\t{$cnt, $dst|$dst, $cnt}", []>;
+def RCL8mi : Ii8<0xC0, MRM2m, (outs i8mem:$dst), (ins i8mem:$src, i8imm:$cnt),
+                 "rcl{b}\t{$cnt, $dst|$dst, $cnt}", []>;
+  
+def RCL16r1 : I<0xD1, MRM2r, (outs GR16:$dst), (ins GR16:$src),
+                "rcl{w}\t{1, $dst|$dst, 1}", []>, OpSize;
+def RCL16m1 : I<0xD1, MRM2m, (outs i16mem:$dst), (ins i16mem:$src),
+                "rcl{w}\t{1, $dst|$dst, 1}", []>, OpSize;
+let Uses = [CL] in {
+def RCL16rCL : I<0xD3, MRM2r, (outs GR16:$dst), (ins GR16:$src),
+                 "rcl{w}\t{%cl, $dst|$dst, CL}", []>, OpSize;
+def RCL16mCL : I<0xD3, MRM2m, (outs i16mem:$dst), (ins i16mem:$src),
+                 "rcl{w}\t{%cl, $dst|$dst, CL}", []>, OpSize;
+}
+def RCL16ri : Ii8<0xC1, MRM2r, (outs GR16:$dst), (ins GR16:$src, i8imm:$cnt),
+                  "rcl{w}\t{$cnt, $dst|$dst, $cnt}", []>, OpSize;
+def RCL16mi : Ii8<0xC1, MRM2m, (outs i16mem:$dst), (ins i16mem:$src, i8imm:$cnt),
+                  "rcl{w}\t{$cnt, $dst|$dst, $cnt}", []>, OpSize;
+
+def RCL32r1 : I<0xD1, MRM2r, (outs GR32:$dst), (ins GR32:$src),
+                "rcl{l}\t{1, $dst|$dst, 1}", []>;
+def RCL32m1 : I<0xD1, MRM2m, (outs i32mem:$dst), (ins i32mem:$src),
+                "rcl{l}\t{1, $dst|$dst, 1}", []>;
+let Uses = [CL] in {
+def RCL32rCL : I<0xD3, MRM2r, (outs GR32:$dst), (ins GR32:$src),
+                 "rcl{l}\t{%cl, $dst|$dst, CL}", []>;
+def RCL32mCL : I<0xD3, MRM2m, (outs i32mem:$dst), (ins i32mem:$src),
+                 "rcl{l}\t{%cl, $dst|$dst, CL}", []>;
+}
+def RCL32ri : Ii8<0xC1, MRM2r, (outs GR32:$dst), (ins GR32:$src, i8imm:$cnt),
+                  "rcl{l}\t{$cnt, $dst|$dst, $cnt}", []>;
+def RCL32mi : Ii8<0xC1, MRM2m, (outs i32mem:$dst), (ins i32mem:$src, i8imm:$cnt),
+                  "rcl{l}\t{$cnt, $dst|$dst, $cnt}", []>;
+                  
+def RCR8r1 : I<0xD0, MRM3r, (outs GR8:$dst), (ins GR8:$src),
+               "rcr{b}\t{1, $dst|$dst, 1}", []>;
+def RCR8m1 : I<0xD0, MRM3m, (outs i8mem:$dst), (ins i8mem:$src),
+               "rcr{b}\t{1, $dst|$dst, 1}", []>;
+let Uses = [CL] in {
+def RCR8rCL : I<0xD2, MRM3r, (outs GR8:$dst), (ins GR8:$src),
+                "rcr{b}\t{%cl, $dst|$dst, CL}", []>;
+def RCR8mCL : I<0xD2, MRM3m, (outs i8mem:$dst), (ins i8mem:$src),
+                "rcr{b}\t{%cl, $dst|$dst, CL}", []>;
+}
+def RCR8ri : Ii8<0xC0, MRM3r, (outs GR8:$dst), (ins GR8:$src, i8imm:$cnt),
+                 "rcr{b}\t{$cnt, $dst|$dst, $cnt}", []>;
+def RCR8mi : Ii8<0xC0, MRM3m, (outs i8mem:$dst), (ins i8mem:$src, i8imm:$cnt),
+                 "rcr{b}\t{$cnt, $dst|$dst, $cnt}", []>;
+  
+def RCR16r1 : I<0xD1, MRM3r, (outs GR16:$dst), (ins GR16:$src),
+                "rcr{w}\t{1, $dst|$dst, 1}", []>, OpSize;
+def RCR16m1 : I<0xD1, MRM3m, (outs i16mem:$dst), (ins i16mem:$src),
+                "rcr{w}\t{1, $dst|$dst, 1}", []>, OpSize;
+let Uses = [CL] in {
+def RCR16rCL : I<0xD3, MRM3r, (outs GR16:$dst), (ins GR16:$src),
+                 "rcr{w}\t{%cl, $dst|$dst, CL}", []>, OpSize;
+def RCR16mCL : I<0xD3, MRM3m, (outs i16mem:$dst), (ins i16mem:$src),
+                 "rcr{w}\t{%cl, $dst|$dst, CL}", []>, OpSize;
+}
+def RCR16ri : Ii8<0xC1, MRM3r, (outs GR16:$dst), (ins GR16:$src, i8imm:$cnt),
+                  "rcr{w}\t{$cnt, $dst|$dst, $cnt}", []>, OpSize;
+def RCR16mi : Ii8<0xC1, MRM3m, (outs i16mem:$dst), (ins i16mem:$src, i8imm:$cnt),
+                  "rcr{w}\t{$cnt, $dst|$dst, $cnt}", []>, OpSize;
+
+def RCR32r1 : I<0xD1, MRM3r, (outs GR32:$dst), (ins GR32:$src),
+                "rcr{l}\t{1, $dst|$dst, 1}", []>;
+def RCR32m1 : I<0xD1, MRM3m, (outs i32mem:$dst), (ins i32mem:$src),
+                "rcr{l}\t{1, $dst|$dst, 1}", []>;
+let Uses = [CL] in {
+def RCR32rCL : I<0xD3, MRM3r, (outs GR32:$dst), (ins GR32:$src),
+                 "rcr{l}\t{%cl, $dst|$dst, CL}", []>;
+def RCR32mCL : I<0xD3, MRM3m, (outs i32mem:$dst), (ins i32mem:$src),
+                 "rcr{l}\t{%cl, $dst|$dst, CL}", []>;
+}
+def RCR32ri : Ii8<0xC1, MRM3r, (outs GR32:$dst), (ins GR32:$src, i8imm:$cnt),
+                  "rcr{l}\t{$cnt, $dst|$dst, $cnt}", []>;
+def RCR32mi : Ii8<0xC1, MRM3m, (outs i32mem:$dst), (ins i32mem:$src, i8imm:$cnt),
+                  "rcr{l}\t{$cnt, $dst|$dst, $cnt}", []>;
+
 // FIXME: provide shorter instructions when imm8 == 1
 let Uses = [CL] in {
 def ROL8rCL  : I<0xD2, MRM0r, (outs GR8 :$dst), (ins GR8 :$src),
