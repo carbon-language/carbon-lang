@@ -33,10 +33,6 @@
 #include <map>
 #include <cmath>
 #include <cstring>
-// Some platforms may need malloc.h for alloca.
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 
 #ifdef HAVE_FFI_CALL
 #ifdef HAVE_FFI_H
@@ -207,9 +203,10 @@ static bool ffiInvoke(RawFunc Fn, Function *F,
     ArgBytes += TD->getTypeStoreSize(ArgTy);
   }
 
-  uint8_t *ArgData = (uint8_t*) alloca(ArgBytes);
-  uint8_t *ArgDataPtr = ArgData;
-  std::vector<void*> values(NumArgs);
+  SmallVector<uint8_t, 128> ArgData;
+  ArgData.resize(ArgBytes);
+  uint8_t *ArgDataPtr = ArgData.data();
+  SmallVector<void*, 16> values(NumArgs);
   for (Function::const_arg_iterator A = F->arg_begin(), E = F->arg_end();
        A != E; ++A) {
     const unsigned ArgNo = A->getArgNo();
@@ -222,22 +219,22 @@ static bool ffiInvoke(RawFunc Fn, Function *F,
   ffi_type *rtype = ffiTypeFor(RetTy);
 
   if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, NumArgs, rtype, &args[0]) == FFI_OK) {
-    void *ret = NULL;
+    SmallVector<uint8_t, 128> ret;
     if (RetTy->getTypeID() != Type::VoidTyID)
-      ret = alloca(TD->getTypeStoreSize(RetTy));
-    ffi_call(&cif, Fn, ret, &values[0]);
+      ret.resize(TD->getTypeStoreSize(RetTy));
+    ffi_call(&cif, Fn, ret.data(), values.data());
     switch (RetTy->getTypeID()) {
       case Type::IntegerTyID:
         switch (cast<IntegerType>(RetTy)->getBitWidth()) {
-          case 8:  Result.IntVal = APInt(8 , *(int8_t *) ret); break;
-          case 16: Result.IntVal = APInt(16, *(int16_t*) ret); break;
-          case 32: Result.IntVal = APInt(32, *(int32_t*) ret); break;
-          case 64: Result.IntVal = APInt(64, *(int64_t*) ret); break;
+          case 8:  Result.IntVal = APInt(8 , *(int8_t *) ret.data()); break;
+          case 16: Result.IntVal = APInt(16, *(int16_t*) ret.data()); break;
+          case 32: Result.IntVal = APInt(32, *(int32_t*) ret.data()); break;
+          case 64: Result.IntVal = APInt(64, *(int64_t*) ret.data()); break;
         }
         break;
-      case Type::FloatTyID:   Result.FloatVal   = *(float *) ret; break;
-      case Type::DoubleTyID:  Result.DoubleVal  = *(double*) ret; break;
-      case Type::PointerTyID: Result.PointerVal = *(void **) ret; break;
+      case Type::FloatTyID:   Result.FloatVal   = *(float *) ret.data(); break;
+      case Type::DoubleTyID:  Result.DoubleVal  = *(double*) ret.data(); break;
+      case Type::PointerTyID: Result.PointerVal = *(void **) ret.data(); break;
       default: break;
     }
     return true;
