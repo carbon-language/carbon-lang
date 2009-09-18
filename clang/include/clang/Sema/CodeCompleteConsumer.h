@@ -198,6 +198,9 @@ public:
                                 ResultSet &Results);
   unsigned CollectMemberLookupResults(DeclContext *Ctx, unsigned InitialRank, 
                                       ResultSet &Results);
+  unsigned CollectMemberLookupResults(DeclContext *Ctx, unsigned InitialRank, 
+                               llvm::SmallPtrSet<DeclContext *, 16> &Visited,
+                                      ResultSet &Results);
   //@}
   
   /// \name Name lookup predicates

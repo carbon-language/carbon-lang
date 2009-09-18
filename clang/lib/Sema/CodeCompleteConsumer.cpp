@@ -321,8 +321,37 @@ unsigned CodeCompleteConsumer::CollectLookupResults(Scope *S,
 /// \returns the next higher rank value, after considering all of the
 /// names within this declaration context.
 unsigned CodeCompleteConsumer::CollectMemberLookupResults(DeclContext *Ctx, 
-                                                          unsigned InitialRank,
+                                                          unsigned InitialRank, 
                                                           ResultSet &Results) {
+  llvm::SmallPtrSet<DeclContext *, 16> Visited;
+  return CollectMemberLookupResults(Ctx, InitialRank, Visited, Results);
+}
+
+/// \brief Collect the results of searching for members within the given
+/// declaration context.
+///
+/// \param Ctx the declaration context from which we will gather results.
+///
+/// \param InitialRank the initial rank given to results in this declaration
+/// context. Larger rank values will be used for, e.g., members found in
+/// base classes.
+///
+/// \param Visited the set of declaration contexts that have already been
+/// visited. Declaration contexts will only be visited once.
+///
+/// \param Results the result set that will be extended with any results
+/// found within this declaration context (and, for a C++ class, its bases).
+///
+/// \returns the next higher rank value, after considering all of the
+/// names within this declaration context.
+unsigned CodeCompleteConsumer::CollectMemberLookupResults(DeclContext *Ctx, 
+                                                          unsigned InitialRank,
+                                 llvm::SmallPtrSet<DeclContext *, 16> &Visited,
+                                                          ResultSet &Results) {
+  // Make sure we don't visit the same context twice.
+  if (!Visited.insert(Ctx->getPrimaryContext()))
+    return InitialRank;
+  
   // Enumerate all of the results in this context.
   Results.EnterNewScope();
   for (DeclContext *CurCtx = Ctx->getPrimaryContext(); CurCtx; 
@@ -352,9 +381,6 @@ unsigned CodeCompleteConsumer::CollectMemberLookupResults(DeclContext *Ctx,
       if (!Record)
         continue;
       
-      // FIXME: We should keep track of the virtual bases we visit, so 
-      // that we don't visit them more than once.
-      
       // FIXME: It would be nice to be able to determine whether referencing
       // a particular member would be ambiguous. For example, given
       //
@@ -376,7 +402,8 @@ unsigned CodeCompleteConsumer::CollectMemberLookupResults(DeclContext *Ctx,
       // Collect results from this base class (and its bases).
       NextRank = std::max(NextRank, 
                           CollectMemberLookupResults(Record->getDecl(), 
-                                                     InitialRank + 1, 
+                                                     InitialRank + 1,
+                                                     Visited,
                                                      Results));
     }
   }
