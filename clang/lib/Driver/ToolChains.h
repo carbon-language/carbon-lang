@@ -95,6 +95,20 @@ public:
   /// either the -mmacosx-version-min, or the current version if unspecified.
   void getMacosxVersionMin(const ArgList &Args, unsigned (&Res)[3]) const;
 
+  static bool isMacosxVersionLT(unsigned (&A)[3], unsigned (&B)[3]) {
+    for (unsigned i=0; i < 3; ++i) {
+      if (A[i] > B[i]) return false;
+      if (A[i] < B[i]) return true;
+    }
+    return false;
+  }
+
+  static bool isMacosxVersionLT(unsigned (&A)[3],
+                                unsigned V0, unsigned V1=0, unsigned V2=0) {
+    unsigned B[3] = { V0, V1, V2 };
+    return isMacosxVersionLT(A, B);
+  }
+
   const char *getMacosxVersionStr() const {
     return MacosxVersionMin.c_str();
   }
