@@ -15,6 +15,7 @@
 
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/Type.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <list>
 #include <map>
 #include <vector>
@@ -25,6 +26,7 @@ class raw_ostream;
 
 namespace clang {
   
+class Decl;
 class DeclContext;
 class NamedDecl;
 class Scope;
@@ -89,6 +91,11 @@ public:
     /// \brief The actual results we have found.
     std::vector<Result> Results;
 
+    /// \brief A record of all of the declarations we have found and placed
+    /// into the result set, used to ensure that no declaration ever gets into
+    /// the result set twice.
+    llvm::SmallPtrSet<Decl*, 16> AllDeclsFound;
+    
     /// \brief A mapping from declaration names to the declarations that have
     /// this name within a particular scope and their index within the list of
     /// results.

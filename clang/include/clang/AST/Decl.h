@@ -201,6 +201,8 @@ public:
   }
   void setOriginalNamespace(NamespaceDecl *ND) { OrigNamespace = ND; }
 
+  virtual NamespaceDecl *getCanonicalDecl() { return OrigNamespace; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(getLocation(), RBracLoc);
   }

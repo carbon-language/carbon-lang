@@ -53,8 +53,10 @@ CodeCompleteConsumer::CodeCompleteMemberReferenceExpr(Scope *S,
         // The "template" keyword can follow "->" or "." in the grammar.
         Results.MaybeAddResult(Result("template", NextRank++));
 
-      // FIXME: For C++, we also need to look into the current scope, since
-      // we could have the start of a nested-name-specifier.
+      // We could have the start of a nested-name-specifier. Add those
+      // results as well.
+      Results.setFilter(&CodeCompleteConsumer::IsNestedNameSpecifier);
+      CollectLookupResults(S, NextRank, Results);
     }
 
     // Hand off the results found for code completion.
@@ -83,10 +85,14 @@ void CodeCompleteConsumer::CodeCompleteTag(Scope *S, ElaboratedType::TagKind TK)
   }
   
   ResultSet Results(*this, Filter);
-  CollectLookupResults(S, 0, Results);
+  unsigned NextRank = CollectLookupResults(S, 0, Results);
   
-  // FIXME: In C++, we could have the start of a nested-name-specifier.
-  // Add those results (with a poorer rank, naturally).
+  if (getSema().getLangOptions().CPlusPlus) {
+    // We could have the start of a nested-name-specifier. Add those
+    // results as well.
+    Results.setFilter(&CodeCompleteConsumer::IsNestedNameSpecifier);
+    CollectLookupResults(S, NextRank, Results);
+  }
   
   ProcessCodeCompleteResults(Results.data(), Results.size());
 }
@@ -121,10 +127,6 @@ void CodeCompleteConsumer::ResultSet::MaybeAddResult(Result R) {
   // FIXME: Using declarations
   // FIXME: Separate overload sets
   
-  // Filter out any unwanted results.
-  if (Filter && !(Completer.*Filter)(R.Declaration))
-    return;
-  
   Decl *CanonDecl = R.Declaration->getCanonicalDecl();
   unsigned IDNS = CanonDecl->getIdentifierNamespace();
 
@@ -134,6 +136,23 @@ void CodeCompleteConsumer::ResultSet::MaybeAddResult(Result R) {
       (IDNS & (Decl::IDNS_OrdinaryFriend | Decl::IDNS_TagFriend)))
     return;
 
+  if (const IdentifierInfo *Id = R.Declaration->getIdentifier()) {
+    // __va_list_tag is a freak of nature. Find it and skip it.
+    if (Id->isStr("__va_list_tag"))
+      return;
+
+    // FIXME: Should we filter out other names in the implementation's
+    // namespace, e.g., those containing a __ or that start with _[A-Z]?
+  }
+
+  // C++ constructors are never found by name lookup.
+  if (isa<CXXConstructorDecl>(CanonDecl))
+    return;
+  
+  // Filter out any unwanted results.
+  if (Filter && !(Completer.*Filter)(R.Declaration))
+    return;
+  
   ShadowMap &SMap = ShadowMaps.back();
   ShadowMap::iterator I, IEnd;
   for (llvm::tie(I, IEnd) = SMap.equal_range(R.Declaration->getDeclName());
@@ -186,6 +205,10 @@ void CodeCompleteConsumer::ResultSet::MaybeAddResult(Result R) {
       break;
     }
   }
+  
+  // Make sure that any given declaration only shows up in the result set once.
+  if (!AllDeclsFound.insert(CanonDecl))
+    return;
   
   // Insert this result into the set of results and into the current shadow
   // map.
