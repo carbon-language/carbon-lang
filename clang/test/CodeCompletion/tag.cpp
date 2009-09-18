@@ -8,13 +8,20 @@ namespace N {
   template<typename> class Z;
 }
 
+namespace M {
+  class A;
+}
+using M::A;
+
 namespace N {
   class Y;
   
   void test() {
     // CHECK-CC1: Y : 2
     // CHECK-CC1: Z : 2
+    // CHECK-CC1: A : 3
     // CHECK-CC1: X : 3
     // CHECK-CC1: Y : 3
+    // CHECK-CC1: M : 6
     // CHECK-CC1: N : 6
     class

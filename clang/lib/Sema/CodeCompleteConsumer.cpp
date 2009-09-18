@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Sema/CodeCompleteConsumer.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/Parse/Scope.h"
 #include "clang/Lex/Preprocessor.h"
 #include "Sema.h"
@@ -123,9 +124,21 @@ void CodeCompleteConsumer::ResultSet::MaybeAddResult(Result R) {
     Results.push_back(R);
     return;
   }
+
+  // Look through using declarations.
+  if (UsingDecl *Using = dyn_cast<UsingDecl>(R.Declaration))
+    return MaybeAddResult(Result(Using->getTargetDecl(), R.Rank));
   
-  // FIXME: Using declarations
-  // FIXME: Separate overload sets
+  // Handle each declaration in an overload set separately.
+  if (OverloadedFunctionDecl *Ovl 
+        = dyn_cast<OverloadedFunctionDecl>(R.Declaration)) {
+    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+                                                FEnd = Ovl->function_end();
+         F != FEnd; ++F)
+      MaybeAddResult(Result(*F, R.Rank));
+    
+    return;
+  }
   
   Decl *CanonDecl = R.Declaration->getCanonicalDecl();
   unsigned IDNS = CanonDecl->getIdentifierNamespace();
