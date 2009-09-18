@@ -893,14 +893,49 @@ void DwarfException::EmitExceptionTable() {
   // of the catch clauses as they appear in the source code, and must be kept in
   // the same order. As a result, changing the order of the catch clause would
   // change the semantics of the program.
-  for (std::vector<GlobalVariable *>::const_reverse_iterator
-         I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
-    const GlobalVariable *GV = *I;
-    PrintRelDirective();
+  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
+  unsigned Index = 1;
 
-    if (GV) {
-      O << Asm->Mang->getMangledName(GV);
+  for (std::vector<GlobalVariable *>::const_reverse_iterator
+         I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I, ++Index) {
+    const GlobalVariable *TI = *I;
+
+    if (TI) {
+      if (TTypeFormat == dwarf::DW_EH_PE_absptr) {
+        // Print out the unadorned name of the type info.
+        PrintRelDirective();
+        O << Asm->Mang->getMangledName(TI);
+      } else {
+        bool IsTypeInfoIndirect = false, IsTypeInfoPCRel = false;
+        const MCExpr *TypeInfoRef =
+          TLOF.getSymbolForDwarfGlobalReference(TI, Asm->Mang, Asm->MMI,
+                                                IsTypeInfoIndirect,
+                                                IsTypeInfoPCRel);
+
+        if (!IsTypeInfoPCRel) {
+          // If the reference to the type info symbol is not already
+          // pc-relative, then we need to subtract our current address from it.
+          // Do this by emitting a label and subtracting it from the expression
+          // we already have.  This is equivalent to emitting "foo - .", but we
+          // have to emit the label for "." directly.
+          SmallString<64> Name;
+          raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
+            << "typeinforef_addr" << Asm->getFunctionNumber() << "_" << Index;
+          MCSymbol *DotSym = Asm->OutContext.GetOrCreateSymbol(Name.str());
+          Asm->OutStreamer.EmitLabel(DotSym);
+
+          TypeInfoRef =
+            MCBinaryExpr::CreateSub(TypeInfoRef,
+                                    MCSymbolRefExpr::Create(DotSym,
+                                                            Asm->OutContext),
+                                    Asm->OutContext);
+        }
+
+        O << MAI->getData32bitsDirective();
+        TypeInfoRef->print(O, MAI);
+      }
     } else {
+      PrintRelDirective();
       O << "0x0";
     }
 

@@ -782,8 +782,8 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   }
 
   // Exception Handling.
-  LSDASection = getMachOSection("__DATA", "__gcc_except_tab", 0,
-                                SectionKind::getDataRel());
+  LSDASection = getMachOSection("__TEXT", "__gcc_except_tab", 0,
+                                SectionKind::getReadOnly());
   EHFrameSection =
     getMachOSection("__TEXT", "__eh_frame",
                     MCSectionMachO::S_COALESCED |
