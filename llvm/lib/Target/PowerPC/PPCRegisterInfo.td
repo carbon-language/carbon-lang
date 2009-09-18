@@ -255,6 +255,11 @@ def CTR8 : SPR<9, "ctr">, DwarfRegNum<[66]>;
 // VRsave register
 def VRSAVE: SPR<256, "VRsave">, DwarfRegNum<[107]>;
 
+// Carry bit.  In the architecture this is really bit 0 of the XER register
+// (which really is SPR register 1);  this is the only bit interesting to a
+// compiler.
+def CARRY: SPR<1, "ca">, DwarfRegNum<[0]>;
+
 // FP rounding mode:  bits 30 and 31 of the FP status and control register
 // This is not allocated as a normal register; it appears only in
 // Uses and Defs.  The ABI says it needs to be preserved by a function,
@@ -377,3 +382,6 @@ def CRRC : RegisterClass<"PPC", [i32], 32, [CR0, CR1, CR5, CR6, CR7, CR2,
 def CTRRC : RegisterClass<"PPC", [i32], 32, [CTR]>;
 def CTRRC8 : RegisterClass<"PPC", [i64], 64, [CTR8]>;
 def VRSAVERC : RegisterClass<"PPC", [i32], 32, [VRSAVE]>;
+def CARRYRC : RegisterClass<"PPC", [i32], 32, [CARRY]> {
+  let CopyCost = -1;
+}

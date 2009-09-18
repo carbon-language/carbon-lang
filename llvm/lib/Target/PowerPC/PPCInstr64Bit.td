@@ -68,7 +68,7 @@ let isCall = 1, PPC970_Unit = 7,
           F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,
           V0,V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,V13,V14,V15,V16,V17,V18,V19,
           LR8,CTR8,
-          CR0,CR1,CR5,CR6,CR7] in {
+          CR0,CR1,CR5,CR6,CR7,CARRY] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
     def BL8_Darwin  : IForm<18, 0, 1,
@@ -94,7 +94,7 @@ let isCall = 1, PPC970_Unit = 7,
           F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,
           V0,V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,V13,V14,V15,V16,V17,V18,V19,
           LR8,CTR8,
-          CR0,CR1,CR5,CR6,CR7] in {
+          CR0,CR1,CR5,CR6,CR7,CARRY] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
     def BL8_ELF  : IForm<18, 0, 1,
@@ -329,14 +329,15 @@ def ADD8  : XOForm_1<31, 266, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                      "add $rT, $rA, $rB", IntGeneral,
                      [(set G8RC:$rT, (add G8RC:$rA, G8RC:$rB))]>;
                      
+let Defs = [CARRY] in {
 def ADDC8 : XOForm_1<31, 10, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                      "addc $rT, $rA, $rB", IntGeneral,
                      [(set G8RC:$rT, (addc G8RC:$rA, G8RC:$rB))]>,
                      PPC970_DGroup_Cracked;
-def ADDE8 : XOForm_1<31, 138, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
-                     "adde $rT, $rA, $rB", IntGeneral,
-                     [(set G8RC:$rT, (adde G8RC:$rA, G8RC:$rB))]>;
-                     
+def ADDIC8 : DForm_2<12, (outs G8RC:$rD), (ins G8RC:$rA, s16imm64:$imm),
+                     "addic $rD, $rA, $imm", IntGeneral,
+                     [(set G8RC:$rD, (addc G8RC:$rA, immSExt16:$imm))]>;
+}
 def ADDI8  : DForm_2<14, (outs G8RC:$rD), (ins G8RC:$rA, s16imm64:$imm),
                      "addi $rD, $rA, $imm", IntGeneral,
                      [(set G8RC:$rD, (add G8RC:$rA, immSExt16:$imm))]>;
@@ -344,36 +345,41 @@ def ADDIS8 : DForm_2<15, (outs G8RC:$rD), (ins G8RC:$rA, symbolHi64:$imm),
                      "addis $rD, $rA, $imm", IntGeneral,
                      [(set G8RC:$rD, (add G8RC:$rA, imm16ShiftedSExt:$imm))]>;
 
+let Defs = [CARRY] in {
 def SUBFIC8: DForm_2< 8, (outs G8RC:$rD), (ins G8RC:$rA, s16imm64:$imm),
                      "subfic $rD, $rA, $imm", IntGeneral,
                      [(set G8RC:$rD, (subc immSExt16:$imm, G8RC:$rA))]>;
-def SUBF8 : XOForm_1<31, 40, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
-                     "subf $rT, $rA, $rB", IntGeneral,
-                     [(set G8RC:$rT, (sub G8RC:$rB, G8RC:$rA))]>;
 def SUBFC8 : XOForm_1<31, 8, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
                       "subfc $rT, $rA, $rB", IntGeneral,
                       [(set G8RC:$rT, (subc G8RC:$rB, G8RC:$rA))]>,
                       PPC970_DGroup_Cracked;
-
-def SUBFE8 : XOForm_1<31, 136, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
-                      "subfe $rT, $rA, $rB", IntGeneral,
-                      [(set G8RC:$rT, (sube G8RC:$rB, G8RC:$rA))]>;
+}
+def SUBF8 : XOForm_1<31, 40, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
+                     "subf $rT, $rA, $rB", IntGeneral,
+                     [(set G8RC:$rT, (sub G8RC:$rB, G8RC:$rA))]>;
+def NEG8    : XOForm_3<31, 104, 0, (outs G8RC:$rT), (ins G8RC:$rA),
+                       "neg $rT, $rA", IntGeneral,
+                       [(set G8RC:$rT, (ineg G8RC:$rA))]>;
+let Uses = [CARRY], Defs = [CARRY] in {
+def ADDE8   : XOForm_1<31, 138, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
+                       "adde $rT, $rA, $rB", IntGeneral,
+                       [(set G8RC:$rT, (adde G8RC:$rA, G8RC:$rB))]>;
 def ADDME8  : XOForm_3<31, 234, 0, (outs G8RC:$rT), (ins G8RC:$rA),
                        "addme $rT, $rA", IntGeneral,
                        [(set G8RC:$rT, (adde G8RC:$rA, immAllOnes))]>;
 def ADDZE8  : XOForm_3<31, 202, 0, (outs G8RC:$rT), (ins G8RC:$rA),
                        "addze $rT, $rA", IntGeneral,
                        [(set G8RC:$rT, (adde G8RC:$rA, 0))]>;
-def NEG8    : XOForm_3<31, 104, 0, (outs G8RC:$rT), (ins G8RC:$rA),
-                       "neg $rT, $rA", IntGeneral,
-                       [(set G8RC:$rT, (ineg G8RC:$rA))]>;
+def SUBFE8  : XOForm_1<31, 136, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
+                       "subfe $rT, $rA, $rB", IntGeneral,
+                       [(set G8RC:$rT, (sube G8RC:$rB, G8RC:$rA))]>;
 def SUBFME8 : XOForm_3<31, 232, 0, (outs G8RC:$rT), (ins G8RC:$rA),
                        "subfme $rT, $rA", IntGeneral,
                        [(set G8RC:$rT, (sube immAllOnes, G8RC:$rA))]>;
 def SUBFZE8 : XOForm_3<31, 200, 0, (outs G8RC:$rT), (ins G8RC:$rA),
                        "subfze $rT, $rA", IntGeneral,
                        [(set G8RC:$rT, (sube 0, G8RC:$rA))]>;
-
+}
 
 
 def MULHD : XOForm_1<31, 73, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
@@ -398,9 +404,11 @@ def SLD  : XForm_6<31,  27, (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB),
 def SRD  : XForm_6<31, 539, (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB),
                    "srd $rA, $rS, $rB", IntRotateD,
                    [(set G8RC:$rA, (PPCsrl G8RC:$rS, GPRC:$rB))]>, isPPC64;
+let Defs = [CARRY] in {
 def SRAD : XForm_6<31, 794, (outs G8RC:$rA), (ins G8RC:$rS, GPRC:$rB),
                    "srad $rA, $rS, $rB", IntRotateD,
                    [(set G8RC:$rA, (PPCsra G8RC:$rS, GPRC:$rB))]>, isPPC64;
+}
                    
 def EXTSB8 : XForm_11<31, 954, (outs G8RC:$rA), (ins G8RC:$rS),
                       "extsb $rA, $rS", IntGeneral,
@@ -420,9 +428,11 @@ def EXTSW_32_64 : XForm_11<31, 986, (outs G8RC:$rA), (ins GPRC:$rS),
                       "extsw $rA, $rS", IntGeneral,
                       [(set G8RC:$rA, (sext GPRC:$rS))]>, isPPC64;
 
+let Defs = [CARRY] in {
 def SRADI  : XSForm_1<31, 413, (outs G8RC:$rA), (ins G8RC:$rS, u6imm:$SH),
                       "sradi $rA, $rS, $SH", IntRotateD,
                       [(set G8RC:$rA, (sra G8RC:$rS, (i32 imm:$SH)))]>, isPPC64;
+}
 def CNTLZD : XForm_11<31, 58, (outs G8RC:$rA), (ins G8RC:$rS),
                       "cntlzd $rA, $rS", IntGeneral,
                       [(set G8RC:$rA, (ctlz G8RC:$rS))]>;
