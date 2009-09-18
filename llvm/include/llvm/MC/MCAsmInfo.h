@@ -95,6 +95,10 @@ namespace llvm {
     /// AllowQuotesInName - This is true if the assembler allows for complex
     /// symbol names to be surrounded in quotes.  This defaults to false.
     bool AllowQuotesInName;
+
+    /// AllowNameToStartWithDigit - This is true if the assembler allows symbol
+    /// names to start with a digit (e.g., "0x0021").  This defaults to false.
+    bool AllowNameToStartWithDigit;
     
     //===--- Data Emission Directives -------------------------------------===//
 
@@ -353,6 +357,9 @@ namespace llvm {
     }
     bool doesAllowQuotesInName() const {
       return AllowQuotesInName;
+    }
+    bool doesAllowNameToStartWithDigit() const {
+      return AllowNameToStartWithDigit;
     }
     const char *getZeroDirective() const {
       return ZeroDirective;

@@ -51,6 +51,10 @@ private:
   /// the space character.  By default, this is false.
   bool UseQuotes;
 
+  /// SymbolsCanStartWithDigit - If this is set, the target allows symbols to
+  /// start with digits (e.g., "0x0021").  By default, this is false.
+  bool SymbolsCanStartWithDigit;
+
   /// AnonGlobalIDs - We need to give global values the same name every time
   /// they are mangled.  This keeps track of the number we give to anonymous
   /// ones.
@@ -75,9 +79,13 @@ public:
   /// strings for assembler labels.
   void setUseQuotes(bool Val) { UseQuotes = Val; }
 
+  /// setSymbolsCanStartWithDigit - If SymbolsCanStartWithDigit is set to true,
+  /// this target allows symbols to start with digits.
+  void setSymbolsCanStartWithDigit(bool Val) { SymbolsCanStartWithDigit = Val; }
+
   /// Acceptable Characters - This allows the target to specify which characters
   /// are acceptable to the assembler without being mangled.  By default we
-  /// allow letters, numbers, '_', '$', and '.', which is what GAS accepts.
+  /// allow letters, numbers, '_', '$', '.', which is what GAS accepts, and '@'.
   void markCharAcceptable(unsigned char X) {
     AcceptableChars[X/32] |= 1 << (X&31);
   }

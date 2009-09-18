@@ -106,6 +106,9 @@ bool AsmPrinter::doInitialization(Module &M) {
   
   if (MAI->doesAllowQuotesInName())
     Mang->setUseQuotes(true);
+
+  if (MAI->doesAllowNameToStartWithDigit())
+    Mang->setSymbolsCanStartWithDigit(true);
   
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");

@@ -16,4 +16,5 @@ using namespace llvm;
 
 MSP430MCAsmInfo::MSP430MCAsmInfo(const Target &T, const StringRef &TT) {
   AlignmentIsInBytes = false;
+  AllowNameToStartWithDigit = true;
 }

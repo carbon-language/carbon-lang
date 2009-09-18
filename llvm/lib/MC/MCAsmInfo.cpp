@@ -34,6 +34,7 @@ MCAsmInfo::MCAsmInfo() {
   InlineAsmEnd = "NO_APP";
   AssemblerDialect = 0;
   AllowQuotesInName = false;
+  AllowNameToStartWithDigit = false;
   ZeroDirective = "\t.zero\t";
   ZeroDirectiveSuffix = 0;
   AsciiDirective = "\t.ascii\t";

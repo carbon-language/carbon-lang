@@ -38,8 +38,9 @@ static void MangleLetter(raw_ostream &OS, unsigned char C) {
 static bool NameNeedsEscaping(const StringRef &Str, const MCAsmInfo &MAI) {
   assert(!Str.empty() && "Cannot create an empty MCSymbol");
   
-  // If the first character is a number, we need quotes.
-  if (Str[0] >= '0' && Str[0] <= '9')
+  // If the first character is a number and the target does not allow this, we
+  // need quotes.
+  if (!MAI.doesAllowNameToStartWithDigit() && Str[0] >= '0' && Str[0] <= '9')
     return true;
 
   // If any of the characters in the string is an unacceptable character, force
@@ -50,9 +51,11 @@ static bool NameNeedsEscaping(const StringRef &Str, const MCAsmInfo &MAI) {
   return false;
 }
 
-static void PrintMangledName(raw_ostream &OS, StringRef Str) {
-  // The first character is not allowed to be a number.
-  if (Str[0] >= '0' && Str[0] <= '9') {
+static void PrintMangledName(raw_ostream &OS, StringRef Str,
+                             const MCAsmInfo &MAI) {
+  // The first character is not allowed to be a number unless the target
+  // explicitly allows it.
+  if (!MAI.doesAllowNameToStartWithDigit() && Str[0] >= '0' && Str[0] <= '9') {
     MangleLetter(OS, Str[0]);
     Str = Str.substr(1);
   }
@@ -91,7 +94,7 @@ void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
 
   // On systems that do not allow quoted names, print with mangling.
   if (!MAI->doesAllowQuotesInName())
-    return PrintMangledName(OS, getName());
+    return PrintMangledName(OS, getName(), *MAI);
 
   // If the string contains a double quote or newline, we still have to mangle
   // it.
