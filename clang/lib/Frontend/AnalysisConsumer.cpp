@@ -293,8 +293,7 @@ static void ActionWarnUninitVals(AnalysisManager& mgr, Decl *D) {
 
 
 static void ActionGRExprEngine(AnalysisManager& mgr, Decl *D, 
-                               GRTransferFuncs* tf,
-                               bool StandardWarnings = true) {
+                               GRTransferFuncs* tf) {
 
 
   llvm::OwningPtr<GRTransferFuncs> TF(tf);
@@ -303,17 +302,13 @@ static void ActionGRExprEngine(AnalysisManager& mgr, Decl *D,
   mgr.DisplayFunction(D);
 
   // Construct the analysis engine.
-  LiveVariables* L = mgr.getLiveVariables(D);
-  if (!L) return;
-
   GRExprEngine Eng(mgr);
 
   Eng.setTransferFunctions(tf);
+  Eng.RegisterInternalChecks(); // FIXME: Internal checks should just
+                                // automatically register.
+  RegisterAppleChecks(Eng, *D);
 
-  if (StandardWarnings) {
-    Eng.RegisterInternalChecks();
-    RegisterAppleChecks(Eng, *D);
-  }
 
   // Set the graph auditor.
   llvm::OwningPtr<ExplodedNode::Auditor> Auditor;
@@ -338,13 +333,13 @@ static void ActionGRExprEngine(AnalysisManager& mgr, Decl *D,
 }
 
 static void ActionCheckerCFRefAux(AnalysisManager& mgr, Decl *D,
-                                  bool GCEnabled, bool StandardWarnings) {
+                                  bool GCEnabled) {
 
   GRTransferFuncs* TF = MakeCFRefCountTF(mgr.getASTContext(),
                                          GCEnabled,
                                          mgr.getLangOptions());
 
-  ActionGRExprEngine(mgr, D, TF, StandardWarnings);
+  ActionGRExprEngine(mgr, D, TF);
 }
 
 static void ActionCheckerCFRef(AnalysisManager& mgr, Decl *D) {
@@ -353,16 +348,16 @@ static void ActionCheckerCFRef(AnalysisManager& mgr, Decl *D) {
    default:
      assert (false && "Invalid GC mode.");
    case LangOptions::NonGC:
-     ActionCheckerCFRefAux(mgr, D, false, true);
+     ActionCheckerCFRefAux(mgr, D, false);
      break;
 
    case LangOptions::GCOnly:
-     ActionCheckerCFRefAux(mgr, D, true, true);
+     ActionCheckerCFRefAux(mgr, D, true);
      break;
 
    case LangOptions::HybridGC:
-     ActionCheckerCFRefAux(mgr, D, false, true);
-     ActionCheckerCFRefAux(mgr, D, true, false);
+     ActionCheckerCFRefAux(mgr, D, false);
+     ActionCheckerCFRefAux(mgr, D, true);
      break;
  }
 }
