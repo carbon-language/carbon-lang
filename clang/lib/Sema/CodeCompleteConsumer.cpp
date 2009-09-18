@@ -762,6 +762,71 @@ static void AddFunctionParameterChunks(ASTContext &Context,
   }
 }
 
+/// \brief Add template parameter chunks to the given code completion string.
+static void AddTemplateParameterChunks(ASTContext &Context,
+                                       TemplateDecl *Template,
+                                       CodeCompletionString *Result) {
+  CodeCompletionString *CCStr = Result;
+  bool FirstParameter = true;
+  
+  TemplateParameterList *Params = Template->getTemplateParameters();
+  for (TemplateParameterList::iterator P = Params->begin(), 
+                                    PEnd = Params->end();
+       P != PEnd; ++P) {
+    bool HasDefaultArg = false;
+    std::string PlaceholderStr;
+    if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*P)) {
+      if (TTP->wasDeclaredWithTypename())
+        PlaceholderStr = "typename";
+      else
+        PlaceholderStr = "class";
+      
+      if (TTP->getIdentifier()) {
+        PlaceholderStr += ' ';
+        PlaceholderStr += TTP->getIdentifier()->getName();
+      }
+      
+      HasDefaultArg = TTP->hasDefaultArgument();
+    } else if (NonTypeTemplateParmDecl *NTTP 
+                 = dyn_cast<NonTypeTemplateParmDecl>(*P)) {
+      if (NTTP->getIdentifier())
+        PlaceholderStr = NTTP->getIdentifier()->getName();
+      NTTP->getType().getAsStringInternal(PlaceholderStr, 
+                                          Context.PrintingPolicy);
+      HasDefaultArg = NTTP->hasDefaultArgument();
+    } else {
+      assert(isa<TemplateTemplateParmDecl>(*P));
+      TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*P);
+      
+      // Since putting the template argument list into the placeholder would
+      // be very, very long, we just use an abbreviation.
+      PlaceholderStr = "template<...> class";
+      if (TTP->getIdentifier()) {
+        PlaceholderStr += ' ';
+        PlaceholderStr += TTP->getIdentifier()->getName();
+      }
+      
+      HasDefaultArg = TTP->hasDefaultArgument();
+    }
+    
+    if (HasDefaultArg) {
+      // When we see an optional default argument, put that argument and
+      // the remaining default arguments into a new, optional string.
+      CodeCompletionString *Opt = new CodeCompletionString;
+      CCStr->AddOptionalChunk(std::auto_ptr<CodeCompletionString>(Opt));
+      CCStr = Opt;
+    }
+    
+    if (FirstParameter)
+      FirstParameter = false;
+    else
+      CCStr->AddTextChunk(", ");
+    
+    // Add the placeholder string.
+    CCStr->AddPlaceholderChunk(PlaceholderStr.c_str());
+  }    
+}
+
 /// \brief If possible, create a new code completion string for the given
 /// result.
 ///
@@ -781,6 +846,29 @@ CodeCompleteConsumer::CreateCodeCompletionString(Result R) {
     Result->AddTextChunk("(");
     AddFunctionParameterChunks(getSema().Context, Function, Result);
     Result->AddTextChunk(")");
+    return Result;
+  }
+  
+  if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(ND)) {
+    // FIXME: We treat these like functions for now, but it would be far
+    // better if we computed the template parameters that are non-deduced from
+    // a call, then printed only those template parameters in "<...>" before
+    // printing the function call arguments.
+    CodeCompletionString *Result = new CodeCompletionString;
+    FunctionDecl *Function = FunTmpl->getTemplatedDecl();
+    Result->AddTextChunk(Function->getNameAsString().c_str());
+    Result->AddTextChunk("(");
+    AddFunctionParameterChunks(getSema().Context, Function, Result);
+    Result->AddTextChunk(")");
+    return Result;
+  }
+  
+  if (TemplateDecl *Template = dyn_cast<TemplateDecl>(ND)) {
+    CodeCompletionString *Result = new CodeCompletionString;
+    Result->AddTextChunk(Template->getNameAsString().c_str());
+    Result->AddTextChunk("<");
+    AddTemplateParameterChunks(getSema().Context, Template, Result);
+    Result->AddTextChunk(">");
     return Result;
   }
   
