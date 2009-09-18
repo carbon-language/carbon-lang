@@ -746,6 +746,11 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   // elements in the vector.
   std::reverse(Instructions.begin(), Instructions.end());
   
+  
+  // Now that we've emitted all of the operand info that fit into 32 bits, emit
+  // information for those instructions that are left.  This is a less dense
+  // encoding, but we expect the main 32-bit table to handle the majority of
+  // instructions.
   if (!Instructions.empty()) {
     // Find the opcode # of inline asm.
     O << "  switch (MI->getOpcode()) {\n";
