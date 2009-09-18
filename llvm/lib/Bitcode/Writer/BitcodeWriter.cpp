@@ -551,7 +551,74 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
   }
   
   if (StartedMetadataBlock)
-    Stream.ExitBlock();    
+    Stream.ExitBlock();
+}
+
+static void WriteMetadataAttachment(const Function &F,
+				    const ValueEnumerator &VE,
+				    BitstreamWriter &Stream) {
+  bool StartedMetadataBlock = false;
+  SmallVector<uint64_t, 64> Record;
+  
+  // Write metadata attachments
+  // METADATA_ATTACHMENT - [m x [value, [n x [id, mdnode]]]
+  Metadata &TheMetadata = F.getContext().getMetadata();
+  for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
+         I != E; ++I) {
+      const Metadata::MDMapTy *P = TheMetadata.getMDs(I);
+      if (!P) continue;
+      bool RecordedInstruction = false;
+      for (Metadata::MDMapTy::const_iterator PI = P->begin(), PE = P->end();
+	   PI != PE; ++PI) {
+	if (MDNode *ND = dyn_cast_or_null<MDNode>(PI->second)) {
+	  if (RecordedInstruction == false) {
+	    Record.push_back(VE.getInstructionID(I));
+	    RecordedInstruction = true;
+	  }
+	  Record.push_back(PI->first);
+	  Record.push_back(VE.getValueID(ND));
+	}
+      }
+      if (!StartedMetadataBlock)  {
+	Stream.EnterSubblock(bitc::METADATA_ATTACHMENT_ID, 3);
+	StartedMetadataBlock = true;
+      }
+      Stream.EmitRecord(bitc::METADATA_ATTACHMENT, Record, 0);
+      Record.clear();
+    }
+
+  if (StartedMetadataBlock) 
+    Stream.ExitBlock();
+}
+
+static void WriteModuleMetadataStore(const Module *M,
+				     const ValueEnumerator &VE,
+				     BitstreamWriter &Stream) {
+  
+  bool StartedMetadataBlock = false;
+  SmallVector<uint64_t, 64> Record;
+  
+  // Write metadata kinds
+  // METADATA_KIND - [n x [id, name]]
+  Metadata &TheMetadata = M->getContext().getMetadata();
+  const StringMap<unsigned> *Kinds = TheMetadata.getHandlerNames();
+  for (StringMap<unsigned>::const_iterator 
+	 I = Kinds->begin(), E = Kinds->end(); I != E; ++I) {
+    Record.push_back(I->second);
+    StringRef KName = I->first();
+    for (unsigned i = 0, e = KName.size(); i != e; ++i)
+      Record.push_back(KName[i]);
+    if (!StartedMetadataBlock)  {
+      Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+      StartedMetadataBlock = true;
+    }
+    Stream.EmitRecord(bitc::METADATA_KIND, Record, 0);
+    Record.clear();
+  }
+
+  if (StartedMetadataBlock) 
+    Stream.ExitBlock();
 }
 
 static void WriteConstants(unsigned FirstVal, unsigned LastVal,
@@ -833,6 +900,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
                              SmallVector<unsigned, 64> &Vals) {
   unsigned Code = 0;
   unsigned AbbrevToUse = 0;
+  VE.setInstructionID(&I);
   switch (I.getOpcode()) {
   default:
     if (Instruction::isCast(I.getOpcode())) {
@@ -1146,7 +1214,8 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
   
   // Emit names for all the instructions etc.
   WriteValueSymbolTable(F.getValueSymbolTable(), VE, Stream);
-    
+
+  WriteMetadataAttachment(F, VE, Stream);
   VE.purgeFunction();
   Stream.ExitBlock();
 }
@@ -1390,6 +1459,9 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isDeclaration())
       WriteFunction(*I, VE, Stream);
+
+  // Emit metadata.
+  WriteModuleMetadataStore(M, VE, Stream);
   
   // Emit the type symbol table information.
   WriteTypeSymbolTable(M->getTypeSymbolTable(), VE, Stream);

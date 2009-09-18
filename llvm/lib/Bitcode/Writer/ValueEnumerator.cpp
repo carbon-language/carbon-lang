@@ -40,6 +40,8 @@ static bool CompareByFrequency(const std::pair<const llvm::Type*,
 
 /// ValueEnumerator - Enumerate module-level information.
 ValueEnumerator::ValueEnumerator(const Module *M) {
+  InstructionCount = 0;
+
   // Enumerate the global variables.
   for (Module::const_global_iterator I = M->global_begin(),
          E = M->global_end(); I != E; ++I)
@@ -83,7 +85,8 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
     for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
          I != E; ++I)
       EnumerateType(I->getType());
-    
+
+    Metadata &TheMetadata = F->getContext().getMetadata();    
     for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I){
         for (User::const_op_iterator OI = I->op_begin(), E = I->op_end(); 
@@ -94,6 +97,14 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
           EnumerateAttributes(CI->getAttributes());
         else if (const InvokeInst *II = dyn_cast<InvokeInst>(I))
           EnumerateAttributes(II->getAttributes());
+
+	// Enumerate metadata attached with this instruction.
+	const Metadata::MDMapTy *MDs = TheMetadata.getMDs(I);
+	if (MDs)
+	  for (Metadata::MDMapTy::const_iterator MI = MDs->begin(), 
+		 ME = MDs->end(); MI != ME; ++MI)
+	    if (MDNode *MDN = dyn_cast_or_null<MDNode>(MI->second))
+	      EnumerateMetadata(MDN);
       }
   }
   
@@ -112,6 +123,16 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   // Now that we rearranged the type table, rebuild TypeMap.
   for (unsigned i = 0, e = Types.size(); i != e; ++i)
     TypeMap[Types[i].first] = i+1;
+}
+
+unsigned ValueEnumerator::getInstructionID(const Instruction *Inst) const {
+  InstructionMapType::const_iterator I = InstructionMap.find(Inst);
+  assert (I != InstructionMap.end() && "Instruction is not mapped!");
+    return I->second;
+}  
+
+void ValueEnumerator::setInstructionID(const Instruction *I) {
+  InstructionMap[I] = InstructionCount++;
 }
 
 unsigned ValueEnumerator::getValueID(const Value *V) const {

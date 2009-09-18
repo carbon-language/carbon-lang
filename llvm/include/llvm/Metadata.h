@@ -311,13 +311,14 @@ public:
 /// MDKindID - This id identifies metadata kind the metadata store. Valid
 /// ID values are 1 or higher. This ID is set by RegisterMDKind.
 typedef unsigned MDKindID;
+
 class Metadata {
 public:
   typedef std::pair<MDKindID, WeakVH> MDPairTy;
   typedef SmallVector<MDPairTy, 2> MDMapTy;
-
-private:
   typedef DenseMap<const Instruction *, MDMapTy> MDStoreTy;
+  friend class BitcodeReader;
+private:
 
   /// MetadataStore - Collection of metadata used in this context.
   MDStoreTy MetadataStore;
@@ -344,6 +345,10 @@ public:
   /// setMD - Attach the metadata of given kind with an Instruction.
   void setMD(MDKindID Kind, MDNode *Node, Instruction *Inst);
   
+  /// getHandlerNames - Get handler names. This is used by bitcode
+  /// writer.
+  const StringMap<unsigned> *getHandlerNames();
+
   /// ValueIsDeleted - This handler is used to update metadata store
   /// when a value is deleted.
   void ValueIsDeleted(Value *V) {}

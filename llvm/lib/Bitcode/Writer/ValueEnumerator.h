@@ -22,6 +22,7 @@ namespace llvm {
 
 class Type;
 class Value;
+class Instruction;
 class BasicBlock;
 class Function;
 class Module;
@@ -47,11 +48,15 @@ private:
   ValueList Values;
   ValueList MDValues;
   ValueMapType MDValueMap;
-
+  
   typedef DenseMap<void*, unsigned> AttributeMapType;
   AttributeMapType AttributeMap;
   std::vector<AttrListPtr> Attributes;
   
+  typedef DenseMap<const Instruction*, unsigned> InstructionMapType;
+  InstructionMapType InstructionMap;
+  unsigned InstructionCount;
+
   /// BasicBlocks - This contains all the basic blocks for the currently
   /// incorporated function.  Their reverse mapping is stored in ValueMap.
   std::vector<const BasicBlock*> BasicBlocks;
@@ -74,7 +79,10 @@ public:
     assert(I != TypeMap.end() && "Type not in ValueEnumerator!");
     return I->second-1;
   }
-  
+
+  unsigned getInstructionID(const Instruction *I) const;
+  void setInstructionID(const Instruction *I);
+
   unsigned getAttributeID(const AttrListPtr &PAL) const {
     if (PAL.isEmpty()) return 0;  // Null maps to zero.
     AttributeMapType::const_iterator I = AttributeMap.find(PAL.getRawPointer());

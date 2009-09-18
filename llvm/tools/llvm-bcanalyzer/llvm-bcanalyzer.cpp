@@ -92,15 +92,16 @@ static const char *GetBlockName(unsigned BlockID,
   if (CurStreamType != LLVMIRBitstream) return 0;
   
   switch (BlockID) {
-  default:                          return 0;
-  case bitc::MODULE_BLOCK_ID:       return "MODULE_BLOCK";
-  case bitc::PARAMATTR_BLOCK_ID:    return "PARAMATTR_BLOCK";
-  case bitc::TYPE_BLOCK_ID:         return "TYPE_BLOCK";
-  case bitc::CONSTANTS_BLOCK_ID:    return "CONSTANTS_BLOCK";
-  case bitc::FUNCTION_BLOCK_ID:     return "FUNCTION_BLOCK";
-  case bitc::TYPE_SYMTAB_BLOCK_ID:  return "TYPE_SYMTAB";
-  case bitc::VALUE_SYMTAB_BLOCK_ID: return "VALUE_SYMTAB";
-  case bitc::METADATA_BLOCK_ID:     return "METADATA_BLOCK";
+  default:                           return 0;
+  case bitc::MODULE_BLOCK_ID:        return "MODULE_BLOCK";
+  case bitc::PARAMATTR_BLOCK_ID:     return "PARAMATTR_BLOCK";
+  case bitc::TYPE_BLOCK_ID:          return "TYPE_BLOCK";
+  case bitc::CONSTANTS_BLOCK_ID:     return "CONSTANTS_BLOCK";
+  case bitc::FUNCTION_BLOCK_ID:      return "FUNCTION_BLOCK";
+  case bitc::TYPE_SYMTAB_BLOCK_ID:   return "TYPE_SYMTAB";
+  case bitc::VALUE_SYMTAB_BLOCK_ID:  return "VALUE_SYMTAB";
+  case bitc::METADATA_BLOCK_ID:      return "METADATA_BLOCK";
+  case bitc::METADATA_ATTACHMENT_ID: return "METADATA_ATTACHMENT_BLOCK";
   }
 }
 
@@ -245,6 +246,11 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::VST_CODE_ENTRY: return "ENTRY";
     case bitc::VST_CODE_BBENTRY: return "BBENTRY";
     }
+  case bitc::METADATA_ATTACHMENT_ID:
+    switch(CodeID) {
+    default:return 0;
+    case bitc::METADATA_ATTACHMENT:  return "METADATA_ATTACHMENT";
+    }
   case bitc::METADATA_BLOCK_ID:
     switch(CodeID) {
     default:return 0;
@@ -252,6 +258,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::METADATA_NODE:        return "MDNODE";
     case bitc::METADATA_NAME:        return "METADATA_NAME";
     case bitc::METADATA_NAMED_NODE:  return "NAMEDMDNODE";
+    case bitc::METADATA_KIND:        return "METADATA_KIND";
     }
   }
 }

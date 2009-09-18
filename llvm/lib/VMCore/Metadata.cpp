@@ -317,6 +317,12 @@ const Metadata::MDMapTy *Metadata::getMDs(const Instruction *Inst) {
   return &(I->second);
 }
 
+/// getHandlerNames - Get handler names. This is used by bitcode
+/// writer.
+const StringMap<unsigned> *Metadata::getHandlerNames() {
+  return &MDHandlerNames;
+}
+
 /// ValueIsDeleted - This handler is used to update metadata store
 /// when a value is deleted.
 void Metadata::ValueIsDeleted(const Instruction *Inst) {

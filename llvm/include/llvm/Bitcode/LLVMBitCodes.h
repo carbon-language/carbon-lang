@@ -34,7 +34,8 @@ namespace bitc {
     FUNCTION_BLOCK_ID,
     TYPE_SYMTAB_BLOCK_ID,
     VALUE_SYMTAB_BLOCK_ID,
-    METADATA_BLOCK_ID
+    METADATA_BLOCK_ID,
+    METADATA_ATTACHMENT_ID
   };
 
 
@@ -111,7 +112,9 @@ namespace bitc {
     METADATA_STRING        = 1,   // MDSTRING:      [values]
     METADATA_NODE          = 2,   // MDNODE:        [n x (type num, value num)]
     METADATA_NAME          = 3,   // STRING:        [values]
-    METADATA_NAMED_NODE    = 4    // NAMEDMDNODE:   [n x mdnodes]
+    METADATA_NAMED_NODE    = 4,   // NAMEDMDNODE:   [n x mdnodes]
+    METADATA_KIND          = 5,   // [n x [id, name]]
+    METADATA_ATTACHMENT    = 6    // [m x [value, [n x [id, mdnode]]]
   };
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
   // constant and maintains an implicit current type value.

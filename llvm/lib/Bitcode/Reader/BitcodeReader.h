@@ -132,6 +132,8 @@ class BitcodeReader : public ModuleProvider {
   std::vector<PATypeHolder> TypeList;
   BitcodeReaderValueList ValueList;
   BitcodeReaderMDValueList MDValueList;
+  SmallVector<Instruction *, 64> InstructionList;
+
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
   
@@ -250,6 +252,7 @@ private:
   bool ParseFunctionBody(Function *F);
   bool ResolveGlobalAndAliasInits();
   bool ParseMetadata();
+  bool ParseMetadataAttachment();
 };
   
 } // End llvm namespace
