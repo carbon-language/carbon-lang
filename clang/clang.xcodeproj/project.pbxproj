@@ -1363,8 +1363,6 @@
 		DED7D72E0A524295003AD0FB /* include */ = {
 			isa = PBXGroup;
 			children = (
-				9012911210470FAF0083456D /* clang-c */,
-				90FD6D5E103C3D03005F5B73 /* Index */,
 				DED7D7300A524295003AD0FB /* Basic */,
 				DED7D7390A524295003AD0FB /* Lex */,
 				DE1F21F20A7D84E800FBF588 /* Parse */,
@@ -1372,9 +1370,11 @@
 				DE67E7260C02108300F66BC5 /* Sema */,
 				DE928B140C05659A00231DA4 /* CodeGen */,
 				356EF9AF0C8F7DA4006650F5 /* Analysis */,
+				90FD6D5E103C3D03005F5B73 /* Index */,
 				DEF7D9F40C9C8B020001F598 /* Rewrite */,
 				DEF1615D0F65C7FC0098507F /* Frontend */,
 				DEF165020F8D46810098507F /* Driver */,
+				9012911210470FAF0083456D /* clang-c */,
 			);
 			path = include;
 			sourceTree = "<group>";
