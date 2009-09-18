@@ -19,8 +19,74 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <string.h>
+#include <cstring>
+#include <functional>
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// Code completion string implementation
+//===----------------------------------------------------------------------===//
+CodeCompletionString::Chunk
+CodeCompletionString::Chunk::CreateText(const char *Text) {
+  Chunk Result;
+  Result.Kind = CK_Text;
+  char *New = new char [std::strlen(Text) + 1];
+  std::strcpy(New, Text);
+  Result.Text = New;
+  return Result;  
+}
+
+CodeCompletionString::Chunk 
+CodeCompletionString::Chunk::CreateOptional(
+                                 std::auto_ptr<CodeCompletionString> Optional) {
+  Chunk Result;
+  Result.Kind = CK_Optional;
+  Result.Optional = Optional.release();
+  return Result;
+}
+
+CodeCompletionString::Chunk 
+CodeCompletionString::Chunk::CreatePlaceholder(const char *Placeholder) {
+  Chunk Result;
+  Result.Kind = CK_Placeholder;
+  char *New = new char [std::strlen(Placeholder) + 1];
+  std::strcpy(New, Placeholder);
+  Result.Placeholder = New;
+  return Result;
+}
+
+void
+CodeCompletionString::Chunk::Destroy() {
+  switch (Kind) {
+  case CK_Text: delete [] Text; break;
+  case CK_Optional: delete Optional; break;
+  case CK_Placeholder: delete [] Placeholder; break;
+  }
+}
+
+CodeCompletionString::~CodeCompletionString() {
+  std::for_each(Chunks.begin(), Chunks.end(), 
+                std::mem_fun_ref(&Chunk::Destroy));
+}
+
+std::string CodeCompletionString::getAsString() const {
+  std::string Result;
+  llvm::raw_string_ostream OS(Result);
+                          
+  for (iterator C = begin(), CEnd = end(); C != CEnd; ++C) {
+    switch (C->Kind) {
+    case CK_Text: OS << C->Text; break;
+    case CK_Optional: OS << "{#" << C->Optional->getAsString() << "#}"; break;
+    case CK_Placeholder: OS << "<#" << C->Placeholder << "#>"; break;
+    }
+  }
+  
+  return Result;
+}
+
+//===----------------------------------------------------------------------===//
+// Code completion consumer implementation
+//===----------------------------------------------------------------------===//
 
 CodeCompleteConsumer::CodeCompleteConsumer(Sema &S) : SemaRef(S) {
   SemaRef.setCodeCompleteConsumer(this);
@@ -180,7 +246,7 @@ void CodeCompleteConsumer::CodeCompleteOperatorName(Scope *S) {
   
   // Add the names of overloadable operators.
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly)      \
-  if (strcmp(Spelling, "?"))                                                  \
+  if (std::strcmp(Spelling, "?"))                                                  \
     Results.MaybeAddResult(Result(Spelling, 0));
 #include "clang/Basic/OperatorKinds.def"
   
@@ -663,6 +729,64 @@ void CodeCompleteConsumer::AddTypeSpecifierResults(unsigned Rank,
   }
 }
 
+/// \brief Add function parameter chunks to the given code completion string.
+static void AddFunctionParameterChunks(ASTContext &Context,
+                                       FunctionDecl *Function,
+                                       CodeCompletionString *Result) {
+  CodeCompletionString *CCStr = Result;
+  
+  for (unsigned P = 0, N = Function->getNumParams(); P != N; ++P) {
+    ParmVarDecl *Param = Function->getParamDecl(P);
+    
+    if (Param->hasDefaultArg()) {
+      // When we see an optional default argument, put that argument and
+      // the remaining default arguments into a new, optional string.
+      CodeCompletionString *Opt = new CodeCompletionString;
+      CCStr->AddOptionalChunk(std::auto_ptr<CodeCompletionString>(Opt));
+      CCStr = Opt;
+    }
+    
+    if (P != 0)
+      CCStr->AddTextChunk(", ");
+    
+    // Format the placeholder string.
+    std::string PlaceholderStr;
+    if (Param->getIdentifier())
+      PlaceholderStr = Param->getIdentifier()->getName();
+    
+    Param->getType().getAsStringInternal(PlaceholderStr, 
+                                         Context.PrintingPolicy);
+    
+    // Add the placeholder string.
+    CCStr->AddPlaceholderChunk(PlaceholderStr.c_str());
+  }
+}
+
+/// \brief If possible, create a new code completion string for the given
+/// result.
+///
+/// \returns Either a new, heap-allocated code completion string describing
+/// how to use this result, or NULL to indicate that the string or name of the
+/// result is all that is needed.
+CodeCompletionString *
+CodeCompleteConsumer::CreateCodeCompletionString(Result R) {
+  if (R.Kind != Result::RK_Declaration)
+    return 0;
+  
+  NamedDecl *ND = R.Declaration;
+
+  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
+    CodeCompletionString *Result = new CodeCompletionString;
+    Result->AddTextChunk(Function->getNameAsString().c_str());
+    Result->AddTextChunk("(");
+    AddFunctionParameterChunks(getSema().Context, Function, Result);
+    Result->AddTextChunk(")");
+    return Result;
+  }
+  
+  return 0;
+}
+
 void 
 PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Result *Results, 
                                                          unsigned NumResults) {
@@ -677,6 +801,11 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Result *Results,
          << Results[I].Rank;
       if (Results[I].Hidden)
         OS << " (Hidden)";
+      if (CodeCompletionString *CCS = CreateCodeCompletionString(Results[I])) {
+        OS << " : " << CCS->getAsString();
+        delete CCS;
+      }
+        
       OS << '\n';
       break;
       

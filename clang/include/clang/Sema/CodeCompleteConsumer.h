@@ -16,8 +16,11 @@
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include <list>
 #include <map>
+#include <memory>
+#include <string>
 #include <vector>
 
 namespace llvm {
@@ -31,6 +34,103 @@ class DeclContext;
 class NamedDecl;
 class Scope;
 class Sema;
+
+/// \brief A "string" used to describe how code completion can
+/// be performed for an entity.
+///
+/// A code completion string typically shows how a particular entity can be 
+/// used. For example, the code completion string for a function would show
+/// the syntax to call it, including the parentheses, placeholders for the 
+/// arguments, etc.  
+class CodeCompletionString {
+public:
+  /// \brief The different kinds of "chunks" that can occur within a code
+  /// completion string.
+  enum ChunkKind {
+    /// \brief A piece of text that should be placed in the buffer, e.g.,
+    /// parentheses or a comma in a function call.
+    CK_Text,
+    /// \brief A code completion string that is entirely optional. For example,
+    /// an optional code completion string that describes the default arguments
+    /// in a function call.
+    CK_Optional,
+    /// \brief A string that acts as a placeholder for, e.g., a function 
+    /// call argument.
+    CK_Placeholder
+  };
+  
+  /// \brief One piece of the code completion string.
+  struct Chunk {
+    /// \brief The kind of data stored in this piece of the code completion 
+    /// string.
+    ChunkKind Kind;
+    
+    union {
+      /// \brief The text string associated with a CK_Text chunk.
+      /// The string is owned by the chunk and will be deallocated 
+      /// (with delete[]) when the chunk is destroyed.
+      const char *Text;
+      
+      /// \brief The code completion string associated with a CK_Optional chunk.
+      /// The optional code completion string is owned by the chunk, and will
+      /// be deallocated (with delete) when the chunk is destroyed.
+      CodeCompletionString *Optional;
+      
+      /// \brief Placeholder text associated with a CK_Placeholder chunk.
+      /// The string is owned by the chunk and will be deallocated (with 
+      /// delete[]) when the chunk is destroyed.
+      const char *Placeholder;
+    };
+    
+    /// \brief Create a new text chunk.
+    static Chunk CreateText(const char *Text);
+
+    /// \brief Create a new optional chunk.
+    static Chunk CreateOptional(std::auto_ptr<CodeCompletionString> Optional);
+
+    /// \brief Create a new placeholder chunk.
+    static Chunk CreatePlaceholder(const char *Placeholder);
+
+    /// \brief Destroy this chunk.
+    void Destroy();
+  };
+  
+private:
+  /// \brief The chunks stored in this string.
+  llvm::SmallVector<Chunk, 4> Chunks;
+  
+  CodeCompletionString(const CodeCompletionString &); // DO NOT IMPLEMENT
+  CodeCompletionString &operator=(const CodeCompletionString &); // DITTO
+  
+public:
+  CodeCompletionString() { }
+  ~CodeCompletionString();
+  
+  typedef llvm::SmallVector<Chunk, 4>::const_iterator iterator;
+  iterator begin() const { return Chunks.begin(); }
+  iterator end() const { return Chunks.end(); }
+  
+  /// \brief Add a new text chunk.
+  /// The text string will be copied.
+  void AddTextChunk(const char *Text) { 
+    Chunks.push_back(Chunk::CreateText(Text)); 
+  }
+  
+  /// \brief Add a new optional chunk.
+  void AddOptionalChunk(std::auto_ptr<CodeCompletionString> Optional) {
+    Chunks.push_back(Chunk::CreateOptional(Optional));
+  }
+  
+  /// \brief Add a new placeholder chunk.
+  /// The placeholder text will be copied.
+  void AddPlaceholderChunk(const char *Placeholder) {
+    Chunks.push_back(Chunk::CreatePlaceholder(Placeholder));
+  }
+  
+  /// \brief Retrieve a string representation of the code completion string,
+  /// which is mainly useful for debugging.
+  std::string getAsString() const;
+};
   
 /// \brief Abstract interface for a consumer of code-completion 
 /// information.
@@ -264,6 +364,7 @@ public:
   //@{  
   bool canHiddenResultBeFound(NamedDecl *Hidden, NamedDecl *Visible);
   void AddTypeSpecifierResults(unsigned Rank, ResultSet &Results);
+  CodeCompletionString *CreateCodeCompletionString(Result R);
   //@}
 };
   
