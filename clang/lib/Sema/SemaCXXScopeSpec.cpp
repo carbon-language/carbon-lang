@@ -260,7 +260,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXGlobalScopeSpecifier(Scope *S,
 
 /// \brief Determines whether the given declaration is an valid acceptable
 /// result for name lookup of a nested-name-specifier.
-bool isAcceptableNestedNameSpecifier(ASTContext &Context, NamedDecl *SD) {
+bool Sema::isAcceptableNestedNameSpecifier(NamedDecl *SD) {
   if (!SD)
     return false;
 
@@ -307,7 +307,7 @@ NamedDecl *Sema::FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS) {
   assert(!Found.isAmbiguous() && "Cannot handle ambiguities here yet");
 
   NamedDecl *Result = Found;
-  if (isAcceptableNestedNameSpecifier(Context, Result))
+  if (isAcceptableNestedNameSpecifier(Result))
     return Result;
 
   return 0;
@@ -406,7 +406,7 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
 
   // FIXME: Deal with ambiguities cleanly.
   NamedDecl *SD = Found;
-  if (isAcceptableNestedNameSpecifier(Context, SD)) {
+  if (isAcceptableNestedNameSpecifier(SD)) {
     if (!ObjectType.isNull() && !ObjectTypeSearchedInScope) {
       // C++ [basic.lookup.classref]p4:
       //   [...] If the name is found in both contexts, the
@@ -425,7 +425,7 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
 
       // FIXME: Handle ambiguities in FoundOuter!
       NamedDecl *OuterDecl = FoundOuter;
-      if (isAcceptableNestedNameSpecifier(Context, OuterDecl) &&
+      if (isAcceptableNestedNameSpecifier(OuterDecl) &&
           OuterDecl->getCanonicalDecl() != SD->getCanonicalDecl() &&
           (!isa<TypeDecl>(OuterDecl) || !isa<TypeDecl>(SD) ||
            !Context.hasSameType(

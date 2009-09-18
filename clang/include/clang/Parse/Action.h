@@ -2210,8 +2210,18 @@ public:
   /// \param IsArrow true when the operator is "->", false when it is ".".
   virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,
                                                SourceLocation OpLoc,
-                                               bool IsArrow) {
-  }
+                                               bool IsArrow) { }
+  
+  /// \brief Code completion for a reference to a tag.
+  ///
+  /// This code completion action is invoked when the code-completion
+  /// token is found after a tag keyword (struct, union, enum, or class).
+  ///
+  /// \para, S the scope in which the tag reference occurs.
+  ///
+  /// \param TagSpec an instance of DeclSpec::TST, indicating what kind of tag
+  /// this is (struct/union/enum/class).
+  virtual void CodeCompleteTag(Scope *S, unsigned TagSpec) { }
   
   /// \brief Code completion for a C++ nested-name-specifier that precedes a
   /// qualified-id of some form.

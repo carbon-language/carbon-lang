@@ -2083,6 +2083,7 @@ public:
   virtual CXXScopeTy *ActOnCXXGlobalScopeSpecifier(Scope *S,
                                                    SourceLocation CCLoc);
 
+  bool isAcceptableNestedNameSpecifier(NamedDecl *SD);
   NamedDecl *FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS);
 
 
@@ -3635,6 +3636,8 @@ public:
                                                SourceLocation OpLoc,
                                                bool IsArrow);
   
+  virtual void CodeCompleteTag(Scope *S, unsigned TagSpec);
+
   virtual void CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
                                        bool EnteringContext);
   //@}

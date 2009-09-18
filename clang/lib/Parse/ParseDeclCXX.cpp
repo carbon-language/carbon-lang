@@ -527,6 +527,12 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     TagType = DeclSpec::TST_union;
   }
 
+  if (Tok.is(tok::code_completion)) {
+    // Code completion for a struct, class, or union name.
+    Actions.CodeCompleteTag(CurScope, TagType);
+    ConsumeToken();
+  }
+  
   AttributeList *Attr = 0;
   // If attributes exist after tag, parse them.
   if (Tok.is(tok::kw___attribute))

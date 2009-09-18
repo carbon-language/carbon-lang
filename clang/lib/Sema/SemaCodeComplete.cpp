@@ -34,6 +34,35 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
   CodeCompleter->CodeCompleteMemberReferenceExpr(S, BaseType, IsArrow);
 }
 
+void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
+  if (!CodeCompleter)
+    return;
+  
+  TagDecl::TagKind TK;
+  switch ((DeclSpec::TST)TagSpec) {
+  case DeclSpec::TST_enum:
+    TK = TagDecl::TK_enum;
+    break;
+    
+  case DeclSpec::TST_union:
+    TK = TagDecl::TK_union;
+    break;
+    
+  case DeclSpec::TST_struct:
+    TK = TagDecl::TK_struct;
+    break;
+
+  case DeclSpec::TST_class:
+    TK = TagDecl::TK_class;
+    break;
+    
+  default:
+    assert(false && "Unknown type specifier kind in CodeCompleteTag");
+    return;
+  }
+  CodeCompleter->CodeCompleteTag(S, TK);
+}
+
 void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
                                    bool EnteringContext) {
   if (!SS.getScopeRep() || !CodeCompleter)

@@ -75,9 +75,17 @@ public:
     Result(const char *Keyword, unsigned Rank)
       : Kind(RK_Keyword), Keyword(Keyword), Rank(Rank), Hidden(false) { }
   };
-  
+    
   /// \brief A container of code-completion results.
   class ResultSet {
+  public:
+    /// \brief The type of a name-lookup filter, which can be provided to the
+    /// name-lookup routines to specify which declarations should be included in
+    /// the result set (when it returns true) and which declarations should be
+    /// filtered out (returns false).
+    typedef bool (CodeCompleteConsumer::*LookupFilter)(NamedDecl *) const;
+    
+  private:
     /// \brief The actual results we have found.
     std::vector<Result> Results;
 
@@ -87,11 +95,27 @@ public:
     typedef std::multimap<DeclarationName, 
                           std::pair<NamedDecl *, unsigned> > ShadowMap;
     
+    /// \brief The code-completion consumer that is producing these results.
+    CodeCompleteConsumer &Completer;
+    
+    /// \brief If non-NULL, a filter function used to remove any code-completion
+    /// results that are not desirable.
+    LookupFilter Filter;
+    
     /// \brief A list of shadow maps, which is used to model name hiding at
     /// different levels of, e.g., the inheritance hierarchy.
     std::list<ShadowMap> ShadowMaps;
-    
+        
   public:
+    explicit ResultSet(CodeCompleteConsumer &Completer,
+                       LookupFilter Filter = 0)
+      : Completer(Completer), Filter(Filter) { }
+    
+    /// \brief Set the filter used for code-completion results.
+    void setFilter(LookupFilter Filter) {
+      this->Filter = Filter;
+    }
+    
     typedef std::vector<Result>::iterator iterator;
     iterator begin() { return Results.begin(); }
     iterator end() { return Results.end(); }
@@ -99,7 +123,7 @@ public:
     Result *data() { return Results.empty()? 0 : &Results.front(); }
     unsigned size() const { return Results.size(); }
     bool empty() const { return Results.empty(); }
-    
+        
     /// \brief Add a new result to this result set (if it isn't already in one
     /// of the shadow maps), or replace an existing result (for, e.g., a 
     /// redeclaration).
@@ -142,6 +166,10 @@ public:
   virtual void CodeCompleteMemberReferenceExpr(Scope *S, QualType BaseType,
                                                bool IsArrow);
   
+  /// \brief Code completion for a tag name following an enum, class, struct,
+  /// or union keyword.
+  virtual void CodeCompleteTag(Scope *S, ElaboratedType::TagKind TK);
+  
   /// \brief Code completion for a qualified-id, e.g., "std::"
   ///
   /// \param S the scope in which the nested-name-specifier occurs.
@@ -154,10 +182,27 @@ public:
                                        bool EnteringContext);
   //@}
   
-  /// \name Utility functions
+  /// \name Name lookup functions
+  ///
+  /// The name lookup functions in this group collect code-completion results
+  /// by performing a form of name looking into a scope or declaration context.
   //@{
-  unsigned CollectMemberResults(DeclContext *Ctx, unsigned InitialRank, 
+  unsigned CollectLookupResults(Scope *S, unsigned InitialRank,
                                 ResultSet &Results);
+  unsigned CollectMemberLookupResults(DeclContext *Ctx, unsigned InitialRank, 
+                                      ResultSet &Results);
+  //@}
+  
+  /// \name Name lookup predicates
+  ///
+  /// These predicates can be passed to the name lookup functions to filter the
+  /// results of name lookup. All of the predicates have the same type, so that
+  /// 
+  //@{
+  bool IsNestedNameSpecifier(NamedDecl *ND) const;
+  bool IsEnum(NamedDecl *ND) const;
+  bool IsClassOrStruct(NamedDecl *ND) const;
+  bool IsUnion(NamedDecl *ND) const;
   //@}
 };
   

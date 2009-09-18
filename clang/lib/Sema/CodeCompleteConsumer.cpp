@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Sema/CodeCompleteConsumer.h"
+#include "clang/Parse/Scope.h"
 #include "clang/Lex/Preprocessor.h"
 #include "Sema.h"
 #include "llvm/ADT/STLExtras.h"
@@ -41,11 +42,11 @@ CodeCompleteConsumer::CodeCompleteMemberReferenceExpr(Scope *S,
       return;
   }
   
-  ResultSet Results;
+  ResultSet Results(*this);
   unsigned NextRank = 0;
   
   if (const RecordType *Record = BaseType->getAs<RecordType>()) {
-    NextRank = CollectMemberResults(Record->getDecl(), NextRank, Results);
+    NextRank = CollectMemberLookupResults(Record->getDecl(), NextRank, Results);
 
     if (getSema().getLangOptions().CPlusPlus) {
       if (!Results.empty())
@@ -64,6 +65,32 @@ CodeCompleteConsumer::CodeCompleteMemberReferenceExpr(Scope *S,
   }
 }
 
+void CodeCompleteConsumer::CodeCompleteTag(Scope *S, ElaboratedType::TagKind TK) {
+  ResultSet::LookupFilter Filter = 0;
+  switch (TK) {
+  case ElaboratedType::TK_enum:
+    Filter = &CodeCompleteConsumer::IsEnum;
+    break;
+    
+  case ElaboratedType::TK_class:
+  case ElaboratedType::TK_struct:
+    Filter = &CodeCompleteConsumer::IsClassOrStruct;
+    break;
+    
+  case ElaboratedType::TK_union:
+    Filter = &CodeCompleteConsumer::IsUnion;
+    break;
+  }
+  
+  ResultSet Results(*this, Filter);
+  CollectLookupResults(S, 0, Results);
+  
+  // FIXME: In C++, we could have the start of a nested-name-specifier.
+  // Add those results (with a poorer rank, naturally).
+  
+  ProcessCodeCompleteResults(Results.data(), Results.size());
+}
+
 void 
 CodeCompleteConsumer::CodeCompleteQualifiedId(Scope *S, 
                                               NestedNameSpecifier *NNS,
@@ -74,8 +101,8 @@ CodeCompleteConsumer::CodeCompleteQualifiedId(Scope *S,
   if (!Ctx)
     return;
   
-  ResultSet Results;
-  unsigned NextRank = CollectMemberResults(Ctx, 0, Results);
+  ResultSet Results(*this);
+  unsigned NextRank = CollectMemberLookupResults(Ctx, 0, Results);
   
   // The "template" keyword can follow "::" in the grammar
   if (!Results.empty())
@@ -92,6 +119,11 @@ void CodeCompleteConsumer::ResultSet::MaybeAddResult(Result R) {
   }
   
   // FIXME: Using declarations
+  // FIXME: Separate overload sets
+  
+  // Filter out any unwanted results.
+  if (Filter && !(Completer.*Filter)(R.Declaration))
+    return;
   
   Decl *CanonDecl = R.Declaration->getCanonicalDecl();
   unsigned IDNS = CanonDecl->getIdentifierNamespace();
@@ -164,23 +196,89 @@ void CodeCompleteConsumer::ResultSet::ExitScope() {
   ShadowMaps.pop_back();
 }
 
+// Find the next outer declaration context corresponding to this scope.
+static DeclContext *findOuterContext(Scope *S) {
+  for (S = S->getParent(); S; S = S->getParent())
+    if (S->getEntity())
+      return static_cast<DeclContext *>(S->getEntity())->getPrimaryContext();
+  
+  return 0;
+}
+
+/// \brief Collect the results of searching for declarations within the given
+/// scope and its parent scopes.
+///
+/// \param S the scope in which we will start looking for declarations.
+///
+/// \param InitialRank the initial rank given to results in this scope.
+/// Larger rank values will be used for results found in parent scopes.
+unsigned CodeCompleteConsumer::CollectLookupResults(Scope *S, 
+                                                    unsigned InitialRank,
+                                                    ResultSet &Results) {
+  if (!S)
+    return InitialRank;
+  
+  // FIXME: Using directives!
+  
+  unsigned NextRank = InitialRank;
+  Results.EnterNewScope();
+  if (S->getEntity() && 
+      !((DeclContext *)S->getEntity())->isFunctionOrMethod()) {
+    // Look into this scope's declaration context, along with any of its
+    // parent lookup contexts (e.g., enclosing classes), up to the point
+    // where we hit the context stored in the next outer scope.
+    DeclContext *Ctx = (DeclContext *)S->getEntity();
+    DeclContext *OuterCtx = findOuterContext(S);
+    
+    for (; Ctx && Ctx->getPrimaryContext() != OuterCtx;
+         Ctx = Ctx->getLookupParent()) {
+      if (Ctx->isFunctionOrMethod())
+        continue;
+      
+      NextRank = CollectMemberLookupResults(Ctx, NextRank + 1, Results);
+    }
+  } else if (!S->getParent()) {
+    // Look into the translation unit scope. We walk through the translation
+    // unit's declaration context, because the Scope itself won't have all of
+    // the declarations if 
+    NextRank = CollectMemberLookupResults(
+                                    getSema().Context.getTranslationUnitDecl(), 
+                                          NextRank + 1, Results);
+  } else {
+    // Walk through the declarations in this Scope.
+    for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
+         D != DEnd; ++D) {
+      if (NamedDecl *ND = dyn_cast<NamedDecl>((Decl *)((*D).get())))
+        Results.MaybeAddResult(Result(ND, NextRank));        
+    }
+    
+    NextRank = NextRank + 1;
+  }
+  
+  // Lookup names in the parent scope.
+  NextRank = CollectLookupResults(S->getParent(), NextRank, Results);
+  Results.ExitScope();
+  
+  return NextRank;
+}
+
 /// \brief Collect the results of searching for members within the given
 /// declaration context.
 ///
 /// \param Ctx the declaration context from which we will gather results.
 ///
-/// \param InitialRank the initial rank given to results in this tag
-/// declaration. Larger rank values will be used for, e.g., members found
-/// in base classes.
+/// \param InitialRank the initial rank given to results in this declaration
+/// context. Larger rank values will be used for, e.g., members found in
+/// base classes.
 ///
 /// \param Results the result set that will be extended with any results
 /// found within this declaration context (and, for a C++ class, its bases).
 ///
 /// \returns the next higher rank value, after considering all of the
 /// names within this declaration context.
-unsigned CodeCompleteConsumer::CollectMemberResults(DeclContext *Ctx, 
-                                                    unsigned InitialRank,
-                                                    ResultSet &Results) {
+unsigned CodeCompleteConsumer::CollectMemberLookupResults(DeclContext *Ctx, 
+                                                          unsigned InitialRank,
+                                                          ResultSet &Results) {
   // Enumerate all of the results in this context.
   Results.EnterNewScope();
   for (DeclContext *CurCtx = Ctx->getPrimaryContext(); CurCtx; 
@@ -188,10 +286,8 @@ unsigned CodeCompleteConsumer::CollectMemberResults(DeclContext *Ctx,
     for (DeclContext::decl_iterator D = CurCtx->decls_begin(), 
                                  DEnd = CurCtx->decls_end();
          D != DEnd; ++D) {
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D)) {
-        // FIXME: Apply a filter to the results
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
         Results.MaybeAddResult(Result(ND, InitialRank));
-      }
     }
   }
   
@@ -235,9 +331,9 @@ unsigned CodeCompleteConsumer::CollectMemberResults(DeclContext *Ctx,
       
       // Collect results from this base class (and its bases).
       NextRank = std::max(NextRank, 
-                          CollectMemberResults(Record->getDecl(), 
-                                               InitialRank + 1, 
-                                               Results));
+                          CollectMemberLookupResults(Record->getDecl(), 
+                                                     InitialRank + 1, 
+                                                     Results));
     }
   }
   
@@ -245,6 +341,46 @@ unsigned CodeCompleteConsumer::CollectMemberResults(DeclContext *Ctx,
 
   Results.ExitScope();
   return NextRank;
+}
+
+/// \brief Determines whether the given declaration is suitable as the 
+/// start of a C++ nested-name-specifier, e.g., a class or namespace.
+bool CodeCompleteConsumer::IsNestedNameSpecifier(NamedDecl *ND) const {
+  // Allow us to find class templates, too.
+  if (ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(ND))
+    ND = ClassTemplate->getTemplatedDecl();
+  
+  return getSema().isAcceptableNestedNameSpecifier(ND);
+}
+
+/// \brief Determines whether the given declaration is an enumeration.
+bool CodeCompleteConsumer::IsEnum(NamedDecl *ND) const {
+  return isa<EnumDecl>(ND);
+}
+
+/// \brief Determines whether the given declaration is a class or struct.
+bool CodeCompleteConsumer::IsClassOrStruct(NamedDecl *ND) const {
+  // Allow us to find class templates, too.
+  if (ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(ND))
+    ND = ClassTemplate->getTemplatedDecl();
+  
+  if (RecordDecl *RD = dyn_cast<RecordDecl>(ND))
+    return RD->getTagKind() == TagDecl::TK_class ||
+           RD->getTagKind() == TagDecl::TK_struct;
+  
+  return false;
+}
+
+/// \brief Determines whether the given declaration is a union.
+bool CodeCompleteConsumer::IsUnion(NamedDecl *ND) const {
+  // Allow us to find class templates, too.
+  if (ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(ND))
+    ND = ClassTemplate->getTemplatedDecl();
+
+  if (RecordDecl *RD = dyn_cast<RecordDecl>(ND))
+    return RD->getTagKind() == TagDecl::TK_union;
+  
+  return false;
 }
 
 namespace {
