@@ -35,7 +35,7 @@ typedef long long __m128i __attribute__((__vector_size__(16)));
 
 typedef int __v4si __attribute__((__vector_size__(16)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
-typedef signed char __v16qi __attribute__((__vector_size__(16)));
+typedef char __v16qi __attribute__((__vector_size__(16)));
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_add_sd(__m128d a, __m128d b)

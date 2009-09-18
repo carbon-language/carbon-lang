@@ -32,7 +32,7 @@ typedef long long __m64 __attribute__((__vector_size__(8)));
 
 typedef int __v2si __attribute__((__vector_size__(8)));
 typedef short __v4hi __attribute__((__vector_size__(8)));
-typedef signed char __v8qi __attribute__((__vector_size__(8)));
+typedef char __v8qi __attribute__((__vector_size__(8)));
 
 static inline void __attribute__((__always_inline__, __nodebug__))
 _mm_empty(void)
