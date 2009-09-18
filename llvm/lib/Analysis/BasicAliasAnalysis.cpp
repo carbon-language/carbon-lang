@@ -15,6 +15,7 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -102,7 +103,7 @@ static bool isNonEscapingLocalObject(const Value *V) {
 /// isObjectSmallerThan - Return true if we can prove that the object specified
 /// by V is smaller than Size.
 static bool isObjectSmallerThan(const Value *V, unsigned Size,
-                                const TargetData &TD) {
+                                LLVMContext &Context, const TargetData &TD) {
   const Type *AccessTy;
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     AccessTy = GV->getType()->getElementType();
@@ -111,6 +112,12 @@ static bool isObjectSmallerThan(const Value *V, unsigned Size,
       AccessTy = AI->getType()->getElementType();
     else
       return false;
+  } else if (const CallInst* CI = extractMallocCall(V)) {
+    if (!isArrayMalloc(V, Context, &TD))
+      // The size is the argument to the malloc call.
+      if (const ConstantInt* C = dyn_cast<ConstantInt>(CI->getOperand(1)))
+        return (C->getZExtValue() < Size);
+    return false;
   } else if (const Argument *A = dyn_cast<Argument>(V)) {
     if (A->hasByValAttr())
       AccessTy = cast<PointerType>(A->getType())->getElementType();
@@ -340,9 +347,10 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   
   // If the size of one access is larger than the entire object on the other
   // side, then we know such behavior is undefined and can assume no alias.
+  LLVMContext &Context = V1->getContext();
   if (TD)
-    if ((V1Size != ~0U && isObjectSmallerThan(O2, V1Size, *TD)) ||
-        (V2Size != ~0U && isObjectSmallerThan(O1, V2Size, *TD)))
+    if ((V1Size != ~0U && isObjectSmallerThan(O2, V1Size, Context, *TD)) ||
+        (V2Size != ~0U && isObjectSmallerThan(O1, V2Size, Context, *TD)))
       return NoAlias;
   
   // If one pointer is the result of a call/invoke and the other is a

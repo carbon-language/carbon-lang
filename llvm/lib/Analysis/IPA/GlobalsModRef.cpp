@@ -23,6 +23,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InstIterator.h"
@@ -236,6 +237,9 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
       }
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*UI)) {
       if (AnalyzeUsesOfPointer(GEP, Readers, Writers)) return true;
+    } else if (BitCastInst *BCI = dyn_cast<BitCastInst>(*UI)) {
+      if (AnalyzeUsesOfPointer(BCI, Readers, Writers, OkayStoreDest))
+        return true;
     } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
       // Make sure that this is just the function being called, not that it is
       // passing into the function.
@@ -299,7 +303,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
       // Check the value being stored.
       Value *Ptr = SI->getOperand(0)->getUnderlyingObject();
 
-      if (isa<MallocInst>(Ptr)) {
+      if (isa<MallocInst>(Ptr) || isMalloc(Ptr)) {
         // Okay, easy case.
       } else if (CallInst *CI = dyn_cast<CallInst>(Ptr)) {
         Function *F = CI->getCalledFunction();
@@ -435,7 +439,8 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
           if (cast<StoreInst>(*II).isVolatile())
             // Treat volatile stores as reading memory somewhere.
             FunctionEffect |= Ref;
-        } else if (isa<MallocInst>(*II) || isa<FreeInst>(*II)) {
+        } else if (isa<MallocInst>(*II) || isa<FreeInst>(*II) ||
+                   isMalloc(&cast<Instruction>(*II))) {
           FunctionEffect |= ModRef;
         }
 

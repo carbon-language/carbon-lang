@@ -13,6 +13,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/Analysis/PointerTracking.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
@@ -95,6 +96,14 @@ const SCEV *PointerTracking::computeAllocationCount(Value *P,
   if (AllocationInst *AI = dyn_cast<AllocationInst>(V)) {
     Value *arraySize = AI->getArraySize();
     Ty = AI->getAllocatedType();
+    // arraySize elements of type Ty.
+    return SE->getSCEV(arraySize);
+  }
+
+  if (CallInst *CI = extractMallocCall(V)) {
+    Value *arraySize = getMallocArraySize(CI, P->getContext(), TD);
+    Ty = getMallocAllocatedType(CI);
+    if (!Ty || !arraySize) return SE->getCouldNotCompute();
     // arraySize elements of type Ty.
     return SE->getSCEV(arraySize);
   }

@@ -20,6 +20,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/PredIteratorCache.h"
@@ -233,6 +234,15 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
       continue;
     }
     
+    if (isMalloc(Inst)) {
+      Value *AccessPtr = MemPtr->getUnderlyingObject();
+      
+      if (AccessPtr == Inst ||
+          AA->alias(Inst, 1, AccessPtr, 1) == AliasAnalysis::MustAlias)
+        return MemDepResult::getDef(Inst);
+      continue;
+    }
+
     // See if this instruction (e.g. a call or vaarg) mod/ref's the pointer.
     switch (AA->getModRefInfo(Inst, MemPtr, MemSize)) {
     case AliasAnalysis::NoModRef:

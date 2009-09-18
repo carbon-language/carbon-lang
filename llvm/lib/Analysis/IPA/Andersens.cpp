@@ -64,6 +64,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/System/Atomic.h"
@@ -592,9 +593,12 @@ namespace {
     friend class InstVisitor<Andersens>;
     void visitReturnInst(ReturnInst &RI);
     void visitInvokeInst(InvokeInst &II) { visitCallSite(CallSite(&II)); }
-    void visitCallInst(CallInst &CI) { visitCallSite(CallSite(&CI)); }
+    void visitCallInst(CallInst &CI) { 
+      if (isMalloc(&CI)) visitAllocationInst(CI);
+      else visitCallSite(CallSite(&CI)); 
+    }
     void visitCallSite(CallSite CS);
-    void visitAllocationInst(AllocationInst &AI);
+    void visitAllocationInst(Instruction &I);
     void visitLoadInst(LoadInst &LI);
     void visitStoreInst(StoreInst &SI);
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
@@ -790,6 +794,8 @@ void Andersens::IdentifyObjects(Module &M) {
         ValueNodes[&*II] = NumObjects++;
         if (AllocationInst *AI = dyn_cast<AllocationInst>(&*II))
           ObjectNodes[AI] = NumObjects++;
+        else if (isMalloc(&*II))
+          ObjectNodes[&*II] = NumObjects++;
       }
 
       // Calls to inline asm need to be added as well because the callee isn't
@@ -1161,10 +1167,10 @@ void Andersens::visitInstruction(Instruction &I) {
   }
 }
 
-void Andersens::visitAllocationInst(AllocationInst &AI) {
-  unsigned ObjectIndex = getObject(&AI);
-  GraphNodes[ObjectIndex].setValue(&AI);
-  Constraints.push_back(Constraint(Constraint::AddressOf, getNodeValue(AI),
+void Andersens::visitAllocationInst(Instruction &I) {
+  unsigned ObjectIndex = getObject(&I);
+  GraphNodes[ObjectIndex].setValue(&I);
+  Constraints.push_back(Constraint(Constraint::AddressOf, getNodeValue(I),
                                    ObjectIndex));
 }
 
@@ -2813,7 +2819,7 @@ void Andersens::PrintNode(const Node *N) const {
   else
     errs() << "(unnamed)";
 
-  if (isa<GlobalValue>(V) || isa<AllocationInst>(V))
+  if (isa<GlobalValue>(V) || isa<AllocationInst>(V) || isMalloc(V))
     if (N == &GraphNodes[getObject(V)])
       errs() << "<mem>";
 }
