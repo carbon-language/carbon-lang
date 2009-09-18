@@ -144,14 +144,14 @@ ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
     TCTriple.setArch(Arch);
 
     // If we recognized the arch, match it to the toolchains we support.
-    if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64)
-      TC = new toolchains::Darwin(*this, TCTriple, DarwinVersion, GCCVersion,
-                                  false);
-    else if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb)
-      TC = new toolchains::Darwin(*this, TCTriple, DarwinVersion, GCCVersion,
-                                  true);
+    if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64) {
+      // We still use the legacy DarwinGCC toolchain on X86.
+      TC = new toolchains::DarwinGCC(*this, TCTriple, DarwinVersion, GCCVersion,
+                                     false);
+    } else if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb)
+      TC = new toolchains::DarwinClang(*this, TCTriple, DarwinVersion, true);
     else
-      TC = new toolchains::Darwin_GCC(*this, TCTriple);
+      TC = new toolchains::Darwin_Generic_GCC(*this, TCTriple);
   }
 
   return TC;
