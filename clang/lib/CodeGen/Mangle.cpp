@@ -511,8 +511,15 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
   if (mangleSubstitution(cast<NamedDecl>(DC)))
     return;
 
-  manglePrefix(DC->getParent());
-  mangleUnqualifiedName(cast<NamedDecl>(DC));
+  // Check if we have a template.
+  const TemplateArgumentList *TemplateArgs = 0;
+  if (const NamedDecl *TD = isTemplate(cast<NamedDecl>(DC), TemplateArgs)) { 
+    mangleTemplatePrefix(TD);
+    mangleTemplateArgumentList(*TemplateArgs);
+  } else {
+    manglePrefix(DC->getParent());
+    mangleUnqualifiedName(cast<NamedDecl>(DC));
+  }
   
   addSubstitution(cast<NamedDecl>(DC));
 }
@@ -790,11 +797,6 @@ void CXXNameMangler::mangleType(const TagType *T) {
     mangleName(T->getDecl()->getTypedefForAnonDecl());
   else
     mangleName(T->getDecl());
-
-  // If this is a class template specialization, mangle the template arguments.
-  if (ClassTemplateSpecializationDecl *Spec
-      = dyn_cast<ClassTemplateSpecializationDecl>(T->getDecl()))
-    mangleTemplateArgumentList(Spec->getTemplateArgs());
 }
 
 // <type>       ::= <array-type>
