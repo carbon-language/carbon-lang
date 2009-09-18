@@ -2008,23 +2008,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // This is more complicated in gcc...
     CmdArgs.push_back("-lgomp");
 
-  // FIXME: Derive these correctly.
-  llvm::StringRef TCDir = getDarwinToolChain().getToolChainDir();
-  if (getToolChain().getArchName() == "x86_64") {
-    CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir +
-                                         "/x86_64"));
-    // Intentionally duplicated for (temporary) gcc bug compatibility.
-    CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir +
-                                         "/x86_64"));
-  }
-  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/" + TCDir));
-  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir));
-  // Intentionally duplicated for (temporary) gcc bug compatibility.
-  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir));
-  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir +
-                                       "/../../../" + TCDir));
-  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + TCDir +
-                                       "/../../.."));
+  getDarwinToolChain().AddLinkSearchPathArgs(Args, CmdArgs);
 
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {

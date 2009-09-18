@@ -60,32 +60,32 @@ Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
   if (getArchName() == "x86_64") {
     Path = getHost().getDriver().Dir;
     Path += "/../lib/gcc/";
-    Path += getToolChainDir();
+    Path += ToolChainDir;
     Path += "/x86_64";
     getFilePaths().push_back(Path);
 
     Path = "/usr/lib/gcc/";
-    Path += getToolChainDir();
+    Path += ToolChainDir;
     Path += "/x86_64";
     getFilePaths().push_back(Path);
   }
 
   Path = getHost().getDriver().Dir;
   Path += "/../lib/gcc/";
-  Path += getToolChainDir();
+  Path += ToolChainDir;
   getFilePaths().push_back(Path);
 
   Path = "/usr/lib/gcc/";
-  Path += getToolChainDir();
+  Path += ToolChainDir;
   getFilePaths().push_back(Path);
 
   Path = getHost().getDriver().Dir;
   Path += "/../libexec/gcc/";
-  Path += getToolChainDir();
+  Path += ToolChainDir;
   getProgramPaths().push_back(Path);
 
   Path = "/usr/libexec/gcc/";
-  Path += getToolChainDir();
+  Path += ToolChainDir;
   getProgramPaths().push_back(Path);
 
   Path = getHost().getDriver().Dir;
@@ -132,6 +132,26 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA) const {
   }
 
   return *T;
+}
+
+void Darwin::AddLinkSearchPathArgs(const ArgList &Args,
+                                   ArgStringList &CmdArgs) const {
+  // FIXME: Derive these correctly.
+  if (getArchName() == "x86_64") {
+    CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir +
+                                         "/x86_64"));
+    // Intentionally duplicated for (temporary) gcc bug compatibility.
+    CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir +
+                                         "/x86_64"));
+  }
+  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/" + ToolChainDir));
+  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir));
+  // Intentionally duplicated for (temporary) gcc bug compatibility.
+  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir));
+  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir +
+                                       "/../../../" + ToolChainDir));
+  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc/" + ToolChainDir +
+                                       "/../../.."));
 }
 
 DerivedArgList *Darwin::TranslateArgs(InputArgList &Args,

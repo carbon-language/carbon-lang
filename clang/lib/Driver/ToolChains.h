@@ -76,6 +76,9 @@ public:
          bool IsIPhone);
   ~Darwin();
 
+  /// @name Darwin Specific Toolchain API
+  /// {
+
   void getDarwinVersion(unsigned (&Res)[3]) const {
     Res[0] = DarwinVersion[0];
     Res[1] = DarwinVersion[1];
@@ -96,11 +99,18 @@ public:
     return IPhoneOSVersionMin.c_str();
   }
 
-  const std::string &getToolChainDir() const {
-    return ToolChainDir;
-  }
+  /// AddLinkSearchPathArgs - Add the linker search paths to \arg CmdArgs.
+  ///
+  /// \param Args - The input argument list.
+  /// \param CmdArgs [out] - The command argument list to append the paths
+  /// (prefixed by -L) to.
+  void AddLinkSearchPathArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
   bool isIPhone() const { return IsIPhone; }
+
+  /// }
+  /// @name ToolChain Implementation
+  /// {
 
   virtual DerivedArgList *TranslateArgs(InputArgList &Args,
                                         const char *BoundArch) const;
@@ -111,6 +121,8 @@ public:
   virtual bool IsUnwindTablesDefault() const;
   virtual const char *GetDefaultRelocationModel() const;
   virtual const char *GetForcedPicModel() const;
+
+  /// }
 };
 
   /// Darwin_GCC - Generic Darwin tool chain using gcc.
