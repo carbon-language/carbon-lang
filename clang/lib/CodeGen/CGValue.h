@@ -152,6 +152,9 @@ class LValue {
 
   // objective-c's ivar
   bool Ivar:1;
+  
+  // objective-c's ivar is an array
+  bool IvarArray:1;
 
   // LValue is non-gc'able for any reason, including being a parameter or local
   // variable.
@@ -173,7 +176,7 @@ private:
     // FIXME: Convenient place to set objc flags to 0. This should really be
     // done in a user-defined constructor instead.
     R.ObjCType = None;
-    R.Ivar = R.NonGC = R.GlobalObjCRef = false;
+    R.Ivar = R.IvarArray = R.NonGC = R.GlobalObjCRef = false;
   }
 
 public:
@@ -192,6 +195,7 @@ public:
   }
 
   bool isObjCIvar() const { return Ivar; }
+  bool isObjCIvarArray() const { return IvarArray; }
   bool isNonGC () const { return NonGC; }
   bool isGlobalObjCRef() const { return GlobalObjCRef; }
   bool isObjCWeak() const { return ObjCType == Weak; }
@@ -202,7 +206,9 @@ public:
   static void SetObjCIvar(LValue& R, bool iValue) {
     R.Ivar = iValue;
   }
-
+  static void SetObjCIvarArray(LValue& R, bool iValue) {
+    R.IvarArray = iValue;
+  }
   static void SetGlobalObjCRef(LValue& R, bool iValue) {
     R.GlobalObjCRef = iValue;
   }

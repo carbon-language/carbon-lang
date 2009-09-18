@@ -1,7 +1,7 @@
 // RUN: clang-cc -fnext-runtime -fobjc-gc -fobjc-newgc-api -emit-llvm -o %t %s &&
 // RUN: grep -F '@objc_assign_global' %t  | count 7 &&
-// RUN: grep -F '@objc_assign_ivar' %t  | count 4 &&
-// RUN: grep -F '@objc_assign_strongCast' %t  | count 4 &&
+// RUN: grep -F '@objc_assign_ivar' %t  | count 5 &&
+// RUN: grep -F '@objc_assign_strongCast' %t  | count 8 &&
 // RUN: true
 
 extern id **somefunc(void);
@@ -49,4 +49,32 @@ void funct2(AStruct *aptr) {
     **ppptr = aptr->alfred;
     *ppptr = somefunc2(); 
 }
+
+typedef const struct __CFString * CFStringRef;
+@interface DSATextSearch {
+__strong CFStringRef *_documentNames;
+  struct {
+    id *innerNames;
+    struct {
+      id *nestedDeeperNames; 
+      struct I {
+         id *is1;
+         id is2[5];
+      } arrI [3];
+    } inner_most;
+  } inner;
+
+}
+- filter;
+@end
+@implementation DSATextSearch
+- filter {
+  int filteredPos = 0;
+  _documentNames[filteredPos] = 0; // storing into an element of array ivar. objc_assign_strongCast is needed.
+  inner.innerNames[filteredPos] = 0;
+  inner.inner_most.nestedDeeperNames[filteredPos] = 0;
+  inner.inner_most.arrI[3].is1[5] = 0;
+  inner.inner_most.arrI[3].is2[5] = 0;
+}
+@end
 

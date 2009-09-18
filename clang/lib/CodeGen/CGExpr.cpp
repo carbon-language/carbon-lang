@@ -697,6 +697,7 @@ void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E, LValue &LV) {
   
   if (isa<ObjCIvarRefExpr>(E)) {
     LV.SetObjCIvar(LV, true);
+    LV.SetObjCIvarArray(LV, E->getType()->isArrayType());
     return;
   }
   if (const DeclRefExpr *Exp = dyn_cast<DeclRefExpr>(E)) {
@@ -714,10 +715,19 @@ void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E, LValue &LV) {
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
   else if (const CStyleCastExpr *Exp = dyn_cast<CStyleCastExpr>(E))
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
-  else if (const ArraySubscriptExpr *Exp = dyn_cast<ArraySubscriptExpr>(E))
+  else if (const ArraySubscriptExpr *Exp = dyn_cast<ArraySubscriptExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getBase(), LV);
+    if (LV.isObjCIvar() && !LV.isObjCIvarArray()) {
+      // Using array syntax to assigning to what an ivar points to is not 
+      // same as assigning to the ivar itself. {id *Names;} Names[i] = 0;
+      LV.SetObjCIvar(LV, false); 
+    }
+  }
   else if (const MemberExpr *Exp = dyn_cast<MemberExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getBase(), LV);
+    // We don't know if member is an 'ivar', but this flag is looked at
+    // only in the context of LV.isObjCIvar().
+    LV.SetObjCIvarArray(LV, E->getType()->isArrayType());
   }
 }
 
