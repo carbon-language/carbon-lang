@@ -285,7 +285,7 @@ void SparseSolver::Solve(Function &F) {
       Instruction *I = InstWorkList.back();
       InstWorkList.pop_back();
 
-      DEBUG(errs() << "\nPopped off I-WL: " << *I);
+      DEBUG(errs() << "\nPopped off I-WL: " << *I << "\n");
 
       // "I" got into the work list because it made a transition.  See if any
       // users are both live and in need of updating.
@@ -324,7 +324,7 @@ void SparseSolver::Print(Function &F, raw_ostream &OS) const {
       OS << "; anon bb\n";
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
       LatticeFunc->PrintValue(getLatticeState(I), OS);
-      OS << *I;
+      OS << *I << "\n";
     }
     
     OS << "\n";
