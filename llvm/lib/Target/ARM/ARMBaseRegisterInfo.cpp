@@ -1021,7 +1021,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   assert(!AFI->isThumb1OnlyFunction() &&
-         "This eliminateFrameIndex does not suppor Thumb1!");
+         "This eliminateFrameIndex does not support Thumb1!");
 
   while (!MI.getOperand(i).isFI()) {
     ++i;
