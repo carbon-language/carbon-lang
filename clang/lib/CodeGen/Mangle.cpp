@@ -82,7 +82,7 @@ namespace {
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs);
     void manglePrefix(const DeclContext *DC);
-    void mangleTemplatePrefix(const DeclContext *DC);
+    void mangleTemplatePrefix(const NamedDecl *ND);
     void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
     void mangleCVQualifiers(unsigned Quals);
     void mangleType(QualType T);
@@ -448,9 +448,7 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND) {
   
   const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND);
   if (FD && FD->getPrimaryTemplate()) {
-    // FIXME: Call mangleTemplatePrefix.
-    manglePrefix(FD->getDeclContext());
-    mangleUnqualifiedName(FD);
+    mangleTemplatePrefix(FD);
     mangleTemplateArgumentList(*FD->getTemplateSpecializationArgs());
   } else {
     manglePrefix(ND->getDeclContext());
@@ -509,11 +507,15 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
   addSubstitution(cast<NamedDecl>(DC));
 }
 
-void CXXNameMangler::mangleTemplatePrefix(const DeclContext *DC) {
+void CXXNameMangler::mangleTemplatePrefix(const NamedDecl *ND) {
   // <template-prefix> ::= <prefix> <template unqualified-name>
   //                   ::= <template-param>
   //                   ::= <substitution>
 
+  // FIXME: <substitution> and <template-param>
+  
+  manglePrefix(ND->getDeclContext());
+  mangleUnqualifiedName(ND);
   // FIXME: Implement!
 }
 
