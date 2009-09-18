@@ -65,7 +65,7 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
   case X86Subtarget::isDarwin:
     if (TM.getSubtarget<X86Subtarget>().is64Bit())
       return new X8664_MachoTargetObjectFile();
-    return new TargetLoweringObjectFileMachO();
+    return new X8632_MachoTargetObjectFile();
   case X86Subtarget::isELF:
     return new TargetLoweringObjectFileELF();
   case X86Subtarget::isMingw:

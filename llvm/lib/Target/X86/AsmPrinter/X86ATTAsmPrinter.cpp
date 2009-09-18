@@ -879,7 +879,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     O << "\t.size\t" << name << ", " << Size << '\n';
 }
 
-bool X86ATTAsmPrinter::doFinalization(Module &M) {
+void X86ATTAsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (Subtarget->isTargetDarwin()) {
     // All darwin targets use mach-o.
     TargetLoweringObjectFileMachO &TLOFMacho = 
@@ -888,26 +888,6 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     MachineModuleInfoMachO &MMIMacho =
       MMI->getObjFileInfo<MachineModuleInfoMachO>();
     
-    // Add the (possibly multiple) personalities to the set of global value
-    // stubs.  Only referenced functions get into the Personalities list.
-    if (!Subtarget->is64Bit()) {
-      const std::vector<Function*> &Personalities = MMI->getPersonalities();
-      for (unsigned i = 0, e = Personalities.size(); i != e; ++i) {
-        if (Personalities[i] == 0)
-          continue;
-        
-        SmallString<128> Name;
-        Mang->getNameWithPrefix(Name, Personalities[i], true /*private label*/);
-        Name += "$non_lazy_ptr";
-        MCSymbol *NLPName = OutContext.GetOrCreateSymbol(Name.str());
-
-        const MCSymbol *&StubName = MMIMacho.getGVStubEntry(NLPName);
-        Name.clear();
-        Mang->getNameWithPrefix(Name, Personalities[i], false);
-        StubName = OutContext.GetOrCreateSymbol(Name.str());
-      }
-    }
-
     // Output stubs for dynamically-linked functions.
     MachineModuleInfoMachO::SymbolListTy Stubs;
 
@@ -1010,8 +990,5 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
         O << "\t.ascii \" -export:" << i->getKeyData() << "\"\n";
     }
   }
-
-  // Do common shutdown.
-  return AsmPrinter::doFinalization(M);
 }
 

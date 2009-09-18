@@ -58,8 +58,9 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
     AsmPrinter::getAnalysisUsage(AU);
   }
 
-  bool doFinalization(Module &M);
-
+  
+  virtual void EmitEndOfAsmFile(Module &M);
+  
   void printInstructionThroughMCStreamer(const MachineInstr *MI);
 
 
