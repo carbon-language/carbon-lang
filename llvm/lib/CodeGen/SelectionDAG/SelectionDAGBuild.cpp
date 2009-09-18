@@ -4024,7 +4024,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MVT::SimpleValueType VT =
       (Intrinsic == Intrinsic::eh_selector_i32 ? MVT::i32 : MVT::i64);
     if (Op.getValueType().getSimpleVT() < VT)
-      Op = DAG.getNode(ISD::ZERO_EXTEND, dl, VT, Op);
+      Op = DAG.getNode(ISD::SIGN_EXTEND, dl, VT, Op);
     else if (Op.getValueType().getSimpleVT() < VT)
       Op = DAG.getNode(ISD::TRUNCATE, dl, VT, Op);
     
