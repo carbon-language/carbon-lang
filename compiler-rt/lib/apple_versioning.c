@@ -11,7 +11,9 @@
 
 
 #if __APPLE__
-  #if __ppc__
+  #if __arm__
+    #define NOT_HERE_BEFORE_10_6(sym) 
+  #elif __ppc__
     #define NOT_HERE_BEFORE_10_6(sym) \
         extern const char sym##_tmp3 __asm("$ld$hide$os10.3$_" #sym ); \
             __attribute__((visibility("default"))) const char sym##_tmp3 = 0; \
