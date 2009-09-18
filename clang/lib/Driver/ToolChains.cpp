@@ -154,6 +154,52 @@ void Darwin::AddLinkSearchPathArgs(const ArgList &Args,
                                        "/../../.."));
 }
 
+void Darwin::AddLinkRuntimeLibArgs(const ArgList &Args,
+                                   ArgStringList &CmdArgs) const {
+  unsigned MacosxVersionMin[3];
+  getMacosxVersionMin(Args, MacosxVersionMin);
+
+  // Derived from libgcc and lib specs but refactored.
+  if (Args.hasArg(options::OPT_static)) {
+    CmdArgs.push_back("-lgcc_static");
+  } else {
+    if (Args.hasArg(options::OPT_static_libgcc)) {
+      CmdArgs.push_back("-lgcc_eh");
+    } else if (Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
+      // Derived from darwin_iphoneos_libgcc spec.
+      if (isIPhone()) {
+        CmdArgs.push_back("-lgcc_s.1");
+      } else {
+        CmdArgs.push_back("-lgcc_s.10.5");
+      }
+    } else if (Args.hasArg(options::OPT_shared_libgcc) ||
+               // FIXME: -fexceptions -fno-exceptions means no exceptions
+               Args.hasArg(options::OPT_fexceptions) ||
+               Args.hasArg(options::OPT_fgnu_runtime)) {
+      // FIXME: This is probably broken on 10.3?
+      if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
+        CmdArgs.push_back("-lgcc_s.10.4");
+      else if (isMacosxVersionLT(MacosxVersionMin, 10, 6))
+        CmdArgs.push_back("-lgcc_s.10.5");
+    } else {
+      if (isMacosxVersionLT(MacosxVersionMin, 10, 3, 9))
+        ; // Do nothing.
+      else if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
+        CmdArgs.push_back("-lgcc_s.10.4");
+      else if (isMacosxVersionLT(MacosxVersionMin, 10, 6))
+        CmdArgs.push_back("-lgcc_s.10.5");
+    }
+
+    if (isIPhone() || isMacosxVersionLT(MacosxVersionMin, 10, 6)) {
+      CmdArgs.push_back("-lgcc");
+      CmdArgs.push_back("-lSystem");
+    } else {
+      CmdArgs.push_back("-lSystem");
+      CmdArgs.push_back("-lgcc");
+    }
+  }
+}
+
 void Darwin::getMacosxVersionMin(const ArgList &Args,
                                  unsigned (&Res)[3]) const {
   if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ)) {

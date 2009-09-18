@@ -2020,49 +2020,8 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
     // link_ssp spec is empty.
 
-    // Derived from libgcc and lib specs but refactored.
-    if (Args.hasArg(options::OPT_static)) {
-      CmdArgs.push_back("-lgcc_static");
-    } else {
-      if (Args.hasArg(options::OPT_static_libgcc)) {
-        CmdArgs.push_back("-lgcc_eh");
-      } else if (Args.hasArg(options::OPT_miphoneos_version_min_EQ)) {
-        // Derived from darwin_iphoneos_libgcc spec.
-        if (getDarwinToolChain().isIPhone()) {
-          CmdArgs.push_back("-lgcc_s.1");
-        } else {
-          CmdArgs.push_back("-lgcc_s.10.5");
-        }
-      } else if (Args.hasArg(options::OPT_shared_libgcc) ||
-                 // FIXME: -fexceptions -fno-exceptions means no exceptions
-                 Args.hasArg(options::OPT_fexceptions) ||
-                 Args.hasArg(options::OPT_fgnu_runtime)) {
-        // FIXME: This is probably broken on 10.3?
-        if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin, 10, 5))
-          CmdArgs.push_back("-lgcc_s.10.4");
-        else if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin,
-                                                        10, 6))
-          CmdArgs.push_back("-lgcc_s.10.5");
-      } else {
-        if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin, 10, 3, 9))
-          ; // Do nothing.
-        else if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin,
-                                                        10, 5))
-          CmdArgs.push_back("-lgcc_s.10.4");
-        else if (getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin,
-                                                        10, 6))
-          CmdArgs.push_back("-lgcc_s.10.5");
-      }
-
-      if (getDarwinToolChain().isIPhone() ||
-          getDarwinToolChain().isMacosxVersionLT(MacosxVersionMin, 10, 6)) {
-        CmdArgs.push_back("-lgcc");
-        CmdArgs.push_back("-lSystem");
-      } else {
-        CmdArgs.push_back("-lSystem");
-        CmdArgs.push_back("-lgcc");
-      }
-    }
+    // Let the tool chain choose which runtime library to link.
+    getDarwinToolChain().AddLinkRuntimeLibArgs(Args, CmdArgs);
   }
 
   if (!Args.hasArg(options::OPT_A) &&

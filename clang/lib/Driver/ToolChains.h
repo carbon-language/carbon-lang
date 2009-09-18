@@ -124,6 +124,10 @@ public:
   /// (prefixed by -L) to.
   void AddLinkSearchPathArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
 
+  /// AddLinkRuntimeLibArgs - Add the linker arguments to link the compiler
+  /// runtime library.
+  void AddLinkRuntimeLibArgs(const ArgList &Args, ArgStringList &CmdArgs) const;
+
   bool isIPhone() const { return IsIPhone; }
 
   /// }
