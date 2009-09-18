@@ -95,9 +95,6 @@ template<typename T> void ft2(T t, void (*)(T), void (*)(T)) { }
 template<typename T, typename U = S1<T> > struct S4 { };
 template<typename T> void ft3(S4<T>*) {  }
 
-void g() {
-  ft2<int>(0);
-}
 extern "C++" {
   // CHECK: @_Z1hv
  void h() { } 
