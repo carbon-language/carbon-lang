@@ -5363,21 +5363,48 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
       Opcode = X86ISD::ADD;
       NumOperands = 2;
       break;
+    case ISD::AND: {
+      // If the primary and result isn't used, don't bother using X86ISD::AND,
+      // because a TEST instruction will be better.
+      bool NonFlagUse = false;
+      for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
+           UE = Op.getNode()->use_end(); UI != UE; ++UI)
+        if (UI->getOpcode() != ISD::BRCOND &&
+            UI->getOpcode() != ISD::SELECT &&
+            UI->getOpcode() != ISD::SETCC) {
+          NonFlagUse = true;
+          break;
+        }
+      if (!NonFlagUse)
+        break;
+    }
+    // FALL THROUGH
     case ISD::SUB:
-      // Due to the ISEL shortcoming noted above, be conservative if this sub is
+    case ISD::OR:
+    case ISD::XOR:
+      // Due to the ISEL shortcoming noted above, be conservative if this op is
       // likely to be selected as part of a load-modify-store instruction.
       for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
            UE = Op.getNode()->use_end(); UI != UE; ++UI)
         if (UI->getOpcode() == ISD::STORE)
           goto default_case;
-      // Otherwise use a regular EFLAGS-setting sub.
-      Opcode = X86ISD::SUB;
+      // Otherwise use a regular EFLAGS-setting instruction.
+      switch (Op.getNode()->getOpcode()) {
+      case ISD::SUB: Opcode = X86ISD::SUB; break;
+      case ISD::OR:  Opcode = X86ISD::OR;  break;
+      case ISD::XOR: Opcode = X86ISD::XOR; break;
+      case ISD::AND: Opcode = X86ISD::AND; break;
+      default: llvm_unreachable("unexpected operator!");
+      }
       NumOperands = 2;
       break;
     case X86ISD::ADD:
     case X86ISD::SUB:
     case X86ISD::INC:
     case X86ISD::DEC:
+    case X86ISD::OR:
+    case X86ISD::XOR:
+    case X86ISD::AND:
       return SDValue(Op.getNode(), 1);
     default:
     default_case:
@@ -5605,7 +5632,10 @@ static bool isX86LogicalCmp(SDValue Op) {
        Opc == X86ISD::SMUL ||
        Opc == X86ISD::UMUL ||
        Opc == X86ISD::INC ||
-       Opc == X86ISD::DEC))
+       Opc == X86ISD::DEC ||
+       Opc == X86ISD::OR ||
+       Opc == X86ISD::XOR ||
+       Opc == X86ISD::AND))
     return true;
 
   return false;
@@ -7133,6 +7163,9 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::UMUL:               return "X86ISD::UMUL";
   case X86ISD::INC:                return "X86ISD::INC";
   case X86ISD::DEC:                return "X86ISD::DEC";
+  case X86ISD::OR:                 return "X86ISD::OR";
+  case X86ISD::XOR:                return "X86ISD::XOR";
+  case X86ISD::AND:                return "X86ISD::AND";
   case X86ISD::MUL_IMM:            return "X86ISD::MUL_IMM";
   case X86ISD::PTEST:              return "X86ISD::PTEST";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
@@ -8094,6 +8127,9 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   case X86ISD::UMUL:
   case X86ISD::INC:
   case X86ISD::DEC:
+  case X86ISD::OR:
+  case X86ISD::XOR:
+  case X86ISD::AND:
     // These nodes' second result is a boolean.
     if (Op.getResNo() == 0)
       break;

@@ -2082,6 +2082,102 @@ def : Pat<(parallel (store (i64 (X86dec_flag (loadi64 addr:$dst))), addr:$dst),
                     (implicit EFLAGS)),
           (DEC64m addr:$dst)>;
 
+// Register-Register Logical Or with EFLAGS result
+def : Pat<(parallel (X86or_flag GR64:$src1, GR64:$src2),
+                    (implicit EFLAGS)),
+          (OR64rr GR64:$src1, GR64:$src2)>;
+
+// Register-Integer Logical Or with EFLAGS result
+def : Pat<(parallel (X86or_flag GR64:$src1, i64immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (OR64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(parallel (X86or_flag GR64:$src1, i64immSExt32:$src2),
+                    (implicit EFLAGS)),
+          (OR64ri32 GR64:$src1, i64immSExt32:$src2)>;
+
+// Register-Memory Logical Or with EFLAGS result
+def : Pat<(parallel (X86or_flag GR64:$src1, (loadi64 addr:$src2)),
+                    (implicit EFLAGS)),
+          (OR64rm GR64:$src1, addr:$src2)>;
+
+// Memory-Register Logical Or with EFLAGS result
+def : Pat<(parallel (store (X86or_flag (loadi64 addr:$dst), GR64:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (OR64mr addr:$dst, GR64:$src2)>;
+def : Pat<(parallel (store (X86or_flag (loadi64 addr:$dst), i64immSExt8:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (OR64mi8 addr:$dst, i64immSExt8:$src2)>;
+def : Pat<(parallel (store (X86or_flag (loadi64 addr:$dst), i64immSExt32:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (OR64mi32 addr:$dst, i64immSExt32:$src2)>;
+
+// Register-Register Logical XOr with EFLAGS result
+def : Pat<(parallel (X86xor_flag GR64:$src1, GR64:$src2),
+                    (implicit EFLAGS)),
+          (XOR64rr GR64:$src1, GR64:$src2)>;
+
+// Register-Integer Logical XOr with EFLAGS result
+def : Pat<(parallel (X86xor_flag GR64:$src1, i64immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (XOR64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(parallel (X86xor_flag GR64:$src1, i64immSExt32:$src2),
+                    (implicit EFLAGS)),
+          (XOR64ri32 GR64:$src1, i64immSExt32:$src2)>;
+
+// Register-Memory Logical XOr with EFLAGS result
+def : Pat<(parallel (X86xor_flag GR64:$src1, (loadi64 addr:$src2)),
+                    (implicit EFLAGS)),
+          (XOR64rm GR64:$src1, addr:$src2)>;
+
+// Memory-Register Logical XOr with EFLAGS result
+def : Pat<(parallel (store (X86xor_flag (loadi64 addr:$dst), GR64:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (XOR64mr addr:$dst, GR64:$src2)>;
+def : Pat<(parallel (store (X86xor_flag (loadi64 addr:$dst), i64immSExt8:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (XOR64mi8 addr:$dst, i64immSExt8:$src2)>;
+def : Pat<(parallel (store (X86xor_flag (loadi64 addr:$dst), i64immSExt32:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (XOR64mi32 addr:$dst, i64immSExt32:$src2)>;
+
+// Register-Register Logical And with EFLAGS result
+def : Pat<(parallel (X86and_flag GR64:$src1, GR64:$src2),
+                    (implicit EFLAGS)),
+          (AND64rr GR64:$src1, GR64:$src2)>;
+
+// Register-Integer Logical And with EFLAGS result
+def : Pat<(parallel (X86and_flag GR64:$src1, i64immSExt8:$src2),
+                    (implicit EFLAGS)),
+          (AND64ri8 GR64:$src1, i64immSExt8:$src2)>;
+def : Pat<(parallel (X86and_flag GR64:$src1, i64immSExt32:$src2),
+                    (implicit EFLAGS)),
+          (AND64ri32 GR64:$src1, i64immSExt32:$src2)>;
+
+// Register-Memory Logical And with EFLAGS result
+def : Pat<(parallel (X86and_flag GR64:$src1, (loadi64 addr:$src2)),
+                    (implicit EFLAGS)),
+          (AND64rm GR64:$src1, addr:$src2)>;
+
+// Memory-Register Logical And with EFLAGS result
+def : Pat<(parallel (store (X86and_flag (loadi64 addr:$dst), GR64:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (AND64mr addr:$dst, GR64:$src2)>;
+def : Pat<(parallel (store (X86and_flag (loadi64 addr:$dst), i64immSExt8:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (AND64mi8 addr:$dst, i64immSExt8:$src2)>;
+def : Pat<(parallel (store (X86and_flag (loadi64 addr:$dst), i64immSExt32:$src2),
+                           addr:$dst),
+                    (implicit EFLAGS)),
+          (AND64mi32 addr:$dst, i64immSExt32:$src2)>;
+
 //===----------------------------------------------------------------------===//
 // X86-64 SSE Instructions
 //===----------------------------------------------------------------------===//
