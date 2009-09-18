@@ -570,7 +570,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Round up the size to a multiple of the alignment, but only if there are
   // calls or alloca's in the function.  This ensures that any calls to
-  // subroutines have their stack frames suitable aligned.
+  // subroutines have their stack frames suitably aligned.
   // Also do this if we need runtime alignment of the stack.  In this case
   // offsets will be relative to SP not FP; round up the stack size so this
   // works.
@@ -584,7 +584,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     if (RegInfo->hasReservedCallFrame(Fn))
       Offset += FFI->getMaxCallFrameSize();
 
-    unsigned AlignMask = std::max(TFI.getStackAlignment(),MaxAlign) - 1;
+    unsigned AlignMask = std::max(TFI.getStackAlignment(), MaxAlign) - 1;
     Offset = (Offset + AlignMask) & ~uint64_t(AlignMask);
   }
 
