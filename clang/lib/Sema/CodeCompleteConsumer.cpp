@@ -118,6 +118,63 @@ CodeCompleteConsumer::CodeCompleteQualifiedId(Scope *S,
   ProcessCodeCompleteResults(Results.data(), Results.size());
 }
 
+void CodeCompleteConsumer::CodeCompleteUsing(Scope *S) { 
+  ResultSet Results(*this, &CodeCompleteConsumer::IsNestedNameSpecifier);
+  
+  // If we aren't in class scope, we could see the "namespace" keyword.
+  if (!S->isClassScope())
+    Results.MaybeAddResult(Result("namespace", 0));
+    
+  // After "using", we can see anything that would start a 
+  // nested-name-specifier.
+  CollectLookupResults(S, 0, Results);
+  
+  ProcessCodeCompleteResults(Results.data(), Results.size());
+}
+
+void CodeCompleteConsumer::CodeCompleteUsingDirective(Scope *S) { 
+  // After "using namespace", we expect to see a namespace name or namespace
+  // alias.
+  ResultSet Results(*this, &CodeCompleteConsumer::IsNamespaceOrAlias);
+  CollectLookupResults(S, 0, Results);
+  ProcessCodeCompleteResults(Results.data(), Results.size());  
+}
+
+void CodeCompleteConsumer::CodeCompleteNamespaceDecl(Scope *S) { 
+  ResultSet Results(*this, &CodeCompleteConsumer::IsNamespace);
+  DeclContext *Ctx = (DeclContext *)S->getEntity();
+  if (!S->getParent())
+    Ctx = getSema().Context.getTranslationUnitDecl();
+
+  if (Ctx && Ctx->isFileContext()) {
+    // We only want to see those namespaces that have already been defined
+    // within this scope, because its likely that the user is creating an
+    // extended namespace declaration. Keep track of the most recent 
+    // definition of each namespace.
+    std::map<NamespaceDecl *, NamespaceDecl *> OrigToLatest;
+    for (DeclContext::specific_decl_iterator<NamespaceDecl> 
+           NS(Ctx->decls_begin()), NSEnd(Ctx->decls_end());
+         NS != NSEnd; ++NS)
+      OrigToLatest[NS->getOriginalNamespace()] = *NS;
+
+    // Add the most recent definition (or extended definition) of each 
+    // namespace to the list of results.
+    for (std::map<NamespaceDecl *, NamespaceDecl *>::iterator 
+          NS = OrigToLatest.begin(), NSEnd = OrigToLatest.end();
+         NS != NSEnd; ++NS)
+      Results.MaybeAddResult(Result(NS->second, 0));
+  }
+  
+  ProcessCodeCompleteResults(Results.data(), Results.size());  
+}
+
+void CodeCompleteConsumer::CodeCompleteNamespaceAliasDecl(Scope *S) { 
+  // After "namespace", we expect to see a namespace  or alias.
+  ResultSet Results(*this, &CodeCompleteConsumer::IsNamespaceOrAlias);
+  CollectLookupResults(S, 0, Results);
+  ProcessCodeCompleteResults(Results.data(), Results.size());  
+}
+
 void CodeCompleteConsumer::ResultSet::MaybeAddResult(Result R) {
   if (R.Kind != Result::RK_Declaration) {
     // For non-declaration results, just add the result.
@@ -452,6 +509,17 @@ bool CodeCompleteConsumer::IsUnion(NamedDecl *ND) const {
     return RD->getTagKind() == TagDecl::TK_union;
   
   return false;
+}
+
+/// \brief Determines whether the given declaration is a namespace.
+bool CodeCompleteConsumer::IsNamespace(NamedDecl *ND) const {
+  return isa<NamespaceDecl>(ND);
+}
+
+/// \brief Determines whether the given declaration is a namespace or 
+/// namespace alias.
+bool CodeCompleteConsumer::IsNamespaceOrAlias(NamedDecl *ND) const {
+  return isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND);
 }
 
 namespace {

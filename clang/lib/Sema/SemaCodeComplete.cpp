@@ -72,3 +72,33 @@ void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
                                       (NestedNameSpecifier *)SS.getScopeRep(),
                                          EnteringContext);
 }
+
+void Sema::CodeCompleteUsing(Scope *S) {
+  if (!CodeCompleter)
+    return;
+  
+  CodeCompleter->CodeCompleteUsing(S);
+}
+
+void Sema::CodeCompleteUsingDirective(Scope *S) {
+  if (!CodeCompleter)
+    return;
+  
+  CodeCompleter->CodeCompleteUsingDirective(S);
+}
+
+void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
+  if (!CodeCompleter)
+    return;
+  
+  CodeCompleter->CodeCompleteNamespaceDecl(S);
+}
+
+void Sema::CodeCompleteNamespaceAliasDecl(Scope *S)  {
+  if (!CodeCompleter)
+    return;
+  
+  CodeCompleter->CodeCompleteNamespaceAliasDecl(S);
+}
+
+

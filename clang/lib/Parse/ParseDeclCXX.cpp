@@ -47,6 +47,11 @@ Parser::DeclPtrTy Parser::ParseNamespace(unsigned Context,
   assert(Tok.is(tok::kw_namespace) && "Not a namespace!");
   SourceLocation NamespaceLoc = ConsumeToken();  // eat the 'namespace'.
 
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteNamespaceDecl(CurScope);
+    ConsumeToken();
+  }
+  
   SourceLocation IdentLoc;
   IdentifierInfo *Ident = 0;
 
@@ -115,6 +120,11 @@ Parser::DeclPtrTy Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
 
   ConsumeToken(); // eat the '='.
 
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteNamespaceAliasDecl(CurScope);
+    ConsumeToken();
+  }
+  
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
   ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);
@@ -188,6 +198,11 @@ Parser::DeclPtrTy Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
   // Eat 'using'.
   SourceLocation UsingLoc = ConsumeToken();
 
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteUsing(CurScope);
+    ConsumeToken();
+  }
+  
   if (Tok.is(tok::kw_namespace))
     // Next token after 'using' is 'namespace' so it must be using-directive
     return ParseUsingDirective(Context, UsingLoc, DeclEnd);
@@ -214,6 +229,11 @@ Parser::DeclPtrTy Parser::ParseUsingDirective(unsigned Context,
   // Eat 'namespace'.
   SourceLocation NamespcLoc = ConsumeToken();
 
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteUsingDirective(CurScope);
+    ConsumeToken();
+  }
+  
   CXXScopeSpec SS;
   // Parse (optional) nested-name-specifier.
   ParseOptionalCXXScopeSpecifier(SS, /*ObjectType=*/0, false);

@@ -3635,11 +3635,13 @@ public:
   virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,
                                                SourceLocation OpLoc,
                                                bool IsArrow);
-  
   virtual void CodeCompleteTag(Scope *S, unsigned TagSpec);
-
   virtual void CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
                                        bool EnteringContext);
+  virtual void CodeCompleteUsing(Scope *S);
+  virtual void CodeCompleteUsingDirective(Scope *S);
+  virtual void CodeCompleteNamespaceDecl(Scope *S);
+  virtual void CodeCompleteNamespaceAliasDecl(Scope *S);
   //@}
   
   //===--------------------------------------------------------------------===//

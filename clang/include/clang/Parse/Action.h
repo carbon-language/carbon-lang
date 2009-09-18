@@ -2233,10 +2233,43 @@ public:
   /// 
   /// \param SS the scope specifier ending with "::".
   ///
-  /// \parameter EnteringContext whether we're entering the context of this
+  /// \parame EnteringContext whether we're entering the context of this
   /// scope specifier.
   virtual void CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
                                        bool EnteringContext) { }
+  
+  /// \brief Code completion for a C++ "using" declaration or directive.
+  ///
+  /// This code completion action is invoked when the code-completion token is
+  /// found after the "using" keyword.
+  ///
+  /// \param S the scope in which the "using" occurs.
+  virtual void CodeCompleteUsing(Scope *S) { }
+  
+  /// \brief Code completion for a C++ using directive.
+  ///
+  /// This code completion action is invoked when the code-completion token is
+  /// found after "using namespace".
+  ///
+  /// \param S the scope in which the "using namespace" occurs.
+  virtual void CodeCompleteUsingDirective(Scope *S) { }
+  
+  /// \brief Code completion for a C++ namespace declaration or namespace
+  /// alias declaration.
+  ///
+  /// This code completion action is invoked when the code-completion token is
+  /// found after "namespace".
+  ///
+  /// \param S the scope in which the "namespace" token occurs.
+  virtual void CodeCompleteNamespaceDecl(Scope *S) { }
+
+  /// \brief Code completion for a C++ namespace alias declaration.
+  ///
+  /// This code completion action is invoked when the code-completion token is
+  /// found after "namespace identifier = ".
+  ///
+  /// \param S the scope in which the namespace alias declaration occurs.
+  virtual void CodeCompleteNamespaceAliasDecl(Scope *S) { }
   //@}
 };
 
