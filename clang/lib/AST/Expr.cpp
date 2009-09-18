@@ -1627,8 +1627,8 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
 /// cast to void*.
 bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
   // Ignore value dependent expressions.
-  if (isValueDependent())
-    return true;
+  assert(!isValueDependent() && "Unexpect value dependent expression!");
+
   // Strip off a cast to void*, if it exists. Except in C++.
   if (const ExplicitCastExpr *CE = dyn_cast<ExplicitCastExpr>(this)) {
     if (!Ctx.getLangOptions().CPlusPlus) {

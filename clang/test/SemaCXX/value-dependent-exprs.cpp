@@ -14,10 +14,13 @@ class C0 {
     int b[I];
   };
 
+  // FIXME: I'm unclear where the right place to handle this is.
+#if 0
   void f0(int *p) {
     if (p == I) {
     }
   }
+#endif
 
 #if 0
   // FIXME: Not sure whether we care about these.
