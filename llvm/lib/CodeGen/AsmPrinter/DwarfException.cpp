@@ -74,6 +74,25 @@ unsigned DwarfException::SizeOfEncodedValue(unsigned Encoding) {
   return 0;
 }
 
+/// CreateLabelDiff - Emit a label and subtract it from the expression we
+/// already have.  This is equivalent to emitting "foo - .", but we have to emit
+/// the label for "." directly.
+const MCExpr *DwarfException::CreateLabelDiff(const MCExpr *ExprRef,
+                                              const char *LabelName,
+                                              unsigned Index) {
+  SmallString<64> Name;
+  raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
+                            << LabelName << Asm->getFunctionNumber()
+                            << "_" << Index;
+  MCSymbol *DotSym = Asm->OutContext.GetOrCreateSymbol(Name.str());
+  Asm->OutStreamer.EmitLabel(DotSym);
+
+  return MCBinaryExpr::CreateSub(ExprRef,
+                                 MCSymbolRefExpr::Create(DotSym,
+                                                         Asm->OutContext),
+                                 Asm->OutContext);
+}
+
 /// EmitCIE - Emit a Common Information Entry (CIE). This holds information that
 /// is shared among many Frame Description Entries.  There is at least one CIE
 /// in every non-empty .debug_frame section.
@@ -176,23 +195,9 @@ void DwarfException::EmitCIE(const Function *PersonalityFn, unsigned Index) {
 
   // If there is a personality, we need to indicate the function's location.
   if (PersonalityRef) {
-    // If the reference to the personality function symbol is not already
-    // pc-relative, then we need to subtract our current address from it.  Do
-    // this by emitting a label and subtracting it from the expression we
-    // already have.  This is equivalent to emitting "foo - .", but we have to
-    // emit the label for "." directly.
-    if (!IsPersonalityPCRel) {
-      SmallString<64> Name;
-      raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
-         << "personalityref_addr" << Asm->getFunctionNumber() << "_" << Index;
-      MCSymbol *DotSym = Asm->OutContext.GetOrCreateSymbol(Name.str());
-      Asm->OutStreamer.EmitLabel(DotSym);
-      
-      PersonalityRef =  
-        MCBinaryExpr::CreateSub(PersonalityRef,
-                                MCSymbolRefExpr::Create(DotSym,Asm->OutContext),
-                                Asm->OutContext);
-    }
+    if (!IsPersonalityPCRel)
+      PersonalityRef = CreateLabelDiff(PersonalityRef, "personalityref_addr",
+                                       Index);
     
     O << MAI->getData32bitsDirective();
     PersonalityRef->print(O, MAI);
@@ -912,24 +917,8 @@ void DwarfException::EmitExceptionTable() {
                                                 IsTypeInfoIndirect,
                                                 IsTypeInfoPCRel);
 
-        if (!IsTypeInfoPCRel) {
-          // If the reference to the type info symbol is not already
-          // pc-relative, then we need to subtract our current address from it.
-          // Do this by emitting a label and subtracting it from the expression
-          // we already have.  This is equivalent to emitting "foo - .", but we
-          // have to emit the label for "." directly.
-          SmallString<64> Name;
-          raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
-            << "typeinforef_addr" << Asm->getFunctionNumber() << "_" << Index;
-          MCSymbol *DotSym = Asm->OutContext.GetOrCreateSymbol(Name.str());
-          Asm->OutStreamer.EmitLabel(DotSym);
-
-          TypeInfoRef =
-            MCBinaryExpr::CreateSub(TypeInfoRef,
-                                    MCSymbolRefExpr::Create(DotSym,
-                                                            Asm->OutContext),
-                                    Asm->OutContext);
-        }
+        if (!IsTypeInfoPCRel)
+          TypeInfoRef = CreateLabelDiff(TypeInfoRef, "typeinforef_addr", Index);
 
         O << MAI->getData32bitsDirective();
         TypeInfoRef->print(O, MAI);

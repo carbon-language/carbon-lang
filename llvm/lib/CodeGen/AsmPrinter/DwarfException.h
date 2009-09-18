@@ -25,6 +25,7 @@ namespace llvm {
 struct LandingPadInfo;
 class MachineModuleInfo;
 class MCAsmInfo;
+class MCExpr;
 class Timer;
 class raw_ostream;
 
@@ -168,6 +169,11 @@ class VISIBILITY_HIDDEN DwarfException : public Dwarf {
                             const SmallVectorImpl<unsigned> &FirstActions);
   void EmitExceptionTable();
 
+  /// CreateLabelDiff - Emit a label and subtract it from the expression we
+  /// already have.  This is equivalent to emitting "foo - .", but we have to
+  /// emit the label for "." directly.
+  const MCExpr *CreateLabelDiff(const MCExpr *ExprRef, const char *LabelName,
+                                unsigned Index);
 public:
   //===--------------------------------------------------------------------===//
   // Main entry points.
