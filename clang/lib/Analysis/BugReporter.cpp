@@ -1732,6 +1732,50 @@ static BugReport *FindReportInEquivalenceClass(BugReportEquivClass& EQ) {
   return NULL;
 }
 
+
+//===----------------------------------------------------------------------===//
+// DiagnosticCache.  This is a hack to cache analyzer diagnostics.  It
+// uses global state, which eventually should go elsewhere.
+//===----------------------------------------------------------------------===//
+namespace {
+class VISIBILITY_HIDDEN DiagCacheItem : public llvm::FoldingSetNode {
+  llvm::FoldingSetNodeID ID;
+public:
+  DiagCacheItem(BugReport *R, PathDiagnostic *PD) {
+    ID.AddString(R->getBugType().getName());
+    ID.AddString(R->getBugType().getCategory());
+    ID.AddString(R->getDescription());
+    ID.AddInteger(R->getLocation().getRawEncoding());
+    PD->Profile(ID);    
+  }
+  
+  void Profile(llvm::FoldingSetNodeID &id) {
+    id = ID;
+  }
+  
+  llvm::FoldingSetNodeID &getID() { return ID; }
+};
+}
+
+static bool IsCachedDiagnostic(BugReport *R, PathDiagnostic *PD) {
+  // FIXME: Eventually this diagnostic cache should reside in something
+  // like AnalysisManager instead of being a static variable.  This is
+  // really unsafe in the long term.
+  typedef llvm::FoldingSet<DiagCacheItem> DiagnosticCache;
+  static DiagnosticCache DC;
+  
+  void *InsertPos;
+  DiagCacheItem *Item = new DiagCacheItem(R, PD);
+  
+  if (DC.FindNodeOrInsertPos(Item->getID(), InsertPos)) {
+    delete Item;
+    return true;
+  }
+  
+  DC.InsertNode(Item, InsertPos);
+  return false;
+}
+
 void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   BugReport *R = FindReportInEquivalenceClass(EQ);
 
@@ -1752,6 +1796,9 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
 
   GeneratePathDiagnostic(*D.get(), EQ);
 
+  if (IsCachedDiagnostic(R, D.get()))
+    return;
+  
   // Get the meta data.
   std::pair<const char**, const char**> Meta = R->getExtraDescriptiveText();
   for (const char** s = Meta.first; s != Meta.second; ++s)
