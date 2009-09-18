@@ -301,7 +301,12 @@ static void ActionGRExprEngine(AnalysisManager& mgr, Decl *D,
   // Display progress.
   mgr.DisplayFunction(D);
 
-  // Construct the analysis engine.
+  // Construct the analysis engine.  We first query for the LiveVariables
+  // information to see if the CFG is valid.
+  // FIXME: Inter-procedural analysis will need to handle invalid CFGs.
+  if (!mgr.getLiveVariables(D))
+    return;  
+  
   GRExprEngine Eng(mgr);
 
   Eng.setTransferFunctions(tf);
