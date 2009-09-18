@@ -69,12 +69,18 @@ namespace {
 
     void mangleFunctionEncoding(const FunctionDecl *FD);
     void mangleName(const NamedDecl *ND);
+    void mangleName(const TemplateDecl *TD, 
+                    const TemplateArgument *TemplateArgs,
+                    unsigned NumTemplateArgs);
     void mangleUnqualifiedName(const NamedDecl *ND);
     void mangleUnscopedName(const NamedDecl *ND);
-    void mangleUnscopedTemplateName(const FunctionDecl *ND);
+    void mangleUnscopedTemplateName(const NamedDecl *ND);
     void mangleSourceName(const IdentifierInfo *II);
     void mangleLocalName(const NamedDecl *ND);
     void mangleNestedName(const NamedDecl *ND);
+    void mangleNestedName(const TemplateDecl *TD, 
+                          const TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs);
     void manglePrefix(const DeclContext *DC);
     void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
     void mangleCVQualifiers(unsigned Quals);
@@ -93,6 +99,8 @@ namespace {
     void mangleCXXCtorType(CXXCtorType T);
     void mangleCXXDtorType(CXXDtorType T);
 
+    void mangleTemplateArgs(const TemplateArgument *TemplateArgs,
+                            unsigned NumTemplateArgs);
     void mangleTemplateArgumentList(const TemplateArgumentList &L);
     void mangleTemplateArgument(const TemplateArgument &A);
   };
@@ -268,6 +276,24 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
     mangleNestedName(ND);
 }
 
+void CXXNameMangler::mangleName(const TemplateDecl *TD, 
+                                const TemplateArgument *TemplateArgs,
+                                unsigned NumTemplateArgs) {
+  const DeclContext *DC = TD->getDeclContext();
+  while (isa<LinkageSpecDecl>(DC)) {
+    assert(cast<LinkageSpecDecl>(DC)->getLanguage() == 
+           LinkageSpecDecl::lang_cxx && "Unexpected linkage decl!");
+    DC = DC->getParent();
+  }
+ 
+  if (DC->isTranslationUnit() || isStdNamespace(DC)) {
+    mangleUnscopedTemplateName(cast<NamedDecl>(TD->getTemplatedDecl()));
+    mangleTemplateArgs(TemplateArgs, NumTemplateArgs);
+  } else {
+    mangleNestedName(TD, TemplateArgs, NumTemplateArgs);
+  }
+}
+
 void CXXNameMangler::mangleUnscopedName(const NamedDecl *ND) {
   //  <unscoped-name> ::= <unqualified-name>
   //                  ::= St <unqualified-name>   # ::std::
@@ -277,14 +303,14 @@ void CXXNameMangler::mangleUnscopedName(const NamedDecl *ND) {
   mangleUnqualifiedName(ND);
 }
 
-void CXXNameMangler::mangleUnscopedTemplateName(const FunctionDecl *FD) {
+void CXXNameMangler::mangleUnscopedTemplateName(const NamedDecl *ND) {
   //     <unscoped-template-name> ::= <unscoped-name>
   //                              ::= <substitution>
-  if (mangleSubstitution(FD))
+  if (mangleSubstitution(ND))
     return;
   
-  mangleUnscopedName(FD);
-  addSubstitution(FD);
+  mangleUnscopedName(ND);
+  addSubstitution(ND);
 }
 
 void CXXNameMangler::mangleCalloffset(int64_t nv, int64_t v) {
@@ -416,6 +442,17 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND) {
     mangleCVQualifiers(Method->getTypeQualifiers());
   manglePrefix(ND->getDeclContext());
   mangleUnqualifiedName(ND);
+  Out << 'E';
+}
+
+void CXXNameMangler::mangleNestedName(const TemplateDecl *TD, 
+                                      const TemplateArgument *TemplateArgs,
+                                      unsigned NumTemplateArgs) {
+  Out << 'N';
+  manglePrefix(TD->getDeclContext());
+  mangleUnqualifiedName(TD->getTemplatedDecl());
+  
+  mangleTemplateArgs(TemplateArgs, NumTemplateArgs);
   Out << 'E';
 }
 
@@ -827,8 +864,10 @@ void CXXNameMangler::mangleType(const FixedWidthIntType *T) {
 }
 
 void CXXNameMangler::mangleType(const TemplateSpecializationType *T) {
-  // TSTs are never canonical unless they're dependent.
-  assert(false && "can't mangle dependent template specializations yet");
+  TemplateDecl *TD = T->getTemplateName().getAsTemplateDecl();
+  assert(TD && "FIXME: Support dependent template names!");
+  
+  mangleName(TD, T->getArgs(), T->getNumArgs());
 }
 
 void CXXNameMangler::mangleType(const TypenameType *T) {
@@ -893,6 +932,18 @@ void CXXNameMangler::mangleTemplateArgumentList(const TemplateArgumentList &L) {
     mangleTemplateArgument(A);
   }
 
+  Out << "E";
+}
+
+void CXXNameMangler::mangleTemplateArgs(const TemplateArgument *TemplateArgs,
+                                        unsigned NumTemplateArgs) {
+  // <template-args> ::= I <template-arg>+ E
+  Out << "I";
+  
+  for (unsigned i = 0; i != NumTemplateArgs; ++i) {
+    mangleTemplateArgument(TemplateArgs[i]);
+  }
+  
   Out << "E";
 }
 
