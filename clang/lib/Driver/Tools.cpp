@@ -1928,11 +1928,11 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
 
-  unsigned MacosxVersion[3];
+  unsigned MacosxVersionMin[3];
   if (Arg *A = Args.getLastArg(options::OPT_mmacosx_version_min_EQ)) {
     bool HadExtra;
-    if (!Driver::GetReleaseVersion(A->getValue(Args), MacosxVersion[0],
-                                   MacosxVersion[1], MacosxVersion[2],
+    if (!Driver::GetReleaseVersion(A->getValue(Args), MacosxVersionMin[0],
+                                   MacosxVersionMin[1], MacosxVersionMin[2],
                                    HadExtra) ||
         HadExtra) {
       const Driver &D = getToolChain().getHost().getDriver();
@@ -1940,7 +1940,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
         << A->getAsString(Args);
     }
   } else {
-    getDarwinToolChain().getMacosxVersion(MacosxVersion);
+    getDarwinToolChain().getMacosxVersion(MacosxVersionMin);
   }
 
   if (!Args.hasArg(options::OPT_A) &&
@@ -1949,15 +1949,15 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     // Derived from startfile spec.
     if (Args.hasArg(options::OPT_dynamiclib)) {
       // Derived from darwin_dylib1 spec.
-      if (isMacosxVersionLT(MacosxVersion, 10, 5))
+      if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
         CmdArgs.push_back("-ldylib1.o");
-      else if (isMacosxVersionLT(MacosxVersion, 10, 6))
+      else if (isMacosxVersionLT(MacosxVersionMin, 10, 6))
         CmdArgs.push_back("-ldylib1.10.5.o");
     } else {
       if (Args.hasArg(options::OPT_bundle)) {
         if (!Args.hasArg(options::OPT_static)) {
           // Derived from darwin_bundle1 spec.
-          if (isMacosxVersionLT(MacosxVersion, 10, 6))
+          if (isMacosxVersionLT(MacosxVersionMin, 10, 6))
             CmdArgs.push_back("-lbundle1.o");
         }
       } else {
@@ -1980,9 +1980,9 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
             // Derived from darwin_crt1 spec.
             if (getDarwinToolChain().isIPhone()) {
               CmdArgs.push_back("-lcrt1.o");
-            } else if (isMacosxVersionLT(MacosxVersion, 10, 5))
+            } else if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
               CmdArgs.push_back("-lcrt1.o");
-            else if (isMacosxVersionLT(MacosxVersion, 10, 6))
+            else if (isMacosxVersionLT(MacosxVersionMin, 10, 6))
               CmdArgs.push_back("-lcrt1.10.5.o");
             else
               CmdArgs.push_back("-lcrt1.10.6.o");
@@ -1995,7 +1995,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
     if (Args.hasArg(options::OPT_shared_libgcc) &&
         !Args.hasArg(options::OPT_miphoneos_version_min_EQ) &&
-        isMacosxVersionLT(MacosxVersion, 10, 5)) {
+        isMacosxVersionLT(MacosxVersionMin, 10, 5)) {
       const char *Str =
         Args.MakeArgString(getToolChain().GetFilePath(C, "crt3.o"));
       CmdArgs.push_back(Str);
@@ -2077,21 +2077,21 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
                  Args.hasArg(options::OPT_fexceptions) ||
                  Args.hasArg(options::OPT_fgnu_runtime)) {
         // FIXME: This is probably broken on 10.3?
-        if (isMacosxVersionLT(MacosxVersion, 10, 5))
+        if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
           CmdArgs.push_back("-lgcc_s.10.4");
-        else if (isMacosxVersionLT(MacosxVersion, 10, 6))
+        else if (isMacosxVersionLT(MacosxVersionMin, 10, 6))
           CmdArgs.push_back("-lgcc_s.10.5");
       } else {
-        if (isMacosxVersionLT(MacosxVersion, 10, 3, 9))
+        if (isMacosxVersionLT(MacosxVersionMin, 10, 3, 9))
           ; // Do nothing.
-        else if (isMacosxVersionLT(MacosxVersion, 10, 5))
+        else if (isMacosxVersionLT(MacosxVersionMin, 10, 5))
           CmdArgs.push_back("-lgcc_s.10.4");
-        else if (isMacosxVersionLT(MacosxVersion, 10, 6))
+        else if (isMacosxVersionLT(MacosxVersionMin, 10, 6))
           CmdArgs.push_back("-lgcc_s.10.5");
       }
 
       if (getDarwinToolChain().isIPhone() ||
-          isMacosxVersionLT(MacosxVersion, 10, 6)) {
+          isMacosxVersionLT(MacosxVersionMin, 10, 6)) {
         CmdArgs.push_back("-lgcc");
         CmdArgs.push_back("-lSystem");
       } else {
