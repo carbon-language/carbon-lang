@@ -202,7 +202,7 @@ public:
     setValPtr(RHS);
     return getValPtr();
   }
-  ValueTy *operator=(AssertingVH<ValueTy> &RHS) {
+  ValueTy *operator=(const AssertingVH<ValueTy> &RHS) {
     setValPtr(RHS.getValPtr());
     return getValPtr();
   }
