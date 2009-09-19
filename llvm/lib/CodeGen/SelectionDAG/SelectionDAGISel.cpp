@@ -954,14 +954,15 @@ SelectionDAGISel::FinishBasicBlock() {
              "This is not a machine PHI node that we are updating!");
       // "default" BB. We can go there only from header BB.
       if (PHIBB == SDL->JTCases[i].second.Default) {
-        PHI->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[pi].second,
-                                                  false));
-        PHI->addOperand(MachineOperand::CreateMBB(SDL->JTCases[i].first.HeaderBB));
+        PHI->addOperand
+          (MachineOperand::CreateReg(SDL->PHINodesToUpdate[pi].second, false));
+        PHI->addOperand
+          (MachineOperand::CreateMBB(SDL->JTCases[i].first.HeaderBB));
       }
       // JT BB. Just iterate over successors here
       if (BB->succ_end() != std::find(BB->succ_begin(),BB->succ_end(), PHIBB)) {
-        PHI->addOperand(MachineOperand::CreateReg(SDL->PHINodesToUpdate[pi].second,
-                                                  false));
+        PHI->addOperand
+          (MachineOperand::CreateReg(SDL->PHINodesToUpdate[pi].second, false));
         PHI->addOperand(MachineOperand::CreateMBB(BB));
       }
     }
@@ -999,7 +1000,8 @@ SelectionDAGISel::FinishBasicBlock() {
     // handle them the right number of times.
     while ((BB = SDL->SwitchCases[i].TrueBB)) {  // Handle LHS and RHS.
       // If new BB's are created during scheduling, the edges may have been
-      // updated.
+      // updated. That is, the edge from ThisBB to BB may have been split and
+      // BB's predecessor is now another block.
       DenseMap<MachineBasicBlock*, MachineBasicBlock*>::iterator EI =
         SDL->EdgeMapping.find(BB);
       if (EI != SDL->EdgeMapping.end())

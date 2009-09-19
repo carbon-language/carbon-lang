@@ -712,6 +712,10 @@ MSP430TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     .addImm(MI->getOperand(3).getImm());
   F->insert(I, copy0MBB);
   F->insert(I, copy1MBB);
+  // Inform sdisel of the edge changes.
+  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(), 
+         SE = BB->succ_end(); SI != SE; ++SI)
+    EM->insert(std::make_pair(*SI, copy1MBB));
   // Update machine-CFG edges by transferring all successors of the current
   // block to the new block which will contain the Phi node for the select.
   copy1MBB->transferSuccessors(BB);

@@ -855,6 +855,11 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   MachineBasicBlock *llscMBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
 
+  // Inform sdisel of the edge changes.
+  for (MachineBasicBlock::succ_iterator I = BB->succ_begin(), 
+         E = BB->succ_end(); I != E; ++I)
+    EM->insert(std::make_pair(*I, sinkMBB));
+
   sinkMBB->transferSuccessors(thisMBB);
 
   F->insert(It, llscMBB);
