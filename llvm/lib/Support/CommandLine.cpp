@@ -25,8 +25,8 @@
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Config/config.h"
-#include <map>
 #include <set>
 #include <cerrno>
 #include <cstdlib>
@@ -105,7 +105,7 @@ void Option::addArgument() {
 /// structures that are easier to handle.
 static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
                           std::vector<Option*> &SinkOpts,
-                          std::map<std::string, Option*> &OptionsMap) {
+                          StringMap<Option*> &OptionsMap) {
   std::vector<const char*> OptionNames;
   Option *CAOpt = 0;  // The ConsumeAfter option if it exists.
   for (Option *O = RegisteredOptionList; O; O = O->getNextRegisteredOption()) {
@@ -118,8 +118,7 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
     // Handle named options.
     for (size_t i = 0, e = OptionNames.size(); i != e; ++i) {
       // Add argument to the argument map!
-      if (!OptionsMap.insert(std::pair<std::string,Option*>(OptionNames[i],
-                                                            O)).second) {
+      if (OptionsMap.GetOrCreateValue(OptionNames[i], O).second != O) {
         errs() << ProgramName << ": CommandLine Error: Argument '"
              << OptionNames[i] << "' defined more than once!\n";
       }
@@ -151,7 +150,7 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
 /// command line.  If there is a value specified (after an equal sign) return
 /// that as well.
 static Option *LookupOption(const char *&Arg, const char *&Value,
-                            std::map<std::string, Option*> &OptionsMap) {
+                            StringMap<Option*> &OptionsMap) {
   while (*Arg == '-') ++Arg;  // Eat leading dashes
 
   const char *ArgEnd = Arg;
@@ -165,8 +164,8 @@ static Option *LookupOption(const char *&Arg, const char *&Value,
   if (*Arg == 0) return 0;
 
   // Look up the option.
-  std::map<std::string, Option*>::iterator I =
-    OptionsMap.find(std::string(Arg, ArgEnd));
+  StringMap<Option*>::iterator I =
+    OptionsMap.find(llvm::StringRef(Arg, ArgEnd-Arg));
   return I != OptionsMap.end() ? I->second : 0;
 }
 
@@ -259,9 +258,9 @@ static inline bool isPrefixedOrGrouping(const Option *O) {
 //
 static Option *getOptionPred(std::string Name, size_t &Length,
                              bool (*Pred)(const Option*),
-                             std::map<std::string, Option*> &OptionsMap) {
+                             StringMap<Option*> &OptionsMap) {
 
-  std::map<std::string, Option*>::iterator OMI = OptionsMap.find(Name);
+  StringMap<Option*>::iterator OMI = OptionsMap.find(Name);
   if (OMI != OptionsMap.end() && Pred(OMI->second)) {
     Length = Name.length();
     return OMI->second;
@@ -417,7 +416,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
   // Process all registered options.
   std::vector<Option*> PositionalOpts;
   std::vector<Option*> SinkOpts;
-  std::map<std::string, Option*> Opts;
+  StringMap<Option*> Opts;
   GetOptionInfo(PositionalOpts, SinkOpts, Opts);
 
   assert((!Opts.empty() || !PositionalOpts.empty()) &&
@@ -727,7 +726,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
   }
 
   // Loop over args and make sure all required args are specified!
-  for (std::map<std::string, Option*>::iterator I = Opts.begin(),
+  for (StringMap<Option*>::iterator I = Opts.begin(),
          E = Opts.end(); I != E; ++I) {
     switch (I->second->getNumOccurrencesFlag()) {
     case Required:
@@ -951,14 +950,12 @@ bool parser<float>::parse(Option &O, const char *AN,
 // argument string.  If the option is not found, getNumOptions() is returned.
 //
 unsigned generic_parser_base::findOption(const char *Name) {
-  unsigned i = 0, e = getNumOptions();
-  std::string N(Name);
+  unsigned e = getNumOptions();
 
-  while (i != e)
-    if (getOption(i) == N)
+  for (unsigned i = 0; i != e; ++i) {
+    if (strcmp(getOption(i), Name) == 0)
       return i;
-    else
-      ++i;
+  }
   return e;
 }
 
@@ -1017,11 +1014,11 @@ class HelpPrinter {
   const bool ShowHidden;
 
   // isHidden/isReallyHidden - Predicates to be used to filter down arg lists.
-  inline static bool isHidden(std::pair<std::string, Option *> &OptPair) {
-    return OptPair.second->getOptionHiddenFlag() >= Hidden;
+  inline static bool isHidden(Option *Opt) {
+    return Opt->getOptionHiddenFlag() >= Hidden;
   }
-  inline static bool isReallyHidden(std::pair<std::string, Option *> &OptPair) {
-    return OptPair.second->getOptionHiddenFlag() == ReallyHidden;
+  inline static bool isReallyHidden(Option *Opt) {
+    return Opt->getOptionHiddenFlag() == ReallyHidden;
   }
 
 public:
@@ -1035,12 +1032,15 @@ public:
     // Get all the options.
     std::vector<Option*> PositionalOpts;
     std::vector<Option*> SinkOpts;
-    std::map<std::string, Option*> OptMap;
+    StringMap<Option*> OptMap;
     GetOptionInfo(PositionalOpts, SinkOpts, OptMap);
 
     // Copy Options into a vector so we can sort them as we like...
-    std::vector<std::pair<std::string, Option*> > Opts;
-    copy(OptMap.begin(), OptMap.end(), std::back_inserter(Opts));
+    std::vector<Option*> Opts;
+    for (StringMap<Option*>::iterator I = OptMap.begin(), E = OptMap.end();
+         I != E; ++I) {
+      Opts.push_back(I->second);
+    }
 
     // Eliminate Hidden or ReallyHidden arguments, depending on ShowHidden
     Opts.erase(std::remove_if(Opts.begin(), Opts.end(),
@@ -1051,8 +1051,8 @@ public:
     {  // Give OptionSet a scope
       std::set<Option*> OptionSet;
       for (unsigned i = 0; i != Opts.size(); ++i)
-        if (OptionSet.count(Opts[i].second) == 0)
-          OptionSet.insert(Opts[i].second);   // Add new entry to set
+        if (OptionSet.count(Opts[i]) == 0)
+          OptionSet.insert(Opts[i]);   // Add new entry to set
         else
           Opts.erase(Opts.begin()+i--);    // Erase duplicate
     }
@@ -1082,11 +1082,11 @@ public:
     // Compute the maximum argument length...
     MaxArgLen = 0;
     for (size_t i = 0, e = Opts.size(); i != e; ++i)
-      MaxArgLen = std::max(MaxArgLen, Opts[i].second->getOptionWidth());
+      MaxArgLen = std::max(MaxArgLen, Opts[i]->getOptionWidth());
 
     outs() << "OPTIONS:\n";
     for (size_t i = 0, e = Opts.size(); i != e; ++i)
-      Opts[i].second->printOptionInfo(MaxArgLen);
+      Opts[i]->printOptionInfo(MaxArgLen);
 
     // Print any extra help the user has declared.
     for (std::vector<const char *>::iterator I = MoreHelp->begin(),
