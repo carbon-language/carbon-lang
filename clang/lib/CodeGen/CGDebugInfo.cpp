@@ -749,13 +749,28 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   if (Ty.isNull())
     return llvm::DIType();
 
-  // Check TypeCache first.
+  // Lookup the cache slot.
   llvm::DIType &Slot = TypeCache[Ty.getAsOpaquePtr()];
-  if (!Slot.isNull()) return Slot;
+
+  // Create the type if necessary.
+  if (Slot.isNull())
+    Slot = CreateTypeNode(Ty, Unit);
+
+  return Slot;
+}
+
+/// getOrCreateTypeNode - Get the type metadata node from the cache or create a
+/// new one if necessary.
+llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
+                                         llvm::DICompileUnit Unit) {
+  // Make sure the type cache has a null entry, to deal with recursion.
+  assert(TypeCache.count(Ty.getAsOpaquePtr()) &&
+         TypeCache[Ty.getAsOpaquePtr()].isNull() &&
+         "Invalid CreateTypeNode call!");
 
   // Handle CVR qualifiers, which recursively handles what they refer to.
   if (Ty.getCVRQualifiers())
-    return Slot = CreateCVRType(Ty, Unit);
+    return CreateCVRType(Ty, Unit);
 
   // Work out details of type.
   switch (Ty->getTypeClass()) {
@@ -766,6 +781,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 #include "clang/AST/TypeNodes.def"
     assert(false && "Dependent types cannot show up in debug information");
 
+  default:
   case Type::LValueReference:
   case Type::RValueReference:
   case Type::Vector:
@@ -778,43 +794,39 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
     // Unsupported types
     return llvm::DIType();
   case Type::ObjCObjectPointer:
-    return Slot = CreateType(cast<ObjCObjectPointerType>(Ty), Unit);
+    return CreateType(cast<ObjCObjectPointerType>(Ty), Unit);
   case Type::ObjCInterface:
-    return Slot = CreateType(cast<ObjCInterfaceType>(Ty), Unit);
-  case Type::Builtin: return Slot = CreateType(cast<BuiltinType>(Ty), Unit);
-  case Type::Complex: return Slot = CreateType(cast<ComplexType>(Ty), Unit);
-  case Type::Pointer: return Slot = CreateType(cast<PointerType>(Ty), Unit);
+    return CreateType(cast<ObjCInterfaceType>(Ty), Unit);
+  case Type::Builtin: return CreateType(cast<BuiltinType>(Ty), Unit);
+  case Type::Complex: return CreateType(cast<ComplexType>(Ty), Unit);
+  case Type::Pointer: return CreateType(cast<PointerType>(Ty), Unit);
   case Type::BlockPointer:
-    return Slot = CreateType(cast<BlockPointerType>(Ty), Unit);
-  case Type::Typedef: return Slot = CreateType(cast<TypedefType>(Ty), Unit);
+    return CreateType(cast<BlockPointerType>(Ty), Unit);
+  case Type::Typedef: return CreateType(cast<TypedefType>(Ty), Unit);
   case Type::Record:
   case Type::Enum:
-    return Slot = CreateType(cast<TagType>(Ty), Unit);
+    return CreateType(cast<TagType>(Ty), Unit);
   case Type::FunctionProto:
   case Type::FunctionNoProto:
-    return Slot = CreateType(cast<FunctionType>(Ty), Unit);
+    return CreateType(cast<FunctionType>(Ty), Unit);
   case Type::Elaborated:
-    return Slot = getOrCreateType(cast<ElaboratedType>(Ty)->getUnderlyingType(),
-                                  Unit);
+    return getOrCreateType(cast<ElaboratedType>(Ty)->getUnderlyingType(),
+                           Unit);
 
   case Type::ConstantArray:
   case Type::ConstantArrayWithExpr:
   case Type::ConstantArrayWithoutExpr:
   case Type::VariableArray:
   case Type::IncompleteArray:
-    return Slot = CreateType(cast<ArrayType>(Ty), Unit);
+    return CreateType(cast<ArrayType>(Ty), Unit);
   case Type::TypeOfExpr:
-    return Slot = getOrCreateType(cast<TypeOfExprType>(Ty)->getUnderlyingExpr()
-                                  ->getType(), Unit);
+    return getOrCreateType(cast<TypeOfExprType>(Ty)->getUnderlyingExpr()
+                           ->getType(), Unit);
   case Type::TypeOf:
-    return Slot = getOrCreateType(cast<TypeOfType>(Ty)->getUnderlyingType(),
-                                  Unit);
+    return getOrCreateType(cast<TypeOfType>(Ty)->getUnderlyingType(), Unit);
   case Type::Decltype:
-    return Slot = getOrCreateType(cast<DecltypeType>(Ty)->getUnderlyingType(),
-                                  Unit);
+    return getOrCreateType(cast<DecltypeType>(Ty)->getUnderlyingType(), Unit);
   }
-
-  return Slot;
 }
 
 /// EmitFunctionStart - Constructs the debug code for entering a function -
@@ -1006,4 +1018,3 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                     Var->hasInternalLinkage(),
                                     true/*definition*/, Var);
 }
-

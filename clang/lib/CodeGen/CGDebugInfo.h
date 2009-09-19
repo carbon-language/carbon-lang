@@ -121,6 +121,9 @@ private:
   /// getOrCreateType - Get the type from the cache or create a new type if
   /// necessary.
   llvm::DIType getOrCreateType(QualType Ty, llvm::DICompileUnit Unit);
+
+  /// CreateTypeNode - Create type metadata for a source language type.
+  llvm::DIType CreateTypeNode(QualType Ty, llvm::DICompileUnit Unit);
 };
 } // namespace CodeGen
 } // namespace clang
