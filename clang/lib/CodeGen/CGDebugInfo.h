@@ -49,7 +49,7 @@ class CGDebugInfo {
 
   /// TypeCache - Cache of previously constructed Types.
   // FIXME: Eliminate this map.  Be careful of iterator invalidation.
-  std::map<void *, llvm::AssertingVH<llvm::MDNode> > TypeCache;
+  std::map<void *, llvm::WeakVH> TypeCache;
 
   bool BlockLiteralGenericSet;
   llvm::DIType BlockLiteralGeneric;

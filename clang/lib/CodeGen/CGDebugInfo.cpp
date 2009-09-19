@@ -752,10 +752,13 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
     return llvm::DIType();
 
   // Check for existing entry.
-  std::map<void *, llvm::AssertingVH<llvm::MDNode> >::iterator it =
+  std::map<void *, llvm::WeakVH>::iterator it =
     TypeCache.find(Ty.getAsOpaquePtr());
-  if (it != TypeCache.end())
-    return llvm::DIType(it->second);
+  if (it != TypeCache.end()) {
+    // Verify that the debug info still exists.
+    if (&*it->second)
+      return llvm::DIType(cast<llvm::MDNode>(it->second));
+  }
 
   // Otherwise create the type.
   llvm::DIType Res = CreateTypeNode(Ty, Unit);
