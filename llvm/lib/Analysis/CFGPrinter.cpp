@@ -110,7 +110,7 @@ namespace {
     CFGOnlyViewer() : FunctionPass(&ID) {}
 
     virtual bool runOnFunction(Function &F) {
-      F.viewCFG();
+      F.viewCFGOnly();
       return false;
     }
 
