@@ -145,7 +145,7 @@ namespace llvm {
     explicit DICompileUnit(MDNode *N = 0) {
       DbgNode = N;
       if (DbgNode && !isCompileUnit())
-	DbgNode = 0;
+        DbgNode = 0;
     }
 
     unsigned getLanguage() const     { return getUnsignedField(2); }
@@ -356,7 +356,7 @@ namespace llvm {
     explicit DISubprogram(MDNode *N = 0) {
       DbgNode = N;
       if (DbgNode && !isSubprogram())
-	DbgNode = 0;
+        DbgNode = 0;
     }
 
     DIDescriptor getContext() const     { return getDescriptorField(2); }
@@ -462,7 +462,7 @@ namespace llvm {
     explicit DILexicalBlock(MDNode *N = 0) {
       DbgNode = N;
       if (DbgNode && !isLexicalBlock())
-	DbgNode = 0;
+        DbgNode = 0;
     }
     DIScope getContext() const { return getFieldAs<DIScope>(1); }
 
@@ -594,7 +594,7 @@ namespace llvm {
 
     /// CreateLocation - Creates a debug info location.
     DILocation CreateLocation(unsigned LineNo, unsigned ColumnNo,
-			      DIScope S, DILocation OrigLoc);
+                              DIScope S, DILocation OrigLoc);
 
     /// InsertStopPoint - Create a new llvm.dbg.stoppoint intrinsic invocation,
     /// inserting it at the end of the specified basic block.
