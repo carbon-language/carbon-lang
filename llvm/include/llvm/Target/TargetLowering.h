@@ -1440,6 +1440,9 @@ public:
   // instructions are special in various ways, which require special support to
   // insert.  The specified MachineInstr is created but not inserted into any
   // basic blocks, and the scheduler passes ownership of it to this method.
+  // When new basic blocks are inserted and the edges from MBB to its successors
+  // are modified, the method should insert pairs of <OldSucc, NewSucc> into the
+  // DenseMap.
   virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                          MachineBasicBlock *MBB,
                     DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const;
