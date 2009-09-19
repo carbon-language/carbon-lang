@@ -18,9 +18,14 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/Support/ValueHandle.h"
 #include <map>
 
 #include "CGBuilder.h"
+
+namespace llvm {
+  class MDNode;
+}
 
 namespace clang {
   class VarDecl;
@@ -44,7 +49,7 @@ class CGDebugInfo {
 
   /// TypeCache - Cache of previously constructed Types.
   // FIXME: Eliminate this map.  Be careful of iterator invalidation.
-  std::map<void *, llvm::DIType> TypeCache;
+  std::map<void *, llvm::AssertingVH<llvm::MDNode> > TypeCache;
 
   bool BlockLiteralGenericSet;
   llvm::DIType BlockLiteralGeneric;

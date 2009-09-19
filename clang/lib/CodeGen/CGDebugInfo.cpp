@@ -443,7 +443,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
 
   // Otherwise, insert it into the TypeCache so that recursive uses will find
   // it.
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl;
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl.getNode();
 
   // Convert all the elements.
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
@@ -511,12 +511,13 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
     DebugFactory.CreateCompositeType(Tag, Unit, Name, DefUnit, Line, Size,
                                      Align, 0, 0, llvm::DIType(), Elements);
 
+  // Update TypeCache.
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl.getNode();
+
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
   FwdDecl.replaceAllUsesWith(RealDecl);
 
-  // Update TypeCache.
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl;
   return RealDecl;
 }
 
@@ -555,7 +556,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
   // Otherwise, insert it into the TypeCache so that recursive uses will find
   // it.
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl;
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl.getNode();
 
   // Convert all the elements.
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
@@ -637,12 +638,13 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
                                      Align, 0, 0, llvm::DIType(), Elements,
                                      RuntimeLang);
 
+  // Update TypeCache.
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl.getNode();
+
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
   FwdDecl.replaceAllUsesWith(RealDecl);
 
-  // Update TypeCache.
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl;
   return RealDecl;
 }
 
@@ -749,25 +751,22 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   if (Ty.isNull())
     return llvm::DIType();
 
-  // Lookup the cache slot.
-  llvm::DIType &Slot = TypeCache[Ty.getAsOpaquePtr()];
+  // Check for existing entry.
+  std::map<void *, llvm::AssertingVH<llvm::MDNode> >::iterator it =
+    TypeCache.find(Ty.getAsOpaquePtr());
+  if (it != TypeCache.end())
+    return llvm::DIType(it->second);
 
-  // Create the type if necessary.
-  if (Slot.isNull())
-    Slot = CreateTypeNode(Ty, Unit);
-
-  return Slot;
+  // Otherwise create the type.
+  llvm::DIType Res = CreateTypeNode(Ty, Unit);
+  TypeCache.insert(std::make_pair(Ty.getAsOpaquePtr(), Res.getNode()));
+  return Res;
 }
 
 /// getOrCreateTypeNode - Get the type metadata node from the cache or create a
 /// new one if necessary.
 llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
                                          llvm::DICompileUnit Unit) {
-  // Make sure the type cache has a null entry, to deal with recursion.
-  assert(TypeCache.count(Ty.getAsOpaquePtr()) &&
-         TypeCache[Ty.getAsOpaquePtr()].isNull() &&
-         "Invalid CreateTypeNode call!");
-
   // Handle CVR qualifiers, which recursively handles what they refer to.
   if (Ty.getCVRQualifiers())
     return CreateCVRType(Ty, Unit);
