@@ -26,6 +26,7 @@
 #include "llvm/System/Path.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
 #include <set>
@@ -894,11 +895,7 @@ bool parser<boolOrDefault>::parse(Option &O, const char *ArgName,
 //
 bool parser<int>::parse(Option &O, const char *ArgName,
                         StringRef Arg, int &Value) {
-  char *End;
-  // FIXME: Temporary.
-  std::string TMP = Arg.str();
-  Value = (int)strtol(TMP.c_str(), &End, 0);
-  if (*End != 0)
+  if (Arg.getAsInteger(0, Value))
     return O.error("'" + Arg + "' value invalid for integer argument!");
   return false;
 }
@@ -907,16 +904,8 @@ bool parser<int>::parse(Option &O, const char *ArgName,
 //
 bool parser<unsigned>::parse(Option &O, const char *ArgName,
                              StringRef Arg, unsigned &Value) {
-  char *End;
-  errno = 0;
-  
-  // FIXME: Temporary.
-  std::string TMP = Arg.str();
-  unsigned long V = strtoul(TMP.c_str(), &End, 0);
-  Value = (unsigned)V;
-  if (((V == ULONG_MAX) && (errno == ERANGE))
-      || (*End != 0)
-      || (Value != V))
+
+  if (Arg.getAsInteger(0, Value))
     return O.error("'" + Arg + "' value invalid for uint argument!");
   return false;
 }
@@ -924,10 +913,8 @@ bool parser<unsigned>::parse(Option &O, const char *ArgName,
 // parser<double>/parser<float> implementation
 //
 static bool parseDouble(Option &O, StringRef Arg, double &Value) {
-  // FIXME: Temporary.
-  std::string TMP = Arg.str();
-
-  const char *ArgStart = TMP.c_str();
+  SmallString<32> TmpStr(Arg.begin(), Arg.end());
+  const char *ArgStart = TmpStr.c_str();
   char *End;
   Value = strtod(ArgStart, &End);
   if (*End != 0)
