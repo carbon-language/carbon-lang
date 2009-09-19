@@ -696,15 +696,15 @@ namespace llvm {
     
     /// Utility function to emit string processing sse4.2 instructions
     /// that return in xmm0.
-    // This takes the instruction to expand, the associated machine basic
-    // block, the number of args, and whether or not the second arg is
-    // in memory or not.
+    /// This takes the instruction to expand, the associated machine basic
+    /// block, the number of args, and whether or not the second arg is
+    /// in memory or not.
     MachineBasicBlock *EmitPCMP(MachineInstr *BInstr, MachineBasicBlock *BB,
 				unsigned argNum, bool inMem) const;
 
     /// Utility function to emit atomic bitwise operations (and, or, xor).
-    // It takes the bitwise instruction to expand, the associated machine basic
-    // block, and the associated X86 opcodes for reg/reg and reg/imm.
+    /// It takes the bitwise instruction to expand, the associated machine basic
+    /// block, and the associated X86 opcodes for reg/reg and reg/imm.
     MachineBasicBlock *EmitAtomicBitwiseWithCustomInserter(
                                                     MachineInstr *BInstr,
                                                     MachineBasicBlock *BB,
