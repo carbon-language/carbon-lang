@@ -224,6 +224,23 @@ namespace llvm {
     }
 
     /// @}
+    /// @name Helpful Algorithms
+    /// @{
+    
+    /// getAsInteger - Parse the current string as an integer of the specified
+    /// radix.  If Radix is specified as zero, this does radix autosensing using
+    /// extended C rules: 0 is octal, 0x is hex, 0b is binary.
+    ///
+    /// If the string is invalid or if only a subset of the string is valid,
+    /// this returns true to signify the error.  The string is considered
+    /// erroneous if empty.
+    ///
+    //bool getAsInteger(unsigned Radix, long long &Result) const;
+    bool getAsInteger(unsigned Radix, unsigned long long &Result) const;
+
+    // TODO: Provide overloads for int/unsigned that check for overflow.
+    
+    /// @}
     /// @name Substring Operations
     /// @{
 
