@@ -12,6 +12,8 @@ using namespace llvm;
 
 const size_t StringRef::npos;
 
+/// GetAsUnsignedInteger - Workhorse method that converts a integer character
+/// sequence of radix up to 36 to an unsigned long long value.
 static bool GetAsUnsignedInteger(StringRef Str, unsigned Radix,
                                  unsigned long long &Result) {
   // Autosense radix if not specified.
@@ -74,3 +76,46 @@ bool StringRef::getAsInteger(unsigned Radix, unsigned long long &Result) const {
   return GetAsUnsignedInteger(*this, Radix, Result);
 }
 
+
+bool StringRef::getAsInteger(unsigned Radix, long long &Result) const {
+  unsigned long long ULLVal;
+  
+  // Handle positive strings first.
+  if (empty() || front() != '-') {
+    if (GetAsUnsignedInteger(*this, Radix, ULLVal) ||
+        // Check for value so large it overflows a signed value.
+        (long long)ULLVal < 0)
+      return true;
+    Result = ULLVal;
+    return false;
+  }
+  
+  // Get the positive part of the value.
+  if (GetAsUnsignedInteger(substr(1), Radix, ULLVal) ||
+      // Reject values so large they'd overflow as negative signed, but allow
+      // "-0".  This negates the unsigned so that the negative isn't undefined
+      // on signed overflow.
+      (long long)-ULLVal > 0)
+    return true;
+  
+  Result = -ULLVal;
+  return false;
+}
+
+bool StringRef::getAsInteger(unsigned Radix, int &Result) const {
+  long long Val;
+  if (getAsInteger(Radix, Val) ||
+      (int)Val != Val)
+    return true;
+  Result = Val;
+  return false;
+}
+
+bool StringRef::getAsInteger(unsigned Radix, unsigned &Result) const {
+  unsigned long long Val;
+  if (getAsInteger(Radix, Val) ||
+      (unsigned)Val != Val)
+    return true;
+  Result = Val;
+  return false;
+}  

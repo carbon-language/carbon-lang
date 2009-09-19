@@ -235,8 +235,10 @@ namespace llvm {
     /// this returns true to signify the error.  The string is considered
     /// erroneous if empty.
     ///
-    //bool getAsInteger(unsigned Radix, long long &Result) const;
+    bool getAsInteger(unsigned Radix, long long &Result) const;
     bool getAsInteger(unsigned Radix, unsigned long long &Result) const;
+    bool getAsInteger(unsigned Radix, int &Result) const;
+    bool getAsInteger(unsigned Radix, unsigned &Result) const;
 
     // TODO: Provide overloads for int/unsigned that check for overflow.
     
