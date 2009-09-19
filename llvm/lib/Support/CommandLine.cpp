@@ -26,6 +26,7 @@
 #include "llvm/System/Path.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
 #include <set>
 #include <cerrno>
@@ -193,7 +194,7 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
 
     if (Value)
       return Handler->error("does not allow a value! '" +
-                            std::string(Value) + "' specified.");
+                            Twine(Value) + "' specified.");
     break;
   case ValueOptional:
     break;
@@ -205,34 +206,31 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   }
 
   // If this isn't a multi-arg option, just run the handler.
-  if (NumAdditionalVals == 0) {
+  if (NumAdditionalVals == 0)
     return Handler->addOccurrence(i, ArgName, Value ? Value : "");
-  }
+
   // If it is, run the handle several times.
-  else {
-    bool MultiArg = false;
+  bool MultiArg = false;
 
-    if (Value) {
-      if (Handler->addOccurrence(i, ArgName, Value, MultiArg))
-        return true;
-      --NumAdditionalVals;
-      MultiArg = true;
-    }
-
-    while (NumAdditionalVals > 0) {
-
-      if (i+1 < argc) {
-        Value = argv[++i];
-      } else {
-        return Handler->error("not enough values!");
-      }
-      if (Handler->addOccurrence(i, ArgName, Value, MultiArg))
-        return true;
-      MultiArg = true;
-      --NumAdditionalVals;
-    }
-    return false;
+  if (Value) {
+    if (Handler->addOccurrence(i, ArgName, Value, MultiArg))
+      return true;
+    --NumAdditionalVals;
+    MultiArg = true;
   }
+
+  while (NumAdditionalVals > 0) {
+
+    if (i+1 >= argc)
+      return Handler->error("not enough values!");
+    Value = argv[++i];
+    
+    if (Handler->addOccurrence(i, ArgName, Value, MultiArg))
+      return true;
+    MultiArg = true;
+    --NumAdditionalVals;
+  }
+  return false;
 }
 
 static bool ProvidePositionalOption(Option *Handler, const std::string &Arg,
@@ -763,7 +761,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
 // Option Base class implementation
 //
 
-bool Option::error(std::string Message, const char *ArgName) {
+bool Option::error(const Twine &Message, const char *ArgName) {
   if (ArgName == 0) ArgName = ArgStr;
   if (ArgName[0] == 0)
     errs() << HelpStr;  // Be nice for positional arguments
@@ -775,8 +773,7 @@ bool Option::error(std::string Message, const char *ArgName) {
 }
 
 bool Option::addOccurrence(unsigned pos, const char *ArgName,
-                           const std::string &Value,
-                           bool MultiArg) {
+                           StringRef Value, bool MultiArg) {
   if (!MultiArg)
     NumOccurrences++;   // Increment the number of times we have been seen
 
@@ -860,42 +857,47 @@ void basic_parser_impl::printOptionInfo(const Option &O,
 // parser<bool> implementation
 //
 bool parser<bool>::parse(Option &O, const char *ArgName,
-                         const std::string &Arg, bool &Value) {
+                         StringRef Arg, bool &Value) {
   if (Arg == "" || Arg == "true" || Arg == "TRUE" || Arg == "True" ||
       Arg == "1") {
     Value = true;
-  } else if (Arg == "false" || Arg == "FALSE" || Arg == "False" || Arg == "0") {
-    Value = false;
-  } else {
-    return O.error("'" + Arg +
-                   "' is invalid value for boolean argument! Try 0 or 1");
+    return false;
   }
-  return false;
+  
+  if (Arg == "false" || Arg == "FALSE" || Arg == "False" || Arg == "0") {
+    Value = false;
+    return false;
+  }
+  return O.error("'" + Arg +
+                 "' is invalid value for boolean argument! Try 0 or 1");
 }
 
 // parser<boolOrDefault> implementation
 //
 bool parser<boolOrDefault>::parse(Option &O, const char *ArgName,
-                         const std::string &Arg, boolOrDefault &Value) {
+                                  StringRef Arg, boolOrDefault &Value) {
   if (Arg == "" || Arg == "true" || Arg == "TRUE" || Arg == "True" ||
       Arg == "1") {
     Value = BOU_TRUE;
-  } else if (Arg == "false" || Arg == "FALSE"
-             || Arg == "False" || Arg == "0") {
-    Value = BOU_FALSE;
-  } else {
-    return O.error("'" + Arg +
-                   "' is invalid value for boolean argument! Try 0 or 1");
+    return false;
   }
-  return false;
+  if (Arg == "false" || Arg == "FALSE" || Arg == "False" || Arg == "0") {
+    Value = BOU_FALSE;
+    return false;
+  }
+  
+  return O.error("'" + Arg +
+                 "' is invalid value for boolean argument! Try 0 or 1");
 }
 
 // parser<int> implementation
 //
 bool parser<int>::parse(Option &O, const char *ArgName,
-                        const std::string &Arg, int &Value) {
+                        StringRef Arg, int &Value) {
   char *End;
-  Value = (int)strtol(Arg.c_str(), &End, 0);
+  // FIXME: Temporary.
+  std::string TMP = Arg.str();
+  Value = (int)strtol(TMP.c_str(), &End, 0);
   if (*End != 0)
     return O.error("'" + Arg + "' value invalid for integer argument!");
   return false;
@@ -904,10 +906,13 @@ bool parser<int>::parse(Option &O, const char *ArgName,
 // parser<unsigned> implementation
 //
 bool parser<unsigned>::parse(Option &O, const char *ArgName,
-                             const std::string &Arg, unsigned &Value) {
+                             StringRef Arg, unsigned &Value) {
   char *End;
   errno = 0;
-  unsigned long V = strtoul(Arg.c_str(), &End, 0);
+  
+  // FIXME: Temporary.
+  std::string TMP = Arg.str();
+  unsigned long V = strtoul(TMP.c_str(), &End, 0);
   Value = (unsigned)V;
   if (((V == ULONG_MAX) && (errno == ERANGE))
       || (*End != 0)
@@ -918,8 +923,11 @@ bool parser<unsigned>::parse(Option &O, const char *ArgName,
 
 // parser<double>/parser<float> implementation
 //
-static bool parseDouble(Option &O, const std::string &Arg, double &Value) {
-  const char *ArgStart = Arg.c_str();
+static bool parseDouble(Option &O, StringRef Arg, double &Value) {
+  // FIXME: Temporary.
+  std::string TMP = Arg.str();
+
+  const char *ArgStart = TMP.c_str();
   char *End;
   Value = strtod(ArgStart, &End);
   if (*End != 0)
@@ -928,12 +936,12 @@ static bool parseDouble(Option &O, const std::string &Arg, double &Value) {
 }
 
 bool parser<double>::parse(Option &O, const char *AN,
-                           const std::string &Arg, double &Val) {
+                           StringRef Arg, double &Val) {
   return parseDouble(O, Arg, Val);
 }
 
 bool parser<float>::parse(Option &O, const char *AN,
-                          const std::string &Arg, float &Val) {
+                          StringRef Arg, float &Val) {
   double dVal;
   if (parseDouble(O, Arg, dVal))
     return true;
