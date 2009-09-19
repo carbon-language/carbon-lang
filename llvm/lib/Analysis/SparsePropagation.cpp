@@ -223,6 +223,9 @@ void SparseSolver::visitTerminatorInst(TerminatorInst &TI) {
 }
 
 void SparseSolver::visitPHINode(PHINode &PN) {
+  // The lattice function may store more information on a PHINode than could be
+  // computed from its incoming values.  For example, SSI form stores its sigma
+  // functions as PHINodes with a single incoming value.
   if (LatticeFunc->IsSpecialCasedPHI(&PN)) {
     LatticeVal IV = LatticeFunc->ComputeInstructionState(PN, *this);
     if (IV != LatticeFunc->getUntrackedVal())
