@@ -49,7 +49,7 @@ protected:
     Callback
   };
 private:
-  
+
   PointerIntPair<ValueHandleBase**, 2, HandleBaseKind> PrevPair;
   ValueHandleBase *Next;
   Value *VP;
@@ -68,9 +68,9 @@ public:
   }
   ~ValueHandleBase() {
     if (isValid(VP))
-      RemoveFromUseList();   
+      RemoveFromUseList();
   }
-  
+
   Value *operator=(Value *RHS) {
     if (VP == RHS) return RHS;
     if (isValid(VP)) RemoveFromUseList();
@@ -86,7 +86,7 @@ public:
     if (isValid(VP)) AddToExistingUseList(RHS.getPrevPtr());
     return VP;
   }
-  
+
   Value *operator->() const { return getValPtr(); }
   Value &operator*() const { return *getValPtr(); }
 
@@ -102,22 +102,22 @@ private:
   // Callbacks made from Value.
   static void ValueIsDeleted(Value *V);
   static void ValueIsRAUWd(Value *Old, Value *New);
-  
+
   // Internal implementation details.
   ValueHandleBase **getPrevPtr() const { return PrevPair.getPointer(); }
   HandleBaseKind getKind() const { return PrevPair.getInt(); }
   void setPrevPtr(ValueHandleBase **Ptr) { PrevPair.setPointer(Ptr); }
-  
+
   /// AddToExistingUseList - Add this ValueHandle to the use list for VP,
   /// where List is known to point into the existing use list.
   void AddToExistingUseList(ValueHandleBase **List);
-  
+
   /// AddToUseList - Add this ValueHandle to the use list for VP.
   void AddToUseList();
   /// RemoveFromUseList - Remove this ValueHandle from its current use list.
   void RemoveFromUseList();
 };
-  
+
 /// WeakVH - This is a value handle that tries hard to point to a Value, even
 /// across RAUW operations, but will null itself out if the value is destroyed.
 /// this is useful for advisory sorts of information, but should not be used as
@@ -160,7 +160,7 @@ template<> struct simplify_type<WeakVH> : public simplify_type<const WeakVH> {};
 /// AssertingVH's as it moves.  This is required because in non-assert mode this
 /// class turns into a trivial wrapper around a pointer.
 template <typename ValueTy>
-class AssertingVH 
+class AssertingVH
 #ifndef NDEBUG
   : public ValueHandleBase
 #endif

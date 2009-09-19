@@ -44,7 +44,7 @@ namespace llvm {
   class LLVMContext;
 
   class DIDescriptor {
-  protected:    
+  protected:
     MDNode *DbgNode;
 
     /// DIDescriptor constructor.  If the specified node is non-null, check
@@ -112,7 +112,7 @@ namespace llvm {
   /// DIArray - This descriptor holds an array of descriptors.
   class DIArray : public DIDescriptor {
   public:
-    explicit DIArray(MDNode *N = 0) 
+    explicit DIArray(MDNode *N = 0)
       : DIDescriptor(N) {}
 
     unsigned getNumElements() const;
@@ -158,14 +158,14 @@ namespace llvm {
     const std::string &getProducer(std::string &F) const {
       return getStringField(5, F);
     }
-    
+
     /// isMain - Each input file is encoded as a separate compile unit in LLVM
     /// debugging information output. However, many target specific tool chains
-    /// prefer to encode only one compile unit in an object file. In this 
+    /// prefer to encode only one compile unit in an object file. In this
     /// situation, the LLVM code generator will include  debugging information
-    /// entities in the compile unit that is marked as main compile unit. The 
+    /// entities in the compile unit that is marked as main compile unit. The
     /// code generator accepts maximum one main compile unit per module. If a
-    /// module does not contain any main compile unit then the code generator 
+    /// module does not contain any main compile unit then the code generator
     /// will emit multiple compile units in the output object file.
 
     bool isMain() const                { return getUnsignedField(6); }
@@ -210,7 +210,7 @@ namespace llvm {
     };
 
   protected:
-    DIType(MDNode *N, unsigned Tag) 
+    DIType(MDNode *N, unsigned Tag)
       : DIDescriptor(N, Tag) {}
     // This ctor is used when the Tag has already been validated by a derived
     // ctor.
@@ -238,17 +238,17 @@ namespace llvm {
     uint64_t getOffsetInBits() const    { return getUInt64Field(7); }
     unsigned getFlags() const           { return getUnsignedField(8); }
     bool isPrivate() const {
-      return (getFlags() & FlagPrivate) != 0; 
+      return (getFlags() & FlagPrivate) != 0;
     }
     bool isProtected() const {
-      return (getFlags() & FlagProtected) != 0; 
+      return (getFlags() & FlagProtected) != 0;
     }
     bool isForwardDecl() const {
-      return (getFlags() & FlagFwdDecl) != 0; 
+      return (getFlags() & FlagFwdDecl) != 0;
     }
     // isAppleBlock - Return true if this is the Apple Blocks extension.
     bool isAppleBlockExtension() const {
-      return (getFlags() & FlagAppleBlock) != 0; 
+      return (getFlags() & FlagAppleBlock) != 0;
     }
     bool isBlockByrefStruct() const {
       return (getFlags() & FlagBlockByrefStruct) != 0;
@@ -448,8 +448,8 @@ namespace llvm {
 
     /// isBlockByrefVariable - Return true if the variable was declared as
     /// a "__block" variable (Apple Blocks).
-    bool isBlockByrefVariable() const { 
-      return getType().isBlockByrefStruct(); 
+    bool isBlockByrefVariable() const {
+      return getType().isBlockByrefStruct();
     }
 
     /// dump - print variable.
@@ -461,7 +461,7 @@ namespace llvm {
   public:
     explicit DILexicalBlock(MDNode *N = 0) {
       DbgNode = N;
-      if (DbgNode && !isLexicalBlock()) 
+      if (DbgNode && !isLexicalBlock())
 	DbgNode = 0;
     }
     DIScope getContext() const { return getFieldAs<DIScope>(1); }
@@ -484,11 +484,11 @@ namespace llvm {
     unsigned getColumnNumber() const   { return getUnsignedField(1); }
     DIScope  getScope() const          { return getFieldAs<DIScope>(3); }
     DILocation getOrigLocation() const { return getFieldAs<DILocation>(4); }
-    std::string getFilename(std::string &F) const  { 
-      return getScope().getFilename(F); 
+    std::string getFilename(std::string &F) const  {
+      return getScope().getFilename(F);
     }
-    std::string getDirectory(std::string &D) const { 
-      return getScope().getDirectory(D); 
+    std::string getDirectory(std::string &D) const {
+      return getScope().getDirectory(D);
     }
   };
 
@@ -497,7 +497,7 @@ namespace llvm {
   class DIFactory {
     Module &M;
     LLVMContext& VMContext;
-    
+
     // Cached values for uniquing and faster lookups.
     const Type *EmptyStructPtr; // "{}*".
     Function *StopPointFn;   // llvm.dbg.stoppoint
@@ -513,7 +513,7 @@ namespace llvm {
   public:
     explicit DIFactory(Module &m);
 
-    /// GetOrCreateArray - Create an descriptor for an array of descriptors. 
+    /// GetOrCreateArray - Create an descriptor for an array of descriptors.
     /// This implicitly uniques the arrays created.
     DIArray GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys);
 
@@ -577,7 +577,7 @@ namespace llvm {
     DIGlobalVariable
     CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
                          const std::string &DisplayName,
-                         const std::string &LinkageName, 
+                         const std::string &LinkageName,
                          DICompileUnit CompileUnit,
                          unsigned LineNo, DIType Type, bool isLocalToUnit,
                          bool isDefinition, llvm::GlobalVariable *GV);
@@ -588,12 +588,12 @@ namespace llvm {
                               DICompileUnit CompileUnit, unsigned LineNo,
                               DIType Type);
 
-    /// CreateLexicalBlock - This creates a descriptor for a lexical block 
+    /// CreateLexicalBlock - This creates a descriptor for a lexical block
     /// with the specified parent context.
     DILexicalBlock CreateLexicalBlock(DIDescriptor Context);
 
     /// CreateLocation - Creates a debug info location.
-    DILocation CreateLocation(unsigned LineNo, unsigned ColumnNo, 
+    DILocation CreateLocation(unsigned LineNo, unsigned ColumnNo,
 			      DIScope S, DILocation OrigLoc);
 
     /// InsertStopPoint - Create a new llvm.dbg.stoppoint intrinsic invocation,
@@ -621,10 +621,10 @@ namespace llvm {
   };
 
   /// Finds the stoppoint coressponding to this instruction, that is the
-  /// stoppoint that dominates this instruction 
+  /// stoppoint that dominates this instruction
   const DbgStopPointInst *findStopPoint(const Instruction *Inst);
 
-  /// Finds the stoppoint corresponding to first real (non-debug intrinsic) 
+  /// Finds the stoppoint corresponding to first real (non-debug intrinsic)
   /// instruction in this Basic Block, and returns the stoppoint for it.
   const DbgStopPointInst *findBBStopPoint(const BasicBlock *BB);
 
@@ -635,46 +635,46 @@ namespace llvm {
   /// Find the debug info descriptor corresponding to this global variable.
   Value *findDbgGlobalDeclare(GlobalVariable *V);
 
-  bool getLocationInfo(const Value *V, std::string &DisplayName, 
+  bool getLocationInfo(const Value *V, std::string &DisplayName,
                        std::string &Type, unsigned &LineNo, std::string &File,
-                       std::string &Dir); 
+                       std::string &Dir);
 
-  /// isValidDebugInfoIntrinsic - Return true if SPI is a valid debug 
+  /// isValidDebugInfoIntrinsic - Return true if SPI is a valid debug
   /// info intrinsic.
-  bool isValidDebugInfoIntrinsic(DbgStopPointInst &SPI, 
+  bool isValidDebugInfoIntrinsic(DbgStopPointInst &SPI,
                                  CodeGenOpt::Level OptLev);
 
-  /// isValidDebugInfoIntrinsic - Return true if FSI is a valid debug 
+  /// isValidDebugInfoIntrinsic - Return true if FSI is a valid debug
   /// info intrinsic.
   bool isValidDebugInfoIntrinsic(DbgFuncStartInst &FSI,
                                  CodeGenOpt::Level OptLev);
 
-  /// isValidDebugInfoIntrinsic - Return true if RSI is a valid debug 
+  /// isValidDebugInfoIntrinsic - Return true if RSI is a valid debug
   /// info intrinsic.
   bool isValidDebugInfoIntrinsic(DbgRegionStartInst &RSI,
                                  CodeGenOpt::Level OptLev);
 
-  /// isValidDebugInfoIntrinsic - Return true if REI is a valid debug 
+  /// isValidDebugInfoIntrinsic - Return true if REI is a valid debug
   /// info intrinsic.
   bool isValidDebugInfoIntrinsic(DbgRegionEndInst &REI,
                                  CodeGenOpt::Level OptLev);
 
-  /// isValidDebugInfoIntrinsic - Return true if DI is a valid debug 
+  /// isValidDebugInfoIntrinsic - Return true if DI is a valid debug
   /// info intrinsic.
   bool isValidDebugInfoIntrinsic(DbgDeclareInst &DI,
                                  CodeGenOpt::Level OptLev);
 
-  /// ExtractDebugLocation - Extract debug location information 
+  /// ExtractDebugLocation - Extract debug location information
   /// from llvm.dbg.stoppoint intrinsic.
   DebugLoc ExtractDebugLocation(DbgStopPointInst &SPI,
                                 DebugLocTracker &DebugLocInfo);
 
-  /// ExtractDebugLocation - Extract debug location information 
+  /// ExtractDebugLocation - Extract debug location information
   /// from DILocation.
   DebugLoc ExtractDebugLocation(DILocation &Loc,
                                 DebugLocTracker &DebugLocInfo);
 
-  /// ExtractDebugLocation - Extract debug location information 
+  /// ExtractDebugLocation - Extract debug location information
   /// from llvm.dbg.func_start intrinsic.
   DebugLoc ExtractDebugLocation(DbgFuncStartInst &FSI,
                                 DebugLocTracker &DebugLocInfo);
@@ -691,7 +691,7 @@ namespace llvm {
     /// processModule - Process entire module and collect debug info
     /// anchors.
     void processModule(Module &M);
-    
+
   private:
     /// processType - Process DIType.
     void processType(DIType DT);
@@ -716,7 +716,7 @@ namespace llvm {
 
     /// addCompileUnit - Add compile unit into CUs.
     bool addCompileUnit(DICompileUnit CU);
-    
+
     /// addGlobalVariable - Add global variable into GVs.
     bool addGlobalVariable(DIGlobalVariable DIG);
 

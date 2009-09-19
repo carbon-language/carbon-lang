@@ -150,7 +150,7 @@ class VISIBILITY_HIDDEN DbgScope {
   SmallVector<DbgScope *, 4> Scopes;  // Scopes defined in scope.
   SmallVector<DbgVariable *, 8> Variables;// Variables declared in scope.
   SmallVector<DbgConcreteScope *, 8> ConcreteInsts;// Concrete insts of funcs.
-  
+
   // Private state for dump()
   mutable unsigned IndentLevel;
 public:
@@ -232,7 +232,7 @@ DbgScope::~DbgScope() {
 DwarfDebug::DwarfDebug(raw_ostream &OS, AsmPrinter *A, const MCAsmInfo *T)
   : Dwarf(OS, A, T, "dbg"), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
-    ValuesSet(InitValuesSetSize), Values(), StringPool(), 
+    ValuesSet(InitValuesSetSize), Values(), StringPool(),
     SectionSourceLines(), didInitial(false), shouldEmit(false),
     FunctionDbgScope(0), DebugTimer(0) {
   if (TimePassesIsEnabled)
@@ -593,7 +593,7 @@ DIType DwarfDebug::GetBlockByrefType(DIType Ty, std::string Name) {
    the variable's Debug Information Entry as its real type.  So far, so good.
    However now the debugger will expect the variable VarName to have the type
    SomeType.  So we need the location attribute for the variable to be an
-   expression that explains to the debugger how to navigate through the 
+   expression that explains to the debugger how to navigate through the
    pointers and struct to find the actual variable of type SomeType.
 
    The following function does just that.  We start by getting
@@ -639,7 +639,7 @@ DIType DwarfDebug::GetBlockByrefType(DIType Ty, std::string Name) {
 /// starting location.  Add the DWARF information to the die.  For
 /// more information, read large comment just above here.
 ///
-void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die, 
+void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
                                        unsigned Attribute,
                                        const MachineLocation &Location) {
   const DIVariable &VD = DV->getVariable();
@@ -667,7 +667,7 @@ void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
 
    // Find the __forwarding field and the variable field in the __Block_byref
    // struct.
-   
+
    DIArray Fields = blockStruct.getTypeArray();
    DIDescriptor varField = DIDescriptor();
    DIDescriptor forwardingField = DIDescriptor();
@@ -683,19 +683,19 @@ void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
      else if (fieldName == varName)
        varField = Element;
    }
-     
+
    assert (!varField.isNull() && "Can't find byref variable in Block struct");
-   assert (!forwardingField.isNull() 
+   assert (!forwardingField.isNull()
            && "Can't find forwarding field in Block struct");
 
    // Get the offsets for the forwarding field and the variable field.
 
-   unsigned int forwardingFieldOffset = 
+   unsigned int forwardingFieldOffset =
      DIDerivedType(forwardingField.getNode()).getOffsetInBits() >> 3;
-   unsigned int varFieldOffset = 
+   unsigned int varFieldOffset =
      DIDerivedType(varField.getNode()).getOffsetInBits() >> 3;
 
-   // Decode the original location, and use that as the start of the 
+   // Decode the original location, and use that as the start of the
    // byref variable's location.
 
    unsigned Reg = RI->getDwarfRegNum(Location.getReg(), false);
@@ -1393,13 +1393,13 @@ void DwarfDebug::ConstructDefaultDbgScope(MachineFunction *MF) {
   StringMap<DIE*>::iterator GI = Globals.find(MF->getFunction()->getName());
   if (GI != Globals.end()) {
     DIE *SPDie = GI->second;
-    
+
     // Add the function bounds.
     AddLabel(SPDie, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
              DWLabel("func_begin", SubprogramCount));
     AddLabel(SPDie, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr,
              DWLabel("func_end", SubprogramCount));
-    
+
     MachineLocation Location(RI->getFrameRegister(*MF));
     AddAddress(SPDie, dwarf::DW_AT_frame_base, Location);
   }
@@ -1487,7 +1487,7 @@ void DwarfDebug::ConstructCompileUnit(MDNode *N) {
 
 void DwarfDebug::ConstructGlobalVariableDIE(MDNode *N) {
   DIGlobalVariable DI_GV(N);
-  
+
   // If debug information is malformed then ignore it.
   if (DI_GV.Verify() == false)
     return;
@@ -1582,7 +1582,7 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
       DebugTimer->stopTimer();
     return;
   }
-  
+
   // Create DIEs for each of the externally visible global variables.
   for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
          E = DbgFinder.global_variable_end(); I != E; ++I)
@@ -1904,7 +1904,7 @@ void DwarfDebug::RecordVariable(MDNode *N, unsigned FrameIndex) {
         Scope = I->second;
       }
     }
-    if (!InlinedVar) 
+    if (!InlinedVar)
       Scope = getOrCreateScope(Context);
   }
 
@@ -2109,7 +2109,7 @@ void DwarfDebug::EmitInitial() {
   didInitial = true;
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
-  
+
   // Dwarf sections base addresses.
   if (MAI->doesDwarfRequireFrameSection()) {
     Asm->OutStreamer.SwitchSection(TLOF.getDwarfFrameSection());
@@ -2669,7 +2669,7 @@ void DwarfDebug::EmitDebugRanges() {
 /// EmitDebugMacInfo - Emit visible names into a debug macinfo section.
 ///
 void DwarfDebug::EmitDebugMacInfo() {
-  if (const MCSection *LineInfo = 
+  if (const MCSection *LineInfo =
       Asm->getObjFileLowering().getDwarfMacroInfoSection()) {
     // Start the dwarf macinfo section.
     Asm->OutStreamer.SwitchSection(LineInfo);
