@@ -917,7 +917,7 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     {llvm::ConstantInt::get(IntTy, Properties.size()), NULLPtr, PropertyArray};
 
   llvm::Constant *PropertyListInit =
-      llvm::ConstantStruct::get(VMContext, PropertyListInitFields, 3);
+      llvm::ConstantStruct::get(VMContext, PropertyListInitFields, 3, false);
   llvm::Constant *PropertyList = new llvm::GlobalVariable(TheModule,
       PropertyListInit->getType(), false, llvm::GlobalValue::InternalLinkage,
       PropertyListInit, ".objc_property_list");
@@ -930,7 +930,7 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
       OptionalPropertyArray };
 
   llvm::Constant *OptionalPropertyListInit =
-      llvm::ConstantStruct::get(VMContext, OptionalPropertyListInitFields, 3);
+      llvm::ConstantStruct::get(VMContext, OptionalPropertyListInitFields, 3, false);
   llvm::Constant *OptionalPropertyList = new llvm::GlobalVariable(TheModule,
           OptionalPropertyListInit->getType(), false,
           llvm::GlobalValue::InternalLinkage, OptionalPropertyListInit,
@@ -1128,7 +1128,7 @@ llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OI
     {llvm::ConstantInt::get(IntTy, Properties.size()), NULLPtr, PropertyArray};
 
   llvm::Constant *PropertyListInit =
-      llvm::ConstantStruct::get(VMContext, PropertyListInitFields, 3);
+      llvm::ConstantStruct::get(VMContext, PropertyListInitFields, 3, false);
   return new llvm::GlobalVariable(TheModule, PropertyListInit->getType(), false,
           llvm::GlobalValue::InternalLinkage, PropertyListInit,
           ".objc_property_list");

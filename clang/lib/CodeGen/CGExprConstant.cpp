@@ -745,7 +745,8 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       Complex[1] = llvm::ConstantInt::get(VMContext,
                                           Result.Val.getComplexIntImag());
 
-      return llvm::ConstantStruct::get(VMContext, Complex, 2);
+      // FIXME: the target may want to specify that this is packed.
+      return llvm::ConstantStruct::get(VMContext, Complex, 2, false);
     }
     case APValue::Float:
       return llvm::ConstantFP::get(VMContext, Result.Val.getFloat());
@@ -757,7 +758,8 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       Complex[1] = llvm::ConstantFP::get(VMContext,
                                          Result.Val.getComplexFloatImag());
 
-      return llvm::ConstantStruct::get(VMContext, Complex, 2);
+      // FIXME: the target may want to specify that this is packed.
+      return llvm::ConstantStruct::get(VMContext, Complex, 2, false);
     }
     case APValue::Vector: {
       llvm::SmallVector<llvm::Constant *, 4> Inits;

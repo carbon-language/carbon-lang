@@ -50,7 +50,7 @@ BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
     Elts.push_back(BuildDestroyHelper(Ty, NoteForHelper));
   }
 
-  C = llvm::ConstantStruct::get(VMContext, Elts);
+  C = llvm::ConstantStruct::get(VMContext, Elts, false);
 
   C = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true,
                                llvm::GlobalValue::InternalLinkage,
@@ -163,7 +163,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
       Elts[0] = CGM.getNSConcreteGlobalBlock();
       Elts[1] = llvm::ConstantInt::get(IntTy, flags|BLOCK_IS_GLOBAL);
 
-      C = llvm::ConstantStruct::get(VMContext, Elts);
+      C = llvm::ConstantStruct::get(VMContext, Elts, false);
 
       char Name[32];
       sprintf(Name, "__block_holder_tmp_%d", CGM.getGlobalUniqueCount());
@@ -516,7 +516,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
                       llvm::ConstantInt::get(UnsignedLongTy,BlockLiteralSize);
 
   llvm::Constant *DescriptorStruct =
-    llvm::ConstantStruct::get(VMContext, &DescriptorFields[0], 2);
+    llvm::ConstantStruct::get(VMContext, &DescriptorFields[0], 2, false);
 
   llvm::GlobalVariable *Descriptor =
     new llvm::GlobalVariable(getModule(), DescriptorStruct->getType(), true,
@@ -557,7 +557,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   LiteralFields[4] = Descriptor;
 
   llvm::Constant *BlockLiteralStruct =
-    llvm::ConstantStruct::get(VMContext, &LiteralFields[0], 5);
+    llvm::ConstantStruct::get(VMContext, &LiteralFields[0], 5, false);
 
   llvm::GlobalVariable *BlockLiteral =
     new llvm::GlobalVariable(getModule(), BlockLiteralStruct->getType(), true,

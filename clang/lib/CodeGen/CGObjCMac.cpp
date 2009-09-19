@@ -1776,7 +1776,7 @@ CGObjCMac::EmitProtocolList(const std::string &Name,
                                                   ProtocolRefs.size()),
                              ProtocolRefs);
 
-  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values, false);
   llvm::GlobalVariable *GV =
     CreateMetadataVar(Name, Init, "__OBJC,__cat_cls_meth,regular,no_dead_strip",
                       4, false);
@@ -1821,7 +1821,7 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
   llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.PropertyTy,
                                              Properties.size());
   Values[2] = llvm::ConstantArray::get(AT, Properties);
-  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values, false);
 
   llvm::GlobalVariable *GV =
     CreateMetadataVar(Name, Init,
@@ -1861,7 +1861,7 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &Name,
   llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.MethodDescriptionTy,
                                              Methods.size());
   Values[1] = llvm::ConstantArray::get(AT, Methods);
-  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values, false);
 
   llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 4, true);
   return llvm::ConstantExpr::getBitCast(GV,
@@ -2234,7 +2234,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.IvarTy,
                                              Ivars.size());
   Values[1] = llvm::ConstantArray::get(AT, Ivars);
-  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values, false);
 
   llvm::GlobalVariable *GV;
   if (ForClass)
@@ -2294,7 +2294,7 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
   llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.MethodTy,
                                              Methods.size());
   Values[2] = llvm::ConstantArray::get(AT, Methods);
-  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values, false);
 
   llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 4, true);
   return llvm::ConstantExpr::getBitCast(GV,
@@ -2929,7 +2929,7 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
                                                   NumClasses + NumCategories),
                              Symbols);
 
-  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values, false);
 
   llvm::GlobalVariable *GV =
     CreateMetadataVar("\01L_OBJC_SYMBOLS", Init,
@@ -4604,7 +4604,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
   llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.MethodTy,
                                              Methods.size());
   Values[2] = llvm::ConstantArray::get(AT, Methods);
-  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values, false);
 
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
@@ -4730,7 +4730,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.IvarnfABITy,
                                              Ivars.size());
   Values[2] = llvm::ConstantArray::get(AT, Ivars);
-  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values, false);
   const char *Prefix = "\01l_OBJC_$_INSTANCE_VARIABLES_";
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
@@ -4924,7 +4924,7 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
                            ProtocolRefs.size()),
       ProtocolRefs);
 
-  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values, false);
   GV = new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
                                 llvm::GlobalValue::InternalLinkage,
                                 Init,
@@ -5058,7 +5058,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     std::vector<llvm::Constant*> Values(2);
     Values[0] = Fn;
     Values[1] = GetMethodVarName(Sel);
-    llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values);
+    llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values, false);
     GV =  new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
                                    llvm::GlobalValue::WeakAnyLinkage,
                                    Init,
