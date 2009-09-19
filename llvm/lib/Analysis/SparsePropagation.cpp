@@ -223,6 +223,13 @@ void SparseSolver::visitTerminatorInst(TerminatorInst &TI) {
 }
 
 void SparseSolver::visitPHINode(PHINode &PN) {
+  if (LatticeFunc->IsSpecialCasedPHI(&PN)) {
+    LatticeVal IV = LatticeFunc->ComputeInstructionState(PN, *this);
+    if (IV != LatticeFunc->getUntrackedVal())
+      UpdateState(PN, IV);
+    return;
+  }
+
   LatticeVal PNIV = getOrInitValueState(&PN);
   LatticeVal Overdefined = LatticeFunc->getOverdefinedVal();
   

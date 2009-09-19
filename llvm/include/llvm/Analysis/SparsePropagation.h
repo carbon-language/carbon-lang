@@ -72,6 +72,12 @@ public:
   virtual LatticeVal ComputeConstant(Constant *C) {
     return getOverdefinedVal(); // always safe
   }
+
+  /// IsSpecialCasedPHI - Given a PHI node, determine whether this PHI node is
+  /// one that the we want to handle through ComputeInstructionState.
+  virtual bool IsSpecialCasedPHI(PHINode *PN) {
+    return false;
+  }
   
   /// GetConstant - If the specified lattice value is representable as an LLVM
   /// constant value, return it.  Otherwise return null.  The returned value
