@@ -415,11 +415,11 @@ public:
   // ConstantStruct accessors
   static Constant* get(const StructType* T, const std::vector<Constant*>& V);
   static Constant* get(LLVMContext &Context, 
-                       const std::vector<Constant*>& V, bool Packed = false);
+                       const std::vector<Constant*>& V, bool Packed);
   static Constant* get(LLVMContext &Context,
                        Constant* const *Vals, unsigned NumVals,
-                       bool Packed = false);
-  
+                       bool Packed);
+
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 

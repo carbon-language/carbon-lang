@@ -207,12 +207,13 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
   };
 
   Constant *DescriptorElts[] = {
-    ConstantStruct::get(F.getContext(), BaseElts, 2),
+    ConstantStruct::get(F.getContext(), BaseElts, 2, false),
     ConstantArray::get(ArrayType::get(VoidPtr, NumMeta),
                        Metadata.begin(), NumMeta)
   };
 
-  Constant *FrameMap = ConstantStruct::get(F.getContext(), DescriptorElts, 2);
+  Constant *FrameMap = ConstantStruct::get(F.getContext(), DescriptorElts, 2,
+                                           false);
 
   std::string TypeName("gc_map.");
   TypeName += utostr(NumMeta);

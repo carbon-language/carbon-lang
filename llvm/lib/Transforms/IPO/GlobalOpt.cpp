@@ -2393,14 +2393,14 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
       CSVals[1] = Constant::getNullValue(PFTy);
       CSVals[0] = ConstantInt::get(Type::getInt32Ty(Context), 2147483647);
     }
-    CAList.push_back(ConstantStruct::get(Context, CSVals));
+    CAList.push_back(ConstantStruct::get(Context, CSVals, false));
   }
   
   // Create the array initializer.
   const Type *StructTy =
-    cast<ArrayType>(GCL->getType()->getElementType())->getElementType();
+      cast<ArrayType>(GCL->getType()->getElementType())->getElementType();
   Constant *CA = ConstantArray::get(ArrayType::get(StructTy, 
-                                           CAList.size()), CAList);
+                                                   CAList.size()), CAList);
   
   // If we didn't change the number of elements, don't create a new GV.
   if (CA->getType() == GCL->getInitializer()->getType()) {
