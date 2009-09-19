@@ -334,13 +334,8 @@ public:
     return *II;
   }
 
-  IdentifierInfo &get(const char *Name) {
-    return get(Name, Name+strlen(Name));
-  }
-  IdentifierInfo &get(const std::string &Name) {
-    // Don't use c_str() here: no need to be null terminated.
-    const char *NameBytes = Name.data();
-    return get(NameBytes, NameBytes+Name.size());
+  IdentifierInfo &get(const llvm::StringRef& Name) {
+    return get(Name.begin(), Name.end());
   }
 
   typedef HashTableTy::const_iterator iterator;
