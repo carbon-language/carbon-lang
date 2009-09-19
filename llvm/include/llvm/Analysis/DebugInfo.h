@@ -142,8 +142,7 @@ namespace llvm {
   /// DICompileUnit - A wrapper for a compile unit.
   class DICompileUnit : public DIScope {
   public:
-    explicit DICompileUnit(MDNode *N = 0) {
-      DbgNode = N;
+    explicit DICompileUnit(MDNode *N = 0) : DIScope(N) {
       if (DbgNode && !isCompileUnit())
         DbgNode = 0;
     }
@@ -353,8 +352,7 @@ namespace llvm {
   /// DISubprogram - This is a wrapper for a subprogram (e.g. a function).
   class DISubprogram : public DIScope {
   public:
-    explicit DISubprogram(MDNode *N = 0) {
-      DbgNode = N;
+    explicit DISubprogram(MDNode *N = 0) : DIScope(N) {
       if (DbgNode && !isSubprogram())
         DbgNode = 0;
     }
@@ -459,8 +457,7 @@ namespace llvm {
   /// DILexicalBlock - This is a wrapper for a lexical block.
   class DILexicalBlock : public DIScope {
   public:
-    explicit DILexicalBlock(MDNode *N = 0) {
-      DbgNode = N;
+    explicit DILexicalBlock(MDNode *N = 0) : DIScope(N) {
       if (DbgNode && !isLexicalBlock())
         DbgNode = 0;
     }
@@ -478,7 +475,7 @@ namespace llvm {
   /// is not associated with any DWARF tag.
   class DILocation : public DIDescriptor {
   public:
-    explicit DILocation(MDNode *L) { DbgNode = L; }
+    explicit DILocation(MDNode *N) : DIDescriptor(N) { ; }
 
     unsigned getLineNumber() const     { return getUnsignedField(0); }
     unsigned getColumnNumber() const   { return getUnsignedField(1); }
