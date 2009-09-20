@@ -1,4 +1,4 @@
-//===-- X86ATTAsmPrinter.h - Convert X86 LLVM code to AT&T assembly -------===//
+//===-- X86AsmPrinter.h - Convert X86 LLVM code to assembly -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86ATTASMPRINTER_H
-#define X86ATTASMPRINTER_H
+#ifndef X86ASMPRINTER_H
+#define X86ASMPRINTER_H
 
 #include "../X86.h"
 #include "../X86MachineFunctionInfo.h"

@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86MCInstLower.h"
-#include "X86ATTAsmPrinter.h"
+#include "X86AsmPrinter.h"
 #include "X86MCAsmInfo.h"
 #include "X86COFFMachineModuleInfo.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
