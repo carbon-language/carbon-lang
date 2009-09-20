@@ -185,7 +185,8 @@ public:
   void NotifyFreeingMachineCode(const Function &F, void *OldPtr);
 
 private:
-  static JITCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM);
+  static JITCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM,
+                                       TargetMachine &tm);
   void runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked);
   void updateFunctionStub(Function *F);
   void updateDlsymStubTable();

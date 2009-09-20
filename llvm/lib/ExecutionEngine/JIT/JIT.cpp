@@ -234,7 +234,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
   jitstate = new JITState(MP);
 
   // Initialize JCE
-  JCE = createEmitter(*this, JMM);
+  JCE = createEmitter(*this, JMM, TM);
 
   // Add target data
   MutexGuard locked(lock);

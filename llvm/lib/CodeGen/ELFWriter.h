@@ -28,6 +28,7 @@ namespace llvm {
   class ELFSection;
   struct ELFSym;
   class GlobalVariable;
+  class JITDebugRegisterer;
   class Mangler;
   class MachineCodeEmitter;
   class MachineConstantPoolEntry;
@@ -51,6 +52,7 @@ namespace llvm {
   ///
   class ELFWriter : public MachineFunctionPass {
     friend class ELFCodeEmitter;
+    friend class JITDebugRegisterer;
   public:
     static char ID;
 

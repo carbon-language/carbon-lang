@@ -36,7 +36,8 @@ JITDwarfEmitter::JITDwarfEmitter(JIT& theJit) : Jit(theJit) {}
 unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F, 
                                                JITCodeEmitter& jce,
                                                unsigned char* StartFunction,
-                                               unsigned char* EndFunction) {
+                                               unsigned char* EndFunction,
+                                               unsigned char* &EHFramePtr) {
   const TargetMachine& TM = F.getTarget();
   TD = TM.getTargetData();
   stackGrowthDirection = TM.getFrameInfo()->getStackGrowthDirection();
@@ -47,7 +48,6 @@ unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F,
                                                      EndFunction);
       
   unsigned char* Result = 0;
-  unsigned char* EHFramePtr = 0;
 
   const std::vector<Function *> Personalities = MMI->getPersonalities();
   EHFramePtr = EmitCommonEHFrame(Personalities[MMI->getPersonalityIndex()]);

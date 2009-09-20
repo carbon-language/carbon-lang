@@ -67,7 +67,8 @@ public:
   unsigned char* EmitDwarfTable(MachineFunction& F, 
                                 JITCodeEmitter& JCE,
                                 unsigned char* StartFunction,
-                                unsigned char* EndFunction);
+                                unsigned char* EndFunction,
+                                unsigned char* &EHFramePtr);
   
   
   unsigned GetDwarfTableSizeInBytes(MachineFunction& F, 

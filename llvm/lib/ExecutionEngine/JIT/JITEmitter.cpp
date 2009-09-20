@@ -14,7 +14,9 @@
 
 #define DEBUG_TYPE "jit"
 #include "JIT.h"
+#include "JITDebugRegisterer.h"
 #include "JITDwarfEmitter.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
@@ -464,9 +466,12 @@ namespace {
 
     /// Resolver - This contains info about the currently resolved functions.
     JITResolver Resolver;
-    
+
     /// DE - The dwarf emitter for the jit.
-    JITDwarfEmitter *DE;
+    OwningPtr<JITDwarfEmitter> DE;
+
+    /// DR - The debug registerer for the jit.
+    OwningPtr<JITDebugRegisterer> DR;
 
     /// LabelLocations - This vector is a mapping from Label ID's to their 
     /// address.
@@ -504,7 +509,7 @@ namespace {
     DebugLocTuple PrevDLT;
 
   public:
-    JITEmitter(JIT &jit, JITMemoryManager *JMM)
+    JITEmitter(JIT &jit, JITMemoryManager *JMM, TargetMachine &TM)
         : SizeEstimate(0), Resolver(jit), MMI(0), CurFn(0) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
@@ -512,11 +517,15 @@ namespace {
         DEBUG(errs() << "JIT is managing a GOT\n");
       }
 
-      if (DwarfExceptionHandling) DE = new JITDwarfEmitter(jit);
+      if (DwarfExceptionHandling || JITEmitDebugInfo) {
+        DE.reset(new JITDwarfEmitter(jit));
+      }
+      if (JITEmitDebugInfo) {
+        DR.reset(new JITDebugRegisterer(TM));
+      }
     }
     ~JITEmitter() { 
       delete MemMgr;
-      if (DwarfExceptionHandling) delete DE;
     }
 
     /// classof - Methods for support type inquiry through isa, cast, and
@@ -604,7 +613,7 @@ namespace {
  
     virtual void setModuleInfo(MachineModuleInfo* Info) {
       MMI = Info;
-      if (DwarfExceptionHandling) DE->setModuleInfo(Info);
+      if (DE.get()) DE->setModuleInfo(Info);
     }
 
     void setMemoryExecutable() {
@@ -1124,12 +1133,12 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     }
         );
 
-  if (DwarfExceptionHandling) {
+  if (DwarfExceptionHandling || JITEmitDebugInfo) {
     uintptr_t ActualSize = 0;
     SavedBufferBegin = BufferBegin;
     SavedBufferEnd = BufferEnd;
     SavedCurBufferPtr = CurBufferPtr;
-    
+
     if (MemMgr->NeedsExactSize()) {
       ActualSize = DE->GetDwarfTableSizeInBytes(F, *this, FnStart, FnEnd);
     }
@@ -1137,14 +1146,28 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     BufferBegin = CurBufferPtr = MemMgr->startExceptionTable(F.getFunction(),
                                                              ActualSize);
     BufferEnd = BufferBegin+ActualSize;
-    uint8_t* FrameRegister = DE->EmitDwarfTable(F, *this, FnStart, FnEnd);
+    uint8_t *EhStart;
+    uint8_t *FrameRegister = DE->EmitDwarfTable(F, *this, FnStart, FnEnd,
+                                                EhStart);
     MemMgr->endExceptionTable(F.getFunction(), BufferBegin, CurBufferPtr,
                               FrameRegister);
+    uint8_t *EhEnd = CurBufferPtr;
     BufferBegin = SavedBufferBegin;
     BufferEnd = SavedBufferEnd;
     CurBufferPtr = SavedCurBufferPtr;
 
-    TheJIT->RegisterTable(FrameRegister);
+    if (DwarfExceptionHandling) {
+      TheJIT->RegisterTable(FrameRegister);
+    }
+
+    if (JITEmitDebugInfo) {
+      DebugInfo I;
+      I.FnStart = FnStart;
+      I.FnEnd = FnEnd;
+      I.EhStart = EhStart;
+      I.EhEnd = EhEnd;
+      DR->RegisterFunction(F.getFunction(), I);
+    }
   }
 
   if (MMI)
@@ -1167,6 +1190,13 @@ void JITEmitter::retryWithMoreMemory(MachineFunction &F) {
 /// function body.  Also drop any references the function has to stubs.
 void JITEmitter::deallocateMemForFunction(const Function *F) {
   MemMgr->deallocateMemForFunction(F);
+
+  // TODO: Do we need to unregister exception handling information from libgcc
+  // here?
+
+  if (JITEmitDebugInfo) {
+    DR->UnregisterFunction(F);
+  }
 
   // If the function did not reference any stubs, return.
   if (CurFnStubUses.find(F) == CurFnStubUses.end())
@@ -1390,8 +1420,9 @@ uintptr_t JITEmitter::getJumpTableEntryAddress(unsigned Index) const {
 //  Public interface to this file
 //===----------------------------------------------------------------------===//
 
-JITCodeEmitter *JIT::createEmitter(JIT &jit, JITMemoryManager *JMM) {
-  return new JITEmitter(jit, JMM);
+JITCodeEmitter *JIT::createEmitter(JIT &jit, JITMemoryManager *JMM,
+                                   TargetMachine &tm) {
+  return new JITEmitter(jit, JMM, tm);
 }
 
 // getPointerToNamedFunction - This function is used as a global wrapper to
