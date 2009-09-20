@@ -181,17 +181,16 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   switch (Handler->getValueExpectedFlag()) {
   case ValueRequired:
     if (Value == 0) {       // No value specified?
-      if (i+1 < argc) {     // Steal the next argument, like for '-o filename'
-        Value = argv[++i];
-      } else {
+      if (i+1 >= argc)
         return Handler->error("requires a value!");
-      }
+      // Steal the next argument, like for '-o filename'
+      Value = argv[++i];
     }
     break;
   case ValueDisallowed:
     if (NumAdditionalVals > 0)
       return Handler->error("multi-valued option specified"
-      " with ValueDisallowed modifier!");
+                            " with ValueDisallowed modifier!");
 
     if (Value)
       return Handler->error("does not allow a value! '" +
@@ -199,6 +198,7 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
     break;
   case ValueOptional:
     break;
+      
   default:
     errs() << ProgramName
          << ": Bad ValueMask flag! CommandLine usage error:"
@@ -221,7 +221,6 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   }
 
   while (NumAdditionalVals > 0) {
-
     if (i+1 >= argc)
       return Handler->error("not enough values!");
     Value = argv[++i];
@@ -234,10 +233,9 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   return false;
 }
 
-static bool ProvidePositionalOption(Option *Handler, const std::string &Arg,
-                                    int i) {
+static bool ProvidePositionalOption(Option *Handler, StringRef Arg, int i) {
   int Dummy = i;
-  return ProvideOption(Handler, Handler->ArgStr, Arg.c_str(), 0, 0, Dummy);
+  return ProvideOption(Handler, Handler->ArgStr, Arg.data(), 0, 0, Dummy);
 }
 
 
@@ -483,9 +481,9 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
   }
 
   // PositionalVals - A vector of "positional" arguments we accumulate into
-  // the process at the end...
+  // the process at the end.
   //
-  std::vector<std::pair<std::string,unsigned> > PositionalVals;
+  SmallVector<std::pair<StringRef,unsigned>, 4> PositionalVals;
 
   // If the program has named positional arguments, and the name has been run
   // across, keep track of which positional argument was named.  Otherwise put
