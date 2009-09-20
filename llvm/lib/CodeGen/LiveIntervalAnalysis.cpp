@@ -665,7 +665,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   if (interval.empty()) {
     // Get the Idx of the defining instructions.
     MachineInstrIndex defIndex = getDefIndex(MIIdx);
-    // Earlyclobbers move back one.
+    // Earlyclobbers move back one, so that they overlap the live range
+    // of inputs.
     if (MO.isEarlyClobber())
       defIndex = getUseIndex(MIIdx);
     VNInfo *ValNo;
@@ -690,6 +691,11 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       MachineInstrIndex killIdx;
       if (vi.Kills[0] != mi)
         killIdx = getNextSlot(getUseIndex(getInstructionIndex(vi.Kills[0])));
+      else if (MO.isEarlyClobber())
+        // Earlyclobbers that die in this instruction move up one extra, to
+        // compensate for having the starting point moved back one.  This
+        // gets them to overlap the live range of other outputs.
+        killIdx = getNextSlot(getNextSlot(defIndex));
       else
         killIdx = getNextSlot(defIndex);
 
@@ -791,7 +797,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       // range covering the def slot.
       if (MO.isDead())
         interval.addRange(
-          LiveRange(RedefIndex, getNextSlot(RedefIndex), OldValNo));
+          LiveRange(RedefIndex, MO.isEarlyClobber() ?
+                                getNextSlot(getNextSlot(RedefIndex)) :
+                                getNextSlot(RedefIndex), OldValNo));
 
       DEBUG({
           errs() << " RESULT: ";
@@ -892,9 +900,14 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // If it is not used after definition, it is considered dead at
   // the instruction defining it. Hence its interval is:
   // [defSlot(def), defSlot(def)+1)
+  // For earlyclobbers, the defSlot was pushed back one; the extra
+  // advance below compensates.
   if (MO.isDead()) {
     DEBUG(errs() << " dead");
-    end = getNextSlot(start);
+    if (MO.isEarlyClobber())
+      end = getNextSlot(getNextSlot(start));
+    else
+      end = getNextSlot(start);
     goto exit;
   }
 
