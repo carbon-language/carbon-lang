@@ -293,7 +293,7 @@ static bool EatsUnboundedNumberOfValues(const Option *O) {
 /// ParseCStringVector - Break INPUT up wherever one or more
 /// whitespace characters are found, and store the resulting tokens in
 /// OUTPUT. The tokens stored in OUTPUT are dynamically allocated
-/// using strdup (), so it is the caller's responsibility to free ()
+/// using strdup(), so it is the caller's responsibility to free()
 /// them later.
 ///
 static void ParseCStringVector(std::vector<char *> &output,
@@ -301,26 +301,26 @@ static void ParseCStringVector(std::vector<char *> &output,
   // Characters which will be treated as token separators:
   static const char *const delims = " \v\f\t\r\n";
 
-  std::string work (input);
+  std::string work(input);
   // Skip past any delims at head of input string.
-  size_t pos = work.find_first_not_of (delims);
+  size_t pos = work.find_first_not_of(delims);
   // If the string consists entirely of delims, then exit early.
   if (pos == std::string::npos) return;
   // Otherwise, jump forward to beginning of first word.
-  work = work.substr (pos);
+  work = work.substr(pos);
   // Find position of first delimiter.
-  pos = work.find_first_of (delims);
+  pos = work.find_first_of(delims);
 
   while (!work.empty() && pos != std::string::npos) {
     // Everything from 0 to POS is the next word to copy.
-    output.push_back (strdup (work.substr (0,pos).c_str ()));
+    output.push_back(strdup(work.substr(0,pos).c_str()));
     // Is there another word in the string?
-    size_t nextpos = work.find_first_not_of (delims, pos + 1);
+    size_t nextpos = work.find_first_not_of(delims, pos + 1);
     if (nextpos != std::string::npos) {
       // Yes? Then remove delims from beginning ...
-      work = work.substr (work.find_first_not_of (delims, pos + 1));
+      work = work.substr(work.find_first_not_of(delims, pos + 1));
       // and find the end of the word.
-      pos = work.find_first_of (delims);
+      pos = work.find_first_of(delims);
     } else {
       // No? (Remainder of string is delims.) End the loop.
       work = "";
@@ -330,9 +330,8 @@ static void ParseCStringVector(std::vector<char *> &output,
 
   // If `input' ended with non-delim char, then we'll get here with
   // the last word of `input' in `work'; copy it now.
-  if (!work.empty ()) {
-    output.push_back (strdup (work.c_str ()));
-  }
+  if (!work.empty())
+    output.push_back(strdup(work.c_str()));
 }
 
 /// ParseEnvironmentOptions - An alternative entry point to the
@@ -365,7 +364,7 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
   // Free all the strdup()ed strings.
   for (std::vector<char*>::iterator i = newArgv.begin(), e = newArgv.end();
        i != e; ++i)
-    free (*i);
+    free(*i);
 }
 
 
