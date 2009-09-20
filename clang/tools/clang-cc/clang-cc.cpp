@@ -667,8 +667,8 @@ TargetABI("target-abi",
 
 // It might be nice to add bounds to the CommandLine library directly.
 struct OptLevelParser : public llvm::cl::parser<unsigned> {
-  bool parse(llvm::cl::Option &O, const char *ArgName,
-             const std::string &Arg, unsigned &Val) {
+  bool parse(llvm::cl::Option &O, llvm::StringRef ArgName,
+             llvm::StringRef Arg, unsigned &Val) {
     if (llvm::cl::parser<unsigned>::parse(O, ArgName, Arg, Val))
       return true;
     if (Val > 3)

@@ -37,39 +37,38 @@ namespace llvm {
     class parser<clang::ParsedSourceLocation>
       : public basic_parser<clang::ParsedSourceLocation> {
     public:
-      bool parse(Option &O, const char *ArgName,
-                 const std::string &ArgValue,
+      bool parse(Option &O, StringRef ArgName, StringRef ArgValue,
                  clang::ParsedSourceLocation &Val);
     };
 
     bool
     parser<clang::ParsedSourceLocation>::
-    parse(Option &O, const char *ArgName, const std::string &ArgValue,
+    parse(Option &O, StringRef ArgName, StringRef ArgValue,
           clang::ParsedSourceLocation &Val) {
       using namespace clang;
 
       const char *ExpectedFormat
         = "source location must be of the form filename:line:column";
-      std::string::size_type SecondColon = ArgValue.rfind(':');
+      StringRef::size_type SecondColon = ArgValue.rfind(':');
       if (SecondColon == std::string::npos) {
         std::fprintf(stderr, "%s\n", ExpectedFormat);
         return true;
       }
-      char *EndPtr;
-      long Column
-        = std::strtol(ArgValue.c_str() + SecondColon + 1, &EndPtr, 10);
-      if (EndPtr != ArgValue.c_str() + ArgValue.size()) {
+
+      unsigned Column;
+      if (ArgValue.substr(SecondColon + 1).getAsInteger(10, Column)) {
         std::fprintf(stderr, "%s\n", ExpectedFormat);
         return true;
       }
+      ArgValue = ArgValue.substr(0, SecondColon);
 
-      std::string::size_type FirstColon = ArgValue.rfind(':', SecondColon-1);
+      StringRef::size_type FirstColon = ArgValue.rfind(':');
       if (FirstColon == std::string::npos) {
         std::fprintf(stderr, "%s\n", ExpectedFormat);
         return true;
       }
-      long Line = std::strtol(ArgValue.c_str() + FirstColon + 1, &EndPtr, 10);
-      if (EndPtr != ArgValue.c_str() + SecondColon) {
+      unsigned Line;
+      if (ArgValue.substr(FirstColon + 1).getAsInteger(10, Line)) {
         std::fprintf(stderr, "%s\n", ExpectedFormat);
         return true;
       }
