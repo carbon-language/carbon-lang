@@ -28,7 +28,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
 #include <cerrno>
@@ -1121,6 +1120,11 @@ HHOp("help-hidden", cl::desc("Display all available options"),
 
 static void (*OverrideVersionPrinter)() = 0;
 
+static int TargetArraySortFn(const void *LHS, const void *RHS) {
+  typedef std::pair<const char *, const Target*> pair_ty;
+  return strcmp(((const pair_ty*)LHS)->first, ((const pair_ty*)RHS)->first);
+}
+
 namespace {
 class VersionPrinter {
 public:
@@ -1145,18 +1149,20 @@ public:
            << "\n"
            << "  Registered Targets:\n";
 
-    std::vector<std::pair<StringRef, const Target*> > Targets;
+    std::vector<std::pair<const char *, const Target*> > Targets;
     size_t Width = 0;
     for (TargetRegistry::iterator it = TargetRegistry::begin(), 
            ie = TargetRegistry::end(); it != ie; ++it) {
       Targets.push_back(std::make_pair(it->getName(), &*it));
-      Width = std::max(Width, Targets.back().first.size());
+      Width = std::max(Width, strlen(Targets.back().first));
     }
-    array_pod_sort(Targets.begin(), Targets.end());
+    if (!Targets.empty())
+      qsort(&Targets[0], Targets.size(), sizeof(Targets[0]),
+            TargetArraySortFn);
 
     for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
       outs() << "    " << Targets[i].first;
-      outs().indent(Width - Targets[i].first.size()) << " - "
+      outs().indent(Width - strlen(Targets[i].first)) << " - "
              << Targets[i].second->getShortDescription() << '\n';
     }
     if (Targets.empty())
