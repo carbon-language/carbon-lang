@@ -151,7 +151,7 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
 /// LookupOption - Lookup the option specified by the specified option on the
 /// command line.  If there is a value specified (after an equal sign) return
 /// that as well.
-static Option *LookupOption(const char *&Arg, const char *&Value,
+static Option *LookupOption(const char *&Arg, StringRef &Value,
                             StringMap<Option*> &OptionsMap) {
   while (*Arg == '-') ++Arg;  // Eat leading dashes
 
@@ -159,9 +159,9 @@ static Option *LookupOption(const char *&Arg, const char *&Value,
   while (*ArgEnd && *ArgEnd != '=')
     ++ArgEnd; // Scan till end of argument name.
 
-  if (*ArgEnd == '=')  // If we have an equals sign...
-    Value = ArgEnd+1;  // Get the value, not the equals
-
+  // If we have an equals sign, remember the value.
+  if (*ArgEnd == '=')
+    Value = ArgEnd+1;
 
   if (*Arg == 0) return 0;
 
@@ -485,7 +485,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
   bool DashDashFound = false;  // Have we read '--'?
   for (int i = 1; i < argc; ++i) {
     Option *Handler = 0;
-    const char *Value = 0;
+    StringRef Value;
     const char *ArgName = "";
 
     // If the option list changed, this means that some command line
@@ -606,7 +606,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
 
     // Check to see if this option accepts a comma separated list of values.  If
     // it does, we have to split up the value into multiple values.
-    if (Value && Handler->getMiscFlags() & CommaSeparated) {
+    if (Handler->getMiscFlags() & CommaSeparated) {
       StringRef Val(Value);
       StringRef::size_type Pos = Val.find(',');
 
@@ -616,7 +616,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
                                       argc, argv, i);
         // Erase the portion before the comma, AND the comma.
         Val = Val.substr(Pos+1);
-        Value += Pos+1;  // Increment the original value pointer as well.
+        Value.substr(Pos+1);  // Increment the original value pointer as well.
 
         // Check for another comma.
         Pos = Val.find(',');
@@ -627,12 +627,8 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
     // active one...
     if (Handler->getFormattingFlag() == cl::Positional)
       ActivePositionalArg = Handler;
-    else if (Value)
-      ErrorParsing |= ProvideOption(Handler, ArgName, Value, argc, argv, i);
     else
-      ErrorParsing |= ProvideOption(Handler, ArgName, StringRef(),
-                                    argc, argv, i);
-
+      ErrorParsing |= ProvideOption(Handler, ArgName, Value, argc, argv, i);
   }
 
   // Check and handle positional arguments now...
