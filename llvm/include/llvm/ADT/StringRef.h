@@ -28,7 +28,8 @@ namespace llvm {
   public:
     typedef const char *iterator;
     static const size_t npos = ~size_t(0);
-
+    typedef size_t size_type;
+    
   private:
     /// The start of the string, in an external buffer.
     const char *Data;
@@ -176,14 +177,19 @@ namespace llvm {
     ///
     /// \return - The index of the last occurence of \arg C, or npos if not
     /// found.
-    size_t rfind(char C) const {
-      for (size_t i = Length, e = 0; i != e;) {
+    size_t rfind(char C, size_t From) const {
+      for (size_t i = From, e = 0; i != e;) {
         --i;
         if (Data[i] == C)
           return i;
       }
       return npos;
     }
+    
+    size_t rfind(char C) const {
+      return rfind(C, Length);
+    }
+
 
     /// rfind - Search for the last string \arg Str in the string.
     ///
