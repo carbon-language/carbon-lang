@@ -12,6 +12,77 @@ using namespace llvm;
 
 const size_t StringRef::npos;
 
+//===----------------------------------------------------------------------===//
+// String Searching
+//===----------------------------------------------------------------------===//
+
+
+/// find - Search for the first string \arg Str in the string.
+///
+/// \return - The index of the first occurence of \arg Str, or npos if not
+/// found.
+size_t StringRef::find(const StringRef &Str) const {
+  size_t N = Str.size();
+  if (N > Length)
+    return npos;
+  for (size_t i = 0, e = Length - N + 1; i != e; ++i)
+    if (substr(i, N).equals(Str))
+      return i;
+  return npos;
+}
+
+/// rfind - Search for the last string \arg Str in the string.
+///
+/// \return - The index of the last occurence of \arg Str, or npos if not
+/// found.
+size_t StringRef::rfind(const StringRef &Str) const {
+  size_t N = Str.size();
+  if (N > Length)
+    return npos;
+  for (size_t i = Length - N + 1, e = 0; i != e;) {
+    --i;
+    if (substr(i, N).equals(Str))
+      return i;
+  }
+  return npos;
+}
+
+/// find_first_of - Find the first character from the string 'Chars' in the
+/// current string or return npos if not in string.
+StringRef::size_type StringRef::find_first_of(StringRef Chars) const {
+  for (size_type i = 0, e = Length; i != e; ++i)
+    if (Chars.find(Data[i]) != npos)
+      return i;
+  return npos;
+}
+
+/// find_first_not_of - Find the first character in the string that is not
+/// in the string 'Chars' or return npos if all are in string. Same as find.
+StringRef::size_type StringRef::find_first_not_of(StringRef Chars) const {
+  for (size_type i = 0, e = Length; i != e; ++i)
+    if (Chars.find(Data[i]) == npos)
+      return i;
+  return npos;
+}
+
+
+//===----------------------------------------------------------------------===//
+// Helpful Algorithms
+//===----------------------------------------------------------------------===//
+
+/// count - Return the number of non-overlapped occurrences of \arg Str in
+/// the string.
+size_t StringRef::count(const StringRef &Str) const {
+  size_t Count = 0;
+  size_t N = Str.size();
+  if (N > Length)
+    return 0;
+  for (size_t i = 0, e = Length - N + 1; i != e; ++i)
+    if (substr(i, N).equals(Str))
+      ++Count;
+  return Count;
+}
+
 /// GetAsUnsignedInteger - Workhorse method that converts a integer character
 /// sequence of radix up to 36 to an unsigned long long value.
 static bool GetAsUnsignedInteger(StringRef Str, unsigned Radix,

@@ -163,16 +163,8 @@ namespace llvm {
     ///
     /// \return - The index of the first occurence of \arg Str, or npos if not
     /// found.
-    size_t find(const StringRef &Str) const {
-      size_t N = Str.size();
-      if (N > Length)
-        return npos;
-      for (size_t i = 0, e = Length - N + 1; i != e; ++i)
-        if (substr(i, N).equals(Str))
-          return i;
-      return npos;
-    }
-
+    size_t find(const StringRef &Str) const;
+    
     /// rfind - Search for the last character \arg C in the string.
     ///
     /// \return - The index of the last occurence of \arg C, or npos if not
@@ -189,24 +181,29 @@ namespace llvm {
     size_t rfind(char C) const {
       return rfind(C, Length);
     }
-
-
+    
     /// rfind - Search for the last string \arg Str in the string.
     ///
     /// \return - The index of the last occurence of \arg Str, or npos if not
     /// found.
-    size_t rfind(const StringRef &Str) const {
-      size_t N = Str.size();
-      if (N > Length)
-        return npos;
-      for (size_t i = Length - N + 1, e = 0; i != e;) {
-        --i;
-        if (substr(i, N).equals(Str))
-          return i;
-      }
-      return npos;
-    }
-
+    size_t rfind(const StringRef &Str) const;
+    
+    /// find_first_of - Find the first instance of the specified character or
+    /// return npos if not in string.  Same as find.
+    size_type find_first_of(char C) const { return find(C); }
+    
+    /// find_first_of - Find the first character from the string 'Chars' in the
+    /// current string or return npos if not in string.
+    size_type find_first_of(StringRef Chars) const;
+    
+    /// find_first_not_of - Find the first character in the string that is not
+    /// in the string 'Chars' or return npos if all are in string. Same as find.
+    size_type find_first_not_of(StringRef Chars) const;
+    
+    /// @}
+    /// @name Helpful Algorithms
+    /// @{
+    
     /// count - Return the number of occurrences of \arg C in the string.
     size_t count(char C) const {
       size_t Count = 0;
@@ -215,23 +212,10 @@ namespace llvm {
           ++Count;
       return Count;
     }
-
+    
     /// count - Return the number of non-overlapped occurrences of \arg Str in
     /// the string.
-    size_t count(const StringRef &Str) const {
-      size_t Count = 0;
-      size_t N = Str.size();
-      if (N > Length)
-        return 0;
-      for (size_t i = 0, e = Length - N + 1; i != e; ++i)
-        if (substr(i, N).equals(Str))
-          ++Count;
-      return Count;
-    }
-
-    /// @}
-    /// @name Helpful Algorithms
-    /// @{
+    size_t count(const StringRef &Str) const;
     
     /// getAsInteger - Parse the current string as an integer of the specified
     /// radix.  If Radix is specified as zero, this does radix autosensing using
