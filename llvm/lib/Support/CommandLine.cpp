@@ -105,9 +105,10 @@ void Option::addArgument() {
 
 /// GetOptionInfo - Scan the list of registered options, turning them into data
 /// structures that are easier to handle.
-static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
-                          std::vector<Option*> &SinkOpts,
+static void GetOptionInfo(SmallVectorImpl<Option*> &PositionalOpts,
+                          SmallVectorImpl<Option*> &SinkOpts,
                           StringMap<Option*> &OptionsMap) {
+  // FIXME: SmallVectorize.
   std::vector<const char*> OptionNames;
   Option *CAOpt = 0;  // The ConsumeAfter option if it exists.
   for (Option *O = RegisteredOptionList; O; O = O->getNextRegisteredOption()) {
@@ -453,8 +454,8 @@ static void ExpandResponseFiles(unsigned argc, char** argv,
 void cl::ParseCommandLineOptions(int argc, char **argv,
                                  const char *Overview, bool ReadResponseFiles) {
   // Process all registered options.
-  std::vector<Option*> PositionalOpts;
-  std::vector<Option*> SinkOpts;
+  SmallVector<Option*, 4> PositionalOpts;
+  SmallVector<Option*, 4> SinkOpts;
   StringMap<Option*> Opts;
   GetOptionInfo(PositionalOpts, SinkOpts, Opts);
 
@@ -617,7 +618,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
              << argv[i] << "'.  Try: '" << argv[0] << " --help'\n";
         ErrorParsing = true;
       } else {
-        for (std::vector<Option*>::iterator I = SinkOpts.begin(),
+        for (SmallVectorImpl<Option*>::iterator I = SinkOpts.begin(),
                E = SinkOpts.end(); I != E ; ++I)
           (*I)->addOccurrence(i, "", argv[i]);
       }
@@ -1031,8 +1032,8 @@ public:
     if (Value == false) return;
 
     // Get all the options.
-    std::vector<Option*> PositionalOpts;
-    std::vector<Option*> SinkOpts;
+    SmallVector<Option*, 4> PositionalOpts;
+    SmallVector<Option*, 4> SinkOpts;
     StringMap<Option*> OptMap;
     GetOptionInfo(PositionalOpts, SinkOpts, OptMap);
 
@@ -1129,25 +1130,26 @@ namespace {
 class VersionPrinter {
 public:
   void print() {
-    outs() << "Low Level Virtual Machine (http://llvm.org/):\n"
-           << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
+    raw_ostream &OS = outs();
+    OS << "Low Level Virtual Machine (http://llvm.org/):\n"
+       << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
 #ifdef LLVM_VERSION_INFO
-    outs() << LLVM_VERSION_INFO;
+    OS << LLVM_VERSION_INFO;
 #endif
-    outs() << "\n  ";
+    OS << "\n  ";
 #ifndef __OPTIMIZE__
-    outs() << "DEBUG build";
+    OS << "DEBUG build";
 #else
-    outs() << "Optimized build";
+    OS << "Optimized build";
 #endif
 #ifndef NDEBUG
-    outs() << " with assertions";
+    OS << " with assertions";
 #endif
-    outs() << ".\n"
-           << "  Built " << __DATE__ << " (" << __TIME__ << ").\n"
-           << "  Host: " << sys::getHostTriple() << '\n'
-           << "\n"
-           << "  Registered Targets:\n";
+    OS << ".\n"
+       << "  Built " << __DATE__ << " (" << __TIME__ << ").\n"
+       << "  Host: " << sys::getHostTriple() << '\n'
+       << '\n'
+       << "  Registered Targets:\n";
 
     std::vector<std::pair<const char *, const Target*> > Targets;
     size_t Width = 0;
@@ -1161,12 +1163,12 @@ public:
             TargetArraySortFn);
 
     for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
-      outs() << "    " << Targets[i].first;
-      outs().indent(Width - strlen(Targets[i].first)) << " - "
+      OS << "    " << Targets[i].first;
+      OS.indent(Width - strlen(Targets[i].first)) << " - "
              << Targets[i].second->getShortDescription() << '\n';
     }
     if (Targets.empty())
-      outs() << "    (none)\n";
+      OS << "    (none)\n";
   }
   void operator=(bool OptionWasSpecified) {
     if (!OptionWasSpecified) return;
