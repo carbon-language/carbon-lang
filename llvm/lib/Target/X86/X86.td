@@ -202,7 +202,7 @@ def ATTAsmWriter : AsmWriter {
   int Variant = 0;
 }
 def IntelAsmWriter : AsmWriter {
-  string AsmWriterClassName  = "IntelAsmPrinter";
+  string AsmWriterClassName  = "IntelInstPrinter";
   int Variant = 1;
 }
 

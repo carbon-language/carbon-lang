@@ -25,7 +25,6 @@ using namespace llvm;
 // Include the auto-generated portion of the assembly writer.
 #define MachineInstr MCInst
 #define NO_ASM_WRITER_BOILERPLATE
-#define X86IntelAsmPrinter X86IntelInstPrinter
 #include "X86GenAsmWriter1.inc"
 #undef MachineInstr
 
@@ -46,8 +45,7 @@ void X86IntelInstPrinter::printSSECC(const MCInst *MI, unsigned Op) {
 }
 
 /// print_pcrel_imm - This is used to print an immediate value that ends up
-/// being encoded as a pc-relative value.  These print slightly differently, for
-/// example, a $ is not emitted.
+/// being encoded as a pc-relative value.
 void X86IntelInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isImm())
