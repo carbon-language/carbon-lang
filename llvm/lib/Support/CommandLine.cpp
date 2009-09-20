@@ -1145,33 +1145,32 @@ public:
            << "\n"
            << "  Registered Targets:\n";
 
-    std::vector<std::pair<std::string, const Target*> > Targets;
+    std::vector<std::pair<StringRef, const Target*> > Targets;
     size_t Width = 0;
     for (TargetRegistry::iterator it = TargetRegistry::begin(), 
            ie = TargetRegistry::end(); it != ie; ++it) {
       Targets.push_back(std::make_pair(it->getName(), &*it));
-      Width = std::max(Width, Targets.back().first.length());
+      Width = std::max(Width, Targets.back().first.size());
     }
     array_pod_sort(Targets.begin(), Targets.end());
 
     for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
       outs() << "    " << Targets[i].first;
-      outs().indent(Width - Targets[i].first.length()) << " - "
+      outs().indent(Width - Targets[i].first.size()) << " - "
              << Targets[i].second->getShortDescription() << '\n';
     }
     if (Targets.empty())
       outs() << "    (none)\n";
   }
   void operator=(bool OptionWasSpecified) {
-    if (OptionWasSpecified) {
-      if (OverrideVersionPrinter == 0) {
-        print();
-        exit(1);
-      } else {
-        (*OverrideVersionPrinter)();
-        exit(1);
-      }
+    if (!OptionWasSpecified) return;
+    
+    if (OverrideVersionPrinter == 0) {
+      print();
+      exit(1);
     }
+    (*OverrideVersionPrinter)();
+    exit(1);
   }
 };
 } // End anonymous namespace
