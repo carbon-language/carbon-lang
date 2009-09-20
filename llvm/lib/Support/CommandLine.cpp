@@ -1033,6 +1033,8 @@ public:
 
     // Copy Options into a vector so we can sort them as we like.
     std::vector<Option*> Opts;
+    SmallPtrSet<Option*, 128> OptionSet;  // Duplicate option detection.
+
     for (StringMap<Option*>::iterator I = OptMap.begin(), E = OptMap.end();
          I != E; ++I) {
       // Ignore really-hidden options.
@@ -1043,20 +1045,11 @@ public:
       if (I->second->getOptionHiddenFlag() == Hidden && !ShowHidden)
         continue;
       
-      Opts.push_back(I->second);
-    }
+      // If we've already seen this option, don't add it to the list again.
+      if (OptionSet.insert(I->second))
+        continue;
 
-    // Eliminate duplicate entries in table (from enum flags options, f.e.).
-    {  // Give OptionSet a scope
-      SmallPtrSet<Option*, 32> OptionSet;
-      for (unsigned i = 0; i != Opts.size(); ++i) {
-        if (OptionSet.insert(Opts[i]))    // Add new entry to set
-          continue;
-        // Erase duplicate.
-        Opts[i] = Opts.back();
-        Opts.pop_back();
-        --i;
-      }
+      Opts.push_back(I->second);
     }
 
     if (ProgramOverview)
