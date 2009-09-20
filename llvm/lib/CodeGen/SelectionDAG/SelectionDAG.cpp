@@ -3047,8 +3047,8 @@ static SDValue getMemsetValue(SDValue Value, EVT VT, SelectionDAG &DAG,
 /// used when a memcpy is turned into a memset when the source is a constant
 /// string ptr.
 static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
-                                    const TargetLowering &TLI,
-                                    std::string &Str, unsigned Offset) {
+                                  const TargetLowering &TLI,
+                                  std::string &Str, unsigned Offset) {
   // Handle vector with all elements zero.
   if (Str.empty()) {
     if (VT.isInteger())
@@ -3219,7 +3219,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   SmallVector<SDValue, 8> OutChains;
   unsigned NumMemOps = MemOps.size();
   uint64_t SrcOff = 0, DstOff = 0;
-  for (unsigned i = 0; i < NumMemOps; i++) {
+  for (unsigned i = 0; i != NumMemOps; ++i) {
     EVT VT = MemOps[i];
     unsigned VTSize = VT.getSizeInBits() / 8;
     SDValue Value, Store;
