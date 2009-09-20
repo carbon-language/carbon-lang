@@ -1627,6 +1627,16 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     if (Result != -1)
       return ConstantInt::get(Type::getInt1Ty(Context), Result);
 
+    // If the right hand side is a bitcast, try using its inverse to simplify
+    // it by moving it to the left hand side.
+    if (ConstantExpr *CE2 = dyn_cast<ConstantExpr>(C2)) {
+      if (CE2->getOpcode() == Instruction::BitCast) {
+        Constant *CE2Op0 = CE2->getOperand(0);
+        Constant *Inverse = ConstantExpr::getBitCast(C1, CE2Op0->getType());
+        return ConstantExpr::getICmp(pred, Inverse, CE2Op0);
+      }
+    }
+
     if (!isa<ConstantExpr>(C1) && isa<ConstantExpr>(C2)) {
       // If C2 is a constant expr and C1 isn't, flip them around and fold the
       // other way if possible.

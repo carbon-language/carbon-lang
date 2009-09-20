@@ -23,3 +23,8 @@ global i1 srem (i1 icmp ult (i8* @X, i8* @Y), i1 icmp ult (i8* @X, i8* @Z))
 global i1 urem (i1 icmp ult (i8* @X, i8* @Y), i1 icmp ult (i8* @X, i8* @Z))
 ; CHECK-NOT: icmp
 ; CHECK: i1 false
+
+global i1 icmp ule (i32* bitcast (i8* @X to i32*), i32* bitcast (i8* @Y to i32*))
+; CHECK-NOT: bitcast
+; CHECK: icmp
+
