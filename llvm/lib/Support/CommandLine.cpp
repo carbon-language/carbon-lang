@@ -1010,6 +1010,12 @@ void generic_parser_base::printOptionInfo(const Option &O,
 // --help and --help-hidden option implementation
 //
 
+static int OptNameCompare(const void *LHS, const void *RHS) {
+  typedef std::pair<const char *, Option*> pair_ty;
+  
+  return strcmp(((pair_ty*)LHS)->first, ((pair_ty*)RHS)->first);
+}
+
 namespace {
 
 class HelpPrinter {
@@ -1032,7 +1038,7 @@ public:
     GetOptionInfo(PositionalOpts, SinkOpts, OptMap);
 
     // Copy Options into a vector so we can sort them as we like.
-    std::vector<Option*> Opts;
+    SmallVector<std::pair<const char *, Option*>, 128> Opts;
     SmallPtrSet<Option*, 128> OptionSet;  // Duplicate option detection.
 
     for (StringMap<Option*>::iterator I = OptMap.begin(), E = OptMap.end();
@@ -1046,11 +1052,15 @@ public:
         continue;
       
       // If we've already seen this option, don't add it to the list again.
-      if (OptionSet.insert(I->second))
+      if (!OptionSet.insert(I->second))
         continue;
 
-      Opts.push_back(I->second);
+      Opts.push_back(std::pair<const char *, Option*>(I->getKey().data(),
+                                                      I->second));
     }
+    
+    // Sort the options list alphabetically.
+    qsort(Opts.data(), Opts.size(), sizeof(Opts[0]), OptNameCompare);
 
     if (ProgramOverview)
       outs() << "OVERVIEW: " << ProgramOverview << "\n";
@@ -1077,11 +1087,11 @@ public:
     // Compute the maximum argument length...
     MaxArgLen = 0;
     for (size_t i = 0, e = Opts.size(); i != e; ++i)
-      MaxArgLen = std::max(MaxArgLen, Opts[i]->getOptionWidth());
+      MaxArgLen = std::max(MaxArgLen, Opts[i].second->getOptionWidth());
 
     outs() << "OPTIONS:\n";
     for (size_t i = 0, e = Opts.size(); i != e; ++i)
-      Opts[i]->printOptionInfo(MaxArgLen);
+      Opts[i].second->printOptionInfo(MaxArgLen);
 
     // Print any extra help the user has declared.
     for (std::vector<const char *>::iterator I = MoreHelp->begin(),
