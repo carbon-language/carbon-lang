@@ -27,3 +27,12 @@
 ; CHECK: @I = global i1 icmp ult (i8* @X, i8* @Y) ; <i1*> [#uses=0]
 @J = global i1 xor (i1 icmp ult (i8* @X, i8* @Y), i1 true)
 ; CHECK: @J = global i1 icmp uge (i8* @X, i8* @Y) ; <i1*> [#uses=0]
+
+@K = global i1 icmp eq (i1 icmp ult (i8* @X, i8* @Y), i1 false)
+; CHECK: @K = global i1 icmp uge (i8* @X, i8* @Y) ; <i1*> [#uses=0]
+@L = global i1 icmp eq (i1 icmp ult (i8* @X, i8* @Y), i1 true)
+; CHECK: @L = global i1 icmp ult (i8* @X, i8* @Y) ; <i1*> [#uses=0]
+@M = global i1 icmp ne (i1 icmp ult (i8* @X, i8* @Y), i1 true)
+; CHECK: @M = global i1 icmp uge (i8* @X, i8* @Y) ; <i1*> [#uses=0]
+@N = global i1 icmp ne (i1 icmp ult (i8* @X, i8* @Y), i1 false)
+; CHECK: @N = global i1 icmp ult (i8* @X, i8* @Y) ; <i1*> [#uses=0]

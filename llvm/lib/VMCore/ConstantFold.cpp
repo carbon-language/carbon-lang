@@ -1428,6 +1428,20 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
       }
   }
 
+  // If the comparison is a comparison between two i1's, simplify it.
+  if (C1->getType() == Type::getInt1Ty(Context)) {
+    switch(pred) {
+    case ICmpInst::ICMP_EQ:
+      if (isa<ConstantInt>(C2))
+        return ConstantExpr::getXor(C1, ConstantExpr::getNot(C2));
+      return ConstantExpr::getXor(ConstantExpr::getNot(C1), C2);
+    case ICmpInst::ICMP_NE:
+      return ConstantExpr::getXor(C1, C2);
+    default:
+      break;
+    }
+  }
+
   if (isa<ConstantInt>(C1) && isa<ConstantInt>(C2)) {
     APInt V1 = cast<ConstantInt>(C1)->getValue();
     APInt V2 = cast<ConstantInt>(C2)->getValue();
