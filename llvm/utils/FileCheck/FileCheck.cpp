@@ -241,23 +241,24 @@ static void PrintCheckFailed(const SourceMgr &SM, const CheckString &CheckStr,
                   "note");
 }
 
-static unsigned CountNumNewlinesBetween(const char *Start, const char *End) {
+/// CountNumNewlinesBetween - Count the number of newlines in the specified
+/// range.
+static unsigned CountNumNewlinesBetween(StringRef Range) {
   unsigned NumNewLines = 0;
-  for (; Start != End; ++Start) {
+  while (1) {
     // Scan for newline.
-    if (Start[0] != '\n' && Start[0] != '\r')
-      continue;
+    Range = Range.substr(Range.find_first_of("\n\r"));
+    if (Range.empty()) return NumNewLines;
     
     ++NumNewLines;
     
     // Handle \n\r and \r\n as a single newline.
-    if (Start+1 != End &&
-        (Start[0] == '\n' || Start[0] == '\r') &&
-        (Start[0] != Start[1]))
-      ++Start;
+    if (Range.size() > 1 &&
+        (Range[1] == '\n' || Range[1] == '\r') &&
+        (Range[0] != Range[1]))
+      Range = Range.substr(1);
+    Range = Range.substr(1);
   }
-  
-  return NumNewLines;
 }
 
 int main(int argc, char **argv) {
@@ -311,7 +312,9 @@ int main(int argc, char **argv) {
       PrintCheckFailed(SM, CheckStr, SearchFrom);
       return 1;
     }
-    
+
+    StringRef SkippedRegion(LastMatch, Buffer.data()-LastMatch);
+
     // If this check is a "CHECK-NEXT", verify that the previous match was on
     // the previous line (i.e. that there is one newline between them).
     if (CheckStr.IsCheckNext) {
@@ -319,7 +322,7 @@ int main(int argc, char **argv) {
       assert(LastMatch != F->getBufferStart() &&
              "CHECK-NEXT can't be the first check in a file");
 
-      unsigned NumNewLines = CountNumNewlinesBetween(LastMatch, Buffer.data());
+      unsigned NumNewLines = CountNumNewlinesBetween(SkippedRegion);
       if (NumNewLines == 0) {
         SM.PrintMessage(CheckStr.Loc,
                     CheckPrefix+"-NEXT: is on the same line as previous match",
@@ -346,7 +349,6 @@ int main(int argc, char **argv) {
     
     // If this match had "not strings", verify that they don't exist in the
     // skipped region.
-    StringRef SkippedRegion(LastMatch, Buffer.data()-LastMatch);
     for (unsigned i = 0, e = CheckStr.NotStrings.size(); i != e; ++i) {
       size_t Pos = SkippedRegion.find(CheckStr.NotStrings[i].second);
       if (Pos == StringRef::npos) continue;
