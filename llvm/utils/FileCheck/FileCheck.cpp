@@ -51,6 +51,11 @@ struct CheckString {
   /// to a CHECK: directive.
   bool IsCheckNext;
   
+  /// NotStrings - These are all of the strings that are disallowed from
+  /// occurring between this match string and the previous one (or start of
+  /// file).
+  std::vector<std::pair<SMLoc, std::string> > NotStrings;
+  
   CheckString(const std::string &S, SMLoc L, bool isCheckNext)
     : Str(S), Loc(L), IsCheckNext(isCheckNext) {}
 };
@@ -74,6 +79,8 @@ static bool ReadCheckFile(SourceMgr &SM,
   // Find all instances of CheckPrefix followed by : in the file.
   StringRef Buffer = F->getBuffer();
 
+  std::vector<std::pair<SMLoc, std::string> > NotMatches;
+  
   while (1) {
     // See if Prefix occurs in the memory buffer.
     Buffer = Buffer.substr(Buffer.find(CheckPrefix));
@@ -86,16 +93,19 @@ static bool ReadCheckFile(SourceMgr &SM,
     
     // When we find a check prefix, keep track of whether we find CHECK: or
     // CHECK-NEXT:
-    bool IsCheckNext;
+    bool IsCheckNext = false, IsCheckNot = false;
     
     // Verify that the : is present after the prefix.
     if (Buffer[CheckPrefix.size()] == ':') {
       Buffer = Buffer.substr(CheckPrefix.size()+1);
-      IsCheckNext = false;
     } else if (Buffer.size() > CheckPrefix.size()+6 &&
                memcmp(Buffer.data()+CheckPrefix.size(), "-NEXT:", 6) == 0) {
       Buffer = Buffer.substr(CheckPrefix.size()+7);
       IsCheckNext = true;
+    } else if (Buffer.size() > CheckPrefix.size()+5 &&
+               memcmp(Buffer.data()+CheckPrefix.size(), "-NOT:", 5) == 0) {
+      Buffer = Buffer.substr(CheckPrefix.size()+6);
+      IsCheckNot = true;
     } else {
       Buffer = Buffer.substr(1);
       continue;
@@ -103,8 +113,7 @@ static bool ReadCheckFile(SourceMgr &SM,
     
     // Okay, we found the prefix, yay.  Remember the rest of the line, but
     // ignore leading and trailing whitespace.
-    while (!Buffer.empty() && (Buffer[0] == ' ' || Buffer[0] == '\t'))
-      Buffer = Buffer.substr(1);
+    Buffer = Buffer.substr(Buffer.find_first_not_of(" \t"));
     
     // Scan ahead to the end of line.
     size_t EOL = Buffer.find_first_of("\n\r");
@@ -122,6 +131,16 @@ static bool ReadCheckFile(SourceMgr &SM,
       return true;
     }
     
+    StringRef PatternStr = Buffer.substr(0, EOL);
+    
+    // Handle CHECK-NOT.
+    if (IsCheckNot) {
+      NotMatches.push_back(std::make_pair(SMLoc::getFromPointer(Buffer.data()),
+                                          PatternStr.str()));
+      Buffer = Buffer.substr(EOL);
+      continue;
+    }
+    
     // Verify that CHECK-NEXT lines have at least one CHECK line before them.
     if (IsCheckNext && CheckStrings.empty()) {
       SM.PrintMessage(SMLoc::getFromPointer(CheckPrefixStart),
@@ -131,10 +150,10 @@ static bool ReadCheckFile(SourceMgr &SM,
     }
     
     // Okay, add the string we captured to the output vector and move on.
-    CheckStrings.push_back(CheckString(std::string(Buffer.data(),
-                                                   Buffer.data()+EOL),
+    CheckStrings.push_back(CheckString(PatternStr.str(),
                                        SMLoc::getFromPointer(Buffer.data()),
                                        IsCheckNext));
+    std::swap(NotMatches, CheckStrings.back().NotStrings);
     
     Buffer = Buffer.substr(EOL);
   }
@@ -142,6 +161,12 @@ static bool ReadCheckFile(SourceMgr &SM,
   if (CheckStrings.empty()) {
     errs() << "error: no check strings found with prefix '" << CheckPrefix
            << ":'\n";
+    return true;
+  }
+  
+  if (!NotMatches.empty()) {
+    errs() << "error: '" << CheckPrefix
+           << "-NOT:' not supported after last check line.\n";
     return true;
   }
   
@@ -271,7 +296,8 @@ int main(int argc, char **argv) {
   // file.
   StringRef Buffer = F->getBuffer();
   
-  const char *LastMatch = 0;
+  const char *LastMatch = Buffer.data();
+  
   for (unsigned StrNo = 0, e = CheckStrings.size(); StrNo != e; ++StrNo) {
     const CheckString &CheckStr = CheckStrings[StrNo];
     
@@ -290,7 +316,8 @@ int main(int argc, char **argv) {
     // the previous line (i.e. that there is one newline between them).
     if (CheckStr.IsCheckNext) {
       // Count the number of newlines between the previous match and this one.
-      assert(LastMatch && "CHECK-NEXT can't be the first check in a file");
+      assert(LastMatch != F->getBufferStart() &&
+             "CHECK-NEXT can't be the first check in a file");
 
       unsigned NumNewLines = CountNumNewlinesBetween(LastMatch, Buffer.data());
       if (NumNewLines == 0) {
@@ -316,6 +343,21 @@ int main(int argc, char **argv) {
         return 1;
       }
     }
+    
+    // If this match had "not strings", verify that they don't exist in the
+    // skipped region.
+    StringRef SkippedRegion(LastMatch, Buffer.data()-LastMatch);
+    for (unsigned i = 0, e = CheckStr.NotStrings.size(); i != e; ++i) {
+      size_t Pos = SkippedRegion.find(CheckStr.NotStrings[i].second);
+      if (Pos == StringRef::npos) continue;
+     
+      SM.PrintMessage(SMLoc::getFromPointer(LastMatch+Pos),
+                      CheckPrefix+"-NOT: string occurred!", "error");
+      SM.PrintMessage(CheckStr.NotStrings[i].first,
+                      CheckPrefix+"-NOT: pattern specified here", "note");
+      return 1;
+    }
+    
 
     // Otherwise, everything is good.  Remember this as the last match and move
     // on to the next one.

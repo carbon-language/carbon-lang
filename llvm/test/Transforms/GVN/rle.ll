@@ -191,3 +191,24 @@ Cont:
 ; CHECK: ret i8 %A
 }
 
+;;===----------------------------------------------------------------------===;;
+;; Store -> Load  and  Load -> Load forwarding where src and dst are different
+;; types, and the reload is an offset from the store pointer.
+;;===----------------------------------------------------------------------===;;
+
+;; i32 -> f32 forwarding.
+define i8 @coerce_offset0(i32 %V, i32* %P) {
+  store i32 %V, i32* %P
+   
+  %P2 = bitcast i32* %P to i8*
+  %P3 = getelementptr i8* %P2, i32 2
+
+  %A = load i8* %P3
+  ret i8 %A
+; CHECK: @coerce_offset0
+; CHECK-NOT: load
+; CHECK: ret i8
+}
+
+
+
