@@ -22,18 +22,6 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-/// createX86CodePrinterPass - Returns a pass that prints the X86 assembly code
-/// for a MachineFunction to the given output stream, using the given target
-/// machine description.
-///
-static AsmPrinter *createX86CodePrinterPass(formatted_raw_ostream &o,
-                                            TargetMachine &tm,
-                                            const MCAsmInfo *tai,
-                                            bool verbose) {
-  return new X86AsmPrinter(o, tm, tai, verbose);
-}
-
-
 static MCInstPrinter *createX86MCInstPrinter(const Target &T,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI,
@@ -47,8 +35,8 @@ static MCInstPrinter *createX86MCInstPrinter(const Target &T,
 
 // Force static initialization.
 extern "C" void LLVMInitializeX86AsmPrinter() { 
-  TargetRegistry::RegisterAsmPrinter(TheX86_32Target, createX86CodePrinterPass);
-  TargetRegistry::RegisterAsmPrinter(TheX86_64Target, createX86CodePrinterPass);
+  RegisterAsmPrinter<X86AsmPrinter> X(TheX86_32Target);
+  RegisterAsmPrinter<X86AsmPrinter> Y(TheX86_64Target);
   
   TargetRegistry::RegisterMCInstPrinter(TheX86_32Target,createX86MCInstPrinter);
   TargetRegistry::RegisterMCInstPrinter(TheX86_64Target,createX86MCInstPrinter);
