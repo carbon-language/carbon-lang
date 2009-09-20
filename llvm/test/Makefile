@@ -46,6 +46,15 @@ ifdef VG
 VALGRIND := valgrind --tool=memcheck --quiet --trace-children=yes --error-exitcode=3 --leak-check=full $(VALGRIND_EXTRA_ARGS)
 endif
 
+# Check what to run for -all
+EXTRA_LIT_SITE_CFGS :=
+LIT_ALL_TESTSUITES := $(LIT_TESTSUITE)
+ifndef TESTSUITE
+ifeq ($(shell test -d $(PROJ_SRC_DIR)/../tools/clang && echo OK), OK)
+LIT_ALL_TESTSUITES += $(PROJ_OBJ_DIR)/../tools/clang/test
+endif
+endif
+
 IGNORE_TESTS :=
 
 ifndef RUNLLVM2CPP
@@ -80,6 +89,14 @@ check-local-lit:: lit.site.cfg Unit/lit.site.cfg
 		--path "$(LLVM_SRC_ROOT)/test/Scripts" \
 		--path "$(LLVMGCCDIR)/bin" \
 		$(LIT_ARGS) $(LIT_TESTSUITE) )
+
+check-local-all:: lit.site.cfg Unit/lit.site.cfg $(EXTRA_LIT_SITE_CFGS)
+	( $(ULIMIT) \
+	  $(LLVM_SRC_ROOT)/utils/lit/lit.py \
+		--path "$(LLVMToolDir)" \
+		--path "$(LLVM_SRC_ROOT)/test/Scripts" \
+		--path "$(LLVMGCCDIR)/bin" \
+		$(LIT_ARGS) $(LIT_ALL_TESTSUITES) )
 
 ifdef TESTONE
 CLEANED_TESTONE := $(patsubst %/,%,$(TESTONE))

@@ -1613,6 +1613,18 @@ check-lit::
 	  $(EchoCmd) No test directory ; \
 	fi
 
+check-all::
+	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/test" ; then \
+	  if test -f "$(PROJ_OBJ_ROOT)/test/Makefile" ; then \
+	    $(EchoCmd) Running test suite ; \
+	    $(MAKE) -C $(PROJ_OBJ_ROOT)/test check-local-all ; \
+	  else \
+	    $(EchoCmd) No Makefile in test directory ; \
+	  fi ; \
+	else \
+	  $(EchoCmd) No test directory ; \
+	fi
+
 ###############################################################################
 # UNITTESTS: Running the unittests test suite
 ###############################################################################
