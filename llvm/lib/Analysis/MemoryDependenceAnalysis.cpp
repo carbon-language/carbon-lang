@@ -521,6 +521,13 @@ getNonLocalPointerDependency(Value *Pointer, bool isLoad, BasicBlock *FromBB,
   const Type *EltTy = cast<PointerType>(Pointer->getType())->getElementType();
   uint64_t PointeeSize = AA->getTypeStoreSize(EltTy);
   
+  // If Pointer is a bitcast instruction, chomp through to the pointee since
+  // they are must alias.  This increases the effectiveness of caching by
+  // finding more equivalences, avoids having to phi translate the bitcast, and
+  // avoids conflicts where we are looking for two "different" values in the
+  // same block when they are really just must aliases.
+  Pointer = Pointer->stripPointerCasts();
+  
   // This is the set of blocks we've inspected, and the pointer we consider in
   // each block.  Because of critical edges, we currently bail out if querying
   // a block with multiple different pointers.  This can happen during PHI
@@ -660,7 +667,6 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
                             SmallVectorImpl<NonLocalDepEntry> &Result,
                             DenseMap<BasicBlock*, Value*> &Visited,
                             bool SkipFirstBlock) {
-  
   // Look up the cached info for Pointer.
   ValueIsLoadPair CacheKey(Pointer, isLoad);
   
@@ -792,6 +798,13 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
         BasicBlock *Pred = *PI;
         Value *PredPtr = PtrPHI->getIncomingValueForBlock(Pred);
+        
+        // If Pointer is a bitcast instruction, chomp through to the pointee since
+        // they are must alias.  This increases the effectiveness of caching by
+        // finding more equivalences, avoids having to phi translate the bitcast, and
+        // avoids conflicts where we are looking for two "different" values in the
+        // same block when they are really just must aliases.
+        PredPtr = PredPtr->stripPointerCasts();
         
         // Check to see if we have already visited this pred block with another
         // pointer.  If so, we can't do this lookup.  This failure can occur

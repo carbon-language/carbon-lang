@@ -141,6 +141,32 @@ Cont:
 ; CHECK: ret i8 %A
 }
 
+;; non-local i32/float -> i8 load forwarding.  This also tests that the "P3"
+;; bitcast equivalence can be properly phi translated.
+define i8 @coerce_mustalias_nonlocal1(i32* %P, i1 %cond) {
+  %P2 = bitcast i32* %P to float*
+  br i1 %cond, label %T, label %F
+T:
+  store i32 42, i32* %P
+  br label %Cont
+  
+F:
+  store float 1.0, float* %P2
+  br label %Cont
+
+Cont:
+  %P3 = bitcast i32* %P to i8*
+  %A = load i8* %P3
+  ret i8 %A
+
+; CHECK: @coerce_mustalias_nonlocal1
+; CHECK: Cont:
+; CHECK:   %A = phi i8 [
+; CHECK-NOT: load
+; CHECK: ret i8 %A
+}
+
+
 ;; non-local i32 -> i8 partial redundancy load forwarding.
 define i8 @coerce_mustalias_pre0(i32* %P, i1 %cond) {
   %P3 = bitcast i32* %P to i8*
