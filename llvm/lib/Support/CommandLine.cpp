@@ -759,7 +759,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
     // Free all the strdup()ed strings.
     for (std::vector<char*>::iterator i = newArgv.begin(), e = newArgv.end();
          i != e; ++i)
-      free (*i);
+      free(*i);
   }
 
   // If we had an error processing our arguments, don't let the program execute
