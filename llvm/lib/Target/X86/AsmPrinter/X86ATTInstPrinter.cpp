@@ -44,11 +44,6 @@ void X86ATTInstPrinter::printSSECC(const MCInst *MI, unsigned Op) {
   }
 }
 
-void X86ATTInstPrinter::printPICLabel(const MCInst *MI, unsigned Op) {
-  llvm_unreachable("This is only used for MOVPC32r,"
-                   "should lower before instruction printing!");
-}
-
 /// print_pcrel_imm - This is used to print an immediate value that ends up
 /// being encoded as a pc-relative value.  These print slightly differently, for
 /// example, a $ is not emitted.

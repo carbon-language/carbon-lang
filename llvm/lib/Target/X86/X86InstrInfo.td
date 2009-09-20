@@ -226,10 +226,6 @@ def SSECC : Operand<i8> {
   let PrintMethod = "printSSECC";
 }
 
-def piclabel: Operand<i32> {
-  let PrintMethod = "printPICLabel";
-}
-
 def ImmSExt8AsmOperand : AsmOperandClass {
   let Name = "ImmSExt8";
   let SuperClass = ImmAsmOperand;
@@ -552,7 +548,7 @@ def INT : I<0xcd, RawFrm, (outs), (ins i8imm:$trap), "int\t$trap", []>;
 
 // PIC base
 let neverHasSideEffects = 1, isNotDuplicable = 1, Uses = [ESP] in
-  def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins piclabel:$label),
+  def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins i32imm:$label),
                       "call\t$label\n\t"
                       "pop{l}\t$reg", []>;
 

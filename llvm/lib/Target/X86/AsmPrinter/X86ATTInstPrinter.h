@@ -37,7 +37,6 @@ public:
   void printMemReference(const MCInst *MI, unsigned Op);
   void printLeaMemReference(const MCInst *MI, unsigned Op);
   void printSSECC(const MCInst *MI, unsigned Op);
-  void printPICLabel(const MCInst *MI, unsigned Op);
   void print_pcrel_imm(const MCInst *MI, unsigned OpNo);
   
   void printopaquemem(const MCInst *MI, unsigned OpNo) {

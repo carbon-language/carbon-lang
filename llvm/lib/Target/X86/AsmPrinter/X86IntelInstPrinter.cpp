@@ -1,4 +1,4 @@
-//===-- X86IntelInstPrinter.cpp - AT&T assembly instruction printing --------===//
+//===-- X86IntelInstPrinter.cpp - AT&T assembly instruction printing ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -43,11 +43,6 @@ void X86IntelInstPrinter::printSSECC(const MCInst *MI, unsigned Op) {
   case 6: O << "nle"; break;
   case 7: O << "ord"; break;
   }
-}
-
-void X86IntelInstPrinter::printPICLabel(const MCInst *MI, unsigned Op) {
-  llvm_unreachable("This is only used for MOVPC32r,"
-                   "should lower before instruction printing!");
 }
 
 /// print_pcrel_imm - This is used to print an immediate value that ends up
