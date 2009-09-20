@@ -1051,14 +1051,17 @@ public:
                           std::ptr_fun(ShowHidden ? isReallyHidden : isHidden)),
                Opts.end());
 
-    // Eliminate duplicate entries in table (from enum flags options, f.e.)
+    // Eliminate duplicate entries in table (from enum flags options, f.e.).
     {  // Give OptionSet a scope
       SmallPtrSet<Option*, 32> OptionSet;
-      for (unsigned i = 0; i != Opts.size(); ++i)
-        if (OptionSet.count(Opts[i]) == 0)
-          OptionSet.insert(Opts[i]);   // Add new entry to set
-        else
-          Opts.erase(Opts.begin()+i--);    // Erase duplicate
+      for (unsigned i = 0; i != Opts.size(); ++i) {
+        if (OptionSet.insert(Opts[i]))    // Add new entry to set
+          continue;
+        // Erase duplicate.
+        Opts[i] = Opts.back();
+        Opts.pop_back();
+        --i;
+      }
     }
 
     if (ProgramOverview)
