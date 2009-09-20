@@ -32,9 +32,11 @@ if(PYTHONINTERP_FOUND)
 
   foreach(testdir ${CLANG_TEST_DIRECTORIES})
     add_custom_target(clang-test-${testdir} 
-      COMMAND sed -e "s#\@CLANG_SOURCE_DIR\@#${CMAKE_CURRENT_SOURCE_DIR}/..#"
-                  -e "s#\@CLANG_BINARY_DIR\@#${CMAKE_CURRENT_BINARY_DIR}/..#"
+      COMMAND sed -e "s#\@LLVM_SOURCE_DIR\@#${LLVM_MAIN_SRC_DIR}#"
+                  -e "s#\@LLVM_BINARY_DIR\@#${LLVM_BINARY_DIR}#"
                   -e "s#\@LLVM_TOOLS_DIR\@#${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}#"
+                  -e "s#\@CLANG_SOURCE_DIR\@#${CMAKE_CURRENT_SOURCE_DIR}/..#"
+                  -e "s#\@CLANG_BINARY_DIR\@#${CMAKE_CURRENT_BINARY_DIR}/..#"
                   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in >
                   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
       COMMAND ${PYTHON_EXECUTABLE} 
@@ -46,9 +48,11 @@ if(PYTHONINTERP_FOUND)
   endforeach()
 
   add_custom_target(clang-test
-    COMMAND sed -e "s#\@CLANG_SOURCE_DIR\@#${CMAKE_CURRENT_SOURCE_DIR}/..#"
-                -e "s#\@CLANG_BINARY_DIR\@#${CMAKE_CURRENT_BINARY_DIR}/..#"
+    COMMAND sed -e "s#\@LLVM_SOURCE_DIR\@#${LLVM_MAIN_SRC_DIR}#"
+                -e "s#\@LLVM_BINARY_DIR\@#${LLVM_BINARY_DIR}#"
                 -e "s#\@LLVM_TOOLS_DIR\@#${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}#"
+                -e "s#\@CLANG_SOURCE_DIR\@#${CMAKE_CURRENT_SOURCE_DIR}/..#"
+                -e "s#\@CLANG_BINARY_DIR\@#${CMAKE_CURRENT_BINARY_DIR}/..#"
                 ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in >
                 ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     COMMAND ${PYTHON_EXECUTABLE} 
