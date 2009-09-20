@@ -1017,14 +1017,6 @@ class HelpPrinter {
   const Option *EmptyArg;
   const bool ShowHidden;
 
-  // isHidden/isReallyHidden - Predicates to be used to filter down arg lists.
-  inline static bool isHidden(Option *Opt) {
-    return Opt->getOptionHiddenFlag() >= Hidden;
-  }
-  inline static bool isReallyHidden(Option *Opt) {
-    return Opt->getOptionHiddenFlag() == ReallyHidden;
-  }
-
 public:
   explicit HelpPrinter(bool showHidden) : ShowHidden(showHidden) {
     EmptyArg = 0;
@@ -1043,13 +1035,16 @@ public:
     std::vector<Option*> Opts;
     for (StringMap<Option*>::iterator I = OptMap.begin(), E = OptMap.end();
          I != E; ++I) {
+      // Ignore really-hidden options.
+      if (I->second->getOptionHiddenFlag() == ReallyHidden)
+        continue;
+      
+      // Unless showhidden is set, ignore hidden flags.
+      if (I->second->getOptionHiddenFlag() == Hidden && !ShowHidden)
+        continue;
+      
       Opts.push_back(I->second);
     }
-
-    // Eliminate Hidden or ReallyHidden arguments, depending on ShowHidden
-    Opts.erase(std::remove_if(Opts.begin(), Opts.end(),
-                          std::ptr_fun(ShowHidden ? isReallyHidden : isHidden)),
-               Opts.end());
 
     // Eliminate duplicate entries in table (from enum flags options, f.e.).
     {  // Give OptionSet a scope
