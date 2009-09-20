@@ -1241,12 +1241,11 @@ static ICmpInst::Predicate evaluateICmpRelation(LLVMContext &Context,
       // null pointer, do the comparison with the pre-casted value.
       if (V2->isNullValue() &&
           (isa<PointerType>(CE1->getType()) || CE1->getType()->isInteger())) {
-        bool sgnd = isSigned;
         if (CE1->getOpcode() == Instruction::ZExt) isSigned = false;
         if (CE1->getOpcode() == Instruction::SExt) isSigned = true;
         return evaluateICmpRelation(Context, CE1Op0,
                                     Constant::getNullValue(CE1Op0->getType()), 
-                                    sgnd);
+                                    isSigned);
       }
       break;
 
