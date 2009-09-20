@@ -16,6 +16,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "X86ATTAsmPrinter.h"
 #include "X86ATTInstPrinter.h"
+#include "X86IntelInstPrinter.h"
 #include "X86MCInstLower.h"
 #include "X86.h"
 #include "X86COFF.h"
@@ -50,7 +51,10 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 //===----------------------------------------------------------------------===//
 
 void X86ATTAsmPrinter::printMCInst(const MCInst *MI) {
-  X86ATTInstPrinter(O, *MAI).printInstruction(MI);
+  if (MAI->getAssemblerDialect() == 0)
+    X86ATTInstPrinter(O, *MAI).printInstruction(MI);
+  else
+    X86IntelInstPrinter(O, *MAI).printInstruction(MI);
 }
 
 void X86ATTAsmPrinter::PrintPICBaseSymbol() const {

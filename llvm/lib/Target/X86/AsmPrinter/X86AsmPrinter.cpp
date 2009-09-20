@@ -16,7 +16,6 @@
 
 #include "X86.h"
 #include "X86ATTAsmPrinter.h"
-#include "X86IntelAsmPrinter.h"
 #include "X86ATTInstPrinter.h"
 #include "X86IntelInstPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -31,8 +30,6 @@ static AsmPrinter *createX86CodePrinterPass(formatted_raw_ostream &o,
                                             TargetMachine &tm,
                                             const MCAsmInfo *tai,
                                             bool verbose) {
-  if (tm.getMCAsmInfo()->getAssemblerDialect() == 1)
-    return new X86IntelAsmPrinter(o, tm, tai, verbose);
   return new X86ATTAsmPrinter(o, tm, tai, verbose);
 }
 

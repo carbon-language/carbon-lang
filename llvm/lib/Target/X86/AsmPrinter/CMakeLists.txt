@@ -4,7 +4,6 @@ add_llvm_library(LLVMX86AsmPrinter
   X86ATTAsmPrinter.cpp
   X86ATTInstPrinter.cpp
   X86AsmPrinter.cpp
-  X86IntelAsmPrinter.cpp
   X86IntelInstPrinter.cpp
   X86MCInstLower.cpp
   )
