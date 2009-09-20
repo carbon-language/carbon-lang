@@ -1248,21 +1248,6 @@ static ICmpInst::Predicate evaluateICmpRelation(LLVMContext &Context,
                                     Constant::getNullValue(CE1Op0->getType()), 
                                     sgnd);
       }
-
-      // If the dest type is a pointer type, and the RHS is a constantexpr cast
-      // from the same type as the src of the LHS, evaluate the inputs.  This is
-      // important for things like "icmp eq (cast 4 to int*), (cast 5 to int*)",
-      // which happens a lot in compilers with tagged integers.
-      if (ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2))
-        if (CE2->isCast() && isa<PointerType>(CE1->getType()) &&
-            CE1->getOperand(0)->getType() == CE2->getOperand(0)->getType() &&
-            CE1->getOperand(0)->getType()->isInteger()) {
-          bool sgnd = isSigned;
-          if (CE1->getOpcode() == Instruction::ZExt) isSigned = false;
-          if (CE1->getOpcode() == Instruction::SExt) isSigned = true;
-          return evaluateICmpRelation(Context, CE1->getOperand(0), 
-                                      CE2->getOperand(0), sgnd);
-        }
       break;
 
     case Instruction::GetElementPtr:
