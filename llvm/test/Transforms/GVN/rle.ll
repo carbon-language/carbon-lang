@@ -60,11 +60,11 @@ define i32* @coerce_mustalias3(float %V, float* %P) {
 ;; i32 -> f32 load forwarding.
 define float @coerce_mustalias4(i32* %P, i1 %cond) {
   %A = load i32* %P
-  br i1 %cond, label %T, label %T
-T:
+  
   %P2 = bitcast i32* %P to float*
-
   %B = load float* %P2
+  br i1 %cond, label %T, label %F
+T:
   ret float %B
   
 F:
@@ -115,5 +115,53 @@ define i8* @coerce_mustalias7(i64 %V, i64* %P) {
 ; CHECK: @coerce_mustalias7
 ; CHECK-NOT: load
 ; CHECK: ret i8*
+}
+
+;; non-local i32/float -> i8 load forwarding.
+define i8 @coerce_mustalias_nonlocal0(i32* %P, i1 %cond) {
+  %P2 = bitcast i32* %P to float*
+  %P3 = bitcast i32* %P to i8*
+  br i1 %cond, label %T, label %F
+T:
+  store i32 42, i32* %P
+  br label %Cont
+  
+F:
+  store float 1.0, float* %P2
+  br label %Cont
+
+Cont:
+  %A = load i8* %P3
+  ret i8 %A
+
+; CHECK: @coerce_mustalias_nonlocal0
+; CHECK: Cont:
+; CHECK:   %A = phi i8 [
+; CHECK-NOT: load
+; CHECK: ret i8 %A
+}
+
+;; non-local i32 -> i8 partial redundancy load forwarding.
+define i8 @coerce_mustalias_pre0(i32* %P, i1 %cond) {
+  %P3 = bitcast i32* %P to i8*
+  br i1 %cond, label %T, label %F
+T:
+  store i32 42, i32* %P
+  br label %Cont
+  
+F:
+  br label %Cont
+
+Cont:
+  %A = load i8* %P3
+  ret i8 %A
+
+; CHECK: @coerce_mustalias_pre0
+; CHECK: F:
+; CHECK:   load i8* %P3
+; CHECK: Cont:
+; CHECK:   %A = phi i8 [
+; CHECK-NOT: load
+; CHECK: ret i8 %A
 }
 

@@ -937,6 +937,115 @@ SpeculationFailure:
   return false;
 }
 
+
+/// CoerceAvailableValueToLoadType - If we saw a store of a value to memory, and
+/// then a load from a must-aliased pointer of a different type, try to coerce
+/// the stored value.  LoadedTy is the type of the load we want to replace and
+/// InsertPt is the place to insert new instructions.
+///
+/// If we can't do it, return null.
+static Value *CoerceAvailableValueToLoadType(Value *StoredVal, 
+                                             const Type *LoadedTy,
+                                             Instruction *InsertPt,
+                                             const TargetData &TD) {
+  const Type *StoredValTy = StoredVal->getType();
+  
+  uint64_t StoreSize = TD.getTypeSizeInBits(StoredValTy);
+  uint64_t LoadSize = TD.getTypeSizeInBits(LoadedTy);
+  
+  // If the store and reload are the same size, we can always reuse it.
+  if (StoreSize == LoadSize) {
+    if (isa<PointerType>(StoredValTy) && isa<PointerType>(LoadedTy)) {
+      // Pointer to Pointer -> use bitcast.
+      return new BitCastInst(StoredVal, LoadedTy, "", InsertPt);
+    }
+    
+    // Convert source pointers to integers, which can be bitcast.
+    if (isa<PointerType>(StoredValTy)) {
+      StoredValTy = TD.getIntPtrType(StoredValTy->getContext());
+      StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", InsertPt);
+    }
+    
+    const Type *TypeToCastTo = LoadedTy;
+    if (isa<PointerType>(TypeToCastTo))
+      TypeToCastTo = TD.getIntPtrType(StoredValTy->getContext());
+    
+    if (StoredValTy != TypeToCastTo)
+      StoredVal = new BitCastInst(StoredVal, TypeToCastTo, "", InsertPt);
+    
+    // Cast to pointer if the load needs a pointer type.
+    if (isa<PointerType>(LoadedTy))
+      StoredVal = new IntToPtrInst(StoredVal, LoadedTy, "", InsertPt);
+    
+    return StoredVal;
+  }
+  
+  // If the loaded value is smaller than the available value, then we can
+  // extract out a piece from it.  If the available value is too small, then we
+  // can't do anything.
+  if (StoreSize < LoadSize)
+    return 0;
+  
+  // Convert source pointers to integers, which can be manipulated.
+  if (isa<PointerType>(StoredValTy)) {
+    StoredValTy = TD.getIntPtrType(StoredValTy->getContext());
+    StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", InsertPt);
+  }
+  
+  // Convert vectors and fp to integer, which can be manipulated.
+  if (!isa<IntegerType>(StoredValTy)) {
+    StoredValTy = IntegerType::get(StoredValTy->getContext(), StoreSize);
+    StoredVal = new BitCastInst(StoredVal, StoredValTy, "", InsertPt);
+  }
+  
+  // If this is a big-endian system, we need to shift the value down to the low
+  // bits so that a truncate will work.
+  if (TD.isBigEndian()) {
+    Constant *Val = ConstantInt::get(StoredVal->getType(), StoreSize-LoadSize);
+    StoredVal = BinaryOperator::CreateLShr(StoredVal, Val, "tmp", InsertPt);
+  }
+  
+  // Truncate the integer to the right size now.
+  const Type *NewIntTy = IntegerType::get(StoredValTy->getContext(), LoadSize);
+  StoredVal = new TruncInst(StoredVal, NewIntTy, "trunc", InsertPt);
+  
+  if (LoadedTy == NewIntTy)
+    return StoredVal;
+  
+  // If the result is a pointer, inttoptr.
+  if (isa<PointerType>(LoadedTy))
+    return new IntToPtrInst(StoredVal, LoadedTy, "inttoptr", InsertPt);
+  
+  // Otherwise, bitcast.
+  return new BitCastInst(StoredVal, LoadedTy, "bitcast", InsertPt);
+}
+
+static void 
+GetAvailableBlockValues(DenseMap<BasicBlock*, Value*> &BlockReplValues,
+                        SmallVector<std::pair<BasicBlock*,
+                                    Value*>, 16> &ValuesPerBlock,
+                        const Type *LoadTy,
+                        const TargetData *TD) {
+
+  for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i) {
+    BasicBlock *BB = ValuesPerBlock[i].first;
+    Value *AvailableVal = ValuesPerBlock[i].second;
+    
+    Value *&BlockEntry = BlockReplValues[BB];
+    if (BlockEntry) continue;
+    
+    if (AvailableVal->getType() != LoadTy) {
+      assert(TD && "Need target data to handle type mismatch case");
+      AvailableVal = CoerceAvailableValueToLoadType(AvailableVal, LoadTy,
+                                                    BB->getTerminator(), *TD);
+      DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\n"
+                   << *ValuesPerBlock[i].second << '\n'
+                   << *AvailableVal << '\n' << "\n\n\n");
+    }
+    BlockEntry = AvailableVal;
+  }
+}
+
 /// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
 /// non-local by performing PHI construction.
 bool GVN::processNonLocalLoad(LoadInst *LI,
@@ -972,6 +1081,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   SmallVector<std::pair<BasicBlock*, Value*>, 16> ValuesPerBlock;
   SmallVector<BasicBlock*, 16> UnavailableBlocks;
 
+  const TargetData *TD = 0;
+  
   for (unsigned i = 0, e = Deps.size(); i != e; ++i) {
     BasicBlock *DepBB = Deps[i].first;
     MemDepResult DepInfo = Deps[i].second;
@@ -992,24 +1103,41 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
     if (StoreInst* S = dyn_cast<StoreInst>(DepInst)) {
       // Reject loads and stores that are to the same address but are of
-      // different types.
-      // NOTE: 403.gcc does have this case (e.g. in readonly_fields_p) because
-      // of bitfield access, it would be interesting to optimize for it at some
-      // point.
+      // different types if we have to.
       if (S->getOperand(0)->getType() != LI->getType()) {
-        UnavailableBlocks.push_back(DepBB);
-        continue;
+        if (TD == 0)
+          TD = getAnalysisIfAvailable<TargetData>();
+        
+        // If the stored value is larger or equal to the loaded value, we can
+        // reuse it.
+        if (TD == 0 || 
+            TD->getTypeSizeInBits(S->getOperand(0)->getType()) <
+              TD->getTypeSizeInBits(LI->getType())) {
+          UnavailableBlocks.push_back(DepBB);
+          continue;
+        }
       }
 
       ValuesPerBlock.push_back(std::make_pair(DepBB, S->getOperand(0)));
 
     } else if (LoadInst* LD = dyn_cast<LoadInst>(DepInst)) {
+      // If the types mismatch and we can't handle it, reject reuse of the load.
       if (LD->getType() != LI->getType()) {
-        UnavailableBlocks.push_back(DepBB);
-        continue;
+        if (TD == 0)
+          TD = getAnalysisIfAvailable<TargetData>();
+        
+        // If the stored value is larger or equal to the loaded value, we can
+        // reuse it.
+        if (TD == 0 || 
+            TD->getTypeSizeInBits(LD->getType()) <
+               TD->getTypeSizeInBits(LI->getType())) {
+          UnavailableBlocks.push_back(DepBB);
+          continue;
+        }          
       }
       ValuesPerBlock.push_back(std::make_pair(DepBB, LD));
     } else {
+      // FIXME: Handle memset/memcpy.
       UnavailableBlocks.push_back(DepBB);
       continue;
     }
@@ -1043,16 +1171,18 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
     DEBUG(errs() << "GVN REMOVING NONLOCAL LOAD: " << *LI << '\n');
 
+    // Convert the block information to a map, and insert coersions as needed.
     DenseMap<BasicBlock*, Value*> BlockReplValues;
-    BlockReplValues.insert(ValuesPerBlock.begin(), ValuesPerBlock.end());
+    GetAvailableBlockValues(BlockReplValues, ValuesPerBlock, LI->getType(), TD);
+    
     // Perform PHI construction.
-    Value* v = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
-    LI->replaceAllUsesWith(v);
+    Value *V = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
+    LI->replaceAllUsesWith(V);
 
-    if (isa<PHINode>(v))
-      v->takeName(LI);
-    if (isa<PointerType>(v->getType()))
-      MD->invalidateCachedPointerInfo(v);
+    if (isa<PHINode>(V))
+      V->takeName(LI);
+    if (isa<PointerType>(V->getType()))
+      MD->invalidateCachedPointerInfo(V);
     toErase.push_back(LI);
     NumGVNLoad++;
     return true;
@@ -1196,103 +1326,20 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     ValuesPerBlock.push_back(std::make_pair((*I)->getParent(), *I));
 
   DenseMap<BasicBlock*, Value*> BlockReplValues;
-  BlockReplValues.insert(ValuesPerBlock.begin(), ValuesPerBlock.end());
+  GetAvailableBlockValues(BlockReplValues, ValuesPerBlock, LI->getType(), TD);
   BlockReplValues[UnavailablePred] = NewLoad;
 
   // Perform PHI construction.
-  Value* v = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
-  LI->replaceAllUsesWith(v);
-  if (isa<PHINode>(v))
-    v->takeName(LI);
-  if (isa<PointerType>(v->getType()))
-    MD->invalidateCachedPointerInfo(v);
+  Value *V = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
+  LI->replaceAllUsesWith(V);
+  if (isa<PHINode>(V))
+    V->takeName(LI);
+  if (isa<PointerType>(V->getType()))
+    MD->invalidateCachedPointerInfo(V);
   toErase.push_back(LI);
   NumPRELoad++;
   return true;
 }
-
-/// CoerceAvailableValueToLoadType - If we saw a store of a value to memory, and
-/// then a load from a must-aliased pointer of a different type, try to coerce
-/// the stored value.  LoadedTy is the type of the load we want to replace and
-/// InsertPt is the place to insert new instructions.
-///
-/// If we can't do it, return null.
-static Value *CoerceAvailableValueToLoadType(Value *StoredVal, 
-                                             const Type *LoadedTy,
-                                             Instruction *InsertPt,
-                                             const TargetData &TD) {
-  const Type *StoredValTy = StoredVal->getType();
-  
-  uint64_t StoreSize = TD.getTypeSizeInBits(StoredValTy);
-  uint64_t LoadSize = TD.getTypeSizeInBits(LoadedTy);
-  
-  // If the store and reload are the same size, we can always reuse it.
-  if (StoreSize == LoadSize) {
-    if (isa<PointerType>(StoredValTy) && isa<PointerType>(LoadedTy)) {
-      // Pointer to Pointer -> use bitcast.
-      return new BitCastInst(StoredVal, LoadedTy, "", InsertPt);
-    }
-
-    // Convert source pointers to integers, which can be bitcast.
-    if (isa<PointerType>(StoredValTy)) {
-      StoredValTy = TD.getIntPtrType(StoredValTy->getContext());
-      StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", InsertPt);
-    }
-    
-    const Type *TypeToCastTo = LoadedTy;
-    if (isa<PointerType>(TypeToCastTo))
-      TypeToCastTo = TD.getIntPtrType(StoredValTy->getContext());
-    
-    if (StoredValTy != TypeToCastTo)
-      StoredVal = new BitCastInst(StoredVal, TypeToCastTo, "", InsertPt);
-    
-    // Cast to pointer if the load needs a pointer type.
-    if (isa<PointerType>(LoadedTy))
-      StoredVal = new IntToPtrInst(StoredVal, LoadedTy, "", InsertPt);
-    
-    return StoredVal;
-  }
-  
-  // If the loaded value is smaller than the available value, then we can
-  // extract out a piece from it.  If the available value is too small, then we
-  // can't do anything.
-  if (StoreSize < LoadSize)
-    return 0;
-
-  // Convert source pointers to integers, which can be manipulated.
-  if (isa<PointerType>(StoredValTy)) {
-    StoredValTy = TD.getIntPtrType(StoredValTy->getContext());
-    StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", InsertPt);
-  }
-
-  // Convert vectors and fp to integer, which can be manipulated.
-  if (!isa<IntegerType>(StoredValTy)) {
-    StoredValTy = IntegerType::get(StoredValTy->getContext(), StoreSize);
-    StoredVal = new BitCastInst(StoredVal, StoredValTy, "", InsertPt);
-  }
-  
-  // If this is a big-endian system, we need to shift the value down to the low
-  // bits so that a truncate will work.
-  if (TD.isBigEndian()) {
-    Constant *Val = ConstantInt::get(StoredVal->getType(), StoreSize-LoadSize);
-    StoredVal = BinaryOperator::CreateLShr(StoredVal, Val, "tmp", InsertPt);
-  }
-  
-  // Truncate the integer to the right size now.
-  const Type *NewIntTy = IntegerType::get(StoredValTy->getContext(), LoadSize);
-  StoredVal = new TruncInst(StoredVal, NewIntTy, "trunc", InsertPt);
-
-  if (LoadedTy == NewIntTy)
-    return StoredVal;
-
-  // If the result is a pointer, inttoptr.
-  if (isa<PointerType>(LoadedTy))
-    return new IntToPtrInst(StoredVal, LoadedTy, "inttoptr", InsertPt);
-
-  // Otherwise, bitcast.
-  return new BitCastInst(StoredVal, LoadedTy, "bitcast", InsertPt);
-}
-
 
 /// processLoad - Attempt to eliminate a load, first by eliminating it
 /// locally, and then attempting non-local elimination if that fails.
