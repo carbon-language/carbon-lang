@@ -1213,11 +1213,15 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
 /// CoerceAvailableValueToLoadType - If we saw a store of a value to memory, and
 /// then a load from a must-aliased pointer of a different type, try to coerce
-/// the stored value.  If we can't do it, return null.
-static Value *CoerceAvailableValueToLoadType(Value *StoredVal, LoadInst *L,
+/// the stored value.  LoadedTy is the type of the load we want to replace and
+/// InsertPt is the place to insert new instructions.
+///
+/// If we can't do it, return null.
+static Value *CoerceAvailableValueToLoadType(Value *StoredVal, 
+                                             const Type *LoadedTy,
+                                             Instruction *InsertPt,
                                              const TargetData &TD) {
   const Type *StoredValTy = StoredVal->getType();
-  const Type *LoadedTy = L->getType();
   
   uint64_t StoreSize = TD.getTypeSizeInBits(StoredValTy);
   uint64_t LoadSize = TD.getTypeSizeInBits(LoadedTy);
@@ -1226,13 +1230,13 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal, LoadInst *L,
   if (StoreSize == LoadSize) {
     if (isa<PointerType>(StoredValTy) && isa<PointerType>(LoadedTy)) {
       // Pointer to Pointer -> use bitcast.
-      return new BitCastInst(StoredVal, LoadedTy, "", L);
+      return new BitCastInst(StoredVal, LoadedTy, "", InsertPt);
     }
 
     // Convert source pointers to integers, which can be bitcast.
     if (isa<PointerType>(StoredValTy)) {
       StoredValTy = TD.getIntPtrType(StoredValTy->getContext());
-      StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", L);
+      StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", InsertPt);
     }
     
     const Type *TypeToCastTo = LoadedTy;
@@ -1240,11 +1244,11 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal, LoadInst *L,
       TypeToCastTo = TD.getIntPtrType(StoredValTy->getContext());
     
     if (StoredValTy != TypeToCastTo)
-      StoredVal = new BitCastInst(StoredVal, TypeToCastTo, "", L);
+      StoredVal = new BitCastInst(StoredVal, TypeToCastTo, "", InsertPt);
     
     // Cast to pointer if the load needs a pointer type.
     if (isa<PointerType>(LoadedTy))
-      StoredVal = new IntToPtrInst(StoredVal, LoadedTy, "", L);
+      StoredVal = new IntToPtrInst(StoredVal, LoadedTy, "", InsertPt);
     
     return StoredVal;
   }
@@ -1258,35 +1262,35 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal, LoadInst *L,
   // Convert source pointers to integers, which can be manipulated.
   if (isa<PointerType>(StoredValTy)) {
     StoredValTy = TD.getIntPtrType(StoredValTy->getContext());
-    StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", L);
+    StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", InsertPt);
   }
 
   // Convert vectors and fp to integer, which can be manipulated.
   if (!isa<IntegerType>(StoredValTy)) {
     StoredValTy = IntegerType::get(StoredValTy->getContext(), StoreSize);
-    StoredVal = new BitCastInst(StoredVal, StoredValTy, "", L);
+    StoredVal = new BitCastInst(StoredVal, StoredValTy, "", InsertPt);
   }
   
   // If this is a big-endian system, we need to shift the value down to the low
   // bits so that a truncate will work.
   if (TD.isBigEndian()) {
     Constant *Val = ConstantInt::get(StoredVal->getType(), StoreSize-LoadSize);
-    StoredVal = BinaryOperator::CreateLShr(StoredVal, Val, "tmp", L);
+    StoredVal = BinaryOperator::CreateLShr(StoredVal, Val, "tmp", InsertPt);
   }
   
   // Truncate the integer to the right size now.
   const Type *NewIntTy = IntegerType::get(StoredValTy->getContext(), LoadSize);
-  StoredVal = new TruncInst(StoredVal, NewIntTy, "trunc", L);
+  StoredVal = new TruncInst(StoredVal, NewIntTy, "trunc", InsertPt);
 
   if (LoadedTy == NewIntTy)
     return StoredVal;
 
   // If the result is a pointer, inttoptr.
   if (isa<PointerType>(LoadedTy))
-    return new IntToPtrInst(StoredVal, LoadedTy, "inttoptr", L);
+    return new IntToPtrInst(StoredVal, LoadedTy, "inttoptr", InsertPt);
 
   // Otherwise, bitcast.
-  return new BitCastInst(StoredVal, LoadedTy, "bitcast", L);
+  return new BitCastInst(StoredVal, LoadedTy, "bitcast", InsertPt);
 }
 
 
@@ -1335,7 +1339,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     const TargetData *TD = 0;
     if (StoredVal->getType() != L->getType() &&
         (TD = getAnalysisIfAvailable<TargetData>())) {
-      StoredVal = CoerceAvailableValueToLoadType(StoredVal, L, *TD);
+      StoredVal = CoerceAvailableValueToLoadType(StoredVal, L->getType(), L, *TD);
       if (StoredVal == 0)
         return false;
       
@@ -1361,7 +1365,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     const TargetData *TD = 0;
     if (DepLI->getType() != L->getType() &&
         (TD = getAnalysisIfAvailable<TargetData>())) {
-      AvailableVal = CoerceAvailableValueToLoadType(DepLI, L, *TD);
+      AvailableVal = CoerceAvailableValueToLoadType(DepLI, L->getType(), L, *TD);
       if (AvailableVal == 0)
         return false;
       
@@ -1380,6 +1384,8 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
 
   // FIXME: We should handle memset/memcpy/memmove as dependent instructions to
   // forward the value if available.
+  //if (isa<MemIntrinsic>(DepInst))
+  //  errs() << "LOAD DEPENDS ON MEM: " << *L << "\n" << *DepInst << "\n\n";
   
   
   // If this load really doesn't depend on anything, then we must be loading an
