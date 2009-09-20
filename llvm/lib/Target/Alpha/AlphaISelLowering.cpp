@@ -48,9 +48,9 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   //I am having problems with shr n i8 1
   setShiftAmountType(MVT::i64);
   setBooleanContents(ZeroOrOneBooleanContent);
-  
+
   setUsesGlobalOffsetTable(true);
-  
+
   addRegisterClass(MVT::i64, Alpha::GPRCRegisterClass);
   addRegisterClass(MVT::f64, Alpha::F8RCRegisterClass);
   addRegisterClass(MVT::f32, Alpha::F4RCRegisterClass);
@@ -60,10 +60,10 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
 
   setLoadExtAction(ISD::EXTLOAD, MVT::i1,  Promote);
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
-  
+
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, Expand);
-  
+
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i8,  Expand);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
@@ -73,13 +73,13 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   //  setOperationAction(ISD::BRIND,        MVT::Other,   Expand);
   setOperationAction(ISD::BR_JT,        MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,        MVT::Other, Expand);
-  setOperationAction(ISD::SELECT_CC,    MVT::Other, Expand);  
+  setOperationAction(ISD::SELECT_CC,    MVT::Other, Expand);
 
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
   setOperationAction(ISD::FREM, MVT::f32, Expand);
   setOperationAction(ISD::FREM, MVT::f64, Expand);
-  
+
   setOperationAction(ISD::UINT_TO_FP, MVT::i64, Expand);
   setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
   setOperationAction(ISD::FP_TO_UINT, MVT::i64, Expand);
@@ -93,7 +93,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BSWAP    , MVT::i64, Expand);
   setOperationAction(ISD::ROTL     , MVT::i64, Expand);
   setOperationAction(ISD::ROTR     , MVT::i64, Expand);
-  
+
   setOperationAction(ISD::SREM     , MVT::i64, Custom);
   setOperationAction(ISD::UREM     , MVT::i64, Custom);
   setOperationAction(ISD::SDIV     , MVT::i64, Custom);
@@ -134,7 +134,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
 
   // Not implemented yet.
-  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand); 
+  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
 
@@ -202,7 +202,7 @@ static SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   SDValue Zero = DAG.getConstant(0, PtrVT);
   // FIXME there isn't really any debug info here
   DebugLoc dl = Op.getDebugLoc();
-  
+
   SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, JTI,
                              DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
   SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, JTI, Hi);
@@ -403,7 +403,7 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
     Alpha::R16, Alpha::R17, Alpha::R18, Alpha::R19, Alpha::R20, Alpha::R21};
   unsigned args_float[] = {
     Alpha::F16, Alpha::F17, Alpha::F18, Alpha::F19, Alpha::F20, Alpha::F21};
-  
+
   for (unsigned ArgNo = 0, e = Ins.size(); ArgNo != e; ++ArgNo) {
     SDValue argt;
     EVT ObjectVT = Ins[ArgNo].VT;
@@ -414,17 +414,17 @@ AlphaTargetLowering::LowerFormalArguments(SDValue Chain,
       default:
         assert(false && "Invalid value type!");
       case MVT::f64:
-        args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 
+        args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo],
                                       &Alpha::F8RCRegClass);
         ArgVal = DAG.getCopyFromReg(Chain, dl, args_float[ArgNo], ObjectVT);
         break;
       case MVT::f32:
-        args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo], 
+        args_float[ArgNo] = AddLiveIn(MF, args_float[ArgNo],
                                       &Alpha::F4RCRegClass);
         ArgVal = DAG.getCopyFromReg(Chain, dl, args_float[ArgNo], ObjectVT);
         break;
       case MVT::i64:
-        args_int[ArgNo] = AddLiveIn(MF, args_int[ArgNo], 
+        args_int[ArgNo] = AddLiveIn(MF, args_int[ArgNo],
                                     &Alpha::GPRCRegClass);
         ArgVal = DAG.getCopyFromReg(Chain, dl, args_int[ArgNo], MVT::i64);
         break;
@@ -495,7 +495,7 @@ AlphaTargetLowering::LowerReturn(SDValue Chain,
       assert(ArgVT.isFloatingPoint());
       ArgReg = Alpha::F0;
     }
-    Copy = DAG.getCopyToReg(Copy, dl, ArgReg, 
+    Copy = DAG.getCopyToReg(Copy, dl, ArgReg,
                             Outs[0].Val, Copy.getValue(1));
     if (DAG.getMachineFunction().getRegInfo().liveout_empty())
       DAG.getMachineFunction().getRegInfo().addLiveOut(ArgReg);
@@ -512,22 +512,22 @@ AlphaTargetLowering::LowerReturn(SDValue Chain,
       ArgReg1 = Alpha::F0;
       ArgReg2 = Alpha::F1;
     }
-    Copy = DAG.getCopyToReg(Copy, dl, ArgReg1, 
+    Copy = DAG.getCopyToReg(Copy, dl, ArgReg1,
                             Outs[0].Val, Copy.getValue(1));
-    if (std::find(DAG.getMachineFunction().getRegInfo().liveout_begin(), 
+    if (std::find(DAG.getMachineFunction().getRegInfo().liveout_begin(),
                   DAG.getMachineFunction().getRegInfo().liveout_end(), ArgReg1)
         == DAG.getMachineFunction().getRegInfo().liveout_end())
       DAG.getMachineFunction().getRegInfo().addLiveOut(ArgReg1);
-    Copy = DAG.getCopyToReg(Copy, dl, ArgReg2, 
+    Copy = DAG.getCopyToReg(Copy, dl, ArgReg2,
                             Outs[1].Val, Copy.getValue(1));
-    if (std::find(DAG.getMachineFunction().getRegInfo().liveout_begin(), 
+    if (std::find(DAG.getMachineFunction().getRegInfo().liveout_begin(),
                    DAG.getMachineFunction().getRegInfo().liveout_end(), ArgReg2)
         == DAG.getMachineFunction().getRegInfo().liveout_end())
       DAG.getMachineFunction().getRegInfo().addLiveOut(ArgReg2);
     break;
   }
   }
-  return DAG.getNode(AlphaISD::RET_FLAG, dl, 
+  return DAG.getNode(AlphaISD::RET_FLAG, dl,
                      MVT::Other, Copy, Copy.getValue(1));
 }
 
@@ -573,7 +573,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     switch (IntNo) {
     default: break;    // Don't custom lower most intrinsics.
     case Intrinsic::alpha_umulh:
-      return DAG.getNode(ISD::MULHU, dl, MVT::i64, 
+      return DAG.getNode(ISD::MULHU, dl, MVT::i64,
                          Op.getOperand(1), Op.getOperand(2));
     }
   }
@@ -582,14 +582,14 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     SDValue ShOpLo = Op.getOperand(0);
     SDValue ShOpHi = Op.getOperand(1);
     SDValue ShAmt  = Op.getOperand(2);
-    SDValue bm = DAG.getNode(ISD::SUB, dl, MVT::i64, 
-			     DAG.getConstant(64, MVT::i64), ShAmt);
+    SDValue bm = DAG.getNode(ISD::SUB, dl, MVT::i64,
+                             DAG.getConstant(64, MVT::i64), ShAmt);
     SDValue BMCC = DAG.getSetCC(dl, MVT::i64, bm,
                                 DAG.getConstant(0, MVT::i64), ISD::SETLE);
     // if 64 - shAmt <= 0
     SDValue Hi_Neg = DAG.getConstant(0, MVT::i64);
     SDValue ShAmt_Neg = DAG.getNode(ISD::SUB, dl, MVT::i64,
-				    DAG.getConstant(0, MVT::i64), bm);
+                                    DAG.getConstant(0, MVT::i64), bm);
     SDValue Lo_Neg = DAG.getNode(ISD::SRL, dl, MVT::i64, ShOpHi, ShAmt_Neg);
     // else
     SDValue carries = DAG.getNode(ISD::SHL, dl, MVT::i64, ShOpHi, bm);
@@ -601,7 +601,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     SDValue Lo = DAG.getNode(ISD::SELECT, dl, MVT::i64, BMCC, Lo_Neg, Lo_Pos);
     SDValue Ops[2] = { Lo, Hi };
     return DAG.getMergeValues(Ops, 2, dl);
-  }			
+  }
     //  case ISD::SRA_PARTS:
 
     //  case ISD::SHL_PARTS:
@@ -623,7 +623,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
 
     if (!isDouble) //Promote
       src = DAG.getNode(ISD::FP_EXTEND, dl, MVT::f64, src);
-    
+
     src = DAG.getNode(AlphaISD::CVTTQ_, dl, MVT::f64, src);
 
     return DAG.getNode(ISD::BIT_CONVERT, dl, MVT::i64, src);
@@ -633,7 +633,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     Constant *C = CP->getConstVal();
     SDValue CPI = DAG.getTargetConstantPool(C, MVT::i64, CP->getAlignment());
     // FIXME there isn't really any debug info here
-    
+
     SDValue Hi = DAG.getNode(AlphaISD::GPRelHi,  dl, MVT::i64, CPI,
                                DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
     SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, CPI, Hi);
@@ -654,11 +654,11 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
       SDValue Lo = DAG.getNode(AlphaISD::GPRelLo, dl, MVT::i64, GA, Hi);
       return Lo;
     } else
-      return DAG.getNode(AlphaISD::RelLit, dl, MVT::i64, GA, 
+      return DAG.getNode(AlphaISD::RelLit, dl, MVT::i64, GA,
                          DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
   }
   case ISD::ExternalSymbol: {
-    return DAG.getNode(AlphaISD::RelLit, dl, MVT::i64, 
+    return DAG.getNode(AlphaISD::RelLit, dl, MVT::i64,
                        DAG.getTargetExternalSymbol(cast<ExternalSymbolSDNode>(Op)
                                                    ->getSymbol(), MVT::i64),
                        DAG.getGLOBAL_OFFSET_TABLE(MVT::i64));
@@ -681,7 +681,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::UDIV:
     if (Op.getValueType().isInteger()) {
       if (Op.getOperand(1).getOpcode() == ISD::Constant)
-        return Op.getOpcode() == ISD::SDIV ? BuildSDIV(Op.getNode(), DAG, NULL) 
+        return Op.getOpcode() == ISD::SDIV ? BuildSDIV(Op.getNode(), DAG, NULL)
           : BuildUDIV(Op.getNode(), DAG, NULL);
       const char* opstr = 0;
       switch (Op.getOpcode()) {
@@ -715,12 +715,12 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     SDValue SrcP = Op.getOperand(2);
     const Value *DestS = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
     const Value *SrcS = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
-    
+
     SDValue Val = DAG.getLoad(getPointerTy(), dl, Chain, SrcP, SrcS, 0);
     SDValue Result = DAG.getStore(Val.getValue(1), dl, Val, DestP, DestS, 0);
-    SDValue NP = DAG.getNode(ISD::ADD, dl, MVT::i64, SrcP, 
+    SDValue NP = DAG.getNode(ISD::ADD, dl, MVT::i64, SrcP,
                                DAG.getConstant(8, MVT::i64));
-    Val = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Result, 
+    Val = DAG.getExtLoad(ISD::SEXTLOAD, dl, MVT::i64, Result,
                          NP, NULL,0, MVT::i32);
     SDValue NPD = DAG.getNode(ISD::ADD, dl, MVT::i64, DestP,
                                 DAG.getConstant(8, MVT::i64));
@@ -730,7 +730,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     SDValue Chain = Op.getOperand(0);
     SDValue VAListP = Op.getOperand(1);
     const Value *VAListS = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-    
+
     // vastart stores the address of the VarArgsBase and VarArgsOffset
     SDValue FR  = DAG.getFrameIndex(VarArgsBase, MVT::i64);
     SDValue S1  = DAG.getStore(Chain, dl, FR, VAListP, VAListS, 0);
@@ -739,13 +739,13 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     return DAG.getTruncStore(S1, dl, DAG.getConstant(VarArgsOffset, MVT::i64),
                              SA2, NULL, 0, MVT::i32);
   }
-  case ISD::RETURNADDR:        
+  case ISD::RETURNADDR:
     return DAG.getNode(AlphaISD::GlobalRetAddr, DebugLoc::getUnknownLoc(),
                        MVT::i64);
       //FIXME: implement
   case ISD::FRAMEADDR:          break;
   }
-  
+
   return SDValue();
 }
 
@@ -769,7 +769,7 @@ void AlphaTargetLowering::ReplaceNodeResults(SDNode *N,
 
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
-AlphaTargetLowering::ConstraintType 
+AlphaTargetLowering::ConstraintType
 AlphaTargetLowering::getConstraintType(const std::string &Constraint) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
@@ -788,33 +788,33 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     default: break;  // Unknown constriant letter
-    case 'f': 
+    case 'f':
       return make_vector<unsigned>(Alpha::F0 , Alpha::F1 , Alpha::F2 ,
                                    Alpha::F3 , Alpha::F4 , Alpha::F5 ,
-                                   Alpha::F6 , Alpha::F7 , Alpha::F8 , 
-                                   Alpha::F9 , Alpha::F10, Alpha::F11, 
-                                   Alpha::F12, Alpha::F13, Alpha::F14, 
-                                   Alpha::F15, Alpha::F16, Alpha::F17, 
-                                   Alpha::F18, Alpha::F19, Alpha::F20, 
-                                   Alpha::F21, Alpha::F22, Alpha::F23, 
-                                   Alpha::F24, Alpha::F25, Alpha::F26, 
-                                   Alpha::F27, Alpha::F28, Alpha::F29, 
+                                   Alpha::F6 , Alpha::F7 , Alpha::F8 ,
+                                   Alpha::F9 , Alpha::F10, Alpha::F11,
+                                   Alpha::F12, Alpha::F13, Alpha::F14,
+                                   Alpha::F15, Alpha::F16, Alpha::F17,
+                                   Alpha::F18, Alpha::F19, Alpha::F20,
+                                   Alpha::F21, Alpha::F22, Alpha::F23,
+                                   Alpha::F24, Alpha::F25, Alpha::F26,
+                                   Alpha::F27, Alpha::F28, Alpha::F29,
                                    Alpha::F30, Alpha::F31, 0);
-    case 'r': 
-      return make_vector<unsigned>(Alpha::R0 , Alpha::R1 , Alpha::R2 , 
-                                   Alpha::R3 , Alpha::R4 , Alpha::R5 , 
-                                   Alpha::R6 , Alpha::R7 , Alpha::R8 , 
-                                   Alpha::R9 , Alpha::R10, Alpha::R11, 
-                                   Alpha::R12, Alpha::R13, Alpha::R14, 
-                                   Alpha::R15, Alpha::R16, Alpha::R17, 
-                                   Alpha::R18, Alpha::R19, Alpha::R20, 
-                                   Alpha::R21, Alpha::R22, Alpha::R23, 
-                                   Alpha::R24, Alpha::R25, Alpha::R26, 
-                                   Alpha::R27, Alpha::R28, Alpha::R29, 
+    case 'r':
+      return make_vector<unsigned>(Alpha::R0 , Alpha::R1 , Alpha::R2 ,
+                                   Alpha::R3 , Alpha::R4 , Alpha::R5 ,
+                                   Alpha::R6 , Alpha::R7 , Alpha::R8 ,
+                                   Alpha::R9 , Alpha::R10, Alpha::R11,
+                                   Alpha::R12, Alpha::R13, Alpha::R14,
+                                   Alpha::R15, Alpha::R16, Alpha::R17,
+                                   Alpha::R18, Alpha::R19, Alpha::R20,
+                                   Alpha::R21, Alpha::R22, Alpha::R23,
+                                   Alpha::R24, Alpha::R25, Alpha::R26,
+                                   Alpha::R27, Alpha::R28, Alpha::R29,
                                    Alpha::R30, Alpha::R31, 0);
     }
   }
-  
+
   return std::vector<unsigned>();
 }
 //===----------------------------------------------------------------------===//
@@ -834,10 +834,10 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
           MI->getOpcode() == Alpha::SWAP64) &&
          "Unexpected instr type to insert");
 
-  bool is32 = MI->getOpcode() == Alpha::CAS32 || 
+  bool is32 = MI->getOpcode() == Alpha::CAS32 ||
     MI->getOpcode() == Alpha::LAS32 ||
     MI->getOpcode() == Alpha::SWAP32;
-  
+
   //Load locked store conditional for atomic ops take on the same form
   //start:
   //ll
@@ -849,14 +849,14 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   DebugLoc dl = MI->getDebugLoc();
   MachineFunction::iterator It = BB;
   ++It;
-  
+
   MachineBasicBlock *thisMBB = BB;
   MachineFunction *F = BB->getParent();
   MachineBasicBlock *llscMBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
 
   // Inform sdisel of the edge changes.
-  for (MachineBasicBlock::succ_iterator I = BB->succ_begin(), 
+  for (MachineBasicBlock::succ_iterator I = BB->succ_begin(),
          E = BB->succ_end(); I != E; ++I)
     EM->insert(std::make_pair(*I, sinkMBB));
 
@@ -866,18 +866,18 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   F->insert(It, sinkMBB);
 
   BuildMI(thisMBB, dl, TII->get(Alpha::BR)).addMBB(llscMBB);
-  
+
   unsigned reg_res = MI->getOperand(0).getReg(),
     reg_ptr = MI->getOperand(1).getReg(),
     reg_v2 = MI->getOperand(2).getReg(),
     reg_store = F->getRegInfo().createVirtualRegister(&Alpha::GPRCRegClass);
 
-  BuildMI(llscMBB, dl, TII->get(is32 ? Alpha::LDL_L : Alpha::LDQ_L), 
+  BuildMI(llscMBB, dl, TII->get(is32 ? Alpha::LDL_L : Alpha::LDQ_L),
           reg_res).addImm(0).addReg(reg_ptr);
   switch (MI->getOpcode()) {
   case Alpha::CAS32:
   case Alpha::CAS64: {
-    unsigned reg_cmp 
+    unsigned reg_cmp
       = F->getRegInfo().createVirtualRegister(&Alpha::GPRCRegClass);
     BuildMI(llscMBB, dl, TII->get(Alpha::CMPEQ), reg_cmp)
       .addReg(reg_v2).addReg(reg_res);

@@ -31,7 +31,7 @@
 using namespace llvm;
 
 namespace {
-  	
+
   class AlphaCodeEmitter {
     MachineCodeEmitter &MCE;
   public:
@@ -60,7 +60,7 @@ namespace {
   public:
     static char ID;
     explicit Emitter(TargetMachine &tm, CodeEmitter &mce)
-      : MachineFunctionPass(&ID), AlphaCodeEmitter(mce), 
+      : MachineFunctionPass(&ID), AlphaCodeEmitter(mce),
         II(0), TM(tm), MCE(mce) {}
     Emitter(TargetMachine &tm, CodeEmitter &mce, const AlphaInstrInfo& ii)
       : MachineFunctionPass(&ID), AlphaCodeEmitter(mce),

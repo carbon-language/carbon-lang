@@ -74,7 +74,7 @@ namespace {
   public:
 
     static char ID;
-    
+
     /// Construct a PBQP register allocator.
     PBQPRegAlloc() : MachineFunctionPass(&ID) {}
 
@@ -696,7 +696,7 @@ bool PBQPRegAlloc::mapPBQPToRegAlloc(const PBQP::Solution &solution) {
 
   // Clear the existing allocation.
   vrm->clearAllVirt();
-  
+
   // Iterate over the nodes mapping the PBQP solution to a register assignment.
   for (unsigned node = 0; node < node2LI.size(); ++node) {
     unsigned virtReg = node2LI[node]->reg,
@@ -764,7 +764,7 @@ void PBQPRegAlloc::finalizeAlloc() const {
 
   // First allocate registers for the empty intervals.
   for (LiveIntervalSet::const_iterator
-	 itr = emptyVRegIntervals.begin(), end = emptyVRegIntervals.end();
+         itr = emptyVRegIntervals.begin(), end = emptyVRegIntervals.end();
          itr != end; ++itr) {
     LiveInterval *li = *itr;
 

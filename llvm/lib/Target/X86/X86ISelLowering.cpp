@@ -7668,7 +7668,7 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
 // all of this code can be replaced with that in the .td file.
 MachineBasicBlock *
 X86TargetLowering::EmitPCMP(MachineInstr *MI, MachineBasicBlock *BB,
-			    unsigned numArgs, bool memArg) const {
+                            unsigned numArgs, bool memArg) const {
 
   MachineFunction *F = BB->getParent();
   DebugLoc dl = MI->getDebugLoc();
@@ -7771,7 +7771,7 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
                    DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
-  
+
   // To "insert" a SELECT_CC instruction, we actually have to insert the
   // diamond control-flow pattern.  The incoming instruction knows the
   // destination vreg to set, the condition code register to branch on, the
@@ -7779,7 +7779,7 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   MachineFunction::iterator It = BB;
   ++It;
-  
+
   //  thisMBB:
   //  ...
   //   TrueVal = ...
@@ -7798,7 +7798,7 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
   // Update machine-CFG edges by first adding all successors of the current
   // block to the new block which will contain the Phi node for the select.
   // Also inform sdisel of the edge changes.
-  for (MachineBasicBlock::succ_iterator I = BB->succ_begin(), 
+  for (MachineBasicBlock::succ_iterator I = BB->succ_begin(),
          E = BB->succ_end(); I != E; ++I) {
     EM->insert(std::make_pair(*I, sinkMBB));
     sinkMBB->addSuccessor(*I);
@@ -7810,15 +7810,15 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
   // Add the true and fallthrough blocks as its successors.
   BB->addSuccessor(copy0MBB);
   BB->addSuccessor(sinkMBB);
-  
+
   //  copy0MBB:
   //   %FalseValue = ...
   //   # fallthrough to sinkMBB
   BB = copy0MBB;
-  
+
   // Update machine-CFG edges
   BB->addSuccessor(sinkMBB);
-  
+
   //  sinkMBB:
   //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
   //  ...
@@ -9374,12 +9374,12 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
         (Constraint[4] >= '0' && Constraint[4] <= '7') &&
         Constraint[5] == ')' &&
         Constraint[6] == '}') {
-      
+
       Res.first = X86::ST0+Constraint[4]-'0';
       Res.second = X86::RFP80RegisterClass;
       return Res;
     }
-    
+
     // GCC allows "st(0)" to be called just plain "st".
     if (StringsEqualNoCase("{st}", Constraint)) {
       Res.first = X86::ST0;
@@ -9393,7 +9393,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       Res.second = X86::CCRRegisterClass;
       return Res;
     }
-    
+
     // 'A' means EAX + EDX.
     if (Constraint == "A") {
       Res.first = X86::EAX;

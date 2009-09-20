@@ -90,7 +90,7 @@ namespace {
   template <class CodeEmitter>
     char Emitter<CodeEmitter>::ID = 0;
 }
-	
+
 /// createPPCCodeEmitterPass - Return a pass that emits the collected PPC code
 /// to the specified MCE object.
 
@@ -129,7 +129,7 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
 template <class CodeEmitter>
 void Emitter<CodeEmitter>::emitBasicBlock(MachineBasicBlock &MBB) {
   MCE.StartMachineBasicBlock(&MBB);
-  
+
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
     const MachineInstr &MI = *I;
     MCE.processDebugLoc(MI.getDebugLoc());
@@ -202,7 +202,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
       case PPC::LWZ8:
       case PPC::LFS:
       case PPC::LFD:
-      
+
       // Stores.
       case PPC::STB:
       case PPC::STB8:
@@ -223,7 +223,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
         break;
       }
     }
-    
+
     MachineRelocation R;
     if (MO.isGlobal()) {
       R = MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
@@ -240,7 +240,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
       R = MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getIndex(), 0);
     }
-    
+
     // If in PIC mode, we need to encode the negated address of the
     // 'movepctolr' into the unrelocated field.  After relocation, we'll have
     // &gv-&movepctolr-4 in the imm field.  Once &movepctolr is added to the imm
@@ -251,7 +251,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
       R.setConstantVal(-(intptr_t)MovePCtoLROffset - 4);
     }
     MCE.addRelocation(R);
-    
+
   } else if (MO.isMBB()) {
     unsigned Reloc = 0;
     unsigned Opcode = MI.getOpcode();

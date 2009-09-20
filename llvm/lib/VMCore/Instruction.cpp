@@ -292,11 +292,11 @@ bool Instruction::isUsedOutsideOfBlock(const BasicBlock *BB) const {
         return true;
       continue;
     }
-    
+
     if (PN->getIncomingBlock(UI) != BB)
       return true;
   }
-  return false;    
+  return false;
 }
 
 /// mayReadFromMemory - Return true if this instruction may read memory.
@@ -380,8 +380,8 @@ bool Instruction::isCommutative(unsigned op) {
 static bool isMalloc(const Value* I) {
   const CallInst *CI = dyn_cast<CallInst>(I);
   if (!CI) {
-  	const BitCastInst *BCI = dyn_cast<BitCastInst>(I);
-	if (!BCI) return false;
+    const BitCastInst *BCI = dyn_cast<BitCastInst>(I);
+    if (!BCI) return false;
 
     CI = dyn_cast<CallInst>(BCI->getOperand(0));
   }

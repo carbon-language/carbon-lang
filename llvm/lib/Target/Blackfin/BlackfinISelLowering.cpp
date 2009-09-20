@@ -173,7 +173,7 @@ BlackfinTargetLowering::LowerFormalArguments(SDValue Chain,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
                  ArgLocs, *DAG.getContext());
-  CCInfo.AllocateStack(12, 4);	// ABI requires 12 bytes stack space
+  CCInfo.AllocateStack(12, 4);  // ABI requires 12 bytes stack space
   CCInfo.AnalyzeFormalArguments(Ins, CC_Blackfin);
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -286,7 +286,7 @@ BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getTarget(), ArgLocs,
                  *DAG.getContext());
-  CCInfo.AllocateStack(12, 4);	// ABI requires 12 bytes stack space
+  CCInfo.AllocateStack(12, 4);  // ABI requires 12 bytes stack space
   CCInfo.AnalyzeCallOperands(Outs, CC_Blackfin);
 
   // Get the size of the outgoing arguments stack space requirement.

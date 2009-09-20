@@ -793,7 +793,7 @@ DILexicalBlock DIFactory::CreateLexicalBlock(DIDescriptor Context) {
 
 /// CreateLocation - Creates a debug info location.
 DILocation DIFactory::CreateLocation(unsigned LineNo, unsigned ColumnNo,
-				     DIScope S, DILocation OrigLoc) {
+                                     DIScope S, DILocation OrigLoc) {
   Value *Elts[] = {
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
     ConstantInt::get(Type::getInt32Ty(VMContext), ColumnNo),
@@ -1218,7 +1218,7 @@ namespace llvm {
 
     // If this location is already tracked then use it.
     DebugLocTuple Tuple(Context, Loc.getLineNumber(),
-			Loc.getColumnNumber());
+                        Loc.getColumnNumber());
     DenseMap<DebugLocTuple, unsigned>::iterator II
       = DebugLocInfo.DebugIdMap.find(Tuple);
     if (II != DebugLocInfo.DebugIdMap.end())

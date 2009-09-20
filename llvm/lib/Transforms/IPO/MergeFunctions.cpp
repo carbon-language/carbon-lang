@@ -582,19 +582,19 @@ static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
           llvm_unreachable(0);
           // fall-through
         case ExternalWeak:
-	  if (F->hasAddressTaken())
+          if (F->hasAddressTaken())
             ThunkGToF(F, G);
           else
             AliasGToF(F, G);
-	  break;
+          break;
         case Internal: {
           bool addrTakenF = F->hasAddressTaken();
           bool addrTakenG = G->hasAddressTaken();
           if (!addrTakenF && addrTakenG) {
             std::swap(FnVec[i], FnVec[j]);
             std::swap(F, G);
-	    std::swap(addrTakenF, addrTakenG);
-	  }
+            std::swap(addrTakenF, addrTakenG);
+          }
 
           if (addrTakenF && addrTakenG) {
             ThunkGToF(F, G);
@@ -602,7 +602,7 @@ static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
             assert(!addrTakenG);
             AliasGToF(F, G);
           }
-	} break;
+        } break;
       }
       break;
   }

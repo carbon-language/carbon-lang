@@ -50,15 +50,15 @@ AssemblyAnnotationWriter::~AssemblyAnnotationWriter() {}
 static const Module *getModuleFromVal(const Value *V) {
   if (const Argument *MA = dyn_cast<Argument>(V))
     return MA->getParent() ? MA->getParent()->getParent() : 0;
-  
+
   if (const BasicBlock *BB = dyn_cast<BasicBlock>(V))
     return BB->getParent() ? BB->getParent()->getParent() : 0;
-  
+
   if (const Instruction *I = dyn_cast<Instruction>(V)) {
     const Function *M = I->getParent() ? I->getParent()->getParent() : 0;
     return M ? M->getParent() : 0;
   }
-  
+
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
     return GV->getParent();
   return 0;
@@ -97,7 +97,7 @@ static void PrintLLVMName(raw_ostream &OS, const StringRef &Name,
   case LabelPrefix:  break;
   case LocalPrefix:  OS << '%'; break;
   }
-  
+
   // Scan the name to see if it needs quotes first.
   bool NeedsQuotes = isdigit(Name[0]);
   if (!NeedsQuotes) {
@@ -109,13 +109,13 @@ static void PrintLLVMName(raw_ostream &OS, const StringRef &Name,
       }
     }
   }
-  
+
   // If we didn't need any quotes, just write out the name in one blast.
   if (!NeedsQuotes) {
     OS << Name;
     return;
   }
-  
+
   // Okay, we need quotes.  Output the quotes and escape any scary characters as
   // needed.
   OS << '"';
@@ -127,7 +127,7 @@ static void PrintLLVMName(raw_ostream &OS, const StringRef &Name,
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
 static void PrintLLVMName(raw_ostream &OS, const Value *V) {
-  PrintLLVMName(OS, V->getName(), 
+  PrintLLVMName(OS, V->getName(),
                 isa<GlobalValue>(V) ? GlobalPrefix : LocalPrefix);
 }
 
@@ -174,11 +174,11 @@ void TypePrinting::CalcTypeName(const Type *Ty,
       return;
     }
   }
-  
+
   // Check to see if the Type is already on the stack...
   unsigned Slot = 0, CurSize = TypeStack.size();
   while (Slot < CurSize && TypeStack[Slot] != Ty) ++Slot; // Scan for type
-  
+
   // This is another base case for the recursion.  In this case, we know
   // that we have looped back to a type that we have previously visited.
   // Generate the appropriate upreference to handle this.
@@ -186,9 +186,9 @@ void TypePrinting::CalcTypeName(const Type *Ty,
     OS << '\\' << unsigned(CurSize-Slot);     // Here's the upreference
     return;
   }
-  
+
   TypeStack.push_back(Ty);    // Recursive case: Add us to the stack..
-  
+
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:      OS << "void"; break;
   case Type::FloatTyID:     OS << "float"; break;
@@ -201,7 +201,7 @@ void TypePrinting::CalcTypeName(const Type *Ty,
   case Type::IntegerTyID:
     OS << 'i' << cast<IntegerType>(Ty)->getBitWidth();
     break;
-      
+
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
     CalcTypeName(FTy->getReturnType(), TypeStack, OS);
@@ -265,7 +265,7 @@ void TypePrinting::CalcTypeName(const Type *Ty,
     OS << "<unrecognized-type>";
     break;
   }
-  
+
   TypeStack.pop_back();       // Remove self from stack.
 }
 
@@ -283,13 +283,13 @@ void TypePrinting::print(const Type *Ty, raw_ostream &OS,
       return;
     }
   }
-  
+
   // Otherwise we have a type that has not been named but is a derived type.
   // Carefully recurse the type hierarchy to print out any contained symbolic
   // names.
   SmallVector<const Type *, 16> TypeStack;
   std::string TypeName;
-  
+
   raw_string_ostream TypeOS(TypeName);
   CalcTypeName(Ty, TypeStack, TypeOS, IgnoreTopLevelName);
   OS << TypeOS.str();
@@ -305,13 +305,13 @@ namespace {
     // objects, we keep several helper maps.
     DenseSet<const Value*> VisitedConstants;
     DenseSet<const Type*> VisitedTypes;
-    
+
     TypePrinting &TP;
     std::vector<const Type*> &NumberedTypes;
   public:
     TypeFinder(TypePrinting &tp, std::vector<const Type*> &numberedTypes)
       : TP(tp), NumberedTypes(numberedTypes) {}
-    
+
     void Run(const Module &M) {
       // Get types from the type symbol table.  This gets opaque types referened
       // only through derived named types.
@@ -319,7 +319,7 @@ namespace {
       for (TypeSymbolTable::const_iterator TI = ST.begin(), E = ST.end();
            TI != E; ++TI)
         IncorporateType(TI->second);
-      
+
       // Get types from global variables.
       for (Module::const_global_iterator I = M.global_begin(),
            E = M.global_end(); I != E; ++I) {
@@ -327,18 +327,18 @@ namespace {
         if (I->hasInitializer())
           IncorporateValue(I->getInitializer());
       }
-      
+
       // Get types from aliases.
       for (Module::const_alias_iterator I = M.alias_begin(),
            E = M.alias_end(); I != E; ++I) {
         IncorporateType(I->getType());
         IncorporateValue(I->getAliasee());
       }
-      
+
       // Get types from functions.
       for (Module::const_iterator FI = M.begin(), E = M.end(); FI != E; ++FI) {
         IncorporateType(FI->getType());
-        
+
         for (Function::const_iterator BB = FI->begin(), E = FI->end();
              BB != E;++BB)
           for (BasicBlock::const_iterator II = BB->begin(),
@@ -352,40 +352,40 @@ namespace {
           }
       }
     }
-    
+
   private:
     void IncorporateType(const Type *Ty) {
       // Check to see if we're already visited this type.
       if (!VisitedTypes.insert(Ty).second)
         return;
-      
+
       // If this is a structure or opaque type, add a name for the type.
       if (((isa<StructType>(Ty) && cast<StructType>(Ty)->getNumElements())
             || isa<OpaqueType>(Ty)) && !TP.hasTypeName(Ty)) {
         TP.addTypeName(Ty, "%"+utostr(unsigned(NumberedTypes.size())));
         NumberedTypes.push_back(Ty);
       }
-      
+
       // Recursively walk all contained types.
       for (Type::subtype_iterator I = Ty->subtype_begin(),
            E = Ty->subtype_end(); I != E; ++I)
-        IncorporateType(*I);      
+        IncorporateType(*I);
     }
-    
+
     /// IncorporateValue - This method is used to walk operand lists finding
     /// types hiding in constant expressions and other operands that won't be
     /// walked in other ways.  GlobalValues, basic blocks, instructions, and
     /// inst operands are all explicitly enumerated.
     void IncorporateValue(const Value *V) {
       if (V == 0 || !isa<Constant>(V) || isa<GlobalValue>(V)) return;
-      
+
       // Already visited?
       if (!VisitedConstants.insert(V).second)
         return;
-      
+
       // Check this type.
       IncorporateType(V->getType());
-      
+
       // Look in operands for types.
       const Constant *C = cast<Constant>(V);
       for (Constant::const_op_iterator I = C->op_begin(),
@@ -399,18 +399,18 @@ namespace {
 /// AddModuleTypesToPrinter - Add all of the symbolic type names for types in
 /// the specified module to the TypePrinter and all numbered types to it and the
 /// NumberedTypes table.
-static void AddModuleTypesToPrinter(TypePrinting &TP, 
+static void AddModuleTypesToPrinter(TypePrinting &TP,
                                     std::vector<const Type*> &NumberedTypes,
                                     const Module *M) {
   if (M == 0) return;
-  
+
   // If the module has a symbol table, take all global types and stuff their
   // names into the TypeNames map.
   const TypeSymbolTable &ST = M->getTypeSymbolTable();
   for (TypeSymbolTable::const_iterator TI = ST.begin(), E = ST.end();
        TI != E; ++TI) {
     const Type *Ty = cast<Type>(TI->second);
-    
+
     // As a heuristic, don't insert pointer to primitive types, because
     // they are used too often to have a single useful name.
     if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
@@ -419,11 +419,11 @@ static void AddModuleTypesToPrinter(TypePrinting &TP,
           !isa<OpaqueType>(PETy))
         continue;
     }
-    
+
     // Likewise don't insert primitives either.
     if (Ty->isInteger() || Ty->isPrimitiveType())
       continue;
-    
+
     // Get the name as a string and insert it into TypeNames.
     std::string NameStr;
     raw_string_ostream NameROS(NameStr);
@@ -432,7 +432,7 @@ static void AddModuleTypesToPrinter(TypePrinting &TP,
     NameOS.flush();
     TP.addTypeName(Ty, NameStr);
   }
-  
+
   // Walk the entire module to find references to unnamed structure and opaque
   // types.  This is required for correctness by opaque types (because multiple
   // uses of an unnamed opaque type needs to be referred to by the same ID) and
@@ -464,15 +464,15 @@ class SlotTracker {
 public:
   /// ValueMap - A mapping of Values to slot numbers.
   typedef DenseMap<const Value*, unsigned> ValueMap;
-  
-private:  
+
+private:
   /// TheModule - The module for which we are holding slot numbers.
   const Module* TheModule;
-  
+
   /// TheFunction - The function for which we are holding slot numbers.
   const Function* TheFunction;
   bool FunctionProcessed;
-  
+
   /// TheMDNode - The MDNode for which we are holding slot numbers.
   const MDNode *TheMDNode;
 
@@ -482,11 +482,11 @@ private:
   /// mMap - The TypePlanes map for the module level data.
   ValueMap mMap;
   unsigned mNext;
-  
+
   /// fMap - The TypePlanes map for the function level data.
   ValueMap fMap;
   unsigned fNext;
-  
+
   /// mdnMap - Map for MDNodes.
   ValueMap mdnMap;
   unsigned mdnNext;
@@ -561,22 +561,22 @@ private:
 static SlotTracker *createSlotTracker(const Value *V) {
   if (const Argument *FA = dyn_cast<Argument>(V))
     return new SlotTracker(FA->getParent());
-  
+
   if (const Instruction *I = dyn_cast<Instruction>(V))
     return new SlotTracker(I->getParent()->getParent());
-  
+
   if (const BasicBlock *BB = dyn_cast<BasicBlock>(V))
     return new SlotTracker(BB->getParent());
-  
+
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
     return new SlotTracker(GV->getParent());
-  
+
   if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(V))
-    return new SlotTracker(GA->getParent());    
-  
+    return new SlotTracker(GA->getParent());
+
   if (const Function *Func = dyn_cast<Function>(V))
     return new SlotTracker(Func);
-  
+
   return 0;
 }
 
@@ -617,7 +617,7 @@ inline void SlotTracker::initialize() {
     processModule();
     TheModule = 0; ///< Prevent re-processing next time we're called.
   }
-  
+
   if (TheFunction && !FunctionProcessed)
     processFunction();
 
@@ -632,20 +632,20 @@ inline void SlotTracker::initialize() {
 // variable initializers and create slots for them.
 void SlotTracker::processModule() {
   ST_DEBUG("begin processModule!\n");
-  
+
   // Add all of the unnamed global variables to the value table.
   for (Module::const_global_iterator I = TheModule->global_begin(),
          E = TheModule->global_end(); I != E; ++I) {
-    if (!I->hasName()) 
+    if (!I->hasName())
       CreateModuleSlot(I);
     if (I->hasInitializer()) {
-      if (MDNode *N = dyn_cast<MDNode>(I->getInitializer())) 
+      if (MDNode *N = dyn_cast<MDNode>(I->getInitializer()))
         CreateMetadataSlot(N);
     }
   }
-  
+
   // Add metadata used by named metadata.
-  for (Module::const_named_metadata_iterator 
+  for (Module::const_named_metadata_iterator
          I = TheModule->named_metadata_begin(),
          E = TheModule->named_metadata_end(); I != E; ++I) {
     const NamedMDNode *NMD = I;
@@ -661,7 +661,7 @@ void SlotTracker::processModule() {
        I != E; ++I)
     if (!I->hasName())
       CreateModuleSlot(I);
-  
+
   ST_DEBUG("end processModule!\n");
 }
 
@@ -669,15 +669,15 @@ void SlotTracker::processModule() {
 void SlotTracker::processFunction() {
   ST_DEBUG("begin processFunction!\n");
   fNext = 0;
-  
+
   // Add all the function arguments with no names.
   for(Function::const_arg_iterator AI = TheFunction->arg_begin(),
       AE = TheFunction->arg_end(); AI != AE; ++AI)
     if (!AI->hasName())
       CreateFunctionSlot(AI);
-  
+
   ST_DEBUG("Inserting Instructions:\n");
-  
+
   Metadata &TheMetadata = TheFunction->getContext().getMetadata();
 
   // Add all of the basic blocks and instructions with no names.
@@ -685,27 +685,27 @@ void SlotTracker::processFunction() {
        E = TheFunction->end(); BB != E; ++BB) {
     if (!BB->hasName())
       CreateFunctionSlot(BB);
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; 
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E;
          ++I) {
       if (I->getType() != Type::getVoidTy(TheFunction->getContext()) &&
           !I->hasName())
         CreateFunctionSlot(I);
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) 
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (MDNode *N = dyn_cast_or_null<MDNode>(I->getOperand(i)))
           CreateMetadataSlot(N);
-      
+
       // Process metadata attached with this instruction.
       const Metadata::MDMapTy *MDs = TheMetadata.getMDs(I);
       if (MDs)
-	for (Metadata::MDMapTy::const_iterator MI = MDs->begin(), 
-	       ME = MDs->end(); MI != ME; ++MI)
-	  if (MDNode *MDN = dyn_cast_or_null<MDNode>(MI->second))
-	    CreateMetadataSlot(MDN);
+        for (Metadata::MDMapTy::const_iterator MI = MDs->begin(),
+               ME = MDs->end(); MI != ME; ++MI)
+          if (MDNode *MDN = dyn_cast_or_null<MDNode>(MI->second))
+            CreateMetadataSlot(MDN);
     }
   }
 
   FunctionProcessed = true;
-  
+
   ST_DEBUG("end processFunction!\n");
 }
 
@@ -746,7 +746,7 @@ void SlotTracker::purgeFunction() {
 int SlotTracker::getGlobalSlot(const GlobalValue *V) {
   // Check for uninitialized state and do lazy initialization.
   initialize();
-  
+
   // Find the type plane in the module map
   ValueMap::iterator MI = mMap.find(V);
   return MI == mMap.end() ? -1 : (int)MI->second;
@@ -756,7 +756,7 @@ int SlotTracker::getGlobalSlot(const GlobalValue *V) {
 int SlotTracker::getMetadataSlot(const MDNode *N) {
   // Check for uninitialized state and do lazy initialization.
   initialize();
-  
+
   // Find the type plane in the module map
   ValueMap::iterator MI = mdnMap.find(N);
   return MI == mdnMap.end() ? -1 : (int)MI->second;
@@ -766,10 +766,10 @@ int SlotTracker::getMetadataSlot(const MDNode *N) {
 /// getLocalSlot - Get the slot number for a value that is local to a function.
 int SlotTracker::getLocalSlot(const Value *V) {
   assert(!isa<Constant>(V) && "Can't get a constant or global slot with this!");
-  
+
   // Check for uninitialized state and do lazy initialization.
   initialize();
-  
+
   ValueMap::iterator FI = fMap.find(V);
   return FI == fMap.end() ? -1 : (int)FI->second;
 }
@@ -778,13 +778,13 @@ int SlotTracker::getLocalSlot(const Value *V) {
 /// CreateModuleSlot - Insert the specified GlobalValue* into the slot table.
 void SlotTracker::CreateModuleSlot(const GlobalValue *V) {
   assert(V && "Can't insert a null Value into SlotTracker!");
-  assert(V->getType() != Type::getVoidTy(V->getContext()) && 
+  assert(V->getType() != Type::getVoidTy(V->getContext()) &&
          "Doesn't need a slot!");
   assert(!V->hasName() && "Doesn't need a slot!");
-  
+
   unsigned DestSlot = mNext++;
   mMap[V] = DestSlot;
-  
+
   ST_DEBUG("  Inserting value [" << V->getType() << "] = " << V << " slot=" <<
            DestSlot << " [");
   // G = Global, F = Function, A = Alias, o = other
@@ -795,21 +795,21 @@ void SlotTracker::CreateModuleSlot(const GlobalValue *V) {
 
 /// CreateSlot - Create a new slot for the specified value if it has no name.
 void SlotTracker::CreateFunctionSlot(const Value *V) {
-  assert(V->getType() != Type::getVoidTy(TheFunction->getContext()) && 
+  assert(V->getType() != Type::getVoidTy(TheFunction->getContext()) &&
          !V->hasName() && "Doesn't need a slot!");
-  
+
   unsigned DestSlot = fNext++;
   fMap[V] = DestSlot;
-  
+
   // G = Global, F = Function, o = other
   ST_DEBUG("  Inserting value [" << V->getType() << "] = " << V << " slot=" <<
            DestSlot << " [o]\n");
-}  
+}
 
 /// CreateModuleSlot - Insert the specified MDNode* into the slot table.
 void SlotTracker::CreateMetadataSlot(const MDNode *N) {
   assert(N && "Can't insert a null Value into SlotTracker!");
-  
+
   ValueMap::iterator I = mdnMap.find(N);
   if (I != mdnMap.end())
     return;
@@ -817,11 +817,11 @@ void SlotTracker::CreateMetadataSlot(const MDNode *N) {
   unsigned DestSlot = mdnNext++;
   mdnMap[N] = DestSlot;
 
-  for (MDNode::const_elem_iterator MDI = N->elem_begin(), 
+  for (MDNode::const_elem_iterator MDI = N->elem_begin(),
          MDE = N->elem_end(); MDI != MDE; ++MDI) {
     const Value *TV = *MDI;
     if (TV)
-      if (const MDNode *N2 = dyn_cast<MDNode>(TV)) 
+      if (const MDNode *N2 = dyn_cast<MDNode>(TV))
         CreateMetadataSlot(N2);
   }
 }
@@ -873,15 +873,15 @@ static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
                          SlotTracker &Machine) {
   SmallVector<const MDNode *, 16> Nodes;
   Nodes.resize(Machine.mdnSize());
-  for (SlotTracker::ValueMap::iterator I = 
-         Machine.mdnBegin(), E = Machine.mdnEnd(); I != E; ++I) 
+  for (SlotTracker::ValueMap::iterator I =
+         Machine.mdnBegin(), E = Machine.mdnEnd(); I != E; ++I)
     Nodes[I->second] = cast<MDNode>(I->first);
 
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
     Out << '!' << i << " = metadata ";
     const MDNode *Node = Nodes[i];
     Out << "!{";
-    for (MDNode::const_elem_iterator NI = Node->elem_begin(), 
+    for (MDNode::const_elem_iterator NI = Node->elem_begin(),
            NE = Node->elem_end(); NI != NE;) {
       const Value *V = *NI;
       if (!V)
@@ -928,7 +928,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     Out << CI->getValue();
     return;
   }
-  
+
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
     if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEdouble ||
         &CFP->getValueAPF().getSemantics() == &APFloat::IEEEsingle) {
@@ -966,14 +966,14 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
       APFloat apf = CFP->getValueAPF();
       // Floats are represented in ASCII IR as double, convert.
       if (!isDouble)
-        apf.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, 
+        apf.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
                           &ignored);
-      Out << "0x" << 
-              utohex_buffer(uint64_t(apf.bitcastToAPInt().getZExtValue()), 
+      Out << "0x" <<
+              utohex_buffer(uint64_t(apf.bitcastToAPInt().getZExtValue()),
                             Buffer+40);
       return;
     }
-    
+
     // Some form of long double.  These appear as a magic letter identifying
     // the type, then a fixed number of hex digits.
     Out << "0x";
@@ -1026,12 +1026,12 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     }
     return;
   }
-  
+
   if (isa<ConstantAggregateZero>(CV)) {
     Out << "zeroinitializer";
     return;
   }
-  
+
   if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
     // As a special case, print the array as a string if it is an array of
     // i8 with ConstantInt values.
@@ -1059,7 +1059,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     }
     return;
   }
-  
+
   if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(CV)) {
     if (CS->getType()->isPacked())
       Out << '<';
@@ -1081,13 +1081,13 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
       }
       Out << ' ';
     }
- 
+
     Out << '}';
     if (CS->getType()->isPacked())
       Out << '>';
     return;
   }
-  
+
   if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
     const Type *ETy = CP->getType()->getElementType();
     assert(CP->getNumOperands() > 0 &&
@@ -1105,17 +1105,17 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     Out << '>';
     return;
   }
-  
+
   if (isa<ConstantPointerNull>(CV)) {
     Out << "null";
     return;
   }
-  
+
   if (isa<UndefValue>(CV)) {
     Out << "undef";
     return;
   }
-  
+
   if (const MDNode *Node = dyn_cast<MDNode>(CV)) {
     Out << "!" << Machine->getMetadataSlot(Node);
     return;
@@ -1150,7 +1150,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     Out << ')';
     return;
   }
-  
+
   Out << "<placeholder or erroneous Constant>";
 }
 
@@ -1166,14 +1166,14 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
     PrintLLVMName(Out, V);
     return;
   }
-  
+
   const Constant *CV = dyn_cast<Constant>(V);
   if (CV && !isa<GlobalValue>(CV)) {
     assert(TypePrinter && "Constants require TypePrinting!");
     WriteConstantInt(Out, CV, *TypePrinter, Machine);
     return;
   }
-  
+
   if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
     Out << "asm ";
     if (IA->hasSideEffects())
@@ -1221,7 +1221,7 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
       Slot = -1;
     }
   }
-  
+
   if (Slot != -1)
     Out << Prefix << Slot;
   else
@@ -1275,7 +1275,7 @@ public:
   }
 
   void write(const Module *M) { printModule(M); }
-  
+
   void write(const GlobalValue *G) {
     if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(G))
       printGlobal(GV);
@@ -1286,7 +1286,7 @@ public:
     else
       llvm_unreachable("Unknown global");
   }
-  
+
   void write(const BasicBlock *BB)    { printBasicBlock(BB);  }
   void write(const Instruction *I)    { printInstruction(*I); }
 
@@ -1322,7 +1322,7 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
   }
 }
 
-void AssemblyWriter::writeParamOperand(const Value *Operand, 
+void AssemblyWriter::writeParamOperand(const Value *Operand,
                                        Attributes Attrs) {
   if (Operand == 0) {
     Out << "<null operand!>";
@@ -1370,7 +1370,7 @@ void AssemblyWriter::printModule(const Module *M) {
     PrintEscapedString(std::string(Asm.begin()+CurPos, Asm.end()), Out);
     Out << "\"\n";
   }
-  
+
   // Loop over the dependent libraries and emit them.
   Module::lib_iterator LI = M->lib_begin();
   Module::lib_iterator LE = M->lib_end();
@@ -1395,7 +1395,7 @@ void AssemblyWriter::printModule(const Module *M) {
   for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I)
     printGlobal(I);
-  
+
   // Output all aliases.
   if (!M->alias_empty()) Out << "\n";
   for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
@@ -1466,7 +1466,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
 
   if (!GV->hasInitializer() && GV->hasExternalLinkage())
     Out << "external ";
-  
+
   PrintLinkage(GV->getLinkage(), Out);
   PrintVisibility(GV->getVisibility(), Out);
 
@@ -1480,7 +1480,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     Out << ' ';
     writeOperand(GV->getInitializer(), false);
   }
-    
+
   if (GV->hasSection())
     Out << ", section \"" << GV->getSection() << '"';
   if (GV->getAlignment())
@@ -1503,9 +1503,9 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
   Out << "alias ";
 
   PrintLinkage(GA->getLinkage(), Out);
-  
+
   const Constant *Aliasee = GA->getAliasee();
-    
+
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Aliasee)) {
     TypePrinter.print(GV->getType(), Out);
     Out << ' ';
@@ -1527,7 +1527,7 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
            "Unsupported aliasee");
     writeOperand(CE, false);
   }
-  
+
   printInfoComment(*GA);
   Out << '\n';
 }
@@ -1536,13 +1536,13 @@ void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
   // Emit all numbered types.
   for (unsigned i = 0, e = NumberedTypes.size(); i != e; ++i) {
     Out << '%' << i << " = type ";
-    
+
     // Make sure we print out at least one level of the type structure, so
     // that we do not get %2 = type %2
     TypePrinter.printAtLeastOneLevel(NumberedTypes[i], Out);
     Out << '\n';
   }
-  
+
   // Print the named types.
   for (TypeSymbolTable::const_iterator TI = ST.begin(), TE = ST.end();
        TI != TE; ++TI) {
@@ -1568,7 +1568,7 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << "declare ";
   else
     Out << "define ";
-  
+
   PrintLinkage(F->getLinkage(), Out);
   PrintVisibility(F->getVisibility(), Out);
 
@@ -1613,10 +1613,10 @@ void AssemblyWriter::printFunction(const Function *F) {
     for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i) {
       // Insert commas as we go... the first arg doesn't get a comma
       if (i) Out << ", ";
-      
+
       // Output type...
       TypePrinter.print(FT->getParamType(i), Out);
-      
+
       Attributes ArgAttrs = Attrs.getParamAttributes(i+1);
       if (ArgAttrs != Attribute::None)
         Out << ' ' << Attribute::getAsString(ArgAttrs);
@@ -1656,7 +1656,7 @@ void AssemblyWriter::printFunction(const Function *F) {
 /// printArgument - This member is called for every argument that is passed into
 /// the function.  Simply print it out
 ///
-void AssemblyWriter::printArgument(const Argument *Arg, 
+void AssemblyWriter::printArgument(const Argument *Arg,
                                    Attributes Attrs) {
   // Output type...
   TypePrinter.print(Arg->getType(), Out);
@@ -1696,7 +1696,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
     Out.PadToColumn(50);
     Out << ";";
     pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
-    
+
     if (PI == PE) {
       Out << " No predecessors!";
     } else {
@@ -1982,7 +1982,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(I.getOperand(i), PrintAllTypes);
     }
   }
-  
+
   // Print post operand alignment for load/store
   if (isa<LoadInst>(I) && cast<LoadInst>(I).getAlignment()) {
     Out << ", align " << cast<LoadInst>(I).getAlignment();
@@ -2060,7 +2060,7 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
       MDNode *MD = dyn_cast_or_null<MDNode>(N->getElement(i));
       if (MD)
         OS << '!' << SlotTable.getMetadataSlot(MD);
-      else 
+      else
         OS << "null";
     }
     OS << "}\n";

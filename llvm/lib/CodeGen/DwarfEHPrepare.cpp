@@ -134,7 +134,7 @@ bool DwarfEHPrepare::NormalizeLandingPads() {
         break;
       }
     }
-    
+
     if (OnlyUnwoundTo) {
       // Only unwind edges lead to the landing pad.  Remember the landing pad.
       LandingPads.insert(LPad);
@@ -254,7 +254,7 @@ bool DwarfEHPrepare::LowerUnwinds() {
 
     // Create the call...
     CallInst *CI = CallInst::Create(RewindFunction,
-				    CreateReadOfExceptionValue(TI->getParent()),
+                                    CreateReadOfExceptionValue(TI->getParent()),
                                     "", TI);
     CI->setCallingConv(TLI->getLibcallCallingConv(RTLIB::UNWIND_RESUME));
     // ...followed by an UnreachableInst.
