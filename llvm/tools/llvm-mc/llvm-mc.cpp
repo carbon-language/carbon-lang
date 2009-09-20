@@ -44,6 +44,10 @@ OutputFilename("o", cl::desc("Output filename"),
 static cl::opt<bool>
 ShowEncoding("show-encoding", cl::desc("Show instruction encodings"));
 
+static cl::opt<unsigned>
+OutputAsmVariant("output-asm-variant",
+                 cl::desc("Syntax variant to use for output printing"));
+
 enum OutputFileType {
   OFT_AssemblyFile,
   OFT_ObjectFile
@@ -252,9 +256,7 @@ static int AssembleInput(const char *ProgName) {
   assert(MAI && "Unable to create target asm info!");
 
   if (FileType == OFT_AssemblyFile) {
-    // FIXME: Syntax Variant should be selectable somehow?
-    unsigned SyntaxVariant = 0;
-    IP.reset(TheTarget->createMCInstPrinter(SyntaxVariant, *MAI, *Out));
+    IP.reset(TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *Out));
     if (ShowEncoding)
       CE.reset(TheTarget->createCodeEmitter(*TM));
     Str.reset(createAsmStreamer(Ctx, *Out, *MAI, IP.get(), CE.get()));

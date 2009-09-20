@@ -5,6 +5,7 @@ add_llvm_library(LLVMX86AsmPrinter
   X86ATTInstPrinter.cpp
   X86AsmPrinter.cpp
   X86IntelAsmPrinter.cpp
+  X86IntelInstPrinter.cpp
   X86MCInstLower.cpp
   )
 add_dependencies(LLVMX86AsmPrinter X86CodeGenTable_gen)

@@ -18,6 +18,7 @@
 #include "X86ATTAsmPrinter.h"
 #include "X86IntelAsmPrinter.h"
 #include "X86ATTInstPrinter.h"
+#include "X86IntelInstPrinter.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
@@ -42,8 +43,8 @@ static MCInstPrinter *createX86MCInstPrinter(const Target &T,
                                              raw_ostream &O) {
   if (SyntaxVariant == 0)
     return new X86ATTInstPrinter(O, MAI);
-  
-  // Don't support intel syntax instprinter yet.
+  if (SyntaxVariant == 1)
+    return new X86IntelInstPrinter(O, MAI);
   return 0;
 }
 
