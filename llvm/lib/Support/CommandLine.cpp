@@ -151,23 +151,25 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
 /// LookupOption - Lookup the option specified by the specified option on the
 /// command line.  If there is a value specified (after an equal sign) return
 /// that as well.
-static Option *LookupOption(const char *&Arg, StringRef &Value,
-                            StringMap<Option*> &OptionsMap) {
-  while (*Arg == '-') ++Arg;  // Eat leading dashes
-
-  const char *ArgEnd = Arg;
-  while (*ArgEnd && *ArgEnd != '=')
-    ++ArgEnd; // Scan till end of argument name.
-
+static Option *LookupOption(StringRef &Arg, StringRef &Value,
+                            const StringMap<Option*> &OptionsMap) {
+  // Eat leading dashes.
+  while (!Arg.empty() && Arg[0] == '-')
+    Arg = Arg.substr(1);
+  
+  // Reject all dashes.
+  if (Arg.empty()) return 0;
+  
+  size_t EqualPos = Arg.find('=');
+  
   // If we have an equals sign, remember the value.
-  if (*ArgEnd == '=')
-    Value = ArgEnd+1;
-
-  if (*Arg == 0) return 0;
+  if (EqualPos != StringRef::npos) {
+    Value = Arg.substr(EqualPos+1);
+    Arg = Arg.substr(0, EqualPos);
+  }
 
   // Look up the option.
-  StringMap<Option*>::iterator I =
-    OptionsMap.find(llvm::StringRef(Arg, ArgEnd-Arg));
+  StringMap<Option*>::const_iterator I = OptionsMap.find(Arg);
   return I != OptionsMap.end() ? I->second : 0;
 }
 
@@ -486,7 +488,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
   for (int i = 1; i < argc; ++i) {
     Option *Handler = 0;
     StringRef Value;
-    const char *ArgName = "";
+    StringRef ArgName = "";
 
     // If the option list changed, this means that some command line
     // option has just been registered or deregistered.  This can occur in
@@ -551,17 +553,16 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
         StringRef RealName(ArgName);
         if (RealName.size() > 1) {
           size_t Length = 0;
-          Option *PGOpt = getOptionPred(RealName, Length, isPrefixedOrGrouping,
-                                        Opts);
+          Option *PGOpt =
+            getOptionPred(RealName, Length, isPrefixedOrGrouping, Opts);
 
           // If the option is a prefixed option, then the value is simply the
           // rest of the name...  so fall through to later processing, by
           // setting up the argument name flags and value fields.
-          //
           if (PGOpt && PGOpt->getFormattingFlag() == cl::Prefix) {
-            Value = ArgName+Length;
-            assert(Opts.count(StringRef(ArgName, Length)) &&
-                   Opts[StringRef(ArgName, Length)] == PGOpt);
+            Value = ArgName.substr(Length);
+            assert(Opts.count(ArgName.substr(0, Length)) &&
+                   Opts[ArgName.substr(0, Length)] == PGOpt);
             Handler = PGOpt;
           } else if (PGOpt) {
             // This must be a grouped option... handle them now.
