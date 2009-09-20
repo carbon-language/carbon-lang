@@ -337,24 +337,22 @@ void foo(int N) {
   for (i = 0; i < N; i++) { X = i; Y = i*4; }
 }
 
-produces two identical IV's (after promotion) on PPC/ARM:
+produces two near identical IV's (after promotion) on PPC/ARM:
 
-LBB1_1: @bb.preheader
-        mov r3, #0
-        mov r2, r3
-        mov r1, r3
-LBB1_2: @bb
-        ldr r12, LCPI1_0
-        ldr r12, [r12]
-        strh r2, [r12]
-        ldr r12, LCPI1_1
-        ldr r12, [r12]
-        strh r3, [r12]
-        add r1, r1, #1    <- [0,+,1]
-        add r3, r3, #4
-        add r2, r2, #1    <- [0,+,1]
-        cmp r1, r0
-        bne LBB1_2      @bb
+LBB1_2:
+	ldr r3, LCPI1_0
+	ldr r3, [r3]
+	strh r2, [r3]
+	ldr r3, LCPI1_1
+	ldr r3, [r3]
+	strh r1, [r3]
+	add r1, r1, #4
+	add r2, r2, #1   <- [0,+,1]
+	sub r0, r0, #1   <- [0,-,1]
+	cmp r0, #0
+	bne LBB1_2
+
+LSR should reuse the "+" IV for the exit test.
 
 
 //===---------------------------------------------------------------------===//
@@ -585,25 +583,6 @@ once.
 
 We should add an FRINT node to the DAG to model targets that have legal
 implementations of ceil/floor/rint.
-
-//===---------------------------------------------------------------------===//
-
-This GCC bug: http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34043
-contains a testcase that compiles down to:
-
-	%struct.XMM128 = type { <4 x float> }
-..
-	%src = alloca %struct.XMM128
-..
-	%tmp6263 = bitcast %struct.XMM128* %src to <2 x i64>*
-	%tmp65 = getelementptr %struct.XMM128* %src, i32 0, i32 0
-	store <2 x i64> %tmp5899, <2 x i64>* %tmp6263, align 16
-	%tmp66 = load <4 x float>* %tmp65, align 16		
-	%tmp71 = add <4 x float> %tmp66, %tmp66		
-
-If the mid-level optimizer turned the bitcast of pointer + store of tmp5899
-into a bitcast of the vector value and a store to the pointer, then the 
-store->load could be easily removed.
 
 //===---------------------------------------------------------------------===//
 
