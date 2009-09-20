@@ -710,7 +710,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
         default: break;
         case Instruction::ICmp:
         case Instruction::FCmp:
-          // icmp pred ^ true -> icmp !pred
+          // cmp pred ^ true -> cmp !pred
           assert(CI2->equalsInt(1));
           CmpInst::Predicate pred = (CmpInst::Predicate)CE1->getPredicate();
           pred = CmpInst::getInversePredicate(pred);
