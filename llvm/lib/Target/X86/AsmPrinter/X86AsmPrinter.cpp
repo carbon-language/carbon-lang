@@ -30,7 +30,7 @@ static AsmPrinter *createX86CodePrinterPass(formatted_raw_ostream &o,
                                             TargetMachine &tm,
                                             const MCAsmInfo *tai,
                                             bool verbose) {
-  return new X86ATTAsmPrinter(o, tm, tai, verbose);
+  return new X86AsmPrinter(o, tm, tai, verbose);
 }
 
 

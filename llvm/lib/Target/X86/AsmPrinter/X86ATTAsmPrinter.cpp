@@ -50,20 +50,20 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 // Primitive Helper Functions.
 //===----------------------------------------------------------------------===//
 
-void X86ATTAsmPrinter::printMCInst(const MCInst *MI) {
+void X86AsmPrinter::printMCInst(const MCInst *MI) {
   if (MAI->getAssemblerDialect() == 0)
     X86ATTInstPrinter(O, *MAI).printInstruction(MI);
   else
     X86IntelInstPrinter(O, *MAI).printInstruction(MI);
 }
 
-void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
+void X86AsmPrinter::PrintPICBaseSymbol() const {
   // FIXME: Gross const cast hack.
-  X86ATTAsmPrinter *AP = const_cast<X86ATTAsmPrinter*>(this);
+  X86AsmPrinter *AP = const_cast<X86AsmPrinter*>(this);
   X86MCInstLower(OutContext, 0, *AP).GetPICBaseSymbol()->print(O, MAI);
 }
 
-void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
+void X86AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   unsigned FnAlign = MF.getAlignment();
   const Function *F = MF.getFunction();
 
@@ -131,7 +131,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
-bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+bool X86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   this->MF = &MF;
   CallingConv::ID CC = F->getCallingConv();
@@ -205,7 +205,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 /// printSymbolOperand - Print a raw symbol reference operand.  This handles
 /// jump tables, constant pools, global address and external symbols, all of
 /// which print to a label with various suffixes for relocation types etc.
-void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
+void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   switch (MO.getType()) {
   default: llvm_unreachable("unknown symbol type!");
   case MachineOperand::MO_JumpTableIndex:
@@ -348,7 +348,7 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
 /// print_pcrel_imm - This is used to print an immediate value that ends up
 /// being encoded as a pc-relative value.  These print slightly differently, for
 /// example, a $ is not emitted.
-void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
+void X86AsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
   default: llvm_unreachable("Unknown pcrel immediate operand");
@@ -366,7 +366,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
 }
 
 
-void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
+void X86AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                     const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
@@ -399,7 +399,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   }
 }
 
-void X86ATTAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
+void X86AsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
   unsigned char value = MI->getOperand(Op).getImm();
   assert(value <= 7 && "Invalid ssecc argument!");
   switch (value) {
@@ -414,8 +414,8 @@ void X86ATTAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
   }
 }
 
-void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
-                                            const char *Modifier) {
+void X86AsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
+                                         const char *Modifier) {
   const MachineOperand &BaseReg  = MI->getOperand(Op);
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
@@ -458,8 +458,8 @@ void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
   }
 }
 
-void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
-                                         const char *Modifier) {
+void X86AsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
+                                      const char *Modifier) {
   assert(isMem(MI, Op) && "Invalid memory reference!");
   const MachineOperand &Segment = MI->getOperand(Op+4);
   if (Segment.getReg()) {
@@ -469,7 +469,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   printLeaMemReference(MI, Op, Modifier);
 }
 
-void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
+void X86AsmPrinter::printPICJumpTableSetLabel(unsigned uid,
                                            const MachineBasicBlock *MBB) const {
   if (!MAI->getSetDirective())
     return;
@@ -494,16 +494,16 @@ void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
 }
 
 
-void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
+void X86AsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
   PrintPICBaseSymbol();
   O << '\n';
   PrintPICBaseSymbol();
   O << ':';
 }
 
-void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
-                                              const MachineBasicBlock *MBB,
-                                              unsigned uid) const {
+void X86AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
+                                           const MachineBasicBlock *MBB,
+                                           unsigned uid) const {
   const char *JTEntryDirective = MJTI->getEntrySize() == 4 ?
     MAI->getData32bitsDirective() : MAI->getData64bitsDirective();
 
@@ -519,7 +519,7 @@ void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
     GetMBBSymbol(MBB->getNumber())->print(O, MAI);
 }
 
-bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode) {
+bool X86AsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode) {
   unsigned Reg = MO.getReg();
   switch (Mode) {
   default: return true;  // Unknown mode.
@@ -546,9 +546,9 @@ bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode) {
 
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
 ///
-bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                       unsigned AsmVariant,
-                                       const char *ExtraCode) {
+bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                    unsigned AsmVariant,
+                                    const char *ExtraCode) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
@@ -620,10 +620,9 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
   return false;
 }
 
-bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
-                                             unsigned OpNo,
-                                             unsigned AsmVariant,
-                                             const char *ExtraCode) {
+bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
+                                          unsigned OpNo, unsigned AsmVariant,
+                                          const char *ExtraCode) {
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
 
@@ -650,7 +649,7 @@ bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 /// printMachineInstruction -- Print out a single X86 LLVM instruction MI in
 /// AT&T syntax to the current output stream.
 ///
-void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
+void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
 
   processDebugLoc(MI->getDebugLoc());
@@ -662,7 +661,7 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   O << '\n';
 }
 
-void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
+void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (!GVar->hasInitializer())
     return;   // External global require no code
   
@@ -803,7 +802,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
     O << "\t.size\t" << name << ", " << Size << '\n';
 }
 
-void X86ATTAsmPrinter::EmitEndOfAsmFile(Module &M) {
+void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (Subtarget->isTargetDarwin()) {
     // All darwin targets use mach-o.
     TargetLoweringObjectFileMachO &TLOFMacho = 

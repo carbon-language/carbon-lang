@@ -32,10 +32,10 @@ class MCInst;
 class MCStreamer;
 class MCSymbol;
 
-class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
+class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
   const X86Subtarget *Subtarget;
  public:
-  explicit X86ATTAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
+  explicit X86AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                             const MCAsmInfo *T, bool V)
     : AsmPrinter(O, TM, T, V) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
