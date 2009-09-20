@@ -1263,7 +1263,7 @@ static ICmpInst::Predicate evaluateICmpRelation(LLVMContext &Context,
           else 
             // If its not weak linkage, the GVal must have a non-zero address
             // so the result is greater-than
-            return isSigned ? ICmpInst::ICMP_SGT :  ICmpInst::ICMP_UGT;
+            return isSigned ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
         } else if (isa<ConstantPointerNull>(CE1Op0)) {
           // If we are indexing from a null pointer, check to see if we have any
           // non-zero indices.
@@ -1567,64 +1567,57 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     case ICmpInst::ICMP_EQ:   // We know the constants are equal!
       // If we know the constants are equal, we can decide the result of this
       // computation precisely.
-      Result = (pred == ICmpInst::ICMP_EQ  ||
-                pred == ICmpInst::ICMP_ULE ||
-                pred == ICmpInst::ICMP_SLE ||
-                pred == ICmpInst::ICMP_UGE ||
-                pred == ICmpInst::ICMP_SGE);
+      Result = ICmpInst::isTrueWhenEqual((ICmpInst::Predicate)pred);
       break;
     case ICmpInst::ICMP_ULT:
-      // If we know that C1 < C2, we can decide the result of this computation
-      // precisely.
-      Result = (pred == ICmpInst::ICMP_ULT ||
-                pred == ICmpInst::ICMP_NE  ||
-                pred == ICmpInst::ICMP_ULE);
+      switch (pred) {
+      case ICmpInst::ICMP_ULT: case ICmpInst::ICMP_NE: case ICmpInst::ICMP_ULE:
+	Result = 1; break;
+      case ICmpInst::ICMP_UGT: case ICmpInst::ICMP_EQ: case ICmpInst::ICMP_UGE:
+	Result = 0; break;
+      }
       break;
     case ICmpInst::ICMP_SLT:
-      // If we know that C1 < C2, we can decide the result of this computation
-      // precisely.
-      Result = (pred == ICmpInst::ICMP_SLT ||
-                pred == ICmpInst::ICMP_NE  ||
-                pred == ICmpInst::ICMP_SLE);
+      switch (pred) {
+      case ICmpInst::ICMP_SLT: case ICmpInst::ICMP_NE: case ICmpInst::ICMP_SLE:
+	Result = 1; break;
+      case ICmpInst::ICMP_SGT: case ICmpInst::ICMP_EQ: case ICmpInst::ICMP_SGE:
+	Result = 0; break;
+      }
       break;
     case ICmpInst::ICMP_UGT:
-      // If we know that C1 > C2, we can decide the result of this computation
-      // precisely.
-      Result = (pred == ICmpInst::ICMP_UGT ||
-                pred == ICmpInst::ICMP_NE  ||
-                pred == ICmpInst::ICMP_UGE);
+      switch (pred) {
+      case ICmpInst::ICMP_UGT: case ICmpInst::ICMP_NE: case ICmpInst::ICMP_UGE:
+	Result = 1; break;
+      case ICmpInst::ICMP_ULT: case ICmpInst::ICMP_EQ: case ICmpInst::ICMP_ULE:
+	Result = 0; break;
+      }
       break;
     case ICmpInst::ICMP_SGT:
-      // If we know that C1 > C2, we can decide the result of this computation
-      // precisely.
-      Result = (pred == ICmpInst::ICMP_SGT ||
-                pred == ICmpInst::ICMP_NE  ||
-                pred == ICmpInst::ICMP_SGE);
+      switch (pred) {
+      case ICmpInst::ICMP_SGT: case ICmpInst::ICMP_NE: case ICmpInst::ICMP_SGE:
+	Result = 1; break;
+      case ICmpInst::ICMP_SLT: case ICmpInst::ICMP_EQ: case ICmpInst::ICMP_SLE:
+	Result = 0; break;
+      }
       break;
     case ICmpInst::ICMP_ULE:
-      // If we know that C1 <= C2, we can only partially decide this relation.
       if (pred == ICmpInst::ICMP_UGT) Result = 0;
-      if (pred == ICmpInst::ICMP_ULT) Result = 1;
+      if (pred == ICmpInst::ICMP_ULT || pred == ICmpInst::ICMP_ULE) Result = 1;
       break;
     case ICmpInst::ICMP_SLE:
-      // If we know that C1 <= C2, we can only partially decide this relation.
       if (pred == ICmpInst::ICMP_SGT) Result = 0;
-      if (pred == ICmpInst::ICMP_SLT) Result = 1;
+      if (pred == ICmpInst::ICMP_SLT || pred == ICmpInst::ICMP_SLE) Result = 1;
       break;
-
     case ICmpInst::ICMP_UGE:
-      // If we know that C1 >= C2, we can only partially decide this relation.
       if (pred == ICmpInst::ICMP_ULT) Result = 0;
-      if (pred == ICmpInst::ICMP_UGT) Result = 1;
+      if (pred == ICmpInst::ICMP_UGT || pred == ICmpInst::ICMP_UGE) Result = 1;
       break;
     case ICmpInst::ICMP_SGE:
-      // If we know that C1 >= C2, we can only partially decide this relation.
       if (pred == ICmpInst::ICMP_SLT) Result = 0;
-      if (pred == ICmpInst::ICMP_SGT) Result = 1;
+      if (pred == ICmpInst::ICMP_SGT || pred == ICmpInst::ICMP_SGE) Result = 1;
       break;
-
     case ICmpInst::ICMP_NE:
-      // If we know that C1 != C2, we can only partially decide this relation.
       if (pred == ICmpInst::ICMP_EQ) Result = 0;
       if (pred == ICmpInst::ICMP_NE) Result = 1;
       break;

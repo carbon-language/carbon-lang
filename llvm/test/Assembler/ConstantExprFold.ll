@@ -19,6 +19,7 @@ global i64* inttoptr (i64 xor (i64 ptrtoint (i64* @A to i64), i64 0) to i64*) ; 
 @B = external global %Ty 
 
 global i1 icmp slt (i64* @A, i64* getelementptr (i64* @A, i64 1))        ; true
+global i1 icmp ult (i64* @A, i64* getelementptr (i64* @A, i64 1))        ; true
 global i1 icmp slt (i64* @A, i64* getelementptr (i64* @A, i64 0))        ; false
 global i1 icmp slt (i32* getelementptr (%Ty* @B, i64 0, i32 0), 
                    i32* getelementptr (%Ty* @B, i64 0, i32 1))            ; true
