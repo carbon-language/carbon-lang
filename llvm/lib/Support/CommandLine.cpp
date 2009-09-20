@@ -171,8 +171,11 @@ static Option *LookupOption(const char *&Arg, const char *&Value,
   return I != OptionsMap.end() ? I->second : 0;
 }
 
+/// ProvideOption - For Value, this differentiates between an empty value ("")
+/// and a null value (StringRef()).  The later is accepted for arguments that
+/// don't allow a value (-foo) the former is rejected (-foo=).
 static inline bool ProvideOption(Option *Handler, StringRef ArgName,
-                                 const char *Value, int argc, char **argv,
+                                 StringRef Value, int argc, char **argv,
                                  int &i) {
   // Is this a multi-argument option?
   unsigned NumAdditionalVals = Handler->getNumAdditionalVals();
@@ -180,7 +183,7 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
   // Enforce value requirements
   switch (Handler->getValueExpectedFlag()) {
   case ValueRequired:
-    if (Value == 0) {       // No value specified?
+    if (Value.data() == 0) {       // No value specified?
       if (i+1 >= argc)
         return Handler->error("requires a value!");
       // Steal the next argument, like for '-o filename'
@@ -192,7 +195,7 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
       return Handler->error("multi-valued option specified"
                             " with ValueDisallowed modifier!");
 
-    if (Value)
+    if (Value.data())
       return Handler->error("does not allow a value! '" +
                             Twine(Value) + "' specified.");
     break;
@@ -208,12 +211,12 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
 
   // If this isn't a multi-arg option, just run the handler.
   if (NumAdditionalVals == 0)
-    return Handler->addOccurrence(i, ArgName, Value ? Value : "");
+    return Handler->addOccurrence(i, ArgName, Value);
 
   // If it is, run the handle several times.
   bool MultiArg = false;
 
-  if (Value) {
+  if (Value.data()) {
     if (Handler->addOccurrence(i, ArgName, Value, MultiArg))
       return true;
     --NumAdditionalVals;
@@ -235,7 +238,7 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
 
 static bool ProvidePositionalOption(Option *Handler, StringRef Arg, int i) {
   int Dummy = i;
-  return ProvideOption(Handler, Handler->ArgStr, Arg.data(), 0, 0, Dummy);
+  return ProvideOption(Handler, Handler->ArgStr, Arg, 0, 0, Dummy);
 }
 
 
@@ -576,7 +579,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
                      "Option can not be cl::Grouping AND cl::ValueRequired!");
               int Dummy;
               ErrorParsing |= ProvideOption(PGOpt, RealArgName,
-                                            0, 0, 0, Dummy);
+                                            StringRef(), 0, 0, Dummy);
 
               // Get the next grouping option.
               PGOpt = getOptionPred(RealName, Length, isGrouping, Opts);
@@ -602,22 +605,20 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
     }
 
     // Check to see if this option accepts a comma separated list of values.  If
-    // it does, we have to split up the value into multiple values...
+    // it does, we have to split up the value into multiple values.
     if (Value && Handler->getMiscFlags() & CommaSeparated) {
-      std::string Val(Value);
-      std::string::size_type Pos = Val.find(',');
+      StringRef Val(Value);
+      StringRef::size_type Pos = Val.find(',');
 
-      while (Pos != std::string::npos) {
-        // Process the portion before the comma...
-        ErrorParsing |= ProvideOption(Handler, ArgName,
-                                      std::string(Val.begin(),
-                                                  Val.begin()+Pos).c_str(),
+      while (Pos != StringRef::npos) {
+        // Process the portion before the comma.
+        ErrorParsing |= ProvideOption(Handler, ArgName, Val.substr(0, Pos),
                                       argc, argv, i);
-        // Erase the portion before the comma, AND the comma...
-        Val.erase(Val.begin(), Val.begin()+Pos+1);
-        Value += Pos+1;  // Increment the original value pointer as well...
+        // Erase the portion before the comma, AND the comma.
+        Val = Val.substr(Pos+1);
+        Value += Pos+1;  // Increment the original value pointer as well.
 
-        // Check for another comma...
+        // Check for another comma.
         Pos = Val.find(',');
       }
     }
@@ -626,8 +627,12 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
     // active one...
     if (Handler->getFormattingFlag() == cl::Positional)
       ActivePositionalArg = Handler;
-    else
+    else if (Value)
       ErrorParsing |= ProvideOption(Handler, ArgName, Value, argc, argv, i);
+    else
+      ErrorParsing |= ProvideOption(Handler, ArgName, StringRef(),
+                                    argc, argv, i);
+
   }
 
   // Check and handle positional arguments now...
