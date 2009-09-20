@@ -560,6 +560,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
           // rest of the name...  so fall through to later processing, by
           // setting up the argument name flags and value fields.
           if (PGOpt && PGOpt->getFormattingFlag() == cl::Prefix) {
+            ArgName = argv[i]+1;
             Value = ArgName.substr(Length);
             assert(Opts.count(ArgName.substr(0, Length)) &&
                    Opts[ArgName.substr(0, Length)] == PGOpt);
