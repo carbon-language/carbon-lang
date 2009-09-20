@@ -1572,33 +1572,33 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     case ICmpInst::ICMP_ULT:
       switch (pred) {
       case ICmpInst::ICMP_ULT: case ICmpInst::ICMP_NE: case ICmpInst::ICMP_ULE:
-	Result = 1; break;
+        Result = 1; break;
       case ICmpInst::ICMP_UGT: case ICmpInst::ICMP_EQ: case ICmpInst::ICMP_UGE:
-	Result = 0; break;
+        Result = 0; break;
       }
       break;
     case ICmpInst::ICMP_SLT:
       switch (pred) {
       case ICmpInst::ICMP_SLT: case ICmpInst::ICMP_NE: case ICmpInst::ICMP_SLE:
-	Result = 1; break;
+        Result = 1; break;
       case ICmpInst::ICMP_SGT: case ICmpInst::ICMP_EQ: case ICmpInst::ICMP_SGE:
-	Result = 0; break;
+        Result = 0; break;
       }
       break;
     case ICmpInst::ICMP_UGT:
       switch (pred) {
       case ICmpInst::ICMP_UGT: case ICmpInst::ICMP_NE: case ICmpInst::ICMP_UGE:
-	Result = 1; break;
+        Result = 1; break;
       case ICmpInst::ICMP_ULT: case ICmpInst::ICMP_EQ: case ICmpInst::ICMP_ULE:
-	Result = 0; break;
+        Result = 0; break;
       }
       break;
     case ICmpInst::ICMP_SGT:
       switch (pred) {
       case ICmpInst::ICMP_SGT: case ICmpInst::ICMP_NE: case ICmpInst::ICMP_SGE:
-	Result = 1; break;
+        Result = 1; break;
       case ICmpInst::ICMP_SLT: case ICmpInst::ICMP_EQ: case ICmpInst::ICMP_SLE:
-	Result = 0; break;
+        Result = 0; break;
       }
       break;
     case ICmpInst::ICMP_ULE:
