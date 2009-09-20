@@ -268,6 +268,13 @@ namespace llvm {
     /// @name Registry Access
     /// @{
 
+    static unsigned getNumTargets() {
+      unsigned Res = 0;
+      for (iterator I = begin(), E = end(); I != E; ++I)
+        ++Res;
+      return Res;
+    }
+    
     static iterator begin();
 
     static iterator end() { return iterator(); }
