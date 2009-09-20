@@ -25,7 +25,7 @@ else
   VGARG=
 endif
 
-ifdef LIT2
+ifndef LIT1
 all:: lit.site.cfg
 	@ echo '--- Running clang tests for $(TARGET_TRIPLE) ---'
 	@ $(LLVM_SRC_ROOT)/utils/lit/lit.py \
