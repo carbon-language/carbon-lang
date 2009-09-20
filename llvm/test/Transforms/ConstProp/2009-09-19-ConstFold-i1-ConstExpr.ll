@@ -28,3 +28,9 @@ global i1 icmp ule (i32* bitcast (i8* @X to i32*), i32* bitcast (i8* @Y to i32*)
 ; CHECK-NOT: bitcast
 ; CHECK: icmp
 
+global i1 icmp eq (i1 icmp ult (i8* @X, i8* @Y), i1 false)
+; CHECK-NOT: false
+; CHECK: icmp
+global i1 icmp eq (i1 icmp ult (i8* @X, i8* @Y), i1 true)
+; CHECK-NOT: true
+; CHECK: icmp

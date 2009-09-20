@@ -704,6 +704,20 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
       break;
     case Instruction::Xor:
       if (CI2->equalsInt(0)) return C1;    // X ^ 0 == X
+
+      if (ConstantExpr *CE1 = dyn_cast<ConstantExpr>(C1)) {
+        switch (CE1->getOpcode()) {
+        default: break;
+        case Instruction::ICmp:
+        case Instruction::FCmp:
+          // icmp pred ^ true -> icmp !pred
+          assert(CI2->equalsInt(1));
+	  CmpInst::Predicate pred = (CmpInst::Predicate)CE1->getPredicate();
+          pred = CmpInst::getInversePredicate(pred);
+          return ConstantExpr::getCompare(pred, CE1->getOperand(0),
+                                          CE1->getOperand(1));
+        }
+      }
       break;
     case Instruction::AShr:
       // ashr (zext C to Ty), C2 -> lshr (zext C, CSA), C2
