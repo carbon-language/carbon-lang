@@ -171,7 +171,7 @@ static Option *LookupOption(const char *&Arg, const char *&Value,
   return I != OptionsMap.end() ? I->second : 0;
 }
 
-static inline bool ProvideOption(Option *Handler, const char *ArgName,
+static inline bool ProvideOption(Option *Handler, StringRef ArgName,
                                  const char *Value, int argc, char **argv,
                                  int &i) {
   // Is this a multi-argument option?
@@ -253,28 +253,28 @@ static inline bool isPrefixedOrGrouping(const Option *O) {
 // see if there options that satisfy the predicate.  If we find one, return it,
 // otherwise return null.
 //
-static Option *getOptionPred(std::string Name, size_t &Length,
+static Option *getOptionPred(StringRef Name, size_t &Length,
                              bool (*Pred)(const Option*),
                              StringMap<Option*> &OptionsMap) {
 
   StringMap<Option*>::iterator OMI = OptionsMap.find(Name);
   if (OMI != OptionsMap.end() && Pred(OMI->second)) {
-    Length = Name.length();
+    Length = Name.size();
     return OMI->second;
   }
 
   if (Name.size() == 1) return 0;
   do {
-    Name.erase(Name.end()-1, Name.end());   // Chop off the last character...
+    Name = Name.substr(0, Name.size()-1);   // Chop off the last character.
     OMI = OptionsMap.find(Name);
 
     // Loop while we haven't found an option and Name still has at least two
     // characters in it (so that the next iteration will not be the empty
-    // string...
+    // string.
   } while ((OMI == OptionsMap.end() || !Pred(OMI->second)) && Name.size() > 1);
 
   if (OMI != OptionsMap.end() && Pred(OMI->second)) {
-    Length = Name.length();
+    Length = Name.size();
     return OMI->second;    // Found one!
   }
   return 0;                // No option found!
@@ -517,7 +517,9 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
       if (ActivePositionalArg) {
         ProvidePositionalOption(ActivePositionalArg, argv[i], i);
         continue;  // We are done!
-      } else if (!PositionalOpts.empty()) {
+      }
+      
+      if (!PositionalOpts.empty()) {
         PositionalVals.push_back(std::make_pair(argv[i],i));
 
         // All of the positional arguments have been fulfulled, give the rest to
@@ -549,13 +551,13 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
         continue;  // We are done!
       }
 
-    } else {     // We start with a '-', must be an argument...
+    } else {     // We start with a '-', must be an argument.
       ArgName = argv[i]+1;
       Handler = LookupOption(ArgName, Value, Opts);
 
       // Check to see if this "option" is really a prefixed or grouped argument.
       if (Handler == 0) {
-        std::string RealName(ArgName);
+        StringRef RealName(ArgName);
         if (RealName.size() > 1) {
           size_t Length = 0;
           Option *PGOpt = getOptionPred(RealName, Length, isPrefixedOrGrouping,
@@ -567,29 +569,28 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
           //
           if (PGOpt && PGOpt->getFormattingFlag() == cl::Prefix) {
             Value = ArgName+Length;
-            assert(Opts.find(std::string(ArgName, Value)) != Opts.end() &&
-                   Opts.find(std::string(ArgName, Value))->second == PGOpt);
+            assert(Opts.count(StringRef(ArgName, Length)) &&
+                   Opts[StringRef(ArgName, Length)] == PGOpt);
             Handler = PGOpt;
           } else if (PGOpt) {
             // This must be a grouped option... handle them now.
             assert(isGrouping(PGOpt) && "Broken getOptionPred!");
 
             do {
-              // Move current arg name out of RealName into RealArgName...
-              std::string RealArgName(RealName.begin(),
-                                      RealName.begin() + Length);
-              RealName.erase(RealName.begin(), RealName.begin() + Length);
+              // Move current arg name out of RealName into RealArgName.
+              StringRef RealArgName = RealName.substr(0, Length);
+              RealName = RealName.substr(Length);
 
               // Because ValueRequired is an invalid flag for grouped arguments,
-              // we don't need to pass argc/argv in...
+              // we don't need to pass argc/argv in.
               //
               assert(PGOpt->getValueExpectedFlag() != cl::ValueRequired &&
                      "Option can not be cl::Grouping AND cl::ValueRequired!");
               int Dummy;
-              ErrorParsing |= ProvideOption(PGOpt, RealArgName.c_str(),
+              ErrorParsing |= ProvideOption(PGOpt, RealArgName,
                                             0, 0, 0, Dummy);
 
-              // Get the next grouping option...
+              // Get the next grouping option.
               PGOpt = getOptionPred(RealName, Length, isGrouping, Opts);
             } while (PGOpt && Length != RealName.size());
 
@@ -760,9 +761,9 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
 // Option Base class implementation
 //
 
-bool Option::error(const Twine &Message, const char *ArgName) {
-  if (ArgName == 0) ArgName = ArgStr;
-  if (ArgName[0] == 0)
+bool Option::error(const Twine &Message, StringRef ArgName) {
+  if (ArgName.data() == 0) ArgName = ArgStr;
+  if (ArgName.empty())
     errs() << HelpStr;  // Be nice for positional arguments
   else
     errs() << ProgramName << ": for the -" << ArgName;
@@ -771,7 +772,7 @@ bool Option::error(const Twine &Message, const char *ArgName) {
   return true;
 }
 
-bool Option::addOccurrence(unsigned pos, const char *ArgName,
+bool Option::addOccurrence(unsigned pos, StringRef ArgName,
                            StringRef Value, bool MultiArg) {
   if (!MultiArg)
     NumOccurrences++;   // Increment the number of times we have been seen
@@ -855,7 +856,7 @@ void basic_parser_impl::printOptionInfo(const Option &O,
 
 // parser<bool> implementation
 //
-bool parser<bool>::parse(Option &O, const char *ArgName,
+bool parser<bool>::parse(Option &O, StringRef ArgName,
                          StringRef Arg, bool &Value) {
   if (Arg == "" || Arg == "true" || Arg == "TRUE" || Arg == "True" ||
       Arg == "1") {
@@ -873,7 +874,7 @@ bool parser<bool>::parse(Option &O, const char *ArgName,
 
 // parser<boolOrDefault> implementation
 //
-bool parser<boolOrDefault>::parse(Option &O, const char *ArgName,
+bool parser<boolOrDefault>::parse(Option &O, StringRef ArgName,
                                   StringRef Arg, boolOrDefault &Value) {
   if (Arg == "" || Arg == "true" || Arg == "TRUE" || Arg == "True" ||
       Arg == "1") {
@@ -891,7 +892,7 @@ bool parser<boolOrDefault>::parse(Option &O, const char *ArgName,
 
 // parser<int> implementation
 //
-bool parser<int>::parse(Option &O, const char *ArgName,
+bool parser<int>::parse(Option &O, StringRef ArgName,
                         StringRef Arg, int &Value) {
   if (Arg.getAsInteger(0, Value))
     return O.error("'" + Arg + "' value invalid for integer argument!");
@@ -900,7 +901,7 @@ bool parser<int>::parse(Option &O, const char *ArgName,
 
 // parser<unsigned> implementation
 //
-bool parser<unsigned>::parse(Option &O, const char *ArgName,
+bool parser<unsigned>::parse(Option &O, StringRef ArgName,
                              StringRef Arg, unsigned &Value) {
 
   if (Arg.getAsInteger(0, Value))
@@ -920,12 +921,12 @@ static bool parseDouble(Option &O, StringRef Arg, double &Value) {
   return false;
 }
 
-bool parser<double>::parse(Option &O, const char *AN,
+bool parser<double>::parse(Option &O, StringRef ArgName,
                            StringRef Arg, double &Val) {
   return parseDouble(O, Arg, Val);
 }
 
-bool parser<float>::parse(Option &O, const char *AN,
+bool parser<float>::parse(Option &O, StringRef ArgName,
                           StringRef Arg, float &Val) {
   double dVal;
   if (parseDouble(O, Arg, dVal))
