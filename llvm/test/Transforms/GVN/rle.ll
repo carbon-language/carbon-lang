@@ -73,6 +73,7 @@ F:
 
 ; CHECK: @coerce_mustalias4
 ; CHECK: %A = load i32* %P
+; CHECK: bitcast
 ; CHECK-NOT: load
 ; CHECK: ret float
 ; CHECK: F:
