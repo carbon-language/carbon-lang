@@ -260,18 +260,8 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
   StringRef StubSizeStr = Comma.second;
   StripSpaces(StubSizeStr);
   
-  // Convert the a null terminated buffer for strtoul.
-  char TmpBuffer[32];
-  if (StubSizeStr.size() >= 32)
-    return"mach-o section specifier has a stub size specifier that is too long";
-  
-  memcpy(TmpBuffer, StubSizeStr.data(), StubSizeStr.size());
-  TmpBuffer[StubSizeStr.size()] = 0;
-  
-  char *EndPtr;
-  StubSize = strtoul(TmpBuffer, &EndPtr, 0);
-
-  if (EndPtr[0] != 0)
+  // Convert the stub size from a string to an integer.
+  if (StubSizeStr.getAsInteger(0, StubSize))
     return "mach-o section specifier has a malformed stub size";
   
   return "";
