@@ -150,28 +150,33 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
 
 /// LookupOption - Lookup the option specified by the specified option on the
 /// command line.  If there is a value specified (after an equal sign) return
-/// that as well.
+/// that as well.  This assumes that leading dashes have already been stripped.
 static Option *LookupOption(StringRef &Arg, StringRef &Value,
                             const StringMap<Option*> &OptionsMap) {
-  // Eat leading dashes.
-  while (!Arg.empty() && Arg[0] == '-')
-    Arg = Arg.substr(1);
-  
   // Reject all dashes.
   if (Arg.empty()) return 0;
   
   size_t EqualPos = Arg.find('=');
   
   // If we have an equals sign, remember the value.
-  if (EqualPos != StringRef::npos) {
-    Value = Arg.substr(EqualPos+1);
-    Arg = Arg.substr(0, EqualPos);
+  if (EqualPos == StringRef::npos) {
+    // Look up the option.
+    StringMap<Option*>::const_iterator I = OptionsMap.find(Arg);
+    return I != OptionsMap.end() ? I->second : 0;
   }
 
-  // Look up the option.
-  StringMap<Option*>::const_iterator I = OptionsMap.find(Arg);
-  return I != OptionsMap.end() ? I->second : 0;
+  // If the argument before the = is a valid option name, we match.  If not,
+  // return Arg unmolested.
+  StringMap<Option*>::const_iterator I =
+    OptionsMap.find(Arg.substr(0, EqualPos));
+  if (I == OptionsMap.end()) return 0;
+  
+  Value = Arg.substr(EqualPos+1);
+  Arg = Arg.substr(0, EqualPos);
+  return I->second;
 }
+
+
 
 /// ProvideOption - For Value, this differentiates between an empty value ("")
 /// and a null value (StringRef()).  The later is accepted for arguments that
@@ -260,23 +265,17 @@ static inline bool isPrefixedOrGrouping(const Option *O) {
 //
 static Option *getOptionPred(StringRef Name, size_t &Length,
                              bool (*Pred)(const Option*),
-                             StringMap<Option*> &OptionsMap) {
+                             const StringMap<Option*> &OptionsMap) {
 
-  StringMap<Option*>::iterator OMI = OptionsMap.find(Name);
-  if (OMI != OptionsMap.end() && Pred(OMI->second)) {
-    Length = Name.size();
-    return OMI->second;
-  }
+  StringMap<Option*>::const_iterator OMI = OptionsMap.find(Name);
 
-  if (Name.size() == 1) return 0;
-  do {
+  // Loop while we haven't found an option and Name still has at least two
+  // characters in it (so that the next iteration will not be the empty
+  // string.
+  while (OMI == OptionsMap.end() && Name.size() > 1) {
     Name = Name.substr(0, Name.size()-1);   // Chop off the last character.
     OMI = OptionsMap.find(Name);
-
-    // Loop while we haven't found an option and Name still has at least two
-    // characters in it (so that the next iteration will not be the empty
-    // string.
-  } while ((OMI == OptionsMap.end() || !Pred(OMI->second)) && Name.size() > 1);
+  }
 
   if (OMI != OptionsMap.end() && Pred(OMI->second)) {
     Length = Name.size();
@@ -284,6 +283,57 @@ static Option *getOptionPred(StringRef Name, size_t &Length,
   }
   return 0;                // No option found!
 }
+
+/// HandlePrefixedOrGroupedOption - The specified argument string (which started
+/// with at least one '-') does not fully match an available option.  Check to
+/// see if this is a prefix or grouped option.  If so, split arg into output an
+/// Arg/Value pair and return the Option to parse it with.
+static Option *HandlePrefixedOrGroupedOption(StringRef &Arg, StringRef &Value,
+                                             bool &ErrorParsing,
+                                         const StringMap<Option*> &OptionsMap) {
+  if (Arg.size() == 1) return 0;
+
+  // Do the lookup!
+  size_t Length = 0;
+  Option *PGOpt = getOptionPred(Arg, Length, isPrefixedOrGrouping, OptionsMap);
+  if (PGOpt == 0) return 0;
+  
+  // If the option is a prefixed option, then the value is simply the
+  // rest of the name...  so fall through to later processing, by
+  // setting up the argument name flags and value fields.
+  if (PGOpt->getFormattingFlag() == cl::Prefix) {
+    Value = Arg.substr(Length);
+    Arg = Arg.substr(0, Length);
+    assert(OptionsMap.count(Arg) && OptionsMap.find(Arg)->second == PGOpt);
+    return PGOpt;
+  }
+  
+  // This must be a grouped option... handle them now.  Grouping options can't
+  // have values.
+  assert(isGrouping(PGOpt) && "Broken getOptionPred!");
+  
+  do {
+    // Move current arg name out of Arg into OneArgName.
+    StringRef OneArgName = Arg.substr(0, Length);
+    Arg = Arg.substr(Length);
+    
+    // Because ValueRequired is an invalid flag for grouped arguments,
+    // we don't need to pass argc/argv in.
+    assert(PGOpt->getValueExpectedFlag() != cl::ValueRequired &&
+           "Option can not be cl::Grouping AND cl::ValueRequired!");
+    int Dummy;
+    ErrorParsing |= ProvideOption(PGOpt, OneArgName,
+                                  StringRef(), 0, 0, Dummy);
+    
+    // Get the next grouping option.
+    PGOpt = getOptionPred(Arg, Length, isGrouping, OptionsMap);
+  } while (PGOpt && Length != Arg.size());
+  
+  // Return the last option with Arg cut down to just the last one.
+  return PGOpt;
+}
+
+
 
 static bool RequiresValue(const Option *O) {
   return O->getNumOccurrencesFlag() == cl::Required ||
@@ -365,13 +415,12 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
 /// ExpandResponseFiles - Copy the contents of argv into newArgv,
 /// substituting the contents of the response files for the arguments
 /// of type @file.
-static void ExpandResponseFiles(int argc, char** argv,
+static void ExpandResponseFiles(unsigned argc, char** argv,
                                 std::vector<char*>& newArgv) {
-  for (int i = 1; i != argc; ++i) {
-    char* arg = argv[i];
+  for (unsigned i = 1; i != argc; ++i) {
+    char *arg = argv[i];
 
     if (arg[0] == '@') {
-
       sys::PathWithStatus respFile(++arg);
 
       // Check that the response file is not empty (mmap'ing empty
@@ -538,6 +587,10 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
       // option is another positional argument.  If so, treat it as an argument,
       // otherwise feed it to the eating positional.
       ArgName = argv[i]+1;
+      // Eat leading dashes.
+      while (!ArgName.empty() && ArgName[0] == '-')
+        ArgName = ArgName.substr(1);
+      
       Handler = LookupOption(ArgName, Value, Opts);
       if (!Handler || Handler->getFormattingFlag() != cl::Positional) {
         ProvidePositionalOption(ActivePositionalArg, argv[i], i);
@@ -546,51 +599,16 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
 
     } else {     // We start with a '-', must be an argument.
       ArgName = argv[i]+1;
+      // Eat leading dashes.
+      while (!ArgName.empty() && ArgName[0] == '-')
+        ArgName = ArgName.substr(1);
+      
       Handler = LookupOption(ArgName, Value, Opts);
 
       // Check to see if this "option" is really a prefixed or grouped argument.
-      if (Handler == 0) {
-        StringRef RealName(ArgName);
-        if (RealName.size() > 1) {
-          size_t Length = 0;
-          Option *PGOpt =
-            getOptionPred(RealName, Length, isPrefixedOrGrouping, Opts);
-
-          // If the option is a prefixed option, then the value is simply the
-          // rest of the name...  so fall through to later processing, by
-          // setting up the argument name flags and value fields.
-          if (PGOpt && PGOpt->getFormattingFlag() == cl::Prefix) {
-            ArgName = argv[i]+1;
-            Value = ArgName.substr(Length);
-            assert(Opts.count(ArgName.substr(0, Length)) &&
-                   Opts[ArgName.substr(0, Length)] == PGOpt);
-            Handler = PGOpt;
-          } else if (PGOpt) {
-            // This must be a grouped option... handle them now.
-            assert(isGrouping(PGOpt) && "Broken getOptionPred!");
-
-            do {
-              // Move current arg name out of RealName into RealArgName.
-              StringRef RealArgName = RealName.substr(0, Length);
-              RealName = RealName.substr(Length);
-
-              // Because ValueRequired is an invalid flag for grouped arguments,
-              // we don't need to pass argc/argv in.
-              //
-              assert(PGOpt->getValueExpectedFlag() != cl::ValueRequired &&
-                     "Option can not be cl::Grouping AND cl::ValueRequired!");
-              int Dummy;
-              ErrorParsing |= ProvideOption(PGOpt, RealArgName,
-                                            StringRef(), 0, 0, Dummy);
-
-              // Get the next grouping option.
-              PGOpt = getOptionPred(RealName, Length, isGrouping, Opts);
-            } while (PGOpt && Length != RealName.size());
-
-            Handler = PGOpt; // Ate all of the options.
-          }
-        }
-      }
+      if (Handler == 0)
+        Handler = HandlePrefixedOrGroupedOption(ArgName, Value,
+                                                ErrorParsing, Opts);
     }
 
     if (Handler == 0) {
@@ -650,7 +668,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
     ErrorParsing = true;
 
   } else if (ConsumeAfterOpt == 0) {
-    // Positional args have already been handled if ConsumeAfter is specified...
+    // Positional args have already been handled if ConsumeAfter is specified.
     unsigned ValNo = 0, NumVals = static_cast<unsigned>(PositionalVals.size());
     for (size_t i = 0, e = PositionalOpts.size(); i != e; ++i) {
       if (RequiresValue(PositionalOpts[i])) {
@@ -807,8 +825,8 @@ size_t alias::getOptionWidth() const {
 // Print out the option for the alias.
 void alias::printOptionInfo(size_t GlobalWidth) const {
   size_t L = std::strlen(ArgStr);
-  errs() << "  -" << ArgStr << std::string(GlobalWidth-L-6, ' ') << " - "
-         << HelpStr << "\n";
+  errs() << "  -" << ArgStr;
+  errs().indent(GlobalWidth-L-6) << " - " << HelpStr << "\n";
 }
 
 
@@ -967,21 +985,21 @@ void generic_parser_base::printOptionInfo(const Option &O,
                                           size_t GlobalWidth) const {
   if (O.hasArgStr()) {
     size_t L = std::strlen(O.ArgStr);
-    outs() << "  -" << O.ArgStr << std::string(GlobalWidth-L-6, ' ')
-           << " - " << O.HelpStr << '\n';
+    outs() << "  -" << O.ArgStr;
+    outs().indent(GlobalWidth-L-6) << " - " << O.HelpStr << '\n';
 
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       size_t NumSpaces = GlobalWidth-strlen(getOption(i))-8;
-      outs() << "    =" << getOption(i) << std::string(NumSpaces, ' ')
-             << " -   " << getDescription(i) << '\n';
+      outs() << "    =" << getOption(i);
+      outs().indent(NumSpaces) << " -   " << getDescription(i) << '\n';
     }
   } else {
     if (O.HelpStr[0])
-      outs() << "  " << O.HelpStr << "\n";
+      outs() << "  " << O.HelpStr << '\n';
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       size_t L = std::strlen(getOption(i));
-      outs() << "    -" << getOption(i) << std::string(GlobalWidth-L-8, ' ')
-             << " - " << getDescription(i) << "\n";
+      outs() << "    -" << getOption(i);
+      outs().indent(GlobalWidth-L-8) << " - " << getDescription(i) << '\n';
     }
   }
 }
@@ -1121,7 +1139,7 @@ public:
 #endif
     outs() << ".\n"
            << "  Built " << __DATE__ << " (" << __TIME__ << ").\n"
-           << "  Host: " << sys::getHostTriple() << "\n"
+           << "  Host: " << sys::getHostTriple() << '\n'
            << "\n"
            << "  Registered Targets:\n";
 
@@ -1135,9 +1153,9 @@ public:
     std::sort(Targets.begin(), Targets.end());
 
     for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
-      outs() << "    " << Targets[i].first
-             << std::string(Width - Targets[i].first.length(), ' ') << " - "
-             << Targets[i].second->getShortDescription() << "\n";
+      outs() << "    " << Targets[i].first;
+      outs().indent(Width - Targets[i].first.length()) << " - "
+             << Targets[i].second->getShortDescription() << '\n';
     }
     if (Targets.empty())
       outs() << "    (none)\n";
