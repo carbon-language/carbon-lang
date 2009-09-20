@@ -906,7 +906,8 @@ void DwarfException::EmitExceptionTable() {
     const GlobalVariable *TI = *I;
 
     if (TI) {
-      if (TTypeFormat == dwarf::DW_EH_PE_absptr) {
+      if (TTypeFormat == dwarf::DW_EH_PE_absptr ||
+          TI->getLinkage() == GlobalValue::InternalLinkage) {
         // Print out the unadorned name of the type info.
         PrintRelDirective();
         O << Asm->Mang->getMangledName(TI);

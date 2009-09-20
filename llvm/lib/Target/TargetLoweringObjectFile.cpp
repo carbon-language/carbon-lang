@@ -782,14 +782,8 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   }
 
   // Exception Handling.
-#if 1
-  LSDASection = getMachOSection("__DATA", "__gcc_except_tab", 0,
-                                SectionKind::getDataRel());
-#else
-  // FIXME: This is causing failures in the CINT2006 SPEC benchmarks.
   LSDASection = getMachOSection("__TEXT", "__gcc_except_tab", 0,
                                 SectionKind::getReadOnly());
-#endif
   EHFrameSection =
     getMachOSection("__TEXT", "__eh_frame",
                     MCSectionMachO::S_COALESCED |
