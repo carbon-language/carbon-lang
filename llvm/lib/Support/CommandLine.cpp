@@ -27,6 +27,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
 #include <set>
@@ -1150,7 +1151,7 @@ public:
       Targets.push_back(std::make_pair(it->getName(), &*it));
       Width = std::max(Width, Targets.back().first.length());
     }
-    std::sort(Targets.begin(), Targets.end());
+    array_pod_sort(Targets.begin(), Targets.end());
 
     for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
       outs() << "    " << Targets[i].first;
