@@ -25,12 +25,12 @@
 #include "llvm/System/Host.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
-#include <set>
 #include <cerrno>
 #include <cstdlib>
 using namespace llvm;
@@ -1039,7 +1039,7 @@ public:
     StringMap<Option*> OptMap;
     GetOptionInfo(PositionalOpts, SinkOpts, OptMap);
 
-    // Copy Options into a vector so we can sort them as we like...
+    // Copy Options into a vector so we can sort them as we like.
     std::vector<Option*> Opts;
     for (StringMap<Option*>::iterator I = OptMap.begin(), E = OptMap.end();
          I != E; ++I) {
@@ -1053,7 +1053,7 @@ public:
 
     // Eliminate duplicate entries in table (from enum flags options, f.e.)
     {  // Give OptionSet a scope
-      std::set<Option*> OptionSet;
+      SmallPtrSet<Option*, 32> OptionSet;
       for (unsigned i = 0; i != Opts.size(); ++i)
         if (OptionSet.count(Opts[i]) == 0)
           OptionSet.insert(Opts[i]);   // Add new entry to set
