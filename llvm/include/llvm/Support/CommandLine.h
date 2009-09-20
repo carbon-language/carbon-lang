@@ -230,7 +230,7 @@ public:
   //
   virtual void printOptionInfo(size_t GlobalWidth) const = 0;
 
-  virtual void getExtraOptionNames(std::vector<const char*> &) {}
+  virtual void getExtraOptionNames(SmallVectorImpl<const char*> &) {}
 
   // addOccurrence - Wrapper around handleOccurrence that enforces Flags.
   //
@@ -397,7 +397,7 @@ struct generic_parser_base {
     hasArgStr = O.hasArgStr();
   }
 
-  void getExtraOptionNames(std::vector<const char*> &OptionNames) {
+  void getExtraOptionNames(SmallVectorImpl<const char*> &OptionNames) {
     // If there has been no argstr specified, that means that we need to add an
     // argument for every possible option.  This ensures that our options are
     // vectored to us.
@@ -502,7 +502,7 @@ struct basic_parser_impl {  // non-template implementation of basic_parser<t>
     return ValueRequired;
   }
 
-  void getExtraOptionNames(std::vector<const char*> &) {}
+  void getExtraOptionNames(SmallVectorImpl<const char*> &) {}
 
   void initialize(Option &) {}
 
@@ -841,7 +841,7 @@ class opt : public Option,
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return Parser.getValueExpectedFlagDefault();
   }
-  virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {
+  virtual void getExtraOptionNames(SmallVectorImpl<const char*> &OptionNames) {
     return Parser.getExtraOptionNames(OptionNames);
   }
 
@@ -996,7 +996,7 @@ class list : public Option, public list_storage<DataType, Storage> {
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return Parser.getValueExpectedFlagDefault();
   }
-  virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {
+  virtual void getExtraOptionNames(SmallVectorImpl<const char*> &OptionNames) {
     return Parser.getExtraOptionNames(OptionNames);
   }
 
@@ -1195,7 +1195,7 @@ class bits : public Option, public bits_storage<DataType, Storage> {
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return Parser.getValueExpectedFlagDefault();
   }
-  virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {
+  virtual void getExtraOptionNames(SmallVectorImpl<const char*> &OptionNames) {
     return Parser.getExtraOptionNames(OptionNames);
   }
 

@@ -108,8 +108,7 @@ void Option::addArgument() {
 static void GetOptionInfo(SmallVectorImpl<Option*> &PositionalOpts,
                           SmallVectorImpl<Option*> &SinkOpts,
                           StringMap<Option*> &OptionsMap) {
-  // FIXME: SmallVectorize.
-  std::vector<const char*> OptionNames;
+  SmallVector<const char*, 16> OptionNames;
   Option *CAOpt = 0;  // The ConsumeAfter option if it exists.
   for (Option *O = RegisteredOptionList; O; O = O->getNextRegisteredOption()) {
     // If this option wants to handle multiple option names, get the full set.
