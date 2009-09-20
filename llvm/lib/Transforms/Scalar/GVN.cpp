@@ -39,6 +39,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <cstdio>
@@ -1210,19 +1211,106 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   return true;
 }
 
+/// CoerceAvailableValueToLoadType - If we saw a store of a value to memory, and
+/// then a load from a must-aliased pointer of a different type, try to coerce
+/// the stored value.  If we can't do it, return null.
+static Value *CoerceAvailableValueToLoadType(Value *StoredVal, LoadInst *L,
+                                             const TargetData &TD) {
+  const Type *StoredValTy = StoredVal->getType();
+  const Type *LoadedTy = L->getType();
+  
+  uint64_t StoreSize = TD.getTypeSizeInBits(StoredValTy);
+  uint64_t LoadSize = TD.getTypeSizeInBits(LoadedTy);
+  
+  // If the store and reload are the same size, we can always reuse it.
+  if (StoreSize == LoadSize) {
+    if (isa<PointerType>(StoredValTy) && isa<PointerType>(LoadedTy)) {
+      // Pointer to Pointer -> use bitcast.
+      return new BitCastInst(StoredVal, LoadedTy, "", L);
+    }
+
+    // Convert source pointers to integers, which can be bitcast.
+    if (isa<PointerType>(StoredValTy)) {
+      StoredValTy = TD.getIntPtrType(StoredValTy->getContext());
+      StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", L);
+    }
+    
+    const Type *TypeToCastTo = LoadedTy;
+    if (isa<PointerType>(TypeToCastTo))
+      TypeToCastTo = TD.getIntPtrType(StoredValTy->getContext());
+    
+    if (StoredValTy != TypeToCastTo)
+      StoredVal = new BitCastInst(StoredVal, TypeToCastTo, "", L);
+    
+    // Cast to pointer if the load needs a pointer type.
+    if (isa<PointerType>(LoadedTy))
+      StoredVal = new IntToPtrInst(StoredVal, LoadedTy, "", L);
+    
+    return StoredVal;
+  }
+  
+  // If the loaded value is smaller than the available value, then we can
+  // extract out a piece from it.  If the available value is too small, then we
+  // can't do anything.
+  if (StoreSize < LoadSize)
+    return 0;
+
+  // Convert source pointers to integers, which can be manipulated.
+  if (isa<PointerType>(StoredValTy)) {
+    StoredValTy = TD.getIntPtrType(StoredValTy->getContext());
+    StoredVal = new PtrToIntInst(StoredVal, StoredValTy, "", L);
+  }
+
+  // Convert vectors and fp to integer, which can be manipulated.
+  if (!isa<IntegerType>(StoredValTy)) {
+    StoredValTy = IntegerType::get(StoredValTy->getContext(), StoreSize);
+    StoredVal = new BitCastInst(StoredVal, StoredValTy, "", L);
+  }
+  
+  // If this is a big-endian system, we need to shift the value down to the low
+  // bits so that a truncate will work.
+  if (TD.isBigEndian()) {
+    Constant *Val = ConstantInt::get(StoredVal->getType(), StoreSize-LoadSize);
+    StoredVal = BinaryOperator::CreateLShr(StoredVal, Val, "tmp", L);
+  }
+  
+  // Truncate the integer to the right size now.
+  const Type *NewIntTy = IntegerType::get(StoredValTy->getContext(), LoadSize);
+  StoredVal = new TruncInst(StoredVal, NewIntTy, "trunc", L);
+
+  if (LoadedTy == NewIntTy)
+    return StoredVal;
+
+  // If the result is a pointer, inttoptr.
+  if (isa<PointerType>(LoadedTy))
+    return new IntToPtrInst(StoredVal, LoadedTy, "inttoptr", L);
+
+  // Otherwise, bitcast.
+  return new BitCastInst(StoredVal, LoadedTy, "bitcast", L);
+}
+
+
 /// processLoad - Attempt to eliminate a load, first by eliminating it
 /// locally, and then attempting non-local elimination if that fails.
 bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   if (L->isVolatile())
     return false;
 
-  Value* pointer = L->getPointerOperand();
-
   // ... to a pointer that has been loaded from before...
   MemDepResult dep = MD->getDependency(L);
 
   // If the value isn't available, don't do anything!
   if (dep.isClobber()) {
+    // FIXME: In the future, we should handle things like:
+    //   store i32 123, i32* %P
+    //   %A = bitcast i32* %P to i8*
+    //   %B = gep i8* %A, i32 1
+    //   %C = load i8* %B
+    //
+    // We could do that by recognizing if the clobber instructions are obviously
+    // a common base + constant offset, and if the previous store (or memset)
+    // completely covers this load.  This sort of thing can happen in bitfield
+    // access code.
     DEBUG(
       // fast print dep, using operator<< on instruction would be too slow
       errs() << "GVN: load ";
@@ -1239,28 +1327,50 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
 
   Instruction *DepInst = dep.getInst();
   if (StoreInst *DepSI = dyn_cast<StoreInst>(DepInst)) {
-    // Only forward substitute stores to loads of the same type.
-    // FIXME: Could do better!
-    if (DepSI->getPointerOperand()->getType() != pointer->getType())
-      return false;
+    Value *StoredVal = DepSI->getOperand(0);
+    
+    // The store and load are to a must-aliased pointer, but they may not
+    // actually have the same type.  See if we know how to reuse the stored
+    // value (depending on its type).
+    const TargetData *TD = 0;
+    if (StoredVal->getType() != L->getType() &&
+        (TD = getAnalysisIfAvailable<TargetData>())) {
+      StoredVal = CoerceAvailableValueToLoadType(StoredVal, L, *TD);
+      if (StoredVal == 0)
+        return false;
+      
+      DEBUG(errs() << "GVN COERCED STORE:\n" << *DepSI << '\n' << *StoredVal
+                   << '\n' << *L << "\n\n\n");
+    }
 
     // Remove it!
-    L->replaceAllUsesWith(DepSI->getOperand(0));
-    if (isa<PointerType>(DepSI->getOperand(0)->getType()))
-      MD->invalidateCachedPointerInfo(DepSI->getOperand(0));
+    L->replaceAllUsesWith(StoredVal);
+    if (isa<PointerType>(StoredVal->getType()))
+      MD->invalidateCachedPointerInfo(StoredVal);
     toErase.push_back(L);
     NumGVNLoad++;
     return true;
   }
 
   if (LoadInst *DepLI = dyn_cast<LoadInst>(DepInst)) {
-    // Only forward substitute stores to loads of the same type.
-    // FIXME: Could do better! load i32 -> load i8 -> truncate on little endian.
-    if (DepLI->getType() != L->getType())
-      return false;
-
+    Value *AvailableVal = DepLI;
+    
+    // The loads are of a must-aliased pointer, but they may not actually have
+    // the same type.  See if we know how to reuse the previously loaded value
+    // (depending on its type).
+    const TargetData *TD = 0;
+    if (DepLI->getType() != L->getType() &&
+        (TD = getAnalysisIfAvailable<TargetData>())) {
+      AvailableVal = CoerceAvailableValueToLoadType(DepLI, L, *TD);
+      if (AvailableVal == 0)
+        return false;
+      
+      DEBUG(errs() << "GVN COERCED LOAD:\n" << *DepLI << "\n" << *AvailableVal
+                   << "\n" << *L << "\n\n\n");
+    }
+    
     // Remove it!
-    L->replaceAllUsesWith(DepLI);
+    L->replaceAllUsesWith(AvailableVal);
     if (isa<PointerType>(DepLI->getType()))
       MD->invalidateCachedPointerInfo(DepLI);
     toErase.push_back(L);
@@ -1268,6 +1378,10 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     return true;
   }
 
+  // FIXME: We should handle memset/memcpy/memmove as dependent instructions to
+  // forward the value if available.
+  
+  
   // If this load really doesn't depend on anything, then we must be loading an
   // undef value.  This can happen when loading for a fresh allocation with no
   // intervening stores, for example.
