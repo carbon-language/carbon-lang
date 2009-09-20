@@ -40,6 +40,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -920,3 +921,27 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
   }
 }
 
+
+//===----------------------------------------------------------------------===//
+// Target Registry Stuff
+//===----------------------------------------------------------------------===//
+
+static MCInstPrinter *createX86MCInstPrinter(const Target &T,
+                                             unsigned SyntaxVariant,
+                                             const MCAsmInfo &MAI,
+                                             raw_ostream &O) {
+  if (SyntaxVariant == 0)
+    return new X86ATTInstPrinter(O, MAI);
+  if (SyntaxVariant == 1)
+    return new X86IntelInstPrinter(O, MAI);
+  return 0;
+}
+
+// Force static initialization.
+extern "C" void LLVMInitializeX86AsmPrinter() { 
+  RegisterAsmPrinter<X86AsmPrinter> X(TheX86_32Target);
+  RegisterAsmPrinter<X86AsmPrinter> Y(TheX86_64Target);
+  
+  TargetRegistry::RegisterMCInstPrinter(TheX86_32Target,createX86MCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheX86_64Target,createX86MCInstPrinter);
+}
