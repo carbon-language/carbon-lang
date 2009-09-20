@@ -36,3 +36,6 @@
 ; CHECK: @M = global i1 icmp uge (i8* @X, i8* @Y) ; <i1*> [#uses=0]
 @N = global i1 icmp ne (i1 icmp ult (i8* @X, i8* @Y), i1 false)
 ; CHECK: @N = global i1 icmp ult (i8* @X, i8* @Y) ; <i1*> [#uses=0]
+
+@O = global i1 icmp eq (i32 zext (i1 icmp ult (i8* @X, i8* @Y) to i32), i32 0)
+; CHECK: @O = global i1 icmp uge (i8* @X, i8* @Y) ; <i1*> [#uses=0]

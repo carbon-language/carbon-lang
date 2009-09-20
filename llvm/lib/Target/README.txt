@@ -1656,25 +1656,3 @@ Instcombine should be able to optimize away the loads (and thus the globals).
 See also PR4973
 
 //===---------------------------------------------------------------------===//
-
-I saw this constant expression in real code after llvm-g++ -O2:
-
-declare extern_weak i32 @0(i64)
-
-define void @foo() {
-  br i1 icmp eq (i32 zext (i1 icmp ne (i32 (i64)* @0, i32 (i64)* null) to i32),
-i32 0), label %cond_true, label %cond_false
-cond_true:
-  ret void
-cond_false:
-  ret void
-}
-
-That branch expression should be reduced to:
-
-  i1 icmp eq (i32 (i64)* @0, i32 (i64)* null)
-
-It's probably not a perf issue, I just happened to see it while examining
-something else and didn't want to forget about it.
-
-//===---------------------------------------------------------------------===//

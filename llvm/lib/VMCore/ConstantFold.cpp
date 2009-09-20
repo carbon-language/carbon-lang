@@ -1665,6 +1665,22 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
       }
     }
 
+    // If the left hand side is an extension, try eliminating it.
+    if (ConstantExpr *CE1 = dyn_cast<ConstantExpr>(C1)) {
+      if (CE1->getOpcode() == Instruction::SExt ||
+          CE1->getOpcode() == Instruction::ZExt) {
+        Constant *CE1Op0 = CE1->getOperand(0);
+        Constant *CE1Inverse = ConstantExpr::getTrunc(CE1, CE1Op0->getType());
+        if (CE1Inverse == CE1Op0) {
+          // Check whether we can safely truncate the right hand side.
+          Constant *C2Inverse = ConstantExpr::getTrunc(C2, CE1Op0->getType());
+          if (ConstantExpr::getZExt(C2Inverse, C2->getType()) == C2) {
+            return ConstantExpr::getICmp(pred, CE1Inverse, C2Inverse);
+          }
+        }
+      }
+    }
+
     if (!isa<ConstantExpr>(C1) && isa<ConstantExpr>(C2)) {
       // If C2 is a constant expr and C1 isn't, flip them around and fold the
       // other way if possible.
