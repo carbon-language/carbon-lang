@@ -45,7 +45,7 @@ namespace GraphProgram {
       CIRCO
    };
 }
-   
+
 void DisplayGraph(const sys::Path& Filename, bool wait=true, GraphProgram::Name program = GraphProgram::DOT);
 
 template<typename GraphType>
@@ -223,9 +223,9 @@ public:
     O << " -> Node" << DestNodeID;
     if (DestNodePort >= 0) {
       if (DOTTraits::hasEdgeDestLabels())
-	O << ":d" << DestNodePort;
+        O << ":d" << DestNodePort;
       else
-	O << ":s" << DestNodePort;
+        O << ":s" << DestNodePort;
     }
 
     if (!Attrs.empty())

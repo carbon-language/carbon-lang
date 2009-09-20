@@ -109,8 +109,8 @@ public:
   }
 
   const MachineInstrBuilder &addMetadata(MDNode *N,
-					 int64_t Offset = 0,
-					 unsigned char TargetFlags = 0) const {
+                                         int64_t Offset = 0,
+                                         unsigned char TargetFlags = 0) const {
     MI->addOperand(MachineOperand::CreateMDNode(N, Offset, TargetFlags));
     return *this;
   }
@@ -191,7 +191,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
 
 /// BuildMI - This version of the builder inserts the newly-built
 /// instruction at the end of the given MachineBasicBlock, and sets up the first
-/// operand as a destination virtual register. 
+/// operand as a destination virtual register.
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
                                    DebugLoc DL,
