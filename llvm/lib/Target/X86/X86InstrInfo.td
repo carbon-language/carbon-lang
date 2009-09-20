@@ -546,11 +546,12 @@ let neverHasSideEffects = 1 in {
 def INT3 : I<0xcc, RawFrm, (outs), (ins), "int 3", []>;
 def INT : I<0xcd, RawFrm, (outs), (ins i8imm:$trap), "int\t$trap", []>;
 
-// PIC base
+// PIC base construction.  This expands to code that looks like this:
+//     call  $next_inst
+//     popl %destreg"
 let neverHasSideEffects = 1, isNotDuplicable = 1, Uses = [ESP] in
   def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins i32imm:$label),
-                      "call\t$label\n\t"
-                      "pop{l}\t$reg", []>;
+                      "", []>;
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
