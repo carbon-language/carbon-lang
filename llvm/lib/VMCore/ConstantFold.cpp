@@ -1010,6 +1010,37 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
     }
   }
 
+  // i1 can be simplified in many cases.
+  if (C1->getType() == Type::getInt1Ty(Context)) {
+    switch (Opcode) {
+    case Instruction::Add:
+    case Instruction::Sub:
+      return ConstantExpr::getXor(const_cast<Constant*>(C1),
+                                  const_cast<Constant*>(C2));
+    case Instruction::Mul:
+      return ConstantExpr::getAnd(const_cast<Constant*>(C1),
+                                  const_cast<Constant*>(C2));
+    case Instruction::Shl:
+    case Instruction::LShr:
+    case Instruction::AShr:
+      // We can assume that C2 == 0.  If it were one the result would be
+      // undefined because the shift value is as large as the bitwidth.
+      return const_cast<Constant*>(C1);
+    case Instruction::SDiv:
+    case Instruction::UDiv:
+      // We can assume that C2 == 1.  If it were zero the result would be
+      // undefined through division by zero.
+      return const_cast<Constant*>(C1);
+    case Instruction::URem:
+    case Instruction::SRem:
+      // We can assume that C2 == 1.  If it were zero the result would be
+      // undefined through division by zero.
+      return ConstantInt::getFalse(Context);
+    default:
+      break;
+    }
+  }
+
   // We don't know how to fold this.
   return 0;
 }
