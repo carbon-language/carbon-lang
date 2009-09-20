@@ -169,17 +169,15 @@ namespace llvm {
     ///
     /// \return - The index of the last occurence of \arg C, or npos if not
     /// found.
-    size_t rfind(char C, size_t From) const {
-      for (size_t i = From, e = 0; i != e;) {
+    size_t rfind(char C, size_t From = npos) const {
+      From = std::min(From, Length);
+      size_t i = From;
+      while (i != 0) {
         --i;
         if (Data[i] == C)
           return i;
       }
       return npos;
-    }
-    
-    size_t rfind(char C) const {
-      return rfind(C, Length);
     }
     
     /// rfind - Search for the last string \arg Str in the string.
