@@ -56,35 +56,6 @@ struct CheckString {
 };
 
 
-/// FindFixedStringInBuffer - This works like strstr, except for two things:
-/// 1) it handles 'nul' characters in memory buffers.  2) it returns the end of
-/// the memory buffer on match failure instead of null.
-static const char *FindFixedStringInBuffer(StringRef Str, const char *CurPtr,
-                                           const MemoryBuffer &MB) {
-  assert(!Str.empty() && "Can't find an empty string");
-  const char *BufEnd = MB.getBufferEnd();
-  
-  while (1) {
-    // Scan for the first character in the match string.
-    CurPtr = (char*)memchr(CurPtr, Str[0], BufEnd-CurPtr);
-    
-    // If we didn't find the first character of the string, then we failed to
-    // match.
-    if (CurPtr == 0) return BufEnd;
-
-    // If the match string is one character, then we win.
-    if (Str.size() == 1) return CurPtr;
-    
-    // Otherwise, verify that the rest of the string matches.
-    if (Str.size() <= unsigned(BufEnd-CurPtr) &&
-        memcmp(CurPtr+1, Str.data()+1, Str.size()-1) == 0)
-      return CurPtr;
-    
-    // If not, advance past this character and try again.
-    ++CurPtr;
-  }
-}
-
 /// ReadCheckFile - Read the check file, which specifies the sequence of
 /// expected strings.  The strings are added to the CheckStrings vector.
 static bool ReadCheckFile(SourceMgr &SM,
@@ -101,52 +72,51 @@ static bool ReadCheckFile(SourceMgr &SM,
   SM.AddNewSourceBuffer(F, SMLoc());
 
   // Find all instances of CheckPrefix followed by : in the file.
-  const char *CurPtr = F->getBufferStart(), *BufferEnd = F->getBufferEnd();
+  StringRef Buffer = F->getBuffer();
 
   while (1) {
     // See if Prefix occurs in the memory buffer.
-    const char *Ptr = FindFixedStringInBuffer(CheckPrefix, CurPtr, *F);
+    Buffer = Buffer.substr(Buffer.find(CheckPrefix));
     
     // If we didn't find a match, we're done.
-    if (Ptr == BufferEnd)
+    if (Buffer.empty())
       break;
     
-    const char *CheckPrefixStart = Ptr;
+    const char *CheckPrefixStart = Buffer.data();
     
     // When we find a check prefix, keep track of whether we find CHECK: or
     // CHECK-NEXT:
     bool IsCheckNext;
     
     // Verify that the : is present after the prefix.
-    if (Ptr[CheckPrefix.size()] == ':') {
-      Ptr += CheckPrefix.size()+1;
+    if (Buffer[CheckPrefix.size()] == ':') {
+      Buffer = Buffer.substr(CheckPrefix.size()+1);
       IsCheckNext = false;
-    } else if (BufferEnd-Ptr > 6 &&
-               memcmp(Ptr+CheckPrefix.size(), "-NEXT:", 6) == 0) {
-      Ptr += CheckPrefix.size()+7;
+    } else if (Buffer.size() > CheckPrefix.size()+6 &&
+               memcmp(Buffer.data()+CheckPrefix.size(), "-NEXT:", 6) == 0) {
+      Buffer = Buffer.substr(CheckPrefix.size()+7);
       IsCheckNext = true;
     } else {
-      CurPtr = Ptr+1;
+      Buffer = Buffer.substr(1);
       continue;
     }
     
     // Okay, we found the prefix, yay.  Remember the rest of the line, but
     // ignore leading and trailing whitespace.
-    while (*Ptr == ' ' || *Ptr == '\t')
-      ++Ptr;
+    while (!Buffer.empty() && (Buffer[0] == ' ' || Buffer[0] == '\t'))
+      Buffer = Buffer.substr(1);
     
     // Scan ahead to the end of line.
-    CurPtr = Ptr;
-    while (CurPtr != BufferEnd && *CurPtr != '\n' && *CurPtr != '\r')
-      ++CurPtr;
+    size_t EOL = Buffer.find_first_of("\n\r");
+    if (EOL == StringRef::npos) EOL = Buffer.size();
     
     // Ignore trailing whitespace.
-    while (CurPtr[-1] == ' ' || CurPtr[-1] == '\t')
-      --CurPtr;
+    while (EOL && (Buffer[EOL-1] == ' ' || Buffer[EOL-1] == '\t'))
+      --EOL;
     
     // Check that there is something on the line.
-    if (Ptr >= CurPtr) {
-      SM.PrintMessage(SMLoc::getFromPointer(CurPtr),
+    if (EOL == 0) {
+      SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()),
                       "found empty check string with prefix '"+CheckPrefix+":'",
                       "error");
       return true;
@@ -161,9 +131,12 @@ static bool ReadCheckFile(SourceMgr &SM,
     }
     
     // Okay, add the string we captured to the output vector and move on.
-    CheckStrings.push_back(CheckString(std::string(Ptr, CurPtr),
-                                       SMLoc::getFromPointer(Ptr),
+    CheckStrings.push_back(CheckString(std::string(Buffer.data(),
+                                                   Buffer.data()+EOL),
+                                       SMLoc::getFromPointer(Buffer.data()),
                                        IsCheckNext));
+    
+    Buffer = Buffer.substr(EOL);
   }
   
   if (CheckStrings.empty()) {
@@ -230,22 +203,16 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
 
 
 static void PrintCheckFailed(const SourceMgr &SM, const CheckString &CheckStr,
-                             const char *CurPtr, const char *BufferEnd) {
+                             StringRef Buffer) {
   // Otherwise, we have an error, emit an error message.
   SM.PrintMessage(CheckStr.Loc, "expected string not found in input",
                   "error");
   
   // Print the "scanning from here" line.  If the current position is at the
   // end of a line, advance to the start of the next line.
-  const char *Scan = CurPtr;
-  while (Scan != BufferEnd &&
-         (*Scan == ' ' || *Scan == '\t'))
-    ++Scan;
-  if (*Scan == '\n' || *Scan == '\r')
-    CurPtr = Scan+1;
+  Buffer = Buffer.substr(Buffer.find_first_not_of(" \t\n\r"));
   
-  
-  SM.PrintMessage(SMLoc::getFromPointer(CurPtr), "scanning from here",
+  SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), "scanning from here",
                   "note");
 }
 
@@ -302,18 +269,20 @@ int main(int argc, char **argv) {
   
   // Check that we have all of the expected strings, in order, in the input
   // file.
-  const char *CurPtr = F->getBufferStart(), *BufferEnd = F->getBufferEnd();
+  StringRef Buffer = F->getBuffer();
   
   const char *LastMatch = 0;
   for (unsigned StrNo = 0, e = CheckStrings.size(); StrNo != e; ++StrNo) {
     const CheckString &CheckStr = CheckStrings[StrNo];
     
+    StringRef SearchFrom = Buffer;
+    
     // Find StrNo in the file.
-    const char *Ptr = FindFixedStringInBuffer(CheckStr.Str, CurPtr, *F);
+    Buffer = Buffer.substr(Buffer.find(CheckStr.Str));
     
     // If we didn't find a match, reject the input.
-    if (Ptr == BufferEnd) {
-      PrintCheckFailed(SM, CheckStr, CurPtr, BufferEnd);
+    if (Buffer.empty()) {
+      PrintCheckFailed(SM, CheckStr, SearchFrom);
       return 1;
     }
     
@@ -323,12 +292,12 @@ int main(int argc, char **argv) {
       // Count the number of newlines between the previous match and this one.
       assert(LastMatch && "CHECK-NEXT can't be the first check in a file");
 
-      unsigned NumNewLines = CountNumNewlinesBetween(LastMatch, Ptr);
+      unsigned NumNewLines = CountNumNewlinesBetween(LastMatch, Buffer.data());
       if (NumNewLines == 0) {
         SM.PrintMessage(CheckStr.Loc,
                     CheckPrefix+"-NEXT: is on the same line as previous match",
                         "error");
-        SM.PrintMessage(SMLoc::getFromPointer(Ptr),
+        SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()),
                         "'next' match was here", "note");
         SM.PrintMessage(SMLoc::getFromPointer(LastMatch),
                         "previous match was here", "note");
@@ -340,7 +309,7 @@ int main(int argc, char **argv) {
                         CheckPrefix+
                         "-NEXT: is not on the line after the previous match",
                         "error");
-        SM.PrintMessage(SMLoc::getFromPointer(Ptr),
+        SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()),
                         "'next' match was here", "note");
         SM.PrintMessage(SMLoc::getFromPointer(LastMatch),
                         "previous match was here", "note");
@@ -350,8 +319,8 @@ int main(int argc, char **argv) {
 
     // Otherwise, everything is good.  Remember this as the last match and move
     // on to the next one.
-    LastMatch = Ptr;
-    CurPtr = Ptr + CheckStr.Str.size();
+    LastMatch = Buffer.data();
+    Buffer = Buffer.substr(CheckStr.Str.size());
   }
   
   return 0;
