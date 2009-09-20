@@ -89,23 +89,16 @@ static bool GetAsUnsignedInteger(StringRef Str, unsigned Radix,
                                  unsigned long long &Result) {
   // Autosense radix if not specified.
   if (Radix == 0) {
-    if (Str[0] != '0') {
+    if (Str.startswith("0x")) {
+      Str = Str.substr(2);
+      Radix = 16;
+    } else if (Str.startswith("0b")) {
+      Str = Str.substr(2);
+      Radix = 2;
+    } else if (Str.startswith("0"))
+      Radix = 8;
+    else
       Radix = 10;
-    } else {
-      if (Str.size() < 2) {
-        Radix = 8;
-      } else {
-        if (Str[1] == 'x') {
-          Str = Str.substr(2);
-          Radix = 16;
-        } else if (Str[1] == 'b') {
-          Str = Str.substr(2);
-          Radix = 2;
-        } else {
-          Radix = 8;
-        }
-      }
-    }
   }
   
   // Empty strings (after the radix autosense) are invalid.
