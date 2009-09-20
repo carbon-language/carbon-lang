@@ -15,6 +15,7 @@ tablegen(X86GenSubtarget.inc -gen-subtarget)
 
 set(sources
   X86CodeEmitter.cpp
+  X86COFFMachineModuleInfo.cpp
   X86ELFWriterInfo.cpp
   X86FloatingPoint.cpp
   X86FloatingPointRegKill.cpp

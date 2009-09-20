@@ -19,6 +19,7 @@
 #include "X86MCInstLower.h"
 #include "X86.h"
 #include "X86COFF.h"
+#include "X86COFFMachineModuleInfo.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86TargetMachine.h"
 #include "llvm/CallingConv.h"
@@ -58,101 +59,15 @@ void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
   X86MCInstLower(OutContext, 0, *AP).GetPICBaseSymbol()->print(O, MAI);
 }
 
-static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
-                                                    const TargetData *TD) {
-  X86MachineFunctionInfo Info;
-  uint64_t Size = 0;
-
-  switch (F->getCallingConv()) {
-  case CallingConv::X86_StdCall:
-    Info.setDecorationStyle(StdCall);
-    break;
-  case CallingConv::X86_FastCall:
-    Info.setDecorationStyle(FastCall);
-    break;
-  default:
-    return Info;
-  }
-
-  unsigned argNum = 1;
-  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
-       AI != AE; ++AI, ++argNum) {
-    const Type* Ty = AI->getType();
-
-    // 'Dereference' type in case of byval parameter attribute
-    if (F->paramHasAttr(argNum, Attribute::ByVal))
-      Ty = cast<PointerType>(Ty)->getElementType();
-
-    // Size should be aligned to DWORD boundary
-    Size += ((TD->getTypeAllocSize(Ty) + 3)/4)*4;
-  }
-
-  // We're not supporting tooooo huge arguments :)
-  Info.setBytesToPopOnReturn((unsigned int)Size);
-  return Info;
-}
-
-/// DecorateCygMingName - Query FunctionInfoMap and use this information for
-/// various name decorations for Cygwin and MingW.
-void X86ATTAsmPrinter::DecorateCygMingName(SmallVectorImpl<char> &Name,
-                                           const GlobalValue *GV) {
-  assert(Subtarget->isTargetCygMing() && "This is only for cygwin and mingw");
-  
-  const Function *F = dyn_cast<Function>(GV);
-  if (!F) return;
-  
-  // Save function name for later type emission.
-  if (F->isDeclaration())
-    CygMingStubs.insert(StringRef(Name.data(), Name.size()));
-  
-  // We don't want to decorate non-stdcall or non-fastcall functions right now
-  CallingConv::ID CC = F->getCallingConv();
-  if (CC != CallingConv::X86_StdCall && CC != CallingConv::X86_FastCall)
-    return;
-  
-  
-  const X86MachineFunctionInfo *Info;
-  
-  FMFInfoMap::const_iterator info_item = FunctionInfoMap.find(F);
-  if (info_item == FunctionInfoMap.end()) {
-    // Calculate apropriate function info and populate map
-    FunctionInfoMap[F] = calculateFunctionInfo(F, TM.getTargetData());
-    Info = &FunctionInfoMap[F];
-  } else {
-    Info = &info_item->second;
-  }
-  
-  if (Info->getDecorationStyle() == None) return;
-  const FunctionType *FT = F->getFunctionType();
-
-  // "Pure" variadic functions do not receive @0 suffix.
-  if (!FT->isVarArg() || FT->getNumParams() == 0 ||
-      (FT->getNumParams() == 1 && F->hasStructRetAttr()))
-    raw_svector_ostream(Name) << '@' << Info->getBytesToPopOnReturn();
-  
-  if (Info->getDecorationStyle() == FastCall) {
-    if (Name[0] == '_')
-      Name[0] = '@';
-    else
-      Name.insert(Name.begin(), '@');
-  }    
-}
-
-/// DecorateCygMingName - Query FunctionInfoMap and use this information for
-/// various name decorations for Cygwin and MingW.
-void X86ATTAsmPrinter::DecorateCygMingName(std::string &Name,
-                                           const GlobalValue *GV) {
-  SmallString<128> NameStr(Name.begin(), Name.end());
-  DecorateCygMingName(NameStr, GV);
-  Name.assign(NameStr.begin(), NameStr.end());
-}
-
 void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   unsigned FnAlign = MF.getAlignment();
   const Function *F = MF.getFunction();
 
-  if (Subtarget->isTargetCygMing())
-    DecorateCygMingName(CurrentFnName, F);
+  if (Subtarget->isTargetCygMing()) {
+    X86COFFMachineModuleInfo &COFFMMI = 
+      MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
+    COFFMMI.DecorateCygMingName(CurrentFnName, F, *TM.getTargetData());
+  }
 
   OutStreamer.SwitchSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   EmitAlignment(FnAlign, F);
@@ -220,16 +135,18 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
 
-  // Populate function information map.  Actually, We don't want to populate
-  // non-stdcall or non-fastcall functions' information right now.
-  if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall)
-    FunctionInfoMap[F] = *MF.getInfo<X86MachineFunctionInfo>();
+  if (Subtarget->isTargetCOFF()) {
+    X86COFFMachineModuleInfo &COFFMMI = 
+    MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
+
+    // Populate function information map.  Don't want to populate
+    // non-stdcall or non-fastcall functions' information right now.
+    if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall)
+      COFFMMI.AddFunctionInfo(F, *MF.getInfo<X86MachineFunctionInfo>());
+  }
 
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
-
-  if (F->hasDLLExportLinkage())
-    DLLExportedFns.insert(Mang->getMangledName(F));
 
   // Print the 'header' of function
   emitFunctionHeader(MF);
@@ -308,8 +225,11 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       Suffix = "$non_lazy_ptr";
     
     std::string Name = Mang->getMangledName(GV, Suffix, Suffix[0] != '\0');
-    if (Subtarget->isTargetCygMing())
-      DecorateCygMingName(Name, GV);
+    if (Subtarget->isTargetCygMing()) {
+      X86COFFMachineModuleInfo &COFFMMI = 
+        MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
+      COFFMMI.DecorateCygMingName(Name, GV, *TM.getTargetData());
+    }
     
     // Handle dllimport linkage.
     if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
@@ -954,16 +874,28 @@ void X86ATTAsmPrinter::EmitEndOfAsmFile(Module &M) {
   }  
   
   if (Subtarget->isTargetCOFF()) {
+    // Necessary for dllexport support
+    std::vector<std::string> DLLExportedFns, DLLExportedGlobals;
+
+    X86COFFMachineModuleInfo &COFFMMI = 
+      MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
+    TargetLoweringObjectFileCOFF &TLOFCOFF = 
+      static_cast<TargetLoweringObjectFileCOFF&>(getObjFileLowering());
+
+    for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
+      if (I->hasDLLExportLinkage())
+        DLLExportedFns.push_back(Mang->getMangledName(I));
+    
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I)
       if (I->hasDLLExportLinkage())
-        DLLExportedGVs.insert(Mang->getMangledName(I));
+        DLLExportedGlobals.push_back(Mang->getMangledName(I));
     
     if (Subtarget->isTargetCygMing()) {
       // Emit type information for external functions
-      for (StringSet<>::iterator i = CygMingStubs.begin(), e = CygMingStubs.end();
-           i != e; ++i) {
-        O << "\t.def\t " << i->getKeyData()
+      for (X86COFFMachineModuleInfo::stub_iterator I = COFFMMI.stub_begin(),
+           E = COFFMMI.stub_end(); I != E; ++I) {
+        O << "\t.def\t " << I->getKeyData()
         << ";\t.scl\t" << COFF::C_EXT
         << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
         << ";\t.endef\n";
@@ -971,23 +903,16 @@ void X86ATTAsmPrinter::EmitEndOfAsmFile(Module &M) {
     }
   
     // Output linker support code for dllexported globals on windows.
-    if (!DLLExportedGVs.empty() || !DLLExportedFns.empty()) {
-      // dllexport symbols only exist on coff targets.
-      TargetLoweringObjectFileCOFF &TLOFCOFF = 
-        static_cast<TargetLoweringObjectFileCOFF&>(getObjFileLowering());
-      
+    if (!DLLExportedGlobals.empty() || !DLLExportedFns.empty()) {
       OutStreamer.SwitchSection(TLOFCOFF.getCOFFSection(".section .drectve",
                                                         true,
                                                    SectionKind::getMetadata()));
     
-      for (StringSet<>::iterator i = DLLExportedGVs.begin(),
-           e = DLLExportedGVs.end(); i != e; ++i)
-        O << "\t.ascii \" -export:" << i->getKeyData() << ",data\"\n";
+      for (unsigned i = 0, e = DLLExportedGlobals.size(); i != e; ++i)
+        O << "\t.ascii \" -export:" << DLLExportedGlobals[i] << ",data\"\n";
     
-      for (StringSet<>::iterator i = DLLExportedFns.begin(),
-           e = DLLExportedFns.end();
-           i != e; ++i)
-        O << "\t.ascii \" -export:" << i->getKeyData() << "\"\n";
+      for (unsigned i = 0, e = DLLExportedFns.size(); i != e; ++i)
+        O << "\t.ascii \" -export:" << DLLExportedFns[i] << "\"\n";
     }
   }
 }

@@ -153,25 +153,6 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
 
   void emitFunctionHeader(const MachineFunction &MF);
 
-  // Necessary for dllexport support
-  StringSet<> CygMingStubs, DLLExportedFns, DLLExportedGVs;
-
-  // We have to propagate some information about MachineFunction to
-  // AsmPrinter. It's ok, when we're printing the function, since we have
-  // access to MachineFunction and can get the appropriate MachineFunctionInfo.
-  // Unfortunately, this is not possible when we're printing reference to
-  // Function (e.g. calling it and so on). Even more, there is no way to get the
-  // corresponding MachineFunctions: it can even be not created at all. That's
-  // why we should use additional structure, when we're collecting all necessary
-  // information.
-  //
-  // This structure is using e.g. for name decoration for stdcall & fastcall'ed
-  // function, since we have to use arguments' size for decoration.
-  typedef std::map<const Function*, X86MachineFunctionInfo> FMFInfoMap;
-  FMFInfoMap FunctionInfoMap;
-
-  void DecorateCygMingName(std::string &Name, const GlobalValue *GV);
-  void DecorateCygMingName(SmallVectorImpl<char> &Name, const GlobalValue *GV);
 };
 
 } // end namespace llvm

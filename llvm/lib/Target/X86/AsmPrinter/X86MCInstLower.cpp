@@ -15,6 +15,7 @@
 #include "X86MCInstLower.h"
 #include "X86ATTAsmPrinter.h"
 #include "X86MCAsmInfo.h"
+#include "X86COFFMachineModuleInfo.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -60,8 +61,11 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   SmallString<128> Name;
   Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
   
-  if (getSubtarget().isTargetCygMing())
-    AsmPrinter.DecorateCygMingName(Name, GV);
+  if (getSubtarget().isTargetCygMing()) {
+    X86COFFMachineModuleInfo &COFFMMI = 
+      AsmPrinter.MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
+    COFFMMI.DecorateCygMingName(Name, GV, *AsmPrinter.TM.getTargetData());
+  }
   
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
