@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=x86 -stats |& grep {Number of re-materialization} | grep 3
-; RUN: llc < %s -march=x86 -stats |& grep {Number of dead spill slots removed}
+; RUN: llc < %s -march=x86 -stats |& grep {Number of re-materialization} | grep 2
 ; rdar://5761454
 
 	%struct.quad_struct = type { i32, i32, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct* }

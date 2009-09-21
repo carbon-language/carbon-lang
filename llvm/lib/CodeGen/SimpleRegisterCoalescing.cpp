@@ -2535,12 +2535,104 @@ void SimpleRegisterCoalescing::releaseMemory() {
   ReMatDefs.clear();
 }
 
-bool SimpleRegisterCoalescing::isZeroLengthInterval(LiveInterval *li) const {
+/// Returns true if the given live interval is zero length.
+static bool isZeroLengthInterval(LiveInterval *li, LiveIntervals *li_) {
   for (LiveInterval::Ranges::const_iterator
          i = li->ranges.begin(), e = li->ranges.end(); i != e; ++i)
     if (li_->getPrevIndex(i->end) > i->start)
       return false;
   return true;
+}
+
+void SimpleRegisterCoalescing::CalculateSpillWeights() {
+  SmallSet<unsigned, 4> Processed;
+  for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
+       mbbi != mbbe; ++mbbi) {
+    MachineBasicBlock* MBB = mbbi;
+    MachineInstrIndex MBBEnd = li_->getMBBEndIdx(MBB);
+    MachineLoop* loop = loopInfo->getLoopFor(MBB);
+    unsigned loopDepth = loop ? loop->getLoopDepth() : 0;
+    bool isExit = loop ? loop->isLoopExit(MBB) : false;
+
+    for (MachineBasicBlock::iterator mii = MBB->begin(), mie = MBB->end();
+         mii != mie; ++mii) {
+      MachineInstr *MI = mii;
+
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        const MachineOperand &mopi = MI->getOperand(i);
+        if (!mopi.isReg() || mopi.getReg() == 0)
+          continue;
+        unsigned Reg = mopi.getReg();
+        if (!TargetRegisterInfo::isVirtualRegister(mopi.getReg()))
+          continue;
+        // Multiple uses of reg by the same instruction. It should not
+        // contribute to spill weight again.
+        if (!Processed.insert(Reg))
+          continue;
+
+        bool HasDef = mopi.isDef();
+        bool HasUse = mopi.isUse();
+        for (unsigned j = i+1; j != e; ++j) {
+          const MachineOperand &mopj = MI->getOperand(j);
+          if (!mopj.isReg() || mopj.getReg() != Reg)
+            continue;
+          HasDef |= mopj.isDef();
+          HasUse |= mopj.isUse();
+        }
+
+        LiveInterval &RegInt = li_->getInterval(Reg);
+        float Weight = li_->getSpillWeight(HasDef, HasUse, loopDepth+1);
+        if (HasDef && isExit) {
+          // Looks like this is a loop count variable update.
+          MachineInstrIndex DefIdx =
+            li_->getDefIndex(li_->getInstructionIndex(MI));
+          const LiveRange *DLR =
+            li_->getInterval(Reg).getLiveRangeContaining(DefIdx);
+          if (DLR->end > MBBEnd)
+            Weight *= 3.0F;
+        }
+        RegInt.weight += Weight;
+      }
+      Processed.clear();
+    }
+  }
+
+  for (LiveIntervals::iterator I = li_->begin(), E = li_->end(); I != E; ++I) {
+    LiveInterval &LI = *I->second;
+    if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
+      // If the live interval length is essentially zero, i.e. in every live
+      // range the use follows def immediately, it doesn't make sense to spill
+      // it and hope it will be easier to allocate for this li.
+      if (isZeroLengthInterval(&LI, li_)) {
+        LI.weight = HUGE_VALF;
+        continue;
+      }
+
+      bool isLoad = false;
+      SmallVector<LiveInterval*, 4> SpillIs;
+      if (li_->isReMaterializable(LI, SpillIs, isLoad)) {
+        // If all of the definitions of the interval are re-materializable,
+        // it is a preferred candidate for spilling. If non of the defs are
+        // loads, then it's potentially very cheap to re-materialize.
+        // FIXME: this gets much more complicated once we support non-trivial
+        // re-materialization.
+        if (isLoad)
+          LI.weight *= 0.9F;
+        else
+          LI.weight *= 0.5F;
+      }
+
+      // Slightly prefer live interval that has been assigned a preferred reg.
+      std::pair<unsigned, unsigned> Hint = mri_->getRegAllocationHint(LI.reg);
+      if (Hint.first || Hint.second)
+        LI.weight *= 1.01F;
+
+      // Divide the weight of the interval by its size.  This encourages
+      // spilling of intervals that are large and have few uses, and
+      // discourages spilling of small intervals with many uses.
+      LI.weight /= li_->getApproximateInstructionCount(LI) * InstrSlots::NUM;
+    }
+  }
 }
 
 
@@ -2581,8 +2673,6 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
        mbbi != mbbe; ++mbbi) {
     MachineBasicBlock* mbb = mbbi;
-    unsigned loopDepth = loopInfo->getLoopDepth(mbb);
-
     for (MachineBasicBlock::iterator mii = mbb->begin(), mie = mbb->end();
          mii != mie; ) {
       MachineInstr *MI = mii;
@@ -2656,62 +2746,12 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         mii = mbbi->erase(mii);
         ++numPeep;
       } else {
-        SmallSet<unsigned, 4> UniqueUses;
-        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-          const MachineOperand &mop = MI->getOperand(i);
-          if (mop.isReg() && mop.getReg() &&
-              TargetRegisterInfo::isVirtualRegister(mop.getReg())) {
-            unsigned reg = mop.getReg();
-            // Multiple uses of reg by the same instruction. It should not
-            // contribute to spill weight again.
-            if (UniqueUses.count(reg) != 0)
-              continue;
-            LiveInterval &RegInt = li_->getInterval(reg);
-            RegInt.weight +=
-              li_->getSpillWeight(mop.isDef(), mop.isUse(), loopDepth);
-            UniqueUses.insert(reg);
-          }
-        }
         ++mii;
       }
     }
   }
 
-  for (LiveIntervals::iterator I = li_->begin(), E = li_->end(); I != E; ++I) {
-    LiveInterval &LI = *I->second;
-    if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
-      // If the live interval length is essentially zero, i.e. in every live
-      // range the use follows def immediately, it doesn't make sense to spill
-      // it and hope it will be easier to allocate for this li.
-      if (isZeroLengthInterval(&LI))
-        LI.weight = HUGE_VALF;
-      else {
-        bool isLoad = false;
-        SmallVector<LiveInterval*, 4> SpillIs;
-        if (li_->isReMaterializable(LI, SpillIs, isLoad)) {
-          // If all of the definitions of the interval are re-materializable,
-          // it is a preferred candidate for spilling. If non of the defs are
-          // loads, then it's potentially very cheap to re-materialize.
-          // FIXME: this gets much more complicated once we support non-trivial
-          // re-materialization.
-          if (isLoad)
-            LI.weight *= 0.9F;
-          else
-            LI.weight *= 0.5F;
-        }
-      }
-
-      // Slightly prefer live interval that has been assigned a preferred reg.
-      std::pair<unsigned, unsigned> Hint = mri_->getRegAllocationHint(LI.reg);
-      if (Hint.first || Hint.second)
-        LI.weight *= 1.01F;
-
-      // Divide the weight of the interval by its size.  This encourages
-      // spilling of intervals that are large and have few uses, and
-      // discourages spilling of small intervals with many uses.
-      LI.weight /= li_->getApproximateInstructionCount(LI) * InstrSlots::NUM;
-    }
-  }
+  CalculateSpillWeights();
 
   DEBUG(dump());
   return true;

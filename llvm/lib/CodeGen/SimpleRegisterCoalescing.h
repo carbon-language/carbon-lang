@@ -123,7 +123,6 @@ namespace llvm {
     /// classes.  The registers may be either phys or virt regs.
     bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
 
-
     /// AdjustCopiesBackFrom - We found a non-trivially-coalescable copy. If
     /// the source value number is defined by a copy from the destination reg
     /// see if we can merge these two destination reg valno# into a single
@@ -235,13 +234,15 @@ namespace llvm {
 
     /// lastRegisterUse - Returns the last use of the specific register between
     /// cycles Start and End or NULL if there are no uses.
-    MachineOperand *lastRegisterUse(MachineInstrIndex Start, MachineInstrIndex End,
-                                    unsigned Reg, MachineInstrIndex &LastUseIdx) const;
+    MachineOperand *lastRegisterUse(MachineInstrIndex Start,
+                                    MachineInstrIndex End, unsigned Reg,
+                                    MachineInstrIndex &LastUseIdx) const;
+
+    /// CalculateSpillWeights - Compute spill weights for all virtual register
+    /// live intervals.
+    void CalculateSpillWeights();
 
     void printRegName(unsigned reg) const;
-
-    /// Returns true if the given live interval is zero length.
-    bool isZeroLengthInterval(LiveInterval *li) const;
   };
 
 } // End llvm namespace
