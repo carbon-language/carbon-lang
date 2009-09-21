@@ -1384,20 +1384,22 @@ static Value *GetBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
 }
 
 
-/// HandleLoadFromClobberingStore - This function is called when we have a
+/// AnalyzeLoadFromClobberingStore - This function is called when we have a
 /// memdep query of a load that ends up being a clobbering store.  This means
 /// that the store *may* provide bits used by the load but we can't be sure
 /// because the pointers don't mustalias.  Check this case to see if there is
-/// anything more we can do before we give up.
-static Value *HandleLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
-                                            const TargetData *TD) {
+/// anything more we can do before we give up.  This returns -1 if we have to
+/// give up, or a byte number in the stored value of the piece that feeds the
+/// load.
+static int AnalyzeLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
+                                          const TargetData *TD) {
   int64_t StoreOffset = 0, LoadOffset = 0;
   Value *StoreBase = 
     GetBaseWithConstantOffset(DepSI->getPointerOperand(), StoreOffset, TD);
   Value *LoadBase = 
     GetBaseWithConstantOffset(L->getPointerOperand(), LoadOffset, TD);
   if (StoreBase != LoadBase)
-    return 0;
+    return -1;
 
   // If the load and store are to the exact same address, they should have been
   // a must alias.  AA must have gotten confused.
@@ -1413,7 +1415,7 @@ static Value *HandleLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
     errs() << "'" << L->getParent()->getParent()->getName() << "'"
     << *L->getParent();
 #endif
-    return 0;
+    return -1;
   }
   
   // If the load and store don't overlap at all, the store doesn't provide
@@ -1425,7 +1427,7 @@ static Value *HandleLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
   uint64_t LoadSize = TD->getTypeSizeInBits(L->getType());
   
   if ((StoreSize & 7) | (LoadSize & 7))
-    return 0;
+    return -1;
   StoreSize >>= 3;  // Convert to bytes.
   LoadSize >>= 3;
   
@@ -1447,7 +1449,7 @@ static Value *HandleLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
     errs() << "'" << L->getParent()->getParent()->getName() << "'"
            << *L->getParent();
 #endif
-    return 0;
+    return -1;
   }
   
   // If the Load isn't completely contained within the stored bits, we don't
@@ -1456,36 +1458,50 @@ static Value *HandleLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
   // valuable.
   if (StoreOffset > LoadOffset ||
       StoreOffset+StoreSize < LoadOffset+LoadSize)
-    return 0;
+    return -1;
   
-  // Adjust LoadOffset to be relative from the start of StoreOffset.
-  LoadOffset -= StoreOffset;
+  // Okay, we can do this transformation.  Return the number of bytes into the
+  // store that the load is.
+  return LoadOffset-StoreOffset;
+}  
   
-  Value *SrcVal = DepSI->getOperand(0);
   
+/// GetStoreValueForLoad - This function is called when we have a
+/// memdep query of a load that ends up being a clobbering store.  This means
+/// that the store *may* provide bits used by the load but we can't be sure
+/// because the pointers don't mustalias.  Check this case to see if there is
+/// anything more we can do before we give up.
+static Value *GetStoreValueForLoad(Value *SrcVal, int Offset,const Type *LoadTy,
+                                   Instruction *InsertPt, const TargetData *TD){
   LLVMContext &Ctx = SrcVal->getType()->getContext();
+
+  uint64_t StoreSize = TD->getTypeSizeInBits(SrcVal->getType())/8;
+  uint64_t LoadSize = TD->getTypeSizeInBits(LoadTy)/8;
+
   
   // Compute which bits of the stored value are being used by the load.  Convert
   // to an integer type to start with.
   if (isa<PointerType>(SrcVal->getType()))
-    SrcVal = new PtrToIntInst(SrcVal, TD->getIntPtrType(Ctx), "tmp", L);
+    SrcVal = new PtrToIntInst(SrcVal, TD->getIntPtrType(Ctx), "tmp", InsertPt);
   if (!isa<IntegerType>(SrcVal->getType()))
-    SrcVal = new BitCastInst(SrcVal, IntegerType::get(Ctx, StoreSize*8), "", L);
+    SrcVal = new BitCastInst(SrcVal, IntegerType::get(Ctx, StoreSize*8),
+                             "tmp", InsertPt);
   
   // Shift the bits to the least significant depending on endianness.
   unsigned ShiftAmt;
   if (TD->isLittleEndian()) {
-    ShiftAmt = LoadOffset*8;
+    ShiftAmt = Offset*8;
   } else {
-    ShiftAmt = StoreSize-LoadSize-LoadOffset;
+    ShiftAmt = StoreSize-LoadSize-Offset;
   }
 
   SrcVal = BinaryOperator::CreateLShr(SrcVal,
-                       ConstantInt::get(SrcVal->getType(), ShiftAmt), "tmp", L);
+                ConstantInt::get(SrcVal->getType(), ShiftAmt), "tmp", InsertPt);
 
-  SrcVal = new TruncInst(SrcVal, IntegerType::get(Ctx, LoadSize*8), "", L);
+  SrcVal = new TruncInst(SrcVal, IntegerType::get(Ctx, LoadSize*8),
+                         "tmp", InsertPt);
   
-  return CoerceAvailableValueToLoadType(SrcVal, L->getType(), L, *TD);
+  return CoerceAvailableValueToLoadType(SrcVal, LoadTy, InsertPt, *TD);
 }
 
 
@@ -1517,8 +1533,11 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // completely covers this load.  This sort of thing can happen in bitfield
     // access code.
     if (StoreInst *DepSI = dyn_cast<StoreInst>(Dep.getInst()))
-      if (const TargetData *TD = getAnalysisIfAvailable<TargetData>())
-        if (Value *AvailVal = HandleLoadFromClobberingStore(L, DepSI, TD)) {
+      if (const TargetData *TD = getAnalysisIfAvailable<TargetData>()) {
+        int Offset = AnalyzeLoadFromClobberingStore(L, DepSI, TD);
+        if (Offset != -1) {
+          Value *AvailVal = GetStoreValueForLoad(DepSI->getOperand(0), Offset,
+                                                 L->getType(), L, TD);
           DEBUG(errs() << "GVN COERCED STORE BITS:\n" << *DepSI << '\n'
                        << *AvailVal << '\n' << *L << "\n\n\n");
     
@@ -1530,6 +1549,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
           NumGVNLoad++;
           return true;
         }
+      }
     
     DEBUG(
       // fast print dep, using operator<< on instruction would be too slow
