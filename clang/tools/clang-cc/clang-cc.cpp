@@ -2181,14 +2181,17 @@ static void ProcessASTInputFile(const std::string &InFile, ProgActions PA,
     return;
   }
 
-  // Stream the input AST to the consumer.
-  Consumer->Initialize(AST->getASTContext());
-  AST->getASTContext()
-    .getExternalSource()->StartTranslationUnit(Consumer.get());
-  Consumer->HandleTranslationUnit(AST->getASTContext());
+  // Set the main file ID to an empty file.
+  //
+  // FIXME: We probably shouldn't need this, but for now this is the simplest
+  // way to reuse the logic in ParseAST.
+  const char *EmptyStr = "";
+  llvm::MemoryBuffer *SB =
+    llvm::MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<dummy input>");
+  AST->getSourceManager().createMainFileIDForMemBuffer(SB);
 
-  // FIXME: Tentative decls and #pragma weak aren't going to get handled
-  // correctly here.
+  // Stream the input AST to the consumer.
+  ParseAST(PP, Consumer.get(), AST->getASTContext(), Stats);
 
   // Release the consumer and the AST, in that order since the consumer may
   // perform actions in its destructor which require the context.
