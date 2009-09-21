@@ -167,3 +167,18 @@ void f() {
     *q = 3; // no-warning
   }
 }
+
+// <rdar://problem/7185607>
+// Bit-fields of a struct should be invalidated when blasting the entire
+// struct with an integer constant.
+struct test_7185607 {
+  int x : 10;
+  int y : 22;
+};
+int rdar_test_7185607() {
+  struct test_7185607 s; // Uninitialized.
+  *((unsigned *) &s) = 0U;
+  return s.x; // no-warning
+}
+
+
