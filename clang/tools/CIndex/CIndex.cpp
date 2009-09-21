@@ -187,7 +187,8 @@ extern "C" {
 
 CXIndex clang_createIndex() 
 {
-  return new Indexer(*new Program(), *new FileManager());
+  // FIXME: Program is leaked.
+  return new Indexer(*new Program());
 }
 
 void clang_disposeIndex(CXIndex CIdx)

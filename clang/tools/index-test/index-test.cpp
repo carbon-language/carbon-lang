@@ -211,10 +211,8 @@ int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv,
                      "LLVM 'Clang' Indexing Test Bed: http://clang.llvm.org\n");
 
-  FileManager FileMgr;
-
   Program Prog;
-  Indexer Idxer(Prog, FileMgr);
+  Indexer Idxer(Prog);
   llvm::SmallVector<TUnit*, 4> TUnits;
 
   // If no input was specified, read from stdin.
@@ -227,7 +225,8 @@ int main(int argc, char **argv) {
     std::string ErrMsg;
     llvm::OwningPtr<ASTUnit> AST;
 
-    AST.reset(ASTUnit::LoadFromPCHFile(InFile, FileMgr, &ErrMsg));
+    AST.reset(ASTUnit::LoadFromPCHFile(InFile, Idxer.getFileManager(),
+                                       &ErrMsg));
     if (!AST) {
       llvm::errs() << "[" << InFile << "] Error: " << ErrMsg << '\n';
       return 1;
@@ -245,7 +244,7 @@ int main(int argc, char **argv) {
 
   if (!PointAtLocation.empty()) {
     const std::string &Filename = PointAtLocation[0].FileName;
-    const FileEntry *File = FileMgr.getFile(Filename);
+    const FileEntry *File = Idxer.getFileManager().getFile(Filename);
     if (File == 0) {
       llvm::errs() << "File '" << Filename << "' does not exist\n";
       return 1;
@@ -254,7 +253,7 @@ int main(int argc, char **argv) {
     // Safety check. Using an out-of-date AST file will only lead to crashes
     // or incorrect results.
     // FIXME: Check all the source files that make up the AST file.
-    const FileEntry *ASTFile = FileMgr.getFile(FirstFile);
+    const FileEntry *ASTFile = Idxer.getFileManager().getFile(FirstFile);
     if (File->getModificationTime() > ASTFile->getModificationTime()) {
       llvm::errs() << "[" << FirstFile << "] Error: " <<
         "Pointing at a source file which was modified after creating "
