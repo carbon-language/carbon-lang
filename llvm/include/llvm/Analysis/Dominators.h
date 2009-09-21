@@ -748,34 +748,13 @@ public:
 
   // dominates - Return true if A dominates B. This performs the
   // special checks necessary if A and B are in the same basic block.
-  bool dominates(const Instruction *A, const Instruction *B) const {
-    const BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
-    if (BBA != BBB) return dominates(BBA, BBB);
+  bool dominates(const Instruction *A, const Instruction *B) const;
 
-    // It is not possible to determine dominance between two PHI nodes 
-    // based on their ordering.
-    if (isa<PHINode>(A) && isa<PHINode>(B)) 
-      return false;
-
-    // Loop through the basic block until we find A or B.
-    BasicBlock::const_iterator I = BBA->begin();
-    for (; &*I != A && &*I != B; ++I) /*empty*/;
-
-    //if(!DT.IsPostDominators) {
-      // A dominates B if it is found first in the basic block.
-      return &*I == A;
-    //} else {
-    //  // A post-dominates B if B is found first in the basic block.
-    //  return &*I == B;
-    //}
-  }
-
-  inline bool properlyDominates(const DomTreeNode* A,
-                                const DomTreeNode* B) const {
+  bool properlyDominates(const DomTreeNode *A, const DomTreeNode *B) const {
     return DT->properlyDominates(A, B);
   }
 
-  inline bool properlyDominates(BasicBlock* A, BasicBlock* B) const {
+  bool properlyDominates(BasicBlock *A, BasicBlock *B) const {
     return DT->properlyDominates(A, B);
   }
 
