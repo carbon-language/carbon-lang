@@ -104,6 +104,7 @@ namespace {
     /// results of name lookup. All of the predicates have the same type, so that
     /// 
     //@{
+    bool IsOrdinaryName(NamedDecl *ND) const;
     bool IsNestedNameSpecifier(NamedDecl *ND) const;
     bool IsEnum(NamedDecl *ND) const;
     bool IsClassOrStruct(NamedDecl *ND) const;
@@ -314,6 +315,16 @@ void ResultBuilder::EnterNewScope() {
 /// \brief Exit from the current scope.
 void ResultBuilder::ExitScope() {
   ShadowMaps.pop_back();
+}
+
+/// \brief Determines whether this given declaration will be found by
+/// ordinary name lookup.
+bool ResultBuilder::IsOrdinaryName(NamedDecl *ND) const {
+  unsigned IDNS = Decl::IDNS_Ordinary;
+  if (SemaRef.getLangOptions().CPlusPlus)
+    IDNS |= Decl::IDNS_Tag;
+  
+  return ND->getIdentifierNamespace() & IDNS;
 }
 
 /// \brief Determines whether the given declaration is suitable as the 
@@ -872,6 +883,13 @@ static void HandleCodeCompleteResults(CodeCompleteConsumer *CodeCompleter,
 
   if (CodeCompleter)
     CodeCompleter->ProcessCodeCompleteResults(Results, NumResults);
+}
+
+void Sema::CodeCompleteOrdinaryName(Scope *S) {
+  ResultBuilder Results(*this, &ResultBuilder::IsOrdinaryName);
+  CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, CurContext, 
+                       Results);
+  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
 
 void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,

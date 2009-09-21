@@ -200,6 +200,11 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
 ///         expression ',' assignment-expression
 ///
 Parser::OwningExprResult Parser::ParseExpression() {
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteOrdinaryName(CurScope);
+    ConsumeToken();
+  }
+
   OwningExprResult LHS(ParseAssignmentExpression());
   if (LHS.isInvalid()) return move(LHS);
 

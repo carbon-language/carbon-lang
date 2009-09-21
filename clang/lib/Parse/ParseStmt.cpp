@@ -90,6 +90,11 @@ Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
       return ParseObjCAtStatement(AtLoc);
     }
 
+  case tok::code_completion:
+    Actions.CodeCompleteOrdinaryName(CurScope);
+    ConsumeToken();
+    return ParseStatementOrDeclaration(OnlyStatement);
+      
   case tok::identifier:
     if (NextToken().is(tok::colon)) { // C99 6.8.1: labeled-statement
       // identifier ':' statement
@@ -918,6 +923,11 @@ Parser::OwningStmtResult Parser::ParseForStatement() {
   OwningStmtResult FirstPart(Actions);
   OwningExprResult SecondPart(Actions), ThirdPart(Actions);
 
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteOrdinaryName(CurScope);
+    ConsumeToken();
+  }
+  
   // Parse the first part of the for specifier.
   if (Tok.is(tok::semi)) {  // for (;
     // no first part, eat the ';'.

@@ -442,6 +442,10 @@ Parser::DeclGroupPtrTy Parser::ParseExternalDeclaration() {
     }
     SingleDecl = ParseObjCMethodDefinition();
     break;
+  case tok::code_completion:
+    Actions.CodeCompleteOrdinaryName(CurScope);
+    ConsumeToken();
+    return ParseExternalDeclaration();
   case tok::kw_using:
   case tok::kw_namespace:
   case tok::kw_typedef:

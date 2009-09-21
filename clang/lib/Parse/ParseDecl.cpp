@@ -710,6 +710,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                         const ParsedTemplateInfo &TemplateInfo,
                                         AccessSpecifier AS,
                                         DeclSpecContext DSContext) {
+  if (Tok.is(tok::code_completion)) {
+    Actions.CodeCompleteOrdinaryName(CurScope);
+    ConsumeToken();
+  }
+  
   DS.SetRangeStart(Tok.getLocation());
   while (1) {
     bool isInvalid = false;

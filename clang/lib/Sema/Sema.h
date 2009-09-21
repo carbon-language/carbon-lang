@@ -3629,6 +3629,7 @@ public:
   /// \name Code completion
   //@{
   void setCodeCompleteConsumer(CodeCompleteConsumer *CCC);
+  virtual void CodeCompleteOrdinaryName(Scope *S);
   virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,
                                                SourceLocation OpLoc,
                                                bool IsArrow);
