@@ -274,6 +274,18 @@ public:
     return true;
   }
 
+  /// hasAllConstantIndices - Return true if all of the indices of this GEP are
+  /// constant integers.  If so, the result pointer and the first operand have
+  /// a constant offset between them.
+  bool hasAllConstantIndices() const {
+    for (const_op_iterator I = idx_begin(), E = idx_end(); I != E; ++I) {
+      if (!isa<ConstantInt>(I))
+        return false;
+    }
+    return true;
+  }
+  
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GEPOperator *) { return true; }
   static inline bool classof(const GetElementPtrInst *) { return true; }
