@@ -23,6 +23,7 @@
 #include "llvm/Function.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Operator.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -38,6 +39,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -1341,6 +1343,153 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   return true;
 }
 
+/// GetBaseWithConstantOffset - Analyze the specified pointer to see if it can
+/// be expressed as a base pointer plus a constant offset.  Return the base and
+/// offset to the caller.
+static Value *GetBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
+                                        const TargetData *TD) {
+  Operator *PtrOp = dyn_cast<Operator>(Ptr);
+  if (PtrOp == 0) return Ptr;
+  
+  // Just look through bitcasts.
+  if (PtrOp->getOpcode() == Instruction::BitCast)
+    return GetBaseWithConstantOffset(PtrOp->getOperand(0), Offset, TD);
+  
+  // If this is a GEP with constant indices, we can look through it.
+  GEPOperator *GEP = dyn_cast<GEPOperator>(PtrOp);
+  if (GEP == 0 || !GEP->hasAllConstantIndices()) return Ptr;
+  
+  gep_type_iterator GTI = gep_type_begin(GEP);
+  for (User::op_iterator I = GEP->idx_begin(), E = GEP->idx_end(); I != E;
+       ++I, ++GTI) {
+    ConstantInt *OpC = cast<ConstantInt>(*I);
+    if (OpC->isZero()) continue;
+    
+    // Handle a struct and array indices which add their offset to the pointer.
+    if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+      Offset += TD->getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
+    } else {
+      uint64_t Size = TD->getTypeAllocSize(GTI.getIndexedType());
+      Offset += OpC->getSExtValue()*Size;
+    }
+  }
+  
+  // Re-sign extend from the pointer size if needed to get overflow edge cases
+  // right.
+  unsigned PtrSize = TD->getPointerSizeInBits();
+  if (PtrSize < 64)
+    Offset = (Offset << (64-PtrSize)) >> (64-PtrSize);
+  
+  return GetBaseWithConstantOffset(GEP->getPointerOperand(), Offset, TD);
+}
+
+
+/// HandleLoadFromClobberingStore - This function is called when we have a
+/// memdep query of a load that ends up being a clobbering store.  This means
+/// that the store *may* provide bits used by the load but we can't be sure
+/// because the pointers don't mustalias.  Check this case to see if there is
+/// anything more we can do before we give up.
+static Value *HandleLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
+                                            const TargetData *TD) {
+  int64_t StoreOffset = 0, LoadOffset = 0;
+  Value *StoreBase = 
+    GetBaseWithConstantOffset(DepSI->getPointerOperand(), StoreOffset, TD);
+  Value *LoadBase = 
+    GetBaseWithConstantOffset(L->getPointerOperand(), LoadOffset, TD);
+  if (StoreBase != LoadBase)
+    return 0;
+
+  // If the load and store are to the exact same address, they should have been
+  // a must alias.  AA must have gotten confused.
+  // FIXME: Study to see if/when this happens.
+  if (LoadOffset == StoreOffset) {
+#if 0
+    errs() << "STORE/LOAD DEP WITH COMMON POINTER MISSED:\n"
+    << "Base       = " << *StoreBase << "\n"
+    << "Store Ptr  = " << *DepSI->getPointerOperand() << "\n"
+    << "Store Offs = " << StoreOffset << " - " << *DepSI << "\n"
+    << "Load Ptr   = " << *L->getPointerOperand() << "\n"
+    << "Load Offs  = " << LoadOffset << " - " << *L << "\n\n";
+    errs() << "'" << L->getParent()->getParent()->getName() << "'"
+    << *L->getParent();
+#endif
+    return 0;
+  }
+  
+  // If the load and store don't overlap at all, the store doesn't provide
+  // anything to the load.  In this case, they really don't alias at all, AA
+  // must have gotten confused.
+  // FIXME: Investigate cases where this bails out, e.g. rdar://7238614. Then
+  // remove this check, as it is duplicated with what we have below.
+  uint64_t StoreSize = TD->getTypeSizeInBits(DepSI->getOperand(0)->getType());
+  uint64_t LoadSize = TD->getTypeSizeInBits(L->getType());
+  
+  if ((StoreSize & 7) | (LoadSize & 7))
+    return 0;
+  StoreSize >>= 3;  // Convert to bytes.
+  LoadSize >>= 3;
+  
+  
+  bool isAAFailure = false;
+  if (StoreOffset < LoadOffset) {
+    isAAFailure = StoreOffset+int64_t(StoreSize) <= LoadOffset;
+  } else {
+    isAAFailure = LoadOffset+int64_t(LoadSize) <= StoreOffset;
+  }
+  if (isAAFailure) {
+#if 0
+    errs() << "STORE LOAD DEP WITH COMMON BASE:\n"
+           << "Base       = " << *StoreBase << "\n"
+           << "Store Ptr  = " << *DepSI->getPointerOperand() << "\n"
+           << "Store Offs = " << StoreOffset << " - " << *DepSI << "\n"
+           << "Load Ptr   = " << *L->getPointerOperand() << "\n"
+           << "Load Offs  = " << LoadOffset << " - " << *L << "\n\n";
+    errs() << "'" << L->getParent()->getParent()->getName() << "'"
+           << *L->getParent();
+#endif
+    return 0;
+  }
+  
+  // If the Load isn't completely contained within the stored bits, we don't
+  // have all the bits to feed it.  We could do something crazy in the future
+  // (issue a smaller load then merge the bits in) but this seems unlikely to be
+  // valuable.
+  if (StoreOffset > LoadOffset ||
+      StoreOffset+StoreSize < LoadOffset+LoadSize)
+    return 0;
+  
+  // Adjust LoadOffset to be relative from the start of StoreOffset.
+  LoadOffset -= StoreOffset;
+  
+  Value *SrcVal = DepSI->getOperand(0);
+  
+  LLVMContext &Ctx = SrcVal->getType()->getContext();
+  
+  // Compute which bits of the stored value are being used by the load.  Convert
+  // to an integer type to start with.
+  if (isa<PointerType>(SrcVal->getType()))
+    SrcVal = new PtrToIntInst(SrcVal, TD->getIntPtrType(Ctx), "tmp", L);
+  if (!isa<IntegerType>(SrcVal->getType()))
+    SrcVal = new BitCastInst(SrcVal, IntegerType::get(Ctx, StoreSize*8), "", L);
+  
+  // Shift the bits to the least significant depending on endianness.
+  unsigned ShiftAmt;
+  if (TD->isLittleEndian()) {
+    ShiftAmt = LoadOffset*8;
+  } else {
+    ShiftAmt = StoreSize-LoadSize-LoadOffset;
+  }
+
+  SrcVal = BinaryOperator::CreateLShr(SrcVal,
+                       ConstantInt::get(SrcVal->getType(), ShiftAmt), "tmp", L);
+
+  SrcVal = new TruncInst(SrcVal, IntegerType::get(Ctx, LoadSize*8), "", L);
+  
+  return CoerceAvailableValueToLoadType(SrcVal, L->getType(), L, *TD);
+}
+
+
+
 /// processLoad - Attempt to eliminate a load, first by eliminating it
 /// locally, and then attempting non-local elimination if that fails.
 bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
@@ -1352,7 +1501,12 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
 
   // If the value isn't available, don't do anything!
   if (Dep.isClobber()) {
-    // FIXME: In the future, we should handle things like:
+    // FIXME: We should handle memset/memcpy/memmove as dependent instructions
+    // to forward the value if available.
+    //if (isa<MemIntrinsic>(Dep.getInst()))
+    //errs() << "LOAD DEPENDS ON MEM: " << *L << "\n" << *Dep.getInst()<<"\n\n";
+    
+    // Check to see if we have something like this:
     //   store i32 123, i32* %P
     //   %A = bitcast i32* %P to i8*
     //   %B = gep i8* %A, i32 1
@@ -1362,6 +1516,21 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // a common base + constant offset, and if the previous store (or memset)
     // completely covers this load.  This sort of thing can happen in bitfield
     // access code.
+    if (StoreInst *DepSI = dyn_cast<StoreInst>(Dep.getInst()))
+      if (const TargetData *TD = getAnalysisIfAvailable<TargetData>())
+        if (Value *AvailVal = HandleLoadFromClobberingStore(L, DepSI, TD)) {
+          DEBUG(errs() << "GVN COERCED STORE BITS:\n" << *DepSI << '\n'
+                       << *AvailVal << '\n' << *L << "\n\n\n");
+    
+          // Replace the load!
+          L->replaceAllUsesWith(AvailVal);
+          if (isa<PointerType>(AvailVal->getType()))
+            MD->invalidateCachedPointerInfo(AvailVal);
+          toErase.push_back(L);
+          NumGVNLoad++;
+          return true;
+        }
+    
     DEBUG(
       // fast print dep, using operator<< on instruction would be too slow
       errs() << "GVN: load ";
@@ -1429,12 +1598,6 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     return true;
   }
 
-  // FIXME: We should handle memset/memcpy/memmove as dependent instructions to
-  // forward the value if available.
-  //if (isa<MemIntrinsic>(DepInst))
-  //  errs() << "LOAD DEPENDS ON MEM: " << *L << "\n" << *DepInst << "\n\n";
-  
-  
   // If this load really doesn't depend on anything, then we must be loading an
   // undef value.  This can happen when loading for a fresh allocation with no
   // intervening stores, for example.

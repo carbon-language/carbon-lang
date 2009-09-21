@@ -141,6 +141,35 @@ Cont:
 ; CHECK: ret i8 %A
 }
 
+;; non-local i32/float -> i8 load forwarding.  This also tests that the "P3"
+;; bitcast equivalence can be properly phi translated.
+define i8 @coerce_mustalias_nonlocal1(i32* %P, i1 %cond) {
+  %P2 = bitcast i32* %P to float*
+  br i1 %cond, label %T, label %F
+T:
+  store i32 42, i32* %P
+  br label %Cont
+  
+F:
+  store float 1.0, float* %P2
+  br label %Cont
+
+Cont:
+  %P3 = bitcast i32* %P to i8*
+  %A = load i8* %P3
+  ret i8 %A
+
+;; FIXME: This is disabled because this caused a miscompile in the llvm-gcc
+;; bootstrap, see r82411
+;
+; HECK: @coerce_mustalias_nonlocal1
+; HECK: Cont:
+; HECK:   %A = phi i8 [
+; HECK-NOT: load
+; HECK: ret i8 %A
+}
+
+
 ;; non-local i32 -> i8 partial redundancy load forwarding.
 define i8 @coerce_mustalias_pre0(i32* %P, i1 %cond) {
   %P3 = bitcast i32* %P to i8*
@@ -164,4 +193,25 @@ Cont:
 ; CHECK-NOT: load
 ; CHECK: ret i8 %A
 }
+
+;;===----------------------------------------------------------------------===;;
+;; Store -> Load  and  Load -> Load forwarding where src and dst are different
+;; types, and the reload is an offset from the store pointer.
+;;===----------------------------------------------------------------------===;;
+
+;; i32 -> f32 forwarding.
+define i8 @coerce_offset0(i32 %V, i32* %P) {
+  store i32 %V, i32* %P
+   
+  %P2 = bitcast i32* %P to i8*
+  %P3 = getelementptr i8* %P2, i32 2
+
+  %A = load i8* %P3
+  ret i8 %A
+; CHECK: @coerce_offset0
+; CHECK-NOT: load
+; CHECK: ret i8
+}
+
+
 
