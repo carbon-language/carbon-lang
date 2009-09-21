@@ -610,3 +610,25 @@ void test_offsetof_4() {
   *p = 0xDEADBEEF; // expected-warning{{Dereference of null pointer}}
 }
 
+// <rdar://problem/6829164> "nil receiver" false positive: make tracking 
+// of the MemRegion for 'self' path-sensitive
+@interface RDar6829164 : NSObject {
+  double x; int y;
+}
+- (id) init;
+@end
+
+id rdar_6829164_1();
+double rdar_6829164_2();
+
+@implementation RDar6829164
+- (id) init {
+  if((self = [super init]) != 0) {
+    id z = rdar_6829164_1();
+    y = (z != 0);
+    if (y)
+      x = rdar_6829164_2();
+  }
+  return self;
+}
+@end
