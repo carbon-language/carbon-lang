@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=x86 | FileCheck %s
+; rdar://7226797
 
 ; LLVM should omit the testl and use the flags result from the orl.
 
