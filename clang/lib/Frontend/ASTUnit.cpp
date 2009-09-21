@@ -13,7 +13,6 @@
 
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/PCHReader.h"
-#include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
@@ -25,7 +24,7 @@
 
 using namespace clang;
 
-ASTUnit::ASTUnit() { }
+ASTUnit::ASTUnit(Diagnostic &_Diags) : Diags(_Diags) { }
 ASTUnit::~ASTUnit() { }
 
 namespace {
@@ -86,19 +85,12 @@ FileManager &ASTUnit::getFileManager() {
 }
 
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
+                                  Diagnostic &Diags,
                                   FileManager &FileMgr,
                                   std::string *ErrMsg) {
-
-  llvm::OwningPtr<ASTUnit> AST(new ASTUnit());
-
-  AST->DiagClient.reset(new TextDiagnosticBuffer());
-  AST->Diags.reset(new Diagnostic(AST->DiagClient.get()));
+  llvm::OwningPtr<ASTUnit> AST(new ASTUnit(Diags));
 
   AST->HeaderInfo.reset(new HeaderSearch(FileMgr));
-  AST->SourceMgr.reset(new SourceManager());
-
-  Diagnostic &Diags = *AST->Diags.get();
-  SourceManager &SourceMgr = *AST->SourceMgr.get();
 
   // Gather Info for preprocessor construction later on.
 
@@ -111,7 +103,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   llvm::OwningPtr<PCHReader> Reader;
   llvm::OwningPtr<ExternalASTSource> Source;
 
-  Reader.reset(new PCHReader(SourceMgr, FileMgr, Diags));
+  Reader.reset(new PCHReader(AST->getSourceManager(), FileMgr, AST->Diags));
   Reader->setListener(new PCHInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 
@@ -130,8 +122,8 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
 
   // Get information about the target being compiled for.
   AST->Target.reset(TargetInfo::CreateTargetInfo(TargetTriple));
-  AST->PP.reset(new Preprocessor(Diags, LangInfo, *AST->Target.get(),
-                                 SourceMgr, HeaderInfo));
+  AST->PP.reset(new Preprocessor(AST->Diags, LangInfo, *AST->Target.get(),
+                                 AST->getSourceManager(), HeaderInfo));
   Preprocessor &PP = *AST->PP.get();
 
   PP.setPredefines(Predefines);
@@ -141,7 +133,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   // Create and initialize the ASTContext.
 
   AST->Ctx.reset(new ASTContext(LangInfo,
-                                SourceMgr,
+                                AST->getSourceManager(),
                                 *AST->Target.get(),
                                 PP.getIdentifierTable(),
                                 PP.getSelectorTable(),

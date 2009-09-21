@@ -206,7 +206,8 @@ CXTranslationUnit clang_createTranslationUnit(
   std::string astName(ast_filename);
   std::string ErrMsg;
   
-  return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getFileManager(), &ErrMsg);
+  return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getDiagnostics(),
+                                  CXXIdx->getFileManager(), &ErrMsg);
 }
 
 void clang_disposeTranslationUnit(

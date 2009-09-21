@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_FRONTEND_ASTUNIT_H
 #define LLVM_CLANG_FRONTEND_ASTUNIT_H
 
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <string>
 
@@ -21,7 +22,6 @@ namespace clang {
   class FileManager;
   class FileEntry;
   class SourceManager;
-  class DiagnosticClient;
   class Diagnostic;
   class HeaderSearch;
   class TargetInfo;
@@ -32,23 +32,22 @@ namespace clang {
 /// \brief Utility class for loading a ASTContext from a PCH file.
 ///
 class ASTUnit {
-  llvm::OwningPtr<SourceManager>    SourceMgr;
-  llvm::OwningPtr<DiagnosticClient> DiagClient;
-  llvm::OwningPtr<Diagnostic>       Diags;
+  Diagnostic                       &Diags;
+  SourceManager                     SourceMgr;
   llvm::OwningPtr<HeaderSearch>     HeaderInfo;
   llvm::OwningPtr<TargetInfo>       Target;
   llvm::OwningPtr<Preprocessor>     PP;
   llvm::OwningPtr<ASTContext>       Ctx;
 
-  ASTUnit(const ASTUnit&); // do not implement
-  ASTUnit &operator=(const ASTUnit &); // do not implement
-  ASTUnit();
+  ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
+  ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
+  ASTUnit(Diagnostic &_Diag);
 
 public:
   ~ASTUnit();
 
-  const SourceManager &getSourceManager() const { return *SourceMgr.get(); }
-        SourceManager &getSourceManager()       { return *SourceMgr.get(); }
+  const SourceManager &getSourceManager() const { return SourceMgr; }
+        SourceManager &getSourceManager()       { return SourceMgr; }
 
   const Preprocessor &getPreprocessor() const { return *PP.get(); }
         Preprocessor &getPreprocessor()       { return *PP.get(); }
@@ -56,22 +55,26 @@ public:
   const ASTContext &getASTContext() const { return *Ctx.get(); }
         ASTContext &getASTContext()       { return *Ctx.get(); }
 
-  const Diagnostic &getDiagnostic() const { return *Diags.get(); }
-        Diagnostic &getDiagnostic()       { return *Diags.get(); }
+  const Diagnostic &getDiagnostic() const { return Diags; }
+        Diagnostic &getDiagnostic()       { return Diags; }
 
   FileManager &getFileManager();
   const std::string &getOriginalSourceFileName();
 
   /// \brief Create a ASTUnit from a PCH file.
   ///
-  /// \param Filename PCH filename
+  /// \param Filename - The PCH file to load.
   ///
-  /// \param FileMgr The FileManager to use
+  /// \param Diags - The Diagnostic implementation to use.
   ///
-  /// \param ErrMsg Error message to report if the PCH file could not be loaded
+  /// \param FileMgr - The FileManager to use.
   ///
-  /// \returns the initialized ASTUnit or NULL if the PCH failed to load
+  /// \param ErrMsg - Error message to report if the PCH file could not be
+  /// loaded.
+  ///
+  /// \returns - The initialized ASTUnit or null if the PCH failed to load.
   static ASTUnit *LoadFromPCHFile(const std::string &Filename,
+                                  Diagnostic &Diags,
                                   FileManager &FileMgr,
                                   std::string *ErrMsg = 0);
 };

@@ -15,6 +15,8 @@
 #include "clang/Analysis/CallGraph.h"
 
 #include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
@@ -31,13 +33,16 @@ int main(int argc, char **argv) {
   if (InputFilenames.empty())
     return 0;
 
+  TextDiagnosticBuffer DiagClient;
+  Diagnostic Diags(&DiagClient);
+
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
 
     std::string ErrMsg;
     llvm::OwningPtr<ASTUnit> AST;
 
-    AST.reset(ASTUnit::LoadFromPCHFile(InFile, FileMgr, &ErrMsg));
+    AST.reset(ASTUnit::LoadFromPCHFile(InFile, Diags, FileMgr, &ErrMsg));
 
     if (!AST) {
       llvm::errs() << "[" << InFile << "] error: " << ErrMsg << '\n';

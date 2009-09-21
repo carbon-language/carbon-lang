@@ -225,8 +225,8 @@ int main(int argc, char **argv) {
     std::string ErrMsg;
     llvm::OwningPtr<ASTUnit> AST;
 
-    AST.reset(ASTUnit::LoadFromPCHFile(InFile, Idxer.getFileManager(),
-                                       &ErrMsg));
+    AST.reset(ASTUnit::LoadFromPCHFile(InFile, Idxer.getDiagnostics(),
+                                       Idxer.getFileManager(), &ErrMsg));
     if (!AST) {
       llvm::errs() << "[" << InFile << "] Error: " << ErrMsg << '\n';
       return 1;
