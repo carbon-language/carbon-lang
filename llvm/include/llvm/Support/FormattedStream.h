@@ -105,10 +105,15 @@ namespace llvm
       // own buffering, and it doesn't need or want TheStream to do another
       // layer of buffering underneath. Resize the buffer to what TheStream
       // had been using, and tell TheStream not to do its own buffering.
+      //
+      // If the underlying stream is unbuffered, just use its preferred buffer
+      // size. We can't treat this as an honest wish for unbuffered output,
+      // because it could very well be a stream we previously forced to be
+      // unbuffered.
       if (size_t BufferSize = TheStream->GetBufferSize())
         SetBufferSize(BufferSize);
       else
-        SetUnbuffered();
+        SetBuffered();
       TheStream->SetUnbuffered();
 
       Scanned = 0;
