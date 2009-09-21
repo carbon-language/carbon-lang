@@ -31,6 +31,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
@@ -66,6 +67,11 @@ namespace {
     const std::vector<MachineConstantPoolEntry> *MCPEs;
     const std::vector<MachineJumpTableEntry> *MJTEs;
     bool IsPIC;
+
+    void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<MachineModuleInfo>();
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
 
   public:
     static char ID;
@@ -204,6 +210,7 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
   MJTEs = &MF.getJumpTableInfo()->getJumpTables();
   IsPIC = TM.getRelocationModel() == Reloc::PIC_;
   JTI->Initialize(MF, IsPIC);
+  MCE.setModuleInfo(&getAnalysis<MachineModuleInfo>());
 
   do {
     DEBUG(errs() << "JITTing function '"
