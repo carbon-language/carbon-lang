@@ -592,13 +592,14 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
     }
     break;
   }
-    // Can PHI instrs refer to MBBs not in the CFG? X86 and ARM do.
-    // case MachineOperand::MO_MachineBasicBlock:
-    //   if (MI->getOpcode() == TargetInstrInfo::PHI) {
-    //     if (!MO->getMBB()->isSuccessor(MI->getParent()))
-    //       report("PHI operand is not in the CFG", MO, MONum);
-    //   }
-    //   break;
+
+  case MachineOperand::MO_MachineBasicBlock:
+    if (MI->getOpcode() == TargetInstrInfo::PHI) {
+      if (!MO->getMBB()->isSuccessor(MI->getParent()))
+        report("PHI operand is not in the CFG", MO, MONum);
+    }
+    break;
+
   default:
     break;
   }
