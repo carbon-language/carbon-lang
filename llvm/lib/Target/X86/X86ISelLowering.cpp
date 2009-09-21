@@ -8256,76 +8256,158 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   SDValue LHS = N->getOperand(1);
   SDValue RHS = N->getOperand(2);
 
-  // If we have SSE[12] support, try to form min/max nodes.
+  // If we have SSE[12] support, try to form min/max nodes. SSE min/max
+  // instructions have the peculiarity that if either operand is a NaN,
+  // they chose what we call the RHS operand (and as such are not symmetric).
+  // It happens that this matches the semantics of the common C idiom
+  // x<y?x:y and related forms, so we can recognize these cases.
   if (Subtarget->hasSSE2() &&
       (LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::f64) &&
       Cond.getOpcode() == ISD::SETCC) {
     ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
 
     unsigned Opcode = 0;
+    // Check for x CC y ? x : y.
     if (LHS == Cond.getOperand(0) && RHS == Cond.getOperand(1)) {
       switch (CC) {
       default: break;
-      case ISD::SETOLE: // (X <= Y) ? X : Y -> min
+      case ISD::SETULT:
+        // This can be a min if we can prove that at least one of the operands
+        // is not a nan.
+        if (!FiniteOnlyFPMath()) {
+          if (DAG.isKnownNeverNaN(RHS)) {
+            // Put the potential NaN in the RHS so that SSE will preserve it.
+            std::swap(LHS, RHS);
+          } else if (!DAG.isKnownNeverNaN(LHS))
+            break;
+        }
+        Opcode = X86ISD::FMIN;
+        break;
+      case ISD::SETOLE:
+        // This can be a min if we can prove that at least one of the operands
+        // is not a nan.
+        if (!FiniteOnlyFPMath()) {
+          if (DAG.isKnownNeverNaN(LHS)) {
+            // Put the potential NaN in the RHS so that SSE will preserve it.
+            std::swap(LHS, RHS);
+          } else if (!DAG.isKnownNeverNaN(RHS))
+            break;
+        }
+        Opcode = X86ISD::FMIN;
+        break;
       case ISD::SETULE:
-      case ISD::SETLE:
-        if (!UnsafeFPMath) break;
-        // FALL THROUGH.
-      case ISD::SETOLT:  // (X olt/lt Y) ? X : Y -> min
+        // This can be a min, but if either operand is a NaN we need it to
+        // preserve the original LHS.
+        std::swap(LHS, RHS);
+      case ISD::SETOLT:
       case ISD::SETLT:
+      case ISD::SETLE:
         Opcode = X86ISD::FMIN;
         break;
 
-      case ISD::SETOGT: // (X > Y) ? X : Y -> max
+      case ISD::SETOGE:
+        // This can be a max if we can prove that at least one of the operands
+        // is not a nan.
+        if (!FiniteOnlyFPMath()) {
+          if (DAG.isKnownNeverNaN(LHS)) {
+            // Put the potential NaN in the RHS so that SSE will preserve it.
+            std::swap(LHS, RHS);
+          } else if (!DAG.isKnownNeverNaN(RHS))
+            break;
+        }
+        Opcode = X86ISD::FMAX;
+        break;
       case ISD::SETUGT:
+        // This can be a max if we can prove that at least one of the operands
+        // is not a nan.
+        if (!FiniteOnlyFPMath()) {
+          if (DAG.isKnownNeverNaN(RHS)) {
+            // Put the potential NaN in the RHS so that SSE will preserve it.
+            std::swap(LHS, RHS);
+          } else if (!DAG.isKnownNeverNaN(LHS))
+            break;
+        }
+        Opcode = X86ISD::FMAX;
+        break;
+      case ISD::SETUGE:
+        // This can be a max, but if either operand is a NaN we need it to
+        // preserve the original LHS.
+        std::swap(LHS, RHS);
+      case ISD::SETOGT:
       case ISD::SETGT:
-        if (!UnsafeFPMath) break;
-        // FALL THROUGH.
-      case ISD::SETUGE:  // (X uge/ge Y) ? X : Y -> max
       case ISD::SETGE:
         Opcode = X86ISD::FMAX;
         break;
       }
+    // Check for x CC y ? y : x -- a min/max with reversed arms.
     } else if (LHS == Cond.getOperand(1) && RHS == Cond.getOperand(0)) {
       switch (CC) {
       default: break;
-      case ISD::SETOGT:
-        // This can use a min only if the LHS isn't NaN.
-        if (DAG.isKnownNeverNaN(LHS))
-          Opcode = X86ISD::FMIN;
-        else if (DAG.isKnownNeverNaN(RHS)) {
-          Opcode = X86ISD::FMIN;
-          // Put the potential NaN in the RHS so that SSE will preserve it.
-          std::swap(LHS, RHS);
+      case ISD::SETOGE:
+        // This can be a min if we can prove that at least one of the operands
+        // is not a nan.
+        if (!FiniteOnlyFPMath()) {
+          if (DAG.isKnownNeverNaN(RHS)) {
+            // Put the potential NaN in the RHS so that SSE will preserve it.
+            std::swap(LHS, RHS);
+          } else if (!DAG.isKnownNeverNaN(LHS))
+            break;
         }
+        Opcode = X86ISD::FMIN;
         break;
-
-      case ISD::SETUGT: // (X > Y) ? Y : X -> min
+      case ISD::SETUGT:
+        // This can be a min if we can prove that at least one of the operands
+        // is not a nan.
+        if (!FiniteOnlyFPMath()) {
+          if (DAG.isKnownNeverNaN(LHS)) {
+            // Put the potential NaN in the RHS so that SSE will preserve it.
+            std::swap(LHS, RHS);
+          } else if (!DAG.isKnownNeverNaN(RHS))
+            break;
+        }
+        Opcode = X86ISD::FMIN;
+        break;
+      case ISD::SETUGE:
+        // This can be a min, but if either operand is a NaN we need it to
+        // preserve the original LHS.
+        std::swap(LHS, RHS);
+      case ISD::SETOGT:
       case ISD::SETGT:
-        if (!UnsafeFPMath) break;
-        // FALL THROUGH.
-      case ISD::SETUGE:  // (X uge/ge Y) ? Y : X -> min
       case ISD::SETGE:
         Opcode = X86ISD::FMIN;
         break;
 
-      case ISD::SETULE:
-        // This can use a max only if the LHS isn't NaN.
-        if (DAG.isKnownNeverNaN(LHS))
-          Opcode = X86ISD::FMAX;
-        else if (DAG.isKnownNeverNaN(RHS)) {
-          Opcode = X86ISD::FMAX;
-          // Put the potential NaN in the RHS so that SSE will preserve it.
-          std::swap(LHS, RHS);
+      case ISD::SETULT:
+        // This can be a max if we can prove that at least one of the operands
+        // is not a nan.
+        if (!FiniteOnlyFPMath()) {
+          if (DAG.isKnownNeverNaN(LHS)) {
+            // Put the potential NaN in the RHS so that SSE will preserve it.
+            std::swap(LHS, RHS);
+          } else if (!DAG.isKnownNeverNaN(RHS))
+            break;
         }
+        Opcode = X86ISD::FMAX;
         break;
-
-      case ISD::SETOLE:   // (X <= Y) ? Y : X -> max
-      case ISD::SETLE:
-        if (!UnsafeFPMath) break;
-        // FALL THROUGH.
-      case ISD::SETOLT:   // (X olt/lt Y) ? Y : X -> max
+      case ISD::SETOLE:
+        // This can be a max if we can prove that at least one of the operands
+        // is not a nan.
+        if (!FiniteOnlyFPMath()) {
+          if (DAG.isKnownNeverNaN(RHS)) {
+            // Put the potential NaN in the RHS so that SSE will preserve it.
+            std::swap(LHS, RHS);
+          } else if (!DAG.isKnownNeverNaN(LHS))
+            break;
+        }
+        Opcode = X86ISD::FMAX;
+        break;
+      case ISD::SETULE:
+        // This can be a max, but if either operand is a NaN we need it to
+        // preserve the original LHS.
+        std::swap(LHS, RHS);
+      case ISD::SETOLT:
       case ISD::SETLT:
+      case ISD::SETLE:
         Opcode = X86ISD::FMAX;
         break;
       }
