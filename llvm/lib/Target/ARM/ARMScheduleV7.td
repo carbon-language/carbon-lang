@@ -14,7 +14,7 @@
 //
 // Scheduling information derived from "Cortex-A8 Technical Reference Manual".
 //
-// Dual issue pipeline so every itinerary starts with FU_Pipe0 | FU_Pipe1
+// Dual issue pipeline represented by FU_Pipe0 | FU_Pipe1
 //
 def CortexA8Itineraries : ProcessorItineraries<[
 
@@ -86,7 +86,7 @@ def CortexA8Itineraries : ProcessorItineraries<[
   // Scaled register offset, issues over 2 cycles
   InstrItinData<IIC_iLoadsi  , [InstrStage<2, [FU_Issue], 0>,
                                 InstrStage<1, [FU_Pipe0], 0>,
-                                InstrStage<1, [FU_Pipe1], 0>,
+                                InstrStage<1, [FU_Pipe1]>,
                                 InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                 InstrStage<1, [FU_LdSt0]>], [4, 1, 1]>,
   //
@@ -103,14 +103,14 @@ def CortexA8Itineraries : ProcessorItineraries<[
   // Scaled register offset with update, issues over 2 cycles
   InstrItinData<IIC_iLoadsiu , [InstrStage<2, [FU_Issue], 0>,
                                 InstrStage<1, [FU_Pipe0], 0>,
-                                InstrStage<1, [FU_Pipe1], 0>,
+                                InstrStage<1, [FU_Pipe1]>,
                                 InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                 InstrStage<1, [FU_LdSt0]>], [4, 3, 1, 1]>,
   //
   // Load multiple
   InstrItinData<IIC_iLoadm   , [InstrStage<2, [FU_Issue], 0>,
                                 InstrStage<2, [FU_Pipe0], 0>,
-                                InstrStage<2, [FU_Pipe1], 0>,
+                                InstrStage<2, [FU_Pipe1]>,
                                 InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                 InstrStage<1, [FU_LdSt0]>]>,
 
@@ -120,16 +120,18 @@ def CortexA8Itineraries : ProcessorItineraries<[
   //
   // Immediate offset
   InstrItinData<IIC_iStorei  , [InstrStage<1, [FU_Issue], 0>,
-                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>], [3, 1]>,
+                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                                InstrStage<1, [FU_LdSt0]>], [3, 1]>,
   //
   // Register offset
   InstrItinData<IIC_iStorer  , [InstrStage<1, [FU_Issue], 0>,
-                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>], [3, 1, 1]>,
+                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                                InstrStage<1, [FU_LdSt0]>], [3, 1, 1]>,
   //
   // Scaled register offset, issues over 2 cycles
   InstrItinData<IIC_iStoresi , [InstrStage<2, [FU_Issue], 0>,
                                 InstrStage<1, [FU_Pipe0], 0>,
-                                InstrStage<1, [FU_Pipe1], 0>,
+                                InstrStage<1, [FU_Pipe1]>,
                                 InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                 InstrStage<1, [FU_LdSt0]>], [3, 1, 1]>,
   //
@@ -146,14 +148,14 @@ def CortexA8Itineraries : ProcessorItineraries<[
   // Scaled register offset with update, issues over 2 cycles
   InstrItinData<IIC_iStoresiu, [InstrStage<2, [FU_Issue], 0>,
                                 InstrStage<1, [FU_Pipe0], 0>,
-                                InstrStage<1, [FU_Pipe1], 0>,
+                                InstrStage<1, [FU_Pipe1]>,
                                 InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                 InstrStage<1, [FU_LdSt0]>], [3, 3, 1, 1]>,
   //
   // Store multiple
   InstrItinData<IIC_iStorem  , [InstrStage<2, [FU_Issue], 0>,
                                 InstrStage<2, [FU_Pipe0], 0>,
-                                InstrStage<2, [FU_Pipe1], 0>,
+                                InstrStage<2, [FU_Pipe1]>,
                                 InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                 InstrStage<1, [FU_LdSt0]>]>,
   
@@ -162,20 +164,173 @@ def CortexA8Itineraries : ProcessorItineraries<[
   // no delay slots, so the latency of a branch is unimportant
   InstrItinData<IIC_Br      , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>]>,
 
-  // NFP ALU is not pipelined so stall all issues 
-  InstrItinData<IIC_fpALU   , [InstrStage<7, [FU_Pipe0], 0>,
-                               InstrStage<7, [FU_Pipe1], 0>]>,
-  // VFP MPY is not pipelined so stall all issues 
-  InstrItinData<IIC_fpMPY   , [InstrStage<7, [FU_Pipe0], 0>,
-                               InstrStage<7, [FU_Pipe1], 0>]>,
-  // loads have an extra cycle of latency, but are fully pipelined
+  // VFP
+  // Issue through integer pipeline, and execute in NEON unit. We assume
+  // RunFast mode so that NFP pipeline is used for single-precision when
+  // possible.
+  //
+  // FP Special Register to Integer Register File Move
+  InstrItinData<IIC_fpSTAT , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                              InstrStage<1, [FU_NLSPipe], 1>]>,
+  //
+  // Integer to Single-Precision FP Register File Move
+  InstrItinData<IIC_fpMOVIS , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe], 1>]>,
+  //
+  // Integer to Double-Precision FP Register File Move
+  InstrItinData<IIC_fpMOVID , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe], 1>]>,
+  //
+  // Single-Precision FP to Integer Register File Move
+  InstrItinData<IIC_fpMOVSI , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe], 1>], [20, 1]>,
+  //
+  // Double-Precision FP to Integer Register File Move
+  InstrItinData<IIC_fpMOVDI , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe], 1>], [20, 20, 1]>,
+  //
+  // Single-precision FP Unary
+  InstrItinData<IIC_fpUNA32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [7, 1]>,
+  //
+  // Double-precision FP Unary
+  InstrItinData<IIC_fpUNA64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<4, [FU_NPipe], 0>,
+                               InstrStage<4, [FU_NLSPipe]>]>,
+  //
+  // Single-precision FP Compare
+  InstrItinData<IIC_fpCMP32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [7, 1]>,
+  //
+  // Double-precision FP Compare
+  InstrItinData<IIC_fpCMP64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<4, [FU_NPipe], 0>,
+                               InstrStage<4, [FU_NLSPipe]>]>,
+  //
+  // Single to Double FP Convert
+  InstrItinData<IIC_fpCVTSD , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<7, [FU_NPipe], 0>,
+                               InstrStage<7, [FU_NLSPipe]>]>,
+  //
+  // Double to Single FP Convert
+  InstrItinData<IIC_fpCVTDS , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<5, [FU_NPipe], 0>,
+                               InstrStage<5, [FU_NLSPipe]>]>,
+  //
+  // Single-Precision FP to Integer Convert
+  InstrItinData<IIC_fpCVTSI , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [7, 1]>,
+  //
+  // Double-Precision FP to Integer Convert
+  InstrItinData<IIC_fpCVTDI , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<8, [FU_NPipe], 0>,
+                               InstrStage<8, [FU_NLSPipe]>]>,
+  //
+  // Integer to Single-Precision FP Convert
+  InstrItinData<IIC_fpCVTIS , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [7, 1]>,
+  //
+  // Integer to Double-Precision FP Convert
+  InstrItinData<IIC_fpCVTID , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<8, [FU_NPipe], 0>,
+                               InstrStage<8, [FU_NLSPipe]>]>,
+  //
+  // Single-precision FP ALU
+  InstrItinData<IIC_fpALU32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [7, 1]>,
+  //
+  // Double-precision FP ALU
+  InstrItinData<IIC_fpALU64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<9, [FU_NPipe], 0>,
+                               InstrStage<9, [FU_NLSPipe]>]>,
+  //
+  // Single-precision FP Multiply
+  InstrItinData<IIC_fpMUL32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [7, 1]>,
+  //
+  // Double-precision FP Multiply
+  InstrItinData<IIC_fpMUL64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<11, [FU_NPipe], 0>,
+                               InstrStage<11, [FU_NLSPipe]>]>,
+  //
+  // Single-precision FP MAC
+  InstrItinData<IIC_fpMAC32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [7, 1]>,
+  //
+  // Double-precision FP MAC
+  InstrItinData<IIC_fpMAC64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<19, [FU_NPipe], 0>,
+                               InstrStage<19, [FU_NLSPipe]>]>,
+  //
+  // Single-precision FP DIV
+  InstrItinData<IIC_fpDIV32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<20, [FU_NPipe], 0>,
+                               InstrStage<20, [FU_NLSPipe]>]>,
+  //
+  // Double-precision FP DIV
+  InstrItinData<IIC_fpDIV64 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<29, [FU_NPipe], 0>,
+                               InstrStage<29, [FU_NLSPipe]>]>,
+  //
+  // Single-precision FP SQRT
+  InstrItinData<IIC_fpSQRT32, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<19, [FU_NPipe], 0>,
+                               InstrStage<19, [FU_NLSPipe]>]>,
+  //
+  // Double-precision FP SQRT
+  InstrItinData<IIC_fpSQRT64, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<29, [FU_NPipe], 0>,
+                               InstrStage<29, [FU_NLSPipe]>]>,
+  //
+  // Single-precision FP Load
   // use FU_Issue to enforce the 1 load/store per cycle limit
-  InstrItinData<IIC_fpLoad  , [InstrStage<1, [FU_Issue], 0>, 
+  InstrItinData<IIC_fpLoad32, [InstrStage<1, [FU_Issue], 0>, 
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_LdSt0]>]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NLSPipe]>]>,
+  //
+  // Double-precision FP Load
   // use FU_Issue to enforce the 1 load/store per cycle limit
-  InstrItinData<IIC_fpStore , [InstrStage<1, [FU_Issue], 0>, 
-                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>]>
+  InstrItinData<IIC_fpLoad64, [InstrStage<2, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0], 0>,
+                               InstrStage<1, [FU_Pipe1]>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NLSPipe]>]>,
+  //
+  // FP Load Multiple
+  // use FU_Issue to enforce the 1 load/store per cycle limit
+  InstrItinData<IIC_fpLoadm,  [InstrStage<3, [FU_Issue], 0>, 
+                               InstrStage<2, [FU_Pipe0], 0>,
+                               InstrStage<2, [FU_Pipe1]>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NLSPipe]>]>,
+  //
+  // Single-precision FP Store
+  // use FU_Issue to enforce the 1 load/store per cycle limit
+  InstrItinData<IIC_fpStore32,[InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NLSPipe]>]>,
+  //
+  // Double-precision FP Store
+  // use FU_Issue to enforce the 1 load/store per cycle limit
+  InstrItinData<IIC_fpStore64,[InstrStage<2, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0], 0>,
+                               InstrStage<1, [FU_Pipe1]>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NLSPipe]>]>,
+  //
+  // FP Store Multiple
+  // use FU_Issue to enforce the 1 load/store per cycle limit
+  InstrItinData<IIC_fpStore64,[InstrStage<3, [FU_Issue], 0>, 
+                               InstrStage<2, [FU_Pipe0], 0>,
+                               InstrStage<2, [FU_Pipe1]>,
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NLSPipe]>]>
 ]>;
 
 // FIXME
@@ -227,10 +382,39 @@ def CortexA9Itineraries : ProcessorItineraries<[
   InstrItinData<IIC_iStoreru , [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_iStoresiu, [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_iStorem  , [InstrStage<2, [FU_Pipe0]>]>,
-  InstrItinData<IIC_Br      , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpALU   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpMPY   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpLoad  , [InstrStage<1, [FU_Pipe0]>,
-                               InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_fpStore , [InstrStage<1, [FU_Pipe0]>]>
+  InstrItinData<IIC_Br       , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpSTAT   , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMOVSI  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMOVDI  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMOVIS  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMOVID  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpUNA32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpUNA64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCMP32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCMP64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTSD  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTDS  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTIS  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTID  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTSI  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTDI  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpALU32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpALU64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMUL32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMUL64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMAC32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMAC64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpDIV32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpDIV64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpSQRT32 , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpSQRT64 , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpLoad32 , [InstrStage<1, [FU_Pipe0]>,
+                                InstrStage<1, [FU_LdSt0]>]>,
+  InstrItinData<IIC_fpLoad64 , [InstrStage<1, [FU_Pipe0]>,
+                                InstrStage<1, [FU_LdSt0]>]>,
+  InstrItinData<IIC_fpLoadm  , [InstrStage<1, [FU_Pipe0]>,
+                                InstrStage<1, [FU_LdSt0]>]>,
+  InstrItinData<IIC_fpStore32, [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpStore64, [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpStorem , [InstrStage<1, [FU_Pipe0]>]>
 ]>;

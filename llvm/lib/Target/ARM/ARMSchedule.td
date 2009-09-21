@@ -15,6 +15,8 @@ def FU_Pipe0   : FuncUnit; // pipeline 0
 def FU_Pipe1   : FuncUnit; // pipeline 1
 def FU_LdSt0   : FuncUnit; // pipeline 0 load/store
 def FU_LdSt1   : FuncUnit; // pipeline 1 load/store
+def FU_NPipe   : FuncUnit; // NEON ALU/MUL pipe
+def FU_NLSPipe : FuncUnit; // NEON LS pipe
 
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for ARM
@@ -59,10 +61,37 @@ def IIC_iStoreiu   : InstrItinClass;
 def IIC_iStoreru   : InstrItinClass;
 def IIC_iStoresiu  : InstrItinClass;
 def IIC_iStorem    : InstrItinClass;
-def IIC_fpALU      : InstrItinClass;
-def IIC_fpMPY      : InstrItinClass;
-def IIC_fpLoad     : InstrItinClass;
-def IIC_fpStore    : InstrItinClass;
+def IIC_fpSTAT     : InstrItinClass;
+def IIC_fpMOVIS    : InstrItinClass;
+def IIC_fpMOVID    : InstrItinClass;
+def IIC_fpMOVSI    : InstrItinClass;
+def IIC_fpMOVDI    : InstrItinClass;
+def IIC_fpUNA32    : InstrItinClass;
+def IIC_fpUNA64    : InstrItinClass;
+def IIC_fpCMP32    : InstrItinClass;
+def IIC_fpCMP64    : InstrItinClass;
+def IIC_fpCVTSD    : InstrItinClass;
+def IIC_fpCVTDS    : InstrItinClass;
+def IIC_fpCVTIS    : InstrItinClass;
+def IIC_fpCVTID    : InstrItinClass;
+def IIC_fpCVTSI    : InstrItinClass;
+def IIC_fpCVTDI    : InstrItinClass;
+def IIC_fpALU32    : InstrItinClass;
+def IIC_fpALU64    : InstrItinClass;
+def IIC_fpMUL32    : InstrItinClass;
+def IIC_fpMUL64    : InstrItinClass;
+def IIC_fpMAC32    : InstrItinClass;
+def IIC_fpMAC64    : InstrItinClass;
+def IIC_fpDIV32    : InstrItinClass;
+def IIC_fpDIV64    : InstrItinClass;
+def IIC_fpSQRT32   : InstrItinClass;
+def IIC_fpSQRT64   : InstrItinClass;
+def IIC_fpLoad32   : InstrItinClass;
+def IIC_fpLoad64   : InstrItinClass;
+def IIC_fpLoadm    : InstrItinClass;
+def IIC_fpStore32  : InstrItinClass;
+def IIC_fpStore64  : InstrItinClass;
+def IIC_fpStorem   : InstrItinClass;
 def IIC_Br         : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
@@ -116,12 +145,41 @@ def GenericItineraries : ProcessorItineraries<[
   InstrItinData<IIC_iStoreru , [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_iStoresiu, [InstrStage<1, [FU_Pipe0]>]>,
   InstrItinData<IIC_iStorem  , [InstrStage<2, [FU_Pipe0]>]>,
-  InstrItinData<IIC_Br      , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpALU   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpMPY   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpLoad  , [InstrStage<1, [FU_Pipe0]>,
-                               InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_fpStore , [InstrStage<1, [FU_Pipe0]>]>
+  InstrItinData<IIC_Br       , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpSTAT   , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMOVSI  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMOVDI  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMOVIS  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMOVID  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpUNA32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpUNA64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCMP32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCMP64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTSD  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTDS  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTIS  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTID  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTSI  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpCVTDI  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpALU32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpALU64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMUL32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMUL64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMAC32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpMAC64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpDIV32  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpDIV64  , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpSQRT32 , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpSQRT64 , [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpLoad32 , [InstrStage<1, [FU_Pipe0]>,
+                                InstrStage<1, [FU_LdSt0]>]>,
+  InstrItinData<IIC_fpLoad64 , [InstrStage<1, [FU_Pipe0]>,
+                                InstrStage<1, [FU_LdSt0]>]>,
+  InstrItinData<IIC_fpLoadm  , [InstrStage<1, [FU_Pipe0]>,
+                                InstrStage<1, [FU_LdSt0]>]>,
+  InstrItinData<IIC_fpStore32, [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpStore64, [InstrStage<1, [FU_Pipe0]>]>,
+  InstrItinData<IIC_fpStorem , [InstrStage<1, [FU_Pipe0]>]>
 ]>;
 
 
