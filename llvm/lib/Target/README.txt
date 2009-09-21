@@ -1268,6 +1268,8 @@ http://gcc.gnu.org/bugzilla/show_bug.cgi?id=35287 [LPRE crit edge splitting]
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=34677 (licm does this, LPRE crit edge)
   llvm-gcc t2.c -S -o - -O0 -emit-llvm | llvm-as | opt -mem2reg -simplifycfg -gvn | llvm-dis
 
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16799 [BITCAST PHI TRANS]
+
 //===---------------------------------------------------------------------===//
 
 Type based alias analysis:
@@ -1275,31 +1277,25 @@ http://gcc.gnu.org/bugzilla/show_bug.cgi?id=14705
 
 //===---------------------------------------------------------------------===//
 
-When GVN/PRE finds a store of float* to a must aliases pointer when expecting
-an int*, it should turn it into a bitcast.  This is a nice generalization of
-the SROA hack that would apply to other cases, e.g.:
-
-int foo(int C, int *P, float X) {
-  if (C) {
-    bar();
-    *P = 42;
-  } else
-    *(float*)P = X;
-
-   return *P;
-}
-
-
-One example (that requires crazy phi translation) is:
-http://gcc.gnu.org/bugzilla/show_bug.cgi?id=16799 [BITCAST PHI TRANS]
-
-//===---------------------------------------------------------------------===//
-
 A/B get pinned to the stack because we turn an if/then into a select instead
 of PRE'ing the load/store.  This may be fixable in instcombine:
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=37892
 
+struct X { int i; };
+int foo (int x) {
+  struct X a;
+  struct X b;
+  struct X *p;
+  a.i = 1;
+  b.i = 2;
+  if (x)
+    p = &a;
+  else
+    p = &b;
+  return p->i;
+}
 
+//===---------------------------------------------------------------------===//
 
 Interesting missed case because of control flow flattening (should be 2 loads):
 http://gcc.gnu.org/bugzilla/show_bug.cgi?id=26629
