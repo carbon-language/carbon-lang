@@ -13,6 +13,20 @@ define i32 @test0(i32 %V, i32* %P) {
 ; CHECK: ret i32 %V
 }
 
+
+;;===----------------------------------------------------------------------===;;
+;; Tests for crashers
+;;===----------------------------------------------------------------------===;;
+
+;; PR5016
+define i8 @crash0({i32, i32} %A, {i32, i32}* %P) {
+  store {i32, i32} %A, {i32, i32}* %P
+  %X = bitcast {i32, i32}* %P to i8*
+  %Y = load i8* %X
+  ret i8 %Y
+}
+
+
 ;;===----------------------------------------------------------------------===;;
 ;; Store -> Load  and  Load -> Load forwarding where src and dst are different
 ;; types, but where the base pointer is a must alias.

@@ -940,6 +940,27 @@ SpeculationFailure:
 }
 
 
+/// CanCoerceMustAliasedValueToLoad - Return true if
+/// CoerceAvailableValueToLoadType will succeed.
+static bool CanCoerceMustAliasedValueToLoad(Value *StoredVal,
+                                            const Type *LoadTy,
+                                            const TargetData &TD) {
+  // If the loaded or stored value is an first class array or struct, don't try
+  // to transform them.  We need to be able to bitcast to integer.
+  if (isa<StructType>(LoadTy) || isa<ArrayType>(LoadTy) ||
+      isa<StructType>(StoredVal->getType()) ||
+      isa<ArrayType>(StoredVal->getType()))
+    return false;
+  
+  // The store has to be at least as big as the load.
+  if (TD.getTypeSizeInBits(StoredVal->getType()) <
+        TD.getTypeSizeInBits(LoadTy))
+    return false;
+  
+  return true;
+}
+  
+
 /// CoerceAvailableValueToLoadType - If we saw a store of a value to memory, and
 /// then a load from a must-aliased pointer of a different type, try to coerce
 /// the stored value.  LoadedTy is the type of the load we want to replace and
@@ -950,6 +971,9 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
                                              const Type *LoadedTy,
                                              Instruction *InsertPt,
                                              const TargetData &TD) {
+  if (!CanCoerceMustAliasedValueToLoad(StoredVal, LoadedTy, TD))
+    return 0;
+  
   const Type *StoredValTy = StoredVal->getType();
   
   uint64_t StoreSize = TD.getTypeSizeInBits(StoredValTy);
@@ -985,8 +1009,7 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
   // If the loaded value is smaller than the available value, then we can
   // extract out a piece from it.  If the available value is too small, then we
   // can't do anything.
-  if (StoreSize < LoadSize)
-    return 0;
+  assert(StoreSize >= LoadSize && "CanCoerceMustAliasedValueToLoad fail");
   
   // Convert source pointers to integers, which can be manipulated.
   if (isa<PointerType>(StoredValTy)) {
@@ -1072,6 +1095,13 @@ static Value *GetBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
 /// load.
 static int AnalyzeLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
                                           const TargetData &TD) {
+  // If the loaded or stored value is an first class array or struct, don't try
+  // to transform them.  We need to be able to bitcast to integer.
+  if (isa<StructType>(L->getType()) || isa<ArrayType>(L->getType()) ||
+      isa<StructType>(DepSI->getOperand(0)->getType()) ||
+      isa<ArrayType>(DepSI->getOperand(0)->getType()))
+    return -1;
+  
   int64_t StoreOffset = 0, LoadOffset = 0;
   Value *StoreBase = 
     GetBaseWithConstantOffset(DepSI->getPointerOperand(), StoreOffset, TD);
@@ -1323,9 +1353,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
         
         // If the stored value is larger or equal to the loaded value, we can
         // reuse it.
-        if (TD == 0 || 
-            TD->getTypeSizeInBits(S->getOperand(0)->getType()) <
-              TD->getTypeSizeInBits(LI->getType())) {
+        if (TD == 0 || !CanCoerceMustAliasedValueToLoad(S->getOperand(0),
+                                                        LI->getType(), *TD)) {
           UnavailableBlocks.push_back(DepBB);
           continue;
         }
@@ -1344,9 +1373,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
         
         // If the stored value is larger or equal to the loaded value, we can
         // reuse it.
-        if (TD == 0 || 
-            TD->getTypeSizeInBits(LD->getType()) <
-               TD->getTypeSizeInBits(LI->getType())) {
+        if (TD == 0 || !CanCoerceMustAliasedValueToLoad(LD, LI->getType(),*TD)){
           UnavailableBlocks.push_back(DepBB);
           continue;
         }          
@@ -1627,7 +1654,8 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     const TargetData *TD = 0;
     if (StoredVal->getType() != L->getType() &&
         (TD = getAnalysisIfAvailable<TargetData>())) {
-      StoredVal = CoerceAvailableValueToLoadType(StoredVal, L->getType(), L, *TD);
+      StoredVal = CoerceAvailableValueToLoadType(StoredVal, L->getType(),
+                                                 L, *TD);
       if (StoredVal == 0)
         return false;
       
@@ -1653,7 +1681,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     const TargetData *TD = 0;
     if (DepLI->getType() != L->getType() &&
         (TD = getAnalysisIfAvailable<TargetData>())) {
-      AvailableVal = CoerceAvailableValueToLoadType(DepLI, L->getType(), L, *TD);
+      AvailableVal = CoerceAvailableValueToLoadType(DepLI, L->getType(), L,*TD);
       if (AvailableVal == 0)
         return false;
       
