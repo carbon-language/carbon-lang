@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple x86_64-apple-darwin10 -fnext-runtime -fobjc-gc -fobjc-newgc-api -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple x86_64-apple-darwin10 -fnext-runtime -fobjc-gc -emit-llvm -o %t %s &&
 // RUN: grep -F '@objc_assign_global' %t  | count 26 &&
 // RUN: true
 

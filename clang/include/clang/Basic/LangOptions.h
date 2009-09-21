@@ -88,7 +88,6 @@ public:
 
   unsigned ElideConstructors : 1; // Whether C++ copy constructors should be
                                   // elided if possible.
-  unsigned ObjCNewGCAPI : 1;      // Generate objective-c's new GC API
 private:
   unsigned GC : 2;                // Objective-C Garbage Collection modes.  We
                                   // declare this enum as unsigned because MSVC
@@ -147,7 +146,6 @@ public:
 
     OverflowChecking = 0;
     ObjCGCBitmapPrint = 0;
-    ObjCNewGCAPI = 1;
 
     InstantiationDepth = 99;
 

@@ -691,8 +691,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
 // or neither.
 static
 void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E, LValue &LV) {
-  if (Ctx.getLangOptions().getGCMode() == LangOptions::NonGC ||
-      !Ctx.getLangOptions().ObjCNewGCAPI)
+  if (Ctx.getLangOptions().getGCMode() == LangOptions::NonGC)
     return;
   
   if (isa<ObjCIvarRefExpr>(E)) {
