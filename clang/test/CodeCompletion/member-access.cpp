@@ -38,5 +38,5 @@ void test(const Proxy &p) {
   // CHECK-CC1: member1 : 2
   // CHECK-CC1: member2 : 2
   // CHECK-CC1: member3 : 2
-  // CHECK-CC1: memfun1 : 2 (Hidden)
+  // CHECK-CC1: memfun1 : 2 (Hidden) : Base2::memfun1(<#int#>)
   p->

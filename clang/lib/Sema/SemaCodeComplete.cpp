@@ -86,7 +86,11 @@ namespace {
     /// \brief Add a new result to this result set (if it isn't already in one
     /// of the shadow maps), or replace an existing result (for, e.g., a 
     /// redeclaration).
-    void MaybeAddResult(Result R);
+    ///
+    /// \param R the result to add (if it is unique).
+    ///
+    /// \param R the context in which this result will be named.
+    void MaybeAddResult(Result R, DeclContext *CurContext = 0);
     
     /// \brief Enter into a new scope.
     void EnterNewScope();
@@ -133,14 +137,57 @@ static bool canHiddenResultBeFound(const LangOptions &LangOpts,
   if (HiddenCtx->isFunctionOrMethod())
     return false;
   
-  // If the hidden and visible declarations are in different name-lookup
-  // contexts, then we can qualify the name of the hidden declaration.
-  // FIXME: Optionally compute the string needed to refer to the hidden
-  // name.
   return HiddenCtx != Visible->getDeclContext()->getLookupContext();
 }
 
-void ResultBuilder::MaybeAddResult(Result R) {
+/// \brief Compute the qualification required to get from the current context
+/// (\p CurContext) to the target context (\p TargetContext).
+///
+/// \param Context the AST context in which the qualification will be used.
+///
+/// \param CurContext the context where an entity is being named, which is
+/// typically based on the current scope.
+///
+/// \param TargetContext the context in which the named entity actually 
+/// resides.
+///
+/// \returns a nested name specifier that refers into the target context, or
+/// NULL if no qualification is needed.
+static NestedNameSpecifier *
+getRequiredQualification(ASTContext &Context,
+                         DeclContext *CurContext,
+                         DeclContext *TargetContext) {
+  llvm::SmallVector<DeclContext *, 4> TargetParents;
+  
+  for (DeclContext *CommonAncestor = TargetContext;
+       CommonAncestor && !CommonAncestor->Encloses(CurContext);
+       CommonAncestor = CommonAncestor->getLookupParent()) {
+    if (CommonAncestor->isTransparentContext() ||
+        CommonAncestor->isFunctionOrMethod())
+      continue;
+    
+    TargetParents.push_back(CommonAncestor);
+  }
+  
+  NestedNameSpecifier *Result = 0;
+  while (!TargetParents.empty()) {
+    DeclContext *Parent = TargetParents.back();
+    TargetParents.pop_back();
+    
+    if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(Parent))
+      Result = NestedNameSpecifier::Create(Context, Result, Namespace);
+    else if (TagDecl *TD = dyn_cast<TagDecl>(Parent))
+      Result = NestedNameSpecifier::Create(Context, Result,
+                                           false,
+                                     Context.getTypeDeclType(TD).getTypePtr());
+    else
+      assert(Parent->isTranslationUnit());
+  }
+  
+  return Result;
+}
+
+void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   if (R.Kind != Result::RK_Declaration) {
     // For non-declaration results, just add the result.
     Results.push_back(R);
@@ -149,7 +196,8 @@ void ResultBuilder::MaybeAddResult(Result R) {
   
   // Look through using declarations.
   if (UsingDecl *Using = dyn_cast<UsingDecl>(R.Declaration))
-    return MaybeAddResult(Result(Using->getTargetDecl(), R.Rank));
+    return MaybeAddResult(Result(Using->getTargetDecl(), R.Rank, R.Qualifier),
+                          CurContext);
   
   // Handle each declaration in an overload set separately.
   if (OverloadedFunctionDecl *Ovl 
@@ -157,7 +205,7 @@ void ResultBuilder::MaybeAddResult(Result R) {
     for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
          FEnd = Ovl->function_end();
          F != FEnd; ++F)
-      MaybeAddResult(Result(*F, R.Rank));
+      MaybeAddResult(Result(*F, R.Rank, R.Qualifier), CurContext);
     
     return;
   }
@@ -232,6 +280,11 @@ void ResultBuilder::MaybeAddResult(Result R) {
                                  I->second.first)) {
         // Note that this result was hidden.
         R.Hidden = true;
+        
+        if (!R.Qualifier)
+          R.Qualifier = getRequiredQualification(SemaRef.Context, 
+                                                 CurContext, 
+                                              R.Declaration->getDeclContext());
       } else {
         // This result was hidden and cannot be found; don't bother adding
         // it.
@@ -329,53 +382,6 @@ static DeclContext *findOuterContext(Scope *S) {
   return 0;
 }
 
-/// \brief Compute the qualification required to get from the current context
-/// (\p CurContext) to the target context (\p TargetContext).
-///
-/// \param Context the AST context in which the qualification will be used.
-///
-/// \param CurContext the context where an entity is being named, which is
-/// typically based on the current scope.
-///
-/// \param TargetContext the context in which the named entity actually 
-/// resides.
-///
-/// \returns a nested name specifier that refers into the target context, or
-/// NULL if no qualification is needed.
-static NestedNameSpecifier *
-getRequiredQualification(ASTContext &Context,
-                         DeclContext *CurContext,
-                         DeclContext *TargetContext) {
-  llvm::SmallVector<DeclContext *, 4> TargetParents;
-  
-  for (DeclContext *CommonAncestor = TargetContext;
-       CommonAncestor && !CommonAncestor->Encloses(CurContext);
-       CommonAncestor = CommonAncestor->getLookupParent()) {
-    if (CommonAncestor->isTransparentContext() ||
-        CommonAncestor->isFunctionOrMethod())
-      continue;
-
-    TargetParents.push_back(CommonAncestor);
-  }
-  
-  NestedNameSpecifier *Result = 0;
-  while (!TargetParents.empty()) {
-    DeclContext *Parent = TargetParents.back();
-    TargetParents.pop_back();
-    
-    if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(Parent))
-      Result = NestedNameSpecifier::Create(Context, Result, Namespace);
-    else if (TagDecl *TD = dyn_cast<TagDecl>(Parent))
-      Result = NestedNameSpecifier::Create(Context, Result,
-                                           false,
-                                    Context.getTypeDeclType(TD).getTypePtr());
-    else
-      assert(Parent->isTranslationUnit());
-  }
-  
-  return Result;
-}
-
 /// \brief Collect the results of searching for members within the given
 /// declaration context.
 ///
@@ -395,7 +401,8 @@ getRequiredQualification(ASTContext &Context,
 /// names within this declaration context.
 static unsigned CollectMemberLookupResults(DeclContext *Ctx, 
                                            unsigned InitialRank,
-                                           llvm::SmallPtrSet<DeclContext *, 16> &Visited,
+                                           DeclContext *CurContext,
+                                 llvm::SmallPtrSet<DeclContext *, 16> &Visited,
                                            ResultBuilder &Results) {
   // Make sure we don't visit the same context twice.
   if (!Visited.insert(Ctx->getPrimaryContext()))
@@ -409,7 +416,8 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
          DEnd = CurCtx->decls_end();
          D != DEnd; ++D) {
       if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
-        Results.MaybeAddResult(CodeCompleteConsumer::Result(ND, InitialRank));
+        Results.MaybeAddResult(CodeCompleteConsumer::Result(ND, InitialRank),
+                               CurContext);
     }
   }
   
@@ -452,6 +460,7 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
       NextRank = std::max(NextRank, 
                           CollectMemberLookupResults(Record->getDecl(), 
                                                      InitialRank + 1,
+                                                     CurContext,
                                                      Visited,
                                                      Results));
     }
@@ -479,9 +488,11 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
 /// names within this declaration context.
 static unsigned CollectMemberLookupResults(DeclContext *Ctx, 
                                            unsigned InitialRank, 
+                                           DeclContext *CurContext,
                                            ResultBuilder &Results) {
   llvm::SmallPtrSet<DeclContext *, 16> Visited;
-  return CollectMemberLookupResults(Ctx, InitialRank, Visited, Results);
+  return CollectMemberLookupResults(Ctx, InitialRank, CurContext, Visited, 
+                                    Results);
 }
 
 /// \brief Collect the results of searching for declarations within the given
@@ -492,10 +503,13 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
 /// \param InitialRank the initial rank given to results in this scope.
 /// Larger rank values will be used for results found in parent scopes.
 ///
+/// \param CurContext the context from which lookup results will be found.
+///
 /// \param Results the builder object that will receive each result.
 static unsigned CollectLookupResults(Scope *S, 
                                      TranslationUnitDecl *TranslationUnit,
                                      unsigned InitialRank,
+                                     DeclContext *CurContext,
                                      ResultBuilder &Results) {
   if (!S)
     return InitialRank;
@@ -517,7 +531,8 @@ static unsigned CollectLookupResults(Scope *S,
       if (Ctx->isFunctionOrMethod())
         continue;
       
-      NextRank = CollectMemberLookupResults(Ctx, NextRank + 1, Results);
+      NextRank = CollectMemberLookupResults(Ctx, NextRank + 1, CurContext,
+                                            Results);
     }
   } else if (!S->getParent()) {
     // Look into the translation unit scope. We walk through the translation
@@ -531,13 +546,14 @@ static unsigned CollectLookupResults(Scope *S,
     // in DeclContexts unless we have to" optimization), we can eliminate the
     // TranslationUnit parameter entirely.
     NextRank = CollectMemberLookupResults(TranslationUnit, NextRank + 1, 
-                                          Results);
+                                          CurContext, Results);
   } else {
     // Walk through the declarations in this Scope.
     for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
          D != DEnd; ++D) {
       if (NamedDecl *ND = dyn_cast<NamedDecl>((Decl *)((*D).get())))
-        Results.MaybeAddResult(CodeCompleteConsumer::Result(ND, NextRank));        
+        Results.MaybeAddResult(CodeCompleteConsumer::Result(ND, NextRank),
+                               CurContext);        
     }
     
     NextRank = NextRank + 1;
@@ -545,7 +561,7 @@ static unsigned CollectLookupResults(Scope *S,
   
   // Lookup names in the parent scope.
   NextRank = CollectLookupResults(S->getParent(), TranslationUnit, NextRank, 
-                                  Results);
+                                  CurContext, Results);
   Results.ExitScope();
   
   return NextRank;
@@ -882,7 +898,8 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
   unsigned NextRank = 0;
   
   if (const RecordType *Record = BaseType->getAs<RecordType>()) {
-    NextRank = CollectMemberLookupResults(Record->getDecl(), NextRank, Results);
+    NextRank = CollectMemberLookupResults(Record->getDecl(), NextRank, 
+                                          Record->getDecl(), Results);
     
     if (getLangOptions().CPlusPlus) {
       if (!Results.empty()) {
@@ -906,7 +923,7 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
       // results as well.
       Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
       CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank, 
-                           Results);
+                           CurContext, Results);
     }
     
     // Hand off the results found for code completion.
@@ -944,14 +961,14 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
   
   ResultBuilder Results(*this, Filter);
   unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
-                                           0, Results);
+                                           0, CurContext, Results);
   
   if (getLangOptions().CPlusPlus) {
     // We could have the start of a nested-name-specifier. Add those
     // results as well.
     Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
     CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank, 
-                         Results);
+                         CurContext, Results);
   }
   
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
@@ -1045,7 +1062,7 @@ void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
     return;
   
   ResultBuilder Results(*this);
-  unsigned NextRank = CollectMemberLookupResults(Ctx, 0, Results);
+  unsigned NextRank = CollectMemberLookupResults(Ctx, 0, Ctx, Results);
   
   // The "template" keyword can follow "::" in the grammar, but only
   // put it into the grammar if the nested-name-specifier is dependent.
@@ -1068,7 +1085,8 @@ void Sema::CodeCompleteUsing(Scope *S) {
   
   // After "using", we can see anything that would start a 
   // nested-name-specifier.
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, Results);
+  CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, 
+                       CurContext, Results);
   
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
@@ -1080,7 +1098,8 @@ void Sema::CodeCompleteUsingDirective(Scope *S) {
   // After "using namespace", we expect to see a namespace name or namespace
   // alias.
   ResultBuilder Results(*this, &ResultBuilder::IsNamespaceOrAlias);
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, Results);
+  CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, CurContext,
+                       Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
@@ -1109,7 +1128,8 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
     for (std::map<NamespaceDecl *, NamespaceDecl *>::iterator 
          NS = OrigToLatest.begin(), NSEnd = OrigToLatest.end();
          NS != NSEnd; ++NS)
-      Results.MaybeAddResult(CodeCompleteConsumer::Result(NS->second, 0));
+      Results.MaybeAddResult(CodeCompleteConsumer::Result(NS->second, 0),
+                             CurContext);
   }
   
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
@@ -1121,7 +1141,8 @@ void Sema::CodeCompleteNamespaceAliasDecl(Scope *S)  {
   
   // After "namespace", we expect to see a namespace or alias.
   ResultBuilder Results(*this, &ResultBuilder::IsNamespaceOrAlias);
-  CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, Results);
+  CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, CurContext,
+                       Results);
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
@@ -1140,7 +1161,7 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   
   // Add any type names visible from the current scope
   unsigned NextRank = CollectLookupResults(S, Context.getTranslationUnitDecl(), 
-                                           0, Results);
+                                           0, CurContext, Results);
   
   // Add any type specifiers
   AddTypeSpecifierResults(getLangOptions(), 0, Results);
@@ -1148,7 +1169,7 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   // Add any nested-name-specifiers
   Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
   CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank + 1, 
-                       Results);
+                       CurContext, Results);
   
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
