@@ -1296,8 +1296,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     if (SrcSubIdx && SrcSubIdx != DstSubIdx) {
       // r1025 = INSERT_SUBREG r1025, r1024<2>, 2 Then r1024 has already been
       // coalesced to a larger register so the subreg indices cancel out.
-      DEBUG(errs() << "\tSource of insert_subreg is already coalesced "
-                   << "to another register.\n");
+      DEBUG(errs() << "\tSource of insert_subreg or subreg_to_reg is already "
+                      "coalesced to another register.\n");
       return false;  // Not coalescable.
     }
   } else if (!tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)){
