@@ -1183,19 +1183,32 @@ static Value *GetStoreValueForLoad(Value *SrcVal, int Offset,const Type *LoadTy,
   return CoerceAvailableValueToLoadType(SrcVal, LoadTy, InsertPt, *TD);
 }
 
+struct AvailableValueInBlock {
+  /// BB - The basic block in question.
+  BasicBlock *BB;
+  /// V - The value that is live out of the block.
+  Value *V;
+  
+  static AvailableValueInBlock get(BasicBlock *BB, Value *V) {
+    AvailableValueInBlock Res;
+    Res.BB = BB;
+    Res.V = V;
+    return Res;
+  }
+};
+
 /// GetAvailableBlockValues - Given the ValuesPerBlock list, convert all of the
 /// available values to values of the expected LoadTy in their blocks and insert
 /// the new values into BlockReplValues.
 static void 
 GetAvailableBlockValues(DenseMap<BasicBlock*, Value*> &BlockReplValues,
-                        const SmallVector<std::pair<BasicBlock*,
-                                    Value*>, 16> &ValuesPerBlock,
+                  const SmallVector<AvailableValueInBlock, 16> &ValuesPerBlock,
                         const Type *LoadTy,
                         const TargetData *TD) {
 
   for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i) {
-    BasicBlock *BB = ValuesPerBlock[i].first;
-    Value *AvailableVal = ValuesPerBlock[i].second;
+    BasicBlock *BB = ValuesPerBlock[i].BB;
+    Value *AvailableVal = ValuesPerBlock[i].V;
     
     Value *&BlockEntry = BlockReplValues[BB];
     if (BlockEntry) continue;
@@ -1205,7 +1218,7 @@ GetAvailableBlockValues(DenseMap<BasicBlock*, Value*> &BlockReplValues,
       AvailableVal = CoerceAvailableValueToLoadType(AvailableVal, LoadTy,
                                                     BB->getTerminator(), *TD);
       DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\n"
-                   << *ValuesPerBlock[i].second << '\n'
+                   << *ValuesPerBlock[i].V << '\n'
                    << *AvailableVal << '\n' << "\n\n\n");
     }
     BlockEntry = AvailableVal;
@@ -1244,7 +1257,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // where we have a value available in repl, also keep track of whether we see
   // dependencies that produce an unknown value for the load (such as a call
   // that could potentially clobber the load).
-  SmallVector<std::pair<BasicBlock*, Value*>, 16> ValuesPerBlock;
+  SmallVector<AvailableValueInBlock, 16> ValuesPerBlock;
   SmallVector<BasicBlock*, 16> UnavailableBlocks;
 
   const TargetData *TD = 0;
@@ -1262,12 +1275,12 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
     // Loading the allocation -> undef.
     if (isa<AllocationInst>(DepInst) || isMalloc(DepInst)) {
-      ValuesPerBlock.push_back(std::make_pair(DepBB,
-                               UndefValue::get(LI->getType())));
+      ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
+                                             UndefValue::get(LI->getType())));
       continue;
     }
 
-    if (StoreInst* S = dyn_cast<StoreInst>(DepInst)) {
+    if (StoreInst *S = dyn_cast<StoreInst>(DepInst)) {
       // Reject loads and stores that are to the same address but are of
       // different types if we have to.
       if (S->getOperand(0)->getType() != LI->getType()) {
@@ -1284,9 +1297,10 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
         }
       }
 
-      ValuesPerBlock.push_back(std::make_pair(DepBB, S->getOperand(0)));
+      ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
+                                                          S->getOperand(0)));
 
-    } else if (LoadInst* LD = dyn_cast<LoadInst>(DepInst)) {
+    } else if (LoadInst *LD = dyn_cast<LoadInst>(DepInst)) {
       // If the types mismatch and we can't handle it, reject reuse of the load.
       if (LD->getType() != LI->getType()) {
         if (TD == 0)
@@ -1301,7 +1315,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
           continue;
         }          
       }
-      ValuesPerBlock.push_back(std::make_pair(DepBB, LD));
+      ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB, LD));
     } else {
       // FIXME: Handle memset/memcpy.
       UnavailableBlocks.push_back(DepBB);
@@ -1332,7 +1346,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
         return true;
       }
 
-      ValuesPerBlock.push_back(std::make_pair((*I)->getParent(), *I));
+      ValuesPerBlock.push_back(AvailableValueInBlock::get((*I)->getParent(),
+                                                          *I));
     }
 
     DEBUG(errs() << "GVN REMOVING NONLOCAL LOAD: " << *LI << '\n');
@@ -1397,13 +1412,13 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // to eliminate LI even if we insert uses in the other predecessors, we will
   // end up increasing code size.  Reject this by scanning for LI.
   for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
-    if (ValuesPerBlock[i].second == LI)
+    if (ValuesPerBlock[i].V == LI)
       return false;
 
   if (isSinglePred) {
     bool isHot = false;
     for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
-      if (Instruction *I = dyn_cast<Instruction>(ValuesPerBlock[i].second))
+      if (Instruction *I = dyn_cast<Instruction>(ValuesPerBlock[i].V))
         // "Hot" Instruction is in some loop (because it dominates its dep.
         // instruction).
         if (DT->dominates(LI, I)) {
@@ -1426,7 +1441,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
   DenseMap<BasicBlock*, char> FullyAvailableBlocks;
   for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i)
-    FullyAvailableBlocks[ValuesPerBlock[i].first] = true;
+    FullyAvailableBlocks[ValuesPerBlock[i].BB] = true;
   for (unsigned i = 0, e = UnavailableBlocks.size(); i != e; ++i)
     FullyAvailableBlocks[UnavailableBlocks[i]] = false;
 
@@ -1489,7 +1504,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   SmallPtrSet<Instruction*, 4> &p = phiMap[LI->getPointerOperand()];
   for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
        I != E; ++I)
-    ValuesPerBlock.push_back(std::make_pair((*I)->getParent(), *I));
+    ValuesPerBlock.push_back(AvailableValueInBlock::get((*I)->getParent(), *I));
 
   DenseMap<BasicBlock*, Value*> BlockReplValues;
   GetAvailableBlockValues(BlockReplValues, ValuesPerBlock, LI->getType(), TD);
