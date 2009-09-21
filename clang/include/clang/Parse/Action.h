@@ -2217,11 +2217,16 @@ public:
   /// This code completion action is invoked when the code-completion
   /// token is found after a tag keyword (struct, union, enum, or class).
   ///
-  /// \para, S the scope in which the tag reference occurs.
+  /// \param S the scope in which the tag reference occurs.
   ///
   /// \param TagSpec an instance of DeclSpec::TST, indicating what kind of tag
   /// this is (struct/union/enum/class).
   virtual void CodeCompleteTag(Scope *S, unsigned TagSpec) { }
+  
+  /// \brief Code completion for a case statement.
+  ///
+  /// \brief S the scope in which the case statement occurs.
+  virtual void CodeCompleteCase(Scope *S) { }
   
   /// \brief Code completion for a C++ nested-name-specifier that precedes a
   /// qualified-id of some form.

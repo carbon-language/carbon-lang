@@ -3633,6 +3633,7 @@ public:
                                                SourceLocation OpLoc,
                                                bool IsArrow);
   virtual void CodeCompleteTag(Scope *S, unsigned TagSpec);
+  virtual void CodeCompleteCase(Scope *S);
   virtual void CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
                                        bool EnteringContext);
   virtual void CodeCompleteUsing(Scope *S);

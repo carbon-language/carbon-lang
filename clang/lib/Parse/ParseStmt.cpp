@@ -261,6 +261,11 @@ Parser::OwningStmtResult Parser::ParseCaseStatement() {
   do {
     SourceLocation CaseLoc = ConsumeToken();  // eat the 'case'.
 
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteCase(CurScope);
+      ConsumeToken();
+    }
+    
     OwningExprResult LHS(ParseConstantExpression());
     if (LHS.isInvalid()) {
       SkipUntil(tok::colon);

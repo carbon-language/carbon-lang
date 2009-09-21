@@ -883,6 +883,79 @@ void Sema::CodeCompleteTag(Scope *S, unsigned TagSpec) {
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
 
+void Sema::CodeCompleteCase(Scope *S) {
+  if (getSwitchStack().empty() || !CodeCompleter)
+    return;
+  
+  SwitchStmt *Switch = getSwitchStack().back();
+  if (!Switch->getCond()->getType()->isEnumeralType())
+    return;
+  
+  // Code-complete the cases of a switch statement over an enumeration type
+  // by providing the list of 
+  EnumDecl *Enum = Switch->getCond()->getType()->getAs<EnumType>()->getDecl();
+  
+  // Determine which enumerators we have already seen in the switch statement.
+  // FIXME: Ideally, we would also be able to look *past* the code-completion
+  // token, in case we are code-completing in the middle of the switch and not
+  // at the end. However, we aren't able to do so at the moment.
+  llvm::SmallPtrSet<EnumConstantDecl *, 8> EnumeratorsSeen;
+  for (SwitchCase *SC = Switch->getSwitchCaseList(); SC; 
+       SC = SC->getNextSwitchCase()) {
+    CaseStmt *Case = dyn_cast<CaseStmt>(SC);
+    if (!Case)
+      continue;
+
+    Expr *CaseVal = Case->getLHS()->IgnoreParenCasts();
+    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CaseVal))
+      if (EnumConstantDecl *Enumerator 
+            = dyn_cast<EnumConstantDecl>(DRE->getDecl())) {
+        // We look into the AST of the case statement to determine which 
+        // enumerator was named. Alternatively, we could compute the value of 
+        // the integral constant expression, then compare it against the
+        // values of each enumerator. However, value-based approach would not 
+        // work as well with C++ templates where enumerators declared within a 
+        // template are type- and value-dependent.
+        EnumeratorsSeen.insert(Enumerator);
+        
+        // FIXME: If this is a qualified-id, should we keep track of the 
+        // nested-name-specifier so we can reproduce it as part of code
+        // completion? e.g.,
+        //
+        //   switch (TagD.getKind()) {
+        //     case TagDecl::TK_enum:
+        //       break;
+        //     case XXX
+        //
+        // At the XXX, we would like our completions to be TagDecl::TK_union,
+        // TagDecl::TK_struct, and TagDecl::TK_class, rather than TK_union,
+        // TK_struct, and TK_class.
+      }
+  }
+  
+  // Add any enumerators that have not yet been mentioned.
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  for (EnumDecl::enumerator_iterator E = Enum->enumerator_begin(),
+                                  EEnd = Enum->enumerator_end();
+       E != EEnd; ++E) {
+    if (EnumeratorsSeen.count(*E))
+      continue;
+    
+    Results.MaybeAddResult(CodeCompleteConsumer::Result(*E, 0));
+  }
+  Results.ExitScope();
+  
+  // In C++, add nested-name-specifiers.
+  if (getLangOptions().CPlusPlus) {
+    Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
+    CollectLookupResults(S, Context.getTranslationUnitDecl(), 1, 
+                         Results);
+  }
+  
+  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
+}
+
 void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
                                    bool EnteringContext) {
   if (!SS.getScopeRep() || !CodeCompleter)
