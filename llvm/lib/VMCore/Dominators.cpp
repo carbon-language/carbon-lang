@@ -52,10 +52,16 @@ void DominatorTree::print(raw_ostream &OS, const Module *) const {
   DT->print(OS);
 }
 
-// dominates - Return true if A dominates B. This performs the
+// dominates - Return true if A dominates a use in B. This performs the
 // special checks necessary if A and B are in the same basic block.
 bool DominatorTree::dominates(const Instruction *A, const Instruction *B) const{
   const BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
+  
+  // If A is an invoke instruction, its value is only available in this normal
+  // successor block.
+  if (const InvokeInst *II = dyn_cast<InvokeInst>(A))
+    BBA = II->getNormalDest();
+  
   if (BBA != BBB) return dominates(BBA, BBB);
   
   // It is not possible to determine dominance between two PHI nodes 
