@@ -220,7 +220,20 @@ so cool to turn it into something like:
 ... which would only do one 32-bit XOR per loop iteration instead of two.
 
 It would also be nice to recognize the reg->size doesn't alias reg->node[i], but
-alas...
+alas.
+
+//===---------------------------------------------------------------------===//
+
+This should be optimized to one 'and' and one 'or', from PR4216:
+
+define i32 @test_bitfield(i32 %bf.prev.low) nounwind ssp {
+entry:
+  %bf.prev.lo.cleared10 = or i32 %bf.prev.low, 32962 ; <i32> [#uses=1]
+  %0 = and i32 %bf.prev.low, -65536               ; <i32> [#uses=1]
+  %1 = and i32 %bf.prev.lo.cleared10, 40186       ; <i32> [#uses=1]
+  %2 = or i32 %1, %0                              ; <i32> [#uses=1]
+  ret i32 %2
+}
 
 //===---------------------------------------------------------------------===//
 
