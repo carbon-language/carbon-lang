@@ -41,7 +41,6 @@ STATISTIC(NumSingleStore,   "Number of alloca's promoted with a single store");
 STATISTIC(NumDeadAlloca,    "Number of dead alloca's removed");
 STATISTIC(NumPHIInsert,     "Number of PHI nodes inserted");
 
-// Provide DenseMapInfo for all pointers.
 namespace llvm {
 template<>
 struct DenseMapInfo<std::pair<BasicBlock*, unsigned> > {
@@ -294,10 +293,9 @@ namespace {
       // As we scan the uses of the alloca instruction, keep track of stores,
       // and decide whether all of the loads and stores to the alloca are within
       // the same basic block.
-      for (Value::use_iterator U = AI->use_begin(), E = AI->use_end();
-           U != E;)  {
-        Instruction *User = cast<Instruction>(*U);
-        ++U;
+      for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
+           UI != E;)  {
+        Instruction *User = cast<Instruction>(*UI++);
         if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
           // Remove any uses of this alloca in DbgInfoInstrinsics.
           assert(BC->hasOneUse() && "Unexpected alloca uses!");
@@ -306,7 +304,8 @@ namespace {
           BC->eraseFromParent();
           continue;
         } 
-        else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+        
+        if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
           // Remember the basic blocks which define new values for the alloca
           DefiningBlocks.push_back(SI->getParent());
           AllocaPointerVal = SI->getOperand(0);
@@ -603,7 +602,9 @@ ComputeLiveInBlocks(AllocaInst *AI, AllocaInfo &Info,
         LiveInBlockWorklist.pop_back();
         --i, --e;
         break;
-      } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+      }
+      
+      if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         if (LI->getOperand(0) != AI) continue;
         
         // Okay, we found a load before a store to the alloca.  It is actually
