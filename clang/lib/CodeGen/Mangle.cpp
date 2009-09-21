@@ -96,7 +96,7 @@ namespace {
     void mangleType(const TagType*);
     void mangleBareFunctionType(const FunctionType *T,
                                 bool MangleReturnType);
-    void mangleExpression(Expr *E);
+    void mangleExpression(const Expr *E);
     void mangleCXXCtorType(CXXCtorType T);
     void mangleCXXDtorType(CXXDtorType T);
 
@@ -917,8 +917,41 @@ void CXXNameMangler::mangleType(const ExtQualType *T) {
   mangleType(QualType(T->getBaseType(), 0));
 }
 
-void CXXNameMangler::mangleExpression(Expr *E) {
-  assert(false && "Cannot mangle expressions yet");
+void CXXNameMangler::mangleExpression(const Expr *E) {
+  // <expression> ::= <unary operator-name> <expression>
+	//              ::= <binary operator-name> <expression> <expression>
+	//              ::= <trinary operator-name> <expression> <expression> <expression>
+  //              ::= cl <expression>* E	        # call
+  //              ::= cv <type> expression           # conversion with one argument
+  //              ::= cv <type> _ <expression>* E # conversion with a different number of arguments
+  //              ::= st <type>		        # sizeof (a type)
+  //              ::= at <type>                      # alignof (a type)
+  //              ::= <template-param>
+  //              ::= <function-param>
+  //              ::= sr <type> <unqualified-name>                   # dependent name
+  //              ::= sr <type> <unqualified-name> <template-args>   # dependent template-id
+  //              ::= sZ <template-param>                            # size of a parameter pack
+	//              ::= <expr-primary>
+  switch (E->getStmtClass()) {
+  default: assert(false && "Unhandled expression kind!");
+  case Expr::DeclRefExprClass: {
+    const Decl *D = cast<DeclRefExpr>(E)->getDecl();
+    
+    switch (D->getKind()) {
+    default: assert(false && "Unhandled decl kind!");
+    case Decl::NonTypeTemplateParm: {
+      const NonTypeTemplateParmDecl *PD = cast<NonTypeTemplateParmDecl>(D);
+      
+      if (PD->getIndex() == 0)
+        Out << "T_";
+      else
+        Out << 'T' << (PD->getIndex() - 1) << '_';
+      break;
+    }
+
+    }
+  }
+  }
 }
 
 // FIXME: <type> ::= G <type>   # imaginary (C 2000)
@@ -996,6 +1029,11 @@ void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
     assert(0 && "Unknown template argument kind!");
   case TemplateArgument::Type:
     mangleType(A.getAsType());
+    break;
+  case TemplateArgument::Expression:
+    Out << 'X';
+    mangleExpression(A.getAsExpr());
+    Out << 'E';
     break;
   case TemplateArgument::Integral:
     //  <expr-primary> ::= L <type> <value number> E # integer literal

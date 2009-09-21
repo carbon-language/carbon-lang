@@ -99,7 +99,7 @@ namespace NS {
   template<typename T> void ft1(T) { }
 }
 
-void g() {
+void g1() {
   // CHECK: @_Z3ft1IidEvT0_T_
   ft1<int, double>(1, 0);
   
@@ -111,6 +111,18 @@ void g() {
   
   // CHECK: @_ZN2NS3ft1IiEEvT_
   NS::ft1<int>(1);
+}
+
+// Expressions
+template<int I> struct S5 { };
+
+template<int I> void ft4(S5<I>) { }
+void g2() {
+  // CHECK: @_Z3ft4ILi10EEv2S5IXT_EE
+  ft4(S5<10>());
+  
+  // CHECK: @_Z3ft4ILi20EEv2S5IXT_EE
+  ft4(S5<20>());
 }
 
 extern "C++" {
