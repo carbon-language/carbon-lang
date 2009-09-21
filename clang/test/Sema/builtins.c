@@ -41,3 +41,14 @@ void test9(short v) {
   old = __sync_fetch_and_add(&old);  // expected-error {{too few arguments to function call}}
   old = __sync_fetch_and_add((int**)0, 42i); // expected-warning {{imaginary constants are an extension}}
 }
+
+
+// rdar://7236819
+void test10(void) __attribute__((noreturn));
+
+void test10(void) {
+  __asm__("int3");  
+  __builtin_unreachable();
+ 
+  // No warning about falling off the end of a noreturn function.
+}

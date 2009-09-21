@@ -224,7 +224,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::trap, 0, 0);
     return RValue::get(Builder.CreateCall(F));
   }
-
+  case Builtin::BI__builtin_unreachable: {
+    Value *V = Builder.CreateUnreachable();
+    Builder.ClearInsertionPoint();
+    return RValue::get(V);
+  }
+      
   case Builtin::BI__builtin_powi:
   case Builtin::BI__builtin_powif:
   case Builtin::BI__builtin_powil: {

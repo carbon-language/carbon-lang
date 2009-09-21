@@ -27,6 +27,7 @@ td {
 <li><a href="#builtins">Builtin Functions</a>
   <ul>
   <li><a href="#__builtin_shufflevector">__builtin_shufflevector</a></li>
+  <li><a href="#__builtin_unreachable">__builtin_unreachable</a></li>
   </ul>
 </li>
 <li><a href="#targetspecific">Target-Specific Extensions</a>
@@ -309,6 +310,47 @@ vec1 is a 4-element vector, index 5 would refer to the second element of vec2.
 with the same element type as vec1/vec2 but that has an element count equal to
 the number of indices specified.
 </p>
+
+<p>Query for this feature with __has_builtin(__builtin_shufflevector).</p>
+
+<!-- ======================================================================= -->
+<h3 id="__builtin_unreachable">__builtin_unreachable</h3>
+<!-- ======================================================================= -->
+
+<p><tt>__builtin_unreachable</tt> is used to indicate that a specific point in
+the program cannot be reached, even if the compiler might otherwise think it
+can.  This is useful to improve optimization and eliminates certain warnings.
+For example, without the <tt>__builtin_unreachable</tt> in the example below,
+the compiler assumes that the inline asm can fall through and prints a "function
+declared 'noreturn' should not return" warning.
+</p>
+
+<p><b>Syntax:</b></p>
+
+<pre>
+__builtin_unreachable()
+</pre>
+
+<p><b>Example of Use:</b></p>
+
+<pre>
+void myabort(void) __attribute__((noreturn));
+void myabort(void) {
+    asm("int3");
+    __builtin_unreachable();
+}
+</pre>
+
+<p><b>Description:</b></p>
+
+<p>The __builtin_unreachable() builtin has completely undefined behavior.  Since
+it has undefined behavior, it is a statement that it is never reached and the
+optimizer can take advantage of this to produce better code.  This builtin takes
+no arguments and produces a void result.
+</p>
+
+<p>Query for this feature with __has_builtin(__builtin_unreachable).</p>
+
 
 <!-- ======================================================================= -->
 <h2 id="targetspecific">Target-Specific Extensions</h2>
