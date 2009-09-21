@@ -208,7 +208,7 @@ Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix,
                  const char *linkerPrivatePrefix)
   : Prefix(prefix), PrivatePrefix(privatePrefix),
     LinkerPrivatePrefix(linkerPrivatePrefix), UseQuotes(false),
-    NextAnonGlobalID(1) {
+    SymbolsCanStartWithDigit(false), NextAnonGlobalID(1) {
   std::fill(AcceptableChars, array_endof(AcceptableChars), 0);
 
   // Letters and numbers are acceptable.
