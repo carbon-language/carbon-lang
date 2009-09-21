@@ -2297,9 +2297,21 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   unsigned Alignment = 0;
   if (LoadMI->hasOneMemOperand())
     Alignment = LoadMI->memoperands_begin()->getAlignment();
-  else if (LoadMI->getOpcode() == X86::V_SET0 ||
-           LoadMI->getOpcode() == X86::V_SETALLONES)
-    Alignment = 16;
+  else
+    switch (LoadMI->getOpcode()) {
+    case X86::V_SET0:
+    case X86::V_SETALLONES:
+      Alignment = 16;
+      break;
+    case X86::FsFLD0SD:
+      Alignment = 8;
+      break;
+    case X86::FsFLD0SS:
+      Alignment = 4;
+      break;
+    default:
+      llvm_unreachable("Don't know how to fold this instruction!");
+    }
   if (Ops.size() == 2 && Ops[0] == 0 && Ops[1] == 1) {
     unsigned NewOpc = 0;
     switch (MI->getOpcode()) {
@@ -2316,8 +2328,11 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     return NULL;
 
   SmallVector<MachineOperand,X86AddrNumOperands> MOs;
-  if (LoadMI->getOpcode() == X86::V_SET0 ||
-      LoadMI->getOpcode() == X86::V_SETALLONES) {
+  switch (LoadMI->getOpcode()) {
+  case X86::V_SET0:
+  case X86::V_SETALLONES:
+  case X86::FsFLD0SD:
+  case X86::FsFLD0SS: {
     // Folding a V_SET0 or V_SETALLONES as a load, to ease register pressure.
     // Create a constant-pool entry and operands to load from it.
 
@@ -2331,17 +2346,22 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
         // This doesn't work for several reasons.
         // 1. GlobalBaseReg may have been spilled.
         // 2. It may not be live at MI.
-        return false;
+        return NULL;
     }
 
-    // Create a v4i32 constant-pool entry.
+    // Create a constant-pool entry.
     MachineConstantPool &MCP = *MF.getConstantPool();
-    const VectorType *Ty =
-          VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 4);
-    Constant *C = LoadMI->getOpcode() == X86::V_SET0 ?
-                    Constant::getNullValue(Ty) :
-                    Constant::getAllOnesValue(Ty);
-    unsigned CPI = MCP.getConstantPoolIndex(C, 16);
+    const Type *Ty;
+    if (LoadMI->getOpcode() == X86::FsFLD0SS)
+      Ty = Type::getFloatTy(MF.getFunction()->getContext());
+    else if (LoadMI->getOpcode() == X86::FsFLD0SD)
+      Ty = Type::getDoubleTy(MF.getFunction()->getContext());
+    else
+      Ty = VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 4);
+    Constant *C = LoadMI->getOpcode() == X86::V_SETALLONES ?
+                    Constant::getAllOnesValue(Ty) :
+                    Constant::getNullValue(Ty);
+    unsigned CPI = MCP.getConstantPoolIndex(C, Alignment);
 
     // Create operands to load from the constant pool entry.
     MOs.push_back(MachineOperand::CreateReg(PICBase, false));
@@ -2349,11 +2369,15 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     MOs.push_back(MachineOperand::CreateReg(0, false));
     MOs.push_back(MachineOperand::CreateCPI(CPI, 0));
     MOs.push_back(MachineOperand::CreateReg(0, false));
-  } else {
+    break;
+  }
+  default: {
     // Folding a normal load. Just copy the load's address operands.
     unsigned NumOps = LoadMI->getDesc().getNumOperands();
     for (unsigned i = NumOps - X86AddrNumOperands; i != NumOps; ++i)
       MOs.push_back(LoadMI->getOperand(i));
+    break;
+  }
   }
   return foldMemoryOperandImpl(MF, MI, Ops[0], MOs, 0, Alignment);
 }
