@@ -361,10 +361,10 @@ int main(int argc, char **argv) {
     }
     
 
-    // Otherwise, everything is good.  Remember this as the last match and move
-    // on to the next one.
-    LastMatch = Buffer.data();
+    // Otherwise, everything is good.  Step over the matched text and remember
+    // the position after the match as the end of the last match.
     Buffer = Buffer.substr(CheckStr.Str.size());
+    LastMatch = Buffer.data();
   }
   
   return 0;
