@@ -199,7 +199,7 @@ Cont:
 ;; types, and the reload is an offset from the store pointer.
 ;;===----------------------------------------------------------------------===;;
 
-;; i32 -> f32 forwarding.
+;; i32 -> i8 forwarding.
 ;; PR4216
 define i8 @coerce_offset0(i32 %V, i32* %P) {
   store i32 %V, i32* %P
@@ -214,5 +214,55 @@ define i8 @coerce_offset0(i32 %V, i32* %P) {
 ; CHECK: ret i8
 }
 
+;; non-local i32/float -> i8 load forwarding.
+define i8 @coerce_offset_nonlocal0(i32* %P, i1 %cond) {
+  %P2 = bitcast i32* %P to float*
+  %P3 = bitcast i32* %P to i8*
+  %P4 = getelementptr i8* %P3, i32 2
+  br i1 %cond, label %T, label %F
+T:
+  store i32 42, i32* %P
+  br label %Cont
+  
+F:
+  store float 1.0, float* %P2
+  br label %Cont
+
+Cont:
+  %A = load i8* %P4
+  ret i8 %A
+
+; CHECK: @coerce_offset_nonlocal0
+; CHECK: Cont:
+; CHECK:   %A = phi i8 [
+; CHECK-NOT: load
+; CHECK: ret i8 %A
+}
+
+
+;; non-local i32 -> i8 partial redundancy load forwarding.
+define i8 @coerce_offset_pre0(i32* %P, i1 %cond) {
+  %P3 = bitcast i32* %P to i8*
+  %P4 = getelementptr i8* %P3, i32 2
+  br i1 %cond, label %T, label %F
+T:
+  store i32 42, i32* %P
+  br label %Cont
+  
+F:
+  br label %Cont
+
+Cont:
+  %A = load i8* %P4
+  ret i8 %A
+
+; CHECK: @coerce_offset_pre0
+; CHECK: F:
+; CHECK:   load i8* %P4
+; CHECK: Cont:
+; CHECK:   %A = phi i8 [
+; CHECK-NOT: load
+; CHECK: ret i8 %A
+}
 
 

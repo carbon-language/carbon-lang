@@ -1026,7 +1026,7 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
 /// be expressed as a base pointer plus a constant offset.  Return the base and
 /// offset to the caller.
 static Value *GetBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
-                                        const TargetData *TD) {
+                                        const TargetData &TD) {
   Operator *PtrOp = dyn_cast<Operator>(Ptr);
   if (PtrOp == 0) return Ptr;
   
@@ -1046,16 +1046,16 @@ static Value *GetBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
     
     // Handle a struct and array indices which add their offset to the pointer.
     if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
-      Offset += TD->getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
+      Offset += TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
     } else {
-      uint64_t Size = TD->getTypeAllocSize(GTI.getIndexedType());
+      uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
       Offset += OpC->getSExtValue()*Size;
     }
   }
   
   // Re-sign extend from the pointer size if needed to get overflow edge cases
   // right.
-  unsigned PtrSize = TD->getPointerSizeInBits();
+  unsigned PtrSize = TD.getPointerSizeInBits();
   if (PtrSize < 64)
     Offset = (Offset << (64-PtrSize)) >> (64-PtrSize);
   
@@ -1071,12 +1071,12 @@ static Value *GetBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
 /// give up, or a byte number in the stored value of the piece that feeds the
 /// load.
 static int AnalyzeLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
-                                          const TargetData *TD) {
+                                          const TargetData &TD) {
   int64_t StoreOffset = 0, LoadOffset = 0;
   Value *StoreBase = 
-  GetBaseWithConstantOffset(DepSI->getPointerOperand(), StoreOffset, TD);
+    GetBaseWithConstantOffset(DepSI->getPointerOperand(), StoreOffset, TD);
   Value *LoadBase = 
-  GetBaseWithConstantOffset(L->getPointerOperand(), LoadOffset, TD);
+    GetBaseWithConstantOffset(L->getPointerOperand(), LoadOffset, TD);
   if (StoreBase != LoadBase)
     return -1;
   
@@ -1102,8 +1102,8 @@ static int AnalyzeLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
   // must have gotten confused.
   // FIXME: Investigate cases where this bails out, e.g. rdar://7238614. Then
   // remove this check, as it is duplicated with what we have below.
-  uint64_t StoreSize = TD->getTypeSizeInBits(DepSI->getOperand(0)->getType());
-  uint64_t LoadSize = TD->getTypeSizeInBits(L->getType());
+  uint64_t StoreSize = TD.getTypeSizeInBits(DepSI->getOperand(0)->getType());
+  uint64_t LoadSize = TD.getTypeSizeInBits(L->getType());
   
   if ((StoreSize & 7) | (LoadSize & 7))
     return -1;
@@ -1150,37 +1150,40 @@ static int AnalyzeLoadFromClobberingStore(LoadInst *L, StoreInst *DepSI,
 /// that the store *may* provide bits used by the load but we can't be sure
 /// because the pointers don't mustalias.  Check this case to see if there is
 /// anything more we can do before we give up.
-static Value *GetStoreValueForLoad(Value *SrcVal, int Offset,const Type *LoadTy,
-                                   Instruction *InsertPt, const TargetData *TD){
+static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
+                                   const Type *LoadTy,
+                                   Instruction *InsertPt, const TargetData &TD){
   LLVMContext &Ctx = SrcVal->getType()->getContext();
   
-  uint64_t StoreSize = TD->getTypeSizeInBits(SrcVal->getType())/8;
-  uint64_t LoadSize = TD->getTypeSizeInBits(LoadTy)/8;
+  uint64_t StoreSize = TD.getTypeSizeInBits(SrcVal->getType())/8;
+  uint64_t LoadSize = TD.getTypeSizeInBits(LoadTy)/8;
   
   
   // Compute which bits of the stored value are being used by the load.  Convert
   // to an integer type to start with.
   if (isa<PointerType>(SrcVal->getType()))
-    SrcVal = new PtrToIntInst(SrcVal, TD->getIntPtrType(Ctx), "tmp", InsertPt);
+    SrcVal = new PtrToIntInst(SrcVal, TD.getIntPtrType(Ctx), "tmp", InsertPt);
   if (!isa<IntegerType>(SrcVal->getType()))
     SrcVal = new BitCastInst(SrcVal, IntegerType::get(Ctx, StoreSize*8),
                              "tmp", InsertPt);
   
   // Shift the bits to the least significant depending on endianness.
   unsigned ShiftAmt;
-  if (TD->isLittleEndian()) {
+  if (TD.isLittleEndian()) {
     ShiftAmt = Offset*8;
   } else {
     ShiftAmt = StoreSize-LoadSize-Offset;
   }
   
-  SrcVal = BinaryOperator::CreateLShr(SrcVal,
-                                      ConstantInt::get(SrcVal->getType(), ShiftAmt), "tmp", InsertPt);
+  if (ShiftAmt)
+    SrcVal = BinaryOperator::CreateLShr(SrcVal,
+                ConstantInt::get(SrcVal->getType(), ShiftAmt), "tmp", InsertPt);
   
-  SrcVal = new TruncInst(SrcVal, IntegerType::get(Ctx, LoadSize*8),
-                         "tmp", InsertPt);
+  if (LoadSize != StoreSize)
+    SrcVal = new TruncInst(SrcVal, IntegerType::get(Ctx, LoadSize*8),
+                           "tmp", InsertPt);
   
-  return CoerceAvailableValueToLoadType(SrcVal, LoadTy, InsertPt, *TD);
+  return CoerceAvailableValueToLoadType(SrcVal, LoadTy, InsertPt, TD);
 }
 
 struct AvailableValueInBlock {
@@ -1188,11 +1191,15 @@ struct AvailableValueInBlock {
   BasicBlock *BB;
   /// V - The value that is live out of the block.
   Value *V;
+  /// Offset - The byte offset in V that is interesting for the load query.
+  unsigned Offset;
   
-  static AvailableValueInBlock get(BasicBlock *BB, Value *V) {
+  static AvailableValueInBlock get(BasicBlock *BB, Value *V,
+                                   unsigned Offset = 0) {
     AvailableValueInBlock Res;
     Res.BB = BB;
     Res.V = V;
+    Res.Offset = Offset;
     return Res;
   }
 };
@@ -1209,14 +1216,23 @@ GetAvailableBlockValues(DenseMap<BasicBlock*, Value*> &BlockReplValues,
   for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i) {
     BasicBlock *BB = ValuesPerBlock[i].BB;
     Value *AvailableVal = ValuesPerBlock[i].V;
+    unsigned Offset = ValuesPerBlock[i].Offset;
     
     Value *&BlockEntry = BlockReplValues[BB];
     if (BlockEntry) continue;
     
     if (AvailableVal->getType() != LoadTy) {
       assert(TD && "Need target data to handle type mismatch case");
-      AvailableVal = CoerceAvailableValueToLoadType(AvailableVal, LoadTy,
-                                                    BB->getTerminator(), *TD);
+      AvailableVal = GetStoreValueForLoad(AvailableVal, Offset, LoadTy,
+                                          BB->getTerminator(), *TD);
+      
+      if (Offset) {
+        DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\n"
+            << *ValuesPerBlock[i].V << '\n'
+            << *AvailableVal << '\n' << "\n\n\n");
+      }
+      
+      
       DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\n"
                    << *ValuesPerBlock[i].V << '\n'
                    << *AvailableVal << '\n' << "\n\n\n");
@@ -1267,6 +1283,24 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     MemDepResult DepInfo = Deps[i].second;
 
     if (DepInfo.isClobber()) {
+      // If the dependence is to a store that writes to a superset of the bits
+      // read by the load, we can extract the bits we need for the load from the
+      // stored value.
+      if (StoreInst *DepSI = dyn_cast<StoreInst>(DepInfo.getInst())) {
+        if (TD == 0)
+          TD = getAnalysisIfAvailable<TargetData>();
+        if (TD) {
+          int Offset = AnalyzeLoadFromClobberingStore(LI, DepSI, *TD);
+          if (Offset != -1) {
+            ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
+                                                           DepSI->getOperand(0),
+                                                                Offset));
+            continue;
+          }
+        }
+      }
+      
+      // FIXME: Handle memset/memcpy.
       UnavailableBlocks.push_back(DepBB);
       continue;
     }
@@ -1299,8 +1333,10 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
 
       ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
                                                           S->getOperand(0)));
-
-    } else if (LoadInst *LD = dyn_cast<LoadInst>(DepInst)) {
+      continue;
+    }
+    
+    if (LoadInst *LD = dyn_cast<LoadInst>(DepInst)) {
       // If the types mismatch and we can't handle it, reject reuse of the load.
       if (LD->getType() != LI->getType()) {
         if (TD == 0)
@@ -1316,11 +1352,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
         }          
       }
       ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB, LD));
-    } else {
-      // FIXME: Handle memset/memcpy.
-      UnavailableBlocks.push_back(DepBB);
       continue;
     }
+    
+    UnavailableBlocks.push_back(DepBB);
+    continue;
   }
 
   // If we have no predecessors that produce a known value for this load, exit
@@ -1550,10 +1586,10 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // access code.
     if (StoreInst *DepSI = dyn_cast<StoreInst>(Dep.getInst()))
       if (const TargetData *TD = getAnalysisIfAvailable<TargetData>()) {
-        int Offset = AnalyzeLoadFromClobberingStore(L, DepSI, TD);
+        int Offset = AnalyzeLoadFromClobberingStore(L, DepSI, *TD);
         if (Offset != -1) {
           Value *AvailVal = GetStoreValueForLoad(DepSI->getOperand(0), Offset,
-                                                 L->getType(), L, TD);
+                                                 L->getType(), L, *TD);
           DEBUG(errs() << "GVN COERCED STORE BITS:\n" << *DepSI << '\n'
                        << *AvailVal << '\n' << *L << "\n\n\n");
     
