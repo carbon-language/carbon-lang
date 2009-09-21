@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "Sema.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
+#include "clang/AST/ExprCXX.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include <list>
 #include <map>
@@ -326,6 +327,53 @@ static DeclContext *findOuterContext(Scope *S) {
       return static_cast<DeclContext *>(S->getEntity())->getPrimaryContext();
   
   return 0;
+}
+
+/// \brief Compute the qualification required to get from the current context
+/// (\p CurContext) to the target context (\p TargetContext).
+///
+/// \param Context the AST context in which the qualification will be used.
+///
+/// \param CurContext the context where an entity is being named, which is
+/// typically based on the current scope.
+///
+/// \param TargetContext the context in which the named entity actually 
+/// resides.
+///
+/// \returns a nested name specifier that refers into the target context, or
+/// NULL if no qualification is needed.
+static NestedNameSpecifier *
+getRequiredQualification(ASTContext &Context,
+                         DeclContext *CurContext,
+                         DeclContext *TargetContext) {
+  llvm::SmallVector<DeclContext *, 4> TargetParents;
+  
+  for (DeclContext *CommonAncestor = TargetContext;
+       CommonAncestor && !CommonAncestor->Encloses(CurContext);
+       CommonAncestor = CommonAncestor->getLookupParent()) {
+    if (CommonAncestor->isTransparentContext() ||
+        CommonAncestor->isFunctionOrMethod())
+      continue;
+
+    TargetParents.push_back(CommonAncestor);
+  }
+  
+  NestedNameSpecifier *Result = 0;
+  while (!TargetParents.empty()) {
+    DeclContext *Parent = TargetParents.back();
+    TargetParents.pop_back();
+    
+    if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(Parent))
+      Result = NestedNameSpecifier::Create(Context, Result, Namespace);
+    else if (TagDecl *TD = dyn_cast<TagDecl>(Parent))
+      Result = NestedNameSpecifier::Create(Context, Result,
+                                           false,
+                                    Context.getTypeDeclType(TD).getTypePtr());
+    else
+      assert(Parent->isTranslationUnit());
+  }
+  
+  return Result;
 }
 
 /// \brief Collect the results of searching for members within the given
@@ -651,6 +699,22 @@ static void AddTemplateParameterChunks(ASTContext &Context,
   }    
 }
 
+/// \brief Add a qualifier to the given code-completion string, if the
+/// provided nested-name-specifier is non-NULL.
+void AddQualifierToCompletionString(CodeCompletionString *Result, 
+                                    NestedNameSpecifier *Qualifier, 
+                                    ASTContext &Context) {
+  if (!Qualifier)
+    return;
+  
+  std::string PrintedNNS;
+  {
+    llvm::raw_string_ostream OS(PrintedNNS);
+    Qualifier->print(OS, Context.PrintingPolicy);
+  }
+  Result->AddTextChunk(PrintedNNS.c_str());
+}
+
 /// \brief If possible, create a new code completion string for the given
 /// result.
 ///
@@ -666,6 +730,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
     CodeCompletionString *Result = new CodeCompletionString;
+    AddQualifierToCompletionString(Result, Qualifier, S.Context);
     Result->AddTextChunk(Function->getNameAsString().c_str());
     Result->AddTextChunk("(");
     AddFunctionParameterChunks(S.Context, Function, Result);
@@ -675,6 +740,7 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   
   if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(ND)) {
     CodeCompletionString *Result = new CodeCompletionString;
+    AddQualifierToCompletionString(Result, Qualifier, S.Context);
     FunctionDecl *Function = FunTmpl->getTemplatedDecl();
     Result->AddTextChunk(Function->getNameAsString().c_str());
     
@@ -727,10 +793,18 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   
   if (TemplateDecl *Template = dyn_cast<TemplateDecl>(ND)) {
     CodeCompletionString *Result = new CodeCompletionString;
+    AddQualifierToCompletionString(Result, Qualifier, S.Context);
     Result->AddTextChunk(Template->getNameAsString().c_str());
     Result->AddTextChunk("<");
     AddTemplateParameterChunks(S.Context, Template, Result);
     Result->AddTextChunk(">");
+    return Result;
+  }
+  
+  if (Qualifier) {
+    CodeCompletionString *Result = new CodeCompletionString;
+    AddQualifierToCompletionString(Result, Qualifier, S.Context);
+    Result->AddTextChunk(ND->getNameAsString().c_str());
     return Result;
   }
   
@@ -900,6 +974,7 @@ void Sema::CodeCompleteCase(Scope *S) {
   // token, in case we are code-completing in the middle of the switch and not
   // at the end. However, we aren't able to do so at the moment.
   llvm::SmallPtrSet<EnumConstantDecl *, 8> EnumeratorsSeen;
+  NestedNameSpecifier *Qualifier = 0;
   for (SwitchCase *SC = Switch->getSwitchCaseList(); SC; 
        SC = SC->getNextSwitchCase()) {
     CaseStmt *Case = dyn_cast<CaseStmt>(SC);
@@ -918,19 +993,30 @@ void Sema::CodeCompleteCase(Scope *S) {
         // template are type- and value-dependent.
         EnumeratorsSeen.insert(Enumerator);
         
-        // FIXME: If this is a qualified-id, should we keep track of the 
-        // nested-name-specifier so we can reproduce it as part of code
-        // completion? e.g.,
+        // If this is a qualified-id, keep track of the nested-name-specifier
+        // so that we can reproduce it as part of code completion, e.g.,
         //
         //   switch (TagD.getKind()) {
         //     case TagDecl::TK_enum:
         //       break;
         //     case XXX
         //
-        // At the XXX, we would like our completions to be TagDecl::TK_union,
+        // At the XXX, our completions are TagDecl::TK_union,
         // TagDecl::TK_struct, and TagDecl::TK_class, rather than TK_union,
         // TK_struct, and TK_class.
+        if (QualifiedDeclRefExpr *QDRE = dyn_cast<QualifiedDeclRefExpr>(DRE))
+          Qualifier = QDRE->getQualifier();
       }
+  }
+  
+  if (getLangOptions().CPlusPlus && !Qualifier && EnumeratorsSeen.empty()) {
+    // If there are no prior enumerators in C++, check whether we have to 
+    // qualify the names of the enumerators that we suggest, because they
+    // may not be visible in this scope.
+    Qualifier = getRequiredQualification(Context, CurContext,
+                                         Enum->getDeclContext());
+    
+    // FIXME: Scoped enums need to start with "EnumDecl" as the context!
   }
   
   // Add any enumerators that have not yet been mentioned.
@@ -942,16 +1028,9 @@ void Sema::CodeCompleteCase(Scope *S) {
     if (EnumeratorsSeen.count(*E))
       continue;
     
-    Results.MaybeAddResult(CodeCompleteConsumer::Result(*E, 0));
+    Results.MaybeAddResult(CodeCompleteConsumer::Result(*E, 0, Qualifier));
   }
   Results.ExitScope();
-  
-  // In C++, add nested-name-specifiers.
-  if (getLangOptions().CPlusPlus) {
-    Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
-    CollectLookupResults(S, Context.getTranslationUnitDecl(), 1, 
-                         Results);
-  }
   
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }

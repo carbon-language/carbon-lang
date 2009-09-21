@@ -24,6 +24,7 @@ class raw_ostream;
 namespace clang {
   
 class NamedDecl;
+class NestedNameSpecifier;
 class Sema;
 
 /// \brief A "string" used to describe how code completion can
@@ -155,10 +156,15 @@ public:
     /// \brief Whether this result is hidden by another name.
     bool Hidden : 1;
     
+    /// \brief If the result requires a nested-name-specifier for name lookup
+    /// to function properly, this is the nested-name-specifier.
+    NestedNameSpecifier *Qualifier;
+    
     /// \brief Build a result that refers to a declaration.
-    Result(NamedDecl *Declaration, unsigned Rank)
+    Result(NamedDecl *Declaration, unsigned Rank, 
+           NestedNameSpecifier *Qualifier = 0)
       : Kind(RK_Declaration), Declaration(Declaration), Rank(Rank), 
-        Hidden(false) { }
+        Hidden(false), Qualifier(Qualifier) { }
     
     /// \brief Build a result that refers to a keyword or symbol.
     Result(const char *Keyword, unsigned Rank)
