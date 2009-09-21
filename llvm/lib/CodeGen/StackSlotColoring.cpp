@@ -473,7 +473,7 @@ void StackSlotColoring::RewriteInstruction(MachineInstr *MI, int OldFI,
     else {
       MachineMemOperand MMO(PseudoSourceValue::getFixedStack(NewFI),
                             MMOs[i].getFlags(), MMOs[i].getOffset(),
-                            MMOs[i].getSize(),  MMOs[i].getAlignment());
+                            MMOs[i].getSize(),  MMOs[i].getBaseAlignment());
       MI->addMemOperand(MF, MMO);
     }
   }

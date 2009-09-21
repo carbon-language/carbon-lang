@@ -5015,10 +5015,10 @@ MachineMemOperand MemSDNode::getMemOperand() const {
   dyn_cast<const FrameIndexSDNode>(getBasePtr().getNode());
   if (!getSrcValue() && FI)
     return MachineMemOperand(PseudoSourceValue::getFixedStack(FI->getIndex()),
-                             Flags, 0, Size, getAlignment());
+                             Flags, 0, Size, getOriginalAlignment());
   else
     return MachineMemOperand(getSrcValue(), Flags, getSrcValueOffset(),
-                             Size, getAlignment());
+                             Size, getOriginalAlignment());
 }
 
 /// Profile - Gather unique data for the node.

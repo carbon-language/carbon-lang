@@ -205,7 +205,7 @@ TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
   assert(MFI.getObjectOffset(FrameIndex) != -1);
   MachineMemOperand MMO(PseudoSourceValue::getFixedStack(FrameIndex),
                         Flags,
-                        MFI.getObjectOffset(FrameIndex),
+                        /*Offset=*/0,
                         MFI.getObjectSize(FrameIndex),
                         MFI.getObjectAlignment(FrameIndex));
   NewMI->addMemOperand(MF, MMO);
