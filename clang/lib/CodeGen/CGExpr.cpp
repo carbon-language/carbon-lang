@@ -697,7 +697,7 @@ void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E, LValue &LV) {
   
   if (isa<ObjCIvarRefExpr>(E)) {
     LV.SetObjCIvar(LV, true);
-    LV.SetObjCIvarArray(LV, E->getType()->isArrayType());
+    LV.SetObjCArray(LV, E->getType()->isArrayType());
     return;
   }
   if (const DeclRefExpr *Exp = dyn_cast<DeclRefExpr>(E)) {
@@ -706,6 +706,7 @@ void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E, LValue &LV) {
           VD->isFileVarDecl())
         LV.SetGlobalObjCRef(LV, true);
     }
+    LV.SetObjCArray(LV, E->getType()->isArrayType());
   }
   else if (const UnaryOperator *Exp = dyn_cast<UnaryOperator>(E))
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
@@ -717,17 +718,20 @@ void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E, LValue &LV) {
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
   else if (const ArraySubscriptExpr *Exp = dyn_cast<ArraySubscriptExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getBase(), LV);
-    if (LV.isObjCIvar() && !LV.isObjCIvarArray()) {
+    if (LV.isObjCIvar() && !LV.isObjCArray()) 
       // Using array syntax to assigning to what an ivar points to is not 
       // same as assigning to the ivar itself. {id *Names;} Names[i] = 0;
       LV.SetObjCIvar(LV, false); 
-    }
+    else if (LV.isGlobalObjCRef() && !LV.isObjCArray())
+      // Using array syntax to assigning to what global points to is not 
+      // same as assigning to the global itself. {id *G;} G[i] = 0;
+      LV.SetGlobalObjCRef(LV, false);
   }
   else if (const MemberExpr *Exp = dyn_cast<MemberExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getBase(), LV);
     // We don't know if member is an 'ivar', but this flag is looked at
     // only in the context of LV.isObjCIvar().
-    LV.SetObjCIvarArray(LV, E->getType()->isArrayType());
+    LV.SetObjCArray(LV, E->getType()->isArrayType());
   }
 }
 
@@ -1130,19 +1134,11 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   }
   if (Field->getType()->isReferenceType())
     V = Builder.CreateLoad(V, "tmp");
-
-  QualType::GCAttrTypes attr = QualType::GCNone;
-  if (CGM.getLangOptions().ObjC1 &&
-      CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
-    QualType Ty = Field->getType();
-    attr = Ty.getObjCGCAttr();
-    if (attr != QualType::GCNone) {
-      // __weak attribute on a field is ignored.
-      if (attr == QualType::Weak)
-        attr = QualType::GCNone;
-    } else if (Ty->isObjCObjectPointerType())
-      attr = QualType::Strong;
-  }
+  QualType::GCAttrTypes attr = getContext().getObjCGCAttrKind(Field->getType());
+  // __weak attribute on a field is ignored.
+  if (attr == QualType::Weak)
+    attr = QualType::GCNone;
+  
   LValue LV =
     LValue::MakeAddr(V,
                      Field->getType().getCVRQualifiers()|CVRQualifiers,
