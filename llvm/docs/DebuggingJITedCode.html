@@ -1,0 +1,171 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>Debugging JITed Code With GDB</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
+
+<div class="doc_title">Debugging JITed Code With GDB</div>
+<ol>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#quickstart">Quickstart</a></li>
+  <li><a href="#example">Example with clang and lli</a></li>
+</ol>
+<div class="doc_author">Written by Reid Kleckner</div>
+
+<!--=========================================================================-->
+<div class="doc_section"><a name="introduction">Introduction</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+
+<p>Without special runtime support, debugging dynamically generated code with
+GDB (as well as most debuggers) can be quite painful.  Debuggers generally read
+debug information from the object file of the code, but for JITed code, there is
+no such file to look for.
+</p>
+
+<p>Depending on the architecture, this can impact the debugging experience in
+different ways.  For example, on most 32-bit x86 architectures, you can simply
+compile with -fno-omit-framepointer for GCC and -fdisable-fp-elim for LLVM.
+When GDB creates a backtrace, it can properly unwind the stack, but the stack
+frames owned by JITed code have ??'s instead of the appropriate symbol name.
+However, on Linux x86_64 in particular, GDB relies on the DWARF CFA debug
+information to unwind the stack, so even if you compile your program to leave
+the frame pointer untouched, GDB will usually be unable to unwind the stack past
+any JITed code stack frames.
+</p>
+
+<p>In order to communicate the necessary debug info to GDB, an interface for
+registering JITed code with debuggers has been designed and implemented for
+GDB and LLVM.  At a high level, whenever LLVM generates new machine code, it
+also generates an object file in memory containing the debug information.  LLVM
+then adds the object file to the global list of object files and calls a special
+function (__jit_debug_register_code) marked noinline that GDB knows about.  When
+GDB attaches to a process, it puts a breakpoint in this function and loads all
+of the object files in the global list.  When LLVM calls the registration
+function, GDB catches the breakpoint signal, loads the new object file from
+LLVM's memory, and resumes the execution.  In this way, GDB can get the
+necessary debug information.
+</p>
+
+<p>At the time of this writing, LLVM only supports architectures that use ELF
+object files and it only generates symbols and DWARF CFA information.  However,
+it would be easy to add more information to the object file, so we don't need to
+coordinate with GDB to get better debug information.
+</p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_section"><a name="quickstart">Quickstart</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+
+<p>In order to debug code JITed by LLVM, you need to install a recent version
+of GDB.  The interface was added on 2009-08-19, so you need a snapshot of GDB
+more recent than that.  Either download a snapshot of GDB or checkout CVS as
+instructed <a href="http://www.gnu.org/software/gdb/current/">here</a>.  Here
+are the commands for doing a checkout and building the code:
+</p>
+
+<pre class="doc_code">
+$ cvs -z 3 -d :pserver:anoncvs@sourceware.org:/cvs/src co gdb
+$ mv src gdb   # You probably don't want this checkout called "src".
+$ cd gdb
+$ ./configure --prefix="$GDB_INSTALL"
+$ make
+$ make install
+</pre>
+
+<p>You can then use -jit-emit-debug in the LLVM command line arguments to enable
+the interface.
+</p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_section"><a name="example">Example with clang and lli</a></div>
+<!--=========================================================================-->
+<div class="doc_text">
+
+<p>For example, consider debugging running lli on the following C code in
+foo.c:
+</p>
+
+<pre class="doc_code">
+#include &lt;stdio.h&gt;
+
+void foo() {
+    printf("%d\n", *(int*)NULL);  // Crash here
+}
+
+void bar() {
+    foo();
+}
+
+void baz() {
+    bar();
+}
+
+int main(int argc, char **argv) {
+    baz();
+}
+</pre>
+
+<p>Here are the commands to run that application under GDB and print the stack
+trace at the crash:
+</p>
+
+<pre class="doc_code">
+# Compile foo.c to bitcode.  You can use either clang or llvm-gcc with this
+# command line.  Both require -fexceptions, or the calls are all marked
+# 'nounwind' which disables DWARF CFA info.
+$ clang foo.c -fexceptions -emit-llvm -c -o foo.bc
+
+# Run foo.bc under lli with -jit-emit-debug.  If you built lli in debug mode,
+# -jit-emit-debug defaults to true.
+$ $GDB_INSTALL/gdb --args lli -jit-emit-debug foo.bc
+...
+
+# Run the code.
+(gdb) run
+Starting program: /tmp/gdb/lli -jit-emit-debug foo.bc
+[Thread debugging using libthread_db enabled]
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00007ffff7f55164 in foo ()
+
+# Print the backtrace, this time with symbols instead of ??.
+(gdb) bt
+#0  0x00007ffff7f55164 in foo ()
+#1  0x00007ffff7f550f9 in bar ()
+#2  0x00007ffff7f55099 in baz ()
+#3  0x00007ffff7f5502a in main ()
+#4  0x00000000007c0225 in llvm::JIT::runFunction(llvm::Function*,
+    std::vector&lt;llvm::GenericValue,
+    std::allocator&lt;llvm::GenericValue&gt; &gt; const&) ()
+#5  0x00000000007d6d98 in
+    llvm::ExecutionEngine::runFunctionAsMain(llvm::Function*,
+    std::vector&lt;std::string,
+    std::allocator&lt;std::string&gt; &gt; const&, char const* const*) ()
+#6  0x00000000004dab76 in main ()
+</pre>
+</div>
+
+<p>As you can see, GDB can correctly unwind the stack and has the appropriate
+function names.
+</p>
+
+<!-- *********************************************************************** -->
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss-blue" alt="Valid CSS"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401-blue" alt="Valid HTML 4.01"></a>
+  <a href="mailto:reid.kleckner@gmail.com">Reid Kleckner</a><br>
+  <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date: 2009-01-01 23:10:51 -0800 (Thu, 01 Jan 2009) $
+</address>
+</body>
+</html>
