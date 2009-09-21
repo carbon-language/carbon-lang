@@ -1202,7 +1202,7 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
   if (TD.isLittleEndian()) {
     ShiftAmt = Offset*8;
   } else {
-    ShiftAmt = StoreSize-LoadSize-Offset;
+    ShiftAmt = (StoreSize-LoadSize-Offset)*8;
   }
   
   if (ShiftAmt)
