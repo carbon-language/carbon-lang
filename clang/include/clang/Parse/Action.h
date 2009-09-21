@@ -2197,6 +2197,7 @@ public:
   /// \todo Code completion for call arguments after a function template-id
   /// \todo Code completion within a call expression, object construction, etc.
   /// \todo Code completion within a template argument list.
+  /// \todo Code completion for attributes.
   //@{
   
   /// \brief Code completion for an ordinary name that occurs within the given
