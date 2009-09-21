@@ -60,9 +60,6 @@ bool CodeGenLICM::runOnLoop(Loop *L, LPPassManager &) {
     for (BasicBlock::iterator BBI = BB->begin(), BBE = BB->end();
          BBI != BBE; ++BBI) {
       Instruction *I = BBI;
-      // Don't bother hoisting constants out of loop-header phi nodes.
-      if (BB == L->getHeader() && isa<PHINode>(I))
-        continue;
       // TODO: For now, skip all intrinsic instructions, because some of them
       // can require their operands to be constants, and we don't want to
       // break that.
