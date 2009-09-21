@@ -234,12 +234,11 @@ void PHINode::resizeOperands(unsigned NumOps) {
 /// otherwise use DT to test for dominance.
 ///
 Value *PHINode::hasConstantValue(DominatorTree *DT) const {
-  // If the PHI node only has one incoming value, eliminate the PHI node...
+  // If the PHI node only has one incoming value, eliminate the PHI node.
   if (getNumIncomingValues() == 1) {
     if (getIncomingValue(0) != this)   // not  X = phi X
       return getIncomingValue(0);
-    else
-      return UndefValue::get(getType());  // Self cycle is dead.
+    return UndefValue::get(getType());  // Self cycle is dead.
   }
       
   // Otherwise if all of the incoming values are the same for the PHI, replace
@@ -253,8 +252,7 @@ Value *PHINode::hasConstantValue(DominatorTree *DT) const {
     } else if (getIncomingValue(i) != this) { // Not the PHI node itself...
       if (InVal && getIncomingValue(i) != InVal)
         return 0;  // Not the same, bail out.
-      else
-        InVal = getIncomingValue(i);
+      InVal = getIncomingValue(i);
     }
   
   // The only case that could cause InVal to be null is if we have a PHI node
@@ -267,19 +265,20 @@ Value *PHINode::hasConstantValue(DominatorTree *DT) const {
   // instruction, we cannot always return X as the result of the PHI node.  Only
   // do this if X is not an instruction (thus it must dominate the PHI block),
   // or if the client is prepared to deal with this possibility.
-  if (HasUndefInput)
-    if (Instruction *IV = dyn_cast<Instruction>(InVal)) {
-      if (DT) {
-        // We have a DominatorTree. Do a precise test.
-        if (!DT->dominates(IV, this))
-          return 0;
-      } else {
-        // If it's in the entry block, it dominates everything.
-        if (IV->getParent() != &IV->getParent()->getParent()->getEntryBlock() ||
-            isa<InvokeInst>(IV))
-          return 0;   // Cannot guarantee that InVal dominates this PHINode.
-      }
-    }
+  if (!HasUndefInput || !isa<Instruction>(InVal))
+    return InVal;
+  
+  Instruction *IV = cast<Instruction>(InVal);
+  if (DT) {
+    // We have a DominatorTree. Do a precise test.
+    if (!DT->dominates(IV, this))
+      return 0;
+  } else {
+    // If it is in the entry block, it obviously dominates everything.
+    if (IV->getParent() != &IV->getParent()->getParent()->getEntryBlock() ||
+        isa<InvokeInst>(IV))
+      return 0;   // Cannot guarantee that InVal dominates this PHINode.
+  }
 
   // All of the incoming values are the same, return the value now.
   return InVal;
