@@ -104,8 +104,6 @@ void CodeGenLICM::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreservedID(LoopSimplifyID);
   AU.addPreserved<LoopInfo>();
   AU.addPreserved<AliasAnalysis>();
-  AU.addPreserved<DominanceFrontier>();
-  AU.addPreserved<DominatorTree>();
   AU.addPreserved<ScalarEvolution>();
   AU.addPreserved<IVUsers>();
 
