@@ -325,8 +325,8 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
   }
 
   if (CheckEquivalentExceptionSpec(
-          Old->getType()->getAsFunctionProtoType(), Old->getLocation(),
-          New->getType()->getAsFunctionProtoType(), New->getLocation())) {
+          Old->getType()->getAs<FunctionProtoType>(), Old->getLocation(),
+          New->getType()->getAs<FunctionProtoType>(), New->getLocation())) {
     Invalid = true;
   }
 
@@ -1632,7 +1632,7 @@ namespace {
       }
 
       // Check the return type.
-      QualType RTy = FD->getType()->getAsFunctionType()->getResultType();
+      QualType RTy = FD->getType()->getAs<FunctionType>()->getResultType();
       bool Invalid =
         SemaRef.RequireNonAbstractType(FD->getLocation(), RTy,
                                        diag::err_abstract_type_in_decl,
@@ -2062,7 +2062,7 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
   // return type, since constructors don't have return types. We
   // *always* have to do this, because GetTypeForDeclarator will
   // put in a result type of "int" when none was specified.
-  const FunctionProtoType *Proto = R->getAsFunctionProtoType();
+  const FunctionProtoType *Proto = R->getAs<FunctionProtoType>();
   return Context.getFunctionType(Context.VoidTy, Proto->arg_type_begin(),
                                  Proto->getNumArgs(),
                                  Proto->isVariadic(), 0);
@@ -2229,7 +2229,7 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   }
 
   // Make sure we don't have any parameters.
-  if (R->getAsFunctionProtoType()->getNumArgs() > 0) {
+  if (R->getAs<FunctionProtoType>()->getNumArgs() > 0) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_with_params);
 
     // Delete the parameters.
@@ -2238,7 +2238,7 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   }
 
   // Make sure the conversion function isn't variadic.
-  if (R->getAsFunctionProtoType()->isVariadic() && !D.isInvalidType()) {
+  if (R->getAs<FunctionProtoType>()->isVariadic() && !D.isInvalidType()) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_variadic);
     D.setInvalidType();
   }
@@ -2261,7 +2261,7 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   // of the errors above fired) and with the conversion type as the
   // return type.
   R = Context.getFunctionType(ConvType, 0, 0, false,
-                              R->getAsFunctionProtoType()->getTypeQuals());
+                              R->getAs<FunctionProtoType>()->getTypeQuals());
 
   // C++0x explicit conversion operators.
   if (D.getDeclSpec().isExplicitSpecified() && !getLangOptions().CPlusPlus0x)
@@ -3799,7 +3799,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
 
   // Overloaded operators other than operator() cannot be variadic.
   if (Op != OO_Call &&
-      FnDecl->getType()->getAsFunctionProtoType()->isVariadic()) {
+      FnDecl->getType()->getAs<FunctionProtoType>()->isVariadic()) {
     return Diag(FnDecl->getLocation(), diag::err_operator_overload_variadic)
       << FnDecl->getDeclName();
   }
@@ -3824,7 +3824,7 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   if ((Op == OO_PlusPlus || Op == OO_MinusMinus) && NumParams == 2) {
     ParmVarDecl *LastParam = FnDecl->getParamDecl(FnDecl->getNumParams() - 1);
     bool ParamIsInt = false;
-    if (const BuiltinType *BT = LastParam->getType()->getAsBuiltinType())
+    if (const BuiltinType *BT = LastParam->getType()->getAs<BuiltinType>())
       ParamIsInt = BT->getKind() == BuiltinType::Int;
 
     if (!ParamIsInt)
@@ -4382,8 +4382,8 @@ void Sema::DiagnoseReturnInConstructorExceptionHandler(CXXTryStmt *TryBlock) {
 
 bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
                                              const CXXMethodDecl *Old) {
-  QualType NewTy = New->getType()->getAsFunctionType()->getResultType();
-  QualType OldTy = Old->getType()->getAsFunctionType()->getResultType();
+  QualType NewTy = New->getType()->getAs<FunctionType>()->getResultType();
+  QualType OldTy = Old->getType()->getAs<FunctionType>()->getResultType();
 
   QualType CNewTy = Context.getCanonicalType(NewTy);
   QualType COldTy = Context.getCanonicalType(OldTy);
@@ -4465,9 +4465,9 @@ bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
                                                 const CXXMethodDecl *Old) {
   return CheckExceptionSpecSubset(diag::err_override_exception_spec,
                                   diag::note_overridden_virtual_function,
-                                  Old->getType()->getAsFunctionProtoType(),
+                                  Old->getType()->getAs<FunctionProtoType>(),
                                   Old->getLocation(),
-                                  New->getType()->getAsFunctionProtoType(),
+                                  New->getType()->getAs<FunctionProtoType>(),
                                   New->getLocation());
 }
 

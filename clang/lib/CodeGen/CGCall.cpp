@@ -69,7 +69,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
   if (MD->isInstance())
     ArgTys.push_back(MD->getThisType(Context));
 
-  const FunctionProtoType *FTP = MD->getType()->getAsFunctionProtoType();
+  const FunctionProtoType *FTP = MD->getType()->getAs<FunctionProtoType>();
   for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
     ArgTys.push_back(FTP->getArgType(i));
   return getFunctionInfo(FTP->getResultType(), ArgTys,
@@ -82,7 +82,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const FunctionDecl *FD) {
       return getFunctionInfo(MD);
 
   unsigned CallingConvention = getCallingConventionForDecl(FD);
-  const FunctionType *FTy = FD->getType()->getAsFunctionType();
+  const FunctionType *FTy = FD->getType()->getAs<FunctionType>();
   if (const FunctionNoProtoType *FNTP = dyn_cast<FunctionNoProtoType>(FTy))
     return getFunctionInfo(FNTP->getResultType(), 
                            llvm::SmallVector<QualType, 16>(),

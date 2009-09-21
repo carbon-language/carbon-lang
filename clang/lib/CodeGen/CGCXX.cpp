@@ -183,7 +183,7 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
     if (Destructor->isTrivial())
       return RValue::get(0);
 
-  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
 
   CallArgList Args;
 
@@ -194,7 +194,7 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
   // And the rest of the call args
   EmitCallArgs(Args, FPT, ArgBeg, ArgEnd);
 
-  QualType ResultType = MD->getType()->getAsFunctionType()->getResultType();
+  QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
   return EmitCall(CGM.getTypes().getFunctionInfo(ResultType, Args),
                   Callee, Args, MD);
 }
@@ -203,7 +203,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   const MemberExpr *ME = cast<MemberExpr>(CE->getCallee());
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
 
-  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
 
   const llvm::Type *Ty =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
@@ -252,7 +252,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
     }
   }
 
-  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   const llvm::Type *Ty =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
@@ -461,7 +461,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
 
   QualType AllocType = E->getAllocatedType();
   FunctionDecl *NewFD = E->getOperatorNew();
-  const FunctionProtoType *NewFTy = NewFD->getType()->getAsFunctionProtoType();
+  const FunctionProtoType *NewFTy = NewFD->getType()->getAs<FunctionProtoType>();
 
   CallArgList NewArgs;
 
@@ -623,7 +623,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   // Call delete.
   FunctionDecl *DeleteFD = E->getOperatorDelete();
   const FunctionProtoType *DeleteFTy =
-    DeleteFD->getType()->getAsFunctionProtoType();
+    DeleteFD->getType()->getAs<FunctionProtoType>();
 
   CallArgList DeleteArgs;
 
@@ -872,9 +872,9 @@ public:
         // FIXME: begin_overridden_methods might be too lax, covariance */
         if (submethods[i] != om)
           continue;
-        QualType nc_oret = OMD->getType()->getAsFunctionType()->getResultType();
+        QualType nc_oret = OMD->getType()->getAs<FunctionType>()->getResultType();
         CanQualType oret = CGM.getContext().getCanonicalType(nc_oret);
-        QualType nc_ret = MD->getType()->getAsFunctionType()->getResultType();
+        QualType nc_ret = MD->getType()->getAs<FunctionType>()->getResultType();
         CanQualType ret = CGM.getContext().getCanonicalType(nc_ret);
         CallOffset ReturnOffset = std::make_pair(0, 0);
         if (oret != ret) {
@@ -1262,7 +1262,7 @@ llvm::Constant *CodeGenFunction::GenerateThunk(llvm::Function *Fn,
                                                const CXXMethodDecl *MD,
                                                bool Extern, int64_t nv,
                                                int64_t v) {
-  QualType R = MD->getType()->getAsFunctionType()->getResultType();
+  QualType R = MD->getType()->getAs<FunctionType>()->getResultType();
 
   FunctionArgList Args;
   ImplicitParamDecl *ThisDecl =
@@ -1297,7 +1297,7 @@ llvm::Constant *CodeGenFunction::GenerateCovariantThunk(llvm::Function *Fn,
                                                         int64_t v_t,
                                                         int64_t nv_r,
                                                         int64_t v_r) {
-  QualType R = MD->getType()->getAsFunctionType()->getResultType();
+  QualType R = MD->getType()->getAs<FunctionType>()->getResultType();
 
   FunctionArgList Args;
   ImplicitParamDecl *ThisDecl =
@@ -1335,7 +1335,7 @@ llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
   if (!Extern)
     linktype = llvm::GlobalValue::InternalLinkage;
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
-  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   const llvm::FunctionType *FTy =
     getTypes().GetFunctionType(getTypes().getFunctionInfo(MD),
                                FPT->isVariadic());
@@ -1360,7 +1360,7 @@ llvm::Constant *CodeGenModule::BuildCovariantThunk(const CXXMethodDecl *MD,
   if (!Extern)
     linktype = llvm::GlobalValue::InternalLinkage;
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
-  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   const llvm::FunctionType *FTy =
     getTypes().GetFunctionType(getTypes().getFunctionInfo(MD),
                                FPT->isVariadic());
@@ -1454,7 +1454,7 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
     CallArgs.push_back(std::make_pair(RValue::get(Src),
                                       BaseCopyCtor->getParamDecl(0)->getType()));
     QualType ResultType =
-      BaseCopyCtor->getType()->getAsFunctionType()->getResultType();
+      BaseCopyCtor->getType()->getAs<FunctionType>()->getResultType();
     EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
              Callee, CallArgs, BaseCopyCtor);
   }
@@ -1524,7 +1524,7 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
                                                                MD);
     assert(hasCopyAssign && "EmitClassAggrCopyAssignment - No user assign");
     (void)hasCopyAssign;
-    const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+    const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
     const llvm::Type *LTy =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
@@ -1538,7 +1538,7 @@ void CodeGenFunction::EmitClassAggrCopyAssignment(llvm::Value *Dest,
     // Push the Src ptr.
     CallArgs.push_back(std::make_pair(RValue::get(Src),
                                       MD->getParamDecl(0)->getType()));
-    QualType ResultType = MD->getType()->getAsFunctionType()->getResultType();
+    QualType ResultType = MD->getType()->getAs<FunctionType>()->getResultType();
     EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
              Callee, CallArgs, MD);
   }
@@ -1588,7 +1588,7 @@ void CodeGenFunction::EmitClassMemberwiseCopy(
     CallArgs.push_back(std::make_pair(RValue::get(Src),
                        BaseCopyCtor->getParamDecl(0)->getType()));
     QualType ResultType =
-    BaseCopyCtor->getType()->getAsFunctionType()->getResultType();
+    BaseCopyCtor->getType()->getAs<FunctionType>()->getResultType();
     EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
              Callee, CallArgs, BaseCopyCtor);
   }
@@ -1620,7 +1620,7 @@ void CodeGenFunction::EmitClassCopyAssignment(
   assert(ConstCopyAssignOp && "EmitClassCopyAssignment - missing copy assign");
   (void)ConstCopyAssignOp;
 
-  const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
   const llvm::Type *LTy =
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                    FPT->isVariadic());
@@ -1635,7 +1635,7 @@ void CodeGenFunction::EmitClassCopyAssignment(
   CallArgs.push_back(std::make_pair(RValue::get(Src),
                                     MD->getParamDecl(0)->getType()));
   QualType ResultType =
-    MD->getType()->getAsFunctionType()->getResultType();
+    MD->getType()->getAs<FunctionType>()->getResultType();
   EmitCall(CGM.getTypes().getFunctionInfo(ResultType, CallArgs),
            Callee, CallArgs, MD);
 }

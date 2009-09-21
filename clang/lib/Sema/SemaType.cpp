@@ -214,7 +214,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     Result = GetTypeFromParser(DS.getTypeRep());
 
     if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
-      if (const ObjCInterfaceType *Interface = Result->getAsObjCInterfaceType())
+      if (const ObjCInterfaceType *Interface = Result->getAs<ObjCInterfaceType>())
         // It would be nice if protocol qualifiers were only stored with the
         // ObjCObjectPointerType. Unfortunately, this isn't possible due
         // to the following typedef idiom (which is uncommon, but allowed):
@@ -949,7 +949,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         // Build the type anyway.
       }
       if (getLangOptions().ObjC1 && T->isObjCInterfaceType()) {
-        const ObjCInterfaceType *OIT = T->getAsObjCInterfaceType();
+        const ObjCInterfaceType *OIT = T->getAs<ObjCInterfaceType>();
         T = Context.getObjCObjectPointerType(T,
                                          (ObjCProtocolDecl **)OIT->qual_begin(),
                                          OIT->getNumProtocols());
@@ -1141,7 +1141,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
           } else if (!FTI.hasPrototype) {
             if (ArgTy->isPromotableIntegerType()) {
               ArgTy = Context.getPromotedIntegerType(ArgTy);
-            } else if (const BuiltinType* BTy = ArgTy->getAsBuiltinType()) {
+            } else if (const BuiltinType* BTy = ArgTy->getAs<BuiltinType>()) {
               if (BTy->getKind() == BuiltinType::Float)
                 ArgTy = Context.DoubleTy;
             }
@@ -1223,7 +1223,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   }
 
   if (getLangOptions().CPlusPlus && T->isFunctionType()) {
-    const FunctionProtoType *FnTy = T->getAsFunctionProtoType();
+    const FunctionProtoType *FnTy = T->getAs<FunctionProtoType>();
     assert(FnTy && "Why oh why is there not a FunctionProtoType here ?");
 
     // C++ 8.3.5p4: A cv-qualifier-seq shall only be part of the function type
@@ -1400,7 +1400,7 @@ bool Sema::CheckDistantExceptionSpec(QualType T) {
   else
     return false;
 
-  const FunctionProtoType *FnT = T->getAsFunctionProtoType();
+  const FunctionProtoType *FnT = T->getAs<FunctionProtoType>();
   if (!FnT)
     return false;
 
@@ -1816,7 +1816,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
   const TagType *Tag = 0;
   if (const RecordType *Record = T->getAs<RecordType>())
     Tag = Record;
-  else if (const EnumType *Enum = T->getAsEnumType())
+  else if (const EnumType *Enum = T->getAs<EnumType>())
     Tag = Enum;
 
   if (Tag && !Tag->getDecl()->isInvalidDecl())

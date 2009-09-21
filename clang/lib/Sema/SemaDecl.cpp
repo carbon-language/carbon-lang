@@ -766,8 +766,8 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   // duplicate function decls like "void f(int); void f(enum X);" properly.
   if (!getLangOptions().CPlusPlus &&
       Context.typesAreCompatible(OldQType, NewQType)) {
-    const FunctionType *OldFuncType = OldQType->getAsFunctionType();
-    const FunctionType *NewFuncType = NewQType->getAsFunctionType();
+    const FunctionType *OldFuncType = OldQType->getAs<FunctionType>();
+    const FunctionType *NewFuncType = NewQType->getAs<FunctionType>();
     const FunctionProtoType *OldProto = 0;
     if (isa<FunctionNoProtoType>(NewFuncType) &&
         (OldProto = dyn_cast<FunctionProtoType>(OldFuncType))) {
@@ -816,14 +816,14 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
   // C99 6.9.1p8.
   if (!getLangOptions().CPlusPlus &&
       Old->hasPrototype() && !New->hasPrototype() &&
-      New->getType()->getAsFunctionProtoType() &&
+      New->getType()->getAs<FunctionProtoType>() &&
       Old->getNumParams() == New->getNumParams()) {
     llvm::SmallVector<QualType, 16> ArgTypes;
     llvm::SmallVector<GNUCompatibleParamWarning, 16> Warnings;
     const FunctionProtoType *OldProto
-      = Old->getType()->getAsFunctionProtoType();
+      = Old->getType()->getAs<FunctionProtoType>();
     const FunctionProtoType *NewProto
-      = New->getType()->getAsFunctionProtoType();
+      = New->getType()->getAs<FunctionProtoType>();
 
     // Determine whether this is the GNU C extension.
     QualType MergedReturn = Context.mergeTypes(OldProto->getResultType(),
@@ -1195,7 +1195,7 @@ void Sema::CheckFallThroughForBlock(QualType BlockTy, Stmt *Body) {
     return;
   bool ReturnsVoid = false;
   bool HasNoReturn = false;
-  if (const FunctionType *FT = BlockTy->getPointeeType()->getAsFunctionType()) {
+  if (const FunctionType *FT = BlockTy->getPointeeType()->getAs<FunctionType>()) {
     if (FT->getResultType()->isVoidType())
       ReturnsVoid = true;
     if (FT->getNoReturnAttr())
@@ -2389,16 +2389,16 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // the class has been completely parsed.
   if (!DC->isRecord() &&
       RequireNonAbstractType(D.getIdentifierLoc(),
-                             R->getAsFunctionType()->getResultType(),
+                             R->getAs<FunctionType>()->getResultType(),
                              diag::err_abstract_type_in_decl,
                              AbstractReturnType))
     D.setInvalidType();
 
   // Do not allow returning a objc interface by-value.
-  if (R->getAsFunctionType()->getResultType()->isObjCInterfaceType()) {
+  if (R->getAs<FunctionType>()->getResultType()->isObjCInterfaceType()) {
     Diag(D.getIdentifierLoc(),
          diag::err_object_cannot_be_passed_returned_by_value) << 0
-      << R->getAsFunctionType()->getResultType();
+      << R->getAs<FunctionType>()->getResultType();
     D.setInvalidType();
   }
 
@@ -2641,7 +2641,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       }
     }
 
-  } else if (const FunctionProtoType *FT = R->getAsFunctionProtoType()) {
+  } else if (const FunctionProtoType *FT = R->getAs<FunctionProtoType>()) {
     // When we're declaring a function with a typedef, typeof, etc as in the
     // following example, we'll need to synthesize (unnamed)
     // parameters for use in the declaration.
@@ -2824,14 +2824,14 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
 
       // Functions marked "overloadable" must have a prototype (that
       // we can't get through declaration merging).
-      if (!NewFD->getType()->getAsFunctionProtoType()) {
+      if (!NewFD->getType()->getAs<FunctionProtoType>()) {
         Diag(NewFD->getLocation(), diag::err_attribute_overloadable_no_prototype)
           << NewFD;
         Redeclaration = true;
 
         // Turn this into a variadic function with no parameters.
         QualType R = Context.getFunctionType(
-                       NewFD->getType()->getAsFunctionType()->getResultType(),
+                       NewFD->getType()->getAs<FunctionType>()->getResultType(),
                        0, 0, true, 0);
         NewFD->setType(R);
         return NewFD->setInvalidDecl();
@@ -2927,7 +2927,7 @@ void Sema::CheckMain(FunctionDecl* FD) {
 
   QualType T = FD->getType();
   assert(T->isFunctionType() && "function decl is not of function type");
-  const FunctionType* FT = T->getAsFunctionType();
+  const FunctionType* FT = T->getAs<FunctionType>();
 
   if (!Context.hasSameUnqualifiedType(FT->getResultType(), Context.IntTy)) {
     // TODO: add a replacement fixit to turn the return type into 'int'.

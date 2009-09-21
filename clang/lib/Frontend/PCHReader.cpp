@@ -1536,7 +1536,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
   if (unsigned File = SpecialTypes[pch::SPECIAL_TYPE_FILE]) {
     QualType FileType = GetType(File);
     assert(!FileType.isNull() && "FILE type is NULL");
-    if (const TypedefType *Typedef = FileType->getAsTypedefType())
+    if (const TypedefType *Typedef = FileType->getAs<TypedefType>())
       Context->setFILEDecl(Typedef->getDecl());
     else {
       const TagType *Tag = FileType->getAs<TagType>();
@@ -1547,7 +1547,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
   if (unsigned Jmp_buf = SpecialTypes[pch::SPECIAL_TYPE_jmp_buf]) {
     QualType Jmp_bufType = GetType(Jmp_buf);
     assert(!Jmp_bufType.isNull() && "jmp_bug type is NULL");
-    if (const TypedefType *Typedef = Jmp_bufType->getAsTypedefType())
+    if (const TypedefType *Typedef = Jmp_bufType->getAs<TypedefType>())
       Context->setjmp_bufDecl(Typedef->getDecl());
     else {
       const TagType *Tag = Jmp_bufType->getAs<TagType>();
@@ -1558,7 +1558,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
   if (unsigned Sigjmp_buf = SpecialTypes[pch::SPECIAL_TYPE_sigjmp_buf]) {
     QualType Sigjmp_bufType = GetType(Sigjmp_buf);
     assert(!Sigjmp_bufType.isNull() && "sigjmp_buf type is NULL");
-    if (const TypedefType *Typedef = Sigjmp_bufType->getAsTypedefType())
+    if (const TypedefType *Typedef = Sigjmp_bufType->getAs<TypedefType>())
       Context->setsigjmp_bufDecl(Typedef->getDecl());
     else {
       const TagType *Tag = Sigjmp_bufType->getAs<TagType>();

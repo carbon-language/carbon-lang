@@ -1625,7 +1625,7 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
   //
   // FIXME: Perform the recursive and no-linkage type checks.
   const TagType *Tag = 0;
-  if (const EnumType *EnumT = Arg->getAsEnumType())
+  if (const EnumType *EnumT = Arg->getAs<EnumType>())
     Tag = EnumT;
   else if (const RecordType *RecordT = Arg->getAs<RecordType>())
     Tag = RecordT;
@@ -1890,7 +1890,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     }
 
     QualType IntegerType = Context.getCanonicalType(ParamType);
-    if (const EnumType *Enum = IntegerType->getAsEnumType())
+    if (const EnumType *Enum = IntegerType->getAs<EnumType>())
       IntegerType = Context.getCanonicalType(Enum->getDecl()->getIntegerType());
 
     if (!Arg->isValueDependent()) {
@@ -3209,7 +3209,7 @@ Sema::ActOnTypenameType(SourceLocation TypenameLoc, const CXXScopeSpec &SS,
   NestedNameSpecifier *NNS
     = static_cast<NestedNameSpecifier *>(SS.getScopeRep());
   const TemplateSpecializationType *TemplateId
-    = T->getAsTemplateSpecializationType();
+    = T->getAs<TemplateSpecializationType>();
   assert(TemplateId && "Expected a template specialization type");
 
   if (computeDeclContext(SS, false)) {

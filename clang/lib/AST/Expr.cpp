@@ -51,7 +51,7 @@ std::string PredefinedExpr::ComputeName(ASTContext &Context, IdentType IT,
 
     std::string Proto = FD->getQualifiedNameAsString(Policy);
 
-    const FunctionType *AFT = FD->getType()->getAsFunctionType();
+    const FunctionType *AFT = FD->getType()->getAs<FunctionType>();
     const FunctionProtoType *FT = 0;
     if (FD->hasWrittenPrototype())
       FT = dyn_cast<FunctionProtoType>(AFT);
@@ -335,7 +335,7 @@ QualType CallExpr::getCallReturnType() const {
   else if (const BlockPointerType *BPT = CalleeType->getAs<BlockPointerType>())
     CalleeType = BPT->getPointeeType();
 
-  const FunctionType *FnType = CalleeType->getAsFunctionType();
+  const FunctionType *FnType = CalleeType->getAs<FunctionType>();
   return FnType->getResultType();
 }
 
@@ -575,7 +575,7 @@ Expr *InitListExpr::updateInit(unsigned Init, Expr *expr) {
 ///
 const FunctionType *BlockExpr::getFunctionType() const {
   return getType()->getAs<BlockPointerType>()->
-                    getPointeeType()->getAsFunctionType();
+                    getPointeeType()->getAs<FunctionType>();
 }
 
 SourceLocation BlockExpr::getCaretLocation() const {
@@ -1693,7 +1693,7 @@ bool ExtVectorElementExpr::isArrow() const {
 }
 
 unsigned ExtVectorElementExpr::getNumElements() const {
-  if (const VectorType *VT = getType()->getAsVectorType())
+  if (const VectorType *VT = getType()->getAs<VectorType>())
     return VT->getNumElements();
   return 1;
 }

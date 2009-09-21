@@ -199,7 +199,7 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
       bool HasVAListArg = Format->getFirstArg() == 0;
       if (!HasVAListArg) {
         if (const FunctionProtoType *Proto
-            = FDecl->getType()->getAsFunctionProtoType())
+            = FDecl->getType()->getAs<FunctionProtoType>())
         HasVAListArg = !Proto->isVariadic();
       }
       CheckPrintfArguments(TheCall, HasVAListArg, Format->getFormatIdx() - 1,
@@ -234,7 +234,7 @@ bool Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
   bool HasVAListArg = Format->getFirstArg() == 0;
   if (!HasVAListArg) {
     const FunctionType *FT =
-      Ty->getAs<BlockPointerType>()->getPointeeType()->getAsFunctionType();
+      Ty->getAs<BlockPointerType>()->getPointeeType()->getAs<FunctionType>();
     if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
       HasVAListArg = !Proto->isVariadic();
   }
@@ -372,7 +372,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     cast<FunctionDecl>(LazilyCreateBuiltin(NewBuiltinII, NewBuiltinID,
                                            TUScope, false, DRE->getLocStart()));
   const FunctionProtoType *BuiltinFT =
-    NewBuiltinDecl->getType()->getAsFunctionProtoType();
+    NewBuiltinDecl->getType()->getAs<FunctionProtoType>();
   ValType = BuiltinFT->getArgType(0)->getAs<PointerType>()->getPointeeType();
 
   // If the first type needs to be converted (e.g. void** -> int*), do it now.
@@ -633,7 +633,7 @@ Action::OwningExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
       return ExprError();
     }
 
-    numElements = FAType->getAsVectorType()->getNumElements();
+    numElements = FAType->getAs<VectorType>()->getNumElements();
     if (TheCall->getNumArgs() != numElements+2) {
       if (TheCall->getNumArgs() < numElements+2)
         return ExprError(Diag(TheCall->getLocEnd(),
@@ -694,7 +694,7 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
 
     QualType RWType = Arg->getType();
 
-    const BuiltinType *BT = RWType->getAsBuiltinType();
+    const BuiltinType *BT = RWType->getAs<BuiltinType>();
     llvm::APSInt Result;
     if (!BT || BT->getKind() != BuiltinType::Int)
       return Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_argument)
@@ -733,7 +733,7 @@ bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
     return false;
 
   QualType ArgType = Arg->getType();
-  const BuiltinType *BT = ArgType->getAsBuiltinType();
+  const BuiltinType *BT = ArgType->getAs<BuiltinType>();
   llvm::APSInt Result(32);
   if (!BT || BT->getKind() != BuiltinType::Int)
     return Diag(TheCall->getLocStart(), diag::err_object_size_invalid_argument)
@@ -1092,7 +1092,7 @@ void Sema::CheckPrintfString(const StringLiteral *FExpr,
 
         // Perform type checking on width/precision specifier.
         const Expr *E = TheCall->getArg(format_idx+numConversions);
-        if (const BuiltinType *BT = E->getType()->getAsBuiltinType())
+        if (const BuiltinType *BT = E->getType()->getAs<BuiltinType>())
           if (BT->getKind() == BuiltinType::Int)
             break;
 

@@ -1539,7 +1539,7 @@ CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
       : ObjCTypes.getSendStretFn(IsSuper);
   } else if (ResultType->isFloatingType()) {
     if (ObjCABI == 2) {
-      if (const BuiltinType *BT = ResultType->getAsBuiltinType()) {
+      if (const BuiltinType *BT = ResultType->getAs<BuiltinType>()) {
         BuiltinType::Kind k = BT->getKind();
         Fn = (k == BuiltinType::LongDouble) ? ObjCTypes.getSendFpretFn2(IsSuper)
           : ObjCTypes.getSendFn2(IsSuper);
@@ -2546,7 +2546,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       if (!CatchParam) {
         AllMatched = true;
       } else {
-        OPT = CatchParam->getType()->getAsObjCObjectPointerType();
+        OPT = CatchParam->getType()->getAs<ObjCObjectPointerType>();
 
         // catch(id e) always matches.
         // FIXME: For the time being we also match id<X>; this should
@@ -2569,7 +2569,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
       assert(OPT && "Unexpected non-object pointer type in @catch");
       QualType T = OPT->getPointeeType();
-      const ObjCInterfaceType *ObjCType = T->getAsObjCInterfaceType();
+      const ObjCInterfaceType *ObjCType = T->getAs<ObjCInterfaceType>();
       assert(ObjCType && "Catch parameter must have Objective-C type!");
 
       // Check if the @catch block matches the exception object.
@@ -2803,7 +2803,7 @@ LValue CGObjCMac::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                        llvm::Value *BaseValue,
                                        const ObjCIvarDecl *Ivar,
                                        unsigned CVRQualifiers) {
-  const ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
+  const ObjCInterfaceDecl *ID = ObjectTy->getAs<ObjCInterfaceType>()->getDecl();
   return EmitValueForIvarAtOffset(CGF, ID, BaseValue, Ivar, CVRQualifiers,
                                   EmitIvarOffset(CGF, ID, Ivar));
 }
@@ -4968,7 +4968,7 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
   llvm::Value *BaseValue,
   const ObjCIvarDecl *Ivar,
   unsigned CVRQualifiers) {
-  const ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
+  const ObjCInterfaceDecl *ID = ObjectTy->getAs<ObjCInterfaceType>()->getDecl();
   return EmitValueForIvarAtOffset(CGF, ID, BaseValue, Ivar, CVRQualifiers,
                                   EmitIvarOffset(CGF, ID, Ivar));
 }
@@ -5462,7 +5462,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         } else {
           // All other types should be Objective-C interface pointer types.
           const ObjCObjectPointerType *PT =
-            CatchDecl->getType()->getAsObjCObjectPointerType();
+            CatchDecl->getType()->getAs<ObjCObjectPointerType>();
           assert(PT && "Invalid @catch type.");
           const ObjCInterfaceType *IT = PT->getInterfaceType();
           assert(IT && "Invalid @catch type.");

@@ -415,7 +415,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
     NamedDecl *IDecl = LookupName(TUScope, receiverName, LookupOrdinaryName);
     if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(IDecl)) {
       const ObjCInterfaceType *OCIT;
-      OCIT = OCTD->getUnderlyingType()->getAsObjCInterfaceType();
+      OCIT = OCTD->getUnderlyingType()->getAs<ObjCInterfaceType>();
       if (!OCIT) {
         Diag(receiverLoc, diag::err_invalid_receiver_to_message);
         return true;

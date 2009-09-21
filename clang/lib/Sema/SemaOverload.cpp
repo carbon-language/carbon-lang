@@ -686,7 +686,7 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
 /// ToType is an integral promotion (C++ 4.5). If so, returns true and
 /// sets PromotedType to the promoted type.
 bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
-  const BuiltinType *To = ToType->getAsBuiltinType();
+  const BuiltinType *To = ToType->getAs<BuiltinType>();
   // All integers are built-in.
   if (!To) {
     return false;
@@ -720,7 +720,7 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
     // unsigned.
     bool FromIsSigned;
     uint64_t FromSize = Context.getTypeSize(FromType);
-    if (const EnumType *FromEnumType = FromType->getAsEnumType()) {
+    if (const EnumType *FromEnumType = FromType->getAs<EnumType>()) {
       QualType UnderlyingType = FromEnumType->getDecl()->getIntegerType();
       FromIsSigned = UnderlyingType->isSignedIntegerType();
     } else {
@@ -798,8 +798,8 @@ bool Sema::IsIntegralPromotion(Expr *From, QualType FromType, QualType ToType) {
 bool Sema::IsFloatingPointPromotion(QualType FromType, QualType ToType) {
   /// An rvalue of type float can be converted to an rvalue of type
   /// double. (C++ 4.6p1).
-  if (const BuiltinType *FromBuiltin = FromType->getAsBuiltinType())
-    if (const BuiltinType *ToBuiltin = ToType->getAsBuiltinType()) {
+  if (const BuiltinType *FromBuiltin = FromType->getAs<BuiltinType>())
+    if (const BuiltinType *ToBuiltin = ToType->getAs<BuiltinType>()) {
       if (FromBuiltin->getKind() == BuiltinType::Float &&
           ToBuiltin->getKind() == BuiltinType::Double)
         return true;
@@ -823,11 +823,11 @@ bool Sema::IsFloatingPointPromotion(QualType FromType, QualType ToType) {
 /// where the conversion between the underlying real types is a
 /// floating-point or integral promotion.
 bool Sema::IsComplexPromotion(QualType FromType, QualType ToType) {
-  const ComplexType *FromComplex = FromType->getAsComplexType();
+  const ComplexType *FromComplex = FromType->getAs<ComplexType>();
   if (!FromComplex)
     return false;
 
-  const ComplexType *ToComplex = ToType->getAsComplexType();
+  const ComplexType *ToComplex = ToType->getAs<ComplexType>();
   if (!ToComplex)
     return false;
 
@@ -1003,9 +1003,9 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     return false;
 
   // First, we handle all conversions on ObjC object pointer types.
-  const ObjCObjectPointerType* ToObjCPtr = ToType->getAsObjCObjectPointerType();
+  const ObjCObjectPointerType* ToObjCPtr = ToType->getAs<ObjCObjectPointerType>();
   const ObjCObjectPointerType *FromObjCPtr =
-    FromType->getAsObjCObjectPointerType();
+    FromType->getAs<ObjCObjectPointerType>();
 
   if (ToObjCPtr && FromObjCPtr) {
     // Objective C++: We're able to convert between "id" or "Class" and a
@@ -1070,9 +1070,9 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
   // pointer conversions. If so, we permit the conversion (but
   // complain about it).
   const FunctionProtoType *FromFunctionType
-    = FromPointeeType->getAsFunctionProtoType();
+    = FromPointeeType->getAs<FunctionProtoType>();
   const FunctionProtoType *ToFunctionType
-    = ToPointeeType->getAsFunctionProtoType();
+    = ToPointeeType->getAs<FunctionProtoType>();
   if (FromFunctionType && ToFunctionType) {
     // If the function types are exactly the same, this isn't an
     // Objective-C pointer conversion.
@@ -1160,9 +1160,9 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
       }
     }
   if (const ObjCObjectPointerType *FromPtrType =
-        FromType->getAsObjCObjectPointerType())
+        FromType->getAs<ObjCObjectPointerType>())
     if (const ObjCObjectPointerType *ToPtrType =
-          ToType->getAsObjCObjectPointerType()) {
+          ToType->getAs<ObjCObjectPointerType>()) {
       // Objective-C++ conversions are always okay.
       // FIXME: We should have a different class of conversions for the
       // Objective-C++ implicit conversions.
@@ -1644,8 +1644,8 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
 
     // Objective-C++: If one interface is more specific than the
     // other, it is the better one.
-    const ObjCInterfaceType* FromIface1 = FromPointee1->getAsObjCInterfaceType();
-    const ObjCInterfaceType* FromIface2 = FromPointee2->getAsObjCInterfaceType();
+    const ObjCInterfaceType* FromIface1 = FromPointee1->getAs<ObjCInterfaceType>();
+    const ObjCInterfaceType* FromIface2 = FromPointee2->getAs<ObjCInterfaceType>();
     if (FromIface1 && FromIface1) {
       if (Context.canAssignObjCInterfaces(FromIface2, FromIface1))
         return ImplicitConversionSequence::Better;
@@ -1832,10 +1832,10 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
     QualType ToPointee2
       = ToType2->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
 
-    const ObjCInterfaceType* FromIface1 = FromPointee1->getAsObjCInterfaceType();
-    const ObjCInterfaceType* FromIface2 = FromPointee2->getAsObjCInterfaceType();
-    const ObjCInterfaceType* ToIface1 = ToPointee1->getAsObjCInterfaceType();
-    const ObjCInterfaceType* ToIface2 = ToPointee2->getAsObjCInterfaceType();
+    const ObjCInterfaceType* FromIface1 = FromPointee1->getAs<ObjCInterfaceType>();
+    const ObjCInterfaceType* FromIface2 = FromPointee2->getAs<ObjCInterfaceType>();
+    const ObjCInterfaceType* ToIface1 = ToPointee1->getAs<ObjCInterfaceType>();
+    const ObjCInterfaceType* ToIface2 = ToPointee2->getAs<ObjCInterfaceType>();
 
     //   -- conversion of C* to B* is better than conversion of C* to A*,
     if (FromPointee1 == FromPointee2 && ToPointee1 != ToPointee2) {
@@ -2129,7 +2129,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
                            bool SuppressUserConversions,
                            bool ForceRValue) {
   const FunctionProtoType* Proto
-    = dyn_cast<FunctionProtoType>(Function->getType()->getAsFunctionType());
+    = dyn_cast<FunctionProtoType>(Function->getType()->getAs<FunctionType>());
   assert(Proto && "Functions without a prototype cannot be overloaded");
   assert(!isa<CXXConversionDecl>(Function) &&
          "Use AddConversionCandidate for conversion functions");
@@ -2247,7 +2247,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
                          OverloadCandidateSet& CandidateSet,
                          bool SuppressUserConversions, bool ForceRValue) {
   const FunctionProtoType* Proto
-    = dyn_cast<FunctionProtoType>(Method->getType()->getAsFunctionType());
+    = dyn_cast<FunctionProtoType>(Method->getType()->getAs<FunctionType>());
   assert(Proto && "Methods without a prototype cannot be overloaded");
   assert(!isa<CXXConversionDecl>(Method) &&
          "Use AddConversionCandidate for conversion functions");
@@ -3865,7 +3865,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
           isPointer = true;
         }
         // Desugar down to a function type.
-        FnType = QualType(FnType->getAsFunctionType(), 0);
+        FnType = QualType(FnType->getAs<FunctionType>(), 0);
         // Reconstruct the pointer/reference as appropriate.
         if (isPointer) FnType = Context.getPointerType(FnType);
         if (isRValueReference) FnType = Context.getRValueReferenceType(FnType);
@@ -4318,7 +4318,7 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
 
       // Determine the result type
       QualType ResultTy
-        = FnDecl->getType()->getAsFunctionType()->getResultType();
+        = FnDecl->getType()->getAs<FunctionType>()->getResultType();
       ResultTy = ResultTy.getNonReferenceType();
 
       // Build the actual expression node.
@@ -4476,7 +4476,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
         // Determine the result type
         QualType ResultTy
-          = FnDecl->getType()->getAsFunctionType()->getResultType();
+          = FnDecl->getType()->getAs<FunctionType>()->getResultType();
         ResultTy = ResultTy.getNonReferenceType();
 
         // Build the actual expression node.
@@ -4714,7 +4714,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
       if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
         ConvType = ConvPtrType->getPointeeType();
 
-      if (const FunctionProtoType *Proto = ConvType->getAsFunctionProtoType())
+      if (const FunctionProtoType *Proto = ConvType->getAs<FunctionProtoType>())
         AddSurrogateCandidate(Conv, Proto, Object, Args, NumArgs, CandidateSet);
     }
   }
@@ -4783,7 +4783,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   // that calls this method, using Object for the implicit object
   // parameter and passing along the remaining arguments.
   CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
-  const FunctionProtoType *Proto = Method->getType()->getAsFunctionProtoType();
+  const FunctionProtoType *Proto = Method->getType()->getAs<FunctionProtoType>();
 
   unsigned NumArgsInProto = Proto->getNumArgs();
   unsigned NumArgsToCheck = NumArgs;

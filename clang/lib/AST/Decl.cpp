@@ -542,7 +542,7 @@ unsigned FunctionDecl::getBuiltinID() const {
 /// based on its FunctionType.  This is the length of the PararmInfo array
 /// after it has been created.
 unsigned FunctionDecl::getNumParams() const {
-  const FunctionType *FT = getType()->getAsFunctionType();
+  const FunctionType *FT = getType()->getAs<FunctionType>();
   if (isa<FunctionNoProtoType>(FT))
     return 0;
   return cast<FunctionProtoType>(FT)->getNumArgs();

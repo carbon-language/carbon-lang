@@ -421,7 +421,7 @@ void InitListChecker::FillInValueInitializations(InitListExpr *ILE) {
     ElementType = AType->getElementType();
     if (const ConstantArrayType *CAType = dyn_cast<ConstantArrayType>(AType))
       NumElements = CAType->getSize().getZExtValue();
-  } else if (const VectorType *VType = ILE->getType()->getAsVectorType()) {
+  } else if (const VectorType *VType = ILE->getType()->getAs<VectorType>()) {
     ElementType = VType->getElementType();
     NumElements = VType->getNumElements();
   } else
@@ -499,7 +499,7 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
   else if (T->isStructureType() || T->isUnionType())
     maxElements = numStructUnionElements(T);
   else if (T->isVectorType())
-    maxElements = T->getAsVectorType()->getNumElements();
+    maxElements = T->getAs<VectorType>()->getNumElements();
   else
     assert(0 && "CheckImplicitInitList(): Illegal type");
 
@@ -835,7 +835,7 @@ void InitListChecker::CheckVectorType(InitListExpr *IList, QualType DeclType,
                                       InitListExpr *StructuredList,
                                       unsigned &StructuredIndex) {
   if (Index < IList->getNumInits()) {
-    const VectorType *VT = DeclType->getAsVectorType();
+    const VectorType *VT = DeclType->getAs<VectorType>();
     unsigned maxElements = VT->getNumElements();
     unsigned numEltsInit = 0;
     QualType elementType = VT->getElementType();
@@ -860,7 +860,7 @@ void InitListChecker::CheckVectorType(InitListExpr *IList, QualType DeclType,
                               StructuredList, StructuredIndex);
           ++numEltsInit;
         } else {
-          const VectorType *IVT = IType->getAsVectorType();
+          const VectorType *IVT = IType->getAs<VectorType>();
           unsigned numIElts = IVT->getNumElements();
           QualType VecType = SemaRef.Context.getExtVectorType(elementType,
                                                               numIElts);
@@ -1625,7 +1625,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
       if (NumInits && NumElements > NumInits)
         NumElements = 0;
     }
-  } else if (const VectorType *VType = CurrentObjectType->getAsVectorType())
+  } else if (const VectorType *VType = CurrentObjectType->getAs<VectorType>())
     NumElements = VType->getNumElements();
   else if (const RecordType *RType = CurrentObjectType->getAs<RecordType>()) {
     RecordDecl *RDecl = RType->getDecl();

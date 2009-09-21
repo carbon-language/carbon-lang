@@ -159,7 +159,7 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
 }
 
 static bool is32Or64BitBasicType(QualType Ty, ASTContext &Context) {
-  if (!Ty->getAsBuiltinType() && !Ty->isPointerType())
+  if (!Ty->getAs<BuiltinType>() && !Ty->isPointerType())
     return false;
 
   uint64_t Size = Context.getTypeSize(Ty);
@@ -292,7 +292,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
   }
 
   // If this is a builtin, pointer, or complex type, it is ok.
-  if (Ty->getAsBuiltinType() || Ty->isPointerType() || Ty->isAnyComplexType())
+  if (Ty->getAs<BuiltinType>() || Ty->isPointerType() || Ty->isAnyComplexType())
     return true;
 
   // Arrays are treated like records.
@@ -326,7 +326,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
                                           llvm::LLVMContext &VMContext) const {
   if (RetTy->isVoidType()) {
     return ABIArgInfo::getIgnore();
-  } else if (const VectorType *VT = RetTy->getAsVectorType()) {
+  } else if (const VectorType *VT = RetTy->getAs<VectorType>()) {
     // On Darwin, some vectors are returned in registers.
     if (IsDarwinVectorABI) {
       uint64_t Size = Context.getTypeSize(RetTy);
@@ -360,7 +360,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
 
     // Classify "single element" structs as their element type.
     if (const Type *SeltTy = isSingleElementStruct(RetTy, Context)) {
-      if (const BuiltinType *BT = SeltTy->getAsBuiltinType()) {
+      if (const BuiltinType *BT = SeltTy->getAs<BuiltinType>()) {
         if (BT->isIntegerType()) {
           // We need to use the size of the structure, padding
           // bit-fields can adjust that to be larger than the single
@@ -618,7 +618,7 @@ void X86_64ABIInfo::classify(QualType Ty,
   Class &Current = OffsetBase < 64 ? Lo : Hi;
   Current = Memory;
 
-  if (const BuiltinType *BT = Ty->getAsBuiltinType()) {
+  if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
     BuiltinType::Kind k = BT->getKind();
 
     if (k == BuiltinType::Void) {
@@ -636,12 +636,12 @@ void X86_64ABIInfo::classify(QualType Ty,
     }
     // FIXME: _Decimal32 and _Decimal64 are SSE.
     // FIXME: _float128 and _Decimal128 are (SSE, SSEUp).
-  } else if (const EnumType *ET = Ty->getAsEnumType()) {
+  } else if (const EnumType *ET = Ty->getAs<EnumType>()) {
     // Classify the underlying integer type.
     classify(ET->getDecl()->getIntegerType(), Context, OffsetBase, Lo, Hi);
   } else if (Ty->hasPointerRepresentation()) {
     Current = Integer;
-  } else if (const VectorType *VT = Ty->getAsVectorType()) {
+  } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
     uint64_t Size = Context.getTypeSize(VT);
     if (Size == 32) {
       // gcc passes all <4 x char>, <2 x short>, <1 x int>, <1 x
@@ -673,7 +673,7 @@ void X86_64ABIInfo::classify(QualType Ty,
       Lo = SSE;
       Hi = SSEUp;
     }
-  } else if (const ComplexType *CT = Ty->getAsComplexType()) {
+  } else if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
     QualType ET = Context.getCanonicalType(CT->getElementType());
 
     uint64_t Size = Context.getTypeSize(Ty);
@@ -1468,7 +1468,7 @@ static bool isIntegerLikeType(QualType Ty,
     return false;
 
   // If this is a builtin or pointer type then it is ok.
-  if (Ty->getAsBuiltinType() || Ty->isPointerType())
+  if (Ty->getAs<BuiltinType>() || Ty->isPointerType())
     return true;
 
   // Complex types "should" be ok by the definition above, but they are not.
@@ -1651,7 +1651,7 @@ class SystemZABIInfo : public ABIInfo {
 
 bool SystemZABIInfo::isPromotableIntegerType(QualType Ty) const {
   // SystemZ ABI requires all 8, 16 and 32 bit quantities to be extended.
-  if (const BuiltinType *BT = Ty->getAsBuiltinType())
+  if (const BuiltinType *BT = Ty->getAs<BuiltinType>())
     switch (BT->getKind()) {
     case BuiltinType::Bool:
     case BuiltinType::Char_S:

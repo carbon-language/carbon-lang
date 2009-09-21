@@ -494,7 +494,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   // A scalar can be splatted to an extended vector of the same element type
   if (DstType->isExtVectorType() && !SrcType->isVectorType()) {
     // Cast the scalar to element type
-    QualType EltTy = DstType->getAsExtVectorType()->getElementType();
+    QualType EltTy = DstType->getAs<ExtVectorType>()->getElementType();
     llvm::Value *Elt = EmitScalarConversion(Src, SrcType, EltTy);
 
     // Insert the element in element zero of an undef vector
@@ -553,7 +553,7 @@ Value *ScalarExprEmitter::
 EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
                               QualType SrcTy, QualType DstTy) {
   // Get the source element type.
-  SrcTy = SrcTy->getAsComplexType()->getElementType();
+  SrcTy = SrcTy->getAs<ComplexType>()->getElementType();
 
   // Handle conversions to bool first, they are special: comparisons against 0.
   if (DstTy->isBooleanType()) {
@@ -1118,14 +1118,14 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   Expr *IdxExp;
   const PointerType *PT = Ops.E->getLHS()->getType()->getAs<PointerType>();
   const ObjCObjectPointerType *OPT =
-    Ops.E->getLHS()->getType()->getAsObjCObjectPointerType();
+    Ops.E->getLHS()->getType()->getAs<ObjCObjectPointerType>();
   if (PT || OPT) {
     Ptr = Ops.LHS;
     Idx = Ops.RHS;
     IdxExp = Ops.E->getRHS();
   } else {  // int + pointer
     PT = Ops.E->getRHS()->getType()->getAs<PointerType>();
-    OPT = Ops.E->getRHS()->getType()->getAsObjCObjectPointerType();
+    OPT = Ops.E->getRHS()->getType()->getAs<ObjCObjectPointerType>();
     assert((PT || OPT) && "Invalid add expr");
     Ptr = Ops.RHS;
     Idx = Ops.LHS;
@@ -1320,7 +1320,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
     CodeGenFunction::ComplexPairTy LHS = CGF.EmitComplexExpr(E->getLHS());
     CodeGenFunction::ComplexPairTy RHS = CGF.EmitComplexExpr(E->getRHS());
 
-    QualType CETy = LHSTy->getAsComplexType()->getElementType();
+    QualType CETy = LHSTy->getAs<ComplexType>()->getElementType();
 
     Value *ResultR, *ResultI;
     if (CETy->isRealFloatingType()) {

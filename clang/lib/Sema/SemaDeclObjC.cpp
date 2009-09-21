@@ -143,7 +143,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
         if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(PrevDecl)) {
           QualType T = TDecl->getUnderlyingType();
           if (T->isObjCInterfaceType()) {
-            if (NamedDecl *IDecl = T->getAsObjCInterfaceType()->getDecl())
+            if (NamedDecl *IDecl = T->getAs<ObjCInterfaceType>()->getDecl())
               SuperClassDecl = dyn_cast<ObjCInterfaceDecl>(IDecl);
           }
         }
@@ -209,7 +209,7 @@ Sema::DeclPtrTy Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   if (const TypedefDecl *TDecl = dyn_cast_or_null<TypedefDecl>(CDeclU)) {
     QualType T = TDecl->getUnderlyingType();
     if (T->isObjCInterfaceType()) {
-      if (NamedDecl *IDecl = T->getAsObjCInterfaceType()->getDecl()) {
+      if (NamedDecl *IDecl = T->getAs<ObjCInterfaceType>()->getDecl()) {
         ClassName = IDecl->getIdentifier();
         CDeclU = LookupName(TUScope, ClassName, LookupOrdinaryName);
       }
@@ -1939,7 +1939,7 @@ Sema::DeclPtrTy Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
       if (T->isObjCObjectPointerType()) {
         QualType InterfaceTy = T->getPointeeType();
         if (const ObjCInterfaceType *OIT =
-              InterfaceTy->getAsObjCInterfaceType()) {
+              InterfaceTy->getAs<ObjCInterfaceType>()) {
         ObjCInterfaceDecl *IDecl = OIT->getDecl();
         if (IDecl)
           if (ObjCProtocolDecl* PNSCopying =

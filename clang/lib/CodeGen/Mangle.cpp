@@ -241,7 +241,7 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
     FD = PrimaryTemplate->getTemplatedDecl();
   }
 
-  mangleBareFunctionType(FD->getType()->getAsFunctionType(), MangleReturnType);
+  mangleBareFunctionType(FD->getType()->getAs<FunctionType>(), MangleReturnType);
 }
 
 static bool isStdNamespace(const DeclContext *DC) {

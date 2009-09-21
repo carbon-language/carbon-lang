@@ -1590,7 +1590,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, ExplodedNode* Pred,
   const FunctionProtoType *Proto = NULL;
   QualType FnType = CE->getCallee()->IgnoreParens()->getType();
   if (const PointerType *FnTypePtr = FnType->getAs<PointerType>())
-    Proto = FnTypePtr->getPointeeType()->getAsFunctionProtoType();
+    Proto = FnTypePtr->getPointeeType()->getAs<FunctionProtoType>();
 
   VisitCallRec(CE, Pred, AI, AE, Dst, Proto, /*ParamIdx=*/0);
 }

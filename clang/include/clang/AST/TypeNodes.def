@@ -31,6 +31,12 @@
 //    type that is always dependent. Clients that do not need to deal
 //    with uninstantiated C++ templates can ignore these types.
 //
+//  There is a fifth macro, independent of the others.  Most clients
+//  will not need to use it.
+//
+//    LEAF_TYPE(Class) - A type that never has inner types.  Clients
+//    which can operate on such types more efficiently may wish to do so.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef ABSTRACT_TYPE
@@ -82,6 +88,17 @@ NON_CANONICAL_TYPE(QualifiedName, Type)
 DEPENDENT_TYPE(Typename, Type)
 TYPE(ObjCInterface, Type)
 TYPE(ObjCObjectPointer, Type)
+
+// These types are always leaves in the type hierarchy.
+#ifdef LEAF_TYPE
+LEAF_TYPE(Enum)
+LEAF_TYPE(Builtin)
+LEAF_TYPE(FixedWidthInt)
+LEAF_TYPE(ObjCInterface)
+LEAF_TYPE(ObjCObjectPointer)
+LEAF_TYPE(TemplateTypeParm)
+#undef LEAF_TYPE
+#endif
 
 #undef DEPENDENT_TYPE
 #undef NON_CANONICAL_TYPE

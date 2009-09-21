@@ -966,7 +966,7 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
   if (StringLiteral *StrLit = dyn_cast<StringLiteral>(From))
     if (const PointerType *ToPtrType = ToType->getAs<PointerType>())
       if (const BuiltinType *ToPointeeType
-          = ToPtrType->getPointeeType()->getAsBuiltinType()) {
+          = ToPtrType->getPointeeType()->getAs<BuiltinType>()) {
         // This conversion is considered only when there is an
         // explicit appropriate pointer target type (C++ 4.2p2).
         if (ToPtrType->getPointeeType().getCVRQualifiers() == 0 &&
@@ -1856,7 +1856,7 @@ Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
     if (const PointerType *PT = Ty->getAs<PointerType>())
       Ty = PT->getPointeeType();
     
-    const FunctionType *FTy = Ty->getAsFunctionType();
+    const FunctionType *FTy = Ty->getAs<FunctionType>();
     if (FTy->getResultType()->isReferenceType())
       return Owned(E);
   }

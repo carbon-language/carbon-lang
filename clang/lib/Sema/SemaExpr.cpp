@@ -132,8 +132,8 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
     QualType Ty = V->getType();
     if (Ty->isBlockPointerType() || Ty->isFunctionPointerType()) {
       const FunctionType *FT = Ty->isFunctionPointerType()
-      ? Ty->getAs<PointerType>()->getPointeeType()->getAsFunctionType()
-      : Ty->getAs<BlockPointerType>()->getPointeeType()->getAsFunctionType();
+      ? Ty->getAs<PointerType>()->getPointeeType()->getAs<FunctionType>()
+      : Ty->getAs<BlockPointerType>()->getPointeeType()->getAs<FunctionType>();
       if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT)) {
         unsigned NumArgsInProto = Proto->getNumArgs();
         unsigned k;
@@ -261,7 +261,7 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
   assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
 
   // If this is a 'float' (CVR qualified or typedef) promote to double.
-  if (const BuiltinType *BT = Ty->getAsBuiltinType())
+  if (const BuiltinType *BT = Ty->getAs<BuiltinType>())
     if (BT->getKind() == BuiltinType::Float)
       return ImpCastExprToType(Expr, Context.DoubleTy);
 
@@ -842,7 +842,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
 
       QualType T = Func->getType();
       QualType NoProtoType = T;
-      if (const FunctionProtoType *Proto = T->getAsFunctionProtoType())
+      if (const FunctionProtoType *Proto = T->getAs<FunctionProtoType>())
         NoProtoType = Context.getFunctionNoProtoType(Proto->getResultType());
       return BuildDeclRefExpr(Func, NoProtoType, Loc, false, false, SS);
     }
@@ -1483,7 +1483,7 @@ QualType Sema::CheckRealImagOperand(Expr *&V, SourceLocation Loc, bool isReal) {
     return Context.DependentTy;
 
   // These operators return the element type of a complex type.
-  if (const ComplexType *CT = V->getType()->getAsComplexType())
+  if (const ComplexType *CT = V->getType()->getAs<ComplexType>())
     return CT->getElementType();
 
   // Otherwise they pass through real integer and floating point types here.
@@ -1562,7 +1562,7 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
 
         // Determine the result type
         QualType ResultTy
-          = FnDecl->getType()->getAsFunctionType()->getResultType();
+          = FnDecl->getType()->getAs<FunctionType>()->getResultType();
         ResultTy = ResultTy.getNonReferenceType();
 
         // Build the actual expression node.
@@ -1678,7 +1678,7 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
 
         // Determine the result type
         QualType ResultTy
-          = FnDecl->getType()->getAsFunctionType()->getResultType();
+          = FnDecl->getType()->getAs<FunctionType>()->getResultType();
         ResultTy = ResultTy.getNonReferenceType();
 
         // Build the actual expression node.
@@ -1759,17 +1759,17 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
     IndexExpr = LHSExp;
     ResultType = PTy->getPointeeType();
   } else if (const ObjCObjectPointerType *PTy =
-               LHSTy->getAsObjCObjectPointerType()) {
+               LHSTy->getAs<ObjCObjectPointerType>()) {
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
     ResultType = PTy->getPointeeType();
   } else if (const ObjCObjectPointerType *PTy =
-               RHSTy->getAsObjCObjectPointerType()) {
+               RHSTy->getAs<ObjCObjectPointerType>()) {
      // Handle the uncommon case of "123[Ptr]".
     BaseExpr = RHSExp;
     IndexExpr = LHSExp;
     ResultType = PTy->getPointeeType();
-  } else if (const VectorType *VTy = LHSTy->getAsVectorType()) {
+  } else if (const VectorType *VTy = LHSTy->getAs<VectorType>()) {
     BaseExpr = LHSExp;    // vectors: V[123]
     IndexExpr = RHSExp;
 
@@ -1847,7 +1847,7 @@ QualType Sema::
 CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
                         const IdentifierInfo *CompName,
                         SourceLocation CompLoc) {
-  const ExtVectorType *vecType = baseType->getAsExtVectorType();
+  const ExtVectorType *vecType = baseType->getAs<ExtVectorType>();
 
   // The vector accessor can't exceed the number of elements.
   const char *compStr = CompName->getName();
@@ -2355,9 +2355,9 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // (*Obj).ivar.
   if ((OpKind == tok::arrow && BaseType->isObjCObjectPointerType()) ||
       (OpKind == tok::period && BaseType->isObjCInterfaceType())) {
-    const ObjCObjectPointerType *OPT = BaseType->getAsObjCObjectPointerType();
+    const ObjCObjectPointerType *OPT = BaseType->getAs<ObjCObjectPointerType>();
     const ObjCInterfaceType *IFaceT =
-      OPT ? OPT->getInterfaceType() : BaseType->getAsObjCInterfaceType();
+      OPT ? OPT->getInterfaceType() : BaseType->getAs<ObjCInterfaceType>();
     if (IFaceT) {
       IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
 
@@ -2419,7 +2419,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // Handle properties on 'id' and qualified "id".
   if (OpKind == tok::period && (BaseType->isObjCIdType() ||
                                 BaseType->isObjCQualifiedIdType())) {
-    const ObjCObjectPointerType *QIdTy = BaseType->getAsObjCObjectPointerType();
+    const ObjCObjectPointerType *QIdTy = BaseType->getAs<ObjCObjectPointerType>();
     IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
 
     // Check protocols on qualified interfaces.
@@ -2936,10 +2936,10 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     if (PT == 0)
       return ExprError(Diag(LParenLoc, diag::err_typecheck_call_not_function)
         << Fn->getType() << Fn->getSourceRange());
-    FuncT = PT->getPointeeType()->getAsFunctionType();
+    FuncT = PT->getPointeeType()->getAs<FunctionType>();
   } else { // This is a block call.
     FuncT = Fn->getType()->getAs<BlockPointerType>()->getPointeeType()->
-                getAsFunctionType();
+                getAs<FunctionType>();
   }
   if (FuncT == 0)
     return ExprError(Diag(LParenLoc, diag::err_typecheck_call_not_function)
@@ -2969,7 +2969,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       const FunctionDecl *Def = 0;
       if (FDecl->getBody(Def) && NumArgs != Def->param_size()) {
         const FunctionProtoType *Proto =
-            Def->getType()->getAsFunctionProtoType();
+            Def->getType()->getAs<FunctionProtoType>();
         if (!Proto || !(Proto->isVariadic() && NumArgs >= Def->param_size())) {
           Diag(RParenLoc, diag::warn_call_wrong_number_of_arguments)
             << (NumArgs > Def->param_size()) << FDecl << Fn->getSourceRange();
@@ -3422,8 +3422,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
       // Two identical object pointer types are always compatible.
       return LHSTy;
     }
-    const ObjCObjectPointerType *LHSOPT = LHSTy->getAsObjCObjectPointerType();
-    const ObjCObjectPointerType *RHSOPT = RHSTy->getAsObjCObjectPointerType();
+    const ObjCObjectPointerType *LHSOPT = LHSTy->getAs<ObjCObjectPointerType>();
+    const ObjCObjectPointerType *RHSOPT = RHSTy->getAs<ObjCObjectPointerType>();
     QualType compositeType = LHSTy;
 
     // If both operands are interfaces and either operand can be
@@ -3470,7 +3470,7 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // Check Objective-C object pointer types and 'void *'
   if (LHSTy->isVoidPointerType() && RHSTy->isObjCObjectPointerType()) {
     QualType lhptee = LHSTy->getAs<PointerType>()->getPointeeType();
-    QualType rhptee = RHSTy->getAsObjCObjectPointerType()->getPointeeType();
+    QualType rhptee = RHSTy->getAs<ObjCObjectPointerType>()->getPointeeType();
     QualType destPointee = lhptee.getQualifiedType(rhptee.getCVRQualifiers());
     QualType destType = Context.getPointerType(destPointee);
     ImpCastExprToType(LHS, destType); // add qualifiers if necessary
@@ -3478,7 +3478,7 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     return destType;
   }
   if (LHSTy->isObjCObjectPointerType() && RHSTy->isVoidPointerType()) {
-    QualType lhptee = LHSTy->getAsObjCObjectPointerType()->getPointeeType();
+    QualType lhptee = LHSTy->getAs<ObjCObjectPointerType>()->getPointeeType();
     QualType rhptee = RHSTy->getAs<PointerType>()->getPointeeType();
     QualType destPointee = rhptee.getQualifiedType(lhptee.getCVRQualifiers());
     QualType destType = Context.getPointerType(destPointee);
@@ -4021,8 +4021,8 @@ inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
   // type.  It would be nice if we only had one vector type someday.
   if (getLangOptions().LaxVectorConversions) {
     // FIXME: Should we warn here?
-    if (const VectorType *LV = lhsType->getAsVectorType()) {
-      if (const VectorType *RV = rhsType->getAsVectorType())
+    if (const VectorType *LV = lhsType->getAs<VectorType>()) {
+      if (const VectorType *RV = rhsType->getAs<VectorType>())
         if (LV->getElementType() == RV->getElementType() &&
             LV->getNumElements() == RV->getNumElements()) {
           return lhsType->isExtVectorType() ? lhsType : rhsType;
@@ -4040,7 +4040,7 @@ inline QualType Sema::CheckVectorOperands(SourceLocation Loc, Expr *&lex,
   }
 
   // Handle the case of an ext vector and scalar.
-  if (const ExtVectorType *LV = lhsType->getAsExtVectorType()) {
+  if (const ExtVectorType *LV = lhsType->getAs<ExtVectorType>()) {
     QualType EltTy = LV->getElementType();
     if (EltTy->isIntegralType() && rhsType->isIntegralType()) {
       if (Context.getIntegerTypeOrder(EltTy, rhsType) >= 0) {
@@ -4695,7 +4695,7 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
   if (lType->isIntegerType())
     return lType;
 
-  const VectorType *VTy = lType->getAsVectorType();
+  const VectorType *VTy = lType->getAs<VectorType>();
   unsigned TypeSize = Context.getTypeSize(VTy->getElementType());
   if (TypeSize == Context.getTypeSize(Context.IntTy))
     return Context.getExtVectorType(Context.IntTy, VTy->getNumElements());
@@ -5132,7 +5132,7 @@ QualType Sema::CheckIndirectionOperand(Expr *Op, SourceLocation OpLoc) {
   if (const PointerType *PT = Ty->getAs<PointerType>())
     return PT->getPointeeType();
 
-  if (const ObjCObjectPointerType *OPT = Ty->getAsObjCObjectPointerType())
+  if (const ObjCObjectPointerType *OPT = Ty->getAs<ObjCObjectPointerType>())
     return OPT->getPointeeType();
 
   Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer)
@@ -5735,7 +5735,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
            diag::warn_attribute_sentinel_not_variadic) << 1;
       // FIXME: remove the attribute.
     }
-    QualType RetTy = T.getTypePtr()->getAsFunctionType()->getResultType();
+    QualType RetTy = T.getTypePtr()->getAs<FunctionType>()->getResultType();
 
     // Do not allow returning a objc interface by-value.
     if (RetTy->isObjCInterfaceType()) {
@@ -5787,7 +5787,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
 
   // Analyze the return type.
   QualType T = GetTypeForDeclarator(ParamInfo, CurScope);
-  QualType RetTy = T->getAsFunctionType()->getResultType();
+  QualType RetTy = T->getAs<FunctionType>()->getResultType();
 
   // Do not allow returning a objc interface by-value.
   if (RetTy->isObjCInterfaceType()) {

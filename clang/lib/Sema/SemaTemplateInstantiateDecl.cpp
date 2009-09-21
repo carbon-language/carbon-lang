@@ -592,7 +592,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   } else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
     CanQualType ConvTy
       = SemaRef.Context.getCanonicalType(
-                                      T->getAsFunctionType()->getResultType());
+                                      T->getAs<FunctionType>()->getResultType());
     Name = SemaRef.Context.DeclarationNames.getCXXConversionFunctionName(
                                                                       ConvTy);
     Method = CXXConversionDecl::Create(SemaRef.Context, Record,
@@ -867,7 +867,7 @@ TemplateDeclInstantiator::SubstFunctionType(FunctionDecl *D,
   if (InvalidDecl)
     return QualType();
 
-  const FunctionProtoType *Proto = D->getType()->getAsFunctionProtoType();
+  const FunctionProtoType *Proto = D->getType()->getAs<FunctionProtoType>();
   assert(Proto && "Missing prototype?");
   QualType ResultType
     = SemaRef.SubstType(Proto->getResultType(), TemplateArgs,

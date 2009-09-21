@@ -224,7 +224,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD,
   }
 
   if (FD->getNumParams()) {
-    const FunctionProtoType* FProto = FD->getType()->getAsFunctionProtoType();
+    const FunctionProtoType* FProto = FD->getType()->getAs<FunctionProtoType>();
     assert(FProto && "Function def must have prototype!");
 
     for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i)

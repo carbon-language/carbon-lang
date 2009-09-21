@@ -1444,7 +1444,7 @@ addAssociatedClassesAndNamespaces(QualType T,
 
   //     -- If T is a fundamental type, its associated sets of
   //        namespaces and classes are both empty.
-  if (T->getAsBuiltinType())
+  if (T->getAs<BuiltinType>())
     return;
 
   //     -- If T is a class type (including unions), its associated
@@ -1465,7 +1465,7 @@ addAssociatedClassesAndNamespaces(QualType T,
   //        the namespace in which it is defined. If it is class
   //        member, its associated class is the member’s class; else
   //        it has no associated class.
-  if (const EnumType *EnumT = T->getAsEnumType()) {
+  if (const EnumType *EnumT = T->getAs<EnumType>()) {
     EnumDecl *Enum = EnumT->getDecl();
 
     DeclContext *Ctx = Enum->getDeclContext();
@@ -1483,13 +1483,13 @@ addAssociatedClassesAndNamespaces(QualType T,
   //     -- If T is a function type, its associated namespaces and
   //        classes are those associated with the function parameter
   //        types and those associated with the return type.
-  if (const FunctionType *FunctionType = T->getAsFunctionType()) {
+  if (const FunctionType *FnType = T->getAs<FunctionType>()) {
     // Return type
-    addAssociatedClassesAndNamespaces(FunctionType->getResultType(),
+    addAssociatedClassesAndNamespaces(FnType->getResultType(),
                                       Context,
                                       AssociatedNamespaces, AssociatedClasses);
 
-    const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FunctionType);
+    const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FnType);
     if (!Proto)
       return;
 
@@ -1629,7 +1629,7 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
   if (T1->isRecordType() || (!T2.isNull() && T2->isRecordType()))
     return true;
 
-  const FunctionProtoType *Proto = Fn->getType()->getAsFunctionProtoType();
+  const FunctionProtoType *Proto = Fn->getType()->getAs<FunctionProtoType>();
   if (Proto->getNumArgs() < 1)
     return false;
 

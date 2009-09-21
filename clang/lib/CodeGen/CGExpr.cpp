@@ -143,7 +143,7 @@ unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
 RValue CodeGenFunction::GetUndefRValue(QualType Ty) {
   if (Ty->isVoidType()) {
     return RValue::get(0);
-  } else if (const ComplexType *CTy = Ty->getAsComplexType()) {
+  } else if (const ComplexType *CTy = Ty->getAs<ComplexType>()) {
     const llvm::Type *EltTy = ConvertType(CTy->getElementType());
     llvm::Value *U = llvm::UndefValue::get(EltTy);
     return RValue::getComplex(std::make_pair(U, U));
@@ -420,7 +420,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
 
   // If the result of the expression is a non-vector type, we must be extracting
   // a single element.  Just codegen as an extractelement.
-  const VectorType *ExprVT = ExprType->getAsVectorType();
+  const VectorType *ExprVT = ExprType->getAs<VectorType>();
   if (!ExprVT) {
     unsigned InIdx = getAccessedFieldNo(0, Elts);
     llvm::Value *Elt = llvm::ConstantInt::get(
@@ -619,7 +619,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
 
   llvm::Value *SrcVal = Src.getScalarVal();
 
-  if (const VectorType *VTy = Ty->getAsVectorType()) {
+  if (const VectorType *VTy = Ty->getAs<VectorType>()) {
     unsigned NumSrcElts = VTy->getNumElements();
     unsigned NumDstElts =
        cast<llvm::VectorType>(Vec->getType())->getNumElements();
@@ -784,7 +784,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     llvm::Value* V = CGM.GetAddrOfFunction(FD);
     if (!FD->hasPrototype()) {
       if (const FunctionProtoType *Proto =
-              FD->getType()->getAsFunctionProtoType()) {
+              FD->getType()->getAs<FunctionProtoType>()) {
         // Ugly case: for a K&R-style definition, the type of the definition
         // isn't the same as the type of a use.  Correct for this with a
         // bitcast.
@@ -1470,10 +1470,10 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee, QualType CalleeType,
          "Call must have function pointer type!");
 
   QualType FnType = CalleeType->getAs<PointerType>()->getPointeeType();
-  QualType ResultType = FnType->getAsFunctionType()->getResultType();
+  QualType ResultType = FnType->getAs<FunctionType>()->getResultType();
 
   CallArgList Args;
-  EmitCallArgs(Args, FnType->getAsFunctionProtoType(), ArgBeg, ArgEnd);
+  EmitCallArgs(Args, FnType->getAs<FunctionProtoType>(), ArgBeg, ArgEnd);
 
   // FIXME: We should not need to do this, it should be part of the function
   // type.

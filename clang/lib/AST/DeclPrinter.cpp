@@ -97,9 +97,9 @@ static QualType GetBaseType(QualType T) {
       BaseType = PTy->getPointeeType();
     else if (const ArrayType* ATy = dyn_cast<ArrayType>(BaseType))
       BaseType = ATy->getElementType();
-    else if (const FunctionType* FTy = BaseType->getAsFunctionType())
+    else if (const FunctionType* FTy = BaseType->getAs<FunctionType>())
       BaseType = FTy->getResultType();
-    else if (const VectorType *VTy = BaseType->getAsVectorType())
+    else if (const VectorType *VTy = BaseType->getAs<VectorType>())
       BaseType = VTy->getElementType();
     else
       assert(0 && "Unknown declarator!");
@@ -332,7 +332,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
   SubPolicy.SuppressSpecifiers = false;
   std::string Proto = D->getNameAsString();
   if (isa<FunctionType>(D->getType().getTypePtr())) {
-    const FunctionType *AFT = D->getType()->getAsFunctionType();
+    const FunctionType *AFT = D->getType()->getAs<FunctionType>();
 
     const FunctionProtoType *FT = 0;
     if (D->hasWrittenPrototype())

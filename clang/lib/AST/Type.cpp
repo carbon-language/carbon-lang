@@ -159,7 +159,7 @@ QualType Type::getDesugaredType(bool ForDisplay) const {
       return QualType(this, 0);
 
     QualType Canon = Spec->getCanonicalTypeInternal();
-    if (Canon->getAsTemplateSpecializationType())
+    if (Canon->getAs<TemplateSpecializationType>())
       return QualType(this, 0);
     return Canon->getDesugaredType();
   }
@@ -276,54 +276,10 @@ const ComplexType *Type::getAsComplexIntegerType() const {
   return cast<ComplexType>(getDesugaredType());
 }
 
-const BuiltinType *Type::getAsBuiltinType() const {
-  // If this is directly a builtin type, return it.
-  if (const BuiltinType *BTy = dyn_cast<BuiltinType>(this))
-    return BTy;
-
-  // If the canonical form of this type isn't a builtin type, reject it.
-  if (!isa<BuiltinType>(CanonicalType)) {
-    // Look through type qualifiers (e.g. ExtQualType's).
-    if (isa<BuiltinType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsBuiltinType();
-    return 0;
-  }
-
-  // If this is a typedef for a builtin type, strip the typedef off without
-  // losing all typedef information.
-  return cast<BuiltinType>(getDesugaredType());
-}
-
-const FunctionType *Type::getAsFunctionType() const {
-  // If this is directly a function type, return it.
-  if (const FunctionType *FTy = dyn_cast<FunctionType>(this))
-    return FTy;
-
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<FunctionType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<FunctionType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsFunctionType();
-    return 0;
-  }
-
-  // If this is a typedef for a function type, strip the typedef off without
-  // losing all typedef information.
-  return cast<FunctionType>(getDesugaredType());
-}
-
-const FunctionNoProtoType *Type::getAsFunctionNoProtoType() const {
-  return dyn_cast_or_null<FunctionNoProtoType>(getAsFunctionType());
-}
-
-const FunctionProtoType *Type::getAsFunctionProtoType() const {
-  return dyn_cast_or_null<FunctionProtoType>(getAsFunctionType());
-}
-
 QualType Type::getPointeeType() const {
   if (const PointerType *PT = getAs<PointerType>())
     return PT->getPointeeType();
-  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
+  if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>())
     return OPT->getPointeeType();
   if (const BlockPointerType *BPT = getAs<BlockPointerType>())
     return BPT->getPointeeType();
@@ -357,7 +313,7 @@ bool Type::isVariablyModifiedType() const {
   // This one isn't completely obvious, but it follows from the
   // definition in C99 6.7.5p3. Because of this rule, it's
   // illegal to declare a function returning a variably modified type.
-  if (const FunctionType *FT = getAsFunctionType())
+  if (const FunctionType *FT = getAs<FunctionType>())
     return FT->getResultType()->isVariablyModifiedType();
 
   return false;
@@ -408,79 +364,11 @@ const RecordType *Type::getAsUnionType() const {
   return 0;
 }
 
-const EnumType *Type::getAsEnumType() const {
-  // Check the canonicalized unqualified type directly; the more complex
-  // version is unnecessary because there isn't any typedef information
-  // to preserve.
-  return dyn_cast<EnumType>(CanonicalType.getUnqualifiedType());
-}
-
-const ComplexType *Type::getAsComplexType() const {
-  // Are we directly a complex type?
-  if (const ComplexType *CTy = dyn_cast<ComplexType>(this))
-    return CTy;
-
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<ComplexType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<ComplexType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsComplexType();
-    return 0;
-  }
-
-  // If this is a typedef for a complex type, strip the typedef off without
-  // losing all typedef information.
-  return cast<ComplexType>(getDesugaredType());
-}
-
-const VectorType *Type::getAsVectorType() const {
-  // Are we directly a vector type?
-  if (const VectorType *VTy = dyn_cast<VectorType>(this))
-    return VTy;
-
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<VectorType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<VectorType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsVectorType();
-    return 0;
-  }
-
-  // If this is a typedef for a vector type, strip the typedef off without
-  // losing all typedef information.
-  return cast<VectorType>(getDesugaredType());
-}
-
-const ExtVectorType *Type::getAsExtVectorType() const {
-  // Are we directly an OpenCU vector type?
-  if (const ExtVectorType *VTy = dyn_cast<ExtVectorType>(this))
-    return VTy;
-
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<ExtVectorType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<ExtVectorType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsExtVectorType();
-    return 0;
-  }
-
-  // If this is a typedef for an extended vector type, strip the typedef off
-  // without losing all typedef information.
-  return cast<ExtVectorType>(getDesugaredType());
-}
-
-const ObjCInterfaceType *Type::getAsObjCInterfaceType() const {
-  // There is no sugar for ObjCInterfaceType's, just return the canonical
-  // type pointer if it is the right class.  There is no typedef information to
-  // return and these cannot be Address-space qualified.
-  return dyn_cast<ObjCInterfaceType>(CanonicalType.getUnqualifiedType());
-}
-
 const ObjCInterfaceType *Type::getAsObjCQualifiedInterfaceType() const {
   // There is no sugar for ObjCInterfaceType's, just return the canonical
   // type pointer if it is the right class.  There is no typedef information to
   // return and these cannot be Address-space qualified.
-  if (const ObjCInterfaceType *OIT = getAsObjCInterfaceType())
+  if (const ObjCInterfaceType *OIT = getAs<ObjCInterfaceType>())
     if (OIT->getNumProtocols())
       return OIT;
   return 0;
@@ -490,16 +378,10 @@ bool Type::isObjCQualifiedInterfaceType() const {
   return getAsObjCQualifiedInterfaceType() != 0;
 }
 
-const ObjCObjectPointerType *Type::getAsObjCObjectPointerType() const {
-  // There is no sugar for ObjCObjectPointerType's, just return the
-  // canonical type pointer if it is the right class.
-  return dyn_cast<ObjCObjectPointerType>(CanonicalType.getUnqualifiedType());
-}
-
 const ObjCObjectPointerType *Type::getAsObjCQualifiedIdType() const {
   // There is no sugar for ObjCQualifiedIdType's, just return the canonical
   // type pointer if it is the right class.
-  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType()) {
+  if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>()) {
     if (OPT->isObjCQualifiedIdType())
       return OPT;
   }
@@ -507,18 +389,11 @@ const ObjCObjectPointerType *Type::getAsObjCQualifiedIdType() const {
 }
 
 const ObjCObjectPointerType *Type::getAsObjCInterfacePointerType() const {
-  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType()) {
+  if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>()) {
     if (OPT->getInterfaceType())
       return OPT;
   }
   return 0;
-}
-
-const TemplateTypeParmType *Type::getAsTemplateTypeParmType() const {
-  // There is no sugar for template type parameters, so just return
-  // the canonical type pointer if it is the right class.
-  // FIXME: can these be address-space qualified?
-  return dyn_cast<TemplateTypeParmType>(CanonicalType);
 }
 
 const CXXRecordDecl *Type::getCXXRecordDeclForPointerType() const {
@@ -526,13 +401,6 @@ const CXXRecordDecl *Type::getCXXRecordDeclForPointerType() const {
     if (const RecordType *RT = PT->getPointeeType()->getAs<RecordType>())
       return dyn_cast<CXXRecordDecl>(RT->getDecl());
   return 0;
-}
-
-const TemplateSpecializationType *
-Type::getAsTemplateSpecializationType() const {
-  // There is no sugar for class template specialization types, so
-  // just return the canonical type pointer if it is the right class.
-  return this->getAs<TemplateSpecializationType>();
 }
 
 bool Type::isIntegerType() const {
@@ -826,7 +694,7 @@ bool Type::isPODType() const {
 }
 
 bool Type::isPromotableIntegerType() const {
-  if (const BuiltinType *BT = getAsBuiltinType())
+  if (const BuiltinType *BT = getAs<BuiltinType>())
     switch (BT->getKind()) {
     case BuiltinType::Bool:
     case BuiltinType::Char_S:
@@ -843,7 +711,7 @@ bool Type::isPromotableIntegerType() const {
 }
 
 bool Type::isNullPtrType() const {
-  if (const BuiltinType *BT = getAsBuiltinType())
+  if (const BuiltinType *BT = getAs<BuiltinType>())
     return BT->getKind() == BuiltinType::NullPtr;
   return false;
 }

@@ -1099,7 +1099,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
 
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
-    bool isVariadic = D->getType()->getAsFunctionProtoType()->isVariadic();
+    bool isVariadic = D->getType()->getAs<FunctionProtoType>()->isVariadic();
 
     Ty = getTypes().GetFunctionType(getTypes().getFunctionInfo(MD), isVariadic);
   } else {

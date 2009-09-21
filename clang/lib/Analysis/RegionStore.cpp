@@ -756,7 +756,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
       if (const PointerType *PT = T->getAs<PointerType>())
         EleTy = PT->getPointeeType();
       else
-        EleTy = T->getAsObjCObjectPointerType()->getPointeeType();
+        EleTy = T->getAs<ObjCObjectPointerType>()->getPointeeType();
 
       SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, getContext());

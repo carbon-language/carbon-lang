@@ -553,7 +553,7 @@ public:
 
   const ObjCInterfaceDecl* getReceiverDecl(Expr* E) {
     if (const ObjCObjectPointerType* PT =
-        E->getType()->getAsObjCObjectPointerType())
+        E->getType()->getAs<ObjCObjectPointerType>())
       return PT->getInterfaceDecl();
 
     return NULL;
@@ -886,7 +886,7 @@ bool RetainSummaryManager::isTrackedObjCObjectType(QualType Ty) {
   if (!Ty->isObjCObjectPointerType())
     return false;
 
-  const ObjCObjectPointerType *PT = Ty->getAsObjCObjectPointerType();
+  const ObjCObjectPointerType *PT = Ty->getAs<ObjCObjectPointerType>();
 
   // Can be true for objects with the 'NSObject' attribute.
   if (!PT)
@@ -953,9 +953,9 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       break;
     }
 
-    // [PR 3337] Use 'getAsFunctionType' to strip away any typedefs on the
+    // [PR 3337] Use 'getAs<FunctionType>' to strip away any typedefs on the
     // function's type.
-    const FunctionType* FT = FD->getType()->getAsFunctionType();
+    const FunctionType* FT = FD->getType()->getAs<FunctionType>();
     const char* FName = FD->getIdentifier()->getName();
 
     // Strip away preceding '_'.  Doing this here will effect all the checks
@@ -2739,7 +2739,7 @@ static QualType GetReturnType(const Expr* RetE, ASTContext& Ctx) {
   // If RetE is a message expression, return its types if it is something
   /// more specific than id.
   if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(RetE))
-    if (const ObjCObjectPointerType *PT = RetTy->getAsObjCObjectPointerType())
+    if (const ObjCObjectPointerType *PT = RetTy->getAs<ObjCObjectPointerType>())
       if (PT->isObjCQualifiedIdType() || PT->isObjCIdType() ||
           PT->isObjCClassType()) {
         // At this point we know the return type of the message expression is
@@ -3012,7 +3012,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
     if (Sym) {
       if (const RefVal* T  = St->get<RefBindings>(Sym)) {
         if (const ObjCObjectPointerType* PT =
-            T->getType()->getAsObjCObjectPointerType())
+            T->getType()->getAs<ObjCObjectPointerType>())
           ID = PT->getInterfaceDecl();
       }
     }
@@ -3021,7 +3021,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet& Dst,
     //  that is called.
     if (!ID) {
       if (const ObjCObjectPointerType *PT =
-          Receiver->getType()->getAsObjCObjectPointerType())
+          Receiver->getType()->getAs<ObjCObjectPointerType>())
         ID = PT->getInterfaceDecl();
     }
 

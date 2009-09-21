@@ -166,7 +166,7 @@ bool NSErrorCheck::CheckNSErrorArgument(QualType ArgTy) {
     return false;
 
   const ObjCObjectPointerType* PT =
-    PPT->getPointeeType()->getAsObjCObjectPointerType();
+    PPT->getPointeeType()->getAs<ObjCObjectPointerType>();
 
   if (!PT)
     return false;
@@ -185,7 +185,7 @@ bool NSErrorCheck::CheckCFErrorArgument(QualType ArgTy) {
   const PointerType* PPT = ArgTy->getAs<PointerType>();
   if (!PPT) return false;
 
-  const TypedefType* TT = PPT->getPointeeType()->getAsTypedefType();
+  const TypedefType* TT = PPT->getPointeeType()->getAs<TypedefType>();
   if (!TT) return false;
 
   return TT->getDecl()->getIdentifier() == II;

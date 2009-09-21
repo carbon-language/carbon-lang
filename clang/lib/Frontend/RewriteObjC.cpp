@@ -868,7 +868,7 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
       PointeeTy = PT->getPointeeType();
     else if (const BlockPointerType *BPT = retType->getAs<BlockPointerType>())
       PointeeTy = BPT->getPointeeType();
-    if ((FPRetType = PointeeTy->getAsFunctionType())) {
+    if ((FPRetType = PointeeTy->getAs<FunctionType>())) {
       ResultStr += FPRetType->getResultType().getAsString();
       ResultStr += "(*";
     }
@@ -1790,7 +1790,7 @@ CallExpr *RewriteObjC::SynthesizeCallToFunctionDecl(
                                                          DRE,
                                                /*isLvalue=*/false);
 
-  const FunctionType *FT = msgSendType->getAsFunctionType();
+  const FunctionType *FT = msgSendType->getAs<FunctionType>();
 
   return new (Context) CallExpr(*Context, ICE, args, nargs, FT->getResultType(),
                                 SourceLocation());
@@ -1871,7 +1871,7 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
     Loc = FD->getLocation();
     // Check for ObjC 'id' and class types that have been adorned with protocol
     // information (id<p>, C<p>*). The protocol references need to be rewritten!
-    const FunctionType *funcType = FD->getType()->getAsFunctionType();
+    const FunctionType *funcType = FD->getType()->getAs<FunctionType>();
     assert(funcType && "missing function type");
     proto = dyn_cast<FunctionProtoType>(funcType);
     if (!proto)
@@ -2164,7 +2164,7 @@ ObjCInterfaceDecl *RewriteObjC::isSuperReceiver(Expr *recExpr) {
 
   if (ObjCSuperExpr *Super = dyn_cast<ObjCSuperExpr>(recExpr)) {
       const ObjCObjectPointerType *OPT =
-        Super->getType()->getAsObjCObjectPointerType();
+        Super->getType()->getAs<ObjCObjectPointerType>();
       assert(OPT);
       const ObjCInterfaceType *IT = OPT->getInterfaceType();
       return IT->getDecl();
@@ -2535,7 +2535,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   // Don't forget the parens to enforce the proper binding.
   ParenExpr *PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), cast);
 
-  const FunctionType *FT = msgSendType->getAsFunctionType();
+  const FunctionType *FT = msgSendType->getAs<FunctionType>();
   CallExpr *CE = new (Context) CallExpr(*Context, PE, &MsgExprs[0],
                                         MsgExprs.size(),
                                         FT->getResultType(), SourceLocation());
@@ -2565,7 +2565,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
     // Don't forget the parens to enforce the proper binding.
     PE = new (Context) ParenExpr(SourceLocation(), SourceLocation(), cast);
 
-    FT = msgSendType->getAsFunctionType();
+    FT = msgSendType->getAs<FunctionType>();
     CallExpr *STCE = new (Context) CallExpr(*Context, PE, &MsgExprs[0],
                                             MsgExprs.size(),
                                             FT->getResultType(), SourceLocation());
@@ -3920,7 +3920,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
     assert(1 && "RewriteBlockClass: Bad type");
   }
   assert(CPT && "RewriteBlockClass: Bad type");
-  const FunctionType *FT = CPT->getPointeeType()->getAsFunctionType();
+  const FunctionType *FT = CPT->getPointeeType()->getAs<FunctionType>();
   assert(FT && "RewriteBlockClass: Bad type");
   const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FT);
   // FTP will be null for closures that don't take arguments.
@@ -4087,11 +4087,11 @@ bool RewriteObjC::PointerTypeTakesAnyBlockArguments(QualType QT) {
   const FunctionProtoType *FTP;
   const PointerType *PT = QT->getAs<PointerType>();
   if (PT) {
-    FTP = PT->getPointeeType()->getAsFunctionProtoType();
+    FTP = PT->getPointeeType()->getAs<FunctionProtoType>();
   } else {
     const BlockPointerType *BPT = QT->getAs<BlockPointerType>();
     assert(BPT && "BlockPointerTypeTakeAnyBlockArguments(): not a block pointer type");
-    FTP = BPT->getPointeeType()->getAsFunctionProtoType();
+    FTP = BPT->getPointeeType()->getAs<FunctionProtoType>();
   }
   if (FTP) {
     for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(),

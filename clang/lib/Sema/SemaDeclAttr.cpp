@@ -41,7 +41,7 @@ static const FunctionType *getFunctionType(const Decl *d,
   else if (blocksToo && Ty->isBlockPointerType())
     Ty = Ty->getAs<BlockPointerType>()->getPointeeType();
 
-  return Ty->getAsFunctionType();
+  return Ty->getAs<FunctionType>();
 }
 
 // FIXME: We should provide an abstraction around a method or function
@@ -124,11 +124,11 @@ static bool isFunctionOrMethodVariadic(const Decl *d) {
 }
 
 static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
-  const ObjCObjectPointerType *PT = T->getAsObjCObjectPointerType();
+  const ObjCObjectPointerType *PT = T->getAs<ObjCObjectPointerType>();
   if (!PT)
     return false;
 
-  const ObjCInterfaceType *ClsT =PT->getPointeeType()->getAsObjCInterfaceType();
+  const ObjCInterfaceType *ClsT =PT->getPointeeType()->getAs<ObjCInterfaceType>();
   if (!ClsT)
     return false;
 
@@ -750,7 +750,7 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(d)) {
-    const FunctionType *FT = FD->getType()->getAsFunctionType();
+    const FunctionType *FT = FD->getType()->getAs<FunctionType>();
     assert(FT && "FunctionDecl has non-function type?");
 
     if (isa<FunctionNoProtoType>(FT)) {
@@ -775,7 +775,7 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     QualType Ty = V->getType();
     if (Ty->isBlockPointerType() || Ty->isFunctionPointerType()) {
       const FunctionType *FT = Ty->isFunctionPointerType() ? getFunctionType(d)
-        : Ty->getAs<BlockPointerType>()->getPointeeType()->getAsFunctionType();
+        : Ty->getAs<BlockPointerType>()->getPointeeType()->getAs<FunctionType>();
       if (!cast<FunctionProtoType>(FT)->isVariadic()) {
         int m = Ty->isFunctionPointerType() ? 0 : 1;
         S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic) << m;
@@ -1549,7 +1549,7 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (!OldTy->getAsBuiltinType() && !OldTy->isComplexType())
+  if (!OldTy->getAs<BuiltinType>() && !OldTy->isComplexType())
     S.Diag(Attr.getLoc(), diag::err_mode_not_primitive);
   else if (IntegerMode) {
     if (!OldTy->isIntegralType())
@@ -1746,7 +1746,7 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
   }
 
   if (!(S.Context.isObjCNSObjectType(RetTy) || RetTy->getAs<PointerType>()
-        || RetTy->getAsObjCObjectPointerType())) {
+        || RetTy->getAs<ObjCObjectPointerType>())) {
     SourceLocation L = Attr.getLoc();
     S.Diag(d->getLocStart(), diag::warn_ns_attribute_wrong_return_type)
       << SourceRange(L, L) << Attr.getName();

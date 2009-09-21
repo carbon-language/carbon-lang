@@ -487,7 +487,7 @@ const char *ASTContext::getCommentForDecl(const Decl *D) {
 /// getFloatTypeSemantics - Return the APFloat 'semantics' for the specified
 /// scalar floating point type.
 const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
-  const BuiltinType *BT = T->getAsBuiltinType();
+  const BuiltinType *BT = T->getAs<BuiltinType>();
   assert(BT && "Not a floating point type!");
   switch (BT->getKind()) {
   default: assert(0 && "Not a floating point type!");
@@ -782,7 +782,7 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) {
   unsigned ABIAlign = getTypeAlign(T);
 
   // Double and long long should be naturally aligned if possible.
-  if (const ComplexType* CT = T->getAsComplexType())
+  if (const ComplexType* CT = T->getAs<ComplexType>())
     T = CT->getElementType().getTypePtr();
   if (T->isSpecificBuiltinType(BuiltinType::Double) ||
       T->isSpecificBuiltinType(BuiltinType::LongLong))
@@ -1120,10 +1120,10 @@ QualType ASTContext::getNoReturnType(QualType T) {
   if (!T->isFunctionType())
     assert(0 && "can't noreturn qualify non-pointer to function or block type");
 
-  if (const FunctionNoProtoType *F = T->getAsFunctionNoProtoType()) {
+  if (const FunctionNoProtoType *F = T->getAs<FunctionNoProtoType>()) {
     return getFunctionNoProtoType(F->getResultType(), true);
   }
-  const FunctionProtoType *F = T->getAsFunctionProtoType();
+  const FunctionProtoType *F = T->getAs<FunctionProtoType>();
   return getFunctionType(F->getResultType(), F->arg_type_begin(),
                          F->getNumArgs(), F->isVariadic(), F->getTypeQuals(),
                          F->hasExceptionSpec(), F->hasAnyExceptionSpec(),
@@ -1887,7 +1887,7 @@ ASTContext::getTypenameType(NestedNameSpecifier *NNS,
     QualType CanonType = getCanonicalType(QualType(TemplateId, 0));
     if (CanonNNS != NNS || CanonType != QualType(TemplateId, 0)) {
       const TemplateSpecializationType *CanonTemplateId
-        = CanonType->getAsTemplateSpecializationType();
+        = CanonType->getAs<TemplateSpecializationType>();
       assert(CanonTemplateId &&
              "Canonical type must also be a template specialization type");
       Canon = getTypenameType(CanonNNS, CanonTemplateId);
@@ -2454,11 +2454,11 @@ ASTContext::getConstantArrayElementCount(const ConstantArrayType *CA)  const {
 /// getFloatingRank - Return a relative rank for floating point types.
 /// This routine will assert if passed a built-in type that isn't a float.
 static FloatingRank getFloatingRank(QualType T) {
-  if (const ComplexType *CT = T->getAsComplexType())
+  if (const ComplexType *CT = T->getAs<ComplexType>())
     return getFloatingRank(CT->getElementType());
 
-  assert(T->getAsBuiltinType() && "getFloatingRank(): not a floating type");
-  switch (T->getAsBuiltinType()->getKind()) {
+  assert(T->getAs<BuiltinType>() && "getFloatingRank(): not a floating type");
+  switch (T->getAs<BuiltinType>()->getKind()) {
   default: assert(0 && "getFloatingRank(): not a floating type");
   case BuiltinType::Float:      return FloatRank;
   case BuiltinType::Double:     return DoubleRank;
@@ -2911,7 +2911,7 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
 ///
 void ASTContext::getLegacyIntegralTypeEncoding (QualType &PointeeTy) const {
   if (isa<TypedefType>(PointeeTy.getTypePtr())) {
-    if (const BuiltinType *BT = PointeeTy->getAsBuiltinType()) {
+    if (const BuiltinType *BT = PointeeTy->getAs<BuiltinType>()) {
       if (BT->getKind() == BuiltinType::ULong &&
           ((const_cast<ASTContext *>(this))->getIntWidth(PointeeTy) == 32))
         PointeeTy = UnsignedIntTy;
@@ -2949,7 +2949,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             const FieldDecl *FD,
                                             bool OutermostType,
                                             bool EncodingProperty) {
-  if (const BuiltinType *BT = T->getAsBuiltinType()) {
+  if (const BuiltinType *BT = T->getAs<BuiltinType>()) {
     if (FD && FD->isBitField())
       return EncodeBitField(this, S, FD);
     char encoding;
@@ -2986,7 +2986,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
 
-  if (const ComplexType *CT = T->getAsComplexType()) {
+  if (const ComplexType *CT = T->getAs<ComplexType>()) {
     S += 'j';
     getObjCEncodingForTypeImpl(CT->getElementType(), S, false, false, 0, false,
                                false);
@@ -3085,7 +3085,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
 
-  if (T->getAsFunctionType()) {
+  if (T->getAs<FunctionType>()) {
     S += '?';
     return;
   }
@@ -3141,7 +3141,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
 
   if (T->isObjCInterfaceType()) {
     // @encode(class_name)
-    ObjCInterfaceDecl *OI = T->getAsObjCInterfaceType()->getDecl();
+    ObjCInterfaceDecl *OI = T->getAs<ObjCInterfaceType>()->getDecl();
     S += '{';
     const IdentifierInfo *II = OI->getIdentifier();
     S += II->getName();
@@ -3160,7 +3160,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
 
-  if (const ObjCObjectPointerType *OPT = T->getAsObjCObjectPointerType()) {
+  if (const ObjCObjectPointerType *OPT = T->getAs<ObjCObjectPointerType>()) {
     if (OPT->isObjCIdType()) {
       S += '@';
       return;
@@ -3250,7 +3250,7 @@ void ASTContext::setObjCIdType(QualType T) {
 void ASTContext::setObjCSelType(QualType T) {
   ObjCSelType = T;
 
-  const TypedefType *TT = T->getAsTypedefType();
+  const TypedefType *TT = T->getAs<TypedefType>();
   if (!TT)
     return;
   TypedefDecl *TD = TT->getDecl();
@@ -3462,7 +3462,7 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
     return true;
 
   if (const ObjCObjectPointerType *lhsQID = lhs->getAsObjCQualifiedIdType()) {
-    const ObjCObjectPointerType *rhsOPT = rhs->getAsObjCObjectPointerType();
+    const ObjCObjectPointerType *rhsOPT = rhs->getAs<ObjCObjectPointerType>();
 
     if (!rhsOPT) return false;
 
@@ -3635,8 +3635,8 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
 
 bool ASTContext::areComparableObjCPointerTypes(QualType LHS, QualType RHS) {
   // get the "pointed to" types
-  const ObjCObjectPointerType *LHSOPT = LHS->getAsObjCObjectPointerType();
-  const ObjCObjectPointerType *RHSOPT = RHS->getAsObjCObjectPointerType();
+  const ObjCObjectPointerType *LHSOPT = LHS->getAs<ObjCObjectPointerType>();
+  const ObjCObjectPointerType *RHSOPT = RHS->getAs<ObjCObjectPointerType>();
 
   if (!LHSOPT || !RHSOPT)
     return false;
@@ -3654,8 +3654,8 @@ bool ASTContext::typesAreCompatible(QualType LHS, QualType RHS) {
 }
 
 QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
-  const FunctionType *lbase = lhs->getAsFunctionType();
-  const FunctionType *rbase = rhs->getAsFunctionType();
+  const FunctionType *lbase = lhs->getAs<FunctionType>();
+  const FunctionType *rbase = rhs->getAs<FunctionType>();
   const FunctionProtoType *lproto = dyn_cast<FunctionProtoType>(lbase);
   const FunctionProtoType *rproto = dyn_cast<FunctionProtoType>(rbase);
   bool allLTypes = true;
@@ -3847,11 +3847,11 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (LHSClass != RHSClass) {
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type.
-    if (const EnumType* ETy = LHS->getAsEnumType()) {
+    if (const EnumType* ETy = LHS->getAs<EnumType>()) {
       if (ETy->getDecl()->getIntegerType() == RHSCan.getUnqualifiedType())
         return RHS;
     }
-    if (const EnumType* ETy = RHS->getAsEnumType()) {
+    if (const EnumType* ETy = RHS->getAs<EnumType>()) {
       if (ETy->getDecl()->getIntegerType() == LHSCan.getUnqualifiedType())
         return LHS;
     }
@@ -3963,15 +3963,15 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     return QualType();
   case Type::Vector:
     // FIXME: The merged type should be an ExtVector!
-    if (areCompatVectorTypes(LHS->getAsVectorType(), RHS->getAsVectorType()))
+    if (areCompatVectorTypes(LHS->getAs<VectorType>(), RHS->getAs<VectorType>()))
       return LHS;
     return QualType();
   case Type::ObjCInterface: {
     // Check if the interfaces are assignment compatible.
     // FIXME: This should be type compatibility, e.g. whether
     // "LHS x; RHS x;" at global scope is legal.
-    const ObjCInterfaceType* LHSIface = LHS->getAsObjCInterfaceType();
-    const ObjCInterfaceType* RHSIface = RHS->getAsObjCInterfaceType();
+    const ObjCInterfaceType* LHSIface = LHS->getAs<ObjCInterfaceType>();
+    const ObjCInterfaceType* RHSIface = RHS->getAs<ObjCInterfaceType>();
     if (LHSIface && RHSIface &&
         canAssignObjCInterfaces(LHSIface, RHSIface))
       return LHS;
@@ -3979,8 +3979,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     return QualType();
   }
   case Type::ObjCObjectPointer: {
-    if (canAssignObjCInterfaces(LHS->getAsObjCObjectPointerType(),
-                                RHS->getAsObjCObjectPointerType()))
+    if (canAssignObjCInterfaces(LHS->getAs<ObjCObjectPointerType>(),
+                                RHS->getAs<ObjCObjectPointerType>()))
       return LHS;
 
     return QualType();
@@ -4040,9 +4040,9 @@ unsigned ASTContext::getIntWidth(QualType T) {
 
 QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
   assert(T->isSignedIntegerType() && "Unexpected type");
-  if (const EnumType* ETy = T->getAsEnumType())
+  if (const EnumType* ETy = T->getAs<EnumType>())
     T = ETy->getDecl()->getIntegerType();
-  const BuiltinType* BTy = T->getAsBuiltinType();
+  const BuiltinType* BTy = T->getAs<BuiltinType>();
   assert (BTy && "Unexpected signed integer type");
   switch (BTy->getKind()) {
   case BuiltinType::Char_S:

@@ -1012,7 +1012,7 @@ public:
   unsigned getMinRequiredArguments() const;
 
   QualType getResultType() const {
-    return getType()->getAsFunctionType()->getResultType();
+    return getType()->getAs<FunctionType>()->getResultType();
   }
   StorageClass getStorageClass() const { return StorageClass(SClass); }
   void setStorageClass(StorageClass SC) { SClass = SC; }

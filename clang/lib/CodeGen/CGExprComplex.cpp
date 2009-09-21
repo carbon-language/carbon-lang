@@ -181,13 +181,13 @@ public:
   }
   ComplexPairTy VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
     assert(E->getType()->isAnyComplexType() && "Expected complex type!");
-    QualType Elem = E->getType()->getAsComplexType()->getElementType();
+    QualType Elem = E->getType()->getAs<ComplexType>()->getElementType();
     llvm::Constant *Null = llvm::Constant::getNullValue(CGF.ConvertType(Elem));
     return ComplexPairTy(Null, Null);
   }
   ComplexPairTy VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
     assert(E->getType()->isAnyComplexType() && "Expected complex type!");
-    QualType Elem = E->getType()->getAsComplexType()->getElementType();
+    QualType Elem = E->getType()->getAs<ComplexType>()->getElementType();
     llvm::Constant *Null =
                        llvm::Constant::getNullValue(CGF.ConvertType(Elem));
     return ComplexPairTy(Null, Null);
@@ -313,7 +313,7 @@ void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val, llvm::Value *Ptr,
 ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
   CGF.ErrorUnsupported(E, "complex expression");
   const llvm::Type *EltTy =
-    CGF.ConvertType(E->getType()->getAsComplexType()->getElementType());
+    CGF.ConvertType(E->getType()->getAs<ComplexType>()->getElementType());
   llvm::Value *U = llvm::UndefValue::get(EltTy);
   return ComplexPairTy(U, U);
 }
@@ -342,8 +342,8 @@ ComplexPairTy ComplexExprEmitter::EmitComplexToComplexCast(ComplexPairTy Val,
                                                            QualType SrcType,
                                                            QualType DestType) {
   // Get the src/dest element type.
-  SrcType = SrcType->getAsComplexType()->getElementType();
-  DestType = DestType->getAsComplexType()->getElementType();
+  SrcType = SrcType->getAs<ComplexType>()->getElementType();
+  DestType = DestType->getAs<ComplexType>()->getElementType();
 
   // C99 6.3.1.6: When a value of complex type is converted to another
   // complex type, both the real and imaginary parts follow the conversion
@@ -365,7 +365,7 @@ ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
   llvm::Value *Elt = CGF.EmitScalarExpr(Op);
 
   // Convert the input element to the element type of the complex.
-  DestTy = DestTy->getAsComplexType()->getElementType();
+  DestTy = DestTy->getAs<ComplexType>()->getElementType();
   Elt = CGF.EmitScalarConversion(Elt, Op->getType(), DestTy);
 
   // Return (realval, 0).
@@ -386,7 +386,7 @@ ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     // Add the inc/dec to the real part.
     NextVal = Builder.CreateAdd(InVal.first, NextVal, isInc ? "inc" : "dec");
   } else {
-    QualType ElemTy = E->getType()->getAsComplexType()->getElementType();
+    QualType ElemTy = E->getType()->getAs<ComplexType>()->getElementType();
     llvm::APFloat FVal(CGF.getContext().getFloatTypeSemantics(ElemTy), 1);
     if (!isInc)
       FVal.changeSign();
@@ -526,7 +526,7 @@ ComplexPairTy ComplexExprEmitter::EmitBinDiv(const BinOpInfo &Op) {
     llvm::Value *Tmp8 = Builder.CreateMul(LHSr, RHSi, "tmp"); // a*d
     llvm::Value *Tmp9 = Builder.CreateSub(Tmp7, Tmp8, "tmp"); // bc-ad
 
-    if (Op.Ty->getAsComplexType()->getElementType()->isUnsignedIntegerType()) {
+    if (Op.Ty->getAs<ComplexType>()->getElementType()->isUnsignedIntegerType()) {
       DSTr = Builder.CreateUDiv(Tmp3, Tmp6, "tmp");
       DSTi = Builder.CreateUDiv(Tmp9, Tmp6, "tmp");
     } else {
@@ -701,7 +701,7 @@ ComplexPairTy ComplexExprEmitter::VisitInitListExpr(InitListExpr *E) {
     return Visit(E->getInit(0));
 
   // Empty init list intializes to null
-  QualType Ty = E->getType()->getAsComplexType()->getElementType();
+  QualType Ty = E->getType()->getAs<ComplexType>()->getElementType();
   const llvm::Type* LTy = CGF.ConvertType(Ty);
   llvm::Value* zeroConstant = llvm::Constant::getNullValue(LTy);
   return ComplexPairTy(zeroConstant, zeroConstant);
@@ -714,7 +714,7 @@ ComplexPairTy ComplexExprEmitter::VisitVAArgExpr(VAArgExpr *E) {
   if (!ArgPtr) {
     CGF.ErrorUnsupported(E, "complex va_arg expression");
     const llvm::Type *EltTy =
-      CGF.ConvertType(E->getType()->getAsComplexType()->getElementType());
+      CGF.ConvertType(E->getType()->getAs<ComplexType>()->getElementType());
     llvm::Value *U = llvm::UndefValue::get(EltTy);
     return ComplexPairTy(U, U);
   }

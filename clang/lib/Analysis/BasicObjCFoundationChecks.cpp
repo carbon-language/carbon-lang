@@ -38,7 +38,7 @@ static const ObjCInterfaceType* GetReceiverType(const ObjCMessageExpr* ME) {
     return NULL;
 
   if (const ObjCObjectPointerType *PT =
-      Receiver->getType()->getAsObjCObjectPointerType())
+      Receiver->getType()->getAs<ObjCObjectPointerType>())
     return PT->getInterfaceType();
 
   return NULL;

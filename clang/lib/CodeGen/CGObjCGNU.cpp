@@ -1688,10 +1688,10 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
         // All other types should be Objective-C interface pointer types.
         const ObjCObjectPointerType *OPT =
-          CatchDecl->getType()->getAsObjCObjectPointerType();
+          CatchDecl->getType()->getAs<ObjCObjectPointerType>();
         assert(OPT && "Invalid @catch type.");
         const ObjCInterfaceType *IT =
-          OPT->getPointeeType()->getAsObjCInterfaceType();
+          OPT->getPointeeType()->getAs<ObjCInterfaceType>();
         assert(IT && "Invalid @catch type.");
         llvm::Value *EHType =
           MakeConstantString(IT->getDecl()->getNameAsString());
@@ -1927,7 +1927,7 @@ LValue CGObjCGNU::EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                        llvm::Value *BaseValue,
                                        const ObjCIvarDecl *Ivar,
                                        unsigned CVRQualifiers) {
-  const ObjCInterfaceDecl *ID = ObjectTy->getAsObjCInterfaceType()->getDecl();
+  const ObjCInterfaceDecl *ID = ObjectTy->getAs<ObjCInterfaceType>()->getDecl();
   return EmitValueForIvarAtOffset(CGF, ID, BaseValue, Ivar, CVRQualifiers,
                                   EmitIvarOffset(CGF, ID, Ivar));
 }

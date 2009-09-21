@@ -811,7 +811,7 @@ public:
   QualType getThisType(ASTContext &C) const;
 
   unsigned getTypeQualifiers() const {
-    return getType()->getAsFunctionProtoType()->getTypeQuals();
+    return getType()->getAs<FunctionProtoType>()->getTypeQuals();
   }
 
   // Implement isa/cast/dyncast/etc.
@@ -1312,7 +1312,7 @@ public:
   /// getConversionType - Returns the type that this conversion
   /// function is converting to.
   QualType getConversionType() const {
-    return getType()->getAsFunctionType()->getResultType();
+    return getType()->getAs<FunctionType>()->getResultType();
   }
 
   // Implement isa/cast/dyncast/etc.

@@ -384,8 +384,8 @@ public:
   // Type Predicates: Check to see if this type is structurally the specified
   // type, ignoring typedefs and qualifiers.
   bool isFunctionType() const;
-  bool isFunctionNoProtoType() const { return getAsFunctionNoProtoType() != 0; }
-  bool isFunctionProtoType() const { return getAsFunctionProtoType() != 0; }
+  bool isFunctionNoProtoType() const { return getAs<FunctionNoProtoType>(); }
+  bool isFunctionProtoType() const { return getAs<FunctionProtoType>(); }
   bool isPointerType() const;
   bool isAnyPointerType() const;   // Any C pointer or ObjC object pointer
   bool isBlockPointerType() const;
@@ -440,35 +440,23 @@ public:
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs and qualifiers, and return a pointer to
   // the best type we can.
-  const BuiltinType *getAsBuiltinType() const;
-  const FunctionType *getAsFunctionType() const;
-  const FunctionNoProtoType *getAsFunctionNoProtoType() const;
-  const FunctionProtoType *getAsFunctionProtoType() const;
   const RecordType *getAsStructureType() const;
   /// NOTE: getAs*ArrayType are methods on ASTContext.
-  const TypedefType *getAsTypedefType() const;
   const RecordType *getAsUnionType() const;
-  const EnumType *getAsEnumType() const;
-  const VectorType *getAsVectorType() const; // GCC vector type.
-  const ComplexType *getAsComplexType() const;
   const ComplexType *getAsComplexIntegerType() const; // GCC complex int type.
-  const ExtVectorType *getAsExtVectorType() const; // Extended vector type.
-  const ObjCObjectPointerType *getAsObjCObjectPointerType() const;
   // The following is a convenience method that returns an ObjCObjectPointerType
   // for object declared using an interface.
   const ObjCObjectPointerType *getAsObjCInterfacePointerType() const;
   const ObjCObjectPointerType *getAsObjCQualifiedIdType() const;
-  const ObjCInterfaceType *getAsObjCInterfaceType() const;
   const ObjCInterfaceType *getAsObjCQualifiedInterfaceType() const;
-  const TemplateTypeParmType *getAsTemplateTypeParmType() const;
   const CXXRecordDecl *getCXXRecordDeclForPointerType() const;
 
   // Member-template getAs<specific type>'.  This scheme will eventually
   // replace the specific getAsXXXX methods above.
+  //
+  // There are some specializations of this member template listed
+  // immediately following this class.
   template <typename T> const T *getAs() const;
-
-  const TemplateSpecializationType *
-    getAsTemplateSpecializationType() const;
 
   /// getAsPointerToObjCInterfaceType - If this is a pointer to an ObjC
   /// interface, return the interface type, otherwise return null.
@@ -521,6 +509,20 @@ public:
                                    const PrintingPolicy &Policy) const = 0;
   static bool classof(const Type *) { return true; }
 };
+
+template <> inline const TypedefType *Type::getAs() const {
+  return dyn_cast<TypedefType>(this);
+}
+
+// We can do canonical leaf types faster, because we don't have to
+// worry about preserving child type decoration.
+#define TYPE(Class, Base)
+#define LEAF_TYPE(Class) \
+template <> inline const Class##Type *Type::getAs() const { \
+  return dyn_cast<Class##Type>(CanonicalType.getUnqualifiedType()); \
+}
+#include "clang/AST/TypeNodes.def"
+
 
 /// ExtQualType - TR18037 (C embedded extensions) 6.2.5p26
 /// This supports all kinds of type attributes; including,
@@ -2155,7 +2157,7 @@ public:
   QualType getPointeeType() const { return PointeeType; }
 
   const ObjCInterfaceType *getInterfaceType() const {
-    return PointeeType->getAsObjCInterfaceType();
+    return PointeeType->getAs<ObjCInterfaceType>();
   }
   /// getInterfaceDecl - returns an interface decl for user-defined types.
   ObjCInterfaceDecl *getInterfaceDecl() const {
@@ -2233,7 +2235,7 @@ inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
       return AT->getElementType().getObjCGCAttr();
   if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CT))
     return EXTQT->getObjCGCAttr();
-  if (const ObjCObjectPointerType *PT = CT->getAsObjCObjectPointerType())
+  if (const ObjCObjectPointerType *PT = CT->getAs<ObjCObjectPointerType>())
     return PT->getPointeeType().getObjCGCAttr();
   // We most look at all pointer types, not just pointer to interface types.
   if (const PointerType *PT = CT->getAs<PointerType>())
@@ -2246,9 +2248,9 @@ inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
 inline bool QualType::getNoReturnAttr() const {
   QualType CT = getTypePtr()->getCanonicalTypeInternal();
   if (const PointerType *PT = getTypePtr()->getAs<PointerType>()) {
-    if (const FunctionType *FT = PT->getPointeeType()->getAsFunctionType())
+    if (const FunctionType *FT = PT->getPointeeType()->getAs<FunctionType>())
       return FT->getNoReturnAttr();
-  } else if (const FunctionType *FT = getTypePtr()->getAsFunctionType())
+  } else if (const FunctionType *FT = getTypePtr()->getAs<FunctionType>())
     return FT->getNoReturnAttr();
 
   return false;
@@ -2295,12 +2297,9 @@ inline QualType QualType::getNonReferenceType() const {
     return *this;
 }
 
-inline const TypedefType* Type::getAsTypedefType() const {
-  return dyn_cast<TypedefType>(this);
-}
 inline const ObjCInterfaceType *Type::getAsPointerToObjCInterfaceType() const {
   if (const PointerType *PT = getAs<PointerType>())
-    return PT->getPointeeType()->getAsObjCInterfaceType();
+    return PT->getPointeeType()->getAs<ObjCInterfaceType>();
   return 0;
 }
 
@@ -2376,22 +2375,22 @@ inline bool Type::isObjCInterfaceType() const {
   return isa<ObjCInterfaceType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isObjCQualifiedIdType() const {
-  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
+  if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>())
     return OPT->isObjCQualifiedIdType();
   return false;
 }
 inline bool Type::isObjCQualifiedClassType() const {
-  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
+  if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>())
     return OPT->isObjCQualifiedClassType();
   return false;
 }
 inline bool Type::isObjCIdType() const {
-  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
+  if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>())
     return OPT->isObjCIdType();
   return false;
 }
 inline bool Type::isObjCClassType() const {
-  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
+  if (const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>())
     return OPT->isObjCClassType();
   return false;
 }
@@ -2403,7 +2402,7 @@ inline bool Type::isTemplateTypeParmType() const {
 }
 
 inline bool Type::isSpecificBuiltinType(unsigned K) const {
-  if (const BuiltinType *BT = getAsBuiltinType())
+  if (const BuiltinType *BT = getAs<BuiltinType>())
     if (BT->getKind() == (BuiltinType::Kind) K)
       return true;
   return false;

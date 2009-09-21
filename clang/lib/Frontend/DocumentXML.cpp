@@ -161,7 +161,7 @@ void DocumentXML::finalize() {
     if (const TagDecl *TD = dyn_cast<TagDecl>(i->first))
       addAttribute("type", getPrefixedId(BasicTypes[TD->getTypeForDecl()], ID_NORMAL));
     else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(i->first))
-      addAttribute("type", getPrefixedId(BasicTypes[FD->getType()->getAsFunctionType()], ID_NORMAL));
+      addAttribute("type", getPrefixedId(BasicTypes[FD->getType()->getAs<FunctionType>()], ID_NORMAL));
 
     if (const DeclContext* parent = i->first->getParent())
       addAttribute("context", parent);

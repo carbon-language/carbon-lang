@@ -487,7 +487,7 @@ static bool EvaluateVector(const Expr* E, APValue& Result, EvalInfo &Info) {
 }
 
 APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
-  const VectorType *VTy = E->getType()->getAsVectorType();
+  const VectorType *VTy = E->getType()->getAs<VectorType>();
   QualType EltTy = VTy->getElementType();
   unsigned NElts = VTy->getNumElements();
   unsigned EltWidth = Info.Ctx.getTypeSize(EltTy);
@@ -566,7 +566,7 @@ VectorExprEvaluator::VisitCompoundLiteralExpr(const CompoundLiteralExpr *E) {
 
 APValue
 VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
-  const VectorType *VT = E->getType()->getAsVectorType();
+  const VectorType *VT = E->getType()->getAs<VectorType>();
   unsigned NumInits = E->getNumInits();
   unsigned NumElements = VT->getNumElements();
 
@@ -599,7 +599,7 @@ VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
 APValue
 VectorExprEvaluator::GetZeroVector(QualType T) {
-  const VectorType *VT = T->getAsVectorType();
+  const VectorType *VT = T->getAs<VectorType>();
   QualType EltTy = VT->getElementType();
   APValue ZeroElement;
   if (EltTy->isIntegerType())
@@ -1575,7 +1575,7 @@ public:
 
   APValue VisitCastExpr(CastExpr *E) {
     Expr* SubExpr = E->getSubExpr();
-    QualType EltType = E->getType()->getAsComplexType()->getElementType();
+    QualType EltType = E->getType()->getAs<ComplexType>()->getElementType();
     QualType SubType = SubExpr->getType();
 
     if (SubType->isRealFloatingType()) {
@@ -1612,7 +1612,7 @@ public:
         Zero = 0;
         return APValue(Result, Zero);
       }
-    } else if (const ComplexType *CT = SubType->getAsComplexType()) {
+    } else if (const ComplexType *CT = SubType->getAs<ComplexType>()) {
       APValue Src;
 
       if (!EvaluateComplex(SubExpr, Src, Info))
