@@ -126,7 +126,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                  AST->getSourceManager(), HeaderInfo));
   Preprocessor &PP = *AST->PP.get();
 
-  PP.setPredefines(Predefines);
+  PP.setPredefines(Reader->getSuggestedPredefines());
   PP.setCounterValue(Counter);
   Reader->setPreprocessor(PP);
 
