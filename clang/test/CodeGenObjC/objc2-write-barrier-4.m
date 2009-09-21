@@ -1,5 +1,6 @@
 // RUN: clang-cc -triple x86_64-apple-darwin10 -fobjc-gc -emit-llvm -o %t %s &&
-// RUN: grep objc_assign_strongCast %t | count 4 &&
+// RUN: grep objc_assign_global %t | count 3 &&
+// RUN: grep objc_assign_strongCast %t | count 2 &&
 // RUN: true
 
 @interface A

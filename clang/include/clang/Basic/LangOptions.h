@@ -147,7 +147,7 @@ public:
 
     OverflowChecking = 0;
     ObjCGCBitmapPrint = 0;
-    ObjCNewGCAPI = 0;
+    ObjCNewGCAPI = 1;
 
     InstantiationDepth = 99;
 
