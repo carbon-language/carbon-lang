@@ -106,9 +106,11 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
     return true;
   }
   PARSE_LANGOPT_BENIGN(getVisibilityMode());
+  PARSE_LANGOPT_IMPORTANT(getStackProtectorMode(),
+                          diag::warn_pch_stack_protector);
   PARSE_LANGOPT_BENIGN(InstantiationDepth);
   PARSE_LANGOPT_IMPORTANT(OpenCL, diag::warn_pch_opencl);
-  PARSE_LANGOPT_IMPORTANT(ElideConstructors, diag::warn_elide_constructors);
+  PARSE_LANGOPT_IMPORTANT(ElideConstructors, diag::warn_pch_elide_constructors);
 #undef PARSE_LANGOPT_IRRELEVANT
 #undef PARSE_LANGOPT_BENIGN
 
@@ -1719,6 +1721,9 @@ bool PCHReader::ParseLanguageOptions(
     LangOpts.setGCMode((LangOptions::GCMode)Record[Idx]);
     ++Idx;
     LangOpts.setVisibilityMode((LangOptions::VisibilityMode)Record[Idx]);
+    ++Idx;
+    LangOpts.setStackProtectorMode((LangOptions::StackProtectorMode)
+                                   Record[Idx]);
     ++Idx;
     PARSE_LANGOPT(InstantiationDepth);
     PARSE_LANGOPT(OpenCL);

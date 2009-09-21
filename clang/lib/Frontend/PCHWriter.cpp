@@ -625,6 +625,7 @@ void PCHWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
                                            // unsigned type
   Record.push_back(LangOpts.getGCMode());
   Record.push_back(LangOpts.getVisibilityMode());
+  Record.push_back(LangOpts.getStackProtectorMode());
   Record.push_back(LangOpts.InstantiationDepth);
   Record.push_back(LangOpts.OpenCL);
   Record.push_back(LangOpts.ElideConstructors);
