@@ -64,8 +64,10 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
   }
 
   CodeCompleteConsumer *CodeCompleter = 0;
-  if (CreateCodeCompleter)
+  if (CreateCodeCompleter) {
     CodeCompleter = CreateCodeCompleter(S, CreateCodeCompleterData);
+    S.setCodeCompleteConsumer(CodeCompleter);
+  }
   
   Parser::DeclGroupPtrTy ADecl;
 

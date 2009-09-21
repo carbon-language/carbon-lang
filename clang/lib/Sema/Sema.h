@@ -3628,12 +3628,7 @@ public:
 
   /// \name Code completion
   //@{
-private:
-  friend class CodeCompleteConsumer;
-  
   void setCodeCompleteConsumer(CodeCompleteConsumer *CCC);
-  
-public:
   virtual void CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *Base,
                                                SourceLocation OpLoc,
                                                bool IsArrow);

@@ -1309,19 +1309,7 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
     SetCommentRetentionState(PP->getCommentRetentionState());
     return true;  // Have a token.
   }
-
-  if (IsEofCodeCompletion) {
-    // We're at the end of the file, but we've been asked to conside the
-    // end of the file to be a code-completion token. Return the
-    // code-completion token.
-    Result.startToken();
-    FormTokenWithChars(Result, CurPtr, tok::code_completion);
-
-    // Only do the eof -> code_completion translation once.
-    IsEofCodeCompletion = false;
-    return true;
-  }
-  
+ 
   // If we are in raw mode, return this event as an EOF token.  Let the caller
   // that put us in raw mode handle the event.
   if (isLexingRawMode()) {
@@ -1331,8 +1319,21 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
     return true;
   }
 
-  // Otherwise, issue diagnostics for unterminated #if and missing newline.
+  // Otherwise, check if we are code-completing, then issue diagnostics for 
+  // unterminated #if and missing newline.
 
+  if (IsEofCodeCompletion) {
+    // We're at the end of the file, but we've been asked to conside the
+    // end of the file to be a code-completion token. Return the
+    // code-completion token.
+    Result.startToken();
+    FormTokenWithChars(Result, CurPtr, tok::code_completion);
+    
+    // Only do the eof -> code_completion translation once.
+    IsEofCodeCompletion = false;
+    return true;
+  }
+  
   // If we are in a #if directive, emit an error.
   while (!ConditionalStack.empty()) {
     PP->Diag(ConditionalStack.back().IfLoc,
