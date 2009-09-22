@@ -21,3 +21,9 @@ LINK_COMPONENTS := system support bitreader bitwriter
 USEDLIBS = clangDriver.a clangBasic.a
 
 include $(LEVEL)/Makefile.common
+
+# Translate make variable to define when building a "production" clang.
+ifdef CLANG_IS_PRODUCTION
+CPP.Defines += -DCLANG_IS_PRODUCTION
+endif
+

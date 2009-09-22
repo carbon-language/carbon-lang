@@ -115,7 +115,7 @@ public:
   Driver(const char *_Name, const char *_Dir,
          const char *_DefaultHostTriple,
          const char *_DefaultImageName,
-         Diagnostic &_Diags);
+         bool IsProduction, Diagnostic &_Diags);
   ~Driver();
 
   /// @name Accessors

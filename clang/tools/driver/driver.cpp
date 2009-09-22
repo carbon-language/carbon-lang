@@ -188,9 +188,14 @@ int main(int argc, const char **argv) {
 
   Diagnostic Diags(&DiagClient);
 
+#ifdef CLANG_IS_PRODUCTION
+  bool IsProduction = true;
+#else
+  bool IsProduction = false;
+#endif
   Driver TheDriver(Path.getBasename().c_str(), Path.getDirname().c_str(),
                    llvm::sys::getHostTriple().c_str(),
-                   "a.out", Diags);
+                   "a.out", IsProduction, Diags);
 
   llvm::OwningPtr<Compilation> C;
 
