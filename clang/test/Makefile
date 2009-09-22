@@ -8,8 +8,8 @@ else
 TESTDIRS ?= $(PROJ_SRC_DIR)
 endif
 
-# LIT2 wants objdir paths, so it will pick up the lit.site.cfg.
-LIT2_TESTDIRS := $(TESTDIRS:$(PROJ_SRC_DIR)%=$(PROJ_OBJ_DIR)%)
+# 'lit' wants objdir paths, so it will pick up the lit.site.cfg.
+TESTDIRS := $(TESTDIRS:$(PROJ_SRC_DIR)%=$(PROJ_OBJ_DIR)%)
 
 ifndef TESTARGS
 ifdef VERBOSE
@@ -25,20 +25,10 @@ else
   VGARG=
 endif
 
-ifndef LIT1
 all:: lit.site.cfg
 	@ echo '--- Running clang tests for $(TARGET_TRIPLE) ---'
 	@ $(LLVM_SRC_ROOT)/utils/lit/lit.py \
-	  $(TESTARGS) $(LIT2_TESTDIRS) $(VGARG)
-else
-all::
-	@ echo '--- Running clang tests for $(TARGET_TRIPLE) ---'
-	@ $(PROJ_SRC_DIR)/../utils/test/MultiTestRunner.py \
-	  --root $(PROJ_SRC_DIR) \
-	  --path $(ToolDir) \
-	  --path $(LLVM_SRC_ROOT)/test/Scripts \
 	  $(TESTARGS) $(TESTDIRS) $(VGARG)
-endif
 
 FORCE:
 
