@@ -46,7 +46,7 @@ class ASTRecordLayoutBuilder {
   /// Bases - base classes and their offsets from the record.
   BaseOffsetsTy Bases;
   
-  // VBases - virtual base classes and ehtir offsets from the record.
+  // VBases - virtual base classes and their offsets from the record.
   BaseOffsetsTy VBases;
 
   /// IndirectPrimaryBases - Virtual base classes, direct or indirect, that are
