@@ -2151,8 +2151,6 @@ static void ProcessASTInputFile(const std::string &InFile, ProgActions PA,
                                 const llvm::StringMap<bool> &Features,
                                 Diagnostic &Diags, FileManager &FileMgr,
                                 llvm::LLVMContext& Context) {
-  // FIXME: This is manufactoring its own diags and source manager, we should
-  // reuse ours.
   std::string Error;
   llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, Diags, FileMgr,
                                                         &Error));
