@@ -87,3 +87,5 @@ unknown_type t19(int* P) {   // expected-error {{unknown type name 'unknown_type
   P = P+1;  // no warning.
 }
 
+// missing ',' before '...'
+void t20(int i...) { } // expected-error {{requires a comma}}

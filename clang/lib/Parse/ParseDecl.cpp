@@ -2448,6 +2448,7 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 ///       parameter-type-list: [C99 6.7.5]
 ///         parameter-list
 ///         parameter-list ',' '...'
+/// [C++]   parameter-list '...'
 ///
 ///       parameter-list: [C99 6.7.5]
 ///         parameter-declaration
@@ -2647,7 +2648,21 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     }
 
     // If the next token is a comma, consume it and keep reading arguments.
-    if (Tok.isNot(tok::comma)) break;
+    if (Tok.isNot(tok::comma)) {
+      if (Tok.is(tok::ellipsis)) {
+        IsVariadic = true;
+        EllipsisLoc = ConsumeToken();     // Consume the ellipsis.
+        
+        if (!getLang().CPlusPlus) {
+          // We have ellipsis without a preceding ',', which is ill-formed
+          // in C. Complain and provide the fix.
+          Diag(EllipsisLoc, diag::err_missing_comma_before_ellipsis)
+            << CodeModificationHint::CreateInsertion(EllipsisLoc, ", ");
+        }
+      }
+      
+      break;
+    }
 
     // Consume the comma.
     ConsumeToken();
