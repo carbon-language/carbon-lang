@@ -503,6 +503,11 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
 #endif
       llvm_unreachable("An asserting value handle still pointed to this"
                        " value!");
+    case Tracking:
+      // Mark that this value has been deleted by setting it to an invalid Value
+      // pointer.
+      ThisNode->operator=(DenseMapInfo<Value *>::getTombstoneKey());
+      break;
     case Weak:
       // Weak just goes to null, which will unlink it from the list.
       ThisNode->operator=(0);
@@ -539,6 +544,14 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
     case Assert:
       // Asserting handle does not follow RAUW implicitly.
       break;
+    case Tracking:
+      // Tracking goes to new value like a WeakVH. Note that this may make it
+      // something incompatible with its templated type. We don't want to have a
+      // virtual (or inline) interface to handle this though, so instead we make
+      // the TrackingVH accessors guarantee that a client never seesl this
+      // value.
+
+      // FALLTHROUGH
     case Weak:
       // Weak goes to the new value, which will unlink it from Old's list.
       ThisNode->operator=(New);
