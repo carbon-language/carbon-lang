@@ -213,8 +213,9 @@ unsigned CodeGenFunction::getByRefValueLLVMField(const ValueDecl *VD) const {
 ///        void *__forwarding;
 ///        int32_t __flags;
 ///        int32_t __size;
-///        void *__copy_helper;
-///        void *__destroy_helper;
+///        void *__copy_helper;       // only if needed
+///        void *__destroy_helper;    // only if needed
+///        char padding[X];           // only if needed
 ///        T x;
 ///      } x
 ///
@@ -390,21 +391,6 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     DI->setLocation(D.getLocation());
     if (Target.useGlobalsForAutomaticVariables()) {
       DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(DeclPtr), &D);
-    } else if (isByRef) {
-      // FIXME: This code is broken and will not emit debug info for the
-      // variable. The right way to do this would be to tell LLVM that this is a
-      // byref pointer, and what the offset is. Unfortunately, right now it's
-      // not possible unless we create a DIType that corresponds to the byref
-      // struct.
-      /*
-      llvm::Value *Loc;
-      bool needsCopyDispose = BlockRequiresCopying(Ty);
-      Loc = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
-      Loc = Builder.CreateLoad(Loc, false);
-      Loc = Builder.CreateBitCast(Loc, DeclPtr->getType());
-      Loc = Builder.CreateStructGEP(Loc, needsCopyDispose*2+4, "x");
-      DI->EmitDeclareOfAutoVariable(&D, Loc, Builder);
-      */
     } else
       DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
   }

@@ -218,9 +218,12 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
         llvm::Value* Addr = Builder.CreateStructGEP(V, i+5, "tmp");
         NoteForHelper[helpersize].index = i+5;
-        NoteForHelper[helpersize].RequiresCopying = BlockRequiresCopying(VD->getType());
+        NoteForHelper[helpersize].RequiresCopying
+          = BlockRequiresCopying(VD->getType());
         NoteForHelper[helpersize].flag
-          = VD->getType()->isBlockPointerType() ? BLOCK_FIELD_IS_BLOCK : BLOCK_FIELD_IS_OBJECT;
+          = (VD->getType()->isBlockPointerType()
+             ? BLOCK_FIELD_IS_BLOCK
+             : BLOCK_FIELD_IS_OBJECT);
 
         if (LocalDeclMap[VD]) {
           if (BDRE->isByRef()) {
@@ -384,6 +387,10 @@ const llvm::Type *BlockModule::getGenericExtendedBlockLiteralType() {
                           GenericExtendedBlockLiteralType);
 
   return GenericExtendedBlockLiteralType;
+}
+
+bool BlockFunction::BlockRequiresCopying(QualType Ty) {
+  return CGM.BlockRequiresCopying(Ty);
 }
 
 RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {

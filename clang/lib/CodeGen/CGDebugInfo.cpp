@@ -918,7 +918,139 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
     return;
 
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(Decl->getLocation());
-  llvm::DIType Ty = getOrCreateType(Decl->getType(), Unit);
+  QualType Type = Decl->getType();
+  llvm::DIType Ty = getOrCreateType(Type, Unit);
+  if (Decl->hasAttr<BlocksAttr>()) {
+    llvm::DICompileUnit DefUnit;
+    unsigned Tag = llvm::dwarf::DW_TAG_structure_type;
+
+    llvm::SmallVector<llvm::DIDescriptor, 5> EltTys;
+
+    llvm::DIType FieldTy;
+
+    QualType FType;
+    uint64_t FieldSize, FieldOffset;
+    unsigned FieldAlign;
+
+    llvm::DIArray Elements;
+    llvm::DIType EltTy;
+    
+    // Build up structure for the byref.  See BuildByRefType.
+    FieldOffset = 0;
+    FType = M->getContext().getPointerType(M->getContext().VoidTy);
+    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+    FieldSize = M->getContext().getTypeSize(FType);
+    FieldAlign = M->getContext().getTypeAlign(FType);
+    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                             "__isa", DefUnit,
+                                             0, FieldSize, FieldAlign,
+                                             FieldOffset, 0, FieldTy);
+    EltTys.push_back(FieldTy);
+    FieldOffset += FieldSize;
+
+    FType = M->getContext().getPointerType(M->getContext().VoidTy);
+    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+    FieldSize = M->getContext().getTypeSize(FType);
+    FieldAlign = M->getContext().getTypeAlign(FType);
+    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                             "__forwarding", DefUnit,
+                                             0, FieldSize, FieldAlign,
+                                             FieldOffset, 0, FieldTy);
+    EltTys.push_back(FieldTy);
+    FieldOffset += FieldSize;
+
+    FType = M->getContext().getFixedWidthIntType(32, true); // Int32Ty;
+    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+    FieldSize = M->getContext().getTypeSize(FType);
+    FieldAlign = M->getContext().getTypeAlign(FType);
+    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                             "__flags", DefUnit,
+                                             0, FieldSize, FieldAlign,
+                                             FieldOffset, 0, FieldTy);
+    EltTys.push_back(FieldTy);
+    FieldOffset += FieldSize;
+
+    FType = M->getContext().getFixedWidthIntType(32, true); // Int32Ty;
+    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+    FieldSize = M->getContext().getTypeSize(FType);
+    FieldAlign = M->getContext().getTypeAlign(FType);
+    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                             "__size", DefUnit,
+                                             0, FieldSize, FieldAlign,
+                                             FieldOffset, 0, FieldTy);
+    EltTys.push_back(FieldTy);
+    FieldOffset += FieldSize;
+    
+    bool HasCopyAndDispose = M->BlockRequiresCopying(Type);
+    if (HasCopyAndDispose) {
+      FType = M->getContext().getPointerType(M->getContext().VoidTy);
+      FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+      FieldSize = M->getContext().getTypeSize(FType);
+      FieldAlign = M->getContext().getTypeAlign(FType);
+      FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                               "__copy_helper", DefUnit,
+                                               0, FieldSize, FieldAlign,
+                                               FieldOffset, 0, FieldTy);
+      EltTys.push_back(FieldTy);
+      FieldOffset += FieldSize;
+
+      FType = M->getContext().getPointerType(M->getContext().VoidTy);
+      FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+      FieldSize = M->getContext().getTypeSize(FType);
+      FieldAlign = M->getContext().getTypeAlign(FType);
+      FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                               "__destroy_helper", DefUnit,
+                                               0, FieldSize, FieldAlign,
+                                               FieldOffset, 0, FieldTy);
+      EltTys.push_back(FieldTy);
+      FieldOffset += FieldSize;
+    }
+    
+    unsigned Align = M->getContext().getDeclAlignInBytes(Decl);
+    if (Align > M->getContext().Target.getPointerAlign(0) / 8) {
+      unsigned AlignedOffsetInBytes
+        = llvm::RoundUpToAlignment(FieldOffset, Align);
+      unsigned NumPaddingBytes
+        = AlignedOffsetInBytes = FieldOffset;
+
+      if (NumPaddingBytes > 0) {
+        llvm::APInt pad(32, NumPaddingBytes);
+        FType = M->getContext().getConstantArrayType(M->getContext().CharTy,
+                                                     pad, ArrayType::Normal, 0);
+        FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+        FieldSize = M->getContext().getTypeSize(FType);
+        FieldAlign = M->getContext().getTypeAlign(FType);
+        FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member,
+                                                 Unit, "", DefUnit,
+                                                 0, FieldSize, FieldAlign,
+                                                 FieldOffset, 0, FieldTy);
+        EltTys.push_back(FieldTy);
+        FieldOffset += FieldSize;
+      }
+    }
+
+    FType = Type;
+    FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+    FieldSize = M->getContext().getTypeSize(FType);
+    FieldAlign = M->getContext().getTypeAlign(FType);
+    std::string Name = Decl->getNameAsString();
+    
+    FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
+                                             Name, DefUnit,
+                                             0, FieldSize, FieldAlign,
+                                             FieldOffset, 0, FieldTy);
+    EltTys.push_back(FieldTy);
+    FieldOffset += FieldSize;
+
+    Elements = DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
+
+    unsigned Flags = llvm::DIType::FlagBlockByrefStruct;
+
+    Ty = DebugFactory.CreateCompositeType(Tag, Unit, "",
+                                          llvm::DICompileUnit(),
+                                          0, FieldOffset, 0, 0, Flags,
+                                          llvm::DIType(), Elements);
+  }
 
   // Get location information.
   SourceManager &SM = M->getContext().getSourceManager();
