@@ -1037,9 +1037,6 @@ public:
   {
     llvm::Triple Triple(TripleStr);
 
-    DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
-                         "i64:32:32-f32:32:32-f64:32:32-"
-                         "v64:64:64-v128:128:128-a0:0:32");
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
 
@@ -1065,6 +1062,16 @@ public:
 
     if (Arch.startswith("thumb"))
       IsThumb = true;
+
+    if (IsThumb) {
+      DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
+                           "i64:64:64-f32:32:32-f64:64:64-"
+                           "v64:64:64-v128:128:128-a0:0:32");
+    } else {
+      DescriptionString = ("e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                           "i64:64:64-f32:32:32-f64:64:64-"
+                           "v64:64:64-v128:128:128-a0:0:64");
+    }
   }
   virtual const char *getABI() const { return ABI.c_str(); }
   virtual bool setABI(const std::string &Name) {
@@ -1077,6 +1084,16 @@ public:
     if (Name == "apcs-gnu") {
       DoubleAlign = LongLongAlign = 32;
       SizeType = UnsignedLong;
+
+      if (IsThumb) {
+        DescriptionString = ("e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-"
+                             "i64:32:32-f32:32:32-f64:32:32-"
+                             "v64:64:64-v128:128:128-a0:0:32");
+      } else {
+        DescriptionString = ("e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                             "i64:32:32-f32:32:32-f64:32:32-"
+                             "v64:64:64-v128:128:128-a0:0:64");
+      }
 
       // FIXME: Override "preferred align" for double and long long.
     } else if (Name == "aapcs") {
