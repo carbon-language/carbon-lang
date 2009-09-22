@@ -433,7 +433,7 @@ public:
   virtual void Destroy(ASTContext& C);
 
   bool isDynamicClass() const {
-    return Polymorphic || NumVBases!=0;
+    return Polymorphic || NumVBases != 0;
   }
 
   /// setBases - Sets the base classes of this struct or class.
