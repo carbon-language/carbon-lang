@@ -40,11 +40,11 @@ class ASTRecordLayoutBuilder {
   const CXXRecordDecl *PrimaryBase;
   bool PrimaryBaseWasVirtual;
 
-  llvm::SmallVector<const CXXRecordDecl *, 4> Bases;
-  llvm::SmallVector<uint64_t, 4> BaseOffsets;
-
-  llvm::SmallVector<const CXXRecordDecl *, 4> VBases;
-  llvm::SmallVector<uint64_t, 4> VBaseOffsets;
+  typedef llvm::SmallVector<std::pair<const CXXRecordDecl *, 
+                                      uint64_t>, 4> BaseOffsetsTy;
+  
+  BaseOffsetsTy Bases;
+  BaseOffsetsTy VBases;
 
   ASTRecordLayoutBuilder(ASTContext &Ctx);
 

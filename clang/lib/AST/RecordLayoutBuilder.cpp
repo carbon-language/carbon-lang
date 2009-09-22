@@ -198,8 +198,7 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
         // Mark it so we don't lay it out twice.
         mark.insert(Base);
         assert (IndirectPrimary.count(Base) && "IndirectPrimary was wrong");
-        VBases.push_back(Base);
-        VBaseOffsets.push_back(Offset);
+        VBases.push_back(std::make_pair(Base, Offset));
       } else if (IndirectPrimary.count(Base)) {
         // Someone else will eventually lay this out.
         ;
@@ -210,7 +209,7 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
         // Mark it so we don't lay it out twice.
         mark.insert(Base);
         LayoutVirtualBase(Base);
-        BaseOffset = *(VBaseOffsets.end()-1);
+        BaseOffset = VBases.back().second;
       }
     }
     if (Base->getNumVBases()) {
@@ -236,13 +235,10 @@ void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD,
   Size = (Size + (BaseAlign-1)) & ~(BaseAlign-1);
 
   // Add base class offsets.
-  if (IsVirtualBase) {
-    VBases.push_back(RD);
-    VBaseOffsets.push_back(Size);
-  } else {
-    Bases.push_back(RD);
-    BaseOffsets.push_back(Size);
-  }
+  if (IsVirtualBase) 
+    VBases.push_back(std::make_pair(RD, Size));
+  else
+    Bases.push_back(std::make_pair(RD, Size));
 
 #if 0
   // And now add offsets for all our primary virtual bases as well, so
@@ -469,11 +465,6 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
   // FIXME: IsPODForThePurposeOfLayout should be stored in the record layout.
   bool IsPODForThePurposeOfLayout = cast<CXXRecordDecl>(D)->isPOD();
 
-  assert(Builder.Bases.size() == Builder.BaseOffsets.size() &&
-         "Base offsets vector must be same size as bases vector!");
-  assert(Builder.VBases.size() == Builder.VBaseOffsets.size() &&
-         "Base offsets vector must be same size as bases vector!");
-
   // FIXME: This should be done in FinalizeLayout.
   uint64_t DataSize =
     IsPODForThePurposeOfLayout ? Builder.Size : Builder.NextOffset;
@@ -488,10 +479,8 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
                              Builder.PrimaryBase,
                              Builder.PrimaryBaseWasVirtual,
                              Builder.Bases.data(),
-                             Builder.BaseOffsets.data(),
                              Builder.Bases.size(),
                              Builder.VBases.data(),
-                             Builder.VBaseOffsets.data(),
                              Builder.VBases.size());
 }
 

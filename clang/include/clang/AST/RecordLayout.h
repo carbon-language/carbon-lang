@@ -91,9 +91,10 @@ class ASTRecordLayout {
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,
                   const CXXRecordDecl *PB, bool PBVirtual,
-                  const CXXRecordDecl **bases, const uint64_t *baseoffsets,
-                  unsigned basecount, const CXXRecordDecl **vbases,
-                  const uint64_t *vbaseoffsets,unsigned vbasecount)
+                  const std::pair<const CXXRecordDecl *, uint64_t> *bases,
+                  unsigned numbases,
+                  const std::pair<const CXXRecordDecl *, uint64_t> *vbases,
+                  unsigned numvbases)
   : Size(size), DataSize(datasize), FieldOffsets(0), Alignment(alignment),
   FieldCount(fieldcount), CXXInfo(new CXXRecordLayoutInfo) {
     if (FieldCount > 0)  {
@@ -106,10 +107,10 @@ class ASTRecordLayout {
     CXXInfo->PrimaryBaseWasVirtual = PBVirtual;
     CXXInfo->NonVirtualSize = nonvirtualsize;
     CXXInfo->NonVirtualAlign = nonvirtualalign;
-    for (unsigned i = 0; i != basecount; ++i)
-      CXXInfo->BaseOffsets[bases[i]] = baseoffsets[i];
-    for (unsigned i = 0; i != vbasecount; ++i)
-      CXXInfo->VBaseOffsets[vbases[i]] = vbaseoffsets[i];
+    for (unsigned i = 0; i != numbases; ++i)
+      CXXInfo->BaseOffsets[bases[i].first] = bases[i].second;
+    for (unsigned i = 0; i != numvbases; ++i)
+      CXXInfo->VBaseOffsets[vbases[i].first] = vbases[i].second;
   }
 
   ~ASTRecordLayout() {
