@@ -472,7 +472,8 @@ are emitted, we can finish up with the merge code:</p>
   // Emit merge block.
   TheFunction->getBasicBlockList().push_back(MergeBB);
   Builder.SetInsertPoint(MergeBB);
-  PHINode *PN = Builder.CreatePHI(Type::getDoubleTy(getGlobalContext()), "iftmp");
+  PHINode *PN = Builder.CreatePHI(Type::getDoubleTy(getGlobalContext()),
+                                  "iftmp");
   
   PN->addIncoming(ThenV, ThenBB);
   PN->addIncoming(ElseV, ElseBB);
@@ -1062,7 +1063,8 @@ public:
 };
 
 /// PrototypeAST - This class represents the "prototype" for a function,
-/// which captures its argument names as well as if it is an operator.
+/// which captures its name, and its argument names (thus implicitly the number
+/// of arguments the function takes).
 class PrototypeAST {
   std::string Name;
   std::vector&lt;std::string&gt; Args;
@@ -1089,7 +1091,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// CurTok/getNextToken - Provide a simple token buffer.  CurTok is the current
-/// token the parser it looking at.  getNextToken reads another token from the
+/// token the parser is looking at.  getNextToken reads another token from the
 /// lexer and updates CurTok with its results.
 static int CurTok;
 static int getNextToken() {
@@ -1137,9 +1139,9 @@ static ExprAST *ParseIdentifierExpr() {
       ExprAST *Arg = ParseExpression();
       if (!Arg) return 0;
       Args.push_back(Arg);
-      
+
       if (CurTok == ')') break;
-      
+
       if (CurTok != ',')
         return Error("Expected ')' or ',' in argument list");
       getNextToken();
@@ -1238,7 +1240,6 @@ static ExprAST *ParseForExpr() {
 
   return new ForExprAST(IdName, Start, End, Step, Body);
 }
-
 
 /// primary
 ///   ::= identifierexpr
@@ -1550,7 +1551,7 @@ Value *ForExprAST::Codegen() {
 
   
   // for expr always returns 0.0.
-  return getGlobalContext().getNullValue(Type::getDoubleTy(getGlobalContext()));
+  return Constant::getNullValue(Type::getDoubleTy(getGlobalContext()));
 }
 
 Function *PrototypeAST::Codegen() {
@@ -1655,7 +1656,7 @@ static void HandleExtern() {
 }
 
 static void HandleTopLevelExpression() {
-  // Evaluate a top level expression into an anonymous function.
+  // Evaluate a top-level expression into an anonymous function.
   if (FunctionAST *F = ParseTopLevelExpr()) {
     if (Function *LF = F-&gt;Codegen()) {
       // JIT the function, returning a function pointer.
@@ -1678,15 +1679,13 @@ static void MainLoop() {
     fprintf(stderr, "ready&gt; ");
     switch (CurTok) {
     case tok_eof:    return;
-    case ';':        getNextToken(); break;  // ignore top level semicolons.
+    case ';':        getNextToken(); break;  // ignore top-level semicolons.
     case tok_def:    HandleDefinition(); break;
     case tok_extern: HandleExtern(); break;
     default:         HandleTopLevelExpression(); break;
     }
   }
 }
-
-
 
 //===----------------------------------------------------------------------===//
 // "Library" functions that can be "extern'd" from user code.
@@ -1704,6 +1703,9 @@ double putchard(double X) {
 //===----------------------------------------------------------------------===//
 
 int main() {
+  InitializeNativeTarget();
+  LLVMContext &amp;Context = getGlobalContext();
+
   // Install standard binary operators.
   // 1 is lowest precedence.
   BinopPrecedence['&lt;'] = 10;
@@ -1716,7 +1718,7 @@ int main() {
   getNextToken();
 
   // Make the module, which holds all the code.
-  TheModule = new Module("my cool jit", getGlobalContext());
+  TheModule = new Module("my cool jit", Context);
 
   ExistingModuleProvider *OurModuleProvider =
       new ExistingModuleProvider(TheModule);

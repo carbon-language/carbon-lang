@@ -79,7 +79,7 @@ public:
 class NumberExprAST : public ExprAST {
   double Val;
 public:
-  explicit NumberExprAST(double val) : Val(val) {}
+  NumberExprAST(double val) : Val(val) {}
   <b>virtual Value *Codegen();</b>
 };
 ...
@@ -464,9 +464,10 @@ block at this point.  We'll fix this in <a href="LangImpl5.html">Chapter 5</a> :
   if (Value *RetVal = Body-&gt;Codegen()) {
     // Finish off the function.
     Builder.CreateRet(RetVal);
-    
+
     // Validate the generated code, checking for consistency.
     verifyFunction(*TheFunction);
+
     return TheFunction;
   }
 </pre>
@@ -708,7 +709,7 @@ enum Token {
   tok_def = -2, tok_extern = -3,
 
   // primary
-  tok_identifier = -4, tok_number = -5,
+  tok_identifier = -4, tok_number = -5
 };
 
 static std::string IdentifierStr;  // Filled in if tok_identifier
@@ -777,7 +778,7 @@ public:
 class NumberExprAST : public ExprAST {
   double Val;
 public:
-  explicit NumberExprAST(double val) : Val(val) {}
+  NumberExprAST(double val) : Val(val) {}
   virtual Value *Codegen();
 };
 
@@ -785,7 +786,7 @@ public:
 class VariableExprAST : public ExprAST {
   std::string Name;
 public:
-  explicit VariableExprAST(const std::string &amp;name) : Name(name) {}
+  VariableExprAST(const std::string &amp;name) : Name(name) {}
   virtual Value *Codegen();
 };
 
@@ -810,7 +811,8 @@ public:
 };
 
 /// PrototypeAST - This class represents the "prototype" for a function,
-/// which captures its argument names as well as if it is an operator.
+/// which captures its name, and its argument names (thus implicitly the number
+/// of arguments the function takes).
 class PrototypeAST {
   std::string Name;
   std::vector&lt;std::string&gt; Args;
@@ -837,7 +839,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// CurTok/getNextToken - Provide a simple token buffer.  CurTok is the current
-/// token the parser it looking at.  getNextToken reads another token from the
+/// token the parser is looking at.  getNextToken reads another token from the
 /// lexer and updates CurTok with its results.
 static int CurTok;
 static int getNextToken() {
@@ -885,9 +887,9 @@ static ExprAST *ParseIdentifierExpr() {
       ExprAST *Arg = ParseExpression();
       if (!Arg) return 0;
       Args.push_back(Arg);
-    
+
       if (CurTok == ')') break;
-    
+
       if (CurTok != ',')
         return Error("Expected ')' or ',' in argument list");
       getNextToken();
@@ -1058,7 +1060,8 @@ Value *BinaryExprAST::Codegen() {
   case '&lt;':
     L = Builder.CreateFCmpULT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
-    return Builder.CreateUIToFP(L, Type::getDoubleTy(getGlobalContext()), "booltmp");
+    return Builder.CreateUIToFP(L, Type::getDoubleTy(getGlobalContext()),
+                                "booltmp");
   default: return ErrorV("invalid binary operator");
   }
 }
@@ -1138,9 +1141,10 @@ Function *FunctionAST::Codegen() {
   if (Value *RetVal = Body-&gt;Codegen()) {
     // Finish off the function.
     Builder.CreateRet(RetVal);
-    
+
     // Validate the generated code, checking for consistency.
     verifyFunction(*TheFunction);
+
     return TheFunction;
   }
   
@@ -1178,7 +1182,7 @@ static void HandleExtern() {
 }
 
 static void HandleTopLevelExpression() {
-  // Evaluate a top level expression into an anonymous function.
+  // Evaluate a top-level expression into an anonymous function.
   if (FunctionAST *F = ParseTopLevelExpr()) {
     if (Function *LF = F-&gt;Codegen()) {
       fprintf(stderr, "Read top-level expression:");
@@ -1196,15 +1200,13 @@ static void MainLoop() {
     fprintf(stderr, "ready&gt; ");
     switch (CurTok) {
     case tok_eof:    return;
-    case ';':        getNextToken(); break;  // ignore top level semicolons.
+    case ';':        getNextToken(); break;  // ignore top-level semicolons.
     case tok_def:    HandleDefinition(); break;
     case tok_extern: HandleExtern(); break;
     default:         HandleTopLevelExpression(); break;
     }
   }
 }
-
-
 
 //===----------------------------------------------------------------------===//
 // "Library" functions that can be "extern'd" from user code.
@@ -1222,7 +1224,7 @@ double putchard(double X) {
 //===----------------------------------------------------------------------===//
 
 int main() {
-  TheModule = new Module("my cool jit", getGlobalContext());
+  LLVMContext &amp;Context = getGlobalContext();
 
   // Install standard binary operators.
   // 1 is lowest precedence.
@@ -1235,8 +1237,15 @@ int main() {
   fprintf(stderr, "ready&gt; ");
   getNextToken();
 
+  // Make the module, which holds all the code.
+  TheModule = new Module("my cool jit", Context);
+
+  // Run the main "interpreter loop" now.
   MainLoop();
+
+  // Print out all of the generated code.
   TheModule-&gt;dump();
+
   return 0;
 }
 </pre>

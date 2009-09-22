@@ -84,7 +84,7 @@ public:
 class NumberExprAST : public ExprAST {
   double Val;
 public:
-  explicit NumberExprAST(double val) : Val(val) {}
+  NumberExprAST(double val) : Val(val) {}
 };
 </pre>
 </div>
@@ -107,7 +107,7 @@ in the basic form of the Kaleidoscope language:
 class VariableExprAST : public ExprAST {
   std::string Name;
 public:
-  explicit VariableExprAST(const std::string &amp;name) : Name(name) {}
+  VariableExprAST(const std::string &amp;name) : Name(name) {}
 };
 
 /// BinaryExprAST - Expression class for a binary operator.
@@ -333,9 +333,9 @@ static ExprAST *ParseIdentifierExpr() {
       ExprAST *Arg = ParseExpression();
       if (!Arg) return 0;
       Args.push_back(Arg);
-    
+
       if (CurTok == ')') break;
-    
+
       if (CurTok != ',')
         return Error("Expected ')' or ',' in argument list");
       getNextToken();
@@ -833,7 +833,7 @@ enum Token {
   tok_def = -2, tok_extern = -3,
 
   // primary
-  tok_identifier = -4, tok_number = -5,
+  tok_identifier = -4, tok_number = -5
 };
 
 static std::string IdentifierStr;  // Filled in if tok_identifier
@@ -901,14 +901,14 @@ public:
 class NumberExprAST : public ExprAST {
   double Val;
 public:
-  explicit NumberExprAST(double val) : Val(val) {}
+  NumberExprAST(double val) : Val(val) {}
 };
 
 /// VariableExprAST - Expression class for referencing a variable, like "a".
 class VariableExprAST : public ExprAST {
   std::string Name;
 public:
-  explicit VariableExprAST(const std::string &amp;name) : Name(name) {}
+  VariableExprAST(const std::string &amp;name) : Name(name) {}
 };
 
 /// BinaryExprAST - Expression class for a binary operator.
@@ -1004,9 +1004,9 @@ static ExprAST *ParseIdentifierExpr() {
       ExprAST *Arg = ParseExpression();
       if (!Arg) return 0;
       Args.push_back(Arg);
-    
+
       if (CurTok == ')') break;
-    
+
       if (CurTok != ',')
         return Error("Expected ')' or ',' in argument list");
       getNextToken();
@@ -1150,7 +1150,7 @@ static PrototypeAST *ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 static void HandleDefinition() {
-  if (FunctionAST *F = ParseDefinition()) {
+  if (ParseDefinition()) {
     fprintf(stderr, "Parsed a function definition.\n");
   } else {
     // Skip token for error recovery.
@@ -1159,7 +1159,7 @@ static void HandleDefinition() {
 }
 
 static void HandleExtern() {
-  if (PrototypeAST *P = ParseExtern()) {
+  if (ParseExtern()) {
     fprintf(stderr, "Parsed an extern\n");
   } else {
     // Skip token for error recovery.
@@ -1169,7 +1169,7 @@ static void HandleExtern() {
 
 static void HandleTopLevelExpression() {
   // Evaluate a top-level expression into an anonymous function.
-  if (FunctionAST *F = ParseTopLevelExpr()) {
+  if (ParseTopLevelExpr()) {
     fprintf(stderr, "Parsed a top-level expr\n");
   } else {
     // Skip token for error recovery.
@@ -1207,7 +1207,9 @@ int main() {
   fprintf(stderr, "ready&gt; ");
   getNextToken();
 
+  // Run the main "interpreter loop" now.
   MainLoop();
+
   return 0;
 }
 </pre>

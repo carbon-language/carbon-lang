@@ -1197,7 +1197,8 @@ public:
 };
 
 /// PrototypeAST - This class represents the "prototype" for a function,
-/// which captures its argument names as well as if it is an operator.
+/// which captures its name, and its argument names (thus implicitly the number
+/// of arguments the function takes), as well as if it is an operator.
 class PrototypeAST {
   std::string Name;
   std::vector&lt;std::string&gt; Args;
@@ -1239,7 +1240,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// CurTok/getNextToken - Provide a simple token buffer.  CurTok is the current
-/// token the parser it looking at.  getNextToken reads another token from the
+/// token the parser is looking at.  getNextToken reads another token from the
 /// lexer and updates CurTok with its results.
 static int CurTok;
 static int getNextToken() {
@@ -1287,9 +1288,9 @@ static ExprAST *ParseIdentifierExpr() {
       ExprAST *Arg = ParseExpression();
       if (!Arg) return 0;
       Args.push_back(Arg);
-      
+
       if (CurTok == ')') break;
-      
+
       if (CurTok != ',')
         return Error("Expected ')' or ',' in argument list");
       getNextToken();
@@ -1434,7 +1435,6 @@ static ExprAST *ParseVarExpr() {
   return new VarExprAST(VarNames, Body);
 }
 
-
 /// primary
 ///   ::= identifierexpr
 ///   ::= numberexpr
@@ -1520,7 +1520,7 @@ static ExprAST *ParseExpression() {
 static PrototypeAST *ParsePrototype() {
   std::string FnName;
   
-  int Kind = 0;  // 0 = identifier, 1 = unary, 2 = binary.
+  unsigned Kind = 0; // 0 = identifier, 1 = unary, 2 = binary.
   unsigned BinaryPrecedence = 30;
   
   switch (CurTok) {
@@ -1622,9 +1622,9 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                                           const std::string &amp;VarName) {
   IRBuilder&lt;&gt; TmpB(&amp;TheFunction-&gt;getEntryBlock(),
                  TheFunction-&gt;getEntryBlock().begin());
-  return TmpB.CreateAlloca(Type::getDoubleTy(getGlobalContext()), 0, VarName.c_str());
+  return TmpB.CreateAlloca(Type::getDoubleTy(getGlobalContext()), 0,
+                           VarName.c_str());
 }
-
 
 Value *NumberExprAST::Codegen() {
   return ConstantFP::get(getGlobalContext(), APFloat(Val));
@@ -1650,7 +1650,6 @@ Value *UnaryExprAST::Codegen() {
   return Builder.CreateCall(F, OperandV, "unop");
 }
 
-
 Value *BinaryExprAST::Codegen() {
   // Special case '=' because we don't want to emit the LHS as an expression.
   if (Op == '=') {
@@ -1669,7 +1668,6 @@ Value *BinaryExprAST::Codegen() {
     Builder.CreateStore(Val, Variable);
     return Val;
   }
-  
   
   Value *L = LHS-&gt;Codegen();
   Value *R = RHS-&gt;Codegen();
@@ -1801,7 +1799,6 @@ Value *ForExprAST::Codegen() {
   
   // Make the new basic block for the loop header, inserting after current
   // block.
-  BasicBlock *PreheaderBB = Builder.GetInsertBlock();
   BasicBlock *LoopBB = BasicBlock::Create(getGlobalContext(), "loop", TheFunction);
   
   // Insert an explicit fall through from the current block to the LoopBB.
@@ -1847,7 +1844,6 @@ Value *ForExprAST::Codegen() {
                                   "loopcond");
   
   // Create the "after loop" block and insert it.
-  BasicBlock *LoopEndBB = Builder.GetInsertBlock();
   BasicBlock *AfterBB = BasicBlock::Create(getGlobalContext(), "afterloop", TheFunction);
   
   // Insert the conditional branch into the end of LoopEndBB.
@@ -1913,7 +1909,6 @@ Value *VarExprAST::Codegen() {
   return BodyVal;
 }
 
-
 Function *PrototypeAST::Codegen() {
   // Make the function type:  double(double,double) etc.
   std::vector&lt;const Type*&gt; Doubles(Args.size(),
@@ -1968,7 +1963,6 @@ void PrototypeAST::CreateArgumentAllocas(Function *F) {
   }
 }
 
-
 Function *FunctionAST::Codegen() {
   NamedValues.clear();
   
@@ -1986,7 +1980,7 @@ Function *FunctionAST::Codegen() {
   
   // Add all arguments to the symbol table and create their allocas.
   Proto-&gt;CreateArgumentAllocas(TheFunction);
-  
+
   if (Value *RetVal = Body-&gt;Codegen()) {
     // Finish off the function.
     Builder.CreateRet(RetVal);
@@ -2039,7 +2033,7 @@ static void HandleExtern() {
 }
 
 static void HandleTopLevelExpression() {
-  // Evaluate a top level expression into an anonymous function.
+  // Evaluate a top-level expression into an anonymous function.
   if (FunctionAST *F = ParseTopLevelExpr()) {
     if (Function *LF = F-&gt;Codegen()) {
       // JIT the function, returning a function pointer.
@@ -2062,15 +2056,13 @@ static void MainLoop() {
     fprintf(stderr, "ready&gt; ");
     switch (CurTok) {
     case tok_eof:    return;
-    case ';':        getNextToken(); break;  // ignore top level semicolons.
+    case ';':        getNextToken(); break;  // ignore top-level semicolons.
     case tok_def:    HandleDefinition(); break;
     case tok_extern: HandleExtern(); break;
     default:         HandleTopLevelExpression(); break;
     }
   }
 }
-
-
 
 //===----------------------------------------------------------------------===//
 // "Library" functions that can be "extern'd" from user code.
@@ -2095,6 +2087,9 @@ double printd(double X) {
 //===----------------------------------------------------------------------===//
 
 int main() {
+  InitializeNativeTarget();
+  LLVMContext &amp;Context = getGlobalContext();
+
   // Install standard binary operators.
   // 1 is lowest precedence.
   BinopPrecedence['='] = 2;
@@ -2108,7 +2103,7 @@ int main() {
   getNextToken();
 
   // Make the module, which holds all the code.
-  TheModule = new Module("my cool jit", getGlobalContext());
+  TheModule = new Module("my cool jit", Context);
 
   ExistingModuleProvider *OurModuleProvider =
       new ExistingModuleProvider(TheModule);

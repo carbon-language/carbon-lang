@@ -324,7 +324,7 @@ top-level expression to look like this:</p>
 <div class="doc_code">
 <pre>
 static void HandleTopLevelExpression() {
-  // Evaluate a top level expression into an anonymous function.
+  // Evaluate a top-level expression into an anonymous function.
   if (FunctionAST *F = ParseTopLevelExpr()) {
     if (Function *LF = F-&gt;Codegen()) {
       LF->dump();  // Dump the function for exposition purposes.
@@ -334,7 +334,7 @@ static void HandleTopLevelExpression() {
       
       // Cast it to the right type (takes no arguments, returns a double) so we
       // can call it as a native function.
-      double (*FP)() = (double (*)())FPtr;
+      double (*FP)() = (double (*)())(intptr_t)FPtr;
       fprintf(stderr, "Evaluated to %f\n", FP());</b>
     }
 </pre>
@@ -363,7 +363,7 @@ entry:
 
 <p>Well this looks like it is basically working.  The dump of the function
 shows the "no argument function that always returns double" that we synthesize
-for each top level expression that is typed in.  This demonstrates very basic
+for each top-level expression that is typed in.  This demonstrates very basic
 functionality, but can we do more?</p>
 
 <div class="doc_code">
@@ -499,7 +499,7 @@ LLVM JIT and optimizer.  To build this example, use:
 <div class="doc_code">
 <pre>
    # Compile
-   g++ -g toy.cpp `llvm-config --cppflags --ldflags --libs core jit native` -O3 -o toy
+   g++ -g toy.cpp `llvm-config --cppflags --ldflags --libs core jit interpreter native` -O3 -o toy
    # Run
    ./toy
 </pre>
@@ -546,7 +546,7 @@ enum Token {
   tok_def = -2, tok_extern = -3,
 
   // primary
-  tok_identifier = -4, tok_number = -5,
+  tok_identifier = -4, tok_number = -5
 };
 
 static std::string IdentifierStr;  // Filled in if tok_identifier
@@ -648,7 +648,8 @@ public:
 };
 
 /// PrototypeAST - This class represents the "prototype" for a function,
-/// which captures its argument names as well as if it is an operator.
+/// which captures its name, and its argument names (thus implicitly the number
+/// of arguments the function takes).
 class PrototypeAST {
   std::string Name;
   std::vector&lt;std::string&gt; Args;
@@ -675,7 +676,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// CurTok/getNextToken - Provide a simple token buffer.  CurTok is the current
-/// token the parser it looking at.  getNextToken reads another token from the
+/// token the parser is looking at.  getNextToken reads another token from the
 /// lexer and updates CurTok with its results.
 static int CurTok;
 static int getNextToken() {
@@ -723,9 +724,9 @@ static ExprAST *ParseIdentifierExpr() {
       ExprAST *Arg = ParseExpression();
       if (!Arg) return 0;
       Args.push_back(Arg);
-    
+
       if (CurTok == ')') break;
-    
+
       if (CurTok != ',')
         return Error("Expected ')' or ',' in argument list");
       getNextToken();
@@ -1024,7 +1025,7 @@ static void HandleExtern() {
 }
 
 static void HandleTopLevelExpression() {
-  // Evaluate a top level expression into an anonymous function.
+  // Evaluate a top-level expression into an anonymous function.
   if (FunctionAST *F = ParseTopLevelExpr()) {
     if (Function *LF = F-&gt;Codegen()) {
       // JIT the function, returning a function pointer.
@@ -1047,15 +1048,13 @@ static void MainLoop() {
     fprintf(stderr, "ready&gt; ");
     switch (CurTok) {
     case tok_eof:    return;
-    case ';':        getNextToken(); break;  // ignore top level semicolons.
+    case ';':        getNextToken(); break;  // ignore top-level semicolons.
     case tok_def:    HandleDefinition(); break;
     case tok_extern: HandleExtern(); break;
     default:         HandleTopLevelExpression(); break;
     }
   }
 }
-
-
 
 //===----------------------------------------------------------------------===//
 // "Library" functions that can be "extern'd" from user code.

@@ -235,7 +235,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// CurTok/getNextToken - Provide a simple token buffer.  CurTok is the current
-/// token the parser it looking at.  getNextToken reads another token from the
+/// token the parser is looking at.  getNextToken reads another token from the
 /// lexer and updates CurTok with its results.
 static int CurTok;
 static int getNextToken() {
@@ -283,9 +283,9 @@ static ExprAST *ParseIdentifierExpr() {
       ExprAST *Arg = ParseExpression();
       if (!Arg) return 0;
       Args.push_back(Arg);
-      
+
       if (CurTok == ')') break;
-      
+
       if (CurTok != ',')
         return Error("Expected ')' or ',' in argument list");
       getNextToken();
@@ -430,7 +430,6 @@ static ExprAST *ParseVarExpr() {
   return new VarExprAST(VarNames, Body);
 }
 
-
 /// primary
 ///   ::= identifierexpr
 ///   ::= numberexpr
@@ -516,7 +515,7 @@ static ExprAST *ParseExpression() {
 static PrototypeAST *ParsePrototype() {
   std::string FnName;
   
-  unsigned Kind = 0;            // 0 = identifier, 1 = unary, 2 = binary.
+  unsigned Kind = 0; // 0 = identifier, 1 = unary, 2 = binary.
   unsigned BinaryPrecedence = 30;
   
   switch (CurTok) {
@@ -622,7 +621,6 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                            VarName.c_str());
 }
 
-
 Value *NumberExprAST::Codegen() {
   return ConstantFP::get(getGlobalContext(), APFloat(Val));
 }
@@ -647,7 +645,6 @@ Value *UnaryExprAST::Codegen() {
   return Builder.CreateCall(F, OperandV, "unop");
 }
 
-
 Value *BinaryExprAST::Codegen() {
   // Special case '=' because we don't want to emit the LHS as an expression.
   if (Op == '=') {
@@ -666,7 +663,6 @@ Value *BinaryExprAST::Codegen() {
     Builder.CreateStore(Val, Variable);
     return Val;
   }
-  
   
   Value *L = LHS->Codegen();
   Value *R = RHS->Codegen();
@@ -908,7 +904,6 @@ Value *VarExprAST::Codegen() {
   return BodyVal;
 }
 
-
 Function *PrototypeAST::Codegen() {
   // Make the function type:  double(double,double) etc.
   std::vector<const Type*> Doubles(Args.size(), 
@@ -963,7 +958,6 @@ void PrototypeAST::CreateArgumentAllocas(Function *F) {
   }
 }
 
-
 Function *FunctionAST::Codegen() {
   NamedValues.clear();
   
@@ -981,7 +975,7 @@ Function *FunctionAST::Codegen() {
   
   // Add all arguments to the symbol table and create their allocas.
   Proto->CreateArgumentAllocas(TheFunction);
-  
+
   if (Value *RetVal = Body->Codegen()) {
     // Finish off the function.
     Builder.CreateRet(RetVal);
@@ -1034,7 +1028,7 @@ static void HandleExtern() {
 }
 
 static void HandleTopLevelExpression() {
-  // Evaluate a top level expression into an anonymous function.
+  // Evaluate a top-level expression into an anonymous function.
   if (FunctionAST *F = ParseTopLevelExpr()) {
     if (Function *LF = F->Codegen()) {
       // JIT the function, returning a function pointer.
@@ -1057,15 +1051,13 @@ static void MainLoop() {
     fprintf(stderr, "ready> ");
     switch (CurTok) {
     case tok_eof:    return;
-    case ';':        getNextToken(); break;  // ignore top level semicolons.
+    case ';':        getNextToken(); break;  // ignore top-level semicolons.
     case tok_def:    HandleDefinition(); break;
     case tok_extern: HandleExtern(); break;
     default:         HandleTopLevelExpression(); break;
     }
   }
 }
-
-
 
 //===----------------------------------------------------------------------===//
 // "Library" functions that can be "extern'd" from user code.
@@ -1092,7 +1084,7 @@ double printd(double X) {
 int main() {
   InitializeNativeTarget();
   LLVMContext &Context = getGlobalContext();
-  
+
   // Install standard binary operators.
   // 1 is lowest precedence.
   BinopPrecedence['='] = 2;
