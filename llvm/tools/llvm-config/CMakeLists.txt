@@ -8,6 +8,8 @@ endif( NOT PERL_FOUND )
 set(PERL ${PERL_EXECUTABLE})
 set(VERSION PACKAGE_VERSION)
 set(PREFIX ${LLVM_BINARY_DIR}) # TODO: Root for `make install'.
+set(abs_top_srcdir ${LLVM_MAIN_SRC_DIR})
+set(abs_top_builddir ${LLVM_BINARY_DIR})
 execute_process(COMMAND date
   OUTPUT_VARIABLE LLVM_CONFIGTIME
   OUTPUT_STRIP_TRAILING_WHITESPACE)
