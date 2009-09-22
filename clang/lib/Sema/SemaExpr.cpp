@@ -2029,13 +2029,65 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       BaseType = Context.ObjCIdRedefinitionType;
       ImpCastExprToType(BaseExpr, BaseType);
     }
-  } else if (BaseType->isObjCClassType() &&
-             BaseType != Context.ObjCClassRedefinitionType) {
-    BaseType = Context.ObjCClassRedefinitionType;
-    ImpCastExprToType(BaseExpr, BaseType);
   }
   assert(!BaseType.isNull() && "no type for member expression");
 
+  // Handle properties on ObjC 'Class' types.
+  if (OpKind == tok::period && BaseType->isObjCClassType()) {
+    // Also must look for a getter name which uses property syntax.
+    IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
+    Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
+    if (ObjCMethodDecl *MD = getCurMethodDecl()) {
+      ObjCInterfaceDecl *IFace = MD->getClassInterface();
+      ObjCMethodDecl *Getter;
+      // FIXME: need to also look locally in the implementation.
+      if ((Getter = IFace->lookupClassMethod(Sel))) {
+        // Check the use of this method.
+        if (DiagnoseUseOfDecl(Getter, MemberLoc))
+          return ExprError();
+      }
+      // If we found a getter then this may be a valid dot-reference, we
+      // will look for the matching setter, in case it is needed.
+      Selector SetterSel =
+      SelectorTable::constructSetterName(PP.getIdentifierTable(),
+                                         PP.getSelectorTable(), Member);
+      ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
+      if (!Setter) {
+        // If this reference is in an @implementation, also check for 'private'
+        // methods.
+        Setter = FindMethodInNestedImplementations(IFace, SetterSel);
+      }
+      // Look through local category implementations associated with the class.
+      if (!Setter)
+        Setter = IFace->getCategoryClassMethod(SetterSel);
+      
+      if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
+        return ExprError();
+      
+      if (Getter || Setter) {
+        QualType PType;
+        
+        if (Getter)
+          PType = Getter->getResultType();
+        else
+          // Get the expression type from Setter's incoming parameter.
+          PType = (*(Setter->param_end() -1))->getType();
+        // FIXME: we must check that the setter has property type.
+        return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, 
+                                                  PType,
+                                                  Setter, MemberLoc, BaseExpr));
+      }
+      return ExprError(Diag(MemberLoc, diag::err_property_not_found)
+                       << MemberName << BaseType);
+    }
+  }
+  
+  if (BaseType->isObjCClassType() &&
+      BaseType != Context.ObjCClassRedefinitionType) {
+    BaseType = Context.ObjCClassRedefinitionType;
+    ImpCastExprToType(BaseExpr, BaseType);
+  }
+  
   // Get the type being accessed in BaseType.  If this is an arrow, the BaseExpr
   // must have pointer type, and the accessed type is the pointee.
   if (OpKind == tok::arrow) {
@@ -2067,8 +2119,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       return ExprError(Diag(MemberLoc,
                             diag::err_typecheck_member_reference_arrow)
         << BaseType << BaseExpr->getSourceRange());
-  } else {
-    if (BaseType->isDependentType()) {
+  } else if (BaseType->isDependentType()) {
       // Require that the base type isn't a pointer type
       // (so we'll report an error for)
       // T* t;
@@ -2103,7 +2154,6 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                                      RAngleLoc));
       }
     }
-  }
 
   // Handle field access to simple records.  This also handles access to fields
   // of the ObjC 'id' struct.
@@ -2303,54 +2353,6 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                                        MemberLoc));
   }
 
-  // Handle properties on ObjC 'Class' types.
-  if (OpKind == tok::period && BaseType->isObjCClassType()) {
-    // Also must look for a getter name which uses property syntax.
-    IdentifierInfo *Member = MemberName.getAsIdentifierInfo();
-    Selector Sel = PP.getSelectorTable().getNullarySelector(Member);
-    if (ObjCMethodDecl *MD = getCurMethodDecl()) {
-      ObjCInterfaceDecl *IFace = MD->getClassInterface();
-      ObjCMethodDecl *Getter;
-      // FIXME: need to also look locally in the implementation.
-      if ((Getter = IFace->lookupClassMethod(Sel))) {
-        // Check the use of this method.
-        if (DiagnoseUseOfDecl(Getter, MemberLoc))
-          return ExprError();
-      }
-      // If we found a getter then this may be a valid dot-reference, we
-      // will look for the matching setter, in case it is needed.
-      Selector SetterSel =
-        SelectorTable::constructSetterName(PP.getIdentifierTable(),
-                                           PP.getSelectorTable(), Member);
-      ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
-      if (!Setter) {
-        // If this reference is in an @implementation, also check for 'private'
-        // methods.
-        Setter = FindMethodInNestedImplementations(IFace, SetterSel);
-      }
-      // Look through local category implementations associated with the class.
-      if (!Setter)
-        Setter = IFace->getCategoryClassMethod(SetterSel);
-
-      if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
-        return ExprError();
-
-      if (Getter || Setter) {
-        QualType PType;
-
-        if (Getter)
-          PType = Getter->getResultType();
-        else
-          // Get the expression type from Setter's incoming parameter.
-          PType = (*(Setter->param_end() -1))->getType();
-        // FIXME: we must check that the setter has property type.
-        return Owned(new (Context) ObjCImplicitSetterGetterRefExpr(Getter, PType,
-                                        Setter, MemberLoc, BaseExpr));
-      }
-      return ExprError(Diag(MemberLoc, diag::err_property_not_found)
-        << MemberName << BaseType);
-    }
-  }
   // Handle access to Objective-C instance variables, such as "Obj->ivar" and
   // (*Obj).ivar.
   if ((OpKind == tok::arrow && BaseType->isObjCObjectPointerType()) ||
