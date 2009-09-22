@@ -17,6 +17,7 @@
 #include "clang/Index/ASTLocation.h"
 #include "clang/Index/Utils.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Decl.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -27,6 +28,45 @@ using namespace idx;
 
 namespace {
 
+class CRefVisitor : public StmtVisitor<CRefVisitor> {
+  CXDecl CDecl;
+  CXDeclIterator Callback;
+  CXClientData CData;
+  
+  void Call(enum CXCursorKind CK, Stmt *SRef) {
+    CXCursor C = { CK, CDecl, SRef };
+    Callback(CDecl, C, CData);
+  }
+
+public:
+  CRefVisitor(CXDecl C, CXDeclIterator cback, CXClientData D) : 
+    CDecl(C), Callback(cback), CData(D) {}
+  
+  void VisitStmt(Stmt *S) {
+    for (Stmt::child_iterator C = S->child_begin(), CEnd = S->child_end();
+         C != CEnd; ++C)
+      Visit(*C);
+  }
+  void VisitDeclRefExpr(DeclRefExpr *Node) {
+    NamedDecl *D = Node->getDecl();
+    if (isa<VarDecl>(D))
+      Call(CXCursor_VarRef, Node);
+    else if (isa<FunctionDecl>(D))
+      Call(CXCursor_FunctionRef, Node);
+    else if (isa<EnumConstantDecl>(D))
+      Call(CXCursor_EnumConstantRef, Node);
+  }
+  void VisitMemberExpr(MemberExpr *Node) {
+    Call(CXCursor_MemberRef, Node);
+  }
+  void VisitObjCMessageExpr(ObjCMessageExpr *Node) {
+    Call(CXCursor_ObjCSelectorRef, Node);
+  }
+  void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
+    Call(CXCursor_ObjCIvarRef, Node);
+  }
+};
+
 // Translation Unit Visitor.
 class TUVisitor : public DeclVisitor<TUVisitor> {
   CXTranslationUnit TUnit;
@@ -34,7 +74,7 @@ class TUVisitor : public DeclVisitor<TUVisitor> {
   CXClientData CData;
   
   void Call(enum CXCursorKind CK, NamedDecl *ND) {
-    CXCursor C = { CK, ND };
+    CXCursor C = { CK, ND, 0 };
     Callback(TUnit, C, CData);
   }
 public:
@@ -103,7 +143,7 @@ class CDeclVisitor : public DeclVisitor<CDeclVisitor> {
     // Disable the callback when the context is equal to the visiting decl.
     if (CDecl == ND && !clang_isReference(CK))
       return;
-    CXCursor C = { CK, ND };
+    CXCursor C = { CK, ND, 0 };
     Callback(CDecl, C, CData);
   }
 public:
@@ -168,6 +208,9 @@ public:
   void VisitFunctionDecl(FunctionDecl *ND) {
     if (ND->isThisDeclarationADefinition()) {
       VisitDeclContext(dyn_cast<DeclContext>(ND));
+      
+      CRefVisitor RVisit(CDecl, Callback, CData);
+      RVisit.Visit(ND->getBody());
     }
   }
   void VisitObjCMethodDecl(ObjCMethodDecl *ND) {
@@ -323,6 +366,22 @@ const char *clang_getCursorSpelling(CXCursor C)
         assert(OID && "clang_getCursorLine(): Missing protocol decl");
         return OID->getIdentifier()->getName();
         }
+      case CXCursor_ObjCSelectorRef:
+        {
+        ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
+                                 static_cast<Stmt *>(C.stmt));
+        assert(OME && "clang_getCursorLine(): Missing message expr");
+        return OME->getSelector().getAsString().c_str();
+        }
+      case CXCursor_VarRef:
+      case CXCursor_FunctionRef:
+      case CXCursor_EnumConstantRef:
+        {
+        DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
+                                 static_cast<Stmt *>(C.stmt));
+        assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
+        return DRE->getDecl()->getIdentifier()->getName();
+        }
       default:
         return "<not implemented>";
     }
@@ -358,6 +417,13 @@ const char *clang_getCursorKindSpelling(enum CXCursorKind Kind)
    case CXCursor_ObjCSuperClassRef: return "ObjCSuperClassRef";
    case CXCursor_ObjCProtocolRef: return "ObjCProtocolRef";
    case CXCursor_ObjCClassRef: return "ObjCClassRef";
+   case CXCursor_ObjCSelectorRef: return "ObjCSelectorRef";
+   
+   case CXCursor_VarRef: return "VarRef";
+   case CXCursor_FunctionRef: return "FunctionRef";
+   case CXCursor_EnumConstantRef: return "EnumConstantRef";
+   case CXCursor_MemberRef: return "MemberRef";
+   
    case CXCursor_InvalidFile: return "InvalidFile";
    case CXCursor_NoDeclFound: return "NoDeclFound";
    case CXCursor_NotImplemented: return "NotImplemented";
@@ -376,6 +442,8 @@ static enum CXCursorKind TranslateKind(Decl *D) {
     case Decl::Var: return CXCursor_VarDecl;
     case Decl::ParmVar: return CXCursor_ParmDecl;
     case Decl::ObjCInterface: return CXCursor_ObjCInterfaceDecl;
+    case Decl::ObjCCategory: return CXCursor_ObjCCategoryDecl;
+    case Decl::ObjCProtocol: return CXCursor_ObjCProtocolDecl;
     case Decl::ObjCMethod: {
       ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D);
       if (MD->isInstanceMethod())
@@ -399,7 +467,7 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   const FileEntry *File = FMgr.getFile(source_name, 
                                        source_name+strlen(source_name));  
   if (!File) {
-    CXCursor C = { CXCursor_InvalidFile, 0 };
+    CXCursor C = { CXCursor_InvalidFile, 0, 0 };
     return C;
   }
   SourceLocation SLoc = 
@@ -409,10 +477,10 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   
   Decl *Dcl = ALoc.getDecl();
   if (Dcl) {  
-    CXCursor C = { TranslateKind(Dcl), Dcl };
+    CXCursor C = { TranslateKind(Dcl), Dcl, 0 };
     return C;
   }
-  CXCursor C = { CXCursor_NoDeclFound, 0 };
+  CXCursor C = { CXCursor_NoDeclFound, 0, 0 };
   return C;
 }
 
@@ -421,7 +489,7 @@ CXCursor clang_getCursorFromDecl(CXDecl AnonDecl)
   assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
   
-  CXCursor C = { TranslateKind(ND), ND };
+  CXCursor C = { TranslateKind(ND), ND, 0 };
   return C;
 }
 
@@ -471,6 +539,22 @@ static SourceLocation getLocationFromCursor(CXCursor C,
         ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing protocol decl");
         return OID->getLocation();
+        }
+      case CXCursor_ObjCSelectorRef:
+        {
+        ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
+                                 static_cast<Stmt *>(C.stmt));
+        assert(OME && "clang_getCursorLine(): Missing message expr");
+        return OME->getLeftLoc(); /* FIXME: should be a range */
+        }
+      case CXCursor_VarRef:
+      case CXCursor_FunctionRef:
+      case CXCursor_EnumConstantRef:
+        {
+        DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
+                                 static_cast<Stmt *>(C.stmt));
+        assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
+        return DRE->getLocation();
         }
       default:
         return SourceLocation();

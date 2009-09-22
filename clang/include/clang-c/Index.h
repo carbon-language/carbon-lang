@@ -34,6 +34,7 @@ typedef void *CXIndex;            /* An indexing instance. */
 typedef void *CXTranslationUnit;  /* A translation unit instance. */
 
 typedef void *CXDecl;    /* A specific declaration within a translation unit. */
+typedef void *CXStmt;    /* A specific statement within a function/method */
 
 /* Cursors represent declarations, definitions, and references. */
 enum CXCursorKind {
@@ -68,13 +69,18 @@ enum CXCursorKind {
  CXCursor_LastDefn                      = 36,
    
  /* References */
- CXCursor_FirstRef                      = 40,
+ CXCursor_FirstRef                      = 40, /* Decl references */
  CXCursor_ObjCSuperClassRef             = 40,            
  CXCursor_ObjCProtocolRef               = 41,
- CXCursor_ObjCMessageRef                = 42,
- CXCursor_ObjCSelectorRef               = 43,
- CXCursor_ObjCClassRef                  = 44,
- CXCursor_LastRef                       = 44,
+ CXCursor_ObjCClassRef                  = 42,
+ 
+ CXCursor_ObjCSelectorRef               = 43, /* Expression references */
+ CXCursor_ObjCIvarRef                   = 44,
+ CXCursor_VarRef                        = 45,
+ CXCursor_FunctionRef                   = 46,
+ CXCursor_EnumConstantRef               = 47,
+ CXCursor_MemberRef                     = 48,
+ CXCursor_LastRef                       = 48,
  
  /* Error conditions */
  CXCursor_FirstInvalid                  = 70,
@@ -85,23 +91,25 @@ enum CXCursorKind {
 };
 
 /* A cursor into the CXTranslationUnit. */
+
 typedef struct {
   enum CXCursorKind kind;
   CXDecl decl;
-  
-  /* FIXME: Handle references. */
+  CXStmt stmt; /* expression reference */
 } CXCursor;  
 
 /* A unique token for looking up "visible" CXDecls from a CXTranslationUnit. */
 typedef void *CXEntity;     
 
 CXIndex clang_createIndex();
+void clang_disposeIndex(CXIndex);
 
 const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
 
 CXTranslationUnit clang_createTranslationUnit(
   CXIndex, const char *ast_filename
 );
+void clang_disposeTranslationUnit(CXTranslationUnit);
 
 /*
    Usage: clang_loadTranslationUnit(). Will load the toplevel declarations
