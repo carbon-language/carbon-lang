@@ -548,8 +548,7 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
       // Tracking goes to new value like a WeakVH. Note that this may make it
       // something incompatible with its templated type. We don't want to have a
       // virtual (or inline) interface to handle this though, so instead we make
-      // the TrackingVH accessors guarantee that a client never seesl this
-      // value.
+      // the TrackingVH accessors guarantee that a client never sees this value.
 
       // FALLTHROUGH
     case Weak:
