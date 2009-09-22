@@ -380,8 +380,8 @@ unsigned PCHStmtReader::VisitStringLiteral(StringLiteral *E) {
   E->setWide(Record[Idx++]);
 
   // Read string data
-  llvm::SmallVector<char, 16> Str(&Record[Idx], &Record[Idx] + Len);
-  E->setStrData(*Reader.getContext(), Str.data(), Len);
+  llvm::SmallString<16> Str(&Record[Idx], &Record[Idx] + Len);
+  E->setString(*Reader.getContext(), Str.str());
   Idx += Len;
 
   // Read source locations

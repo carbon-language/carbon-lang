@@ -20,6 +20,7 @@
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include <vector>
 
 namespace clang {
@@ -583,18 +584,23 @@ public:
   /// \brief Construct an empty string literal.
   static StringLiteral *CreateEmpty(ASTContext &C, unsigned NumStrs);
 
+  llvm::StringRef getString() const {
+    return llvm::StringRef(StrData, ByteLength);
+  }
+  // FIXME: These are deprecated, replace with StringRef.
   const char *getStrData() const { return StrData; }
   unsigned getByteLength() const { return ByteLength; }
 
   /// \brief Sets the string data to the given string data.
-  void setStrData(ASTContext &C, const char *Str, unsigned Len);
+  void setString(ASTContext &C, llvm::StringRef Str);
 
   bool isWide() const { return IsWide; }
   void setWide(bool W) { IsWide = W; }
 
   bool containsNonAsciiOrNull() const {
-    for (unsigned i = 0; i < getByteLength(); ++i)
-      if (!isascii(getStrData()[i]) || !getStrData()[i])
+    llvm::StringRef Str = getString();
+    for (unsigned i = 0, e = Str.size(); i != e; ++i)
+      if (!isascii(Str[i]) || !Str[i])
         return true;
     return false;
   }

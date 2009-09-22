@@ -159,14 +159,14 @@ void StringLiteral::DoDestroy(ASTContext &C) {
   Expr::DoDestroy(C);
 }
 
-void StringLiteral::setStrData(ASTContext &C, const char *Str, unsigned Len) {
+void StringLiteral::setString(ASTContext &C, llvm::StringRef Str) {
   if (StrData)
     C.Deallocate(const_cast<char*>(StrData));
 
-  char *AStrData = new (C, 1) char[Len];
-  memcpy(AStrData, Str, Len);
+  char *AStrData = new (C, 1) char[Str.size()];
+  memcpy(AStrData, Str.data(), Str.size());
   StrData = AStrData;
-  ByteLength = Len;
+  ByteLength = Str.size();
 }
 
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
