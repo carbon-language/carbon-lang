@@ -791,6 +791,8 @@ public:
                                OverloadCandidateSet& Conversions,
                                bool AllowConversionFunctions,
                                bool AllowExplicit, bool ForceRValue);
+  bool DiagnoseAmbiguousUserDefinedConversion(Expr *From, QualType ToType);
+                                              
 
   ImplicitConversionSequence::CompareKind
   CompareImplicitConversionSequences(const ImplicitConversionSequence& ICS1,

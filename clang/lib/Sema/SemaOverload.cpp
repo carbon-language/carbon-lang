@@ -1501,6 +1501,22 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
 
   return OR_No_Viable_Function;
 }
+  
+bool
+Sema::DiagnoseAmbiguousUserDefinedConversion(Expr *From, QualType ToType) {
+  ImplicitConversionSequence ICS;
+  OverloadCandidateSet CandidateSet;
+  OverloadingResult OvResult = 
+    IsUserDefinedConversion(From, ToType, ICS.UserDefined,
+                            CandidateSet, true, false, false);
+  if (OvResult != OR_Ambiguous)
+    return false;
+  Diag(From->getSourceRange().getBegin(),
+       diag::err_typecheck_ambiguous_condition)
+  << From->getType() << ToType << From->getSourceRange();
+    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+  return true;  
+}
 
 /// CompareImplicitConversionSequences - Compare two implicit
 /// conversion sequences to determine whether one is better than the
@@ -1983,18 +1999,10 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
   if (!PerformImplicitConversion(From, ToType, Flavor,
                                  /*AllowExplicit=*/false, Elidable))
     return false;
-  ImplicitConversionSequence ICS;
-  OverloadCandidateSet CandidateSet;
-  if (IsUserDefinedConversion(From, ToType, ICS.UserDefined,
-                              CandidateSet,
-                              true, false, false) != OR_Ambiguous)
+  if (!DiagnoseAmbiguousUserDefinedConversion(From, ToType))
     return Diag(From->getSourceRange().getBegin(),
                 diag::err_typecheck_convert_incompatible)
       << ToType << From->getType() << Flavor << From->getSourceRange();
-  Diag(From->getSourceRange().getBegin(),
-       diag::err_typecheck_ambiguous_condition)
-  << From->getType() << ToType << From->getSourceRange();
-  PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
   return true;
 }
 
@@ -2109,19 +2117,12 @@ bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
   ImplicitConversionSequence ICS = TryContextuallyConvertToBool(From);
   if (!PerformImplicitConversion(From, Context.BoolTy, ICS, "converting"))
     return false;
-
-    OverloadCandidateSet CandidateSet;
-    if (IsUserDefinedConversion(From, Context.BoolTy, ICS.UserDefined,
-                            CandidateSet,
-                            true, false, false) != OR_Ambiguous)
-      return  Diag(From->getSourceRange().getBegin(),
-                   diag::err_typecheck_bool_condition)
-                    << From->getType() << From->getSourceRange();
-    Diag(From->getSourceRange().getBegin(),
-         diag::err_typecheck_ambiguous_condition)
-          << From->getType() << Context.BoolTy << From->getSourceRange();
-    PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
-    return true;
+  
+  if (!DiagnoseAmbiguousUserDefinedConversion(From, Context.BoolTy))
+    return  Diag(From->getSourceRange().getBegin(),
+                 diag::err_typecheck_bool_condition)
+                  << From->getType() << From->getSourceRange();
+  return true;
 }
 
 /// AddOverloadCandidate - Adds the given function to the set of
