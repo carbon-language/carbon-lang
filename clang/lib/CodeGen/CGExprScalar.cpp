@@ -683,7 +683,6 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
     
     Value *Src = Visit(const_cast<Expr*>(E));
 
-    // FIXME: This should be true, but that leads to a failure in virt.cpp
     bool NullCheckValue = true;
     
     if (isa<CXXThisExpr>(E)) {
