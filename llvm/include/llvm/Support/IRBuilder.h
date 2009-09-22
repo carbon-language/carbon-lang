@@ -134,10 +134,10 @@ public:
   /// SetCurrentLocation - This specifies the location information used
   /// by debugging information.
   void SetCurrentLocation(MDNode *L) {
-    if (MDKind == 0) {
-      Context.getMetadata().RegisterMDKind("dbg");
+    if (MDKind == 0) 
       MDKind = Context.getMetadata().getMDKind("dbg");
-    }
+    if (MDKind == 0)
+      MDKind = Context.getMetadata().RegisterMDKind("dbg");
     CurLocation = L;
   }
 
