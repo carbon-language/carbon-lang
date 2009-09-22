@@ -131,8 +131,8 @@ public:
     InsertPt = IP;
   }
 
-  /// SetCurrentLocation - This specifies the location information used
-  /// by debugging information.
+  /// SetCurrentLocation - Set location information used by debugging
+  /// information.
   void SetCurrentLocation(MDNode *L) {
     if (MDKind == 0) 
       MDKind = Context.getMetadata().getMDKind("dbg");
@@ -142,7 +142,13 @@ public:
   }
 
   MDNode *getCurrentLocation() const { return CurLocation; }
-  
+
+  /// SetLocation -  Set location information for the given instruction.
+  void SetLocation(Instruction *I) {
+    if (CurLocation)
+      Context.getMetadata().setMD(MDKind, CurLocation, I);
+  }
+
   /// Insert - Insert and return the specified instruction.
   template<typename InstTy>
   InstTy *Insert(InstTy *I, const Twine &Name = "") const {
