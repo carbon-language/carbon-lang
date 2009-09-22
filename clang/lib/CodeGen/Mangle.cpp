@@ -279,11 +279,8 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   //         ::= <local-name>
   //
   const DeclContext *DC = ND->getDeclContext();
-  while (isa<LinkageSpecDecl>(DC)) {
-    assert(cast<LinkageSpecDecl>(DC)->getLanguage() == 
-           LinkageSpecDecl::lang_cxx && "Unexpected linkage decl!");
+  while (isa<LinkageSpecDecl>(DC))
     DC = DC->getParent();
-  }
   
   if (DC->isTranslationUnit() || isStdNamespace(DC)) {
     // Check if we have a template.

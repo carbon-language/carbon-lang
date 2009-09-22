@@ -130,3 +130,10 @@ extern "C++" {
  void h() { } 
 }
 
+// PR5019
+extern "C" { struct a { int b; }; }
+
+// CHECK: @_Z1fP1a
+int f(struct a *x) {
+    return x->b;
+}
