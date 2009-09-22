@@ -10,6 +10,6 @@ LEVEL=../..
 
 include $(LEVEL)/Makefile.config
 
-PARALLEL_DIRS:= Chapter7
+PARALLEL_DIRS:= Chapter2 Chapter3 Chapter4 Chapter5 Chapter6 Chapter7
 
 include $(LEVEL)/Makefile.common

@@ -1,4 +1,4 @@
-##===- examples/Kaleidoscope/Chapter7/Makefile -------------*- Makefile -*-===##
+##===- examples/Kaleidoscope/Chapter3/Makefile -------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,9 +7,9 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
-TOOLNAME = Kaleidoscope-Ch7
+TOOLNAME = Kaleidoscope-Ch3
 EXAMPLE_TOOL = 1
 
-LINK_COMPONENTS := core jit interpreter native
+LINK_COMPONENTS := core
 
 include $(LEVEL)/Makefile.common
