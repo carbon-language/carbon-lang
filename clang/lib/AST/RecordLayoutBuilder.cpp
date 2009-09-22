@@ -87,7 +87,6 @@ void ASTRecordLayoutBuilder::IdentifyPrimaryBases(const CXXRecordDecl *RD) {
     
     // Only bases with virtual bases participate in computing the
     // indirect primary virtual base classes.
-    // FIXME: Is this correct?
     if (Base->getNumVBases())
       IdentifyPrimaryBases(Base);
   }
