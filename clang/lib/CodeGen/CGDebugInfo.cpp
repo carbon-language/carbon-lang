@@ -1009,9 +1009,9 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
     unsigned Align = M->getContext().getDeclAlignInBytes(Decl);
     if (Align > M->getContext().Target.getPointerAlign(0) / 8) {
       unsigned AlignedOffsetInBytes
-        = llvm::RoundUpToAlignment(FieldOffset, Align);
+        = llvm::RoundUpToAlignment(FieldOffset/8, Align);
       unsigned NumPaddingBytes
-        = AlignedOffsetInBytes = FieldOffset;
+        = AlignedOffsetInBytes - FieldOffset/8;
 
       if (NumPaddingBytes > 0) {
         llvm::APInt pad(32, NumPaddingBytes);
@@ -1032,7 +1032,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *Decl, unsigned Tag,
     FType = Type;
     FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
     FieldSize = M->getContext().getTypeSize(FType);
-    FieldAlign = M->getContext().getTypeAlign(FType);
+    FieldAlign = Align*8;
     std::string Name = Decl->getNameAsString();
     
     FieldTy = DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_member, Unit,
