@@ -657,6 +657,11 @@ static void AddFunctionParameterChunks(ASTContext &Context,
     // Add the placeholder string.
     CCStr->AddPlaceholderChunk(PlaceholderStr.c_str());
   }
+  
+  if (const FunctionProtoType *Proto 
+        = Function->getType()->getAs<FunctionProtoType>())
+    if (Proto->isVariadic())
+      CCStr->AddPlaceholderChunk(", ...");
 }
 
 /// \brief Add template parameter chunks to the given code completion string.
