@@ -189,6 +189,8 @@ getRequiredQualification(ASTContext &Context,
 }
 
 void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
+  assert(!ShadowMaps.empty() && "Must enter into a results scope");
+  
   if (R.Kind != Result::RK_Declaration) {
     // For non-declaration results, just add the result.
     Results.push_back(R);
@@ -1200,6 +1202,7 @@ void Sema::CodeCompleteUsing(Scope *S) {
     return;
   
   ResultBuilder Results(*this, &ResultBuilder::IsNestedNameSpecifier);
+  Results.EnterNewScope();
   
   // If we aren't in class scope, we could see the "namespace" keyword.
   if (!S->isClassScope())
@@ -1209,6 +1212,7 @@ void Sema::CodeCompleteUsing(Scope *S) {
   // nested-name-specifier.
   CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, 
                        CurContext, Results);
+  Results.ExitScope();
   
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
@@ -1220,8 +1224,10 @@ void Sema::CodeCompleteUsingDirective(Scope *S) {
   // After "using namespace", we expect to see a namespace name or namespace
   // alias.
   ResultBuilder Results(*this, &ResultBuilder::IsNamespaceOrAlias);
+  Results.EnterNewScope();
   CollectLookupResults(S, Context.getTranslationUnitDecl(), 0, CurContext,
                        Results);
+  Results.ExitScope();
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
@@ -1247,11 +1253,13 @@ void Sema::CodeCompleteNamespaceDecl(Scope *S)  {
     
     // Add the most recent definition (or extended definition) of each 
     // namespace to the list of results.
+    Results.EnterNewScope();
     for (std::map<NamespaceDecl *, NamespaceDecl *>::iterator 
          NS = OrigToLatest.begin(), NSEnd = OrigToLatest.end();
          NS != NSEnd; ++NS)
       Results.MaybeAddResult(CodeCompleteConsumer::Result(NS->second, 0),
                              CurContext);
+    Results.ExitScope();
   }
   
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
@@ -1274,6 +1282,7 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
 
   typedef CodeCompleteConsumer::Result Result;
   ResultBuilder Results(*this, &ResultBuilder::IsType);
+  Results.EnterNewScope();
   
   // Add the names of overloadable operators.
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly)      \
@@ -1292,6 +1301,7 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   Results.setFilter(&ResultBuilder::IsNestedNameSpecifier);
   CollectLookupResults(S, Context.getTranslationUnitDecl(), NextRank + 1, 
                        CurContext, Results);
+  Results.ExitScope();
   
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
