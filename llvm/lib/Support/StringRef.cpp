@@ -10,7 +10,10 @@
 #include "llvm/ADT/StringRef.h"
 using namespace llvm;
 
+// MSVC emits references to this into the translation units which reference it.
+#ifndef _MSC_VER
 const size_t StringRef::npos;
+#endif
 
 //===----------------------------------------------------------------------===//
 // String Searching
