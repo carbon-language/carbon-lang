@@ -83,75 +83,77 @@ void ExactHazardRecognizer::dumpScoreboard() {
 }
 
 ExactHazardRecognizer::HazardType ExactHazardRecognizer::getHazardType(SUnit *SU) {
-  if (!ItinData.isEmpty()) {
-    unsigned cycle = 0;
+  if (ItinData.isEmpty())
+    return NoHazard;
 
-    // Use the itinerary for the underlying instruction to check for
-    // free FU's in the scoreboard at the appropriate future cycles.
-    unsigned idx = SU->getInstr()->getDesc().getSchedClass();
-    for (const InstrStage *IS = ItinData.beginStage(idx),
-           *E = ItinData.endStage(idx); IS != E; ++IS) {
-      // We must find one of the stage's units free for every cycle the
-      // stage is occupied. FIXME it would be more accurate to find the
-      // same unit free in all the cycles.
-      for (unsigned int i = 0; i < IS->getCycles(); ++i) {
-        assert(((cycle + i) < ScoreboardDepth) && 
-               "Scoreboard depth exceeded!");
-        
-        unsigned index = getFutureIndex(cycle + i);
-        unsigned freeUnits = IS->getUnits() & ~Scoreboard[index];
-        if (!freeUnits) {
-          DEBUG(errs() << "*** Hazard in cycle " << (cycle + i) << ", ");
-          DEBUG(errs() << "SU(" << SU->NodeNum << "): ");
-          DEBUG(SU->getInstr()->dump());
-          return Hazard;
-        }
-      }
+  unsigned cycle = 0;
+
+  // Use the itinerary for the underlying instruction to check for
+  // free FU's in the scoreboard at the appropriate future cycles.
+  unsigned idx = SU->getInstr()->getDesc().getSchedClass();
+  for (const InstrStage *IS = ItinData.beginStage(idx),
+         *E = ItinData.endStage(idx); IS != E; ++IS) {
+    // We must find one of the stage's units free for every cycle the
+    // stage is occupied. FIXME it would be more accurate to find the
+    // same unit free in all the cycles.
+    for (unsigned int i = 0; i < IS->getCycles(); ++i) {
+      assert(((cycle + i) < ScoreboardDepth) && 
+             "Scoreboard depth exceeded!");
       
-      // Advance the cycle to the next stage.
-      cycle += IS->getNextCycles();
+      unsigned index = getFutureIndex(cycle + i);
+      unsigned freeUnits = IS->getUnits() & ~Scoreboard[index];
+      if (!freeUnits) {
+        DEBUG(errs() << "*** Hazard in cycle " << (cycle + i) << ", ");
+        DEBUG(errs() << "SU(" << SU->NodeNum << "): ");
+        DEBUG(SU->getInstr()->dump());
+        return Hazard;
+      }
     }
+    
+    // Advance the cycle to the next stage.
+    cycle += IS->getNextCycles();
   }
 
   return NoHazard;
 }
     
 void ExactHazardRecognizer::EmitInstruction(SUnit *SU) {
-  if (!ItinData.isEmpty()) {
-    unsigned cycle = 0;
+  if (ItinData.isEmpty())
+    return;
 
-    // Use the itinerary for the underlying instruction to reserve FU's
-    // in the scoreboard at the appropriate future cycles.
-    unsigned idx = SU->getInstr()->getDesc().getSchedClass();
-    for (const InstrStage *IS = ItinData.beginStage(idx), 
-           *E = ItinData.endStage(idx); IS != E; ++IS) {
-      // We must reserve one of the stage's units for every cycle the
-      // stage is occupied. FIXME it would be more accurate to reserve
-      // the same unit free in all the cycles.
-      for (unsigned int i = 0; i < IS->getCycles(); ++i) {
-        assert(((cycle + i) < ScoreboardDepth) &&
-               "Scoreboard depth exceeded!");
-        
-        unsigned index = getFutureIndex(cycle + i);
-        unsigned freeUnits = IS->getUnits() & ~Scoreboard[index];
-        
-        // reduce to a single unit
-        unsigned freeUnit = 0;
-        do {
-          freeUnit = freeUnits;
-          freeUnits = freeUnit & (freeUnit - 1);
-        } while (freeUnits);
-        
-        assert(freeUnit && "No function unit available!");
-        Scoreboard[index] |= freeUnit;
-      }
+  unsigned cycle = 0;
 
-      // Advance the cycle to the next stage.
-      cycle += IS->getNextCycles();
+  // Use the itinerary for the underlying instruction to reserve FU's
+  // in the scoreboard at the appropriate future cycles.
+  unsigned idx = SU->getInstr()->getDesc().getSchedClass();
+  for (const InstrStage *IS = ItinData.beginStage(idx), 
+         *E = ItinData.endStage(idx); IS != E; ++IS) {
+    // We must reserve one of the stage's units for every cycle the
+    // stage is occupied. FIXME it would be more accurate to reserve
+    // the same unit free in all the cycles.
+    for (unsigned int i = 0; i < IS->getCycles(); ++i) {
+      assert(((cycle + i) < ScoreboardDepth) &&
+             "Scoreboard depth exceeded!");
+      
+      unsigned index = getFutureIndex(cycle + i);
+      unsigned freeUnits = IS->getUnits() & ~Scoreboard[index];
+      
+      // reduce to a single unit
+      unsigned freeUnit = 0;
+      do {
+        freeUnit = freeUnits;
+        freeUnits = freeUnit & (freeUnit - 1);
+      } while (freeUnits);
+      
+      assert(freeUnit && "No function unit available!");
+      Scoreboard[index] |= freeUnit;
     }
-
-    DEBUG(dumpScoreboard());
+    
+    // Advance the cycle to the next stage.
+    cycle += IS->getNextCycles();
   }
+  
+  DEBUG(dumpScoreboard());
 }
     
 void ExactHazardRecognizer::AdvanceCycle() {
