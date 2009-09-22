@@ -13,6 +13,7 @@ class TestingConfig:
                 'PATH' : os.pathsep.join(litConfig.path +
                                          [os.environ.get('PATH','')]),
                 'SYSTEMROOT' : os.environ.get('SYSTEMROOT',''),
+                'LLVM_DISABLE_CRT_DEBUG' : '1',
                 }
 
             config = TestingConfig(parent,

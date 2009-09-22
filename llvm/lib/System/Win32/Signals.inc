@@ -43,6 +43,7 @@ static std::vector<llvm::sys::Path> *FilesToRemove = NULL;
 static std::vector<std::pair<void(*)(void*), void*> > *CallBacksToRun = 0;
 static bool RegisteredUnhandledExceptionFilter = false;
 static bool CleanupExecuted = false;
+static bool ExitOnUnhandledExceptions = false;
 static PTOP_LEVEL_EXCEPTION_FILTER OldFilter = NULL;
 
 // Windows creates a new thread to execute the console handler when an event
@@ -57,8 +58,36 @@ namespace llvm {
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
+/// CRTReportHook - Function called on a CRT debugging event.
+static int CRTReportHook(int ReportType, char *Message, int *Return) {
+  // Don't cause a DebugBreak() on return.
+  if (Return)
+    *Return = 0;
 
-static void RegisterHandler() { 
+  switch (ReportType) {
+  default:
+  case _CRT_ASSERT:
+    fprintf(stderr, "CRT assert: %s\n", Message);
+    // FIXME: Is there a way to just crash? Perhaps throw to the unhandled
+    // exception code? Perhaps SetErrorMode() handles this.
+    _exit(3);
+    break;
+  case _CRT_ERROR:
+    fprintf(stderr, "CRT error: %s\n", Message);
+    // FIXME: Is there a way to just crash? Perhaps throw to the unhandled
+    // exception code? Perhaps SetErrorMode() handles this.
+    _exit(3);
+    break;
+  case _CRT_WARN:
+    fprintf(stderr, "CRT warn: %s\n", Message);
+    break;
+  }
+
+  // Don't call _CrtDbgReport.
+  return TRUE;
+}
+
+static void RegisterHandler() {
   if (RegisteredUnhandledExceptionFilter) {
     EnterCriticalSection(&CriticalSection);
     return;
@@ -75,6 +104,12 @@ static void RegisterHandler() {
   RegisteredUnhandledExceptionFilter = true;
   OldFilter = SetUnhandledExceptionFilter(LLVMUnhandledExceptionFilter);
   SetConsoleCtrlHandler(LLVMConsoleCtrlHandler, TRUE);
+
+  // Environment variable to disable any kind of crash dialog.
+  if (getenv("LLVM_DISABLE_CRT_DEBUG")) {
+    _CrtSetReportHook(CRTReportHook);
+	ExitOnUnhandledExceptions = true;
+  }
 
   // IMPORTANT NOTE: Caller must call LeaveCriticalSection(&CriticalSection) or
   // else multi-threading problems will ensue.
@@ -234,6 +269,9 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
   } catch (...) {
       assert(0 && "Crashed in LLVMUnhandledExceptionFilter");
   }
+
+  if (ExitOnUnhandledExceptions)
+  	_exit(-3);
 
   // Allow dialog box to pop up allowing choice to start debugger.
   if (OldFilter)
