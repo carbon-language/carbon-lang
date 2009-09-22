@@ -77,10 +77,18 @@ CodeGenFunction::GetAddressCXXOfBaseClass(llvm::Value *BaseValue,
   if (ClassDecl == BaseClassDecl)
     return BaseValue;
 
+  QualType BTy =
+    getContext().getCanonicalType(
+      getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(BaseClassDecl)));
+  const llvm::Type *BasePtrTy = llvm::PointerType::getUnqual(ConvertType(BTy));
 
   uint64_t Offset = ComputeBaseClassOffset(getContext(), 
                                            ClassDecl, BaseClassDecl);
-
+  if (!Offset) {
+    // Just cast back.
+    return Builder.CreateBitCast(BaseValue, BasePtrTy);
+  }
+  
   llvm::BasicBlock *CastNull = 0;
   llvm::BasicBlock *CastNotNull = 0;
   llvm::BasicBlock *CastEnd = 0;
@@ -108,13 +116,8 @@ CodeGenFunction::GetAddressCXXOfBaseClass(llvm::Value *BaseValue,
   BaseValue = Builder.CreateBitCast(BaseValue, Int8PtrTy);
   BaseValue = Builder.CreateGEP(BaseValue, OffsetVal, "add.ptr");
   
-  QualType BTy =
-    getContext().getCanonicalType(
-      getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(BaseClassDecl)));
-  
   // Cast back.
-  const llvm::Type *BasePtr = llvm::PointerType::getUnqual(ConvertType(BTy));
-  BaseValue = Builder.CreateBitCast(BaseValue, BasePtr);
+  BaseValue = Builder.CreateBitCast(BaseValue, BasePtrTy);
  
   if (NullCheckValue) {
     Builder.CreateBr(CastEnd);
