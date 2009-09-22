@@ -21,6 +21,6 @@ namespace N {
     // CHECK-CC1: A : 4
     // CHECK-CC1: X : 4
     // CHECK-CC1: Y : 4
-    // CHECK-CC1: M : 9
-    // CHECK-CC1: N : 9
+    // CHECK-CC1: M : 9 : M::
+    // CHECK-CC1: N : 9 : N::
     // RUN: true

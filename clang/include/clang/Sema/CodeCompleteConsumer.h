@@ -173,6 +173,10 @@ public:
     /// \brief Whether this result was found via lookup into a base class.
     bool QualifierIsInformative : 1;
     
+    /// \brief Whether this declaration is the beginning of a 
+    /// nested-name-specifier and, therefore, should be followed by '::'.
+    bool StartsNestedNameSpecifier : 1;
+    
     /// \brief If the result should have a nested-name-specifier, this is it.
     /// When \c QualifierIsInformative, the nested-name-specifier is 
     /// informative rather than required.
@@ -183,13 +187,14 @@ public:
            NestedNameSpecifier *Qualifier = 0,
            bool QualifierIsInformative = false)
       : Kind(RK_Declaration), Declaration(Declaration), Rank(Rank), 
-        Hidden(false), QualifierIsInformative(QualifierIsInformative), 
-        Qualifier(Qualifier) { }
+        Hidden(false), QualifierIsInformative(QualifierIsInformative),
+        StartsNestedNameSpecifier(false), Qualifier(Qualifier) { }
     
     /// \brief Build a result that refers to a keyword or symbol.
     Result(const char *Keyword, unsigned Rank)
       : Kind(RK_Keyword), Keyword(Keyword), Rank(Rank), Hidden(false),
-        QualifierIsInformative(0), Qualifier(0) { }
+        QualifierIsInformative(0), StartsNestedNameSpecifier(false), 
+        Qualifier(0) { }
     
     /// \brief Retrieve the declaration stored in this result.
     NamedDecl *getDeclaration() const {

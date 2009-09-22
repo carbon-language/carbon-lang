@@ -313,6 +313,11 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
       R.QualifierIsInformative = false;
   }
   
+  // If the filter is for nested-name-specifiers, then this result starts a
+  // nested-name-specifier.
+  if (Filter == &ResultBuilder::IsNestedNameSpecifier)
+    R.StartsNestedNameSpecifier = true;
+  
   // Insert this result into the set of results and into the current shadow
   // map.
   SMap.insert(std::make_pair(R.Declaration->getDeclName(),
@@ -849,11 +854,13 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
     return Result;
   }
   
-  if (Qualifier) {
+  if (Qualifier || StartsNestedNameSpecifier) {
     CodeCompletionString *Result = new CodeCompletionString;
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
                                    S.Context);
     Result->AddTextChunk(ND->getNameAsString().c_str());
+    if (StartsNestedNameSpecifier)
+      Result->AddTextChunk("::");
     return Result;
   }
   
