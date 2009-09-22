@@ -158,8 +158,8 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
 
   // Otherwise if is the first nearly empty virtual base, if one exists,
   // otherwise there is no primary base class.
-  setPrimaryBase(FirstPrimary, true);
-  return;
+  if (!PrimaryBase)
+    setPrimaryBase(FirstPrimary, true);
 }
 
 void ASTRecordLayoutBuilder::LayoutVirtualBase(const CXXRecordDecl *RD) {
