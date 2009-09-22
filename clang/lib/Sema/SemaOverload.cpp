@@ -2122,12 +2122,17 @@ bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
 /// If @p ForceRValue, treat all arguments as rvalues. This is a slightly
 /// hacky way to implement the overloading rules for elidable copy
 /// initialization in C++0x (C++0x 12.8p15).
+///
+/// \para PartialOverloading true if we are performing "partial" overloading
+/// based on an incomplete set of function arguments. This feature is used by
+/// code completion.
 void
 Sema::AddOverloadCandidate(FunctionDecl *Function,
                            Expr **Args, unsigned NumArgs,
                            OverloadCandidateSet& CandidateSet,
                            bool SuppressUserConversions,
-                           bool ForceRValue) {
+                           bool ForceRValue,
+                           bool PartialOverloading) {
   const FunctionProtoType* Proto
     = dyn_cast<FunctionProtoType>(Function->getType()->getAs<FunctionType>());
   assert(Proto && "Functions without a prototype cannot be overloaded");
@@ -2177,7 +2182,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   // parameter list is truncated on the right, so that there are
   // exactly m parameters.
   unsigned MinRequiredArgs = Function->getMinRequiredArguments();
-  if (NumArgs < MinRequiredArgs) {
+  if (NumArgs < MinRequiredArgs && !PartialOverloading) {
     // Not enough arguments.
     Candidate.Viable = false;
     return;
@@ -3615,9 +3620,15 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 void
 Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
                                            Expr **Args, unsigned NumArgs,
-                                           OverloadCandidateSet& CandidateSet) {
+                                           bool HasExplicitTemplateArgs,
+                                const TemplateArgument *ExplicitTemplateArgs,
+                                           unsigned NumExplicitTemplateArgs,                                            
+                                           OverloadCandidateSet& CandidateSet,
+                                           bool PartialOverloading) {
   FunctionSet Functions;
 
+  // FIXME: Should we be trafficking in canonical function decls throughout?
+  
   // Record all of the function candidates that we've already
   // added to the overload set, so that we don't add those same
   // candidates a second time.
@@ -3630,6 +3641,7 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
         Functions.insert(FunTmpl);
     }
 
+  // FIXME: Pass in the explicit template arguments?
   ArgumentDependentLookup(Name, Args, NumArgs, Functions);
 
   // Erase all of the candidates we already knew about.
@@ -3648,11 +3660,17 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
   for (FunctionSet::iterator Func = Functions.begin(),
                           FuncEnd = Functions.end();
        Func != FuncEnd; ++Func) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Func))
-      AddOverloadCandidate(FD, Args, NumArgs, CandidateSet);
-    else
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*Func)) {
+      if (HasExplicitTemplateArgs)
+        continue;
+      
+      AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
+                           false, false, PartialOverloading);
+    } else
       AddTemplateOverloadCandidate(cast<FunctionTemplateDecl>(*Func),
-                                   /*FIXME: explicit args */false, 0, 0,
+                                   HasExplicitTemplateArgs,
+                                   ExplicitTemplateArgs,
+                                   NumExplicitTemplateArgs,
                                    Args, NumArgs, CandidateSet);
   }
 }
@@ -4100,6 +4118,101 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   return 0;
 }
 
+/// \brief Add a single candidate to the overload set.
+static void AddOverloadedCallCandidate(Sema &S,
+                                       AnyFunctionDecl Callee,
+                                       bool &ArgumentDependentLookup,
+                                       bool HasExplicitTemplateArgs,
+                                 const TemplateArgument *ExplicitTemplateArgs,
+                                       unsigned NumExplicitTemplateArgs,
+                                       Expr **Args, unsigned NumArgs,
+                                       OverloadCandidateSet &CandidateSet,
+                                       bool PartialOverloading) {
+  if (FunctionDecl *Func = dyn_cast<FunctionDecl>(Callee)) {
+    assert(!HasExplicitTemplateArgs && "Explicit template arguments?");
+    S.AddOverloadCandidate(Func, Args, NumArgs, CandidateSet, false, false,
+                           PartialOverloading);
+  
+    if (Func->getDeclContext()->isRecord() ||
+        Func->getDeclContext()->isFunctionOrMethod())
+      ArgumentDependentLookup = false;
+    return;
+  }  
+  
+  FunctionTemplateDecl *FuncTemplate = cast<FunctionTemplateDecl>(Callee);
+  S.AddTemplateOverloadCandidate(FuncTemplate, HasExplicitTemplateArgs,
+                                 ExplicitTemplateArgs,
+                                 NumExplicitTemplateArgs,
+                                 Args, NumArgs, CandidateSet);
+  
+  if (FuncTemplate->getDeclContext()->isRecord())
+    ArgumentDependentLookup = false;
+}
+  
+/// \brief Add the overload candidates named by callee and/or found by argument
+/// dependent lookup to the given overload set.
+void Sema::AddOverloadedCallCandidates(NamedDecl *Callee,
+                                       DeclarationName &UnqualifiedName,
+                                       bool &ArgumentDependentLookup,
+                                       bool HasExplicitTemplateArgs,
+                                  const TemplateArgument *ExplicitTemplateArgs,
+                                       unsigned NumExplicitTemplateArgs,
+                                       Expr **Args, unsigned NumArgs,
+                                       OverloadCandidateSet &CandidateSet,
+                                       bool PartialOverloading) {
+  // Add the functions denoted by Callee to the set of candidate
+  // functions. While we're doing so, track whether argument-dependent
+  // lookup still applies, per:
+  //
+  // C++0x [basic.lookup.argdep]p3:
+  //   Let X be the lookup set produced by unqualified lookup (3.4.1)
+  //   and let Y be the lookup set produced by argument dependent
+  //   lookup (defined as follows). If X contains
+  //
+  //     -- a declaration of a class member, or
+  //
+  //     -- a block-scope function declaration that is not a
+  //        using-declaration (FIXME: check for using declaration), or
+  //
+  //     -- a declaration that is neither a function or a function
+  //        template
+  //
+  //   then Y is empty.
+  if (!Callee) {
+    // Nothing to do.
+  } else if (OverloadedFunctionDecl *Ovl
+               = dyn_cast<OverloadedFunctionDecl>(Callee)) {
+    for (OverloadedFunctionDecl::function_iterator Func = Ovl->function_begin(),
+                                                FuncEnd = Ovl->function_end();
+         Func != FuncEnd; ++Func)
+      AddOverloadedCallCandidate(*this, *Func, ArgumentDependentLookup,
+                                 HasExplicitTemplateArgs,
+                                 ExplicitTemplateArgs, NumExplicitTemplateArgs,
+                                 Args, NumArgs, CandidateSet, 
+                                 PartialOverloading);
+  } else if (isa<FunctionDecl>(Callee) || isa<FunctionTemplateDecl>(Callee))
+    AddOverloadedCallCandidate(*this, 
+                               AnyFunctionDecl::getFromNamedDecl(Callee),
+                               ArgumentDependentLookup,
+                               HasExplicitTemplateArgs,
+                               ExplicitTemplateArgs, NumExplicitTemplateArgs,
+                               Args, NumArgs, CandidateSet,
+                               PartialOverloading);
+  // FIXME: assert isa<FunctionDecl> || isa<FunctionTemplateDecl> rather than
+  // checking dynamically.
+  
+  if (Callee)
+    UnqualifiedName = Callee->getDeclName();
+  
+  if (ArgumentDependentLookup)
+    AddArgumentDependentLookupCandidates(UnqualifiedName, Args, NumArgs,
+                                         HasExplicitTemplateArgs,
+                                         ExplicitTemplateArgs,
+                                         NumExplicitTemplateArgs,
+                                         CandidateSet,
+                                         PartialOverloading);  
+}
+  
 /// ResolveOverloadedCallFn - Given the call expression that calls Fn
 /// (which eventually refers to the declaration Func) and the call
 /// arguments Args/NumArgs, attempt to resolve the function call down
@@ -4120,74 +4233,11 @@ FunctionDecl *Sema::ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
   OverloadCandidateSet CandidateSet;
 
   // Add the functions denoted by Callee to the set of candidate
-  // functions. While we're doing so, track whether argument-dependent
-  // lookup still applies, per:
-  //
-  // C++0x [basic.lookup.argdep]p3:
-  //   Let X be the lookup set produced by unqualified lookup (3.4.1)
-  //   and let Y be the lookup set produced by argument dependent
-  //   lookup (defined as follows). If X contains
-  //
-  //     -- a declaration of a class member, or
-  //
-  //     -- a block-scope function declaration that is not a
-  //        using-declaration, or
-  //
-  //     -- a declaration that is neither a function or a function
-  //        template
-  //
-  //   then Y is empty.
-  if (OverloadedFunctionDecl *Ovl
-        = dyn_cast_or_null<OverloadedFunctionDecl>(Callee)) {
-    for (OverloadedFunctionDecl::function_iterator Func = Ovl->function_begin(),
-                                                FuncEnd = Ovl->function_end();
-         Func != FuncEnd; ++Func) {
-      DeclContext *Ctx = 0;
-      if (FunctionDecl *FunDecl = dyn_cast<FunctionDecl>(*Func)) {
-        if (HasExplicitTemplateArgs)
-          continue;
-
-        AddOverloadCandidate(FunDecl, Args, NumArgs, CandidateSet);
-        Ctx = FunDecl->getDeclContext();
-      } else {
-        FunctionTemplateDecl *FunTmpl = cast<FunctionTemplateDecl>(*Func);
-        AddTemplateOverloadCandidate(FunTmpl, HasExplicitTemplateArgs,
-                                     ExplicitTemplateArgs,
-                                     NumExplicitTemplateArgs,
-                                     Args, NumArgs, CandidateSet);
-        Ctx = FunTmpl->getDeclContext();
-      }
-
-
-      if (Ctx->isRecord() || Ctx->isFunctionOrMethod())
-        ArgumentDependentLookup = false;
-    }
-  } else if (FunctionDecl *Func = dyn_cast_or_null<FunctionDecl>(Callee)) {
-    assert(!HasExplicitTemplateArgs && "Explicit template arguments?");
-    AddOverloadCandidate(Func, Args, NumArgs, CandidateSet);
-
-    if (Func->getDeclContext()->isRecord() ||
-        Func->getDeclContext()->isFunctionOrMethod())
-      ArgumentDependentLookup = false;
-  } else if (FunctionTemplateDecl *FuncTemplate
-               = dyn_cast_or_null<FunctionTemplateDecl>(Callee)) {
-    AddTemplateOverloadCandidate(FuncTemplate, HasExplicitTemplateArgs,
-                                 ExplicitTemplateArgs,
-                                 NumExplicitTemplateArgs,
-                                 Args, NumArgs, CandidateSet);
-
-    if (FuncTemplate->getDeclContext()->isRecord())
-      ArgumentDependentLookup = false;
-  }
-
-  if (Callee)
-    UnqualifiedName = Callee->getDeclName();
-
-  // FIXME: Pass explicit template arguments through for ADL
-  if (ArgumentDependentLookup)
-    AddArgumentDependentLookupCandidates(UnqualifiedName, Args, NumArgs,
-                                         CandidateSet);
-
+  // functions. 
+  AddOverloadedCallCandidates(Callee, UnqualifiedName, ArgumentDependentLookup,
+                              HasExplicitTemplateArgs, ExplicitTemplateArgs,
+                              NumExplicitTemplateArgs, Args, NumArgs, 
+                              CandidateSet);
   OverloadCandidateSet::iterator Best;
   switch (BestViableFunction(CandidateSet, Fn->getLocStart(), Best)) {
   case OR_Success:
@@ -4877,7 +4927,6 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
   //   for a class object x of type T if T::operator->() exists and if
   //   the operator is selected as the best match function by the
   //   overload resolution mechanism (13.3).
-  // FIXME: look in base classes.
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Arrow);
   OverloadCandidateSet CandidateSet;
   const RecordType *BaseRecord = Base->getType()->getAs<RecordType>();

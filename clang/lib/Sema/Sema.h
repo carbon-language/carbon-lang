@@ -835,7 +835,8 @@ public:
                             Expr **Args, unsigned NumArgs,
                             OverloadCandidateSet& CandidateSet,
                             bool SuppressUserConversions = false,
-                            bool ForceRValue = false);
+                            bool ForceRValue = false,
+                            bool PartialOverloading = false);
   void AddFunctionCandidates(const FunctionSet &Functions,
                              Expr **Args, unsigned NumArgs,
                              OverloadCandidateSet& CandidateSet,
@@ -891,7 +892,11 @@ public:
                                     OverloadCandidateSet& CandidateSet);
   void AddArgumentDependentLookupCandidates(DeclarationName Name,
                                             Expr **Args, unsigned NumArgs,
-                                            OverloadCandidateSet& CandidateSet);
+                                            bool HasExplicitTemplateArgs,
+                                  const TemplateArgument *ExplicitTemplateArgs,
+                                            unsigned NumExplicitTemplateArgs,                                            
+                                            OverloadCandidateSet& CandidateSet,
+                                            bool PartialOverloading = false);
   bool isBetterOverloadCandidate(const OverloadCandidate& Cand1,
                                  const OverloadCandidate& Cand2);
   OverloadingResult BestViableFunction(OverloadCandidateSet& CandidateSet,
@@ -904,6 +909,16 @@ public:
                                                    bool Complain);
   void FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
 
+  void AddOverloadedCallCandidates(NamedDecl *Callee,
+                                   DeclarationName &UnqualifiedName,
+                                   bool &ArgumentDependentLookup,
+                                   bool HasExplicitTemplateArgs,
+                                   const TemplateArgument *ExplicitTemplateArgs,
+                                   unsigned NumExplicitTemplateArgs,
+                                   Expr **Args, unsigned NumArgs,
+                                   OverloadCandidateSet &CandidateSet,
+                                   bool PartialOverloading = false);
+    
   FunctionDecl *ResolveOverloadedCallFn(Expr *Fn, NamedDecl *Callee,
                                         DeclarationName UnqualifiedName,
                                         bool HasExplicitTemplateArgs,
@@ -1670,6 +1685,16 @@ public:
                                  unsigned NumInitializers
                                  );
 
+  void DeconstructCallFunction(Expr *FnExpr,
+                               NamedDecl *&Function,
+                               DeclarationName &Name,
+                               NestedNameSpecifier *&Qualifier,
+                               SourceRange &QualifierRange,
+                               bool &ArgumentDependentLookup,
+                               bool &HasExplicitTemplateArguments,
+                               const TemplateArgument *&ExplicitTemplateArgs,
+                               unsigned &NumExplicitTemplateArgs);
+    
   /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma
   /// locations.
@@ -3635,6 +3660,8 @@ public:
                                                bool IsArrow);
   virtual void CodeCompleteTag(Scope *S, unsigned TagSpec);
   virtual void CodeCompleteCase(Scope *S);
+  virtual void CodeCompleteCall(Scope *S, ExprTy *Fn,
+                                ExprTy **Args, unsigned NumArgs);
   virtual void CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
                                        bool EnteringContext);
   virtual void CodeCompleteUsing(Scope *S);

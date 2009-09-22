@@ -2734,6 +2734,96 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   return Invalid;
 }
 
+/// \brief "Deconstruct" the function argument of a call expression to find 
+/// the underlying declaration (if any), the name of the called function, 
+/// whether argument-dependent lookup is available, whether it has explicit
+/// template arguments, etc.
+void Sema::DeconstructCallFunction(Expr *FnExpr,
+                                   NamedDecl *&Function,
+                                   DeclarationName &Name,
+                                   NestedNameSpecifier *&Qualifier,
+                                   SourceRange &QualifierRange,
+                                   bool &ArgumentDependentLookup,
+                                   bool &HasExplicitTemplateArguments,
+                                 const TemplateArgument *&ExplicitTemplateArgs,
+                                   unsigned &NumExplicitTemplateArgs) {
+  // Set defaults for all of the output parameters.
+  Function = 0;
+  Name = DeclarationName();
+  Qualifier = 0;
+  QualifierRange = SourceRange();
+  ArgumentDependentLookup = getLangOptions().CPlusPlus;
+  HasExplicitTemplateArguments = false;
+  
+  // If we're directly calling a function, get the appropriate declaration.
+  // Also, in C++, keep track of whether we should perform argument-dependent
+  // lookup and whether there were any explicitly-specified template arguments.
+  while (true) {
+    if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(FnExpr))
+      FnExpr = IcExpr->getSubExpr();
+    else if (ParenExpr *PExpr = dyn_cast<ParenExpr>(FnExpr)) {
+      // Parentheses around a function disable ADL
+      // (C++0x [basic.lookup.argdep]p1).
+      ArgumentDependentLookup = false;
+      FnExpr = PExpr->getSubExpr();
+    } else if (isa<UnaryOperator>(FnExpr) &&
+               cast<UnaryOperator>(FnExpr)->getOpcode()
+               == UnaryOperator::AddrOf) {
+      FnExpr = cast<UnaryOperator>(FnExpr)->getSubExpr();
+    } else if (QualifiedDeclRefExpr *QDRExpr 
+                 = dyn_cast<QualifiedDeclRefExpr>(FnExpr)) {
+      // Qualified names disable ADL (C++0x [basic.lookup.argdep]p1).
+      ArgumentDependentLookup = false;
+      Qualifier = QDRExpr->getQualifier();
+      QualifierRange = QDRExpr->getQualifierRange();
+      Function = dyn_cast<NamedDecl>(QDRExpr->getDecl());
+      break;
+    } else if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(FnExpr)) {
+      Function = dyn_cast<NamedDecl>(DRExpr->getDecl());
+      break;
+    } else if (UnresolvedFunctionNameExpr *DepName
+               = dyn_cast<UnresolvedFunctionNameExpr>(FnExpr)) {
+      Name = DepName->getName();
+      break;
+    } else if (TemplateIdRefExpr *TemplateIdRef
+               = dyn_cast<TemplateIdRefExpr>(FnExpr)) {
+      Function = TemplateIdRef->getTemplateName().getAsTemplateDecl();
+      if (!Function)
+        Function = TemplateIdRef->getTemplateName().getAsOverloadedFunctionDecl();
+      HasExplicitTemplateArguments = true;
+      ExplicitTemplateArgs = TemplateIdRef->getTemplateArgs();
+      NumExplicitTemplateArgs = TemplateIdRef->getNumTemplateArgs();
+      
+      // C++ [temp.arg.explicit]p6:
+      //   [Note: For simple function names, argument dependent lookup (3.4.2)
+      //   applies even when the function name is not visible within the
+      //   scope of the call. This is because the call still has the syntactic
+      //   form of a function call (3.4.1). But when a function template with
+      //   explicit template arguments is used, the call does not have the
+      //   correct syntactic form unless there is a function template with
+      //   that name visible at the point of the call. If no such name is
+      //   visible, the call is not syntactically well-formed and
+      //   argument-dependent lookup does not apply. If some such name is
+      //   visible, argument dependent lookup applies and additional function
+      //   templates may be found in other namespaces.
+      //
+      // The summary of this paragraph is that, if we get to this point and the
+      // template-id was not a qualified name, then argument-dependent lookup
+      // is still possible.
+      if ((Qualifier = TemplateIdRef->getQualifier())) {
+        ArgumentDependentLookup = false;
+        QualifierRange = TemplateIdRef->getQualifierRange();
+      }
+      break;
+    } else {
+      // Any kind of name that does not refer to a declaration (or
+      // set of declarations) disables ADL (C++0x [basic.lookup.argdep]p3).
+      ArgumentDependentLookup = false;
+      break;
+    }
+  }
+}
+
 /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
 /// This provides the location of the left/right parens and a list of comma
 /// locations.
@@ -2808,67 +2898,15 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   // If we're directly calling a function, get the appropriate declaration.
   // Also, in C++, keep track of whether we should perform argument-dependent
   // lookup and whether there were any explicitly-specified template arguments.
-  Expr *FnExpr = Fn;
   bool ADL = true;
   bool HasExplicitTemplateArgs = 0;
   const TemplateArgument *ExplicitTemplateArgs = 0;
   unsigned NumExplicitTemplateArgs = 0;
-  while (true) {
-    if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(FnExpr))
-      FnExpr = IcExpr->getSubExpr();
-    else if (ParenExpr *PExpr = dyn_cast<ParenExpr>(FnExpr)) {
-      // Parentheses around a function disable ADL
-      // (C++0x [basic.lookup.argdep]p1).
-      ADL = false;
-      FnExpr = PExpr->getSubExpr();
-    } else if (isa<UnaryOperator>(FnExpr) &&
-               cast<UnaryOperator>(FnExpr)->getOpcode()
-                 == UnaryOperator::AddrOf) {
-      FnExpr = cast<UnaryOperator>(FnExpr)->getSubExpr();
-    } else if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(FnExpr)) {
-      // Qualified names disable ADL (C++0x [basic.lookup.argdep]p1).
-      ADL &= !isa<QualifiedDeclRefExpr>(DRExpr);
-      NDecl = dyn_cast<NamedDecl>(DRExpr->getDecl());
-      break;
-    } else if (UnresolvedFunctionNameExpr *DepName
-                 = dyn_cast<UnresolvedFunctionNameExpr>(FnExpr)) {
-      UnqualifiedName = DepName->getName();
-      break;
-    } else if (TemplateIdRefExpr *TemplateIdRef
-                 = dyn_cast<TemplateIdRefExpr>(FnExpr)) {
-      NDecl = TemplateIdRef->getTemplateName().getAsTemplateDecl();
-      if (!NDecl)
-        NDecl = TemplateIdRef->getTemplateName().getAsOverloadedFunctionDecl();
-      HasExplicitTemplateArgs = true;
-      ExplicitTemplateArgs = TemplateIdRef->getTemplateArgs();
-      NumExplicitTemplateArgs = TemplateIdRef->getNumTemplateArgs();
-
-      // C++ [temp.arg.explicit]p6:
-      //   [Note: For simple function names, argument dependent lookup (3.4.2)
-      //   applies even when the function name is not visible within the
-      //   scope of the call. This is because the call still has the syntactic
-      //   form of a function call (3.4.1). But when a function template with
-      //   explicit template arguments is used, the call does not have the
-      //   correct syntactic form unless there is a function template with
-      //   that name visible at the point of the call. If no such name is
-      //   visible, the call is not syntactically well-formed and
-      //   argument-dependent lookup does not apply. If some such name is
-      //   visible, argument dependent lookup applies and additional function
-      //   templates may be found in other namespaces.
-      //
-      // The summary of this paragraph is that, if we get to this point and the
-      // template-id was not a qualified name, then argument-dependent lookup
-      // is still possible.
-      if (TemplateIdRef->getQualifier())
-        ADL = false;
-      break;
-    } else {
-      // Any kind of name that does not refer to a declaration (or
-      // set of declarations) disables ADL (C++0x [basic.lookup.argdep]p3).
-      ADL = false;
-      break;
-    }
-  }
+  NestedNameSpecifier *Qualifier = 0;
+  SourceRange QualifierRange;
+  DeconstructCallFunction(Fn, NDecl, UnqualifiedName, Qualifier, QualifierRange,
+                          ADL,HasExplicitTemplateArgs, ExplicitTemplateArgs,
+                          NumExplicitTemplateArgs);
 
   OverloadedFunctionDecl *Ovl = 0;
   FunctionTemplateDecl *FunctionTemplate = 0;
@@ -2903,16 +2941,15 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
 
       // Update Fn to refer to the actual function selected.
       Expr *NewFn = 0;
-      if (QualifiedDeclRefExpr *QDRExpr
-            = dyn_cast<QualifiedDeclRefExpr>(FnExpr))
+      if (Qualifier)
         NewFn = new (Context) QualifiedDeclRefExpr(FDecl, FDecl->getType(),
-                                                   QDRExpr->getLocation(),
+                                                   Fn->getLocStart(),
                                                    false, false,
-                                                 QDRExpr->getQualifierRange(),
-                                                   QDRExpr->getQualifier());
+                                                   QualifierRange,
+                                                   Qualifier);
       else
         NewFn = new (Context) DeclRefExpr(FDecl, FDecl->getType(),
-                                          Fn->getSourceRange().getBegin());
+                                          Fn->getLocStart());
       Fn->Destroy(Context);
       Fn = NewFn;
     }

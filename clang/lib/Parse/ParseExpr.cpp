@@ -899,8 +899,14 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
 
       Loc = ConsumeParen();
 
+      if (Tok.is(tok::code_completion)) {
+        Actions.CodeCompleteCall(CurScope, LHS.get(), 0, 0);
+        ConsumeToken();
+      }
+      
       if (Tok.isNot(tok::r_paren)) {
-        if (ParseExpressionList(ArgExprs, CommaLocs)) {
+        if (ParseExpressionList(ArgExprs, CommaLocs, &Action::CodeCompleteCall,
+                                LHS.get())) {
           SkipUntil(tok::r_paren);
           return ExprError();
         }
@@ -1508,8 +1514,19 @@ Parser::OwningExprResult Parser::ParseStringLiteralExpression() {
 /// [C++]   assignment-expression
 /// [C++]   expression-list , assignment-expression
 ///
-bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs) {
+bool Parser::ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs,
+                                 void (Action::*Completer)(Scope *S, 
+                                                           void *Data,
+                                                           ExprTy **Args,
+                                                           unsigned NumArgs),
+                                 void *Data) {
   while (1) {
+    if (Tok.is(tok::code_completion)) {
+      if (Completer)
+        (Actions.*Completer)(CurScope, Data, Exprs.data(), Exprs.size());
+      ConsumeToken();
+    }
+    
     OwningExprResult Expr(ParseAssignmentExpression());
     if (Expr.isInvalid())
       return true;

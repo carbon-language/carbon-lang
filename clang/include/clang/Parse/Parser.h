@@ -745,7 +745,11 @@ private:
   typedef llvm::SmallVector<SourceLocation, ExprListSize> CommaLocsTy;
 
   /// ParseExpressionList - Used for C/C++ (argument-)expression-list.
-  bool ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs);
+  bool ParseExpressionList(ExprListTy &Exprs, CommaLocsTy &CommaLocs,
+                           void (Action::*Completer)(Scope *S, void *Data,
+                                                     ExprTy **Args,
+                                                     unsigned NumArgs) = 0,
+                           void *Data = 0);
 
   /// ParenParseOption - Control what ParseParenExpression will parse.
   enum ParenParseOption {

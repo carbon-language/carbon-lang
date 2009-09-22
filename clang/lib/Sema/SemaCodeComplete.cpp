@@ -1070,6 +1070,78 @@ void Sema::CodeCompleteCase(Scope *S) {
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
+namespace {
+  struct IsBetterOverloadCandidate {
+    Sema &S;
+    
+  public:
+    explicit IsBetterOverloadCandidate(Sema &S) : S(S) { }
+    
+    bool 
+    operator()(const OverloadCandidate &X, const OverloadCandidate &Y) const {
+      return S.isBetterOverloadCandidate(X, Y);
+    }
+  };
+}
+
+void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
+                            ExprTy **ArgsIn, unsigned NumArgs) {
+  if (!CodeCompleter)
+    return;
+  
+  Expr *Fn = (Expr *)FnIn;
+  Expr **Args = (Expr **)ArgsIn;
+  
+  // Ignore type-dependent call expressions entirely.
+  if (Fn->isTypeDependent() || 
+      Expr::hasAnyTypeDependentArguments(Args, NumArgs))
+    return;
+  
+  NamedDecl *Function;
+  DeclarationName UnqualifiedName;
+  NestedNameSpecifier *Qualifier;
+  SourceRange QualifierRange;
+  bool ArgumentDependentLookup;
+  bool HasExplicitTemplateArgs;
+  const TemplateArgument *ExplicitTemplateArgs;
+  unsigned NumExplicitTemplateArgs;
+  
+  DeconstructCallFunction(Fn,
+                          Function, UnqualifiedName, Qualifier, QualifierRange,
+                          ArgumentDependentLookup, HasExplicitTemplateArgs,
+                          ExplicitTemplateArgs, NumExplicitTemplateArgs);
+
+  
+  // FIXME: What if we're calling something that isn't a function declaration?
+  // FIXME: What if we're calling a pseudo-destructor?
+  // FIXME: What if we're calling a member function?
+  
+  // Build an overload candidate set based on the functions we find.
+  OverloadCandidateSet CandidateSet;
+  AddOverloadedCallCandidates(Function, UnqualifiedName, 
+                              ArgumentDependentLookup, HasExplicitTemplateArgs,
+                              ExplicitTemplateArgs, NumExplicitTemplateArgs,
+                              Args, NumArgs,
+                              CandidateSet,
+                              /*PartialOverloading=*/true);
+  
+  // Sort the overload candidate set by placing the best overloads first.
+  std::stable_sort(CandidateSet.begin(), CandidateSet.end(),
+                   IsBetterOverloadCandidate(*this));
+  
+  // Add the remaining viable overload candidates as code-completion reslults.  
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+  for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
+                                   CandEnd = CandidateSet.end();
+       Cand != CandEnd; ++Cand) {
+    if (Cand->Viable)
+      Results.MaybeAddResult(Result(Cand->Function, 0), 0);
+  }
+  
+  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
+}
+
 void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,
                                    bool EnteringContext) {
   if (!SS.getScopeRep() || !CodeCompleter)

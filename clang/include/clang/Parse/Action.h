@@ -2239,6 +2239,18 @@ public:
   /// \brief S the scope in which the case statement occurs.
   virtual void CodeCompleteCase(Scope *S) { }
   
+  /// \brief Code completion for a call.
+  ///
+  /// \brief S the scope in which the call occurs.
+  ///
+  /// \param Fn the expression describing the function being called.
+  ///
+  /// \param Args the arguments to the function call (so far).
+  ///
+  /// \param NumArgs the number of arguments in \p Args.
+  virtual void CodeCompleteCall(Scope *S, ExprTy *Fn,
+                                ExprTy **Args, unsigned NumArgs) { }
+                                
   /// \brief Code completion for a C++ nested-name-specifier that precedes a
   /// qualified-id of some form.
   ///
