@@ -23,13 +23,13 @@ using namespace clang;
 
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx)
   : Ctx(Ctx), Size(0), Alignment(8), Packed(false), MaxFieldAlignment(0),
-  NextOffset(0), IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8) {}
+  NextOffset(0), IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8),
+  PrimaryBase(0), PrimaryBaseWasVirtual(false) {}
 
 /// LayoutVtable - Lay out the vtable and set PrimaryBase.
 void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
   if (!RD->isDynamicClass()) {
     // There is no primary base in this case.
-    setPrimaryBase(0, false);
     return;
   }
 
@@ -149,10 +149,8 @@ void ASTRecordLayoutBuilder::SelectPrimaryBase(const CXXRecordDecl *RD) {
 
   // If we have no virtual bases at this point, bail out as the searching below
   // is expensive.
-  if (RD->getNumVBases() == 0) {
-    setPrimaryBase(0, false);
+  if (RD->getNumVBases() == 0)
     return;
-  }
   
   // Then we can search for the first nearly empty virtual base itself.
   const CXXRecordDecl *FirstPrimary = 0;
