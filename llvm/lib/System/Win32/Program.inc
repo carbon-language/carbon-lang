@@ -25,6 +25,21 @@
 namespace llvm {
 using namespace sys;
 
+Program::Program() : Data_(0) {}
+
+Program::~Program() {
+  if (Data_) {
+    HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
+    CloseHandle(hProcess);
+    Data_ = 0;
+  }
+}
+
+unsigned Program::GetPid() const {
+  HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
+  return GetProcessId(hProcess);
+}
+
 // This function just uses the PATH environment variable to find the program.
 Path
 Program::FindProgramByName(const std::string& progName) {
@@ -122,6 +137,11 @@ Program::Execute(const Path& path,
                  const Path** redirects,
                  unsigned memoryLimit,
                  std::string* ErrMsg) {
+  if (Data_) {
+    HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
+    CloseHandle(Data_);
+    Data_ = 0;
+  }
 
   if (!path.canExecute()) {
     if (ErrMsg)
@@ -249,10 +269,9 @@ Program::Execute(const Path& path,
                path.str() + "'");
     return false;
   }
-  Pid_ = pi.dwProcessId;
+  Data_ = reinterpret_cast<void*>(pi.hProcess);
 
   // Make sure these get closed no matter what.
-  AutoHandle hProcess(pi.hProcess);
   AutoHandle hThread(pi.hThread);
 
   // Assign the process to a job if a memory limit is defined.
@@ -286,17 +305,12 @@ Program::Execute(const Path& path,
 int
 Program::Wait(unsigned secondsToWait,
               std::string* ErrMsg) {
-  if (Pid_ == 0) {
+  if (Data_ == 0) {
     MakeErrMsg(ErrMsg, "Process not started!");
     return -1;
   }
 
-  HANDLE hOpen = OpenProcess(SYNCHRONIZE, FALSE, Pid_);
-  if (hOpen == NULL) {
-    MakeErrMsg(ErrMsg, "OpenProcess failed!");
-    return -1;
-  }
-  AutoHandle hProcess(hOpen);
+  HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
 
   // Wait for the process to terminate.
   DWORD millisecondsToWait = INFINITE;
@@ -327,18 +341,12 @@ Program::Wait(unsigned secondsToWait,
 
 bool
 Program::Kill(std::string* ErrMsg) {
-  if (Pid_ == 0) {
+  if (Data_ == 0) {
     MakeErrMsg(ErrMsg, "Process not started!");
     return true;
   }
 
-  HANDLE hOpen = OpenProcess(PROCESS_TERMINATE, FALSE, Pid_);
-  if (hOpen == NULL) {
-    MakeErrMsg(ErrMsg, "OpenProcess failed!");
-    return true;
-  }
-  AutoHandle hProcess(hOpen);
-
+  HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
   if (TerminateProcess(hProcess, 1) == 0) {
     MakeErrMsg(ErrMsg, "The process couldn't be killed!");
     return true;

@@ -29,18 +29,22 @@ namespace sys {
   /// @since 1.4
   /// @brief An abstraction for finding and executing programs.
   class Program {
+    /// Opaque handle for target specific data.
+    void *Data_;
 
-    unsigned Pid_;
+    // Noncopyable.
+    Program(const Program& other);
+    Program& operator=(const Program& other);
 
     /// @name Methods
     /// @{
   public:
 
-    Program() : Pid_(0) {}
-    ~Program() {}
+    Program();
+    ~Program();
 
     /// Return process ID of this program.
-    unsigned GetPid() const { return Pid_; }
+    unsigned GetPid() const;
 
     /// This function executes the program using the \p arguments provided.  The
     /// invoked program will inherit the stdin, stdout, and stderr file
