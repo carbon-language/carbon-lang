@@ -1132,6 +1132,8 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
   // Add the remaining viable overload candidates as code-completion reslults.  
   typedef CodeCompleteConsumer::Result Result;
   ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  
   for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                                    CandEnd = CandidateSet.end();
        Cand != CandEnd; ++Cand) {
@@ -1139,6 +1141,7 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
       Results.MaybeAddResult(Result(Cand->Function, 0), 0);
   }
   
+  Results.ExitScope();
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
 }
 
