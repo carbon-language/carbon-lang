@@ -214,10 +214,10 @@ OutputFile("o",
  llvm::cl::desc("Specify output file"));
 
 
-static llvm::cl::opt<int>
-DumpCodeCompletion("code-completion-dump",
-                   llvm::cl::value_desc("N"),
-                   llvm::cl::desc("Dump code-completion information at $$N$$"));
+static llvm::cl::opt<ParsedSourceLocation>
+CodeCompletionAt("code-completion-at",
+                 llvm::cl::value_desc("file:line:column"),
+              llvm::cl::desc("Dump code-completion information at a location"));
 
 /// \brief Buld a new code-completion consumer that prints the results of
 /// code completion to standard output.
@@ -2057,17 +2057,22 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     CodeCompleteConsumer *(*CreateCodeCompleter)(Sema &, void *) = 0;
     void *CreateCodeCompleterData = 0;
     
-    if (DumpCodeCompletion) {
-      // To dump code-completion information, we chop off the file at the
-      // location of the string $$N$$, where N is the value provided to
-      // -code-completion-dump, and then tell the lexer to return a 
-      // code-completion token before it hits the end of the file.
-      // FIXME: Find $$N$$ in the main file buffer
-      
-      PP.SetMainFileEofCodeCompletion();
-      
-      // Set up the creation routine for code-completion.
-      CreateCodeCompleter = BuildPrintingCodeCompleter;
+    if (!CodeCompletionAt.FileName.empty()) {
+      // Tell the source manager to chop off the given file at a specific
+      // line and column.
+      if (const FileEntry *Entry 
+            = PP.getFileManager().getFile(CodeCompletionAt.FileName)) {
+        // Truncate the named file at the given line/column.
+        PP.getSourceManager().truncateFileAt(Entry, CodeCompletionAt.Line,
+                                             CodeCompletionAt.Column);
+        
+        // Set up the creation routine for code-completion.
+        CreateCodeCompleter = BuildPrintingCodeCompleter;
+      } else {
+        PP.getDiagnostics().Report(FullSourceLoc(), 
+                                   diag::err_fe_invalid_code_complete_file)
+          << CodeCompletionAt.FileName;
+      }
     }
 
     ParseAST(PP, Consumer.get(), *ContextOwner.get(), Stats,

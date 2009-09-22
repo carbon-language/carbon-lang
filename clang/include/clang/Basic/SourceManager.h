@@ -54,6 +54,9 @@ namespace SrcMgr {
     /// file.  This is owned by the ContentCache object.
     mutable const llvm::MemoryBuffer *Buffer;
 
+    /// The line and column at which we should truncate the file.
+    unsigned TruncateAtLine, TruncateAtColumn;
+    
   public:
     /// Reference to the file entry.  This reference does not own
     /// the FileEntry object.  It is possible for this to be NULL if
@@ -93,15 +96,28 @@ namespace SrcMgr {
       Buffer = B;
     }
 
+    /// \brief Truncate this file at the given line and column.
+    ///
+    /// \param Line the line on which to truncate the current file (1-based).
+    /// \param Column the column at which to truncate the current file.
+    /// (1-based).
+    void truncateAt(unsigned Line, unsigned Column);
+    
+    /// \brief Determines whether the file was artificially truncated with
+    /// truncateAt().
+    bool isTruncated() const { return TruncateAtLine && TruncateAtColumn; }
+      
     ContentCache(const FileEntry *Ent = 0)
-      : Buffer(0), Entry(Ent), SourceLineCache(0), NumLines(0) {}
+      : Buffer(0), TruncateAtLine(0), TruncateAtColumn(0), Entry(Ent), 
+        SourceLineCache(0), NumLines(0) {}
 
     ~ContentCache();
 
     /// The copy ctor does not allow copies where source object has either
     ///  a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
     ///  is not transfered, so this is a logical error.
-    ContentCache(const ContentCache &RHS) : Buffer(0), SourceLineCache(0) {
+    ContentCache(const ContentCache &RHS) 
+      : Buffer(0), TruncateAtLine(0), TruncateAtColumn(0), SourceLineCache(0) {
       Entry = RHS.Entry;
 
       assert (RHS.Buffer == 0 && RHS.SourceLineCache == 0
@@ -331,13 +347,19 @@ class SourceManager {
   mutable FileID LastRFIDForBeforeTUCheck;
   mutable bool   LastResForBeforeTUCheck;
 
+  // Keep track of the file/line/column that we should truncate.
+  const FileEntry *TruncateFile;
+  unsigned TruncateAtLine;
+  unsigned TruncateAtColumn;
+  
   // SourceManager doesn't support copy construction.
   explicit SourceManager(const SourceManager&);
   void operator=(const SourceManager&);
 public:
   SourceManager()
     : ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
-      NumBinaryProbes(0) {
+      NumBinaryProbes(0), TruncateFile(0), TruncateAtLine(0),
+      TruncateAtColumn(0) {
     clearIDTables();
   }
   ~SourceManager();
@@ -647,6 +669,12 @@ public:
   /// \returns true if LHS source location comes before RHS, false otherwise.
   bool isBeforeInTranslationUnit(SourceLocation LHS, SourceLocation RHS) const;
 
+  /// \brief Truncate the given file at the specified line/column.
+  void truncateFileAt(const FileEntry *Entry, unsigned Line, unsigned Column);
+  
+  /// \brief Determine whether this file was truncated.
+  bool isTruncatedFile(FileID FID) const;
+  
   // Iterators over FileInfos.
   typedef llvm::DenseMap<const FileEntry*, SrcMgr::ContentCache*>
       ::const_iterator fileinfo_iterator;

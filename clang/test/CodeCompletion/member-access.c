@@ -1,5 +1,3 @@
-// RUN: clang-cc -fsyntax-only -code-completion-dump=1 %s -o - | FileCheck -check-prefix=CC1 %s &&
-// RUN: true
 struct Point {
   float x;
   float y;
@@ -7,7 +5,9 @@ struct Point {
 };
 
 void test(struct Point *p) {
+  p->
+  // RUN: clang-cc -fsyntax-only -code-completion-at=%s:8:6 %s -o - | FileCheck -check-prefix=CC1 %s &&
   // CHECK-CC1: x
   // CHECK-CC1: y
   // CHECK-CC1: z
-  p->
+  // RUN: true

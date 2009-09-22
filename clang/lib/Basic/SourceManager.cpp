@@ -41,9 +41,10 @@ unsigned ContentCache::getSizeBytesMapped() const {
 /// getSize - Returns the size of the content encapsulated by this ContentCache.
 ///  This can be the size of the source file or the size of an arbitrary
 ///  scratch buffer.  If the ContentCache encapsulates a source file, that
-///  file is not lazily brought in from disk to satisfy this query.
+///  file is not lazily brought in from disk to satisfy this query unless it
+///  needs to be truncated due to a truncateAt() call.
 unsigned ContentCache::getSize() const {
-  return Entry ? Entry->getSize() : Buffer->getBufferSize();
+  return Buffer ? Buffer->getBufferSize() : Entry->getSize();
 }
 
 const llvm::MemoryBuffer *ContentCache::getBuffer() const {
@@ -52,8 +53,52 @@ const llvm::MemoryBuffer *ContentCache::getBuffer() const {
     // FIXME: Should we support a way to not have to do this check over
     //   and over if we cannot open the file?
     Buffer = MemoryBuffer::getFile(Entry->getName(), 0, Entry->getSize());
+    if (isTruncated())
+      const_cast<ContentCache *>(this)->truncateAt(TruncateAtLine, 
+                                                   TruncateAtColumn);
   }
   return Buffer;
+}
+
+void ContentCache::truncateAt(unsigned Line, unsigned Column) {
+  TruncateAtLine = Line;
+  TruncateAtColumn = Column;
+  
+  if (!isTruncated() || !Buffer)
+    return;
+  
+  // Find the byte position of the truncation point.
+  const char *Position = Buffer->getBufferStart();
+  for (unsigned Line = 1; Line < TruncateAtLine; ++Line) {
+    for (; *Position; ++Position) {
+      if (*Position != '\r' && *Position != '\n')
+        continue;
+      
+      // Eat \r\n or \n\r as a single line.
+      if ((Position[1] == '\r' || Position[1] == '\n') &&
+          Position[0] != Position[1])
+        ++Position;
+      ++Position;
+      break;
+    }
+  }
+  
+  for (unsigned Column = 1; Column < TruncateAtColumn; ++Column, ++Position) {
+    if (!*Position)
+      break;
+    
+    if (*Position == '\t')
+      Column += 7;
+  }
+  
+  // Truncate the buffer.
+  if (Position != Buffer->getBufferEnd()) {
+    MemoryBuffer *TruncatedBuffer 
+      = MemoryBuffer::getMemBufferCopy(Buffer->getBufferStart(), Position, 
+                                       Buffer->getBufferIdentifier());
+    delete Buffer;
+    Buffer = TruncatedBuffer;
+  }
 }
 
 unsigned LineTableInfo::getLineTableFilenameID(const char *Ptr, unsigned Len) {
@@ -287,6 +332,16 @@ SourceManager::getOrCreateContentCache(const FileEntry *FileEnt) {
   EntryAlign = std::max(8U, EntryAlign);
   Entry = ContentCacheAlloc.Allocate<ContentCache>(1, EntryAlign);
   new (Entry) ContentCache(FileEnt);
+  
+  if (FileEnt == TruncateFile) {
+    // If we had queued up a file truncation request, perform the truncation
+    // now.
+    Entry->truncateAt(TruncateAtLine, TruncateAtColumn);
+    TruncateFile = 0;
+    TruncateAtLine = 0;
+    TruncateAtColumn = 0;
+  }
+  
   return Entry;
 }
 
@@ -1056,6 +1111,28 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
     assert(REntry == 0 && "Locations in not #included files ?");
     return LastResForBeforeTUCheck = false;
   }
+}
+
+void SourceManager::truncateFileAt(const FileEntry *Entry, unsigned Line, 
+                                   unsigned Column) {
+  llvm::DenseMap<const FileEntry*, SrcMgr::ContentCache*>::iterator FI
+     = FileInfos.find(Entry);
+  if (FI != FileInfos.end()) {
+    FI->second->truncateAt(Line, Column);
+    return;
+  }
+  
+  // We cannot perform the truncation until we actually see the file, so
+  // save the truncation information.
+  assert(TruncateFile == 0 && "Can't queue up multiple file truncations!");
+  TruncateFile = Entry;
+  TruncateAtLine = Line;
+  TruncateAtColumn = Column;
+}
+
+/// \brief Determine whether this file was truncated.
+bool SourceManager::isTruncatedFile(FileID FID) const {
+  return getSLocEntry(FID).getFile().getContentCache()->isTruncated();
 }
 
 /// PrintStats - Print statistics to stderr.

@@ -101,12 +101,16 @@ Lexer::Lexer(FileID FID, Preprocessor &PP)
     Features(PP.getLangOptions()) {
 
   const llvm::MemoryBuffer *InputFile = PP.getSourceManager().getBuffer(FID);
-
+  
   InitLexer(InputFile->getBufferStart(), InputFile->getBufferStart(),
             InputFile->getBufferEnd());
 
   // Default to keeping comments if the preprocessor wants them.
   SetCommentRetentionState(PP.getCommentRetentionState());
+      
+  // If the input file is truncated, the EOF is a code-completion token.
+  if (PP.getSourceManager().isTruncatedFile(FID))
+    IsEofCodeCompletion = true;
 }
 
 /// Lexer constructor - Create a new raw lexer object.  This object is only
@@ -1323,15 +1327,23 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
   // unterminated #if and missing newline.
 
   if (IsEofCodeCompletion) {
-    // We're at the end of the file, but we've been asked to conside the
-    // end of the file to be a code-completion token. Return the
-    // code-completion token.
-    Result.startToken();
-    FormTokenWithChars(Result, CurPtr, tok::code_completion);
+    bool isIntendedFile = true;
+    if (PP && FileLoc.isFileID()) {
+      SourceManager &SM = PP->getSourceManager();
+      isIntendedFile = SM.isTruncatedFile(SM.getFileID(FileLoc));
+    }
     
-    // Only do the eof -> code_completion translation once.
-    IsEofCodeCompletion = false;
-    return true;
+    if (isIntendedFile) {
+      // We're at the end of the file, but we've been asked to consider the
+      // end of the file to be a code-completion token. Return the
+      // code-completion token.
+      Result.startToken();
+      FormTokenWithChars(Result, CurPtr, tok::code_completion);
+      
+      // Only do the eof -> code_completion translation once.
+      IsEofCodeCompletion = false;
+      return true;
+    }
   }
   
   // If we are in a #if directive, emit an error.
