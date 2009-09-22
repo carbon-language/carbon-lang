@@ -197,8 +197,8 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   
   // Look through using declarations.
   if (UsingDecl *Using = dyn_cast<UsingDecl>(R.Declaration))
-    return MaybeAddResult(Result(Using->getTargetDecl(), R.Rank, R.Qualifier),
-                          CurContext);
+    MaybeAddResult(Result(Using->getTargetDecl(), R.Rank, R.Qualifier),
+                   CurContext);
   
   // Handle each declaration in an overload set separately.
   if (OverloadedFunctionDecl *Ovl 
@@ -281,6 +281,7 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
                                  I->second.first)) {
         // Note that this result was hidden.
         R.Hidden = true;
+        R.QualifierIsInformative = false;
         
         if (!R.Qualifier)
           R.Qualifier = getRequiredQualification(SemaRef.Context, 
@@ -299,6 +300,18 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   // Make sure that any given declaration only shows up in the result set once.
   if (!AllDeclsFound.insert(CanonDecl))
     return;
+  
+  // If this result is supposed to have an informative qualifier, add one.
+  if (R.QualifierIsInformative && !R.Qualifier) {
+    DeclContext *Ctx = R.Declaration->getDeclContext();
+    if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(Ctx))
+      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, 0, Namespace);
+    else if (TagDecl *Tag = dyn_cast<TagDecl>(Ctx))
+      R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, 0, false, 
+                             SemaRef.Context.getTypeDeclType(Tag).getTypePtr());
+    else
+      R.QualifierIsInformative = false;
+  }
   
   // Insert this result into the set of results and into the current shadow
   // map.
@@ -398,9 +411,7 @@ static DeclContext *findOuterContext(Scope *S) {
 ///
 /// \param Ctx the declaration context from which we will gather results.
 ///
-/// \param InitialRank the initial rank given to results in this declaration
-/// context. Larger rank values will be used for, e.g., members found in
-/// base classes.
+/// \param Rank the rank given to results in this declaration context.
 ///
 /// \param Visited the set of declaration contexts that have already been
 /// visited. Declaration contexts will only be visited once.
@@ -408,18 +419,22 @@ static DeclContext *findOuterContext(Scope *S) {
 /// \param Results the result set that will be extended with any results
 /// found within this declaration context (and, for a C++ class, its bases).
 ///
+/// \param InBaseClass whether we are in a base class.
+///
 /// \returns the next higher rank value, after considering all of the
 /// names within this declaration context.
 static unsigned CollectMemberLookupResults(DeclContext *Ctx, 
-                                           unsigned InitialRank,
+                                           unsigned Rank,
                                            DeclContext *CurContext,
                                  llvm::SmallPtrSet<DeclContext *, 16> &Visited,
-                                           ResultBuilder &Results) {
+                                           ResultBuilder &Results,
+                                           bool InBaseClass = false) {
   // Make sure we don't visit the same context twice.
   if (!Visited.insert(Ctx->getPrimaryContext()))
-    return InitialRank;
+    return Rank;
   
   // Enumerate all of the results in this context.
+  typedef CodeCompleteConsumer::Result Result;
   Results.EnterNewScope();
   for (DeclContext *CurCtx = Ctx->getPrimaryContext(); CurCtx; 
        CurCtx = CurCtx->getNextContext()) {
@@ -427,13 +442,11 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
          DEnd = CurCtx->decls_end();
          D != DEnd; ++D) {
       if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
-        Results.MaybeAddResult(CodeCompleteConsumer::Result(ND, InitialRank),
-                               CurContext);
+        Results.MaybeAddResult(Result(ND, Rank, 0, InBaseClass), CurContext);
     }
   }
   
   // Traverse the contexts of inherited classes.
-  unsigned NextRank = InitialRank;
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Ctx)) {
     for (CXXRecordDecl::base_class_iterator B = Record->bases_begin(),
          BEnd = Record->bases_end();
@@ -468,19 +481,15 @@ static unsigned CollectMemberLookupResults(DeclContext *Ctx,
       //   c->A::member
       
       // Collect results from this base class (and its bases).
-      NextRank = std::max(NextRank, 
-                          CollectMemberLookupResults(Record->getDecl(), 
-                                                     InitialRank + 1,
-                                                     CurContext,
-                                                     Visited,
-                                                     Results));
+      CollectMemberLookupResults(Record->getDecl(), Rank, CurContext, Visited,
+                                 Results, /*InBaseClass=*/true);
     }
   }
   
   // FIXME: Look into base classes in Objective-C!
   
   Results.ExitScope();
-  return NextRank;
+  return Rank + 1;
 }
 
 /// \brief Collect the results of searching for members within the given
@@ -735,6 +744,7 @@ static void AddTemplateParameterChunks(ASTContext &Context,
 /// provided nested-name-specifier is non-NULL.
 void AddQualifierToCompletionString(CodeCompletionString *Result, 
                                     NestedNameSpecifier *Qualifier, 
+                                    bool QualifierIsInformative,
                                     ASTContext &Context) {
   if (!Qualifier)
     return;
@@ -744,7 +754,10 @@ void AddQualifierToCompletionString(CodeCompletionString *Result,
     llvm::raw_string_ostream OS(PrintedNNS);
     Qualifier->print(OS, Context.PrintingPolicy);
   }
-  Result->AddTextChunk(PrintedNNS.c_str());
+  if (QualifierIsInformative)
+    Result->AddInformativeChunk(PrintedNNS.c_str());
+  else
+    Result->AddTextChunk(PrintedNNS.c_str());
 }
 
 /// \brief If possible, create a new code completion string for the given
@@ -762,7 +775,8 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
     CodeCompletionString *Result = new CodeCompletionString;
-    AddQualifierToCompletionString(Result, Qualifier, S.Context);
+    AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
+                                   S.Context);
     Result->AddTextChunk(Function->getNameAsString().c_str());
     Result->AddTextChunk("(");
     AddFunctionParameterChunks(S.Context, Function, Result);
@@ -772,7 +786,8 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   
   if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(ND)) {
     CodeCompletionString *Result = new CodeCompletionString;
-    AddQualifierToCompletionString(Result, Qualifier, S.Context);
+    AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
+                                   S.Context);
     FunctionDecl *Function = FunTmpl->getTemplatedDecl();
     Result->AddTextChunk(Function->getNameAsString().c_str());
     
@@ -825,7 +840,8 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   
   if (TemplateDecl *Template = dyn_cast<TemplateDecl>(ND)) {
     CodeCompletionString *Result = new CodeCompletionString;
-    AddQualifierToCompletionString(Result, Qualifier, S.Context);
+    AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
+                                   S.Context);
     Result->AddTextChunk(Template->getNameAsString().c_str());
     Result->AddTextChunk("<");
     AddTemplateParameterChunks(S.Context, Template, Result);
@@ -835,7 +851,8 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   
   if (Qualifier) {
     CodeCompletionString *Result = new CodeCompletionString;
-    AddQualifierToCompletionString(Result, Qualifier, S.Context);
+    AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
+                                   S.Context);
     Result->AddTextChunk(ND->getNameAsString().c_str());
     return Result;
   }

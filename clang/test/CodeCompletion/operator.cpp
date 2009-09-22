@@ -14,5 +14,5 @@ void f() {
   // CHECK-CC1: short : 0
   // CHECK-CC1: Integer : 2
   // CHECK-CC1: T : 2
-  // CHECK-CC1: N : 5
+  // CHECK-CC1: N : 6
   // RUN: true

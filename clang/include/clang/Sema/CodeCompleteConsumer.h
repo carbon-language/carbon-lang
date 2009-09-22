@@ -48,7 +48,10 @@ public:
     CK_Optional,
     /// \brief A string that acts as a placeholder for, e.g., a function 
     /// call argument.
-    CK_Placeholder
+    CK_Placeholder,
+    /// \brief A piece of text that describes something about the result but
+    /// should not be inserted into the buffer.
+    CK_Informative
   };
   
   /// \brief One piece of the code completion string.
@@ -58,7 +61,8 @@ public:
     ChunkKind Kind;
     
     union {
-      /// \brief The text string associated with a CK_Text chunk.
+      /// \brief The text string associated with a CK_Text, CK_Placeholder,
+      /// or CK_Informative chunk.
       /// The string is owned by the chunk and will be deallocated 
       /// (with delete[]) when the chunk is destroyed.
       const char *Text;
@@ -67,13 +71,14 @@ public:
       /// The optional code completion string is owned by the chunk, and will
       /// be deallocated (with delete) when the chunk is destroyed.
       CodeCompletionString *Optional;
-      
-      /// \brief Placeholder text associated with a CK_Placeholder chunk.
-      /// The string is owned by the chunk and will be deallocated (with 
-      /// delete[]) when the chunk is destroyed.
-      const char *Placeholder;
     };
     
+    Chunk() : Kind(CK_Text), Text(0) { }
+    
+  private:
+    Chunk(ChunkKind Kind, const char *Text);
+          
+  public:
     /// \brief Create a new text chunk.
     static Chunk CreateText(const char *Text);
 
@@ -82,7 +87,10 @@ public:
 
     /// \brief Create a new placeholder chunk.
     static Chunk CreatePlaceholder(const char *Placeholder);
-    
+
+    /// \brief Create a new informative chunk.
+    static Chunk CreateInformative(const char *Informative);
+
     /// \brief Destroy this chunk, deallocating any memory it owns.
     void Destroy();
   };
@@ -117,6 +125,12 @@ public:
   /// The placeholder text will be copied.
   void AddPlaceholderChunk(const char *Placeholder) {
     Chunks.push_back(Chunk::CreatePlaceholder(Placeholder));
+  }
+
+  /// \brief Add a new informative chunk.
+  /// The text will be copied.
+  void AddInformativeChunk(const char *Text) {
+    Chunks.push_back(Chunk::CreateInformative(Text));
   }
   
   /// \brief Retrieve a string representation of the code completion string,
@@ -156,19 +170,26 @@ public:
     /// \brief Whether this result is hidden by another name.
     bool Hidden : 1;
     
-    /// \brief If the result requires a nested-name-specifier for name lookup
-    /// to function properly, this is the nested-name-specifier.
+    /// \brief Whether this result was found via lookup into a base class.
+    bool QualifierIsInformative : 1;
+    
+    /// \brief If the result should have a nested-name-specifier, this is it.
+    /// When \c QualifierIsInformative, the nested-name-specifier is 
+    /// informative rather than required.
     NestedNameSpecifier *Qualifier;
     
     /// \brief Build a result that refers to a declaration.
     Result(NamedDecl *Declaration, unsigned Rank, 
-           NestedNameSpecifier *Qualifier = 0)
+           NestedNameSpecifier *Qualifier = 0,
+           bool QualifierIsInformative = false)
       : Kind(RK_Declaration), Declaration(Declaration), Rank(Rank), 
-        Hidden(false), Qualifier(Qualifier) { }
+        Hidden(false), QualifierIsInformative(QualifierIsInformative), 
+        Qualifier(Qualifier) { }
     
     /// \brief Build a result that refers to a keyword or symbol.
     Result(const char *Keyword, unsigned Rank)
-      : Kind(RK_Keyword), Keyword(Keyword), Rank(Rank), Hidden(false) { }
+      : Kind(RK_Keyword), Keyword(Keyword), Rank(Rank), Hidden(false),
+        QualifierIsInformative(0), Qualifier(0) { }
     
     /// \brief Retrieve the declaration stored in this result.
     NamedDecl *getDeclaration() const {

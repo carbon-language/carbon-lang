@@ -18,8 +18,8 @@ namespace N2 {
     // CHECK-CC1: I1 : 2
     // CHECK-CC1: I4 : 2
     // CHECK-CC1: I5 : 2
-    // CHECK-CC1: N2 : 3
-    // CHECK-CC1: N3 : 3
-    // CHECK-NEXT-CC1: N4 : 3
+    // CHECK-CC1: N2 : 4
+    // CHECK-CC1: N3 : 4
+    // CHECK-NEXT-CC1: N4 : 4
     // RUN: true
 
