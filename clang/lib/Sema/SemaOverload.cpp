@@ -1983,10 +1983,19 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
   if (!PerformImplicitConversion(From, ToType, Flavor,
                                  /*AllowExplicit=*/false, Elidable))
     return false;
-
-  return Diag(From->getSourceRange().getBegin(),
-              diag::err_typecheck_convert_incompatible)
-    << ToType << From->getType() << Flavor << From->getSourceRange();
+  ImplicitConversionSequence ICS;
+  OverloadCandidateSet CandidateSet;
+  if (IsUserDefinedConversion(From, ToType, ICS.UserDefined,
+                              CandidateSet,
+                              true, false, false) != OR_Ambiguous)
+    return Diag(From->getSourceRange().getBegin(),
+                diag::err_typecheck_convert_incompatible)
+      << ToType << From->getType() << Flavor << From->getSourceRange();
+  Diag(From->getSourceRange().getBegin(),
+       diag::err_typecheck_ambiguous_condition)
+  << From->getType() << ToType << From->getSourceRange();
+  PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+  return true;
 }
 
 /// TryObjectArgumentInitialization - Try to initialize the object
@@ -2104,13 +2113,13 @@ bool Sema::PerformContextuallyConvertToBool(Expr *&From) {
     OverloadCandidateSet CandidateSet;
     if (IsUserDefinedConversion(From, Context.BoolTy, ICS.UserDefined,
                             CandidateSet,
-                            true, true, false) != OR_Ambiguous)
+                            true, false, false) != OR_Ambiguous)
       return  Diag(From->getSourceRange().getBegin(),
                    diag::err_typecheck_bool_condition)
                     << From->getType() << From->getSourceRange();
     Diag(From->getSourceRange().getBegin(),
-         diag::err_typecheck_ambiguous_bool_condition)
-          << From->getType() << From->getSourceRange();
+         diag::err_typecheck_ambiguous_condition)
+          << From->getType() << Context.BoolTy << From->getSourceRange();
     PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
     return true;
 }
