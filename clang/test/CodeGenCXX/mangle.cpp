@@ -137,3 +137,13 @@ extern "C" { struct a { int b; }; }
 int f(struct a *x) {
     return x->b;
 }
+
+// PR5017
+extern "C" {
+struct Debug {
+ const Debug& operator<< (unsigned a) const { }
+};
+Debug dbg;
+// CHECK: @_ZNK5DebuglsEj
+int main(void) {  dbg << 32 ;}
+}

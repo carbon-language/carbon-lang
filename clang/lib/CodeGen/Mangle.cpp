@@ -131,7 +131,7 @@ bool CXXNameMangler::mangleFunctionDecl(const FunctionDecl *FD) {
       return false;
 
     // No name mangling in a C linkage specification.
-    if (isInCLinkageSpecification(FD))
+    if (!isa<CXXMethodDecl>(FD) && isInCLinkageSpecification(FD))
       return false;
   }
 
@@ -502,6 +502,9 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
   //           ::= <substitution>
   // FIXME: We only handle mangling of namespaces and classes at the moment.
 
+  while (isa<LinkageSpecDecl>(DC))
+    DC = DC->getParent();
+  
   if (DC->isTranslationUnit())
     return;
   
