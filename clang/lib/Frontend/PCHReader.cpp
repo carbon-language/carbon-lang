@@ -1388,8 +1388,13 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
   this->FileName = FileName;
 
   // Open the PCH file.
+  //
+  // FIXME: This shouldn't be here, we should just take a raw_ostream.
   std::string ErrStr;
-  Buffer.reset(llvm::MemoryBuffer::getFile(FileName.c_str(), &ErrStr));
+  if (FileName == "-")
+    Buffer.reset(llvm::MemoryBuffer::getSTDIN());
+  else
+    Buffer.reset(llvm::MemoryBuffer::getFile(FileName.c_str(), &ErrStr));
   if (!Buffer) {
     Error(ErrStr.c_str());
     return IgnorePCH;
