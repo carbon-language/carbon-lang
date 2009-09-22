@@ -5,11 +5,15 @@ import ShUtil
 import Test
 import Util
 
+import platform
+
 class InternalShellError(Exception):
     def __init__(self, command, message):
         self.command = command
         self.message = message
 
+# Don't use close_fds on Windows.
+kUseCloseFDs = platform.system() != 'Windows'
 def executeCommand(command, cwd=None, env=None):
     p = subprocess.Popen(command, cwd=cwd,
                          stdin=subprocess.PIPE,
@@ -111,7 +115,7 @@ def executeShCmd(cmd, cfg, cwd, results):
                                       stdout = stdout,
                                       stderr = stderr,
                                       env = cfg.environment,
-                                      close_fds = True))
+                                      close_fds = kUseCloseFDs))
 
         # Immediately close stdin for any process taking stdin from us.
         if stdin == subprocess.PIPE:
