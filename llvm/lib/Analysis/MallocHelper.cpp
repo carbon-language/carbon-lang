@@ -155,7 +155,7 @@ const PointerType* llvm::getMallocType(const CallInst* CI) {
   if (BCI && CI->hasOneUse())
     return cast<PointerType>(BCI->getDestTy());
 
-  // Malloc call was not bitcast, so the type is the malloc's return type, i8*.
+  // Malloc call was not bitcast, so type is the malloc function's return type.
   if (!BCI)
     return cast<PointerType>(CI->getType());
 
