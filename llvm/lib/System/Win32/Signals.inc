@@ -43,7 +43,9 @@ static std::vector<llvm::sys::Path> *FilesToRemove = NULL;
 static std::vector<std::pair<void(*)(void*), void*> > *CallBacksToRun = 0;
 static bool RegisteredUnhandledExceptionFilter = false;
 static bool CleanupExecuted = false;
+#ifdef _MSC_VER
 static bool ExitOnUnhandledExceptions = false;
+#endif
 static PTOP_LEVEL_EXCEPTION_FILTER OldFilter = NULL;
 
 // Windows creates a new thread to execute the console handler when an event
