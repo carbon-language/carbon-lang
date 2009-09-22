@@ -2786,6 +2786,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
         continue;
       }
 
+  tryAgain:
     if (isa<Loc>(V)) {
       if (loc::MemRegionVal* MR = dyn_cast<loc::MemRegionVal>(&V)) {
         if (Summ.getArg(idx) == DoNothingByRef)
@@ -2837,17 +2838,17 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       }
       else {
         // Nuke all other arguments passed by reference.
-        // FIXME: is this necessary or correct? unbind only removes the binding.
-        // We should bind it to UnknownVal explicitly. Otherwise default value
-        // may be loaded.
+        // FIXME: is this necessary or correct? This handles the non-Region
+        //  cases.  Is it ever valid to store to these?
         state = state->unbindLoc(cast<Loc>(V));
       }
     }
-    else if (isa<nonloc::LocAsInteger>(V))
-      // FIXME: is this necessary or correct? unbind only removes the binding.
-      // We should bind it to UnknownVal explicitly. Otherwise default value
-      // may be loaded.
-      state = state->unbindLoc(cast<nonloc::LocAsInteger>(V).getLoc());
+    else if (isa<nonloc::LocAsInteger>(V)) {
+      // If we are passing a location wrapped as an integer, unwrap it and
+      // invalidate the values referred by the location.
+      V = cast<nonloc::LocAsInteger>(V).getLoc();
+      goto tryAgain;
+    }
   }
 
   // Evaluate the effect on the message receiver.

@@ -632,3 +632,14 @@ double rdar_6829164_2();
   return self;
 }
 @end
+
+// <rdar://problem/7242015> - Invalidate values passed-by-reference
+// to functions when the pointer to the value is passed as an integer.
+void test_7242015_aux(unsigned long);
+int rdar_7242015() {
+  int x;
+  test_7242015_aux((unsigned long) &x); // no-warning
+  return x; // Previously we return and uninitialized value when
+            // using RegionStore.
+}
+
