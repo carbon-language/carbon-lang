@@ -110,7 +110,7 @@ def executeShCmd(cmd, cfg, cwd, results):
         if not args[0]:
             raise InternalShellError(j, '%r: command not found' % j.args[0])
 
-        procs.append(subprocess.Popen(j.args, cwd=cwd,
+        procs.append(subprocess.Popen(args, cwd=cwd,
                                       stdin = stdin,
                                       stdout = stdout,
                                       stderr = stderr,
