@@ -33,7 +33,7 @@ namespace clang {
   void ParseAST(Preprocessor &pp, ASTConsumer *C,
                 ASTContext &Ctx, bool PrintStats = false,
                 bool CompleteTranslationUnit = true,
-            CodeCompleteConsumer *(CreateCodeCompleter)(Sema &, void *Data) = 0,
+           CodeCompleteConsumer *(*CreateCodeCompleter)(Sema &, void *Data) = 0,
                 void *CreateCodeCompleterData = 0);
 
 }  // end namespace clang

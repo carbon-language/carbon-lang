@@ -35,7 +35,7 @@ using namespace clang;
 void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
                      ASTContext &Ctx, bool PrintStats,
                      bool CompleteTranslationUnit,
-                CodeCompleteConsumer *(CreateCodeCompleter)(Sema &, void *Data),
+               CodeCompleteConsumer *(*CreateCodeCompleter)(Sema &, void *Data),
                      void *CreateCodeCompleterData) {
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
