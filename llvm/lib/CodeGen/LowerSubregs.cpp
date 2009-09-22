@@ -130,6 +130,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
       // instruction with IMPLICIT_DEF.
       MI->setDesc(TII.get(TargetInstrInfo::IMPLICIT_DEF));
       MI->RemoveOperand(2);     // SubIdx
+      MI->getOperand(1).setImplicit(true);
       DEBUG(errs() << "subreg: replace by: " << *MI);
       return true;
     }
