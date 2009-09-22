@@ -27,10 +27,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
 
-#if TARGET_OS_MAC
+#include "config.h"
+
+#ifdef HAVE_AVAILABILITY_MACROS_H
+#include <AvailabilityMacros.h>
+#endif
+
+#ifdef HAVE_TARGET_CONDITIONALS_H
+#include <TargetConditionals.h>
+#endif
+
+#if defined(HAVE_OSATOMIC_COMPARE_AND_SWAP_INT) && defined(HAVE_OSATOMIC_COMPARE_AND_SWAP_LONG)
+#ifdef HAVE_LIBKERN_OSATOMIC_H
 #include <libkern/OSAtomic.h>
-#elif TARGET_OS_WIN32
+#endif
+#elif defined(__WIN32__)
 #define _CRT_SECURE_NO_WARNINGS 1
 #include <windows.h>
 static __inline bool OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst)
@@ -50,8 +63,7 @@ static __inline bool OSAtomicCompareAndSwapInt(int oldi, int newi, int volatile 
  * a 64-bit system, make sure we have an 8-byte atomic function
  * available.
  */
-#elif __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 && \
-      ((__SIZEOF_LONG__ != 8) || __GCC_HAVE_SYNC_COMPARE_AND_SWAP_8)
+#elif defined(HAVE_SYNC_BOOL_COMPARE_AND_SWAP_INT) && defined(HAVE_SYNC_BOOL_COMPARE_AND_SWAP_LONG)
 static __inline bool OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst)
 {
   return __sync_bool_compare_and_swap(dst, oldl, newl);
@@ -61,6 +73,8 @@ static __inline bool OSAtomicCompareAndSwapInt(int oldi, int newi, int volatile 
 {
   return __sync_bool_compare_and_swap(dst, oldi, newi);
 }
+#else
+#error unknown atomic compare-and-swap primitive
 #endif
 
 
@@ -143,7 +157,7 @@ static int latching_decr_int(int *where) {
 /***********************
 GC support stub routines
 ************************/
-#if !TARGET_OS_WIN32
+#if 0
 #pragma mark GC Support Routines
 #endif
 
@@ -171,11 +185,7 @@ static void _Block_release_object_default(const void *ptr) {
 }
 
 static void _Block_assign_weak_default(const void *ptr, void *dest) {
-#if !TARGET_OS_WIN32
-    *(long *)dest = (long)ptr;
-#else
     *(void **)dest = (void *)ptr;
-#endif
 }
 
 static void _Block_memmove_default(void *dst, void *src, unsigned long size) {
@@ -260,7 +270,7 @@ void _Block_use_RR( void (*retain)(const void *),
 Internal Support routines for copying
 ********************************************************************************/
 
-#if !TARGET_OS_WIN32
+#if 0
 #pragma mark Copy/Release support
 #endif
 
@@ -429,7 +439,7 @@ static void _Block_byref_release(const void *arg) {
  *
  ***********************************************************/
 
-#if !TARGET_OS_WIN32
+#if 0
 #pragma mark SPI/API
 #endif
 
@@ -460,7 +470,7 @@ void _Block_release(void *arg) {
         ;
     }
     else {
-        printf("Block_release called upon a stack Block: %p, ignored\n", aBlock);
+        printf("Block_release called upon a stack Block: %p, ignored\n", (void *)aBlock);
     }
 }
 
@@ -498,7 +508,7 @@ unsigned long int Block_size(void *arg) {
 }
 
 
-#if !TARGET_OS_WIN32
+#if 0
 #pragma mark Compiler SPI entry points
 #endif
 
@@ -595,7 +605,7 @@ void _Block_object_dispose(const void *object, const int flags) {
 /*******************
 Debugging support
 ********************/
-#if !TARGET_OS_WIN32
+#if 0
 #pragma mark Debugging
 #endif
 
@@ -612,7 +622,7 @@ const char *_Block_dump(const void *block) {
         printf("Block compiled by obsolete compiler, please recompile source for this Block\n");
         exit(1);
     }
-    cp += sprintf(cp, "^%p (new layout) =\n", closure);
+    cp += sprintf(cp, "^%p (new layout) =\n", (void *)closure);
     if (closure->isa == NULL) {
         cp += sprintf(cp, "isa: NULL\n");
     }
@@ -632,7 +642,7 @@ const char *_Block_dump(const void *block) {
         cp += sprintf(cp, "isa: finalizing Block\n");
     }
     else {
-        cp += sprintf(cp, "isa?: %p\n", closure->isa);
+        cp += sprintf(cp, "isa?: %p\n", (void *)closure->isa);
     }
     cp += sprintf(cp, "flags:");
     if (closure->flags & BLOCK_HAS_DESCRIPTOR) {
@@ -651,16 +661,16 @@ const char *_Block_dump(const void *block) {
         cp += sprintf(cp, " HASCTOR");
     }
     cp += sprintf(cp, "\nrefcount: %u\n", closure->flags & BLOCK_REFCOUNT_MASK);
-    cp += sprintf(cp, "invoke: %p\n", closure->invoke);
+    cp += sprintf(cp, "invoke: %#lx\n", (uintptr_t)closure->invoke);
     {
         struct Block_descriptor *dp = closure->descriptor;
-        cp += sprintf(cp, "descriptor: %p\n", dp);
+        cp += sprintf(cp, "descriptor: %p\n", (void *)dp);
         cp += sprintf(cp, "descriptor->reserved: %lu\n", dp->reserved);
         cp += sprintf(cp, "descriptor->size: %lu\n", dp->size);
 
         if (closure->flags & BLOCK_HAS_COPY_DISPOSE) {
-            cp += sprintf(cp, "descriptor->copy helper: %p\n", dp->copy);
-            cp += sprintf(cp, "descriptor->dispose helper: %p\n", dp->dispose);
+            cp += sprintf(cp, "descriptor->copy helper: %#lx\n", (uintptr_t)dp->copy);
+            cp += sprintf(cp, "descriptor->dispose helper: %#lx\n", (uintptr_t)dp->dispose);
         }
     }
     return buffer;
@@ -670,13 +680,13 @@ const char *_Block_dump(const void *block) {
 const char *_Block_byref_dump(struct Block_byref *src) {
     static char buffer[256];
     char *cp = buffer;
-    cp += sprintf(cp, "byref data block %p contents:\n", src);
-    cp += sprintf(cp, "  forwarding: %p\n", src->forwarding);
+    cp += sprintf(cp, "byref data block %p contents:\n", (void *)src);
+    cp += sprintf(cp, "  forwarding: %p\n", (void *)src->forwarding);
     cp += sprintf(cp, "  flags: 0x%x\n", src->flags);
     cp += sprintf(cp, "  size: %d\n", src->size);
     if (src->flags & BLOCK_HAS_COPY_DISPOSE) {
-        cp += sprintf(cp, "  copy helper: %p\n", src->byref_keep);
-        cp += sprintf(cp, "  dispose helper: %p\n", src->byref_destroy);
+        cp += sprintf(cp, "  copy helper: %#lx\n", (uintptr_t)src->byref_keep);
+        cp += sprintf(cp, "  dispose helper: %#lx\n", (uintptr_t)src->byref_destroy);
     }
     return buffer;
 }

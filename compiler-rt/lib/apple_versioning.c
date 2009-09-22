@@ -143,5 +143,8 @@ NOT_HERE_BEFORE_10_6(__gcc_qsub)
 NOT_HERE_BEFORE_10_6(__trampoline_setup)
 #endif /* __ppc__ */
 
+#else /* !__APPLE__ */
 
-#endif /* __APPLE__*/
+extern int avoid_empty_file;
+
+#endif /* !__APPLE__*/

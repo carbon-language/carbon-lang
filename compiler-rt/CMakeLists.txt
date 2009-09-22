@@ -26,13 +26,6 @@ INCLUDE_DIRECTORIES(
  ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-install(DIRECTORY include
-  DESTINATION .
-  PATTERN ".svn" EXCLUDE
-  PATTERN "*.cmake" EXCLUDE
-  PATTERN "*.in" EXCLUDE
-  )
-
 SET( Achitectures
  i386 x86_64 ppc arm
  )

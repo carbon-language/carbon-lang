@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef _Block_H_
-#define _Block_H_
+#ifndef _BLOCK_H_
+#define _BLOCK_H_
 
 #if !defined(BLOCK_EXPORT)
 #   if defined(__cplusplus)
@@ -33,14 +33,7 @@
 #   endif
 #endif
 
-#include <config.h>
-
-#if defined( HAVE_AVAILABILITY_MACROS_H ) && defined( HAVE_TARGET_CONDITIONALS_H )
-#include <AvailabilityMacros.h>
-#include <TargetConditionals.h>
-#endif /* HAVE_AVAILABILITY_MACROS_H and HAVE_TARGET_CONDITIONALS_H. */
-
-#if __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -53,7 +46,7 @@ BLOCK_EXPORT void *_Block_copy(const void *aBlock);
 /* Lose the reference, and if heap based and last reference, recover the memory. */
 BLOCK_EXPORT void _Block_release(const void *aBlock);
 
-#if __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 

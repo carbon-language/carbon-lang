@@ -33,16 +33,9 @@
 #   endif
 #endif
 
-#include <config.h>
-
-#if defined( HAVE_AVAILABILITY_MACROS_H ) && defined( HAVE_TARGET_CONDITIONALS_H )
-#include <AvailabilityMacros.h>
-#include <TargetConditionals.h>
-#endif /* HAVE_AVAILABILITY_MACROS_H and HAVE_TARGET_CONDITIONALS_H. */
-
 #include <stdbool.h>
 
-#if __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -171,9 +164,9 @@ struct Block_basic {
 };
 
 
-#if __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 
 
-#endif
+#endif /* _BLOCK_PRIVATE_H_ */
