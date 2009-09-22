@@ -34,7 +34,7 @@ namespace llvm {
 extern "C" {
 
   // Debuggers puts a breakpoint in this function.
-  void __attribute__((noinline)) __jit_debug_register_code() { }
+  void DISABLE_INLINE __jit_debug_register_code() { }
 
   // We put information about the JITed function in this global, which the
   // debugger reads.  Make sure to specify the version statically, because the
