@@ -5,6 +5,11 @@ import ShUtil
 import Test
 import Util
 
+class InternalShellError(Exception):
+    def __init__(self, command, message):
+        self.command = command
+        self.message = message
+
 def executeCommand(command, cwd=None, env=None):
     p = subprocess.Popen(command, cwd=cwd,
                          stdin=subprocess.PIPE,
@@ -94,6 +99,13 @@ def executeShCmd(cmd, cfg, cwd, results):
             stderrIsStdout = True
         else:
             stderrIsStdout = False
+
+        # Resolve the executable path ourselves.
+        args = list(j.args)
+        args[0] = Util.which(args[0], cfg.environment['PATH'])
+        if not args[0]:
+            raise InternalShellError(j, '%r: command not found' % j.args[0])
+
         procs.append(subprocess.Popen(j.args, cwd=cwd,
                                       stdin = stdin,
                                       stdout = stdout,
@@ -159,7 +171,12 @@ def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
         return (Test.FAIL, "shell parser error on: %r" % ln)
 
     results = []
-    exitCode = executeShCmd(cmd, test.config, cwd, results)
+    try:
+        exitCode = executeShCmd(cmd, test.config, cwd, results)
+    except InternalShellError,e:
+        out = ''
+        err = e.message
+        exitCode = 255
 
     out = err = ''
     for i,(cmd, cmd_out,cmd_err,res) in enumerate(results):
@@ -225,7 +242,11 @@ def executeTclScriptInternal(test, litConfig, tmpBase, commands, cwd):
         return out,err,exitCode
     else:
         results = []
-        exitCode = executeShCmd(cmd, test.config, cwd, results)
+        try:
+            exitCode = executeShCmd(cmd, test.config, cwd, results)
+        except InternalShellError,e:
+            results.append((e.command, '', e.message + '\n', 255))
+            exitCode = 255
 
     out = err = ''
 
