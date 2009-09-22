@@ -497,7 +497,7 @@ const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
   }
 }
 
-/// getDeclAlign - Return a conservative estimate of the alignment of the
+/// getDeclAlignInBytes - Return a conservative estimate of the alignment of the
 /// specified decl.  Note that bitfields do not have a valid alignment, so
 /// this method will assert on them.
 unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
