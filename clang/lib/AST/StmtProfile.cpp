@@ -237,7 +237,7 @@ void StmtProfiler::VisitImaginaryLiteral(ImaginaryLiteral *S) {
 
 void StmtProfiler::VisitStringLiteral(StringLiteral *S) {
   VisitExpr(S);
-  ID.AddString(S->getString());
+  ID.AddString(S->getStrData(), S->getStrData() + S->getByteLength());
   ID.AddBoolean(S->isWide());
 }
 

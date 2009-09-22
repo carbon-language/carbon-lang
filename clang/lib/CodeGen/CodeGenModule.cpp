@@ -1310,11 +1310,14 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
                          bool TargetIsLSB,
                          bool &IsUTF16,
                          unsigned &StringLength) {
-  // Check for simple case.
-  if (!Literal->containsNonAsciiOrNull())
-    return Map.GetOrCreateValue(Literal->getString());
-
   unsigned NumBytes = Literal->getByteLength();
+
+  // Check for simple case.
+  if (!Literal->containsNonAsciiOrNull()) {
+    StringLength = NumBytes;
+    return Map.GetOrCreateValue(llvm::StringRef(Literal->getStrData(),
+                                                StringLength));
+  }
 
   // Otherwise, convert the UTF8 literals into a byte string.
   llvm::SmallVector<UTF16, 128> ToBuf(NumBytes);
@@ -1330,7 +1333,9 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
     // FIXME: Have Sema::CheckObjCString() validate the UTF-8 string and remove
     // this duplicate code.
     assert(Result == sourceIllegal && "UTF-8 to UTF-16 conversion failed");
-    return Map.GetOrCreateValue(Literal->getString());
+    StringLength = NumBytes;
+    return Map.GetOrCreateValue(llvm::StringRef(Literal->getStrData(),
+                                                StringLength));
   }
 
   // ConvertUTF8toUTF16 returns the length in ToPtr.

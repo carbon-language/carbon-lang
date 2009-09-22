@@ -447,13 +447,17 @@ bool Sema::CheckObjCString(Expr *Arg) {
     return true;
   }
 
-  llvm::StringRef Str = Literal->getString();
-  size_t NullLoc = Str.find('\0');
+  const char *Data = Literal->getStrData();
+  unsigned Length = Literal->getByteLength();
 
-  if (NullLoc != llvm::StringRef::npos)
-    Diag(getLocationOfStringLiteralByte(Literal, NullLoc),
-         diag::warn_cfstring_literal_contains_nul_character)
-      << Arg->getSourceRange();
+  for (unsigned i = 0; i < Length; ++i) {
+    if (!Data[i]) {
+      Diag(getLocationOfStringLiteralByte(Literal, i),
+           diag::warn_cfstring_literal_contains_nul_character)
+        << Arg->getSourceRange();
+      break;
+    }
+  }
 
   return false;
 }
