@@ -231,9 +231,9 @@ public:
     if (E->getType()->isVariablyModifiedType())
       CGF.EmitVLASize(E->getType());
 
-    return EmitCastExpr(E->getSubExpr(), E->getType(), E->getCastKind());
+    return EmitCastExpr(E);
   }
-  Value *EmitCastExpr(const Expr *E, QualType T, CastExpr::CastKind Kind);
+  Value *EmitCastExpr(const CastExpr *E);
 
   Value *VisitCallExpr(const CallExpr *E) {
     if (E->getCallReturnType()->isReferenceType())
@@ -618,8 +618,11 @@ Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
 // VisitCastExpr - Emit code for an explicit or implicit cast.  Implicit casts
 // have to handle a more broad range of conversions than explicit casts, as they
 // handle things like function to ptr-to-function decay etc.
-Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy,
-                                       CastExpr::CastKind Kind) {
+Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
+  const Expr *E = CE->getSubExpr();
+  QualType DestTy = CE->getType();
+  CastExpr::CastKind Kind = CE->getCastKind();
+  
   if (!DestTy->isVoidType())
     TestAndClearIgnoreResultAssign();
 
@@ -681,12 +684,16 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy,
     Value *Src = Visit(const_cast<Expr*>(E));
 
     // FIXME: This should be true, but that leads to a failure in virt.cpp
-    bool NullCheckValue = false;
+    bool NullCheckValue = true;
     
-    // We always assume that 'this' is never null.
-    if (isa<CXXThisExpr>(E))
+    if (isa<CXXThisExpr>(E)) {
+      // We always assume that 'this' is never null.
       NullCheckValue = false;
-    
+    } else if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(CE)) {
+      // And that lvalue casts are never null.
+      if (ICE->isLvalueCast())
+        NullCheckValue = false;
+    }
     return CGF.GetAddressCXXOfBaseClass(Src, DerivedClassDecl, BaseClassDecl,
                                         NullCheckValue);
   }
