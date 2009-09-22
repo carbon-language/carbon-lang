@@ -22,6 +22,13 @@
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
+namespace {
+  struct Win32ProcessInfo {
+    HANDLE hProcess;
+    DWORD  dwProcessId;
+  };
+}
+
 namespace llvm {
 using namespace sys;
 
@@ -29,15 +36,16 @@ Program::Program() : Data_(0) {}
 
 Program::~Program() {
   if (Data_) {
-    HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
-    CloseHandle(hProcess);
+    Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data_);
+    CloseHandle(wpi->hProcess);
+    delete wpi;
     Data_ = 0;
   }
 }
 
 unsigned Program::GetPid() const {
-  HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
-  return GetProcessId(hProcess);
+  Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data_);
+  return wpi->dwProcessId;
 }
 
 // This function just uses the PATH environment variable to find the program.
@@ -138,8 +146,9 @@ Program::Execute(const Path& path,
                  unsigned memoryLimit,
                  std::string* ErrMsg) {
   if (Data_) {
-    HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
-    CloseHandle(Data_);
+    Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data_);
+    CloseHandle(wpi->hProcess);
+    delete wpi;
     Data_ = 0;
   }
 
@@ -269,7 +278,10 @@ Program::Execute(const Path& path,
                path.str() + "'");
     return false;
   }
-  Data_ = reinterpret_cast<void*>(pi.hProcess);
+  Win32ProcessInfo* wpi = new Win32ProcessInfo;
+  wpi->hProcess = pi.hProcess;
+  wpi->dwProcessId = pi.dwProcessId;
+  Data_ = wpi;
 
   // Make sure these get closed no matter what.
   AutoHandle hThread(pi.hThread);
@@ -310,7 +322,8 @@ Program::Wait(unsigned secondsToWait,
     return -1;
   }
 
-  HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
+  Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data_);
+  HANDLE hProcess = wpi->hProcess;
 
   // Wait for the process to terminate.
   DWORD millisecondsToWait = INFINITE;
@@ -346,7 +359,8 @@ Program::Kill(std::string* ErrMsg) {
     return true;
   }
 
-  HANDLE hProcess = reinterpret_cast<HANDLE>(Data_);
+  Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data_);
+  HANDLE hProcess = wpi->hProcess;
   if (TerminateProcess(hProcess, 1) == 0) {
     MakeErrMsg(ErrMsg, "The process couldn't be killed!");
     return true;
