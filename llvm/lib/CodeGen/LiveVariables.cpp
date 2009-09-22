@@ -180,9 +180,9 @@ void LiveVariables::HandleVirtRegDef(unsigned Reg, MachineInstr *MI) {
 }
 
 /// FindLastPartialDef - Return the last partial def of the specified register.
-/// Also returns the sub-register that's defined.
+/// Also returns the sub-registers that're defined by the instruction.
 MachineInstr *LiveVariables::FindLastPartialDef(unsigned Reg,
-                                                unsigned &PartDefReg) {
+                                            SmallSet<unsigned,4> &PartDefRegs) {
   unsigned LastDefReg = 0;
   unsigned LastDefDist = 0;
   MachineInstr *LastDef = NULL;
@@ -198,7 +198,23 @@ MachineInstr *LiveVariables::FindLastPartialDef(unsigned Reg,
       LastDefDist = Dist;
     }
   }
-  PartDefReg = LastDefReg;
+
+  if (!LastDef)
+    return 0;
+
+  PartDefRegs.insert(LastDefReg);
+  for (unsigned i = 0, e = LastDef->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = LastDef->getOperand(i);
+    if (!MO.isReg() || !MO.isDef() || MO.getReg() == 0)
+      continue;
+    unsigned DefReg = MO.getReg();
+    if (TRI->isSubRegister(Reg, DefReg)) {
+      PartDefRegs.insert(DefReg);
+      for (const unsigned *SubRegs = TRI->getSubRegisters(DefReg);
+           unsigned SubReg = *SubRegs; ++SubRegs)
+        PartDefRegs.insert(SubReg);
+    }
+  }
   return LastDef;
 }
 
@@ -216,8 +232,8 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
     // ...
     //    = EAX
     // All of the sub-registers must have been defined before the use of Reg!
-    unsigned PartDefReg = 0;
-    MachineInstr *LastPartialDef = FindLastPartialDef(Reg, PartDefReg);
+    SmallSet<unsigned, 4> PartDefRegs;
+    MachineInstr *LastPartialDef = FindLastPartialDef(Reg, PartDefRegs);
     // If LastPartialDef is NULL, it must be using a livein register.
     if (LastPartialDef) {
       LastPartialDef->addOperand(MachineOperand::CreateReg(Reg, true/*IsDef*/,
@@ -228,7 +244,7 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
            unsigned SubReg = *SubRegs; ++SubRegs) {
         if (Processed.count(SubReg))
           continue;
-        if (SubReg == PartDefReg || TRI->isSubRegister(PartDefReg, SubReg))
+        if (PartDefRegs.count(SubReg))
           continue;
         // This part of Reg was defined before the last partial def. It's killed
         // here.
