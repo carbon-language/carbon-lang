@@ -58,6 +58,7 @@ namespace llvm {
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
+#ifdef _MSC_VER
 /// CRTReportHook - Function called on a CRT debugging event.
 static int CRTReportHook(int ReportType, char *Message, int *Return) {
   // Don't cause a DebugBreak() on return.
@@ -86,6 +87,7 @@ static int CRTReportHook(int ReportType, char *Message, int *Return) {
   // Don't call _CrtDbgReport.
   return TRUE;
 }
+#endif
 
 static void RegisterHandler() {
   if (RegisteredUnhandledExceptionFilter) {
@@ -106,10 +108,12 @@ static void RegisterHandler() {
   SetConsoleCtrlHandler(LLVMConsoleCtrlHandler, TRUE);
 
   // Environment variable to disable any kind of crash dialog.
+#ifdef _MSC_VER
   if (getenv("LLVM_DISABLE_CRT_DEBUG")) {
     _CrtSetReportHook(CRTReportHook);
-	ExitOnUnhandledExceptions = true;
+    ExitOnUnhandledExceptions = true;
   }
+#endif
 
   // IMPORTANT NOTE: Caller must call LeaveCriticalSection(&CriticalSection) or
   // else multi-threading problems will ensue.
@@ -270,8 +274,10 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
       assert(0 && "Crashed in LLVMUnhandledExceptionFilter");
   }
 
+#ifdef _MSC_VER
   if (ExitOnUnhandledExceptions)
   	_exit(-3);
+#endif
 
   // Allow dialog box to pop up allowing choice to start debugger.
   if (OldFilter)
