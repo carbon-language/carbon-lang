@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin9 -stats |& grep asm-printer | grep 161
+; RUN: llc < %s -mtriple=arm-apple-darwin9 -stats |& grep asm-printer | grep 162
 
 	%"struct.Adv5::Ekin<3>" = type <{ i8 }>
 	%"struct.Adv5::X::Energyflux<3>" = type { double }

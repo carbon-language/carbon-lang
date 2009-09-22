@@ -2571,17 +2571,19 @@ void SimpleRegisterCoalescing::CalculateSpillWeights() {
           continue;
 
         bool HasDef = mopi.isDef();
-        bool HasUse = mopi.isUse();
+        bool HasUse = !HasDef;
         for (unsigned j = i+1; j != e; ++j) {
           const MachineOperand &mopj = MI->getOperand(j);
           if (!mopj.isReg() || mopj.getReg() != Reg)
             continue;
           HasDef |= mopj.isDef();
           HasUse |= mopj.isUse();
+          if (HasDef && HasUse)
+            break;
         }
 
         LiveInterval &RegInt = li_->getInterval(Reg);
-        float Weight = li_->getSpillWeight(HasDef, HasUse, loopDepth+1);
+        float Weight = li_->getSpillWeight(HasDef, HasUse, loopDepth);
         if (HasDef && isExit) {
           // Looks like this is a loop count variable update.
           MachineInstrIndex DefIdx =
