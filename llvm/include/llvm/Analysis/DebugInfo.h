@@ -24,6 +24,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
   class BasicBlock;
@@ -45,7 +46,7 @@ namespace llvm {
 
   class DIDescriptor {
   protected:
-    MDNode *DbgNode;
+    TrackingVH<MDNode> DbgNode;
 
     /// DIDescriptor constructor.  If the specified node is non-null, check
     /// to make sure that the tag in the descriptor matches 'RequiredTag'.  If

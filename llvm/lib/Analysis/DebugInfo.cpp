@@ -267,8 +267,17 @@ void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
     return;
 
   assert (!D.isNull() && "Can not replace with null");
-  DbgNode->replaceAllUsesWith(D.getNode());
-  delete DbgNode;
+
+  // Since we use a TrackingVH for the node, its easy for clients to manufacture
+  // legitimate situations where they want to replaceAllUsesWith() on something
+  // which, due to uniquing, has merged with the source. We shield clients from
+  // this detail by allowing a value to be replaced with replaceAllUsesWith()
+  // itself.
+  if (getNode() != D.getNode()) {
+    MDNode *Node = DbgNode;
+    Node->replaceAllUsesWith(D.getNode());
+    delete Node;
+  }
 }
 
 /// Verify - Verify that a compile unit is well formed.
@@ -395,7 +404,7 @@ bool DISubprogram::describes(const Function *F) {
 /// dump - Print descriptor.
 void DIDescriptor::dump() const {
   errs() << "[" << dwarf::TagString(getTag()) << "] ";
-  errs().write_hex((intptr_t)DbgNode) << ']';
+  errs().write_hex((intptr_t) &*DbgNode) << ']';
 }
 
 /// dump - Print compile unit.
