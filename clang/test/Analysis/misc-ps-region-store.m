@@ -181,4 +181,17 @@ int rdar_test_7185607() {
   return s.x; // no-warning
 }
 
+// <rdar://problem/7242006> [RegionStore] compound literal assignment with
+//  floats not honored
+// This test case is mirrored in misc-ps.m, but this case is a negative.
+typedef float CGFloat;
+typedef struct _NSSize {
+    CGFloat width;
+    CGFloat height;
+} NSSize;
+
+CGFloat rdar7242006_negative(CGFloat x) {
+  NSSize y;
+  return y.width; // expected-warning{{garbage}}
+}
 

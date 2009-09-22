@@ -1397,6 +1397,7 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
     if (CAT->getElementType()->isStructureType())
       state = BindStruct(state, ER, *VI);
     else
+      // FIXME: Do we need special handling of nested arrays?
       state = Bind(state, ValMgr.makeLoc(ER), *VI);
   }
 
@@ -1448,14 +1449,14 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
       break;
 
     QualType FTy = (*FI)->getType();
-    FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
+    const FieldRegion* FR = MRMgr.getFieldRegion(*FI, R);
 
-    if (Loc::IsLocType(FTy) || FTy->isIntegerType())
-      state = Bind(state, ValMgr.makeLoc(FR), *VI);
-    else if (FTy->isArrayType())
+    if (FTy->isArrayType())
       state = BindArray(state, FR, *VI);
     else if (FTy->isStructureType())
       state = BindStruct(state, FR, *VI);
+    else
+      state = Bind(state, ValMgr.makeLoc(FR), *VI);
   }
 
   // There may be fewer values in the initialize list than the fields of struct.

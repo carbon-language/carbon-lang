@@ -2263,6 +2263,7 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, ExplodedNode* Pred,
     WorkList.reserve(NumInitElements);
     WorkList.push_back(InitListWLItem(Pred, StartVals, E->rbegin()));
     InitListExpr::reverse_iterator ItrEnd = E->rend();
+    assert(!(E->rbegin() == E->rend()));
 
     // Process the worklist until it is empty.
     while (!WorkList.empty()) {

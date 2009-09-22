@@ -643,3 +643,10 @@ int rdar_7242015() {
             // using RegionStore.
 }
 
+// <rdar://problem/7242006> [RegionStore] compound literal assignment with
+//  floats not honored
+CGFloat rdar7242006(CGFloat x) {
+  NSSize y = (NSSize){x, 10};
+  return y.width; // no-warning
+}
+
