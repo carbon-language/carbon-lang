@@ -170,6 +170,18 @@ public:
     Result(const char *Keyword, unsigned Rank)
       : Kind(RK_Keyword), Keyword(Keyword), Rank(Rank), Hidden(false) { }
     
+    /// \brief Retrieve the declaration stored in this result.
+    NamedDecl *getDeclaration() const {
+      assert(Kind == RK_Declaration && "Not a declaration result");
+      return Declaration;
+    }
+    
+    /// \brief Retrieve the keyword stored in this result.
+    const char *getKeyword() const {
+      assert(Kind == RK_Keyword && "Not a keyword result");
+      return Keyword;
+    }
+    
     /// \brief Create a new code-completion string that describes how to insert
     /// this result into a program.
     CodeCompletionString *CreateCodeCompletionString(Sema &S);
