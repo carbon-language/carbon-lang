@@ -278,23 +278,32 @@ llvm::Value *CodeGenFunction::LoadCXXThis() {
 
 /// EmitCXXAggrConstructorCall - This routine essentially creates a (nested)
 /// for-loop to call the default constructor on individual members of the
-/// array. 'Array' is the array type, 'This' is llvm pointer of the start
-/// of the array and 'D' is the default costructor Decl for elements of the
-/// array. It is assumed that all relevant checks have been made by the
-/// caller.
+/// array. 
+/// 'D' is the default constructor for elements of the array, 'ArrayTy' is the
+/// array type and 'ArrayPtr' points to the beginning fo the array.
+/// It is assumed that all relevant checks have been made by the caller.
 void
 CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
-                                            const ArrayType *Array,
-                                            llvm::Value *This) {
-  const ConstantArrayType *CA = dyn_cast<ConstantArrayType>(Array);
-  assert(CA && "Do we support VLA for construction ?");
+                                            const ConstantArrayType *ArrayTy,
+                                            llvm::Value *ArrayPtr) {
+  const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
+  llvm::Value * NumElements =
+    llvm::ConstantInt::get(SizeTy, 
+                           getContext().getConstantArrayElementCount(ArrayTy));
+
+  EmitCXXAggrConstructorCall(D, NumElements, ArrayPtr);
+}
+
+void
+CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
+                                            llvm::Value *NumElements,
+                                            llvm::Value *ArrayPtr) {
+  const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
 
   // Create a temporary for the loop index and initialize it with 0.
-  llvm::Value *IndexPtr = CreateTempAlloca(llvm::Type::getInt64Ty(VMContext),
-                                           "loop.index");
-  llvm::Value* zeroConstant =
-    llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
-  Builder.CreateStore(zeroConstant, IndexPtr, false);
+  llvm::Value *IndexPtr = CreateTempAlloca(SizeTy, "loop.index");
+  llvm::Value *Zero = llvm::Constant::getNullValue(SizeTy);
+  Builder.CreateStore(Zero, IndexPtr, false);
 
   // Start the loop with a block that tests the condition.
   llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
@@ -306,12 +315,8 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
 
   // Generate: if (loop-index < number-of-elements fall to the loop body,
   // otherwise, go to the block after the for-loop.
-  uint64_t NumElements = getContext().getConstantArrayElementCount(CA);
-  llvm::Value * NumElementsPtr =
-    llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext), NumElements);
   llvm::Value *Counter = Builder.CreateLoad(IndexPtr);
-  llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElementsPtr,
-                                              "isless");
+  llvm::Value *IsLess = Builder.CreateICmpULT(Counter, NumElements, "isless");
   // If the condition is true, execute the body.
   Builder.CreateCondBr(IsLess, ForBody, AfterFor);
 
@@ -320,13 +325,14 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   llvm::BasicBlock *ContinueBlock = createBasicBlock("for.inc");
   // Inside the loop body, emit the constructor call on the array element.
   Counter = Builder.CreateLoad(IndexPtr);
-  llvm::Value *Address = Builder.CreateInBoundsGEP(This, Counter, "arrayidx");
+  llvm::Value *Address = Builder.CreateInBoundsGEP(ArrayPtr, Counter, 
+                                                   "arrayidx");
   EmitCXXConstructorCall(D, Ctor_Complete, Address, 0, 0);
 
   EmitBlock(ContinueBlock);
 
   // Emit the increment of the loop counter.
-  llvm::Value *NextVal = llvm::ConstantInt::get(Counter->getType(), 1);
+  llvm::Value *NextVal = llvm::ConstantInt::get(SizeTy, 1);
   Counter = Builder.CreateLoad(IndexPtr);
   NextVal = Builder.CreateAdd(Counter, NextVal, "inc");
   Builder.CreateStore(NextVal, IndexPtr, false);

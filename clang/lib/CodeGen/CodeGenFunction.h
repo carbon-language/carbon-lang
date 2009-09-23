@@ -610,8 +610,11 @@ public:
                               CallExpr::const_arg_iterator ArgEnd);
 
   void EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
-                                  const ArrayType *Array,
-                                  llvm::Value *This);
+                                  const ConstantArrayType *ArrayTy,
+                                  llvm::Value *ArrayPtr);
+  void EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
+                                  llvm::Value *NumElements,
+                                  llvm::Value *ArrayPtr);
 
   void EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
                                  const ArrayType *Array,
