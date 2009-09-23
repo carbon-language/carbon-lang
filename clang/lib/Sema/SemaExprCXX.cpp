@@ -1356,6 +1356,7 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
     //   conversion the reference must bind directly to E1.
     if (!Self.CheckReferenceInit(From,
                             Self.Context.getLValueReferenceType(To->getType()),
+                                 To->getLocStart(),
                                  /*SuppressUserConversions=*/false,
                                  /*AllowExplicit=*/false,
                                  /*ForceRValue=*/false,
@@ -1477,6 +1478,7 @@ static bool ConvertForConditional(Sema &Self, Expr *&E,
     // redoing all the work.
     return Self.CheckReferenceInit(E, Self.Context.getLValueReferenceType(
                                         TargetType(ICS)),
+                                   /*FIXME:*/E->getLocStart(),
                                    /*SuppressUserConversions=*/false,
                                    /*AllowExplicit=*/false,
                                    /*ForceRValue=*/false);
@@ -1487,6 +1489,7 @@ static bool ConvertForConditional(Sema &Self, Expr *&E,
            "TryClassUnification should never generate indirect ref bindings");
     return Self.CheckReferenceInit(E, Self.Context.getLValueReferenceType(
                                         TargetType(ICS)),
+                                   /*FIXME:*/E->getLocStart(),
                                    /*SuppressUserConversions=*/false,
                                    /*AllowExplicit=*/false,
                                    /*ForceRValue=*/false);

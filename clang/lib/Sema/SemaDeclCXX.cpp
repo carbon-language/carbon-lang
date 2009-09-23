@@ -3363,6 +3363,7 @@ Sema::CompareReferenceRelationship(QualType T1, QualType T2,
 /// When @p ForceRValue, we unconditionally treat the initializer as an rvalue.
 bool
 Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
+                         SourceLocation DeclLoc,
                          bool SuppressUserConversions,
                          bool AllowExplicit, bool ForceRValue,
                          ImplicitConversionSequence *ICS) {
@@ -3381,7 +3382,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       // Since we're performing this reference-initialization for
       // real, update the initializer with the resulting function.
       if (!ICS) {
-        if (DiagnoseUseOfDecl(Fn, Init->getSourceRange().getBegin()))
+        if (DiagnoseUseOfDecl(Fn, DeclLoc))
           return true;
 
         FixOverloadedFunctionReference(Init, Fn);
@@ -3416,7 +3417,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   //   A&& r = b;
   if (isRValRef && InitLvalue == Expr::LV_Valid) {
     if (!ICS)
-      Diag(Init->getSourceRange().getBegin(), diag::err_lvalue_to_rvalue_ref)
+      Diag(DeclLoc, diag::err_lvalue_to_rvalue_ref)
         << Init->getSourceRange();
     return true;
   }
@@ -3502,7 +3503,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     }
 
     OverloadCandidateSet::iterator Best;
-    switch (BestViableFunction(CandidateSet, Init->getLocStart(), Best)) {
+    switch (BestViableFunction(CandidateSet, DeclLoc, Best)) {
     case OR_Success:
       // This is a direct binding.
       BindsDirectly = true;
@@ -3528,7 +3529,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
         return false;
       } else {
         OwningExprResult InitConversion =
-          BuildCXXCastArgument(Init->getLocStart(), QualType(),
+          BuildCXXCastArgument(DeclLoc, QualType(),
                                CastExpr::CK_UserDefinedConversion,
                                cast<CXXMethodDecl>(Best->Function), 
                                Owned(Init));
@@ -3565,8 +3566,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     // ambiguity (or inaccessibility) unless the reference binding
     // actually happens.
     if (DerivedToBase)
-      return CheckDerivedToBaseConversion(T2, T1,
-                                          Init->getSourceRange().getBegin(),
+      return CheckDerivedToBaseConversion(T2, T1, DeclLoc,
                                           Init->getSourceRange());
     else
       return false;
@@ -3577,8 +3577,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   //        rvalue reference and the initializer expression shall be an rvalue.
   if (!isRValRef && T1.getCVRQualifiers() != QualType::Const) {
     if (!ICS)
-      Diag(Init->getSourceRange().getBegin(),
-           diag::err_not_reference_to_const_init)
+      Diag(DeclLoc, diag::err_not_reference_to_const_init)
         << T1 << (InitLvalue != Expr::LV_Valid? "temporary" : "value")
         << T2 << Init->getSourceRange();
     return true;
@@ -3642,8 +3641,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     // added qualification. But that wasn't the case, so the reference
     // initialization fails.
     if (!ICS)
-      Diag(Init->getSourceRange().getBegin(),
-           diag::err_reference_init_drops_quals)
+      Diag(DeclLoc, diag::err_reference_init_drops_quals)
         << T1 << (InitLvalue != Expr::LV_Valid? "temporary" : "value")
         << T2 << Init->getSourceRange();
     return true;
@@ -3657,8 +3655,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   if (SuppressUserConversions && RefRelationship == Ref_Incompatible &&
       (T1->isRecordType() || T2->isRecordType())) {
     if (!ICS)
-      Diag(Init->getSourceRange().getBegin(),
-           diag::err_typecheck_convert_incompatible)
+      Diag(DeclLoc, diag::err_typecheck_convert_incompatible)
         << DeclType << Init->getType() << "initializing" << Init->getSourceRange();
     return true;
   }
@@ -3709,8 +3706,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
         }
       }
       else
-        Diag(Init->getSourceRange().getBegin(), diag::err_lvalue_to_rvalue_ref)
-              << Init->getSourceRange();
+        Diag(DeclLoc, diag::err_lvalue_to_rvalue_ref)
+          << Init->getSourceRange();
     }
     return badConversion;
   }

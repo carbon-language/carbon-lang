@@ -1963,6 +1963,7 @@ Sema::TryCopyInitialization(Expr *From, QualType ToType,
   if (ToType->isReferenceType()) {
     ImplicitConversionSequence ICS;
     CheckReferenceInit(From, ToType,
+                       /*FIXME:*/From->getLocStart(),
                        SuppressUserConversions,
                        /*AllowExplicit=*/false,
                        ForceRValue,
@@ -2000,6 +2001,7 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
 
   if (ToType->isReferenceType())
     return CheckReferenceInit(From, ToType,
+                              /*FIXME:*/From->getLocStart(),
                               /*SuppressUserConversions=*/false,
                               /*AllowExplicit=*/false,
                               /*ForceRValue=*/false);

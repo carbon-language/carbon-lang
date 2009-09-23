@@ -144,7 +144,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
   //   (8.3.2), shall be initialized by an object, or function, of
   //   type T or by an object that can be converted into a T.
   if (DeclType->isReferenceType())
-    return CheckReferenceInit(Init, DeclType,
+    return CheckReferenceInit(Init, DeclType, InitLoc,
                               /*SuppressUserConversions=*/false,
                               /*AllowExplicit=*/DirectInit,
                               /*ForceRValue=*/false);
@@ -801,6 +801,7 @@ void InitListChecker::CheckReferenceType(InitListExpr *IList, QualType DeclType,
 
     Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
     if (SemaRef.CheckReferenceInit(expr, DeclType,
+                                   /*FIXME:*/expr->getLocStart(),
                                    /*SuppressUserConversions=*/false,
                                    /*AllowExplicit=*/false,
                                    /*ForceRValue=*/false))

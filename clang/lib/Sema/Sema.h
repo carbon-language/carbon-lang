@@ -3571,6 +3571,7 @@ public:
                                                       bool& DerivedToBase);
 
   bool CheckReferenceInit(Expr *&simpleInit_or_initList, QualType declType,
+                          SourceLocation DeclLoc,
                           bool SuppressUserConversions,
                           bool AllowExplicit,
                           bool ForceRValue,

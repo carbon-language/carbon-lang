@@ -787,6 +787,7 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
     // get error messages.
     ImplicitConversionSequence ICS;
     bool failed = Self.CheckReferenceInit(SrcExpr, DestType,
+                                          OpRange.getBegin(),
                                           /*SuppressUserConversions=*/false,
                                           /*AllowExplicit=*/false,
                                           /*ForceRValue=*/false,
