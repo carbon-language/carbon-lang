@@ -16,6 +16,9 @@ using namespace clang;
 using namespace CodeGen;
 
 static uint64_t CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
+  if (!E->isArray())
+    return 0;
+  
   QualType T = E->getAllocatedType();
   
   const RecordType *RT = T->getAs<RecordType>();
@@ -34,7 +37,7 @@ static uint64_t CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
   
   // Padding is the maximum of sizeof(size_t) and alignof(T)
   return std::max(Ctx.getTypeSize(Ctx.getSizeType()),
-                  static_cast<uint64_t>(Ctx.getTypeAlign(T)));
+                  static_cast<uint64_t>(Ctx.getTypeAlign(T))) / 8;
 }
 
 static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF, 
@@ -115,11 +118,6 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
 }
 
 llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
-  if (E->isArray() && CalculateCookiePadding(getContext(), E)) {
-    ErrorUnsupported(E, "new[] expression");
-    return llvm::UndefValue::get(ConvertType(E->getType()));
-  }
-
   QualType AllocType = E->getAllocatedType();
   FunctionDecl *NewFD = E->getOperatorNew();
   const FunctionProtoType *NewFTy = NewFD->getType()->getAs<FunctionProtoType>();
@@ -199,6 +197,21 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     EmitBlock(NewNotNull);
   }
 
+  if (uint64_t CookiePadding = CalculateCookiePadding(getContext(), E)) {
+    uint64_t CookieOffset = 
+      CookiePadding - getContext().getTypeSize(SizeTy) / 8;
+    
+    llvm::Value *NumElementsPtr = 
+      Builder.CreateConstInBoundsGEP1_64(NewPtr, CookieOffset);
+    
+    NumElementsPtr = Builder.CreateBitCast(NumElementsPtr, 
+                                           ConvertType(SizeTy)->getPointerTo());
+    Builder.CreateStore(NumElements, NumElementsPtr);
+
+    // Now add the padding to the new ptr.
+    NewPtr = Builder.CreateConstInBoundsGEP1_64(NewPtr, CookiePadding);
+  }
+  
   NewPtr = Builder.CreateBitCast(NewPtr, ConvertType(E->getType()));
 
   EmitNewInitializer(*this, E, NewPtr, NumElements);

@@ -55,6 +55,10 @@ void t7() {
   new int();
 }
 
+struct U {
+  ~U();
+};
+  
 void t8(int n) {
   new int[10];
   new int[n];
@@ -62,4 +66,8 @@ void t8(int n) {
   // Non-POD
   new T[10];
   new T[n];
+  
+  // Cookie required
+  new U[10];
+  new U[n];
 }
