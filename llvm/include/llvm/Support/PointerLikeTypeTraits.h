@@ -50,12 +50,16 @@ public:
 // Provide PointerLikeTypeTraits for const pointers.
 template<typename T>
 class PointerLikeTypeTraits<const T*> {
+  typedef PointerLikeTypeTraits<T*> NonConst;
+
 public:
-  static inline const void *getAsVoidPointer(const T* P) { return P; }
-  static inline const T *getFromVoidPointer(const void *P) {
-    return static_cast<const T*>(P);
+  static inline const void *getAsVoidPointer(const T* P) {
+    return NonConst::getAsVoidPointer(const_cast<T*>(P));
   }
-  enum { NumLowBitsAvailable = 2 };
+  static inline const T *getFromVoidPointer(const void *P) {
+    return NonConst::getFromVoidPointer(const_cast<void*>(P));
+  }
+  enum { NumLowBitsAvailable = NonConst::NumLowBitsAvailable };
 };
 
 // Provide PointerLikeTypeTraits for uintptr_t.
