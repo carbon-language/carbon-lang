@@ -4,7 +4,7 @@ DIRS := include lib tools docs
 include $(LEVEL)/Makefile.common
 
 ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
-test::
+all::
 	$(Verb) if [ ! -f test/Makefile ]; then \
 	  $(MKDIR) test; \
 	  $(CP) $(PROJ_SRC_DIR)/test/Makefile test/Makefile; \
