@@ -42,6 +42,8 @@ void good_news()
   //V *pv = new (ps) V;
   
   pi = new (S(1.0f, 2)) int;
+  
+  (void)new int[true];
 }
 
 struct abstract {

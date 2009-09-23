@@ -402,12 +402,15 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
       llvm::APSInt Value;
       if (ArraySize->isIntegerConstantExpr(Value, Context, 0, false)) {
         if (Value < llvm::APSInt(
-                        llvm::APInt::getNullValue(Value.getBitWidth()), false))
+                        llvm::APInt::getNullValue(Value.getBitWidth()), 
+                                 Value.isUnsigned()))
           return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
                            diag::err_typecheck_negative_array_size)
             << ArraySize->getSourceRange());
       }
     }
+    
+    ImpCastExprToType(ArraySize, Context.getSizeType());
   }
 
   FunctionDecl *OperatorNew = 0;
