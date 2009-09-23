@@ -104,7 +104,7 @@ unsigned InlineCostAnalyzer::FunctionInfo::
 /// analyzeFunction - Fill in the current structure with information gleaned
 /// from the specified function.
 void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
-  unsigned NumInsts = 0, NumBlocks = 0, NumVectorInsts = 0;
+  unsigned NumInsts = 0, NumBlocks = 0, NumVectorInsts = 0, NumRets = 0;
 
   // Look at the size of the callee.  Each basic block counts as 20 units, and
   // each instruction counts as 5.
@@ -157,12 +157,20 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
         if (GEPI->hasAllConstantIndices())
           continue;
       }
+
+      if (isa<ReturnInst>(II))
+        ++NumRets;
       
       ++NumInsts;
     }
 
     ++NumBlocks;
   }
+
+  // A function with exactly one return has it removed during the inlining
+  // process (see InlineFunction), so don't count it.
+  if (NumRets==1)
+    --NumInsts;
 
   this->NumBlocks      = NumBlocks;
   this->NumInsts       = NumInsts;
@@ -186,11 +194,10 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   Function *Callee = CS.getCalledFunction();
   Function *Caller = TheCall->getParent()->getParent();
 
-      // Don't inline functions which can be redefined at link-time to mean
-      // something else.
-   if (Callee->mayBeOverridden() ||
-       // Don't inline functions marked noinline.
-       Callee->hasFnAttr(Attribute::NoInline) || NeverInline.count(Callee))
+  // Don't inline functions which can be redefined at link-time to mean
+  // something else.  Don't inline functions marked noinline.
+  if (Callee->mayBeOverridden() ||
+      Callee->hasFnAttr(Attribute::NoInline) || NeverInline.count(Callee))
     return llvm::InlineCost::getNever();
 
   // InlineCost - This value measures how good of an inline candidate this call
@@ -291,6 +298,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   // likely to be inlined, look at factors that make us not want to inline it.
   
   // Don't inline into something too big, which would make it bigger.
+  // "size" here is the number of basic blocks, not instructions.
   //
   InlineCost += Caller->size()/15;
   
