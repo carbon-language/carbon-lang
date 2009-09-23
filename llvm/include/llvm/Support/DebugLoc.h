@@ -63,7 +63,7 @@ namespace llvm {
     bool operator!=(const DebugLoc &DL) const { return !(*this == DL); }
   };
 
-  // Partially specialize DenseMapInfo for DebugLocTyple.
+  // Specialize DenseMapInfo for DebugLocTuple.
   template<>  struct DenseMapInfo<DebugLocTuple> {
     static inline DebugLocTuple getEmptyKey() {
       return DebugLocTuple(0, ~0U, ~0U);
