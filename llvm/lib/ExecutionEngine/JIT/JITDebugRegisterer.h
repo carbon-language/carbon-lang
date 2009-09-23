@@ -48,7 +48,7 @@ extern "C" {
 
 namespace llvm {
 
-struct ELFSection;
+class ELFSection;
 class Function;
 class TargetMachine;
 
