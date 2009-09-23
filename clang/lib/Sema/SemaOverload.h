@@ -195,7 +195,11 @@ namespace clang {
       /// details of the user-defined conversion sequence.
       UserDefinedConversionSequence UserDefined;
     };
-
+    
+    /// When ConversionKind == BadConversion due to multiple conversion
+    /// functions, this will list those functions.
+    llvm::SmallVector<FunctionDecl*, 4> ConversionFunctionSet;
+    
     // The result of a comparison between implicit conversion
     // sequences. Use Sema::CompareImplicitConversionSequences to
     // actually perform the comparison.

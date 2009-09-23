@@ -411,13 +411,15 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
                             bool InOverloadResolution) {
   ImplicitConversionSequence ICS;
   OverloadCandidateSet Conversions;
+  OverloadingResult UserDefResult = OR_Success;
   if (IsStandardConversion(From, ToType, InOverloadResolution, ICS.Standard))
     ICS.ConversionKind = ImplicitConversionSequence::StandardConversion;
   else if (getLangOptions().CPlusPlus &&
-           IsUserDefinedConversion(From, ToType, ICS.UserDefined,
+           (UserDefResult = IsUserDefinedConversion(From, ToType, 
+                                   ICS.UserDefined,
                                    Conversions,
                                    !SuppressUserConversions, AllowExplicit,
-                                   ForceRValue) == OR_Success) {
+                                   ForceRValue)) == OR_Success) {
     ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
     // C++ [over.ics.user]p4:
     //   A conversion of an expression of class type to the same class
@@ -454,8 +456,14 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
     if (SuppressUserConversions &&
         ICS.ConversionKind == ImplicitConversionSequence::UserDefinedConversion)
       ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
-  } else
+  } else {
     ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
+    if (UserDefResult == OR_Ambiguous) {
+      for (OverloadCandidateSet::iterator Cand = Conversions.begin();
+           Cand != Conversions.end(); ++Cand)
+        ICS.ConversionFunctionSet.push_back(Cand->Function);
+    }
+  }
 
   return ICS;
 }
@@ -3868,8 +3876,27 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
                               *Cand->Function->getTemplateSpecializationArgs());
         } else {
           // Normal function
-          // FIXME: Give a better reason!
-          Diag(Cand->Function->getLocation(), diag::err_ovl_candidate);
+          bool errReported = false;
+          if (!Cand->Viable && Cand->Conversions.size() > 0) {
+            for (int i = Cand->Conversions.size()-1; i >= 0; i--) {
+              const ImplicitConversionSequence &Conversion = 
+                                                        Cand->Conversions[i];
+              if ((Conversion.ConversionKind != 
+                   ImplicitConversionSequence::BadConversion) ||
+                  Conversion.ConversionFunctionSet.size() == 0)
+                continue;
+              Diag(Cand->Function->getLocation(), 
+                   diag::err_ovl_candidate_not_viable) << (i+1);
+              errReported = true;
+              for (int j = Conversion.ConversionFunctionSet.size()-1; 
+                   j >= 0; j--) {
+                FunctionDecl *Func = Conversion.ConversionFunctionSet[j];
+                Diag(Func->getLocation(), diag::err_ovl_candidate);
+              }
+            }
+          }
+          if (!errReported)
+            Diag(Cand->Function->getLocation(), diag::err_ovl_candidate);
         }
       } else if (Cand->IsSurrogate) {
         // Desugar the type of the surrogate down to a function type,
