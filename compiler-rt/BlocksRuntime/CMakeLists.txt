@@ -1,4 +1,4 @@
-PROJECT( BlocksRuntime )
+PROJECT( BlocksRuntime C )
 
 SET( SRCS
  runtime.c
