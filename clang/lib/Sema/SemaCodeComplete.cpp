@@ -112,6 +112,7 @@ namespace {
     bool IsNamespace(NamedDecl *ND) const;
     bool IsNamespaceOrAlias(NamedDecl *ND) const;
     bool IsType(NamedDecl *ND) const;
+    bool IsMember(NamedDecl *ND) const;
     //@}    
   };  
 }
@@ -303,8 +304,17 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
   if (!AllDeclsFound.insert(CanonDecl))
     return;
   
+  // If the filter is for nested-name-specifiers, then this result starts a
+  // nested-name-specifier.
+  if ((Filter == &ResultBuilder::IsNestedNameSpecifier) ||
+      (Filter == &ResultBuilder::IsMember &&
+       isa<CXXRecordDecl>(R.Declaration) &&
+       cast<CXXRecordDecl>(R.Declaration)->isInjectedClassName()))
+    R.StartsNestedNameSpecifier = true;
+  
   // If this result is supposed to have an informative qualifier, add one.
-  if (R.QualifierIsInformative && !R.Qualifier) {
+  if (R.QualifierIsInformative && !R.Qualifier &&
+      !R.StartsNestedNameSpecifier) {
     DeclContext *Ctx = R.Declaration->getDeclContext();
     if (NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(Ctx))
       R.Qualifier = NestedNameSpecifier::Create(SemaRef.Context, 0, Namespace);
@@ -314,12 +324,7 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     else
       R.QualifierIsInformative = false;
   }
-  
-  // If the filter is for nested-name-specifiers, then this result starts a
-  // nested-name-specifier.
-  if (Filter == &ResultBuilder::IsNestedNameSpecifier)
-    R.StartsNestedNameSpecifier = true;
-  
+    
   // Insert this result into the set of results and into the current shadow
   // map.
   SMap.insert(std::make_pair(R.Declaration->getDeclName(),
@@ -402,6 +407,14 @@ bool ResultBuilder::IsNamespaceOrAlias(NamedDecl *ND) const {
 /// namespace alias.
 bool ResultBuilder::IsType(NamedDecl *ND) const {
   return isa<TypeDecl>(ND);
+}
+
+/// \brief Since every declaration found within a class is a member that we
+/// care about, always returns true. This predicate exists mostly to 
+/// communicate to the result builder that we are performing a lookup for
+/// member access.
+bool ResultBuilder::IsMember(NamedDecl *ND) const {
+  return true;
 }
 
 // Find the next outer declaration context corresponding to this scope.
@@ -952,6 +965,10 @@ namespace {
       if (X.Hidden != Y.Hidden)
         return !X.Hidden;
       
+      // Non-nested-name-specifiers precede nested-name-specifiers.
+      if (X.StartsNestedNameSpecifier != Y.StartsNestedNameSpecifier)
+        return !X.StartsNestedNameSpecifier;
+      
       // Ordering depends on the kind of result.
       switch (X.Kind) {
         case Result::RK_Declaration:
@@ -1005,7 +1022,7 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
       return;
   }
   
-  ResultBuilder Results(*this);
+  ResultBuilder Results(*this, &ResultBuilder::IsMember);
   unsigned NextRank = 0;
   
   if (const RecordType *Record = BaseType->getAs<RecordType>()) {
