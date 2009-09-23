@@ -466,7 +466,9 @@ public:
   Expr *getSubExpr() { return cast<Expr>(SubExpr); }
   void setSubExpr(Expr *E) { SubExpr = E; }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
+  virtual SourceRange getSourceRange() const { 
+    return SubExpr->getSourceRange();
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Stmt *T) {
@@ -539,7 +541,13 @@ public:
     Args[Arg] = ArgExpr;
   }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
+  virtual SourceRange getSourceRange() const { 
+    // FIXME: Should we know where the parentheses are, if there are any?
+    if (NumArgs == 0)
+      return SourceRange(); 
+    
+    return SourceRange(Args[0]->getLocStart(), Args[NumArgs - 1]->getLocEnd());
+  }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXConstructExprClass ||
@@ -1289,7 +1297,9 @@ public:
   const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
   void setSubExpr(Expr *E) { SubExpr = E; }
 
-  virtual SourceRange getSourceRange() const { return SourceRange(); }
+  virtual SourceRange getSourceRange() const { 
+    return SubExpr->getSourceRange();
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Stmt *T) {

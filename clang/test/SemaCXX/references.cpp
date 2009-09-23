@@ -87,3 +87,18 @@ void test8(int& const,// expected-error{{'const' qualifier may not be applied to
 
   typedef intref const intref_c; // okay. FIXME: how do we verify that this is the same type as intref?
 }
+
+
+class string {
+  char *Data;
+  unsigned Length;
+public:
+  string(); 
+  ~string();
+};
+
+string getInput();
+
+void test9() {
+  string &s = getInput(); // expected-error{{lvalue reference}}
+}
