@@ -122,8 +122,11 @@
   
   <ul>
   <li>svn co http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt</li>
-  <li>cd compiler-rt</li>
+  <li>mkdir build</li>
+  <li>cd build</li>
+  <li>cmake ../compiler-rt</li>
   <li>make</li>
+  <li>make install</li>
   </ul>
   
   <p>Note that the library will probably only build out of the box on Darwin,
