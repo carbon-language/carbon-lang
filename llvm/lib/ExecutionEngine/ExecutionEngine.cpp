@@ -429,7 +429,8 @@ ExecutionEngine *EngineBuilder::create() {
     if (WhichEngine & EngineKind::JIT)
       WhichEngine = EngineKind::JIT;
     else {
-      *ErrorStr = "Cannot create an interpreter with a memory manager.";
+      if (ErrorStr)
+        *ErrorStr = "Cannot create an interpreter with a memory manager.";
       return 0;
     }
   }
@@ -442,9 +443,6 @@ ExecutionEngine *EngineBuilder::create() {
         ExecutionEngine::JITCtor(MP, ErrorStr, JMM, OptLevel,
                                  AllocateGVsWithCode);
       if (EE) return EE;
-    } else {
-      *ErrorStr = "JIT has not been linked in.";
-      return 0;
     }
   }
 
@@ -453,10 +451,15 @@ ExecutionEngine *EngineBuilder::create() {
   if (WhichEngine & EngineKind::Interpreter) {
     if (ExecutionEngine::InterpCtor)
       return ExecutionEngine::InterpCtor(MP, ErrorStr);
-    *ErrorStr = "Interpreter has not been linked in.";
+    if (ErrorStr)
+      *ErrorStr = "Interpreter has not been linked in.";
     return 0;
   }
-  
+
+  if ((WhichEngine & EngineKind::JIT) && ExecutionEngine::JITCtor == 0) {
+    if (ErrorStr)
+      *ErrorStr = "JIT has not been linked in.";
+  }    
   return 0;
 }
 
