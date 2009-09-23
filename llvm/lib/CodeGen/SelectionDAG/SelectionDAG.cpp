@@ -3645,26 +3645,26 @@ SDValue
 SelectionDAG::getLoad(ISD::MemIndexedMode AM, DebugLoc dl,
                       ISD::LoadExtType ExtType, EVT VT, SDValue Chain,
                       SDValue Ptr, SDValue Offset,
-                      const Value *SV, int SVOffset, EVT EVT,
+                      const Value *SV, int SVOffset, EVT MemVT,
                       bool isVolatile, unsigned Alignment) {
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(VT);
 
-  if (VT == EVT) {
+  if (VT == MemVT) {
     ExtType = ISD::NON_EXTLOAD;
   } else if (ExtType == ISD::NON_EXTLOAD) {
-    assert(VT == EVT && "Non-extending load from different memory type!");
+    assert(VT == MemVT && "Non-extending load from different memory type!");
   } else {
     // Extending load.
     if (VT.isVector())
-      assert(EVT.getVectorNumElements() == VT.getVectorNumElements() &&
+      assert(MemVT.getVectorNumElements() == VT.getVectorNumElements() &&
              "Invalid vector extload!");
     else
-      assert(EVT.bitsLT(VT) &&
+      assert(MemVT.bitsLT(VT) &&
              "Should only be an extending load, not truncating!");
     assert((ExtType == ISD::EXTLOAD || VT.isInteger()) &&
            "Cannot sign/zero extend a FP/Vector load!");
-    assert(VT.isInteger() == EVT.isInteger() &&
+    assert(VT.isInteger() == MemVT.isInteger() &&
            "Cannot convert from FP to Int or Int -> FP!");
   }
 
@@ -3677,13 +3677,13 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, DebugLoc dl,
   SDValue Ops[] = { Chain, Ptr, Offset };
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
-  ID.AddInteger(EVT.getRawBits());
+  ID.AddInteger(MemVT.getRawBits());
   ID.AddInteger(encodeMemSDNodeFlags(ExtType, AM, isVolatile, Alignment));
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDValue(E, 0);
   SDNode *N = NodeAllocator.Allocate<LoadSDNode>();
-  new (N) LoadSDNode(Ops, dl, VTs, AM, ExtType, EVT, SV, SVOffset,
+  new (N) LoadSDNode(Ops, dl, VTs, AM, ExtType, MemVT, SV, SVOffset,
                      Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
@@ -3702,11 +3702,11 @@ SDValue SelectionDAG::getLoad(EVT VT, DebugLoc dl,
 SDValue SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
                                  SDValue Chain, SDValue Ptr,
                                  const Value *SV,
-                                 int SVOffset, EVT EVT,
+                                 int SVOffset, EVT MemVT,
                                  bool isVolatile, unsigned Alignment) {
   SDValue Undef = getUNDEF(Ptr.getValueType());
   return getLoad(ISD::UNINDEXED, dl, ExtType, VT, Chain, Ptr, Undef,
-                 SV, SVOffset, EVT, isVolatile, Alignment);
+                 SV, SVOffset, MemVT, isVolatile, Alignment);
 }
 
 SDValue

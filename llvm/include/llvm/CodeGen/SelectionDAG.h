@@ -547,13 +547,13 @@ public:
                     unsigned Alignment=0);
   SDValue getExtLoad(ISD::LoadExtType ExtType, DebugLoc dl, EVT VT,
                        SDValue Chain, SDValue Ptr, const Value *SV,
-                       int SVOffset, EVT EVT, bool isVolatile=false,
+                       int SVOffset, EVT MemVT, bool isVolatile=false,
                        unsigned Alignment=0);
   SDValue getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
                            SDValue Offset, ISD::MemIndexedMode AM);
   SDValue getLoad(ISD::MemIndexedMode AM, DebugLoc dl, ISD::LoadExtType ExtType,
                   EVT VT, SDValue Chain, SDValue Ptr, SDValue Offset,
-                  const Value *SV, int SVOffset, EVT EVT,
+                  const Value *SV, int SVOffset, EVT MemVT,
                   bool isVolatile=false, unsigned Alignment=0);
 
   /// getStore - Helper function to build ISD::STORE nodes.
