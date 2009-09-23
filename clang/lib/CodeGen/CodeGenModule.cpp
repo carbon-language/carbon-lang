@@ -1635,6 +1635,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::UsingDirective:
   case Decl::ClassTemplate:
   case Decl::FunctionTemplate:
+  case Decl::NamespaceAlias:
     break;
   case Decl::CXXConstructor:
     EmitCXXConstructors(cast<CXXConstructorDecl>(D));
