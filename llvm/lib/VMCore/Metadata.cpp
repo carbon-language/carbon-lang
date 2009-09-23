@@ -338,3 +338,20 @@ void Metadata::ValueIsDeleted(const Instruction *Inst) {
   Info.clear();
   MetadataStore.erase(Inst);
 }
+
+/// ValueIsCloned - This handler is used to update metadata store
+/// when In1 is cloned to create In2.
+void Metadata::ValueIsCloned(const Instruction *In1, Instruction *In2) {
+  // Find Metadata handles for In1.
+  MDStoreTy::iterator I = MetadataStore.find(In1);
+  if (I == MetadataStore.end())
+    return;
+
+  // FIXME : Give all metadata handlers a chance to adjust.
+
+  MDMapTy &In1Info = I->second;
+  MDMapTy In2Info;
+  for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
+    if (MDNode *MD = dyn_cast_or_null<MDNode>(I->second))
+      setMD(I->first, MD, In2);
+}

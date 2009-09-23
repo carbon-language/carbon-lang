@@ -351,8 +351,12 @@ public:
 
   /// ValueIsDeleted - This handler is used to update metadata store
   /// when a value is deleted.
-  void ValueIsDeleted(Value *V) {}
+  void ValueIsDeleted(const Value *V) {}
   void ValueIsDeleted(const Instruction *Inst);
+
+  /// ValueIsCloned - This handler is used to update metadata store
+  /// when In1 is cloned to create In2.
+  void ValueIsCloned(const Instruction *In1, Instruction *In2);
 };
 
 } // end llvm namespace

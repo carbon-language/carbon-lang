@@ -298,6 +298,9 @@ public:
                                 const BasicBlock *PredBB) const{
     return const_cast<Value*>(this)->DoPHITranslation(CurBB, PredBB);
   }
+
+  /// hasMetadata - Return true if metadata is attached with this value.
+  bool hasMetadata() const { return HasMetadata; }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const Value &V) {
