@@ -38,24 +38,29 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
       clang_getDefinitionSpellingAndExtent(Cursor, &startBuf, &endBuf,
                                            &startLine, &startColumn,
                                            &endLine, &endColumn);
-      /* Probe the entire body, looking for "refs". */
-      unsigned curLine = startLine, curColumn = startColumn;
-      while (startBuf <= endBuf) {
-        if (*startBuf == '\n') {
+      {
+        /* Probe the entire body, looking for both decls and refs. */
+        unsigned curLine = startLine, curColumn = startColumn;
+        CXCursor Ref;
+        
+        while (startBuf <= endBuf) {
+          if (*startBuf == '\n') {
+            startBuf++;
+            curLine++;
+            curColumn = 1;
+          } else if (*startBuf != '\t')
+            curColumn++;
+        
+          Ref = clang_getCursor(Unit, clang_getCursorSource(Cursor), 
+                                curLine, curColumn);
+          if (Ref.kind != CXCursor_FunctionDecl) {
+            PrintCursor(Ref);
+            printf("(Context: %s", clang_getDeclSpelling(Ref.decl));
+            printf(" Source:  %s (%d:%d))\n", clang_getCursorSource(Ref),
+                                              curLine, curColumn);
+          }
           startBuf++;
-          curLine++;
-          curColumn = 1;
         }
-        CXCursor Ref = clang_getCursor(Unit, clang_getCursorSource(Cursor), 
-                                       curLine, curColumn);
-        if (Ref.kind != CXCursor_FunctionDecl) {
-          PrintCursor(Ref);
-          printf("(Context: %s", clang_getDeclSpelling(Ref.decl));
-          printf(" Source:  %s (%d:%d))\n", clang_getCursorSource(Ref),
-                                            curLine, curColumn);
-        }
-        startBuf++;
-        curColumn++;
       }
     }
     clang_loadDeclaration(Cursor.decl, DeclVisitor, 0);
@@ -66,32 +71,27 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
  * First sign of life:-)
  */
 int main(int argc, char **argv) {
+  if (argc != 3) {
+    printf("Incorrect usage of c-index-test (requires 3 arguments)\n");
+    return 0;
+  }
+  {
   CXIndex Idx = clang_createIndex();
   CXTranslationUnit TU = clang_createTranslationUnit(Idx, argv[1]);
-
-  if (argc == 2) {
-    /* malloc - returns a cursor of type CXCursor_FunctionDecl */
-    CXCursor C = clang_getCursor(TU, "/usr/include/stdlib.h", 169, 7);
-    PrintCursor(C);
-    /* methodSignature - returns a cursor of type ObjCInstanceMethodDecl */
-    C = clang_getCursor(TU, "/System/Library/Frameworks/Foundation.framework/Headers/NSInvocation.h", 22, 1);
-    PrintCursor(C);
-    C = clang_getCursor(TU, "Large.m", 5, 18);
-    PrintCursor(C);
-  } else if (argc == 3) {
-    enum CXCursorKind K = CXCursor_NotImplemented;
-    
-    if (!strcmp(argv[2], "all")) {
-      clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
-      return 1;
-    } 
-    if (!strcmp(argv[2], "category")) K = CXCursor_ObjCCategoryDecl;
-    else if (!strcmp(argv[2], "interface")) K = CXCursor_ObjCInterfaceDecl;
-    else if (!strcmp(argv[2], "protocol")) K = CXCursor_ObjCProtocolDecl;
-    else if (!strcmp(argv[2], "function")) K = CXCursor_FunctionDecl;
-    else if (!strcmp(argv[2], "typedef")) K = CXCursor_TypedefDecl;
-    
-    clang_loadTranslationUnit(TU, TranslationUnitVisitor, &K);
-  }
+  enum CXCursorKind K = CXCursor_NotImplemented;
+  
+  if (!strcmp(argv[2], "all")) {
+    clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
+    return 1;
+  } 
+  /* Perform some simple filtering. */
+  if (!strcmp(argv[2], "category")) K = CXCursor_ObjCCategoryDecl;
+  else if (!strcmp(argv[2], "interface")) K = CXCursor_ObjCInterfaceDecl;
+  else if (!strcmp(argv[2], "protocol")) K = CXCursor_ObjCProtocolDecl;
+  else if (!strcmp(argv[2], "function")) K = CXCursor_FunctionDecl;
+  else if (!strcmp(argv[2], "typedef")) K = CXCursor_TypedefDecl;
+  
+  clang_loadTranslationUnit(TU, TranslationUnitVisitor, &K);
   return 1;
+  }
 }
