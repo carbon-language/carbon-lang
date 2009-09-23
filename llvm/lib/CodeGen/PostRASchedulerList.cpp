@@ -178,6 +178,11 @@ namespace {
                                       unsigned LastNewReg,
                                       const TargetRegisterClass *);
     void StartBlockForKills(MachineBasicBlock *BB);
+    
+    // ToggleKillFlag - Toggle a register operand kill flag. Other
+    // adjustments may be made to the instruction if necessary. Return
+    // true if the operand has been deleted, false if not.
+    bool ToggleKillFlag(MachineInstr *MI, MachineOperand &MO);
   };
 }
 
@@ -822,6 +827,40 @@ void SchedulePostRATDList::StartBlockForKills(MachineBasicBlock *BB) {
   }
 }
 
+bool SchedulePostRATDList::ToggleKillFlag(MachineInstr *MI,
+                                          MachineOperand &MO) {
+  // Setting kill flag...
+  if (!MO.isKill()) {
+    MO.setIsKill(true);
+    return false;
+  }
+  
+  // If MO itself is live, clear the kill flag...
+  if (KillIndices[MO.getReg()] != ~0u) {
+    MO.setIsKill(false);
+    return false;
+  }
+
+  // If any subreg of MO is live, then create an imp-def for that
+  // subreg and keep MO marked as killed.
+  bool AllDead = true;
+  const unsigned SuperReg = MO.getReg();
+  for (const unsigned *Subreg = TRI->getSubRegisters(SuperReg);
+       *Subreg; ++Subreg) {
+    if (KillIndices[*Subreg] != ~0u) {
+      MI->addOperand(MachineOperand::CreateReg(*Subreg,
+                                               true  /*IsDef*/,
+                                               true  /*IsImp*/,
+                                               false /*IsKill*/,
+                                               false /*IsDead*/));
+      AllDead = false;
+    }
+  }
+
+  MO.setIsKill(AllDead);
+  return false;
+}
+
 /// FixupKills - Fix the register kill flags, they may have been made
 /// incorrect by instruction reordering.
 ///
@@ -860,9 +899,9 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       }
     }
 
-    // Examine all used registers and set kill flag. When a register
-    // is used multiple times we only set the kill flag on the first
-    // use.
+    // Examine all used registers and set/clear kill flag. When a
+    // register is used multiple times we only set the kill flag on
+    // the first use.
     killedRegs.clear();
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
@@ -889,8 +928,12 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       }
       
       if (MO.isKill() != kill) {
-        MO.setIsKill(kill);
-        DEBUG(errs() << "Fixed " << MO << " in ");
+        bool removed = ToggleKillFlag(MI, MO);
+        if (removed) {
+          DEBUG(errs() << "Fixed <removed> in ");
+        } else {
+          DEBUG(errs() << "Fixed " << MO << " in ");
+        }
         DEBUG(MI->dump());
       }
       
