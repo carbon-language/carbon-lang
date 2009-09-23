@@ -15,8 +15,107 @@
 using namespace clang;
 using namespace CodeGen;
 
+static uint64_t CalculateCookiePadding(ASTContext &Ctx, const CXXNewExpr *E) {
+  QualType T = E->getAllocatedType();
+  
+  const RecordType *RT = T->getAs<RecordType>();
+  if (!RT)
+    return 0;
+  
+  const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
+  if (!RD)
+    return 0;
+  
+  // Check if the class has a trivial destructor.
+  if (RD->hasTrivialDestructor()) {
+    // FIXME: Check for a two-argument delete.
+    return 0;
+  }
+  
+  // Padding is the maximum of sizeof(size_t) and alignof(T)
+  return std::max(Ctx.getTypeSize(Ctx.getSizeType()),
+                  static_cast<uint64_t>(Ctx.getTypeAlign(T)));
+}
+
+static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF, 
+                                        const CXXNewExpr *E,
+                                        llvm::Value *& NumElements) {
+  QualType Type = E->getAllocatedType();
+  uint64_t TypeSizeInBytes = CGF.getContext().getTypeSize(Type) / 8;
+  const llvm::Type *SizeTy = CGF.ConvertType(CGF.getContext().getSizeType());
+  
+  if (!E->isArray())
+    return llvm::ConstantInt::get(SizeTy, TypeSizeInBytes);
+
+  uint64_t CookiePadding = CalculateCookiePadding(CGF.getContext(), E);
+  
+  Expr::EvalResult Result;
+  if (E->getArraySize()->Evaluate(Result, CGF.getContext()) &&
+      !Result.HasSideEffects && Result.Val.isInt()) {
+
+    uint64_t AllocSize = 
+      Result.Val.getInt().getZExtValue() * TypeSizeInBytes + CookiePadding;
+    
+    NumElements = 
+      llvm::ConstantInt::get(SizeTy, Result.Val.getInt().getZExtValue());
+    
+    return llvm::ConstantInt::get(SizeTy, AllocSize);
+  }
+  
+  // Emit the array size expression.
+  NumElements = CGF.EmitScalarExpr(E->getArraySize());
+  
+  // Multiply with the type size.
+  llvm::Value *V = 
+    CGF.Builder.CreateMul(NumElements, 
+                          llvm::ConstantInt::get(SizeTy, TypeSizeInBytes));
+
+  // And add the cookie padding if necessary.
+  if (CookiePadding)
+    V = CGF.Builder.CreateAdd(V, llvm::ConstantInt::get(SizeTy, CookiePadding));
+  
+  return V;
+}
+
+static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
+                               llvm::Value *NewPtr,
+                               llvm::Value *NumElements) {
+  QualType AllocType = E->getAllocatedType();
+
+  if (!E->isArray()) {
+    if (CXXConstructorDecl *Ctor = E->getConstructor()) {
+      CGF.EmitCXXConstructorCall(Ctor, Ctor_Complete, NewPtr,
+                                 E->constructor_arg_begin(),
+                                 E->constructor_arg_end());
+
+      return;
+    }
+    
+    // We have a POD type.
+    if (E->getNumConstructorArgs() == 0)
+      return;
+
+    assert(E->getNumConstructorArgs() == 1 &&
+           "Can only have one argument to initializer of POD type.");
+      
+    const Expr *Init = E->getConstructorArg(0);
+    
+    if (!CGF.hasAggregateLLVMType(AllocType))
+      CGF.Builder.CreateStore(CGF.EmitScalarExpr(Init), NewPtr);
+    else if (AllocType->isAnyComplexType())
+      CGF.EmitComplexExprIntoAddr(Init, NewPtr, 
+                                  AllocType.isVolatileQualified());
+    else
+      CGF.EmitAggExpr(Init, NewPtr, AllocType.isVolatileQualified());
+    return;
+  }
+  
+  if (CXXConstructorDecl *Ctor = E->getConstructor())
+    CGF.EmitCXXAggrConstructorCall(Ctor, NumElements, NewPtr);
+}
+
 llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
-  if (E->isArray()) {
+  if (E->isArray() && CalculateCookiePadding(getContext(), E)) {
     ErrorUnsupported(E, "new[] expression");
     return llvm::UndefValue::get(ConvertType(E->getType()));
   }
@@ -29,10 +128,10 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
 
   // The allocation size is the first argument.
   QualType SizeTy = getContext().getSizeType();
-  llvm::Value *AllocSize =
-    llvm::ConstantInt::get(ConvertType(SizeTy),
-                           getContext().getTypeSize(AllocType) / 8);
 
+  llvm::Value *NumElements = 0;
+  llvm::Value *AllocSize = EmitCXXNewAllocSize(*this, E, NumElements);
+  
   NewArgs.push_back(std::make_pair(RValue::get(AllocSize), SizeTy));
 
   // Emit the rest of the arguments.
@@ -102,28 +201,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
 
   NewPtr = Builder.CreateBitCast(NewPtr, ConvertType(E->getType()));
 
-  if (AllocType->isPODType()) {
-    if (E->getNumConstructorArgs() > 0) {
-      assert(E->getNumConstructorArgs() == 1 &&
-             "Can only have one argument to initializer of POD type.");
-
-      const Expr *Init = E->getConstructorArg(0);
-
-      if (!hasAggregateLLVMType(AllocType))
-        Builder.CreateStore(EmitScalarExpr(Init), NewPtr);
-      else if (AllocType->isAnyComplexType())
-        EmitComplexExprIntoAddr(Init, NewPtr, AllocType.isVolatileQualified());
-      else
-        EmitAggExpr(Init, NewPtr, AllocType.isVolatileQualified());
-    }
-  } else {
-    // Call the constructor.
-    CXXConstructorDecl *Ctor = E->getConstructor();
-
-    EmitCXXConstructorCall(Ctor, Ctor_Complete, NewPtr,
-                           E->constructor_arg_begin(),
-                           E->constructor_arg_end());
-  }
+  EmitNewInitializer(*this, E, NewPtr, NumElements);
 
   if (NullCheckResult) {
     Builder.CreateBr(NewEnd);

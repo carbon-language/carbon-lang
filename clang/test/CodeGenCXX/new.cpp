@@ -1,4 +1,4 @@
-// RUN: clang-cc %s -emit-llvm -o %t &&
+// RUN: clang-cc %s -emit-llvm -o - | FileCheck %s
 
 void t1() {
   int* a = new int;
@@ -32,7 +32,7 @@ struct T {
 };
 
 void t4() {
-  // RUN: grep "call void @_ZN1TC1Ev" %t | count 1 &&
+  // CHECK: call void @_ZN1TC1Ev
   T *t = new T;
 }
 
@@ -42,7 +42,7 @@ struct T2 {
 };
 
 void t5() { 
-  // RUN: grep "call void @_ZN2T2C1Eii" %t | count 1 
+  // CHECK: call void @_ZN2T2C1Eii
   T2 *t2 = new T2(10, 10);
 }
 
@@ -53,4 +53,13 @@ int *t6() {
 
 void t7() {
   new int();
+}
+
+void t8(int n) {
+  new int[10];
+  new int[n];
+  
+  // Non-POD
+  new T[10];
+  new T[n];
 }
