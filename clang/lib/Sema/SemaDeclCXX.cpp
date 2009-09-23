@@ -3472,7 +3472,6 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   //          the best one through overload resolution (13.3)),
   if (!isRValRef && !SuppressUserConversions && T2->isRecordType() &&
       !RequireCompleteType(SourceLocation(), T2, 0)) {
-    // FIXME: Look for conversions in base classes!
     CXXRecordDecl *T2RecordDecl
       = dyn_cast<CXXRecordDecl>(T2->getAs<RecordType>()->getDecl());
 
