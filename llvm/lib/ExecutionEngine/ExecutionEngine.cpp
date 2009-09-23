@@ -269,7 +269,8 @@ static void *CreateArgv(LLVMContext &C, ExecutionEngine *EE,
 /// runStaticConstructorsDestructors - This method is used to execute all of
 /// the static constructors or destructors for a module, depending on the
 /// value of isDtors.
-void ExecutionEngine::runStaticConstructorsDestructors(Module *module, bool isDtors) {
+void ExecutionEngine::runStaticConstructorsDestructors(Module *module,
+                                                       bool isDtors) {
   const char *Name = isDtors ? "llvm.global_dtors" : "llvm.global_ctors";
   
   // Execute global ctors/dtors for each module in the program.
@@ -425,30 +426,38 @@ ExecutionEngine *EngineBuilder::create() {
   // create, we assume they only want the JIT, and we fail if they only want
   // the interpreter.
   if (JMM) {
-    if (WhichEngine & EngineKind::JIT) {
+    if (WhichEngine & EngineKind::JIT)
       WhichEngine = EngineKind::JIT;
-    } else {
+    else {
       *ErrorStr = "Cannot create an interpreter with a memory manager.";
+      return 0;
     }
   }
 
-  ExecutionEngine *EE = 0;
-
   // Unless the interpreter was explicitly selected or the JIT is not linked,
   // try making a JIT.
-  if (WhichEngine & EngineKind::JIT && ExecutionEngine::JITCtor) {
-    EE = ExecutionEngine::JITCtor(MP, ErrorStr, JMM, OptLevel,
-                                  AllocateGVsWithCode);
+  if (WhichEngine & EngineKind::JIT) {
+    if (ExecutionEngine::JITCtor) {
+      ExecutionEngine *EE =
+        ExecutionEngine::JITCtor(MP, ErrorStr, JMM, OptLevel,
+                                 AllocateGVsWithCode);
+      if (EE) return EE;
+    } else {
+      *ErrorStr = "JIT has not been linked in.";
+      return 0;
+    }
   }
 
   // If we can't make a JIT and we didn't request one specifically, try making
   // an interpreter instead.
-  if (WhichEngine & EngineKind::Interpreter && EE == 0 &&
-      ExecutionEngine::InterpCtor) {
-    EE = ExecutionEngine::InterpCtor(MP, ErrorStr);
+  if (WhichEngine & EngineKind::Interpreter) {
+    if (ExecutionEngine::InterpCtor)
+      return ExecutionEngine::InterpCtor(MP, ErrorStr);
+    *ErrorStr = "Interpreter has not been linked in.";
+    return 0;
   }
-
-  return EE;
+  
+  return 0;
 }
 
 /// getPointerToGlobal - This returns the address of the specified global
