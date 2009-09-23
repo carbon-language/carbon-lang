@@ -5580,10 +5580,7 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
     else
       OS << "<null>";
   } else if (const MemOperandSDNode *M = dyn_cast<MemOperandSDNode>(this)) {
-    if (M->MO.getValue())
-      OS << "<" << M->MO.getValue() << ":" << M->MO.getOffset() << ">";
-    else
-      OS << "<null:" << M->MO.getOffset() << ">";
+    OS << ": " << M->MO;
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {
     OS << ":" << N->getVT().getEVTString();
   }

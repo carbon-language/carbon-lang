@@ -22,6 +22,7 @@ namespace llvm {
 
 class Value;
 class FoldingSetNodeID;
+class raw_ostream;
 
 //===----------------------------------------------------------------------===//
 /// MachineMemOperand - A description of a memory reference used in the backend.
@@ -91,6 +92,8 @@ public:
   ///
   void Profile(FoldingSetNodeID &ID) const;
 };
+
+raw_ostream &operator<<(raw_ostream &OS, const MachineMemOperand &MRO);
 
 } // End llvm namespace
 

@@ -15,6 +15,7 @@
 #include "llvm/Constants.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Value.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
@@ -295,6 +296,44 @@ void MachineMemOperand::Profile(FoldingSetNodeID &ID) const {
   ID.AddInteger(Size);
   ID.AddPointer(V);
   ID.AddInteger(Flags);
+}
+
+raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MRO) {
+  assert((MRO.isLoad() || MRO.isStore()) &&
+         "SV has to be a load, store or both.");
+  
+  if (MRO.isVolatile())
+    OS << "Volatile ";
+
+  if (MRO.isLoad())
+    OS << "LD";
+  if (MRO.isStore())
+    OS << "ST";
+  OS << MRO.getSize();
+  
+  // Print the address information.
+  OS << "[";
+  if (!MRO.getValue())
+    OS << "<unknown>";
+  else
+    WriteAsOperand(OS, MRO.getValue(), /*PrintType=*/false);
+
+  // If the alignment of the memory reference itself differs from the alignment
+  // of the base pointer, print the base alignment explicitly, next to the base
+  // pointer.
+  if (MRO.getBaseAlignment() != MRO.getAlignment())
+    OS << "(align=" << MRO.getBaseAlignment() << ")";
+
+  if (MRO.getOffset() != 0)
+    OS << "+" << MRO.getOffset();
+  OS << "]";
+
+  // Print the alignment of the reference.
+  if (MRO.getBaseAlignment() != MRO.getAlignment() ||
+      MRO.getBaseAlignment() != MRO.getSize())
+    OS << "(align=" << MRO.getAlignment() << ")";
+
+  return OS;
 }
 
 //===----------------------------------------------------------------------===//
@@ -967,32 +1006,9 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << ", Mem:";
     for (std::list<MachineMemOperand>::const_iterator i = memoperands_begin(),
          e = memoperands_end(); i != e; ++i) {
-      const MachineMemOperand &MRO = *i;
-      const Value *V = MRO.getValue();
-
-      assert((MRO.isLoad() || MRO.isStore()) &&
-             "SV has to be a load, store or both.");
-      
-      if (MRO.isVolatile())
-        OS << "Volatile ";
-
-      if (MRO.isLoad())
-        OS << "LD";
-      if (MRO.isStore())
-        OS << "ST";
-        
-      OS << "(" << MRO.getSize() << "," << MRO.getAlignment() << ") [";
-      
-      if (!V)
-        OS << "<unknown>";
-      else if (!V->getName().empty())
-        OS << V->getName();
-      else if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V)) {
-        PSV->print(OS);
-      } else
-        OS << V;
-
-      OS << " + " << MRO.getOffset() << "]";
+      OS << *i;
+      if (next(i) != e)
+        OS << " ";
     }
   }
 

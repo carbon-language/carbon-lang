@@ -1198,6 +1198,11 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
     return;
   }
 
+  if (V->getValueID() == Value::PseudoSourceValueVal) {
+    V->print(Out);
+    return;
+  }
+
   char Prefix = '%';
   int Slot;
   if (Machine) {
@@ -2076,8 +2081,15 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   } else if (isa<InlineAsm>(this)) {
     WriteAsOperand(OS, this, true, 0);
   } else {
-    llvm_unreachable("Unknown value to print out!");
+    // Otherwise we don't know what it is. Call the virtual function to
+    // allow a subclass to print itself.
+    printCustom(OS);
   }
+}
+
+// Value::printCustom - subclasses should override this to implement printing.
+void Value::printCustom(raw_ostream &OS) const {
+  llvm_unreachable("Unknown value to print out!");
 }
 
 // Value::dump - allow easy printing of Values from the debugger.

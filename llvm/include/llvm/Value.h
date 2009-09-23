@@ -90,13 +90,18 @@ private:
   void operator=(const Value &);     // Do not implement
   Value(const Value &);              // Do not implement
 
+protected:
+  /// printCustom - Value subclasses can override this to implement custom
+  /// printing behavior.
+  virtual void printCustom(raw_ostream &O) const;
+
 public:
   Value(const Type *Ty, unsigned scid);
   virtual ~Value();
 
   /// dump - Support for debugging, callable in GDB: V->dump()
   //
-  virtual void dump() const;
+  void dump() const;
 
   /// print - Implement operator<< on Value.
   ///

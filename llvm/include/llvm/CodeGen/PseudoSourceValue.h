@@ -25,16 +25,14 @@ namespace llvm {
   /// stack frame (e.g., a spill slot), below the stack frame (e.g., argument
   /// space), or constant pool.
   class PseudoSourceValue : public Value {
+  private:
+    /// printCustom - Implement printing for PseudoSourceValue. This is called
+    /// from Value::print or Value's operator<<.
+    ///
+    virtual void printCustom(raw_ostream &O) const;
+
   public:
     PseudoSourceValue();
-
-    /// dump - Support for debugging, callable in GDB: V->dump()
-    //
-    virtual void dump() const;
-
-    /// print - Implement operator<< on PseudoSourceValue.
-    ///
-    virtual void print(raw_ostream &OS) const;
 
     /// isConstant - Test whether this PseudoSourceValue has a constant value.
     ///
