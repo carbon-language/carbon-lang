@@ -870,6 +870,12 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     // __builtin_constant_p always has one operand: it returns true if that
     // operand can be folded, false otherwise.
     return Success(E->getArg(0)->isEvaluatable(Info.Ctx), E);
+      
+  case Builtin::BI__builtin_eh_return_data_regno: {
+    int Operand = E->getArg(0)->EvaluateAsInt(Info.Ctx).getZExtValue();
+    Operand = Info.Ctx.Target.getEHDataRegisterNumber(Operand);
+    return Success(Operand, E);
+  }
   }
 }
 

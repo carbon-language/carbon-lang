@@ -52,3 +52,13 @@ void test10(void) {
  
   // No warning about falling off the end of a noreturn function.
 }
+
+void test11(int X) {
+  switch (X) {  
+  case __builtin_eh_return_data_regno(0):  // constant foldable.
+    break;
+  }
+
+  __builtin_eh_return_data_regno(X);  // expected-error {{not an integer constant expression}}
+}
+

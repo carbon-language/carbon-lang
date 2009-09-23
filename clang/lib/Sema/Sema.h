@@ -3700,6 +3700,7 @@ private:
   bool SemaBuiltinObjectSize(CallExpr *TheCall);
   bool SemaBuiltinLongjmp(CallExpr *TheCall);
   bool SemaBuiltinAtomicOverloaded(CallExpr *TheCall);
+  bool SemaBuiltinEHReturnDataRegNo(CallExpr *TheCall);
   bool SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
                               bool HasVAListArg, unsigned format_idx,
                               unsigned firstDataArg);

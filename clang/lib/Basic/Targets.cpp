@@ -900,6 +900,12 @@ public:
   virtual const char *getVAListDeclaration() const {
     return "typedef char* __builtin_va_list;";
   }
+  
+  int getEHDataRegisterNumber(unsigned RegNo) const {
+    if (RegNo == 0) return 0;
+    if (RegNo == 1) return 2;
+    return -1;
+  }
 };
 } // end anonymous namespace
 
@@ -989,6 +995,12 @@ public:
            "  void* reg_save_area;"
            "} __va_list_tag;"
            "typedef __va_list_tag __builtin_va_list[1];";
+  }
+  
+  int getEHDataRegisterNumber(unsigned RegNo) const {
+    if (RegNo == 0) return 0;
+    if (RegNo == 1) return 1;
+    return -1;
   }
 };
 } // end anonymous namespace

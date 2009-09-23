@@ -209,7 +209,6 @@
 		DEB076CF0F3A222200F5A2BE /* DeclTemplate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEB076CE0F3A222200F5A2BE /* DeclTemplate.cpp */; };
 		DEB077990F44F97800F5A2BE /* TokenConcatenation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEB077980F44F97800F5A2BE /* TokenConcatenation.cpp */; };
 		DEB07AC80F4A427E00F5A2BE /* SemaAttr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEB07AC70F4A427E00F5A2BE /* SemaAttr.cpp */; };
-		DEC63B1C0C7B940600DBF169 /* CFG.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC63B1B0C7B940600DBF169 /* CFG.h */; };
 		DEC8D9910A9433CD00353FCA /* Decl.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9900A9433CD00353FCA /* Decl.h */; };
 		DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9A30A94346E00353FCA /* AST.h */; };
 		DECAB0D00DB3C84200E13CCB /* RewriteRope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECAB0CF0DB3C84200E13CCB /* RewriteRope.cpp */; };
@@ -327,7 +326,6 @@
 				DE6951C70C4D1F5D00A5826B /* RecordLayout.h in CopyFiles */,
 				DE6954640C5121BD00A5826B /* Token.h in CopyFiles */,
 				DEF2E95F0C5FBD74000C4259 /* InternalsManual.html in CopyFiles */,
-				DEC63B1C0C7B940600DBF169 /* CFG.h in CopyFiles */,
 				DEF7D9F70C9C8B1A0001F598 /* Rewriter.h in CopyFiles */,
 				84AF36A10CB17A3B00C820A5 /* DeclObjC.h in CopyFiles */,
 				DE3986F00CB8D4B300223765 /* IdentifierTable.h in CopyFiles */,
@@ -679,7 +677,6 @@
 		DEB077980F44F97800F5A2BE /* TokenConcatenation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TokenConcatenation.cpp; sourceTree = "<group>"; };
 		DEB07AC70F4A427E00F5A2BE /* SemaAttr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaAttr.cpp; path = lib/Sema/SemaAttr.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DEB089EE0F12F1D900522C07 /* TypeTraits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TypeTraits.h; sourceTree = "<group>"; };
-		DEC63B1B0C7B940600DBF169 /* CFG.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CFG.h; path = clang/AST/CFG.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEC8D9900A9433CD00353FCA /* Decl.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Decl.h; path = clang/AST/Decl.h; sourceTree = "<group>"; tabWidth = 2; };
 		DEC8D9A30A94346E00353FCA /* AST.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = AST.h; path = clang/AST/AST.h; sourceTree = "<group>"; tabWidth = 2; };
 		DECAB0CF0DB3C84200E13CCB /* RewriteRope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteRope.cpp; path = lib/Rewrite/RewriteRope.cpp; sourceTree = "<group>"; };
@@ -1303,7 +1300,6 @@
 				90FB99DE0F98FB1D008F9415 /* DeclContextInternals.h */,
 				90FB99DF0F98FB1D008F9415 /* DeclVisitor.h */,
 				90FB99E00F98FB1D008F9415 /* ExternalASTSource.h */,
-				DEC63B1B0C7B940600DBF169 /* CFG.h */,
 				DEC8D9900A9433CD00353FCA /* Decl.h */,
 				3538FDB60ED24A2C005EC283 /* DeclarationName.h */,
 				035611470DA6A45C00D2EF2A /* DeclBase.h */,

@@ -384,10 +384,17 @@ public:
     return RegParmMax;
   }
 
-  // isTLSSupported - Whether the target supports thread-local storage
+  /// isTLSSupported - Whether the target supports thread-local storage.
   bool isTLSSupported() const {
     return TLSSupported;
   }
+  
+  /// getEHDataRegisterNumber - Return the register number that
+  /// __builtin_eh_return_regno would return with the specified argument.
+  virtual int getEHDataRegisterNumber(unsigned RegNo) const {
+    return -1; 
+  }
+  
 
 protected:
   virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {
