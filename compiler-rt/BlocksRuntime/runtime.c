@@ -33,54 +33,59 @@
 
 #ifdef HAVE_AVAILABILITY_MACROS_H
 #include <AvailabilityMacros.h>
-#endif
+#endif /* HAVE_AVAILABILITY_MACROS_H */
 
 #ifdef HAVE_TARGET_CONDITIONALS_H
 #include <TargetConditionals.h>
-#endif
+#endif /* HAVE_TARGET_CONDITIONALS_H */
 
 #if defined(HAVE_OSATOMIC_COMPARE_AND_SWAP_INT) && defined(HAVE_OSATOMIC_COMPARE_AND_SWAP_LONG)
+
 #ifdef HAVE_LIBKERN_OSATOMIC_H
 #include <libkern/OSAtomic.h>
-#endif
+#endif /* HAVE_LIBKERN_OSATOMIC_H */
+
 #elif defined(__WIN32__)
 #define _CRT_SECURE_NO_WARNINGS 1
 #include <windows.h>
-static __inline bool OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst)
-{
+
+static __inline bool OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst) {
     /* fixme barrier is overkill -- see objc-os.h */
     long original = InterlockedCompareExchange(dst, newl, oldl);
     return (original == oldl);
 }
 
-static __inline bool OSAtomicCompareAndSwapInt(int oldi, int newi, int volatile *dst)
-{
+static __inline bool OSAtomicCompareAndSwapInt(int oldi, int newi, int volatile *dst) {
     /* fixme barrier is overkill -- see objc-os.h */
     int original = InterlockedCompareExchange(dst, newi, oldi);
     return (original == oldi);
 }
-/* check to see if the GCC atomic built-ins are available.  if we're on
+
+/*
+ * Check to see if the GCC atomic built-ins are available.  If we're on
  * a 64-bit system, make sure we have an 8-byte atomic function
  * available.
+ *
  */
+
 #elif defined(HAVE_SYNC_BOOL_COMPARE_AND_SWAP_INT) && defined(HAVE_SYNC_BOOL_COMPARE_AND_SWAP_LONG)
-static __inline bool OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst)
-{
+
+static __inline bool OSAtomicCompareAndSwapLong(long oldl, long newl, long volatile *dst) {
   return __sync_bool_compare_and_swap(dst, oldl, newl);
 }
 
-static __inline bool OSAtomicCompareAndSwapInt(int oldi, int newi, int volatile *dst)
-{
+static __inline bool OSAtomicCompareAndSwapInt(int oldi, int newi, int volatile *dst) {
   return __sync_bool_compare_and_swap(dst, oldi, newi);
 }
+
 #else
 #error unknown atomic compare-and-swap primitive
-#endif
+#endif /* HAVE_OSATOMIC_COMPARE_AND_SWAP_INT && HAVE_OSATOMIC_COMPARE_AND_SWAP_LONG */
 
 
-/***********************
-Globals
-************************/
+/*
+ * Globals:
+ */
 
 static void *_Block_copy_class = _NSConcreteMallocBlock;
 static void *_Block_copy_finalizing_class = _NSConcreteMallocBlock;
@@ -91,9 +96,9 @@ static const int WANTS_ONE = (1 << 16);
 
 static bool isGC = false;
 
-/*******************************************************************************
-Internal Utilities
-********************************************************************************/
+/*
+ * Internal Utilities:
+ */
 
 #if 0
 static unsigned long int latching_incr_long(unsigned long int *where) {
@@ -107,7 +112,7 @@ static unsigned long int latching_incr_long(unsigned long int *where) {
         }
     }
 }
-#endif
+#endif /* if 0 */
 
 static int latching_incr_int(int *where) {
     while (1) {
@@ -136,7 +141,7 @@ static int latching_decr_long(unsigned long int *where) {
         }
     }
 }
-#endif
+#endif /* if 0 */
 
 static int latching_decr_int(int *where) {
     while (1) {
@@ -154,13 +159,12 @@ static int latching_decr_int(int *where) {
 }
 
 
-/***********************
-GC support stub routines
-************************/
+/*
+ * GC support stub routines:
+ */
 #if 0
 #pragma mark GC Support Routines
-#endif
-
+#endif /* if 0 */
 
 
 static void *_Block_alloc_default(const unsigned long size, const bool initialCountIsOne, const bool isObject) {
@@ -203,9 +207,9 @@ static void _Block_memmove_gc_broken(void *dest, void *src, unsigned long size) 
     }
 }
 
-/**************************************************************************
-GC support callout functions - initially set to stub routines
-***************************************************************************/
+/*
+ * GC support callout functions - initially set to stub routines:
+ */
 
 static void *(*_Block_allocator)(const unsigned long, const bool isOne, const bool isObject) = _Block_alloc_default;
 static void (*_Block_deallocator)(const void *) = (void (*)(const void *))free;
@@ -217,13 +221,14 @@ static void (*_Block_assign_weak)(const void *dest, void *ptr) = _Block_assign_w
 static void (*_Block_memmove)(void *dest, void *src, unsigned long size) = _Block_memmove_default;
 
 
-/**************************************************************************
-GC support SPI functions - called from ObjC runtime and CoreFoundation
-***************************************************************************/
+/*
+ * GC support SPI functions - called from ObjC runtime and CoreFoundation:
+ */
 
-// Public SPI
-// Called from objc-auto to turn on GC.
-// version 3, 4 arg, but changed 1st arg
+/* Public SPI
+ * Called from objc-auto to turn on GC.
+ * version 3, 4 arg, but changed 1st arg
+ */
 void _Block_use_GC( void *(*alloc)(const unsigned long, const bool isOne, const bool isObject),
                     void (*setHasRefcount)(const void *, const bool),
                     void (*gc_assign)(void *, void **),
@@ -236,7 +241,7 @@ void _Block_use_GC( void *(*alloc)(const unsigned long, const bool isOne, const 
     _Block_assign = gc_assign;
     _Block_copy_flag = BLOCK_IS_GC;
     _Block_copy_class = _NSConcreteAutoBlock;
-    // blocks with ctors & dtors need to have the dtor run from a class with a finalizer
+    /* blocks with ctors & dtors need to have the dtor run from a class with a finalizer */
     _Block_copy_finalizing_class = _NSConcreteFinalizingBlock;
     _Block_setHasRefcount = setHasRefcount;
     _Byref_flag_initial_value = BLOCK_IS_GC;   // no refcount
@@ -246,35 +251,38 @@ void _Block_use_GC( void *(*alloc)(const unsigned long, const bool isOne, const 
     _Block_memmove = gc_memmove;
 }
 
-// transitional
+/* transitional */
 void _Block_use_GC5( void *(*alloc)(const unsigned long, const bool isOne, const bool isObject),
                     void (*setHasRefcount)(const void *, const bool),
                     void (*gc_assign)(void *, void **),
                     void (*gc_assign_weak)(const void *, void *)) {
-    // until objc calls _Block_use_GC it will call us; supply a broken internal memmove implementation until then
+    /* until objc calls _Block_use_GC it will call us; supply a broken internal memmove implementation until then */
     _Block_use_GC(alloc, setHasRefcount, gc_assign, gc_assign_weak, _Block_memmove_gc_broken);
 }
 
  
-// Called from objc-auto to alternatively turn on retain/release.
-// Prior to this the only "object" support we can provide is for those
-// super special objects that live in libSystem, namely dispatch queues.
-// Blocks and Block_byrefs have their own special entry points.
+/*
+ * Called from objc-auto to alternatively turn on retain/release.
+ * Prior to this the only "object" support we can provide is for those
+ * super special objects that live in libSystem, namely dispatch queues.
+ * Blocks and Block_byrefs have their own special entry points.
+ *
+ */
 void _Block_use_RR( void (*retain)(const void *),
                     void (*release)(const void *)) {
     _Block_retain_object = retain;
     _Block_release_object = release;
 }
 
-/*******************************************************************************
-Internal Support routines for copying
-********************************************************************************/
+/*
+ * Internal Support routines for copying:
+ */
 
 #if 0
 #pragma mark Copy/Release support
-#endif
+#endif /* if 0 */
 
-// Copy, or bump refcount, of a block.  If really copying, call the copy helper if present.
+/* Copy, or bump refcount, of a block.  If really copying, call the copy helper if present. */
 static void *_Block_copy_internal(const void *arg, const int flags) {
     struct Block_layout *aBlock;
     const bool wantsOne = (WANTS_ONE & flags) == WANTS_ONE;
@@ -348,16 +356,16 @@ static void *_Block_copy_internal(const void *arg, const int flags) {
 }
 
 
+/*
+ * Runtime entry points for maintaining the sharing knowledge of byref data blocks.
+ *
+ * A closure has been copied and its fixup routine is asking us to fix up the reference to the shared byref data
+ * Closures that aren't copied must still work, so everyone always accesses variables after dereferencing the forwarding ptr.
+ * We ask if the byref pointer that we know about has already been copied to the heap, and if so, increment it.
+ * Otherwise we need to copy it and update the stack forwarding pointer
+ * XXX We need to account for weak/nonretained read-write barriers.
+ */
 
-
-
-// Runtime entry points for maintaining the sharing knowledge of byref data blocks.
-
-// A closure has been copied and its fixup routine is asking us to fix up the reference to the shared byref data
-// Closures that aren't copied must still work, so everyone always accesses variables after dereferencing the forwarding ptr.
-// We ask if the byref pointer that we know about has already been copied to the heap, and if so, increment it.
-// Otherwise we need to copy it and update the stack forwarding pointer
-// XXX We need to account for weak/nonretained read-write barriers.
 static void _Block_byref_assign_copy(void *dest, const void *arg, const int flags) {
     struct Block_byref **destp = (struct Block_byref **)dest;
     struct Block_byref *src = (struct Block_byref *)arg;
@@ -432,16 +440,16 @@ static void _Block_byref_release(const void *arg) {
 }
 
 
-/************************************************************
+/*
  *
  * API supporting SPI
  * _Block_copy, _Block_release, and (old) _Block_destroy
  *
- ***********************************************************/
+ */
 
 #if 0
 #pragma mark SPI/API
-#endif
+#endif /* if 0 */
 
 void *_Block_copy(const void *arg) {
     return _Block_copy_internal(arg, WANTS_ONE);
@@ -490,11 +498,11 @@ static void _Block_destroy(const void *arg) {
 
 
 
-/************************************************************
+/*
  *
  * SPI used by other layers
  *
- ***********************************************************/
+ */
 
 // SPI, also internal.  Called from NSAutoBlock only under GC
 void *_Block_copy_collectable(const void *aBlock) {
@@ -510,7 +518,7 @@ unsigned long int Block_size(void *arg) {
 
 #if 0
 #pragma mark Compiler SPI entry points
-#endif
+#endif /* if 0 */
 
     
 /*******************************************************
@@ -546,10 +554,10 @@ The implementation of the two routines would be improved by switch statements en
 
 ********************************************************/
 
-//
-// When Blocks or Block_byrefs hold objects then their copy routine helpers use this entry point
-// to do the assignment.
-//
+/*
+ * When Blocks or Block_byrefs hold objects then their copy routine helpers use this entry point
+ * to do the assignment.
+ */
 void _Block_object_assign(void *destAddr, const void *object, const int flags) {
     //printf("_Block_object_assign(*%p, %p, %x)\n", destAddr, object, flags);
     if ((flags & BLOCK_BYREF_CALLER) == BLOCK_BYREF_CALLER) {
@@ -602,12 +610,12 @@ void _Block_object_dispose(const void *object, const int flags) {
 }
 
 
-/*******************
-Debugging support
-********************/
+/*
+ * Debugging support:
+ */
 #if 0
 #pragma mark Debugging
-#endif
+#endif /* if 0 */
 
 
 const char *_Block_dump(const void *block) {
