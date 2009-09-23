@@ -466,17 +466,10 @@ void
 MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI)
 {
   const TargetInstrDesc &TI = MI->getDesc();
-  if (MI->getNumExplicitOperands() < TI.getNumOperands()) {
+  if (MI->getNumOperands() < TI.getNumOperands()) {
     report("Too few operands", MI);
     *OS << TI.getNumOperands() << " operands expected, but "
         << MI->getNumExplicitOperands() << " given.\n";
-  }
-  if (!TI.isVariadic()) {
-    if (MI->getNumExplicitOperands() > TI.getNumOperands()) {
-      report("Too many operands", MI);
-      *OS << TI.getNumOperands() << " operands expected, but "
-          << MI->getNumExplicitOperands() << " given.\n";
-    }
   }
 }
 
@@ -494,6 +487,16 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
       report("Explicit definition marked as use", MO, MONum);
     else if (MO->isImplicit())
       report("Explicit definition marked as implicit", MO, MONum);
+  } else if (MONum < TI.getNumOperands()) {
+    if (MO->isReg()) {
+      if (MO->isDef())
+        report("Explicit operand marked as def", MO, MONum);
+      if (MO->isImplicit())
+        report("Explicit operand marked as implicit", MO, MONum);
+    }
+  } else {
+    if (MO->isReg() && !MO->isImplicit() && !TI.isVariadic())
+      report("Extra explicit operand on non-variadic instruction", MO, MONum);
   }
 
   switch (MO->getType()) {
