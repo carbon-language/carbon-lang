@@ -192,7 +192,15 @@ unsigned clang_getCursorColumn(CXCursor);
 const char *clang_getCursorSource(CXCursor);
 const char *clang_getCursorSpelling(CXCursor);
 
-const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); /* for debug */
+/* for debug/testing */
+const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); 
+void clang_getDefinitionSpellingAndExtent(CXCursor, 
+                                          const char **startBuf, 
+                                          const char **endBuf,
+                                          unsigned *startLine,
+                                          unsigned *startColumn,
+                                          unsigned *endLine,
+                                          unsigned *endColumn);
 
 /*
  * If CXCursorKind == Cursor_Reference, then this will return the referenced

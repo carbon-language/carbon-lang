@@ -32,6 +32,32 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
                                       clang_getCursorLine(Cursor),
                                       clang_getCursorColumn(Cursor));
 
+    if (Cursor.kind == CXCursor_FunctionDefn) {
+      const char *startBuf, *endBuf;
+      unsigned startLine, startColumn, endLine, endColumn;
+      clang_getDefinitionSpellingAndExtent(Cursor, &startBuf, &endBuf,
+                                           &startLine, &startColumn,
+                                           &endLine, &endColumn);
+      /* Probe the entire body, looking for "refs". */
+      unsigned curLine = startLine, curColumn = startColumn;
+      while (startBuf <= endBuf) {
+        if (*startBuf == '\n') {
+          startBuf++;
+          curLine++;
+          curColumn = 1;
+        }
+        CXCursor Ref = clang_getCursor(Unit, clang_getCursorSource(Cursor), 
+                                       curLine, curColumn);
+        if (Ref.kind != CXCursor_FunctionDecl) {
+          PrintCursor(Ref);
+          printf("(Context: %s", clang_getDeclSpelling(Ref.decl));
+          printf(" Source:  %s (%d:%d))\n", clang_getCursorSource(Ref),
+                                            curLine, curColumn);
+        }
+        startBuf++;
+        curColumn++;
+      }
+    }
     clang_loadDeclaration(Cursor.decl, DeclVisitor, 0);
   }
 }

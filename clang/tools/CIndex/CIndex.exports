@@ -22,4 +22,5 @@ _clang_isDefinition
 _clang_isInvalid
 _clang_getCursorSpelling
 _clang_getCursorKindSpelling
+_clang_getDefinitionSpellingAndExtent
 _clang_getTranslationUnitSpelling
