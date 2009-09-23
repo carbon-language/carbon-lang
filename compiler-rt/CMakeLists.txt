@@ -34,9 +34,19 @@ SET( Configurations
  Debug Release Profile
  )
 
-# BlocksRuntime - some random cruft that got thrown in at the last minute, ignoring for now.
-ADD_SUBDIRECTORY( BlocksRuntime )
+# Only build Blocks Runtime if the compiler has enough support
+IF( WIN32 OR MSVC OR HAVE_OSATOMIC_COMPARE_AND_SWAP_INT OR HAVE_SYNC_BOOL_COMPARE_AND_SWAP_INT )
+  SET(BUILD_BLOCKS_RUNTIME TRUE)
+ELSE( WIN32 OR MSVC OR HAVE_OSATOMIC_COMPARE_AND_SWAP_INT OR HAVE_SYNC_BOOL_COMPARE_AND_SWAP_INT )
+  SET(BUILD_BLOCKS_RUNTIME FALSE)
+ENDIF( WIN32 OR MSVC OR HAVE_OSATOMIC_COMPARE_AND_SWAP_INT OR HAVE_SYNC_BOOL_COMPARE_AND_SWAP_INT )
 
+IF( BUILD_BLOCKS_RUNTIME )
+  ADD_SUBDIRECTORY( BlocksRuntime )
+ELSE( BUILD_BLOCKS_RUNTIME )
+  MESSAGE(STATUS "No suitable atomic operation routines detected, skipping Blocks Runtime")
+ENDIF( BUILD_BLOCKS_RUNTIME )
+ 
 ADD_SUBDIRECTORY( lib )
 
 # Tests are being ignored for until the very basics are working.
