@@ -141,6 +141,10 @@ void LiveIntervals::processImplicitDefs() {
       if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
         unsigned Reg = MI->getOperand(0).getReg();
         ImpDefRegs.insert(Reg);
+        if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+          for (const unsigned *SS = tri_->getSubRegisters(Reg); *SS; ++SS)
+            ImpDefRegs.insert(*SS);
+        }
         ImpDefMIs.push_back(MI);
         continue;
       }

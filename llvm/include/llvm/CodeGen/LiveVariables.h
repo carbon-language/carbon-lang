@@ -149,7 +149,11 @@ private:   // Intermediate data structures
   bool HandlePhysRegKill(unsigned Reg, MachineInstr *MI);
 
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
-  void HandlePhysRegDef(unsigned Reg, MachineInstr *MI);
+  void HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
+                        SmallVector<unsigned, 4> &Defs,
+                        SmallVector<unsigned, 4> &SuperDefs);
+  void UpdatePhysRegDefs(MachineInstr *MI, SmallVector<unsigned, 4> &Defs);
+  void UpdateSuperRegDefs(MachineInstr *MI, SmallVector<unsigned, 4> &Defs);
 
   /// FindLastPartialDef - Return the last partial def of the specified register.
   /// Also returns the sub-registers that're defined by the instruction.
