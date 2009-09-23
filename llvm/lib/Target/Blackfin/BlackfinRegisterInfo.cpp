@@ -451,14 +451,6 @@ unsigned BlackfinRegisterInfo::getFrameRegister(MachineFunction &MF) const {
   return hasFP(MF) ? BF::FP : BF::SP;
 }
 
-int
-BlackfinRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
-  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  return MFI->getObjectOffset(FI) + MFI->getStackSize() -
-    TFI.getOffsetOfLocalArea() + MFI->getOffsetAdjustment();
-}
-
 unsigned BlackfinRegisterInfo::getEHExceptionRegister() const {
   llvm_unreachable("What is the exception register");
   return 0;

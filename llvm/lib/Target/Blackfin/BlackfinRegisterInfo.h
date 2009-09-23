@@ -76,7 +76,6 @@ namespace llvm {
     void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
     unsigned getFrameRegister(MachineFunction &MF) const;
-    int getFrameIndexOffset(MachineFunction &MF, int FI) const;
     unsigned getRARegister() const;
 
     // Exception handling queries.
