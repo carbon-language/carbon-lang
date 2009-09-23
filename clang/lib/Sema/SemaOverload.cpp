@@ -2189,7 +2189,8 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   // (C++ 13.3.2p2): A candidate function having fewer than m
   // parameters is viable only if it has an ellipsis in its parameter
   // list (8.3.5).
-  if (NumArgs > NumArgsInProto && !Proto->isVariadic()) {
+  if ((NumArgs + (PartialOverloading && NumArgs)) > NumArgsInProto && 
+      !Proto->isVariadic()) {
     Candidate.Viable = false;
     return;
   }
