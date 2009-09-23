@@ -1904,8 +1904,8 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
         // For big endian targets, we need to add an offset to the pointer to
         // load the correct bytes.  For little endian systems, we merely need to
         // read fewer bytes from the same pointer.
-        unsigned LVTStoreBytes = LoadedVT.getStoreSizeInBits()/8;
-        unsigned EVTStoreBytes = ExtVT.getStoreSizeInBits()/8;
+        unsigned LVTStoreBytes = LoadedVT.getStoreSize();
+        unsigned EVTStoreBytes = ExtVT.getStoreSize();
         unsigned PtrOff = LVTStoreBytes - EVTStoreBytes;
         unsigned Alignment = LN0->getAlignment();
         SDValue NewPtr = LN0->getBasePtr();

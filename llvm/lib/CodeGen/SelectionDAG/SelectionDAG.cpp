@@ -1367,7 +1367,7 @@ SDValue SelectionDAG::getShiftAmountOperand(SDValue Op) {
 /// specified value type.
 SDValue SelectionDAG::CreateStackTemporary(EVT VT, unsigned minAlign) {
   MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
-  unsigned ByteSize = VT.getStoreSizeInBits()/8;
+  unsigned ByteSize = VT.getStoreSize();
   const Type *Ty = VT.getTypeForEVT(*getContext());
   unsigned StackAlign =
   std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty), minAlign);

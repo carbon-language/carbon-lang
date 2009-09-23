@@ -206,7 +206,7 @@ BlackfinTargetLowering::LowerFormalArguments(SDValue Chain,
       InVals.push_back(ArgValue);
     } else {
       assert(VA.isMemLoc() && "CCValAssign must be RegLoc or MemLoc");
-      unsigned ObjSize = VA.getLocVT().getStoreSizeInBits()/8;
+      unsigned ObjSize = VA.getLocVT().getStoreSize();
       int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset());
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
       InVals.push_back(DAG.getLoad(VA.getValVT(), dl, Chain, FIN, NULL, 0));

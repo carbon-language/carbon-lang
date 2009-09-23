@@ -1545,7 +1545,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
     // Big-endian - high bits are at low addresses.  Favor aligned loads at
     // the cost of some bit-fiddling.
     EVT MemVT = N->getMemoryVT();
-    unsigned EBytes = MemVT.getStoreSizeInBits()/8;
+    unsigned EBytes = MemVT.getStoreSize();
     unsigned IncrementSize = NVT.getSizeInBits()/8;
     unsigned ExcessBits = (EBytes - IncrementSize)*8;
 
@@ -2230,7 +2230,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
     GetExpandedInteger(N->getValue(), Lo, Hi);
 
     EVT ExtVT = N->getMemoryVT();
-    unsigned EBytes = ExtVT.getStoreSizeInBits()/8;
+    unsigned EBytes = ExtVT.getStoreSize();
     unsigned IncrementSize = NVT.getSizeInBits()/8;
     unsigned ExcessBits = (EBytes - IncrementSize)*8;
     EVT HiVT = EVT::getIntegerVT(*DAG.getContext(), ExtVT.getSizeInBits() - ExcessBits);
