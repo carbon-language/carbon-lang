@@ -223,6 +223,7 @@ namespace llvm {
     virtual unsigned getFunctionAlignment(const Function *F) const;
 
     bool isShuffleMaskLegal(const SmallVectorImpl<int> &M, EVT VT) const;
+    bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
   private:
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
     /// make the right decision when generating code for different targets.

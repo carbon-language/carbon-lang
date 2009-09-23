@@ -4073,3 +4073,9 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   return TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, hasMemory,
                                                       Ops, DAG);
 }
+
+bool
+ARMTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
+  // The ARM target isn't yet aware of offsets.
+  return false;
+}
