@@ -18,11 +18,11 @@ void f();
 void test() {
   f(Y(), 0, 0);
   // RUN: clang-cc -fsyntax-only -code-completion-at=%s:19:9 %s -o - | FileCheck -check-prefix=CC1 %s &&
-  // CHECK-CC1: int ZZ
-  // CHECK-NEXT-CC1: int j
-  // CHECK-NEXT-CC1: float y
+  // CHECK-CC1: f(struct N::Y y, <#int ZZ#>)
+  // CHECK-NEXT-CC1: f(int i, <#int j#>, int k)
+  // CHECK-NEXT-CC1: f(float x, <#float y#>)
   // RUN: clang-cc -fsyntax-only -code-completion-at=%s:19:13 %s -o - | FileCheck -check-prefix=CC2 %s &&
-  // FIXME: two ellipses are showing up when they shouldn't
-  // CHECK-CC2: int k
+  // FIXME: two extra overloads are showing up!
+  // CHECK-CC2: f(int i, int j, <#int k#>)
   // RUN: true
 }

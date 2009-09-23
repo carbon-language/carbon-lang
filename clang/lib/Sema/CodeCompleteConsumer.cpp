@@ -169,26 +169,10 @@ PrintingCodeCompleteConsumer::ProcessOverloadCandidates(unsigned CurrentArg,
                                               OverloadCandidate *Candidates,
                                                      unsigned NumCandidates) {
   for (unsigned I = 0; I != NumCandidates; ++I) {
-    std::string ArgString;
-    QualType ArgType;
-    
-    if (FunctionDecl *Function = Candidates[I].getFunction()) {
-      if (CurrentArg < Function->getNumParams()) {
-        ArgString = Function->getParamDecl(CurrentArg)->getNameAsString();
-        ArgType = Function->getParamDecl(CurrentArg)->getOriginalType();
-      }
-    } else if (const FunctionProtoType *Proto 
-                 = dyn_cast<FunctionProtoType>(
-                                            Candidates[I].getFunctionType())) {
-      if (CurrentArg < Proto->getNumArgs())
-        ArgType = Proto->getArgType(CurrentArg);
-    }
-    
-    if (ArgType.isNull())
-      OS << "...\n";  // We have no prototype or we're matching an ellipsis.
-    else {
-      ArgType.getAsStringInternal(ArgString, SemaRef.Context.PrintingPolicy);
-      OS << ArgString << "\n";
+    if (CodeCompletionString *CCS
+          = Candidates[I].CreateSignatureString(CurrentArg, SemaRef)) {
+      OS << CCS->getAsString() << "\n";
+      delete CCS;
     }
   }
 

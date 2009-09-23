@@ -869,6 +869,68 @@ CodeCompleteConsumer::Result::CreateCodeCompletionString(Sema &S) {
   return 0;
 }
 
+CodeCompletionString *
+CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
+                                                          unsigned CurrentArg,
+                                                               Sema &S) const {
+  CodeCompletionString *Result = new CodeCompletionString;
+  FunctionDecl *FDecl = getFunction();
+  const FunctionProtoType *Proto 
+    = dyn_cast<FunctionProtoType>(getFunctionType());
+  if (!FDecl && !Proto) {
+    // Function without a prototype. Just give the return type and a 
+    // highlighted ellipsis.
+    const FunctionType *FT = getFunctionType();
+    Result->AddTextChunk(
+            FT->getResultType().getAsString(S.Context.PrintingPolicy).c_str());
+    Result->AddTextChunk("(");
+    Result->AddPlaceholderChunk("...");
+    Result->AddTextChunk("(");    
+    return Result;
+  }
+  
+  if (FDecl)
+    Result->AddTextChunk(FDecl->getNameAsString().c_str());    
+  else
+    Result->AddTextChunk(
+         Proto->getResultType().getAsString(S.Context.PrintingPolicy).c_str());
+  
+  Result->AddTextChunk("(");
+  unsigned NumParams = FDecl? FDecl->getNumParams() : Proto->getNumArgs();
+  for (unsigned I = 0; I != NumParams; ++I) {
+    if (I)
+      Result->AddTextChunk(", ");
+    
+    std::string ArgString;
+    QualType ArgType;
+    
+    if (FDecl) {
+      ArgString = FDecl->getParamDecl(I)->getNameAsString();
+      ArgType = FDecl->getParamDecl(I)->getOriginalType();
+    } else {
+      ArgType = Proto->getArgType(I);
+    }
+    
+    ArgType.getAsStringInternal(ArgString, S.Context.PrintingPolicy);
+    
+    if (I == CurrentArg)
+      Result->AddPlaceholderChunk(ArgString.c_str());
+    else
+      Result->AddTextChunk(ArgString.c_str());
+  }
+  
+  if (Proto && Proto->isVariadic()) {
+    Result->AddTextChunk(", ");
+    if (CurrentArg < NumParams)
+      Result->AddTextChunk("...");
+    else
+      Result->AddPlaceholderChunk("...");
+  }
+  Result->AddTextChunk(")");
+  
+  return Result;
+}
+
 namespace {
   struct SortCodeCompleteResult {
     typedef CodeCompleteConsumer::Result Result;

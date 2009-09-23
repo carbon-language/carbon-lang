@@ -273,6 +273,11 @@ public:
     /// \brief Retrieve the function type of the entity, regardless of how the
     /// function is stored.
     const FunctionType *getFunctionType() const;
+    
+    /// \brief Create a new code-completion string that describes the function
+    /// signature of this overload candidate.
+    CodeCompletionString *CreateSignatureString(unsigned CurrentArg, 
+                                                Sema &S) const;    
   };
   
   /// \brief Deregisters and destroys this code-completion consumer.
