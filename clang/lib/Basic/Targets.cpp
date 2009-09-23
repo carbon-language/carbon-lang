@@ -346,12 +346,6 @@ public:
 };
 } // end anonymous namespace.
 
-/// GetWindowsLanguageOptions - Set the default language options for Windows.
-static void GetWindowsLanguageOptions(LangOptions &Opts,
-                                     const llvm::Triple &Triple) {
-  Opts.Microsoft = true;
-}
-
 //===----------------------------------------------------------------------===//
 // Specific target implementations.
 //===----------------------------------------------------------------------===//
@@ -960,12 +954,75 @@ public:
     DefineStd(Defines, "WIN32", Opts);
     DefineStd(Defines, "WINNT", Opts);
     Define(Defines, "_X86_");
-    Define(Defines, "__MSVCRT__");
   }
+};
+} // end anonymous namespace
 
+namespace {
+
+/// GetWindowsVisualStudioLanguageOptions - Set the default language options for Windows.
+static void GetWindowsVisualStudioLanguageOptions(LangOptions &Opts) {
+  Opts.Microsoft = true;
+}
+
+// x86-32 Windows Visual Studio target
+class VisualStudioWindowsX86_32TargetInfo : public WindowsX86_32TargetInfo {
+public:
+  VisualStudioWindowsX86_32TargetInfo(const std::string& triple)
+    : WindowsX86_32TargetInfo(triple) {
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    WindowsX86_32TargetInfo::getTargetDefines(Opts, Defines);
+    // The value of the following reflects processor type.
+    // 300=386, 400=486, 500=Pentium, 600=Blend (default)
+    // We lost the original triple, so we use the default.
+    Define(Defines, "_M_IX86", "600");
+  }
   virtual void getDefaultLangOptions(LangOptions &Opts) {
-    X86_32TargetInfo::getDefaultLangOptions(Opts);
-    GetWindowsLanguageOptions(Opts, getTriple());
+    WindowsX86_32TargetInfo::getDefaultLangOptions(Opts);
+    GetWindowsVisualStudioLanguageOptions(Opts);
+  }
+};
+} // end anonymous namespace
+
+namespace {
+// x86-32 MinGW target
+class MinGWX86_32TargetInfo : public WindowsX86_32TargetInfo {
+public:
+  MinGWX86_32TargetInfo(const std::string& triple)
+    : WindowsX86_32TargetInfo(triple) {
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    WindowsX86_32TargetInfo::getTargetDefines(Opts, Defines);
+    Define(Defines, "__MSVCRT__");
+    Define(Defines, "__MINGW32__");
+    Define(Defines, "__declspec");
+  }
+};
+} // end anonymous namespace
+
+namespace {
+// x86-32 Cygwin target
+class CygwinX86_32TargetInfo : public X86_32TargetInfo {
+public:
+  CygwinX86_32TargetInfo(const std::string& triple)
+    : X86_32TargetInfo(triple) {
+    TLSSupported = false;
+    WCharType = UnsignedShort;
+    WCharWidth = WCharAlign = 16;
+    DoubleAlign = LongLongAlign = 64;
+    DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
+                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-"
+                        "a0:0:64-f80:32:32";
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_32TargetInfo::getTargetDefines(Opts, Defines);
+    Define(Defines, "__CYGWIN__");
+    Define(Defines, "__CYGWIN32__");
+    DefineStd(Defines, "unix", Opts);
   }
 };
 } // end anonymous namespace
@@ -1001,6 +1058,61 @@ public:
     if (RegNo == 0) return 0;
     if (RegNo == 1) return 1;
     return -1;
+  }
+};
+} // end anonymous namespace
+
+namespace {
+// x86-64 Windows target
+class WindowsX86_64TargetInfo : public X86_64TargetInfo {
+public:
+  WindowsX86_64TargetInfo(const std::string& triple)
+    : X86_64TargetInfo(triple) {
+    TLSSupported = false;
+    WCharType = UnsignedShort;
+    WCharWidth = WCharAlign = 16;
+    DoubleAlign = LongLongAlign = 64;
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    X86_64TargetInfo::getTargetDefines(Opts, Defines);
+    Define(Defines, "_WIN64");
+    DefineStd(Defines, "WIN64", Opts);
+  }
+};
+} // end anonymous namespace
+
+namespace {
+// x86-64 Windows Visual Studio target
+class VisualStudioWindowsX86_64TargetInfo : public WindowsX86_64TargetInfo {
+public:
+  VisualStudioWindowsX86_64TargetInfo(const std::string& triple)
+    : WindowsX86_64TargetInfo(triple) {
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    WindowsX86_64TargetInfo::getTargetDefines(Opts, Defines);
+    Define(Defines, "_M_X64");
+  }
+  virtual const char *getVAListDeclaration() const {
+    return "typedef char* va_list;";
+  }
+};
+} // end anonymous namespace
+
+namespace {
+// x86-64 MinGW target
+class MinGWX86_64TargetInfo : public WindowsX86_64TargetInfo {
+public:
+  MinGWX86_64TargetInfo(const std::string& triple)
+    : WindowsX86_64TargetInfo(triple) {
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                std::vector<char> &Defines) const {
+    WindowsX86_64TargetInfo::getTargetDefines(Opts, Defines);
+    Define(Defines, "__MSVCRT__");
+    Define(Defines, "__MINGW64__");
+    Define(Defines, "__declspec");
   }
 };
 } // end anonymous namespace
@@ -1764,10 +1876,11 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
     case llvm::Triple::Solaris:
       return new SolarisTargetInfo<X86_32TargetInfo>(T);
     case llvm::Triple::Cygwin:
+      return new CygwinX86_32TargetInfo(T);
     case llvm::Triple::MinGW32:
-    case llvm::Triple::MinGW64:
+      return new MinGWX86_32TargetInfo(T);
     case llvm::Triple::Win32:
-      return new WindowsX86_32TargetInfo(T);
+      return new VisualStudioWindowsX86_32TargetInfo(T);
     default:
       return new X86_32TargetInfo(T);
     }
@@ -1786,6 +1899,10 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new FreeBSDTargetInfo<X86_64TargetInfo>(T);
     case llvm::Triple::Solaris:
       return new SolarisTargetInfo<X86_64TargetInfo>(T);
+    case llvm::Triple::MinGW64:
+      return new MinGWX86_64TargetInfo(T);
+    case llvm::Triple::Win32:   // This is what Triple.h supports now.
+      return new VisualStudioWindowsX86_64TargetInfo(T);
     default:
       return new X86_64TargetInfo(T);
     }
