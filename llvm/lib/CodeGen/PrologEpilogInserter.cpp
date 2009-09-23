@@ -433,8 +433,7 @@ static inline void
 AdjustStackOffset(MachineFrameInfo *FFI, int FrameIdx,
                   bool StackGrowsDown, int64_t &Offset,
                   unsigned &MaxAlign) {
-  // If stack grows down, we need to add size of find the lowest address of the
-  // object.
+  // If the stack grows down, add the object size to find the lowest address.
   if (StackGrowsDown)
     Offset += FFI->getObjectSize(FrameIdx);
 
