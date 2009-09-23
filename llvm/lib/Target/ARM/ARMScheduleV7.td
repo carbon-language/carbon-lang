@@ -325,96 +325,161 @@ def CortexA8Itineraries : ProcessorItineraries<[
   //
   // FP Store Multiple
   // use FU_Issue to enforce the 1 load/store per cycle limit
-  InstrItinData<IIC_fpStore64,[InstrStage<3, [FU_Issue], 0>, 
+  InstrItinData<IIC_fpStorem, [InstrStage<3, [FU_Issue], 0>, 
                                InstrStage<2, [FU_Pipe0], 0>,
                                InstrStage<2, [FU_Pipe1]>,
                                InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_LdSt0], 0>,
-                               InstrStage<1, [FU_NLSPipe]>]>
-]>;
+                               InstrStage<1, [FU_NLSPipe]>]>,
 
-// FIXME
-def CortexA9Itineraries : ProcessorItineraries<[
-  InstrItinData<IIC_iALUx   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iALUi   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iALUr   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iALUsi  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iALUsr  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iUNAr   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iUNAsi  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iUNAsr  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iCMPi   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iCMPr   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iCMPsi  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iCMPsr  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMOVi   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMOVr   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMOVsi  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMOVsr  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iCMOVi  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iCMOVr  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iCMOVsi , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iCMOVsr , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMUL16  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMAC16  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMUL32  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMAC32  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMUL64  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iMAC64  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iLoadi  , [InstrStage<1, [FU_Pipe0]>,
-                               InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_iLoadr  , [InstrStage<1, [FU_Pipe0]>,
-                               InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_iLoadsi , [InstrStage<1, [FU_Pipe0]>,
-                               InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_iLoadiu , [InstrStage<1, [FU_Pipe0]>,
-                               InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_iLoadru , [InstrStage<1, [FU_Pipe0]>,
-                               InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_iLoadsiu, [InstrStage<1, [FU_Pipe0]>,
-                               InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_iLoadm  , [InstrStage<2, [FU_Pipe0]>,
-                               InstrStage<2, [FU_LdSt0]>]>,
-  InstrItinData<IIC_iStorei  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iStorer  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iStoresi , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iStoreiu , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iStoreru , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iStoresiu, [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_iStorem  , [InstrStage<2, [FU_Pipe0]>]>,
-  InstrItinData<IIC_Br       , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpSTAT   , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpMOVSI  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpMOVDI  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpMOVIS  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpMOVID  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpUNA32  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpUNA64  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpCMP32  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpCMP64  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpCVTSD  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpCVTDS  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpCVTIS  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpCVTID  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpCVTSI  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpCVTDI  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpALU32  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpALU64  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpMUL32  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpMUL64  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpMAC32  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpMAC64  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpDIV32  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpDIV64  , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpSQRT32 , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpSQRT64 , [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpLoad32 , [InstrStage<1, [FU_Pipe0]>,
-                                InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_fpLoad64 , [InstrStage<1, [FU_Pipe0]>,
-                                InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_fpLoadm  , [InstrStage<1, [FU_Pipe0]>,
-                                InstrStage<1, [FU_LdSt0]>]>,
-  InstrItinData<IIC_fpStore32, [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpStore64, [InstrStage<1, [FU_Pipe0]>]>,
-  InstrItinData<IIC_fpStorem , [InstrStage<1, [FU_Pipe0]>]>
+  // NEON
+  // Issue through integer pipeline, and execute in NEON unit.
+  //
+  // VLD1
+  InstrItinData<IIC_VLD1,     [InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NLSPipe]>]>,
+  //
+  // VLD2
+  InstrItinData<IIC_VLD2,     [InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NLSPipe]>], [2, 2, 1]>,
+  //
+  // VLD3
+  InstrItinData<IIC_VLD3,     [InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NLSPipe]>], [2, 2, 2, 1]>,
+  //
+  // VLD4
+  InstrItinData<IIC_VLD4,     [InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NLSPipe]>], [2, 2, 2, 2, 1]>,
+  //
+  // VST
+  InstrItinData<IIC_VST,      [InstrStage<1, [FU_Issue], 0>, 
+                               InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_LdSt0], 0>,
+                               InstrStage<1, [FU_NLSPipe]>]>,
+  //
+  // Double-register FP Unary
+  InstrItinData<IIC_VUNAD,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [5, 2]>,
+  //
+  // Quad-register FP Unary
+  // Result written in N5, but that is relative to the last cycle of multicycle,
+  // so we use 6 for those cases
+  InstrItinData<IIC_VUNAQ,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [6, 2]>,
+  //
+  // Double-register FP Binary
+  InstrItinData<IIC_VBIND,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [5, 2, 2]>,
+  //
+  // Quad-register FP Binary
+  // Result written in N5, but that is relative to the last cycle of multicycle,
+  // so we use 6 for those cases
+  InstrItinData<IIC_VBINQ,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [6, 2, 2]>,
+  //
+  // Double-register Permute Move
+  InstrItinData<IIC_VMOVD,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>], [2, 1]>,
+  //
+  // Quad-register Permute Move
+  // Result written in N2, but that is relative to the last cycle of multicycle,
+  // so we use 3 for those cases
+  InstrItinData<IIC_VMOVQ,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NLSPipe]>], [3, 1]>,
+  //
+  // Double-register Permute
+  InstrItinData<IIC_VPERMD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>], [2, 2, 1, 1]>,
+  //
+  // Quad-register Permute
+  // Result written in N2, but that is relative to the last cycle of multicycle,
+  // so we use 3 for those cases
+  InstrItinData<IIC_VPERMQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NLSPipe]>], [3, 3, 1, 1]>,
+  //
+  // Quad-register Permute (3 cycle issue)
+  // Result written in N2, but that is relative to the last cycle of multicycle,
+  // so we use 4 for those cases
+  InstrItinData<IIC_VPERMQ3,  [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>,
+                               InstrStage<1, [FU_NPipe], 0>,
+                               InstrStage<2, [FU_NLSPipe]>], [4, 4, 1, 1]>,
+  //
+  // Double-register Integer Count
+  InstrItinData<IIC_VCNTiD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 2]>,
+  //
+  // Quad-register Integer Count
+  // Result written in N3, but that is relative to the last cycle of multicycle,
+  // so we use 4 for those cases
+  InstrItinData<IIC_VCNTiQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [4, 2]>,
+  //
+  // Double-register Integer Unary
+  InstrItinData<IIC_VUNAiD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 2]>,
+  //
+  // Quad-register Integer Unary
+  InstrItinData<IIC_VUNAiQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 2]>,
+  //
+  // Double-register Integer Q-Unary
+  InstrItinData<IIC_VQUNAiD,  [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+  //
+  // Quad-register Integer CountQ-Unary
+  InstrItinData<IIC_VQUNAiQ,  [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1]>,
+  //
+  // Double-register Integer Binary
+  InstrItinData<IIC_VBINiD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 2, 2]>,
+  //
+  // Quad-register Integer Binary
+  InstrItinData<IIC_VBINiQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 2, 2]>,
+  //
+  // Double-register Integer Binary (4 cycle)
+  InstrItinData<IIC_VBINi4D,  [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 2, 1]>,
+  //
+  // Quad-register Integer Binary (4 cycle)
+  InstrItinData<IIC_VBINi4Q,  [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 2, 1]>,
+  //
+  // Double-register Integer Subtract
+  InstrItinData<IIC_VSUBiD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 2, 1]>,
+  //
+  // Quad-register Integer Subtract
+  InstrItinData<IIC_VSUBiQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 2, 1]>,
+  //
+  // Double-register Integer Multiply (.8, .16)
+  InstrItinData<IIC_VMULi16D, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [6, 2, 2]>,
+  //
+  // Double-register Integer Multiply (.32)
+  InstrItinData<IIC_VMULi32D, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 2, 1]>,
+  //
+  // Quad-register Integer Multiply (.8, .16)
+  InstrItinData<IIC_VMULi16Q, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 2, 2]>,
+  //
+  // Quad-register Integer Multiply (.32)
+  InstrItinData<IIC_VMULi32Q, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>,
+                               InstrStage<2, [FU_NLSPipe], 0>,
+                               InstrStage<3, [FU_NPipe]>], [9, 2, 1]>
+
+
 ]>;
