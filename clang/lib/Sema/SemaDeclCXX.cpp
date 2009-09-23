@@ -3527,10 +3527,15 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
                "Expected a direct reference binding!");
         return false;
       } else {
-        // Perform the conversion.
-        // FIXME: Binding to a subobject of the lvalue is going to require more
-        // AST annotation than this.
-        ImpCastExprToType(Init, T1, CastExpr::CK_Unknown, /*isLvalue=*/true);
+        OwningExprResult InitConversion =
+          BuildCXXCastArgument(Init->getLocStart(), QualType(),
+                               CastExpr::CK_UserDefinedConversion,
+                               cast<CXXMethodDecl>(Best->Function), 
+                               Owned(Init));
+        Init = InitConversion.takeAs<Expr>();
+                                    
+        ImpCastExprToType(Init, T1, CastExpr::CK_UserDefinedConversion, 
+                          /*isLvalue=*/true);
       }
       break;
 
