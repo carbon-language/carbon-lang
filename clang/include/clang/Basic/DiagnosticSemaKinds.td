@@ -476,6 +476,8 @@ def err_destructor_name : Error<
 
 // C++ initialization
 def err_lvalue_to_rvalue_ref : Error<"rvalue reference cannot bind to lvalue">;
+def err_lvalue_to_rvalue_ambig_ref : Error<"rvalue reference cannot bind to lvalue "
+                                           "due to multiple conversion functions">;
 // FIXME: passing in an English string as %1!
 def err_not_reference_to_const_init : Error<
   "non-const lvalue reference to type %0 cannot be initialized "

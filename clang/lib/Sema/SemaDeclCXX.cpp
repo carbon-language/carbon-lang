@@ -3478,7 +3478,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
 
     OverloadCandidateSet CandidateSet;
     OverloadedFunctionDecl *Conversions
-      = T2RecordDecl->getConversionFunctions();
+      = T2RecordDecl->getVisibleConversionFunctions();
     for (OverloadedFunctionDecl::function_iterator Func
            = Conversions->function_begin();
          Func != Conversions->function_end(); ++Func) {
@@ -3489,7 +3489,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
         Conv = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
       else
         Conv = cast<CXXConversionDecl>(*Func);
-
+      
       // If the conversion function doesn't return a reference type,
       // it can't be considered for this conversion.
       if (Conv->getConversionType()->isLValueReferenceType() &&
@@ -3688,7 +3688,27 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
     }
     return ICS->ConversionKind == ImplicitConversionSequence::BadConversion;
   } else {
-    return PerformImplicitConversion(Init, T1, "initializing");
+    ImplicitConversionSequence Conversions;
+    bool badConversion = PerformImplicitConversion(Init, T1, "initializing", 
+                                                   false, false, 
+                                                   Conversions);
+    if (badConversion) {
+      if ((Conversions.ConversionKind  == 
+            ImplicitConversionSequence::BadConversion)
+          && Conversions.ConversionFunctionSet.size() > 0) {
+        Diag(Init->getSourceRange().getBegin(), 
+             diag::err_lvalue_to_rvalue_ambig_ref) << Init->getSourceRange();
+        for (int j = Conversions.ConversionFunctionSet.size()-1; 
+             j >= 0; j--) {
+          FunctionDecl *Func = Conversions.ConversionFunctionSet[j];
+          Diag(Func->getLocation(), diag::err_ovl_candidate);
+        }
+      }
+      else
+        Diag(Init->getSourceRange().getBegin(), diag::err_lvalue_to_rvalue_ref)
+              << Init->getSourceRange();
+    }
+    return badConversion;
   }
 }
 

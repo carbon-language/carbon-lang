@@ -996,6 +996,15 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
                                 const char *Flavor, bool AllowExplicit,
                                 bool Elidable) {
   ImplicitConversionSequence ICS;
+  return PerformImplicitConversion(From, ToType, Flavor, AllowExplicit, 
+                                   Elidable, ICS);
+}
+
+bool
+Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
+                                const char *Flavor, bool AllowExplicit,
+                                bool Elidable,
+                                ImplicitConversionSequence& ICS) {
   ICS.ConversionKind = ImplicitConversionSequence::BadConversion;
   if (Elidable && getLangOptions().CPlusPlus0x) {
     ICS = TryImplicitConversion(From, ToType,

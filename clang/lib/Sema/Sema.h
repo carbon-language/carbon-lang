@@ -3469,6 +3469,11 @@ public:
                                  bool AllowExplicit = false,
                                  bool Elidable = false);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
+                                 const char *Flavor,
+                                 bool AllowExplicit,
+                                 bool Elidable,
+                                 ImplicitConversionSequence& ICS);
+  bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const ImplicitConversionSequence& ICS,
                                  const char *Flavor);
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
