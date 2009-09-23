@@ -1006,7 +1006,7 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr *Ex, ExplodedNode *Pred,
     return;
 
   } else if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(D)) {
-    assert(asLValue);
+    // This code is valid regardless of the value of 'isLValue'.
     SVal V = ValMgr.getFunctionPointer(FD);
     MakeNode(Dst, Ex, Pred, state->BindExpr(Ex, V),
              ProgramPoint::PostLValueKind);

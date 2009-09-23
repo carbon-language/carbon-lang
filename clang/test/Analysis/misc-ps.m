@@ -650,3 +650,10 @@ CGFloat rdar7242006(CGFloat x) {
   return y.width; // no-warning
 }
 
+// PR 4988 - This test exhibits a case where a function can be referenced
+//  when not explicitly used in an "lvalue" context (as far as the analyzer is
+//  concerned). This previously triggered a crash due to an invalid assertion.
+void pr_4988(void) {
+  pr_4988; // expected-warning{{expression result unused}}
+}
+
