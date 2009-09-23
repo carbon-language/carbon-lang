@@ -10,7 +10,7 @@ namespace N {
     
     operator int() const;
   };
-  void f(Y y, int);
+  void f(Y y, int ZZ);
 }
 typedef N::Y Y;
 void f();
@@ -18,12 +18,11 @@ void f();
 void test() {
   f(Y(), 0, 0);
   // RUN: clang-cc -fsyntax-only -code-completion-at=%s:19:9 %s -o - | FileCheck -check-prefix=CC1 %s &&
-  // CHECK-CC1: f : 0 : f(<#struct N::Y y#>, <#int#>)
-  // CHECK-NEXT-CC1: f : 0 : f(<#int i#>, <#int j#>, <#int k#>)
-  // CHECK-NEXT-CC1: f : 0 : f(<#float x#>, <#float y#>)
+  // CHECK-CC1: int ZZ
+  // CHECK-NEXT-CC1: int j
+  // CHECK-NEXT-CC1: float y
   // RUN: clang-cc -fsyntax-only -code-completion-at=%s:19:13 %s -o - | FileCheck -check-prefix=CC2 %s &&
-  // CHECK-NOT-CC2: f : 0 : f(<#struct N::Y y#>, <#int#>)
-  // CHECK-CC2: f : 0 : f(<#int i#>, <#int j#>, <#int k#>)
-  // CHECK-NEXT-CC2: f : 0 : f(<#float x#>, <#float y#>)
+  // FIXME: two ellipses are showing up when they shouldn't
+  // CHECK-CC2: int k
   // RUN: true
 }

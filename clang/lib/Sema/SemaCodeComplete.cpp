@@ -1161,19 +1161,17 @@ void Sema::CodeCompleteCall(Scope *S, ExprTy *FnIn,
                    IsBetterOverloadCandidate(*this));
   
   // Add the remaining viable overload candidates as code-completion reslults.  
-  typedef CodeCompleteConsumer::Result Result;
-  ResultBuilder Results(*this);
-  Results.EnterNewScope();
+  typedef CodeCompleteConsumer::OverloadCandidate ResultCandidate;
+  llvm::SmallVector<ResultCandidate, 8> Results;
   
   for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                                    CandEnd = CandidateSet.end();
        Cand != CandEnd; ++Cand) {
     if (Cand->Viable)
-      Results.MaybeAddResult(Result(Cand->Function, 0), 0);
+      Results.push_back(ResultCandidate(Cand->Function));
   }
-  
-  Results.ExitScope();
-  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());
+  CodeCompleter->ProcessOverloadCandidates(NumArgs, Results.data(), 
+                                           Results.size());
 }
 
 void Sema::CodeCompleteQualifiedId(Scope *S, const CXXScopeSpec &SS,

@@ -22,7 +22,10 @@ class raw_ostream;
 }
 
 namespace clang {
-  
+
+class FunctionDecl;
+class FunctionType;
+class FunctionTemplateDecl;
 class NamedDecl;
 class NestedNameSpecifier;
 class Sema;
@@ -213,6 +216,65 @@ public:
     CodeCompletionString *CreateCodeCompletionString(Sema &S);
   };
     
+  class OverloadCandidate {
+  public:
+    /// \brief Describes the type of overload candidate.
+    enum CandidateKind {
+      /// \brief The candidate is a function declaration.
+      CK_Function,
+      /// \brief The candidate is a function template.
+      CK_FunctionTemplate,
+      /// \brief The "candidate" is actually a variable, expression, or block
+      /// for which we only have a function prototype.
+      CK_FunctionType
+    };
+    
+  private:
+    /// \brief The kind of overload candidate.
+    CandidateKind Kind;
+    
+    union {
+      /// \brief The function overload candidate, available when 
+      /// Kind == CK_Function.
+      FunctionDecl *Function;
+      
+      /// \brief The function template overload candidate, available when
+      /// Kind == CK_FunctionTemplate.
+      FunctionTemplateDecl *FunctionTemplate;
+      
+      /// \brief The function type that describes the entity being called,
+      /// when Kind == CK_FunctionType.
+      const FunctionType *Type;
+    };
+    
+  public:
+    OverloadCandidate(FunctionDecl *Function)
+      : Kind(CK_Function), Function(Function) { }
+
+    OverloadCandidate(FunctionTemplateDecl *FunctionTemplateDecl)
+      : Kind(CK_FunctionTemplate), FunctionTemplate(FunctionTemplate) { }
+
+    OverloadCandidate(const FunctionType *Type)
+      : Kind(CK_FunctionType), Type(Type) { }
+
+    /// \brief Determine the kind of overload candidate.
+    CandidateKind getKind() const { return Kind; }
+    
+    /// \brief Retrieve the function overload candidate or the templated 
+    /// function declaration for a function template.
+    FunctionDecl *getFunction() const;
+    
+    /// \brief Retrieve the function template overload candidate.
+    FunctionTemplateDecl *getFunctionTemplate() const {
+      assert(getKind() == CK_FunctionTemplate && "Not a function template");
+      return FunctionTemplate;
+    }
+    
+    /// \brief Retrieve the function type of the entity, regardless of how the
+    /// function is stored.
+    const FunctionType *getFunctionType() const;
+  };
+  
   /// \brief Deregisters and destroys this code-completion consumer.
   virtual ~CodeCompleteConsumer();
     
@@ -221,6 +283,17 @@ public:
   /// \brief Process the finalized code-completion results.
   virtual void ProcessCodeCompleteResults(Result *Results, 
                                           unsigned NumResults) { }
+  
+  /// \brief Process the set of overload candidates.
+  ///
+  /// \param CurrentArg the index of the current argument.
+  ///
+  /// \param Candidates an array of overload candidates.
+  ///
+  /// \param NumCandidates the number of overload candidates
+  virtual void ProcessOverloadCandidates(unsigned CurrentArg,
+                                         OverloadCandidate *Candidates,
+                                         unsigned NumCandidates) { }
   //@}
 };
   
@@ -243,6 +316,10 @@ public:
   /// \brief Prints the finalized code-completion results.
   virtual void ProcessCodeCompleteResults(Result *Results, 
                                           unsigned NumResults);
+  
+  virtual void ProcessOverloadCandidates(unsigned CurrentArg,
+                                         OverloadCandidate *Candidates,
+                                         unsigned NumCandidates);  
 };
   
 } // end namespace clang

@@ -97,6 +97,36 @@ std::string CodeCompletionString::getAsString() const {
 }
 
 //===----------------------------------------------------------------------===//
+// Code completion overload candidate implementation
+//===----------------------------------------------------------------------===//
+FunctionDecl *
+CodeCompleteConsumer::OverloadCandidate::getFunction() const {
+  if (getKind() == CK_Function)
+    return Function;
+  else if (getKind() == CK_FunctionTemplate)
+    return FunctionTemplate->getTemplatedDecl();
+  else
+    return 0;
+}
+
+const FunctionType *
+CodeCompleteConsumer::OverloadCandidate::getFunctionType() const {
+  switch (Kind) {
+  case CK_Function:
+    return Function->getType()->getAs<FunctionType>();
+      
+  case CK_FunctionTemplate:
+    return FunctionTemplate->getTemplatedDecl()->getType()
+             ->getAs<FunctionType>();
+      
+  case CK_FunctionType:
+    return Type;
+  }
+  
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
 // Code completion consumer implementation
 //===----------------------------------------------------------------------===//
 
@@ -128,6 +158,40 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Result *Results,
     }
   }
   
+  // Once we've printed the code-completion results, suppress remaining
+  // diagnostics.
+  // FIXME: Move this somewhere else!
+  SemaRef.PP.getDiagnostics().setSuppressAllDiagnostics();
+}
+
+void 
+PrintingCodeCompleteConsumer::ProcessOverloadCandidates(unsigned CurrentArg,
+                                              OverloadCandidate *Candidates,
+                                                     unsigned NumCandidates) {
+  for (unsigned I = 0; I != NumCandidates; ++I) {
+    std::string ArgString;
+    QualType ArgType;
+    
+    if (FunctionDecl *Function = Candidates[I].getFunction()) {
+      if (CurrentArg < Function->getNumParams()) {
+        ArgString = Function->getParamDecl(CurrentArg)->getNameAsString();
+        ArgType = Function->getParamDecl(CurrentArg)->getOriginalType();
+      }
+    } else if (const FunctionProtoType *Proto 
+                 = dyn_cast<FunctionProtoType>(
+                                            Candidates[I].getFunctionType())) {
+      if (CurrentArg < Proto->getNumArgs())
+        ArgType = Proto->getArgType(CurrentArg);
+    }
+    
+    if (ArgType.isNull())
+      OS << "...\n";  // We have no prototype or we're matching an ellipsis.
+    else {
+      ArgType.getAsStringInternal(ArgString, SemaRef.Context.PrintingPolicy);
+      OS << ArgString << "\n";
+    }
+  }
+
   // Once we've printed the code-completion results, suppress remaining
   // diagnostics.
   // FIXME: Move this somewhere else!
