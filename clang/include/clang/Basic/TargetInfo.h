@@ -385,7 +385,7 @@ public:
   }
 
   // isTLSSupported - Whether the target supports thread-local storage
-  unsigned isTLSSupported() const {
+  bool isTLSSupported() const {
     return TLSSupported;
   }
 
