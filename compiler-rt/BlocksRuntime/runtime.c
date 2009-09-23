@@ -669,7 +669,7 @@ const char *_Block_dump(const void *block) {
         cp += sprintf(cp, " HASCTOR");
     }
     cp += sprintf(cp, "\nrefcount: %u\n", closure->flags & BLOCK_REFCOUNT_MASK);
-    cp += sprintf(cp, "invoke: %#x\n", (uintptr_t)closure->invoke);
+    cp += sprintf(cp, "invoke: %p\n", (void *)(uintptr_t)closure->invoke);
     {
         struct Block_descriptor *dp = closure->descriptor;
         cp += sprintf(cp, "descriptor: %p\n", (void *)dp);
@@ -677,8 +677,8 @@ const char *_Block_dump(const void *block) {
         cp += sprintf(cp, "descriptor->size: %lu\n", dp->size);
 
         if (closure->flags & BLOCK_HAS_COPY_DISPOSE) {
-            cp += sprintf(cp, "descriptor->copy helper: %#x\n", (uintptr_t)dp->copy);
-            cp += sprintf(cp, "descriptor->dispose helper: %#x\n", (uintptr_t)dp->dispose);
+            cp += sprintf(cp, "descriptor->copy helper: %p\n", (void *)(uintptr_t)dp->copy);
+            cp += sprintf(cp, "descriptor->dispose helper: %p\n", (void *)(uintptr_t)dp->dispose);
         }
     }
     return buffer;
@@ -693,8 +693,8 @@ const char *_Block_byref_dump(struct Block_byref *src) {
     cp += sprintf(cp, "  flags: 0x%x\n", src->flags);
     cp += sprintf(cp, "  size: %d\n", src->size);
     if (src->flags & BLOCK_HAS_COPY_DISPOSE) {
-        cp += sprintf(cp, "  copy helper: %#x\n", (uintptr_t)src->byref_keep);
-        cp += sprintf(cp, "  dispose helper: %#x\n", (uintptr_t)src->byref_destroy);
+        cp += sprintf(cp, "  copy helper: %p\n", (void *)(uintptr_t)src->byref_keep);
+        cp += sprintf(cp, "  dispose helper: %p\n", (void *)(uintptr_t)src->byref_destroy);
     }
     return buffer;
 }
