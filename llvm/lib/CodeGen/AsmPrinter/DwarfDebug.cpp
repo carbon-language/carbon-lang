@@ -662,9 +662,6 @@ void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
   std::string typeName;
   blockStruct.getName(typeName);
 
-  assert(typeName.find ("__Block_byref_") == 0
-         && "Attempting to get Block location of non-Block variable!");
-
   // Find the __forwarding field and the variable field in the __Block_byref
   // struct.
 
