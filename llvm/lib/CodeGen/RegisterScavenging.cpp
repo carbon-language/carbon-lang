@@ -109,45 +109,6 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   Tracking = false;
 }
 
-#ifndef NDEBUG
-/// isLiveInButUnusedBefore - Return true if register is livein the MBB not
-/// not used before it reaches the MI that defines register.
-static bool isLiveInButUnusedBefore(unsigned Reg, MachineInstr *MI,
-                                    MachineBasicBlock *MBB,
-                                    const TargetRegisterInfo *TRI,
-                                    MachineRegisterInfo* MRI) {
-  // First check if register is livein.
-  bool isLiveIn = false;
-  for (MachineBasicBlock::const_livein_iterator I = MBB->livein_begin(),
-         E = MBB->livein_end(); I != E; ++I)
-    if (Reg == *I || TRI->isSuperRegister(Reg, *I)) {
-      isLiveIn = true;
-      break;
-    }
-  if (!isLiveIn)
-    return false;
-
-  // Is there any use of it before the specified MI?
-  SmallPtrSet<MachineInstr*, 4> UsesInMBB;
-  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
-         UE = MRI->use_end(); UI != UE; ++UI) {
-    MachineOperand &UseMO = UI.getOperand();
-    if (UseMO.isReg() && UseMO.isUndef())
-      continue;
-    MachineInstr *UseMI = &*UI;
-    if (UseMI->getParent() == MBB)
-      UsesInMBB.insert(UseMI);
-  }
-  if (UsesInMBB.empty())
-    return true;
-
-  for (MachineBasicBlock::iterator I = MBB->begin(), E = MI; I != E; ++I)
-    if (UsesInMBB.count(&*I))
-      return false;
-  return true;
-}
-#endif
-
 void RegScavenger::addRegWithSubRegs(BitVector &BV, unsigned Reg) {
   BV.set(Reg);
   for (const unsigned *R = TRI->getSubRegisters(Reg); *R; R++)
@@ -221,9 +182,13 @@ void RegScavenger::forward() {
              "Using an early clobbered register!");
     } else {
       assert(MO.isDef());
+#if 0
+      // FIXME: Enable this once we've figured out how to correctly transfer
+      // implicit kills during codegen passes like the coalescer.
       assert((KillRegs.test(Reg) || isUnused(Reg) ||
               isLiveInButUnusedBefore(Reg, MI, MBB, TRI, MRI)) &&
              "Re-defining a live register!");
+#endif
     }
   }
 
