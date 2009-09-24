@@ -270,14 +270,12 @@ CFGBlock* CFGBuilder::createBlock(bool add_successor) {
   return B;
 }
 
-/// FinishBlock - When the last statement has been added to the block, we must
-///  reverse the statements because they have been inserted in reverse order.
+/// FinishBlock - "Finalize" the block by checking if we have a bad CFG.
 bool CFGBuilder::FinishBlock(CFGBlock* B) {
   if (badCFG)
     return false;
 
   assert(B);
-  B->reverseStmts();
   return true;
 }
 
@@ -699,9 +697,8 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   // first statement we are processing.  In either case, we create a new basic
   // block.  First, we create the blocks for the then...else statements, and
   // then we create the block containing the if statement.  If we were in the
-  // middle of a block, we stop processing that block and reverse its
-  // statements.  That block is then the implicit successor for the "then" and
-  // "else" clauses.
+  // middle of a block, we stop processing that block.  That block is then the
+  // implicit successor for the "then" and "else" clauses.
 
   // The block we were proccessing is now finished.  Make it the successor
   // block.
@@ -772,14 +769,14 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
 
 
 CFGBlock* CFGBuilder::VisitReturnStmt(ReturnStmt* R) {
-  // If we were in the middle of a block we stop processing that block and
-  // reverse its statements.
+  // If we were in the middle of a block we stop processing that block.
   //
   // NOTE: If a "return" appears in the middle of a block, this means that the
   //       code afterwards is DEAD (unreachable).  We still keep a basic block
   //       for that code; a simple "mark-and-sweep" from the entry block will be
   //       able to report such dead blocks.
-  if (Block) FinishBlock(Block);
+  if (Block)
+    FinishBlock(Block);
 
   // Create the new block.
   Block = createBlock(false);
@@ -1183,8 +1180,7 @@ CFGBlock* CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) {
   // FIXME: This isn't complete.  We basically treat @throw like a return
   //  statement.
 
-  // If we were in the middle of a block we stop processing that block and
-  // reverse its statements.
+  // If we were in the middle of a block we stop processing that block.
   if (Block && !FinishBlock(Block))
     return 0;
 
@@ -1200,8 +1196,7 @@ CFGBlock* CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) {
 }
 
 CFGBlock* CFGBuilder::VisitCXXThrowExpr(CXXThrowExpr* T) {
-  // If we were in the middle of a block we stop processing that block and
-  // reverse its statements.
+  // If we were in the middle of a block we stop processing that block.
   if (Block && !FinishBlock(Block))
     return 0;
 
@@ -1517,9 +1512,6 @@ CFG* CFG::buildCFG(Stmt* Statement, ASTContext *C) {
   CFGBuilder Builder;
   return Builder.buildCFG(Statement, C);
 }
-
-/// reverseStmts - Reverses the orders of statements within a CFGBlock.
-void CFGBlock::reverseStmts() { std::reverse(Stmts.begin(),Stmts.end()); }
 
 //===----------------------------------------------------------------------===//
 // CFG: Queries for BlkExprs.

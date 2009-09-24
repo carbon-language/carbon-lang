@@ -57,9 +57,39 @@ namespace clang {
 ///     &&, ||          expression that uses result of && or ||, RHS
 ///
 class CFGBlock {
-  typedef std::vector<Stmt*> StatementListTy;
+  class StatementList {
+    typedef std::vector<Stmt*> ImplTy;
+    ImplTy Impl;
+  public:
+    typedef std::reverse_iterator<ImplTy::iterator>       iterator;
+    typedef std::reverse_iterator<ImplTy::const_iterator> const_iterator;
+    typedef ImplTy::iterator                              reverse_iterator;
+    typedef ImplTy::const_iterator                        const_reverse_iterator;
+  
+    void push_back(Stmt *s) { Impl.push_back(s); }
+    Stmt *front() const { return Impl.back(); }
+    Stmt *back() const { return Impl.front(); }
+    
+    iterator begin() { return Impl.rbegin(); }
+    iterator end() { return Impl.rend(); }
+    const_iterator begin() const { return Impl.rbegin(); }
+    const_iterator end() const { return Impl.rend(); }
+    reverse_iterator rbegin() { return Impl.begin(); }
+    reverse_iterator rend() { return Impl.end(); }
+    const_reverse_iterator rbegin() const { return Impl.begin(); }
+    const_reverse_iterator rend() const { return Impl.end(); }
+
+   Stmt*  operator[](size_t i) const  {
+     assert(i < Impl.size());
+     return Impl[Impl.size() - 1 - i];
+   }
+    
+    size_t size() const { return Impl.size(); }
+    bool empty() const { return Impl.empty(); }
+  };
+
   /// Stmts - The set of statements in the basic block.
-  StatementListTy Stmts;
+  StatementList Stmts;
 
   /// Label - An (optional) label that prefixes the executable
   ///  statements in the block.  When this variable is non-NULL, it is
@@ -92,10 +122,10 @@ public:
   ~CFGBlock() {};
 
   // Statement iterators
-  typedef StatementListTy::iterator                                  iterator;
-  typedef StatementListTy::const_iterator                      const_iterator;
-  typedef std::reverse_iterator<const_iterator>        const_reverse_iterator;
-  typedef std::reverse_iterator<iterator>                    reverse_iterator;
+  typedef StatementList::iterator                      iterator;
+  typedef StatementList::const_iterator                const_iterator;
+  typedef StatementList::reverse_iterator              reverse_iterator;
+  typedef StatementList::const_reverse_iterator        const_reverse_iterator;
 
   Stmt*                        front()       const { return Stmts.front();   }
   Stmt*                        back()        const { return Stmts.back();    }
@@ -113,7 +143,8 @@ public:
   unsigned                     size()        const { return Stmts.size();    }
   bool                         empty()       const { return Stmts.empty();   }
 
-  Stmt*  operator[](size_t i) const  { assert (i < size()); return Stmts[i]; }
+  Stmt*  operator[](size_t i) const  { return Stmts[i]; }
+
 
   // CFG iterators
   typedef AdjacentBlocks::iterator                              pred_iterator;
