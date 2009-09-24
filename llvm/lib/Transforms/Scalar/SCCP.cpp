@@ -1267,6 +1267,10 @@ CallOverdefined:
   for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
        AI != E; ++AI, ++CAI) {
     LatticeVal &IV = ValueState[AI];
+    if (AI->hasByValAttr() && isa<PointerType>(AI->getType())) {
+      IV.markOverdefined();
+      continue;
+    }
     if (!IV.isOverdefined())
       mergeInValue(IV, AI, getValueState(*CAI));
   }
