@@ -1226,7 +1226,7 @@ DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
                  RI->getFrameIndexOffset(*MF, DV->getFrameIndex()));
 
     if (VD.isBlockByrefVariable())
-      AddBlockByrefAddress (DV, VariableDie, dwarf::DW_AT_location, Location);
+      AddBlockByrefAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
     else
       AddAddress(VariableDie, dwarf::DW_AT_location, Location);
   }
