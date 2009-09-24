@@ -3697,7 +3697,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       if ((Conversions.ConversionKind  == 
             ImplicitConversionSequence::BadConversion)
           && Conversions.ConversionFunctionSet.size() > 0) {
-        Diag(Init->getSourceRange().getBegin(), 
+        Diag(DeclLoc, 
              diag::err_lvalue_to_rvalue_ambig_ref) << Init->getSourceRange();
         for (int j = Conversions.ConversionFunctionSet.size()-1; 
              j >= 0; j--) {
