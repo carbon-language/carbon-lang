@@ -1267,7 +1267,7 @@ CallOverdefined:
   for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
        AI != E; ++AI, ++CAI) {
     LatticeVal &IV = ValueState[AI];
-    if (AI->hasByValAttr() && isa<PointerType>(AI->getType())) {
+    if (AI->hasByValAttr() && !F->onlyReadsMemory()) {
       IV.markOverdefined();
       continue;
     }
