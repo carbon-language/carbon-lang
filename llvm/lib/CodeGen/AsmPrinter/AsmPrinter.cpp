@@ -130,15 +130,12 @@ bool AsmPrinter::doInitialization(Module &M) {
       << '\n' << MAI->getCommentString()
       << " End of file scope inline assembly\n";
 
-  if (MAI->doesSupportDebugInformation() ||
-      MAI->doesSupportExceptionHandling()) {
-    MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-    if (MMI)
-      MMI->AnalyzeModule(M);
-    DW = getAnalysisIfAvailable<DwarfWriter>();
-    if (DW)
-      DW->BeginModule(&M, MMI, O, this, MAI);
-  }
+  MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  if (MMI)
+    MMI->AnalyzeModule(M);
+  DW = getAnalysisIfAvailable<DwarfWriter>();
+  if (DW)
+    DW->BeginModule(&M, MMI, O, this, MAI);
 
   return false;
 }
