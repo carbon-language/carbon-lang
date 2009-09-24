@@ -219,8 +219,18 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
   }
 }
 
-void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD,
-  bool IsVirtualBase) {
+bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD, 
+                                                    uint64_t Offset) const {
+  // FIXME: Implement.
+  return true;
+}
+
+void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
+                                                     uint64_t Offset) {
+  // FIXME: Implement.
+}
+
+uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   const ASTRecordLayout &BaseInfo = Ctx.getASTRecordLayout(RD);
   if (!Bases.empty()) {
     assert(BaseInfo.getDataSize() > 0 &&
@@ -229,15 +239,32 @@ void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD,
   
   unsigned BaseAlign = BaseInfo.getNonVirtualAlign();
   uint64_t BaseSize = BaseInfo.getNonVirtualSize();
-
+  
   // Round up the current record size to the base's alignment boundary.
-  Size = (Size + (BaseAlign-1)) & ~(BaseAlign-1);
+  uint64_t Offset = llvm::RoundUpToAlignment(Size, BaseAlign);
+  
+  // Reserve space for this base.
+  Size = Offset + BaseSize;
+  
+  // Remember the next available offset.
+  NextOffset = Size;
+  
+  // Remember max struct/class alignment.
+  UpdateAlignment(BaseAlign);
+  
+  return Offset;
+}
+
+void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD,
+  bool IsVirtualBase) {
+  // Layout the base.
+  unsigned Offset = LayoutBase(RD);
 
   // Add base class offsets.
   if (IsVirtualBase) 
-    VBases.push_back(std::make_pair(RD, Size));
+    VBases.push_back(std::make_pair(RD, Offset));
   else
-    Bases.push_back(std::make_pair(RD, Size));
+    Bases.push_back(std::make_pair(RD, Offset));
 
 #if 0
   // And now add offsets for all our primary virtual bases as well, so
@@ -254,15 +281,6 @@ void ASTRecordLayoutBuilder::LayoutBaseNonVirtually(const CXXRecordDecl *RD,
       L = &Ctx.getASTRecordLayout(PB);
   }
 #endif
-
-  // Reserve space for this base.
-  Size += BaseSize;
-
-  // Remember the next available offset.
-  NextOffset = Size;
-
-  // Remember max struct/class alignment.
-  UpdateAlignment(BaseAlign);
 }
 
 void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
@@ -408,7 +426,7 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
       FieldAlign = std::min(FieldAlign, MaxFieldAlignment);
 
     // Round up the current record size to the field's alignment boundary.
-    FieldOffset = (FieldOffset + (FieldAlign-1)) & ~(FieldAlign-1);
+    FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
   }
 
   // Place this field at the current location.
