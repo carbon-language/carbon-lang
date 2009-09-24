@@ -664,7 +664,6 @@ void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
 
   // Find the __forwarding field and the variable field in the __Block_byref
   // struct.
-
   DIArray Fields = blockStruct.getTypeArray();
   DIDescriptor varField = DIDescriptor();
   DIDescriptor forwardingField = DIDescriptor();
@@ -681,20 +680,18 @@ void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
       varField = Element;
   }
 
-  assert (!varField.isNull() && "Can't find byref variable in Block struct");
-  assert (!forwardingField.isNull()
-          && "Can't find forwarding field in Block struct");
+  assert(!varField.isNull() && "Can't find byref variable in Block struct");
+  assert(!forwardingField.isNull()
+         && "Can't find forwarding field in Block struct");
 
   // Get the offsets for the forwarding field and the variable field.
-
   unsigned int forwardingFieldOffset =
     DIDerivedType(forwardingField.getNode()).getOffsetInBits() >> 3;
   unsigned int varFieldOffset =
     DIDerivedType(varField.getNode()).getOffsetInBits() >> 3;
 
-  // Decode the original location, and use that as the start of the
-  // byref variable's location.
-
+  // Decode the original location, and use that as the start of the byref
+  // variable's location.
   unsigned Reg = RI->getDwarfRegNum(Location.getReg(), false);
   DIEBlock *Block = new DIEBlock();
 
@@ -717,16 +714,14 @@ void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
     AddUInt(Block, 0, dwarf::DW_FORM_sdata, Location.getOffset());
   }
 
-  // If we started with a pointer to the__Block_byref... struct, then
+  // If we started with a pointer to the __Block_byref... struct, then
   // the first thing we need to do is dereference the pointer (DW_OP_deref).
-
   if (isPointer)
     AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
 
   // Next add the offset for the '__forwarding' field:
   // DW_OP_plus_uconst ForwardingFieldOffset.  Note there's no point in
   // adding the offset if it's 0.
-
   if (forwardingFieldOffset > 0) {
     AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
     AddUInt(Block, 0, dwarf::DW_FORM_udata, forwardingFieldOffset);
@@ -734,20 +729,17 @@ void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
 
   // Now dereference the __forwarding field to get to the real __Block_byref
   // struct:  DW_OP_deref.
-
   AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
 
   // Now that we've got the real __Block_byref... struct, add the offset
   // for the variable's field to get to the location of the actual variable:
   // DW_OP_plus_uconst varFieldOffset.  Again, don't add if it's 0.
-
   if (varFieldOffset > 0) {
     AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
     AddUInt(Block, 0, dwarf::DW_FORM_udata, varFieldOffset);
   }
 
   // Now attach the location information to the DIE.
-
   AddBlock(Die, Attribute, 0, Block);
 }
 
