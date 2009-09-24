@@ -413,7 +413,7 @@ void SubtargetEmitter::EmitProcessorData(raw_ostream &OS,
     
     // For each itinerary class
     std::vector<InstrItinerary> &ItinList = *ProcListIter++;
-    for (unsigned j = 0, M = ItinList.size(); j < M;) {
+    for (unsigned j = 0, M = ItinList.size(); j < M; ++j) {
       InstrItinerary &Intinerary = ItinList[j];
       
       // Emit in the form of 
@@ -427,13 +427,11 @@ void SubtargetEmitter::EmitProcessorData(raw_ostream &OS,
           Intinerary.LastOperandCycle << " }";
       }
       
-      // If more in list add comma
-      if (++j < M) OS << ",";
-      
-      OS << " // " << (j - 1) << "\n";
+      OS << ", // " << j << "\n";
     }
     
     // End processor itinerary table
+    OS << "  { ~0U, ~0U, ~0U, ~0U } // end marker\n";
     OS << "};\n";
   }
 }

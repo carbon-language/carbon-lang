@@ -104,6 +104,14 @@ struct InstrItineraryData {
   ///
   bool isEmpty() const { return Itineratries == 0; }
 
+  /// isEndMarker - Returns true if the index is for the end marker
+  /// itinerary.
+  ///
+  bool isEndMarker(unsigned ItinClassIndx) const {
+    return ((Itineratries[ItinClassIndx].FirstStage == ~0U) &&
+            (Itineratries[ItinClassIndx].LastStage == ~0U));
+  }
+
   /// beginStage - Return the first stage of the itinerary.
   /// 
   const InstrStage *beginStage(unsigned ItinClassIndx) const {
