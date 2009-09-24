@@ -351,42 +351,33 @@ static bool EatsUnboundedNumberOfValues(const Option *O) {
 /// using strdup(), so it is the caller's responsibility to free()
 /// them later.
 ///
-static void ParseCStringVector(std::vector<char *> &output,
-                               const char *input) {
+static void ParseCStringVector(std::vector<char *> &OutputVector,
+                               const char *Input) {
   // Characters which will be treated as token separators:
-  static const char *const delims = " \v\f\t\r\n";
+  StringRef Delims = " \v\f\t\r\n";
 
-  std::string work(input);
-  // Skip past any delims at head of input string.
-  size_t pos = work.find_first_not_of(delims);
-  // If the string consists entirely of delims, then exit early.
-  if (pos == std::string::npos) return;
-  // Otherwise, jump forward to beginning of first word.
-  work = work.substr(pos);
-  // Find position of first delimiter.
-  pos = work.find_first_of(delims);
-
-  while (!work.empty() && pos != std::string::npos) {
-    // Everything from 0 to POS is the next word to copy.
-    output.push_back(strdup(work.substr(0,pos).c_str()));
-    // Is there another word in the string?
-    size_t nextpos = work.find_first_not_of(delims, pos + 1);
-    if (nextpos != std::string::npos) {
-      // Yes? Then remove delims from beginning ...
-      work = work.substr(work.find_first_not_of(delims, pos + 1));
-      // and find the end of the word.
-      pos = work.find_first_of(delims);
-    } else {
-      // No? (Remainder of string is delims.) End the loop.
-      work = "";
-      pos = std::string::npos;
+  StringRef WorkStr(Input);
+  while (!WorkStr.empty()) {
+    // If the first character is a delimiter, strip them off.
+    if (Delims.find(WorkStr[0]) != StringRef::npos) {
+      size_t Pos = WorkStr.find_first_not_of(Delims);
+      if (Pos == StringRef::npos) Pos = WorkStr.size();
+      WorkStr = WorkStr.substr(Pos);
+      continue;
     }
+    
+    // Find position of first delimiter.
+    size_t Pos = WorkStr.find_first_of(Delims);
+    if (Pos == StringRef::npos) Pos = WorkStr.size();
+    
+    // Everything from 0 to Pos is the next word to copy.
+    char *NewStr = (char*)malloc(Pos+1);
+    memcpy(NewStr, WorkStr.data(), Pos);
+    NewStr[Pos] = 0;
+    OutputVector.push_back(NewStr);
+    
+    WorkStr = WorkStr.substr(Pos);
   }
-
-  // If `input' ended with non-delim char, then we'll get here with
-  // the last word of `input' in `work'; copy it now.
-  if (!work.empty())
-    output.push_back(strdup(work.c_str()));
 }
 
 /// ParseEnvironmentOptions - An alternative entry point to the
