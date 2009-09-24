@@ -39,16 +39,18 @@ static cl::opt<bool>
 NoCanonicalizeWhiteSpace("strict-whitespace",
               cl::desc("Do not treat all horizontal whitespace as equivalent"));
 
+//===----------------------------------------------------------------------===//
+// Pattern Handling Code.
+//===----------------------------------------------------------------------===//
+
 class Pattern {
   /// Str - The string to match.
   std::string Str;
 public:
   
-  Pattern(StringRef S) : Str(S.str()) {
-    // Remove duplicate spaces in the check strings if requested.
-    if (!NoCanonicalizeWhiteSpace)
-      CanonicalizeCheckString();
-  }
+  Pattern() { }
+  
+  bool ParsePattern(StringRef PatternStr, SourceMgr &SM);
   
   /// Match - Match the pattern string against the input buffer Buffer.  This
   /// returns the position that is matched or npos if there is no match.  If
@@ -78,6 +80,33 @@ private:
   }
 };
 
+bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
+  // Ignore trailing whitespace.
+  while (!PatternStr.empty() &&
+         (PatternStr.back() == ' ' || PatternStr.back() == '\t'))
+    PatternStr = PatternStr.substr(0, PatternStr.size()-1);
+  
+  // Check that there is something on the line.
+  if (PatternStr.empty()) {
+    SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
+                    "found empty check string with prefix '"+CheckPrefix+":'",
+                    "error");
+    return true;
+  }
+  
+  Str = PatternStr.str();
+  
+  // Remove duplicate spaces in the check strings if requested.
+  if (!NoCanonicalizeWhiteSpace)
+    CanonicalizeCheckString();
+  
+  return false;
+}
+
+
+//===----------------------------------------------------------------------===//
+// Check Strings.
+//===----------------------------------------------------------------------===//
 
 /// CheckString - This is a check that we found in the input file.
 struct CheckString {
@@ -94,7 +123,7 @@ struct CheckString {
   /// NotStrings - These are all of the strings that are disallowed from
   /// occurring between this match string and the previous one (or start of
   /// file).
-  std::vector<std::pair<SMLoc, std::string> > NotStrings;
+  std::vector<std::pair<SMLoc, Pattern> > NotStrings;
   
   CheckString(const Pattern &P, SMLoc L, bool isCheckNext)
     : Pat(P), Loc(L), IsCheckNext(isCheckNext) {}
@@ -119,7 +148,7 @@ static bool ReadCheckFile(SourceMgr &SM,
   // Find all instances of CheckPrefix followed by : in the file.
   StringRef Buffer = F->getBuffer();
 
-  std::vector<std::pair<SMLoc, std::string> > NotMatches;
+  std::vector<std::pair<SMLoc, Pattern> > NotMatches;
   
   while (1) {
     // See if Prefix occurs in the memory buffer.
@@ -157,29 +186,14 @@ static bool ReadCheckFile(SourceMgr &SM,
     
     // Scan ahead to the end of line.
     size_t EOL = Buffer.find_first_of("\n\r");
-    if (EOL == StringRef::npos) EOL = Buffer.size();
-    
-    // Ignore trailing whitespace.
-    while (EOL && (Buffer[EOL-1] == ' ' || Buffer[EOL-1] == '\t'))
-      --EOL;
-    
-    // Check that there is something on the line.
-    if (EOL == 0) {
-      SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()),
-                      "found empty check string with prefix '"+CheckPrefix+":'",
-                      "error");
+
+    // Parse the pattern.
+    Pattern P;
+    if (P.ParsePattern(Buffer.substr(0, EOL), SM))
       return true;
-    }
     
-    StringRef PatternStr = Buffer.substr(0, EOL);
-    
-    // Handle CHECK-NOT.
-    if (IsCheckNot) {
-      NotMatches.push_back(std::make_pair(SMLoc::getFromPointer(Buffer.data()),
-                                          PatternStr.str()));
-      Buffer = Buffer.substr(EOL);
-      continue;
-    }
+    Buffer = Buffer.substr(EOL);
+
     
     // Verify that CHECK-NEXT lines have at least one CHECK line before them.
     if (IsCheckNext && CheckStrings.empty()) {
@@ -189,15 +203,19 @@ static bool ReadCheckFile(SourceMgr &SM,
       return true;
     }
     
-    Pattern P(PatternStr);
+    // Handle CHECK-NOT.
+    if (IsCheckNot) {
+      NotMatches.push_back(std::make_pair(SMLoc::getFromPointer(Buffer.data()),
+                                          P));
+      continue;
+    }
+    
     
     // Okay, add the string we captured to the output vector and move on.
     CheckStrings.push_back(CheckString(P,
                                        SMLoc::getFromPointer(Buffer.data()),
                                        IsCheckNext));
     std::swap(NotMatches, CheckStrings.back().NotStrings);
-    
-    Buffer = Buffer.substr(EOL);
   }
   
   if (CheckStrings.empty()) {
@@ -367,7 +385,8 @@ int main(int argc, char **argv) {
     // If this match had "not strings", verify that they don't exist in the
     // skipped region.
     for (unsigned i = 0, e = CheckStr.NotStrings.size(); i != e; ++i) {
-      size_t Pos = SkippedRegion.find(CheckStr.NotStrings[i].second);
+      size_t MatchLen = 0;
+      size_t Pos = CheckStr.NotStrings[i].second.Match(SkippedRegion, MatchLen);
       if (Pos == StringRef::npos) continue;
      
       SM.PrintMessage(SMLoc::getFromPointer(LastMatch+Pos),
