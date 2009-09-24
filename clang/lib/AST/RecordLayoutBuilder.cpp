@@ -221,30 +221,45 @@ void ASTRecordLayoutBuilder::LayoutVirtualBases(const CXXRecordDecl *RD,
 
 bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD, 
                                                     uint64_t Offset) const {
-  // FIXME: Implement.
+  // Look for an empty class with the same type at the same offset.
+  for (EmptyClassOffsetsTy::const_iterator I = 
+        EmptyClassOffsets.lower_bound(Offset), 
+       E = EmptyClassOffsets.upper_bound(Offset); I != E; ++I) {
+    
+    if (I->second == RD)
+      return false;
+  }
+  
+  // FIXME: Bases and fields.
   return true;
 }
 
 void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
                                                      uint64_t Offset) {
-  // FIXME: Implement.
+  if (RD->isEmpty())
+    EmptyClassOffsets.insert(std::make_pair(Offset, RD));
+    
+  // FIXME: Update bases and fields.
 }
 
 uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   const ASTRecordLayout &BaseInfo = Ctx.getASTRecordLayout(RD);
-  if (!Bases.empty()) {
-    assert(BaseInfo.getDataSize() > 0 &&
-           "FIXME: Handle empty classes.");
+
+  // If we have an empty base class, try to place it at offset 0.
+  if (RD->isEmpty() && canPlaceRecordAtOffset(RD, 0)) {
+    // We were able to place the class at offset 0.
+    // Since the base is empty we don't have to update the size or alignment.
+    UpdateEmptyClassOffsets(RD, 0);
+    
+    return 0;
   }
   
   unsigned BaseAlign = BaseInfo.getNonVirtualAlign();
-  uint64_t BaseSize = BaseInfo.getNonVirtualSize();
-  
   // Round up the current record size to the base's alignment boundary.
   uint64_t Offset = llvm::RoundUpToAlignment(Size, BaseAlign);
   
   // Reserve space for this base.
-  Size = Offset + BaseSize;
+  Size = Offset + BaseInfo.getNonVirtualSize();
   
   // Remember the next available offset.
   NextOffset = Size;
