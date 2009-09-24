@@ -2151,7 +2151,7 @@ public:
   /// looked up in the declarator-id's scope, until the declarator is parsed and
   /// ActOnCXXExitDeclaratorScope is called.
   /// The 'SS' should be a non-empty valid CXXScopeSpec.
-  virtual void ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS);
+  virtual bool ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS);
 
   /// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
   /// invoked ActOnCXXEnterDeclaratorScope(), is finished. 'SS' is the same

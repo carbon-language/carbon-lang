@@ -300,7 +300,9 @@ public:
   /// looked up in the declarator-id's scope, until the declarator is parsed and
   /// ActOnCXXExitDeclaratorScope is called.
   /// The 'SS' should be a non-empty valid CXXScopeSpec.
-  virtual void ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
+  /// \returns true if an error occurred, false otherwise.
+  virtual bool ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
+    return false;
   }
 
   /// ActOnCXXExitDeclaratorScope - Called when a declarator that previously

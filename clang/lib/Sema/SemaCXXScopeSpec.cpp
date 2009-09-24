@@ -519,10 +519,18 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
 /// looked up in the declarator-id's scope, until the declarator is parsed and
 /// ActOnCXXExitDeclaratorScope is called.
 /// The 'SS' should be a non-empty valid CXXScopeSpec.
-void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
+bool Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
-  if (DeclContext *DC = computeDeclContext(SS, true))
+  if (DeclContext *DC = computeDeclContext(SS, true)) {
+    // Before we enter a declarator's context, we need to make sure that
+    // it is a complete declaration context.
+    if (!DC->isDependentContext() && RequireCompleteDeclContext(SS))
+      return true;
+      
     EnterDeclaratorContext(S, DC);
+  }
+  
+  return false;
 }
 
 /// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
