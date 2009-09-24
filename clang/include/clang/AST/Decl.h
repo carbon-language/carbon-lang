@@ -1081,6 +1081,12 @@ public:
     TemplateOrSpecialization = Template;
   }
 
+  /// \brief Determine whether this function is a function template 
+  /// specialization.
+  bool isFunctionTemplateSpecialization() const {
+    return getPrimaryTemplate() != 0;
+  }
+                       
   /// \brief Retrieve the primary template that this function template
   /// specialization either specializes or was instantiated from.
   ///
@@ -1105,10 +1111,17 @@ public:
   ///
   /// \param TemplateArgs the template arguments that produced this
   /// function template specialization from the template.
+  ///
+  /// \param InsertPos If non-NULL, the position in the function template
+  /// specialization set where the function template specialization data will
+  /// be inserted.
+  ///
+  /// \param TSK the kind of template specialization this is.
   void setFunctionTemplateSpecialization(ASTContext &Context,
                                          FunctionTemplateDecl *Template,
                                       const TemplateArgumentList *TemplateArgs,
-                                         void *InsertPos);
+                                         void *InsertPos,
+                    TemplateSpecializationKind TSK = TSK_ImplicitInstantiation);
 
   /// \brief Determine what kind of template instantiation this function
   /// represents.

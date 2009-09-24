@@ -2877,6 +2877,166 @@ Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
   return DeclPtrTy();
 }
 
+/// \brief Perform semantic analysis for the given function template 
+/// specialization.
+///
+/// This routine performs all of the semantic analysis required for an 
+/// explicit function template specialization. On successful completion,
+/// the function declaration \p FD will become a function template
+/// specialization.
+///
+/// \param FD the function declaration, which will be updated to become a
+/// function template specialization.
+///
+/// \param HasExplicitTemplateArgs whether any template arguments were
+/// explicitly provided.
+///
+/// \param LAngleLoc the location of the left angle bracket ('<'), if
+/// template arguments were explicitly provided.
+///
+/// \param ExplicitTemplateArgs the explicitly-provided template arguments, 
+/// if any.
+///
+/// \param NumExplicitTemplateArgs the number of explicitly-provided template
+/// arguments. This number may be zero even when HasExplicitTemplateArgs is
+/// true as in, e.g., \c void sort<>(char*, char*);
+///
+/// \param RAngleLoc the location of the right angle bracket ('>'), if
+/// template arguments were explicitly provided.
+/// 
+/// \param PrevDecl the set of declarations that 
+bool 
+Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
+                                          bool HasExplicitTemplateArgs,
+                                          SourceLocation LAngleLoc,
+                              const TemplateArgument *ExplicitTemplateArgs,
+                                          unsigned NumExplicitTemplateArgs,
+                                          SourceLocation RAngleLoc,
+                                          NamedDecl *&PrevDecl) {
+  // The set of function template specializations that could match this
+  // explicit function template specialization.
+  typedef llvm::SmallVector<FunctionDecl *, 8> CandidateSet;
+  CandidateSet Candidates;
+  
+  DeclContext *FDLookupContext = FD->getDeclContext()->getLookupContext();
+  for (OverloadIterator Ovl(PrevDecl), OvlEnd; Ovl != OvlEnd; ++Ovl) {
+    if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(*Ovl)) {
+      // Only consider templates found within the same semantic lookup scope as 
+      // FD.
+      if (!FDLookupContext->Equals(Ovl->getDeclContext()->getLookupContext()))
+        continue;
+      
+      // C++ [temp.expl.spec]p11:
+      //   A trailing template-argument can be left unspecified in the 
+      //   template-id naming an explicit function template specialization 
+      //   provided it can be deduced from the function argument type.
+      // Perform template argument deduction to determine whether we may be
+      // specializing this template.
+      // FIXME: It is somewhat wasteful to build
+      TemplateDeductionInfo Info(Context);
+      FunctionDecl *Specialization = 0;
+      if (TemplateDeductionResult TDK
+            = DeduceTemplateArguments(FunTmpl, HasExplicitTemplateArgs,
+                                      ExplicitTemplateArgs, 
+                                      NumExplicitTemplateArgs,
+                                      FD->getType(),
+                                      Specialization,
+                                      Info)) {
+        // FIXME: Template argument deduction failed; record why it failed, so
+        // that we can provide nifty diagnostics.
+        (void)TDK;
+        continue;
+      }
+      
+      // Record this candidate.
+      Candidates.push_back(Specialization);
+    }
+  }
+  
+  if (Candidates.empty()) {
+    Diag(FD->getLocation(), diag::err_function_template_spec_no_match)
+      << FD->getDeclName();
+    // FIXME: Print the almost-ran candidates.
+    return true;
+  }
+  
+  if (Candidates.size() > 1) {
+    // C++ [temp.func.order]p1:
+    //   Partial ordering of overloaded function template declarations is used
+    //   [...] when [...] an explicit specialization (14.7.3) refers to a 
+    //   function template specialization.
+    CandidateSet::iterator Best = Candidates.begin();
+    for (CandidateSet::iterator C = Best + 1, CEnd = Candidates.end();
+         C != CEnd; ++C) {
+      if (getMoreSpecializedTemplate((*Best)->getPrimaryTemplate(), 
+                                     (*C)->getPrimaryTemplate(),
+                                     TPOC_Other)
+            == (*C)->getPrimaryTemplate())
+        Best = C;
+    }
+    
+    bool Ambiguous = false;
+    for (CandidateSet::iterator C = Candidates.begin(), CEnd = Candidates.end();
+         C != CEnd; ++C) {
+      if (C != Best &&
+          getMoreSpecializedTemplate((*Best)->getPrimaryTemplate(), 
+                                     (*C)->getPrimaryTemplate(),
+                                     TPOC_Other)
+            != (*Best)->getPrimaryTemplate()) {
+        Ambiguous = true;
+        break;
+      }
+    }
+    
+    if (Ambiguous) {
+      // Partial ordering was ambiguous.
+      Diag(FD->getLocation(), diag::err_function_template_spec_ambiguous)
+        << FD->getDeclName()
+        << HasExplicitTemplateArgs;
+      
+      for (CandidateSet::iterator C = Candidates.begin(), 
+                               CEnd = Candidates.end();
+           C != CEnd; ++C)
+        Diag((*C)->getLocation(), diag::note_function_template_spec_matched)
+          << getTemplateArgumentBindingsText(
+                            (*C)->getPrimaryTemplate()->getTemplateParameters(),
+                                        *(*C)->getTemplateSpecializationArgs());
+      
+      return true;
+    }
+    
+    // Move the best candidate to the front of the candidates list.
+    std::swap(*Best, Candidates.front());
+  }
+  
+  // The first candidate is a prior declaration of the function template
+  // specialization we're declared here, which we may have created above.
+  FunctionDecl *Specialization = Candidates.front();
+  
+  // FIXME: Check if the prior specialization has a point of instantiation.
+  // If so, we have run afoul of C++ [temp.expl.spec]p6.
+  
+  // Mark the prior declaration as an explicit specialization, so that later
+  // clients know that this is an explicit specialization.
+  // FIXME: Check for prior explicit instantiations?
+  Specialization->setTemplateSpecializationKind(TSK_ExplicitSpecialization);
+  
+  // Turn the given function declaration into a function template
+  // specialization, with the template arguments from the previous
+  // specialization.
+  FD->setFunctionTemplateSpecialization(Context, 
+                                        Specialization->getPrimaryTemplate(),
+                         new (Context) TemplateArgumentList(
+                             *Specialization->getTemplateSpecializationArgs()), 
+                                        /*InsertPos=*/0, 
+                                        TSK_ExplicitSpecialization);
+  
+  // The "previous declaration" for this function template specialization is
+  // the prior function template specialization.
+  PrevDecl = Specialization;
+  return false;
+}
+
 // Explicit instantiation of a class template specialization
 // FIXME: Implement extern template semantics
 Sema::DeclResult

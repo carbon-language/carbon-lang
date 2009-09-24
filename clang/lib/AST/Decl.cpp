@@ -689,7 +689,10 @@ void
 FunctionDecl::setFunctionTemplateSpecialization(ASTContext &Context,
                                                 FunctionTemplateDecl *Template,
                                      const TemplateArgumentList *TemplateArgs,
-                                                void *InsertPos) {
+                                                void *InsertPos,
+                                              TemplateSpecializationKind TSK) {
+  assert(TSK != TSK_Undeclared && 
+         "Must specify the type of function template specialization");
   FunctionTemplateSpecializationInfo *Info
     = TemplateOrSpecialization.dyn_cast<FunctionTemplateSpecializationInfo*>();
   if (!Info)
@@ -697,13 +700,24 @@ FunctionDecl::setFunctionTemplateSpecialization(ASTContext &Context,
 
   Info->Function = this;
   Info->Template.setPointer(Template);
-  Info->Template.setInt(TSK_ImplicitInstantiation - 1);
+  Info->Template.setInt(TSK - 1);
   Info->TemplateArguments = TemplateArgs;
   TemplateOrSpecialization = Info;
 
   // Insert this function template specialization into the set of known
-  // function template specialiations.
-  Template->getSpecializations().InsertNode(Info, InsertPos);
+  // function template specializations.
+  if (InsertPos)
+    Template->getSpecializations().InsertNode(Info, InsertPos);
+  else {
+    // Try to insert the new node. If there is an existing node, remove it 
+    // first.
+    FunctionTemplateSpecializationInfo *Existing
+      = Template->getSpecializations().GetOrInsertNode(Info);
+    if (Existing) {
+      Template->getSpecializations().RemoveNode(Existing);
+      Template->getSpecializations().GetOrInsertNode(Info);
+    }
+  }
 }
 
 TemplateSpecializationKind FunctionDecl::getTemplateSpecializationKind() const {

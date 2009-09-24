@@ -2515,6 +2515,14 @@ public:
                                                     MultiTemplateParamsArg TemplateParameterLists,
                                                     Declarator &D);
 
+  bool CheckFunctionTemplateSpecialization(FunctionDecl *FD,
+                                           bool HasExplicitTemplateArgs,
+                                           SourceLocation LAngleLoc,
+                                  const TemplateArgument *ExplicitTemplateArgs,
+                                           unsigned NumExplicitTemplateArgs,
+                                           SourceLocation RAngleLoc,
+                                           NamedDecl *&PrevDecl);
+    
   virtual DeclResult
   ActOnExplicitInstantiation(Scope *S,
                              SourceLocation ExternLoc,

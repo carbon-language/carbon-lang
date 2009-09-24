@@ -4055,6 +4055,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       //   resulting template argument list is used to generate a single
       //   function template specialization, which is added to the set of
       //   overloaded functions considered.
+      // FIXME: We don't really want to build the specialization here, do we?
       FunctionDecl *Specialization = 0;
       TemplateDeductionInfo Info(Context);
       if (TemplateDeductionResult Result
@@ -4064,6 +4065,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
         // FIXME: make a note of the failed deduction for diagnostics.
         (void)Result;
       } else {
+        // FIXME: If the match isn't exact, shouldn't we just drop this as
+        // a candidate? Find a testcase before changing the code.
         assert(FunctionType
                  == Context.getCanonicalType(Specialization->getType()));
         Matches.insert(

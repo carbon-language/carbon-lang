@@ -1436,7 +1436,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 }
 
 /// \brief Deduce template arguments when taking the address of a function
-/// template (C++ [temp.deduct.funcaddr]).
+/// template (C++ [temp.deduct.funcaddr]) or matching a 
 ///
 /// \param FunctionTemplate the function template for which we are performing
 /// template argument deduction.

@@ -373,6 +373,12 @@ TemplateArgumentList::TemplateArgumentList(ASTContext &Context,
   Builder.ReleaseArgs();
 }
 
+TemplateArgumentList::TemplateArgumentList(const TemplateArgumentList &Other)
+  : FlatArguments(Other.FlatArguments.getPointer(), 1),
+    NumFlatArguments(Other.flat_size()),
+    StructuredArguments(Other.StructuredArguments.getPointer(), 1),
+    NumStructuredArguments(Other.NumStructuredArguments) { }
+
 TemplateArgumentList::~TemplateArgumentList() {
   // FIXME: Deallocate template arguments
 }

@@ -967,6 +967,16 @@ def err_partial_spec_ordering_ambiguous : Error<
     "ambiguous partial specializations of %0">;
 def note_partial_spec_match : Note<"partial specialization matches %0">;
 
+// C++ Function template specializations
+def err_function_template_spec_no_match : Error<
+    "no function template matches function template specialization %0">;
+def err_function_template_spec_ambiguous : Error<
+    "function template specialization %0 ambiguously refers to more than one "
+    "function template; explicitly specify%select{|additional }1 template "
+    "arguments to identify a particular function template">;
+def note_function_template_spec_matched : Note<
+    "function template matches specialization %0">;
+    
 // C++ Template Instantiation
 def err_template_recursion_depth_exceeded : Error<
   "recursive template instantiation exceeded maximum depth of %0">,

@@ -1794,9 +1794,11 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
   if (New == 0)
     return DeclPtrTy();
 
-  // If this has an identifier and is not an invalid redeclaration,
-  // add it to the scope stack.
-  if (Name && !(Redeclaration && New->isInvalidDecl()))
+  // If this has an identifier and is not an invalid redeclaration or 
+  // function template specialization, add it to the scope stack.
+  if (Name && !(Redeclaration && New->isInvalidDecl()) &&
+      !(isa<FunctionDecl>(New) && 
+        cast<FunctionDecl>(New)->isFunctionTemplateSpecialization()))
     PushOnScopeChains(New, S);
 
   return DeclPtrTy::make(New);
@@ -2516,6 +2518,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Match up the template parameter lists with the scope specifier, then
   // determine whether we have a template or a template specialization.
   FunctionTemplateDecl *FunctionTemplate = 0;
+  bool isFunctionTemplateSpecialization = false;
   if (TemplateParameterList *TemplateParams
         = MatchTemplateParametersToScopeSpecifier(
                                   D.getDeclSpec().getSourceRange().getBegin(),
@@ -2536,13 +2539,14 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       FunctionTemplate->setLexicalDeclContext(CurContext);
       NewFD->setDescribedFunctionTemplate(FunctionTemplate);
     } else {
-      // FIXME: Handle function template specializations
+      // This is a function template specialization.
+      isFunctionTemplateSpecialization = true;
     }
 
     // FIXME: Free this memory properly.
     TemplateParamLists.release();
   }
-
+  
   // C++ [dcl.fct.spec]p5:
   //   The virtual specifier shall only be used in declarations of
   //   nonstatic class member functions that appear within a
@@ -2678,6 +2682,18 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
     PrevDecl = 0;
 
+  // FIXME: If the declarator has a template argument list but 
+  // isFunctionTemplateSpecialization is false, this is a function template 
+  // specialization but the user forgot the "template<>" header. Complain about
+  // the missing template<> header and set isFunctionTemplateSpecialization.
+
+  if (isFunctionTemplateSpecialization &&
+      CheckFunctionTemplateSpecialization(NewFD, 
+                                          /*FIXME:*/false, SourceLocation(),
+                                          0, 0, SourceLocation(), 
+                                          PrevDecl))
+    NewFD->setInvalidDecl();
+  
   // Perform semantic checking on the function declaration.
   bool OverloadableAttrRequired = false; // FIXME: HACK!
   CheckFunctionDeclaration(NewFD, PrevDecl, Redeclaration,

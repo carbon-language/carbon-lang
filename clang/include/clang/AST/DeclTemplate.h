@@ -419,6 +419,9 @@ public:
                        TemplateArgumentListBuilder &Builder,
                        bool TakeArgs);
 
+  /// \brief Produces a shallow copy of the given template argument list
+  TemplateArgumentList(const TemplateArgumentList &Other);
+  
   ~TemplateArgumentList();
 
   /// \brief Retrieve the template argument at a given index.
