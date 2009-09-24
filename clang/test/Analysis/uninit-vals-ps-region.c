@@ -25,7 +25,7 @@ void test_uninit_pos() {
   struct TestUninit v2 = test_uninit_aux();
   int z;
   v1.y = z;
-  test_unit_aux2(v2.x + v1.y);  // expected-warning{{The right operand of the '+' expression is a garbage value}}
+  test_unit_aux2(v2.x + v1.y);  // expected-warning{{The right operand of '+' is a garbage value}}
 }
 void test_uninit_neg() {
   struct TestUninit v1 = { 0, 0 };

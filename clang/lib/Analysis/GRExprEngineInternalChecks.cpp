@@ -235,9 +235,9 @@ public:
                 
         if (Ex) {
           OS << "The " << (isLeft ? "left" : "right")
-             << " operand of the '"
+             << " operand of '"
              << BinaryOperator::getOpcodeStr(B->getOpcode())
-             << "' expression is a garbage value";
+             << "' is a garbage value";
         }          
         else {
           // Neither operand was undefined, but the result is undefined.
