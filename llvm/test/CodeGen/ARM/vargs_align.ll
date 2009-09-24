@@ -1,7 +1,5 @@
-; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | \
-; RUN:   grep {add sp, sp, #16} | count 1
-; RUN: llc < %s -march=arm -mtriple=arm-linux-gnu | \
-; RUN:   grep {add sp, sp, #12} | count 2
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi | FileCheck %s -check-prefix=EABI
+; RUN: llc < %s -march=arm -mtriple=arm-linux-gnu | FileCheck %s -check-prefix=OABI
 
 define i32 @f(i32 %a, ...) {
 entry:
@@ -18,4 +16,8 @@ entry:
 return:		; preds = %entry
 	%retval2 = load i32* %retval		; <i32> [#uses=1]
 	ret i32 %retval2
+; EABI: add sp, sp, #12
+; EABI: add sp, sp, #16
+; OABI: add sp, sp, #12
+; OABI: add sp, sp, #12
 }
