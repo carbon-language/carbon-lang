@@ -170,7 +170,8 @@ public:
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                     llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
-                                    llvm::Value *src, llvm::Value *dest);
+                                    llvm::Value *src, llvm::Value *dest,
+                                    llvm::Value *ivarOffset);
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
   virtual void EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
@@ -1873,7 +1874,8 @@ void CGObjCGNU::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
 }
 
 void CGObjCGNU::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
-                                   llvm::Value *src, llvm::Value *dst) {
+                                   llvm::Value *src, llvm::Value *dst,
+                                   llvm::Value *ivarOffset) {
   return;
 }
 

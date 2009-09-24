@@ -490,8 +490,17 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
     // load of a __strong object.
     llvm::Value *LvalueDst = Dst.getAddress();
     llvm::Value *src = Src.getScalarVal();
-    if (Dst.isObjCIvar())
-      CGM.getObjCRuntime().EmitObjCIvarAssign(*this, src, LvalueDst);
+    if (Dst.isObjCIvar()) {
+      assert(Dst.getBaseIvarExp() && "BaseIvarExp is NULL");
+      const llvm::Type *ResultType = ConvertType(getContext().LongTy);
+      llvm::Value *RHS = EmitScalarExpr(Dst.getBaseIvarExp());
+      RHS = Builder.CreatePtrToInt(RHS, ResultType, "sub.ptr.rhs.cast");
+      llvm::Value *LHS = 
+        Builder.CreatePtrToInt(LvalueDst, ResultType, "sub.ptr.lhs.cast");
+      llvm::Value *BytesBetween = Builder.CreateSub(LHS, RHS, "ivar.offset");
+      CGM.getObjCRuntime().EmitObjCIvarAssign(*this, src, LvalueDst,
+                                              BytesBetween);
+    }
     else if (Dst.isGlobalObjCRef())
       CGM.getObjCRuntime().EmitObjCGlobalAssign(*this, src, LvalueDst);
     else
@@ -694,6 +703,8 @@ void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E, LValue &LV) {
   
   if (isa<ObjCIvarRefExpr>(E)) {
     LV.SetObjCIvar(LV, true);
+    ObjCIvarRefExpr *Exp = cast<ObjCIvarRefExpr>(const_cast<Expr*>(E));
+    LV.setBaseIvarExp(Exp->getBase());
     LV.SetObjCArray(LV, E->getType()->isArrayType());
     return;
   }

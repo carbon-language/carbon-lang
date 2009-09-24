@@ -369,9 +369,10 @@ public:
 
   /// GcAssignIvarFn -- LLVM objc_assign_ivar function.
   llvm::Constant *getGcAssignIvarFn() {
-    // id objc_assign_ivar(id, id *)
+    // id objc_assign_ivar(id, id *, ptrdiff_t)
     std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
     Args.push_back(ObjectPtrTy->getPointerTo());
+    Args.push_back(LongTy);
     llvm::FunctionType *FTy =
       llvm::FunctionType::get(ObjectPtrTy, Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_assign_ivar");
@@ -1130,7 +1131,8 @@ public:
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                     llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
-                                  llvm::Value *src, llvm::Value *dest);
+                                  llvm::Value *src, llvm::Value *dest,
+                                  llvm::Value *ivarOffset);
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
   virtual void EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
@@ -1360,7 +1362,8 @@ public:
   virtual void EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
                                     llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
-                                  llvm::Value *src, llvm::Value *dest);
+                                  llvm::Value *src, llvm::Value *dest,
+                                  llvm::Value *ivarOffset);
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
   virtual void EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
@@ -2745,10 +2748,12 @@ void CGObjCMac::EmitObjCGlobalAssign(CodeGen::CodeGenFunction &CGF,
 }
 
 /// EmitObjCIvarAssign - Code gen for assigning to a __strong object.
-/// objc_assign_ivar (id src, id *dst)
+/// objc_assign_ivar (id src, id *dst, ptrdiff_t ivaroffset)
 ///
 void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
-                                   llvm::Value *src, llvm::Value *dst) {
+                                   llvm::Value *src, llvm::Value *dst,
+                                   llvm::Value *ivarOffset) {
+  assert(ivarOffset && "EmitObjCIvarAssign - ivarOffset is NULL");
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
@@ -2759,8 +2764,8 @@ void CGObjCMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignIvarFn(),
-                          src, dst, "assignivar");
+  CGF.Builder.CreateCall3(ObjCTypes.getGcAssignIvarFn(),
+                          src, dst, ivarOffset);
   return;
 }
 
@@ -5268,11 +5273,12 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
   return Builder.CreateLoad(Entry, false, "tmp");
 }
 /// EmitObjCIvarAssign - Code gen for assigning to a __strong object.
-/// objc_assign_ivar (id src, id *dst)
+/// objc_assign_ivar (id src, id *dst, ptrdiff_t)
 ///
 void CGObjCNonFragileABIMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
                                                 llvm::Value *src,
-                                                llvm::Value *dst) {
+                                                llvm::Value *dst,
+                                                llvm::Value *ivarOffset) {
   const llvm::Type * SrcTy = src->getType();
   if (!isa<llvm::PointerType>(SrcTy)) {
     unsigned Size = CGM.getTargetData().getTypeAllocSize(SrcTy);
@@ -5283,8 +5289,8 @@ void CGObjCNonFragileABIMac::EmitObjCIvarAssign(CodeGen::CodeGenFunction &CGF,
   }
   src = CGF.Builder.CreateBitCast(src, ObjCTypes.ObjectPtrTy);
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
-  CGF.Builder.CreateCall2(ObjCTypes.getGcAssignIvarFn(),
-                          src, dst, "assignivar");
+  CGF.Builder.CreateCall3(ObjCTypes.getGcAssignIvarFn(),
+                          src, dst, ivarOffset);
   return;
 }
 
