@@ -198,7 +198,8 @@ CGFloat rdar7242006_negative(CGFloat x) {
 // <rdar://problem/7249340> - Allow binding of values to symbolic regions.
 // This test case shows how RegionStore tracks the value bound to 'x'
 // after the assignment.
-void rdar_7249340(int *x) {
+typedef int* ptr_rdar_7249340;
+void rdar_7249340(ptr_rdar_7249340 x) {
   *x = 1;
   if (*x)
     return;
