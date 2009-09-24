@@ -49,11 +49,7 @@ class VISIBILITY_HIDDEN X86AsmPrinter : public AsmPrinter {
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
-    if (Subtarget->isTargetDarwin() ||
-        Subtarget->isTargetELF() ||
-        Subtarget->isTargetCygMing()) {
-      AU.addRequired<MachineModuleInfo>();
-    }
+    AU.addRequired<MachineModuleInfo>();
     AU.addRequired<DwarfWriter>();
     AsmPrinter::getAnalysisUsage(AU);
   }
