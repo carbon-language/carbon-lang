@@ -39,10 +39,50 @@ static cl::opt<bool>
 NoCanonicalizeWhiteSpace("strict-whitespace",
               cl::desc("Do not treat all horizontal whitespace as equivalent"));
 
-/// CheckString - This is a check that we found in the input file.
-struct CheckString {
+class Pattern {
   /// Str - The string to match.
   std::string Str;
+public:
+  
+  Pattern(StringRef S) : Str(S.str()) {
+    // Remove duplicate spaces in the check strings if requested.
+    if (!NoCanonicalizeWhiteSpace)
+      CanonicalizeCheckString();
+  }
+  
+  /// Match - Match the pattern string against the input buffer Buffer.  This
+  /// returns the position that is matched or npos if there is no match.  If
+  /// there is a match, the size of the matched string is returned in MatchLen.
+  size_t Match(StringRef Buffer, size_t &MatchLen) const {
+    MatchLen = Str.size();
+    return Buffer.find(Str);
+  }
+  
+private:
+  /// CanonicalizeCheckString - Replace all sequences of horizontal whitespace
+  /// in the check strings with a single space.
+  void CanonicalizeCheckString() {
+    for (unsigned C = 0; C != Str.size(); ++C) {
+      // If C is not a horizontal whitespace, skip it.
+      if (Str[C] != ' ' && Str[C] != '\t')
+        continue;
+      
+      // Replace the character with space, then remove any other space
+      // characters after it.
+      Str[C] = ' ';
+      
+      while (C+1 != Str.size() &&
+             (Str[C+1] == ' ' || Str[C+1] == '\t'))
+        Str.erase(Str.begin()+C+1);
+    }
+  }
+};
+
+
+/// CheckString - This is a check that we found in the input file.
+struct CheckString {
+  /// Pat - The pattern to match.
+  Pattern Pat;
   
   /// Loc - The location in the match file that the check string was specified.
   SMLoc Loc;
@@ -56,8 +96,8 @@ struct CheckString {
   /// file).
   std::vector<std::pair<SMLoc, std::string> > NotStrings;
   
-  CheckString(const std::string &S, SMLoc L, bool isCheckNext)
-    : Str(S), Loc(L), IsCheckNext(isCheckNext) {}
+  CheckString(const Pattern &P, SMLoc L, bool isCheckNext)
+    : Pat(P), Loc(L), IsCheckNext(isCheckNext) {}
 };
 
 
@@ -149,8 +189,10 @@ static bool ReadCheckFile(SourceMgr &SM,
       return true;
     }
     
+    Pattern P(PatternStr);
+    
     // Okay, add the string we captured to the output vector and move on.
-    CheckStrings.push_back(CheckString(PatternStr.str(),
+    CheckStrings.push_back(CheckString(P,
                                        SMLoc::getFromPointer(Buffer.data()),
                                        IsCheckNext));
     std::swap(NotMatches, CheckStrings.back().NotStrings);
@@ -171,28 +213,6 @@ static bool ReadCheckFile(SourceMgr &SM,
   }
   
   return false;
-}
-
-// CanonicalizeCheckStrings - Replace all sequences of horizontal whitespace in
-// the check strings with a single space.
-static void CanonicalizeCheckStrings(std::vector<CheckString> &CheckStrings) {
-  for (unsigned i = 0, e = CheckStrings.size(); i != e; ++i) {
-    std::string &Str = CheckStrings[i].Str;
-    
-    for (unsigned C = 0; C != Str.size(); ++C) {
-      // If C is not a horizontal whitespace, skip it.
-      if (Str[C] != ' ' && Str[C] != '\t')
-        continue;
-      
-      // Replace the character with space, then remove any other space
-      // characters after it.
-      Str[C] = ' ';
-      
-      while (C+1 != Str.size() &&
-             (Str[C+1] == ' ' || Str[C+1] == '\t'))
-        Str.erase(Str.begin()+C+1);
-    }
-  }
 }
 
 /// CanonicalizeInputFile - Remove duplicate horizontal space from the specified
@@ -273,10 +293,6 @@ int main(int argc, char **argv) {
   if (ReadCheckFile(SM, CheckStrings))
     return 2;
 
-  // Remove duplicate spaces in the check strings if requested.
-  if (!NoCanonicalizeWhiteSpace)
-    CanonicalizeCheckStrings(CheckStrings);
-
   // Open the file to check and add it to SourceMgr.
   std::string ErrorStr;
   MemoryBuffer *F =
@@ -305,7 +321,8 @@ int main(int argc, char **argv) {
     StringRef SearchFrom = Buffer;
     
     // Find StrNo in the file.
-    Buffer = Buffer.substr(Buffer.find(CheckStr.Str));
+    size_t MatchLen = 0;
+    Buffer = Buffer.substr(CheckStr.Pat.Match(Buffer, MatchLen));
     
     // If we didn't find a match, reject the input.
     if (Buffer.empty()) {
@@ -363,7 +380,7 @@ int main(int argc, char **argv) {
 
     // Otherwise, everything is good.  Step over the matched text and remember
     // the position after the match as the end of the last match.
-    Buffer = Buffer.substr(CheckStr.Str.size());
+    Buffer = Buffer.substr(MatchLen);
     LastMatch = Buffer.data();
   }
   
