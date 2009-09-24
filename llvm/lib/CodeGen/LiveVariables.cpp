@@ -265,78 +265,13 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
     PhysRegUse[SubReg] =  MI;
 }
 
-/// hasRegisterUseBelow - Return true if the specified register is used after
-/// the current instruction and before it's next definition.
-bool LiveVariables::hasRegisterUseBelow(unsigned Reg,
-                                        MachineBasicBlock::iterator I,
-                                        MachineBasicBlock *MBB) {
-  if (I == MBB->end())
-    return false;
-
-  // First find out if there are any uses / defs below.
-  bool hasDistInfo = true;
-  unsigned CurDist = DistanceMap[I];
-  SmallVector<MachineInstr*, 4> Uses;
-  SmallVector<MachineInstr*, 4> Defs;
-  for (MachineRegisterInfo::reg_iterator RI = MRI->reg_begin(Reg),
-         RE = MRI->reg_end(); RI != RE; ++RI) {
-    MachineOperand &UDO = RI.getOperand();
-    MachineInstr *UDMI = &*RI;
-    if (UDMI->getParent() != MBB)
-      continue;
-    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UDMI);
-    bool isBelow = false;
-    if (DI == DistanceMap.end()) {
-      // Must be below if it hasn't been assigned a distance yet.
-      isBelow = true;
-      hasDistInfo = false;
-    } else if (DI->second > CurDist)
-      isBelow = true;
-    if (isBelow) {
-      if (UDO.isUse())
-        Uses.push_back(UDMI);
-      if (UDO.isDef())
-        Defs.push_back(UDMI);
-    }
-  }
-
-  if (Uses.empty())
-    // No uses below.
-    return false;
-  else if (!Uses.empty() && Defs.empty())
-    // There are uses below but no defs below.
-    return true;
-  // There are both uses and defs below. We need to know which comes first.
-  if (!hasDistInfo) {
-    // Complete DistanceMap for this MBB. This information is computed only
-    // once per MBB.
-    ++I;
-    ++CurDist;
-    for (MachineBasicBlock::iterator E = MBB->end(); I != E; ++I, ++CurDist)
-      DistanceMap.insert(std::make_pair(I, CurDist));
-  }
-
-  unsigned EarliestUse = DistanceMap[Uses[0]];
-  for (unsigned i = 1, e = Uses.size(); i != e; ++i) {
-    unsigned Dist = DistanceMap[Uses[i]];
-    if (Dist < EarliestUse)
-      EarliestUse = Dist;
-  }
-  for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
-    unsigned Dist = DistanceMap[Defs[i]];
-    if (Dist < EarliestUse)
-      // The register is defined before its first use below.
-      return false;
-  }
-  return true;
-}
-
 bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
-  if (!PhysRegUse[Reg] && !PhysRegDef[Reg])
+  MachineInstr *LastDef = PhysRegDef[Reg];
+  MachineInstr *LastUse = PhysRegUse[Reg];
+  if (!LastDef && !LastUse)
     return false;
 
-  MachineInstr *LastRefOrPartRef = PhysRegUse[Reg]
-    ? PhysRegUse[Reg] : PhysRegDef[Reg];
+  MachineInstr *LastRefOrPartRef = LastUse ? LastUse : LastDef;
   unsigned LastRefOrPartRefDist = DistanceMap[LastRefOrPartRef];
   // The whole register is used.
   // AL =
@@ -355,9 +290,22 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
   // AX<dead> = AL<imp-def>
   //    = AL<kill>
   // AX = 
+  MachineInstr *LastPartDef = 0;
+  unsigned LastPartDefDist = 0;
   SmallSet<unsigned, 8> PartUses;
   for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
        unsigned SubReg = *SubRegs; ++SubRegs) {
+    MachineInstr *Def = PhysRegDef[SubReg];
+    if (Def && Def != LastDef) {
+      // There was a def of this sub-register in between. This is a partial
+      // def, keep track of the last one.
+      unsigned Dist = DistanceMap[Def];
+      if (Dist > LastPartDefDist) {
+        LastPartDefDist = Dist;
+        LastPartDef = Def;
+      }
+      continue;
+    }
     if (MachineInstr *Use = PhysRegUse[SubReg]) {
       PartUses.insert(SubReg);
       for (const unsigned *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
@@ -370,46 +318,47 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
     }
   }
 
-  if (LastRefOrPartRef == PhysRegDef[Reg] && LastRefOrPartRef != MI)
-    // If the last reference is the last def, then it's not used at all.
-    // That is, unless we are currently processing the last reference itself.
-    LastRefOrPartRef->addRegisterDead(Reg, TRI, true);
-
-  // Partial uses. Mark register def dead and add implicit def of
-  // sub-registers which are used.
-  // EAX<dead>  = op  AL<imp-def>
-  // That is, EAX def is dead but AL def extends pass it.
-  // Enable this after live interval analysis is fixed to improve codegen!
-  else if (!PhysRegUse[Reg]) {
+  if (LastRefOrPartRef == PhysRegDef[Reg] && LastRefOrPartRef != MI) {
+    if (LastPartDef)
+      // The last partial def kills the register.
+      LastPartDef->addOperand(MachineOperand::CreateReg(Reg, false/*IsDef*/,
+                                                true/*IsImp*/, true/*IsKill*/));
+    else
+      // If the last reference is the last def, then it's not used at all.
+      // That is, unless we are currently processing the last reference itself.
+      LastRefOrPartRef->addRegisterDead(Reg, TRI, true);
+  } else if (!PhysRegUse[Reg]) {
+    // Partial uses. Mark register def dead and add implicit def of
+    // sub-registers which are used.
+    // EAX<dead>  = op  AL<imp-def>
+    // That is, EAX def is dead but AL def extends pass it.
     PhysRegDef[Reg]->addRegisterDead(Reg, TRI, true);
     for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
          unsigned SubReg = *SubRegs; ++SubRegs) {
-      if (PartUses.count(SubReg)) {
-        bool NeedDef = true;
-        if (PhysRegDef[Reg] == PhysRegDef[SubReg]) {
-          MachineOperand *MO = PhysRegDef[Reg]->findRegisterDefOperand(SubReg);
-          if (MO) {
-            NeedDef = false;
-            assert(!MO->isDead());
-          }
+      if (!PartUses.count(SubReg))
+        continue;
+      bool NeedDef = true;
+      if (PhysRegDef[Reg] == PhysRegDef[SubReg]) {
+        MachineOperand *MO = PhysRegDef[Reg]->findRegisterDefOperand(SubReg);
+        if (MO) {
+          NeedDef = false;
+          assert(!MO->isDead());
         }
-        if (NeedDef)
-          PhysRegDef[Reg]->addOperand(MachineOperand::CreateReg(SubReg,
-                                                                true, true));
-        LastRefOrPartRef->addRegisterKilled(SubReg, TRI, true);
-        for (const unsigned *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
-          PartUses.erase(*SS);
       }
+      if (NeedDef)
+        PhysRegDef[Reg]->addOperand(MachineOperand::CreateReg(SubReg,
+                                                 true/*IsDef*/, true/*IsImp*/));
+      LastRefOrPartRef->addRegisterKilled(SubReg, TRI, true);
+      for (const unsigned *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
+        PartUses.erase(*SS);
     }
-  }
-  else
+  } else
     LastRefOrPartRef->addRegisterKilled(Reg, TRI, true);
   return true;
 }
 
 void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
-                                     SmallVector<unsigned, 4> &Defs,
-                                     SmallVector<unsigned, 4> &SuperDefs) {
+                                     SmallVector<unsigned, 4> &Defs) {
   // What parts of the register are previously defined?
   SmallSet<unsigned, 32> Live;
   if (PhysRegDef[Reg] || PhysRegUse[Reg]) {
@@ -425,6 +374,8 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
       // AL =
       // AH =
       //    = AX
+      if (Live.count(SubReg))
+        continue;
       if (PhysRegDef[SubReg] || PhysRegUse[SubReg]) {
         Live.insert(SubReg);
         for (const unsigned *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
@@ -435,49 +386,18 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
 
   // Start from the largest piece, find the last time any part of the register
   // is referenced.
-  if (!HandlePhysRegKill(Reg, MI)) {
-    // Only some of the sub-registers are used.
-    for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
-         unsigned SubReg = *SubRegs; ++SubRegs) {
-      if (!Live.count(SubReg))
-        // Skip if this sub-register isn't defined.
-        continue;
-      if (HandlePhysRegKill(SubReg, MI)) {
-        Live.erase(SubReg);
-        for (const unsigned *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
-          Live.erase(*SS);
-      }
-    }
-    assert(Live.empty() && "Not all defined registers are killed / dead?");
+  HandlePhysRegKill(Reg, MI);
+  // Only some of the sub-registers are used.
+  for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
+       unsigned SubReg = *SubRegs; ++SubRegs) {
+    if (!Live.count(SubReg))
+      // Skip if this sub-register isn't defined.
+      continue;
+    HandlePhysRegKill(SubReg, MI);
   }
 
-  if (MI) {
-    // Does this extend the live range of a super-register?
-    SmallSet<unsigned, 8> Processed;
-    for (const unsigned *SuperRegs = TRI->getSuperRegisters(Reg);
-         unsigned SuperReg = *SuperRegs; ++SuperRegs) {
-      if (Processed.count(SuperReg))
-        continue;
-      MachineInstr *LastRef = PhysRegUse[SuperReg]
-        ? PhysRegUse[SuperReg] : PhysRegDef[SuperReg];
-      if (LastRef && LastRef != MI) {
-        // The larger register is previously defined. Now a smaller part is
-        // being re-defined. Treat it as read/mod/write if there are uses
-        // below.
-        // EAX =
-        // AX  =        EAX<imp-use,kill>, EAX<imp-def>
-        // ...
-        //     =  EAX
-        SuperDefs.push_back(SuperReg);
-        Processed.insert(SuperReg);
-        for (const unsigned *SS = TRI->getSubRegisters(SuperReg); *SS; ++SS)
-          Processed.insert(*SS);
-      }
-    }
-
-    // Remember this def.
-    Defs.push_back(Reg);
-  }
+  if (MI)
+    Defs.push_back(Reg);  // Remember this def.
 }
 
 void LiveVariables::UpdatePhysRegDefs(MachineInstr *MI,
@@ -508,51 +428,6 @@ namespace {
       return A < B;
     }
   };
-}
-
-void LiveVariables::UpdateSuperRegDefs(MachineInstr *MI,
-                                       SmallVector<unsigned, 4> &SuperDefs) {
-  // This instruction has defined part of some registers. If there are no
-  // more uses below MI, then the last use / def becomes kill / dead.
-  if (SuperDefs.empty())
-    return;
-
-  RegSorter RS(TRI);
-  std::sort(SuperDefs.begin(), SuperDefs.end(), RS);
-  SmallSet<unsigned, 4> Processed;
-  for (unsigned j = 0, ee = SuperDefs.size(); j != ee; ++j) {
-    unsigned SuperReg = SuperDefs[j];
-    if (!Processed.insert(SuperReg))
-      continue;
-    if (hasRegisterUseBelow(SuperReg, MI, MI->getParent())) {
-      // Previous use / def is not the last use / dead def. It's now
-      // partially re-defined.
-      MI->addOperand(MachineOperand::CreateReg(SuperReg, false/*IsDef*/,
-                                               true/*IsImp*/,true/*IsKill*/));
-      MI->addOperand(MachineOperand::CreateReg(SuperReg, true/*IsDef*/,
-                                               true/*IsImp*/));
-      PhysRegDef[SuperReg] = MI;
-      PhysRegUse[SuperReg] = NULL;
-      for (const unsigned *SS = TRI->getSubRegisters(SuperReg); *SS; ++SS) {
-        Processed.insert(*SS);
-        PhysRegDef[*SS] = MI;
-        PhysRegUse[*SS] = NULL;
-      }
-    } else {
-      // Previous use / def is kill / dead. It's not being re-defined.
-      HandlePhysRegKill(SuperReg, MI);
-      PhysRegDef[SuperReg] = 0;
-      PhysRegUse[SuperReg] = NULL;
-      for (const unsigned *SS = TRI->getSubRegisters(SuperReg); *SS; ++SS) {
-        Processed.insert(*SS);
-        if (PhysRegDef[*SS] == MI)
-          continue;  // This instruction may have defined it.
-        PhysRegDef[*SS] = MI;
-        PhysRegUse[*SS] = NULL;
-      }
-    }
-  }
-  SuperDefs.clear();
 }
 
 bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
@@ -588,14 +463,11 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
 
     // Mark live-in registers as live-in.
     SmallVector<unsigned, 4> Defs;
-    SmallVector<unsigned, 4> SuperDefs;
     for (MachineBasicBlock::const_livein_iterator II = MBB->livein_begin(),
            EE = MBB->livein_end(); II != EE; ++II) {
       assert(TargetRegisterInfo::isPhysicalRegister(*II) &&
              "Cannot have a live-in virtual register!");
-      HandlePhysRegDef(*II, 0, Defs, SuperDefs);
-      UpdatePhysRegDefs(0, Defs);
-      SuperDefs.clear();
+      HandlePhysRegDef(*II, 0, Defs);
     }
 
     // Loop over all of the instructions, processing them.
@@ -641,12 +513,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         unsigned MOReg = DefRegs[i];
         if (TargetRegisterInfo::isVirtualRegister(MOReg))
           HandleVirtRegDef(MOReg, MI);
-        else if (!ReservedRegisters[MOReg]) {
-          HandlePhysRegDef(MOReg, MI, Defs, SuperDefs);
-        }
+        else if (!ReservedRegisters[MOReg])
+          HandlePhysRegDef(MOReg, MI, Defs);
       }
-
-      UpdateSuperRegDefs(MI, SuperDefs);
       UpdatePhysRegDefs(MI, Defs);
     }
 
@@ -685,11 +554,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     // Loop over PhysRegDef / PhysRegUse, killing any registers that are
     // available at the end of the basic block.
     for (unsigned i = 0; i != NumRegs; ++i)
-      if (PhysRegDef[i] || PhysRegUse[i]) {
-        HandlePhysRegDef(i, 0, Defs, SuperDefs);
-        UpdatePhysRegDefs(0, Defs);
-        SuperDefs.clear();
-      }
+      if (PhysRegDef[i] || PhysRegUse[i])
+        HandlePhysRegDef(i, 0, Defs);
 
     std::fill(PhysRegDef,  PhysRegDef  + NumRegs, (MachineInstr*)0);
     std::fill(PhysRegUse,  PhysRegUse  + NumRegs, (MachineInstr*)0);

@@ -150,20 +150,13 @@ private:   // Intermediate data structures
 
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
-                        SmallVector<unsigned, 4> &Defs,
-                        SmallVector<unsigned, 4> &SuperDefs);
+                        SmallVector<unsigned, 4> &Defs);
   void UpdatePhysRegDefs(MachineInstr *MI, SmallVector<unsigned, 4> &Defs);
-  void UpdateSuperRegDefs(MachineInstr *MI, SmallVector<unsigned, 4> &Defs);
 
   /// FindLastPartialDef - Return the last partial def of the specified register.
   /// Also returns the sub-registers that're defined by the instruction.
   MachineInstr *FindLastPartialDef(unsigned Reg,
                                    SmallSet<unsigned,4> &PartDefRegs);
-
-  /// hasRegisterUseBelow - Return true if the specified register is used after
-  /// the current instruction and before its next definition.
-  bool hasRegisterUseBelow(unsigned Reg, MachineBasicBlock::iterator I,
-                           MachineBasicBlock *MBB);
 
   /// analyzePHINodes - Gather information about the PHI nodes in here. In
   /// particular, we want to map the variable information of a virtual
