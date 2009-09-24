@@ -54,7 +54,6 @@ namespace llvm {
     /// Matches.
     /// For this feature to be enabled you must construct the regex using
     /// Regex("...", Regex::Sub) constructor.
-
     bool match(const StringRef &String, SmallVectorImpl<StringRef> *Matches=0);
   private:
     struct llvm_regex *preg;

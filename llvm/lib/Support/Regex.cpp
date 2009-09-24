@@ -10,15 +10,15 @@
 // This file implements a POSIX regular expression matcher.
 //
 //===----------------------------------------------------------------------===//
+
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "regex_impl.h"
 #include <string>
-
 using namespace llvm;
-Regex::Regex(const StringRef &regex, unsigned Flags)
-{
+
+Regex::Regex(const StringRef &regex, unsigned Flags) {
   unsigned flags = 0;
   preg = new struct llvm_regex;
   preg->re_endp = regex.end();
@@ -35,26 +35,23 @@ Regex::Regex(const StringRef &regex, unsigned Flags)
   error = llvm_regcomp(preg, regex.data(), flags|REG_EXTENDED|REG_PEND);
 }
 
-bool Regex::isValid(std::string &Error)
-{
+bool Regex::isValid(std::string &Error) {
   if (!error)
     return true;
 
   size_t len = llvm_regerror(error, preg, NULL, 0);
-  char *errbuff = new char[len];
-  llvm_regerror(error, preg, errbuff, len);
-  Error.assign(errbuff);
+  
+  Error.resize(len);
+  llvm_regerror(error, preg, &Error[0], len);
   return false;
 }
 
-Regex::~Regex()
-{
+Regex::~Regex() {
   llvm_regfree(preg);
   delete preg;
 }
 
-bool Regex::match(const StringRef &String, SmallVectorImpl<StringRef> *Matches)
-{
+bool Regex::match(const StringRef &String, SmallVectorImpl<StringRef> *Matches){
   unsigned nmatch = Matches ? preg->re_nsub+1 : 0;
 
   if (Matches) {
@@ -81,7 +78,7 @@ bool Regex::match(const StringRef &String, SmallVectorImpl<StringRef> *Matches)
   // There was a match.
 
   if (Matches) { // match position requested
-    for (unsigned i=0;i<nmatch; i++) {
+    for (unsigned i = 0; i != nmatch; ++i) {
       if (pm[i].rm_so == -1) {
         // this group didn't match
         Matches->push_back(StringRef());
