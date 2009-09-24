@@ -1937,8 +1937,7 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
 void RewriteObjC::SynthSelGetUidFunctionDecl() {
   IdentifierInfo *SelGetUidIdent = &Context->Idents.get("sel_registerName");
   llvm::SmallVector<QualType, 16> ArgTys;
-  ArgTys.push_back(Context->getPointerType(
-    Context->CharTy.getQualifiedType(QualType::Const)));
+  ArgTys.push_back(Context->getPointerType(Context->CharTy.withConst()));
   QualType getFuncType = Context->getFunctionType(Context->getObjCSelType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/, 0);
@@ -2084,8 +2083,7 @@ void RewriteObjC::SynthMsgSendFpretFunctionDecl() {
 void RewriteObjC::SynthGetClassFunctionDecl() {
   IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getClass");
   llvm::SmallVector<QualType, 16> ArgTys;
-  ArgTys.push_back(Context->getPointerType(
-                     Context->CharTy.getQualifiedType(QualType::Const)));
+  ArgTys.push_back(Context->getPointerType(Context->CharTy.withConst()));
   QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/, 0);
@@ -2099,8 +2097,7 @@ void RewriteObjC::SynthGetClassFunctionDecl() {
 void RewriteObjC::SynthGetMetaClassFunctionDecl() {
   IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getMetaClass");
   llvm::SmallVector<QualType, 16> ArgTys;
-  ArgTys.push_back(Context->getPointerType(
-                     Context->CharTy.getQualifiedType(QualType::Const)));
+  ArgTys.push_back(Context->getPointerType(Context->CharTy.withConst()));
   QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/, 0);

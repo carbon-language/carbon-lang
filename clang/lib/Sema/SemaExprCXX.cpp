@@ -972,7 +972,7 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
           = ToPtrType->getPointeeType()->getAs<BuiltinType>()) {
         // This conversion is considered only when there is an
         // explicit appropriate pointer target type (C++ 4.2p2).
-        if (ToPtrType->getPointeeType().getCVRQualifiers() == 0 &&
+        if (!ToPtrType->getPointeeType().hasQualifiers() &&
             ((StrLit->isWide() && ToPointeeType->isWideCharType()) ||
              (!StrLit->isWide() &&
               (ToPointeeType->getKind() == BuiltinType::Char_U ||
@@ -1316,10 +1316,7 @@ QualType Sema::CheckPointerToMemberOperands(
   // argument.
   // We probably need a "MemberFunctionClosureType" or something like that.
   QualType Result = MemPtr->getPointeeType();
-  if (LType.isConstQualified())
-    Result.addConst();
-  if (LType.isVolatileQualified())
-    Result.addVolatile();
+  Result = Context.getCVRQualifiedType(Result, LType.getCVRQualifiers());
   return Result;
 }
 
@@ -1662,14 +1659,33 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if (LMemPtr && RMemPtr) {
     QualType LPointee = LMemPtr->getPointeeType();
     QualType RPointee = RMemPtr->getPointeeType();
+
+    QualifierCollector LPQuals, RPQuals;
+    const Type *LPCan = LPQuals.strip(Context.getCanonicalType(LPointee));
+    const Type *RPCan = RPQuals.strip(Context.getCanonicalType(RPointee));
+
     // First, we check that the unqualified pointee type is the same. If it's
     // not, there's no conversion that will unify the two pointers.
-    if (Context.getCanonicalType(LPointee).getUnqualifiedType() ==
-        Context.getCanonicalType(RPointee).getUnqualifiedType()) {
-      // Second, we take the greater of the two cv qualifications. If neither
+    if (LPCan == RPCan) {
+
+      // Second, we take the greater of the two qualifications. If neither
       // is greater than the other, the conversion is not possible.
-      unsigned Q = LPointee.getCVRQualifiers() | RPointee.getCVRQualifiers();
-      if (Q == LPointee.getCVRQualifiers() || Q == RPointee.getCVRQualifiers()){
+
+      Qualifiers MergedQuals = LPQuals + RPQuals;
+
+      bool CompatibleQuals = true;
+      if (MergedQuals.getCVRQualifiers() != LPQuals.getCVRQualifiers() &&
+          MergedQuals.getCVRQualifiers() != RPQuals.getCVRQualifiers())
+        CompatibleQuals = false;
+      else if (LPQuals.getAddressSpace() != RPQuals.getAddressSpace())
+        // FIXME:
+        // C99 6.5.15 as modified by TR 18037:
+        //   If the second and third operands are pointers into different
+        //   address spaces, the address spaces must overlap.
+        CompatibleQuals = false;
+      // FIXME: GC qualifiers?
+
+      if (CompatibleQuals) {
         // Third, we check if either of the container classes is derived from
         // the other.
         QualType LContainer(LMemPtr->getClass(), 0);
@@ -1687,8 +1703,9 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
           // The type 'Q Pointee (MoreDerived::*)' is the common type.
           // We don't use ImpCastExprToType here because this could still fail
           // for ambiguous or inaccessible conversions.
-          QualType Common = Context.getMemberPointerType(
-            LPointee.getQualifiedType(Q), MoreDerived.getTypePtr());
+          LPointee = Context.getQualifiedType(LPointee, MergedQuals);
+          QualType Common
+            = Context.getMemberPointerType(LPointee, MoreDerived.getTypePtr());
           if (PerformImplicitConversion(LHS, Common, "converting"))
             return QualType();
           if (PerformImplicitConversion(RHS, Common, "converting"))
@@ -1750,6 +1767,7 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   // What we do here is, we build the two possible composite types, and try the
   // conversions in both directions. If only one works, or if the two composite
   // types are the same, we have succeeded.
+  // FIXME: extended qualifiers?
   llvm::SmallVector<unsigned, 4> QualifierUnion;
   llvm::SmallVector<std::pair<const Type *, const Type *>, 4> MemberOfClass;
   QualType Composite1 = T1, Composite2 = T2;
@@ -1790,16 +1808,21 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
          I = QualifierUnion.begin(),
          E = QualifierUnion.end();
        I != E; (void)++I, ++MOC) {
+    Qualifiers Quals = Qualifiers::fromCVRMask(*I);
     if (MOC->first && MOC->second) {
       // Rebuild member pointer type
-      Composite1 = Context.getMemberPointerType(Composite1.getQualifiedType(*I),
-                                                MOC->first);
-      Composite2 = Context.getMemberPointerType(Composite2.getQualifiedType(*I),
-                                                MOC->second);
+      Composite1 = Context.getMemberPointerType(
+                                    Context.getQualifiedType(Composite1, Quals),
+                                    MOC->first);
+      Composite2 = Context.getMemberPointerType(
+                                    Context.getQualifiedType(Composite2, Quals),
+                                    MOC->second);
     } else {
       // Rebuild pointer type
-      Composite1 = Context.getPointerType(Composite1.getQualifiedType(*I));
-      Composite2 = Context.getPointerType(Composite2.getQualifiedType(*I));
+      Composite1
+        = Context.getPointerType(Context.getQualifiedType(Composite1, Quals));
+      Composite2
+        = Context.getPointerType(Context.getQualifiedType(Composite2, Quals));
     }
   }
 

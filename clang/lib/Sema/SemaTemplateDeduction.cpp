@@ -300,28 +300,30 @@ DeduceTemplateArguments(ASTContext &Context,
 }
 
 /// \brief Returns a completely-unqualified array type, capturing the
-/// qualifiers in CVRQuals.
+/// qualifiers in Quals.
 ///
 /// \param Context the AST context in which the array type was built.
 ///
 /// \param T a canonical type that may be an array type.
 ///
-/// \param CVRQuals will receive the set of const/volatile/restrict qualifiers
-/// that were applied to the element type of the array.
+/// \param Quals will receive the full set of qualifiers that were
+/// applied to the element type of the array.
 ///
 /// \returns if \p T is an array type, the completely unqualified array type
 /// that corresponds to T. Otherwise, returns T.
 static QualType getUnqualifiedArrayType(ASTContext &Context, QualType T,
-                                        unsigned &CVRQuals) {
+                                        Qualifiers &Quals) {
   assert(T->isCanonical() && "Only operates on canonical types");
   if (!isa<ArrayType>(T)) {
-    CVRQuals = T.getCVRQualifiers();
+    Quals = T.getQualifiers();
     return T.getUnqualifiedType();
   }
 
+  assert(!T.hasQualifiers() && "canonical array type has qualifiers!");
+
   if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(T)) {
     QualType Elt = getUnqualifiedArrayType(Context, CAT->getElementType(),
-                                           CVRQuals);
+                                           Quals);
     if (Elt == CAT->getElementType())
       return T;
 
@@ -331,7 +333,7 @@ static QualType getUnqualifiedArrayType(ASTContext &Context, QualType T,
 
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(T)) {
     QualType Elt = getUnqualifiedArrayType(Context, IAT->getElementType(),
-                                           CVRQuals);
+                                           Quals);
     if (Elt == IAT->getElementType())
       return T;
 
@@ -340,7 +342,7 @@ static QualType getUnqualifiedArrayType(ASTContext &Context, QualType T,
 
   const DependentSizedArrayType *DSAT = cast<DependentSizedArrayType>(T);
   QualType Elt = getUnqualifiedArrayType(Context, DSAT->getElementType(),
-                                         CVRQuals);
+                                         Quals);
   if (Elt == DSAT->getElementType())
     return T;
 
@@ -387,9 +389,9 @@ DeduceTemplateArguments(ASTContext &Context,
   //     referred to by the reference) can be more cv-qualified than the
   //     transformed A.
   if (TDF & TDF_ParamWithReferenceType) {
-    unsigned ExtraQualsOnParam
-      = Param.getCVRQualifiers() & ~Arg.getCVRQualifiers();
-    Param.setCVRQualifiers(Param.getCVRQualifiers() & ~ExtraQualsOnParam);
+    Qualifiers Quals = Param.getQualifiers();
+    Quals.setCVRQualifiers(Quals.getCVRQualifiers() & Arg.getCVRQualifiers());
+    Param = Context.getQualifiedType(Param.getUnqualifiedType(), Quals);
   }
 
   // If the parameter type is not dependent, there is nothing to deduce.
@@ -418,10 +420,10 @@ DeduceTemplateArguments(ASTContext &Context,
     // top level, so they can be matched with the qualifiers on the parameter.
     // FIXME: address spaces, ObjC GC qualifiers
     if (isa<ArrayType>(Arg)) {
-      unsigned CVRQuals = 0;
-      Arg = getUnqualifiedArrayType(Context, Arg, CVRQuals);
-      if (CVRQuals) {
-        Arg = Arg.getWithAdditionalQualifiers(CVRQuals);
+      Qualifiers Quals;
+      Arg = getUnqualifiedArrayType(Context, Arg, Quals);
+      if (Quals) {
+        Arg = Context.getQualifiedType(Arg, Quals);
         RecanonicalizeArg = true;
       }
     }
@@ -437,8 +439,8 @@ DeduceTemplateArguments(ASTContext &Context,
 
     assert(TemplateTypeParm->getDepth() == 0 && "Can't deduce with depth > 0");
 
-    unsigned Quals = Arg.getCVRQualifiers() & ~Param.getCVRQualifiers();
-    QualType DeducedType = Arg.getQualifiedType(Quals);
+    QualType DeducedType = Arg;
+    DeducedType.removeCVRQualifiers(Param.getCVRQualifiers());
     if (RecanonicalizeArg)
       DeducedType = Context.getCanonicalType(DeducedType);
 
@@ -2022,13 +2024,6 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
 
   T = SemaRef.Context.getCanonicalType(T);
   switch (T->getTypeClass()) {
-  case Type::ExtQual:
-    MarkUsedTemplateParameters(SemaRef,
-                               QualType(cast<ExtQualType>(T)->getBaseType(), 0),
-                               OnlyDeduced,
-                               Used);
-    break;
-
   case Type::Pointer:
     MarkUsedTemplateParameters(SemaRef,
                                cast<PointerType>(T)->getPointeeType(),

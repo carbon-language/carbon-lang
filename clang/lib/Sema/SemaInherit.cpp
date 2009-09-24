@@ -59,7 +59,7 @@ BasePaths::decl_iterator BasePaths::found_decls_end() {
 /// an unqualified, canonical class type.
 bool BasePaths::isAmbiguous(QualType BaseType) {
   assert(BaseType->isCanonical() && "Base type must be the canonical type");
-  assert(BaseType.getCVRQualifiers() == 0 && "Base type must be unqualified");
+  assert(BaseType.hasQualifiers() == 0 && "Base type must be unqualified");
   std::pair<bool, unsigned>& Subobjects = ClassSubobjects[BaseType];
   return Subobjects.second + (Subobjects.first? 1 : 0) > 1;
 }

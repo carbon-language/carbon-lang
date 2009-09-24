@@ -59,6 +59,13 @@ ASTContext::~ASTContext() {
   }
 
   {
+    llvm::FoldingSet<ExtQuals>::iterator
+      I = ExtQualNodes.begin(), E = ExtQualNodes.end();
+    while (I != E)
+      Deallocate(&*I++);
+  }
+
+  {
     llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*>::iterator
       I = ASTRecordLayouts.begin(), E = ASTRecordLayouts.end();
     while (I != E) {
@@ -525,6 +532,10 @@ unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
 
 /// getTypeSize - Return the size of the specified type, in bits.  This method
 /// does not work on incomplete types.
+///
+/// FIXME: Pointers into different addr spaces could have different sizes and
+/// alignment requirements: getPointerInfo should take an AddrSpace, this
+/// should take a QualType, &c.
 std::pair<uint64_t, unsigned>
 ASTContext::getTypeInfo(const Type *T) {
   uint64_t Width=0;
@@ -656,10 +667,6 @@ ASTContext::getTypeInfo(const Type *T) {
     Width = std::max(llvm::NextPowerOf2(Width - 1), (uint64_t)8);
     Align = Width;
     break;
-  case Type::ExtQual:
-    // FIXME: Pointers into different addr spaces could have different sizes and
-    // alignment requirements: getPointerInfo should take an AddrSpace.
-    return getTypeInfo(QualType(cast<ExtQualType>(T)->getBaseType(), 0));
   case Type::ObjCObjectPointer:
     Width = Target.getPointerWidth(0);
     Align = Target.getPointerAlign(0);
@@ -1002,52 +1009,58 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
 //                   Type creation/memoization methods
 //===----------------------------------------------------------------------===//
 
+QualType ASTContext::getExtQualType(const Type *TypeNode, Qualifiers Quals) {
+  unsigned Fast = Quals.getFastQualifiers();
+  Quals.removeFastQualifiers();
+
+  // Check if we've already instantiated this type.
+  llvm::FoldingSetNodeID ID;
+  ExtQuals::Profile(ID, TypeNode, Quals);
+  void *InsertPos = 0;
+  if (ExtQuals *EQ = ExtQualNodes.FindNodeOrInsertPos(ID, InsertPos)) {
+    assert(EQ->getQualifiers() == Quals);
+    QualType T = QualType(EQ, Fast);
+    return T;
+  }
+
+  ExtQuals *New = new (*this, 8) ExtQuals(*this, TypeNode, Quals);
+  ExtQualNodes.InsertNode(New, InsertPos);
+  QualType T = QualType(New, Fast);
+  return T;
+}
+
+QualType ASTContext::getVolatileType(QualType T) {
+  QualType CanT = getCanonicalType(T);
+  if (CanT.isVolatileQualified()) return T;
+
+  QualifierCollector Quals;
+  const Type *TypeNode = Quals.strip(T);
+  Quals.addVolatile();
+
+  return getExtQualType(TypeNode, Quals);
+}
+
 QualType ASTContext::getAddrSpaceQualType(QualType T, unsigned AddressSpace) {
   QualType CanT = getCanonicalType(T);
   if (CanT.getAddressSpace() == AddressSpace)
     return T;
 
-  // If we are composing extended qualifiers together, merge together into one
-  // ExtQualType node.
-  unsigned CVRQuals = T.getCVRQualifiers();
-  QualType::GCAttrTypes GCAttr = QualType::GCNone;
-  Type *TypeNode = T.getTypePtr();
+  // If we are composing extended qualifiers together, merge together
+  // into one ExtQuals node.
+  QualifierCollector Quals;
+  const Type *TypeNode = Quals.strip(T);
 
-  if (ExtQualType *EQT = dyn_cast<ExtQualType>(TypeNode)) {
-    // If this type already has an address space specified, it cannot get
-    // another one.
-    assert(EQT->getAddressSpace() == 0 &&
-           "Type cannot be in multiple addr spaces!");
-    GCAttr = EQT->getObjCGCAttr();
-    TypeNode = EQT->getBaseType();
-  }
+  // If this type already has an address space specified, it cannot get
+  // another one.
+  assert(!Quals.hasAddressSpace() &&
+         "Type cannot be in multiple addr spaces!");
+  Quals.addAddressSpace(AddressSpace);
 
-  // Check if we've already instantiated this type.
-  llvm::FoldingSetNodeID ID;
-  ExtQualType::Profile(ID, TypeNode, AddressSpace, GCAttr);
-  void *InsertPos = 0;
-  if (ExtQualType *EXTQy = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(EXTQy, CVRQuals);
-
-  // If the base type isn't canonical, this won't be a canonical type either,
-  // so fill in the canonical type field.
-  QualType Canonical;
-  if (!TypeNode->isCanonical()) {
-    Canonical = getAddrSpaceQualType(CanT, AddressSpace);
-
-    // Update InsertPos, the previous call could have invalidated it.
-    ExtQualType *NewIP = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
-  }
-  ExtQualType *New =
-    new (*this, 8) ExtQualType(TypeNode, Canonical, AddressSpace, GCAttr);
-  ExtQualTypes.InsertNode(New, InsertPos);
-  Types.push_back(New);
-  return QualType(New, CVRQuals);
+  return getExtQualType(TypeNode, Quals);
 }
 
 QualType ASTContext::getObjCGCQualType(QualType T,
-                                       QualType::GCAttrTypes GCAttr) {
+                                       Qualifiers::GC GCAttr) {
   QualType CanT = getCanonicalType(T);
   if (CanT.getObjCGCAttr() == GCAttr)
     return T;
@@ -1059,75 +1072,48 @@ QualType ASTContext::getObjCGCQualType(QualType T,
       return getPointerType(ResultType);
     }
   }
-  // If we are composing extended qualifiers together, merge together into one
-  // ExtQualType node.
-  unsigned CVRQuals = T.getCVRQualifiers();
-  Type *TypeNode = T.getTypePtr();
-  unsigned AddressSpace = 0;
 
-  if (ExtQualType *EQT = dyn_cast<ExtQualType>(TypeNode)) {
-    // If this type already has an ObjCGC specified, it cannot get
-    // another one.
-    assert(EQT->getObjCGCAttr() == QualType::GCNone &&
-           "Type cannot have multiple ObjCGCs!");
-    AddressSpace = EQT->getAddressSpace();
-    TypeNode = EQT->getBaseType();
-  }
+  // If we are composing extended qualifiers together, merge together
+  // into one ExtQuals node.
+  QualifierCollector Quals;
+  const Type *TypeNode = Quals.strip(T);
 
-  // Check if we've already instantiated an gc qual'd type of this type.
-  llvm::FoldingSetNodeID ID;
-  ExtQualType::Profile(ID, TypeNode, AddressSpace, GCAttr);
-  void *InsertPos = 0;
-  if (ExtQualType *EXTQy = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(EXTQy, CVRQuals);
+  // If this type already has an ObjCGC specified, it cannot get
+  // another one.
+  assert(!Quals.hasObjCGCAttr() &&
+         "Type cannot have multiple ObjCGCs!");
+  Quals.addObjCGCAttr(GCAttr);
 
-  // If the base type isn't canonical, this won't be a canonical type either,
-  // so fill in the canonical type field.
-  // FIXME: Isn't this also not canonical if the base type is a array
-  // or pointer type?  I can't find any documentation for objc_gc, though...
-  QualType Canonical;
-  if (!T->isCanonical()) {
-    Canonical = getObjCGCQualType(CanT, GCAttr);
-
-    // Update InsertPos, the previous call could have invalidated it.
-    ExtQualType *NewIP = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
-  }
-  ExtQualType *New =
-    new (*this, 8) ExtQualType(TypeNode, Canonical, AddressSpace, GCAttr);
-  ExtQualTypes.InsertNode(New, InsertPos);
-  Types.push_back(New);
-  return QualType(New, CVRQuals);
+  return getExtQualType(TypeNode, Quals);
 }
 
 QualType ASTContext::getNoReturnType(QualType T) {
-  QualifierSet qs;
-  qs.strip(T);
+  QualType ResultType;
   if (T->isPointerType()) {
     QualType Pointee = T->getAs<PointerType>()->getPointeeType();
-    QualType ResultType = getNoReturnType(Pointee);
+    ResultType = getNoReturnType(Pointee);
     ResultType = getPointerType(ResultType);
-    ResultType.setCVRQualifiers(T.getCVRQualifiers());
-    return qs.apply(ResultType, *this);
-  }
-  if (T->isBlockPointerType()) {
+  } else if (T->isBlockPointerType()) {
     QualType Pointee = T->getAs<BlockPointerType>()->getPointeeType();
-    QualType ResultType = getNoReturnType(Pointee);
+    ResultType = getNoReturnType(Pointee);
     ResultType = getBlockPointerType(ResultType);
-    ResultType.setCVRQualifiers(T.getCVRQualifiers());
-    return qs.apply(ResultType, *this);
-  }
-  if (!T->isFunctionType())
-    assert(0 && "can't noreturn qualify non-pointer to function or block type");
+  } else {
+    assert (T->isFunctionType()
+            && "can't noreturn qualify non-pointer to function or block type");
 
-  if (const FunctionNoProtoType *F = T->getAs<FunctionNoProtoType>()) {
-    return getFunctionNoProtoType(F->getResultType(), true);
+    if (const FunctionNoProtoType *F = T->getAs<FunctionNoProtoType>()) {
+      ResultType = getFunctionNoProtoType(F->getResultType(), true);
+    } else {
+      const FunctionProtoType *F = T->getAs<FunctionProtoType>();
+      ResultType
+        = getFunctionType(F->getResultType(), F->arg_type_begin(),
+                          F->getNumArgs(), F->isVariadic(), F->getTypeQuals(),
+                          F->hasExceptionSpec(), F->hasAnyExceptionSpec(),
+                          F->getNumExceptions(), F->exception_begin(), true);
+    }
   }
-  const FunctionProtoType *F = T->getAs<FunctionProtoType>();
-  return getFunctionType(F->getResultType(), F->arg_type_begin(),
-                         F->getNumArgs(), F->isVariadic(), F->getTypeQuals(),
-                         F->hasExceptionSpec(), F->hasAnyExceptionSpec(),
-                         F->getNumExceptions(), F->exception_begin(), true);
+
+  return getQualifiedType(ResultType, T.getQualifiers());
 }
 
 /// getComplexType - Return the uniqued reference to the type for a complex
@@ -1645,8 +1631,8 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
                                      const QualType *ExArray, bool NoReturn) {
   if (LangOpts.CPlusPlus) {
     for (unsigned i = 0; i != NumArgs; ++i)
-      assert(!ArgArray[i].getCVRQualifiers() && 
-             "C++ arguments can't have toplevel CVR qualifiers!");
+      assert(!ArgArray[i].hasQualifiers() && 
+             "C++ arguments can't have toplevel qualifiers!");
   }
   
   // Unique functions, to guarantee there is only one function of a particular
@@ -2157,33 +2143,38 @@ QualType ASTContext::getPointerDiffType() const {
 /// to be free of any of these, allowing two canonical types to be compared
 /// for exact equality with a simple pointer comparison.
 CanQualType ASTContext::getCanonicalType(QualType T) {
-  QualType CanType = T.getTypePtr()->getCanonicalTypeInternal();
+  QualifierCollector Quals;
+  const Type *Ptr = Quals.strip(T);
+  QualType CanType = Ptr->getCanonicalTypeInternal();
 
-  // If the result has type qualifiers, make sure to canonicalize them as well.
-  unsigned TypeQuals = T.getCVRQualifiers() | CanType.getCVRQualifiers();
-  if (TypeQuals == 0)
+  // The canonical internal type will be the canonical type *except*
+  // that we push type qualifiers down through array types.
+
+  // If there are no new qualifiers to push down, stop here.
+  if (!Quals.hasQualifiers())
     return CanQualType::CreateUnsafe(CanType);
 
-  // If the type qualifiers are on an array type, get the canonical type of the
-  // array with the qualifiers applied to the element type.
+  // If the type qualifiers are on an array type, get the canonical
+  // type of the array with the qualifiers applied to the element
+  // type.
   ArrayType *AT = dyn_cast<ArrayType>(CanType);
   if (!AT)
-    return CanQualType::CreateUnsafe(CanType.getQualifiedType(TypeQuals));
+    return CanQualType::CreateUnsafe(getQualifiedType(CanType, Quals));
 
   // Get the canonical version of the element with the extra qualifiers on it.
   // This can recursively sink qualifiers through multiple levels of arrays.
-  QualType NewEltTy=AT->getElementType().getWithAdditionalQualifiers(TypeQuals);
+  QualType NewEltTy = getQualifiedType(AT->getElementType(), Quals);
   NewEltTy = getCanonicalType(NewEltTy);
 
   if (ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
     return CanQualType::CreateUnsafe(
              getConstantArrayType(NewEltTy, CAT->getSize(),
                                   CAT->getSizeModifier(),
-                                  CAT->getIndexTypeQualifier()));
+                                  CAT->getIndexTypeCVRQualifiers()));
   if (IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(AT))
     return CanQualType::CreateUnsafe(
              getIncompleteArrayType(NewEltTy, IAT->getSizeModifier(),
-                                    IAT->getIndexTypeQualifier()));
+                                    IAT->getIndexTypeCVRQualifiers()));
 
   if (DependentSizedArrayType *DSAT = dyn_cast<DependentSizedArrayType>(AT))
     return CanQualType::CreateUnsafe(
@@ -2191,7 +2182,7 @@ CanQualType ASTContext::getCanonicalType(QualType T) {
                                         DSAT->getSizeExpr() ?
                                           DSAT->getSizeExpr()->Retain() : 0,
                                         DSAT->getSizeModifier(),
-                                        DSAT->getIndexTypeQualifier(),
+                                        DSAT->getIndexTypeCVRQualifiers(),
                                         DSAT->getBracketsRange()));
 
   VariableArrayType *VAT = cast<VariableArrayType>(AT);
@@ -2199,7 +2190,7 @@ CanQualType ASTContext::getCanonicalType(QualType T) {
                                                         VAT->getSizeExpr() ?
                                               VAT->getSizeExpr()->Retain() : 0,
                                                         VAT->getSizeModifier(),
-                                                  VAT->getIndexTypeQualifier(),
+                                              VAT->getIndexTypeCVRQualifiers(),
                                                      VAT->getBracketsRange()));
 }
 
@@ -2316,68 +2307,47 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) {
 
 const ArrayType *ASTContext::getAsArrayType(QualType T) {
   // Handle the non-qualified case efficiently.
-  if (T.getCVRQualifiers() == 0) {
+  if (!T.hasQualifiers()) {
     // Handle the common positive case fast.
     if (const ArrayType *AT = dyn_cast<ArrayType>(T))
       return AT;
   }
 
-  // Handle the common negative case fast, ignoring CVR qualifiers.
+  // Handle the common negative case fast.
   QualType CType = T->getCanonicalTypeInternal();
-
-  // Make sure to look through type qualifiers (like ExtQuals) for the negative
-  // test.
-  if (!isa<ArrayType>(CType) &&
-      !isa<ArrayType>(CType.getUnqualifiedType()))
+  if (!isa<ArrayType>(CType))
     return 0;
 
-  // Apply any CVR qualifiers from the array type to the element type.  This
+  // Apply any qualifiers from the array type to the element type.  This
   // implements C99 6.7.3p8: "If the specification of an array type includes
   // any type qualifiers, the element type is so qualified, not the array type."
 
   // If we get here, we either have type qualifiers on the type, or we have
   // sugar such as a typedef in the way.  If we have type qualifiers on the type
   // we must propagate them down into the element type.
-  unsigned CVRQuals = T.getCVRQualifiers();
-  unsigned AddrSpace = 0;
-  Type *Ty = T.getTypePtr();
 
-  // Rip through ExtQualType's and typedefs to get to a concrete type.
-  while (1) {
-    if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(Ty)) {
-      AddrSpace = EXTQT->getAddressSpace();
-      Ty = EXTQT->getBaseType();
-    } else {
-      T = Ty->getDesugaredType();
-      if (T.getTypePtr() == Ty && T.getCVRQualifiers() == 0)
-        break;
-      CVRQuals |= T.getCVRQualifiers();
-      Ty = T.getTypePtr();
-    }
-  }
+  QualifierCollector Qs;
+  const Type *Ty = Qs.strip(T.getDesugaredType());
 
   // If we have a simple case, just return now.
   const ArrayType *ATy = dyn_cast<ArrayType>(Ty);
-  if (ATy == 0 || (AddrSpace == 0 && CVRQuals == 0))
+  if (ATy == 0 || Qs.empty())
     return ATy;
 
   // Otherwise, we have an array and we have qualifiers on it.  Push the
   // qualifiers into the array element type and return a new array type.
   // Get the canonical version of the element with the extra qualifiers on it.
   // This can recursively sink qualifiers through multiple levels of arrays.
-  QualType NewEltTy = ATy->getElementType();
-  if (AddrSpace)
-    NewEltTy = getAddrSpaceQualType(NewEltTy, AddrSpace);
-  NewEltTy = NewEltTy.getWithAdditionalQualifiers(CVRQuals);
+  QualType NewEltTy = getQualifiedType(ATy->getElementType(), Qs);
 
   if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(ATy))
     return cast<ArrayType>(getConstantArrayType(NewEltTy, CAT->getSize(),
                                                 CAT->getSizeModifier(),
-                                                CAT->getIndexTypeQualifier()));
+                                           CAT->getIndexTypeCVRQualifiers()));
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(ATy))
     return cast<ArrayType>(getIncompleteArrayType(NewEltTy,
                                                   IAT->getSizeModifier(),
-                                                  IAT->getIndexTypeQualifier()));
+                                           IAT->getIndexTypeCVRQualifiers()));
 
   if (const DependentSizedArrayType *DSAT
         = dyn_cast<DependentSizedArrayType>(ATy))
@@ -2386,15 +2356,15 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
                                                 DSAT->getSizeExpr() ?
                                               DSAT->getSizeExpr()->Retain() : 0,
                                                 DSAT->getSizeModifier(),
-                                                DSAT->getIndexTypeQualifier(),
+                                              DSAT->getIndexTypeCVRQualifiers(),
                                                 DSAT->getBracketsRange()));
 
   const VariableArrayType *VAT = cast<VariableArrayType>(ATy);
   return cast<ArrayType>(getVariableArrayType(NewEltTy,
                                               VAT->getSizeExpr() ?
-                                               VAT->getSizeExpr()->Retain() : 0,
+                                              VAT->getSizeExpr()->Retain() : 0,
                                               VAT->getSizeModifier(),
-                                              VAT->getIndexTypeQualifier(),
+                                              VAT->getIndexTypeCVRQualifiers(),
                                               VAT->getBracketsRange()));
 }
 
@@ -2416,17 +2386,17 @@ QualType ASTContext::getArrayDecayedType(QualType Ty) {
   QualType PtrTy = getPointerType(PrettyArrayType->getElementType());
 
   // int x[restrict 4] ->  int *restrict
-  return PtrTy.getQualifiedType(PrettyArrayType->getIndexTypeQualifier());
+  return getQualifiedType(PtrTy, PrettyArrayType->getIndexTypeQualifiers());
 }
 
 QualType ASTContext::getBaseElementType(QualType QT) {
-  QualifierSet qualifiers;
+  QualifierCollector Qs;
   while (true) {
-    const Type *UT = qualifiers.strip(QT);
+    const Type *UT = Qs.strip(QT);
     if (const ArrayType *AT = getAsArrayType(QualType(UT,0))) {
       QT = AT->getElementType();
     } else {
-      return qualifiers.apply(QT, *this);
+      return Qs.apply(QT);
     }
   }
 }
@@ -2651,11 +2621,11 @@ QualType ASTContext::getCFConstantStringType() {
     QualType FieldTypes[4];
 
     // const int *isa;
-    FieldTypes[0] = getPointerType(IntTy.getQualifiedType(QualType::Const));
+    FieldTypes[0] = getPointerType(IntTy.withConst());
     // int flags;
     FieldTypes[1] = IntTy;
     // const char *str;
-    FieldTypes[2] = getPointerType(CharTy.getQualifiedType(QualType::Const));
+    FieldTypes[2] = getPointerType(CharTy.withConst());
     // long length;
     FieldTypes[3] = LongTy;
 
@@ -3139,9 +3109,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
 
-  if (T->isObjCInterfaceType()) {
+  if (const ObjCInterfaceType *OIT = T->getAs<ObjCInterfaceType>()) {
     // @encode(class_name)
-    ObjCInterfaceDecl *OI = T->getAs<ObjCInterfaceType>()->getDecl();
+    ObjCInterfaceDecl *OI = OIT->getDecl();
     S += '{';
     const IdentifierInfo *II = OI->getIdentifier();
     S += II->getName();
@@ -3388,24 +3358,24 @@ bool ASTContext::isObjCNSObjectType(QualType Ty) const {
 /// getObjCGCAttr - Returns one of GCNone, Weak or Strong objc's
 /// garbage collection attribute.
 ///
-QualType::GCAttrTypes ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
-  QualType::GCAttrTypes GCAttrs = QualType::GCNone;
+Qualifiers::GC ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
+  Qualifiers::GC GCAttrs = Qualifiers::GCNone;
   if (getLangOptions().ObjC1 &&
       getLangOptions().getGCMode() != LangOptions::NonGC) {
     GCAttrs = Ty.getObjCGCAttr();
     // Default behavious under objective-c's gc is for objective-c pointers
     // (or pointers to them) be treated as though they were declared
     // as __strong.
-    if (GCAttrs == QualType::GCNone) {
+    if (GCAttrs == Qualifiers::GCNone) {
       if (Ty->isObjCObjectPointerType() || Ty->isBlockPointerType())
-        GCAttrs = QualType::Strong;
+        GCAttrs = Qualifiers::Strong;
       else if (Ty->isPointerType())
         return getObjCGCAttrKind(Ty->getAs<PointerType>()->getPointeeType());
     }
     // Non-pointers have none gc'able attribute regardless of the attribute
     // set on them.
     else if (!Ty->isAnyPointerType() && !Ty->isBlockPointerType())
-      return QualType::GCNone;
+      return Qualifiers::GCNone;
   }
   return GCAttrs;
 }
@@ -3766,11 +3736,38 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (LHSCan == RHSCan)
     return LHS;
 
-  // If the qualifiers are different, the types aren't compatible
-  // Note that we handle extended qualifiers later, in the
-  // case for ExtQualType.
-  if (LHSCan.getCVRQualifiers() != RHSCan.getCVRQualifiers())
+  // If the qualifiers are different, the types aren't compatible... mostly.
+  Qualifiers LQuals = LHSCan.getQualifiers();
+  Qualifiers RQuals = RHSCan.getQualifiers();
+  if (LQuals != RQuals) {
+    // If any of these qualifiers are different, we have a type
+    // mismatch.
+    if (LQuals.getCVRQualifiers() != RQuals.getCVRQualifiers() ||
+        LQuals.getAddressSpace() != RQuals.getAddressSpace())
+      return QualType();
+
+    // Exactly one GC qualifier difference is allowed: __strong is
+    // okay if the other type has no GC qualifier but is an Objective
+    // C object pointer (i.e. implicitly strong by default).  We fix
+    // this by pretending that the unqualified type was actually
+    // qualified __strong.
+    Qualifiers::GC GC_L = LQuals.getObjCGCAttr();
+    Qualifiers::GC GC_R = RQuals.getObjCGCAttr();
+    assert((GC_L != GC_R) && "unequal qualifier sets had only equal elements");
+
+    if (GC_L == Qualifiers::Weak || GC_R == Qualifiers::Weak)
+      return QualType();
+
+    if (GC_L == Qualifiers::Strong && RHSCan->isObjCObjectPointerType()) {
+      return mergeTypes(LHS, getObjCGCQualType(RHS, Qualifiers::Strong));
+    }
+    if (GC_R == Qualifiers::Strong && LHSCan->isObjCObjectPointerType()) {
+      return mergeTypes(getObjCGCQualType(LHS, Qualifiers::Strong), RHS);
+    }
     return QualType();
+  }
+
+  // Okay, qualifiers are equal.
 
   Type::TypeClass LHSClass = LHSCan->getTypeClass();
   Type::TypeClass RHSClass = RHSCan->getTypeClass();
@@ -3779,59 +3776,6 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   // comparisons, just force one to the other.
   if (LHSClass == Type::FunctionProto) LHSClass = Type::FunctionNoProto;
   if (RHSClass == Type::FunctionProto) RHSClass = Type::FunctionNoProto;
-
-  // Strip off objc_gc attributes off the top level so they can be merged.
-  // This is a complete mess, but the attribute itself doesn't make much sense.
-  if (RHSClass == Type::ExtQual) {
-    QualType::GCAttrTypes GCAttr = RHSCan.getObjCGCAttr();
-    if (GCAttr != QualType::GCNone) {
-      QualType::GCAttrTypes GCLHSAttr = LHSCan.getObjCGCAttr();
-      // __weak attribute must appear on both declarations.
-      // __strong attribue is redundant if other decl is an objective-c
-      // object pointer (or decorated with __strong attribute); otherwise
-      // issue error.
-      if ((GCAttr == QualType::Weak && GCLHSAttr != GCAttr) ||
-          (GCAttr == QualType::Strong && GCLHSAttr != GCAttr &&
-           !LHSCan->isObjCObjectPointerType()))
-        return QualType();
-
-      RHS = QualType(cast<ExtQualType>(RHS.getDesugaredType())->getBaseType(),
-                     RHS.getCVRQualifiers());
-      QualType Result = mergeTypes(LHS, RHS);
-      if (!Result.isNull()) {
-        if (Result.getObjCGCAttr() == QualType::GCNone)
-          Result = getObjCGCQualType(Result, GCAttr);
-        else if (Result.getObjCGCAttr() != GCAttr)
-          Result = QualType();
-      }
-      return Result;
-    }
-  }
-  if (LHSClass == Type::ExtQual) {
-    QualType::GCAttrTypes GCAttr = LHSCan.getObjCGCAttr();
-    if (GCAttr != QualType::GCNone) {
-      QualType::GCAttrTypes GCRHSAttr = RHSCan.getObjCGCAttr();
-      // __weak attribute must appear on both declarations. __strong
-      // __strong attribue is redundant if other decl is an objective-c
-      // object pointer (or decorated with __strong attribute); otherwise
-      // issue error.
-      if ((GCAttr == QualType::Weak && GCRHSAttr != GCAttr) ||
-          (GCAttr == QualType::Strong && GCRHSAttr != GCAttr &&
-           !RHSCan->isObjCObjectPointerType()))
-        return QualType();
-
-      LHS = QualType(cast<ExtQualType>(LHS.getDesugaredType())->getBaseType(),
-                     LHS.getCVRQualifiers());
-      QualType Result = mergeTypes(LHS, RHS);
-      if (!Result.isNull()) {
-        if (Result.getObjCGCAttr() == QualType::GCNone)
-          Result = getObjCGCQualType(Result, GCAttr);
-        else if (Result.getObjCGCAttr() != GCAttr)
-          Result = QualType();
-      }
-      return Result;
-    }
-  }
 
   // Same as above for arrays
   if (LHSClass == Type::VariableArray || LHSClass == Type::IncompleteArray)
@@ -3988,34 +3932,6 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   case Type::FixedWidthInt:
     // Distinct fixed-width integers are not compatible.
     return QualType();
-  case Type::ExtQual:
-    // FIXME: ExtQual types can be compatible even if they're not
-    // identical!
-    return QualType();
-    // First attempt at an implementation, but I'm not really sure it's
-    // right...
-#if 0
-    ExtQualType* LQual = cast<ExtQualType>(LHSCan);
-    ExtQualType* RQual = cast<ExtQualType>(RHSCan);
-    if (LQual->getAddressSpace() != RQual->getAddressSpace() ||
-        LQual->getObjCGCAttr() != RQual->getObjCGCAttr())
-      return QualType();
-    QualType LHSBase, RHSBase, ResultType, ResCanUnqual;
-    LHSBase = QualType(LQual->getBaseType(), 0);
-    RHSBase = QualType(RQual->getBaseType(), 0);
-    ResultType = mergeTypes(LHSBase, RHSBase);
-    if (ResultType.isNull()) return QualType();
-    ResCanUnqual = getCanonicalType(ResultType).getUnqualifiedType();
-    if (LHSCan.getUnqualifiedType() == ResCanUnqual)
-      return LHS;
-    if (RHSCan.getUnqualifiedType() == ResCanUnqual)
-      return RHS;
-    ResultType = getAddrSpaceQualType(ResultType, LQual->getAddressSpace());
-    ResultType = getObjCGCQualType(ResultType, LQual->getObjCGCAttr());
-    ResultType.setCVRQualifiers(LHSCan.getCVRQualifiers());
-    return ResultType;
-#endif
-
   case Type::TemplateSpecialization:
     assert(false && "Dependent types have no size");
     break;
@@ -4231,7 +4147,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
         break;
       // FIXME: There's no way to have a built-in with an rvalue ref arg.
       case 'C':
-        Type = Type.getQualifiedType(QualType::Const);
+        Type = Type.withConst();
         break;
     }
   }

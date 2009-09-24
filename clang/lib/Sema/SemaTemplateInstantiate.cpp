@@ -496,7 +496,7 @@ TemplateInstantiator::TransformPredefinedExpr(PredefinedExpr *E) {
     PredefinedExpr::ComputeName(getSema().Context, IT, currentDecl).length();
 
   llvm::APInt LengthI(32, Length + 1);
-  QualType ResTy = getSema().Context.CharTy.getQualifiedType(QualType::Const);
+  QualType ResTy = getSema().Context.CharTy.withConst();
   ResTy = getSema().Context.getConstantArrayType(ResTy, LengthI, 
                                                  ArrayType::Normal, 0);
   PredefinedExpr *PE =

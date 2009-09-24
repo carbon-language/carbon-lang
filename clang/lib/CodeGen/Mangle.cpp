@@ -84,7 +84,7 @@ namespace {
     void manglePrefix(const DeclContext *DC);
     void mangleTemplatePrefix(const NamedDecl *ND);
     void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
-    void mangleCVQualifiers(unsigned Quals);
+    void mangleQualifiers(Qualifiers Quals);
     void mangleType(QualType T);
 
     // Declare manglers for every type class.
@@ -459,7 +459,7 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND) {
   // FIXME: no class template support
   Out << 'N';
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(ND))
-    mangleCVQualifiers(Method->getTypeQualifiers());
+    mangleQualifiers(Qualifiers::fromCVRMask(Method->getTypeQualifiers()));
   
   // Check if we have a template.
   const TemplateArgumentList *TemplateArgs = 0;
@@ -637,14 +637,16 @@ CXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity) {
   }
 }
 
-void CXXNameMangler::mangleCVQualifiers(unsigned Quals) {
+void CXXNameMangler::mangleQualifiers(Qualifiers Quals) {
   // <CV-qualifiers> ::= [r] [V] [K]    # restrict (C99), volatile, const
-  if (Quals & QualType::Restrict)
+  if (Quals.hasRestrict())
     Out << 'r';
-  if (Quals & QualType::Volatile)
+  if (Quals.hasVolatile())
     Out << 'V';
-  if (Quals & QualType::Const)
+  if (Quals.hasConst())
     Out << 'K';
+
+  // FIXME: For now, just drop all extension qualifiers on the floor.
 }
 
 void CXXNameMangler::mangleType(QualType T) {
@@ -655,10 +657,10 @@ void CXXNameMangler::mangleType(QualType T) {
   if (IsSubstitutable && mangleSubstitution(T))
     return;
 
-  if (unsigned CVRQualifiers = T.getCVRQualifiers()) {
-    //  <type> ::= <CV-qualifiers> <type>
-    mangleCVQualifiers(CVRQualifiers);
-
+  if (Qualifiers Quals = T.getQualifiers()) {
+    mangleQualifiers(Quals);
+    // Recurse:  even if the qualified type isn't yet substitutable,
+    // the unqualified type might be.
     mangleType(T.getUnqualifiedType());
   } else {
     switch (T->getTypeClass()) {
@@ -669,7 +671,7 @@ void CXXNameMangler::mangleType(QualType T) {
       return;
 #define TYPE(CLASS, PARENT) \
     case Type::CLASS: \
-      mangleType(static_cast<CLASS##Type*>(T.getTypePtr())); \
+      mangleType(static_cast<const CLASS##Type*>(T.getTypePtr())); \
       break;
 #include "clang/AST/TypeNodes.def"
     }
@@ -830,7 +832,7 @@ void CXXNameMangler::mangleType(const MemberPointerType *T) {
   mangleType(QualType(T->getClass(), 0));
   QualType PointeeType = T->getPointeeType();
   if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(PointeeType)) {
-    mangleCVQualifiers(FPT->getTypeQuals());
+    mangleQualifiers(Qualifiers::fromCVRMask(FPT->getTypeQuals()));
     mangleType(FPT);
   } else
     mangleType(PointeeType);
@@ -910,11 +912,6 @@ void CXXNameMangler::mangleType(const TemplateSpecializationType *T) {
 
 void CXXNameMangler::mangleType(const TypenameType *T) {
   assert(false && "can't mangle dependent typenames yet");
-}
-
-// FIXME: For now, just drop all extension qualifiers on the floor.
-void CXXNameMangler::mangleType(const ExtQualType *T) {
-  mangleType(QualType(T->getBaseType(), 0));
 }
 
 void CXXNameMangler::mangleExpression(const Expr *E) {

@@ -68,17 +68,8 @@ NODE_XML(QualType, "CvQualifiedType")
   ATTRIBUTE_OPT_XML(isConstQualified(), "const")        // boolean
   ATTRIBUTE_OPT_XML(isVolatileQualified(), "volatile")  // boolean
   ATTRIBUTE_OPT_XML(isRestrictQualified(), "restrict")  // boolean
-END_NODE_XML
-
-NODE_XML(ExtQualType, "ExtQualType")
-  ID_ATTRIBUTE_XML
-  TYPE_ATTRIBUTE_XML(getBaseType())
-  ATTRIBUTE_OPT_XML(getAddressSpace(), "adress_space")  // unsigned: Address Space ID - The address space ID this type is qualified with.
-  ATTRIBUTE_ENUM_OPT_XML(getObjCGCAttr(), "objc_gc")    // GC __weak/__strong attributes
-	  ENUM_XML(QualType::GCNone, "")
-	  ENUM_XML(QualType::Weak, "weak")
-	  ENUM_XML(QualType::Strong, "strong")
-  END_ENUM_XML
+  ATTRIBUTE_OPT_XML(getObjCGCAttr(), "objc_gc")         // Qualifiers::GC
+  ATTRIBUTE_OPT_XML(getAddressSpace(), "address_space") // unsigned
 END_NODE_XML
 
 NODE_XML(BuiltinType, "FundamentalType")
@@ -175,7 +166,7 @@ NODE_XML(ConstantArrayType, "ArrayType")
 	  ENUM_XML(ArrayType::Static, "static")
 	  ENUM_XML(ArrayType::Star, "star")
   END_ENUM_XML
-  ATTRIBUTE_OPT_XML(getIndexTypeQualifier(), "index_type_qualifier")   // unsigned
+  ATTRIBUTE_OPT_XML(getIndexTypeCVRQualifiers(), "index_type_qualifier")   // unsigned
 END_NODE_XML
 
 NODE_XML(IncompleteArrayType, "IncompleteArrayType")

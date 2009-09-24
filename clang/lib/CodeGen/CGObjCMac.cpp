@@ -112,6 +112,9 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   V = CGF.Builder.CreateGEP(V, Offset, "add.ptr");
   V = CGF.Builder.CreateBitCast(V, llvm::PointerType::getUnqual(LTy));
 
+  Qualifiers Quals = CGF.MakeQualifiers(IvarTy);
+  Quals.addCVRQualifiers(CVRQualifiers);
+
   if (Ivar->isBitField()) {
     // We need to compute the bit offset for the bit-field, the offset
     // is to the byte. Note, there is a subtle invariant here: we can
@@ -124,11 +127,11 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
       Ivar->getBitWidth()->EvaluateAsInt(CGF.getContext()).getZExtValue();
     return LValue::MakeBitfield(V, BitOffset, BitFieldSize,
                                 IvarTy->isSignedIntegerType(),
-                                IvarTy.getCVRQualifiers()|CVRQualifiers);
+                                Quals.getCVRQualifiers());
   }
 
-  LValue LV = LValue::MakeAddr(V, IvarTy.getCVRQualifiers()|CVRQualifiers,
-                               CGF.CGM.getContext().getObjCGCAttrKind(IvarTy));
+  
+  LValue LV = LValue::MakeAddr(V, Quals);
   return LV;
 }
 
@@ -2992,21 +2995,20 @@ llvm::Constant *CGObjCCommonMac::GetIvarLayoutName(IdentifierInfo *Ident,
   return llvm::Constant::getNullValue(ObjCTypes.Int8PtrTy);
 }
 
-static QualType::GCAttrTypes GetGCAttrTypeForType(ASTContext &Ctx,
-                                                  QualType FQT) {
+static Qualifiers::GC GetGCAttrTypeForType(ASTContext &Ctx, QualType FQT) {
   if (FQT.isObjCGCStrong())
-    return QualType::Strong;
+    return Qualifiers::Strong;
 
   if (FQT.isObjCGCWeak())
-    return QualType::Weak;
+    return Qualifiers::Weak;
 
   if (FQT->isObjCObjectPointerType() || FQT->isBlockPointerType())
-    return QualType::Strong;
+    return Qualifiers::Strong;
 
   if (const PointerType *PT = FQT->getAs<PointerType>())
     return GetGCAttrTypeForType(Ctx, PT->getPointeeType());
 
-  return QualType::GCNone;
+  return Qualifiers::GCNone;
 }
 
 void CGObjCCommonMac::BuildAggrIvarRecordLayout(const RecordType *RT,
@@ -3123,11 +3125,11 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
     }
     // At this point, we are done with Record/Union and array there of.
     // For other arrays we are down to its element type.
-    QualType::GCAttrTypes GCAttr = GetGCAttrTypeForType(CGM.getContext(), FQT);
+    Qualifiers::GC GCAttr = GetGCAttrTypeForType(CGM.getContext(), FQT);
 
     unsigned FieldSize = CGM.getContext().getTypeSize(Field->getType());
-    if ((ForStrongLayout && GCAttr == QualType::Strong)
-        || (!ForStrongLayout && GCAttr == QualType::Weak)) {
+    if ((ForStrongLayout && GCAttr == Qualifiers::Strong)
+        || (!ForStrongLayout && GCAttr == Qualifiers::Weak)) {
       if (IsUnion) {
         uint64_t UnionIvarSize = FieldSize / WordSizeInBits;
         if (UnionIvarSize > MaxUnionIvarSize) {
@@ -3140,8 +3142,8 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
                                     FieldSize / WordSizeInBits));
       }
     } else if ((ForStrongLayout &&
-                (GCAttr == QualType::GCNone || GCAttr == QualType::Weak))
-               || (!ForStrongLayout && GCAttr != QualType::Weak)) {
+                (GCAttr == Qualifiers::GCNone || GCAttr == Qualifiers::Weak))
+               || (!ForStrongLayout && GCAttr != Qualifiers::Weak)) {
       if (IsUnion) {
         // FIXME: Why the asymmetry? We divide by word size in bits on other
         // side.

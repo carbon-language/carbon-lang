@@ -496,6 +496,12 @@ public:
   //                                  Helpers
   //===--------------------------------------------------------------------===//
 
+  Qualifiers MakeQualifiers(QualType T) {
+    Qualifiers Quals = T.getQualifiers();
+    Quals.setObjCGCAttr(getContext().getObjCGCAttrKind(T));
+    return Quals;
+  }
+
   /// CreateTempAlloca - This creates a alloca and inserts it into the entry
   /// block.
   llvm::AllocaInst *CreateTempAlloca(const llvm::Type *Ty,

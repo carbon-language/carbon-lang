@@ -146,7 +146,7 @@ CXXRecordDecl::setBases(ASTContext &C,
 }
 
 bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {
-  return getCopyConstructor(Context, QualType::Const) != 0;
+  return getCopyConstructor(Context, Qualifiers::Const) != 0;
 }
 
 CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context,
@@ -167,8 +167,8 @@ CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context,
 
     if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(Context,
                                                           FoundTQs)) {
-      if (((TypeQuals & QualType::Const) == (FoundTQs & QualType::Const)) ||
-          (!(TypeQuals & QualType::Const) && (FoundTQs & QualType::Const)))
+      if (((TypeQuals & Qualifiers::Const) == (FoundTQs & Qualifiers::Const)) ||
+          (!(TypeQuals & Qualifiers::Const) && (FoundTQs & Qualifiers::Const)))
         return cast<CXXConstructorDecl>(*Con);
 
     }
@@ -508,7 +508,8 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
     ClassTy = TD->getInjectedClassNameType(C);
   else
     ClassTy = C.getTagDeclType(getParent());
-  ClassTy = ClassTy.getWithAdditionalQualifiers(getTypeQualifiers());
+  ClassTy = C.getQualifiedType(ClassTy,
+                               Qualifiers::fromCVRMask(getTypeQualifiers()));
   return C.getPointerType(ClassTy);
 }
 
@@ -599,6 +600,8 @@ CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
     = Context.getCanonicalType(Context.getTagDeclType(getParent()));
   if (PointeeType.getUnqualifiedType() != ClassTy)
     return false;
+
+  // FIXME: other qualifiers?
 
   // We have a copy constructor.
   TypeQuals = PointeeType.getCVRQualifiers();

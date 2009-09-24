@@ -186,12 +186,12 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
          "Destination type is not pointer or pointer to member.");
 
   QualType UnwrappedSrcType = SrcType, UnwrappedDestType = DestType;
-  llvm::SmallVector<unsigned, 8> cv1, cv2;
+  llvm::SmallVector<Qualifiers, 8> cv1, cv2;
 
   // Find the qualifications.
   while (Self.UnwrapSimilarPointerTypes(UnwrappedSrcType, UnwrappedDestType)) {
-    cv1.push_back(UnwrappedSrcType.getCVRQualifiers());
-    cv2.push_back(UnwrappedDestType.getCVRQualifiers());
+    cv1.push_back(UnwrappedSrcType.getQualifiers());
+    cv2.push_back(UnwrappedDestType.getQualifiers());
   }
   assert(cv1.size() > 0 && "Must have at least one pointer level.");
 
@@ -199,13 +199,14 @@ CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
   // unwrapping, of course).
   QualType SrcConstruct = Self.Context.VoidTy;
   QualType DestConstruct = Self.Context.VoidTy;
-  for (llvm::SmallVector<unsigned, 8>::reverse_iterator i1 = cv1.rbegin(),
-                                                        i2 = cv2.rbegin();
+  ASTContext &Context = Self.Context;
+  for (llvm::SmallVector<Qualifiers, 8>::reverse_iterator i1 = cv1.rbegin(),
+                                                          i2 = cv2.rbegin();
        i1 != cv1.rend(); ++i1, ++i2) {
-    SrcConstruct = Self.Context.getPointerType(
-      SrcConstruct.getQualifiedType(*i1));
-    DestConstruct = Self.Context.getPointerType(
-      DestConstruct.getQualifiedType(*i2));
+    SrcConstruct
+      = Context.getPointerType(Context.getQualifiedType(SrcConstruct, *i1));
+    DestConstruct
+      = Context.getPointerType(Context.getQualifiedType(DestConstruct, *i2));
   }
 
   // Test if they're compatible.

@@ -825,7 +825,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
     return LV_NotObjectType;
 
   // Allow qualified void which is an incomplete type other than void (yuck).
-  if (TR->isVoidType() && !Ctx.getCanonicalType(TR).getCVRQualifiers())
+  if (TR->isVoidType() && !Ctx.getCanonicalType(TR).hasQualifiers())
     return LV_IncompleteVoidType;
 
   return LV_Valid;
@@ -1120,7 +1120,7 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
       // dereferencing to a  pointer is always a gc'able candidate,
       // unless it is __weak.
       return T->isPointerType() &&
-             (Ctx.getObjCGCAttrKind(T) != QualType::Weak);
+             (Ctx.getObjCGCAttrKind(T) != Qualifiers::Weak);
     }
     return false;
   }
@@ -1397,7 +1397,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     if (isa<EnumConstantDecl>(cast<DeclRefExpr>(E)->getDecl()))
       return NoDiag();
     if (Ctx.getLangOptions().CPlusPlus &&
-        E->getType().getCVRQualifiers() == QualType::Const) {
+        E->getType().getCVRQualifiers() == Qualifiers::Const) {
       // C++ 7.1.5.1p2
       //   A variable of non-volatile const-qualified integral or enumeration
       //   type initialized by an ICE can be used in ICEs.
@@ -1635,7 +1635,7 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
       // Check that it is a cast to void*.
       if (const PointerType *PT = CE->getType()->getAs<PointerType>()) {
         QualType Pointee = PT->getPointeeType();
-        if (Pointee.getCVRQualifiers() == 0 &&
+        if (!Pointee.hasQualifiers() &&
             Pointee->isVoidType() &&                              // to void*
             CE->getSubExpr()->getType()->isIntegerType())         // from int.
           return CE->getSubExpr()->isNullPointerConstant(Ctx);

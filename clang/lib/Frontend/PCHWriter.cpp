@@ -64,13 +64,6 @@ namespace {
   };
 }
 
-void PCHTypeWriter::VisitExtQualType(const ExtQualType *T) {
-  Writer.AddTypeRef(QualType(T->getBaseType(), 0), Record);
-  Record.push_back(T->getObjCGCAttr()); // FIXME: use stable values
-  Record.push_back(T->getAddressSpace());
-  Code = pch::TYPE_EXT_QUAL;
-}
-
 void PCHTypeWriter::VisitBuiltinType(const BuiltinType *T) {
   assert(false && "Built-in types are never serialized");
 }
@@ -115,7 +108,7 @@ void PCHTypeWriter::VisitMemberPointerType(const MemberPointerType *T) {
 void PCHTypeWriter::VisitArrayType(const ArrayType *T) {
   Writer.AddTypeRef(T->getElementType(), Record);
   Record.push_back(T->getSizeModifier()); // FIXME: stable values
-  Record.push_back(T->getIndexTypeQualifier()); // FIXME: stable values
+  Record.push_back(T->getIndexTypeCVRQualifiers()); // FIXME: stable values
 }
 
 void PCHTypeWriter::VisitConstantArrayType(const ConstantArrayType *T) {
@@ -1087,7 +1080,7 @@ void PCHWriter::WriteComments(ASTContext &Context) {
 //===----------------------------------------------------------------------===//
 
 /// \brief Write the representation of a type to the PCH stream.
-void PCHWriter::WriteType(const Type *T) {
+void PCHWriter::WriteType(QualType T) {
   pch::TypeID &ID = TypeIDs[T];
   if (ID == 0) // we haven't seen this type before.
     ID = NextTypeID++;
@@ -1104,22 +1097,30 @@ void PCHWriter::WriteType(const Type *T) {
 
   // Emit the type's representation.
   PCHTypeWriter W(*this, Record);
-  switch (T->getTypeClass()) {
-    // For all of the concrete, non-dependent types, call the
-    // appropriate visitor function.
+
+  if (T.hasNonFastQualifiers()) {
+    Qualifiers Qs = T.getQualifiers();
+    AddTypeRef(T.getUnqualifiedType(), Record);
+    Record.push_back(Qs.getAsOpaqueValue());
+    W.Code = pch::TYPE_EXT_QUAL;
+  } else {
+    switch (T->getTypeClass()) {
+      // For all of the concrete, non-dependent types, call the
+      // appropriate visitor function.
 #define TYPE(Class, Base) \
-    case Type::Class: W.Visit##Class##Type(cast<Class##Type>(T)); break;
+      case Type::Class: W.Visit##Class##Type(cast<Class##Type>(T)); break;
 #define ABSTRACT_TYPE(Class, Base)
 #define DEPENDENT_TYPE(Class, Base)
 #include "clang/AST/TypeNodes.def"
 
-    // For all of the dependent type nodes (which only occur in C++
-    // templates), produce an error.
+      // For all of the dependent type nodes (which only occur in C++
+      // templates), produce an error.
 #define TYPE(Class, Base)
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
-    assert(false && "Cannot serialize dependent type nodes");
-    break;
+      assert(false && "Cannot serialize dependent type nodes");
+      break;
+    }
   }
 
   // Emit the serialized record.
@@ -1136,9 +1137,8 @@ void PCHWriter::WriteTypesBlock(ASTContext &Context) {
 
   // Emit all of the types that need to be emitted (so far).
   while (!TypesToEmit.empty()) {
-    const Type *T = TypesToEmit.front();
+    QualType T = TypesToEmit.front();
     TypesToEmit.pop();
-    assert(!isa<BuiltinType>(T) && "Built-in types are not serialized");
     WriteType(T);
   }
 
@@ -1975,6 +1975,26 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
     return;
   }
 
+  unsigned FastQuals = T.getFastQualifiers();
+  T.removeFastQualifiers();
+
+  if (T.hasNonFastQualifiers()) {
+    pch::TypeID &ID = TypeIDs[T];
+    if (ID == 0) {
+      // We haven't seen these qualifiers applied to this type before.
+      // Assign it a new ID.  This is the only time we enqueue a
+      // qualified type, and it has no CV qualifiers.
+      ID = NextTypeID++;
+      TypesToEmit.push(T);
+    }
+    
+    // Encode the type qualifiers in the type reference.
+    Record.push_back((ID << Qualifiers::FastWidth) | FastQuals);
+    return;
+  }
+
+  assert(!T.hasQualifiers());
+  
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(T.getTypePtr())) {
     pch::TypeID ID = 0;
     switch (BT->getKind()) {
@@ -2010,20 +2030,20 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
       break;
     }
 
-    Record.push_back((ID << 3) | T.getCVRQualifiers());
+    Record.push_back((ID << Qualifiers::FastWidth) | FastQuals);
     return;
   }
 
-  pch::TypeID &ID = TypeIDs[T.getTypePtr()];
+  pch::TypeID &ID = TypeIDs[T];
   if (ID == 0) {
     // We haven't seen this type before. Assign it a new ID and put it
-    // into the queu of types to emit.
+    // into the queue of types to emit.
     ID = NextTypeID++;
-    TypesToEmit.push(T.getTypePtr());
+    TypesToEmit.push(T);
   }
 
   // Encode the type qualifiers in the type reference.
-  Record.push_back((ID << 3) | T.getCVRQualifiers());
+  Record.push_back((ID << Qualifiers::FastWidth) | FastQuals);
 }
 
 void PCHWriter::AddDeclRef(const Decl *D, RecordData &Record) {

@@ -188,7 +188,7 @@ public:
   /// not permitted (e.g., qualifiers on reference or function types). This
   /// is the right thing for template instantiation, but probably not for
   /// other clients.
-  QualType AddTypeQualifiers(QualType T, unsigned CVRQualifiers);
+  QualType AddTypeQualifiers(QualType T, Qualifiers Qs);
 
   /// \brief Transform the given statement.
   ///
@@ -1935,13 +1935,16 @@ QualType TreeTransform<Derived>::TransformType(QualType T) {
   if (getDerived().AlreadyTransformed(T))
     return T;
 
+  QualifierCollector Qs;
+  const Type *Ty = Qs.strip(T);
+
   QualType Result;
-  switch (T->getTypeClass()) {
+  switch (Ty->getTypeClass()) {
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define TYPE(CLASS, PARENT)                                                  \
     case Type::CLASS:                                                        \
       Result = getDerived().Transform##CLASS##Type(                          \
-                                  static_cast<CLASS##Type*>(T.getTypePtr())); \
+                                       static_cast<const CLASS##Type*>(Ty)); \
       break;
 #include "clang/AST/TypeNodes.def"
   }
@@ -1949,22 +1952,16 @@ QualType TreeTransform<Derived>::TransformType(QualType T) {
   if (Result.isNull() || T == Result)
     return Result;
 
-  return getDerived().AddTypeQualifiers(Result, T.getCVRQualifiers());
+  return getDerived().AddTypeQualifiers(Result, Qs);
 }
 
 template<typename Derived>
 QualType
-TreeTransform<Derived>::AddTypeQualifiers(QualType T, unsigned CVRQualifiers) {
-  if (CVRQualifiers && !T->isFunctionType() && !T->isReferenceType())
-    return T.getWithAdditionalQualifiers(CVRQualifiers);
+TreeTransform<Derived>::AddTypeQualifiers(QualType T, Qualifiers Quals) {
+  if (!Quals.empty() && !T->isFunctionType() && !T->isReferenceType())
+    return SemaRef.Context.getQualifiedType(T, Quals);
 
   return T;
-}
-
-template<typename Derived>
-QualType TreeTransform<Derived>::TransformExtQualType(const ExtQualType *T) {
-  // FIXME: Implement
-  return QualType(T, 0);
 }
 
 template<typename Derived>
@@ -2076,7 +2073,7 @@ TreeTransform<Derived>::TransformConstantArrayType(const ConstantArrayType *T) {
   return getDerived().RebuildConstantArrayType(ElementType,
                                                T->getSizeModifier(),
                                                T->getSize(),
-                                               T->getIndexTypeQualifier());
+                                               T->getIndexTypeCVRQualifiers());
 }
 
 template<typename Derived>
@@ -2103,7 +2100,7 @@ TreeTransform<Derived>::TransformConstantArrayWithExprType(
                                                        T->getSizeModifier(),
                                                        T->getSize(),
                                                        Size.takeAs<Expr>(),
-                                                   T->getIndexTypeQualifier(),
+                                               T->getIndexTypeCVRQualifiers(),
                                                        T->getBracketsRange());
 }
 
@@ -2122,7 +2119,7 @@ TreeTransform<Derived>::TransformConstantArrayWithoutExprType(
   return getDerived().RebuildConstantArrayWithoutExprType(ElementType,
                                                        T->getSizeModifier(),
                                                        T->getSize(),
-                                                    T->getIndexTypeQualifier());
+                                             T->getIndexTypeCVRQualifiers());
 }
 
 template<typename Derived>
@@ -2138,7 +2135,7 @@ QualType TreeTransform<Derived>::TransformIncompleteArrayType(
 
   return getDerived().RebuildIncompleteArrayType(ElementType,
                                                  T->getSizeModifier(),
-                                                 T->getIndexTypeQualifier());
+                                               T->getIndexTypeCVRQualifiers());
 }
 
 template<typename Derived>
@@ -2165,7 +2162,7 @@ QualType TreeTransform<Derived>::TransformVariableArrayType(
   return getDerived().RebuildVariableArrayType(ElementType,
                                                T->getSizeModifier(),
                                                move(Size),
-                                               T->getIndexTypeQualifier(),
+                                               T->getIndexTypeCVRQualifiers(),
                                                T->getBracketsRange());
 }
 
@@ -2193,7 +2190,7 @@ QualType TreeTransform<Derived>::TransformDependentSizedArrayType(
   return getDerived().RebuildDependentSizedArrayType(ElementType,
                                                      T->getSizeModifier(),
                                                      move(Size),
-                                                     T->getIndexTypeQualifier(),
+                                            T->getIndexTypeCVRQualifiers(),
                                                      T->getBracketsRange());
 }
 
@@ -4462,14 +4459,14 @@ TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
 
 template<typename Derived>
 QualType TreeTransform<Derived>::RebuildPointerType(QualType PointeeType) {
-  return SemaRef.BuildPointerType(PointeeType, 0,
+  return SemaRef.BuildPointerType(PointeeType, Qualifiers(),
                                   getDerived().getBaseLocation(),
                                   getDerived().getBaseEntity());
 }
 
 template<typename Derived>
 QualType TreeTransform<Derived>::RebuildBlockPointerType(QualType PointeeType) {
-  return SemaRef.BuildBlockPointerType(PointeeType, 0,
+  return SemaRef.BuildBlockPointerType(PointeeType, Qualifiers(),
                                        getDerived().getBaseLocation(),
                                        getDerived().getBaseEntity());
 }
@@ -4477,7 +4474,7 @@ QualType TreeTransform<Derived>::RebuildBlockPointerType(QualType PointeeType) {
 template<typename Derived>
 QualType
 TreeTransform<Derived>::RebuildLValueReferenceType(QualType ReferentType) {
-  return SemaRef.BuildReferenceType(ReferentType, true, 0,
+  return SemaRef.BuildReferenceType(ReferentType, true, Qualifiers(),
                                     getDerived().getBaseLocation(),
                                     getDerived().getBaseEntity());
 }
@@ -4485,7 +4482,7 @@ TreeTransform<Derived>::RebuildLValueReferenceType(QualType ReferentType) {
 template<typename Derived>
 QualType
 TreeTransform<Derived>::RebuildRValueReferenceType(QualType ReferentType) {
-  return SemaRef.BuildReferenceType(ReferentType, false, 0,
+  return SemaRef.BuildReferenceType(ReferentType, false, Qualifiers(),
                                     getDerived().getBaseLocation(),
                                     getDerived().getBaseEntity());
 }
@@ -4493,7 +4490,7 @@ TreeTransform<Derived>::RebuildRValueReferenceType(QualType ReferentType) {
 template<typename Derived>
 QualType TreeTransform<Derived>::RebuildMemberPointerType(QualType PointeeType,
                                                           QualType ClassType) {
-  return SemaRef.BuildMemberPointerType(PointeeType, ClassType, 0,
+  return SemaRef.BuildMemberPointerType(PointeeType, ClassType, Qualifiers(),
                                         getDerived().getBaseLocation(),
                                         getDerived().getBaseEntity());
 }
@@ -4700,7 +4697,7 @@ TreeTransform<Derived>::RebuildNestedNameSpecifier(NestedNameSpecifier *Prefix,
                                                    QualType T) {
   if (T->isDependentType() || T->isRecordType() ||
       (SemaRef.getLangOptions().CPlusPlus0x && T->isEnumeralType())) {
-    assert(T.getCVRQualifiers() == 0 && "Can't get cv-qualifiers here");
+    assert(!T.hasQualifiers() && "Can't get cv-qualifiers here");
     return NestedNameSpecifier::Create(SemaRef.Context, Prefix, TemplateKW,
                                        T.getTypePtr());
   }

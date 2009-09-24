@@ -2046,13 +2046,13 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
 
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
   if (FTI.TypeQuals != 0) {
-    if (FTI.TypeQuals & QualType::Const)
+    if (FTI.TypeQuals & Qualifiers::Const)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_constructor)
         << "const" << SourceRange(D.getIdentifierLoc());
-    if (FTI.TypeQuals & QualType::Volatile)
+    if (FTI.TypeQuals & Qualifiers::Volatile)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_constructor)
         << "volatile" << SourceRange(D.getIdentifierLoc());
-    if (FTI.TypeQuals & QualType::Restrict)
+    if (FTI.TypeQuals & Qualifiers::Restrict)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_constructor)
         << "restrict" << SourceRange(D.getIdentifierLoc());
   }
@@ -2159,13 +2159,13 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D,
 
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
   if (FTI.TypeQuals != 0 && !D.isInvalidType()) {
-    if (FTI.TypeQuals & QualType::Const)
+    if (FTI.TypeQuals & Qualifiers::Const)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_destructor)
         << "const" << SourceRange(D.getIdentifierLoc());
-    if (FTI.TypeQuals & QualType::Volatile)
+    if (FTI.TypeQuals & Qualifiers::Volatile)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_destructor)
         << "volatile" << SourceRange(D.getIdentifierLoc());
-    if (FTI.TypeQuals & QualType::Restrict)
+    if (FTI.TypeQuals & Qualifiers::Restrict)
       Diag(D.getIdentifierLoc(), diag::err_invalid_qualified_destructor)
         << "restrict" << SourceRange(D.getIdentifierLoc());
     D.setInvalidType();
@@ -2844,10 +2844,8 @@ Sema::getAssignOperatorMethod(ParmVarDecl *ParmDecl,
   // If class's assignment operator argument is const/volatile qualified,
   // look for operator = (const/volatile B&). Otherwise, look for
   // operator = (B&).
-  if (ParmDecl->getType().isConstQualified())
-    RHSType.addConst();
-  if (ParmDecl->getType().isVolatileQualified())
-    RHSType.addVolatile();
+  RHSType = Context.getCVRQualifiedType(RHSType,
+                                     ParmDecl->getType().getCVRQualifiers());
   ExprOwningPtr<Expr> LHS(this,  new (Context) DeclRefExpr(ParmDecl,
                                                           LHSType,
                                                           SourceLocation()));
@@ -3575,7 +3573,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   //     -- Otherwise, the reference shall be to a non-volatile const
   //        type (i.e., cv1 shall be const), or the reference shall be an
   //        rvalue reference and the initializer expression shall be an rvalue.
-  if (!isRValRef && T1.getCVRQualifiers() != QualType::Const) {
+  if (!isRValRef && T1.getCVRQualifiers() != Qualifiers::Const) {
     if (!ICS)
       Diag(DeclLoc, diag::err_not_reference_to_const_init)
         << T1 << (InitLvalue != Expr::LV_Valid? "temporary" : "value")

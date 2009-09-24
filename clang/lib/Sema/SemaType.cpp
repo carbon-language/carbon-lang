@@ -312,7 +312,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     // Enforce C99 6.7.3p2: "Types other than pointer types derived from object
     // or incomplete types shall not be restrict-qualified."  C++ also allows
     // restrict-qualified references.
-    if (TypeQuals & QualType::Restrict) {
+    if (TypeQuals & DeclSpec::TQ_restrict) {
       if (Result->isPointerType() || Result->isReferenceType()) {
         QualType EltTy = Result->isPointerType() ?
           Result->getAs<PointerType>()->getPointeeType() :
@@ -324,13 +324,13 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
           Diag(DS.getRestrictSpecLoc(),
                diag::err_typecheck_invalid_restrict_invalid_pointee)
             << EltTy << DS.getSourceRange();
-          TypeQuals &= ~QualType::Restrict; // Remove the restrict qualifier.
+          TypeQuals &= ~DeclSpec::TQ_restrict; // Remove the restrict qualifier.
         }
       } else {
         Diag(DS.getRestrictSpecLoc(),
              diag::err_typecheck_invalid_restrict_not_pointer)
           << Result << DS.getSourceRange();
-        TypeQuals &= ~QualType::Restrict; // Remove the restrict qualifier.
+        TypeQuals &= ~DeclSpec::TQ_restrict; // Remove the restrict qualifier.
       }
     }
 
@@ -340,12 +340,14 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     if (Result->isFunctionType() && TypeQuals) {
       // Get some location to point at, either the C or V location.
       SourceLocation Loc;
-      if (TypeQuals & QualType::Const)
+      if (TypeQuals & DeclSpec::TQ_const)
         Loc = DS.getConstSpecLoc();
-      else {
-        assert((TypeQuals & QualType::Volatile) &&
-               "Has CV quals but not C or V?");
+      else if (TypeQuals & DeclSpec::TQ_volatile)
         Loc = DS.getVolatileSpecLoc();
+      else {
+        assert((TypeQuals & DeclSpec::TQ_restrict) &&
+               "Has CVR quals but not C, V, or R?");
+        Loc = DS.getRestrictSpecLoc();
       }
       Diag(Loc, diag::warn_typecheck_function_qualifiers)
         << Result << DS.getSourceRange();
@@ -359,12 +361,14 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     // FIXME: Shouldn't we be checking SCS_typedef here?
     if (DS.getTypeSpecType() == DeclSpec::TST_typename &&
         TypeQuals && Result->isReferenceType()) {
-      TypeQuals &= ~QualType::Const;
-      TypeQuals &= ~QualType::Volatile;
+      TypeQuals &= ~DeclSpec::TQ_const;
+      TypeQuals &= ~DeclSpec::TQ_volatile;
     }
 
-    Result = Result.getQualifiedType(TypeQuals);
+    Qualifiers Quals = Qualifiers::fromCVRMask(TypeQuals);
+    Result = Context.getQualifiedType(Result, Quals);
   }
+
   return Result;
 }
 
@@ -399,23 +403,25 @@ QualType Sema::BuildPointerType(QualType T, unsigned Quals,
     return QualType();
   }
 
+  Qualifiers Qs = Qualifiers::fromCVRMask(Quals);
+
   // Enforce C99 6.7.3p2: "Types other than pointer types derived from
   // object or incomplete types shall not be restrict-qualified."
-  if ((Quals & QualType::Restrict) && !T->isIncompleteOrObjectType()) {
+  if (Qs.hasRestrict() && !T->isIncompleteOrObjectType()) {
     Diag(Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
       << T;
-    Quals &= ~QualType::Restrict;
+    Qs.removeRestrict();
   }
 
   // Build the pointer type.
-  return Context.getPointerType(T).getQualifiedType(Quals);
+  return Context.getQualifiedType(Context.getPointerType(T), Qs);
 }
 
 /// \brief Build a reference type.
 ///
 /// \param T The type to which we'll be building a reference.
 ///
-/// \param Quals The cvr-qualifiers to be applied to the reference type.
+/// \param CVR The cvr-qualifiers to be applied to the reference type.
 ///
 /// \param Loc The location of the entity whose type involves this
 /// reference type or, if there is no such entity, the location of the
@@ -426,8 +432,9 @@ QualType Sema::BuildPointerType(QualType T, unsigned Quals,
 ///
 /// \returns A suitable reference type, if there are no
 /// errors. Otherwise, returns a NULL type.
-QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
+QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned CVR,
                                   SourceLocation Loc, DeclarationName Entity) {
+  Qualifiers Quals = Qualifiers::fromCVRMask(CVR);
   if (LValueRef) {
     if (const RValueReferenceType *R = T->getAs<RValueReferenceType>()) {
       // C++0x [dcl.typedef]p9: If a typedef TD names a type that is a
@@ -435,8 +442,8 @@ QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
       //   reference to cv TD" creates the type "lvalue reference to T".
       // We use the qualifiers (restrict or none) of the original reference,
       // not the new ones. This is consistent with GCC.
-      return Context.getLValueReferenceType(R->getPointeeType()).
-               getQualifiedType(T.getCVRQualifiers());
+      QualType LVRT = Context.getLValueReferenceType(R->getPointeeType());
+      return Context.getQualifiedType(LVRT, T.getQualifiers());
     }
   }
   if (T->isReferenceType()) {
@@ -449,7 +456,7 @@ QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
     //   typedef int& intref;
     //   typedef intref& intref2;
     //
-    // Parser::ParserDeclaratorInternal diagnoses the case where
+    // Parser::ParseDeclaratorInternal diagnoses the case where
     // references are written directly; here, we handle the
     // collapsing of references-to-references as described in C++
     // DR 106 and amended by C++ DR 540.
@@ -466,10 +473,10 @@ QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
 
   // Enforce C99 6.7.3p2: "Types other than pointer types derived from
   // object or incomplete types shall not be restrict-qualified."
-  if ((Quals & QualType::Restrict) && !T->isIncompleteOrObjectType()) {
+  if (Quals.hasRestrict() && !T->isIncompleteOrObjectType()) {
     Diag(Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
       << T;
-    Quals &= ~QualType::Restrict;
+    Quals.removeRestrict();
   }
 
   // C++ [dcl.ref]p1:
@@ -481,13 +488,13 @@ QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
   // We diagnose extraneous cv-qualifiers for the non-typedef,
   // non-template type argument case within the parser. Here, we just
   // ignore any extraneous cv-qualifiers.
-  Quals &= ~QualType::Const;
-  Quals &= ~QualType::Volatile;
+  Quals.removeConst();
+  Quals.removeVolatile();
 
   // Handle restrict on references.
   if (LValueRef)
-    return Context.getLValueReferenceType(T).getQualifiedType(Quals);
-  return Context.getRValueReferenceType(T).getQualifiedType(Quals);
+    return Context.getQualifiedType(Context.getLValueReferenceType(T), Quals);
+  return Context.getQualifiedType(Context.getRValueReferenceType(T), Quals);
 }
 
 /// \brief Build an array type.
@@ -513,6 +520,7 @@ QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
 QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                               Expr *ArraySize, unsigned Quals,
                               SourceRange Brackets, DeclarationName Entity) {
+
   SourceLocation Loc = Brackets.getBegin();
   // C99 6.7.5.2p1: If the element type is an incomplete or function type,
   // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
@@ -706,15 +714,17 @@ QualType Sema::BuildFunctionType(QualType T,
 ///
 /// \param T the type to which the member pointer refers.
 /// \param Class the class type into which the member pointer points.
-/// \param Quals Qualifiers applied to the member pointer type
+/// \param CVR Qualifiers applied to the member pointer type
 /// \param Loc the location where this type begins
 /// \param Entity the name of the entity that will have this member pointer type
 ///
 /// \returns a member pointer type, if successful, or a NULL type if there was
 /// an error.
 QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
-                                      unsigned Quals, SourceLocation Loc,
+                                      unsigned CVR, SourceLocation Loc,
                                       DeclarationName Entity) {
+  Qualifiers Quals = Qualifiers::fromCVRMask(CVR);
+
   // Verify that we're not building a pointer to pointer to function with
   // exception specification.
   if (CheckDistantExceptionSpec(T)) {
@@ -744,13 +754,13 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
 
   // Enforce C99 6.7.3p2: "Types other than pointer types derived from
   // object or incomplete types shall not be restrict-qualified."
-  if ((Quals & QualType::Restrict) && !T->isIncompleteOrObjectType()) {
+  if (Quals.hasRestrict() && !T->isIncompleteOrObjectType()) {
     Diag(Loc, diag::err_typecheck_invalid_restrict_invalid_pointee)
       << T;
 
     // FIXME: If we're doing this as part of template instantiation,
     // we should return immediately.
-    Quals &= ~QualType::Restrict;
+    Quals.removeRestrict();
   }
 
   if (!Class->isDependentType() && !Class->isRecordType()) {
@@ -758,15 +768,15 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
     return QualType();
   }
 
-  return Context.getMemberPointerType(T, Class.getTypePtr())
-           .getQualifiedType(Quals);
+  return Context.getQualifiedType(
+           Context.getMemberPointerType(T, Class.getTypePtr()), Quals);
 }
 
 /// \brief Build a block pointer type.
 ///
 /// \param T The type to which we'll be building a block pointer.
 ///
-/// \param Quals The cvr-qualifiers to be applied to the block pointer type.
+/// \param CVR The cvr-qualifiers to be applied to the block pointer type.
 ///
 /// \param Loc The location of the entity whose type involves this
 /// block pointer type or, if there is no such entity, the location of the
@@ -777,15 +787,16 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
 ///
 /// \returns A suitable block pointer type, if there are no
 /// errors. Otherwise, returns a NULL type.
-QualType Sema::BuildBlockPointerType(QualType T, unsigned Quals,
+QualType Sema::BuildBlockPointerType(QualType T, unsigned CVR,
                                      SourceLocation Loc,
                                      DeclarationName Entity) {
-  if (!T.getTypePtr()->isFunctionType()) {
+  if (!T->isFunctionType()) {
     Diag(Loc, diag::err_nonfunction_block_type);
     return QualType();
   }
 
-  return Context.getBlockPointerType(T).getQualifiedType(Quals);
+  Qualifiers Quals = Qualifiers::fromCVRMask(CVR);
+  return Context.getQualifiedType(Context.getBlockPointerType(T), Quals);
 }
 
 QualType Sema::GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo) {
@@ -921,8 +932,9 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     case DeclaratorChunk::BlockPointer:
       if (ShouldBuildInfo) {
         if (SourceTy->isFunctionType())
-          SourceTy = Context.getBlockPointerType(SourceTy)
-                                      .getQualifiedType(DeclType.Cls.TypeQuals);
+          SourceTy
+            = Context.getQualifiedType(Context.getBlockPointerType(SourceTy),
+                             Qualifiers::fromCVRMask(DeclType.Cls.TypeQuals));
         else
           // If not function type Context::getBlockPointerType asserts,
           // so just give up.
@@ -939,8 +951,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     case DeclaratorChunk::Pointer:
       //FIXME: Use ObjCObjectPointer for info when appropriate.
       if (ShouldBuildInfo)
-        SourceTy = Context.getPointerType(SourceTy)
-                                      .getQualifiedType(DeclType.Ptr.TypeQuals);
+        SourceTy = Context.getQualifiedType(Context.getPointerType(SourceTy),
+                             Qualifiers::fromCVRMask(DeclType.Ptr.TypeQuals));
       // Verify that we're not building a pointer to pointer to function with
       // exception specification.
       if (getLangOptions().CPlusPlus && CheckDistantExceptionSpec(T)) {
@@ -957,14 +969,16 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       }
       T = BuildPointerType(T, DeclType.Ptr.TypeQuals, DeclType.Loc, Name);
       break;
-    case DeclaratorChunk::Reference:
+    case DeclaratorChunk::Reference: {
+      Qualifiers Quals;
+      if (DeclType.Ref.HasRestrict) Quals.addRestrict();
+
       if (ShouldBuildInfo) {
         if (DeclType.Ref.LValueRef)
           SourceTy = Context.getLValueReferenceType(SourceTy);
         else
           SourceTy = Context.getRValueReferenceType(SourceTy);
-        unsigned Quals = DeclType.Ref.HasRestrict ? QualType::Restrict : 0;
-        SourceTy = SourceTy.getQualifiedType(Quals);
+        SourceTy = Context.getQualifiedType(SourceTy, Quals);
       }
 
       // Verify that we're not building a reference to pointer to function with
@@ -974,15 +988,15 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         D.setInvalidType(true);
         // Build the type anyway.
       }
-      T = BuildReferenceType(T, DeclType.Ref.LValueRef,
-                             DeclType.Ref.HasRestrict ? QualType::Restrict : 0,
+      T = BuildReferenceType(T, DeclType.Ref.LValueRef, Quals,
                              DeclType.Loc, Name);
       break;
+    }
     case DeclaratorChunk::Array: {
       if (ShouldBuildInfo)
         // We just need to get an array type, the exact type doesn't matter.
         SourceTy = Context.getIncompleteArrayType(SourceTy, ArrayType::Normal,
-                                                DeclType.Arr.TypeQuals);
+                                                  DeclType.Arr.TypeQuals);
 
       // Verify that we're not building an array of pointers to function with
       // exception specification.
@@ -1009,7 +1023,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         ASM = ArrayType::Normal;
         D.setInvalidType(true);
       }
-      T = BuildArrayType(T, ASM, ArraySize, ATI.TypeQuals,
+      T = BuildArrayType(T, ASM, ArraySize,
+                         Qualifiers::fromCVRMask(ATI.TypeQuals),
                          SourceRange(DeclType.Loc, DeclType.EndLoc), Name);
       break;
     }
@@ -1028,7 +1043,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         }
         SourceTy = Context.getFunctionType(SourceTy, ArgTys.data(),
                                            ArgTys.size(),
-                                           FTI.isVariadic, FTI.TypeQuals);
+                                           FTI.isVariadic,
+                                           FTI.TypeQuals);
       }
 
       // If the function declarator has a prototype (i.e. it is not () and
@@ -1132,7 +1148,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
               Param->setType(ArgTy);
             } else {
               // Reject, but continue to parse 'float(const void)'.
-              if (ArgTy.getCVRQualifiers())
+              if (ArgTy.hasQualifiers())
                 Diag(DeclType.Loc, diag::err_void_param_qualified);
 
               // Do not add 'void' to the ArgTys list.
@@ -1198,8 +1214,9 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
       if (ShouldBuildInfo) {
         QualType cls = !ClsType.isNull() ? ClsType : Context.IntTy;
-        SourceTy = Context.getMemberPointerType(SourceTy, cls.getTypePtr())
-                                      .getQualifiedType(DeclType.Mem.TypeQuals);
+        SourceTy = Context.getQualifiedType(
+                      Context.getMemberPointerType(SourceTy, cls.getTypePtr()),
+                      Qualifiers::fromCVRMask(DeclType.Mem.TypeQuals));
       }
 
       if (!ClsType.isNull())
@@ -1479,7 +1496,7 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
       SubIsPointer = true;
     }
     bool SubIsClass = CanonicalSubT->isRecordType();
-    CanonicalSubT.setCVRQualifiers(0);
+    CanonicalSubT = CanonicalSubT.getUnqualifiedType();
 
     BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
                     /*DetectVirtual=*/false);
@@ -1501,7 +1518,7 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
           continue;
         }
       }
-      CanonicalSuperT.setCVRQualifiers(0);
+      CanonicalSuperT = CanonicalSuperT.getUnqualifiedType();
       // If the types are the same, move on to the next type in the subset.
       if (CanonicalSubT == CanonicalSuperT) {
         Contained = true;
@@ -1633,6 +1650,7 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
 /// space for the type.
 static void HandleAddressSpaceTypeAttribute(QualType &Type,
                                             const AttributeList &Attr, Sema &S){
+
   // If this type is already address space qualified, reject it.
   // Clause 6.7.3 - Type qualifiers: "No type shall be qualified by qualifiers
   // for two or more different address spaces."
@@ -1664,10 +1682,10 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
     addrSpace.setIsSigned(false);
   }
   llvm::APSInt max(addrSpace.getBitWidth());
-  max = QualType::MaxAddressSpace;
+  max = Qualifiers::MaxAddressSpace;
   if (addrSpace > max) {
     S.Diag(Attr.getLoc(), diag::err_attribute_address_space_too_high)
-      << QualType::MaxAddressSpace << ASArgExpr->getSourceRange();
+      << Qualifiers::MaxAddressSpace << ASArgExpr->getSourceRange();
     return;
   }
 
@@ -1679,7 +1697,7 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
 /// specified type.  The attribute contains 1 argument, weak or strong.
 static void HandleObjCGCTypeAttribute(QualType &Type,
                                       const AttributeList &Attr, Sema &S) {
-  if (Type.getObjCGCAttr() != QualType::GCNone) {
+  if (Type.getObjCGCAttr() != Qualifiers::GCNone) {
     S.Diag(Attr.getLoc(), diag::err_attribute_multiple_objc_gc);
     return;
   }
@@ -1690,15 +1708,15 @@ static void HandleObjCGCTypeAttribute(QualType &Type,
       << "objc_gc" << 1;
     return;
   }
-  QualType::GCAttrTypes GCAttr;
+  Qualifiers::GC GCAttr;
   if (Attr.getNumArgs() != 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
     return;
   }
   if (Attr.getParameterName()->isStr("weak"))
-    GCAttr = QualType::Weak;
+    GCAttr = Qualifiers::Weak;
   else if (Attr.getParameterName()->isStr("strong"))
-    GCAttr = QualType::Strong;
+    GCAttr = Qualifiers::Strong;
   else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
       << "objc_gc" << Attr.getParameterName();

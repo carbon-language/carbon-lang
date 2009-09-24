@@ -44,9 +44,7 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
 
     // If this is a sugared type (like a typedef, typeof, etc), then unwrap one
     // level of the sugar so that the type is more obvious to the user.
-    QualType DesugaredTy = Ty->getDesugaredType(true);
-    DesugaredTy.setCVRQualifiers(DesugaredTy.getCVRQualifiers() |
-                                 Ty.getCVRQualifiers());
+    QualType DesugaredTy = Ty.getDesugaredType(true);
 
     if (Ty != DesugaredTy &&
         // If the desugared type is a vector type, we don't want to expand it,

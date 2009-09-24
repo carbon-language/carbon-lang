@@ -30,7 +30,7 @@ using llvm::cast;
 using llvm::cast_or_null;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
-namespace clang { class Type; }
+namespace clang { class Type; class ExtQuals; }
 
 namespace llvm {
   template <typename T>
@@ -41,6 +41,15 @@ namespace llvm {
     static inline void *getAsVoidPointer(::clang::Type *P) { return P; }
     static inline ::clang::Type *getFromVoidPointer(void *P) {
       return static_cast< ::clang::Type*>(P);
+    }
+    enum { NumLowBitsAvailable = 3 };
+  };
+  template<>
+  class PointerLikeTypeTraits< ::clang::ExtQuals*> {
+  public:
+    static inline void *getAsVoidPointer(::clang::ExtQuals *P) { return P; }
+    static inline ::clang::ExtQuals *getFromVoidPointer(void *P) {
+      return static_cast< ::clang::ExtQuals*>(P);
     }
     enum { NumLowBitsAvailable = 3 };
   };
@@ -73,43 +82,345 @@ namespace clang {
 #define TYPE(Class, Base) class Class##Type;
 #include "clang/AST/TypeNodes.def"
 
-/// QualType - For efficiency, we don't store CVR-qualified types as nodes on
-/// their own: instead each reference to a type stores the qualifiers.  This
-/// greatly reduces the number of nodes we need to allocate for types (for
-/// example we only need one for 'int', 'const int', 'volatile int',
-/// 'const volatile int', etc).
-///
-/// As an added efficiency bonus, instead of making this a pair, we just store
-/// the three bits we care about in the low bits of the pointer.  To handle the
-/// packing/unpacking, we make QualType be a simple wrapper class that acts like
-/// a smart pointer.
-class QualType {
-  llvm::PointerIntPair<Type*, 3> Value;
+/// Qualifiers - The collection of all-type qualifiers we support.
+/// Clang supports five independent qualifiers:
+/// * C99: const, volatile, and restrict
+/// * Embedded C (TR18037): address spaces
+/// * Objective C: the GC attributes (none, weak, or strong)
+class Qualifiers {
 public:
-  enum TQ {   // NOTE: These flags must be kept in sync with DeclSpec::TQ.
+  enum TQ { // NOTE: These flags must be kept in sync with DeclSpec::TQ.
     Const    = 0x1,
     Restrict = 0x2,
     Volatile = 0x4,
-    CVRFlags = Const|Restrict|Volatile
+    CVRMask = Const | Volatile | Restrict
   };
 
-  enum GCAttrTypes {
+  enum GC {
     GCNone = 0,
     Weak,
     Strong
   };
 
-  // 24 bits should be enough for anyone.
-  static const unsigned MaxAddressSpace = 0xffffffu;
+  enum {
+    /// The maximum supported address space number.
+    /// 24 bits should be enough for anyone.
+    MaxAddressSpace = 0xffffffu,
 
+    /// The width of the "fast" qualifier mask.
+    FastWidth = 2,
+
+    /// The fast qualifier mask.
+    FastMask = (1 << FastWidth) - 1
+  };
+
+  Qualifiers() : Mask(0) {}
+
+  static Qualifiers fromFastMask(unsigned Mask) {
+    Qualifiers Qs;
+    Qs.addFastQualifiers(Mask);
+    return Qs;
+  }
+
+  static Qualifiers fromCVRMask(unsigned CVR) {
+    Qualifiers Qs;
+    Qs.addCVRQualifiers(CVR);
+    return Qs;
+  }
+
+  // Deserialize qualifiers from an opaque representation.
+  static Qualifiers fromOpaqueValue(unsigned opaque) {
+    Qualifiers Qs;
+    Qs.Mask = opaque;
+    return Qs;
+  }
+
+  // Serialize these qualifiers into an opaque representation.
+  unsigned getAsOpaqueValue() const {
+    return Mask;
+  }
+
+  bool hasConst() const { return Mask & Const; }
+  void setConst(bool flag) {
+    Mask = (Mask & ~Const) | (flag ? Const : 0);
+  }
+  void removeConst() { Mask &= ~Const; }
+  void addConst() { Mask |= Const; }
+
+  bool hasVolatile() const { return Mask & Volatile; }
+  void setVolatile(bool flag) {
+    Mask = (Mask & ~Volatile) | (flag ? Volatile : 0);
+  }
+  void removeVolatile() { Mask &= ~Volatile; }
+  void addVolatile() { Mask |= Volatile; }
+
+  bool hasRestrict() const { return Mask & Restrict; }
+  void setRestrict(bool flag) {
+    Mask = (Mask & ~Restrict) | (flag ? Restrict : 0);
+  }
+  void removeRestrict() { Mask &= ~Restrict; }
+  void addRestrict() { Mask |= Restrict; }
+
+  bool hasCVRQualifiers() const { return getCVRQualifiers(); }
+  unsigned getCVRQualifiers() const { return Mask & CVRMask; }
+  void setCVRQualifiers(unsigned mask) {
+    assert(!(mask & ~CVRMask) && "bitmask contains non-CVR bits");
+    Mask = (Mask & ~CVRMask) | mask;
+  }
+  void removeCVRQualifiers(unsigned mask) {
+    assert(!(mask & ~CVRMask) && "bitmask contains non-CVR bits");
+    Mask &= ~mask;
+  }
+  void removeCVRQualifiers() {
+    removeCVRQualifiers(CVRMask);
+  }
+  void addCVRQualifiers(unsigned mask) {
+    assert(!(mask & ~CVRMask) && "bitmask contains non-CVR bits");
+    Mask |= mask;
+  }
+
+  bool hasObjCGCAttr() const { return Mask & GCAttrMask; }
+  GC getObjCGCAttr() const { return GC((Mask & GCAttrMask) >> GCAttrShift); }
+  void setObjCGCAttr(GC type) {
+    Mask = (Mask & ~GCAttrMask) | (type << GCAttrShift);
+  }
+  void removeObjCGCAttr() { setObjCGCAttr(GCNone); }
+  void addObjCGCAttr(GC type) {
+    assert(type);
+    setObjCGCAttr(type);
+  }
+
+  bool hasAddressSpace() const { return Mask & AddressSpaceMask; }
+  unsigned getAddressSpace() const { return Mask >> AddressSpaceShift; }
+  void setAddressSpace(unsigned space) {
+    assert(space <= MaxAddressSpace);
+    Mask = (Mask & ~AddressSpaceMask)
+         | (((uint32_t) space) << AddressSpaceShift);
+  }
+  void removeAddressSpace() { setAddressSpace(0); }
+  void addAddressSpace(unsigned space) {
+    assert(space);
+    setAddressSpace(space);
+  }
+
+  // Fast qualifiers are those that can be allocated directly
+  // on a QualType object.
+  bool hasFastQualifiers() const { return getFastQualifiers(); }
+  unsigned getFastQualifiers() const { return Mask & FastMask; }
+  void setFastQualifiers(unsigned mask) {
+    assert(!(mask & ~FastMask) && "bitmask contains non-fast qualifier bits");
+    Mask = (Mask & ~FastMask) | mask;
+  }
+  void removeFastQualifiers(unsigned mask) {
+    assert(!(mask & ~FastMask) && "bitmask contains non-fast qualifier bits");
+    Mask &= ~mask;
+  }
+  void removeFastQualifiers() {
+    removeFastQualifiers(FastMask);
+  }
+  void addFastQualifiers(unsigned mask) {
+    assert(!(mask & ~FastMask) && "bitmask contains non-fast qualifier bits");
+    Mask |= mask;
+  }
+
+  /// hasNonFastQualifiers - Return true if the set contains any
+  /// qualifiers which require an ExtQuals node to be allocated.
+  bool hasNonFastQualifiers() const { return Mask & ~FastMask; }
+  Qualifiers getNonFastQualifiers() const {
+    Qualifiers Quals = *this;
+    Quals.setFastQualifiers(0);
+    return Quals;
+  }
+
+  /// hasQualifiers - Return true if the set contains any qualifiers.
+  bool hasQualifiers() const { return Mask; }
+  bool empty() const { return !Mask; }
+
+  /// \brief Add the qualifiers from the given set to this set.
+  void addQualifiers(Qualifiers Q) {
+    // If the other set doesn't have any non-boolean qualifiers, just
+    // bit-or it in.
+    if (!(Q.Mask & ~CVRMask))
+      Mask |= Q.Mask;
+    else {
+      Mask |= (Q.Mask & CVRMask);
+      if (Q.hasAddressSpace())
+        addAddressSpace(Q.getAddressSpace());
+      if (Q.hasObjCGCAttr())
+        addObjCGCAttr(Q.getObjCGCAttr());
+    }
+  }
+
+  bool operator==(Qualifiers Other) const { return Mask == Other.Mask; }
+  bool operator!=(Qualifiers Other) const { return Mask != Other.Mask; }
+
+  operator bool() const { return hasQualifiers(); }
+
+  Qualifiers &operator+=(Qualifiers R) {
+    addQualifiers(R);
+    return *this;
+  }
+
+  // Union two qualifier sets.  If an enumerated qualifier appears
+  // in both sets, use the one from the right.
+  friend Qualifiers operator+(Qualifiers L, Qualifiers R) {
+    L += R;
+    return L;
+  }
+
+  std::string getAsString() const;
+  std::string getAsString(const PrintingPolicy &Policy) const {
+    std::string Buffer;
+    getAsStringInternal(Buffer, Policy);
+    return Buffer;
+  }
+  void getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const;
+
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    ID.AddInteger(Mask);
+  }
+
+private:
+
+  // bits:     |0 1 2|3 .. 4|5  ..  31|
+  //           |C R V|GCAttr|AddrSpace|
+  uint32_t Mask;
+
+  static const uint32_t GCAttrMask = 0x18;
+  static const uint32_t GCAttrShift = 3;
+  static const uint32_t AddressSpaceMask = ~(CVRMask | GCAttrMask);
+  static const uint32_t AddressSpaceShift = 5;
+};
+
+
+/// ExtQuals - We can encode up to three bits in the low bits of a
+/// type pointer, but there are many more type qualifiers that we want
+/// to be able to apply to an arbitrary type.  Therefore we have this
+/// struct, intended to be heap-allocated and used by QualType to
+/// store qualifiers.
+///
+/// The current design tags the 'const' and 'restrict' qualifiers in
+/// two low bits on the QualType pointer; a third bit records whether
+/// the pointer is an ExtQuals node.  'const' was chosen because it is
+/// orders of magnitude more common than the other two qualifiers, in
+/// both library and user code.  It's relatively rare to see
+/// 'restrict' in user code, but many standard C headers are saturated
+/// with 'restrict' declarations, so that representing them efficiently
+/// is a critical goal of this representation.
+class ExtQuals : public llvm::FoldingSetNode {
+  // NOTE: changing the fast qualifiers should be straightforward as
+  // long as you don't make 'const' non-fast.
+  // 1. Qualifiers:
+  //    a) Modify the bitmasks (Qualifiers::TQ and DeclSpec::TQ).
+  //       Fast qualifiers must occupy the low-order bits.
+  //    b) Update Qualifiers::FastWidth and FastMask.
+  // 2. QualType:
+  //    a) Update is{Volatile,Restrict}Qualified(), defined inline.
+  //    b) Update remove{Volatile,Restrict}, defined near the end of
+  //       this header.
+  // 3. ASTContext:
+  //    a) Update get{Volatile,Restrict}Type.
+
+  /// Context - the context to which this set belongs.  We save this
+  /// here so that QualifierCollector can use it to reapply extended
+  /// qualifiers to an arbitrary type without requiring a context to
+  /// be pushed through every single API dealing with qualifiers.
+  ASTContext& Context;
+
+  /// BaseType - the underlying type that this qualifies
+  const Type *BaseType;
+
+  /// Quals - the immutable set of qualifiers applied by this
+  /// node;  always contains extended qualifiers.
+  Qualifiers Quals;
+
+public:
+  ExtQuals(ASTContext& Context, const Type *Base, Qualifiers Quals)
+    : Context(Context), BaseType(Base), Quals(Quals)
+  {
+    assert(Quals.hasNonFastQualifiers()
+           && "ExtQuals created with no fast qualifiers");
+    assert(!Quals.hasFastQualifiers()
+           && "ExtQuals created with fast qualifiers");
+  }
+
+  Qualifiers getQualifiers() const { return Quals; }
+
+  bool hasVolatile() const { return Quals.hasVolatile(); }
+
+  bool hasObjCGCAttr() const { return Quals.hasObjCGCAttr(); }
+  Qualifiers::GC getObjCGCAttr() const { return Quals.getObjCGCAttr(); }
+
+  bool hasAddressSpace() const { return Quals.hasAddressSpace(); }
+  unsigned getAddressSpace() const { return Quals.getAddressSpace(); }
+
+  const Type *getBaseType() const { return BaseType; }
+
+  ASTContext &getContext() const { return Context; }
+
+public:
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    Profile(ID, getBaseType(), Quals);
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      const Type *BaseType,
+                      Qualifiers Quals) {
+    assert(!Quals.hasFastQualifiers() && "fast qualifiers in ExtQuals hash!");
+    ID.AddPointer(BaseType);
+    Quals.Profile(ID);
+  }
+};
+
+
+/// QualType - For efficiency, we don't store CV-qualified types as nodes on
+/// their own: instead each reference to a type stores the qualifiers.  This
+/// greatly reduces the number of nodes we need to allocate for types (for
+/// example we only need one for 'int', 'const int', 'volatile int',
+/// 'const volatile int', etc).
+///
+/// As an added efficiency bonus, instead of making this a pair, we
+/// just store the two bits we care about in the low bits of the
+/// pointer.  To handle the packing/unpacking, we make QualType be a
+/// simple wrapper class that acts like a smart pointer.  A third bit
+/// indicates whether there are extended qualifiers present, in which
+/// case the pointer points to a special structure.
+class QualType {
+  // Thankfully, these are efficiently composable.
+  llvm::PointerIntPair<llvm::PointerUnion<const Type*,const ExtQuals*>,
+                       Qualifiers::FastWidth> Value;
+
+  bool hasExtQuals() const {
+    return Value.getPointer().is<const ExtQuals*>();
+  }
+
+  const ExtQuals *getExtQualsUnsafe() const {
+    return Value.getPointer().get<const ExtQuals*>();
+  }
+
+  const Type *getTypePtrUnsafe() const {
+    return Value.getPointer().get<const Type*>();
+  }
+
+  friend class QualifierCollector;
+public:
   QualType() {}
 
   QualType(const Type *Ptr, unsigned Quals)
-    : Value(const_cast<Type*>(Ptr), Quals) {}
+    : Value(Ptr, Quals) {}
+  QualType(const ExtQuals *Ptr, unsigned Quals)
+    : Value(Ptr, Quals) {}
 
-  unsigned getCVRQualifiers() const { return Value.getInt(); }
-  void setCVRQualifiers(unsigned Quals) { Value.setInt(Quals); }
-  Type *getTypePtr() const { return Value.getPointer(); }
+  unsigned getFastQualifiers() const { return Value.getInt(); }
+  void setFastQualifiers(unsigned Quals) { Value.setInt(Quals); }
+
+  /// Retrieves a pointer to the underlying (unqualified) type.
+  /// This should really return a const Type, but it's not worth
+  /// changing all the users right now.
+  Type *getTypePtr() const {
+    if (hasNonFastQualifiers())
+      return const_cast<Type*>(getExtQualsUnsafe()->getBaseType());
+    return const_cast<Type*>(getTypePtrUnsafe());
+  }
 
   void *getAsOpaquePtr() const { return Value.getOpaqueValue(); }
   static QualType getFromOpaquePtr(void *Ptr) {
@@ -128,43 +439,97 @@ public:
 
   /// isNull - Return true if this QualType doesn't point to a type yet.
   bool isNull() const {
-    return getTypePtr() == 0;
+    return Value.getPointer().isNull();
   }
 
   bool isConstQualified() const {
-    return (getCVRQualifiers() & Const) ? true : false;
-  }
-  bool isVolatileQualified() const {
-    return (getCVRQualifiers() & Volatile) ? true : false;
+    return (getFastQualifiers() & Qualifiers::Const);
   }
   bool isRestrictQualified() const {
-    return (getCVRQualifiers() & Restrict) ? true : false;
+    return (getFastQualifiers() & Qualifiers::Restrict);
+  }
+  bool isVolatileQualified() const {
+    return (hasNonFastQualifiers() && getExtQualsUnsafe()->hasVolatile());
+  }
+
+  // Determines whether this type has any direct qualifiers.
+  bool hasQualifiers() const {
+    return getFastQualifiers() || hasNonFastQualifiers();
+  }
+
+  bool hasNonFastQualifiers() const {
+    return hasExtQuals();
+  }
+
+  // Retrieves the set of qualifiers belonging to this type.
+  Qualifiers getQualifiers() const {
+    Qualifiers Quals;
+    if (hasNonFastQualifiers())
+      Quals = getExtQualsUnsafe()->getQualifiers();
+    Quals.addFastQualifiers(getFastQualifiers());
+    return Quals;
+  }
+
+  // Retrieves the CVR qualifiers of this type.
+  unsigned getCVRQualifiers() const {
+    unsigned CVR = getFastQualifiers();
+    if (isVolatileQualified()) CVR |= Qualifiers::Volatile;
+    return CVR;
   }
 
   bool isConstant(ASTContext& Ctx) const;
 
-  /// addConst/addVolatile/addRestrict - add the specified type qual to this
-  /// QualType.
-  void addConst()    { Value.setInt(Value.getInt() | Const); }
-  void addVolatile() { Value.setInt(Value.getInt() | Volatile); }
-  void addRestrict() { Value.setInt(Value.getInt() | Restrict); }
+  // Don't promise in the API that anything besides 'const' can be
+  // easily added.
 
-  void removeConst()    { Value.setInt(Value.getInt() & ~Const); }
-  void removeVolatile() { Value.setInt(Value.getInt() & ~Volatile); }
-  void removeRestrict() { Value.setInt(Value.getInt() & ~Restrict); }
-
-  QualType getQualifiedType(unsigned TQs) const {
-    return QualType(getTypePtr(), TQs);
+  /// addConst - add the specified type qualifier to this QualType.  
+  void addConst() {
+    addFastQualifiers(Qualifiers::Const);
   }
-  QualType getWithAdditionalQualifiers(unsigned TQs) const {
-    return QualType(getTypePtr(), TQs|getCVRQualifiers());
+  QualType withConst() const {
+    return withFastQualifiers(Qualifiers::Const);
   }
 
-  QualType withConst() const { return getWithAdditionalQualifiers(Const); }
-  QualType withVolatile() const { return getWithAdditionalQualifiers(Volatile);}
-  QualType withRestrict() const { return getWithAdditionalQualifiers(Restrict);}
+  void addFastQualifiers(unsigned TQs) {
+    assert(!(TQs & ~Qualifiers::FastMask)
+           && "non-fast qualifier bits set in mask!");
+    Value.setInt(Value.getInt() | TQs);
+  }
 
-  QualType getUnqualifiedType() const;
+  void removeConst();
+  void removeVolatile();
+  void removeRestrict();
+  void removeCVRQualifiers(unsigned Mask);
+
+  void removeFastQualifiers() { Value.setInt(0); }
+  void removeFastQualifiers(unsigned Mask) {
+    assert(!(Mask & ~Qualifiers::FastMask) && "mask has non-fast qualifiers");
+    Value.setInt(Value.getInt() & ~Mask);
+  }
+
+  // Creates a type with the given qualifiers in addition to any
+  // qualifiers already on this type.
+  QualType withFastQualifiers(unsigned TQs) const {
+    QualType T = *this;
+    T.addFastQualifiers(TQs);
+    return T;
+  }
+
+  // Creates a type with exactly the given fast qualifiers, removing
+  // any existing fast qualifiers.
+  QualType withExactFastQualifiers(unsigned TQs) const {
+    return withoutFastQualifiers().withFastQualifiers(TQs);
+  }
+
+  // Removes fast qualifiers, but leaves any extended qualifiers in place.
+  QualType withoutFastQualifiers() const {
+    QualType T = *this;
+    T.removeFastQualifiers();
+    return T;
+  }
+
+  QualType getUnqualifiedType() const { return QualType(getTypePtr(), 0); }
+
   bool isMoreQualifiedThan(QualType Other) const;
   bool isAtLeastAsQualifiedAs(QualType Other) const;
   QualType getNonReferenceType() const;
@@ -175,6 +540,8 @@ public:
   /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
   /// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
   /// concrete.
+  ///
+  /// Qualifiers are left in place.
   QualType getDesugaredType(bool ForDisplay = false) const;
 
   /// operator==/!= - Indicate whether the specified types and qualifiers are
@@ -202,22 +569,20 @@ public:
     ID.AddPointer(getAsOpaquePtr());
   }
 
-public:
-
   /// getAddressSpace - Return the address space of this type.
   inline unsigned getAddressSpace() const;
 
   /// GCAttrTypesAttr - Returns gc attribute of this type.
-  inline QualType::GCAttrTypes getObjCGCAttr() const;
+  inline Qualifiers::GC getObjCGCAttr() const;
 
   /// isObjCGCWeak true when Type is objc's weak.
   bool isObjCGCWeak() const {
-    return getObjCGCAttr() == Weak;
+    return getObjCGCAttr() == Qualifiers::Weak;
   }
 
   /// isObjCGCStrong true when Type is objc's strong.
   bool isObjCGCStrong() const {
-    return getObjCGCAttr() == Strong;
+    return getObjCGCAttr() == Qualifiers::Strong;
   }
 
   /// getNoReturnAttr - Returns true if the type has the noreturn attribute,
@@ -249,7 +614,7 @@ public:
   static inline clang::QualType getFromVoidPointer(void *P) {
     return clang::QualType::getFromOpaquePtr(P);
   }
-  // CVR qualifiers go in low bits.
+  // Various qualifiers go in low bits.
   enum { NumLowBitsAvailable = 0 };
 };
 
@@ -519,149 +884,9 @@ template <> inline const TypedefType *Type::getAs() const {
 #define TYPE(Class, Base)
 #define LEAF_TYPE(Class) \
 template <> inline const Class##Type *Type::getAs() const { \
-  return dyn_cast<Class##Type>(CanonicalType.getUnqualifiedType()); \
+  return dyn_cast<Class##Type>(CanonicalType); \
 }
 #include "clang/AST/TypeNodes.def"
-
-
-/// ExtQualType - TR18037 (C embedded extensions) 6.2.5p26
-/// This supports all kinds of type attributes; including,
-/// address space qualified types, objective-c's __weak and
-/// __strong attributes.
-///
-class ExtQualType : public Type, public llvm::FoldingSetNode {
-  /// BaseType - This is the underlying type that this qualifies.  All CVR
-  /// qualifiers are stored on the QualType that references this type, so we
-  /// can't have any here.
-  Type *BaseType;
-
-  /// Address Space ID - The address space ID this type is qualified with.
-  unsigned AddressSpace;
-  /// GC __weak/__strong attributes
-  QualType::GCAttrTypes GCAttrType;
-
-  ExtQualType(Type *Base, QualType CanonicalPtr, unsigned AddrSpace,
-              QualType::GCAttrTypes gcAttr) :
-      Type(ExtQual, CanonicalPtr, Base->isDependentType()), BaseType(Base),
-      AddressSpace(AddrSpace), GCAttrType(gcAttr) {
-    assert(!isa<ExtQualType>(BaseType) &&
-           "Cannot have ExtQualType of ExtQualType");
-  }
-  friend class ASTContext;  // ASTContext creates these.
-public:
-  Type *getBaseType() const { return BaseType; }
-  QualType::GCAttrTypes getObjCGCAttr() const { return GCAttrType; }
-  unsigned getAddressSpace() const { return AddressSpace; }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
-  void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getBaseType(), AddressSpace, GCAttrType);
-  }
-  static void Profile(llvm::FoldingSetNodeID &ID, Type *Base,
-                      unsigned AddrSpace, QualType::GCAttrTypes gcAttr) {
-    ID.AddPointer(Base);
-    ID.AddInteger(AddrSpace);
-    ID.AddInteger(gcAttr);
-  }
-
-  static bool classof(const Type *T) { return T->getTypeClass() == ExtQual; }
-  static bool classof(const ExtQualType *) { return true; }
-};
-
-
-/// QualifierSet - This class is used to collect qualifiers.
-/// Clang supports five independent qualifiers:
-/// * C99: const, volatile, and restrict
-/// * Embedded C (TR18037): address spaces
-/// * Objective C: the GC attributes (none, weak, or strong)
-class QualifierSet {
-public:
-  QualifierSet() : Mask(0) {}
-
-  void removeConst() { removeCVR(QualType::Const); }
-  void removeVolatile() { removeCVR(QualType::Volatile); }
-  void removeRestrict() { removeCVR(QualType::Restrict); }
-  void removeCVR(unsigned mask) { Mask &= ~mask; }
-  void removeAddressSpace() { setAddressSpace(0); }
-  void removeObjCGCAttrType() { setGCAttrType(QualType::GCNone); }
-
-  void addConst() { addCVR(QualType::Const); }
-  void addVolatile() { addCVR(QualType::Volatile); }
-  void addRestrict() { addCVR(QualType::Restrict); }
-  void addCVR(unsigned mask) { Mask |= mask; }
-  void addAddressSpace(unsigned space) {
-    assert(space);
-    setAddressSpace(space);
-  }
-  void addObjCGCAttrType(QualType::GCAttrTypes type) {
-    assert(type);
-    setGCAttrType(type);
-  }
-
-  bool hasConst() const { return Mask & QualType::Const; }
-  bool hasVolatile() const { return Mask & QualType::Volatile; }
-  bool hasRestrict() const { return Mask & QualType::Restrict; }
-  unsigned getCVRMask() const { return Mask & CVRMask; }
-
-  bool hasObjCGCAttrType() const { return Mask & GCAttrMask; }
-  QualType::GCAttrTypes getObjCGCAttrType() const {
-    return QualType::GCAttrTypes((Mask & GCAttrMask) >> GCAttrShift);
-  }
-
-  bool hasAddressSpace() const { return Mask & AddressSpaceMask; }
-  unsigned getAddressSpace() const { return Mask >> AddressSpaceShift; }
-
-  /// empty() - Return true if there are no qualifiers collected
-  /// in this set.
-  bool empty() {
-    return (Mask == 0);
-  }
-
-  /// Collect any qualifiers on the given type and return an
-  /// unqualified type.
-  const Type *strip(QualType QT) {
-    Mask |= QT.getCVRQualifiers();
-    return strip(QT.getTypePtr());
-  }
-
-  /// Collect any qualifiers on the given type and return an
-  /// unqualified type.
-  const Type *strip(const Type* T);
-
-  /// Apply the collected qualifiers to the given type.
-  QualType apply(QualType QT, ASTContext& C);
-
-  /// Apply the collected qualifiers to the given type.
-  QualType apply(const Type* T, ASTContext& C) {
-    return apply(QualType(T, 0), C);
-  }
-
-  bool operator==(QualifierSet& Other) { return Mask == Other.Mask; }
-
-private:
-  void setAddressSpace(unsigned space) {
-    assert(space <= MaxAddressSpace);
-    Mask = (Mask & ~AddressSpaceMask)
-         | (((uint32_t) space) << AddressSpaceShift);
-  }
-
-  void setGCAttrType(QualType::GCAttrTypes type) {
-    Mask = (Mask & ~GCAttrMask) | (type << GCAttrShift);
-  }
-
-  // bits:     |0 1 2|3 .. 4|5  ..  31|
-  //           |C R V|GCAttr|AddrSpace|
-  uint32_t Mask;
-
-  static const uint32_t CVRMask = 0x07;
-  static const uint32_t GCAttrMask = 0x18;
-  static const uint32_t GCAttrShift = 3;
-  static const uint32_t AddressSpaceMask = ~(CVRMask | GCAttrMask);
-  static const uint32_t AddressSpaceShift = 5;
-  static const unsigned MaxAddressSpace = QualType::MaxAddressSpace;
-};
 
 
 /// BuiltinType - This class is used for builtin types like 'int'.  Builtin
@@ -967,7 +1192,10 @@ public:
   ArraySizeModifier getSizeModifier() const {
     return ArraySizeModifier(SizeModifier);
   }
-  unsigned getIndexTypeQualifier() const { return IndexTypeQuals; }
+  Qualifiers getIndexTypeQualifiers() const {
+    return Qualifiers::fromCVRMask(IndexTypeQuals);
+  }
+  unsigned getIndexTypeCVRQualifiers() const { return IndexTypeQuals; }
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray ||
@@ -1003,7 +1231,7 @@ public:
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getElementType(), getSize(),
-            getSizeModifier(), getIndexTypeQualifier());
+            getSizeModifier(), getIndexTypeCVRQualifiers());
   }
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ET,
                       const llvm::APInt &ArraySize, ArraySizeModifier SizeMod,
@@ -1109,7 +1337,8 @@ public:
   friend class StmtIteratorBase;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getElementType(), getSizeModifier(), getIndexTypeQualifier());
+    Profile(ID, getElementType(), getSizeModifier(),
+            getIndexTypeCVRQualifiers());
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ET,
@@ -1226,7 +1455,7 @@ public:
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, Context, getElementType(),
-            getSizeModifier(), getIndexTypeQualifier(), getSizeExpr());
+            getSizeModifier(), getIndexTypeCVRQualifiers(), getSizeExpr());
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
@@ -1709,7 +1938,7 @@ public:
   /// @brief Determines whether this type is in the process of being
   /// defined.
   bool isBeingDefined() const { return decl.getInt(); }
-  void setBeingDefined(bool Def) { decl.setInt(Def? 1 : 0); }
+  void setBeingDefined(bool Def) const { decl.setInt(Def? 1 : 0); }
 
   virtual void getAsStringInternal(std::string &InnerString,
                                    const PrintingPolicy &Policy) const;
@@ -2206,41 +2435,119 @@ public:
   static bool classof(const ObjCObjectPointerType *) { return true; }
 };
 
+/// A qualifier set is used to build a set of qualifiers.
+class QualifierCollector : public Qualifiers {
+  ASTContext *Context;
+
+public:
+  QualifierCollector(Qualifiers Qs = Qualifiers())
+    : Qualifiers(Qs), Context(0) {}
+  QualifierCollector(ASTContext &Context, Qualifiers Qs = Qualifiers())
+    : Qualifiers(Qs), Context(&Context) {}
+
+  void setContext(ASTContext &C) { Context = &C; }
+
+  /// Collect any qualifiers on the given type and return an
+  /// unqualified type.
+  const Type *strip(QualType QT) {
+    addFastQualifiers(QT.getFastQualifiers());
+    if (QT.hasNonFastQualifiers()) {
+      const ExtQuals *EQ = QT.getExtQualsUnsafe();
+      Context = &EQ->getContext();
+      addQualifiers(EQ->getQualifiers());
+      return EQ->getBaseType();
+    }
+    return QT.getTypePtrUnsafe();
+  }
+
+  /// Apply the collected qualifiers to the given type.
+  QualType apply(QualType QT) const;
+
+  /// Apply the collected qualifiers to the given type.
+  QualType apply(const Type* T) const;
+
+};
+
+
 // Inline function definitions.
 
-/// getUnqualifiedType - Return the type without any qualifiers.
-inline QualType QualType::getUnqualifiedType() const {
-  Type *TP = getTypePtr();
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(TP))
-    TP = EXTQT->getBaseType();
-  return QualType(TP, 0);
+inline void QualType::removeConst() {
+  removeFastQualifiers(Qualifiers::Const);
+}
+
+inline void QualType::removeRestrict() {
+  removeFastQualifiers(Qualifiers::Restrict);
+}
+
+inline void QualType::removeVolatile() {
+  QualifierCollector Qc;
+  const Type *Ty = Qc.strip(*this);
+  if (Qc.hasVolatile()) {
+    Qc.removeVolatile();
+    *this = Qc.apply(Ty);
+  }
+}
+
+inline void QualType::removeCVRQualifiers(unsigned Mask) {
+  assert(!(Mask & ~Qualifiers::CVRMask) && "mask has non-fast qualifiers");
+
+  // Fast path: we don't need to touch the slow qualifiers.
+  if (!(Mask & ~Qualifiers::FastMask)) {
+    removeFastQualifiers(Mask);
+    return;
+  }
+
+  QualifierCollector Qc;
+  const Type *Ty = Qc.strip(*this);
+  Qc.removeCVRQualifiers(Mask);
+  *this = Qc.apply(Ty);
 }
 
 /// getAddressSpace - Return the address space of this type.
 inline unsigned QualType::getAddressSpace() const {
+  if (hasNonFastQualifiers()) {
+    const ExtQuals *EQ = getExtQualsUnsafe();
+    if (EQ->hasAddressSpace())
+      return EQ->getAddressSpace();
+  }
+
   QualType CT = getTypePtr()->getCanonicalTypeInternal();
+  if (CT.hasNonFastQualifiers()) {
+    const ExtQuals *EQ = CT.getExtQualsUnsafe();
+    if (EQ->hasAddressSpace())
+      return EQ->getAddressSpace();
+  }
+
   if (const ArrayType *AT = dyn_cast<ArrayType>(CT))
     return AT->getElementType().getAddressSpace();
   if (const RecordType *RT = dyn_cast<RecordType>(CT))
     return RT->getAddressSpace();
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CT))
-    return EXTQT->getAddressSpace();
   return 0;
 }
 
 /// getObjCGCAttr - Return the gc attribute of this type.
-inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
+inline Qualifiers::GC QualType::getObjCGCAttr() const {
+  if (hasNonFastQualifiers()) {
+    const ExtQuals *EQ = getExtQualsUnsafe();
+    if (EQ->hasObjCGCAttr())
+      return EQ->getObjCGCAttr();
+  }
+
   QualType CT = getTypePtr()->getCanonicalTypeInternal();
+  if (CT.hasNonFastQualifiers()) {
+    const ExtQuals *EQ = CT.getExtQualsUnsafe();
+    if (EQ->hasObjCGCAttr())
+      return EQ->getObjCGCAttr();
+  }
+
   if (const ArrayType *AT = dyn_cast<ArrayType>(CT))
       return AT->getElementType().getObjCGCAttr();
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CT))
-    return EXTQT->getObjCGCAttr();
   if (const ObjCObjectPointerType *PT = CT->getAs<ObjCObjectPointerType>())
     return PT->getPointeeType().getObjCGCAttr();
   // We most look at all pointer types, not just pointer to interface types.
   if (const PointerType *PT = CT->getAs<PointerType>())
     return PT->getPointeeType().getObjCGCAttr();
-  return GCNone;
+  return Qualifiers::GCNone;
 }
 
   /// getNoReturnAttr - Returns true if the type has the noreturn attribute,
@@ -2262,6 +2569,7 @@ inline bool QualType::getNoReturnAttr() const {
 /// "int". However, it is not more qualified than "const volatile
 /// int".
 inline bool QualType::isMoreQualifiedThan(QualType Other) const {
+  // FIXME: work on arbitrary qualifiers
   unsigned MyQuals = this->getCVRQualifiers();
   unsigned OtherQuals = Other.getCVRQualifiers();
   if (getAddressSpace() != Other.getAddressSpace())
@@ -2274,6 +2582,7 @@ inline bool QualType::isMoreQualifiedThan(QualType Other) const {
 /// int" is at least as qualified as "const int", "volatile int",
 /// "int", and "const volatile int".
 inline bool QualType::isAtLeastAsQualifiedAs(QualType Other) const {
+  // FIXME: work on arbitrary qualifiers
   unsigned MyQuals = this->getCVRQualifiers();
   unsigned OtherQuals = Other.getCVRQualifiers();
   if (getAddressSpace() != Other.getAddressSpace())
@@ -2441,14 +2750,10 @@ template <typename T> const T *Type::getAs() const {
     return Ty;
 
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<T>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<T>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAs<T>();
+  if (!isa<T>(CanonicalType))
     return 0;
-  }
 
-  // If this is a typedef for a pointer type, strip the typedef off without
+  // If this is a typedef for the type, strip the typedef off without
   // losing all typedef information.
   return cast<T>(getDesugaredType());
 }

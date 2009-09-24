@@ -206,7 +206,7 @@ private:
   ///
   /// When the pointer at index I is non-NULL, the type with
   /// ID = (I + 1) << 3 has already been loaded from the PCH file.
-  std::vector<Type *> TypesLoaded;
+  std::vector<QualType> TypesLoaded;
 
   /// \brief Offset of each declaration within the bitstream, indexed
   /// by the declaration ID (-1).

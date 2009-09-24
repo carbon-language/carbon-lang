@@ -1814,14 +1814,16 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
   // constant expression folding, like struct {char x[(int)(char*)2];}
   SizeIsNegative = false;
 
-  if (const PointerType* PTy = dyn_cast<PointerType>(T)) {
+  QualifierCollector Qs;
+  const Type *Ty = Qs.strip(T);
+
+  if (const PointerType* PTy = dyn_cast<PointerType>(Ty)) {
     QualType Pointee = PTy->getPointeeType();
     QualType FixedType =
         TryToFixInvalidVariablyModifiedType(Pointee, Context, SizeIsNegative);
     if (FixedType.isNull()) return FixedType;
     FixedType = Context.getPointerType(FixedType);
-    FixedType.setCVRQualifiers(T.getCVRQualifiers());
-    return FixedType;
+    return Qs.apply(FixedType);
   }
 
   const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T);
@@ -2968,7 +2970,7 @@ void Sema::CheckMain(FunctionDecl* FD) {
       //   char const * const *
       //   char * const *
 
-      QualifierSet qs;
+      QualifierCollector qs;
       const PointerType* PT;
       if ((PT = qs.strip(AT)->getAs<PointerType>()) &&
           (PT = qs.strip(PT->getPointeeType())->getAs<PointerType>()) &&

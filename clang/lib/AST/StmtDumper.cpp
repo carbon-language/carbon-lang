@@ -87,13 +87,10 @@ namespace  {
       fprintf(F, "'%s'", T.getAsString().c_str());
 
       if (!T.isNull()) {
-        // If the type is directly a typedef, strip off typedefness to give at
-        // least one level of concreteness.
-        if (TypedefType *TDT = dyn_cast<TypedefType>(T)) {
-          QualType Simplified =
-            TDT->LookThroughTypedefs().getQualifiedType(T.getCVRQualifiers());
+        // If the type is sugared, also dump a (shallow) desugared type.
+        QualType Simplified = T.getDesugaredType();
+        if (Simplified != T)
           fprintf(F, ":'%s'", Simplified.getAsString().c_str());
-        }
       }
     }
     void DumpStmt(const Stmt *Node) {

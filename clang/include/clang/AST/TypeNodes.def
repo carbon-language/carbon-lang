@@ -51,7 +51,6 @@
 #  define DEPENDENT_TYPE(Class, Base) TYPE(Class, Base)
 #endif
 
-TYPE(ExtQual, Type)
 TYPE(Builtin, Type)
 TYPE(FixedWidthInt, Type)
 TYPE(Complex, Type)

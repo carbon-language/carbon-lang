@@ -40,6 +40,24 @@ class SourceManager;
 class SwitchCase;
 class TargetInfo;
 
+/// A structure for putting "fast"-unqualified QualTypes into a
+/// DenseMap.  This uses the standard pointer hash function.
+struct UnsafeQualTypeDenseMapInfo {
+  static inline bool isEqual(QualType A, QualType B) { return A == B; }
+  static inline bool isPod() { return true; }
+  static inline QualType getEmptyKey() {
+    return QualType::getFromOpaquePtr((void*) 1);
+  }
+  static inline QualType getTombstoneKey() {
+    return QualType::getFromOpaquePtr((void*) 2);
+  }
+  static inline unsigned getHashValue(QualType T) {
+    assert(!T.getFastQualifiers() && "hash invalid for types with fast quals");
+    uintptr_t v = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
+    return (unsigned(v) >> 4) ^ (unsigned(v) >> 9);
+  }
+};
+
 /// \brief Writes a precompiled header containing the contents of a
 /// translation unit.
 ///
@@ -76,9 +94,11 @@ private:
   ///
   /// The ID numbers of types are consecutive (in order of discovery)
   /// and start at 1. 0 is reserved for NULL. When types are actually
-  /// stored in the stream, the ID number is shifted by 3 bits to
-  /// allow for the const/volatile/restrict qualifiers.
-  llvm::DenseMap<const Type *, pch::TypeID> TypeIDs;
+  /// stored in the stream, the ID number is shifted by 2 bits to
+  /// allow for the const/volatile qualifiers.
+  ///
+  /// Keys in the map never have const/volatile qualifiers.
+  llvm::DenseMap<QualType, pch::TypeID, UnsafeQualTypeDenseMapInfo> TypeIDs;
 
   /// \brief Offset of each type in the bitstream, indexed by
   /// the type's ID.
@@ -89,7 +109,7 @@ private:
 
   /// \brief Queue containing the types that we still need to
   /// emit.
-  std::queue<const Type *> TypesToEmit;
+  std::queue<QualType> TypesToEmit;
 
   /// \brief Map that provides the ID numbers of each identifier in
   /// the output stream.
@@ -168,7 +188,7 @@ private:
                                const char* isysroot);
   void WritePreprocessor(const Preprocessor &PP);
   void WriteComments(ASTContext &Context);
-  void WriteType(const Type *T);
+  void WriteType(QualType T);
   void WriteTypesBlock(ASTContext &Context);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);
   uint64_t WriteDeclContextVisibleBlock(ASTContext &Context, DeclContext *DC);

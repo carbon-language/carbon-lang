@@ -132,6 +132,7 @@ private:
   // for addAttributeOptional:
   static bool isDefault(unsigned value)           { return value == 0; }
   static bool isDefault(bool value)               { return !value; }
+  static bool isDefault(Qualifiers::GC value)     { return value == Qualifiers::GCNone; }
   static bool isDefault(const std::string& value) { return value.empty(); }
 };
 

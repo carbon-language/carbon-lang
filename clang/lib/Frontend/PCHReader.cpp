@@ -1764,18 +1764,11 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   unsigned Code = Stream.ReadCode();
   switch ((pch::TypeCode)Stream.ReadRecord(Code, Record)) {
   case pch::TYPE_EXT_QUAL: {
-    assert(Record.size() == 3 &&
+    assert(Record.size() == 2 &&
            "Incorrect encoding of extended qualifier type");
     QualType Base = GetType(Record[0]);
-    QualType::GCAttrTypes GCAttr = (QualType::GCAttrTypes)Record[1];
-    unsigned AddressSpace = Record[2];
-
-    QualType T = Base;
-    if (GCAttr != QualType::GCNone)
-      T = Context->getObjCGCQualType(T, GCAttr);
-    if (AddressSpace)
-      T = Context->getAddrSpaceQualType(T, AddressSpace);
-    return T;
+    Qualifiers Quals = Qualifiers::fromOpaqueValue(Record[1]);
+    return Context->getQualifiedType(Base, Quals);
   }
 
   case pch::TYPE_FIXED_WIDTH_INT: {
@@ -1984,8 +1977,8 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
 
 
 QualType PCHReader::GetType(pch::TypeID ID) {
-  unsigned Quals = ID & 0x07;
-  unsigned Index = ID >> 3;
+  unsigned FastQuals = ID & Qualifiers::FastMask;
+  unsigned Index = ID >> Qualifiers::FastWidth;
 
   if (Index < pch::NUM_PREDEF_TYPE_IDS) {
     QualType T;
@@ -2026,15 +2019,15 @@ QualType PCHReader::GetType(pch::TypeID ID) {
     }
 
     assert(!T.isNull() && "Unknown predefined type");
-    return T.getQualifiedType(Quals);
+    return T.withFastQualifiers(FastQuals);
   }
 
   Index -= pch::NUM_PREDEF_TYPE_IDS;
   //assert(Index < TypesLoaded.size() && "Type index out-of-range");
-  if (!TypesLoaded[Index])
-    TypesLoaded[Index] = ReadTypeRecord(TypeOffsets[Index]).getTypePtr();
+  if (TypesLoaded[Index].isNull())
+    TypesLoaded[Index] = ReadTypeRecord(TypeOffsets[Index]);
 
-  return QualType(TypesLoaded[Index], Quals);
+  return TypesLoaded[Index].withFastQualifiers(FastQuals);
 }
 
 Decl *PCHReader::GetDecl(pch::DeclID ID) {
@@ -2155,7 +2148,7 @@ void PCHReader::PrintStats() {
 
   unsigned NumTypesLoaded
     = TypesLoaded.size() - std::count(TypesLoaded.begin(), TypesLoaded.end(),
-                                      (Type *)0);
+                                      QualType());
   unsigned NumDeclsLoaded
     = DeclsLoaded.size() - std::count(DeclsLoaded.begin(), DeclsLoaded.end(),
                                       (Decl *)0);

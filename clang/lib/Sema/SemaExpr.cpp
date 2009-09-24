@@ -566,7 +566,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
   // of the anonymous union objects and, eventually, the field we
   // found via name lookup.
   bool BaseObjectIsPointer = false;
-  unsigned ExtraQuals = 0;
+  Qualifiers BaseQuals;
   if (BaseObject) {
     // BaseObject is an anonymous struct/union variable (and is,
     // therefore, not part of another non-anonymous record).
@@ -574,8 +574,8 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
     MarkDeclarationReferenced(Loc, BaseObject);
     BaseObjectExpr = new (Context) DeclRefExpr(BaseObject,BaseObject->getType(),
                                                SourceLocation());
-    ExtraQuals
-      = Context.getCanonicalType(BaseObject->getType()).getCVRQualifiers();
+    BaseQuals
+      = Context.getCanonicalType(BaseObject->getType()).getQualifiers();
   } else if (BaseObjectExpr) {
     // The caller provided the base object expression. Determine
     // whether its a pointer and whether it adds any qualifiers to the
@@ -585,7 +585,8 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
       BaseObjectIsPointer = true;
       ObjectType = ObjectPtr->getPointeeType();
     }
-    ExtraQuals = Context.getCanonicalType(ObjectType).getCVRQualifiers();
+    BaseQuals
+      = Context.getCanonicalType(ObjectType).getQualifiers();
   } else {
     // We've found a member of an anonymous struct/union that is
     // inside a non-anonymous struct/union, so in a well-formed
@@ -608,7 +609,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
         return ExprError(Diag(Loc,diag::err_invalid_member_use_in_static_method)
           << Field->getDeclName());
       }
-      ExtraQuals = MD->getTypeQualifiers();
+      BaseQuals = Qualifiers::fromCVRMask(MD->getTypeQualifiers());
     }
 
     if (!BaseObjectExpr)
@@ -619,24 +620,35 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
   // Build the implicit member references to the field of the
   // anonymous struct/union.
   Expr *Result = BaseObjectExpr;
-  unsigned BaseAddrSpace = BaseObjectExpr->getType().getAddressSpace();
+  Qualifiers ResultQuals = BaseQuals;
   for (llvm::SmallVector<FieldDecl *, 4>::reverse_iterator
          FI = AnonFields.rbegin(), FIEnd = AnonFields.rend();
        FI != FIEnd; ++FI) {
     QualType MemberType = (*FI)->getType();
-    if (!(*FI)->isMutable()) {
-      unsigned combinedQualifiers
-        = MemberType.getCVRQualifiers() | ExtraQuals;
-      MemberType = MemberType.getQualifiedType(combinedQualifiers);
-    }
-    if (BaseAddrSpace != MemberType.getAddressSpace())
-      MemberType = Context.getAddrSpaceQualType(MemberType, BaseAddrSpace);
+    Qualifiers MemberTypeQuals =
+      Context.getCanonicalType(MemberType).getQualifiers();
+
+    // CVR attributes from the base are picked up by members,
+    // except that 'mutable' members don't pick up 'const'.
+    if ((*FI)->isMutable())
+      ResultQuals.removeConst();
+
+    // GC attributes are never picked up by members.
+    ResultQuals.removeObjCGCAttr();
+
+    // TR 18037 does not allow fields to be declared with address spaces.
+    assert(!MemberTypeQuals.hasAddressSpace());
+
+    Qualifiers NewQuals = ResultQuals + MemberTypeQuals;
+    if (NewQuals != MemberTypeQuals)
+      MemberType = Context.getQualifiedType(MemberType, NewQuals);
+
     MarkDeclarationReferenced(Loc, *FI);
     // FIXME: Might this end up being a qualified name?
     Result = new (Context) MemberExpr(Result, BaseObjectIsPointer, *FI,
                                       OpLoc, MemberType);
     BaseObjectIsPointer = false;
-    ExtraQuals = Context.getCanonicalType(MemberType).getCVRQualifiers();
+    ResultQuals = NewQuals;
   }
 
   return Owned(Result);
@@ -948,11 +960,10 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
 
         if (const ReferenceType *RefType = MemberType->getAs<ReferenceType>())
           MemberType = RefType->getPointeeType();
-        else if (!FD->isMutable()) {
-          unsigned combinedQualifiers
-            = MemberType.getCVRQualifiers() | MD->getTypeQualifiers();
-          MemberType = MemberType.getQualifiedType(combinedQualifiers);
-        }
+        else if (!FD->isMutable())
+          MemberType
+            = Context.getQualifiedType(MemberType,
+                            Qualifiers::fromCVRMask(MD->getTypeQualifiers()));
       } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
         if (!Method->isStatic()) {
           Ctx = Method->getParent();
@@ -1135,7 +1146,7 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
     //    - a constant with integral or enumeration type and is
     //      initialized with an expression that is value-dependent
     else if (const VarDecl *Dcl = dyn_cast<VarDecl>(VD)) {
-      if (Dcl->getType().getCVRQualifiers() == QualType::Const &&
+      if (Dcl->getType().getCVRQualifiers() == Qualifiers::Const &&
           Dcl->getInit()) {
         ValueDependent = Dcl->getInit()->isValueDependent();
       }
@@ -1174,7 +1185,7 @@ Sema::OwningExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc,
       PredefinedExpr::ComputeName(Context, IT, currentDecl).length();
 
     llvm::APInt LengthI(32, Length + 1);
-    ResTy = Context.CharTy.getQualifiedType(QualType::Const);
+    ResTy = Context.CharTy.withConst();
     ResTy = Context.getConstantArrayType(ResTy, LengthI, ArrayType::Normal, 0);
   }
   return Owned(new (Context) PredefinedExpr(Loc, ResTy, IT));
@@ -2235,14 +2246,16 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       if (const ReferenceType *Ref = MemberType->getAs<ReferenceType>())
         MemberType = Ref->getPointeeType();
       else {
-        unsigned BaseAddrSpace = BaseType.getAddressSpace();
-        unsigned combinedQualifiers =
-          MemberType.getCVRQualifiers() | BaseType.getCVRQualifiers();
-        if (FD->isMutable())
-          combinedQualifiers &= ~QualType::Const;
-        MemberType = MemberType.getQualifiedType(combinedQualifiers);
-        if (BaseAddrSpace != MemberType.getAddressSpace())
-           MemberType = Context.getAddrSpaceQualType(MemberType, BaseAddrSpace);
+        Qualifiers BaseQuals = BaseType.getQualifiers();
+        BaseQuals.removeObjCGCAttr();
+        if (FD->isMutable()) BaseQuals.removeConst();
+
+        Qualifiers MemberQuals
+          = Context.getCanonicalType(MemberType).getQualifiers();
+
+        Qualifiers Combined = BaseQuals + MemberQuals;
+        if (Combined != MemberQuals)
+          MemberType = Context.getQualifiedType(MemberType, Combined);
       }
 
       MarkDeclarationReferenced(MemberLoc, FD);
@@ -3510,7 +3523,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if (LHSTy->isVoidPointerType() && RHSTy->isObjCObjectPointerType()) {
     QualType lhptee = LHSTy->getAs<PointerType>()->getPointeeType();
     QualType rhptee = RHSTy->getAs<ObjCObjectPointerType>()->getPointeeType();
-    QualType destPointee = lhptee.getQualifiedType(rhptee.getCVRQualifiers());
+    QualType destPointee
+      = Context.getQualifiedType(lhptee, rhptee.getQualifiers());
     QualType destType = Context.getPointerType(destPointee);
     ImpCastExprToType(LHS, destType); // add qualifiers if necessary
     ImpCastExprToType(RHS, destType); // promote to void*
@@ -3519,7 +3533,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   if (LHSTy->isObjCObjectPointerType() && RHSTy->isVoidPointerType()) {
     QualType lhptee = LHSTy->getAs<ObjCObjectPointerType>()->getPointeeType();
     QualType rhptee = RHSTy->getAs<PointerType>()->getPointeeType();
-    QualType destPointee = rhptee.getQualifiedType(lhptee.getCVRQualifiers());
+    QualType destPointee
+      = Context.getQualifiedType(rhptee, lhptee.getQualifiers());
     QualType destType = Context.getPointerType(destPointee);
     ImpCastExprToType(RHS, destType); // add qualifiers if necessary
     ImpCastExprToType(LHS, destType); // promote to void*
@@ -3534,14 +3549,16 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     // ignore qualifiers on void (C99 6.5.15p3, clause 6)
     if (lhptee->isVoidType() && rhptee->isIncompleteOrObjectType()) {
       // Figure out necessary qualifiers (C99 6.5.15p6)
-      QualType destPointee=lhptee.getQualifiedType(rhptee.getCVRQualifiers());
+      QualType destPointee
+        = Context.getQualifiedType(lhptee, rhptee.getQualifiers());
       QualType destType = Context.getPointerType(destPointee);
       ImpCastExprToType(LHS, destType); // add qualifiers if necessary
       ImpCastExprToType(RHS, destType); // promote to void*
       return destType;
     }
     if (rhptee->isVoidType() && lhptee->isIncompleteOrObjectType()) {
-      QualType destPointee=rhptee.getQualifiedType(lhptee.getCVRQualifiers());
+      QualType destPointee
+        = Context.getQualifiedType(rhptee, lhptee.getQualifiers());
       QualType destType = Context.getPointerType(destPointee);
       ImpCastExprToType(LHS, destType); // add qualifiers if necessary
       ImpCastExprToType(RHS, destType); // promote to void*

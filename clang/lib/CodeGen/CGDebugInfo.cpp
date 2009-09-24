@@ -788,7 +788,6 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   case Type::RValueReference:
   case Type::Vector:
   case Type::ExtVector:
-  case Type::ExtQual:
   case Type::FixedWidthInt:
   case Type::MemberPointer:
   case Type::TemplateSpecialization:

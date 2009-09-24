@@ -629,7 +629,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
                                            (Name + ".addr").c_str());
       // FIXME: What are the right qualifiers here?
       llvm::Function::arg_iterator End =
-        ExpandTypeFromArgs(Ty, LValue::MakeAddr(Temp,0), AI);
+        ExpandTypeFromArgs(Ty, LValue::MakeAddr(Temp, Qualifiers()), AI);
       EmitParmDecl(*Arg, Temp);
 
       // Name the arguments used in expansion and increment AI.

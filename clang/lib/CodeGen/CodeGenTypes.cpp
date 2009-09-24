@@ -267,7 +267,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
 
   case Type::VariableArray: {
     const VariableArrayType &A = cast<VariableArrayType>(Ty);
-    assert(A.getIndexTypeQualifier() == 0 &&
+    assert(A.getIndexTypeCVRQualifiers() == 0 &&
            "FIXME: We only handle trivial array types so far!");
     // VLAs resolve to the innermost element type; this matches
     // the return of alloca, and there isn't any obviously better choice.
@@ -275,7 +275,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
   case Type::IncompleteArray: {
     const IncompleteArrayType &A = cast<IncompleteArrayType>(Ty);
-    assert(A.getIndexTypeQualifier() == 0 &&
+    assert(A.getIndexTypeCVRQualifiers() == 0 &&
            "FIXME: We only handle trivial array types so far!");
     // int X[] -> [0 x int]
     return llvm::ArrayType::get(ConvertTypeForMemRecursive(A.getElementType()), 0);
@@ -311,10 +311,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(&Ty);
     return GetFunctionType(getFunctionInfo(FNPT), true);
   }
-
-  case Type::ExtQual:
-    return
-      ConvertTypeRecursive(QualType(cast<ExtQualType>(Ty).getBaseType(), 0));
 
   case Type::ObjCInterface: {
     // Objective-C interfaces are always opaque (outside of the

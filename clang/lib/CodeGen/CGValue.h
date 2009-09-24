@@ -118,12 +118,6 @@ class LValue {
                   // use getKVCRefExpr
   } LVType;
 
-  enum ObjCType {
-    None = 0,     // object with no gc attribute.
-    Weak,         // __weak object expression
-    Strong        // __strong object expression
-  };
-
   llvm::Value *V;
 
   union {
@@ -146,9 +140,8 @@ class LValue {
     const ObjCImplicitSetterGetterRefExpr *KVCRefExpr;
   };
 
-  bool Volatile:1;
-  // FIXME: set but never used, what effect should it have?
-  bool Restrict:1;
+  // 'const' is unused here
+  Qualifiers Quals;
 
   // objective-c's ivar
   bool Ivar:1;
@@ -163,20 +156,13 @@ class LValue {
   // Lvalue is a global reference of an objective-c object
   bool GlobalObjCRef : 1;
 
-  // objective-c's gc attributes
-  unsigned ObjCType : 2;
-
-  // address space
-  unsigned AddressSpace;
-
 private:
-  static void SetQualifiers(unsigned Qualifiers, LValue& R) {
-    R.Volatile = (Qualifiers&QualType::Volatile)!=0;
-    R.Restrict = (Qualifiers&QualType::Restrict)!=0;
+  void SetQualifiers(Qualifiers Quals) {
+    this->Quals = Quals;
+    
     // FIXME: Convenient place to set objc flags to 0. This should really be
     // done in a user-defined constructor instead.
-    R.ObjCType = None;
-    R.Ivar = R.ObjIsArray = R.NonGC = R.GlobalObjCRef = false;
+    this->Ivar = this->ObjIsArray = this->NonGC = this->GlobalObjCRef = false;
   }
 
 public:
@@ -187,21 +173,20 @@ public:
   bool isPropertyRef() const { return LVType == PropertyRef; }
   bool isKVCRef() const { return LVType == KVCRef; }
 
-  bool isVolatileQualified() const { return Volatile; }
-  bool isRestrictQualified() const { return Restrict; }
-  unsigned getQualifiers() const {
-    return (Volatile ? QualType::Volatile : 0) |
-           (Restrict ? QualType::Restrict : 0);
+  bool isVolatileQualified() const { return Quals.hasVolatile(); }
+  bool isRestrictQualified() const { return Quals.hasRestrict(); }
+  unsigned getVRQualifiers() const {
+    return Quals.getCVRQualifiers() & ~Qualifiers::Const;
   }
 
   bool isObjCIvar() const { return Ivar; }
   bool isObjCArray() const { return ObjIsArray; }
   bool isNonGC () const { return NonGC; }
   bool isGlobalObjCRef() const { return GlobalObjCRef; }
-  bool isObjCWeak() const { return ObjCType == Weak; }
-  bool isObjCStrong() const { return ObjCType == Strong; }
+  bool isObjCWeak() const { return Quals.getObjCGCAttr() == Qualifiers::Weak; }
+  bool isObjCStrong() const { return Quals.getObjCGCAttr() == Qualifiers::Strong; }
 
-  unsigned getAddressSpace() const { return AddressSpace; }
+  unsigned getAddressSpace() const { return Quals.getAddressSpace(); }
 
   static void SetObjCIvar(LValue& R, bool iValue) {
     R.Ivar = iValue;
@@ -215,14 +200,6 @@ public:
 
   static void SetObjCNonGC(LValue& R, bool iValue) {
     R.NonGC = iValue;
-  }
-  static void SetObjCType(QualType::GCAttrTypes GCAttrs, LValue& R) {
-    if (GCAttrs == QualType::Weak)
-      R.ObjCType = Weak;
-    else if (GCAttrs == QualType::Strong)
-      R.ObjCType = Strong;
-    else
-     R.ObjCType = None;
   }
 
   // simple lvalue
@@ -262,48 +239,44 @@ public:
     return KVCRefExpr;
   }
 
-  static LValue MakeAddr(llvm::Value *V, unsigned Qualifiers,
-                         QualType::GCAttrTypes GCAttrs = QualType::GCNone,
-                         unsigned AddressSpace = 0) {
+  static LValue MakeAddr(llvm::Value *V, Qualifiers Quals) {
     LValue R;
     R.LVType = Simple;
     R.V = V;
-    SetQualifiers(Qualifiers,R);
-    R.AddressSpace = AddressSpace;
-    SetObjCType(GCAttrs, R);
+    R.SetQualifiers(Quals);
     return R;
   }
 
   static LValue MakeVectorElt(llvm::Value *Vec, llvm::Value *Idx,
-                              unsigned Qualifiers) {
+                              unsigned CVR) {
     LValue R;
     R.LVType = VectorElt;
     R.V = Vec;
     R.VectorIdx = Idx;
-    SetQualifiers(Qualifiers,R);
+    R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
     return R;
   }
 
   static LValue MakeExtVectorElt(llvm::Value *Vec, llvm::Constant *Elts,
-                                 unsigned Qualifiers) {
+                                 unsigned CVR) {
     LValue R;
     R.LVType = ExtVectorElt;
     R.V = Vec;
     R.VectorElts = Elts;
-    SetQualifiers(Qualifiers,R);
+    R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
     return R;
   }
 
   static LValue MakeBitfield(llvm::Value *V, unsigned short StartBit,
                              unsigned short Size, bool IsSigned,
-                             unsigned Qualifiers) {
+                             unsigned CVR) {
     LValue R;
     R.LVType = BitField;
     R.V = V;
     R.BitfieldData.StartBit = StartBit;
     R.BitfieldData.Size = Size;
     R.BitfieldData.IsSigned = IsSigned;
-    SetQualifiers(Qualifiers,R);
+    R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
     return R;
   }
 
@@ -311,20 +284,20 @@ public:
   // the lvalue. However, this complicates the code a bit, and I haven't figured
   // out how to make it go wrong yet.
   static LValue MakePropertyRef(const ObjCPropertyRefExpr *E,
-                                unsigned Qualifiers) {
+                                unsigned CVR) {
     LValue R;
     R.LVType = PropertyRef;
     R.PropertyRefExpr = E;
-    SetQualifiers(Qualifiers,R);
+    R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
     return R;
   }
 
   static LValue MakeKVCRef(const ObjCImplicitSetterGetterRefExpr *E,
-                           unsigned Qualifiers) {
+                           unsigned CVR) {
     LValue R;
     R.LVType = KVCRef;
     R.KVCRefExpr = E;
-    SetQualifiers(Qualifiers,R);
+    R.SetQualifiers(Qualifiers::fromCVRMask(CVR));
     return R;
   }
 };

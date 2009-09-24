@@ -101,12 +101,8 @@ const Type *Type::getArrayElementTypeNoTypeQual() const {
     return ATy->getElementType().getTypePtr();
 
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<ArrayType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (ArrayType *AT = dyn_cast<ArrayType>(CanonicalType.getUnqualifiedType()))
-      return AT->getElementType().getTypePtr();
+  if (!isa<ArrayType>(CanonicalType))
     return 0;
-  }
 
   // If this is a typedef for an array type, strip the typedef off without
   // losing all typedef information.
@@ -125,8 +121,8 @@ const Type *Type::getArrayElementTypeNoTypeQual() const {
 /// decide whether it is worth providing a desugared form of the type
 /// or not.
 QualType QualType::getDesugaredType(bool ForDisplay) const {
-  return getTypePtr()->getDesugaredType(ForDisplay)
-     .getWithAdditionalQualifiers(getCVRQualifiers());
+  QualifierCollector Qs;
+  return Qs.apply(Qs.strip(*this)->getDesugaredType(ForDisplay));
 }
 
 /// getDesugaredType - Return the specified type with any "sugar" removed from
@@ -181,8 +177,6 @@ QualType Type::getDesugaredType(bool ForDisplay) const {
 bool Type::isVoidType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::Void;
-  if (const ExtQualType *AS = dyn_cast<ExtQualType>(CanonicalType))
-    return AS->getBaseType()->isVoidType();
   return false;
 }
 
@@ -190,15 +184,11 @@ bool Type::isObjectType() const {
   if (isa<FunctionType>(CanonicalType) || isa<ReferenceType>(CanonicalType) ||
       isa<IncompleteArrayType>(CanonicalType) || isVoidType())
     return false;
-  if (const ExtQualType *AS = dyn_cast<ExtQualType>(CanonicalType))
-    return AS->getBaseType()->isObjectType();
   return true;
 }
 
 bool Type::isDerivedType() const {
   switch (CanonicalType->getTypeClass()) {
-  case ExtQual:
-    return cast<ExtQualType>(CanonicalType)->getBaseType()->isDerivedType();
   case Pointer:
   case VariableArray:
   case ConstantArray:
@@ -241,39 +231,19 @@ bool Type::isUnionType() const {
 bool Type::isComplexType() const {
   if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
     return CT->getElementType()->isFloatingType();
-  if (const ExtQualType *AS = dyn_cast<ExtQualType>(CanonicalType))
-    return AS->getBaseType()->isComplexType();
   return false;
 }
 
 bool Type::isComplexIntegerType() const {
   // Check for GCC complex integer extension.
-  if (const ComplexType *CT = dyn_cast<ComplexType>(CanonicalType))
-    return CT->getElementType()->isIntegerType();
-  if (const ExtQualType *AS = dyn_cast<ExtQualType>(CanonicalType))
-    return AS->getBaseType()->isComplexIntegerType();
-  return false;
+  return getAsComplexIntegerType();
 }
 
 const ComplexType *Type::getAsComplexIntegerType() const {
-  // Are we directly a complex type?
-  if (const ComplexType *CTy = dyn_cast<ComplexType>(this)) {
-    if (CTy->getElementType()->isIntegerType())
-      return CTy;
-    return 0;
-  }
-
-  // If the canonical form of this type isn't what we want, reject it.
-  if (!isa<ComplexType>(CanonicalType)) {
-    // Look through type qualifiers (e.g. ExtQualType's).
-    if (isa<ComplexType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsComplexIntegerType();
-    return 0;
-  }
-
-  // If this is a typedef for a complex type, strip the typedef off without
-  // losing all typedef information.
-  return cast<ComplexType>(getDesugaredType());
+  if (const ComplexType *Complex = getAs<ComplexType>())
+    if (Complex->getElementType()->isIntegerType())
+      return Complex;
+  return 0;
 }
 
 QualType Type::getPointeeType() const {
@@ -335,9 +305,6 @@ const RecordType *Type::getAsStructureType() const {
     // losing all typedef information.
     return cast<RecordType>(getDesugaredType());
   }
-  // Look through type qualifiers
-  if (isa<RecordType>(CanonicalType.getUnqualifiedType()))
-    return CanonicalType.getUnqualifiedType()->getAsStructureType();
   return 0;
 }
 
@@ -358,9 +325,6 @@ const RecordType *Type::getAsUnionType() const {
     return cast<RecordType>(getDesugaredType());
   }
 
-  // Look through type qualifiers
-  if (isa<RecordType>(CanonicalType.getUnqualifiedType()))
-    return CanonicalType.getUnqualifiedType()->getAsUnionType();
   return 0;
 }
 
@@ -416,8 +380,6 @@ bool Type::isIntegerType() const {
     return true;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isIntegerType();
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isIntegerType();
   return false;
 }
 
@@ -431,24 +393,18 @@ bool Type::isIntegralType() const {
                     // FIXME: In C++, enum types are never integral.
   if (isa<FixedWidthIntType>(CanonicalType))
     return true;
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isIntegralType();
   return false;
 }
 
 bool Type::isEnumeralType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     return TT->getDecl()->isEnum();
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isEnumeralType();
   return false;
 }
 
 bool Type::isBooleanType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::Bool;
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isBooleanType();
   return false;
 }
 
@@ -458,16 +414,12 @@ bool Type::isCharType() const {
            BT->getKind() == BuiltinType::UChar ||
            BT->getKind() == BuiltinType::Char_S ||
            BT->getKind() == BuiltinType::SChar;
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isCharType();
   return false;
 }
 
 bool Type::isWideCharType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::WChar;
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isWideCharType();
   return false;
 }
 
@@ -490,8 +442,6 @@ bool Type::isSignedIntegerType() const {
 
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isSignedIntegerType();
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isSignedIntegerType();
   return false;
 }
 
@@ -514,8 +464,6 @@ bool Type::isUnsignedIntegerType() const {
 
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isUnsignedIntegerType();
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isUnsignedIntegerType();
   return false;
 }
 
@@ -527,8 +475,6 @@ bool Type::isFloatingType() const {
     return CT->getElementType()->isFloatingType();
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isFloatingType();
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isFloatingType();
   return false;
 }
 
@@ -538,8 +484,6 @@ bool Type::isRealFloatingType() const {
            BT->getKind() <= BuiltinType::LongDouble;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isRealFloatingType();
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isRealFloatingType();
   return false;
 }
 
@@ -553,8 +497,6 @@ bool Type::isRealType() const {
     return true;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isRealType();
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isRealType();
   return false;
 }
 
@@ -568,8 +510,6 @@ bool Type::isArithmeticType() const {
     return ET->getDecl()->isDefinition();
   if (isa<FixedWidthIntType>(CanonicalType))
     return true;
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isArithmeticType();
   return isa<ComplexType>(CanonicalType) || isa<VectorType>(CanonicalType);
 }
 
@@ -583,8 +523,6 @@ bool Type::isScalarType() const {
       return true;
     return false;
   }
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isScalarType();
   if (isa<FixedWidthIntType>(CanonicalType))
     return true;
   return isa<PointerType>(CanonicalType) ||
@@ -611,8 +549,6 @@ bool Type::isAggregateType() const {
     return true;
   }
 
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isAggregateType();
   return isa<ArrayType>(CanonicalType);
 }
 
@@ -620,8 +556,6 @@ bool Type::isAggregateType() const {
 /// according to the rules of C99 6.7.5p3.  It is not legal to call this on
 /// incomplete types or dependent types.
 bool Type::isConstantSizeType() const {
-  if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CanonicalType))
-    return EXTQT->getBaseType()->isConstantSizeType();
   assert(!isIncompleteType() && "This doesn't make sense for incomplete types");
   assert(!isDependentType() && "This doesn't make sense for dependent types");
   // The VAT must have a size, as it is known to be complete.
@@ -634,8 +568,6 @@ bool Type::isConstantSizeType() const {
 bool Type::isIncompleteType() const {
   switch (CanonicalType->getTypeClass()) {
   default: return false;
-  case ExtQual:
-    return cast<ExtQualType>(CanonicalType)->getBaseType()->isIncompleteType();
   case Builtin:
     // Void is the only incomplete builtin type.  Per C99 6.2.5p19, it can never
     // be completed.
@@ -664,8 +596,6 @@ bool Type::isPODType() const {
   switch (CanonicalType->getTypeClass()) {
     // Everything not explicitly mentioned is not POD.
   default: return false;
-  case ExtQual:
-    return cast<ExtQualType>(CanonicalType)->getBaseType()->isPODType();
   case VariableArray:
   case ConstantArray:
     // IncompleteArray is caught by isIncompleteType() above.
@@ -827,21 +757,16 @@ QualType TypedefType::LookThroughTypedefs() const {
     return FirstType;
 
   // Otherwise, do the fully general loop.
-  unsigned TypeQuals = 0;
+  QualifierCollector Qs;
+
+  QualType CurType;
   const TypedefType *TDT = this;
-  while (1) {
-    QualType CurType = TDT->getDecl()->getUnderlyingType();
+  do {
+    CurType = TDT->getDecl()->getUnderlyingType();
+    TDT = dyn_cast<TypedefType>(Qs.strip(CurType));
+  } while (TDT);
 
-
-    /// FIXME:
-    /// FIXME: This is incorrect for ExtQuals!
-    /// FIXME:
-    TypeQuals |= CurType.getCVRQualifiers();
-
-    TDT = dyn_cast<TypedefType>(CurType);
-    if (TDT == 0)
-      return QualType(CurType.getTypePtr(), TypeQuals);
-  }
+  return Qs.apply(CurType);
 }
 
 TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
@@ -961,27 +886,20 @@ TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
     Args[Idx].Profile(ID, Context);
 }
 
-const Type *QualifierSet::strip(const Type* T) {
-  QualType DT = T->getDesugaredType();
-  addCVR(DT.getCVRQualifiers());
+QualType QualifierCollector::apply(QualType QT) const {
+  if (!hasNonFastQualifiers())
+    return QT.withFastQualifiers(getFastQualifiers());
 
-  if (const ExtQualType* EQT = dyn_cast<ExtQualType>(DT)) {
-    if (EQT->getAddressSpace())
-      addAddressSpace(EQT->getAddressSpace());
-    if (EQT->getObjCGCAttr())
-      addObjCGCAttrType(EQT->getObjCGCAttr());
-    return EQT->getBaseType();
-  } else {
-    // Use the sugared type unless desugaring found extra qualifiers.
-    return (DT.getCVRQualifiers() ? DT.getTypePtr() : T);
-  }
+  assert(Context && "extended qualifiers but no context!");
+  return Context->getQualifiedType(QT, *this);
 }
 
-QualType QualifierSet::apply(QualType QT, ASTContext& C) {
-  QT = QT.getWithAdditionalQualifiers(getCVRMask());
-  if (hasObjCGCAttrType()) QT = C.getObjCGCQualType(QT, getObjCGCAttrType());
-  if (hasAddressSpace()) QT = C.getAddrSpaceQualType(QT, getAddressSpace());
-  return QT;
+QualType QualifierCollector::apply(const Type *T) const {
+  if (!hasNonFastQualifiers())
+    return QualType(T, getFastQualifiers());
+
+  assert(Context && "extended qualifiers but no context!");
+  return Context->getQualifiedType(T, *this);
 }
 
 
@@ -1012,14 +930,46 @@ void Type::dump() const {
 
 
 static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {
-  // Note: funkiness to ensure we get a space only between quals.
-  bool NonePrinted = true;
-  if (TypeQuals & QualType::Const)
-    S += "const", NonePrinted = false;
-  if (TypeQuals & QualType::Volatile)
-    S += (NonePrinted+" volatile"), NonePrinted = false;
-  if (TypeQuals & QualType::Restrict)
-    S += (NonePrinted+" restrict"), NonePrinted = false;
+  if (TypeQuals & Qualifiers::Const) {
+    if (!S.empty()) S += ' ';
+    S += "const";
+  }
+  if (TypeQuals & Qualifiers::Volatile) {
+    if (!S.empty()) S += ' ';
+    S += "volatile";
+  }
+  if (TypeQuals & Qualifiers::Restrict) {
+    if (!S.empty()) S += ' ';
+    S += "restrict";
+  }
+}
+
+std::string Qualifiers::getAsString() const {
+  LangOptions LO;
+  return getAsString(PrintingPolicy(LO));
+}
+
+// Appends qualifiers to the given string, separated by spaces.  Will
+// prefix a space if the string is non-empty.  Will not append a final
+// space.
+void Qualifiers::getAsStringInternal(std::string &S,
+                                     const PrintingPolicy&) const {
+  AppendTypeQualList(S, getCVRQualifiers());
+  if (unsigned AddressSpace = getAddressSpace()) {
+    if (!S.empty()) S += ' ';
+    S += "__attribute__((address_space(";
+    S += llvm::utostr_32(AddressSpace);
+    S += ")))";
+  }
+  if (Qualifiers::GC GCAttrType = getObjCGCAttr()) {
+    if (!S.empty()) S += ' ';
+    S += "__attribute__((objc_gc(";
+    if (GCAttrType == Qualifiers::Weak)
+      S += "weak";
+    else
+      S += "strong";
+    S += ")))";
+  }
 }
 
 std::string QualType::getAsString() const {
@@ -1041,13 +991,16 @@ QualType::getAsStringInternal(std::string &S,
     return;
 
   // Print qualifiers as appropriate.
-  if (unsigned Tq = getCVRQualifiers()) {
+  Qualifiers Quals = getQualifiers();
+  if (!Quals.empty()) {
     std::string TQS;
-    AppendTypeQualList(TQS, Tq);
-    if (!S.empty())
-      S = TQS + ' ' + S;
-    else
-      S = TQS;
+    Quals.getAsStringInternal(TQS, Policy);
+
+    if (!S.empty()) {
+      TQS += ' ';
+      TQS += S;
+    }
+    std::swap(S, TQS);
   }
 
   getTypePtr()->getAsStringInternal(S, Policy);
@@ -1082,25 +1035,6 @@ void FixedWidthIntType::getAsStringInternal(std::string &S, const PrintingPolicy
 void ComplexType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   ElementType->getAsStringInternal(S, Policy);
   S = "_Complex " + S;
-}
-
-void ExtQualType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
-  bool NeedsSpace = false;
-  if (AddressSpace) {
-    S = "__attribute__((address_space("+llvm::utostr_32(AddressSpace)+")))" + S;
-    NeedsSpace = true;
-  }
-  if (GCAttrType != QualType::GCNone) {
-    if (NeedsSpace)
-      S += ' ';
-    S += "__attribute__((objc_gc(";
-    if (GCAttrType == QualType::Weak)
-      S += "weak";
-    else
-      S += "strong";
-    S += ")))";
-  }
-  BaseType->getAsStringInternal(S, Policy);
 }
 
 void PointerType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
@@ -1195,8 +1129,8 @@ void IncompleteArrayType::getAsStringInternal(std::string &S, const PrintingPoli
 void VariableArrayType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   S += '[';
 
-  if (getIndexTypeQualifier()) {
-    AppendTypeQualList(S, getIndexTypeQualifier());
+  if (getIndexTypeQualifiers().hasQualifiers()) {
+    AppendTypeQualList(S, getIndexTypeCVRQualifiers());
     S += ' ';
   }
 
@@ -1219,8 +1153,8 @@ void VariableArrayType::getAsStringInternal(std::string &S, const PrintingPolicy
 void DependentSizedArrayType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
   S += '[';
 
-  if (getIndexTypeQualifier()) {
-    AppendTypeQualList(S, getIndexTypeQualifier());
+  if (getIndexTypeQualifiers().hasQualifiers()) {
+    AppendTypeQualList(S, getIndexTypeCVRQualifiers());
     S += ' ';
   }
 
@@ -1536,6 +1470,9 @@ void ObjCObjectPointerType::getAsStringInternal(std::string &InnerString,
     }
     ObjCQIString += '>';
   }
+
+  PointeeType.getQualifiers().getAsStringInternal(ObjCQIString, Policy);
+
   if (!isObjCIdType() && !isObjCQualifiedIdType())
     ObjCQIString += " *"; // Don't forget the implicit pointer.
   else if (!InnerString.empty()) // Prefix the basic type, e.g. 'typedefname X'.

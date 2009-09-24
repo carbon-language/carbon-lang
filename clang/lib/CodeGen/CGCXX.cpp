@@ -1686,8 +1686,8 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
         // FIXME: This is really ugly; should be refactored somehow
         unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
         llvm::Value *V = Builder.CreateStructGEP(LoadOfThis, idx, "tmp");
-        LHS = LValue::MakeAddr(V, FieldType.getCVRQualifiers(),
-                               QualType::GCNone, FieldType.getAddressSpace());
+        assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
+        LHS = LValue::MakeAddr(V, MakeQualifiers(FieldType));
       } else {
         LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
       }

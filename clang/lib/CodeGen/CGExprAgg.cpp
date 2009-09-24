@@ -181,7 +181,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     llvm::Value *CastPtr = Builder.CreateBitCast(DestPtr,
                                                  CGF.ConvertType(PtrTy));
     EmitInitializationToLValue(E->getSubExpr(),
-                               LValue::MakeAddr(CastPtr, 0));
+                               LValue::MakeAddr(CastPtr, Qualifiers()));
     return;
   }
 
@@ -316,7 +316,7 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
     return;
   }
 
-  EmitFinalDestCopy(VE, LValue::MakeAddr(ArgPtr, 0));
+  EmitFinalDestCopy(VE, LValue::MakeAddr(ArgPtr, Qualifiers()));
 }
 
 void AggExprEmitter::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
@@ -429,15 +429,16 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     QualType ElementType = CGF.getContext().getCanonicalType(E->getType());
     ElementType = CGF.getContext().getAsArrayType(ElementType)->getElementType();
 
-    unsigned CVRqualifier = ElementType.getCVRQualifiers();
+    // FIXME: were we intentionally ignoring address spaces and GC attributes?
+    Qualifiers Quals = CGF.MakeQualifiers(ElementType);
 
     for (uint64_t i = 0; i != NumArrayElements; ++i) {
       llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
       if (i < NumInitElements)
         EmitInitializationToLValue(E->getInit(i),
-                                   LValue::MakeAddr(NextVal, CVRqualifier));
+                                   LValue::MakeAddr(NextVal, Quals));
       else
-        EmitNullInitializationToLValue(LValue::MakeAddr(NextVal, CVRqualifier),
+        EmitNullInitializationToLValue(LValue::MakeAddr(NextVal, Quals),
                                        ElementType);
     }
     return;

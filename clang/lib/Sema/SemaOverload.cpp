@@ -856,12 +856,12 @@ BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr,
                                    ASTContext &Context) {
   QualType CanonFromPointee = Context.getCanonicalType(FromPtr->getPointeeType());
   QualType CanonToPointee = Context.getCanonicalType(ToPointee);
-  unsigned Quals = CanonFromPointee.getCVRQualifiers();
+  Qualifiers Quals = CanonFromPointee.getQualifiers();
 
   // Exact qualifier match -> return the pointer type we're converting to.
-  if (CanonToPointee.getCVRQualifiers() == Quals) {
+  if (CanonToPointee.getQualifiers() == Quals) {
     // ToType is exactly what we need. Return it.
-    if (ToType.getTypePtr())
+    if (!ToType.isNull())
       return ToType;
 
     // Build a pointer to ToPointee. It has the right qualifiers
@@ -870,7 +870,8 @@ BuildSimilarlyQualifiedPointerType(const PointerType *FromPtr,
   }
 
   // Just build a canonical type that has the right qualifiers.
-  return Context.getPointerType(CanonToPointee.getQualifiedType(Quals));
+  return Context.getPointerType(
+         Context.getQualifiedType(CanonToPointee.getUnqualifiedType(), Quals));
 }
 
 static bool isNullPointerConstantForConversion(Expr *Expr,
@@ -2022,8 +2023,8 @@ bool Sema::PerformCopyInitialization(Expr *&From, QualType ToType,
 ImplicitConversionSequence
 Sema::TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method) {
   QualType ClassType = Context.getTypeDeclType(Method->getParent());
-  unsigned MethodQuals = Method->getTypeQualifiers();
-  QualType ImplicitParamType = ClassType.getQualifiedType(MethodQuals);
+  QualType ImplicitParamType
+    = Context.getCVRQualifiedType(ClassType, Method->getTypeQualifiers());
 
   // Set up the conversion sequence as a "bad" conversion, to allow us
   // to exit early.
@@ -2831,27 +2832,27 @@ public:
 /// restrict *", and "int const volatile restrict *" to the set of
 /// pointer types. Returns true if the add of @p Ty itself succeeded,
 /// false otherwise.
+///
+/// FIXME: what to do about extended qualifiers?
 bool
 BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty) {
+
   // Insert this type.
   if (!PointerTypes.insert(Ty))
     return false;
 
-  if (const PointerType *PointerTy = Ty->getAs<PointerType>()) {
-    QualType PointeeTy = PointerTy->getPointeeType();
-    // FIXME: Optimize this so that we don't keep trying to add the same types.
+  const PointerType *PointerTy = Ty->getAs<PointerType>();
+  assert(PointerTy && "type was not a pointer type!");
 
-    // FIXME: Do we have to add CVR qualifiers at *all* levels to deal with all
-    // pointer conversions that don't cast away constness?
-    if (!PointeeTy.isConstQualified())
-      AddPointerWithMoreQualifiedTypeVariants
-        (Context.getPointerType(PointeeTy.withConst()));
-    if (!PointeeTy.isVolatileQualified())
-      AddPointerWithMoreQualifiedTypeVariants
-        (Context.getPointerType(PointeeTy.withVolatile()));
-    if (!PointeeTy.isRestrictQualified())
-      AddPointerWithMoreQualifiedTypeVariants
-        (Context.getPointerType(PointeeTy.withRestrict()));
+  QualType PointeeTy = PointerTy->getPointeeType();
+  unsigned BaseCVR = PointeeTy.getCVRQualifiers();
+
+  // Iterate through all strict supersets of BaseCVR.
+  for (unsigned CVR = BaseCVR+1; CVR <= Qualifiers::CVRMask; ++CVR) {
+    if ((CVR | BaseCVR) != CVR) continue;
+    
+    QualType QPointeeTy = Context.getCVRQualifiedType(PointeeTy, CVR);
+    PointerTypes.insert(Context.getPointerType(QPointeeTy));
   }
 
   return true;
@@ -2864,6 +2865,8 @@ BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty) {
 /// restrict *", and "int const volatile restrict *" to the set of
 /// pointer types. Returns true if the add of @p Ty itself succeeded,
 /// false otherwise.
+///
+/// FIXME: what to do about extended qualifiers?
 bool
 BuiltinCandidateTypeSet::AddMemberPointerWithMoreQualifiedTypeVariants(
     QualType Ty) {
@@ -2871,20 +2874,20 @@ BuiltinCandidateTypeSet::AddMemberPointerWithMoreQualifiedTypeVariants(
   if (!MemberPointerTypes.insert(Ty))
     return false;
 
-  if (const MemberPointerType *PointerTy = Ty->getAs<MemberPointerType>()) {
-    QualType PointeeTy = PointerTy->getPointeeType();
-    const Type *ClassTy = PointerTy->getClass();
-    // FIXME: Optimize this so that we don't keep trying to add the same types.
+  const MemberPointerType *PointerTy = Ty->getAs<MemberPointerType>();
+  assert(PointerTy && "type was not a member pointer type!");
 
-    if (!PointeeTy.isConstQualified())
-      AddMemberPointerWithMoreQualifiedTypeVariants
-        (Context.getMemberPointerType(PointeeTy.withConst(), ClassTy));
-    if (!PointeeTy.isVolatileQualified())
-      AddMemberPointerWithMoreQualifiedTypeVariants
-        (Context.getMemberPointerType(PointeeTy.withVolatile(), ClassTy));
-    if (!PointeeTy.isRestrictQualified())
-      AddMemberPointerWithMoreQualifiedTypeVariants
-        (Context.getMemberPointerType(PointeeTy.withRestrict(), ClassTy));
+  QualType PointeeTy = PointerTy->getPointeeType();
+  const Type *ClassTy = PointerTy->getClass();
+
+  // Iterate through all strict supersets of the pointee type's CVR
+  // qualifiers.
+  unsigned BaseCVR = PointeeTy.getCVRQualifiers();
+  for (unsigned CVR = BaseCVR+1; CVR <= Qualifiers::CVRMask; ++CVR) {
+    if ((CVR | BaseCVR) != CVR) continue;
+    
+    QualType QPointeeTy = Context.getCVRQualifiedType(PointeeTy, CVR);
+    MemberPointerTypes.insert(Context.getMemberPointerType(QPointeeTy, ClassTy));
   }
 
   return true;
@@ -2924,7 +2927,8 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
     // Add 'cv void*' to our set of types.
     if (!Ty->isVoidType()) {
       QualType QualVoid
-        = Context.VoidTy.getQualifiedType(PointeeTy.getCVRQualifiers());
+        = Context.getCVRQualifiedType(Context.VoidTy,
+                                   PointeeTy.getCVRQualifiers());
       AddPointerWithMoreQualifiedTypeVariants(Context.getPointerType(QualVoid));
     }
 
@@ -2936,7 +2940,8 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
       for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
            Base != ClassDecl->bases_end(); ++Base) {
         QualType BaseTy = Context.getCanonicalType(Base->getType());
-        BaseTy = BaseTy.getQualifiedType(PointeeTy.getCVRQualifiers());
+        BaseTy = Context.getCVRQualifiedType(BaseTy.getUnqualifiedType(),
+                                          PointeeTy.getCVRQualifiers());
 
         // Add the pointer type, recursively, so that we get all of
         // the indirect base classes, too.
@@ -2997,7 +3002,8 @@ static void AddBuiltinAssignmentOperatorCandidates(Sema &S,
 
   if (!S.Context.getCanonicalType(T).isVolatileQualified()) {
     // volatile T& operator=(volatile T&, T)
-    ParamTypes[0] = S.Context.getLValueReferenceType(T.withVolatile());
+    ParamTypes[0]
+      = S.Context.getLValueReferenceType(S.Context.getVolatileType(T));
     ParamTypes[1] = T;
     S.AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                           /*IsAssignmentOperator=*/true);
@@ -3119,7 +3125,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         AddBuiltinCandidate(ArithTy, ParamTypes, Args, 2, CandidateSet);
 
       // Volatile version
-      ParamTypes[0] = Context.getLValueReferenceType(ArithTy.withVolatile());
+      ParamTypes[0]
+        = Context.getLValueReferenceType(Context.getVolatileType(ArithTy));
       if (NumArgs == 1)
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
       else
@@ -3154,7 +3161,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
       if (!Context.getCanonicalType(*Ptr).isVolatileQualified()) {
         // With volatile
-        ParamTypes[0] = Context.getLValueReferenceType((*Ptr).withVolatile());
+        ParamTypes[0]
+          = Context.getLValueReferenceType(Context.getVolatileType(*Ptr));
         if (NumArgs == 1)
           AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
         else
@@ -3465,7 +3473,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
       if (!Context.getCanonicalType(*Ptr).isVolatileQualified()) {
         // volatile version
-        ParamTypes[0] = Context.getLValueReferenceType((*Ptr).withVolatile());
+        ParamTypes[0]
+          = Context.getLValueReferenceType(Context.getVolatileType(*Ptr));
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                             /*IsAssigmentOperator=*/Op == OO_Equal);
       }
@@ -3498,7 +3507,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
                             /*IsAssigmentOperator=*/Op == OO_Equal);
 
         // Add this built-in operator as a candidate (VQ is 'volatile').
-        ParamTypes[0] = ArithmeticTypes[Left].withVolatile();
+        ParamTypes[0] = Context.getVolatileType(ArithmeticTypes[Left]);
         ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                             /*IsAssigmentOperator=*/Op == OO_Equal);
@@ -3536,7 +3545,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 
         // Add this built-in operator as a candidate (VQ is 'volatile').
         ParamTypes[0] = ArithmeticTypes[Left];
-        ParamTypes[0].addVolatile();
+        ParamTypes[0] = Context.getVolatileType(ParamTypes[0]);
         ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
       }
