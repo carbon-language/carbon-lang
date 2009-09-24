@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -emit-llvm -o %t %s &&
+// RUN: clang-cc -fblocks -triple i386-apple-darwin9 -emit-llvm -o %t %s &&
 // RUN: grep 'define signext i8 @f0()' %t &&
 // RUN: grep 'define signext i16 @f1()' %t &&
 // RUN: grep 'define i32 @f2()' %t &&
@@ -158,5 +158,48 @@ struct s38 { char a[3]; short b; } f38(void) { while (1) {} }
 typedef int v39 __attribute((vector_size(16)));
 struct s39 { v39 x; };
 void f39(struct s39 x) {}
+
+// <rdar://problem/7247671>
+// RUN: grep 'define i32 @f40()' %t &&
+enum e40 { ec0 = 0 };
+enum e40 f40(void) { }
+
+// RUN: grep 'define void ()\* @f41()' %t &&
+typedef void (^vvbp)(void);
+vvbp f41(void) { }
+
+// RUN: grep 'define i32 @f42()' %t &&
+struct s42 { enum e40 f0; } f42(void) {  }
+
+// RUN: grep 'define i64 @f43()' %t &&
+struct s43 { enum e40 f0; int f1; } f43(void) {  }
+
+// RUN: grep 'define i32 @f44()' %t &&
+struct s44 { vvbp f0; } f44(void) {  }
+
+// RUN: grep 'define i64 @f45()' %t &&
+struct s45 { vvbp f0; int f1; } f45(void) {  }
+
+// RUN: grep 'define void @f46(i32 %a0)' %t &&
+void f46(enum e40 a0) { }
+
+// RUN: grep 'define void @f47(void ()\* %a1)' %t &&
+void f47(vvbp a1) { }
+
+// RUN: grep 'define void @f48(i32 %a0.0)' %t &&
+struct s48 { enum e40 f0; };
+void f48(struct s48 a0) { }
+
+// RUN: grep 'define void @f49(i32 %a0.0, i32 %a0.1)' %t &&
+struct s49 { enum e40 f0; int f1; };
+void f49(struct s49 a0) { }
+
+// RUN: grep 'define void @f50(void ()\* %a0.0)' %t &&
+struct s50 { vvbp f0; };
+void f50(struct s50 a0) { }
+
+// RUN: grep 'define void @f51(void ()\* %a0.0, i32 %a0.1)' %t &&
+struct s51 { vvbp f0; int f1; };
+void f51(struct s51 a0) { }
 
 // RUN: true
