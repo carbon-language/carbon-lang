@@ -1,6 +1,6 @@
 ; test that casted mallocs get converted to malloc of the right type
 ; RUN: opt < %s -instcombine -S | \
-; RUN:    not grep bitcast
+; RUN:    grep bitcast | count 1
 
 ; The target datalayout is important for this test case. We have to tell 
 ; instcombine that the ABI alignment for a long is 4-bytes, not 8, otherwise

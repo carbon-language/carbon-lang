@@ -1,5 +1,4 @@
 ; RUN: opt < %s -instcombine -S | grep {ret i32 0}
-; RUN: opt < %s -instcombine -S | not grep malloc
 ; PR1313
 
 define i32 @test1(i32 %argc, i8* %argv, i8* %envp) {

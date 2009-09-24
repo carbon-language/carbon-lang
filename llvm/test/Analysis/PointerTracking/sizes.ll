@@ -63,7 +63,7 @@ entry:
 define i32 @foo2(i32 %n) nounwind {
 entry:
 	%call = malloc i8, i32 %n		; <i8*> [#uses=1]
-; CHECK: %call =
+; CHECK: %malloccall =
 ; CHECK: ==> %n elements, %n bytes allocated
 	%call2 = tail call i8* @calloc(i64 2, i64 4) nounwind		; <i8*> [#uses=1]
 ; CHECK: %call2 =

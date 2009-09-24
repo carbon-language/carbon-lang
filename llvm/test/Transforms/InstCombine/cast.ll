@@ -79,9 +79,9 @@ define void @test11(i32* %P) {
 }
 
 define i32* @test12() {
-        %p = malloc [4 x i8]            ; <[4 x i8]*> [#uses=1]
-        %c = bitcast [4 x i8]* %p to i32*               ; <i32*> [#uses=1]
-        ret i32* %c
+        %c = malloc [4 x i8]            ; <[4 x i8]*> [#uses=1]
+        %p = bitcast [4 x i8]* %c to i32*               ; <i32*> [#uses=1]
+        ret i32* %p
 }
 define i8* @test13(i64 %A) {
         %c = getelementptr [0 x i8]* bitcast ([32832 x i8]* @inbuf to [0 x i8]*), i64 0, i64 %A             ; <i8*> [#uses=1]
