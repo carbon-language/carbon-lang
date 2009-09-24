@@ -20,6 +20,7 @@
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "llvm/Module.h"
@@ -416,6 +417,55 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
 }
 ASTConsumer *clang::CreateDeclContextPrinter() {
   return new DeclContextPrinter();
+}
+
+//===----------------------------------------------------------------------===//
+/// RecordLayoutDumper - C++ Record Layout Dumping.
+namespace {
+class RecordLayoutDumper : public ASTConsumer {
+  llvm::raw_ostream& Out;
+  
+  // FIXME: Maybe this be useful in ASTContext.cpp.
+  void DumpRecordLayout(const CXXRecordDecl *RD, ASTContext &C) {
+    const ASTRecordLayout &Info = C.getASTRecordLayout(RD);
+    
+    Out << RD->getKindName() << ' ' << RD->getQualifiedNameAsString() << '\n';
+    Out << "  sizeof=" << Info.getSize() / 8;
+    Out << ", dsize=" << Info.getDataSize() / 8;
+    Out << ", align=" << Info.getAlignment() / 8 << '\n';
+    Out << "  nvsize=" << Info.getNonVirtualSize() / 8;
+    Out << ", nvalign=" << Info.getNonVirtualAlign() / 8 << '\n';
+    Out << '\n';
+  }
+  
+public:
+  RecordLayoutDumper() : Out(llvm::errs()) {}
+  
+  void HandleTranslationUnit(ASTContext &C) {
+    for (ASTContext::type_iterator I = C.types_begin(), E = C.types_end(); 
+         I != E; ++I) {
+      const RecordType *RT = dyn_cast<RecordType>(*I);
+      if (!RT)
+        continue;
+      
+      const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
+      if (!RD)
+        continue;
+      
+      if (RD->isImplicit())
+        continue;
+
+      // FIXME: Do we really need to hard code this?
+      if (RD->getQualifiedNameAsString() == "__va_list_tag")
+        continue;
+      
+      DumpRecordLayout(RD, C);
+   }
+  }
+};
+} // end anonymous namespace
+ASTConsumer *clang::CreateRecordLayoutDumper() {
+  return new RecordLayoutDumper();
 }
 
 //===----------------------------------------------------------------------===//

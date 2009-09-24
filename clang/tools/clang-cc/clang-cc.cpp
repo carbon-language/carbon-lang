@@ -138,6 +138,7 @@ enum ProgActions {
   ASTDump,                      // Parse ASTs and dump them.
   ASTView,                      // Parse ASTs and view them in Graphviz.
   PrintDeclContext,             // Print DeclContext and their Decls.
+  DumpRecordLayouts,            // Dump record layout information.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
   ParseNoop,                    // Parse with noop callbacks.
@@ -183,6 +184,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs and view them with GraphViz"),
              clEnumValN(PrintDeclContext, "print-decl-contexts",
                         "Print DeclContexts and their Decls"),
+             clEnumValN(DumpRecordLayouts, "dump-record-layouts",
+                        "Dump record layout information"),
              clEnumValN(GeneratePTH, "emit-pth",
                         "Generate pre-tokenized header file"),
              clEnumValN(GeneratePCH, "emit-pch",
@@ -1773,6 +1776,9 @@ static ASTConsumer *CreateConsumerAction(Preprocessor &PP,
 
   case PrintDeclContext:
     return CreateDeclContextPrinter();
+
+  case DumpRecordLayouts:
+    return CreateRecordLayoutDumper();
 
   case InheritanceView:
     return CreateInheritanceViewer(InheritanceViewCls);
