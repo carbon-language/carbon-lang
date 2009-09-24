@@ -45,7 +45,7 @@ NoCanonicalizeWhiteSpace("strict-whitespace",
 
 class Pattern {
   /// Str - The string to match.
-  std::string Str;
+  StringRef Str;
 public:
   
   Pattern() { }
@@ -58,25 +58,6 @@ public:
   size_t Match(StringRef Buffer, size_t &MatchLen) const {
     MatchLen = Str.size();
     return Buffer.find(Str);
-  }
-  
-private:
-  /// CanonicalizeCheckString - Replace all sequences of horizontal whitespace
-  /// in the check strings with a single space.
-  void CanonicalizeCheckString() {
-    for (unsigned C = 0; C != Str.size(); ++C) {
-      // If C is not a horizontal whitespace, skip it.
-      if (Str[C] != ' ' && Str[C] != '\t')
-        continue;
-      
-      // Replace the character with space, then remove any other space
-      // characters after it.
-      Str[C] = ' ';
-      
-      while (C+1 != Str.size() &&
-             (Str[C+1] == ' ' || Str[C+1] == '\t'))
-        Str.erase(Str.begin()+C+1);
-    }
   }
 };
 
@@ -93,13 +74,10 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
                     "error");
     return true;
   }
+
   
-  Str = PatternStr.str();
   
-  // Remove duplicate spaces in the check strings if requested.
-  if (!NoCanonicalizeWhiteSpace)
-    CanonicalizeCheckString();
-  
+  Str = PatternStr;
   return false;
 }
 
@@ -129,6 +107,37 @@ struct CheckString {
     : Pat(P), Loc(L), IsCheckNext(isCheckNext) {}
 };
 
+/// CanonicalizeInputFile - Remove duplicate horizontal space from the specified
+/// memory buffer, free it, and return a new one.
+static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
+  SmallVector<char, 16> NewFile;
+  NewFile.reserve(MB->getBufferSize());
+  
+  for (const char *Ptr = MB->getBufferStart(), *End = MB->getBufferEnd();
+       Ptr != End; ++Ptr) {
+    // If C is not a horizontal whitespace, skip it.
+    if (*Ptr != ' ' && *Ptr != '\t') {
+      NewFile.push_back(*Ptr);
+      continue;
+    }
+    
+    // Otherwise, add one space and advance over neighboring space.
+    NewFile.push_back(' ');
+    while (Ptr+1 != End &&
+           (Ptr[1] == ' ' || Ptr[1] == '\t'))
+      ++Ptr;
+  }
+  
+  // Free the old buffer and return a new one.
+  MemoryBuffer *MB2 =
+    MemoryBuffer::getMemBufferCopy(NewFile.data(), 
+                                   NewFile.data() + NewFile.size(),
+                                   MB->getBufferIdentifier());
+  
+  delete MB;
+  return MB2;
+}
+
 
 /// ReadCheckFile - Read the check file, which specifies the sequence of
 /// expected strings.  The strings are added to the CheckStrings vector.
@@ -143,6 +152,12 @@ static bool ReadCheckFile(SourceMgr &SM,
            << ErrorStr << '\n';
     return true;
   }
+  
+  // If we want to canonicalize whitespace, strip excess whitespace from the
+  // buffer containing the CHECK lines.
+  if (!NoCanonicalizeWhiteSpace)
+    F = CanonicalizeInputFile(F);
+  
   SM.AddNewSourceBuffer(F, SMLoc());
 
   // Find all instances of CheckPrefix followed by : in the file.
@@ -232,38 +247,6 @@ static bool ReadCheckFile(SourceMgr &SM,
   
   return false;
 }
-
-/// CanonicalizeInputFile - Remove duplicate horizontal space from the specified
-/// memory buffer, free it, and return a new one.
-static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
-  SmallVector<char, 16> NewFile;
-  NewFile.reserve(MB->getBufferSize());
-  
-  for (const char *Ptr = MB->getBufferStart(), *End = MB->getBufferEnd();
-       Ptr != End; ++Ptr) {
-    // If C is not a horizontal whitespace, skip it.
-    if (*Ptr != ' ' && *Ptr != '\t') {
-      NewFile.push_back(*Ptr);
-      continue;
-    }
-    
-    // Otherwise, add one space and advance over neighboring space.
-    NewFile.push_back(' ');
-    while (Ptr+1 != End &&
-           (Ptr[1] == ' ' || Ptr[1] == '\t'))
-      ++Ptr;
-  }
-  
-  // Free the old buffer and return a new one.
-  MemoryBuffer *MB2 =
-    MemoryBuffer::getMemBufferCopy(NewFile.data(), 
-                                   NewFile.data() + NewFile.size(),
-                                   MB->getBufferIdentifier());
-
-  delete MB;
-  return MB2;
-}
-
 
 static void PrintCheckFailed(const SourceMgr &SM, const CheckString &CheckStr,
                              StringRef Buffer) {
