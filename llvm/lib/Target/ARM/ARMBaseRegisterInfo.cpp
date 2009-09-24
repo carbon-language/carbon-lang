@@ -649,10 +649,12 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // Estimate if we might need to scavenge a register at some point in order
     // to materialize a stack offset. If so, either spill one additional
     // callee-saved register or reserve a special spill slot to facilitate
-    // register scavenging.
-    if (RS && !ExtraCSSpill && !AFI->isThumb1OnlyFunction()) {
+    // register scavenging. Thumb1 needs a spill slot for stack pointer
+    // adjustments also, even when the frame itself is small.
+    if (RS && !ExtraCSSpill) {
       MachineFrameInfo  *MFI = MF.getFrameInfo();
-      if (estimateStackSize(MF, MFI) >= estimateRSStackSizeLimit(MF)) {
+      if (estimateStackSize(MF, MFI) >= estimateRSStackSizeLimit(MF)
+          || AFI->isThumb1OnlyFunction()) {
         // If any non-reserved CS register isn't spilled, just spill one or two
         // extra. That should take care of it!
         unsigned NumExtras = TargetAlign / 4;

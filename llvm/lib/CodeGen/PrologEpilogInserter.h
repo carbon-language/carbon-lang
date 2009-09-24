@@ -123,6 +123,7 @@ namespace llvm {
     void insertCSRSpillsAndRestores(MachineFunction &Fn);
     void calculateFrameObjectOffsets(MachineFunction &Fn);
     void replaceFrameIndices(MachineFunction &Fn);
+    void scavengeFrameVirtualRegs(MachineFunction &Fn);
     void insertPrologEpilogCode(MachineFunction &Fn);
 
     // Initialize DFA sets, called before iterations.

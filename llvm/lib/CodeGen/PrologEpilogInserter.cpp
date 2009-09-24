@@ -31,7 +31,9 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include <climits>
 
@@ -41,6 +43,16 @@ char PEI::ID = 0;
 
 static RegisterPass<PEI>
 X("prologepilog", "Prologue/Epilogue Insertion");
+
+// FIXME: For now, the frame index scavenging is off by default and only
+// used by the Thumb1 target. When it's the default and replaces the current
+// on-the-fly PEI scavenging for all targets, requiresRegisterScavenging()
+// will replace this.
+cl::opt<bool>
+FrameIndexVirtualScavenging("enable-frame-index-scavenging",
+                            cl::Hidden,
+                            cl::desc("Enable frame index elimination with"
+                                     "virtual register scavenging"));
 
 /// createPrologEpilogCodeInserter - This function returns a pass that inserts
 /// prolog and epilog code, and eliminates abstract frame references.
@@ -103,6 +115,12 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   // and actual offsets.
   //
   replaceFrameIndices(Fn);
+
+  // If register scavenging is needed, as we've enabled doing it as a
+  // post-pass, scavenge the virtual registers that frame index elimiation
+  // inserted.
+  if (TRI->requiresRegisterScavenging(Fn) && FrameIndexVirtualScavenging)
+    scavengeFrameVirtualRegs(Fn);
 
   delete RS;
   clearAllSets();
@@ -634,7 +652,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   for (MachineFunction::iterator BB = Fn.begin(),
          E = Fn.end(); BB != E; ++BB) {
     int SPAdj = 0;  // SP offset due to call frame setup / destroy.
-    if (RS) RS->enterBasicBlock(BB);
+    if (RS && !FrameIndexVirtualScavenging) RS->enterBasicBlock(BB);
 
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
 
@@ -680,7 +698,8 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
           // use that target machine register info object to eliminate
           // it.
 
-          TRI.eliminateFrameIndex(MI, SPAdj, RS);
+          TRI.eliminateFrameIndex(MI, SPAdj, FrameIndexVirtualScavenging ?
+                                  NULL : RS);
 
           // Reset the iterator if we were at the beginning of the BB.
           if (AtBeginning) {
@@ -695,10 +714,50 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
       if (DoIncr && I != BB->end()) ++I;
 
       // Update register states.
-      if (RS && MI) RS->forward(MI);
+      if (RS && !FrameIndexVirtualScavenging && MI) RS->forward(MI);
     }
 
     assert(SPAdj == 0 && "Unbalanced call frame setup / destroy pairs?");
   }
 }
 
+void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
+  const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
+
+  // Run through the instructions and find any virtual registers.
+  for (MachineFunction::iterator BB = Fn.begin(),
+       E = Fn.end(); BB != E; ++BB) {
+    RS->enterBasicBlock(BB);
+
+    // Keep a map of which scratch reg we use for each virtual reg.
+    // FIXME: Is a map like this the best solution? Seems like overkill,
+    // but to get rid of it would need some fairly strong assumptions
+    // that may not be valid as this gets smarter about reuse and such.
+    IndexedMap<unsigned, VirtReg2IndexFunctor> ScratchRegForVirtReg;
+    ScratchRegForVirtReg.grow(Fn.getRegInfo().getLastVirtReg());
+
+    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
+      MachineInstr *MI = I;
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
+        if (MI->getOperand(i).isReg()) {
+          unsigned Reg = MI->getOperand(i).getReg();
+          if (Reg && TRI->isVirtualRegister(Reg)) {
+            // If we already have a scratch for this virtual register, use it
+            unsigned NewReg = ScratchRegForVirtReg[Reg];
+            if (!NewReg) {
+              const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(Reg);
+              NewReg = RS->FindUnusedReg(RC);
+              if (NewReg == 0)
+                // No register is "free". Scavenge a register.
+                // FIXME: Track SPAdj. Zero won't always be right
+                NewReg = RS->scavengeRegister(RC, I, 0);
+              assert (NewReg && "unable to scavenge register!");
+              ScratchRegForVirtReg[Reg] = NewReg;
+            }
+            MI->getOperand(i).setReg(NewReg);
+          }
+        }
+      RS->forward(MI);
+    }
+  }
+}
