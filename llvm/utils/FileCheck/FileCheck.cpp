@@ -19,6 +19,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Regex.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
@@ -44,8 +45,9 @@ NoCanonicalizeWhiteSpace("strict-whitespace",
 //===----------------------------------------------------------------------===//
 
 class Pattern {
-  /// Str - The string to match.
-  StringRef Str;
+  /// Chunks - The pattern chunks to match.  If the bool is false, it is a fixed
+  /// string match, if it is true, it is a regex match.
+  SmallVector<std::pair<StringRef, bool>, 4> Chunks;
 public:
   
   Pattern() { }
@@ -55,10 +57,7 @@ public:
   /// Match - Match the pattern string against the input buffer Buffer.  This
   /// returns the position that is matched or npos if there is no match.  If
   /// there is a match, the size of the matched string is returned in MatchLen.
-  size_t Match(StringRef Buffer, size_t &MatchLen) const {
-    MatchLen = Str.size();
-    return Buffer.find(Str);
-  }
+  size_t Match(StringRef Buffer, size_t &MatchLen) const;
 };
 
 bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
@@ -74,11 +73,117 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
                     "error");
     return true;
   }
+  
+  // Scan the pattern to break it into regex and non-regex pieces.
+  while (!PatternStr.empty()) {
+    // Handle fixed string matches.
+    if (PatternStr.size() < 2 ||
+        PatternStr[0] != '{' || PatternStr[1] != '{') {
+      // Find the end, which is the start of the next regex.
+      size_t FixedMatchEnd = PatternStr.find("{{");
+      
+      Chunks.push_back(std::make_pair(PatternStr.substr(0, FixedMatchEnd),
+                                      false));
+      PatternStr = PatternStr.substr(FixedMatchEnd);
+      continue;
+    }
+    
+    // Otherwise, this is the start of a regex match.  Scan for the }}.
+    size_t End = PatternStr.find("}}");
+    if (End == StringRef::npos) {
+      SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
+                      "found start of regex string with no end '}}'", "error");
+      return true;
+    }
+    
+    Regex R(PatternStr.substr(2, End-2));
+    std::string Error;
+    if (!R.isValid(Error)) {
+      SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()+2),
+                      "invalid regex: " + Error, "error");
+      return true;
+    }
+    
+    Chunks.push_back(std::make_pair(PatternStr.substr(2, End-2), true));
+    PatternStr = PatternStr.substr(End+2);
+  }
 
-  
-  
-  Str = PatternStr;
   return false;
+}
+
+/// Match - Match the pattern string against the input buffer Buffer.  This
+/// returns the position that is matched or npos if there is no match.  If
+/// there is a match, the size of the matched string is returned in MatchLen.
+size_t Pattern::Match(StringRef Buffer, size_t &MatchLen) const {
+  size_t FirstMatch = StringRef::npos;
+  MatchLen = 0;
+  
+  SmallVector<StringRef, 4> MatchInfo;
+  
+  while (!Buffer.empty()) {
+    StringRef MatchAttempt = Buffer;
+    
+    unsigned ChunkNo = 0, e = Chunks.size();
+    for (; ChunkNo != e; ++ChunkNo) {
+      StringRef PatternStr = Chunks[ChunkNo].first;
+      
+      size_t ThisMatch = StringRef::npos;
+      size_t ThisLength = StringRef::npos;
+      if (!Chunks[ChunkNo].second) {
+        // Fixed string match.
+        ThisMatch = MatchAttempt.find(Chunks[ChunkNo].first);
+        ThisLength = Chunks[ChunkNo].first.size();
+      } else if (Regex(Chunks[ChunkNo].first, Regex::Sub).match(MatchAttempt, &MatchInfo)) {
+        // Successful regex match.
+        assert(!MatchInfo.empty() && "Didn't get any match");
+        StringRef FullMatch = MatchInfo[0];
+        MatchInfo.clear();
+        
+        ThisMatch = FullMatch.data()-MatchAttempt.data();
+        ThisLength = FullMatch.size();
+      }
+      
+      // Otherwise, what we do depends on if this is the first match or not.  If
+      // this is the first match, it doesn't match to match at the start of
+      // MatchAttempt.
+      if (ChunkNo == 0) {
+        // If the first match fails then this pattern will never match in
+        // Buffer.
+        if (ThisMatch == StringRef::npos)
+          return ThisMatch;
+        
+        FirstMatch = ThisMatch;
+        MatchAttempt = MatchAttempt.substr(FirstMatch);
+        ThisMatch = 0;
+      }
+      
+      // If this chunk didn't match, then the entire pattern didn't match from
+      // FirstMatch, try later in the buffer.
+      if (ThisMatch == StringRef::npos)
+        break;
+      
+      // Ok, if the match didn't match at the beginning of MatchAttempt, then we
+      // have something like "ABC{{DEF}} and something was in-between.  Reject
+      // the match.
+      if (ThisMatch != 0)
+        break;
+      
+      // Otherwise, match the string and move to the next chunk.
+      MatchLen += ThisLength;
+      MatchAttempt = MatchAttempt.substr(ThisLength);
+    }
+
+    // If the whole thing matched, we win.
+    if (ChunkNo == e)
+      return FirstMatch;
+    
+    // Otherwise, try matching again after FirstMatch to see if this pattern
+    // matches later in the buffer.
+    Buffer = Buffer.substr(FirstMatch+1);
+  }
+  
+  // If we ran out of stuff to scan, then we didn't match.
+  return StringRef::npos;
 }
 
 
@@ -367,14 +472,14 @@ int main(int argc, char **argv) {
     
     // If this match had "not strings", verify that they don't exist in the
     // skipped region.
-    for (unsigned i = 0, e = CheckStr.NotStrings.size(); i != e; ++i) {
+    for (unsigned ChunkNo = 0, e = CheckStr.NotStrings.size(); ChunkNo != e; ++ChunkNo) {
       size_t MatchLen = 0;
-      size_t Pos = CheckStr.NotStrings[i].second.Match(SkippedRegion, MatchLen);
+      size_t Pos = CheckStr.NotStrings[ChunkNo].second.Match(SkippedRegion, MatchLen);
       if (Pos == StringRef::npos) continue;
      
       SM.PrintMessage(SMLoc::getFromPointer(LastMatch+Pos),
                       CheckPrefix+"-NOT: string occurred!", "error");
-      SM.PrintMessage(CheckStr.NotStrings[i].first,
+      SM.PrintMessage(CheckStr.NotStrings[ChunkNo].first,
                       CheckPrefix+"-NOT: pattern specified here", "note");
       return 1;
     }

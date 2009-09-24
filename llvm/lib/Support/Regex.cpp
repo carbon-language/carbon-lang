@@ -14,13 +14,14 @@
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SmallVector.h"
 #include "regex_impl.h"
 #include <string>
 using namespace llvm;
 
 Regex::Regex(const StringRef &regex, unsigned Flags) {
   unsigned flags = 0;
-  preg = new struct llvm_regex;
+  preg = new llvm_regex();
   preg->re_endp = regex.end();
   if (Flags & IgnoreCase) 
     flags |= REG_ICASE;
@@ -60,7 +61,7 @@ bool Regex::match(const StringRef &String, SmallVectorImpl<StringRef> *Matches){
   }
 
   // pmatch needs to have at least one element.
-  SmallVector<llvm_regmatch_t, 2> pm;
+  SmallVector<llvm_regmatch_t, 8> pm;
   pm.resize(nmatch > 0 ? nmatch : 1);
   pm[0].rm_so = 0;
   pm[0].rm_eo = String.size();

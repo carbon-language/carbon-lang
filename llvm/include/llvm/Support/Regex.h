@@ -11,11 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
+#include <string>
 
 struct llvm_regex;
+
 namespace llvm {
+  class StringRef;
+  template<typename T> class SmallVectorImpl;
+  
   class Regex {
   public:
     enum {
@@ -54,6 +57,8 @@ namespace llvm {
     /// Matches.
     /// For this feature to be enabled you must construct the regex using
     /// Regex("...", Regex::Sub) constructor.
+    ///
+    /// This returns true on a successful match.
     bool match(const StringRef &String, SmallVectorImpl<StringRef> *Matches=0);
   private:
     struct llvm_regex *preg;

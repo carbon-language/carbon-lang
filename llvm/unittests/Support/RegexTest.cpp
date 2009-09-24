@@ -9,6 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "llvm/Support/Regex.h"
+#include "llvm/ADT/SmallVector.h"
 #include <cstring>
 
 using namespace llvm;
