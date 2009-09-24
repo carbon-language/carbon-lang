@@ -471,11 +471,12 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Start at the beginning of the local area.
   // The Offset is the distance from the stack top in the direction
   // of stack growth -- so it's always nonnegative.
-  int64_t Offset = TFI.getOffsetOfLocalArea();
+  int LocalAreaOffset = TFI.getOffsetOfLocalArea();
   if (StackGrowsDown)
-    Offset = -Offset;
-  assert(Offset >= 0
+    LocalAreaOffset = -LocalAreaOffset;
+  assert(LocalAreaOffset >= 0
          && "Local area offset should be in direction of stack growth");
+  int64_t Offset = LocalAreaOffset;
 
   // If there are fixed sized objects that are preallocated in the local area,
   // non-fixed objects can't be allocated right at the start of local area.
@@ -588,7 +589,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   }
 
   // Update frame info to pretend that this is part of the stack...
-  FFI->setStackSize(Offset+TFI.getOffsetOfLocalArea());
+  FFI->setStackSize(Offset - LocalAreaOffset);
 
   // Remember the required stack alignment in case targets need it to perform
   // dynamic stack alignment.
