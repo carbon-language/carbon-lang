@@ -30,7 +30,13 @@ using llvm::cast;
 using llvm::cast_or_null;
 using llvm::dyn_cast;
 using llvm::dyn_cast_or_null;
-namespace clang { class Type; class ExtQuals; }
+namespace clang {
+  enum {
+    TypeAlignmentInBits = 3,
+    TypeAlignment = 1 << TypeAlignmentInBits
+  };
+  class Type; class ExtQuals;
+}
 
 namespace llvm {
   template <typename T>
@@ -42,7 +48,7 @@ namespace llvm {
     static inline ::clang::Type *getFromVoidPointer(void *P) {
       return static_cast< ::clang::Type*>(P);
     }
-    enum { NumLowBitsAvailable = 3 };
+    enum { NumLowBitsAvailable = clang::TypeAlignmentInBits };
   };
   template<>
   class PointerLikeTypeTraits< ::clang::ExtQuals*> {
@@ -51,7 +57,7 @@ namespace llvm {
     static inline ::clang::ExtQuals *getFromVoidPointer(void *P) {
       return static_cast< ::clang::ExtQuals*>(P);
     }
-    enum { NumLowBitsAvailable = 3 };
+    enum { NumLowBitsAvailable = clang::TypeAlignmentInBits };
   };
 }
 
@@ -2489,7 +2495,7 @@ inline void QualType::removeVolatile() {
 }
 
 inline void QualType::removeCVRQualifiers(unsigned Mask) {
-  assert(!(Mask & ~Qualifiers::CVRMask) && "mask has non-fast qualifiers");
+  assert(!(Mask & ~Qualifiers::CVRMask) && "mask has non-CVR bits");
 
   // Fast path: we don't need to touch the slow qualifiers.
   if (!(Mask & ~Qualifiers::FastMask)) {
