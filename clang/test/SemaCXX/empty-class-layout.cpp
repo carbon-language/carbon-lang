@@ -10,3 +10,10 @@ SA(1, sizeof(B) == 1);
 
 struct C : A, B { };
 SA(2, sizeof(C) == 4);
+
+struct D { };
+struct E : D { };
+struct F : E { };
+
+struct G : E, F { };
+SA(3, sizeof(G) == 2);

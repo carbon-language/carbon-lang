@@ -230,7 +230,25 @@ bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
       return false;
   }
   
-  // FIXME: Bases and fields.
+  const ASTRecordLayout &Info = Ctx.getASTRecordLayout(RD);
+
+  // Check bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    if (I->isVirtual())
+      continue;
+    
+    const CXXRecordDecl *Base =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+
+    uint64_t BaseClassOffset = Info.getBaseClassOffset(Base);
+    
+    if (!canPlaceRecordAtOffset(Base, Offset + BaseClassOffset))
+      return false;
+  }
+  
+  // FIXME: fields.
+  // FIXME: virtual bases.
   return true;
 }
 
@@ -238,8 +256,23 @@ void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
                                                      uint64_t Offset) {
   if (RD->isEmpty())
     EmptyClassOffsets.insert(std::make_pair(Offset, RD));
+  
+  const ASTRecordLayout &Info = Ctx.getASTRecordLayout(RD);
+
+  // Update bases.
+  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
+       E = RD->bases_end(); I != E; ++I) {
+    if (I->isVirtual())
+      continue;
     
-  // FIXME: Update bases and fields.
+    const CXXRecordDecl *Base =
+      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+    
+    uint64_t BaseClassOffset = Info.getBaseClassOffset(Base);
+    UpdateEmptyClassOffsets(Base, Offset + BaseClassOffset);
+  }
+  
+  // FIXME: Update fields and virtual bases.
 }
 
 uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
@@ -248,25 +281,35 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   // If we have an empty base class, try to place it at offset 0.
   if (RD->isEmpty() && canPlaceRecordAtOffset(RD, 0)) {
     // We were able to place the class at offset 0.
-    // Since the base is empty we don't have to update the size or alignment.
     UpdateEmptyClassOffsets(RD, 0);
-    
+
+    Size = std::max(Size, BaseInfo.getNonVirtualSize());
+
     return 0;
   }
   
   unsigned BaseAlign = BaseInfo.getNonVirtualAlign();
+  
   // Round up the current record size to the base's alignment boundary.
   uint64_t Offset = llvm::RoundUpToAlignment(Size, BaseAlign);
   
-  // Reserve space for this base.
-  Size = Offset + BaseInfo.getNonVirtualSize();
-  
+  // Try to place the base.
+  while (true) {
+    if (canPlaceRecordAtOffset(RD, Offset))
+      break;
+    
+    Offset += BaseAlign;
+  }
+
   // Remember the next available offset.
-  NextOffset = Size;
+  NextOffset = Offset + BaseInfo.getNonVirtualSize();
+
+  Size = std::max(Size, NextOffset);
   
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign);
-  
+
+  UpdateEmptyClassOffsets(RD, Offset);
   return Offset;
 }
 
