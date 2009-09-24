@@ -195,3 +195,14 @@ CGFloat rdar7242006_negative(CGFloat x) {
   return y.width; // expected-warning{{garbage}}
 }
 
+// <rdar://problem/7249340> - Allow binding of values to symbolic regions.
+// This test case shows how RegionStore tracks the value bound to 'x'
+// after the assignment.
+void rdar_7249340(int *x) {
+  *x = 1;
+  if (*x)
+    return;
+  int *p = 0;   // This is unreachable.
+  *p = 0xDEADBEEF; // no-warning
+}
+

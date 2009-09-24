@@ -315,6 +315,9 @@ public:
                                   const GRState *state,
                                   const TypedRegion *R);
 
+  const ElementRegion *GetElementZeroRegion(const SymbolicRegion *SR,
+                                            QualType T);
+
   //===------------------------------------------------------------------===//
   // State pruning.
   //===------------------------------------------------------------------===//
@@ -857,6 +860,16 @@ static bool IsReinterpreted(QualType RTy, QualType UsedTy, ASTContext &Ctx) {
   return true;
 }
 
+const ElementRegion *
+RegionStoreManager::GetElementZeroRegion(const SymbolicRegion *SR, QualType T) {
+  ASTContext &Ctx = getContext();
+  SVal idx = ValMgr.makeZeroArrayIndex();
+  assert(!T.isNull());
+  return MRMgr.getElementRegion(T, idx, SR, Ctx);
+}
+  
+  
+
 SValuator::CastResult
 RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
 
@@ -879,12 +892,8 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   if (isa<AllocaRegion>(MR))
     return SValuator::CastResult(state, UnknownVal());
 
-  if (isa<SymbolicRegion>(MR)) {
-    ASTContext &Ctx = getContext();
-    SVal idx = ValMgr.makeZeroArrayIndex();
-    assert(!T.isNull());
-    MR = MRMgr.getElementRegion(T, idx, MR, Ctx);
-  }
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR))
+    MR = GetElementZeroRegion(SR, T);
 
   if (isa<CodeTextRegion>(MR))
     return SValuator::CastResult(state, UnknownVal());
@@ -1308,6 +1317,13 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
           return InvalidateRegion(state, superR, NULL, 0);
       }
     }
+  }
+  else if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R)) {
+    // Binding directly to a symbolic region should be treated as binding
+    // to element 0.
+    QualType T = SR->getSymbol()->getType(getContext());
+    T = cast<PointerType>(T)->getPointeeType();
+    R = GetElementZeroRegion(SR, T);
   }
 
   // Perform the binding.
