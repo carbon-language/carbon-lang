@@ -44,10 +44,39 @@ NoCanonicalizeWhiteSpace("strict-whitespace",
 // Pattern Handling Code.
 //===----------------------------------------------------------------------===//
 
+class PatternChunk {
+  StringRef Str;
+  bool isRegEx;
+public:
+  PatternChunk(StringRef S, bool isRE) : Str(S), isRegEx(isRE) {}
+  
+  
+  size_t Match(StringRef Buffer, size_t &MatchLen) const {
+    if (!isRegEx) {
+      // Fixed string match.
+      MatchLen = Str.size();
+      return Buffer.find(Str);
+    }
+     
+    // Regex match.
+    SmallVector<StringRef, 4> MatchInfo;
+    if (!Regex(Str, Regex::Sub).match(Buffer, &MatchInfo))
+      return StringRef::npos;
+    
+    // Successful regex match.
+    assert(!MatchInfo.empty() && "Didn't get any match");
+    StringRef FullMatch = MatchInfo[0];
+    
+    MatchLen = FullMatch.size();
+    return FullMatch.data()-Buffer.data();
+  }
+  
+};
+
 class Pattern {
   /// Chunks - The pattern chunks to match.  If the bool is false, it is a fixed
   /// string match, if it is true, it is a regex match.
-  SmallVector<std::pair<StringRef, bool>, 4> Chunks;
+  SmallVector<PatternChunk, 4> Chunks;
 public:
   
   Pattern() { }
@@ -82,8 +111,7 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
       // Find the end, which is the start of the next regex.
       size_t FixedMatchEnd = PatternStr.find("{{");
       
-      Chunks.push_back(std::make_pair(PatternStr.substr(0, FixedMatchEnd),
-                                      false));
+      Chunks.push_back(PatternChunk(PatternStr.substr(0, FixedMatchEnd),false));
       PatternStr = PatternStr.substr(FixedMatchEnd);
       continue;
     }
@@ -104,7 +132,7 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
       return true;
     }
     
-    Chunks.push_back(std::make_pair(PatternStr.substr(2, End-2), true));
+    Chunks.push_back(PatternChunk(PatternStr.substr(2, End-2), true));
     PatternStr = PatternStr.substr(End+2);
   }
 
@@ -118,30 +146,13 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen) const {
   size_t FirstMatch = StringRef::npos;
   MatchLen = 0;
   
-  SmallVector<StringRef, 4> MatchInfo;
-  
   while (!Buffer.empty()) {
     StringRef MatchAttempt = Buffer;
     
     unsigned ChunkNo = 0, e = Chunks.size();
     for (; ChunkNo != e; ++ChunkNo) {
-      StringRef PatternStr = Chunks[ChunkNo].first;
-      
-      size_t ThisMatch = StringRef::npos;
-      size_t ThisLength = StringRef::npos;
-      if (!Chunks[ChunkNo].second) {
-        // Fixed string match.
-        ThisMatch = MatchAttempt.find(Chunks[ChunkNo].first);
-        ThisLength = Chunks[ChunkNo].first.size();
-      } else if (Regex(Chunks[ChunkNo].first, Regex::Sub).match(MatchAttempt, &MatchInfo)) {
-        // Successful regex match.
-        assert(!MatchInfo.empty() && "Didn't get any match");
-        StringRef FullMatch = MatchInfo[0];
-        MatchInfo.clear();
-        
-        ThisMatch = FullMatch.data()-MatchAttempt.data();
-        ThisLength = FullMatch.size();
-      }
+      size_t ThisMatch, ThisLength = StringRef::npos;
+      ThisMatch = Chunks[ChunkNo].Match(MatchAttempt, ThisLength);
       
       // Otherwise, what we do depends on if this is the first match or not.  If
       // this is the first match, it doesn't match to match at the start of
