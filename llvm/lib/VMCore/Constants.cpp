@@ -436,7 +436,7 @@ ConstantFP* ConstantFP::get(LLVMContext &Context, const APFloat& V) {
   return Slot;
 }
 
-ConstantFP *ConstantFP::getInf(const Type *Ty, bool Negative) {
+ConstantFP *ConstantFP::getInfinity(const Type *Ty, bool Negative) {
   const fltSemantics &Semantics = *TypeToFloatSemantics(Ty);
   return ConstantFP::get(Ty->getContext(),
                          APFloat::getInf(Semantics, Negative));

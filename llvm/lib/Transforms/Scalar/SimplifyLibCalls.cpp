@@ -1034,8 +1034,8 @@ struct PowOpt : public LibCallOptimization {
       // and negative infinite correctly.
       // TODO: In fast-math mode, this could be just sqrt(x).
       // TODO: In finite-only mode, this could be just fabs(sqrt(x)).
-      Value *Inf = ConstantFP::getInf(CI->getType());
-      Value *NegInf = ConstantFP::getInf(CI->getType(), true);
+      Value *Inf = ConstantFP::getInfinity(CI->getType());
+      Value *NegInf = ConstantFP::getInfinity(CI->getType(), true);
       Value *Sqrt = EmitUnaryFloatFnCall(Op1, "sqrt", B, CI->getAttributes());
       Value *FAbs = EmitUnaryFloatFnCall(Sqrt, "fabs", B, CI->getAttributes());
       Value *FCmp = B.CreateFCmpOEQ(Op1, NegInf, "tmp");
