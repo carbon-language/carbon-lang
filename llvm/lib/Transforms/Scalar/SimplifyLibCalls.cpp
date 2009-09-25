@@ -95,7 +95,8 @@ public:
   /// 'floor').  This function is known to take a single of type matching 'Op'
   /// and returns one value with the same type.  If 'Op' is a long double, 'l'
   /// is added as the suffix of name, if 'Op' is a float, we add a 'f' suffix.
-  Value *EmitUnaryFloatFnCall(Value *Op, const char *Name, IRBuilder<> &B);
+  Value *EmitUnaryFloatFnCall(Value *Op, const char *Name, IRBuilder<> &B,
+                              const AttrListPtr &Attrs);
   
   /// EmitPutChar - Emit a call to the putchar function.  This assumes that Char
   /// is an integer.
@@ -221,7 +222,8 @@ Value *LibCallOptimization::EmitMemSet(Value *Dst, Value *Val,
 /// returns one value with the same type.  If 'Op' is a long double, 'l' is
 /// added as the suffix of name, if 'Op' is a float, we add a 'f' suffix.
 Value *LibCallOptimization::EmitUnaryFloatFnCall(Value *Op, const char *Name,
-                                                 IRBuilder<> &B) {
+                                                 IRBuilder<> &B,
+                                                 const AttrListPtr &Attrs) {
   char NameBuffer[20];
   if (Op->getType() != Type::getDoubleTy(*Context)) {
     // If we need to add a suffix, copy into NameBuffer.
@@ -240,7 +242,7 @@ Value *LibCallOptimization::EmitUnaryFloatFnCall(Value *Op, const char *Name,
   Value *Callee = M->getOrInsertFunction(Name, Op->getType(),
                                          Op->getType(), NULL);
   CallInst *CI = B.CreateCall(Callee, Op, Name);
-
+  CI->setAttributes(Attrs);
   if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
     CI->setCallingConv(F->getCallingConv());
 
@@ -1017,7 +1019,7 @@ struct PowOpt : public LibCallOptimization {
       if (Op1C->isExactlyValue(1.0))  // pow(1.0, x) -> 1.0
         return Op1C;
       if (Op1C->isExactlyValue(2.0))  // pow(2.0, x) -> exp2(x)
-        return EmitUnaryFloatFnCall(Op2, "exp2", B);
+        return EmitUnaryFloatFnCall(Op2, "exp2", B, CI->getAttributes());
     }
     
     ConstantFP *Op2C = dyn_cast<ConstantFP>(Op2);
@@ -1027,16 +1029,18 @@ struct PowOpt : public LibCallOptimization {
       return ConstantFP::get(CI->getType(), 1.0);
     
     if (Op2C->isExactlyValue(0.5)) {
-      // FIXME: This is not safe for -0.0 and -inf.  This can only be done when
-      // 'unsafe' math optimizations are allowed.
-      // x    pow(x, 0.5)  sqrt(x)
-      // ---------------------------------------------
-      // -0.0    +0.0       -0.0
-      // -inf    +inf       NaN
-#if 0
-      // pow(x, 0.5) -> sqrt(x)
-      return B.CreateCall(get_sqrt(), Op1, "sqrt");
-#endif
+      // Expand pow(x, 0.5) to (x == -infinity ? +infinity : fabs(sqrt(x))).
+      // This is faster than calling pow, and still handles negative zero
+      // and negative infinite correctly.
+      // TODO: In fast-math mode, this could be just sqrt(x).
+      // TODO: In finite-only mode, this could be just fabs(sqrt(x)).
+      Value *Inf = ConstantFP::getInf(CI->getType());
+      Value *NegInf = ConstantFP::getInf(CI->getType(), true);
+      Value *Sqrt = EmitUnaryFloatFnCall(Op1, "sqrt", B, CI->getAttributes());
+      Value *FAbs = EmitUnaryFloatFnCall(Sqrt, "fabs", B, CI->getAttributes());
+      Value *FCmp = B.CreateFCmpOEQ(Op1, NegInf, "tmp");
+      Value *Sel = B.CreateSelect(FCmp, Inf, FAbs, "tmp");
+      return Sel;
     }
     
     if (Op2C->isExactlyValue(1.0))  // pow(x, 1.0) -> x
@@ -1117,7 +1121,7 @@ struct UnaryDoubleFPOpt : public LibCallOptimization {
 
     // floor((double)floatval) -> (double)floorf(floatval)
     Value *V = Cast->getOperand(0);
-    V = EmitUnaryFloatFnCall(V, Callee->getName().data(), B);
+    V = EmitUnaryFloatFnCall(V, Callee->getName().data(), B, CI->getAttributes());
     return B.CreateFPExt(V, Type::getDoubleTy(*Context));
   }
 };
