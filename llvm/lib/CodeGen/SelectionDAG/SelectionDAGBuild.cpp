@@ -4576,6 +4576,15 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
+      } else if (Name == "sqrt" || Name == "sqrtf" || Name == "sqrtl") {
+        if (I.getNumOperands() == 2 &&   // Basic sanity checks.
+            I.getOperand(1)->getType()->isFloatingPoint() &&
+            I.getType() == I.getOperand(1)->getType()) {
+          SDValue Tmp = getValue(I.getOperand(1));
+          setValue(&I, DAG.getNode(ISD::FSQRT, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
+          return;
+        }
       }
     }
   } else if (isa<InlineAsm>(I.getOperand(0))) {
