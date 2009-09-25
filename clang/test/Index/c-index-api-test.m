@@ -6,7 +6,7 @@
 // CHECK: <invalid loc>:0:0: ObjCInterfaceDecl=Protocol [Context=c-index-api-test.m]
 // CHECK: <invalid loc>:0:0: TypedefDecl=id [Context=c-index-api-test.m]
 // CHECK: <invalid loc>:0:0: TypedefDecl=Class [Context=c-index-api-test.m]
-// CHECK: <built-in>:75:15: TypedefDecl=__builtin_va_list [Context=c-index-api-test.m]
+// 
 
 @interface Foo 
 {
