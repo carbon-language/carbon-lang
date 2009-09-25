@@ -1071,6 +1071,7 @@ namespace {
     const TargetRegisterInfo *TRI;
     const ARMSubtarget *STI;
     MachineRegisterInfo *MRI;
+    MachineFunction *MF;
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
 
@@ -1083,7 +1084,8 @@ namespace {
                           unsigned &NewOpc, unsigned &EvenReg,
                           unsigned &OddReg, unsigned &BaseReg,
                           unsigned &OffReg, unsigned &Offset,
-                          unsigned &PredReg, ARMCC::CondCodes &Pred);
+                          unsigned &PredReg, ARMCC::CondCodes &Pred,
+                          bool &isT2);
     bool RescheduleOps(MachineBasicBlock *MBB,
                        SmallVector<MachineInstr*, 4> &Ops,
                        unsigned Base, bool isLd,
@@ -1099,6 +1101,7 @@ bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   TRI = Fn.getTarget().getRegisterInfo();
   STI = &Fn.getTarget().getSubtarget<ARMSubtarget>();
   MRI = &Fn.getRegInfo();
+  MF  = &Fn;
 
   bool Modified = false;
   for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
@@ -1162,15 +1165,29 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
                                           unsigned &OddReg, unsigned &BaseReg,
                                           unsigned &OffReg, unsigned &Offset,
                                           unsigned &PredReg,
-                                          ARMCC::CondCodes &Pred) {
+                                          ARMCC::CondCodes &Pred,
+                                          bool &isT2) {
   // FIXME: FLDS / FSTS -> FLDD / FSTD
+  unsigned Scale = 1;
   unsigned Opcode = Op0->getOpcode();
   if (Opcode == ARM::LDR)
     NewOpc = ARM::LDRD;
   else if (Opcode == ARM::STR)
     NewOpc = ARM::STRD;
-  else
-    return 0;
+  else if (Opcode == ARM::t2LDRi8 || Opcode == ARM::t2LDRi12) {
+    NewOpc = ARM::t2LDRDi8;
+    Scale = 4;
+    isT2 = true;
+  } else if (Opcode == ARM::t2STRi8 || Opcode == ARM::t2STRi12) {
+    NewOpc = ARM::t2STRDi8;
+    Scale = 4;
+    isT2 = true;
+  } else
+    return false;
+
+  if (!isT2 &&
+      (Op0->getOperand(2).getReg() != Op1->getOperand(2).getReg()))
+      return false;
 
   // Must sure the base address satisfies i64 ld / st alignment requirement.
   if (!Op0->hasOneMemOperand() ||
@@ -1179,10 +1196,10 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
     return false;
 
   unsigned Align = (*Op0->memoperands_begin())->getAlignment();
+  Function *Func = MF->getFunction();
   unsigned ReqAlign = STI->hasV6Ops()
-    ? TD->getPrefTypeAlignment(
-  Type::getInt64Ty(Op0->getParent()->getParent()->getFunction()->getContext())) 
-  : 8; // Pre-v6 need 8-byte align
+    ? TD->getPrefTypeAlignment(Type::getInt64Ty(Func->getContext())) 
+    : 8;  // Pre-v6 need 8-byte align
   if (Align < ReqAlign)
     return false;
 
@@ -1193,16 +1210,21 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
     AddSub = ARM_AM::sub;
     OffImm = - OffImm;
   }
-  if (OffImm >= 256) // 8 bits
+  int Limit = (1 << 8) * Scale;
+  if (OffImm >= Limit || (OffImm & (Scale-1)))
     return false;
-  Offset = ARM_AM::getAM3Opc(AddSub, OffImm);
 
+  if (isT2)
+    Offset = OffImm;
+  else
+    Offset = ARM_AM::getAM3Opc(AddSub, OffImm);
   EvenReg = Op0->getOperand(0).getReg();
   OddReg  = Op1->getOperand(0).getReg();
   if (EvenReg == OddReg)
     return false;
   BaseReg = Op0->getOperand(1).getReg();
-  OffReg = Op0->getOperand(2).getReg();
+  if (!isT2)
+    OffReg = Op0->getOperand(2).getReg();
   Pred = llvm::getInstrPredicate(Op0, PredReg);
   dl = Op0->getDebugLoc();
   return true;
@@ -1255,7 +1277,7 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
       LastOffset = Offset;
       LastBytes = Bytes;
       LastOpcode = Opcode;
-      if (++NumMove == 8) // FIXME: Tune
+      if (++NumMove == 8) // FIXME: Tune this limit.
         break;
     }
 
@@ -1291,29 +1313,36 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
         unsigned EvenReg = 0, OddReg = 0;
         unsigned BaseReg = 0, OffReg = 0, PredReg = 0;
         ARMCC::CondCodes Pred = ARMCC::AL;
+        bool isT2 = false;
         unsigned NewOpc = 0;
         unsigned Offset = 0;
         DebugLoc dl;
         if (NumMove == 2 && CanFormLdStDWord(Op0, Op1, dl, NewOpc,
                                              EvenReg, OddReg, BaseReg, OffReg,
-                                             Offset, PredReg, Pred)) {
+                                             Offset, PredReg, Pred, isT2)) {
           Ops.pop_back();
           Ops.pop_back();
 
           // Form the pair instruction.
           if (isLd) {
-            BuildMI(*MBB, InsertPos, dl, TII->get(NewOpc))
+            MachineInstrBuilder MIB = BuildMI(*MBB, InsertPos,
+                                              dl, TII->get(NewOpc))
               .addReg(EvenReg, RegState::Define)
               .addReg(OddReg, RegState::Define)
-              .addReg(BaseReg).addReg(0).addImm(Offset)
-              .addImm(Pred).addReg(PredReg);
+              .addReg(BaseReg);
+            if (!isT2)
+              MIB.addReg(OffReg);
+            MIB.addImm(Offset).addImm(Pred).addReg(PredReg);
             ++NumLDRDFormed;
           } else {
-            BuildMI(*MBB, InsertPos, dl, TII->get(NewOpc))
+            MachineInstrBuilder MIB = BuildMI(*MBB, InsertPos,
+                                              dl, TII->get(NewOpc))
               .addReg(EvenReg)
               .addReg(OddReg)
-              .addReg(BaseReg).addReg(0).addImm(Offset)
-              .addImm(Pred).addReg(PredReg);
+              .addReg(BaseReg);
+            if (!isT2)
+              MIB.addReg(OffReg);
+            MIB.addImm(Offset).addImm(Pred).addReg(PredReg);
             ++NumSTRDFormed;
           }
           MBB->erase(Op0);
@@ -1369,9 +1398,8 @@ ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
       if (llvm::getInstrPredicate(MI, PredReg) != ARMCC::AL)
         continue;
 
-      int Opcode = MI->getOpcode();
-      bool isLd = Opcode == ARM::LDR ||
-        Opcode == ARM::FLDS || Opcode == ARM::FLDD;
+      int Opc = MI->getOpcode();
+      bool isLd = isi32Load(Opc) || Opc == ARM::FLDS || Opc == ARM::FLDD;
       unsigned Base = MI->getOperand(1).getReg();
       int Offset = getMemoryOpOffset(MI);
 
