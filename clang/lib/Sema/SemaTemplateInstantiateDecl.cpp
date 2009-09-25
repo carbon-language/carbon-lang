@@ -711,7 +711,9 @@ ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
   // Mark the default argument as being uninstantiated.
   if (D->hasUninstantiatedDefaultArg())
     Param->setUninstantiatedDefaultArg(D->getUninstantiatedDefaultArg());
-
+  else if (Expr *Arg = D->getDefaultArg())
+    Param->setUninstantiatedDefaultArg(Arg);
+  
   // Note: we don't try to instantiate function parameters until after
   // we've instantiated the function's type. Therefore, we don't have
   // to check for 'void' parameter types here.
