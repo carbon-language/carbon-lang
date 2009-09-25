@@ -34,10 +34,13 @@ public:
 private:
   StackDirection StackDir;
   unsigned StackAlignment;
+  unsigned TransientStackAlignment;
   int LocalAreaOffset;
 public:
-  TargetFrameInfo(StackDirection D, unsigned StackAl, int LAO)
-    : StackDir(D), StackAlignment(StackAl), LocalAreaOffset(LAO) {}
+  TargetFrameInfo(StackDirection D, unsigned StackAl, int LAO,
+                  unsigned TransAl = 1)
+    : StackDir(D), StackAlignment(StackAl), TransientStackAlignment(TransAl),
+      LocalAreaOffset(LAO) {}
 
   virtual ~TargetFrameInfo();
 
@@ -48,11 +51,19 @@ public:
   ///
   StackDirection getStackGrowthDirection() const { return StackDir; }
 
-  /// getStackAlignment - This method returns the number of bytes that the stack
-  /// pointer must be aligned to.  Typically, this is the largest alignment for
-  /// any data object in the target.
+  /// getStackAlignment - This method returns the number of bytes to which the
+  /// stack pointer must be aligned on entry to a function.  Typically, this
+  /// is the largest alignment for any data object in the target.
   ///
   unsigned getStackAlignment() const { return StackAlignment; }
+
+  /// getTransientStackAlignment - This method returns the number of bytes to
+  /// which the stack pointer must be aligned at all times, even between
+  /// calls.
+  ///
+  unsigned getTransientStackAlignment() const {
+    return TransientStackAlignment;
+  }
 
   /// getOffsetOfLocalArea - This method returns the offset of the local area
   /// from the stack pointer on entrance to a function.

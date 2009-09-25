@@ -23,7 +23,7 @@ namespace llvm {
 class ARMFrameInfo : public TargetFrameInfo {
 public:
   explicit ARMFrameInfo(const ARMSubtarget &ST)
-    : TargetFrameInfo(StackGrowsDown, ST.getStackAlignment(), 0) {
+    : TargetFrameInfo(StackGrowsDown, ST.getStackAlignment(), 0, 4) {
   }
 };
 

@@ -484,7 +484,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Loop over all of the stack objects, assigning sequential addresses...
   MachineFrameInfo *FFI = Fn.getFrameInfo();
 
-  unsigned MaxAlign = FFI->getMaxAlignment();
+  unsigned MaxAlign = 1;
 
   // Start at the beginning of the local area.
   // The Offset is the distance from the stack top in the direction
@@ -586,23 +586,28 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       AdjustStackOffset(FFI, SFI, StackGrowsDown, Offset, MaxAlign);
   }
 
-  // Round up the size to a multiple of the alignment, but only if there are
-  // calls or alloca's in the function.  This ensures that any calls to
-  // subroutines have their stack frames suitably aligned.
-  // Also do this if we need runtime alignment of the stack.  In this case
-  // offsets will be relative to SP not FP; round up the stack size so this
-  // works.
-  if (!RegInfo->targetHandlesStackFrameRounding() &&
-      (FFI->hasCalls() || FFI->hasVarSizedObjects() ||
-       (RegInfo->needsStackRealignment(Fn) &&
-        FFI->getObjectIndexEnd() != 0))) {
+  if (!RegInfo->targetHandlesStackFrameRounding()) {
     // If we have reserved argument space for call sites in the function
     // immediately on entry to the current function, count it as part of the
     // overall stack size.
-    if (RegInfo->hasReservedCallFrame(Fn))
+    if (FFI->hasCalls() && RegInfo->hasReservedCallFrame(Fn))
       Offset += FFI->getMaxCallFrameSize();
 
-    unsigned AlignMask = std::max(TFI.getStackAlignment(), MaxAlign) - 1;
+    // Round up the size to a multiple of the alignment.  If the function has
+    // any calls or alloca's, align to the target's StackAlignment value to
+    // ensure that the callee's frame or the alloca data is suitably aligned;
+    // otherwise, for leaf functions, align to the TransientStackAlignment
+    // value.
+    unsigned StackAlign;
+    if (FFI->hasCalls() || FFI->hasVarSizedObjects() ||
+        (RegInfo->needsStackRealignment(Fn) && FFI->getObjectIndexEnd() != 0))
+      StackAlign = TFI.getStackAlignment();
+    else
+      StackAlign = TFI.getTransientStackAlignment();
+    // If the frame pointer is eliminated, all frame offsets will be relative
+    // to SP not FP; align to MaxAlign so this works.
+    StackAlign = std::max(StackAlign, MaxAlign);
+    unsigned AlignMask = StackAlign - 1;
     Offset = (Offset + AlignMask) & ~uint64_t(AlignMask);
   }
 
@@ -611,7 +616,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Remember the required stack alignment in case targets need it to perform
   // dynamic stack alignment.
-  FFI->setMaxAlignment(MaxAlign);
+  if (MaxAlign > FFI->getMaxAlignment())
+    FFI->setMaxAlignment(MaxAlign);
 }
 
 
