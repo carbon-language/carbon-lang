@@ -378,7 +378,7 @@ if (!defined($Analyses)) { $Analyses = '-checker-cfref'; }
 
 # Get the store model.
 my $StoreModel = $ENV{'CCC_ANALYZER_STORE_MODEL'};
-if (!defined $StoreModel) { $StoreModel = "basic"; }
+if (!defined $StoreModel) { $StoreModel = "region"; }
 
 # Get the constraints engine.
 my $ConstraintsModel = $ENV{'CCC_ANALYZER_CONSTRAINTS_MODEL'};

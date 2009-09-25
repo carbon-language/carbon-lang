@@ -532,6 +532,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-static-define");
 
   if (isa<AnalyzeJobAction>(JA)) {
+    // Enable region store model by default.
+    CmdArgs.push_back("-analyzer-store=region");
+
     // Add default argument set.
     if (!Args.hasArg(options::OPT__analyzer_no_default_checks)) {
       CmdArgs.push_back("-warn-dead-stores");

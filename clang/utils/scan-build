@@ -949,10 +949,12 @@ ADVANCED OPTIONS:
                         used by checker-0.160 and earlier.
 
  -store [model] - Specify the store model used by the analyzer. By default,
-                  the 'basic' store model is used. 'region' specifies a field-
-                  sensitive store model. Be warned that the 'region' model
-                  is still in very early testing phase and may often crash.
-                  
+                  the 'region' store model is used. 'region' specifies a field-
+                  sensitive store model. Users can also specify 'basic', which
+                  is far less precise but can more quickly analyze code.
+                  'basic' was the default store model for checker-0.221 and
+                  earlier.
+
  -no-failure-reports - Do not create a 'failures' subdirectory that includes
                        analyzer crash reports and preprocessed source files.
 
