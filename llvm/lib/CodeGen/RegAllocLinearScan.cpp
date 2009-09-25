@@ -397,10 +397,10 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
     // Remove unnecessary kills since a copy does not clobber the register.
     if (li_->hasInterval(SrcReg)) {
       LiveInterval &SrcLI = li_->getInterval(SrcReg);
-      for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(cur.reg),
-             E = mri_->reg_end(); I != E; ++I) {
+      for (MachineRegisterInfo::use_iterator I = mri_->use_begin(cur.reg),
+             E = mri_->use_end(); I != E; ++I) {
         MachineOperand &O = I.getOperand();
-        if (!O.isUse() || !O.isKill())
+        if (!O.isKill())
           continue;
         MachineInstr *MI = &*I;
         if (SrcLI.liveAt(li_->getDefIndex(li_->getInstructionIndex(MI))))

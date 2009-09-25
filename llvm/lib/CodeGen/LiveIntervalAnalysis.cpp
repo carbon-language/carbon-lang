@@ -1087,11 +1087,9 @@ LiveIntervals::isProfitableToCoalesce(LiveInterval &DstInt, LiveInterval &SrcInt
                                    SmallVector<MachineInstr*,16> &OtherCopies) {
   bool HaveConflict = false;
   unsigned NumIdent = 0;
-  for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(SrcInt.reg),
-         re = mri_->reg_end(); ri != re; ++ri) {
+  for (MachineRegisterInfo::def_iterator ri = mri_->def_begin(SrcInt.reg),
+         re = mri_->def_end(); ri != re; ++ri) {
     MachineOperand &O = ri.getOperand();
-    if (!O.isDef())
-      continue;
 
     MachineInstr *MI = &*ri;
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
