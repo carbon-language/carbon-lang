@@ -3409,23 +3409,38 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     return DeclPtrTy();
   }
   
+  // Translate the parser's template argument list in our AST format.
+  bool HasExplicitTemplateArgs = false;
+  llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
+  if (D.getKind() == Declarator::DK_TemplateId) {
+    TemplateIdAnnotation *TemplateId = D.getTemplateId();
+    ASTTemplateArgsPtr TemplateArgsPtr(*this,
+                                       TemplateId->getTemplateArgs(),
+                                       TemplateId->getTemplateArgIsType(),
+                                       TemplateId->NumArgs);
+    translateTemplateArguments(TemplateArgsPtr,
+                               TemplateId->getTemplateArgLocations(),
+                               TemplateArgs);
+    HasExplicitTemplateArgs = true;
+  }
+  
+  
   // C++ [temp.explicit]p1:
   //   A [...] function [...] can be explicitly instantiated from its template. 
   //   A member function [...] of a class template can be explicitly 
   //  instantiated from the member definition associated with its class 
   //  template.
-  // FIXME: Implement this!
   llvm::SmallVector<FunctionDecl *, 8> Matches;
   for (LookupResult::iterator P = Previous.begin(), PEnd = Previous.end();
        P != PEnd; ++P) {
     NamedDecl *Prev = *P;
-    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Prev)) {
-      // FIXME: If there were any explicitly-specified template arguments, 
-      // don't look for Method declarations.
-      if (Context.hasSameUnqualifiedType(Method->getType(), R)) {
-        Matches.clear();
-        Matches.push_back(Method);
-        break;
+    if (!HasExplicitTemplateArgs) {
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Prev)) {
+        if (Context.hasSameUnqualifiedType(Method->getType(), R)) {
+          Matches.clear();
+          Matches.push_back(Method);
+          break;
+        }
       }
     }
     
@@ -3436,7 +3451,8 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     TemplateDeductionInfo Info(Context);
     FunctionDecl *Specialization = 0;
     if (TemplateDeductionResult TDK
-          = DeduceTemplateArguments(FunTmpl, /*FIXME:*/false, 0, 0, 
+          = DeduceTemplateArguments(FunTmpl, HasExplicitTemplateArgs,
+                                    TemplateArgs.data(), TemplateArgs.size(),
                                     R, Specialization, Info)) {
       // FIXME: Keep track of almost-matches?
       (void)TDK;

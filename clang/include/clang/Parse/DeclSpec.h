@@ -794,8 +794,10 @@ public:
     DK_Constructor,      // A C++ constructor (identifier is the class name)
     DK_Destructor,       // A C++ destructor  (identifier is ~class name)
     DK_Operator,         // A C++ overloaded operator name
-    DK_Conversion        // A C++ conversion function (identifier is
+    DK_Conversion,       // A C++ conversion function (identifier is
                          // "operator " then the type name)
+    DK_TemplateId        // A C++ template-id naming a function template
+                         // specialization.
   };
 
 private:
@@ -839,6 +841,10 @@ private:
     /// When Kind is DK_Operator, this is the actual overloaded
     /// operator that this declarator names.
     OverloadedOperatorKind OperatorKind;
+    
+    /// When Kind is DK_TemplateId, this is the template-id annotation that
+    /// contains the template and its template arguments.
+    TemplateIdAnnotation *TemplateId;
   };
 
   /// InlineParams - This is a local array used for the first function decl
@@ -916,6 +922,10 @@ public:
     Identifier = 0;
     IdentifierLoc = SourceLocation();
     Range = DS.getSourceRange();
+    
+    if (Kind == DK_TemplateId)
+      TemplateId->Destroy();
+    
     Kind = DK_Abstract;
 
     for (unsigned i = 0, e = DeclTypeInfo.size(); i != e; ++i)
@@ -1023,6 +1033,16 @@ public:
       SetRangeEnd(EndLoc);
   }
 
+  /// \brief Set this declaration to be a C++ template-id, which includes the
+  /// template (or set of function templates) along with template arguments.
+  void setTemplateId(TemplateIdAnnotation *TemplateId) {
+    assert(TemplateId && "NULL template-id provided to declarator?");
+    IdentifierLoc = TemplateId->TemplateNameLoc;
+    Kind = DK_TemplateId;
+    SetRangeEnd(TemplateId->RAngleLoc);
+    this->TemplateId = TemplateId;
+  }
+                     
   /// AddTypeInfo - Add a chunk to this declarator. Also extend the range to
   /// EndLoc, which should be the last token of the chunk.
   void AddTypeInfo(const DeclaratorChunk &TI, SourceLocation EndLoc) {
@@ -1085,10 +1105,22 @@ public:
   void setExtension(bool Val = true) { Extension = Val; }
   bool getExtension() const { return Extension; }
 
-  ActionBase::TypeTy *getDeclaratorIdType() const { return Type; }
+  ActionBase::TypeTy *getDeclaratorIdType() const { 
+    assert((Kind == DK_Constructor || Kind == DK_Destructor || 
+            Kind == DK_Conversion) && "Declarator kind does not have a type");
+    return Type; 
+  }
 
-  OverloadedOperatorKind getOverloadedOperator() const { return OperatorKind; }
+  OverloadedOperatorKind getOverloadedOperator() const { 
+    assert(Kind == DK_Operator && "Declarator is not an overloaded operator");
+    return OperatorKind; 
+  }
 
+  TemplateIdAnnotation *getTemplateId() { 
+    assert(Kind == DK_TemplateId && "Declarator is not a template-id");
+    return TemplateId;
+  }
+  
   void setInvalidType(bool Val = true) { InvalidType = Val; }
   bool isInvalidType() const {
     return InvalidType || DS.getTypeSpecType() == DeclSpec::TST_error;

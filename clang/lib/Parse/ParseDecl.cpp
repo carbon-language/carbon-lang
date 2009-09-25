@@ -2210,12 +2210,12 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
 ///
 ///       id-expression: [C++ 5.1]
 ///         unqualified-id
-///         qualified-id            [TODO]
+///         qualified-id
 ///
 ///       unqualified-id: [C++ 5.1]
 ///         identifier
 ///         operator-function-id
-///         conversion-function-id  [TODO]
+///         conversion-function-id
 ///          '~' class-name
 ///         template-id
 ///
@@ -2254,15 +2254,7 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         TemplateIdAnnotation *TemplateId
           = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
 
-        // FIXME: Could this template-id name a constructor?
-
-        // FIXME: This is an egregious hack, where we silently ignore
-        // the specialization (which should be a function template
-        // specialization name) and use the name instead. This hack
-        // will go away when we have support for function
-        // specializations.
-        D.SetIdentifier(TemplateId->Name, Tok.getLocation());
-        TemplateId->Destroy();
+        D.setTemplateId(TemplateId);
         ConsumeToken();
         goto PastIdentifier;
       } else if (Tok.is(tok::kw_operator)) {

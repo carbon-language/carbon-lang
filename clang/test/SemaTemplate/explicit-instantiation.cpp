@@ -55,3 +55,17 @@ template int X2::f0(int); // expected-error{{not an instantiation}}
 template int *X2::f1(int *); // okay
 
 template void X2::f2(int *, int *); // expected-error{{ambiguous}}
+
+
+template<typename T> void print_type();
+
+template void print_type<int>();
+template void print_type<float>();
+
+template<typename T> void print_type(T*);
+
+template void print_type(int*);
+template void print_type<int>(float*); // expected-error{{does not refer}}
+
+void print_type(double*);
+template void print_type<double>(double*);

@@ -842,7 +842,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   switch (D.getKind()) {
   case Declarator::DK_Abstract:
   case Declarator::DK_Normal:
-  case Declarator::DK_Operator: {
+  case Declarator::DK_Operator:
+  case Declarator::DK_TemplateId: {
     const DeclSpec &DS = D.getDeclSpec();
     if (OmittedReturnType) {
       // We default to a dependent type initially.  Can be modified by

@@ -1587,6 +1587,17 @@ DeclarationName Sema::GetNameForDeclarator(Declarator &D) {
     assert(D.getIdentifier() == 0 && "operator names have no identifier");
     return Context.DeclarationNames.getCXXOperatorName(
                                                 D.getOverloadedOperator());
+      
+  case Declarator::DK_TemplateId: {
+    TemplateName Name
+      = TemplateName::getFromVoidPointer(D.getTemplateId()->Template);    
+    if (TemplateDecl *Template = Name.getAsTemplateDecl())
+      return Template->getDeclName();
+    if (OverloadedFunctionDecl *Ovl = Name.getAsOverloadedFunctionDecl())
+      return Ovl->getDeclName();
+    
+    return DeclarationName();
+  }
   }
 
   assert(false && "Unknown name kind");
