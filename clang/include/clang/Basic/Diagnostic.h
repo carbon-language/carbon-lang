@@ -254,6 +254,12 @@ public:
   }
   bool getSuppressAllDiagnostics() const { return SuppressAllDiagnostics; }
   
+  /// \brief Pretend that the last diagnostic issued was ignored. This can
+  /// be used by clients who suppress diagnostics themselves.
+  void setLastDiagnosticIgnored() {
+    LastDiagLevel = Ignored;
+  }
+  
   /// setExtensionHandlingBehavior - This controls whether otherwise-unmapped
   /// extension diagnostics are mapped onto ignore/warning/error.  This
   /// corresponds to the GCC -pedantic and -pedantic-errors option.

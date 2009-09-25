@@ -403,6 +403,7 @@ public:
       // deduction, and that error is one of the SFINAE errors,
       // suppress the diagnostic.
       ++NumSFINAEErrors;
+      Diags.setLastDiagnosticIgnored();
       return SemaDiagnosticBuilder(*this);
     }
 
@@ -2444,6 +2445,10 @@ public:
                                 TemplateParameterList *TemplateParams,
                                 AccessSpecifier AS);
 
+  void translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
+                                  SourceLocation *TemplateArgLocs,
+                        llvm::SmallVector<TemplateArgument, 16> &TemplateArgs);
+    
   QualType CheckTemplateIdType(TemplateName Template,
                                SourceLocation TemplateLoc,
                                SourceLocation LAngleLoc,

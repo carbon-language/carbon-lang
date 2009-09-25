@@ -2693,15 +2693,49 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
     PrevDecl = 0;
 
-  // FIXME: If the declarator has a template argument list but 
-  // isFunctionTemplateSpecialization is false, this is a function template 
-  // specialization but the user forgot the "template<>" header. Complain about
-  // the missing template<> header and set isFunctionTemplateSpecialization.
-
+  // If the declarator is a template-id, translate the parser's template 
+  // argument list into our AST format.
+  bool HasExplicitTemplateArgs = false;
+  llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
+  SourceLocation LAngleLoc, RAngleLoc;
+  if (D.getKind() == Declarator::DK_TemplateId) {
+    TemplateIdAnnotation *TemplateId = D.getTemplateId();
+    ASTTemplateArgsPtr TemplateArgsPtr(*this,
+                                       TemplateId->getTemplateArgs(),
+                                       TemplateId->getTemplateArgIsType(),
+                                       TemplateId->NumArgs);
+    translateTemplateArguments(TemplateArgsPtr,
+                               TemplateId->getTemplateArgLocations(),
+                               TemplateArgs);
+    TemplateArgsPtr.release();
+    
+    HasExplicitTemplateArgs = true;
+    LAngleLoc = TemplateId->LAngleLoc;
+    RAngleLoc = TemplateId->RAngleLoc;
+    
+    if (FunctionTemplate) {
+      // FIXME: Diagnostic function template with explicit template
+      // arguments.
+      HasExplicitTemplateArgs = false;
+    } else if (!isFunctionTemplateSpecialization && 
+               !D.getDeclSpec().isFriendSpecified()) {
+      // We have encountered something that the user meant to be a 
+      // specialization (because it has explicitly-specified template
+      // arguments) but that was not introduced with a "template<>" (or had
+      // too few of them).
+      Diag(D.getIdentifierLoc(), diag::err_template_spec_needs_header)
+        << SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc)
+        << CodeModificationHint::CreateInsertion(
+                                   D.getDeclSpec().getSourceRange().getBegin(),
+                                                 "template<> ");
+      isFunctionTemplateSpecialization = true;
+    }
+  }
+  
   if (isFunctionTemplateSpecialization &&
-      CheckFunctionTemplateSpecialization(NewFD, 
-                                          /*FIXME:*/false, SourceLocation(),
-                                          0, 0, SourceLocation(), 
+      CheckFunctionTemplateSpecialization(NewFD, HasExplicitTemplateArgs,
+                                          LAngleLoc, TemplateArgs.data(),
+                                          TemplateArgs.size(), RAngleLoc,
                                           PrevDecl))
     NewFD->setInvalidDecl();
   

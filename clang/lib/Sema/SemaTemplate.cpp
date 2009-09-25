@@ -1037,9 +1037,8 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
 
 /// \brief Translates template arguments as provided by the parser
 /// into template arguments used by semantic analysis.
-static void
-translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
-                           SourceLocation *TemplateArgLocs,
+void Sema::translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
+                                      SourceLocation *TemplateArgLocs,
                      llvm::SmallVector<TemplateArgument, 16> &TemplateArgs) {
   TemplateArgs.reserve(TemplateArgsIn.size());
 
@@ -3409,7 +3408,8 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     return DeclPtrTy();
   }
   
-  // Translate the parser's template argument list in our AST format.
+  // If the declarator is a template-id, translate the parser's template 
+  // argument list into our AST format.
   bool HasExplicitTemplateArgs = false;
   llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
   if (D.getKind() == Declarator::DK_TemplateId) {
@@ -3423,8 +3423,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
                                TemplateArgs);
     HasExplicitTemplateArgs = true;
   }
-  
-  
+    
   // C++ [temp.explicit]p1:
   //   A [...] function [...] can be explicitly instantiated from its template. 
   //   A member function [...] of a class template can be explicitly 
