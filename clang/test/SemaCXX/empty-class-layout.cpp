@@ -43,3 +43,17 @@ struct S2 : virtual Derived<10> {
   Empty e[2];
 };
 SA(7, sizeof(S2) == 24);
+
+struct S3 {
+  Empty e;
+};
+
+struct S4 : Empty, S3 { 
+};
+SA(8, sizeof(S4) == 2);
+
+struct S5 : S3, Empty {};
+SA(9, sizeof(S5) == 2);
+
+struct S6 : S5 { };
+SA(10, sizeof(S6) == 2);

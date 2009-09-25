@@ -247,7 +247,18 @@ bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
       return false;
   }
   
-  // FIXME: fields.
+  // Check fields.
+  unsigned FieldNo = 0;
+  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end(); 
+       I != E; ++I, ++FieldNo) {
+    const FieldDecl *FD = *I;
+    
+    uint64_t FieldOffset = Info.getFieldOffset(FieldNo);
+    
+    if (!canPlaceFieldAtOffset(FD, Offset + FieldOffset))
+      return false;
+  }
+
   // FIXME: virtual bases.
   return true;
 }
@@ -304,7 +315,17 @@ void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
     UpdateEmptyClassOffsets(Base, Offset + BaseClassOffset);
   }
   
-  // FIXME: Update fields and virtual bases.
+  // Update fields.
+  unsigned FieldNo = 0;
+  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end(); 
+       I != E; ++I, ++FieldNo) {
+    const FieldDecl *FD = *I;
+    
+    uint64_t FieldOffset = Info.getFieldOffset(FieldNo);
+    UpdateEmptyClassOffsets(FD, Offset + FieldOffset);
+  }
+  
+  // FIXME: Update virtual bases.
 }
 
 void
@@ -348,7 +369,7 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
     // We were able to place the class at offset 0.
     UpdateEmptyClassOffsets(RD, 0);
 
-    Size = std::max(Size, BaseInfo.getNonVirtualSize());
+    Size = std::max(Size, BaseInfo.getSize());
 
     return 0;
   }
@@ -366,11 +387,14 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
     Offset += BaseAlign;
   }
 
-  // Remember the next available offset.
-  NextOffset = Offset + BaseInfo.getNonVirtualSize();
+  if (!RD->isEmpty()) {
+    // Remember the next available offset.
+    NextOffset = Offset + BaseInfo.getNonVirtualSize();
 
-  Size = std::max(Size, NextOffset);
-  
+    Size = std::max(Size, NextOffset);
+  } else
+    Size = std::max(Size, Offset + BaseInfo.getSize());
+
   // Remember max struct/class alignment.
   UpdateAlignment(BaseAlign);
 
