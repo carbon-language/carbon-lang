@@ -5046,11 +5046,10 @@ Loop:       ; Infinite loop that counts from 0 on up...
 </pre>
 
 <p>llvm treats calls to some functions with names and arguments that match the
-standard C library as being the C library functions, and may perform
-optimizations or generate code for them under that assumption.  These
-functions currently include:
-acos, asin, atan, atan2, ceil, cos, cosf, cosh, exp, fabs, floor, fmod, log,
-log10, malloc, pow, sin, sinh, sqrt, sqrtf, sin, sinf, tan, tanh.</p>
+standard C99 library as being the C99 library functions, and may perform
+optimizations or generate code for them under that assumption.  This is
+something we'd like to change in the future to provide better support for
+freestanding environments and non-C-based langauges.</p>
 
 </div>
 
