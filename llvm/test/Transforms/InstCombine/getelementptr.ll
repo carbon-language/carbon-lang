@@ -58,7 +58,7 @@ define i32* @test6() {
         %B = getelementptr i32* %A, i64 2             
         ret i32* %B
 ; CHECK: @test6
-; CHECK: getelementptr i8* %malloccall, i64 8
+; CHECK: getelementptr [4 x i32]* %M, i64 0, i64 2
 }
 
 define i32* @test7(i32* %I, i64 %C, i64 %D) {

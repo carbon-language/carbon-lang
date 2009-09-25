@@ -1636,16 +1636,12 @@ LLVMValueRef LLVMBuildNot(LLVMBuilderRef B, LLVMValueRef V, const char *Name) {
 
 LLVMValueRef LLVMBuildMalloc(LLVMBuilderRef B, LLVMTypeRef Ty,
                              const char *Name) {
-  const Type* IntPtrT = Type::getInt32Ty(unwrap(B)->GetInsertBlock()->getContext());
-  return wrap(CallInst::CreateMalloc(unwrap(B)->GetInsertBlock(), IntPtrT,
-                                     unwrap(Ty), 0, 0, Twine(Name)));
+  return wrap(unwrap(B)->CreateMalloc(unwrap(Ty), 0, Name));
 }
 
 LLVMValueRef LLVMBuildArrayMalloc(LLVMBuilderRef B, LLVMTypeRef Ty,
                                   LLVMValueRef Val, const char *Name) {
-  const Type* IntPtrT = Type::getInt32Ty(unwrap(B)->GetInsertBlock()->getContext());
-  return wrap(CallInst::CreateMalloc(unwrap(B)->GetInsertBlock(), IntPtrT,
-                                     unwrap(Ty), unwrap(Val), 0, Twine(Name)));
+  return wrap(unwrap(B)->CreateMalloc(unwrap(Ty), unwrap(Val), Name));
 }
 
 LLVMValueRef LLVMBuildAlloca(LLVMBuilderRef B, LLVMTypeRef Ty,

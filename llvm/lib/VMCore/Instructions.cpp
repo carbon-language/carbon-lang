@@ -462,8 +462,7 @@ static Value *checkArraySize(Value *Amt, const Type *IntPtrTy) {
 
 static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
                            const Type *IntPtrTy, const Type *AllocTy,
-                           Value *ArraySize, Function* MallocF, 
-                           const Twine &NameStr) {
+                           Value *ArraySize, const Twine &NameStr) {
   assert(((!InsertBefore && InsertAtEnd) || (InsertBefore && !InsertAtEnd)) &&
          "createMalloc needs either InsertBefore or InsertAtEnd");
 
@@ -500,11 +499,10 @@ static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
   BasicBlock* BB = InsertBefore ? InsertBefore->getParent() : InsertAtEnd;
   Module* M = BB->getParent()->getParent();
   const Type *BPTy = PointerType::getUnqual(Type::getInt8Ty(BB->getContext()));
-  if (!MallocF)
-    // prototype malloc as "void *malloc(size_t)"
-    MallocF = cast<Function>(M->getOrInsertFunction("malloc", BPTy,
-                                                    IntPtrTy, NULL));
-  if (!MallocF->doesNotAlias(0)) MallocF->setDoesNotAlias(0);
+  // prototype malloc as "void *malloc(size_t)"
+  Constant *MallocF = M->getOrInsertFunction("malloc", BPTy, IntPtrTy, NULL);
+  if (!cast<Function>(MallocF)->doesNotAlias(0))
+    cast<Function>(MallocF)->setDoesNotAlias(0);
   const PointerType *AllocPtrType = PointerType::getUnqual(AllocTy);
   CallInst *MCall = NULL;
   Value    *MCast = NULL;
@@ -533,8 +531,7 @@ static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
 Value *CallInst::CreateMalloc(Instruction *InsertBefore, const Type *IntPtrTy,
                               const Type *AllocTy, Value *ArraySize,
                               const Twine &Name) {
-  return createMalloc(InsertBefore, NULL, IntPtrTy, AllocTy, 
-                      ArraySize, NULL, Name);
+  return createMalloc(InsertBefore, NULL, IntPtrTy, AllocTy, ArraySize, Name);
 }
 
 /// CreateMalloc - Generate the IR for a call to malloc:
@@ -547,9 +544,8 @@ Value *CallInst::CreateMalloc(Instruction *InsertBefore, const Type *IntPtrTy,
 /// responsibility of the caller.
 Value *CallInst::CreateMalloc(BasicBlock *InsertAtEnd, const Type *IntPtrTy,
                               const Type *AllocTy, Value *ArraySize, 
-                              Function* MallocF, const Twine &Name) {
-  return createMalloc(NULL, InsertAtEnd, IntPtrTy, AllocTy,
-                      ArraySize, MallocF, Name);
+                              const Twine &Name) {
+  return createMalloc(NULL, InsertAtEnd, IntPtrTy, AllocTy, ArraySize, Name);
 }
 
 //===----------------------------------------------------------------------===//
