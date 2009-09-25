@@ -44,39 +44,13 @@ NoCanonicalizeWhiteSpace("strict-whitespace",
 // Pattern Handling Code.
 //===----------------------------------------------------------------------===//
 
-class PatternChunk {
-  StringRef Str;
-  bool isRegEx;
-public:
-  PatternChunk(StringRef S, bool isRE) : Str(S), isRegEx(isRE) {}
-  
-  size_t Match(StringRef Buffer, size_t &MatchLen) const {
-    if (!isRegEx) {
-      // Fixed string match.
-      MatchLen = Str.size();
-      return Buffer.find(Str);
-    }
-     
-    // Regex match.
-    SmallVector<StringRef, 4> MatchInfo;
-    if (!Regex(Str, Regex::Sub|Regex::Newline).match(Buffer, &MatchInfo))
-      return StringRef::npos;
-    
-    // Successful regex match.
-    assert(!MatchInfo.empty() && "Didn't get any match");
-    StringRef FullMatch = MatchInfo[0];
-    
-    MatchLen = FullMatch.size();
-    return FullMatch.data()-Buffer.data();
-  }
-};
-
 class Pattern {
-  /// Chunks - The pattern chunks to match.  If the bool is false, it is a fixed
-  /// string match, if it is true, it is a regex match.
-  SmallVector<PatternChunk, 4> Chunks;
-  
+  /// FixedStr - If non-empty, this pattern is a fixed string match with the
+  /// specified fixed string.
   StringRef FixedStr;
+  
+  /// RegEx - If non-empty, this is a regex pattern.
+  std::string RegExStr;
 public:
   
   Pattern() { }
@@ -87,6 +61,9 @@ public:
   /// returns the position that is matched or npos if there is no match.  If
   /// there is a match, the size of the matched string is returned in MatchLen.
   size_t Match(StringRef Buffer, size_t &MatchLen) const;
+  
+private:
+  void AddFixedStringToRegEx(StringRef FixedStr);
 };
 
 bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
@@ -109,17 +86,15 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
     return false;
   }
   
-  // Otherwise, there is at least one regex piece.
-  
-  // Scan the pattern to break it into regex and non-regex pieces.
+  // Otherwise, there is at least one regex piece.  Build up the regex pattern
+  // by escaping scary characters in fixed strings, building up one big regex.
   while (!PatternStr.empty()) {
     // Handle fixed string matches.
     if (PatternStr.size() < 2 ||
         PatternStr[0] != '{' || PatternStr[1] != '{') {
       // Find the end, which is the start of the next regex.
       size_t FixedMatchEnd = PatternStr.find("{{");
-      
-      Chunks.push_back(PatternChunk(PatternStr.substr(0, FixedMatchEnd),false));
+      AddFixedStringToRegEx(PatternStr.substr(0, FixedMatchEnd));
       PatternStr = PatternStr.substr(FixedMatchEnd);
       continue;
     }
@@ -132,7 +107,8 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
       return true;
     }
     
-    Regex R(PatternStr.substr(2, End-2));
+    StringRef RegexStr = PatternStr.substr(2, End-2);
+    Regex R(RegexStr);
     std::string Error;
     if (!R.isValid(Error)) {
       SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()+2),
@@ -140,12 +116,40 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
       return true;
     }
     
-    Chunks.push_back(PatternChunk(PatternStr.substr(2, End-2), true));
+    RegExStr += RegexStr.str();
     PatternStr = PatternStr.substr(End+2);
   }
 
   return false;
 }
+
+void Pattern::AddFixedStringToRegEx(StringRef FixedStr) {
+  // Add the characters from FixedStr to the regex, escaping as needed.  This
+  // avoids "leaning toothpicks" in common patterns.
+  for (unsigned i = 0, e = FixedStr.size(); i != e; ++i) {
+    switch (FixedStr[i]) {
+    // These are the special characters matched in "p_ere_exp".
+    case '(':
+    case ')':
+    case '^':
+    case '$':
+    case '|':
+    case '*':
+    case '+':
+    case '?':
+    case '.':
+    case '[':
+    case '\\':
+    case '{':
+      RegExStr += '\\';
+      // FALL THROUGH.
+    default:
+      RegExStr += FixedStr[i];
+      break;
+    }
+  }
+}
+
 
 /// Match - Match the pattern string against the input buffer Buffer.  This
 /// returns the position that is matched or npos if there is no match.  If
@@ -157,58 +161,17 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen) const {
     return Buffer.find(FixedStr);
   }
   
-  size_t FirstMatch = StringRef::npos;
-  MatchLen = 0;
+  // Regex match.
+  SmallVector<StringRef, 4> MatchInfo;
+  if (!Regex(RegExStr, Regex::Sub|Regex::Newline).match(Buffer, &MatchInfo))
+    return StringRef::npos;
   
-  while (!Buffer.empty()) {
-    StringRef MatchAttempt = Buffer;
-    
-    unsigned ChunkNo = 0, e = Chunks.size();
-    for (; ChunkNo != e; ++ChunkNo) {
-      size_t ThisMatch, ThisLength = StringRef::npos;
-      ThisMatch = Chunks[ChunkNo].Match(MatchAttempt, ThisLength);
-      
-      // Otherwise, what we do depends on if this is the first match or not.  If
-      // this is the first match, it doesn't match to match at the start of
-      // MatchAttempt.
-      if (ChunkNo == 0) {
-        // If the first match fails then this pattern will never match in
-        // Buffer.
-        if (ThisMatch == StringRef::npos)
-          return ThisMatch;
-        
-        FirstMatch = ThisMatch;
-        MatchAttempt = MatchAttempt.substr(FirstMatch);
-        ThisMatch = 0;
-      }
-      
-      // If this chunk didn't match, then the entire pattern didn't match from
-      // FirstMatch, try later in the buffer.
-      if (ThisMatch == StringRef::npos)
-        break;
-      
-      // Ok, if the match didn't match at the beginning of MatchAttempt, then we
-      // have something like "ABC{{DEF}} and something was in-between.  Reject
-      // the match.
-      if (ThisMatch != 0)
-        break;
-      
-      // Otherwise, match the string and move to the next chunk.
-      MatchLen += ThisLength;
-      MatchAttempt = MatchAttempt.substr(ThisLength);
-    }
-
-    // If the whole thing matched, we win.
-    if (ChunkNo == e)
-      return FirstMatch;
-    
-    // Otherwise, try matching again after FirstMatch to see if this pattern
-    // matches later in the buffer.
-    Buffer = Buffer.substr(FirstMatch+1);
-  }
+  // Successful regex match.
+  assert(!MatchInfo.empty() && "Didn't get any match");
+  StringRef FullMatch = MatchInfo[0];
   
-  // If we ran out of stuff to scan, then we didn't match.
-  return StringRef::npos;
+  MatchLen = FullMatch.size();
+  return FullMatch.data()-Buffer.data();
 }
 
 

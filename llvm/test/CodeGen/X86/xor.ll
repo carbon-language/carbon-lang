@@ -59,10 +59,10 @@ bb12:
         
 ; X64: test4:
 ; X64:    notl	%eax
-; X64:    andl	{{.*%eax}}
+; X64:    andl	{{.*}}%eax
 ; X32: test4:
 ; X32:    notl	%edx
-; X32:    andl	{{.*%edx}}
+; X32:    andl	{{.*}}%edx
 }
 
 define i16 @test5(i16 %a, i16 %b) nounwind  {
@@ -81,10 +81,10 @@ bb12:
 	ret i16 %tmp3
 ; X64: test5:
 ; X64:    notw	%ax
-; X64:    andw	{{.*%ax}}
+; X64:    andw	{{.*}}%ax
 ; X32: test5:
 ; X32:    notw	%dx
-; X32:    andw	{{.*%dx}}
+; X32:    andw	{{.*}}%dx
 }
 
 define i8 @test6(i8 %a, i8 %b) nounwind  {
@@ -103,10 +103,10 @@ bb12:
 	ret i8 %tmp3
 ; X64: test6:
 ; X64:    notb	%al
-; X64:    andb	{{.*%al}}
+; X64:    andb	{{.*}}%al
 ; X32: test6:
 ; X32:    notb	%dl
-; X32:    andb	{{.*%dl}}
+; X32:    andb	{{.*}}%dl
 }
 
 define i32 @test7(i32 %a, i32 %b) nounwind  {
@@ -125,9 +125,9 @@ bb12:
 	ret i32 %tmp3
 ; X64: test7:
 ; X64:    xorl	$2147483646, %eax
-; X64:    andl	{{.*%eax}}
+; X64:    andl	{{.*}}%eax
 ; X32: test7:
 ; X32:    xorl	$2147483646, %edx
-; X32:    andl	{{.*%edx}}
+; X32:    andl	{{.*}}%edx
 }
 
