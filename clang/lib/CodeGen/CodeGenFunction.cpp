@@ -159,7 +159,8 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   // later.  Don't create this with the builder, because we don't want it
   // folded.
   llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::getInt32Ty(VMContext));
-  AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::getInt32Ty(VMContext), "",
+  AllocaInsertPt = new llvm::BitCastInst(Undef,
+                                         llvm::Type::getInt32Ty(VMContext), "",
                                          EntryBB);
   if (Builder.isNamePreserving())
     AllocaInsertPt->setName("allocapt");
