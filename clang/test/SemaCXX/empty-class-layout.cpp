@@ -18,9 +18,14 @@ struct F : E { };
 struct G : E, F { };
 SA(3, sizeof(G) == 2);
 
-struct H { H(); };
+struct Empty { Empty(); };
 
-struct I : H { 
-  H h;
+struct I : Empty { 
+  Empty e;
 };
 SA(4, sizeof(I) == 2);
+
+struct J : Empty { 
+  Empty e[2];
+};
+SA(5, sizeof(J) == 3);

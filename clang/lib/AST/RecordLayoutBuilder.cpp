@@ -254,12 +254,32 @@ bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
 
 bool ASTRecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD, 
                                                    uint64_t Offset) const {
-  if (const RecordType *RT = dyn_cast<RecordType>(FD->getType())) {
+  QualType T = FD->getType();
+  if (const RecordType *RT = T->getAs<RecordType>()) {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
       return canPlaceRecordAtOffset(RD, Offset);
   }
   
-  // FIXME: Arrays.
+  if (const ConstantArrayType *AT = Ctx.getAsConstantArrayType(T)) {
+    QualType ElemTy = Ctx.getBaseElementType(AT);
+    const RecordType *RT = ElemTy->getAs<RecordType>();
+    if (!RT)
+      return true;
+    const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
+    if (!RD)
+      return true;
+    
+    const ASTRecordLayout &Info = Ctx.getASTRecordLayout(RD);
+
+    uint64_t NumElements = Ctx.getConstantArrayElementCount(AT);
+    unsigned ElementOffset = Offset;
+    for (uint64_t I = 0; I != NumElements; ++I) {
+      if (!canPlaceRecordAtOffset(RD, ElementOffset))
+        return false;
+      
+      ElementOffset += Info.getSize();
+    }
+  }
   
   return true;
 }

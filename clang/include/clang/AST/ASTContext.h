@@ -889,9 +889,9 @@ public:
     return dyn_cast_or_null<IncompleteArrayType>(getAsArrayType(T));
   }
 
-  /// getBaseElementType - Returns the innermost element type of a variable
-  /// length array type. For example, will return "int" for int[m][n]
-  QualType getBaseElementType(const VariableArrayType *VAT);
+  /// getBaseElementType - Returns the innermost element type of an array type.
+  /// For example, will return "int" for int[m][n]
+  QualType getBaseElementType(const ArrayType *VAT);
 
   /// getBaseElementType - Returns the innermost element type of a type
   /// (which needn't actually be an array type).

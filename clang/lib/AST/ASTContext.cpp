@@ -2407,11 +2407,11 @@ QualType ASTContext::getBaseElementType(QualType QT) {
   }
 }
 
-QualType ASTContext::getBaseElementType(const VariableArrayType *VAT) {
-  QualType ElemTy = VAT->getElementType();
+QualType ASTContext::getBaseElementType(const ArrayType *AT) {
+  QualType ElemTy = AT->getElementType();
 
-  if (const VariableArrayType *VAT = getAsVariableArrayType(ElemTy))
-    return getBaseElementType(VAT);
+  if (const ArrayType *AT = getAsArrayType(ElemTy))
+    return getBaseElementType(AT);
 
   return ElemTy;
 }
