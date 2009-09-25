@@ -1113,9 +1113,22 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   if (SCS.CopyConstructor) {
     // FIXME: When can ToType be a reference type?
     assert(!ToType->isReferenceType());
-    if (SCS.Second == ICK_Derived_To_Base)
-      ImpCastExprToType(From, ToType, CastExpr::CK_DerivedToBase,
-                        /*isLvalue=*/true);
+    if (SCS.Second == ICK_Derived_To_Base) {
+      ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+      if (CompleteConstructorCall(cast<CXXConstructorDecl>(SCS.CopyConstructor),
+                                  MultiExprArg(*this, (void **)&From, 1),
+                                  /*FIXME:ConstructLoc*/SourceLocation(), 
+                                  ConstructorArgs))
+        return true;
+      OwningExprResult FromResult =
+        BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
+                              ToType, SCS.CopyConstructor,
+                              move_arg(ConstructorArgs));
+      if (FromResult.isInvalid())
+        return true;
+      From = FromResult.takeAs<Expr>();
+      return false;
+    }
     OwningExprResult FromResult =
       BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                             ToType, SCS.CopyConstructor,
