@@ -179,61 +179,63 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
   case bitc::CONSTANTS_BLOCK_ID:
     switch (CodeID) {
     default: return 0;
-    case bitc::CST_CODE_SETTYPE:       return "SETTYPE";
-    case bitc::CST_CODE_NULL:          return "NULL";
-    case bitc::CST_CODE_UNDEF:         return "UNDEF";
-    case bitc::CST_CODE_INTEGER:       return "INTEGER";
-    case bitc::CST_CODE_WIDE_INTEGER:  return "WIDE_INTEGER";
-    case bitc::CST_CODE_FLOAT:         return "FLOAT";
-    case bitc::CST_CODE_AGGREGATE:     return "AGGREGATE";
-    case bitc::CST_CODE_STRING:        return "STRING";
-    case bitc::CST_CODE_CSTRING:       return "CSTRING";
-    case bitc::CST_CODE_CE_BINOP:      return "CE_BINOP";
-    case bitc::CST_CODE_CE_CAST:       return "CE_CAST";
-    case bitc::CST_CODE_CE_GEP:        return "CE_GEP";
-    case bitc::CST_CODE_CE_SELECT:     return "CE_SELECT";
-    case bitc::CST_CODE_CE_EXTRACTELT: return "CE_EXTRACTELT";
-    case bitc::CST_CODE_CE_INSERTELT:  return "CE_INSERTELT";
-    case bitc::CST_CODE_CE_SHUFFLEVEC: return "CE_SHUFFLEVEC";
-    case bitc::CST_CODE_CE_CMP:        return "CE_CMP";
-    case bitc::CST_CODE_INLINEASM:     return "INLINEASM";
-    case bitc::CST_CODE_CE_SHUFVEC_EX: return "CE_SHUFVEC_EX";
+    case bitc::CST_CODE_SETTYPE:         return "SETTYPE";
+    case bitc::CST_CODE_NULL:            return "NULL";
+    case bitc::CST_CODE_UNDEF:           return "UNDEF";
+    case bitc::CST_CODE_INTEGER:         return "INTEGER";
+    case bitc::CST_CODE_WIDE_INTEGER:    return "WIDE_INTEGER";
+    case bitc::CST_CODE_FLOAT:           return "FLOAT";
+    case bitc::CST_CODE_AGGREGATE:       return "AGGREGATE";
+    case bitc::CST_CODE_STRING:          return "STRING";
+    case bitc::CST_CODE_CSTRING:         return "CSTRING";
+    case bitc::CST_CODE_CE_BINOP:        return "CE_BINOP";
+    case bitc::CST_CODE_CE_CAST:         return "CE_CAST";
+    case bitc::CST_CODE_CE_GEP:          return "CE_GEP";
+    case bitc::CST_CODE_CE_INBOUNDS_GEP: return "CE_INBOUNDS_GEP";
+    case bitc::CST_CODE_CE_SELECT:       return "CE_SELECT";
+    case bitc::CST_CODE_CE_EXTRACTELT:   return "CE_EXTRACTELT";
+    case bitc::CST_CODE_CE_INSERTELT:    return "CE_INSERTELT";
+    case bitc::CST_CODE_CE_SHUFFLEVEC:   return "CE_SHUFFLEVEC";
+    case bitc::CST_CODE_CE_CMP:          return "CE_CMP";
+    case bitc::CST_CODE_INLINEASM:       return "INLINEASM";
+    case bitc::CST_CODE_CE_SHUFVEC_EX:   return "CE_SHUFVEC_EX";
     }        
   case bitc::FUNCTION_BLOCK_ID:
     switch (CodeID) {
     default: return 0;
     case bitc::FUNC_CODE_DECLAREBLOCKS: return "DECLAREBLOCKS";
     
-    case bitc::FUNC_CODE_INST_BINOP:       return "INST_BINOP";
-    case bitc::FUNC_CODE_INST_CAST:        return "INST_CAST";
-    case bitc::FUNC_CODE_INST_GEP:         return "INST_GEP";
-    case bitc::FUNC_CODE_INST_SELECT:      return "INST_SELECT";
-    case bitc::FUNC_CODE_INST_EXTRACTELT:  return "INST_EXTRACTELT";
-    case bitc::FUNC_CODE_INST_INSERTELT:   return "INST_INSERTELT";
-    case bitc::FUNC_CODE_INST_SHUFFLEVEC:  return "INST_SHUFFLEVEC";
-    case bitc::FUNC_CODE_INST_CMP:         return "INST_CMP";
+    case bitc::FUNC_CODE_INST_BINOP:        return "INST_BINOP";
+    case bitc::FUNC_CODE_INST_CAST:         return "INST_CAST";
+    case bitc::FUNC_CODE_INST_GEP:          return "INST_GEP";
+    case bitc::FUNC_CODE_INST_INBOUNDS_GEP: return "INST_INBOUNDS_GEP";
+    case bitc::FUNC_CODE_INST_SELECT:       return "INST_SELECT";
+    case bitc::FUNC_CODE_INST_EXTRACTELT:   return "INST_EXTRACTELT";
+    case bitc::FUNC_CODE_INST_INSERTELT:    return "INST_INSERTELT";
+    case bitc::FUNC_CODE_INST_SHUFFLEVEC:   return "INST_SHUFFLEVEC";
+    case bitc::FUNC_CODE_INST_CMP:          return "INST_CMP";
     
-    case bitc::FUNC_CODE_INST_RET:         return "INST_RET";
-    case bitc::FUNC_CODE_INST_BR:          return "INST_BR";
-    case bitc::FUNC_CODE_INST_SWITCH:      return "INST_SWITCH";
-    case bitc::FUNC_CODE_INST_INVOKE:      return "INST_INVOKE";
-    case bitc::FUNC_CODE_INST_UNWIND:      return "INST_UNWIND";
-    case bitc::FUNC_CODE_INST_UNREACHABLE: return "INST_UNREACHABLE";
+    case bitc::FUNC_CODE_INST_RET:          return "INST_RET";
+    case bitc::FUNC_CODE_INST_BR:           return "INST_BR";
+    case bitc::FUNC_CODE_INST_SWITCH:       return "INST_SWITCH";
+    case bitc::FUNC_CODE_INST_INVOKE:       return "INST_INVOKE";
+    case bitc::FUNC_CODE_INST_UNWIND:       return "INST_UNWIND";
+    case bitc::FUNC_CODE_INST_UNREACHABLE:  return "INST_UNREACHABLE";
     
-    case bitc::FUNC_CODE_INST_PHI:         return "INST_PHI";
-    case bitc::FUNC_CODE_INST_MALLOC:      return "INST_MALLOC";
-    case bitc::FUNC_CODE_INST_FREE:        return "INST_FREE";
-    case bitc::FUNC_CODE_INST_ALLOCA:      return "INST_ALLOCA";
-    case bitc::FUNC_CODE_INST_LOAD:        return "INST_LOAD";
-    case bitc::FUNC_CODE_INST_STORE:       return "INST_STORE";
-    case bitc::FUNC_CODE_INST_CALL:        return "INST_CALL";
-    case bitc::FUNC_CODE_INST_VAARG:       return "INST_VAARG";
-    case bitc::FUNC_CODE_INST_STORE2:      return "INST_STORE2";
-    case bitc::FUNC_CODE_INST_GETRESULT:   return "INST_GETRESULT";
-    case bitc::FUNC_CODE_INST_EXTRACTVAL:  return "INST_EXTRACTVAL";
-    case bitc::FUNC_CODE_INST_INSERTVAL:   return "INST_INSERTVAL";
-    case bitc::FUNC_CODE_INST_CMP2:        return "INST_CMP2";
-    case bitc::FUNC_CODE_INST_VSELECT:     return "INST_VSELECT";
+    case bitc::FUNC_CODE_INST_PHI:          return "INST_PHI";
+    case bitc::FUNC_CODE_INST_MALLOC:       return "INST_MALLOC";
+    case bitc::FUNC_CODE_INST_FREE:         return "INST_FREE";
+    case bitc::FUNC_CODE_INST_ALLOCA:       return "INST_ALLOCA";
+    case bitc::FUNC_CODE_INST_LOAD:         return "INST_LOAD";
+    case bitc::FUNC_CODE_INST_STORE:        return "INST_STORE";
+    case bitc::FUNC_CODE_INST_CALL:         return "INST_CALL";
+    case bitc::FUNC_CODE_INST_VAARG:        return "INST_VAARG";
+    case bitc::FUNC_CODE_INST_STORE2:       return "INST_STORE2";
+    case bitc::FUNC_CODE_INST_GETRESULT:    return "INST_GETRESULT";
+    case bitc::FUNC_CODE_INST_EXTRACTVAL:   return "INST_EXTRACTVAL";
+    case bitc::FUNC_CODE_INST_INSERTVAL:    return "INST_INSERTVAL";
+    case bitc::FUNC_CODE_INST_CMP2:         return "INST_CMP2";
+    case bitc::FUNC_CODE_INST_VSELECT:      return "INST_VSELECT";
     }
   case bitc::TYPE_SYMTAB_BLOCK_ID:
     switch (CodeID) {
