@@ -1089,8 +1089,6 @@ LiveIntervals::isProfitableToCoalesce(LiveInterval &DstInt, LiveInterval &SrcInt
   unsigned NumIdent = 0;
   for (MachineRegisterInfo::def_iterator ri = mri_->def_begin(SrcInt.reg),
          re = mri_->def_end(); ri != re; ++ri) {
-    MachineOperand &O = ri.getOperand();
-
     MachineInstr *MI = &*ri;
     unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
     if (!tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg))
