@@ -16,8 +16,6 @@
 #ifndef LLVM_CODEGEN_MACHINEMEMOPERAND_H
 #define LLVM_CODEGEN_MACHINEMEMOPERAND_H
 
-#include "llvm/Support/MathExtras.h"
-
 namespace llvm {
 
 class Value;
@@ -76,9 +74,7 @@ public:
 
   /// getAlignment - Return the minimum known alignment in bytes of the
   /// actual memory reference.
-  uint64_t getAlignment() const {
-    return MinAlign(getBaseAlignment(), getOffset());
-  }
+  uint64_t getAlignment() const;
 
   /// getBaseAlignment - Return the minimum known alignment in bytes of the
   /// base address, without the offset.

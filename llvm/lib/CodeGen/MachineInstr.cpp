@@ -315,6 +315,12 @@ void MachineMemOperand::refineAlignment(const MachineMemOperand *MMO) {
   }
 }
 
+/// getAlignment - Return the minimum known alignment in bytes of the
+/// actual memory reference.
+uint64_t MachineMemOperand::getAlignment() const {
+  return MinAlign(getBaseAlignment(), getOffset());
+}
+
 raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
   assert((MMO.isLoad() || MMO.isStore()) &&
          "SV has to be a load, store or both.");
