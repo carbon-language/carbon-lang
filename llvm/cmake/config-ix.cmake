@@ -71,6 +71,7 @@ check_symbol_exists(strtoll stdlib.h HAVE_STRTOLL)
 check_symbol_exists(strerror string.h HAVE_STRERROR)
 check_symbol_exists(strerror_r string.h HAVE_STRERROR_R)
 check_symbol_exists(strerror_s string.h HAVE_STRERROR_S)
+check_symbol_exists(setenv stdlib.h HAVE_SETENV)
 
 check_symbol_exists(__GLIBC__ stdio.h LLVM_USING_GLIBC)
 if( LLVM_USING_GLIBC )

@@ -291,6 +291,9 @@
 /* Define to 1 if you have the `sbrk' function. */
 #undef HAVE_SBRK
 
+/* Define to 1 if you have the `setenv' function. */
+#cmakedefine HAVE_SETENV ${HAVE_SETENV}
+
 /* Define to 1 if you have the `setjmp' function. */
 #undef HAVE_SETJMP
 

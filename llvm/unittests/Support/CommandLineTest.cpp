@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Config/config.h"
 
 #include "gtest/gtest.h"
 
@@ -24,16 +25,25 @@ class TempEnvVar {
       : name(name) {
     const char *old_value = getenv(name);
     EXPECT_EQ(NULL, old_value) << old_value;
+#if HAVE_SETENV
     setenv(name, value, true);
+#else
+#   define SKIP_ENVIRONMENT_TESTS
+#endif
   }
 
   ~TempEnvVar() {
+#if HAVE_SETENV
+    // Assume setenv and unsetenv come together.
     unsetenv(name);
+#endif
   }
 
  private:
   const char *const name;
 };
+
+#ifndef SKIP_ENVIRONMENT_TESTS
 
 const char test_env_var[] = "LLVM_TEST_COMMAND_LINE_FLAGS";
 
@@ -44,5 +54,7 @@ TEST(CommandLineTest, ParseEnvironment) {
   cl::ParseEnvironmentOptions("CommandLineTest", test_env_var);
   EXPECT_EQ("hello", EnvironmentTestOption);
 }
+
+#endif  // SKIP_ENVIRONMENT_TESTS
 
 }  // anonymous namespace
