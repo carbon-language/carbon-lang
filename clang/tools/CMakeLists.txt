@@ -1,4 +1,7 @@
 add_subdirectory(clang-cc)
 add_subdirectory(driver)
 add_subdirectory(index-test)
-add_subdirectory(wpa)
+option(CLANG_BUILD_EXPERIMENTAL "Build experimenal Clang tools" OFF)
+if (CLANG_BUILD_EXPERIMENTAL)
+  add_subdirectory(wpa)
+endif ()
