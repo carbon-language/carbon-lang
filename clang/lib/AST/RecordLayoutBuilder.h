@@ -112,6 +112,10 @@ class ASTRecordLayoutBuilder {
   /// EmptyClassOffsets map if the class is empty or has any empty bases or
   /// fields.
   void UpdateEmptyClassOffsets(const CXXRecordDecl *RD, uint64_t Offset);
+
+  /// UpdateEmptyClassOffsets - Called after a field has been placed at the 
+  /// given offset.
+  void UpdateEmptyClassOffsets(const FieldDecl *FD, uint64_t Offset);
   
   /// FinishLayout - Finalize record layout. Adjust record size based on the
   /// alignment.

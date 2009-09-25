@@ -307,6 +307,39 @@ void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
   // FIXME: Update fields and virtual bases.
 }
 
+void
+ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const FieldDecl *FD, 
+                                                uint64_t Offset) {
+  QualType T = FD->getType();
+
+  if (const RecordType *RT = T->getAs<RecordType>()) {
+    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      UpdateEmptyClassOffsets(RD, Offset);
+      return;
+    }
+  }
+  
+  if (const ConstantArrayType *AT = Ctx.getAsConstantArrayType(T)) {
+    QualType ElemTy = Ctx.getBaseElementType(AT);
+    const RecordType *RT = ElemTy->getAs<RecordType>();
+    if (!RT)
+      return;
+    const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl());
+    if (!RD)
+      return;
+    
+    const ASTRecordLayout &Info = Ctx.getASTRecordLayout(RD);
+
+    uint64_t NumElements = Ctx.getConstantArrayElementCount(AT);
+    unsigned ElementOffset = Offset;
+
+    for (uint64_t I = 0; I != NumElements; ++I) {
+      UpdateEmptyClassOffsets(RD, ElementOffset);
+      ElementOffset += Info.getSize();
+    }
+  }
+}
+
 uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   const ASTRecordLayout &BaseInfo = Ctx.getASTRecordLayout(RD);
 
@@ -527,6 +560,8 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
         // We can't try again.
         FieldOffset += FieldAlign;
       }
+      
+      UpdateEmptyClassOffsets(D, FieldOffset);
     }
   }
 

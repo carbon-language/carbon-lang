@@ -540,6 +540,9 @@ public:
       if (RD->isImplicit())
         continue;
 
+      if (RD->isDependentType())
+        continue;
+      
       // FIXME: Do we really need to hard code this?
       if (RD->getQualifiedNameAsString() == "__va_list_tag")
         continue;

@@ -29,3 +29,17 @@ struct J : Empty {
   Empty e[2];
 };
 SA(5, sizeof(J) == 3);
+
+template<int N> struct Derived : Empty, Derived<N - 1> { 
+};
+template<> struct Derived<0> : Empty { };
+
+struct S1 : virtual Derived<10> { 
+  Empty e;
+};
+SA(6, sizeof(S1) == 24);
+
+struct S2 : virtual Derived<10> { 
+  Empty e[2];
+};
+SA(7, sizeof(S2) == 24);
