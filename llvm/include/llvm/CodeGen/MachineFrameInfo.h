@@ -133,11 +133,14 @@ class MachineFrameInfo {
   uint64_t StackSize;
   
   /// OffsetAdjustment - The amount that a frame offset needs to be adjusted to
-  /// have the actual offset from the stack/frame pointer.  The calculation is 
-  /// MFI->getObjectOffset(Index) + StackSize - TFI.getOffsetOfLocalArea() +
-  /// OffsetAdjustment.  If OffsetAdjustment is zero (default) then offsets are
-  /// away from TOS. If OffsetAdjustment == StackSize then offsets are toward
-  /// TOS.
+  /// have the actual offset from the stack/frame pointer.  The exact usage of
+  /// this is target-dependent, but it is typically used to adjust between
+  /// SP-relative and FP-relative offsets.  E.G., if objects are accessed via
+  /// SP then OffsetAdjustment is zero; if FP is used, OffsetAdjustment is set
+  /// to the distance between the initial SP and the value in FP.  For many
+  /// targets, this value is only used when generating debug info (via
+  /// TargetRegisterInfo::getFrameIndexOffset); when generating code, the
+  /// corresponding adjustments are performed directly.
   int OffsetAdjustment;
   
   /// MaxAlignment - The prolog/epilog code inserter may process objects 
