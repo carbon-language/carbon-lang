@@ -173,27 +173,34 @@ llvm::DIType CGDebugInfo::CreateType(const ComplexType *Ty,
                                       Offset, /*flags*/ 0, Encoding);
 }
 
-/// getOrCreateCVRType - Get the CVR qualified type from the cache or create
+/// CreateCVRType - Get the qualified type from the cache or create
 /// a new one if necessary.
-llvm::DIType CGDebugInfo::CreateCVRType(QualType Ty, llvm::DICompileUnit Unit) {
+llvm::DIType CGDebugInfo::CreateQualifiedType(QualType Ty, llvm::DICompileUnit Unit) {
+  QualifierCollector Qc;
+  const Type *T = Qc.strip(Ty);
+
+  // Ignore these qualifiers for now.
+  Qc.removeObjCGCAttr();
+  Qc.removeAddressSpace();
+
   // We will create one Derived type for one qualifier and recurse to handle any
   // additional ones.
-  llvm::DIType FromTy;
   unsigned Tag;
-  if (Ty.isConstQualified()) {
+  if (Qc.hasConst()) {
     Tag = llvm::dwarf::DW_TAG_const_type;
-    Ty.removeConst();
-    FromTy = getOrCreateType(Ty, Unit);
-  } else if (Ty.isVolatileQualified()) {
+    Qc.removeConst();
+  } else if (Qc.hasVolatile()) {
     Tag = llvm::dwarf::DW_TAG_volatile_type;
-    Ty.removeVolatile();
-    FromTy = getOrCreateType(Ty, Unit);
-  } else {
-    assert(Ty.isRestrictQualified() && "Unknown type qualifier for debug info");
+    Qc.removeVolatile();
+  } else if (Qc.hasRestrict()) {
     Tag = llvm::dwarf::DW_TAG_restrict_type;
-    Ty.removeRestrict();
-    FromTy = getOrCreateType(Ty, Unit);
+    Qc.removeRestrict();
+  } else {
+    assert(Qc.empty() && "Unknown type qualifier for debug info");
+    return getOrCreateType(QualType(T, 0), Unit);
   }
+
+  llvm::DIType FromTy = getOrCreateType(Qc.apply(T), Unit);
 
   // No need to fill in the Name, Line, Size, Alignment, Offset in case of
   // CVR derived types.
@@ -770,9 +777,9 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 /// new one if necessary.
 llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
                                          llvm::DICompileUnit Unit) {
-  // Handle CVR qualifiers, which recursively handles what they refer to.
-  if (Ty.getCVRQualifiers())
-    return CreateCVRType(Ty, Unit);
+  // Handle qualifiers, which recursively handles what they refer to.
+  if (Ty.hasQualifiers())
+    return CreateQualifiedType(Ty, Unit);
 
   // Work out details of type.
   switch (Ty->getTypeClass()) {
