@@ -370,6 +370,14 @@ unsigned clang_getDeclColumn(CXDecl AnonDecl)
   return SourceMgr.getSpellingLineNumber(ND->getLocation());
 }
 
+const char *clang_getDeclSource(CXDecl AnonDecl) 
+{
+  assert(AnonDecl && "Passed null CXDecl");
+  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
+  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
+  return SourceMgr.getBufferName(ND->getLocation());
+}
+
 const char *clang_getCursorSpelling(CXCursor C)
 {
   assert(C.decl && "CXCursor has null decl");

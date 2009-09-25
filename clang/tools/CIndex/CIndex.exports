@@ -11,6 +11,7 @@ _clang_getDeclarationName
 _clang_getDeclSpelling
 _clang_getDeclLine
 _clang_getDeclColumn
+_clang_getDeclSource
 _clang_getEntity
 _clang_getEntityFromDecl
 _clang_getURI

@@ -177,6 +177,7 @@ CXEntity clang_getEntityFromDecl(CXDecl);
 const char *clang_getDeclSpelling(CXDecl);
 unsigned clang_getDeclLine(CXDecl);
 unsigned clang_getDeclColumn(CXDecl);
+const char *clang_getDeclSource(CXDecl);
 
 /*
  * CXCursor Operations.
