@@ -354,6 +354,22 @@ const char *clang_getDeclSpelling(CXDecl AnonDecl)
     return "";
 }
 
+unsigned clang_getDeclLine(CXDecl AnonDecl)
+{
+  assert(AnonDecl && "Passed null CXDecl");
+  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
+  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
+  return SourceMgr.getSpellingLineNumber(ND->getLocation());
+}
+
+unsigned clang_getDeclColumn(CXDecl AnonDecl)
+{
+  assert(AnonDecl && "Passed null CXDecl");
+  NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
+  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
+  return SourceMgr.getSpellingLineNumber(ND->getLocation());
+}
+
 const char *clang_getCursorSpelling(CXCursor C)
 {
   assert(C.decl && "CXCursor has null decl");
@@ -542,9 +558,36 @@ CXCursorKind clang_getCursorKind(CXCursor C)
   return C.kind;
 }
 
+static Decl *getDeclFromExpr(Stmt *E) {
+  if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(E))
+    return RefExpr->getDecl();
+  if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
+    return ME->getMemberDecl();
+  if (ObjCIvarRefExpr *RE = dyn_cast<ObjCIvarRefExpr>(E))
+    return RE->getDecl();
+
+  if (CallExpr *CE = dyn_cast<CallExpr>(E))
+    return getDeclFromExpr(CE->getCallee());
+  if (CastExpr *CE = dyn_cast<CastExpr>(E))
+    return getDeclFromExpr(CE->getSubExpr());
+  if (ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(E))
+    return OME->getMethodDecl();
+
+  return 0;
+}
+
 CXDecl clang_getCursorDecl(CXCursor C) 
 {
-  return C.decl;
+  if (clang_isDeclaration(C.kind))
+    return C.decl;
+    
+  if (clang_isReference(C.kind)) {
+    if (C.stmt)
+      return getDeclFromExpr(static_cast<Stmt *>(C.stmt));
+    else
+      return C.decl;
+  }
+  return 0;
 }
 
 static SourceLocation getLocationFromCursor(CXCursor C, 

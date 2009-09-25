@@ -9,9 +9,16 @@ extern char *basename(const char *);
 static void PrintCursor(CXCursor Cursor) {
   if (clang_isInvalid(Cursor.kind))
     printf("Invalid Cursor => %s\n", clang_getCursorKindSpelling(Cursor.kind));
-  else
+  else {
     printf("%s=%s", clang_getCursorKindSpelling(Cursor.kind),
                       clang_getCursorSpelling(Cursor));
+    if (Cursor.stmt) {
+      CXDecl DeclReferenced = clang_getCursorDecl(Cursor);
+      if (DeclReferenced)
+        printf(":%d:%d", clang_getDeclLine(DeclReferenced),
+                         clang_getDeclColumn(DeclReferenced));
+    }
+  }
 }
 
 static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) 
