@@ -1103,8 +1103,8 @@ QualType ASTContext::getNoReturnType(QualType T) {
     assert (T->isFunctionType()
             && "can't noreturn qualify non-pointer to function or block type");
 
-    if (const FunctionNoProtoType *F = T->getAs<FunctionNoProtoType>()) {
-      ResultType = getFunctionNoProtoType(F->getResultType(), true);
+    if (const FunctionNoProtoType *FNPT = T->getAs<FunctionNoProtoType>()) {
+      ResultType = getFunctionNoProtoType(FNPT->getResultType(), true);
     } else {
       const FunctionProtoType *F = T->getAs<FunctionProtoType>();
       ResultType
