@@ -17,6 +17,7 @@
 #include "llvm/Value.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetMachine.h"
@@ -298,40 +299,56 @@ void MachineMemOperand::Profile(FoldingSetNodeID &ID) const {
   ID.AddInteger(Flags);
 }
 
-raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MRO) {
-  assert((MRO.isLoad() || MRO.isStore()) &&
+void MachineMemOperand::refineAlignment(const MachineMemOperand *MMO) {
+  // The Value and Offset may differ due to CSE. But the flags and size
+  // should be the same.
+  assert(MMO->getFlags() == getFlags() && "Flags mismatch!");
+  assert(MMO->getSize() == getSize() && "Size mismatch!");
+
+  if (MMO->getBaseAlignment() >= getBaseAlignment()) {
+    // Update the alignment value.
+    Flags = (Flags & 7) | ((Log2_32(MMO->getBaseAlignment()) + 1) << 3);
+    // Also update the base and offset, because the new alignment may
+    // not be applicable with the old ones.
+    V = MMO->getValue();
+    Offset = MMO->getOffset();
+  }
+}
+
+raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
+  assert((MMO.isLoad() || MMO.isStore()) &&
          "SV has to be a load, store or both.");
   
-  if (MRO.isVolatile())
+  if (MMO.isVolatile())
     OS << "Volatile ";
 
-  if (MRO.isLoad())
+  if (MMO.isLoad())
     OS << "LD";
-  if (MRO.isStore())
+  if (MMO.isStore())
     OS << "ST";
-  OS << MRO.getSize();
+  OS << MMO.getSize();
   
   // Print the address information.
   OS << "[";
-  if (!MRO.getValue())
+  if (!MMO.getValue())
     OS << "<unknown>";
   else
-    WriteAsOperand(OS, MRO.getValue(), /*PrintType=*/false);
+    WriteAsOperand(OS, MMO.getValue(), /*PrintType=*/false);
 
   // If the alignment of the memory reference itself differs from the alignment
   // of the base pointer, print the base alignment explicitly, next to the base
   // pointer.
-  if (MRO.getBaseAlignment() != MRO.getAlignment())
-    OS << "(align=" << MRO.getBaseAlignment() << ")";
+  if (MMO.getBaseAlignment() != MMO.getAlignment())
+    OS << "(align=" << MMO.getBaseAlignment() << ")";
 
-  if (MRO.getOffset() != 0)
-    OS << "+" << MRO.getOffset();
+  if (MMO.getOffset() != 0)
+    OS << "+" << MMO.getOffset();
   OS << "]";
 
   // Print the alignment of the reference.
-  if (MRO.getBaseAlignment() != MRO.getAlignment() ||
-      MRO.getBaseAlignment() != MRO.getSize())
-    OS << "(align=" << MRO.getAlignment() << ")";
+  if (MMO.getBaseAlignment() != MMO.getAlignment() ||
+      MMO.getBaseAlignment() != MMO.getSize())
+    OS << "(align=" << MMO.getAlignment() << ")";
 
   return OS;
 }
@@ -343,7 +360,8 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MRO) {
 /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
 /// TID NULL and no operands.
 MachineInstr::MachineInstr()
-  : TID(0), NumImplicitOps(0), Parent(0), debugLoc(DebugLoc::getUnknownLoc()) {
+  : TID(0), NumImplicitOps(0), MemRefs(0), MemRefsEnd(0),
+    Parent(0), debugLoc(DebugLoc::getUnknownLoc()) {
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
 }
@@ -362,7 +380,7 @@ void MachineInstr::addImplicitDefUseOperands() {
 /// TargetInstrDesc or the numOperands if it is not zero. (for
 /// instructions with variable number of operands).
 MachineInstr::MachineInstr(const TargetInstrDesc &tid, bool NoImp)
-  : TID(&tid), NumImplicitOps(0), Parent(0), 
+  : TID(&tid), NumImplicitOps(0), MemRefs(0), MemRefsEnd(0), Parent(0),
     debugLoc(DebugLoc::getUnknownLoc()) {
   if (!NoImp && TID->getImplicitDefs())
     for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
@@ -380,7 +398,8 @@ MachineInstr::MachineInstr(const TargetInstrDesc &tid, bool NoImp)
 /// MachineInstr ctor - As above, but with a DebugLoc.
 MachineInstr::MachineInstr(const TargetInstrDesc &tid, const DebugLoc dl,
                            bool NoImp)
-  : TID(&tid), NumImplicitOps(0), Parent(0), debugLoc(dl) {
+  : TID(&tid), NumImplicitOps(0), MemRefs(0), MemRefsEnd(0),
+    Parent(0), debugLoc(dl) {
   if (!NoImp && TID->getImplicitDefs())
     for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
       NumImplicitOps++;
@@ -399,7 +418,7 @@ MachineInstr::MachineInstr(const TargetInstrDesc &tid, const DebugLoc dl,
 /// basic block.
 ///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, const TargetInstrDesc &tid)
-  : TID(&tid), NumImplicitOps(0), Parent(0), 
+  : TID(&tid), NumImplicitOps(0), MemRefs(0), MemRefsEnd(0), Parent(0), 
     debugLoc(DebugLoc::getUnknownLoc()) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   if (TID->ImplicitDefs)
@@ -419,7 +438,8 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, const TargetInstrDesc &tid)
 ///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
                            const TargetInstrDesc &tid)
-  : TID(&tid), NumImplicitOps(0), Parent(0), debugLoc(dl) {
+  : TID(&tid), NumImplicitOps(0), MemRefs(0), MemRefsEnd(0),
+    Parent(0), debugLoc(dl) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   if (TID->ImplicitDefs)
     for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
@@ -437,19 +457,15 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
 /// MachineInstr ctor - Copies MachineInstr arg exactly
 ///
 MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
-  : TID(&MI.getDesc()), NumImplicitOps(0), Parent(0), 
-        debugLoc(MI.getDebugLoc()) {
+  : TID(&MI.getDesc()), NumImplicitOps(0),
+    MemRefs(MI.MemRefs), MemRefsEnd(MI.MemRefsEnd),
+    Parent(0), debugLoc(MI.getDebugLoc()) {
   Operands.reserve(MI.getNumOperands());
 
   // Add operands
   for (unsigned i = 0; i != MI.getNumOperands(); ++i)
     addOperand(MI.getOperand(i));
   NumImplicitOps = MI.NumImplicitOps;
-
-  // Add memory operands.
-  for (std::list<MachineMemOperand>::const_iterator i = MI.memoperands_begin(),
-       j = MI.memoperands_end(); i != j; ++i)
-    addMemOperand(MF, *i);
 
   // Set parent to null.
   Parent = 0;
@@ -459,8 +475,6 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
 
 MachineInstr::~MachineInstr() {
   LeakDetector::removeGarbageObject(this);
-  assert(MemOperands.empty() &&
-         "MachineInstr being deleted with live memoperands!");
 #ifndef NDEBUG
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
     assert(Operands[i].ParentMI == this && "ParentMI mismatch!");
@@ -621,18 +635,24 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
   }
 }
 
-/// addMemOperand - Add a MachineMemOperand to the machine instruction,
-/// referencing arbitrary storage.
+/// addMemOperand - Add a MachineMemOperand to the machine instruction.
+/// This function should be used only occasionally. The setMemRefs function
+/// is the primary method for setting up a MachineInstr's MemRefs list.
 void MachineInstr::addMemOperand(MachineFunction &MF,
-                                 const MachineMemOperand &MO) {
-  MemOperands.push_back(MO);
-}
+                                 MachineMemOperand *MO) {
+  mmo_iterator OldMemRefs = MemRefs;
+  mmo_iterator OldMemRefsEnd = MemRefsEnd;
 
-/// clearMemOperands - Erase all of this MachineInstr's MachineMemOperands.
-void MachineInstr::clearMemOperands(MachineFunction &MF) {
-  MemOperands.clear();
-}
+  size_t NewNum = (MemRefsEnd - MemRefs) + 1;
+  mmo_iterator NewMemRefs = MF.allocateMemRefsArray(NewNum);
+  mmo_iterator NewMemRefsEnd = NewMemRefs + NewNum;
 
+  std::copy(OldMemRefs, OldMemRefsEnd, NewMemRefs);
+  NewMemRefs[NewNum - 1] = MO;
+
+  MemRefs = NewMemRefs;
+  MemRefsEnd = NewMemRefsEnd;
+}
 
 /// removeFromParent - This method unlinks 'this' from the containing basic
 /// block, and returns it, but does not delete it.
@@ -972,9 +992,8 @@ bool MachineInstr::hasVolatileMemoryRef() const {
     return true;
   
   // Check the memory reference information for volatile references.
-  for (std::list<MachineMemOperand>::const_iterator I = memoperands_begin(),
-       E = memoperands_end(); I != E; ++I)
-    if (I->isVolatile())
+  for (mmo_iterator I = memoperands_begin(), E = memoperands_end(); I != E; ++I)
+    if ((*I)->isVolatile())
       return true;
 
   return false;
@@ -1004,9 +1023,9 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
 
   if (!memoperands_empty()) {
     OS << ", Mem:";
-    for (std::list<MachineMemOperand>::const_iterator i = memoperands_begin(),
-         e = memoperands_end(); i != e; ++i) {
-      OS << *i;
+    for (mmo_iterator i = memoperands_begin(), e = memoperands_end();
+         i != e; ++i) {
+      OS << **i;
       if (next(i) != e)
         OS << " ";
     }

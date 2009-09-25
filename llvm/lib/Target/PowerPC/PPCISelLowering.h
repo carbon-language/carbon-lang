@@ -41,8 +41,7 @@ namespace llvm {
       FCTIDZ, FCTIWZ,
       
       /// STFIWX - The STFIWX instruction.  The first operand is an input token
-      /// chain, then an f64 value to store, then an address to store it to,
-      /// then a SRCVALUE for the address.
+      /// chain, then an f64 value to store, then an address to store it to.
       STFIWX,
       
       // VMADDFP, VNMSUBFP - The VMADDFP and VNMSUBFP instructions, taking
@@ -80,9 +79,6 @@ namespace llvm {
       /// registers.
       EXTSW_32,
 
-      /// STD_32 - This is the STD instruction for use with "32-bit" registers.
-      STD_32,
-      
       /// CALL - A direct function call.
       CALL_Darwin, CALL_SVR4,
       
@@ -124,18 +120,6 @@ namespace llvm {
       /// an optional input flag argument.
       COND_BRANCH,
       
-      /// CHAIN = STBRX CHAIN, GPRC, Ptr, SRCVALUE, Type - This is a 
-      /// byte-swapping store instruction.  It byte-swaps the low "Type" bits of
-      /// the GPRC input, then stores it through Ptr.  Type can be either i16 or
-      /// i32.
-      STBRX, 
-      
-      /// GPRC, CHAIN = LBRX CHAIN, Ptr, SRCVALUE, Type - This is a 
-      /// byte-swapping load instruction.  It loads "Type" bits, byte swaps it,
-      /// then puts it in the bottom bits of the GPRC.  TYPE can be either i16
-      /// or i32.
-      LBRX,
-
       // The following 5 instructions are used only as part of the
       // long double-to-int conversion sequence.
 
@@ -170,7 +154,22 @@ namespace llvm {
       ///   operand #1 callee (register or absolute)
       ///   operand #2 stack adjustment
       ///   operand #3 optional in flag
-      TC_RETURN
+      TC_RETURN,
+
+      /// STD_32 - This is the STD instruction for use with "32-bit" registers.
+      STD_32 = ISD::FIRST_TARGET_MEMORY_OPCODE,
+      
+      /// CHAIN = STBRX CHAIN, GPRC, Ptr, Type - This is a 
+      /// byte-swapping store instruction.  It byte-swaps the low "Type" bits of
+      /// the GPRC input, then stores it through Ptr.  Type can be either i16 or
+      /// i32.
+      STBRX, 
+      
+      /// GPRC, CHAIN = LBRX CHAIN, Ptr, Type - This is a 
+      /// byte-swapping load instruction.  It loads "Type" bits, byte swaps it,
+      /// then puts it in the bottom bits of the GPRC.  TYPE can be either i16
+      /// or i32.
+      LBRX
     };
   }
 

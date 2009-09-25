@@ -19,6 +19,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cassert>
 #include <vector>
@@ -514,15 +515,23 @@ public:
   SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
                     SDValue Ptr, SDValue Cmp, SDValue Swp, const Value* PtrVal,
                     unsigned Alignment=0);
+  SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
+                    SDValue Ptr, SDValue Cmp, SDValue Swp,
+                    MachineMemOperand *MMO);
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain and
   /// takes 2 operands.
   SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
                     SDValue Ptr, SDValue Val, const Value* PtrVal,
                     unsigned Alignment = 0);
+  SDValue getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT, SDValue Chain,
+                    SDValue Ptr, SDValue Val,
+                    MachineMemOperand *MMO);
 
   /// getMemIntrinsicNode - Creates a MemIntrinsicNode that may produce a
-  /// result and takes a list of operands.
+  /// result and takes a list of operands. Opcode may be INTRINSIC_VOID,
+  /// INTRINSIC_W_CHAIN, or a target-specific opcode with a value not
+  /// less than FIRST_TARGET_MEMORY_OPCODE.
   SDValue getMemIntrinsicNode(unsigned Opcode, DebugLoc dl,
                               const EVT *VTs, unsigned NumVTs,
                               const SDValue *Ops, unsigned NumOps,
@@ -535,6 +544,10 @@ public:
                               EVT MemVT, const Value *srcValue, int SVOff,
                               unsigned Align = 0, bool Vol = false,
                               bool ReadMem = true, bool WriteMem = true);
+
+  SDValue getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
+                              const SDValue *Ops, unsigned NumOps,
+                              EVT MemVT, MachineMemOperand *MMO);
 
   /// getMergeValues - Create a MERGE_VALUES node from the given operands.
   SDValue getMergeValues(const SDValue *Ops, unsigned NumOps, DebugLoc dl);
@@ -555,24 +568,27 @@ public:
                   EVT VT, SDValue Chain, SDValue Ptr, SDValue Offset,
                   const Value *SV, int SVOffset, EVT MemVT,
                   bool isVolatile=false, unsigned Alignment=0);
+  SDValue getLoad(ISD::MemIndexedMode AM, DebugLoc dl, ISD::LoadExtType ExtType,
+                  EVT VT, SDValue Chain, SDValue Ptr, SDValue Offset,
+                  EVT MemVT, MachineMemOperand *MMO);
 
   /// getStore - Helper function to build ISD::STORE nodes.
   ///
   SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                      const Value *SV, int SVOffset, bool isVolatile=false,
                      unsigned Alignment=0);
+  SDValue getStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
+                   MachineMemOperand *MMO);
   SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
                           const Value *SV, int SVOffset, EVT TVT,
                           bool isVolatile=false, unsigned Alignment=0);
+  SDValue getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val, SDValue Ptr,
+                        EVT TVT, MachineMemOperand *MMO);
   SDValue getIndexedStore(SDValue OrigStoe, DebugLoc dl, SDValue Base,
                            SDValue Offset, ISD::MemIndexedMode AM);
 
   /// getSrcValue - Construct a node to track a Value* through the backend.
   SDValue getSrcValue(const Value *v);
-
-  /// getMemOperand - Construct a node to track a memory reference
-  /// through the backend.
-  SDValue getMemOperand(const MachineMemOperand &MO);
 
   /// getShiftAmountOperand - Return the specified value casted to
   /// the target's desired shift amount type.
@@ -682,8 +698,10 @@ public:
   SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
                          EVT VT3, EVT VT4, const SDValue *Ops, unsigned NumOps);
   SDNode *getMachineNode(unsigned Opcode, DebugLoc dl,
-                        const std::vector<EVT> &ResultTys, const SDValue *Ops,
-                        unsigned NumOps);
+                         const std::vector<EVT> &ResultTys, const SDValue *Ops,
+                         unsigned NumOps);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, SDVTList VTs,
+                         const SDValue *Ops, unsigned NumOps);
 
   /// getTargetExtractSubreg - A convenience function for creating
   /// TargetInstrInfo::EXTRACT_SUBREG nodes.

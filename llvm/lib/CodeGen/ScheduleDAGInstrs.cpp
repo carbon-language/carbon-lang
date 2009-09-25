@@ -17,6 +17,7 @@
 #include "llvm/Operator.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetMachine.h"
@@ -96,11 +97,11 @@ static const Value *getUnderlyingObject(const Value *V) {
 /// object, return the Value for that object. Otherwise return null.
 static const Value *getUnderlyingObjectForInstr(const MachineInstr *MI) {
   if (!MI->hasOneMemOperand() ||
-      !MI->memoperands_begin()->getValue() ||
-      MI->memoperands_begin()->isVolatile())
+      !(*MI->memoperands_begin())->getValue() ||
+      (*MI->memoperands_begin())->isVolatile())
     return 0;
 
-  const Value *V = MI->memoperands_begin()->getValue();
+  const Value *V = (*MI->memoperands_begin())->getValue();
   if (!V)
     return 0;
 
@@ -335,10 +336,10 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
       if (!ChainTID.isCall() &&
           !ChainTID.hasUnmodeledSideEffects() &&
           ChainMI->hasOneMemOperand() &&
-          !ChainMI->memoperands_begin()->isVolatile() &&
-          ChainMI->memoperands_begin()->getValue())
+          !(*ChainMI->memoperands_begin())->isVolatile() &&
+          (*ChainMI->memoperands_begin())->getValue())
         // We know that the Chain accesses one specific memory location.
-        ChainMMO = &*ChainMI->memoperands_begin();
+        ChainMMO = *ChainMI->memoperands_begin();
       else
         // Unknown memory accesses. Assume the worst.
         ChainMMO = 0;

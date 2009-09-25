@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/CommandLine.h"
@@ -451,6 +452,7 @@ bool StackSlotColoring::AllMemRefsCanBeUnfolded(int SS) {
 /// to old frame index with new one.
 void StackSlotColoring::RewriteInstruction(MachineInstr *MI, int OldFI,
                                            int NewFI, MachineFunction &MF) {
+  // Update the operands.
   for (unsigned i = 0, ee = MI->getNumOperands(); i != ee; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (!MO.isFI())
@@ -461,22 +463,15 @@ void StackSlotColoring::RewriteInstruction(MachineInstr *MI, int OldFI,
     MO.setIndex(NewFI);
   }
 
-  // Update the MachineMemOperand for the new memory location.
-  // FIXME: We need a better method of managing these too.
-  SmallVector<MachineMemOperand, 2> MMOs(MI->memoperands_begin(),
-                                         MI->memoperands_end());
-  MI->clearMemOperands(MF);
+  // Update the memory references. This changes the MachineMemOperands
+  // directly. They may be in use by multiple instructions, however all
+  // instructions using OldFI are being rewritten to use NewFI.
   const Value *OldSV = PseudoSourceValue::getFixedStack(OldFI);
-  for (unsigned i = 0, ee = MMOs.size(); i != ee; ++i) {
-    if (MMOs[i].getValue() != OldSV)
-      MI->addMemOperand(MF, MMOs[i]);
-    else {
-      MachineMemOperand MMO(PseudoSourceValue::getFixedStack(NewFI),
-                            MMOs[i].getFlags(), MMOs[i].getOffset(),
-                            MMOs[i].getSize(),  MMOs[i].getBaseAlignment());
-      MI->addMemOperand(MF, MMO);
-    }
-  }
+  const Value *NewSV = PseudoSourceValue::getFixedStack(NewFI);
+  for (MachineInstr::mmo_iterator I = MI->memoperands_begin(),
+       E = MI->memoperands_end(); I != E; ++I)
+    if ((*I)->getValue() == OldSV)
+      (*I)->setValue(NewSV);
 }
 
 /// PropagateBackward - Traverse backward and look for the definition of

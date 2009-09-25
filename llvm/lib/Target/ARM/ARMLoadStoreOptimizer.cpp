@@ -1174,11 +1174,11 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
 
   // Must sure the base address satisfies i64 ld / st alignment requirement.
   if (!Op0->hasOneMemOperand() ||
-      !Op0->memoperands_begin()->getValue() ||
-      Op0->memoperands_begin()->isVolatile())
+      !(*Op0->memoperands_begin())->getValue() ||
+      (*Op0->memoperands_begin())->isVolatile())
     return false;
 
-  unsigned Align = Op0->memoperands_begin()->getAlignment();
+  unsigned Align = (*Op0->memoperands_begin())->getAlignment();
   unsigned ReqAlign = STI->hasV6Ops()
     ? TD->getPrefTypeAlignment(
   Type::getInt64Ty(Op0->getParent()->getParent()->getFunction()->getContext())) 

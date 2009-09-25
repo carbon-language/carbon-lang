@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
@@ -1443,12 +1444,12 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
 
     // If the instruction accesses memory and the memory could be non-constant,
     // assume the instruction is not rematerializable.
-    for (std::list<MachineMemOperand>::const_iterator
-           I = MI->memoperands_begin(), E = MI->memoperands_end(); I != E; ++I){
-      const MachineMemOperand &MMO = *I;
-      if (MMO.isVolatile() || MMO.isStore())
+    for (MachineInstr::mmo_iterator I = MI->memoperands_begin(),
+         E = MI->memoperands_end(); I != E; ++I){
+      const MachineMemOperand *MMO = *I;
+      if (MMO->isVolatile() || MMO->isStore())
         return false;
-      const Value *V = MMO.getValue();
+      const Value *V = MMO->getValue();
       if (!V)
         return false;
       if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V)) {

@@ -190,11 +190,6 @@ MachineFunction::CloneMachineInstr(const MachineInstr *Orig) {
 ///
 void
 MachineFunction::DeleteMachineInstr(MachineInstr *MI) {
-  // Clear the instructions memoperands. This must be done manually because
-  // the instruction's parent pointer is now null, so it can't properly
-  // deallocate them on its own.
-  MI->clearMemOperands(*this);
-
   MI->~MachineInstr();
   InstructionRecycler.Deallocate(Allocator, MI);
 }
@@ -215,6 +210,29 @@ MachineFunction::DeleteMachineBasicBlock(MachineBasicBlock *MBB) {
   assert(MBB->getParent() == this && "MBB parent mismatch!");
   MBB->~MachineBasicBlock();
   BasicBlockRecycler.Deallocate(Allocator, MBB);
+}
+
+MachineMemOperand *
+MachineFunction::getMachineMemOperand(const Value *v, unsigned f,
+                                      int64_t o, uint64_t s,
+                                      unsigned base_alignment) {
+  return new (Allocator.Allocate<MachineMemOperand>())
+             MachineMemOperand(v, f, o, s, base_alignment);
+}
+
+MachineMemOperand *
+MachineFunction::getMachineMemOperand(const MachineMemOperand *MMO,
+                                      int64_t Offset, uint64_t Size) {
+  return new (Allocator.Allocate<MachineMemOperand>())
+             MachineMemOperand(MMO->getValue(), MMO->getFlags(),
+                               int64_t(uint64_t(MMO->getOffset()) +
+                                       uint64_t(Offset)),
+                               Size, MMO->getBaseAlignment());
+}
+
+MachineInstr::mmo_iterator
+MachineFunction::allocateMemRefsArray(unsigned long Num) {
+  return Allocator.Allocate<MachineMemOperand *>(Num);
 }
 
 void MachineFunction::dump() const {

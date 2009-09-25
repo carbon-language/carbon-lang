@@ -88,6 +88,16 @@ public:
   bool isStore() const { return Flags & MOStore; }
   bool isVolatile() const { return Flags & MOVolatile; }
 
+  /// refineAlignment - Update this MachineMemOperand to reflect the alignment
+  /// of MMO, if it has a greater alignment. This must only be used when the
+  /// new alignment applies to all users of this MachineMemOperand.
+  void refineAlignment(const MachineMemOperand *MMO);
+
+  /// setValue - Change the SourceValue for this MachineMemOperand. This
+  /// should only be used when an object is being relocated and all references
+  /// to it are being updated.
+  void setValue(const Value *NewSV) { V = NewSV; }
+
   /// Profile - Gather unique data for the object.
   ///
   void Profile(FoldingSetNodeID &ID) const;

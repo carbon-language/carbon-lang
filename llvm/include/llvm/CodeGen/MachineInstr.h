@@ -20,10 +20,8 @@
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineOperand.h"
-#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Support/DebugLoc.h"
-#include <list>
 #include <vector>
 
 namespace llvm {
@@ -32,17 +30,23 @@ class TargetInstrDesc;
 class TargetInstrInfo;
 class TargetRegisterInfo;
 class MachineFunction;
+class MachineMemOperand;
 
 //===----------------------------------------------------------------------===//
 /// MachineInstr - Representation of each machine instruction.
 ///
 class MachineInstr : public ilist_node<MachineInstr> {
+public:
+  typedef MachineMemOperand **mmo_iterator;
+
+private:
   const TargetInstrDesc *TID;           // Instruction descriptor.
   unsigned short NumImplicitOps;        // Number of implicit operands (which
                                         // are determined at construction time).
 
   std::vector<MachineOperand> Operands; // the operands
-  std::list<MachineMemOperand> MemOperands; // information on memory references
+  mmo_iterator MemRefs;                 // information on memory references
+  mmo_iterator MemRefsEnd;
   MachineBasicBlock *Parent;            // Pointer to the owning basic block.
   DebugLoc debugLoc;                    // Source line information.
 
@@ -132,21 +136,14 @@ public:
   unsigned getNumExplicitOperands() const;
   
   /// Access to memory operands of the instruction
-  std::list<MachineMemOperand>::iterator memoperands_begin()
-  { return MemOperands.begin(); }
-  std::list<MachineMemOperand>::iterator memoperands_end()
-  { return MemOperands.end(); }
-  std::list<MachineMemOperand>::const_iterator memoperands_begin() const
-  { return MemOperands.begin(); }
-  std::list<MachineMemOperand>::const_iterator memoperands_end() const
-  { return MemOperands.end(); }
-  bool memoperands_empty() const { return MemOperands.empty(); }
+  mmo_iterator memoperands_begin() const { return MemRefs; }
+  mmo_iterator memoperands_end() const { return MemRefsEnd; }
+  bool memoperands_empty() const { return MemRefsEnd == MemRefs; }
 
   /// hasOneMemOperand - Return true if this instruction has exactly one
   /// MachineMemOperand.
   bool hasOneMemOperand() const {
-    return !memoperands_empty() &&
-           next(memoperands_begin()) == memoperands_end();
+    return MemRefsEnd - MemRefs == 1;
   }
 
   /// isIdenticalTo - Return true if this instruction is identical to (same
@@ -319,13 +316,17 @@ public:
   ///
   void RemoveOperand(unsigned i);
 
-  /// addMemOperand - Add a MachineMemOperand to the machine instruction,
-  /// referencing arbitrary storage.
-  void addMemOperand(MachineFunction &MF,
-                     const MachineMemOperand &MO);
+  /// addMemOperand - Add a MachineMemOperand to the machine instruction.
+  /// This function should be used only occasionally. The setMemRefs function
+  /// is the primary method for setting up a MachineInstr's MemRefs list.
+  void addMemOperand(MachineFunction &MF, MachineMemOperand *MO);
 
-  /// clearMemOperands - Erase all of this MachineInstr's MachineMemOperands.
-  void clearMemOperands(MachineFunction &MF);
+  /// setMemRefs - Assign this MachineInstr's memory reference descriptor
+  /// list. This does not transfer ownership.
+  void setMemRefs(mmo_iterator NewMemRefs, mmo_iterator NewMemRefsEnd) {
+    MemRefs = NewMemRefs;
+    MemRefsEnd = NewMemRefsEnd;
+  }
 
 private:
   /// getRegInfo - If this instruction is embedded into a MachineFunction,

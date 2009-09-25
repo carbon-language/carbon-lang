@@ -1465,11 +1465,14 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
   if (!SelectAddr(In1, In1, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
     return NULL;
-  SDValue LSI = Node->getOperand(4);    // MemOperand
-  const SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, In2L, In2H, LSI, Chain};
-  return CurDAG->getMachineNode(Opc, Node->getDebugLoc(),
-                                MVT::i32, MVT::i32, MVT::Other, Ops,
-                                array_lengthof(Ops));
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();
+  const SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, In2L, In2H, Chain};
+  SDNode *ResNode = CurDAG->getMachineNode(Opc, Node->getDebugLoc(),
+                                           MVT::i32, MVT::i32, MVT::Other, Ops,
+                                           array_lengthof(Ops));
+  cast<MachineSDNode>(ResNode)->setMemRefs(MemOp, MemOp + 1);
+  return ResNode;
 }
 
 SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
@@ -1605,15 +1608,18 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
   DebugLoc dl = Node->getDebugLoc();
   SDValue Undef = SDValue(CurDAG->getMachineNode(TargetInstrInfo::IMPLICIT_DEF,
                                                  dl, NVT), 0);
-  SDValue MemOp = CurDAG->getMemOperand(cast<MemSDNode>(Node)->getMemOperand());
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();
   if (isInc || isDec) {
-    SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, MemOp, Chain };
-    SDValue Ret = SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 7), 0);
+    SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Chain };
+    SDValue Ret = SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 6), 0);
+    cast<MachineSDNode>(Ret)->setMemRefs(MemOp, MemOp + 1);
     SDValue RetVals[] = { Undef, Ret };
     return CurDAG->getMergeValues(RetVals, 2, dl).getNode();
   } else {
-    SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Val, MemOp, Chain };
-    SDValue Ret = SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 8), 0);
+    SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Val, Chain };
+    SDValue Ret = SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 7), 0);
+    cast<MachineSDNode>(Ret)->setMemRefs(MemOp, MemOp + 1);
     SDValue RetVals[] = { Undef, Ret };
     return CurDAG->getMergeValues(RetVals, 2, dl).getNode();
   }

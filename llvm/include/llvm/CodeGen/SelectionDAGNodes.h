@@ -27,13 +27,10 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
-#include "llvm/Support/Allocator.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/DebugLoc.h"
 #include <cassert>
-#include <climits>
 
 namespace llvm {
 
@@ -536,11 +533,6 @@ namespace ISD {
     // make reference to a value in the LLVM IR.
     SRCVALUE,
 
-    // MEMOPERAND - This is a node that contains a MachineMemOperand which
-    // records information about a memory reference. This is used to make
-    // AliasAnalysis queries from the backend.
-    MEMOPERAND,
-
     // PCMARKER - This corresponds to the pcmarker intrinsic.
     PCMARKER,
 
@@ -617,9 +609,16 @@ namespace ISD {
     ATOMIC_LOAD_UMIN,
     ATOMIC_LOAD_UMAX,
 
-    // BUILTIN_OP_END - This must be the last enum value in this list.
+    /// BUILTIN_OP_END - This must be the last enum value in this list.
+    /// The target-specific pre-isel opcode values start here.
     BUILTIN_OP_END
   };
+
+  /// FIRST_TARGET_MEMORY_OPCODE - Target-specific pre-isel operations
+  /// which do not reference a specific memory location should be less than
+  /// this value. Those that do must not be less than this value, and can
+  /// be used with SelectionDAG::getMemIntrinsicNode.
+  static const int FIRST_TARGET_MEMORY_OPCODE = 1 << 14;
 
   /// Node predicates
 
@@ -867,6 +866,7 @@ public:
   inline unsigned getNumOperands() const;
   inline const SDValue &getOperand(unsigned i) const;
   inline uint64_t getConstantOperandVal(unsigned i) const;
+  inline bool isTargetMemoryOpcode() const;
   inline bool isTargetOpcode() const;
   inline bool isMachineOpcode() const;
   inline unsigned getMachineOpcode() const;
@@ -1031,17 +1031,17 @@ class SDNode : public FoldingSetNode, public ilist_node<SDNode> {
 private:
   /// NodeType - The operation that this node performs.
   ///
-  short NodeType;
+  int16_t NodeType;
 
   /// OperandsNeedDelete - This is true if OperandList was new[]'d.  If true,
   /// then they will be delete[]'d when the node is destroyed.
-  unsigned short OperandsNeedDelete : 1;
+  uint16_t OperandsNeedDelete : 1;
 
 protected:
   /// SubclassData - This member is defined by this class, but is not used for
   /// anything.  Subclasses can use it to hold whatever state they find useful.
   /// This field is initialized to zero by the ctor.
-  unsigned short SubclassData : 15;
+  uint16_t SubclassData : 15;
 
 private:
   /// NodeId - Unique id per SDNode in the DAG.
@@ -1084,6 +1084,13 @@ public:
   /// isTargetOpcode - Test if this node has a target-specific opcode (in the
   /// \<target\>ISD namespace).
   bool isTargetOpcode() const { return NodeType >= ISD::BUILTIN_OP_END; }
+
+  /// isTargetMemoryOpcode - Test if this node has a target-specific 
+  /// memory-referencing opcode (in the \<target\>ISD namespace and
+  /// greater than FIRST_TARGET_MEMORY_OPCODE).
+  bool isTargetMemoryOpcode() const {
+    return NodeType >= ISD::FIRST_TARGET_MEMORY_OPCODE;
+  }
 
   /// isMachineOpcode - Test if this node has a post-isel opcode, directly
   /// corresponding to a MachineInstr opcode.
@@ -1417,6 +1424,9 @@ inline uint64_t SDValue::getConstantOperandVal(unsigned i) const {
 inline bool SDValue::isTargetOpcode() const {
   return Node->isTargetOpcode();
 }
+inline bool SDValue::isTargetMemoryOpcode() const {
+  return Node->isTargetMemoryOpcode();
+}
 inline bool SDValue::isMachineOpcode() const {
   return Node->isMachineOpcode();
 }
@@ -1515,47 +1525,55 @@ private:
   // MemoryVT - VT of in-memory value.
   EVT MemoryVT;
 
-  //! SrcValue - Memory location for alias analysis.
-  const Value *SrcValue;
+protected:
+  /// MMO - Memory reference information.
+  MachineMemOperand *MMO;
 
-  //! SVOffset - Memory location offset. Note that base is defined in MemSDNode
-  int SVOffset;
 public:
   MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, EVT MemoryVT,
-            const Value *srcValue, int SVOff, unsigned alignment,
-            bool isvolatile);
+            MachineMemOperand *MMO);
 
   MemSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs, const SDValue *Ops,
-            unsigned NumOps, EVT MemoryVT, const Value *srcValue, int SVOff,
-            unsigned alignment, bool isvolatile);
+            unsigned NumOps, EVT MemoryVT, MachineMemOperand *MMO);
+
+  bool readMem() const { return MMO->isLoad(); }
+  bool writeMem() const { return MMO->isStore(); }
 
   /// Returns alignment and volatility of the memory access
   unsigned getOriginalAlignment() const { 
-    return (1u << (SubclassData >> 6)) >> 1; 
+    return MMO->getBaseAlignment();
   }
   unsigned getAlignment() const {
-    return MinAlign(getOriginalAlignment(), SVOffset);
+    return MMO->getAlignment();
   }
-  bool isVolatile() const { return (SubclassData >> 5) & 1; }
 
   /// getRawSubclassData - Return the SubclassData value, which contains an
-  /// encoding of the alignment and volatile information, as well as bits
-  /// used by subclasses. This function should only be used to compute a
-  /// FoldingSetNodeID value.
+  /// encoding of the volatile flag, as well as bits used by subclasses. This
+  /// function should only be used to compute a FoldingSetNodeID value.
   unsigned getRawSubclassData() const {
     return SubclassData;
   }
 
+  bool isVolatile() const { return (SubclassData >> 5) & 1; }
+
   /// Returns the SrcValue and offset that describes the location of the access
-  const Value *getSrcValue() const { return SrcValue; }
-  int getSrcValueOffset() const { return SVOffset; }
+  const Value *getSrcValue() const { return MMO->getValue(); }
+  int64_t getSrcValueOffset() const { return MMO->getOffset(); }
 
   /// getMemoryVT - Return the type of the in-memory value.
   EVT getMemoryVT() const { return MemoryVT; }
 
   /// getMemOperand - Return a MachineMemOperand object describing the memory
   /// reference performed by operation.
-  MachineMemOperand getMemOperand() const;
+  MachineMemOperand *getMemOperand() const { return MMO; }
+
+  /// refineAlignment - Update this MemSDNode's MachineMemOperand information
+  /// to reflect the alignment of NewMMO, if it has a greater alignment.
+  /// This must only be used when the new alignment applies to all users of
+  /// this MachineMemOperand.
+  void refineAlignment(const MachineMemOperand *NewMMO) {
+    MMO->refineAlignment(NewMMO);
+  }
 
   const SDValue &getChain() const { return getOperand(0); }
   const SDValue &getBasePtr() const {
@@ -1583,7 +1601,7 @@ public:
            N->getOpcode() == ISD::ATOMIC_LOAD_UMAX    ||
            N->getOpcode() == ISD::INTRINSIC_W_CHAIN   ||
            N->getOpcode() == ISD::INTRINSIC_VOID      ||
-           N->isTargetOpcode();
+           N->isTargetMemoryOpcode();
   }
 };
 
@@ -1603,17 +1621,18 @@ public:
   // Align:  alignment of memory
   AtomicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTL, EVT MemVT,
                SDValue Chain, SDValue Ptr,
-               SDValue Cmp, SDValue Swp, const Value* SrcVal,
-               unsigned Align=0)
-    : MemSDNode(Opc, dl, VTL, MemVT, SrcVal, /*SVOffset=*/0,
-                Align, /*isVolatile=*/true) {
+               SDValue Cmp, SDValue Swp, MachineMemOperand *MMO)
+    : MemSDNode(Opc, dl, VTL, MemVT, MMO) {
+    assert(readMem() && "Atomic MachineMemOperand is not a load!");
+    assert(writeMem() && "Atomic MachineMemOperand is not a store!");
     InitOperands(Ops, Chain, Ptr, Cmp, Swp);
   }
   AtomicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTL, EVT MemVT,
                SDValue Chain, SDValue Ptr,
-               SDValue Val, const Value* SrcVal, unsigned Align=0)
-    : MemSDNode(Opc, dl, VTL, MemVT, SrcVal, /*SVOffset=*/0,
-                Align, /*isVolatile=*/true) {
+               SDValue Val, MachineMemOperand *MMO)
+    : MemSDNode(Opc, dl, VTL, MemVT, MMO) {
+    assert(readMem() && "Atomic MachineMemOperand is not a load!");
+    assert(writeMem() && "Atomic MachineMemOperand is not a store!");
     InitOperands(Ops, Chain, Ptr, Val);
   }
 
@@ -1643,23 +1662,17 @@ public:
   }
 };
 
-/// MemIntrinsicSDNode - This SDNode is used for target intrinsic that touches
-/// memory and need an associated memory operand.
-///
+/// MemIntrinsicSDNode - This SDNode is used for target intrinsics that touch
+/// memory and need an associated MachineMemOperand. Its opcode may be
+/// INTRINSIC_VOID, INTRINSIC_W_CHAIN, or a target-specific opcode with a
+/// value not less than FIRST_TARGET_MEMORY_OPCODE.
 class MemIntrinsicSDNode : public MemSDNode {
-  bool ReadMem;  // Intrinsic reads memory
-  bool WriteMem; // Intrinsic writes memory
 public:
   MemIntrinsicSDNode(unsigned Opc, DebugLoc dl, SDVTList VTs,
                      const SDValue *Ops, unsigned NumOps,
-                     EVT MemoryVT, const Value *srcValue, int SVO,
-                     unsigned Align, bool Vol, bool ReadMem, bool WriteMem)
-    : MemSDNode(Opc, dl, VTs, Ops, NumOps, MemoryVT, srcValue, SVO, Align, Vol),
-      ReadMem(ReadMem), WriteMem(WriteMem) {
+                     EVT MemoryVT, MachineMemOperand *MMO)
+    : MemSDNode(Opc, dl, VTs, Ops, NumOps, MemoryVT, MMO) {
   }
-
-  bool readMem() const { return ReadMem; }
-  bool writeMem() const { return WriteMem; }
 
   // Methods to support isa and dyn_cast
   static bool classof(const MemIntrinsicSDNode *) { return true; }
@@ -1668,7 +1681,7 @@ public:
     // early a node with a target opcode can be of this class
     return N->getOpcode() == ISD::INTRINSIC_W_CHAIN ||
            N->getOpcode() == ISD::INTRINSIC_VOID ||
-           N->isTargetOpcode();
+           N->isTargetMemoryOpcode();
   }
 };
 
@@ -1956,10 +1969,6 @@ public:
 /// used when the SelectionDAG needs to make a simple reference to something
 /// in the LLVM IR representation.
 ///
-/// Note that this is not used for carrying alias information; that is done
-/// with MemOperandSDNode, which includes a Value which is required to be a
-/// pointer, and several other fields specific to memory references.
-///
 class SrcValueSDNode : public SDNode {
   const Value *V;
   friend class SelectionDAG;
@@ -1975,28 +1984,6 @@ public:
   static bool classof(const SrcValueSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::SRCVALUE;
-  }
-};
-
-
-/// MemOperandSDNode - An SDNode that holds a MachineMemOperand. This is
-/// used to represent a reference to memory after ISD::LOAD
-/// and ISD::STORE have been lowered.
-///
-class MemOperandSDNode : public SDNode {
-  friend class SelectionDAG;
-  /// Create a MachineMemOperand node
-  explicit MemOperandSDNode(const MachineMemOperand &mo)
-    : SDNode(ISD::MEMOPERAND, DebugLoc::getUnknownLoc(),
-             getSDVTList(MVT::Other)), MO(mo) {}
-
-public:
-  /// MO - The contained MachineMemOperand.
-  const MachineMemOperand MO;
-
-  static bool classof(const MemOperandSDNode *) { return true; }
-  static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::MEMOPERAND;
   }
 };
 
@@ -2269,9 +2256,8 @@ class LSBaseSDNode : public MemSDNode {
 public:
   LSBaseSDNode(ISD::NodeType NodeTy, DebugLoc dl, SDValue *Operands,
                unsigned numOperands, SDVTList VTs, ISD::MemIndexedMode AM,
-               EVT VT, const Value *SV, int SVO, unsigned Align, bool Vol)
-    : MemSDNode(NodeTy, dl, VTs, VT, SV, SVO, Align, Vol) {
-    assert(Align != 0 && "Loads and stores should have non-zero aligment");
+               EVT MemVT, MachineMemOperand *MMO)
+    : MemSDNode(NodeTy, dl, VTs, MemVT, MMO) {
     SubclassData |= AM << 2;
     assert(getAddressingMode() == AM && "MemIndexedMode encoding error!");
     InitOperands(Ops, Operands, numOperands);
@@ -2307,12 +2293,14 @@ public:
 class LoadSDNode : public LSBaseSDNode {
   friend class SelectionDAG;
   LoadSDNode(SDValue *ChainPtrOff, DebugLoc dl, SDVTList VTs,
-             ISD::MemIndexedMode AM, ISD::LoadExtType ETy, EVT LVT,
-             const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
+             ISD::MemIndexedMode AM, ISD::LoadExtType ETy, EVT MemVT,
+             MachineMemOperand *MMO)
     : LSBaseSDNode(ISD::LOAD, dl, ChainPtrOff, 3,
-                   VTs, AM, LVT, SV, O, Align, Vol) {
+                   VTs, AM, MemVT, MMO) {
     SubclassData |= (unsigned short)ETy;
     assert(getExtensionType() == ETy && "LoadExtType encoding error!");
+    assert(readMem() && "Load MachineMemOperand is not a load!");
+    assert(!writeMem() && "Load MachineMemOperand is a store!");
   }
 public:
 
@@ -2336,12 +2324,14 @@ public:
 class StoreSDNode : public LSBaseSDNode {
   friend class SelectionDAG;
   StoreSDNode(SDValue *ChainValuePtrOff, DebugLoc dl, SDVTList VTs,
-              ISD::MemIndexedMode AM, bool isTrunc, EVT SVT,
-              const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
+              ISD::MemIndexedMode AM, bool isTrunc, EVT MemVT,
+              MachineMemOperand *MMO)
     : LSBaseSDNode(ISD::STORE, dl, ChainValuePtrOff, 4,
-                   VTs, AM, SVT, SV, O, Align, Vol) {
+                   VTs, AM, MemVT, MMO) {
     SubclassData |= (unsigned short)isTrunc;
     assert(isTruncatingStore() == isTrunc && "isTrunc encoding error!");
+    assert(!readMem() && "Store MachineMemOperand is a load!");
+    assert(writeMem() && "Store MachineMemOperand is not a store!");
   }
 public:
 
@@ -2360,6 +2350,44 @@ public:
   }
 };
 
+/// MachineSDNode - An SDNode that represents everything that will be needed
+/// to construct a MachineInstr. These nodes are created during the
+/// instruction selection proper phase.
+///
+class MachineSDNode : public SDNode {
+public:
+  typedef MachineMemOperand **mmo_iterator;
+
+private:
+  friend class SelectionDAG;
+  MachineSDNode(unsigned Opc, const DebugLoc DL, SDVTList VTs)
+    : SDNode(Opc, DL, VTs), MemRefs(0), MemRefsEnd(0) {}
+
+  /// LocalOperands - Operands for this instruction, if they fit here. If
+  /// they don't, this field is unused.
+  SDUse LocalOperands[4];
+
+  /// MemRefs - Memory reference descriptions for this instruction.
+  mmo_iterator MemRefs;
+  mmo_iterator MemRefsEnd;
+
+public:
+  mmo_iterator memoperands_begin() const { return MemRefs; }
+  mmo_iterator memoperands_end() const { return MemRefsEnd; }
+  bool memoperands_empty() const { return MemRefsEnd == MemRefs; }
+
+  /// setMemRefs - Assign this MachineSDNodes's memory reference descriptor
+  /// list. This does not transfer ownership.
+  void setMemRefs(mmo_iterator NewMemRefs, mmo_iterator NewMemRefsEnd) {
+    MemRefs = NewMemRefs;
+    MemRefsEnd = NewMemRefsEnd;
+  }
+
+  static bool classof(const MachineSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->isMachineOpcode();
+  }
+};
 
 class SDNodeIterator : public std::iterator<std::forward_iterator_tag,
                                             SDNode, ptrdiff_t> {

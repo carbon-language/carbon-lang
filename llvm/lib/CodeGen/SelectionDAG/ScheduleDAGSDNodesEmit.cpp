@@ -497,7 +497,6 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     const TargetInstrDesc &II = TII->get(Opc);
     unsigned NumResults = CountResults(Node);
     unsigned NodeOperands = CountOperands(Node);
-    unsigned MemOperandsEnd = ComputeMemOperandsEnd(Node);
     bool HasPhysRegOuts = (NumResults > II.getNumDefs()) &&
                           II.getImplicitDefs() != 0;
 #ifndef NDEBUG
@@ -525,9 +524,9 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
       AddOperand(MI, Node->getOperand(i), i-NumSkip+II.getNumDefs(), &II,
                  VRBaseMap);
 
-    // Emit all of the memory operands of this instruction
-    for (unsigned i = NodeOperands; i != MemOperandsEnd; ++i)
-      AddMemOperand(MI,cast<MemOperandSDNode>(Node->getOperand(i+NumSkip))->MO);
+    // Transfer all of the memory reference descriptions of this instruction.
+    MI->setMemRefs(cast<MachineSDNode>(Node)->memoperands_begin(),
+                   cast<MachineSDNode>(Node)->memoperands_end());
 
     if (II.usesCustomDAGSchedInsertionHook()) {
       // Insert this instruction into the basic block using a target

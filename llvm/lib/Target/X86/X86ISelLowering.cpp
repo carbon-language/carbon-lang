@@ -6983,12 +6983,11 @@ ReplaceATOMIC_BINARY_64(SDNode *Node, SmallVectorImpl<SDValue>&Results,
                              Node->getOperand(2), DAG.getIntPtrConstant(0));
   SDValue In2H = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
                              Node->getOperand(2), DAG.getIntPtrConstant(1));
-  // This is a generalized SDNode, not an AtomicSDNode, so it doesn't
-  // have a MemOperand.  Pass the info through as a normal operand.
-  SDValue LSI = DAG.getMemOperand(cast<MemSDNode>(Node)->getMemOperand());
-  SDValue Ops[] = { Chain, In1, In2L, In2H, LSI };
+  SDValue Ops[] = { Chain, In1, In2L, In2H };
   SDVTList Tys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
-  SDValue Result = DAG.getNode(NewOp, dl, Tys, Ops, 5);
+  SDValue Result =
+    DAG.getMemIntrinsicNode(NewOp, dl, Tys, Ops, 4, MVT::i64,
+                            cast<MemSDNode>(Node)->getMemOperand());
   SDValue OpsF[] = { Result.getValue(0), Result.getValue(1)};
   Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, OpsF, 2));
   Results.push_back(Result.getValue(2));
@@ -7396,7 +7395,8 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
     (*MIB).addOperand(*argOpers[i]);
   MIB.addReg(t2);
   assert(bInstr->hasOneMemOperand() && "Unexpected number of memoperand");
-  (*MIB).addMemOperand(*F, *bInstr->memoperands_begin());
+  (*MIB).setMemRefs(bInstr->memoperands_begin(),
+                    bInstr->memoperands_end());
 
   MIB = BuildMI(newMBB, dl, TII->get(copyOpc), destOper.getReg());
   MIB.addReg(EAXreg);
@@ -7548,7 +7548,8 @@ X86TargetLowering::EmitAtomicBit6432WithCustomInserter(MachineInstr *bInstr,
     (*MIB).addOperand(*argOpers[i]);
 
   assert(bInstr->hasOneMemOperand() && "Unexpected number of memoperand");
-  (*MIB).addMemOperand(*F, *bInstr->memoperands_begin());
+  (*MIB).setMemRefs(bInstr->memoperands_begin(),
+                    bInstr->memoperands_end());
 
   MIB = BuildMI(newMBB, dl, TII->get(copyOpc), t3);
   MIB.addReg(X86::EAX);
@@ -7652,7 +7653,8 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
     (*MIB).addOperand(*argOpers[i]);
   MIB.addReg(t3);
   assert(mInstr->hasOneMemOperand() && "Unexpected number of memoperand");
-  (*MIB).addMemOperand(*F, *mInstr->memoperands_begin());
+  (*MIB).setMemRefs(mInstr->memoperands_begin(),
+                    mInstr->memoperands_end());
 
   MIB = BuildMI(newMBB, dl, TII->get(X86::MOV32rr), destOper.getReg());
   MIB.addReg(X86::EAX);
@@ -7747,6 +7749,11 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
   // In the XMM save block, save all the XMM argument registers.
   for (int i = 3, e = MI->getNumOperands(); i != e; ++i) {
     int64_t Offset = (i - 3) * 16 + VarArgsFPOffset;
+    MachineMemOperand *MMO =
+      F->getMachineMemOperand(
+        PseudoSourceValue::getFixedStack(RegSaveFrameIndex),
+        MachineMemOperand::MOStore, Offset,
+        /*Size=*/16, /*Align=*/16);
     BuildMI(XMMSaveMBB, DL, TII->get(X86::MOVAPSmr))
       .addFrameIndex(RegSaveFrameIndex)
       .addImm(/*Scale=*/1)
@@ -7754,10 +7761,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
       .addImm(/*Disp=*/Offset)
       .addReg(/*Segment=*/0)
       .addReg(MI->getOperand(i).getReg())
-      .addMemOperand(MachineMemOperand(
-                       PseudoSourceValue::getFixedStack(RegSaveFrameIndex),
-                       MachineMemOperand::MOStore, Offset,
-                       /*Size=*/16, /*Align=*/16));
+      .addMemOperand(MMO);
   }
 
   F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.

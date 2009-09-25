@@ -516,8 +516,6 @@ namespace llvm {
     ///
     void EmitNoop();
 
-    void AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO);
-
     void EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
 
   private:

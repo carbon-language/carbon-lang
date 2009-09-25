@@ -27,6 +27,7 @@
 
 namespace llvm {
 
+class Value;
 class Function;
 class MachineRegisterInfo;
 class MachineFrameInfo;
@@ -319,6 +320,24 @@ public:
   /// DeleteMachineBasicBlock - Delete the given MachineBasicBlock.
   ///
   void DeleteMachineBasicBlock(MachineBasicBlock *MBB);
+
+  /// getMachineMemOperand - Allocate a new MachineMemOperand.
+  /// MachineMemOperands are owned by the MachineFunction and need not be
+  /// explicitly deallocated.
+  MachineMemOperand *getMachineMemOperand(const Value *v, unsigned f,
+                                          int64_t o, uint64_t s,
+                                          unsigned base_alignment);
+
+  /// getMachineMemOperand - Allocate a new MachineMemOperand by copying
+  /// an existing one, adjusting by an offset and using the given EVT.
+  /// MachineMemOperands are owned by the MachineFunction and need not be
+  /// explicitly deallocated.
+  MachineMemOperand *getMachineMemOperand(const MachineMemOperand *MMO,
+                                          int64_t Offset, uint64_t Size);
+
+  /// allocateMemRefsArray - Allocate an array to hold MachineMemOperand
+  /// pointers.  This array is owned by the MachineFunction.
+  MachineInstr::mmo_iterator allocateMemRefsArray(unsigned long Num);
 
   //===--------------------------------------------------------------------===//
   // Debug location.

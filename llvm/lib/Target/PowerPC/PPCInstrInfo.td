@@ -35,11 +35,11 @@ def SDT_PPCcondbr : SDTypeProfile<0, 3, [
   SDTCisVT<0, i32>, SDTCisVT<2, OtherVT>
 ]>;
 
-def SDT_PPClbrx : SDTypeProfile<1, 3, [
-  SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
+def SDT_PPClbrx : SDTypeProfile<1, 2, [
+  SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>
 ]>;
-def SDT_PPCstbrx : SDTypeProfile<0, 4, [
-  SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
+def SDT_PPCstbrx : SDTypeProfile<0, 3, [
+  SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>
 ]>;
 
 def SDT_PPClarx : SDTypeProfile<1, 1, [
@@ -741,10 +741,10 @@ def LWZX : XForm_1<31,  23, (outs GPRC:$rD), (ins memrr:$src),
                    
 def LHBRX : XForm_1<31, 790, (outs GPRC:$rD), (ins memrr:$src),
                    "lhbrx $rD, $src", LdStGeneral,
-                   [(set GPRC:$rD, (PPClbrx xoaddr:$src, srcvalue:$sv, i16))]>;
+                   [(set GPRC:$rD, (PPClbrx xoaddr:$src, i16))]>;
 def LWBRX : XForm_1<31,  534, (outs GPRC:$rD), (ins memrr:$src),
                    "lwbrx $rD, $src", LdStGeneral,
-                   [(set GPRC:$rD, (PPClbrx xoaddr:$src, srcvalue:$sv, i32))]>;
+                   [(set GPRC:$rD, (PPClbrx xoaddr:$src, i32))]>;
 
 def LFSX   : XForm_25<31, 535, (outs F4RC:$frD), (ins memrr:$src),
                       "lfsx $frD, $src", LdStLFDU,
@@ -837,11 +837,11 @@ def STWUX : XForm_8<31, 183, (outs), (ins GPRC:$rS, GPRC:$rA, GPRC:$rB),
 }
 def STHBRX: XForm_8<31, 918, (outs), (ins GPRC:$rS, memrr:$dst),
                    "sthbrx $rS, $dst", LdStGeneral,
-                   [(PPCstbrx GPRC:$rS, xoaddr:$dst, srcvalue:$dummy, i16)]>, 
+                   [(PPCstbrx GPRC:$rS, xoaddr:$dst, i16)]>, 
                    PPC970_DGroup_Cracked;
 def STWBRX: XForm_8<31, 662, (outs), (ins GPRC:$rS, memrr:$dst),
                    "stwbrx $rS, $dst", LdStGeneral,
-                   [(PPCstbrx GPRC:$rS, xoaddr:$dst, srcvalue:$dummy, i32)]>,
+                   [(PPCstbrx GPRC:$rS, xoaddr:$dst, i32)]>,
                    PPC970_DGroup_Cracked;
 
 def STFIWX: XForm_28<31, 983, (outs), (ins F8RC:$frS, memrr:$dst),

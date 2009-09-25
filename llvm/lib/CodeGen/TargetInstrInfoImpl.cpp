@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -203,11 +204,11 @@ TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
          "Folded a use to a non-load!");
   const MachineFrameInfo &MFI = *MF.getFrameInfo();
   assert(MFI.getObjectOffset(FrameIndex) != -1);
-  MachineMemOperand MMO(PseudoSourceValue::getFixedStack(FrameIndex),
-                        Flags,
-                        /*Offset=*/0,
-                        MFI.getObjectSize(FrameIndex),
-                        MFI.getObjectAlignment(FrameIndex));
+  MachineMemOperand *MMO =
+    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIndex),
+                            Flags, /*Offset=*/0,
+                            MFI.getObjectSize(FrameIndex),
+                            MFI.getObjectAlignment(FrameIndex));
   NewMI->addMemOperand(MF, MMO);
 
   return NewMI;
@@ -232,9 +233,8 @@ TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
   if (!NewMI) return 0;
 
   // Copy the memoperands from the load to the folded instruction.
-  for (std::list<MachineMemOperand>::iterator I = LoadMI->memoperands_begin(),
-       E = LoadMI->memoperands_end(); I != E; ++I)
-    NewMI->addMemOperand(MF, *I);
+  NewMI->setMemRefs(LoadMI->memoperands_begin(),
+                    LoadMI->memoperands_end());
 
   return NewMI;
 }

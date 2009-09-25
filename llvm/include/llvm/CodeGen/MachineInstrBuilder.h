@@ -121,7 +121,7 @@ public:
     return *this;
   }
 
-  const MachineInstrBuilder &addMemOperand(const MachineMemOperand &MMO) const {
+  const MachineInstrBuilder &addMemOperand(MachineMemOperand *MMO) const {
     MI->addMemOperand(*MI->getParent()->getParent(), MMO);
     return *this;
   }

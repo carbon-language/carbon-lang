@@ -2296,7 +2296,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   // Determine the alignment of the load.
   unsigned Alignment = 0;
   if (LoadMI->hasOneMemOperand())
-    Alignment = LoadMI->memoperands_begin()->getAlignment();
+    Alignment = (*LoadMI->memoperands_begin())->getAlignment();
   else
     switch (LoadMI->getOpcode()) {
     case X86::V_SET0:
@@ -2567,7 +2567,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   std::vector<SDValue> AfterOps;
   DebugLoc dl = N->getDebugLoc();
   unsigned NumOps = N->getNumOperands();
-  for (unsigned i = 0; i != NumOps-2; ++i) {
+  for (unsigned i = 0; i != NumOps-1; ++i) {
     SDValue Op = N->getOperand(i);
     if (i >= Index-NumDefs && i < Index-NumDefs + X86AddrNumOperands)
       AddrOps.push_back(Op);
@@ -2576,8 +2576,6 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     else if (i > Index-NumDefs)
       AfterOps.push_back(Op);
   }
-  SDValue MemOp = N->getOperand(NumOps-2);
-  AddrOps.push_back(MemOp);
   SDValue Chain = N->getOperand(NumOps-1);
   AddrOps.push_back(Chain);
 
@@ -2615,9 +2613,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   // Emit the store instruction.
   if (FoldedStore) {
     AddrOps.pop_back();
-    AddrOps.pop_back();
     AddrOps.push_back(SDValue(NewNode, 0));
-    AddrOps.push_back(MemOp);
     AddrOps.push_back(Chain);
     bool isAligned = (RI.getStackAlignment() >= 16) ||
       RI.needsStackRealignment(MF);
