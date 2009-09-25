@@ -1151,6 +1151,7 @@ emitPrologue(MachineFunction &MF) const {
   unsigned GPRCS1Size = 0, GPRCS2Size = 0, DPRCSSize = 0;
   int FramePtrSpillFI = 0;
 
+  // Allocate the vararg register save area. This is not counted in NumBytes.
   if (VARegSaveSize)
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, -VARegSaveSize);
 
@@ -1198,8 +1199,11 @@ emitPrologue(MachineFunction &MF) const {
   emitSPUpdate(isARM, MBB, MBBI, dl, TII, -GPRCS1Size);
   movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, ARM::t2STRi12, 1, STI);
 
-  // Darwin ABI requires FP to point to the stack slot that contains the
-  // previous FP.
+  // Set FP to point to the stack slot that contains the previous FP.
+  // For Darwin, FP is R7, which has now been stored in spill area 1.
+  // Otherwise, if this is not Darwin, all the callee-saved registers go
+  // into spill area 1, including the FP in R11.  In either case, it is
+  // now safe to emit this assignment.
   if (STI.isTargetDarwin() || hasFP(MF)) {
     unsigned ADDriOpc = !AFI->isThumbFunction() ? ARM::ADDri : ARM::t2ADDri;
     MachineInstrBuilder MIB =
