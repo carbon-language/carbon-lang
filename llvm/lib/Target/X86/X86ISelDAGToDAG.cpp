@@ -1467,9 +1467,9 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
     return NULL;
   SDValue LSI = Node->getOperand(4);    // MemOperand
   const SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, In2L, In2H, LSI, Chain};
-  return CurDAG->getTargetNode(Opc, Node->getDebugLoc(),
-                               MVT::i32, MVT::i32, MVT::Other, Ops,
-                               array_lengthof(Ops));
+  return CurDAG->getMachineNode(Opc, Node->getDebugLoc(),
+                                MVT::i32, MVT::i32, MVT::Other, Ops,
+                                array_lengthof(Ops));
 }
 
 SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
@@ -1603,17 +1603,17 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
   }
 
   DebugLoc dl = Node->getDebugLoc();
-  SDValue Undef = SDValue(CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF,
-                                                dl, NVT), 0);
+  SDValue Undef = SDValue(CurDAG->getMachineNode(TargetInstrInfo::IMPLICIT_DEF,
+                                                 dl, NVT), 0);
   SDValue MemOp = CurDAG->getMemOperand(cast<MemSDNode>(Node)->getMemOperand());
   if (isInc || isDec) {
     SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, MemOp, Chain };
-    SDValue Ret = SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 7), 0);
+    SDValue Ret = SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 7), 0);
     SDValue RetVals[] = { Undef, Ret };
     return CurDAG->getMergeValues(RetVals, 2, dl).getNode();
   } else {
     SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Val, MemOp, Chain };
-    SDValue Ret = SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 8), 0);
+    SDValue Ret = SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 8), 0);
     SDValue RetVals[] = { Undef, Ret };
     return CurDAG->getMergeValues(RetVals, 2, dl).getNode();
   }
@@ -1723,14 +1723,14 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N1.getOperand(0),
                         InFlag };
       SDNode *CNode =
-        CurDAG->getTargetNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
-                              array_lengthof(Ops));
+        CurDAG->getMachineNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
+                               array_lengthof(Ops));
       InFlag = SDValue(CNode, 1);
       // Update the chain.
       ReplaceUses(N1.getValue(1), SDValue(CNode, 0));
     } else {
       InFlag =
-        SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Flag, N1, InFlag), 0);
+        SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Flag, N1, InFlag), 0);
     }
 
     // Copy the low half of the result, if it is needed.
@@ -1756,8 +1756,8 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                         X86::AX, MVT::i16, InFlag);
         InFlag = Result.getValue(2);
-        Result = SDValue(CurDAG->getTargetNode(X86::SHR16ri, dl, MVT::i16,
-                                               Result,
+        Result = SDValue(CurDAG->getMachineNode(X86::SHR16ri, dl, MVT::i16,
+                                                Result,
                                    CurDAG->getTargetConstant(8, MVT::i8)), 0);
         // Then truncate it down to i8.
         Result = CurDAG->getTargetExtractSubreg(X86::SUBREG_8BIT, dl,
@@ -1846,14 +1846,14 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       if (TryFoldLoad(N, N0, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4)) {
         SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N0.getOperand(0) };
         Move =
-          SDValue(CurDAG->getTargetNode(X86::MOVZX16rm8, dl, MVT::i16,
-                                        MVT::Other, Ops,
-                                        array_lengthof(Ops)), 0);
+          SDValue(CurDAG->getMachineNode(X86::MOVZX16rm8, dl, MVT::i16,
+                                         MVT::Other, Ops,
+                                         array_lengthof(Ops)), 0);
         Chain = Move.getValue(1);
         ReplaceUses(N0.getValue(1), Chain);
       } else {
         Move =
-          SDValue(CurDAG->getTargetNode(X86::MOVZX16rr8, dl, MVT::i16, N0),0);
+          SDValue(CurDAG->getMachineNode(X86::MOVZX16rr8, dl, MVT::i16, N0),0);
         Chain = CurDAG->getEntryNode();
       }
       Chain  = CurDAG->getCopyToReg(Chain, dl, X86::AX, Move, SDValue());
@@ -1865,27 +1865,27 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       if (isSigned && !signBitIsZero) {
         // Sign extend the low part into the high part.
         InFlag =
-          SDValue(CurDAG->getTargetNode(SExtOpcode, dl, MVT::Flag, InFlag),0);
+          SDValue(CurDAG->getMachineNode(SExtOpcode, dl, MVT::Flag, InFlag),0);
       } else {
         // Zero out the high part, effectively zero extending the input.
         SDValue ClrNode;
 
         if (NVT.getSimpleVT() == MVT::i64) {
-          ClrNode = SDValue(CurDAG->getTargetNode(X86::MOV32r0, dl, MVT::i32),
+          ClrNode = SDValue(CurDAG->getMachineNode(X86::MOV32r0, dl, MVT::i32),
                             0);
           // We just did a 32-bit clear, insert it into a 64-bit register to
           // clear the whole 64-bit reg.
           SDValue Undef =
-            SDValue(CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF,
-                                          dl, MVT::i64), 0);
+            SDValue(CurDAG->getMachineNode(TargetInstrInfo::IMPLICIT_DEF,
+                                           dl, MVT::i64), 0);
           SDValue SubRegNo =
             CurDAG->getTargetConstant(X86::SUBREG_32BIT, MVT::i32);
           ClrNode =
-            SDValue(CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl,
-                                          MVT::i64, Undef, ClrNode, SubRegNo),
+            SDValue(CurDAG->getMachineNode(TargetInstrInfo::INSERT_SUBREG, dl,
+                                           MVT::i64, Undef, ClrNode, SubRegNo),
                     0);
         } else {
-          ClrNode = SDValue(CurDAG->getTargetNode(ClrOpcode, dl, NVT), 0);
+          ClrNode = SDValue(CurDAG->getMachineNode(ClrOpcode, dl, NVT), 0);
         }
 
         InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, HiReg,
@@ -1897,14 +1897,14 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N1.getOperand(0),
                         InFlag };
       SDNode *CNode =
-        CurDAG->getTargetNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
-                              array_lengthof(Ops));
+        CurDAG->getMachineNode(MOpc, dl, MVT::Other, MVT::Flag, Ops,
+                               array_lengthof(Ops));
       InFlag = SDValue(CNode, 1);
       // Update the chain.
       ReplaceUses(N1.getValue(1), SDValue(CNode, 0));
     } else {
       InFlag =
-        SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Flag, N1, InFlag), 0);
+        SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Flag, N1, InFlag), 0);
     }
 
     // Copy the division (low) result, if it is needed.
@@ -1930,7 +1930,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         Result = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                         X86::AX, MVT::i16, InFlag);
         InFlag = Result.getValue(2);
-        Result = SDValue(CurDAG->getTargetNode(X86::SHR16ri, dl, MVT::i16,
+        Result = SDValue(CurDAG->getMachineNode(X86::SHR16ri, dl, MVT::i16,
                                       Result,
                                       CurDAG->getTargetConstant(8, MVT::i8)),
                          0);
@@ -1985,8 +1985,8 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
           default: llvm_unreachable("Unsupported TEST operand type!");
           }
           SDValue RC = CurDAG->getTargetConstant(TRC->getID(), MVT::i32);
-          Reg = SDValue(CurDAG->getTargetNode(X86::COPY_TO_REGCLASS, dl,
-                                              Reg.getValueType(), Reg, RC), 0);
+          Reg = SDValue(CurDAG->getMachineNode(X86::COPY_TO_REGCLASS, dl,
+                                               Reg.getValueType(), Reg, RC), 0);
         }
 
         // Extract the l-register.
@@ -1994,7 +1994,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                                         MVT::i8, Reg);
 
         // Emit a testb.
-        return CurDAG->getTargetNode(X86::TEST8ri, dl, MVT::i32, Subreg, Imm);
+        return CurDAG->getMachineNode(X86::TEST8ri, dl, MVT::i32, Subreg, Imm);
       }
 
       // For example, "testl %eax, $2048" to "testb %ah, $8".
@@ -2013,8 +2013,8 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         default: llvm_unreachable("Unsupported TEST operand type!");
         }
         SDValue RC = CurDAG->getTargetConstant(TRC->getID(), MVT::i32);
-        Reg = SDValue(CurDAG->getTargetNode(X86::COPY_TO_REGCLASS, dl,
-                                            Reg.getValueType(), Reg, RC), 0);
+        Reg = SDValue(CurDAG->getMachineNode(X86::COPY_TO_REGCLASS, dl,
+                                             Reg.getValueType(), Reg, RC), 0);
 
         // Extract the h-register.
         SDValue Subreg = CurDAG->getTargetExtractSubreg(X86::SUBREG_8BIT_HI, dl,
@@ -2022,8 +2022,8 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
 
         // Emit a testb. No special NOREX tricks are needed since there's
         // only one GPR operand!
-        return CurDAG->getTargetNode(X86::TEST8ri, dl, MVT::i32,
-                                     Subreg, ShiftedImm);
+        return CurDAG->getMachineNode(X86::TEST8ri, dl, MVT::i32,
+                                      Subreg, ShiftedImm);
       }
 
       // For example, "testl %eax, $32776" to "testw %ax, $32776".
@@ -2037,7 +2037,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                                         MVT::i16, Reg);
 
         // Emit a testw.
-        return CurDAG->getTargetNode(X86::TEST16ri, dl, MVT::i32, Subreg, Imm);
+        return CurDAG->getMachineNode(X86::TEST16ri, dl, MVT::i32, Subreg, Imm);
       }
 
       // For example, "testq %rax, $268468232" to "testl %eax, $268468232".
@@ -2051,7 +2051,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
                                                         MVT::i32, Reg);
 
         // Emit a testl.
-        return CurDAG->getTargetNode(X86::TEST32ri, dl, MVT::i32, Subreg, Imm);
+        return CurDAG->getMachineNode(X86::TEST32ri, dl, MVT::i32, Subreg, Imm);
       }
     }
     break;

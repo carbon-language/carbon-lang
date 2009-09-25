@@ -173,12 +173,12 @@ SDNode *SparcDAGToDAGISel::Select(SDValue Op) {
     // Set the Y register to the high-part.
     SDValue TopPart;
     if (N->getOpcode() == ISD::SDIV) {
-      TopPart = SDValue(CurDAG->getTargetNode(SP::SRAri, dl, MVT::i32, DivLHS,
+      TopPart = SDValue(CurDAG->getMachineNode(SP::SRAri, dl, MVT::i32, DivLHS,
                                    CurDAG->getTargetConstant(31, MVT::i32)), 0);
     } else {
       TopPart = CurDAG->getRegister(SP::G0, MVT::i32);
     }
-    TopPart = SDValue(CurDAG->getTargetNode(SP::WRYrr, dl, MVT::Flag, TopPart,
+    TopPart = SDValue(CurDAG->getMachineNode(SP::WRYrr, dl, MVT::Flag, TopPart,
                                      CurDAG->getRegister(SP::G0, MVT::i32)), 0);
 
     // FIXME: Handle div by immediate.
@@ -192,8 +192,8 @@ SDNode *SparcDAGToDAGISel::Select(SDValue Op) {
     SDValue MulLHS = N->getOperand(0);
     SDValue MulRHS = N->getOperand(1);
     unsigned Opcode = N->getOpcode() == ISD::MULHU ? SP::UMULrr : SP::SMULrr;
-    SDNode *Mul = CurDAG->getTargetNode(Opcode, dl, MVT::i32, MVT::Flag,
-                                        MulLHS, MulRHS);
+    SDNode *Mul = CurDAG->getMachineNode(Opcode, dl, MVT::i32, MVT::Flag,
+                                         MulLHS, MulRHS);
     // The high part is in the Y register.
     return CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, SDValue(Mul, 1));
     return NULL;

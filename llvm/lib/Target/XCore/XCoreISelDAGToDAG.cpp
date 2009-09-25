@@ -169,7 +169,8 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
       case ISD::Constant: {
         if (Predicate_immMskBitp(N)) {
           SDValue MskSize = Transform_msksize_xform(N);
-          return CurDAG->getTargetNode(XCore::MKMSK_rus, dl, MVT::i32, MskSize);
+          return CurDAG->getMachineNode(XCore::MKMSK_rus, dl,
+                                        MVT::i32, MskSize);
         }
         else if (! Predicate_immU16(N)) {
           unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
@@ -177,20 +178,20 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
             CurDAG->getTargetConstantPool(ConstantInt::get(
                                   Type::getInt32Ty(*CurDAG->getContext()), Val),
                                           TLI.getPointerTy());
-          return CurDAG->getTargetNode(XCore::LDWCP_lru6, dl, MVT::i32, 
-                                       MVT::Other, CPIdx, 
-                                       CurDAG->getEntryNode());
+          return CurDAG->getMachineNode(XCore::LDWCP_lru6, dl, MVT::i32, 
+                                        MVT::Other, CPIdx, 
+                                        CurDAG->getEntryNode());
         }
         break;
       }
       case ISD::SMUL_LOHI: {
         // FIXME fold addition into the macc instruction
         if (!Subtarget.isXS1A()) {
-          SDValue Zero(CurDAG->getTargetNode(XCore::LDC_ru6, dl, MVT::i32,
+          SDValue Zero(CurDAG->getMachineNode(XCore::LDC_ru6, dl, MVT::i32,
                                   CurDAG->getTargetConstant(0, MVT::i32)), 0);
           SDValue Ops[] = { Zero, Zero, Op.getOperand(0), Op.getOperand(1) };
-          SDNode *ResNode = CurDAG->getTargetNode(XCore::MACCS_l4r, dl,
-                                                  MVT::i32, MVT::i32, Ops, 4);
+          SDNode *ResNode = CurDAG->getMachineNode(XCore::MACCS_l4r, dl,
+                                                   MVT::i32, MVT::i32, Ops, 4);
           ReplaceUses(SDValue(N, 0), SDValue(ResNode, 1));
           ReplaceUses(SDValue(N, 1), SDValue(ResNode, 0));
           return NULL;
@@ -199,12 +200,12 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
       }
       case ISD::UMUL_LOHI: {
         // FIXME fold addition into the macc / lmul instruction
-        SDValue Zero(CurDAG->getTargetNode(XCore::LDC_ru6, dl, MVT::i32,
+        SDValue Zero(CurDAG->getMachineNode(XCore::LDC_ru6, dl, MVT::i32,
                                   CurDAG->getTargetConstant(0, MVT::i32)), 0);
         SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                             Zero, Zero };
-        SDNode *ResNode = CurDAG->getTargetNode(XCore::LMUL_l6r, dl, MVT::i32,
-                                                MVT::i32, Ops, 4);
+        SDNode *ResNode = CurDAG->getMachineNode(XCore::LMUL_l6r, dl, MVT::i32,
+                                                 MVT::i32, Ops, 4);
         ReplaceUses(SDValue(N, 0), SDValue(ResNode, 1));
         ReplaceUses(SDValue(N, 1), SDValue(ResNode, 0));
         return NULL;
@@ -213,8 +214,8 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
         if (!Subtarget.isXS1A()) {
           SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                               Op.getOperand(2) };
-          return CurDAG->getTargetNode(XCore::LADD_l5r, dl, MVT::i32, MVT::i32,
-                                       Ops, 3);
+          return CurDAG->getMachineNode(XCore::LADD_l5r, dl, MVT::i32, MVT::i32,
+                                        Ops, 3);
         }
         break;
       }
@@ -222,8 +223,8 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
         if (!Subtarget.isXS1A()) {
           SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                               Op.getOperand(2) };
-          return CurDAG->getTargetNode(XCore::LSUB_l5r, dl, MVT::i32, MVT::i32,
-                                       Ops, 3);
+          return CurDAG->getMachineNode(XCore::LSUB_l5r, dl, MVT::i32, MVT::i32,
+                                        Ops, 3);
         }
         break;
       }

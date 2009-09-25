@@ -784,7 +784,7 @@ public:
   EmitResultCode(TreePatternNode *N, std::vector<Record*> DstRegs,
                  bool InFlagDecled, bool ResNodeDecled,
                  bool LikeLeaf = false, bool isRoot = false) {
-    // List of arguments of getTargetNode() or SelectNodeTo().
+    // List of arguments of getMachineNode() or SelectNodeTo().
     std::vector<std::string> NodeOps;
     // This is something selected from the pattern we matched.
     if (!N->getName().empty()) {
@@ -1089,7 +1089,7 @@ public:
       std::string Code = "Opc" + utostr(OpcNo);
 
       if (!isRoot || (InputHasChain && !NodeHasChain))
-        // For call to "getTargetNode()".
+        // For call to "getMachineNode()".
         Code += ", N.getDebugLoc()";
 
       emitOpcode(II.Namespace + "::" + II.TheDef->getName());
@@ -1303,7 +1303,7 @@ public:
       // would leave users of the chain dangling.
       //
       if (!isRoot || (InputHasChain && !NodeHasChain)) {
-        Code = "CurDAG->getTargetNode(" + Code;
+        Code = "CurDAG->getMachineNode(" + Code;
       } else {
         Code = "CurDAG->SelectNodeTo(N.getNode(), " + Code;
       }

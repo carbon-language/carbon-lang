@@ -813,8 +813,8 @@ SDNode *ARMDAGToDAGISel::SelectARMIndexedLoad(SDValue Op) {
     SDValue Base = LD->getBasePtr();
     SDValue Ops[]= { Base, Offset, AMOpc, getAL(CurDAG),
                      CurDAG->getRegister(0, MVT::i32), Chain };
-    return CurDAG->getTargetNode(Opcode, Op.getDebugLoc(), MVT::i32, MVT::i32,
-                                 MVT::Other, Ops, 6);
+    return CurDAG->getMachineNode(Opcode, Op.getDebugLoc(), MVT::i32, MVT::i32,
+                                  MVT::Other, Ops, 6);
   }
 
   return NULL;
@@ -861,8 +861,8 @@ SDNode *ARMDAGToDAGISel::SelectT2IndexedLoad(SDValue Op) {
     SDValue Base = LD->getBasePtr();
     SDValue Ops[]= { Base, Offset, getAL(CurDAG),
                      CurDAG->getRegister(0, MVT::i32), Chain };
-    return CurDAG->getTargetNode(Opcode, Op.getDebugLoc(), MVT::i32, MVT::i32,
-                                 MVT::Other, Ops, 5);
+    return CurDAG->getMachineNode(Opcode, Op.getDebugLoc(), MVT::i32, MVT::i32,
+                                  MVT::Other, Ops, 5);
   }
 
   return NULL;
@@ -882,7 +882,7 @@ SDNode *ARMDAGToDAGISel::SelectDYN_ALLOC(SDValue Op) {
     // instruction that can read and write SP. This matches to a pseudo
     // instruction that has a chain to ensure the result is written back to
     // the stack pointer.
-    SP = SDValue(CurDAG->getTargetNode(ARM::tANDsp, dl, VT, SP, Align), 0);
+    SP = SDValue(CurDAG->getMachineNode(ARM::tANDsp, dl, VT, SP, Align), 0);
 
   bool isC = isa<ConstantSDNode>(Size);
   uint32_t C = isC ? cast<ConstantSDNode>(Size)->getZExtValue() : ~0UL;
@@ -958,8 +958,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         SDValue Pred = CurDAG->getTargetConstant(0xEULL, MVT::i32);
         SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
         SDValue Ops[] = { CPIdx, Pred, PredReg, CurDAG->getEntryNode() };
-        ResNode = CurDAG->getTargetNode(ARM::tLDRcp, dl, MVT::i32, MVT::Other,
-                                        Ops, 4);
+        ResNode = CurDAG->getMachineNode(ARM::tLDRcp, dl, MVT::i32, MVT::Other,
+                                         Ops, 4);
       } else {
         SDValue Ops[] = {
           CPIdx,
@@ -969,8 +969,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
           CurDAG->getRegister(0, MVT::i32),
           CurDAG->getEntryNode()
         };
-        ResNode=CurDAG->getTargetNode(ARM::LDRcp, dl, MVT::i32, MVT::Other,
-                                      Ops, 6);
+        ResNode=CurDAG->getMachineNode(ARM::LDRcp, dl, MVT::i32, MVT::Other,
+                                       Ops, 6);
       }
       ReplaceUses(Op, SDValue(ResNode, 0));
       return NULL;
@@ -1038,9 +1038,9 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     }
     break;
   case ARMISD::FMRRD:
-    return CurDAG->getTargetNode(ARM::FMRRD, dl, MVT::i32, MVT::i32,
-                                 Op.getOperand(0), getAL(CurDAG),
-                                 CurDAG->getRegister(0, MVT::i32));
+    return CurDAG->getMachineNode(ARM::FMRRD, dl, MVT::i32, MVT::i32,
+                                  Op.getOperand(0), getAL(CurDAG),
+                                  CurDAG->getRegister(0, MVT::i32));
   case ISD::UMUL_LOHI: {
     if (Subtarget->isThumb1Only())
       break;
@@ -1048,12 +1048,12 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                         CurDAG->getRegister(0, MVT::i32) };
-      return CurDAG->getTargetNode(ARM::t2UMULL, dl, MVT::i32, MVT::i32, Ops,4);
+      return CurDAG->getMachineNode(ARM::t2UMULL, dl, MVT::i32, MVT::i32, Ops,4);
     } else {
       SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                         CurDAG->getRegister(0, MVT::i32) };
-      return CurDAG->getTargetNode(ARM::UMULL, dl, MVT::i32, MVT::i32, Ops, 5);
+      return CurDAG->getMachineNode(ARM::UMULL, dl, MVT::i32, MVT::i32, Ops, 5);
     }
   }
   case ISD::SMUL_LOHI: {
@@ -1062,12 +1062,12 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     if (Subtarget->isThumb()) {
       SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
-      return CurDAG->getTargetNode(ARM::t2SMULL, dl, MVT::i32, MVT::i32, Ops,4);
+      return CurDAG->getMachineNode(ARM::t2SMULL, dl, MVT::i32, MVT::i32, Ops,4);
     } else {
       SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                         CurDAG->getRegister(0, MVT::i32) };
-      return CurDAG->getTargetNode(ARM::SMULL, dl, MVT::i32, MVT::i32, Ops, 5);
+      return CurDAG->getMachineNode(ARM::SMULL, dl, MVT::i32, MVT::i32, Ops, 5);
     }
   }
   case ISD::LOAD: {
@@ -1109,8 +1109,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                                cast<ConstantSDNode>(N2)->getZExtValue()),
                                MVT::i32);
     SDValue Ops[] = { N1, Tmp2, N3, Chain, InFlag };
-    SDNode *ResNode = CurDAG->getTargetNode(Opc, dl, MVT::Other,
-                                            MVT::Flag, Ops, 5);
+    SDNode *ResNode = CurDAG->getMachineNode(Opc, dl, MVT::Other,
+                                             MVT::Flag, Ops, 5);
     Chain = SDValue(ResNode, 0);
     if (Op.getNode()->getNumValues() == 2) {
       InFlag = SDValue(ResNode, 1);
@@ -1277,8 +1277,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v4f32:
     case MVT::v4i32: Opc = ARM::VZIPq32; break;
     }
-    return CurDAG->getTargetNode(Opc, dl, VT, VT,
-                                 N->getOperand(0), N->getOperand(1));
+    return CurDAG->getMachineNode(Opc, dl, VT, VT,
+                                  N->getOperand(0), N->getOperand(1));
   }
   case ARMISD::VUZP: {
     unsigned Opc = 0;
@@ -1294,8 +1294,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v4f32:
     case MVT::v4i32: Opc = ARM::VUZPq32; break;
     }
-    return CurDAG->getTargetNode(Opc, dl, VT, VT,
-                                 N->getOperand(0), N->getOperand(1));
+    return CurDAG->getMachineNode(Opc, dl, VT, VT,
+                                  N->getOperand(0), N->getOperand(1));
   }
   case ARMISD::VTRN: {
     unsigned Opc = 0;
@@ -1311,8 +1311,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     case MVT::v4f32:
     case MVT::v4i32: Opc = ARM::VTRNq32; break;
     }
-    return CurDAG->getTargetNode(Opc, dl, VT, VT,
-                                 N->getOperand(0), N->getOperand(1));
+    return CurDAG->getMachineNode(Opc, dl, VT, VT,
+                                  N->getOperand(0), N->getOperand(1));
   }
 
   case ISD::INTRINSIC_VOID:
@@ -1338,7 +1338,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       }
       SDValue Chain = N->getOperand(0);
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
-      return CurDAG->getTargetNode(Opc, dl, VT, VT, MVT::Other, Ops, 4);
+      return CurDAG->getMachineNode(Opc, dl, VT, VT, MVT::Other, Ops, 4);
     }
 
     case Intrinsic::arm_neon_vld3: {
@@ -1354,7 +1354,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       }
       SDValue Chain = N->getOperand(0);
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
-      return CurDAG->getTargetNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 4);
+      return CurDAG->getMachineNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 4);
     }
 
     case Intrinsic::arm_neon_vld4: {
@@ -1372,7 +1372,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
       std::vector<EVT> ResTys(4, VT);
       ResTys.push_back(MVT::Other);
-      return CurDAG->getTargetNode(Opc, dl, ResTys, Ops, 4);
+      return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 4);
     }
 
     case Intrinsic::arm_neon_vld2lane: {
@@ -1390,7 +1390,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                               N->getOperand(3), N->getOperand(4),
                               N->getOperand(5), Chain };
-      return CurDAG->getTargetNode(Opc, dl, VT, VT, MVT::Other, Ops, 7);
+      return CurDAG->getMachineNode(Opc, dl, VT, VT, MVT::Other, Ops, 7);
     }
 
     case Intrinsic::arm_neon_vld3lane: {
@@ -1408,7 +1408,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                               N->getOperand(3), N->getOperand(4),
                               N->getOperand(5), N->getOperand(6), Chain };
-      return CurDAG->getTargetNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 8);
+      return CurDAG->getMachineNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 8);
     }
 
     case Intrinsic::arm_neon_vld4lane: {
@@ -1429,7 +1429,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                               N->getOperand(7), Chain };
       std::vector<EVT> ResTys(4, VT);
       ResTys.push_back(MVT::Other);
-      return CurDAG->getTargetNode(Opc, dl, ResTys, Ops, 9);
+      return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 9);
     }
 
     case Intrinsic::arm_neon_vst2: {
@@ -1446,7 +1446,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue Chain = N->getOperand(0);
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                               N->getOperand(3), N->getOperand(4), Chain };
-      return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 6);
+      return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 6);
     }
 
     case Intrinsic::arm_neon_vst3: {
@@ -1464,7 +1464,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                               N->getOperand(3), N->getOperand(4),
                               N->getOperand(5), Chain };
-      return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 7);
+      return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 7);
     }
 
     case Intrinsic::arm_neon_vst4: {
@@ -1482,7 +1482,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                               N->getOperand(3), N->getOperand(4),
                               N->getOperand(5), N->getOperand(6), Chain };
-      return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 8);
+      return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 8);
     }
 
     case Intrinsic::arm_neon_vst2lane: {
@@ -1500,7 +1500,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                               N->getOperand(3), N->getOperand(4),
                               N->getOperand(5), Chain };
-      return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 7);
+      return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 7);
     }
 
     case Intrinsic::arm_neon_vst3lane: {
@@ -1518,7 +1518,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                               N->getOperand(3), N->getOperand(4),
                               N->getOperand(5), N->getOperand(6), Chain };
-      return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 8);
+      return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 8);
     }
 
     case Intrinsic::arm_neon_vst4lane: {
@@ -1537,7 +1537,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                               N->getOperand(3), N->getOperand(4),
                               N->getOperand(5), N->getOperand(6),
                               N->getOperand(7), Chain };
-      return CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 9);
+      return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 9);
     }
     }
   }

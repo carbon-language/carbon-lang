@@ -422,26 +422,26 @@ SDValue BlackfinTargetLowering::LowerADDE(SDValue Op, SelectionDAG &DAG) {
   unsigned Opcode = Op.getOpcode()==ISD::ADDE ? BF::ADD : BF::SUB;
 
   // zext incoming carry flag in AC0 to 32 bits
-  SDNode* CarryIn = DAG.getTargetNode(BF::MOVE_cc_ac0, dl, MVT::i32,
-                                      /* flag= */ Op.getOperand(2));
-  CarryIn = DAG.getTargetNode(BF::MOVECC_zext, dl, MVT::i32,
-                              SDValue(CarryIn, 0));
+  SDNode* CarryIn = DAG.getMachineNode(BF::MOVE_cc_ac0, dl, MVT::i32,
+                                       /* flag= */ Op.getOperand(2));
+  CarryIn = DAG.getMachineNode(BF::MOVECC_zext, dl, MVT::i32,
+                               SDValue(CarryIn, 0));
 
   // Add operands, produce sum and carry flag
-  SDNode *Sum = DAG.getTargetNode(Opcode, dl, MVT::i32, MVT::Flag,
-                                  Op.getOperand(0), Op.getOperand(1));
+  SDNode *Sum = DAG.getMachineNode(Opcode, dl, MVT::i32, MVT::Flag,
+                                   Op.getOperand(0), Op.getOperand(1));
 
   // Store intermediate carry from Sum
-  SDNode* Carry1 = DAG.getTargetNode(BF::MOVE_cc_ac0, dl, MVT::i32,
-                                     /* flag= */ SDValue(Sum, 1));
+  SDNode* Carry1 = DAG.getMachineNode(BF::MOVE_cc_ac0, dl, MVT::i32,
+                                      /* flag= */ SDValue(Sum, 1));
 
   // Add incoming carry, again producing an output flag
-  Sum = DAG.getTargetNode(Opcode, dl, MVT::i32, MVT::Flag,
-                          SDValue(Sum, 0), SDValue(CarryIn, 0));
+  Sum = DAG.getMachineNode(Opcode, dl, MVT::i32, MVT::Flag,
+                           SDValue(Sum, 0), SDValue(CarryIn, 0));
 
   // Update AC0 with the intermediate carry, producing a flag.
-  SDNode *CarryOut = DAG.getTargetNode(BF::OR_ac0_cc, dl, MVT::Flag,
-                                       SDValue(Carry1, 0));
+  SDNode *CarryOut = DAG.getMachineNode(BF::OR_ac0_cc, dl, MVT::Flag,
+                                        SDValue(Carry1, 0));
 
   // Compose (i32, flag) pair
   SDValue ops[2] = { SDValue(Sum, 0), SDValue(CarryOut, 0) };

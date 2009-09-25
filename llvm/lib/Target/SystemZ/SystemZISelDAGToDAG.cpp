@@ -663,37 +663,38 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
     // Prepare the dividend
     SDNode *Dividend;
     if (is32Bit)
-      Dividend = CurDAG->getTargetNode(SystemZ::MOVSX64rr32, dl, MVT::i64, N0);
+      Dividend = CurDAG->getMachineNode(SystemZ::MOVSX64rr32, dl, MVT::i64, N0);
     else
       Dividend = N0.getNode();
 
     // Insert prepared dividend into suitable 'subreg'
-    SDNode *Tmp = CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF,
-                                        dl, ResVT);
+    SDNode *Tmp = CurDAG->getMachineNode(TargetInstrInfo::IMPLICIT_DEF,
+                                         dl, ResVT);
     Dividend =
-      CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl, ResVT,
-                            SDValue(Tmp, 0), SDValue(Dividend, 0),
-                            CurDAG->getTargetConstant(subreg_odd, MVT::i32));
+      CurDAG->getMachineNode(TargetInstrInfo::INSERT_SUBREG, dl, ResVT,
+                             SDValue(Tmp, 0), SDValue(Dividend, 0),
+                             CurDAG->getTargetConstant(subreg_odd, MVT::i32));
 
     SDNode *Result;
     SDValue DivVal = SDValue(Dividend, 0);
     if (foldedLoad) {
       SDValue Ops[] = { DivVal, Tmp0, Tmp1, Tmp2, N1.getOperand(0) };
-      Result = CurDAG->getTargetNode(MOpc, dl, ResVT, Ops, array_lengthof(Ops));
+      Result = CurDAG->getMachineNode(MOpc, dl, ResVT,
+                                      Ops, array_lengthof(Ops));
       // Update the chain.
       ReplaceUses(N1.getValue(1), SDValue(Result, 0));
     } else {
-      Result = CurDAG->getTargetNode(Opc, dl, ResVT, SDValue(Dividend, 0), N1);
+      Result = CurDAG->getMachineNode(Opc, dl, ResVT, SDValue(Dividend, 0), N1);
     }
 
     // Copy the division (odd subreg) result, if it is needed.
     if (!Op.getValue(0).use_empty()) {
       unsigned SubRegIdx = (is32Bit ? subreg_odd32 : subreg_odd);
-      SDNode *Div = CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,
-                                          dl, NVT,
-                                          SDValue(Result, 0),
-                                          CurDAG->getTargetConstant(SubRegIdx,
-                                                                    MVT::i32));
+      SDNode *Div = CurDAG->getMachineNode(TargetInstrInfo::EXTRACT_SUBREG,
+                                           dl, NVT,
+                                           SDValue(Result, 0),
+                                           CurDAG->getTargetConstant(SubRegIdx,
+                                                                     MVT::i32));
 
       ReplaceUses(Op.getValue(0), SDValue(Div, 0));
       DEBUG(errs().indent(Indent-2) << "=> ";
@@ -704,11 +705,11 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
     // Copy the remainder (even subreg) result, if it is needed.
     if (!Op.getValue(1).use_empty()) {
       unsigned SubRegIdx = (is32Bit ? subreg_even32 : subreg_even);
-      SDNode *Rem = CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,
-                                          dl, NVT,
-                                          SDValue(Result, 0),
-                                          CurDAG->getTargetConstant(SubRegIdx,
-                                                                    MVT::i32));
+      SDNode *Rem = CurDAG->getMachineNode(TargetInstrInfo::EXTRACT_SUBREG,
+                                           dl, NVT,
+                                           SDValue(Result, 0),
+                                           CurDAG->getTargetConstant(SubRegIdx,
+                                                                     MVT::i32));
 
       ReplaceUses(Op.getValue(1), SDValue(Rem, 0));
       DEBUG(errs().indent(Indent-2) << "=> ";
@@ -751,39 +752,39 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
     SDNode *Dividend = N0.getNode();
 
     // Insert prepared dividend into suitable 'subreg'
-    SDNode *Tmp = CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF,
-                                        dl, ResVT);
+    SDNode *Tmp = CurDAG->getMachineNode(TargetInstrInfo::IMPLICIT_DEF,
+                                         dl, ResVT);
     {
       unsigned SubRegIdx = (is32Bit ? subreg_odd32 : subreg_odd);
       Dividend =
-        CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl, ResVT,
-                              SDValue(Tmp, 0), SDValue(Dividend, 0),
-                              CurDAG->getTargetConstant(SubRegIdx, MVT::i32));
+        CurDAG->getMachineNode(TargetInstrInfo::INSERT_SUBREG, dl, ResVT,
+                               SDValue(Tmp, 0), SDValue(Dividend, 0),
+                               CurDAG->getTargetConstant(SubRegIdx, MVT::i32));
     }
 
     // Zero out even subreg
-    Dividend = CurDAG->getTargetNode(ClrOpc, dl, ResVT, SDValue(Dividend, 0));
+    Dividend = CurDAG->getMachineNode(ClrOpc, dl, ResVT, SDValue(Dividend, 0));
 
     SDValue DivVal = SDValue(Dividend, 0);
     SDNode *Result;
     if (foldedLoad) {
       SDValue Ops[] = { DivVal, Tmp0, Tmp1, Tmp2, N1.getOperand(0) };
-      Result = CurDAG->getTargetNode(MOpc, dl,ResVT,
-                                     Ops, array_lengthof(Ops));
+      Result = CurDAG->getMachineNode(MOpc, dl,ResVT,
+                                      Ops, array_lengthof(Ops));
       // Update the chain.
       ReplaceUses(N1.getValue(1), SDValue(Result, 0));
     } else {
-      Result = CurDAG->getTargetNode(Opc, dl, ResVT, DivVal, N1);
+      Result = CurDAG->getMachineNode(Opc, dl, ResVT, DivVal, N1);
     }
 
     // Copy the division (odd subreg) result, if it is needed.
     if (!Op.getValue(0).use_empty()) {
       unsigned SubRegIdx = (is32Bit ? subreg_odd32 : subreg_odd);
-      SDNode *Div = CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,
-                                          dl, NVT,
-                                          SDValue(Result, 0),
-                                          CurDAG->getTargetConstant(SubRegIdx,
-                                                                    MVT::i32));
+      SDNode *Div = CurDAG->getMachineNode(TargetInstrInfo::EXTRACT_SUBREG,
+                                           dl, NVT,
+                                           SDValue(Result, 0),
+                                           CurDAG->getTargetConstant(SubRegIdx,
+                                                                     MVT::i32));
       ReplaceUses(Op.getValue(0), SDValue(Div, 0));
       DEBUG(errs().indent(Indent-2) << "=> ";
             Result->dump(CurDAG);
@@ -793,11 +794,11 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
     // Copy the remainder (even subreg) result, if it is needed.
     if (!Op.getValue(1).use_empty()) {
       unsigned SubRegIdx = (is32Bit ? subreg_even32 : subreg_even);
-      SDNode *Rem = CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,
-                                          dl, NVT,
-                                          SDValue(Result, 0),
-                                          CurDAG->getTargetConstant(SubRegIdx,
-                                                                    MVT::i32));
+      SDNode *Rem = CurDAG->getMachineNode(TargetInstrInfo::EXTRACT_SUBREG,
+                                           dl, NVT,
+                                           SDValue(Result, 0),
+                                           CurDAG->getTargetConstant(SubRegIdx,
+                                                                     MVT::i32));
       ReplaceUses(Op.getValue(1), SDValue(Rem, 0));
       DEBUG(errs().indent(Indent-2) << "=> ";
             Result->dump(CurDAG);

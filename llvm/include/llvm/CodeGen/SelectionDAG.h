@@ -650,38 +650,38 @@ public:
   SDNode *MorphNodeTo(SDNode *N, unsigned Opc, SDVTList VTs,
                       const SDValue *Ops, unsigned NumOps);
 
-  /// getTargetNode - These are used for target selectors to create a new node
-  /// with specified return type(s), target opcode, and operands.
+  /// getMachineNode - These are used for target selectors to create a new node
+  /// with specified return type(s), MachineInstr opcode, and operands.
   ///
-  /// Note that getTargetNode returns the resultant node.  If there is already a
-  /// node of the specified opcode and operands, it returns that node instead of
-  /// the current one.
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT, SDValue Op1);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT, SDValue Op1,
-                        SDValue Op2);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT,
-                        SDValue Op1, SDValue Op2, SDValue Op3);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT,
-                        const SDValue *Ops, unsigned NumOps);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
-                        SDValue Op1);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT1,
-                        EVT VT2, SDValue Op1, SDValue Op2);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT1,
-                        EVT VT2, SDValue Op1, SDValue Op2, SDValue Op3);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
-                        const SDValue *Ops, unsigned NumOps);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2, EVT VT3,
-                        SDValue Op1, SDValue Op2);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2, EVT VT3,
-                        SDValue Op1, SDValue Op2, SDValue Op3);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2, EVT VT3,
-                        const SDValue *Ops, unsigned NumOps);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2, EVT VT3,
-                        EVT VT4, const SDValue *Ops, unsigned NumOps);
-  SDNode *getTargetNode(unsigned Opcode, DebugLoc dl,
+  /// Note that getMachineNode returns the resultant node.  If there is already
+  /// a node of the specified opcode and operands, it returns that node instead
+  /// of the current one.
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT, SDValue Op1);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT, SDValue Op1,
+                         SDValue Op2);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT,
+                         SDValue Op1, SDValue Op2, SDValue Op3);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT,
+                         const SDValue *Ops, unsigned NumOps);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
+                         SDValue Op1);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1,
+                         EVT VT2, SDValue Op1, SDValue Op2);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1,
+                         EVT VT2, SDValue Op1, SDValue Op2, SDValue Op3);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
+                         const SDValue *Ops, unsigned NumOps);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
+                         EVT VT3, SDValue Op1, SDValue Op2);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
+                         EVT VT3, SDValue Op1, SDValue Op2, SDValue Op3);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
+                         EVT VT3, const SDValue *Ops, unsigned NumOps);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl, EVT VT1, EVT VT2,
+                         EVT VT3, EVT VT4, const SDValue *Ops, unsigned NumOps);
+  SDNode *getMachineNode(unsigned Opcode, DebugLoc dl,
                         const std::vector<EVT> &ResultTys, const SDValue *Ops,
                         unsigned NumOps);
 

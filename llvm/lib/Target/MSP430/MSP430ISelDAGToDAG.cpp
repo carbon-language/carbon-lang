@@ -166,8 +166,8 @@ SDNode *MSP430DAGToDAGISel::Select(SDValue Op) {
     if (Node->hasOneUse())
       return CurDAG->SelectNodeTo(Node, MSP430::ADD16ri, MVT::i16,
                                   TFI, CurDAG->getTargetConstant(0, MVT::i16));
-    return CurDAG->getTargetNode(MSP430::ADD16ri, dl, MVT::i16,
-                                 TFI, CurDAG->getTargetConstant(0, MVT::i16));
+    return CurDAG->getMachineNode(MSP430::ADD16ri, dl, MVT::i16,
+                                  TFI, CurDAG->getTargetConstant(0, MVT::i16));
   }
   }
 
