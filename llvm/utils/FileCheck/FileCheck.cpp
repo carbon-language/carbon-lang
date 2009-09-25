@@ -50,7 +50,6 @@ class PatternChunk {
 public:
   PatternChunk(StringRef S, bool isRE) : Str(S), isRegEx(isRE) {}
   
-  
   size_t Match(StringRef Buffer, size_t &MatchLen) const {
     if (!isRegEx) {
       // Fixed string match.
@@ -60,7 +59,7 @@ public:
      
     // Regex match.
     SmallVector<StringRef, 4> MatchInfo;
-    if (!Regex(Str, Regex::Sub).match(Buffer, &MatchInfo))
+    if (!Regex(Str, Regex::Sub|Regex::Newline).match(Buffer, &MatchInfo))
       return StringRef::npos;
     
     // Successful regex match.
@@ -70,7 +69,6 @@ public:
     MatchLen = FullMatch.size();
     return FullMatch.data()-Buffer.data();
   }
-  
 };
 
 class Pattern {
