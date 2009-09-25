@@ -70,10 +70,8 @@ bool MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
                                              MachineBasicBlock *MBB) const {
   assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
          "Only makes sense for vregs");
-  for (MachineRegisterInfo::reg_iterator I = RegInfo->reg_begin(Reg),
-       E = RegInfo->reg_end(); I != E; ++I) {
-    if (I.getOperand().isDef()) continue;  // ignore def.
-    
+  for (MachineRegisterInfo::use_iterator I = RegInfo->use_begin(Reg),
+       E = RegInfo->use_end(); I != E; ++I) {
     // Determine the block of the use.
     MachineInstr *UseInst = &*I;
     MachineBasicBlock *UseBlock = UseInst->getParent();
