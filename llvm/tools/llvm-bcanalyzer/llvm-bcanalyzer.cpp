@@ -32,6 +32,7 @@
 #include "llvm/Bitcode/LLVMBitCodes.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -546,8 +547,8 @@ static int AnalyzeBitcode() {
     errs() << "         Total Size: ";
     PrintSize(Stats.NumBits);
     errs() << "\n";
-    errs() << "          % of file: "
-           << Stats.NumBits/(double)BufferSizeBits*100 << "\n";
+    double pct = (Stats.NumBits * 100.0) / BufferSizeBits;
+    errs() << "    Percent of file: " << format("%2.4f%%", pct) << "\n";
     if (Stats.NumInstances > 1) {
       errs() << "       Average Size: ";
       PrintSize(Stats.NumBits/(double)Stats.NumInstances);
@@ -563,9 +564,10 @@ static int AnalyzeBitcode() {
       errs() << "        Num Abbrevs: " << Stats.NumAbbrevs << "\n";
       errs() << "        Num Records: " << Stats.NumRecords << "\n";
     }
-    if (Stats.NumRecords)
-      errs() << "      % Abbrev Recs: " << (Stats.NumAbbreviatedRecords/
-                (double)Stats.NumRecords)*100 << "\n";
+    if (Stats.NumRecords) {
+      double pct = (Stats.NumAbbreviatedRecords * 100.0) / Stats.NumRecords;
+      errs() << "    Percent Abbrevs: " << format("%2.4f%%", pct) << "\n";
+    }
     errs() << "\n";
 
     // Print a histogram of the codes we see.
