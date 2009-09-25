@@ -75,6 +75,8 @@ class Pattern {
   /// Chunks - The pattern chunks to match.  If the bool is false, it is a fixed
   /// string match, if it is true, it is a regex match.
   SmallVector<PatternChunk, 4> Chunks;
+  
+  StringRef FixedStr;
 public:
   
   Pattern() { }
@@ -100,6 +102,14 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
                     "error");
     return true;
   }
+  
+  // Check to see if this is a fixed string, or if it has regex pieces.
+  if (PatternStr.size() < 2 || PatternStr.find("{{") == StringRef::npos) {
+    FixedStr = PatternStr;
+    return false;
+  }
+  
+  // Otherwise, there is at least one regex piece.
   
   // Scan the pattern to break it into regex and non-regex pieces.
   while (!PatternStr.empty()) {
@@ -141,6 +151,12 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
 /// returns the position that is matched or npos if there is no match.  If
 /// there is a match, the size of the matched string is returned in MatchLen.
 size_t Pattern::Match(StringRef Buffer, size_t &MatchLen) const {
+  // If this is a fixed string pattern, just match it now.
+  if (!FixedStr.empty()) {
+    MatchLen = FixedStr.size();
+    return Buffer.find(FixedStr);
+  }
+  
   size_t FirstMatch = StringRef::npos;
   MatchLen = 0;
   
