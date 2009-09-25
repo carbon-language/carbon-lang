@@ -5726,6 +5726,11 @@ void SDNode::dumpr() const {
   DumpNodesr(errs(), this, 0, 0, once);
 }
 
+void SDNode::dumpr(const SelectionDAG *G) const {
+  VisitedSDNodeSet once;
+  DumpNodesr(errs(), this, 0, G, once);
+}
+
 
 // getAddressSpace - Return the address space this GlobalAddress belongs to.
 unsigned GlobalAddressSDNode::getAddressSpace() const {

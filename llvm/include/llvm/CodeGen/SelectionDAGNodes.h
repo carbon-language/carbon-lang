@@ -1295,6 +1295,7 @@ public:
   void dump() const;
   void dumpr() const;
   void dump(const SelectionDAG *G) const;
+  void dumpr(const SelectionDAG *G) const;
 
   static bool classof(const SDNode *) { return true; }
 
