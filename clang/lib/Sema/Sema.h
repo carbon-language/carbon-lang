@@ -782,6 +782,7 @@ public:
   bool CheckPointerConversion(Expr *From, QualType ToType, 
                               CastExpr::CastKind &Kind);
   bool IsMemberPointerConversion(Expr *From, QualType FromType, QualType ToType,
+                                 bool InOverloadResolution,
                                  QualType &ConvertedType);
   bool CheckMemberPointerConversion(Expr *From, QualType ToType,
                                     CastExpr::CastKind &Kind);

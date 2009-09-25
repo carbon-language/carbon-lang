@@ -64,7 +64,8 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
           if (E->getDecl()->getIdentifier() == SelfII)
             if (ME->getMethodDecl() == PD->getSetterMethodDecl() &&
                 ME->getNumArgs() == 1 &&
-                ME->getArg(0)->isNullPointerConstant(Ctx))
+                ME->getArg(0)->isNullPointerConstant(Ctx, 
+                                              Expr::NPC_ValueDependentIsNull))
               return true;
 
   // self.myIvar = nil;
@@ -73,7 +74,8 @@ static bool scan_ivar_release(Stmt* S, ObjCIvarDecl* ID,
       if (ObjCPropertyRefExpr* PRE =
          dyn_cast<ObjCPropertyRefExpr>(BO->getLHS()->IgnoreParenCasts()))
           if (PRE->getProperty() == PD)
-            if (BO->getRHS()->isNullPointerConstant(Ctx)) {
+            if (BO->getRHS()->isNullPointerConstant(Ctx, 
+                                            Expr::NPC_ValueDependentIsNull)) {
               // This is only a 'release' if the property kind is not
               // 'assign'.
               return PD->getSetterKind() != ObjCPropertyDecl::Assign;;

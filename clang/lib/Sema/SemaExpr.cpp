@@ -173,7 +173,8 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   }
   Expr *sentinelExpr = Args[sentinel];
   if (sentinelExpr && (!sentinelExpr->getType()->isPointerType() ||
-                       !sentinelExpr->isNullPointerConstant(Context))) {
+                       !sentinelExpr->isNullPointerConstant(Context,
+                                            Expr::NPC_ValueDependentIsNull))) {
     Diag(Loc, diag::warn_missing_sentinel) << isMethod;
     Diag(D->getLocation(), diag::note_sentinel_here) << isMethod;
   }
@@ -3395,12 +3396,12 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
   // the type of the other operand."
   if ((LHSTy->isAnyPointerType() || LHSTy->isBlockPointerType()) &&
-      RHS->isNullPointerConstant(Context)) {
+      RHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
     ImpCastExprToType(RHS, LHSTy); // promote the null to a pointer.
     return LHSTy;
   }
   if ((RHSTy->isAnyPointerType() || RHSTy->isBlockPointerType()) &&
-      LHS->isNullPointerConstant(Context)) {
+      LHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
     ImpCastExprToType(LHS, RHSTy); // promote the null to a pointer.
     return RHSTy;
   }
@@ -3982,7 +3983,8 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType, Expr *&rExpr) {
           break;
         }
 
-      if (rExpr->isNullPointerConstant(Context)) {
+      if (rExpr->isNullPointerConstant(Context, 
+                                       Expr::NPC_ValueDependentIsNull)) {
         ImpCastExprToType(rExpr, it->getType());
         InitField = *it;
         break;
@@ -4025,7 +4027,8 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   if ((lhsType->isPointerType() ||
        lhsType->isObjCObjectPointerType() ||
        lhsType->isBlockPointerType())
-      && rExpr->isNullPointerConstant(Context)) {
+      && rExpr->isNullPointerConstant(Context, 
+                                      Expr::NPC_ValueDependentIsNull)) {
     ImpCastExprToType(rExpr, lhsType);
     return Compatible;
   }
@@ -4454,12 +4457,14 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     Expr *literalString = 0;
     Expr *literalStringStripped = 0;
     if ((isa<StringLiteral>(LHSStripped) || isa<ObjCEncodeExpr>(LHSStripped)) &&
-        !RHSStripped->isNullPointerConstant(Context)) {
+        !RHSStripped->isNullPointerConstant(Context, 
+                                            Expr::NPC_ValueDependentIsNull)) {
       literalString = lex;
       literalStringStripped = LHSStripped;
     } else if ((isa<StringLiteral>(RHSStripped) ||
                 isa<ObjCEncodeExpr>(RHSStripped)) &&
-               !LHSStripped->isNullPointerConstant(Context)) {
+               !LHSStripped->isNullPointerConstant(Context, 
+                                            Expr::NPC_ValueDependentIsNull)) {
       literalString = rex;
       literalStringStripped = RHSStripped;
     }
@@ -4504,8 +4509,10 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       return ResultTy;
   }
 
-  bool LHSIsNull = lex->isNullPointerConstant(Context);
-  bool RHSIsNull = rex->isNullPointerConstant(Context);
+  bool LHSIsNull = lex->isNullPointerConstant(Context, 
+                                              Expr::NPC_ValueDependentIsNull);
+  bool RHSIsNull = rex->isNullPointerConstant(Context, 
+                                              Expr::NPC_ValueDependentIsNull);
 
   // All of the following pointer related warnings are GCC extensions, except
   // when handling null pointer constants. One day, we can consider making them
@@ -5721,8 +5728,10 @@ Sema::OwningExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
   assert((CondExpr && LHSExpr && RHSExpr) && "Missing type argument(s)");
 
   QualType resType;
+  bool ValueDependent = false;
   if (CondExpr->isTypeDependent() || CondExpr->isValueDependent()) {
     resType = Context.DependentTy;
+    ValueDependent = true;
   } else {
     // The conditional expression is required to be a constant expression.
     llvm::APSInt condEval(32);
@@ -5734,11 +5743,15 @@ Sema::OwningExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
 
     // If the condition is > zero, then the AST type is the same as the LSHExpr.
     resType = condEval.getZExtValue() ? LHSExpr->getType() : RHSExpr->getType();
+    ValueDependent = condEval.getZExtValue() ? LHSExpr->isValueDependent()
+                                             : RHSExpr->isValueDependent();
   }
 
   cond.release(); expr1.release(); expr2.release();
   return Owned(new (Context) ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr,
-                                        resType, RPLoc));
+                                        resType, RPLoc,
+                                        resType->isDependentType(),
+                                        ValueDependent));
 }
 
 //===----------------------------------------------------------------------===//

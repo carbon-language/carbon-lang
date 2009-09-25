@@ -633,7 +633,8 @@ Sema::IsStandardConversion(Expr* From, QualType ToType,
     // Pointer conversions (C++ 4.10).
     SCS.Second = ICK_Pointer_Conversion;
     SCS.IncompatibleObjC = IncompatibleObjC;
-  } else if (IsMemberPointerConversion(From, FromType, ToType, FromType)) {
+  } else if (IsMemberPointerConversion(From, FromType, ToType, 
+                                       InOverloadResolution, FromType)) {
     // Pointer to member conversions (4.11).
     SCS.Second = ICK_Pointer_Member;
   } else if (ToType->isBooleanType() &&
@@ -883,7 +884,9 @@ static bool isNullPointerConstantForConversion(Expr *Expr,
       Expr->getType()->isIntegralType())
     return !InOverloadResolution;
 
-  return Expr->isNullPointerConstant(Context);
+  return Expr->isNullPointerConstant(Context,
+                    InOverloadResolution? Expr::NPC_ValueDependentIsNotNull
+                                        : Expr::NPC_ValueDependentIsNull);
 }
 
 /// IsPointerConversion - Determines whether the conversion of the
@@ -1188,13 +1191,17 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType,
 /// If so, returns true and places the converted type (that might differ from
 /// ToType in its cv-qualifiers at some level) into ConvertedType.
 bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
-                                     QualType ToType, QualType &ConvertedType) {
+                                     QualType ToType, 
+                                     bool InOverloadResolution,
+                                     QualType &ConvertedType) {
   const MemberPointerType *ToTypePtr = ToType->getAs<MemberPointerType>();
   if (!ToTypePtr)
     return false;
 
   // A null pointer constant can be converted to a member pointer (C++ 4.11p1)
-  if (From->isNullPointerConstant(Context)) {
+  if (From->isNullPointerConstant(Context,
+                    InOverloadResolution? Expr::NPC_ValueDependentIsNotNull
+                                        : Expr::NPC_ValueDependentIsNull)) {
     ConvertedType = ToType;
     return true;
   }
@@ -1231,7 +1238,8 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
   const MemberPointerType *FromPtrType = FromType->getAs<MemberPointerType>();
   if (!FromPtrType) {
     // This must be a null pointer to member pointer conversion
-    assert(From->isNullPointerConstant(Context) &&
+    assert(From->isNullPointerConstant(Context, 
+                                       Expr::NPC_ValueDependentIsNull) &&
            "Expr must be null pointer constant!");
     Kind = CastExpr::CK_NullToMemberPointer;
     return false;

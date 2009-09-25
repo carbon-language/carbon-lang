@@ -1648,11 +1648,13 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // frankly, is stupid.)
   const MemberPointerType *LMemPtr = LTy->getAs<MemberPointerType>();
   const MemberPointerType *RMemPtr = RTy->getAs<MemberPointerType>();
-  if (LMemPtr && RHS->isNullPointerConstant(Context)) {
+  if (LMemPtr && 
+      RHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
     ImpCastExprToType(RHS, LTy);
     return LTy;
   }
-  if (RMemPtr && LHS->isNullPointerConstant(Context)) {
+  if (RMemPtr && 
+      LHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
     ImpCastExprToType(LHS, RTy);
     return RTy;
   }
@@ -1743,11 +1745,11 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   //   pointer operands to bring them to their composite pointer type. If
   //   one operand is a null pointer constant, the composite pointer type is
   //   the type of the other operand.
-  if (E1->isNullPointerConstant(Context)) {
+  if (E1->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
     ImpCastExprToType(E1, T2);
     return T2;
   }
-  if (E2->isNullPointerConstant(Context)) {
+  if (E2->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
     ImpCastExprToType(E2, T1);
     return T1;
   }

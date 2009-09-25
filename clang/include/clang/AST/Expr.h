@@ -257,10 +257,26 @@ public:
   /// also succeeds on stack based, immutable address lvalues.
   bool EvaluateAsAnyLValue(EvalResult &Result, ASTContext &Ctx) const;
 
+  /// \brief Enumeration used to describe how \c isNullPointerConstant()
+  /// should cope with value-dependent expressions.
+  enum NullPointerConstantValueDependence {
+    /// \brief Specifies that the expression should never be value-dependent.
+    NPC_NeverValueDependent = 0,
+    
+    /// \brief Specifies that a value-dependent expression of integral or
+    /// dependent type should be considered a null pointer constant.
+    NPC_ValueDependentIsNull,
+    
+    /// \brief Specifies that a value-dependent expression should be considered
+    /// to never be a null pointer constant.
+    NPC_ValueDependentIsNotNull
+  };
+  
   /// isNullPointerConstant - C99 6.3.2.3p3 -  Return true if this is either an
   /// integer constant expression with the value zero, or if this is one that is
   /// cast to void*.
-  bool isNullPointerConstant(ASTContext &Ctx) const;
+  bool isNullPointerConstant(ASTContext &Ctx,
+                             NullPointerConstantValueDependence NPC) const;
 
   /// isOBJCGCCandidate - Return true if this expression may be used in a read/
   /// write barrier.
@@ -2004,8 +2020,8 @@ class ChooseExpr : public Expr {
   SourceLocation BuiltinLoc, RParenLoc;
 public:
   ChooseExpr(SourceLocation BLoc, Expr *cond, Expr *lhs, Expr *rhs, QualType t,
-             SourceLocation RP)
-    : Expr(ChooseExprClass, t),
+             SourceLocation RP, bool TypeDependent, bool ValueDependent)
+    : Expr(ChooseExprClass, t, TypeDependent, ValueDependent),
       BuiltinLoc(BLoc), RParenLoc(RP) {
       SubExprs[COND] = cond;
       SubExprs[LHS] = lhs;

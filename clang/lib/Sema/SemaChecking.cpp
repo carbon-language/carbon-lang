@@ -93,7 +93,7 @@ bool Sema::CheckablePrintfAttr(const FormatAttr *Format, CallExpr *TheCall) {
     unsigned format_idx = Format->getFormatIdx() - 1;
     if (format_idx < TheCall->getNumArgs()) {
       Expr *Format = TheCall->getArg(format_idx)->IgnoreParenCasts();
-      if (!Format->isNullPointerConstant(Context))
+      if (!Format->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull))
         return true;
     }
   }
@@ -911,7 +911,8 @@ Sema::CheckNonNullArguments(const NonNullAttr *NonNull,
   for (NonNullAttr::iterator i = NonNull->begin(), e = NonNull->end();
        i != e; ++i) {
     const Expr *ArgExpr = TheCall->getArg(*i);
-    if (ArgExpr->isNullPointerConstant(Context))
+    if (ArgExpr->isNullPointerConstant(Context, 
+                                       Expr::NPC_ValueDependentIsNotNull))
       Diag(TheCall->getCallee()->getLocStart(), diag::warn_null_arg)
         << ArgExpr->getSourceRange();
   }
