@@ -171,23 +171,7 @@ def CortexA8Itineraries : ProcessorItineraries<[
   //
   // FP Special Register to Integer Register File Move
   InstrItinData<IIC_fpSTAT , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                              InstrStage<1, [FU_NLSPipe], 1>]>,
-  //
-  // Integer to Single-Precision FP Register File Move
-  InstrItinData<IIC_fpMOVIS , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NLSPipe], 1>]>,
-  //
-  // Integer to Double-Precision FP Register File Move
-  InstrItinData<IIC_fpMOVID , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NLSPipe], 1>]>,
-  //
-  // Single-Precision FP to Integer Register File Move
-  InstrItinData<IIC_fpMOVSI , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NLSPipe], 1>], [20, 1]>,
-  //
-  // Double-Precision FP to Integer Register File Move
-  InstrItinData<IIC_fpMOVDI , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NLSPipe], 1>], [20, 20, 1]>,
+                              InstrStage<1, [FU_NLSPipe]>]>,
   //
   // Single-precision FP Unary
   InstrItinData<IIC_fpUNA32 , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
@@ -385,6 +369,10 @@ def CortexA8Itineraries : ProcessorItineraries<[
   InstrItinData<IIC_VBINQ,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NPipe]>], [6, 2, 2]>,
   //
+  // Move Immediate
+  InstrItinData<IIC_VMOVImm,  [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3]>,
+  //
   // Double-register Permute Move
   InstrItinData<IIC_VMOVD,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NLSPipe]>], [2, 1]>,
@@ -394,6 +382,26 @@ def CortexA8Itineraries : ProcessorItineraries<[
   // so we use 3 for those cases
   InstrItinData<IIC_VMOVQ,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<2, [FU_NLSPipe]>], [3, 1]>,
+  //
+  // Integer to Single-precision Move
+  InstrItinData<IIC_VMOVIS ,  [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>], [2, 1]>,
+  //
+  // Integer to Double-precision Move
+  InstrItinData<IIC_VMOVID ,  [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>], [2, 1, 1]>,
+  //
+  // Single-precision to Integer Move
+  InstrItinData<IIC_VMOVSI ,  [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>], [20, 1]>,
+  //
+  // Double-precision to Integer Move
+  InstrItinData<IIC_VMOVDI ,  [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>], [20, 20, 1]>,
+  //
+  // Integer to Lane Move
+  InstrItinData<IIC_VMOVISL , [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NLSPipe]>], [3, 1, 1]>,
   //
   // Double-register Permute
   InstrItinData<IIC_VPERMD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
@@ -413,15 +421,33 @@ def CortexA8Itineraries : ProcessorItineraries<[
                                InstrStage<1, [FU_NPipe], 0>,
                                InstrStage<2, [FU_NLSPipe]>], [4, 4, 1, 1]>,
   //
+  // Double-register FP Multiple-Accumulate
+  InstrItinData<IIC_VMACD,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [9, 2, 2, 3]>,
+  //
+  // Quad-register FP Multiple-Accumulate
+  // Result written in N9, but that is relative to the last cycle of multicycle,
+  // so we use 10 for those cases
+  InstrItinData<IIC_VMACQ,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [10, 2, 2, 3]>,
+  //
+  // Double-register Reciprical Step
+  InstrItinData<IIC_VRECSD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [9, 2, 2]>,
+  //
+  // Quad-register Reciprical Step
+  InstrItinData<IIC_VRECSQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [10, 2, 2]>,
+  //
   // Double-register Integer Count
   InstrItinData<IIC_VCNTiD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<1, [FU_NPipe]>], [3, 2]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 2, 2]>,
   //
   // Quad-register Integer Count
   // Result written in N3, but that is relative to the last cycle of multicycle,
   // so we use 4 for those cases
   InstrItinData<IIC_VCNTiQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
-                               InstrStage<2, [FU_NPipe]>], [4, 2]>,
+                               InstrStage<2, [FU_NPipe]>], [4, 2, 2]>,
   //
   // Double-register Integer Unary
   InstrItinData<IIC_VUNAiD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
@@ -463,6 +489,30 @@ def CortexA8Itineraries : ProcessorItineraries<[
   InstrItinData<IIC_VSUBiQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [3, 2, 1]>,
   //
+  // Double-register Integer Shift
+  InstrItinData<IIC_VSHLiD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [3, 1, 1]>,
+  //
+  // Quad-register Integer Shift
+  InstrItinData<IIC_VSHLiQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [4, 1, 1]>,
+  //
+  // Double-register Integer Shift (4 cycle)
+  InstrItinData<IIC_VSHLi4D,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [4, 1, 1]>,
+  //
+  // Quad-register Integer Shift (4 cycle)
+  InstrItinData<IIC_VSHLi4Q,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [5, 1, 1]>,
+  //
+  // Double-register Integer Pair Add Long
+  InstrItinData<IIC_VPALiD,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [6, 3, 2, 1]>,
+  //
+  // Quad-register Integer Pair Add Long
+  InstrItinData<IIC_VPALiQ,   [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 3, 2, 1]>,
+  //
   // Double-register Integer Multiply (.8, .16)
   InstrItinData<IIC_VMULi16D, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>], [6, 2, 2]>,
@@ -479,7 +529,59 @@ def CortexA8Itineraries : ProcessorItineraries<[
   InstrItinData<IIC_VMULi32Q, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
                                InstrStage<1, [FU_NPipe]>,
                                InstrStage<2, [FU_NLSPipe], 0>,
-                               InstrStage<3, [FU_NPipe]>], [9, 2, 1]>
-
-
+                               InstrStage<3, [FU_NPipe]>], [9, 2, 1]>,
+  //
+  // Double-register Integer Multiply-Accumulate (.8, .16)
+  InstrItinData<IIC_VMACi16D, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>], [6, 2, 2, 3]>,
+  //
+  // Double-register Integer Multiply-Accumulate (.32)
+  InstrItinData<IIC_VMACi32D, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 2, 1, 3]>,
+  //
+  // Quad-register Integer Multiply-Accumulate (.8, .16)
+  InstrItinData<IIC_VMACi16Q, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NPipe]>], [7, 2, 2, 3]>,
+  //
+  // Quad-register Integer Multiply-Accumulate (.32)
+  InstrItinData<IIC_VMACi32Q, [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NPipe]>,
+                               InstrStage<2, [FU_NLSPipe], 0>,
+                               InstrStage<3, [FU_NPipe]>], [9, 2, 1, 3]>,
+  //
+  // Double-register VEXT
+  InstrItinData<IIC_VEXTD,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>], [2, 1, 1]>,
+  //
+  // Quad-register VEXT
+  InstrItinData<IIC_VEXTQ,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NLSPipe]>], [3, 1, 1]>,
+  //
+  // VTB
+  InstrItinData<IIC_VTB1,     [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NLSPipe]>], [3, 2, 1]>,
+  InstrItinData<IIC_VTB2,     [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NLSPipe]>], [3, 2, 2, 1]>,
+  InstrItinData<IIC_VTB3,     [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>,
+                               InstrStage<1, [FU_NPipe], 0>,
+                               InstrStage<2, [FU_NLSPipe]>], [4, 2, 2, 3, 1]>,
+  InstrItinData<IIC_VTB4,     [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>,
+                               InstrStage<1, [FU_NPipe], 0>,
+                               InstrStage<2, [FU_NLSPipe]>], [4, 2, 2, 3, 3, 1]>,
+  //
+  // VTBX
+  InstrItinData<IIC_VTBX1,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NLSPipe]>], [3, 1, 2, 1]>,
+  InstrItinData<IIC_VTBX2,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<2, [FU_NLSPipe]>], [3, 1, 2, 2, 1]>,
+  InstrItinData<IIC_VTBX3,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>,
+                               InstrStage<1, [FU_NPipe], 0>,
+                               InstrStage<2, [FU_NLSPipe]>], [4, 1, 2, 2, 3, 1]>,
+  InstrItinData<IIC_VTBX4,    [InstrStage<1, [FU_Pipe0, FU_Pipe1]>,
+                               InstrStage<1, [FU_NLSPipe]>,
+                               InstrStage<1, [FU_NPipe], 0>,
+                               InstrStage<2, [FU_NLSPipe]>], [4, 1, 2, 2, 3, 3, 1]>
 ]>;

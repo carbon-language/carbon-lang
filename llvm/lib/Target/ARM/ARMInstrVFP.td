@@ -225,16 +225,16 @@ def FSQRTS  : ASuI<0b11101011, 0b0001, 0b1100, (outs SPR:$dst), (ins SPR:$a),
 //
 
 def FMRS   : AVConv2I<0b11100001, 0b1010, (outs GPR:$dst), (ins SPR:$src),
-                 IIC_fpMOVSI, "fmrs", " $dst, $src",
+                 IIC_VMOVSI, "fmrs", " $dst, $src",
                  [(set GPR:$dst, (bitconvert SPR:$src))]>;
 
 def FMSR   : AVConv4I<0b11100000, 0b1010, (outs SPR:$dst), (ins GPR:$src),
-                 IIC_fpMOVIS, "fmsr", " $dst, $src",
+                 IIC_VMOVIS, "fmsr", " $dst, $src",
                  [(set SPR:$dst, (bitconvert GPR:$src))]>;
 
 def FMRRD  : AVConv3I<0b11000101, 0b1011,
                       (outs GPR:$dst1, GPR:$dst2), (ins DPR:$src),
-                 IIC_fpMOVDI, "fmrrd", " $dst1, $dst2, $src",
+                 IIC_VMOVDI, "fmrrd", " $dst1, $dst2, $src",
                  [/* FIXME: Can't write pattern for multiple result instr*/]>;
 
 // FMDHR: GPR -> SPR
@@ -242,7 +242,7 @@ def FMRRD  : AVConv3I<0b11000101, 0b1011,
 
 def FMDRR : AVConv5I<0b11000100, 0b1011,
                      (outs DPR:$dst), (ins GPR:$src1, GPR:$src2),
-                IIC_fpMOVID, "fmdrr", " $dst, $src1, $src2",
+                IIC_VMOVID, "fmdrr", " $dst, $src1, $src2",
                 [(set DPR:$dst, (arm_fmdrr GPR:$src1, GPR:$src2))]>;
 
 // FMRDH: SPR -> GPR
