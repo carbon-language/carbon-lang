@@ -4921,7 +4921,8 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     }
 
     // Turn STORE (BSWAP) -> sthbrx/stwbrx.
-    if (N->getOperand(1).getOpcode() == ISD::BSWAP &&
+    if (cast<StoreSDNode>(N)->isUnindexed() &&
+        N->getOperand(1).getOpcode() == ISD::BSWAP &&
         N->getOperand(1).getNode()->hasOneUse() &&
         (N->getOperand(1).getValueType() == MVT::i32 ||
          N->getOperand(1).getValueType() == MVT::i16)) {
