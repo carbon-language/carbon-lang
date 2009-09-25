@@ -35,6 +35,7 @@ namespace {
   class VISIBILITY_HIDDEN MachineSinking : public MachineFunctionPass {
     const TargetMachine   *TM;
     const TargetInstrInfo *TII;
+    const TargetRegisterInfo *TRI;
     MachineFunction       *CurMF; // Current MachineFunction
     MachineRegisterInfo  *RegInfo; // Machine register information
     MachineDominatorTree *DT;   // Machine dominator tree
@@ -95,6 +96,7 @@ bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
   CurMF = &MF;
   TM = &CurMF->getTarget();
   TII = TM->getInstrInfo();
+  TRI = TM->getRegisterInfo();
   RegInfo = &CurMF->getRegInfo();
   DT = &getAnalysis<MachineDominatorTree>();
 
@@ -176,8 +178,19 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
     if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
       // If this is a physical register use, we can't move it.  If it is a def,
       // we can move it, but only if the def is dead.
-      if (MO.isUse() || !MO.isDead())
+      if (MO.isUse()) {
+        // If the physreg has no defs anywhere, it's just an ambient register
+        // and we can freely move its uses.
+        if (!RegInfo->def_empty(Reg))
+          return false;
+        // Check for a def among the register's aliases too.
+        for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
+          if (!RegInfo->def_empty(*Alias))
+            return false;
+      } else if (!MO.isDead()) {
+        // A def that isn't dead. We can't move it.
         return false;
+      }
     } else {
       // Virtual register uses are always safe to sink.
       if (MO.isUse()) continue;
