@@ -45,6 +45,9 @@ NoCanonicalizeWhiteSpace("strict-whitespace",
 //===----------------------------------------------------------------------===//
 
 class Pattern {
+  SourceMgr *SM;
+  SMLoc PatternLoc;
+  
   /// FixedStr - If non-empty, this pattern is a fixed string match with the
   /// specified fixed string.
   StringRef FixedStr;
@@ -67,6 +70,9 @@ private:
 };
 
 bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
+  this->SM = &SM;
+  PatternLoc = SMLoc::getFromPointer(PatternStr.data());
+  
   // Ignore trailing whitespace.
   while (!PatternStr.empty() &&
          (PatternStr.back() == ' ' || PatternStr.back() == '\t'))
@@ -74,9 +80,8 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
   
   // Check that there is something on the line.
   if (PatternStr.empty()) {
-    SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
-                    "found empty check string with prefix '"+CheckPrefix+":'",
-                    "error");
+    SM.PrintMessage(PatternLoc, "found empty check string with prefix '" +
+                    CheckPrefix+":'", "error");
     return true;
   }
   
@@ -169,6 +174,13 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen) const {
   // Successful regex match.
   assert(!MatchInfo.empty() && "Didn't get any match");
   StringRef FullMatch = MatchInfo[0];
+  
+  
+  if (MatchInfo.size() != 1) {
+    SM->PrintMessage(PatternLoc, "regex cannot use grouping parens", "error");
+    exit(1);
+  }
+    
   
   MatchLen = FullMatch.size();
   return FullMatch.data()-Buffer.data();
