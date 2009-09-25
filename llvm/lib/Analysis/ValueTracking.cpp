@@ -840,9 +840,13 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
       if (F->isDeclaration()) {
         // abs(x) != -0.0
         if (F->getName() == "abs") return true;
-        // abs[lf](x) != -0.0
-        if (F->getName() == "absf") return true;
-        if (F->getName() == "absl") return true;
+        // fabs[lf](x) != -0.0
+        if (F->getName() == "fabs") return true;
+        if (F->getName() == "fabsf") return true;
+        if (F->getName() == "fabsl") return true;
+        if (F->getName() == "sqrt" || F->getName() == "sqrtf" ||
+            F->getName() == "sqrtl")
+          return CannotBeNegativeZero(CI->getOperand(1), Depth+1);
       }
     }
   
