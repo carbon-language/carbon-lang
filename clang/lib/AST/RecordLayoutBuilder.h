@@ -103,6 +103,10 @@ class ASTRecordLayoutBuilder {
   /// (direct or indirect) of the same type having the same offset.
   bool canPlaceRecordAtOffset(const CXXRecordDecl *RD, uint64_t Offset) const;
 
+  /// canPlaceFieldAtOffset - Return whether a field can be placed at the given
+  /// offset.
+  bool canPlaceFieldAtOffset(const FieldDecl *FD, uint64_t Offset) const;
+
   /// UpdateEmptyClassOffsets - Called after a record (either a base class
   /// or a field) has been placed at the given offset. Will update the
   /// EmptyClassOffsets map if the class is empty or has any empty bases or

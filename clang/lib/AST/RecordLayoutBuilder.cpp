@@ -252,6 +252,18 @@ bool ASTRecordLayoutBuilder::canPlaceRecordAtOffset(const CXXRecordDecl *RD,
   return true;
 }
 
+bool ASTRecordLayoutBuilder::canPlaceFieldAtOffset(const FieldDecl *FD, 
+                                                   uint64_t Offset) const {
+  if (const RecordType *RT = dyn_cast<RecordType>(FD->getType())) {
+    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
+      return canPlaceRecordAtOffset(RD, Offset);
+  }
+  
+  // FIXME: Arrays.
+  
+  return true;
+}
+
 void ASTRecordLayoutBuilder::UpdateEmptyClassOffsets(const CXXRecordDecl *RD,
                                                      uint64_t Offset) {
   if (RD->isEmpty())
@@ -485,6 +497,17 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
 
     // Round up the current record size to the field's alignment boundary.
     FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
+    
+    if (!IsUnion) {
+      while (true) {
+        // Check if we can place the field at this offset.
+        if (canPlaceFieldAtOffset(D, FieldOffset))
+          break;
+        
+        // We can't try again.
+        FieldOffset += FieldAlign;
+      }
+    }
   }
 
   // Place this field at the current location.
