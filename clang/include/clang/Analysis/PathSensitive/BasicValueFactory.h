@@ -92,16 +92,25 @@ public:
 
   /// Convert - Create a new persistent APSInt with the same value as 'From'
   ///  but with the bitwidth and signedness of 'To'.
-  const llvm::APSInt& Convert(const llvm::APSInt& To,
+  const llvm::APSInt &Convert(const llvm::APSInt& To,
                               const llvm::APSInt& From) {
 
     if (To.isUnsigned() == From.isUnsigned() &&
         To.getBitWidth() == From.getBitWidth())
       return From;
 
-    return getValue(From.getSExtValue(),
-                    To.getBitWidth(),
-                    To.isUnsigned());
+    return getValue(From.getSExtValue(), To.getBitWidth(), To.isUnsigned());
+  }
+  
+  const llvm::APSInt &Convert(QualType T, const llvm::APSInt &From) {
+    assert(T->isIntegerType() || Loc::IsLocType(T));
+    unsigned bitwidth = Ctx.getTypeSize(T);
+    bool isUnsigned = T->isUnsignedIntegerType() || Loc::IsLocType(T);
+    
+    if (isUnsigned == From.isUnsigned() && bitwidth == From.getBitWidth())
+      return From;
+    
+    return getValue(From.getSExtValue(), bitwidth, isUnsigned);
   }
 
   const llvm::APSInt& getIntValue(uint64_t X, bool isUnsigned) {

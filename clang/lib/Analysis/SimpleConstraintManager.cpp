@@ -162,8 +162,19 @@ const GRState *SimpleConstraintManager::AssumeAux(const GRState *state,
 
   case nonloc::SymExprValKind: {
     nonloc::SymExprVal V = cast<nonloc::SymExprVal>(Cond);
-    if (const SymIntExpr *SE = dyn_cast<SymIntExpr>(V.getSymbolicExpression()))
-      return AssumeSymInt(state, Assumption, SE);
+    if (const SymIntExpr *SE = dyn_cast<SymIntExpr>(V.getSymbolicExpression())){
+      // FIXME: This is a hack.  It silently converts the RHS integer to be
+      // of the same type as on the left side.  This should be removed once
+      // we support truncation/extension of symbolic values.      
+      GRStateManager &StateMgr = state->getStateManager();
+      ASTContext &Ctx = StateMgr.getContext();
+      QualType LHSType = SE->getLHS()->getType(Ctx);
+      BasicValueFactory &BasicVals = StateMgr.getBasicVals();
+      const llvm::APSInt &RHS = BasicVals.Convert(LHSType, SE->getRHS());
+      SymIntExpr SENew(SE->getLHS(), SE->getOpcode(), RHS, SE->getType(Ctx));
+
+      return AssumeSymInt(state, Assumption, &SENew);
+    }
 
     // For all other symbolic expressions, over-approximate and consider
     // the constraint feasible.

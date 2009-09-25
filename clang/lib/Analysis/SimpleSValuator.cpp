@@ -68,6 +68,15 @@ SVal SimpleSValuator::EvalCastNL(NonLoc val, QualType castTy) {
     QualType T = Ctx.getCanonicalType(se->getType(Ctx));
     if (T == Ctx.getCanonicalType(castTy))
       return val;
+    
+    // FIXME: Remove this hack when we support symbolic truncation/extension.
+    // HACK: If both castTy and T are integers, ignore the cast.  This is
+    // not a permanent solution.  Eventually we want to precisely handle
+    // extension/truncation of symbolic integers.  This prevents us from losing
+    // precision when we assign 'x = y' and 'y' is symbolic and x and y are
+    // different integer types.
+    if (T->isIntegerType() && castTy->isIntegerType())
+      return val;
 
     return UnknownVal();
   }

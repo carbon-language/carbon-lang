@@ -207,3 +207,33 @@ void rdar_7249340(ptr_rdar_7249340 x) {
   *p = 0xDEADBEEF; // no-warning
 }
 
+// <rdar://problem/7249327> - This test case tests both value tracking of
+// array values and that we handle symbolic values that are casted
+// between different integer types.  Note the assignment 'n = *a++'; here
+// 'n' is and 'int' and '*a' is 'unsigned'.  Previously we got a false positive
+// at 'x += *b++' (undefined value) because we got a false path.
+int rdar_7249327_aux(void);
+
+void rdar_7249327(unsigned int A[2*32]) {
+  int B[2*32];
+  int *b;
+  unsigned int *a;
+  int x = 0;
+  
+  int n;
+  
+  a = A;
+  b = B;
+  
+  n = *a++;
+  if (n)
+    *b++ = rdar_7249327_aux();
+
+  a = A;
+  b = B;
+  
+  n = *a++;
+  if (n)
+    x += *b++; // no-warning
+}
+
