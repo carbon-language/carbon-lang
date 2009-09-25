@@ -18,9 +18,12 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/STLExtras.h"
 
 namespace clang {
 
+class DeclarationName;
+  
 class PartialDiagnostic {
   struct Storage {
     Storage() : NumDiagArgs(0), NumDiagRanges(0) { }
@@ -132,6 +135,9 @@ public:
     PD.AddSourceRange(R);
     return PD;
   }
+  
+  friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                             DeclarationName N);
 };
 
 inline PartialDiagnostic PDiag(unsigned DiagID) {

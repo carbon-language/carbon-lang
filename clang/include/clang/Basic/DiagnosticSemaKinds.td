@@ -1036,7 +1036,26 @@ def note_nontemplate_decl_here : Note<
     "non-templated declaration is here">;
 def err_explicit_instantiation_out_of_scope : Error<
   "explicit instantiation of %0 not in a namespace enclosing %1">;
-
+def err_explicit_instantiation_requires_name : Error<
+  "explicit instantiation declaration requires a name">;
+def err_explicit_instantiation_of_typedef : Error<
+  "explicit instantiation of typedef %0">;
+def err_explicit_instantiation_not_known : Error<
+  "explicit instantiation of %0 does not refer to a function template, member "
+  "function, member class, or static data member">;
+def note_explicit_instantiation_here : Note<
+  "explicit instantiation refers here">;
+def err_explicit_instantiation_data_member_not_instantiated : Error<
+  "explicit instantiation refers to static data member %q0 that is not an "
+  "instantiation">;
+def err_explicit_instantiation_member_function_not_instantiated : Error<
+  "explicit instantiation refers to member function %q0 that is not an "
+  "instantiation">;
+def err_explicit_instantiation_ambiguous : Error<
+  "partial ordering for explicit instantiation of %0 is ambiguous">;
+def note_explicit_instantiation_candidate : Note<
+  "explicit instantiation candidate function template here %0">;
+  
 // C++ typename-specifiers
 def err_typename_nested_not_found : Error<"no type named %0 in %1">;
 def err_typename_nested_not_found_global : Error<

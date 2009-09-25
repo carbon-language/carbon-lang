@@ -2550,6 +2550,11 @@ public:
                              SourceLocation NameLoc,
                              AttributeList *Attr);
 
+  virtual DeclResult ActOnExplicitInstantiation(Scope *S,
+                                                SourceLocation ExternLoc,
+                                                SourceLocation TemplateLoc,
+                                                Declarator &D);
+    
   bool CheckTemplateArgumentList(TemplateDecl *Template,
                                  SourceLocation TemplateLoc,
                                  SourceLocation LAngleLoc,
@@ -2779,6 +2784,15 @@ public:
   FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                                    FunctionTemplateDecl *FT2,
                                            TemplatePartialOrderingContext TPOC);
+  FunctionDecl *getMostSpecialized(FunctionDecl **Specializations,
+                                   unsigned NumSpecializations,
+                                   TemplatePartialOrderingContext TPOC,
+                                   SourceLocation Loc,
+                                   const PartialDiagnostic &NoneDiag,
+                                   const PartialDiagnostic &AmbigDiag,
+                                   const PartialDiagnostic &CandidateDiag,
+                                   unsigned *Index = 0);
+                                   
   ClassTemplatePartialSpecializationDecl *
   getMoreSpecializedPartialSpecialization(
                                   ClassTemplatePartialSpecializationDecl *PS1,

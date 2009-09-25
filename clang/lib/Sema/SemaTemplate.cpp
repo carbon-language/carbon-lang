@@ -17,6 +17,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
@@ -3324,6 +3325,180 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   // should be available for clients that want to see all of the declarations in
   // the source code.
   return TagD;
+}
+
+Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
+                                                  SourceLocation ExternLoc,
+                                                  SourceLocation TemplateLoc,
+                                                  Declarator &D) {
+  // Explicit instantiations always require a name.
+  DeclarationName Name = GetNameForDeclarator(D);
+  if (!Name) {
+    if (!D.isInvalidType())
+      Diag(D.getDeclSpec().getSourceRange().getBegin(),
+           diag::err_explicit_instantiation_requires_name)
+        << D.getDeclSpec().getSourceRange()
+        << D.getSourceRange();
+    
+    return true;
+  }
+
+  // The scope passed in may not be a decl scope.  Zip up the scope tree until
+  // we find one that is.
+  while ((S->getFlags() & Scope::DeclScope) == 0 ||
+         (S->getFlags() & Scope::TemplateParamScope) != 0)
+    S = S->getParent();
+
+  // Determine the type of the declaration.
+  QualType R = GetTypeForDeclarator(D, S, 0);
+  if (R.isNull())
+    return true;
+  
+  if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
+    // Cannot explicitly instantiate a typedef.
+    Diag(D.getIdentifierLoc(), diag::err_explicit_instantiation_of_typedef)
+      << Name;
+    return true;
+  }
+
+  // Determine what kind of explicit instantiation we have.
+  TemplateSpecializationKind TSK
+    = ExternLoc.isInvalid()? TSK_ExplicitInstantiationDefinition
+                           : TSK_ExplicitInstantiationDeclaration;
+  
+  LookupResult Previous = LookupParsedName(S, &D.getCXXScopeSpec(),
+                                           Name, LookupOrdinaryName);
+
+  if (!R->isFunctionType()) {
+    // C++ [temp.explicit]p1:
+    //   A [...] static data member of a class template can be explicitly 
+    //   instantiated from the member definition associated with its class 
+    //   template.
+    if (Previous.isAmbiguous()) {
+      return DiagnoseAmbiguousLookup(Previous, Name, D.getIdentifierLoc(),
+                                     D.getSourceRange());
+    }
+    
+    VarDecl *Prev = dyn_cast_or_null<VarDecl>(Previous.getAsDecl());
+    if (!Prev || !Prev->isStaticDataMember()) {
+      // We expect to see a data data member here.
+      Diag(D.getIdentifierLoc(), diag::err_explicit_instantiation_not_known)
+        << Name;
+      for (LookupResult::iterator P = Previous.begin(), PEnd = Previous.end();
+           P != PEnd; ++P)
+        Diag(P->getLocation(), diag::note_explicit_instantiation_here);
+      return true;
+    }
+    
+    if (!Prev->getInstantiatedFromStaticDataMember()) {
+      // FIXME: Check for explicit specialization?
+      Diag(D.getIdentifierLoc(), 
+           diag::err_explicit_instantiation_data_member_not_instantiated)
+        << Prev;
+      Diag(Prev->getLocation(), diag::note_explicit_instantiation_here);
+      // FIXME: Can we provide a note showing where this was declared?
+      return true;
+    }
+    
+    // Instantiate static data member.
+    // FIXME: Note that this is an explicit instantiation.
+    if (TSK == TSK_ExplicitInstantiationDefinition)
+      InstantiateStaticDataMemberDefinition(D.getIdentifierLoc(), Prev, false);
+    
+    // FIXME: Create an ExplicitInstantiation node?
+    return DeclPtrTy();
+  }
+  
+  // C++ [temp.explicit]p1:
+  //   A [...] function [...] can be explicitly instantiated from its template. 
+  //   A member function [...] of a class template can be explicitly 
+  //  instantiated from the member definition associated with its class 
+  //  template.
+  // FIXME: Implement this!
+  llvm::SmallVector<FunctionDecl *, 8> Matches;
+  for (LookupResult::iterator P = Previous.begin(), PEnd = Previous.end();
+       P != PEnd; ++P) {
+    NamedDecl *Prev = *P;
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Prev)) {
+      // FIXME: If there were any explicitly-specified template arguments, 
+      // don't look for Method declarations.
+      if (Context.hasSameUnqualifiedType(Method->getType(), R)) {
+        Matches.clear();
+        Matches.push_back(Method);
+        break;
+      }
+    }
+    
+    FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(Prev);
+    if (!FunTmpl)
+      continue;
+
+    TemplateDeductionInfo Info(Context);
+    FunctionDecl *Specialization = 0;
+    if (TemplateDeductionResult TDK
+          = DeduceTemplateArguments(FunTmpl, /*FIXME:*/false, 0, 0, 
+                                    R, Specialization, Info)) {
+      // FIXME: Keep track of almost-matches?
+      (void)TDK;
+      continue;
+    }
+    
+    Matches.push_back(Specialization);
+  }
+  
+  // Find the most specialized function template specialization.
+  FunctionDecl *Specialization
+    = getMostSpecialized(Matches.data(), Matches.size(), TPOC_Other, 
+                         D.getIdentifierLoc(), 
+          PartialDiagnostic(diag::err_explicit_instantiation_not_known) << Name,
+          PartialDiagnostic(diag::err_explicit_instantiation_ambiguous) << Name,
+                PartialDiagnostic(diag::note_explicit_instantiation_candidate));
+
+  if (!Specialization)
+    return true;
+  
+  switch (Specialization->getTemplateSpecializationKind()) {
+  case TSK_Undeclared:
+    Diag(D.getIdentifierLoc(), 
+         diag::err_explicit_instantiation_member_function_not_instantiated)
+      << Specialization
+      << (Specialization->getTemplateSpecializationKind() ==
+          TSK_ExplicitSpecialization);
+    Diag(Specialization->getLocation(), diag::note_explicit_instantiation_here);
+    return true;
+
+  case TSK_ExplicitSpecialization:
+    // C++ [temp.explicit]p4:
+    //   For a given set of template parameters, if an explicit instantiation
+    //   of a template appears after a declaration of an explicit 
+    //   specialization for that template, the explicit instantiation has no 
+    //   effect.
+    break;      
+
+  case TSK_ExplicitInstantiationDefinition:
+    // FIXME: Check that we aren't trying to perform an explicit instantiation
+    // declaration now.
+    // Fall through
+      
+  case TSK_ImplicitInstantiation:
+  case TSK_ExplicitInstantiationDeclaration:
+    // Instantiate the function, if this is an explicit instantiation 
+    // definition.
+    if (TSK == TSK_ExplicitInstantiationDefinition)
+      InstantiateFunctionDefinition(D.getIdentifierLoc(), Specialization, 
+                                    false);
+      
+    // FIXME: setTemplateSpecializationKind doesn't (yet) work for 
+    // non-templated member functions.
+    if (!Specialization->getPrimaryTemplate())
+      break;
+      
+    Specialization->setTemplateSpecializationKind(TSK);
+    break;
+  }
+
+  // FIXME: Create some kind of ExplicitInstantiationDecl here.
+  return DeclPtrTy();
 }
 
 Sema::TypeResult

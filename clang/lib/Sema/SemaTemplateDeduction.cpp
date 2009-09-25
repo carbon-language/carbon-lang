@@ -1885,6 +1885,124 @@ Sema::getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
     return 0;
 }
 
+/// \brief Determine if the two templates are equivalent.
+static bool isSameTemplate(TemplateDecl *T1, TemplateDecl *T2) {
+  if (T1 == T2)
+    return true;
+  
+  if (!T1 || !T2)
+    return false;
+  
+  return T1->getCanonicalDecl() == T2->getCanonicalDecl();
+}
+
+/// \brief Retrieve the most specialized of the given function template
+/// specializations.
+///
+/// \param Specializations the set of function template specializations that
+/// we will be comparing.
+///
+/// \param NumSpecializations the number of function template specializations in
+/// \p Specializations
+///
+/// \param TPOC the partial ordering context to use to compare the function
+/// template specializations.
+///
+/// \param Loc the location where the ambiguity or no-specializations 
+/// diagnostic should occur.
+///
+/// \param NoneDiag partial diagnostic used to diagnose cases where there are
+/// no matching candidates.
+///
+/// \param AmbigDiag partial diagnostic used to diagnose an ambiguity, if one
+/// occurs.
+///
+/// \param CandidateDiag partial diagnostic used for each function template
+/// specialization that is a candidate in the ambiguous ordering. One parameter
+/// in this diagnostic should be unbound, which will correspond to the string
+/// describing the template arguments for the function template specialization.
+///
+/// \param Index if non-NULL and the result of this function is non-nULL, 
+/// receives the index corresponding to the resulting function template
+/// specialization.
+///
+/// \returns the most specialized function template specialization, if 
+/// found. Otherwise, returns NULL.
+///
+/// \todo FIXME: Consider passing in the "also-ran" candidates that failed 
+/// template argument deduction.
+FunctionDecl *Sema::getMostSpecialized(FunctionDecl **Specializations,
+                                       unsigned NumSpecializations,
+                                       TemplatePartialOrderingContext TPOC,
+                                       SourceLocation Loc,
+                                       const PartialDiagnostic &NoneDiag,
+                                       const PartialDiagnostic &AmbigDiag,
+                                       const PartialDiagnostic &CandidateDiag,
+                                       unsigned *Index) {
+  if (NumSpecializations == 0) {
+    Diag(Loc, NoneDiag);
+    return 0;
+  }
+  
+  if (NumSpecializations == 1) {
+    if (Index)
+      *Index = 0;
+    
+    return Specializations[0];
+  }
+    
+  
+  // Find the function template that is better than all of the templates it
+  // has been compared to.
+  unsigned Best = 0;
+  FunctionTemplateDecl *BestTemplate 
+    = Specializations[Best]->getPrimaryTemplate();
+  assert(BestTemplate && "Not a function template specialization?");
+  for (unsigned I = 1; I != NumSpecializations; ++I) {
+    FunctionTemplateDecl *Challenger = Specializations[I]->getPrimaryTemplate();
+    assert(Challenger && "Not a function template specialization?");
+    if (isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger, 
+                                                  TPOC),
+                       Challenger)) {
+      Best = I;
+      BestTemplate = Challenger;
+    }
+  }
+  
+  // Make sure that the "best" function template is more specialized than all
+  // of the others.
+  bool Ambiguous = false;
+  for (unsigned I = 0; I != NumSpecializations; ++I) {
+    FunctionTemplateDecl *Challenger = Specializations[I]->getPrimaryTemplate();
+    if (I != Best &&
+        !isSameTemplate(getMoreSpecializedTemplate(BestTemplate, Challenger, 
+                                                  TPOC),
+                        BestTemplate)) {
+      Ambiguous = true;
+      break;
+    }
+  }
+  
+  if (!Ambiguous) {
+    // We found an answer. Return it.
+    if (Index)
+      *Index = Best;
+    return Specializations[Best];
+  }
+  
+  // Diagnose the ambiguity.
+  Diag(Loc, AmbigDiag);
+  
+  // FIXME: Can we order the candidates in some sane way?
+  for (unsigned I = 0; I != NumSpecializations; ++I)
+    Diag(Specializations[I]->getLocation(), CandidateDiag)
+      << getTemplateArgumentBindingsText(
+            Specializations[I]->getPrimaryTemplate()->getTemplateParameters(),
+                         *Specializations[I]->getTemplateSpecializationArgs());
+  
+  return 0;
+}
+
 /// \brief Returns the more specialized class template partial specialization
 /// according to the rules of partial ordering of class template partial
 /// specializations (C++ [temp.class.order]).

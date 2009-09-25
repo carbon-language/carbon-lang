@@ -419,13 +419,36 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
   }
 
   // Inform the current actions module that we just parsed this declarator.
-  DeclPtrTy ThisDecl = TemplateInfo.TemplateParams?
-      Actions.ActOnTemplateDeclarator(CurScope,
+  DeclPtrTy ThisDecl;
+  switch (TemplateInfo.Kind) {
+  case ParsedTemplateInfo::NonTemplate:
+    ThisDecl = Actions.ActOnDeclarator(CurScope, D);
+    break;
+      
+  case ParsedTemplateInfo::Template:
+  case ParsedTemplateInfo::ExplicitSpecialization:
+    ThisDecl = Actions.ActOnTemplateDeclarator(CurScope,
                              Action::MultiTemplateParamsArg(Actions,
                                           TemplateInfo.TemplateParams->data(),
                                           TemplateInfo.TemplateParams->size()),
-                                    D)
-    : Actions.ActOnDeclarator(CurScope, D);
+                                               D);
+    break;
+      
+  case ParsedTemplateInfo::ExplicitInstantiation: {
+    Action::DeclResult ThisRes 
+      = Actions.ActOnExplicitInstantiation(CurScope,
+                                           TemplateInfo.ExternLoc,
+                                           TemplateInfo.TemplateLoc,
+                                           D);
+    if (ThisRes.isInvalid()) {
+      SkipUntil(tok::semi, true, true);
+      return DeclPtrTy();
+    }
+    
+    ThisDecl = ThisRes.get();
+    break;
+    }
+  }
 
   // Parse declarator '=' initializer.
   if (Tok.is(tok::equal)) {
