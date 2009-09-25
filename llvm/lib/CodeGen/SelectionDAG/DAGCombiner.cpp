@@ -6089,11 +6089,12 @@ SDValue DAGCombiner::BuildUDIV(SDNode *N) {
   return S;
 }
 
-/// FindBaseOffset - Return true if base is known not to alias with anything
-/// but itself.  Provides base object and offset as results.
-static bool FindBaseOffset(SDValue Ptr, SDValue &Base, int64_t &Offset) {
+/// FindBaseOffset - Return true if base is a frame index, which is known not
+// to alias with anything but itself.  Provides base object and offset as results.
+static bool FindBaseOffset(SDValue Ptr, SDValue &Base, int64_t &Offset,
+                           GlobalValue *&GV, void *&CV) {
   // Assume it is a primitive operation.
-  Base = Ptr; Offset = 0;
+  Base = Ptr; Offset = 0; GV = 0; CV = 0;
 
   // If it's an adding a simple constant then integrate the offset.
   if (Base.getOpcode() == ISD::ADD) {
@@ -6102,11 +6103,27 @@ static bool FindBaseOffset(SDValue Ptr, SDValue &Base, int64_t &Offset) {
       Offset += C->getZExtValue();
     }
   }
+  
+  // Return the underlying GlobalValue, and update the Offset.  Return false
+  // for GlobalAddressSDNode since the same GlobalAddress may be represented
+  // by multiple nodes with different offsets.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Base)) {
+    GV = G->getGlobal();
+    Offset += G->getOffset();
+    return false;
+  }
 
+  // Return the underlying Constant value, and update the Offset.  Return false
+  // for ConstantSDNodes since the same constant pool entry may be represented
+  // by multiple nodes with different offsets.
+  if (ConstantPoolSDNode *C = dyn_cast<ConstantPoolSDNode>(Base)) {
+    CV = C->isMachineConstantPoolEntry() ? (void *)C->getMachineCPVal()
+                                         : (void *)C->getConstVal();
+    Offset += C->getOffset();
+    return false;
+  }
   // If it's any of the following then it can't alias with anything but itself.
-  return isa<FrameIndexSDNode>(Base) ||
-         isa<ConstantPoolSDNode>(Base) ||
-         isa<GlobalAddressSDNode>(Base);
+  return isa<FrameIndexSDNode>(Base);
 }
 
 /// isAlias - Return true if there is any possibility that the two addresses
@@ -6123,16 +6140,19 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1,
   // Gather base node and offset information.
   SDValue Base1, Base2;
   int64_t Offset1, Offset2;
-  bool KnownBase1 = FindBaseOffset(Ptr1, Base1, Offset1);
-  bool KnownBase2 = FindBaseOffset(Ptr2, Base2, Offset2);
+  GlobalValue *GV1, *GV2;
+  void *CV1, *CV2;
+  bool isFrameIndex1 = FindBaseOffset(Ptr1, Base1, Offset1, GV1, CV1);
+  bool isFrameIndex2 = FindBaseOffset(Ptr2, Base2, Offset2, GV2, CV2);
 
-  // If they have a same base address then...
-  if (Base1 == Base2)
-    // Check to see if the addresses overlap.
+  // If they have a same base address then check to see if they overlap.
+  if (Base1 == Base2 || (GV1 && (GV1 == GV2)) || (CV1 && (CV1 == CV2)))
     return !((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1);
 
-  // If we know both bases then they can't alias.
-  if (KnownBase1 && KnownBase2) return false;
+  // If we know what the bases are, and they aren't identical, then we know they
+  // cannot alias.
+  if ((isFrameIndex1 || CV1 || GV1) && (isFrameIndex2 || CV2 || GV2))
+    return false;
 
   // If we know required SrcValue1 and SrcValue2 have relatively large alignment
   // compared to the size and offset of the access, we may be able to prove they
