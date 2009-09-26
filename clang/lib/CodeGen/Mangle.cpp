@@ -74,7 +74,7 @@ namespace {
                     unsigned NumTemplateArgs);
     void mangleUnqualifiedName(const NamedDecl *ND);
     void mangleUnscopedName(const NamedDecl *ND);
-    void mangleUnscopedTemplateName(const NamedDecl *ND);
+    void mangleUnscopedTemplateName(const TemplateDecl *ND);
     void mangleSourceName(const IdentifierInfo *II);
     void mangleLocalName(const NamedDecl *ND);
     void mangleNestedName(const NamedDecl *ND);
@@ -82,7 +82,7 @@ namespace {
                           const TemplateArgument *TemplateArgs,
                           unsigned NumTemplateArgs);
     void manglePrefix(const DeclContext *DC);
-    void mangleTemplatePrefix(const NamedDecl *ND);
+    void mangleTemplatePrefix(const TemplateDecl *ND);
     void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
     void mangleQualifiers(Qualifiers Quals);
     void mangleType(QualType T);
@@ -285,7 +285,7 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   if (DC->isTranslationUnit() || isStdNamespace(DC)) {
     // Check if we have a template.
     const TemplateArgumentList *TemplateArgs = 0;
-    if (const NamedDecl *TD = isTemplate(ND, TemplateArgs)) {
+    if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
       mangleUnscopedTemplateName(TD);
       mangleTemplateArgumentList(*TemplateArgs);
       return;
@@ -313,7 +313,7 @@ void CXXNameMangler::mangleName(const TemplateDecl *TD,
   }
  
   if (DC->isTranslationUnit() || isStdNamespace(DC)) {
-    mangleUnscopedTemplateName(cast<NamedDecl>(TD->getTemplatedDecl()));
+    mangleUnscopedTemplateName(TD);
     mangleTemplateArgs(TemplateArgs, NumTemplateArgs);
   } else {
     mangleNestedName(TD, TemplateArgs, NumTemplateArgs);
@@ -329,7 +329,7 @@ void CXXNameMangler::mangleUnscopedName(const NamedDecl *ND) {
   mangleUnqualifiedName(ND);
 }
 
-void CXXNameMangler::mangleUnscopedTemplateName(const NamedDecl *ND) {
+void CXXNameMangler::mangleUnscopedTemplateName(const TemplateDecl *ND) {
   //     <unscoped-template-name> ::= <unscoped-name>
   //                              ::= <substitution>
   if (mangleSubstitution(ND))
@@ -463,7 +463,7 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND) {
   
   // Check if we have a template.
   const TemplateArgumentList *TemplateArgs = 0;
-  if (const NamedDecl *TD = isTemplate(ND, TemplateArgs)) { 
+  if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) { 
     mangleTemplatePrefix(TD);
     mangleTemplateArgumentList(*TemplateArgs);
   } else {
@@ -478,7 +478,7 @@ void CXXNameMangler::mangleNestedName(const TemplateDecl *TD,
                                       unsigned NumTemplateArgs) {
   Out << 'N';
   manglePrefix(TD->getDeclContext());
-  mangleUnqualifiedName(TD->getTemplatedDecl());
+  mangleUnqualifiedName(TD);
   
   mangleTemplateArgs(TemplateArgs, NumTemplateArgs);
   Out << 'E';
@@ -513,7 +513,7 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
 
   // Check if we have a template.
   const TemplateArgumentList *TemplateArgs = 0;
-  if (const NamedDecl *TD = isTemplate(cast<NamedDecl>(DC), TemplateArgs)) { 
+  if (const TemplateDecl *TD = isTemplate(cast<NamedDecl>(DC), TemplateArgs)) { 
     mangleTemplatePrefix(TD);
     mangleTemplateArgumentList(*TemplateArgs);
   } else {
@@ -524,7 +524,7 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC) {
   addSubstitution(cast<NamedDecl>(DC));
 }
 
-void CXXNameMangler::mangleTemplatePrefix(const NamedDecl *ND) {
+void CXXNameMangler::mangleTemplatePrefix(const TemplateDecl *ND) {
   // <template-prefix> ::= <prefix> <template unqualified-name>
   //                   ::= <template-param>
   //                   ::= <substitution>
@@ -533,7 +533,6 @@ void CXXNameMangler::mangleTemplatePrefix(const NamedDecl *ND) {
   
   manglePrefix(ND->getDeclContext());
   mangleUnqualifiedName(ND);
-  // FIXME: Implement!
 }
 
 void
