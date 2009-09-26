@@ -23,7 +23,7 @@ using namespace clang;
 
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx)
   : Ctx(Ctx), Size(0), Alignment(8), Packed(false), MaxFieldAlignment(0),
-  NextOffset(0), IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8),
+  DataSize(0), IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8),
   PrimaryBase(0), PrimaryBaseWasVirtual(false) {}
 
 /// LayoutVtable - Lay out the vtable and set PrimaryBase.
@@ -38,7 +38,7 @@ void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
     int AS = 0;
     UpdateAlignment(Ctx.Target.getPointerAlign(AS));
     Size += Ctx.Target.getPointerWidth(AS);
-    NextOffset = Size;
+    DataSize = Size;
   }
 }
 
@@ -377,7 +377,7 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   unsigned BaseAlign = BaseInfo.getNonVirtualAlign();
   
   // Round up the current record size to the base's alignment boundary.
-  uint64_t Offset = llvm::RoundUpToAlignment(NextOffset, BaseAlign);
+  uint64_t Offset = llvm::RoundUpToAlignment(DataSize, BaseAlign);
   
   // Try to place the base.
   while (true) {
@@ -388,10 +388,10 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   }
 
   if (!RD->isEmpty()) {
-    // Remember the next available offset.
-    NextOffset = Offset + BaseInfo.getNonVirtualSize();
+    // Update the data size.
+    DataSize = Offset + BaseInfo.getNonVirtualSize();
 
-    Size = std::max(Size, NextOffset);
+    Size = std::max(Size, DataSize);
   } else
     Size = std::max(Size, Offset + BaseInfo.getSize());
 
@@ -480,7 +480,7 @@ void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D,
     // We start laying out ivars not at the end of the superclass
     // structure, but at the next byte following the last field.
     Size = llvm::RoundUpToAlignment(SL.getDataSize(), 8);
-    NextOffset = Size;
+    DataSize = Size;
   }
 
   Packed = D->hasAttr<PackedAttr>();
@@ -513,7 +513,7 @@ void ASTRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
 
 void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   bool FieldPacked = Packed;
-  uint64_t FieldOffset = IsUnion ? 0 : NextOffset;
+  uint64_t FieldOffset = IsUnion ? 0 : DataSize;
   uint64_t FieldSize;
   unsigned FieldAlign;
 
@@ -598,8 +598,8 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   else
     Size = FieldOffset + FieldSize;
 
-  // Remember the next available offset.
-  NextOffset = Size;
+  // Update the data size.
+  DataSize = Size;
 
   // Remember max struct/class alignment.
   UpdateAlignment(FieldAlign);
@@ -642,7 +642,7 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
 
   // FIXME: This should be done in FinalizeLayout.
   uint64_t DataSize =
-    IsPODForThePurposeOfLayout ? Builder.Size : Builder.NextOffset;
+    IsPODForThePurposeOfLayout ? Builder.Size : Builder.DataSize;
   uint64_t NonVirtualSize =
     IsPODForThePurposeOfLayout ? DataSize : Builder.NonVirtualSize;
 
@@ -668,7 +668,7 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
   Builder.Layout(D, Impl);
 
   return new ASTRecordLayout(Builder.Size, Builder.Alignment,
-                             Builder.NextOffset,
+                             Builder.DataSize,
                              Builder.FieldOffsets.data(),
                              Builder.FieldOffsets.size());
 }

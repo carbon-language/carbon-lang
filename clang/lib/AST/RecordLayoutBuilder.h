@@ -31,9 +31,16 @@ class ASTRecordLayoutBuilder {
   unsigned Alignment;
   llvm::SmallVector<uint64_t, 16> FieldOffsets;
 
+  /// Packed - Whether the record is packed or not.
   bool Packed;
+  
+  /// MaxFieldAlignment - The maximum allowed field alignment. This is set by
+  /// #pragma pack. 
   unsigned MaxFieldAlignment;
-  uint64_t NextOffset;
+  
+  /// DataSize - The data size of the record being laid out.
+  uint64_t DataSize;
+  
   bool IsUnion;
 
   uint64_t NonVirtualSize;
