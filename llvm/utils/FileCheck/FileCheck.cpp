@@ -168,7 +168,7 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen) const {
   
   // Regex match.
   SmallVector<StringRef, 4> MatchInfo;
-  if (!Regex(RegExStr, Regex::Sub|Regex::Newline).match(Buffer, &MatchInfo))
+  if (!Regex(RegExStr, Regex::Newline).match(Buffer, &MatchInfo))
     return StringRef::npos;
   
   // Successful regex match.
