@@ -62,7 +62,7 @@ ifeq ($(MAKECMDGOALS),install-clang)
 endif
 
 ifeq ($(MAKECMDGOALS),clang-only)
-  DIRS := $(filter-out tools runtime docs, $(DIRS)) tools/clang
+  DIRS := $(filter-out tools runtime docs unittests, $(DIRS)) tools/clang
   OPTIONAL_DIRS :=
 endif
 
