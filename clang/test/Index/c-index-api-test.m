@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -emit-pch %s -o %t.ast &&
+// RUN: clang -emit-ast %s -o %t.ast &&
 // RUN: c-index-test %t.ast all | FileCheck %s
 
 // CHECK: <invalid loc>:0:0: StructDecl=objc_selector [Context=c-index-api-test.m]
