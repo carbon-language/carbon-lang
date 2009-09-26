@@ -1019,7 +1019,7 @@ struct PowOpt : public LibCallOptimization {
       if (Op1C->isExactlyValue(1.0))  // pow(1.0, x) -> 1.0
         return Op1C;
       if (Op1C->isExactlyValue(2.0))  // pow(2.0, x) -> exp2(x)
-        return EmitUnaryFloatFnCall(Op2, "exp2", B, CI->getAttributes());
+        return EmitUnaryFloatFnCall(Op2, "exp2", B, Callee->getAttributes());
     }
     
     ConstantFP *Op2C = dyn_cast<ConstantFP>(Op2);
@@ -1036,8 +1036,10 @@ struct PowOpt : public LibCallOptimization {
       // TODO: In finite-only mode, this could be just fabs(sqrt(x)).
       Value *Inf = ConstantFP::getInfinity(CI->getType());
       Value *NegInf = ConstantFP::getInfinity(CI->getType(), true);
-      Value *Sqrt = EmitUnaryFloatFnCall(Op1, "sqrt", B, CI->getAttributes());
-      Value *FAbs = EmitUnaryFloatFnCall(Sqrt, "fabs", B, CI->getAttributes());
+      Value *Sqrt = EmitUnaryFloatFnCall(Op1, "sqrt", B,
+                                         Callee->getAttributes());
+      Value *FAbs = EmitUnaryFloatFnCall(Sqrt, "fabs", B,
+                                         Callee->getAttributes());
       Value *FCmp = B.CreateFCmpOEQ(Op1, NegInf, "tmp");
       Value *Sel = B.CreateSelect(FCmp, Inf, FAbs, "tmp");
       return Sel;
@@ -1121,7 +1123,8 @@ struct UnaryDoubleFPOpt : public LibCallOptimization {
 
     // floor((double)floatval) -> (double)floorf(floatval)
     Value *V = Cast->getOperand(0);
-    V = EmitUnaryFloatFnCall(V, Callee->getName().data(), B, CI->getAttributes());
+    V = EmitUnaryFloatFnCall(V, Callee->getName().data(), B,
+                             Callee->getAttributes());
     return B.CreateFPExt(V, Type::getDoubleTy(*Context));
   }
 };
