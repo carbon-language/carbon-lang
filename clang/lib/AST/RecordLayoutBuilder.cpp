@@ -581,7 +581,7 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
         if (canPlaceFieldAtOffset(D, FieldOffset))
           break;
         
-        // We can't try again.
+        // We couldn't place the field at the offset. Try again at a new offset.
         FieldOffset += FieldAlign;
       }
       
