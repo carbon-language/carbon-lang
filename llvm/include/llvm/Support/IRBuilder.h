@@ -298,6 +298,12 @@ public:
         return Folder.CreateSub(LC, RC);
     return Insert(BinaryOperator::CreateSub(LHS, RHS), Name);
   }
+  Value *CreateNSWSub(Value *LHS, Value *RHS, const Twine &Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return Folder.CreateNSWSub(LC, RC);
+    return Insert(BinaryOperator::CreateNSWSub(LHS, RHS), Name);
+  }
   Value *CreateFSub(Value *LHS, Value *RHS, const Twine &Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
