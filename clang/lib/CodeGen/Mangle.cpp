@@ -59,6 +59,8 @@ namespace {
     bool mangleSubstitution(QualType T);
     bool mangleSubstitution(uintptr_t Ptr);
     
+    bool mangleStandardSubstitution(const NamedDecl *ND);
+    
     void addSubstitution(const NamedDecl *ND) {
       addSubstitution(reinterpret_cast<uintptr_t>(ND));
     }
@@ -1070,8 +1072,11 @@ void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
 
 // <substitution> ::= S <seq-id> _
 //                ::= S_
-
 bool CXXNameMangler::mangleSubstitution(const NamedDecl *ND) {
+  // Try one of the standard substitutions first.
+  if (mangleStandardSubstitution(ND))
+    return true;
+  
   return mangleSubstitution(reinterpret_cast<uintptr_t>(ND));
 }
 
@@ -1117,6 +1122,22 @@ bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
     Out << 'S' << BufferPtr << '_';
   }
   
+  return true;
+}
+
+bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
+  // <substitution> ::= St # ::std::
+  
+  const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND);
+  if (!NS)
+    return false;
+  if (!NS->getParent()->isTranslationUnit())
+    return false;
+  
+  if (!NS->getOriginalNamespace()->getIdentifier()->isStr("std"))
+    return false;
+  
+  Out << "St";
   return true;
 }
 
