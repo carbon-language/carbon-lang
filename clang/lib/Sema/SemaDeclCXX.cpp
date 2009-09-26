@@ -4141,14 +4141,6 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
     break;
   }
 
-  // C++ [class.friend]p2: A class shall not be defined inside
-  //   a friend declaration.
-  if (IsDefinition) {
-    Diag(DS.getFriendSpecLoc(), diag::err_friend_decl_defines_class)
-      << DS.getSourceRange();
-    return DeclPtrTy();
-  }
-
   // C++98 [class.friend]p1: A friend of a class is a function
   //   or class that is not a member of the class . . .
   // But that's a silly restriction which nobody implements for

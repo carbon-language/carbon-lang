@@ -624,9 +624,22 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // 'struct foo :...' then this is a definition. Otherwise we have
   // something like 'struct foo xyz', a reference.
   Action::TagUseKind TUK;
-  if (Tok.is(tok::l_brace) || (getLang().CPlusPlus && Tok.is(tok::colon)))
-    TUK = Action::TUK_Definition;
-  else if (Tok.is(tok::semi))
+  if (Tok.is(tok::l_brace) || (getLang().CPlusPlus && Tok.is(tok::colon))) {
+    if (DS.isFriendSpecified()) {
+      // C++ [class.friend]p2:
+      //   A class shall not be defined in a friend declaration.
+      Diag(Tok.getLocation(), diag::err_friend_decl_defines_class)
+        << SourceRange(DS.getFriendSpecLoc());
+
+      // Skip everything up to the semicolon, so that this looks like a proper
+      // friend class (or template thereof) declaration.
+      SkipUntil(tok::semi, true, true);
+      TUK = Action::TUK_Friend;
+    } else {
+      // Okay, this is a class definition.
+      TUK = Action::TUK_Definition;
+    }
+  } else if (Tok.is(tok::semi))
     TUK = DS.isFriendSpecified() ? Action::TUK_Friend : Action::TUK_Declaration;
   else
     TUK = Action::TUK_Reference;
@@ -1043,12 +1056,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
   if (Tok.is(tok::semi)) {
     ConsumeToken();
-
-    if (DS.isFriendSpecified()) {
-      Actions.ActOnFriendTypeDecl(CurScope, DS, move(TemplateParams));
-    } else
-      Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
-
+    Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
     return;
   }
 

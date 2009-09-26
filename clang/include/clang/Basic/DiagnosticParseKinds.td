@@ -279,6 +279,10 @@ def err_expected_type_name_after_typename : Error<
 
 def err_variadic_templates : Error<
   "variadic templates are only allowed in C++0x">;
+  
+// C++ declarations
+def err_friend_decl_defines_class : Error<
+  "cannot define a type in a friend declaration">;
 
 // Language specific pragmas
 // - Generic warnings

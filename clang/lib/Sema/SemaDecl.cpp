@@ -1288,6 +1288,59 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
     Tag = dyn_cast<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
   }
 
+  if (DS.isFriendSpecified()) {
+    // We have a "friend" declaration that does not have a declarator.
+    // Look at the type to see if the friend declaration was handled
+    // elsewhere (e.g., for friend classes and friend class templates).
+    // If not, produce a suitable diagnostic or go try to befriend the
+    // type itself.
+    QualType T;
+    if (DS.getTypeSpecType() == DeclSpec::TST_typename ||
+        DS.getTypeSpecType() == DeclSpec::TST_typeofType)
+      T = QualType::getFromOpaquePtr(DS.getTypeRep());
+    else if (DS.getTypeSpecType() == DeclSpec::TST_typeofExpr ||
+             DS.getTypeSpecType() == DeclSpec::TST_decltype)
+      T = ((Expr *)DS.getTypeRep())->getType();
+    else if (DS.getTypeSpecType() == DeclSpec::TST_class ||
+             DS.getTypeSpecType() == DeclSpec::TST_struct ||
+             DS.getTypeSpecType() == DeclSpec::TST_union)
+      return DeclPtrTy::make(Tag);
+    
+    if (T.isNull()) {
+      // Fall through to diagnose this error, below.
+    } else if (const RecordType *RecordT = T->getAs<RecordType>()) {
+      // C++ [class.friend]p2:
+      //   An elaborated-type-specifier shall be used in a friend declaration
+      //   for a class.
+
+      // We have something like "friend C;", where C is the name of a
+      // class type but is missing an elaborated type specifier. Complain,
+      // but tell the user exactly how to fix the problem.
+      RecordDecl *RecordD = RecordT->getDecl();
+      Diag(DS.getTypeSpecTypeLoc(), diag::err_unelaborated_friend_type)
+        << (unsigned)RecordD->getTagKind()
+        << QualType(RecordT, 0)
+        << SourceRange(DS.getFriendSpecLoc())
+        << CodeModificationHint::CreateInsertion(DS.getTypeSpecTypeLoc(),
+                                  RecordD->getKindName() + std::string(" "));
+      
+      // FIXME: We could go into ActOnTag to actually make the friend
+      // declaration happen at this point.
+      return DeclPtrTy();
+    } 
+    
+    if (!T.isNull() && T->isDependentType()) {
+      // Since T is a dependent type, handle it as a friend type
+      // declaration.
+      return ActOnFriendTypeDecl(S, DS, MultiTemplateParamsArg(*this, 0, 0));
+    } 
+        
+    // Complain about any non-dependent friend type here.
+    Diag(DS.getFriendSpecLoc(), diag::err_unexpected_friend)
+      << DS.getSourceRange();
+    return DeclPtrTy();
+  }
+         
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
     if (!Record->getDeclName() && Record->isDefinition() &&
         DS.getStorageClassSpec() != DeclSpec::SCS_typedef) {
@@ -1305,7 +1358,7 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
     if (Record->getDeclName() && getLangOptions().Microsoft)
       return DeclPtrTy::make(Tag);
   }
-
+  
   if (!DS.isMissingDeclaratorOk() &&
       DS.getTypeSpecType() != DeclSpec::TST_error) {
     // Warn about typedefs of enums without names, since this is an
@@ -4022,11 +4075,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           = MatchTemplateParametersToScopeSpecifier(KWLoc, SS,
                         (TemplateParameterList**)TemplateParameterLists.get(),
                                               TemplateParameterLists.size())) {
-      if (TUK == TUK_Friend) {
-        // When declaring a friend template, we do want to match the
-        // template parameters to the scope specifier, but don't go so far
-        // as to try to declare a new template.
-      } else if (TemplateParams->size() > 0) {
+      if (TemplateParams->size() > 0) {
         // This is a declaration or definition of a class template (which may
         // be a member of another template).
         OwnedDecl = false;

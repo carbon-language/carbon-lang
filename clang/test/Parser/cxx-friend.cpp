@@ -21,8 +21,8 @@ class B {
   // 'A' here should refer to the declaration above.  
   friend class A;
 
-  friend C; // expected-error {{must specify 'class' in a friend class declaration}}
-  friend U; // expected-error {{must specify 'union' in a friend union declaration}}
+  friend C; // expected-error {{must specify 'class' to befriend}}
+  friend U; // expected-error {{must specify 'union' to befriend}}
   friend int; // expected-error {{friends can only be classes or functions}}
 
   friend void myfunc();

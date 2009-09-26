@@ -579,6 +579,18 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
     Previous = LookupQualifiedName(SemanticContext, Name, LookupOrdinaryName,
                                    true);
+  } else if (TUK == TUK_Friend) {
+    // C++ [namespace.memdef]p3:
+    //   [...] When looking for a prior declaration of a class or a function 
+    //   declared as a friend, and when the name of the friend class or 
+    //   function is neither a qualified name nor a template-id, scopes outside
+    //   the innermost enclosing namespace scope are not considered.
+    SemanticContext = CurContext;
+    while (!SemanticContext->isFileContext())
+      SemanticContext = SemanticContext->getLookupParent();
+    
+    Previous = LookupQualifiedName(SemanticContext, Name, LookupOrdinaryName,
+                                   true);
   } else {
     SemanticContext = CurContext;
     Previous = LookupName(S, Name, LookupOrdinaryName, true);
@@ -654,13 +666,6 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // FIXME: If we had a scope specifier, we better have a previous template
   // declaration!
 
-  // If this is a friend declaration of an undeclared template,
-  // create the template in the innermost namespace scope.
-  if (TUK == TUK_Friend && !PrevClassTemplate) {
-    while (!SemanticContext->isFileContext())
-      SemanticContext = SemanticContext->getParent();
-  }
-
   CXXRecordDecl *NewClass =
     CXXRecordDecl::Create(Context, Kind, SemanticContext, NameLoc, Name, KWLoc,
                           PrevClassTemplate?
@@ -682,10 +687,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   (void)T;
 
   // Set the access specifier.
-  if (TUK == TUK_Friend)
-    NewTemplate->setObjectOfFriendDecl(/* PreviouslyDeclared = */
-                                       PrevClassTemplate != NULL);
-  else 
+  if (!Invalid && TUK != TUK_Friend)
     SetMemberAccessSpecifier(NewTemplate, PrevClassTemplate, AS);
 
   // Set the lexical context of these templates
@@ -701,11 +703,14 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (TUK != TUK_Friend)
     PushOnScopeChains(NewTemplate, S);
   else {
-    // We might be replacing an existing declaration in the lookup tables;
-    // if so, borrow its access specifier.
-    if (PrevClassTemplate)
+    if (PrevClassTemplate && PrevClassTemplate->getAccess() != AS_none) {
       NewTemplate->setAccess(PrevClassTemplate->getAccess());
+      NewClass->setAccess(PrevClassTemplate->getAccess());
+    }
 
+    NewTemplate->setObjectOfFriendDecl(/* PreviouslyDeclared = */
+                                       PrevClassTemplate != NULL);
+    
     // Friend templates are visible in fairly strange ways.
     if (!CurContext->isDependentContext()) {
       DeclContext *DC = SemanticContext->getLookupContext();
@@ -714,6 +719,13 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
         PushOnScopeChains(NewTemplate, EnclosingScope,
                           /* AddToContext = */ false);      
     }
+    
+    FriendDecl *Friend = FriendDecl::Create(Context, CurContext,
+                                            NewClass->getLocation(),
+                                            NewTemplate,
+                                    /*FIXME:*/NewClass->getLocation());
+    Friend->setAccess(AS_public);
+    CurContext->addDecl(Friend);
   }
 
   if (Invalid) {

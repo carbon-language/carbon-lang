@@ -308,8 +308,6 @@ def err_static_assert_expression_is_not_constant : Error<
   "static_assert expression is not an integral constant expression">;
 def err_static_assert_failed : Error<"static_assert failed \"%0\"">;
 
-def err_friend_decl_defines_class : Error<
-  "cannot define a type in a friend declaration">;
 def err_unexpected_friend : Error<
   "friends can only be classes or functions">;
 def err_friend_is_member : Error<
@@ -317,8 +315,7 @@ def err_friend_is_member : Error<
 def ext_friend_inner_class : Extension<
   "C++ 98 does not allow inner classes as friends">;
 def err_unelaborated_friend_type : Error<
-  "must specify '%select{class|union}0' in a friend "
-  "%select{class|union}0 declaration">;
+  "must specify '%select{struct|union|class|enum}0' to befriend %1">;
 def err_qualified_friend_not_found : Error<
   "no function named %0 with type %1 was found in the specified scope">;
 def err_introducing_special_friend : Error<
