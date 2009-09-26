@@ -1132,18 +1132,26 @@ bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
 
 bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
   // <substitution> ::= St # ::std::
+  if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND)) {
+    if (NS->getParent()->isTranslationUnit() &&
+        NS->getOriginalNamespace()->getIdentifier()->isStr("std")) {
+      Out << "St";
+      return true;
+    }
+  }
+
+  if (const ClassTemplateDecl *TD = dyn_cast<ClassTemplateDecl>(ND)) {
+    if (!isStdNamespace(TD->getDeclContext()))
+      return false;
+    
+    // <substitution> ::= Sa # ::std::allocator
+    if (TD->getIdentifier()->isStr("allocator")) {
+      Out << "Sa";
+      return true;
+    }
+  }
   
-  const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND);
-  if (!NS)
-    return false;
-  if (!NS->getParent()->isTranslationUnit())
-    return false;
-  
-  if (!NS->getOriginalNamespace()->getIdentifier()->isStr("std"))
-    return false;
-  
-  Out << "St";
-  return true;
+  return false;
 }
 
 void CXXNameMangler::addSubstitution(QualType T) {

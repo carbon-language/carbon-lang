@@ -7,3 +7,12 @@ namespace std {
   // CHECK: define void @_ZNSt1AC2Ev
   A::A() { }
 };
+
+namespace std {
+  template<typename T> struct allocator { allocator(); };
+}
+
+// FIXME: typename is really not allowed here, but it's kept 
+// as a workaround for PR5061.
+// CHECK: define void @_Z1fSaIcESaIiE
+void f(typename std::allocator<char>, typename std::allocator<int>) { }
