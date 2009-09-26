@@ -77,14 +77,14 @@ namespace {
   };
 }
 
-void Decl::print(llvm::raw_ostream &Out, unsigned Indentation) {
+void Decl::print(llvm::raw_ostream &Out, unsigned Indentation) const {
   print(Out, getASTContext().PrintingPolicy, Indentation);
 }
 
 void Decl::print(llvm::raw_ostream &Out, const PrintingPolicy &Policy,
-                 unsigned Indentation) {
+                 unsigned Indentation) const {
   DeclPrinter Printer(Out, getASTContext(), Policy, Indentation);
-  Printer.Visit(this);
+  Printer.Visit(const_cast<Decl*>(this));
 }
 
 static QualType GetBaseType(QualType T) {
@@ -149,7 +149,7 @@ void Decl::printGroup(Decl** Begin, unsigned NumDecls,
   }
 }
 
-void Decl::dump() {
+void Decl::dump() const {
   print(llvm::errs());
 }
 

@@ -456,13 +456,13 @@ public:
   /// Destroy - Call destructors and release memory.
   virtual void Destroy(ASTContext& C);
 
-  void print(llvm::raw_ostream &Out, unsigned Indentation = 0);
+  void print(llvm::raw_ostream &Out, unsigned Indentation = 0) const;
   void print(llvm::raw_ostream &Out, const PrintingPolicy &Policy,
-             unsigned Indentation = 0);
+             unsigned Indentation = 0) const;
   static void printGroup(Decl** Begin, unsigned NumDecls,
                          llvm::raw_ostream &Out, const PrintingPolicy &Policy,
                          unsigned Indentation = 0);
-  void dump();
+  void dump() const;
 
 private:
   const Attr *getAttrsImpl() const;
