@@ -1,5 +1,5 @@
 ; RUN: opt < %s -simplify-libcalls -S | FileCheck %s
-; rdar://7235530
+; rdar://7251832
 
 ; SimplifyLibcalls should optimize pow(x, 0.5) to sqrt plus code to handle
 ; special cases. The readonly attribute on the call should be preserved.
