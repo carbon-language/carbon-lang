@@ -62,3 +62,8 @@ void test11(int X) {
   __builtin_eh_return_data_regno(X);  // expected-error {{not an integer constant expression}}
 }
 
+// PR5062
+void test12(void) __attribute__((__noreturn__));
+void test12(void) {
+  __builtin_trap();  // no warning because trap is noreturn.
+}
