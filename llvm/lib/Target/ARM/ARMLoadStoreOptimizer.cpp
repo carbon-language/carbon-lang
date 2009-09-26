@@ -1185,6 +1185,7 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
   } else
     return false;
 
+  // Make sure the offset registers match.
   if (!isT2 &&
       (Op0->getOperand(2).getReg() != Op1->getOperand(2).getReg()))
       return false;
