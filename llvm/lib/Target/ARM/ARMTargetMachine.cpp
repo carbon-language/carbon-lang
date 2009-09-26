@@ -22,8 +22,6 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-static cl::opt<bool> DisableLdStOpti("disable-arm-loadstore-opti", cl::Hidden,
-                              cl::desc("Disable load store optimization pass"));
 static cl::opt<bool> DisableIfConversion("disable-arm-if-conversion",cl::Hidden,
                               cl::desc("Disable if-conversion pass"));
 
@@ -101,7 +99,7 @@ bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
     PM.add(createNEONPreAllocPass());
 
   // FIXME: temporarily disabling load / store optimization pass for Thumb mode.
-  if (OptLevel != CodeGenOpt::None && !DisableLdStOpti && !Subtarget.isThumb())
+  if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb())
     PM.add(createARMLoadStoreOptimizationPass(true));
   return true;
 }
@@ -109,12 +107,10 @@ bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
 bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb1 mode.
-  if (OptLevel != CodeGenOpt::None && !DisableLdStOpti &&
-      !Subtarget.isThumb1Only())
+  if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
     PM.add(createARMLoadStoreOptimizationPass());
 
-  if (OptLevel != CodeGenOpt::None &&
-      !DisableIfConversion && !Subtarget.isThumb1Only())
+  if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
     PM.add(createIfConverterPass());
 
   if (Subtarget.isThumb2()) {
