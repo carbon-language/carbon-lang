@@ -579,18 +579,6 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
     Previous = LookupQualifiedName(SemanticContext, Name, LookupOrdinaryName,
                                    true);
-  } else if (TUK == TUK_Friend) {
-    // C++ [namespace.memdef]p3:
-    //   [...] When looking for a prior declaration of a class or a function 
-    //   declared as a friend, and when the name of the friend class or 
-    //   function is neither a qualified name nor a template-id, scopes outside
-    //   the innermost enclosing namespace scope are not considered.
-    SemanticContext = CurContext;
-    while (!SemanticContext->isFileContext())
-      SemanticContext = SemanticContext->getLookupParent();
-    
-    Previous = LookupQualifiedName(SemanticContext, Name, LookupOrdinaryName,
-                                   true);
   } else {
     SemanticContext = CurContext;
     Previous = LookupName(S, Name, LookupOrdinaryName, true);
@@ -601,7 +589,27 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (Previous.begin() != Previous.end())
     PrevDecl = *Previous.begin();
 
-  if (PrevDecl && !isDeclInScope(PrevDecl, SemanticContext, S))
+  if (PrevDecl && TUK == TUK_Friend) {
+    // C++ [namespace.memdef]p3:
+    //   [...] When looking for a prior declaration of a class or a function 
+    //   declared as a friend, and when the name of the friend class or 
+    //   function is neither a qualified name nor a template-id, scopes outside
+    //   the innermost enclosing namespace scope are not considered.
+    DeclContext *OutermostContext = CurContext;
+    while (!OutermostContext->isFileContext())
+      OutermostContext = OutermostContext->getLookupParent();
+    
+    if (OutermostContext->Equals(PrevDecl->getDeclContext()) ||
+        OutermostContext->Encloses(PrevDecl->getDeclContext())) {
+      SemanticContext = PrevDecl->getDeclContext();
+    } else {
+      // Declarations in outer scopes don't matter. However, the outermost
+      // context we computed is the semntic context for our new 
+      // declaration.
+      PrevDecl = 0;
+      SemanticContext = OutermostContext;
+    }
+  } else if (PrevDecl && !isDeclInScope(PrevDecl, SemanticContext, S))
     PrevDecl = 0;
 
   // If there is a previous declaration with the same name, check
