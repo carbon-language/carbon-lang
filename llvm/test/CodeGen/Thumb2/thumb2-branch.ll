@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 -disable-arm-if-conversion | FileCheck %s
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
 
 define void @f1(i32 %a, i32 %b, i32* %v) {
 entry:

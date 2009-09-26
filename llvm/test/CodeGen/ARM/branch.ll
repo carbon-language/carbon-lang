@@ -3,6 +3,7 @@
 ; RUN: grep bge %t
 ; RUN: grep bhs %t
 ; RUN: grep blo %t
+; XFAIL: *
 
 define void @f1(i32 %a, i32 %b, i32* %v) {
 entry:
