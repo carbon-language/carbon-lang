@@ -252,13 +252,13 @@ static bool isStdNamespace(const DeclContext *DC) {
   return NS->getOriginalNamespace()->getIdentifier()->isStr("std");
 }
 
-static const NamedDecl *isTemplate(const NamedDecl *ND, 
-                                   const TemplateArgumentList *&TemplateArgs) {
+static const TemplateDecl *
+isTemplate(const NamedDecl *ND, const TemplateArgumentList *&TemplateArgs) {
   // Check if we have a function template.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)){
-    if (FD->getPrimaryTemplate()) {
+    if (const TemplateDecl *TD = FD->getPrimaryTemplate()) {
       TemplateArgs = FD->getTemplateSpecializationArgs();
-      return FD;
+      return TD;
     }
   }
 
@@ -266,7 +266,7 @@ static const NamedDecl *isTemplate(const NamedDecl *ND,
   if (const ClassTemplateSpecializationDecl *Spec =
         dyn_cast<ClassTemplateSpecializationDecl>(ND)) {
     TemplateArgs = &Spec->getTemplateArgs();
-    return Spec;
+    return Spec->getSpecializedTemplate();
   }
     
   return 0;
