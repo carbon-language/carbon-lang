@@ -51,6 +51,9 @@ public:
   Value *CreateSub(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateSub(LHS, RHS);
   }
+  Value *CreateNSWSub(Constant *LHS, Constant *RHS) const {
+    return BinaryOperator::CreateNSWSub(LHS, RHS);
+  }
   Value *CreateFSub(Constant *LHS, Constant *RHS) const {
     return BinaryOperator::CreateFSub(LHS, RHS);
   }

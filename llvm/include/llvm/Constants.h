@@ -654,6 +654,7 @@ public:
   static Constant *getBitCast (Constant *C, const Type *Ty);
 
   static Constant* getNSWAdd(Constant* C1, Constant* C2);
+  static Constant* getNSWSub(Constant* C1, Constant* C2);
   static Constant* getExactSDiv(Constant* C1, Constant* C2);
 
   /// Transparently provide more efficient getOperand methods.

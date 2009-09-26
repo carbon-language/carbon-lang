@@ -44,6 +44,9 @@ public:
   Constant *CreateSub(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getSub(LHS, RHS);
   }
+  Constant *CreateNSWSub(Constant *LHS, Constant *RHS) const {
+    return ConstantExpr::getNSWSub(LHS, RHS);
+  }
   Constant *CreateFSub(Constant *LHS, Constant *RHS) const {
     return ConstantExpr::getFSub(LHS, RHS);
   }
