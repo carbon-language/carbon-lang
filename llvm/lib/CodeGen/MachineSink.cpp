@@ -39,6 +39,7 @@ namespace {
     MachineFunction       *CurMF; // Current MachineFunction
     MachineRegisterInfo  *RegInfo; // Machine register information
     MachineDominatorTree *DT;   // Machine dominator tree
+    BitVector AllocatableSet;   // Which physregs are allocatable?
 
   public:
     static char ID; // Pass identification
@@ -99,6 +100,7 @@ bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
   TRI = TM->getRegisterInfo();
   RegInfo = &CurMF->getRegInfo();
   DT = &getAnalysis<MachineDominatorTree>();
+  AllocatableSet = TRI->getAllocatableSet(*CurMF);
 
   bool EverMadeChange = false;
   
@@ -180,13 +182,20 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
       // we can move it, but only if the def is dead.
       if (MO.isUse()) {
         // If the physreg has no defs anywhere, it's just an ambient register
-        // and we can freely move its uses.
+        // and we can freely move its uses. Alternatively, if it's allocatable,
+        // it could get allocated to something with a def during allocation.
         if (!RegInfo->def_empty(Reg))
           return false;
+        if (AllocatableSet.test(Reg))
+          return false;
         // Check for a def among the register's aliases too.
-        for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
-          if (!RegInfo->def_empty(*Alias))
+        for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+          unsigned AliasReg = *Alias;
+          if (!RegInfo->def_empty(AliasReg))
             return false;
+          if (AllocatableSet.test(AliasReg))
+            return false;
+        }
       } else if (!MO.isDead()) {
         // A def that isn't dead. We can't move it.
         return false;
