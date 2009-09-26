@@ -93,17 +93,17 @@ int main() {
   dstY.pr();
 }
 
-// CHECK-LP64: .globl   __ZN1XaSERK1X
-// CHECK-LP64: .weak_definition  __ZN1XaSERK1X
-// CHECK-LP64: __ZN1XaSERK1X:
-// CHECK-LP64: .globl   __ZN1QaSERK1Q
-// CHECK-LP64: .weak_definition  __ZN1QaSERK1Q
-// CHECK-LP64: __ZN1QaSERK1Q:
+// CHECK-LP64: .globl   __ZN1XaSERKS_
+// CHECK-LP64: .weak_definition  __ZN1XaSERKS_
+// CHECK-LP64: __ZN1XaSERKS_:
+// CHECK-LP64: .globl   __ZN1QaSERKS_
+// CHECK-LP64: .weak_definition  __ZN1QaSERKS_
+// CHECK-LP64: __ZN1QaSERKS_:
 
-// CHECK-LP32: .globl   __ZN1XaSERK1X
-// CHECK-LP32: .weak_definition  __ZN1XaSERK1X
-// CHECK-LP32: __ZN1XaSERK1X:
-// CHECK-LP32: .globl   __ZN1QaSERK1Q
-// CHECK-LP32: .weak_definition  __ZN1QaSERK1Q
-// CHECK-LP32: __ZN1QaSERK1Q:
+// CHECK-LP32: .globl   __ZN1XaSERKS_
+// CHECK-LP32: .weak_definition  __ZN1XaSERKS_
+// CHECK-LP32: __ZN1XaSERKS_:
+// CHECK-LP32: .globl   __ZN1QaSERKS_
+// CHECK-LP32: .weak_definition  __ZN1QaSERKS_
+// CHECK-LP32: __ZN1QaSERKS_:
 

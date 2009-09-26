@@ -456,7 +456,7 @@ void CXXNameMangler::mangleSourceName(const IdentifierInfo *II) {
 void CXXNameMangler::mangleNestedName(const NamedDecl *ND) {
   // <nested-name> ::= N [<CV-qualifiers>] <prefix> <unqualified-name> E
   //               ::= N [<CV-qualifiers>] <template-prefix> <template-args> E
-  // FIXME: no class template support
+
   Out << 'N';
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(ND))
     mangleQualifiers(Qualifiers::fromCVRMask(Method->getTypeQualifiers()));
@@ -1077,6 +1077,11 @@ bool CXXNameMangler::mangleSubstitution(const NamedDecl *ND) {
 }
 
 bool CXXNameMangler::mangleSubstitution(QualType T) {
+  if (!T.getCVRQualifiers()) {
+    if (const RecordType *RT = T->getAs<RecordType>())
+      return mangleSubstitution(RT->getDecl());
+  }
+  
   uintptr_t TypePtr = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
 
   return mangleSubstitution(TypePtr);
@@ -1117,6 +1122,13 @@ bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
 }
 
 void CXXNameMangler::addSubstitution(QualType T) {
+  if (!T.getCVRQualifiers()) {
+    if (const RecordType *RT = T->getAs<RecordType>()) {
+      addSubstitution(RT->getDecl());
+      return;
+    }
+  }
+  
   uintptr_t TypePtr = reinterpret_cast<uintptr_t>(T.getAsOpaquePtr());
   addSubstitution(TypePtr);
 }
@@ -1144,6 +1156,10 @@ namespace clang {
     assert(!isa<CXXDestructorDecl>(D) &&
            "Use mangleCXXDtor for destructor decls!");
 
+    PrettyStackTraceDecl CrashInfo(const_cast<NamedDecl *>(D), SourceLocation(),
+                                   Context.getSourceManager(),
+                                   "Mangling declaration");
+    
     CXXNameMangler Mangler(Context, os);
     if (!Mangler.mangle(D))
       return false;

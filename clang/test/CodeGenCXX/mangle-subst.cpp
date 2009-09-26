@@ -24,3 +24,10 @@ namespace A {
 
 // CHECK: define void @_Z1fN1A1AENS_1BE(
 void f(A::A a, A::B b) { }
+
+struct C {
+  struct D { };
+};
+
+// CHECK: define void @_Z1fN1C1DERS_PS_S1_(
+void f(C::D, C&, C*, C&) { }

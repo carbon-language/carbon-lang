@@ -101,10 +101,10 @@ int main() {
   m1.pr();
 }
 
-// CHECK-LP64: .globl  __ZN1XC1ERK1X
-// CHECK-LP64: .weak_definition __ZN1XC1ERK1X
-// CHECK-LP64: __ZN1XC1ERK1X:
+// CHECK-LP64: .globl  __ZN1XC1ERKS_
+// CHECK-LP64: .weak_definition __ZN1XC1ERKS_
+// CHECK-LP64: __ZN1XC1ERKS_:
 
-// CHECK-LP32: .globl  __ZN1XC1ERK1X
-// CHECK-LP32: .weak_definition __ZN1XC1ERK1X
-// CHECK-LP32: __ZN1XC1ERK1X:
+// CHECK-LP32: .globl  __ZN1XC1ERKS_
+// CHECK-LP32: .weak_definition __ZN1XC1ERKS_
+// CHECK-LP32: __ZN1XC1ERKS_:
