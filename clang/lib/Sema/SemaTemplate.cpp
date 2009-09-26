@@ -2566,7 +2566,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                        SourceLocation RAngleLoc,
                                        AttributeList *Attr,
                                MultiTemplateParamsArg TemplateParameterLists) {
-  assert(TUK == TUK_Declaration || TUK == TUK_Definition);
+  assert(TUK != TUK_Reference && "References are not specializations");
 
   // Find the class template we're specializing
   TemplateName Name = TemplateD.getAsVal<TemplateName>();
@@ -2577,6 +2577,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 
   // Check the validity of the template headers that introduce this
   // template.
+  // FIXME: We probably shouldn't complain about these headers for
+  // friend declarations.
   TemplateParameterList *TemplateParams
     = MatchTemplateParametersToScopeSpecifier(TemplateNameLoc, SS,
                         (TemplateParameterList**)TemplateParameterLists.get(),
@@ -2615,7 +2617,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
         }
       }
     }
-  } else if (!TemplateParams)
+  } else if (!TemplateParams && TUK != TUK_Friend)
     Diag(KWLoc, diag::err_template_spec_needs_header)
       << CodeModificationHint::CreateInsertion(KWLoc, "template<> ");
 
@@ -2684,6 +2686,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                 AS_none);
     }
 
+    // FIXME: Diagnose friend partial specializations
+
     // FIXME: Template parameter list matters, too
     ClassTemplatePartialSpecializationDecl::Profile(ID,
                                                    Converted.getFlatArguments(),
@@ -2709,7 +2713,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 
   // Check whether we can declare a class template specialization in
   // the current scope.
-  if (CheckClassTemplateSpecializationScope(ClassTemplate, PrevDecl,
+  if (TUK != TUK_Friend &&
+      CheckClassTemplateSpecializationScope(ClassTemplate, PrevDecl,
                                             TemplateNameLoc,
                                             SS.getRange(),
                                             isPartialSpecialization,
@@ -2718,9 +2723,12 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
 
   // The canonical type
   QualType CanonType;
-  if (PrevDecl && PrevDecl->getSpecializationKind() == TSK_Undeclared) {
+  if (PrevDecl && 
+      (PrevDecl->getSpecializationKind() == TSK_Undeclared ||
+       TUK == TUK_Friend)) {
     // Since the only prior class template specialization with these
-    // arguments was referenced but not declared, reuse that
+    // arguments was referenced but not declared, or we're only
+    // referencing this specialization as a friend, reuse that
     // declaration node as our own, updating its source location to
     // reflect our new declaration.
     Specialization = PrevDecl;
@@ -2790,7 +2798,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     }
   } else {
     // Create a new class template specialization declaration node for
-    // this explicit specialization.
+    // this explicit specialization or friend declaration.
     Specialization
       = ClassTemplateSpecializationDecl::Create(Context,
                                              ClassTemplate->getDeclContext(),
@@ -2810,8 +2818,9 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     CanonType = Context.getTypeDeclType(Specialization);
   }
 
-  // Note that this is an explicit specialization.
-  Specialization->setSpecializationKind(TSK_ExplicitSpecialization);
+  // If this is not a friend, note that this is an explicit specialization.
+  if (TUK != TUK_Friend)
+    Specialization->setSpecializationKind(TSK_ExplicitSpecialization);
 
   // Check that this isn't a redefinition of this specialization.
   if (TUK == TUK_Definition) {
@@ -2839,7 +2848,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                             TemplateArgs.data(),
                                             TemplateArgs.size(),
                                             CanonType);
-  Specialization->setTypeAsWritten(WrittenTy);
+  if (TUK != TUK_Friend)
+    Specialization->setTypeAsWritten(WrittenTy);
   TemplateArgsIn.release();
 
   // C++ [temp.expl.spec]p9:
@@ -2856,10 +2866,19 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   if (TUK == TUK_Definition)
     Specialization->startDefinition();
 
-  // Add the specialization into its lexical context, so that it can
-  // be seen when iterating through the list of declarations in that
-  // context. However, specializations are not found by name lookup.
-  CurContext->addDecl(Specialization);
+  if (TUK == TUK_Friend) {
+    FriendDecl *Friend = FriendDecl::Create(Context, CurContext,
+                                            TemplateNameLoc,
+                                            WrittenTy.getTypePtr(),
+                                            /*FIXME:*/KWLoc);
+    Friend->setAccess(AS_public);
+    CurContext->addDecl(Friend);
+  } else {
+    // Add the specialization into its lexical context, so that it can
+    // be seen when iterating through the list of declarations in that
+    // context. However, specializations are not found by name lookup.
+    CurContext->addDecl(Specialization);
+  }
   return DeclPtrTy::make(Specialization);
 }
 

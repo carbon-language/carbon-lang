@@ -690,7 +690,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                       TemplateId->getTemplateArgLocations(),
                                              TemplateId->RAngleLoc,
                                              Attr);
-    } else if (TUK == Action::TUK_Reference || TUK == Action::TUK_Friend) {
+    } else if (TUK == Action::TUK_Reference) {
       TypeResult
         = Actions.ActOnTemplateIdType(TemplateTy::make(TemplateId->Template),
                                       TemplateId->TemplateNameLoc,

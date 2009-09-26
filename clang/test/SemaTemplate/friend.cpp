@@ -8,3 +8,7 @@ template<typename T> struct A {
 void f() {
   A<int>::B b;
 }
+
+struct C0 {
+  friend struct A<int>;
+};
