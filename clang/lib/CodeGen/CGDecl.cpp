@@ -103,10 +103,13 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
   }
 
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
-  return new llvm::GlobalVariable(CGM.getModule(), LTy,
-                                  Ty.isConstant(getContext()), Linkage,
-                                  CGM.EmitNullConstant(D.getType()), Name, 0,
-                                  D.isThreadSpecified(), Ty.getAddressSpace());
+  llvm::GlobalVariable *GV =
+    new llvm::GlobalVariable(CGM.getModule(), LTy,
+                             Ty.isConstant(getContext()), Linkage,
+                             CGM.EmitNullConstant(D.getType()), Name, 0,
+                             D.isThreadSpecified(), Ty.getAddressSpace());
+  GV->setAlignment(getContext().getDeclAlignInBytes(&D));
+  return GV;
 }
 
 void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
@@ -375,8 +378,10 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
                                     false, "tmp");
 
     // Allocate memory for the array.
-    llvm::Value *VLA = Builder.CreateAlloca(llvm::Type::getInt8Ty(VMContext),
-                                            VLASize, "vla");
+    llvm::AllocaInst *VLA = 
+      Builder.CreateAlloca(llvm::Type::getInt8Ty(VMContext), VLASize, "vla");
+    VLA->setAlignment(getContext().getDeclAlignInBytes(&D));
+
     DeclPtr = Builder.CreateBitCast(VLA, LElemPtrTy, "tmp");
   }
 
