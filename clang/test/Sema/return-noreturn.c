@@ -11,6 +11,12 @@ void test2() {
   if (j) while (1) { }
 }
 
+__attribute__((__noreturn__))
+void test2_positive() {
+  if (j) while (1) { }
+} // expected-warning{{function declared 'noreturn' should not return}}
+
+
 // This test case illustrates that we don't warn about the missing return
 // because the function is marked noreturn and there is an infinite loop.
 extern int foo_test_3();
