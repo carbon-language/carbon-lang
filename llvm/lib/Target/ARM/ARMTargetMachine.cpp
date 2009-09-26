@@ -22,9 +22,6 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-static cl::opt<bool> DisableIfConversion("disable-arm-if-conversion",cl::Hidden,
-                              cl::desc("Disable if-conversion pass"));
-
 static const MCAsmInfo *createMCAsmInfo(const Target &T,
                                         const StringRef &TT) {
   Triple TheTriple(TT);
