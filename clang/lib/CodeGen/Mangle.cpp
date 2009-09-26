@@ -911,7 +911,22 @@ void CXXNameMangler::mangleType(const TemplateSpecializationType *T) {
 }
 
 void CXXNameMangler::mangleType(const TypenameType *T) {
-  assert(false && "can't mangle dependent typenames yet");
+  // Typename types are always nested
+  Out << 'N';
+
+  const Type *QTy = T->getQualifier()->getAsType();
+  if (const TemplateSpecializationType *TST = 
+        dyn_cast<TemplateSpecializationType>(QTy)) {
+    TemplateDecl *TD = TST->getTemplateName().getAsTemplateDecl();
+
+    mangleTemplatePrefix(TD);
+    mangleTemplateArgs(TST->getArgs(), TST->getNumArgs());
+  } else
+    assert(false && "Unhandled type!");
+
+  mangleSourceName(T->getIdentifier());
+  
+  Out << 'E';
 }
 
 void CXXNameMangler::mangleExpression(const Expr *E) {

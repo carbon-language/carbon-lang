@@ -147,3 +147,11 @@ Debug dbg;
 // CHECK: @_ZNK5DebuglsEj
 int main(void) {  dbg << 32 ;}
 }
+
+template<typename T> struct S6 {
+  typedef int B;
+};
+
+template<typename T> void ft5(typename S6<T>::B) { }
+// CHECK: @_Z3ft5IiEvN2S6IT_E1BE
+template void ft5<int>(int);
