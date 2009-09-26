@@ -2953,65 +2953,18 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
     }
   }
   
-  if (Candidates.empty()) {
-    Diag(FD->getLocation(), diag::err_function_template_spec_no_match)
-      << FD->getDeclName();
-    // FIXME: Print the almost-ran candidates.
+  // Find the most specialized function template.
+  FunctionDecl *Specialization = getMostSpecialized(Candidates.data(),
+                                                    Candidates.size(),
+                                                    TPOC_Other,
+                                                    FD->getLocation(),
+                  PartialDiagnostic(diag::err_function_template_spec_no_match) 
+                    << FD->getDeclName(),
+                  PartialDiagnostic(diag::err_function_template_spec_ambiguous)
+                    << FD->getDeclName() << HasExplicitTemplateArgs,
+                  PartialDiagnostic(diag::note_function_template_spec_matched));
+  if (!Specialization)
     return true;
-  }
-  
-  if (Candidates.size() > 1) {
-    // C++ [temp.func.order]p1:
-    //   Partial ordering of overloaded function template declarations is used
-    //   [...] when [...] an explicit specialization (14.7.3) refers to a 
-    //   function template specialization.
-    CandidateSet::iterator Best = Candidates.begin();
-    for (CandidateSet::iterator C = Best + 1, CEnd = Candidates.end();
-         C != CEnd; ++C) {
-      if (getMoreSpecializedTemplate((*Best)->getPrimaryTemplate(), 
-                                     (*C)->getPrimaryTemplate(),
-                                     TPOC_Other)
-            == (*C)->getPrimaryTemplate())
-        Best = C;
-    }
-    
-    bool Ambiguous = false;
-    for (CandidateSet::iterator C = Candidates.begin(), CEnd = Candidates.end();
-         C != CEnd; ++C) {
-      if (C != Best &&
-          getMoreSpecializedTemplate((*Best)->getPrimaryTemplate(), 
-                                     (*C)->getPrimaryTemplate(),
-                                     TPOC_Other)
-            != (*Best)->getPrimaryTemplate()) {
-        Ambiguous = true;
-        break;
-      }
-    }
-    
-    if (Ambiguous) {
-      // Partial ordering was ambiguous.
-      Diag(FD->getLocation(), diag::err_function_template_spec_ambiguous)
-        << FD->getDeclName()
-        << HasExplicitTemplateArgs;
-      
-      for (CandidateSet::iterator C = Candidates.begin(), 
-                               CEnd = Candidates.end();
-           C != CEnd; ++C)
-        Diag((*C)->getLocation(), diag::note_function_template_spec_matched)
-          << getTemplateArgumentBindingsText(
-                            (*C)->getPrimaryTemplate()->getTemplateParameters(),
-                                        *(*C)->getTemplateSpecializationArgs());
-      
-      return true;
-    }
-    
-    // Move the best candidate to the front of the candidates list.
-    std::swap(*Best, Candidates.front());
-  }
-  
-  // The first candidate is a prior declaration of the function template
-  // specialization we're declared here, which we may have created above.
-  FunctionDecl *Specialization = Candidates.front();
   
   // FIXME: Check if the prior specialization has a point of instantiation.
   // If so, we have run afoul of C++ [temp.expl.spec]p6.
