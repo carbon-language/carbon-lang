@@ -508,20 +508,37 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
 }
 
 Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
+  int NumOperands = S->getNumOperands();
   const Type *Ty = SE.getEffectiveSCEVType(S->getType());
-  Value *V = expand(S->getOperand(S->getNumOperands()-1));
+
+  // Find the index of an operand to start with. Choose the operand with
+  // pointer type, if there is one, or the last operand otherwise.
+  int PIdx = 0;
+  for (; PIdx != NumOperands - 1; ++PIdx)
+    if (isa<PointerType>(S->getOperand(PIdx)->getType())) break;
+
+  // Expand code for the operand that we chose.
+  Value *V = expand(S->getOperand(PIdx));
 
   // Turn things like ptrtoint+arithmetic+inttoptr into GEP. See the
   // comments on expandAddToGEP for details.
   if (const PointerType *PTy = dyn_cast<PointerType>(V->getType())) {
+    // Take the operand at PIdx out of the list.
     const SmallVectorImpl<const SCEV *> &Ops = S->getOperands();
-    return expandAddToGEP(&Ops[0], &Ops[Ops.size() - 1], PTy, Ty, V);
+    SmallVector<const SCEV *, 8> NewOps;
+    NewOps.insert(NewOps.end(), Ops.begin(), Ops.begin() + PIdx);
+    NewOps.insert(NewOps.end(), Ops.begin() + PIdx + 1, Ops.end());
+    // Make a GEP.
+    return expandAddToGEP(NewOps.begin(), NewOps.end(), PTy, Ty, V);
   }
 
+  // Otherwise, we'll expand the rest of the SCEVAddExpr as plain integer
+  // arithmetic.
   V = InsertNoopCastOfTo(V, Ty);
 
   // Emit a bunch of add instructions
-  for (int i = S->getNumOperands()-2; i >= 0; --i) {
+  for (int i = NumOperands-1; i >= 0; --i) {
+    if (i == PIdx) continue;
     Value *W = expandCodeFor(S->getOperand(i), Ty);
     V = InsertBinop(Instruction::Add, V, W);
   }
