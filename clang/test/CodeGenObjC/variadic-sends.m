@@ -9,19 +9,19 @@
 
 void f0(A *a) {
   // CHECK-X86-32: call void bitcast (i8* (i8*, %struct.objc_selector*, ...)* @objc_msgSend to void (i8*, %struct.objc_selector*)*)
-  // CHECK-X86-64: call void bitcast (i8* (i8*, %struct.objc_selector*, ...)* @objc_msgSend to void (i64, %struct.objc_selector*)*)
+  // CHECK-X86-64: call void bitcast (i8* (i8*, %struct.objc_selector*, ...)* @objc_msgSend to void (i8*, %struct.objc_selector*)*)
   [a im0];
 }
 
 void f1(A *a) {
   // CHECK-X86-32: call void bitcast (i8* (i8*, %struct.objc_selector*, ...)* @objc_msgSend to void (i8*, %struct.objc_selector*, i32)*)
-  // CHECK-X86-64: call void bitcast (i8* (i8*, %struct.objc_selector*, ...)* @objc_msgSend to void (i64, %struct.objc_selector*, i32)*)
+  // CHECK-X86-64: call void bitcast (i8* (i8*, %struct.objc_selector*, ...)* @objc_msgSend to void (i8*, %struct.objc_selector*, i32)*)
   [a im1: 1];
 }
 
 void f2(A *a) {
   // CHECK-X86-32: call void (i8*, %struct.objc_selector*, i32, i32, ...)* bitcast (i8* (i8*, %struct.objc_selector*, ...)* @objc_msgSend to void (i8*, %struct.objc_selector*, i32, i32, ...)*)
-  // CHECK-X86-64: call void (i64, %struct.objc_selector*, i32, i32, ...)* bitcast (i8* (i8*, %struct.objc_selector*, ...)* @objc_msgSend to void (i64, %struct.objc_selector*, i32, i32, ...)*)
+  // CHECK-X86-64: call void (i8*, %struct.objc_selector*, i32, i32, ...)* bitcast (i8* (i8*, %struct.objc_selector*, ...)* @objc_msgSend to void (i8*, %struct.objc_selector*, i32, i32, ...)*)
   [a im2: 1, 2];
 }
 

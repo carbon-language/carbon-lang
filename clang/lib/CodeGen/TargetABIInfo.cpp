@@ -836,7 +836,7 @@ ABIArgInfo X86_64ABIInfo::getCoerceResult(QualType Ty,
   if (CoerceTo == llvm::Type::getInt64Ty(CoerceTo->getContext())) {
     // Integer and pointer types will end up in a general purpose
     // register.
-    if (Ty->isIntegralType() || Ty->isPointerType())
+    if (Ty->isIntegralType() || Ty->hasPointerRepresentation())
       return (Ty->isPromotableIntegerType() ?
               ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
   } else if (CoerceTo == llvm::Type::getDoubleTy(CoerceTo->getContext())) {
