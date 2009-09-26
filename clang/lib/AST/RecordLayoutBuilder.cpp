@@ -377,7 +377,7 @@ uint64_t ASTRecordLayoutBuilder::LayoutBase(const CXXRecordDecl *RD) {
   unsigned BaseAlign = BaseInfo.getNonVirtualAlign();
   
   // Round up the current record size to the base's alignment boundary.
-  uint64_t Offset = llvm::RoundUpToAlignment(Size, BaseAlign);
+  uint64_t Offset = llvm::RoundUpToAlignment(NextOffset, BaseAlign);
   
   // Try to place the base.
   while (true) {
