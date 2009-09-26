@@ -223,30 +223,33 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
 }
 
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
-  // Find the entry function definition.
-  FunctionDecl *FD = 0;
-  TranslationUnitDecl *TU = Ctx->getTranslationUnitDecl();
-  for (DeclContext::decl_iterator I = TU->decls_begin(), E = TU->decls_end();
-       I != E; ++I) {
-    if (FunctionDecl *fd = dyn_cast<FunctionDecl>(*I))
-      if (fd->isThisDeclarationADefinition() &&
-          fd->getNameAsString() == Opts.AnalyzeSpecificFunction) {
-        FD = fd;
-        break;
+  
+  TranslationUnitDecl *TU = C.getTranslationUnitDecl();
+  
+  if (!TranslationUnitActions.empty()) {  
+    // Find the entry function definition (if any).
+    FunctionDecl *FD = 0;
+    
+    if (!Opts.AnalyzeSpecificFunction.empty()) {
+      for (DeclContext::decl_iterator I=TU->decls_begin(), E=TU->decls_end();
+           I != E; ++I) {
+        if (FunctionDecl *fd = dyn_cast<FunctionDecl>(*I))
+          if (fd->isThisDeclarationADefinition() &&
+              fd->getNameAsString() == Opts.AnalyzeSpecificFunction) {
+            FD = fd;
+            break;
+          }
       }
-  }
+    }
 
-  if(!TranslationUnitActions.empty()) {
     for (Actions::iterator I = TranslationUnitActions.begin(), 
          E = TranslationUnitActions.end(); I != E; ++I)
       (*I)(*Mgr, FD);  
   }
 
   if (!ObjCImplementationActions.empty()) {
-    TranslationUnitDecl *TUD = C.getTranslationUnitDecl();
-
-    for (DeclContext::decl_iterator I = TUD->decls_begin(),
-                                    E = TUD->decls_end();
+    for (DeclContext::decl_iterator I = TU->decls_begin(),
+                                    E = TU->decls_end();
          I != E; ++I)
       if (ObjCImplementationDecl* ID = dyn_cast<ObjCImplementationDecl>(*I))
         HandleCode(ID, 0, ObjCImplementationActions);
