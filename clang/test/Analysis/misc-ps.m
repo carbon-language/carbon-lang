@@ -657,3 +657,27 @@ void pr_4988(void) {
   pr_4988; // expected-warning{{expression result unused}}
 }
 
+// <rdar://problem/7152418> - A 'signed char' is used as a flag, which is
+//  implicitly converted to an int.
+void *rdar7152418_bar();
+@interface RDar7152418 {
+  signed char x;
+}
+-(char)foo;
+@end;
+@implementation RDar7152418
+-(char)foo {
+  char *p = 0;
+  void *result = 0;
+  if (x) {
+    result = rdar7152418_bar();
+    p = "hello";
+  }
+  if (!result) {
+    result = rdar7152418_bar();
+    if (result && x)
+      return *p; // no-warning
+  }
+  return 1;
+}
+
