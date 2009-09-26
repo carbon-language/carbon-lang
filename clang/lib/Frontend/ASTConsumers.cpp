@@ -543,6 +543,12 @@ public:
       if (RD->isDependentType())
         continue;
       
+      if (RD->isInvalidDecl())
+        continue;
+      
+      if (!RD->getDefinition(C))
+        continue;
+      
       // FIXME: Do we really need to hard code this?
       if (RD->getQualifiedNameAsString() == "__va_list_tag")
         continue;
