@@ -4036,7 +4036,6 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   // Look through all of the overloaded functions, searching for one
   // whose type matches exactly.
   llvm::SmallPtrSet<FunctionDecl *, 4> Matches;
-
   bool FoundNonTemplateFunction = false;
   for (OverloadIterator FunEnd; Fun != FunEnd; ++Fun) {
     // C++ [over.over]p3:
@@ -4106,15 +4105,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 
   // C++ [over.over]p4:
   //   If more than one function is selected, [...]
-  llvm::SmallVector<FunctionDecl *, 4> RemainingMatches;
   typedef llvm::SmallPtrSet<FunctionDecl *, 4>::iterator MatchIter;
-  if (FoundNonTemplateFunction) {
-    //   [...] any function template specializations in the set are
-    //   eliminated if the set also contains a non-template function, [...]
-    for (MatchIter M = Matches.begin(), MEnd = Matches.end(); M != MEnd; ++M)
-      if ((*M)->getPrimaryTemplate() == 0)
-        RemainingMatches.push_back(*M);
-  } else {
+  if (!FoundNonTemplateFunction) {
     //   [...] and any given function template specialization F1 is
     //   eliminated if the set contains a second function template
     //   specialization whose function template is more specialized
@@ -4125,45 +4117,23 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     // two-pass algorithm (similar to the one used to identify the
     // best viable function in an overload set) that identifies the
     // best function template (if it exists).
-    MatchIter Best = Matches.begin();
-    MatchIter M = Best, MEnd = Matches.end();
-    // Find the most specialized function.
-    for (++M; M != MEnd; ++M)
-      if (getMoreSpecializedTemplate((*M)->getPrimaryTemplate(),
-                                     (*Best)->getPrimaryTemplate(),
-                                     TPOC_Other)
-            == (*M)->getPrimaryTemplate())
-        Best = M;
-
-    // Determine whether this function template is more specialized
-    // that all of the others.
-    bool Ambiguous = false;
-    for (M = Matches.begin(); M != MEnd; ++M) {
-      if (M != Best &&
-          getMoreSpecializedTemplate((*M)->getPrimaryTemplate(),
-                                     (*Best)->getPrimaryTemplate(),
-                                     TPOC_Other)
-           != (*Best)->getPrimaryTemplate()) {
-        Ambiguous = true;
-        break;
-      }
-    }
-
-    // If one function template was more specialized than all of the
-    // others, return it.
-    if (!Ambiguous)
-      return *Best;
-
-    // We could not find a most-specialized function template, which
-    // is equivalent to having a set of function templates with more
-    // than one such template. So, we place all of the function
-    // templates into the set of remaining matches and produce a
-    // diagnostic below. FIXME: we could perform the quadratic
-    // algorithm here, pruning the result set to limit the number of
-    // candidates output later.
-    RemainingMatches.append(Matches.begin(), Matches.end());
+    llvm::SmallVector<FunctionDecl *, 8> TemplateMatches(Matches.begin(), 
+                                                         Matches.end());
+    return getMostSpecialized(TemplateMatches.data(), TemplateMatches.size(), 
+                              TPOC_Other, From->getLocStart(),
+                              PartialDiagnostic(0),
+                            PartialDiagnostic(diag::err_addr_ovl_ambiguous)
+                              << TemplateMatches[0]->getDeclName(), 
+                       PartialDiagnostic(diag::err_ovl_template_candidate));
   }
 
+  //   [...] any function template specializations in the set are
+  //   eliminated if the set also contains a non-template function, [...]
+  llvm::SmallVector<FunctionDecl *, 4> RemainingMatches;
+  for (MatchIter M = Matches.begin(), MEnd = Matches.end(); M != MEnd; ++M)
+    if ((*M)->getPrimaryTemplate() == 0)
+      RemainingMatches.push_back(*M);
+  
   // [...] After such eliminations, if any, there shall remain exactly one
   // selected function.
   if (RemainingMatches.size() == 1)
