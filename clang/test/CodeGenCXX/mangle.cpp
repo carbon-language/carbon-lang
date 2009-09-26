@@ -155,3 +155,21 @@ template<typename T> struct S6 {
 template<typename T> void ft5(typename S6<T>::B) { }
 // CHECK: @_Z3ft5IiEvN2S6IT_E1BE
 template void ft5<int>(int);
+
+template<typename T> class A {};
+
+namespace NS {
+template<typename T> bool operator==(const A<T>&, const A<T>&) { return true; }
+}
+
+// FIXME: This should be _ZN2NSeqIcEEbRK1AIT_ES5_
+// CHECK: @_ZN2NSeqIcEEbRK1AIT_ES4_
+template bool NS::operator==(const ::A<char>&, const ::A<char>&);
+
+namespace std {
+template<typename T> bool operator==(const A<T>&, const A<T>&) { return true; }
+}
+
+// CHECK: @_ZSteqIcEbRK1AIT_ES4_
+template bool std::operator==(const ::A<char>&, const ::A<char>&);
+

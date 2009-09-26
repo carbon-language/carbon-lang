@@ -335,7 +335,7 @@ void CXXNameMangler::mangleUnscopedTemplateName(const TemplateDecl *ND) {
   if (mangleSubstitution(ND))
     return;
   
-  mangleUnscopedName(ND);
+  mangleUnscopedName(ND->getTemplatedDecl());
   addSubstitution(ND);
 }
 
@@ -532,7 +532,7 @@ void CXXNameMangler::mangleTemplatePrefix(const TemplateDecl *ND) {
   // FIXME: <substitution> and <template-param>
   
   manglePrefix(ND->getDeclContext());
-  mangleUnqualifiedName(ND);
+  mangleUnqualifiedName(ND->getTemplatedDecl());
 }
 
 void
