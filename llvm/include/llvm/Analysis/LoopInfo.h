@@ -8,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the LoopInfo class that is used to identify natural loops
-// and determine the loop depth of various nodes of the CFG.  Note that natural
+// and determine the loop depth of various nodes of the CFG.  A natural loop
+// has exactly one entry-point, which is called the header. Note that natural
 // loops may actually be several loops that share the same header node.
 //
 // This analysis calculates the nesting structure of loops in a function.  For
