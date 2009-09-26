@@ -9,10 +9,19 @@ namespace std {
 };
 
 namespace std {
-  template<typename T> struct allocator { allocator(); };
+  template<typename T> struct allocator { };
 }
 
 // FIXME: typename is really not allowed here, but it's kept 
 // as a workaround for PR5061.
 // CHECK: define void @_Z1fSaIcESaIiE
 void f(typename std::allocator<char>, typename std::allocator<int>) { }
+
+namespace std {
+  template<typename T> struct basic_string { };
+}
+
+// FIXME: typename is really not allowed here, but it's kept 
+// as a workaround for PR5061.
+// CHECK: define void @_Z1fSbIcESbIiE
+void f(typename std::basic_string<char>, typename std::basic_string<int>) { }

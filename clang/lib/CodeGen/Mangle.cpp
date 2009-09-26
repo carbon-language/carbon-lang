@@ -1149,6 +1149,12 @@ bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
       Out << "Sa";
       return true;
     }
+    
+    // <<substitution> ::= Sb # ::std::basic_string
+    if (TD->getIdentifier()->isStr("basic_string")) {
+      Out << "Sb";
+      return true;
+    }
   }
   
   return false;
