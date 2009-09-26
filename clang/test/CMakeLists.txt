@@ -25,6 +25,7 @@ set(CLANG_TEST_DIRECTORIES
 include(FindPythonInterp)
 if(PYTHONINTERP_FOUND)
   get_target_property(LLVM_TOOLS_PATH clang RUNTIME_OUTPUT_DIRECTORY)
+  get_target_property(LLVM_LIBS_PATH clang LIBRARY_OUTPUT_DIRECTORY)
   set(CLANG_TEST_EXTRA_ARGS)
   if (MSVC OR XCODE)
     set(CLANG_TEST_EXTRA_ARGS "--no-progress-bar")
@@ -35,6 +36,7 @@ if(PYTHONINTERP_FOUND)
       COMMAND sed -e "s#\@LLVM_SOURCE_DIR\@#${LLVM_MAIN_SRC_DIR}#"
                   -e "s#\@LLVM_BINARY_DIR\@#${LLVM_BINARY_DIR}#"
                   -e "s#\@LLVM_TOOLS_DIR\@#${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}#"
+                  -e "s#\@LLVM_LIBS_DIR\@#${LLVM_LIBS_PATH}/${CMAKE_CFG_INTDIR}#"
                   -e "s#\@CLANG_SOURCE_DIR\@#${CMAKE_CURRENT_SOURCE_DIR}/..#"
                   -e "s#\@CLANG_BINARY_DIR\@#${CMAKE_CURRENT_BINARY_DIR}/..#"
                   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in >
@@ -51,6 +53,7 @@ if(PYTHONINTERP_FOUND)
     COMMAND sed -e "s#\@LLVM_SOURCE_DIR\@#${LLVM_MAIN_SRC_DIR}#"
                 -e "s#\@LLVM_BINARY_DIR\@#${LLVM_BINARY_DIR}#"
                 -e "s#\@LLVM_TOOLS_DIR\@#${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}#"
+                -e "s#\@LLVM_LIBS_DIR\@#${LLVM_LIBS_PATH}/${CMAKE_CFG_INTDIR}#"
                 -e "s#\@CLANG_SOURCE_DIR\@#${CMAKE_CURRENT_SOURCE_DIR}/..#"
                 -e "s#\@CLANG_BINARY_DIR\@#${CMAKE_CURRENT_BINARY_DIR}/..#"
                 ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in >
@@ -66,6 +69,7 @@ if(PYTHONINTERP_FOUND)
     COMMAND sed -e "s#\@LLVM_SOURCE_DIR\@#${LLVM_MAIN_SRC_DIR}#"
                 -e "s#\@LLVM_BINARY_DIR\@#${LLVM_BINARY_DIR}#"
                 -e "s#\@LLVM_TOOLS_DIR\@#${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}#"
+                -e "s#\@LLVM_LIBS_DIR\@#${LLVM_LIBS_PATH}/${CMAKE_CFG_INTDIR}#"
                 -e "s#\@CLANG_SOURCE_DIR\@#${CMAKE_CURRENT_SOURCE_DIR}/..#"
                 -e "s#\@CLANG_BINARY_DIR\@#${CMAKE_CURRENT_BINARY_DIR}/..#"
                 ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in >

@@ -37,6 +37,7 @@ lit.site.cfg: FORCE
 	@sed -e "s#@LLVM_SOURCE_DIR@#$(LLVM_SRC_ROOT)#g" \
 	     -e "s#@LLVM_BINARY_DIR@#$(LLVM_OBJ_ROOT)#g" \
 	     -e "s#@LLVM_TOOLS_DIR@#$(ToolDir)#g" \
+	     -e "s#@LLVM_LIBS_DIR@#$(LibDir)#g" \
 	     -e "s#@CLANG_SOURCE_DIR@#$(PROJ_SRC_DIR)/..#g" \
 	     -e "s#@CLANG_BINARY_DIR@#$(PROJ_OBJ_DIR)/..#g" \
 	     $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
