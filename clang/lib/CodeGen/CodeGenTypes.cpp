@@ -342,9 +342,16 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     // Name the codegen type after the typedef name
     // if there is no tag type name available
     if (TD->getIdentifier())
-      TypeName += TD->getNameAsString();
+      // FIXME: We should not have to check for a null decl context here.
+      // Right now we do it because the implicit Obj-C decls don't have one.
+      TypeName += TD->getDeclContext() ? TD->getQualifiedNameAsString() :
+        TD->getNameAsString();
     else if (const TypedefType *TdT = dyn_cast<TypedefType>(T))
-      TypeName += TdT->getDecl()->getNameAsString();
+      // FIXME: We should not have to check for a null decl context here.
+      // Right now we do it because the implicit Obj-C decls don't have one.
+      TypeName += TdT->getDecl()->getDeclContext() ? 
+        TdT->getDecl()->getQualifiedNameAsString() :
+        TdT->getDecl()->getNameAsString();
     else
       TypeName += "anon";
 
