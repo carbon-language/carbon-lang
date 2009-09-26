@@ -57,3 +57,8 @@ SA(9, sizeof(S5) == 2);
 
 struct S6 : S5 { };
 SA(10, sizeof(S6) == 2);
+
+struct S7 : Empty {
+  void *v;
+};
+SA(11, sizeof(S7) == 8);

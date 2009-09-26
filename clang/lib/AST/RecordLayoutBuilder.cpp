@@ -513,7 +513,7 @@ void ASTRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
 
 void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   bool FieldPacked = Packed;
-  uint64_t FieldOffset = IsUnion ? 0 : Size;
+  uint64_t FieldOffset = IsUnion ? 0 : NextOffset;
   uint64_t FieldSize;
   unsigned FieldAlign;
 
