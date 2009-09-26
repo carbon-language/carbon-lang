@@ -162,8 +162,7 @@ namespace NS {
 template<typename T> bool operator==(const A<T>&, const A<T>&) { return true; }
 }
 
-// FIXME: This should be _ZN2NSeqIcEEbRK1AIT_ES5_
-// CHECK: @_ZN2NSeqIcEEbRK1AIT_ES4_
+// CHECK: @_ZN2NSeqIcEEbRK1AIT_ES5_
 template bool NS::operator==(const ::A<char>&, const ::A<char>&);
 
 namespace std {

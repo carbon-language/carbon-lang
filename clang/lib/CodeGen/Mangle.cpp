@@ -531,10 +531,15 @@ void CXXNameMangler::mangleTemplatePrefix(const TemplateDecl *ND) {
   //                   ::= <template-param>
   //                   ::= <substitution>
 
-  // FIXME: <substitution> and <template-param>
+  if (mangleSubstitution(ND))
+    return;
+  
+  // FIXME: <template-param>
   
   manglePrefix(ND->getDeclContext());
   mangleUnqualifiedName(ND->getTemplatedDecl());
+  
+  addSubstitution(ND);
 }
 
 void
