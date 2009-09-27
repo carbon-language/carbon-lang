@@ -934,19 +934,21 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
   case ISD::Constant: {
     unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
     bool UseCP = true;
-    if (Subtarget->isThumb()) {
-      if (Subtarget->hasThumb2())
-        // Thumb2 has the MOVT instruction, so all immediates can
-        // be done with MOV + MOVT, at worst.
-        UseCP = 0;
-      else
+    if (Subtarget->hasThumb2())
+      // Thumb2-aware targets have the MOVT instruction, so all immediates can
+      // be done with MOV + MOVT, at worst.
+      UseCP = 0;
+    else {
+      if (Subtarget->isThumb()) {
         UseCP = (Val > 255 &&                          // MOV
                  ~Val > 255 &&                         // MOV + MVN
                  !ARM_AM::isThumbImmShiftedVal(Val));  // MOV + LSL
-    } else
-      UseCP = (ARM_AM::getSOImmVal(Val) == -1 &&     // MOV
-               ARM_AM::getSOImmVal(~Val) == -1 &&    // MVN
-               !ARM_AM::isSOImmTwoPartVal(Val));     // two instrs.
+      } else
+        UseCP = (ARM_AM::getSOImmVal(Val) == -1 &&     // MOV
+                 ARM_AM::getSOImmVal(~Val) == -1 &&    // MVN
+                 !ARM_AM::isSOImmTwoPartVal(Val));     // two instrs.
+    }
+
     if (UseCP) {
       SDValue CPIdx =
         CurDAG->getTargetConstantPool(ConstantInt::get(

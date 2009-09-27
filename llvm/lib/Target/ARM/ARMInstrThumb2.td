@@ -88,28 +88,6 @@ def imm0_255_neg : PatLeaf<(i32 imm), [{
   return (uint32_t)(-N->getZExtValue()) < 255;
 }], imm_neg_XFORM>; 
 
-/// imm0_65535 predicate - True if the 32-bit immediate is in the range 
-/// [0.65535].
-def imm0_65535 : PatLeaf<(i32 imm), [{
-  return (uint32_t)N->getZExtValue() < 65536;
-}]>;
-
-/// Split a 32-bit immediate into two 16 bit parts.
-def t2_lo16 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant((uint32_t)N->getZExtValue() & 0xffff,
-                                   MVT::i32);
-}]>;
-
-def t2_hi16 : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant((uint32_t)N->getZExtValue() >> 16, MVT::i32);
-}]>;
-
-def t2_lo16AllZero : PatLeaf<(i32 imm), [{
-  // Returns true if all low 16-bits are 0.
-  return (((uint32_t)N->getZExtValue()) & 0xFFFFUL) == 0;
-  }], t2_hi16>;
-
-
 // Define Thumb2 specific addressing modes.
 
 // t2addrmode_imm12  := reg + imm12
@@ -681,12 +659,11 @@ def t2MOVi16 : T2I<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVi,
                    "movw", " $dst, $src",
                    [(set GPR:$dst, imm0_65535:$src)]>;
 
-// FIXME: Also available in ARM mode.
 let Constraints = "$src = $dst" in
 def t2MOVTi16 : T2sI<(outs GPR:$dst), (ins GPR:$src, i32imm:$imm), IIC_iMOVi,
                      "movt", " $dst, $imm",
                      [(set GPR:$dst,
-                           (or (and GPR:$src, 0xffff), t2_lo16AllZero:$imm))]>;
+                           (or (and GPR:$src, 0xffff), lo16AllZero:$imm))]>;
 
 //===----------------------------------------------------------------------===//
 //  Extend Instructions.
@@ -1153,4 +1130,4 @@ def : T2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 // Large immediate handling.
 
 def : T2Pat<(i32 imm:$src),
-            (t2MOVTi16 (t2MOVi16 (t2_lo16 imm:$src)), (t2_hi16 imm:$src))>;
+            (t2MOVTi16 (t2MOVi16 (lo16 imm:$src)), (hi16 imm:$src))>;

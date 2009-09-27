@@ -190,6 +190,27 @@ def bf_inv_mask_imm : Operand<i32>,
   let PrintMethod = "printBitfieldInvMaskImmOperand";
 }
 
+/// Split a 32-bit immediate into two 16 bit parts.
+def lo16 : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant((uint32_t)N->getZExtValue() & 0xffff,
+                                   MVT::i32);
+}]>;
+
+def hi16 : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant((uint32_t)N->getZExtValue() >> 16, MVT::i32);
+}]>;
+
+def lo16AllZero : PatLeaf<(i32 imm), [{
+  // Returns true if all low 16-bits are 0.
+  return (((uint32_t)N->getZExtValue()) & 0xFFFFUL) == 0;
+  }], hi16>;
+
+/// imm0_65535 predicate - True if the 32-bit immediate is in the range 
+/// [0.65535].
+def imm0_65535 : PatLeaf<(i32 imm), [{
+  return (uint32_t)N->getZExtValue() < 65536;
+}]>;
+
 class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
 class UnOpFrag <dag res> : PatFrag<(ops node:$Src), res>;
 
@@ -897,15 +918,36 @@ def STM : AXI4st<(outs),
 
 let neverHasSideEffects = 1 in
 def MOVr : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMOVr,
-                 "mov", " $dst, $src", []>, UnaryDP;
+                "mov", " $dst, $src", []>, UnaryDP;
 def MOVs : AsI1<0b1101, (outs GPR:$dst), (ins so_reg:$src), 
-                 DPSoRegFrm, IIC_iMOVsr,
-                 "mov", " $dst, $src", [(set GPR:$dst, so_reg:$src)]>, UnaryDP;
+                DPSoRegFrm, IIC_iMOVsr,
+                "mov", " $dst, $src", [(set GPR:$dst, so_reg:$src)]>, UnaryDP;
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOVi : AsI1<0b1101, (outs GPR:$dst), (ins so_imm:$src), DPFrm, IIC_iMOVi,
-                 "mov", " $dst, $src", [(set GPR:$dst, so_imm:$src)]>, UnaryDP {
-    let Inst{25} = 1;
+                "mov", " $dst, $src", [(set GPR:$dst, so_imm:$src)]>, UnaryDP {
+  let Inst{25} = 1;
+}
+
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in
+def MOVi16 : AI1<0b1000, (outs GPR:$dst), (ins i32imm:$src), 
+                 DPFrm, IIC_iMOVi,
+                 "movw", " $dst, $src",
+                 [(set GPR:$dst, imm0_65535:$src)]>,
+                 Requires<[IsARM, HasV6T2]> {
+  let Inst{25} = 1;
+}
+
+let isReMaterializable = 1, isAsCheapAsAMove = 1, 
+    Constraints = "$src = $dst" in
+def MOVTi16 : AI1<0b1010, (outs GPR:$dst), (ins GPR:$src, i32imm:$imm),
+                  DPFrm, IIC_iMOVi,
+                  "movt", " $dst, $imm", 
+                  [(set GPR:$dst,
+                        (or (and GPR:$src, 0xffff), 
+                            lo16AllZero:$imm))]>, UnaryDP,
+                  Requires<[IsARM, HasV6T2]> {
+  let Inst{25} = 1;
 }
 
 let Uses = [CPSR] in
@@ -1477,6 +1519,10 @@ def : ARMPat<(or GPR:$LHS, so_imm2part:$RHS),
 def : ARMPat<(xor GPR:$LHS, so_imm2part:$RHS),
              (EORri (EORri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
                     (so_imm2part_2 imm:$RHS))>;
+
+def : ARMPat<(i32 imm:$src),
+             (MOVTi16 (MOVi16 (lo16 imm:$src)), (hi16 imm:$src))>,
+       Requires<[IsARM, HasV6T2]>;
 
 // TODO: add,sub,and, 3-instr forms?
 
