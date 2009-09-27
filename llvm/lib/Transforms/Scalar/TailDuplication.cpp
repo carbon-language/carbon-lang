@@ -28,7 +28,6 @@
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Analysis/ConstantFolding.h"
-#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -129,8 +128,8 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI,
     // other instructions.
     if (isa<CallInst>(I) || isa<InvokeInst>(I)) return false;
 
-    // Allso alloca and malloc.
-    if (isa<AllocationInst>(I) || isMalloc(I)) return false;
+    // Also alloca and malloc.
+    if (isa<AllocationInst>(I)) return false;
 
     // Some vector instructions can expand into a number of instructions.
     if (isa<ShuffleVectorInst>(I) || isa<ExtractElementInst>(I) ||
