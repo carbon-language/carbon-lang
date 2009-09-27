@@ -1822,7 +1822,7 @@ bool GVN::processInstruction(Instruction *I,
 
   // Allocations are always uniquely numbered, so we can save time and memory
   // by fast failing them.
-  } else if (isa<AllocationInst>(I) || isMalloc(I) || isa<TerminatorInst>(I)) {
+  } else if (isa<AllocationInst>(I) || isa<TerminatorInst>(I)) {
     localAvail[I->getParent()]->table.insert(std::make_pair(Num, I));
     return false;
   }
@@ -1987,7 +1987,7 @@ bool GVN::performPRE(Function& F) {
          BE = CurrentBlock->end(); BI != BE; ) {
       Instruction *CurInst = BI++;
 
-      if (isa<AllocationInst>(CurInst) || isMalloc(CurInst) ||
+      if (isa<AllocationInst>(CurInst) ||
           isa<TerminatorInst>(CurInst) || isa<PHINode>(CurInst) ||
           (CurInst->getType() == Type::getVoidTy(F.getContext())) ||
           CurInst->mayReadFromMemory() || CurInst->mayHaveSideEffects() ||
