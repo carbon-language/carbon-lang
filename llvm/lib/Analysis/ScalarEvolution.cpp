@@ -207,6 +207,10 @@ bool SCEVCastExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return Op->dominates(BB, DT);
 }
 
+bool SCEVCastExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
+  return Op->properlyDominates(BB, DT);
+}
+
 SCEVTruncateExpr::SCEVTruncateExpr(const FoldingSetNodeID &ID,
                                    const SCEV *op, const Type *ty)
   : SCEVCastExpr(ID, scTruncate, op, ty) {
@@ -260,8 +264,20 @@ bool SCEVNAryExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return true;
 }
 
+bool SCEVNAryExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    if (!getOperand(i)->properlyDominates(BB, DT))
+      return false;
+  }
+  return true;
+}
+
 bool SCEVUDivExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return LHS->dominates(BB, DT) && RHS->dominates(BB, DT);
+}
+
+bool SCEVUDivExpr::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
+  return LHS->properlyDominates(BB, DT) && RHS->properlyDominates(BB, DT);
 }
 
 void SCEVUDivExpr::print(raw_ostream &OS) const {
@@ -325,6 +341,12 @@ bool SCEVUnknown::isLoopInvariant(const Loop *L) const {
 bool SCEVUnknown::dominates(BasicBlock *BB, DominatorTree *DT) const {
   if (Instruction *I = dyn_cast<Instruction>(getValue()))
     return DT->dominates(I->getParent(), BB);
+  return true;
+}
+
+bool SCEVUnknown::properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
+  if (Instruction *I = dyn_cast<Instruction>(getValue()))
+    return DT->properlyDominates(I->getParent(), BB);
   return true;
 }
 

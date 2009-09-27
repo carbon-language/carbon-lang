@@ -104,6 +104,10 @@ namespace llvm {
     /// the specified basic block.
     virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const = 0;
 
+    /// properlyDominates - Return true if elements that makes up this SCEV
+    /// properly dominate the specified basic block.
+    virtual bool properlyDominates(BasicBlock *BB, DominatorTree *DT) const = 0;
+
     /// print - Print out the internal representation of this scalar to the
     /// specified stream.  This should really only be used for debugging
     /// purposes.
@@ -135,6 +139,10 @@ namespace llvm {
     virtual bool hasOperand(const SCEV *Op) const;
 
     virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const {
+      return true;
+    }
+
+    virtual bool properlyDominates(BasicBlock *BB, DominatorTree *DT) const {
       return true;
     }
 
