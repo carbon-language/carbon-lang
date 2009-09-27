@@ -56,6 +56,7 @@
       <li><a href="#t_classifications">Type Classifications</a></li>
       <li><a href="#t_primitive">Primitive Types</a>    
         <ol>
+          <li><a href="#t_integer">Integer Type</a></li>
           <li><a href="#t_floating">Floating Point Types</a></li>
           <li><a href="#t_void">Void Type</a></li>
           <li><a href="#t_label">Label Type</a></li>
@@ -64,7 +65,6 @@
       </li>
       <li><a href="#t_derived">Derived Types</a>
         <ol>
-          <li><a href="#t_integer">Integer Type</a></li>
           <li><a href="#t_array">Array Type</a></li>
           <li><a href="#t_function">Function Type</a></li>
           <li><a href="#t_pointer">Pointer Type</a></li>
@@ -1380,7 +1380,7 @@ Classifications</a> </div>
 
 <p>The <a href="#t_firstclass">first class</a> types are perhaps the most
    important.  Values of these types are the only ones which can be produced by
-   instructions, passed as arguments, or used as operands to instructions.</p>
+   instructions.</p>
 
 </div>
 
@@ -1391,6 +1391,47 @@ Classifications</a> </div>
 
 <p>The primitive types are the fundamental building blocks of the LLVM
    system.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="t_integer">Integer Type</a> </div>
+
+<div class="doc_text">
+
+<h5>Overview:</h5>
+<p>The integer type is a very simple type that simply specifies an arbitrary
+   bit width for the integer type desired. Any bit width from 1 bit to
+   2<sup>23</sup>-1 (about 8 million) can be specified.</p>
+
+<h5>Syntax:</h5>
+<pre>
+  iN
+</pre>
+
+<p>The number of bits the integer will occupy is specified by the <tt>N</tt>
+   value.</p>
+
+<h5>Examples:</h5>
+<table class="layout">
+  <tr class="layout">
+    <td class="left"><tt>i1</tt></td>
+    <td class="left">a single-bit integer.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>i32</tt></td>
+    <td class="left">a 32-bit integer.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>i1942652</tt></td>
+    <td class="left">a really big integer of over 1 million bits.</td>
+  </tr>
+</table>
+
+<p>Note that the code generator does not yet support large integer types to be
+   used as function return types. The specific limit on how large a return type
+   the code generator can currently handle is target-dependent; currently it's
+   often 64 bits for 32-bit targets and 128 bits for 64-bit targets.</p>
 
 </div>
 
@@ -1467,49 +1508,10 @@ Classifications</a> </div>
 
 <p>The real power in LLVM comes from the derived types in the system.  This is
    what allows a programmer to represent arrays, functions, pointers, and other
-   useful types.  Note that these derived types may be recursive: For example,
-   it is possible to have a two dimensional array.</p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_integer">Integer Type</a> </div>
-
-<div class="doc_text">
-
-<h5>Overview:</h5>
-<p>The integer type is a very simple derived type that simply specifies an
-   arbitrary bit width for the integer type desired. Any bit width from 1 bit to
-   2^23-1 (about 8 million) can be specified.</p>
-
-<h5>Syntax:</h5>
-<pre>
-  iN
-</pre>
-
-<p>The number of bits the integer will occupy is specified by the <tt>N</tt>
-   value.</p>
-
-<h5>Examples:</h5>
-<table class="layout">
-  <tr class="layout">
-    <td class="left"><tt>i1</tt></td>
-    <td class="left">a single-bit integer.</td>
-  </tr>
-  <tr class="layout">
-    <td class="left"><tt>i32</tt></td>
-    <td class="left">a 32-bit integer.</td>
-  </tr>
-  <tr class="layout">
-    <td class="left"><tt>i1942652</tt></td>
-    <td class="left">a really big integer of over 1 million bits.</td>
-  </tr>
-</table>
-
-<p>Note that the code generator does not yet support large integer types to be
-   used as function return types. The specific limit on how large a return type
-   the code generator can currently handle is target-dependent; currently it's
-   often 64 bits for 32-bit targets and 128 bits for 64-bit targets.</p>
+   useful types.  Each of these types contain one or more element types which
+   may be a primitive type, or another derived type.  For example, it is
+   possible to have a two dimensional array, using an array as the element type
+   of another array.</p>
 
 </div>
 
@@ -1888,7 +1890,7 @@ Classifications</a> </div>
 <dl>
   <dt><b>Boolean constants</b></dt>
   <dd>The two strings '<tt>true</tt>' and '<tt>false</tt>' are both valid
-      constants of the <tt><a href="#t_primitive">i1</a></tt> type.</dd>
+      constants of the <tt><a href="#t_integer">i1</a></tt> type.</dd>
 
   <dt><b>Integer constants</b></dt>
   <dd>Standard integers (such as '4') are constants of
@@ -4691,7 +4693,7 @@ entry:
 <h5>Semantics:</h5>
 <p>The '<tt>icmp</tt>' compares <tt>op1</tt> and <tt>op2</tt> according to the
    condition code given as <tt>cond</tt>. The comparison performed always yields
-   either an <a href="#t_primitive"><tt>i1</tt></a> or vector of <tt>i1</tt>
+   either an <a href="#t_integer"><tt>i1</tt></a> or vector of <tt>i1</tt>
    result, as follows:</p>
 
 <ol>
@@ -4768,7 +4770,7 @@ entry:
    values based on comparison of its operands.</p>
 
 <p>If the operands are floating point scalars, then the result type is a boolean
-(<a href="#t_primitive"><tt>i1</tt></a>).</p>
+(<a href="#t_integer"><tt>i1</tt></a>).</p>
 
 <p>If the operands are floating point vectors, then the result type is a vector
    of boolean with the same number of elements as the operands being
@@ -4810,7 +4812,7 @@ entry:
 <p>The '<tt>fcmp</tt>' instruction compares <tt>op1</tt> and <tt>op2</tt>
    according to the condition code given as <tt>cond</tt>.  If the operands are
    vectors, then the vectors are compared element by element.  Each comparison
-   performed always yields an <a href="#t_primitive">i1</a> result, as
+   performed always yields an <a href="#t_integer">i1</a> result, as
    follows:</p>
 
 <ol>
