@@ -202,3 +202,25 @@ define i1 @test24(i1 %a, i1 %b) {
         ret i1 %c
 }
 
+define i32 @test25()  {
+entry:
+  br i1 false, label %jump, label %ret
+jump:
+  br label %ret 
+ret:
+  %a = phi i1 [true, %jump], [false, %entry]
+  %b = select i1 %a, i32 10, i32 20
+  ret i32 %b
+}
+
+define i32 @test26()  {
+entry:
+  br i1 false, label %jump, label %ret
+jump:
+  %c = or i1 false, false
+  br label %ret 
+ret:
+  %a = phi i1 [true, %jump], [%c, %entry]
+  %b = select i1 %a, i32 10, i32 20
+  ret i32 %b
+}

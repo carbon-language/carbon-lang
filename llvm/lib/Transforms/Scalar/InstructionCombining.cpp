@@ -384,9 +384,10 @@ namespace {
     Value *SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
                                       APInt& UndefElts, unsigned Depth = 0);
       
-    // FoldOpIntoPhi - Given a binary operator or cast instruction which has a
-    // PHI node as operand #0, see if we can fold the instruction into the PHI
-    // (which is only possible if all operands to the PHI are constants).
+    // FoldOpIntoPhi - Given a binary operator, cast instruction, or select
+    // which has a PHI node as operand #0, see if we can fold the instruction
+    // into the PHI (which is only possible if all operands to the PHI are
+    // constants).
     Instruction *FoldOpIntoPhi(Instruction &I);
 
     // FoldPHIArgOpIntoPHI - If all operands to a PHI node are the same "unary"
@@ -1938,20 +1939,23 @@ static Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI,
 }
 
 
-/// FoldOpIntoPhi - Given a binary operator or cast instruction which has a PHI
-/// node as operand #0, see if we can fold the instruction into the PHI (which
-/// is only possible if all operands to the PHI are constants).
+/// FoldOpIntoPhi - Given a binary operator, cast instruction, or select which
+/// has a PHI node as operand #0, see if we can fold the instruction into the
+/// PHI (which is only possible if all operands to the PHI are constants).
 Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   PHINode *PN = cast<PHINode>(I.getOperand(0));
   unsigned NumPHIValues = PN->getNumIncomingValues();
   if (!PN->hasOneUse() || NumPHIValues == 0) return 0;
 
-  // Check to see if all of the operands of the PHI are constants.  If there is
-  // one non-constant value, remember the BB it is.  If there is more than one
-  // or if *it* is a PHI, bail out.
+  // Check to see if all of the operands of the PHI are simple constants
+  // (constantint/constantfp/undef).  If there is one non-constant value,
+  // remember the BB it is.  If there is more than one or if *it* is a PHI, bail
+  // out.  We don't do arbitrary constant expressions here because moving their
+  // computation can be expensive without a cost model.
   BasicBlock *NonConstBB = 0;
   for (unsigned i = 0; i != NumPHIValues; ++i)
-    if (!isa<Constant>(PN->getIncomingValue(i))) {
+    if (!isa<Constant>(PN->getIncomingValue(i)) ||
+        isa<ConstantExpr>(PN->getIncomingValue(i))) {
       if (NonConstBB) return 0;  // More than one non-const value.
       if (isa<PHINode>(PN->getIncomingValue(i))) return 0;  // Itself a phi.
       NonConstBB = PN->getIncomingBlock(i);
@@ -1978,7 +1982,26 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   NewPN->takeName(PN);
 
   // Next, add all of the operands to the PHI.
-  if (I.getNumOperands() == 2) {
+  if (SelectInst *SI = dyn_cast<SelectInst>(&I)) {
+    // We only currently try to fold the condition of a select when it is a phi,
+    // not the true/false values.
+    for (unsigned i = 0; i != NumPHIValues; ++i) {
+      Value *InV = 0;
+      if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
+        if (InC->isNullValue())
+          InV = SI->getFalseValue();
+        else
+          InV = SI->getTrueValue();
+      } else {
+        assert(PN->getIncomingBlock(i) == NonConstBB);
+        InV = SelectInst::Create(PN->getIncomingValue(i), 
+                                 SI->getTrueValue(), SI->getFalseValue(),
+                                 "phitmp", NonConstBB->getTerminator());
+        Worklist.Add(cast<Instruction>(InV));
+      }
+      NewPN->addIncoming(InV, PN->getIncomingBlock(i));
+    }
+  } else if (I.getNumOperands() == 2) {
     Constant *C = cast<Constant>(I.getOperand(1));
     for (unsigned i = 0; i != NumPHIValues; ++i) {
       Value *InV = 0;
@@ -9421,6 +9444,14 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     if (FoldI)
       return FoldI;
   }
+
+  // See if we can fold the select into a phi node.  The true/false values have
+  // to be live in the predecessor blocks.
+  if (isa<PHINode>(SI.getCondition()) &&
+      isa<Constant>(SI.getTrueValue()) &&
+      isa<Constant>(SI.getFalseValue()))
+    if (Instruction *NV = FoldOpIntoPhi(SI))
+      return NV;
 
   if (BinaryOperator::isNot(CondVal)) {
     SI.setOperand(0, BinaryOperator::getNotArgument(CondVal));
