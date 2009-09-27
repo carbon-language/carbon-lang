@@ -378,7 +378,6 @@ public:
   void verifyLoop() const {
 #ifndef NDEBUG
     assert(!Blocks.empty() && "Loop header is missing");
-    assert(getHeader() && "Loop header is missing");
 
     // Sort the blocks vector so that we can use binary search to do quick
     // lookups.
