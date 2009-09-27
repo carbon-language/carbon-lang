@@ -34,7 +34,8 @@ namespace llvm {
   public:
     PseudoSourceValue();
 
-    /// isConstant - Test whether this PseudoSourceValue has a constant value.
+    /// isConstant - Test whether the memory pointed to by this
+    /// PseudoSourceValue has a constant value.
     ///
     virtual bool isConstant(const MachineFrameInfo *) const;
 
