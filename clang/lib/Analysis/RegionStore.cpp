@@ -514,6 +514,10 @@ const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
       continue;
     }
     
+    // FIXME: Special case FieldRegion/ElementRegion for more
+    // efficient invalidation.  We don't need to conjure symbols for
+    // these regions in all cases.
+    
     // Get the old binding.  Is it a region?  If so, add it to the worklist.
     if (const SVal *OldV = B.lookup(R)) {
       if (const MemRegion *RV = OldV->getAsRegion())
