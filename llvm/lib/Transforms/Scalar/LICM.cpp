@@ -593,7 +593,7 @@ void LICM::sink(Instruction &I) {
     if (AI) {
       std::vector<AllocaInst*> Allocas;
       Allocas.push_back(AI);
-      PromoteMemToReg(Allocas, *DT, *DF, I.getContext(), CurAST);
+      PromoteMemToReg(Allocas, *DT, *DF, AI->getContext(), CurAST);
     }
   }
 }
