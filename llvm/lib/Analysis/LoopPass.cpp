@@ -220,7 +220,7 @@ bool LPPassManager::runOnFunction(Function &F) {
     skipThisLoop = false;
     redoThisLoop = false;
 
-    // Run all passes on current SCC
+    // Run all passes on the current Loop.
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
       Pass *P = getContainedPass(Index);
 
