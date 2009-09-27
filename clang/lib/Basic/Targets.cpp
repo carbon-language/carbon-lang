@@ -998,7 +998,7 @@ public:
     WindowsX86_32TargetInfo::getTargetDefines(Opts, Defines);
     Define(Defines, "__MSVCRT__");
     Define(Defines, "__MINGW32__");
-    Define(Defines, "__declspec");
+    Define(Defines, "__declspec", "__declspec");
   }
 };
 } // end anonymous namespace
