@@ -237,3 +237,15 @@ void rdar_7249327(unsigned int A[2*32]) {
     x += *b++; // no-warning
 }
 
+// <rdar://problem/6914474> - Check that 'x' is invalidated because its
+// address is passed in as a value to a struct.
+struct doodad_6914474 { int *v; };
+extern void prod_6914474(struct doodad_6914474 *d);
+int rdar_6914474(void) {
+  int x;
+  struct doodad_6914474 d;
+  d.v = &x;
+  prod_6914474(&d);
+  return x; // no-warning
+}
+

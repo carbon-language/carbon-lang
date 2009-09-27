@@ -88,13 +88,15 @@ DefinedOrUnknownSVal ValueManager::getRegionValueSymbolVal(const MemRegion* R,
   return nonloc::SymbolVal(sym);
 }
 
-DefinedOrUnknownSVal ValueManager::getConjuredSymbolVal(const Expr *E, unsigned Count) {
+DefinedOrUnknownSVal ValueManager::getConjuredSymbolVal(const void *SymbolTag,
+                                                        const Expr *E,
+                                                        unsigned Count) {
   QualType T = E->getType();
 
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
 
-  SymbolRef sym = SymMgr.getConjuredSymbol(E, Count);
+  SymbolRef sym = SymMgr.getConjuredSymbol(E, Count, SymbolTag);
 
   if (Loc::IsLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
@@ -102,14 +104,15 @@ DefinedOrUnknownSVal ValueManager::getConjuredSymbolVal(const Expr *E, unsigned 
   return nonloc::SymbolVal(sym);
 }
 
-DefinedOrUnknownSVal ValueManager::getConjuredSymbolVal(const Expr *E,
+DefinedOrUnknownSVal ValueManager::getConjuredSymbolVal(const void *SymbolTag,
+                                                        const Expr *E,
                                                         QualType T,
                                                         unsigned Count) {
   
   if (!SymbolManager::canSymbolicate(T))
     return UnknownVal();
 
-  SymbolRef sym = SymMgr.getConjuredSymbol(E, T, Count);
+  SymbolRef sym = SymMgr.getConjuredSymbol(E, T, Count, SymbolTag);
 
   if (Loc::IsLocType(T))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));

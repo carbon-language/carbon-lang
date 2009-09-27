@@ -436,69 +436,98 @@ RegionStoreManager::RemoveSubRegionBindings(RegionBindings &B,
   DVM = DVMFactory.Remove(DVM, R);
 }
 
-
 const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
                                                     const MemRegion *R,
-                                                    const Expr *E,
+                                                    const Expr *Ex,
                                                     unsigned Count) {
   ASTContext& Ctx = StateMgr.getContext();
 
   // Strip away casts.
   R = R->getBaseRegion();
 
-  // Remove the bindings to subregions.
-  {
-    // Get the mapping of regions -> subregions.
-    llvm::OwningPtr<RegionStoreSubRegionMap>
-      SubRegions(getRegionStoreSubRegionMap(state));
+  // Get the mapping of regions -> subregions.
+  llvm::OwningPtr<RegionStoreSubRegionMap>
+    SubRegions(getRegionStoreSubRegionMap(state));
+  
+  RegionBindings B = GetRegionBindings(state->getStore());
+  RegionDefaultBindings DVM = state->get<RegionDefaultValue>();
+  RegionDefaultBindings::Factory &DVMFactory =
+    state->get_context<RegionDefaultValue>();
+  
+  llvm::DenseMap<const MemRegion *, unsigned> Visited;
+  llvm::SmallVector<const MemRegion *, 10> WorkList;
+  WorkList.push_back(R);
+  
+  while (!WorkList.empty()) {
+    R = WorkList.back();
+    WorkList.pop_back();
+    
+    // Have we visited this region before?
+    unsigned &visited = Visited[R];
+    if (visited)
+      continue;
+    visited = 1;
 
-    RegionBindings B = GetRegionBindings(state->getStore());
-    RegionDefaultBindings DVM = state->get<RegionDefaultValue>();
-    RegionDefaultBindings::Factory &DVMFactory =
-      state->get_context<RegionDefaultValue>();
+    // Add subregions to work list.
+    RegionStoreSubRegionMap::iterator I, E;
+    for (llvm::tie(I, E) = SubRegions->begin_end(R); I!=E; ++I)
+      WorkList.push_back(*I);
+    
+    // Handle region.
+    if (isa<AllocaRegion>(R) || isa<SymbolicRegion>(R) ||
+        isa<ObjCObjectRegion>(R)) {
+        // Invalidate the region by setting its default value to
+        // conjured symbol. The type of the symbol is irrelavant.
+      DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(R, Ex, Ctx.IntTy,
+                                                           Count);      
+      DVM = DVMFactory.Add(DVM, R, V);
+      continue;
+    }
 
-    RemoveSubRegionBindings(B, DVM, DVMFactory, R, *SubRegions.get());
-    state = state->makeWithStore(B.getRoot())->set<RegionDefaultValue>(DVM);
+    if (!R->isBoundable())
+      continue;
+  
+    const TypedRegion *TR = cast<TypedRegion>(R);
+    QualType T = TR->getValueType(Ctx);
+  
+    if (const RecordType *RT = T->getAsStructureType()) {
+        // FIXME: handle structs with default region value.
+      const RecordDecl *RD = RT->getDecl()->getDefinition(Ctx);
+    
+        // No record definition.  There is nothing we can do.
+      if (!RD)
+        continue;
+    
+        // Invalidate the region by setting its default value to
+        // conjured symbol. The type of the symbol is irrelavant.
+      DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(R, Ex, Ctx.IntTy,
+                                                           Count);
+      DVM = DVMFactory.Add(DVM, R, V);
+      continue;
+    }
+  
+    if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
+      // Set the default value of the array to conjured symbol.
+      DefinedOrUnknownSVal V =
+        ValMgr.getConjuredSymbolVal(R, Ex, AT->getElementType(), Count);
+      DVM = DVMFactory.Add(DVM, R, V);
+      continue;
+    }
+    
+    // Get the old binding.  Is it a region?  If so, add it to the worklist.
+    if (const SVal *OldV = B.lookup(R)) {
+      if (const MemRegion *RV = OldV->getAsRegion())
+        WorkList.push_back(RV);
+    }
+    
+    // Invalidate the binding.
+    DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(R, Ex, T, Count);
+    assert(SymbolManager::canSymbolicate(T) || V.isUnknown());
+    B = RBFactory.Add(B, R, V);
   }
 
-  if (!R->isBoundable())
-    return state;
-
-  if (isa<AllocaRegion>(R) || isa<SymbolicRegion>(R) ||
-      isa<ObjCObjectRegion>(R)) {
-    // Invalidate the region by setting its default value to
-    // conjured symbol. The type of the symbol is irrelavant.
-    SVal V = ValMgr.getConjuredSymbolVal(E, Ctx.IntTy, Count);
-    return setDefaultValue(state, R, V);
-  }
-
-  const TypedRegion *TR = cast<TypedRegion>(R);
-  QualType T = TR->getValueType(Ctx);
-
-  if (const RecordType *RT = T->getAsStructureType()) {
-    // FIXME: handle structs with default region value.
-    const RecordDecl *RD = RT->getDecl()->getDefinition(Ctx);
-
-    // No record definition.  There is nothing we can do.
-    if (!RD)
-      return state;
-
-    // Invalidate the region by setting its default value to
-    // conjured symbol. The type of the symbol is irrelavant.
-    SVal V = ValMgr.getConjuredSymbolVal(E, Ctx.IntTy, Count);
-    return setDefaultValue(state, R, V);
-  }
-
-  if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
-    // Set the default value of the array to conjured symbol.
-    SVal V = ValMgr.getConjuredSymbolVal(E, AT->getElementType(),
-                                         Count);
-    return setDefaultValue(state, TR, V);
-  }
-
-  SVal V = ValMgr.getConjuredSymbolVal(E, T, Count);
-  assert(SymbolManager::canSymbolicate(T) || V.isUnknown());
-  return Bind(state, ValMgr.makeLoc(TR), V);
+  // Create a new state with the updated bindings.
+  return state->makeWithStore(B.getRoot())->set<RegionDefaultValue>(DVM);
 }
 
 //===----------------------------------------------------------------------===//

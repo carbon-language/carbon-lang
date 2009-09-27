@@ -2906,7 +2906,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
       if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
         unsigned Count = Builder.getCurrentBlockCount();
         ValueManager &ValMgr = Eng.getValueManager();
-        SVal X = ValMgr.getConjuredSymbolVal(Ex, T, Count);
+        SVal X = ValMgr.getConjuredSymbolVal(NULL, Ex, T, Count);
         state = state->BindExpr(Ex, X, false);
       }
 

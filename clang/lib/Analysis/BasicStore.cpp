@@ -639,7 +639,7 @@ const GRState *BasicStoreManager::InvalidateRegion(const GRState *state,
       return state;
 
   QualType T = cast<TypedRegion>(R)->getValueType(R->getContext());
-  SVal V = ValMgr.getConjuredSymbolVal(E, T, Count);
+  SVal V = ValMgr.getConjuredSymbolVal(R, E, T, Count);
   return Bind(state, loc::MemRegionVal(R), V);
 }
 

@@ -104,8 +104,10 @@ public:
     return UnknownVal();
   }
 
-  DefinedOrUnknownSVal getConjuredSymbolVal(const Expr *E, unsigned Count);
-  DefinedOrUnknownSVal getConjuredSymbolVal(const Expr *E, QualType T,
+  DefinedOrUnknownSVal getConjuredSymbolVal(const void *SymbolTag,
+                                            const Expr *E, unsigned Count);
+  DefinedOrUnknownSVal getConjuredSymbolVal(const void *SymbolTag,
+                                            const Expr *E, QualType T,
                                             unsigned Count);
 
   DefinedOrUnknownSVal getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
