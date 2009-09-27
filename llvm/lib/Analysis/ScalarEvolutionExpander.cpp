@@ -680,29 +680,22 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     // Create and insert the PHI node for the induction variable in the
     // specified loop.
     BasicBlock *Header = L->getHeader();
-    BasicBlock *Preheader = L->getLoopPreheader();
     PHINode *PN = PHINode::Create(Ty, "indvar", Header->begin());
     InsertedValues.insert(PN);
-    PN->addIncoming(Constant::getNullValue(Ty), Preheader);
 
-    pred_iterator HPI = pred_begin(Header);
-    assert(HPI != pred_end(Header) && "Loop with zero preds???");
-    if (!L->contains(*HPI)) ++HPI;
-    assert(HPI != pred_end(Header) && L->contains(*HPI) &&
-           "No backedge in loop?");
-
-    // Insert a unit add instruction right before the terminator corresponding
-    // to the back-edge.
     Constant *One = ConstantInt::get(Ty, 1);
-    Instruction *Add = BinaryOperator::CreateAdd(PN, One, "indvar.next",
-                                                 (*HPI)->getTerminator());
-    InsertedValues.insert(Add);
-
-    pred_iterator PI = pred_begin(Header);
-    if (*PI == Preheader)
-      ++PI;
-    PN->addIncoming(Add, *PI);
-    return PN;
+    for (pred_iterator HPI = pred_begin(Header), HPE = pred_end(Header);
+         HPI != HPE; ++HPI)
+      if (L->contains(*HPI)) {
+        // Insert a unit add instruction right before the terminator corresponding
+        // to the back-edge.
+        Instruction *Add = BinaryOperator::CreateAdd(PN, One, "indvar.next",
+                                                     (*HPI)->getTerminator());
+        InsertedValues.insert(Add);
+        PN->addIncoming(Add, *HPI);
+      } else {
+        PN->addIncoming(Constant::getNullValue(Ty), *HPI);
+      }
   }
 
   // {0,+,F} --> {0,+,1} * F
