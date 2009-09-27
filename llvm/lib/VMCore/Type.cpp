@@ -365,25 +365,11 @@ const IntegerType *Type::getInt64Ty(LLVMContext &C) {
 /// isValidReturnType - Return true if the specified type is valid as a return
 /// type.
 bool FunctionType::isValidReturnType(const Type *RetTy) {
-  if (RetTy->isFirstClassType()) {
-    if (const PointerType *PTy = dyn_cast<PointerType>(RetTy))
-      return PTy->getElementType()->getTypeID() != MetadataTyID;
-    return true;
-  }
-  if (RetTy->getTypeID() == VoidTyID || RetTy->getTypeID() == MetadataTyID ||
-      isa<OpaqueType>(RetTy))
-    return true;
-  
-  // If this is a multiple return case, verify that each return is a first class
-  // value and that there is at least one value.
-  const StructType *SRetTy = dyn_cast<StructType>(RetTy);
-  if (SRetTy == 0 || SRetTy->getNumElements() == 0)
-    return false;
-  
-  for (unsigned i = 0, e = SRetTy->getNumElements(); i != e; ++i)
-    if (!SRetTy->getElementType(i)->isFirstClassType())
-      return false;
-  return true;
+  if (const PointerType *PTy = dyn_cast<PointerType>(RetTy))
+    return PTy->getElementType()->getTypeID() != MetadataTyID;
+
+  return RetTy->getTypeID() != LabelTyID &&
+         RetTy->getTypeID() != MetadataTyID;
 }
 
 /// isValidArgumentType - Return true if the specified type is valid as an

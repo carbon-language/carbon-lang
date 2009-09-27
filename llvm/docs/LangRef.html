@@ -1592,7 +1592,7 @@ Classifications</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;returntype list&gt; (&lt;parameter list&gt;)
+  &lt;returntype&gt; (&lt;parameter list&gt;)
 </pre>
 
 <p>...where '<tt>&lt;parameter list&gt;</tt>' is a comma-separated list of type
@@ -1600,8 +1600,8 @@ Classifications</a> </div>
    which indicates that the function takes a variable number of arguments.
    Variable argument functions can access their arguments with
    the <a href="#int_varargs">variable argument handling intrinsic</a>
-   functions.  '<tt>&lt;returntype list&gt;</tt>' is a comma-separated list of
-   <a href="#t_firstclass">first class</a> type specifiers.</p>
+   functions.  '<tt>&lt;returntype&gt;</tt>' is a any type except
+   <a href="#t_label">label</a> and <a href="#t_metadata">metadata</a>.</p>
 
 <h5>Examples:</h5>
 <table class="layout">
@@ -1626,8 +1626,8 @@ Classifications</a> </div>
     </td>
   </tr><tr class="layout">
     <td class="left"><tt>{i32, i32} (i32)</tt></td>
-    <td class="left">A function taking an <tt>i32</tt>, returning two 
-        <tt>i32</tt> values as an aggregate of type <tt>{ i32, i32 }</tt>
+    <td class="left">A function taking an <tt>i32</tt>, returning a
+        <a href="#t_struct">structure</a> containing two <tt>i32</tt> values
     </td>
   </tr>
 </table>
