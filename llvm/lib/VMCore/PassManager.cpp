@@ -815,34 +815,35 @@ void PMDataManager::removeDeadPasses(Pass *P, const StringRef &Msg,
   }
 
   for (SmallVector<Pass *, 12>::iterator I = DeadPasses.begin(),
-         E = DeadPasses.end(); I != E; ++I) {
+         E = DeadPasses.end(); I != E; ++I)
+    freePass(*I, Msg, DBG_STR);
+}
 
-    dumpPassInfo(*I, FREEING_MSG, DBG_STR, Msg);
+void PMDataManager::freePass(Pass *P, const StringRef &Msg,
+                             enum PassDebuggingString DBG_STR) {
+  dumpPassInfo(P, FREEING_MSG, DBG_STR, Msg);
 
-    {
-      // If the pass crashes releasing memory, remember this.
-      PassManagerPrettyStackEntry X(*I);
-      
-      if (TheTimeInfo) TheTimeInfo->passStarted(*I);
-      (*I)->releaseMemory();
-      if (TheTimeInfo) TheTimeInfo->passEnded(*I);
-    }
-    if (const PassInfo *PI = (*I)->getPassInfo()) {
+  {
+    // If the pass crashes releasing memory, remember this.
+    PassManagerPrettyStackEntry X(P);
+    
+    if (TheTimeInfo) TheTimeInfo->passStarted(P);
+    P->releaseMemory();
+    if (TheTimeInfo) TheTimeInfo->passEnded(P);
+  }
+
+  if (const PassInfo *PI = P->getPassInfo()) {
+    // Remove the pass itself (if it is not already removed).
+    AvailableAnalysis.erase(PI);
+
+    // Remove all interfaces this pass implements, for which it is also
+    // listed as the available implementation.
+    const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+    for (unsigned i = 0, e = II.size(); i != e; ++i) {
       std::map<AnalysisID, Pass*>::iterator Pos =
-        AvailableAnalysis.find(PI);
-
-      // It is possible that pass is already removed from the AvailableAnalysis
-      if (Pos != AvailableAnalysis.end())
+        AvailableAnalysis.find(II[i]);
+      if (Pos != AvailableAnalysis.end() && Pos->second == P)
         AvailableAnalysis.erase(Pos);
-
-      // Remove all interfaces this pass implements, for which it is also
-      // listed as the available implementation.
-      const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
-      for (unsigned i = 0, e = II.size(); i != e; ++i) {
-        Pos = AvailableAnalysis.find(II[i]);
-        if (Pos != AvailableAnalysis.end() && Pos->second == *I)
-          AvailableAnalysis.erase(Pos);
-      }
     }
   }
 }

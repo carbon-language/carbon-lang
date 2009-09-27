@@ -285,9 +285,13 @@ public:
   /// Remove Analysis that is not preserved by the pass
   void removeNotPreservedAnalysis(Pass *P);
   
-  /// Remove dead passes
+  /// Remove dead passes used by P.
   void removeDeadPasses(Pass *P, const StringRef &Msg, 
                         enum PassDebuggingString);
+
+  /// Remove P.
+  void freePass(Pass *P, const StringRef &Msg, 
+                enum PassDebuggingString);
 
   /// Add pass P into the PassVector. Update 
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
