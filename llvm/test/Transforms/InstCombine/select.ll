@@ -202,9 +202,9 @@ define i1 @test24(i1 %a, i1 %b) {
         ret i1 %c
 }
 
-define i32 @test25()  {
+define i32 @test25(i1 %c)  {
 entry:
-  br i1 false, label %jump, label %ret
+  br i1 %c, label %jump, label %ret
 jump:
   br label %ret 
 ret:
@@ -213,14 +213,37 @@ ret:
   ret i32 %b
 }
 
-define i32 @test26()  {
+define i32 @test26(i1 %cond)  {
 entry:
-  br i1 false, label %jump, label %ret
+  br i1 %cond, label %jump, label %ret
 jump:
   %c = or i1 false, false
   br label %ret 
 ret:
   %a = phi i1 [true, %jump], [%c, %entry]
   %b = select i1 %a, i32 10, i32 20
+  ret i32 %b
+}
+
+define i32 @test27(i1 %c, i32 %A, i32 %B)  {
+entry:
+  br i1 %c, label %jump, label %ret
+jump:
+  br label %ret 
+ret:
+  %a = phi i1 [true, %jump], [false, %entry]
+  %b = select i1 %a, i32 %A, i32 %B
+  ret i32 %b
+}
+
+define i32 @test28(i1 %cond, i32 %A, i32 %B)  {
+entry:
+  br i1 %cond, label %jump, label %ret
+jump:
+  br label %ret 
+ret:
+  %c = phi i32 [%A, %jump], [%B, %entry]
+  %a = phi i1 [true, %jump], [false, %entry]
+  %b = select i1 %a, i32 %A, i32 %c
   ret i32 %b
 }

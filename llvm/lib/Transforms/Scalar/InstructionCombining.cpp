@@ -1949,9 +1949,9 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
 
   // Check to see if all of the operands of the PHI are simple constants
   // (constantint/constantfp/undef).  If there is one non-constant value,
-  // remember the BB it is.  If there is more than one or if *it* is a PHI, bail
-  // out.  We don't do arbitrary constant expressions here because moving their
-  // computation can be expensive without a cost model.
+  // remember the BB it is in.  If there is more than one or if *it* is a PHI,
+  // bail out.  We don't do arbitrary constant expressions here because moving
+  // their computation can be expensive without a cost model.
   BasicBlock *NonConstBB = 0;
   for (unsigned i = 0; i != NumPHIValues; ++i)
     if (!isa<Constant>(PN->getIncomingValue(i)) ||
@@ -1985,21 +1985,23 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   if (SelectInst *SI = dyn_cast<SelectInst>(&I)) {
     // We only currently try to fold the condition of a select when it is a phi,
     // not the true/false values.
+    Value *TrueV = SI->getTrueValue();
+    Value *FalseV = SI->getFalseValue();
     for (unsigned i = 0; i != NumPHIValues; ++i) {
+      BasicBlock *ThisBB = PN->getIncomingBlock(i);
+      Value *TrueVInPred = TrueV->DoPHITranslation(I.getParent(), ThisBB);
+      Value *FalseVInPred = FalseV->DoPHITranslation(I.getParent(), ThisBB);
       Value *InV = 0;
       if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
-        if (InC->isNullValue())
-          InV = SI->getFalseValue();
-        else
-          InV = SI->getTrueValue();
+        InV = InC->isNullValue() ? FalseVInPred : TrueVInPred;
       } else {
         assert(PN->getIncomingBlock(i) == NonConstBB);
-        InV = SelectInst::Create(PN->getIncomingValue(i), 
-                                 SI->getTrueValue(), SI->getFalseValue(),
+        InV = SelectInst::Create(PN->getIncomingValue(i), TrueVInPred,
+                                 FalseVInPred,
                                  "phitmp", NonConstBB->getTerminator());
         Worklist.Add(cast<Instruction>(InV));
       }
-      NewPN->addIncoming(InV, PN->getIncomingBlock(i));
+      NewPN->addIncoming(InV, ThisBB);
     }
   } else if (I.getNumOperands() == 2) {
     Constant *C = cast<Constant>(I.getOperand(1));
@@ -9234,6 +9236,14 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
   return Changed ? &SI : 0;
 }
 
+/// isDefinedInBB - Return true if the value is an instruction defined in the
+/// specified basicblock.
+static bool isDefinedInBB(const Value *V, const BasicBlock *BB) {
+  const Instruction *I = dyn_cast<Instruction>(V);
+  return I != 0 && I->getParent() == BB;
+}
+
+
 Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   Value *CondVal = SI.getCondition();
   Value *TrueVal = SI.getTrueValue();
@@ -9446,10 +9456,13 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   }
 
   // See if we can fold the select into a phi node.  The true/false values have
-  // to be live in the predecessor blocks.
+  // to be live in the predecessor blocks.  If they are instructions in SI's
+  // block, we can't map to the predecessor.
   if (isa<PHINode>(SI.getCondition()) &&
-      isa<Constant>(SI.getTrueValue()) &&
-      isa<Constant>(SI.getFalseValue()))
+      (!isDefinedInBB(SI.getTrueValue(), SI.getParent()) ||
+       isa<PHINode>(SI.getTrueValue())) &&
+      (!isDefinedInBB(SI.getFalseValue(), SI.getParent()) ||
+       isa<PHINode>(SI.getFalseValue())))
     if (Instruction *NV = FoldOpIntoPhi(SI))
       return NV;
 
