@@ -498,8 +498,9 @@ void DerivedType::dropAllTypeUses() {
     // pick so long as it doesn't point back to this type.  We choose something
     // concrete to avoid overhead for adding to AbstractTypeUser lists and
     // stuff.
+    const Type *ConcreteTy = Type::getInt32Ty(getContext());
     for (unsigned i = 1, e = NumContainedTys; i != e; ++i)
-      ContainedTys[i] = Type::getInt32Ty(getContext());
+      ContainedTys[i] = ConcreteTy;
   }
 }
 
