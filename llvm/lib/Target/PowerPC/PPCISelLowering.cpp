@@ -5116,7 +5116,7 @@ void PPCTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   default: break;
   case PPCISD::LBRX: {
     // lhbrx is known to have the top bits cleared out.
-    if (cast<VTSDNode>(Op.getOperand(3))->getVT() == MVT::i16)
+    if (cast<VTSDNode>(Op.getOperand(2))->getVT() == MVT::i16)
       KnownZero = 0xFFFF0000;
     break;
   }
