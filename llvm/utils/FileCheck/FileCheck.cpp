@@ -23,6 +23,8 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
+#include "llvm/ADT/StringMap.h"
+#include <algorithm>
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -45,7 +47,6 @@ NoCanonicalizeWhiteSpace("strict-whitespace",
 //===----------------------------------------------------------------------===//
 
 class Pattern {
-  SourceMgr *SM;
   SMLoc PatternLoc;
   
   /// FixedStr - If non-empty, this pattern is a fixed string match with the
@@ -54,6 +55,19 @@ class Pattern {
   
   /// RegEx - If non-empty, this is a regex pattern.
   std::string RegExStr;
+  
+  /// VariableUses - Entries in this vector map to uses of a variable in the
+  /// pattern, e.g. "foo[[bar]]baz".  In this case, the RegExStr will contain
+  /// "foobaz" and we'll get an entry in this vector that tells us to insert the
+  /// value of bar at offset 3.
+  std::vector<std::pair<StringRef, unsigned> > VariableUses;
+  
+  /// VariableDefs - Entries in this vector map to definitions of a variable in
+  /// the pattern, e.g. "foo[[bar:.*]]baz".  In this case, the RegExStr will
+  /// contain "foo(.*)baz" and VariableDefs will contain the pair "bar",1.  The
+  /// index indicates what parenthesized value captures the variable value.
+  std::vector<std::pair<StringRef, unsigned> > VariableDefs;
+  
 public:
   
   Pattern() { }
@@ -63,14 +77,19 @@ public:
   /// Match - Match the pattern string against the input buffer Buffer.  This
   /// returns the position that is matched or npos if there is no match.  If
   /// there is a match, the size of the matched string is returned in MatchLen.
-  size_t Match(StringRef Buffer, size_t &MatchLen) const;
+  ///
+  /// The VariableTable StringMap provides the current values of filecheck
+  /// variables and is updated if this match defines new values.
+  size_t Match(StringRef Buffer, size_t &MatchLen,
+               StringMap<StringRef> &VariableTable) const;
   
 private:
-  void AddFixedStringToRegEx(StringRef FixedStr);
+  static void AddFixedStringToRegEx(StringRef FixedStr, std::string &TheStr);
+  bool AddRegExToRegEx(StringRef RegExStr, unsigned &CurParen, SourceMgr &SM);
 };
 
+
 bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
-  this->SM = &SM;
   PatternLoc = SMLoc::getFromPointer(PatternStr.data());
   
   // Ignore trailing whitespace.
@@ -86,49 +105,113 @@ bool Pattern::ParsePattern(StringRef PatternStr, SourceMgr &SM) {
   }
   
   // Check to see if this is a fixed string, or if it has regex pieces.
-  if (PatternStr.size() < 2 || PatternStr.find("{{") == StringRef::npos) {
+  if (PatternStr.size() < 2 ||
+      (PatternStr.find("{{") == StringRef::npos &&
+       PatternStr.find("[[") == StringRef::npos)) {
     FixedStr = PatternStr;
     return false;
   }
   
+  // Paren value #0 is for the fully matched string.  Any new parenthesized
+  // values add from their.
+  unsigned CurParen = 1;
+  
   // Otherwise, there is at least one regex piece.  Build up the regex pattern
   // by escaping scary characters in fixed strings, building up one big regex.
   while (!PatternStr.empty()) {
-    // Handle fixed string matches.
-    if (PatternStr.size() < 2 ||
-        PatternStr[0] != '{' || PatternStr[1] != '{') {
-      // Find the end, which is the start of the next regex.
-      size_t FixedMatchEnd = PatternStr.find("{{");
-      AddFixedStringToRegEx(PatternStr.substr(0, FixedMatchEnd));
-      PatternStr = PatternStr.substr(FixedMatchEnd);
+    // RegEx matches.
+    if (PatternStr.size() >= 2 &&
+        PatternStr[0] == '{' && PatternStr[1] == '{') {
+     
+      // Otherwise, this is the start of a regex match.  Scan for the }}.
+      size_t End = PatternStr.find("}}");
+      if (End == StringRef::npos) {
+        SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
+                        "found start of regex string with no end '}}'", "error");
+        return true;
+      }
+      
+      if (AddRegExToRegEx(PatternStr.substr(2, End-2), CurParen, SM))
+        return true;
+      PatternStr = PatternStr.substr(End+2);
       continue;
     }
     
-    // Otherwise, this is the start of a regex match.  Scan for the }}.
-    size_t End = PatternStr.find("}}");
-    if (End == StringRef::npos) {
-      SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
-                      "found start of regex string with no end '}}'", "error");
-      return true;
+    // Named RegEx matches.  These are of two forms: [[foo:.*]] which matches .*
+    // (or some other regex) and assigns it to the FileCheck variable 'foo'. The
+    // second form is [[foo]] which is a reference to foo.  The variable name
+    // itself must be of the form "[a-zA-Z][0-9a-zA-Z]*", otherwise we reject
+    // it.  This is to catch some common errors.
+    if (PatternStr.size() >= 2 &&
+        PatternStr[0] == '[' && PatternStr[1] == '[') {
+      // Verify that it is terminated properly.
+      size_t End = PatternStr.find("]]");
+      if (End == StringRef::npos) {
+        SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()),
+                        "invalid named regex reference, no ]] found", "error");
+        return true;
+      }
+      
+      StringRef MatchStr = PatternStr.substr(2, End-2);
+      PatternStr = PatternStr.substr(End+2);
+      
+      // Get the regex name (e.g. "foo").
+      size_t NameEnd = MatchStr.find(':');
+      StringRef Name = MatchStr.substr(0, NameEnd);
+      
+      if (Name.empty()) {
+        SM.PrintMessage(SMLoc::getFromPointer(Name.data()),
+                        "invalid name in named regex: empty name", "error");
+        return true;
+      }
+
+      // Verify that the name is well formed.
+      for (unsigned i = 0, e = Name.size(); i != e; ++i)
+        if ((Name[i] < 'a' || Name[i] > 'z') &&
+            (Name[i] < 'A' || Name[i] > 'Z') &&
+            (Name[i] < '0' || Name[i] > '9')) {
+          SM.PrintMessage(SMLoc::getFromPointer(Name.data()+i),
+                          "invalid name in named regex", "error");
+          return true;
+        }
+      
+      // Name can't start with a digit.
+      if (isdigit(Name[0])) {
+        SM.PrintMessage(SMLoc::getFromPointer(Name.data()),
+                        "invalid name in named regex", "error");
+        return true;
+      }
+      
+      // Handle [[foo]].
+      if (NameEnd == StringRef::npos) {
+        VariableUses.push_back(std::make_pair(Name, RegExStr.size()));
+        continue;
+      }
+      
+      // Handle [[foo:.*]].
+      VariableDefs.push_back(std::make_pair(Name, CurParen));
+      RegExStr += '(';
+      ++CurParen;
+      
+      if (AddRegExToRegEx(MatchStr.substr(NameEnd+1), CurParen, SM))
+        return true;
+
+      RegExStr += ')';
     }
     
-    StringRef RegexStr = PatternStr.substr(2, End-2);
-    Regex R(RegexStr);
-    std::string Error;
-    if (!R.isValid(Error)) {
-      SM.PrintMessage(SMLoc::getFromPointer(PatternStr.data()+2),
-                      "invalid regex: " + Error, "error");
-      return true;
-    }
-    
-    RegExStr += RegexStr.str();
-    PatternStr = PatternStr.substr(End+2);
+    // Handle fixed string matches.
+    // Find the end, which is the start of the next regex.
+    size_t FixedMatchEnd = PatternStr.find("{{");
+    FixedMatchEnd = std::min(FixedMatchEnd, PatternStr.find("[["));
+    AddFixedStringToRegEx(PatternStr.substr(0, FixedMatchEnd), RegExStr);
+    PatternStr = PatternStr.substr(FixedMatchEnd);
+    continue;
   }
 
   return false;
 }
 
-void Pattern::AddFixedStringToRegEx(StringRef FixedStr) {
+void Pattern::AddFixedStringToRegEx(StringRef FixedStr, std::string &TheStr) {
   // Add the characters from FixedStr to the regex, escaping as needed.  This
   // avoids "leaning toothpicks" in common patterns.
   for (unsigned i = 0, e = FixedStr.size(); i != e; ++i) {
@@ -146,41 +229,81 @@ void Pattern::AddFixedStringToRegEx(StringRef FixedStr) {
     case '[':
     case '\\':
     case '{':
-      RegExStr += '\\';
+      TheStr += '\\';
       // FALL THROUGH.
     default:
-      RegExStr += FixedStr[i];
+      TheStr += FixedStr[i];
       break;
     }
   }
 }
 
+bool Pattern::AddRegExToRegEx(StringRef RegexStr, unsigned &CurParen,
+                              SourceMgr &SM) {
+  Regex R(RegexStr);
+  std::string Error;
+  if (!R.isValid(Error)) {
+    SM.PrintMessage(SMLoc::getFromPointer(RegexStr.data()),
+                    "invalid regex: " + Error, "error");
+    return true;
+  }
+  
+  RegExStr += RegexStr.str();
+  CurParen += R.getNumMatches();
+  return false;
+}
 
 /// Match - Match the pattern string against the input buffer Buffer.  This
 /// returns the position that is matched or npos if there is no match.  If
 /// there is a match, the size of the matched string is returned in MatchLen.
-size_t Pattern::Match(StringRef Buffer, size_t &MatchLen) const {
+size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
+                      StringMap<StringRef> &VariableTable) const {
   // If this is a fixed string pattern, just match it now.
   if (!FixedStr.empty()) {
     MatchLen = FixedStr.size();
     return Buffer.find(FixedStr);
   }
-  
+
   // Regex match.
+  
+  // If there are variable uses, we need to create a temporary string with the
+  // actual value.
+  StringRef RegExToMatch = RegExStr;
+  std::string TmpStr;
+  if (!VariableUses.empty()) {
+    TmpStr = RegExStr;
+    
+    unsigned InsertOffset = 0;
+    for (unsigned i = 0, e = VariableUses.size(); i != e; ++i) {
+      // Look up the value and escape it so that we can plop it into the regex.
+      std::string Value;
+      AddFixedStringToRegEx(VariableTable[VariableUses[i].first], Value);
+      
+      // Plop it into the regex at the adjusted offset.
+      TmpStr.insert(TmpStr.begin()+VariableUses[i].second+InsertOffset,
+                    Value.begin(), Value.end());
+      InsertOffset += Value.size();
+    }
+    
+    // Match the newly constructed regex.
+    RegExToMatch = TmpStr;
+  }
+  
+  
   SmallVector<StringRef, 4> MatchInfo;
-  if (!Regex(RegExStr, Regex::Newline).match(Buffer, &MatchInfo))
+  if (!Regex(RegExToMatch, Regex::Newline).match(Buffer, &MatchInfo))
     return StringRef::npos;
   
   // Successful regex match.
   assert(!MatchInfo.empty() && "Didn't get any match");
   StringRef FullMatch = MatchInfo[0];
   
-  
-  if (MatchInfo.size() != 1) {
-    SM->PrintMessage(PatternLoc, "regex cannot use grouping parens", "error");
-    exit(1);
+  // If this defines any variables, remember their values.
+  for (unsigned i = 0, e = VariableDefs.size(); i != e; ++i) {
+    assert(VariableDefs[i].second < MatchInfo.size() &&
+           "Internal paren error");
+    VariableTable[VariableDefs[i].first] = MatchInfo[VariableDefs[i].second];
   }
-    
   
   MatchLen = FullMatch.size();
   return FullMatch.data()-Buffer.data();
@@ -415,6 +538,9 @@ int main(int argc, char **argv) {
   
   SM.AddNewSourceBuffer(F, SMLoc());
   
+  /// VariableTable - This holds all the current filecheck variables.
+  StringMap<StringRef> VariableTable;
+  
   // Check that we have all of the expected strings, in order, in the input
   // file.
   StringRef Buffer = F->getBuffer();
@@ -428,7 +554,7 @@ int main(int argc, char **argv) {
     
     // Find StrNo in the file.
     size_t MatchLen = 0;
-    Buffer = Buffer.substr(CheckStr.Pat.Match(Buffer, MatchLen));
+    Buffer = Buffer.substr(CheckStr.Pat.Match(Buffer, MatchLen, VariableTable));
     
     // If we didn't find a match, reject the input.
     if (Buffer.empty()) {
@@ -472,9 +598,12 @@ int main(int argc, char **argv) {
     
     // If this match had "not strings", verify that they don't exist in the
     // skipped region.
-    for (unsigned ChunkNo = 0, e = CheckStr.NotStrings.size(); ChunkNo != e; ++ChunkNo) {
+    for (unsigned ChunkNo = 0, e = CheckStr.NotStrings.size();
+         ChunkNo != e; ++ChunkNo) {
       size_t MatchLen = 0;
-      size_t Pos = CheckStr.NotStrings[ChunkNo].second.Match(SkippedRegion, MatchLen);
+      size_t Pos = CheckStr.NotStrings[ChunkNo].second.Match(SkippedRegion,
+                                                             MatchLen,
+                                                             VariableTable);
       if (Pos == StringRef::npos) continue;
      
       SM.PrintMessage(SMLoc::getFromPointer(LastMatch+Pos),

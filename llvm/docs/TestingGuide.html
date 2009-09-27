@@ -626,7 +626,7 @@ define i8 @coerce_offset0(i32 %V, i32* %P) {
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"><a 
-name="FileCheck-Matching">FileCheck Pattern Matting Syntax</a></div>
+name="FileCheck-Matching">FileCheck Pattern Matching Syntax</a></div>
 
 <div class="doc_text">
 
@@ -656,7 +656,46 @@ braces explicitly from the input, you can use something ugly like
 
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a 
+name="FileCheck-Variables">FileCheck Variables</a></div>
 
+<div class="doc_text">
+
+<p>It is often useful to match a pattern and then verify that it occurs again
+later in the file.  For codegen tests, this can be useful to allow any register,
+but verify that that register is used consistently later.  To do this, FileCheck
+allows named variables to be defined and substituted into patterns.  Here is a
+simple example:</p>
+
+<div class="doc_code">
+<pre>
+; CHECK: test5:
+; CHECK:    notw	<b>[[REG:%[a-z]+]]</b>
+; CHECK:    andw	{{.*}}<b>[[REG]]</b>
+</pre>
+</div>
+
+<p>The first check line matches a regex (%[a-z]+) and captures it into the
+variables "REG".  The second line verifies that whatever is in REG occurs later
+in the file after an "andw".  FileCheck variable references are always contained
+in [[ ]] pairs, are named, and their names can be formed with the regex
+"[a-zA-Z][a-zA-Z0-9]*".  If a colon follows the name, then it is a definition of
+the variable, if not, it is a use.</p>
+
+<p>FileCheck variables can be defined multiple times, and uses always get the
+latest value.  Note that variables are all read at the start of a "CHECK" line
+and are all defined at the end.  This means that if you have something like
+"<tt>CHECK: [[XYZ:.*]]x[[XYZ]]</tt>" that the check line will read the previous
+value of the XYZ variable and define a new one after the match is performed.  If
+you need to do something like this you can probably take advantage of the fact
+that FileCheck is not actually line-oriented when it matches, this allows you to
+define two separate CHECK lines that match on the same line.
+</p>
+
+
+
+</div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="dgvars">Variables and
