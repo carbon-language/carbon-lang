@@ -110,17 +110,21 @@ void LPPassManager::insertLoop(Loop *L, Loop *ParentLoop) {
   else
     LI->addTopLevelLoop(L);
 
+  insertLoopIntoQueue(L);
+}
+
+void LPPassManager::insertLoopIntoQueue(Loop *L) {
   // Insert L into loop queue
   if (L == CurrentLoop) 
     redoLoop(L);
-  else if (!ParentLoop)
+  else if (!L->getParentLoop())
     // This is top level loop. 
     LQ.push_front(L);
   else {
-    // Insert L after ParentLoop
+    // Insert L after the parent loop.
     for (std::deque<Loop *>::iterator I = LQ.begin(),
            E = LQ.end(); I != E; ++I) {
-      if (*I == ParentLoop) {
+      if (*I == L->getParentLoop()) {
         // deque does not support insert after.
         ++I;
         LQ.insert(I, 1, L);
