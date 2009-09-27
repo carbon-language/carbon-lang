@@ -121,11 +121,11 @@ static bool getSCEVStartAndStride(const SCEV *&SH, Loop *L, Loop *UseLoop,
 
   Start = SE->getAddExpr(Start, AddRecStart);
 
-  // If stride is an instruction, make sure it dominates the loop preheader.
+  // If stride is an instruction, make sure it properly dominates the header.
   // Otherwise we could end up with a use before def situation.
   if (!isa<SCEVConstant>(AddRecStride)) {
-    BasicBlock *Preheader = L->getLoopPreheader();
-    if (!AddRecStride->dominates(Preheader, DT))
+    BasicBlock *Header = L->getHeader();
+    if (!AddRecStride->properlyDominates(Header, DT))
       return false;
 
     DEBUG(errs() << "[" << L->getHeader()->getName()
