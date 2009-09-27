@@ -236,7 +236,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
     return;   // Early exit if no callee saved registers are modified!
 
   unsigned NumFixedSpillSlots;
-  const std::pair<unsigned,int> *FixedSpillSlots =
+  const TargetFrameInfo::SpillSlot *FixedSpillSlots =
     TFI->getCalleeSavedSpillSlots(NumFixedSpillSlots);
 
   // Now that we know which registers need to be saved and restored, allocate
@@ -254,9 +254,9 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
 
     // Check to see if this physreg must be spilled to a particular stack slot
     // on this target.
-    const std::pair<unsigned,int> *FixedSlot = FixedSpillSlots;
+    const TargetFrameInfo::SpillSlot *FixedSlot = FixedSpillSlots;
     while (FixedSlot != FixedSpillSlots+NumFixedSpillSlots &&
-           FixedSlot->first != Reg)
+           FixedSlot->Reg != Reg)
       ++FixedSlot;
 
     if (FixedSlot == FixedSpillSlots + NumFixedSpillSlots) {
@@ -273,7 +273,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
       if ((unsigned)FrameIdx > MaxCSFrameIndex) MaxCSFrameIndex = FrameIdx;
     } else {
       // Spill it to the stack where we must.
-      FrameIdx = FFI->CreateFixedObject(RC->getSize(), FixedSlot->second);
+      FrameIdx = FFI->CreateFixedObject(RC->getSize(), FixedSlot->Offset);
     }
 
     I->setFrameIdx(FrameIdx);
