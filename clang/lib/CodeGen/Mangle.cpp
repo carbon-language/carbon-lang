@@ -480,11 +480,13 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND) {
 void CXXNameMangler::mangleNestedName(const TemplateDecl *TD, 
                                       const TemplateArgument *TemplateArgs,
                                       unsigned NumTemplateArgs) {
+  // <nested-name> ::= N [<CV-qualifiers>] <template-prefix> <template-args> E
+
   Out << 'N';
-  manglePrefix(TD->getDeclContext());
-  mangleUnqualifiedName(TD);
   
+  mangleTemplatePrefix(TD);
   mangleTemplateArgs(TemplateArgs, NumTemplateArgs);
+  
   Out << 'E';
 }
 

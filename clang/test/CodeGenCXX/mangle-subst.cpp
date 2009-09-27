@@ -46,3 +46,11 @@ template <typename T> void f2(V<T>, typename V<T>::U) { }
 
 // CHECK: @_Z2f2IiEv1VIT_ENS2_1UE
 template void f2<int>(V<int>, int);
+
+namespace NS {
+template <typename T> struct S1 {};
+template<typename T> void ft3(S1<T>, S1<char>) {  }
+
+// CHECK: @_ZN2NS3ft3IiEEvNS_2S1IT_EENS1_IcEE
+template void ft3<int>(S1<int>, S1<char>);
+}
