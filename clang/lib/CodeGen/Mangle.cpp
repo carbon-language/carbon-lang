@@ -920,10 +920,13 @@ void CXXNameMangler::mangleType(const TypenameType *T) {
   const Type *QTy = T->getQualifier()->getAsType();
   if (const TemplateSpecializationType *TST = 
         dyn_cast<TemplateSpecializationType>(QTy)) {
-    TemplateDecl *TD = TST->getTemplateName().getAsTemplateDecl();
+    if (!mangleSubstitution(QualType(TST, 0))) {
+      TemplateDecl *TD = TST->getTemplateName().getAsTemplateDecl();
 
-    mangleTemplatePrefix(TD);
-    mangleTemplateArgs(TST->getArgs(), TST->getNumArgs());
+      mangleTemplatePrefix(TD);
+      mangleTemplateArgs(TST->getArgs(), TST->getNumArgs());
+      addSubstitution(QualType(TST, 0));
+    }
   } else if (const TemplateTypeParmType *TTPT = 
               dyn_cast<TemplateTypeParmType>(QTy)) {
     // We use the QualType mangle type variant here because it handles
