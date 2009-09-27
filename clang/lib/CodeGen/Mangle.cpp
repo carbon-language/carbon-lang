@@ -1130,6 +1130,45 @@ bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
   return true;
 }
 
+static bool isCharType(QualType T) {
+  if (T.isNull())
+    return false;
+      
+  return T->isSpecificBuiltinType(BuiltinType::Char_S) ||
+    T->isSpecificBuiltinType(BuiltinType::Char_U);
+}
+
+/// isCharSpecialization - Returns whether a given type is a template 
+/// specialization of a given name with a single argument of type char.
+static bool isCharSpecialization(QualType T, const char *Name) {
+  if (T.isNull())
+    return false;
+  
+  const RecordType *RT = T->getAs<RecordType>();
+  if (!RT)
+    return false;
+  
+  const ClassTemplateSpecializationDecl *SD = 
+    dyn_cast<ClassTemplateSpecializationDecl>(RT->getDecl());
+  if (!SD)
+    return false;
+
+  if (!isStdNamespace(SD->getDeclContext()))
+    return false;
+  
+  const TemplateArgumentList &TemplateArgs = SD->getTemplateArgs();
+  if (TemplateArgs.size() != 1)
+    return false;
+  
+  if (!isCharType(TemplateArgs[0].getAsType()))
+    return false;
+  
+  if (strcmp(SD->getIdentifier()->getName(), Name) != 0)
+    return false;
+
+  return true;
+}
+
 bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
   // <substitution> ::= St # ::std::
   if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND)) {
@@ -1157,6 +1196,30 @@ bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
     }
   }
   
+  if (const ClassTemplateSpecializationDecl *SD = 
+        dyn_cast<ClassTemplateSpecializationDecl>(ND)) {
+    //    <substitution> ::= Ss # ::std::basic_string<char,
+    //                            ::std::char_traits<char>,
+    //                            ::std::allocator<char> >
+    if (SD->getIdentifier()->isStr("basic_string")) {
+      const TemplateArgumentList &TemplateArgs = SD->getTemplateArgs();
+      
+      if (TemplateArgs.size() != 3)
+        return false;
+      
+      if (!isCharType(TemplateArgs[0].getAsType()))
+        return false;
+      
+      if (!isCharSpecialization(TemplateArgs[1].getAsType(), "char_traits"))
+        return false;
+      
+      if (!isCharSpecialization(TemplateArgs[2].getAsType(), "allocator"))
+        return false;
+
+      Out << "Ss";
+      return true;
+    }
+  }
   return false;
 }
 

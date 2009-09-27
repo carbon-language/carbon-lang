@@ -18,10 +18,19 @@ namespace std {
 void f(typename std::allocator<char>, typename std::allocator<int>) { }
 
 namespace std {
-  template<typename T> struct basic_string { };
+  template<typename T, typename U, typename V> struct basic_string { };
 }
 
 // FIXME: typename is really not allowed here, but it's kept 
 // as a workaround for PR5061.
-// CHECK: define void @_Z1fSbIcESbIiE
-void f(typename std::basic_string<char>, typename std::basic_string<int>) { }
+// CHECK: define void @_Z1fSbIcciE
+void f(typename std::basic_string<char, char, int>) { }
+
+namespace std {
+  template<typename T> struct char_traits { };
+  
+  typedef std::basic_string<char, std::char_traits<char>, std::allocator<char> > string;
+}
+
+// CHECK: _Z1fSs
+void f(std::string) { }
