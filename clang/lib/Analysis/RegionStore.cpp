@@ -514,17 +514,21 @@ const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
       continue;
     }
     
-    // FIXME: Special case FieldRegion/ElementRegion for more
-    // efficient invalidation.  We don't need to conjure symbols for
-    // these regions in all cases.
-    
     // Get the old binding.  Is it a region?  If so, add it to the worklist.
     if (const SVal *OldV = B.lookup(R)) {
       if (const MemRegion *RV = OldV->getAsRegion())
         WorkList.push_back(RV);
     }
     
-    // Invalidate the binding.
+    if (isa<FieldRegion>(R) || isa<ElementRegion>(R) || isa<ObjCIvarRegion>(R)){
+      // For fields and elements, only remove the old binding.  The super
+      // region will get set with a default value from which we can lazily
+      // derive a new symbolic value.
+      B = RBFactory.Remove(B, R);
+      continue;
+    }
+    
+    // Invalidate the binding by conjuring a new symbol.
     DefinedOrUnknownSVal V = ValMgr.getConjuredSymbolVal(R, Ex, T, Count);
     assert(SymbolManager::canSymbolicate(T) || V.isUnknown());
     B = RBFactory.Add(B, R, V);
