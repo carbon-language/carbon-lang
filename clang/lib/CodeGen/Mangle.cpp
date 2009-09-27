@@ -106,6 +106,8 @@ namespace {
                             unsigned NumTemplateArgs);
     void mangleTemplateArgumentList(const TemplateArgumentList &L);
     void mangleTemplateArgument(const TemplateArgument &A);
+    
+    void mangleTemplateParameter(unsigned Index);
   };
 }
 
@@ -845,13 +847,8 @@ void CXXNameMangler::mangleType(const MemberPointerType *T) {
 }
 
 // <type>           ::= <template-param>
-// <template-param> ::= T_    # first template parameter
-//                  ::= T <parameter-2 non-negative number> _
 void CXXNameMangler::mangleType(const TemplateTypeParmType *T) {
-  if (T->getIndex() == 0)
-    Out << "T_";
-  else
-    Out << 'T' << (T->getIndex() - 1) << '_';
+  mangleTemplateParameter(T->getIndex());
 }
 
 // FIXME: <type> ::= <template-template-param> <template-args>
@@ -927,6 +924,11 @@ void CXXNameMangler::mangleType(const TypenameType *T) {
 
     mangleTemplatePrefix(TD);
     mangleTemplateArgs(TST->getArgs(), TST->getNumArgs());
+  } else if (const TemplateTypeParmType *TTPT = 
+              dyn_cast<TemplateTypeParmType>(QTy)) {
+    // We use the QualType mangle type variant here because it handles
+    // substitutions.
+    mangleType(QualType(TTPT, 0));
   } else
     assert(false && "Unhandled type!");
 
@@ -959,11 +961,7 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     default: assert(false && "Unhandled decl kind!");
     case Decl::NonTypeTemplateParm: {
       const NonTypeTemplateParmDecl *PD = cast<NonTypeTemplateParmDecl>(D);
-      
-      if (PD->getIndex() == 0)
-        Out << "T_";
-      else
-        Out << 'T' << (PD->getIndex() - 1) << '_';
+      mangleTemplateParameter(PD->getIndex());
       break;
     }
 
@@ -1073,6 +1071,15 @@ void CXXNameMangler::mangleTemplateArgument(const TemplateArgument &A) {
     Out << 'E';
     break;
   }
+}
+
+void CXXNameMangler::mangleTemplateParameter(unsigned Index) {
+  // <template-param> ::= T_    # first template parameter
+  //                  ::= T <parameter-2 non-negative number> _
+  if (Index == 0)
+    Out << "T_";
+  else
+    Out << 'T' << (Index - 1) << '_';
 }
 
 // <substitution> ::= S <seq-id> _

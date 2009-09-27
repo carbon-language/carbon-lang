@@ -172,3 +172,11 @@ template<typename T> bool operator==(const A<T>&, const A<T>&) { return true; }
 // CHECK: @_ZSteqIcEbRK1AIT_ES4_
 template bool std::operator==(const ::A<char>&, const ::A<char>&);
 
+struct S {
+  typedef int U;
+};
+
+template <typename T> typename T::U ft6(const T&) { return 0; }
+
+// CHECK: @_Z3ft6I1SENT_1UERKS1_
+template int ft6<S>(const S&);
