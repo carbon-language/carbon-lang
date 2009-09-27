@@ -57,14 +57,14 @@ public:
 }
 
 static ManagedStatic<StatisticInfo> StatInfo;
-static ManagedStatic<sys::Mutex> StatLock;
+static ManagedStatic<sys::SmartMutex<true> > StatLock;
 
 /// RegisterStatistic - The first time a statistic is bumped, this method is
 /// called.
 void Statistic::RegisterStatistic() {
   // If stats are enabled, inform StatInfo that this statistic should be
   // printed.
-  sys::ScopedLock Writer(*StatLock);
+  sys::SmartScopedLock<true> Writer(*StatLock);
   if (!Initialized) {
     if (Enabled)
       StatInfo->addStatistic(this);
