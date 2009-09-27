@@ -249,9 +249,6 @@ bool FunctionAttrs::IsFunctionMallocLike(Function *F,
       switch (RVI->getOpcode()) {
         // Extend the analysis by looking upwards.
         case Instruction::BitCast:
-          if (isMalloc(RVI))
-            break;
-          // fall through
         case Instruction::GetElementPtr:
           FlowsToReturn.insert(RVI->getOperand(0));
           continue;
@@ -259,12 +256,14 @@ bool FunctionAttrs::IsFunctionMallocLike(Function *F,
           SelectInst *SI = cast<SelectInst>(RVI);
           FlowsToReturn.insert(SI->getTrueValue());
           FlowsToReturn.insert(SI->getFalseValue());
-        } continue;
+          continue;
+        }
         case Instruction::PHI: {
           PHINode *PN = cast<PHINode>(RVI);
           for (int i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
             FlowsToReturn.insert(PN->getIncomingValue(i));
-        } continue;
+          continue;
+        }
 
         // Check whether the pointer came from an allocation.
         case Instruction::Alloca:
