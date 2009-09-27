@@ -114,6 +114,10 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::ObjCForCollectionStmtClass:
     EmitObjCForCollectionStmt(cast<ObjCForCollectionStmt>(*S));
     break;
+      
+  case Stmt::CXXTryStmtClass:
+    EmitCXXTryStmt(cast<CXXTryStmt>(*S));
+    break;
   }
 }
 

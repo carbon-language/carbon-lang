@@ -40,6 +40,7 @@ namespace llvm {
 namespace clang {
   class ASTContext;
   class CXXDestructorDecl;
+  class CXXTryStmt;
   class Decl;
   class EnumConstantDecl;
   class FunctionDecl;
@@ -711,6 +712,8 @@ public:
   void EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S);
   void EmitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt &S);
 
+  void EmitCXXTryStmt(const CXXTryStmt &S);
+  
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission
   //===--------------------------------------------------------------------===//

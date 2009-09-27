@@ -21,6 +21,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/StmtCXX.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 using namespace CodeGen;
@@ -28,10 +29,8 @@ using namespace CodeGen;
 void
 CodeGenFunction::EmitCXXGlobalDtorRegistration(const CXXDestructorDecl *Dtor,
                                                llvm::Constant *DeclPtr) {
-  // FIXME: This is ABI dependent and we use the Itanium ABI.
-
-  const llvm::Type *Int8PtrTy =
-    llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+  const llvm::Type *Int8PtrTy = 
+    llvm::Type::getInt8Ty(VMContext)->getPointerTo();
 
   std::vector<const llvm::Type *> Params;
   Params.push_back(Int8PtrTy);
@@ -1938,4 +1937,10 @@ void CodeGenFunction::SynthesizeDefaultDestructor(const CXXDestructorDecl *Dtor,
                 SourceLocation());
   EmitDtorEpilogue(Dtor, DtorType);
   FinishFunction();
+}
+
+// FIXME: Move this to CGCXXStmt.cpp
+void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
+  // FIXME: We need to do more here.
+  EmitStmt(S.getTryBlock());
 }
