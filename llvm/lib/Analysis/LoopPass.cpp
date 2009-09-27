@@ -253,6 +253,15 @@ bool LPPassManager::runOnFunction(Function &F) {
         break;
     }
     
+    // If the loop was deleted, release all the loop passes. This frees up
+    // some memory, and avoids trouble with the pass manager trying to call
+    // verifyAnalysis on them.
+    if (skipThisLoop)
+      for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
+        Pass *P = getContainedPass(Index);
+        freePass(P, "", ON_LOOP_MSG);
+      }
+
     // Pop the loop from queue after running all passes.
     LQ.pop_back();
     
