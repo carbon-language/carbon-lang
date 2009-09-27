@@ -243,10 +243,8 @@ StringRef AsmLexer::LexUntilEndOfStatement() {
 }
 
 bool AsmLexer::isAtStartOfComment(char Char) {
-  for (const char *p = MAI.getCommentString(); *p != 0; ++p)
-    if (Char == *p)
-        return true;
-  return false;
+  // FIXME: This won't work for multi-character comment indicators like "//".
+  return Char == *MAI.getCommentString();
 }
 
 AsmToken AsmLexer::LexToken() {

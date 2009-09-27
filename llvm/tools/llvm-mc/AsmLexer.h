@@ -30,7 +30,7 @@ class MCAsmInfo;
 /// AsmLexer - Lexer class for assembly files.
 class AsmLexer : public MCAsmLexer {
   SourceMgr &SrcMgr;
-  const MCAsmInfo MAI;
+  const MCAsmInfo &MAI;
   
   const char *CurPtr;
   const MemoryBuffer *CurBuf;
