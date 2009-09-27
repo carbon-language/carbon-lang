@@ -1489,9 +1489,9 @@ Classifications</a> </div>
 <div class="doc_text">
 
 <h5>Overview:</h5>
-<p>The metadata type represents embedded metadata. The only derived type that
-   may contain metadata is <tt>metadata*</tt> or a function type that returns or
-   takes metadata typed parameters, but not pointer to metadata types.</p>
+<p>The metadata type represents embedded metadata. No derived types may be
+   created from metadata except for <a href="#t_function">function</a>
+   arguments.
 
 <h5>Syntax:</h5>
 <pre>
@@ -1601,7 +1601,7 @@ Classifications</a> </div>
    Variable argument functions can access their arguments with
    the <a href="#int_varargs">variable argument handling intrinsic</a>
    functions.  '<tt>&lt;returntype&gt;</tt>' is a any type except
-   <a href="#t_label">label</a> and <a href="#t_metadata">metadata</a>.</p>
+   <a href="#t_label">label</a>.</p>
 
 <h5>Examples:</h5>
 <table class="layout">

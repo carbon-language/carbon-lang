@@ -365,9 +365,6 @@ const IntegerType *Type::getInt64Ty(LLVMContext &C) {
 /// isValidReturnType - Return true if the specified type is valid as a return
 /// type.
 bool FunctionType::isValidReturnType(const Type *RetTy) {
-  if (const PointerType *PTy = dyn_cast<PointerType>(RetTy))
-    return PTy->getElementType()->getTypeID() != MetadataTyID;
-
   return RetTy->getTypeID() != LabelTyID &&
          RetTy->getTypeID() != MetadataTyID;
 }
@@ -375,12 +372,7 @@ bool FunctionType::isValidReturnType(const Type *RetTy) {
 /// isValidArgumentType - Return true if the specified type is valid as an
 /// argument type.
 bool FunctionType::isValidArgumentType(const Type *ArgTy) {
-  if ((!ArgTy->isFirstClassType() && !isa<OpaqueType>(ArgTy)) ||
-      (isa<PointerType>(ArgTy) &&
-       cast<PointerType>(ArgTy)->getElementType()->getTypeID() == MetadataTyID))
-    return false;
-
-  return true;
+  return ArgTy->isFirstClassType() || isa<OpaqueType>(ArgTy);
 }
 
 FunctionType::FunctionType(const Type *Result,
@@ -817,15 +809,8 @@ ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
 }
 
 bool ArrayType::isValidElementType(const Type *ElemTy) {
-  if (ElemTy->getTypeID() == VoidTyID || ElemTy->getTypeID() == LabelTyID ||
-      ElemTy->getTypeID() == MetadataTyID || isa<FunctionType>(ElemTy))
-    return false;
-
-  if (const PointerType *PTy = dyn_cast<PointerType>(ElemTy))
-    if (PTy->getElementType()->getTypeID() == MetadataTyID)
-      return false;
-
-  return true;
+  return ElemTy->getTypeID() != VoidTyID && ElemTy->getTypeID() != LabelTyID &&
+         ElemTy->getTypeID() != MetadataTyID && !isa<FunctionType>(ElemTy);
 }
 
 VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
@@ -849,11 +834,8 @@ VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
 }
 
 bool VectorType::isValidElementType(const Type *ElemTy) {
-  if (ElemTy->isInteger() || ElemTy->isFloatingPoint() ||
-      isa<OpaqueType>(ElemTy))
-    return true;
-
-  return false;
+  return ElemTy->isInteger() || ElemTy->isFloatingPoint() ||
+         isa<OpaqueType>(ElemTy);
 }
 
 //===----------------------------------------------------------------------===//
@@ -896,15 +878,8 @@ StructType *StructType::get(LLVMContext &Context, const Type *type, ...) {
 }
 
 bool StructType::isValidElementType(const Type *ElemTy) {
-  if (ElemTy->getTypeID() == VoidTyID || ElemTy->getTypeID() == LabelTyID ||
-      ElemTy->getTypeID() == MetadataTyID || isa<FunctionType>(ElemTy))
-    return false;
-
-  if (const PointerType *PTy = dyn_cast<PointerType>(ElemTy))
-    if (PTy->getElementType()->getTypeID() == MetadataTyID)
-      return false;
-
-  return true;
+  return ElemTy->getTypeID() != VoidTyID && ElemTy->getTypeID() != LabelTyID &&
+         ElemTy->getTypeID() != MetadataTyID && !isa<FunctionType>(ElemTy);
 }
 
 
@@ -941,15 +916,9 @@ PointerType *Type::getPointerTo(unsigned addrs) const {
 }
 
 bool PointerType::isValidElementType(const Type *ElemTy) {
-  if (ElemTy->getTypeID() == VoidTyID ||
-      ElemTy->getTypeID() == LabelTyID)
-    return false;
-
-  if (const PointerType *PTy = dyn_cast<PointerType>(ElemTy))
-    if (PTy->getElementType()->getTypeID() == MetadataTyID)
-      return false;
-
-  return true;
+  return ElemTy->getTypeID() != VoidTyID &&
+         ElemTy->getTypeID() != LabelTyID &&
+         ElemTy->getTypeID() != MetadataTyID;
 }
 
 
