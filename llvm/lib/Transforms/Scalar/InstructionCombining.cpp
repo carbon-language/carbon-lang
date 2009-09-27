@@ -388,7 +388,11 @@ namespace {
     // which has a PHI node as operand #0, see if we can fold the instruction
     // into the PHI (which is only possible if all operands to the PHI are
     // constants).
-    Instruction *FoldOpIntoPhi(Instruction &I);
+    //
+    // If AllowAggressive is true, FoldOpIntoPhi will allow certain transforms
+    // that would normally be unprofitable because they strongly encourage jump
+    // threading.
+    Instruction *FoldOpIntoPhi(Instruction &I, bool AllowAggressive = false);
 
     // FoldPHIArgOpIntoPHI - If all operands to a PHI node are the same "unary"
     // operator and they all are only used by the PHI, PHI together their
@@ -1942,11 +1946,22 @@ static Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI,
 /// FoldOpIntoPhi - Given a binary operator, cast instruction, or select which
 /// has a PHI node as operand #0, see if we can fold the instruction into the
 /// PHI (which is only possible if all operands to the PHI are constants).
-Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
+///
+/// If AllowAggressive is true, FoldOpIntoPhi will allow certain transforms
+/// that would normally be unprofitable because they strongly encourage jump
+/// threading.
+Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
+                                         bool AllowAggressive) {
+  AllowAggressive = false;
   PHINode *PN = cast<PHINode>(I.getOperand(0));
   unsigned NumPHIValues = PN->getNumIncomingValues();
-  if (!PN->hasOneUse() || NumPHIValues == 0) return 0;
-
+  if (NumPHIValues == 0 ||
+      // We normally only transform phis with a single use, unless we're trying
+      // hard to make jump threading happen.
+      (!PN->hasOneUse() && !AllowAggressive))
+    return 0;
+  
+  
   // Check to see if all of the operands of the PHI are simple constants
   // (constantint/constantfp/undef).  If there is one non-constant value,
   // remember the BB it is in.  If there is more than one or if *it* is a PHI,
@@ -1970,7 +1985,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   // operation in that block.  However, if this is a critical edge, we would be
   // inserting the computation one some other paths (e.g. inside a loop).  Only
   // do this if the pred block is unconditionally branching into the phi block.
-  if (NonConstBB) {
+  if (NonConstBB != 0 && !AllowAggressive) {
     BranchInst *BI = dyn_cast<BranchInst>(NonConstBB->getTerminator());
     if (!BI || !BI->isUnconditional()) return 0;
   }
@@ -5865,7 +5880,7 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
         // block.  If in the same block, we're encouraging jump threading.  If
         // not, we are just pessimizing the code by making an i1 phi.
         if (LHSI->getParent() == I.getParent())
-          if (Instruction *NV = FoldOpIntoPhi(I))
+          if (Instruction *NV = FoldOpIntoPhi(I, true))
             return NV;
         break;
       case Instruction::SIToFP:
@@ -6221,11 +6236,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         break;
 
       case Instruction::PHI:
-        // Only fold icmp into the PHI if the phi and fcmp are in the same
+        // Only fold icmp into the PHI if the phi and icmp are in the same
         // block.  If in the same block, we're encouraging jump threading.  If
         // not, we are just pessimizing the code by making an i1 phi.
         if (LHSI->getParent() == I.getParent())
-          if (Instruction *NV = FoldOpIntoPhi(I))
+          if (Instruction *NV = FoldOpIntoPhi(I, true))
             return NV;
         break;
       case Instruction::Select: {
