@@ -1282,6 +1282,10 @@ void GetElementPtrInst::setIsInBounds(bool B) {
   cast<GEPOperator>(this)->setIsInBounds(B);
 }
 
+bool GetElementPtrInst::isInBounds() const {
+  return cast<GEPOperator>(this)->isInBounds();
+}
+
 //===----------------------------------------------------------------------===//
 //                           ExtractElementInst Implementation
 //===----------------------------------------------------------------------===//
@@ -1836,6 +1840,18 @@ void BinaryOperator::setHasNoSignedWrap(bool b) {
 
 void BinaryOperator::setIsExact(bool b) {
   cast<SDivOperator>(this)->setIsExact(b);
+}
+
+bool BinaryOperator::hasNoUnsignedWrap() const {
+  return cast<OverflowingBinaryOperator>(this)->hasNoUnsignedWrap();
+}
+
+bool BinaryOperator::hasNoSignedWrap() const {
+  return cast<OverflowingBinaryOperator>(this)->hasNoSignedWrap();
+}
+
+bool BinaryOperator::isExact() const {
+  return cast<SDivOperator>(this)->isExact();
 }
 
 //===----------------------------------------------------------------------===//

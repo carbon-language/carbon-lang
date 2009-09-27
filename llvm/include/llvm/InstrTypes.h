@@ -311,17 +311,26 @@ public:
   /// setHasNoUnsignedWrap - Set or clear the nsw flag on this instruction,
   /// which must be an operator which supports this flag. See LangRef.html
   /// for the meaning of this flag.
-  void setHasNoUnsignedWrap(bool);
+  void setHasNoUnsignedWrap(bool b = true);
 
   /// setHasNoSignedWrap - Set or clear the nsw flag on this instruction,
   /// which must be an operator which supports this flag. See LangRef.html
   /// for the meaning of this flag.
-  void setHasNoSignedWrap(bool);
+  void setHasNoSignedWrap(bool b = true);
 
   /// setIsExact - Set or clear the exact flag on this instruction,
   /// which must be an operator which supports this flag. See LangRef.html
   /// for the meaning of this flag.
-  void setIsExact(bool);
+  void setIsExact(bool b = true);
+
+  /// hasNoUnsignedWrap - Determine whether the no unsigned wrap flag is set.
+  bool hasNoUnsignedWrap() const;
+
+  /// hasNoSignedWrap - Determine whether the no signed wrap flag is set.
+  bool hasNoSignedWrap() const;
+
+  /// isExact - Determine whether the exact flag is set.
+  bool isExact() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BinaryOperator *) { return true; }

@@ -604,7 +604,10 @@ public:
 
   /// setIsInBounds - Set or clear the inbounds flag on this GEP instruction.
   /// See LangRef.html for the meaning of inbounds on a getelementptr.
-  void setIsInBounds(bool);
+  void setIsInBounds(bool b = true);
+
+  /// isInBounds - Determine whether the GEP has the inbounds flag.
+  bool isInBounds() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GetElementPtrInst *) { return true; }
