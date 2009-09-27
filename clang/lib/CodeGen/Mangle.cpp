@@ -20,6 +20,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
@@ -971,7 +972,26 @@ void CXXNameMangler::mangleExpression(const Expr *E) {
     }
 
     }
+    
+    break;
   }
+  
+  case Expr::UnresolvedDeclRefExprClass: {
+    const UnresolvedDeclRefExpr *DRE = cast<UnresolvedDeclRefExpr>(E);
+    const Type *QTy = DRE->getQualifier()->getAsType();
+    assert(QTy && "Qualifier was not type!");
+
+    // ::= sr <type> <unqualified-name>                   # dependent name
+    Out << "sr";
+    mangleType(QualType(QTy, 0));
+    
+    assert(DRE->getDeclName().getNameKind() == DeclarationName::Identifier &&
+           "Unhandled decl name kind!");
+    mangleSourceName(DRE->getDeclName().getAsIdentifierInfo());
+    
+    break;
+  }
+
   }
 }
 
