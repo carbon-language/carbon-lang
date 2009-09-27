@@ -1,4 +1,4 @@
-##===- unittests/Makefile ----------------------------------*- Makefile -*-===##
+##===- unittests/Transforms/Makefile -----------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,9 +7,9 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ..
+LEVEL = ../..
 
-PARALLEL_DIRS = ADT ExecutionEngine Support Transforms VMCore
+PARALLEL_DIRS = Utils
 
 include $(LEVEL)/Makefile.common
 
