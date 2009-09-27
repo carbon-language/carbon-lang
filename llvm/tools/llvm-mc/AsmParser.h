@@ -21,6 +21,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/ADT/StringMap.h"
 
 namespace llvm {
 class AsmCond;
@@ -47,15 +48,23 @@ private:
   // is also used by TargetLoweringObjectFile.
   mutable void *SectionUniquingMap;
 
+  /// DirectiveMap - This is a table handlers for directives.  Each handler is
+  /// invoked after the directive identifier is read and is responsible for
+  /// parsing and validating the rest of the directive.  The handler is passed
+  /// in the directive name and the location of the directive keyword.
+  StringMap<bool(AsmParser::*)(StringRef, SMLoc)> DirectiveMap;
 public:
   AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
-            const MCAsmInfo &_MAI)
-    : Lexer(_SM, _MAI), Ctx(_Ctx), Out(_Out), TargetParser(0),
-      SectionUniquingMap(0) {}
+            const MCAsmInfo &_MAI);
   ~AsmParser();
 
   bool Run();
+
   
+  void AddDirectiveHandler(StringRef Directive,
+                           bool (AsmParser::*Handler)(StringRef, SMLoc)) {
+    DirectiveMap[Directive] = Handler;
+  }
 public:
   TargetAsmParser &getTargetParser() const { return *TargetParser; }
   void setTargetParser(TargetAsmParser &P) { TargetParser = &P; }
@@ -64,19 +73,14 @@ public:
   /// {
 
   virtual MCAsmLexer &getLexer() { return Lexer; }
-
   virtual MCContext &getContext() { return Ctx; }
-
   virtual MCStreamer &getStreamer() { return Out; }
 
   virtual void Warning(SMLoc L, const Twine &Meg);
-
   virtual bool Error(SMLoc L, const Twine &Msg);
 
   virtual bool ParseExpression(const MCExpr *&Res);
-
   virtual bool ParseParenExpression(const MCExpr *&Res);
-
   virtual bool ParseAbsoluteExpression(int64_t &Res);
 
   /// }
@@ -145,9 +149,9 @@ private:
   bool ParseDirectiveElse(SMLoc DirectiveLoc); // ".else"
   bool ParseDirectiveEndIf(SMLoc DirectiveLoc); // .endif
 
-  bool ParseDirectiveFile(SMLoc DirectiveLoc); // ".file"
-  bool ParseDirectiveLine(SMLoc DirectiveLoc); // ".line"
-  bool ParseDirectiveLoc(SMLoc DirectiveLoc); // ".loc"
+  bool ParseDirectiveFile(StringRef, SMLoc DirectiveLoc); // ".file"
+  bool ParseDirectiveLine(StringRef, SMLoc DirectiveLoc); // ".line"
+  bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc); // ".loc"
 
   /// ParseEscapedString - Parse the current token as a string which may include
   /// escaped characters and return the string contents.

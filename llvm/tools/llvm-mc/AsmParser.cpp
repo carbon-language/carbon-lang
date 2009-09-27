@@ -32,6 +32,18 @@ using namespace llvm;
 // TargetLoweringObjectFile.
 typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
 
+AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
+                     const MCAsmInfo &_MAI) 
+  : Lexer(_SM, _MAI), Ctx(_Ctx), Out(_Out), TargetParser(0),
+    SectionUniquingMap(0) {
+  // Debugging directives.
+  AddDirectiveHandler(".file", &AsmParser::ParseDirectiveFile);
+  AddDirectiveHandler(".line", &AsmParser::ParseDirectiveLine);
+  AddDirectiveHandler(".loc", &AsmParser::ParseDirectiveLoc);
+}
+
+
+
 AsmParser::~AsmParser() {
   // If we have the MachO uniquing map, free it.
   delete (MachOUniqueMapTy*)SectionUniquingMap;
@@ -672,15 +684,11 @@ bool AsmParser::ParseStatement() {
     if (IDVal == ".load")
       return ParseDirectiveDarwinDumpOrLoad(IDLoc, /*IsLoad=*/false);
 
-    // Debugging directives
-
-    if (IDVal == ".file")
-      return ParseDirectiveFile(IDLoc);
-    if (IDVal == ".line")
-      return ParseDirectiveLine(IDLoc);
-    if (IDVal == ".loc")
-      return ParseDirectiveLoc(IDLoc);
-
+    // Look up the handler in the handler table, 
+    bool(AsmParser::*Handler)(StringRef, SMLoc) = DirectiveMap[IDVal];
+    if (Handler)
+      return (this->*Handler)(IDVal, IDLoc);
+    
     // Target hook for parsing target specific directives.
     if (!getTargetParser().ParseDirective(ID))
       return false;
@@ -1587,7 +1595,7 @@ bool AsmParser::ParseDirectiveEndIf(SMLoc DirectiveLoc) {
 
 /// ParseDirectiveFile
 /// ::= .file [number] string
-bool AsmParser::ParseDirectiveFile(SMLoc DirectiveLoc) {
+bool AsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   // FIXME: I'm not sure what this is.
   int64_t FileNumber = -1;
   if (Lexer.is(AsmToken::Integer)) {
@@ -1614,7 +1622,7 @@ bool AsmParser::ParseDirectiveFile(SMLoc DirectiveLoc) {
 
 /// ParseDirectiveLine
 /// ::= .line [number]
-bool AsmParser::ParseDirectiveLine(SMLoc DirectiveLoc) {
+bool AsmParser::ParseDirectiveLine(StringRef, SMLoc DirectiveLoc) {
   if (Lexer.isNot(AsmToken::EndOfStatement)) {
     if (Lexer.isNot(AsmToken::Integer))
       return TokError("unexpected token in '.line' directive");
@@ -1635,7 +1643,7 @@ bool AsmParser::ParseDirectiveLine(SMLoc DirectiveLoc) {
 
 /// ParseDirectiveLoc
 /// ::= .loc number [number [number]]
-bool AsmParser::ParseDirectiveLoc(SMLoc DirectiveLoc) {
+bool AsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
   if (Lexer.isNot(AsmToken::Integer))
     return TokError("unexpected token in '.loc' directive");
 
