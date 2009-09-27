@@ -245,6 +245,11 @@ RDYNAMIC := @RDYNAMIC@
 #DEBUG_RUNTIME = 1
 @DEBUG_RUNTIME@
 
+# When DEBUG_SYMBOLS is enabled, the compiler libraries will retain debug
+# symbols.
+#DEBUG_SYMBOLS = 1
+@DEBUG_SYMBOLS@
+
 # When ENABLE_PROFILING is enabled, the llvm source base is built with profile
 # information to allow gprof to be used to get execution frequencies.
 #ENABLE_PROFILING = 1

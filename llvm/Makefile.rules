@@ -313,7 +313,7 @@ ifeq ($(ENABLE_OPTIMIZED),1)
   CXX.Flags += $(OPTIMIZE_OPTION) $(OmitFramePointer)
   C.Flags   += $(OPTIMIZE_OPTION) $(OmitFramePointer)
   LD.Flags  += $(OPTIMIZE_OPTION)
-  ifdef DEBUG_RUNTIME
+  ifdef DEBUG_SYMBOLS
     BuildMode := $(BuildMode)+Debug
     CXX.Flags += -g
     C.Flags   += -g
