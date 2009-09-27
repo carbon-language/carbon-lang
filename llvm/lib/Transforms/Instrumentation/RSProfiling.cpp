@@ -397,7 +397,7 @@ Value* ProfilerRS::Translate(Value* v) {
       return i;
     } else {
       //translate this
-      Instruction* i2 = i->clone(v->getContext());
+      Instruction* i2 = i->clone();
       if (i->hasName())
         i2->setName("dup_" + i->getName());
       TransCache[i] = i2;

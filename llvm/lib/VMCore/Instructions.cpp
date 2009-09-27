@@ -2999,7 +2999,7 @@ void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 // Define these methods here so vtables don't get emitted into every translation
 // unit that uses these classes.
 
-GetElementPtrInst *GetElementPtrInst::clone(LLVMContext&) const {
+GetElementPtrInst *GetElementPtrInst::clone() const {
   GetElementPtrInst *New = new(getNumOperands()) GetElementPtrInst(*this);
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3009,7 +3009,7 @@ GetElementPtrInst *GetElementPtrInst::clone(LLVMContext&) const {
   return New;
 }
 
-BinaryOperator *BinaryOperator::clone(LLVMContext&) const {
+BinaryOperator *BinaryOperator::clone() const {
   BinaryOperator *New = Create(getOpcode(), Op<0>(), Op<1>());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3019,7 +3019,7 @@ BinaryOperator *BinaryOperator::clone(LLVMContext&) const {
   return New;
 }
 
-FCmpInst* FCmpInst::clone(LLVMContext &Context) const {
+FCmpInst* FCmpInst::clone() const {
   FCmpInst *New = new FCmpInst(getPredicate(), Op<0>(), Op<1>());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3028,7 +3028,7 @@ FCmpInst* FCmpInst::clone(LLVMContext &Context) const {
   }
   return New;
 }
-ICmpInst* ICmpInst::clone(LLVMContext &Context) const {
+ICmpInst* ICmpInst::clone() const {
   ICmpInst *New = new ICmpInst(getPredicate(), Op<0>(), Op<1>());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3038,7 +3038,7 @@ ICmpInst* ICmpInst::clone(LLVMContext &Context) const {
   return New;
 }
 
-ExtractValueInst *ExtractValueInst::clone(LLVMContext&) const {
+ExtractValueInst *ExtractValueInst::clone() const {
   ExtractValueInst *New = new ExtractValueInst(*this);
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3047,7 +3047,7 @@ ExtractValueInst *ExtractValueInst::clone(LLVMContext&) const {
   }
   return New;
 }
-InsertValueInst *InsertValueInst::clone(LLVMContext&) const {
+InsertValueInst *InsertValueInst::clone() const {
   InsertValueInst *New = new InsertValueInst(*this);
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3057,7 +3057,7 @@ InsertValueInst *InsertValueInst::clone(LLVMContext&) const {
   return New;
 }
 
-MallocInst *MallocInst::clone(LLVMContext&) const {
+MallocInst *MallocInst::clone() const {
   MallocInst *New = new MallocInst(getAllocatedType(),
                                    (Value*)getOperand(0),
                                    getAlignment());
@@ -3069,7 +3069,7 @@ MallocInst *MallocInst::clone(LLVMContext&) const {
   return New;
 }
 
-AllocaInst *AllocaInst::clone(LLVMContext&) const {
+AllocaInst *AllocaInst::clone() const {
   AllocaInst *New = new AllocaInst(getAllocatedType(),
                                    (Value*)getOperand(0),
                                    getAlignment());
@@ -3081,7 +3081,7 @@ AllocaInst *AllocaInst::clone(LLVMContext&) const {
   return New;
 }
 
-FreeInst *FreeInst::clone(LLVMContext&) const {
+FreeInst *FreeInst::clone() const {
   FreeInst *New = new FreeInst(getOperand(0));
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3091,7 +3091,7 @@ FreeInst *FreeInst::clone(LLVMContext&) const {
   return New;
 }
 
-LoadInst *LoadInst::clone(LLVMContext&) const {
+LoadInst *LoadInst::clone() const {
   LoadInst *New = new LoadInst(getOperand(0),
                                Twine(), isVolatile(),
                                getAlignment());
@@ -3103,7 +3103,7 @@ LoadInst *LoadInst::clone(LLVMContext&) const {
   return New;
 }
 
-StoreInst *StoreInst::clone(LLVMContext&) const {
+StoreInst *StoreInst::clone() const {
   StoreInst *New = new StoreInst(getOperand(0), getOperand(1),
                                  isVolatile(), getAlignment());
   New->SubclassOptionalData = SubclassOptionalData;
@@ -3114,7 +3114,7 @@ StoreInst *StoreInst::clone(LLVMContext&) const {
   return New;
 }
 
-TruncInst *TruncInst::clone(LLVMContext&) const {
+TruncInst *TruncInst::clone() const {
   TruncInst *New = new TruncInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3124,7 +3124,7 @@ TruncInst *TruncInst::clone(LLVMContext&) const {
   return New;
 }
 
-ZExtInst *ZExtInst::clone(LLVMContext&) const {
+ZExtInst *ZExtInst::clone() const {
   ZExtInst *New = new ZExtInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3134,7 +3134,7 @@ ZExtInst *ZExtInst::clone(LLVMContext&) const {
   return New;
 }
 
-SExtInst *SExtInst::clone(LLVMContext&) const {
+SExtInst *SExtInst::clone() const {
   SExtInst *New = new SExtInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3144,7 +3144,7 @@ SExtInst *SExtInst::clone(LLVMContext&) const {
   return New;
 }
 
-FPTruncInst *FPTruncInst::clone(LLVMContext&) const {
+FPTruncInst *FPTruncInst::clone() const {
   FPTruncInst *New = new FPTruncInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3154,7 +3154,7 @@ FPTruncInst *FPTruncInst::clone(LLVMContext&) const {
   return New;
 }
 
-FPExtInst *FPExtInst::clone(LLVMContext&) const {
+FPExtInst *FPExtInst::clone() const {
   FPExtInst *New = new FPExtInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3164,7 +3164,7 @@ FPExtInst *FPExtInst::clone(LLVMContext&) const {
   return New;
 }
 
-UIToFPInst *UIToFPInst::clone(LLVMContext&) const {
+UIToFPInst *UIToFPInst::clone() const {
   UIToFPInst *New = new UIToFPInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3174,7 +3174,7 @@ UIToFPInst *UIToFPInst::clone(LLVMContext&) const {
   return New;
 }
 
-SIToFPInst *SIToFPInst::clone(LLVMContext&) const {
+SIToFPInst *SIToFPInst::clone() const {
   SIToFPInst *New = new SIToFPInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3184,7 +3184,7 @@ SIToFPInst *SIToFPInst::clone(LLVMContext&) const {
   return New;
 }
 
-FPToUIInst *FPToUIInst::clone(LLVMContext&) const {
+FPToUIInst *FPToUIInst::clone() const {
   FPToUIInst *New = new FPToUIInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3194,7 +3194,7 @@ FPToUIInst *FPToUIInst::clone(LLVMContext&) const {
   return New;
 }
 
-FPToSIInst *FPToSIInst::clone(LLVMContext&) const {
+FPToSIInst *FPToSIInst::clone() const {
   FPToSIInst *New = new FPToSIInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3204,7 +3204,7 @@ FPToSIInst *FPToSIInst::clone(LLVMContext&) const {
   return New;
 }
 
-PtrToIntInst *PtrToIntInst::clone(LLVMContext&) const {
+PtrToIntInst *PtrToIntInst::clone() const {
   PtrToIntInst *New = new PtrToIntInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3214,7 +3214,7 @@ PtrToIntInst *PtrToIntInst::clone(LLVMContext&) const {
   return New;
 }
 
-IntToPtrInst *IntToPtrInst::clone(LLVMContext&) const {
+IntToPtrInst *IntToPtrInst::clone() const {
   IntToPtrInst *New = new IntToPtrInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3224,7 +3224,7 @@ IntToPtrInst *IntToPtrInst::clone(LLVMContext&) const {
   return New;
 }
 
-BitCastInst *BitCastInst::clone(LLVMContext&) const {
+BitCastInst *BitCastInst::clone() const {
   BitCastInst *New = new BitCastInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3234,7 +3234,7 @@ BitCastInst *BitCastInst::clone(LLVMContext&) const {
   return New;
 }
 
-CallInst *CallInst::clone(LLVMContext&) const {
+CallInst *CallInst::clone() const {
   CallInst *New = new(getNumOperands()) CallInst(*this);
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3244,7 +3244,7 @@ CallInst *CallInst::clone(LLVMContext&) const {
   return New;
 }
 
-SelectInst *SelectInst::clone(LLVMContext&) const {
+SelectInst *SelectInst::clone() const {
   SelectInst *New = SelectInst::Create(getOperand(0),
                                        getOperand(1),
                                        getOperand(2));
@@ -3256,7 +3256,7 @@ SelectInst *SelectInst::clone(LLVMContext&) const {
   return New;
 }
 
-VAArgInst *VAArgInst::clone(LLVMContext&) const {
+VAArgInst *VAArgInst::clone() const {
   VAArgInst *New = new VAArgInst(getOperand(0), getType());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3266,7 +3266,7 @@ VAArgInst *VAArgInst::clone(LLVMContext&) const {
   return New;
 }
 
-ExtractElementInst *ExtractElementInst::clone(LLVMContext&) const {
+ExtractElementInst *ExtractElementInst::clone() const {
   ExtractElementInst *New = ExtractElementInst::Create(getOperand(0),
                                                        getOperand(1));
   New->SubclassOptionalData = SubclassOptionalData;
@@ -3277,7 +3277,7 @@ ExtractElementInst *ExtractElementInst::clone(LLVMContext&) const {
   return New;
 }
 
-InsertElementInst *InsertElementInst::clone(LLVMContext&) const {
+InsertElementInst *InsertElementInst::clone() const {
   InsertElementInst *New = InsertElementInst::Create(getOperand(0),
                                                      getOperand(1),
                                                      getOperand(2));
@@ -3289,7 +3289,7 @@ InsertElementInst *InsertElementInst::clone(LLVMContext&) const {
   return New;
 }
 
-ShuffleVectorInst *ShuffleVectorInst::clone(LLVMContext&) const {
+ShuffleVectorInst *ShuffleVectorInst::clone() const {
   ShuffleVectorInst *New = new ShuffleVectorInst(getOperand(0),
                                                  getOperand(1),
                                                  getOperand(2));
@@ -3301,7 +3301,7 @@ ShuffleVectorInst *ShuffleVectorInst::clone(LLVMContext&) const {
   return New;
 }
 
-PHINode *PHINode::clone(LLVMContext&) const {
+PHINode *PHINode::clone() const {
   PHINode *New = new PHINode(*this);
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3311,7 +3311,7 @@ PHINode *PHINode::clone(LLVMContext&) const {
   return New;
 }
 
-ReturnInst *ReturnInst::clone(LLVMContext&) const {
+ReturnInst *ReturnInst::clone() const {
   ReturnInst *New = new(getNumOperands()) ReturnInst(*this);
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3321,7 +3321,7 @@ ReturnInst *ReturnInst::clone(LLVMContext&) const {
   return New;
 }
 
-BranchInst *BranchInst::clone(LLVMContext&) const {
+BranchInst *BranchInst::clone() const {
   unsigned Ops(getNumOperands());
   BranchInst *New = new(Ops, Ops == 1) BranchInst(*this);
   New->SubclassOptionalData = SubclassOptionalData;
@@ -3332,7 +3332,7 @@ BranchInst *BranchInst::clone(LLVMContext&) const {
   return New;
 }
 
-SwitchInst *SwitchInst::clone(LLVMContext&) const {
+SwitchInst *SwitchInst::clone() const {
   SwitchInst *New = new SwitchInst(*this);
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3342,7 +3342,7 @@ SwitchInst *SwitchInst::clone(LLVMContext&) const {
   return New;
 }
 
-InvokeInst *InvokeInst::clone(LLVMContext&) const {
+InvokeInst *InvokeInst::clone() const {
   InvokeInst *New = new(getNumOperands()) InvokeInst(*this);
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
@@ -3352,22 +3352,20 @@ InvokeInst *InvokeInst::clone(LLVMContext&) const {
   return New;
 }
 
-UnwindInst *UnwindInst::clone(LLVMContext &C) const {
-  UnwindInst *New = new UnwindInst(C);
+UnwindInst *UnwindInst::clone() const {
+  LLVMContext &Context = getContext();
+  UnwindInst *New = new UnwindInst(Context);
   New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
+  if (hasMetadata())
     Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
   return New;
 }
 
-UnreachableInst *UnreachableInst::clone(LLVMContext &C) const {
-  UnreachableInst *New = new UnreachableInst(C);
+UnreachableInst *UnreachableInst::clone() const {
+  LLVMContext &Context = getContext();
+  UnreachableInst *New = new UnreachableInst(Context);
   New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
+  if (hasMetadata())
     Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
   return New;
 }

@@ -306,7 +306,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
   // keeping track of the mapping...
   //
   for (; BI != DestBlock->end(); ++BI) {
-    Instruction *New = BI->clone(BI->getContext());
+    Instruction *New = BI->clone();
     New->setName(BI->getName());
     SourceBlock->getInstList().push_back(New);
     ValueMapping[BI] = New;

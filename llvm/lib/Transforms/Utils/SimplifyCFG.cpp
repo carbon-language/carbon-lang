@@ -16,7 +16,6 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
@@ -911,7 +910,7 @@ HoistTerminator:
     return true;
 
   // Okay, it is safe to hoist the terminator.
-  Instruction *NT = I1->clone(BB1->getContext());
+  Instruction *NT = I1->clone();
   BIParent->getInstList().insert(BI, NT);
   if (NT->getType() != Type::getVoidTy(BB1->getContext())) {
     I1->replaceAllUsesWith(NT);
@@ -1151,7 +1150,6 @@ static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
 /// ultimate destination.
 static bool FoldCondBranchOnPHI(BranchInst *BI) {
   BasicBlock *BB = BI->getParent();
-  LLVMContext &Context = BB->getContext();
   PHINode *PN = dyn_cast<PHINode>(BI->getCondition());
   // NOTE: we currently cannot transform this case if the PHI node is used
   // outside of the block.
@@ -1205,7 +1203,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
           TranslateMap[PN] = PN->getIncomingValueForBlock(PredBB);
         } else {
           // Clone the instruction.
-          Instruction *N = BBI->clone(Context);
+          Instruction *N = BBI->clone();
           if (BBI->hasName()) N->setName(BBI->getName()+".c");
           
           // Update operands due to translation.
@@ -1218,7 +1216,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
           }
           
           // Check for trivial simplification.
-          if (Constant *C = ConstantFoldInstruction(N, Context)) {
+          if (Constant *C = ConstantFoldInstruction(N, BB->getContext())) {
             TranslateMap[BBI] = C;
             delete N;   // Constant folded away, don't need actual inst
           } else {
@@ -1554,7 +1552,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     
     // Clone Cond into the predecessor basic block, and or/and the
     // two conditions together.
-    Instruction *New = Cond->clone(BB->getContext());
+    Instruction *New = Cond->clone();
     PredBlock->getInstList().insert(PBI, New);
     New->takeName(Cond);
     Cond->setName(New->getName()+".old");
@@ -1814,7 +1812,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                        << "INTO UNCOND BRANCH PRED: " << *Pred);
           Instruction *UncondBranch = Pred->getTerminator();
           // Clone the return and add it to the end of the predecessor.
-          Instruction *NewRet = RI->clone(BB->getContext());
+          Instruction *NewRet = RI->clone();
           Pred->getInstList().push_back(NewRet);
 
           BasicBlock::iterator BBI = RI;

@@ -24,7 +24,6 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/Dominators.h"
@@ -2303,7 +2302,6 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
   // one register value.
   BasicBlock *LatchBlock = L->getLoopLatch();
   BasicBlock *ExitingBlock = L->getExitingBlock();
-  LLVMContext &Context = LatchBlock->getContext();
   
   if (!ExitingBlock)
     // Multiple exits, just look at the exit in the latch block if there is one.
@@ -2394,7 +2392,7 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
       Cond->moveBefore(TermBr);
     } else {
       // Otherwise, clone the terminating condition and insert into the loopend.
-      Cond = cast<ICmpInst>(Cond->clone(Context));
+      Cond = cast<ICmpInst>(Cond->clone());
       Cond->setName(L->getHeader()->getName() + ".termcond");
       LatchBlock->getInstList().insert(TermBr, Cond);
       

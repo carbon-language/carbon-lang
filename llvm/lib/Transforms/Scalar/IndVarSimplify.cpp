@@ -292,7 +292,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
       if (NumPreds != 1) {
         // Clone the PHI and delete the original one. This lets IVUsers and
         // any other maps purge the original user from their records.
-        PHINode *NewPN = PN->clone(PN->getContext());
+        PHINode *NewPN = PN->clone();
         NewPN->takeName(PN);
         NewPN->insertBefore(PN);
         PN->replaceAllUsesWith(NewPN);

@@ -43,7 +43,7 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
   // Loop over all instructions, and copy them over.
   for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end();
        II != IE; ++II) {
-    Instruction *NewInst = II->clone(BB->getContext());
+    Instruction *NewInst = II->clone();
     if (II->hasName())
       NewInst->setName(II->getName()+NameSuffix);
     NewBB->getInstList().push_back(NewInst);
@@ -248,7 +248,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
         continue;
     }
       
-    Instruction *NewInst = II->clone(BB->getContext());
+    Instruction *NewInst = II->clone();
     if (II->hasName())
       NewInst->setName(II->getName()+NameSuffix);
     NewBB->getInstList().push_back(NewInst);
@@ -296,7 +296,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
   }
   
   if (!TerminatorDone) {
-    Instruction *NewInst = OldTI->clone(BB->getContext());
+    Instruction *NewInst = OldTI->clone();
     if (OldTI->hasName())
       NewInst->setName(OldTI->getName()+NameSuffix);
     NewBB->getInstList().push_back(NewInst);

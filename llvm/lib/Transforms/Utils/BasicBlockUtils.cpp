@@ -663,7 +663,7 @@ void llvm::CopyPrecedingStopPoint(Instruction *I,
   if (I != I->getParent()->begin()) {
     BasicBlock::iterator BBI = I;  --BBI;
     if (DbgStopPointInst *DSPI = dyn_cast<DbgStopPointInst>(BBI)) {
-      CallInst *newDSPI = DSPI->clone(I->getContext());
+      CallInst *newDSPI = DSPI->clone();
       newDSPI->insertBefore(InsertPos);
     }
   }
