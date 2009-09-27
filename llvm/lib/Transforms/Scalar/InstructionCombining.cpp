@@ -6289,19 +6289,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                                                       !I.isTrueWhenEqual()));
         }
         break;
-      case Instruction::BitCast:
-        // If we have (malloc != null), and if the malloc has a single use, we
-        // can assume it is successful and remove the malloc.
-        CallInst* CI = extractMallocCallFromBitCast(LHSI);
-        if (CI && CI->hasOneUse() && LHSI->hasOneUse()
-            && isa<ConstantPointerNull>(RHSC)) {
-          Worklist.Add(LHSI);
-          Worklist.Add(CI);
-          return ReplaceInstUsesWith(I,
-                                     ConstantInt::get(Type::getInt1Ty(*Context),
-                                                      !I.isTrueWhenEqual()));
-        }
-        break;
       }
   }
 
@@ -9536,18 +9523,14 @@ static unsigned EnforceKnownAlignment(Value *V,
         Align = PrefAlign;
       }
     }
-  } else if (AllocationInst *AI = dyn_cast<AllocationInst>(V)) {
-    // If there is a requested alignment and if this is an alloca, round up.  We
-    // don't do this for malloc, because some systems can't respect the request.
-    if (isa<AllocaInst>(AI)) {
-      if (AI->getAlignment() >= PrefAlign)
-        Align = AI->getAlignment();
-      else {
-        AI->setAlignment(PrefAlign);
-        Align = PrefAlign;
-      }
+  } else if (AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
+    // If there is a requested alignment and if this is an alloca, round up.
+    if (AI->getAlignment() >= PrefAlign)
+      Align = AI->getAlignment();
+    else {
+      AI->setAlignment(PrefAlign);
+      Align = PrefAlign;
     }
-    // No alignment changes are possible for malloc calls
   }
 
   return Align;
