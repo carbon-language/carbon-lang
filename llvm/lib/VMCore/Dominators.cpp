@@ -60,7 +60,7 @@ bool DominatorTree::runOnFunction(Function &F) {
 }
 
 void DominatorTree::verifyAnalysis() const {
-  if (!VerifyDomInfo || true /* fixme */) return;
+  if (!VerifyDomInfo) return;
 
   Function &F = *getRoot()->getParent();
 
