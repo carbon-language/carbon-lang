@@ -27,7 +27,7 @@ public:
 
 void test(const Proxy &p) {
   p->
-  // RUN: clang-cc -fsyntax-only -code-completion-at=%s:29:6 %s -o - | FileCheck -check-prefix=CC1 %s &&
+  // RUN: clang-cc -fsyntax-only -code-completion-at=%s:29:6 %s -o - | FileCheck -check-prefix=CHECK-CC1 %s &&
   // CHECK-CC1: member1 : 0 : [#Base1::#]member1
   // CHECK-CC1: member1 : 0 : [#Base2::#]member1
   // CHECK-CC1: member2 : 0 : [#Base1::#]member2
@@ -37,7 +37,7 @@ void test(const Proxy &p) {
   // CHECK-CC1: memfun1 : 0 : [#Base3::#]memfun1(<#double#>)
   // CHECK-CC1: memfun2 : 0 : [#Base3::#]memfun2(<#int#>)
   // CHECK-CC1: memfun3 : 0 : memfun3(<#int#>)
-  // CHECK-CC1-NEXT: Base1 : 0 : Base1::
+  // CHECK-CC1: Base1 : 0 : Base1::
   // CHECK-CC1: memfun1 : 0 (Hidden) : Base2::memfun1(<#int#>)
   // RUN: true
   

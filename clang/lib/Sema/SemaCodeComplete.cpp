@@ -14,6 +14,7 @@
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/AST/ExprCXX.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringExtras.h"
 #include <list>
 #include <map>
 #include <vector>
@@ -948,6 +949,14 @@ namespace {
   struct SortCodeCompleteResult {
     typedef CodeCompleteConsumer::Result Result;
     
+    bool isEarlierDeclarationName(DeclarationName X, DeclarationName Y) const {
+      if (X.getNameKind() != Y.getNameKind())
+        return X.getNameKind() < Y.getNameKind();
+      
+      return llvm::LowercaseString(X.getAsString()) 
+        < llvm::LowercaseString(Y.getAsString());
+    }
+    
     bool operator()(const Result &X, const Result &Y) const {
       // Sort first by rank.
       if (X.Rank < Y.Rank)
@@ -973,7 +982,8 @@ namespace {
       switch (X.Kind) {
         case Result::RK_Declaration:
           // Order based on the declaration names.
-          return X.Declaration->getDeclName() < Y.Declaration->getDeclName();
+          return isEarlierDeclarationName(X.Declaration->getDeclName(),
+                                          Y.Declaration->getDeclName());
           
         case Result::RK_Keyword:
           return strcmp(X.Keyword, Y.Keyword) == -1;
