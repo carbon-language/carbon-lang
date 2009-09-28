@@ -1222,6 +1222,19 @@ static bool isInstantiationOf(ClassTemplateDecl *Pattern,
   return false;
 }
 
+static bool isInstantiationOf(FunctionTemplateDecl *Pattern,
+                              FunctionTemplateDecl *Instance) {
+  Pattern = Pattern->getCanonicalDecl();
+  
+  do {
+    Instance = Instance->getCanonicalDecl();
+    if (Pattern == Instance) return true;
+    Instance = Instance->getInstantiatedFromMemberTemplate();
+  } while (Instance);
+  
+  return false;
+}
+
 static bool isInstantiationOf(CXXRecordDecl *Pattern,
                               CXXRecordDecl *Instance) {
   Pattern = Pattern->getCanonicalDecl();
@@ -1308,6 +1321,9 @@ static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
 
   if (ClassTemplateDecl *Temp = dyn_cast<ClassTemplateDecl>(Other))
     return isInstantiationOf(cast<ClassTemplateDecl>(D), Temp);
+
+  if (FunctionTemplateDecl *Temp = dyn_cast<FunctionTemplateDecl>(Other))
+    return isInstantiationOf(cast<FunctionTemplateDecl>(D), Temp);
 
   if (FieldDecl *Field = dyn_cast<FieldDecl>(Other)) {
     if (!Field->getDeclName()) {
