@@ -649,7 +649,8 @@ let neverHasSideEffects = 1 in
 def t2MOVr : T2sI<(outs GPR:$dst), (ins GPR:$src), IIC_iMOVr,
                    "mov", ".w $dst, $src", []>;
 
-let isReMaterializable = 1, isAsCheapAsAMove = 1 in
+// AddedComplexity to ensure isel tries t2MOVi before t2MOVi16.
+let isReMaterializable = 1, isAsCheapAsAMove = 1, AddedComplexity = 1 in
 def t2MOVi : T2sI<(outs GPR:$dst), (ins t2_so_imm:$src), IIC_iMOVi,
                    "mov", ".w $dst, $src",
                    [(set GPR:$dst, t2_so_imm:$src)]>;
@@ -660,10 +661,10 @@ def t2MOVi16 : T2I<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVi,
                    [(set GPR:$dst, imm0_65535:$src)]>;
 
 let Constraints = "$src = $dst" in
-def t2MOVTi16 : T2sI<(outs GPR:$dst), (ins GPR:$src, i32imm:$imm), IIC_iMOVi,
-                     "movt", " $dst, $imm",
-                     [(set GPR:$dst,
-                           (or (and GPR:$src, 0xffff), lo16AllZero:$imm))]>;
+def t2MOVTi16 : T2I<(outs GPR:$dst), (ins GPR:$src, i32imm:$imm), IIC_iMOVi,
+                    "movt", " $dst, $imm",
+                    [(set GPR:$dst,
+                          (or (and GPR:$src, 0xffff), lo16AllZero:$imm))]>;
 
 //===----------------------------------------------------------------------===//
 //  Extend Instructions.
@@ -1127,7 +1128,10 @@ def : T2Pat<(ARMWrapper  tconstpool  :$dst), (t2LEApcrel tconstpool  :$dst)>;
 def : T2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
             (t2LEApcrelJT tjumptable:$dst, imm:$id)>;
 
-// Large immediate handling.
-
-def : T2Pat<(i32 imm:$src),
-            (t2MOVTi16 (t2MOVi16 (lo16 imm:$src)), (hi16 imm:$src))>;
+// 32-bit immediate using movw + movt.
+// This is a single pseudo instruction to make it re-materializable. Remove
+// when we can do generalized remat.
+let isReMaterializable = 1 in
+def t2MOVi32imm : T2Ix2<(outs GPR:$dst), (ins i32imm:$src), IIC_iMOVi,
+                     "movw", " $dst, ${src:lo16}\n\tmovt${p} $dst, ${src:hi16}",
+                     [(set GPR:$dst, (i32 imm:$src))]>;

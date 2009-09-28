@@ -100,6 +100,7 @@ def HasV5T    : Predicate<"Subtarget->hasV5TOps()">;
 def HasV5TE   : Predicate<"Subtarget->hasV5TEOps()">;
 def HasV6     : Predicate<"Subtarget->hasV6Ops()">;
 def HasV6T2   : Predicate<"Subtarget->hasV6T2Ops()">;
+def NoV6T2    : Predicate<"!Subtarget->hasV6T2Ops()">;
 def HasV7     : Predicate<"Subtarget->hasV7Ops()">;
 def HasVFP2   : Predicate<"Subtarget->hasVFP2()">;
 def HasVFP3   : Predicate<"Subtarget->hasVFP3()">;
@@ -938,7 +939,7 @@ def MOVi16 : AI1<0b1000, (outs GPR:$dst), (ins i32imm:$src),
   let Inst{25} = 1;
 }
 
-let isAsCheapAsAMove = 1, Constraints = "$src = $dst" in
+let Constraints = "$src = $dst" in
 def MOVTi16 : AI1<0b1010, (outs GPR:$dst), (ins GPR:$src, i32imm:$imm),
                   DPFrm, IIC_iMOVi,
                   "movt", " $dst, $imm", 
@@ -1510,7 +1511,8 @@ let isReMaterializable = 1 in
 def MOVi2pieces : AI1x2<(outs GPR:$dst), (ins so_imm2part:$src), 
                          Pseudo, IIC_iMOVi,
                          "mov", " $dst, $src",
-                         [(set GPR:$dst, so_imm2part:$src)]>;
+                         [(set GPR:$dst, so_imm2part:$src)]>,
+                  Requires<[IsARM, NoV6T2]>;
 
 def : ARMPat<(or GPR:$LHS, so_imm2part:$RHS),
              (ORRri (ORRri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
@@ -1519,9 +1521,14 @@ def : ARMPat<(xor GPR:$LHS, so_imm2part:$RHS),
              (EORri (EORri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
                     (so_imm2part_2 imm:$RHS))>;
 
-def : ARMPat<(i32 imm:$src),
-             (MOVTi16 (MOVi16 (lo16 imm:$src)), (hi16 imm:$src))>,
-       Requires<[IsARM, HasV6T2]>;
+// 32-bit immediate using movw + movt.
+// This is a single pseudo instruction to make it re-materializable. Remove
+// when we can do generalized remat.
+let isReMaterializable = 1 in
+def MOVi32imm : AI1x2<(outs GPR:$dst), (ins i32imm:$src), Pseudo, IIC_iMOVi,
+                     "movw", " $dst, ${src:lo16}\n\tmovt${p} $dst, ${src:hi16}",
+                     [(set GPR:$dst, (i32 imm:$src))]>,
+               Requires<[IsARM, HasV6T2]>;
 
 // TODO: add,sub,and, 3-instr forms?
 

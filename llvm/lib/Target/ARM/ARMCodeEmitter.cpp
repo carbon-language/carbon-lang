@@ -596,7 +596,8 @@ void Emitter<CodeEmitter>::emitPseudoInstruction(const MachineInstr &MI) {
   unsigned Opcode = MI.getDesc().Opcode;
   switch (Opcode) {
   default:
-    llvm_unreachable("ARMCodeEmitter::emitPseudoInstruction");//FIXME:
+    llvm_unreachable("ARMCodeEmitter::emitPseudoInstruction");
+  // FIXME: Add support for MOVimm32.
   case TargetInstrInfo::INLINEASM: {
     // We allow inline assembler nodes with empty bodies - they can
     // implicitly define registers, which is ok for JIT.

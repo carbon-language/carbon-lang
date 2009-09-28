@@ -96,7 +96,6 @@ reMaterialize(MachineBasicBlock &MBB,
 
   MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
   MI->getOperand(0).setReg(DestReg);
-
   MBB.insert(I, MI);
 }
 

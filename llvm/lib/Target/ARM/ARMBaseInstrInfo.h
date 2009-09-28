@@ -296,7 +296,7 @@ bool isJumpTableBranchOpcode(int Opc) {
 /// getInstrPredicate - If instruction is predicated, returns its predicate
 /// condition, otherwise returns AL. It also returns the condition code
 /// register by reference.
-ARMCC::CondCodes getInstrPredicate(MachineInstr *MI, unsigned &PredReg);
+ARMCC::CondCodes getInstrPredicate(const MachineInstr *MI, unsigned &PredReg);
 
 int getMatchingCondBranchOpcode(int Opc);
 

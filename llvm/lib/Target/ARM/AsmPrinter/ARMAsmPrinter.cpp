@@ -329,7 +329,14 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     break;
   }
   case MachineOperand::MO_Immediate: {
-    O << '#' << MO.getImm();
+    int64_t Imm = MO.getImm();
+    if (Modifier) {
+      if (strcmp(Modifier, "lo16") == 0)
+        Imm = Imm & 0xffffLL;
+      else if (strcmp(Modifier, "hi16") == 0)
+        Imm = (Imm & 0xffff0000LL) >> 16;
+    }
+    O << '#' << Imm;
     break;
   }
   case MachineOperand::MO_MachineBasicBlock:

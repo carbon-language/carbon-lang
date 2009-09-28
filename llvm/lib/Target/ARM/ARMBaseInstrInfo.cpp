@@ -864,7 +864,8 @@ ARMBaseInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
 /// getInstrPredicate - If instruction is predicated, returns its predicate
 /// condition, otherwise returns AL. It also returns the condition code
 /// register by reference.
-ARMCC::CondCodes llvm::getInstrPredicate(MachineInstr *MI, unsigned &PredReg) {
+ARMCC::CondCodes
+llvm::getInstrPredicate(const MachineInstr *MI, unsigned &PredReg) {
   int PIdx = MI->findFirstPredOperandIdx();
   if (PIdx == -1) {
     PredReg = 0;

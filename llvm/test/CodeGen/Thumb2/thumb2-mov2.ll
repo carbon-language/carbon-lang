@@ -1,10 +1,11 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep movt | grep #1234
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep movt | grep #1234
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep movt | grep #1234
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep movt | grep #1234
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep mov  | grep movt
+; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
 
 define i32 @t2MOVTi16_ok_1(i32 %a) {
+; CHECK: t2MOVTi16_ok_1:
+; CHECK:      movs r1, #0
+; CHECK-NEXT: movt r1, #1234
+; CHECK:      movw r1, #65535
+; CHECK-NEXT: movt r1, #1234
     %1 = and i32 %a, 65535
     %2 = shl i32 1234, 16
     %3 = or  i32 %1, %2
@@ -13,6 +14,11 @@ define i32 @t2MOVTi16_ok_1(i32 %a) {
 }
 
 define i32 @t2MOVTi16_test_1(i32 %a) {
+; CHECK: t2MOVTi16_test_1:
+; CHECK:      movs r1, #0
+; CHECK-NEXT: movt r1, #1234
+; CHECK:      movw r1, #65535
+; CHECK-NEXT: movt r1, #1234
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
     %3 = or  i32   %1, 255  ; This give us 0xFFFF in %3
@@ -24,6 +30,11 @@ define i32 @t2MOVTi16_test_1(i32 %a) {
 }
 
 define i32 @t2MOVTi16_test_2(i32 %a) {
+; CHECK: t2MOVTi16_test_2:
+; CHECK:      movs r1, #0
+; CHECK-NEXT: movt r1, #1234
+; CHECK:      movw r1, #65535
+; CHECK-NEXT: movt r1, #1234
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
     %3 = or  i32   %1, 255  ; This give us 0xFFFF in %3
@@ -36,6 +47,11 @@ define i32 @t2MOVTi16_test_2(i32 %a) {
 }
 
 define i32 @t2MOVTi16_test_3(i32 %a) {
+; CHECK: t2MOVTi16_test_3:
+; CHECK:      movs r1, #0
+; CHECK-NEXT: movt r1, #1234
+; CHECK:      movw r1, #65535
+; CHECK-NEXT: movt r1, #1234
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
     %3 = or  i32   %1, 255  ; This give us 0xFFFF in %3
@@ -50,6 +66,11 @@ define i32 @t2MOVTi16_test_3(i32 %a) {
 }
 
 define i32 @t2MOVTi16_test_nomatch_1(i32 %a) {
+; CHECK: t2MOVTi16_test_nomatch_1:
+; CHECK:      movw r1, #16384
+; CHECK-NEXT: movt r1, #154
+; CHECK:      movw r1, #65535
+; CHECK-NEXT: movt r1, #154
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
     %3 = or  i32   %1, 255  ; This give us 0xFFFF in %3
@@ -58,7 +79,6 @@ define i32 @t2MOVTi16_test_nomatch_1(i32 %a) {
     %6 = shl i32   %4,   2  ; This gives us (1234 << 16) in %6
     %7 = lshr i32  %6,   3
     %8 = or  i32   %5,  %7
-
     ret i32 %8
 }
 

@@ -592,3 +592,11 @@ conditional move:
 it saves an instruction and a register.
 
 //===---------------------------------------------------------------------===//
+
+add/sub/and/or + i32 imm can be simplified by folding part of the immediate
+into the operation.
+
+//===---------------------------------------------------------------------===//
+
+It might be profitable to cse MOVi16 if there are lots of 32-bit immediates
+with the same bottom half.

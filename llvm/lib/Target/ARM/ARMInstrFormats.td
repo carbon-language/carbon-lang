@@ -984,6 +984,11 @@ class T2JTI<dag oops, dag iops, InstrItinClass itin,
             string asm, list<dag> pattern>
   : Thumb2XI<oops, iops, AddrModeNone, SizeSpecial, itin, asm, "", pattern>;
 
+class T2Ix2<dag oops, dag iops, InstrItinClass itin,
+          string opc, string asm, list<dag> pattern>
+  : Thumb2I<oops, iops, AddrModeNone, Size8Bytes, itin, opc, asm, "", pattern>;
+
+
 // T2Iidxldst - Thumb2 indexed load / store instructions.
 class T2Iidxldst<dag oops, dag iops, AddrMode am, IndexMode im,
                  InstrItinClass itin,
