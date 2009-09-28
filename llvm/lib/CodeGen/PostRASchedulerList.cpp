@@ -655,11 +655,11 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
        I != E; --Count) {
     MachineInstr *MI = --I;
 
-    // After regalloc, IMPLICIT_DEF instructions aren't safe to treat as
-    // dependence-breaking. In the case of an INSERT_SUBREG, the IMPLICIT_DEF
+    // After regalloc, KILL instructions aren't safe to treat as
+    // dependence-breaking. In the case of an INSERT_SUBREG, the KILL
     // is left behind appearing to clobber the super-register, while the
     // subregister needs to remain live. So we just ignore them.
-    if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
+    if (MI->getOpcode() == TargetInstrInfo::KILL)
       continue;
 
     // Check if this instruction has a dependence on the critical path that

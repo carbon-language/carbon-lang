@@ -126,11 +126,10 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
   if (SrcReg == DstReg) {
     // No need to insert an identity copy instruction.
     if (MI->getOperand(1).isKill()) {
-      // We must make sure the super-register gets killed.Replace the
-      // instruction with IMPLICIT_DEF.
-      MI->setDesc(TII.get(TargetInstrInfo::IMPLICIT_DEF));
+      // We must make sure the super-register gets killed. Replace the
+      // instruction with KILL.
+      MI->setDesc(TII.get(TargetInstrInfo::KILL));
       MI->RemoveOperand(2);     // SubIdx
-      MI->getOperand(1).setImplicit(true);
       DEBUG(errs() << "subreg: replace by: " << *MI);
       return true;
     }
@@ -243,14 +242,14 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
 
   if (DstSubReg == InsReg) {
     // No need to insert an identity copy instruction. If the SrcReg was
-    // <undef>, we need to make sure it is alive by inserting an IMPLICIT_DEF
+    // <undef>, we need to make sure it is alive by inserting a KILL
     if (MI->getOperand(1).isUndef() && !MI->getOperand(0).isDead()) {
       MachineInstrBuilder MIB = BuildMI(*MBB, MI, MI->getDebugLoc(),
-                                TII.get(TargetInstrInfo::IMPLICIT_DEF), DstReg);
+                                TII.get(TargetInstrInfo::KILL), DstReg);
       if (MI->getOperand(2).isUndef())
-        MIB.addReg(InsReg, RegState::Implicit | RegState::Undef);
+        MIB.addReg(InsReg, RegState::Undef);
       else
-        MIB.addReg(InsReg, RegState::ImplicitKill);
+        MIB.addReg(InsReg, RegState::Kill);
     } else {
       DEBUG(errs() << "subreg: eliminated!\n");
       MBB->erase(MI);
@@ -261,10 +260,10 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     const TargetRegisterClass *TRC0= TRI.getPhysicalRegisterRegClass(DstSubReg);
     const TargetRegisterClass *TRC1= TRI.getPhysicalRegisterRegClass(InsReg);
     if (MI->getOperand(2).isUndef())
-      // If the source register being inserted is undef, then this becomes an
-      // implicit_def.
+      // If the source register being inserted is undef, then this becomes a
+      // KILL.
       BuildMI(*MBB, MI, MI->getDebugLoc(),
-              TII.get(TargetInstrInfo::IMPLICIT_DEF), DstSubReg);
+              TII.get(TargetInstrInfo::KILL), DstSubReg);
     else
       TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
     MachineBasicBlock::iterator CopyMI = MI;
