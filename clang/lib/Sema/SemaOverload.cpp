@@ -2186,7 +2186,9 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
     // argument doesn't participate in overload resolution.
   }
 
-
+  if (!CandidateSet.isNewCandidate(Function))
+    return;
+    
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
@@ -2256,14 +2258,29 @@ void Sema::AddFunctionCandidates(const FunctionSet &Functions,
   for (FunctionSet::const_iterator F = Functions.begin(),
                                 FEnd = Functions.end();
        F != FEnd; ++F) {
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*F))
-      AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
-                           SuppressUserConversions);
-    else
-      AddTemplateOverloadCandidate(cast<FunctionTemplateDecl>(*F),
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*F)) {
+      if (isa<CXXMethodDecl>(FD) && !cast<CXXMethodDecl>(FD)->isStatic())
+        AddMethodCandidate(cast<CXXMethodDecl>(FD),
+                           Args[0], Args + 1, NumArgs - 1, 
+                           CandidateSet, SuppressUserConversions);
+      else
+        AddOverloadCandidate(FD, Args, NumArgs, CandidateSet,
+                             SuppressUserConversions);
+    } else {
+      FunctionTemplateDecl *FunTmpl = cast<FunctionTemplateDecl>(*F);
+      if (isa<CXXMethodDecl>(FunTmpl->getTemplatedDecl()) &&
+          !cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl())->isStatic())
+        AddMethodTemplateCandidate(FunTmpl,
                                    /*FIXME: explicit args */false, 0, 0,
-                                   Args, NumArgs, CandidateSet,
+                                   Args[0], Args + 1, NumArgs - 1,
+                                   CandidateSet,
                                    SuppressUserConversions);
+      else
+        AddTemplateOverloadCandidate(FunTmpl,
+                                     /*FIXME: explicit args */false, 0, 0,
+                                     Args, NumArgs, CandidateSet,
+                                     SuppressUserConversions);
+    }
   }
 }
 
@@ -2288,6 +2305,9 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, Expr *Object,
          "Use AddConversionCandidate for conversion functions");
   assert(!isa<CXXConstructorDecl>(Method) &&
          "Use AddOverloadCandidate for constructors");
+
+  if (!CandidateSet.isNewCandidate(Method))
+    return;
 
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
@@ -2375,6 +2395,9 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
                                  OverloadCandidateSet& CandidateSet,
                                  bool SuppressUserConversions,
                                  bool ForceRValue) {
+  if (!CandidateSet.isNewCandidate(MethodTmpl))
+    return;
+
   // C++ [over.match.funcs]p7:
   //   In each case where a candidate is a function template, candidate
   //   function template specializations are generated using template argument
@@ -2417,6 +2440,9 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
                                    OverloadCandidateSet& CandidateSet,
                                    bool SuppressUserConversions,
                                    bool ForceRValue) {
+  if (!CandidateSet.isNewCandidate(FunctionTemplate))
+    return;
+
   // C++ [over.match.funcs]p7:
   //   In each case where a candidate is a function template, candidate
   //   function template specializations are generated using template argument
@@ -2457,6 +2483,9 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
                              OverloadCandidateSet& CandidateSet) {
   assert(!Conversion->getDescribedFunctionTemplate() &&
          "Conversion function templates use AddTemplateConversionCandidate");
+
+  if (!CandidateSet.isNewCandidate(Conversion))
+    return;
 
   // Add this candidate
   CandidateSet.push_back(OverloadCandidate());
@@ -2538,6 +2567,9 @@ Sema::AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
   assert(isa<CXXConversionDecl>(FunctionTemplate->getTemplatedDecl()) &&
          "Only conversion function templates permitted here");
 
+  if (!CandidateSet.isNewCandidate(FunctionTemplate))
+    return;
+
   TemplateDeductionInfo Info(Context);
   CXXConversionDecl *Specialization = 0;
   if (TemplateDeductionResult Result
@@ -2564,6 +2596,9 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
                                  const FunctionProtoType *Proto,
                                  Expr *Object, Expr **Args, unsigned NumArgs,
                                  OverloadCandidateSet& CandidateSet) {
+  if (!CandidateSet.isNewCandidate(Conversion))
+    return;
+
   CandidateSet.push_back(OverloadCandidate());
   OverloadCandidate& Candidate = CandidateSet.back();
   Candidate.Function = 0;
@@ -2649,7 +2684,6 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
                                  Expr **Args, unsigned NumArgs,
                                  OverloadCandidateSet& CandidateSet,
                                  SourceRange OpRange) {
-
   FunctionSet Functions;
 
   QualType T1 = Args[0]->getType();
