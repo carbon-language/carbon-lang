@@ -832,6 +832,20 @@ ignored</a>.</li>
 </ul>
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+	<a name="ocaml-bindingse">Known problems with the O'Caml bindings</a>
+</div>
+
+<div class="doc_text">
+
+<p>The Llvm.Linkage module is broken, and has incorrect values. Only
+Llvm.Linkage.External, Llvm.Linkage.Available_externally, and
+Llvm.Linkage.Link_once will be correct. If you need any of the other linkage
+modes, you'll have to write an external C library in order to expose the
+functionality. This has been fixed in the trunk.</p>
+</div>
+
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="additionalinfo">Additional Information</a>
