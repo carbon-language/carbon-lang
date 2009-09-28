@@ -2002,10 +2002,11 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
     // not the true/false values.
     Value *TrueV = SI->getTrueValue();
     Value *FalseV = SI->getFalseValue();
+    BasicBlock *PhiTransBB = PN->getParent();
     for (unsigned i = 0; i != NumPHIValues; ++i) {
       BasicBlock *ThisBB = PN->getIncomingBlock(i);
-      Value *TrueVInPred = TrueV->DoPHITranslation(I.getParent(), ThisBB);
-      Value *FalseVInPred = FalseV->DoPHITranslation(I.getParent(), ThisBB);
+      Value *TrueVInPred = TrueV->DoPHITranslation(PhiTransBB, ThisBB);
+      Value *FalseVInPred = FalseV->DoPHITranslation(PhiTransBB, ThisBB);
       Value *InV = 0;
       if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
         InV = InC->isNullValue() ? FalseVInPred : TrueVInPred;

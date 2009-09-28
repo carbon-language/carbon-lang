@@ -247,3 +247,19 @@ ret:
   %b = select i1 %a, i32 %A, i32 %c
   ret i32 %b
 }
+
+define i32 @test29(i1 %cond, i32 %A, i32 %B)  {
+entry:
+  br i1 %cond, label %jump, label %ret
+jump:
+  br label %ret 
+ret:
+  %c = phi i32 [%A, %jump], [%B, %entry]
+  %a = phi i1 [true, %jump], [false, %entry]
+  br label %next
+  
+next:
+  %b = select i1 %a, i32 %A, i32 %c
+  ret i32 %b
+}
+
