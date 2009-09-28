@@ -248,6 +248,7 @@ BUILTIN(__builtin_setjmp, "iv**", "")
 BUILTIN(__builtin_longjmp, "vv**i", "")
 BUILTIN(__builtin_unwind_init, "v", "")
 BUILTIN(__builtin_eh_return_data_regno, "ii", "nc")
+BUILTIN(__builtin_vsnprintf, "ic*zcC*a", "nFP:2:")
 
 // GCC Object size checking builtins
 BUILTIN(__builtin_object_size, "zv*i", "n")
