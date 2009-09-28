@@ -41,9 +41,9 @@ typedef std::vector<std::string> StrVector;
 
 // Indentation.
 unsigned TabWidth = 4;
-unsigned Indent1 = TabWidth*1;
-unsigned Indent2 = TabWidth*2;
-unsigned Indent3 = TabWidth*3;
+unsigned Indent1  = TabWidth*1;
+unsigned Indent2  = TabWidth*2;
+unsigned Indent3  = TabWidth*3;
 
 // Default help string.
 const char * DefaultHelpString = "NO HELP MESSAGE PROVIDED";
