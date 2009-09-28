@@ -230,9 +230,9 @@ bool LPPassManager::runOnFunction(Function &F) {
       initializeAnalysisImpl(P);
 
       LoopPass *LP = dynamic_cast<LoopPass *>(P);
+      assert(LP && "Invalid LPPassManager member");
       {
         PassManagerPrettyStackEntry X(LP, *CurrentLoop->getHeader());
-        assert(LP && "Invalid LPPassManager member");
         Timer *T = StartPassTimer(P);
         Changed |= LP->runOnLoop(CurrentLoop, *this);
         StopPassTimer(P, T);
