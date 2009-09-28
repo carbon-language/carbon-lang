@@ -61,7 +61,7 @@ template<bool preserveNames = true, typename T = ConstantFolder,
 class IRBuilder : public Inserter {
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
-  MDKindID MDKind;
+  unsigned MDKind;
   MDNode *CurDbgLocation;
   LLVMContext &Context;
   T Folder;

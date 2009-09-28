@@ -307,13 +307,9 @@ public:
 /// Metadata -
 /// Metadata manages metadata used in a context.
 
-/// MDKindID - This id identifies metadata kind the metadata store. Valid
-/// ID values are 1 or higher. This ID is set by RegisterMDKind.
-typedef unsigned MDKindID;
-
 class Metadata {
 public:
-  typedef std::pair<MDKindID, WeakVH> MDPairTy;
+  typedef std::pair<unsigned, WeakVH> MDPairTy;
   typedef SmallVector<MDPairTy, 2> MDMapTy;
   typedef DenseMap<const Instruction *, MDMapTy> MDStoreTy;
   friend class BitcodeReader;
@@ -328,21 +324,21 @@ private:
 public:
   /// RegisterMDKind - Register a new metadata kind and return its ID.
   /// A metadata kind can be registered only once. 
-  MDKindID RegisterMDKind(const char *Name);
+  unsigned RegisterMDKind(const char *Name);
 
   /// getMDKind - Return metadata kind. If the requested metadata kind
   /// is not registered then return 0.
-  MDKindID getMDKind(const char *Name);
+  unsigned getMDKind(const char *Name);
 
   /// getMD - Get the metadata of given kind attached with an Instruction.
   /// If the metadata is not found then return 0.
-  MDNode *getMD(MDKindID Kind, const Instruction *Inst);
+  MDNode *getMD(unsigned Kind, const Instruction *Inst);
 
   /// getMDs - Get the metadata attached with an Instruction.
   const MDMapTy *getMDs(const Instruction *Inst);
 
   /// setMD - Attach the metadata of given kind with an Instruction.
-  void setMD(MDKindID Kind, MDNode *Node, Instruction *Inst);
+  void setMD(unsigned Kind, MDNode *Node, Instruction *Inst);
   
   /// getHandlerNames - Get handler names. This is used by bitcode
   /// writer.

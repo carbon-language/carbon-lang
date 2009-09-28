@@ -259,8 +259,8 @@ NamedMDNode::~NamedMDNode() {
 
 /// RegisterMDKind - Register a new metadata kind and return its ID.
 /// A metadata kind can be registered only once. 
-MDKindID Metadata::RegisterMDKind(const char *Name) {
-  MDKindID Count = MDHandlerNames.size();
+unsigned Metadata::RegisterMDKind(const char *Name) {
+  unsigned Count = MDHandlerNames.size();
   StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
   assert(I == MDHandlerNames.end() && "Already registered MDKind!");
   MDHandlerNames[Name] = Count + 1;
@@ -269,7 +269,7 @@ MDKindID Metadata::RegisterMDKind(const char *Name) {
 
 /// getMDKind - Return metadata kind. If the requested metadata kind
 /// is not registered then return 0.
-MDKindID Metadata::getMDKind(const char *Name) {
+unsigned Metadata::getMDKind(const char *Name) {
   StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
   if (I == MDHandlerNames.end())
     return 0;
@@ -278,7 +278,7 @@ MDKindID Metadata::getMDKind(const char *Name) {
 }
 
 /// setMD - Attach the metadata of given kind with an Instruction.
-void Metadata::setMD(MDKindID MDKind, MDNode *Node, Instruction *Inst) {
+void Metadata::setMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   Inst->HasMetadata = true;
   if (I == MetadataStore.end()) {
@@ -295,7 +295,7 @@ void Metadata::setMD(MDKindID MDKind, MDNode *Node, Instruction *Inst) {
 
 /// getMD - Get the metadata of given kind attached with an Instruction.
 /// If the metadata is not found then return 0.
-MDNode *Metadata::getMD(MDKindID MDKind, const Instruction *Inst) {
+MDNode *Metadata::getMD(unsigned MDKind, const Instruction *Inst) {
   MDNode *Node = NULL;
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end())

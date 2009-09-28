@@ -836,7 +836,7 @@ bool BitcodeReader::ParseMetadata() {
         return Error("Invalid METADATA_KIND record");
       SmallString<8> Name;
       Name.resize(RecordLength-1);
-      MDKindID Kind = Record[0];
+      unsigned Kind = Record[0];
       for (unsigned i = 1; i != RecordLength; ++i)
         Name[i-1] = Record[i];
       Metadata &TheMetadata = Context.getMetadata();
@@ -1580,7 +1580,7 @@ bool BitcodeReader::ParseMetadataAttachment() {
         return Error ("Invalid METADATA_ATTACHMENT reader!");
       Instruction *Inst = InstructionList[Record[0]];
       for (unsigned i = 1; i != RecordLength; i = i+2) {
-        MDKindID Kind = Record[i];
+        unsigned Kind = Record[i];
         Value *Node = MDValueList.getValueFwdRef(Record[i+1]);
         TheMetadata.setMD(Kind, cast<MDNode>(Node), Inst);
       }
