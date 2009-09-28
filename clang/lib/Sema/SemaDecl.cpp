@@ -288,14 +288,22 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
          ((DeclContext *)S->getEntity())->isTransparentContext())
     S = S->getParent();
 
-  S->AddDecl(DeclPtrTy::make(D));
-
   // Add scoped declarations into their context, so that they can be
   // found later. Declarations without a context won't be inserted
   // into any context.
   if (AddToContext)
     CurContext->addDecl(D);
 
+  // Out-of-line function and variable definitions should not be pushed into
+  // scope.
+  if ((isa<FunctionTemplateDecl>(D) &&
+       cast<FunctionTemplateDecl>(D)->getTemplatedDecl()->isOutOfLine()) ||
+      (isa<FunctionDecl>(D) && cast<FunctionDecl>(D)->isOutOfLine()) ||
+      (isa<VarDecl>(D) && cast<VarDecl>(D)->isOutOfLine()))
+    return;
+
+  S->AddDecl(DeclPtrTy::make(D));
+  
   // C++ [basic.scope]p4:
   //   -- exactly one declaration shall declare a class name or
   //   enumeration name that is not a typedef name and the other
