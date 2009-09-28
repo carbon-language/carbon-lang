@@ -4220,9 +4220,6 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   DeclarationName Name = GetNameForDeclarator(D);
   assert(Name);
 
-  // The existing declaration we found.
-  FunctionDecl *FD = NULL;
-
   // The context we found the declaration in, or in which we should
   // create the declaration.
   DeclContext *DC;
@@ -4230,19 +4227,20 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   // FIXME: handle local classes
 
   // Recover from invalid scope qualifiers as if they just weren't there.
+  NamedDecl *PrevDecl = 0;
   if (!ScopeQual.isInvalid() && ScopeQual.isSet()) {
     DC = computeDeclContext(ScopeQual);
 
     // FIXME: handle dependent contexts
     if (!DC) return DeclPtrTy();
 
-    Decl *Dec = LookupQualifiedNameWithType(DC, Name, T);
+    PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName, true);
 
     // If searching in that context implicitly found a declaration in
     // a different context, treat it like it wasn't found at all.
     // TODO: better diagnostics for this case.  Suggesting the right
     // qualified scope would be nice...
-    if (!Dec || Dec->getDeclContext() != DC) {
+    if (!PrevDecl || !PrevDecl->getDeclContext()->Equals(DC)) {
       D.setInvalidType();
       Diag(Loc, diag::err_qualified_friend_not_found) << Name << T;
       return DeclPtrTy();
@@ -4250,10 +4248,8 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
 
     // C++ [class.friend]p1: A friend of a class is a function or
     //   class that is not a member of the class . . .
-    if (DC == CurContext)
+    if (DC->Equals(CurContext))
       Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
-
-    FD = cast<FunctionDecl>(Dec);
 
   // Otherwise walk out to the nearest namespace scope looking for matches.
   } else {
@@ -4268,15 +4264,15 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
       // declarations should stop at the nearest enclosing namespace,
       // not that they should only consider the nearest enclosing
       // namespace.
-      while (DC->isRecord()) DC = DC->getParent();
+      while (DC->isRecord()) 
+        DC = DC->getParent();
 
-      Decl *Dec = LookupQualifiedNameWithType(DC, Name, T);
+      PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName, true);
 
       // TODO: decide what we think about using declarations.
-      if (Dec) {
-        FD = cast<FunctionDecl>(Dec);
+      if (PrevDecl)
         break;
-      }
+      
       if (DC->isFileContext()) break;
       DC = DC->getParent();
     }
@@ -4286,24 +4282,11 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
     // C++0x changes this for both friend types and functions.
     // Most C++ 98 compilers do seem to give an error here, so
     // we do, too.
-    if (FD && DC == CurContext && !getLangOptions().CPlusPlus0x)
+    if (PrevDecl && DC->Equals(CurContext) && !getLangOptions().CPlusPlus0x)
       Diag(DS.getFriendSpecLoc(), diag::err_friend_is_member);
   }
 
-  bool Redeclaration = (FD != 0);
-
-  // If we found a match, create a friend function declaration with
-  // that function as the previous declaration.
-  if (Redeclaration) {
-    // Create it in the semantic context of the original declaration.
-    DC = FD->getDeclContext();
-
-  // If we didn't find something matching the type exactly, create
-  // a declaration.  This declaration should only be findable via
-  // argument-dependent lookup.
-  } else {
-    assert(DC->isFileContext());
-
+  if (DC->isFileContext()) {
     // This implies that it has to be an operator or function.
     if (D.getKind() == Declarator::DK_Constructor ||
         D.getKind() == Declarator::DK_Destructor ||
@@ -4315,20 +4298,15 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
     }
   }
 
-  NamedDecl *ND = ActOnFunctionDeclarator(S, D, DC, T, DInfo,
-                                          /* PrevDecl = */ FD,
+  bool Redeclaration = false;
+  NamedDecl *ND = ActOnFunctionDeclarator(S, D, DC, T, DInfo, PrevDecl,
                                           MultiTemplateParamsArg(*this),
                                           IsDefinition,
                                           Redeclaration);
   if (!ND) return DeclPtrTy();
 
-  assert(cast<FunctionDecl>(ND)->getPreviousDeclaration() == FD &&
-         "lost reference to previous declaration");
-
-  FD = cast<FunctionDecl>(ND);
-
-  assert(FD->getDeclContext() == DC);
-  assert(FD->getLexicalDeclContext() == CurContext);
+  assert(ND->getDeclContext() == DC);
+  assert(ND->getLexicalDeclContext() == CurContext);
 
   // Add the function declaration to the appropriate lookup tables,
   // adjusting the redeclarations list as necessary.  We don't
@@ -4338,18 +4316,18 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   // lookup context is in lexical scope.
   if (!CurContext->isDependentContext()) {
     DC = DC->getLookupContext();
-    DC->makeDeclVisibleInContext(FD, /* Recoverable=*/ false);
+    DC->makeDeclVisibleInContext(ND, /* Recoverable=*/ false);
     if (Scope *EnclosingScope = getScopeForDeclContext(S, DC))
-      PushOnScopeChains(FD, EnclosingScope, /*AddToContext=*/ false);
+      PushOnScopeChains(ND, EnclosingScope, /*AddToContext=*/ false);
   }
 
   FriendDecl *FrD = FriendDecl::Create(Context, CurContext,
-                                       D.getIdentifierLoc(), FD,
+                                       D.getIdentifierLoc(), ND,
                                        DS.getFriendSpecLoc());
   FrD->setAccess(AS_public);
   CurContext->addDecl(FrD);
 
-  return DeclPtrTy::make(FD);
+  return DeclPtrTy::make(ND);
 }
 
 void Sema::SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc) {
