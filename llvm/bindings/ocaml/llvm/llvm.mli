@@ -82,13 +82,18 @@ module Linkage : sig
     External
   | Available_externally
   | Link_once
+  | Link_once_odr
   | Weak
+  | Weak_odr
   | Appending
   | Internal
+  | Private
   | Dllimport
   | Dllexport
   | External_weak
   | Ghost
+  | Common
+  | Linker_private
 end
 
 (** The linker visibility of a global value, accessed with {!visibility} and
