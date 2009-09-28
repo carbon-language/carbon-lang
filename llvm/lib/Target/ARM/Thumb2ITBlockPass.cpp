@@ -35,6 +35,10 @@ namespace {
     }
 
   private:
+    MachineBasicBlock::iterator
+      SplitT2MOV32imm(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+                      MachineInstr *MI, DebugLoc dl,
+                      unsigned PredReg, ARMCC::CondCodes CC);
     bool InsertITBlocks(MachineBasicBlock &MBB);
   };
   char Thumb2ITBlockPass::ID = 0;
@@ -47,6 +51,34 @@ static ARMCC::CondCodes getPredicate(const MachineInstr *MI, unsigned &PredReg){
   return llvm::getInstrPredicate(MI, PredReg);
 }
 
+MachineBasicBlock::iterator
+Thumb2ITBlockPass::SplitT2MOV32imm(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MBBI,
+                                   MachineInstr *MI,
+                                   DebugLoc dl, unsigned PredReg,
+                                   ARMCC::CondCodes CC) {
+  // Splitting t2MOVi32imm into a pair of t2MOVi16 + t2MOVTi16 here.
+  // The only reason it was a single instruction was so it could be
+  // re-materialized. We want to split it before this and the thumb2
+  // size reduction pass to make sure the IT mask is correct and expose
+  // width reduction opportunities. It doesn't make sense to do this in a 
+  // separate pass so here it is.
+  unsigned DstReg = MI->getOperand(0).getReg();
+  bool DstDead = MI->getOperand(0).isDead(); // Is this possible?
+  unsigned Imm = MI->getOperand(1).getImm();
+  unsigned Lo16 = Imm & 0xffff;
+  unsigned Hi16 = (Imm >> 16) & 0xffff;
+  BuildMI(MBB, MBBI, dl, TII->get(ARM::t2MOVi16), DstReg)
+    .addImm(Lo16).addImm(CC).addReg(PredReg);
+  BuildMI(MBB, MBBI, dl, TII->get(ARM::t2MOVTi16))
+    .addReg(DstReg, getDefRegState(true) | getDeadRegState(DstDead))
+    .addReg(DstReg).addImm(Hi16).addImm(CC).addReg(PredReg);
+  --MBBI;
+  --MBBI;
+  MI->eraseFromParent();
+  return MBBI;
+}
+
 bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
   bool Modified = false;
 
@@ -57,26 +89,8 @@ bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
     unsigned PredReg = 0;
     ARMCC::CondCodes CC = getPredicate(MI, PredReg);
 
-    // Splitting t2MOVi32imm into a pair of t2MOVi16 + t2MOVTi16 here.
-    // The only reason it was a single instruction was so it could be
-    // re-materialized. We want to split it before this and the thumb2
-    // size reduction pass to make sure the IT mask is correct and expose
-    // width reduction opportunities. It doesn't make sense to do this in a 
-    // separate pass so here it is.
     if (MI->getOpcode() == ARM::t2MOVi32imm) {
-      unsigned DstReg = MI->getOperand(0).getReg();
-      bool DstDead = MI->getOperand(0).isDead(); // Is this possible?
-      unsigned Imm = MI->getOperand(1).getImm();
-      unsigned Lo16 = Imm & 0xffff;
-      unsigned Hi16 = (Imm >> 16) & 0xffff;
-      BuildMI(MBB, MBBI, dl, TII->get(ARM::t2MOVi16), DstReg)
-        .addImm(Lo16).addImm(CC).addReg(PredReg);
-      BuildMI(MBB, MBBI, dl, TII->get(ARM::t2MOVTi16))
-        .addReg(DstReg, getDefRegState(true) | getDeadRegState(DstDead))
-        .addReg(DstReg).addImm(Hi16).addImm(CC).addReg(PredReg);
-      --MBBI;
-      --MBBI;
-      MI->eraseFromParent();
+      MBBI = SplitT2MOV32imm(MBB, MBBI, MI, dl, PredReg, CC);
       continue;
     }
 
@@ -94,8 +108,15 @@ bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
     ARMCC::CondCodes OCC = ARMCC::getOppositeCondition(CC);
     unsigned Mask = 0, Pos = 3;
     while (MBBI != E && Pos) {
-      unsigned Dummy = 0;
-      ARMCC::CondCodes NCC = getPredicate(&*MBBI, Dummy);
+      MachineInstr *NMI = &*MBBI;
+      DebugLoc ndl = NMI->getDebugLoc();
+      unsigned NPredReg = 0;
+      ARMCC::CondCodes NCC = getPredicate(NMI, NPredReg);
+      if (NMI->getOpcode() == ARM::t2MOVi32imm) {
+        MBBI = SplitT2MOV32imm(MBB, MBBI, NMI, ndl, NPredReg, NCC);
+        continue;
+      }
+
       if (NCC == OCC) {
         Mask |= (1 << Pos);
       } else if (NCC != CC)
