@@ -1267,15 +1267,11 @@ class AssemblyWriter {
   AssemblyAnnotationWriter *AnnotationWriter;
   std::vector<const Type*> NumberedTypes;
 
-  // Each MDNode is assigned unique MetadataIDNo.
-  std::map<const MDNode *, unsigned> MDNodes;
-  unsigned MetadataIDNo;
-
 public:
   inline AssemblyWriter(formatted_raw_ostream &o, SlotTracker &Mac,
                         const Module *M,
                         AssemblyAnnotationWriter *AAW)
-    : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW), MetadataIDNo(0) {
+    : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
     AddModuleTypesToPrinter(TypePrinter, NumberedTypes, M);
   }
 
