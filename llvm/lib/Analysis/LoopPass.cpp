@@ -241,7 +241,8 @@ bool LPPassManager::runOnFunction(Function &F) {
 
       if (Changed)
         dumpPassInfo(P, MODIFICATION_MSG, ON_LOOP_MSG,
-                     CurrentLoop->getHeader()->getNameStr());
+                     skipThisLoop ? "<deleted>" :
+                                    CurrentLoop->getHeader()->getNameStr());
       dumpPreservedSet(P);
 
       if (!skipThisLoop) {
