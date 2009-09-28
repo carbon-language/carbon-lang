@@ -2692,21 +2692,34 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
       if (JoinedCopies.count(MI)) {
         // Delete all coalesced copies.
+        bool DoDelete = true;
         if (!tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
           assert((MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
                   MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
                   MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG) &&
                  "Unrecognized copy instruction");
           DstReg = MI->getOperand(0).getReg();
+          if (TargetRegisterInfo::isPhysicalRegister(DstReg))
+            // Do not delete extract_subreg, insert_subreg of physical
+            // registers unless the definition is dead. e.g.
+            // %DO<def> = INSERT_SUBREG %D0<undef>, %S0<kill>, 1
+            // or else the scavenger may complain. LowerSubregs will
+            // change this to an IMPLICIT_DEF later.
+            DoDelete = false;
         }
         if (MI->registerDefIsDead(DstReg)) {
           LiveInterval &li = li_->getInterval(DstReg);
           if (!ShortenDeadCopySrcLiveRange(li, MI))
             ShortenDeadCopyLiveRange(li, MI);
+          DoDelete = true;
         }
-        li_->RemoveMachineInstrFromMaps(MI);
-        mii = mbbi->erase(mii);
-        ++numPeep;
+        if (!DoDelete)
+          mii = next(mii);
+        else {
+          li_->RemoveMachineInstrFromMaps(MI);
+          mii = mbbi->erase(mii);
+          ++numPeep;
+        }
         continue;
       }
 

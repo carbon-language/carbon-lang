@@ -7,7 +7,7 @@
 
 ; CHECK: foo:
 ; CHECK-NEXT: divsd
-; CHECK-NEXT: testb $1, %dil
+; CHECK:      testb $1, %dil
 ; CHECK-NEXT: jne
 
 define double @foo(double %x, double %y, i1 %c) nounwind {

@@ -1,5 +1,4 @@
 ; RUN: llc < %s -march=bfin -verify-machineinstrs
-; XFAIL: *
 
 ; When joining live intervals of sub-registers, an MBB live-in list is not
 ; updated properly. The register scavenger asserts on an undefined register.
