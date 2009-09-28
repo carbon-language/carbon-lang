@@ -2179,6 +2179,8 @@ public:
   Expr *BuildObjCEncodeExpression(SourceLocation AtLoc,
                                   QualType EncodedType,
                                   SourceLocation RParenLoc);
+  CXXMemberCallExpr *BuildCXXMemberCallExpr(Expr *Exp, CXXMethodDecl *Method);
+
   virtual ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                SourceLocation EncodeLoc,
                                                SourceLocation LParenLoc,

@@ -4895,15 +4895,10 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     // on the object argument, then let ActOnCallExpr finish the job.
     
     // Create an implicit member expr to refer to the conversion operator.
-    MemberExpr *ME = 
-      new (Context) MemberExpr(Object, /*IsArrow=*/false, Conv, 
-                               SourceLocation(), Conv->getType());
-    QualType ResultType = Conv->getConversionType().getNonReferenceType();
+    // and then call it.
     CXXMemberCallExpr *CE =
-      new (Context) CXXMemberCallExpr(Context, ME, 0, 0, 
-                                      ResultType,
-                                      SourceLocation());
-    
+    BuildCXXMemberCallExpr(Object, Conv);
+      
     return ActOnCallExpr(S, ExprArg(*this, CE), LParenLoc,
                          MultiExprArg(*this, (ExprTy**)Args, NumArgs),
                          CommaLocs, RParenLoc).release();

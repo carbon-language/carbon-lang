@@ -2080,6 +2080,24 @@ Sema::ActOnConversionOperatorReferenceExpr(Scope *S, ExprArg Base,
                                   ConvName, DeclPtrTy(), SS);
 }
 
+CXXMemberCallExpr *Sema::BuildCXXMemberCallExpr(Expr *Exp, 
+                                                CXXMethodDecl *Method) {
+  MemberExpr *ME = 
+      new (Context) MemberExpr(Exp, /*IsArrow=*/false, Method, 
+                               SourceLocation(), Method->getType());
+  QualType ResultType;
+  if (const CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(Method))
+    ResultType = Conv->getConversionType().getNonReferenceType();
+  else
+    ResultType = Method->getResultType().getNonReferenceType();
+
+    CXXMemberCallExpr *CE =
+      new (Context) CXXMemberCallExpr(Context, ME, 0, 0, 
+                                      ResultType,
+                                      SourceLocation());
+  return CE;
+}
+
 Sema::OwningExprResult Sema::BuildCXXCastArgument(SourceLocation CastLoc,
                                                   QualType Ty,
                                                   CastExpr::CastKind Kind,
@@ -2108,22 +2126,10 @@ Sema::OwningExprResult Sema::BuildCXXCastArgument(SourceLocation CastLoc,
     if (PerformObjectArgumentInitialization(From, Method))
       return ExprError();
     
-    // Create an implicit member expr to refer to the conversion operator.
-    MemberExpr *ME = 
-      new (Context) MemberExpr(From, /*IsArrow=*/false, Method, 
-                               SourceLocation(), Method->getType());
-    
-
-    // And an implicit call expr that calls it.
-    QualType ResultType = Method->getResultType().getNonReferenceType();
-    CXXMemberCallExpr *CE =
-      new (Context) CXXMemberCallExpr(Context, ME, 0, 0, 
-                                      ResultType,
-                                      SourceLocation());
-
+    // Create an implicit call expr that calls it.
+    CXXMemberCallExpr *CE = BuildCXXMemberCallExpr(From, Method);
     return Owned(CE);
   }
-      
   }
 }    
 
