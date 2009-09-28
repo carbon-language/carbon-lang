@@ -49,8 +49,9 @@ class ARMDAGToDAGISel : public SelectionDAGISel {
   const ARMSubtarget *Subtarget;
 
 public:
-  explicit ARMDAGToDAGISel(ARMBaseTargetMachine &tm)
-    : SelectionDAGISel(tm), TM(tm),
+  explicit ARMDAGToDAGISel(ARMBaseTargetMachine &tm,
+                           CodeGenOpt::Level OptLevel)
+    : SelectionDAGISel(tm, OptLevel), TM(tm),
     Subtarget(&TM.getSubtarget<ARMSubtarget>()) {
   }
 
@@ -1566,6 +1567,7 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
 /// createARMISelDag - This pass converts a legalized DAG into a
 /// ARM-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createARMISelDag(ARMBaseTargetMachine &TM) {
-  return new ARMDAGToDAGISel(TM);
+FunctionPass *llvm::createARMISelDag(ARMBaseTargetMachine &TM,
+                                     CodeGenOpt::Level OptLevel) {
+  return new ARMDAGToDAGISel(TM, OptLevel);
 }
