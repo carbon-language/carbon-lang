@@ -18,7 +18,7 @@
 namespace llvm {
 
 class LLVMContextImpl;
-class Metadata;
+class MetadataContext;
 /// This is an important class for using LLVM in a threaded context.  It
 /// (opaquely) owns and manages the core "global" data of LLVM's core 
 /// infrastructure, including the type and constant uniquing tables.
@@ -30,7 +30,7 @@ class LLVMContext {
   void operator=(LLVMContext&);
 public:
   LLVMContextImpl* pImpl;
-  Metadata &getMetadata();
+  MetadataContext &getMetadata();
   bool RemoveDeadMetadata();
   LLVMContext();
   ~LLVMContext();

@@ -372,7 +372,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
                                         BasicBlock::iterator Begin,
                                         BasicBlock::iterator End) {
   SDL->setCurrentBasicBlock(BB);
-  Metadata &TheMetadata = LLVMBB->getParent()->getContext().getMetadata();
+  MetadataContext &TheMetadata = LLVMBB->getParent()->getContext().getMetadata();
   unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
 
   // Lower all of the non-terminator instructions. If a call is emitted
@@ -655,7 +655,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
 #endif
                                 );
 
-  Metadata &TheMetadata = Fn.getContext().getMetadata();
+  MetadataContext &TheMetadata = Fn.getContext().getMetadata();
   unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
 
   // Iterate over all basic blocks in the function.

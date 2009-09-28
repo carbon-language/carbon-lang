@@ -71,6 +71,6 @@ bool LLVMContext::RemoveDeadMetadata() {
   return Changed;
 }
 
-Metadata &LLVMContext::getMetadata() {
+MetadataContext &LLVMContext::getMetadata() {
   return pImpl->TheMetadata;
 }

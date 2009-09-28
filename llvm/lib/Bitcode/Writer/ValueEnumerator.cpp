@@ -86,7 +86,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
          I != E; ++I)
       EnumerateType(I->getType());
 
-    Metadata &TheMetadata = F->getContext().getMetadata();
+    MetadataContext &TheMetadata = F->getContext().getMetadata();
     for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I){
         for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
@@ -99,9 +99,9 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
           EnumerateAttributes(II->getAttributes());
 
         // Enumerate metadata attached with this instruction.
-        const Metadata::MDMapTy *MDs = TheMetadata.getMDs(I);
+        const MetadataContext::MDMapTy *MDs = TheMetadata.getMDs(I);
         if (MDs)
-          for (Metadata::MDMapTy::const_iterator MI = MDs->begin(),
+          for (MetadataContext::MDMapTy::const_iterator MI = MDs->begin(),
                  ME = MDs->end(); MI != ME; ++MI)
             if (MDNode *MDN = dyn_cast_or_null<MDNode>(MI->second))
               EnumerateMetadata(MDN);

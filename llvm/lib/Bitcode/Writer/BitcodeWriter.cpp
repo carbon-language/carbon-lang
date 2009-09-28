@@ -562,15 +562,15 @@ static void WriteMetadataAttachment(const Function &F,
 
   // Write metadata attachments
   // METADATA_ATTACHMENT - [m x [value, [n x [id, mdnode]]]
-  Metadata &TheMetadata = F.getContext().getMetadata();
+  MetadataContext &TheMetadata = F.getContext().getMetadata();
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
          I != E; ++I) {
-      const Metadata::MDMapTy *P = TheMetadata.getMDs(I);
+      const MetadataContext::MDMapTy *P = TheMetadata.getMDs(I);
       if (!P) continue;
       bool RecordedInstruction = false;
-      for (Metadata::MDMapTy::const_iterator PI = P->begin(), PE = P->end();
-           PI != PE; ++PI) {
+      for (MetadataContext::MDMapTy::const_iterator PI = P->begin(), 
+             PE = P->end(); PI != PE; ++PI) {
         if (MDNode *ND = dyn_cast_or_null<MDNode>(PI->second)) {
           if (RecordedInstruction == false) {
             Record.push_back(VE.getInstructionID(I));
@@ -601,7 +601,7 @@ static void WriteModuleMetadataStore(const Module *M,
 
   // Write metadata kinds
   // METADATA_KIND - [n x [id, name]]
-  Metadata &TheMetadata = M->getContext().getMetadata();
+  MetadataContext &TheMetadata = M->getContext().getMetadata();
   const StringMap<unsigned> *Kinds = TheMetadata.getHandlerNames();
   for (StringMap<unsigned>::const_iterator
          I = Kinds->begin(), E = Kinds->end(); I != E; ++I) {

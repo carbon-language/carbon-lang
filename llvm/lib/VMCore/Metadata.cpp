@@ -259,7 +259,7 @@ NamedMDNode::~NamedMDNode() {
 
 /// RegisterMDKind - Register a new metadata kind and return its ID.
 /// A metadata kind can be registered only once. 
-unsigned Metadata::RegisterMDKind(const char *Name) {
+unsigned MetadataContext::RegisterMDKind(const char *Name) {
   unsigned Count = MDHandlerNames.size();
   StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
   assert(I == MDHandlerNames.end() && "Already registered MDKind!");
@@ -269,7 +269,7 @@ unsigned Metadata::RegisterMDKind(const char *Name) {
 
 /// getMDKind - Return metadata kind. If the requested metadata kind
 /// is not registered then return 0.
-unsigned Metadata::getMDKind(const char *Name) {
+unsigned MetadataContext::getMDKind(const char *Name) {
   StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
   if (I == MDHandlerNames.end())
     return 0;
@@ -278,7 +278,7 @@ unsigned Metadata::getMDKind(const char *Name) {
 }
 
 /// setMD - Attach the metadata of given kind with an Instruction.
-void Metadata::setMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
+void MetadataContext::setMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   Inst->HasMetadata = true;
   if (I == MetadataStore.end()) {
@@ -295,7 +295,7 @@ void Metadata::setMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
 
 /// getMD - Get the metadata of given kind attached with an Instruction.
 /// If the metadata is not found then return 0.
-MDNode *Metadata::getMD(unsigned MDKind, const Instruction *Inst) {
+MDNode *MetadataContext::getMD(unsigned MDKind, const Instruction *Inst) {
   MDNode *Node = NULL;
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end())
@@ -309,7 +309,7 @@ MDNode *Metadata::getMD(unsigned MDKind, const Instruction *Inst) {
 }
 
 /// getMDs - Get the metadata attached with an Instruction.
-const Metadata::MDMapTy *Metadata::getMDs(const Instruction *Inst) {
+const MetadataContext::MDMapTy *MetadataContext::getMDs(const Instruction *Inst) {
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end())
     return NULL;
@@ -319,13 +319,13 @@ const Metadata::MDMapTy *Metadata::getMDs(const Instruction *Inst) {
 
 /// getHandlerNames - Get handler names. This is used by bitcode
 /// writer.
-const StringMap<unsigned> *Metadata::getHandlerNames() {
+const StringMap<unsigned> *MetadataContext::getHandlerNames() {
   return &MDHandlerNames;
 }
 
 /// ValueIsDeleted - This handler is used to update metadata store
 /// when a value is deleted.
-void Metadata::ValueIsDeleted(const Instruction *Inst) {
+void MetadataContext::ValueIsDeleted(const Instruction *Inst) {
   // Find Metadata handles for this instruction.
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end())
@@ -341,7 +341,7 @@ void Metadata::ValueIsDeleted(const Instruction *Inst) {
 
 /// ValueIsCloned - This handler is used to update metadata store
 /// when In1 is cloned to create In2.
-void Metadata::ValueIsCloned(const Instruction *In1, Instruction *In2) {
+void MetadataContext::ValueIsCloned(const Instruction *In1, Instruction *In2) {
   // Find Metadata handles for In1.
   MDStoreTy::iterator I = MetadataStore.find(In1);
   if (I == MetadataStore.end())

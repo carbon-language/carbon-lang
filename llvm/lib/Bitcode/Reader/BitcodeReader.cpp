@@ -839,7 +839,7 @@ bool BitcodeReader::ParseMetadata() {
       unsigned Kind = Record[0];
       for (unsigned i = 1; i != RecordLength; ++i)
         Name[i-1] = Record[i];
-      Metadata &TheMetadata = Context.getMetadata();
+      MetadataContext &TheMetadata = Context.getMetadata();
       assert(TheMetadata.MDHandlerNames.find(Name.str())
              == TheMetadata.MDHandlerNames.end() &&
              "Already registered MDKind!");
@@ -1556,7 +1556,7 @@ bool BitcodeReader::ParseMetadataAttachment() {
   if (Stream.EnterSubBlock(bitc::METADATA_ATTACHMENT_ID))
     return Error("Malformed block record");
 
-  Metadata &TheMetadata = Context.getMetadata();
+  MetadataContext &TheMetadata = Context.getMetadata();
   SmallVector<uint64_t, 64> Record;
   while(1) {
     unsigned Code = Stream.ReadCode();

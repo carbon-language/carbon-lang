@@ -42,7 +42,7 @@ class raw_ostream;
 class AssemblyAnnotationWriter;
 class ValueHandleBase;
 class LLVMContext;
-class Metadata;
+class MetadataContext;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
@@ -83,7 +83,7 @@ private:
   friend class ValueSymbolTable; // Allow ValueSymbolTable to directly mod Name.
   friend class SymbolTable;      // Allow SymbolTable to directly poke Name.
   friend class ValueHandleBase;
-  friend class Metadata;
+  friend class MetadataContext;
   friend class AbstractTypeUser;
   ValueName *Name;
 

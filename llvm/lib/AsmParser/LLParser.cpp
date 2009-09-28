@@ -1038,7 +1038,7 @@ bool LLParser::ParseOptionalDbgInfo() {
   MetadataBase *Node;
   if (ParseMDNode(Node)) return true;
 
-  Metadata &TheMetadata = M->getContext().getMetadata();
+  MetadataContext &TheMetadata = M->getContext().getMetadata();
   unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
   if (!MDDbgKind)
     MDDbgKind = TheMetadata.RegisterMDKind("dbg");
@@ -2656,7 +2656,7 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
       ParseOptionalDbgInfo();
 
     // Set metadata attached with this instruction.
-    Metadata &TheMetadata = M->getContext().getMetadata();
+    MetadataContext &TheMetadata = M->getContext().getMetadata();
     for (SmallVector<std::pair<unsigned, MDNode *>, 2>::iterator
            MDI = MDsOnInst.begin(), MDE = MDsOnInst.end(); MDI != MDE; ++MDI)
       TheMetadata.setMD(MDI->first, MDI->second, Inst);

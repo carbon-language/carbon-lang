@@ -678,7 +678,7 @@ void SlotTracker::processFunction() {
 
   ST_DEBUG("Inserting Instructions:\n");
 
-  Metadata &TheMetadata = TheFunction->getContext().getMetadata();
+  MetadataContext &TheMetadata = TheFunction->getContext().getMetadata();
 
   // Add all of the basic blocks and instructions with no names.
   for (Function::const_iterator BB = TheFunction->begin(),
@@ -695,9 +695,9 @@ void SlotTracker::processFunction() {
           CreateMetadataSlot(N);
 
       // Process metadata attached with this instruction.
-      const Metadata::MDMapTy *MDs = TheMetadata.getMDs(I);
+      const MetadataContext::MDMapTy *MDs = TheMetadata.getMDs(I);
       if (MDs)
-        for (Metadata::MDMapTy::const_iterator MI = MDs->begin(),
+        for (MetadataContext::MDMapTy::const_iterator MI = MDs->begin(),
                ME = MDs->end(); MI != ME; ++MI)
           if (MDNode *MDN = dyn_cast_or_null<MDNode>(MI->second))
             CreateMetadataSlot(MDN);
@@ -1275,7 +1275,7 @@ public:
     : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
     AddModuleTypesToPrinter(TypePrinter, NumberedTypes, M);
     // FIXME: Provide MDPrinter
-    Metadata &TheMetadata = M->getContext().getMetadata();
+    MetadataContext &TheMetadata = M->getContext().getMetadata();
     const StringMap<unsigned> *Names = TheMetadata.getHandlerNames();
     for (StringMapConstIterator<unsigned> I = Names->begin(),
            E = Names->end(); I != E; ++I) {
@@ -2001,10 +2001,10 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   }
 
   // Print Metadata info
-  Metadata &TheMetadata = I.getContext().getMetadata();
-  const Metadata::MDMapTy *MDMap = TheMetadata.getMDs(&I);
+  MetadataContext &TheMetadata = I.getContext().getMetadata();
+  const MetadataContext::MDMapTy *MDMap = TheMetadata.getMDs(&I);
   if (MDMap)
-    for (Metadata::MDMapTy::const_iterator MI = MDMap->begin(),
+    for (MetadataContext::MDMapTy::const_iterator MI = MDMap->begin(),
            ME = MDMap->end(); MI != ME; ++MI)
       if (const MDNode *MD = dyn_cast_or_null<MDNode>(MI->second))
         Out << ", " << MDNames[MI->first]

@@ -304,10 +304,10 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// Metadata -
-/// Metadata manages metadata used in a context.
+/// MetadataContext -
+/// MetadataContext manages metadata used in a context.
 
-class Metadata {
+class MetadataContext {
 public:
   typedef std::pair<unsigned, WeakVH> MDPairTy;
   typedef SmallVector<MDPairTy, 2> MDMapTy;
