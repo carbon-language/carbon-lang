@@ -588,41 +588,11 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
     ++CurCycle;
   }
 
-  // Reverse the order if it is bottom up.
+  // Reverse the order since it is bottom up.
   std::reverse(Sequence.begin(), Sequence.end());
-  
-  
+
 #ifndef NDEBUG
-  // Verify that all SUnits were scheduled.
-  bool AnyNotSched = false;
-  unsigned DeadNodes = 0;
-  unsigned Noops = 0;
-  for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
-    if (!SUnits[i].isScheduled) {
-      if (SUnits[i].NumPreds == 0 && SUnits[i].NumSuccs == 0) {
-        ++DeadNodes;
-        continue;
-      }
-      if (!AnyNotSched)
-        errs() << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(this);
-      errs() << "has not been scheduled!\n";
-      AnyNotSched = true;
-    }
-    if (SUnits[i].NumSuccsLeft != 0) {
-      if (!AnyNotSched)
-        errs() << "*** List scheduling failed! ***\n";
-      SUnits[i].dump(this);
-      errs() << "has successors left!\n";
-      AnyNotSched = true;
-    }
-  }
-  for (unsigned i = 0, e = Sequence.size(); i != e; ++i)
-    if (!Sequence[i])
-      ++Noops;
-  assert(!AnyNotSched);
-  assert(Sequence.size() + DeadNodes - Noops == SUnits.size() &&
-         "The number of nodes scheduled doesn't match the expected number!");
+  VerifySchedule(/*isBottomUp=*/true);
 #endif
 }
 
