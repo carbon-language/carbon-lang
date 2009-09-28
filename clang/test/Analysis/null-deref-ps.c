@@ -1,10 +1,16 @@
-// RUN: clang-cc -analyze -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=basic -analyzer-store=basic &&
-// RUN: clang-cc -analyze -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=range -analyzer-store=basic &&
-// RUN: clang-cc -analyze -std=gnu99 -checker-cfref -analyzer-store=region -analyzer-constraints=range -analyzer-purge-dead=false -verify %s &&
-// RUN: clang-cc -analyze -std=gnu99 -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: clang-cc -triple i386-apple-darwin10 -analyze -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=basic -analyzer-store=basic &&
+// RUN: clang-cc -triple i386-apple-darwin10 -analyze -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=range -analyzer-store=basic &&
+// RUN: clang-cc -triple i386-apple-darwin10 -analyze -std=gnu99 -checker-cfref -analyzer-store=region -analyzer-constraints=range -analyzer-purge-dead=false -verify %s &&
+// RUN: clang-cc -triple i386-apple-darwin10 -analyze -std=gnu99 -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
 
-#include<stdint.h>
-#include <assert.h>
+typedef unsigned uintptr_t;
+
+extern void __assert_fail (__const char *__assertion, __const char *__file,
+    unsigned int __line, __const char *__function)
+     __attribute__ ((__noreturn__));
+
+#define assert(expr) \
+  ((expr)  ? (void)(0)  : __assert_fail (#expr, __FILE__, __LINE__, __func__))
 
 void f1(int *p) {  
   if (p) *p = 1;
