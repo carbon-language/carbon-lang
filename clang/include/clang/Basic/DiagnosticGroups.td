@@ -70,6 +70,9 @@ def : DiagGroup<"shadow">;
 def : DiagGroup<"shorten-64-to-32">;
 def : DiagGroup<"sign-compare">;
 
+// Preprocessor warnings.
+def : DiagGroup<"builtin-macro-redefined">;
+
 // Just silence warnings about common forms of -Wstrict-aliasing for now.
 def : DiagGroup<"strict-aliasing=0">;
 def : DiagGroup<"strict-aliasing=1">;
