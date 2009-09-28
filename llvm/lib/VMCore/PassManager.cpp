@@ -397,25 +397,19 @@ public:
   // null.  It may be called multiple times.
   static void createTheTimeInfo();
 
-  void passStarted(Pass *P) {
+  /// passStarted - This method creates a timer for the given pass if it doesn't
+  /// already have one, and starts the timer.
+  Timer *passStarted(Pass *P) {
     if (dynamic_cast<PMDataManager *>(P)) 
-      return;
+      return 0;
 
     sys::SmartScopedLock<true> Lock(*TimingInfoMutex);
     std::map<Pass*, Timer>::iterator I = TimingData.find(P);
     if (I == TimingData.end())
       I=TimingData.insert(std::make_pair(P, Timer(P->getPassName(), TG))).first;
-    I->second.startTimer();
-  }
-  
-  void passEnded(Pass *P) {
-    if (dynamic_cast<PMDataManager *>(P)) 
-      return;
-
-    sys::SmartScopedLock<true> Lock(*TimingInfoMutex);
-    std::map<Pass*, Timer>::iterator I = TimingData.find(P);
-    assert(I != TimingData.end() && "passStarted/passEnded not nested right!");
-    I->second.stopTimer();
+    Timer *T = &I->second;
+    T->startTimer();
+    return T;
   }
 };
 
@@ -827,9 +821,9 @@ void PMDataManager::freePass(Pass *P, const StringRef &Msg,
     // If the pass crashes releasing memory, remember this.
     PassManagerPrettyStackEntry X(P);
     
-    if (TheTimeInfo) TheTimeInfo->passStarted(P);
+    Timer *T = StartPassTimer(P);
     P->releaseMemory();
-    if (TheTimeInfo) TheTimeInfo->passEnded(P);
+    StopPassTimer(P, T);
   }
 
   if (const PassInfo *PI = P->getPassInfo()) {
@@ -1162,9 +1156,9 @@ bool BBPassManager::runOnFunction(Function &F) {
         // If the pass crashes, remember this.
         PassManagerPrettyStackEntry X(BP, *I);
       
-        if (TheTimeInfo) TheTimeInfo->passStarted(BP);
+        Timer *T = StartPassTimer(BP);
         Changed |= BP->runOnBasicBlock(*I);
-        if (TheTimeInfo) TheTimeInfo->passEnded(BP);
+        StopPassTimer(BP, T);
       }
 
       if (Changed) 
@@ -1377,9 +1371,9 @@ bool FPPassManager::runOnFunction(Function &F) {
     {
       PassManagerPrettyStackEntry X(FP, F);
 
-      if (TheTimeInfo) TheTimeInfo->passStarted(FP);
+      Timer *T = StartPassTimer(FP);
       Changed |= FP->runOnFunction(F);
-      if (TheTimeInfo) TheTimeInfo->passEnded(FP);
+      StopPassTimer(FP, T);
     }
 
     if (Changed) 
@@ -1453,9 +1447,9 @@ MPPassManager::runOnModule(Module &M) {
 
     {
       PassManagerPrettyStackEntry X(MP, M);
-      if (TheTimeInfo) TheTimeInfo->passStarted(MP);
+      Timer *T = StartPassTimer(MP);
       Changed |= MP->runOnModule(M);
-      if (TheTimeInfo) TheTimeInfo->passEnded(MP);
+      StopPassTimer(MP, T);
     }
 
     if (Changed) 
@@ -1591,15 +1585,15 @@ void TimingInfo::createTheTimeInfo() {
 }
 
 /// If TimingInfo is enabled then start pass timer.
-void llvm::StartPassTimer(Pass *P) {
+Timer *llvm::StartPassTimer(Pass *P) {
   if (TheTimeInfo) 
-    TheTimeInfo->passStarted(P);
+    return TheTimeInfo->passStarted(P);
+  return 0;
 }
 
 /// If TimingInfo is enabled then stop pass timer.
-void llvm::StopPassTimer(Pass *P) {
-  if (TheTimeInfo) 
-    TheTimeInfo->passEnded(P);
+void llvm::StopPassTimer(Pass *P, Timer *T) {
+  if (T) T->stopTimer();
 }
 
 //===----------------------------------------------------------------------===//

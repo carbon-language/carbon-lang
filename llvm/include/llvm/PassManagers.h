@@ -95,6 +95,7 @@ namespace llvm {
   class Pass;
   class StringRef;
   class Value;
+  class Timer;
 
 /// FunctionPassManager and PassManager, two top level managers, serve 
 /// as the public interface of pass manager infrastructure.
@@ -460,8 +461,8 @@ public:
   }
 };
 
-extern void StartPassTimer(llvm::Pass *);
-extern void StopPassTimer(llvm::Pass *);
+extern Timer *StartPassTimer(Pass *);
+extern void StopPassTimer(Pass *, Timer *);
 
 }
 

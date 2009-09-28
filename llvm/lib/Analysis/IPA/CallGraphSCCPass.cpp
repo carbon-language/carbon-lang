@@ -96,9 +96,9 @@ bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
       CallGraphUpToDate = true;
     }
 
-    StartPassTimer(CGSP);
+    Timer *T = StartPassTimer(CGSP);
     Changed = CGSP->runOnSCC(CurSCC);
-    StopPassTimer(CGSP);
+    StopPassTimer(CGSP, T);
     
     // After the CGSCCPass is done, when assertions are enabled, use
     // RefreshCallGraph to verify that the callgraph was correctly updated.
@@ -110,7 +110,6 @@ bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
     return Changed;
   }
   
-  StartPassTimer(P);
   FPPassManager *FPP = dynamic_cast<FPPassManager *>(P);
   assert(FPP && "Invalid CGPassManager member");
   
@@ -118,10 +117,11 @@ bool CGPassManager::RunPassOnSCC(Pass *P, std::vector<CallGraphNode*> &CurSCC,
   for (unsigned i = 0, e = CurSCC.size(); i != e; ++i) {
     if (Function *F = CurSCC[i]->getFunction()) {
       dumpPassInfo(P, EXECUTION_MSG, ON_FUNCTION_MSG, F->getName());
+      Timer *T = StartPassTimer(FPP);
       Changed |= FPP->runOnFunction(*F);
+      StopPassTimer(FPP, T);
     }
   }
-  StopPassTimer(P);
   
   // The function pass(es) modified the IR, they may have clobbered the
   // callgraph.
