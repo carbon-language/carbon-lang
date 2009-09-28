@@ -458,6 +458,13 @@ use TableGen inheritance instead.
   - ``empty`` - The opposite of ``not_empty``. Equivalent to ``(not (not_empty
     X))``. Provided for convenience.
 
+  - ``single_input_file`` - Returns true if there was only one input file
+    provided on the command-line. Used without arguments:
+    ``(single_input_file)``.
+
+  - ``multiple_input_files`` - Equivalent to ``(not (single_input_file))`` (the
+    case of zero input files is considered an error).
+
   - ``default`` - Always evaluates to true. Should always be the last
     test in the ``case`` expression.
 

@@ -976,8 +976,22 @@ void CheckForSuperfluousOptions (const RecordVector& Edges,
   }
 }
 
-/// EmitCaseTest1Arg - Helper function used by
-/// EmitCaseConstructHandler.
+/// EmitCaseTest0Args - Helper function used by EmitCaseConstructHandler().
+bool EmitCaseTest0Args(const std::string& TestName, raw_ostream& O) {
+  if (TestName == "single_input_file") {
+    O << "InputFilenames.size() == 1";
+    return true;
+  }
+  else if (TestName == "multiple_input_files") {
+    O << "InputFilenames.size() > 1";
+    return true;
+  }
+
+  return false;
+}
+
+
+/// EmitCaseTest1Arg - Helper function used by EmitCaseConstructHandler().
 bool EmitCaseTest1Arg(const std::string& TestName,
                       const DagInit& d,
                       const OptionDescriptions& OptDescs,
@@ -1021,8 +1035,7 @@ bool EmitCaseTest1Arg(const std::string& TestName,
   return false;
 }
 
-/// EmitCaseTest2Args - Helper function used by
-/// EmitCaseConstructHandler.
+/// EmitCaseTest2Args - Helper function used by EmitCaseConstructHandler().
 bool EmitCaseTest2Args(const std::string& TestName,
                        const DagInit& d,
                        unsigned IndentLevel,
@@ -1101,6 +1114,8 @@ void EmitCaseTest(const DagInit& d, unsigned IndentLevel,
     EmitLogicalOperationTest(d, "||", IndentLevel, OptDescs, O);
   else if (TestName == "not")
     EmitLogicalNot(d, IndentLevel, OptDescs, O);
+  else if (EmitCaseTest0Args(TestName, O))
+    return;
   else if (EmitCaseTest1Arg(TestName, d, OptDescs, O))
     return;
   else if (EmitCaseTest2Args(TestName, d, IndentLevel, OptDescs, O))
@@ -2043,7 +2058,8 @@ void EmitRegisterPlugin(int Priority, raw_ostream& O) {
 /// EmitIncludes - Emit necessary #include directives and some
 /// additional declarations.
 void EmitIncludes(raw_ostream& O) {
-  O << "#include \"llvm/CompilerDriver/CompilationGraph.h\"\n"
+  O << "#include \"llvm/CompilerDriver/BuiltinOptions.h\"\n"
+    << "#include \"llvm/CompilerDriver/CompilationGraph.h\"\n"
     << "#include \"llvm/CompilerDriver/ForceLinkageMacros.h\"\n"
     << "#include \"llvm/CompilerDriver/Plugin.h\"\n"
     << "#include \"llvm/CompilerDriver/Tool.h\"\n\n"

@@ -66,6 +66,8 @@ def input_languages_contain;
 def empty;
 def not_empty;
 def default;
+def single_input_file;
+def multiple_input_files;
 
 // Possible actions.
 

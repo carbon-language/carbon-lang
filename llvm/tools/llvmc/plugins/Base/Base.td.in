@@ -70,6 +70,8 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
               !strconcat(cmd_prefix, " -c $INFILE -o $OUTFILE -emit-llvm"))),
  (actions
      (case
+         (and (multiple_input_files), (or (switch_on "S"), (switch_on "c"))),
+              (error "cannot specify -o with -c or -S with multiple files"),
          (switch_on "E"), [(stop_compilation), (output_suffix E_ext)],
          (and (switch_on "emit-llvm"), (switch_on "S")),
               [(output_suffix "ll"), (stop_compilation)],
