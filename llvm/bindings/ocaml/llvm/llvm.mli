@@ -134,6 +134,16 @@ module Attribute : sig
   | Nest
   | Readnone
   | Readonly
+  | Noinline
+  | Alwaysinline
+  | Optsize
+  | Ssp
+  | Sspreq
+  | Nocapture
+  | Noredzone
+  | Noimplicitfloat
+  | Naked
+  | Inlinehint
 end
 
 (** The predicate for an integer comparison ([icmp]) instruction.
