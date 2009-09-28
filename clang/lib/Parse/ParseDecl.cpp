@@ -778,6 +778,19 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         continue;
       }
 
+      if (Next.is(tok::annot_typename)) {
+        // FIXME: is this scope-specifier getting dropped?
+        ConsumeToken(); // the scope-specifier
+        if (Tok.getAnnotationValue())
+          isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, 
+                                         PrevSpec, DiagID, 
+                                         Tok.getAnnotationValue());
+        else
+          DS.SetTypeSpecError();
+        DS.SetRangeEnd(Tok.getAnnotationEndLoc());
+        ConsumeToken(); // The typename
+      }
+
       if (Next.isNot(tok::identifier))
         goto DoneWithDeclSpec;
 
