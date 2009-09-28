@@ -536,7 +536,8 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       }
     }
 
-    if (CSRegClasses[i] == ARM::GPRRegisterClass) {
+    if (CSRegClasses[i] == ARM::GPRRegisterClass ||
+        CSRegClasses[i] == ARM::tGPRRegisterClass) {
       if (Spilled) {
         NumGPRSpills++;
 
@@ -667,7 +668,8 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
             NumExtras--;
           }
         }
-        while (NumExtras && !UnspilledCS2GPRs.empty()) {
+        while (NumExtras && !UnspilledCS2GPRs.empty() &&
+               !AFI->isThumb1OnlyFunction()) {
           unsigned Reg = UnspilledCS2GPRs.back();
           UnspilledCS2GPRs.pop_back();
           if (!isReservedReg(MF, Reg)) {
