@@ -224,7 +224,8 @@ bool LPPassManager::runOnFunction(Function &F) {
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
       Pass *P = getContainedPass(Index);
 
-      dumpPassInfo(P, EXECUTION_MSG, ON_LOOP_MSG, "");
+      dumpPassInfo(P, EXECUTION_MSG, ON_LOOP_MSG,
+                   CurrentLoop->getHeader()->getNameStr());
       dumpRequiredSet(P);
 
       initializeAnalysisImpl(P);
@@ -239,7 +240,8 @@ bool LPPassManager::runOnFunction(Function &F) {
       }
 
       if (Changed)
-        dumpPassInfo(P, MODIFICATION_MSG, ON_LOOP_MSG, "");
+        dumpPassInfo(P, MODIFICATION_MSG, ON_LOOP_MSG,
+                     CurrentLoop->getHeader()->getNameStr());
       dumpPreservedSet(P);
 
       if (!skipThisLoop) {
@@ -258,7 +260,10 @@ bool LPPassManager::runOnFunction(Function &F) {
 
       removeNotPreservedAnalysis(P);
       recordAvailableAnalysis(P);
-      removeDeadPasses(P, "", ON_LOOP_MSG);
+      removeDeadPasses(P,
+                       skipThisLoop ? "<deleted>" :
+                                      CurrentLoop->getHeader()->getNameStr(),
+                       ON_LOOP_MSG);
 
       if (skipThisLoop)
         // Do not run other passes on this loop.
@@ -271,7 +276,7 @@ bool LPPassManager::runOnFunction(Function &F) {
     if (skipThisLoop)
       for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {  
         Pass *P = getContainedPass(Index);
-        freePass(P, "", ON_LOOP_MSG);
+        freePass(P, "<deleted>", ON_LOOP_MSG);
       }
 
     // Pop the loop from queue after running all passes.
