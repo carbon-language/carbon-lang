@@ -67,3 +67,7 @@ void test12(void) __attribute__((__noreturn__));
 void test12(void) {
   __builtin_trap();  // no warning because trap is noreturn.
 }
+
+void test_unknown_builtin(int a, int b) {
+  __builtin_foo(a, b); // expected-error{{use of unknown builtin}}
+}

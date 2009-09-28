@@ -32,6 +32,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
+#include <cstring>
 #include <functional>
 #include <queue>
 using namespace clang;
@@ -3925,14 +3926,14 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   }
 
   // Extension in C99.  Legal in C90, but warn about it.
-  if (getLangOptions().C99)
+  static const unsigned int BuiltinLen = strlen("__builtin_");
+  if (II.getLength() > BuiltinLen &&
+      std::equal(II.getName(), II.getName() + BuiltinLen, "__builtin_"))
+    Diag(Loc, diag::warn_builtin_unknown) << &II;
+  else if (getLangOptions().C99)
     Diag(Loc, diag::ext_implicit_function_decl) << &II;
   else
     Diag(Loc, diag::warn_implicit_function_decl) << &II;
-
-  // FIXME: handle stuff like:
-  // void foo() { extern float X(); }
-  // void bar() { X(); }  <-- implicit decl for X in another scope.
 
   // Set a Declarator for the implicit definition: int foo();
   const char *Dummy;

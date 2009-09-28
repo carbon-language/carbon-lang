@@ -148,6 +148,7 @@ def warn_redecl_library_builtin : Warning<
 def err_builtin_definition : Error<"definition of builtin function %0">;
 def err_types_compatible_p_in_cplusplus : Error<
   "__builtin_types_compatible_p is not valid in C++">;
+def warn_builtin_unknown : Warning<"use of unknown builtin %0">, DefaultError;
 
 /// main()
 // static/inline main() are not errors in C, just in C++.
