@@ -4883,12 +4883,18 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     // We selected one of the surrogate functions that converts the
     // object parameter to a function pointer. Perform the conversion
     // on the object argument, then let ActOnCallExpr finish the job.
-    // FIXME: Represent the user-defined conversion in the AST!
-    ImpCastExprToType(Object,
-                      Conv->getConversionType().getNonReferenceType(),
-                      CastExpr::CK_Unknown,
-                      Conv->getConversionType()->isLValueReferenceType());
-    return ActOnCallExpr(S, ExprArg(*this, Object), LParenLoc,
+    
+    // Create an implicit member expr to refer to the conversion operator.
+    MemberExpr *ME = 
+      new (Context) MemberExpr(Object, /*IsArrow=*/false, Conv, 
+                               SourceLocation(), Conv->getType());
+    QualType ResultType = Conv->getConversionType().getNonReferenceType();
+    CXXMemberCallExpr *CE =
+      new (Context) CXXMemberCallExpr(Context, ME, 0, 0, 
+                                      ResultType,
+                                      SourceLocation());
+    
+    return ActOnCallExpr(S, ExprArg(*this, CE), LParenLoc,
                          MultiExprArg(*this, (ExprTy**)Args, NumArgs),
                          CommaLocs, RParenLoc).release();
   }
