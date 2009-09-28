@@ -1511,8 +1511,6 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
       return OR_Deleted;
 
     case OR_Ambiguous:
-      // FIXME: See C++ [over.best.ics]p10 for the handling of
-      // ambiguous conversion sequences.
       return OR_Ambiguous;
     }
 
@@ -2236,8 +2234,20 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
                                 /*InOverloadResolution=*/true);
       if (Candidate.Conversions[ArgIdx].ConversionKind
             == ImplicitConversionSequence::BadConversion) {
-        Candidate.Viable = false;
-        break;
+      // 13.3.3.1-p10 If several different sequences of conversions exist that 
+      // each convert the argument to the parameter type, the implicit conversion 
+      // sequence associated with the parameter is defined to be the unique conversion 
+      // sequence designated the ambiguous conversion sequence. For the purpose of 
+      // ranking implicit conversion sequences as described in 13.3.3.2, the ambiguous 
+      // conversion sequence is treated as a user-defined sequence that is 
+      // indistinguishable from any other user-defined conversion sequence
+        if (Candidate.Conversions[ArgIdx].ConversionFunctionSet.size() > 0)
+          Candidate.Conversions[ArgIdx].ConversionKind =
+            ImplicitConversionSequence::UserDefinedConversion;
+        else {
+          Candidate.Viable = false;
+          break;
+        }
       }
     } else {
       // (C++ 13.3.2p2): For the purposes of overload resolution, any
