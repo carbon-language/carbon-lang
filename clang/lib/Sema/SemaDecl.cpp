@@ -311,9 +311,10 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
       IdentifierResolver::iterator
         I = IdResolver.begin(TD->getDeclName()),
         IEnd = IdResolver.end();
-      if (I != IEnd && isDeclInScope(*I, CurContext, S)) {
+      NamedDecl *ID = *I;
+      if (I != IEnd && isDeclInScope(ID, CurContext, S)) {
         NamedDecl *PrevDecl = *I;
-        for (; I != IEnd && isDeclInScope(*I, CurContext, S);
+        for (; I != IEnd && isDeclInScope(ID, CurContext, S);
              PrevDecl = *I, ++I) {
           if (TD->declarationReplaces(*I)) {
             // This is a redeclaration. Remove it from the chain and
@@ -372,6 +373,41 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S, bool AddToContext) {
   }
 
   IdResolver.AddDecl(D);
+}
+
+bool Sema::isDeclInScope(NamedDecl *&D, DeclContext *Ctx, Scope *S) {
+  if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
+    // Look inside the overload set to determine if any of the declarations
+    // are in scope. (Possibly) build a new overload set containing only
+    // those declarations that are in scope.
+    OverloadedFunctionDecl *NewOvl = 0;
+    bool FoundInScope = false;
+    for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
+         FEnd = Ovl->function_end();
+         F != FEnd; ++F) {
+      NamedDecl *FD = F->get();
+      if (!isDeclInScope(FD, Ctx, S)) {
+        if (!NewOvl && F != Ovl->function_begin()) {
+          NewOvl = OverloadedFunctionDecl::Create(Context, 
+                                                  F->get()->getDeclContext(),
+                                                  F->get()->getDeclName());
+          D = NewOvl;
+          for (OverloadedFunctionDecl::function_iterator 
+               First = Ovl->function_begin();
+               First != F; ++First)
+            NewOvl->addOverload(*First);
+        }
+      } else {
+        FoundInScope = true;
+        if (NewOvl)
+          NewOvl->addOverload(*F);
+      }
+    }
+    
+    return FoundInScope;
+  }
+  
+  return IdResolver.isDeclInScope(D, Ctx, Context, S);
 }
 
 void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
@@ -1971,7 +2007,7 @@ void Sema::DiagnoseFunctionSpecifiers(Declarator& D) {
 NamedDecl*
 Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                              QualType R,  DeclaratorInfo *DInfo,
-                             Decl* PrevDecl, bool &Redeclaration) {
+                             NamedDecl* PrevDecl, bool &Redeclaration) {
   // Typedef declarators cannot be qualified (C++ [dcl.meaning]p1).
   if (D.getCXXScopeSpec().isSet()) {
     Diag(D.getIdentifierLoc(), diag::err_qualified_typedef_declarator)
@@ -4411,7 +4447,8 @@ CreateNewDecl:
     if (Lookup.getKind() == LookupResult::Found)
       PrevTypedef = dyn_cast<TypedefDecl>(Lookup.getAsDecl());
 
-    if (PrevTypedef && isDeclInScope(PrevTypedef, SearchDC, S) &&
+    NamedDecl *PrevTypedefNamed = PrevTypedef;
+    if (PrevTypedef && isDeclInScope(PrevTypedefNamed, SearchDC, S) &&
         Context.getCanonicalType(Context.getTypeDeclType(PrevTypedef)) !=
           Context.getCanonicalType(Context.getTypeDeclType(New))) {
       Diag(Loc, diag::err_tag_definition_of_typedef)

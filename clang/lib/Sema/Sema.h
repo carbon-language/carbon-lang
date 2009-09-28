@@ -528,7 +528,7 @@ public:
   void DiagnoseFunctionSpecifiers(Declarator& D);
   NamedDecl* ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                     QualType R, DeclaratorInfo *DInfo,
-                                    Decl* PrevDecl, bool &Redeclaration);
+                                    NamedDecl* PrevDecl, bool &Redeclaration);
   NamedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, DeclaratorInfo *DInfo,
                                      NamedDecl* PrevDecl,
@@ -725,9 +725,7 @@ public:
   /// isDeclInScope - If 'Ctx' is a function/method, isDeclInScope returns true
   /// if 'D' is in Scope 'S', otherwise 'S' is ignored and isDeclInScope returns
   /// true if 'D' belongs to the given declaration context.
-  bool isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S = 0) {
-    return IdResolver.isDeclInScope(D, Ctx, Context, S);
-  }
+  bool isDeclInScope(NamedDecl *&D, DeclContext *Ctx, Scope *S = 0);
 
   /// Finds the scope corresponding to the given decl context, if it
   /// happens to be an enclosing scope.  Otherwise return NULL.
