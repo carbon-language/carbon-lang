@@ -4118,6 +4118,11 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     Type = Context.getVectorType(ElementType, NumElements);
     break;
   }
+  case 'X': {
+    QualType ElementType = DecodeTypeFromStr(Str, Context, Error, false);
+    Type = Context.getComplexType(ElementType);
+    break;
+  }      
   case 'P':
     Type = Context.getFILEType();
     if (Type.isNull()) {
