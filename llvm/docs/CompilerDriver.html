@@ -438,15 +438,21 @@ user.
 Example: <tt class="docutils literal"><span class="pre">(not_empty</span> <span class="pre">&quot;o&quot;)</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">empty</span></tt> - The opposite of <tt class="docutils literal"><span class="pre">not_empty</span></tt>. Equivalent to <tt class="docutils literal"><span class="pre">(not</span> <span class="pre">(not_empty</span>
 <span class="pre">X))</span></tt>. Provided for convenience.</li>
+<li><tt class="docutils literal"><span class="pre">single_input_file</span></tt> - Returns true if there was only one input file
+provided on the command-line. Used without arguments:
+<tt class="docutils literal"><span class="pre">(single_input_file)</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">multiple_input_files</span></tt> - Equivalent to <tt class="docutils literal"><span class="pre">(not</span> <span class="pre">(single_input_file))</span></tt> (the
+case of zero input files is considered an error).</li>
 <li><tt class="docutils literal"><span class="pre">default</span></tt> - Always evaluates to true. Should always be the last
 test in the <tt class="docutils literal"><span class="pre">case</span></tt> expression.</li>
-<li><tt class="docutils literal"><span class="pre">and</span></tt> - A standard logical combinator that returns true iff all
-of its arguments return true. Used like this: <tt class="docutils literal"><span class="pre">(and</span> <span class="pre">(test1),</span>
-<span class="pre">(test2),</span> <span class="pre">...</span> <span class="pre">(testN))</span></tt>. Nesting of <tt class="docutils literal"><span class="pre">and</span></tt> and <tt class="docutils literal"><span class="pre">or</span></tt> is allowed,
-but not encouraged.</li>
-<li><tt class="docutils literal"><span class="pre">or</span></tt> - Another logical combinator that returns true only if any
-one of its arguments returns true. Example: <tt class="docutils literal"><span class="pre">(or</span> <span class="pre">(test1),</span>
-<span class="pre">(test2),</span> <span class="pre">...</span> <span class="pre">(testN))</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">and</span></tt> - A standard binary logical combinator that returns true iff all of
+its arguments return true. Used like this: <tt class="docutils literal"><span class="pre">(and</span> <span class="pre">(test1),</span> <span class="pre">(test2),</span>
+<span class="pre">...</span> <span class="pre">(testN))</span></tt>. Nesting of <tt class="docutils literal"><span class="pre">and</span></tt> and <tt class="docutils literal"><span class="pre">or</span></tt> is allowed, but not
+encouraged.</li>
+<li><tt class="docutils literal"><span class="pre">or</span></tt> - A binary logical combinator that returns true iff any of its
+arguments returns true. Example: <tt class="docutils literal"><span class="pre">(or</span> <span class="pre">(test1),</span> <span class="pre">(test2),</span> <span class="pre">...</span> <span class="pre">(testN))</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">not</span></tt> - Standard unary logical combinator that negates its
+argument. Example: <tt class="docutils literal"><span class="pre">(not</span> <span class="pre">(or</span> <span class="pre">(test1),</span> <span class="pre">(test2),</span> <span class="pre">...</span> <span class="pre">(testN)))</span></tt>.</li>
 </ul>
 </li>
 </ul>
