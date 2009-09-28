@@ -20,10 +20,21 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include <algorithm>
 using namespace llvm;
+
+// Always verify loopinfo if expensive checking is enabled.
+#ifdef XDEBUG
+bool VerifyLoopInfo = true;
+#else
+bool VerifyLoopInfo = false;
+#endif
+static cl::opt<bool,true>
+VerifyLoopInfoX("verify-loop-info", cl::location(VerifyLoopInfo),
+                cl::desc("Verify loop info (time consuming)"));
 
 char LoopInfo::ID = 0;
 static RegisterPass<LoopInfo>
@@ -375,10 +386,20 @@ bool LoopInfo::runOnFunction(Function &) {
 }
 
 void LoopInfo::verifyAnalysis() const {
+  // LoopInfo is a FunctionPass, but verifying every loop in the function
+  // each time verifyAnalysis is called is very expensive. The
+  // -verify-loop-info option can enable this. In order to perform some
+  // checking by default, LoopPass has been taught to call verifyLoop
+  // manually during loop pass sequences.
+
+  if (!VerifyLoopInfo) return;
+
   for (iterator I = begin(), E = end(); I != E; ++I) {
     assert(!(*I)->getParentLoop() && "Top-level loop has a parent!");
     (*I)->verifyLoopNest();
   }
+
+  // TODO: check BBMap consistency.
 }
 
 void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {

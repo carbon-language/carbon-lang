@@ -24,8 +24,19 @@
 #include "llvm/Analysis/DominatorInternals.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/CommandLine.h"
 #include <algorithm>
 using namespace llvm;
+
+// Always verify dominfo if expensive checking is enabled.
+#ifdef XDEBUG
+bool VerifyDomInfo = true;
+#else
+bool VerifyDomInfo = false;
+#endif
+static cl::opt<bool,true>
+VerifyDomInfoX("verify-dom-info", cl::location(VerifyDomInfo),
+               cl::desc("Verify dominator info (time consuming)"));
 
 //===----------------------------------------------------------------------===//
 //  DominatorTree Implementation
@@ -46,6 +57,16 @@ E("domtree", "Dominator Tree Construction", true, true);
 bool DominatorTree::runOnFunction(Function &F) {
   DT->recalculate(F);
   return false;
+}
+
+void DominatorTree::verifyAnalysis() const {
+  if (!VerifyDomInfo || true /* fixme */) return;
+
+  Function &F = *getRoot()->getParent();
+
+  DominatorTree OtherDT;
+  OtherDT.getBase().recalculate(F);
+  assert(!compare(OtherDT) && "Invalid DominatorTree info!");
 }
 
 void DominatorTree::print(raw_ostream &OS, const Module *) const {
@@ -86,6 +107,17 @@ bool DominatorTree::dominates(const Instruction *A, const Instruction *B) const{
 char DominanceFrontier::ID = 0;
 static RegisterPass<DominanceFrontier>
 G("domfrontier", "Dominance Frontier Construction", true, true);
+
+void DominanceFrontier::verifyAnalysis() const {
+  if (!VerifyDomInfo) return;
+
+  DominatorTree &DT = getAnalysis<DominatorTree>();
+
+  DominanceFrontier OtherDF;
+  const std::vector<BasicBlock*> &DTRoots = DT.getRoots();
+  OtherDF.calculate(DT, DT.getNode(DTRoots[0]));
+  assert(!compare(OtherDF) && "Invalid DominanceFrontier info!");
+}
 
 // NewBB is split and now it has one successor. Update dominace frontier to
 // reflect this change.

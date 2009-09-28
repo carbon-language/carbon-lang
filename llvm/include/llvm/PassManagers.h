@@ -280,9 +280,6 @@ public:
   /// verifyPreservedAnalysis -- Verify analysis presreved by pass P.
   void verifyPreservedAnalysis(Pass *P);
 
-  /// verifyDomInfo -- Verify dominator information if it is available.
-  void verifyDomInfo(Pass &P, Function &F);
-
   /// Remove Analysis that is not preserved by the pass
   void removeNotPreservedAnalysis(Pass *P);
   

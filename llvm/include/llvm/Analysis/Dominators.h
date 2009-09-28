@@ -734,6 +734,8 @@ public:
 
   virtual bool runOnFunction(Function &F);
 
+  virtual void verifyAnalysis() const;
+
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }
@@ -990,6 +992,8 @@ public:
     calculate(DT, DT[Roots[0]]);
     return false;
   }
+
+  virtual void verifyAnalysis() const;
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();

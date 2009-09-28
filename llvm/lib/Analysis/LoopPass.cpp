@@ -242,15 +242,23 @@ bool LPPassManager::runOnFunction(Function &F) {
         dumpPassInfo(P, MODIFICATION_MSG, ON_LOOP_MSG, "");
       dumpPreservedSet(P);
 
-      if (!skipThisLoop)
+      if (!skipThisLoop) {
+        // Manually check that this loop is still healthy. This is done
+        // instead of relying on LoopInfo::verifyLoop since LoopInfo
+        // is a function pass and it's really expensive to verify every
+        // loop in the function every time. That level of checking can be
+        // enabled with the -verify-loop-info option.
+        Timer *T = StartPassTimer(LI);
+        CurrentLoop->verifyLoop();
+        StopPassTimer(LI, T);
+
+        // Then call the regular verifyAnalysis functions.
         verifyPreservedAnalysis(LP);
+      }
 
       removeNotPreservedAnalysis(P);
       recordAvailableAnalysis(P);
       removeDeadPasses(P, "", ON_LOOP_MSG);
-
-      // If dominator information is available then verify the info if requested.
-      verifyDomInfo(*LP, F);
 
       if (skipThisLoop)
         // Do not run other passes on this loop.

@@ -13,6 +13,7 @@
 
 
 #include "llvm/PassManagers.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Module.h"
@@ -22,7 +23,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/System/Threading.h"
-#include "llvm/Analysis/Dominators.h"
 #include "llvm-c/Core.h"
 #include <algorithm>
 #include <cstdio>
@@ -44,16 +44,6 @@ namespace llvm {
 enum PassDebugLevel {
   None, Arguments, Structure, Executions, Details
 };
-
-// Always verify dominfo if expensive checking is enabled.
-#ifdef XDEBUG
-bool VerifyDomInfo = true;
-#else
-bool VerifyDomInfo = false;
-#endif
-static cl::opt<bool,true>
-VerifyDomInfoX("verify-dom-info", cl::location(VerifyDomInfo),
-               cl::desc("Verify dominator info (time consuming)"));
 
 static cl::opt<enum PassDebugLevel>
 PassDebugging("debug-pass", cl::Hidden,
@@ -703,47 +693,13 @@ void PMDataManager::verifyPreservedAnalysis(Pass *P) {
   for (AnalysisUsage::VectorType::const_iterator I = PreservedSet.begin(),
          E = PreservedSet.end(); I != E; ++I) {
     AnalysisID AID = *I;
-    if (Pass *AP = findAnalysisPass(AID, true))
+    if (Pass *AP = findAnalysisPass(AID, true)) {
+
+      Timer *T = 0;
+      if (TheTimeInfo) T = TheTimeInfo->passStarted(AP);
       AP->verifyAnalysis();
-  }
-}
-
-/// verifyDomInfo - Verify dominator information if it is available.
-void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
-  if (!VerifyDomInfo || !P.getResolver())
-    return;
-
-  DominatorTree *DT = P.getAnalysisIfAvailable<DominatorTree>();
-  if (!DT)
-    return;
-
-  DominatorTree OtherDT;
-  OtherDT.getBase().recalculate(F);
-  if (DT->compare(OtherDT)) {
-    errs() << "Dominator Information for " << F.getName() << "\n";
-    errs() << "Pass '" << P.getPassName() << "'\n";
-    errs() << "----- Valid -----\n";
-    OtherDT.dump();
-    errs() << "----- Invalid -----\n";
-    DT->dump();
-    llvm_unreachable("Invalid dominator info");
-  }
-
-  DominanceFrontier *DF = P.getAnalysisIfAvailable<DominanceFrontier>();
-  if (!DF) 
-    return;
-
-  DominanceFrontier OtherDF;
-  std::vector<BasicBlock*> DTRoots = DT->getRoots();
-  OtherDF.calculate(*DT, DT->getNode(DTRoots[0]));
-  if (DF->compare(OtherDF)) {
-    errs() << "Dominator Information for " << F.getName() << "\n";
-    errs() << "Pass '" << P.getPassName() << "'\n";
-    errs() << "----- Valid -----\n";
-    OtherDF.dump();
-    errs() << "----- Invalid -----\n";
-    DF->dump();
-    llvm_unreachable("Invalid dominator info");
+      if (T) T->stopTimer();
+    }
   }
 }
 
@@ -1384,9 +1340,6 @@ bool FPPassManager::runOnFunction(Function &F) {
     removeNotPreservedAnalysis(FP);
     recordAvailableAnalysis(FP);
     removeDeadPasses(FP, F.getName(), ON_FUNCTION_MSG);
-
-    // If dominator information is available then verify the info if requested.
-    verifyDomInfo(*FP, F);
   }
   return Changed;
 }

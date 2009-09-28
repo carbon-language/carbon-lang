@@ -1,4 +1,4 @@
-; RUN: llc %s -o /dev/null -verify-dom-info
+; RUN: llc %s -o /dev/null -verify-dom-info -verify-loop-info
 	%llvm.dbg.anchor.type = type { i32, i32 }
 	%llvm.dbg.basictype.type = type { i32, { }*, i8*, { }*, i32, i64, i64, i64, i32, i32, i8*, i8* }
 	%llvm.dbg.compile_unit.type = type { i32, { }*, i32, i8*, i8*, i8* }
