@@ -20,7 +20,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Scalar.h"
@@ -33,23 +33,19 @@ using namespace llvm;
 STATISTIC(NumExtracted, "Number of loops extracted");
 
 namespace {
-  // FIXME: This is not a function pass, but the PassManager doesn't allow
-  // Module passes to require FunctionPasses, so we can't get loop info if we're
-  // not a function pass.
-  struct VISIBILITY_HIDDEN LoopExtractor : public FunctionPass {
+  struct VISIBILITY_HIDDEN LoopExtractor : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
     unsigned NumLoops;
 
     explicit LoopExtractor(unsigned numLoops = ~0) 
-      : FunctionPass(&ID), NumLoops(numLoops) {}
+      : LoopPass(&ID), NumLoops(numLoops) {}
 
-    virtual bool runOnFunction(Function &F);
+    virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(BreakCriticalEdgesID);
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<DominatorTree>();
-      AU.addRequired<LoopInfo>();
     }
   };
 }
@@ -73,68 +69,50 @@ Y("loop-extract-single", "Extract at most one loop into a new function");
 // createLoopExtractorPass - This pass extracts all natural loops from the
 // program into a function if it can.
 //
-FunctionPass *llvm::createLoopExtractorPass() { return new LoopExtractor(); }
+Pass *llvm::createLoopExtractorPass() { return new LoopExtractor(); }
 
-bool LoopExtractor::runOnFunction(Function &F) {
-  LoopInfo &LI = getAnalysis<LoopInfo>();
-
-  // If this function has no loops, there is nothing to do.
-  if (LI.empty())
+bool LoopExtractor::runOnLoop(Loop *L, LPPassManager &LPM) {
+  // Only visit top-level loops.
+  if (L->getParentLoop())
     return false;
 
   DominatorTree &DT = getAnalysis<DominatorTree>();
+  bool Changed = false;
 
   // If there is more than one top-level loop in this function, extract all of
-  // the loops.
-  bool Changed = false;
-  if (LI.end()-LI.begin() > 1) {
-    for (LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i) {
-      if (NumLoops == 0) return Changed;
-      --NumLoops;
-      Changed |= ExtractLoop(DT, *i) != 0;
-      ++NumExtracted;
-    }
-  } else {
-    // Otherwise there is exactly one top-level loop.  If this function is more
-    // than a minimal wrapper around the loop, extract the loop.
-    Loop *TLL = *LI.begin();
-    bool ShouldExtractLoop = false;
+  // the loops. Otherwise there is exactly one top-level loop; in this case if
+  // this function is more than a minimal wrapper around the loop, extract
+  // the loop.
+  bool ShouldExtractLoop = false;
 
-    // Extract the loop if the entry block doesn't branch to the loop header.
-    TerminatorInst *EntryTI = F.getEntryBlock().getTerminator();
-    if (!isa<BranchInst>(EntryTI) ||
-        !cast<BranchInst>(EntryTI)->isUnconditional() ||
-        EntryTI->getSuccessor(0) != TLL->getHeader())
-      ShouldExtractLoop = true;
-    else {
-      // Check to see if any exits from the loop are more than just return
-      // blocks.
-      SmallVector<BasicBlock*, 8> ExitBlocks;
-      TLL->getExitBlocks(ExitBlocks);
-      for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-        if (!isa<ReturnInst>(ExitBlocks[i]->getTerminator())) {
-          ShouldExtractLoop = true;
-          break;
-        }
-    }
-
-    if (ShouldExtractLoop) {
-      if (NumLoops == 0) return Changed;
-      --NumLoops;
-      Changed |= ExtractLoop(DT, TLL) != 0;
-      ++NumExtracted;
-    } else {
-      // Okay, this function is a minimal container around the specified loop.
-      // If we extract the loop, we will continue to just keep extracting it
-      // infinitely... so don't extract it.  However, if the loop contains any
-      // subloops, extract them.
-      for (Loop::iterator i = TLL->begin(), e = TLL->end(); i != e; ++i) {
-        if (NumLoops == 0) return Changed;
-        --NumLoops;
-        Changed |= ExtractLoop(DT, *i) != 0;
-        ++NumExtracted;
+  // Extract the loop if the entry block doesn't branch to the loop header.
+  TerminatorInst *EntryTI =
+    L->getHeader()->getParent()->getEntryBlock().getTerminator();
+  if (!isa<BranchInst>(EntryTI) ||
+      !cast<BranchInst>(EntryTI)->isUnconditional() ||
+      EntryTI->getSuccessor(0) != L->getHeader())
+    ShouldExtractLoop = true;
+  else {
+    // Check to see if any exits from the loop are more than just return
+    // blocks.
+    SmallVector<BasicBlock*, 8> ExitBlocks;
+    L->getExitBlocks(ExitBlocks);
+    for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
+      if (!isa<ReturnInst>(ExitBlocks[i]->getTerminator())) {
+        ShouldExtractLoop = true;
+        break;
       }
+  }
+  if (ShouldExtractLoop) {
+    if (NumLoops == 0) return Changed;
+    --NumLoops;
+    if (ExtractLoop(DT, L) != 0) {
+      Changed = true;
+      // After extraction, the loop is replaced by a function call, so
+      // we shouldn't try to run any more loop passes on it.
+      LPM.deleteLoopFromQueue(L);
     }
+    ++NumExtracted;
   }
 
   return Changed;
@@ -143,7 +121,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
 // createSingleLoopExtractorPass - This pass extracts one natural loop from the
 // program into a function if it can.  This is used by bugpoint.
 //
-FunctionPass *llvm::createSingleLoopExtractorPass() {
+Pass *llvm::createSingleLoopExtractorPass() {
   return new SingleLoopExtractor();
 }
 

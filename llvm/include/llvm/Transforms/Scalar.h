@@ -220,7 +220,7 @@ extern const PassInfo *const BreakCriticalEdgesID;
 //
 //   AU.addRequiredID(LoopSimplifyID);
 //
-FunctionPass *createLoopSimplifyPass();
+Pass *createLoopSimplifyPass();
 extern const PassInfo *const LoopSimplifyID;
 
 //===----------------------------------------------------------------------===//
