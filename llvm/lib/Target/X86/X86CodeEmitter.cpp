@@ -596,6 +596,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI,
       MCE.emitLabel(MI.getOperand(0).getImm());
       break;
     case TargetInstrInfo::IMPLICIT_DEF:
+    case TargetInstrInfo::KILL:
     case X86::DWARF_LOC:
     case X86::FP_REG_KILL:
       break;

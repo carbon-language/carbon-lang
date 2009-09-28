@@ -29,7 +29,7 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
         R->getName() == "DBG_LABEL" ||
         R->getName() == "EH_LABEL" ||
         R->getName() == "GC_LABEL" ||
-        R->getName() == "DECLARE" ||
+        R->getName() == "KILL" ||
         R->getName() == "EXTRACT_SUBREG" ||
         R->getName() == "INSERT_SUBREG" ||
         R->getName() == "IMPLICIT_DEF" ||
@@ -106,7 +106,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
         R->getName() == "DBG_LABEL" ||
         R->getName() == "EH_LABEL" ||
         R->getName() == "GC_LABEL" ||
-        R->getName() == "DECLARE" ||
+        R->getName() == "KILL" ||
         R->getName() == "EXTRACT_SUBREG" ||
         R->getName() == "INSERT_SUBREG" ||
         R->getName() == "IMPLICIT_DEF" ||
@@ -144,7 +144,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
         InstName == "DBG_LABEL"||
         InstName == "EH_LABEL"||
         InstName == "GC_LABEL"||
-        InstName == "DECLARE"||
+        InstName == "KILL"||
         InstName == "EXTRACT_SUBREG" ||
         InstName == "INSERT_SUBREG" ||
         InstName == "IMPLICIT_DEF" ||

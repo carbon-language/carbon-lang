@@ -308,9 +308,9 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
   if (I == Instructions.end()) throw "Could not find 'GC_LABEL' instruction!";
   const CodeGenInstruction *GC_LABEL = &I->second;
   
-  I = getInstructions().find("DECLARE");
-  if (I == Instructions.end()) throw "Could not find 'DECLARE' instruction!";
-  const CodeGenInstruction *DECLARE = &I->second;
+  I = getInstructions().find("KILL");
+  if (I == Instructions.end()) throw "Could not find 'KILL' instruction!";
+  const CodeGenInstruction *KILL = &I->second;
   
   I = getInstructions().find("EXTRACT_SUBREG");
   if (I == Instructions.end()) 
@@ -343,7 +343,7 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
   NumberedInstructions.push_back(DBG_LABEL);
   NumberedInstructions.push_back(EH_LABEL);
   NumberedInstructions.push_back(GC_LABEL);
-  NumberedInstructions.push_back(DECLARE);
+  NumberedInstructions.push_back(KILL);
   NumberedInstructions.push_back(EXTRACT_SUBREG);
   NumberedInstructions.push_back(INSERT_SUBREG);
   NumberedInstructions.push_back(IMPLICIT_DEF);
@@ -355,7 +355,7 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
         &II->second != DBG_LABEL &&
         &II->second != EH_LABEL &&
         &II->second != GC_LABEL &&
-        &II->second != DECLARE &&
+        &II->second != KILL &&
         &II->second != EXTRACT_SUBREG &&
         &II->second != INSERT_SUBREG &&
         &II->second != IMPLICIT_DEF &&

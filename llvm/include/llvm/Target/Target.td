@@ -426,12 +426,12 @@ def GC_LABEL : Instruction {
   let Namespace = "TargetInstrInfo";
   let hasCtrlDep = 1;
 }
-def DECLARE : Instruction {
+def KILL : Instruction {
   let OutOperandList = (ops);
   let InOperandList = (ops variable_ops);
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
-  let hasCtrlDep = 1;
+  let neverHasSideEffects = 1;
 }
 def EXTRACT_SUBREG : Instruction {
   let OutOperandList = (ops unknown:$dst);

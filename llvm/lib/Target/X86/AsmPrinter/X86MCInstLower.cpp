@@ -407,6 +407,8 @@ void X86AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   case TargetInstrInfo::IMPLICIT_DEF:
     printImplicitDef(MI);
     return;
+  case TargetInstrInfo::KILL:
+    return;
   case X86::MOVPC32r: {
     MCInst TmpInst;
     // This is a pseudo op for a two instruction sequence with a label, which

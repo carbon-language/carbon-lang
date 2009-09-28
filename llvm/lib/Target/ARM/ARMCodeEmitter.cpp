@@ -611,6 +611,7 @@ void Emitter<CodeEmitter>::emitPseudoInstruction(const MachineInstr &MI) {
     MCE.emitLabel(MI.getOperand(0).getImm());
     break;
   case TargetInstrInfo::IMPLICIT_DEF:
+  case TargetInstrInfo::KILL:
   case ARM::DWARF_LOC:
     // Do nothing.
     break;

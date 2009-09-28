@@ -681,6 +681,8 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
     << "  } else if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {\n"
     << "    printImplicitDef(MI);\n"
     << "    return;\n"
+    << "  } else if (MI->getOpcode() == TargetInstrInfo::KILL) {\n"
+    << "    return;\n"
     << "  }\n\n";
 
   O << "\n#endif\n";

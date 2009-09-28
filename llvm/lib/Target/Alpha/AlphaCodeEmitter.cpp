@@ -125,6 +125,7 @@ void Emitter<CodeEmitter>::emitBasicBlock(MachineBasicBlock &MBB) {
     case Alpha::PCLABEL:
     case Alpha::MEMLABEL:
     case TargetInstrInfo::IMPLICIT_DEF:
+    case TargetInstrInfo::KILL:
       break; //skip these
     }
   }

@@ -339,7 +339,7 @@ void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
         R->getName() != "DBG_LABEL" &&
         R->getName() != "EH_LABEL" &&
         R->getName() != "GC_LABEL" &&
-        R->getName() != "DECLARE" &&
+        R->getName() != "KILL" &&
         R->getName() != "EXTRACT_SUBREG" &&
         R->getName() != "INSERT_SUBREG" &&
         R->getName() != "IMPLICIT_DEF" &&

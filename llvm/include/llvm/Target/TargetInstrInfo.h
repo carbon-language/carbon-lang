@@ -51,7 +51,10 @@ public:
     DBG_LABEL = 2,
     EH_LABEL = 3,
     GC_LABEL = 4,
-    // FIXME: DECLARE is removed. Readjust enum values ?
+
+    /// KILL - This instruction is a noop that is used only to adjust the liveness
+    /// of registers. This can be useful when dealing with sub-registers.
+    KILL = 5,
 
     /// EXTRACT_SUBREG - This instruction takes two operands: a register
     /// that has subregisters, and a subregister index. It returns the
