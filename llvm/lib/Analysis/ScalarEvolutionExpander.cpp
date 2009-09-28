@@ -620,11 +620,11 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   if (CanonicalIV &&
       SE.getTypeSizeInBits(CanonicalIV->getType()) >
       SE.getTypeSizeInBits(Ty)) {
-    const SCEV *Start = SE.getAnyExtendExpr(S->getStart(),
-                                            CanonicalIV->getType());
-    const SCEV *Step = SE.getAnyExtendExpr(S->getStepRecurrence(SE),
-                                           CanonicalIV->getType());
-    Value *V = expand(SE.getAddRecExpr(Start, Step, S->getLoop()));
+    const SmallVectorImpl<const SCEV *> &Ops = S->getOperands();
+    SmallVector<const SCEV *, 4> NewOps(Ops.size());
+    for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+      NewOps[i] = SE.getAnyExtendExpr(Ops[i], CanonicalIV->getType());
+    Value *V = expand(SE.getAddRecExpr(NewOps, S->getLoop()));
     BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
     BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
     BasicBlock::iterator NewInsertPt =
