@@ -261,7 +261,7 @@ def getTestsInSuite(ts, path_in_suite, litConfig,
     # Search subdirectories.
     for filename in os.listdir(source_path):
         # FIXME: This doesn't belong here?
-        if filename == 'Output' or filename in lc.excludes:
+        if filename in ('Output', '.svn') or filename in lc.excludes:
             continue
 
         # Ignore non-directories.
