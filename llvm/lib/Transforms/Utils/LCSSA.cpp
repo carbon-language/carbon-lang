@@ -90,10 +90,8 @@ namespace {
 
     /// verifyAnalysis() - Verify loop nest.
     virtual void verifyAnalysis() const {
-#ifndef NDEBUG
       // Check the special guarantees that LCSSA makes.
-      assert(L->isLCSSAForm());
-#endif
+      assert(L->isLCSSAForm() && "LCSSA form not preserved!");
     }
 
     void getLoopValuesUsedOutsideLoop(Loop *L,
