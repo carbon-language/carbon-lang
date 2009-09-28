@@ -96,8 +96,6 @@ reMaterialize(MachineBasicBlock &MBB,
 
   MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
   MI->getOperand(0).setReg(DestReg);
-  if (Orig->getOpcode() == ARM::MOVTi16)
-    MI->getOperand(1).setReg(DestReg);
 
   MBB.insert(I, MI);
 }

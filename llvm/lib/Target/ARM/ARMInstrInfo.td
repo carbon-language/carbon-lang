@@ -938,8 +938,7 @@ def MOVi16 : AI1<0b1000, (outs GPR:$dst), (ins i32imm:$src),
   let Inst{25} = 1;
 }
 
-let isReMaterializable = 1, isAsCheapAsAMove = 1, 
-    Constraints = "$src = $dst" in
+let isAsCheapAsAMove = 1, Constraints = "$src = $dst" in
 def MOVTi16 : AI1<0b1010, (outs GPR:$dst), (ins GPR:$src, i32imm:$imm),
                   DPFrm, IIC_iMOVi,
                   "movt", " $dst, $imm", 
