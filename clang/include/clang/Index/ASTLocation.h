@@ -14,7 +14,8 @@
 #ifndef LLVM_CLANG_INDEX_ASTLOCATION_H
 #define LLVM_CLANG_INDEX_ASTLOCATION_H
 
-#include <cassert>
+#include "clang/AST/TypeLoc.h"
+#include "llvm/ADT/PointerIntPair.h"
 
 namespace llvm {
   class raw_ostream;
@@ -23,7 +24,7 @@ namespace llvm {
 namespace clang {
   class Decl;
   class Stmt;
-  class SourceRange;
+  class NamedDecl;
 
 namespace idx {
   class TranslationUnit;
@@ -37,26 +38,105 @@ namespace idx {
 /// like the declaration context, ASTContext, etc.
 ///
 class ASTLocation {
-  const Decl *D;
-  const Stmt *Stm;
+public:
+  enum NodeKind {
+    N_Decl, N_NamedRef, N_Stmt, N_Type
+  };
+
+  struct NamedRef {
+    NamedDecl *ND;
+    SourceLocation Loc;
+    
+    NamedRef() : ND(0) { }
+    NamedRef(NamedDecl *nd, SourceLocation loc) : ND(nd), Loc(loc) { }
+  };
+
+private:
+  llvm::PointerIntPair<Decl *, 2, NodeKind> ParentDecl;
+
+  union {
+    Decl *D;
+    Stmt *Stm;
+    struct {
+      NamedDecl *ND;
+      unsigned RawLoc;
+    } NDRef;
+    struct {
+      void *TyPtr;
+      void *Data;
+    } Ty;
+  };
 
 public:
-  ASTLocation() : D(0), Stm(0) {}
+  ASTLocation() { }
 
-  explicit ASTLocation(const Decl *d, const Stmt *stm = 0) : D(d), Stm(stm) {
-    assert((Stm == 0 || isImmediateParent(D, Stm)) &&
-           "The Decl is not the immediate parent of the Stmt.");
+  explicit ASTLocation(const Decl *d)
+    : ParentDecl(const_cast<Decl*>(d), N_Decl), D(const_cast<Decl*>(d)) { }
+
+  ASTLocation(const Decl *parentDecl, const Stmt *stm)
+    : ParentDecl(const_cast<Decl*>(parentDecl), N_Stmt),
+      Stm(const_cast<Stmt*>(stm)) {
+    if (!stm) ParentDecl.setPointer(0);
   }
 
-  const Decl *getDecl() const { return D; }
-  const Stmt *getStmt() const { return Stm; }
-  Decl *getDecl() { return const_cast<Decl*>(D); }
-  Stmt *getStmt() { return const_cast<Stmt*>(Stm); }
+  ASTLocation(const Decl *parentDecl, NamedDecl *ndRef, SourceLocation loc)
+    : ParentDecl(const_cast<Decl*>(parentDecl), N_NamedRef) {
+    if (ndRef) {
+      NDRef.ND = ndRef;
+      NDRef.RawLoc = loc.getRawEncoding();
+    } else
+      ParentDecl.setPointer(0);
+  }
 
-  bool isValid() const { return D != 0; }
+  ASTLocation(const Decl *parentDecl, TypeLoc tyLoc)
+    : ParentDecl(const_cast<Decl*>(parentDecl), N_Type) {
+    if (tyLoc) {
+      Ty.TyPtr = tyLoc.getSourceType().getAsOpaquePtr();
+      Ty.Data = tyLoc.getOpaqueData();
+    } else
+      ParentDecl.setPointer(0);
+  }
+
+  bool isValid() const { return ParentDecl.getPointer() != 0; }
   bool isInvalid() const { return !isValid(); }
-  bool isDecl() const { return isValid() && Stm == 0; }
-  bool isStmt() const { return isValid() && Stm != 0; }
+  
+  NodeKind getKind() const {
+    assert(isValid());
+    return (NodeKind)ParentDecl.getInt();
+  }
+  
+  Decl *getParentDecl() const { return ParentDecl.getPointer(); }
+  
+  Decl *AsDecl() const {
+    assert(getKind() == N_Decl);
+    return D;
+  }
+  Stmt *AsStmt() const {
+    assert(getKind() == N_Stmt);
+    return Stm;
+  }
+  NamedRef AsNamedRef() const {
+    assert(getKind() == N_NamedRef);
+    return NamedRef(NDRef.ND, SourceLocation::getFromRawEncoding(NDRef.RawLoc));
+  }
+  TypeLoc AsTypeLoc() const {
+    assert(getKind() == N_Type);
+    return TypeLoc(QualType::getFromOpaquePtr(Ty.TyPtr), Ty.Data);
+  }
+
+  Decl *dyn_AsDecl() const { return getKind() == N_Decl ? D : 0; }
+  Stmt *dyn_AsStmt() const { return getKind() == N_Stmt ? Stm : 0; }
+  NamedRef dyn_AsNamedRef() const {
+    return getKind() == N_Type ? AsNamedRef() : NamedRef();
+  }
+  TypeLoc dyn_AsTypeLoc() const {
+    return getKind() == N_Type ? AsTypeLoc() : TypeLoc();
+  }
+  
+  bool isDecl() const { return isValid() && getKind() == N_Decl; }
+  bool isStmt() const { return isValid() && getKind() == N_Stmt; }
+  bool isNamedRef() const { return isValid() && getKind() == N_NamedRef; }
+  bool isType() const { return isValid() && getKind() == N_Type; }
 
   /// \brief Returns the declaration that this ASTLocation references.
   ///
@@ -69,17 +149,6 @@ public:
   }
 
   SourceRange getSourceRange() const;
-
-  /// \brief Checks that D is the immediate Decl parent of Node.
-  static bool isImmediateParent(const Decl *D, const Stmt *Node);
-  static const Decl *FindImmediateParent(const Decl *D, const Stmt *Node);
-
-  friend bool operator==(const ASTLocation &L, const ASTLocation &R) {
-    return L.D == R.D && L.Stm == R.Stm;
-  }
-  friend bool operator!=(const ASTLocation &L, const ASTLocation &R) {
-    return !(L == R);
-  }
 
   void print(llvm::raw_ostream &OS) const;
 };

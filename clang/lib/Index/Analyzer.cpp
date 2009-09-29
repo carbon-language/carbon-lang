@@ -144,16 +144,15 @@ public:
   /// It returns true "eagerly", meaning it will return false only if it can
   /// "prove" statically that the interface cannot accept this message.
   bool ValidReference(ASTLocation ASTLoc, ObjCInterfaceDecl *IFace) {
-    assert(ASTLoc.isValid());
     assert(ASTLoc.isStmt());
 
     // FIXME: Finding @selector references should be through another Analyzer
     // method, like FindSelectors.
-    if (isa<ObjCSelectorExpr>(ASTLoc.getStmt()))
+    if (isa<ObjCSelectorExpr>(ASTLoc.AsStmt()))
       return false;
 
     ObjCInterfaceDecl *MsgD = 0;
-    ObjCMessageExpr *Msg = cast<ObjCMessageExpr>(ASTLoc.getStmt());
+    ObjCMessageExpr *Msg = cast<ObjCMessageExpr>(ASTLoc.AsStmt());
 
     if (Msg->getReceiver()) {
       const ObjCObjectPointerType *OPT =

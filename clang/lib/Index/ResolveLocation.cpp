@@ -183,7 +183,7 @@ ASTLocation DeclLocResolver::VisitDeclContext(DeclContext *DC) {
 
 ASTLocation DeclLocResolver::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
   ASTLocation ASTLoc = VisitDeclContext(TU);
-  if (ASTLoc.getDecl() == TU)
+  if (ASTLoc.getParentDecl() == TU)
     return ASTLocation();
   return ASTLoc;
 }

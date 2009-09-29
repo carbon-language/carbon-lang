@@ -132,7 +132,7 @@ static void ProcessObjCMessage(ObjCMessageExpr *Msg, Indexer &Idxer) {
     Analyz.FindObjCMethods(Msg, Results);
     for (ResultsTy::iterator
            I = Results.begin(), E = Results.end(); I != E; ++I) {
-      const ObjCMethodDecl *D = cast<ObjCMethodDecl>(I->getDecl());
+      const ObjCMethodDecl *D = cast<ObjCMethodDecl>(I->AsDecl());
       if (D->isThisDeclarationADefinition())
         I->print(OS);
     }
@@ -146,7 +146,7 @@ static void ProcessASTLocation(ASTLocation ASTLoc, Indexer &Idxer) {
   assert(ASTLoc.isValid());
 
   if (ObjCMessageExpr *Msg =
-        dyn_cast_or_null<ObjCMessageExpr>(ASTLoc.getStmt()))
+        dyn_cast_or_null<ObjCMessageExpr>(ASTLoc.dyn_AsStmt()))
     return ProcessObjCMessage(Msg, Idxer);
 
   Decl *D = ASTLoc.getReferencedDecl();
@@ -184,7 +184,7 @@ static void ProcessASTLocation(ASTLocation ASTLoc, Indexer &Idxer) {
     Analyz.FindDeclarations(D, Results);
     for (ResultsTy::iterator
            I = Results.begin(), E = Results.end(); I != E; ++I) {
-      const Decl *D = I->getDecl();
+      const Decl *D = I->AsDecl();
       bool isDef = false;
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
         isDef = FD->isThisDeclarationADefinition();
@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
       llvm::raw_ostream &OS = llvm::outs();
       ASTLoc.print(OS);
       if (const char *Comment =
-            FirstAST->getASTContext().getCommentForDecl(ASTLoc.getDecl()))
+            FirstAST->getASTContext().getCommentForDecl(ASTLoc.dyn_AsDecl()))
         OS << "Comment associated with this declaration:\n" << Comment << "\n";
     } else {
       ProcessASTLocation(ASTLoc, Idxer);

@@ -512,8 +512,8 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
                                                                 
   ASTLocation ALoc = ResolveLocationInAST(CXXUnit->getASTContext(), SLoc);
   
-  Decl *Dcl = ALoc.getDecl();
-  Stmt *Stm = ALoc.getStmt();
+  Decl *Dcl = ALoc.getParentDecl();
+  Stmt *Stm = ALoc.dyn_AsStmt();
   if (Dcl) {
     if (Stm) {
       if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Stm)) {
