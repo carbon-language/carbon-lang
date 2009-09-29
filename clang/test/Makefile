@@ -27,7 +27,7 @@ endif
 
 all:: lit.site.cfg
 	@ echo '--- Running clang tests for $(TARGET_TRIPLE) ---'
-	@ $(LLVM_SRC_ROOT)/utils/lit/lit.py \
+	@ $(PYTHON) $(LLVM_SRC_ROOT)/utils/lit/lit.py \
 	  $(TESTARGS) $(TESTDIRS) $(VGARG)
 
 FORCE:
