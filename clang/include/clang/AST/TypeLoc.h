@@ -139,6 +139,10 @@ public:
     return SourceRange(getNameLoc(), getNameLoc());
   }
 
+  TypedefDecl *getTypedefDecl() const {
+    return cast<TypedefType>(Ty)->getDecl();
+  }
+
   /// \brief Returns the size of the type source info data block that is
   /// specific to this type.
   unsigned getLocalDataSize() const { return sizeof(Info); }
