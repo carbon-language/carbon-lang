@@ -241,7 +241,8 @@ unsigned RegScavenger::findSurvivorReg(MachineBasicBlock::iterator MI,
     // Remove any candidates touched by instruction.
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg() || MO.isUndef() || !MO.getReg())
+      if (!MO.isReg() || MO.isUndef() || !MO.getReg() ||
+          TRI->isVirtualRegister(MO.getReg()))
         continue;
       Candidates.reset(MO.getReg());
       for (const unsigned *R = TRI->getAliasSet(MO.getReg()); *R; R++)
@@ -279,7 +280,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   // Exclude all the registers being used by the instruction.
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = I->getOperand(i);
-    if (MO.isReg())
+    if (MO.isReg() && !TRI->isVirtualRegister(MO.getReg()))
       Candidates.reset(MO.getReg());
   }
 
