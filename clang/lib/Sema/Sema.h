@@ -3683,8 +3683,10 @@ public:
   QualType adjustFunctionParamType(QualType T) const {
     if (!Context.getLangOptions().CPlusPlus)
       return T;
-
-    return T.getUnqualifiedType();
+    return 
+      T->isDependentType() ? T.getUnqualifiedType()
+                            : T.getDesugaredType().getUnqualifiedType();
+    
   }
 
   /// \name Code completion

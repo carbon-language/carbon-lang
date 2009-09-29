@@ -155,7 +155,7 @@ typedef INTREF Func1(FLOAT, double);
 typedef float& Func2(int, double);
 
 struct ConvertToFunc {
-  operator Func1*(); // expected-note{{conversion candidate of type 'INTREF (*)(FLOAT, double)'}}
+  operator Func1*(); // expected-note{{conversion candidate of type 'INTREF (*)(float, double)'}}
   operator Func2&(); // expected-note{{conversion candidate of type 'float &(&)(int, double)'}}
   void operator()();
 };
