@@ -2241,9 +2241,15 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
       // ranking implicit conversion sequences as described in 13.3.3.2, the ambiguous 
       // conversion sequence is treated as a user-defined sequence that is 
       // indistinguishable from any other user-defined conversion sequence
-        if (!Candidate.Conversions[ArgIdx].ConversionFunctionSet.empty())
+        if (!Candidate.Conversions[ArgIdx].ConversionFunctionSet.empty()) {
           Candidate.Conversions[ArgIdx].ConversionKind =
             ImplicitConversionSequence::UserDefinedConversion;
+          // Set the conversion function to one of them. As due to ambiguity,
+          // they carry the same weight and is needed for overload resolution
+          // later.
+          Candidate.Conversions[ArgIdx].UserDefined.ConversionFunction =
+            Candidate.Conversions[ArgIdx].ConversionFunctionSet[0];
+        }
         else {
           Candidate.Viable = false;
           break;
