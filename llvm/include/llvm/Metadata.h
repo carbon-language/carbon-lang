@@ -342,8 +342,8 @@ public:
   /// getMDs - Get the metadata attached with an Instruction.
   const MDMapTy *getMDs(const Instruction *Inst);
 
-  /// setMD - Attach the metadata of given kind with an Instruction.
-  void setMD(unsigned Kind, MDNode *Node, Instruction *Inst);
+  /// addMD - Attach the metadata of given kind with an Instruction.
+  void addMD(unsigned Kind, MDNode *Node, Instruction *Inst);
   
   /// getHandlerNames - Get handler names. This is used by bitcode
   /// writer.

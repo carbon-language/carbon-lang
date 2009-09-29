@@ -2665,7 +2665,7 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
     MetadataContext &TheMetadata = M->getContext().getMetadata();
     for (SmallVector<std::pair<unsigned, MDNode *>, 2>::iterator
            MDI = MDsOnInst.begin(), MDE = MDsOnInst.end(); MDI != MDE; ++MDI)
-      TheMetadata.setMD(MDI->first, MDI->second, Inst);
+      TheMetadata.addMD(MDI->first, MDI->second, Inst);
     MDsOnInst.clear();
 
     BB->getInstList().push_back(Inst);

@@ -1582,7 +1582,7 @@ bool BitcodeReader::ParseMetadataAttachment() {
       for (unsigned i = 1; i != RecordLength; i = i+2) {
         unsigned Kind = Record[i];
         Value *Node = MDValueList.getValueFwdRef(Record[i+1]);
-        TheMetadata.setMD(Kind, cast<MDNode>(Node), Inst);
+        TheMetadata.addMD(Kind, cast<MDNode>(Node), Inst);
       }
       break;
     }

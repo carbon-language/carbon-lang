@@ -148,7 +148,7 @@ public:
   /// SetDebugLocation -  Set location information for the given instruction.
   void SetDebugLocation(Instruction *I) {
     if (CurDbgLocation)
-      Context.getMetadata().setMD(MDKind, CurDbgLocation, I);
+      Context.getMetadata().addMD(MDKind, CurDbgLocation, I);
   }
 
   /// Insert - Insert and return the specified instruction.
@@ -156,7 +156,7 @@ public:
   InstTy *Insert(InstTy *I, const Twine &Name = "") const {
     this->InsertHelper(I, Name, BB, InsertPt);
     if (CurDbgLocation)
-      Context.getMetadata().setMD(MDKind, CurDbgLocation, I);
+      Context.getMetadata().addMD(MDKind, CurDbgLocation, I);
     return I;
   }
 

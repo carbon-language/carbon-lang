@@ -300,18 +300,29 @@ unsigned MetadataContext::getMDKind(const char *Name) {
   return I->getValue();
 }
 
-/// setMD - Attach the metadata of given kind with an Instruction.
-void MetadataContext::setMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
-  MDStoreTy::iterator I = MetadataStore.find(Inst);
+/// addMD - Attach the metadata of given kind with an Instruction.
+void MetadataContext::addMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
+  assert (Node && "Unable to add custome metadata");
   Inst->HasMetadata = true;
+  MDStoreTy::iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end()) {
     MDMapTy Info;
     Info.push_back(std::make_pair(MDKind, Node));
     MetadataStore.insert(std::make_pair(Inst, Info));
     return;
   }
-  
+
   MDMapTy &Info = I->second;
+  // If there is an entry for this MDKind then replace it.
+  for (unsigned i = 0, e = Info.size(); i != e; ++i) {
+    MDPairTy &P = Info[i];
+    if (P.first == MDKind) {
+      Info[i] = std::make_pair(MDKind, Node);
+      return;
+    }
+  }
+
+  // Otherwise add a new entry.
   Info.push_back(std::make_pair(MDKind, Node));
   return;
 }
@@ -319,16 +330,15 @@ void MetadataContext::setMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
 /// getMD - Get the metadata of given kind attached with an Instruction.
 /// If the metadata is not found then return 0.
 MDNode *MetadataContext::getMD(unsigned MDKind, const Instruction *Inst) {
-  MDNode *Node = NULL;
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end())
-    return Node;
+    return NULL;
   
   MDMapTy &Info = I->second;
   for (MDMapTy::iterator I = Info.begin(), E = Info.end(); I != E; ++I)
     if (I->first == MDKind)
-      Node = dyn_cast_or_null<MDNode>(I->second);
-  return Node;
+      return dyn_cast_or_null<MDNode>(I->second);
+  return NULL;
 }
 
 /// getMDs - Get the metadata attached with an Instruction.
@@ -374,5 +384,5 @@ void MetadataContext::ValueIsCloned(const Instruction *In1, Instruction *In2) {
   MDMapTy In2Info;
   for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
     if (MDNode *MD = dyn_cast_or_null<MDNode>(I->second))
-      setMD(I->first, MD, In2);
+      addMD(I->first, MD, In2);
 }
