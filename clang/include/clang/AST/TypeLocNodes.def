@@ -37,6 +37,7 @@
 
 TYPESPEC_TYPELOC(DefaultTypeSpecLoc, Type)
 TYPESPEC_TYPELOC(TypedefLoc, TypedefType)
+TYPESPEC_TYPELOC(ObjCProtocolListLoc, ObjCProtocolListType)
 DECLARATOR_TYPELOC(PointerLoc, PointerType)
 DECLARATOR_TYPELOC(BlockPointerLoc, BlockPointerType)
 DECLARATOR_TYPELOC(MemberPointerLoc, MemberPointerType)

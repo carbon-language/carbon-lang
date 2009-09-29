@@ -150,6 +150,73 @@ public:
   static bool classof(const TypedefLoc *TL) { return true; }
 };
 
+/// \brief Wrapper for source info for ObjC protocol lists.
+class ObjCProtocolListLoc : public TypeSpecLoc {
+  struct Info {
+    SourceLocation LAngleLoc, RAngleLoc;
+  };
+  // SourceLocations are stored after Info, one for each Protocol.
+  SourceLocation *getProtocolLocArray() const {
+    return reinterpret_cast<SourceLocation*>(static_cast<Info*>(Data) + 1);
+  }
+
+public:
+  SourceLocation getLAngleLoc() const {
+    return static_cast<Info*>(Data)->LAngleLoc;
+  }
+  void setLAngleLoc(SourceLocation Loc) {
+    static_cast<Info*>(Data)->LAngleLoc = Loc;
+  }
+
+  SourceLocation getRAngleLoc() const {
+    return static_cast<Info*>(Data)->RAngleLoc;
+  }
+  void setRAngleLoc(SourceLocation Loc) {
+    static_cast<Info*>(Data)->RAngleLoc = Loc;
+  }
+
+  unsigned getNumProtocols() const {
+    return cast<ObjCProtocolListType>(Ty)->getNumProtocols();
+  }
+
+  SourceLocation getProtocolLoc(unsigned i) const {
+    assert(i < getNumProtocols() && "Index is out of bounds!");
+    return getProtocolLocArray()[i];
+  }
+  void setProtocolLoc(unsigned i, SourceLocation Loc) {
+    assert(i < getNumProtocols() && "Index is out of bounds!");
+    getProtocolLocArray()[i] = Loc;
+  }
+
+  ObjCProtocolDecl *getProtocol(unsigned i) const {
+    assert(i < getNumProtocols() && "Index is out of bounds!");
+    return *(cast<ObjCProtocolListType>(Ty)->qual_begin() + i);
+  }
+  
+  TypeLoc getBaseTypeLoc() const {
+    void *Next = static_cast<char*>(Data) + getLocalDataSize();
+    return TypeLoc(cast<ObjCProtocolListType>(Ty)->getBaseType(), Next);
+  }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(getLAngleLoc(), getRAngleLoc());
+  }
+
+  /// \brief Returns the size of the type source info data block that is
+  /// specific to this type.
+  unsigned getLocalDataSize() const {
+    return sizeof(Info) + getNumProtocols() * sizeof(SourceLocation);
+  }
+
+  /// \brief Returns the size of the type source info data block.
+  unsigned getFullDataSize() const {
+    return getLocalDataSize() + getBaseTypeLoc().getFullDataSize();
+  }
+
+  static bool classof(const TypeLoc *TL);
+  static bool classof(const ObjCProtocolListLoc *TL) { return true; }
+};
+
 /// \brief Wrapper for source info for pointers.
 class PointerLoc : public DeclaratorLoc {
   struct Info {

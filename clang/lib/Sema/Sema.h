@@ -449,7 +449,7 @@ public:
   //
   QualType adjustParameterType(QualType T);
   QualType ConvertDeclSpecToType(const DeclSpec &DS, SourceLocation DeclLoc,
-                                 bool &IsInvalid);
+                                 bool &IsInvalid, QualType &SourceTy);
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
   QualType BuildPointerType(QualType T, unsigned Quals,
                             SourceLocation Loc, DeclarationName Entity);

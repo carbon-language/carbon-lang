@@ -83,6 +83,7 @@ public:
 
 /// \brief Returns the size of the type source info data block.
 unsigned TypeLoc::getFullDataSize() const {
+  if (isNull()) return 0;
   return TypeSizer().Visit(*this);
 }
 
@@ -98,6 +99,7 @@ public:
 #include "clang/AST/TypeLocNodes.def"
 
   TypeLoc VisitTypeSpecLoc(TypeLoc TyLoc) { return TypeLoc(); }
+  TypeLoc VisitObjCProtocolListLoc(ObjCProtocolListLoc TL);
 
   TypeLoc VisitTypeLoc(TypeLoc TyLoc) {
     assert(0 && "A declarator loc wrapper was not handled!");
@@ -105,6 +107,10 @@ public:
   }
 };
 
+}
+
+TypeLoc NextLoc::VisitObjCProtocolListLoc(ObjCProtocolListLoc TL) {
+  return TL.getBaseTypeLoc();
 }
 
 TypeLoc NextLoc::VisitPointerLoc(PointerLoc TL) {
@@ -221,6 +227,24 @@ public:
 
 bool TypedefLoc::classof(const TypeLoc *TL) {
   return TypedefLocChecker().Visit(*TL);
+}
+
+//===----------------------------------------------------------------------===//
+// ObjCProtocolListLoc Implementation
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+class ObjCProtocolListLocChecker :
+  public TypeLocVisitor<ObjCProtocolListLocChecker, bool> {
+public:
+  bool VisitObjCProtocolListLoc(ObjCProtocolListLoc TyLoc) { return true; }
+};
+
+}
+
+bool ObjCProtocolListLoc::classof(const TypeLoc *TL) {
+  return ObjCProtocolListLocChecker().Visit(*TL);
 }
 
 //===----------------------------------------------------------------------===//

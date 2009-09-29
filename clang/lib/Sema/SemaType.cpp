@@ -51,14 +51,16 @@ QualType Sema::adjustParameterType(QualType T) {
 /// object.
 /// \param DS  the declaration specifiers
 /// \param DeclLoc The location of the declarator identifier or invalid if none.
+/// \param SourceTy QualType representing the type as written in source form.
 /// \returns The type described by the declaration specifiers.  This function
 /// never returns null.
 QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
                                      SourceLocation DeclLoc,
-                                     bool &isInvalid) {
+                                     bool &isInvalid, QualType &SourceTy) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
   QualType Result;
+  SourceTy = Result;
 
   switch (DS.getTypeSpecType()) {
   case DeclSpec::TST_void:
@@ -103,6 +105,9 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
   case DeclSpec::TST_unspecified:
     // "<proto1,proto2>" is an objc qualified ID with a missing id.
     if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
+      SourceTy = Context.getObjCProtocolListType(QualType(),
+                                                 (ObjCProtocolDecl**)PQ,
+                                                 DS.getNumProtocolQualifiers());
       Result = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy,
                                                 (ObjCProtocolDecl**)PQ,
                                                 DS.getNumProtocolQualifiers());
@@ -214,7 +219,11 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     Result = GetTypeFromParser(DS.getTypeRep());
 
     if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
-      if (const ObjCInterfaceType *Interface = Result->getAs<ObjCInterfaceType>())
+      SourceTy = Context.getObjCProtocolListType(Result,
+                                                 (ObjCProtocolDecl**)PQ,
+                                                 DS.getNumProtocolQualifiers());
+      if (const ObjCInterfaceType *
+            Interface = Result->getAs<ObjCInterfaceType>()) {
         // It would be nice if protocol qualifiers were only stored with the
         // ObjCObjectPointerType. Unfortunately, this isn't possible due
         // to the following typedef idiom (which is uncommon, but allowed):
@@ -227,7 +236,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
         Result = Context.getObjCInterfaceType(Interface->getDecl(),
                                               (ObjCProtocolDecl**)PQ,
                                               DS.getNumProtocolQualifiers());
-      else if (Result->isObjCIdType())
+      } else if (Result->isObjCIdType())
         // id<protocol-list>
         Result = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy,
                         (ObjCProtocolDecl**)PQ, DS.getNumProtocolQualifiers());
@@ -369,6 +378,8 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     Result = Context.getQualifiedType(Result, Quals);
   }
 
+  if (SourceTy.isNull())
+    SourceTy = Result;
   return Result;
 }
 
@@ -839,6 +850,10 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   // Determine the type of the declarator. Not all forms of declarator
   // have a type.
   QualType T;
+  // The QualType referring to the type as written in source code. We can't use
+  // T because it can change due to semantic analysis.
+  QualType SourceTy;
+
   switch (D.getKind()) {
   case Declarator::DK_Abstract:
   case Declarator::DK_Normal:
@@ -851,7 +866,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       T = Context.DependentTy;
     } else {
       bool isInvalid = false;
-      T = ConvertDeclSpecToType(DS, D.getIdentifierLoc(), isInvalid);
+      T = ConvertDeclSpecToType(DS, D.getIdentifierLoc(), isInvalid, SourceTy);
       if (isInvalid)
         D.setInvalidType(true);
       else if (OwnedDecl && DS.isTypeSpecOwned())
@@ -869,6 +884,9 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     T = Context.VoidTy;
     break;
   }
+  
+  if (SourceTy.isNull())
+    SourceTy = T;
 
   if (T == Context.UndeducedAutoTy) {
     int Error = -1;
@@ -919,9 +937,6 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     Name = D.getIdentifier();
 
   bool ShouldBuildInfo = DInfo != 0;
-  // The QualType referring to the type as written in source code. We can't use
-  // T because it can change due to semantic analysis.
-  QualType SourceTy = T;
 
   // Walk the DeclTypeInfo, building the recursive type as we go.
   // DeclTypeInfos are ordered from the identifier out, which is
@@ -1278,6 +1293,27 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   return T;
 }
 
+static void FillTypeSpecLoc(TypeLoc TSL, const DeclSpec &DS) {
+  if (TSL.isNull()) return;
+
+  if (TypedefLoc *TL = dyn_cast<TypedefLoc>(&TSL)) {
+    TL->setNameLoc(DS.getTypeSpecTypeLoc());
+
+  } else if (ObjCProtocolListLoc *PLL = dyn_cast<ObjCProtocolListLoc>(&TSL)) {
+    assert(PLL->getNumProtocols() == DS.getNumProtocolQualifiers());
+    PLL->setLAngleLoc(DS.getProtocolLAngleLoc());
+    PLL->setRAngleLoc(DS.getSourceRange().getEnd());
+    for (unsigned i = 0; i != DS.getNumProtocolQualifiers(); ++i)
+      PLL->setProtocolLoc(i, DS.getProtocolLocs()[i]);
+    FillTypeSpecLoc(PLL->getBaseTypeLoc(), DS);
+
+  } else {
+    //FIXME: Other typespecs.
+    DefaultTypeSpecLoc &DTL = cast<DefaultTypeSpecLoc>(TSL);
+    DTL.setStartLoc(DS.getSourceRange().getBegin());
+  }
+}
+
 /// \brief Create and instantiate a DeclaratorInfo with type source information.
 ///
 /// \param T QualType referring to the type as written in source code.
@@ -1343,14 +1379,8 @@ Sema::GetDeclaratorInfoForDeclarator(Declarator &D, QualType T, unsigned Skip) {
 
     CurrTL = CurrTL.getNextTypeLoc();
   }
-
-  if (TypedefLoc *TL = dyn_cast<TypedefLoc>(&CurrTL)) {
-    TL->setNameLoc(D.getDeclSpec().getTypeSpecTypeLoc());
-  } else {
-    //FIXME: Other typespecs.
-    DefaultTypeSpecLoc &DTL = cast<DefaultTypeSpecLoc>(CurrTL);
-    DTL.setStartLoc(D.getDeclSpec().getSourceRange().getBegin());
-  }
+  
+  FillTypeSpecLoc(CurrTL, D.getDeclSpec());
 
   return DInfo;
 }
