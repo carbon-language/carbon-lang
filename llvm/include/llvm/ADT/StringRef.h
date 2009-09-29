@@ -46,7 +46,7 @@ namespace llvm {
 
     /// Construct a string ref from a cstring.
     /*implicit*/ StringRef(const char *Str) 
-      : Data(Str), Length(::strlen(Str)) {}
+      : Data(Str) { if (Str) Length = ::strlen(Str); else Length = 0; }
  
     /// Construct a string ref from a pointer and length.
     /*implicit*/ StringRef(const char *_Data, unsigned _Length)
