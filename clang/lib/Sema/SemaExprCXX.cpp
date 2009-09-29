@@ -849,6 +849,18 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                                    << Ex->getSourceRange()))
       return ExprError();
 
+    // C++ [expr.delete]p2:
+    //   [Note: a pointer to a const type can be the operand of a 
+    //   delete-expression; it is not necessary to cast away the constness 
+    //   (5.2.11) of the pointer expression before it is used as the operand 
+    //   of the delete-expression. ]
+    ImpCastExprToType(Ex, Context.getPointerType(Context.VoidTy), 
+                      CastExpr::CK_NoOp);
+    
+    // Update the operand.
+    Operand.take();
+    Operand = ExprArg(*this, Ex);
+    
     DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
                                       ArrayForm ? OO_Array_Delete : OO_Delete);
 

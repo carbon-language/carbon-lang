@@ -132,3 +132,8 @@ public:
 void X4::release(X3 *x) {
   delete x;
 }
+
+class X6 {
+public:
+  void Destroy() const { delete this; }
+};
