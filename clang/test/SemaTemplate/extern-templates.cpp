@@ -39,3 +39,29 @@ void test_longptr(X0<long*> xl, X0<long*>::Inner xli) {
 }
 
 template class X0<long*>;
+
+template<typename T>
+class X1 {
+public:
+  void f(T t) { t += 2; }
+  
+  void g(T t);
+};
+
+template<typename T>
+void X1<T>::g(T t) { 
+  t += 2; 
+}
+
+extern template class X1<void*>;
+
+void g_X1(X1<void*> x1, void *ptr) {
+  x1.g(ptr);
+}
+
+extern template void X1<const void*>::g(const void*);
+
+void g_X1_2(X1<const void *> x1, const void *ptr) {
+  // FIXME: This should not instantiate of x1<const void*>::g
+//  x1.g(ptr);
+}

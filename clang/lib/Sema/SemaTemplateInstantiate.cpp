@@ -977,10 +977,11 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
                                DEnd = Instantiation->decls_end();
        D != DEnd; ++D) {
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(*D)) {
-      if (!Function->getBody())
+      if (!Function->getBody() && TSK != TSK_ExplicitInstantiationDeclaration)
         InstantiateFunctionDefinition(PointOfInstantiation, Function);
     } else if (VarDecl *Var = dyn_cast<VarDecl>(*D)) {
-      if (Var->isStaticDataMember())
+      if (Var->isStaticDataMember() && 
+          TSK != TSK_ExplicitInstantiationDeclaration)
         InstantiateStaticDataMemberDefinition(PointOfInstantiation, Var);
     } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(*D)) {
       if (!Record->isInjectedClassName() && !Record->getDefinition(Context)) {
