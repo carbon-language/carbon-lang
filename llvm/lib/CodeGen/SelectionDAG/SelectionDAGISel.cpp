@@ -381,8 +381,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
     if (MDDbgKind) {
       // Update DebugLoc if debug information is attached with this
       // instruction.
-      if (MDNode *Dbg =
-          dyn_cast_or_null<MDNode>(TheMetadata.getMD(MDDbgKind, I))) {
+      if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, I)) {
         DILocation DILoc(Dbg);
         DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
         SDL->setCurDebugLoc(Loc);
@@ -743,8 +742,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
         if (MDDbgKind) {
           // Update DebugLoc if debug information is attached with this
           // instruction.
-          if (MDNode *Dbg =
-              dyn_cast_or_null<MDNode>(TheMetadata.getMD(MDDbgKind, BI))) {
+          if (MDNode *Dbg = TheMetadata.getMD(MDDbgKind, BI)) {
             DILocation DILoc(Dbg);
             DebugLoc Loc = ExtractDebugLocation(DILoc,
                                                 MF.getDebugLocInfo());
