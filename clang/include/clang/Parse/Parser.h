@@ -674,7 +674,9 @@ private:
   void ParseObjCClassInstanceVariables(DeclPtrTy interfaceDecl,
                                        SourceLocation atLoc);
   bool ParseObjCProtocolReferences(llvm::SmallVectorImpl<Action::DeclPtrTy> &P,
+                                   llvm::SmallVectorImpl<SourceLocation> &PLocs,
                                    bool WarnOnDeclarations,
+                                   SourceLocation &LAngleLoc,
                                    SourceLocation &EndProtoLoc);
   void ParseObjCInterfaceDeclList(DeclPtrTy interfaceDecl,
                                   tok::ObjCKeywordKind contextKey);

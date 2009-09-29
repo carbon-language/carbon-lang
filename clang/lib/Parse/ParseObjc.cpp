@@ -148,10 +148,12 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
     rparenLoc = ConsumeParen();
 
     // Next, we need to check for any protocol references.
-    SourceLocation EndProtoLoc;
+    SourceLocation LAngleLoc, EndProtoLoc;
     llvm::SmallVector<DeclPtrTy, 8> ProtocolRefs;
+    llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
     if (Tok.is(tok::less) &&
-        ParseObjCProtocolReferences(ProtocolRefs, true, EndProtoLoc))
+        ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, true,
+                                    LAngleLoc, EndProtoLoc))
       return DeclPtrTy();
 
     if (attrList) // categories don't support attributes.
@@ -183,9 +185,11 @@ Parser::DeclPtrTy Parser::ParseObjCAtInterfaceDeclaration(
   }
   // Next, we need to check for any protocol references.
   llvm::SmallVector<Action::DeclPtrTy, 8> ProtocolRefs;
-  SourceLocation EndProtoLoc;
+  llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
+  SourceLocation LAngleLoc, EndProtoLoc;
   if (Tok.is(tok::less) &&
-      ParseObjCProtocolReferences(ProtocolRefs, true, EndProtoLoc))
+      ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, true,
+                                  LAngleLoc, EndProtoLoc))
     return DeclPtrTy();
 
   DeclPtrTy ClsType =
@@ -786,10 +790,12 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 ///
 bool Parser::
 ParseObjCProtocolReferences(llvm::SmallVectorImpl<Action::DeclPtrTy> &Protocols,
-                            bool WarnOnDeclarations, SourceLocation &EndLoc) {
+                            llvm::SmallVectorImpl<SourceLocation> &ProtocolLocs,
+                            bool WarnOnDeclarations,
+                            SourceLocation &LAngleLoc, SourceLocation &EndLoc) {
   assert(Tok.is(tok::less) && "expected <");
 
-  ConsumeToken(); // the "<"
+  LAngleLoc = ConsumeToken(); // the "<"
 
   llvm::SmallVector<IdentifierLocPair, 8> ProtocolIdents;
 
@@ -801,6 +807,7 @@ ParseObjCProtocolReferences(llvm::SmallVectorImpl<Action::DeclPtrTy> &Protocols,
     }
     ProtocolIdents.push_back(std::make_pair(Tok.getIdentifierInfo(),
                                        Tok.getLocation()));
+    ProtocolLocs.push_back(Tok.getLocation());
     ConsumeToken();
 
     if (Tok.isNot(tok::comma))
@@ -982,11 +989,13 @@ Parser::DeclPtrTy Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
   }
 
   // Last, and definitely not least, parse a protocol declaration.
-  SourceLocation EndProtoLoc;
+  SourceLocation LAngleLoc, EndProtoLoc;
 
   llvm::SmallVector<DeclPtrTy, 8> ProtocolRefs;
+  llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
   if (Tok.is(tok::less) &&
-      ParseObjCProtocolReferences(ProtocolRefs, false, EndProtoLoc))
+      ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, false,
+                                  LAngleLoc, EndProtoLoc))
     return DeclPtrTy();
 
   DeclPtrTy ProtoType =

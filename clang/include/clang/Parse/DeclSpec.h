@@ -144,6 +144,8 @@ private:
   // "id<foo>".
   const ActionBase::DeclPtrTy *ProtocolQualifiers;
   unsigned NumProtocolQualifiers;
+  SourceLocation ProtocolLAngleLoc;
+  SourceLocation *ProtocolLocs;
 
   // SourceLocation info.  These are null if the item wasn't specified or if
   // the setting was synthesized.
@@ -175,11 +177,13 @@ public:
       TypeRep(0),
       AttrList(0),
       ProtocolQualifiers(0),
-      NumProtocolQualifiers(0) {
+      NumProtocolQualifiers(0),
+      ProtocolLocs(0) {
   }
   ~DeclSpec() {
     delete AttrList;
     delete [] ProtocolQualifiers;
+    delete [] ProtocolLocs;
   }
   // storage-class-specifier
   SCS getStorageClassSpec() const { return (SCS)StorageClassSpec; }
@@ -339,14 +343,21 @@ public:
   ProtocolQualifierListTy getProtocolQualifiers() const {
     return ProtocolQualifiers;
   }
+  SourceLocation *getProtocolLocs() const { return ProtocolLocs; }
   unsigned getNumProtocolQualifiers() const {
     return NumProtocolQualifiers;
   }
-  void setProtocolQualifiers(const ActionBase::DeclPtrTy *Protos, unsigned NP) {
+  SourceLocation getProtocolLAngleLoc() const { return ProtocolLAngleLoc; }
+  void setProtocolQualifiers(const ActionBase::DeclPtrTy *Protos, unsigned NP,
+                             SourceLocation *ProtoLocs,
+                             SourceLocation LAngleLoc) {
     if (NP == 0) return;
     ProtocolQualifiers = new ActionBase::DeclPtrTy[NP];
+    ProtocolLocs = new SourceLocation[NP];
     memcpy((void*)ProtocolQualifiers, Protos, sizeof(ActionBase::DeclPtrTy)*NP);
+    memcpy(ProtocolLocs, ProtoLocs, sizeof(SourceLocation)*NP);
     NumProtocolQualifiers = NP;
+    ProtocolLAngleLoc = LAngleLoc;
   }
 
   /// Finish - This does final analysis of the declspec, issuing diagnostics for

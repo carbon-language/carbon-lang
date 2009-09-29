@@ -848,10 +848,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       if (!Tok.is(tok::less) || !getLang().ObjC1)
         continue;
 
-      SourceLocation EndProtoLoc;
+      SourceLocation LAngleLoc, EndProtoLoc;
       llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
-      ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
-      DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size());
+      llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
+      ParseObjCProtocolReferences(ProtocolDecl, ProtocolLocs, false,
+                                  LAngleLoc, EndProtoLoc);
+      DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size(),
+                               ProtocolLocs.data(), LAngleLoc);
 
       DS.SetRangeEnd(EndProtoLoc);
       continue;
@@ -908,10 +911,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       if (!Tok.is(tok::less) || !getLang().ObjC1)
         continue;
 
-      SourceLocation EndProtoLoc;
+      SourceLocation LAngleLoc, EndProtoLoc;
       llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
-      ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
-      DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size());
+      llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
+      ParseObjCProtocolReferences(ProtocolDecl, ProtocolLocs, false,
+                                  LAngleLoc, EndProtoLoc);
+      DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size(),
+                               ProtocolLocs.data(), LAngleLoc);
 
       DS.SetRangeEnd(EndProtoLoc);
 
@@ -1154,10 +1160,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         goto DoneWithDeclSpec;
 
       {
-        SourceLocation EndProtoLoc;
+        SourceLocation LAngleLoc, EndProtoLoc;
         llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
-        ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
-        DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size());
+        llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
+        ParseObjCProtocolReferences(ProtocolDecl, ProtocolLocs, false,
+                                    LAngleLoc, EndProtoLoc);
+        DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size(),
+                                 ProtocolLocs.data(), LAngleLoc);
         DS.SetRangeEnd(EndProtoLoc);
 
         Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id)
@@ -1268,10 +1277,13 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
     if (!Tok.is(tok::less) || !getLang().ObjC1)
       return true;
 
-    SourceLocation EndProtoLoc;
+    SourceLocation LAngleLoc, EndProtoLoc;
     llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
-    ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
-    DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size());
+    llvm::SmallVector<SourceLocation, 8> ProtocolLocs;
+    ParseObjCProtocolReferences(ProtocolDecl, ProtocolLocs, false,
+                                LAngleLoc, EndProtoLoc);
+    DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size(),
+                             ProtocolLocs.data(), LAngleLoc);
 
     DS.SetRangeEnd(EndProtoLoc);
     return true;
