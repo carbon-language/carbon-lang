@@ -350,15 +350,7 @@ public:
   SourceLocation getProtocolLAngleLoc() const { return ProtocolLAngleLoc; }
   void setProtocolQualifiers(const ActionBase::DeclPtrTy *Protos, unsigned NP,
                              SourceLocation *ProtoLocs,
-                             SourceLocation LAngleLoc) {
-    if (NP == 0) return;
-    ProtocolQualifiers = new ActionBase::DeclPtrTy[NP];
-    ProtocolLocs = new SourceLocation[NP];
-    memcpy((void*)ProtocolQualifiers, Protos, sizeof(ActionBase::DeclPtrTy)*NP);
-    memcpy(ProtocolLocs, ProtoLocs, sizeof(SourceLocation)*NP);
-    NumProtocolQualifiers = NP;
-    ProtocolLAngleLoc = LAngleLoc;
-  }
+                             SourceLocation LAngleLoc);
 
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,

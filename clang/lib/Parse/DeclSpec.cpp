@@ -334,6 +334,19 @@ bool DeclSpec::SetFriendSpec(SourceLocation Loc, const char *&PrevSpec,
   return false;
 }
 
+void DeclSpec::setProtocolQualifiers(const ActionBase::DeclPtrTy *Protos,
+                                     unsigned NP,
+                                     SourceLocation *ProtoLocs,
+                                     SourceLocation LAngleLoc) {
+  if (NP == 0) return;
+  ProtocolQualifiers = new ActionBase::DeclPtrTy[NP];
+  ProtocolLocs = new SourceLocation[NP];
+  memcpy((void*)ProtocolQualifiers, Protos, sizeof(ActionBase::DeclPtrTy)*NP);
+  memcpy(ProtocolLocs, ProtoLocs, sizeof(SourceLocation)*NP);
+  NumProtocolQualifiers = NP;
+  ProtocolLAngleLoc = LAngleLoc;
+}
+
 /// Finish - This does final analysis of the declspec, rejecting things like
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
 /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,
