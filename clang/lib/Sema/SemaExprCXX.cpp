@@ -589,6 +589,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
                                   DeclarationName Name, Expr** Args,
                                   unsigned NumArgs, DeclContext *Ctx,
                                   bool AllowMissing, FunctionDecl *&Operator) {
+  // FIXME: Change to use LookupQualifiedName!
   DeclContext::lookup_iterator Alloc, AllocEnd;
   llvm::tie(Alloc, AllocEnd) = Ctx->lookup(Name);
   if (Alloc == AllocEnd) {
@@ -602,9 +603,13 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
   for (; Alloc != AllocEnd; ++Alloc) {
     // Even member operator new/delete are implicitly treated as
     // static, so don't use AddMemberCandidate.
-    if (FunctionDecl *Fn = dyn_cast<FunctionDecl>(*Alloc))
+    if (FunctionDecl *Fn = dyn_cast<FunctionDecl>(*Alloc)) {
       AddOverloadCandidate(Fn, Args, NumArgs, Candidates,
                            /*SuppressUserConversions=*/false);
+      continue;
+    } 
+    
+    // FIXME: Handle function templates
   }
 
   // Do the resolution.
@@ -616,7 +621,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     // The first argument is size_t, and the first parameter must be size_t,
     // too. This is checked on declaration and can be assumed. (It can't be
     // asserted on, though, since invalid decls are left in there.)
-    for (unsigned i = 1; i < NumArgs; ++i) {
+    for (unsigned i = 0; i < NumArgs; ++i) {
       // FIXME: Passing word to diagnostic.
       if (PerformCopyInitialization(Args[i],
                                     FnDecl->getParamDecl(i)->getType(),
@@ -844,27 +849,27 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                                    << Ex->getSourceRange()))
       return ExprError();
 
-    // FIXME: This should be shared with the code for finding the delete
-    // operator in ActOnCXXNew.
-    IntegerLiteral Size(llvm::APInt::getNullValue(
-                        Context.Target.getPointerWidth(0)),
-                        Context.getSizeType(),
-                        SourceLocation());
-    ImplicitCastExpr Cast(Context.getPointerType(Context.VoidTy),
-                          CastExpr::CK_Unknown, &Size, false);
-    Expr *DeleteArg = &Cast;
-
     DeclarationName DeleteName = Context.DeclarationNames.getCXXOperatorName(
                                       ArrayForm ? OO_Array_Delete : OO_Delete);
 
     if (Pointee->isRecordType() && !UseGlobal) {
       CXXRecordDecl *Record
         = cast<CXXRecordDecl>(Pointee->getAs<RecordType>()->getDecl());
-      // FIXME: We fail to find inherited overloads.
-      if (FindAllocationOverload(StartLoc, SourceRange(), DeleteName,
-                                 &DeleteArg, 1, Record, /*AllowMissing=*/true,
-                                 OperatorDelete))
-        return ExprError();
+      
+      // Try to find operator delete/operator delete[] in class scope.
+      LookupResult Found = LookupQualifiedName(Record, DeleteName, 
+                                               LookupOrdinaryName);
+      // FIXME: Diagnose ambiguity properly
+      assert(!Found.isAmbiguous() && "Ambiguous delete/delete[] not handled");
+      for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
+           F != FEnd; ++F) {
+        if (CXXMethodDecl *Delete = dyn_cast<CXXMethodDecl>(*F))
+          if (Delete->isUsualDeallocationFunction()) {
+            OperatorDelete = Delete;
+            break;
+          }
+      }
+      
       if (!Record->hasTrivialDestructor())
         if (const CXXDestructorDecl *Dtor = Record->getDestructor(Context))
           MarkDeclarationReferenced(StartLoc,
@@ -876,7 +881,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       DeclareGlobalNewDelete();
       DeclContext *TUDecl = Context.getTranslationUnitDecl();
       if (FindAllocationOverload(StartLoc, SourceRange(), DeleteName,
-                                 &DeleteArg, 1, TUDecl, /*AllowMissing=*/false,
+                                 &Ex, 1, TUDecl, /*AllowMissing=*/false,
                                  OperatorDelete))
         return ExprError();
     }

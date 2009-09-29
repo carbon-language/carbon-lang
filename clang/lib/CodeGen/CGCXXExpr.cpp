@@ -239,10 +239,18 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
     return;
   };
 
-  QualType DeleteTy =
-    E->getArgument()->getType()->getAs<PointerType>()->getPointeeType();
+  // Get at the argument before we performed the implicit conversion
+  // to void*.
+  const Expr *Arg = E->getArgument();
+  while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
+    if (ICE->getCastKind() != CastExpr::CK_UserDefinedConversion &&
+        ICE->getType()->isVoidPointerType())
+      Arg = ICE->getSubExpr();
+  }
+  
+  QualType DeleteTy = Arg->getType()->getAs<PointerType>()->getPointeeType();
 
-  llvm::Value *Ptr = EmitScalarExpr(E->getArgument());
+  llvm::Value *Ptr = EmitScalarExpr(Arg);
 
   // Null check the pointer.
   llvm::BasicBlock *DeleteNotNull = createBasicBlock("delete.notnull");

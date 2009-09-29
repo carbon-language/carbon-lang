@@ -451,6 +451,40 @@ CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                isStatic, isInline);
 }
 
+bool CXXMethodDecl::isUsualDeallocationFunction() const {
+  if (getOverloadedOperator() != OO_Delete &&
+      getOverloadedOperator() != OO_Array_Delete)
+    return false;
+  
+  // C++ [basic.stc.dynamic.deallocation]p2:
+  //   If a class T has a member deallocation function named operator delete 
+  //   with exactly one parameter, then that function is a usual (non-placement)
+  //   deallocation function. [...]
+  if (getNumParams() == 1)
+    return true;
+  
+  // C++ [basic.stc.dynamic.deallocation]p2:
+  //   [...] If class T does not declare such an operator delete but does 
+  //   declare a member deallocation function named operator delete with 
+  //   exactly two parameters, the second of which has type std::size_t (18.1),
+  //   then this function is a usual deallocation function.
+  ASTContext &Context = getASTContext();
+  if (getNumParams() != 2 ||
+      !Context.hasSameType(getParamDecl(1)->getType(), Context.getSizeType()))
+    return false;
+                 
+  // This function is a usual deallocation function if there are no 
+  // single-parameter deallocation functions of the same kind.
+  for (DeclContext::lookup_const_result R = getDeclContext()->lookup(getDeclName());
+       R.first != R.second; ++R.first) {
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*R.first))
+      if (FD->getNumParams() == 1)
+        return false;
+  }
+  
+  return true;
+}
+
 typedef llvm::DenseMap<const CXXMethodDecl*,
                        std::vector<const CXXMethodDecl *> *>
                        OverriddenMethodsMapTy;
