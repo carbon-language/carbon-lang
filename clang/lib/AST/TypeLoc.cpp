@@ -18,6 +18,30 @@ using namespace clang;
 // TypeLoc Implementation
 //===----------------------------------------------------------------------===//
 
+namespace {
+
+/// \brief Return the source range for the visited TypeSpecLoc.
+class TypeLocRanger : public TypeLocVisitor<TypeLocRanger, SourceRange> {
+public:
+#define ABSTRACT_TYPELOC(CLASS)
+#define TYPELOC(CLASS, PARENT, TYPE) \
+    SourceRange Visit##CLASS(CLASS TyLoc) { return TyLoc.getSourceRange(); }
+#include "clang/AST/TypeLocNodes.def"
+
+  SourceRange VisitTypeLoc(TypeLoc TyLoc) {
+    assert(0 && "A typeloc wrapper was not handled!");
+    return SourceRange();
+  }
+};
+
+}
+
+SourceRange TypeLoc::getSourceRange() const {
+  if (isNull())
+    return SourceRange();
+  return TypeLocRanger().Visit(*this);
+}
+
 /// \brief Returns the size of type source info data block for the given type.
 unsigned TypeLoc::getFullDataSizeForType(QualType Ty) {
   return TypeLoc(Ty, 0).getFullDataSize();
@@ -111,30 +135,6 @@ TypeLoc TypeLoc::getNextTypeLoc() const {
 //===----------------------------------------------------------------------===//
 // TypeSpecLoc Implementation
 //===----------------------------------------------------------------------===//
-
-namespace {
-
-/// \brief Return the source range for the visited TypeSpecLoc.
-class TypeSpecRanger : public TypeLocVisitor<TypeSpecRanger, SourceRange> {
-public:
-#define TYPELOC(CLASS, PARENT, TYPE)
-#define TYPESPEC_TYPELOC(CLASS, TYPE) \
-    SourceRange Visit##CLASS(CLASS TyLoc) { return TyLoc.getSourceRange(); }
-#include "clang/AST/TypeLocNodes.def"
-
-  SourceRange VisitTypeLoc(TypeLoc TyLoc) {
-    assert(0 && "A typespec loc wrapper was not handled!");
-    return SourceRange();
-  }
-};
-
-}
-
-SourceRange TypeSpecLoc::getSourceRange() const {
-  if (isNull())
-    return SourceRange();
-  return TypeSpecRanger().Visit(*this);
-}
 
 namespace {
 class TypeSpecChecker : public TypeLocVisitor<TypeSpecChecker, bool> {

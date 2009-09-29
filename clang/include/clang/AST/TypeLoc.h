@@ -48,6 +48,8 @@ public:
   /// \brief Get the pointer where source information is stored.
   void *getOpaqueData() const { return Data; }
 
+  SourceRange getSourceRange() const;
+
   /// \brief Find the TypeSpecLoc that is part of this TypeLoc.
   TypeSpecLoc getTypeSpecLoc() const;
 
@@ -76,8 +78,6 @@ public:
 /// \brief Base wrapper of type source info data for type-spec types.
 class TypeSpecLoc : public TypeLoc  {
 public:
-  SourceRange getSourceRange() const;
-
   static bool classof(const TypeLoc *TL);
   static bool classof(const TypeSpecLoc *TL) { return true; }
 };
