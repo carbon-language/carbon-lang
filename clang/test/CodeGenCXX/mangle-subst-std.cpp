@@ -12,19 +12,15 @@ namespace std {
   template<typename T> struct allocator { };
 }
 
-// FIXME: typename is really not allowed here, but it's kept 
-// as a workaround for PR5061.
 // CHECK: define void @_Z1fSaIcESaIiE
-void f(typename std::allocator<char>, typename std::allocator<int>) { }
+void f(std::allocator<char>, std::allocator<int>) { }
 
 namespace std {
   template<typename T, typename U, typename V> struct basic_string { };
 }
 
-// FIXME: typename is really not allowed here, but it's kept 
-// as a workaround for PR5061.
 // CHECK: define void @_Z1fSbIcciE
-void f(typename std::basic_string<char, char, int>) { }
+void f(std::basic_string<char, char, int>) { }
 
 namespace std {
   template<typename T> struct char_traits { };
