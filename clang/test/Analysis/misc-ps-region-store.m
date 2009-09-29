@@ -249,3 +249,20 @@ int rdar_6914474(void) {
   return x; // no-warning
 }
 
+// Test invalidation of a single field.
+struct s_test_field_invalidate {
+  int x;
+};
+extern void test_invalidate_field(int *x);
+int test_invalidate_field_test() {
+  struct s_test_field_invalidate y;
+  test_invalidate_field(&y.x);
+  return y.x; // no-warning
+}
+int test_invalidate_field_test_positive() {
+  struct s_test_field_invalidate y;
+  return y.x; // expected-warning{{garbage}}
+}
+
+
+
