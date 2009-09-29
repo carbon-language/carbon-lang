@@ -262,8 +262,8 @@ NamedMDNode::~NamedMDNode() {
 unsigned MetadataContext::RegisterMDKind(const char *Name) {
   assert (validName(Name) && "Invalid custome metadata name!");
   unsigned Count = MDHandlerNames.size();
-  StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
-  assert(I == MDHandlerNames.end() && "Already registered MDKind!");
+  assert(MDHandlerNames.find(Name) == MDHandlerNames.end() 
+         && "Already registered MDKind!");
   MDHandlerNames[Name] = Count + 1;
   return Count + 1;
 }
