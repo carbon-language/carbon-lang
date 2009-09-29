@@ -198,6 +198,21 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
            "Implicit cast types must be compatible");
     Visit(E->getSubExpr());
     break;
+
+  case CastExpr::CK_NullToMemberPointer: {
+    QualType T = E->getType();
+    const llvm::Type *PtrDiffTy = 
+      CGF.ConvertType(CGF.getContext().getPointerDiffType());
+
+    llvm::Value *NullValue = llvm::Constant::getNullValue(PtrDiffTy);
+    llvm::Value *Ptr = Builder.CreateStructGEP(DestPtr, 0, "ptr");
+    Builder.CreateStore(NullValue, Ptr, VolatileDest);
+    
+    llvm::Value *Adj = Builder.CreateStructGEP(DestPtr, 1, "adj");
+    Builder.CreateStore(NullValue, Adj, VolatileDest);
+
+    break;
+  }
   }
 }
 

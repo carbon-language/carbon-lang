@@ -785,6 +785,13 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   return C;
 }
 
+static inline bool isDataMemberPointerType(QualType T) {
+  if (const MemberPointerType *MPT = T->getAs<MemberPointerType>())
+    return !MPT->getPointeeType()->isFunctionType();
+  
+  return false;
+}
+
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
   // No need to check for member pointers when not compiling C++.
   if (!getContext().getLangOptions().CPlusPlus)
@@ -795,7 +802,7 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
     QualType ElementTy = CAT->getElementType();
 
     // FIXME: Handle arrays of structs that contain member pointers.
-    if (Context.getBaseElementType(ElementTy)->isMemberPointerType()) {
+    if (isDataMemberPointerType(Context.getBaseElementType(ElementTy))) {
       llvm::Constant *Element = EmitNullConstant(ElementTy);
       uint64_t NumElements = CAT->getSize().getZExtValue();
       std::vector<llvm::Constant *> Array(NumElements);
@@ -821,7 +828,7 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
   }
 
   // FIXME: Handle structs that contain member pointers.
-  if (T->isMemberPointerType())
+  if (isDataMemberPointerType(T))
     return llvm::Constant::getAllOnesValue(getTypes().ConvertTypeForMem(T));
 
   return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
