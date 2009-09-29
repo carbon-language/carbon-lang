@@ -518,8 +518,7 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK){
 enum LangStds {
   lang_unspecified,
   lang_c89, lang_c94, lang_c99,
-  lang_gnu_START,
-  lang_gnu89 = lang_gnu_START, lang_gnu99,
+  lang_gnu89, lang_gnu99,
   lang_cxx98, lang_gnucxx98,
   lang_cxx0x, lang_gnucxx0x
 };
@@ -752,7 +751,22 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   }
 
   // GNUMode - Set if we're in gnu99, gnu89, gnucxx98, etc.
-  Options.GNUMode = LangStd >= lang_gnu_START;
+  switch (LangStd) {
+  default: assert(0 && "Unknown language standard!");
+  case lang_gnucxx0x:
+  case lang_gnucxx98:
+  case lang_gnu99:
+  case lang_gnu89:
+    Options.GNUMode = 1;
+    break;
+  case lang_cxx0x:
+  case lang_cxx98:
+  case lang_c99:
+  case lang_c94:
+  case lang_c89:
+    Options.GNUMode = 0;
+    break;
+  }
 
   if (Options.CPlusPlus) {
     Options.C99 = 0;
