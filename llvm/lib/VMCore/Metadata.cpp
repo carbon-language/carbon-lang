@@ -327,6 +327,39 @@ void MetadataContext::addMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
   return;
 }
 
+/// removeMD - Remove metadata of given kind attached with an instuction.
+void MetadataContext::removeMD(unsigned Kind, Instruction *Inst) {
+  MDStoreTy::iterator I = MetadataStore.find(Inst);
+  if (I == MetadataStore.end())
+    return;
+
+  MDMapTy &Info = I->second;
+  for (MDMapTy::iterator MI = Info.begin(), ME = Info.end(); MI != ME; ++MI) {
+    MDPairTy &P = *MI;
+    if (P.first == Kind) {
+      Info.erase(MI);
+      return;
+    }
+  }
+
+  return;
+}
+  
+/// removeMDs - Remove all metadata attached with an instruction.
+void MetadataContext::removeMDs(const Instruction *Inst) {
+  // Find Metadata handles for this instruction.
+  MDStoreTy::iterator I = MetadataStore.find(Inst);
+  assert (I != MetadataStore.end() && "Invalid custom metadata info!");
+  MDMapTy &Info = I->second;
+  
+  // FIXME : Give all metadata handlers a chance to adjust.
+  
+  // Remove the entries for this instruction.
+  Info.clear();
+  MetadataStore.erase(I);
+}
+
+
 /// getMD - Get the metadata of given kind attached with an Instruction.
 /// If the metadata is not found then return 0.
 MDNode *MetadataContext::getMD(unsigned MDKind, const Instruction *Inst) {
@@ -354,21 +387,6 @@ const MetadataContext::MDMapTy *MetadataContext::getMDs(const Instruction *Inst)
 /// writer.
 const StringMap<unsigned> *MetadataContext::getHandlerNames() {
   return &MDHandlerNames;
-}
-
-/// ValueIsDeleted - This handler is used to update metadata store
-/// when a value is deleted.
-void MetadataContext::ValueIsDeleted(const Instruction *Inst) {
-  // Find Metadata handles for this instruction.
-  MDStoreTy::iterator I = MetadataStore.find(Inst);
-  assert (I != MetadataStore.end() && "Invalid custom metadata info!");
-  MDMapTy &Info = I->second;
-  
-  // FIXME : Give all metadata handlers a chance to adjust.
-  
-  // Remove the entries for this instruction.
-  Info.clear();
-  MetadataStore.erase(I);
 }
 
 /// ValueIsCloned - This handler is used to update metadata store

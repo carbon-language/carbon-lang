@@ -345,6 +345,12 @@ public:
   /// addMD - Attach the metadata of given kind with an Instruction.
   void addMD(unsigned Kind, MDNode *Node, Instruction *Inst);
   
+  /// removeMD - Remove metadata of given kind attached with an instuction.
+  void removeMD(unsigned Kind, Instruction *Inst);
+  
+  /// removeMDs - Remove all metadata attached with an instruction.
+  void removeMDs(const Instruction *Inst);
+
   /// getHandlerNames - Get handler names. This is used by bitcode
   /// writer.
   const StringMap<unsigned> *getHandlerNames();
@@ -352,7 +358,9 @@ public:
   /// ValueIsDeleted - This handler is used to update metadata store
   /// when a value is deleted.
   void ValueIsDeleted(const Value *V) {}
-  void ValueIsDeleted(const Instruction *Inst);
+  void ValueIsDeleted(const Instruction *Inst) {
+    removeMDs(Inst);
+  }
 
   /// ValueIsCloned - This handler is used to update metadata store
   /// when In1 is cloned to create In2.
