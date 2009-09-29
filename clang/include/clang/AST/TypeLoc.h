@@ -31,11 +31,9 @@ protected:
   QualType Ty;
   void *Data;
 
-  TypeLoc(QualType ty, void *data) : Ty(ty), Data(data) { }
-  static TypeLoc Create(QualType ty, void *data) { return TypeLoc(ty,data); }
-  friend class DeclaratorInfo;
 public:
   TypeLoc() : Data(0) { }
+  TypeLoc(QualType ty, void *opaqueData) : Ty(ty), Data(opaqueData) { }
 
   bool isNull() const { return Ty.isNull(); }
   operator bool() const { return !isNull(); }
@@ -46,6 +44,9 @@ public:
   /// \brief Get the type for which this source info wrapper provides
   /// information.
   QualType getSourceType() const { return Ty; }
+
+  /// \brief Get the pointer where source information is stored.
+  void *getOpaqueData() const { return Data; }
 
   /// \brief Find the TypeSpecLoc that is part of this TypeLoc.
   TypeSpecLoc getTypeSpecLoc() const;
@@ -165,7 +166,7 @@ public:
 
   TypeLoc getPointeeLoc() const {
     void *Next = static_cast<char*>(Data) + getLocalDataSize();
-    return Create(cast<PointerType>(Ty)->getPointeeType(), Next);
+    return TypeLoc(cast<PointerType>(Ty)->getPointeeType(), Next);
   }
 
   /// \brief Find the TypeSpecLoc that is part of this PointerLoc.
@@ -206,7 +207,7 @@ public:
 
   TypeLoc getPointeeLoc() const {
     void *Next = static_cast<char*>(Data) + getLocalDataSize();
-    return Create(cast<BlockPointerType>(Ty)->getPointeeType(), Next);
+    return TypeLoc(cast<BlockPointerType>(Ty)->getPointeeType(), Next);
   }
 
   /// \brief Find the TypeSpecLoc that is part of this BlockPointerLoc.
@@ -247,7 +248,7 @@ public:
 
   TypeLoc getPointeeLoc() const {
     void *Next = static_cast<char*>(Data) + getLocalDataSize();
-    return Create(cast<MemberPointerType>(Ty)->getPointeeType(), Next);
+    return TypeLoc(cast<MemberPointerType>(Ty)->getPointeeType(), Next);
   }
 
   /// \brief Find the TypeSpecLoc that is part of this MemberPointerLoc.
@@ -288,7 +289,7 @@ public:
 
   TypeLoc getPointeeLoc() const {
     void *Next = static_cast<char*>(Data) + getLocalDataSize();
-    return Create(cast<ReferenceType>(Ty)->getPointeeType(), Next);
+    return TypeLoc(cast<ReferenceType>(Ty)->getPointeeType(), Next);
   }
 
   /// \brief Find the TypeSpecLoc that is part of this ReferenceLoc.
@@ -350,7 +351,7 @@ public:
 
   TypeLoc getResultLoc() const {
     void *Next = static_cast<char*>(Data) + getLocalDataSize();
-    return Create(cast<FunctionType>(Ty)->getResultType(), Next);
+    return TypeLoc(cast<FunctionType>(Ty)->getResultType(), Next);
   }
 
   /// \brief Find the TypeSpecLoc that is part of this FunctionLoc.
@@ -406,7 +407,7 @@ public:
 
   TypeLoc getElementLoc() const {
     void *Next = static_cast<char*>(Data) + getLocalDataSize();
-    return Create(cast<ArrayType>(Ty)->getElementType(), Next);
+    return TypeLoc(cast<ArrayType>(Ty)->getElementType(), Next);
   }
 
   /// \brief Find the TypeSpecLoc that is part of this ArrayLoc.

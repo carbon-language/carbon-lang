@@ -39,7 +39,7 @@ void Attr::Destroy(ASTContext &C) {
 
 /// \brief Return the TypeLoc wrapper for the type source info.
 TypeLoc DeclaratorInfo::getTypeLoc() const {
-  return TypeLoc::Create(Ty, (void*)(this + 1));
+  return TypeLoc(Ty, (void*)(this + 1));
 }
 
 //===----------------------------------------------------------------------===//
