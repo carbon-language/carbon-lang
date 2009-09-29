@@ -513,6 +513,8 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   ASTLocation ALoc = ResolveLocationInAST(CXXUnit->getASTContext(), SLoc);
   
   Decl *Dcl = ALoc.getParentDecl();
+  if (ALoc.isNamedRef())
+    Dcl = ALoc.AsNamedRef().ND;
   Stmt *Stm = ALoc.dyn_AsStmt();
   if (Dcl) {
     if (Stm) {
