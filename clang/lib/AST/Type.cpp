@@ -22,12 +22,12 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
-bool QualType::isConstant(ASTContext &Ctx) const {
-  if (isConstQualified())
+bool QualType::isConstant(QualType T, ASTContext &Ctx) {
+  if (T.isConstQualified())
     return true;
 
-  if (getTypePtr()->isArrayType())
-    return Ctx.getAsArrayType(*this)->getElementType().isConstant(Ctx);
+  if (const ArrayType *AT = Ctx.getAsArrayType(T))
+    return AT->getElementType().isConstant(Ctx);
 
   return false;
 }
@@ -106,7 +106,8 @@ const Type *Type::getArrayElementTypeNoTypeQual() const {
 
   // If this is a typedef for an array type, strip the typedef off without
   // losing all typedef information.
-  return cast<ArrayType>(getDesugaredType())->getElementType().getTypePtr();
+  return cast<ArrayType>(getUnqualifiedDesugaredType())
+    ->getElementType().getTypePtr();
 }
 
 /// getDesugaredType - Return the specified type with any "sugar" removed from
@@ -115,62 +116,46 @@ const Type *Type::getArrayElementTypeNoTypeQual() const {
 /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
 /// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
 /// concrete.
-///
-/// \param ForDisplay When true, the desugaring is provided for
-/// display purposes only. In this case, we apply more heuristics to
-/// decide whether it is worth providing a desugared form of the type
-/// or not.
-QualType QualType::getDesugaredType(bool ForDisplay) const {
+QualType QualType::getDesugaredType(QualType T) {
   QualifierCollector Qs;
-  return Qs.apply(Qs.strip(*this)->getDesugaredType(ForDisplay));
+
+  QualType Cur = T;
+  while (true) {
+    const Type *CurTy = Qs.strip(Cur);
+    switch (CurTy->getTypeClass()) {
+#define ABSTRACT_TYPE(Class, Parent)
+#define TYPE(Class, Parent) \
+    case Type::Class: { \
+      const Class##Type *Ty = cast<Class##Type>(CurTy); \
+      if (!Ty->isSugared()) \
+        return Qs.apply(Cur); \
+      Cur = Ty->desugar(); \
+      break; \
+    }
+#include "clang/AST/TypeNodes.def"
+    }
+  }
 }
 
-/// getDesugaredType - Return the specified type with any "sugar" removed from
-/// type type.  This takes off typedefs, typeof's etc.  If the outer level of
-/// the type is already concrete, it returns it unmodified.  This is similar
-/// to getting the canonical type, but it doesn't remove *all* typedefs.  For
-/// example, it return "T*" as "T*", (not as "int*"), because the pointer is
-/// concrete.
-///
-/// \param ForDisplay When true, the desugaring is provided for
-/// display purposes only. In this case, we apply more heuristics to
-/// decide whether it is worth providing a desugared form of the type
-/// or not.
-QualType Type::getDesugaredType(bool ForDisplay) const {
-  if (const TypedefType *TDT = dyn_cast<TypedefType>(this))
-    return TDT->LookThroughTypedefs().getDesugaredType();
-  if (const ElaboratedType *ET = dyn_cast<ElaboratedType>(this))
-    return ET->getUnderlyingType().getDesugaredType();
-  if (const TypeOfExprType *TOE = dyn_cast<TypeOfExprType>(this))
-    return TOE->getUnderlyingExpr()->getType().getDesugaredType();
-  if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
-    return TOT->getUnderlyingType().getDesugaredType();
-  if (const DecltypeType *DTT = dyn_cast<DecltypeType>(this)) {
-    if (!DTT->getUnderlyingType()->isDependentType())
-      return DTT->getUnderlyingType().getDesugaredType();
-  }
-  if (const TemplateSpecializationType *Spec
-        = dyn_cast<TemplateSpecializationType>(this)) {
-    if (ForDisplay)
-      return QualType(this, 0);
+/// getUnqualifiedDesugaredType - Pull any qualifiers and syntactic
+/// sugar off the given type.  This should produce an object of the
+/// same dynamic type as the canonical type.
+const Type *Type::getUnqualifiedDesugaredType() const {
+  const Type *Cur = this;
 
-    QualType Canon = Spec->getCanonicalTypeInternal();
-    if (Canon->getAs<TemplateSpecializationType>())
-      return QualType(this, 0);
-    return Canon->getDesugaredType();
+  while (true) {
+    switch (Cur->getTypeClass()) {
+#define ABSTRACT_TYPE(Class, Parent)
+#define TYPE(Class, Parent) \
+    case Class: { \
+      const Class##Type *Ty = cast<Class##Type>(Cur); \
+      if (!Ty->isSugared()) return Cur; \
+      Cur = Ty->desugar().getTypePtr(); \
+      break; \
+    }
+#include "clang/AST/TypeNodes.def"
+    }
   }
-  if (const QualifiedNameType *QualName  = dyn_cast<QualifiedNameType>(this)) {
-    if (ForDisplay) {
-      // If desugaring the type that the qualified name is referring to
-      // produces something interesting, that's our desugared type.
-      QualType NamedType = QualName->getNamedType().getDesugaredType();
-      if (NamedType != QualName->getNamedType())
-        return NamedType;
-    } else
-      return QualName->getNamedType().getDesugaredType();
-  }
-
-  return QualType(this, 0);
 }
 
 /// isVoidType - Helper method to determine if this is the 'void' type.
@@ -303,7 +288,7 @@ const RecordType *Type::getAsStructureType() const {
 
     // If this is a typedef for a structure type, strip the typedef off without
     // losing all typedef information.
-    return cast<RecordType>(getDesugaredType());
+    return cast<RecordType>(getUnqualifiedDesugaredType());
   }
   return 0;
 }
@@ -322,7 +307,7 @@ const RecordType *Type::getAsUnionType() const {
 
     // If this is a typedef for a union type, strip the typedef off without
     // losing all typedef information.
-    return cast<RecordType>(getDesugaredType());
+    return cast<RecordType>(getUnqualifiedDesugaredType());
   }
 
   return 0;
@@ -790,8 +775,16 @@ QualType TypedefType::LookThroughTypedefs() const {
   return Qs.apply(CurType);
 }
 
+QualType TypedefType::desugar() const {
+  return getDecl()->getUnderlyingType();
+}
+
 TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
   : Type(TypeOfExpr, can, E->isTypeDependent()), TOExpr(E) {
+}
+
+QualType TypeOfExprType::desugar() const {
+  return getUnderlyingExpr()->getType();
 }
 
 void DependentTypeOfExprType::Profile(llvm::FoldingSetNodeID &ID,

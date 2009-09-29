@@ -1267,7 +1267,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
         assert(BaseClass && "ActOnMemInitializers - neither field or base");
         Diag(Member->getSourceLocation(),
              diag::error_multiple_base_initialization)
-          << BaseClass->getDesugaredType(true);
+          << QualType(BaseClass, 0);
       }
       Diag(PrevMember->getSourceLocation(), diag::note_previous_initializer)
         << 0;
@@ -1336,7 +1336,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
         Type *BaseClass = PrevMember->getBaseClass();
         Diag(PrevMember->getSourceLocation(),
              diag::warn_base_initialized)
-              << BaseClass->getDesugaredType(true);
+          << QualType(BaseClass, 0);
       } else {
         FieldDecl *Field = PrevMember->getMember();
         Diag(PrevMember->getSourceLocation(),
@@ -1352,7 +1352,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
         Type *BaseClass = Member->getBaseClass();
         Diag(Member->getSourceLocation(),
              diag::note_fieldorbase_initialized_here) << 1
-          << BaseClass->getDesugaredType(true);
+          << QualType(BaseClass, 0);
       }
       for (curIndex = 0; curIndex < Last; curIndex++)
         if (MemberInCtorList == AllBaseOrMembers[curIndex])

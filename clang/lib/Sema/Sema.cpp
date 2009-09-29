@@ -44,16 +44,23 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
 
     // If this is a sugared type (like a typedef, typeof, etc), then unwrap one
     // level of the sugar so that the type is more obvious to the user.
-    QualType DesugaredTy = Ty.getDesugaredType(true);
+    QualType DesugaredTy = Ty.getDesugaredType();
 
     if (Ty != DesugaredTy &&
         // If the desugared type is a vector type, we don't want to expand it,
         // it will turn into an attribute mess. People want their "vec4".
         !isa<VectorType>(DesugaredTy) &&
 
-        // Don't aka just because we saw an elaborated type.
+        // Don't aka just because we saw an elaborated type...
         (!isa<ElaboratedType>(Ty) ||
-         cast<ElaboratedType>(Ty)->getUnderlyingType() != DesugaredTy) &&
+         cast<ElaboratedType>(Ty)->desugar() != DesugaredTy) &&
+
+        // ...or a qualified name type...
+        (!isa<QualifiedNameType>(Ty) ||
+         cast<QualifiedNameType>(Ty)->desugar() != DesugaredTy) &&
+
+        // ...or a non-dependent template specialization.
+        (!isa<TemplateSpecializationType>(Ty) || Ty->isDependentType()) &&
 
         // Don't desugar magic Objective-C types.
         Ty.getUnqualifiedType() != Context.getObjCIdType() &&

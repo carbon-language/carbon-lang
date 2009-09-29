@@ -218,11 +218,11 @@ public:
 
   QualType getDesugaredValueType(ASTContext& C) const {
     QualType T = getValueType(C);
-    return T.getTypePtr() ? T->getDesugaredType() : T;
+    return T.getTypePtr() ? T.getDesugaredType() : T;
   }
 
   QualType getDesugaredLocationType(ASTContext& C) const {
-    return getLocationType(C)->getDesugaredType();
+    return getLocationType(C).getDesugaredType();
   }
 
   bool isBoundable() const {
