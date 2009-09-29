@@ -48,24 +48,24 @@ public:
   }
 
   void VisitFunctionDecl(FunctionDecl *D) {
-    BaseDeclVisitor::VisitValueDecl(D);
+    BaseDeclVisitor::VisitFunctionDecl(D);
     if (D->isThisDeclarationADefinition())
       Visit(D->getBody());
   }
 
   void VisitObjCMethodDecl(ObjCMethodDecl *D) {
-    BaseDeclVisitor::VisitNamedDecl(D);
+    BaseDeclVisitor::VisitObjCMethodDecl(D);
     if (D->getBody())
       Visit(D->getBody());
   }
 
   void VisitBlockDecl(BlockDecl *D) {
-    BaseDeclVisitor::VisitDecl(D);
+    BaseDeclVisitor::VisitBlockDecl(D);
     Visit(D->getBody());
   }
 
   void VisitVarDecl(VarDecl *D) {
-    BaseDeclVisitor::VisitValueDecl(D);
+    BaseDeclVisitor::VisitVarDecl(D);
     if (Expr *Init = D->getInit())
       Visit(Init);
   }
