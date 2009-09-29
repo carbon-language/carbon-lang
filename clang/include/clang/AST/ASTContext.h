@@ -86,6 +86,7 @@ class ASTContext {
   llvm::FoldingSet<TypenameType> TypenameTypes;
   llvm::FoldingSet<ObjCInterfaceType> ObjCInterfaceTypes;
   llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
+  llvm::FoldingSet<ObjCProtocolListType> ObjCProtocolListTypes;
   llvm::FoldingSet<ElaboratedType> ElaboratedTypes;
 
   llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
@@ -509,6 +510,10 @@ public:
   QualType getObjCObjectPointerType(QualType OIT,
                                     ObjCProtocolDecl **ProtocolList = 0,
                                     unsigned NumProtocols = 0);
+
+  QualType getObjCProtocolListType(QualType T,
+                                   ObjCProtocolDecl **Protocols,
+                                   unsigned NumProtocols);
 
   /// getTypeOfType - GCC extension.
   QualType getTypeOfExprType(Expr *e);

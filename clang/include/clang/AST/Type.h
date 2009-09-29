@@ -2443,6 +2443,46 @@ public:
   static bool classof(const ObjCObjectPointerType *) { return true; }
 };
 
+/// \brief An ObjC Protocol list that qualifies a type.
+///
+/// This is used only for keeping detailed type source information, it should
+/// not participate in the semantics of the type system.
+/// The protocol list is not canonicalized.
+class ObjCProtocolListType : public Type, public llvm::FoldingSetNode {
+  QualType BaseType;
+
+  // List of protocols for this protocol conforming object type.
+  llvm::SmallVector<ObjCProtocolDecl*, 4> Protocols;
+
+  ObjCProtocolListType(QualType T, ObjCProtocolDecl **Protos, unsigned NumP) :
+    Type(ObjCProtocolList, QualType(), /*Dependent=*/false),
+    BaseType(T), Protocols(Protos, Protos+NumP) { }
+  friend class ASTContext;  // ASTContext creates these.
+
+public:
+  QualType getBaseType() const { return BaseType; }
+
+  /// \brief Provides access to the list of protocols qualifying the base type.
+  typedef llvm::SmallVector<ObjCProtocolDecl*, 4>::const_iterator qual_iterator;
+
+  qual_iterator qual_begin() const { return Protocols.begin(); }
+  qual_iterator qual_end() const   { return Protocols.end(); }
+  bool qual_empty() const { return Protocols.size() == 0; }
+
+  /// \brief Return the number of qualifying protocols.
+  unsigned getNumProtocols() const { return Protocols.size(); }
+
+  void Profile(llvm::FoldingSetNodeID &ID);
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType T,
+                      ObjCProtocolDecl **protocols, unsigned NumProtocols);
+  virtual void getAsStringInternal(std::string &InnerString,
+                                   const PrintingPolicy &Policy) const;
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == ObjCProtocolList;
+  }
+  static bool classof(const ObjCProtocolListType *) { return true; }
+};
+
 /// A qualifier set is used to build a set of qualifiers.
 class QualifierCollector : public Qualifiers {
   ASTContext *Context;

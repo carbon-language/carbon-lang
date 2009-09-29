@@ -2485,6 +2485,13 @@ QualType TreeTransform<Derived>::TransformObjCObjectPointerType(
   return QualType(T, 0);
 }
 
+template<typename Derived>
+QualType TreeTransform<Derived>::TransformObjCProtocolListType(
+                                                const ObjCProtocolListType *T) {
+  assert(false && "Should not see ObjCProtocolList types");
+  return QualType(T, 0);
+}
+
 //===----------------------------------------------------------------------===//
 // Statement transformation
 //===----------------------------------------------------------------------===//

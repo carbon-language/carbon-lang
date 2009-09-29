@@ -551,6 +551,10 @@ ASTContext::getTypeInfo(const Type *T) {
     assert(false && "Should not see dependent types");
     break;
 
+  case Type::ObjCProtocolList:
+    assert(false && "Should not see protocol list types");
+    break;
+
   case Type::FunctionNoProto:
   case Type::FunctionProto:
     // GCC extension: alignof(function) = 32 bits
@@ -1986,6 +1990,25 @@ QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
                       Protocols, NumProtocols);
   Types.push_back(QType);
   ObjCInterfaceTypes.InsertNode(QType, InsertPos);
+  return QualType(QType, 0);
+}
+
+QualType ASTContext::getObjCProtocolListType(QualType T,
+                                             ObjCProtocolDecl **Protocols,
+                                             unsigned NumProtocols) {
+  llvm::FoldingSetNodeID ID;
+  ObjCProtocolListType::Profile(ID, T, Protocols, NumProtocols);
+
+  void *InsertPos = 0;
+  if (ObjCProtocolListType *QT =
+      ObjCProtocolListTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(QT, 0);
+
+  // No Match;
+  ObjCProtocolListType *QType = new (*this, TypeAlignment)
+    ObjCProtocolListType(T, Protocols, NumProtocols);
+  Types.push_back(QType);
+  ObjCProtocolListTypes.InsertNode(QType, InsertPos);
   return QualType(QType, 0);
 }
 

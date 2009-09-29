@@ -255,6 +255,15 @@ PCHTypeWriter::VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
   Code = pch::TYPE_OBJC_OBJECT_POINTER;
 }
 
+void PCHTypeWriter::VisitObjCProtocolListType(const ObjCProtocolListType *T) {
+  Writer.AddTypeRef(T->getBaseType(), Record);
+  Record.push_back(T->getNumProtocols());
+  for (ObjCProtocolListType::qual_iterator I = T->qual_begin(),
+       E = T->qual_end(); I != E; ++I)
+    Writer.AddDeclRef(*I, Record);
+  Code = pch::TYPE_OBJC_PROTOCOL_LIST;
+}
+
 //===----------------------------------------------------------------------===//
 // PCHWriter Implementation
 //===----------------------------------------------------------------------===//
@@ -425,6 +434,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(TYPE_ENUM);
   RECORD(TYPE_OBJC_INTERFACE);
   RECORD(TYPE_OBJC_OBJECT_POINTER);
+  RECORD(TYPE_OBJC_PROTOCOL_LIST);
   // Statements and Exprs can occur in the Types block.
   AddStmtsExprs(Stream, Record);
 
