@@ -278,3 +278,12 @@ int test_handle_array_wrapper() {
   return p->z;  // no-warning
 }
 
+// <rdar://problem/7261075> [RegionStore] crash when 
+//   handling load: '*((unsigned int *)"????")'
+int rdar_7261075(void) {
+  unsigned int var = 0;
+  if (var == *((unsigned int *)"????"))
+    return 1;
+  return 0;
+}
+

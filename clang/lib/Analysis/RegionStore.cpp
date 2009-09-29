@@ -1060,6 +1060,13 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
 
   // Check if the region is an element region of a string literal.
   if (const StringRegion *StrR=dyn_cast<StringRegion>(superR)) {
+    // FIXME: Handle loads from strings where the literal is treated as 
+    // an integer, e.g., *((unsigned int*)"hello")
+    ASTContext &Ctx = getContext();
+    QualType T = StrR->getValueType(Ctx)->getAs<ArrayType>()->getElementType();
+    if (T != Ctx.getCanonicalType(R->getElementType()))
+      return UnknownVal();
+    
     const StringLiteral *Str = StrR->getStringLiteral();
     SVal Idx = R->getIndex();
     if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Idx)) {
@@ -1072,7 +1079,7 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
         return UnknownVal();
       }
       char c = (i == byteLength) ? '\0' : Str->getStrData()[i];
-      return ValMgr.makeIntVal(c, getContext().CharTy);
+      return ValMgr.makeIntVal(c, T);
     }
   }
 
