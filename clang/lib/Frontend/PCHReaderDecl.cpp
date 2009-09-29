@@ -18,7 +18,7 @@
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/TypeLoc.h"
+#include "clang/AST/TypeLocVisitor.h"
 using namespace clang;
 
 

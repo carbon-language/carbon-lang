@@ -14,7 +14,7 @@
 
 #include "clang/Index/Utils.h"
 #include "clang/Index/ASTLocation.h"
-#include "clang/AST/TypeLoc.h"
+#include "clang/AST/TypeLocVisitor.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Lexer.h"

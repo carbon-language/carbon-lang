@@ -14,7 +14,7 @@
 #include "clang/Frontend/PCHWriter.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/TypeLoc.h"
+#include "clang/AST/TypeLocVisitor.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include <cstdio>
 
