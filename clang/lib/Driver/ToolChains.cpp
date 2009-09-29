@@ -213,6 +213,13 @@ DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple,
                          bool IsIPhoneOS)
   : Darwin(Host, Triple, DarwinVersion, IsIPhoneOS)
 {
+  // Add the relative libexec dir (for clang-cc).
+  //
+  // FIXME: We should sink clang-cc into libexec/clang/<version>/.
+  std::string Path = getHost().getDriver().Dir;
+  Path += "/../libexec";
+  getProgramPaths().push_back(Path);
+
   // We expect 'as', 'ld', etc. to be adjacent to our install dir.
   getProgramPaths().push_back(getHost().getDriver().Dir);
 }
