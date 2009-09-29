@@ -92,7 +92,7 @@ std::string CodeCompletionString::getAsString() const {
     case CK_Informative: OS << "[#" << C->Text << "#]"; break;
     }
   }
-  
+  OS.flush();
   return Result;
 }
 
