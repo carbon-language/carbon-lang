@@ -264,5 +264,17 @@ int test_invalidate_field_test_positive() {
   return y.x; // expected-warning{{garbage}}
 }
 
+// This test case illustrates how a typeless array of bytes casted to a
+// struct should be treated as initialized.  RemoveDeadBindings previously
+// had a bug that caused 'x' to lose its default symbolic value after the
+// assignment to 'p', thus causing 'p->z' to evaluate to "undefined".
+struct ArrayWrapper { unsigned char y[16]; };
+struct WrappedStruct { unsigned z; };
 
+int test_handle_array_wrapper() {
+  struct ArrayWrapper x;
+  test_handle_array_wrapper(&x);
+  struct WrappedStruct *p = (struct WrappedStruct*) x.y;
+  return p->z;  // no-warning
+}
 

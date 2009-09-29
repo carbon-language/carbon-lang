@@ -168,13 +168,20 @@ public:
 class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
   const RegionStoreFeatures Features;
   RegionBindings::Factory RBFactory;
+  
+  typedef llvm::DenseMap<const GRState *, RegionStoreSubRegionMap*> SMCache;
+  SMCache SC;
+
 public:
   RegionStoreManager(GRStateManager& mgr, const RegionStoreFeatures &f)
     : StoreManager(mgr),
       Features(f),
       RBFactory(mgr.getAllocator()) {}
 
-  virtual ~RegionStoreManager() {}
+  virtual ~RegionStoreManager() {
+    for (SMCache::iterator I = SC.begin(), E = SC.end(); I != E; ++I)
+      delete (*I).second;
+  }
 
   SubRegionMap *getSubRegionMap(const GRState *state);
 
@@ -1570,211 +1577,210 @@ RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
 // State pruning.
 //===----------------------------------------------------------------------===//
 
-static void UpdateLiveSymbols(SVal X, SymbolReaper& SymReaper) {
-  if (loc::MemRegionVal *XR = dyn_cast<loc::MemRegionVal>(&X)) {
-    const MemRegion *R = XR->getRegion();
-
-    while (R) {
-      if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R)) {
-        SymReaper.markLive(SR->getSymbol());
-        return;
-      }
-
-      if (const SubRegion *SR = dyn_cast<SubRegion>(R)) {
-        R = SR->getSuperRegion();
-        continue;
-      }
-
-      break;
-    }
-
-    return;
-  }
-
-  for (SVal::symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end();SI!=SE;++SI)
-    SymReaper.markLive(*SI);
-}
-
 namespace {
-class VISIBILITY_HIDDEN TreeScanner {
-  RegionBindings B;
-  RegionDefaultBindings DB;
-  SymbolReaper &SymReaper;
-  llvm::DenseSet<const MemRegion*> &Marked;
-  llvm::DenseSet<const LazyCompoundValData*> &ScannedLazyVals;
-  RegionStoreSubRegionMap &M;
-  RegionStoreManager &RS;
-  llvm::SmallVectorImpl<const MemRegion*> &RegionRoots;
-  const bool MarkKeys;
+class VISIBILITY_HIDDEN RBDNode
+  : public std::pair<const GRState*, const MemRegion *> {
 public:
-  TreeScanner(RegionBindings b, RegionDefaultBindings db,
-              SymbolReaper &symReaper,
-              llvm::DenseSet<const MemRegion*> &marked,
-              llvm::DenseSet<const LazyCompoundValData*> &scannedLazyVals,
-              RegionStoreSubRegionMap &m, RegionStoreManager &rs,
-              llvm::SmallVectorImpl<const MemRegion*> &regionRoots,
-              bool markKeys = true)
-    : B(b), DB(db), SymReaper(symReaper), Marked(marked),
-      ScannedLazyVals(scannedLazyVals), M(m),
-      RS(rs), RegionRoots(regionRoots), MarkKeys(markKeys) {}
+  RBDNode(const GRState *st, const MemRegion *r)
+    : std::pair<const GRState*, const MemRegion*>(st, r) {}
+  
+  const GRState *getState() const { return first; }
+  const MemRegion *getRegion() const { return second; }
+};
 
-  void scanTree(const MemRegion *R);
+enum VisitFlag { NotVisited = 0, VisitedFromSubRegion, VisitedFromSuperRegion };
+
+class RBDItem : public RBDNode {
+private:
+  const VisitFlag VF;
+  
+public:
+  RBDItem(const GRState *st, const MemRegion *r, VisitFlag vf)
+    : RBDNode(st, r), VF(vf) {}
+
+  VisitFlag getVisitFlag() const { return VF; }
 };
 } // end anonymous namespace
-
-
-void TreeScanner::scanTree(const MemRegion *R) {
-  if (MarkKeys) {
-    if (Marked.count(R))
-      return;
-
-    Marked.insert(R);
-  }
-
-  // Mark the symbol for any live SymbolicRegion as "live".  This means we
-  // should continue to track that symbol.
-  if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
-    SymReaper.markLive(SymR->getSymbol());
-
-  // Get the data binding for R (if any).
-  const SVal* Xptr = B.lookup(R);
-
-    // Check for lazy bindings.
-  if (const nonloc::LazyCompoundVal *V =
-      dyn_cast_or_null<nonloc::LazyCompoundVal>(Xptr)) {
-
-    const LazyCompoundValData *D = V->getCVData();
-
-    if (!ScannedLazyVals.count(D)) {
-      // Scan the bindings in the LazyCompoundVal.
-      ScannedLazyVals.insert(D);
-
-      // FIXME: Cache subregion maps.
-      const GRState *lazyState = D->getState();
-
-      llvm::OwningPtr<RegionStoreSubRegionMap>
-        lazySM(RS.getRegionStoreSubRegionMap(lazyState));
-
-      Store lazyStore = lazyState->getStore();
-      RegionBindings lazyB = RS.GetRegionBindings(lazyStore);
-
-      RegionDefaultBindings lazyDB = lazyState->get<RegionDefaultValue>();
-
-      // Scan the bindings.
-      TreeScanner scan(lazyB, lazyDB, SymReaper, Marked, ScannedLazyVals,
-                       *lazySM.get(), RS, RegionRoots, false);
-
-      scan.scanTree(D->getRegion());
-    }
-  }
-  else {
-      // No direct binding? Get the default binding for R (if any).
-    if (!Xptr)
-      Xptr = DB.lookup(R);
-
-      // Direct or default binding?
-    if (Xptr) {
-      SVal X = *Xptr;
-      UpdateLiveSymbols(X, SymReaper); // Update the set of live symbols.
-
-        // If X is a region, then add it to the RegionRoots.
-      if (const MemRegion *RX = X.getAsRegion()) {
-        RegionRoots.push_back(RX);
-          // Mark the super region of the RX as live.
-          // e.g.: int x; char *y = (char*) &x; if (*y) ...
-          // 'y' => element region. 'x' is its super region.
-        if (const SubRegion *SR = dyn_cast<SubRegion>(RX)) {
-          RegionRoots.push_back(SR->getSuperRegion());
-        }
-      }
-    }
-  }
-
-  RegionStoreSubRegionMap::iterator I, E;
-
-  for (llvm::tie(I, E) = M.begin_end(R); I != E; ++I)
-    scanTree(*I);
-}
-
+  
 void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
                                             SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
   Store store = state.getStore();
   RegionBindings B = GetRegionBindings(store);
-
-  // Lazily constructed backmap from MemRegions to SubRegions.
-  typedef llvm::ImmutableSet<const MemRegion*> SubRegionsTy;
-  typedef llvm::ImmutableMap<const MemRegion*, SubRegionsTy> SubRegionsMapTy;
+  RegionDefaultBindings DVM = state.get<RegionDefaultValue>();
 
   // The backmap from regions to subregions.
   llvm::OwningPtr<RegionStoreSubRegionMap>
   SubRegions(getRegionStoreSubRegionMap(&state));
-
-  // Do a pass over the regions in the store.  For VarRegions we check if
-  // the variable is still live and if so add it to the list of live roots.
-  // For other regions we populate our region backmap.
+  
+    // Do a pass over the regions in the store.  For VarRegions we check if
+    // the variable is still live and if so add it to the list of live roots.
+    // For other regions we populate our region backmap.
   llvm::SmallVector<const MemRegion*, 10> IntermediateRoots;
-
+  
   // Scan the direct bindings for "intermediate" roots.
   for (RegionBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     const MemRegion *R = I.getKey();
     IntermediateRoots.push_back(R);
   }
-
+  
   // Scan the default bindings for "intermediate" roots.
-  RegionDefaultBindings DVM = state.get<RegionDefaultValue>();
   for (RegionDefaultBindings::iterator I = DVM.begin(), E = DVM.end();
        I != E; ++I) {
     const MemRegion *R = I.getKey();
     IntermediateRoots.push_back(R);
   }
-
+  
   // Process the "intermediate" roots to find if they are referenced by
   // real roots.
+  llvm::SmallVector<RBDItem, 10> WorkList;
+  llvm::DenseMap<const MemRegion*,unsigned> IntermediateVisited;
+  
   while (!IntermediateRoots.empty()) {
     const MemRegion* R = IntermediateRoots.back();
     IntermediateRoots.pop_back();
-
+    
+    unsigned &visited = IntermediateVisited[R];
+    if (visited)
+      continue;
+    visited = 1;
+    
     if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
-      if (SymReaper.isLive(Loc, VR->getDecl())) {
-        RegionRoots.push_back(VR); // This is a live "root".
-      }
+      if (SymReaper.isLive(Loc, VR->getDecl()))
+        WorkList.push_back(RBDItem(&state, VR, VisitedFromSuperRegion));
       continue;
     }
-
+    
     if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
       if (SymReaper.isLive(SR->getSymbol()))
-        RegionRoots.push_back(SR);
+        WorkList.push_back(RBDItem(&state, SR, VisitedFromSuperRegion));
       continue;
     }
-
-    // Add the super region for R to the worklist if it is a subregion.
+    
+      // Add the super region for R to the worklist if it is a subregion.
     if (const SubRegion* superR =
-          dyn_cast<SubRegion>(cast<SubRegion>(R)->getSuperRegion()))
+        dyn_cast<SubRegion>(cast<SubRegion>(R)->getSuperRegion()))
       IntermediateRoots.push_back(superR);
   }
 
-  // Process the worklist of RegionRoots.  This performs a "mark-and-sweep"
-  // of the store.  We want to find all live symbols and dead regions.
-  llvm::DenseSet<const MemRegion*> Marked;
-  llvm::DenseSet<const LazyCompoundValData*> LazyVals;
-  TreeScanner TS(B, DVM, SymReaper, Marked, LazyVals, *SubRegions.get(),
-                 *this, RegionRoots);
-
-  while (!RegionRoots.empty()) {
-    const MemRegion *R = RegionRoots.back();
-    RegionRoots.pop_back();
-    TS.scanTree(R);
+  // Enqueue the RegionRoots onto WorkList.
+  for (llvm::SmallVectorImpl<const MemRegion*>::iterator I=RegionRoots.begin(),
+       E=RegionRoots.end(); I!=E; ++I) {
+    WorkList.push_back(RBDItem(&state, *I, VisitedFromSuperRegion));
   }
+  RegionRoots.clear();
+  
+  // Process the worklist.
+  typedef llvm::DenseMap<std::pair<const GRState*, const MemRegion*>, VisitFlag>
+          VisitMap;
+    
+  VisitMap Visited;
+  
+  while (!WorkList.empty()) {
+    RBDItem N = WorkList.back();
+    WorkList.pop_back();
+    
+    // Have we visited this node before?
+    VisitFlag &VF = Visited[N];
+    if (VF >= N.getVisitFlag())
+      continue;
+    
+    const MemRegion *R = N.getRegion();
+    const GRState *state_N = N.getState();
+    
+    // Enqueue subregions?
+    if (N.getVisitFlag() == VisitedFromSuperRegion) {
+      RegionStoreSubRegionMap *M;
+      
+      if (&state == state_N)
+        M = SubRegions.get();
+      else {
+        RegionStoreSubRegionMap *& SM = SC[state_N];
+        if (!SM)
+          SM = getRegionStoreSubRegionMap(state_N);
+        M = SM;
+      }
+      
+      RegionStoreSubRegionMap::iterator I, E;
+      for (llvm::tie(I, E) = M->begin_end(R); I != E; ++I)
+        WorkList.push_back(RBDItem(state_N, *I, VisitedFromSuperRegion));
+    }
 
+    // At this point, if we have already visited this region before, we are
+    // done. 
+    if (VF != NotVisited) {
+      VF = N.getVisitFlag();
+      continue;
+    }
+    VF = N.getVisitFlag();
+    
+    // Enqueue the super region.
+    if (const SubRegion *SR = dyn_cast<SubRegion>(R)) {
+      const MemRegion *superR = SR->getSuperRegion();
+      if (!isa<MemSpaceRegion>(superR)) {
+        // If 'R' is a field or an element, we want to keep the bindings
+        // for the other fields and elements around.  The reason is that
+        // pointer arithmetic can get us to the other fields or elements.        
+        VisitFlag NewVisit =
+          isa<FieldRegion>(R) || isa<ElementRegion>(R) || isa<ObjCIvarRegion>(R)
+          ? VisitedFromSuperRegion : VisitedFromSubRegion;
+        
+        WorkList.push_back(RBDItem(state_N, superR, NewVisit));
+      }
+    }
+
+    // Mark the symbol for any live SymbolicRegion as "live".  This means we
+    // should continue to track that symbol.
+    if (const SymbolicRegion* SymR = dyn_cast<SymbolicRegion>(R))
+      SymReaper.markLive(SymR->getSymbol());
+
+    Store store_N = state_N->getStore();
+    RegionBindings B_N = GetRegionBindings(store_N);
+    
+    // Get the data binding for R (if any).
+    const SVal* Xptr = B_N.lookup(R);
+    
+    // Check for lazy bindings.
+    if (const nonloc::LazyCompoundVal *V =
+          dyn_cast_or_null<nonloc::LazyCompoundVal>(Xptr)) {
+      
+      const LazyCompoundValData *D = V->getCVData();
+      WorkList.push_back(RBDItem(D->getState(), D->getRegion(),
+                                 VisitedFromSuperRegion));
+    }
+    else {
+      // No direct binding? Get the default binding for R (if any).
+      if (!Xptr) {
+        RegionDefaultBindings DVM_N = &state == state_N ? DVM
+          : state_N->get<RegionDefaultValue>();
+
+        Xptr = DVM_N.lookup(R);
+      }
+      
+      // Direct or default binding?
+      if (Xptr) {
+        SVal X = *Xptr;
+        
+        // Update the set of live symbols.
+        for (SVal::symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end();
+             SI!=SE;++SI)
+          SymReaper.markLive(*SI);
+        
+        // If X is a region, then add it to the worklist.
+        if (const MemRegion *RX = X.getAsRegion())
+          WorkList.push_back(RBDItem(state_N, RX, VisitedFromSuperRegion));
+      }
+    }
+  }
+  
   // We have now scanned the store, marking reachable regions and symbols
   // as live.  We now remove all the regions that are dead from the store
   // as well as update DSymbols with the set symbols that are now dead.
   for (RegionBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     const MemRegion* R = I.getKey();
     // If this region live?  Is so, none of its symbols are dead.
-    if (Marked.count(R))
+    if (Visited.find(std::make_pair(&state, R)) != Visited.end())
       continue;
 
     // Remove this dead region from the store.
@@ -1800,7 +1806,7 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
     const MemRegion *R = I.getKey();
 
     // If this region live?  Is so, none of its symbols are dead.
-    if (Marked.count(R))
+    if (Visited.find(std::make_pair(&state, R)) != Visited.end())
       continue;
 
     // Remove this dead region.
