@@ -177,6 +177,9 @@ void TypeLocWriter::VisitDefaultTypeSpecLoc(DefaultTypeSpecLoc TyLoc) {
 void TypeLocWriter::VisitTypedefLoc(TypedefLoc TyLoc) {
   Writer.AddSourceLocation(TyLoc.getNameLoc(), Record);
 }
+void TypeLocWriter::VisitObjCInterfaceLoc(ObjCInterfaceLoc TyLoc) {
+  Writer.AddSourceLocation(TyLoc.getNameLoc(), Record);
+}
 void TypeLocWriter::VisitObjCProtocolListLoc(ObjCProtocolListLoc TyLoc) {
   Writer.AddSourceLocation(TyLoc.getLAngleLoc(), Record);
   Writer.AddSourceLocation(TyLoc.getRAngleLoc(), Record);

@@ -179,6 +179,9 @@ void TypeLocReader::VisitDefaultTypeSpecLoc(DefaultTypeSpecLoc TyLoc) {
 void TypeLocReader::VisitTypedefLoc(TypedefLoc TyLoc) {
   TyLoc.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
+void TypeLocReader::VisitObjCInterfaceLoc(ObjCInterfaceLoc TyLoc) {
+  TyLoc.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
 void TypeLocReader::VisitObjCProtocolListLoc(ObjCProtocolListLoc TyLoc) {
   TyLoc.setLAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   TyLoc.setRAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));

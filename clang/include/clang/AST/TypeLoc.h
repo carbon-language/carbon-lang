@@ -154,6 +154,38 @@ public:
   static bool classof(const TypedefLoc *TL) { return true; }
 };
 
+/// \brief Wrapper for source info for ObjC interfaces.
+class ObjCInterfaceLoc : public TypeSpecLoc {
+  struct Info {
+    SourceLocation NameLoc;
+  };
+
+public:
+  SourceLocation getNameLoc() const {
+    return static_cast<Info*>(Data)->NameLoc;
+  }
+  void setNameLoc(SourceLocation Loc) {
+    static_cast<Info*>(Data)->NameLoc = Loc;
+  }
+  SourceRange getSourceRange() const {
+    return SourceRange(getNameLoc(), getNameLoc());
+  }
+
+  ObjCInterfaceDecl *getIFaceDecl() const {
+    return cast<ObjCInterfaceType>(Ty)->getDecl();
+  }
+
+  /// \brief Returns the size of the type source info data block that is
+  /// specific to this type.
+  unsigned getLocalDataSize() const { return sizeof(Info); }
+
+  /// \brief Returns the size of the type source info data block.
+  unsigned getFullDataSize() const { return getLocalDataSize(); }
+
+  static bool classof(const TypeLoc *TL);
+  static bool classof(const TypedefLoc *TL) { return true; }
+};
+
 /// \brief Wrapper for source info for ObjC protocol lists.
 class ObjCProtocolListLoc : public TypeSpecLoc {
   struct Info {

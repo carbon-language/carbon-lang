@@ -1299,6 +1299,9 @@ static void FillTypeSpecLoc(TypeLoc TSL, const DeclSpec &DS) {
   if (TypedefLoc *TL = dyn_cast<TypedefLoc>(&TSL)) {
     TL->setNameLoc(DS.getTypeSpecTypeLoc());
 
+  } else if (ObjCInterfaceLoc *TL = dyn_cast<ObjCInterfaceLoc>(&TSL)) {
+    TL->setNameLoc(DS.getTypeSpecTypeLoc());
+
   } else if (ObjCProtocolListLoc *PLL = dyn_cast<ObjCProtocolListLoc>(&TSL)) {
     assert(PLL->getNumProtocols() == DS.getNumProtocolQualifiers());
     PLL->setLAngleLoc(DS.getProtocolLAngleLoc());

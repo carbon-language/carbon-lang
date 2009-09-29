@@ -230,6 +230,24 @@ bool TypedefLoc::classof(const TypeLoc *TL) {
 }
 
 //===----------------------------------------------------------------------===//
+// ObjCInterfaceLoc Implementation
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+class ObjCInterfaceLocChecker :
+  public TypeLocVisitor<ObjCInterfaceLocChecker, bool> {
+public:
+  bool VisitObjCInterfaceLoc(ObjCInterfaceLoc TyLoc) { return true; }
+};
+
+}
+
+bool ObjCInterfaceLoc::classof(const TypeLoc *TL) {
+  return ObjCInterfaceLocChecker().Visit(*TL);
+}
+
+//===----------------------------------------------------------------------===//
 // ObjCProtocolListLoc Implementation
 //===----------------------------------------------------------------------===//
 
