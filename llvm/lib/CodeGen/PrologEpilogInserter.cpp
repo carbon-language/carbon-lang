@@ -727,6 +727,9 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   }
 }
 
+/// scavengeFrameVirtualRegs - Replace all frame index virtual registers
+/// with physical registers. Use the register scavenger to find an
+/// appropriate register to use.
 void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
 
@@ -735,33 +738,41 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
        E = Fn.end(); BB != E; ++BB) {
     RS->enterBasicBlock(BB);
 
-    // Keep a map of which scratch reg we use for each virtual reg.
-    // FIXME: Is a map like this the best solution? Seems like overkill,
-    // but to get rid of it would need some fairly strong assumptions
-    // that may not be valid as this gets smarter about reuse and such.
-    IndexedMap<unsigned, VirtReg2IndexFunctor> ScratchRegForVirtReg;
-    ScratchRegForVirtReg.grow(Fn.getRegInfo().getLastVirtReg());
+    unsigned CurrentVirtReg = 0;
+    unsigned CurrentScratchReg;
 
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       MachineInstr *MI = I;
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
         if (MI->getOperand(i).isReg()) {
           unsigned Reg = MI->getOperand(i).getReg();
-          if (Reg && TRI->isVirtualRegister(Reg)) {
-            // If we already have a scratch for this virtual register, use it
-            unsigned NewReg = ScratchRegForVirtReg[Reg];
-            if (!NewReg) {
-              const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(Reg);
-              NewReg = RS->FindUnusedReg(RC);
-              if (NewReg == 0)
-                // No register is "free". Scavenge a register.
-                // FIXME: Track SPAdj. Zero won't always be right
-                NewReg = RS->scavengeRegister(RC, I, 0);
-              assert (NewReg && "unable to scavenge register!");
-              ScratchRegForVirtReg[Reg] = NewReg;
-            }
-            MI->getOperand(i).setReg(NewReg);
+          if (Reg == 0 || !TRI->isVirtualRegister(Reg))
+            continue;
+
+          // If we already have a scratch for this virtual register, use it
+          if (Reg != CurrentVirtReg) {
+            // When we first encounter a new virtual register, it
+            // must be a definition.
+            assert(MI->getOperand(i).isDef() &&
+                   "frame index virtual missing def!");
+            // We can't have nested virtual register live ranges because
+            // there's only a guarantee of one scavenged register at a time.
+            assert (CurrentVirtReg == 0 &&
+                    "overlapping frame index virtual registers!");
+            CurrentVirtReg = Reg;
+            const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(Reg);
+            CurrentScratchReg = RS->FindUnusedReg(RC);
+            if (CurrentScratchReg == 0)
+              // No register is "free". Scavenge a register.
+              // FIXME: Track SPAdj. Zero won't always be right
+              CurrentScratchReg = RS->scavengeRegister(RC, I, 0);
           }
+          assert (CurrentScratchReg && "Missing scratch register!");
+          MI->getOperand(i).setReg(CurrentScratchReg);
+
+          // If this is the last use of the register, stop tracking it.
+          if (MI->getOperand(i).isKill())
+            CurrentVirtReg = 0;
         }
       RS->forward(MI);
     }
