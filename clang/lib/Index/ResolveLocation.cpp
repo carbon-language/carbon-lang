@@ -220,6 +220,9 @@ ASTLocation DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
   assert(ContainsLocation(D) &&
          "Should visit only after verifying that loc is in range");
 
+  if (ContainsLocation(D->getDeclaratorInfo()))
+    return ResolveInDeclarator(D, 0, D->getDeclaratorInfo());
+
   // First, search through the parameters of the function.
   for (FunctionDecl::param_iterator
          I = D->param_begin(), E = D->param_end(); I != E; ++I) {
