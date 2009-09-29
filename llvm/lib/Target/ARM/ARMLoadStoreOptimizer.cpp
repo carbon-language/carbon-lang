@@ -1191,6 +1191,10 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
                                           unsigned &PredReg,
                                           ARMCC::CondCodes &Pred,
                                           bool &isT2) {
+  // Make sure we're allowed to generate LDRD/STRD.
+  if (!STI->hasV5TEOps())
+    return false;
+
   // FIXME: FLDS / FSTS -> FLDD / FSTD
   unsigned Scale = 1;
   unsigned Opcode = Op0->getOpcode();
