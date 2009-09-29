@@ -668,6 +668,15 @@ bool Type::isSpecifierType() const {
   }
 }
 
+const char *Type::getTypeClassName() const {
+  switch (TC) {
+  default: assert(0 && "Type class not in TypeNodes.def!");
+#define ABSTRACT_TYPE(Derived, Base)
+#define TYPE(Derived, Base) case Derived: return #Derived;
+#include "clang/AST/TypeNodes.def"
+  }
+}
+
 const char *BuiltinType::getName(const LangOptions &LO) const {
   switch (getKind()) {
   default: assert(0 && "Unknown builtin type!");

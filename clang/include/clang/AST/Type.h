@@ -874,6 +874,8 @@ public:
   /// set of type specifiers.
   bool isSpecifierType() const;
 
+  const char *getTypeClassName() const;
+
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   void dump() const;
   virtual void getAsStringInternal(std::string &InnerString,
