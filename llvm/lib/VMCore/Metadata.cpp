@@ -351,15 +351,14 @@ const StringMap<unsigned> *MetadataContext::getHandlerNames() {
 void MetadataContext::ValueIsDeleted(const Instruction *Inst) {
   // Find Metadata handles for this instruction.
   MDStoreTy::iterator I = MetadataStore.find(Inst);
-  if (I == MetadataStore.end())
-    return;
+  assert (I != MetadataStore.end() && "Invalid custom metadata info!");
   MDMapTy &Info = I->second;
   
   // FIXME : Give all metadata handlers a chance to adjust.
   
   // Remove the entries for this instruction.
   Info.clear();
-  MetadataStore.erase(Inst);
+  MetadataStore.erase(I);
 }
 
 /// ValueIsCloned - This handler is used to update metadata store
@@ -367,8 +366,7 @@ void MetadataContext::ValueIsDeleted(const Instruction *Inst) {
 void MetadataContext::ValueIsCloned(const Instruction *In1, Instruction *In2) {
   // Find Metadata handles for In1.
   MDStoreTy::iterator I = MetadataStore.find(In1);
-  if (I == MetadataStore.end())
-    return;
+  assert (I != MetadataStore.end() && "Invalid custom metadata info!");
 
   // FIXME : Give all metadata handlers a chance to adjust.
 
