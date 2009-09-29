@@ -174,27 +174,31 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
 //===----------------------------------------------------------------------===//
 
 void AggExprEmitter::VisitCastExpr(CastExpr *E) {
-  if (E->getCastKind() == CastExpr::CK_ToUnion) {
+  switch (E->getCastKind()) {
+  default: assert(0 && "Unhandled cast kind!");
+
+  case CastExpr::CK_ToUnion: {
     // GCC union extension
     QualType PtrTy =
-        CGF.getContext().getPointerType(E->getSubExpr()->getType());
+    CGF.getContext().getPointerType(E->getSubExpr()->getType());
     llvm::Value *CastPtr = Builder.CreateBitCast(DestPtr,
                                                  CGF.ConvertType(PtrTy));
     EmitInitializationToLValue(E->getSubExpr(),
                                LValue::MakeAddr(CastPtr, Qualifiers()));
-    return;
+    break;
   }
 
   // FIXME: Remove the CK_Unknown check here.
-  assert((E->getCastKind() == CastExpr::CK_NoOp ||
-          E->getCastKind() == CastExpr::CK_Unknown ||
-          E->getCastKind() == CastExpr::CK_UserDefinedConversion ||
-          E->getCastKind() == CastExpr::CK_ConstructorConversion) &&
-         "Only no-op casts allowed!");
-  assert(CGF.getContext().hasSameUnqualifiedType(E->getSubExpr()->getType(),
-                                                 E->getType()) &&
-         "Implicit cast types must be compatible");
-  Visit(E->getSubExpr());
+  case CastExpr::CK_Unknown:
+  case CastExpr::CK_NoOp:
+  case CastExpr::CK_UserDefinedConversion:
+  case CastExpr::CK_ConstructorConversion:
+    assert(CGF.getContext().hasSameUnqualifiedType(E->getSubExpr()->getType(),
+                                                   E->getType()) &&
+           "Implicit cast types must be compatible");
+    Visit(E->getSubExpr());
+    break;
+  }
 }
 
 void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
