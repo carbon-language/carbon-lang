@@ -69,21 +69,38 @@ static uint64_t ComputeBaseClassOffset(ASTContext &Context,
     return Offset;
 }
 
+llvm::Constant *
+CodeGenFunction::GetCXXBaseClassOffset(const CXXRecordDecl *ClassDecl,
+                                       const CXXRecordDecl *BaseClassDecl) {
+  if (ClassDecl == BaseClassDecl)
+    return 0;
+
+  QualType BTy =
+    getContext().getCanonicalType(
+      getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(BaseClassDecl)));
+
+  uint64_t Offset = ComputeBaseClassOffset(getContext(), 
+                                           ClassDecl, BaseClassDecl);
+  if (!Offset)
+    return 0;
+
+  const llvm::Type *PtrDiffTy = ConvertType(getContext().getPointerDiffType());
+
+  return llvm::ConstantInt::get(PtrDiffTy, Offset);
+}
+
 llvm::Value *
 CodeGenFunction::GetAddressCXXOfBaseClass(llvm::Value *BaseValue,
                                           const CXXRecordDecl *ClassDecl,
                                           const CXXRecordDecl *BaseClassDecl,
                                           bool NullCheckValue) {
-  if (ClassDecl == BaseClassDecl)
-    return BaseValue;
-
+  llvm::Constant *Offset = GetCXXBaseClassOffset(ClassDecl, BaseClassDecl);
+  
   QualType BTy =
     getContext().getCanonicalType(
       getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(BaseClassDecl)));
   const llvm::Type *BasePtrTy = llvm::PointerType::getUnqual(ConvertType(BTy));
 
-  uint64_t Offset = ComputeBaseClassOffset(getContext(), 
-                                           ClassDecl, BaseClassDecl);
   if (!Offset) {
     // Just cast back.
     return Builder.CreateBitCast(BaseValue, BasePtrTy);
@@ -105,16 +122,12 @@ CodeGenFunction::GetAddressCXXOfBaseClass(llvm::Value *BaseValue,
     EmitBlock(CastNotNull);
   }
   
-  const llvm::Type *LongTy = 
-    CGM.getTypes().ConvertType(CGM.getContext().LongTy);
   const llvm::Type *Int8PtrTy = 
     llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
   
-  llvm::Value *OffsetVal = llvm::ConstantInt::get(LongTy, Offset);
-  
   // Apply the offset.
   BaseValue = Builder.CreateBitCast(BaseValue, Int8PtrTy);
-  BaseValue = Builder.CreateGEP(BaseValue, OffsetVal, "add.ptr");
+  BaseValue = Builder.CreateGEP(BaseValue, Offset, "add.ptr");
   
   // Cast back.
   BaseValue = Builder.CreateBitCast(BaseValue, BasePtrTy);

@@ -200,7 +200,6 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     break;
 
   case CastExpr::CK_NullToMemberPointer: {
-    QualType T = E->getType();
     const llvm::Type *PtrDiffTy = 
       CGF.ConvertType(CGF.getContext().getPointerDiffType());
 
@@ -211,6 +210,40 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     llvm::Value *Adj = Builder.CreateStructGEP(DestPtr, 1, "adj");
     Builder.CreateStore(NullValue, Adj, VolatileDest);
 
+    break;
+  }
+      
+  case CastExpr::CK_BaseToDerivedMemberPointer: {
+    QualType SrcType = E->getSubExpr()->getType();
+    
+    llvm::Value *Src = CGF.CreateTempAlloca(CGF.ConvertTypeForMem(SrcType), 
+                                            "tmp");
+    CGF.EmitAggExpr(E->getSubExpr(), Src, SrcType.isVolatileQualified());
+    
+    llvm::Value *SrcPtr = Builder.CreateStructGEP(Src, 0, "src.ptr");
+    SrcPtr = Builder.CreateLoad(SrcPtr);
+    
+    llvm::Value *SrcAdj = Builder.CreateStructGEP(Src, 1, "src.adj");
+    SrcAdj = Builder.CreateLoad(SrcAdj);
+    
+    llvm::Value *DstPtr = Builder.CreateStructGEP(DestPtr, 0, "dst.ptr");
+    Builder.CreateStore(SrcPtr, DstPtr, VolatileDest);
+    
+    llvm::Value *DstAdj = Builder.CreateStructGEP(DestPtr, 1, "dst.adj");
+    
+    // Now See if we need to update the adjustment.
+    const CXXRecordDecl *SrcDecl = 
+      cast<CXXRecordDecl>(SrcType->getAs<MemberPointerType>()->
+                          getClass()->getAs<RecordType>()->getDecl());
+    const CXXRecordDecl *DstDecl = 
+      cast<CXXRecordDecl>(E->getType()->getAs<MemberPointerType>()->
+                          getClass()->getAs<RecordType>()->getDecl());
+    
+    llvm::Constant *Adj = CGF.GetCXXBaseClassOffset(DstDecl, SrcDecl);
+    if (Adj)
+      SrcAdj = Builder.CreateAdd(SrcAdj, Adj, "adj");
+    
+    Builder.CreateStore(SrcAdj, DstAdj, VolatileDest);
     break;
   }
   }

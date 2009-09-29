@@ -589,6 +589,11 @@ public:
                                         const CXXRecordDecl *BaseClassDecl,
                                         bool NullCheckValue);
 
+  /// GetCXXBaseClassOffset - Returns the offset from a derived class to its
+  /// base class. Returns null if the offset is 0.
+  llvm::Constant *GetCXXBaseClassOffset(const CXXRecordDecl *ClassDecl,
+                                        const CXXRecordDecl *BaseClassDecl);
+  
   void EmitClassAggrMemberwiseCopy(llvm::Value *DestValue,
                                    llvm::Value *SrcValue,
                                    const ArrayType *Array,
