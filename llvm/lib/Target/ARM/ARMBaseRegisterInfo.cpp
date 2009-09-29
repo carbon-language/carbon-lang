@@ -668,13 +668,15 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
             NumExtras--;
           }
         }
-        while (NumExtras && !UnspilledCS2GPRs.empty() &&
-               !AFI->isThumb1OnlyFunction()) {
-          unsigned Reg = UnspilledCS2GPRs.back();
-          UnspilledCS2GPRs.pop_back();
-          if (!isReservedReg(MF, Reg)) {
-            Extras.push_back(Reg);
-            NumExtras--;
+        // For non-Thumb1 functions, also check for hi-reg CS registers
+        if (!AFI->isThumb1OnlyFunction()) {
+          while (NumExtras && !UnspilledCS2GPRs.empty()) {
+            unsigned Reg = UnspilledCS2GPRs.back();
+            UnspilledCS2GPRs.pop_back();
+            if (!isReservedReg(MF, Reg)) {
+              Extras.push_back(Reg);
+              NumExtras--;
+            }
           }
         }
         if (Extras.size() && NumExtras == 0) {
