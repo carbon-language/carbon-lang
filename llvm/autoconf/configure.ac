@@ -284,14 +284,6 @@ if test "$llvm_cv_target_arch" = "Unknown" ; then
   AC_MSG_WARN([Configuring LLVM for an unknown target archicture])
 fi
 
-dnl Handle 32-bit linux systems running a 64-bit kernel.
-if test "$llvm_cv_os_type" = "Linux" -a "$llvm_cv_target_arch" = "x86_64" ; then
-  AC_IS_LINUX_MIXED
-  if test "$llvm_cv_linux_mixed" = "yes"; then
-    llvm_cv_target_arch="x86"
-  fi
-fi
-
 # Determine the LLVM native architecture for the target
 case "$llvm_cv_target_arch" in
     x86)     LLVM_NATIVE_ARCH="X86" ;;
@@ -1157,6 +1149,16 @@ dnl===
 dnl=== SECTION 9: Additional checks, variables, etc.
 dnl===
 dnl===-----------------------------------------------------------------------===
+
+dnl Handle 32-bit linux systems running a 64-bit kernel.
+dnl This has to come after section 4 because it invokes the compiler.
+if test "$llvm_cv_os_type" = "Linux" -a "$llvm_cv_target_arch" = "x86_64" ; then
+  AC_IS_LINUX_MIXED
+  if test "$llvm_cv_linux_mixed" = "yes"; then
+    llvm_cv_target_arch="x86"
+    ARCH="x86"
+  fi
+fi
 
 dnl Check, whether __dso_handle is present
 AC_CHECK_FUNCS([__dso_handle])
