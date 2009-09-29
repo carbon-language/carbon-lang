@@ -58,3 +58,18 @@
 
 @implementation XCRemoteComputerManager(x) // expected-error {{reimplementation of category 'x' for class 'XCRemoteComputerManager'}}
 @end
+
+// <rdar://problem/7249233>
+
+@protocol MultipleCat_P
+-(void) im0;
+@end
+
+@interface MultipleCat_I @end
+
+@interface MultipleCat_I()  @end
+
+@interface MultipleCat_I() <MultipleCat_P>  @end
+
+@implementation MultipleCat_I // expected-warning {{incomplete implementation}}, expected-warning {{method definition for 'im0' not found}}
+@end
