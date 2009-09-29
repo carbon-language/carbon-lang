@@ -78,19 +78,16 @@ DIDescriptor::DIDescriptor(MDNode *N, unsigned RequiredTag) {
   }
 }
 
-const std::string &
-DIDescriptor::getStringField(unsigned Elt, std::string &Result) const {
-  Result.clear();
+const char *
+DIDescriptor::getStringField(unsigned Elt) const {
   if (DbgNode == 0)
-    return Result;
+    return NULL;
 
   if (Elt < DbgNode->getNumElements())
-    if (MDString *MDS = dyn_cast_or_null<MDString>(DbgNode->getElement(Elt))) {
-      Result.assign(MDS->begin(), MDS->begin() + MDS->length());
-      return Result;
-    }
+    if (MDString *MDS = dyn_cast_or_null<MDString>(DbgNode->getElement(Elt)))
+      return MDS->getString().data();
 
-  return Result;
+  return NULL;
 }
 
 uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
@@ -284,8 +281,8 @@ void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
 bool DICompileUnit::Verify() const {
   if (isNull())
     return false;
-  std::string Res;
-  if (getFilename(Res).empty())
+  const char *N = getFilename();
+  if (!N)
     return false;
   // It is possible that directory and produce string is empty.
   return true;
@@ -387,11 +384,10 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
 /// information for the function F.
 bool DISubprogram::describes(const Function *F) {
   assert (F && "Invalid function");
-  std::string Name;
-  getLinkageName(Name);
-  if (Name.empty())
-    getName(Name);
-  if (F->getName() == Name)
+  const char *Name = getLinkageName();
+  if (!Name)
+    Name = getName();
+  if (strcmp(F->getName().data(), Name) == 0)
     return true;
   return false;
 }
@@ -412,16 +408,14 @@ void DICompileUnit::dump() const {
   if (getLanguage())
     errs() << " [" << dwarf::LanguageString(getLanguage()) << "] ";
 
-  std::string Res1, Res2;
-  errs() << " [" << getDirectory(Res1) << "/" << getFilename(Res2) << " ]";
+  errs() << " [" << getDirectory() << "/" << getFilename() << " ]";
 }
 
 /// dump - Print type.
 void DIType::dump() const {
   if (isNull()) return;
 
-  std::string Res;
-  if (!getName(Res).empty())
+  if (const char *Res = getName())
     errs() << " [" << Res << "] ";
 
   unsigned Tag = getTag();
@@ -478,8 +472,7 @@ void DICompositeType::dump() const {
 
 /// dump - Print global.
 void DIGlobal::dump() const {
-  std::string Res;
-  if (!getName(Res).empty())
+  if (const char *Res = getName())
     errs() << " [" << Res << "] ";
 
   unsigned Tag = getTag();
@@ -503,8 +496,7 @@ void DIGlobal::dump() const {
 
 /// dump - Print subprogram.
 void DISubprogram::dump() const {
-  std::string Res;
-  if (!getName(Res).empty())
+  if (const char *Res = getName())
     errs() << " [" << Res << "] ";
 
   unsigned Tag = getTag();
@@ -532,8 +524,7 @@ void DIGlobalVariable::dump() const {
 
 /// dump - Print variable.
 void DIVariable::dump() const {
-  std::string Res;
-  if (!getName(Res).empty())
+  if (const char *Res = getName())
     errs() << " [" << Res << "] ";
 
   getCompileUnit().dump();
@@ -594,9 +585,9 @@ DISubrange DIFactory::GetOrCreateSubrange(int64_t Lo, int64_t Hi) {
 /// CreateCompileUnit - Create a new descriptor for the specified compile
 /// unit.  Note that this does not unique compile units within the module.
 DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
-                                           const std::string &Filename,
-                                           const std::string &Directory,
-                                           const std::string &Producer,
+                                           StringRef Filename,
+                                           StringRef Directory,
+                                           StringRef Producer,
                                            bool isMain,
                                            bool isOptimized,
                                            const char *Flags,
@@ -618,7 +609,7 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
 }
 
 /// CreateEnumerator - Create a single enumerator value.
-DIEnumerator DIFactory::CreateEnumerator(const std::string &Name, uint64_t Val){
+DIEnumerator DIFactory::CreateEnumerator(StringRef Name, uint64_t Val){
   Value *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_enumerator),
     MDString::get(VMContext, Name),
@@ -630,7 +621,7 @@ DIEnumerator DIFactory::CreateEnumerator(const std::string &Name, uint64_t Val){
 
 /// CreateBasicType - Create a basic type like int, float, etc.
 DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
-                                      const std::string &Name,
+                                       StringRef Name,
                                        DICompileUnit CompileUnit,
                                        unsigned LineNumber,
                                        uint64_t SizeInBits,
@@ -656,7 +647,7 @@ DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
 /// pointer, typedef, etc.
 DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
                                            DIDescriptor Context,
-                                           const std::string &Name,
+                                           StringRef Name,
                                            DICompileUnit CompileUnit,
                                            unsigned LineNumber,
                                            uint64_t SizeInBits,
@@ -682,7 +673,7 @@ DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
 /// CreateCompositeType - Create a composite type like array, struct, etc.
 DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
                                                DIDescriptor Context,
-                                               const std::string &Name,
+                                               StringRef Name,
                                                DICompileUnit CompileUnit,
                                                unsigned LineNumber,
                                                uint64_t SizeInBits,
@@ -715,9 +706,9 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
 /// See comments in DISubprogram for descriptions of these fields.  This
 /// method does not unique the generated descriptors.
 DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
-                                         const std::string &Name,
-                                         const std::string &DisplayName,
-                                         const std::string &LinkageName,
+                                         StringRef Name,
+                                         StringRef DisplayName,
+                                         StringRef LinkageName,
                                          DICompileUnit CompileUnit,
                                          unsigned LineNo, DIType Type,
                                          bool isLocalToUnit,
@@ -741,9 +732,9 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
 
 /// CreateGlobalVariable - Create a new descriptor for the specified global.
 DIGlobalVariable
-DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
-                                const std::string &DisplayName,
-                                const std::string &LinkageName,
+DIFactory::CreateGlobalVariable(DIDescriptor Context, StringRef Name,
+                                StringRef DisplayName,
+                                StringRef LinkageName,
                                 DICompileUnit CompileUnit,
                                 unsigned LineNo, DIType Type,bool isLocalToUnit,
                                 bool isDefinition, llvm::GlobalVariable *Val) {
@@ -775,7 +766,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
 
 /// CreateVariable - Create a new descriptor for the specified variable.
 DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
-                                     const std::string &Name,
+                                     StringRef Name,
                                      DICompileUnit CompileUnit, unsigned LineNo,
                                      DIType Type) {
   Value *Elts[] = {
@@ -1127,8 +1118,8 @@ namespace llvm {
     return 0;
   }
 
-  bool getLocationInfo(const Value *V, std::string &DisplayName,
-                       std::string &Type, unsigned &LineNo, std::string &File,
+bool getLocationInfo(const Value *V, std::string &DisplayName,
+                     std::string &Type, unsigned &LineNo, std::string &File,
                        std::string &Dir) {
     DICompileUnit Unit;
     DIType TypeD;
@@ -1138,7 +1129,8 @@ namespace llvm {
       if (!DIGV) return false;
       DIGlobalVariable Var(cast<MDNode>(DIGV));
 
-      Var.getDisplayName(DisplayName);
+      if (const char *D = Var.getDisplayName())
+        DisplayName = D;
       LineNo = Var.getLineNumber();
       Unit = Var.getCompileUnit();
       TypeD = Var.getType();
@@ -1147,15 +1139,19 @@ namespace llvm {
       if (!DDI) return false;
       DIVariable Var(cast<MDNode>(DDI->getVariable()));
 
-      Var.getName(DisplayName);
+      if (const char *D = Var.getName())
+        DisplayName = D;
       LineNo = Var.getLineNumber();
       Unit = Var.getCompileUnit();
       TypeD = Var.getType();
     }
 
-    TypeD.getName(Type);
-    Unit.getFilename(File);
-    Unit.getDirectory(Dir);
+    if (const char *T = TypeD.getName())
+      Type = T;
+    if (const char *F = Unit.getFilename())
+      File = F;
+    if (const char *D = Unit.getDirectory())
+      Dir = D;
     return true;
   }
 

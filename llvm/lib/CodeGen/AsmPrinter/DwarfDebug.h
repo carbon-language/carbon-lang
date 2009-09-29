@@ -450,8 +450,8 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// source file names. If none currently exists, create a new id and insert it
   /// in the SourceIds map. This can update DirectoryNames and SourceFileNames maps
   /// as well.
-  unsigned GetOrCreateSourceID(const std::string &DirName,
-                               const std::string &FileName);
+  unsigned GetOrCreateSourceID(const char *DirName,
+                               const char *FileName);
 
   void ConstructCompileUnit(MDNode *N);
 

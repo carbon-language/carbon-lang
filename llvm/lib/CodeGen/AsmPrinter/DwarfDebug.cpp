@@ -570,9 +570,7 @@ DIType DwarfDebug::GetBlockByrefType(DIType Ty, std::string Name) {
   for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
     DIDescriptor Element = Elements.getElement(i);
     DIDerivedType DT = DIDerivedType(Element.getNode());
-    std::string Name2;
-    DT.getName(Name2);
-    if (Name == Name2)
+    if (strcmp(Name.c_str(), DT.getName()) == 0)
       return (DT.getTypeDerivedFrom());
   }
 
@@ -648,8 +646,7 @@ void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
   unsigned Tag = Ty.getTag();
   bool isPointer = false;
 
-  std::string varName;
-  VD.getName(varName);
+  const char *varName = VD.getName();
 
   if (Tag == dwarf::DW_TAG_pointer_type) {
     DIDerivedType DTy = DIDerivedType (Ty.getNode());
@@ -658,9 +655,6 @@ void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
   }
 
   DICompositeType blockStruct = DICompositeType(TmpTy.getNode());
-
-  std::string typeName;
-  blockStruct.getName(typeName);
 
   // Find the __forwarding field and the variable field in the __Block_byref
   // struct.
@@ -672,11 +666,10 @@ void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
   for (unsigned i = 0, N = Fields.getNumElements(); i < N; ++i) {
     DIDescriptor Element = Fields.getElement(i);
     DIDerivedType DT = DIDerivedType(Element.getNode());
-    std::string fieldName;
-    DT.getName(fieldName);
-    if (fieldName == "__forwarding")
+    const char *fieldName = DT.getName();
+    if (strcmp(fieldName, "__forwarding") == 0)
       forwardingField = Element;
-    else if (fieldName == varName)
+    else if (strcmp(fieldName, varName) == 0)
       varField = Element;
   }
 
@@ -823,14 +816,13 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
 void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                                   DIBasicType BTy) {
   // Get core information.
-  std::string Name;
-  BTy.getName(Name);
+  const char *Name = BTy.getName();
   Buffer.setTag(dwarf::DW_TAG_base_type);
   AddUInt(&Buffer, dwarf::DW_AT_encoding,  dwarf::DW_FORM_data1,
           BTy.getEncoding());
 
   // Add name if not anonymous or intermediate type.
-  if (!Name.empty())
+  if (Name)
     AddString(&Buffer, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
   uint64_t Size = BTy.getSizeInBits() >> 3;
   AddUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
@@ -840,8 +832,7 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
 void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                                   DIDerivedType DTy) {
   // Get core information.
-  std::string Name;
-  DTy.getName(Name);
+  const char *Name = DTy.getName();
   uint64_t Size = DTy.getSizeInBits() >> 3;
   unsigned Tag = DTy.getTag();
 
@@ -855,7 +846,7 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
   AddType(DW_Unit, &Buffer, FromTy);
 
   // Add name if not anonymous or intermediate type.
-  if (!Name.empty())
+  if (Name)
     AddString(&Buffer, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
 
   // Add size if non-zero (derived types might be zero-sized.)
@@ -871,8 +862,7 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
 void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
                                   DICompositeType CTy) {
   // Get core information.
-  std::string Name;
-  CTy.getName(Name);
+  const char *Name = CTy.getName();
 
   uint64_t Size = CTy.getSizeInBits() >> 3;
   unsigned Tag = CTy.getTag();
@@ -952,7 +942,7 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
   }
 
   // Add name if not anonymous or intermediate type.
-  if (!Name.empty())
+  if (Name)
     AddString(&Buffer, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
 
   if (Tag == dwarf::DW_TAG_enumeration_type ||
@@ -1018,8 +1008,7 @@ void DwarfDebug::ConstructArrayTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
 /// ConstructEnumTypeDIE - Construct enum type DIE from DIEnumerator.
 DIE *DwarfDebug::ConstructEnumTypeDIE(CompileUnit *DW_Unit, DIEnumerator *ETy) {
   DIE *Enumerator = new DIE(dwarf::DW_TAG_enumerator);
-  std::string Name;
-  ETy->getName(Name);
+  const char *Name = ETy->getName();
   AddString(Enumerator, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
   int64_t Value = ETy->getEnumValue();
   AddSInt(Enumerator, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, Value);
@@ -1030,12 +1019,11 @@ DIE *DwarfDebug::ConstructEnumTypeDIE(CompileUnit *DW_Unit, DIEnumerator *ETy) {
 DIE *DwarfDebug::CreateGlobalVariableDIE(CompileUnit *DW_Unit,
                                          const DIGlobalVariable &GV) {
   DIE *GVDie = new DIE(dwarf::DW_TAG_variable);
-  std::string Name;
-  GV.getDisplayName(Name);
-  AddString(GVDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
-  std::string LinkageName;
-  GV.getLinkageName(LinkageName);
-  if (!LinkageName.empty()) {
+  AddString(GVDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, 
+            GV.getDisplayName());
+
+  const char *LinkageName = GV.getLinkageName();
+  if (LinkageName) {
     // Skip special LLVM prefix that is used to inform the asm printer to not
     // emit usual symbol prefix before the symbol name. This happens for
     // Objective-C symbol names and symbol whose name is replaced using GCC's
@@ -1055,9 +1043,7 @@ DIE *DwarfDebug::CreateGlobalVariableDIE(CompileUnit *DW_Unit,
 /// CreateMemberDIE - Create new member DIE.
 DIE *DwarfDebug::CreateMemberDIE(CompileUnit *DW_Unit, const DIDerivedType &DT){
   DIE *MemberDie = new DIE(DT.getTag());
-  std::string Name;
-  DT.getName(Name);
-  if (!Name.empty())
+  if (const char *Name = DT.getName())
     AddString(MemberDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
 
   AddType(DW_Unit, MemberDie, DT.getTypeDerivedFrom());
@@ -1106,13 +1092,11 @@ DIE *DwarfDebug::CreateSubprogramDIE(CompileUnit *DW_Unit,
                                      bool IsInlined) {
   DIE *SPDie = new DIE(dwarf::DW_TAG_subprogram);
 
-  std::string Name;
-  SP.getName(Name);
+  const char * Name = SP.getName();
   AddString(SPDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
 
-  std::string LinkageName;
-  SP.getLinkageName(LinkageName);
-  if (!LinkageName.empty()) {
+  const char *LinkageName = SP.getLinkageName();
+  if (LinkageName) {
     // Skip special LLVM prefix that is used to inform the asm printer to not emit
     // usual symbol prefix before the symbol name. This happens for Objective-C
     // symbol names and symbol whose name is replaced using GCC's __asm__ attribute.
@@ -1196,8 +1180,7 @@ DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
 
   // Define variable debug information entry.
   DIE *VariableDie = new DIE(Tag);
-  std::string Name;
-  VD.getName(Name);
+  const char *Name = VD.getName();
   AddString(VariableDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
 
   // Add source line info if available.
@@ -1398,8 +1381,8 @@ void DwarfDebug::ConstructDefaultDbgScope(MachineFunction *MF) {
 /// source file names. If none currently exists, create a new id and insert it
 /// in the SourceIds map. This can update DirectoryNames and SourceFileNames
 /// maps as well.
-unsigned DwarfDebug::GetOrCreateSourceID(const std::string &DirName,
-                                         const std::string &FileName) {
+unsigned DwarfDebug::GetOrCreateSourceID(const char *DirName,
+                                         const char *FileName) {
   unsigned DId;
   StringMap<unsigned>::iterator DI = DirectoryIdMap.find(DirName);
   if (DI != DirectoryIdMap.end()) {
@@ -1434,28 +1417,26 @@ unsigned DwarfDebug::GetOrCreateSourceID(const std::string &DirName,
 
 void DwarfDebug::ConstructCompileUnit(MDNode *N) {
   DICompileUnit DIUnit(N);
-  std::string Dir, FN, Prod;
-  unsigned ID = GetOrCreateSourceID(DIUnit.getDirectory(Dir),
-                                    DIUnit.getFilename(FN));
+  const char *FN = DIUnit.getFilename();
+  const char *Dir = DIUnit.getDirectory();
+  unsigned ID = GetOrCreateSourceID(Dir, FN);
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   AddSectionOffset(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
                    DWLabel("section_line", 0), DWLabel("section_line", 0),
                    false);
   AddString(Die, dwarf::DW_AT_producer, dwarf::DW_FORM_string,
-            DIUnit.getProducer(Prod));
+            DIUnit.getProducer());
   AddUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data1,
           DIUnit.getLanguage());
   AddString(Die, dwarf::DW_AT_name, dwarf::DW_FORM_string, FN);
 
-  if (!Dir.empty())
+  if (Dir)
     AddString(Die, dwarf::DW_AT_comp_dir, dwarf::DW_FORM_string, Dir);
   if (DIUnit.isOptimized())
     AddUInt(Die, dwarf::DW_AT_APPLE_optimized, dwarf::DW_FORM_flag, 1);
 
-  std::string Flags;
-  DIUnit.getFlags(Flags);
-  if (!Flags.empty())
+  if (const char *Flags = DIUnit.getFlags())
     AddString(Die, dwarf::DW_AT_APPLE_flags, dwarf::DW_FORM_string, Flags);
 
   unsigned RVer = DIUnit.getRunTimeVersion();
@@ -1502,8 +1483,7 @@ void DwarfDebug::ConstructGlobalVariableDIE(MDNode *N) {
   ModuleCU->getDie()->AddChild(VariableDie);
 
   // Expose as global. FIXME - need to check external flag.
-  std::string Name;
-  ModuleCU->AddGlobal(DI_GV.getName(Name), VariableDie);
+  ModuleCU->AddGlobal(DI_GV.getName(), VariableDie);
   return;
 }
 
@@ -1529,8 +1509,7 @@ void DwarfDebug::ConstructSubprogram(MDNode *N) {
   ModuleCU->getDie()->AddChild(SubprogramDie);
 
   // Expose as global.
-  std::string Name;
-  ModuleCU->AddGlobal(SP.getName(Name), SubprogramDie);
+  ModuleCU->AddGlobal(SP.getName(), SubprogramDie);
   return;
 }
 
@@ -1801,9 +1780,8 @@ unsigned DwarfDebug::RecordSourceLine(unsigned Line, unsigned Col,
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-  std::string Dir, Fn;
-  unsigned Src = GetOrCreateSourceID(CU.getDirectory(Dir),
-                                     CU.getFilename(Fn));
+  unsigned Src = GetOrCreateSourceID(CU.getDirectory(),
+                                     CU.getFilename());
   unsigned ID = MMI->NextLabelID();
   Lines.push_back(SrcLineInfo(Line, Col, Src, ID));
 
@@ -1823,7 +1801,7 @@ unsigned DwarfDebug::getOrCreateSourceID(const std::string &DirName,
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-  unsigned SrcId = GetOrCreateSourceID(DirName, FileName);
+  unsigned SrcId = GetOrCreateSourceID(DirName.c_str(), FileName.c_str());
 
   if (TimePassesIsEnabled)
     DebugTimer->stopTimer();
@@ -2708,13 +2686,10 @@ void DwarfDebug::EmitDebugInlineInfo() {
     MDNode *Node = I->first;
     SmallVector<unsigned, 4> &Labels = I->second;
     DISubprogram SP(Node);
-    std::string Name;
-    std::string LName;
+    const char *LName = SP.getLinkageName();
+    const char *Name = SP.getName();
 
-    SP.getLinkageName(LName);
-    SP.getName(Name);
-
-    if (LName.empty())
+    if (!LName)
       Asm->EmitString(Name);
     else {
       // Skip special LLVM prefix that is used to inform the asm printer to not

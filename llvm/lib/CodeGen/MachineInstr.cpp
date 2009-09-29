@@ -1041,9 +1041,8 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     const MachineFunction *MF = getParent()->getParent();
     DebugLocTuple DLT = MF->getDebugLocTuple(debugLoc);
     DICompileUnit CU(DLT.CompileUnit);
-    std::string Dir, Fn;
     OS << " [dbg: "
-       << CU.getDirectory(Dir) << '/' << CU.getFilename(Fn) << ","
+       << CU.getDirectory() << '/' << CU.getFilename() << ","
        << DLT.Line << ","
        << DLT.Col  << "]";
   }

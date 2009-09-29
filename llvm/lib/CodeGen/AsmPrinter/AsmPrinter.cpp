@@ -1750,9 +1750,8 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
   O.PadToColumn(MAI->getCommentColumn());
   O << MAI->getCommentString() << " SrcLine ";
   if (DLT.CompileUnit) {
-    std::string Str;
     DICompileUnit CU(DLT.CompileUnit);
-    O << CU.getFilename(Str) << " ";
+    O << CU.getFilename() << " ";
   }
   O << DLT.Line;
   if (DLT.Col != 0) 
