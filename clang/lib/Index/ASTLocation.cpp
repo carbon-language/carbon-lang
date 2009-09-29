@@ -47,13 +47,13 @@ Decl *ASTLocation::getReferencedDecl() {
 }
 
 
-static bool isContainedInStatement(Stmt *Node, Stmt *Parent) {
+static bool isContainedInStatement(const Stmt *Node, const Stmt *Parent) {
   assert(Node && Parent && "Passed null Node or Parent");
 
   if (Node == Parent)
     return true;
 
-  for (Stmt::child_iterator
+  for (Stmt::const_child_iterator
          I = Parent->child_begin(), E = Parent->child_end(); I != E; ++I) {
     if (*I)
       if (isContainedInStatement(Node, *I))
@@ -63,23 +63,23 @@ static bool isContainedInStatement(Stmt *Node, Stmt *Parent) {
   return false;
 }
 
-Decl *ASTLocation::FindImmediateParent(Decl *D, Stmt *Node) {
+const Decl *ASTLocation::FindImmediateParent(const Decl *D, const Stmt *Node) {
   assert(D && Node && "Passed null Decl or null Stmt");
 
-  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    Expr *Init = VD->getInit();
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    const Expr *Init = VD->getInit();
     if (Init == 0)
       return 0;
     return isContainedInStatement(Node, Init) ? D : 0;
   }
 
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (!FD->isThisDeclarationADefinition())
       return 0;
 
     for (DeclContext::decl_iterator
            I = FD->decls_begin(), E = FD->decls_end(); I != E; ++I) {
-      Decl *Child = FindImmediateParent(*I, Node);
+      const Decl *Child = FindImmediateParent(*I, Node);
       if (Child)
         return Child;
     }
@@ -88,13 +88,13 @@ Decl *ASTLocation::FindImmediateParent(Decl *D, Stmt *Node) {
     return isContainedInStatement(Node, FD->getBody()) ? D : 0;
   }
 
-  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
     if (!MD->getBody())
       return 0;
 
     for (DeclContext::decl_iterator
            I = MD->decls_begin(), E = MD->decls_end(); I != E; ++I) {
-      Decl *Child = FindImmediateParent(*I, Node);
+      const Decl *Child = FindImmediateParent(*I, Node);
       if (Child)
         return Child;
     }
@@ -103,10 +103,10 @@ Decl *ASTLocation::FindImmediateParent(Decl *D, Stmt *Node) {
     return isContainedInStatement(Node, MD->getBody()) ? D : 0;
   }
 
-  if (BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+  if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
     for (DeclContext::decl_iterator
            I = BD->decls_begin(), E = BD->decls_end(); I != E; ++I) {
-      Decl *Child = FindImmediateParent(*I, Node);
+      const Decl *Child = FindImmediateParent(*I, Node);
       if (Child)
         return Child;
     }
@@ -118,7 +118,7 @@ Decl *ASTLocation::FindImmediateParent(Decl *D, Stmt *Node) {
   return 0;
 }
 
-bool ASTLocation::isImmediateParent(Decl *D, Stmt *Node) {
+bool ASTLocation::isImmediateParent(const Decl *D, const Stmt *Node) {
   assert(D && Node && "Passed null Decl or null Stmt");
   return D == FindImmediateParent(D, Node);
 }

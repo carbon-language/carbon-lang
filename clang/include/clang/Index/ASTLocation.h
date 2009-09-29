@@ -37,22 +37,21 @@ namespace idx {
 /// like the declaration context, ASTContext, etc.
 ///
 class ASTLocation {
-  Decl *D;
-  Stmt *Stm;
+  const Decl *D;
+  const Stmt *Stm;
 
 public:
   ASTLocation() : D(0), Stm(0) {}
 
-  explicit ASTLocation(const Decl *d, const Stmt *stm = 0)
-    : D(const_cast<Decl*>(d)), Stm(const_cast<Stmt*>(stm)) {
+  explicit ASTLocation(const Decl *d, const Stmt *stm = 0) : D(d), Stm(stm) {
     assert((Stm == 0 || isImmediateParent(D, Stm)) &&
            "The Decl is not the immediate parent of the Stmt.");
   }
 
   const Decl *getDecl() const { return D; }
   const Stmt *getStmt() const { return Stm; }
-  Decl *getDecl() { return D; }
-  Stmt *getStmt() { return Stm; }
+  Decl *getDecl() { return const_cast<Decl*>(D); }
+  Stmt *getStmt() { return const_cast<Stmt*>(Stm); }
 
   bool isValid() const { return D != 0; }
   bool isInvalid() const { return !isValid(); }
@@ -72,8 +71,8 @@ public:
   SourceRange getSourceRange() const;
 
   /// \brief Checks that D is the immediate Decl parent of Node.
-  static bool isImmediateParent(Decl *D, Stmt *Node);
-  static Decl *FindImmediateParent(Decl *D, Stmt *Node);
+  static bool isImmediateParent(const Decl *D, const Stmt *Node);
+  static const Decl *FindImmediateParent(const Decl *D, const Stmt *Node);
 
   friend bool operator==(const ASTLocation &L, const ASTLocation &R) {
     return L.D == R.D && L.Stm == R.Stm;
