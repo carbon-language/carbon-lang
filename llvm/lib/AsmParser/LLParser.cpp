@@ -125,7 +125,7 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::GlobalID:   if (ParseUnnamedGlobal()) return true; break;
     case lltok::GlobalVar:  if (ParseNamedGlobal()) return true; break;
     case lltok::Metadata:   if (ParseStandaloneMetadata()) return true; break;
-    case lltok::NamedMD:    if (ParseNamedMetadata()) return true; break;
+    case lltok::NamedOrCustomMD: if (ParseNamedMetadata()) return true; break;
 
     // The Global variable production with no name can have many different
     // optional leading prefixes, the production is:
@@ -461,7 +461,7 @@ bool LLParser::ParseMDNode(MetadataBase *&Node) {
 ///ParseNamedMetadata:
 ///   !foo = !{ !1, !2 }
 bool LLParser::ParseNamedMetadata() {
-  assert(Lex.getKind() == lltok::NamedMD);
+  assert(Lex.getKind() == lltok::NamedOrCustomMD);
   Lex.Lex();
   std::string Name = Lex.getStrVal();
 
@@ -1025,24 +1025,30 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
   return false;
 }
 
-/// ParseOptionalDbgInfo
+/// ParseOptionalCustomMetadata
 ///   ::= /* empty */
-///   ::= 'dbg' !42
-bool LLParser::ParseOptionalDbgInfo() {
+///   ::= !dbg !42
+bool LLParser::ParseOptionalCustomMetadata() {
 
-  if (!EatIfPresent(lltok::kw_dbg))
+  std::string Name;
+  if (Lex.getKind() == lltok::NamedOrCustomMD) {
+    Name = Lex.getStrVal();
+    Lex.Lex();
+  } else
     return false;
+
   if (Lex.getKind() != lltok::Metadata)
     return TokError("Expected '!' here");
   Lex.Lex();
+
   MetadataBase *Node;
   if (ParseMDNode(Node)) return true;
 
   MetadataContext &TheMetadata = M->getContext().getMetadata();
-  unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
-  if (!MDDbgKind)
-    MDDbgKind = TheMetadata.RegisterMDKind("dbg");
-  MDsOnInst.push_back(std::make_pair(MDDbgKind, cast<MDNode>(Node)));
+  unsigned MDK = TheMetadata.getMDKind(Name.c_str());
+  if (!MDK)
+    MDK = TheMetadata.RegisterMDKind(Name.c_str());
+  MDsOnInst.push_back(std::make_pair(MDK, cast<MDNode>(Node)));
 
   return false;
 }
@@ -1067,8 +1073,8 @@ bool LLParser::ParseOptionalInfo(unsigned &Alignment) {
 
   // FIXME: Handle customized metadata info attached with an instruction.
   do {
-    if (Lex.getKind() == lltok::kw_dbg) {
-      if (ParseOptionalDbgInfo()) return true;
+      if (Lex.getKind() == lltok::NamedOrCustomMD) {
+      if (ParseOptionalCustomMetadata()) return true;
     } else if (Lex.getKind() == lltok::kw_align) {
       if (ParseOptionalAlignment(Alignment)) return true;
     } else
@@ -2653,7 +2659,7 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
 
     if (ParseInstruction(Inst, BB, PFS)) return true;
     if (EatIfPresent(lltok::comma))
-      ParseOptionalDbgInfo();
+      ParseOptionalCustomMetadata();
 
     // Set metadata attached with this instruction.
     MetadataContext &TheMetadata = M->getContext().getMetadata();
@@ -2841,9 +2847,9 @@ bool LLParser::ParseCmpPredicate(unsigned &P, unsigned Opc) {
 //===----------------------------------------------------------------------===//
 
 /// ParseRet - Parse a return instruction.
-///   ::= 'ret' void (',' 'dbg' !1)
-///   ::= 'ret' TypeAndValue (',' 'dbg' !1)
-///   ::= 'ret' TypeAndValue (',' TypeAndValue)+  (',' 'dbg' !1)
+///   ::= 'ret' void (',' !dbg, !1)
+///   ::= 'ret' TypeAndValue (',' !dbg, !1)
+///   ::= 'ret' TypeAndValue (',' TypeAndValue)+  (',' !dbg, !1)
 ///         [[obsolete: LLVM 3.0]]
 bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
                         PerFunctionState &PFS) {
@@ -2852,7 +2858,7 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
 
   if (Ty == Type::getVoidTy(Context)) {
     if (EatIfPresent(lltok::comma))
-      if (ParseOptionalDbgInfo()) return true;
+      if (ParseOptionalCustomMetadata()) return true;
     Inst = ReturnInst::Create(Context);
     return false;
   }
@@ -2861,9 +2867,9 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
   if (ParseValue(Ty, RV, PFS)) return true;
 
   if (EatIfPresent(lltok::comma)) {
-    // Parse optional 'dbg'
-    if (Lex.getKind() == lltok::kw_dbg) {
-      if (ParseOptionalDbgInfo()) return true;
+    // Parse optional custom metadata, e.g. !dbg
+    if (Lex.getKind() == lltok::NamedOrCustomMD) {
+      if (ParseOptionalCustomMetadata()) return true;
     } else {
       // The normal case is one return value.
       // FIXME: LLVM 3.0 remove MRV support for 'ret i32 1, i32 2', requiring use
@@ -2872,8 +2878,9 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
       RVs.push_back(RV);
 
       do {
-        // If optional 'dbg' is seen then this is the end of MRV.
-        if (Lex.getKind() == lltok::kw_dbg)
+        // If optional custom metadata, e.g. !dbg is seen then this is the 
+        // end of MRV.
+        if (Lex.getKind() == lltok::NamedOrCustomMD)
           break;
         if (ParseTypeAndValue(RV, PFS)) return true;
         RVs.push_back(RV);
@@ -2888,7 +2895,7 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
     }
   }
   if (EatIfPresent(lltok::comma))
-    if (ParseOptionalDbgInfo()) return true;
+    if (ParseOptionalCustomMetadata()) return true;
 
   Inst = ReturnInst::Create(Context, RV);
   return false;
@@ -3439,7 +3446,8 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
   if (ParseType(Ty)) return true;
 
   if (EatIfPresent(lltok::comma)) {
-    if (Lex.getKind() == lltok::kw_align || Lex.getKind() == lltok::kw_dbg) {
+    if (Lex.getKind() == lltok::kw_align 
+        || Lex.getKind() == lltok::NamedOrCustomMD) {
       if (ParseOptionalInfo(Alignment)) return true;
     } else {
       if (ParseTypeAndValue(Size, SizeLoc, PFS)) return true;

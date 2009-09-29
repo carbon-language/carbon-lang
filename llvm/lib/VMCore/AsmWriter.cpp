@@ -2007,7 +2007,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     for (MetadataContext::MDMapTy::const_iterator MI = MDMap->begin(),
            ME = MDMap->end(); MI != ME; ++MI)
       if (const MDNode *MD = dyn_cast_or_null<MDNode>(MI->second))
-        Out << ", " << MDNames[MI->first]
+        Out << ", !" << MDNames[MI->first]
             << " !" << Machine.getMetadataSlot(MD);
 
   printInfoComment(I);

@@ -127,7 +127,7 @@ namespace lltok {
     GlobalVar,         // @foo @"foo"
     LocalVar,          // %foo %"foo"
     StringConstant,    // "foo"
-    NamedMD,           // !foo
+    NamedOrCustomMD,   // !foo
 
     // Metadata valued tokens.
     Metadata,          // !"foo" !{i8 42}

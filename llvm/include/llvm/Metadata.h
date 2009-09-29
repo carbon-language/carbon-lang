@@ -305,8 +305,10 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// MetadataContext -
-/// MetadataContext manages metadata used in a context.
-
+/// MetadataContext handles uniquing and assignment of IDs for custom metadata
+/// types. Custom metadata handler names do not contain spaces. And the name
+/// must start with an alphabet. The regular expression used to check name
+/// is [a-zA-Z$._][a-zA-Z$._0-9]*
 class MetadataContext {
 public:
   typedef std::pair<unsigned, WeakVH> MDPairTy;
@@ -329,6 +331,9 @@ public:
   /// getMDKind - Return metadata kind. If the requested metadata kind
   /// is not registered then return 0.
   unsigned getMDKind(const char *Name);
+
+  /// validName - Return true if Name is a valid custom metadata handler name.
+  bool validName(const char *Name);
 
   /// getMD - Get the metadata of given kind attached with an Instruction.
   /// If the metadata is not found then return 0.

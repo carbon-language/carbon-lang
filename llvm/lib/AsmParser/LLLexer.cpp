@@ -434,7 +434,7 @@ lltok::Kind LLLexer::LexMetadata() {
       ++CurPtr;
 
     StrVal.assign(TokStart+1, CurPtr);   // Skip !
-    return lltok::NamedMD;
+    return lltok::NamedOrCustomMD;
   }
   return lltok::Metadata;
 }
@@ -530,7 +530,6 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(asm);
   KEYWORD(sideeffect);
   KEYWORD(gc);
-  KEYWORD(dbg);
 
   KEYWORD(ccc);
   KEYWORD(fastcc);

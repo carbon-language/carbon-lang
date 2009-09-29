@@ -4,13 +4,13 @@ define i32 @foo() nounwind ssp {
 entry:
   %retval = alloca i32                            ; <i32*> [#uses=2]
   call void @llvm.dbg.func.start(metadata !0)
-  store i32 42, i32* %retval, dbg !3
-  br label %0, dbg !3
+  store i32 42, i32* %retval, !dbg !3
+  br label %0, !dbg !3
 
 ; <label>:0                                       ; preds = %entry
   call void @llvm.dbg.region.end(metadata !0)
-  %1 = load i32* %retval, dbg !3                  ; <i32> [#uses=1]
-  ret i32 %1, dbg !3
+  %1 = load i32* %retval, !dbg !3                  ; <i32> [#uses=1]
+  ret i32 %1, !dbg !3
 }
 
 declare void @llvm.dbg.func.start(metadata) nounwind readnone

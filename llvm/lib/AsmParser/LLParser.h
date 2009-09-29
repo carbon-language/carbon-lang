@@ -128,7 +128,7 @@ namespace llvm {
     bool ParseOptionalVisibility(unsigned &Visibility);
     bool ParseOptionalCallingConv(CallingConv::ID &CC);
     bool ParseOptionalAlignment(unsigned &Alignment);
-    bool ParseOptionalDbgInfo();
+    bool ParseOptionalCustomMetadata();
     bool ParseOptionalInfo(unsigned &Alignment);
     bool ParseIndexList(SmallVectorImpl<unsigned> &Indices);
 

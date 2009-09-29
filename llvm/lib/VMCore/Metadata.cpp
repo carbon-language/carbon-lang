@@ -260,6 +260,7 @@ NamedMDNode::~NamedMDNode() {
 /// RegisterMDKind - Register a new metadata kind and return its ID.
 /// A metadata kind can be registered only once. 
 unsigned MetadataContext::RegisterMDKind(const char *Name) {
+  assert (validName(Name) && "Invalid custome metadata name!");
   unsigned Count = MDHandlerNames.size();
   StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
   assert(I == MDHandlerNames.end() && "Already registered MDKind!");
@@ -267,9 +268,31 @@ unsigned MetadataContext::RegisterMDKind(const char *Name) {
   return Count + 1;
 }
 
+/// validName - Return true if Name is a valid custom metadata handler name.
+bool MetadataContext::validName(const char *Name) {
+  if (!Name)
+    return false;
+
+  if (!isalpha(*Name))
+    return false;
+
+  unsigned Length = strlen(Name);  
+  unsigned Count = 1;
+  ++Name;
+  while (Name &&
+         (isalnum(*Name) || *Name == '_' || *Name == '-' || *Name == '.')) {
+    ++Name;
+    ++Count;
+  }
+  if (Length != Count)
+    return false;
+  return true;
+}
+
 /// getMDKind - Return metadata kind. If the requested metadata kind
 /// is not registered then return 0.
 unsigned MetadataContext::getMDKind(const char *Name) {
+  assert (validName(Name) && "Invalid custome metadata name!");
   StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
   if (I == MDHandlerNames.end())
     return 0;
