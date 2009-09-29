@@ -221,7 +221,8 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   //   virtual call mechanism.
   llvm::Value *Callee;
   if (MD->isVirtual() && !ME->hasQualifier())
-    Callee = BuildVirtualCall(MD, This, Ty);
+    // FIXME: push getCanonicalDecl as a conversion using the static type system (CanCXXMethodDecl).
+    Callee = BuildVirtualCall(MD->getCanonicalDecl(), This, Ty);
   else if (const CXXDestructorDecl *Destructor
              = dyn_cast<CXXDestructorDecl>(MD))
     Callee = CGM.GetAddrOfFunction(GlobalDecl(Destructor, Dtor_Complete), Ty);

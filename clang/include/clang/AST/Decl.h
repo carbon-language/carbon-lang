@@ -973,6 +973,7 @@ public:
 
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
 
+  virtual const FunctionDecl *getCanonicalDecl() const;
   virtual FunctionDecl *getCanonicalDecl();
 
   unsigned getBuiltinID() const;

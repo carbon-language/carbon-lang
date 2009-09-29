@@ -653,6 +653,10 @@ FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
   }
 }
 
+const FunctionDecl *FunctionDecl::getCanonicalDecl() const {
+  return getFirstDeclaration();
+}
+
 FunctionDecl *FunctionDecl::getCanonicalDecl() {
   return getFirstDeclaration();
 }

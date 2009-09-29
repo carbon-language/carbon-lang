@@ -920,6 +920,19 @@ struct test13_D : test13_NV1, virtual test13_B2 {
 // CHECK-LP64-NEXT: .quad __ZN2D14bar4Ev
 // CHECK-LP64-NEXT: .quad __ZN2D14bar5Ev
 
+class test14 {
+public:
+    virtual void initWithInt(int a);
+    static test14 *withInt(int a);
+};
+
+void test14::initWithInt(int a) { }
+
+test14 *test14::withInt(int a) {
+  test14 *me = new test14;
+  me->initWithInt(a);
+  return me;
+}
 
 test11_D d11;
 test10_D d10;

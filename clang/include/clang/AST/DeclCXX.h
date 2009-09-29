@@ -785,6 +785,13 @@ public:
     return (CD->begin_overridden_methods() != CD->end_overridden_methods());
   }
   
+  const CXXMethodDecl *getCanonicalDecl() const {
+    return cast<CXXMethodDecl>(FunctionDecl::getCanonicalDecl());
+  }
+  CXXMethodDecl *getCanonicalDecl() {
+    return cast<CXXMethodDecl>(FunctionDecl::getCanonicalDecl());
+  }
+  
   ///
   void addOverriddenMethod(const CXXMethodDecl *MD);
 

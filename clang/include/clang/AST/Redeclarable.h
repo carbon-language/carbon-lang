@@ -79,6 +79,15 @@ public:
     return D;
   }
 
+  /// \brief Return the first declaration of this declaration or itself if this
+  /// is the only declaration.
+  const decl_type *getFirstDeclaration() const {
+    const decl_type *D = static_cast<const decl_type*>(this);
+    while (D->getPreviousDeclaration())
+      D = D->getPreviousDeclaration();
+    return D;
+  }
+
   /// \brief Set the previous declaration. If PrevDecl is NULL, set this as the
   /// first and only declaration.
   void setPreviousDeclaration(decl_type *PrevDecl) {
