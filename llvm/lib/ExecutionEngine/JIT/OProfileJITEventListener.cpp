@@ -72,21 +72,19 @@ class FilenameCache {
   // Holds the filename of each CompileUnit, so that we can pass the
   // pointer into oprofile.  These char*s are freed in the destructor.
   DenseMap<MDNode*, char*> Filenames;
-  // Used as the scratch space in DICompileUnit::getFilename().
-  std::string TempFilename;
 
  public:
-  const char* getFilename(MDNode *CompileUnit) {
+  const char *getFilename(MDNode *CompileUnit) {
     char *&Filename = Filenames[CompileUnit];
     if (Filename == NULL) {
       DICompileUnit CU(CompileUnit);
-      Filename = strdup(CU.getFilename(TempFilename).c_str());
+      Filename = strdup(CU.getFilename());
     }
     return Filename;
   }
   ~FilenameCache() {
     for (DenseMap<MDNode*, char*>::iterator
-             I = Filenames.begin(), E = Filenames.end(); I != E;++I) {
+             I = Filenames.begin(), E = Filenames.end(); I != E; ++I) {
       free(I->second);
     }
   }
@@ -97,7 +95,7 @@ static debug_line_info LineStartToOProfileFormat(
     uintptr_t Address, DebugLoc Loc) {
   debug_line_info Result;
   Result.vma = Address;
-  const DebugLocTuple& tuple = MF.getDebugLocTuple(Loc);
+  const DebugLocTuple &tuple = MF.getDebugLocTuple(Loc);
   Result.lineno = tuple.Line;
   Result.filename = Filenames.getFilename(tuple.CompileUnit);
   DEBUG(errs() << "Mapping " << reinterpret_cast<void*>(Result.vma) << " to "
