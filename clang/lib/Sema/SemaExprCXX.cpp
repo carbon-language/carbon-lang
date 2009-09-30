@@ -1977,17 +1977,23 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
   //   [...] When operator->returns, the operator-> is applied  to the value
   //   returned, with the original second operand.
   if (OpKind == tok::arrow) {
+    // The set of types we've considered so far.
+    llvm::SmallVector<CanQualType,8> CTypes;
+    CTypes.push_back(Context.getCanonicalType(BaseType));
+    
     while (BaseType->isRecordType()) {
       Base = BuildOverloadedArrowExpr(S, move(Base), BaseExpr->getExprLoc());
       BaseExpr = (Expr*)Base.get();
       if (BaseExpr == NULL)
         return ExprError();
-      if (Context.getCanonicalType(BaseExpr->getType()) == 
-          Context.getCanonicalType(BaseType)) {
+      BaseType = BaseExpr->getType();
+      CanQualType CBaseType = Context.getCanonicalType(BaseType);
+      if (std::find(CTypes.begin(), CTypes.end(), CBaseType) != CTypes.end()) {
+        // TODO: note the chain of conversions
         Diag(OpLoc, diag::err_operator_arrow_circular);
         return ExprError();
       }
-      BaseType = BaseExpr->getType();
+      CTypes.push_back(CBaseType);
     }
   }
 

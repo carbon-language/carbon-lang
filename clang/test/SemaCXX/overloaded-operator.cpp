@@ -224,3 +224,19 @@ void m() {
   AX a; 
   a->b = 0; // expected-error {{circular pointer delegation detected}}
 }
+
+struct CircA {
+  struct CircB& operator->();
+  int val;
+};
+struct CircB {
+  struct CircC& operator->();
+};
+struct CircC {
+  struct CircA& operator->();
+};
+
+void circ() {
+  CircA a;
+  a->val = 0; // expected-error {{circular pointer delegation detected}}
+}
