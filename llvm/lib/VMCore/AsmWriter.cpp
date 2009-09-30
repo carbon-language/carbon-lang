@@ -874,7 +874,7 @@ static void WriteMDNodeComment(const MDNode *Node,
 			       formatted_raw_ostream &Out) {
   if (Node->getNumElements() < 1)
     return;
-  ConstantInt *CI = dyn_cast<ConstantInt>(Node->getElement(0));
+  ConstantInt *CI = dyn_cast_or_null<ConstantInt>(Node->getElement(0));
   if (!CI) return;
   unsigned Val = CI->getZExtValue();
   unsigned Tag = Val & ~LLVMDebugVersionMask;
