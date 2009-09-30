@@ -243,10 +243,10 @@ namespace llvm {
     unsigned NodeNum;                   // Entry # of node in the node vector.
     unsigned NodeQueueId;               // Queue id of node.
     unsigned short Latency;             // Node latency.
-    short NumPreds;                     // # of SDep::Data preds.
-    short NumSuccs;                     // # of SDep::Data sucss.
-    short NumPredsLeft;                 // # of preds not scheduled.
-    short NumSuccsLeft;                 // # of succs not scheduled.
+    unsigned NumPreds;                  // # of SDep::Data preds.
+    unsigned NumSuccs;                  // # of SDep::Data sucss.
+    unsigned NumPredsLeft;              // # of preds not scheduled.
+    unsigned NumSuccsLeft;              // # of succs not scheduled.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
     bool isCommutable     : 1;          // Is a commutable instruction.
     bool hasPhysRegDefs   : 1;          // Has physreg defs that are being used.

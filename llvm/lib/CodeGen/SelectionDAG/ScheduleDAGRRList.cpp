@@ -278,6 +278,7 @@ void ScheduleDAGRRList::CapturePred(SDep *PredEdge) {
       AvailableQueue->remove(PredSU);
   }
 
+  assert(PredSU->NumSuccsLeft < UINT_MAX && "NumSuccsLeft will overflow!");
   ++PredSU->NumSuccsLeft;
 }
 
@@ -824,17 +825,17 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
 /// the AvailableQueue if the count reaches zero. Also update its cycle bound.
 void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, const SDep *SuccEdge) {
   SUnit *SuccSU = SuccEdge->getSUnit();
-  --SuccSU->NumPredsLeft;
-  
+
 #ifndef NDEBUG
-  if (SuccSU->NumPredsLeft < 0) {
+  if (SuccSU->NumPredsLeft == 0) {
     errs() << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
     errs() << " has been released too many times!\n";
     llvm_unreachable(0);
   }
 #endif
-  
+  --SuccSU->NumPredsLeft;
+
   // If all the node's predecessors are scheduled, this node is ready
   // to be scheduled. Ignore the special ExitSU node.
   if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU) {

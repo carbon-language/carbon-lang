@@ -82,13 +82,19 @@ void SUnit::addPred(const SDep &D) {
   SUnit *N = D.getSUnit();
   // Update the bookkeeping.
   if (D.getKind() == SDep::Data) {
+    assert(NumPreds < UINT_MAX && "NumPreds will overflow!");
+    assert(N->NumSuccs < UINT_MAX && "NumSuccs will overflow!");
     ++NumPreds;
     ++N->NumSuccs;
   }
-  if (!N->isScheduled)
+  if (!N->isScheduled) {
+    assert(NumPredsLeft < UINT_MAX && "NumPredsLeft will overflow!");
     ++NumPredsLeft;
-  if (!isScheduled)
+  }
+  if (!isScheduled) {
+    assert(N->NumSuccsLeft < UINT_MAX && "NumSuccsLeft will overflow!");
     ++N->NumSuccsLeft;
+  }
   Preds.push_back(D);
   N->Succs.push_back(P);
   if (P.getLatency() != 0) {
@@ -121,13 +127,19 @@ void SUnit::removePred(const SDep &D) {
       Preds.erase(I);
       // Update the bookkeeping.
       if (P.getKind() == SDep::Data) {
+        assert(NumPreds > 0 && "NumPreds will underflow!");
+        assert(N->NumSuccs > 0 && "NumSuccs will underflow!");
         --NumPreds;
         --N->NumSuccs;
       }
-      if (!N->isScheduled)
+      if (!N->isScheduled) {
+        assert(NumPredsLeft > 0 && "NumPredsLeft will underflow!");
         --NumPredsLeft;
-      if (!isScheduled)
+      }
+      if (!isScheduled) {
+        assert(N->NumSuccsLeft > 0 && "NumSuccsLeft will underflow!");
         --N->NumSuccsLeft;
+      }
       if (P.getLatency() != 0) {
         this->setDepthDirty();
         N->setHeightDirty();

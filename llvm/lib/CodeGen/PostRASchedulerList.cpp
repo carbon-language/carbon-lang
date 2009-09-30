@@ -972,17 +972,17 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
 /// the PendingQueue if the count reaches zero. Also update its cycle bound.
 void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
   SUnit *SuccSU = SuccEdge->getSUnit();
-  --SuccSU->NumPredsLeft;
-  
+
 #ifndef NDEBUG
-  if (SuccSU->NumPredsLeft < 0) {
+  if (SuccSU->NumPredsLeft == 0) {
     errs() << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
     errs() << " has been released too many times!\n";
     llvm_unreachable(0);
   }
 #endif
-  
+  --SuccSU->NumPredsLeft;
+
   // Compute how many cycles it will be before this actually becomes
   // available.  This is the max of the start time of all predecessors plus
   // their latencies.

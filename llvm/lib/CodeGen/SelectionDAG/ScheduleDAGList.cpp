@@ -108,17 +108,17 @@ void ScheduleDAGList::Schedule() {
 /// the PendingQueue if the count reaches zero. Also update its cycle bound.
 void ScheduleDAGList::ReleaseSucc(SUnit *SU, const SDep &D) {
   SUnit *SuccSU = D.getSUnit();
-  --SuccSU->NumPredsLeft;
-  
+
 #ifndef NDEBUG
-  if (SuccSU->NumPredsLeft < 0) {
+  if (SuccSU->NumPredsLeft == 0) {
     errs() << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
     errs() << " has been released too many times!\n";
     llvm_unreachable(0);
   }
 #endif
-  
+  --SuccSU->NumPredsLeft;
+
   SuccSU->setDepthToAtLeast(SU->getDepth() + D.getLatency());
   
   // If all the node's predecessors are scheduled, this node is ready
