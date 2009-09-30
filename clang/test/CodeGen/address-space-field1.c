@@ -1,6 +1,6 @@
 // RUN: clang-cc -emit-llvm < %s -o - | FileCheck %s
 // CHECK:%struct.S = type { i32, i32 }
-// CHECK:define void @test_addrspace(%struct.S addrspace(1)* %p1, %struct.S addrspace(2)* %p2) nounwind {
+// CHECK:define void @test_addrspace(%struct.S addrspace(1)* %p1, %struct.S addrspace(2)* %p2) nounwind
 // CHECK:entry:
 // CHECK:  %p1.addr = alloca %struct.S addrspace(1)*       ; <%struct.S addrspace(1)**> [#uses=3]
 // CHECK:  %p2.addr = alloca %struct.S addrspace(2)*       ; <%struct.S addrspace(2)**> [#uses=3]
