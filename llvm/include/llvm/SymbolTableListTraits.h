@@ -28,7 +28,8 @@
 #include "llvm/ADT/ilist.h"
 
 namespace llvm {
-
+class ValueSymbolTable;
+  
 template<typename NodeTy> class ilist_iterator;
 template<typename NodeTy, typename Traits> class iplist;
 template<typename Ty> struct ilist_traits;
