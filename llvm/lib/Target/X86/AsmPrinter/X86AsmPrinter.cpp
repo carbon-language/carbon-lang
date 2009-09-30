@@ -653,7 +653,7 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
 
-  processDebugLoc(MI->getDebugLoc());
+  processDebugLoc(MI);
   
   printInstructionThroughMCStreamer(MI);
   

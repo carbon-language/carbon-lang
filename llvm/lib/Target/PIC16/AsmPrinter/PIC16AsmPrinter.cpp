@@ -43,7 +43,7 @@ PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
 }
 
 bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
-  processDebugLoc(MI->getDebugLoc());
+  processDebugLoc(MI);
   
   printInstruction(MI);
   

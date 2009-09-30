@@ -1347,10 +1347,10 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
 
 /// processDebugLoc - Processes the debug information of each machine
 /// instruction's DebugLoc.
-void AsmPrinter::processDebugLoc(DebugLoc DL) {
+void AsmPrinter::processDebugLoc(const MachineInstr *MI) {
   if (!MAI || !DW)
     return;
-  
+  DebugLoc DL = MI->getDebugLoc();
   if (MAI->doesSupportDebugInformation() && DW->ShouldEmitDwarfDebug()) {
     if (!DL.isUnknown()) {
       DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);

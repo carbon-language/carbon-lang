@@ -358,7 +358,7 @@ namespace llvm {
 
     /// processDebugLoc - Processes the debug information of each machine
     /// instruction's DebugLoc.
-    void processDebugLoc(DebugLoc DL);
+    void processDebugLoc(const MachineInstr *MI);
     
     /// printInlineAsm - This method formats and prints the specified machine
     /// instruction that is an inline asm.

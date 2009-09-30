@@ -405,7 +405,7 @@ bool SPUAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 ///
 void SPUAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
-  processDebugLoc(MI->getDebugLoc());
+  processDebugLoc(MI);
   printInstruction(MI);
 
   if (VerboseAsm && !MI->getDebugLoc().isUnknown())

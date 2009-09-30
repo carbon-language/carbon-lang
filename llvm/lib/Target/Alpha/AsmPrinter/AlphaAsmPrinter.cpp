@@ -177,7 +177,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
          II != E; ++II) {
       // Print the assembly for the instruction.
       ++EmittedInsts;
-      processDebugLoc(II->getDebugLoc());
+      processDebugLoc(II);
       
       printInstruction(II);
       

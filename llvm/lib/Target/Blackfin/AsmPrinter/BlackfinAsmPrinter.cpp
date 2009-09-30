@@ -146,7 +146,7 @@ bool BlackfinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
-      processDebugLoc(II->getDebugLoc());
+      processDebugLoc(II);
 
       printInstruction(II);
       if (VerboseAsm && !II->getDebugLoc().isUnknown())

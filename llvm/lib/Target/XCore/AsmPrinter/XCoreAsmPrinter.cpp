@@ -352,7 +352,7 @@ bool XCoreAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
 void XCoreAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
 
-  processDebugLoc(MI->getDebugLoc());
+  processDebugLoc(MI);
 
   // Check for mov mnemonic
   unsigned src, dst, srcSR, dstSR;
