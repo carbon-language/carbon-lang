@@ -213,3 +213,14 @@ namespace M {
 struct AA { bool operator!=(AA&); };
 struct BB : AA {};
 bool x(BB y, BB z) { return y != z; }
+
+
+struct AX { 
+  AX& operator ->();
+  int b;
+}; 
+
+void m() {
+  AX a; 
+  a->b = 0; // expected-error {{circular pointer delegation detected}}
+}

@@ -1982,6 +1982,11 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
       BaseExpr = (Expr*)Base.get();
       if (BaseExpr == NULL)
         return ExprError();
+      if (Context.getCanonicalType(BaseExpr->getType()) == 
+          Context.getCanonicalType(BaseType)) {
+        Diag(OpLoc, diag::err_operator_arrow_circular);
+        return ExprError();
+      }
       BaseType = BaseExpr->getType();
     }
   }
