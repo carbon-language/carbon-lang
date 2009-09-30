@@ -3632,7 +3632,18 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
       << D.getCXXScopeSpec().getRange();
     New->setInvalidDecl();
   }
-
+  
+  // ISO/IEC TR 18037 S6.7.3: "The type of an object with automatic storage 
+  // duration shall not be qualified by an address-space qualifier."
+  // Since all parameters have automatic store duration, they can not have
+  // an address space.
+  if (T.getAddressSpace() != 0) {
+    Diag(D.getIdentifierLoc(),  
+         diag::err_arg_with_address_space);
+    New->setInvalidDecl();
+  }   
+  
+  
   // Add the parameter declaration into this scope.
   S->AddDecl(DeclPtrTy::make(New));
   if (II)
