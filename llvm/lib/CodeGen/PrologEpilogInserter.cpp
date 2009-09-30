@@ -744,8 +744,15 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
         if (MI->getOperand(i).isReg()) {
           unsigned Reg = MI->getOperand(i).getReg();
-          if (Reg == 0 || !TargetRegisterInfo::isVirtualRegister(Reg))
+          if (Reg == 0)
             continue;
+          if (!TargetRegisterInfo::isVirtualRegister(Reg)) {
+            // If we have an active scavenged register, we shouldn't be
+            // seeing any references to it.
+            assert (Reg != CurrentScratchReg
+                    && "overlapping use of scavenged frame index register!");
+            continue;
+          }
 
           // If we already have a scratch for this virtual register, use it
           if (Reg != CurrentVirtReg) {
@@ -770,7 +777,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
 
           // If this is the last use of the register, stop tracking it.
           if (MI->getOperand(i).isKill())
-            CurrentVirtReg = 0;
+            CurrentScratchReg = CurrentVirtReg = 0;
         }
       RS->forward(MI);
     }
