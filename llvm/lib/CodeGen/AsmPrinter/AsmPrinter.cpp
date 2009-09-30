@@ -110,8 +110,8 @@ bool AsmPrinter::doInitialization(Module &M) {
   if (MAI->doesAllowNameToStartWithDigit())
     Mang->setSymbolsCanStartWithDigit(true);
   
-  GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
-  assert(MI && "AsmPrinter didn't require GCModuleInfo?");
+  // Allow the target to emit any magic that it wants at the start of the file.
+  EmitStartOfAsmFile(M);
 
   if (MAI->hasSingleParameterDotFile()) {
     /* Very minimal debug info. It is ignored if we emit actual
@@ -120,6 +120,8 @@ bool AsmPrinter::doInitialization(Module &M) {
     O << "\t.file\t\"" << M.getModuleIdentifier() << "\"\n";
   }
 
+  GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
+  assert(MI && "AsmPrinter didn't require GCModuleInfo?");
   for (GCModuleInfo::iterator I = MI->begin(), E = MI->end(); I != E; ++I)
     if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*I))
       MP->beginAssembly(O, *this, *MAI);

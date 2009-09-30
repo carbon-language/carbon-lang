@@ -381,8 +381,8 @@ namespace {
     }
 
     bool runOnMachineFunction(MachineFunction &F);
-    bool doInitialization(Module &M);
     bool doFinalization(Module &M);
+    void EmitStartOfAsmFile(Module &M);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -862,7 +862,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 
-bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
+void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
   static const char *const CPUDirectives[] = {
     "",
     "ppc",
@@ -885,9 +885,6 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
   assert(Directive <= PPC::DIR_64 && "Directive out of range.");
   O << "\t.machine " << CPUDirectives[Directive] << '\n';
 
-  bool Result = AsmPrinter::doInitialization(M);
-  assert(MMI);
-
   // Prime text sections so they are adjacent.  This reduces the likelihood a
   // large data or debug section causes a branch to exceed 16M limit.
   TargetLoweringObjectFileMachO &TLOFMacho = 
@@ -907,8 +904,6 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
                                       16, SectionKind::getText()));
   }
   OutStreamer.SwitchSection(getObjFileLowering().getTextSection());
-
-  return Result;
 }
 
 void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {

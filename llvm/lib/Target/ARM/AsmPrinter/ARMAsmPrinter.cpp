@@ -149,8 +149,8 @@ namespace {
 
     void printMachineInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);
-    bool doInitialization(Module &M);
     bool doFinalization(Module &M);
+    void EmitStartOfAsmFile(Module &M);
 
     /// EmitMachineConstantPoolValue - Print a machine constantpool value to
     /// the .s file.
@@ -1043,8 +1043,7 @@ void ARMAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   O << '\n';
 }
 
-bool ARMAsmPrinter::doInitialization(Module &M) {
-
+void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
   if (Subtarget->isTargetDarwin()) {
     Reloc::Model RelocM = TM.getRelocationModel();
     if (RelocM == Reloc::PIC_ || RelocM == Reloc::DynamicNoPIC) {
@@ -1063,8 +1062,6 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
         O << "\t.section __TEXT,__picsymbolstub4,symbol_stubs,none,16\n";
     }
   }
-
-  bool Result = AsmPrinter::doInitialization(M);
 
   // Use unified assembler syntax mode for Thumb.
   if (Subtarget->isThumb())
@@ -1102,8 +1099,6 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
 
     // FIXME: Should we signal R9 usage?
   }
-
-  return Result;
 }
 
 void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {

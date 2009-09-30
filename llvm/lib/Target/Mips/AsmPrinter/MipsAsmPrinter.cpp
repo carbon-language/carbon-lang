@@ -85,7 +85,7 @@ namespace {
     static const char *getRegisterName(unsigned RegNo);
 
     bool runOnMachineFunction(MachineFunction &F);
-    bool doInitialization(Module &M);
+    void EmitStartOfAsmFile(Module &M);
   };
 } // end of anonymous namespace
 
@@ -408,7 +408,7 @@ printFCCOperand(const MachineInstr *MI, int opNum, const char *Modifier) {
   O << Mips::MipsFCCToString((Mips::CondCode)MO.getImm()); 
 }
 
-bool MipsAsmPrinter::doInitialization(Module &M) {
+void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // FIXME: Use SwitchSection.
   
   // Tell the assembler which ABI we are using
@@ -421,8 +421,6 @@ bool MipsAsmPrinter::doInitialization(Module &M) {
 
   // return to previous section
   O << "\t.previous" << '\n'; 
-
-  return AsmPrinter::doInitialization(M);
 }
 
 void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {

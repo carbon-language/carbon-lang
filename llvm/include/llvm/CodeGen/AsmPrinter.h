@@ -169,6 +169,10 @@ namespace llvm {
     /// call this implementation.
     bool doInitialization(Module &M);
 
+    /// EmitStartOfAsmFile - This virtual method can be overridden by targets
+    /// that want to emit something at the start of their file.
+    virtual void EmitStartOfAsmFile(Module &M) {}
+    
     /// EmitEndOfAsmFile - This virtual method can be overridden by targets that
     /// want to emit something at the end of their file.
     virtual void EmitEndOfAsmFile(Module &M) {}
