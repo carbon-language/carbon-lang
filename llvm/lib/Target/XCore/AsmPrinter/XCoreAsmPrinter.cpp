@@ -53,12 +53,11 @@ static cl::opt<unsigned> MaxThreads("xcore-max-threads", cl::Optional,
 
 namespace {
   class VISIBILITY_HIDDEN XCoreAsmPrinter : public AsmPrinter {
-    DwarfWriter *DW;
     const XCoreSubtarget &Subtarget;
   public:
     explicit XCoreAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                              const MCAsmInfo *T, bool V)
-      : AsmPrinter(O, TM, T, V), DW(0),
+      : AsmPrinter(O, TM, T, V),
       Subtarget(TM.getSubtarget<XCoreSubtarget>()) {}
 
     virtual const char *getPassName() const {
@@ -84,7 +83,6 @@ namespace {
 
     void printMachineInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);
-    bool doInitialization(Module &M);
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AsmPrinter::getAnalysisUsage(AU);
@@ -367,13 +365,6 @@ void XCoreAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   if (VerboseAsm && !MI->getDebugLoc().isUnknown())
     EmitComments(*MI);
   O << '\n';
-}
-
-bool XCoreAsmPrinter::doInitialization(Module &M) {
-  bool Result = AsmPrinter::doInitialization(M);
-  DW = getAnalysisIfAvailable<DwarfWriter>();
-  
-  return Result;
 }
 
 // Force static initialization.

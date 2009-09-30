@@ -50,7 +50,6 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
   class VISIBILITY_HIDDEN ARMAsmPrinter : public AsmPrinter {
-    DwarfWriter *DW;
 
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
     /// make the right decision when printing asm code for different targets.
@@ -84,7 +83,7 @@ namespace {
   public:
     explicit ARMAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                            const MCAsmInfo *T, bool V)
-      : AsmPrinter(O, TM, T, V), DW(0), AFI(NULL), MCP(NULL),
+      : AsmPrinter(O, TM, T, V), AFI(NULL), MCP(NULL),
         InCPMode(false) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
@@ -1066,7 +1065,6 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
   }
 
   bool Result = AsmPrinter::doInitialization(M);
-  DW = getAnalysisIfAvailable<DwarfWriter>();
 
   // Use unified assembler syntax mode for Thumb.
   if (Subtarget->isThumb())
