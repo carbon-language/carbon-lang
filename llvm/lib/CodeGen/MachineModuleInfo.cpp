@@ -63,12 +63,6 @@ bool MachineModuleInfo::doFinalization() {
   return false;
 }
 
-/// BeginFunction - Begin gathering function meta information.
-///
-void MachineModuleInfo::BeginFunction(MachineFunction *MF) {
-  // Coming soon.
-}
-
 /// EndFunction - Discard function meta information.
 ///
 void MachineModuleInfo::EndFunction() {
