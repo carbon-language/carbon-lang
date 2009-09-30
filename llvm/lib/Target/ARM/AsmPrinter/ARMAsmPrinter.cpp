@@ -1046,6 +1046,25 @@ void ARMAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 bool ARMAsmPrinter::doInitialization(Module &M) {
 
+  if (Subtarget->isTargetDarwin()) {
+    Reloc::Model RelocM = TM.getRelocationModel();
+    if (RelocM == Reloc::PIC_ || RelocM == Reloc::DynamicNoPIC) {
+      // Declare all the text sections up front (before the DWARF sections
+      // emitted by AsmPrinter::doInitialization) so the assembler will keep
+      // them together at the beginning of the object file.  This helps
+      // avoid out-of-range branches that are due a fundamental limitation of
+      // the way symbol offsets are encoded with the current Darwin ARM
+      // relocations.
+      O << "\t.section __TEXT,__text,regular\n"
+        << "\t.section __TEXT,__textcoal_nt,coalesced\n"
+        << "\t.section __TEXT,__const_coal,coalesced\n";
+      if (RelocM == Reloc::DynamicNoPIC)
+        O << "\t.section __TEXT,__symbol_stub4,symbol_stubs,none,12\n";
+      else
+        O << "\t.section __TEXT,__picsymbolstub4,symbol_stubs,none,16\n";
+    }
+  }
+
   bool Result = AsmPrinter::doInitialization(M);
   DW = getAnalysisIfAvailable<DwarfWriter>();
 
