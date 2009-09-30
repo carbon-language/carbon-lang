@@ -301,9 +301,15 @@ public:
                                         SectionKind K) const;
 
   /// getTextCoalSection - Return the "__TEXT,__textcoal_nt" section we put weak
-  /// symbols into.
+  /// text symbols into.
   const MCSection *getTextCoalSection() const {
     return TextCoalSection;
+  }
+  
+  /// getConstTextCoalSection - Return the "__TEXT,__const_coal" section
+  /// we put weak read-only symbols into.
+  const MCSection *getConstTextCoalSection() const {
+    return ConstTextCoalSection;
   }
   
   /// getLazySymbolPointerSection - Return the section corresponding to

@@ -1053,13 +1053,24 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
       // avoid out-of-range branches that are due a fundamental limitation of
       // the way symbol offsets are encoded with the current Darwin ARM
       // relocations.
-      O << "\t.section __TEXT,__text,regular\n"
-        << "\t.section __TEXT,__textcoal_nt,coalesced\n"
-        << "\t.section __TEXT,__const_coal,coalesced\n";
-      if (RelocM == Reloc::DynamicNoPIC)
-        O << "\t.section __TEXT,__symbol_stub4,symbol_stubs,none,12\n";
-      else
-        O << "\t.section __TEXT,__picsymbolstub4,symbol_stubs,none,16\n";
+      TargetLoweringObjectFileMachO &TLOFMacho = 
+        static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+      OutStreamer.SwitchSection(TLOFMacho.getTextSection());
+      OutStreamer.SwitchSection(TLOFMacho.getTextCoalSection());
+      OutStreamer.SwitchSection(TLOFMacho.getConstTextCoalSection());
+      if (RelocM == Reloc::DynamicNoPIC) {
+        const MCSection *sect =
+          TLOFMacho.getMachOSection("__TEXT", "__symbol_stub4",
+                                    MCSectionMachO::S_SYMBOL_STUBS,
+                                    12, SectionKind::getText());
+        OutStreamer.SwitchSection(sect);
+      } else {
+        const MCSection *sect =
+          TLOFMacho.getMachOSection("__TEXT", "__picsymbolstub4",
+                                    MCSectionMachO::S_SYMBOL_STUBS,
+                                    16, SectionKind::getText());
+        OutStreamer.SwitchSection(sect);
+      }
     }
   }
 
