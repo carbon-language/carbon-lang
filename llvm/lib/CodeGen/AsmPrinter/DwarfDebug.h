@@ -510,7 +510,7 @@ public:
   /// RecordSourceLine - Records location information and associates it with a 
   /// label. Returns a unique label ID used to generate a label and provide
   /// correspondence to the source line list.
-  unsigned RecordSourceLine(unsigned Line, unsigned Col, DICompileUnit CU);
+  unsigned RecordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
 
   /// getRecordSourceLineCount - Return the number of source lines in the debug
   /// info.

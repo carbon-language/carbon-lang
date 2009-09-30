@@ -1731,8 +1731,7 @@ void DwarfDebug::BeginFunction(MachineFunction *MF) {
   DebugLoc FDL = MF->getDefaultDebugLoc();
   if (!FDL.isUnknown()) {
     DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
-    unsigned LabelID = RecordSourceLine(DLT.Line, DLT.Col,
-                                        DICompileUnit(DLT.CompileUnit));
+    unsigned LabelID = RecordSourceLine(DLT.Line, DLT.Col, DLT.CompileUnit);
     Asm->printLabel(LabelID);
     O << '\n';
   }
@@ -1825,14 +1824,15 @@ unsigned DwarfDebug::RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
 /// RecordSourceLine - Records location information and associates it with a
 /// label. Returns a unique label ID used to generate a label and provide
 /// correspondence to the source line list.
-unsigned DwarfDebug::RecordSourceLine(unsigned Line, unsigned Col,
-                                      DICompileUnit CU) {
+unsigned DwarfDebug::RecordSourceLine(unsigned Line, unsigned Col, 
+                                      MDNode *Scope) {
   if (!MMI)
     return 0;
 
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
+  DICompileUnit CU(Scope);
   unsigned Src = GetOrCreateSourceID(CU.getDirectory(),
                                      CU.getFilename());
   unsigned ID = MMI->NextLabelID();

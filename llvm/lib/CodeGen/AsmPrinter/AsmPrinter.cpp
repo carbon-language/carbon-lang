@@ -1356,8 +1356,8 @@ void AsmPrinter::processDebugLoc(DebugLoc DL) {
       DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);
 
       if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT) {
-        printLabel(DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,
-                                        DICompileUnit(CurDLT.CompileUnit)));
+        printLabel(DW->RecordSourceLine(CurDLT.Line, CurDLT.Col, 
+                                        CurDLT.CompileUnit));
         O << '\n';
       }
 

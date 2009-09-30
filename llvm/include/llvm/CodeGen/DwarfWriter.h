@@ -85,7 +85,7 @@ public:
   /// RecordSourceLine - Register a source line with debug info. Returns a
   /// unique label ID used to generate a label and provide correspondence to
   /// the source line list.
-  unsigned RecordSourceLine(unsigned Line, unsigned Col, DICompileUnit CU);
+  unsigned RecordSourceLine(unsigned Line, unsigned Col, MDNode *Scope);
 
   /// RecordRegionStart - Indicate the start of a region.
   unsigned RecordRegionStart(MDNode *N);
