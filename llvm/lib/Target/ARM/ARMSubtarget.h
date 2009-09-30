@@ -55,6 +55,9 @@ protected:
   /// ThumbMode - Indicates supported Thumb version.
   ThumbTypeEnum ThumbMode;
 
+  /// PostRAScheduler - True if using post-register-allocation scheduler.
+  bool PostRAScheduler;
+
   /// IsR9Reserved - True if R9 is a not available as general purpose register.
   bool IsR9Reserved;
 
@@ -122,6 +125,10 @@ protected:
   bool isR9Reserved() const { return IsR9Reserved; }
 
   const std::string & getCPUString() const { return CPUString; }
+  
+  /// enablePostRAScheduler - From TargetSubtarget, return true to
+  /// enable post-RA scheduler.
+  bool enablePostRAScheduler() const { return PostRAScheduler; }
 
   /// getInstrItins - Return the instruction itineraies based on subtarget
   /// selection.

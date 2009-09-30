@@ -34,6 +34,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtarget.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -209,6 +210,11 @@ static bool isSchedulingBoundary(const MachineInstr *MI,
 }
 
 bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
+  // Check that post-RA scheduling is enabled for this function
+  const TargetSubtarget &ST = Fn.getTarget().getSubtarget<TargetSubtarget>();
+  if (!ST.enablePostRAScheduler())
+    return true;
+
   DEBUG(errs() << "PostRAScheduler\n");
 
   const MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();

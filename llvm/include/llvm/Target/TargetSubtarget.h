@@ -39,10 +39,14 @@ public:
   /// should be attempted.
   virtual unsigned getSpecialAddressLatency() const { return 0; }
 
+  // enablePostRAScheduler - Return true to enable
+  // post-register-allocation scheduling.
+  virtual bool enablePostRAScheduler() const { return false; }
+
   // adjustSchedDependency - Perform target specific adjustments to
   // the latency of a schedule dependency.
   virtual void adjustSchedDependency(SUnit *def, SUnit *use, 
-                                     SDep& dep) const { };
+                                     SDep& dep) const { }
 };
 
 } // End llvm namespace

@@ -43,6 +43,9 @@ def FeatureThumb2 : SubtargetFeature<"thumb2", "ThumbMode", "Thumb2",
 def FeatureNEONFP : SubtargetFeature<"neonfp", "UseNEONForSinglePrecisionFP",
                                      "true",
                                      "Use NEON for single-precision FP">;
+def FeaturePostRASched : SubtargetFeature<"postrasched", "PostRAScheduler",
+                                     "true",
+                                     "Use Post-Register-Allocation Scheduler">;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
@@ -105,7 +108,8 @@ def : ProcNoItin<"arm1156t2f-s",    [ArchV6T2, FeatureThumb2, FeatureVFP2]>;
 
 // V7 Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
-                [ArchV7A, FeatureThumb2, FeatureNEON, FeatureNEONFP]>;
+                [ArchV7A, FeatureThumb2, FeatureNEON, FeatureNEONFP,
+                 FeaturePostRASched]>;
 def : ProcNoItin<"cortex-a9",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
 
 //===----------------------------------------------------------------------===//

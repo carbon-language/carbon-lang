@@ -45,14 +45,6 @@ static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
 
-// This is not enabled by default due to 1) high compile time cost, 2) it's not
-// beneficial to all targets. The plan is to let targets decide whether this
-// is enabled.
-static cl::opt<bool>
-EnablePostRAScheduler("post-RA-scheduler",
-                       cl::desc("Enable scheduling after register allocation"),
-                       cl::init(false));
-
 // Enable or disable FastISel. Both options are needed, because
 // FastISel is enabled by default with -fast, and we wish to be
 // able to enable or disable fast-isel independently from -O0.
@@ -326,7 +318,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   printAndVerify(PM);
 
   // Second pass scheduler.
-  if (OptLevel != CodeGenOpt::None && EnablePostRAScheduler) {
+  if (OptLevel != CodeGenOpt::None) {
     PM.add(createPostRAScheduler());
     printAndVerify(PM);
   }

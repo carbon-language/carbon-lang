@@ -29,6 +29,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , UseNEONForSinglePrecisionFP(false)
   , IsThumb(isThumb)
   , ThumbMode(Thumb1)
+  , PostRAScheduler(false)
   , IsR9Reserved(ReserveR9)
   , stackAlignment(4)
   , CPUString("generic")
