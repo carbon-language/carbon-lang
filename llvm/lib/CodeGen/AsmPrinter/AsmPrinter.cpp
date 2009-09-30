@@ -115,7 +115,7 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   if (MAI->hasSingleParameterDotFile()) {
     /* Very minimal debug info. It is ignored if we emit actual
-       debug info. If we don't, this at helps the user find where
+       debug info. If we don't, this at least helps the user find where
        a function came from. */
     O << "\t.file\t\"" << M.getModuleIdentifier() << "\"\n";
   }
