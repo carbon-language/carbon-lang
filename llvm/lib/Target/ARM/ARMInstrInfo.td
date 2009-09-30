@@ -618,7 +618,7 @@ def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
 //  Control Flow Instructions.
 //
 
-let isReturn = 1, isTerminator = 1 in
+let isReturn = 1, isTerminator = 1, isBarrier = 1 in
   def BX_RET : AI<(outs), (ins), BrMiscFrm, IIC_Br, 
                   "bx", " lr", [(ARMretflag)]> {
   let Inst{7-4}   = 0b0001;
@@ -630,7 +630,7 @@ let isReturn = 1, isTerminator = 1 in
 // FIXME: $dst1 should be a def. But the extra ops must be in the end of the
 // operand list.
 // FIXME: Should pc be an implicit operand like PICADD, etc?
-let isReturn = 1, isTerminator = 1, mayLoad = 1 in
+let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1 in
   def LDM_RET : AXI4ld<(outs),
                     (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
                     LdStMulFrm, IIC_Br, "ldm${p}${addr:submode} $addr, $dst1",

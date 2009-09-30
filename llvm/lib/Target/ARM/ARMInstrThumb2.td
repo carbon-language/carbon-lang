@@ -1072,7 +1072,7 @@ let Defs =
 // FIXME: $dst1 should be a def. But the extra ops must be in the end of the
 // operand list.
 // FIXME: Should pc be an implicit operand like PICADD, etc?
-let isReturn = 1, isTerminator = 1, mayLoad = 1 in
+let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1 in
   def t2LDM_RET : T2XI<(outs),
                     (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
                     IIC_Br, "ldm${addr:submode}${p}${addr:wide} $addr, $dst1",

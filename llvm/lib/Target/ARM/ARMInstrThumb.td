@@ -174,14 +174,14 @@ def tANDsp : PseudoInst<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
 //  Control Flow Instructions.
 //
 
-let isReturn = 1, isTerminator = 1 in {
+let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   def tBX_RET : TI<(outs), (ins), IIC_Br, "bx lr", [(ARMretflag)]>;
   // Alternative return instruction used by vararg functions.
   def tBX_RET_vararg : TI<(outs), (ins tGPR:$target), IIC_Br, "bx $target", []>;
 }
 
 // FIXME: remove when we have a way to marking a MI with these properties.
-let isReturn = 1, isTerminator = 1, mayLoad = 1 in
+let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1 in
 def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$dst1, variable_ops), IIC_Br,
                    "pop${p} $dst1", []>;
 
