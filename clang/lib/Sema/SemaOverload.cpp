@@ -3998,10 +3998,11 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
 
         Diag(Cand->Surrogate->getLocation(), diag::err_ovl_surrogate_cand)
           << FnType;
-      } else {
+      } else if (OnlyViable) {
         // FIXME: We need to get the identifier in here
         // FIXME: Do we want the error message to point at the operator?
         // (built-ins won't have a location)
+        // FIXME: can we get some kind of stable location for this?
         QualType FnType
           = Context.getFunctionType(Cand->BuiltinTypes.ResultTy,
                                     Cand->BuiltinTypes.ParamTypes,
@@ -4631,19 +4632,34 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       }
     }
 
-    case OR_No_Viable_Function:
+    case OR_No_Viable_Function: {
+      // C++ [over.match.oper]p9:
+      //   If the operator is the operator , [...] and there are no
+      //   viable functions, then the operator is assumed to be the
+      //   built-in operator and interpreted according to clause 5.
+      if (Opc == BinaryOperator::Comma)
+        break;
+
       // For class as left operand for assignment or compound assigment operator
       // do not fall through to handling in built-in, but report that no overloaded
       // assignment operator found
-      if (Args[0]->getType()->isRecordType() && Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign) {
+      OwningExprResult Result = ExprError();
+      if (Args[0]->getType()->isRecordType() && 
+          Opc >= BinaryOperator::Assign && Opc <= BinaryOperator::OrAssign) {
         Diag(OpLoc,  diag::err_ovl_no_viable_oper)
              << BinaryOperator::getOpcodeStr(Opc)
              << Args[0]->getSourceRange() << Args[1]->getSourceRange();
-        return ExprError();
+      } else {
+        // No viable function; try to create a built-in operation, which will
+        // produce an error. Then, show the non-viable candidates.
+        Result = CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
       }
-      // No viable function; fall through to handling this as a
-      // built-in operator, which will produce an error message for us.
-      break;
+      assert(Result.isInvalid() && 
+             "C++ binary operator overloading is missing candidates!");
+      if (Result.isInvalid())
+        PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+      return move(Result);
+    }
 
     case OR_Ambiguous:
       Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
@@ -4661,9 +4677,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       return ExprError();
     }
 
-  // Either we found no viable overloaded operator or we matched a
-  // built-in operator. In either case, try to build a built-in
-  // operation.
+  // We matched a built-in operator; build it.
   return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 }
 

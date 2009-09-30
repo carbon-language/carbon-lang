@@ -1599,11 +1599,19 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
       }
     }
 
-    case OR_No_Viable_Function:
-      // No viable function; fall through to handling this as a
-      // built-in operator, which will produce an error message for us.
-      break;
-
+    case OR_No_Viable_Function: {
+      // No viable function; try checking this as a built-in operator, which
+      // will fail and provide a diagnostic. Then, print the overload
+      // candidates.
+      OwningExprResult Result = CreateBuiltinUnaryOp(OpLoc, Opc, move(Input));
+      assert(Result.isInvalid() && 
+             "C++ postfix-unary operator overloading is missing candidates!");
+      if (Result.isInvalid())
+        PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+      
+      return move(Result);
+    }
+        
     case OR_Ambiguous:
       Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
           << UnaryOperator::getOpcodeStr(Opc)

@@ -1,7 +1,7 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
 namespace std {
-  template<typename T> class vector { };
+  template<typename T> class vector { }; // expected-note{{candidate}}
 }
 
 typedef int INT;

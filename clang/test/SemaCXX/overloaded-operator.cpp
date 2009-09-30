@@ -28,12 +28,12 @@ void g(Y y, Z z) {
 }
 
 struct A {
-  bool operator==(Z&); // expected-note{{candidate function}}
+  bool operator==(Z&); // expected-note 2{{candidate function}}
 };
 
 A make_A();
 
-bool operator==(A&, Z&); // expected-note{{candidate function}}
+bool operator==(A&, Z&); // expected-note 2{{candidate function}}
 
 void h(A a, const A ac, Z z) {
   make_A() == z;

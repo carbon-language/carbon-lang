@@ -59,7 +59,7 @@ void f(Short s, Long l, Enum1 e1, Enum2 e2, Xpmf pmf) {
   // FIXME: should pass (void)static_cast<no&>(islong(e1 % e2));
 }
 
-struct ShortRef {
+struct ShortRef { // expected-note{{candidate function}}
   operator short&();
 };
 
@@ -67,7 +67,7 @@ struct LongRef {
   operator volatile long&();
 };
 
-struct XpmfRef {
+struct XpmfRef { // expected-note{{candidate function}}
   operator pmf&();
 };
 

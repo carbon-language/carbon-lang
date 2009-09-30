@@ -8,7 +8,8 @@ void f() { A = 0; } // expected-error {{unexpected namespace name 'A': expected 
 int A; // expected-error {{redefinition of 'A' as different kind of symbol}}
 class A; // expected-error {{redefinition of 'A' as different kind of symbol}}
 
-class B {}; // expected-note {{previous definition is here}}
+class B {}; // expected-note {{previous definition is here}} \
+            // FIXME: ugly expected-note{{candidate function}}
 
 void C(); // expected-note {{previous definition is here}}
 namespace C {} // expected-error {{redefinition of 'C' as different kind of symbol}}
