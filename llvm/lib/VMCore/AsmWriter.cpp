@@ -32,6 +32,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/FormattedStream.h"
@@ -869,6 +870,30 @@ static const char *getPredicateText(unsigned predicate) {
   return pred;
 }
 
+static void WriteMDNodeComment(const MDNode *Node,
+			       formatted_raw_ostream &Out) {
+  if (Node->getNumElements() < 1)
+    return;
+  ConstantInt *CI = dyn_cast<ConstantInt>(Node->getElement(0));
+  if (!CI) return;
+  unsigned Val = CI->getZExtValue();
+  unsigned Tag = Val & ~LLVMDebugVersionMask;
+  if (Val >= LLVMDebugVersion) {
+    if (Tag == dwarf::DW_TAG_auto_variable)
+      Out << "; [ DW_TAG_auto_variable ]";
+    else if (Tag == dwarf::DW_TAG_arg_variable)
+      Out << "; [ DW_TAG_arg_variable ]";
+    else if (Tag == dwarf::DW_TAG_return_variable)
+      Out << "; [ DW_TAG_return_variable ]";
+    else if (Tag == dwarf::DW_TAG_vector_type)
+      Out << "; [ DW_TAG_vector_type ]";
+    else if (Tag == dwarf::DW_TAG_user_base)
+      Out << "; [ DW_TAG_user_base ]";
+    else
+      Out << "; [" << dwarf::TagString(Tag) << " ]";
+  }
+}
+
 static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
                          SlotTracker &Machine) {
   SmallVector<const MDNode *, 16> Nodes;
@@ -898,7 +923,10 @@ static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
       if (++NI != NE)
         Out << ", ";
     }
-    Out << "}\n";
+
+    Out << "}";
+    WriteMDNodeComment(Node, Out);
+    Out << "\n";
   }
 }
 
