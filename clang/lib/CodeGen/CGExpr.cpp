@@ -719,8 +719,18 @@ void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E, LValue &LV) {
   }
   else if (const UnaryOperator *Exp = dyn_cast<UnaryOperator>(E))
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
-  else if (const ParenExpr *Exp = dyn_cast<ParenExpr>(E))
+  else if (const ParenExpr *Exp = dyn_cast<ParenExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
+    if (LV.isObjCIvar()) {
+      // If cast is to a structure pointer, follow gcc's behavior and make it
+      // a non-ivar write-barrier.
+      QualType ExpTy = E->getType();
+      if (ExpTy->isPointerType())
+        ExpTy = ExpTy->getAs<PointerType>()->getPointeeType();
+      if (ExpTy->isRecordType())
+        LV.SetObjCIvar(LV, false); 
+    }        
+  }
   else if (const ImplicitCastExpr *Exp = dyn_cast<ImplicitCastExpr>(E))
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV);
   else if (const CStyleCastExpr *Exp = dyn_cast<CStyleCastExpr>(E))
