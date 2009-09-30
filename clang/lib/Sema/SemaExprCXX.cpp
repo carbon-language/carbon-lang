@@ -1979,6 +1979,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
   if (OpKind == tok::arrow) {
     // The set of types we've considered so far.
     llvm::SmallPtrSet<CanQualType,8> CTypes;
+    llvm::SmallVector<SourceLocation, 8> Locations;
     CTypes.insert(Context.getCanonicalType(BaseType));
     
     while (BaseType->isRecordType()) {
@@ -1986,11 +1987,14 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
       BaseExpr = (Expr*)Base.get();
       if (BaseExpr == NULL)
         return ExprError();
+      if (CXXOperatorCallExpr *OpCall = dyn_cast<CXXOperatorCallExpr>(BaseExpr))
+        Locations.push_back(OpCall->getOperatorLoc());
       BaseType = BaseExpr->getType();
       CanQualType CBaseType = Context.getCanonicalType(BaseType);
       if (!CTypes.insert(CBaseType)) {
-        // TODO: note the chain of conversions
         Diag(OpLoc, diag::err_operator_arrow_circular);
+        for (unsigned i = 0; i < Locations.size(); i++)
+          Diag(Locations[i], diag::note_declared_at);
         return ExprError();
       }
     }

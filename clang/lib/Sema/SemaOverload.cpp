@@ -5065,7 +5065,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
   UsualUnaryConversions(FnExpr);
   Base = new (Context) CXXOperatorCallExpr(Context, OO_Arrow, FnExpr, &Base, 1,
                                  Method->getResultType().getNonReferenceType(),
-                                 OpLoc);
+                                 Method->getLocation());
   return Owned(Base);
 }
 

@@ -216,7 +216,7 @@ bool x(BB y, BB z) { return y != z; }
 
 
 struct AX { 
-  AX& operator ->();
+  AX& operator ->();	 // expected-note {{declared at}}
   int b;
 }; 
 
@@ -226,14 +226,14 @@ void m() {
 }
 
 struct CircA {
-  struct CircB& operator->();
+  struct CircB& operator->(); // expected-note {{declared at}}
   int val;
 };
 struct CircB {
-  struct CircC& operator->();
+  struct CircC& operator->(); // expected-note {{declared at}}
 };
 struct CircC {
-  struct CircA& operator->();
+  struct CircA& operator->(); // expected-note {{declared at}}
 };
 
 void circ() {
