@@ -317,6 +317,10 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   PM.add(createPrologEpilogCodeInserter());
   printAndVerify(PM);
 
+  // Run pre-sched2 passes.
+  if (addPreSched2(PM, OptLevel))
+    printAndVerify(PM);
+
   // Second pass scheduler.
   if (OptLevel != CodeGenOpt::None) {
     PM.add(createPostRAScheduler());
