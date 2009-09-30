@@ -1978,8 +1978,8 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
   //   returned, with the original second operand.
   if (OpKind == tok::arrow) {
     // The set of types we've considered so far.
-    llvm::SmallVector<CanQualType,8> CTypes;
-    CTypes.push_back(Context.getCanonicalType(BaseType));
+    llvm::SmallPtrSet<CanQualType,8> CTypes;
+    CTypes.insert(Context.getCanonicalType(BaseType));
     
     while (BaseType->isRecordType()) {
       Base = BuildOverloadedArrowExpr(S, move(Base), BaseExpr->getExprLoc());
@@ -1988,12 +1988,11 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
         return ExprError();
       BaseType = BaseExpr->getType();
       CanQualType CBaseType = Context.getCanonicalType(BaseType);
-      if (std::find(CTypes.begin(), CTypes.end(), CBaseType) != CTypes.end()) {
+      if (!CTypes.insert(CBaseType)) {
         // TODO: note the chain of conversions
         Diag(OpLoc, diag::err_operator_arrow_circular);
         return ExprError();
       }
-      CTypes.push_back(CBaseType);
     }
   }
 
