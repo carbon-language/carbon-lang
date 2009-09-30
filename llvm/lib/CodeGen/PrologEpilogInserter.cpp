@@ -731,8 +731,6 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 /// with physical registers. Use the register scavenger to find an
 /// appropriate register to use.
 void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
-  const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
-
   // Run through the instructions and find any virtual registers.
   for (MachineFunction::iterator BB = Fn.begin(),
        E = Fn.end(); BB != E; ++BB) {
@@ -746,7 +744,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
         if (MI->getOperand(i).isReg()) {
           unsigned Reg = MI->getOperand(i).getReg();
-          if (Reg == 0 || !TRI->isVirtualRegister(Reg))
+          if (Reg == 0 || !TargetRegisterInfo::isVirtualRegister(Reg))
             continue;
 
           // If we already have a scratch for this virtual register, use it
