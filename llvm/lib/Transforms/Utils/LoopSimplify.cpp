@@ -274,9 +274,10 @@ ReprocessLoop:
       DomTreeNode *Node = DT->getNode(ExitingBlock);
       const std::vector<DomTreeNodeBase<BasicBlock> *> &Children =
         Node->getChildren();
-      for (unsigned k = 0, g = Children.size(); k != g; ++k) {
-        DT->changeImmediateDominator(Children[k], Node->getIDom());
-        if (DF) DF->changeImmediateDominator(Children[k]->getBlock(),
+      while (!Children.empty()) {
+        DomTreeNode *Child = Children.front();
+        DT->changeImmediateDominator(Child, Node->getIDom());
+        if (DF) DF->changeImmediateDominator(Child->getBlock(),
                                              Node->getIDom()->getBlock(),
                                              DT);
       }
