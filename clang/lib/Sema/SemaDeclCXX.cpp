@@ -3703,9 +3703,14 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
           Diag(Func->getLocation(), diag::err_ovl_candidate);
         }
       }
-      else
-        Diag(DeclLoc, diag::err_lvalue_to_rvalue_ref)
-          << Init->getSourceRange();
+      else {
+        if (isRValRef)
+          Diag(DeclLoc, diag::err_lvalue_to_rvalue_ref) 
+            << Init->getSourceRange();
+        else
+          Diag(DeclLoc, diag::err_invalid_initialization)
+            << DeclType << Init->getType() << Init->getSourceRange();
+      }
     }
     return badConversion;
   }
