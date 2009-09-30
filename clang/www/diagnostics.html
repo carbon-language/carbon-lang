@@ -43,7 +43,7 @@ what is wrong in a particular piece of code, an example is:</p>
   $ <b>gcc-4.2 -fsyntax-only -Wformat format-strings.c</b>
   format-strings.c:91: warning: too few arguments for format
   $ <b>clang -fsyntax-only format-strings.c</b>
-  format-strings.c:91:13: warning: '.*' specified field precision is missing a matching 'int' argument
+  format-strings.c:91:13: <font color="magenta">warning:</font> '.*' specified field precision is missing a matching 'int' argument
   <font color="darkgreen">  printf("%.*d");</font>
   <font color="blue">            ^</font>
 </pre>
@@ -64,7 +64,7 @@ nonsensical example to illustrate this:</p>
   $ <b>gcc-4.2 -fsyntax-only t.c</b>
   t.c:7: error: invalid operands to binary + (have 'int' and 'struct A')
   $ <b>clang -fsyntax-only t.c</b>
-  t.c:7:39: error: invalid operands to binary expression ('int' and 'struct A')
+  t.c:7:39: <font color="red">error:</font> invalid operands to binary expression ('int' and 'struct A')
   <font color="darkgreen">  return y + func(y ? ((SomeA.X + 40) + SomeA) / 42 + SomeA.X : SomeA.X);</font>
   <font color="blue">                       ~~~~~~~~~~~~~~ ^ ~~~~~</font>
 </pre>
@@ -89,7 +89,7 @@ one:</p>
   $ <b>gcc-4.2 -fsyntax-only t.c</b>
   t.c:5: error: invalid type argument of 'unary *'
   $ <b>clang -fsyntax-only t.c</b>
-  t.c:5:11: error: indirection requires pointer operand ('int' invalid)
+  t.c:5:11: <font color="red">error:</font> indirection requires pointer operand ('int' invalid)
   <font color="darkgreen">  int y = *SomeA.X;</font>
   <font color="blue">          ^~~~~~~~</font>
 </pre>
@@ -112,7 +112,7 @@ example P and Q have type "int*":</p>
   $ <b>gcc-4.2 -fsyntax-only t.c</b>
   #'exact_div_expr' not supported by pp_c_expression#'t.c:12: error: called object  is not a function
   $ <b>clang -fsyntax-only t.c</b>
-  t.c:12:8: error: called object type 'int' is not a function or function pointer
+  t.c:12:8: <font color="red">error:</font> called object type 'int' is not a function or function pointer
   <font color="darkgreen">  (P-Q)();</font>
   <font color="blue">  ~~~~~^</font>
 </pre>
@@ -134,7 +134,7 @@ a typedef in C:</p>
   $ <b>gcc-4.2 -fsyntax-only t.c</b>
   t.c:15: error: invalid operands to binary / (have 'float __vector__' and 'const int *')
   $ <b>clang -fsyntax-only t.c</b>
-  t.c:15:11: error: can't convert between vector values of different size ('__m128' and 'int const *')
+  t.c:15:11: <font color="red">error:</font> can't convert between vector values of different size ('__m128' and 'int const *')
   <font color="darkgreen">  myvec[1]/P;</font>
   <font color="blue">  ~~~~~~~~^~</font>
 </pre>
@@ -148,7 +148,7 @@ is useful for the compiler to expose underlying details of a typedef:</p>
   $ <b>gcc-4.2 -fsyntax-only t.c</b>
   t.c:13: error: request for member 'x' in something not a structure or union
   $ <b>clang -fsyntax-only t.c</b>
-  t.c:13:9: error: member reference base type 'pid_t' (aka 'int') is not a structure or union
+  t.c:13:9: <font color="red">error:</font> member reference base type 'pid_t' (aka 'int') is not a structure or union
   <font color="darkgreen">  myvar = myvar.x;</font>
   <font color="blue">          ~~~~~ ^</font>
 </pre>
@@ -182,7 +182,7 @@ void addHTTPService(servers::Server const &server, ::services::WebService const 
   $ <b>g++-4.2 -fsyntax-only t.cpp</b>
   t.cpp:9: error: no match for 'operator+=' in 'server += http'
   $ <b>clang -fsyntax-only t.cpp</b>
-  t.cpp:9:10: error: invalid operands to binary expression ('servers::Server const' and '::services::WebService const *')
+  t.cpp:9:10: <font color="red">error:</font> invalid operands to binary expression ('servers::Server const' and '::services::WebService const *')
     <font color="darkgreen">server += http;</font>
     <font color="blue">~~~~~~ ^  ~~~~</font>
 </pre>
@@ -193,7 +193,7 @@ void addHTTPService(servers::Server const &server, ::services::WebService const 
   $ <b>g++-4.2 -fsyntax-only t.cpp</b>
   t.cpp:12: error: no match for 'operator=' in 'str = vec'
   $ <b>clang -fsyntax-only t.cpp</b>
-  t.cpp:12:7: error: incompatible type assigning 'vector&lt;Real&gt;', expected 'std::string' (aka 'class std::basic_string&lt;char&gt;')
+  t.cpp:12:7: <font color="red">error:</font> incompatible type assigning 'vector&lt;Real&gt;', expected 'std::string' (aka 'class std::basic_string&lt;char&gt;')
     <font color="darkgreen">str = vec</font>;
         <font color="blue">^ ~~~</font>
 </pre>
@@ -210,21 +210,25 @@ extension that has been considered obsolete since 1993:</p>
 
 <pre>
   $ <b>clang t.c</b>
-  t.c:5:28: warning: use of GNU old-style field designator extension
+  t.c:5:28: <font color="magenta">warning:</font> use of GNU old-style field designator extension
   <font color="darkgreen">struct point origin = { x: 0.0, y: 0.0 };</font>
                           <font color="red">~~</font> <font color="blue">^</font>
                           <font color="darkgreen">.x = </font>
-  t.c:5:36: warning: use of GNU old-style field designator extension
+  t.c:5:36: <font color="magenta">warning:</font> use of GNU old-style field designator extension
   <font color="darkgreen">struct point origin = { x: 0.0, y: 0.0 };</font>
                                   <font color="red">~~</font> <font color="blue">^</font>
                                   <font color="darkgreen">.y = </font>
 </pre>
 
-<p>The underlined code should be removed, then replaced with the code below the caret line (".x =" or ".y =", respectively). "Fix-it" hints are most useful for working around common user errors and misconceptions. For example, C++ users commonly forget the syntax for explicit specialization of class templates, as in the following error:</p>
+<p>The underlined code should be removed, then replaced with the code below the
+caret line (".x =" or ".y =", respectively). "Fix-it" hints are most useful for
+working around common user errors and misconceptions. For example, C++ users
+commonly forget the syntax for explicit specialization of class templates,
+as in the following error:</p>
 
 <pre>
   $ <b>clang t.cpp</b>
-  t.cpp:9:3: error: template specialization requires 'template&lt;&gt;'
+  t.cpp:9:3: <font color="red">error:</font> template specialization requires 'template&lt;&gt;'
     struct iterator_traits&lt;file_iterator&gt; {
     <font color="blue">^</font>
     <font color="darkgreen">template&lt;&gt; </font>
@@ -244,7 +248,7 @@ Clang helps you out:</p>
   t.c: In function 'test':
   t.c:80: error: invalid operands to binary &lt; (have 'struct mystruct' and 'float')
   $ <b>clang -fsyntax-only t.c</b>
-  t.c:80:3: error: invalid operands to binary expression ('typeof(P)' (aka 'struct mystruct') and 'typeof(F)' (aka 'float'))
+  t.c:80:3: <font color="red">error:</font> invalid operands to binary expression ('typeof(P)' (aka 'struct mystruct') and 'typeof(F)' (aka 'float'))
   <font color="darkgreen">  X = MYMAX(P, F);</font>
   <font color="blue">      ^~~~~~~~~~~</font>
   t.c:76:94: note: instantiated from:
@@ -260,7 +264,7 @@ implements the "wwopen" class of APIs):</p>
 
 <pre>
   $ <b>clang -fsyntax-only t.c</b>
-  t.c:22:2: warning: type specifier missing, defaults to 'int'
+  t.c:22:2: <font color="magenta">warning:</font> type specifier missing, defaults to 'int'
   <font color="darkgreen">        ILPAD();</font>
   <font color="blue">        ^</font>
   t.c:17:17: note: instantiated from:
@@ -273,6 +277,45 @@ implements the "wwopen" class of APIs):</p>
 
 <p>In practice, we've found that this is actually more useful in multiply nested
 macros that in simple ones.</p>
+
+<h2>Quality of Implementation and Attention to Detail</h2>
+
+<p>Finally, we have put a lot of work polishing the little things, because
+little things add up over time and contribute to a great user experience.  Two
+examples are:</p>
+
+<pre>
+  $ <b>gcc-4.2 t.c</b>
+  t.c: In function 'foo':
+  t.c:5: error: expected ';' before '}' token
+  $ <b>clang t.c</b>
+  t.c:4:8: <font color="red">error:</font> expected ';' after expression
+  <font color="darkgreen">  bar()</font>
+  <font color="blue">       ^</font>
+  <font color="blue">       ;</font>
+</pre>
+
+<p>This shows a trivial little tweak, where we tell you to put the semicolon at
+the end of the line that is missing it (line 8) instead of at the beginning of
+the following line (line 9).  This is particularly important with fixit hints
+and caret diagnostics, because otherwise you don't get the important context.
+</p>
+
+<pre>
+  $ <b>gcc-4.2 t.c</b>
+  t.c:3: error: expected '=', ',', ';', 'asm' or '__attribute__' before '*' token
+  $ <b>clang t.c</b>
+  t.c:3:1: <font color="red">error:</font> unknown type name 'foo_t'
+  <font color="darkgreen">foo_t *P = 0;</font>
+  <font color="blue">^</font>
+</pre>
+
+<p>This shows an example of much better error recovery.  The message coming out
+of GCC is completely useless for diagnosing the problem, Clang tries much harder
+and produces a much more useful diagnosis of the problem.</p>
+
+<p>While each of these details is minor, we feel that they all add up to provide
+a much more polished experience.</p>
 
 </div>
 </body>
