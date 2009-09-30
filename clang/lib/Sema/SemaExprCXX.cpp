@@ -589,10 +589,8 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
                                   DeclarationName Name, Expr** Args,
                                   unsigned NumArgs, DeclContext *Ctx,
                                   bool AllowMissing, FunctionDecl *&Operator) {
-  // FIXME: Change to use LookupQualifiedName!
-  DeclContext::lookup_iterator Alloc, AllocEnd;
-  llvm::tie(Alloc, AllocEnd) = Ctx->lookup(Name);
-  if (Alloc == AllocEnd) {
+  LookupResult R = LookupQualifiedName(Ctx, Name, LookupOrdinaryName);
+  if (!R) {
     if (AllowMissing)
       return false;
     return Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
@@ -600,7 +598,8 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
   }
 
   OverloadCandidateSet Candidates;
-  for (; Alloc != AllocEnd; ++Alloc) {
+  for (LookupResult::iterator Alloc = R.begin(), AllocEnd = R.end(); 
+       Alloc != AllocEnd; ++Alloc) {
     // Even member operator new/delete are implicitly treated as
     // static, so don't use AddMemberCandidate.
     if (FunctionDecl *Fn = dyn_cast<FunctionDecl>(*Alloc)) {

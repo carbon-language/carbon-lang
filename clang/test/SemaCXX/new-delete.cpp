@@ -38,8 +38,7 @@ void good_news()
   ia4 *pai = new (int[3][4]);
   pi = ::new int;
   U *pu = new (ps) U;
-  // FIXME: Inherited functions are not looked up currently.
-  //V *pv = new (ps) V;
+  V *pv = new (ps) V;
   
   pi = new (S(1.0f, 2)) int;
   
@@ -133,7 +132,7 @@ void X4::release(X3 *x) {
   delete x;
 }
 
-class X6 {
+class X5 {
 public:
   void Destroy() const { delete this; }
 };
