@@ -66,6 +66,7 @@ template<typename T, int I> struct C { };
 struct D : public C<int, 1> { };
 struct E : public D { };
 struct F : A<float> { };
+struct G : A<float>, C<int, 1> { };
 
 template<typename T, int I>
   C<T, I> *f4a(const C<T, I>&);
@@ -75,12 +76,13 @@ template<typename T, int I>
   C<T, I> *f4c(C<T, I>*);
 int *f4c(...);
 
-void test_f4(D d, E e, F f) {
+void test_f4(D d, E e, F f, G g) {
   C<int, 1> *ci1a = f4a(d);
   C<int, 1> *ci2a = f4a(e);
   C<int, 1> *ci1b = f4b(d);
   C<int, 1> *ci2b = f4b(e);
   C<int, 1> *ci1c = f4c(&d);
   C<int, 1> *ci2c = f4c(&e);
+  C<int, 1> *ci3c = f4c(&g);
   int       *ip1 = f4c(&f);
 }

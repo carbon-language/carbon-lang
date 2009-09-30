@@ -651,8 +651,7 @@ DeduceTemplateArguments(ASTContext &Context,
         = DeduceTemplateArguments(Context, TemplateParams, SpecParam, Arg,
                                   Info, Deduced);
 
-      if (Result && (TDF & TDF_DerivedClass) &&
-          Result != Sema::TDK_Inconsistent) {
+      if (Result && (TDF & TDF_DerivedClass)) {
         // C++ [temp.deduct.call]p3b3:
         //   If P is a class, and P has the form template-id, then A can be a
         //   derived class of the deduced A. Likewise, if P is a pointer to a
@@ -690,11 +689,6 @@ DeduceTemplateArguments(ASTContext &Context,
               // note that we had some success.
               if (BaseResult == Sema::TDK_Success)
                 Successful = true;
-              // If deduction against this base resulted in an inconsistent
-              // set of deduced template arguments, template argument
-              // deduction fails.
-              else if (BaseResult == Sema::TDK_Inconsistent)
-                return BaseResult;
             }
 
             // Visit base classes
