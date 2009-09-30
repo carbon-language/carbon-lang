@@ -15,6 +15,7 @@
 #define CLANG_CODEGEN_CGDEBUGINFO_H
 
 #include "clang/AST/Type.h"
+#include "clang/AST/Expr.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/DebugInfo.h"
@@ -33,6 +34,7 @@ namespace clang {
 
 namespace CodeGen {
   class CodeGenModule;
+  class CodeGenFunction;
 
 /// CGDebugInfo - This class gathers all debug information during compilation
 /// and is responsible for emitting to llvm globals or pass directly to
@@ -102,6 +104,13 @@ public:
   void EmitDeclareOfAutoVariable(const VarDecl *Decl, llvm::Value *AI,
                                  CGBuilderTy &Builder);
 
+  /// EmitDeclareOfBlockDeclRefVariable - Emit call to llvm.dbg.declare for an
+  /// imported variable declaration in a block.
+  void EmitDeclareOfBlockDeclRefVariable(const BlockDeclRefExpr *BDRE,
+                                         llvm::Value *AI,
+                                         CGBuilderTy &Builder,
+                                         CodeGenFunction *CGF);
+
   /// EmitDeclareOfArgVariable - Emit call to llvm.dbg.declare for an argument
   /// variable declaration.
   void EmitDeclareOfArgVariable(const VarDecl *Decl, llvm::Value *AI,
@@ -118,6 +127,9 @@ private:
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
                    CGBuilderTy &Builder);
 
+  /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
+  void EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag, llvm::Value *AI,
+                   CGBuilderTy &Builder, CodeGenFunction *CGF);
 
   /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
   /// new one if necessary.

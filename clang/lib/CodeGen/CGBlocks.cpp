@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/DeclObjC.h"
@@ -661,9 +662,40 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
 
   StartFunction(BD, ResultType, Fn, Args,
                 BExpr->getBody()->getLocEnd());
+
+  // Save a spot to insert the debug information for all the BlockDeclRefDecls.
+  llvm::BasicBlock *entry = Builder.GetInsertBlock();
+  llvm::BasicBlock::iterator entry_ptr = Builder.GetInsertPoint();
+
   CurFuncDecl = OuterFuncDecl;
   CurCodeDecl = BD;
   EmitStmt(BExpr->getBody());
+
+  if (CGDebugInfo *DI = getDebugInfo()) {
+    llvm::BasicBlock *end = Builder.GetInsertBlock();
+    llvm::BasicBlock::iterator end_ptr = Builder.GetInsertPoint();
+
+    // Emit debug information for all the BlockDeclRefDecls.
+    // First, go back to the entry...
+    Builder.SetInsertPoint(entry, entry_ptr);
+
+    // And then insert the debug information..
+    for (unsigned i=0; i < BlockDeclRefDecls.size(); ++i) {
+      const Expr *E = BlockDeclRefDecls[i];
+      const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
+      if (BDRE) {
+        const ValueDecl *D = BDRE->getDecl();
+        DI->setLocation(D->getLocation());
+        DI->EmitDeclareOfBlockDeclRefVariable(BDRE,
+                                             LocalDeclMap[getBlockStructDecl()],
+                                              Builder, this);
+      }
+    }
+
+    // Then go back to the end, and we're done.
+    Builder.SetInsertPoint(end, end_ptr);
+  }
+
   FinishFunction(cast<CompoundStmt>(BExpr->getBody())->getRBracLoc());
 
   // The runtime needs a minimum alignment of a void *.
