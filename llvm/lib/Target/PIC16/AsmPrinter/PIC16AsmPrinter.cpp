@@ -217,7 +217,7 @@ void PIC16AsmPrinter::printLibcallDecls() {
   O << MAI->getCommentString() << "External decls for libcalls - END." <<"\n";
 }
 
-/// doInitialization - Perfrom Module level initializations here.
+/// doInitialization - Perform Module level initializations here.
 /// One task that we do here is to sectionize all global variables.
 /// The MemSelOptimizer pass depends on the sectionizing.
 ///
