@@ -197,17 +197,17 @@ void ScheduleDAGRRList::Schedule() {
 /// the AvailableQueue if the count reaches zero. Also update its cycle bound.
 void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
   SUnit *PredSU = PredEdge->getSUnit();
-  --PredSU->NumSuccsLeft;
-  
+
 #ifndef NDEBUG
-  if (PredSU->NumSuccsLeft < 0) {
+  if (PredSU->NumSuccsLeft == 0) {
     errs() << "*** Scheduling failed! ***\n";
     PredSU->dump(this);
     errs() << " has been released too many times!\n";
     llvm_unreachable(0);
   }
 #endif
-  
+  --PredSU->NumSuccsLeft;
+
   // If all the node's successors are scheduled, this node is ready
   // to be scheduled. Ignore the special EntrySU node.
   if (PredSU->NumSuccsLeft == 0 && PredSU != &EntrySU) {
