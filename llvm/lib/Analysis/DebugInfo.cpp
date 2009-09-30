@@ -189,6 +189,11 @@ bool DIDescriptor::isVariable() const {
   }
 }
 
+/// isType - Return true if the specified tag is legal for DIType.
+bool DIDescriptor::isType() const {
+  return isBasicType() || isCompositeType() || isDerivedType();
+}
+
 /// isSubprogram - Return true if the specified tag is legal for
 /// DISubprogram.
 bool DIDescriptor::isSubprogram() const {
@@ -205,6 +210,11 @@ bool DIDescriptor::isGlobalVariable() const {
   unsigned Tag = getTag();
 
   return Tag == dwarf::DW_TAG_variable;
+}
+
+/// isGlobal - Return true if the specified tag is legal for DIGlobal.
+bool DIDescriptor::isGlobal() const {
+  return isGlobalVariable();
 }
 
 /// isScope - Return true if the specified tag is one of the scope
@@ -238,6 +248,22 @@ bool DIDescriptor::isLexicalBlock() const {
   unsigned Tag = getTag();
 
   return Tag == dwarf::DW_TAG_lexical_block;
+}
+
+/// isSubrange - Return true if the specified tag is DW_TAG_subrange_type.
+bool DIDescriptor::isSubrange() const {
+  assert (!isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+
+  return Tag == dwarf::DW_TAG_subrange_type;
+}
+
+/// isEnumerator - Return true if the specified tag is DW_TAG_enumerator.
+bool DIDescriptor::isEnumerator() const {
+  assert (!isNull() && "Invalid descriptor!");
+  unsigned Tag = getTag();
+
+  return Tag == dwarf::DW_TAG_enumerator;
 }
 
 //===----------------------------------------------------------------------===//
@@ -390,6 +416,30 @@ bool DISubprogram::describes(const Function *F) {
   if (strcmp(F->getName().data(), Name) == 0)
     return true;
   return false;
+}
+
+const char *DIScope::getFilename() const {
+  if (isLexicalBlock()) 
+    return DILexicalBlock(DbgNode).getFilename();
+  else if (isSubprogram())
+    return DISubprogram(DbgNode).getFilename();
+  else if (isCompileUnit())
+    return DICompileUnit(DbgNode).getFilename();
+  else 
+    assert (0 && "Invalid DIScope!");
+  return NULL;
+}
+
+const char *DIScope::getDirectory() const {
+  if (isLexicalBlock()) 
+    return DILexicalBlock(DbgNode).getDirectory();
+  else if (isSubprogram())
+    return DISubprogram(DbgNode).getDirectory();
+  else if (isCompileUnit())
+    return DICompileUnit(DbgNode).getDirectory();
+  else 
+    assert (0 && "Invalid DIScope!");
+  return NULL;
 }
 
 //===----------------------------------------------------------------------===//

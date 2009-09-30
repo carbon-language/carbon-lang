@@ -98,6 +98,10 @@ namespace llvm {
     bool isScope() const;
     bool isCompileUnit() const;
     bool isLexicalBlock() const;
+    bool isSubrange() const;
+    bool isEnumerator() const;
+    bool isType() const;
+    bool isGlobal() const;
   };
 
   /// DISubrange - This is used to represent ranges, for array bounds.
@@ -131,8 +135,8 @@ namespace llvm {
     }
     virtual ~DIScope() {}
 
-    virtual const char *getFilename() const { return NULL; }
-    virtual const char *getDirectory() const { return NULL; }
+    const char *getFilename() const;
+    const char *getDirectory() const;
   };
 
   /// DICompileUnit - A wrapper for a compile unit.
@@ -438,6 +442,7 @@ namespace llvm {
         DbgNode = 0;
     }
     DIScope getContext() const       { return getFieldAs<DIScope>(1); }
+    const char *getDirectory() const { return getContext().getDirectory(); }
     const char *getFilename() const  { return getContext().getFilename(); }
   };
 
