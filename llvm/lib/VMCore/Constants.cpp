@@ -482,6 +482,10 @@ ConstantArray::ConstantArray(const ArrayType *T,
 
 Constant *ConstantArray::get(const ArrayType *Ty, 
                              const std::vector<Constant*> &V) {
+  for (unsigned i = 0, e = V.size(); i != e; ++i) {
+    assert(V[i]->getType() == Ty->getElementType() &&
+           "Wrong type in array element initializer");
+  }
   LLVMContextImpl *pImpl = Ty->getContext().pImpl;
   // If this is an all-zero array, return a ConstantAggregateZero object
   if (!V.empty()) {
@@ -2140,4 +2144,3 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   // Delete the old constant!
   destroyConstant();
 }
-
