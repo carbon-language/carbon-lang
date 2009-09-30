@@ -654,7 +654,13 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // adjustments also, even when the frame itself is small.
     if (RS && !ExtraCSSpill) {
       MachineFrameInfo  *MFI = MF.getFrameInfo();
-      if (estimateStackSize(MF, MFI) >= estimateRSStackSizeLimit(MF)
+      // If any of the stack slot references may be out of range of an
+      // immediate offset, make sure a register (or a spill slot) is
+      // available for the register scavenger. Note that if we're indexing
+      // off the frame pointer, the effective stack size is 4 bytes larger
+      // since the FP points to the previous FP.
+      if (estimateStackSize(MF, MFI) + (hasFP(MF) ? 4 : 0)
+          >= estimateRSStackSizeLimit(MF)
           || AFI->isThumb1OnlyFunction()) {
         // If any non-reserved CS register isn't spilled, just spill one or two
         // extra. That should take care of it!
