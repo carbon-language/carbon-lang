@@ -739,7 +739,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
     RS->enterBasicBlock(BB);
 
     unsigned CurrentVirtReg = 0;
-    unsigned CurrentScratchReg;
+    unsigned CurrentScratchReg = 0;
 
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       MachineInstr *MI = I;
