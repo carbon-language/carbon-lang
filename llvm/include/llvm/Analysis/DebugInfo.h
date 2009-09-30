@@ -187,10 +187,10 @@ namespace llvm {
   class DIType : public DIDescriptor {
   public:
     enum {
-      FlagPrivate    = 1 << 0,
-      FlagProtected  = 1 << 1,
-      FlagFwdDecl    = 1 << 2,
-      FlagAppleBlock = 1 << 3,
+      FlagPrivate          = 1 << 0,
+      FlagProtected        = 1 << 1,
+      FlagFwdDecl          = 1 << 2,
+      FlagAppleBlock       = 1 << 3,
       FlagBlockByrefStruct = 1 << 4
     };
 
@@ -409,6 +409,17 @@ namespace llvm {
     /// Verify - Verify that a variable descriptor is well formed.
     bool Verify() const;
 
+    /// HasComplexAddr - Return true if the variable has a complex address.
+    bool hasComplexAddress() const {
+      return getNumAddrElements() > 0;
+    }
+
+    unsigned getNumAddrElements() const { return DbgNode->getNumElements()-6; }
+
+    uint64_t getAddrElement(unsigned Idx) const {
+      return getUInt64Field(Idx+6);
+    }
+
     /// isBlockByrefVariable - Return true if the variable was declared as
     /// a "__block" variable (Apple Blocks).
     bool isBlockByrefVariable() const {
@@ -463,6 +474,8 @@ namespace llvm {
     DIFactory(const DIFactory &);     // DO NOT IMPLEMENT
     void operator=(const DIFactory&); // DO NOT IMPLEMENT
   public:
+    enum ComplexAddrKind { OpPlus=1, OpDeref };
+
     explicit DIFactory(Module &m);
 
     /// GetOrCreateArray - Create an descriptor for an array of descriptors.
@@ -539,6 +552,14 @@ namespace llvm {
                               StringRef Name,
                               DICompileUnit CompileUnit, unsigned LineNo,
                               DIType Type);
+
+    /// CreateComplexVariable - Create a new descriptor for the specified
+    /// variable which has a complex address expression for its address.
+    DIVariable CreateComplexVariable(unsigned Tag, DIDescriptor Context,
+                                     const std::string &Name,
+                                     DICompileUnit CompileUnit, unsigned LineNo,
+                                     DIType Type,
+                                     SmallVector<Value *, 9> &addr);
 
     /// CreateLexicalBlock - This creates a descriptor for a lexical block
     /// with the specified parent context.

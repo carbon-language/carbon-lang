@@ -556,7 +556,7 @@ DIType DwarfDebug::GetBlockByrefType(DIType Ty, std::string Name) {
   unsigned tag = Ty.getTag();
 
   if (tag == dwarf::DW_TAG_pointer_type) {
-    DIDerivedType DTy = DIDerivedType (Ty.getNode());
+    DIDerivedType DTy = DIDerivedType(Ty.getNode());
     subType = DTy.getTypeDerivedFrom();
   }
 
@@ -575,6 +575,56 @@ DIType DwarfDebug::GetBlockByrefType(DIType Ty, std::string Name) {
   }
 
   return Ty;
+}
+
+/// AddComplexAddress - Start with the address based on the location provided,
+/// and generate the DWARF information necessary to find the actual variable
+/// given the extra address information encoded in the DIVariable, starting from
+/// the starting location.  Add the DWARF information to the die.
+///
+void DwarfDebug::AddComplexAddress(DbgVariable *&DV, DIE *Die,
+                                   unsigned Attribute,
+                                   const MachineLocation &Location) {
+  const DIVariable &VD = DV->getVariable();
+  DIType Ty = VD.getType();
+
+  // Decode the original location, and use that as the start of the byref
+  // variable's location.
+  unsigned Reg = RI->getDwarfRegNum(Location.getReg(), false);
+  DIEBlock *Block = new DIEBlock();
+
+  if (Location.isReg()) {
+    if (Reg < 32) {
+      AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_reg0 + Reg);
+    } else {
+      Reg = Reg - dwarf::DW_OP_reg0;
+      AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_breg0 + Reg);
+      AddUInt(Block, 0, dwarf::DW_FORM_udata, Reg);
+    }
+  } else {
+    if (Reg < 32)
+      AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_breg0 + Reg);
+    else {
+      AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_bregx);
+      AddUInt(Block, 0, dwarf::DW_FORM_udata, Reg);
+    }
+
+    AddUInt(Block, 0, dwarf::DW_FORM_sdata, Location.getOffset());
+  }
+
+  for (unsigned i = 0, N = VD.getNumAddrElements(); i < N; ++i) {
+    uint64_t Element = VD.getAddrElement(i);
+
+    if (Element == DIFactory::OpPlus) {
+      AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_plus_uconst);
+      AddUInt(Block, 0, dwarf::DW_FORM_udata, VD.getAddrElement(++i));
+    } else if (Element == DIFactory::OpDeref) {
+      AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_deref);
+    } else llvm_unreachable("unknown DIFactory Opcode");
+  }
+
+  // Now attach the location information to the DIE.
+  AddBlock(Die, Attribute, 0, Block);
 }
 
 /* Byref variables, in Blocks, are declared by the programmer as "SomeType
@@ -649,7 +699,7 @@ void DwarfDebug::AddBlockByrefAddress(DbgVariable *&DV, DIE *Die,
   const char *varName = VD.getName();
 
   if (Tag == dwarf::DW_TAG_pointer_type) {
-    DIDerivedType DTy = DIDerivedType (Ty.getNode());
+    DIDerivedType DTy = DIDerivedType(Ty.getNode());
     TmpTy = DTy.getTypeDerivedFrom();
     isPointer = true;
   }
@@ -790,7 +840,6 @@ void DwarfDebug::AddType(CompileUnit *DW_Unit, DIE *Entity, DIType Ty) {
   else {
     assert(Ty.isDerivedType() && "Unknown kind of DIType");
     ConstructTypeDIE(DW_Unit, Buffer, DIDerivedType(Ty.getNode()));
-
   }
 
   // Add debug information entry to entity and appropriate context.
@@ -1187,6 +1236,7 @@ DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
   AddSourceLine(VariableDie, &VD);
 
   // Add variable type.
+  // FIXME: isBlockByrefVariable should be reformulated in terms of complex addresses instead.
   if (VD.isBlockByrefVariable())
     AddType(Unit, VariableDie, GetBlockByrefType(VD.getType(), Name));
   else
@@ -1200,7 +1250,10 @@ DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
     Location.set(RI->getFrameRegister(*MF),
                  RI->getFrameIndexOffset(*MF, DV->getFrameIndex()));
 
-    if (VD.isBlockByrefVariable())
+
+    if (VD.hasComplexAddress())
+      AddComplexAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
+    else if (VD.isBlockByrefVariable())
       AddBlockByrefAddress(DV, VariableDie, dwarf::DW_AT_location, Location);
     else
       AddAddress(VariableDie, dwarf::DW_AT_location, Location);

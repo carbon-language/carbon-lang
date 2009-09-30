@@ -531,6 +531,8 @@ void DIVariable::dump() const {
   errs() << " [" << getLineNumber() << "] ";
   getType().dump();
   errs() << "\n";
+
+  // FIXME: Dump complex addresses
 }
 
 //===----------------------------------------------------------------------===//
@@ -778,6 +780,26 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
     Type.getNode(),
   };
   return DIVariable(MDNode::get(VMContext, &Elts[0], 6));
+}
+
+
+/// CreateComplexVariable - Create a new descriptor for the specified variable
+/// which has a complex address expression for its address.
+DIVariable DIFactory::CreateComplexVariable(unsigned Tag, DIDescriptor Context,
+                                            const std::string &Name,
+                                            DICompileUnit CompileUnit,
+                                            unsigned LineNo,
+                                   DIType Type, SmallVector<Value *, 9> &addr) {
+  SmallVector<Value *, 9> Elts;
+  Elts.push_back(GetTagConstant(Tag));
+  Elts.push_back(Context.getNode());
+  Elts.push_back(MDString::get(VMContext, Name));
+  Elts.push_back(CompileUnit.getNode());
+  Elts.push_back(ConstantInt::get(Type::getInt32Ty(VMContext), LineNo));
+  Elts.push_back(Type.getNode());
+  Elts.insert(Elts.end(), addr.begin(), addr.end());
+
+  return DIVariable(MDNode::get(VMContext, &Elts[0], 6+addr.size()));
 }
 
 
