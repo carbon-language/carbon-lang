@@ -351,23 +351,6 @@ unsigned MachineFunction::addLiveIn(unsigned PReg,
   return VReg;
 }
 
-/// getOrCreateDebugLocID - Look up the DebugLocTuple index with the given
-/// source file, line, and column. If none currently exists, create a new
-/// DebugLocTuple, and insert it into the DebugIdMap.
-unsigned MachineFunction::getOrCreateDebugLocID(MDNode *CompileUnit,
-                                                unsigned Line, unsigned Col) {
-  DebugLocTuple Tuple(CompileUnit, Line, Col);
-  DenseMap<DebugLocTuple, unsigned>::iterator II
-    = DebugLocInfo.DebugIdMap.find(Tuple);
-  if (II != DebugLocInfo.DebugIdMap.end())
-    return II->second;
-  // Add a new tuple.
-  unsigned Id = DebugLocInfo.DebugLocations.size();
-  DebugLocInfo.DebugLocations.push_back(Tuple);
-  DebugLocInfo.DebugIdMap[Tuple] = Id;
-  return Id;
-}
-
 /// getDebugLocTuple - Get the DebugLocTuple for a given DebugLoc object.
 DebugLocTuple MachineFunction::getDebugLocTuple(DebugLoc DL) const {
   unsigned Idx = DL.getIndex();
