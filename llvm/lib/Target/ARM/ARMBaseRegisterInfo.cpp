@@ -658,7 +658,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       // immediate offset, make sure a register (or a spill slot) is
       // available for the register scavenger. Note that if we're indexing
       // off the frame pointer, the effective stack size is 4 bytes larger
-      // since the FP points to the previous FP.
+      // since the FP points to the stack slot of the previous FP.
       if (estimateStackSize(MF, MFI) + (hasFP(MF) ? 4 : 0)
           >= estimateRSStackSizeLimit(MF)
           || AFI->isThumb1OnlyFunction()) {
