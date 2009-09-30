@@ -153,7 +153,7 @@ public:
 
   /// BeginFunction - Begin gathering function meta information.
   ///
-  void BeginFunction(MachineFunction *MF) {}
+  void BeginFunction(MachineFunction *) {}
   
   /// EndFunction - Discard function meta information.
   ///
