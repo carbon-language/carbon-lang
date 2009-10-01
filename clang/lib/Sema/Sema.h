@@ -766,7 +766,8 @@ public:
                         bool SuppressUserConversions,
                         bool AllowExplicit,
                         bool ForceRValue,
-                        bool InOverloadResolution);
+                        bool InOverloadResolution,
+                        bool UserCast = false);
   bool IsStandardConversion(Expr *From, QualType ToType,
                             bool InOverloadResolution,
                             StandardConversionSequence& SCS);
@@ -790,7 +791,8 @@ public:
                                UserDefinedConversionSequence& User,
                                OverloadCandidateSet& Conversions,
                                bool AllowConversionFunctions,
-                               bool AllowExplicit, bool ForceRValue);
+                               bool AllowExplicit, bool ForceRValue,
+                               bool UserCast = false);
   bool DiagnoseAmbiguousUserDefinedConversion(Expr *From, QualType ToType);
                                               
 

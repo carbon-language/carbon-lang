@@ -806,7 +806,8 @@ TryStaticImplicitCast(Sema &Self, Expr *SrcExpr, QualType DestType,
                                /*SuppressUserConversions=*/false,
                                /*AllowExplicit=*/true,
                                /*ForceRValue=*/false,
-                               /*InOverloadResolution=*/false);
+                               /*InOverloadResolution=*/false,
+                               /*one of user provided casts*/true);
 
   if (ICS.ConversionKind == ImplicitConversionSequence::BadConversion)
     return TC_NotApplicable;

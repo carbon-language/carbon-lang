@@ -404,11 +404,14 @@ Sema::IsOverload(FunctionDecl *New, Decl* OldD,
 /// permitted.
 /// If @p ForceRValue, then overloading is performed as if From was an rvalue,
 /// no matter its actual lvalueness.
+/// If @p UserCast, the implicit conversion is being done for a user-specified
+/// cast.
 ImplicitConversionSequence
 Sema::TryImplicitConversion(Expr* From, QualType ToType,
                             bool SuppressUserConversions,
                             bool AllowExplicit, bool ForceRValue,
-                            bool InOverloadResolution) {
+                            bool InOverloadResolution,
+                            bool UserCast) {
   ImplicitConversionSequence ICS;
   OverloadCandidateSet Conversions;
   OverloadingResult UserDefResult = OR_Success;
@@ -419,7 +422,7 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
                                    ICS.UserDefined,
                                    Conversions,
                                    !SuppressUserConversions, AllowExplicit,
-                                   ForceRValue)) == OR_Success) {
+				   ForceRValue, UserCast)) == OR_Success) {
     ICS.ConversionKind = ImplicitConversionSequence::UserDefinedConversion;
     // C++ [over.ics.user]p4:
     //   A conversion of an expression of class type to the same class
@@ -1372,12 +1375,15 @@ static void GetFunctionAndTemplate(AnyFunctionDecl Orig, T *&Function,
 ///
 /// \param ForceRValue  true if the expression should be treated as an rvalue
 /// for overload resolution.
+/// \param UserCast true if looking for user defined conversion for a static
+/// cast.
 Sema::OverloadingResult Sema::IsUserDefinedConversion(
                                    Expr *From, QualType ToType,
                                    UserDefinedConversionSequence& User,
                                    OverloadCandidateSet& CandidateSet,
                                    bool AllowConversionFunctions,
-                                   bool AllowExplicit, bool ForceRValue) {
+                                   bool AllowExplicit, bool ForceRValue,
+                                   bool UserCast) {
   if (const RecordType *ToRecordType = ToType->getAs<RecordType>()) {
     if (CXXRecordDecl *ToRecordDecl
           = dyn_cast<CXXRecordDecl>(ToRecordType->getDecl())) {
@@ -1411,11 +1417,14 @@ Sema::OverloadingResult Sema::IsUserDefinedConversion(
           if (ConstructorTmpl)
             AddTemplateOverloadCandidate(ConstructorTmpl, false, 0, 0, &From,
                                          1, CandidateSet,
-                                         /*SuppressUserConversions=*/true,
+                                         /*SuppressUserConversions=*/!UserCast,
                                          ForceRValue);
           else
+            // Allow one user-defined conversion when user specifies a
+            // From->ToType conversion via an static cast (c-style, etc).
             AddOverloadCandidate(Constructor, &From, 1, CandidateSet,
-                                 /*SuppressUserConversions=*/true, ForceRValue);
+                                 /*SuppressUserConversions=*/!UserCast, 
+                                 ForceRValue);
         }
       }
     }
