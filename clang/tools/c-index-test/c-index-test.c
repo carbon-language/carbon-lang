@@ -12,12 +12,10 @@ static void PrintCursor(CXCursor Cursor) {
   else {
     printf("%s=%s", clang_getCursorKindSpelling(Cursor.kind),
                       clang_getCursorSpelling(Cursor));
-    if (Cursor.stmt) {
-      CXDecl DeclReferenced = clang_getCursorDecl(Cursor);
-      if (DeclReferenced)
-        printf(":%d:%d", clang_getDeclLine(DeclReferenced),
-                         clang_getDeclColumn(DeclReferenced));
-    }
+    CXDecl DeclReferenced = clang_getCursorDecl(Cursor);
+    if (DeclReferenced)
+      printf(":%d:%d", clang_getDeclLine(DeclReferenced),
+                       clang_getDeclColumn(DeclReferenced));
   }
 }
 

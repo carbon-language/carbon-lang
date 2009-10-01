@@ -393,6 +393,9 @@ const char *clang_getCursorSpelling(CXCursor C)
         }
       case CXCursor_ObjCClassRef: 
         {
+        if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND)) {
+          return OID->getIdentifier()->getName();
+        }
         ObjCCategoryDecl *OID = dyn_cast<ObjCCategoryDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing category decl");
         return OID->getClassInterface()->getIdentifier()->getName();
@@ -524,10 +527,20 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
       } else if (ObjCMessageExpr *MExp = dyn_cast<ObjCMessageExpr>(Stm)) {
         CXCursor C = { CXCursor_ObjCSelectorRef, Dcl, MExp };
         return C;
-      }
+      } 
       // Fall through...treat as a decl, not a ref.
     }
-    CXCursor C = { TranslateKind(Dcl), Dcl, 0 };
+    if (ALoc.isNamedRef()) {
+      if (isa<ObjCInterfaceDecl>(Dcl)) {
+        CXCursor C = { CXCursor_ObjCClassRef, Dcl, ALoc.getParentDecl() };
+        return C;
+      }
+      if (isa<ObjCProtocolDecl>(Dcl)) {
+        CXCursor C = { CXCursor_ObjCProtocolRef, Dcl, ALoc.getParentDecl() };
+        return C;
+      }
+    }
+	  CXCursor C = { TranslateKind(Dcl), Dcl, 0 };
     return C;
   }
   CXCursor C = { CXCursor_NoDeclFound, 0, 0 };
@@ -592,19 +605,34 @@ CXDecl clang_getCursorDecl(CXCursor C)
     return C.decl;
     
   if (clang_isReference(C.kind)) {
-    if (C.stmt)
-      return getDeclFromExpr(static_cast<Stmt *>(C.stmt));
-    else
+    if (C.stmt) {
+      if (C.kind == CXCursor_ObjCClassRef)
+        return static_cast<Stmt *>(C.stmt);
+      else
+        return getDeclFromExpr(static_cast<Stmt *>(C.stmt));
+    } else
       return C.decl;
   }
   return 0;
 }
 
+  
 static SourceLocation getLocationFromCursor(CXCursor C, 
                                             SourceManager &SourceMgr,
                                             NamedDecl *ND) {
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
+      case CXCursor_ObjCClassRef: 
+        {
+        if (isa<ObjCInterfaceDecl>(ND)) {
+          // FIXME: This is a hack (storing the parent decl in the stmt slot).
+          NamedDecl *parentDecl = static_cast<NamedDecl *>(C.stmt);
+          return parentDecl->getLocation();
+        }
+        ObjCCategoryDecl *OID = dyn_cast<ObjCCategoryDecl>(ND);
+        assert(OID && "clang_getCursorLine(): Missing category decl");
+        return OID->getClassInterface()->getLocation();
+        }
       case CXCursor_ObjCSuperClassRef: 
         {
         ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
