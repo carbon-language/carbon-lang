@@ -8,7 +8,6 @@ add_llvm_library(LLVMScalarOpts
   DCE.cpp
   DeadStoreElimination.cpp
   GVN.cpp
-  GVNPRE.cpp
   IndVarSimplify.cpp
   InstructionCombining.cpp
   JumpThreading.cpp
