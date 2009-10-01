@@ -461,7 +461,7 @@ defm t2LDRB  : T2I_ld<"ldrb", UnOpFrag<(zextloadi8  node:$Src)>>;
 defm t2LDRSH : T2I_ld<"ldrsh", UnOpFrag<(sextloadi16 node:$Src)>>;
 defm t2LDRSB : T2I_ld<"ldrsb", UnOpFrag<(sextloadi8  node:$Src)>>;
 
-let mayLoad = 1 in {
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 // Load doubleword
 def t2LDRDi8  : T2Ii8s4<(outs GPR:$dst1, GPR:$dst2),
                         (ins t2addrmode_imm8s4:$addr),
@@ -576,7 +576,7 @@ defm t2STRB  : T2I_st<"strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
 defm t2STRH  : T2I_st<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 
 // Store doubleword
-let mayLoad = 1 in
+let mayLoad = 1, hasExtraSrcRegAllocReq = 1 in
 def t2STRDi8 : T2Ii8s4<(outs),
                        (ins GPR:$src1, GPR:$src2, t2addrmode_imm8s4:$addr),
                IIC_iStorer, "strd", " $src1, $addr", []>;
@@ -631,12 +631,12 @@ def t2STRB_POST : T2Iidxldst<(outs GPR:$base_wb),
 //  Load / store multiple Instructions.
 //
 
-let mayLoad = 1 in
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
 def t2LDM : T2XI<(outs),
                  (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
               IIC_iLoadm, "ldm${addr:submode}${p}${addr:wide} $addr, $wb", []>;
 
-let mayStore = 1 in
+let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 def t2STM : T2XI<(outs),
                  (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
               IIC_iStorem, "stm${addr:submode}${p}${addr:wide} $addr, $wb", []>;
@@ -1072,7 +1072,8 @@ let Defs =
 // FIXME: $dst1 should be a def. But the extra ops must be in the end of the
 // operand list.
 // FIXME: Should pc be an implicit operand like PICADD, etc?
-let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1 in
+let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
+    hasExtraDefRegAllocReq = 1 in
   def t2LDM_RET : T2XI<(outs),
                     (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
                     IIC_Br, "ldm${addr:submode}${p}${addr:wide} $addr, $wb",

@@ -56,7 +56,7 @@ def FSTS  : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
 //  Load / store multiple Instructions.
 //
 
-let mayLoad = 1 in {
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 def FLDMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
                            variable_ops), IIC_fpLoadm,
                   "fldm${addr:submode}d${p} ${addr:base}, $wb",
@@ -70,9 +70,9 @@ def FLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
                   []> {
   let Inst{20} = 1;
 }
-}
+} // mayLoad, hasExtraDefRegAllocReq
 
-let mayStore = 1 in {
+let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
 def FSTMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
                            variable_ops), IIC_fpStorem,
                  "fstm${addr:submode}d${p} ${addr:base}, $wb",
@@ -86,7 +86,7 @@ def FSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
                  []> {
   let Inst{20} = 0;
 }
-} // mayStore
+} // mayStore, hasExtraSrcRegAllocReq
 
 // FLDMX, FSTMX - mixing S/D registers for pre-armv6 cores
 

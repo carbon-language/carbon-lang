@@ -107,7 +107,7 @@ def addrmode_neonldstm : Operand<i32>,
 //===----------------------------------------------------------------------===//
 
 /* TODO: Take advantage of vldm.
-let mayLoad = 1 in {
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 def VLDMD : NI<(outs),
                (ins addrmode_neonldstm:$addr, reglist:$dst1, variable_ops),
                IIC_fpLoadm,
@@ -176,7 +176,7 @@ def  VLD1q32  : VLD1Q<"vld1.32", v4i32, int_arm_neon_vld1>;
 def  VLD1qf   : VLD1Q<"vld1.32", v4f32, int_arm_neon_vld1>;
 def  VLD1q64  : VLD1Q<"vld1.64", v2i64, int_arm_neon_vld1>;
 
-let mayLoad = 1 in {
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 
 //   VLD2     : Vector Load (multiple 2-element structures)
 class VLD2D<string OpcodeStr>
@@ -245,7 +245,7 @@ class VLD4LND<string OpcodeStr>
 def VLD4LNd8  : VLD4LND<"vld4.8">;
 def VLD4LNd16 : VLD4LND<"vld4.16">;
 def VLD4LNd32 : VLD4LND<"vld4.32">;
-}
+} // mayLoad = 1, hasExtraDefRegAllocReq = 1
 
 //   VST1     : Vector Store (multiple single elements)
 class VST1D<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
@@ -257,6 +257,7 @@ class VST1Q<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
           !strconcat(OpcodeStr, "\t${src:dregpair}, $addr"), "",
           [(IntOp addrmode6:$addr, (Ty QPR:$src))]>;
 
+let hasExtraSrcRegAllocReq = 1 in {
 def  VST1d8   : VST1D<"vst1.8",  v8i8,  int_arm_neon_vst1>;
 def  VST1d16  : VST1D<"vst1.16", v4i16, int_arm_neon_vst1>;
 def  VST1d32  : VST1D<"vst1.32", v2i32, int_arm_neon_vst1>;
@@ -268,8 +269,9 @@ def  VST1q16  : VST1Q<"vst1.16", v8i16, int_arm_neon_vst1>;
 def  VST1q32  : VST1Q<"vst1.32", v4i32, int_arm_neon_vst1>;
 def  VST1qf   : VST1Q<"vst1.32", v4f32, int_arm_neon_vst1>;
 def  VST1q64  : VST1Q<"vst1.64", v2i64, int_arm_neon_vst1>;
+} // hasExtraSrcRegAllocReq
 
-let mayStore = 1 in {
+let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
 
 //   VST2     : Vector Store (multiple 2-element structures)
 class VST2D<string OpcodeStr>
@@ -334,7 +336,7 @@ class VST4LND<string OpcodeStr>
 def VST4LNd8  : VST4LND<"vst4.8">;
 def VST4LNd16 : VST4LND<"vst4.16">;
 def VST4LNd32 : VST4LND<"vst4.32">;
-}
+} // mayStore = 1, hasExtraSrcRegAllocReq = 1
 
 
 //===----------------------------------------------------------------------===//
@@ -2550,6 +2552,7 @@ def  VTBL1
         (ins DPR:$tbl1, DPR:$src), IIC_VTB1,
         "vtbl.8\t$dst, \\{$tbl1\\}, $src", "",
         [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl1 DPR:$tbl1, DPR:$src)))]>;
+let hasExtraSrcRegAllocReq = 1 in {
 def  VTBL2
   : N3V<1,1,0b11,0b1001,0,0, (outs DPR:$dst),
         (ins DPR:$tbl1, DPR:$tbl2, DPR:$src), IIC_VTB2,
@@ -2568,6 +2571,7 @@ def  VTBL4
         "vtbl.8\t$dst, \\{$tbl1,$tbl2,$tbl3,$tbl4\\}, $src", "",
         [(set DPR:$dst, (v8i8 (int_arm_neon_vtbl4 DPR:$tbl1, DPR:$tbl2,
                                DPR:$tbl3, DPR:$tbl4, DPR:$src)))]>;
+} // hasExtraSrcRegAllocReq = 1
 
 //   VTBX     : Vector Table Extension
 def  VTBX1
@@ -2576,6 +2580,7 @@ def  VTBX1
         "vtbx.8\t$dst, \\{$tbl1\\}, $src", "$orig = $dst",
         [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx1
                                DPR:$orig, DPR:$tbl1, DPR:$src)))]>;
+let hasExtraSrcRegAllocReq = 1 in {
 def  VTBX2
   : N3V<1,1,0b11,0b1001,1,0, (outs DPR:$dst),
         (ins DPR:$orig, DPR:$tbl1, DPR:$tbl2, DPR:$src), IIC_VTBX2,
@@ -2594,6 +2599,7 @@ def  VTBX4
         "vtbx.8\t$dst, \\{$tbl1,$tbl2,$tbl3,$tbl4\\}, $src", "$orig = $dst",
         [(set DPR:$dst, (v8i8 (int_arm_neon_vtbx4 DPR:$orig, DPR:$tbl1,
                                DPR:$tbl2, DPR:$tbl3, DPR:$tbl4, DPR:$src)))]>;
+} // hasExtraSrcRegAllocReq = 1
 
 //===----------------------------------------------------------------------===//
 // NEON instructions for single-precision FP math
