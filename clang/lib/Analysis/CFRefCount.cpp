@@ -2054,8 +2054,8 @@ namespace {
     BadRelease(CFRefCount* tf) : CFRefBug(tf, "Bad release") {}
 
     const char* getDescription() const {
-      return "Incorrect decrement of the reference count of an "
-      "object is not owned at this point by the caller";
+      return "Incorrect decrement of the reference count of an object that is "
+             "not owned at this point by the caller";
     }
   };
 
