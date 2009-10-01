@@ -887,6 +887,9 @@ static bool isNullPointerConstantForConversion(Expr *Expr,
       Expr->getType()->isIntegralType())
     return !InOverloadResolution;
 
+  if (Expr->getType()->isEnumeralType())
+    return !InOverloadResolution;
+
   return Expr->isNullPointerConstant(Context,
                     InOverloadResolution? Expr::NPC_ValueDependentIsNotNull
                                         : Expr::NPC_ValueDependentIsNull);
