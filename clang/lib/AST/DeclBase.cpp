@@ -157,6 +157,17 @@ void Decl::setLexicalDeclContext(DeclContext *DC) {
   }
 }
 
+bool Decl::isInAnonymousNamespace() const {
+  const DeclContext *DC = getDeclContext();
+  do {
+    if (const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC))
+      if (ND->isAnonymousNamespace())
+        return true;
+  } while ((DC = DC->getParent()));
+
+  return false;
+}
+
 TranslationUnitDecl *Decl::getTranslationUnitDecl() {
   if (TranslationUnitDecl *TUD = dyn_cast<TranslationUnitDecl>(this))
     return TUD;

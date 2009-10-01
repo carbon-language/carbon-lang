@@ -247,6 +247,11 @@ void CodeGenModule::EmitAnnotations() {
 static CodeGenModule::GVALinkage
 GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
                       const LangOptions &Features) {
+  // Everything located semantically within an anonymous namespace is
+  // always internal.
+  if (FD->isInAnonymousNamespace())
+    return CodeGenModule::GVA_Internal;
+
   // The kind of external linkage this function will have, if it is not
   // inline or static.
   CodeGenModule::GVALinkage External = CodeGenModule::GVA_StrongExternal;
@@ -1000,7 +1005,9 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   GV->setAlignment(getContext().getDeclAlignInBytes(D));
 
   // Set the llvm linkage type as appropriate.
-  if (D->getStorageClass() == VarDecl::Static)
+  if (D->isInAnonymousNamespace())
+    GV->setLinkage(llvm::Function::InternalLinkage);
+  else if (D->getStorageClass() == VarDecl::Static)
     GV->setLinkage(llvm::Function::InternalLinkage);
   else if (D->hasAttr<DLLImportAttr>())
     GV->setLinkage(llvm::Function::DLLImportLinkage);

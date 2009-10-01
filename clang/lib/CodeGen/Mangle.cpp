@@ -254,7 +254,8 @@ static bool isStdNamespace(const DeclContext *DC) {
     return false;
 
   const NamespaceDecl *NS = cast<NamespaceDecl>(DC);
-  return NS->getOriginalNamespace()->getIdentifier()->isStr("std");
+  const IdentifierInfo *II = NS->getOriginalNamespace()->getIdentifier();
+  return II && II->isStr("std");
 }
 
 static const TemplateDecl *
@@ -403,6 +404,14 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
   DeclarationName Name = ND->getDeclName();
   switch (Name.getNameKind()) {
   case DeclarationName::Identifier:
+    if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND))
+      if (NS->isAnonymousNamespace()) {
+        // This is how gcc mangles these names.  It's apparently
+        // always '1', no matter how many different anonymous
+        // namespaces appear in a context.
+        Out << "12_GLOBAL__N_1";
+        break;
+      }
     mangleSourceName(Name.getAsIdentifierInfo());
     break;
 
@@ -1204,8 +1213,7 @@ static bool isCharSpecialization(QualType T, const char *Name) {
 bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
   // <substitution> ::= St # ::std::
   if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND)) {
-    if (NS->getParent()->isTranslationUnit() &&
-        NS->getOriginalNamespace()->getIdentifier()->isStr("std")) {
+    if (isStdNamespace(NS)) {
       Out << "St";
       return true;
     }

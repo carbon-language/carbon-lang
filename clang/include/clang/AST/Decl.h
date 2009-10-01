@@ -192,6 +192,17 @@ public:
 
   virtual void Destroy(ASTContext& C);
 
+  // \brief Returns true if this is an anonymous namespace declaration.
+  //
+  // For example:
+  //   namespace {
+  //     ...
+  //   };
+  // q.v. C++ [namespace.unnamed]
+  bool isAnonymousNamespace() const {
+    return !getIdentifier();
+  }
+
   NamespaceDecl *getNextNamespace() { return NextNamespace; }
   const NamespaceDecl *getNextNamespace() const { return NextNamespace; }
   void setNextNamespace(NamespaceDecl *ND) { NextNamespace = ND; }

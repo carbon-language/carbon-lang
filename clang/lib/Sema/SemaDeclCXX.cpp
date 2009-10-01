@@ -2397,7 +2397,38 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
 
     PushOnScopeChains(Namespc, DeclRegionScope);
   } else {
-    // FIXME: Handle anonymous namespaces
+    // Anonymous namespaces.
+
+    // C++ [namespace.unnamed]p1.  An unnamed-namespace-definition
+    //   behaves as if it were replaced by
+    //     namespace unique { /* empty body */ }
+    //     using namespace unique;
+    //     namespace unique { namespace-body }
+    //   where all occurrences of 'unique' in a translation unit are
+    //   replaced by the same identifier and this identifier differs
+    //   from all other identifiers in the entire program.
+
+    // We just create the namespace with an empty name and then add an
+    // implicit using declaration, just like the standard suggests.
+    //
+    // CodeGen enforces the "universally unique" aspect by giving all
+    // declarations semantically contained within an anonymous
+    // namespace internal linkage.
+
+    assert(Namespc->isAnonymousNamespace());
+    CurContext->addDecl(Namespc);
+
+    UsingDirectiveDecl* UD
+      = UsingDirectiveDecl::Create(Context, CurContext,
+                                   /* 'using' */ LBrace,
+                                   /* 'namespace' */ SourceLocation(),
+                                   /* qualifier */ SourceRange(),
+                                   /* NNS */ NULL,
+                                   /* identifier */ SourceLocation(),
+                                   Namespc,
+                                   /* Ancestor */ CurContext);
+    UD->setImplicit();
+    CurContext->addDecl(UD);
   }
 
   // Although we could have an invalid decl (i.e. the namespace name is a

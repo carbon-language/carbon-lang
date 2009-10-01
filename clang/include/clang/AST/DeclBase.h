@@ -224,6 +224,8 @@ public:
     return const_cast<Decl*>(this)->getTranslationUnitDecl();
   }
 
+  bool isInAnonymousNamespace() const;
+
   ASTContext &getASTContext() const;
 
   void setAccess(AccessSpecifier AS) {
