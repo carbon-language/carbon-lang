@@ -147,6 +147,8 @@ class VISIBILITY_HIDDEN DbgScope {
                                       // Either subprogram or block.
   unsigned StartLabelID;              // Label ID of the beginning of scope.
   unsigned EndLabelID;                // Label ID of the end of scope.
+  const MachineInstr *LastInsn;       // Last instruction of this scope.
+  const MachineInstr *FirstInsn;      // First instruction of this scope.
   SmallVector<DbgScope *, 4> Scopes;  // Scopes defined in scope.
   SmallVector<DbgVariable *, 8> Variables;// Variables declared in scope.
   SmallVector<DbgConcreteScope *, 8> ConcreteInsts;// Concrete insts of funcs.
@@ -155,7 +157,8 @@ class VISIBILITY_HIDDEN DbgScope {
   mutable unsigned IndentLevel;
 public:
   DbgScope(DbgScope *P, DIDescriptor D)
-    : Parent(P), Desc(D), StartLabelID(0), EndLabelID(0), IndentLevel(0) {}
+    : Parent(P), Desc(D), StartLabelID(0), EndLabelID(0), LastInsn(0),
+      FirstInsn(0), IndentLevel(0) {}
   virtual ~DbgScope();
 
   // Accessors.
@@ -168,7 +171,10 @@ public:
   SmallVector<DbgConcreteScope*,8> &getConcreteInsts() { return ConcreteInsts; }
   void setStartLabelID(unsigned S) { StartLabelID = S; }
   void setEndLabelID(unsigned E)   { EndLabelID = E; }
-
+  void setLastInsn(const MachineInstr *MI) { LastInsn = MI; }
+  const MachineInstr *getLastInsn()      { return LastInsn; }
+  void setFirstInsn(const MachineInstr *MI) { FirstInsn = MI; }
+  const MachineInstr *getFirstInsn()      { return FirstInsn; }
   /// AddScope - Add a scope to the scope.
   ///
   void AddScope(DbgScope *S) { Scopes.push_back(S); }
