@@ -20,3 +20,11 @@ struct C {
 };
 
 C::~C() { }
+
+// PR5084
+template<typename T>
+class A1 {
+  ~A1();
+};
+
+template<> A1<char>::~A1();
