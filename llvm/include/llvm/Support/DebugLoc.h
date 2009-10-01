@@ -25,17 +25,19 @@ namespace llvm {
   ///
   struct DebugLocTuple {
     MDNode *CompileUnit;
+    MDNode *InlinedLoc;
     unsigned Line, Col;
 
     DebugLocTuple()
-      : CompileUnit(0), Line(~0U), Col(~0U) {};
+      : CompileUnit(0), InlinedLoc(0), Line(~0U), Col(~0U) {};
 
-    DebugLocTuple(MDNode *n, unsigned l, unsigned c)
-      : CompileUnit(n), Line(l), Col(c) {};
+    DebugLocTuple(MDNode *n, MDNode *i, unsigned l, unsigned c)
+      : CompileUnit(n), InlinedLoc(i), Line(l), Col(c) {};
 
     bool operator==(const DebugLocTuple &DLT) const {
       return CompileUnit == DLT.CompileUnit &&
-             Line == DLT.Line && Col == DLT.Col;
+        InlinedLoc == DLT.InlinedLoc &&
+        Line == DLT.Line && Col == DLT.Col;
     }
     bool operator!=(const DebugLocTuple &DLT) const {
       return !(*this == DLT);
@@ -66,18 +68,20 @@ namespace llvm {
   // Specialize DenseMapInfo for DebugLocTuple.
   template<>  struct DenseMapInfo<DebugLocTuple> {
     static inline DebugLocTuple getEmptyKey() {
-      return DebugLocTuple(0, ~0U, ~0U);
+      return DebugLocTuple(0, 0, ~0U, ~0U);
     }
     static inline DebugLocTuple getTombstoneKey() {
-      return DebugLocTuple((MDNode*)~1U, ~1U, ~1U);
+      return DebugLocTuple((MDNode*)~1U, (MDNode*)~1U, ~1U, ~1U);
     }
     static unsigned getHashValue(const DebugLocTuple &Val) {
       return DenseMapInfo<MDNode*>::getHashValue(Val.CompileUnit) ^
+             DenseMapInfo<MDNode*>::getHashValue(Val.InlinedLoc) ^
              DenseMapInfo<unsigned>::getHashValue(Val.Line) ^
              DenseMapInfo<unsigned>::getHashValue(Val.Col);
     }
     static bool isEqual(const DebugLocTuple &LHS, const DebugLocTuple &RHS) {
       return LHS.CompileUnit == RHS.CompileUnit &&
+             LHS.InlinedLoc  == RHS.InlinedLoc &&
              LHS.Line        == RHS.Line &&
              LHS.Col         == RHS.Col;
     }

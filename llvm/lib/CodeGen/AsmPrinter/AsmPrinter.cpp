@@ -60,7 +60,7 @@ AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
     OutStreamer(*createAsmStreamer(OutContext, O, *T, 0)),
 
     LastMI(0), LastFn(0), Counter(~0U),
-    PrevDLT(0, ~0U, ~0U) {
+    PrevDLT(0, 0, ~0U, ~0U) {
   DW = 0; MMI = 0;
   switch (AsmVerbose) {
   case cl::BOU_UNSET: VerboseAsm = VDef;  break;

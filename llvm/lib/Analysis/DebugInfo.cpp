@@ -952,7 +952,6 @@ void DIFactory::InsertDeclare(Value *Storage, DIVariable D, BasicBlock *BB) {
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(Module &M) {
 
-
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
       for (BasicBlock::iterator BI = (*FI).begin(), BE = (*FI).end(); BI != BE;
@@ -1271,7 +1270,7 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
     Value *Context = SPI.getContext();
 
     // If this location is already tracked then use it.
-    DebugLocTuple Tuple(cast<MDNode>(Context), SPI.getLine(),
+    DebugLocTuple Tuple(cast<MDNode>(Context), NULL, SPI.getLine(),
                         SPI.getColumn());
     DenseMap<DebugLocTuple, unsigned>::iterator II
       = DebugLocInfo.DebugIdMap.find(Tuple);
@@ -1292,9 +1291,11 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
                                 DebugLocTracker &DebugLocInfo) {
     DebugLoc DL;
     MDNode *Context = Loc.getScope().getNode();
-
+    MDNode *InlinedLoc = NULL;
+    if (!Loc.getOrigLocation().isNull())
+      InlinedLoc = Loc.getOrigLocation().getNode();
     // If this location is already tracked then use it.
-    DebugLocTuple Tuple(Context, Loc.getLineNumber(),
+    DebugLocTuple Tuple(Context, InlinedLoc, Loc.getLineNumber(),
                         Loc.getColumnNumber());
     DenseMap<DebugLocTuple, unsigned>::iterator II
       = DebugLocInfo.DebugIdMap.find(Tuple);
@@ -1321,7 +1322,7 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
     DICompileUnit CU(Subprogram.getCompileUnit());
 
     // If this location is already tracked then use it.
-    DebugLocTuple Tuple(CU.getNode(), Line, /* Column */ 0);
+    DebugLocTuple Tuple(CU.getNode(), NULL, Line, /* Column */ 0);
     DenseMap<DebugLocTuple, unsigned>::iterator II
       = DebugLocInfo.DebugIdMap.find(Tuple);
     if (II != DebugLocInfo.DebugIdMap.end())
