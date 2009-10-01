@@ -178,6 +178,7 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   DebugLoc DL = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(ARM::tPOP));
   AddDefaultPred(MIB);
+  MIB.addReg(0); // No write back.
 
   bool NumRegs = 0;
   for (unsigned i = CSI.size(); i != 0; --i) {
