@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=arm -mattr=+vfp2 | grep -E {fabss\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 1
-; RUN: llc < %s -march=arm -mattr=+neon,+neonfp | grep -E {vabs.f32\\W*d\[0-9\]+,\\W*d\[0-9\]+} | count 1
-; RUN: llc < %s -march=arm -mattr=+neon,-neonfp | grep -E {fabss\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 1
+; RUN: llc < %s -march=arm -mattr=+neon -arm-use-neon-fp=1 | grep -E {vabs.f32\\W*d\[0-9\]+,\\W*d\[0-9\]+} | count 1
+; RUN: llc < %s -march=arm -mattr=+neon -arm-use-neon-fp=0 | grep -E {fabss\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 1
 ; RUN: llc < %s -march=arm -mcpu=cortex-a8 | grep -E {vabs.f32\\W*d\[0-9\]+,\\W*d\[0-9\]+} | count 1
 ; RUN: llc < %s -march=arm -mcpu=cortex-a9 | grep -E {fabss\\W*s\[0-9\]+,\\W*s\[0-9\]+} | count 1
 

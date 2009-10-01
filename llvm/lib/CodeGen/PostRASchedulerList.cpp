@@ -54,7 +54,7 @@ STATISTIC(NumStalls, "Number of pipeline stalls");
 static cl::opt<bool>
 EnablePostRAScheduler("post-RA-scheduler",
                        cl::desc("Enable scheduling after register allocation"),
-                       cl::init(false));
+                       cl::init(false), cl::Hidden);
 static cl::opt<bool>
 EnableAntiDepBreaking("break-anti-dependencies",
                       cl::desc("Break post-RA scheduling anti-dependencies"),

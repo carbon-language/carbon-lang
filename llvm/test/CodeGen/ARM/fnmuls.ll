@@ -1,7 +1,7 @@
 ; XFAIL: *
 ; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s
-; RUN: llc < %s -march=arm -mattr=+neon,+neonfp | FileCheck %s
-; RUN: llc < %s -march=arm -mattr=+neon,-neonfp | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon -arm-use-neon-fp=1 | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+neon -arm-use-neon-fp=0 | FileCheck %s
 ; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s
 ; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s
 
