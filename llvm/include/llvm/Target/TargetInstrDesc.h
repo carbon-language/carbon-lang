@@ -111,7 +111,9 @@ namespace TID {
     ConvertibleTo3Addr,
     UsesCustomDAGSchedInserter,
     Rematerializable,
-    CheapAsAMove
+    CheapAsAMove,
+    ExtraSrcRegAllocReq,
+    ExtraDefRegAllocReq
   };
 }
 
@@ -442,6 +444,26 @@ public:
   /// are not marking copies from and to the same register class with this flag.
   bool isAsCheapAsAMove() const {
     return Flags & (1 << TID::CheapAsAMove);
+  }
+
+  /// hasExtraSrcRegAllocReq - Returns true if this instruction source operands
+  /// have special register allocation requirements that are not captured by the
+  /// operand register classes. e.g. ARM::STRD's two source registers must be an
+  /// even / odd pair, ARM::STM registers have to be in ascending order.
+  /// Post-register allocation passes should not attempt to change allocations
+  /// for sources of instructions with this flag.
+  bool hasExtraSrcRegAllocReq() const {
+    return Flags & (1 << TID::ExtraSrcRegAllocReq);
+  }
+
+  /// hasExtraDefRegAllocReq - Returns true if this instruction def operands
+  /// have special register allocation requirements that are not captured by the
+  /// operand register classes. e.g. ARM::LDRD's two def registers must be an
+  /// even / odd pair, ARM::LDM registers have to be in ascending order.
+  /// Post-register allocation passes should not attempt to change allocations
+  /// for definitions of instructions with this flag.
+  bool hasExtraDefRegAllocReq() const {
+    return Flags & (1 << TID::ExtraDefRegAllocReq);
   }
 };
 

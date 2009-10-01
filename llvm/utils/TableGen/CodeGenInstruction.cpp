@@ -101,6 +101,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   mayHaveSideEffects = R->getValueAsBit("mayHaveSideEffects");
   neverHasSideEffects = R->getValueAsBit("neverHasSideEffects");
   isAsCheapAsAMove = R->getValueAsBit("isAsCheapAsAMove");
+  hasExtraSrcRegAllocReq = R->getValueAsBit("hasExtraSrcRegAllocReq");
+  hasExtraDefRegAllocReq = R->getValueAsBit("hasExtraDefRegAllocReq");
   hasOptionalDef = false;
   isVariadic = false;
 

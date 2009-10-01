@@ -106,6 +106,8 @@ namespace llvm {
     bool mayHaveSideEffects;
     bool neverHasSideEffects;
     bool isAsCheapAsAMove;
+    bool hasExtraSrcRegAllocReq;
+    bool hasExtraDefRegAllocReq;
     
     /// ParseOperandName - Parse an operand name like "$foo" or "$foo.bar",
     /// where $foo is a whole operand and $foo.bar refers to a suboperand.

@@ -203,6 +203,8 @@ class Instruction {
   bit hasCtrlDep   = 0;     // Does this instruction r/w ctrl-flow chains?
   bit isNotDuplicable = 0;  // Is it unsafe to duplicate this instruction?
   bit isAsCheapAsAMove = 0; // As cheap (or cheaper) than a move instruction.
+  bit hasExtraSrcRegAllocReq = 0; // Sources have special regalloc requirement?
+  bit hasExtraDefRegAllocReq = 0; // Defs have special regalloc requirement?
 
   // Side effect flags - When set, the flags have these meanings:
   //

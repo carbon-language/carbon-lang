@@ -280,6 +280,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isVariadic)         OS << "|(1<<TID::Variadic)";
   if (Inst.hasSideEffects)     OS << "|(1<<TID::UnmodeledSideEffects)";
   if (Inst.isAsCheapAsAMove)   OS << "|(1<<TID::CheapAsAMove)";
+  if (Inst.hasExtraSrcRegAllocReq) OS << "|(1<<TID::ExtraSrcRegAllocReq)";
+  if (Inst.hasExtraDefRegAllocReq) OS << "|(1<<TID::ExtraDefRegAllocReq)";
   OS << ", 0";
 
   // Emit all of the target-specific flags...
