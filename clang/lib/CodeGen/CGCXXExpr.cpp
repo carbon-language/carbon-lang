@@ -246,6 +246,8 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
     if (ICE->getCastKind() != CastExpr::CK_UserDefinedConversion &&
         ICE->getType()->isVoidPointerType())
       Arg = ICE->getSubExpr();
+    else
+      break;
   }
   
   QualType DeleteTy = Arg->getType()->getAs<PointerType>()->getPointeeType();

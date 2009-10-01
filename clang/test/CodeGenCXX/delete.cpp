@@ -23,3 +23,15 @@ void t4(T *t) {
   // RUN: grep "call void @_ZN1TD1Ev" %t | count 1
   delete t;
 }
+
+// PR5102
+template <typename T>
+class A {
+  operator T *() const;
+};
+
+void f() {
+  A<char*> a;
+  
+  delete a;
+}
