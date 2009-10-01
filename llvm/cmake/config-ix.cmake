@@ -1,6 +1,28 @@
+include(CheckIncludeFile)
+include(CheckLibraryExists)
+include(CheckSymbolExists)
+include(CheckFunctionExists)
+include(CheckCXXSourceCompiles)
+
+# Helper macros and functions
+macro(add_cxx_include result files)
+  set(${result} "")
+  foreach (file_name ${files})
+     set(${result} "${${result}}#include<${file_name}>\n")
+  endforeach()
+endmacro(add_cxx_include files result)
+
+function(check_type_exists type files variable)
+  add_cxx_include(includes "${files}")
+  CHECK_CXX_SOURCE_COMPILES("
+    ${includes} ${type} typeVar;
+    int main() {
+        return 0;
+    }
+    " ${variable})
+endfunction()
 
 # include checks
-include(CheckIncludeFile)
 check_include_file(argz.h HAVE_ARGZ_H)
 check_include_file(assert.h HAVE_ASSERT_H)
 check_include_file(dirent.h HAVE_DIRENT_H)
@@ -41,15 +63,12 @@ check_include_file(utime.h HAVE_UTIME_H)
 check_include_file(windows.h HAVE_WINDOWS_H)
 
 # library checks
-include(CheckLibraryExists)
 check_library_exists(pthread pthread_create "" HAVE_LIBPTHREAD)
 check_library_exists(pthread pthread_getspecific "" HAVE_PTHREAD_GETSPECIFIC)
 check_library_exists(pthread pthread_rwlock_init "" HAVE_PTHREAD_RWLOCK_INIT)
 check_library_exists(dl dlopen "" HAVE_LIBDL)
 
 # function checks
-include(CheckSymbolExists)
-include(CheckFunctionExists)
 check_symbol_exists(getpagesize unistd.h HAVE_GETPAGESIZE)
 check_symbol_exists(getrusage sys/resource.h HAVE_GETRUSAGE)
 check_symbol_exists(setrlimit sys/resource.h HAVE_SETRLIMIT)
@@ -77,6 +96,27 @@ check_symbol_exists(__GLIBC__ stdio.h LLVM_USING_GLIBC)
 if( LLVM_USING_GLIBC )
   add_llvm_definitions( -D_GNU_SOURCE )
 endif()
+
+# Type checks
+check_type_exists(std::bidirectional_iterator<int,int> "iterator;iostream" HAVE_BI_ITERATOR)
+check_type_exists(std::iterator<int,int,int> iterator HAVE_STD_ITERATOR)
+check_type_exists(std::forward_iterator<int,int> iterator HAVE_FWD_ITERATOR)
+
+set(headers "")
+if (HAVE_SYS_TYPES_H)
+  set(headers ${headers} "sys/types.h")
+endif()
+
+if (HAVE_INTTYPES_H)
+  set(headers ${headers} "inttypes.h")
+endif()
+
+if (HAVE_STDINT_H)
+  set(headers ${headers} "stdint.h")
+endif()
+
+check_type_exists(uint64_t "${headers}" HAVE_UINT64_T)
+check_type_exists(u_int64_t "${headers}" HAVE_U_INT64_T)
 
 # Define LLVM_MULTITHREADED if gcc atomic builtins exists.
 include(CheckAtomic)

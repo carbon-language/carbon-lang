@@ -27,11 +27,8 @@
 #cmakedefine HAVE_SYS_TYPES_H ${HAVE_SYS_TYPES_H}
 #cmakedefine HAVE_INTTYPES_H ${HAVE_INTTYPES_H}
 #cmakedefine HAVE_STDINT_H ${HAVE_STDINT_H}
-#undef HAVE_UINT64_T
-#undef HAVE_U_INT64_T
-
-/* FIXME: UGLY HACK (Added by Kevin) */
-#define HAVE_UINT64_T 1
+#cmakedefine HAVE_UINT64_T ${HAVE_UINT64_T}
+#cmakedefine HAVE_U_INT64_T ${HAVE_U_INT64_T}
 
 #ifdef __cplusplus
 #include <cmath>
