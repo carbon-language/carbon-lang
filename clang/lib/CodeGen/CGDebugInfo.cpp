@@ -1088,7 +1088,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
   // The llvm optimizer and code generator are not yet ready to support
   // optimized code debugging.
   const CompileOptions &CO = M->getCompileOpts();
-  if (CO.OptimizationLevel)
+  if (CO.OptimizationLevel || Builder.GetInsertBlock() == 0)
     return;
 
   uint64_t XOffset = 0;
@@ -1269,7 +1269,7 @@ void CGDebugInfo::EmitDeclare(const BlockDeclRefExpr *BDRE, unsigned Tag,
                                        Decl->getNameAsString(), Unit, Line, Ty,
                                        addr);
   // Insert an llvm.dbg.declare into the current block.
-  DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertBlock());
+  DebugFactory.InsertDeclare(Storage, D, Builder.GetInsertPoint());
 }
 
 void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *Decl,
