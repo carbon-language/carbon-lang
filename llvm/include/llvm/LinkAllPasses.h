@@ -71,7 +71,6 @@ namespace {
       (void) llvm::createGlobalDCEPass();
       (void) llvm::createGlobalOptimizerPass();
       (void) llvm::createGlobalsModRefPass();
-      (void) llvm::createGVNPREPass();
       (void) llvm::createIPConstantPropagationPass();
       (void) llvm::createIPSCCPPass();
       (void) llvm::createIndVarSimplifyPass();

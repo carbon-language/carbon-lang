@@ -285,13 +285,6 @@ FunctionPass *createPredicateSimplifierPass();
 
 //===----------------------------------------------------------------------===//
 //
-// GVN-PRE - This pass performs global value numbering and partial redundancy
-// elimination.
-//
-FunctionPass *createGVNPREPass();
-
-//===----------------------------------------------------------------------===//
-//
 // GVN - This pass performs global value numbering and redundant load 
 // elimination cotemporaneously.
 //
