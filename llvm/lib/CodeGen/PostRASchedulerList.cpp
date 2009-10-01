@@ -313,8 +313,10 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
   // Clear "do not change" set.
   KeepRegs.clear();
 
+  bool IsReturnBlock = (!BB->empty() && BB->back().getDesc().isReturn());
+
   // Determine the live-out physregs for this block.
-  if (!BB->empty() && BB->back().getDesc().isReturn()) {
+  if (IsReturnBlock) {
     // In a return block, examine the function live-out regs.
     for (MachineRegisterInfo::liveout_iterator I = MRI.liveout_begin(),
          E = MRI.liveout_end(); I != E; ++I) {
@@ -348,24 +350,25 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
           DefIndices[AliasReg] = ~0u;
         }
       }
+  }
 
-    // Also mark as live-out any callee-saved registers that were not
-    // saved in the prolog.
-    const MachineFrameInfo *MFI = MF.getFrameInfo();
-    BitVector Pristine = MFI->getPristineRegs(BB);
-    for (const unsigned *I = TRI->getCalleeSavedRegs(); *I; ++I) {
-      unsigned Reg = *I;
-      if (!Pristine.test(Reg)) continue;
-      Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
-      KillIndices[Reg] = BB->size();
-      DefIndices[Reg] = ~0u;
-      // Repeat, for all aliases.
-      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-        unsigned AliasReg = *Alias;
-        Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-        KillIndices[AliasReg] = BB->size();
-        DefIndices[AliasReg] = ~0u;
-      }
+  // Mark live-out callee-saved registers. In a return block this is
+  // all callee-saved registers. In non-return this is any
+  // callee-saved register that is not saved in the prolog.
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  BitVector Pristine = MFI->getPristineRegs(BB);
+  for (const unsigned *I = TRI->getCalleeSavedRegs(); *I; ++I) {
+    unsigned Reg = *I;
+    if (!IsReturnBlock && !Pristine.test(Reg)) continue;
+    Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+    KillIndices[Reg] = BB->size();
+    DefIndices[Reg] = ~0u;
+    // Repeat, for all aliases.
+    for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+      unsigned AliasReg = *Alias;
+      Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
+      KillIndices[AliasReg] = BB->size();
+      DefIndices[AliasReg] = ~0u;
     }
   }
 }
