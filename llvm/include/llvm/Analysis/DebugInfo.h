@@ -592,7 +592,12 @@ namespace llvm {
     void InsertRegionEnd(DIDescriptor D, BasicBlock *BB);
 
     /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
-    void InsertDeclare(llvm::Value *Storage, DIVariable D, BasicBlock *BB);
+    void InsertDeclare(llvm::Value *Storage, DIVariable D,
+                       BasicBlock *InsertAtEnd);
+
+    /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
+    void InsertDeclare(llvm::Value *Storage, DIVariable D,
+                       Instruction *InsertBefore);
 
   private:
     Constant *GetTagConstant(unsigned TAG);

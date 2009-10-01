@@ -933,15 +933,29 @@ void DIFactory::InsertRegionEnd(DIDescriptor D, BasicBlock *BB) {
 }
 
 /// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
-void DIFactory::InsertDeclare(Value *Storage, DIVariable D, BasicBlock *BB) {
+void DIFactory::InsertDeclare(Value *Storage, DIVariable D,
+                              Instruction *InsertBefore) {
   // Cast the storage to a {}* for the call to llvm.dbg.declare.
-  Storage = new BitCastInst(Storage, EmptyStructPtr, "", BB);
+  Storage = new BitCastInst(Storage, EmptyStructPtr, "", InsertBefore);
 
   if (!DeclareFn)
     DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
 
   Value *Args[] = { Storage, D.getNode() };
-  CallInst::Create(DeclareFn, Args, Args+2, "", BB);
+  CallInst::Create(DeclareFn, Args, Args+2, "", InsertBefore);
+}
+
+/// InsertDeclare - Insert a new llvm.dbg.declare intrinsic call.
+void DIFactory::InsertDeclare(Value *Storage, DIVariable D,
+                              BasicBlock *InsertAtEnd) {
+  // Cast the storage to a {}* for the call to llvm.dbg.declare.
+  Storage = new BitCastInst(Storage, EmptyStructPtr, "", InsertAtEnd);
+
+  if (!DeclareFn)
+    DeclareFn = Intrinsic::getDeclaration(&M, Intrinsic::dbg_declare);
+
+  Value *Args[] = { Storage, D.getNode() };
+  CallInst::Create(DeclareFn, Args, Args+2, "", InsertAtEnd);
 }
 
 
