@@ -48,6 +48,7 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 // Forward declarations.
 class Constant;
+class MDNode;
 class GlobalVariable;
 class MachineBasicBlock;
 class MachineFunction;
@@ -142,8 +143,12 @@ class MachineModuleInfo : public ImmutablePass {
   /// DbgInfoAvailable - True if debugging information is available
   /// in this module.
   bool DbgInfoAvailable;
+
 public:
   static char ID; // Pass identification, replacement for typeid
+
+  typedef DenseMap<MDNode *, std::pair<MDNode *, unsigned> > VariableDbgInfoMapTy;
+  VariableDbgInfoMapTy VariableDbgInfo;
 
   MachineModuleInfo();
   ~MachineModuleInfo();
@@ -324,6 +329,15 @@ public:
   /// getPersonality - Return a personality function if available.  The presence
   /// of one is required to emit exception handling info.
   Function *getPersonality() const;
+
+  /// setVariableDbgInfo - Collect information used to emit debugging information
+  /// of a variable.
+  void setVariableDbgInfo(MDNode *N, MDNode *L, unsigned S) {
+    if (N && L)
+      VariableDbgInfo[N] = std::make_pair(L, S);
+  }
+
+  VariableDbgInfoMapTy &getVariableDbgInfo() {  return VariableDbgInfo;  }
 
 }; // End class MachineModuleInfo
 

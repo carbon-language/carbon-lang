@@ -407,7 +407,6 @@ bool FastISel::SelectCall(User *I) {
         || !DW->ShouldEmitDwarfDebug())
       return true;
 
-    Value *Variable = DI->getVariable();
     Value *Address = DI->getAddress();
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
       Address = BCI->getOperand(0);
@@ -418,8 +417,15 @@ bool FastISel::SelectCall(User *I) {
       StaticAllocaMap.find(AI);
     if (SI == StaticAllocaMap.end()) break; // VLAs.
     int FI = SI->second;
-    
-    DW->RecordVariable(cast<MDNode>(Variable), FI);
+    if (MMI) {
+      MetadataContext &TheMetadata = AI->getContext().getMetadata();
+      unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
+      MDNode *AllocaLocation =
+        dyn_cast_or_null<MDNode>(TheMetadata.getMD(MDDbgKind, AI));
+      if (AllocaLocation)
+        MMI->setVariableDbgInfo(DI->getVariable(), AllocaLocation, FI);
+    }
+    DW->RecordVariable(DI->getVariable(), FI);
     return true;
   }
   case Intrinsic::eh_exception: {
