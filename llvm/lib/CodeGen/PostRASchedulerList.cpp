@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -301,7 +302,7 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
   KeepRegs.clear();
 
   // Determine the live-out physregs for this block.
-  if (!BB->empty() && BB->back().getDesc().isReturn())
+  if (!BB->empty() && BB->back().getDesc().isReturn()) {
     // In a return block, examine the function live-out regs.
     for (MachineRegisterInfo::liveout_iterator I = MRI.liveout_begin(),
          E = MRI.liveout_end(); I != E; ++I) {
@@ -317,7 +318,7 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
         DefIndices[AliasReg] = ~0u;
       }
     }
-  else
+  } else {
     // In a non-return block, examine the live-in regs of all successors.
     for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
          SE = BB->succ_end(); SI != SE; ++SI)
@@ -336,26 +337,23 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
         }
       }
 
-  // Consider callee-saved registers as live-out, since we're running after
-  // prologue/epilogue insertion so there's no way to add additional
-  // saved registers.
-  //
-  // TODO: there is a new method
-  // MachineFrameInfo::getPristineRegs(MBB). It gives you a list of
-  // CSRs that have not been saved when entering the MBB. The
-  // remaining CSRs have been saved and can be treated like call
-  // clobbered registers.
-  for (const unsigned *I = TRI->getCalleeSavedRegs(); *I; ++I) {
-    unsigned Reg = *I;
-    Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
-    KillIndices[Reg] = BB->size();
-    DefIndices[Reg] = ~0u;
-    // Repeat, for all aliases.
-    for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-      unsigned AliasReg = *Alias;
-      Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
-      KillIndices[AliasReg] = BB->size();
-      DefIndices[AliasReg] = ~0u;
+    // Also mark as live-out any callee-saved registers that were not
+    // saved in the prolog.
+    const MachineFrameInfo *MFI = MF.getFrameInfo();
+    BitVector Pristine = MFI->getPristineRegs(BB);
+    for (const unsigned *I = TRI->getCalleeSavedRegs(); *I; ++I) {
+      unsigned Reg = *I;
+      if (!Pristine.test(Reg)) continue;
+      Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
+      KillIndices[Reg] = BB->size();
+      DefIndices[Reg] = ~0u;
+      // Repeat, for all aliases.
+      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+        unsigned AliasReg = *Alias;
+        Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
+        KillIndices[AliasReg] = BB->size();
+        DefIndices[AliasReg] = ~0u;
+      }
     }
   }
 }
@@ -483,6 +481,16 @@ void SchedulePostRATDList::PrescanInstruction(MachineInstr *MI) {
     // If we're still willing to consider this register, note the reference.
     if (Classes[Reg] != reinterpret_cast<TargetRegisterClass *>(-1))
       RegRefs.insert(std::make_pair(Reg, &MO));
+
+    // It's not safe to change register allocation for source operands of
+    // that have special allocation requirements.
+    if (MO.isUse() && MI->getDesc().hasExtraSrcRegAllocReq()) {
+      if (KeepRegs.insert(Reg)) {
+        for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+             *Subreg; ++Subreg)
+          KeepRegs.insert(*Subreg);
+      }
+    }
   }
 }
 
@@ -670,13 +678,6 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
        I != E; --Count) {
     MachineInstr *MI = --I;
 
-    // After regalloc, KILL instructions aren't safe to treat as
-    // dependence-breaking. In the case of an INSERT_SUBREG, the KILL
-    // is left behind appearing to clobber the super-register, while the
-    // subregister needs to remain live. So we just ignore them.
-    if (MI->getOpcode() == TargetInstrInfo::KILL)
-      continue;
-
     // Check if this instruction has a dependence on the critical path that
     // is an anti-dependence that we may be able to break. If it is, set
     // AntiDepReg to the non-zero register associated with the anti-dependence.
@@ -735,24 +736,6 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
     }
 
     PrescanInstruction(MI);
-
-    if (MI->getDesc().hasExtraSrcRegAllocReq()) {
-      // It's not safe to change register allocation for source operands of
-      // that have special allocation requirements.
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        MachineOperand &MO = MI->getOperand(i);
-        if (!MO.isReg()) continue;
-        unsigned Reg = MO.getReg();
-        if (Reg == 0) continue;
-        if (MO.isUse()) {
-          if (KeepRegs.insert(Reg)) {
-            for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
-                 *Subreg; ++Subreg)
-              KeepRegs.insert(*Subreg);
-          }
-        }
-      }
-    }
 
     if (MI->getDesc().hasExtraDefRegAllocReq())
       // If this instruction's defs have special allocation requirement, don't
