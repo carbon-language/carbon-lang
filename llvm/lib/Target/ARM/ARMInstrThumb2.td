@@ -633,13 +633,13 @@ def t2STRB_POST : T2Iidxldst<(outs GPR:$base_wb),
 
 let mayLoad = 1 in
 def t2LDM : T2XI<(outs),
-                 (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
-              IIC_iLoadm, "ldm${addr:submode}${p}${addr:wide} $addr, $dst1", []>;
+                 (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
+              IIC_iLoadm, "ldm${addr:submode}${p}${addr:wide} $addr, $wb", []>;
 
 let mayStore = 1 in
 def t2STM : T2XI<(outs),
-                 (ins addrmode4:$addr, pred:$p, reglist:$src1, variable_ops),
-              IIC_iStorem, "stm${addr:submode}${p}${addr:wide} $addr, $src1", []>;
+                 (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
+              IIC_iStorem, "stm${addr:submode}${p}${addr:wide} $addr, $wb", []>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.
@@ -1074,8 +1074,8 @@ let Defs =
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1 in
   def t2LDM_RET : T2XI<(outs),
-                    (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
-                    IIC_Br, "ldm${addr:submode}${p}${addr:wide} $addr, $dst1",
+                    (ins addrmode4:$addr, pred:$p, reglist:$wb, variable_ops),
+                    IIC_Br, "ldm${addr:submode}${p}${addr:wide} $addr, $wb",
                     []>;
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {

@@ -241,6 +241,7 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
         .addReg(Base, getKillRegState(BaseKill))
         .addImm(ARM_AM::getAM5Opc(Mode, false, isDPR ? NumRegs<<1 : NumRegs))
         .addImm(Pred).addReg(PredReg);
+  MIB.addReg(0); // Add optional writeback (0 for now).
   for (unsigned i = 0; i != NumRegs; ++i)
     MIB = MIB.addReg(Regs[i].first, getDefRegState(isDef)
                      | getKillRegState(Regs[i].second));
@@ -383,7 +384,7 @@ static inline unsigned getLSMultipleTransferSize(MachineInstr *MI) {
   case ARM::STM:
   case ARM::t2LDM:
   case ARM::t2STM:
-    return (MI->getNumOperands() - 4) * 4;
+    return (MI->getNumOperands() - 5) * 4;
   case ARM::FLDMS:
   case ARM::FSTMS:
   case ARM::FLDMD:
@@ -434,11 +435,15 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
       if (Mode == ARM_AM::ia &&
           isMatchingDecrement(PrevMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM4ModeImm(ARM_AM::db, true));
+        MI->getOperand(4).setReg(Base);
+        MI->getOperand(4).setIsDef();
         MBB.erase(PrevMBBI);
         return true;
       } else if (Mode == ARM_AM::ib &&
                  isMatchingDecrement(PrevMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM4ModeImm(ARM_AM::da, true));
+        MI->getOperand(4).setReg(Base);  // WB to base
+        MI->getOperand(4).setIsDef();
         MBB.erase(PrevMBBI);
         return true;
       }
@@ -449,6 +454,8 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
       if ((Mode == ARM_AM::ia || Mode == ARM_AM::ib) &&
           isMatchingIncrement(NextMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM4ModeImm(Mode, true));
+        MI->getOperand(4).setReg(Base);  // WB to base
+        MI->getOperand(4).setIsDef();
         if (NextMBBI == I) {
           Advance = true;
           ++I;
@@ -458,6 +465,8 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
       } else if ((Mode == ARM_AM::da || Mode == ARM_AM::db) &&
                  isMatchingDecrement(NextMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM4ModeImm(Mode, true));
+        MI->getOperand(4).setReg(Base);  // WB to base
+        MI->getOperand(4).setIsDef();
         if (NextMBBI == I) {
           Advance = true;
           ++I;
@@ -478,6 +487,8 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
       if (Mode == ARM_AM::ia &&
           isMatchingDecrement(PrevMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM5Opc(ARM_AM::db, true, Offset));
+        MI->getOperand(4).setReg(Base);  // WB to base
+        MI->getOperand(4).setIsDef();
         MBB.erase(PrevMBBI);
         return true;
       }
@@ -488,6 +499,8 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
       if (Mode == ARM_AM::ia &&
           isMatchingIncrement(NextMBBI, Base, Bytes, 0, Pred, PredReg)) {
         MI->getOperand(1).setImm(ARM_AM::getAM5Opc(ARM_AM::ia, true, Offset));
+        MI->getOperand(4).setReg(Base);  // WB to base
+        MI->getOperand(4).setIsDef();
         if (NextMBBI == I) {
           Advance = true;
           ++I;
@@ -630,6 +643,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc))
         .addReg(Base, getKillRegState(BaseKill))
         .addImm(Offset).addImm(Pred).addReg(PredReg)
+        .addReg(Base, getDefRegState(true)) // WB base register
         .addReg(MI->getOperand(0).getReg(), RegState::Define);
     else if (isAM2)
       // LDR_PRE, LDR_POST,
@@ -647,6 +661,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
       // FSTMS, FSTMD
       BuildMI(MBB, MBBI, dl, TII->get(NewOpc)).addReg(Base).addImm(Offset)
         .addImm(Pred).addReg(PredReg)
+        .addReg(Base, getDefRegState(true)) // WB base register
         .addReg(MO.getReg(), getKillRegState(MO.isKill()));
     else if (isAM2)
       // STR_PRE, STR_POST
@@ -811,18 +826,20 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
           .addReg(BaseReg, getKillRegState(BaseKill))
           .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia))
           .addImm(Pred).addReg(PredReg)
+          .addReg(0)
           .addReg(EvenReg, getDefRegState(isLd) | getDeadRegState(EvenDeadKill))
-          .addReg(OddReg, getDefRegState(isLd)| getDeadRegState(OddDeadKill));
+          .addReg(OddReg,  getDefRegState(isLd) | getDeadRegState(OddDeadKill));
         ++NumLDRD2LDM;
       } else {
         BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
           .addReg(BaseReg, getKillRegState(BaseKill))
           .addImm(ARM_AM::getAM4ModeImm(ARM_AM::ia))
           .addImm(Pred).addReg(PredReg)
+          .addReg(0)
           .addReg(EvenReg,
                   getKillRegState(EvenDeadKill) | getUndefRegState(EvenUndef))
           .addReg(OddReg,
-                  getKillRegState(OddDeadKill) | getUndefRegState(OddUndef));
+                  getKillRegState(OddDeadKill)  | getUndefRegState(OddUndef));
         ++NumSTRD2STM;
       }
     } else {

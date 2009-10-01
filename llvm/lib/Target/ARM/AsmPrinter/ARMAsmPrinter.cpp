@@ -838,10 +838,11 @@ void ARMAsmPrinter::printPCLabel(const MachineInstr *MI, int OpNum) {
 
 void ARMAsmPrinter::printRegisterList(const MachineInstr *MI, int OpNum) {
   O << "{";
-  for (unsigned i = OpNum, e = MI->getNumOperands(); i != e; ++i) {
+  // Always skip the first operand, it's the optional (and implicit writeback).
+  for (unsigned i = OpNum+1, e = MI->getNumOperands(); i != e; ++i) {
     if (MI->getOperand(i).isImplicit())
       continue;
-    if ((int)i != OpNum) O << ", ";
+    if ((int)i != OpNum+1) O << ", ";
     printOperand(MI, i);
   }
   O << "}";

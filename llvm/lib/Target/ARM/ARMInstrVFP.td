@@ -57,32 +57,32 @@ def FSTS  : ASI5<0b1101, 0b00, (outs), (ins SPR:$src, addrmode5:$addr),
 //
 
 let mayLoad = 1 in {
-def FLDMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
+def FLDMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
                            variable_ops), IIC_fpLoadm,
-                  "fldm${addr:submode}d${p} ${addr:base}, $dst1",
+                  "fldm${addr:submode}d${p} ${addr:base}, $wb",
                   []> {
   let Inst{20} = 1;
 }
 
-def FLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
+def FLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
                            variable_ops), IIC_fpLoadm, 
-                  "fldm${addr:submode}s${p} ${addr:base}, $dst1",
+                  "fldm${addr:submode}s${p} ${addr:base}, $wb",
                   []> {
   let Inst{20} = 1;
 }
 }
 
 let mayStore = 1 in {
-def FSTMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,
+def FSTMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
                            variable_ops), IIC_fpStorem,
-                 "fstm${addr:submode}d${p} ${addr:base}, $src1",
+                 "fstm${addr:submode}d${p} ${addr:base}, $wb",
                  []> {
   let Inst{20} = 0;
 }
 
-def FSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,
+def FSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$wb,
                            variable_ops), IIC_fpStorem,
-                 "fstm${addr:submode}s${p} ${addr:base}, $src1",
+                 "fstm${addr:submode}s${p} ${addr:base}, $wb",
                  []> {
   let Inst{20} = 0;
 }
@@ -233,8 +233,8 @@ def FMSR   : AVConv4I<0b11100000, 0b1010, (outs SPR:$dst), (ins GPR:$src),
                  [(set SPR:$dst, (bitconvert GPR:$src))]>;
 
 def FMRRD  : AVConv3I<0b11000101, 0b1011,
-                      (outs GPR:$dst1, GPR:$dst2), (ins DPR:$src),
-                 IIC_VMOVDI, "fmrrd", " $dst1, $dst2, $src",
+                      (outs GPR:$wb, GPR:$dst2), (ins DPR:$src),
+                 IIC_VMOVDI, "fmrrd", " $wb, $dst2, $src",
                  [/* FIXME: Can't write pattern for multiple result instr*/]>;
 
 // FMDHR: GPR -> SPR
