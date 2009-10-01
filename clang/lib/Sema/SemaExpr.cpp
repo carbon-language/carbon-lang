@@ -2001,21 +2001,6 @@ static Decl *FindGetterNameDecl(const ObjCObjectPointerType *QIdTy,
   return GDecl;
 }
 
-/// FindMethodInNestedImplementations - Look up a method in current and
-/// all base class implementations.
-///
-ObjCMethodDecl *Sema::FindMethodInNestedImplementations(
-                                              const ObjCInterfaceDecl *IFace,
-                                              const Selector &Sel) {
-  ObjCMethodDecl *Method = 0;
-  if (ObjCImplementationDecl *ImpDecl = IFace->getImplementation())
-    Method = ImpDecl->getInstanceMethod(Sel);
-
-  if (!Method && IFace->getSuperClass())
-    return FindMethodInNestedImplementations(IFace->getSuperClass(), Sel);
-  return Method;
-}
-
 Action::OwningExprResult
 Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                tok::TokenKind OpKind, SourceLocation MemberLoc,
@@ -2075,7 +2060,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       if (!Setter) {
         // If this reference is in an @implementation, also check for 'private'
         // methods.
-        Setter = FindMethodInNestedImplementations(IFace, SetterSel);
+        Setter = IFace->lookupPrivateInstanceMethod(SetterSel);
       }
       // Look through local category implementations associated with the class.
       if (!Setter)
@@ -2526,7 +2511,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
     // If this reference is in an @implementation, check for 'private' methods.
     if (!Getter)
-      Getter = FindMethodInNestedImplementations(IFace, Sel);
+      Getter = IFace->lookupPrivateInstanceMethod(Sel);
 
     // Look through local category implementations associated with the class.
     if (!Getter)
@@ -2545,7 +2530,7 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     if (!Setter) {
       // If this reference is in an @implementation, also check for 'private'
       // methods.
-      Setter = FindMethodInNestedImplementations(IFace, SetterSel);
+      Setter = IFace->lookupPrivateInstanceMethod(SetterSel);
     }
     // Look through local category implementations associated with the class.
     if (!Setter)

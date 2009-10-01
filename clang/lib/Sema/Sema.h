@@ -1270,10 +1270,6 @@ private:
   std::pair<bool, LookupResult> CppLookupName(Scope *S, DeclarationName Name,
                                               LookupNameKind NameKind,
                                               bool RedeclarationOnly);
-  ObjCMethodDecl *FindMethodInNestedImplementations(
-                                                const ObjCInterfaceDecl *IFace,
-                                                const Selector &Sel);
-
 public:
   /// Determines whether D is a suitable lookup result according to the
   /// lookup criteria.
