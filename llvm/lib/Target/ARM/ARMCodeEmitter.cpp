@@ -998,7 +998,7 @@ void Emitter<CodeEmitter>::emitLoadStoreMultipleInstruction(
     Binary |= 0x1 << ARMII::W_BitShift;
 
   // Set registers
-  for (unsigned i = 4, e = MI.getNumOperands(); i != e; ++i) {
+  for (unsigned i = 5, e = MI.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || MO.isImplicit())
       break;
@@ -1403,11 +1403,11 @@ void Emitter<CodeEmitter>::emitVFPLoadStoreMultipleInstruction(
     Binary |= 0x1 << ARMII::W_BitShift;
 
   // First register is encoded in Dd.
-  Binary |= encodeVFPRd(MI, 4);
+  Binary |= encodeVFPRd(MI, 5);
 
   // Number of registers are encoded in offset field.
   unsigned NumRegs = 1;
-  for (unsigned i = 5, e = MI.getNumOperands(); i != e; ++i) {
+  for (unsigned i = 6, e = MI.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || MO.isImplicit())
       break;
