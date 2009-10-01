@@ -93,6 +93,11 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
 
   if (isTargetDarwin())
     IsR9Reserved = ReserveR9 | (ARMArchVersion < V6);
+
+  // Set CPU specific features.
+  if (CPUString == "cortex-a8") {
+    PostRAScheduler = true;
+  }
 }
 
 /// GVIsIndirectSymbol - true if the GV will be accessed via an indirect symbol.

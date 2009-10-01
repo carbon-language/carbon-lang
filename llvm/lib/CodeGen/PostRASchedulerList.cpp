@@ -48,11 +48,17 @@ using namespace llvm;
 STATISTIC(NumNoops, "Number of noops inserted");
 STATISTIC(NumStalls, "Number of pipeline stalls");
 
+// Post-RA scheduling is enabled with
+// TargetSubtarget.enablePostRAScheduler(). This flag can be used to
+// override the target.
+static cl::opt<bool>
+EnablePostRAScheduler("post-RA-scheduler",
+                       cl::desc("Enable scheduling after register allocation"),
+                       cl::init(false));
 static cl::opt<bool>
 EnableAntiDepBreaking("break-anti-dependencies",
                       cl::desc("Break post-RA scheduling anti-dependencies"),
                       cl::init(true), cl::Hidden);
-
 static cl::opt<bool>
 EnablePostRAHazardAvoidance("avoid-hazards",
                       cl::desc("Enable exact hazard avoidance"),
@@ -215,10 +221,16 @@ static bool isSchedulingBoundary(const MachineInstr *MI,
 }
 
 bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
-  // Check that post-RA scheduling is enabled for this function
-  const TargetSubtarget &ST = Fn.getTarget().getSubtarget<TargetSubtarget>();
-  if (!ST.enablePostRAScheduler())
-    return true;
+  // Check for explicit enable/disable of post-ra scheduling.
+  if (EnablePostRAScheduler.getPosition() > 0) {
+    if (!EnablePostRAScheduler)
+      return true;
+  } else {
+    // Check that post-RA scheduling is enabled for this function
+    const TargetSubtarget &ST = Fn.getTarget().getSubtarget<TargetSubtarget>();
+    if (!ST.enablePostRAScheduler())
+      return true;
+  }
 
   DEBUG(errs() << "PostRAScheduler\n");
 

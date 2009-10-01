@@ -1,5 +1,5 @@
 ; XFAIL: *
-; RUN: llvm-as < %s | llc -asm-verbose=false -O3 -relocation-model=pic -disable-fp-elim -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -mattr=+postrasched | FileCheck %s
+; RUN: llvm-as < %s | llc -asm-verbose=false -O3 -relocation-model=pic -disable-fp-elim -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -post-RA-scheduler | FileCheck %s
 
 
 ; ModuleID = '<stdin>'
