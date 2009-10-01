@@ -123,13 +123,17 @@ namespace {
     /// RegRegs - Map registers to all their references within a live range.
     std::multimap<unsigned, MachineOperand *> RegRefs;
 
-    /// The index of the most recent kill (proceding bottom-up), or ~0u if
-    /// the register is not live.
+    /// KillIndices - The index of the most recent kill (proceding bottom-up),
+    /// or ~0u if the register is not live.
     unsigned KillIndices[TargetRegisterInfo::FirstVirtualRegister];
 
-    /// The index of the most recent complete def (proceding bottom up), or ~0u
-    /// if the register is live.
+    /// DefIndices - The index of the most recent complete def (proceding bottom
+    /// up), or ~0u if the register is live.
     unsigned DefIndices[TargetRegisterInfo::FirstVirtualRegister];
+
+    /// KeepRegs - A set of registers which are live and cannot be changed to
+    /// break anti-dependencies.
+    SmallSet<unsigned, 4> KeepRegs;
 
   public:
     SchedulePostRATDList(MachineFunction &MF,
@@ -292,6 +296,9 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
   // Initialize the indices to indicate that no registers are live.
   std::fill(KillIndices, array_endof(KillIndices), ~0u);
   std::fill(DefIndices, array_endof(DefIndices), BB->size());
+
+  // Clear "do not change" set.
+  KeepRegs.clear();
 
   // Determine the live-out physregs for this block.
   if (!BB->empty() && BB->back().getDesc().isReturn())
@@ -495,9 +502,10 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
 
     DefIndices[Reg] = Count;
     KillIndices[Reg] = ~0u;
-          assert(((KillIndices[Reg] == ~0u) !=
-                  (DefIndices[Reg] == ~0u)) &&
-               "Kill and Def maps aren't consistent for Reg!");
+    assert(((KillIndices[Reg] == ~0u) !=
+            (DefIndices[Reg] == ~0u)) &&
+           "Kill and Def maps aren't consistent for Reg!");
+    KeepRegs.erase(Reg);
     Classes[Reg] = 0;
     RegRefs.erase(Reg);
     // Repeat, for all subregs.
@@ -506,6 +514,7 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
       unsigned SubregReg = *Subreg;
       DefIndices[SubregReg] = Count;
       KillIndices[SubregReg] = ~0u;
+      KeepRegs.erase(SubregReg);
       Classes[SubregReg] = 0;
       RegRefs.erase(SubregReg);
     }
@@ -690,8 +699,12 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
         if (Edge->getKind() == SDep::Anti) {
           AntiDepReg = Edge->getReg();
           assert(AntiDepReg != 0 && "Anti-dependence on reg0?");
-          // Don't break anti-dependencies on non-allocatable registers.
           if (!AllocatableSet.test(AntiDepReg))
+            // Don't break anti-dependencies on non-allocatable registers.
+            AntiDepReg = 0;
+          else if (KeepRegs.count(AntiDepReg))
+            // Don't break anti-dependencies if an use down below requires
+            // this exact register.
             AntiDepReg = 0;
           else {
             // If the SUnit has other dependencies on the SUnit that it
@@ -723,16 +736,40 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
 
     PrescanInstruction(MI);
 
-    // If this instruction has a use of AntiDepReg, breaking it
-    // is invalid.
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isReg()) continue;
-      unsigned Reg = MO.getReg();
-      if (Reg == 0) continue;
-      if (MO.isUse() && AntiDepReg == Reg) {
-        AntiDepReg = 0;
-        break;
+    if (MI->getDesc().hasExtraSrcRegAllocReq()) {
+      // It's not safe to change register allocation for source operands of
+      // that have special allocation requirements.
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        MachineOperand &MO = MI->getOperand(i);
+        if (!MO.isReg()) continue;
+        unsigned Reg = MO.getReg();
+        if (Reg == 0) continue;
+        if (MO.isUse()) {
+          if (KeepRegs.insert(Reg)) {
+            for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+                 *Subreg; ++Subreg)
+              KeepRegs.insert(*Subreg);
+          }
+        }
+      }
+    }
+
+    if (MI->getDesc().hasExtraDefRegAllocReq())
+      // If this instruction's defs have special allocation requirement, don't
+      // break this anti-dependency.
+      AntiDepReg = 0;
+    else if (AntiDepReg) {
+      // If this instruction has a use of AntiDepReg, breaking it
+      // is invalid.
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        MachineOperand &MO = MI->getOperand(i);
+        if (!MO.isReg()) continue;
+        unsigned Reg = MO.getReg();
+        if (Reg == 0) continue;
+        if (MO.isUse() && AntiDepReg == Reg) {
+          AntiDepReg = 0;
+          break;
+        }
       }
     }
 
