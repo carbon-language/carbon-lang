@@ -274,7 +274,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     if (LangOpts.ObjCNonFragileABI) {
       DefineBuiltinMacro(Buf, "__OBJC2__=1");
       DefineBuiltinMacro(Buf, "OBJC_ZEROCOST_EXCEPTIONS=1");
-      DefineBuiltinMacro(Buf, "__EXCEPTIONS=1");
     }
 
     if (LangOpts.getGCMode() != LangOptions::NonGC)
@@ -299,9 +298,11 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     DefineBuiltinMacro(Buf, "__BLOCKS__=1");
   }
 
+  if (LangOpts.Exceptions)
+    DefineBuiltinMacro(Buf, "__EXCEPTIONS=1");
+
   if (LangOpts.CPlusPlus) {
     DefineBuiltinMacro(Buf, "__DEPRECATED=1");
-    DefineBuiltinMacro(Buf, "__EXCEPTIONS=1");
     DefineBuiltinMacro(Buf, "__GNUG__=4");
     DefineBuiltinMacro(Buf, "__GXX_WEAK__=1");
     if (LangOpts.GNUMode)
