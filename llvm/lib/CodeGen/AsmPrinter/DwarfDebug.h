@@ -141,6 +141,15 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// DbgScopeMap - Tracks the scopes in the current function.
   DenseMap<MDNode *, DbgScope *> DbgScopeMap;
 
+  typedef DenseMap<const MachineInstr *, SmallVector<DbgScope *, 2> > 
+    InsnToDbgScopeMapTy;
+
+  /// DbgScopeBeginMap - Maps instruction with a list DbgScopes it starts.
+  InsnToDbgScopeMapTy DbgScopeBeginMap;
+
+  /// DbgScopeEndMap - Maps instruction with a list DbgScopes it ends.
+  InsnToDbgScopeMapTy DbgScopeEndMap;
+
   /// DbgAbstractScopeMap - Tracks abstract instance scopes in the current
   /// function.
   DenseMap<MDNode *, DbgScope *> DbgAbstractScopeMap;
@@ -348,9 +357,10 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   ///
   DIE *CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit);
 
-  /// getOrCreateScope - Returns the scope associated with the given descriptor.
+  /// getDbgScope - Returns the scope associated with the given descriptor.
   ///
   DbgScope *getOrCreateScope(MDNode *N);
+  DbgScope *getDbgScope(MDNode *N, const MachineInstr *MI);
 
   /// ConstructDbgScope - Construct the components of a scope.
   ///
@@ -542,6 +552,11 @@ public:
   /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
   unsigned RecordInlinedFnEnd(DISubprogram &SP);
 
+  /// ExtractScopeInformation - Scan machine instructions in this function
+  /// and collect DbgScopes. Return true, if atleast one scope was found.
+  bool ExtractScopeInformation(MachineFunction *MF);
+
+  void SetDbgScopeLabels(const MachineInstr *MI, unsigned Label);
 };
 
 } // End of namespace llvm

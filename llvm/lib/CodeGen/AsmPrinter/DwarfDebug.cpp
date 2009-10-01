@@ -187,6 +187,21 @@ public:
   ///
   void AddConcreteInst(DbgConcreteScope *C) { ConcreteInsts.push_back(C); }
 
+  void FixInstructionMarkers() {
+    assert (getFirstInsn() && "First instruction is missing!");
+    if (getLastInsn())
+      return;
+    
+    // If a scope does not have an instruction to mark an end then use
+    // the end of last child scope.
+    SmallVector<DbgScope *, 4> &Scopes = getScopes();
+    assert (!Scopes.empty() && "Inner most scope does not have last insn!");
+    DbgScope *L = Scopes.back();
+    if (!L->getLastInsn())
+      L->FixInstructionMarkers();
+    setLastInsn(L->getLastInsn());
+  }
+
 #ifndef NDEBUG
   void dump() const;
 #endif
@@ -1270,6 +1285,45 @@ DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
 
 /// getOrCreateScope - Returns the scope associated with the given descriptor.
 ///
+DbgScope *DwarfDebug::getDbgScope(MDNode *N, const MachineInstr *MI) {
+  DbgScope *&Slot = DbgScopeMap[N];
+  if (Slot) return Slot;
+
+  DbgScope *Parent = NULL;
+
+  DIDescriptor Scope(N);
+  if (Scope.isCompileUnit()) {
+    return NULL;
+  } else if (Scope.isSubprogram()) {
+    DISubprogram SP(N);
+    DIDescriptor ParentDesc = SP.getContext();
+    if (!ParentDesc.isNull() && !ParentDesc.isCompileUnit())
+      Parent = getDbgScope(ParentDesc.getNode(), MI);
+  } else if (Scope.isLexicalBlock()) {
+    DILexicalBlock DB(N);
+    DIDescriptor ParentDesc = DB.getContext();
+    if (!ParentDesc.isNull())
+      Parent = getDbgScope(ParentDesc.getNode(), MI);
+  } else
+    assert (0 && "Unexpected scope info");
+
+  Slot = new DbgScope(Parent, DIDescriptor(N));
+  Slot->setFirstInsn(MI);
+
+  if (Parent)
+    Parent->AddScope(Slot);
+  else
+    // First function is top level function.
+    // FIXME - Dpatel - What is FunctionDbgScope ?
+    if (!FunctionDbgScope)
+      FunctionDbgScope = Slot;
+
+  return Slot;
+}
+
+
+/// getOrCreateScope - Returns the scope associated with the given descriptor.
+/// FIXME - Remove this method.
 DbgScope *DwarfDebug::getOrCreateScope(MDNode *N) {
   DbgScope *&Slot = DbgScopeMap[N];
   if (Slot) return Slot;
@@ -1716,6 +1770,77 @@ void DwarfDebug::EndModule() {
     DebugTimer->stopTimer();
 }
 
+/// ExtractScopeInformation - Scan machine instructions in this function
+/// and collect DbgScopes. Return true, if atleast one scope was found.
+bool DwarfDebug::ExtractScopeInformation(MachineFunction *MF) {
+  // If scope information was extracted using .dbg intrinsics then there is not
+  // any need to extract these information by scanning each instruction.
+  if (!DbgScopeMap.empty())
+    return false;
+
+  // Scan each instruction and create scopes.
+  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
+       I != E; ++I) {
+    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
+         II != IE; ++II) {
+      const MachineInstr *MInsn = II;
+      DebugLoc DL = MInsn->getDebugLoc();
+      if (DL.isUnknown())
+        continue;
+      DebugLocTuple DLT = MF->getDebugLocTuple(DL);
+      if (!DLT.CompileUnit)
+        continue;
+      // There is no need to create another DIE for compile unit. For all
+      // other scopes, create one DbgScope now. This will be translated 
+      // into a scope DIE at the end.
+      DIDescriptor D(DLT.CompileUnit);
+      if (!D.isCompileUnit()) {
+        DbgScope *Scope = getDbgScope(DLT.CompileUnit, MInsn);
+        Scope->setLastInsn(MInsn);
+      }
+    }
+  }
+
+  // If a scope's last instruction is not set then use its child scope's
+  // last instruction as this scope's last instrunction.
+  for (DenseMap<MDNode *, DbgScope *>::iterator DI = DbgScopeMap.begin(),
+	 DE = DbgScopeMap.end(); DI != DE; ++DI) {
+    assert (DI->second->getFirstInsn() && "Invalid first instruction!");
+    DI->second->FixInstructionMarkers();
+    assert (DI->second->getLastInsn() && "Invalid last instruction!");
+  }
+
+  // Each scope has first instruction and last instruction to mark beginning
+  // and end of a scope respectively. Create an inverse map that list scopes
+  // starts (and ends) with an instruction. One instruction may start (or end)
+  // multiple scopes.
+  for (DenseMap<MDNode *, DbgScope *>::iterator DI = DbgScopeMap.begin(),
+	 DE = DbgScopeMap.end(); DI != DE; ++DI) {
+    DbgScope *S = DI->second;
+    assert (S && "DbgScope is missing!");
+    const MachineInstr *MI = S->getFirstInsn();
+    assert (MI && "DbgScope does not have first instruction!");
+
+    InsnToDbgScopeMapTy::iterator IDI = DbgScopeBeginMap.find(MI);
+    if (IDI != DbgScopeBeginMap.end())
+      IDI->second.push_back(S);
+    else
+      DbgScopeBeginMap.insert(std::make_pair(MI, 
+                                             SmallVector<DbgScope *, 2>(2, S)));
+
+    MI = S->getLastInsn();
+    assert (MI && "DbgScope does not have last instruction!");
+    IDI = DbgScopeEndMap.find(MI);
+    if (IDI != DbgScopeEndMap.end())
+      IDI->second.push_back(S);
+    else
+      DbgScopeEndMap.insert(std::make_pair(MI,
+                                             SmallVector<DbgScope *, 2>(2, S)));
+  }
+
+  return !DbgScopeMap.empty();
+}
+
 /// BeginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
 void DwarfDebug::BeginFunction(MachineFunction *MF) {
@@ -1795,6 +1920,8 @@ void DwarfDebug::EndFunction(MachineFunction *MF) {
   if (FunctionDbgScope) {
     delete FunctionDbgScope;
     DbgScopeMap.clear();
+    DbgScopeBeginMap.clear();
+    DbgScopeEndMap.clear();
     DbgAbstractScopeMap.clear();
     DbgConcreteScopeMap.clear();
     FunctionDbgScope = NULL;
