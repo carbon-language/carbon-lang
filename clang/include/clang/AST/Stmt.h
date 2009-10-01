@@ -188,7 +188,10 @@ public:
     return this;
   }
 
-  StmtClass getStmtClass() const { return (StmtClass)sClass; }
+  StmtClass getStmtClass() const { 
+    assert(RefCount >= 1 && "Referencing already-destroyed statement!");
+    return (StmtClass)sClass; 
+  }
   const char *getStmtClassName() const;
 
   /// SourceLocation tokens are not useful in isolation - they are low level

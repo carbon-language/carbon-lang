@@ -3414,6 +3414,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
                                TemplateId->getTemplateArgLocations(),
                                TemplateArgs);
     HasExplicitTemplateArgs = true;
+    TemplateArgsPtr.release();
   }
     
   // C++ [temp.explicit]p1:

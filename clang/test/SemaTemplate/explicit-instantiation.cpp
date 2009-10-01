@@ -69,3 +69,7 @@ template void print_type<int>(float*); // expected-error{{does not refer}}
 
 void print_type(double*);
 template void print_type<double>(double*);
+
+// PR5069
+template<int I> void foo0 (int (&)[I + 1]) { }
+template void foo0<2> (int (&)[3]);
