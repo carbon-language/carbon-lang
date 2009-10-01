@@ -49,8 +49,8 @@ namespace llvm {
       : Data(Str) { if (Str) Length = ::strlen(Str); else Length = 0; }
  
     /// Construct a string ref from a pointer and length.
-    /*implicit*/ StringRef(const char *_Data, unsigned _Length)
-      : Data(_Data), Length(_Length) {}
+    /*implicit*/ StringRef(const char *data, unsigned length)
+      : Data(data), Length(length) {}
 
     /// Construct a string ref from an std::string.
     /*implicit*/ StringRef(const std::string &Str) 
