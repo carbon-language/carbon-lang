@@ -892,7 +892,8 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprArg rex) {
     return StmtError();
 
   if (FnRetType->isVoidType()) {
-    if (RetValExp) {// C99 6.8.6.4p1 (ext_ since GCC warns)
+    if (RetValExp && !RetValExp->isTypeDependent()) {
+      // C99 6.8.6.4p1 (ext_ since GCC warns)
       unsigned D = diag::ext_return_has_expr;
       if (RetValExp->getType()->isVoidType())
         D = diag::ext_return_has_void_expr;

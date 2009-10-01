@@ -1183,6 +1183,10 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
   bool ReturnsVoid = false;
   bool HasNoReturn = false;
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    // If the result type of the function is a dependent type, we don't know
+    // whether it will be void or not, so don't 
+    if (FD->getResultType()->isDependentType())
+      return;
     if (FD->getResultType()->isVoidType())
       ReturnsVoid = true;
     if (FD->hasAttr<NoReturnAttr>())
@@ -1202,7 +1206,7 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
       && (Diags.getDiagnosticLevel(diag::warn_suggest_noreturn_block)
           == Diagnostic::Ignored || !ReturnsVoid))
     return;
-  // FIXME: Funtion try block
+  // FIXME: Function try block
   if (CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
     switch (CheckFallThrough(Body)) {
     case MaybeFallThrough:
