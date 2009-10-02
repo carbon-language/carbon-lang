@@ -542,7 +542,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
 
 /// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned ARMTargetLowering::getFunctionAlignment(const Function *F) const {
-  return getTargetMachine().getSubtarget<ARMSubtarget>().isThumb() ? 1 : 2;
+  return getTargetMachine().getSubtarget<ARMSubtarget>().isThumb() ? 0 : 1;
 }
 
 //===----------------------------------------------------------------------===//
