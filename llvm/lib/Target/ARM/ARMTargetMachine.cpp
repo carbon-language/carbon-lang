@@ -22,10 +22,6 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-static cl::opt<bool>
-LdStBeforeSched("ldstopti-before-sched2", cl::Hidden,
-            cl::desc("Move ld / st multiple pass before postalloc scheduling"));
-
 static const MCAsmInfo *createMCAsmInfo(const Target &T,
                                         const StringRef &TT) {
   Triple TheTriple(TT);
@@ -109,8 +105,7 @@ bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
                                         CodeGenOpt::Level OptLevel) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb1.
   if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
-    if (LdStBeforeSched)
-      PM.add(createARMLoadStoreOptimizationPass());
+    PM.add(createARMLoadStoreOptimizationPass());
 
   return true;
 }
@@ -118,11 +113,8 @@ bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
 bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb1.
-  if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only()) {
-    if (!LdStBeforeSched)
-      PM.add(createARMLoadStoreOptimizationPass());
+  if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
     PM.add(createIfConverterPass());
-  }
 
   if (Subtarget.isThumb2()) {
     PM.add(createThumb2ITBlockPass());

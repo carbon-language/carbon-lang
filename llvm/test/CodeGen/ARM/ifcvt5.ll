@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=arm
-; RUN: llc < %s -march=arm | grep blge | count 1
+; RUN: llc < %s -march=arm | FileCheck %s
 
 @x = external global i32*		; <i32**> [#uses=1]
 
@@ -11,6 +10,8 @@ entry:
 }
 
 define void @t1(i32 %a, i32 %b) {
+; CHECK: t1:
+; CHECK: ldmltfd sp!, {r7, pc}
 entry:
 	%tmp1 = icmp sgt i32 %a, 10		; <i1> [#uses=1]
 	br i1 %tmp1, label %cond_true, label %UnifiedReturnBlock
