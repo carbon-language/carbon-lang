@@ -11,6 +11,12 @@ LEVEL = ../..
 LIBRARYNAME = LLVMSystem
 BUILD_ARCHIVE = 1
 
+include $(LEVEL)/Makefile.config
+
+ifeq ($(HOST_OS),MingW)
+  REQUIRES_EH := 1
+endif
+
 EXTRA_DIST = Unix Win32 README.txt
 
 include $(LEVEL)/Makefile.common

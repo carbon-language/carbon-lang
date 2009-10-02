@@ -25,7 +25,7 @@ LIBS += -lGoogleTest -lUnitTestMain
 $(LLVMUnitTestExe): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 	$(Echo) Linking $(BuildMode) unit test $(TESTNAME) $(StripWarnMsg)
 	$(Verb) $(Link) -o $@ $(TOOLLINKOPTS) $(ObjectsO) $(ProjLibsOptions) \
-	$(LIBS) $(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB)
+	$(LLVMLibsOptions) $(ExtraLibs) $(TOOLLINKOPTSB) $(LIBS) 
 	$(Echo) ======= Finished Linking $(BuildMode) Unit test $(TESTNAME) \
           $(StripWarnMsg)
 
