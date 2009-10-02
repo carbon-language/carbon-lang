@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-pc-linux-gnu -verify -emit-llvm -o %t %s &&
+// RUN: clang-cc -triple i386-pc-linux-gnu -verify -emit-llvm -o %t %s | FileCheck %s --input-file=%t &&
 
 #include <stdint.h>
 
@@ -47,6 +47,12 @@ int g9 = (2 + 3i) * (5 + 7i) != (-11 + 29i);
 // RUN: grep '@g10 = global i32 0' %t &&
 int g10 = (2.0 + 3.0i) * (5.0 + 7.0i) != (-11.0 + 29.0i);
 
+// PR5108
+// CHECK: @ss = global %4 <{ i32 0, i8 7 }>, align 1
+struct s {
+  unsigned long a;
+  unsigned long b:3;
+} __attribute__((__packed__)) ss  = { .a = 0x0, .b = 7,  };
 
 // Global references
 // RUN: grep '@g11.l0 = internal global i32 ptrtoint (i32 ()\* @g11 to i32)' %t &&

@@ -37,10 +37,13 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
 
   unsigned NextFieldOffsetInBytes;
 
+  unsigned LLVMStructAlignment;
+  
   std::vector<llvm::Constant *> Elements;
 
   ConstStructBuilder(CodeGenModule &CGM, CodeGenFunction *CGF)
-    : CGM(CGM), CGF(CGF), Packed(false), NextFieldOffsetInBytes(0) { }
+    : CGM(CGM), CGF(CGF), Packed(false), NextFieldOffsetInBytes(0),
+    LLVMStructAlignment(1) { }
 
   bool AppendField(const FieldDecl *Field, uint64_t FieldOffset,
                    const Expr *InitExpr) {
@@ -61,44 +64,11 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
       llvm::RoundUpToAlignment(NextFieldOffsetInBytes, FieldAlignment);
 
     if (AlignedNextFieldOffsetInBytes > FieldOffsetInBytes) {
-      std::vector<llvm::Constant *> PackedElements;
-
       assert(!Packed && "Alignment is wrong even with a packed struct!");
 
       // Convert the struct to a packed struct.
-      uint64_t ElementOffsetInBytes = 0;
-
-      for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
-        llvm::Constant *C = Elements[i];
-
-        unsigned ElementAlign =
-          CGM.getTargetData().getABITypeAlignment(C->getType());
-        uint64_t AlignedElementOffsetInBytes =
-          llvm::RoundUpToAlignment(ElementOffsetInBytes, ElementAlign);
-
-        if (AlignedElementOffsetInBytes > ElementOffsetInBytes) {
-          // We need some padding.
-          uint64_t NumBytes =
-            AlignedElementOffsetInBytes - ElementOffsetInBytes;
-
-          const llvm::Type *Ty = llvm::Type::getInt8Ty(CGF->getLLVMContext());
-          if (NumBytes > 1)
-            Ty = llvm::ArrayType::get(Ty, NumBytes);
-
-          llvm::Constant *Padding = llvm::Constant::getNullValue(Ty);
-          PackedElements.push_back(Padding);
-          ElementOffsetInBytes += getSizeInBytes(Padding);
-        }
-
-        PackedElements.push_back(C);
-        ElementOffsetInBytes += getSizeInBytes(C);
-      }
-
-      assert(ElementOffsetInBytes == NextFieldOffsetInBytes &&
-             "Packing the struct changed its size!");
-
-      Elements = PackedElements;
-      Packed = true;
+      ConvertStructToPacked();
+      
       AlignedNextFieldOffsetInBytes = NextFieldOffsetInBytes;
     }
 
@@ -115,7 +85,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
     // Add the field.
     Elements.push_back(C);
     NextFieldOffsetInBytes = AlignedNextFieldOffsetInBytes + getSizeInBytes(C);
-
+    LLVMStructAlignment = std::max(LLVMStructAlignment, FieldAlignment);
     return true;
   }
 
@@ -270,6 +240,44 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
     AppendPadding(NumPadBytes);
   }
 
+  void ConvertStructToPacked() {
+    std::vector<llvm::Constant *> PackedElements;
+    uint64_t ElementOffsetInBytes = 0;
+
+    for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
+      llvm::Constant *C = Elements[i];
+
+      unsigned ElementAlign =
+        CGM.getTargetData().getABITypeAlignment(C->getType());
+      uint64_t AlignedElementOffsetInBytes =
+        llvm::RoundUpToAlignment(ElementOffsetInBytes, ElementAlign);
+
+      if (AlignedElementOffsetInBytes > ElementOffsetInBytes) {
+        // We need some padding.
+        uint64_t NumBytes =
+          AlignedElementOffsetInBytes - ElementOffsetInBytes;
+
+        const llvm::Type *Ty = llvm::Type::getInt8Ty(CGF->getLLVMContext());
+        if (NumBytes > 1)
+          Ty = llvm::ArrayType::get(Ty, NumBytes);
+
+        llvm::Constant *Padding = llvm::Constant::getNullValue(Ty);
+        PackedElements.push_back(Padding);
+        ElementOffsetInBytes += getSizeInBytes(Padding);
+      }
+
+      PackedElements.push_back(C);
+      ElementOffsetInBytes += getSizeInBytes(C);
+    }
+
+    assert(ElementOffsetInBytes == NextFieldOffsetInBytes &&
+           "Packing the struct changed its size!");
+
+    Elements = PackedElements;
+    LLVMStructAlignment = 1;
+    Packed = true;
+  }
+                              
   bool Build(InitListExpr *ILE) {
     RecordDecl *RD = ILE->getType()->getAs<RecordType>()->getDecl();
     const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
@@ -306,9 +314,22 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
       // we must have a flexible array member at the end.
       assert(RD->hasFlexibleArrayMember() &&
              "Must have flexible array member if struct is bigger than type!");
-
+      
       // No tail padding is necessary.
       return true;
+    }
+
+    uint64_t LLVMSizeInBytes = llvm::RoundUpToAlignment(NextFieldOffsetInBytes, 
+                                                        LLVMStructAlignment);
+
+    // Check if we need to convert the struct to a packed struct.
+    if (NextFieldOffsetInBytes <= LayoutSizeInBytes && 
+        LLVMSizeInBytes > LayoutSizeInBytes) {
+      assert(!Packed && "Size mismatch!");
+      
+      ConvertStructToPacked();
+      assert(NextFieldOffsetInBytes == LayoutSizeInBytes &&
+             "Converting to packed did not help!");
     }
 
     // Append tail padding if necessary.
