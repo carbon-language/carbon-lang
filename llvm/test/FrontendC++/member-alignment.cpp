@@ -1,4 +1,5 @@
 // RUN: %llvmgxx -S -emit-llvm %s -o - | FileCheck %s
+// XFAIL: arm
 
 // rdar://7268289
 
@@ -15,5 +16,5 @@ t::bar(void) {
 
 void
 t::foo(void) {
-// CHECK: _ZN1t3fooEv{.*}} align 2
+// CHECK: _ZN1t3fooEv{{.*}} align 2
 }
