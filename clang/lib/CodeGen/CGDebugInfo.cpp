@@ -350,8 +350,10 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   FieldOffset += FieldSize;
   Elements = DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
 
+  unsigned Flags = llvm::DIType::FlagAppleBlock;
+
   EltTy = DebugFactory.CreateCompositeType(Tag, Unit, "__block_literal_generic",
-                                           DefUnit, 0, FieldOffset, 0, 0, 0,
+                                           DefUnit, 0, FieldOffset, 0, 0, Flags,
                                            llvm::DIType(), Elements);
 
   BlockLiteralGenericSet = true;
