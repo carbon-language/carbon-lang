@@ -85,7 +85,12 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
     // Add the field.
     Elements.push_back(C);
     NextFieldOffsetInBytes = AlignedNextFieldOffsetInBytes + getSizeInBytes(C);
-    LLVMStructAlignment = std::max(LLVMStructAlignment, FieldAlignment);
+    
+    if (Packed)
+      assert(LLVMStructAlignment == 1 && "Packed struct not byte-aligned!");
+    else
+      LLVMStructAlignment = std::max(LLVMStructAlignment, FieldAlignment);
+
     return true;
   }
 
