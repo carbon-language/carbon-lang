@@ -884,6 +884,7 @@ bool SchedulePostRATDList::ToggleKillFlag(MachineInstr *MI,
 
   // If any subreg of MO is live, then create an imp-def for that
   // subreg and keep MO marked as killed.
+  MO.setIsKill(false);
   bool AllDead = true;
   const unsigned SuperReg = MO.getReg();
   for (const unsigned *Subreg = TRI->getSubRegisters(SuperReg);
@@ -898,7 +899,8 @@ bool SchedulePostRATDList::ToggleKillFlag(MachineInstr *MI,
     }
   }
 
-  MO.setIsKill(AllDead);
+  if(AllDead)
+    MO.setIsKill(true);
   return false;
 }
 
