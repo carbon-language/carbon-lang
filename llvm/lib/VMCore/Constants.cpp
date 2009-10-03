@@ -472,9 +472,7 @@ ConstantArray::ConstantArray(const ArrayType *T,
   for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
        I != E; ++I, ++OL) {
     Constant *C = *I;
-    assert((C->getType() == T->getElementType() ||
-            (T->isAbstract() &&
-             C->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
+    assert(C->getType() == T->getElementType() &&
            "Initializer for array element doesn't match array element type!");
     *OL = C;
   }
@@ -545,11 +543,7 @@ ConstantStruct::ConstantStruct(const StructType *T,
   for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
        I != E; ++I, ++OL) {
     Constant *C = *I;
-    assert((C->getType() == T->getElementType(I-V.begin()) ||
-            ((T->getElementType(I-V.begin())->isAbstract() ||
-              C->getType()->isAbstract()) &&
-             T->getElementType(I-V.begin())->getTypeID() == 
-                   C->getType()->getTypeID())) &&
+    assert(C->getType() == T->getElementType(I-V.begin()) &&
            "Initializer for struct element doesn't match struct element type!");
     *OL = C;
   }
@@ -594,9 +588,7 @@ ConstantVector::ConstantVector(const VectorType *T,
     for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
          I != E; ++I, ++OL) {
       Constant *C = *I;
-      assert((C->getType() == T->getElementType() ||
-            (T->isAbstract() &&
-             C->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
+      assert(C->getType() == T->getElementType() &&
            "Initializer for vector element doesn't match vector element type!");
     *OL = C;
   }
