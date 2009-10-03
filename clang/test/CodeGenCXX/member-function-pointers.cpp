@@ -1,13 +1,19 @@
 // RUN: clang-cc %s -emit-llvm -o - -triple=x86_64-apple-darwin9 | FileCheck %s
 
-struct A { int a; };
-struct B { int b; };
+struct A { int a; void f(); virtual void vf(); };
+struct B { int b; virtual void g(); };
 struct C : B, A { };
 
 void (A::*pa)();
 void (A::*volatile vpa)();
 void (B::*pb)();
 void (C::*pc)();
+
+// CHECK: @pa2 = global %0 { i64 ptrtoint (void ()* @_ZN1A1fEv to i64), i64 0 }, align 8
+void (A::*pa2)() = &A::f;
+
+// CHECK: @pa3 = global %0 { i64 1, i64 0 }, align 8
+void (A::*pa3)() = &A::vf;
 
 void f() {
   // CHECK: store i64 0, i64* getelementptr inbounds (%0* @pa, i32 0, i32 0)
@@ -19,7 +25,7 @@ void f() {
   vpa = 0;
 
   // CHECK: store i64 %0, i64* getelementptr inbounds (%0* @pc, i32 0, i32 0)
-  // CHECK: [[ADJ:%[a-zA-Z0-9]+]] = add i64 %1, 4
+  // CHECK: [[ADJ:%[a-zA-Z0-9]+]] = add i64 %1, 16
   // CHECK: store i64 [[ADJ]], i64* getelementptr inbounds (%0* @pc, i32 0, i32 1)
-  pc = pa;  
+  pc = pa;
 }

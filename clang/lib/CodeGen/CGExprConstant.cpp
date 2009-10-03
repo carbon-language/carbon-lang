@@ -402,7 +402,50 @@ public:
   llvm::Constant *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
     return Visit(E->getInitializer());
   }
+  
+  llvm::Constant *EmitMemberFunctionPointer(CXXMethodDecl *MD) {
+    assert(MD->isInstance() && "Member function must not be static!");
+    
+    const llvm::Type *PtrDiffTy = 
+      CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
+    
+    llvm::Constant *Values[2];
+    
+    // Get the function pointer (or index if this is a virtual function).
+    if (MD->isVirtual()) {
+      uint64_t Index = CGM.GetVtableIndex(MD);
+      
+      Values[0] = llvm::ConstantInt::get(PtrDiffTy, Index + 1);
+    } else {
+      llvm::Constant *FuncPtr = CGM.GetAddrOfFunction(MD);
 
+      Values[0] = llvm::ConstantExpr::getPtrToInt(FuncPtr, PtrDiffTy);
+    } 
+    
+    // The adjustment will always be 0.
+    Values[1] = llvm::ConstantInt::get(PtrDiffTy, 0);
+    
+    return llvm::ConstantStruct::get(CGM.getLLVMContext(),
+                                     Values, 2, /*Packed=*/false);
+  }
+
+  llvm::Constant *VisitUnaryAddrOf(UnaryOperator *E) {
+    if (const MemberPointerType *MPT = 
+        E->getType()->getAs<MemberPointerType>()) {
+      QualType T = MPT->getPointeeType();
+      if (T->isFunctionProtoType()) {
+        QualifiedDeclRefExpr *DRE = cast<QualifiedDeclRefExpr>(E->getSubExpr());
+        
+        return EmitMemberFunctionPointer(cast<CXXMethodDecl>(DRE->getDecl()));
+      }
+      
+      // FIXME: Should we handle other member pointer types here too,
+      // or should they be handled by Expr::Evaluate?
+    }
+    
+    return 0;
+  }
+    
   llvm::Constant *VisitCastExpr(CastExpr* E) {
     switch (E->getCastKind()) {
     case CastExpr::CK_ToUnion: {
