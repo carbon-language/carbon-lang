@@ -180,6 +180,16 @@ public:
     { return Visit(E->getSubExpr()); }
   APValue VisitChooseExpr(const ChooseExpr *E)
     { return Visit(E->getChosenSubExpr(Info.Ctx)); }
+
+  APValue VisitCastExpr(CastExpr *E) {
+    switch (E->getCastKind()) {
+    default:
+      return APValue();
+
+    case CastExpr::CK_NoOp:
+      return Visit(E->getSubExpr());
+    }
+  }
   // FIXME: Missing: __real__, __imag__
 };
 } // end anonymous namespace

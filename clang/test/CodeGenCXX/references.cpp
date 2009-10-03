@@ -95,3 +95,8 @@ struct A {
 void f(A* a) {
   int b = a->b();
 }
+
+// PR5122
+void *foo = 0;
+void * const & kFoo = foo;
+
