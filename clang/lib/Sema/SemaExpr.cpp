@@ -2902,6 +2902,28 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
         return Owned(BuildCallToMemberFunction(S, Fn, LParenLoc, Args, NumArgs,
                                                CommaLocs, RParenLoc));
     }
+    
+    // Determine whether this is a call to a pointer-to-member function.
+    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Fn->IgnoreParens())) {
+      if (BO->getOpcode() == BinaryOperator::PtrMemD ||
+          BO->getOpcode() == BinaryOperator::PtrMemI) {
+        const FunctionProtoType *FPT = cast<FunctionProtoType>(BO->getType());
+        QualType ReturnTy = FPT->getResultType();
+      
+        CXXMemberCallExpr *CE = 
+          new (Context) CXXMemberCallExpr(Context, BO, Args, NumArgs,
+                                          ReturnTy.getNonReferenceType(),
+                                          RParenLoc);
+        
+        ExprOwningPtr<CXXMemberCallExpr> TheCall(this, CE);
+        
+        if (ConvertArgumentsForCall(&*TheCall, BO, 0, FPT, Args, NumArgs, 
+                                    RParenLoc))
+          return ExprError();
+
+        return Owned(MaybeBindToTemporary(TheCall.release()).release());
+      }
+    }
   }
 
   // If we're directly calling a function, get the appropriate declaration.
