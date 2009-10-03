@@ -935,6 +935,12 @@ class N2VCvtQ<bit op24, bit op23, bits<6> op21_16, bits<4> op11_8, bit op7,
 // Multiclasses
 //===----------------------------------------------------------------------===//
 
+// Abbreviations used in multiclass suffixes:
+//   Q = quarter int (8 bit) elements
+//   H = half int (16 bit) elements
+//   S = single int (32 bit) elements
+//   D = double int (64 bit) elements
+
 // Neon 3-register vector operations.
 
 // First with only element sizes of 8, 16 and 32 bits:
