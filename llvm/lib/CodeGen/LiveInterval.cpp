@@ -131,7 +131,7 @@ bool LiveInterval::overlapsFrom(const LiveInterval& other,
 
 /// overlaps - Return true if the live interval overlaps a range specified
 /// by [Start, End).
-bool LiveInterval::overlaps(LiveIndex Start, MachineInstrIndex End) const {
+bool LiveInterval::overlaps(LiveIndex Start, LiveIndex End) const {
   assert(Start < End && "Invalid range");
   const_iterator I  = begin();
   const_iterator E  = end();
@@ -268,7 +268,7 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
 
 /// isInOneLiveRange - Return true if the range specified is entirely in 
 /// a single LiveRange of the live interval.
-bool LiveInterval::isInOneLiveRange(LiveIndex Start, MachineInstrIndex End) {
+bool LiveInterval::isInOneLiveRange(LiveIndex Start, LiveIndex End) {
   Ranges::iterator I = std::upper_bound(ranges.begin(), ranges.end(), Start);
   if (I == ranges.begin())
     return false;
@@ -279,7 +279,7 @@ bool LiveInterval::isInOneLiveRange(LiveIndex Start, MachineInstrIndex End) {
 
 /// removeRange - Remove the specified range from this interval.  Note that
 /// the range must be in a single LiveRange in its entirety.
-void LiveInterval::removeRange(LiveIndex Start, MachineInstrIndex End,
+void LiveInterval::removeRange(LiveIndex Start, LiveIndex End,
                                bool RemoveDeadValNo) {
   // Find the LiveRange containing this span.
   Ranges::iterator I = std::upper_bound(ranges.begin(), ranges.end(), Start);

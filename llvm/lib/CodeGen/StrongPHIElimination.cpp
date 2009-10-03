@@ -748,7 +748,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       
       LiveInterval& I = LI.getInterval(curr.second);
       MachineBasicBlock::iterator term = MBB->getFirstTerminator();
-      LiveIndex endIdx = MachineInstrIndex();
+      LiveIndex endIdx = LiveIndex();
       if (term != MBB->end())
         endIdx = LI.getInstructionIndex(term);
       else

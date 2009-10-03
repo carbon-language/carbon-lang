@@ -83,7 +83,7 @@ namespace {
     DenseMap<unsigned, int> IntervalSSMap;
 
     // Def2SpillMap - A map from a def instruction index to spill index.
-    DenseMap<LiveIndex, MachineInstrIndex> Def2SpillMap;
+    DenseMap<LiveIndex, LiveIndex> Def2SpillMap;
 
   public:
     static char ID;
@@ -142,10 +142,10 @@ namespace {
     int CreateSpillStackSlot(unsigned, const TargetRegisterClass *);
 
     bool IsAvailableInStack(MachineBasicBlock*, unsigned,
-                            LiveIndex, MachineInstrIndex,
+                            LiveIndex, LiveIndex,
                             LiveIndex&, int&) const;
 
-    void UpdateSpillSlotInterval(VNInfo*, LiveIndex, MachineInstrIndex);
+    void UpdateSpillSlotInterval(VNInfo*, LiveIndex, LiveIndex);
 
     bool SplitRegLiveInterval(LiveInterval*);
 
@@ -363,7 +363,7 @@ PreAllocSplitting::IsAvailableInStack(MachineBasicBlock *DefMBB,
   DenseMap<unsigned, int>::iterator I = IntervalSSMap.find(Reg);
   if (I == IntervalSSMap.end())
     return false;
-  DenseMap<LiveIndex, MachineInstrIndex>::iterator
+  DenseMap<LiveIndex, LiveIndex>::iterator
     II = Def2SpillMap.find(DefIndex);
   if (II == Def2SpillMap.end())
     return false;

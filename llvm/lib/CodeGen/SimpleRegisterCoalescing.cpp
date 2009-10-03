@@ -399,7 +399,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   bool BHasPHIKill = BValNo->hasPHIKill();
   SmallVector<VNInfo*, 4> BDeadValNos;
   VNInfo::KillSet BKills;
-  std::map<LiveIndex, MachineInstrIndex> BExtend;
+  std::map<LiveIndex, LiveIndex> BExtend;
 
   // If ALR and BLR overlaps and end of BLR extends beyond end of ALR, e.g.
   // A = or A, B
@@ -494,7 +494,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
        AI != AE; ++AI) {
     if (AI->valno != AValNo) continue;
     LiveIndex End = AI->end;
-    std::map<LiveIndex, MachineInstrIndex>::iterator
+    std::map<LiveIndex, LiveIndex>::iterator
       EI = BExtend.find(End);
     if (EI != BExtend.end())
       End = EI->second;
@@ -549,7 +549,7 @@ static bool isSameOrFallThroughBB(MachineBasicBlock *MBB,
 /// from a physical register live interval as well as from the live intervals
 /// of its sub-registers.
 static void removeRange(LiveInterval &li,
-                        LiveIndex Start, MachineInstrIndex End,
+                        LiveIndex Start, LiveIndex End,
                         LiveIntervals *li_, const TargetRegisterInfo *tri_) {
   li.removeRange(Start, End, true);
   if (TargetRegisterInfo::isPhysicalRegister(li.reg)) {

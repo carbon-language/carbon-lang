@@ -321,7 +321,7 @@ public:
     vrm->assignVirt2StackSlot(li->reg, ss);
 
     MachineInstr *mi = 0;
-    LiveIndex storeIdx = MachineInstrIndex();
+    LiveIndex storeIdx = LiveIndex();
 
     if (valno->isDefAccurate()) {
       // If we have an accurate def we can just grab an iterator to the instr
@@ -335,7 +335,7 @@ public:
     }
 
     MachineBasicBlock *defBlock = mi->getParent();
-    LiveIndex loadIdx = MachineInstrIndex();
+    LiveIndex loadIdx = LiveIndex();
 
     // Now we need to find the load...
     MachineBasicBlock::iterator useItr(mi);

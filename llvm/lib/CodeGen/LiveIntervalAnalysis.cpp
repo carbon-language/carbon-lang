@@ -292,7 +292,7 @@ void LiveIntervals::computeNumbering() {
   // Number MachineInstrs and MachineBasicBlocks.
   // Initialize MBB indexes to a sentinal.
   MBB2IdxMap.resize(mf_->getNumBlockIDs(),
-                    std::make_pair(LiveIndex(),MachineInstrIndex()));
+                    std::make_pair(LiveIndex(),LiveIndex()));
   
   LiveIndex MIIndex;
   for (MachineFunction::iterator MBB = mf_->begin(), E = mf_->end();
@@ -406,7 +406,7 @@ void LiveIntervals::computeNumbering() {
                 (idx == index ? offset : LiveIndex::LOAD));
           else
             LI->end =
-              LiveIndex(MachineInstrIndex::NUM * i2miMap_.size());
+              LiveIndex(LiveIndex::NUM * i2miMap_.size());
         }
       }
       
@@ -485,7 +485,7 @@ void LiveIntervals::scaleNumbering(int factor) {
   Idx2MBBMap.clear();
   for (MachineFunction::iterator MBB = mf_->begin(), MBBE = mf_->end();
        MBB != MBBE; ++MBB) {
-    std::pair<LiveIndex, MachineInstrIndex> &mbbIndices = MBB2IdxMap[MBB->getNumber()];
+    std::pair<LiveIndex, LiveIndex> &mbbIndices = MBB2IdxMap[MBB->getNumber()];
     mbbIndices.first = mbbIndices.first.scale(factor);
     mbbIndices.second = mbbIndices.second.scale(factor);
     Idx2MBBMap.push_back(std::make_pair(mbbIndices.first, MBB)); 
@@ -1283,7 +1283,7 @@ void LiveIntervals::computeIntervals() {
 }
 
 bool LiveIntervals::findLiveInMBBs(
-                              LiveIndex Start, MachineInstrIndex End,
+                              LiveIndex Start, LiveIndex End,
                               SmallVectorImpl<MachineBasicBlock*> &MBBs) const {
   std::vector<IdxMBBPair>::const_iterator I =
     std::lower_bound(Idx2MBBMap.begin(), Idx2MBBMap.end(), Start);
@@ -1300,7 +1300,7 @@ bool LiveIntervals::findLiveInMBBs(
 }
 
 bool LiveIntervals::findReachableMBBs(
-                              LiveIndex Start, MachineInstrIndex End,
+                              LiveIndex Start, LiveIndex End,
                               SmallVectorImpl<MachineBasicBlock*> &MBBs) const {
   std::vector<IdxMBBPair>::const_iterator I =
     std::lower_bound(Idx2MBBMap.begin(), Idx2MBBMap.end(), Start);
@@ -1700,7 +1700,7 @@ void LiveIntervals::rewriteImplicitOps(const LiveInterval &li,
 /// for addIntervalsForSpills to rewrite uses / defs for the given live range.
 bool LiveIntervals::
 rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
-                 bool TrySplit, LiveIndex index, MachineInstrIndex end, 
+                 bool TrySplit, LiveIndex index, LiveIndex end, 
                  MachineInstr *MI,
                  MachineInstr *ReMatOrigDefMI, MachineInstr *ReMatDefMI,
                  unsigned Slot, int LdSlot,
@@ -2732,12 +2732,12 @@ LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
                                                   MachineInstr* startInst) {
   LiveInterval& Interval = getOrCreateInterval(reg);
   VNInfo* VN = Interval.getNextValue(
-    LiveIndex(getInstructionIndex(startInst), MachineInstrIndex::DEF),
+    LiveIndex(getInstructionIndex(startInst), LiveIndex::DEF),
     startInst, true, getVNInfoAllocator());
   VN->setHasPHIKill(true);
   VN->kills.push_back(terminatorGaps[startInst->getParent()]);
   LiveRange LR(
-    LiveIndex(getInstructionIndex(startInst), MachineInstrIndex::DEF),
+    LiveIndex(getInstructionIndex(startInst), LiveIndex::DEF),
     getNextSlot(getMBBEndIdx(startInst->getParent())), VN);
   Interval.addRange(LR);
   
