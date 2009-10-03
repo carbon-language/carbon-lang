@@ -413,7 +413,7 @@ public:
     
     // Get the function pointer (or index if this is a virtual function).
     if (MD->isVirtual()) {
-      uint64_t Index = CGM.GetVtableIndex(MD);
+      uint64_t Index = CGM.GetVtableIndex(MD->getCanonicalDecl());
       
       Values[0] = llvm::ConstantInt::get(PtrDiffTy, Index + 1);
     } else {
