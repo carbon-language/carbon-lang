@@ -28,8 +28,8 @@
 #include <algorithm>
 using namespace llvm;
 
-// Print a MachineInstrIndex to a raw_ostream.
-void MachineInstrIndex::print(raw_ostream &os) const {
+// Print a LiveIndex to a raw_ostream.
+void LiveIndex::print(raw_ostream &os) const {
   os << (index & ~PHI_BIT);
 }
 
@@ -40,7 +40,7 @@ void MachineInstrIndex::print(raw_ostream &os) const {
 // variable it represents. This is because slot 1 is used (def slot) and spans
 // up to slot 3 (store slot).
 //
-bool LiveInterval::liveAt(MachineInstrIndex I) const {
+bool LiveInterval::liveAt(LiveIndex I) const {
   Ranges::const_iterator r = std::upper_bound(ranges.begin(), ranges.end(), I);
 
   if (r == ranges.begin())
@@ -53,7 +53,7 @@ bool LiveInterval::liveAt(MachineInstrIndex I) const {
 // liveBeforeAndAt - Check if the interval is live at the index and the index
 // just before it. If index is liveAt, check if it starts a new live range.
 // If it does, then check if the previous live range ends at index-1.
-bool LiveInterval::liveBeforeAndAt(MachineInstrIndex I) const {
+bool LiveInterval::liveBeforeAndAt(LiveIndex I) const {
   Ranges::const_iterator r = std::upper_bound(ranges.begin(), ranges.end(), I);
 
   if (r == ranges.begin())
@@ -131,7 +131,7 @@ bool LiveInterval::overlapsFrom(const LiveInterval& other,
 
 /// overlaps - Return true if the live interval overlaps a range specified
 /// by [Start, End).
-bool LiveInterval::overlaps(MachineInstrIndex Start, MachineInstrIndex End) const {
+bool LiveInterval::overlaps(LiveIndex Start, MachineInstrIndex End) const {
   assert(Start < End && "Invalid range");
   const_iterator I  = begin();
   const_iterator E  = end();
@@ -149,10 +149,10 @@ bool LiveInterval::overlaps(MachineInstrIndex Start, MachineInstrIndex End) cons
 /// specified by I to end at the specified endpoint.  To do this, we should
 /// merge and eliminate all ranges that this will overlap with.  The iterator is
 /// not invalidated.
-void LiveInterval::extendIntervalEndTo(Ranges::iterator I, MachineInstrIndex NewEnd) {
+void LiveInterval::extendIntervalEndTo(Ranges::iterator I, LiveIndex NewEnd) {
   assert(I != ranges.end() && "Not a valid interval!");
   VNInfo *ValNo = I->valno;
-  MachineInstrIndex OldEnd = I->end;
+  LiveIndex OldEnd = I->end;
 
   // Search for the first interval that we can't merge with.
   Ranges::iterator MergeTo = next(I);
@@ -183,7 +183,7 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, MachineInstrIndex New
 /// specified by I to start at the specified endpoint.  To do this, we should
 /// merge and eliminate all ranges that this will overlap with.
 LiveInterval::Ranges::iterator
-LiveInterval::extendIntervalStartTo(Ranges::iterator I, MachineInstrIndex NewStart) {
+LiveInterval::extendIntervalStartTo(Ranges::iterator I, LiveIndex NewStart) {
   assert(I != ranges.end() && "Not a valid interval!");
   VNInfo *ValNo = I->valno;
 
@@ -216,7 +216,7 @@ LiveInterval::extendIntervalStartTo(Ranges::iterator I, MachineInstrIndex NewSta
 
 LiveInterval::iterator
 LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
-  MachineInstrIndex Start = LR.start, End = LR.end;
+  LiveIndex Start = LR.start, End = LR.end;
   iterator it = std::upper_bound(From, ranges.end(), Start);
 
   // If the inserted interval starts in the middle or right at the end of
@@ -268,7 +268,7 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
 
 /// isInOneLiveRange - Return true if the range specified is entirely in 
 /// a single LiveRange of the live interval.
-bool LiveInterval::isInOneLiveRange(MachineInstrIndex Start, MachineInstrIndex End) {
+bool LiveInterval::isInOneLiveRange(LiveIndex Start, MachineInstrIndex End) {
   Ranges::iterator I = std::upper_bound(ranges.begin(), ranges.end(), Start);
   if (I == ranges.begin())
     return false;
@@ -279,7 +279,7 @@ bool LiveInterval::isInOneLiveRange(MachineInstrIndex Start, MachineInstrIndex E
 
 /// removeRange - Remove the specified range from this interval.  Note that
 /// the range must be in a single LiveRange in its entirety.
-void LiveInterval::removeRange(MachineInstrIndex Start, MachineInstrIndex End,
+void LiveInterval::removeRange(LiveIndex Start, MachineInstrIndex End,
                                bool RemoveDeadValNo) {
   // Find the LiveRange containing this span.
   Ranges::iterator I = std::upper_bound(ranges.begin(), ranges.end(), Start);
@@ -331,7 +331,7 @@ void LiveInterval::removeRange(MachineInstrIndex Start, MachineInstrIndex End,
   }
 
   // Otherwise, we are splitting the LiveRange into two pieces.
-  MachineInstrIndex OldEnd = I->end;
+  LiveIndex OldEnd = I->end;
   I->end = Start;   // Trim the old interval.
 
   // Insert the new one.
@@ -391,7 +391,7 @@ void LiveInterval::scaleNumbering(unsigned factor) {
 /// getLiveRangeContaining - Return the live range that contains the
 /// specified index, or null if there is none.
 LiveInterval::const_iterator 
-LiveInterval::FindLiveRangeContaining(MachineInstrIndex Idx) const {
+LiveInterval::FindLiveRangeContaining(LiveIndex Idx) const {
   const_iterator It = std::upper_bound(begin(), end(), Idx);
   if (It != ranges.begin()) {
     --It;
@@ -403,7 +403,7 @@ LiveInterval::FindLiveRangeContaining(MachineInstrIndex Idx) const {
 }
 
 LiveInterval::iterator 
-LiveInterval::FindLiveRangeContaining(MachineInstrIndex Idx) {
+LiveInterval::FindLiveRangeContaining(LiveIndex Idx) {
   iterator It = std::upper_bound(begin(), end(), Idx);
   if (It != begin()) {
     --It;
@@ -416,7 +416,7 @@ LiveInterval::FindLiveRangeContaining(MachineInstrIndex Idx) {
 
 /// findDefinedVNInfo - Find the VNInfo defined by the specified
 /// index (register interval).
-VNInfo *LiveInterval::findDefinedVNInfoForRegInt(MachineInstrIndex Idx) const {
+VNInfo *LiveInterval::findDefinedVNInfoForRegInt(LiveIndex Idx) const {
   for (LiveInterval::const_vni_iterator i = vni_begin(), e = vni_end();
        i != e; ++i) {
     if ((*i)->def == Idx)
@@ -561,7 +561,7 @@ void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
   for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {
     if (I->valno != RHSValNo)
       continue;
-    MachineInstrIndex Start = I->start, End = I->end;
+    LiveIndex Start = I->start, End = I->end;
     IP = std::upper_bound(IP, end(), Start);
     // If the start of this range overlaps with an existing liverange, trim it.
     if (IP != begin() && IP[-1].end > Start) {
@@ -638,20 +638,20 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
       ClobberValNo = UnusedValNo;
     else {
       UnusedValNo = ClobberValNo =
-        getNextValue(MachineInstrIndex(), 0, false, VNInfoAllocator);
+        getNextValue(LiveIndex(), 0, false, VNInfoAllocator);
       ValNoMaps.insert(std::make_pair(I->valno, ClobberValNo));
     }
 
     bool Done = false;
-    MachineInstrIndex Start = I->start, End = I->end;
+    LiveIndex Start = I->start, End = I->end;
     // If a clobber range starts before an existing range and ends after
     // it, the clobber range will need to be split into multiple ranges.
     // Loop until the entire clobber range is handled.
     while (!Done) {
       Done = true;
       IP = std::upper_bound(IP, end(), Start);
-      MachineInstrIndex SubRangeStart = Start;
-      MachineInstrIndex SubRangeEnd = End;
+      LiveIndex SubRangeStart = Start;
+      LiveIndex SubRangeEnd = End;
 
       // If the start of this range overlaps with an existing liverange, trim it.
       if (IP != begin() && IP[-1].end > SubRangeStart) {
@@ -687,13 +687,13 @@ void LiveInterval::MergeInClobberRanges(const LiveInterval &Clobbers,
   }
 }
 
-void LiveInterval::MergeInClobberRange(MachineInstrIndex Start,
-                                       MachineInstrIndex End,
+void LiveInterval::MergeInClobberRange(LiveIndex Start,
+                                       LiveIndex End,
                                        BumpPtrAllocator &VNInfoAllocator) {
   // Find a value # to use for the clobber ranges.  If there is already a value#
   // for unknown values, use it.
   VNInfo *ClobberValNo =
-    getNextValue(MachineInstrIndex(), 0, false, VNInfoAllocator);
+    getNextValue(LiveIndex(), 0, false, VNInfoAllocator);
   
   iterator IP = begin();
   IP = std::upper_bound(IP, end(), Start);

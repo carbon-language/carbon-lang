@@ -51,13 +51,13 @@ protected:
 
   /// Ensures there is space before the given machine instruction, returns the
   /// instruction's new number.
-  MachineInstrIndex makeSpaceBefore(MachineInstr *mi) {
+  LiveIndex makeSpaceBefore(MachineInstr *mi) {
     if (!lis->hasGapBeforeInstr(lis->getInstructionIndex(mi))) {
       lis->scaleNumbering(2);
       ls->scaleNumbering(2);
     }
 
-    MachineInstrIndex miIdx = lis->getInstructionIndex(mi);
+    LiveIndex miIdx = lis->getInstructionIndex(mi);
 
     assert(lis->hasGapBeforeInstr(miIdx));
     
@@ -66,13 +66,13 @@ protected:
 
   /// Ensure there is space after the given machine instruction, returns the
   /// instruction's new number.
-  MachineInstrIndex makeSpaceAfter(MachineInstr *mi) {
+  LiveIndex makeSpaceAfter(MachineInstr *mi) {
     if (!lis->hasGapAfterInstr(lis->getInstructionIndex(mi))) {
       lis->scaleNumbering(2);
       ls->scaleNumbering(2);
     }
 
-    MachineInstrIndex miIdx = lis->getInstructionIndex(mi);
+    LiveIndex miIdx = lis->getInstructionIndex(mi);
 
     assert(lis->hasGapAfterInstr(miIdx));
 
@@ -83,19 +83,19 @@ protected:
   /// after the given instruction. Returns the base index of the inserted
   /// instruction. The caller is responsible for adding an appropriate
   /// LiveInterval to the LiveIntervals analysis.
-  MachineInstrIndex insertStoreAfter(MachineInstr *mi, unsigned ss,
+  LiveIndex insertStoreAfter(MachineInstr *mi, unsigned ss,
                                      unsigned vreg,
                                      const TargetRegisterClass *trc) {
 
     MachineBasicBlock::iterator nextInstItr(next(mi)); 
 
-    MachineInstrIndex miIdx = makeSpaceAfter(mi);
+    LiveIndex miIdx = makeSpaceAfter(mi);
 
     tii->storeRegToStackSlot(*mi->getParent(), nextInstItr, vreg,
                              true, ss, trc);
     MachineBasicBlock::iterator storeInstItr(next(mi));
     MachineInstr *storeInst = &*storeInstItr;
-    MachineInstrIndex storeInstIdx = lis->getNextIndex(miIdx);
+    LiveIndex storeInstIdx = lis->getNextIndex(miIdx);
 
     assert(lis->getInstructionFromIndex(storeInstIdx) == 0 &&
            "Store inst index already in use.");
@@ -108,15 +108,15 @@ protected:
   /// Insert a store of the given vreg to the given stack slot immediately
   /// before the given instructnion. Returns the base index of the inserted
   /// Instruction.
-  MachineInstrIndex insertStoreBefore(MachineInstr *mi, unsigned ss,
+  LiveIndex insertStoreBefore(MachineInstr *mi, unsigned ss,
                                       unsigned vreg,
                                       const TargetRegisterClass *trc) {
-    MachineInstrIndex miIdx = makeSpaceBefore(mi);
+    LiveIndex miIdx = makeSpaceBefore(mi);
   
     tii->storeRegToStackSlot(*mi->getParent(), mi, vreg, true, ss, trc);
     MachineBasicBlock::iterator storeInstItr(prior(mi));
     MachineInstr *storeInst = &*storeInstItr;
-    MachineInstrIndex storeInstIdx = lis->getPrevIndex(miIdx);
+    LiveIndex storeInstIdx = lis->getPrevIndex(miIdx);
 
     assert(lis->getInstructionFromIndex(storeInstIdx) == 0 &&
            "Store inst index already in use.");
@@ -131,8 +131,8 @@ protected:
                                       unsigned vreg,
                                       const TargetRegisterClass *trc) {
 
-    MachineInstrIndex storeInstIdx = insertStoreAfter(mi, ss, vreg, trc);
-    MachineInstrIndex start = lis->getDefIndex(lis->getInstructionIndex(mi)),
+    LiveIndex storeInstIdx = insertStoreAfter(mi, ss, vreg, trc);
+    LiveIndex start = lis->getDefIndex(lis->getInstructionIndex(mi)),
                       end = lis->getUseIndex(storeInstIdx);
 
     VNInfo *vni =
@@ -149,18 +149,18 @@ protected:
   /// after the given instruction. Returns the base index of the inserted
   /// instruction. The caller is responsibel for adding/removing an appropriate
   /// range vreg's LiveInterval.
-  MachineInstrIndex insertLoadAfter(MachineInstr *mi, unsigned ss,
+  LiveIndex insertLoadAfter(MachineInstr *mi, unsigned ss,
                                     unsigned vreg,
                                     const TargetRegisterClass *trc) {
 
     MachineBasicBlock::iterator nextInstItr(next(mi)); 
 
-    MachineInstrIndex miIdx = makeSpaceAfter(mi);
+    LiveIndex miIdx = makeSpaceAfter(mi);
 
     tii->loadRegFromStackSlot(*mi->getParent(), nextInstItr, vreg, ss, trc);
     MachineBasicBlock::iterator loadInstItr(next(mi));
     MachineInstr *loadInst = &*loadInstItr;
-    MachineInstrIndex loadInstIdx = lis->getNextIndex(miIdx);
+    LiveIndex loadInstIdx = lis->getNextIndex(miIdx);
 
     assert(lis->getInstructionFromIndex(loadInstIdx) == 0 &&
            "Store inst index already in use.");
@@ -174,15 +174,15 @@ protected:
   /// before the given instruction. Returns the base index of the inserted
   /// instruction. The caller is responsible for adding an appropriate
   /// LiveInterval to the LiveIntervals analysis.
-  MachineInstrIndex insertLoadBefore(MachineInstr *mi, unsigned ss,
+  LiveIndex insertLoadBefore(MachineInstr *mi, unsigned ss,
                                      unsigned vreg,
                                      const TargetRegisterClass *trc) {  
-    MachineInstrIndex miIdx = makeSpaceBefore(mi);
+    LiveIndex miIdx = makeSpaceBefore(mi);
   
     tii->loadRegFromStackSlot(*mi->getParent(), mi, vreg, ss, trc);
     MachineBasicBlock::iterator loadInstItr(prior(mi));
     MachineInstr *loadInst = &*loadInstItr;
-    MachineInstrIndex loadInstIdx = lis->getPrevIndex(miIdx);
+    LiveIndex loadInstIdx = lis->getPrevIndex(miIdx);
 
     assert(lis->getInstructionFromIndex(loadInstIdx) == 0 &&
            "Load inst index already in use.");
@@ -197,8 +197,8 @@ protected:
                                       unsigned vreg,
                                       const TargetRegisterClass *trc) {
 
-    MachineInstrIndex loadInstIdx = insertLoadBefore(mi, ss, vreg, trc);
-    MachineInstrIndex start = lis->getDefIndex(loadInstIdx),
+    LiveIndex loadInstIdx = insertLoadBefore(mi, ss, vreg, trc);
+    LiveIndex start = lis->getDefIndex(loadInstIdx),
                       end = lis->getUseIndex(lis->getInstructionIndex(mi));
 
     VNInfo *vni =
@@ -321,7 +321,7 @@ public:
     vrm->assignVirt2StackSlot(li->reg, ss);
 
     MachineInstr *mi = 0;
-    MachineInstrIndex storeIdx = MachineInstrIndex();
+    LiveIndex storeIdx = MachineInstrIndex();
 
     if (valno->isDefAccurate()) {
       // If we have an accurate def we can just grab an iterator to the instr
@@ -335,7 +335,7 @@ public:
     }
 
     MachineBasicBlock *defBlock = mi->getParent();
-    MachineInstrIndex loadIdx = MachineInstrIndex();
+    LiveIndex loadIdx = MachineInstrIndex();
 
     // Now we need to find the load...
     MachineBasicBlock::iterator useItr(mi);
