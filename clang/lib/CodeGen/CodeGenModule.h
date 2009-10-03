@@ -252,6 +252,14 @@ public:
                                       int64_t nv_t, int64_t v_t,
                                       int64_t nv_r, int64_t v_r);
 
+  /// GetVtableIndex - Return the vtable index for a virtual member function.
+  uint64_t GetVtableIndex(const CXXMethodDecl *MD);
+
+  /// GetCXXBaseClassOffset - Returns the offset from a derived class to its
+  /// base class. Returns null if the offset is 0.
+  llvm::Constant *GetCXXBaseClassOffset(const CXXRecordDecl *ClassDecl,
+                                        const CXXRecordDecl *BaseClassDecl);
+
   /// GetStringForStringLiteral - Return the appropriate bytes for a string
   /// literal, properly padded to match the literal type. If only the address of
   /// a constant is needed consider using GetAddrOfConstantStringLiteral.

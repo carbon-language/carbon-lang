@@ -239,7 +239,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
       cast<CXXRecordDecl>(E->getType()->getAs<MemberPointerType>()->
                           getClass()->getAs<RecordType>()->getDecl());
     
-    llvm::Constant *Adj = CGF.GetCXXBaseClassOffset(DstDecl, SrcDecl);
+    llvm::Constant *Adj = CGF.CGM.GetCXXBaseClassOffset(DstDecl, SrcDecl);
     if (Adj)
       SrcAdj = Builder.CreateAdd(SrcAdj, Adj, "adj");
     

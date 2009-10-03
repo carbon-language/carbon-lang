@@ -70,8 +70,8 @@ static uint64_t ComputeBaseClassOffset(ASTContext &Context,
 }
 
 llvm::Constant *
-CodeGenFunction::GetCXXBaseClassOffset(const CXXRecordDecl *ClassDecl,
-                                       const CXXRecordDecl *BaseClassDecl) {
+CodeGenModule::GetCXXBaseClassOffset(const CXXRecordDecl *ClassDecl,
+                                     const CXXRecordDecl *BaseClassDecl) {
   if (ClassDecl == BaseClassDecl)
     return 0;
 
@@ -84,7 +84,8 @@ CodeGenFunction::GetCXXBaseClassOffset(const CXXRecordDecl *ClassDecl,
   if (!Offset)
     return 0;
 
-  const llvm::Type *PtrDiffTy = ConvertType(getContext().getPointerDiffType());
+  const llvm::Type *PtrDiffTy = 
+    Types.ConvertType(getContext().getPointerDiffType());
 
   return llvm::ConstantInt::get(PtrDiffTy, Offset);
 }
@@ -94,7 +95,7 @@ CodeGenFunction::GetAddressCXXOfBaseClass(llvm::Value *BaseValue,
                                           const CXXRecordDecl *ClassDecl,
                                           const CXXRecordDecl *BaseClassDecl,
                                           bool NullCheckValue) {
-  llvm::Constant *Offset = GetCXXBaseClassOffset(ClassDecl, BaseClassDecl);
+  llvm::Constant *Offset = CGM.GetCXXBaseClassOffset(ClassDecl, BaseClassDecl);
   
   QualType BTy =
     getContext().getCanonicalType(

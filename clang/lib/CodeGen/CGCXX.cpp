@@ -1206,21 +1206,25 @@ CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *&This,
                                   const llvm::Type *Ty) {
   // FIXME: If we know the dynamic type, we don't have to do a virtual dispatch.
 
-  // FIXME: move to Context
-  if (vtableinfo == 0)
-    vtableinfo = new VtableInfo(CGM);
-
-  VtableInfo::Index_t Idx = vtableinfo->lookup(MD);
-
+  uint64_t Index = CGM.GetVtableIndex(MD);
+  
   Ty = llvm::PointerType::get(Ty, 0);
   Ty = llvm::PointerType::get(Ty, 0);
   Ty = llvm::PointerType::get(Ty, 0);
   llvm::Value *vtbl = Builder.CreateBitCast(This, Ty);
   vtbl = Builder.CreateLoad(vtbl);
   llvm::Value *vfn = Builder.CreateConstInBoundsGEP1_64(vtbl,
-                                                        Idx, "vfn");
+                                                        Index, "vfn");
   vfn = Builder.CreateLoad(vfn);
   return vfn;
+}
+
+uint64_t CodeGenModule::GetVtableIndex(const CXXMethodDecl *MD) {
+  // FIXME: move to CodeGenModule.
+  if (vtableinfo == 0)
+    vtableinfo = new VtableInfo(*this);
+  
+  return vtableinfo->lookup(MD);
 }
 
 /// EmitClassAggrMemberwiseCopy - This routine generates code to copy a class
@@ -1241,7 +1245,7 @@ void CodeGenFunction::EmitClassAggrMemberwiseCopy(llvm::Value *Dest,
                                            "loop.index");
   llvm::Value* zeroConstant =
     llvm::Constant::getNullValue(llvm::Type::getInt64Ty(VMContext));
-    Builder.CreateStore(zeroConstant, IndexPtr, false);
+  Builder.CreateStore(zeroConstant, IndexPtr, false);
   // Start the loop with a block that tests the condition.
   llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
   llvm::BasicBlock *AfterFor = createBasicBlock("for.end");
