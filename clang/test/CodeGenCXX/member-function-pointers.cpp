@@ -15,6 +15,12 @@ void (A::*pa2)() = &A::f;
 // CHECK: @pa3 = global %0 { i64 1, i64 0 }, align 8
 void (A::*pa3)() = &A::vf;
 
+// CHECK: @pc2 = global %0 { i64 ptrtoint (void ()* @_ZN1A1fEv to i64), i64 16 }, align 8
+void (C::*pc2)() = &C::f;
+
+// CHECK: @pc3 = global %0 { i64 1, i64 0 }, align 8
+void (A::*pc3)() = &A::vf;
+
 void f() {
   // CHECK: store i64 0, i64* getelementptr inbounds (%0* @pa, i32 0, i32 0)
   // CHECK: store i64 0, i64* getelementptr inbounds (%0* @pa, i32 0, i32 1)

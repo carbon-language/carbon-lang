@@ -485,6 +485,43 @@ public:
     }
     case CastExpr::CK_NullToMemberPointer:
       return CGM.EmitNullConstant(E->getType());
+      
+    case CastExpr::CK_BaseToDerivedMemberPointer: {
+      Expr *SubExpr = E->getSubExpr();
+
+      const MemberPointerType *SrcTy = 
+        SubExpr->getType()->getAs<MemberPointerType>();
+      const MemberPointerType *DestTy = 
+        E->getType()->getAs<MemberPointerType>();
+      
+      const CXXRecordDecl *BaseClass =
+        cast<CXXRecordDecl>(cast<RecordType>(SrcTy->getClass())->getDecl());
+      const CXXRecordDecl *DerivedClass =
+        cast<CXXRecordDecl>(cast<RecordType>(DestTy->getClass())->getDecl());
+
+      if (SrcTy->getPointeeType()->isFunctionProtoType()) {
+        llvm::Constant *C = 
+          CGM.EmitConstantExpr(SubExpr, SubExpr->getType(), CGF);
+        if (!C)
+          return 0;
+        
+        llvm::ConstantStruct *CS = cast<llvm::ConstantStruct>(C);
+        
+        // Check if we need to update the adjustment.
+        if (llvm::Constant *Offset = CGM.GetCXXBaseClassOffset(DerivedClass,
+                                                               BaseClass)) {
+          llvm::Constant *Values[2];
+        
+          Values[0] = CS->getOperand(0);
+          Values[1] = llvm::ConstantExpr::getAdd(CS->getOperand(1), Offset);
+          return llvm::ConstantStruct::get(CGM.getLLVMContext(), Values, 2, 
+                                           /*Packed=*/false);
+        }
+        
+        return CS;
+      }          
+    }
+        
     default: {
       // FIXME: This should be handled by the CK_NoOp cast kind.
       // Explicit and implicit no-op casts
