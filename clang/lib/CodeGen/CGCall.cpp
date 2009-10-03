@@ -63,6 +63,21 @@ static unsigned getCallingConventionForDecl(const Decl *D) {
   return llvm::CallingConv::C;
 }
 
+const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXRecordDecl *RD,
+                                                 const FunctionProtoType *FTP) {
+  llvm::SmallVector<QualType, 16> ArgTys;
+  
+  // Add the 'this' pointer.
+  ArgTys.push_back(Context.getPointerType(Context.getTagDeclType(RD)));
+  
+  for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
+    ArgTys.push_back(FTP->getArgType(i));
+  
+  // FIXME: Set calling convention correctly, it needs to be associated with the
+  // type somehow.
+  return getFunctionInfo(FTP->getResultType(), ArgTys, 0);
+}
+
 const CGFunctionInfo &CodeGenTypes::getFunctionInfo(const CXXMethodDecl *MD) {
   llvm::SmallVector<QualType, 16> ArgTys;
   // Add the 'this' pointer unless this is a static method.

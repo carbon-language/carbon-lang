@@ -49,3 +49,8 @@ void f2() {
   // CHECK: store i64 0, i64* [[pa2adj]]
   void (A::*pa3)() = &A::vf;
 }
+
+void f3(A *a, A &ar) {
+  (a->*pa)();
+  (ar.*pa)();
+}

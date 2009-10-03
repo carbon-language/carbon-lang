@@ -181,7 +181,11 @@ public:
   const CGFunctionInfo &getFunctionInfo(const FunctionDecl *FD);
   const CGFunctionInfo &getFunctionInfo(const CXXMethodDecl *MD);
   const CGFunctionInfo &getFunctionInfo(const ObjCMethodDecl *MD);
-
+  
+  // getFunctionInfo - Get the function info for a member function.
+  const CGFunctionInfo &getFunctionInfo(const CXXRecordDecl *RD,
+                                        const FunctionProtoType *FTP);
+  
   /// getFunctionInfo - Get the function info for a function described by a
   /// return type and argument types. If the calling convention is not
   /// specified, the "C" calling convention will be used.
