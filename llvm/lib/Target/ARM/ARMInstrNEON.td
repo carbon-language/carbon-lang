@@ -1526,7 +1526,7 @@ defm VQDMLAL  : N3VLInt3_HS<0, 1, 0b1001, 0, "vqdmlal.s", int_arm_neon_vqdmlal>;
 defm VQDMLALsl: N3VLInt3SL_HS<0, 0b0011, "vqdmlal.s", int_arm_neon_vqdmlal>;
 
 //   VMLS     : Vector Multiply Subtract (integer and floating-point)
-defm VMLS     : N3VMulOp_QHS<0, 0, 0b1001, 0, IIC_VMACi16D, IIC_VMACi32D,
+defm VMLS     : N3VMulOp_QHS<1, 0, 0b1001, 0, IIC_VMACi16D, IIC_VMACi32D,
                              IIC_VMACi16Q, IIC_VMACi32Q, "vmls.i", sub>;
 def  VMLSfd   : N3VDMulOp<0, 0, 0b10, 0b1101, 1, IIC_VMACD, "vmls.f32", v2f32, fmul, fsub>;
 def  VMLSfq   : N3VQMulOp<0, 0, 0b10, 0b1101, 1, IIC_VMACQ, "vmls.f32", v4f32, fmul, fsub>;
