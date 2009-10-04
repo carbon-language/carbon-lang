@@ -37,9 +37,9 @@ STATISTIC(NumSigmaInserted, "Number of sigma functions inserted");
 STATISTIC(NumPhiInserted, "Number of phi functions inserted");
 
 void SSI::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<DominanceFrontier>();
-  AU.addRequired<DominatorTree>();
-  AU.setPreservesCFG();
+  AU.addRequiredTransitive<DominanceFrontier>();
+  AU.addRequiredTransitive<DominatorTree>();
+  AU.setPreservesAll();
 }
 
 bool SSI::runOnFunction(Function &F) {
