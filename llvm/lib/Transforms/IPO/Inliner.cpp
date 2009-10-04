@@ -192,6 +192,7 @@ bool Inliner::shouldInline(CallSite CS) {
   Function *Fn = CS.getCaller();
   if (Fn && !Fn->isDeclaration() &&
       Fn->hasFnAttr(Attribute::OptimizeForSize) &&
+      InlineLimit.getNumOccurrences() == 0 &&
       InlineThreshold != 50)
     CurrentThreshold = 50;
   
