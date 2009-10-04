@@ -31,8 +31,6 @@ using namespace llvm;
 static const std::string SSI_PHI = "SSI_phi";
 static const std::string SSI_SIG = "SSI_sigma";
 
-static const unsigned UNSIGNED_INFINITE = ~0U;
-
 STATISTIC(NumSigmaInserted, "Number of sigma functions inserted");
 STATISTIC(NumPhiInserted, "Number of phi functions inserted");
 
@@ -54,17 +52,18 @@ bool SSI::runOnFunction(Function &F) {
 void SSI::createSSI(SmallVectorImpl<Instruction *> &value) {
   init(value);
 
-  for (unsigned i = 0; i < num_values; ++i) {
-    if (created.insert(value[i])) {
-      needConstruction[i] = true;
-    }
-  }
-  insertSigmaFunctions(value);
+  SmallPtrSet<Instruction*, 4> needConstruction;
+  for (SmallVectorImpl<Instruction*>::iterator I = value.begin(),
+       E = value.end(); I != E; ++I)
+    if (created.insert(*I))
+      needConstruction.insert(*I);
+
+  insertSigmaFunctions(needConstruction);
 
   // Test if there is a need to transform to SSI
-  if (needConstruction.any()) {
-    insertPhiFunctions(value);
-    renameInit(value);
+  if (!needConstruction.empty()) {
+    insertPhiFunctions(needConstruction);
+    renameInit(needConstruction);
     rename(DT_->getRoot());
     fixPhis();
   }
@@ -75,21 +74,19 @@ void SSI::createSSI(SmallVectorImpl<Instruction *> &value) {
 /// Insert sigma functions (a sigma function is a phi function with one
 /// operator)
 ///
-void SSI::insertSigmaFunctions(SmallVectorImpl<Instruction *> &value) {
-  for (unsigned i = 0; i < num_values; ++i) {
-    if (!needConstruction[i])
-      continue;
-
-    for (Value::use_iterator begin = value[i]->use_begin(), end =
-         value[i]->use_end(); begin != end; ++begin) {
+void SSI::insertSigmaFunctions(SmallPtrSet<Instruction*, 4> &value) {
+  for (SmallPtrSet<Instruction*, 4>::iterator I = value.begin(),
+       E = value.end(); I != E; ++I) {
+    for (Value::use_iterator begin = (*I)->use_begin(),
+         end = (*I)->use_end(); begin != end; ++begin) {
       // Test if the Use of the Value is in a comparator
       if (CmpInst *CI = dyn_cast<CmpInst>(begin)) {
         // Iterates through all uses of CmpInst
-        for (Value::use_iterator begin_ci = CI->use_begin(), end_ci =
-             CI->use_end(); begin_ci != end_ci; ++begin_ci) {
+        for (Value::use_iterator begin_ci = CI->use_begin(),
+             end_ci = CI->use_end(); begin_ci != end_ci; ++begin_ci) {
           // Test if any use of CmpInst is in a Terminator
           if (TerminatorInst *TI = dyn_cast<TerminatorInst>(begin_ci)) {
-            insertSigma(TI, value[i], i);
+            insertSigma(TI, *I);
           }
         }
       }
@@ -100,7 +97,7 @@ void SSI::insertSigmaFunctions(SmallVectorImpl<Instruction *> &value) {
 /// Inserts Sigma Functions in every BasicBlock successor to Terminator
 /// Instruction TI. All inserted Sigma Function are related to Instruction I.
 ///
-void SSI::insertSigma(TerminatorInst *TI, Instruction *I, unsigned pos) {
+void SSI::insertSigma(TerminatorInst *TI, Instruction *I) {
   // Basic Block of the Terminator Instruction
   BasicBlock *BB = TI->getParent();
   for (unsigned i = 0, e = TI->getNumSuccessors(); i < e; ++i) {
@@ -111,10 +108,9 @@ void SSI::insertSigma(TerminatorInst *TI, Instruction *I, unsigned pos) {
         dominateAny(BB_next, I)) {
       PHINode *PN = PHINode::Create(I->getType(), SSI_SIG, BB_next->begin());
       PN->addIncoming(I, BB);
-      sigmas.insert(std::make_pair(PN, pos));
+      sigmas[PN] = I;
       created.insert(PN);
-      needConstruction[pos] = true;
-      defsites[pos].push_back(BB_next);
+      defsites[I].push_back(BB_next);
       ++NumSigmaInserted;
     }
   }
@@ -122,66 +118,63 @@ void SSI::insertSigma(TerminatorInst *TI, Instruction *I, unsigned pos) {
 
 /// Insert phi functions when necessary
 ///
-void SSI::insertPhiFunctions(SmallVectorImpl<Instruction *> &value) {
+void SSI::insertPhiFunctions(SmallPtrSet<Instruction*, 4> &value) {
   DominanceFrontier *DF = &getAnalysis<DominanceFrontier>();
-  for (unsigned i = 0; i < num_values; ++i) {
+  for (SmallPtrSet<Instruction*, 4>::iterator I = value.begin(),
+       E = value.end(); I != E; ++I) {
     // Test if there were any sigmas for this variable
-    if (needConstruction[i]) {
+    SmallPtrSet<BasicBlock *, 16> BB_visited;
 
-      SmallPtrSet<BasicBlock *, 16> BB_visited;
+    // Insert phi functions if there is any sigma function
+    while (!defsites[*I].empty()) {
 
-      // Insert phi functions if there is any sigma function
-      while (!defsites[i].empty()) {
+      BasicBlock *BB = defsites[*I].back();
 
-        BasicBlock *BB = defsites[i].back();
+      defsites[*I].pop_back();
+      DominanceFrontier::iterator DF_BB = DF->find(BB);
 
-        defsites[i].pop_back();
-        DominanceFrontier::iterator DF_BB = DF->find(BB);
+      // The BB is unreachable. Skip it.
+      if (DF_BB == DF->end())
+        continue; 
 
-        // The BB is unreachable. Skip it.
-        if (DF_BB == DF->end())
-          continue; 
+      // Iterates through all the dominance frontier of BB
+      for (std::set<BasicBlock *>::iterator DF_BB_begin =
+           DF_BB->second.begin(), DF_BB_end = DF_BB->second.end();
+           DF_BB_begin != DF_BB_end; ++DF_BB_begin) {
+        BasicBlock *BB_dominated = *DF_BB_begin;
 
-        // Iterates through all the dominance frontier of BB
-        for (std::set<BasicBlock *>::iterator DF_BB_begin =
-             DF_BB->second.begin(), DF_BB_end = DF_BB->second.end();
-             DF_BB_begin != DF_BB_end; ++DF_BB_begin) {
-          BasicBlock *BB_dominated = *DF_BB_begin;
+        // Test if has not yet visited this node and if the
+        // original definition dominates this node
+        if (BB_visited.insert(BB_dominated) &&
+            DT_->properlyDominates(value_original[*I], BB_dominated) &&
+            dominateAny(BB_dominated, *I)) {
+          PHINode *PN = PHINode::Create(
+              (*I)->getType(), SSI_PHI, BB_dominated->begin());
+          phis.insert(std::make_pair(PN, *I));
+          created.insert(PN);
 
-          // Test if has not yet visited this node and if the
-          // original definition dominates this node
-          if (BB_visited.insert(BB_dominated) &&
-              DT_->properlyDominates(value_original[i], BB_dominated) &&
-              dominateAny(BB_dominated, value[i])) {
-            PHINode *PN = PHINode::Create(
-                value[i]->getType(), SSI_PHI, BB_dominated->begin());
-            phis.insert(std::make_pair(PN, i));
-            created.insert(PN);
-
-            defsites[i].push_back(BB_dominated);
-            ++NumPhiInserted;
-          }
+          defsites[*I].push_back(BB_dominated);
+          ++NumPhiInserted;
         }
       }
-      BB_visited.clear();
     }
+    BB_visited.clear();
   }
 }
 
 /// Some initialization for the rename part
 ///
-void SSI::renameInit(SmallVectorImpl<Instruction *> &value) {
-  value_stack.resize(num_values);
-  for (unsigned i = 0; i < num_values; ++i) {
-    value_stack[i].push_back(value[i]);
-  }
+void SSI::renameInit(SmallPtrSet<Instruction*, 4> &value) {
+  for (SmallPtrSet<Instruction*, 4>::iterator I = value.begin(),
+       E = value.end(); I != E; ++I)
+    value_stack[*I].push_back(*I);
 }
 
 /// Renames all variables in the specified BasicBlock.
 /// Only variables that need to be rename will be.
 ///
 void SSI::rename(BasicBlock *BB) {
-  BitVector *defined = new BitVector(num_values, false);
+  SmallPtrSet<Instruction*, 8> defined;
 
   // Iterate through instructions and make appropriate renaming.
   // For SSI_PHI (b = PHI()), store b at value_stack as a new
@@ -195,19 +188,17 @@ void SSI::rename(BasicBlock *BB) {
        begin != end; ++begin) {
     Instruction *I = begin;
     if (PHINode *PN = dyn_cast<PHINode>(I)) { // Treat PHI functions
-      int position;
+      Instruction* position;
 
       // Treat SSI_PHI
-      if ((position = getPositionPhi(PN)) != -1) {
+      if ((position = getPositionPhi(PN))) {
         value_stack[position].push_back(PN);
-        (*defined)[position] = true;
-      }
-
+        defined.insert(position);
       // Treat SSI_SIG
-      else if ((position = getPositionSigma(PN)) != -1) {
+      } else if ((position = getPositionSigma(PN))) {
         substituteUse(I);
         value_stack[position].push_back(PN);
-        (*defined)[position] = true;
+        defined.insert(position);
       }
 
       // Treat all other PHI functions
@@ -234,8 +225,8 @@ void SSI::rename(BasicBlock *BB) {
          notPhi = BB_succ->getFirstNonPHI(); begin != *notPhi; ++begin) {
       Instruction *I = begin;
       PHINode *PN = dyn_cast<PHINode>(I);
-      int position;
-      if (PN && ((position = getPositionPhi(PN)) != -1)) {
+      Instruction* position;
+      if (PN && ((position = getPositionPhi(PN)))) {
         PN->addIncoming(value_stack[position].back(), BB);
       }
     }
@@ -253,15 +244,9 @@ void SSI::rename(BasicBlock *BB) {
 
   // Now we remove all inserted definitions of a variable from the top of
   // the stack leaving the previous one as the top.
-  if (defined->any()) {
-    for (unsigned i = 0; i < num_values; ++i) {
-      if ((*defined)[i]) {
-        value_stack[i].pop_back();
-      }
-    }
-  }
-
-  delete defined;
+  for (SmallPtrSet<Instruction*, 8>::iterator DI = defined.begin(),
+       DE = defined.end(); DI != DE; ++DI)
+    value_stack[*DI].pop_back();
 }
 
 /// Substitute any use in this instruction for the last definition of
@@ -270,23 +255,24 @@ void SSI::rename(BasicBlock *BB) {
 void SSI::substituteUse(Instruction *I) {
   for (unsigned i = 0, e = I->getNumOperands(); i < e; ++i) {
     Value *operand = I->getOperand(i);
-    for (unsigned j = 0; j < num_values; ++j) {
-      if (operand == value_stack[j].front() &&
-          I != value_stack[j].back()) {
+    for (DenseMap<Instruction*, SmallVector<Instruction*, 1> >::iterator
+         VI = value_stack.begin(), VE = value_stack.end(); VI != VE; ++VI) {
+      if (operand == VI->second.front() &&
+          I != VI->second.back()) {
         PHINode *PN_I = dyn_cast<PHINode>(I);
-        PHINode *PN_vs = dyn_cast<PHINode>(value_stack[j].back());
+        PHINode *PN_vs = dyn_cast<PHINode>(VI->second.back());
 
         // If a phi created in a BasicBlock is used as an operand of another
         // created in the same BasicBlock, this step marks this second phi,
         // to fix this issue later. It cannot be fixed now, because the
         // operands of the first phi are not final yet.
         if (PN_I && PN_vs &&
-            value_stack[j].back()->getParent() == I->getParent()) {
+            VI->second.back()->getParent() == I->getParent()) {
 
           phisToFix.insert(PN_I);
         }
 
-        I->setOperand(i, value_stack[j].back());
+        I->setOperand(i, VI->second.back());
         break;
       }
     }
@@ -333,7 +319,7 @@ void SSI::fixPhis() {
     }
   }
 
-  for (DenseMapIterator<PHINode *, unsigned> begin = phis.begin(),
+  for (DenseMapIterator<PHINode *, Instruction*> begin = phis.begin(),
        end = phis.end(); begin != end; ++begin) {
     PHINode *PN = begin->first;
     BasicBlock *BB = PN->getParent();
@@ -359,10 +345,10 @@ void SSI::fixPhis() {
 /// Return which variable (position on the vector of variables) this phi
 /// represents on the phis list.
 ///
-unsigned SSI::getPositionPhi(PHINode *PN) {
-  DenseMap<PHINode *, unsigned>::iterator val = phis.find(PN);
+Instruction* SSI::getPositionPhi(PHINode *PN) {
+  DenseMap<PHINode *, Instruction*>::iterator val = phis.find(PN);
   if (val == phis.end())
-    return UNSIGNED_INFINITE;
+    return 0;
   else
     return val->second;
 }
@@ -370,10 +356,10 @@ unsigned SSI::getPositionPhi(PHINode *PN) {
 /// Return which variable (position on the vector of variables) this phi
 /// represents on the sigmas list.
 ///
-unsigned SSI::getPositionSigma(PHINode *PN) {
-  DenseMap<PHINode *, unsigned>::iterator val = sigmas.find(PN);
+Instruction* SSI::getPositionSigma(PHINode *PN) {
+  DenseMap<PHINode *, Instruction*>::iterator val = sigmas.find(PN);
   if (val == sigmas.end())
-    return UNSIGNED_INFINITE;
+    return 0;
   else
     return val->second;
 }
@@ -381,27 +367,16 @@ unsigned SSI::getPositionSigma(PHINode *PN) {
 /// Initializes
 ///
 void SSI::init(SmallVectorImpl<Instruction *> &value) {
-  num_values = value.size();
-  needConstruction.resize(num_values, false);
-
-  value_original.resize(num_values);
-  defsites.resize(num_values);
-
-  for (unsigned i = 0; i < num_values; ++i) {
-    value_original[i] = value[i]->getParent();
-    defsites[i].push_back(value_original[i]);
+  for (SmallVectorImpl<Instruction *>::iterator I = value.begin(),
+       E = value.end(); I != E; ++I) {
+    value_original[*I] = (*I)->getParent();
+    defsites[*I].push_back((*I)->getParent());
   }
 }
 
 /// Clean all used resources in this creation of SSI
 ///
 void SSI::clean() {
-  for (unsigned i = 0; i < num_values; ++i) {
-    defsites[i].clear();
-    if (i < value_stack.size())
-      value_stack[i].clear();
-  }
-
   phis.clear();
   sigmas.clear();
   phisToFix.clear();
@@ -409,7 +384,6 @@ void SSI::clean() {
   defsites.clear();
   value_stack.clear();
   value_original.clear();
-  needConstruction.clear();
 }
 
 /// createSSIPass - The public interface to this file...

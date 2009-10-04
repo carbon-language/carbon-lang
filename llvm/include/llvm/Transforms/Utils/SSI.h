@@ -23,7 +23,6 @@
 #define LLVM_TRANSFORMS_UTILS_SSI_H
 
 #include "llvm/Pass.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -55,43 +54,36 @@ namespace llvm {
       // Stores variables created by SSI
       SmallPtrSet<Instruction *, 16> created;
 
-      // These variables are only live for each creation
-      unsigned num_values;
-
-      // Has a bit for each variable, true if it needs to be created
-      // and false otherwise
-      BitVector needConstruction;
-
       // Phis created by SSI
-      DenseMap<PHINode *, unsigned> phis;
+      DenseMap<PHINode *, Instruction*> phis;
 
       // Sigmas created by SSI
-      DenseMap<PHINode *, unsigned> sigmas;
+      DenseMap<PHINode *, Instruction*> sigmas;
 
       // Phi nodes that have a phi as operand and has to be fixed
       SmallPtrSet<PHINode *, 1> phisToFix;
 
       // List of definition points for every variable
-      SmallVector<SmallVector<BasicBlock *, 1>, 0> defsites;
+      DenseMap<Instruction*, SmallVector<BasicBlock*, 4> > defsites;
 
       // Basic Block of the original definition of each variable
-      SmallVector<BasicBlock *, 0> value_original;
+      DenseMap<Instruction*, BasicBlock*> value_original;
 
       // Stack of last seen definition of a variable
-      SmallVector<SmallVector<Instruction *, 1>, 0> value_stack;
+      DenseMap<Instruction*, SmallVector<Instruction *, 1> > value_stack;
 
-      void insertSigmaFunctions(SmallVectorImpl<Instruction *> &value);
-      void insertSigma(TerminatorInst *TI, Instruction *I, unsigned pos);
-      void insertPhiFunctions(SmallVectorImpl<Instruction *> &value);
-      void renameInit(SmallVectorImpl<Instruction *> &value);
+      void insertSigmaFunctions(SmallPtrSet<Instruction*, 4> &value);
+      void insertSigma(TerminatorInst *TI, Instruction *I);
+      void insertPhiFunctions(SmallPtrSet<Instruction*, 4> &value);
+      void renameInit(SmallPtrSet<Instruction*, 4> &value);
       void rename(BasicBlock *BB);
 
       void substituteUse(Instruction *I);
       bool dominateAny(BasicBlock *BB, Instruction *value);
       void fixPhis();
 
-      unsigned getPositionPhi(PHINode *PN);
-      unsigned getPositionSigma(PHINode *PN);
+      Instruction* getPositionPhi(PHINode *PN);
+      Instruction* getPositionSigma(PHINode *PN);
 
       void init(SmallVectorImpl<Instruction *> &value);
       void clean();
