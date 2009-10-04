@@ -49,7 +49,7 @@ bool SSI::runOnFunction(Function &F) {
 
 /// This methods creates the SSI representation for the list of values
 /// received. It will only create SSI representation if a value is used
-/// in a to decide a branch. Repeated values are created only once.
+/// to decide a branch. Repeated values are created only once.
 ///
 void SSI::createSSI(SmallVectorImpl<Instruction *> &value) {
   init(value);
