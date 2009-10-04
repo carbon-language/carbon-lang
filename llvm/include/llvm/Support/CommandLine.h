@@ -67,7 +67,7 @@ void MarkOptionsChanged();
 // Flags permitted to be passed to command line arguments
 //
 
-enum NumOccurrences {          // Flags for the number of occurrences allowed
+enum NumOccurrencesFlag {      // Flags for the number of occurrences allowed
   Optional        = 0x01,      // Zero or One occurrence
   ZeroOrMore      = 0x02,      // Zero or more occurrences allowed
   Required        = 0x03,      // One occurrence required
@@ -162,8 +162,8 @@ public:
   const char *HelpStr;    // The descriptive text message for --help
   const char *ValueStr;   // String describing what the value of this option is
 
-  inline enum NumOccurrences getNumOccurrencesFlag() const {
-    return static_cast<enum NumOccurrences>(Flags & OccurrencesMask);
+  inline enum NumOccurrencesFlag getNumOccurrencesFlag() const {
+    return static_cast<enum NumOccurrencesFlag>(Flags & OccurrencesMask);
   }
   inline enum ValueExpected getValueExpectedFlag() const {
     int VE = Flags & ValueMask;
@@ -197,7 +197,7 @@ public:
     Flags |= Flag;
   }
 
-  void setNumOccurrencesFlag(enum NumOccurrences Val) {
+  void setNumOccurrencesFlag(enum NumOccurrencesFlag Val) {
     setFlag(Val, OccurrencesMask);
   }
   void setValueExpectedFlag(enum ValueExpected Val) { setFlag(Val, ValueMask); }
@@ -720,8 +720,10 @@ template<> struct applicator<const char*> {
   static void opt(const char *Str, Opt &O) { O.setArgStr(Str); }
 };
 
-template<> struct applicator<NumOccurrences> {
-  static void opt(NumOccurrences NO, Option &O) { O.setNumOccurrencesFlag(NO); }
+template<> struct applicator<NumOccurrencesFlag> {
+  static void opt(NumOccurrencesFlag NO, Option &O) {
+    O.setNumOccurrencesFlag(NO);
+  }
 };
 template<> struct applicator<ValueExpected> {
   static void opt(ValueExpected VE, Option &O) { O.setValueExpectedFlag(VE); }
