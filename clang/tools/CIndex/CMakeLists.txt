@@ -21,3 +21,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     INSTALL_NAME_DIR "@executable_path/../lib"
     )
 endif()
+
+set_target_properties(CIndex
+  PROPERTIES
+  LINKER_LANGUAGE CXX)
