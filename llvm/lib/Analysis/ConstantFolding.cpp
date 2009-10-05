@@ -677,6 +677,8 @@ llvm::canConstantFoldCallTo(const Function *F) {
   case Intrinsic::ctpop:
   case Intrinsic::ctlz:
   case Intrinsic::cttz:
+  case Intrinsic::uadd_with_overflow:
+  case Intrinsic::usub_with_overflow:
     return true;
   default:
     return false;
@@ -756,7 +758,7 @@ llvm::ConstantFoldCall(Function *F,
   if (!F->hasName()) return 0;
   LLVMContext &Context = F->getContext();
   StringRef Name = F->getName();
-  
+
   const Type *Ty = F->getReturnType();
   if (NumOperands == 1) {
     if (ConstantFP *Op = dyn_cast<ConstantFP>(Operands[0])) {
@@ -881,6 +883,32 @@ llvm::ConstantFoldCall(Function *F,
       }
       return 0;
     }
+    
+    
+    if (ConstantInt *Op1 = dyn_cast<ConstantInt>(Operands[0])) {
+      if (ConstantInt *Op2 = dyn_cast<ConstantInt>(Operands[1])) {
+        switch (F->getIntrinsicID()) {
+        default: break;
+        case Intrinsic::uadd_with_overflow: {
+          Constant *Res = ConstantExpr::getAdd(Op1, Op2);           // result.
+          Constant *Ops[] = {
+            Res, ConstantExpr::getICmp(CmpInst::ICMP_ULT, Res, Op1) // overflow.
+          };
+          return ConstantStruct::get(F->getContext(), Ops, 2, false);
+        }
+        case Intrinsic::usub_with_overflow: {
+          Constant *Res = ConstantExpr::getSub(Op1, Op2);           // result.
+          Constant *Ops[] = {
+            Res, ConstantExpr::getICmp(CmpInst::ICMP_UGT, Res, Op1) // overflow.
+          };
+          return ConstantStruct::get(F->getContext(), Ops, 2, false);
+        }
+        }
+      }
+      
+      return 0;
+    }
+    return 0;
   }
   return 0;
 }
