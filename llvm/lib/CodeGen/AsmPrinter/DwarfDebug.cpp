@@ -1477,6 +1477,17 @@ void DwarfDebug::ConstructFunctionDbgScope(DbgScope *RootScope,
   }
 
   ConstructDbgScope(RootScope, 0, 0, SPDie, ModuleCU);
+  // If there are global variables at this scope then add their dies.
+  for (SmallVector<WeakVH, 4>::iterator SGI = ScopedGVs.begin(), 
+       SGE = ScopedGVs.end(); SGI != SGE; ++SGI) {
+    MDNode *N = dyn_cast_or_null<MDNode>(*SGI);
+    if (!N) continue;
+    DIGlobalVariable GV(N);
+    if (GV.getContext().getNode() == RootScope->getDesc().getNode()) {
+      DIE *ScopedGVDie = CreateGlobalVariableDIE(ModuleCU, GV);
+      SPDie->AddChild(ScopedGVDie);
+    }
+  }
 }
 
 /// ConstructDefaultDbgScope - Construct a default scope for the subprogram.
@@ -1667,8 +1678,13 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
 
   // Create DIEs for each of the externally visible global variables.
   for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
-         E = DbgFinder.global_variable_end(); I != E; ++I)
-    ConstructGlobalVariableDIE(*I);
+         E = DbgFinder.global_variable_end(); I != E; ++I) {
+    DIGlobalVariable GV(*I);
+    if (GV.getContext().getNode() != GV.getCompileUnit().getNode())
+      ScopedGVs.push_back(*I);
+    else
+      ConstructGlobalVariableDIE(*I);
+  }
 
   // Create DIEs for each of the externally visible subprograms.
   for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),

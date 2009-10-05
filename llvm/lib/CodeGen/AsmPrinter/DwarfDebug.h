@@ -141,6 +141,10 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// DbgScopeMap - Tracks the scopes in the current function.
   DenseMap<MDNode *, DbgScope *> DbgScopeMap;
 
+  /// ScopedGVs - Tracks global variables that are not at file scope.
+  /// For example void f() { static int b = 42; }
+  SmallVector<WeakVH, 4> ScopedGVs;
+
   typedef DenseMap<const MachineInstr *, SmallVector<DbgScope *, 2> > 
     InsnToDbgScopeMapTy;
 
