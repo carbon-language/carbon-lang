@@ -1107,6 +1107,14 @@ DIE *DwarfDebug::CreateGlobalVariableDIE(CompileUnit *DW_Unit,
   if (!GV.isLocalToUnit())
     AddUInt(GVDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
   AddSourceLine(GVDie, &GV);
+
+  // Add address.
+  DIEBlock *Block = new DIEBlock();
+  AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
+  AddObjectLabel(Block, 0, dwarf::DW_FORM_udata,
+                 Asm->Mang->getMangledName(GV.getGlobal()));
+  AddBlock(GVDie, dwarf::DW_AT_location, 0, Block);
+
   return GVDie;
 }
 
@@ -1581,13 +1589,6 @@ void DwarfDebug::ConstructGlobalVariableDIE(MDNode *N) {
     return;
 
   DIE *VariableDie = CreateGlobalVariableDIE(ModuleCU, DI_GV);
-
-  // Add address.
-  DIEBlock *Block = new DIEBlock();
-  AddUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-  AddObjectLabel(Block, 0, dwarf::DW_FORM_udata,
-                 Asm->Mang->getMangledName(DI_GV.getGlobal()));
-  AddBlock(VariableDie, dwarf::DW_AT_location, 0, Block);
 
   // Add to map.
   Slot = VariableDie;
