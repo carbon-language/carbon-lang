@@ -185,6 +185,7 @@ class AlignedAttr : public Attr {
 public:
   AlignedAttr(unsigned alignment) : Attr(Aligned), Alignment(alignment) {}
 
+  // FIXME: Should use addressable units, not bits, to match llvm
   /// getAlignment - The specified alignment in bits.
   unsigned getAlignment() const { return Alignment; }
 
