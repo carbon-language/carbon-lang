@@ -1958,16 +1958,33 @@ unsigned DwarfDebug::RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
 /// label. Returns a unique label ID used to generate a label and provide
 /// correspondence to the source line list.
 unsigned DwarfDebug::RecordSourceLine(unsigned Line, unsigned Col, 
-                                      MDNode *Scope) {
+                                      MDNode *S) {
   if (!MMI)
     return 0;
 
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-  DICompileUnit CU(Scope);
-  unsigned Src = GetOrCreateSourceID(CU.getDirectory(),
-                                     CU.getFilename());
+  const char *Dir = NULL;
+  const char *Fn = NULL;
+
+  DIDescriptor Scope(S);
+  if (Scope.isCompileUnit()) {
+    DICompileUnit CU(S);
+    Dir = CU.getDirectory();
+    Fn = CU.getFilename();
+  } else if (Scope.isSubprogram()) {
+    DISubprogram SP(S);
+    Dir = SP.getDirectory();
+    Fn = SP.getFilename();
+  } else if (Scope.isLexicalBlock()) {
+    DILexicalBlock DB(S);
+    Dir = DB.getDirectory();
+    Fn = DB.getFilename();
+  } else
+    assert (0 && "Unexpected scope info");
+
+  unsigned Src = GetOrCreateSourceID(Dir, Fn);
   unsigned ID = MMI->NextLabelID();
   Lines.push_back(SrcLineInfo(Line, Col, Src, ID));
 
