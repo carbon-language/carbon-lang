@@ -26,6 +26,7 @@
 #include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/Version.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -1340,9 +1341,7 @@ PCHReader::ReadPCHBlock() {
     case pch::SOURCE_LOCATION_OFFSETS:
       SLocOffsets = (const uint32_t *)BlobStart;
       TotalNumSLocEntries = Record[0];
-      SourceMgr.PreallocateSLocEntries(this,
-                                                   TotalNumSLocEntries,
-                                                   Record[1]);
+      SourceMgr.PreallocateSLocEntries(this, TotalNumSLocEntries, Record[1]);
       break;
 
     case pch::SOURCE_LOCATION_PRELOADS:
@@ -1377,6 +1376,23 @@ PCHReader::ReadPCHBlock() {
       Comments = (SourceRange *)BlobStart;
       NumComments = BlobLen / sizeof(SourceRange);
       break;
+        
+    case pch::SVN_BRANCH_REVISION: {
+      unsigned CurRevision = getClangSubversionRevision();
+      if (Record[0] && CurRevision && Record[0] != CurRevision) {
+        Diag(Record[0] < CurRevision? diag::warn_pch_version_too_old
+                                    : diag::warn_pch_version_too_new);
+        return IgnorePCH;
+      }
+      
+      const char *CurBranch = getClangSubversionPath();
+      if (strncmp(CurBranch, BlobStart, BlobLen)) {
+        std::string PCHBranch(BlobStart, BlobLen);
+        Diag(diag::warn_pch_different_branch) << PCHBranch << CurBranch;
+        return IgnorePCH;
+      }
+      break;
+    }
     }
   }
   Error("premature end of bitstream in PCH file");
