@@ -15,7 +15,6 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/IVUsers.h"
 #include "llvm/Analysis/LiveValues.h"
-#include "llvm/Analysis/LoopDependenceAnalysis.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -41,7 +40,6 @@ void MachineFunctionPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<AliasAnalysis>();
   AU.addPreserved<ScalarEvolution>();
   AU.addPreserved<IVUsers>();
-  AU.addPreserved<LoopDependenceAnalysis>();
   AU.addPreserved<MemoryDependenceAnalysis>();
   AU.addPreserved<LiveValues>();
   AU.addPreserved<DominatorTree>();
