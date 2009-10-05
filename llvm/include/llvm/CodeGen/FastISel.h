@@ -91,7 +91,7 @@ public:
   ///
   bool SelectInstruction(Instruction *I);
 
-  /// SelectInstruction - Do "fast" instruction selection for the given
+  /// SelectOperator - Do "fast" instruction selection for the given
   /// LLVM IR operator (Instruction or ConstantExpr), and append
   /// generated machine instructions to the current block. Return true
   /// if selection was successful.
