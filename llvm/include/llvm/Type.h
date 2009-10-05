@@ -205,6 +205,12 @@ public:
   bool isFloatingPoint() const { return ID == FloatTyID || ID == DoubleTyID ||
       ID == X86_FP80TyID || ID == FP128TyID || ID == PPC_FP128TyID; }
 
+  /// isFloatTy - Return true if this is 'float', a 32-bit IEEE fp type.
+  bool isFloatTy() const { return ID == FloatTyID; }
+
+  /// isDoubleTy - Return true if this is 'double', a 64-bit IEEE fp type.
+  bool isDoubleTy() const { return ID == DoubleTyID; }
+  
   /// isFPOrFPVector - Return true if this is a FP type or a vector of FP types.
   ///
   bool isFPOrFPVector() const;
