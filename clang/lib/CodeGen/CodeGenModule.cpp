@@ -345,6 +345,9 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 
   if (D->hasAttr<NoInlineAttr>())
     F->addFnAttr(llvm::Attribute::NoInline);
+
+  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
+    F->setAlignment(AA->getAlignment()/8);
 }
 
 void CodeGenModule::SetCommonAttributes(const Decl *D,
