@@ -10,16 +10,17 @@ static void PrintCursor(CXCursor Cursor) {
   if (clang_isInvalid(Cursor.kind))
     printf("Invalid Cursor => %s\n", clang_getCursorKindSpelling(Cursor.kind));
   else {
+    CXDecl DeclReferenced;
     printf("%s=%s", clang_getCursorKindSpelling(Cursor.kind),
                       clang_getCursorSpelling(Cursor));
-    CXDecl DeclReferenced = clang_getCursorDecl(Cursor);
+    DeclReferenced = clang_getCursorDecl(Cursor);
     if (DeclReferenced)
       printf(":%d:%d", clang_getDeclLine(DeclReferenced),
                        clang_getDeclColumn(DeclReferenced));
   }
 }
 
-static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter) 
+static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter)
 {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     printf("// CHECK: %s:%d:%d: ", basename(clang_getCursorSource(Cursor)),
@@ -30,7 +31,7 @@ static void DeclVisitor(CXDecl Dcl, CXCursor Cursor, CXClientData Filter)
   }
 }
 static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
-                                   CXClientData Filter) 
+                                   CXClientData Filter)
 {
   if (!Filter || (Cursor.kind == *(enum CXCursorKind *)Filter)) {
     printf("// CHECK: %s:%d:%d: ", basename(clang_getCursorSource(Cursor)),
@@ -51,7 +52,7 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
         /* Probe the entire body, looking for both decls and refs. */
         unsigned curLine = startLine, curColumn = startColumn;
         CXCursor Ref;
-        
+
         while (startBuf <= endBuf) {
           if (*startBuf == '\n') {
             startBuf++;
@@ -59,8 +60,8 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
             curColumn = 1;
           } else if (*startBuf != '\t')
             curColumn++;
-        
-          Ref = clang_getCursor(Unit, clang_getCursorSource(Cursor), 
+
+          Ref = clang_getCursor(Unit, clang_getCursorSource(Cursor),
                                 curLine, curColumn);
           if (Ref.kind != CXCursor_FunctionDecl) {
             printf("// CHECK: %s:%d:%d: ", basename(clang_getCursorSource(Ref)),
@@ -87,18 +88,18 @@ int main(int argc, char **argv) {
   CXIndex Idx = clang_createIndex();
   CXTranslationUnit TU = clang_createTranslationUnit(Idx, argv[1]);
   enum CXCursorKind K = CXCursor_NotImplemented;
-  
+
   if (!strcmp(argv[2], "all")) {
     clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
     return 1;
-  } 
+  }
   /* Perform some simple filtering. */
   if (!strcmp(argv[2], "category")) K = CXCursor_ObjCCategoryDecl;
   else if (!strcmp(argv[2], "interface")) K = CXCursor_ObjCInterfaceDecl;
   else if (!strcmp(argv[2], "protocol")) K = CXCursor_ObjCProtocolDecl;
   else if (!strcmp(argv[2], "function")) K = CXCursor_FunctionDecl;
   else if (!strcmp(argv[2], "typedef")) K = CXCursor_TypedefDecl;
-  
+
   clang_loadTranslationUnit(TU, TranslationUnitVisitor, &K);
   return 1;
   }
