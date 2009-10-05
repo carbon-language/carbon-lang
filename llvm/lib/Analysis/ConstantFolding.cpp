@@ -721,9 +721,9 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
     return 0;
   }
   
-  if (Ty == Type::getFloatTy(Context))
+  if (Ty->isFloatTy())
     return ConstantFP::get(Context, APFloat((float)V));
-  if (Ty == Type::getDoubleTy(Context))
+  if (Ty->isDoubleTy())
     return ConstantFP::get(Context, APFloat(V));
   llvm_unreachable("Can only constant fold float/double");
   return 0; // dummy return to suppress warning
@@ -740,9 +740,9 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
     return 0;
   }
   
-  if (Ty == Type::getFloatTy(Context))
+  if (Ty->isFloatTy())
     return ConstantFP::get(Context, APFloat((float)V));
-  if (Ty == Type::getDoubleTy(Context))
+  if (Ty->isDoubleTy())
     return ConstantFP::get(Context, APFloat(V));
   llvm_unreachable("Can only constant fold float/double");
   return 0; // dummy return to suppress warning
@@ -756,19 +756,17 @@ llvm::ConstantFoldCall(Function *F,
   if (!F->hasName()) return 0;
   LLVMContext &Context = F->getContext();
   StringRef Name = F->getName();
-
+  
   const Type *Ty = F->getReturnType();
   if (NumOperands == 1) {
     if (ConstantFP *Op = dyn_cast<ConstantFP>(Operands[0])) {
-      if (Ty != Type::getFloatTy(F->getContext()) &&
-          Ty != Type::getDoubleTy(Context))
+      if (!Ty->isFloatTy() && !Ty->isDoubleTy())
         return 0;
       /// Currently APFloat versions of these functions do not exist, so we use
       /// the host native double versions.  Float versions are not called
       /// directly but for all these it is true (float)(f((double)arg)) ==
       /// f(arg).  Long double not supported yet.
-      double V = Ty == Type::getFloatTy(Context) ?
-                                     (double)Op->getValueAPF().convertToFloat():
+      double V = Ty->isFloatTy() ? (double)Op->getValueAPF().convertToFloat() :
                                      Op->getValueAPF().convertToDouble();
       switch (Name[0]) {
       case 'a':
@@ -854,14 +852,16 @@ llvm::ConstantFoldCall(Function *F,
   
   if (NumOperands == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {
-      if (Ty!=Type::getFloatTy(F->getContext()) && 
-          Ty!=Type::getDoubleTy(Context))
+      if (!Ty->isFloatTy() && !Ty->isDoubleTy())
         return 0;
-      double Op1V = Ty==Type::getFloatTy(F->getContext()) ? 
-                      (double)Op1->getValueAPF().convertToFloat():
+      double Op1V = Ty->isFloatTy() ? 
+                      (double)Op1->getValueAPF().convertToFloat() :
                       Op1->getValueAPF().convertToDouble();
       if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
-        double Op2V = Ty==Type::getFloatTy(F->getContext()) ? 
+        if (Op2->getType() != Op1->getType())
+          return 0;
+        
+        double Op2V = Ty->isFloatTy() ? 
                       (double)Op2->getValueAPF().convertToFloat():
                       Op2->getValueAPF().convertToDouble();
 
