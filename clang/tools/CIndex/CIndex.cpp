@@ -606,7 +606,8 @@ CXDecl clang_getCursorDecl(CXCursor C)
     
   if (clang_isReference(C.kind)) {
     if (C.stmt) {
-      if (C.kind == CXCursor_ObjCClassRef)
+      if (C.kind == CXCursor_ObjCClassRef || 
+          C.kind == CXCursor_ObjCProtocolRef)
         return static_cast<Stmt *>(C.stmt);
       else
         return getDeclFromExpr(static_cast<Stmt *>(C.stmt));
