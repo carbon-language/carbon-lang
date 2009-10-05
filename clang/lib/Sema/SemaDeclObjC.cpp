@@ -588,8 +588,15 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     CDecl->insertNextClassCategory();
 
   if (NumProtoRefs) {
-    CDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,Context);
-    CDecl->setLocEnd(EndProtoLoc);
+    // Protocols in the class extension belong to the class.
+    if (!CDecl->getIdentifier())
+     IDecl->mergeClassExtensionProtocolList((ObjCProtocolDecl**)ProtoRefs, 
+                                            NumProtoRefs,Context); 
+    else {
+      CDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,
+                             Context);
+      CDecl->setLocEnd(EndProtoLoc);
+    }
   }
 
   CheckObjCDeclScope(CDecl);

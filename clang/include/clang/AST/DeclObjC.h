@@ -469,6 +469,11 @@ public:
     ReferencedProtocols.set(List, Num, C);
   }
 
+  /// mergeClassExtensionProtocolList - Merge class extension's protocol list
+  /// into the protocol list for this class.
+  void mergeClassExtensionProtocolList(ObjCProtocolDecl *const* List, unsigned Num,
+                       ASTContext &C);
+
   void setIVarList(ObjCIvarDecl * const *List, unsigned Num, ASTContext &C) {
     IVars.set(List, Num, C);
   }
