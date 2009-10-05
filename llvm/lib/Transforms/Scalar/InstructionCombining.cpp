@@ -5934,9 +5934,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   
   // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
   // addresses never equal each other!  We already know that Op0 != Op1.
-  if ((isa<GlobalValue>(Op0) || isa<AllocaInst>(Op0) || isMalloc(Op0) ||
+  if ((isa<GlobalValue>(Op0) || isa<AllocaInst>(Op0) || 
        isa<ConstantPointerNull>(Op0)) &&
-      (isa<GlobalValue>(Op1) || isa<AllocaInst>(Op1) || isMalloc(Op1) ||
+      (isa<GlobalValue>(Op1) || isa<AllocaInst>(Op1) || 
        isa<ConstantPointerNull>(Op1)))
     return ReplaceInstUsesWith(I, ConstantInt::get(Type::getInt1Ty(*Context), 
                                                    !I.isTrueWhenEqual()));
