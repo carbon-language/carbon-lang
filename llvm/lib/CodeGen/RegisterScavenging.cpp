@@ -268,9 +268,6 @@ unsigned RegScavenger::findSurvivorReg(MachineBasicBlock::iterator MI,
 unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
                                         MachineBasicBlock::iterator I,
                                         int SPAdj) {
-  assert(ScavengingFrameIndex >= 0 &&
-         "Cannot scavenge a register without an emergency spill slot!");
-
   // Mask off the registers which are not in the TargetRegisterClass.
   BitVector Candidates(NumPhysRegs, false);
   CreateRegClassMask(RC, Candidates);
@@ -301,14 +298,23 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   // Avoid infinite regress
   ScavengedReg = SReg;
 
-  // Spill the scavenged register before I.
-  TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC);
-  MachineBasicBlock::iterator II = prior(I);
-  TRI->eliminateFrameIndex(II, SPAdj, this);
+  // If the target knows how to save/restore the register, let it do so;
+  // otherwise, use the emergency stack spill slot.
+  if (!TRI->saveScavengerRegister(*MBB, I, RC, SReg)) {
+    // Spill the scavenged register before I.
+    assert(ScavengingFrameIndex >= 0 &&
+           "Cannot scavenging register without an emergency spill slot!");
+    TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC);
+    MachineBasicBlock::iterator II = prior(I);
+    TRI->eliminateFrameIndex(II, SPAdj, this);
 
-  // Restore the scavenged register before its use (or first terminator).
-  TII->loadRegFromStackSlot(*MBB, UseMI, SReg, ScavengingFrameIndex, RC);
+    // Restore the scavenged register before its use (or first terminator).
+    TII->loadRegFromStackSlot(*MBB, UseMI, SReg, ScavengingFrameIndex, RC);
+  } else
+    TRI->restoreScavengerRegister(*MBB, UseMI, RC, SReg);
+
   ScavengeRestore = prior(UseMI);
+
   // Doing this here leads to infinite regress.
   // ScavengedReg = SReg;
   ScavengedRC = RC;

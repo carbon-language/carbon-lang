@@ -54,6 +54,14 @@ public:
                         unsigned FrameReg, int Offset,
                         unsigned MOVOpc, unsigned ADDriOpc, unsigned SUBriOpc) const;
 
+  bool saveScavengerRegister(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator I,
+                             const TargetRegisterClass *RC,
+                             unsigned Reg) const;
+  void restoreScavengerRegister(MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator I,
+                                const TargetRegisterClass *RC,
+                                unsigned Reg) const;
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, RegScavenger *RS = NULL) const;
 

@@ -660,8 +660,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       // off the frame pointer, the effective stack size is 4 bytes larger
       // since the FP points to the stack slot of the previous FP.
       if (estimateStackSize(MF, MFI) + (hasFP(MF) ? 4 : 0)
-          >= estimateRSStackSizeLimit(MF)
-          || AFI->isThumb1OnlyFunction()) {
+          >= estimateRSStackSizeLimit(MF)) {
         // If any non-reserved CS register isn't spilled, just spill one or two
         // extra. That should take care of it!
         unsigned NumExtras = TargetAlign / 4;
@@ -690,7 +689,8 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
             MF.getRegInfo().setPhysRegUsed(Extras[i]);
             AFI->setCSRegisterIsSpilled(Extras[i]);
           }
-        } else {
+        } else if (!AFI->isThumb1OnlyFunction()) {
+          // note: Thumb1 functions spill to R12, not the stack.
           // Reserve a slot closest to SP or frame pointer.
           const TargetRegisterClass *RC = ARM::GPRRegisterClass;
           RS->setScavengingFrameIndex(MFI->CreateStackObject(RC->getSize(),

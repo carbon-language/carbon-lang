@@ -402,6 +402,31 @@ rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   return 0;
 }
 
+/// saveScavengerRegister - Save the register so it can be used by the
+/// register scavenger. Return true.
+bool Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
+                                               MachineBasicBlock::iterator I,
+                                               const TargetRegisterClass *RC,
+                                               unsigned Reg) const {
+  // Thumb1 can't use the emergency spill slot on the stack because
+  // ldr/str immediate offsets must be positive, and if we're referencing
+  // off the frame pointer (if, for example, there are alloca() calls in
+  // the function, the offset will be negative. Use R12 instead since that's
+  // a call clobbered register that we know won't be used in Thumb1 mode.
+
+  TII.copyRegToReg(MBB, I, ARM::R12, Reg, ARM::GPRRegisterClass, RC);
+  return true;
+}
+
+/// restoreScavengerRegister - restore a registers saved by
+// saveScavengerRegister().
+void Thumb1RegisterInfo::restoreScavengerRegister(MachineBasicBlock &MBB,
+                                               MachineBasicBlock::iterator I,
+                                               const TargetRegisterClass *RC,
+                                               unsigned Reg) const {
+  TII.copyRegToReg(MBB, I, Reg, ARM::R12, RC, ARM::GPRRegisterClass);
+}
+
 void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                              int SPAdj, RegScavenger *RS) const{
   unsigned i = 0;
