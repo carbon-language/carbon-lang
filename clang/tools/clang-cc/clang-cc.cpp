@@ -1098,6 +1098,10 @@ RelocatablePCH("relocatable-pch",
 static llvm::cl::opt<bool>
 nostdinc("nostdinc", llvm::cl::desc("Disable standard #include directories"));
 
+static llvm::cl::opt<bool>
+nostdclanginc("nostdclanginc",
+	      llvm::cl::desc("Disable standard clang #include directories"));
+
 // Various command line options.  These four add directories to each chain.
 static llvm::cl::list<std::string>
 F_dirs("F", llvm::cl::value_desc("directory"), llvm::cl::Prefix,
@@ -1132,6 +1136,32 @@ isysroot("isysroot", llvm::cl::value_desc("dir"), llvm::cl::init("/"),
          llvm::cl::desc("Set the system root directory (usually /)"));
 
 // Finally, implement the code that groks the options above.
+
+// Add the clang headers, which are relative to the clang binary.
+void AddClangIncludePaths(const char *Argv0, InitHeaderSearch *Init) {
+  if (nostdclanginc)
+    return;
+
+  llvm::sys::Path MainExecutablePath =
+     llvm::sys::Path::GetMainExecutable(Argv0,
+                                    (void*)(intptr_t)AddClangIncludePaths);
+  if (MainExecutablePath.isEmpty())
+    return;
+
+  MainExecutablePath.eraseComponent();  // Remove /clang from foo/bin/clang
+  MainExecutablePath.eraseComponent();  // Remove /bin   from foo/bin
+
+  // Get foo/lib/clang/<version>/include
+  MainExecutablePath.appendComponent("lib");
+  MainExecutablePath.appendComponent("clang");
+  MainExecutablePath.appendComponent(CLANG_VERSION_STRING);
+  MainExecutablePath.appendComponent("include");
+
+  // We pass true to ignore sysroot so that we *always* look for clang headers
+  // relative to our executable, never relative to -isysroot.
+  Init->AddPath(MainExecutablePath.c_str(), InitHeaderSearch::System,
+		false, false, false, true /*ignore sysroot*/);
+}
 
 /// InitializeIncludePaths - Process the -I options and set them in the
 /// HeaderSearch object.
@@ -1212,25 +1242,7 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
 
   Init.AddDefaultEnvVarPaths(Lang);
 
-  // Add the clang headers, which are relative to the clang binary.
-  llvm::sys::Path MainExecutablePath =
-     llvm::sys::Path::GetMainExecutable(Argv0,
-                                    (void*)(intptr_t)InitializeIncludePaths);
-  if (!MainExecutablePath.isEmpty()) {
-    MainExecutablePath.eraseComponent();  // Remove /clang from foo/bin/clang
-    MainExecutablePath.eraseComponent();  // Remove /bin   from foo/bin
-
-    // Get foo/lib/clang/<version>/include
-    MainExecutablePath.appendComponent("lib");
-    MainExecutablePath.appendComponent("clang");
-    MainExecutablePath.appendComponent(CLANG_VERSION_STRING);
-    MainExecutablePath.appendComponent("include");
-
-    // We pass true to ignore sysroot so that we *always* look for clang headers
-    // relative to our executable, never relative to -isysroot.
-    Init.AddPath(MainExecutablePath.c_str(), InitHeaderSearch::System,
-                 false, false, false, true /*ignore sysroot*/);
-  }
+  AddClangIncludePaths(Argv0, &Init);
 
   if (!nostdinc)
     Init.AddDefaultSystemIncludePaths(Lang);
