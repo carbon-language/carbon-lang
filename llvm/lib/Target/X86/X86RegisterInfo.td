@@ -555,7 +555,7 @@ def GR32_NOREX : RegisterClass<"X86", [i32], 32,
 }
 // GR64_NOREX - GR64 registers which do not require a REX prefix.
 def GR64_NOREX : RegisterClass<"X86", [i64], 64,
-                               [RAX, RCX, RDX, RSI, RDI, RBX, RBP, RSP]> {
+                               [RAX, RCX, RDX, RSI, RDI, RBX, RBP, RSP, RIP]> {
   let SubRegClassList = [GR8_NOREX, GR8_NOREX, GR16_NOREX, GR32_NOREX];
   let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -567,11 +567,11 @@ def GR64_NOREX : RegisterClass<"X86", [i64], 64,
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
       // Does the function dedicate RBP to being a frame ptr?
       if (RI->hasFP(MF))
-        // If so, don't allocate RSP or RBP.
-        return end() - 2;
+        // If so, don't allocate RIP, RSP or RBP.
+        return end() - 3;
       else
-        // If not, just don't allocate RSP.
-        return end() - 1;
+        // If not, just don't allocate RIP or RSP.
+        return end() - 2;
     }
   }];
 }
