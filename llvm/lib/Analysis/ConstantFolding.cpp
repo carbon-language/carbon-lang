@@ -678,7 +678,9 @@ llvm::canConstantFoldCallTo(const Function *F) {
   case Intrinsic::ctlz:
   case Intrinsic::cttz:
     return true;
-  default: break;
+  default:
+    return false;
+  case 0: break;
   }
 
   if (!F->hasName()) return false;
@@ -748,25 +750,24 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
 
 /// ConstantFoldCall - Attempt to constant fold a call to the specified function
 /// with the specified arguments, returning null if unsuccessful.
-
 Constant *
 llvm::ConstantFoldCall(Function *F, 
-                       Constant* const* Operands, unsigned NumOperands) {
+                       Constant *const *Operands, unsigned NumOperands) {
   if (!F->hasName()) return 0;
   LLVMContext &Context = F->getContext();
   StringRef Name = F->getName();
-  
+
   const Type *Ty = F->getReturnType();
   if (NumOperands == 1) {
     if (ConstantFP *Op = dyn_cast<ConstantFP>(Operands[0])) {
-      if (Ty!=Type::getFloatTy(F->getContext()) &&
-          Ty!=Type::getDoubleTy(Context))
+      if (Ty != Type::getFloatTy(F->getContext()) &&
+          Ty != Type::getDoubleTy(Context))
         return 0;
       /// Currently APFloat versions of these functions do not exist, so we use
       /// the host native double versions.  Float versions are not called
       /// directly but for all these it is true (float)(f((double)arg)) ==
       /// f(arg).  Long double not supported yet.
-      double V = Ty==Type::getFloatTy(F->getContext()) ?
+      double V = Ty == Type::getFloatTy(Context) ?
                                      (double)Op->getValueAPF().convertToFloat():
                                      Op->getValueAPF().convertToDouble();
       switch (Name[0]) {
@@ -832,7 +833,11 @@ llvm::ConstantFoldCall(Function *F,
       default:
         break;
       }
-    } else if (ConstantInt *Op = dyn_cast<ConstantInt>(Operands[0])) {
+      return 0;
+    }
+    
+    
+    if (ConstantInt *Op = dyn_cast<ConstantInt>(Operands[0])) {
       if (Name.startswith("llvm.bswap"))
         return ConstantInt::get(Context, Op->getValue().byteSwap());
       else if (Name.startswith("llvm.ctpop"))
@@ -841,8 +846,13 @@ llvm::ConstantFoldCall(Function *F,
         return ConstantInt::get(Ty, Op->getValue().countTrailingZeros());
       else if (Name.startswith("llvm.ctlz"))
         return ConstantInt::get(Ty, Op->getValue().countLeadingZeros());
+      return 0;
     }
-  } else if (NumOperands == 2) {
+    
+    return 0;
+  }
+  
+  if (NumOperands == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {
       if (Ty!=Type::getFloatTy(F->getContext()) && 
           Ty!=Type::getDoubleTy(Context))
@@ -855,22 +865,21 @@ llvm::ConstantFoldCall(Function *F,
                       (double)Op2->getValueAPF().convertToFloat():
                       Op2->getValueAPF().convertToDouble();
 
-        if (Name == "pow") {
+        if (Name == "pow")
           return ConstantFoldBinaryFP(pow, Op1V, Op2V, Ty, Context);
-        } else if (Name == "fmod") {
+        if (Name == "fmod")
           return ConstantFoldBinaryFP(fmod, Op1V, Op2V, Ty, Context);
-        } else if (Name == "atan2") {
+        if (Name == "atan2")
           return ConstantFoldBinaryFP(atan2, Op1V, Op2V, Ty, Context);
-        }
       } else if (ConstantInt *Op2C = dyn_cast<ConstantInt>(Operands[1])) {
-        if (Name == "llvm.powi.f32") {
+        if (Name == "llvm.powi.f32")
           return ConstantFP::get(Context, APFloat((float)std::pow((float)Op1V,
                                                  (int)Op2C->getZExtValue())));
-        } else if (Name == "llvm.powi.f64") {
+        if (Name == "llvm.powi.f64")
           return ConstantFP::get(Context, APFloat((double)std::pow((double)Op1V,
                                                  (int)Op2C->getZExtValue())));
-        }
       }
+      return 0;
     }
   }
   return 0;
