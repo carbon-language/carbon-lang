@@ -301,7 +301,6 @@ add_subdirectory(lib/ExecutionEngine/Interpreter)
 add_subdirectory(lib/ExecutionEngine/JIT)
 add_subdirectory(lib/Target)
 add_subdirectory(lib/AsmParser)
-add_subdirectory(lib/Debugger)
 add_subdirectory(lib/Archive)
 
 add_subdirectory(projects)

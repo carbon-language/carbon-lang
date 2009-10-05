@@ -27,7 +27,6 @@ add_subdirectory(llvm-link)
 add_subdirectory(lli)
 
 add_subdirectory(llvm-extract)
-add_subdirectory(llvm-db)
 
 add_subdirectory(bugpoint)
 add_subdirectory(llvm-bcanalyzer)

@@ -19,7 +19,7 @@ DIRS := llvm-config
 PARALLEL_DIRS := opt llvm-as llvm-dis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvm-prof llvm-link \
-                 lli llvm-extract llvm-db \
+                 lli llvm-extract \
                  bugpoint llvm-bcanalyzer llvm-stub \
                  llvm-mc llvmc
 
