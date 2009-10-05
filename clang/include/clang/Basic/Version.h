@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This header defines version macros for Clang.
+// This header defines version macros and version-related utility functions 
+// for Clang.
 //
 //===----------------------------------------------------------------------===//
 
@@ -44,5 +45,15 @@
 #define CLANG_VERSION_STRING \
   CLANG_MAKE_VERSION_STRING(CLANG_VERSION_MAJOR,CLANG_VERSION_MINOR)
 #endif
+
+namespace clang {
+  /// \brief Retrieves the Subversion path that identifies the particular 
+  /// Clang branch, tag, or trunk from which this Clang was built.
+  const char *getClangSubversionPath();
+  
+  /// \brief Retrieves the Subversion revision number from which this Clang
+  /// was built.
+  unsigned getClangSubversionRevision();
+}
 
 #endif // LLVM_CLANG_BASIC_VERSION_H

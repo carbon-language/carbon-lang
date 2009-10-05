@@ -410,24 +410,13 @@ void Driver::PrintHelp(bool ShowHidden) const {
 }
 
 void Driver::PrintVersion(const Compilation &C, llvm::raw_ostream &OS) const {
-  static char buf[] = "$URL$";
-  char *zap = strstr(buf, "/lib/Driver");
-  if (zap)
-    *zap = 0;
-  zap = strstr(buf, "/clang/tools/clang");
-  if (zap)
-    *zap = 0;
-  const char *vers = buf+6;
-  // FIXME: Add cmake support and remove #ifdef
-#ifdef SVN_REVISION
-  const char *revision = SVN_REVISION;
-#else
-  const char *revision = "";
-#endif
   // FIXME: The following handlers should use a callback mechanism, we don't
   // know what the client would like to do.
   OS << "clang version " CLANG_VERSION_STRING " ("
-     << vers << " " << revision << ")" << '\n';
+     << getClangSubversionPath();
+  if (unsigned Revision = getClangSubversionRevision())
+    OS << " " << Revision;
+  OS << ")" << '\n';
 
   const ToolChain &TC = C.getDefaultToolChain();
   OS << "Target: " << TC.getTripleString() << '\n';

@@ -11,7 +11,18 @@ add_clang_library(clangBasic
   TargetInfo.cpp
   Targets.cpp
   TokenKinds.cpp
+  Version.cpp
   )
+
+# Determine Subversion revision.
+# FIXME: This only gets updated when CMake is run, so this revision number
+# may be out-of-date!
+find_package(Subversion)
+if (Subversion_FOUND)
+  Subversion_WC_INFO(${CLANG_SOURCE_DIR} CLANG)
+  set_source_files_properties(Version.cpp
+    PROPERTIES COMPILE_DEFINITIONS "SVN_REVISION=\"${CLANG_WC_REVISION}\"")
+endif()
 
 add_dependencies(clangBasic 
                  ClangDiagnosticAnalysis
