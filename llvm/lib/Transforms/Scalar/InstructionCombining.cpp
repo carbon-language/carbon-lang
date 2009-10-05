@@ -774,7 +774,7 @@ bool InstCombiner::SimplifyDemandedBits(Use &U, APInt DemandedMask,
   Value *NewVal = SimplifyDemandedUseBits(U.get(), DemandedMask,
                                           KnownZero, KnownOne, Depth);
   if (NewVal == 0) return false;
-  U.set(NewVal);
+  U = NewVal;
   return true;
 }
 
@@ -12819,7 +12819,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
           if (Constant *NewC = ConstantFoldConstantExpression(CE,   
                                   F.getContext(), TD))
             if (NewC != CE) {
-              i->set(NewC);
+              *i = NewC;
               MadeIRChange = true;
             }
     }
