@@ -600,12 +600,11 @@ void Verifier::visitFunction(Function &F) {
           "# formal arguments must match # of arguments for function type!",
           &F, FT);
   Assert1(F.getReturnType()->isFirstClassType() ||
-          F.getReturnType()->getTypeID() == Type::VoidTyID || 
+          F.getReturnType()->isVoidTy() || 
           isa<StructType>(F.getReturnType()),
           "Functions cannot return aggregate values!", &F);
 
-  Assert1(!F.hasStructRetAttr() ||
-          F.getReturnType()->getTypeID() == Type::VoidTyID,
+  Assert1(!F.hasStructRetAttr() || F.getReturnType()->isVoidTy(),
           "Invalid struct return type!", &F);
 
   const AttrListPtr &Attrs = F.getAttributes();
@@ -643,7 +642,7 @@ void Verifier::visitFunction(Function &F) {
     Assert1(I->getType()->isFirstClassType(),
             "Function arguments must have first-class types!", I);
     if (!isLLVMdotName)
-      Assert2(I->getType() != Type::getMetadataTy(F.getContext()),
+      Assert2(!I->getType()->isMetadataTy(),
               "Function takes metadata but isn't an intrinsic", I, &F);
   }
 
@@ -738,7 +737,7 @@ void Verifier::visitTerminatorInst(TerminatorInst &I) {
 void Verifier::visitReturnInst(ReturnInst &RI) {
   Function *F = RI.getParent()->getParent();
   unsigned N = RI.getNumOperands();
-  if (F->getReturnType()->getTypeID() == Type::VoidTyID) 
+  if (F->getReturnType()->isVoidTy()) 
     Assert2(N == 0,
             "Found return instr that returns non-void in Function of void "
             "return type!", &RI, F->getReturnType());
@@ -1103,7 +1102,7 @@ void Verifier::VerifyCallSite(CallSite CS) {
       CS.getCalledFunction()->getName().substr(0, 5) != "llvm.") {
     for (FunctionType::param_iterator PI = FTy->param_begin(),
            PE = FTy->param_end(); PI != PE; ++PI)
-      Assert1(PI->get() != Type::getMetadataTy(I->getContext()),
+      Assert1(!PI->get()->isMetadataTy(),
               "Function has metadata parameter but isn't an intrinsic", I);
   }
 
@@ -1329,18 +1328,18 @@ void Verifier::visitInstruction(Instruction &I) {
     Assert1(BB->getTerminator() == &I, "Terminator not at end of block!", &I);
 
   // Check that void typed values don't have names
-  Assert1(I.getType() != Type::getVoidTy(I.getContext()) || !I.hasName(),
+  Assert1(!I.getType()->isVoidTy() || !I.hasName(),
           "Instruction has a name, but provides a void value!", &I);
 
   // Check that the return value of the instruction is either void or a legal
   // value type.
-  Assert1(I.getType()->getTypeID() == Type::VoidTyID || 
+  Assert1(I.getType()->isVoidTy() || 
           I.getType()->isFirstClassType(),
           "Instruction returns a non-scalar type!", &I);
 
   // Check that the instruction doesn't produce metadata. Calls are already
   // checked against the callee type.
-  Assert1(I.getType()->getTypeID() != Type::MetadataTyID ||
+  Assert1(!I.getType()->isMetadataTy() ||
           isa<CallInst>(I) || isa<InvokeInst>(I),
           "Invalid use of metadata!", &I);
 

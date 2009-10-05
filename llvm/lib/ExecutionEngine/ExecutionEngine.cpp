@@ -539,11 +539,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
     case Instruction::UIToFP: {
       GenericValue GV = getConstantValue(Op0);
-      if (CE->getType() == Type::getFloatTy(CE->getContext()))
+      if (CE->getType()->isFloatTy())
         GV.FloatVal = float(GV.IntVal.roundToDouble());
-      else if (CE->getType() == Type::getDoubleTy(CE->getContext()))
+      else if (CE->getType()->isDoubleTy())
         GV.DoubleVal = GV.IntVal.roundToDouble();
-      else if (CE->getType() == Type::getX86_FP80Ty(Op0->getContext())) {
+      else if (CE->getType()->isX86_FP80Ty()) {
         const uint64_t zero[] = {0, 0};
         APFloat apf = APFloat(APInt(80, 2, zero));
         (void)apf.convertFromAPInt(GV.IntVal, 
@@ -555,11 +555,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     }
     case Instruction::SIToFP: {
       GenericValue GV = getConstantValue(Op0);
-      if (CE->getType() == Type::getFloatTy(CE->getContext()))
+      if (CE->getType()->isFloatTy())
         GV.FloatVal = float(GV.IntVal.signedRoundToDouble());
-      else if (CE->getType() == Type::getDoubleTy(CE->getContext()))
+      else if (CE->getType()->isDoubleTy())
         GV.DoubleVal = GV.IntVal.signedRoundToDouble();
-      else if (CE->getType() == Type::getX86_FP80Ty(CE->getContext())) {
+      else if (CE->getType()->isX86_FP80Ty()) {
         const uint64_t zero[] = { 0, 0};
         APFloat apf = APFloat(APInt(80, 2, zero));
         (void)apf.convertFromAPInt(GV.IntVal, 
@@ -573,11 +573,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     case Instruction::FPToSI: {
       GenericValue GV = getConstantValue(Op0);
       uint32_t BitWidth = cast<IntegerType>(CE->getType())->getBitWidth();
-      if (Op0->getType() == Type::getFloatTy(Op0->getContext()))
+      if (Op0->getType()->isFloatTy())
         GV.IntVal = APIntOps::RoundFloatToAPInt(GV.FloatVal, BitWidth);
-      else if (Op0->getType() == Type::getDoubleTy(Op0->getContext()))
+      else if (Op0->getType()->isDoubleTy())
         GV.IntVal = APIntOps::RoundDoubleToAPInt(GV.DoubleVal, BitWidth);
-      else if (Op0->getType() == Type::getX86_FP80Ty(Op0->getContext())) {
+      else if (Op0->getType()->isX86_FP80Ty()) {
         APFloat apf = APFloat(GV.IntVal);
         uint64_t v;
         bool ignored;
@@ -610,9 +610,9 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         default: llvm_unreachable("Invalid bitcast operand");
         case Type::IntegerTyID:
           assert(DestTy->isFloatingPoint() && "invalid bitcast");
-          if (DestTy == Type::getFloatTy(Op0->getContext()))
+          if (DestTy->isFloatTy())
             GV.FloatVal = GV.IntVal.bitsToFloat();
-          else if (DestTy == Type::getDoubleTy(DestTy->getContext()))
+          else if (DestTy->isDoubleTy())
             GV.DoubleVal = GV.IntVal.bitsToDouble();
           break;
         case Type::FloatTyID: 

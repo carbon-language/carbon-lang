@@ -460,9 +460,9 @@ void Emitter<CodeEmitter>::emitConstPoolInstruction(const MachineInstr &MI) {
       uint32_t Val = *(uint32_t*)CI->getValue().getRawData();
       emitWordLE(Val);
     } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
-      if (CFP->getType() == Type::getFloatTy(CFP->getContext()))
+      if (CFP->getType()->isFloatTy())
         emitWordLE(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
-      else if (CFP->getType() == Type::getDoubleTy(CFP->getContext()))
+      else if (CFP->getType()->isDoubleTy())
         emitDWordLE(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
       else {
         llvm_unreachable("Unable to handle this constantpool entry!");

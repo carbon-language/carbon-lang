@@ -38,16 +38,18 @@ STATISTIC(NumMoveToCpy,   "Number of memmoves converted to memcpy");
 /// true for all i8 values obviously, but is also true for i32 0, i32 -1,
 /// i16 0xF0F0, double 0.0 etc.  If the value can't be handled with a repeated
 /// byte store (e.g. i16 0x1234), return null.
-static Value *isBytewiseValue(Value *V, LLVMContext &Context) {
+static Value *isBytewiseValue(Value *V) {
+  LLVMContext &Context = V->getContext();
+  
   // All byte-wide stores are splatable, even of arbitrary variables.
   if (V->getType() == Type::getInt8Ty(Context)) return V;
   
   // Constant float and double values can be handled as integer values if the
   // corresponding integer value is "byteable".  An important case is 0.0. 
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
-    if (CFP->getType() == Type::getFloatTy(Context))
+    if (CFP->getType()->isFloatTy())
       V = ConstantExpr::getBitCast(CFP, Type::getInt32Ty(Context));
-    if (CFP->getType() == Type::getDoubleTy(Context))
+    if (CFP->getType()->isDoubleTy())
       V = ConstantExpr::getBitCast(CFP, Type::getInt64Ty(Context));
     // Don't handle long double formats, which have strange constraints.
   }
@@ -349,7 +351,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
   // Ensure that the value being stored is something that can be memset'able a
   // byte at a time like "0" or "-1" or any width, as well as things like
   // 0xA0A0A0A0 and 0.0.
-  Value *ByteVal = isBytewiseValue(SI->getOperand(0), Context);
+  Value *ByteVal = isBytewiseValue(SI->getOperand(0));
   if (!ByteVal)
     return false;
 
@@ -390,7 +392,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
     if (NextStore->isVolatile()) break;
     
     // Check to see if this stored value is of the same byte-splattable value.
-    if (ByteVal != isBytewiseValue(NextStore->getOperand(0), Context))
+    if (ByteVal != isBytewiseValue(NextStore->getOperand(0)))
       break;
 
     // Check to see if this store is to a constant offset from the start ptr.

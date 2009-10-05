@@ -192,7 +192,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
     return UndefValue::get(DestTy);
   }
   // No compile-time operations on this type yet.
-  if (V->getType() == Type::getPPC_FP128Ty(Context) || DestTy == Type::getPPC_FP128Ty(Context))
+  if (V->getType()->isPPC_FP128Ty() || DestTy->isPPC_FP128Ty())
     return 0;
 
   // If the cast operand is a constant expression, there's a few things we can
@@ -241,10 +241,10 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
     if (ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
       bool ignored;
       APFloat Val = FPC->getValueAPF();
-      Val.convert(DestTy == Type::getFloatTy(Context) ? APFloat::IEEEsingle :
-                  DestTy == Type::getDoubleTy(Context) ? APFloat::IEEEdouble :
-                  DestTy == Type::getX86_FP80Ty(Context) ? APFloat::x87DoubleExtended :
-                  DestTy == Type::getFP128Ty(Context) ? APFloat::IEEEquad :
+      Val.convert(DestTy->isFloatTy() ? APFloat::IEEEsingle :
+                  DestTy->isDoubleTy() ? APFloat::IEEEdouble :
+                  DestTy->isX86_FP80Ty() ? APFloat::x87DoubleExtended :
+                  DestTy->isFP128Ty() ? APFloat::IEEEquad :
                   APFloat::Bogus,
                   APFloat::rmNearestTiesToEven, &ignored);
       return ConstantFP::get(Context, Val);
@@ -584,7 +584,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
                                               unsigned Opcode,
                                               Constant *C1, Constant *C2) {
   // No compile-time operations on this type yet.
-  if (C1->getType() == Type::getPPC_FP128Ty(Context))
+  if (C1->getType()->isPPC_FP128Ty())
     return 0;
 
   // Handle UndefValue up front.
@@ -1110,7 +1110,7 @@ static FCmpInst::Predicate evaluateFCmpRelation(LLVMContext &Context,
          "Cannot compare values of different types!");
 
   // No compile-time operations on this type yet.
-  if (V1->getType() == Type::getPPC_FP128Ty(Context))
+  if (V1->getType()->isPPC_FP128Ty())
     return FCmpInst::BAD_FCMP_PREDICATE;
 
   // Handle degenerate case quickly
@@ -1403,7 +1403,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     return UndefValue::get(ResultTy);
 
   // No compile-time operations on this type yet.
-  if (C1->getType() == Type::getPPC_FP128Ty(Context))
+  if (C1->getType()->isPPC_FP128Ty())
     return 0;
 
   // icmp eq/ne(null,GV) -> false/true
@@ -1837,7 +1837,8 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
     // This happens with pointers to member functions in C++.
     if (CE->getOpcode() == Instruction::IntToPtr && NumIdx == 1 &&
         isa<ConstantInt>(CE->getOperand(0)) && isa<ConstantInt>(Idxs[0]) &&
-        cast<PointerType>(CE->getType())->getElementType() == Type::getInt8Ty(Context)) {
+        cast<PointerType>(CE->getType())->getElementType() ==
+            Type::getInt8Ty(Context)) {
       Constant *Base = CE->getOperand(0);
       Constant *Offset = Idxs[0];
 

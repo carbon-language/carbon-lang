@@ -365,7 +365,7 @@ static GenericValue executeFCMP_OGT(GenericValue Src1, GenericValue Src2,
 }
 
 #define IMPLEMENT_UNORDERED(TY, X,Y)                                     \
-  if (TY == Type::getFloatTy(Ty->getContext())) {                        \
+  if (TY->isFloatTy()) {                                                 \
     if (X.FloatVal != X.FloatVal || Y.FloatVal != Y.FloatVal) {          \
       Dest.IntVal = APInt(1,true);                                       \
       return Dest;                                                       \
@@ -421,7 +421,7 @@ static GenericValue executeFCMP_UGT(GenericValue Src1, GenericValue Src2,
 static GenericValue executeFCMP_ORD(GenericValue Src1, GenericValue Src2,
                                      const Type *Ty) {
   GenericValue Dest;
-  if (Ty == Type::getFloatTy(Ty->getContext()))
+  if (Ty->isFloatTy())
     Dest.IntVal = APInt(1,(Src1.FloatVal == Src1.FloatVal && 
                            Src2.FloatVal == Src2.FloatVal));
   else
@@ -433,7 +433,7 @@ static GenericValue executeFCMP_ORD(GenericValue Src1, GenericValue Src2,
 static GenericValue executeFCMP_UNO(GenericValue Src1, GenericValue Src2,
                                      const Type *Ty) {
   GenericValue Dest;
-  if (Ty == Type::getFloatTy(Ty->getContext()))
+  if (Ty->isFloatTy())
     Dest.IntVal = APInt(1,(Src1.FloatVal != Src1.FloatVal || 
                            Src2.FloatVal != Src2.FloatVal));
   else
@@ -970,8 +970,7 @@ GenericValue Interpreter::executeZExtInst(Value *SrcVal, const Type *DstTy,
 GenericValue Interpreter::executeFPTruncInst(Value *SrcVal, const Type *DstTy,
                                              ExecutionContext &SF) {
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(SrcVal->getType() == Type::getDoubleTy(SrcVal->getContext()) &&
-         DstTy == Type::getFloatTy(SrcVal->getContext()) &&
+  assert(SrcVal->getType()->isDoubleTy() && DstTy->isFloatTy() &&
          "Invalid FPTrunc instruction");
   Dest.FloatVal = (float) Src.DoubleVal;
   return Dest;
@@ -980,8 +979,7 @@ GenericValue Interpreter::executeFPTruncInst(Value *SrcVal, const Type *DstTy,
 GenericValue Interpreter::executeFPExtInst(Value *SrcVal, const Type *DstTy,
                                            ExecutionContext &SF) {
   GenericValue Dest, Src = getOperandValue(SrcVal, SF);
-  assert(SrcVal->getType() == Type::getFloatTy(SrcVal->getContext()) &&
-         DstTy == Type::getDoubleTy(SrcVal->getContext()) &&
+  assert(SrcVal->getType()->isFloatTy() && DstTy->isDoubleTy() &&
          "Invalid FPTrunc instruction");
   Dest.DoubleVal = (double) Src.FloatVal;
   return Dest;
@@ -1072,22 +1070,22 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
     assert(isa<PointerType>(SrcTy) && "Invalid BitCast");
     Dest.PointerVal = Src.PointerVal;
   } else if (DstTy->isInteger()) {
-    if (SrcTy == Type::getFloatTy(SrcVal->getContext())) {
+    if (SrcTy->isFloatTy()) {
       Dest.IntVal.zext(sizeof(Src.FloatVal) * CHAR_BIT);
       Dest.IntVal.floatToBits(Src.FloatVal);
-    } else if (SrcTy == Type::getDoubleTy(SrcVal->getContext())) {
+    } else if (SrcTy->isDoubleTy()) {
       Dest.IntVal.zext(sizeof(Src.DoubleVal) * CHAR_BIT);
       Dest.IntVal.doubleToBits(Src.DoubleVal);
     } else if (SrcTy->isInteger()) {
       Dest.IntVal = Src.IntVal;
     } else 
       llvm_unreachable("Invalid BitCast");
-  } else if (DstTy == Type::getFloatTy(SrcVal->getContext())) {
+  } else if (DstTy->isFloatTy()) {
     if (SrcTy->isInteger())
       Dest.FloatVal = Src.IntVal.bitsToFloat();
     else
       Dest.FloatVal = Src.FloatVal;
-  } else if (DstTy == Type::getDoubleTy(SrcVal->getContext())) {
+  } else if (DstTy->isDoubleTy()) {
     if (SrcTy->isInteger())
       Dest.DoubleVal = Src.IntVal.bitsToDouble();
     else

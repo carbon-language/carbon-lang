@@ -457,16 +457,15 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
     return;
   } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
     APInt Val = CFP->getValueAPF().bitcastToAPInt();
-    if (CFP->getType() == Type::getDoubleTy(CV->getContext()))
+    if (CFP->getType()->isDoubleTy())
       GblS.emitWord64(Val.getZExtValue());
-    else if (CFP->getType() == Type::getFloatTy(CV->getContext()))
+    else if (CFP->getType()->isFloatTy())
       GblS.emitWord32(Val.getZExtValue());
-    else if (CFP->getType() == Type::getX86_FP80Ty(CV->getContext())) {
-      unsigned PadSize = 
-             TD->getTypeAllocSize(Type::getX86_FP80Ty(CV->getContext()))-
-             TD->getTypeStoreSize(Type::getX86_FP80Ty(CV->getContext()));
+    else if (CFP->getType()->isX86_FP80Ty()) {
+      unsigned PadSize = TD->getTypeAllocSize(CFP->getType())-
+                         TD->getTypeStoreSize(CFP->getType());
       GblS.emitWordFP80(Val.getRawData(), PadSize);
-    } else if (CFP->getType() == Type::getPPC_FP128Ty(CV->getContext()))
+    } else if (CFP->getType()->isPPC_FP128Ty())
       llvm_unreachable("PPC_FP128Ty global emission not implemented");
     return;
   } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {

@@ -1184,7 +1184,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
   if (F == 0 || !F->hasLocalLinkage()) {
 CallOverdefined:
     // Void return and not tracking callee, just bail.
-    if (I->getType() == Type::getVoidTy(I->getContext())) return;
+    if (I->getType()->isVoidTy()) return;
     
     // Otherwise, if we have a single return value case, and if the function is
     // a declaration, maybe we can constant fold it.
@@ -1354,7 +1354,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
     
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
       // Look for instructions which produce undef values.
-      if (I->getType() == Type::getVoidTy(F.getContext())) continue;
+      if (I->getType()->isVoidTy()) continue;
       
       LatticeVal &LV = getValueState(I);
       if (!LV.isUndefined()) continue;
@@ -1593,8 +1593,7 @@ bool SCCP::runOnFunction(Function &F) {
       //
       for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
         Instruction *Inst = BI++;
-        if (Inst->getType() == Type::getVoidTy(F.getContext()) ||
-            isa<TerminatorInst>(Inst))
+        if (Inst->getType()->isVoidTy() || isa<TerminatorInst>(Inst))
           continue;
         
         LatticeVal &IV = Values[Inst];
@@ -1769,7 +1768,7 @@ bool IPSCCP::runOnModule(Module &M) {
       } else {
         for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
           Instruction *Inst = BI++;
-          if (Inst->getType() == Type::getVoidTy(M.getContext()))
+          if (Inst->getType()->isVoidTy())
             continue;
           
           LatticeVal &IV = Values[Inst];
@@ -1846,7 +1845,7 @@ bool IPSCCP::runOnModule(Module &M) {
   for (DenseMap<Function*, LatticeVal>::const_iterator I = RV.begin(),
          E = RV.end(); I != E; ++I)
     if (!I->second.isOverdefined() &&
-        I->first->getReturnType() != Type::getVoidTy(M.getContext())) {
+        !I->first->getReturnType()->isVoidTy()) {
       Function *F = I->first;
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
         if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))

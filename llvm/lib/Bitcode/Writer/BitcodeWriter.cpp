@@ -729,18 +729,16 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       Code = bitc::CST_CODE_FLOAT;
       const Type *Ty = CFP->getType();
-      if (Ty == Type::getFloatTy(Ty->getContext()) ||
-          Ty == Type::getDoubleTy(Ty->getContext())) {
+      if (Ty->isFloatTy() || Ty->isDoubleTy()) {
         Record.push_back(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
-      } else if (Ty == Type::getX86_FP80Ty(Ty->getContext())) {
+      } else if (Ty->isX86_FP80Ty()) {
         // api needed to prevent premature destruction
         // bits are not in the same order as a normal i80 APInt, compensate.
         APInt api = CFP->getValueAPF().bitcastToAPInt();
         const uint64_t *p = api.getRawData();
         Record.push_back((p[1] << 48) | (p[0] >> 16));
         Record.push_back(p[0] & 0xffffLL);
-      } else if (Ty == Type::getFP128Ty(Ty->getContext()) ||
-                 Ty == Type::getPPC_FP128Ty(Ty->getContext())) {
+      } else if (Ty->isFP128Ty() || Ty->isPPC_FP128Ty()) {
         APInt api = CFP->getValueAPF().bitcastToAPInt();
         const uint64_t *p = api.getRawData();
         Record.push_back(p[0]);

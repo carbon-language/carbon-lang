@@ -327,16 +327,16 @@ ConstantInt* ConstantInt::get(const IntegerType* Ty, const StringRef& Str,
 //===----------------------------------------------------------------------===//
 
 static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
-  if (Ty == Type::getFloatTy(Ty->getContext()))
+  if (Ty->isFloatTy())
     return &APFloat::IEEEsingle;
-  if (Ty == Type::getDoubleTy(Ty->getContext()))
+  if (Ty->isDoubleTy())
     return &APFloat::IEEEdouble;
-  if (Ty == Type::getX86_FP80Ty(Ty->getContext()))
+  if (Ty->isX86_FP80Ty())
     return &APFloat::x87DoubleExtended;
-  else if (Ty == Type::getFP128Ty(Ty->getContext()))
+  else if (Ty->isFP128Ty())
     return &APFloat::IEEEquad;
   
-  assert(Ty == Type::getPPC_FP128Ty(Ty->getContext()) && "Unknown FP format");
+  assert(Ty->isPPC_FP128Ty() && "Unknown FP format");
   return &APFloat::PPCDoubleDouble;
 }
 

@@ -225,12 +225,12 @@ Value *LibCallOptimization::EmitUnaryFloatFnCall(Value *Op, const char *Name,
                                                  IRBuilder<> &B,
                                                  const AttrListPtr &Attrs) {
   char NameBuffer[20];
-  if (Op->getType() != Type::getDoubleTy(*Context)) {
+  if (!Op->getType()->isDoubleTy()) {
     // If we need to add a suffix, copy into NameBuffer.
     unsigned NameLen = strlen(Name);
     assert(NameLen < sizeof(NameBuffer)-2);
     memcpy(NameBuffer, Name, NameLen);
-    if (Op->getType() == Type::getFloatTy(*Context))
+    if (Op->getType()->isFloatTy())
       NameBuffer[NameLen] = 'f';  // floorf
     else
       NameBuffer[NameLen] = 'l';  // floorl
@@ -622,7 +622,8 @@ struct StrChrOpt : public LibCallOptimization {
       if (!TD) return 0;
 
       uint64_t Len = GetStringLength(SrcStr);
-      if (Len == 0 || FT->getParamType(1) != Type::getInt32Ty(*Context)) // memchr needs i32.
+      if (Len == 0 ||
+          FT->getParamType(1) != Type::getInt32Ty(*Context)) // memchr needs i32.
         return 0;
       
       return EmitMemChr(SrcStr, CI->getOperand(2), // include nul.
@@ -1082,15 +1083,15 @@ struct Exp2Opt : public LibCallOptimization {
 
     if (LdExpArg) {
       const char *Name;
-      if (Op->getType() == Type::getFloatTy(*Context))
+      if (Op->getType()->isFloatTy())
         Name = "ldexpf";
-      else if (Op->getType() == Type::getDoubleTy(*Context))
+      else if (Op->getType()->isDoubleTy())
         Name = "ldexp";
       else
         Name = "ldexpl";
 
       Constant *One = ConstantFP::get(*Context, APFloat(1.0f));
-      if (Op->getType() != Type::getFloatTy(*Context))
+      if (!Op->getType()->isFloatTy())
         One = ConstantExpr::getFPExtend(One, Op->getType());
 
       Module *M = Caller->getParent();
@@ -1112,13 +1113,13 @@ struct Exp2Opt : public LibCallOptimization {
 struct UnaryDoubleFPOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
-    if (FT->getNumParams() != 1 || FT->getReturnType() != Type::getDoubleTy(*Context) ||
-        FT->getParamType(0) != Type::getDoubleTy(*Context))
+    if (FT->getNumParams() != 1 || !FT->getReturnType()->isDoubleTy() ||
+        !FT->getParamType(0)->isDoubleTy())
       return 0;
 
     // If this is something like 'floor((double)floatval)', convert to floorf.
     FPExtInst *Cast = dyn_cast<FPExtInst>(CI->getOperand(1));
-    if (Cast == 0 || Cast->getOperand(0)->getType() != Type::getFloatTy(*Context))
+    if (Cast == 0 || !Cast->getOperand(0)->getType()->isFloatTy())
       return 0;
 
     // floor((double)floatval) -> (double)floorf(floatval)
@@ -1260,7 +1261,7 @@ struct PrintFOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() < 1 || !isa<PointerType>(FT->getParamType(0)) ||
         !(isa<IntegerType>(FT->getReturnType()) ||
-          FT->getReturnType() == Type::getVoidTy(*Context)))
+          FT->getReturnType()->isVoidTy()))
       return 0;
     
     // Check for a fixed format string.

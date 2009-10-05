@@ -1297,8 +1297,7 @@ static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
           VecTy = VInTy;
         return;
       }
-    } else if (In == Type::getFloatTy(Context) ||
-               In == Type::getDoubleTy(Context) ||
+    } else if (In->isFloatTy() || In->isDoubleTy() ||
                (isa<IntegerType>(In) && In->getPrimitiveSizeInBits() >= 8 &&
                 isPowerOf2_32(In->getPrimitiveSizeInBits()))) {
       // If we're accessing something that could be an element of a vector, see

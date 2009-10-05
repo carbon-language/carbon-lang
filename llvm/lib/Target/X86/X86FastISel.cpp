@@ -1058,9 +1058,9 @@ bool X86FastISel::X86SelectSelect(Instruction *I) {
 bool X86FastISel::X86SelectFPExt(Instruction *I) {
   // fpext from float to double.
   if (Subtarget->hasSSE2() &&
-      I->getType() == Type::getDoubleTy(I->getContext())) {
+      I->getType()->isDoubleTy()) {
     Value *V = I->getOperand(0);
-    if (V->getType() == Type::getFloatTy(I->getContext())) {
+    if (V->getType()->isFloatTy()) {
       unsigned OpReg = getRegForValue(V);
       if (OpReg == 0) return false;
       unsigned ResultReg = createResultReg(X86::FR64RegisterClass);
@@ -1075,9 +1075,9 @@ bool X86FastISel::X86SelectFPExt(Instruction *I) {
 
 bool X86FastISel::X86SelectFPTrunc(Instruction *I) {
   if (Subtarget->hasSSE2()) {
-    if (I->getType() == Type::getFloatTy(I->getContext())) {
+    if (I->getType()->isFloatTy()) {
       Value *V = I->getOperand(0);
-      if (V->getType() == Type::getDoubleTy(I->getContext())) {
+      if (V->getType()->isDoubleTy()) {
         unsigned OpReg = getRegForValue(V);
         if (OpReg == 0) return false;
         unsigned ResultReg = createResultReg(X86::FR32RegisterClass);
@@ -1244,7 +1244,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   // Handle *simple* calls for now.
   const Type *RetTy = CS.getType();
   EVT RetVT;
-  if (RetTy == Type::getVoidTy(I->getContext()))
+  if (RetTy->isVoidTy())
     RetVT = MVT::isVoid;
   else if (!isTypeLegal(RetTy, RetVT, true))
     return false;
