@@ -34,12 +34,23 @@ static bool isMallocCall(const CallInst *CI) {
     return false;
 
   const Module* M = CI->getParent()->getParent()->getParent();
-  Constant *MallocFunc = M->getFunction("malloc");
+  Function *MallocFunc = M->getFunction("malloc");
 
   if (CI->getOperand(0) != MallocFunc)
     return false;
 
-  return true;
+  // Check malloc prototype.
+  // FIXME: this will be obsolete when nobuiltin attribute will exist.
+  const FunctionType *FTy = MallocFunc->getFunctionType();
+  if (FTy->getNumParams() != 1)
+    return false;
+  if (IntegerType *ITy = dyn_cast<IntegerType>(FTy->param_begin()->get())) {
+    if (ITy->getBitWidth() != 32 && ITy->getBitWidth() != 64)
+      return false;
+    return true;
+  }
+
+  return false;
 }
 
 /// extractMallocCall - Returns the corresponding CallInst if the instruction
