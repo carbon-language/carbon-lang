@@ -52,24 +52,140 @@ current one.  To see the release notes for a specific release, please see the
 
 </div>
 
-<!-- Unfinished features in 2.5:
-  Machine LICM
+  Many new papers added to /pubs/
+  Machine LICM, hoists things like constant pool loads, loads from readonly stubs, vector constant synthesization code, etc.
   Machine Sinking
-  target-specific intrinsics
+  Regalloc improvements for commuting, various spiller peephole optimizations, cross-class coalescing.
+  Support for debug line numbers when optimization enabled
   gold lto plugin
-  pre-alloc splitter, strong phi elim
-  <tt>llc -enable-value-prop</tt>, propagation of value info
-       (sign/zero ext info) from one MBB to another
-  debug info for optimized code
+
+  target-specific intrinsics (r63765)
+  <tt>llc -enable-value-prop</tt>, propagation of value info (sign/zero ext info) from one MBB to another
   interpreter + libffi
+  LLVMContext
+  Preliminary support for addrspace 256 -> GS, 257 -> FS, known problems: CodeGenerator.html#x86_memory
+
+Add support for the PowerPC 64-bit SVR4 ABI.
+
+  NSW/NUW/exact div
+  Inbounds for GEP
+  SRoA improvements for vector unions, memset, arbitrary weird bitfield accesses etc.  It now produces "strange" sized integers.
+  pre-alloc splitter??
+  Callgraph + SCCPassMgr??
+  X86: Support for softfloat modes, typically used by OS kernels.
+  MC:
+    MCSection, MCAsmInfo
+	MCInstPrinter did it make it in?
+	MCInst (X86 using it so far)
+	Rewrite of X86 GV selection logic: TargetOperand flags on ExternalSymbol, GV, etc operands.
+	Can parse and re-print out an darwin-x86 .s file.
+	TargetLoweringObjectFile, MCSectionKind
+	Verrrry early start of a macho writer.
+	
+  ELF Writer?  How stable?
+  
+  LSR promotes int induction variables to 64-bit on 64-bit targets, major perf boost for numerical code.
+  LSR now analyzes pointer expressions (e.g. getelementptrs), not just integers.
+  Stack slot coloring for register spills (denser stack frames)
+  SelectionDAGS: New BuildVectorSDNode (r65296), and ISD::VECTOR_SHUFFLE (r69952 / PR2957)
+  New PrettyStackTrace, crashes of llvm tools should give some indication of what the compiler was doing at the time of the crash (e.g. running a pass), and print out command line arguments.
+  new linkage types linkonce_odr, weak_odr, linker_private, and available_externally.
+  Inliner reuse stack space when inlining arrays?
+  
+  Regalloc hints for allocation stuff: Evan r73381/r73671.  Finished/enabled?
+  API Cleanup:
+	no use of hash_set/hash_map, no more llvm::OStream
+    Use raw_ostream for everything, killed off llvm/Streams.h and DOUT
+  
+  Mips now supports O32 Calling Convention
+
+  StringRef class, Twine class.
+  New BlackFin backend.
+
+  Shrink wrapping support in PEI, what is the state of it?
+
+  X86-64: better modeling of implicit zero extensions, eliminates a lot of redundant zexts
+  X86-64 TLS support for local exec and initial exec.
+  X86 - Better modeling of H registerts as subregs.
+  Getelementpr instruction now allows any integer type for array/pointer indexes.
+
+  include/llvm/Analysis/LiveValues.h => dead??
+  lib/Analysis/LoopVR.cpp  ==> dead??
+  include/llvm/CodeGen/LazyLiveness.h  ==> dead?
+  lib/Transforms/IPO/MergeFunctions.cpp ==> dead?
+  llvm/Analysis/PointerTracking.h ==> dead??
+  PRedSimplify -> Ask vmkit if it is still useful and for testcases.
+  
+  ARM calling convention code is now tblgen generated instead of manual.
+  ARM: NEON support. neonfp for doing single precision fp with neon instead of VFP.
+  Tblgen now supports multiclass inheritance.
+  Unladen swallow as user?
+  Loop index split disabled by default?
+
+  New WeakVH and AssertingVH and CallbackVH classes.
+  New llvm/ADT/Triple class.
+  Removed the IA64 backend.
+  Profile info improvements by Andreas Neustifter.
+  PostRA scheduler improvements David Goodwin.
+ 
+  New MSP430 and SystemZ backends.
+  llvm-gcc now supports a new TCE target.
+  klee web page at klee.llvm.org
+  New llvm/System/Atomic.h, llvm/System/RWMutex.h for portable atomic ops, rw locks.
+  llvm_start_multithreaded: ProgrammersMAnual.html#threading
+  
+  Tablegen now supports a number of new string and list operations like 
+     !(subst), !(foreach), !car, !cdr, !null, !if, !cast.
+  New fadd, fsub, fmul instructions and classes. 
+  New MachineVerifier pass.
+  Enabled GVN Load PRE.  
+  ARM AAPCS-VFP hard float ABI is supported. 
+  
+  LLVM build now builds all libraries as .a files instead of some
+  libraries as relinked .o files.  This requires some APIs like
+  InitializeAllTargets.h.  TargetRegistry! 
+  
+  ARM Thumb2 support: status?
+  CBE status: not part of the release criteria.
+  
+  New SourceMgr, SMLoc classes for simple parsers with caret diagnostics and #include support, (used by
+    tablegen, llvm-mc, the .ll parser, FileCheck, etc)
+  FileCheck! + CHECK-NEXT
+  New compiler-rt project.
+  New Static Single Information (SSI) construction pass (not used by anything yet, experimental).
+
+  llvm_report_error() error handling API (llvm/Support/ErrorHandling.h)
+  
+  x86: Vector icmp/fcmp now work with SSE codegen.
+  X86: all global variable reference logic is now in ClassifyGlobalReference.
+  JIT support for oprofile (r75279), configure with --with-oprofile.  Now we get line # and function info for JIT'd functions.
+  Mention gcc plugin.
+  
+  New EngineBuilder class for creating JITs: r76276 Reid Kleckner <reid at kleckner.net>
+  
+  -asm-verbose now prints location info (with -g) and loop nest info.
+  JIT now supports generating more than 16M of code.
+   
+removed the BigBlock register allocator, it had bitrotted.
+Target intrinsics can now return multiple results.
+   
+  SSE 4.2 support.
+  Ada bindings for LLVM IR.
+  Many extensions to the C APIs.
+   
+<!-- Unfinished features in 2.6:
+  Mention gcc plugin.
+  strong phi elim
+  variable debug info for optimized code
   postalloc scheduler: anti dependence breaking, hazard recognizer?
-
-initial support for debug line numbers when optimization enabled, not useful in
-  2.5 but will be for 2.6.
-
+  metadata
+  loop dependence analysis
  -->
 
  <!-- for announcement email:
+ Logo web page.
+ llvm devmtg
+ compiler_rt
    -->
 
 <!-- *********************************************************************** -->
