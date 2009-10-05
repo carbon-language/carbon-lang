@@ -304,7 +304,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         Constant *SubInit = 0;
         if (Init)
-          SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE, Context);
+          SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
         Changed |= CleanupConstantGlobalUsers(CE, SubInit, Context);
       } else if (CE->getOpcode() == Instruction::BitCast && 
                  isa<PointerType>(CE->getType())) {
@@ -325,7 +325,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
         ConstantExpr *CE = 
           dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP, Context));
         if (Init && CE && CE->getOpcode() == Instruction::GetElementPtr)
-          SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE, Context);
+          SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
       }
       Changed |= CleanupConstantGlobalUsers(GEP, SubInit, Context);
 
@@ -2475,8 +2475,7 @@ static bool isSimpleEnoughPointerToCommit(Constant *C, LLVMContext &Context) {
       if (!CE->isGEPWithNoNotionalOverIndexing())
         return false;
 
-      return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE,
-                                                    Context);
+      return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE);
     }
   return false;
 }
@@ -2588,8 +2587,7 @@ static Constant *ComputeLoadResult(Constant *P,
         isa<GlobalVariable>(CE->getOperand(0))) {
       GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
       if (GV->hasDefinitiveInitializer())
-        return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE,
-                                                      Context);
+        return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE);
     }
 
   return 0;  // don't know how to evaluate.

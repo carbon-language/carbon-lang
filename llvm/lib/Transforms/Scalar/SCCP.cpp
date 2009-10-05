@@ -1162,8 +1162,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
       if (GV->isConstant() && GV->hasDefinitiveInitializer())
         if (Constant *V =
-             ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE,
-                                                    *Context)) {
+             ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE)) {
           markConstant(IV, &I, V);
           return;
         }

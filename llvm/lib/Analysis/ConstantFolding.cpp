@@ -606,8 +606,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
 /// getelementptr constantexpr, return the constant value being addressed by the
 /// constant expression, or null if something is funny and we can't decide.
 Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C, 
-                                                       ConstantExpr *CE,
-                                                       LLVMContext &Context) {
+                                                       ConstantExpr *CE) {
   if (CE->getOperand(1) != Constant::getNullValue(CE->getOperand(1)->getType()))
     return 0;  // Do not allow stepping over the value!
   

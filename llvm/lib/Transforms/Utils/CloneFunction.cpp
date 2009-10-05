@@ -346,7 +346,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
           if (GV->isConstant() && GV->hasDefinitiveInitializer())
             return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(),
-                                                          CE, Context);
+                                                          CE);
 
   return ConstantFoldInstOperands(I->getOpcode(), I->getType(), &Ops[0],
                                   Ops.size(), Context, TD);
