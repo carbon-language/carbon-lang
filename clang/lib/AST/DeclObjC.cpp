@@ -148,15 +148,13 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
   }
   if (ProtocolRefs.empty())
     return;
-  
+  // Merge ProtocolRefs into class's protocol list;
   for (protocol_iterator p = protocol_begin(), e = protocol_end();
        p != e; p++)
     ProtocolRefs.push_back(*p);
   ReferencedProtocols.Destroy(C);
   unsigned NumProtoRefs = ProtocolRefs.size();
   setProtocolList((ObjCProtocolDecl**)&ProtocolRefs[0], NumProtoRefs, C);
-  // Merge ProtocolRefs into class's protocol list;
-  
 }
 
 ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(IdentifierInfo *ID,

@@ -588,15 +588,13 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     CDecl->insertNextClassCategory();
 
   if (NumProtoRefs) {
+    CDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs, 
+                           Context);
+    CDecl->setLocEnd(EndProtoLoc);
     // Protocols in the class extension belong to the class.
     if (!CDecl->getIdentifier())
      IDecl->mergeClassExtensionProtocolList((ObjCProtocolDecl**)ProtoRefs, 
                                             NumProtoRefs,Context); 
-    else {
-      CDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,
-                             Context);
-      CDecl->setLocEnd(EndProtoLoc);
-    }
   }
 
   CheckObjCDeclScope(CDecl);
@@ -1102,10 +1100,14 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplDecl* IMPDecl,
       }
     }
   } else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl)) {
-    for (ObjCCategoryDecl::protocol_iterator PI = C->protocol_begin(),
-         E = C->protocol_end(); PI != E; ++PI)
-      CheckProtocolMethodDefs(IMPDecl->getLocation(), *PI, IncompleteImpl,
-                              InsMap, ClsMap, C->getClassInterface());
+    // For extended class, unimplemented methods in its protocols will
+    // be reported in the primary class.
+    if (C->getIdentifier()) {
+      for (ObjCCategoryDecl::protocol_iterator PI = C->protocol_begin(),
+           E = C->protocol_end(); PI != E; ++PI)
+        CheckProtocolMethodDefs(IMPDecl->getLocation(), *PI, IncompleteImpl,
+                                InsMap, ClsMap, C->getClassInterface());
+    }
   } else
     assert(false && "invalid ObjCContainerDecl type.");
 }
