@@ -188,6 +188,30 @@ public:
   ///
   inline TypeID getTypeID() const { return ID; }
 
+  /// isVoidTy - Return true if this is 'void'.
+  bool isVoidTy() const { return ID == VoidTyID; }
+
+  /// isFloatTy - Return true if this is 'float', a 32-bit IEEE fp type.
+  bool isFloatTy() const { return ID == FloatTyID; }
+  
+  /// isDoubleTy - Return true if this is 'double', a 64-bit IEEE fp type.
+  bool isDoubleTy() const { return ID == DoubleTyID; }
+
+  /// isX86_FP80Ty - Return true if this is x86 long double.
+  bool isX86_FP80Ty() const { return ID == X86_FP80TyID; }
+
+  /// isFP128Ty - Return true if this is 'fp128'.
+  bool isFP128Ty() const { return ID == FP128TyID; }
+
+  /// isPPC_FP128Ty - Return true if this is powerpc long double.
+  bool isPPC_FP128Ty() const { return ID == PPC_FP128TyID; }
+
+  /// isLabelTy - Return true if this is 'label'.
+  bool isLabelTy() const { return ID == LabelTyID; }
+
+  /// isMetadataTy - Return true if this is 'metadata'.
+  bool isMetadataTy() const { return ID == MetadataTyID; }
+
   /// getDescription - Return the string representation of the type.
   std::string getDescription() const;
 
@@ -205,12 +229,6 @@ public:
   bool isFloatingPoint() const { return ID == FloatTyID || ID == DoubleTyID ||
       ID == X86_FP80TyID || ID == FP128TyID || ID == PPC_FP128TyID; }
 
-  /// isFloatTy - Return true if this is 'float', a 32-bit IEEE fp type.
-  bool isFloatTy() const { return ID == FloatTyID; }
-
-  /// isDoubleTy - Return true if this is 'double', a 64-bit IEEE fp type.
-  bool isDoubleTy() const { return ID == DoubleTyID; }
-  
   /// isFPOrFPVector - Return true if this is a FP type or a vector of FP types.
   ///
   bool isFPOrFPVector() const;
