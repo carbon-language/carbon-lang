@@ -1464,6 +1464,10 @@ void DwarfDebug::ConstructFunctionDbgScope(DbgScope *RootScope,
 
   // Get the subprogram die.
   DIE *SPDie = ModuleCU->getDieMapSlotFor(SPD.getNode());
+  if (!SPDie) {
+    ConstructSubprogram(SPD.getNode());
+    SPDie = ModuleCU->getDieMapSlotFor(SPD.getNode());
+  }
   assert(SPDie && "Missing subprogram descriptor");
 
   if (!AbstractScope) {
