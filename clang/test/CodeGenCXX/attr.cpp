@@ -10,8 +10,9 @@ int foo() { }
 
 
 class C {
-  virtual void bar1() __attribute__((aligned(2)));
-  virtual void bar2() __attribute__((aligned(1024)));
+  virtual void bar1() __attribute__((aligned(1)));
+  virtual void bar2() __attribute__((aligned(2)));
+  virtual void bar3() __attribute__((aligned(1024)));
 } c;
 
 void C::bar1() { }
@@ -23,6 +24,13 @@ void C::bar1() { }
 
 void C::bar2() { }
 
-// CHECK:.align  10, 0x90
+// CHECK:.align 1, 0x90
 // CHECK-NEXT:.globl __ZN1C4bar2Ev
 // CHECK-NEXT:__ZN1C4bar2Ev:
+
+
+void C::bar3() { }
+
+// CHECK:.align 10, 0x90
+// CHECK-NEXT:.globl __ZN1C4bar3Ev
+// CHECK-NEXT:__ZN1C4bar3Ev:

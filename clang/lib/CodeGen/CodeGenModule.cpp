@@ -348,6 +348,9 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     F->setAlignment(AA->getAlignment()/8);
+  // C++ ABI requires 2-byte alignment for member functions.
+  if (F->getAlignment() < 16 && isa<CXXMethodDecl>(D))
+    F->setAlignment(16/8);
 }
 
 void CodeGenModule::SetCommonAttributes(const Decl *D,
