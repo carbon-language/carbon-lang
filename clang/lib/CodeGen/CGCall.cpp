@@ -892,8 +892,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   }
 
   llvm::Instruction *CI = CS.getInstruction();
-  if (Builder.isNamePreserving() &&
-      CI->getType() != llvm::Type::getVoidTy(VMContext))
+  if (Builder.isNamePreserving() && !CI->getType()->isVoidTy())
     CI->setName("call");
 
   switch (RetAI.getKind()) {

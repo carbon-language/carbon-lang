@@ -1088,7 +1088,7 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     llvm::CallInst *NewCall = llvm::CallInst::Create(NewFn, ArgList.begin(),
                                                      ArgList.end(), "", CI);
     ArgList.clear();
-    if (NewCall->getType() != llvm::Type::getVoidTy(Old->getContext()))
+    if (!NewCall->getType()->isVoidTy())
       NewCall->takeName(CI);
     NewCall->setAttributes(CI->getAttributes());
     NewCall->setCallingConv(CI->getCallingConv());

@@ -818,11 +818,11 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
       NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
   } else {
     // Add the inc/dec to the real part.
-    if (InVal->getType() == llvm::Type::getFloatTy(VMContext))
+    if (InVal->getType()->isFloatTy())
       NextVal =
         llvm::ConstantFP::get(VMContext,
                               llvm::APFloat(static_cast<float>(AmountVal)));
-    else if (InVal->getType() == llvm::Type::getDoubleTy(VMContext))
+    else if (InVal->getType()->isDoubleTy())
       NextVal =
         llvm::ConstantFP::get(VMContext,
                               llvm::APFloat(static_cast<double>(AmountVal)));
