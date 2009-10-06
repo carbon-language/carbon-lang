@@ -894,9 +894,9 @@ public:
 
         const CXXMethodDecl *MD = *mi;
         llvm::Constant *m = 0;
-//        if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
-//          m = wrap(CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete));
-//        else {
+        if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
+          m = wrap(CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete));
+        else {
           const FunctionProtoType *FPT = 
             MD->getType()->getAs<FunctionProtoType>();
           const llvm::Type *Ty =
@@ -904,7 +904,7 @@ public:
                                            FPT->isVariadic());
           
           m = wrap(CGM.GetAddrOfFunction(MD, Ty));
-//        }
+        }
 
         OverrideMethod(MD, m, MorallyVirtual, Offset);
       }
