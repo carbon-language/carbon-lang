@@ -1674,7 +1674,8 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx,
     return true;
 
   // This expression must be an integer type.
-  if (!getType()->isIntegerType())
+  if (!getType()->isIntegerType() || 
+      (Ctx.getLangOptions().CPlusPlus && getType()->isEnumeralType()))
     return false;
 
   // If we have an integer constant expression, we need to *evaluate* it and
