@@ -12,11 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
-#include "SemaInherit.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/CFG.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
@@ -2455,6 +2455,35 @@ static bool isUsingDecl(Decl *D) {
   return isa<UsingDecl>(D) || isa<UnresolvedUsingDecl>(D);
 }
 
+/// \brief Data used with FindOverriddenMethod
+struct FindOverriddenMethodData {
+  Sema *S;
+  CXXMethodDecl *Method;
+};
+
+/// \brief Member lookup function that determines whether a given C++
+/// method overrides a method in a base class, to be used with
+/// CXXRecordDecl::lookupInBases().
+static bool FindOverriddenMethod(CXXBaseSpecifier *Specifier,
+                                 CXXBasePath &Path,
+                                 void *UserData) {
+  RecordDecl *BaseRecord = Specifier->getType()->getAs<RecordType>()->getDecl();
+  
+  FindOverriddenMethodData *Data 
+    = reinterpret_cast<FindOverriddenMethodData*>(UserData);
+  for (Path.Decls = BaseRecord->lookup(Data->Method->getDeclName());
+       Path.Decls.first != Path.Decls.second;
+       ++Path.Decls.first) {
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*Path.Decls.first)) {
+      OverloadedFunctionDecl::function_iterator MatchedDecl;
+      if (MD->isVirtual() && !Data->S->IsOverload(Data->Method, MD, MatchedDecl))
+        return true;
+    }
+  }
+  
+  return false;
+}
+
 NamedDecl*
 Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, DeclaratorInfo *DInfo,
@@ -2690,11 +2719,13 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD)) {
     // Look for virtual methods in base classes that this method might override.
-
-    BasePaths Paths;
-    if (LookupInBases(cast<CXXRecordDecl>(DC),
-                      MemberLookupCriteria(NewMD), Paths)) {
-      for (BasePaths::decl_iterator I = Paths.found_decls_begin(),
+    CXXBasePaths Paths;
+    FindOverriddenMethodData Data;
+    Data.Method = NewMD;
+    Data.S = this;
+    if (cast<CXXRecordDecl>(DC)->lookupInBases(&FindOverriddenMethod, &Data,
+                                                Paths)) {
+      for (CXXBasePaths::decl_iterator I = Paths.found_decls_begin(),
            E = Paths.found_decls_end(); I != E; ++I) {
         if (CXXMethodDecl *OldMD = dyn_cast<CXXMethodDecl>(*I)) {
           if (!CheckOverridingFunctionReturnType(NewMD, OldMD) &&

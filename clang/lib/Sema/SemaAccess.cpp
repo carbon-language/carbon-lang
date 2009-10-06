@@ -11,9 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SemaInherit.h"
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CXXInheritance.h"
+#include "clang/AST/DeclCXX.h"
 using namespace clang;
 
 /// SetMemberAccessSpecifier - Set the access specifier of a member.
@@ -47,7 +48,7 @@ bool Sema::SetMemberAccessSpecifier(NamedDecl *MemberDecl,
 /// inaccessible. If @p NoPrivileges is true, special access rights (members
 /// and friends) are not considered.
 const CXXBaseSpecifier *Sema::FindInaccessibleBase(
-    QualType Derived, QualType Base, BasePaths &Paths, bool NoPrivileges) {
+    QualType Derived, QualType Base, CXXBasePaths &Paths, bool NoPrivileges) {
   Base = Context.getCanonicalType(Base).getUnqualifiedType();
   assert(!Paths.isAmbiguous(Base) &&
          "Can't check base class access if set of paths is ambiguous");
@@ -61,12 +62,12 @@ const CXXBaseSpecifier *Sema::FindInaccessibleBase(
   if (CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(getCurFunctionDecl()))
     CurrentClassDecl = MD->getParent();
 
-  for (BasePaths::paths_iterator Path = Paths.begin(), PathsEnd = Paths.end();
+  for (CXXBasePaths::paths_iterator Path = Paths.begin(), PathsEnd = Paths.end();
       Path != PathsEnd; ++Path) {
 
     bool FoundInaccessibleBase = false;
 
-    for (BasePath::const_iterator Element = Path->begin(),
+    for (CXXBasePath::const_iterator Element = Path->begin(),
          ElementEnd = Path->end(); Element != ElementEnd; ++Element) {
       const CXXBaseSpecifier *Base = Element->Base;
 
@@ -106,7 +107,7 @@ const CXXBaseSpecifier *Sema::FindInaccessibleBase(
 /// and report an error if it can't. [class.access.base]
 bool Sema::CheckBaseClassAccess(QualType Derived, QualType Base,
                                 unsigned InaccessibleBaseID,
-                                BasePaths &Paths, SourceLocation AccessLoc,
+                                CXXBasePaths &Paths, SourceLocation AccessLoc,
                                 DeclarationName Name) {
 
   if (!getLangOptions().AccessControl)

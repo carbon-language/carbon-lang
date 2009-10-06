@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
-#include "SemaInherit.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/TypeOrdering.h"
@@ -1259,8 +1259,8 @@ bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType,
   assert(FromClass->isRecordType() && "Pointer into non-class.");
   assert(ToClass->isRecordType() && "Pointer into non-class.");
 
-  BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
-                  /*DetectVirtual=*/true);
+  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+                     /*DetectVirtual=*/true);
   bool DerivationOkay = IsDerivedFrom(ToClass, FromClass, Paths);
   assert(DerivationOkay &&
          "Should not have been called if derivation isn't OK.");

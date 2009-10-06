@@ -197,6 +197,12 @@ public:
   /// an opaque pointer.
   void *getAsOpaquePtr() const { return reinterpret_cast<void*>(Ptr); }
 
+  static DeclarationName getFromOpaquePtr(void *P) {
+    DeclarationName N;
+    N.Ptr = reinterpret_cast<uintptr_t> (P);
+    return N;
+  }
+  
   static DeclarationName getFromOpaqueInteger(uintptr_t P) {
     DeclarationName N;
     N.Ptr = P;

@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
-#include "SemaInherit.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/TypeLoc.h"
@@ -1532,8 +1532,8 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
     bool SubIsClass = CanonicalSubT->isRecordType();
     CanonicalSubT = CanonicalSubT.getUnqualifiedType();
 
-    BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                    /*DetectVirtual=*/false);
+    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
+                       /*DetectVirtual=*/false);
 
     bool Contained = false;
     // Make sure it's in the superset.

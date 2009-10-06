@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SemaInherit.h"
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
@@ -1322,8 +1322,8 @@ QualType Sema::CheckPointerToMemberOperands(
 
   if (Context.getCanonicalType(Class).getUnqualifiedType() !=
       Context.getCanonicalType(LType).getUnqualifiedType()) {
-    BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
-                    /*DetectVirtual=*/false);
+    CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+                       /*DetectVirtual=*/false);
     // FIXME: Would it be useful to print full ambiguity paths, or is that
     // overkill?
     if (!IsDerivedFrom(LType, Class, Paths) ||

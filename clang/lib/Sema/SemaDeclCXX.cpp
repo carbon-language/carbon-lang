@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
-#include "SemaInherit.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/TypeOrdering.h"
 #include "clang/AST/StmtVisitor.h"
@@ -25,6 +25,7 @@
 #include "llvm/Support/Compiler.h"
 #include <algorithm> // for std::equal
 #include <map>
+#include <set>
 
 using namespace clang;
 
@@ -607,6 +608,139 @@ void Sema::ActOnBaseSpecifiers(DeclPtrTy ClassDecl, BaseTy **Bases,
                        (CXXBaseSpecifier**)(Bases), NumBases);
 }
 
+/// \brief Determine whether the type \p Derived is a C++ class that is
+/// derived from the type \p Base.
+bool Sema::IsDerivedFrom(QualType Derived, QualType Base) {
+  if (!getLangOptions().CPlusPlus)
+    return false;
+    
+  const RecordType *DerivedRT = Derived->getAs<RecordType>();
+  if (!DerivedRT)
+    return false;
+  
+  const RecordType *BaseRT = Base->getAs<RecordType>();
+  if (!BaseRT)
+    return false;
+  
+  CXXRecordDecl *DerivedRD = cast<CXXRecordDecl>(DerivedRT->getDecl());
+  CXXRecordDecl *BaseRD = cast<CXXRecordDecl>(BaseRT->getDecl());
+  return DerivedRD->isDerivedFrom(BaseRD);
+}
+
+/// \brief Determine whether the type \p Derived is a C++ class that is
+/// derived from the type \p Base.
+bool Sema::IsDerivedFrom(QualType Derived, QualType Base, CXXBasePaths &Paths) {
+  if (!getLangOptions().CPlusPlus)
+    return false;
+  
+  const RecordType *DerivedRT = Derived->getAs<RecordType>();
+  if (!DerivedRT)
+    return false;
+  
+  const RecordType *BaseRT = Base->getAs<RecordType>();
+  if (!BaseRT)
+    return false;
+  
+  CXXRecordDecl *DerivedRD = cast<CXXRecordDecl>(DerivedRT->getDecl());
+  CXXRecordDecl *BaseRD = cast<CXXRecordDecl>(BaseRT->getDecl());
+  return DerivedRD->isDerivedFrom(BaseRD, Paths);
+}
+
+/// CheckDerivedToBaseConversion - Check whether the Derived-to-Base
+/// conversion (where Derived and Base are class types) is
+/// well-formed, meaning that the conversion is unambiguous (and
+/// that all of the base classes are accessible). Returns true
+/// and emits a diagnostic if the code is ill-formed, returns false
+/// otherwise. Loc is the location where this routine should point to
+/// if there is an error, and Range is the source range to highlight
+/// if there is an error.
+bool
+Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
+                                   unsigned InaccessibleBaseID,
+                                   unsigned AmbigiousBaseConvID,
+                                   SourceLocation Loc, SourceRange Range,
+                                   DeclarationName Name) {
+  // First, determine whether the path from Derived to Base is
+  // ambiguous. This is slightly more expensive than checking whether
+  // the Derived to Base conversion exists, because here we need to
+  // explore multiple paths to determine if there is an ambiguity.
+  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
+                     /*DetectVirtual=*/false);
+  bool DerivationOkay = IsDerivedFrom(Derived, Base, Paths);
+  assert(DerivationOkay &&
+         "Can only be used with a derived-to-base conversion");
+  (void)DerivationOkay;
+  
+  if (!Paths.isAmbiguous(Context.getCanonicalType(Base).getUnqualifiedType())) {
+    // Check that the base class can be accessed.
+    return CheckBaseClassAccess(Derived, Base, InaccessibleBaseID, Paths, Loc,
+                                Name);
+  }
+  
+  // We know that the derived-to-base conversion is ambiguous, and
+  // we're going to produce a diagnostic. Perform the derived-to-base
+  // search just one more time to compute all of the possible paths so
+  // that we can print them out. This is more expensive than any of
+  // the previous derived-to-base checks we've done, but at this point
+  // performance isn't as much of an issue.
+  Paths.clear();
+  Paths.setRecordingPaths(true);
+  bool StillOkay = IsDerivedFrom(Derived, Base, Paths);
+  assert(StillOkay && "Can only be used with a derived-to-base conversion");
+  (void)StillOkay;
+  
+  // Build up a textual representation of the ambiguous paths, e.g.,
+  // D -> B -> A, that will be used to illustrate the ambiguous
+  // conversions in the diagnostic. We only print one of the paths
+  // to each base class subobject.
+  std::string PathDisplayStr = getAmbiguousPathsDisplayString(Paths);
+  
+  Diag(Loc, AmbigiousBaseConvID)
+  << Derived << Base << PathDisplayStr << Range << Name;
+  return true;
+}
+
+bool
+Sema::CheckDerivedToBaseConversion(QualType Derived, QualType Base,
+                                   SourceLocation Loc, SourceRange Range) {
+  return CheckDerivedToBaseConversion(Derived, Base,
+                                      diag::err_conv_to_inaccessible_base,
+                                      diag::err_ambiguous_derived_to_base_conv,
+                                      Loc, Range, DeclarationName());
+}
+
+
+/// @brief Builds a string representing ambiguous paths from a
+/// specific derived class to different subobjects of the same base
+/// class.
+///
+/// This function builds a string that can be used in error messages
+/// to show the different paths that one can take through the
+/// inheritance hierarchy to go from the derived class to different
+/// subobjects of a base class. The result looks something like this:
+/// @code
+/// struct D -> struct B -> struct A
+/// struct D -> struct C -> struct A
+/// @endcode
+std::string Sema::getAmbiguousPathsDisplayString(CXXBasePaths &Paths) {
+  std::string PathDisplayStr;
+  std::set<unsigned> DisplayedPaths;
+  for (CXXBasePaths::paths_iterator Path = Paths.begin();
+       Path != Paths.end(); ++Path) {
+    if (DisplayedPaths.insert(Path->back().SubobjectNumber).second) {
+      // We haven't displayed a path to this particular base
+      // class subobject yet.
+      PathDisplayStr += "\n    ";
+      PathDisplayStr += Context.getTypeDeclType(Paths.getOrigin()).getAsString();
+      for (CXXBasePath::const_iterator Element = Path->begin();
+           Element != Path->end(); ++Element)
+        PathDisplayStr += " -> " + Element->Base->getType().getAsString();
+    }
+  }
+  
+  return PathDisplayStr;
+}
+
 //===----------------------------------------------------------------------===//
 // C++ class member Handling
 //===----------------------------------------------------------------------===//
@@ -919,10 +1053,10 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
     if (!DirectBaseSpec || !DirectBaseSpec->isVirtual()) {
       // We haven't found a base yet; search the class hierarchy for a
       // virtual base class.
-      BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                      /*DetectVirtual=*/false);
+      CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
+                         /*DetectVirtual=*/false);
       if (IsDerivedFrom(Context.getTypeDeclType(ClassDecl), BaseType, Paths)) {
-        for (BasePaths::paths_iterator Path = Paths.begin();
+        for (CXXBasePaths::paths_iterator Path = Paths.begin();
              Path != Paths.end(); ++Path) {
           if (Path->back().Base->isVirtual()) {
             VirtualBaseSpec = Path->back().Base;

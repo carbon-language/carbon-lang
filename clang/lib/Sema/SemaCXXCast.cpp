@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
-#include "SemaInherit.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CXXInheritance.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include <set>
@@ -610,8 +610,8 @@ TryStaticDowncast(Sema &Self, QualType SrcType, QualType DestType,
     return TC_NotApplicable;
   }
 
-  BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/!CStyle,
-                  /*DetectVirtual=*/true);
+  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/!CStyle,
+                     /*DetectVirtual=*/true);
   if (!Self.IsDerivedFrom(DestType, SrcType, Paths)) {
     return TC_NotApplicable;
   }
@@ -652,13 +652,14 @@ TryStaticDowncast(Sema &Self, QualType SrcType, QualType DestType,
     }
     std::string PathDisplayStr;
     std::set<unsigned> DisplayedPaths;
-    for (BasePaths::paths_iterator PI = Paths.begin(), PE = Paths.end();
+    for (CXXBasePaths::paths_iterator PI = Paths.begin(), PE = Paths.end();
          PI != PE; ++PI) {
       if (DisplayedPaths.insert(PI->back().SubobjectNumber).second) {
         // We haven't displayed a path to this particular base
         // class subobject yet.
         PathDisplayStr += "\n    ";
-        for (BasePath::const_reverse_iterator EI = PI->rbegin(),EE = PI->rend();
+        for (CXXBasePath::const_reverse_iterator EI = PI->rbegin(),
+                                                 EE = PI->rend();
              EI != EE; ++EI)
           PathDisplayStr += EI->Base->getType().getAsString() + " -> ";
         PathDisplayStr += DestType.getAsString();
@@ -720,7 +721,7 @@ TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
   // B base of D
   QualType SrcClass(SrcMemPtr->getClass(), 0);
   QualType DestClass(DestMemPtr->getClass(), 0);
-  BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/!CStyle,
+  CXXBasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/!CStyle,
                   /*DetectVirtual=*/true);
   if (!Self.IsDerivedFrom(SrcClass, DestClass, Paths)) {
     return TC_NotApplicable;

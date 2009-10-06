@@ -21,13 +21,16 @@
 namespace clang {
 
 class ClassTemplateDecl;
-class CXXRecordDecl;
-class CXXConstructorDecl;
-class CXXDestructorDecl;
-class CXXConversionDecl;
-class CXXMethodDecl;
 class ClassTemplateSpecializationDecl;
-
+class CXXBasePath;
+class CXXBasePaths;
+class CXXConstructorDecl;
+class CXXConversionDecl;
+class CXXDestructorDecl;
+class CXXMethodDecl;
+class CXXRecordDecl;
+class CXXMemberLookupCriteria;
+  
 /// \brief Represents any kind of function declaration, whether it is a
 /// concrete function or a function template.
 class AnyFunctionDecl {
@@ -739,6 +742,114 @@ public:
     return dyn_cast<FunctionDecl>(getDeclContext());
   }
 
+  /// \brief Determine whether this class is derived from the class \p Base.
+  ///
+  /// This routine only determines whether this class is derived from \p Base,
+  /// but does not account for factors that may make a Derived -> Base class
+  /// ill-formed, such as private/protected inheritance or multiple, ambiguous
+  /// base class subobjects.
+  ///
+  /// \param Base the base class we are searching for.
+  ///
+  /// \returns true if this class is derived from Base, false otherwise.
+  bool isDerivedFrom(CXXRecordDecl *Base);
+  
+  /// \brief Determine whether this class is derived from the type \p Base.
+  ///
+  /// This routine only determines whether this class is derived from \p Base,
+  /// but does not account for factors that may make a Derived -> Base class
+  /// ill-formed, such as private/protected inheritance or multiple, ambiguous
+  /// base class subobjects.
+  ///
+  /// \param Base the base class we are searching for.
+  ///
+  /// \param Paths will contain the paths taken from the current class to the
+  /// given \p Base class.
+  ///
+  /// \returns true if this class is derived from Base, false otherwise.
+  ///
+  /// \todo add a separate paramaeter to configure IsDerivedFrom, rather than 
+  /// tangling input and output in \p Paths  
+  bool isDerivedFrom(CXXRecordDecl *Base, CXXBasePaths &Paths);
+  
+  /// \brief Function type used by lookupInBases() to determine whether a 
+  /// specific base class subobject matches the lookup criteria.
+  ///
+  /// \param Specifier the base-class specifier that describes the inheritance 
+  /// from the base class we are trying to match.
+  ///
+  /// \param Path the current path, from the most-derived class down to the 
+  /// base named by the \p Specifier.
+  ///
+  /// \param UserData a single pointer to user-specified data, provided to
+  /// lookupInBases().
+  ///
+  /// \returns true if this base matched the search criteria, false otherwise.
+  typedef bool BaseMatchesCallback(CXXBaseSpecifier *Specifier,
+                                   CXXBasePath &Path,
+                                   void *UserData);
+  
+  /// \brief Look for entities within the base classes of this C++ class,
+  /// transitively searching all base class subobjects.
+  ///
+  /// This routine uses the callback function \p BaseMatches to find base 
+  /// classes meeting some search criteria, walking all base class subobjects
+  /// and populating the given \p Paths structure with the paths through the 
+  /// inheritance hierarchy that resulted in a match. On a successful search,
+  /// the \p Paths structure can be queried to retrieve the matching paths and
+  /// to determine if there were any ambiguities.
+  ///
+  /// \param BaseMatches callback function used to determine whether a given
+  /// base matches the user-defined search criteria.
+  ///
+  /// \param UserData user data pointer that will be provided to \p BaseMatches.
+  ///
+  /// \param Paths used to record the paths from this class to its base class
+  /// subobjects that match the search criteria.
+  ///
+  /// \returns true if there exists any path from this class to a base class
+  /// subobject that matches the search criteria.
+  bool lookupInBases(BaseMatchesCallback *BaseMatches, void *UserData,
+                     CXXBasePaths &Paths);
+  
+  /// \brief Base-class lookup callback that determines whether the given
+  /// base class specifier refers to a specific class declaration.
+  ///
+  /// This callback can be used with \c lookupInBases() to determine whether
+  /// a given derived class has is a base class subobject of a particular type.
+  /// The user data pointer should refer to the canonical CXXRecordDecl of the
+  /// base class that we are searching for.
+  static bool FindBaseClass(CXXBaseSpecifier *Specifier, CXXBasePath &Path,
+                            void *BaseRecord);
+  
+  /// \brief Base-class lookup callback that determines whether there exists
+  /// a tag with the given name.
+  ///
+  /// This callback can be used with \c lookupInBases() to find tag members
+  /// of the given name within a C++ class hierarchy. The user data pointer
+  /// is an opaque \c DeclarationName pointer.
+  static bool FindTagMember(CXXBaseSpecifier *Specifier, CXXBasePath &Path,
+                            void *Name);
+
+  /// \brief Base-class lookup callback that determines whether there exists
+  /// a member with the given name.
+  ///
+  /// This callback can be used with \c lookupInBases() to find members
+  /// of the given name within a C++ class hierarchy. The user data pointer
+  /// is an opaque \c DeclarationName pointer.
+  static bool FindOrdinaryMember(CXXBaseSpecifier *Specifier, CXXBasePath &Path,
+                                 void *Name);
+  
+  /// \brief Base-class lookup callback that determines whether there exists
+  /// a member with the given name that can be used in a nested-name-specifier.
+  ///
+  /// This callback can be used with \c lookupInBases() to find membes of
+  /// the given name within a C++ class hierarchy that can occur within
+  /// nested-name-specifiers.
+  static bool FindNestedNameSpecifierMember(CXXBaseSpecifier *Specifier, 
+                                            CXXBasePath &Path,
+                                            void *UserData);
+  
   /// viewInheritance - Renders and displays an inheritance diagram
   /// for this C++ class and all of its base classes (transitively) using
   /// GraphViz.
