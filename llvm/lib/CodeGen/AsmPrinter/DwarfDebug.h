@@ -563,7 +563,6 @@ public:
   /// CollectVariableInfo - Populate DbgScope entries with variables' info.
   void CollectVariableInfo();
 
-  void SetDbgScopeLabels(const MachineInstr *MI, unsigned Label);
 };
 
 } // End of namespace llvm
