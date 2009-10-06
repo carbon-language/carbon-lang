@@ -747,6 +747,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
             DebugLoc Loc = ExtractDebugLocation(DILoc,
                                                 MF.getDebugLocInfo());
             FastIS->setCurDebugLoc(Loc);
+            if (MF.getDefaultDebugLoc().isUnknown())
+              MF.setDefaultDebugLoc(Loc);
           }
         }
 
