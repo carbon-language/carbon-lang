@@ -879,7 +879,9 @@ void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
                                   getOrCreateType(ReturnType, Unit),
                                   Fn->hasInternalLinkage(), true/*definition*/);
 
-//  DebugFactory.InsertSubprogramStart(SP, Builder.GetInsertBlock());
+#ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
+  DebugFactory.InsertSubprogramStart(SP, Builder.GetInsertBlock());
+#endif
 
   // Push function on region stack.
   RegionStack.push_back(SP);
