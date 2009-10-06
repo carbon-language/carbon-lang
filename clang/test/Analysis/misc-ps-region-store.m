@@ -287,3 +287,19 @@ int rdar_7261075(void) {
   return 0;
 }
 
+// <rdar://problem/7275774> false path due to limited pointer 
+//                          arithmetic constraints
+void rdar_7275774(void *data, unsigned n) {
+  if (!(data || n == 0))
+    return;
+  
+  unsigned short *p = (unsigned short*) data;
+  unsigned short *q = p + (n / 2);
+
+  if (p < q) {
+    // If we reach here, 'p' cannot be null.  If 'p' is null, then 'n' must
+    // be '0', meaning that this branch is not feasible.
+    *p = *q; // no-warning
+  }
+}
+

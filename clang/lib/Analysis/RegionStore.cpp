@@ -826,7 +826,10 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
 
     // Not yet handled.
     case MemRegion::VarRegionKind:
-    case MemRegion::StringRegionKind:
+    case MemRegion::StringRegionKind: {
+      
+    }
+    // Fall-through.
     case MemRegion::CompoundLiteralRegionKind:
     case MemRegion::FieldRegionKind:
     case MemRegion::ObjCObjectRegionKind:
@@ -851,17 +854,27 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
 
   SVal Idx = ER->getIndex();
   nonloc::ConcreteInt* Base = dyn_cast<nonloc::ConcreteInt>(&Idx);
-  nonloc::ConcreteInt* Offset = dyn_cast<nonloc::ConcreteInt>(&R);
 
-  // Only support concrete integer indexes for now.
-  if (Base && Offset) {
-    // FIXME: Should use SValuator here.
-    SVal NewIdx = Base->evalBinOp(ValMgr, Op,
+  // For now, only support:
+  //  (a) concrete integer indices that can easily be resolved
+  //  (b) 0 + symbolic index
+  if (Base) {
+    if (nonloc::ConcreteInt *Offset = dyn_cast<nonloc::ConcreteInt>(&R)) {
+      // FIXME: Should use SValuator here.
+      SVal NewIdx =
+        Base->evalBinOp(ValMgr, Op,
                 cast<nonloc::ConcreteInt>(ValMgr.convertToArrayIndex(*Offset)));
-    const MemRegion* NewER =
-      MRMgr.getElementRegion(ER->getElementType(), NewIdx, ER->getSuperRegion(),
-                             getContext());
-    return ValMgr.makeLoc(NewER);
+      const MemRegion* NewER =
+        MRMgr.getElementRegion(ER->getElementType(), NewIdx,
+                               ER->getSuperRegion(), getContext());
+      return ValMgr.makeLoc(NewER);
+    }    
+    if (0 == Base->getValue()) {
+      const MemRegion* NewER =
+        MRMgr.getElementRegion(ER->getElementType(), R,
+                               ER->getSuperRegion(), getContext());
+      return ValMgr.makeLoc(NewER);      
+    }    
   }
 
   return UnknownVal();

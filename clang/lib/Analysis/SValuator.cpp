@@ -43,7 +43,7 @@ SVal SValuator::EvalBinOp(const GRState *ST, BinaryOperator::Opcode Op,
     return EvalBinOpLN(ST, Op, cast<Loc>(R), cast<NonLoc>(L), T);
   }
 
-  return EvalBinOpNN(Op, cast<NonLoc>(L), cast<NonLoc>(R), T);
+  return EvalBinOpNN(ST, Op, cast<NonLoc>(L), cast<NonLoc>(R), T);
 }
 
 DefinedOrUnknownSVal SValuator::EvalEQ(const GRState *ST,

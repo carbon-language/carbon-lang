@@ -67,8 +67,8 @@ public:
 
   virtual SVal EvalComplement(NonLoc val) = 0;
 
-  virtual SVal EvalBinOpNN(BinaryOperator::Opcode Op, NonLoc lhs,
-                           NonLoc rhs, QualType resultTy) = 0;
+  virtual SVal EvalBinOpNN(const GRState *state, BinaryOperator::Opcode Op,
+                           NonLoc lhs, NonLoc rhs, QualType resultTy) = 0;
 
   virtual SVal EvalBinOpLL(BinaryOperator::Opcode Op, Loc lhs, Loc rhs,
                            QualType resultTy) = 0;

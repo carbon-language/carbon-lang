@@ -2545,7 +2545,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, ExplodedNode* Pred,
             }
             else {
               nonloc::ConcreteInt X(getBasicVals().getValue(0, Ex->getType()));
-              Result = EvalBinOp(BinaryOperator::EQ, cast<NonLoc>(V), X,
+              Result = EvalBinOp(state, BinaryOperator::EQ, cast<NonLoc>(V), X,
                                  U->getType());
             }
 

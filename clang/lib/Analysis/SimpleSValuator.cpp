@@ -29,8 +29,8 @@ public:
 
   virtual SVal EvalMinus(NonLoc val);
   virtual SVal EvalComplement(NonLoc val);
-  virtual SVal EvalBinOpNN(BinaryOperator::Opcode op, NonLoc lhs, NonLoc rhs,
-                           QualType resultTy);
+  virtual SVal EvalBinOpNN(const GRState *state, BinaryOperator::Opcode op,
+                           NonLoc lhs, NonLoc rhs, QualType resultTy);
   virtual SVal EvalBinOpLL(BinaryOperator::Opcode op, Loc lhs, Loc rhs,
                            QualType resultTy);
   virtual SVal EvalBinOpLN(const GRState *state, BinaryOperator::Opcode op,
@@ -206,7 +206,8 @@ static SVal EvalEquality(ValueManager &ValMgr, Loc lhs, Loc rhs, bool isEqual,
   return ValMgr.makeTruthVal(isEqual ? lhs == rhs : lhs != rhs, resultTy);
 }
 
-SVal SimpleSValuator::EvalBinOpNN(BinaryOperator::Opcode op,
+SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
+                                  BinaryOperator::Opcode op,
                                   NonLoc lhs, NonLoc rhs,
                                   QualType resultTy)  {
   // Handle trivial case where left-side and right-side are the same.
@@ -342,8 +343,18 @@ SVal SimpleSValuator::EvalBinOpNN(BinaryOperator::Opcode op,
       }
     }
     case nonloc::SymbolValKind: {
+      nonloc::SymbolVal *slhs = cast<nonloc::SymbolVal>(&lhs);
+      SymbolRef Sym = slhs->getSymbol();
+      
+      // Does the symbol simplify to a constant?
+      if (Sym->getType(ValMgr.getContext())->isIntegerType())
+        if (const llvm::APSInt *Constant = state->getSymVal(Sym)) {
+          lhs = nonloc::ConcreteInt(*Constant);
+          continue;
+        }
+      
       if (isa<nonloc::ConcreteInt>(rhs)) {
-        return ValMgr.makeNonLoc(cast<nonloc::SymbolVal>(lhs).getSymbol(), op,
+        return ValMgr.makeNonLoc(slhs->getSymbol(), op,
                                  cast<nonloc::ConcreteInt>(rhs).getValue(),
                                  resultTy);
       }
@@ -362,6 +373,13 @@ SVal SimpleSValuator::EvalBinOpLL(BinaryOperator::Opcode op, Loc lhs, Loc rhs,
     case BinaryOperator::EQ:
     case BinaryOperator::NE:
       return EvalEquality(ValMgr, lhs, rhs, op == BinaryOperator::EQ, resultTy);
+    case BinaryOperator::LT:
+    case BinaryOperator::GT:
+      // FIXME: Generalize.  For now, just handle the trivial case where
+      //  the two locations are identical.
+      if (lhs == rhs)
+        return ValMgr.makeTruthVal(false, resultTy);
+      return UnknownVal();
   }
 }
 
