@@ -23,6 +23,16 @@ namespace llvm {
   class ARMBaseInstrInfo;
   class Type;
 
+namespace ARM {
+  /// SubregIndex - The index of various subregister classes. Note that 
+  /// these indices must be kept in sync with the class indices in the 
+  /// ARMRegisterInfo.td file.
+  enum SubregIndex {
+    SSUBREG_0 = 1, SSUBREG_1 = 2, SSUBREG_2 = 3, SSUBREG_3 = 4,
+    DSUBREG_0 = 5, DSUBREG_1 = 6
+  };
+}
+
 struct ARMRegisterInfo : public ARMBaseRegisterInfo {
 public:
   ARMRegisterInfo(const ARMBaseInstrInfo &tii, const ARMSubtarget &STI);

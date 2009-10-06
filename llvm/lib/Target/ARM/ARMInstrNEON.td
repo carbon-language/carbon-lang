@@ -182,10 +182,19 @@ let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 class VLD2D<string OpcodeStr>
   : NLdSt<(outs DPR:$dst1, DPR:$dst2), (ins addrmode6:$addr), IIC_VLD2,
           !strconcat(OpcodeStr, "\t\\{$dst1,$dst2\\}, $addr"), "", []>;
+class VLD2Q<string OpcodeStr>
+  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
+          (ins addrmode6:$addr), IIC_VLD2,
+          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3,$dst4\\}, $addr"),
+          "", []>;
 
 def  VLD2d8   : VLD2D<"vld2.8">;
 def  VLD2d16  : VLD2D<"vld2.16">;
 def  VLD2d32  : VLD2D<"vld2.32">;
+
+def  VLD2q8   : VLD2Q<"vld2.8">;
+def  VLD2q16  : VLD2Q<"vld2.16">;
+def  VLD2q32  : VLD2Q<"vld2.32">;
 
 //   VLD3     : Vector Load (multiple 3-element structures)
 class VLD3D<string OpcodeStr>

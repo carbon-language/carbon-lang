@@ -130,6 +130,10 @@ private:
   virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                             char ConstraintCode,
                                             std::vector<SDValue> &OutOps);
+
+  /// PairDRegs - Insert a pair of double registers into an implicit def to
+  /// form a quad register.
+  SDNode *PairDRegs(EVT VT, SDValue V0, SDValue V1);
 };
 }
 
@@ -923,6 +927,20 @@ SDNode *ARMDAGToDAGISel::SelectDYN_ALLOC(SDValue Op) {
   return 0;
 }
 
+/// PairDRegs - Insert a pair of double registers into an implicit def to
+/// form a quad register.
+SDNode *ARMDAGToDAGISel::PairDRegs(EVT VT, SDValue V0, SDValue V1) {
+  DebugLoc dl = V0.getNode()->getDebugLoc();
+  SDValue Undef =
+    SDValue(CurDAG->getMachineNode(TargetInstrInfo::IMPLICIT_DEF, dl, VT), 0);
+  SDValue SubReg0 = CurDAG->getTargetConstant(ARM::DSUBREG_0, MVT::i32);
+  SDValue SubReg1 = CurDAG->getTargetConstant(ARM::DSUBREG_1, MVT::i32);
+  SDNode *Pair = CurDAG->getMachineNode(TargetInstrInfo::INSERT_SUBREG, dl,
+                                        VT, Undef, V0, SubReg0);
+  return CurDAG->getMachineNode(TargetInstrInfo::INSERT_SUBREG, dl,
+                                VT, SDValue(Pair, 0), V1, SubReg1);
+}
+
 SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
   SDNode *N = Op.getNode();
   DebugLoc dl = N->getDebugLoc();
@@ -1332,16 +1350,33 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      EVT RegVT = VT;
       switch (VT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("unhandled vld2 type");
       case MVT::v8i8:  Opc = ARM::VLD2d8; break;
       case MVT::v4i16: Opc = ARM::VLD2d16; break;
       case MVT::v2f32:
       case MVT::v2i32: Opc = ARM::VLD2d32; break;
+      case MVT::v16i8: Opc = ARM::VLD2q8; RegVT = MVT::v8i8; break;
+      case MVT::v8i16: Opc = ARM::VLD2q16; RegVT = MVT::v4i16; break;
+      case MVT::v4f32: Opc = ARM::VLD2q32; RegVT = MVT::v2f32; break;
+      case MVT::v4i32: Opc = ARM::VLD2q32; RegVT = MVT::v2i32; break;
       }
       SDValue Chain = N->getOperand(0);
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
-      return CurDAG->getMachineNode(Opc, dl, VT, VT, MVT::Other, Ops, 4);
+      if (RegVT == VT)
+        return CurDAG->getMachineNode(Opc, dl, VT, VT, MVT::Other, Ops, 4);
+      
+      // Quad registers are loaded as pairs of double registers.
+      std::vector<EVT> ResTys(4, RegVT);
+      ResTys.push_back(MVT::Other);
+      SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 4);
+      SDNode *Q0 = PairDRegs(VT, SDValue(VLd, 0), SDValue(VLd, 1));
+      SDNode *Q1 = PairDRegs(VT, SDValue(VLd, 2), SDValue(VLd, 3));
+      ReplaceUses(SDValue(N, 0), SDValue(Q0, 0));
+      ReplaceUses(SDValue(N, 1), SDValue(Q1, 0));
+      ReplaceUses(SDValue(N, 2), SDValue(VLd, 4));
+      return NULL;
     }
 
     case Intrinsic::arm_neon_vld3: {
