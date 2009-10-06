@@ -879,7 +879,7 @@ void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
                                   getOrCreateType(ReturnType, Unit),
                                   Fn->hasInternalLinkage(), true/*definition*/);
 
-  DebugFactory.InsertSubprogramStart(SP, Builder.GetInsertBlock());
+//  DebugFactory.InsertSubprogramStart(SP, Builder.GetInsertBlock());
 
   // Push function on region stack.
   RegionStack.push_back(SP);
@@ -903,8 +903,19 @@ void CGDebugInfo::EmitStopPoint(llvm::Function *Fn, CGBuilderTy &Builder) {
   // Get the appropriate compile unit.
   llvm::DICompileUnit Unit = getOrCreateCompileUnit(CurLoc);
   PresumedLoc PLoc = SM.getPresumedLoc(CurLoc);
+
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+  llvm::DIDescriptor DR = RegionStack.back();
+  llvm::DIScope DS = llvm::DIScope(DR.getNode());
+  llvm::DILocation DO(NULL);
+  llvm::DILocation DL = 
+    DebugFactory.CreateLocation(PLoc.getLine(), PLoc.getColumn(),
+                                DS, DO);
+  Builder.SetCurrentDebugLocation(DL.getNode());
+#else
   DebugFactory.InsertStopPoint(Unit, PLoc.getLine(), PLoc.getColumn(),
                                Builder.GetInsertBlock());
+#endif
 }
 
 /// EmitRegionStart- Constructs the debug code for entering a declarative
@@ -915,7 +926,9 @@ void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, CGBuilderTy &Builder) {
     D = RegionStack.back();
   D = DebugFactory.CreateLexicalBlock(D);
   RegionStack.push_back(D);
+#ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
   DebugFactory.InsertRegionStart(D, Builder.GetInsertBlock());
+#endif
 }
 
 /// EmitRegionEnd - Constructs the debug code for exiting a declarative
@@ -926,7 +939,9 @@ void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, CGBuilderTy &Builder) {
   // Provide an region stop point.
   EmitStopPoint(Fn, Builder);
 
+#ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
   DebugFactory.InsertRegionEnd(RegionStack.back(), Builder.GetInsertBlock());
+#endif
   RegionStack.pop_back();
 }
 
