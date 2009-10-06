@@ -118,7 +118,6 @@ namespace {
       (void) llvm::createRSProfilingPass();
       (void) llvm::createIndMemRemPass();
       (void) llvm::createInstCountPass();
-      (void) llvm::createPredicateSimplifierPass();
       (void) llvm::createCodeGenLICMPass();
       (void) llvm::createCodeGenPreparePass();
       (void) llvm::createGVNPass();

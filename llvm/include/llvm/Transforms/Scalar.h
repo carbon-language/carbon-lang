@@ -278,13 +278,6 @@ extern const PassInfo *const LCSSAID;
 
 //===----------------------------------------------------------------------===//
 //
-// PredicateSimplifier - This pass collapses duplicate variables into one
-// canonical form, and tries to simplify expressions along the way.
-//
-FunctionPass *createPredicateSimplifierPass();
-
-//===----------------------------------------------------------------------===//
-//
 // GVN - This pass performs global value numbering and redundant load 
 // elimination cotemporaneously.
 //
