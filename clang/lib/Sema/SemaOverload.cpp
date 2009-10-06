@@ -3678,7 +3678,45 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     break;
 
   case OO_ArrowStar:
-    // FIXME: No support for pointer-to-members yet.
+    // C++ [over.built]p11:
+    //    For every quintuple (C1, C2, T, CV1, CV2), where C2 is a class type, 
+    //    C1 is the same type as C2 or is a derived class of C2, T is an object 
+    //    type or a function type, and CV1 and CV2 are cv-qualifier-seqs, 
+    //    there exist candidate operator functions of the form 
+    //    CV12 T& operator->*(CV1 C1*, CV2 T C2::*); 
+    //    where CV12 is the union of CV1 and CV2.
+    {
+      for (BuiltinCandidateTypeSet::iterator Ptr = 
+             CandidateTypes.pointer_begin();
+           Ptr != CandidateTypes.pointer_end(); ++Ptr) {
+        QualType C1Ty = (*Ptr);
+        QualType C1;
+        if (const PointerType *PointerTy = C1Ty->getAs<PointerType>()) {
+          C1 = PointerTy->getPointeeType();
+          C1 = Context.getCanonicalType(C1).getUnqualifiedType();
+          if (!isa<RecordType>(C1))
+            continue;
+        }
+        for (BuiltinCandidateTypeSet::iterator
+             MemPtr = CandidateTypes.member_pointer_begin(),
+             MemPtrEnd = CandidateTypes.member_pointer_end();
+             MemPtr != MemPtrEnd; ++MemPtr) {
+          const MemberPointerType *mptr = cast<MemberPointerType>(*MemPtr);
+          QualType C2 = QualType(mptr->getClass(), 0);
+          C2 = Context.getCanonicalType(C2).getUnqualifiedType();
+          if (C1 != C2 && !IsDerivedFrom(C1, C2))
+            break;
+          QualType ParamTypes[2] = { *Ptr, *MemPtr };
+          // build CV12 T&
+          QualType T = mptr->getPointeeType();
+          unsigned CV1 = (*Ptr).getCVRQualifiers();
+          unsigned CV2 = T.getCVRQualifiers();
+          T = Context.getCVRQualifiedType(T, (CV1 | CV2));
+          QualType ResultTy = Context.getLValueReferenceType(T);
+          AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
+        }
+      }
+    }
     break;
 
   case OO_Conditional:
