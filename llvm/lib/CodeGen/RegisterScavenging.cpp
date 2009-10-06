@@ -303,7 +303,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   if (!TRI->saveScavengerRegister(*MBB, I, RC, SReg)) {
     // Spill the scavenged register before I.
     assert(ScavengingFrameIndex >= 0 &&
-           "Cannot scavenging register without an emergency spill slot!");
+           "Cannot scavenge register without an emergency spill slot!");
     TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC);
     MachineBasicBlock::iterator II = prior(I);
     TRI->eliminateFrameIndex(II, SPAdj, this);
