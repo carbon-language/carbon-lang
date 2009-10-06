@@ -1,11 +1,5 @@
-// PR5021
-struct A {
-  virtual void f(char);
-};
+// RUN: clang-cc -emit-llvm-only %s
 
-void f(A *a) {
-  a->f('c');
-}
 // PR5021
 struct A {
   virtual void f(char);
