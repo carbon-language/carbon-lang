@@ -1671,15 +1671,6 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
   if (!ModuleCU)
     ModuleCU = CompileUnits[0];
 
-  // If there is not any debug info available for any global variables and any
-  // subprograms then there is not any debug info to emit.
-  if (DbgFinder.global_variable_count() == 0
-      && DbgFinder.subprogram_count() == 0) {
-    if (TimePassesIsEnabled)
-      DebugTimer->stopTimer();
-    return;
-  }
-
   // Create DIEs for each of the externally visible global variables.
   for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
          E = DbgFinder.global_variable_end(); I != E; ++I) {
@@ -1728,7 +1719,7 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
 /// EndModule - Emit all Dwarf sections that should come after the content.
 ///
 void DwarfDebug::EndModule() {
-  if (!ShouldEmitDwarfDebug())
+  if (!ModuleCU)
     return;
 
   if (TimePassesIsEnabled)
