@@ -643,6 +643,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
         // Check for another comma.
         Pos = Val.find(',');
       }
+      Value = Val;
     }
 
     // If this is a named positional argument, just remember that it is the
