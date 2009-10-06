@@ -681,3 +681,14 @@ void *rdar7152418_bar();
   return 1;
 }
 
+// Test constant-folding of symbolic values, automatically handling type
+// conversions of the symbol as necessary.  Previously this would crash
+// once we started eagerly evaluating symbols whose values were constrained
+// to a single value.
+void test_constant_symbol(signed char x) {
+  while (1) {
+    if (x == ((signed char) 0)) {}
+  }
+}
+
+

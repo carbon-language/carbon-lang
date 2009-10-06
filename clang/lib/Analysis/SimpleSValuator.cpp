@@ -349,8 +349,13 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
       // Does the symbol simplify to a constant?
       if (Sym->getType(ValMgr.getContext())->isIntegerType())
         if (const llvm::APSInt *Constant = state->getSymVal(Sym)) {
-          lhs = nonloc::ConcreteInt(*Constant);
-          continue;
+          // What should we convert it to?
+          if (nonloc::ConcreteInt *rhs_I = dyn_cast<nonloc::ConcreteInt>(&rhs)){
+            BasicValueFactory &BVF = ValMgr.getBasicValueFactory();
+            lhs = nonloc::ConcreteInt(BVF.Convert(rhs_I->getValue(),
+                                                  *Constant));
+            continue;
+          }
         }
       
       if (isa<nonloc::ConcreteInt>(rhs)) {
