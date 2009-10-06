@@ -116,7 +116,7 @@ FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) {
 // current module.
 bool LowerInvoke::doInitialization(Module &M) {
   const Type *VoidPtrTy =
-          PointerType::getUnqual(Type::getInt8Ty(M.getContext()));
+          Type::getInt8PtrTy(M.getContext());
   AbortMessage = 0;
   if (ExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
@@ -530,7 +530,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
                                                  "TheJmpBuf",
                                                  EntryBB->getTerminator());
     JmpBufPtr = new BitCastInst(JmpBufPtr,
-                        PointerType::getUnqual(Type::getInt8Ty(F.getContext())),
+                        Type::getInt8PtrTy(F.getContext()),
                                 "tmp", EntryBB->getTerminator());
     Value *SJRet = CallInst::Create(SetJmpFn, JmpBufPtr, "sjret",
                                     EntryBB->getTerminator());
@@ -585,7 +585,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   Idx[0] = GetElementPtrInst::Create(BufPtr, Idx.begin(), Idx.end(), "JmpBuf",
                                      UnwindBlock);
   Idx[0] = new BitCastInst(Idx[0],
-             PointerType::getUnqual(Type::getInt8Ty(F.getContext())),
+             Type::getInt8PtrTy(F.getContext()),
                            "tmp", UnwindBlock);
   Idx[1] = ConstantInt::get(Type::getInt32Ty(F.getContext()), 1);
   CallInst::Create(LongJmpFn, Idx.begin(), Idx.end(), "", UnwindBlock);

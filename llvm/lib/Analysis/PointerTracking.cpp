@@ -48,7 +48,7 @@ void PointerTracking::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool PointerTracking::doInitialization(Module &M) {
-  const Type *PTy = PointerType::getUnqual(Type::getInt8Ty(M.getContext()));
+  const Type *PTy = Type::getInt8PtrTy(M.getContext());
 
   // Find calloc(i64, i64) or calloc(i32, i32).
   callocFunc = M.getFunction("calloc");

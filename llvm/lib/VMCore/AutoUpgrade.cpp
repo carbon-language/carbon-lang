@@ -265,7 +265,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       if (isLoadH || isLoadL) {
         Value *Op1 = UndefValue::get(Op0->getType());
         Value *Addr = new BitCastInst(CI->getOperand(2), 
-                                  PointerType::getUnqual(Type::getDoubleTy(C)),
+                                  Type::getDoublePtrTy(C),
                                       "upgraded.", CI);
         Value *Load = new LoadInst(Addr, "upgraded.", false, 8, CI);
         Value *Idx = ConstantInt::get(Type::getInt32Ty(C), 0);

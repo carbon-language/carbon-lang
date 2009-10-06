@@ -189,7 +189,7 @@ ShadowStackGC::ShadowStackGC() : Head(0), StackEntryTy(0) {
 
 Constant *ShadowStackGC::GetFrameMap(Function &F) {
   // doInitialization creates the abstract type of this value.
-  Type *VoidPtr = PointerType::getUnqual(Type::getInt8Ty(F.getContext()));
+  const Type *VoidPtr = Type::getInt8PtrTy(F.getContext());
 
   // Truncate the ShadowStackDescriptor if some metadata is null.
   unsigned NumMeta = 0;

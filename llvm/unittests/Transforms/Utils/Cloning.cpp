@@ -64,7 +64,7 @@ TEST(CloneInstruction, OverflowBits) {
 
 TEST(CloneInstruction, Inbounds) {
   LLVMContext context;
-  Value *V = new Argument(Type::getInt32Ty(context)->getPointerTo());
+  Value *V = new Argument(Type::getInt32PtrTy(context));
   Constant *Z = Constant::getNullValue(Type::getInt32Ty(context));
   std::vector<Value *> ops;
   ops.push_back(Z);

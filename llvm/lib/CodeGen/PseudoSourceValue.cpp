@@ -44,7 +44,7 @@ static const char *const PSVNames[] = {
 // static.  For now, we can safely use the global context for the time being to
 // squeak by.
 PseudoSourceValue::PseudoSourceValue() :
-  Value(PointerType::getUnqual(Type::getInt8Ty(getGlobalContext())),
+  Value(Type::getInt8PtrTy(getGlobalContext()),
         PseudoSourceValueVal) {}
 
 void PseudoSourceValue::printCustom(raw_ostream &O) const {

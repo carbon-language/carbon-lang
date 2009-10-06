@@ -103,22 +103,22 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
         break;
       case Intrinsic::memcpy:
         M.getOrInsertFunction("memcpy",
-          PointerType::getUnqual(Type::getInt8Ty(Context)),
-                              PointerType::getUnqual(Type::getInt8Ty(Context)), 
-                              PointerType::getUnqual(Type::getInt8Ty(Context)), 
+          Type::getInt8PtrTy(Context),
+                              Type::getInt8PtrTy(Context), 
+                              Type::getInt8PtrTy(Context), 
                               TD.getIntPtrType(Context), (Type *)0);
         break;
       case Intrinsic::memmove:
         M.getOrInsertFunction("memmove",
-          PointerType::getUnqual(Type::getInt8Ty(Context)),
-                              PointerType::getUnqual(Type::getInt8Ty(Context)), 
-                              PointerType::getUnqual(Type::getInt8Ty(Context)), 
+          Type::getInt8PtrTy(Context),
+                              Type::getInt8PtrTy(Context), 
+                              Type::getInt8PtrTy(Context), 
                               TD.getIntPtrType(Context), (Type *)0);
         break;
       case Intrinsic::memset:
         M.getOrInsertFunction("memset",
-          PointerType::getUnqual(Type::getInt8Ty(Context)),
-                              PointerType::getUnqual(Type::getInt8Ty(Context)), 
+          Type::getInt8PtrTy(Context),
+                              Type::getInt8PtrTy(Context), 
                               Type::getInt32Ty(M.getContext()), 
                               TD.getIntPtrType(Context), (Type *)0);
         break;

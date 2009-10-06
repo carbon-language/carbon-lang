@@ -77,7 +77,7 @@ void RaiseAllocations::doInitialization(Module &M) {
 
     // Get the expected prototype for malloc
     const FunctionType *Malloc1Type = 
-      FunctionType::get(PointerType::getUnqual(Type::getInt8Ty(M.getContext())),
+      FunctionType::get(Type::getInt8PtrTy(M.getContext()),
                       std::vector<const Type*>(1,
                                       Type::getInt64Ty(M.getContext())), false);
 
@@ -229,7 +229,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
           Value *Source = *CS.arg_begin();
           if (!isa<PointerType>(Source->getType()))
             Source = new IntToPtrInst(Source,           
-                        PointerType::getUnqual(Type::getInt8Ty(M.getContext())), 
+                        Type::getInt8PtrTy(M.getContext()), 
                                       "FreePtrCast", I);
           new FreeInst(Source, I);
 

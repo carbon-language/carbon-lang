@@ -236,7 +236,7 @@ bool DwarfEHPrepare::LowerUnwinds() {
   if (!RewindFunction) {
     LLVMContext &Ctx = UnwindInsts[0]->getContext();
     std::vector<const Type*>
-      Params(1, PointerType::getUnqual(Type::getInt8Ty(Ctx)));
+      Params(1, Type::getInt8PtrTy(Ctx));
     FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
                                           Params, false);
     const char *RewindName = TLI->getLibcallName(RTLIB::UNWIND_RESUME);

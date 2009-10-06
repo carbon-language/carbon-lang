@@ -381,6 +381,21 @@ public:
   static const IntegerType *getInt32Ty(LLVMContext &C);
   static const IntegerType *getInt64Ty(LLVMContext &C);
 
+  //===--------------------------------------------------------------------===//
+  // Convenience methods for getting pointer types with one of the above builtin
+  // types as pointee.
+  //
+  static const PointerType *getFloatPtrTy(LLVMContext &C, unsigned AS = 0);
+  static const PointerType *getDoublePtrTy(LLVMContext &C, unsigned AS = 0);
+  static const PointerType *getX86_FP80PtrTy(LLVMContext &C, unsigned AS = 0);
+  static const PointerType *getFP128PtrTy(LLVMContext &C, unsigned AS = 0);
+  static const PointerType *getPPC_FP128PtrTy(LLVMContext &C, unsigned AS = 0);
+  static const PointerType *getInt1PtrTy(LLVMContext &C, unsigned AS = 0);
+  static const PointerType *getInt8PtrTy(LLVMContext &C, unsigned AS = 0);
+  static const PointerType *getInt16PtrTy(LLVMContext &C, unsigned AS = 0);
+  static const PointerType *getInt32PtrTy(LLVMContext &C, unsigned AS = 0);
+  static const PointerType *getInt64PtrTy(LLVMContext &C, unsigned AS = 0);
+
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Type *) { return true; }
 

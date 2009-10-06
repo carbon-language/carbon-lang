@@ -464,7 +464,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
   if (!AnyNonZeroIndices) {
     // Cast the base to i8*.
     V = InsertNoopCastOfTo(V,
-       Type::getInt8Ty(Ty->getContext())->getPointerTo(PTy->getAddressSpace()));
+       Type::getInt8PtrTy(Ty->getContext(), PTy->getAddressSpace()));
 
     // Expand the operands for a plain byte offset.
     Value *Idx = expandCodeFor(SE.getAddExpr(Ops), Ty);

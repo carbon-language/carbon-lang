@@ -102,7 +102,7 @@ namespace {
       {
         std::vector<Constant *> AUGs;
         const Type *SBP=
-              PointerType::getUnqual(Type::getInt8Ty(M.getContext()));
+              Type::getInt8PtrTy(M.getContext());
         for (std::vector<GlobalValue*>::iterator GI = Named.begin(), 
                GE = Named.end(); GI != GE; ++GI) {
           (*GI)->setLinkage(GlobalValue::ExternalLinkage);

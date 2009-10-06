@@ -704,8 +704,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   // Prototype: void *getPointerToNamedFunction(const char* Name)
   Constant *resolverFunc =
     Safe->getOrInsertFunction("getPointerToNamedFunction",
-                    PointerType::getUnqual(Type::getInt8Ty(Safe->getContext())),
-                    PointerType::getUnqual(Type::getInt8Ty(Safe->getContext())),
+                    Type::getInt8PtrTy(Safe->getContext()),
+                    Type::getInt8PtrTy(Safe->getContext()),
                        (Type *)0);
 
   // Use the function we just added to get addresses of functions we need.

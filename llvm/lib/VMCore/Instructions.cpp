@@ -498,7 +498,7 @@ static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
   // Create the call to Malloc.
   BasicBlock* BB = InsertBefore ? InsertBefore->getParent() : InsertAtEnd;
   Module* M = BB->getParent()->getParent();
-  const Type *BPTy = PointerType::getUnqual(Type::getInt8Ty(BB->getContext()));
+  const Type *BPTy = Type::getInt8PtrTy(BB->getContext());
   // prototype malloc as "void *malloc(size_t)"
   Constant *MallocF = M->getOrInsertFunction("malloc", BPTy, IntPtrTy, NULL);
   if (!cast<Function>(MallocF)->doesNotAlias(0))

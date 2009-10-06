@@ -25,9 +25,9 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
                                    GlobalValue *Array) {
   LLVMContext &Context = MainFn->getContext();
   const Type *ArgVTy = 
-    PointerType::getUnqual(PointerType::getUnqual(Type::getInt8Ty(Context)));
+    PointerType::getUnqual(Type::getInt8PtrTy(Context));
   const PointerType *UIntPtr =
-        PointerType::getUnqual(Type::getInt32Ty(Context));
+        Type::getInt32PtrTy(Context);
   Module &M = *MainFn->getParent();
   Constant *InitFn = M.getOrInsertFunction(FnName, Type::getInt32Ty(Context),
                                            Type::getInt32Ty(Context),

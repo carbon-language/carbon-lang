@@ -243,7 +243,7 @@ static void *CreateArgv(LLVMContext &C, ExecutionEngine *EE,
   char *Result = new char[(InputArgv.size()+1)*PtrSize];
 
   DEBUG(errs() << "JIT: ARGV = " << (void*)Result << "\n");
-  const Type *SBytePtr = PointerType::getUnqual(Type::getInt8Ty(C));
+  const Type *SBytePtr = Type::getInt8PtrTy(C);
 
   for (unsigned i = 0; i != InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;

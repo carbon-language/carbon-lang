@@ -88,7 +88,7 @@ bool SjLjEHPass::doInitialization(Module &M) {
   // Build the function context structure.
   // builtin_setjmp uses a five word jbuf
   const Type *VoidPtrTy =
-          PointerType::getUnqual(Type::getInt8Ty(M.getContext()));
+          Type::getInt8PtrTy(M.getContext());
   const Type *Int32Ty = Type::getInt32Ty(M.getContext());
   FunctionContextTy =
     StructType::get(M.getContext(),
@@ -378,7 +378,7 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
       // the instruction hasn't already been removed.
       if (!I->getParent()) continue;
       Value *Val = new LoadInst(ExceptionAddr, "exception", true, I);
-      Type *Ty = PointerType::getUnqual(Type::getInt8Ty(F.getContext()));
+      const Type *Ty = Type::getInt8PtrTy(F.getContext());
       Val = CastInst::Create(Instruction::IntToPtr, Val, Ty, "", I);
 
       I->replaceAllUsesWith(Val);
@@ -455,8 +455,8 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
     // Call the setjmp instrinsic. It fills in the rest of the jmpbuf
     Value *SetjmpArg =
       CastInst::Create(Instruction::BitCast, FieldPtr,
-                        Type::getInt8Ty(F.getContext())->getPointerTo(), "",
-                        EntryBB->getTerminator());
+                       Type::getInt8PtrTy(F.getContext()), "",
+                       EntryBB->getTerminator());
     Value *DispatchVal = CallInst::Create(BuiltinSetjmpFn, SetjmpArg,
                                           "dispatch",
                                           EntryBB->getTerminator());

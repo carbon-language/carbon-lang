@@ -124,7 +124,7 @@ public:
 /// CastToCStr - Return V if it is an i8*, otherwise cast it to i8*.
 Value *LibCallOptimization::CastToCStr(Value *V, IRBuilder<> &B) {
   return
-        B.CreateBitCast(V, PointerType::getUnqual(Type::getInt8Ty(*Context)), "cstr");
+        B.CreateBitCast(V, Type::getInt8PtrTy(*Context), "cstr");
 }
 
 /// EmitStrLen - Emit a call to the strlen function to the builder, for the
@@ -138,7 +138,7 @@ Value *LibCallOptimization::EmitStrLen(Value *Ptr, IRBuilder<> &B) {
 
   Constant *StrLen =M->getOrInsertFunction("strlen", AttrListPtr::get(AWI, 2),
                                            TD->getIntPtrType(*Context),
-                                    PointerType::getUnqual(Type::getInt8Ty(*Context)),
+                                    Type::getInt8PtrTy(*Context),
                                            NULL);
   CallInst *CI = B.CreateCall(StrLen, CastToCStr(Ptr, B), "strlen");
   if (const Function *F = dyn_cast<Function>(StrLen->stripPointerCasts()))
@@ -169,8 +169,8 @@ Value *LibCallOptimization::EmitMemChr(Value *Ptr, Value *Val,
   AWI = AttributeWithIndex::get(~0u, Attribute::ReadOnly | Attribute::NoUnwind);
 
   Value *MemChr = M->getOrInsertFunction("memchr", AttrListPtr::get(&AWI, 1),
-                                    PointerType::getUnqual(Type::getInt8Ty(*Context)),
-                                    PointerType::getUnqual(Type::getInt8Ty(*Context)),
+                                    Type::getInt8PtrTy(*Context),
+                                    Type::getInt8PtrTy(*Context),
                                          Type::getInt32Ty(*Context), TD->getIntPtrType(*Context),
                                          NULL);
   CallInst *CI = B.CreateCall3(MemChr, CastToCStr(Ptr, B), Val, Len, "memchr");
@@ -193,8 +193,8 @@ Value *LibCallOptimization::EmitMemCmp(Value *Ptr1, Value *Ptr2,
 
   Value *MemCmp = M->getOrInsertFunction("memcmp", AttrListPtr::get(AWI, 3),
                                          Type::getInt32Ty(*Context),
-                                    PointerType::getUnqual(Type::getInt8Ty(*Context)),
-                                    PointerType::getUnqual(Type::getInt8Ty(*Context)),
+                                    Type::getInt8PtrTy(*Context),
+                                    Type::getInt8PtrTy(*Context),
                                          TD->getIntPtrType(*Context), NULL);
   CallInst *CI = B.CreateCall3(MemCmp, CastToCStr(Ptr1, B), CastToCStr(Ptr2, B),
                                Len, "memcmp");
@@ -273,7 +273,7 @@ void LibCallOptimization::EmitPutS(Value *Str, IRBuilder<> &B) {
 
   Value *PutS = M->getOrInsertFunction("puts", AttrListPtr::get(AWI, 2),
                                        Type::getInt32Ty(*Context),
-                                    PointerType::getUnqual(Type::getInt8Ty(*Context)),
+                                    Type::getInt8PtrTy(*Context),
                                        NULL);
   CallInst *CI = B.CreateCall(PutS, CastToCStr(Str, B), "puts");
   if (const Function *F = dyn_cast<Function>(PutS->stripPointerCasts()))
@@ -313,11 +313,11 @@ void LibCallOptimization::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B) {
   Constant *F;
   if (isa<PointerType>(File->getType()))
     F = M->getOrInsertFunction("fputs", AttrListPtr::get(AWI, 3), Type::getInt32Ty(*Context),
-                               PointerType::getUnqual(Type::getInt8Ty(*Context)),
+                               Type::getInt8PtrTy(*Context),
                                File->getType(), NULL);
   else
     F = M->getOrInsertFunction("fputs", Type::getInt32Ty(*Context),
-                               PointerType::getUnqual(Type::getInt8Ty(*Context)),
+                               Type::getInt8PtrTy(*Context),
                                File->getType(), NULL);
   CallInst *CI = B.CreateCall2(F, CastToCStr(Str, B), File, "fputs");
 
@@ -338,12 +338,12 @@ void LibCallOptimization::EmitFWrite(Value *Ptr, Value *Size, Value *File,
   if (isa<PointerType>(File->getType()))
     F = M->getOrInsertFunction("fwrite", AttrListPtr::get(AWI, 3),
                                TD->getIntPtrType(*Context),
-                               PointerType::getUnqual(Type::getInt8Ty(*Context)),
+                               Type::getInt8PtrTy(*Context),
                                TD->getIntPtrType(*Context), TD->getIntPtrType(*Context),
                                File->getType(), NULL);
   else
     F = M->getOrInsertFunction("fwrite", TD->getIntPtrType(*Context),
-                               PointerType::getUnqual(Type::getInt8Ty(*Context)),
+                               Type::getInt8PtrTy(*Context),
                                TD->getIntPtrType(*Context), TD->getIntPtrType(*Context),
                                File->getType(), NULL);
   CallInst *CI = B.CreateCall4(F, CastToCStr(Ptr, B), Size,
@@ -510,7 +510,7 @@ struct StrCatOpt : public LibCallOptimization {
     // Verify the "strcat" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
-        FT->getReturnType() != PointerType::getUnqual(Type::getInt8Ty(*Context)) ||
+        FT->getReturnType() != Type::getInt8PtrTy(*Context) ||
         FT->getParamType(0) != FT->getReturnType() ||
         FT->getParamType(1) != FT->getReturnType())
       return 0;
@@ -560,7 +560,7 @@ struct StrNCatOpt : public StrCatOpt {
     // Verify the "strncat" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 ||
-        FT->getReturnType() != PointerType::getUnqual(Type::getInt8Ty(*Context)) ||
+        FT->getReturnType() != Type::getInt8PtrTy(*Context) ||
         FT->getParamType(0) != FT->getReturnType() ||
         FT->getParamType(1) != FT->getReturnType() ||
         !isa<IntegerType>(FT->getParamType(2)))
@@ -608,7 +608,7 @@ struct StrChrOpt : public LibCallOptimization {
     // Verify the "strchr" function prototype.
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
-        FT->getReturnType() != PointerType::getUnqual(Type::getInt8Ty(*Context)) ||
+        FT->getReturnType() != Type::getInt8PtrTy(*Context) ||
         FT->getParamType(0) != FT->getReturnType())
       return 0;
     
@@ -666,7 +666,7 @@ struct StrCmpOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 || FT->getReturnType() != Type::getInt32Ty(*Context) ||
         FT->getParamType(0) != FT->getParamType(1) ||
-        FT->getParamType(0) != PointerType::getUnqual(Type::getInt8Ty(*Context)))
+        FT->getParamType(0) != Type::getInt8PtrTy(*Context))
       return 0;
     
     Value *Str1P = CI->getOperand(1), *Str2P = CI->getOperand(2);
@@ -713,7 +713,7 @@ struct StrNCmpOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != Type::getInt32Ty(*Context) ||
         FT->getParamType(0) != FT->getParamType(1) ||
-        FT->getParamType(0) != PointerType::getUnqual(Type::getInt8Ty(*Context)) ||
+        FT->getParamType(0) != Type::getInt8PtrTy(*Context) ||
         !isa<IntegerType>(FT->getParamType(2)))
       return 0;
     
@@ -759,7 +759,7 @@ struct StrCpyOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 || FT->getReturnType() != FT->getParamType(0) ||
         FT->getParamType(0) != FT->getParamType(1) ||
-        FT->getParamType(0) != PointerType::getUnqual(Type::getInt8Ty(*Context)))
+        FT->getParamType(0) != Type::getInt8PtrTy(*Context))
       return 0;
     
     Value *Dst = CI->getOperand(1), *Src = CI->getOperand(2);
@@ -789,7 +789,7 @@ struct StrNCpyOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         FT->getParamType(0) != FT->getParamType(1) ||
-        FT->getParamType(0) != PointerType::getUnqual(Type::getInt8Ty(*Context)) ||
+        FT->getParamType(0) != Type::getInt8PtrTy(*Context) ||
         !isa<IntegerType>(FT->getParamType(2)))
       return 0;
 
@@ -837,7 +837,7 @@ struct StrLenOpt : public LibCallOptimization {
   virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 1 ||
-        FT->getParamType(0) != PointerType::getUnqual(Type::getInt8Ty(*Context)) ||
+        FT->getParamType(0) != Type::getInt8PtrTy(*Context) ||
         !isa<IntegerType>(FT->getReturnType()))
       return 0;
     

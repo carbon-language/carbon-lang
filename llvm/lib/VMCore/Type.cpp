@@ -358,6 +358,46 @@ const IntegerType *Type::getInt64Ty(LLVMContext &C) {
   return &C.pImpl->Int64Ty;
 }
 
+const PointerType *Type::getFloatPtrTy(LLVMContext &C, unsigned AS) {
+  return getFloatTy(C)->getPointerTo(AS);
+}
+
+const PointerType *Type::getDoublePtrTy(LLVMContext &C, unsigned AS) {
+  return getDoubleTy(C)->getPointerTo(AS);
+}
+
+const PointerType *Type::getX86_FP80PtrTy(LLVMContext &C, unsigned AS) {
+  return getX86_FP80Ty(C)->getPointerTo(AS);
+}
+
+const PointerType *Type::getFP128PtrTy(LLVMContext &C, unsigned AS) {
+  return getFP128Ty(C)->getPointerTo(AS);
+}
+
+const PointerType *Type::getPPC_FP128PtrTy(LLVMContext &C, unsigned AS) {
+  return getPPC_FP128Ty(C)->getPointerTo(AS);
+}
+
+const PointerType *Type::getInt1PtrTy(LLVMContext &C, unsigned AS) {
+  return getInt1Ty(C)->getPointerTo(AS);
+}
+
+const PointerType *Type::getInt8PtrTy(LLVMContext &C, unsigned AS) {
+  return getInt8Ty(C)->getPointerTo(AS);
+}
+
+const PointerType *Type::getInt16PtrTy(LLVMContext &C, unsigned AS) {
+  return getInt16Ty(C)->getPointerTo(AS);
+}
+
+const PointerType *Type::getInt32PtrTy(LLVMContext &C, unsigned AS) {
+  return getInt32Ty(C)->getPointerTo(AS);
+}
+
+const PointerType *Type::getInt64PtrTy(LLVMContext &C, unsigned AS) {
+  return getInt64Ty(C)->getPointerTo(AS);
+}
+
 //===----------------------------------------------------------------------===//
 //                          Derived Type Constructors
 //===----------------------------------------------------------------------===//

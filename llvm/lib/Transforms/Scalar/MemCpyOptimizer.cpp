@@ -443,7 +443,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
     StartPtr = Range.StartPtr;
   
     // Cast the start ptr to be i8* as memset requires.
-    const Type *i8Ptr = PointerType::getUnqual(Type::getInt8Ty(Context));
+    const Type *i8Ptr = Type::getInt8PtrTy(Context);
     if (StartPtr->getType() != i8Ptr)
       StartPtr = new BitCastInst(StartPtr, i8Ptr, StartPtr->getName(),
                                  InsertPt);

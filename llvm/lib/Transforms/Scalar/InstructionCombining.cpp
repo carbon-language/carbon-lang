@@ -9947,7 +9947,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       // If the call and callee calling conventions don't match, this call must
       // be unreachable, as the call is undefined.
       new StoreInst(ConstantInt::getTrue(*Context),
-                UndefValue::get(PointerType::getUnqual(Type::getInt1Ty(*Context))), 
+                UndefValue::get(Type::getInt1PtrTy(*Context)), 
                                   OldCall);
       if (!OldCall->use_empty())
         OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
@@ -9961,7 +9961,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     // undef so that we know that this code is not reachable, despite the fact
     // that we can't modify the CFG here.
     new StoreInst(ConstantInt::getTrue(*Context),
-               UndefValue::get(PointerType::getUnqual(Type::getInt1Ty(*Context))),
+               UndefValue::get(Type::getInt1PtrTy(*Context)),
                   CS.getInstruction());
 
     if (!CS.getInstruction()->use_empty())
@@ -11235,7 +11235,7 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
   if (isa<UndefValue>(Op)) {
     // Insert a new store to null because we cannot modify the CFG here.
     new StoreInst(ConstantInt::getTrue(*Context),
-           UndefValue::get(PointerType::getUnqual(Type::getInt1Ty(*Context))), &FI);
+           UndefValue::get(Type::getInt1PtrTy(*Context)), &FI);
     return EraseInstFromFunction(FI);
   }
   
