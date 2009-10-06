@@ -49,6 +49,22 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
     CurLoc = M->getContext().getSourceManager().getInstantiationLoc(Loc);
 }
 
+/// getContext - Get context info for the decl.
+llvm::DIDescriptor CGDebugInfo::getContext(const VarDecl *Decl,
+                                           llvm::DIDescriptor &CompileUnit) {
+  if (Decl->isFileVarDecl())
+    return CompileUnit;
+  if (Decl->getDeclContext()->isFunctionOrMethod()) {
+    // Find the last subprogram in region stack.
+    for (unsigned RI = RegionStack.size(), RE = 0; RI != RE; --RI) {
+      llvm::DIDescriptor R = RegionStack[RI - 1];
+      if (R.isSubprogram())
+        return R;
+    }
+  }
+  return CompileUnit;
+}
+
 /// getOrCreateCompileUnit - Get the compile unit from the cache or create a new
 /// one if necessary. This returns null for invalid source locations.
 llvm::DICompileUnit CGDebugInfo::getOrCreateCompileUnit(SourceLocation Loc) {
@@ -1327,7 +1343,8 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                            ArrayType::Normal, 0);
   }
 
-  DebugFactory.CreateGlobalVariable(Unit, Name, Name, "", Unit, LineNo,
+  DebugFactory.CreateGlobalVariable(getContext(Decl, Unit), 
+                                    Name, Name, "", Unit, LineNo,
                                     getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
                                     true/*definition*/, Var);
