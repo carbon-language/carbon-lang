@@ -560,6 +560,9 @@ public:
   /// and collect DbgScopes. Return true, if atleast one scope was found.
   bool ExtractScopeInformation(MachineFunction *MF);
 
+  /// CollectVariableInfo - Populate DbgScope entries with variables' info.
+  void CollectVariableInfo();
+
   void SetDbgScopeLabels(const MachineInstr *MI, unsigned Label);
 };
 

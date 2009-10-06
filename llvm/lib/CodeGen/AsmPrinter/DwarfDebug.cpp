@@ -1782,6 +1782,20 @@ void DwarfDebug::EndModule() {
     DebugTimer->stopTimer();
 }
 
+/// CollectVariableInfo - Populate DbgScope entries with variables' info.
+void DwarfDebug::CollectVariableInfo() {
+  if (!MMI) return;
+  MachineModuleInfo::VariableDbgInfoMapTy &VMap = MMI->getVariableDbgInfo();
+  for (MachineModuleInfo::VariableDbgInfoMapTy::iterator VI = VMap.begin(),
+         VE = VMap.end(); VI != VE; ++VI) {
+    MDNode *Var = VI->first;
+    DILocation VLoc(VI->second.first);
+    unsigned VSlot = VI->second.second;
+    DbgScope *Scope = getDbgScope(VLoc.getScope().getNode(), NULL);
+    Scope->AddVariable(new DbgVariable(DIVariable(Var), VSlot, false));
+  }
+}
+
 /// ExtractScopeInformation - Scan machine instructions in this function
 /// and collect DbgScopes. Return true, if atleast one scope was found.
 bool DwarfDebug::ExtractScopeInformation(MachineFunction *MF) {
