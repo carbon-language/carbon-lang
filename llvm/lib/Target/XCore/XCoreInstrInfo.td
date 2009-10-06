@@ -26,10 +26,6 @@ include "XCoreInstrFormats.td"
 // Feature predicates.
 //===----------------------------------------------------------------------===//
 
-// HasXS1A - This predicate is true when the target processor supports XS1A
-// instructions.
-def HasXS1A   : Predicate<"Subtarget.isXS1A()">;
-
 // HasXS1B - This predicate is true when the target processor supports XS1B
 // instructions.
 def HasXS1B : Predicate<"Subtarget.isXS1B()">;
@@ -142,9 +138,6 @@ def immU20 : PatLeaf<(imm), [{
   return (uint32_t)N->getZExtValue() < (1 << 20);
 }]>;
 
-// FIXME check subtarget. Currently we check if the immediate
-// is in the common subset of legal immediate values for both
-// XS1A and XS1B.
 def immMskBitp : PatLeaf<(imm), [{
   uint32_t value = (uint32_t)N->getZExtValue();
   if (!isMask_32(value)) {
@@ -157,9 +150,6 @@ def immMskBitp : PatLeaf<(imm), [{
           || msksize == 32;
 }]>;
 
-// FIXME check subtarget. Currently we check if the immediate
-// is in the common subset of legal immediate values for both
-// XS1A and XS1B.
 def immBitp : PatLeaf<(imm), [{
   uint32_t value = (uint32_t)N->getZExtValue();
   return (value >= 1 && value <= 8)
@@ -522,13 +512,6 @@ def LMUL_l6r : _L6R<(outs GRRegs:$dst1, GRRegs:$dst2),
                     (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3,
                       GRRegs:$src4),
                     "lmul $dst1, $dst2, $src1, $src2, $src3, $src4",
-                    []>;
-
-let Predicates = [HasXS1A] in
-def MACC_l6r : _L6R<(outs GRRegs:$dst1, GRRegs:$dst2),
-                    (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3,
-                      GRRegs:$src4),
-                    "macc $dst1, $dst2, $src1, $src2, $src3, $src4",
                     []>;
 
 // Register - U6

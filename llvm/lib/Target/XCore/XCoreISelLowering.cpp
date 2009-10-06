@@ -89,13 +89,8 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
   
   // 64bit
-  if (!Subtarget.isXS1A()) {
-    setOperationAction(ISD::ADD, MVT::i64, Custom);
-    setOperationAction(ISD::SUB, MVT::i64, Custom);
-  }
-  if (Subtarget.isXS1A()) {
-    setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
-  }
+  setOperationAction(ISD::ADD, MVT::i64, Custom);
+  setOperationAction(ISD::SUB, MVT::i64, Custom);
   setOperationAction(ISD::MULHS, MVT::i32, Expand);
   setOperationAction(ISD::MULHU, MVT::i32, Expand);
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
@@ -221,17 +216,16 @@ getGlobalAddressWrapper(SDValue GA, GlobalValue *GV, SelectionDAG &DAG)
   DebugLoc dl = GA.getDebugLoc();
   if (isa<Function>(GV)) {
     return DAG.getNode(XCoreISD::PCRelativeWrapper, dl, MVT::i32, GA);
-  } else if (!Subtarget.isXS1A()) {
-    const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
-    if (!GVar) {
-      // If GV is an alias then use the aliasee to determine constness
-      if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-        GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal());
-    }
-    bool isConst = GVar && GVar->isConstant();
-    if (isConst) {
-      return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, GA);
-    }
+  }
+  const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
+  if (!GVar) {
+    // If GV is an alias then use the aliasee to determine constness
+    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
+      GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal());
+  }
+  bool isConst = GVar && GVar->isConstant();
+  if (isConst) {
+    return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, GA);
   }
   return DAG.getNode(XCoreISD::DPRelativeWrapper, dl, MVT::i32, GA);
 }
@@ -297,21 +291,16 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
   // FIXME there isn't really debug info here
   DebugLoc dl = CP->getDebugLoc();
-  if (Subtarget.isXS1A()) {
-    llvm_unreachable("Lowering of constant pool unimplemented");
-    return SDValue();
+  EVT PtrVT = Op.getValueType();
+  SDValue Res;
+  if (CP->isMachineConstantPoolEntry()) {
+    Res = DAG.getTargetConstantPool(CP->getMachineCPVal(), PtrVT,
+                                    CP->getAlignment());
   } else {
-    EVT PtrVT = Op.getValueType();
-    SDValue Res;
-    if (CP->isMachineConstantPoolEntry()) {
-      Res = DAG.getTargetConstantPool(CP->getMachineCPVal(), PtrVT,
-                                      CP->getAlignment());
-    } else {
-      Res = DAG.getTargetConstantPool(CP->getConstVal(), PtrVT,
-                                      CP->getAlignment());
-    }
-    return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, Res);
+    Res = DAG.getTargetConstantPool(CP->getConstVal(), PtrVT,
+                                    CP->getAlignment());
   }
+  return DAG.getNode(XCoreISD::CPRelativeWrapper, dl, MVT::i32, Res);
 }
 
 SDValue XCoreTargetLowering::
@@ -524,7 +513,6 @@ ExpandADDSUB(SDNode *N, SelectionDAG &DAG)
   assert(N->getValueType(0) == MVT::i64 &&
          (N->getOpcode() == ISD::ADD || N->getOpcode() == ISD::SUB) &&
         "Unknown operand to lower!");
-  assert(!Subtarget.isXS1A() && "Cannot custom lower ADD/SUB on xs1a");
   DebugLoc dl = N->getDebugLoc();
   
   // Extract components

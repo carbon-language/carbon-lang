@@ -52,20 +52,13 @@ void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
   // and can be placed in the standard data / bss sections.
   TLSDataSection = DataSection;
   TLSBSSSection = BSSSection;
-  
-  if (TM.getSubtarget<XCoreSubtarget>().isXS1A())
-    ReadOnlySection =   // FIXME: Why is this a writable section for XS1A?
-      MCSectionXCore::Create(".dp.rodata", MCSectionELF::SHT_PROGBITS,
-                             MCSectionELF::SHF_ALLOC | MCSectionELF::SHF_WRITE |
-                             MCSectionXCore::SHF_DP_SECTION,
-                             SectionKind::getDataRel(), false, getContext());
-  else
-    ReadOnlySection = 
-      MCSectionXCore::Create(".cp.rodata", MCSectionELF::SHT_PROGBITS,
-                             MCSectionELF::SHF_ALLOC |
-                             MCSectionXCore::SHF_CP_SECTION,
-                             SectionKind::getReadOnlyWithRel(), false,
-                             getContext());
+
+  ReadOnlySection = 
+    MCSectionXCore::Create(".cp.rodata", MCSectionELF::SHT_PROGBITS,
+                           MCSectionELF::SHF_ALLOC |
+                           MCSectionXCore::SHF_CP_SECTION,
+                           SectionKind::getReadOnlyWithRel(), false,
+                           getContext());
 
   // Dynamic linking is not supported. Data with relocations is placed in the
   // same section as data without relocations.
