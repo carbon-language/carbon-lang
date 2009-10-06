@@ -653,13 +653,15 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 void X86AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
 
-  processDebugLoc(MI);
+  processDebugLoc(MI, true);
   
   printInstructionThroughMCStreamer(MI);
   
   if (VerboseAsm && !MI->getDebugLoc().isUnknown())
     EmitComments(*MI);
   O << '\n';
+
+  processDebugLoc(MI, false);
 }
 
 void X86AsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {

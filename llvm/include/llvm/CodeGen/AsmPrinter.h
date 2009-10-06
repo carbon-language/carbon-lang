@@ -141,7 +141,7 @@ namespace llvm {
     mutable const Function *LastFn;
     mutable unsigned Counter;
     
-    // Private state for processDebugLock()
+    // Private state for processDebugLoc()
     mutable DebugLocTuple PrevDLT;
 
   protected:
@@ -357,8 +357,8 @@ namespace llvm {
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
 
     /// processDebugLoc - Processes the debug information of each machine
-    /// instruction's DebugLoc.
-    void processDebugLoc(const MachineInstr *MI);
+    /// instruction's DebugLoc. 
+    void processDebugLoc(const MachineInstr *MI, bool BeforePrintingInsn);
     
     /// printInlineAsm - This method formats and prints the specified machine
     /// instruction that is an inline asm.

@@ -177,13 +177,13 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
          II != E; ++II) {
       // Print the assembly for the instruction.
       ++EmittedInsts;
-      processDebugLoc(II);
-      
+      processDebugLoc(II, true);
       printInstruction(II);
       
       if (VerboseAsm && !II->getDebugLoc().isUnknown())
         EmitComments(*II);
       O << '\n';
+      processDebugLoc(II, false);
     }
   }
 

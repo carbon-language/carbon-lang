@@ -124,13 +124,13 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
-      processDebugLoc(II);
+      processDebugLoc(II, true);
       printInstruction(II);
       
       if (VerboseAsm && !II->getDebugLoc().isUnknown())
         EmitComments(*II);
       O << '\n';
-      
+      processDebugLoc(II, false);
       ++EmittedInsts;
     }
   }

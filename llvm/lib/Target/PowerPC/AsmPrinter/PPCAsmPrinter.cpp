@@ -545,7 +545,7 @@ void PPCAsmPrinter::printPredicateOperand(const MachineInstr *MI, unsigned OpNo,
 void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
   
-  processDebugLoc(MI);
+  processDebugLoc(MI, true);
 
   // Check for slwi/srwi mnemonics.
   if (MI->getOpcode() == PPC::RLWINM) {
@@ -595,6 +595,8 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   if (VerboseAsm && !MI->getDebugLoc().isUnknown())
     EmitComments(*MI);
   O << '\n';
+
+  processDebugLoc(MI, false);
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()

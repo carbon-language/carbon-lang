@@ -346,7 +346,7 @@ template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI) {
   DEBUG(errs() << "JIT: " << (void*)MCE.getCurrentPCValue() << ":\t" << MI);
 
-  MCE.processDebugLoc(MI.getDebugLoc());
+  MCE.processDebugLoc(MI.getDebugLoc(), true);
 
   NumEmitted++;  // Keep track of the # of mi's emitted
   switch (MI.getDesc().TSFlags & ARMII::FormMask) {
@@ -409,6 +409,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI) {
     emitMiscInstruction(MI);
     break;
   }
+  MCE.processDebugLoc(MI.getDebugLoc(), false);
 }
 
 template<class CodeEmitter>

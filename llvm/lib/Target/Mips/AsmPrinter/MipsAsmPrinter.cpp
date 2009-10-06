@@ -278,7 +278,7 @@ bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
-      processDebugLoc(II);
+      processDebugLoc(II, true);
 
       // Print the assembly for the instruction.
       printInstruction(II);
@@ -286,7 +286,8 @@ bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       if (VerboseAsm && !II->getDebugLoc().isUnknown())
         EmitComments(*II);
       O << '\n';
-      
+
+      processDebugLoc(II, false);      
       ++EmittedInsts;
     }
 
