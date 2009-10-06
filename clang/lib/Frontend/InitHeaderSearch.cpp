@@ -98,6 +98,12 @@ void InitHeaderSearch::AddEnvVarPaths(const char *Name) {
     AddPath(at, Angled, false, true, false);
 }
 
+void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(std::string base,
+						   std::string arch) {
+    AddPath(base, System, true, false, false);
+    AddPath(base + "/" + arch, System, true, false, false);
+    AddPath(base + "/backward", System, true, false, false);
+}
 
 void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
   // FIXME: temporary hack: hard-coded paths.
@@ -119,96 +125,56 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
 #else
 
   if (Lang.CPlusPlus) {
-    AddPath("/usr/include/c++/4.2.1", System, true, false, false);
-    AddPath("/usr/include/c++/4.2.1/i686-apple-darwin10", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.2.1/backward", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
+				"i686-apple-darwin10");
 
-    AddPath("/usr/include/c++/4.0.0", System, true, false, false);
-    AddPath("/usr/include/c++/4.0.0/i686-apple-darwin8", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.0.0/backward", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.0.0", "i686-apple-darwin8");
 
     // Ubuntu 7.10 - Gutsy Gibbon
-    AddPath("/usr/include/c++/4.1.3", System, true, false, false);
-    AddPath("/usr/include/c++/4.1.3/i486-linux-gnu", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.1.3/backward", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.3", "i486-linux-gnu");
 
     // Ubuntu 9.04
-    AddPath("/usr/include/c++/4.3.3", System, true, false, false);
-    AddPath("/usr/include/c++/4.3.3/x86_64-linux-gnu/", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.3.3/backward", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.3", "x86_64-linux-gnu");
 
     // Fedora 8
-    AddPath("/usr/include/c++/4.1.2", System, true, false, false);
-    AddPath("/usr/include/c++/4.1.2/i386-redhat-linux", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.1.2/backward", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.2", "i386-redhat-linux");
 
     // Fedora 9
-    AddPath("/usr/include/c++/4.3.0", System, true, false, false);
-    AddPath("/usr/include/c++/4.3.0/i386-redhat-linux", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.3.0/backward", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.0", "i386-redhat-linux");
 
     // Fedora 10
-    AddPath("/usr/include/c++/4.3.2", System, true, false, false);
-    AddPath("/usr/include/c++/4.3.2/i386-redhat-linux", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.3.2/backward", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.2", "i386-redhat-linux");
 
     // openSUSE 11.1
-    AddPath("/usr/include/c++/4.3", System, true, false, false);
-    AddPath("/usr/include/c++/4.3/i586-suse-linux", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.3/x86_64-suse-linux", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.3/backward", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3", "i586-suse-linux");
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3", "x86_64-suse-linux");
 
     // openSUSE 11.2
-    AddPath("/usr/include/c++/4.4", System, true, false, false);
-    AddPath("/usr/include/c++/4.4/i586-suse-linux", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.4/x86_64-suse-linux", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.4/backward", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4", "i586-suse-linux");
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4", "x86_64-suse-linux");
 
     // Arch Linux 2008-06-24
-    AddPath("/usr/include/c++/4.3.1", System, true, false, false);
-    AddPath("/usr/include/c++/4.3.1/i686-pc-linux-gnu", System, true, false,
-        false);
-    AddPath("/usr/include/c++/4.3.1/backward", System, true, false, false);
-    AddPath("/usr/include/c++/4.3.1/x86_64-unknown-linux-gnu", System, true,
-        false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.1", "i686-pc-linux-gnu");
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.1",
+				"x86_64-unknown-linux-gnu");
 
     // Gentoo x86 2009.0 stable
-    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.3.2/include/g++-v4", System,
-            true, false, false);
-    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.3.2/include/g++-v4/"
-            "i686-pc-linux-gnu", System, true, false, false);
-    AddPath(" /usr/lib/gcc/i686-pc-linux-gnu/4.3.2/include/g++-v4/backward",
-            System, true, false, false);
+    AddGnuCPlusPlusIncludePaths(
+       "/usr/lib/gcc/i686-pc-linux-gnu/4.3.2/include/g++-v4",
+       "i686-pc-linux-gnu");
 
     // Gentoo x86 2008.0 stable
-    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include/g++-v4", System,
-            true, false, false);
-    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include/g++-v4/"
-            "i686-pc-linux-gnu", System, true, false, false);
-    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include/g++-v4/backward",
-            System, true, false, false);
+    AddGnuCPlusPlusIncludePaths(
+       "/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include/g++-v4",
+       "i686-pc-linux-gnu");
 
     // Ubuntu 8.10
-    AddPath("/usr/include/c++/4.3/i486-linux-gnu", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3", "i486-pc-linux-gnu");
 
     // Gentoo amd64 stable
-    AddPath("/usr/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/g++-v4", System,
-            true, false, false);
-    AddPath("/usr/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/g++-v4/"
-            "i686-pc-linux-gnu", System, true, false, false);
-    AddPath("/usr/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/g++-v4/backward",
-            System, true, false, false);
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/g++-v4",
+	"i686-pc-linux-gnu");
 
     // DragonFly
     AddPath("/usr/include/c++/4.1", System, true, false, false);
@@ -217,8 +183,8 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang) {
     AddPath("/usr/include/c++/4.2", System, true, false, false);
 
     // AuroraUX
-    AddPath("/opt/gcc4/include/c++/4.2.4", System, true, false, false);
-    AddPath("/opt/gcc4/include/c++/4.2.4/i386-pc-solaris2.11", System, true, false, false);
+    AddGnuCPlusPlusIncludePaths("/Opt/gcc4/include/c++/4.2.4",
+				"i386-pc-solaris2.11");
   }
 
   AddPath("/usr/local/include", System, false, false, false);
@@ -366,4 +332,3 @@ void InitHeaderSearch::Realize() {
     fprintf(stderr, "End of search list.\n");
   }
 }
-

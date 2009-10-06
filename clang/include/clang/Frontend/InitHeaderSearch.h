@@ -56,6 +56,10 @@ public:
   ///  header search list.
   void AddEnvVarPaths(const char *Name);
 
+  /// AddGnuCPlusPlusIncludePaths - Add the necessary paths to suport a gnu
+  ///  libstdc++.
+  void AddGnuCPlusPlusIncludePaths(std::string base, std::string arch);
+
   /// AddDefaultEnvVarPaths - Adds list of paths from default environment
   ///  variables such as CPATH.
   void AddDefaultEnvVarPaths(const LangOptions &Lang);
