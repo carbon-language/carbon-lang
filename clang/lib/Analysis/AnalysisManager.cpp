@@ -27,9 +27,9 @@ void AnalysisManager::DisplayFunction(Decl *D) {
   if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
     const NamedDecl *ND = cast<NamedDecl>(D);
     SourceManager &SM = getASTContext().getSourceManager();
-    llvm::errs() << "ANALYZE: "
-                 << SM.getPresumedLoc(ND->getLocation()).getFilename()
-                 << ' ' << ND->getNameAsString() << '\n';
+    (llvm::errs() << "ANALYZE: "
+                  << SM.getPresumedLoc(ND->getLocation()).getFilename()
+                  << ' ' << ND->getNameAsString() << '\n').flush();
   }
 }
 
