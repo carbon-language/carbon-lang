@@ -119,3 +119,9 @@ unsigned DwarfWriter::RecordInlinedFnEnd(DISubprogram SP) {
   return DD->RecordInlinedFnEnd(SP);
 }
 
+void DwarfWriter::SetDbgScopeBeginLabels(const MachineInstr *MI, unsigned L) {
+  DD->SetDbgScopeEndLabels(MI, L);
+}
+void DwarfWriter::SetDbgScopeEndLabels(const MachineInstr *MI, unsigned L) {
+  DD->SetDbgScopeBeginLabels(MI, L);
+}

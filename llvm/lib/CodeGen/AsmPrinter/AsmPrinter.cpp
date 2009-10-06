@@ -1363,12 +1363,18 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
       DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);
       if (BeforePrintingInsn) {
         if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT) {
-          printLabel(DW->RecordSourceLine(CurDLT.Line, CurDLT.Col, 
-                                          CurDLT.CompileUnit));
-          O << '\n';
+	  unsigned L = DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,
+	  				    CurDLT.CompileUnit);
+          printLabel(L);
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+          DW->SetDbgScopeBeginLabels(MI, L);
+#endif
+        } else {
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+          DW->SetDbgScopeEndLabels(MI, 0);
+#endif
         }
-      }
-
+      } 
       PrevDLT = CurDLT;
     }
   }

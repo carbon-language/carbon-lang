@@ -1322,7 +1322,6 @@ DbgScope *DwarfDebug::getDbgScope(MDNode *N, const MachineInstr *MI) {
     Parent->AddScope(Slot);
   else
     // First function is top level function.
-    // FIXME - Dpatel - What is FunctionDbgScope ?
     if (!FunctionDbgScope)
       FunctionDbgScope = Slot;
 
@@ -1900,6 +1899,12 @@ void DwarfDebug::BeginFunction(MachineFunction *MF) {
 
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
+
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+  if (!ExtractScopeInformation(MF))
+    return;
+  CollectVariableInfo();
+#endif
 
   // Begin accumulating function debug information.
   MMI->BeginFunction(MF);

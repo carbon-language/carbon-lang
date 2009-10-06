@@ -425,7 +425,9 @@ bool FastISel::SelectCall(User *I) {
       if (AllocaLocation)
         MMI->setVariableDbgInfo(DI->getVariable(), AllocaLocation, FI);
     }
+#ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
     DW->RecordVariable(DI->getVariable(), FI);
+#endif
     return true;
   }
   case Intrinsic::eh_exception: {

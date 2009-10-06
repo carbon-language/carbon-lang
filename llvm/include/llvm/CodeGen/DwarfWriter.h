@@ -110,8 +110,9 @@ public:
 
   /// RecordInlinedFnEnd - Indicate the end of inlined subroutine.
   unsigned RecordInlinedFnEnd(DISubprogram SP);
+  void SetDbgScopeBeginLabels(const MachineInstr *MI, unsigned L);
+  void SetDbgScopeEndLabels(const MachineInstr *MI, unsigned L);
 };
-
 
 } // end llvm namespace
 
