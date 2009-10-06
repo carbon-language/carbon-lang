@@ -99,9 +99,8 @@ TEST(JIT, GlobalInFunction) {
 
   // Get the pointer to the native code to force it to JIT the function and
   // allocate space for the global.
-  void (*F1Ptr)();
-  // Hack to avoid ISO C++ warning about casting function pointers.
-  *(void**)(void*)&F1Ptr = JIT->getPointerToFunction(F1);
+  void (*F1Ptr)() =
+      reinterpret_cast<void(*)()>((intptr_t)JIT->getPointerToFunction(F1));
 
   // Since F1 was codegen'd, a pointer to G should be available.
   int32_t *GPtr = (int32_t*)JIT->getPointerToGlobalIfAvailable(G);
@@ -115,9 +114,8 @@ TEST(JIT, GlobalInFunction) {
   // Make a second function identical to the first, referring to the same
   // global.
   Function *F2 = makeReturnGlobal("F2", G, M);
-  // Hack to avoid ISO C++ warning about casting function pointers.
-  void (*F2Ptr)();
-  *(void**)(void*)&F2Ptr = JIT->getPointerToFunction(F2);
+  void (*F2Ptr)() =
+      reinterpret_cast<void(*)()>((intptr_t)JIT->getPointerToFunction(F2));
 
   // F2() should increment G.
   F2Ptr();
