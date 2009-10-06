@@ -1,15 +1,5 @@
 ; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
-%struct.__builtin_neon_v8qi2 = type { <8 x i8>,  <8 x i8> }
-%struct.__builtin_neon_v4hi2 = type { <4 x i16>, <4 x i16> }
-%struct.__builtin_neon_v2si2 = type { <2 x i32>, <2 x i32> }
-%struct.__builtin_neon_v2sf2 = type { <2 x float>, <2 x float> }
-
-%struct.__builtin_neon_v16qi2 = type { <16 x i8>, <16 x i8> }
-%struct.__builtin_neon_v8hi2  = type { <8 x i16>, <8 x i16> }
-%struct.__builtin_neon_v4si2  = type { <4 x i32>, <4 x i32> }
-%struct.__builtin_neon_v4sf2  = type { <4 x float>, <4 x float> }
-
 define <8 x i8> @vtrni8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vtrni8:
 ;CHECK: vtrn.8
