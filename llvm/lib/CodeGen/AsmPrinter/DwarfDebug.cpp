@@ -1796,6 +1796,30 @@ void DwarfDebug::CollectVariableInfo() {
   }
 }
 
+/// SetDbgScopeBeginLabels - Update DbgScope begin labels for the scopes that
+/// start with this machine instruction.
+void DwarfDebug::SetDbgScopeBeginLabels(const MachineInstr *MI, unsigned Label) {
+  InsnToDbgScopeMapTy::iterator I = DbgScopeBeginMap.find(MI);
+  if (I == DbgScopeBeginMap.end())
+    return;
+  SmallVector<DbgScope *, 2> &SD = I->second;
+  for (SmallVector<DbgScope *, 2>::iterator SDI = SD.begin(), SDE = SD.end();
+       SDI != SDE; ++SDI) 
+    (*SDI)->setStartLabelID(Label);
+}
+
+/// SetDbgScopeEndLabels - Update DbgScope end labels for the scopes that
+/// end with this machine instruction.
+void DwarfDebug::SetDbgScopeEndLabels(const MachineInstr *MI, unsigned Label) {
+  InsnToDbgScopeMapTy::iterator I = DbgScopeEndMap.find(MI);
+  if (I == DbgScopeBeginMap.end())
+    return;
+  SmallVector<DbgScope *, 2> &SD = I->second;
+  for (SmallVector<DbgScope *, 2>::iterator SDI = SD.begin(), SDE = SD.end();
+       SDI != SDE; ++SDI) 
+    (*SDI)->setEndLabelID(Label);
+}
+
 /// ExtractScopeInformation - Scan machine instructions in this function
 /// and collect DbgScopes. Return true, if atleast one scope was found.
 bool DwarfDebug::ExtractScopeInformation(MachineFunction *MF) {

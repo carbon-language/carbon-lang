@@ -563,6 +563,13 @@ public:
   /// CollectVariableInfo - Populate DbgScope entries with variables' info.
   void CollectVariableInfo();
 
+  /// SetDbgScopeBeginLabels - Update DbgScope begin labels for the scopes that
+  /// start with this machine instruction.
+  void SetDbgScopeBeginLabels(const MachineInstr *MI, unsigned Label);
+
+  /// SetDbgScopeEndLabels - Update DbgScope end labels for the scopes that
+  /// end with this machine instruction.
+  void SetDbgScopeEndLabels(const MachineInstr *MI, unsigned Label);
 };
 
 } // End of namespace llvm
