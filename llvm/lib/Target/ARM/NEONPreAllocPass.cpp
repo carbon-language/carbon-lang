@@ -163,9 +163,8 @@ bool NEONPreAllocPass::PreAllocNEONRegisters(MachineBasicBlock &MBB) {
 
       if (MO.isUse()) {
         // Insert a copy from VirtReg.
-        AddDefaultPred(BuildMI(MBB, MBBI, MI->getDebugLoc(),
-                               TII->get(ARM::FCPYD), MO.getReg())
-                       .addReg(VirtReg));
+        TII->copyRegToReg(MBB, MBBI, MO.getReg(), VirtReg,
+                          ARM::DPRRegisterClass, ARM::DPRRegisterClass);
         if (MO.isKill()) {
           MachineInstr *CopyMI = prior(MBBI);
           CopyMI->findRegisterUseOperand(VirtReg)->setIsKill();
@@ -173,9 +172,8 @@ bool NEONPreAllocPass::PreAllocNEONRegisters(MachineBasicBlock &MBB) {
         MO.setIsKill();
       } else if (MO.isDef() && !MO.isDead()) {
         // Add a copy to VirtReg.
-        AddDefaultPred(BuildMI(MBB, NextI, MI->getDebugLoc(),
-                               TII->get(ARM::FCPYD), VirtReg)
-                       .addReg(MO.getReg()));
+        TII->copyRegToReg(MBB, NextI, VirtReg, MO.getReg(),
+                          ARM::DPRRegisterClass, ARM::DPRRegisterClass);
       }
     }
   }
