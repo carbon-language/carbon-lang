@@ -233,11 +233,30 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD,
   // FIXME: Support CXXTryStmt here, too.
   if (const CompoundStmt *S = FD->getCompoundBody()) {
     StartFunction(GD, FD->getResultType(), Fn, Args, S->getLBracLoc());
+    const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD);
+    llvm::BasicBlock *DtorEpilogue = 0;
+    if (DD) {
+      DtorEpilogue = createBasicBlock("dtor.epilogue");
+    
+      PushCleanupBlock(DtorEpilogue);
+    }
+    
     if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD))
       EmitCtorPrologue(CD, GD.getCtorType());
     EmitStmt(S);
-    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD))
+      
+    if (DD) {
+      CleanupBlockInfo Info = PopCleanupBlock();
+
+      assert(Info.CleanupBlock == DtorEpilogue && "Block mismatch!");
+      EmitBlock(DtorEpilogue);
       EmitDtorEpilogue(DD, GD.getDtorType());
+      
+      if (Info.SwitchBlock)
+        EmitBlock(Info.SwitchBlock);
+      if (Info.EndBlock)
+        EmitBlock(Info.EndBlock);
+    }
     FinishFunction(S->getRBracLoc());
   } else if (FD->isImplicit()) {
     const CXXRecordDecl *ClassDecl =
