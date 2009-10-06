@@ -891,7 +891,13 @@ public:
            ++mi)
         if (mi->isVirtual()) {
           const CXXMethodDecl *MD = *mi;
-          llvm::Constant *m = wrap(CGM.GetAddrOfFunction(MD));
+          const FunctionProtoType *FPT = 
+            MD->getType()->getAs<FunctionProtoType>();
+          const llvm::Type *Ty =
+            CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
+                                           FPT->isVariadic());
+          
+          llvm::Constant *m = wrap(CGM.GetAddrOfFunction(MD, Ty));
           OverrideMethod(MD, m, MorallyVirtual, Offset);
         }
     }
@@ -901,9 +907,15 @@ public:
     llvm::Constant *m = 0;
     if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
       m = wrap(CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete));
-    else
-      m = wrap(CGM.GetAddrOfFunction(MD));
-
+    else {
+      const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+      const llvm::Type *Ty =
+        CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
+                                       FPT->isVariadic());
+      
+      m = wrap(CGM.GetAddrOfFunction(MD, Ty));
+    }
+    
     // If we can find a previously allocated slot for this, reuse it.
     if (OverrideMethod(MD, m, MorallyVirtual, Offset))
       return;
