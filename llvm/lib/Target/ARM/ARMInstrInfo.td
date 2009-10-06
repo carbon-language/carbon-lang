@@ -384,7 +384,7 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
 }
 
 /// AI1_bin_s_irs - Similar to AsI1_bin_irs except it sets the 's' bit so the
-/// instruction modifies the CSPR register.
+/// instruction modifies the CPSR register.
 let Defs = [CPSR] in {
 multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                          bit Commutable = 0> {
