@@ -1989,24 +1989,6 @@ void DwarfDebug::EndFunction(MachineFunction *MF) {
 /// RecordSourceLine - Records location information and associates it with a
 /// label. Returns a unique label ID used to generate a label and provide
 /// correspondence to the source line list.
-unsigned DwarfDebug::RecordSourceLine(Value *V, unsigned Line, unsigned Col) {
-  if (TimePassesIsEnabled)
-    DebugTimer->startTimer();
-
-  CompileUnit *Unit = CompileUnitMap[V];
-  assert(Unit && "Unable to find CompileUnit");
-  unsigned ID = MMI->NextLabelID();
-  Lines.push_back(SrcLineInfo(Line, Col, Unit->getID(), ID));
-
-  if (TimePassesIsEnabled)
-    DebugTimer->stopTimer();
-
-  return ID;
-}
-
-/// RecordSourceLine - Records location information and associates it with a
-/// label. Returns a unique label ID used to generate a label and provide
-/// correspondence to the source line list.
 unsigned DwarfDebug::RecordSourceLine(unsigned Line, unsigned Col, 
                                       MDNode *S) {
   if (!MMI)
