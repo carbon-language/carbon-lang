@@ -782,8 +782,8 @@ public:
       return i->second;
     // FIXME: temporal botch, is this data here, by the time we need it?
 
-    // FIXME: Locate the containing virtual base first.
-    return 42;
+    assert(false && "FIXME: Locate the containing virtual base first");
+    return 0;
   }
 
   bool OverrideMethod(const CXXMethodDecl *MD, llvm::Constant *m,
@@ -888,18 +888,26 @@ public:
       const CXXRecordDecl *RD = i->first;
       int64_t Offset = i->second;
       for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-           ++mi)
-        if (mi->isVirtual()) {
-          const CXXMethodDecl *MD = *mi;
+           ++mi) {
+        if (!mi->isVirtual())
+          continue;
+
+        const CXXMethodDecl *MD = *mi;
+        llvm::Constant *m = 0;
+//        if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
+//          m = wrap(CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete));
+//        else {
           const FunctionProtoType *FPT = 
             MD->getType()->getAs<FunctionProtoType>();
           const llvm::Type *Ty =
             CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
                                            FPT->isVariadic());
           
-          llvm::Constant *m = wrap(CGM.GetAddrOfFunction(MD, Ty));
-          OverrideMethod(MD, m, MorallyVirtual, Offset);
-        }
+          m = wrap(CGM.GetAddrOfFunction(MD, Ty));
+//        }
+
+        OverrideMethod(MD, m, MorallyVirtual, Offset);
+      }
     }
   }
 
@@ -1320,6 +1328,36 @@ llvm::Constant *CodeGenModule::BuildCovariantThunk(const CXXMethodDecl *MD,
   // Fn = Builder.CreateBitCast(Fn, Ptr8Ty);
   llvm::Constant *m = llvm::ConstantExpr::getBitCast(Fn, Ptr8Ty);
   return m;
+}
+
+llvm::Value *
+CodeGenFunction::GetVirtualCXXBaseClassOffset(llvm::Value *This,
+                                              const CXXRecordDecl *ClassDecl,
+                                           const CXXRecordDecl *BaseClassDecl) {
+  // FIXME: move to Context
+  if (vtableinfo == 0)
+    vtableinfo = new VtableInfo(CGM);
+  
+  const llvm::Type *Int8PtrTy = 
+    llvm::Type::getInt8Ty(VMContext)->getPointerTo();
+
+  llvm::Value *VTablePtr = Builder.CreateBitCast(This, 
+                                                 Int8PtrTy->getPointerTo());
+  VTablePtr = Builder.CreateLoad(VTablePtr, "vtable");
+
+  llvm::Value *VBaseOffsetPtr = 
+    Builder.CreateConstGEP1_64(VTablePtr, 
+                               vtableinfo->VBlookup(ClassDecl, BaseClassDecl),
+                               "vbase.offset.ptr");
+  const llvm::Type *PtrDiffTy = 
+    ConvertType(getContext().getPointerDiffType());
+  
+  VBaseOffsetPtr = Builder.CreateBitCast(VBaseOffsetPtr, 
+                                         PtrDiffTy->getPointerTo());
+                                         
+  llvm::Value *VBaseOffset = Builder.CreateLoad(VBaseOffsetPtr, "vbase.offset");
+  
+  return VBaseOffset;
 }
 
 llvm::Value *

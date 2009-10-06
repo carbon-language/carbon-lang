@@ -589,6 +589,11 @@ public:
                                         const CXXRecordDecl *BaseClassDecl,
                                         bool NullCheckValue);
   
+  llvm::Value *
+  GetVirtualCXXBaseClassOffset(llvm::Value *This,
+                               const CXXRecordDecl *ClassDecl,
+                               const CXXRecordDecl *BaseClassDecl);
+    
   void EmitClassAggrMemberwiseCopy(llvm::Value *DestValue,
                                    llvm::Value *SrcValue,
                                    const ArrayType *Array,
