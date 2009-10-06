@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-pc-linux-gnu -relocation-model=pic | FileCheck %s -check-prefix=LINUX
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu -relocation-model=pic -asm-verbose=false | FileCheck %s -check-prefix=LINUX
 
 @ptr = external global i32* 
 @dst = external global i32 
@@ -12,7 +12,6 @@ entry:
     ret void
     
 ; LINUX:    test1:
-; LINUX: .LBB1_0:
 ; LINUX:	call	.L1$pb
 ; LINUX-NEXT: .L1$pb:
 ; LINUX-NEXT:	popl

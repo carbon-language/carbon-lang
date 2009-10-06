@@ -98,7 +98,6 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     // Print a label for the basic block.
     if (I != MF.begin()) {
       EmitBasicBlockStart(I);
-      O << '\n';
     }
     
     // Print a basic block.

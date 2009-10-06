@@ -7,7 +7,7 @@ define i32 @test(i32 %argc, i8** %argv) nounwind {
 entry:
 ; CHECK: cmpl	$2
 ; CHECK-NEXT: je
-; CHECK-NEXT: LBB1_1
+; CHECK-NEXT: %entry
 
 	switch i32 %argc, label %UnifiedReturnBlock [
 		 i32 1, label %bb

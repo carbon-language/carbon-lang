@@ -1623,8 +1623,15 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
   if (unsigned Align = MBB->getAlignment())
     EmitAlignment(Log2_32(Align));
 
-  GetMBBSymbol(MBB->getNumber())->print(O, MAI);
-  O << ':';
+  if (MBB->pred_empty() || MBB->isOnlyReachableByFallthrough()) {
+    if (VerboseAsm)
+      O << MAI->getCommentString() << " BB#" << MBB->getNumber() << ':';
+  } else {
+    GetMBBSymbol(MBB->getNumber())->print(O, MAI);
+    O << ':';
+    if (!VerboseAsm)
+      O << '\n';
+  }
   
   if (VerboseAsm) {
     if (const BasicBlock *BB = MBB->getBasicBlock())
@@ -1635,6 +1642,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
       }
 
     EmitComments(*MBB);
+    O << '\n';
   }
 }
 

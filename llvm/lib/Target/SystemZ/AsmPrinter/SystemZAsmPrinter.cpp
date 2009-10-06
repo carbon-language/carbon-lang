@@ -129,13 +129,7 @@ bool SystemZAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    if (!VerboseAsm && (I->pred_empty() || I->isOnlyReachableByFallthrough())) {
-      // This is an entry block or a block that's only reachable via a
-      // fallthrough edge. In non-VerboseAsm mode, don't print the label.
-    } else {
-      EmitBasicBlockStart(I);
-      O << '\n';
-    }
+    EmitBasicBlockStart(I);
 
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II)

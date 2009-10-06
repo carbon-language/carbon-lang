@@ -285,7 +285,6 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     // Print a label for the basic block.
     if (I != MF.begin()) {
       EmitBasicBlockStart(I);
-      O << '\n';
     }
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
