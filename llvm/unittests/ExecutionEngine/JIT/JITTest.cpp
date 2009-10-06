@@ -22,6 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/TypeBuilder.h"
 #include "llvm/Target/TargetSelect.h"
 #include "llvm/Type.h"
 
@@ -43,6 +44,21 @@ Function *makeReturnGlobal(std::string Name, GlobalVariable *G, Module *M) {
   builder.CreateRet(Add);
   return F;
 }
+
+class JITTest : public testing::Test {
+ protected:
+  virtual void SetUp() {
+    M = new Module("<main>", Context);
+    std::string Error;
+    TheJIT.reset(EngineBuilder(M).setEngineKind(EngineKind::JIT)
+                 .setErrorStr(&Error).create());
+    ASSERT_TRUE(TheJIT.get() != NULL) << Error;
+  }
+
+  LLVMContext Context;
+  Module *M;  // Owned by ExecutionEngine.
+  OwningPtr<ExecutionEngine> TheJIT;
+};
 
 // Regression test for a bug.  The JIT used to allocate globals inside the same
 // memory block used for the function, and when the function code was freed,
@@ -113,6 +129,43 @@ TEST(JIT, GlobalInFunction) {
   // F2() should *still* increment G.
   F2Ptr();
   EXPECT_EQ(3, *GPtr);
+}
+
+int PlusOne(int arg) {
+  return arg + 1;
+}
+
+TEST_F(JITTest, FarCallToKnownFunction) {
+  // x86-64 can only make direct calls to functions within 32 bits of
+  // the current PC.  To call anything farther away, we have to load
+  // the address into a register and call through the register.  The
+  // current JIT does this by allocating a stub for any far call.
+  // There was a bug in which the JIT tried to emit a direct call when
+  // the target was already in the JIT's global mappings and lazy
+  // compilation was disabled.
+
+  Function *KnownFunction = Function::Create(
+      TypeBuilder<int(int), false>::get(Context),
+      GlobalValue::ExternalLinkage, "known", M);
+  TheJIT->addGlobalMapping(KnownFunction, (void*)(intptr_t)PlusOne);
+
+  // int test() { return known(7); }
+  Function *TestFunction = Function::Create(
+      TypeBuilder<int(), false>::get(Context),
+      GlobalValue::ExternalLinkage, "test", M);
+  BasicBlock *Entry = BasicBlock::Create(Context, "entry", TestFunction);
+  IRBuilder<> Builder(Entry);
+  Value *result = Builder.CreateCall(
+      KnownFunction,
+      ConstantInt::get(TypeBuilder<int, false>::get(Context), 7));
+  Builder.CreateRet(result);
+
+  TheJIT->EnableDlsymStubs(false);
+  TheJIT->DisableLazyCompilation();
+  int (*TestFunctionPtr)() = reinterpret_cast<int(*)()>(
+      (intptr_t)TheJIT->getPointerToFunction(TestFunction));
+  // This used to crash in trying to call PlusOne().
+  EXPECT_EQ(8, TestFunctionPtr());
 }
 
 // This code is copied from JITEventListenerTest, but it only runs once for all
