@@ -1812,7 +1812,7 @@ void DwarfDebug::SetDbgScopeBeginLabels(const MachineInstr *MI, unsigned Label) 
 /// end with this machine instruction.
 void DwarfDebug::SetDbgScopeEndLabels(const MachineInstr *MI, unsigned Label) {
   InsnToDbgScopeMapTy::iterator I = DbgScopeEndMap.find(MI);
-  if (I == DbgScopeBeginMap.end())
+  if (I == DbgScopeEndMap.end())
     return;
   SmallVector<DbgScope *, 2> &SD = I->second;
   for (SmallVector<DbgScope *, 2>::iterator SDI = SD.begin(), SDE = SD.end();
