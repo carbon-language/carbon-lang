@@ -597,7 +597,7 @@ namespace {
     /// MachineRelocations that reference external functions by name.
     const StringMap<void*> &getExternalFnStubs() const { return ExtFnStubs; }
     
-    virtual void processDebugLoc(DebugLoc DL);
+    virtual void processDebugLoc(DebugLoc DL, bool BeforePrintingInsn);
 
     virtual void emitLabel(uint64_t LabelID) {
       if (LabelLocations.size() <= LabelID)
@@ -708,18 +708,20 @@ void JITEmitter::AddStubToCurrentFunction(void *StubAddr) {
   FnRefs.insert(CurFn);
 }
 
-void JITEmitter::processDebugLoc(DebugLoc DL) {
+void JITEmitter::processDebugLoc(DebugLoc DL, bool BeforePrintingInsn) {
   if (!DL.isUnknown()) {
     DebugLocTuple CurDLT = EmissionDetails.MF->getDebugLocTuple(DL);
 
-    if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT) {
-      JITEvent_EmittedFunctionDetails::LineStart NextLine;
-      NextLine.Address = getCurrentPCValue();
-      NextLine.Loc = DL;
-      EmissionDetails.LineStarts.push_back(NextLine);
+    if (BeforePrintingInsn) {
+      if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT) {
+        JITEvent_EmittedFunctionDetails::LineStart NextLine;
+        NextLine.Address = getCurrentPCValue();
+        NextLine.Loc = DL;
+        EmissionDetails.LineStarts.push_back(NextLine);
+      }
+  
+      PrevDLT = CurDLT;
     }
-
-    PrevDLT = CurDLT;
   }
 }
 
