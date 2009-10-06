@@ -1303,7 +1303,7 @@ namespace clang {
                                    "Mangling declaration");
     
     CXXNameMangler Mangler(Context, os);
-    if (!Mangler.mangle(D))
+    if (!Mangler.mangle(cast<NamedDecl>(D->getCanonicalDecl())))
       return false;
 
     os.flush();

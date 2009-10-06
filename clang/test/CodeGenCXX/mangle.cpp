@@ -198,3 +198,12 @@ template<typename T> typename __enable_if<__is_scalar<T>::__value, void>::__type
 template void ft7<int>();
 // CHECK: @_Z3ft7IPvEN11__enable_ifIXsr11__is_scalarIT_E7__valueEvE6__typeEv
 template void ft7<void*>();
+
+// PR5144
+extern "C" {
+void extern_f(void);
+};
+
+// CHECK: @extern_f
+void extern_f(void) { }
+
