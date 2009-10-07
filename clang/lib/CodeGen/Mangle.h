@@ -20,6 +20,7 @@
 
 #include "CGCXX.h"
 #include "clang/AST/Type.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
   class raw_ostream;
@@ -35,11 +36,21 @@ namespace clang {
 
   class MangleContext {
     ASTContext &Context;
+    
+    llvm::DenseMap<const TagDecl *, uint64_t> AnonStructIds;
+
   public:
     explicit MangleContext(ASTContext &Context)
     : Context(Context) { }
     
     ASTContext &getASTContext() const { return Context; }
+    
+    uint64_t getAnonymousStructId(const TagDecl *TD) {
+      std::pair<llvm::DenseMap<const TagDecl *, 
+                               uint64_t>::iterator, bool> Result =
+      AnonStructIds.insert(std::make_pair(TD, AnonStructIds.size()));
+      return Result.first->second;
+    }
   };
 
   bool mangleName(MangleContext &Context, const NamedDecl *D,

@@ -207,3 +207,17 @@ void extern_f(void);
 // CHECK: @extern_f
 void extern_f(void) { }
 
+struct S7 {
+  struct S { S(); };
+  
+  struct {
+    S s;
+  } a;
+};
+
+// PR5139
+// CHECK: @_ZN2S7C1Ev
+// CHECK: @_ZN2S7C2Ev
+// CHECK: @"_ZN2S73$_0C1Ev"
+S7::S7() {}
+

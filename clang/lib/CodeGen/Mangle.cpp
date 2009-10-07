@@ -22,6 +22,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -404,8 +405,8 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
   //                     ::= <source-name>
   DeclarationName Name = ND->getDeclName();
   switch (Name.getNameKind()) {
-  case DeclarationName::Identifier:
-    if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND))
+  case DeclarationName::Identifier: {
+    if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(ND)) {
       if (NS->isAnonymousNamespace()) {
         // This is how gcc mangles these names.  It's apparently
         // always '1', no matter how many different anonymous
@@ -413,8 +414,38 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND) {
         Out << "12_GLOBAL__N_1";
         break;
       }
-    mangleSourceName(Name.getAsIdentifierInfo());
+    }    
+
+    if (const IdentifierInfo *II = Name.getAsIdentifierInfo()) {
+      mangleSourceName(II);
+      break;
+    }
+      
+    // We must have an anonymous struct.
+    const TagDecl *TD = cast<TagDecl>(ND);
+    if (const TypedefDecl *D = TD->getTypedefForAnonDecl()) {
+      assert(TD->getDeclContext() == D->getDeclContext() &&
+             "Typedef should not be in another decl context!");
+      assert(D->getDeclName().getAsIdentifierInfo() &&
+             "Typedef was not named!");
+      mangleSourceName(D->getDeclName().getAsIdentifierInfo());
+      break;
+    }
+    
+    // Get a unique id for the anonymous struct.
+    uint64_t AnonStructId = Context.getAnonymousStructId(TD);
+
+    // Mangle it as a source name in the form
+    // [n] $_<id> 
+    // where n is the length of the string.
+    llvm::SmallString<8> Str;
+    Str += "$_";
+    Str += llvm::utostr(AnonStructId);
+
+    Out << Str.size();
+    Out << Str.str();
     break;
+  }
 
   case DeclarationName::ObjCZeroArgSelector:
   case DeclarationName::ObjCOneArgSelector:
