@@ -46,17 +46,18 @@ Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
 
 DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
                      const unsigned (&DarwinVersion)[3],
-                     const unsigned (&_GCCVersion)[3], bool IsIPhoneOS)
+                     const unsigned (&_GCCVersion)[4], bool IsIPhoneOS)
   : Darwin(Host, Triple, DarwinVersion, IsIPhoneOS)
 {
   GCCVersion[0] = _GCCVersion[0];
   GCCVersion[1] = _GCCVersion[1];
   GCCVersion[2] = _GCCVersion[2];
+  GCCVersion[3] = _GCCVersion[3];
 
   // Set up the tool chain paths to match gcc.
 
   ToolChainDir = "i686-apple-darwin";
-  ToolChainDir += llvm::utostr(DarwinVersion[0]);
+  ToolChainDir += llvm::utostr(GCCVersion[3]);
   ToolChainDir += "/";
   ToolChainDir += llvm::utostr(GCCVersion[0]);
   ToolChainDir += '.';
