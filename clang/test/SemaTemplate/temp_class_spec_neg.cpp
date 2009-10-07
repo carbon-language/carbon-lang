@@ -9,7 +9,7 @@ namespace N {
 }
 
 template<typename T>
-struct N::M::A<T*> { }; // expected-error{{not in namespace}}
+struct N::M::A<T*> { }; // expected-error{{originally}}
 
 // C++ [temp.class.spec]p9
 //   bullet 1
@@ -25,7 +25,7 @@ template <class T, T* t> struct C<T*, t>; // okay
 
 template< int X, int (*array_ptr)[X] > class A2 {}; // expected-note{{here}}
 int array[5]; 
-template< int X > class A2<X,&array> { }; // expected-error{{specializes}}
+template< int X > class A2<X, &array> { }; // expected-error{{specializes}}
 
 template<typename T, int N, template<typename X> class TT>
 struct Test0;

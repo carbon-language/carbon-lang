@@ -2485,13 +2485,6 @@ public:
                                                 const CXXScopeSpec &SS,
                                                 TypeTy *ObjectType);
 
-  bool CheckClassTemplateSpecializationScope(ClassTemplateDecl *ClassTemplate,
-                                    ClassTemplateSpecializationDecl *PrevDecl,
-                                             SourceLocation TemplateNameLoc,
-                                             SourceRange ScopeSpecifierRange,
-                                             bool PartialSpecialization,
-                                             bool ExplicitInstantiation);
-
   bool CheckClassTemplatePartialSpecializationArgs(
                                         TemplateParameterList *TemplateParams,
                               const TemplateArgumentListBuilder &TemplateArgs,

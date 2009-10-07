@@ -85,12 +85,12 @@ namespace N {
 
 template<> struct N::B<int> { }; // okay
 
-template<> struct N::B<float> { }; // expected-error{{class template specialization of 'B' not in namespace 'N'}}
+template<> struct N::B<float> { }; // expected-error{{originally}}
 
 namespace M {
   template<> struct ::N::B<short> { }; // expected-error{{class template specialization of 'B' not in a namespace enclosing 'N'}}
 
-  template<> struct ::A<long double>; // expected-error{{class template specialization of 'A' must occur in the global scope}}
+  template<> struct ::A<long double>; // expected-error{{originally}}
 }
 
 template<> struct N::B<char> { 

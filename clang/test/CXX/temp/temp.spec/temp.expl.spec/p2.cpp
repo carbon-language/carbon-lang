@@ -2,9 +2,10 @@
 
 // This test creates cases where implicit instantiations of various entities
 // would cause a diagnostic, but provides expliict specializations for those
-// entities that avoid the diagnostic. The intent is to verify that 
-// implicit instantiations do not occur (because the explicit specialization 
-// is used instead).
+// entities that avoid the diagnostic. The specializations are alternately
+// declarations and definitions, and the intent of this test is to verify
+// that we allow specializations only in the appropriate namespaces (and
+// nowhere else).
 struct NonDefaultConstructible {
   NonDefaultConstructible(int);
 };
@@ -14,16 +15,30 @@ struct NonDefaultConstructible {
 //   An explicit specialization of any of the following:
 
 //     -- function template
-template<typename T> void f0(T) {
-  T t;
+namespace N0 {
+  template<typename T> void f0(T) { // expected-note{{here}}
+    T t;
+  }
+
+  template<> void f0(NonDefaultConstructible) { }
+
+  void test_f0(NonDefaultConstructible NDC) {
+    f0(NDC);
+  }
+  
+  template<> void f0(int);
+  template<> void f0(long);
 }
 
-template<> void f0(NonDefaultConstructible) { }
+template<> void N0::f0(int) { } // okay
 
-void test_f0(NonDefaultConstructible NDC) {
-  f0(NDC);
+namespace N1 {
+  template<> void N0::f0(long) { } // expected-error{{not in a namespace enclosing}}
 }
 
+template<> void N0::f0(double) { } // expected-error{{originally be declared}}
+
+// FIXME: update the remainder of this test to check for scopes properly.
 //     -- class template
 template<typename T>
 struct X0 {
@@ -52,7 +67,7 @@ template<typename T> T X0<T>::member;
 
 template<> struct X0<void> { };
 X0<void> test_X0;
-  
+
 
 //     -- member function of a class template
 template<> void X0<void*>::f1(void *) { }
