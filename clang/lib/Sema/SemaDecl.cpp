@@ -2235,12 +2235,15 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   // Match up the template parameter lists with the scope specifier, then
   // determine whether we have a template or a template specialization.
+  // FIXME: Actually record when this is an explicit specialization!
+  bool isExplicitSpecialization = false;
   if (TemplateParameterList *TemplateParams
-      = MatchTemplateParametersToScopeSpecifier(
+        = MatchTemplateParametersToScopeSpecifier(
                                   D.getDeclSpec().getSourceRange().getBegin(),
-                                                D.getCXXScopeSpec(),
+                                                  D.getCXXScopeSpec(),
                         (TemplateParameterList**)TemplateParamLists.get(),
-                                                 TemplateParamLists.size())) {
+                                                   TemplateParamLists.size(),
+                                                  isExplicitSpecialization)) {
     if (TemplateParams->size() > 0) {
       // There is no such thing as a variable template.
       Diag(D.getIdentifierLoc(), diag::err_template_variable)
@@ -2256,6 +2259,8 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         << II
         << SourceRange(TemplateParams->getTemplateLoc(),
                        TemplateParams->getRAngleLoc());
+      
+      isExplicitSpecialization = true;
     }
   }
 
@@ -2660,13 +2665,15 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // Match up the template parameter lists with the scope specifier, then
   // determine whether we have a template or a template specialization.
   FunctionTemplateDecl *FunctionTemplate = 0;
+  bool isExplicitSpecialization = false;
   bool isFunctionTemplateSpecialization = false;
   if (TemplateParameterList *TemplateParams
         = MatchTemplateParametersToScopeSpecifier(
                                   D.getDeclSpec().getSourceRange().getBegin(),
                                   D.getCXXScopeSpec(),
                            (TemplateParameterList**)TemplateParamLists.get(),
-                                                  TemplateParamLists.size())) {
+                                                  TemplateParamLists.size(),
+                                                  isExplicitSpecialization)) {
     if (TemplateParams->size() > 0) {
       // This is a function template
 
@@ -2847,7 +2854,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     RAngleLoc = TemplateId->RAngleLoc;
     
     if (FunctionTemplate) {
-      // FIXME: Diagnostic function template with explicit template
+      // FIXME: Diagnose function template with explicit template
       // arguments.
       HasExplicitTemplateArgs = false;
     } else if (!isFunctionTemplateSpecialization && 
@@ -2865,13 +2872,17 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
   
-  if (isFunctionTemplateSpecialization &&
-      CheckFunctionTemplateSpecialization(NewFD, HasExplicitTemplateArgs,
-                                          LAngleLoc, TemplateArgs.data(),
-                                          TemplateArgs.size(), RAngleLoc,
-                                          PrevDecl))
+  if (isFunctionTemplateSpecialization) {
+      if (CheckFunctionTemplateSpecialization(NewFD, HasExplicitTemplateArgs,
+                                              LAngleLoc, TemplateArgs.data(),
+                                              TemplateArgs.size(), RAngleLoc,
+                                              PrevDecl))
+        NewFD->setInvalidDecl();
+  } else if (isExplicitSpecialization && isa<CXXMethodDecl>(NewFD) &&
+             CheckMemberFunctionSpecialization(cast<CXXMethodDecl>(NewFD),
+                                               PrevDecl))
     NewFD->setInvalidDecl();
-  
+           
   // Perform semantic checking on the function declaration.
   bool OverloadableAttrRequired = false; // FIXME: HACK!
   CheckFunctionDeclaration(NewFD, PrevDecl, Redeclaration,
@@ -4161,11 +4172,14 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   OwnedDecl = false;
   TagDecl::TagKind Kind = TagDecl::getTagKindForTypeSpec(TagSpec);
 
+  // FIXME: Check explicit specializations more carefully.
+  bool isExplicitSpecialization = false;
   if (TUK != TUK_Reference) {
     if (TemplateParameterList *TemplateParams
           = MatchTemplateParametersToScopeSpecifier(KWLoc, SS,
                         (TemplateParameterList**)TemplateParameterLists.get(),
-                                              TemplateParameterLists.size())) {
+                                              TemplateParameterLists.size(),
+                                                    isExplicitSpecialization)) {
       if (TemplateParams->size() > 0) {
         // This is a declaration or definition of a class template (which may
         // be a member of another template).

@@ -922,8 +922,8 @@ def err_template_spec_unknown_kind : Error<
   "instantiation|instantiation}0 for a class template, function template, or "
   "a member function, static data member, or member class of a class template">;
 def note_specialized_entity : Note<
-  "explicit %select{<error>|<error>|specialized|instantiated|instantiated}0 is "
-  "here">;
+  "explicitly %select{<error>|<error>|specialized|instantiated|instantiated}0 "
+  "declaration is here">;
 def err_template_spec_decl_function_scope : Error<
   "explicit %select{<error>|<error>|specialization|instantiation|"
   "instantiation}0 of %1 in function scope">;
@@ -946,6 +946,10 @@ def err_template_spec_redecl_global_scope : Error<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 must occur "
   "at global scope">;
+def err_function_spec_not_instantiated : Error<
+  "specialization of member function %q0 does not specialize an instantiated "
+  "member function">;
+def note_specialized_decl : Note<"attempt to specialize declaration here">;
 
 // C++ class template specializations and out-of-line definitions
 def err_template_spec_needs_header : Error<

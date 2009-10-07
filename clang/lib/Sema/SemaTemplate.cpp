@@ -933,6 +933,9 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
 ///
 /// \param NumParamLists the number of template parameter lists in ParamLists.
 ///
+/// \param IsExplicitSpecialization will be set true if the entity being
+/// declared is an explicit specialization, false otherwise.
+///
 /// \returns the template parameter list, if any, that corresponds to the
 /// name that is preceded by the scope specifier @p SS. This template
 /// parameter list may be have template parameters (if we're declaring a
@@ -943,7 +946,10 @@ TemplateParameterList *
 Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
                                               const CXXScopeSpec &SS,
                                           TemplateParameterList **ParamLists,
-                                              unsigned NumParamLists) {
+                                              unsigned NumParamLists,
+                                              bool &IsExplicitSpecialization) {
+  IsExplicitSpecialization = false;
+  
   // Find the template-ids that occur within the nested-name-specifier. These
   // template-ids will match up with the template parameter lists.
   llvm::SmallVector<const TemplateSpecializationType *, 4>
@@ -1000,6 +1006,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
           << SS.getRange()
           << CodeModificationHint::CreateInsertion(FirstTemplateLoc,
                                                    "template<> ");
+        IsExplicitSpecialization = true;
       }
       return 0;
     }
@@ -1031,6 +1038,8 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
            diag::err_template_param_list_matches_nontemplate)
         << TemplateId
         << ParamLists[Idx]->getSourceRange();
+    else
+      IsExplicitSpecialization = true;
   }
 
   // If there were at least as many template-ids as there were template
@@ -2399,11 +2408,14 @@ static bool CheckTemplateSpecializationScope(Sema &S,
   // Keep these "kind" numbers in sync with the %select statements in the
   // various diagnostics emitted by this routine.
   int EntityKind = 0;
-  if (isa<ClassTemplateDecl>(Specialized))
+  bool isTemplateSpecialization = false;
+  if (isa<ClassTemplateDecl>(Specialized)) {
     EntityKind = IsPartialSpecialization? 1 : 0;
-  else if (isa<FunctionTemplateDecl>(Specialized))
+    isTemplateSpecialization = true;
+  } else if (isa<FunctionTemplateDecl>(Specialized)) {
     EntityKind = 2;
-  else if (isa<CXXMethodDecl>(Specialized))
+    isTemplateSpecialization = true;
+  } else if (isa<CXXMethodDecl>(Specialized))
     EntityKind = 3;
   else if (isa<VarDecl>(Specialized))
     EntityKind = 4;
@@ -2464,7 +2476,8 @@ static bool CheckTemplateSpecializationScope(Sema &S,
           << EntityKind << Specialized
           << cast<NamedDecl>(SpecializedContext);
         
-        S.Diag(Specialized->getLocation(), diag::note_template_decl_here);
+        S.Diag(Specialized->getLocation(), diag::note_specialized_entity) 
+          << TSK;
         ComplainedAboutScope = true;
       }
     }
@@ -2492,7 +2505,7 @@ static bool CheckTemplateSpecializationScope(Sema &S,
         << EntityKind << Specialized
         << cast<NamedDecl>(SpecializedContext);
   
-    S.Diag(Specialized->getLocation(), diag::note_template_decl_here);
+    S.Diag(Specialized->getLocation(), diag::note_specialized_entity) << TSK;
   }
   
   // FIXME: check for specialization-after-instantiation errors and such.
@@ -2640,6 +2653,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   ClassTemplateDecl *ClassTemplate
     = cast<ClassTemplateDecl>(Name.getAsTemplateDecl());
 
+  bool isExplicitSpecialization = false;
   bool isPartialSpecialization = false;
 
   // Check the validity of the template headers that introduce this
@@ -2649,7 +2663,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   TemplateParameterList *TemplateParams
     = MatchTemplateParametersToScopeSpecifier(TemplateNameLoc, SS,
                         (TemplateParameterList**)TemplateParameterLists.get(),
-                                              TemplateParameterLists.size());
+                                              TemplateParameterLists.size(),
+                                              isExplicitSpecialization);
   if (TemplateParams && TemplateParams->size() > 0) {
     isPartialSpecialization = true;
 
@@ -2684,9 +2699,11 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
         }
       }
     }
-  } else if (!TemplateParams && TUK != TUK_Friend)
+  } else if (!TemplateParams && TUK != TUK_Friend) {
     Diag(KWLoc, diag::err_template_spec_needs_header)
       << CodeModificationHint::CreateInsertion(KWLoc, "template<> ");
+    isExplicitSpecialization = true;
+  }
 
   // Check that the specialization uses the same tag kind as the
   // original template.
@@ -3098,6 +3115,70 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   // The "previous declaration" for this function template specialization is
   // the prior function template specialization.
   PrevDecl = Specialization;
+  return false;
+}
+
+/// \brief Perform semantic analysis for the given member function
+/// specialization.
+///
+/// This routine performs all of the semantic analysis required for an 
+/// explicit member function specialization. On successful completion,
+/// the function declaration \p FD will become a member function
+/// specialization.
+///
+/// \param FD the function declaration, which will be updated to become a
+/// function template specialization.
+///
+/// \param PrevDecl the set of declarations, one of which may be specialized
+/// by this function specialization.
+bool 
+Sema::CheckMemberFunctionSpecialization(CXXMethodDecl *FD,
+                                        NamedDecl *&PrevDecl) {
+  // Try to find the member function we are instantiating.
+  CXXMethodDecl *Instantiation = 0;
+  for (OverloadIterator Ovl(PrevDecl), OvlEnd; Ovl != OvlEnd; ++Ovl) {
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Ovl)) {
+      if (Context.hasSameType(FD->getType(), Method->getType())) {
+        Instantiation = Method;
+        break;
+      }
+    }
+  }
+  
+  if (!Instantiation) {
+    // There is no previous declaration that matches. Since member function
+    // specializations are always out-of-line, the caller will complain about
+    // this mismatch later.
+    return false;
+  }
+  
+  // FIXME: Check if the prior declaration has a point of instantiation.
+  // If so, we have run afoul of C++ [temp.expl.spec]p6.
+  
+  // Make sure that this is a specialization of a member function.
+  FunctionDecl *FunctionInTemplate
+    = Instantiation->getInstantiatedFromMemberFunction();
+  if (!FunctionInTemplate) {
+    Diag(FD->getLocation(), diag::err_function_spec_not_instantiated)
+      << FD;
+    Diag(Instantiation->getLocation(), diag::note_specialized_decl);
+    return true;
+  }
+  
+  // Check the scope of this explicit specialization.
+  if (CheckTemplateSpecializationScope(*this, 
+                                       FunctionInTemplate,
+                                       Instantiation, FD->getLocation(), 
+                                       false, TSK_ExplicitSpecialization))
+    return true;
+  
+  // FIXME: Mark the new declaration as a member function specialization.
+  // We may also want to mark the original instantiation as having been
+  // explicitly specialized.
+  
+  // Save the caller the trouble of having to figure out which declaration
+  // this specialization matches.
+  PrevDecl = Instantiation;
   return false;
 }
 

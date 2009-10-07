@@ -2433,7 +2433,8 @@ public:
   MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
                                           const CXXScopeSpec &SS,
                                           TemplateParameterList **ParamLists,
-                                          unsigned NumParamLists);
+                                          unsigned NumParamLists,
+                                          bool &IsExplicitSpecialization);
 
   DeclResult CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                 SourceLocation KWLoc, const CXXScopeSpec &SS,
@@ -2518,6 +2519,8 @@ public:
                                            unsigned NumExplicitTemplateArgs,
                                            SourceLocation RAngleLoc,
                                            NamedDecl *&PrevDecl);
+  bool CheckMemberFunctionSpecialization(CXXMethodDecl *FD, 
+                                         NamedDecl *&PrevDecl);
     
   virtual DeclResult
   ActOnExplicitInstantiation(Scope *S,

@@ -51,7 +51,7 @@ template<typename T>
 struct X0 { // expected-note 2{{here}}
   static T member;
   
-  void f1(T t) {
+  void f1(T t) { // expected-note{{explicitly specialized declaration is here}}
     t = 17;
   }
   
@@ -85,15 +85,19 @@ namespace N0 {
   template<> struct X0<volatile void>;
 }
 
-template<> struct N0::X0<volatile void> { };
+template<> struct N0::X0<volatile void> { 
+  void f1(void *);
+};
 
 //     -- member function of a class template
-// FIXME: this should complain about the scope of f1, but we don't seem
-// to recognize it as a specialization. Hrm?
-template<> void N0::X0<void*>::f1(void *) { }
+template<> void N0::X0<void*>::f1(void *) { } // expected-error{{member function specialization}}
 
 void test_spec(N0::X0<void*> xvp, void *vp) {
   xvp.f1(vp);
+}
+
+namespace N0 {
+  template<> void X0<volatile void>::f1(void *) { } // expected-error{{no function template matches}}
 }
 
 #if 0

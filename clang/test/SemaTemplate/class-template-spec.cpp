@@ -1,5 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-template<typename T, typename U = int> struct A; // expected-note 2{{template is declared here}}
+template<typename T, typename U = int> struct A; // expected-note {{template is declared here}} \
+                                                 // expected-note{{explicitly specialized}}
 
 template<> struct A<double, double>; // expected-note{{forward declaration}}
 
@@ -74,7 +75,7 @@ struct A<double> { }; // expected-error{{template specialization requires 'templ
 template<> struct ::A<double>;
 
 namespace N {
-  template<typename T> struct B; // expected-note 2{{template is declared here}}
+  template<typename T> struct B; // expected-note 2{{explicitly specialized}}
 
   template<> struct ::N::B<char>; // okay
   template<> struct ::N::B<short>; // okay
