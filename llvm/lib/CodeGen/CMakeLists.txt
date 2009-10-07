@@ -13,7 +13,6 @@ add_llvm_library(LLVMCodeGen
   IntrinsicLowering.cpp
   LLVMTargetMachine.cpp
   LatencyPriorityQueue.cpp
-  LazyLiveness.cpp
   LiveInterval.cpp
   LiveIntervalAnalysis.cpp
   LiveStackAnalysis.cpp
