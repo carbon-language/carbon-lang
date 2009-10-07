@@ -176,7 +176,7 @@ void BumpVector<T>::grow(BumpVectorContext &C, size_t MinSize) {
     NewCapacity = MinSize;
 
   // Allocate the memory from the BumpPtrAllocator.
-  T *NewElts = C.getAllocator().Allocate<T>(NewCapacity);
+  T *NewElts = C.getAllocator().template Allocate<T>(NewCapacity);
   
   // Copy the elements over.
   if (llvm::is_class<T>::value) {
