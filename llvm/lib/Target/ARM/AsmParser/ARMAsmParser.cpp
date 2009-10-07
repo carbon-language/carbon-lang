@@ -100,6 +100,7 @@ struct ARMOperand {
 
     struct {
       unsigned RegNum;
+      bool Writeback;
     } Reg;
 
     // This is for all forms of ARM address expressions
@@ -146,10 +147,11 @@ struct ARMOperand {
     return Res;
   }
 
-  static ARMOperand CreateReg(unsigned RegNum) {
+  static ARMOperand CreateReg(unsigned RegNum, bool Writeback) {
     ARMOperand Res;
     Res.Kind = Register;
     Res.Reg.RegNum = RegNum;
+    Res.Reg.Writeback = Writeback;
     return Res;
   }
 
@@ -193,9 +195,16 @@ bool ARMAsmParser::ParseRegister(ARMOperand &Op) {
   RegNum = MatchRegisterName(Tok.getString());
   if (RegNum == 0)
     return true;
-
-  Op = ARMOperand::CreateReg(RegNum);
   getLexer().Lex(); // Eat identifier token.
+
+  bool Writeback = false;
+  const AsmToken &ExclaimTok = getLexer().getTok();
+  if (ExclaimTok.is(AsmToken::Exclaim)) {
+    Writeback = true;
+    getLexer().Lex(); // Eat exclaim token
+  }
+
+  Op = ARMOperand::CreateReg(RegNum, Writeback);
 
   return false;
 }
@@ -396,6 +405,8 @@ unsigned ARMAsmParser::MatchRegisterName(const StringRef &Name) {
     return 2;
   else if (Name == "r3")
     return 3;
+  else if (Name == "sp")
+    return 13;
   return 0;
 }
 
@@ -406,6 +417,9 @@ bool ARMAsmParser::MatchInstruction(SmallVectorImpl<ARMOperand> &Operands,
   assert(Op0.Kind == ARMOperand::Token && "First operand not a Token");
   const StringRef &Mnemonic = Op0.getToken();
   if (Mnemonic == "add" ||
+      Mnemonic == "stmfd" ||
+      Mnemonic == "str" ||
+      Mnemonic == "ldmfd" ||
       Mnemonic == "ldr")
     return false;
 
