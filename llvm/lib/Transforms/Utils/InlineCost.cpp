@@ -135,6 +135,10 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
           NumInsts += 5;
       }
       
+      // This, too, is a call.
+      if (isa<MallocInst>(II))
+	NumInsts += 5;
+
       if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
         if (!AI->isStaticAlloca())
           this->usesDynamicAlloca = true;
