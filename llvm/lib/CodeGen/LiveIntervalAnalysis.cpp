@@ -1428,32 +1428,16 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
     if (!EnableAggressiveRemat)
       return false;
 
-    // If the instruction accesses memory but the memoperands have been lost,
-    // we can't analyze it.
     const TargetInstrDesc &TID = MI->getDesc();
-    if ((TID.mayLoad() || TID.mayStore()) && MI->memoperands_empty())
-      return false;
 
     // Avoid instructions obviously unsafe for remat.
-    if (TID.hasUnmodeledSideEffects() || TID.isNotDuplicable())
+    if (TID.hasUnmodeledSideEffects() || TID.isNotDuplicable() ||
+        TID.mayStore())
       return false;
 
-    // If the instruction accesses memory and the memory could be non-constant,
-    // assume the instruction is not rematerializable.
-    for (MachineInstr::mmo_iterator I = MI->memoperands_begin(),
-         E = MI->memoperands_end(); I != E; ++I){
-      const MachineMemOperand *MMO = *I;
-      if (MMO->isVolatile() || MMO->isStore())
-        return false;
-      const Value *V = MMO->getValue();
-      if (!V)
-        return false;
-      if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V)) {
-        if (!PSV->isConstant(mf_->getFrameInfo()))
-          return false;
-      } else if (!aa_->pointsToConstantMemory(V))
-        return false;
-    }
+    // Avoid instructions which load from potentially varying memory.
+    if (TID.mayLoad() && !MI->isInvariantLoad(aa_))
+      return false;
 
     // If any of the registers accessed are non-constant, conservatively assume
     // the instruction is not rematerializable.
@@ -1464,8 +1448,29 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
         unsigned Reg = MO.getReg();
         if (Reg == 0)
           continue;
-        if (TargetRegisterInfo::isPhysicalRegister(Reg))
-          return false;
+        if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+          if (MO.isUse()) {
+            // If the physreg has no defs anywhere, it's just an ambient register
+            // and we can freely move its uses. Alternatively, if it's allocatable,
+            // it could get allocated to something with a def during allocation.
+            if (!mri_->def_empty(Reg))
+              return false;
+            if (allocatableRegs_.test(Reg))
+              return false;
+            // Check for a def among the register's aliases too.
+            for (const unsigned *Alias = tri_->getAliasSet(Reg); *Alias; ++Alias) {
+              unsigned AliasReg = *Alias;
+              if (!mri_->def_empty(AliasReg))
+                return false;
+              if (allocatableRegs_.test(AliasReg))
+                return false;
+            }
+          } else {
+            // A physreg def. We can't remat it.
+            return false;
+          }
+          continue;
+        }
 
         // Only allow one def, and that in the first operand.
         if (MO.isDef() != (i == 0))
