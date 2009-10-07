@@ -193,6 +193,9 @@ class VLD2Q<bits<4> op7_4, string OpcodeStr>
 def  VLD2d8   : VLD2D<0b0000, "vld2.8">;
 def  VLD2d16  : VLD2D<0b0100, "vld2.16">;
 def  VLD2d32  : VLD2D<0b1000, "vld2.32">;
+def  VLD2d64  : NLdSt<0,0b10,0b1010,0b1100, (outs DPR:$dst1, DPR:$dst2),
+                      (ins addrmode6:$addr), IIC_VLD1,
+                      "vld1.64\t\\{$dst1,$dst2\\}, $addr", "", []>;
 
 def  VLD2q8   : VLD2Q<0b0000, "vld2.8">;
 def  VLD2q16  : VLD2Q<0b0100, "vld2.16">;
