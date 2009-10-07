@@ -165,14 +165,14 @@ public:
 /// DarwinGCC - The Darwin toolchain used by GCC.
 class VISIBILITY_HIDDEN DarwinGCC : public Darwin {
   /// GCC version to use.
-  unsigned GCCVersion[4];
+  unsigned GCCVersion[3];
 
   /// The directory suffix for this tool chain.
   std::string ToolChainDir;
 
 public:
   DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
-            const unsigned (&DarwinVersion)[3], const unsigned (&GCCVersion)[4],
+            const unsigned (&DarwinVersion)[3], const unsigned (&GCCVersion)[3],
             bool IsIPhoneOS);
 
   /// @name Darwin ToolChain Implementation
