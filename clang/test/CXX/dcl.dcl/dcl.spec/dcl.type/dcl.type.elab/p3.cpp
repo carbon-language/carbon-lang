@@ -12,9 +12,8 @@ class A1 {
   friend class A;
   friend union A; // expected-error {{use of 'A' with tag type that does not match previous declaration}}
 
-  // FIXME: a better error would be something like 'enum types cannot be friends'
   friend enum A; // expected-error {{ISO C++ forbids forward references to 'enum' types}} \
-                // expected-error{{classes or functions}}
+                 // expected-error {{enum types cannot be friends}}
 };
 
 template <class T> struct B { // expected-note {{previous use is here}}

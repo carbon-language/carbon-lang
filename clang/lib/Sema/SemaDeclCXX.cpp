@@ -4283,8 +4283,10 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
 
       std::string InsertionText = std::string(" ") + RD->getKindName();
 
-      Diag(DS.getFriendSpecLoc(), diag::err_unelaborated_friend_type)
-        << (RD->isUnion())
+      Diag(DS.getTypeSpecTypeLoc(), diag::err_unelaborated_friend_type)
+        << (unsigned) RD->getTagKind()
+        << T
+        << SourceRange(DS.getFriendSpecLoc())
         << CodeModificationHint::CreateInsertion(DS.getTypeSpecTypeLoc(),
                                                  InsertionText);
       return DeclPtrTy();
@@ -4295,21 +4297,11 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
     }
   }
 
-  bool IsDefinition = false;
-
-  // We want to do a few things differently if the type was declared with
-  // a tag:  specifically, we want to use the associated RecordDecl as
-  // the object of our friend declaration, and we want to disallow
-  // class definitions.
-  switch (DS.getTypeSpecType()) {
-  default: break;
-  case DeclSpec::TST_class:
-  case DeclSpec::TST_struct:
-  case DeclSpec::TST_union:
-    CXXRecordDecl *RD = cast_or_null<CXXRecordDecl>((Decl*) DS.getTypeRep());
-    if (RD)
-      IsDefinition |= RD->isDefinition();
-    break;
+  // Enum types cannot be friends.
+  if (T->getAs<EnumType>()) {
+    Diag(DS.getTypeSpecTypeLoc(), diag::err_enum_friend)
+      << SourceRange(DS.getFriendSpecLoc());
+    return DeclPtrTy();
   }
 
   // C++98 [class.friend]p1: A friend of a class is a function

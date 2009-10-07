@@ -1323,71 +1323,29 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   // FIXME: Warn on useless const/volatile
   // FIXME: Warn on useless static/extern/typedef/private_extern/mutable
   // FIXME: Warn on useless attributes
+  Decl *TagD = 0;
   TagDecl *Tag = 0;
   if (DS.getTypeSpecType() == DeclSpec::TST_class ||
       DS.getTypeSpecType() == DeclSpec::TST_struct ||
       DS.getTypeSpecType() == DeclSpec::TST_union ||
       DS.getTypeSpecType() == DeclSpec::TST_enum) {
-    if (!DS.getTypeRep()) // We probably had an error
+    TagD = static_cast<Decl *>(DS.getTypeRep());
+
+    if (!TagD) // We probably had an error
       return DeclPtrTy();
 
     // Note that the above type specs guarantee that the
     // type rep is a Decl, whereas in many of the others
     // it's a Type.
-    Tag = dyn_cast<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
+    Tag = dyn_cast<TagDecl>(TagD);
   }
 
   if (DS.isFriendSpecified()) {
-    // We have a "friend" declaration that does not have a declarator.
-    // Look at the type to see if the friend declaration was handled
-    // elsewhere (e.g., for friend classes and friend class templates).
-    // If not, produce a suitable diagnostic or go try to befriend the
-    // type itself.
-    QualType T;
-    if (DS.getTypeSpecType() == DeclSpec::TST_typename ||
-        DS.getTypeSpecType() == DeclSpec::TST_typeofType)
-      T = QualType::getFromOpaquePtr(DS.getTypeRep());
-    else if (DS.getTypeSpecType() == DeclSpec::TST_typeofExpr ||
-             DS.getTypeSpecType() == DeclSpec::TST_decltype)
-      T = ((Expr *)DS.getTypeRep())->getType();
-    else if (DS.getTypeSpecType() == DeclSpec::TST_class ||
-             DS.getTypeSpecType() == DeclSpec::TST_struct ||
-             DS.getTypeSpecType() == DeclSpec::TST_union)
-      return DeclPtrTy::make(Tag);
-    
-    if (T.isNull()) {
-      // Fall through to diagnose this error, below.
-    } else if (const RecordType *RecordT = T->getAs<RecordType>()) {
-      // C++ [class.friend]p2:
-      //   An elaborated-type-specifier shall be used in a friend declaration
-      //   for a class.
-
-      // We have something like "friend C;", where C is the name of a
-      // class type but is missing an elaborated type specifier. Complain,
-      // but tell the user exactly how to fix the problem.
-      RecordDecl *RecordD = RecordT->getDecl();
-      Diag(DS.getTypeSpecTypeLoc(), diag::err_unelaborated_friend_type)
-        << (unsigned)RecordD->getTagKind()
-        << QualType(RecordT, 0)
-        << SourceRange(DS.getFriendSpecLoc())
-        << CodeModificationHint::CreateInsertion(DS.getTypeSpecTypeLoc(),
-                                  RecordD->getKindName() + std::string(" "));
-      
-      // FIXME: We could go into ActOnTag to actually make the friend
-      // declaration happen at this point.
+    // If we're dealing with a class template decl, assume that the
+    // template routines are handling it.
+    if (TagD && isa<ClassTemplateDecl>(TagD))
       return DeclPtrTy();
-    } 
-    
-    if (!T.isNull() && T->isDependentType()) {
-      // Since T is a dependent type, handle it as a friend type
-      // declaration.
-      return ActOnFriendTypeDecl(S, DS, MultiTemplateParamsArg(*this, 0, 0));
-    } 
-        
-    // Complain about any non-dependent friend type here.
-    Diag(DS.getFriendSpecLoc(), diag::err_unexpected_friend)
-      << DS.getSourceRange();
-    return DeclPtrTy();
+    return ActOnFriendTypeDecl(S, DS, MultiTemplateParamsArg(*this, 0, 0));
   }
          
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
@@ -4333,13 +4291,8 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           // for the consumer of this Decl to know it doesn't own it.
           // For our current ASTs this shouldn't be a problem, but will
           // need to be changed with DeclGroups.
-          if (TUK == TUK_Reference)
+          if (TUK == TUK_Reference || TUK == TUK_Friend)
             return DeclPtrTy::make(PrevDecl);
-
-          // If this is a friend, make sure we create the new
-          // declaration in the appropriate semantic context.
-          if (TUK == TUK_Friend)
-            SearchDC = PrevDecl->getDeclContext();
 
           // Diagnose attempts to redefine a tag.
           if (TUK == TUK_Definition) {

@@ -311,6 +311,8 @@ def err_static_assert_failed : Error<"static_assert failed \"%0\"">;
 
 def err_unexpected_friend : Error<
   "friends can only be classes or functions">;
+def err_enum_friend : Error<
+  "enum types cannot be friends">;
 def err_friend_is_member : Error<
   "friends cannot be members of the declaring class">;
 def ext_friend_inner_class : Extension<
