@@ -1,12 +1,8 @@
-; RUN: llc < %s -march=arm -mattr=+neon > %t
-; RUN: grep {vmlal\\.s8} %t | count 1
-; RUN: grep {vmlal\\.s16} %t | count 1
-; RUN: grep {vmlal\\.s32} %t | count 1
-; RUN: grep {vmlal\\.u8} %t | count 1
-; RUN: grep {vmlal\\.u16} %t | count 1
-; RUN: grep {vmlal\\.u32} %t | count 1
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i16> @vmlals8(<8 x i16>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
+;CHECK: vmlals8:
+;CHECK: vmlal.s8
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i8>* %B
 	%tmp3 = load <8 x i8>* %C
@@ -15,6 +11,8 @@ define <8 x i16> @vmlals8(<8 x i16>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
 }
 
 define <4 x i32> @vmlals16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
+;CHECK: vmlals16:
+;CHECK: vmlal.s16
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i16>* %B
 	%tmp3 = load <4 x i16>* %C
@@ -23,6 +21,8 @@ define <4 x i32> @vmlals16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind
 }
 
 define <2 x i64> @vmlals32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
+;CHECK: vmlals32:
+;CHECK: vmlal.s32
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i32>* %B
 	%tmp3 = load <2 x i32>* %C
@@ -31,6 +31,8 @@ define <2 x i64> @vmlals32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind
 }
 
 define <8 x i16> @vmlalu8(<8 x i16>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
+;CHECK: vmlalu8:
+;CHECK: vmlal.u8
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i8>* %B
 	%tmp3 = load <8 x i8>* %C
@@ -39,6 +41,8 @@ define <8 x i16> @vmlalu8(<8 x i16>* %A, <8 x i8>* %B, <8 x i8>* %C) nounwind {
 }
 
 define <4 x i32> @vmlalu16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
+;CHECK: vmlalu16:
+;CHECK: vmlal.u16
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i16>* %B
 	%tmp3 = load <4 x i16>* %C
@@ -47,6 +51,8 @@ define <4 x i32> @vmlalu16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind
 }
 
 define <2 x i64> @vmlalu32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
+;CHECK: vmlalu32:
+;CHECK: vmlal.u32
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i32>* %B
 	%tmp3 = load <2 x i32>* %C
