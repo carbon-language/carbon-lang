@@ -3029,9 +3029,8 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
       }
 
       CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
-      // FIXME: Visit conversion functions in the base classes, too.
       OverloadedFunctionDecl *Conversions
-        = ClassDecl->getConversionFunctions();
+        = ClassDecl->getVisibleConversionFunctions();
       for (OverloadedFunctionDecl::function_iterator Func
              = Conversions->function_begin();
            Func != Conversions->function_end(); ++Func) {
