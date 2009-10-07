@@ -316,10 +316,19 @@ let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
 class VST2D<string OpcodeStr>
   : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src1,$src2\\}, $addr"), "", []>;
+class VST2Q<string OpcodeStr>
+  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
+                   DPR:$src4), IIC_VST,
+          !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3,$src4\\}, $addr"),
+          "", []>;
 
 def  VST2d8   : VST2D<"vst2.8">;
 def  VST2d16  : VST2D<"vst2.16">;
 def  VST2d32  : VST2D<"vst2.32">;
+
+def  VST2q8   : VST2Q<"vst2.8">;
+def  VST2q16  : VST2Q<"vst2.16">;
+def  VST2q32  : VST2Q<"vst2.32">;
 
 //   VST3     : Vector Store (multiple 3-element structures)
 class VST3D<string OpcodeStr>
