@@ -40,7 +40,8 @@ static bool isMallocCall(const CallInst *CI) {
     return false;
 
   // Check malloc prototype.
-  // FIXME: this will be obsolete when nobuiltin attribute will exist.
+  // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
+  // attribute will exist.
   const FunctionType *FTy = MallocFunc->getFunctionType();
   if (FTy->getNumParams() != 1)
     return false;
