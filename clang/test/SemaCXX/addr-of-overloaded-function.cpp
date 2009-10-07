@@ -44,3 +44,13 @@ void h_test() {
   ha(h1);
   hb(h1);
 }
+
+struct A { };
+void f(void (*)(A *));
+
+struct B
+{
+  void g() { f(d); }
+  void d(void *);
+  static void d(A *);
+};
