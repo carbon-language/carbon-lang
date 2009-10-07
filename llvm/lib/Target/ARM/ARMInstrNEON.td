@@ -201,10 +201,25 @@ class VLD3D<string OpcodeStr>
   : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3), (ins addrmode6:$addr),
           IIC_VLD3,
           !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3\\}, $addr"), "", []>;
+class VLD3WB<string OpcodeStr>
+  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
+          (ins addrmode6:$addr), IIC_VLD3,
+          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3\\}, $addr"),
+          "$addr.addr = $wb", []>;
 
 def  VLD3d8   : VLD3D<"vld3.8">;
 def  VLD3d16  : VLD3D<"vld3.16">;
 def  VLD3d32  : VLD3D<"vld3.32">;
+
+// vld3 to double-spaced even registers.
+def  VLD3q8a  : VLD3WB<"vld3.8">;
+def  VLD3q16a : VLD3WB<"vld3.16">;
+def  VLD3q32a : VLD3WB<"vld3.32">;
+
+// vld3 to double-spaced odd registers.
+def  VLD3q8b  : VLD3WB<"vld3.8">;
+def  VLD3q16b : VLD3WB<"vld3.16">;
+def  VLD3q32b : VLD3WB<"vld3.32">;
 
 //   VLD4     : Vector Load (multiple 4-element structures)
 class VLD4D<string OpcodeStr>

@@ -444,7 +444,7 @@ bool ARMDAGToDAGISel::SelectAddrMode6(SDValue Op, SDValue N,
                                       SDValue &Addr, SDValue &Update,
                                       SDValue &Opc) {
   Addr = N;
-  // The optional writeback is handled in ARMLoadStoreOpt.
+  // Default to no writeback.
   Update = CurDAG->getRegister(0, MVT::i32);
   Opc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(false), MVT::i32);
   return true;
@@ -1388,16 +1388,57 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      if (VT.is64BitVector()) {
+        switch (VT.getSimpleVT().SimpleTy) {
+        default: llvm_unreachable("unhandled vld3 type");
+        case MVT::v8i8:  Opc = ARM::VLD3d8; break;
+        case MVT::v4i16: Opc = ARM::VLD3d16; break;
+        case MVT::v2f32:
+        case MVT::v2i32: Opc = ARM::VLD3d32; break;
+        }
+        SDValue Chain = N->getOperand(0);
+        const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
+        return CurDAG->getMachineNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 4);
+      }
+      // Quad registers are loaded with two separate instructions, where one
+      // loads the even registers and the other loads the odd registers.
+      EVT RegVT = VT;
+      unsigned Opc2 = 0;
       switch (VT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("unhandled vld3 type");
-      case MVT::v8i8:  Opc = ARM::VLD3d8; break;
-      case MVT::v4i16: Opc = ARM::VLD3d16; break;
-      case MVT::v2f32:
-      case MVT::v2i32: Opc = ARM::VLD3d32; break;
+      case MVT::v16i8:
+        Opc = ARM::VLD3q8a;  Opc2 = ARM::VLD3q8b;  RegVT = MVT::v8i8; break;
+      case MVT::v8i16:
+        Opc = ARM::VLD3q16a; Opc2 = ARM::VLD3q16b; RegVT = MVT::v4i16; break;
+      case MVT::v4f32:
+        Opc = ARM::VLD3q32a; Opc2 = ARM::VLD3q32b; RegVT = MVT::v2f32; break;
+      case MVT::v4i32:
+        Opc = ARM::VLD3q32a; Opc2 = ARM::VLD3q32b; RegVT = MVT::v2i32; break;
       }
       SDValue Chain = N->getOperand(0);
-      const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
-      return CurDAG->getMachineNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 4);
+      // Enable writeback to the address register.
+      MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
+
+      std::vector<EVT> ResTys(3, RegVT);
+      ResTys.push_back(MemAddr.getValueType());
+      ResTys.push_back(MVT::Other);
+
+      const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc, Chain };
+      SDNode *VLdA = CurDAG->getMachineNode(Opc, dl, ResTys, OpsA, 4);
+      Chain = SDValue(VLdA, 4);
+
+      const SDValue OpsB[] = { SDValue(VLdA, 3), MemUpdate, MemOpc, Chain };
+      SDNode *VLdB = CurDAG->getMachineNode(Opc2, dl, ResTys, OpsB, 4);
+      Chain = SDValue(VLdB, 4);
+
+      SDNode *Q0 = PairDRegs(VT, SDValue(VLdA, 0), SDValue(VLdB, 0));
+      SDNode *Q1 = PairDRegs(VT, SDValue(VLdA, 1), SDValue(VLdB, 1));
+      SDNode *Q2 = PairDRegs(VT, SDValue(VLdA, 2), SDValue(VLdB, 2));
+      ReplaceUses(SDValue(N, 0), SDValue(Q0, 0));
+      ReplaceUses(SDValue(N, 1), SDValue(Q1, 0));
+      ReplaceUses(SDValue(N, 2), SDValue(Q2, 0));
+      ReplaceUses(SDValue(N, 3), Chain);
+      return NULL;
     }
 
     case Intrinsic::arm_neon_vld4: {

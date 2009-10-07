@@ -36,8 +36,12 @@ namespace {
   char NEONPreAllocPass::ID = 0;
 }
 
-static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd,
-                             unsigned &NumRegs) {
+static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
+                             unsigned &Offset, unsigned &Stride) {
+  // Default to unit stride with no offset.
+  Stride = 1;
+  Offset = 0;
+
   switch (Opcode) {
   default:
     break;
@@ -67,6 +71,24 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd,
   case ARM::VLD3LNd32:
     FirstOpnd = 0;
     NumRegs = 3;
+    return true;
+
+  case ARM::VLD3q8a:
+  case ARM::VLD3q16a:
+  case ARM::VLD3q32a:
+    FirstOpnd = 0;
+    NumRegs = 3;
+    Offset = 0;
+    Stride = 2;
+    return true;
+
+  case ARM::VLD3q8b:
+  case ARM::VLD3q16b:
+  case ARM::VLD3q32b:
+    FirstOpnd = 0;
+    NumRegs = 3;
+    Offset = 1;
+    Stride = 2;
     return true;
 
   case ARM::VLD4d8:
@@ -149,8 +171,8 @@ bool NEONPreAllocPass::PreAllocNEONRegisters(MachineBasicBlock &MBB) {
   MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
   for (; MBBI != E; ++MBBI) {
     MachineInstr *MI = &*MBBI;
-    unsigned FirstOpnd, NumRegs;
-    if (!isNEONMultiRegOp(MI->getOpcode(), FirstOpnd, NumRegs))
+    unsigned FirstOpnd, NumRegs, Offset, Stride;
+    if (!isNEONMultiRegOp(MI->getOpcode(), FirstOpnd, NumRegs, Offset, Stride))
       continue;
 
     MachineBasicBlock::iterator NextI = next(MBBI);
@@ -164,9 +186,10 @@ bool NEONPreAllocPass::PreAllocNEONRegisters(MachineBasicBlock &MBB) {
       // For now, just assign a fixed set of adjacent registers.
       // This leaves plenty of room for future improvements.
       static const unsigned NEONDRegs[] = {
-        ARM::D0, ARM::D1, ARM::D2, ARM::D3
+        ARM::D0, ARM::D1, ARM::D2, ARM::D3,
+        ARM::D4, ARM::D5, ARM::D6, ARM::D7
       };
-      MO.setReg(NEONDRegs[R]);
+      MO.setReg(NEONDRegs[Offset + R * Stride]);
 
       if (MO.isUse()) {
         // Insert a copy from VirtReg.
