@@ -95,11 +95,11 @@ FunctionPass *llvm::createCodePlacementOptPass() {
 ///       ...
 ///       jmp B
 ///
-///       C:  --> new loop header
+///       C:
 ///       ...
 ///       <fallthough to B>
 ///       
-///       B:
+///       B:  --> loop header
 ///       ...
 ///       jcc <cond> C, [exit]
 ///
