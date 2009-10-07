@@ -1,4 +1,4 @@
-// RUN: clang -emit-ast %s -o %t.ast &&
+// RUN: clang-cc -triple x86_64-apple-darwin10 -emit-pch -x objective-c %s -o %t.ast &&
 // RUN: c-index-test %t.ast all | FileCheck %s
 
 // CHECK: <invalid loc>:0:0: TypedefDecl=__int128_t:0:0 [Context=c-index-api-test.m]
@@ -8,13 +8,13 @@
 // CHECK: <invalid loc>:0:0: ObjCInterfaceDecl=Protocol:0:0 [Context=c-index-api-test.m]
 // CHECK: <invalid loc>:0:0: TypedefDecl=id:0:0 [Context=c-index-api-test.m]
 // CHECK: <invalid loc>:0:0: TypedefDecl=Class:0:0 [Context=c-index-api-test.m]
-// CHECK: <built-in>:80:16: StructDecl=__va_list_tag:80:16 [Context=c-index-api-test.m]
-// CHECK: <built-in>:80:42: FieldDecl=gp_offset:80:42 [Context=__va_list_tag]
-// CHECK: <built-in>:80:63: FieldDecl=fp_offset:80:63 [Context=__va_list_tag]
-// CHECK: <built-in>:80:81: FieldDecl=overflow_arg_area:80:81 [Context=__va_list_tag]
-// CHECK: <built-in>:80:107: FieldDecl=reg_save_area:80:107 [Context=__va_list_tag]
-// CHECK: <built-in>:80:123: TypedefDecl=__va_list_tag:80:123 [Context=c-index-api-test.m]
-// CHECK: <built-in>:80:159: TypedefDecl=__builtin_va_list:80:159 [Context=c-index-api-test.m]
+// CHECK: <built-in>:79:16: StructDecl=__va_list_tag:79:16 [Context=c-index-api-test.m]
+// CHECK: <built-in>:79:42: FieldDecl=gp_offset:79:42 [Context=__va_list_tag]
+// CHECK: <built-in>:79:63: FieldDecl=fp_offset:79:63 [Context=__va_list_tag]
+// CHECK: <built-in>:79:81: FieldDecl=overflow_arg_area:79:81 [Context=__va_list_tag]
+// CHECK: <built-in>:79:107: FieldDecl=reg_save_area:79:107 [Context=__va_list_tag]
+// CHECK: <built-in>:79:123: TypedefDecl=__va_list_tag:79:123 [Context=c-index-api-test.m]
+// CHECK: <built-in>:79:159: TypedefDecl=__builtin_va_list:79:159 [Context=c-index-api-test.m]
 // 
 
 @interface Foo 
