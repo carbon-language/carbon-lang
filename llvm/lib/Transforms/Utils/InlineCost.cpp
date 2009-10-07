@@ -135,8 +135,8 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
           NumInsts += 5;
       }
       
-      // This, too, is a call.
-      if (isa<MallocInst>(II))
+      // These, too, are calls.
+      if (isa<MallocInst>(II) || isa<FreeInst>(II))
 	NumInsts += 5;
 
       if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
