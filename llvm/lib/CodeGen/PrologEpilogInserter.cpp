@@ -828,7 +828,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             if (PrevScratchReg && Value == PrevValue) {
               // FIXME: This assumes that the instructions in the live range
               // for the virtual register are exclusively for the purpose
-              // of populating the value in the register. That reasonable
+              // of populating the value in the register. That's reasonable
               // for these frame index registers, but it's still a very, very
               // strong assumption. Perhaps this implies that the frame index
               // elimination should be before register allocation, with
