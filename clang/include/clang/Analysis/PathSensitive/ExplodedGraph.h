@@ -26,12 +26,14 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/Support/Casting.h"
+#include "clang/Analysis/Support/BumpVector.h"
 
 namespace clang {
 
 class GRState;
 class CFG;
 class ASTContext;
+class ExplodedGraph;
 
 //===----------------------------------------------------------------------===//
 // ExplodedGraph "implementation" classes.  These classes are not typed to
@@ -68,20 +70,18 @@ class ExplodedNode : public llvm::FoldingSetNode {
   public:
     NodeGroup() : P(0) {}
 
-    ~NodeGroup();
+    ExplodedNode **begin() const;
 
-    ExplodedNode** begin() const;
-
-    ExplodedNode** end() const;
+    ExplodedNode **end() const;
 
     unsigned size() const;
 
-    bool empty() const { return size() == 0; }
+    bool empty() const { return (P & ~Mask) == 0; }
 
-    void addNode(ExplodedNode* N);
+    void addNode(ExplodedNode* N, ExplodedGraph &G);
 
     void setFlag() {
-      assert (P == 0);
+      assert(P == 0);
       P = AuxFlag;
     }
 
@@ -131,7 +131,10 @@ public:
   const T* getLocationAs() const { return llvm::dyn_cast<T>(&Location); }
 
   static void Profile(llvm::FoldingSetNodeID &ID,
-                      const ProgramPoint& Loc, const GRState* state);
+                      const ProgramPoint& Loc, const GRState* state) {
+    ID.Add(Loc);
+    ID.AddPointer(state);
+  }
 
   void Profile(llvm::FoldingSetNodeID& ID) const {
     Profile(ID, getLocation(), getState());
@@ -139,7 +142,7 @@ public:
 
   /// addPredeccessor - Adds a predecessor to the current node, and
   ///  in tandem add this node as a successor of the other node.
-  void addPredecessor(ExplodedNode* V);
+  void addPredecessor(ExplodedNode* V, ExplodedGraph &G);
 
   unsigned succ_size() const { return Succs.size(); }
   unsigned pred_size() const { return Preds.size(); }
@@ -229,8 +232,9 @@ protected:
   /// Nodes - The nodes in the graph.
   llvm::FoldingSet<ExplodedNode> Nodes;
 
-  /// Allocator - BumpPtrAllocator to create nodes.
-  llvm::BumpPtrAllocator Allocator;
+  /// BVC - Allocator and context for allocating nodes and their predecessor
+  /// and successor groups.
+  BumpVectorContext BVC;
 
   /// Ctx - The ASTContext used to "interpret" CodeDecl.
   ASTContext& Ctx;
@@ -265,7 +269,7 @@ public:
 
   ExplodedGraph(ASTContext& ctx) : Ctx(ctx), NumNodes(0) {}
 
-  virtual ~ExplodedGraph() {}
+  ~ExplodedGraph() {}
 
   unsigned num_roots() const { return Roots.size(); }
   unsigned num_eops() const { return EndNodes.size(); }
@@ -307,7 +311,8 @@ public:
 
   const_eop_iterator eop_end() const { return EndNodes.end(); }
 
-  llvm::BumpPtrAllocator& getAllocator() { return Allocator; }
+  llvm::BumpPtrAllocator & getAllocator() { return BVC.getAllocator(); }
+  BumpVectorContext &getNodeAllocator() { return BVC; }
 
   ASTContext& getContext() { return Ctx; }
 

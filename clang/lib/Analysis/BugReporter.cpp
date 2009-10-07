@@ -1432,7 +1432,7 @@ MakeReportGraph(const ExplodedGraph* G,
 
     // Link up the new node with the previous node.
     if (Last)
-      NewN->addPredecessor(Last);
+      NewN->addPredecessor(Last, *GNew);
 
     Last = NewN;
 

@@ -43,52 +43,47 @@ void ExplodedNode::SetAuditor(ExplodedNode::Auditor* A) {
 // ExplodedNode.
 //===----------------------------------------------------------------------===//
 
-static inline std::vector<ExplodedNode*>& getVector(void* P) {
-  return *reinterpret_cast<std::vector<ExplodedNode*>*>(P);
+static inline BumpVector<ExplodedNode*>& getVector(void* P) {
+  return *reinterpret_cast<BumpVector<ExplodedNode*>*>(P);
 }
 
-void ExplodedNode::Profile(llvm::FoldingSetNodeID& ID,
-                           const ProgramPoint& Loc,
-                           const GRState* state) {
-  ID.Add(Loc);
-  ID.AddPointer(state);
-}
-
-void ExplodedNode::addPredecessor(ExplodedNode* V) {
+void ExplodedNode::addPredecessor(ExplodedNode* V, ExplodedGraph &G) {
   assert (!V->isSink());
-  Preds.addNode(V);
-  V->Succs.addNode(this);
+  Preds.addNode(V, G);
+  V->Succs.addNode(this, G);
 #ifndef NDEBUG
   if (NodeAuditor) NodeAuditor->AddEdge(V, this);
 #endif
 }
 
-void ExplodedNode::NodeGroup::addNode(ExplodedNode* N) {
-
-  assert ((reinterpret_cast<uintptr_t>(N) & Mask) == 0x0);
-  assert (!getFlag());
+void ExplodedNode::NodeGroup::addNode(ExplodedNode* N, ExplodedGraph &G) {
+  assert((reinterpret_cast<uintptr_t>(N) & Mask) == 0x0);
+  assert(!getFlag());
 
   if (getKind() == Size1) {
     if (ExplodedNode* NOld = getNode()) {
-      std::vector<ExplodedNode*>* V = new std::vector<ExplodedNode*>();
-      assert ((reinterpret_cast<uintptr_t>(V) & Mask) == 0x0);
-      V->push_back(NOld);
-      V->push_back(N);
+      BumpVectorContext &Ctx = G.getNodeAllocator();
+      BumpVector<ExplodedNode*> *V = 
+        G.getAllocator().Allocate<BumpVector<ExplodedNode*> >();
+      new (V) BumpVector<ExplodedNode*>(Ctx, 4);
+      
+      assert((reinterpret_cast<uintptr_t>(V) & Mask) == 0x0);
+      V->push_back(NOld, Ctx);
+      V->push_back(N, Ctx);
       P = reinterpret_cast<uintptr_t>(V) | SizeOther;
-      assert (getPtr() == (void*) V);
-      assert (getKind() == SizeOther);
+      assert(getPtr() == (void*) V);
+      assert(getKind() == SizeOther);
     }
     else {
       P = reinterpret_cast<uintptr_t>(N);
-      assert (getKind() == Size1);
+      assert(getKind() == Size1);
     }
   }
   else {
-    assert (getKind() == SizeOther);
-    getVector(getPtr()).push_back(N);
+    assert(getKind() == SizeOther);
+    getVector(getPtr()).push_back(N, G.getNodeAllocator());
   }
 }
-
 
 unsigned ExplodedNode::NodeGroup::size() const {
   if (getFlag())
@@ -100,7 +95,7 @@ unsigned ExplodedNode::NodeGroup::size() const {
     return getVector(getPtr()).size();
 }
 
-ExplodedNode** ExplodedNode::NodeGroup::begin() const {
+ExplodedNode **ExplodedNode::NodeGroup::begin() const {
   if (getFlag())
     return NULL;
 
@@ -119,12 +114,8 @@ ExplodedNode** ExplodedNode::NodeGroup::end() const {
   else {
     // Dereferencing end() is undefined behaviour. The vector is not empty, so
     // we can dereference the last elem and then add 1 to the result.
-    return const_cast<ExplodedNode**>(&getVector(getPtr()).back()) + 1;
+    return const_cast<ExplodedNode**>(getVector(getPtr()).end());
   }
-}
-
-ExplodedNode::NodeGroup::~NodeGroup() {
-  if (getKind() == SizeOther) delete &getVector(getPtr());
 }
 
 ExplodedNode *ExplodedGraph::getNode(const ProgramPoint& L,
@@ -138,7 +129,7 @@ ExplodedNode *ExplodedGraph::getNode(const ProgramPoint& L,
 
   if (!V) {
     // Allocate a new node.
-    V = (NodeTy*) Allocator.Allocate<NodeTy>();
+    V = (NodeTy*) getAllocator().Allocate<NodeTy>();
     new (V) NodeTy(L, State);
 
     // Insert the node into the node set and return it.
@@ -253,7 +244,7 @@ ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
       if (PI == Pass2.end())
         continue;
 
-      NewN->addPredecessor(PI->second);
+      NewN->addPredecessor(PI->second, *G);
     }
 
     // In the case that some of the intended successors of NewN have already
@@ -263,7 +254,7 @@ ExplodedGraph::TrimInternal(const ExplodedNode* const* BeginSources,
     for (ExplodedNode **I=N->Succs.begin(), **E=N->Succs.end(); I!=E; ++I) {
       Pass2Ty::iterator PI = Pass2.find(*I);
       if (PI != Pass2.end()) {
-        PI->second->addPredecessor(NewN);
+        PI->second->addPredecessor(NewN, *G);
         continue;
       }
 

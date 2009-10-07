@@ -372,7 +372,7 @@ void GRCoreEngine::GenerateNode(const ProgramPoint& Loc,
   ExplodedNode* Node = G->getNode(Loc, State, &IsNew);
 
   if (Pred)
-    Node->addPredecessor(Pred);  // Link 'Node' with its predecessor.
+    Node->addPredecessor(Pred, *G);  // Link 'Node' with its predecessor.
   else {
     assert (IsNew);
     G->addRoot(Node);  // 'Node' has no predecessor.  Make it a root.
@@ -412,7 +412,7 @@ void GRStmtNodeBuilder::GenerateAutoTransition(ExplodedNode* N) {
 
   bool IsNew;
   ExplodedNode* Succ = Eng.G->getNode(Loc, N->State, &IsNew);
-  Succ->addPredecessor(N);
+  Succ->addPredecessor(N, *Eng.G);
 
   if (IsNew)
     Eng.WList->Enqueue(Succ, B, Idx+1);
@@ -471,7 +471,7 @@ GRStmtNodeBuilder::generateNodeInternal(const ProgramPoint &Loc,
                                         ExplodedNode* Pred) {
   bool IsNew;
   ExplodedNode* N = Eng.G->getNode(Loc, State, &IsNew);
-  N->addPredecessor(Pred);
+  N->addPredecessor(Pred, *Eng.G);
   Deferred.erase(Pred);
 
   if (IsNew) {
@@ -497,7 +497,7 @@ ExplodedNode* GRBranchNodeBuilder::generateNode(const GRState* State,
     Eng.G->getNode(BlockEdge(Src,branch ? DstT:DstF,Pred->getLocationContext()),
                    State, &IsNew);
 
-  Succ->addPredecessor(Pred);
+  Succ->addPredecessor(Pred, *Eng.G);
 
   if (branch)
     GeneratedTrue = true;
@@ -529,7 +529,7 @@ GRIndirectGotoNodeBuilder::generateNode(const iterator& I, const GRState* St,
   ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock(),
                                       Pred->getLocationContext()), St, &IsNew);
 
-  Succ->addPredecessor(Pred);
+  Succ->addPredecessor(Pred, *Eng.G);
 
   if (IsNew) {
 
@@ -552,7 +552,7 @@ GRSwitchNodeBuilder::generateCaseStmtNode(const iterator& I, const GRState* St){
 
   ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock(),
                                        Pred->getLocationContext()), St, &IsNew);
-  Succ->addPredecessor(Pred);
+  Succ->addPredecessor(Pred, *Eng.G);
 
   if (IsNew) {
     Eng.WList->Enqueue(Succ);
@@ -574,7 +574,7 @@ GRSwitchNodeBuilder::generateDefaultCaseNode(const GRState* St, bool isSink) {
 
   ExplodedNode* Succ = Eng.G->getNode(BlockEdge(Src, DefaultBlock,
                                        Pred->getLocationContext()), St, &IsNew);
-  Succ->addPredecessor(Pred);
+  Succ->addPredecessor(Pred, *Eng.G);
 
   if (IsNew) {
     if (isSink)
@@ -602,7 +602,7 @@ GREndPathNodeBuilder::generateNode(const GRState* State, const void *tag,
   ExplodedNode* Node = Eng.G->getNode(BlockEntrance(&B,
                                Pred->getLocationContext(), tag), State, &IsNew);
 
-  Node->addPredecessor(P ? P : Pred);
+  Node->addPredecessor(P ? P : Pred, *Eng.G);
 
   if (IsNew) {
     Eng.G->addEndOfPath(Node);
