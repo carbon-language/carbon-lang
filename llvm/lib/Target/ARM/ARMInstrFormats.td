@@ -1215,7 +1215,8 @@ class NI4<dag oops, dag iops, InstrItinClass itin, string asm, list<dag> pattern
   : NeonI<oops, iops, AddrMode4, IndexModeNone, itin, asm, "", pattern> {
 }
 
-class NLdSt<dag oops, dag iops, InstrItinClass itin,
+class NLdSt<bit op23, bits<2> op21_20, bits<4> op11_8, bits<4> op7_4,
+            dag oops, dag iops, InstrItinClass itin,
             string asm, string cstr, list<dag> pattern>
   : NeonI<oops, iops, AddrMode6, IndexModeNone, itin, asm, cstr, pattern> {
   let Inst{31-24} = 0b11110100;

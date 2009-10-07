@@ -155,265 +155,289 @@ def VSTRQ : NI4<(outs), (ins QPR:$src, addrmode4:$addr),
 }
 
 //   VLD1     : Vector Load (multiple single elements)
-class VLD1D<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
-  : NLdSt<(outs DPR:$dst), (ins addrmode6:$addr), IIC_VLD1,
+class VLD1D<bits<4> op7_4, string OpcodeStr, ValueType Ty, Intrinsic IntOp>
+  : NLdSt<0,0b10,0b0111,op7_4, (outs DPR:$dst), (ins addrmode6:$addr), IIC_VLD1,
           !strconcat(OpcodeStr, "\t\\{$dst\\}, $addr"), "",
           [(set DPR:$dst, (Ty (IntOp addrmode6:$addr)))]>;
-class VLD1Q<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
-  : NLdSt<(outs QPR:$dst), (ins addrmode6:$addr), IIC_VLD1,
+class VLD1Q<bits<4> op7_4, string OpcodeStr, ValueType Ty, Intrinsic IntOp>
+  : NLdSt<0,0b10,0b1010,op7_4, (outs QPR:$dst), (ins addrmode6:$addr), IIC_VLD1,
           !strconcat(OpcodeStr, "\t${dst:dregpair}, $addr"), "",
           [(set QPR:$dst, (Ty (IntOp addrmode6:$addr)))]>;
 
-def  VLD1d8   : VLD1D<"vld1.8",  v8i8,  int_arm_neon_vld1>;
-def  VLD1d16  : VLD1D<"vld1.16", v4i16, int_arm_neon_vld1>;
-def  VLD1d32  : VLD1D<"vld1.32", v2i32, int_arm_neon_vld1>;
-def  VLD1df   : VLD1D<"vld1.32", v2f32, int_arm_neon_vld1>;
-def  VLD1d64  : VLD1D<"vld1.64", v1i64, int_arm_neon_vld1>;
+def  VLD1d8   : VLD1D<0b0000, "vld1.8",  v8i8,  int_arm_neon_vld1>;
+def  VLD1d16  : VLD1D<0b0100, "vld1.16", v4i16, int_arm_neon_vld1>;
+def  VLD1d32  : VLD1D<0b1000, "vld1.32", v2i32, int_arm_neon_vld1>;
+def  VLD1df   : VLD1D<0b1000, "vld1.32", v2f32, int_arm_neon_vld1>;
+def  VLD1d64  : VLD1D<0b1100, "vld1.64", v1i64, int_arm_neon_vld1>;
 
-def  VLD1q8   : VLD1Q<"vld1.8",  v16i8, int_arm_neon_vld1>;
-def  VLD1q16  : VLD1Q<"vld1.16", v8i16, int_arm_neon_vld1>;
-def  VLD1q32  : VLD1Q<"vld1.32", v4i32, int_arm_neon_vld1>;
-def  VLD1qf   : VLD1Q<"vld1.32", v4f32, int_arm_neon_vld1>;
-def  VLD1q64  : VLD1Q<"vld1.64", v2i64, int_arm_neon_vld1>;
+def  VLD1q8   : VLD1Q<0b0000, "vld1.8",  v16i8, int_arm_neon_vld1>;
+def  VLD1q16  : VLD1Q<0b0100, "vld1.16", v8i16, int_arm_neon_vld1>;
+def  VLD1q32  : VLD1Q<0b1000, "vld1.32", v4i32, int_arm_neon_vld1>;
+def  VLD1qf   : VLD1Q<0b1000, "vld1.32", v4f32, int_arm_neon_vld1>;
+def  VLD1q64  : VLD1Q<0b1100, "vld1.64", v2i64, int_arm_neon_vld1>;
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in {
 
 //   VLD2     : Vector Load (multiple 2-element structures)
-class VLD2D<string OpcodeStr>
-  : NLdSt<(outs DPR:$dst1, DPR:$dst2), (ins addrmode6:$addr), IIC_VLD2,
+class VLD2D<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b10,0b1000,op7_4, (outs DPR:$dst1, DPR:$dst2),
+          (ins addrmode6:$addr), IIC_VLD2,
           !strconcat(OpcodeStr, "\t\\{$dst1,$dst2\\}, $addr"), "", []>;
-class VLD2Q<string OpcodeStr>
-  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
+class VLD2Q<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b10,0b0011,op7_4,
+          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$addr), IIC_VLD2,
           !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3,$dst4\\}, $addr"),
           "", []>;
 
-def  VLD2d8   : VLD2D<"vld2.8">;
-def  VLD2d16  : VLD2D<"vld2.16">;
-def  VLD2d32  : VLD2D<"vld2.32">;
+def  VLD2d8   : VLD2D<0b0000, "vld2.8">;
+def  VLD2d16  : VLD2D<0b0100, "vld2.16">;
+def  VLD2d32  : VLD2D<0b1000, "vld2.32">;
 
-def  VLD2q8   : VLD2Q<"vld2.8">;
-def  VLD2q16  : VLD2Q<"vld2.16">;
-def  VLD2q32  : VLD2Q<"vld2.32">;
+def  VLD2q8   : VLD2Q<0b0000, "vld2.8">;
+def  VLD2q16  : VLD2Q<0b0100, "vld2.16">;
+def  VLD2q32  : VLD2Q<0b1000, "vld2.32">;
 
 //   VLD3     : Vector Load (multiple 3-element structures)
-class VLD3D<string OpcodeStr>
-  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3), (ins addrmode6:$addr),
-          IIC_VLD3,
+class VLD3D<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b10,0b0100,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
+          (ins addrmode6:$addr), IIC_VLD3,
           !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3\\}, $addr"), "", []>;
-class VLD3WB<string OpcodeStr>
-  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
+class VLD3WB<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b10,0b0101,op7_4, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, GPR:$wb),
           (ins addrmode6:$addr), IIC_VLD3,
           !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3\\}, $addr"),
           "$addr.addr = $wb", []>;
 
-def  VLD3d8   : VLD3D<"vld3.8">;
-def  VLD3d16  : VLD3D<"vld3.16">;
-def  VLD3d32  : VLD3D<"vld3.32">;
+def  VLD3d8   : VLD3D<0b0000, "vld3.8">;
+def  VLD3d16  : VLD3D<0b0100, "vld3.16">;
+def  VLD3d32  : VLD3D<0b1000, "vld3.32">;
 
 // vld3 to double-spaced even registers.
-def  VLD3q8a  : VLD3WB<"vld3.8">;
-def  VLD3q16a : VLD3WB<"vld3.16">;
-def  VLD3q32a : VLD3WB<"vld3.32">;
+def  VLD3q8a  : VLD3WB<0b0000, "vld3.8">;
+def  VLD3q16a : VLD3WB<0b0100, "vld3.16">;
+def  VLD3q32a : VLD3WB<0b1000, "vld3.32">;
 
 // vld3 to double-spaced odd registers.
-def  VLD3q8b  : VLD3WB<"vld3.8">;
-def  VLD3q16b : VLD3WB<"vld3.16">;
-def  VLD3q32b : VLD3WB<"vld3.32">;
+def  VLD3q8b  : VLD3WB<0b0000, "vld3.8">;
+def  VLD3q16b : VLD3WB<0b0100, "vld3.16">;
+def  VLD3q32b : VLD3WB<0b1000, "vld3.32">;
 
 //   VLD4     : Vector Load (multiple 4-element structures)
-class VLD4D<string OpcodeStr>
-  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
+class VLD4D<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b10,0b0000,op7_4,
+          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$addr), IIC_VLD4,
           !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3,$dst4\\}, $addr"),
           "", []>;
-class VLD4WB<string OpcodeStr>
-  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
+class VLD4WB<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b10,0b0001,op7_4,
+          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
           (ins addrmode6:$addr), IIC_VLD4,
           !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3,$dst4\\}, $addr"),
           "$addr.addr = $wb", []>;
 
-def  VLD4d8   : VLD4D<"vld4.8">;
-def  VLD4d16  : VLD4D<"vld4.16">;
-def  VLD4d32  : VLD4D<"vld4.32">;
+def  VLD4d8   : VLD4D<0b0000, "vld4.8">;
+def  VLD4d16  : VLD4D<0b0100, "vld4.16">;
+def  VLD4d32  : VLD4D<0b1000, "vld4.32">;
 
 // vld4 to double-spaced even registers.
-def  VLD4q8a  : VLD4WB<"vld4.8">;
-def  VLD4q16a : VLD4WB<"vld4.16">;
-def  VLD4q32a : VLD4WB<"vld4.32">;
+def  VLD4q8a  : VLD4WB<0b0000, "vld4.8">;
+def  VLD4q16a : VLD4WB<0b0100, "vld4.16">;
+def  VLD4q32a : VLD4WB<0b1000, "vld4.32">;
 
 // vld4 to double-spaced odd registers.
-def  VLD4q8b  : VLD4WB<"vld4.8">;
-def  VLD4q16b : VLD4WB<"vld4.16">;
-def  VLD4q32b : VLD4WB<"vld4.32">;
+def  VLD4q8b  : VLD4WB<0b0000, "vld4.8">;
+def  VLD4q16b : VLD4WB<0b0100, "vld4.16">;
+def  VLD4q32b : VLD4WB<0b1000, "vld4.32">;
+
+//   VLD1LN   : Vector Load (single element to one lane)
+//   FIXME: Not yet implemented.
 
 //   VLD2LN   : Vector Load (single 2-element structure to one lane)
-class VLD2LND<string OpcodeStr>
-  : NLdSt<(outs DPR:$dst1, DPR:$dst2),
+class VLD2LND<bits<4> op11_8, string OpcodeStr>
+  : NLdSt<1,0b10,op11_8,0b0000, (outs DPR:$dst1, DPR:$dst2),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
           IIC_VLD2,
           !strconcat(OpcodeStr, "\t\\{$dst1[$lane],$dst2[$lane]\\}, $addr"),
           "$src1 = $dst1, $src2 = $dst2", []>;
 
-def VLD2LNd8  : VLD2LND<"vld2.8">;
-def VLD2LNd16 : VLD2LND<"vld2.16">;
-def VLD2LNd32 : VLD2LND<"vld2.32">;
+def VLD2LNd8  : VLD2LND<0b0001, "vld2.8">;
+def VLD2LNd16 : VLD2LND<0b0101, "vld2.16">;
+def VLD2LNd32 : VLD2LND<0b1001, "vld2.32">;
 
 //   VLD3LN   : Vector Load (single 3-element structure to one lane)
-class VLD3LND<string OpcodeStr>
-  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
+class VLD3LND<bits<4> op11_8, string OpcodeStr>
+  : NLdSt<1,0b10,op11_8,0b0000, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
           nohash_imm:$lane), IIC_VLD3,
           !strconcat(OpcodeStr,
           "\t\\{$dst1[$lane],$dst2[$lane],$dst3[$lane]\\}, $addr"),
           "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3", []>;
 
-def VLD3LNd8  : VLD3LND<"vld3.8">;
-def VLD3LNd16 : VLD3LND<"vld3.16">;
-def VLD3LNd32 : VLD3LND<"vld3.32">;
+def VLD3LNd8  : VLD3LND<0b0010, "vld3.8">;
+def VLD3LNd16 : VLD3LND<0b0110, "vld3.16">;
+def VLD3LNd32 : VLD3LND<0b1010, "vld3.32">;
 
 //   VLD4LN   : Vector Load (single 4-element structure to one lane)
-class VLD4LND<string OpcodeStr>
-  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
+class VLD4LND<bits<4> op11_8, string OpcodeStr>
+  : NLdSt<1,0b10,op11_8,0b0000,
+          (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
           nohash_imm:$lane), IIC_VLD4,
           !strconcat(OpcodeStr,
           "\t\\{$dst1[$lane],$dst2[$lane],$dst3[$lane],$dst4[$lane]\\}, $addr"),
           "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4", []>;
 
-def VLD4LNd8  : VLD4LND<"vld4.8">;
-def VLD4LNd16 : VLD4LND<"vld4.16">;
-def VLD4LNd32 : VLD4LND<"vld4.32">;
+def VLD4LNd8  : VLD4LND<0b0011, "vld4.8">;
+def VLD4LNd16 : VLD4LND<0b0111, "vld4.16">;
+def VLD4LNd32 : VLD4LND<0b1011, "vld4.32">;
+
+//   VLD1DUP  : Vector Load (single element to all lanes)
+//   VLD2DUP  : Vector Load (single 2-element structure to all lanes)
+//   VLD3DUP  : Vector Load (single 3-element structure to all lanes)
+//   VLD4DUP  : Vector Load (single 4-element structure to all lanes)
+//   FIXME: Not yet implemented.
 } // mayLoad = 1, hasExtraDefRegAllocReq = 1
 
 //   VST1     : Vector Store (multiple single elements)
-class VST1D<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
-  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src), IIC_VST,
+class VST1D<bits<4> op7_4, string OpcodeStr, ValueType Ty, Intrinsic IntOp>
+  : NLdSt<0,0b00,0b0111,op7_4, (outs), (ins addrmode6:$addr, DPR:$src), IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src\\}, $addr"), "",
           [(IntOp addrmode6:$addr, (Ty DPR:$src))]>;
-class VST1Q<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
-  : NLdSt<(outs), (ins addrmode6:$addr, QPR:$src), IIC_VST,
+class VST1Q<bits<4> op7_4, string OpcodeStr, ValueType Ty, Intrinsic IntOp>
+  : NLdSt<0,0b00,0b1010,op7_4, (outs), (ins addrmode6:$addr, QPR:$src), IIC_VST,
           !strconcat(OpcodeStr, "\t${src:dregpair}, $addr"), "",
           [(IntOp addrmode6:$addr, (Ty QPR:$src))]>;
 
 let hasExtraSrcRegAllocReq = 1 in {
-def  VST1d8   : VST1D<"vst1.8",  v8i8,  int_arm_neon_vst1>;
-def  VST1d16  : VST1D<"vst1.16", v4i16, int_arm_neon_vst1>;
-def  VST1d32  : VST1D<"vst1.32", v2i32, int_arm_neon_vst1>;
-def  VST1df   : VST1D<"vst1.32", v2f32, int_arm_neon_vst1>;
-def  VST1d64  : VST1D<"vst1.64", v1i64, int_arm_neon_vst1>;
+def  VST1d8   : VST1D<0b0000, "vst1.8",  v8i8,  int_arm_neon_vst1>;
+def  VST1d16  : VST1D<0b0100, "vst1.16", v4i16, int_arm_neon_vst1>;
+def  VST1d32  : VST1D<0b1000, "vst1.32", v2i32, int_arm_neon_vst1>;
+def  VST1df   : VST1D<0b1000, "vst1.32", v2f32, int_arm_neon_vst1>;
+def  VST1d64  : VST1D<0b1100, "vst1.64", v1i64, int_arm_neon_vst1>;
 
-def  VST1q8   : VST1Q<"vst1.8",  v16i8, int_arm_neon_vst1>;
-def  VST1q16  : VST1Q<"vst1.16", v8i16, int_arm_neon_vst1>;
-def  VST1q32  : VST1Q<"vst1.32", v4i32, int_arm_neon_vst1>;
-def  VST1qf   : VST1Q<"vst1.32", v4f32, int_arm_neon_vst1>;
-def  VST1q64  : VST1Q<"vst1.64", v2i64, int_arm_neon_vst1>;
+def  VST1q8   : VST1Q<0b0000, "vst1.8",  v16i8, int_arm_neon_vst1>;
+def  VST1q16  : VST1Q<0b0100, "vst1.16", v8i16, int_arm_neon_vst1>;
+def  VST1q32  : VST1Q<0b1000, "vst1.32", v4i32, int_arm_neon_vst1>;
+def  VST1qf   : VST1Q<0b1000, "vst1.32", v4f32, int_arm_neon_vst1>;
+def  VST1q64  : VST1Q<0b1100, "vst1.64", v2i64, int_arm_neon_vst1>;
 } // hasExtraSrcRegAllocReq
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in {
 
 //   VST2     : Vector Store (multiple 2-element structures)
-class VST2D<string OpcodeStr>
-  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
+class VST2D<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b00,0b1000,op7_4, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src1,$src2\\}, $addr"), "", []>;
-class VST2Q<string OpcodeStr>
-  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
-                   DPR:$src4), IIC_VST,
+class VST2Q<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b00,0b0011,op7_4, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
+          IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3,$src4\\}, $addr"),
           "", []>;
 
-def  VST2d8   : VST2D<"vst2.8">;
-def  VST2d16  : VST2D<"vst2.16">;
-def  VST2d32  : VST2D<"vst2.32">;
+def  VST2d8   : VST2D<0b0000, "vst2.8">;
+def  VST2d16  : VST2D<0b0100, "vst2.16">;
+def  VST2d32  : VST2D<0b1000, "vst2.32">;
 
-def  VST2q8   : VST2Q<"vst2.8">;
-def  VST2q16  : VST2Q<"vst2.16">;
-def  VST2q32  : VST2Q<"vst2.32">;
+def  VST2q8   : VST2Q<0b0000, "vst2.8">;
+def  VST2q16  : VST2Q<0b0100, "vst2.16">;
+def  VST2q32  : VST2Q<0b1000, "vst2.32">;
 
 //   VST3     : Vector Store (multiple 3-element structures)
-class VST3D<string OpcodeStr>
-  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3),
-          IIC_VST,
+class VST3D<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b00,0b0100,op7_4, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3\\}, $addr"), "", []>;
-class VST3WB<string OpcodeStr>
-  : NLdSt<(outs GPR:$wb), (ins addrmode6:$addr, DPR:$src1, DPR:$src2,
-                           DPR:$src3), IIC_VST,
+class VST3WB<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b00,0b0101,op7_4, (outs GPR:$wb),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3), IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3\\}, $addr"),
           "$addr.addr = $wb", []>;
 
-def  VST3d8   : VST3D<"vst3.8">;
-def  VST3d16  : VST3D<"vst3.16">;
-def  VST3d32  : VST3D<"vst3.32">;
+def  VST3d8   : VST3D<0b0000, "vst3.8">;
+def  VST3d16  : VST3D<0b0100, "vst3.16">;
+def  VST3d32  : VST3D<0b1000, "vst3.32">;
 
 // vst3 to double-spaced even registers.
-def  VST3q8a  : VST3WB<"vst3.8">;
-def  VST3q16a : VST3WB<"vst3.16">;
-def  VST3q32a : VST3WB<"vst3.32">;
+def  VST3q8a  : VST3WB<0b0000, "vst3.8">;
+def  VST3q16a : VST3WB<0b0100, "vst3.16">;
+def  VST3q32a : VST3WB<0b1000, "vst3.32">;
 
 // vst3 to double-spaced odd registers.
-def  VST3q8b  : VST3WB<"vst3.8">;
-def  VST3q16b : VST3WB<"vst3.16">;
-def  VST3q32b : VST3WB<"vst3.32">;
+def  VST3q8b  : VST3WB<0b0000, "vst3.8">;
+def  VST3q16b : VST3WB<0b0100, "vst3.16">;
+def  VST3q32b : VST3WB<0b1000, "vst3.32">;
 
 //   VST4     : Vector Store (multiple 4-element structures)
-class VST4D<string OpcodeStr>
-  : NLdSt<(outs), (ins addrmode6:$addr,
-                   DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4), IIC_VST,
+class VST4D<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b00,0b0000,op7_4, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
+          IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3,$src4\\}, $addr"),
           "", []>;
-class VST4WB<string OpcodeStr>
-  : NLdSt<(outs GPR:$wb), (ins addrmode6:$addr, DPR:$src1, DPR:$src2,
-                           DPR:$src3, DPR:$src4), IIC_VST,
+class VST4WB<bits<4> op7_4, string OpcodeStr>
+  : NLdSt<0,0b00,0b0001,op7_4, (outs GPR:$wb),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4),
+          IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3,$src4\\}, $addr"),
           "$addr.addr = $wb", []>;
 
-def  VST4d8   : VST4D<"vst4.8">;
-def  VST4d16  : VST4D<"vst4.16">;
-def  VST4d32  : VST4D<"vst4.32">;
+def  VST4d8   : VST4D<0b0000, "vst4.8">;
+def  VST4d16  : VST4D<0b0100, "vst4.16">;
+def  VST4d32  : VST4D<0b1000, "vst4.32">;
 
 // vst4 to double-spaced even registers.
-def  VST4q8a  : VST4WB<"vst4.8">;
-def  VST4q16a : VST4WB<"vst4.16">;
-def  VST4q32a : VST4WB<"vst4.32">;
+def  VST4q8a  : VST4WB<0b0000, "vst4.8">;
+def  VST4q16a : VST4WB<0b0100, "vst4.16">;
+def  VST4q32a : VST4WB<0b1000, "vst4.32">;
 
 // vst4 to double-spaced odd registers.
-def  VST4q8b  : VST4WB<"vst4.8">;
-def  VST4q16b : VST4WB<"vst4.16">;
-def  VST4q32b : VST4WB<"vst4.32">;
+def  VST4q8b  : VST4WB<0b0000, "vst4.8">;
+def  VST4q16b : VST4WB<0b0100, "vst4.16">;
+def  VST4q32b : VST4WB<0b1000, "vst4.32">;
+
+//   VST1LN   : Vector Store (single element from one lane)
+//   FIXME: Not yet implemented.
 
 //   VST2LN   : Vector Store (single 2-element structure from one lane)
-class VST2LND<string OpcodeStr>
-  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
+class VST2LND<bits<4> op11_8, string OpcodeStr>
+  : NLdSt<1,0b00,op11_8,0b0000, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
           IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src1[$lane],$src2[$lane]\\}, $addr"),
           "", []>;
 
-def VST2LNd8  : VST2LND<"vst2.8">;
-def VST2LNd16 : VST2LND<"vst2.16">;
-def VST2LNd32 : VST2LND<"vst2.32">;
+def VST2LNd8  : VST2LND<0b0000, "vst2.8">;
+def VST2LNd16 : VST2LND<0b0100, "vst2.16">;
+def VST2LNd32 : VST2LND<0b1000, "vst2.32">;
 
 //   VST3LN   : Vector Store (single 3-element structure from one lane)
-class VST3LND<string OpcodeStr>
-  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
-          nohash_imm:$lane), IIC_VST,
+class VST3LND<bits<4> op11_8, string OpcodeStr>
+  : NLdSt<1,0b00,op11_8,0b0000, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
+           nohash_imm:$lane), IIC_VST,
           !strconcat(OpcodeStr,
           "\t\\{$src1[$lane],$src2[$lane],$src3[$lane]\\}, $addr"), "", []>;
 
-def VST3LNd8  : VST3LND<"vst3.8">;
-def VST3LNd16 : VST3LND<"vst3.16">;
-def VST3LNd32 : VST3LND<"vst3.32">;
+def VST3LNd8  : VST3LND<0b0010, "vst3.8">;
+def VST3LNd16 : VST3LND<0b0110, "vst3.16">;
+def VST3LNd32 : VST3LND<0b1010, "vst3.32">;
 
 //   VST4LN   : Vector Store (single 4-element structure from one lane)
-class VST4LND<string OpcodeStr>
-  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
-          DPR:$src4, nohash_imm:$lane), IIC_VST,
+class VST4LND<bits<4> op11_8, string OpcodeStr>
+  : NLdSt<1,0b00,op11_8,0b0000, (outs),
+          (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
+           nohash_imm:$lane), IIC_VST,
           !strconcat(OpcodeStr,
           "\t\\{$src1[$lane],$src2[$lane],$src3[$lane],$src4[$lane]\\}, $addr"),
           "", []>;
 
-def VST4LNd8  : VST4LND<"vst4.8">;
-def VST4LNd16 : VST4LND<"vst4.16">;
-def VST4LNd32 : VST4LND<"vst4.32">;
+def VST4LNd8  : VST4LND<0b0011, "vst4.8">;
+def VST4LNd16 : VST4LND<0b0111, "vst4.16">;
+def VST4LNd32 : VST4LND<0b1011, "vst4.32">;
 } // mayStore = 1, hasExtraSrcRegAllocReq = 1
 
 
