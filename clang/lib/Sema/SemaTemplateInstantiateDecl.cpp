@@ -522,7 +522,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
     if (!Owner->isDependentContext())
       DC->makeDeclVisibleInContext(Function, /* Recoverable = */ false);
 
-    Function->setInstantiationOfMemberFunction(D);
+    Function->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
   }
 
   if (InitFunctionInstantiation(Function, D))
@@ -637,7 +637,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
       FunctionTemplate->setLexicalDeclContext(D->getLexicalDeclContext());
     Method->setDescribedFunctionTemplate(FunctionTemplate);
   } else if (!FunctionTemplate)
-    Method->setInstantiationOfMemberFunction(D);
+    Method->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
 
   // If we are instantiating a member function defined
   // out-of-line, the instantiation will have the same lexical

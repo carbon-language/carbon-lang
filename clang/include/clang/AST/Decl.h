@@ -27,6 +27,7 @@ class Stmt;
 class CompoundStmt;
 class StringLiteral;
 class TemplateArgumentList;
+class MemberSpecializationInfo;
 class FunctionTemplateSpecializationInfo;
 class TypeLoc;
 
@@ -830,14 +831,15 @@ private:
   /// For non-templates, this value will be NULL. For function
   /// declarations that describe a function template, this will be a
   /// pointer to a FunctionTemplateDecl. For member functions
-  /// of class template specializations, this will be the
-  /// FunctionDecl from which the member function was instantiated.
+  /// of class template specializations, this will be a MemberSpecializationInfo
+  /// pointer containing information about the specialization.
   /// For function template specializations, this will be a
   /// FunctionTemplateSpecializationInfo, which contains information about
   /// the template being specialized and the template arguments involved in
   /// that specialization.
-  llvm::PointerUnion3<FunctionTemplateDecl*, FunctionDecl*,
-                      FunctionTemplateSpecializationInfo*>
+  llvm::PointerUnion3<FunctionTemplateDecl *, 
+                      MemberSpecializationInfo *,
+                      FunctionTemplateSpecializationInfo *>
     TemplateOrSpecialization;
 
 protected:
@@ -1063,15 +1065,12 @@ public:
   /// the FunctionDecl X<T>::A. When a complete definition of
   /// X<int>::A is required, it will be instantiated from the
   /// declaration returned by getInstantiatedFromMemberFunction().
-  FunctionDecl *getInstantiatedFromMemberFunction() const {
-    return TemplateOrSpecialization.dyn_cast<FunctionDecl*>();
-  }
+  FunctionDecl *getInstantiatedFromMemberFunction() const;
 
   /// \brief Specify that this record is an instantiation of the
-  /// member function RD.
-  void setInstantiationOfMemberFunction(FunctionDecl *RD) {
-    TemplateOrSpecialization = RD;
-  }
+  /// member function FD.
+  void setInstantiationOfMemberFunction(FunctionDecl *FD,
+                                        TemplateSpecializationKind TSK);
 
   /// \brief Retrieves the function template that is described by this
   /// function declaration.

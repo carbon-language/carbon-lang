@@ -977,6 +977,8 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
                                DEnd = Instantiation->decls_end();
        D != DEnd; ++D) {
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(*D)) {
+      if (Function->getInstantiatedFromMemberFunction())
+        Function->setTemplateSpecializationKind(TSK);
       if (!Function->getBody() && TSK != TSK_ExplicitInstantiationDeclaration)
         InstantiateFunctionDefinition(PointOfInstantiation, Function);
     } else if (VarDecl *Var = dyn_cast<VarDecl>(*D)) {
@@ -984,14 +986,19 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
           TSK != TSK_ExplicitInstantiationDeclaration)
         InstantiateStaticDataMemberDefinition(PointOfInstantiation, Var);
     } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(*D)) {
-      if (!Record->isInjectedClassName() && !Record->getDefinition(Context)) {
-        assert(Record->getInstantiatedFromMemberClass() &&
-               "Missing instantiated-from-template information");
+      if (Record->isInjectedClassName())
+        continue;
+      
+      assert(Record->getInstantiatedFromMemberClass() &&
+             "Missing instantiated-from-template information");
+      if (!Record->getDefinition(Context))
         InstantiateClass(PointOfInstantiation, Record,
                          Record->getInstantiatedFromMemberClass(),
                          TemplateArgs,
                          TSK);
-      }
+      else
+        InstantiateClassMembers(PointOfInstantiation, Record, TemplateArgs, 
+                                TSK);
     }
   }
 }

@@ -3171,10 +3171,13 @@ Sema::CheckMemberFunctionSpecialization(CXXMethodDecl *FD,
                                        Instantiation, FD->getLocation(), 
                                        false, TSK_ExplicitSpecialization))
     return true;
+
+  // FIXME: Check for specialization-after-instantiation errors and such.
   
-  // FIXME: Mark the new declaration as a member function specialization.
-  // We may also want to mark the original instantiation as having been
-  // explicitly specialized.
+  // Note that this function is an explicit instantiation of a member function.
+  Instantiation->setTemplateSpecializationKind(TSK_ExplicitSpecialization);
+  FD->setInstantiationOfMemberFunction(FunctionInTemplate, 
+                                       TSK_ExplicitSpecialization);
   
   // Save the caller the trouble of having to figure out which declaration
   // this specialization matches.

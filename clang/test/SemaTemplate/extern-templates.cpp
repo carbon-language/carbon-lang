@@ -31,11 +31,11 @@ void test_intptr(X0<int*> xi, X0<int*>::Inner xii) {
 
 // FIXME: we would like the notes to point to the explicit instantiation at the
 // bottom.
-extern template class X0<long*>; // expected-note{{instantiation}}
+extern template class X0<long*>; // expected-note 2{{instantiation}}
 
 void test_longptr(X0<long*> xl, X0<long*>::Inner xli) {
   xl.f(0);
-  xli.g(0); // expected-note{{instantiation}}
+  xli.g(0);
 }
 
 template class X0<long*>;
