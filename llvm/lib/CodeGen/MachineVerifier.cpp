@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetMachine.h"
@@ -456,6 +457,15 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
     report("Too few operands", MI);
     *OS << TI.getNumOperands() << " operands expected, but "
         << MI->getNumExplicitOperands() << " given.\n";
+  }
+
+  // Check the MachineMemOperands for basic consistency.
+  for (MachineInstr::mmo_iterator I = MI->memoperands_begin(),
+       E = MI->memoperands_end(); I != E; ++I) {
+    if ((*I)->isLoad() && !TI.mayLoad())
+      report("Missing mayLoad flag", MI);
+    if ((*I)->isStore() && !TI.mayStore())
+      report("Missing mayStore flag", MI);
   }
 }
 
