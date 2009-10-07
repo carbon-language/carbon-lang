@@ -1350,13 +1350,22 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
-      EVT RegVT = VT;
+      if (VT.is64BitVector()) {
+        switch (VT.getSimpleVT().SimpleTy) {
+        default: llvm_unreachable("unhandled vld2 type");
+        case MVT::v8i8:  Opc = ARM::VLD2d8; break;
+        case MVT::v4i16: Opc = ARM::VLD2d16; break;
+        case MVT::v2f32:
+        case MVT::v2i32: Opc = ARM::VLD2d32; break;
+        }
+        SDValue Chain = N->getOperand(0);
+        const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
+        return CurDAG->getMachineNode(Opc, dl, VT, VT, MVT::Other, Ops, 4);
+      }
+      // Quad registers are loaded as pairs of double registers.
+      EVT RegVT;
       switch (VT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("unhandled vld2 type");
-      case MVT::v8i8:  Opc = ARM::VLD2d8; break;
-      case MVT::v4i16: Opc = ARM::VLD2d16; break;
-      case MVT::v2f32:
-      case MVT::v2i32: Opc = ARM::VLD2d32; break;
       case MVT::v16i8: Opc = ARM::VLD2q8; RegVT = MVT::v8i8; break;
       case MVT::v8i16: Opc = ARM::VLD2q16; RegVT = MVT::v4i16; break;
       case MVT::v4f32: Opc = ARM::VLD2q32; RegVT = MVT::v2f32; break;
@@ -1364,10 +1373,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       }
       SDValue Chain = N->getOperand(0);
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
-      if (RegVT == VT)
-        return CurDAG->getMachineNode(Opc, dl, VT, VT, MVT::Other, Ops, 4);
-      
-      // Quad registers are loaded as pairs of double registers.
       std::vector<EVT> ResTys(4, RegVT);
       ResTys.push_back(MVT::Other);
       SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 4);
