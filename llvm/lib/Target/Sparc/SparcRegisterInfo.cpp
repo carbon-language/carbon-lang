@@ -76,8 +76,10 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
-void SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                            int SPAdj, RegScavenger *RS) const {
+unsigned
+SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
+                                       int SPAdj, int *Value,
+                                       RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
 
   unsigned i = 0;
@@ -113,6 +115,7 @@ void SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MI.getOperand(i).ChangeToRegister(SP::G1, false);
     MI.getOperand(i+1).ChangeToImmediate(Offset & ((1 << 10)-1));
   }
+  return 0;
 }
 
 void SparcRegisterInfo::

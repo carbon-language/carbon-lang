@@ -326,9 +326,9 @@ SPURegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
   MBB.erase(I);
 }
 
-void
+unsigned
 SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
-                                     RegScavenger *RS) const
+                                     int *Value, RegScavenger *RS) const
 {
   unsigned i = 0;
   MachineInstr &MI = *II;
@@ -371,6 +371,7 @@ SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   } else {
     MO.ChangeToImmediate(Offset);
   }
+  return 0;
 }
 
 /// determineFrameLayout - Determine the size of the frame and maximum call

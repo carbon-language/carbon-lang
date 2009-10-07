@@ -63,8 +63,9 @@ namespace llvm {
                                        MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator I) const;
     //! Convert frame indicies into machine operands
-    void eliminateFrameIndex(MachineBasicBlock::iterator II, int,
-                             RegScavenger *RS) const;
+    unsigned eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
+                                 int *Value = NULL,
+                                 RegScavenger *RS = NULL) const;
     //! Determine the frame's layour
     void determineFrameLayout(MachineFunction &MF) const;
 

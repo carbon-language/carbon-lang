@@ -660,8 +660,13 @@ public:
   /// specified instruction, as long as it keeps the iterator pointing the the
   /// finished product. SPAdj is the SP adjustment due to call frame setup
   /// instruction.
-  virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
-                                   int SPAdj, RegScavenger *RS=NULL) const = 0;
+  ///
+  /// When -enable-frame-index-scavenging is enabled, the virtual register
+  /// allocated for this frame index is returned and its value is stored in
+  /// *Value.
+  virtual unsigned eliminateFrameIndex(MachineBasicBlock::iterator MI,
+                                       int SPAdj, int *Value = NULL,
+                                       RegScavenger *RS=NULL) const = 0;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.

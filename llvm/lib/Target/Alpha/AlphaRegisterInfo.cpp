@@ -151,8 +151,10 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 //variable locals
 //<- SP
 
-void AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                            int SPAdj, RegScavenger *RS) const {
+unsigned
+AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
+                                       int SPAdj, int *Value,
+                                       RegScavenger *RS) const {
   assert(SPAdj == 0 && "Unexpected");
 
   unsigned i = 0;
@@ -197,6 +199,7 @@ void AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   } else {
     MI.getOperand(i).ChangeToImmediate(Offset);
   }
+  return 0;
 }
 
 

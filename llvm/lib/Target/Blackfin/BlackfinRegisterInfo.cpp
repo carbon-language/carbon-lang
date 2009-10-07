@@ -219,9 +219,10 @@ static unsigned findScratchRegister(MachineBasicBlock::iterator II,
   return Reg;
 }
 
-void BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                               int SPAdj,
-                                               RegScavenger *RS) const {
+unsigned
+BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
+                                          int SPAdj, int *Value,
+                                          RegScavenger *RS) const {
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
@@ -258,20 +259,20 @@ void BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       MI.setDesc(TII.get(isStore
                          ? BF::STORE32p_uimm6m4
                          : BF::LOAD32p_uimm6m4));
-      return;
+      return 0;
     }
     if (BaseReg == BF::FP && isUint<7>(-Offset)) {
       MI.setDesc(TII.get(isStore
                          ? BF::STORE32fp_nimm7m4
                          : BF::LOAD32fp_nimm7m4));
       MI.getOperand(FIPos+1).setImm(-Offset);
-      return;
+      return 0;
     }
     if (isInt<18>(Offset)) {
       MI.setDesc(TII.get(isStore
                          ? BF::STORE32p_imm18m4
                          : BF::LOAD32p_imm18m4));
-      return;
+      return 0;
     }
     // Use RegScavenger to calculate proper offset...
     MI.dump();
@@ -356,6 +357,7 @@ void BlackfinRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     llvm_unreachable("Cannot eliminate frame index");
     break;
   }
+  return 0;
 }
 
 void BlackfinRegisterInfo::

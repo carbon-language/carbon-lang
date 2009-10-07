@@ -1023,9 +1023,10 @@ unsigned findScratchRegister(RegScavenger *RS, const TargetRegisterClass *RC,
   return Reg;
 }
 
-void
+unsigned
 ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                         int SPAdj, RegScavenger *RS) const {
+                                         int SPAdj, int *Value,
+                                         RegScavenger *RS) const {
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
@@ -1067,7 +1068,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     Done = rewriteT2FrameIndex(MI, i, FrameReg, Offset, TII);
   }
   if (Done)
-    return;
+    return 0;
 
   // If we get here, the immediate doesn't fit into the instruction.  We folded
   // as much as possible above, handle the rest, providing a register that is
@@ -1102,6 +1103,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
     MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
   }
+  return 0;
 }
 
 /// Move iterator pass the next bunch of callee save load / store ops for

@@ -62,8 +62,9 @@ public:
                                 MachineBasicBlock::iterator I,
                                 const TargetRegisterClass *RC,
                                 unsigned Reg) const;
-  void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                           int SPAdj, RegScavenger *RS = NULL) const;
+  unsigned eliminateFrameIndex(MachineBasicBlock::iterator II,
+                               int SPAdj, int *Value = NULL,
+                               RegScavenger *RS = NULL) const;
 
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;

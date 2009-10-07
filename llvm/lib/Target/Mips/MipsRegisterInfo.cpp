@@ -348,9 +348,9 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 // FrameIndex represent objects inside a abstract stack.
 // We must replace FrameIndex with an stack/frame pointer
 // direct reference.
-void MipsRegisterInfo::
-eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj, 
-                    RegScavenger *RS) const 
+unsigned MipsRegisterInfo::
+eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
+                    int *Value, RegScavenger *RS) const
 {
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
@@ -382,6 +382,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
   MI.getOperand(i-1).ChangeToImmediate(Offset);
   MI.getOperand(i).ChangeToRegister(getFrameRegister(MF), false);
+  return 0;
 }
 
 void MipsRegisterInfo::
