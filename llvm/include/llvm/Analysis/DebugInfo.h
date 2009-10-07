@@ -679,7 +679,10 @@ bool getLocationInfo(const Value *V, std::string &DisplayName,
     /// processType - Process DIType.
     void processType(DIType DT);
 
-    /// processSubprogram - Enumberate DISubprogram.
+    /// processLexicalBlock - Process DILexicalBlock.
+    void processLexicalBlock(DILexicalBlock LB);
+
+    /// processSubprogram - Process DISubprogram.
     void processSubprogram(DISubprogram SP);
 
     /// processStopPoint - Process DbgStopPointInst.

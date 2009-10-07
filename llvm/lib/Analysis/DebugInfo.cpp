@@ -966,6 +966,12 @@ void DIFactory::InsertDeclare(Value *Storage, DIVariable D,
 /// processModule - Process entire module and collect debug info.
 void DebugInfoFinder::processModule(Module &M) {
 
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+  MetadataContext &TheMetadata = M.getContext().getMetadata();
+  unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
+  if (!MDDbgKind)
+    return;
+#endif
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
       for (BasicBlock::iterator BI = (*FI).begin(), BE = (*FI).end(); BI != BE;
@@ -980,6 +986,18 @@ void DebugInfoFinder::processModule(Module &M) {
           processRegionEnd(DRE);
         else if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
           processDeclare(DDI);
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+        else if (MDNode *L = TheMetadata.getMD(MDDbgKind, BI)) {
+          DILocation Loc(L);
+          DIScope S(Loc.getScope().getNode());
+          if (S.isCompileUnit())
+            addCompileUnit(DICompileUnit(S.getNode()));
+          else if (S.isSubprogram())
+            processSubprogram(DISubprogram(S.getNode()));
+          else if (S.isLexicalBlock())
+            processLexicalBlock(DILexicalBlock(S.getNode()));
+        }
+#endif
       }
 
   NamedMDNode *NMD = M.getNamedMetadata("llvm.dbg.gv");
@@ -1019,6 +1037,17 @@ void DebugInfoFinder::processType(DIType DT) {
     if (!DDT.isNull())
       processType(DDT.getTypeDerivedFrom());
   }
+}
+
+/// processLexicalBlock
+void DebugInfoFinder::processLexicalBlock(DILexicalBlock LB) {
+  if (LB.isNull())
+    return;
+  DIScope Context = LB.getContext();
+  if (Context.isLexicalBlock())
+    return processLexicalBlock(DILexicalBlock(Context.getNode()));
+  else
+    return processSubprogram(DISubprogram(Context.getNode()));
 }
 
 /// processSubprogram - Process DISubprogram.
