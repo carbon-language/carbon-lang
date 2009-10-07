@@ -1303,12 +1303,14 @@ public:
     : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
     AddModuleTypesToPrinter(TypePrinter, NumberedTypes, M);
     // FIXME: Provide MDPrinter
-    MetadataContext &TheMetadata = M->getContext().getMetadata();
-    const StringMap<unsigned> *Names = TheMetadata.getHandlerNames();
-    for (StringMapConstIterator<unsigned> I = Names->begin(),
-           E = Names->end(); I != E; ++I) {
-      const StringMapEntry<unsigned> &Entry = *I;
-      MDNames[I->second] = Entry.getKeyData();
+    if (M) {
+      MetadataContext &TheMetadata = M->getContext().getMetadata();
+      const StringMap<unsigned> *Names = TheMetadata.getHandlerNames();
+      for (StringMapConstIterator<unsigned> I = Names->begin(),
+             E = Names->end(); I != E; ++I) {
+        const StringMapEntry<unsigned> &Entry = *I;
+        MDNames[I->second] = Entry.getKeyData();
+      }
     }
   }
 
@@ -2029,15 +2031,16 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   }
 
   // Print Metadata info
-  MetadataContext &TheMetadata = I.getContext().getMetadata();
-  const MetadataContext::MDMapTy *MDMap = TheMetadata.getMDs(&I);
-  if (MDMap)
-    for (MetadataContext::MDMapTy::const_iterator MI = MDMap->begin(),
-           ME = MDMap->end(); MI != ME; ++MI)
-      if (const MDNode *MD = dyn_cast_or_null<MDNode>(MI->second))
-        Out << ", !" << MDNames[MI->first]
-            << " !" << Machine.getMetadataSlot(MD);
-
+  if (!MDNames.empty()) {
+    MetadataContext &TheMetadata = I.getContext().getMetadata();
+    const MetadataContext::MDMapTy *MDMap = TheMetadata.getMDs(&I);
+    if (MDMap)
+      for (MetadataContext::MDMapTy::const_iterator MI = MDMap->begin(),
+             ME = MDMap->end(); MI != ME; ++MI)
+        if (const MDNode *MD = dyn_cast_or_null<MDNode>(MI->second))
+          Out << ", !" << MDNames[MI->first]
+              << " !" << Machine.getMetadataSlot(MD);
+  }
   printInfoComment(I);
 }
 
