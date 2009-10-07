@@ -17,6 +17,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 
 namespace clang {
 
@@ -394,7 +395,11 @@ class CXXRecordDecl : public RecordDecl {
   llvm::PointerUnion<ClassTemplateDecl*, CXXRecordDecl*>
     TemplateOrInstantiation;
   
-  void getNestedVisibleConversionFunctions(CXXRecordDecl *RD);
+  void getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
+          const llvm::SmallPtrSet<QualType, 8> &TopConversionsTypeSet,
+          const llvm::SmallPtrSet<QualType, 8> &HiddenConversionTypes);
+  void collectConversionFunctions(
+    llvm::SmallPtrSet<QualType, 8>& ConversionsTypeSet);
   
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
