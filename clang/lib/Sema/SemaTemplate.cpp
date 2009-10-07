@@ -2434,11 +2434,19 @@ static bool CheckTemplateSpecializationScope(Sema &S,
     return true;
   }
   
+  // FIXME: For everything except class template partial specializations,
+  // complain if the explicit specialization/instantiation occurs at class 
+  // scope.
+
+  // C++ [temp.class.spec]p6:
+  //   A class template partial specialization may be declared or redeclared
+  //   in any namespace scope in which its definition may be defined (14.5.1 
+  //   and 14.5.2).  
   bool ComplainedAboutScope = false;
-  DeclContext *SpecializedContext
+  DeclContext *SpecializedContext 
     = Specialized->getDeclContext()->getEnclosingNamespaceContext();
+  DeclContext *DC = S.CurContext->getEnclosingNamespaceContext();
   if (TSK == TSK_ExplicitSpecialization) {
-    DeclContext *DC = S.CurContext->getEnclosingNamespaceContext();
     if ((!PrevDecl || 
          getTemplateSpecializationKind(PrevDecl) == TSK_Undeclared ||
          getTemplateSpecializationKind(PrevDecl) == TSK_ImplicitInstantiation)){
@@ -2468,8 +2476,8 @@ static bool CheckTemplateSpecializationScope(Sema &S,
   // specializations of function templates, static data members, and member
   // functions, so we skip the check here for those kinds of entities.
   // FIXME: HandleDeclarator's diagnostics aren't quite as good, though.
-  // Should we refactor the check, so that it occurs later?
-  if (!ComplainedAboutScope && !S.CurContext->Encloses(SpecializedContext) &&
+  // Should we refactor that check, so that it occurs later?
+  if (!ComplainedAboutScope && !DC->Encloses(SpecializedContext) &&
       ((TSK == TSK_ExplicitSpecialization &&
         !(isa<FunctionTemplateDecl>(Specialized) || isa<VarDecl>(Specialized) ||
           isa<FunctionDecl>(Specialized))) || 

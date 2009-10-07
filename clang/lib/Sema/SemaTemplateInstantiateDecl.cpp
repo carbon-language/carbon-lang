@@ -57,6 +57,8 @@ namespace {
     ParmVarDecl *VisitParmVarDecl(ParmVarDecl *D);
     Decl *VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
     Decl *VisitClassTemplateDecl(ClassTemplateDecl *D);
+    Decl *VisitClassTemplatePartialSpecializationDecl(
+                                    ClassTemplatePartialSpecializationDecl *D);
     Decl *VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
     Decl *VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D);
@@ -398,6 +400,13 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
   Owner->addDecl(Inst);
   return Inst;
+}
+
+Decl *
+TemplateDeclInstantiator::VisitClassTemplatePartialSpecializationDecl(
+                                   ClassTemplatePartialSpecializationDecl *D) {
+  assert(false &&"Partial specializations of member templates are unsupported");
+  return 0;
 }
 
 Decl *
