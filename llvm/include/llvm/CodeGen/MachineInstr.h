@@ -26,6 +26,7 @@
 
 namespace llvm {
 
+class AliasAnalysis;
 class TargetInstrDesc;
 class TargetInstrInfo;
 class TargetRegisterInfo;
@@ -285,6 +286,13 @@ public:
   /// memory reference is not available. Return false if it is known to
   /// have no volatile memory references.
   bool hasVolatileMemoryRef() const;
+
+  /// isInvariantLoad - Return true if this instruction is loading from a
+  /// location whose value is invariant across the function.  For example,
+  /// loading a value from the constant pool or from from the argument area of
+  /// a function if it does not change.  This should only return true of *all*
+  /// loads the instruction does are invariant (if it does multiple loads).
+  bool isInvariantLoad(AliasAnalysis *AA = 0) const;
 
   //
   // Debugging support

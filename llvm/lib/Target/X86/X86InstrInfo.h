@@ -456,8 +456,6 @@ public:
                      unsigned DestReg, unsigned SubIdx,
                      const MachineInstr *Orig) const;
 
-  bool isInvariantLoad(const MachineInstr *MI) const;
-
   /// convertToThreeAddress - This method must be implemented by targets that
   /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
   /// may be able to convert a two-address instruction into a true

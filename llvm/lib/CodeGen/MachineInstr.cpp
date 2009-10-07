@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LeakDetector.h"
@@ -946,7 +947,7 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
   // destination. The check for isInvariantLoad gives the targe the chance to
   // classify the load as always returning a constant, e.g. a constant pool
   // load.
-  if (TID->mayLoad() && !TII->isInvariantLoad(this))
+  if (TID->mayLoad() && !isInvariantLoad())
     // Otherwise, this is a real load.  If there is a store between the load and
     // end of block, or if the load is volatile, we can't move it.
     return !SawStore && !hasVolatileMemoryRef();
@@ -1003,6 +1004,46 @@ bool MachineInstr::hasVolatileMemoryRef() const {
       return true;
 
   return false;
+}
+
+/// isInvariantLoad - Return true if this instruction is loading from a
+/// location whose value is invariant across the function.  For example,
+/// loading a value from the constant pool or from from the argument area
+/// of a function if it does not change.  This should only return true of
+/// *all* loads the instruction does are invariant (if it does multiple loads).
+bool MachineInstr::isInvariantLoad(AliasAnalysis *AA) const {
+  // If the instruction doesn't load at all, it isn't an invariant load.
+  if (!TID->mayLoad())
+    return false;
+
+  // If the instruction has lost its memoperands, conservatively assume that
+  // it may not be an invariant load.
+  if (memoperands_empty())
+    return false;
+
+  const MachineFrameInfo *MFI = getParent()->getParent()->getFrameInfo();
+
+  for (mmo_iterator I = memoperands_begin(),
+       E = memoperands_end(); I != E; ++I) {
+    if ((*I)->isVolatile()) return false;
+    if ((*I)->isStore()) return false;
+
+    if (const Value *V = (*I)->getValue()) {
+      // A load from a constant PseudoSourceValue is invariant.
+      if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V))
+        if (PSV->isConstant(MFI))
+          continue;
+      // If we have an AliasAnalysis, ask it whether the memory is constant.
+      if (AA && AA->pointsToConstantMemory(V))
+        continue;
+    }
+
+    // Otherwise assume conservatively.
+    return false;
+  }
+
+  // Everything checks out.
+  return true;
 }
 
 void MachineInstr::dump() const {

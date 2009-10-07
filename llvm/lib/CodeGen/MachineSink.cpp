@@ -178,8 +178,6 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
     if (Reg == 0) continue;
     
     if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-      // If this is a physical register use, we can't move it.  If it is a def,
-      // we can move it, but only if the def is dead.
       if (MO.isUse()) {
         // If the physreg has no defs anywhere, it's just an ambient register
         // and we can freely move its uses. Alternatively, if it's allocatable,

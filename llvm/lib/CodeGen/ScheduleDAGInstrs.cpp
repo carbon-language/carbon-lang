@@ -375,7 +375,7 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
         // Treat all other stores conservatively.
         goto new_chain;
     } else if (TID.mayLoad()) {
-      if (TII->isInvariantLoad(MI)) {
+      if (MI->isInvariantLoad()) {
         // Invariant load, no chain dependencies needed!
       } else if (const Value *V = getUnderlyingObjectForInstr(MI)) {
         // A load from a specific PseudoSourceValue. Add precise dependencies.

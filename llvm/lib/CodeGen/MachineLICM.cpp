@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
@@ -47,6 +48,7 @@ namespace {
     BitVector AllocatableSet;
 
     // Various analyses that we use...
+    AliasAnalysis        *AA;      // Alias analysis info.
     MachineLoopInfo      *LI;      // Current MachineLoopInfo
     MachineDominatorTree *DT;      // Machine dominator tree for the cur loop
     MachineRegisterInfo  *RegInfo; // Machine register information
@@ -72,6 +74,7 @@ namespace {
       AU.setPreservesCFG();
       AU.addRequired<MachineLoopInfo>();
       AU.addRequired<MachineDominatorTree>();
+      AU.addRequired<AliasAnalysis>();
       AU.addPreserved<MachineLoopInfo>();
       AU.addPreserved<MachineDominatorTree>();
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -144,6 +147,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   // Get our Loop information...
   LI = &getAnalysis<MachineLoopInfo>();
   DT = &getAnalysis<MachineDominatorTree>();
+  AA = &getAnalysis<AliasAnalysis>();
 
   for (MachineLoopInfo::iterator
          I = LI->begin(), E = LI->end(); I != E; ++I) {
@@ -214,7 +218,7 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
     // Okay, this instruction does a load. As a refinement, we allow the target
     // to decide whether the loaded value is actually a constant. If so, we can
     // actually use it as a load.
-    if (!TII->isInvariantLoad(&I))
+    if (!I.isInvariantLoad(AA))
       // FIXME: we should be able to sink loads with no other side effects if
       // there is nothing that can change memory from here until the end of
       // block. This is a trivial form of alias analysis.
@@ -259,8 +263,6 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
 
     // Don't hoist an instruction that uses or defines a physical register.
     if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-      // If this is a physical register use, we can't move it.  If it is a def,
-      // we can move it, but only if the def is dead.
       if (MO.isUse()) {
         // If the physreg has no defs anywhere, it's just an ambient register
         // and we can freely move its uses. Alternatively, if it's allocatable,

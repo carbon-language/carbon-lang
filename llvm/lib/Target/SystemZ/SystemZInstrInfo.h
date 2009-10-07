@@ -70,7 +70,6 @@ public:
                    unsigned &SrcSubIdx, unsigned &DstSubIdx) const;
   unsigned isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const;
   unsigned isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const;
-  bool isInvariantLoad(const MachineInstr *MI) const;
 
   virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,

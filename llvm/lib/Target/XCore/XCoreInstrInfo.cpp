@@ -116,30 +116,6 @@ XCoreInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   return 0;
 }
 
-/// isInvariantLoad - Return true if the specified instruction (which is marked
-/// mayLoad) is loading from a location whose value is invariant across the
-/// function.  For example, loading a value from the constant pool or from
-/// from the argument area of a function if it does not change.  This should
-/// only return true of *all* loads the instruction does are invariant (if it
-/// does multiple loads).
-bool
-XCoreInstrInfo::isInvariantLoad(const MachineInstr *MI) const {
-  // Loads from constants pools and loads from invariant argument slots are
-  // invariant
-  int Opcode = MI->getOpcode();
-  if (Opcode == XCore::LDWCP_ru6 || Opcode == XCore::LDWCP_lru6) {
-    return MI->getOperand(1).isCPI();
-  }
-  int FrameIndex;
-  if (isLoadFromStackSlot(MI, FrameIndex)) {
-    const MachineFrameInfo &MFI =
-      *MI->getParent()->getParent()->getFrameInfo();
-    return MFI.isFixedObjectIndex(FrameIndex) &&
-           MFI.isImmutableObjectIndex(FrameIndex);
-  }
-  return false;
-}
-
 //===----------------------------------------------------------------------===//
 // Branch Analysis
 //===----------------------------------------------------------------------===//

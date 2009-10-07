@@ -266,30 +266,6 @@ unsigned SystemZInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   return 0;
 }
 
-bool SystemZInstrInfo::isInvariantLoad(const MachineInstr *MI) const {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    // Loads from constant pools are trivially invariant.
-    if (MO.isCPI())
-      return true;
-
-    if (MO.isGlobal())
-      return isGVStub(MO.getGlobal(), TM);
-
-    // If this is a load from an invariant stack slot, the load is a constant.
-    if (MO.isFI()) {
-      const MachineFrameInfo &MFI =
-        *MI->getParent()->getParent()->getFrameInfo();
-      int Idx = MO.getIndex();
-      return MFI.isFixedObjectIndex(Idx) && MFI.isImmutableObjectIndex(Idx);
-    }
-  }
-
-  // All other instances of these instructions are presumed to have other
-  // issues.
-  return false;
-}
-
 bool
 SystemZInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
