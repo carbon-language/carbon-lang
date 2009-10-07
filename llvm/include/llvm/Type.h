@@ -430,7 +430,7 @@ public:
 
   /// getPointerTo - Return a pointer to the current type.  This is equivalent
   /// to PointerType::get(Foo, AddrSpace).
-  PointerType *getPointerTo(unsigned AddrSpace = 0) const;
+  const PointerType *getPointerTo(unsigned AddrSpace = 0) const;
 
 private:
   /// isSizedDerivedType - Derived types like structures and arrays are sized

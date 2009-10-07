@@ -951,7 +951,7 @@ PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
   return PT;
 }
 
-PointerType *Type::getPointerTo(unsigned addrs) const {
+const PointerType *Type::getPointerTo(unsigned addrs) const {
   return PointerType::get(this, addrs);
 }
 
