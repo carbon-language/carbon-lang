@@ -95,6 +95,11 @@ namespace llvm {
     // functions.
     bool ShrinkWrapThisFunction;
 
+    // Flag to control whether to use the register scavenger to resolve
+    // frame index materialization registers. Set according to
+    // TRI->requiresFrameIndexScavenging() for the curren function.
+    bool FrameIndexVirtualScavenging;
+
     // When using the scavenger post-pass to resolve frame reference
     // materialization registers, maintain a map of the registers to
     // the constant value and SP adjustment associated with it.
