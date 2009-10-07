@@ -660,7 +660,6 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
   }
 
   Scope *Initial = S;
-  DeclContext *OutOfLineCtx = 0;
   IdentifierResolver::iterator
     I = IdResolver.begin(Name),
     IEnd = IdResolver.end();
@@ -742,26 +741,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
   // context as well as walking through the scopes.
 
   LookupResultsTy LookupResults;
-  assert((!OutOfLineCtx || OutOfLineCtx->isFileContext()) &&
-         "We should have been looking only at file context here already.");
   bool LookedInCtx = false;
-  LookupResult Result;
-  while (OutOfLineCtx &&
-         OutOfLineCtx != S->getEntity() &&
-         OutOfLineCtx->isNamespace()) {
-    LookedInCtx = true;
-
-    // Look into context considering using-directives.
-    CppNamespaceLookup(Context, OutOfLineCtx, Name, NameKind, IDNS,
-                       LookupResults, &UDirs);
-
-    if ((Result = MergeLookupResults(Context, LookupResults)) ||
-        (RedeclarationOnly && !OutOfLineCtx->isTransparentContext()))
-      return std::make_pair(true, Result);
-
-    OutOfLineCtx = OutOfLineCtx->getParent();
-  }
-
   for (; S; S = S->getParent()) {
     DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
     if (Ctx->isTransparentContext())
@@ -797,6 +777,7 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
     CppNamespaceLookup(Context, Ctx, Name, NameKind, IDNS,
                        LookupResults, &UDirs);
 
+    LookupResult Result;
     if ((Result = MergeLookupResults(Context, LookupResults)) ||
         (RedeclarationOnly && !Ctx->isTransparentContext()))
       return std::make_pair(true, Result);
