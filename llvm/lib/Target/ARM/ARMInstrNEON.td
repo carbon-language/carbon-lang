@@ -361,10 +361,25 @@ class VST4D<string OpcodeStr>
                    DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4), IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3,$src4\\}, $addr"),
           "", []>;
+class VST4WB<string OpcodeStr>
+  : NLdSt<(outs GPR:$wb), (ins addrmode6:$addr, DPR:$src1, DPR:$src2,
+                           DPR:$src3, DPR:$src4), IIC_VST,
+          !strconcat(OpcodeStr, "\t\\{$src1,$src2,$src3,$src4\\}, $addr"),
+          "$addr.addr = $wb", []>;
 
 def  VST4d8   : VST4D<"vst4.8">;
 def  VST4d16  : VST4D<"vst4.16">;
 def  VST4d32  : VST4D<"vst4.32">;
+
+// vst4 to double-spaced even registers.
+def  VST4q8a  : VST4WB<"vst4.8">;
+def  VST4q16a : VST4WB<"vst4.16">;
+def  VST4q32a : VST4WB<"vst4.32">;
+
+// vst4 to double-spaced odd registers.
+def  VST4q8b  : VST4WB<"vst4.8">;
+def  VST4q16b : VST4WB<"vst4.16">;
+def  VST4q32b : VST4WB<"vst4.32">;
 
 //   VST2LN   : Vector Store (single 2-element structure from one lane)
 class VST2LND<string OpcodeStr>
