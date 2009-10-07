@@ -247,6 +247,10 @@ class VLD4WB<bits<4> op7_4, string OpcodeStr>
 def  VLD4d8   : VLD4D<0b0000, "vld4.8">;
 def  VLD4d16  : VLD4D<0b0100, "vld4.16">;
 def  VLD4d32  : VLD4D<0b1000, "vld4.32">;
+def  VLD4d64  : NLdSt<0,0b10,0b0010,0b1100,
+                      (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
+                      (ins addrmode6:$addr), IIC_VLD1,
+                      "vld1.64\t\\{$dst1,$dst2,$dst3,$dst4\\}, $addr", "", []>;
 
 // vld4 to double-spaced even registers.
 def  VLD4q8a  : VLD4WB<0b0000, "vld4.8">;

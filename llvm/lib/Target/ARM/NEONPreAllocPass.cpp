@@ -96,6 +96,7 @@ static bool isNEONMultiRegOp(int Opcode, unsigned &FirstOpnd, unsigned &NumRegs,
   case ARM::VLD4d8:
   case ARM::VLD4d16:
   case ARM::VLD4d32:
+  case ARM::VLD4d64:
   case ARM::VLD4LNd8:
   case ARM::VLD4LNd16:
   case ARM::VLD4LNd32:
