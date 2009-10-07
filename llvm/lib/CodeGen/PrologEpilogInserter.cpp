@@ -782,8 +782,8 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
     unsigned CurrentScratchReg = 0;
     unsigned PrevScratchReg = 0;
     int PrevValue;
-    MachineInstr *PrevLastUseMI;
-    unsigned PrevLastUseOp;
+    MachineInstr *PrevLastUseMI = NULL;
+    unsigned PrevLastUseOp = 0;
 
     // The instruction stream may change in the loop, so check BB->end()
     // directly.
@@ -875,6 +875,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
           if (MI->getOperand(i).isKill()) {
             PrevScratchReg = CurrentScratchReg;
             PrevLastUseMI = MI;
+            PrevLastUseOp = i;
             CurrentScratchReg = CurrentVirtReg = 0;
           }
         }
