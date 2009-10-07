@@ -135,7 +135,7 @@ CodeGenFunction::EmitStaticCXXBlockVarDeclInit(const VarDecl &D,
 
   llvm::SmallString<256> GuardVName;
   llvm::raw_svector_ostream GuardVOut(GuardVName);
-  mangleGuardVariable(&D, getContext(), GuardVOut);
+  mangleGuardVariable(CGM.getMangleContext(), &D, GuardVOut);
 
   // Create the guard variable.
   llvm::GlobalValue *GuardV =
@@ -607,7 +607,7 @@ const char *CodeGenModule::getMangledCXXCtorName(const CXXConstructorDecl *D,
                                                  CXXCtorType Type) {
   llvm::SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
-  mangleCXXCtor(D, Type, Context, Out);
+  mangleCXXCtor(getMangleContext(), D, Type, Out);
 
   Name += '\0';
   return UniqueMangledName(Name.begin(), Name.end());
@@ -643,7 +643,7 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
                                                  CXXDtorType Type) {
   llvm::SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
-  mangleCXXDtor(D, Type, Context, Out);
+  mangleCXXDtor(getMangleContext(), D, Type, Out);
 
   Name += '\0';
   return UniqueMangledName(Name.begin(), Name.end());
@@ -661,7 +661,7 @@ llvm::Constant *CodeGenModule::GenerateRtti(const CXXRecordDecl *RD) {
   llvm::raw_svector_ostream Out(OutName);
   QualType ClassTy;
   ClassTy = getContext().getTagDeclType(RD);
-  mangleCXXRtti(ClassTy, getContext(), Out);
+  mangleCXXRtti(getMangleContext(), ClassTy, Out);
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> info;
@@ -1187,7 +1187,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::raw_svector_ostream Out(OutName);
   QualType ClassTy;
   ClassTy = getContext().getTagDeclType(RD);
-  mangleCXXVtable(ClassTy, getContext(), Out);
+  mangleCXXVtable(CGM.getMangleContext(), ClassTy, Out);
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> methods;
@@ -1285,7 +1285,7 @@ llvm::Constant *CodeGenModule::BuildThunk(const CXXMethodDecl *MD, bool Extern,
                                           int64_t nv, int64_t v) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  mangleThunk(MD, nv, v, getContext(), Out);
+  mangleThunk(getMangleContext(), MD, nv, v, Out);
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   if (!Extern)
@@ -1310,7 +1310,7 @@ llvm::Constant *CodeGenModule::BuildCovariantThunk(const CXXMethodDecl *MD,
                                                    int64_t v_r) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
-  mangleCovariantThunk(MD, nv_t, v_t, nv_r, v_r, getContext(), Out);
+  mangleCovariantThunk(getMangleContext(), MD, nv_t, v_t, nv_r, v_r, Out);
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   if (!Extern)

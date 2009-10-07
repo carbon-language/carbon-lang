@@ -39,7 +39,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CompileOptions &compileOpts,
                              Diagnostic &diags)
   : BlockModule(C, M, TD, Types, *this), Context(C),
     Features(C.getLangOptions()), CompileOpts(compileOpts), TheModule(M),
-    TheTargetData(TD), Diags(diags), Types(C, M, TD), Runtime(0),
+    TheTargetData(TD), Diags(diags), Types(C, M, TD), MangleCtx(C), Runtime(0),
     MemCpyFn(0), MemMoveFn(0), MemSetFn(0), CFConstantStringClassRef(0),
     VMContext(M.getContext()) {
 
@@ -166,7 +166,7 @@ const char *CodeGenModule::getMangledName(const NamedDecl *ND) {
 
   llvm::SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
-  if (!mangleName(ND, Context, Out)) {
+  if (!mangleName(getMangleContext(), ND, Out)) {
     assert(ND->getIdentifier() && "Attempt to mangle unnamed decl.");
     return ND->getNameAsCString();
   }

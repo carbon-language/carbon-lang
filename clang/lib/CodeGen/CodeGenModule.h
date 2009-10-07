@@ -22,6 +22,7 @@
 #include "CGCall.h"
 #include "CGCXX.h"
 #include "CodeGenTypes.h"
+#include "Mangle.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
@@ -123,9 +124,11 @@ class CodeGenModule : public BlockModule {
   const llvm::TargetData &TheTargetData;
   Diagnostic &Diags;
   CodeGenTypes Types;
+  MangleContext MangleCtx;
+
   CGObjCRuntime* Runtime;
   CGDebugInfo* DebugInfo;
-
+  
   llvm::Function *MemCpyFn;
   llvm::Function *MemMoveFn;
   llvm::Function *MemSetFn;
@@ -217,6 +220,7 @@ public:
   const LangOptions &getLangOptions() const { return Features; }
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
+  MangleContext &getMangleContext() { return MangleCtx; }
   Diagnostic &getDiags() const { return Diags; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
   llvm::LLVMContext &getLLVMContext() { return VMContext; }
