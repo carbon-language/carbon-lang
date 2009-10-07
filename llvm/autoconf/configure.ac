@@ -999,31 +999,30 @@ AC_ARG_WITH(oprofile,
       AC_SUBST(USE_OPROFILE, [1])
       case "$withval" in
         /usr|yes) llvm_cv_oppath=/usr/lib/oprofile ;;
+        no) llvm_cv_oppath=
+            AC_SUBST(USE_OPROFILE, [0]) ;;
         *) llvm_cv_oppath="${withval}/lib/oprofile"
            CPPFLAGS="-I${withval}/include";;
       esac
-      LIBS="$LIBS -L${llvm_cv_oppath} -Wl,-rpath,${llvm_cv_oppath}"
-      AC_SEARCH_LIBS(op_open_agent, opagent, [], [
-        echo "Error! You need to have libopagent around."
-        exit -1
-      ])
-      AC_CHECK_HEADER([opagent.h], [], [
-        echo "Error! You need to have opagent.h around."
-        exit -1
-      ])
+      if test -n "$llvm_cv_oppath" ; then
+        LIBS="$LIBS -L${llvm_cv_oppath} -Wl,-rpath,${llvm_cv_oppath}"
+        dnl Work around http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=537744:
+        dnl libbfd is not included properly in libopagent in some Debian
+        dnl versions.  If libbfd isn't found at all, we assume opagent works
+        dnl anyway.
+        AC_SEARCH_LIBS(bfd_init, bfd, [], [])
+        AC_SEARCH_LIBS(op_open_agent, opagent, [], [
+          echo "Error! You need to have libopagent around."
+          exit -1
+        ])
+        AC_CHECK_HEADER([opagent.h], [], [
+          echo "Error! You need to have opagent.h around."
+          exit -1
+          ])
+      fi
     ],
     [
-      llvm_cv_old_LIBS="$LIBS"
-      LIBS="$LIBS -L/usr/lib/oprofile -Wl,-rpath,/usr/lib/oprofile"
-      dnl If either the library or header aren't present, omit oprofile support.
-      AC_SEARCH_LIBS(op_open_agent, opagent,
-                     [AC_SUBST(USE_OPROFILE, [1])],
-                     [LIBS="$llvm_cv_old_LIBS"
-                      AC_SUBST(USE_OPROFILE, [0])])
-      AC_CHECK_HEADER([opagent.h], [], [
-        LIBS="$llvm_cv_old_LIBS"
-        AC_SUBST(USE_OPROFILE, [0])
-      ])
+      AC_SUBST(USE_OPROFILE, [0])
     ])
 AC_DEFINE_UNQUOTED([USE_OPROFILE],$USE_OPROFILE,
                    [Define if we have the oprofile JIT-support library])
