@@ -9397,7 +9397,6 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     switch (Constraint[0]) {
     default: break;
     case 'r':   // GENERAL_REGS
-    case 'R':   // LEGACY_REGS
     case 'l':   // INDEX_REGS
       if (VT == MVT::i8)
         return std::make_pair(0U, X86::GR8RegisterClass);
@@ -9406,6 +9405,14 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       if (VT == MVT::i32 || !Subtarget->is64Bit())
         return std::make_pair(0U, X86::GR32RegisterClass);
       return std::make_pair(0U, X86::GR64RegisterClass);
+    case 'R':   // LEGACY_REGS
+      if (VT == MVT::i8)
+        return std::make_pair(0U, X86::GR8_NOREXRegisterClass);
+      if (VT == MVT::i16)
+        return std::make_pair(0U, X86::GR16_NOREXRegisterClass);
+      if (VT == MVT::i32 || !Subtarget->is64Bit())
+        return std::make_pair(0U, X86::GR32_NOREXRegisterClass);
+      return std::make_pair(0U, X86::GR64_NOREXRegisterClass);
     case 'f':  // FP Stack registers.
       // If SSE is enabled for this VT, use f80 to ensure the isel moves the
       // value to the correct fpstack register class.
