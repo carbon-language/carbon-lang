@@ -1396,6 +1396,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v4i16: Opc = ARM::VLD3d16; break;
         case MVT::v2f32:
         case MVT::v2i32: Opc = ARM::VLD3d32; break;
+        case MVT::v1i64: Opc = ARM::VLD3d64; break;
         }
         SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };

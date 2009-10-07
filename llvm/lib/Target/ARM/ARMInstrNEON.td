@@ -215,6 +215,10 @@ class VLD3WB<bits<4> op7_4, string OpcodeStr>
 def  VLD3d8   : VLD3D<0b0000, "vld3.8">;
 def  VLD3d16  : VLD3D<0b0100, "vld3.16">;
 def  VLD3d32  : VLD3D<0b1000, "vld3.32">;
+def  VLD3d64  : NLdSt<0,0b10,0b0110,0b1100,
+                      (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
+                      (ins addrmode6:$addr), IIC_VLD1,
+                      "vld1.64\t\\{$dst1,$dst2,$dst3\\}, $addr", "", []>;
 
 // vld3 to double-spaced even registers.
 def  VLD3q8a  : VLD3WB<0b0000, "vld3.8">;
