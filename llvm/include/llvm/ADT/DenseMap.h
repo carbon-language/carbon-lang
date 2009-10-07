@@ -145,6 +145,9 @@ public:
     return ValueT();
   }
 
+  // Inserts key,value pair into the map if the key isn't already in the map.
+  // If the key is already in the map, it returns false and doesn't update the
+  // value.
   std::pair<iterator, bool> insert(const std::pair<KeyT, ValueT> &KV) {
     BucketT *TheBucket;
     if (LookupBucketFor(KV.first, TheBucket))
