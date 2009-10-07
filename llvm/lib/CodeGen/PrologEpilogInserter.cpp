@@ -44,6 +44,16 @@ char PEI::ID = 0;
 static RegisterPass<PEI>
 X("prologepilog", "Prologue/Epilogue Insertion");
 
+// FIXME: For now, the frame index scavenging is off by default and only
+// used by the Thumb1 target. When it's the default and replaces the current
+// on-the-fly PEI scavenging for all targets, requiresRegisterScavenging()
+// will replace this.
+cl::opt<bool>
+FrameIndexVirtualScavenging("enable-frame-index-scavenging",
+                            cl::Hidden,
+                            cl::desc("Enable frame index elimination with"
+                                     "virtual register scavenging"));
+
 /// createPrologEpilogCodeInserter - This function returns a pass that inserts
 /// prolog and epilog code, and eliminates abstract frame references.
 ///
@@ -56,7 +66,6 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   const Function* F = Fn.getFunction();
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
   RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
-  FrameIndexVirtualScavenging = TRI->requiresFrameIndexScavenging(Fn);
 
   // Get MachineModuleInfo so that we can track the construction of the
   // frame.
