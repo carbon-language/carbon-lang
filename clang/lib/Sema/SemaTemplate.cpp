@@ -2433,11 +2433,13 @@ static bool CheckTemplateSpecializationScope(Sema &S,
       << TSK << Specialized;
     return true;
   }
-  
-  // FIXME: For everything except class template partial specializations,
-  // complain if the explicit specialization/instantiation occurs at class 
-  // scope.
 
+  if (S.CurContext->isRecord() && !IsPartialSpecialization) {
+    S.Diag(Loc, diag::err_template_spec_decl_class_scope)
+      << TSK << Specialized;
+    return true;
+  }
+  
   // C++ [temp.class.spec]p6:
   //   A class template partial specialization may be declared or redeclared
   //   in any namespace scope in which its definition may be defined (14.5.1 

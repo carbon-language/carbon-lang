@@ -927,6 +927,9 @@ def note_specialized_entity : Note<
 def err_template_spec_decl_function_scope : Error<
   "explicit %select{<error>|<error>|specialization|instantiation|"
   "instantiation}0 of %1 in function scope">;
+def err_template_spec_decl_class_scope : Error<
+  "explicit %select{<error>|<error>|specialization|instantiation|"
+  "instantiation}0 of %1 in class scope">;
 def err_template_spec_decl_out_of_scope_global : Error<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 must "

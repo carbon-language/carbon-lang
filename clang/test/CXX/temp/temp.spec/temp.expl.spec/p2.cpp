@@ -38,6 +38,12 @@ namespace N1 {
 
 template<> void N0::f0(double) { } // expected-error{{originally be declared}}
 
+struct X1 {
+  template<typename T> void f(T);
+  
+  template<> void f(int); // expected-error{{in class scope}}
+};
+
 //     -- class template
 namespace N0 {
   
