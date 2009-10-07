@@ -3693,7 +3693,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         QualType C1;
         if (const PointerType *PointerTy = C1Ty->getAs<PointerType>()) {
           C1 = PointerTy->getPointeeType();
-          C1 = Context.getCanonicalType(C1).getUnqualifiedType();
+          C1 = C1.getUnqualifiedType();
           if (!isa<RecordType>(C1))
             continue;
         }
@@ -3703,7 +3703,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
              MemPtr != MemPtrEnd; ++MemPtr) {
           const MemberPointerType *mptr = cast<MemberPointerType>(*MemPtr);
           QualType C2 = QualType(mptr->getClass(), 0);
-          C2 = Context.getCanonicalType(C2).getUnqualifiedType();
+          C2 = C2.getUnqualifiedType();
           if (C1 != C2 && !IsDerivedFrom(C1, C2))
             break;
           QualType ParamTypes[2] = { *Ptr, *MemPtr };
