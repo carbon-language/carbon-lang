@@ -1445,18 +1445,61 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      if (VT.is64BitVector()) {
+        switch (VT.getSimpleVT().SimpleTy) {
+        default: llvm_unreachable("unhandled vld4 type");
+        case MVT::v8i8:  Opc = ARM::VLD4d8; break;
+        case MVT::v4i16: Opc = ARM::VLD4d16; break;
+        case MVT::v2f32:
+        case MVT::v2i32: Opc = ARM::VLD4d32; break;
+        }
+        SDValue Chain = N->getOperand(0);
+        const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
+        std::vector<EVT> ResTys(4, VT);
+        ResTys.push_back(MVT::Other);
+        return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 4);
+      }
+      // Quad registers are loaded with two separate instructions, where one
+      // loads the even registers and the other loads the odd registers.
+      EVT RegVT = VT;
+      unsigned Opc2 = 0;
       switch (VT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("unhandled vld4 type");
-      case MVT::v8i8:  Opc = ARM::VLD4d8; break;
-      case MVT::v4i16: Opc = ARM::VLD4d16; break;
-      case MVT::v2f32:
-      case MVT::v2i32: Opc = ARM::VLD4d32; break;
+      case MVT::v16i8:
+        Opc = ARM::VLD4q8a;  Opc2 = ARM::VLD4q8b;  RegVT = MVT::v8i8; break;
+      case MVT::v8i16:
+        Opc = ARM::VLD4q16a; Opc2 = ARM::VLD4q16b; RegVT = MVT::v4i16; break;
+      case MVT::v4f32:
+        Opc = ARM::VLD4q32a; Opc2 = ARM::VLD4q32b; RegVT = MVT::v2f32; break;
+      case MVT::v4i32:
+        Opc = ARM::VLD4q32a; Opc2 = ARM::VLD4q32b; RegVT = MVT::v2i32; break;
       }
       SDValue Chain = N->getOperand(0);
-      const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
-      std::vector<EVT> ResTys(4, VT);
+      // Enable writeback to the address register.
+      MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
+
+      std::vector<EVT> ResTys(4, RegVT);
+      ResTys.push_back(MemAddr.getValueType());
       ResTys.push_back(MVT::Other);
-      return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 4);
+
+      const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc, Chain };
+      SDNode *VLdA = CurDAG->getMachineNode(Opc, dl, ResTys, OpsA, 4);
+      Chain = SDValue(VLdA, 5);
+
+      const SDValue OpsB[] = { SDValue(VLdA, 4), MemUpdate, MemOpc, Chain };
+      SDNode *VLdB = CurDAG->getMachineNode(Opc2, dl, ResTys, OpsB, 4);
+      Chain = SDValue(VLdB, 5);
+
+      SDNode *Q0 = PairDRegs(VT, SDValue(VLdA, 0), SDValue(VLdB, 0));
+      SDNode *Q1 = PairDRegs(VT, SDValue(VLdA, 1), SDValue(VLdB, 1));
+      SDNode *Q2 = PairDRegs(VT, SDValue(VLdA, 2), SDValue(VLdB, 2));
+      SDNode *Q3 = PairDRegs(VT, SDValue(VLdA, 3), SDValue(VLdB, 3));
+      ReplaceUses(SDValue(N, 0), SDValue(Q0, 0));
+      ReplaceUses(SDValue(N, 1), SDValue(Q1, 0));
+      ReplaceUses(SDValue(N, 2), SDValue(Q2, 0));
+      ReplaceUses(SDValue(N, 3), SDValue(Q3, 0));
+      ReplaceUses(SDValue(N, 4), Chain);
+      return NULL;
     }
 
     case Intrinsic::arm_neon_vld2lane: {

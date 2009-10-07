@@ -227,10 +227,25 @@ class VLD4D<string OpcodeStr>
           (ins addrmode6:$addr), IIC_VLD4,
           !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3,$dst4\\}, $addr"),
           "", []>;
+class VLD4WB<string OpcodeStr>
+  : NLdSt<(outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4, GPR:$wb),
+          (ins addrmode6:$addr), IIC_VLD4,
+          !strconcat(OpcodeStr, "\t\\{$dst1,$dst2,$dst3,$dst4\\}, $addr"),
+          "$addr.addr = $wb", []>;
 
 def  VLD4d8   : VLD4D<"vld4.8">;
 def  VLD4d16  : VLD4D<"vld4.16">;
 def  VLD4d32  : VLD4D<"vld4.32">;
+
+// vld4 to double-spaced even registers.
+def  VLD4q8a  : VLD4WB<"vld4.8">;
+def  VLD4q16a : VLD4WB<"vld4.16">;
+def  VLD4q32a : VLD4WB<"vld4.32">;
+
+// vld4 to double-spaced odd registers.
+def  VLD4q8b  : VLD4WB<"vld4.8">;
+def  VLD4q16b : VLD4WB<"vld4.16">;
+def  VLD4q32b : VLD4WB<"vld4.32">;
 
 //   VLD2LN   : Vector Load (single 2-element structure to one lane)
 class VLD2LND<string OpcodeStr>
