@@ -38,10 +38,11 @@ namespace N1 {
 
 template<> void N0::f0(double) { } // expected-error{{originally be declared}}
 
-// FIXME: update the remainder of this test to check for scopes properly.
 //     -- class template
+namespace N0 {
+  
 template<typename T>
-struct X0 {
+struct X0 { // expected-note 2{{here}}
   static T member;
   
   void f1(T t) {
@@ -57,25 +58,40 @@ struct X0 {
   void ft1(T t, U u);
 };
 
+}
+
 template<typename T> 
 template<typename U>
-void X0<T>::ft1(T t, U u) {
+void N0::X0<T>::ft1(T t, U u) {
   t = u;
 }
 
-template<typename T> T X0<T>::member;
+template<typename T> T N0::X0<T>::member;
 
-template<> struct X0<void> { };
-X0<void> test_X0;
+template<> struct N0::X0<void> { }; // expected-error{{originally}}
+N0::X0<void> test_X0;
 
+namespace N1 {
+  template<> struct N0::X0<const void> { }; // expected-error{{originally}}
+}
+
+namespace N0 {
+  template<> struct X0<volatile void>;
+}
+
+template<> struct N0::X0<volatile void> { };
 
 //     -- member function of a class template
-template<> void X0<void*>::f1(void *) { }
+// FIXME: this should complain about the scope of f1, but we don't seem
+// to recognize it as a specialization. Hrm?
+template<> void N0::X0<void*>::f1(void *) { }
 
-void test_spec(X0<void*> xvp, void *vp) {
+void test_spec(N0::X0<void*> xvp, void *vp) {
   xvp.f1(vp);
 }
 
+#if 0
+// FIXME: update the remainder of this test to check for scopes properly.
 //     -- static data member of a class template
 template<> 
 NonDefaultConstructible X0<NonDefaultConstructible>::member = 17;
@@ -105,10 +121,4 @@ void X0<void*>::ft1(void*, const void*) { }
 void test_func_template(X0<void *> xvp, void *vp, const void *cvp) {
   xvp.ft1(vp, cvp);
 }
-
-// example from the standard:
-template<class T> class stream;
-template<> class stream<char> { /* ... */ };
-template<class T> class Array { /* ... */ }; 
-template<class T> void sort(Array<T>& v) { /* ... */ }
-template<> void sort<char*>(Array<char*>&) ;
+#endif
