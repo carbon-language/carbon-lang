@@ -708,6 +708,11 @@ public:
   SDValue getTargetExtractSubreg(int SRIdx, DebugLoc DL, EVT VT,
                                  SDValue Operand);
 
+  /// getTargetInsertSubreg - A convenience function for creating
+  /// TargetInstrInfo::INSERT_SUBREG nodes.
+  SDValue getTargetInsertSubreg(int SRIdx, DebugLoc DL, EVT VT,
+                                SDValue Operand, SDValue Subreg);
+
   /// getNodeIfExists - Get the specified node if it's already available, or
   /// else return NULL.
   SDNode *getNodeIfExists(unsigned Opcode, SDVTList VTs,

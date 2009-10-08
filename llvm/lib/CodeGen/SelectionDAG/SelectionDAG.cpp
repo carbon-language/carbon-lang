@@ -4769,6 +4769,17 @@ SelectionDAG::getTargetExtractSubreg(int SRIdx, DebugLoc DL, EVT VT,
   return SDValue(Subreg, 0);
 }
 
+/// getTargetInsertSubreg - A convenience function for creating
+/// TargetInstrInfo::INSERT_SUBREG nodes.
+SDValue
+SelectionDAG::getTargetInsertSubreg(int SRIdx, DebugLoc DL, EVT VT,
+                                    SDValue Operand, SDValue Subreg) {
+  SDValue SRIdxVal = getTargetConstant(SRIdx, MVT::i32);
+  SDNode *Result = getMachineNode(TargetInstrInfo::INSERT_SUBREG, DL,
+                                  VT, Operand, Subreg, SRIdxVal);
+  return SDValue(Result, 0);
+}
+
 /// getNodeIfExists - Get the specified node if it's already available, or
 /// else return NULL.
 SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
