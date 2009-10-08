@@ -996,9 +996,9 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
                          Record->getInstantiatedFromMemberClass(),
                          TemplateArgs,
                          TSK);
-      else
-        InstantiateClassMembers(PointOfInstantiation, Record, TemplateArgs, 
-                                TSK);
+      
+      InstantiateClassMembers(PointOfInstantiation, Record, TemplateArgs, 
+                              TSK);
     }
   }
 }

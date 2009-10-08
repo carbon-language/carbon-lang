@@ -3651,11 +3651,6 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
       InstantiateFunctionDefinition(D.getIdentifierLoc(), Specialization, 
                                     false);
       
-    // FIXME: setTemplateSpecializationKind doesn't (yet) work for 
-    // non-templated member functions.
-    if (!Specialization->getPrimaryTemplate())
-      break;
-      
     Specialization->setTemplateSpecializationKind(TSK);
     break;
   }

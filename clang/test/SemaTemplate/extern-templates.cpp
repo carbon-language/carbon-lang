@@ -62,6 +62,5 @@ void g_X1(X1<void*> x1, void *ptr) {
 extern template void X1<const void*>::g(const void*);
 
 void g_X1_2(X1<const void *> x1, const void *ptr) {
-  // FIXME: This should not instantiate of x1<const void*>::g
-//  x1.g(ptr);
+  x1.g(ptr);
 }
