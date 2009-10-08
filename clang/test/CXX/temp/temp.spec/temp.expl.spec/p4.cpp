@@ -13,7 +13,7 @@ struct X { // expected-note{{here}}
   void g() { }
   
   struct Inner { 
-    T value; 
+    T value; 	// expected-note {{member is declared here}}
   };
   
   static T value;

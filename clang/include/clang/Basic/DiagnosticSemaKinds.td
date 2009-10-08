@@ -720,8 +720,9 @@ def err_param_default_argument_member_template_redecl : Error<
   "default arguments cannot be added to an out-of-line definition of a member "
   "of a %select{class template|class template partial specialization|nested "
   "class in a template}0">;
+def note_field_decl : Note<"member is declared here">;
 def err_defining_default_ctor : Error<
-  "cannot define the implicit default constructor for %0, because %select{base class|member}1 "
+  "cannot define the implicit default constructor for %0, because %select{base class|member's type}1 "
   "%2 does not have any default constructor">;
 def note_previous_class_decl : Note<
   "%0 declared here">;

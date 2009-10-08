@@ -2852,7 +2852,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
         MarkDeclarationReferenced(CurrentLocation, BaseCtor);
       else {
         Diag(CurrentLocation, diag::err_defining_default_ctor)
-          << Context.getTagDeclType(ClassDecl) << 1
+          << Context.getTagDeclType(ClassDecl) << 0
           << Context.getTagDeclType(BaseClassDecl);
         Diag(BaseClassDecl->getLocation(), diag::note_previous_class_decl)
               << Context.getTagDeclType(BaseClassDecl);
@@ -2874,8 +2874,9 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
           MarkDeclarationReferenced(CurrentLocation, FieldCtor);
         else {
           Diag(CurrentLocation, diag::err_defining_default_ctor)
-          << Context.getTagDeclType(ClassDecl) << 0 <<
+          << Context.getTagDeclType(ClassDecl) << 1 <<
               Context.getTagDeclType(FieldClassDecl);
+          Diag((*Field)->getLocation(), diag::note_field_decl);
           Diag(FieldClassDecl->getLocation(), diag::note_previous_class_decl)
           << Context.getTagDeclType(FieldClassDecl);
           err = true;
