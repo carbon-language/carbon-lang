@@ -1071,6 +1071,7 @@ public:
     TLSSupported = false;
     WCharType = UnsignedShort;
     WCharWidth = WCharAlign = 16;
+    LongWidth = LongAlign = 32;
     DoubleAlign = LongLongAlign = 64;
   }
   virtual void getTargetDefines(const LangOptions &Opts,
