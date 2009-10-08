@@ -51,6 +51,8 @@ getTargetNodeName(unsigned Opcode) const
     case XCoreISD::CPRelativeWrapper : return "XCoreISD::CPRelativeWrapper";
     case XCoreISD::STWSP             : return "XCoreISD::STWSP";
     case XCoreISD::RETSP             : return "XCoreISD::RETSP";
+    case XCoreISD::LADD              : return "XCoreISD::LADD";
+    case XCoreISD::LSUB              : return "XCoreISD::LSUB";
     default                           : return NULL;
   }
 }
