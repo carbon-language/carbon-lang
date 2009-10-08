@@ -51,45 +51,26 @@ current one.  To see the release notes for a specific release, please see the
 <a href="http://llvm.org/releases/">releases page</a>.</p>
 
 </div>
-
-
-
-  MC:
-    MCSection, MCAsmInfo
-	MCInstPrinter did it make it in?
-	MCInst (X86 using it so far)
-	Rewrite of X86 GV selection logic: TargetOperand flags on ExternalSymbol, GV, etc operands.
-	Can parse and re-print out an darwin-x86 .s file.
-	TargetLoweringObjectFile, MCSectionKind
-	Verrrry early start of a macho writer.
-	
-  ELF Writer?  How stable?
-  
-APIs:
-   
-  Shrink wrapping support in PEI, what is the state of it?
+ 
 
 <!--
 Almost dead code.
-  include/llvm/Analysis/LiveValues.h => dan
-  lib/Analysis/LoopVR.cpp  ==> dan/nick/owen
-  lib/Transforms/IPO/MergeFunctions.cpp
-  llvm/Analysis/PointerTracking.h
+  include/llvm/Analysis/LiveValues.h => Dan
+  lib/Transforms/IPO/MergeFunctions.cpp => consider for 2.8.
+  llvm/Analysis/PointerTracking.h => Edwin wants this, consider for 2.8.
 -->
  
-  LLVM build now builds all libraries as .a files instead of some
-  libraries as relinked .o files.  This requires some APIs like
-  InitializeAllTargets.h.  TargetRegistry! 
-
-
    
 <!-- Unfinished features in 2.6:
-  Mention gcc plugin.
+  gcc plugin.
   strong phi elim
   variable debug info for optimized code
   postalloc scheduler: anti dependence breaking, hazard recognizer?
   metadata
   loop dependence analysis
+  ELF Writer?  How stable?
+  <li>PostRA scheduler improvements, ARM adoption (David Goodwin).</li>
+
  -->
 
  <!-- for announcement email:
@@ -128,7 +109,7 @@ Project</a> and the <a href="#vmkit">VMKit Project</a>.
 
 <div class="doc_text">
 
-<p>The <a href="http://clang.llvm.org/">Clang project</a> is an effort to build
+<p><b>UPDATE!</b> The <a href="http://clang.llvm.org/">Clang project</a> is an effort to build
 a set of new 'LLVM native' front-end technologies for the LLVM optimizer and
 code generator.  While Clang is not included in the LLVM 2.6 release, it is
 continuing to make major strides forward in all areas.  Its C and Objective-C
@@ -161,7 +142,7 @@ list</a>.</p>
 
 <div class="doc_text">
 
-<p>Previously announced in the 2.4 LLVM release, the Clang project also
+<p><b>UPDATE!</b> Previously announced in the 2.4 and 2.5 LLVM releases, the Clang project also
 includes an early stage static source code analysis tool for <a
 href="http://clang.llvm.org/StaticAnalysis.html">automatically finding bugs</a>
 in C and Objective-C programs. The tool performs a growing set of checks to find
@@ -185,6 +166,7 @@ this project is encouraged to get involved!</p>
 
 <div class="doc_text">
 <p>
+<b>UPDATE!</b> 
 The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation of
 a JVM and a CLI Virtual Machines (Microsoft .NET is an
 implementation of the CLI) using the Just-In-Time compiler of LLVM.</p>
@@ -200,12 +182,48 @@ bug fixes, cleanup and new features. The major changes are:</p>
 </ul>
 </div>
 
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="mc">llvm-mc: Machine Code Toolkit</a>
+</div>
+
+<div class="doc_text">
+<p>
+<b>UPDATE!</b> 
+blah
+
+  MC:
+    MCSection, MCAsmInfo
+	MCInstPrinter did it make it in?
+	MCInst (X86 using it so far)
+	Rewrite of X86 GV selection logic: TargetOperand flags on ExternalSymbol, GV, etc operands.
+	Can parse and re-print out an darwin-x86 .s file.
+	TargetLoweringObjectFile, MCSectionKind
+	Verrrry early start of a macho writer.
+</p>
+
+</div>	
+
+
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="externalproj">External Projects Using LLVM 2.6</a>
 </div>
 <!-- *********************************************************************** -->
 
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="Rubinius">Rubinius</a>
+</div>
+
+<div class="doc_text">
+<p><a href="http://github.com/evanphx/rubinius">Rubinius</a> is an environment
+for running Ruby code which strives to write as much of the core class
+implementation in Ruby as possible. Combined with a bytecode interpreting VM, it
+uses LLVM to optimize and compile ruby code down to machine code. Techniques
+such as type feedback, method inlining, and uncommon traps are all used to
+remove dynamism from ruby execution and increase performance.</p>
+</div>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -236,6 +254,7 @@ handling.</p>
 
 <div class="doc_text">
 <p>
+<b>UPDATE!</b> 
 <a href="http://pure-lang.googlecode.com/">Pure</a>
 is an algebraic/functional programming language based on term rewriting.
 Programs are collections of equations which are used to evaluate expressions in
@@ -262,6 +281,7 @@ it as a kind of functional scripting language for many application areas.
 
 <div class="doc_text">
 <p>
+<b>UPDATE!</b> 
 <a href="http://www.dsource.org/projects/ldc">LDC</a> is an implementation of
 the D Programming Language using the LLVM optimizer and code generator.
 The LDC project works great with the LLVM 2.6 release.  General improvements in
@@ -279,7 +299,9 @@ fully featured as the original DMD compiler from DigitalMars.
 </div>
 
 <div class="doc_text">
-<p><a href="http://code.roadsend.com/rphp">Roadsend PHP</a> (rphp) is an open
+<p>
+<b>UPDATE!</b> 
+<a href="http://code.roadsend.com/rphp">Roadsend PHP</a> (rphp) is an open
 source implementation of the PHP programming 
 language that uses LLVM for its optimizer, JIT, and static compiler. This is a 
 reimplementation of an earlier project that is now based on LLVM.</p>
@@ -291,22 +313,14 @@ reimplementation of an earlier project that is now based on LLVM.</p>
 </div>
 
 <div class="doc_text">
-<p><a href="http://code.google.com/p/unladen-swallow/">Unladen Swallow</a> is a
+<p>
+<b>UPDATE!</b> 
+<a href="http://code.google.com/p/unladen-swallow/">Unladen Swallow</a> is a
 branch of <a href="http://python.org/">Python</a> intended to be fully
 compatible and significantly faster.  It uses LLVM's optimization passes and JIT
 compiler.</p>
 </div>
 
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="Rubinius">Rubinius</a>
-</div>
-
-<div class="doc_text">
-<p><a href="http://github.com/evanphx/rubinius">Rubinius</a> is a new virtual
-machine for Ruby. It leverages LLVM to dynamically compile Ruby code down to
-machine code using LLVM's JIT.</p>
-</div>
 
 
 <!-- *********************************************************************** -->
@@ -339,7 +353,6 @@ in this section.
 <li>New MSP430 and SystemZ backends.</li>
 <li>New BlackFin backend.</li>
 <li>LLVMContext,   llvm_start_multithreaded: ProgrammersManual.html#threading</li>
-<li>Unladen swallow as user?</li>
 <li>klee web page at klee.llvm.org</li>
 <li>FileCheck</li>
 <li>New compiler-rt project.</li>
@@ -347,25 +360,6 @@ in this section.
 </ul>
 
 </div>
-
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="llvm-gcc">llvm-gcc 4.2 Improvements</a>
-</div>
-
-<div class="doc_text">
-
-<p>LLVM fully supports the llvm-gcc 4.2 front-end, which marries the GCC
-front-ends and driver with the LLVM optimizer and code generator.  It currently
-includes support for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
-
-<ul>
-<li>Something wonderful!</li>
-</ul>
-
-</div>
-
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -438,8 +432,7 @@ it run faster:</p>
 <li>Regalloc hints for allocation stuff: Evan r73381/r73671.  Finished/enabled?</li>
 <li>Stack slot coloring for register spills (denser stack frames)</li>
 <li>SelectionDAGS: New BuildVectorSDNode (r65296), and ISD::VECTOR_SHUFFLE (r69952 / PR2957)</li>
-<li>PostRA scheduler improvements David Goodwin.</li>
-</li>
+<li>Experimental support for shrink wrapping support in PEI.</li>
 </ul>
 </div>
 
@@ -579,8 +572,17 @@ to receive callbacks when the JIT emits or frees machine code. The
 OProfile support uses this mechanism.</li>
    JIT support for oprofile (r75279), configure with --with-oprofile.  Now we get line # and function info for JIT'd functions.
 
-<li>  Profile info improvements by Andreas Neustifter.</li>
-<li>  Many extensions to the C APIs.</li>
+<li>Profile info improvements by Andreas Neustifter.</li>
+<li>Many extensions to the C APIs.</li>
+
+<li>LLVMC:
+
+* Dynamic plugins now work on Windows.
+* New option property: init. Makes possible to provide default values for
+ options defined in plugins (interface to cl::init).
+* New example: Skeleton, shows how to create a standalone LLVMC-based driver.
+* New example: mcc16, a driver for the PIC16 toolchain.</li>
+
 </ul>
 
 </div>
@@ -606,6 +608,12 @@ from the previous release.</p>
 criteria.  We still want it to work, but no one is maintaining it and it lacks
 support for arbitrary precision integers and other important IR features.</li>
 </ul>
+
+  LLVM build now builds all libraries as .a files instead of some
+  libraries as relinked .o files.  This requires some APIs like
+  InitializeAllTargets.h.  TargetRegistry! 
+
+
 
 
 <p>In addition, many APIs have changed in this release.  Some of the major LLVM
