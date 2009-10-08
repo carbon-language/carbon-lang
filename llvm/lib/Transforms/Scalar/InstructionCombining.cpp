@@ -90,9 +90,10 @@ namespace {
     /// Add - Add the specified instruction to the worklist if it isn't already
     /// in it.
     void Add(Instruction *I) {
-      DEBUG(errs() << "IC: ADD: " << *I << '\n');
-      if (WorklistMap.insert(std::make_pair(I, Worklist.size())).second)
+      if (WorklistMap.insert(std::make_pair(I, Worklist.size())).second) {
+        DEBUG(errs() << "IC: ADD: " << *I << '\n');
         Worklist.push_back(I);
+      }
     }
     
     void AddValue(Value *V) {
@@ -12853,7 +12854,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     std::string OrigI;
 #endif
     DEBUG(raw_string_ostream SS(OrigI); I->print(SS); OrigI = SS.str(););
-    
+    DEBUG(errs() << "IC: Visiting: " << OrigI << '\n');
+
     if (Instruction *Result = visit(*I)) {
       ++NumCombined;
       // Should we replace the old instruction with a new one?
