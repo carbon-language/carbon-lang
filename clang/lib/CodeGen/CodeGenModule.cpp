@@ -531,6 +531,17 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
   const VarDecl *VD = cast<VarDecl>(Global);
   assert(VD->isFileVarDecl() && "Invalid decl");
 
+  // We never want to defer structs that have non-trivial constructors or 
+  // destructors.
+  
+  // FIXME: Handle references.
+  if (const RecordType *RT = VD->getType()->getAs<RecordType>()) {
+    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      if (!RD->hasTrivialConstructor() || !RD->hasTrivialDestructor())
+        return false;
+    }
+  }
+      
   return VD->getStorageClass() == VarDecl::Static;
 }
 
