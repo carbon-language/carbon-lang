@@ -30,3 +30,28 @@ cscope.files:
 	                    -or -name '*.h' > cscope.files
 
 .PHONY: test report clean cscope.files
+
+install-local::
+	$(Echo) Installing include files
+	$(Verb) $(MKDIR) $(PROJ_includedir)
+	$(Verb) if test -d "$(PROJ_SRC_ROOT)/tools/clang/include" ; then \
+	  cd $(PROJ_SRC_ROOT)/tools/clang/include && \
+	  for  hdr in `find . -type f '!' '(' -name '*~' \
+	      -o -name '.#*' -o -name '*.in' ')' -print | grep -v CVS | \
+	      grep -v .svn` ; do \
+	    instdir=`dirname "$(PROJ_includedir)/$$hdr"` ; \
+	    if test \! -d "$$instdir" ; then \
+	      $(EchoCmd) Making install directory $$instdir ; \
+	      $(MKDIR) $$instdir ;\
+	    fi ; \
+	    $(DataInstall) $$hdr $(PROJ_includedir)/$$hdr ; \
+	  done ; \
+	fi
+ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
+	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/tools/clang/include" ; then \
+	  cd $(PROJ_OBJ_ROOT)/tools/clang/include && \
+	  for hdr in `find . -type f -print | grep -v CVS .tmp` ; do \
+	    $(DataInstall) $$hdr $(PROJ_includedir)/$$hdr ; \
+	  done ; \
+	fi
+endif
