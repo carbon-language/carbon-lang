@@ -98,6 +98,12 @@ void test_spec(N0::X0<void*> xvp, void *vp) {
 
 namespace N0 {
   template<> void X0<volatile void>::f1(void *) { } // expected-error{{no function template matches}}
+
+  template<> void X0<const volatile void*>::f1(const volatile void*);
+}
+
+void test_x0_cvvoid(N0::X0<const volatile void*> x0, const volatile void *cvp) {
+  x0.f1(cvp); // okay: we've explicitly specialized
 }
 
 #if 0

@@ -6198,15 +6198,9 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     // Implicit instantiation of function templates and member functions of
     // class templates.
-    if (!Function->getBody()) {
-      // FIXME: distinguish between implicit instantiations of function
-      // templates and explicit specializations (the latter don't get
-      // instantiated, naturally).
-      if (Function->getInstantiatedFromMemberFunction() ||
-          Function->getPrimaryTemplate())
-        PendingImplicitInstantiations.push_back(std::make_pair(Function, Loc));
-    }
-
+    if (!Function->getBody() && 
+        Function->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
+      PendingImplicitInstantiations.push_back(std::make_pair(Function, Loc));
 
     // FIXME: keep track of references to static functions
     Function->setUsed(true);
