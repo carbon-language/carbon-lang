@@ -1193,8 +1193,6 @@ PreAllocSplitting::SplitRegLiveIntervals(const TargetRegisterClass **RCs,
   while (!Intervals.empty()) {
     if (PreSplitLimit != -1 && (int)NumSplits == PreSplitLimit)
       break;
-    else if (NumSplits == 4)
-      Change |= Change;
     LiveInterval *LI = Intervals.back();
     Intervals.pop_back();
     bool result = SplitRegLiveInterval(LI);
