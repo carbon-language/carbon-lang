@@ -352,6 +352,9 @@ class VST2Q<bits<4> op7_4, string OpcodeStr>
 def  VST2d8   : VST2D<0b0000, "vst2.8">;
 def  VST2d16  : VST2D<0b0100, "vst2.16">;
 def  VST2d32  : VST2D<0b1000, "vst2.32">;
+def  VST2d64  : NLdSt<0,0b00,0b1010,0b1100, (outs),
+                      (ins addrmode6:$addr, DPR:$src1, DPR:$src2), IIC_VST,
+                      "vst1.64\t\\{$src1,$src2\\}, $addr", "", []>;
 
 def  VST2q8   : VST2Q<0b0000, "vst2.8">;
 def  VST2q16  : VST2Q<0b0100, "vst2.16">;
