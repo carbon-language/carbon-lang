@@ -561,6 +561,12 @@ public:
     return false;
   }
 
+  /// requiresFrameIndexScavenging - returns true if the target requires post
+  /// PEI scavenging of registers for materializing frame index constants.
+  virtual bool requiresFrameIndexScavenging(const MachineFunction &MF) const {
+    return false;
+  }
+
   /// hasFP - Return true if the specified function should have a dedicated
   /// frame pointer register. For most targets this is true only if the function
   /// has variable sized allocas or if frame pointer elimination is disabled.
