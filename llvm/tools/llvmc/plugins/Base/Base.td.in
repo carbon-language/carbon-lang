@@ -1,4 +1,4 @@
-//===- Base.td - LLVMC2 toolchain descriptions -------------*- tablegen -*-===//
+//===- Base.td - LLVMC toolchain descriptions --------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains compilation graph description used by llvmc2.
+// This file contains compilation graph description used by llvmc.
 //
 //===----------------------------------------------------------------------===//
 
@@ -32,10 +32,17 @@ def OptList : OptionList<[
     (help "Enable threads")),
  (parameter_option "linker",
     (help "Choose linker (possible values: gcc, g++)")),
+ (parameter_option "MF",
+    (help "Specify a file to write dependencies to"), (hidden)),
+ (parameter_option "MT",
+    (help "Change the name of the rule emitted by dependency generation"),
+    (hidden)),
  (parameter_list_option "include",
     (help "Include the named file prior to preprocessing")),
  (prefix_list_option "I",
     (help "Add a directory to include path")),
+ (prefix_list_option "D",
+    (help "Define a macro")),
  (prefix_list_option "Wa,",
     (help "Pass options to assembler")),
  (prefix_list_option "Wllc,",
@@ -78,13 +85,17 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
          (and (switch_on "emit-llvm"), (switch_on "c")), (stop_compilation),
          (switch_on "fsyntax-only"), (stop_compilation),
          (not_empty "include"), (forward "include"),
-         (not_empty "I"), (forward "I"))),
+         (not_empty "I"), (forward "I")),
+         (not_empty "D"), (forward "D")),
+         (not_empty "MF"), (forward "MF")),
+         (not_empty "MT"), (forward "MT"))),
  (sink)
 ]>;
 
 def llvm_gcc_c : llvm_gcc_based<"@LLVMGCCCOMMAND@ -x c", "c", "i">;
 def llvm_gcc_cpp : llvm_gcc_based<"@LLVMGXXCOMMAND@ -x c++", "c++", "i">;
-def llvm_gcc_m : llvm_gcc_based<"@LLVMGCCCOMMAND@ -x objective-c", "objective-c", "mi">;
+def llvm_gcc_m : llvm_gcc_based<"@LLVMGCCCOMMAND@ -x objective-c",
+                                                  "objective-c", "mi">;
 def llvm_gcc_mxx : llvm_gcc_based<"@LLVMGCCCOMMAND@ -x objective-c++",
                                   "objective-c++", "mi">;
 
@@ -134,7 +145,7 @@ class llvm_gcc_based_linker <string cmd_prefix> : Tool<
           (switch_on "pthread"), (append_cmd "-lpthread"),
           (not_empty "L"), (forward "L"),
           (not_empty "l"), (forward "l"),
-          (not_empty "Wl,"), (unpack_values "Wl,")))
+          (not_empty "Wl,"), (forward "Wl,")))
 ]>;
 
 // Default linker
