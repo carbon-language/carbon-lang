@@ -986,7 +986,7 @@ namespace {
                                           Y.Declaration->getDeclName());
           
         case Result::RK_Keyword:
-          return strcmp(X.Keyword, Y.Keyword) == -1;
+          return strcmp(X.Keyword, Y.Keyword) < 0;
       }
       
       // Silence GCC warning.
