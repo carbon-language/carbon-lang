@@ -3454,6 +3454,8 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
             
             FinalizeVarWithDestructor(Var, InitType);
           }
+        } else {
+          Var->setInvalidDecl();
         }
       }
     }
