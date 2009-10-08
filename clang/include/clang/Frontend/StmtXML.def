@@ -78,6 +78,9 @@
 #  define CONTEXT_ATTRIBUTE_XML( FN )  ATTRIBUTE_XML(FN, "context")
 #endif
 
+NODE_XML(Stmt, "Stmt_Unsupported")                    // fallback for unsupproted statements
+  ATTRIBUTE_FILE_LOCATION_XML
+END_NODE_XML
 
 NODE_XML(NullStmt, "NullStmt")
   ATTRIBUTE_FILE_LOCATION_XML
