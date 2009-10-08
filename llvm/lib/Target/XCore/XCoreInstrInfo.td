@@ -975,5 +975,21 @@ def : Pat<(mul GRRegs:$src, -3),
 def : Pat<(sra GRRegs:$src, 31),
           (ASHR_l2rus GRRegs:$src, 32)>;
 
+def : Pat<(brcond (setlt GRRegs:$lhs, 0), bb:$dst),
+          (BRFT_lru6 (ASHR_l2rus GRRegs:$lhs, 32), bb:$dst)>;
+
+// setge X, 0 is canonicalized to setgt X, -1
+def : Pat<(brcond (setgt GRRegs:$lhs, -1), bb:$dst),
+          (BRFF_lru6 (ASHR_l2rus GRRegs:$lhs, 32), bb:$dst)>;
+
+def : Pat<(select (setlt GRRegs:$lhs, 0), GRRegs:$T, GRRegs:$F),
+          (SELECT_CC (ASHR_l2rus GRRegs:$lhs, 32), GRRegs:$T, GRRegs:$F)>;
+
+def : Pat<(select (setgt GRRegs:$lhs, -1), GRRegs:$T, GRRegs:$F),
+          (SELECT_CC (ASHR_l2rus GRRegs:$lhs, 32), GRRegs:$F, GRRegs:$T)>;
+
+def : Pat<(setgt GRRegs:$lhs, -1),
+          (EQ_2rus (ASHR_l2rus GRRegs:$lhs, 32), 0)>;
+
 def : Pat<(sra (shl GRRegs:$src, immBpwSubBitp:$imm), immBpwSubBitp:$imm),
           (SEXT_rus GRRegs:$src, (bpwsub_xform immBpwSubBitp:$imm))>;
