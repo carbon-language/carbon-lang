@@ -267,6 +267,7 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
   case llvm::Triple::MinGW64:
     if (Lang.CPlusPlus) {
       // Try gcc 4.4.0
+      // FIXME: This can just use AddGnuCPlusPlusIncludePaths, right?
       AddPath("c:/mingw/lib/gcc/mingw32/4.4.0/include/c++",
               System, true, false, false);
       AddPath("c:/mingw/lib/gcc/mingw32/4.4.0/include/c++/mingw32",
@@ -274,6 +275,7 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
       AddPath("c:/mingw/lib/gcc/mingw32/4.4.0/include/c++/backward",
               System, true, false, false);
       // Try gcc 4.3.0
+      // FIXME: This can just use AddGnuCPlusPlusIncludePaths, right?
       AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++",
               System, true, false, false);
       AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++/mingw32",
