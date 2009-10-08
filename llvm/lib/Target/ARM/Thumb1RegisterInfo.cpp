@@ -671,15 +671,6 @@ void Thumb1RegisterInfo::emitPrologue(MachineFunction &MF) const {
   DebugLoc dl = (MBBI != MBB.end() ?
                  MBBI->getDebugLoc() : DebugLoc::getUnknownLoc());
 
-  // Check if R3 is live in. It might have to be used as a scratch register.
-  for (MachineRegisterInfo::livein_iterator I =MF.getRegInfo().livein_begin(),
-         E = MF.getRegInfo().livein_end(); I != E; ++I) {
-    if (I->first == ARM::R3) {
-      AFI->setR3IsLiveIn(true);
-      break;
-    }
-  }
-
   // Thumb add/sub sp, imm8 instructions implicitly multiply the offset by 4.
   NumBytes = (NumBytes + 3) & ~3;
   MFI->setStackSize(NumBytes);
