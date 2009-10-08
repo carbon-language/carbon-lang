@@ -6145,9 +6145,12 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   if (D->isUsed())
     return;
 
-  // Mark a parameter declaration "used", regardless of whether we're in a
-  // template or not.
-  if (isa<ParmVarDecl>(D))
+  // Mark a parameter or variable declaration "used", regardless of whether we're in a
+  // template or not. The reason for this is that unevaluated expressions
+  // (e.g. (void)sizeof()) constitute a use for warning purposes (-Wunused-variables and
+  // -Wunused-parameters)
+  if (isa<ParmVarDecl>(D) || 
+      (isa<VarDecl>(D) && D->getDeclContext()->isFunctionOrMethod()))
     D->setUsed(true);
 
   // Do not mark anything as "used" within a dependent context; wait for

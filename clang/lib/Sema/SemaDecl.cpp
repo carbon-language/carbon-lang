@@ -434,6 +434,12 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
 
     if (!D->getDeclName()) continue;
 
+    // Diagnose unused variables in this scope.
+    if (!D->isUsed() && !D->hasAttr<UnusedAttr>() && isa<VarDecl>(D) && 
+        !isa<ParmVarDecl>(D) && !isa<ImplicitParamDecl>(D) && 
+        D->getDeclContext()->isFunctionOrMethod())
+	    Diag(D->getLocation(), diag::warn_unused_variable) << D->getDeclName();
+    
     // Remove this name from our lexical scope.
     IdResolver.RemoveDecl(D);
   }
