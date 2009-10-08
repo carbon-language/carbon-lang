@@ -1291,6 +1291,24 @@ bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
       Out << "Ss";
       return true;
     }
+    
+    //    <substitution> ::= So # ::std::basic_ostream<char,  
+    //                            ::std::char_traits<char> >
+    if (SD->getIdentifier()->isStr("basic_ostream")) {
+      const TemplateArgumentList &TemplateArgs = SD->getTemplateArgs();
+      
+      if (TemplateArgs.size() != 2)
+        return false;
+      
+      if (!isCharType(TemplateArgs[0].getAsType()))
+        return false;
+      
+      if (!isCharSpecialization(TemplateArgs[1].getAsType(), "char_traits"))
+        return false;
+
+      Out << "So";
+      return true;
+    }
   }
   return false;
 }

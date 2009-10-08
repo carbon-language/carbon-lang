@@ -9,24 +9,31 @@ namespace std {
 };
 
 namespace std {
-  template<typename T> struct allocator { };
+  template<typename> struct allocator { };
 }
 
 // CHECK: define void @_Z1fSaIcESaIiE
 void f(std::allocator<char>, std::allocator<int>) { }
 
 namespace std {
-  template<typename T, typename U, typename V> struct basic_string { };
+  template<typename, typename, typename> struct basic_string { };
 }
 
 // CHECK: define void @_Z1fSbIcciE
 void f(std::basic_string<char, char, int>) { }
 
 namespace std {
-  template<typename T> struct char_traits { };
+  template<typename> struct char_traits { };
   
   typedef std::basic_string<char, std::char_traits<char>, std::allocator<char> > string;
 }
 
 // CHECK: _Z1fSs
 void f(std::string) { }
+
+namespace std {
+  template<typename, typename> struct basic_ostream { };
+}
+
+// CHECK: _Z1fSo
+void f(std::basic_ostream<char, std::char_traits<char> >) { }
