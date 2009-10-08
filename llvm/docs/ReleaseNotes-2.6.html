@@ -223,6 +223,11 @@ implementation in Ruby as possible. Combined with a bytecode interpreting VM, it
 uses LLVM to optimize and compile ruby code down to machine code. Techniques
 such as type feedback, method inlining, and uncommon traps are all used to
 remove dynamism from ruby execution and increase performance.</p>
+
+<p>Since LLVM 2.5, Rubinius has made several major leaps forward, implementing
+a counter based JIT, type feedback, and speculative method inlining.
+</p>
+
 </div>
 
 <!--=========================================================================-->
@@ -254,7 +259,6 @@ handling.</p>
 
 <div class="doc_text">
 <p>
-<b>UPDATE!</b> 
 <a href="http://pure-lang.googlecode.com/">Pure</a>
 is an algebraic/functional programming language based on term rewriting.
 Programs are collections of equations which are used to evaluate expressions in
@@ -264,12 +268,8 @@ built-in list and matrix support (including list and matrix comprehensions) and
 an easy-to-use C interface. The interpreter uses LLVM as a backend to
  JIT-compile Pure programs to fast native code.</p>
 
-<p>In addition to the usual algebraic data structures, Pure also has
-MATLAB-style matrices in order to support numeric computations and signal
-processing in an efficient way. Pure is mainly aimed at mathematical
-applications right now, but it has been designed as a general purpose language.
-The dynamic interpreter environment and the C interface make it possible to use
-it as a kind of functional scripting language for many application areas.
+<p>Pure versions 0.31 and later have been tested and are known to work with
+LLVM 2.6 (and continue to work with older LLVM releases >= 2.3 as well).
 </p>
 </div>
 
@@ -300,7 +300,6 @@ fully featured as the original DMD compiler from DigitalMars.
 
 <div class="doc_text">
 <p>
-<b>UPDATE!</b> 
 <a href="http://code.roadsend.com/rphp">Roadsend PHP</a> (rphp) is an open
 source implementation of the PHP programming 
 language that uses LLVM for its optimizer, JIT, and static compiler. This is a 
