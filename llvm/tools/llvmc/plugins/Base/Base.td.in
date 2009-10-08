@@ -85,9 +85,9 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
          (and (switch_on "emit-llvm"), (switch_on "c")), (stop_compilation),
          (switch_on "fsyntax-only"), (stop_compilation),
          (not_empty "include"), (forward "include"),
-         (not_empty "I"), (forward "I")),
-         (not_empty "D"), (forward "D")),
-         (not_empty "MF"), (forward "MF")),
+         (not_empty "I"), (forward "I"),
+         (not_empty "D"), (forward "D"),
+         (not_empty "MF"), (forward "MF"),
          (not_empty "MT"), (forward "MT"))),
  (sink)
 ]>;
