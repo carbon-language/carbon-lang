@@ -1,6 +1,34 @@
-// RUN: clang-cc -emit-llvm < %s -o %t &&
-// RUN: grep addrspace\(1\) %t | count 8 &&
-// RUN: grep addrspace\(2\) %t | count 9
+// RUN: clang-cc -emit-llvm %s -o - | FileCheck %s
+// CHECK: addrspace(1)
+// CHECK: addrspace(2)
+// CHECK: addrspace(1)
+// CHECK: addrspace(1)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
+// CHECK: addrspace(1)
+// CHECK: addrspace(1)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
+// CHECK: addrspace(1)
+// CHECK: addrspace(1)
+// CHECK: addrspace(1)
+// CHECK: addrspace(1)
+// CHECK: addrspace(1)
+// CHECK: addrspace(1)
+// CHECK: addrspace(1)
+// CHECK: addrspace(1)
+// CHECK: addrspace(1)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
+// CHECK: addrspace(2)
 
 // Check that we don't lose the address space when accessing an array element
 // inside a structure.

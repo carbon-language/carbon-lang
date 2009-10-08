@@ -1,7 +1,7 @@
-// RUN: clang-cc -emit-llvm < %s -o %t &&
-// RUN: grep "store i32 351, i32*" %t &&
-// RUN: grep "w = global %0 { i32 2, \[4 x i8\] zeroinitializer }" %t &&
-// RUN: grep "y = global %union.u { double 7.300000e+01 }" %t
+// RUN: clang-cc -emit-llvm  %s -o - | FileCheck %s
+// CHECK: w = global %0 { i32 2, [4 x i8] zeroinitializer }
+// CHECK: y = global %union.u { double 7.300000e+0{{[0]*}}1 }
+// CHECK: store i32 351, i32
 
 union u { int i; double d; };
 
