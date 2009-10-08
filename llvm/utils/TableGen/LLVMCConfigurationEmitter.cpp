@@ -1352,12 +1352,15 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
     ++I;
   }
 
+  bool hasINFILE = false;
+
   for (; I != E; ++I) {
     const std::string& cmd = *I;
     assert(!cmd.empty());
     O.indent(IndentLevel);
     if (cmd.at(0) == '$') {
       if (cmd == "$INFILE") {
+        hasINFILE = true;
         if (IsJoin) {
           O << "for (PathVector::const_iterator B = inFiles.begin()"
             << ", E = inFiles.end();\n";
@@ -1369,7 +1372,8 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
         }
       }
       else if (cmd == "$OUTFILE") {
-        O << "vec.push_back(out_file);\n";
+        O << "vec.push_back(\"\");\n";
+        O.indent(IndentLevel) << "out_file_index = vec.size()-1;\n";
       }
       else {
         O << "vec.push_back(";
@@ -1381,8 +1385,10 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
       O << "vec.push_back(\"" << cmd << "\");\n";
     }
   }
-  O.indent(IndentLevel) << "cmd = ";
+  if (!hasINFILE)
+    throw "Tool '" + ToolName + "' doesn't take any input!";
 
+  O.indent(IndentLevel) << "cmd = ";
   if (StrVec[0][0] == '$')
     SubstituteSpecialCommands(StrVec.begin(), StrVec.end(), O);
   else
@@ -1566,7 +1572,7 @@ class EmitActionHandler {
   }
 };
 
-// EmitGenerateActionMethod - Emit one of two versions of the
+// EmitGenerateActionMethod - Emit either a normal or a "join" version of the
 // Tool::GenerateAction() method.
 void EmitGenerateActionMethod (const ToolDescription& D,
                                const OptionDescriptions& OptDescs,
@@ -1586,17 +1592,7 @@ void EmitGenerateActionMethod (const ToolDescription& D,
   O.indent(Indent2) << "bool stop_compilation = !HasChildren;\n";
   O.indent(Indent2) << "const char* output_suffix = \""
                     << D.OutputSuffix << "\";\n";
-  O.indent(Indent2) << "std::string out_file;\n\n";
-
-  // For every understood option, emit handling code.
-  if (D.Actions)
-    EmitCaseConstructHandler(D.Actions, Indent2, EmitActionHandler(OptDescs),
-                             false, OptDescs, O);
-
-  O << '\n';
-  O.indent(Indent2)
-    << "out_file = OutFilename(" << (IsJoin ? "sys::Path(),\n" : "inFile,\n");
-  O.indent(Indent3) << "TempDir, stop_compilation, output_suffix).str();\n\n";
+  O.indent(Indent2) << "int out_file_index = -1;\n\n";
 
   // cmd_line is either a string or a 'case' construct.
   if (!D.CmdLine)
@@ -1607,6 +1603,20 @@ void EmitGenerateActionMethod (const ToolDescription& D,
     EmitCaseConstructHandler(D.CmdLine, Indent2,
                              EmitCmdLineVecFillCallback(IsJoin, D.Name),
                              true, OptDescs, O);
+
+  // For every understood option, emit handling code.
+  if (D.Actions)
+    EmitCaseConstructHandler(D.Actions, Indent2, EmitActionHandler(OptDescs),
+                             false, OptDescs, O);
+
+  O << '\n';
+  O.indent(Indent2)
+    << "std::string out_file = OutFilename("
+    << (IsJoin ? "sys::Path(),\n" : "inFile,\n");
+  O.indent(Indent3) << "TempDir, stop_compilation, output_suffix).str();\n\n";
+  // TODO: emit this check only when necessary.
+  O.indent(Indent2) << "if (out_file_index != -1)\n";
+  O.indent(Indent3) << "vec[out_file_index] = out_file;\n";
 
   // Handle the Sink property.
   if (D.isSink()) {

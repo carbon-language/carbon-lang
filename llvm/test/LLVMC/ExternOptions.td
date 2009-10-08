@@ -10,7 +10,7 @@ def OptList : OptionList<[(switch_option "Wall", (extern)),
                           (prefix_list_option "L", (extern))]>;
 
 def dummy_tool : Tool<[
-(cmd_line "dummy_cmd"),
+(cmd_line "dummy_cmd $INFILE"),
 (in_language "dummy"),
 (out_language "dummy"),
 (actions (case

@@ -11,7 +11,7 @@ def OptList : OptionList<[
     (parameter_list_option "baz", (zero_or_one))]>;
 
 def dummy_tool : Tool<[
-(cmd_line "dummy_cmd"),
+(cmd_line "dummy_cmd $INFILE"),
 (in_language "dummy"),
 (out_language "dummy"),
 (actions (case

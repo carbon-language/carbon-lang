@@ -8,7 +8,7 @@ include "llvm/CompilerDriver/Common.td"
 def OptList : OptionList<[(parameter_option "dummy", (extern))]>;
 
 def dummy_tool : Tool<[
-(cmd_line "dummy_cmd"),
+(cmd_line "dummy_cmd $INFILE"),
 (in_language "dummy"),
 (out_language "dummy"),
 (actions (case

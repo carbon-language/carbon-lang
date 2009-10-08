@@ -4,7 +4,7 @@
 include "llvm/CompilerDriver/Common.td"
 
 def dummy_tool : Tool<[
-(cmd_line "dummy_cmd"),
+(cmd_line "dummy_cmd $INFILE"),
 (in_language "dummy"),
 (out_language "dummy")
 ]>;
