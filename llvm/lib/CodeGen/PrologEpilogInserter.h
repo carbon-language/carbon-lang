@@ -27,7 +27,6 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/IndexedMap.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
@@ -99,7 +98,7 @@ namespace llvm {
     // materialization registers, maintain a map of the registers to
     // the constant value and SP adjustment associated with it.
     typedef std::pair<int, int> FrameConstantEntry;
-    IndexedMap<FrameConstantEntry, VirtReg2IndexFunctor> FrameConstantRegMap;
+    DenseMap<unsigned, FrameConstantEntry> FrameConstantRegMap;
 
 #ifndef NDEBUG
     // Machine function handle.

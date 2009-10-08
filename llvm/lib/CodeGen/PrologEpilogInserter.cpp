@@ -655,11 +655,6 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   int FrameSetupOpcode   = TRI.getCallFrameSetupOpcode();
   int FrameDestroyOpcode = TRI.getCallFrameDestroyOpcode();
 
-  // Pre-allocate space for frame index mappings. If more space is needed,
-  // the map will be grown later.
-  if (FrameIndexVirtualScavenging)
-    FrameConstantRegMap.grow(Fn.getRegInfo().getLastVirtReg() + 128);
-
   for (MachineFunction::iterator BB = Fn.begin(),
          E = Fn.end(); BB != E; ++BB) {
     int SPAdj = 0;  // SP offset due to call frame setup / destroy.
@@ -716,7 +711,6 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
             assert (FrameIndexVirtualScavenging &&
                     "Not scavenging, but virtual returned from "
                     "eliminateFrameIndex()!");
-            FrameConstantRegMap.grow(VReg);
             FrameConstantRegMap[VReg] = FrameConstantEntry(Value, SPAdj);
           }
 
@@ -780,10 +774,14 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
 
     unsigned CurrentVirtReg = 0;
     unsigned CurrentScratchReg = 0;
+    bool havePrevValue = false;
     unsigned PrevScratchReg = 0;
     int PrevValue;
     MachineInstr *PrevLastUseMI = NULL;
     unsigned PrevLastUseOp = 0;
+    bool trackingCurrentValue = false;
+    int SPAdj = 0;
+    int Value = 0;
 
     // The instruction stream may change in the loop, so check BB->end()
     // directly.
@@ -818,14 +816,31 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             continue;
           }
 
-          // If we already have a scratch for this virtual register, use it
+          // Have we already allocated a scratch register for this virtual?
           if (Reg != CurrentVirtReg) {
-            int Value = FrameConstantRegMap[Reg].first;
-            int SPAdj = FrameConstantRegMap[Reg].second;
+            // When we first encounter a new virtual register, it
+            // must be a definition.
+            assert(MI->getOperand(i).isDef() &&
+                   "frame index virtual missing def!");
+            // We can't have nested virtual register live ranges because
+            // there's only a guarantee of one scavenged register at a time.
+            assert (CurrentVirtReg == 0 &&
+                    "overlapping frame index virtual registers!");
+
+            // If the target gave us information about what's in the register,
+            // we can use that to re-use scratch regs.
+            DenseMap<unsigned, FrameConstantEntry>::iterator Entry =
+              FrameConstantRegMap.find(Reg);
+            trackingCurrentValue = Entry != FrameConstantRegMap.end();
+            if (trackingCurrentValue) {
+              SPAdj = (*Entry).second.second;
+              Value = (*Entry).second.first;
+            } else
+              SPAdj = Value = 0;
 
             // If the scratch register from the last allocation is still
             // available, see if the value matches. If it does, just re-use it.
-            if (PrevScratchReg && Value == PrevValue) {
+            if (trackingCurrentValue && havePrevValue && PrevValue == Value) {
               // FIXME: This assumes that the instructions in the live range
               // for the virtual register are exclusively for the purpose
               // of populating the value in the register. That's reasonable
@@ -850,14 +865,6 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
               PrevLastUseMI->getOperand(PrevLastUseOp).setIsKill(false);
               RS->setUsed(CurrentScratchReg);
             } else {
-              // When we first encounter a new virtual register, it
-              // must be a definition.
-              assert(MI->getOperand(i).isDef() &&
-                     "frame index virtual missing def!");
-              // We can't have nested virtual register live ranges because
-              // there's only a guarantee of one scavenged register at a time.
-              assert (CurrentVirtReg == 0 &&
-                      "overlapping frame index virtual registers!");
               CurrentVirtReg = Reg;
               const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(Reg);
               CurrentScratchReg = RS->FindUnusedReg(RC);
@@ -877,6 +884,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             PrevLastUseMI = MI;
             PrevLastUseOp = i;
             CurrentScratchReg = CurrentVirtReg = 0;
+            havePrevValue = trackingCurrentValue;
           }
         }
       RS->forward(MI);
