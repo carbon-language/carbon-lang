@@ -449,16 +449,24 @@ def  VST4q32b : VST4WB<0b1000, "vst4.32">;
 //   FIXME: Not yet implemented.
 
 //   VST2LN   : Vector Store (single 2-element structure from one lane)
-class VST2LND<bits<4> op11_8, string OpcodeStr>
+class VST2LN<bits<4> op11_8, string OpcodeStr>
   : NLdSt<1,0b00,op11_8,0b0000, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
           IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src1[$lane],$src2[$lane]\\}, $addr"),
           "", []>;
 
-def VST2LNd8  : VST2LND<0b0000, "vst2.8">;
-def VST2LNd16 : VST2LND<0b0100, "vst2.16">;
-def VST2LNd32 : VST2LND<0b1000, "vst2.32">;
+def VST2LNd8  : VST2LN<0b0000, "vst2.8">;
+def VST2LNd16 : VST2LN<0b0100, "vst2.16">;
+def VST2LNd32 : VST2LN<0b1000, "vst2.32">;
+
+// vst2 to double-spaced even registers.
+def VST2LNq16a: VST2LN<0b0100, "vst2.16">;
+def VST2LNq32a: VST2LN<0b1000, "vst2.32">;
+
+// vst2 to double-spaced odd registers.
+def VST2LNq16b: VST2LN<0b0100, "vst2.16">;
+def VST2LNq32b: VST2LN<0b1000, "vst2.32">;
 
 //   VST3LN   : Vector Store (single 3-element structure from one lane)
 class VST3LND<bits<4> op11_8, string OpcodeStr>
