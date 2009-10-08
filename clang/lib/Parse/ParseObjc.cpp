@@ -390,6 +390,10 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
   SourceLocation LHSLoc = ConsumeParen(); // consume '('
 
   while (1) {
+    if (Tok.is(tok::code_completion)) {
+      Actions.CodeCompleteObjCProperty(CurScope, DS);
+      ConsumeToken();
+    }
     const IdentifierInfo *II = Tok.getIdentifierInfo();
 
     // If this is not an identifier at all, bail out early.

@@ -503,6 +503,7 @@
 		35F9B1560D1C6B2E00DDFDAE /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/Analyses/UninitializedValues.h; sourceTree = "<group>"; };
 		35FE6BCE0DF6EE1F00739712 /* DeclBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = DeclBase.cpp; path = lib/AST/DeclBase.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		72D16C1E0D9975C400E6DA4A /* HTMLRewrite.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLRewrite.cpp; path = lib/Rewrite/HTMLRewrite.cpp; sourceTree = "<group>"; };
+		7F270AFE107A90010031B377 /* CodeCompleteConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CodeCompleteConsumer.h; path = clang/Sema/CodeCompleteConsumer.h; sourceTree = "<group>"; };
 		84AF36A00CB17A3B00C820A5 /* DeclObjC.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = DeclObjC.h; path = clang/AST/DeclObjC.h; sourceTree = "<group>"; tabWidth = 2; };
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = lib/Parse/AttributeList.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -1229,6 +1230,7 @@
 		DE67E7260C02108300F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
+				7F270AFE107A90010031B377 /* CodeCompleteConsumer.h */,
 				9063F2210F9E8BDF002F7251 /* ExternalSemaSource.h */,
 				9063F2220F9E8BDF002F7251 /* SemaConsumer.h */,
 				DE67E7270C02109800F66BC5 /* ParseAST.h */,

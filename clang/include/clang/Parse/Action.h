@@ -2340,6 +2340,14 @@ public:
   ///
   /// \param S the scope in which the operator keyword occurs.
   virtual void CodeCompleteOperatorName(Scope *S) { }
+
+  /// \brief Code completion for an ObjC property decl.
+  ///
+  /// This code completion action is invoked when the code-completion token is
+  /// found after the left paren.
+  ///
+  /// \param S the scope in which the operator keyword occurs.  
+  virtual void CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS) { }
   //@}
 };
 

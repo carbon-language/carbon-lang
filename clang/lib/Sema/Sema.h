@@ -3699,6 +3699,8 @@ public:
   virtual void CodeCompleteNamespaceDecl(Scope *S);
   virtual void CodeCompleteNamespaceAliasDecl(Scope *S);
   virtual void CodeCompleteOperatorName(Scope *S);
+  
+  virtual void CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS);
   //@}
   
   //===--------------------------------------------------------------------===//

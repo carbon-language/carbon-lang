@@ -1393,3 +1393,30 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
   HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
 }
 
+void Sema::CodeCompleteObjCProperty(Scope *S, ObjCDeclSpec &ODS) { 
+  if (!CodeCompleter)
+    return;
+  unsigned Attributes = ODS.getPropertyAttributes();
+  
+  typedef CodeCompleteConsumer::Result Result;
+  ResultBuilder Results(*this);
+  Results.EnterNewScope();
+  if (!(Attributes & ObjCDeclSpec::DQ_PR_readonly))
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("readonly", 0));
+  if (!(Attributes & ObjCDeclSpec::DQ_PR_assign))
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("assign", 0));
+  if (!(Attributes & ObjCDeclSpec::DQ_PR_readwrite))
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("readwrite", 0));
+  if (!(Attributes & ObjCDeclSpec::DQ_PR_retain))
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("retain", 0));
+  if (!(Attributes & ObjCDeclSpec::DQ_PR_copy))
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("copy", 0));
+  if (!(Attributes & ObjCDeclSpec::DQ_PR_nonatomic))
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("nonatomic", 0));
+  if (!(Attributes & ObjCDeclSpec::DQ_PR_setter))
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("setter", 0));
+  if (!(Attributes & ObjCDeclSpec::DQ_PR_getter))
+    Results.MaybeAddResult(CodeCompleteConsumer::Result("getter", 0));
+  Results.ExitScope();
+  HandleCodeCompleteResults(CodeCompleter, Results.data(), Results.size());  
+}
