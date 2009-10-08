@@ -1,8 +1,8 @@
-; RUN: llc < %s -march=arm -mattr=+neon > %t
-; RUN: grep {vqdmlsl\\.s16} %t | count 1
-; RUN: grep {vqdmlsl\\.s32} %t | count 1
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <4 x i32> @vqdmlsls16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwind {
+;CHECK: vqdmlsls16:
+;CHECK: vqdmlsl.s16
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i16>* %B
 	%tmp3 = load <4 x i16>* %C
@@ -11,6 +11,8 @@ define <4 x i32> @vqdmlsls16(<4 x i32>* %A, <4 x i16>* %B, <4 x i16>* %C) nounwi
 }
 
 define <2 x i64> @vqdmlsls32(<2 x i64>* %A, <2 x i32>* %B, <2 x i32>* %C) nounwind {
+;CHECK: vqdmlsls32:
+;CHECK: vqdmlsl.s32
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i32>* %B
 	%tmp3 = load <2 x i32>* %C
