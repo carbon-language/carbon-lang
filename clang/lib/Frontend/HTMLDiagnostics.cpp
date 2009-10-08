@@ -25,7 +25,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
-#include <fstream>
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -316,29 +316,26 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
     return;
   }
 
-  // Create the stream to write out the HTML.
-  std::ofstream os;
+  // Create a path for the target HTML file.
+  llvm::sys::Path F(FilePrefix);
+  F.makeUnique(false, NULL);
 
-  {
-    // Create a path for the target HTML file.
-    llvm::sys::Path F(FilePrefix);
-    F.makeUnique(false, NULL);
+  // Rename the file with an HTML extension.
+  llvm::sys::Path H(F);
+  H.appendSuffix("html");
+  F.renamePathOnDisk(H, NULL);
 
-    // Rename the file with an HTML extension.
-    llvm::sys::Path H(F);
-    H.appendSuffix("html");
-    F.renamePathOnDisk(H, NULL);
+  std::string ErrorMsg;
+  llvm::raw_fd_ostream os(H.c_str(), ErrorMsg);
 
-    os.open(H.c_str());
-
-    if (!os) {
-      llvm::errs() << "warning: could not create file '" << F.str() << "'\n";
-      return;
-    }
-
-    if (FilesMade)
-      FilesMade->push_back(H.getLast());
+  if (!ErrorMsg.empty()) {
+    (llvm::errs() << "warning: could not create file '" << F.str() 
+                  << "'\n").flush();
+    return;
   }
+
+  if (FilesMade)
+    FilesMade->push_back(H.getLast());
 
   // Emit the HTML to disk.
   for (RewriteBuffer::iterator I = Buf->begin(), E = Buf->end(); I!=E; ++I)
