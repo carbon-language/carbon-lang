@@ -374,6 +374,10 @@ class VST3WB<bits<4> op7_4, string OpcodeStr>
 def  VST3d8   : VST3D<0b0000, "vst3.8">;
 def  VST3d16  : VST3D<0b0100, "vst3.16">;
 def  VST3d32  : VST3D<0b1000, "vst3.32">;
+def  VST3d64  : NLdSt<0,0b00,0b0110,0b1100, (outs),
+                      (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3),
+                      IIC_VST,
+                      "vst1.64\t\\{$src1,$src2,$src3\\}, $addr", "", []>;
 
 // vst3 to double-spaced even registers.
 def  VST3q8a  : VST3WB<0b0000, "vst3.8">;
