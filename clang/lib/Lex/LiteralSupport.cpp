@@ -298,6 +298,7 @@ NumericLiteralParser(const char *begin, const char *end,
   isLongLong = false;
   isFloat = false;
   isImaginary = false;
+  isMicrosoftInteger = false;
   hadError = false;
 
   if (*s == '0') { // parse radix
@@ -375,31 +376,50 @@ NumericLiteralParser(const char *begin, const char *end,
     case 'i':
       if (PP.getLangOptions().Microsoft) {
         // Allow i8, i16, i32, i64, and i128.
-        if (++s == ThisTokEnd) break;
-        switch (*s) {
-          case '8':
-            s++; // i8 suffix
-            break;
-          case '1':
-            if (++s == ThisTokEnd) break;
-            if (*s == '6') s++; // i16 suffix
-            else if (*s == '2') {
-              if (++s == ThisTokEnd) break;
-              if (*s == '8') s++; // i128 suffix
-            }
-            break;
-          case '3':
-            if (++s == ThisTokEnd) break;
-            if (*s == '2') s++; // i32 suffix
-            break;
-          case '6':
-            if (++s == ThisTokEnd) break;
-            if (*s == '4') s++; // i64 suffix
-            break;
-          default:
-            break;
+        if (s + 1 != ThisTokEnd) {
+          switch (s[1]) {
+            case '8':
+              s += 2; // i8 suffix
+              isMicrosoftInteger = true;
+              continue;
+            case '1':
+              s += 2;
+              if (s == ThisTokEnd) break;
+              if (*s == '6') s++; // i16 suffix
+              else if (*s == '2') {
+                if (++s == ThisTokEnd) break;
+                if (*s == '8') s++; // i128 suffix
+              }
+              isMicrosoftInteger = true;
+              continue;
+            case '3':
+              s += 2;
+              if (s == ThisTokEnd) break;
+              if (*s == '2') s++; // i32 suffix
+              isMicrosoftInteger = true;
+              continue;
+            case '6':
+              s += 2;
+              if (s == ThisTokEnd) break;
+              if (*s == '4') s++; // i64 suffix
+              isMicrosoftInteger = true;
+              continue;
+            case 'f':      // FP Suffix for "float"
+            case 'F':
+              if (!isFPConstant) break;  // Error for integer constant.
+              if (isFloat || isLong) break; // FF, LF invalid.
+              isFloat = true;
+              if (isImaginary) break;   // Cannot be repeated.
+              PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+                      diag::ext_imaginary_constant);
+              isImaginary = true;
+              s++;
+              continue;  // Success.
+            default:
+              break;
+          }
+          break;
         }
-        break;
       }
       // fall through.
     case 'I':
