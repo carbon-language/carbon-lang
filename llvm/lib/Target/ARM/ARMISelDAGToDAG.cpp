@@ -1510,18 +1510,67 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      if (VT.is64BitVector()) {
+        switch (VT.getSimpleVT().SimpleTy) {
+        default: llvm_unreachable("unhandled vld2lane type");
+        case MVT::v8i8:  Opc = ARM::VLD2LNd8; break;
+        case MVT::v4i16: Opc = ARM::VLD2LNd16; break;
+        case MVT::v2f32:
+        case MVT::v2i32: Opc = ARM::VLD2LNd32; break;
+        }
+        SDValue Chain = N->getOperand(0);
+        const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
+                                N->getOperand(3), N->getOperand(4),
+                                N->getOperand(5), Chain };
+        return CurDAG->getMachineNode(Opc, dl, VT, VT, MVT::Other, Ops, 7);
+      }
+      // Quad registers are handled by extracting subregs, doing the load,
+      // and then inserting the results as subregs.
+      EVT RegVT;
+      unsigned Opc2 = 0;
       switch (VT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("unhandled vld2lane type");
-      case MVT::v8i8:  Opc = ARM::VLD2LNd8; break;
-      case MVT::v4i16: Opc = ARM::VLD2LNd16; break;
-      case MVT::v2f32:
-      case MVT::v2i32: Opc = ARM::VLD2LNd32; break;
+      case MVT::v8i16:
+        Opc = ARM::VLD2LNq16a;
+        Opc2 = ARM::VLD2LNq16b;
+        RegVT = MVT::v4i16;
+        break;
+      case MVT::v4f32:
+        Opc = ARM::VLD2LNq32a;
+        Opc2 = ARM::VLD2LNq32b;
+        RegVT = MVT::v2f32;
+        break;
+      case MVT::v4i32:
+        Opc = ARM::VLD2LNq32a;
+        Opc2 = ARM::VLD2LNq32b;
+        RegVT = MVT::v2i32;
+        break;
       }
       SDValue Chain = N->getOperand(0);
-      const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
-                              N->getOperand(3), N->getOperand(4),
-                              N->getOperand(5), Chain };
-      return CurDAG->getMachineNode(Opc, dl, VT, VT, MVT::Other, Ops, 7);
+      unsigned Lane = cast<ConstantSDNode>(N->getOperand(5))->getZExtValue();
+      unsigned NumElts = RegVT.getVectorNumElements();
+      int SubregIdx = (Lane < NumElts) ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
+
+      SDValue D0 = CurDAG->getTargetExtractSubreg(SubregIdx, dl, RegVT,
+                                                  N->getOperand(3));
+      SDValue D1 = CurDAG->getTargetExtractSubreg(SubregIdx, dl, RegVT,
+                                                  N->getOperand(4));
+      const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, D0, D1,
+                              getI32Imm(Lane % NumElts), Chain };
+      SDNode *VLdLn = CurDAG->getMachineNode((Lane < NumElts) ? Opc : Opc2,
+                                             dl, RegVT, RegVT, MVT::Other,
+                                             Ops, 7);
+      SDValue Q0 = CurDAG->getTargetInsertSubreg(SubregIdx, dl, VT,
+                                                 N->getOperand(3),
+                                                 SDValue(VLdLn, 0));
+      SDValue Q1 = CurDAG->getTargetInsertSubreg(SubregIdx, dl, VT,
+                                                 N->getOperand(4),
+                                                 SDValue(VLdLn, 1));
+      Chain = SDValue(VLdLn, 2);
+      ReplaceUses(SDValue(N, 0), Q0);
+      ReplaceUses(SDValue(N, 1), Q1);
+      ReplaceUses(SDValue(N, 2), Chain);
+      return NULL;
     }
 
     case Intrinsic::arm_neon_vld3lane: {
