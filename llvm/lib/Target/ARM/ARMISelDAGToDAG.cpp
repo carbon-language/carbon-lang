@@ -59,7 +59,8 @@ public:
     return "ARM Instruction Selection";
   }
 
- /// getI32Imm - Return a target constant with the specified value, of type i32.
+  /// getI32Imm - Return a target constant of type i32 with the specified
+  /// value.
   inline SDValue getI32Imm(unsigned Imm) {
     return CurDAG->getTargetConstant(Imm, MVT::i32);
   }
