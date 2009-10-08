@@ -922,11 +922,21 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
       return BinOp->getRHS()->isLvalue(Ctx);
 
     // C++ [expr.mptr.oper]p6
-    if ((BinOp->getOpcode() == BinaryOperator::PtrMemD ||
-         BinOp->getOpcode() == BinaryOperator::PtrMemI) &&
+    // The result of a .* expression is an lvalue only if its first operand is 
+    // an lvalue and its second operand is a pointer to data member. 
+    if (BinOp->getOpcode() == BinaryOperator::PtrMemD &&
         !BinOp->getType()->isFunctionType())
       return BinOp->getLHS()->isLvalue(Ctx);
 
+    // The result of an ->* expression is an lvalue only if its second operand 
+    // is a pointer to data member.
+    if (BinOp->getOpcode() == BinaryOperator::PtrMemI &&
+        !BinOp->getType()->isFunctionType()) {
+      QualType Ty = BinOp->getRHS()->getType();
+      if (Ty->isMemberPointerType() && !Ty->isMemberFunctionPointerType())
+        return LV_Valid;
+    }
+    
     if (!BinOp->isAssignmentOp())
       return LV_InvalidExpression;
 

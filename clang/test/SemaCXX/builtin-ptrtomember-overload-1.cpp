@@ -36,6 +36,7 @@ struct C1 : B1 {
 
 void foo1(C1 c1, int A::* pmf) {
         int i = c1->*pmf;
+        c1->*pmf = 10;
 }
 
 void foo1(C1 c1, int E::* pmf) {

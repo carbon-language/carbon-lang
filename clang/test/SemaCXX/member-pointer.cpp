@@ -99,7 +99,7 @@ void h() {
   int i = phm->*pi;
   (void)&(hm.*pi);
   (void)&(phm->*pi);
-  (void)&((&hm)->*pi); // expected-error {{address expression must be an lvalue or a function designator}}
+  (void)&((&hm)->*pi); 
 
   void (HasMembers::*pf)() = &HasMembers::f;
   (hm.*pf)();
