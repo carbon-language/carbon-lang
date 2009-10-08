@@ -52,26 +52,8 @@ current one.  To see the release notes for a specific release, please see the
 
 </div>
 
-  Many new papers added to /pubs/
-  Machine LICM, hoists things like constant pool loads, loads from readonly stubs, vector constant synthesization code, etc.
-  Machine Sinking
-  Regalloc improvements for commuting, various spiller peephole optimizations, cross-class coalescing.
-  Support for debug line numbers when optimization enabled
-  gold lto plugin
 
-  target-specific intrinsics (r63765)
-  <tt>llc -enable-value-prop</tt>, propagation of value info (sign/zero ext info) from one MBB to another
-  interpreter + libffi
-  LLVMContext
-  Preliminary support for addrspace 256 -> GS, 257 -> FS, known problems: CodeGenerator.html#x86_memory
 
-Add support for the PowerPC 64-bit SVR4 ABI.
-
-  NSW/NUW/exact div
-  Inbounds for GEP
-  SRoA improvements for vector unions, memset, arbitrary weird bitfield accesses etc.  It now produces "strange" sized integers.
-  pre-alloc splitter??
-  X86: Support for softfloat modes, typically used by OS kernels.
   MC:
     MCSection, MCAsmInfo
 	MCInstPrinter did it make it in?
@@ -83,94 +65,23 @@ Add support for the PowerPC 64-bit SVR4 ABI.
 	
   ELF Writer?  How stable?
   
-  LSR promotes int induction variables to 64-bit on 64-bit targets, major perf boost for numerical code.
-  LSR now analyzes pointer expressions (e.g. getelementptrs), not just integers.
-  Stack slot coloring for register spills (denser stack frames)
-  SelectionDAGS: New BuildVectorSDNode (r65296), and ISD::VECTOR_SHUFFLE (r69952 / PR2957)
-  New PrettyStackTrace, crashes of llvm tools should give some indication of what the compiler was doing at the time of the crash (e.g. running a pass), and print out command line arguments.
-  new linkage types linkonce_odr, weak_odr, linker_private, and available_externally.
-  Inliner reuse stack space when inlining arrays?
-  
-  Regalloc hints for allocation stuff: Evan r73381/r73671.  Finished/enabled?
-  API Cleanup:
-	no use of hash_set/hash_map, no more llvm::OStream
-    Use raw_ostream for everything, killed off llvm/Streams.h and DOUT
-  
-  Mips now supports O32 Calling Convention
-
-  StringRef class, Twine class.
-  New BlackFin backend.
-
+APIs:
+   
   Shrink wrapping support in PEI, what is the state of it?
 
-  X86-64: better modeling of implicit zero extensions, eliminates a lot of redundant zexts
-  X86-64 TLS support for local exec and initial exec.
-  X86 - Better modeling of H registerts as subregs.
-  Getelementpr instruction now allows any integer type for array/pointer indexes.
-
-  include/llvm/Analysis/LiveValues.h => dead??
-  lib/Analysis/LoopVR.cpp  ==> dead??
-  include/llvm/CodeGen/LazyLiveness.h  ==> dead?
-  lib/Transforms/IPO/MergeFunctions.cpp ==> dead?
-  llvm/Analysis/PointerTracking.h ==> dead??
-  PRedSimplify -> Ask vmkit if it is still useful and for testcases.
-  
-  ARM calling convention code is now tblgen generated instead of manual.
-  ARM: NEON support. neonfp for doing single precision fp with neon instead of VFP.
-  Tblgen now supports multiclass inheritance.
-  Unladen swallow as user?
-  Loop index split disabled by default?
-
-  New WeakVH and AssertingVH and CallbackVH classes.
-  New llvm/ADT/Triple class.
-  Removed the IA64 backend.
-  Profile info improvements by Andreas Neustifter.
-  PostRA scheduler improvements David Goodwin.
+<!--
+Almost dead code.
+  include/llvm/Analysis/LiveValues.h => dan
+  lib/Analysis/LoopVR.cpp  ==> dan/nick/owen
+  lib/Transforms/IPO/MergeFunctions.cpp
+  llvm/Analysis/PointerTracking.h
+-->
  
-  New MSP430 and SystemZ backends.
-  llvm-gcc now supports a new TCE target.
-  klee web page at klee.llvm.org
-  New llvm/System/Atomic.h, llvm/System/RWMutex.h for portable atomic ops, rw locks.
-  llvm_start_multithreaded: ProgrammersMAnual.html#threading
-  
-  Tablegen now supports a number of new string and list operations like 
-     !(subst), !(foreach), !car, !cdr, !null, !if, !cast.
-  New fadd, fsub, fmul instructions and classes. 
-  New MachineVerifier pass.
-  Enabled GVN Load PRE.  
-  ARM AAPCS-VFP hard float ABI is supported. 
-  
   LLVM build now builds all libraries as .a files instead of some
   libraries as relinked .o files.  This requires some APIs like
   InitializeAllTargets.h.  TargetRegistry! 
-  
-  ARM Thumb2 support: status?
-  CBE status: not part of the release criteria.
-  
-  New SourceMgr, SMLoc classes for simple parsers with caret diagnostics and #include support, (used by
-    tablegen, llvm-mc, the .ll parser, FileCheck, etc)
-  FileCheck! + CHECK-NEXT
-  New compiler-rt project.
-  New Static Single Information (SSI) construction pass (not used by anything yet, experimental).
 
-  llvm_report_error() error handling API (llvm/Support/ErrorHandling.h)
-  
-  x86: Vector icmp/fcmp now work with SSE codegen.
-  X86: all global variable reference logic is now in ClassifyGlobalReference.
-  JIT support for oprofile (r75279), configure with --with-oprofile.  Now we get line # and function info for JIT'd functions.
-  Mention gcc plugin.
-  
-  New EngineBuilder class for creating JITs: r76276 Reid Kleckner <reid at kleckner.net>
-  
-  -asm-verbose now prints location info (with -g) and loop nest info.
-  JIT now supports generating more than 16M of code.
-   
-removed the BigBlock register allocator, it had bitrotted.
-Target intrinsics can now return multiple results.
-   
-  SSE 4.2 support.
-  Ada bindings for LLVM IR.
-  Many extensions to the C APIs.
+
    
 <!-- Unfinished features in 2.6:
   Mention gcc plugin.
@@ -185,6 +96,10 @@ Target intrinsics can now return multiple results.
  Logo web page.
  llvm devmtg
  compiler_rt
+ klee web page at klee.llvm.org
+ Many new papers added to /pubs/
+   Mention gcc plugin.
+
    -->
 
 <!-- *********************************************************************** -->
@@ -406,6 +321,7 @@ machine code using LLVM's JIT.</p>
 minor improvements.  Some of the major improvements and new features are listed
 in this section.
 </p>
+
 </div>
 
 <!--=========================================================================-->
@@ -418,7 +334,15 @@ in this section.
 <p>LLVM 2.6 includes several major new capabilities:</p>
 
 <ul>
-<li>Something wonderful!</li>
+<li>Support for debug line numbers when optimization enabled</li>
+<li>gold lto plugin</li>
+<li>New MSP430 and SystemZ backends.</li>
+<li>New BlackFin backend.</li>
+<li>LLVMContext,   llvm_start_multithreaded: ProgrammersManual.html#threading</li>
+<li>Unladen swallow as user?</li>
+<li>klee web page at klee.llvm.org</li>
+<li>FileCheck</li>
+<li>New compiler-rt project.</li>
 <li>LLVM 2.6 includes a brand new experimental LLVM bindings to the Ada2005 programming language.</li>
 </ul>
 
@@ -453,7 +377,14 @@ includes support for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 can be useful if you are writing a front-end for LLVM:</p>
 
 <ul>
-<li>Something wonderful!</li>
+<li>Getelementpr instruction now allows any integer type for array/pointer indexes.</li>
+<li>Inbounds for GEP</li>
+<li>NSW/NUW/exact div</li>
+<li>LSR promotes int induction variables to 64-bit on 64-bit targets, major perf boost for numerical code.</li>
+<li>LSR now analyzes pointer expressions (e.g. getelementptrs), not just integers.</li>
+<li>new linkage types linkonce_odr, weak_odr, linker_private, and available_externally.</li>
+<li>New fadd, fsub, fmul instructions and classes. </li>
+<li>Target intrinsics can now return multiple results.</li>
 </ul>
 
 </div>
@@ -470,7 +401,11 @@ release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
 
-<li>Something wonderful!</li>
+<li>SRoA improvements for vector unions, memset, arbitrary weird bitfield accesses etc.  It now produces "strange" sized integers.</li>
+<li>Inliner reuse stack space when inlining arrays?</li>
+<li>Enabled GVN Load PRE.</li>
+<li>New Static Single Information (SSI) construction pass (not used by anything yet, experimental).</li>
+</li>
 
 </ul>
 
@@ -489,7 +424,22 @@ it run faster:</p>
 
 <ul>
 
-<li>Something wonderful!</li>
+<li>    -asm-verbose now prints location info (with -g) and loop nest info.</li>
+<li>Tblgen now supports multiclass inheritance and a number of new string and
+    list operations like !(subst), !(foreach), !car, !cdr, !null, !if, !cast.
+    These make the .td files more expressive and allow more aggressive factoring
+    of duplication across instruction patterns.</li>
+<li>New MachineVerifier pass.</li>
+<li>Machine LICM, hoists things like constant pool loads, loads from readonly stubs, vector constant synthesization code, etc.</li>
+<li>Machine Sinking</li>
+<li>target-specific intrinsics (r63765)</li>
+<li>Regalloc improvements for commuting, various spiller peephole optimizations, cross-class coalescing.</li>
+<li><tt>llc -enable-value-prop</tt>, propagation of value info (sign/zero ext info) from one MBB to another</li>
+<li>Regalloc hints for allocation stuff: Evan r73381/r73671.  Finished/enabled?</li>
+<li>Stack slot coloring for register spills (denser stack frames)</li>
+<li>SelectionDAGS: New BuildVectorSDNode (r65296), and ISD::VECTOR_SHUFFLE (r69952 / PR2957)</li>
+<li>PostRA scheduler improvements David Goodwin.</li>
+</li>
 </ul>
 </div>
 
@@ -504,7 +454,16 @@ it run faster:</p>
 
 <ul>
 
-<li>Something wonderful!</li>
+<li>Preliminary support for addrspace 256 -> GS, 257 -> FS, known problems: CodeGenerator.html#x86_memory</li>
+<li>Support for softfloat modes, typically used by OS kernels.</li>
+
+<li>X86-64: better modeling of implicit zero extensions, eliminates a lot of redundant zexts</li>
+<li>X86-64 TLS support for local exec and initial exec.</li>
+<li>Better modeling of H registerts as subregs.</li>
+<li>Vector icmp/fcmp now work with SSE codegen.</li>
+<li>SSE 4.2 support.</li>
+<li>all global variable reference logic is now in ClassifyGlobalReference.</li>
+</li>
 </ul>
 
 </div>
@@ -519,18 +478,18 @@ it run faster:</p>
 </p>
 
 <ul>
-<li>Something wonderful!</li>
+<li>Support for floating-point, indirect function calls, and
+    passing/returning aggregate types to functions.
+<li>The code generator is able to generate debug info into output COFF files.
+<li>Support for placing an object into a specific section or at a specific
+    address in memory.</li>
 </ul>
 
 <p>Things not yet supported:</p>
 
 <ul>
-<li>Floating point.</li>
-<li>Passing/returning aggregate types to and from functions.</li>
 <li>Variable arguments.</li>
-<li>Indirect function calls.</li>
 <li>Interrupts/programs.</li>
-<li>Debug info.</li>
 </ul>
 
 </div>
@@ -554,21 +513,74 @@ AAPCS-VFP "hard float" calling conventions are also supported with the
 and subject to change. The Neon intrinsics, in particular, may change in future
 releases of LLVM.
 </li>
+
+  ARM AAPCS-VFP hard float ABI is supported. 
+  ARM calling convention code is now tblgen generated instead of manual.
+  ARM: NEON support. neonfp for doing single precision fp with neon instead of VFP.
+
 </ul>
 
 </div>
 
-
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="llvmc">Improvements in LLVMC</a>
+<a name="OtherTarget">Other Target Specific Improvements</a>
 </div>
 
 <div class="doc_text">
-<p>New features include:</p>
+<p>New features of other targets include:
+</p>
 
 <ul>
-<li>Something wonderful!</li>
+<li>Add support for the PowerPC 64-bit SVR4 ABI.</li>
+<li>Mips now supports O32 Calling Convention.</li>
+</ul>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="newapis">New Useful APIs</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+<li>New EngineBuilder class for creating JITs: r76276</li>
+  New PrettyStackTrace, crashes of llvm tools should give some indication of what the compiler was doing at the time of the crash (e.g. running a pass), and print out command line arguments.
+  StringRef class, Twine class.
+    New WeakVH and AssertingVH and CallbackVH classes.
+  New llvm/ADT/Triple class.
+ llvm_report_error() error handling API (llvm/Support/ErrorHandling.h)
+  New llvm/System/Atomic.h, llvm/System/RWMutex.h for portable atomic ops, rw locks.
+  New SourceMgr, SMLoc classes for simple parsers with caret diagnostics and #include support, (used by
+    tablegen, llvm-mc, the .ll parser, FileCheck, etc)
+
+<ul>
+
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="otherimprovements">Other Improvements and New Features</a>
+</div>
+
+<div class="doc_text">
+<p>Other miscellaneous features include:</p>
+
+<ul>
+<li>interpreter + libffi</li>
+<li>  JIT now supports generating more than 16M of code.</li>
+<li>Users can now <a
+href="http://llvm.org/doxygen/classllvm_1_1ExecutionEngine.html#fcd2b4b92ca38812ca31640b0da14927">register</a>
+a <a href="http://llvm.org/doxygen/classllvm_1_1JITEventListener.html">JITEventListener</a>
+to receive callbacks when the JIT emits or frees machine code. The
+OProfile support uses this mechanism.</li>
+   JIT support for oprofile (r75279), configure with --with-oprofile.  Now we get line # and function info for JIT'd functions.
+
+<li>  Profile info improvements by Andreas Neustifter.</li>
+<li>  Many extensions to the C APIs.</li>
 </ul>
 
 </div>
@@ -587,13 +599,22 @@ from the previous release.</p>
 
 <ul>
 
-<li>Something horrible!</li>
-
+<li>The Itanium (IA64) backend has been removed.  It was not supported and
+    bitrotted.</li>
+<li>The BigBlock register allocator has been removed, it also bitrotted.</li>
+<li>The C Backend (-march=c) is no longer considered part of the LLVM release
+criteria.  We still want it to work, but no one is maintaining it and it lacks
+support for arbitrary precision integers and other important IR features.</li>
 </ul>
 
 
 <p>In addition, many APIs have changed in this release.  Some of the major LLVM
 API changes are:</p>
+
+
+  API Cleanup:
+    no use of hash_set/hash_map, no more llvm::OStream
+    Use raw_ostream for everything, killed off llvm/Streams.h and DOUT
 
 <ul>
 <li>LLVM's global uniquing tables for <tt>Type</tt>s and <tt>Constant</tt>s have
@@ -724,7 +745,7 @@ using the stock GCC 3.x.x series 'out the box',
 See: <a href="#brokengcc">Broken versions of GCC and other tools</a>.
 However, A <a href="http://pkg.auroraux.org/GCC">Modern GCC Build</a>
 for x86/x64 has been made available from the third party AuroraUX Project
-that has been meticulously tested for bootstrapping LLVM & Clang.</li>
+that has been meticulously tested for bootstrapping LLVM &amp; Clang.</li>
 </ul>
 
 </div>
@@ -809,9 +830,6 @@ processors, thumb programs can crash or produce wrong
 results (<a href="http://llvm.org/PR1388">PR1388</a>).</li>
 <li>Compilation for ARM Linux OABI (old ABI) is supported but not fully tested.
 </li>
-<li>There is a bug in QEMU-ARM (&lt;= 0.9.0) which causes it to incorrectly
- execute
-programs compiled with LLVM.  Please use more recent versions of QEMU.</li>
 </ul>
 
 </div>
