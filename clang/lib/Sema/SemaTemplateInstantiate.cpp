@@ -972,20 +972,30 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
                               CXXRecordDecl *Instantiation,
                         const MultiLevelTemplateArgumentList &TemplateArgs,
                               TemplateSpecializationKind TSK) {
-  // FIXME: extern templates
   for (DeclContext::decl_iterator D = Instantiation->decls_begin(),
                                DEnd = Instantiation->decls_end();
        D != DEnd; ++D) {
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(*D)) {
-      if (Function->getInstantiatedFromMemberFunction())
+      if (Function->getInstantiatedFromMemberFunction()) {
+        // If this member was explicitly specialized, do nothing.
+        if (Function->getTemplateSpecializationKind() ==
+              TSK_ExplicitSpecialization)
+          continue;
+        
         Function->setTemplateSpecializationKind(TSK);
-      if (!Function->getBody() && TSK != TSK_ExplicitInstantiationDeclaration)
+      }
+      
+      if (!Function->getBody() && TSK == TSK_ExplicitInstantiationDefinition)
         InstantiateFunctionDefinition(PointOfInstantiation, Function);
     } else if (VarDecl *Var = dyn_cast<VarDecl>(*D)) {
       if (Var->isStaticDataMember()) {
+        // If this member was explicitly specialized, do nothing.
+        if (Var->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+          continue;
+        
         Var->setTemplateSpecializationKind(TSK);
         
-        if (TSK != TSK_ExplicitInstantiationDeclaration)
+        if (TSK == TSK_ExplicitInstantiationDefinition)
           InstantiateStaticDataMemberDefinition(PointOfInstantiation, Var);
       }        
     } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(*D)) {
@@ -994,6 +1004,11 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       
       assert(Record->getInstantiatedFromMemberClass() &&
              "Missing instantiated-from-template information");
+      
+      // If this member was explicitly specialized, do nothing.
+      if (Record->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+        continue;
+      
       if (!Record->getDefinition(Context))
         InstantiateClass(PointOfInstantiation, Record,
                          Record->getInstantiatedFromMemberClass(),

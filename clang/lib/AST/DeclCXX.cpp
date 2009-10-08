@@ -437,6 +437,53 @@ void CXXRecordDecl::addConversionFunction(FunctionTemplateDecl *ConvDecl) {
   Conversions.addOverload(ConvDecl);
 }
 
+CXXRecordDecl *CXXRecordDecl::getInstantiatedFromMemberClass() const {
+  if (MemberSpecializationInfo *MSInfo
+        = TemplateOrInstantiation.dyn_cast<MemberSpecializationInfo *>())
+    return cast<CXXRecordDecl>(MSInfo->getInstantiatedFrom());
+  
+  return 0;
+}
+
+void 
+CXXRecordDecl::setInstantiationOfMemberClass(CXXRecordDecl *RD,
+                                             TemplateSpecializationKind TSK) {
+  assert(TemplateOrInstantiation.isNull() && 
+         "Previous template or instantiation?");
+  assert(!isa<ClassTemplateSpecializationDecl>(this));
+  TemplateOrInstantiation 
+    = new (getASTContext()) MemberSpecializationInfo(RD, TSK);
+}
+
+TemplateSpecializationKind CXXRecordDecl::getTemplateSpecializationKind() {
+  if (ClassTemplateSpecializationDecl *Spec
+        = dyn_cast<ClassTemplateSpecializationDecl>(this))
+    return Spec->getSpecializationKind();
+  
+  if (MemberSpecializationInfo *MSInfo
+      = TemplateOrInstantiation.dyn_cast<MemberSpecializationInfo *>())
+    return MSInfo->getTemplateSpecializationKind();
+  
+  return TSK_Undeclared;
+}
+
+void 
+CXXRecordDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
+  if (ClassTemplateSpecializationDecl *Spec
+      = dyn_cast<ClassTemplateSpecializationDecl>(this)) {
+    Spec->setSpecializationKind(TSK);
+    return;
+  }
+  
+  if (MemberSpecializationInfo *MSInfo
+        = TemplateOrInstantiation.dyn_cast<MemberSpecializationInfo *>()) {
+    MSInfo->setTemplateSpecializationKind(TSK);
+    return;
+  }
+  
+  assert(false && "Not a class template or member class specialization");
+}
+
 CXXConstructorDecl *
 CXXRecordDecl::getDefaultConstructor(ASTContext &Context) {
   QualType ClassType = Context.getTypeDeclType(this);

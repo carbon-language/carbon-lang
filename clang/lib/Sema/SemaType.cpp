@@ -1849,10 +1849,11 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
                  = dyn_cast<CXXRecordDecl>(Record->getDecl())) {
       if (CXXRecordDecl *Pattern = Rec->getInstantiatedFromMemberClass()) {
         // This record was instantiated from a class within a template.
-        return InstantiateClass(Loc, Rec, Pattern,
-                                getTemplateInstantiationArgs(Rec),
-                                TSK_ImplicitInstantiation,
-                                /*Complain=*/diag != 0);
+        if (Rec->getTemplateSpecializationKind() != TSK_ExplicitSpecialization)
+          return InstantiateClass(Loc, Rec, Pattern,
+                                  getTemplateInstantiationArgs(Rec),
+                                  TSK_ImplicitInstantiation,
+                                  /*Complain=*/diag != 0);
       }
     }
   }

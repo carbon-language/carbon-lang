@@ -55,7 +55,7 @@ struct X0 { // expected-note 2{{here}}
     t = 17;
   }
   
-  struct Inner : public T { };
+  struct Inner : public T { }; // expected-note 3{{here}}
   
   template<typename U>
   struct InnerTemplate : public T { };
@@ -115,6 +115,8 @@ namespace N0 {
   template<> long X0<long>::member = 17;
 
   template<> float X0<float>::member;
+  
+  template<> double X0<double>::member;
 }
 
 NonDefaultConstructible &get_static_member() {
@@ -125,14 +127,51 @@ template<> int N0::X0<int>::member;  // expected-error{{originally}}
 
 template<> float N0::X0<float>::member = 3.14f;
 
+namespace N1 {
+  template<> double N0::X0<double>::member = 3.14; // expected-error{{not in a namespace enclosing}}
+}
+
+//    -- member class of a class template
+namespace N0 {
+  
+  template<>
+  struct X0<void*>::Inner { };
+
+  template<>
+  struct X0<int>::Inner { };
+
+  template<>
+  struct X0<unsigned>::Inner;
+
+  template<>
+  struct X0<float>::Inner;
+
+  template<>
+  struct X0<double>::Inner; // expected-note{{forward declaration}}
+}
+
+template<>
+struct N0::X0<long>::Inner { }; // expected-error{{originally}}
+
+template<>
+struct N0::X0<float>::Inner { };
+
+namespace N1 {
+  template<>
+  struct N0::X0<unsigned>::Inner { }; // expected-error{{member class specialization}}
+
+  template<>
+  struct N0::X0<unsigned long>::Inner { }; // expected-error{{member class specialization}}
+};
+
+N0::X0<void*>::Inner inner0;
+N0::X0<int>::Inner inner1;
+N0::X0<long>::Inner inner2;
+N0::X0<float>::Inner inner3;
+N0::X0<double>::Inner inner4; // expected-error{{incomplete}}
+
 #if 0
 // FIXME: update the remainder of this test to check for scopes properly.
-//    -- member class of a class template
-template<>
-struct X0<void*>::Inner { };
-
-X0<void*>::Inner inner0;
-
 //    -- member class template of a class template
 template<>
 template<>

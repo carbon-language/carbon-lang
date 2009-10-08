@@ -846,6 +846,8 @@ def err_template_param_default_arg_missing : Error<
 def err_template_variable : Error<"variable %0 declared as a template">;
 def err_template_variable_noparams : Error<
   "extraneous 'template<>' in declaration of variable %0">;
+def err_template_tag_noparams : Error<
+  "extraneous 'template<>' in declaration of %0 %1">;
 
 // C++ Template Argument Lists
 def err_template_arg_list_different_arity : Error<

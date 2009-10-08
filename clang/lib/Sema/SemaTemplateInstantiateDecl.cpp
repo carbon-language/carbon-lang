@@ -454,7 +454,7 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   if (D->getAccess() != AS_none)
     Record->setAccess(D->getAccess());
   if (!D->isInjectedClassName())
-    Record->setInstantiationOfMemberClass(D);
+    Record->setInstantiationOfMemberClass(D, TSK_ImplicitInstantiation);
 
   // If the original function was part of a friend declaration,
   // inherit its namespace state.

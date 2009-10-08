@@ -4161,11 +4161,14 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         TemplateParameterLists.release();
         return Result.get();
       } else {
-        // FIXME: diagnose the extraneous 'template<>', once we recover
-        // slightly better in ParseTemplate.cpp from bogus template
-        // parameters.
+        // The "template<>" header is extraneous.
+        Diag(TemplateParams->getTemplateLoc(), diag::err_template_tag_noparams)
+          << ElaboratedType::getNameForTagKind(Kind) << Name;
+        isExplicitSpecialization = true;
       }
     }
+             
+    TemplateParameterLists.release();
   }
 
   DeclContext *SearchDC = CurContext;
@@ -4493,6 +4496,11 @@ CreateNewDecl:
     }
   }
 
+  // If this is a specialization of a member class (of a class template),
+  // check the specialization.
+  if (isExplicitSpecialization && CheckMemberSpecialization(New, PrevDecl))
+    Invalid = true;
+      
   if (Invalid)
     New->setInvalidDecl();
 

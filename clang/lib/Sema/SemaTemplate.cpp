@@ -2360,15 +2360,13 @@ static TemplateSpecializationKind getTemplateSpecializationKind(NamedDecl *D) {
   if (!D)
     return TSK_Undeclared;
   
-  if (ClassTemplateSpecializationDecl *CTS 
-        = dyn_cast<ClassTemplateSpecializationDecl>(D))
-    return CTS->getSpecializationKind();
+  if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(D))
+    return Record->getTemplateSpecializationKind();
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D))
     return Function->getTemplateSpecializationKind();
   if (VarDecl *Var = dyn_cast<VarDecl>(D))
     return Var->getTemplateSpecializationKind();
   
-  // FIXME: member classes of class templates!
   return TSK_Undeclared;
 }
 
@@ -3192,23 +3190,46 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
   // FIXME: Check for specialization-after-instantiation errors and such.
   
   // Note that this is an explicit instantiation of a member.
+  // the original declaration to note that it is an explicit specialization
+  // (if it was previously an implicit instantiation). This latter step
+  // makes bookkeeping easier.
   if (isa<FunctionDecl>(Member)) {
-    // FIXME: We're also setting the original instantiation we found to be
-    // an explicit specialization, although I'd rather not have to do this.
-    cast<FunctionDecl>(Instantiation)->setTemplateSpecializationKind(
-                                                    TSK_ExplicitSpecialization);
+    FunctionDecl *InstantiationFunction = cast<FunctionDecl>(Instantiation);
+    if (InstantiationFunction->getTemplateSpecializationKind() ==
+          TSK_ImplicitInstantiation) {
+      InstantiationFunction->setTemplateSpecializationKind(
+                                                  TSK_ExplicitSpecialization);
+      InstantiationFunction->setLocation(Member->getLocation());
+    }
+    
     cast<FunctionDecl>(Member)->setInstantiationOfMemberFunction(
                                         cast<CXXMethodDecl>(InstantiatedFrom),
                                                   TSK_ExplicitSpecialization);
   } else if (isa<VarDecl>(Member)) {
+    VarDecl *InstantiationVar = cast<VarDecl>(Instantiation);
+    if (InstantiationVar->getTemplateSpecializationKind() ==
+          TSK_ImplicitInstantiation) {
+      InstantiationVar->setTemplateSpecializationKind(
+                                                  TSK_ExplicitSpecialization);
+      InstantiationVar->setLocation(Member->getLocation());
+    }
+    
     Context.setInstantiatedFromStaticDataMember(cast<VarDecl>(Member),
                                                 cast<VarDecl>(InstantiatedFrom),
                                                 TSK_ExplicitSpecialization);
   } else {
     assert(isa<CXXRecordDecl>(Member) && "Only member classes remain");
-    // FIXME: Record TSK_ExplicitSpecialization.
+    CXXRecordDecl *InstantiationClass = cast<CXXRecordDecl>(Instantiation);
+    if (InstantiationClass->getTemplateSpecializationKind() ==
+          TSK_ImplicitInstantiation) {
+      InstantiationClass->setTemplateSpecializationKind(
+                                                   TSK_ExplicitSpecialization);
+      InstantiationClass->setLocation(Member->getLocation());
+    }
+    
     cast<CXXRecordDecl>(Member)->setInstantiationOfMemberClass(
-                                        cast<CXXRecordDecl>(InstantiatedFrom));
+                                        cast<CXXRecordDecl>(InstantiatedFrom),
+                                                   TSK_ExplicitSpecialization);
   }
              
   // Save the caller the trouble of having to figure out which declaration
