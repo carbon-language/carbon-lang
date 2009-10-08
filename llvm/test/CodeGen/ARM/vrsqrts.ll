@@ -1,7 +1,8 @@
-; RUN: llc < %s -march=arm -mattr=+neon > %t
-; RUN: grep {vrsqrts\\.f32} %t | count 2
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <2 x float> @vrsqrtsf32(<2 x float>* %A, <2 x float>* %B) nounwind {
+;CHECK: vrsqrtsf32:
+;CHECK: vrsqrts.f32
 	%tmp1 = load <2 x float>* %A
 	%tmp2 = load <2 x float>* %B
 	%tmp3 = call <2 x float> @llvm.arm.neon.vrsqrts.v2f32(<2 x float> %tmp1, <2 x float> %tmp2)
@@ -9,6 +10,8 @@ define <2 x float> @vrsqrtsf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 }
 
 define <4 x float> @vrsqrtsQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
+;CHECK: vrsqrtsQf32:
+;CHECK: vrsqrts.f32
 	%tmp1 = load <4 x float>* %A
 	%tmp2 = load <4 x float>* %B
 	%tmp3 = call <4 x float> @llvm.arm.neon.vrsqrts.v4f32(<4 x float> %tmp1, <4 x float> %tmp2)
