@@ -155,6 +155,12 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     Owner->addDecl(Var);
   }
 
+  // Link instantiations of static data members back to the template from
+  // which they were instantiated.
+  if (Var->isStaticDataMember())
+    SemaRef.Context.setInstantiatedFromStaticDataMember(Var, D, 
+                                                        TSK_ImplicitInstantiation);
+  
   if (D->getInit()) {
     OwningExprResult Init
       = SemaRef.SubstExpr(D->getInit(), TemplateArgs);
@@ -190,11 +196,6 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
                                    D->hasCXXDirectInitializer());
   } else if (!Var->isStaticDataMember() || Var->isOutOfLine())
     SemaRef.ActOnUninitializedDecl(Sema::DeclPtrTy::make(Var), false);
-
-  // Link instantiations of static data members back to the template from
-  // which they were instantiated.
-  if (Var->isStaticDataMember())
-    SemaRef.Context.setInstantiatedFromStaticDataMember(Var, D);
 
   return Var;
 }
@@ -977,6 +978,10 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
   assert(!Function->getBody() && "Already instantiated!");
 
+  // Never instantiate an explicit specialization.
+  if (Function->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+    return;
+  
   // Find the function body that we'll be substituting.
   const FunctionDecl *PatternDecl = 0;
   if (FunctionTemplateDecl *Primary = Function->getPrimaryTemplate()) {
@@ -1084,7 +1089,6 @@ void Sema::InstantiateStaticDataMemberDefinition(
     return;
 
   // Find the out-of-line definition of this static data member.
-  // FIXME: Do we have to look for specializations separately?
   VarDecl *Def = Var->getInstantiatedFromStaticDataMember();
   bool FoundOutOfLineDef = false;
   assert(Def && "This data member was not instantiated from a template?");
@@ -1106,7 +1110,17 @@ void Sema::InstantiateStaticDataMemberDefinition(
     return;
   }
 
-  // FIXME: extern templates
+  // Never instantiate an explicit specialization.
+  if (Def->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+    return;
+  
+  // C++0x [temp.explicit]p9:
+  //   Except for inline functions, other explicit instantiation declarations
+  //   have the effect of suppressing the implicit instantiation of the entity
+  //   to which they refer.
+  if (Def->getTemplateSpecializationKind() 
+        == TSK_ExplicitInstantiationDeclaration)
+    return;
 
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Var);
   if (Inst)

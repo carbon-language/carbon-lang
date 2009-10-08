@@ -2519,8 +2519,7 @@ public:
                                            unsigned NumExplicitTemplateArgs,
                                            SourceLocation RAngleLoc,
                                            NamedDecl *&PrevDecl);
-  bool CheckMemberFunctionSpecialization(CXXMethodDecl *FD, 
-                                         NamedDecl *&PrevDecl);
+  bool CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl);
     
   virtual DeclResult
   ActOnExplicitInstantiation(Scope *S,

@@ -49,7 +49,7 @@ namespace N0 {
   
 template<typename T>
 struct X0 { // expected-note 2{{here}}
-  static T member;
+  static T member; // expected-note{{here}}
   
   void f1(T t) { // expected-note{{explicitly specialized declaration is here}}
     t = 17;
@@ -106,16 +106,27 @@ void test_x0_cvvoid(N0::X0<const volatile void*> x0, const volatile void *cvp) {
   x0.f1(cvp); // okay: we've explicitly specialized
 }
 
-#if 0
-// FIXME: update the remainder of this test to check for scopes properly.
 //     -- static data member of a class template
-template<> 
-NonDefaultConstructible X0<NonDefaultConstructible>::member = 17;
+namespace N0 {
+  // This actually tests p15; the following is a declaration, not a definition.
+  template<> 
+  NonDefaultConstructible X0<NonDefaultConstructible>::member;
+  
+  template<> long X0<long>::member = 17;
 
-NonDefaultConstructible &get_static_member() {
-  return X0<NonDefaultConstructible>::member;
+  template<> float X0<float>::member;
 }
 
+NonDefaultConstructible &get_static_member() {
+  return N0::X0<NonDefaultConstructible>::member;
+}
+
+template<> int N0::X0<int>::member;  // expected-error{{originally}}
+
+template<> float N0::X0<float>::member = 3.14f;
+
+#if 0
+// FIXME: update the remainder of this test to check for scopes properly.
 //    -- member class of a class template
 template<>
 struct X0<void*>::Inner { };

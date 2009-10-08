@@ -371,7 +371,26 @@ SourceRange VarDecl::getSourceRange() const {
 }
 
 VarDecl *VarDecl::getInstantiatedFromStaticDataMember() {
-  return getASTContext().getInstantiatedFromStaticDataMember(this);
+  if (MemberSpecializationInfo *MSI
+        = getASTContext().getInstantiatedFromStaticDataMember(this))
+    return cast<VarDecl>(MSI->getInstantiatedFrom());
+  
+  return 0;
+}
+
+TemplateSpecializationKind VarDecl::getTemplateSpecializationKind() {
+  if (MemberSpecializationInfo *MSI
+        = getASTContext().getInstantiatedFromStaticDataMember(this))
+    return MSI->getTemplateSpecializationKind();
+  
+  return TSK_Undeclared;
+}
+
+void VarDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
+  MemberSpecializationInfo *MSI
+    = getASTContext().getInstantiatedFromStaticDataMember(this);
+  assert(MSI && "Not an instantiated static data member?");
+  MSI->setTemplateSpecializationKind(TSK);
 }
 
 bool VarDecl::isTentativeDefinition(ASTContext &Context) const {

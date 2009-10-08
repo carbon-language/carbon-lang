@@ -154,7 +154,8 @@ class ASTContext {
   ///
   /// This data structure stores the mapping from instantiations of static
   /// data members to the static data member representations within the
-  /// class template from which they were instantiated.
+  /// class template from which they were instantiated along with the kind
+  /// of instantiation or specialization (a TemplateSpecializationKind - 1).
   ///
   /// Given the following example:
   ///
@@ -172,8 +173,9 @@ class ASTContext {
   ///
   /// This mapping will contain an entry that maps from the VarDecl for
   /// X<int>::value to the corresponding VarDecl for X<T>::value (within the
-  /// class template X).
-  llvm::DenseMap<VarDecl *, VarDecl *> InstantiatedFromStaticDataMember;
+  /// class template X) and will be marked TSK_ImplicitInstantiation.
+  llvm::DenseMap<VarDecl *, MemberSpecializationInfo *> 
+    InstantiatedFromStaticDataMember;
 
   /// \brief Keeps track of the UnresolvedUsingDecls from which UsingDecls
   /// where created during instantiation.
@@ -265,11 +267,12 @@ public:
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member
   /// from which it was instantiated.
-  VarDecl *getInstantiatedFromStaticDataMember(VarDecl *Var);
+  MemberSpecializationInfo *getInstantiatedFromStaticDataMember(VarDecl *Var);
 
   /// \brief Note that the static data member \p Inst is an instantiation of
   /// the static data member template \p Tmpl of a class template.
-  void setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl);
+  void setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl,
+                                           TemplateSpecializationKind TSK);
 
   /// \brief If this using decl is instantiated from an unresolved using decl,
   /// return it.

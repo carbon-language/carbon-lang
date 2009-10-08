@@ -2365,8 +2365,9 @@ static TemplateSpecializationKind getTemplateSpecializationKind(NamedDecl *D) {
     return CTS->getSpecializationKind();
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D))
     return Function->getTemplateSpecializationKind();
-
-  // FIXME: static data members!
+  if (VarDecl *Var = dyn_cast<VarDecl>(D))
+    return Var->getTemplateSpecializationKind();
+  
   // FIXME: member classes of class templates!
   return TSK_Undeclared;
 }
@@ -3118,7 +3119,7 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   return false;
 }
 
-/// \brief Perform semantic analysis for the given member function
+/// \brief Perform semantic analysis for the given non-template member
 /// specialization.
 ///
 /// This routine performs all of the semantic analysis required for an 
@@ -3126,27 +3127,45 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
 /// the function declaration \p FD will become a member function
 /// specialization.
 ///
-/// \param FD the function declaration, which will be updated to become a
-/// function template specialization.
+/// \param Member the member declaration, which will be updated to become a
+/// specialization.
 ///
 /// \param PrevDecl the set of declarations, one of which may be specialized
 /// by this function specialization.
 bool 
-Sema::CheckMemberFunctionSpecialization(CXXMethodDecl *FD,
-                                        NamedDecl *&PrevDecl) {
-  // Try to find the member function we are instantiating.
-  CXXMethodDecl *Instantiation = 0;
-  for (OverloadIterator Ovl(PrevDecl), OvlEnd; Ovl != OvlEnd; ++Ovl) {
-    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Ovl)) {
-      if (Context.hasSameType(FD->getType(), Method->getType())) {
-        Instantiation = Method;
-        break;
+Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
+  assert(!isa<TemplateDecl>(Member) && "Only for non-template members");
+         
+  // Try to find the member we are instantiating.
+  NamedDecl *Instantiation = 0;
+  NamedDecl *InstantiatedFrom = 0;
+  if (!PrevDecl) {
+    // Nowhere to look anyway.
+  } else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Member)) {
+    for (OverloadIterator Ovl(PrevDecl), OvlEnd; Ovl != OvlEnd; ++Ovl) {
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Ovl)) {
+        if (Context.hasSameType(Function->getType(), Method->getType())) {
+          Instantiation = Method;
+          InstantiatedFrom = Method->getInstantiatedFromMemberFunction();
+          break;
+        }
       }
+    }
+  } else if (isa<VarDecl>(Member)) {
+    if (VarDecl *PrevVar = dyn_cast<VarDecl>(PrevDecl))
+      if (PrevVar->isStaticDataMember()) {
+        Instantiation = PrevDecl;
+        InstantiatedFrom = PrevVar->getInstantiatedFromStaticDataMember();
+      }
+  } else if (isa<RecordDecl>(Member)) {
+    if (CXXRecordDecl *PrevRecord = dyn_cast<CXXRecordDecl>(PrevDecl)) {
+      Instantiation = PrevDecl;
+      InstantiatedFrom = PrevRecord->getInstantiatedFromMemberClass();
     }
   }
   
   if (!Instantiation) {
-    // There is no previous declaration that matches. Since member function
+    // There is no previous declaration that matches. Since member
     // specializations are always out-of-line, the caller will complain about
     // this mismatch later.
     return false;
@@ -3155,30 +3174,43 @@ Sema::CheckMemberFunctionSpecialization(CXXMethodDecl *FD,
   // FIXME: Check if the prior declaration has a point of instantiation.
   // If so, we have run afoul of C++ [temp.expl.spec]p6.
   
-  // Make sure that this is a specialization of a member function.
-  FunctionDecl *FunctionInTemplate
-    = Instantiation->getInstantiatedFromMemberFunction();
-  if (!FunctionInTemplate) {
-    Diag(FD->getLocation(), diag::err_function_spec_not_instantiated)
-      << FD;
+  // Make sure that this is a specialization of a member.
+  if (!InstantiatedFrom) {
+    Diag(Member->getLocation(), diag::err_spec_member_not_instantiated)
+      << Member;
     Diag(Instantiation->getLocation(), diag::note_specialized_decl);
     return true;
   }
   
   // Check the scope of this explicit specialization.
   if (CheckTemplateSpecializationScope(*this, 
-                                       FunctionInTemplate,
-                                       Instantiation, FD->getLocation(), 
+                                       InstantiatedFrom,
+                                       Instantiation, Member->getLocation(), 
                                        false, TSK_ExplicitSpecialization))
     return true;
 
   // FIXME: Check for specialization-after-instantiation errors and such.
   
-  // Note that this function is an explicit instantiation of a member function.
-  Instantiation->setTemplateSpecializationKind(TSK_ExplicitSpecialization);
-  FD->setInstantiationOfMemberFunction(FunctionInTemplate, 
-                                       TSK_ExplicitSpecialization);
-  
+  // Note that this is an explicit instantiation of a member.
+  if (isa<FunctionDecl>(Member)) {
+    // FIXME: We're also setting the original instantiation we found to be
+    // an explicit specialization, although I'd rather not have to do this.
+    cast<FunctionDecl>(Instantiation)->setTemplateSpecializationKind(
+                                                    TSK_ExplicitSpecialization);
+    cast<FunctionDecl>(Member)->setInstantiationOfMemberFunction(
+                                        cast<CXXMethodDecl>(InstantiatedFrom),
+                                                  TSK_ExplicitSpecialization);
+  } else if (isa<VarDecl>(Member)) {
+    Context.setInstantiatedFromStaticDataMember(cast<VarDecl>(Member),
+                                                cast<VarDecl>(InstantiatedFrom),
+                                                TSK_ExplicitSpecialization);
+  } else {
+    assert(isa<CXXRecordDecl>(Member) && "Only member classes remain");
+    // FIXME: Record TSK_ExplicitSpecialization.
+    cast<CXXRecordDecl>(Member)->setInstantiationOfMemberClass(
+                                        cast<CXXRecordDecl>(InstantiatedFrom));
+  }
+             
   // Save the caller the trouble of having to figure out which declaration
   // this specialization matches.
   PrevDecl = Instantiation;
@@ -3547,7 +3579,8 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     }
     
     // Instantiate static data member.
-    // FIXME: Note that this is an explicit instantiation.
+    // FIXME: Check for prior specializations and such.
+    Prev->setTemplateSpecializationKind(TSK);
     if (TSK == TSK_ExplicitInstantiationDefinition)
       InstantiateStaticDataMemberDefinition(D.getIdentifierLoc(), Prev, false);
     

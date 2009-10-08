@@ -948,9 +948,8 @@ def err_template_spec_redecl_global_scope : Error<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 must occur "
   "at global scope">;
-def err_function_spec_not_instantiated : Error<
-  "specialization of member function %q0 does not specialize an instantiated "
-  "member function">;
+def err_spec_member_not_instantiated : Error<
+  "specialization of member %q0 does not specialize an instantiated member">;
 def note_specialized_decl : Note<"attempt to specialize declaration here">;
 
 // C++ class template specializations and out-of-line definitions

@@ -982,9 +982,12 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       if (!Function->getBody() && TSK != TSK_ExplicitInstantiationDeclaration)
         InstantiateFunctionDefinition(PointOfInstantiation, Function);
     } else if (VarDecl *Var = dyn_cast<VarDecl>(*D)) {
-      if (Var->isStaticDataMember() && 
-          TSK != TSK_ExplicitInstantiationDeclaration)
-        InstantiateStaticDataMemberDefinition(PointOfInstantiation, Var);
+      if (Var->isStaticDataMember()) {
+        Var->setTemplateSpecializationKind(TSK);
+        
+        if (TSK != TSK_ExplicitInstantiationDeclaration)
+          InstantiateStaticDataMemberDefinition(PointOfInstantiation, Var);
+      }        
     } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(*D)) {
       if (Record->isInjectedClassName())
         continue;

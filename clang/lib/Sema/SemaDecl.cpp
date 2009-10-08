@@ -2193,7 +2193,6 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   // Match up the template parameter lists with the scope specifier, then
   // determine whether we have a template or a template specialization.
-  // FIXME: Actually record when this is an explicit specialization!
   bool isExplicitSpecialization = false;
   if (TemplateParameterList *TemplateParams
         = MatchTemplateParametersToScopeSpecifier(
@@ -2259,7 +2258,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       !(NewVD->hasLinkage() &&
         isOutOfScopePreviousDeclaration(PrevDecl, DC, Context)))
     PrevDecl = 0;
-
+  
   // Merge the decl with the existing one if appropriate.
   if (PrevDecl) {
     if (isa<FieldDecl>(PrevDecl) && D.getCXXScopeSpec().isSet()) {
@@ -2281,6 +2280,11 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   CheckVariableDeclaration(NewVD, PrevDecl, Redeclaration);
 
+  // This is an explicit specialization of a static data member. Check it.
+  if (isExplicitSpecialization && !NewVD->isInvalidDecl() &&
+      CheckMemberSpecialization(NewVD, PrevDecl))
+    NewVD->setInvalidDecl();
+  
   // attributes declared post-definition are currently ignored
   if (PrevDecl) {
     const VarDecl *Def = 0, *PrevVD = dyn_cast<VarDecl>(PrevDecl);
@@ -2837,8 +2841,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                               PrevDecl))
         NewFD->setInvalidDecl();
   } else if (isExplicitSpecialization && isa<CXXMethodDecl>(NewFD) &&
-             CheckMemberFunctionSpecialization(cast<CXXMethodDecl>(NewFD),
-                                               PrevDecl))
+             CheckMemberSpecialization(NewFD, PrevDecl))
     NewFD->setInvalidDecl();
            
   // Perform semantic checking on the function declaration.
@@ -3400,6 +3403,15 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
       return;
     }
 
+    // C++ [temp.expl.spec]p15:
+    //   An explicit specialization of a static data member of a template is a
+    //   definition if the declaration includes an initializer; otherwise, it 
+    //   is a declaration.
+    if (Var->isStaticDataMember() &&
+        Var->getInstantiatedFromStaticDataMember() &&
+        Var->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+      return;
+    
     // C++ [dcl.init]p9:
     //   If no initializer is specified for an object, and the object
     //   is of (possibly cv-qualified) non-POD class type (or array
