@@ -11,7 +11,7 @@
 // CHECK: @"__func__.-[Foo(Category) instanceTestWithCategory]" = private constant [42 x i8] c"-[Foo(Category) instanceTestWithCategory]\00"
 // CHECK: @"__func__.+[Foo(Category) classTestWithCategory]" = private constant [39 x i8] c"+[Foo(Category) classTestWithCategory]\00"
 
-#include <stdio.h>
+int printf(const char * _Format, ...);
 
 @interface Foo
 @end

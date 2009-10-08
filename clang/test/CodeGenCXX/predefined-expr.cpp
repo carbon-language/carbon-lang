@@ -51,7 +51,7 @@
 // CHECK: private constant [11 x i8] c"staticFunc\00"
 // CHECK: private constant [28 x i8] c"void NS::Base::staticFunc()\00"
 
-#include <stdio.h>
+int printf(const char * _Format, ...);
 
 namespace NS {
 
