@@ -32,6 +32,14 @@ define void @vst4f(float* %A, <2 x float>* %B) nounwind {
 	ret void
 }
 
+define void @vst4i64(i64* %A, <1 x i64>* %B) nounwind {
+;CHECK: vst4i64:
+;CHECK: vst1.64
+	%tmp1 = load <1 x i64>* %B
+	call void @llvm.arm.neon.vst4.v1i64(i64* %A, <1 x i64> %tmp1, <1 x i64> %tmp1, <1 x i64> %tmp1, <1 x i64> %tmp1)
+	ret void
+}
+
 define void @vst4Qi8(i8* %A, <16 x i8>* %B) nounwind {
 ;CHECK: vst4Qi8:
 ;CHECK: vst4.8
@@ -72,6 +80,7 @@ declare void @llvm.arm.neon.vst4.v8i8(i8*, <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8
 declare void @llvm.arm.neon.vst4.v4i16(i8*, <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>) nounwind
 declare void @llvm.arm.neon.vst4.v2i32(i8*, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>) nounwind
 declare void @llvm.arm.neon.vst4.v2f32(i8*, <2 x float>, <2 x float>, <2 x float>, <2 x float>) nounwind
+declare void @llvm.arm.neon.vst4.v1i64(i8*, <1 x i64>, <1 x i64>, <1 x i64>, <1 x i64>) nounwind
 
 declare void @llvm.arm.neon.vst4.v16i8(i8*, <16 x i8>, <16 x i8>, <16 x i8>, <16 x i8>) nounwind
 declare void @llvm.arm.neon.vst4.v8i16(i8*, <8 x i16>, <8 x i16>, <8 x i16>, <8 x i16>) nounwind
