@@ -1166,7 +1166,8 @@ void AddClangIncludePaths(const char *Argv0, InitHeaderSearch *Init) {
 /// InitializeIncludePaths - Process the -I options and set them in the
 /// HeaderSearch object.
 void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
-                            FileManager &FM, const LangOptions &Lang) {
+                            FileManager &FM, const LangOptions &Lang,
+                            llvm::Triple &triple) {
   InitHeaderSearch Init(Headers, Verbose, isysroot);
 
   // Handle -I... and -F... options, walking the lists in parallel.
@@ -1245,7 +1246,7 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
   AddClangIncludePaths(Argv0, &Init);
 
   if (!nostdinc)
-    Init.AddDefaultSystemIncludePaths(Lang);
+    Init.AddDefaultSystemIncludePaths(Lang, triple);
 
   // Now that we have collected all of the include paths, merge them all
   // together and tell the preprocessor about them.
@@ -2410,7 +2411,7 @@ int main(int argc, char **argv) {
     HeaderSearch HeaderInfo(FileMgr);
 
 
-    InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
+    InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo, Triple);
 
     // Set up the preprocessor with these options.
     DriverPreprocessorFactory PPFactory(Diags, LangInfo, *Target,

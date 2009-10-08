@@ -16,6 +16,7 @@
 
 #include "clang/Lex/DirectoryLookup.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Triple.h"
 #include <string>
 #include <vector>
 
@@ -66,7 +67,7 @@ public:
 
   /// AddDefaultSystemIncludePaths - Adds the default system include paths so
   ///  that e.g. stdio.h is found.
-  void AddDefaultSystemIncludePaths(const LangOptions &Lang);
+  void AddDefaultSystemIncludePaths(const LangOptions &Lang, llvm::Triple &triple);
 
   /// Realize - Merges all search path lists into one list and send it to
   /// HeaderSearch.
