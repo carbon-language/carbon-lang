@@ -58,7 +58,8 @@ struct X0 { // expected-note 2{{here}}
   struct Inner : public T { }; // expected-note 3{{here}}
   
   template<typename U>
-  struct InnerTemplate : public T { };
+  struct InnerTemplate : public T { }; // expected-note 2{{explicitly specialized}} \
+   // expected-error{{base specifier}}
   
   template<typename U>
   void ft1(T t, U u);
@@ -170,15 +171,40 @@ N0::X0<long>::Inner inner2;
 N0::X0<float>::Inner inner3;
 N0::X0<double>::Inner inner4; // expected-error{{incomplete}}
 
+//    -- member class template of a class template
+namespace N0 {
+  template<>
+  template<>
+  struct X0<void*>::InnerTemplate<int> { };
+  
+  template<> template<>
+  struct X0<int>::InnerTemplate<int>; // expected-note{{forward declaration}}
+
+  template<> template<>
+  struct X0<int>::InnerTemplate<long>;
+
+  template<> template<>
+  struct X0<int>::InnerTemplate<double>;
+}
+
+template<> template<>
+struct N0::X0<int>::InnerTemplate<long> { }; // okay
+
+template<> template<>
+struct N0::X0<int>::InnerTemplate<float> { }; // expected-error{{class template specialization}}
+
+namespace N1 {
+  template<> template<>
+  struct N0::X0<int>::InnerTemplate<double> { }; // expected-error{{enclosing}}
+}
+
+N0::X0<void*>::InnerTemplate<int> inner_template0;
+N0::X0<int>::InnerTemplate<int> inner_template1; // expected-error{{incomplete}}
+N0::X0<int>::InnerTemplate<long> inner_template2;
+N0::X0<int>::InnerTemplate<unsigned long> inner_template3; // expected-note{{instantiation}}
+
 #if 0
 // FIXME: update the remainder of this test to check for scopes properly.
-//    -- member class template of a class template
-template<>
-template<>
-struct X0<void*>::InnerTemplate<int> { };
-
-X0<void*>::InnerTemplate<int> inner_template0;
-
 //    -- member function template of a class template
 template<>
 template<>
