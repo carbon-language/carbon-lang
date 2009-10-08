@@ -116,7 +116,7 @@ GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
     return 0;
 
   if (Elt < DbgNode->getNumElements())
-      return dyn_cast<GlobalVariable>(DbgNode->getElement(Elt));
+      return dyn_cast_or_null<GlobalVariable>(DbgNode->getElement(Elt));
   return 0;
 }
 
