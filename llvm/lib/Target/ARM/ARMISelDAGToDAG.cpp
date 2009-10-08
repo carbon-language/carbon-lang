@@ -1405,7 +1405,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       }
       // Quad registers are loaded with two separate instructions, where one
       // loads the even registers and the other loads the odd registers.
-      EVT RegVT = VT;
+      EVT RegVT;
       unsigned Opc2 = 0;
       switch (VT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("unhandled vld3 type");
@@ -1465,7 +1465,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       }
       // Quad registers are loaded with two separate instructions, where one
       // loads the even registers and the other loads the odd registers.
-      EVT RegVT = VT;
+      EVT RegVT;
       unsigned Opc2 = 0;
       switch (VT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("unhandled vld4 type");
