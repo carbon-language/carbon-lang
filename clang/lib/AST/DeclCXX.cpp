@@ -357,21 +357,21 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
     }
   }
   
+  if (getNumBases() == 0 && getNumVBases() == 0)
+    return;
+  
+  llvm::SmallPtrSet<QualType, 8> ConversionFunctions;
+  if (!inTopClass)
+    collectConversionFunctions(ConversionFunctions);
+  
   for (CXXRecordDecl::base_class_iterator VBase = vbases_begin(),
        E = vbases_end(); VBase != E; ++VBase) {
     CXXRecordDecl *VBaseClassDecl
       = cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
-    if (inTopClass)
-      VBaseClassDecl->getNestedVisibleConversionFunctions(RD,
-                                                        TopConversionsTypeSet,
-                                                        TopConversionsTypeSet);
-    else {
-      llvm::SmallPtrSet<QualType, 8> HiddenConversionTypes;
-        collectConversionFunctions(HiddenConversionTypes);
-      VBaseClassDecl->getNestedVisibleConversionFunctions(RD,
-                                                        TopConversionsTypeSet,
-                                                        HiddenConversionTypes);
-    }
+    VBaseClassDecl->getNestedVisibleConversionFunctions(RD,
+                  TopConversionsTypeSet,
+                  (inTopClass ? TopConversionsTypeSet : ConversionFunctions));
+      
   }
   for (CXXRecordDecl::base_class_iterator Base = bases_begin(),
        E = bases_end(); Base != E; ++Base) {
@@ -379,17 +379,11 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
       continue;
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (inTopClass)
-      BaseClassDecl->getNestedVisibleConversionFunctions(RD,
-                                                         TopConversionsTypeSet,
-                                                         TopConversionsTypeSet);
-    else {
-      llvm::SmallPtrSet<QualType, 8> HiddenConversionTypes;
-      collectConversionFunctions(HiddenConversionTypes);
-      BaseClassDecl->getNestedVisibleConversionFunctions(RD,
-                                                         TopConversionsTypeSet,
-                                                         HiddenConversionTypes);
-    }
+    
+    BaseClassDecl->getNestedVisibleConversionFunctions(RD,
+                  TopConversionsTypeSet,
+                  (inTopClass ? TopConversionsTypeSet : ConversionFunctions));
+    
   }
 }
 
