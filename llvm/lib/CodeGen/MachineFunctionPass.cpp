@@ -11,11 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/IVUsers.h"
-#include "llvm/Analysis/LiveValues.h"
-#include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 using namespace llvm;
@@ -36,15 +33,18 @@ void MachineFunctionPass::getAnalysisUsage(AnalysisUsage &AU) const {
 
   // MachineFunctionPass preserves all LLVM IR passes, but there's no
   // high-level way to express this. Instead, just list a bunch of
-  // passes explicitly.
+  // passes explicitly. This does not include setPreservesCFG,
+  // because CodeGen overloads that to mean preserving the MachineBasicBlock
+  // CFG in addition to the LLVM IR CFG.
   AU.addPreserved<AliasAnalysis>();
-  AU.addPreserved<ScalarEvolution>();
-  AU.addPreserved<IVUsers>();
-  AU.addPreserved<MemoryDependenceAnalysis>();
-  AU.addPreserved<LiveValues>();
-  AU.addPreserved<DominatorTree>();
-  AU.addPreserved<DominanceFrontier>();
-  AU.addPreserved<LoopInfo>();
+  AU.addPreserved("scalar-evolution");
+  AU.addPreserved("iv-users");
+  AU.addPreserved("memdep");
+  AU.addPreserved("live-values");
+  AU.addPreserved("domtree");
+  AU.addPreserved("domfrontier");
+  AU.addPreserved("loops");
+  AU.addPreserved("lda");
 
   FunctionPass::getAnalysisUsage(AU);
 }

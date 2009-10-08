@@ -22,8 +22,6 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/IVUsers.h"
 #include "llvm/ADT/DenseMap.h"
 using namespace llvm;
 
@@ -104,8 +102,10 @@ void CodeGenLICM::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreservedID(LoopSimplifyID);
   AU.addPreserved<LoopInfo>();
   AU.addPreserved<AliasAnalysis>();
-  AU.addPreserved<ScalarEvolution>();
-  AU.addPreserved<IVUsers>();
+  AU.addPreserved("scalar-evolution");
+  AU.addPreserved("iv-users");
+  AU.addPreserved("lda");
+  AU.addPreserved("live-values");
 
   // Hoisting requires a loop preheader.
   AU.addRequiredID(LoopSimplifyID);

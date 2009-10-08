@@ -46,6 +46,7 @@ class PMStack;
 class AnalysisResolver;
 class PMDataManager;
 class raw_ostream;
+class StringRef;
 
 // AnalysisID - Use the PassInfo to identify a pass...
 typedef const PassInfo* AnalysisID;
@@ -163,6 +164,10 @@ public:
   // lookupPassInfo - Return the pass info object for the specified pass class,
   // or null if it is not known.
   static const PassInfo *lookupPassInfo(intptr_t TI);
+
+  // lookupPassInfo - Return the pass info object for the pass with the given
+  // argument string, or null if it is not known.
+  static const PassInfo *lookupPassInfo(const StringRef &Arg);
 
   /// getAnalysisIfAvailable<AnalysisType>() - Subclasses use this function to
   /// get analysis information that might be around, for example to update it.
