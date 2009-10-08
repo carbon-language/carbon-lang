@@ -62,7 +62,7 @@ struct X0 { // expected-note 2{{here}}
    // expected-error{{base specifier}}
   
   template<typename U>
-  void ft1(T t, U u);
+  void ft1(T t, U u); // expected-note{{explicitly specialized}}
 };
 
 }
@@ -203,14 +203,37 @@ N0::X0<int>::InnerTemplate<int> inner_template1; // expected-error{{incomplete}}
 N0::X0<int>::InnerTemplate<long> inner_template2;
 N0::X0<int>::InnerTemplate<unsigned long> inner_template3; // expected-note{{instantiation}}
 
-#if 0
-// FIXME: update the remainder of this test to check for scopes properly.
 //    -- member function template of a class template
-template<>
-template<>
-void X0<void*>::ft1(void*, const void*) { }
+namespace N0 {
+  template<>
+  template<>
+  void X0<void*>::ft1(void*, const void*) { }
+  
+  template<> template<>
+  void X0<void*>::ft1(void *, int);
 
-void test_func_template(X0<void *> xvp, void *vp, const void *cvp) {
-  xvp.ft1(vp, cvp);
+  template<> template<>
+  void X0<void*>::ft1(void *, unsigned);
+
+  template<> template<>
+  void X0<void*>::ft1(void *, long);
 }
-#endif
+
+template<> template<>
+void N0::X0<void*>::ft1(void *, unsigned) { } // okay
+
+template<> template<>
+void N0::X0<void*>::ft1(void *, float) { } // expected-error{{function template specialization}}
+
+namespace N1 {
+  template<> template<>
+  void N0::X0<void*>::ft1(void *, long) { } // expected-error{{enclosing}}
+}
+
+
+void test_func_template(N0::X0<void *> xvp, void *vp, const void *cvp,
+                        int i, unsigned u) {
+  xvp.ft1(vp, cvp);
+  xvp.ft1(vp, i);
+  xvp.ft1(vp, u);
+}
