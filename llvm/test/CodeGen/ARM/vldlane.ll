@@ -209,6 +209,10 @@ declare %struct.__neon_float32x4x3_t @llvm.arm.neon.vld3lane.v4f32(i8*, <4 x flo
 %struct.__neon_int32x2x4_t = type { <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32> }
 %struct.__neon_float32x2x4_t = type { <2 x float>, <2 x float>, <2 x float>, <2 x float> }
 
+%struct.__neon_int16x8x4_t = type { <8 x i16>, <8 x i16>, <8 x i16>, <8 x i16> }
+%struct.__neon_int32x4x4_t = type { <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32> }
+%struct.__neon_float32x4x4_t = type { <4 x float>, <4 x float>, <4 x float>, <4 x float> }
+
 define <8 x i8> @vld4lanei8(i8* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vld4lanei8:
 ;CHECK: vld4.8
@@ -269,7 +273,56 @@ define <2 x float> @vld4lanef(float* %A, <2 x float>* %B) nounwind {
 	ret <2 x float> %tmp9
 }
 
+define <8 x i16> @vld4laneQi16(i16* %A, <8 x i16>* %B) nounwind {
+;CHECK: vld4laneQi16:
+;CHECK: vld4.16
+	%tmp1 = load <8 x i16>* %B
+	%tmp2 = call %struct.__neon_int16x8x4_t @llvm.arm.neon.vld4lane.v8i16(i16* %A, <8 x i16> %tmp1, <8 x i16> %tmp1, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 1)
+        %tmp3 = extractvalue %struct.__neon_int16x8x4_t %tmp2, 0
+        %tmp4 = extractvalue %struct.__neon_int16x8x4_t %tmp2, 1
+        %tmp5 = extractvalue %struct.__neon_int16x8x4_t %tmp2, 2
+        %tmp6 = extractvalue %struct.__neon_int16x8x4_t %tmp2, 3
+        %tmp7 = add <8 x i16> %tmp3, %tmp4
+        %tmp8 = add <8 x i16> %tmp5, %tmp6
+        %tmp9 = add <8 x i16> %tmp7, %tmp8
+	ret <8 x i16> %tmp9
+}
+
+define <4 x i32> @vld4laneQi32(i32* %A, <4 x i32>* %B) nounwind {
+;CHECK: vld4laneQi32:
+;CHECK: vld4.32
+	%tmp1 = load <4 x i32>* %B
+	%tmp2 = call %struct.__neon_int32x4x4_t @llvm.arm.neon.vld4lane.v4i32(i32* %A, <4 x i32> %tmp1, <4 x i32> %tmp1, <4 x i32> %tmp1, <4 x i32> %tmp1, i32 1)
+        %tmp3 = extractvalue %struct.__neon_int32x4x4_t %tmp2, 0
+        %tmp4 = extractvalue %struct.__neon_int32x4x4_t %tmp2, 1
+        %tmp5 = extractvalue %struct.__neon_int32x4x4_t %tmp2, 2
+        %tmp6 = extractvalue %struct.__neon_int32x4x4_t %tmp2, 3
+        %tmp7 = add <4 x i32> %tmp3, %tmp4
+        %tmp8 = add <4 x i32> %tmp5, %tmp6
+        %tmp9 = add <4 x i32> %tmp7, %tmp8
+	ret <4 x i32> %tmp9
+}
+
+define <4 x float> @vld4laneQf(float* %A, <4 x float>* %B) nounwind {
+;CHECK: vld4laneQf:
+;CHECK: vld4.32
+	%tmp1 = load <4 x float>* %B
+	%tmp2 = call %struct.__neon_float32x4x4_t @llvm.arm.neon.vld4lane.v4f32(float* %A, <4 x float> %tmp1, <4 x float> %tmp1, <4 x float> %tmp1, <4 x float> %tmp1, i32 1)
+        %tmp3 = extractvalue %struct.__neon_float32x4x4_t %tmp2, 0
+        %tmp4 = extractvalue %struct.__neon_float32x4x4_t %tmp2, 1
+        %tmp5 = extractvalue %struct.__neon_float32x4x4_t %tmp2, 2
+        %tmp6 = extractvalue %struct.__neon_float32x4x4_t %tmp2, 3
+        %tmp7 = add <4 x float> %tmp3, %tmp4
+        %tmp8 = add <4 x float> %tmp5, %tmp6
+        %tmp9 = add <4 x float> %tmp7, %tmp8
+	ret <4 x float> %tmp9
+}
+
 declare %struct.__neon_int8x8x4_t @llvm.arm.neon.vld4lane.v8i8(i8*, <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8>, i32) nounwind readonly
 declare %struct.__neon_int16x4x4_t @llvm.arm.neon.vld4lane.v4i16(i8*, <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>, i32) nounwind readonly
 declare %struct.__neon_int32x2x4_t @llvm.arm.neon.vld4lane.v2i32(i8*, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, i32) nounwind readonly
 declare %struct.__neon_float32x2x4_t @llvm.arm.neon.vld4lane.v2f32(i8*, <2 x float>, <2 x float>, <2 x float>, <2 x float>, i32) nounwind readonly
+
+declare %struct.__neon_int16x8x4_t @llvm.arm.neon.vld4lane.v8i16(i8*, <8 x i16>, <8 x i16>, <8 x i16>, <8 x i16>, i32) nounwind readonly
+declare %struct.__neon_int32x4x4_t @llvm.arm.neon.vld4lane.v4i32(i8*, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>, i32) nounwind readonly
+declare %struct.__neon_float32x4x4_t @llvm.arm.neon.vld4lane.v4f32(i8*, <4 x float>, <4 x float>, <4 x float>, <4 x float>, i32) nounwind readonly

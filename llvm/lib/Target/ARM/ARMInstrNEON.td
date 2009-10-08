@@ -299,15 +299,15 @@ def VLD3LNd16 : VLD3LN<0b0110, "vld3.16">;
 def VLD3LNd32 : VLD3LN<0b1010, "vld3.32">;
 
 // vld3 to double-spaced even registers.
-def VLD3LNq16a: VLD3LN<0b0101, "vld3.16">;
-def VLD3LNq32a: VLD3LN<0b1001, "vld3.32">;
+def VLD3LNq16a: VLD3LN<0b0110, "vld3.16">;
+def VLD3LNq32a: VLD3LN<0b1010, "vld3.32">;
 
 // vld3 to double-spaced odd registers.
-def VLD3LNq16b: VLD3LN<0b0101, "vld3.16">;
-def VLD3LNq32b: VLD3LN<0b1001, "vld3.32">;
+def VLD3LNq16b: VLD3LN<0b0110, "vld3.16">;
+def VLD3LNq32b: VLD3LN<0b1010, "vld3.32">;
 
 //   VLD4LN   : Vector Load (single 4-element structure to one lane)
-class VLD4LND<bits<4> op11_8, string OpcodeStr>
+class VLD4LN<bits<4> op11_8, string OpcodeStr>
   : NLdSt<1,0b10,op11_8,0b0000,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
@@ -316,9 +316,17 @@ class VLD4LND<bits<4> op11_8, string OpcodeStr>
           "\t\\{$dst1[$lane],$dst2[$lane],$dst3[$lane],$dst4[$lane]\\}, $addr"),
           "$src1 = $dst1, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4", []>;
 
-def VLD4LNd8  : VLD4LND<0b0011, "vld4.8">;
-def VLD4LNd16 : VLD4LND<0b0111, "vld4.16">;
-def VLD4LNd32 : VLD4LND<0b1011, "vld4.32">;
+def VLD4LNd8  : VLD4LN<0b0011, "vld4.8">;
+def VLD4LNd16 : VLD4LN<0b0111, "vld4.16">;
+def VLD4LNd32 : VLD4LN<0b1011, "vld4.32">;
+
+// vld4 to double-spaced even registers.
+def VLD4LNq16a: VLD4LN<0b0111, "vld4.16">;
+def VLD4LNq32a: VLD4LN<0b1011, "vld4.32">;
+
+// vld4 to double-spaced odd registers.
+def VLD4LNq16b: VLD4LN<0b0111, "vld4.16">;
+def VLD4LNq32b: VLD4LN<0b1011, "vld4.32">;
 
 //   VLD1DUP  : Vector Load (single element to all lanes)
 //   VLD2DUP  : Vector Load (single 2-element structure to all lanes)

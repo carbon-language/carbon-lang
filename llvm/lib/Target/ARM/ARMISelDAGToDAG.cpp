@@ -1596,7 +1596,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       EVT RegVT;
       unsigned Opc2 = 0;
       switch (VT.getSimpleVT().SimpleTy) {
-      default: llvm_unreachable("unhandled vld2lane type");
+      default: llvm_unreachable("unhandled vld3lane type");
       case MVT::v8i16:
         Opc = ARM::VLD3LNq16a;
         Opc2 = ARM::VLD3LNq16b;
@@ -1650,21 +1650,83 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      if (VT.is64BitVector()) {
+        switch (VT.getSimpleVT().SimpleTy) {
+        default: llvm_unreachable("unhandled vld4lane type");
+        case MVT::v8i8:  Opc = ARM::VLD4LNd8; break;
+        case MVT::v4i16: Opc = ARM::VLD4LNd16; break;
+        case MVT::v2f32:
+        case MVT::v2i32: Opc = ARM::VLD4LNd32; break;
+        }
+        SDValue Chain = N->getOperand(0);
+        const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
+                                N->getOperand(3), N->getOperand(4),
+                                N->getOperand(5), N->getOperand(6),
+                                N->getOperand(7), Chain };
+        std::vector<EVT> ResTys(4, VT);
+        ResTys.push_back(MVT::Other);
+        return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 9);
+      }
+      // Quad registers are handled by extracting subregs, doing the load,
+      // and then inserting the results as subregs.
+      EVT RegVT;
+      unsigned Opc2 = 0;
       switch (VT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("unhandled vld4lane type");
-      case MVT::v8i8:  Opc = ARM::VLD4LNd8; break;
-      case MVT::v4i16: Opc = ARM::VLD4LNd16; break;
-      case MVT::v2f32:
-      case MVT::v2i32: Opc = ARM::VLD4LNd32; break;
+      case MVT::v8i16:
+        Opc = ARM::VLD4LNq16a;
+        Opc2 = ARM::VLD4LNq16b;
+        RegVT = MVT::v4i16;
+        break;
+      case MVT::v4f32:
+        Opc = ARM::VLD4LNq32a;
+        Opc2 = ARM::VLD4LNq32b;
+        RegVT = MVT::v2f32;
+        break;
+      case MVT::v4i32:
+        Opc = ARM::VLD4LNq32a;
+        Opc2 = ARM::VLD4LNq32b;
+        RegVT = MVT::v2i32;
+        break;
       }
       SDValue Chain = N->getOperand(0);
-      const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
-                              N->getOperand(3), N->getOperand(4),
-                              N->getOperand(5), N->getOperand(6),
-                              N->getOperand(7), Chain };
-      std::vector<EVT> ResTys(4, VT);
+      unsigned Lane = cast<ConstantSDNode>(N->getOperand(7))->getZExtValue();
+      unsigned NumElts = RegVT.getVectorNumElements();
+      int SubregIdx = (Lane < NumElts) ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
+
+      SDValue D0 = CurDAG->getTargetExtractSubreg(SubregIdx, dl, RegVT,
+                                                  N->getOperand(3));
+      SDValue D1 = CurDAG->getTargetExtractSubreg(SubregIdx, dl, RegVT,
+                                                  N->getOperand(4));
+      SDValue D2 = CurDAG->getTargetExtractSubreg(SubregIdx, dl, RegVT,
+                                                  N->getOperand(5));
+      SDValue D3 = CurDAG->getTargetExtractSubreg(SubregIdx, dl, RegVT,
+                                                  N->getOperand(6));
+      const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, D0, D1, D2, D3,
+                              getI32Imm(Lane % NumElts), Chain };
+      std::vector<EVT> ResTys(4, RegVT);
       ResTys.push_back(MVT::Other);
-      return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 9);
+      SDNode *VLdLn = CurDAG->getMachineNode((Lane < NumElts) ? Opc : Opc2,
+                                             dl, ResTys, Ops, 9);
+      SDValue Q0 = CurDAG->getTargetInsertSubreg(SubregIdx, dl, VT,
+                                                 N->getOperand(3),
+                                                 SDValue(VLdLn, 0));
+      SDValue Q1 = CurDAG->getTargetInsertSubreg(SubregIdx, dl, VT,
+                                                 N->getOperand(4),
+                                                 SDValue(VLdLn, 1));
+      SDValue Q2 = CurDAG->getTargetInsertSubreg(SubregIdx, dl, VT,
+                                                 N->getOperand(5),
+                                                 SDValue(VLdLn, 2));
+      SDValue Q3 = CurDAG->getTargetInsertSubreg(SubregIdx, dl, VT,
+                                                 N->getOperand(6),
+                                                 SDValue(VLdLn, 3));
+      Chain = SDValue(VLdLn, 4);
+      ReplaceUses(SDValue(N, 0), Q0);
+      ReplaceUses(SDValue(N, 1), Q1);
+      ReplaceUses(SDValue(N, 2), Q2);
+      ReplaceUses(SDValue(N, 3), Q3);
+      ReplaceUses(SDValue(N, 4), Chain);
+      return NULL;
     }
 
     case Intrinsic::arm_neon_vst2: {
