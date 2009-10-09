@@ -489,7 +489,7 @@ def VST3LNq16b: VST3LN<0b0110, "vst3.16">;
 def VST3LNq32b: VST3LN<0b1010, "vst3.32">;
 
 //   VST4LN   : Vector Store (single 4-element structure from one lane)
-class VST4LND<bits<4> op11_8, string OpcodeStr>
+class VST4LN<bits<4> op11_8, string OpcodeStr>
   : NLdSt<1,0b00,op11_8,0b0000, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
            nohash_imm:$lane), IIC_VST,
@@ -497,9 +497,18 @@ class VST4LND<bits<4> op11_8, string OpcodeStr>
           "\t\\{$src1[$lane],$src2[$lane],$src3[$lane],$src4[$lane]\\}, $addr"),
           "", []>;
 
-def VST4LNd8  : VST4LND<0b0011, "vst4.8">;
-def VST4LNd16 : VST4LND<0b0111, "vst4.16">;
-def VST4LNd32 : VST4LND<0b1011, "vst4.32">;
+def VST4LNd8  : VST4LN<0b0011, "vst4.8">;
+def VST4LNd16 : VST4LN<0b0111, "vst4.16">;
+def VST4LNd32 : VST4LN<0b1011, "vst4.32">;
+
+// vst4 to double-spaced even registers.
+def VST4LNq16a: VST4LN<0b0111, "vst4.16">;
+def VST4LNq32a: VST4LN<0b1011, "vst4.32">;
+
+// vst4 to double-spaced odd registers.
+def VST4LNq16b: VST4LN<0b0111, "vst4.16">;
+def VST4LNq32b: VST4LN<0b1011, "vst4.32">;
+
 } // mayStore = 1, hasExtraSrcRegAllocReq = 1
 
 
