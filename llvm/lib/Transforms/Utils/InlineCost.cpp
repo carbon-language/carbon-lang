@@ -132,12 +132,12 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
         // Calls often compile into many machine instructions.  Bump up their
         // cost to reflect this.
         if (!isa<IntrinsicInst>(II))
-          NumInsts += 5;
+          NumInsts += InlineConstants::CallPenalty;
       }
       
       // These, too, are calls.
       if (isa<MallocInst>(II) || isa<FreeInst>(II))
-	NumInsts += 5;
+	NumInsts += InlineConstants::CallPenalty;
 
       if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
         if (!AI->isStaticAlloca())
@@ -212,21 +212,21 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   // make it almost guaranteed to be inlined.
   //
   if (Callee->hasLocalLinkage() && Callee->hasOneUse())
-    InlineCost -= 15000;
+    InlineCost += InlineConstants::LastCallToStaticBonus;
   
   // If this function uses the coldcc calling convention, prefer not to inline
   // it.
   if (Callee->getCallingConv() == CallingConv::Cold)
-    InlineCost += 2000;
+    InlineCost += InlineConstants::ColdccPenalty;
   
   // If the instruction after the call, or if the normal destination of the
   // invoke is an unreachable instruction, the function is noreturn.  As such,
   // there is little point in inlining this.
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
     if (isa<UnreachableInst>(II->getNormalDest()->begin()))
-      InlineCost += 10000;
+      InlineCost += InlineConstants::NoreturnPenalty;
   } else if (isa<UnreachableInst>(++BasicBlock::iterator(TheCall)))
-    InlineCost += 10000;
+    InlineCost += InlineConstants::NoreturnPenalty;
   
   // Get information about the callee...
   FunctionInfo &CalleeFI = CachedFunctionInfo[Callee];

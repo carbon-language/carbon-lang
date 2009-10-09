@@ -27,6 +27,14 @@ namespace llvm {
   template<class PtrType, unsigned SmallSize>
   class SmallPtrSet;
 
+  namespace InlineConstants {
+    // Various magic constants used to adjust heuristics.
+    const int CallPenalty = 5;
+    const int LastCallToStaticBonus = -15000;
+    const int ColdccPenalty = 2000;
+    const int NoreturnPenalty = 10000;
+  }
+
   /// InlineCost - Represent the cost of inlining a function. This
   /// supports special values for functions which should "always" or
   /// "never" be inlined. Otherwise, the cost represents a unitless

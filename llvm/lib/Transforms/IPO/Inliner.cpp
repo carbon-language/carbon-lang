@@ -243,10 +243,11 @@ bool Inliner::shouldInline(CallSite CS) {
       if (Cost2 >= (int)(CurrentThreshold2 * FudgeFactor2))
         allOuterCallsWillBeInlined = false;
 
-      // See if we have this case.  The magic 6 is what InlineCost assigns
+      // See if we have this case.  We subtract off the penalty
       // for the call instruction, which we would be deleting.
       if (Cost2 < (int)(CurrentThreshold2 * FudgeFactor2) &&
-          Cost2 + Cost - 6 >= (int)(CurrentThreshold2 * FudgeFactor2)) {
+          Cost2 + Cost - (InlineConstants::CallPenalty + 1) >= 
+                (int)(CurrentThreshold2 * FudgeFactor2)) {
         someOuterCallWouldNotBeInlined = true;
         TotalSecondaryCost += Cost2;
       }
@@ -256,7 +257,7 @@ bool Inliner::shouldInline(CallSite CS) {
     // be removed entirely.  We did not account for this above unless there
     // is only one caller of Caller.
     if (allOuterCallsWillBeInlined && Caller->use_begin() != Caller->use_end())
-      TotalSecondaryCost -= 15000;
+      TotalSecondaryCost += InlineConstants::LastCallToStaticBonus;
 
     if (outerCallsFound && someOuterCallWouldNotBeInlined && 
         TotalSecondaryCost < Cost) {
