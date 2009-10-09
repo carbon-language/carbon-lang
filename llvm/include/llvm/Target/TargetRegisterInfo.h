@@ -325,7 +325,7 @@ public:
   /// getAllocatableSet - Returns a bitset indexed by register number
   /// indicating if a register is allocatable or not. If a register class is
   /// specified, returns the subset for the class.
-  BitVector getAllocatableSet(MachineFunction &MF,
+  BitVector getAllocatableSet(const MachineFunction &MF,
                               const TargetRegisterClass *RC = NULL) const;
 
   const TargetRegisterDesc &operator[](unsigned RegNo) const {

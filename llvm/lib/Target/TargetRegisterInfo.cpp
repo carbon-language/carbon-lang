@@ -62,14 +62,14 @@ TargetRegisterInfo::getPhysicalRegisterRegClass(unsigned reg, EVT VT) const {
 
 /// getAllocatableSetForRC - Toggle the bits that represent allocatable
 /// registers for the specific register class.
-static void getAllocatableSetForRC(MachineFunction &MF,
+static void getAllocatableSetForRC(const MachineFunction &MF,
                                    const TargetRegisterClass *RC, BitVector &R){  
   for (TargetRegisterClass::iterator I = RC->allocation_order_begin(MF),
          E = RC->allocation_order_end(MF); I != E; ++I)
     R.set(*I);
 }
 
-BitVector TargetRegisterInfo::getAllocatableSet(MachineFunction &MF,
+BitVector TargetRegisterInfo::getAllocatableSet(const MachineFunction &MF,
                                           const TargetRegisterClass *RC) const {
   BitVector Allocatable(NumRegs);
   if (RC) {
