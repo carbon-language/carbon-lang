@@ -280,6 +280,13 @@ define <2 x i64> @vlshrQi64(<2 x i64>* %A) nounwind {
 	ret <2 x i64> %tmp2
 }
 
+; Example that requires splitting and expanding a vector shift.
+define <2 x i64> @update(<2 x i64> %val) nounwind readnone {
+entry:
+	%shr = lshr <2 x i64> %val, < i64 2, i64 2 >		; <<2 x i64>> [#uses=1]
+	ret <2 x i64> %shr
+}
+
 define <8 x i8> @vashrs8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vashrs8:
 ;CHECK: vneg.s8
