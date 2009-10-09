@@ -98,11 +98,11 @@ void InitHeaderSearch::AddEnvVarPaths(const char *Name) {
     AddPath(at, Angled, false, true, false);
 }
 
-void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(std::string base,
-                                                   std::string arch) {
-    AddPath(base, System, true, false, false);
-    AddPath(base + "/" + arch, System, true, false, false);
-    AddPath(base + "/backward", System, true, false, false);
+void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(const std::string &Base,
+                                                  const char *Arch) {
+    AddPath(Base, System, true, false, false);
+    AddPath(Base + "/" + Arch, System, true, false, false);
+    AddPath(Base + "/backward", System, true, false, false);
 }
 
 #if defined(LLVM_ON_WIN32)

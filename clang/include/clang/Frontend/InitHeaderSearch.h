@@ -59,7 +59,7 @@ public:
 
   /// AddGnuCPlusPlusIncludePaths - Add the necessary paths to suport a gnu
   ///  libstdc++.
-  void AddGnuCPlusPlusIncludePaths(std::string base, std::string arch);
+  void AddGnuCPlusPlusIncludePaths(const std::string &Base, const char *Arch);
 
   /// AddDefaultEnvVarPaths - Adds list of paths from default environment
   ///  variables such as CPATH.
