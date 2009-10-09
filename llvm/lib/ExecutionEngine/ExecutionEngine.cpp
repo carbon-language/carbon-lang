@@ -113,6 +113,22 @@ Function *ExecutionEngine::FindFunctionNamed(const char *FnName) {
 }
 
 
+void *ExecutionEngineState::RemoveMapping(
+  const MutexGuard &, const GlobalValue *ToUnmap) {
+  std::map<AssertingVH<const GlobalValue>, void *>::iterator I =
+    GlobalAddressMap.find(ToUnmap);
+  void *OldVal;
+  if (I == GlobalAddressMap.end())
+    OldVal = 0;
+  else {
+    OldVal = I->second;
+    GlobalAddressMap.erase(I);
+  }
+
+  GlobalAddressReverseMap.erase(OldVal);
+  return OldVal;
+}
+
 /// addGlobalMapping - Tell the execution engine that the specified global is
 /// at the specified location.  This is used internally as functions are JIT'd
 /// and as global variables are laid out in memory.  It can and should also be
@@ -151,13 +167,11 @@ void ExecutionEngine::clearGlobalMappingsFromModule(Module *M) {
   MutexGuard locked(lock);
   
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI) {
-    state.getGlobalAddressMap(locked).erase(&*FI);
-    state.getGlobalAddressReverseMap(locked).erase(&*FI);
+    state.RemoveMapping(locked, FI);
   }
   for (Module::global_iterator GI = M->global_begin(), GE = M->global_end(); 
        GI != GE; ++GI) {
-    state.getGlobalAddressMap(locked).erase(&*GI);
-    state.getGlobalAddressReverseMap(locked).erase(&*GI);
+    state.RemoveMapping(locked, GI);
   }
 }
 
@@ -172,18 +186,7 @@ void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
 
   // Deleting from the mapping?
   if (Addr == 0) {
-    std::map<AssertingVH<const GlobalValue>, void *>::iterator I = Map.find(GV);
-    void *OldVal;
-    if (I == Map.end())
-      OldVal = 0;
-    else {
-      OldVal = I->second;
-      Map.erase(I); 
-    }
-    
-    if (!state.getGlobalAddressReverseMap(locked).empty())
-      state.getGlobalAddressReverseMap(locked).erase(OldVal);
-    return OldVal;
+    return state.RemoveMapping(locked, GV);
   }
   
   void *&CurVal = Map[GV];

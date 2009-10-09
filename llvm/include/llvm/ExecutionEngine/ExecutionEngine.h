@@ -61,6 +61,9 @@ public:
   getGlobalAddressReverseMap(const MutexGuard &) {
     return GlobalAddressReverseMap;
   }
+
+  // Returns the address ToUnmap was mapped to.
+  void *RemoveMapping(const MutexGuard &, const GlobalValue *ToUnmap);
 };
 
 
