@@ -28,3 +28,19 @@ namespace N {
   template<typename T> void f0(T) { }
   template<typename T> void f1(T) { } // expected-error{{redefinition}}
 }
+
+// PR4768
+template<typename T>
+struct X0 {
+  template<typename U> friend struct X0;
+};
+
+template<typename T>
+struct X0<T*> {
+  template<typename U> friend struct X0;
+};
+
+template<>
+struct X0<int> {
+  template<typename U> friend struct X0;
+};

@@ -616,6 +616,22 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // whether this is a valid redeclaration.
   ClassTemplateDecl *PrevClassTemplate
     = dyn_cast_or_null<ClassTemplateDecl>(PrevDecl);
+
+  // We may have found the injected-class-name of a class template,
+  // class template partial specialization, or class template specialization. 
+  // In these cases, grab the template that is being defined or specialized.
+  if (!PrevClassTemplate && PrevDecl && isa<CXXRecordDecl>(PrevDecl) && 
+      cast<CXXRecordDecl>(PrevDecl)->isInjectedClassName()) {
+    PrevDecl = cast<CXXRecordDecl>(PrevDecl->getDeclContext());
+    PrevClassTemplate 
+      = cast<CXXRecordDecl>(PrevDecl)->getDescribedClassTemplate();
+    if (!PrevClassTemplate && isa<ClassTemplateSpecializationDecl>(PrevDecl)) {
+      PrevClassTemplate
+        = cast<ClassTemplateSpecializationDecl>(PrevDecl)
+            ->getSpecializedTemplate();
+    }
+  }
+
   if (PrevClassTemplate) {
     // Ensure that the template parameter lists are compatible.
     if (!TemplateParameterListsAreEqual(TemplateParams,
