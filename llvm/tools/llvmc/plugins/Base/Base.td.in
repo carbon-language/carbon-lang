@@ -111,7 +111,8 @@ def llvm_as : Tool<
 [(in_language "llvm-assembler"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line "llvm-as $INFILE -o $OUTFILE")
+ (cmd_line "llvm-as $INFILE -o $OUTFILE"),
+ (actions (case (switch_on "emit-llvm"), (stop_compilation)))
 ]>;
 
 def llvm_gcc_assembler : Tool<
@@ -125,7 +126,7 @@ def llvm_gcc_assembler : Tool<
 ]>;
 
 def llc : Tool<
-[(in_language "llvm-bitcode"),
+[(in_language ["llvm-bitcode", "llvm-assembler"]),
  (out_language "assembler"),
  (output_suffix "s"),
  (cmd_line "llc -f $INFILE -o $OUTFILE"),
@@ -178,7 +179,6 @@ def CompilationGraph : CompilationGraph<[
     Edge<"root", "llvm_gcc_cpp">,
     Edge<"root", "llvm_gcc_m">,
     Edge<"root", "llvm_gcc_mxx">,
-    Edge<"root", "llvm_as">,
     Edge<"root", "llc">,
 
     Edge<"llvm_gcc_c", "llc">,
@@ -187,6 +187,8 @@ def CompilationGraph : CompilationGraph<[
     Edge<"llvm_gcc_mxx", "llc">,
     Edge<"llvm_as", "llc">,
 
+    OptionalEdge<"root", "llvm_as",
+                         (case (switch_on "emit-llvm"), (inc_weight))>,
     OptionalEdge<"llvm_gcc_c", "opt", (case (switch_on "opt"), (inc_weight))>,
     OptionalEdge<"llvm_gcc_cpp", "opt", (case (switch_on "opt"), (inc_weight))>,
     OptionalEdge<"llvm_gcc_m", "opt", (case (switch_on "opt"), (inc_weight))>,
