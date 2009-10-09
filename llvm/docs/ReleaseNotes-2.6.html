@@ -180,6 +180,59 @@ bug fixes, cleanup and new features. The major changes are:</p>
 </ul>
 </div>
 
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="compiler-rt">compiler-rt: Compiler Runtime Library</a>
+</div>
+
+<div class="doc_text">
+<p>
+The new LLVM <a href="http://compiler-rt.llvm.org/">compiler-rt project</a>
+is a simple library that provides an implementation of the low-level
+target-specific hooks required by code generation and other runtime components.
+For example, when compiling for a 32-bit target, converting a double to a 64-bit
+unsigned integer is compiling into a runtime call to the "__fixunsdfdi"
+function. The compiler-rt library provides optimized implementations of this and
+other low-level routines.</p>
+
+<p>
+All of the code in the compiler-rt project is available under the standard LLVM
+License, a "BSD-style" license.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="klee">klee: Symbolic Execution and Automatic Test Case Generator</a>
+</div>
+
+<div class="doc_text">
+<p>
+The new LLVM <a href="http://klee.llvm.org/">klee project</a> is a symbolic
+execution framework for programs in LLVM bitcode form.  Klee tries to
+symbolically evaluate "all" paths through the application and records state
+transitions that lead to fault states.  This allows it to construct testcases
+that lead to faults and can even be used to verify algorithms.  For more
+details, please see the <a
+href="http://llvm.org/pubs/2008-12-OSDI-KLEE.html">OSDI 2008 paper</a> about
+Klee.</p>
+
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="dragonegg">Dragon Egg: An LLVM backend plugin for GCC</a>
+</div>
+
+<div class="doc_text">
+<p>
+<b>Duncan needs to write me</b>.
+</p>
+
+</div>
+
+
 <!--=========================================================================-->
 <div class="doc_subsection">
 <a name="mc">llvm-mc: Machine Code Toolkit</a>
@@ -279,7 +332,6 @@ LLVM 2.6 (and continue to work with older LLVM releases >= 2.3 as well).
 
 <div class="doc_text">
 <p>
-<b>UPDATE!</b> 
 <a href="http://www.dsource.org/projects/ldc">LDC</a> is an implementation of
 the D Programming Language using the LLVM optimizer and code generator.
 The LDC project works great with the LLVM 2.6 release.  General improvements in
@@ -306,16 +358,28 @@ reimplementation of an earlier project that is now based on LLVM.</p>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="Unladen Swallow">Unladen Swallow</a>
+<a name="UnladenSwallow">Unladen Swallow</a>
 </div>
 
 <div class="doc_text">
 <p>
-<b>UPDATE!</b> 
 <a href="http://code.google.com/p/unladen-swallow/">Unladen Swallow</a> is a
 branch of <a href="http://python.org/">Python</a> intended to be fully
 compatible and significantly faster.  It uses LLVM's optimization passes and JIT
 compiler.</p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="llvm-lua">llvm-lua</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://code.google.com/p/llvm-lua/">LLVM-Lua</a> uses LLVM to add JIT
+&amp; static compiling support to the Lua VM.  Lua bytecode is analyzed to
+remove type checks, then LLVM is used to compile those bytecodes down to machine
+code.</p>
 </div>
 
 
@@ -345,14 +409,19 @@ in this section.
 <p>LLVM 2.6 includes several major new capabilities:</p>
 
 <ul>
-<li>Support for debug line numbers when optimization enabled</li>
-<li>gold lto plugin</li>
-<li>New MSP430 and SystemZ backends.</li>
-<li>New BlackFin backend.</li>
+<li>New <a href="#compiler-rt">compiler-rt</a>, <A href="#klee">klee</a>,
+    and <a href="#mc">machine code toolkit</a> subprojects.</li>
+<li>LLVM debug info now generates line number information, even when
+    optimizations are enabled.  This allows statistical sampling tools like
+    oprofile and Shark to map samples back to source lines.</li>
+<li>LLVM now includes new experiemental backends to support the MSP430, SystemZ,
+    and BlackFin architectures.</li>
+<li>LLVM supports a new <a href="GoldPlugin.html">Gold Linker Plugin</a> which
+    enables support for <a href="LinkTimeOptimization.html">transparent
+    link-time optimization</a> on ELF targets when used with the Gold binutils
+    linker.</li>
 <li>LLVMContext,   llvm_start_multithreaded: ProgrammersManual.html#threading</li>
-<li>klee web page at klee.llvm.org</li>
 <li>FileCheck</li>
-<li>New compiler-rt project.</li>
 <li>LLVM 2.6 includes a brand new experimental LLVM bindings to the Ada2005 programming language.</li>
 </ul>
 
@@ -430,6 +499,19 @@ it run faster:</p>
 <li>Stack slot coloring for register spills (denser stack frames)</li>
 <li>SelectionDAGS: New BuildVectorSDNode (r65296), and ISD::VECTOR_SHUFFLE (r69952 / PR2957)</li>
 <li>Experimental support for shrink wrapping support in PEI.</li>
+<li>Experimental support for writing ELF .o files directly from the compiler,
+    it works well for many simple C testcases, but doesn't support exception
+    handling, debug info, inline assembly, etc.</li>
+<li>Targets can now specify register allocation hints through
+   MachineRegisterInfo:: setRegAllocationHint. A regalloc hint consists 1) hint
+   type, 2) physical register number. A hint type of zero specifies a register
+   allocation preference. Other hint type values are target specific which are
+   resolved by TargetRegisterInfo::ResolveRegAllocHint. An example of which is
+   the ARM target can uses register hint to request that the register allocator
+   provide an even / odd register pair to two virtual registers.  It is
+   important to note the register allocation hints are just hints.  There is no
+   guarantee the register allocators will be able to satisfy the hints.</li>
+   
 </ul>
 </div>
 
@@ -569,7 +651,11 @@ to receive callbacks when the JIT emits or frees machine code. The
 OProfile support uses this mechanism.</li>
    JIT support for oprofile (r75279), configure with --with-oprofile.  Now we get line # and function info for JIT'd functions.
 
-<li>Profile info improvements by Andreas Neustifter.</li>
+<li>LLVM profile information support has been significantly improved to produce
+correct use counts, and has support for edge profiling with reduced runtime
+overhead.  Combined, the generated profile information is both more correct and
+imposes about half as much overhead (2.6. from 12% to 6% overhead on SPEC
+CPU2000).</li>
 <li>Many extensions to the C APIs.</li>
 
 <li>LLVMC:
