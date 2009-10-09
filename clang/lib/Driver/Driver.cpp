@@ -412,6 +412,9 @@ void Driver::PrintHelp(bool ShowHidden) const {
 void Driver::PrintVersion(const Compilation &C, llvm::raw_ostream &OS) const {
   // FIXME: The following handlers should use a callback mechanism, we don't
   // know what the client would like to do.
+#ifdef CLANG_VENDOR
+  OS << CLANG_VENDOR;
+#endif
   OS << "clang version " CLANG_VERSION_STRING " ("
      << getClangSubversionPath();
   if (unsigned Revision = getClangSubversionRevision())
