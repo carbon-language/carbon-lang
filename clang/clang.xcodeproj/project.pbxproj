@@ -73,7 +73,6 @@
 		35544B890F5C7FD700D92AA9 /* SimpleConstraintManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35544B860F5C7FD700D92AA9 /* SimpleConstraintManager.cpp */; };
 		35544B8C0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35544B8B0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp */; };
 		3557D1A90EB136B100C59739 /* InheritViz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3557D1A80EB136B100C59739 /* InheritViz.cpp */; };
-		3557D1F00EB13BB700C59739 /* SemaInherit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3557D1EF0EB13BB700C59739 /* SemaInherit.cpp */; };
 		35585DC00EAFBC4500D0A97A /* SemaOverload.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */; };
 		3558F76D0E267C8300A5B0DF /* BasicStore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3558F76C0E267C8300A5B0DF /* BasicStore.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
@@ -438,7 +437,6 @@
 		35544B870F5C7FD700D92AA9 /* SimpleConstraintManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SimpleConstraintManager.h; path = lib/Analysis/SimpleConstraintManager.h; sourceTree = "<group>"; };
 		35544B8B0F5C803200D92AA9 /* SemaTemplateInstantiate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateInstantiate.cpp; path = lib/Sema/SemaTemplateInstantiate.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		3557D1A80EB136B100C59739 /* InheritViz.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = InheritViz.cpp; path = lib/AST/InheritViz.cpp; sourceTree = "<group>"; tabWidth = 2; };
-		3557D1EF0EB13BB700C59739 /* SemaInherit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaInherit.cpp; path = lib/Sema/SemaInherit.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35585DBD0EAFBC4500D0A97A /* CXXFieldCollector.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CXXFieldCollector.h; path = lib/Sema/CXXFieldCollector.h; sourceTree = "<group>"; tabWidth = 2; };
 		35585DBE0EAFBC4500D0A97A /* SemaOverload.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaOverload.cpp; path = lib/Sema/SemaOverload.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		35585DBF0EAFBC4500D0A97A /* SemaOverload.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = SemaOverload.h; path = lib/Sema/SemaOverload.h; sourceTree = "<group>"; tabWidth = 2; };
@@ -608,7 +606,6 @@
 		DE3986EF0CB8D4B300223765 /* IdentifierTable.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; path = IdentifierTable.h; sourceTree = "<group>"; tabWidth = 2; };
 		DE3986F30CB8D50C00223765 /* IdentifierTable.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; path = IdentifierTable.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE3B90DE0EAC5EF200D01046 /* ExtensionRAIIObject.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ExtensionRAIIObject.h; path = lib/Parse/ExtensionRAIIObject.h; sourceTree = "<group>"; tabWidth = 2; };
-		DE3B921C0EB1A81400D01046 /* SemaInherit.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = SemaInherit.h; path = lib/Sema/SemaInherit.h; sourceTree = "<group>"; tabWidth = 2; };
 		DE3B92230EB5152000D01046 /* Designator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = Designator.h; path = clang/Parse/Designator.h; sourceTree = "<group>"; tabWidth = 2; };
 		DE41211D0D7F1BBE0080F80A /* GRWorkList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRWorkList.h; path = clang/Analysis/PathSensitive/GRWorkList.h; sourceTree = "<group>"; };
 		DE41211E0D7F1BBE0080F80A /* SymbolManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SymbolManager.h; path = clang/Analysis/PathSensitive/SymbolManager.h; sourceTree = "<group>"; };
@@ -1206,8 +1203,6 @@
 				DE704B250D0FBEBE009C7762 /* SemaDeclObjC.cpp */,
 				DE67E7100C020ED400F66BC5 /* SemaExpr.cpp */,
 				DE47999B0D2EBE1A00706D2D /* SemaExprObjC.cpp */,
-				3557D1EF0EB13BB700C59739 /* SemaInherit.cpp */,
-				DE3B921C0EB1A81400D01046 /* SemaInherit.h */,
 				DE67E70E0C020ECF00F66BC5 /* SemaExprCXX.cpp */,
 				3599299A0DE2425300A8A33E /* SemaInit.cpp */,
 				357EA27C0F2526F300439B60 /* SemaLookup.cpp */,
@@ -1797,7 +1792,6 @@
 				35A057E30EAE2D950069249F /* SVals.cpp in Sources */,
 				35585DC00EAFBC4500D0A97A /* SemaOverload.cpp in Sources */,
 				3557D1A90EB136B100C59739 /* InheritViz.cpp in Sources */,
-				3557D1F00EB13BB700C59739 /* SemaInherit.cpp in Sources */,
 				35E194690ECB82FB00F21733 /* SemaCXXScopeSpec.cpp in Sources */,
 				35E1946A0ECB82FB00F21733 /* SemaCXXCast.cpp in Sources */,
 				35E1946D0ECB83C100F21733 /* PTHLexer.cpp in Sources */,
