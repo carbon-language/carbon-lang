@@ -157,13 +157,6 @@ public:
     return state;
   }
 
-  // FIXME: Make out-of-line.
-  virtual const GRState *setDefaultValue(const GRState *state,
-                                          const MemRegion *region,
-                                          SVal val) {
-    return state;
-  }
-
   virtual void print(Store store, llvm::raw_ostream& Out,
                      const char* nl, const char *sep) = 0;
 
