@@ -299,6 +299,9 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
   if (isa<ObjCMethodDecl>(this))
     return false;
 
+  if (isa<ObjCInterfaceDecl>(this) && isa<ObjCCompatibleAliasDecl>(OldD))
+    return true;
+
   // For non-function declarations, if the declarations are of the
   // same kind then this must be a redeclaration, or semantic analysis
   // would not have given us the new declaration.

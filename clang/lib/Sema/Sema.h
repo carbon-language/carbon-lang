@@ -1045,63 +1045,13 @@ public:
   /// results occurred for a given lookup.
   ///
   /// Any non-ambiguous lookup can be converted into a single
-  /// (possibly NULL) @c NamedDecl* via a conversion function or the
-  /// getAsDecl() method. This conversion permits the common-case
-  /// usage in C and Objective-C where name lookup will always return
-  /// a single declaration.
-  struct LookupResult {
-    /// The kind of entity that is actually stored within the
-    /// LookupResult object.
-    enum {
-      /// First is a single declaration (a NamedDecl*), which may be NULL.
-      SingleDecl,
-
-      /// First is a single declaration (an OverloadedFunctionDecl*).
-      OverloadedDeclSingleDecl,
-
-      /// [First, Last) is an iterator range represented as opaque
-      /// pointers used to reconstruct IdentifierResolver::iterators.
-      OverloadedDeclFromIdResolver,
-
-      /// [First, Last) is an iterator range represented as opaque
-      /// pointers used to reconstruct DeclContext::lookup_iterators.
-      OverloadedDeclFromDeclContext,
-
-      /// First is a pointer to a CXXBasePaths structure, which is owned
-      /// by the LookupResult. Last is non-zero to indicate that the
-      /// ambiguity is caused by two names found in base class
-      /// subobjects of different types.
-      AmbiguousLookupStoresBasePaths,
-
-      /// [First, Last) is an iterator range represented as opaque
-      /// pointers used to reconstruct new'ed Decl*[] array containing
-      /// found ambiguous decls. LookupResult is owner of this array.
-      AmbiguousLookupStoresDecls
-    } StoredKind;
-
-    /// The first lookup result, whose contents depend on the kind of
-    /// lookup result. This may be a NamedDecl* (if StoredKind ==
-    /// SingleDecl), OverloadedFunctionDecl* (if StoredKind ==
-    /// OverloadedDeclSingleDecl), the opaque pointer from an
-    /// IdentifierResolver::iterator (if StoredKind ==
-    /// OverloadedDeclFromIdResolver), a DeclContext::lookup_iterator
-    /// (if StoredKind == OverloadedDeclFromDeclContext), or a
-    /// CXXBasePaths pointer (if StoredKind == AmbiguousLookupStoresBasePaths).
-    mutable uintptr_t First;
-
-    /// The last lookup result, whose contents depend on the kind of
-    /// lookup result. This may be unused (if StoredKind ==
-    /// SingleDecl), it may have the same type as First (for
-    /// overloaded function declarations), or is may be used as a
-    /// Boolean value (if StoredKind == AmbiguousLookupStoresBasePaths).
-    mutable uintptr_t Last;
-
-    /// Context - The context in which we will build any
-    /// OverloadedFunctionDecl nodes needed by the conversion to
-    /// Decl*.
-    ASTContext *Context;
-
-    /// @brief The kind of entity found by name lookup.
+  /// (possibly NULL) @c NamedDecl* via the getAsSingleDecl() method.
+  /// This permits the common-case usage in C and Objective-C where
+  /// name lookup will always return a single declaration.  Use of
+  /// this is largely deprecated; callers should handle the possibility
+  /// of multiple declarations.
+  class LookupResult {
+  public:
     enum LookupKind {
       /// @brief No entity found met the criteria.
       NotFound = 0,
@@ -1156,122 +1106,119 @@ public:
       ///    }
       /// }
       /// @endcode
-      AmbiguousReference
+      AmbiguousReference,
+
+      FirstAmbiguous = AmbiguousBaseSubobjectTypes
     };
 
-    static LookupResult CreateLookupResult(ASTContext &Context, NamedDecl *D);
+    typedef llvm::SmallVector<NamedDecl*, 4> DeclsTy;
+    typedef DeclsTy::const_iterator iterator;
 
-    static LookupResult CreateLookupResult(ASTContext &Context,
-                                           IdentifierResolver::iterator F,
-                                           IdentifierResolver::iterator L);
-
-    static LookupResult CreateLookupResult(ASTContext &Context,
-                                           DeclContext::lookup_iterator F,
-                                           DeclContext::lookup_iterator L);
-
-    static LookupResult CreateLookupResult(ASTContext &Context, 
-                                           CXXBasePaths *Paths,
-                                           bool DifferentSubobjectTypes) {
-      LookupResult Result;
-      Result.StoredKind = AmbiguousLookupStoresBasePaths;
-      Result.First = reinterpret_cast<uintptr_t>(Paths);
-      Result.Last = DifferentSubobjectTypes? 1 : 0;
-      Result.Context = &Context;
-      return Result;
+    LookupResult()
+      : Kind(NotFound),
+        Paths(0)
+    {}
+    ~LookupResult() {
+      if (Paths) deletePaths(Paths);
     }
 
-    template <typename Iterator>
-    static LookupResult CreateLookupResult(ASTContext &Context,
-                                           Iterator B, std::size_t Len) {
-      NamedDecl ** Array = new NamedDecl*[Len];
-      for (std::size_t Idx = 0; Idx < Len; ++Idx, ++B)
-        Array[Idx] = *B;
-      LookupResult Result;
-      Result.StoredKind = AmbiguousLookupStoresDecls;
-      Result.First = reinterpret_cast<uintptr_t>(Array);
-      Result.Last = reinterpret_cast<uintptr_t>(Array + Len);
-      Result.Context = &Context;
-      return Result;
-    }
-
-    LookupKind getKind() const;
-
-    /// @brief Determine whether name look found something.
-    operator bool() const { return getKind() != NotFound; }
-
-    /// @brief Determines whether the lookup resulted in an ambiguity.
     bool isAmbiguous() const {
-      return StoredKind == AmbiguousLookupStoresBasePaths ||
-             StoredKind == AmbiguousLookupStoresDecls;
+      return getKind() >= FirstAmbiguous;
     }
 
-    /// @brief Allows conversion of a lookup result into a
-    /// declaration, with the same behavior as getAsDecl.
-    operator NamedDecl*() const { return getAsDecl(); }
+    LookupKind getKind() const {
+      sanity();
+      return Kind;
+    }
 
-    NamedDecl* getAsDecl() const;
+    iterator begin() const { return Decls.begin(); }
+    iterator end() const { return Decls.end(); }
 
-    CXXBasePaths *getBasePaths() const;
+    /// \brief Return true if no decls were found
+    bool empty() const { return Decls.empty(); }
 
-    /// \brief Iterate over the results of name lookup.
+    /// \brief Return the base paths structure that's associated with
+    /// these results, or null if none is.
+    CXXBasePaths *getBasePaths() const {
+      return Paths;
+    }
+
+    /// \brief Add a declaration to these results.
+    void addDecl(NamedDecl *D) {
+      Decls.push_back(D->getUnderlyingDecl());
+      Kind = Found;
+    }
+
+    /// \brief Resolves the kind of the lookup, possibly hiding decls.
     ///
-    /// The @c iterator class provides iteration over the results of a
-    /// non-ambiguous name lookup.
-    class iterator {
-      /// The LookupResult structure we're iterating through.
-      LookupResult *Result;
+    /// This should be called in any environment where lookup might
+    /// generate multiple lookup results.
+    void resolveKind();
 
-      /// The current position of this iterator within the sequence of
-      /// results. This value will have the same representation as the
-      /// @c First field in the LookupResult structure.
-      mutable uintptr_t Current;
+    /// \brief Fetch this as an unambiguous single declaration
+    /// (possibly an overloaded one).
+    ///
+    /// This is deprecated; users should be written to handle
+    /// ambiguous and overloaded lookups.
+    NamedDecl *getAsSingleDecl(ASTContext &Context) const;
 
-    public:
-      typedef NamedDecl *                value_type;
-      typedef NamedDecl *                reference;
-      typedef NamedDecl *                pointer;
-      typedef std::ptrdiff_t             difference_type;
-      typedef std::forward_iterator_tag  iterator_category;
+    /// \brief Fetch the unique decl found by this lookup.  Asserts
+    /// that one was found.
+    ///
+    /// This is intended for users who have examined the result kind
+    /// and are certain that there is only one result.
+    NamedDecl *getFoundDecl() const {
+      assert(getKind() == Found && "getFoundDecl called on non-unique result");
+      return *Decls.begin();
+    }
 
-      iterator() : Result(0), Current(0) { }
+    /// \brief Make these results show that the name was found in
+    /// base classes of different types.
+    ///
+    /// The given paths object is copied and invalidated.
+    void setAmbiguousBaseSubobjectTypes(CXXBasePaths &P);
 
-      iterator(LookupResult *Res, uintptr_t Cur) : Result(Res), Current(Cur) { }
+    /// \brief Make these results show that the name was found in
+    /// distinct base classes of the same type.
+    ///
+    /// The given paths object is copied and invalidated.
+    void setAmbiguousBaseSubobjects(CXXBasePaths &P);
 
-      reference operator*() const;
+    /// \brief Clears out any current state.
+    void clear() {
+      Kind = NotFound;
+      Decls.clear();
+      if (Paths) deletePaths(Paths);
+      Paths = NULL;
+    }
 
-      pointer operator->() const { return **this; }
+    void print(llvm::raw_ostream &);
 
-      iterator &operator++();
+  private:
+    void addDeclsFromBasePaths(const CXXBasePaths &P);
 
-      iterator operator++(int) {
-        iterator tmp(*this);
-        ++(*this);
-        return tmp;
-      }
+    // Sanity checks.
+    void sanity() const {
+      assert(Kind != NotFound || Decls.size() == 0);
+      assert(Kind != Found || Decls.size() == 1);
+      assert(Kind == NotFound || Kind == Found ||
+             Kind == AmbiguousBaseSubobjects || Decls.size() > 1);
+      assert((Paths != NULL) == (Kind == AmbiguousBaseSubobjectTypes ||
+                                 Kind == AmbiguousBaseSubobjects));
+    }
 
-      friend inline bool operator==(iterator const& x, iterator const& y) {
-        return x.Current == y.Current;
-      }
+    static void deletePaths(CXXBasePaths *);
 
-      friend inline bool operator!=(iterator const& x, iterator const& y) {
-        return x.Current != y.Current;
-      }
-    };
-    friend class iterator;
-
-    iterator begin();
-    iterator end();
-
-    /// \brief Free the memory associated with this lookup.
-    void Destroy();
+    LookupKind Kind;
+    DeclsTy Decls;
+    CXXBasePaths *Paths;
   };
 
 private:
   typedef llvm::SmallVector<LookupResult, 3> LookupResultsVecTy;
 
-  std::pair<bool, LookupResult> CppLookupName(Scope *S, DeclarationName Name,
-                                              LookupNameKind NameKind,
-                                              bool RedeclarationOnly);
+  bool CppLookupName(LookupResult &R, Scope *S, DeclarationName Name,
+                     LookupNameKind NameKind, bool RedeclarationOnly);
 public:
   /// Determines whether D is a suitable lookup result according to the
   /// lookup criteria.
@@ -1303,24 +1250,38 @@ public:
     return false;
   }
 
-  LookupResult LookupName(Scope *S, DeclarationName Name,
-                          LookupNameKind NameKind,
-                          bool RedeclarationOnly = false,
-                          bool AllowBuiltinCreation = false,
-                          SourceLocation Loc = SourceLocation());
-  LookupResult LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
-                                   LookupNameKind NameKind,
-                                   bool RedeclarationOnly = false);
+  /// \brief Look up a name, looking for a single declaration.  Return
+  /// null if no unambiguous results were found.
+  ///
+  /// It is preferable to use the elaborated form and explicitly handle
+  /// ambiguity and overloaded.
+  NamedDecl *LookupSingleName(Scope *S, DeclarationName Name,
+                              LookupNameKind NameKind,
+                              bool RedeclarationOnly = false) {
+    LookupResult R;
+    LookupName(R, S, Name, NameKind, RedeclarationOnly);
+    return R.getAsSingleDecl(Context);
+  }
+  bool LookupName(LookupResult &R, Scope *S,
+                  DeclarationName Name,
+                  LookupNameKind NameKind,
+                  bool RedeclarationOnly = false,
+                  bool AllowBuiltinCreation = false,
+                  SourceLocation Loc = SourceLocation());
+  bool LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
+                           DeclarationName Name,
+                           LookupNameKind NameKind,
+                           bool RedeclarationOnly = false);
   Decl *LookupQualifiedNameWithType(DeclContext *LookupCtx,
                                     DeclarationName Name,
                                     QualType T);
-  LookupResult LookupParsedName(Scope *S, const CXXScopeSpec *SS,
-                                DeclarationName Name,
-                                LookupNameKind NameKind,
-                                bool RedeclarationOnly = false,
-                                bool AllowBuiltinCreation = false,
-                                SourceLocation Loc = SourceLocation(),
-                                bool EnteringContext = false);
+  bool LookupParsedName(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
+                        DeclarationName Name,
+                        LookupNameKind NameKind,
+                        bool RedeclarationOnly = false,
+                        bool AllowBuiltinCreation = false,
+                        SourceLocation Loc = SourceLocation(),
+                        bool EnteringContext = false);
 
   ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II);
   ObjCCategoryImplDecl *LookupObjCCategoryImpl(IdentifierInfo *II);

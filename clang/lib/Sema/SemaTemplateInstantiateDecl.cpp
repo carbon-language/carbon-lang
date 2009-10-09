@@ -657,8 +657,9 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   NamedDecl *PrevDecl = 0;
 
   if (!FunctionTemplate || TemplateParams) {
-    PrevDecl = SemaRef.LookupQualifiedName(Owner, Name,
-                                           Sema::LookupOrdinaryName, true);
+    Sema::LookupResult R;
+    SemaRef.LookupQualifiedName(R, Owner, Name, Sema::LookupOrdinaryName, true);
+    PrevDecl = R.getAsSingleDecl(SemaRef.Context);
 
     // In C++, the previous declaration we find might be a tag type
     // (class or enum). In this case, the new declaration will hide the

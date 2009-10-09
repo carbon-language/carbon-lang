@@ -2490,8 +2490,8 @@ Sema::DeclPtrTy Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // original-namespace-definition is the name of the namespace. Subsequently
     // in that declarative region, it is treated as an original-namespace-name.
 
-    NamedDecl *PrevDecl = LookupName(DeclRegionScope, II, LookupOrdinaryName,
-                                     true);
+    NamedDecl *PrevDecl
+      = LookupSingleName(DeclRegionScope, II, LookupOrdinaryName, true);
 
     if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
       // This is an extended namespace definition.
@@ -2599,13 +2599,14 @@ Sema::DeclPtrTy Sema::ActOnUsingDirective(Scope *S,
   UsingDirectiveDecl *UDir = 0;
 
   // Lookup namespace name.
-  LookupResult R = LookupParsedName(S, &SS, NamespcName,
-                                    LookupNamespaceName, false);
+  LookupResult R;
+  LookupParsedName(R, S, &SS, NamespcName, LookupNamespaceName, false);
   if (R.isAmbiguous()) {
     DiagnoseAmbiguousLookup(R, NamespcName, IdentLoc);
     return DeclPtrTy();
   }
-  if (NamedDecl *NS = R) {
+  if (!R.empty()) {
+    NamedDecl *NS = R.getFoundDecl();
     assert(isa<NamespaceDecl>(NS) && "expected namespace decl");
     // C++ [namespace.udir]p1:
     //   A using-directive specifies that the names in the nominated
@@ -2746,15 +2747,16 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
 
 
   // Lookup target name.
-  LookupResult R = LookupQualifiedName(LookupContext,
-                                       Name, LookupOrdinaryName);
+  LookupResult R;
+  LookupQualifiedName(R, LookupContext, Name, LookupOrdinaryName);
 
-  if (!R) {
+  if (R.empty()) {
     DiagnoseMissingMember(IdentLoc, Name, NNS, SS.getRange());
     return 0;
   }
 
-  NamedDecl *ND = R.getAsDecl();
+  // FIXME: handle ambiguity?
+  NamedDecl *ND = R.getAsSingleDecl(Context);
 
   if (IsTypeName && !isa<TypeDecl>(ND)) {
     Diag(IdentLoc, diag::err_using_typename_non_type);
@@ -2790,14 +2792,17 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
                                              IdentifierInfo *Ident) {
 
   // Lookup the namespace name.
-  LookupResult R = LookupParsedName(S, &SS, Ident, LookupNamespaceName, false);
+  LookupResult R;
+  LookupParsedName(R, S, &SS, Ident, LookupNamespaceName, false);
 
   // Check if we have a previous declaration with the same name.
-  if (NamedDecl *PrevDecl = LookupName(S, Alias, LookupOrdinaryName, true)) {
+  if (NamedDecl *PrevDecl
+        = LookupSingleName(S, Alias, LookupOrdinaryName, true)) {
     if (NamespaceAliasDecl *AD = dyn_cast<NamespaceAliasDecl>(PrevDecl)) {
       // We already have an alias with the same name that points to the same
       // namespace, so don't create a new one.
-      if (!R.isAmbiguous() && AD->getNamespace() == getNamespaceDecl(R))
+      if (!R.isAmbiguous() && !R.empty() &&
+          AD->getNamespace() == getNamespaceDecl(R.getFoundDecl()))
         return DeclPtrTy();
     }
 
@@ -2813,7 +2818,7 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
     return DeclPtrTy();
   }
 
-  if (!R) {
+  if (R.empty()) {
     Diag(NamespaceLoc, diag::err_expected_namespace_name) << SS.getRange();
     return DeclPtrTy();
   }
@@ -2822,7 +2827,7 @@ Sema::DeclPtrTy Sema::ActOnNamespaceAliasDef(Scope *S,
     NamespaceAliasDecl::Create(Context, CurContext, NamespaceLoc, AliasLoc,
                                Alias, SS.getRange(),
                                (NestedNameSpecifier *)SS.getScopeRep(),
-                               IdentLoc, R);
+                               IdentLoc, R.getFoundDecl());
 
   CurContext->addDecl(AliasDecl);
   return DeclPtrTy::make(AliasDecl);
@@ -4151,7 +4156,7 @@ Sema::DeclPtrTy Sema::ActOnExceptionDeclarator(Scope *S, Declarator &D) {
 
   bool Invalid = D.isInvalidType();
   IdentifierInfo *II = D.getIdentifier();
-  if (NamedDecl *PrevDecl = LookupName(S, II, LookupOrdinaryName)) {
+  if (NamedDecl *PrevDecl = LookupSingleName(S, II, LookupOrdinaryName)) {
     // The scope should be freshly made just for us. There is just no way
     // it contains any previous declaration.
     assert(!S->isDeclScope(DeclPtrTy::make(PrevDecl)));
@@ -4398,7 +4403,9 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
     // FIXME: handle dependent contexts
     if (!DC) return DeclPtrTy();
 
-    PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName, true);
+    LookupResult R;
+    LookupQualifiedName(R, DC, Name, LookupOrdinaryName, true);
+    PrevDecl = R.getAsSingleDecl(Context);
 
     // If searching in that context implicitly found a declaration in
     // a different context, treat it like it wasn't found at all.
@@ -4431,7 +4438,9 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
       while (DC->isRecord()) 
         DC = DC->getParent();
 
-      PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName, true);
+      LookupResult R;
+      LookupQualifiedName(R, DC, Name, LookupOrdinaryName, true);
+      PrevDecl = R.getAsSingleDecl(Context);
 
       // TODO: decide what we think about using declarations.
       if (PrevDecl)

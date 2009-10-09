@@ -69,8 +69,9 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
     TyOrExpr = GetTypeFromParser(TyOrExpr).getAsOpaquePtr();
 
   IdentifierInfo *TypeInfoII = &PP.getIdentifierTable().get("type_info");
-  Decl *TypeInfoDecl = LookupQualifiedName(StdNamespace, TypeInfoII, 
-                                           LookupTagName);
+  LookupResult R;
+  LookupQualifiedName(R, StdNamespace, TypeInfoII, LookupTagName);  
+  Decl *TypeInfoDecl = R.getAsSingleDecl(Context);
   RecordDecl *TypeInfoRecordDecl = dyn_cast_or_null<RecordDecl>(TypeInfoDecl);
   if (!TypeInfoRecordDecl)
     return ExprError(Diag(OpLoc, diag::err_need_header_before_typeid));
@@ -589,13 +590,16 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
                                   DeclarationName Name, Expr** Args,
                                   unsigned NumArgs, DeclContext *Ctx,
                                   bool AllowMissing, FunctionDecl *&Operator) {
-  LookupResult R = LookupQualifiedName(Ctx, Name, LookupOrdinaryName);
-  if (!R) {
+  LookupResult R;
+  LookupQualifiedName(R, Ctx, Name, LookupOrdinaryName);
+  if (R.empty()) {
     if (AllowMissing)
       return false;
     return Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
       << Name << Range;
   }
+
+  // FIXME: handle ambiguity
 
   OverloadCandidateSet Candidates;
   for (LookupResult::iterator Alloc = R.begin(), AllocEnd = R.end(); 
@@ -868,8 +872,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         = cast<CXXRecordDecl>(Pointee->getAs<RecordType>()->getDecl());
       
       // Try to find operator delete/operator delete[] in class scope.
-      LookupResult Found = LookupQualifiedName(Record, DeleteName, 
-                                               LookupOrdinaryName);
+      LookupResult Found;
+      LookupQualifiedName(Found, Record, DeleteName, LookupOrdinaryName);
       // FIXME: Diagnose ambiguity properly
       assert(!Found.isAmbiguous() && "Ambiguous delete/delete[] not handled");
       for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();

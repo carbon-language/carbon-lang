@@ -179,13 +179,12 @@ void Sema::ActOnPragmaUnused(const Token *Identifiers, unsigned NumIdentifiers,
   for (unsigned i = 0; i < NumIdentifiers; ++i) {
     const Token &Tok = Identifiers[i];
     IdentifierInfo *Name = Tok.getIdentifierInfo();
-    const LookupResult &Lookup = LookupParsedName(curScope, NULL, Name,
-                                                  LookupOrdinaryName,
-                                                  false, true,
-                                                  Tok.getLocation());
+    LookupResult Lookup;
+    LookupParsedName(Lookup, curScope, NULL, Name,LookupOrdinaryName,
+                     false, true, Tok.getLocation());
     // FIXME: Handle Lookup.isAmbiguous?
 
-    NamedDecl *ND = Lookup.getAsDecl();
+    NamedDecl *ND = Lookup.getAsSingleDecl(Context);
 
     if (!ND) {
       Diag(PragmaLoc, diag::warn_pragma_unused_undeclared_var)

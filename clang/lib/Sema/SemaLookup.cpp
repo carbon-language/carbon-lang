@@ -35,7 +35,6 @@ using namespace clang;
 
 typedef llvm::SmallVector<UsingDirectiveDecl*, 4> UsingDirectivesTy;
 typedef llvm::DenseSet<NamespaceDecl*> NamespaceSet;
-typedef llvm::SmallVector<Sema::LookupResult, 3> LookupResultsTy;
 
 /// UsingDirAncestorCompare - Implements strict weak ordering of
 /// UsingDirectives. It orders them by address of its common ancestor.
@@ -107,178 +106,6 @@ static void AddScopeUsingDirectives(ASTContext &Context, Scope *S,
   }
 }
 
-/// MaybeConstructOverloadSet - Name lookup has determined that the
-/// elements in [I, IEnd) have the name that we are looking for, and
-/// *I is a match for the namespace. This routine returns an
-/// appropriate Decl for name lookup, which may either be *I or an
-/// OverloadedFunctionDecl that represents the overloaded functions in
-/// [I, IEnd).
-///
-/// The existance of this routine is temporary; users of LookupResult
-/// should be able to handle multiple results, to deal with cases of
-/// ambiguity and overloaded functions without needing to create a
-/// Decl node.
-template<typename DeclIterator>
-static NamedDecl *
-MaybeConstructOverloadSet(ASTContext &Context,
-                          DeclIterator I, DeclIterator IEnd) {
-  assert(I != IEnd && "Iterator range cannot be empty");
-  assert(!isa<OverloadedFunctionDecl>(*I) &&
-         "Cannot have an overloaded function");
-
-  if ((*I)->isFunctionOrFunctionTemplate()) {
-    // If we found a function, there might be more functions. If
-    // so, collect them into an overload set.
-    DeclIterator Last = I;
-    OverloadedFunctionDecl *Ovl = 0;
-    for (++Last;
-         Last != IEnd && (*Last)->isFunctionOrFunctionTemplate();
-         ++Last) {
-      if (!Ovl) {
-        // FIXME: We leak this overload set. Eventually, we want to stop
-        // building the declarations for these overload sets, so there will be
-        // nothing to leak.
-        Ovl = OverloadedFunctionDecl::Create(Context, (*I)->getDeclContext(),
-                                             (*I)->getDeclName());
-        NamedDecl *ND = (*I)->getUnderlyingDecl();
-        if (isa<FunctionDecl>(ND))
-          Ovl->addOverload(cast<FunctionDecl>(ND));
-        else
-          Ovl->addOverload(cast<FunctionTemplateDecl>(ND));
-      }
-
-      NamedDecl *ND = (*Last)->getUnderlyingDecl();
-      if (isa<FunctionDecl>(ND))
-        Ovl->addOverload(cast<FunctionDecl>(ND));
-      else
-        Ovl->addOverload(cast<FunctionTemplateDecl>(ND));
-    }
-
-    // If we had more than one function, we built an overload
-    // set. Return it.
-    if (Ovl)
-      return Ovl;
-  }
-
-  return *I;
-}
-
-/// Merges together multiple LookupResults dealing with duplicated Decl's.
-static Sema::LookupResult
-MergeLookupResults(ASTContext &Context, LookupResultsTy &Results) {
-  typedef Sema::LookupResult LResult;
-  typedef llvm::SmallPtrSet<NamedDecl*, 4> DeclsSetTy;
-
-  // Remove duplicated Decl pointing at same Decl, by storing them in
-  // associative collection. This might be case for code like:
-  //
-  //    namespace A { int i; }
-  //    namespace B { using namespace A; }
-  //    namespace C { using namespace A; }
-  //
-  //    void foo() {
-  //      using namespace B;
-  //      using namespace C;
-  //      ++i; // finds A::i, from both namespace B and C at global scope
-  //    }
-  //
-  //  C++ [namespace.qual].p3:
-  //    The same declaration found more than once is not an ambiguity
-  //    (because it is still a unique declaration).
-  DeclsSetTy FoundDecls;
-
-  // Counter of tag names, and functions for resolving ambiguity
-  // and name hiding.
-  std::size_t TagNames = 0, Functions = 0, OrdinaryNonFunc = 0;
-
-  LookupResultsTy::iterator I = Results.begin(), End = Results.end();
-
-  // No name lookup results, return early.
-  if (I == End) return LResult::CreateLookupResult(Context, 0);
-
-  // Keep track of the tag declaration we found. We only use this if
-  // we find a single tag declaration.
-  TagDecl *TagFound = 0;
-
-  for (; I != End; ++I) {
-    switch (I->getKind()) {
-    case LResult::NotFound:
-      assert(false &&
-             "Should be always successful name lookup result here.");
-      break;
-
-    case LResult::AmbiguousReference:
-    case LResult::AmbiguousBaseSubobjectTypes:
-    case LResult::AmbiguousBaseSubobjects:
-      assert(false && "Shouldn't get ambiguous lookup here.");
-      break;
-
-    case LResult::Found: {
-      NamedDecl *ND = I->getAsDecl()->getUnderlyingDecl();
-
-      if (TagDecl *TD = dyn_cast<TagDecl>(ND)) {
-        TagFound = TD->getCanonicalDecl();
-        TagNames += FoundDecls.insert(TagFound)?  1 : 0;
-      } else if (ND->isFunctionOrFunctionTemplate())
-        Functions += FoundDecls.insert(ND)? 1 : 0;
-      else
-        FoundDecls.insert(ND);
-      break;
-    }
-
-    case LResult::FoundOverloaded:
-      for (LResult::iterator FI = I->begin(), FEnd = I->end(); FI != FEnd; ++FI)
-        Functions += FoundDecls.insert(*FI)? 1 : 0;
-      break;
-    }
-  }
-  OrdinaryNonFunc = FoundDecls.size() - TagNames - Functions;
-  bool Ambiguous = false, NameHidesTags = false;
-
-  if (FoundDecls.size() == 1) {
-    // 1) Exactly one result.
-  } else if (TagNames > 1) {
-    // 2) Multiple tag names (even though they may be hidden by an
-    // object name).
-    Ambiguous = true;
-  } else if (FoundDecls.size() - TagNames == 1) {
-    // 3) Ordinary name hides (optional) tag.
-    NameHidesTags = TagFound;
-  } else if (Functions) {
-    // C++ [basic.lookup].p1:
-    // ... Name lookup may associate more than one declaration with
-    // a name if it finds the name to be a function name; the declarations
-    // are said to form a set of overloaded functions (13.1).
-    // Overload resolution (13.3) takes place after name lookup has succeeded.
-    //
-    if (!OrdinaryNonFunc) {
-      // 4) Functions hide tag names.
-      NameHidesTags = TagFound;
-    } else {
-      // 5) Functions + ordinary names.
-      Ambiguous = true;
-    }
-  } else {
-    // 6) Multiple non-tag names
-    Ambiguous = true;
-  }
-
-  if (Ambiguous)
-    return LResult::CreateLookupResult(Context,
-                                       FoundDecls.begin(), FoundDecls.size());
-  if (NameHidesTags) {
-    // There's only one tag, TagFound. Remove it.
-    assert(TagFound && FoundDecls.count(TagFound) && "No tag name found?");
-    FoundDecls.erase(TagFound);
-  }
-
-  // Return successful name lookup result.
-  return LResult::CreateLookupResult(Context,
-                                MaybeConstructOverloadSet(Context,
-                                                          FoundDecls.begin(),
-                                                          FoundDecls.end()));
-}
-
 // Retrieve the set of identifier namespaces that correspond to a
 // specific kind of name lookup.
 inline unsigned
@@ -324,97 +151,78 @@ getIdentifierNamespacesFromLookupNameKind(Sema::LookupNameKind NameKind,
   return IDNS;
 }
 
-Sema::LookupResult
-Sema::LookupResult::CreateLookupResult(ASTContext &Context, NamedDecl *D) {
-  if (D)
-    D = D->getUnderlyingDecl();
-
-  LookupResult Result;
-  Result.StoredKind = (D && isa<OverloadedFunctionDecl>(D))?
-    OverloadedDeclSingleDecl : SingleDecl;
-  Result.First = reinterpret_cast<uintptr_t>(D);
-  Result.Last = 0;
-  Result.Context = &Context;
-  return Result;
+// Necessary because CXXBasePaths is not complete in Sema.h
+void Sema::LookupResult::deletePaths(CXXBasePaths *Paths) {
+  delete Paths;
 }
 
-/// @brief Moves the name-lookup results from Other to this LookupResult.
-Sema::LookupResult
-Sema::LookupResult::CreateLookupResult(ASTContext &Context,
-                                       IdentifierResolver::iterator F,
-                                       IdentifierResolver::iterator L) {
-  LookupResult Result;
-  Result.Context = &Context;
+void Sema::LookupResult::resolveKind() {
+  unsigned N = Decls.size();
 
-  if (F != L && (*F)->isFunctionOrFunctionTemplate()) {
-    IdentifierResolver::iterator Next = F;
-    ++Next;
-    if (Next != L && (*Next)->isFunctionOrFunctionTemplate()) {
-      Result.StoredKind = OverloadedDeclFromIdResolver;
-      Result.First = F.getAsOpaqueValue();
-      Result.Last = L.getAsOpaqueValue();
-      return Result;
+  // Fast case: no possible ambiguity.
+  if (N <= 1) return;
+
+  llvm::SmallPtrSet<NamedDecl*, 16> Unique;
+
+  bool Ambiguous = false;
+  bool HasTag = false, HasFunction = false, HasNonFunction = false;
+
+  unsigned UniqueTagIndex = 0;
+  
+  unsigned I = 0;
+  while (I < N) {
+    NamedDecl *D = Decls[I];
+    assert(D == D->getUnderlyingDecl());
+
+    NamedDecl *CanonD = cast<NamedDecl>(D->getCanonicalDecl());
+    if (!Unique.insert(CanonD)) {
+      // If it's not unique, pull something off the back (and
+      // continue at this index).
+      Decls[I] = Decls[--N];
+    } else if (isa<UnresolvedUsingDecl>(D)) {
+      // FIXME: proper support for UnresolvedUsingDecls.
+      Decls[I] = Decls[--N];
+    } else {
+      // Otherwise, do some decl type analysis and then continue.
+      if (isa<TagDecl>(D)) {
+        if (HasTag)
+          Ambiguous = true;
+        UniqueTagIndex = I;
+        HasTag = true;
+      } else if (D->isFunctionOrFunctionTemplate()) {
+        HasFunction = true;
+      } else {
+        if (HasNonFunction)
+          Ambiguous = true;
+        HasNonFunction = true;
+      }
+      I++;
     }
   }
 
-  NamedDecl *D = *F;
-  if (D)
-    D = D->getUnderlyingDecl();
+  // C++ [basic.scope.hiding]p2:
+  //   A class name or enumeration name can be hidden by the name of
+  //   an object, function, or enumerator declared in the same
+  //   scope. If a class or enumeration name and an object, function,
+  //   or enumerator are declared in the same scope (in any order)
+  //   with the same name, the class or enumeration name is hidden
+  //   wherever the object, function, or enumerator name is visible.
+  // But it's still an error if there are distinct tag types found,
+  // even if they're not visible. (ref?)
+  if (HasTag && !Ambiguous && (HasFunction || HasNonFunction))
+    Decls[UniqueTagIndex] = Decls[--N];
 
-  Result.StoredKind = SingleDecl;
-  Result.First = reinterpret_cast<uintptr_t>(D);
-  Result.Last = 0;
-  return Result;
-}
+  Decls.set_size(N);
 
-Sema::LookupResult
-Sema::LookupResult::CreateLookupResult(ASTContext &Context,
-                                       DeclContext::lookup_iterator F,
-                                       DeclContext::lookup_iterator L) {
-  LookupResult Result;
-  Result.Context = &Context;
+  if (HasFunction && HasNonFunction)
+    Ambiguous = true;
 
-  if (F != L && (*F)->isFunctionOrFunctionTemplate()) {
-    DeclContext::lookup_iterator Next = F;
-    ++Next;
-    if (Next != L && (*Next)->isFunctionOrFunctionTemplate()) {
-      Result.StoredKind = OverloadedDeclFromDeclContext;
-      Result.First = reinterpret_cast<uintptr_t>(F);
-      Result.Last = reinterpret_cast<uintptr_t>(L);
-      return Result;
-    }
-  }
-
-  NamedDecl *D = *F;
-  if (D)
-    D = D->getUnderlyingDecl();
-
-  Result.StoredKind = SingleDecl;
-  Result.First = reinterpret_cast<uintptr_t>(D);
-  Result.Last = 0;
-  return Result;
-}
-
-/// @brief Determine the result of name lookup.
-Sema::LookupResult::LookupKind Sema::LookupResult::getKind() const {
-  switch (StoredKind) {
-  case SingleDecl:
-    return (reinterpret_cast<Decl *>(First) != 0)? Found : NotFound;
-
-  case OverloadedDeclSingleDecl:
-  case OverloadedDeclFromIdResolver:
-  case OverloadedDeclFromDeclContext:
-    return FoundOverloaded;
-
-  case AmbiguousLookupStoresBasePaths:
-    return Last? AmbiguousBaseSubobjectTypes : AmbiguousBaseSubobjects;
-
-  case AmbiguousLookupStoresDecls:
-    return AmbiguousReference;
-  }
-
-  // We can't ever get here.
-  return NotFound;
+  if (Ambiguous)
+    Kind = AmbiguousReference;
+  else if (N > 1)
+    Kind = FoundOverloaded;
+  else
+    Kind = Found;
 }
 
 /// @brief Converts the result of name lookup into a single (possible
@@ -430,191 +238,93 @@ Sema::LookupResult::LookupKind Sema::LookupResult::getKind() const {
 /// solution, since it causes the OverloadedFunctionDecl to be
 /// leaked. FIXME: Eventually, there will be a better way to iterate
 /// over the set of overloaded functions returned by name lookup.
-NamedDecl *Sema::LookupResult::getAsDecl() const {
-  switch (StoredKind) {
-  case SingleDecl:
-    return reinterpret_cast<NamedDecl *>(First);
+NamedDecl *Sema::LookupResult::getAsSingleDecl(ASTContext &C) const {
+  size_t size = Decls.size();
+  if (size == 0) return 0;
+  if (size == 1) return *begin();
 
-  case OverloadedDeclFromIdResolver:
-    return MaybeConstructOverloadSet(*Context,
-                         IdentifierResolver::iterator::getFromOpaqueValue(First),
-                         IdentifierResolver::iterator::getFromOpaqueValue(Last));
+  if (isAmbiguous()) return 0;
 
-  case OverloadedDeclFromDeclContext:
-    return MaybeConstructOverloadSet(*Context,
-                           reinterpret_cast<DeclContext::lookup_iterator>(First),
-                           reinterpret_cast<DeclContext::lookup_iterator>(Last));
+  iterator I = begin(), E = end();
 
-  case OverloadedDeclSingleDecl:
-    return reinterpret_cast<OverloadedFunctionDecl*>(First);
-
-  case AmbiguousLookupStoresDecls:
-  case AmbiguousLookupStoresBasePaths:
-    assert(false &&
-           "Name lookup returned an ambiguity that could not be handled");
-    break;
-  }
-
-  return 0;
-}
-
-/// @brief Retrieves the BasePaths structure describing an ambiguous
-/// name lookup, or null.
-CXXBasePaths *Sema::LookupResult::getBasePaths() const {
-  if (StoredKind == AmbiguousLookupStoresBasePaths)
-      return reinterpret_cast<CXXBasePaths *>(First);
-  return 0;
-}
-
-Sema::LookupResult::iterator::reference
-Sema::LookupResult::iterator::operator*() const {
-  switch (Result->StoredKind) {
-  case SingleDecl:
-    return reinterpret_cast<NamedDecl*>(Current);
-
-  case OverloadedDeclSingleDecl:
-    return *reinterpret_cast<NamedDecl**>(Current);
-
-  case OverloadedDeclFromIdResolver:
-    return *IdentifierResolver::iterator::getFromOpaqueValue(Current);
-
-  case AmbiguousLookupStoresBasePaths:
-    if (Result->Last)
-      return *reinterpret_cast<NamedDecl**>(Current);
-
-    // Fall through to handle the DeclContext::lookup_iterator we're
-    // storing.
-
-  case OverloadedDeclFromDeclContext:
-  case AmbiguousLookupStoresDecls:
-    return *reinterpret_cast<DeclContext::lookup_iterator>(Current);
-  }
-
-  return 0;
-}
-
-Sema::LookupResult::iterator& Sema::LookupResult::iterator::operator++() {
-  switch (Result->StoredKind) {
-  case SingleDecl:
-    Current = reinterpret_cast<uintptr_t>((NamedDecl*)0);
-    break;
-
-  case OverloadedDeclSingleDecl: {
-    NamedDecl ** I = reinterpret_cast<NamedDecl**>(Current);
-    ++I;
-    Current = reinterpret_cast<uintptr_t>(I);
-    break;
-  }
-
-  case OverloadedDeclFromIdResolver: {
-    IdentifierResolver::iterator I
-      = IdentifierResolver::iterator::getFromOpaqueValue(Current);
-    ++I;
-    Current = I.getAsOpaqueValue();
-    break;
-  }
-
-  case AmbiguousLookupStoresBasePaths:
-    if (Result->Last) {
-      NamedDecl ** I = reinterpret_cast<NamedDecl**>(Current);
-      ++I;
-      Current = reinterpret_cast<uintptr_t>(I);
-      break;
-    }
-    // Fall through to handle the DeclContext::lookup_iterator we're
-    // storing.
-
-  case OverloadedDeclFromDeclContext:
-  case AmbiguousLookupStoresDecls: {
-    DeclContext::lookup_iterator I
-      = reinterpret_cast<DeclContext::lookup_iterator>(Current);
-    ++I;
-    Current = reinterpret_cast<uintptr_t>(I);
-    break;
-  }
-  }
-
-  return *this;
-}
-
-Sema::LookupResult::iterator Sema::LookupResult::begin() {
-  switch (StoredKind) {
-  case SingleDecl:
-  case OverloadedDeclFromIdResolver:
-  case OverloadedDeclFromDeclContext:
-  case AmbiguousLookupStoresDecls:
-    return iterator(this, First);
-
-  case OverloadedDeclSingleDecl: {
-    OverloadedFunctionDecl * Ovl =
-      reinterpret_cast<OverloadedFunctionDecl*>(First);
-    return iterator(this,
-                    reinterpret_cast<uintptr_t>(&(*Ovl->function_begin())));
-  }
-
-  case AmbiguousLookupStoresBasePaths:
-    if (Last)
-      return iterator(this,
-              reinterpret_cast<uintptr_t>(getBasePaths()->found_decls_begin()));
+  OverloadedFunctionDecl *Ovl
+    = OverloadedFunctionDecl::Create(C, (*I)->getDeclContext(),
+                                        (*I)->getDeclName());
+  for (; I != E; ++I) {
+    NamedDecl *ND = *I;
+    assert(ND->getUnderlyingDecl() == ND
+           && "decls in lookup result should have redirections stripped");
+    assert(ND->isFunctionOrFunctionTemplate());
+    if (isa<FunctionDecl>(ND))
+      Ovl->addOverload(cast<FunctionDecl>(ND));
     else
-      return iterator(this,
-              reinterpret_cast<uintptr_t>(getBasePaths()->front().Decls.first));
+      Ovl->addOverload(cast<FunctionTemplateDecl>(ND));
+    // FIXME: UnresolvedUsingDecls.
   }
-
-  // Required to suppress GCC warning.
-  return iterator();
+  
+  return Ovl;
 }
 
-Sema::LookupResult::iterator Sema::LookupResult::end() {
-  switch (StoredKind) {
-  case SingleDecl:
-  case OverloadedDeclFromIdResolver:
-  case OverloadedDeclFromDeclContext:
-  case AmbiguousLookupStoresDecls:
-    return iterator(this, Last);
-
-  case OverloadedDeclSingleDecl: {
-    OverloadedFunctionDecl * Ovl =
-      reinterpret_cast<OverloadedFunctionDecl*>(First);
-    return iterator(this,
-                    reinterpret_cast<uintptr_t>(&(*Ovl->function_end())));
-  }
-
-  case AmbiguousLookupStoresBasePaths:
-    if (Last)
-      return iterator(this,
-               reinterpret_cast<uintptr_t>(getBasePaths()->found_decls_end()));
-    else
-      return iterator(this, reinterpret_cast<uintptr_t>(
-                                     getBasePaths()->front().Decls.second));
-  }
-
-  // Required to suppress GCC warning.
-  return iterator();
+void Sema::LookupResult::addDeclsFromBasePaths(const CXXBasePaths &P) {
+  CXXBasePaths::paths_iterator I, E;
+  DeclContext::lookup_iterator DI, DE;
+  for (I = P.begin(), E = P.end(); I != E; ++I)
+    for (llvm::tie(DI,DE) = I->Decls; DI != DE; ++DI)
+      addDecl(*DI);
 }
 
-void Sema::LookupResult::Destroy() {
-  if (CXXBasePaths *Paths = getBasePaths())
-    delete Paths;
-  else if (getKind() == AmbiguousReference)
-    delete[] reinterpret_cast<NamedDecl **>(First);
+void Sema::LookupResult::setAmbiguousBaseSubobjects(CXXBasePaths &P) {
+  Paths = new CXXBasePaths;
+  Paths->swap(P);
+  addDeclsFromBasePaths(*Paths);
+  resolveKind();
+  Kind = AmbiguousBaseSubobjects;
 }
 
-static void
-CppNamespaceLookup(ASTContext &Context, DeclContext *NS,
+void Sema::LookupResult::setAmbiguousBaseSubobjectTypes(CXXBasePaths &P) {
+  Paths = new CXXBasePaths;
+  Paths->swap(P);
+  addDeclsFromBasePaths(*Paths);
+  resolveKind();
+  Kind = AmbiguousBaseSubobjectTypes;
+}
+
+void Sema::LookupResult::print(llvm::raw_ostream &Out) {
+  Out << Decls.size() << " result(s)";
+  if (isAmbiguous()) Out << ", ambiguous";
+  if (Paths) Out << ", base paths present";
+  
+  for (iterator I = begin(), E = end(); I != E; ++I) {
+    Out << "\n";
+    (*I)->print(Out, 2);
+  }
+}
+
+// Adds all qualifying matches for a name within a decl context to the
+// given lookup result.  Returns true if any matches were found.
+static bool LookupDirect(Sema::LookupResult &R, DeclContext *DC,
+                         DeclarationName Name,
+                         Sema::LookupNameKind NameKind,
+                         unsigned IDNS) {
+  bool Found = false;
+
+  DeclContext::lookup_iterator I, E;
+  for (llvm::tie(I, E) = DC->lookup(Name); I != E; ++I)
+    if (Sema::isAcceptableLookupResult(*I, NameKind, IDNS))
+      R.addDecl(*I), Found = true;
+
+  return Found;
+}
+
+static bool
+CppNamespaceLookup(Sema::LookupResult &R, ASTContext &Context, DeclContext *NS,
                    DeclarationName Name, Sema::LookupNameKind NameKind,
-                   unsigned IDNS, LookupResultsTy &Results,
-                   UsingDirectivesTy *UDirs = 0) {
+                   unsigned IDNS, UsingDirectivesTy *UDirs = 0) {
 
   assert(NS && NS->isFileContext() && "CppNamespaceLookup() requires namespace!");
 
   // Perform qualified name lookup into the LookupCtx.
-  DeclContext::lookup_iterator I, E;
-  for (llvm::tie(I, E) = NS->lookup(Name); I != E; ++I)
-    if (Sema::isAcceptableLookupResult(*I, NameKind, IDNS)) {
-      Results.push_back(Sema::LookupResult::CreateLookupResult(Context, I, E));
-      break;
-    }
+  bool Found = LookupDirect(R, NS, Name, NameKind, IDNS);
 
   if (UDirs) {
     // For each UsingDirectiveDecl, which common ancestor is equal
@@ -625,9 +335,13 @@ CppNamespaceLookup(ASTContext &Context, DeclContext *NS,
                        UsingDirAncestorCompare());
 
     for (; UI != UEnd; ++UI)
-      CppNamespaceLookup(Context, (*UI)->getNominatedNamespace(),
-                         Name, NameKind, IDNS, Results);
+      if (LookupDirect(R, (*UI)->getNominatedNamespace(), Name, NameKind, IDNS))
+        Found = true;
   }
+
+  R.resolveKind();
+
+  return Found;
 }
 
 static bool isNamespaceOrTranslationUnitScope(Scope *S) {
@@ -645,8 +359,8 @@ static DeclContext *findOuterContext(Scope *S) {
   return 0;
 }
 
-std::pair<bool, Sema::LookupResult>
-Sema::CppLookupName(Scope *S, DeclarationName Name,
+bool
+Sema::CppLookupName(LookupResult &R, Scope *S, DeclarationName Name,
                     LookupNameKind NameKind, bool RedeclarationOnly) {
   assert(getLangOptions().CPlusPlus &&
          "Can perform only C++ lookup");
@@ -684,25 +398,19 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
   //
   for (; S && !isNamespaceOrTranslationUnitScope(S); S = S->getParent()) {
     // Check whether the IdResolver has anything in this scope.
+    bool Found = false;
     for (; I != IEnd && S->isDeclScope(DeclPtrTy::make(*I)); ++I) {
       if (isAcceptableLookupResult(*I, NameKind, IDNS)) {
-        // We found something.  Look for anything else in our scope
-        // with this same name and in an acceptable identifier
-        // namespace, so that we can construct an overload set if we
-        // need to.
-        IdentifierResolver::iterator LastI = I;
-        for (++LastI; LastI != IEnd; ++LastI) {
-          if (!S->isDeclScope(DeclPtrTy::make(*LastI)))
-            break;
-        }
-        LookupResult Result =
-          LookupResult::CreateLookupResult(Context, I, LastI);
-        return std::make_pair(true, Result);
+        Found = true;
+        R.addDecl(*I);
       }
     }
+    if (Found) {
+      R.resolveKind();
+      return true;
+    }
+
     if (DeclContext *Ctx = static_cast<DeclContext*>(S->getEntity())) {
-      LookupResult R;
-      
       DeclContext *OuterCtx = findOuterContext(S);
       for (; Ctx && Ctx->getPrimaryContext() != OuterCtx; 
            Ctx = Ctx->getLookupParent()) {
@@ -715,9 +423,8 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
         // example, inside a class without any base classes, we never need to
         // perform qualified lookup because all of the members are on top of the
         // identifier chain.
-        R = LookupQualifiedName(Ctx, Name, NameKind, RedeclarationOnly);
-        if (R)
-          return std::make_pair(true, R);
+        if (LookupQualifiedName(R, Ctx, Name, NameKind, RedeclarationOnly))
+          return true;
       }
     }
   }
@@ -740,8 +447,6 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
   // that aren't strictly lexical, and therefore we walk through the
   // context as well as walking through the scopes.
 
-  LookupResultsTy LookupResults;
-  bool LookedInCtx = false;
   for (; S; S = S->getParent()) {
     DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
     if (Ctx->isTransparentContext())
@@ -751,45 +456,32 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
            "We should have been looking only at file context here already.");
 
     // Check whether the IdResolver has anything in this scope.
+    bool Found = false;
     for (; I != IEnd && S->isDeclScope(DeclPtrTy::make(*I)); ++I) {
       if (isAcceptableLookupResult(*I, NameKind, IDNS)) {
         // We found something.  Look for anything else in our scope
         // with this same name and in an acceptable identifier
         // namespace, so that we can construct an overload set if we
         // need to.
-        IdentifierResolver::iterator LastI = I;
-        for (++LastI; LastI != IEnd; ++LastI) {
-          if (!S->isDeclScope(DeclPtrTy::make(*LastI)))
-            break;
-        }
-
-        // We store name lookup result, and continue trying to look into
-        // associated context, and maybe namespaces nominated by
-        // using-directives.
-        LookupResults.push_back(
-          LookupResult::CreateLookupResult(Context, I, LastI));
-        break;
+        Found = true;
+        R.addDecl(*I);
       }
     }
 
-    LookedInCtx = true;
     // Look into context considering using-directives.
-    CppNamespaceLookup(Context, Ctx, Name, NameKind, IDNS,
-                       LookupResults, &UDirs);
+    if (CppNamespaceLookup(R, Context, Ctx, Name, NameKind, IDNS, &UDirs))
+      Found = true;
 
-    LookupResult Result;
-    if ((Result = MergeLookupResults(Context, LookupResults)) ||
-        (RedeclarationOnly && !Ctx->isTransparentContext()))
-      return std::make_pair(true, Result);
+    if (Found) {
+      R.resolveKind();
+      return true;
+    }
+
+    if (RedeclarationOnly && !Ctx->isTransparentContext())
+      return false;
   }
 
-  if (!(LookedInCtx || LookupResults.empty())) {
-    // We didn't Performed lookup in Scope entity, so we return
-    // result form IdentifierResolver.
-    assert((LookupResults.size() == 1) && "Wrong size!");
-    return std::make_pair(true, LookupResults.front());
-  }
-  return std::make_pair(false, LookupResult());
+  return !R.empty();
 }
 
 /// @brief Perform unqualified name lookup starting from a given
@@ -823,11 +515,10 @@ Sema::CppLookupName(Scope *S, DeclarationName Name,
 /// @returns The result of name lookup, which includes zero or more
 /// declarations and possibly additional information used to diagnose
 /// ambiguities.
-Sema::LookupResult
-Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
-                 bool RedeclarationOnly, bool AllowBuiltinCreation,
-                 SourceLocation Loc) {
-  if (!Name) return LookupResult::CreateLookupResult(Context, 0);
+bool Sema::LookupName(LookupResult &R, Scope *S, DeclarationName Name,
+                      LookupNameKind NameKind, bool RedeclarationOnly,
+                      bool AllowBuiltinCreation, SourceLocation Loc) {
+  if (!Name) return false;
 
   if (!getLangOptions().CPlusPlus) {
     // Unqualified name lookup in C/Objective-C is purely lexical, so
@@ -897,6 +588,8 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
             continue;
         }
 
+        R.addDecl(*I);
+
         if ((*I)->getAttr<OverloadableAttr>()) {
           // If this declaration has the "overloadable" attribute, we
           // might have a set of overloaded functions.
@@ -912,20 +605,18 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
           for (++LastI; LastI != IEnd; ++LastI) {
             if (!S->isDeclScope(DeclPtrTy::make(*LastI)))
               break;
+            R.addDecl(*LastI);
           }
-
-          return LookupResult::CreateLookupResult(Context, I, LastI);
         }
 
-        // We have a single lookup result.
-        return LookupResult::CreateLookupResult(Context, *I);
+        R.resolveKind();
+
+        return true;
       }
   } else {
     // Perform C++ unqualified name lookup.
-    std::pair<bool, LookupResult> MaybeResult =
-      CppLookupName(S, Name, NameKind, RedeclarationOnly);
-    if (MaybeResult.first)
-      return MaybeResult.second;
+    if (CppLookupName(R, S, Name, NameKind, RedeclarationOnly))
+      return true;
   }
 
   // If we didn't find a use of this identifier, and if the identifier
@@ -941,15 +632,16 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
         // 'malloc'. Instead, we'll just error.
         if (getLangOptions().CPlusPlus &&
             Context.BuiltinInfo.isPredefinedLibFunction(BuiltinID))
-          return LookupResult::CreateLookupResult(Context, 0);
+          return false;
 
-        return LookupResult::CreateLookupResult(Context,
-                            LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID,
-                                                S, RedeclarationOnly, Loc));
+        NamedDecl *D = LazilyCreateBuiltin((IdentifierInfo *)II, BuiltinID,
+                                           S, RedeclarationOnly, Loc);
+        if (D) R.addDecl(D);
+        return (D != NULL);
       }
     }
   }
-  return LookupResult::CreateLookupResult(Context, 0);
+  return false;
 }
 
 /// @brief Perform qualified name lookup into a given context.
@@ -982,13 +674,13 @@ Sema::LookupName(Scope *S, DeclarationName Name, LookupNameKind NameKind,
 /// @returns The result of name lookup, which includes zero or more
 /// declarations and possibly additional information used to diagnose
 /// ambiguities.
-Sema::LookupResult
-Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
-                          LookupNameKind NameKind, bool RedeclarationOnly) {
+bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
+                               DeclarationName Name, LookupNameKind NameKind,
+                               bool RedeclarationOnly) {
   assert(LookupCtx && "Sema::LookupQualifiedName requires a lookup context");
 
   if (!Name)
-    return LookupResult::CreateLookupResult(Context, 0);
+    return false;
 
   // If we're performing qualified name lookup (e.g., lookup into a
   // struct), find fields as part of ordinary name lookup.
@@ -1007,15 +699,15 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
          "Declaration context must already be complete!");
 
   // Perform qualified name lookup into the LookupCtx.
-  DeclContext::lookup_iterator I, E;
-  for (llvm::tie(I, E) = LookupCtx->lookup(Name); I != E; ++I)
-    if (isAcceptableLookupResult(*I, NameKind, IDNS))
-      return LookupResult::CreateLookupResult(Context, I, E);
+  if (LookupDirect(R, LookupCtx, Name, NameKind, IDNS)) {
+    R.resolveKind();
+    return true;
+  }
 
   // If this isn't a C++ class, we aren't allowed to look into base
   // classes, we're done.
   if (RedeclarationOnly || !isa<CXXRecordDecl>(LookupCtx))
-    return LookupResult::CreateLookupResult(Context, 0);
+    return false;
 
   // Perform lookup into our base classes.
   CXXRecordDecl *LookupRec = cast<CXXRecordDecl>(LookupCtx);
@@ -1041,7 +733,7 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
     case LookupObjCImplementationName:
     case LookupObjCCategoryImplName:
       // These lookups will never find a member in a C++ class (or base class).
-      return LookupResult::CreateLookupResult(Context, 0);
+      return false;
       
     case LookupNestedNameSpecifierName:
       BaseCallback = &CXXRecordDecl::FindNestedNameSpecifierMember;
@@ -1049,7 +741,7 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
   }
   
   if (!LookupRec->lookupInBases(BaseCallback, Name.getAsOpaquePtr(), Paths))
-    return LookupResult::CreateLookupResult(Context, 0);
+    return false;
 
   // C++ [class.member.lookup]p2:
   //   [...] If the resulting set of declarations are not all from
@@ -1066,16 +758,15 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
 
     // Determine whether we're looking at a distinct sub-object or not.
     if (SubobjectType.isNull()) {
-      // This is the first subobject we've looked at. Record it's type.
+      // This is the first subobject we've looked at. Record its type.
       SubobjectType = Context.getCanonicalType(PathElement.Base->getType());
       SubobjectNumber = PathElement.SubobjectNumber;
     } else if (SubobjectType
                  != Context.getCanonicalType(PathElement.Base->getType())) {
       // We found members of the given name in two subobjects of
       // different types. This lookup is ambiguous.
-      CXXBasePaths *PathsOnHeap = new CXXBasePaths;
-      PathsOnHeap->swap(Paths);
-      return LookupResult::CreateLookupResult(Context, PathsOnHeap, true);
+      R.setAmbiguousBaseSubobjectTypes(Paths);
+      return true;
     } else if (SubobjectNumber != PathElement.SubobjectNumber) {
       // We have a different subobject of the same type.
 
@@ -1111,21 +802,18 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
 
       // We have found a nonstatic member name in multiple, distinct
       // subobjects. Name lookup is ambiguous.
-      CXXBasePaths *PathsOnHeap = new CXXBasePaths;
-      PathsOnHeap->swap(Paths);
-      return LookupResult::CreateLookupResult(Context, PathsOnHeap, false);
+      R.setAmbiguousBaseSubobjects(Paths);
+      return true;
     }
   }
 
   // Lookup in a base class succeeded; return these results.
 
-  // If we found a function declaration, return an overload set.
-  if ((*Paths.front().Decls.first)->isFunctionOrFunctionTemplate())
-    return LookupResult::CreateLookupResult(Context,
-                        Paths.front().Decls.first, Paths.front().Decls.second);
-
-  // We found a non-function declaration; return a single declaration.
-  return LookupResult::CreateLookupResult(Context, *Paths.front().Decls.first);
+  DeclContext::lookup_iterator I, E;
+  for (llvm::tie(I,E) = Paths.front().Decls; I != E; ++I)
+    R.addDecl(*I);
+  R.resolveKind();
+  return true;
 }
 
 /// @brief Performs name lookup for a name that was parsed in the
@@ -1152,17 +840,16 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
 /// @param EnteringContext Indicates whether we are going to enter the
 /// context of the scope-specifier SS (if present).
 ///
-/// @returns The result of qualified or unqualified name lookup.
-Sema::LookupResult
-Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS,
-                       DeclarationName Name, LookupNameKind NameKind,
-                       bool RedeclarationOnly, bool AllowBuiltinCreation,
-                       SourceLocation Loc,
-                       bool EnteringContext) {
+/// @returns True if any decls were found (but possibly ambiguous)
+bool Sema::LookupParsedName(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
+                            DeclarationName Name, LookupNameKind NameKind,
+                            bool RedeclarationOnly, bool AllowBuiltinCreation,
+                            SourceLocation Loc,
+                            bool EnteringContext) {
   if (SS && SS->isInvalid()) {
     // When the scope specifier is invalid, don't even look for
     // anything.
-    return LookupResult::CreateLookupResult(Context, 0);
+    return false;
   }
 
   if (SS && SS->isSet()) {
@@ -1170,20 +857,20 @@ Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS,
       // We have resolved the scope specifier to a particular declaration
       // contex, and will perform name lookup in that context.
       if (!DC->isDependentContext() && RequireCompleteDeclContext(*SS))
-        return LookupResult::CreateLookupResult(Context, 0);
+        return false;
 
-      return LookupQualifiedName(DC, Name, NameKind, RedeclarationOnly);
+      return LookupQualifiedName(R, DC, Name, NameKind, RedeclarationOnly);
     }
 
     // We could not resolve the scope specified to a specific declaration
     // context, which means that SS refers to an unknown specialization.
     // Name lookup can't find anything in this case.
-    return LookupResult::CreateLookupResult(Context, 0);
+    return false;
   }
 
   // Perform unqualified name lookup starting in the given scope.
-  return LookupName(S, Name, NameKind, RedeclarationOnly, AllowBuiltinCreation,
-                    Loc);
+  return LookupName(R, S, Name, NameKind, RedeclarationOnly,
+                    AllowBuiltinCreation, Loc);
 }
 
 
@@ -1222,7 +909,6 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
 
       Diag((*Found)->getLocation(), diag::note_ambiguous_member_found);
 
-      Result.Destroy();
       return true;
     }
 
@@ -1240,24 +926,18 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
         Diag(D->getLocation(), diag::note_ambiguous_member_found);
     }
 
-    Result.Destroy();
-    return true;
-  } else if (Result.getKind() == LookupResult::AmbiguousReference) {
-    Diag(NameLoc, diag::err_ambiguous_reference) << Name << LookupRange;
-
-    NamedDecl **DI = reinterpret_cast<NamedDecl **>(Result.First),
-            **DEnd = reinterpret_cast<NamedDecl **>(Result.Last);
-
-    for (; DI != DEnd; ++DI)
-      Diag((*DI)->getLocation(), diag::note_ambiguous_candidate) << *DI;
-
-    Result.Destroy();
     return true;
   }
 
-  assert(false && "Unhandled form of name lookup ambiguity");
+  assert(Result.getKind() == LookupResult::AmbiguousReference &&
+         "unhandled form of name lookup ambiguity");
+  Diag(NameLoc, diag::err_ambiguous_reference) << Name << LookupRange;
 
-  // We can't reach here.
+  
+  LookupResult::iterator DI = Result.begin(), DE = Result.end();
+  for (; DI != DE; ++DI)
+    Diag((*DI)->getLocation(), diag::note_ambiguous_candidate) << *DI;
+
   return true;
 }
 
@@ -1661,14 +1341,14 @@ IsAcceptableNonMemberOperatorCandidate(FunctionDecl *Fn,
 
 /// \brief Find the protocol with the given name, if any.
 ObjCProtocolDecl *Sema::LookupProtocol(IdentifierInfo *II) {
-  Decl *D = LookupName(TUScope, II, LookupObjCProtocolName).getAsDecl();
+  Decl *D = LookupSingleName(TUScope, II, LookupObjCProtocolName);
   return cast_or_null<ObjCProtocolDecl>(D);
 }
 
 /// \brief Find the Objective-C category implementation with the given
 /// name, if any.
 ObjCCategoryImplDecl *Sema::LookupObjCCategoryImpl(IdentifierInfo *II) {
-  Decl *D = LookupName(TUScope, II, LookupObjCCategoryImplName).getAsDecl();
+  Decl *D = LookupSingleName(TUScope, II, LookupObjCCategoryImplName);
   return cast_or_null<ObjCCategoryImplDecl>(D);
 }
 
@@ -1678,8 +1358,8 @@ ObjCCategoryImplDecl *Sema::LookupObjCCategoryImpl(IdentifierInfo *II) {
 Decl *Sema::LookupQualifiedNameWithType(DeclContext *DC,
                                         DeclarationName Name,
                                         QualType T) {
-  LookupResult result =
-    LookupQualifiedName(DC, Name, LookupOrdinaryName, true);
+  LookupResult result;
+  LookupQualifiedName(result, DC, Name, LookupOrdinaryName, true);
 
   CanQualType CQT = Context.getCanonicalType(T);
 
@@ -1708,11 +1388,12 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
   //        of type T2 or "reference to (possibly cv-qualified) T2",
   //        when T2 is an enumeration type, are candidate functions.
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(Op);
-  LookupResult Operators = LookupName(S, OpName, LookupOperatorName);
+  LookupResult Operators;
+  LookupName(Operators, S, OpName, LookupOperatorName);
 
   assert(!Operators.isAmbiguous() && "Operator lookup cannot be ambiguous");
 
-  if (!Operators)
+  if (Operators.empty())
     return;
 
   for (LookupResult::iterator Op = Operators.begin(), OpEnd = Operators.end();

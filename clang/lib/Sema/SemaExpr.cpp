@@ -695,8 +695,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
                                                      isAddressOfOperand));
   }
 
-  LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName,
-                                         false, true, Loc);
+  LookupResult Lookup;
+  LookupParsedName(Lookup, S, SS, Name, LookupOrdinaryName, false, true, Loc);
 
   if (Lookup.isAmbiguous()) {
     DiagnoseAmbiguousLookup(Lookup, Name, Loc,
@@ -705,7 +705,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     return ExprError();
   }
 
-  NamedDecl *D = Lookup.getAsDecl();
+  NamedDecl *D = Lookup.getAsSingleDecl(Context);
 
   // If this reference is in an Objective-C method, then ivar lookup happens as
   // well.
@@ -2181,10 +2181,10 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     }
 
     // The record definition is complete, now make sure the member is valid.
-    LookupResult Result
-      = LookupQualifiedName(DC, MemberName, LookupMemberName, false);
+    LookupResult Result;
+    LookupQualifiedName(Result, DC, MemberName, LookupMemberName, false);
 
-    if (!Result)
+    if (Result.empty())
       return ExprError(Diag(MemberLoc, diag::err_typecheck_no_member_deprecated)
                << MemberName << BaseExpr->getSourceRange());
     if (Result.isAmbiguous()) {
@@ -2193,13 +2193,14 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       return ExprError();
     }
 
+    NamedDecl *MemberDecl = Result.getAsSingleDecl(Context);
+
     if (SS && SS->isSet()) {
+      TypeDecl* TyD = cast<TypeDecl>(MemberDecl->getDeclContext());
       QualType BaseTypeCanon
         = Context.getCanonicalType(BaseType).getUnqualifiedType();
       QualType MemberTypeCanon
-        = Context.getCanonicalType(
-                  Context.getTypeDeclType(
-                    dyn_cast<TypeDecl>(Result.getAsDecl()->getDeclContext())));
+        = Context.getCanonicalType(Context.getTypeDeclType(TyD));
 
       if (BaseTypeCanon != MemberTypeCanon &&
           !IsDerivedFrom(BaseTypeCanon, MemberTypeCanon))
@@ -2207,8 +2208,6 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                               diag::err_not_direct_base_or_virtual)
                          << MemberTypeCanon << BaseTypeCanon);
     }
-
-    NamedDecl *MemberDecl = Result;
 
     // If the decl being referenced had an error, return an error for this
     // sub-expr without emitting another error, in order to avoid cascading
@@ -5685,10 +5684,11 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         }
       }
 
+      LookupResult R;
+      LookupQualifiedName(R, RD, OC.U.IdentInfo, LookupMemberName);
+
       FieldDecl *MemberDecl
-        = dyn_cast_or_null<FieldDecl>(LookupQualifiedName(RD, OC.U.IdentInfo,
-                                                          LookupMemberName)
-                                        .getAsDecl());
+        = dyn_cast_or_null<FieldDecl>(R.getAsSingleDecl(Context));
       // FIXME: Leaks Res
       if (!MemberDecl)
         return ExprError(Diag(BuiltinLoc, diag::err_typecheck_no_member_deprecated)

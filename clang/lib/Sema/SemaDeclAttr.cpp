@@ -1104,8 +1104,9 @@ static void HandleCleanupAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   }
 
   // Look up the function
-  NamedDecl *CleanupDecl = S.LookupName(S.TUScope, Attr.getParameterName(),
-                                        Sema::LookupOrdinaryName);
+  NamedDecl *CleanupDecl
+    = S.LookupSingleName(S.TUScope, Attr.getParameterName(),
+                         Sema::LookupOrdinaryName);
   if (!CleanupDecl) {
     S.Diag(Attr.getLoc(), diag::err_attribute_cleanup_arg_not_found) <<
       Attr.getParameterName();

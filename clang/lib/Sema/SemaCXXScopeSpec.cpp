@@ -302,11 +302,11 @@ NamedDecl *Sema::FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS) {
   if (NNS->getKind() != NestedNameSpecifier::Identifier)
     return 0;
 
-  LookupResult Found
-    = LookupName(S, NNS->getAsIdentifier(), LookupNestedNameSpecifierName);
+  LookupResult Found;
+  LookupName(Found, S, NNS->getAsIdentifier(), LookupNestedNameSpecifierName);
   assert(!Found.isAmbiguous() && "Cannot handle ambiguities here yet");
 
-  NamedDecl *Result = Found;
+  NamedDecl *Result = Found.getAsSingleDecl(Context);
   if (isAcceptableNestedNameSpecifier(Result))
     return Result;
 
@@ -359,8 +359,8 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
     if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(SS))
       return 0;
 
-    Found = LookupQualifiedName(LookupCtx, &II, LookupNestedNameSpecifierName,
-                                false);
+    LookupQualifiedName(Found, LookupCtx, &II, LookupNestedNameSpecifierName,
+                        false);
 
     if (!ObjectType.isNull() && Found.getKind() == LookupResult::NotFound) {
       // C++ [basic.lookup.classref]p4:
@@ -384,9 +384,9 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
       // reconstruct the result from when name lookup was performed at template
       // definition time.
       if (S)
-        Found = LookupName(S, &II, LookupNestedNameSpecifierName);
-      else
-        Found = LookupResult::CreateLookupResult(Context, ScopeLookupResult);
+        LookupName(Found, S, &II, LookupNestedNameSpecifierName);
+      else if (ScopeLookupResult)
+        Found.addDecl(ScopeLookupResult);
 
       ObjectTypeSearchedInScope = true;
     }
@@ -401,11 +401,11 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
     return NestedNameSpecifier::Create(Context, Prefix, &II);
   } else {
     // Perform unqualified name lookup in the current scope.
-    Found = LookupName(S, &II, LookupNestedNameSpecifierName);
+    LookupName(Found, S, &II, LookupNestedNameSpecifierName);
   }
 
   // FIXME: Deal with ambiguities cleanly.
-  NamedDecl *SD = Found;
+  NamedDecl *SD = Found.getAsSingleDecl(Context);
   if (isAcceptableNestedNameSpecifier(SD)) {
     if (!ObjectType.isNull() && !ObjectTypeSearchedInScope) {
       // C++ [basic.lookup.classref]p4:
@@ -416,15 +416,15 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
       // into the current scope (the scope of the postfix-expression) to
       // see if we can find the same name there. As above, if there is no
       // scope, reconstruct the result from the template instantiation itself.
-      LookupResult FoundOuter;
-      if (S)
-        FoundOuter = LookupName(S, &II, LookupNestedNameSpecifierName);
-      else
-        FoundOuter = LookupResult::CreateLookupResult(Context,
-                                                      ScopeLookupResult);
+      NamedDecl *OuterDecl;
+      if (S) {
+        LookupResult FoundOuter;
+        LookupName(FoundOuter, S, &II, LookupNestedNameSpecifierName);
+        // FIXME: Handle ambiguities!
+        OuterDecl = FoundOuter.getAsSingleDecl(Context);
+      } else
+        OuterDecl = ScopeLookupResult;
 
-      // FIXME: Handle ambiguities in FoundOuter!
-      NamedDecl *OuterDecl = FoundOuter;
       if (isAcceptableNestedNameSpecifier(OuterDecl) &&
           OuterDecl->getCanonicalDecl() != SD->getCanonicalDecl() &&
           (!isa<TypeDecl>(OuterDecl) || !isa<TypeDecl>(SD) ||
@@ -461,8 +461,11 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
   // If we didn't find anything during our lookup, try again with
   // ordinary name lookup, which can help us produce better error
   // messages.
-  if (!SD)
-    SD = LookupName(S, &II, LookupOrdinaryName);
+  if (!SD) {
+    Found.clear();
+    LookupName(Found, S, &II, LookupOrdinaryName);
+    SD = Found.getAsSingleDecl(Context);
+  }
 
   unsigned DiagID;
   if (SD)

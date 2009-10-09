@@ -2762,8 +2762,9 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
     if (RequireCompleteType(OpLoc, T1, PartialDiagnostic(0)))
       return;
 
-    LookupResult Operators = LookupQualifiedName(T1Rec->getDecl(), OpName,
-                                                 LookupOrdinaryName, false);
+    LookupResult Operators;
+    LookupQualifiedName(Operators, T1Rec->getDecl(), OpName,
+                        LookupOrdinaryName, false);
     for (LookupResult::iterator Oper = Operators.begin(),
                              OperEnd = Operators.end();
          Oper != OperEnd;
@@ -5070,8 +5071,8 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
   OverloadCandidateSet CandidateSet;
   const RecordType *BaseRecord = Base->getType()->getAs<RecordType>();
 
-  LookupResult R = LookupQualifiedName(BaseRecord->getDecl(), OpName, 
-                                       LookupOrdinaryName);
+  LookupResult R;
+  LookupQualifiedName(R, BaseRecord->getDecl(), OpName, LookupOrdinaryName);
 
   for (LookupResult::iterator Oper = R.begin(), OperEnd = R.end();
        Oper != OperEnd; ++Oper)

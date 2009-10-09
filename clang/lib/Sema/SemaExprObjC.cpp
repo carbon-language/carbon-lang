@@ -77,7 +77,7 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
     Ty = Context.getObjCObjectPointerType(Ty);
   } else {
     IdentifierInfo *NSIdent = &Context.Idents.get("NSString");
-    NamedDecl *IF = LookupName(TUScope, NSIdent, LookupOrdinaryName);
+    NamedDecl *IF = LookupSingleName(TUScope, NSIdent, LookupOrdinaryName);
     if (ObjCInterfaceDecl *StrIF = dyn_cast_or_null<ObjCInterfaceDecl>(IF)) {
       Context.setObjCConstantStringInterface(StrIF);
       Ty = Context.getObjCConstantStringInterface();
@@ -387,7 +387,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
     } else {
       // 'super' has been used outside a method context. If a variable named
       // 'super' has been declared, redirect. If not, produce a diagnostic.
-      NamedDecl *SuperDecl = LookupName(S, receiverName, LookupOrdinaryName);
+      NamedDecl *SuperDecl
+        = LookupSingleName(S, receiverName, LookupOrdinaryName);
       ValueDecl *VD = dyn_cast_or_null<ValueDecl>(SuperDecl);
       if (VD) {
         ExprResult ReceiverExpr = new (Context) DeclRefExpr(VD, VD->getType(),
@@ -412,7 +413,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
   //
   // If necessary, the following lookup could move to getObjCInterfaceDecl().
   if (!ClassDecl) {
-    NamedDecl *IDecl = LookupName(TUScope, receiverName, LookupOrdinaryName);
+    NamedDecl *IDecl
+      = LookupSingleName(TUScope, receiverName, LookupOrdinaryName);
     if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(IDecl)) {
       const ObjCInterfaceType *OCIT;
       OCIT = OCTD->getUnderlyingType()->getAs<ObjCInterfaceType>();

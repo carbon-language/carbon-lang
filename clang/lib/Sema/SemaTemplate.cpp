@@ -135,7 +135,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     if (!LookupCtx->isDependentContext() && RequireCompleteDeclContext(*SS))
       return TNK_Non_template;
 
-    Found = LookupQualifiedName(LookupCtx, &II, LookupOrdinaryName);
+    LookupQualifiedName(Found, LookupCtx, &II, LookupOrdinaryName);
 
     if (ObjectTypePtr && Found.getKind() == LookupResult::NotFound) {
       // C++ [basic.lookup.classref]p1:
@@ -150,7 +150,7 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
       //
       // FIXME: When we're instantiating a template, do we actually have to
       // look in the scope of the template? Seems fishy...
-      Found = LookupName(S, &II, LookupOrdinaryName);
+      LookupName(Found, S, &II, LookupOrdinaryName);
       ObjectTypeSearchedInScope = true;
     }
   } else if (isDependent) {
@@ -158,14 +158,15 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     return TNK_Non_template;
   } else {
     // Perform unqualified name lookup in the current scope.
-    Found = LookupName(S, &II, LookupOrdinaryName);
+    LookupName(Found, S, &II, LookupOrdinaryName);
   }
 
   // FIXME: Cope with ambiguous name-lookup results.
   assert(!Found.isAmbiguous() &&
          "Cannot handle template name-lookup ambiguities");
 
-  NamedDecl *Template = isAcceptableTemplateName(Context, Found);
+  NamedDecl *Template
+    = isAcceptableTemplateName(Context, Found.getAsSingleDecl(Context));
   if (!Template)
     return TNK_Non_template;
 
@@ -175,9 +176,11 @@ TemplateNameKind Sema::isTemplateName(Scope *S,
     //   template, the name is also looked up in the context of the entire
     //   postfix-expression and [...]
     //
-    LookupResult FoundOuter = LookupName(S, &II, LookupOrdinaryName);
+    LookupResult FoundOuter;
+    LookupName(FoundOuter, S, &II, LookupOrdinaryName);
     // FIXME: Handle ambiguities in this lookup better
-    NamedDecl *OuterTemplate = isAcceptableTemplateName(Context, FoundOuter);
+    NamedDecl *OuterTemplate
+      = isAcceptableTemplateName(Context, FoundOuter.getAsSingleDecl(Context));
 
     if (!OuterTemplate) {
       //   - if the name is not found, the name found in the class of the
@@ -284,7 +287,7 @@ Sema::DeclPtrTy Sema::ActOnTypeParameter(Scope *S, bool Typename, bool Ellipsis,
   bool Invalid = false;
 
   if (ParamName) {
-    NamedDecl *PrevDecl = LookupName(S, ParamName, LookupTagName);
+    NamedDecl *PrevDecl = LookupSingleName(S, ParamName, LookupTagName);
     if (PrevDecl && PrevDecl->isTemplateParameter())
       Invalid = Invalid || DiagnoseTemplateParameterShadow(ParamNameLoc,
                                                            PrevDecl);
@@ -402,7 +405,7 @@ Sema::DeclPtrTy Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
 
   IdentifierInfo *ParamName = D.getIdentifier();
   if (ParamName) {
-    NamedDecl *PrevDecl = LookupName(S, ParamName, LookupTagName);
+    NamedDecl *PrevDecl = LookupSingleName(S, ParamName, LookupTagName);
     if (PrevDecl && PrevDecl->isTemplateParameter())
       Invalid = Invalid || DiagnoseTemplateParameterShadow(D.getIdentifierLoc(),
                                                            PrevDecl);
@@ -577,11 +580,11 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
       return true;
     }
 
-    Previous = LookupQualifiedName(SemanticContext, Name, LookupOrdinaryName,
+    LookupQualifiedName(Previous, SemanticContext, Name, LookupOrdinaryName,
                                    true);
   } else {
     SemanticContext = CurContext;
-    Previous = LookupName(S, Name, LookupOrdinaryName, true);
+    LookupName(Previous, S, Name, LookupOrdinaryName, true);
   }
 
   assert(!Previous.isAmbiguous() && "Ambiguity in class template redecl?");
@@ -3581,8 +3584,9 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     = ExternLoc.isInvalid()? TSK_ExplicitInstantiationDefinition
                            : TSK_ExplicitInstantiationDeclaration;
   
-  LookupResult Previous = LookupParsedName(S, &D.getCXXScopeSpec(),
-                                           Name, LookupOrdinaryName);
+  LookupResult Previous;
+  LookupParsedName(Previous, S, &D.getCXXScopeSpec(),
+                   Name, LookupOrdinaryName);
 
   if (!R->isFunctionType()) {
     // C++ [temp.explicit]p1:
@@ -3594,14 +3598,15 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
                                      D.getSourceRange());
     }
     
-    VarDecl *Prev = dyn_cast_or_null<VarDecl>(Previous.getAsDecl());
+    VarDecl *Prev = dyn_cast_or_null<VarDecl>(
+        Previous.getAsSingleDecl(Context));
     if (!Prev || !Prev->isStaticDataMember()) {
       // We expect to see a data data member here.
       Diag(D.getIdentifierLoc(), diag::err_explicit_instantiation_not_known)
         << Name;
       for (LookupResult::iterator P = Previous.begin(), PEnd = Previous.end();
            P != PEnd; ++P)
-        Diag(P->getLocation(), diag::note_explicit_instantiation_here);
+        Diag((*P)->getLocation(), diag::note_explicit_instantiation_here);
       return true;
     }
     
@@ -3824,8 +3829,8 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
   assert(Ctx && "No declaration context?");
 
   DeclarationName Name(&II);
-  LookupResult Result = LookupQualifiedName(Ctx, Name, LookupOrdinaryName,
-                                            false);
+  LookupResult Result;
+  LookupQualifiedName(Result, Ctx, Name, LookupOrdinaryName, false);
   unsigned DiagID = 0;
   Decl *Referenced = 0;
   switch (Result.getKind()) {
@@ -3837,7 +3842,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     break;
 
   case LookupResult::Found:
-    if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getAsDecl())) {
+    if (TypeDecl *Type = dyn_cast<TypeDecl>(Result.getFoundDecl())) {
       // We found a type. Build a QualifiedNameType, since the
       // typename-specifier was just sugar. FIXME: Tell
       // QualifiedNameType that it has a "typename" prefix.
@@ -3845,7 +3850,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     }
 
     DiagID = diag::err_typename_nested_not_type;
-    Referenced = Result.getAsDecl();
+    Referenced = Result.getFoundDecl();
     break;
 
   case LookupResult::FoundOverloaded:
