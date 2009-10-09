@@ -222,7 +222,7 @@ bool getVisualStudioDir(std::string &path) {
 #endif // LLVM_ON_WIN32
 
 void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
-                                               const llvm::Triple &triple) {
+                                                   const llvm::Triple &triple) {
   // FIXME: temporary hack: hard-coded paths.
   llvm::Triple::OSType os = triple.getOS();
 
