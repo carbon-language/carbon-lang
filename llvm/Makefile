@@ -144,7 +144,8 @@ FilesToConfig := \
   include/llvm/Config/config.h \
   include/llvm/Config/Targets.def \
 	include/llvm/Config/AsmPrinters.def \
-  include/llvm/Support/DataTypes.h
+  include/llvm/Support/DataTypes.h \
+	tools/llvmc/plugins/Base/Base.td
 FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
 
 all-local:: $(FilesToConfigPATH)
