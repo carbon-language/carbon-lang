@@ -37,7 +37,7 @@ install-local::
 	$(Verb) if test -d "$(PROJ_SRC_ROOT)/tools/clang/include" ; then \
 	  cd $(PROJ_SRC_ROOT)/tools/clang/include && \
 	  for  hdr in `find . -type f '!' '(' -name '*~' \
-	      -o -name '.#*' -o -name '*.in' ')' -print | grep -v CVS | \
+	      -o -name '.#*' -o -name '*.in' -o -name '*.txt' ')' -print | grep -v CVS | \
 	      grep -v .svn` ; do \
 	    instdir=`dirname "$(PROJ_includedir)/$$hdr"` ; \
 	    if test \! -d "$$instdir" ; then \
