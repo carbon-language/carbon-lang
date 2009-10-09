@@ -46,6 +46,8 @@ private:
 
   bool ParseRegister(ARMOperand &Op);
 
+  bool ParseRegisterList(ARMOperand &Op);
+
   bool ParseMemory(ARMOperand &Op);
 
   bool ParseShift(enum ShiftType *St, const MCExpr *ShiftAmount);
@@ -62,9 +64,11 @@ private:
   bool MatchInstruction(SmallVectorImpl<ARMOperand> &Operands,
                         MCInst &Inst);
 
-  /// MatchRegisterName - Match the given string to a register name, or 0 if
-  /// there is no match.
-  unsigned MatchRegisterName(const StringRef &Name);
+  /// MatchRegisterName - Match the given string to a register name and return
+  /// its register number, or -1 if there is no match.  To allow return values
+  /// to be used directly in register lists, arm registers have values between
+  /// 0 and 15.
+  int MatchRegisterName(const StringRef &Name);
 
   /// }
 
@@ -190,10 +194,10 @@ bool ARMAsmParser::ParseRegister(ARMOperand &Op) {
 
   // FIXME: Validate register for the current architecture; we have to do
   // validation later, so maybe there is no need for this here.
-  unsigned RegNum;
+  int RegNum;
 
   RegNum = MatchRegisterName(Tok.getString());
-  if (RegNum == 0)
+  if (RegNum == -1)
     return true;
   getLexer().Lex(); // Eat identifier token.
 
@@ -209,6 +213,53 @@ bool ARMAsmParser::ParseRegister(ARMOperand &Op) {
   return false;
 }
 
+// Try to parse a register list.  The first token must be a '{' when called
+// for now.
+bool ARMAsmParser::ParseRegisterList(ARMOperand &Op) {
+  const AsmToken &LCurlyTok = getLexer().getTok();
+  assert(LCurlyTok.is(AsmToken::LCurly) && "Token is not an Left Curly Brace");
+  getLexer().Lex(); // Eat left curly brace token.
+
+  const AsmToken &RegTok = getLexer().getTok();
+  SMLoc RegLoc = RegTok.getLoc();
+  if (RegTok.isNot(AsmToken::Identifier))
+    return Error(RegLoc, "register expected");
+  int RegNum = MatchRegisterName(RegTok.getString());
+  if (RegNum == -1)
+    return Error(RegLoc, "register expected");
+  getLexer().Lex(); // Eat identifier token.
+  unsigned RegList = 1 << RegNum;
+
+  int HighRegNum = RegNum;
+  // TODO ranges like "{Rn-Rm}"
+  while (getLexer().getTok().is(AsmToken::Comma)) {
+    getLexer().Lex(); // Eat comma token.
+
+    const AsmToken &RegTok = getLexer().getTok();
+    SMLoc RegLoc = RegTok.getLoc();
+    if (RegTok.isNot(AsmToken::Identifier))
+      return Error(RegLoc, "register expected");
+    int RegNum = MatchRegisterName(RegTok.getString());
+    if (RegNum == -1)
+      return Error(RegLoc, "register expected");
+
+    if (RegList & (1 << RegNum))
+      Warning(RegLoc, "register duplicated in register list");
+    else if (RegNum <= HighRegNum)
+      Warning(RegLoc, "register not in ascending order in register list");
+    RegList |= 1 << RegNum;
+    HighRegNum = RegNum;
+
+    getLexer().Lex(); // Eat identifier token.
+  }
+  const AsmToken &RCurlyTok = getLexer().getTok();
+  if (RCurlyTok.isNot(AsmToken::RCurly))
+    return Error(RCurlyTok.getLoc(), "'}' expected");
+  getLexer().Lex(); // Eat left curly brace token.
+
+  return false;
+}
+
 // Try to parse an arm memory expression.  It must start with a '[' token.
 // TODO Only preindexing and postindexing addressing are started, unindexed
 // with option, etc are still to do.
@@ -220,8 +271,8 @@ bool ARMAsmParser::ParseMemory(ARMOperand &Op) {
   const AsmToken &BaseRegTok = getLexer().getTok();
   if (BaseRegTok.isNot(AsmToken::Identifier))
     return Error(BaseRegTok.getLoc(), "register expected");
-  unsigned BaseRegNum = MatchRegisterName(BaseRegTok.getString());
-  if (BaseRegNum == 0)
+  int BaseRegNum = MatchRegisterName(BaseRegTok.getString());
+  if (BaseRegNum == -1)
     return Error(BaseRegTok.getLoc(), "register expected");
   getLexer().Lex(); // Eat identifier token.
 
@@ -251,12 +302,12 @@ bool ARMAsmParser::ParseMemory(ARMOperand &Op) {
 
     // See if there is a register following the "[Rn," we have so far.
     const AsmToken &OffsetRegTok = getLexer().getTok();
-    unsigned OffsetRegNum = MatchRegisterName(OffsetRegTok.getString());
+    int OffsetRegNum = MatchRegisterName(OffsetRegTok.getString());
     bool OffsetRegShifted = false;
     enum ShiftType ShiftType;
     const MCExpr *ShiftAmount;
     const MCExpr *Offset;
-    if (OffsetRegNum != 0) {
+    if (OffsetRegNum != -1) {
       OffsetIsReg = true;
       getLexer().Lex(); // Eat identifier token for the offset register.
       // Look for a comma then a shift
@@ -321,12 +372,12 @@ bool ARMAsmParser::ParseMemory(ARMOperand &Op) {
 
     // See if there is a register following the "[Rn]," we have so far.
     const AsmToken &OffsetRegTok = getLexer().getTok();
-    unsigned OffsetRegNum = MatchRegisterName(OffsetRegTok.getString());
+    int OffsetRegNum = MatchRegisterName(OffsetRegTok.getString());
     bool OffsetRegShifted = false;
     enum ShiftType ShiftType;
     const MCExpr *ShiftAmount;
     const MCExpr *Offset;
-    if (OffsetRegNum != 0) {
+    if (OffsetRegNum != -1) {
       OffsetIsReg = true;
       getLexer().Lex(); // Eat identifier token for the offset register.
       // Look for a comma then a shift
@@ -398,16 +449,42 @@ bool ARMAsmParser::ParseShift(ShiftType *St, const MCExpr *ShiftAmount) {
 }
 
 // A hack to allow some testing
-unsigned ARMAsmParser::MatchRegisterName(const StringRef &Name) {
-  if (Name == "r1")
+int ARMAsmParser::MatchRegisterName(const StringRef &Name) {
+  if (Name == "r0" || Name == "R0")
+    return 0;
+  else if (Name == "r1" || Name == "R1")
     return 1;
-  else if (Name == "r2")
+  else if (Name == "r2" || Name == "R2")
     return 2;
-  else if (Name == "r3")
+  else if (Name == "r3" || Name == "R3")
     return 3;
-  else if (Name == "sp")
+  else if (Name == "r3" || Name == "R3")
+    return 3;
+  else if (Name == "r4" || Name == "R4")
+    return 4;
+  else if (Name == "r5" || Name == "R5")
+    return 5;
+  else if (Name == "r6" || Name == "R6")
+    return 6;
+  else if (Name == "r7" || Name == "R7")
+    return 7;
+  else if (Name == "r8" || Name == "R8")
+    return 8;
+  else if (Name == "r9" || Name == "R9")
+    return 9;
+  else if (Name == "r10" || Name == "R10")
+    return 10;
+  else if (Name == "r11" || Name == "R11" || Name == "fp")
+    return 11;
+  else if (Name == "r12" || Name == "R12" || Name == "ip")
+    return 12;
+  else if (Name == "r13" || Name == "R13" || Name == "sp")
     return 13;
-  return 0;
+  else if (Name == "r14" || Name == "R14" || Name == "lr")
+      return 14;
+  else if (Name == "r15" || Name == "R15" || Name == "pc")
+    return 15;
+  return -1;
 }
 
 // A hack to allow some testing
@@ -420,7 +497,8 @@ bool ARMAsmParser::MatchInstruction(SmallVectorImpl<ARMOperand> &Operands,
       Mnemonic == "stmfd" ||
       Mnemonic == "str" ||
       Mnemonic == "ldmfd" ||
-      Mnemonic == "ldr")
+      Mnemonic == "ldr" ||
+      Mnemonic == "mov")
     return false;
 
   return true;
@@ -432,13 +510,18 @@ bool ARMAsmParser::ParseOperand(ARMOperand &Op) {
   case AsmToken::Identifier:
     if (!ParseRegister(Op))
       return false;
-    // TODO parse other operands that start with an identifier
-    return true;
+    // TODO parse other operands that start with an identifier like labels
+    return Error(getLexer().getTok().getLoc(), "labels not yet supported");
   case AsmToken::LBrac:
     if (!ParseMemory(Op))
       return false;
+  case AsmToken::LCurly:
+    if (!ParseRegisterList(Op))
+      return(false);
+  case AsmToken::Hash:
+    return Error(getLexer().getTok().getLoc(), "immediates not yet supported");
   default:
-    return true;
+    return Error(getLexer().getTok().getLoc(), "unexpected token in operand");
   }
 }
 
