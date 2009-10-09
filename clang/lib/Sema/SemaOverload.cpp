@@ -4116,7 +4116,9 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   } else if (MemberExpr *ME = dyn_cast<MemberExpr>(OvlExpr)) {
     Ovl = dyn_cast<OverloadedFunctionDecl>(ME->getMemberDecl());
     FunctionTemplate = dyn_cast<FunctionTemplateDecl>(ME->getMemberDecl());
+    // FIXME: Explicit template arguments
   }
+  // FIXME: TemplateIdRefExpr?
 
   // If there's no overloaded function declaration or function template,
   // we're done.
