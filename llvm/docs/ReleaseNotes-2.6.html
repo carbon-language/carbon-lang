@@ -436,6 +436,12 @@ in this section.
     by allowing multiple "LLVMContext" objects to exist.  Please see the <a 
     href="ProgrammersManual.html#threading">threading entry in the Programmer's
     Manual</a> for more information.</li>
+<li>LLVM now has experimental support for <a
+    href="http://nondot.org/~sabre/LLVMNotes/EmbeddedMetadata.txt">embedded
+    metadata</a> in LLVM IR, though the implementation is not guaranteed to be
+    final and the .bc file format may change in future releases.  Debug info 
+    does not yet use this format in LLVM 2.6.</p>
+    
 </ul>
 
 </div>
@@ -617,8 +623,11 @@ releases of LLVM.
 </p>
 
 <ul>
-<li>Add support for the PowerPC 64-bit SVR4 ABI.</li>
 <li>Mips now supports O32 Calling Convention.</li>
+<li>Many improvements to the 32-bit PowerPC SVR4 ABI (used on powerpc-linux)
+    support, lots of bugs fixed.</li>
+<li>Added support for the 64-bit PowerPC SVR4 ABI (used on powerpc64-linux).
+    Needs more testing.</li>
 </ul>
 
 </div>
