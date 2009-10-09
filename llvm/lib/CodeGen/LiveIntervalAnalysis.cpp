@@ -50,8 +50,6 @@ using namespace llvm;
 static cl::opt<bool> DisableReMat("disable-rematerialization", 
                                   cl::init(false), cl::Hidden);
 
-static cl::opt<bool> EnableAggressiveRemat("aggressive-remat", cl::Hidden);
-
 static cl::opt<bool> EnableFastSpilling("fast-spill",
                                         cl::init(false), cl::Hidden);
 
@@ -1408,99 +1406,12 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   if (DisableReMat)
     return false;
 
-  if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
-    return true;
+  if (!tii_->isTriviallyReMaterializable(MI, aa_))
+    return false;
 
-  int FrameIdx = 0;
-  if (tii_->isLoadFromStackSlot(MI, FrameIdx) &&
-      mf_->getFrameInfo()->isImmutableObjectIndex(FrameIdx))
-    // FIXME: Let target specific isReallyTriviallyReMaterializable determines
-    // this but remember this is not safe to fold into a two-address
-    // instruction.
-    // This is a load from fixed stack slot. It can be rematerialized.
-    return true;
-
-  // If the target-specific rules don't identify an instruction as
-  // being trivially rematerializable, use some target-independent
-  // rules.
-  if (!tii_->isTriviallyReMaterializable(MI)) {
-    if (!EnableAggressiveRemat)
-      return false;
-
-    const TargetInstrDesc &TID = MI->getDesc();
-
-    // Avoid instructions obviously unsafe for remat.
-    if (TID.hasUnmodeledSideEffects() || TID.isNotDuplicable() ||
-        TID.mayStore())
-      return false;
-
-    // Avoid instructions which load from potentially varying memory.
-    if (TID.mayLoad() && !MI->isInvariantLoad(aa_))
-      return false;
-
-    // If any of the registers accessed are non-constant, conservatively assume
-    // the instruction is not rematerializable.
-    unsigned ImpUse = 0;
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = MI->getOperand(i);
-      if (MO.isReg()) {
-        unsigned Reg = MO.getReg();
-        if (Reg == 0)
-          continue;
-        if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-          if (MO.isUse()) {
-            // If the physreg has no defs anywhere, it's just an ambient register
-            // and we can freely move its uses. Alternatively, if it's allocatable,
-            // it could get allocated to something with a def during allocation.
-            if (!mri_->def_empty(Reg))
-              return false;
-            if (allocatableRegs_.test(Reg))
-              return false;
-            // Check for a def among the register's aliases too.
-            for (const unsigned *Alias = tri_->getAliasSet(Reg); *Alias; ++Alias) {
-              unsigned AliasReg = *Alias;
-              if (!mri_->def_empty(AliasReg))
-                return false;
-              if (allocatableRegs_.test(AliasReg))
-                return false;
-            }
-          } else {
-            // A physreg def. We can't remat it.
-            return false;
-          }
-          continue;
-        }
-
-        // Only allow one def, and that in the first operand.
-        if (MO.isDef() != (i == 0))
-          return false;
-
-        // Only allow constant-valued registers.
-        bool IsLiveIn = mri_->isLiveIn(Reg);
-        MachineRegisterInfo::def_iterator I = mri_->def_begin(Reg),
-                                          E = mri_->def_end();
-
-        // For the def, it should be the only def of that register.
-        if (MO.isDef() && (next(I) != E || IsLiveIn))
-          return false;
-
-        if (MO.isUse()) {
-          // Only allow one use other register use, as that's all the
-          // remat mechanisms support currently.
-          if (Reg != li.reg) {
-            if (ImpUse == 0)
-              ImpUse = Reg;
-            else if (Reg != ImpUse)
-              return false;
-          }
-          // For the use, there should be only one associated def.
-          if (I != E && (next(I) != E || IsLiveIn))
-            return false;
-        }
-      }
-    }
-  }
-
+  // Target-specific code can mark an instruction as being rematerializable
+  // if it has one virtual reg use, though it had better be something like
+  // a PIC base register which is likely to be live everywhere.
   unsigned ImpUse = getReMatImplicitUse(li, MI);
   if (ImpUse) {
     const LiveInterval &ImpLi = getInterval(ImpUse);

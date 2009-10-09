@@ -31,6 +31,7 @@
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -76,12 +77,15 @@ DebugMod("postra-sched-debugmod",
 
 namespace {
   class VISIBILITY_HIDDEN PostRAScheduler : public MachineFunctionPass {
+    AliasAnalysis *AA;
+
   public:
     static char ID;
     PostRAScheduler() : MachineFunctionPass(&ID) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequired<AliasAnalysis>();
       AU.addRequired<MachineDominatorTree>();
       AU.addPreserved<MachineDominatorTree>();
       AU.addRequired<MachineLoopInfo>();
@@ -119,6 +123,9 @@ namespace {
     /// HazardRec - The hazard recognizer to use.
     ScheduleHazardRecognizer *HazardRec;
 
+    /// AA - AliasAnalysis for making memory reference queries.
+    AliasAnalysis *AA;
+
     /// Classes - For live regs that are only used in one register class in a
     /// live range, the register class. If the register is not live, the
     /// corresponding value is null. If the register is live but used in
@@ -146,10 +153,11 @@ namespace {
     SchedulePostRATDList(MachineFunction &MF,
                          const MachineLoopInfo &MLI,
                          const MachineDominatorTree &MDT,
-                         ScheduleHazardRecognizer *HR)
+                         ScheduleHazardRecognizer *HR,
+                         AliasAnalysis *aa)
       : ScheduleDAGInstrs(MF, MLI, MDT), Topo(SUnits),
         AllocatableSet(TRI->getAllocatableSet(MF)),
-        HazardRec(HR) {}
+        HazardRec(HR), AA(aa) {}
 
     ~SchedulePostRATDList() {
       delete HazardRec;
@@ -241,7 +249,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     (ScheduleHazardRecognizer *)new ExactHazardRecognizer(InstrItins) :
     (ScheduleHazardRecognizer *)new SimpleHazardRecognizer();
 
-  SchedulePostRATDList Scheduler(Fn, MLI, MDT, HR);
+  SchedulePostRATDList Scheduler(Fn, MLI, MDT, HR, AA);
 
   // Loop over all of the basic blocks
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
@@ -379,7 +387,7 @@ void SchedulePostRATDList::Schedule() {
   DEBUG(errs() << "********** List Scheduling **********\n");
   
   // Build the scheduling graph.
-  BuildSchedGraph();
+  BuildSchedGraph(AA);
 
   if (EnableAntiDepBreaking) {
     if (BreakAntiDependencies()) {
@@ -392,7 +400,7 @@ void SchedulePostRATDList::Schedule() {
       SUnits.clear();
       EntrySU = SUnit();
       ExitSU = SUnit();
-      BuildSchedGraph();
+      BuildSchedGraph(AA);
     }
   }
 

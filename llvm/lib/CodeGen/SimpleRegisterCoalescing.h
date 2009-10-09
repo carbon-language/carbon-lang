@@ -45,6 +45,7 @@ namespace llvm {
     const TargetInstrInfo* tii_;
     LiveIntervals *li_;
     const MachineLoopInfo* loopInfo;
+    AliasAnalysis *AA;
     
     BitVector allocatableRegs_;
     DenseMap<const TargetRegisterClass*, BitVector> allocatableRCRegs_;

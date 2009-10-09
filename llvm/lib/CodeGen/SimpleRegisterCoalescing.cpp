@@ -17,6 +17,7 @@
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/Value.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -72,6 +73,7 @@ const PassInfo *const llvm::SimpleRegisterCoalescingID = &X;
 
 void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
+  AU.addRequired<AliasAnalysis>();
   AU.addRequired<LiveIntervals>();
   AU.addPreserved<LiveIntervals>();
   AU.addRequired<MachineLoopInfo>();
@@ -646,10 +648,10 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   const TargetInstrDesc &TID = DefMI->getDesc();
   if (!TID.isAsCheapAsAMove())
     return false;
-  if (!tii_->isTriviallyReMaterializable(DefMI))
+  if (!tii_->isTriviallyReMaterializable(DefMI, AA))
     return false;
   bool SawStore = false;
-  if (!DefMI->isSafeToMove(tii_, SawStore))
+  if (!DefMI->isSafeToMove(tii_, SawStore, AA))
     return false;
   if (TID.getNumDefs() != 1)
     return false;
@@ -2655,6 +2657,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   tri_ = tm_->getRegisterInfo();
   tii_ = tm_->getInstrInfo();
   li_ = &getAnalysis<LiveIntervals>();
+  AA = &getAnalysis<AliasAnalysis>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
 
   DEBUG(errs() << "********** SIMPLE REGISTER COALESCING **********\n"

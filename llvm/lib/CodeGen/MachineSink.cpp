@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -39,6 +40,7 @@ namespace {
     MachineFunction       *CurMF; // Current MachineFunction
     MachineRegisterInfo  *RegInfo; // Machine register information
     MachineDominatorTree *DT;   // Machine dominator tree
+    AliasAnalysis *AA;
     BitVector AllocatableSet;   // Which physregs are allocatable?
 
   public:
@@ -50,6 +52,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
+      AU.addRequired<AliasAnalysis>();
       AU.addRequired<MachineDominatorTree>();
       AU.addPreserved<MachineDominatorTree>();
     }
@@ -100,6 +103,7 @@ bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
   TRI = TM->getRegisterInfo();
   RegInfo = &CurMF->getRegInfo();
   DT = &getAnalysis<MachineDominatorTree>();
+  AA = &getAnalysis<AliasAnalysis>();
   AllocatableSet = TRI->getAllocatableSet(*CurMF);
 
   bool EverMadeChange = false;
@@ -151,7 +155,7 @@ bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
 /// instruction out of its current block into a successor.
 bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   // Check if it's safe to move the instruction.
-  if (!MI->isSafeToMove(TII, SawStore))
+  if (!MI->isSafeToMove(TII, SawStore, AA))
     return false;
   
   // FIXME: This should include support for sinking instructions within the

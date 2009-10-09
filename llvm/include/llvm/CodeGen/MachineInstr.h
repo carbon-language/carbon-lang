@@ -275,11 +275,13 @@ public:
   /// isSafeToMove - Return true if it is safe to move this instruction. If
   /// SawStore is set to true, it means that there is a store (or call) between
   /// the instruction's location and its intended destination.
-  bool isSafeToMove(const TargetInstrInfo *TII, bool &SawStore) const;
+  bool isSafeToMove(const TargetInstrInfo *TII, bool &SawStore,
+                    AliasAnalysis *AA) const;
 
   /// isSafeToReMat - Return true if it's safe to rematerialize the specified
   /// instruction which defined the specified register instead of copying it.
-  bool isSafeToReMat(const TargetInstrInfo *TII, unsigned DstReg) const;
+  bool isSafeToReMat(const TargetInstrInfo *TII, unsigned DstReg,
+                     AliasAnalysis *AA) const;
 
   /// hasVolatileMemoryRef - Return true if this instruction may have a
   /// volatile memory reference, or if the information describing the
@@ -292,7 +294,7 @@ public:
   /// loading a value from the constant pool or from from the argument area of
   /// a function if it does not change.  This should only return true of *all*
   /// loads the instruction does are invariant (if it does multiple loads).
-  bool isInvariantLoad(AliasAnalysis *AA = 0) const;
+  bool isInvariantLoad(AliasAnalysis *AA) const;
 
   //
   // Debugging support

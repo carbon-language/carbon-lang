@@ -155,7 +155,7 @@ namespace llvm {
 
     /// BuildSchedGraph - Build SUnits from the MachineBasicBlock that we are
     /// input.
-    virtual void BuildSchedGraph();
+    virtual void BuildSchedGraph(AliasAnalysis *AA);
 
     /// ComputeLatency - Compute node latency.
     ///

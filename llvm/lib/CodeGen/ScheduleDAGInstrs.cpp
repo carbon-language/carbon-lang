@@ -123,7 +123,7 @@ void ScheduleDAGInstrs::StartBlock(MachineBasicBlock *BB) {
     }
 }
 
-void ScheduleDAGInstrs::BuildSchedGraph() {
+void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   // We'll be allocating one SUnit for each instruction, plus one for
   // the region exit node.
   SUnits.reserve(BB->size());
@@ -375,7 +375,7 @@ void ScheduleDAGInstrs::BuildSchedGraph() {
         // Treat all other stores conservatively.
         goto new_chain;
     } else if (TID.mayLoad()) {
-      if (MI->isInvariantLoad()) {
+      if (MI->isInvariantLoad(AA)) {
         // Invariant load, no chain dependencies needed!
       } else if (const Value *V = getUnderlyingObjectForInstr(MI)) {
         // A load from a specific PseudoSourceValue. Add precise dependencies.

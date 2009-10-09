@@ -53,7 +53,7 @@ FunctionPass *llvm::createDeadMachineInstructionElimPass() {
 bool DeadMachineInstructionElim::isDead(const MachineInstr *MI) const {
   // Don't delete instructions with side effects.
   bool SawStore = false;
-  if (!MI->isSafeToMove(TII, SawStore))
+  if (!MI->isSafeToMove(TII, SawStore, 0))
     return false;
 
   // Examine each operand.

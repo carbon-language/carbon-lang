@@ -34,6 +34,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -62,6 +63,7 @@ namespace {
     const TargetRegisterInfo *TRI;
     MachineRegisterInfo *MRI;
     LiveVariables *LV;
+    AliasAnalysis *AA;
 
     // DistanceMap - Keep track the distance of a MI from the start of the
     // current basic block.
@@ -130,6 +132,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequired<AliasAnalysis>();
       AU.addPreserved<LiveVariables>();
       AU.addPreservedID(MachineLoopInfoID);
       AU.addPreservedID(MachineDominatorsID);
@@ -160,7 +163,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
                                            MachineBasicBlock::iterator OldPos) {
   // Check if it's safe to move this instruction.
   bool SeenStore = true; // Be conservative.
-  if (!MI->isSafeToMove(TII, SeenStore))
+  if (!MI->isSafeToMove(TII, SeenStore, AA))
     return false;
 
   unsigned DefReg = 0;
@@ -903,6 +906,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   TII = TM.getInstrInfo();
   TRI = TM.getRegisterInfo();
   LV = getAnalysisIfAvailable<LiveVariables>();
+  AA = &getAnalysis<AliasAnalysis>();
 
   bool MadeChange = false;
 
@@ -1027,7 +1031,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           // copying it.
           if (DefMI &&
               DefMI->getDesc().isAsCheapAsAMove() &&
-              DefMI->isSafeToReMat(TII, regB) &&
+              DefMI->isSafeToReMat(TII, regB, AA) &&
               isProfitableToReMat(regB, rc, mi, DefMI, mbbi, Dist)){
             DEBUG(errs() << "2addr: REMATTING : " << *DefMI << "\n");
             unsigned regASubIdx = mi->getOperand(DstIdx).getSubReg();

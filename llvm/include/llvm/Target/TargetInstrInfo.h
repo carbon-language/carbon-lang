@@ -103,23 +103,33 @@ public:
   /// isTriviallyReMaterializable - Return true if the instruction is trivially
   /// rematerializable, meaning it has no side effects and requires no operands
   /// that aren't always available.
-  bool isTriviallyReMaterializable(const MachineInstr *MI) const {
-    return MI->getDesc().isRematerializable() &&
-           isReallyTriviallyReMaterializable(MI);
+  bool isTriviallyReMaterializable(const MachineInstr *MI,
+                                   AliasAnalysis *AA = 0) const {
+    return MI->getOpcode() == IMPLICIT_DEF ||
+           (MI->getDesc().isRematerializable() &&
+            (isReallyTriviallyReMaterializable(MI) ||
+             isReallyTriviallyReMaterializableGeneric(MI, AA)));
   }
 
 protected:
   /// isReallyTriviallyReMaterializable - For instructions with opcodes for
-  /// which the M_REMATERIALIZABLE flag is set, this function tests whether the
-  /// instruction itself is actually trivially rematerializable, considering
-  /// its operands.  This is used for targets that have instructions that are
-  /// only trivially rematerializable for specific uses.  This predicate must
-  /// return false if the instruction has any side effects other than
-  /// producing a value, or if it requres any address registers that are not
-  /// always available.
+  /// which the M_REMATERIALIZABLE flag is set, this hook lets the target
+  /// specify whether the instruction is actually trivially rematerializable,
+  /// taking into consideration its operands. This predicate must return false
+  /// if the instruction has any side effects other than producing a value, or
+  /// if it requres any address registers that are not always available.
   virtual bool isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
-    return true;
+    return false;
   }
+
+private:
+  /// isReallyTriviallyReMaterializableGeneric - For instructions with opcodes
+  /// for which the M_REMATERIALIZABLE flag is set and the target hook
+  /// isReallyTriviallyReMaterializable returns false, this function does
+  /// target-independent tests to determine if the instruction is really
+  /// trivially rematerializable.
+  bool isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
+                                                AliasAnalysis *AA) const;
 
 public:
   /// Return true if the instruction is a register to register move and return

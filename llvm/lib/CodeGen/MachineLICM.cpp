@@ -317,12 +317,10 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
   if (MI.getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
     return false;
 
-  const TargetInstrDesc &TID = MI.getDesc();
-
   // FIXME: For now, only hoist re-materilizable instructions. LICM will
   // increase register pressure. We want to make sure it doesn't increase
   // spilling.
-  if (!TII->isTriviallyReMaterializable(&MI))
+  if (!TII->isTriviallyReMaterializable(&MI, AA))
     return false;
 
   // If result(s) of this instruction is used by PHIs, then don't hoist it.

@@ -933,7 +933,8 @@ void MachineInstr::copyPredicates(const MachineInstr *MI) {
 /// SawStore is set to true, it means that there is a store (or call) between
 /// the instruction's location and its intended destination.
 bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
-                                bool &SawStore) const {
+                                bool &SawStore,
+                                AliasAnalysis *AA) const {
   // Ignore stuff that we obviously can't move.
   if (TID->mayStore() || TID->isCall()) {
     SawStore = true;
@@ -947,7 +948,7 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
   // destination. The check for isInvariantLoad gives the targe the chance to
   // classify the load as always returning a constant, e.g. a constant pool
   // load.
-  if (TID->mayLoad() && !isInvariantLoad())
+  if (TID->mayLoad() && !isInvariantLoad(AA))
     // Otherwise, this is a real load.  If there is a store between the load and
     // end of block, or if the load is volatile, we can't move it.
     return !SawStore && !hasVolatileMemoryRef();
@@ -958,10 +959,11 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
 /// isSafeToReMat - Return true if it's safe to rematerialize the specified
 /// instruction which defined the specified register instead of copying it.
 bool MachineInstr::isSafeToReMat(const TargetInstrInfo *TII,
-                                 unsigned DstReg) const {
+                                 unsigned DstReg,
+                                 AliasAnalysis *AA) const {
   bool SawStore = false;
-  if (!TII->isTriviallyReMaterializable(this) ||
-      !isSafeToMove(TII, SawStore))
+  if (!TII->isTriviallyReMaterializable(this, AA) ||
+      !isSafeToMove(TII, SawStore, AA))
     return false;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
