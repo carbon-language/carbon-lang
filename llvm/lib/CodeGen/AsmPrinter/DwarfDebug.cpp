@@ -950,8 +950,10 @@ void DwarfDebug::ConstructTypeDIE(CompileUnit *DW_Unit, DIE &Buffer,
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
       DIE *ElemDie = NULL;
       DIEnumerator Enum(Elements.getElement(i).getNode());
-      ElemDie = ConstructEnumTypeDIE(DW_Unit, &Enum);
-      Buffer.AddChild(ElemDie);
+      if (!Enum.isNull()) {
+        ElemDie = ConstructEnumTypeDIE(DW_Unit, &Enum);
+        Buffer.AddChild(ElemDie);
+      }
     }
   }
     break;
