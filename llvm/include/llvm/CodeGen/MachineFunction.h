@@ -329,7 +329,7 @@ public:
                                           unsigned base_alignment);
 
   /// getMachineMemOperand - Allocate a new MachineMemOperand by copying
-  /// an existing one, adjusting by an offset and using the given EVT.
+  /// an existing one, adjusting by an offset and using the given size.
   /// MachineMemOperands are owned by the MachineFunction and need not be
   /// explicitly deallocated.
   MachineMemOperand *getMachineMemOperand(const MachineMemOperand *MMO,
@@ -338,6 +338,20 @@ public:
   /// allocateMemRefsArray - Allocate an array to hold MachineMemOperand
   /// pointers.  This array is owned by the MachineFunction.
   MachineInstr::mmo_iterator allocateMemRefsArray(unsigned long Num);
+
+  /// extractLoadMemRefs - Allocate an array and populate it with just the
+  /// load information from the given MachineMemOperand sequence.
+  std::pair<MachineInstr::mmo_iterator,
+            MachineInstr::mmo_iterator>
+    extractLoadMemRefs(MachineInstr::mmo_iterator Begin,
+                       MachineInstr::mmo_iterator End);
+
+  /// extractStoreMemRefs - Allocate an array and populate it with just the
+  /// store information from the given MachineMemOperand sequence.
+  std::pair<MachineInstr::mmo_iterator,
+            MachineInstr::mmo_iterator>
+    extractStoreMemRefs(MachineInstr::mmo_iterator Begin,
+                        MachineInstr::mmo_iterator End);
 
   //===--------------------------------------------------------------------===//
   // Debug location.

@@ -498,6 +498,8 @@ public:
   virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
                               SmallVectorImpl<MachineOperand> &Addr,
                               const TargetRegisterClass *RC,
+                              MachineInstr::mmo_iterator MMOBegin,
+                              MachineInstr::mmo_iterator MMOEnd,
                               SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
   virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -508,6 +510,8 @@ public:
   virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                SmallVectorImpl<MachineOperand> &Addr,
                                const TargetRegisterClass *RC,
+                               MachineInstr::mmo_iterator MMOBegin,
+                               MachineInstr::mmo_iterator MMOEnd,
                                SmallVectorImpl<MachineInstr*> &NewMIs) const;
   
   virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
