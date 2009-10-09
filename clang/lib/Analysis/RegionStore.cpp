@@ -1485,7 +1485,7 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
   if (i < size) {
     if (ElementTy->isIntegerType()) {
       SVal V = ValMgr.makeZeroVal(ElementTy);
-      state = setDefaultValue(state, R, V);
+      state = state->set<RegionDefaultValue>(R, V);
     }
   }
 
@@ -1540,7 +1540,7 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
 
   // There may be fewer values in the initialize list than the fields of struct.
   if (FI != FE)
-    state = setDefaultValue(state, R, ValMgr.makeIntVal(0, false));
+    state = state->set<RegionDefaultValue>(R, ValMgr.makeIntVal(0, false));
 
   return state;
 }
