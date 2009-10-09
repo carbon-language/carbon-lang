@@ -778,6 +778,24 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
     LI->addRange(LiveRange(DefIdx, LIs->getNextSlot(DefIdx), DeadVN));
     DeadVN->addKill(DefIdx);
   }
+
+  // Update kill markers.
+  for (LiveInterval::vni_iterator VI = LI->vni_begin(), VE = LI->vni_end();
+       VI != VE; ++VI) {
+    VNInfo* VNI = *VI;
+    for (unsigned i = 0, e = VNI->kills.size(); i != e; ++i) {
+      LiveIndex KillIdx = VNI->kills[i];
+      if (KillIdx.isPHIIndex())
+        continue;
+      MachineInstr *KillMI = LIs->getInstructionFromIndex(KillIdx);
+      if (KillMI) {
+        MachineOperand *KillMO = KillMI->findRegisterUseOperand(CurrLI->reg);
+        if (KillMO)
+          // It could be a dead def.
+          KillMO->setIsKill();
+      }
+    }
+  }
 }
 
 /// RenumberValno - Split the given valno out into a new vreg, allowing it to
@@ -1102,7 +1120,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
       return false; // Def is dead. Do nothing.
     
     if ((SpillMI = FoldSpill(LI->reg, RC, DefMI, Barrier,
-                            BarrierMBB, SS, RefsInMBB))) {
+                             BarrierMBB, SS, RefsInMBB))) {
       SpillIndex = LIs->getInstructionIndex(SpillMI);
     } else {
       // Check if it's possible to insert a spill after the def MI.
@@ -1118,11 +1136,9 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
         if (SpillPt == DefMBB->end())
           return false; // No gap to insert spill.
       }
-      // Add spill. The store instruction kills the register if def is before
-      // the barrier in the barrier block.
+      // Add spill. 
       SS = CreateSpillStackSlot(CurrLI->reg, RC);
-      TII->storeRegToStackSlot(*DefMBB, SpillPt, CurrLI->reg,
-                               DefMBB == BarrierMBB, SS, RC);
+      TII->storeRegToStackSlot(*DefMBB, SpillPt, CurrLI->reg, false, SS, RC);
       SpillMI = prior(SpillPt);
       LIs->InsertMachineInstrInMaps(SpillMI, SpillIndex);
     }
@@ -1150,7 +1166,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
                           LIs->getDefIndex(RestoreIndex));
 
   ReconstructLiveInterval(CurrLI);
-  
+
   if (!FoldedRestore) {
     LiveIndex RestoreIdx = LIs->getInstructionIndex(prior(RestorePt));
     RestoreIdx = LIs->getDefIndex(RestoreIdx);
