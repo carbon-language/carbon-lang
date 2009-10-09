@@ -2951,20 +2951,18 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 
   Operator *U = cast<Operator>(V);
   switch (Opcode) {
-  case Instruction::Add: {
-    AddOperator *A = cast<AddOperator>(U);
+  case Instruction::Add:
+    // Don't transfer the NSW and NUW bits from the Add instruction to the
+    // Add expression, because the Instruction may be guarded by control
+    // flow and the no-overflow bits may not be valid for the expression in
+    // any context.
     return getAddExpr(getSCEV(U->getOperand(0)),
-                      getSCEV(U->getOperand(1)),
-                      A->hasNoUnsignedWrap(),
-                      A->hasNoSignedWrap());
-  }
-  case Instruction::Mul: {
-    MulOperator *M = cast<MulOperator>(U);
+                      getSCEV(U->getOperand(1)));
+  case Instruction::Mul:
+    // Don't transfer the NSW and NUW bits from the Mul instruction to the
+    // Mul expression, as with Add.
     return getMulExpr(getSCEV(U->getOperand(0)),
-                      getSCEV(U->getOperand(1)),
-                      M->hasNoUnsignedWrap(),
-                      M->hasNoSignedWrap());
-  }
+                      getSCEV(U->getOperand(1)));
   case Instruction::UDiv:
     return getUDivExpr(getSCEV(U->getOperand(0)),
                        getSCEV(U->getOperand(1)));
