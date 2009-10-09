@@ -70,7 +70,7 @@ Almost dead code.
   loop dependence analysis
   ELF Writer?  How stable?
   <li>PostRA scheduler improvements, ARM adoption (David Goodwin).</li>
-
+  2.7 supports the GDB 7.0 jit interfaces for debug info.
  -->
 
  <!-- for announcement email:
@@ -240,17 +240,29 @@ Klee.</p>
 
 <div class="doc_text">
 <p>
-<b>UPDATE!</b> 
-blah
+The LLVM Machine Code (MC) Toolkit project is a (very early) effort to build
+better tools for dealing with machine code, object file formats, etc.  The idea
+is to be able to generate most of the target specific details of assemblers and
+disassemblers from existing LLVM target .td files (with suitable enhancements),
+and to build infrastructure for reading and writing common object file formats.
+One of the first deliverables is to build a full assembler and integrate it into
+the compiler, which is predicted to substantially reduce compile time in some
+scenarios.
+</p>
 
-  MC:
-    MCSection, MCAsmInfo
-	MCInstPrinter did it make it in?
-	MCInst (X86 using it so far)
-	Rewrite of X86 GV selection logic: TargetOperand flags on ExternalSymbol, GV, etc operands.
-	Can parse and re-print out an darwin-x86 .s file.
-	TargetLoweringObjectFile, MCSectionKind
-	Verrrry early start of a macho writer.
+<p>In the LLVM 2.6 timeframe, the MC framework has grown to the point where it
+can reliably parse and pretty print (with some encoding information) a
+darwin/x86 .s file successfully, and has the very early phases of a Mach-O
+assembler in progress.  Beyond the MC framework itself, major refactoring of the
+LLVM code generator has started.  The idea is to make the code generator reason
+about the code it is producing in a much more semantic way, rather than a
+textual way.  For example, the code generator now uses MCSection objects to
+represent section assignments, instead of text strings that print to .section
+directives.</p>
+
+<p>MC is an early and ongoing project that will hopefully continue to lead to
+many improvements in the code generator and build infrastructure useful for many
+other situations.
 </p>
 
 </div>	
@@ -410,19 +422,20 @@ in this section.
 
 <ul>
 <li>New <a href="#compiler-rt">compiler-rt</a>, <A href="#klee">klee</a>,
-    and <a href="#mc">machine code toolkit</a> subprojects.</li>
-<li>LLVM debug info now generates line number information, even when
-    optimizations are enabled.  This allows statistical sampling tools like
-    oprofile and Shark to map samples back to source lines.</li>
-<li>LLVM now includes new experiemental backends to support the MSP430, SystemZ,
+    and <a href="#mc">machine code toolkit</a> sub-projects.</li>
+<li>Debug information now includes line numbers when optimizations are enabled.
+    This allows statistical sampling tools like oprofile and Shark to map
+    samples back to source lines.</li>
+<li>LLVM now includes new experimental backends to support the MSP430, SystemZ,
     and BlackFin architectures.</li>
 <li>LLVM supports a new <a href="GoldPlugin.html">Gold Linker Plugin</a> which
     enables support for <a href="LinkTimeOptimization.html">transparent
     link-time optimization</a> on ELF targets when used with the Gold binutils
     linker.</li>
-<li>LLVMContext,   llvm_start_multithreaded: ProgrammersManual.html#threading</li>
-<li>FileCheck</li>
-<li>LLVM 2.6 includes a brand new experimental LLVM bindings to the Ada2005 programming language.</li>
+<li>LLVM now supports doing optimization and code generation on multiple threads
+    by allowing multiple "LLVMContext" objects to exist.  Please see the <a 
+    href="ProgrammersManual.html#threading">threading entry in the Programmer's
+    Manual</a> for more information.</li>
 </ul>
 
 </div>
@@ -612,6 +625,28 @@ releases of LLVM.
 
 <!--=========================================================================-->
 <div class="doc_subsection">
+<a name="executionengine">Interpreter and JIT Improvements</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+<li>The JIT now supports generating more than 16M of code.</li>
+<li>When configured with --with-oprofile, the JIT can now inform oprofile about
+     JIT'd code, allowing oprofile to get line number and function name
+     information for JIT'd functions.</li>
+<li>When "libffi" is available, the LLVM interpreter now uses it, which supports
+    calling almost arbitrary external (natively compiled) functions.</li>
+<li>Clients of the JIT can now register a 'JITEventListener' object to receive
+    callbacks when the JIT emits or frees machine code. The OProfile support
+    uses this mechanism.</li>
+</ul>
+
+</div>
+
+
+<!--=========================================================================-->
+<div class="doc_subsection">
 <a name="newapis">New Useful APIs</a>
 </div>
 
@@ -628,7 +663,7 @@ releases of LLVM.
   New SourceMgr, SMLoc classes for simple parsers with caret diagnostics and #include support, (used by
     tablegen, llvm-mc, the .ll parser, FileCheck, etc)
 
-<ul>
+</ul>
 
 
 </div>
@@ -642,21 +677,19 @@ releases of LLVM.
 <p>Other miscellaneous features include:</p>
 
 <ul>
-<li>interpreter + libffi</li>
-<li>  JIT now supports generating more than 16M of code.</li>
-<li>Users can now <a
-href="http://llvm.org/doxygen/classllvm_1_1ExecutionEngine.html#fcd2b4b92ca38812ca31640b0da14927">register</a>
-a <a href="http://llvm.org/doxygen/classllvm_1_1JITEventListener.html">JITEventListener</a>
-to receive callbacks when the JIT emits or frees machine code. The
-OProfile support uses this mechanism.</li>
-   JIT support for oprofile (r75279), configure with --with-oprofile.  Now we get line # and function info for JIT'd functions.
-
+<li>LLVM now includes a new internal '<a 
+    href="http://llvm.org/cmds/FileCheck.html">FileCheck</a>' tool which allows
+    writing much more accurate regression tests that run faster.  Please see the
+    <a href="TestingGuide.html#FileCheck">FileCheck section of the Testing
+    Guide</a> for more information.</li>
 <li>LLVM profile information support has been significantly improved to produce
 correct use counts, and has support for edge profiling with reduced runtime
 overhead.  Combined, the generated profile information is both more correct and
 imposes about half as much overhead (2.6. from 12% to 6% overhead on SPEC
 CPU2000).</li>
 <li>Many extensions to the C APIs.</li>
+<li>LLVM 2.6 includes a brand new experimental LLVM bindings to the Ada2005
+programming language.</li>
 
 <li>LLVMC:
 
