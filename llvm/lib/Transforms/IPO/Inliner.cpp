@@ -189,9 +189,9 @@ bool Inliner::shouldInline(CallSite CS) {
   
   int Cost = IC.getValue();
   int CurrentThreshold = InlineThreshold;
-  Function *Fn = CS.getCaller();
-  if (Fn && !Fn->isDeclaration() &&
-      Fn->hasFnAttr(Attribute::OptimizeForSize) &&
+  Function *Caller = CS.getCaller();
+  if (Caller && !Caller->isDeclaration() &&
+      Caller->hasFnAttr(Attribute::OptimizeForSize) &&
       InlineLimit.getNumOccurrences() == 0 &&
       InlineThreshold != 50)
     CurrentThreshold = 50;
@@ -203,8 +203,72 @@ bool Inliner::shouldInline(CallSite CS) {
     return false;
   }
   
+  // Try to detect the case where the current inlining candidate caller
+  // (call it B) is a static function and is an inlining candidate elsewhere,
+  // and the current candidate callee (call it C) is large enough that
+  // inlining it into B would make B too big to inline later.  In these
+  // circumstances it may be best not to inline C into B, but to inline B
+  // into its callers.
+  if (Caller->hasLocalLinkage()) {
+    int TotalSecondaryCost = 0;
+    bool outerCallsFound = false;
+    bool allOuterCallsWillBeInlined = true;
+    bool someOuterCallWouldNotBeInlined = false;
+    for (Value::use_iterator I = Caller->use_begin(), E =Caller->use_end(); 
+         I != E; ++I) {
+      CallSite CS2 = CallSite::get(*I);
+
+      // If this isn't a call to Caller (it could be some other sort
+      // of reference) skip it.
+      if (CS2.getInstruction() == 0 || CS2.getCalledFunction() != Caller)
+        continue;
+
+      InlineCost IC2 = getInlineCost(CS2);
+      if (IC2.isNever())
+        allOuterCallsWillBeInlined = false;
+      if (IC2.isAlways() || IC2.isNever())
+        continue;
+
+      outerCallsFound = true;
+      int Cost2 = IC2.getValue();
+      int CurrentThreshold2 = InlineThreshold;
+      Function *Caller2 = CS2.getCaller();
+      if (Caller2 && !Caller2->isDeclaration() &&
+          Caller2->hasFnAttr(Attribute::OptimizeForSize) &&
+          InlineThreshold != 50)
+        CurrentThreshold2 = 50;
+
+      float FudgeFactor2 = getInlineFudgeFactor(CS2);
+
+      if (Cost2 >= (int)(CurrentThreshold2 * FudgeFactor2))
+        allOuterCallsWillBeInlined = false;
+
+      // See if we have this case.  The magic 6 is what InlineCost assigns
+      // for the call instruction, which we would be deleting.
+      if (Cost2 < (int)(CurrentThreshold2 * FudgeFactor2) &&
+          Cost2 + Cost - 6 >= (int)(CurrentThreshold2 * FudgeFactor2)) {
+        someOuterCallWouldNotBeInlined = true;
+        TotalSecondaryCost += Cost2;
+      }
+    }
+    // If all outer calls to Caller would get inlined, the cost for the last
+    // one is set very low by getInlineCost, in anticipation that Caller will
+    // be removed entirely.  We did not account for this above unless there
+    // is only one caller of Caller.
+    if (allOuterCallsWillBeInlined && Caller->use_begin() != Caller->use_end())
+      TotalSecondaryCost -= 15000;
+
+    if (outerCallsFound && someOuterCallWouldNotBeInlined && 
+        TotalSecondaryCost < Cost) {
+      DEBUG(errs() << "    NOT Inlining: " << *CS.getInstruction() << 
+           " Cost = " << Cost << 
+           ", outer Cost = " << TotalSecondaryCost << '\n');
+      return false;
+    }
+  }
+
   DEBUG(errs() << "    Inlining: cost=" << Cost
-        << ", Call: " << *CS.getInstruction() << "\n");
+        << ", Call: " << *CS.getInstruction() << '\n');
   return true;
 }
 
@@ -232,7 +296,7 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
         CallSite CS = CallSite::get(I);
-        // If this this isn't a call, or it is a call to an intrinsic, it can
+        // If this isn't a call, or it is a call to an intrinsic, it can
         // never be inlined.
         if (CS.getInstruction() == 0 || isa<IntrinsicInst>(I))
           continue;
@@ -279,7 +343,7 @@ bool Inliner::runOnSCC(std::vector<CallGraphNode*> &SCC) {
       // try to do so.
       if (!shouldInline(CS))
         continue;
-      
+
       Function *Caller = CS.getCaller();
       // Attempt to inline the function...
       if (!InlineCallIfPossible(CS, CG, TD, InlinedArrayAllocas))
