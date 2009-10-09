@@ -164,18 +164,22 @@ this project is encouraged to get involved!</p>
 
 <div class="doc_text">
 <p>
-<b>UPDATE!</b> 
 The <a href="http://vmkit.llvm.org/">VMKit project</a> is an implementation of
-a JVM and a CLI Virtual Machines (Microsoft .NET is an
-implementation of the CLI) using the Just-In-Time compiler of LLVM.</p>
+a JVM and a CLI Virtual Machine (Microsoft .NET is an
+implementation of the CLI) using LLVM for static and just-in-time compilation.</p>
 
-<p>Following LLVM 2.6, VMKit has its XYZ release that you can find on its
+<p>VMKit version 0.26 builds with LLVM 2.6 and you can find it on its
 <a href="http://vmkit.llvm.org/releases/">webpage</a>. The release includes
 bug fixes, cleanup and new features. The major changes are:</p>
 
 <ul>
 
-<li>Something wonderful!</li>
+<li>A new llcj tool to generate shared libraries or executables of Java files.</li>
+<li>A rewriting of the JVM C++ codebase to call LLVM garbage collection (GC) intrinsics when it manipulates GC objects. </li>
+<li>Cooperative GC and precise stack scanning using the GC framework of LLVM. </li>
+<li>Fast subtype checking (paper from Click et al [JGI'02]). </li>
+<li>Implementation of a two-word header for Java objects instead of the orginal three-word header. </li>
+<li>Better Java specification-compliance: division by zero checks, stack overflow checks, finalization and references support. </li>
 
 </ul>
 </div>
