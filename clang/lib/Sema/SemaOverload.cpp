@@ -3690,11 +3690,12 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
            Ptr != CandidateTypes.pointer_end(); ++Ptr) {
         QualType C1Ty = (*Ptr);
         QualType C1;
+        unsigned CV1;
         if (const PointerType *PointerTy = C1Ty->getAs<PointerType>()) {
-          C1 = PointerTy->getPointeeType();
-          C1 = C1.getUnqualifiedType();
+          C1 = PointerTy->getPointeeType().getUnqualifiedType();
           if (!isa<RecordType>(C1))
             continue;
+          CV1 = PointerTy->getPointeeType().getCVRQualifiers();
         }
         for (BuiltinCandidateTypeSet::iterator
              MemPtr = CandidateTypes.member_pointer_begin(),
@@ -3708,7 +3709,6 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
           QualType ParamTypes[2] = { *Ptr, *MemPtr };
           // build CV12 T&
           QualType T = mptr->getPointeeType();
-          unsigned CV1 = (*Ptr).getCVRQualifiers();
           unsigned CV2 = T.getCVRQualifiers();
           T = Context.getCVRQualifiedType(T, (CV1 | CV2));
           QualType ResultTy = Context.getLValueReferenceType(T);
@@ -3972,7 +3972,9 @@ Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
 /// set. If OnlyViable is true, only viable candidates will be printed.
 void
 Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
-                              bool OnlyViable) {
+                              bool OnlyViable,
+                              BinaryOperator::Opcode Opc,
+                              SourceLocation OpLoc) {
   OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                              LastCand = CandidateSet.end();
   for (; Cand != LastCand; ++Cand) {
@@ -4045,17 +4047,14 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
         Diag(Cand->Surrogate->getLocation(), diag::err_ovl_surrogate_cand)
           << FnType;
       } else if (OnlyViable) {
-        // FIXME: We need to get the identifier in here
-        // FIXME: Do we want the error message to point at the operator?
-        // (built-ins won't have a location)
-        // FIXME: can we get some kind of stable location for this?
         QualType FnType
           = Context.getFunctionType(Cand->BuiltinTypes.ResultTy,
                                     Cand->BuiltinTypes.ParamTypes,
                                     Cand->Conversions.size(),
                                     false, 0);
 
-        Diag(SourceLocation(), diag::err_ovl_builtin_candidate) << FnType;
+        Diag(OpLoc, diag::err_ovl_builtin_candidate) << FnType <<
+	  BinaryOperator::getOpcodeStr(Opc);
       }
     }
   }
@@ -4714,7 +4713,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
           << BinaryOperator::getOpcodeStr(Opc)
           << Args[0]->getSourceRange() << Args[1]->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true, Opc, OpLoc);
       return ExprError();
 
     case OR_Deleted:

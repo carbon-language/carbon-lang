@@ -906,7 +906,9 @@ public:
                                        SourceLocation Loc,
                                        OverloadCandidateSet::iterator& Best);
   void PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
-                               bool OnlyViable);
+                         bool OnlyViable,
+                         BinaryOperator::Opcode Opc=(BinaryOperator::Opcode)0,
+                         SourceLocation Loc=SourceLocation());
 
   FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                                    bool Complain);
