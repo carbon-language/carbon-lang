@@ -1,14 +1,8 @@
-; RUN: llc < %s -march=arm -mattr=+neon > %t
-; RUN: grep {vsli\\.8} %t | count 2
-; RUN: grep {vsli\\.16} %t | count 2
-; RUN: grep {vsli\\.32} %t | count 2
-; RUN: grep {vsli\\.64} %t | count 2
-; RUN: grep {vsri\\.8} %t | count 2
-; RUN: grep {vsri\\.16} %t | count 2
-; RUN: grep {vsri\\.32} %t | count 2
-; RUN: grep {vsri\\.64} %t | count 2
+; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
 
 define <8 x i8> @vsli8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+;CHECK: vsli8:
+;CHECK: vsli.8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
 	%tmp3 = call <8 x i8> @llvm.arm.neon.vshiftins.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2, <8 x i8> < i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7 >)
@@ -16,6 +10,8 @@ define <8 x i8> @vsli8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vsli16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+;CHECK: vsli16:
+;CHECK: vsli.16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
 	%tmp3 = call <4 x i16> @llvm.arm.neon.vshiftins.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2, <4 x i16> < i16 15, i16 15, i16 15, i16 15 >)
@@ -23,6 +19,8 @@ define <4 x i16> @vsli16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vsli32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+;CHECK: vsli32:
+;CHECK: vsli.32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
 	%tmp3 = call <2 x i32> @llvm.arm.neon.vshiftins.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2, <2 x i32> < i32 31, i32 31 >)
@@ -30,6 +28,8 @@ define <2 x i32> @vsli32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <1 x i64> @vsli64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
+;CHECK: vsli64:
+;CHECK: vsli.64
 	%tmp1 = load <1 x i64>* %A
 	%tmp2 = load <1 x i64>* %B
 	%tmp3 = call <1 x i64> @llvm.arm.neon.vshiftins.v1i64(<1 x i64> %tmp1, <1 x i64> %tmp2, <1 x i64> < i64 63 >)
@@ -37,6 +37,8 @@ define <1 x i64> @vsli64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
 }
 
 define <16 x i8> @vsliQ8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+;CHECK: vsliQ8:
+;CHECK: vsli.8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
 	%tmp3 = call <16 x i8> @llvm.arm.neon.vshiftins.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2, <16 x i8> < i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7 >)
@@ -44,6 +46,8 @@ define <16 x i8> @vsliQ8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vsliQ16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
+;CHECK: vsliQ16:
+;CHECK: vsli.16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
 	%tmp3 = call <8 x i16> @llvm.arm.neon.vshiftins.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2, <8 x i16> < i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15 >)
@@ -51,6 +55,8 @@ define <8 x i16> @vsliQ16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vsliQ32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
+;CHECK: vsliQ32:
+;CHECK: vsli.32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
 	%tmp3 = call <4 x i32> @llvm.arm.neon.vshiftins.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2, <4 x i32> < i32 31, i32 31, i32 31, i32 31 >)
@@ -58,6 +64,8 @@ define <4 x i32> @vsliQ32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <2 x i64> @vsliQ64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
+;CHECK: vsliQ64:
+;CHECK: vsli.64
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i64>* %B
 	%tmp3 = call <2 x i64> @llvm.arm.neon.vshiftins.v2i64(<2 x i64> %tmp1, <2 x i64> %tmp2, <2 x i64> < i64 63, i64 63 >)
@@ -65,6 +73,8 @@ define <2 x i64> @vsliQ64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 }
 
 define <8 x i8> @vsri8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+;CHECK: vsri8:
+;CHECK: vsri.8
 	%tmp1 = load <8 x i8>* %A
 	%tmp2 = load <8 x i8>* %B
 	%tmp3 = call <8 x i8> @llvm.arm.neon.vshiftins.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2, <8 x i8> < i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8 >)
@@ -72,6 +82,8 @@ define <8 x i8> @vsri8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 }
 
 define <4 x i16> @vsri16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
+;CHECK: vsri16:
+;CHECK: vsri.16
 	%tmp1 = load <4 x i16>* %A
 	%tmp2 = load <4 x i16>* %B
 	%tmp3 = call <4 x i16> @llvm.arm.neon.vshiftins.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2, <4 x i16> < i16 -16, i16 -16, i16 -16, i16 -16 >)
@@ -79,6 +91,8 @@ define <4 x i16> @vsri16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 }
 
 define <2 x i32> @vsri32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
+;CHECK: vsri32:
+;CHECK: vsri.32
 	%tmp1 = load <2 x i32>* %A
 	%tmp2 = load <2 x i32>* %B
 	%tmp3 = call <2 x i32> @llvm.arm.neon.vshiftins.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2, <2 x i32> < i32 -32, i32 -32 >)
@@ -86,6 +100,8 @@ define <2 x i32> @vsri32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 }
 
 define <1 x i64> @vsri64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
+;CHECK: vsri64:
+;CHECK: vsri.64
 	%tmp1 = load <1 x i64>* %A
 	%tmp2 = load <1 x i64>* %B
 	%tmp3 = call <1 x i64> @llvm.arm.neon.vshiftins.v1i64(<1 x i64> %tmp1, <1 x i64> %tmp2, <1 x i64> < i64 -64 >)
@@ -93,6 +109,8 @@ define <1 x i64> @vsri64(<1 x i64>* %A, <1 x i64>* %B) nounwind {
 }
 
 define <16 x i8> @vsriQ8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
+;CHECK: vsriQ8:
+;CHECK: vsri.8
 	%tmp1 = load <16 x i8>* %A
 	%tmp2 = load <16 x i8>* %B
 	%tmp3 = call <16 x i8> @llvm.arm.neon.vshiftins.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2, <16 x i8> < i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8, i8 -8 >)
@@ -100,6 +118,8 @@ define <16 x i8> @vsriQ8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 }
 
 define <8 x i16> @vsriQ16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
+;CHECK: vsriQ16:
+;CHECK: vsri.16
 	%tmp1 = load <8 x i16>* %A
 	%tmp2 = load <8 x i16>* %B
 	%tmp3 = call <8 x i16> @llvm.arm.neon.vshiftins.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2, <8 x i16> < i16 -16, i16 -16, i16 -16, i16 -16, i16 -16, i16 -16, i16 -16, i16 -16 >)
@@ -107,6 +127,8 @@ define <8 x i16> @vsriQ16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 }
 
 define <4 x i32> @vsriQ32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
+;CHECK: vsriQ32:
+;CHECK: vsri.32
 	%tmp1 = load <4 x i32>* %A
 	%tmp2 = load <4 x i32>* %B
 	%tmp3 = call <4 x i32> @llvm.arm.neon.vshiftins.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2, <4 x i32> < i32 -32, i32 -32, i32 -32, i32 -32 >)
@@ -114,6 +136,8 @@ define <4 x i32> @vsriQ32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 }
 
 define <2 x i64> @vsriQ64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
+;CHECK: vsriQ64:
+;CHECK: vsri.64
 	%tmp1 = load <2 x i64>* %A
 	%tmp2 = load <2 x i64>* %B
 	%tmp3 = call <2 x i64> @llvm.arm.neon.vshiftins.v2i64(<2 x i64> %tmp1, <2 x i64> %tmp2, <2 x i64> < i64 -64, i64 -64 >)
