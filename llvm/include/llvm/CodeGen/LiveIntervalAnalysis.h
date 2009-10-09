@@ -254,8 +254,7 @@ namespace llvm {
     /// findGapBeforeInstr - Find an empty instruction slot before the
     /// specified index. If "Furthest" is true, find one that's furthest
     /// away from the index (but before any index that's occupied).
-    LiveIndex findGapBeforeInstr(LiveIndex Index,
-                                         bool Furthest = false) {
+    LiveIndex findGapBeforeInstr(LiveIndex Index, bool Furthest = false) {
       Index = getBaseIndex(getPrevIndex(Index));
       if (getInstructionFromIndex(Index))
         return LiveIndex();  // No gap!
