@@ -550,11 +550,6 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
          "Invalid argument to EmitParmDecl");
   QualType Ty = D.getType();
 
-  if (CGDebugInfo *DI = getDebugInfo()) {
-    DI->setLocation(D.getLocation());
-    DI->EmitStopPoint(CurFn, Builder);
-  }
-
   llvm::Value *DeclPtr;
   if (!Ty->isConstantSizeType()) {
     // Variable sized values always are passed by-reference.
@@ -583,7 +578,9 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg) {
   DMEntry = DeclPtr;
 
   // Emit debug info for param declaration.
-  if (CGDebugInfo *DI = getDebugInfo())
+  if (CGDebugInfo *DI = getDebugInfo()) {
+    DI->setLocation(D.getLocation());
     DI->EmitDeclareOfArgVariable(&D, DeclPtr, Builder);
+  }
 }
 
