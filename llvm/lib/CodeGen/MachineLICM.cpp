@@ -131,10 +131,6 @@ static bool LoopIsOuterMostWithPreheader(MachineLoop *CurLoop) {
 /// loop.
 ///
 bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
-  const Function *F = MF.getFunction();
-  if (F->hasFnAttr(Attribute::OptimizeForSize))
-    return false;
-
   DEBUG(errs() << "******** Machine LICM ********\n");
 
   Changed = false;
