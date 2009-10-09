@@ -271,8 +271,6 @@ public:
   /// KillStruct - Set the entire struct to unknown.
   const GRState *KillStruct(const GRState *state, const TypedRegion* R);
 
-  const GRState *setDefaultValue(const GRState *state, const MemRegion* R, SVal V);
-
   Store Remove(Store store, Loc LV);
 
   //===------------------------------------------------------------------===//
@@ -1564,11 +1562,6 @@ const GRState *RegionStoreManager::KillStruct(const GRState *state,
   }
 
   return state->makeWithStore(store);
-}
-
-const GRState *RegionStoreManager::setDefaultValue(const GRState *state,
-                                               const MemRegion* R, SVal V) {
-  return state->set<RegionDefaultValue>(R, V);
 }
 
 const GRState*
