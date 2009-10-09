@@ -797,10 +797,13 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             if (Reg == PrevScratchReg) {
               if (MO.isUse()) {
                 // Two-address operands implicitly kill
-                if (MO.isKill() || MI->isRegTiedToDefOperand(i))
+                if (MO.isKill() || MI->isRegTiedToDefOperand(i)) {
+                  havePrevValue = false;
                   PrevScratchReg = 0;
+                }
               } else {
                 assert (MO.isDef());
+                havePrevValue = false;
                 PrevScratchReg = 0;
               }
             }
