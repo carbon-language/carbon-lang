@@ -137,6 +137,7 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Result *Results,
                                                          unsigned NumResults) {
   // Print the results.
   for (unsigned I = 0; I != NumResults; ++I) {
+    OS << "COMPLETION: ";
     switch (Results[I].Kind) {
     case Result::RK_Declaration:
       OS << Results[I].Declaration->getNameAsString() << " : " 
@@ -171,7 +172,7 @@ PrintingCodeCompleteConsumer::ProcessOverloadCandidates(unsigned CurrentArg,
   for (unsigned I = 0; I != NumCandidates; ++I) {
     if (CodeCompletionString *CCS
           = Candidates[I].CreateSignatureString(CurrentArg, SemaRef)) {
-      OS << CCS->getAsString() << "\n";
+      OS << "OVERLOAD: " << CCS->getAsString() << "\n";
       delete CCS;
     }
   }

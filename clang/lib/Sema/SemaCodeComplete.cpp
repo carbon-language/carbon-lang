@@ -198,7 +198,11 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     Results.push_back(R);
     return;
   }
-  
+
+  // Skip unnamed entities.
+  if (!R.Declaration->getDeclName())
+    return;
+      
   // Look through using declarations.
   if (UsingDecl *Using = dyn_cast<UsingDecl>(R.Declaration))
     MaybeAddResult(Result(Using->getTargetDecl(), R.Rank, R.Qualifier),
@@ -229,8 +233,14 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     if (Id->isStr("__va_list_tag") || Id->isStr("__builtin_va_list"))
       return;
     
-    // FIXME: Should we filter out other names in the implementation's
-    // namespace, e.g., those containing a __ or that start with _[A-Z]?
+    // Filter out names reserved for the implementation (C99 7.1.3, 
+    // C++ [lib.global.names]). Users don't need to see those.
+    if (Id->getLength() >= 2) {
+      const char *Name = Id->getName();
+      if (Name[0] == '_' &&
+          (Name[1] == '_' || (Name[1] >= 'A' && Name[1] <= 'Z')))
+        return;
+    }
   }
   
   // C++ constructors are never found by name lookup.
