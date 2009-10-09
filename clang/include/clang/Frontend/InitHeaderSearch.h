@@ -67,7 +67,8 @@ public:
 
   /// AddDefaultSystemIncludePaths - Adds the default system include paths so
   ///  that e.g. stdio.h is found.
-  void AddDefaultSystemIncludePaths(const LangOptions &Lang, llvm::Triple &triple);
+  void AddDefaultSystemIncludePaths(const LangOptions &Lang,
+                                    const llvm::Triple &triple);
 
   /// Realize - Merges all search path lists into one list and send it to
   /// HeaderSearch.
