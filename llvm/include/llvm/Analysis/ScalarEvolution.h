@@ -402,37 +402,45 @@ namespace llvm {
     const SCEV *getZeroExtendExpr(const SCEV *Op, const Type *Ty);
     const SCEV *getSignExtendExpr(const SCEV *Op, const Type *Ty);
     const SCEV *getAnyExtendExpr(const SCEV *Op, const Type *Ty);
-    const SCEV *getAddExpr(SmallVectorImpl<const SCEV *> &Ops);
-    const SCEV *getAddExpr(const SCEV *LHS, const SCEV *RHS) {
+    const SCEV *getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
+                           bool HasNUW = false, bool HasNSW = false);
+    const SCEV *getAddExpr(const SCEV *LHS, const SCEV *RHS,
+                           bool HasNUW = false, bool HasNSW = false) {
       SmallVector<const SCEV *, 2> Ops;
       Ops.push_back(LHS);
       Ops.push_back(RHS);
-      return getAddExpr(Ops);
+      return getAddExpr(Ops, HasNUW, HasNSW);
     }
     const SCEV *getAddExpr(const SCEV *Op0, const SCEV *Op1,
-                           const SCEV *Op2) {
+                           const SCEV *Op2,
+                           bool HasNUW = false, bool HasNSW = false) {
       SmallVector<const SCEV *, 3> Ops;
       Ops.push_back(Op0);
       Ops.push_back(Op1);
       Ops.push_back(Op2);
-      return getAddExpr(Ops);
+      return getAddExpr(Ops, HasNUW, HasNSW);
     }
-    const SCEV *getMulExpr(SmallVectorImpl<const SCEV *> &Ops);
-    const SCEV *getMulExpr(const SCEV *LHS, const SCEV *RHS) {
+    const SCEV *getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
+                           bool HasNUW = false, bool HasNSW = false);
+    const SCEV *getMulExpr(const SCEV *LHS, const SCEV *RHS,
+                           bool HasNUW = false, bool HasNSW = false) {
       SmallVector<const SCEV *, 2> Ops;
       Ops.push_back(LHS);
       Ops.push_back(RHS);
-      return getMulExpr(Ops);
+      return getMulExpr(Ops, HasNUW, HasNSW);
     }
     const SCEV *getUDivExpr(const SCEV *LHS, const SCEV *RHS);
     const SCEV *getAddRecExpr(const SCEV *Start, const SCEV *Step,
-                              const Loop *L);
+                              const Loop *L,
+                              bool HasNUW = false, bool HasNSW = false);
     const SCEV *getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
-                              const Loop *L);
+                              const Loop *L,
+                              bool HasNUW = false, bool HasNSW = false);
     const SCEV *getAddRecExpr(const SmallVectorImpl<const SCEV *> &Operands,
-                              const Loop *L) {
+                              const Loop *L,
+                              bool HasNUW = false, bool HasNSW = false) {
       SmallVector<const SCEV *, 4> NewOp(Operands.begin(), Operands.end());
-      return getAddRecExpr(NewOp, L);
+      return getAddRecExpr(NewOp, L, HasNUW, HasNSW);
     }
     const SCEV *getSMaxExpr(const SCEV *LHS, const SCEV *RHS);
     const SCEV *getSMaxExpr(SmallVectorImpl<const SCEV *> &Operands);
