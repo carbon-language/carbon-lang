@@ -140,7 +140,7 @@ public:
                                              DeclarationName N);
 };
 
-inline PartialDiagnostic PDiag(unsigned DiagID) {
+inline PartialDiagnostic PDiag(unsigned DiagID = 0) {
   return PartialDiagnostic(DiagID);
 }
 

@@ -31,7 +31,7 @@ struct s1 {
 enum e1 { YES, NO };
 
 static enum e1 badfunc(struct s1 *q) {
-  return q->bar(); // expected-error{{return type of called function ('enum s1::e1') is incomplete}}
+  return q->bar(); // expected-error{{calling function with incomplete return type 'enum s1::e1'}}
 }
 
 enum e2; // expected-error{{ISO C++ forbids forward references to 'enum' types}}

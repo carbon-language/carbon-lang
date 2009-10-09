@@ -1820,7 +1820,9 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
 /// @returns @c true if @p T is incomplete and a diagnostic was emitted,
 /// @c false otherwise.
 bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
-                               const PartialDiagnostic &PD) {
+                               const PartialDiagnostic &PD,
+                               std::pair<SourceLocation, 
+                                         PartialDiagnostic> Note) {
   unsigned diag = PD.getDiagID();
 
   // FIXME: Add this assertion to help us flush out problems with
@@ -1864,6 +1866,10 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
   // We have an incomplete type. Produce a diagnostic.
   Diag(Loc, PD) << T;
 
+  // If we have a note, produce it.
+  if (!Note.first.isInvalid())
+    Diag(Note.first, Note.second);
+    
   // If the type was a forward declaration of a class/struct/union
   // type, produce
   const TagType *Tag = 0;

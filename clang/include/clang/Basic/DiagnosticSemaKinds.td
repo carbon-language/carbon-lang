@@ -1770,7 +1770,11 @@ def err_block_decl_ref_not_modifiable_lvalue : Error<
 def err_typecheck_call_not_function : Error<
   "called object type %0 is not a function or function pointer">;
 def err_call_incomplete_return : Error<
-  "return type of called function (%0) is incomplete">;
+  "calling function with incomplete return type %0">;
+def err_call_function_incomplete_return : Error<
+  "calling %0 with incomplete return type %1">;
+def note_function_with_incomplete_return_type_declared_here : Note<
+  "%0 declared here">;
 def err_call_incomplete_argument : Error<
   "argument type %0 is incomplete">;
 def err_typecheck_call_too_few_args : Error<

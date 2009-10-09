@@ -493,7 +493,10 @@ public:
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
 
   bool RequireCompleteType(SourceLocation Loc, QualType T,
-                           const PartialDiagnostic &PD);
+                           const PartialDiagnostic &PD,
+                           std::pair<SourceLocation,
+                                     PartialDiagnostic> Note =
+                            std::make_pair(SourceLocation(), PDiag()));
 
   QualType getQualifiedNameType(const CXXScopeSpec &SS, QualType T);
 
@@ -959,6 +962,12 @@ public:
   OwningExprResult BuildOverloadedArrowExpr(Scope *S, ExprArg Base,
                                             SourceLocation OpLoc);
 
+  /// CheckCallReturnType - Checks that a call expression's return type is
+  /// complete. Returns true on failure. The location passed in is the location
+  /// that best represents the call.
+  bool CheckCallReturnType(QualType ReturnType, SourceLocation Loc,
+                           CallExpr *CE, FunctionDecl *FD);
+                           
   /// Helpers for dealing with blocks and functions.
   void CheckFallThroughForFunctionDef(Decl *D, Stmt *Body);
   void CheckFallThroughForBlock(QualType BlockTy, Stmt *Body);

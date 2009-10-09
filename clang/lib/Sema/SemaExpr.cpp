@@ -3013,11 +3013,9 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       << Fn->getType() << Fn->getSourceRange());
 
   // Check for a valid return type
-  if (!FuncT->getResultType()->isVoidType() &&
-      RequireCompleteType(Fn->getSourceRange().getBegin(),
-                          FuncT->getResultType(),
-                          PDiag(diag::err_call_incomplete_return)
-                            << TheCall->getSourceRange()))
+  if (CheckCallReturnType(FuncT->getResultType(), 
+                          Fn->getSourceRange().getBegin(), TheCall.get(),
+                          FDecl))
     return ExprError();
 
   // We know the result type of the call, set it.
@@ -6223,3 +6221,26 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     return;
   }
 }
+
+bool Sema::CheckCallReturnType(QualType ReturnType, SourceLocation Loc,
+                               CallExpr *CE, FunctionDecl *FD) {
+  if (ReturnType->isVoidType() || !ReturnType->isIncompleteType())
+    return false;
+
+  PartialDiagnostic Note =
+    FD ? PDiag(diag::note_function_with_incomplete_return_type_declared_here)
+    << FD->getDeclName() : PDiag();
+  SourceLocation NoteLoc = FD ? FD->getLocation() : SourceLocation();
+  
+  if (RequireCompleteType(Loc, ReturnType,
+                          FD ? 
+                          PDiag(diag::err_call_function_incomplete_return)
+                            << CE->getSourceRange() << FD->getDeclName() :
+                          PDiag(diag::err_call_incomplete_return) 
+                            << CE->getSourceRange(),
+                          std::make_pair(NoteLoc, Note)))
+    return true;
+
+  return false;
+}
+

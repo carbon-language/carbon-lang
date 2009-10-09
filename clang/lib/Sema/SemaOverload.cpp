@@ -2759,7 +2759,7 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
   //        empty.
   if (const RecordType *T1Rec = T1->getAs<RecordType>()) {
     // Complete the type if it can be completed. Otherwise, we're done.
-    if (RequireCompleteType(OpLoc, T1, PartialDiagnostic(0)))
+    if (RequireCompleteType(OpLoc, T1, PDiag()))
       return;
 
     LookupResult Operators;
@@ -4219,10 +4219,10 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                                          Matches.end());
     return getMostSpecialized(TemplateMatches.data(), TemplateMatches.size(), 
                               TPOC_Other, From->getLocStart(),
-                              PartialDiagnostic(0),
-                            PartialDiagnostic(diag::err_addr_ovl_ambiguous)
+                              PDiag(),
+                              PDiag(diag::err_addr_ovl_ambiguous)
                               << TemplateMatches[0]->getDeclName(), 
-                       PartialDiagnostic(diag::err_ovl_template_candidate));
+                              PDiag(diag::err_ovl_template_candidate));
   }
 
   //   [...] any function template specializations in the set are

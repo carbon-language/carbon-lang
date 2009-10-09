@@ -2,12 +2,12 @@
 
 struct foo; // expected-note 3 {{forward declaration of 'struct foo'}}
 
-struct foo a();
+struct foo a(); // expected-note {{'a' declared here}}
 void b(struct foo);
 void c();
 
 void func() {
-  a(); // expected-error{{return type of called function ('struct foo') is incomplete}}
+  a(); // expected-error{{calling 'a' with incomplete return type 'struct foo'}}
   b(*(struct foo*)0); // expected-error{{argument type 'struct foo' is incomplete}}
   c(*(struct foo*)0); // expected-error{{argument type 'struct foo' is incomplete}}
 }
