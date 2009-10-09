@@ -1272,9 +1272,6 @@ public:
                            DeclarationName Name,
                            LookupNameKind NameKind,
                            bool RedeclarationOnly = false);
-  Decl *LookupQualifiedNameWithType(DeclContext *LookupCtx,
-                                    DeclarationName Name,
-                                    QualType T);
   bool LookupParsedName(LookupResult &R, Scope *S, const CXXScopeSpec *SS,
                         DeclarationName Name,
                         LookupNameKind NameKind,
