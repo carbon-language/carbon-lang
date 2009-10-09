@@ -317,7 +317,7 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E) {
   
   // Since the function pointer is 1 plus the virtual table offset, we
   // subtract 1 by using a GEP.
-  VTable = Builder.CreateConstGEP1_64(VTable, -1);
+  VTable = Builder.CreateConstGEP1_64(VTable, (uint64_t)-1);
   
   llvm::Value *VirtualFn = Builder.CreateLoad(VTable, "virtualfn");
   
