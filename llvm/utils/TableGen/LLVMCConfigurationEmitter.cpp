@@ -1572,6 +1572,47 @@ class EmitActionHandler {
   }
 };
 
+bool IsOutFileIndexCheckRequiredStr (const Init* CmdLine) {
+  StrVector StrVec;
+  TokenizeCmdline(InitPtrToString(CmdLine), StrVec);
+
+  for (StrVector::const_iterator I = StrVec.begin(), E = StrVec.end();
+       I != E; ++I) {
+    if (*I == "$OUTFILE")
+      return false;
+  }
+
+  return true;
+}
+
+class IsOutFileIndexCheckRequiredStrCallback {
+  bool* ret_;
+
+public:
+  IsOutFileIndexCheckRequiredStrCallback(bool* ret) : ret_(ret)
+  {}
+
+  void operator()(const Init* CmdLine) {
+    if (IsOutFileIndexCheckRequiredStr(CmdLine))
+      *ret_ = true;
+  }
+};
+
+bool IsOutFileIndexCheckRequiredCase (Init* CmdLine) {
+  bool ret = false;
+  WalkCase(CmdLine, Id(), IsOutFileIndexCheckRequiredStrCallback(&ret));
+  return ret;
+}
+
+/// IsOutFileIndexCheckRequired - Should we emit an "out_file_index != -1" check
+/// in EmitGenerateActionMethod() ?
+bool IsOutFileIndexCheckRequired (Init* CmdLine) {
+  if (typeid(*CmdLine) == typeid(StringInit))
+    return IsOutFileIndexCheckRequiredStr(CmdLine);
+  else
+    return IsOutFileIndexCheckRequiredCase(CmdLine);
+}
+
 // EmitGenerateActionMethod - Emit either a normal or a "join" version of the
 // Tool::GenerateAction() method.
 void EmitGenerateActionMethod (const ToolDescription& D,
@@ -1592,12 +1633,17 @@ void EmitGenerateActionMethod (const ToolDescription& D,
   O.indent(Indent2) << "bool stop_compilation = !HasChildren;\n";
   O.indent(Indent2) << "const char* output_suffix = \""
                     << D.OutputSuffix << "\";\n";
-  O.indent(Indent2) << "int out_file_index = -1;\n\n";
 
-  // cmd_line is either a string or a 'case' construct.
   if (!D.CmdLine)
     throw "Tool " + D.Name + " has no cmd_line property!";
-  else if (typeid(*D.CmdLine) == typeid(StringInit))
+
+  bool IndexCheckRequired = IsOutFileIndexCheckRequired(D.CmdLine);
+  O.indent(Indent2) << "int out_file_index"
+                    << (IndexCheckRequired ? " = -1" : "")
+                    << ";\n\n";
+
+  // Process the cmd_line property.
+  if (typeid(*D.CmdLine) == typeid(StringInit))
     EmitCmdLineVecFill(D.CmdLine, D.Name, IsJoin, Indent2, O);
   else
     EmitCaseConstructHandler(D.CmdLine, Indent2,
@@ -1614,9 +1660,11 @@ void EmitGenerateActionMethod (const ToolDescription& D,
     << "std::string out_file = OutFilename("
     << (IsJoin ? "sys::Path(),\n" : "inFile,\n");
   O.indent(Indent3) << "TempDir, stop_compilation, output_suffix).str();\n\n";
-  // TODO: emit this check only when necessary.
-  O.indent(Indent2) << "if (out_file_index != -1)\n";
-  O.indent(Indent3) << "vec[out_file_index] = out_file;\n";
+
+  if (IndexCheckRequired)
+    O.indent(Indent2) << "if (out_file_index != -1)\n";
+  O.indent(IndexCheckRequired ? Indent3 : Indent2)
+    << "vec[out_file_index] = out_file;\n";
 
   // Handle the Sink property.
   if (D.isSink()) {
