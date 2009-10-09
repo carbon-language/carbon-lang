@@ -42,6 +42,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
+#include "llvm/Metadata.h"
 
 namespace llvm {
 
@@ -147,7 +148,7 @@ class MachineModuleInfo : public ImmutablePass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  typedef DenseMap<MDNode *, std::pair<MDNode *, unsigned> > VariableDbgInfoMapTy;
+  typedef SmallVector< std::pair< WeakMetadataVH, unsigned>, 4 > VariableDbgInfoMapTy;
   VariableDbgInfoMapTy VariableDbgInfo;
 
   MachineModuleInfo();
@@ -332,9 +333,8 @@ public:
 
   /// setVariableDbgInfo - Collect information used to emit debugging information
   /// of a variable.
-  void setVariableDbgInfo(MDNode *N, MDNode *L, unsigned S) {
-    if (N && L)
-      VariableDbgInfo[N] = std::make_pair(L, S);
+  void setVariableDbgInfo(MDNode *N, unsigned S) {
+    VariableDbgInfo.push_back(std::make_pair(N, S));
   }
 
   VariableDbgInfoMapTy &getVariableDbgInfo() {  return VariableDbgInfo;  }

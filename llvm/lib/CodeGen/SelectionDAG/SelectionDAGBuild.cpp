@@ -3970,7 +3970,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (!isValidDebugInfoIntrinsic(DI, CodeGenOpt::None))
       return 0;
 
-    Value *Variable = DI.getVariable();
+    MDNode *Variable = DI.getVariable();
     Value *Address = DI.getAddress();
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
       Address = BCI->getOperand(0);
@@ -3983,7 +3983,13 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (SI == FuncInfo.StaticAllocaMap.end()) 
       return 0; // VLAs.
     int FI = SI->second;
-    DW->RecordVariable(cast<MDNode>(Variable), FI);
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+    MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
+    if (MMI) 
+      MMI->setVariableDbgInfo(Variable, FI);
+#else
+    DW->RecordVariable(Variable, FI);
+#endif
     return 0;
   }
   case Intrinsic::eh_exception: {

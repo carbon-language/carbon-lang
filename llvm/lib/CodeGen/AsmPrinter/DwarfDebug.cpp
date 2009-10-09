@@ -1784,23 +1784,19 @@ void DwarfDebug::EndModule() {
 }
 
 /// CollectVariableInfo - Populate DbgScope entries with variables' info.
-bool DwarfDebug::CollectVariableInfo() {
-  if (!MMI) return false;
-  bool ArgsCollected = false;
+void DwarfDebug::CollectVariableInfo() {
+  if (!MMI) return;
   MachineModuleInfo::VariableDbgInfoMapTy &VMap = MMI->getVariableDbgInfo();
   for (MachineModuleInfo::VariableDbgInfoMapTy::iterator VI = VMap.begin(),
          VE = VMap.end(); VI != VE; ++VI) {
-    MDNode *Var = VI->first;
+    MetadataBase *MB = VI->first;
+    MDNode *Var = dyn_cast_or_null<MDNode>(MB);
     DIVariable DV (Var);
     if (DV.isNull()) continue;
-    if (DV.getTag() == dwarf::DW_TAG_arg_variable)
-      ArgsCollected = true;
-    DILocation VLoc(VI->second.first);
-    unsigned VSlot = VI->second.second;
-    DbgScope *Scope = getDbgScope(VLoc.getScope().getNode(), NULL);
+    unsigned VSlot = VI->second;
+    DbgScope *Scope = getDbgScope(DV.getContext().getNode(),  NULL);
     Scope->AddVariable(new DbgVariable(DV, VSlot, false));
   }
-  return ArgsCollected;
 }
 
 /// SetDbgScopeBeginLabels - Update DbgScope begin labels for the scopes that
@@ -1911,7 +1907,7 @@ void DwarfDebug::BeginFunction(MachineFunction *MF) {
 #ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
   if (!ExtractScopeInformation(MF))
     return;
-  bool ArgsCollected = CollectVariableInfo();
+  CollectVariableInfo();
 #endif
 
   // Begin accumulating function debug information.
@@ -1923,18 +1919,27 @@ void DwarfDebug::BeginFunction(MachineFunction *MF) {
   // Emit label for the implicitly defined dbg.stoppoint at the start of the
   // function.
 #ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
-  if (!ArgsCollected) {
-#else
-  if (1) {
-#endif
-    DebugLoc FDL = MF->getDefaultDebugLoc();
-    if (!FDL.isUnknown()) {
-      DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
-      unsigned LabelID = RecordSourceLine(DLT.Line, DLT.Col, DLT.CompileUnit);
-      Asm->printLabel(LabelID);
-      O << '\n';
-    }
+  DebugLoc FDL = MF->getDefaultDebugLoc();
+  if (!FDL.isUnknown()) {
+    DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
+    unsigned LabelID = 0;
+    DISubprogram SP(DLT.CompileUnit);
+    if (!SP.isNull())
+      LabelID = RecordSourceLine(SP.getLineNumber(), 0, DLT.CompileUnit);
+    else
+      LabelID = RecordSourceLine(DLT.Line, DLT.Col, DLT.CompileUnit);
+    Asm->printLabel(LabelID);
+    O << '\n';
   }
+#else
+  DebugLoc FDL = MF->getDefaultDebugLoc();
+  if (!FDL.isUnknown()) {
+    DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
+    unsigned LabelID = RecordSourceLine(DLT.Line, DLT.Col, DLT.CompileUnit);
+    Asm->printLabel(LabelID);
+    O << '\n';
+  }
+#endif
   if (TimePassesIsEnabled)
     DebugTimer->stopTimer();
 }
@@ -1947,6 +1952,10 @@ void DwarfDebug::EndFunction(MachineFunction *MF) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+  if (DbgScopeMap.empty())
+    return;
+#endif
   // Define end label for subprogram.
   EmitLabel("func_end", SubprogramCount);
 

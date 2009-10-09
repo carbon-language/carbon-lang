@@ -556,7 +556,7 @@ public:
   bool ExtractScopeInformation(MachineFunction *MF);
 
   /// CollectVariableInfo - Populate DbgScope entries with variables' info.
-  bool CollectVariableInfo();
+  void CollectVariableInfo();
 
   /// SetDbgScopeBeginLabels - Update DbgScope begin labels for the scopes that
   /// start with this machine instruction.

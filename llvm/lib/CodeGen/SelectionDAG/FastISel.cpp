@@ -417,14 +417,8 @@ bool FastISel::SelectCall(User *I) {
       StaticAllocaMap.find(AI);
     if (SI == StaticAllocaMap.end()) break; // VLAs.
     int FI = SI->second;
-    if (MMI) {
-      MetadataContext &TheMetadata = AI->getContext().getMetadata();
-      unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
-      MDNode *AllocaLocation =
-        dyn_cast_or_null<MDNode>(TheMetadata.getMD(MDDbgKind, AI));
-      if (AllocaLocation)
-        MMI->setVariableDbgInfo(DI->getVariable(), AllocaLocation, FI);
-    }
+    if (MMI)
+      MMI->setVariableDbgInfo(DI->getVariable(), FI);
 #ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
     DW->RecordVariable(DI->getVariable(), FI);
 #endif
