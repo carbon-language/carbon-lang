@@ -3690,12 +3690,11 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
            Ptr != CandidateTypes.pointer_end(); ++Ptr) {
         QualType C1Ty = (*Ptr);
         QualType C1;
-        unsigned CV1;
+        QualifierCollector Q1;
         if (const PointerType *PointerTy = C1Ty->getAs<PointerType>()) {
-          C1 = PointerTy->getPointeeType().getUnqualifiedType();
+          C1 = QualType(Q1.strip(PointerTy->getPointeeType()), 0);
           if (!isa<RecordType>(C1))
             continue;
-          CV1 = PointerTy->getPointeeType().getCVRQualifiers();
         }
         for (BuiltinCandidateTypeSet::iterator
              MemPtr = CandidateTypes.member_pointer_begin(),
@@ -3709,8 +3708,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
           QualType ParamTypes[2] = { *Ptr, *MemPtr };
           // build CV12 T&
           QualType T = mptr->getPointeeType();
-          unsigned CV2 = T.getCVRQualifiers();
-          T = Context.getCVRQualifiedType(T, (CV1 | CV2));
+          T = Q1.apply(T);
           QualType ResultTy = Context.getLValueReferenceType(T);
           AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
         }
