@@ -109,28 +109,26 @@ Project</a> and the <a href="#vmkit">VMKit Project</a>.
 
 <div class="doc_text">
 
-<p><b>UPDATE!</b> The <a href="http://clang.llvm.org/">Clang project</a> is an effort to build
-a set of new 'LLVM native' front-end technologies for the LLVM optimizer and
-code generator.  While Clang is not included in the LLVM 2.6 release, it is
-continuing to make major strides forward in all areas.  Its C and Objective-C
-parsing and code generation support is now very solid.  For example, it is
-capable of successfully building many real-world applications for X86-32
-and X86-64,
-including the <a href="http://wiki.freebsd.org/BuildingFreeBSDWithClang">FreeBSD
-kernel</a> and <a href="http://gcc.gnu.org/gcc-4.2/">gcc 4.2</a>.  C++ is also
-making <a href="http://clang.llvm.org/cxx_status.html">incredible progress</a>,
-and work on templates has recently started.  If you are
-interested in fast compiles and good diagnostics, we encourage you to try it out
-by <a href="http://clang.llvm.org/get_started.html">building from mainline</a>
-and reporting any issues you hit to the <a
+<p>The <a href="http://clang.llvm.org/">Clang project</a> is an effort to build
+a set of new 'LLVM native' front-end technologies for the C family of languages.
+LLVM 2.6 is the first release to officially include Clang, and it provides a
+production quality C and Objective-C compiler.  If you are interested in fast
+compiles and good diagnostics, we encourage you to try it out.</p>
+
+<p>In addition to supporting these languages, C++ support is also <a
+href="http://clang.llvm.org/cxx_status.html">well under way</a>, and mainline
+Clang is able to parse the libstdc++ 4.2 headers and even codegen simple apps.
+If you are interested in Clang C++ support or any other Clang feature, we
+strongly encourage you to get involved on the <a 
 href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">Clang front-end mailing
 list</a>.</p>
 
 <p>In the LLVM 2.6 time-frame, the Clang team has made many improvements:</p>
 
 <ul>
-<li>Something wonderful!</li>
+<li>C and Objective-C support are now considered production quality.</li>
 <li>AuroraUX / FreeBSD &amp; OpenBSD Toolchain support.</li>
+<li>Most of Objective-C 2.0 is now supported with the GNU runtime.</li>
 <li>Many many bugs are fixed and many features have been added.</li>
 </ul>
 </div>
