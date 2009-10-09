@@ -2951,12 +2951,20 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 
   Operator *U = cast<Operator>(V);
   switch (Opcode) {
-  case Instruction::Add:
+  case Instruction::Add: {
+    AddOperator *A = cast<AddOperator>(U);
     return getAddExpr(getSCEV(U->getOperand(0)),
-                      getSCEV(U->getOperand(1)));
-  case Instruction::Mul:
+                      getSCEV(U->getOperand(1)),
+                      A->hasNoUnsignedWrap(),
+                      A->hasNoSignedWrap());
+  }
+  case Instruction::Mul: {
+    MulOperator *M = cast<MulOperator>(U);
     return getMulExpr(getSCEV(U->getOperand(0)),
-                      getSCEV(U->getOperand(1)));
+                      getSCEV(U->getOperand(1)),
+                      M->hasNoUnsignedWrap(),
+                      M->hasNoSignedWrap());
+  }
   case Instruction::UDiv:
     return getUDivExpr(getSCEV(U->getOperand(0)),
                        getSCEV(U->getOperand(1)));
