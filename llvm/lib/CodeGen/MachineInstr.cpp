@@ -960,8 +960,7 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
 bool MachineInstr::isSafeToReMat(const TargetInstrInfo *TII,
                                  unsigned DstReg) const {
   bool SawStore = false;
-  if (!getDesc().isRematerializable() ||
-      !TII->isTriviallyReMaterializable(this) ||
+  if (!TII->isTriviallyReMaterializable(this) ||
       !isSafeToMove(TII, SawStore))
     return false;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {

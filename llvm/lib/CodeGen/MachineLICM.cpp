@@ -322,7 +322,7 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
   // FIXME: For now, only hoist re-materilizable instructions. LICM will
   // increase register pressure. We want to make sure it doesn't increase
   // spilling.
-  if (!TID.isRematerializable() || !TII->isTriviallyReMaterializable(&MI))
+  if (!TII->isTriviallyReMaterializable(&MI))
     return false;
 
   // If result(s) of this instruction is used by PHIs, then don't hoist it.

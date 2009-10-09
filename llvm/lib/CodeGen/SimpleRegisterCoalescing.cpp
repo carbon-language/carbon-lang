@@ -646,8 +646,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   const TargetInstrDesc &TID = DefMI->getDesc();
   if (!TID.isAsCheapAsAMove())
     return false;
-  if (!DefMI->getDesc().isRematerializable() ||
-      !tii_->isTriviallyReMaterializable(DefMI))
+  if (!tii_->isTriviallyReMaterializable(DefMI))
     return false;
   bool SawStore = false;
   if (!DefMI->isSafeToMove(tii_, SawStore))

@@ -1423,8 +1423,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   // If the target-specific rules don't identify an instruction as
   // being trivially rematerializable, use some target-independent
   // rules.
-  if (!MI->getDesc().isRematerializable() ||
-      !tii_->isTriviallyReMaterializable(MI)) {
+  if (!tii_->isTriviallyReMaterializable(MI)) {
     if (!EnableAggressiveRemat)
       return false;
 
