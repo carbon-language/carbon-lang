@@ -778,7 +778,7 @@ def err_ovl_template_candidate : Note<
   "candidate function template specialization %0">;
 def err_ovl_candidate_deleted : Note<
   "candidate function has been explicitly %select{made unavailable|deleted}0">;
-def err_ovl_builtin_candidate : Note<"built-in candidate function %0 for operator '%1'">;
+def err_ovl_builtin_candidate : Note<"built-in candidate operator %2 (%0, %1)">;
 def err_ovl_no_viable_function_in_init : Error<
   "no matching constructor for initialization of %0">;
 def err_ovl_ambiguous_init : Error<"call to constructor of %0 is ambiguous">;

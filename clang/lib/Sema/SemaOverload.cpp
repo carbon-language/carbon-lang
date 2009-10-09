@@ -4045,14 +4045,12 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
         Diag(Cand->Surrogate->getLocation(), diag::err_ovl_surrogate_cand)
           << FnType;
       } else if (OnlyViable) {
-        QualType FnType
-          = Context.getFunctionType(Cand->BuiltinTypes.ResultTy,
-                                    Cand->BuiltinTypes.ParamTypes,
-                                    Cand->Conversions.size(),
-                                    false, 0);
-
-        Diag(OpLoc, diag::err_ovl_builtin_candidate) << FnType <<
-	  BinaryOperator::getOpcodeStr(Opc);
+        assert(Cand->Conversions.size() == 2 && 
+               "builtin-binary-operator-not-binary");
+        Diag(OpLoc, diag::err_ovl_builtin_candidate) 
+          << Cand->BuiltinTypes.ParamTypes[0] 
+          << Cand->BuiltinTypes.ParamTypes[1] 
+          << BinaryOperator::getOpcodeStr(Opc);
       }
     }
   }
