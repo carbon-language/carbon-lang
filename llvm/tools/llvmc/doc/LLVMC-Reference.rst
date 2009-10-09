@@ -509,8 +509,8 @@ The complete list of all currently implemented tool properties follows.
   - ``in_language`` - input language name. Can be either a string or a
     list, in case the tool supports multiple input languages.
 
-  - ``out_language`` - output language name. Tools are not allowed to
-    have multiple output languages.
+  - ``out_language`` - output language name. Multiple output languages are not
+    allowed.
 
   - ``output_suffix`` - output file suffix. Can also be changed
     dynamically, see documentation on actions.
