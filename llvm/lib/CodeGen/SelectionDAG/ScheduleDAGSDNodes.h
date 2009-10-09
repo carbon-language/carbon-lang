@@ -86,7 +86,7 @@ namespace llvm {
     /// are input.  This SUnit graph is similar to the SelectionDAG, but
     /// excludes nodes that aren't interesting to scheduling, and represents
     /// flagged together nodes with a single SUnit.
-    virtual void BuildSchedGraph();
+    virtual void BuildSchedGraph(AliasAnalysis *AA);
 
     /// ComputeLatency - Compute node latency.
     ///

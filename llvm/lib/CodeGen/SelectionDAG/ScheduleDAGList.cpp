@@ -91,7 +91,7 @@ void ScheduleDAGList::Schedule() {
   DEBUG(errs() << "********** List Scheduling **********\n");
   
   // Build the scheduling graph.
-  BuildSchedGraph();
+  BuildSchedGraph(NULL);
 
   AvailableQueue->initNodes(SUnits);
   
