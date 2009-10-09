@@ -756,7 +756,7 @@ let isBranch = 1, isTerminator = 1 in {
 //
 
 // Load
-let canFoldAsLoad = 1 in 
+let canFoldAsLoad = 1, isReMaterializable = 1 in 
 def LDR  : AI2ldw<(outs GPR:$dst), (ins addrmode2:$addr), LdFrm, IIC_iLoadr,
                "ldr", " $dst, $addr",
                [(set GPR:$dst, (load addrmode2:$addr))]>;
