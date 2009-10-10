@@ -94,9 +94,15 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   case LookupResult::FoundOverloaded:
     return 0;
 
-  case LookupResult::AmbiguousBaseSubobjectTypes:
-  case LookupResult::AmbiguousBaseSubobjects:
-  case LookupResult::AmbiguousReference: {
+  case LookupResult::Ambiguous: {
+    // Recover from type-hiding ambiguities by hiding the type.  We'll
+    // do the lookup again when looking for an object, and we can
+    // diagnose the error then.  If we don't do this, then the error
+    // about hiding the type will be immediately followed by an error
+    // that only makes sense if the identifier was treated like a type.
+    if (Result.getAmbiguityKind() == LookupResult::AmbiguousTagHiding)
+      return 0;
+
     // Look to see if we have a type anywhere in the list of results.
     for (LookupResult::iterator Res = Result.begin(), ResEnd = Result.end();
          Res != ResEnd; ++Res) {
@@ -4129,6 +4135,8 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   bool isStdBadAlloc = false;
   bool Invalid = false;
 
+  bool RedeclarationOnly = (TUK != TUK_Reference);
+
   if (Name && SS.isNotEmpty()) {
     // We have a nested-name tag ('struct foo::bar').
 
@@ -4155,11 +4163,18 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     SearchDC = DC;
     // Look-up name inside 'foo::'.
     LookupResult R;
-    LookupQualifiedName(R, DC, Name, LookupTagName, true);
-    PrevDecl = dyn_cast_or_null<TagDecl>(R.getAsSingleDecl(Context));
+    LookupQualifiedName(R, DC, Name, LookupTagName, RedeclarationOnly);
+
+    if (R.isAmbiguous()) {
+      DiagnoseAmbiguousLookup(R, Name, NameLoc, SS.getRange());
+      return DeclPtrTy();
+    }
+
+    if (R.getKind() == LookupResult::Found)
+      PrevDecl = dyn_cast<TagDecl>(R.getFoundDecl());
 
     // A tag 'foo::bar' must already exist.
-    if (PrevDecl == 0) {
+    if (!PrevDecl) {
       Diag(NameLoc, diag::err_not_tag_in_scope) << Name << SS.getRange();
       Name = 0;
       Invalid = true;
@@ -4172,8 +4187,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     // shouldn't be. Doing so can result in ambiguities that we
     // shouldn't be diagnosing.
     LookupResult R;
-    LookupName(R, S, Name, LookupTagName,
-                                /*RedeclarationOnly=*/(TUK != TUK_Reference));
+    LookupName(R, S, Name, LookupTagName, RedeclarationOnly);
     if (R.isAmbiguous()) {
       DiagnoseAmbiguousLookup(R, Name, NameLoc);
       // FIXME: This is not best way to recover from case like:

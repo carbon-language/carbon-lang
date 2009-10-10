@@ -25,6 +25,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <set>
 #include <vector>
 #include <iterator>
@@ -162,6 +163,9 @@ void Sema::LookupResult::resolveKind() {
   // Fast case: no possible ambiguity.
   if (N <= 1) return;
 
+  // Don't do any extra resolution if we've already resolved as ambiguous.
+  if (Kind == Ambiguous) return;
+
   llvm::SmallPtrSet<NamedDecl*, 16> Unique;
 
   bool Ambiguous = false;
@@ -218,11 +222,11 @@ void Sema::LookupResult::resolveKind() {
     Ambiguous = true;
 
   if (Ambiguous)
-    Kind = AmbiguousReference;
+    setAmbiguous(LookupResult::AmbiguousReference);
   else if (N > 1)
-    Kind = FoundOverloaded;
+    Kind = LookupResult::FoundOverloaded;
   else
-    Kind = Found;
+    Kind = LookupResult::Found;
 }
 
 /// @brief Converts the result of name lookup into a single (possible
@@ -278,7 +282,7 @@ void Sema::LookupResult::setAmbiguousBaseSubobjects(CXXBasePaths &P) {
   Paths->swap(P);
   addDeclsFromBasePaths(*Paths);
   resolveKind();
-  Kind = AmbiguousBaseSubobjects;
+  setAmbiguous(AmbiguousBaseSubobjects);
 }
 
 void Sema::LookupResult::setAmbiguousBaseSubobjectTypes(CXXBasePaths &P) {
@@ -286,7 +290,7 @@ void Sema::LookupResult::setAmbiguousBaseSubobjectTypes(CXXBasePaths &P) {
   Paths->swap(P);
   addDeclsFromBasePaths(*Paths);
   resolveKind();
-  Kind = AmbiguousBaseSubobjectTypes;
+  setAmbiguous(AmbiguousBaseSubobjectTypes);
 }
 
 void Sema::LookupResult::print(llvm::raw_ostream &Out) {
@@ -644,6 +648,120 @@ bool Sema::LookupName(LookupResult &R, Scope *S, DeclarationName Name,
   return false;
 }
 
+/// @brief Perform qualified name lookup in the namespaces nominated by
+/// using directives by the given context.
+///
+/// C++98 [namespace.qual]p2:
+///   Given X::m (where X is a user-declared namespace), or given ::m
+///   (where X is the global namespace), let S be the set of all
+///   declarations of m in X and in the transitive closure of all
+///   namespaces nominated by using-directives in X and its used
+///   namespaces, except that using-directives are ignored in any
+///   namespace, including X, directly containing one or more
+///   declarations of m. No namespace is searched more than once in
+///   the lookup of a name. If S is the empty set, the program is
+///   ill-formed. Otherwise, if S has exactly one member, or if the
+///   context of the reference is a using-declaration
+///   (namespace.udecl), S is the required set of declarations of
+///   m. Otherwise if the use of m is not one that allows a unique
+///   declaration to be chosen from S, the program is ill-formed.
+/// C++98 [namespace.qual]p5:
+///   During the lookup of a qualified namespace member name, if the
+///   lookup finds more than one declaration of the member, and if one
+///   declaration introduces a class name or enumeration name and the
+///   other declarations either introduce the same object, the same
+///   enumerator or a set of functions, the non-type name hides the
+///   class or enumeration name if and only if the declarations are
+///   from the same namespace; otherwise (the declarations are from
+///   different namespaces), the program is ill-formed.
+static bool LookupQualifiedNameInUsingDirectives(Sema::LookupResult &R,
+                                                 DeclContext *StartDC,
+                                                 DeclarationName Name,
+                                                 Sema::LookupNameKind NameKind,
+                                                 unsigned IDNS) {
+  assert(StartDC->isFileContext() && "start context is not a file context");
+
+  DeclContext::udir_iterator I = StartDC->using_directives_begin();
+  DeclContext::udir_iterator E = StartDC->using_directives_end();
+
+  if (I == E) return false;
+
+  // We have at least added all these contexts to the queue.
+  llvm::DenseSet<DeclContext*> Visited;
+  Visited.insert(StartDC);
+
+  // We have not yet looked into these namespaces, much less added
+  // their "using-children" to the queue.
+  llvm::SmallVector<NamespaceDecl*, 8> Queue;
+
+  // We have already looked into the initial namespace; seed the queue
+  // with its using-children.
+  for (; I != E; ++I) {
+    NamespaceDecl *ND = (*I)->getNominatedNamespace();
+    if (Visited.insert(ND).second)
+      Queue.push_back(ND);
+  }
+
+  // The easiest way to implement the restriction in [namespace.qual]p5
+  // is to check whether any of the individual results found a tag
+  // and, if so, to declare an ambiguity if the final result is not
+  // a tag.
+  bool FoundTag = false;
+  bool FoundNonTag = false;
+
+  Sema::LookupResult LocalR;
+
+  bool Found = false;
+  while (!Queue.empty()) {
+    NamespaceDecl *ND = Queue.back();
+    Queue.pop_back();
+
+    // We go through some convolutions here to avoid copying results
+    // between LookupResults.
+    bool UseLocal = !R.empty();
+    Sema::LookupResult &DirectR = UseLocal ? LocalR : R;
+    bool FoundDirect = LookupDirect(DirectR, ND, Name, NameKind, IDNS);
+
+    if (FoundDirect) {
+      // First do any local hiding.
+      DirectR.resolveKind();
+
+      // If the local result is a tag, remember that.
+      if (DirectR.isSingleTagDecl())
+        FoundTag = true;
+      else
+        FoundNonTag = true;
+
+      // Append the local results to the total results if necessary.
+      if (UseLocal) {
+        R.addAllDecls(LocalR);
+        LocalR.clear();
+      }
+    }
+
+    // If we find names in this namespace, ignore its using directives.
+    if (FoundDirect) {
+      Found = true;
+      continue;
+    }
+
+    for (llvm::tie(I,E) = ND->getUsingDirectives(); I != E; ++I) {
+      NamespaceDecl *Nom = (*I)->getNominatedNamespace();
+      if (Visited.insert(Nom).second)
+        Queue.push_back(Nom);
+    }
+  }
+
+  if (Found) {
+    if (FoundTag && FoundNonTag)
+      R.setAmbiguousQualifiedTagHiding();
+    else
+      R.resolveKind();
+  }
+
+  return Found;
+}
+
 /// @brief Perform qualified name lookup into a given context.
 ///
 /// Qualified name lookup (C++ [basic.lookup.qual]) is used to find
@@ -704,9 +822,26 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
     return true;
   }
 
+  // Don't descend into implied contexts for redeclarations.
+  // C++98 [namespace.qual]p6:
+  //   In a declaration for a namespace member in which the
+  //   declarator-id is a qualified-id, given that the qualified-id
+  //   for the namespace member has the form
+  //     nested-name-specifier unqualified-id
+  //   the unqualified-id shall name a member of the namespace
+  //   designated by the nested-name-specifier.
+  // See also [class.mfct]p5 and [class.static.data]p2.
+  if (RedeclarationOnly)
+    return false;
+
+  // If this is a namespace, look it up in 
+  if (LookupCtx->isFileContext())
+    return LookupQualifiedNameInUsingDirectives(R, LookupCtx, Name, NameKind,
+                                                IDNS);
+
   // If this isn't a C++ class, we aren't allowed to look into base
   // classes, we're done.
-  if (RedeclarationOnly || !isa<CXXRecordDecl>(LookupCtx))
+  if (!isa<CXXRecordDecl>(LookupCtx))
     return false;
 
   // Perform lookup into our base classes.
@@ -895,31 +1030,32 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
                                    SourceRange LookupRange) {
   assert(Result.isAmbiguous() && "Lookup result must be ambiguous");
 
-  if (CXXBasePaths *Paths = Result.getBasePaths()) {
-    if (Result.getKind() == LookupResult::AmbiguousBaseSubobjects) {
-      QualType SubobjectType = Paths->front().back().Base->getType();
-      Diag(NameLoc, diag::err_ambiguous_member_multiple_subobjects)
-        << Name << SubobjectType << getAmbiguousPathsDisplayString(*Paths)
-        << LookupRange;
+  switch (Result.getAmbiguityKind()) {
+  case LookupResult::AmbiguousBaseSubobjects: {
+    CXXBasePaths *Paths = Result.getBasePaths();
+    QualType SubobjectType = Paths->front().back().Base->getType();
+    Diag(NameLoc, diag::err_ambiguous_member_multiple_subobjects)
+      << Name << SubobjectType << getAmbiguousPathsDisplayString(*Paths)
+      << LookupRange;
+    
+    DeclContext::lookup_iterator Found = Paths->front().Decls.first;
+    while (isa<CXXMethodDecl>(*Found) &&
+           cast<CXXMethodDecl>(*Found)->isStatic())
+      ++Found;
+    
+    Diag((*Found)->getLocation(), diag::note_ambiguous_member_found);
+    
+    return true;
+  }
 
-      DeclContext::lookup_iterator Found = Paths->front().Decls.first;
-      while (isa<CXXMethodDecl>(*Found) &&
-             cast<CXXMethodDecl>(*Found)->isStatic())
-        ++Found;
-
-      Diag((*Found)->getLocation(), diag::note_ambiguous_member_found);
-
-      return true;
-    }
-
-    assert(Result.getKind() == LookupResult::AmbiguousBaseSubobjectTypes &&
-           "Unhandled form of name lookup ambiguity");
-
+  case LookupResult::AmbiguousBaseSubobjectTypes: {
     Diag(NameLoc, diag::err_ambiguous_member_multiple_subobject_types)
       << Name << LookupRange;
-
+    
+    CXXBasePaths *Paths = Result.getBasePaths();
     std::set<Decl *> DeclsPrinted;
-    for (CXXBasePaths::paths_iterator Path = Paths->begin(), PathEnd = Paths->end();
+    for (CXXBasePaths::paths_iterator Path = Paths->begin(),
+                                      PathEnd = Paths->end();
          Path != PathEnd; ++Path) {
       Decl *D = *Path->Decls.first;
       if (DeclsPrinted.insert(D).second)
@@ -929,15 +1065,40 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
     return true;
   }
 
-  assert(Result.getKind() == LookupResult::AmbiguousReference &&
-         "unhandled form of name lookup ambiguity");
-  Diag(NameLoc, diag::err_ambiguous_reference) << Name << LookupRange;
+  case LookupResult::AmbiguousTagHiding: {
+    Diag(NameLoc, diag::err_ambiguous_tag_hiding) << Name << LookupRange;
 
+    llvm::SmallPtrSet<NamedDecl*,8> TagDecls;
+
+    LookupResult::iterator DI, DE = Result.end();
+    for (DI = Result.begin(); DI != DE; ++DI)
+      if (TagDecl *TD = dyn_cast<TagDecl>(*DI)) {
+        TagDecls.insert(TD);
+        Diag(TD->getLocation(), diag::note_hidden_tag);
+      }
+
+    for (DI = Result.begin(); DI != DE; ++DI)
+      if (!isa<TagDecl>(*DI))
+        Diag((*DI)->getLocation(), diag::note_hiding_object);
+
+    // For recovery purposes, go ahead and implement the hiding.
+    Result.hideDecls(TagDecls);
+
+    return true;
+  }
+
+  case LookupResult::AmbiguousReference: {
+    Diag(NameLoc, diag::err_ambiguous_reference) << Name << LookupRange;
   
-  LookupResult::iterator DI = Result.begin(), DE = Result.end();
-  for (; DI != DE; ++DI)
-    Diag((*DI)->getLocation(), diag::note_ambiguous_candidate) << *DI;
+    LookupResult::iterator DI = Result.begin(), DE = Result.end();
+    for (; DI != DE; ++DI)
+      Diag((*DI)->getLocation(), diag::note_ambiguous_candidate) << *DI;
 
+    return true;
+  }
+  }
+
+  llvm::llvm_unreachable("unknown ambiguity kind");
   return true;
 }
 

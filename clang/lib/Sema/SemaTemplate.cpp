@@ -3858,9 +3858,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
     Referenced = *Result.begin();
     break;
 
-  case LookupResult::AmbiguousBaseSubobjectTypes:
-  case LookupResult::AmbiguousBaseSubobjects:
-  case LookupResult::AmbiguousReference:
+  case LookupResult::Ambiguous:
     DiagnoseAmbiguousLookup(Result, Name, Range.getEnd(), Range);
     return QualType();
   }

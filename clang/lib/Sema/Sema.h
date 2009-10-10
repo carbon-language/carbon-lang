@@ -1074,6 +1074,13 @@ public:
       /// functions into an OverloadedFunctionDecl.
       FoundOverloaded,
 
+      /// @brief Name lookup results in an ambiguity; use
+      /// getAmbiguityKind to figure out what kind of ambiguity
+      /// we have.
+      Ambiguous
+    };
+
+    enum AmbiguityKind {
       /// Name lookup results in an ambiguity because multiple
       /// entities that meet the lookup criteria were found in
       /// subobjects of different types. For example:
@@ -1117,7 +1124,22 @@ public:
       /// @endcode
       AmbiguousReference,
 
-      FirstAmbiguous = AmbiguousBaseSubobjectTypes
+      /// Name lookup results in an ambiguity because an entity with a
+      /// tag name was hidden by an entity with an ordinary name from
+      /// a different context.
+      /// @code
+      /// namespace A { struct Foo {}; }
+      /// namespace B { void Foo(); }
+      /// namespace C {
+      ///   using namespace A;
+      ///   using namespace B;
+      /// }
+      /// void test() {
+      ///   C::Foo(); // error: tag 'A::Foo' is hidden by an object in a
+      ///             // different namespace
+      /// }
+      /// @endcode
+      AmbiguousTagHiding
     };
 
     typedef llvm::SmallVector<NamedDecl*, 4> DeclsTy;
@@ -1132,12 +1154,17 @@ public:
     }
 
     bool isAmbiguous() const {
-      return getKind() >= FirstAmbiguous;
+      return getKind() == Ambiguous;
     }
 
     LookupKind getKind() const {
       sanity();
       return Kind;
+    }
+
+    AmbiguityKind getAmbiguityKind() const {
+      assert(isAmbiguous());
+      return Ambiguity;
     }
 
     iterator begin() const { return Decls.begin(); }
@@ -1156,6 +1183,25 @@ public:
     void addDecl(NamedDecl *D) {
       Decls.push_back(D->getUnderlyingDecl());
       Kind = Found;
+    }
+
+    /// \brief Add all the declarations from another set of lookup
+    /// results.
+    void addAllDecls(const LookupResult &Other) {
+      Decls.append(Other.begin(), Other.end());
+      Kind = Found;
+    }
+
+    /// \brief Hides a set of declarations.
+    template <class NamedDeclSet> void hideDecls(const NamedDeclSet &Set) {
+      unsigned I = 0, N = Decls.size();
+      while (I < N) {
+        if (Set.count(Decls[I]))
+          Decls[I] = Decls[--N];
+        else
+          I++;
+      }
+      Decls.set_size(N);
     }
 
     /// \brief Resolves the kind of the lookup, possibly hiding decls.
@@ -1181,6 +1227,11 @@ public:
       return *Decls.begin();
     }
 
+    /// \brief Asks if the result is a single tag decl.
+    bool isSingleTagDecl() const {
+      return getKind() == Found && isa<TagDecl>(getFoundDecl());
+    }
+
     /// \brief Make these results show that the name was found in
     /// base classes of different types.
     ///
@@ -1193,6 +1244,13 @@ public:
     /// The given paths object is copied and invalidated.
     void setAmbiguousBaseSubobjects(CXXBasePaths &P);
 
+    /// \brief Make these results show that the name was found in
+    /// different contexts and a tag decl was hidden by an ordinary
+    /// decl in a different context.
+    void setAmbiguousQualifiedTagHiding() {
+      setAmbiguous(AmbiguousTagHiding);
+    }
+
     /// \brief Clears out any current state.
     void clear() {
       Kind = NotFound;
@@ -1204,6 +1262,11 @@ public:
     void print(llvm::raw_ostream &);
 
   private:
+    void setAmbiguous(AmbiguityKind AK) {
+      Kind = Ambiguous;
+      Ambiguity = AK;
+    }
+
     void addDeclsFromBasePaths(const CXXBasePaths &P);
 
     // Sanity checks.
@@ -1211,14 +1274,17 @@ public:
       assert(Kind != NotFound || Decls.size() == 0);
       assert(Kind != Found || Decls.size() == 1);
       assert(Kind == NotFound || Kind == Found ||
-             Kind == AmbiguousBaseSubobjects || Decls.size() > 1);
-      assert((Paths != NULL) == (Kind == AmbiguousBaseSubobjectTypes ||
-                                 Kind == AmbiguousBaseSubobjects));
+             (Kind == Ambiguous && Ambiguity == AmbiguousBaseSubobjects)
+             || Decls.size() > 1);
+      assert((Paths != NULL) == (Kind == Ambiguous &&
+                                 (Ambiguity == AmbiguousBaseSubobjectTypes ||
+                                  Ambiguity == AmbiguousBaseSubobjects)));
     }
 
     static void deletePaths(CXXBasePaths *);
 
     LookupKind Kind;
+    AmbiguityKind Ambiguity; // ill-defined unless ambiguous
     DeclsTy Decls;
     CXXBasePaths *Paths;
   };

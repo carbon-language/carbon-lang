@@ -194,7 +194,13 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
   case DeclSpec::TST_union:
   case DeclSpec::TST_struct: {
     Decl *D = static_cast<Decl *>(DS.getTypeRep());
-    assert(D && "Didn't get a decl for a class/enum/union/struct?");
+    if (!D) {
+      // This can happen in C++ with ambiguous lookups.
+      Result = Context.IntTy;
+      isInvalid = true;
+      break;
+    }
+
     assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
