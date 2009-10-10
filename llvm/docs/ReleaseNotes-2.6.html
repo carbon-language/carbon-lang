@@ -77,7 +77,7 @@ Almost dead code.
  Logo web page.
  llvm devmtg
  compiler_rt
- klee web page at klee.llvm.org
+ KLEE web page at klee.llvm.org
  Many new papers added to /pubs/
    Mention gcc plugin.
 
@@ -216,19 +216,19 @@ License, a "BSD-style" license.</p>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="klee">klee: Symbolic Execution and Automatic Test Case Generator</a>
+<a name="klee">KLEE: Symbolic Execution and Automatic Test Case Generator</a>
 </div>
 
 <div class="doc_text">
 <p>
-The new LLVM <a href="http://klee.llvm.org/">klee project</a> is a symbolic
-execution framework for programs in LLVM bitcode form.  Klee tries to
+The new LLVM <a href="http://klee.llvm.org/">KLEE project</a> is a symbolic
+execution framework for programs in LLVM bitcode form.  KLEE tries to
 symbolically evaluate "all" paths through the application and records state
 transitions that lead to fault states.  This allows it to construct testcases
 that lead to faults and can even be used to verify algorithms.  For more
 details, please see the <a
 href="http://llvm.org/pubs/2008-12-OSDI-KLEE.html">OSDI 2008 paper</a> about
-Klee.</p>
+KLEE.</p>
 
 </div>
 
@@ -441,7 +441,7 @@ in this section.
 <p>LLVM 2.6 includes several major new capabilities:</p>
 
 <ul>
-<li>New <a href="#compiler-rt">compiler-rt</a>, <A href="#klee">klee</a>,
+<li>New <a href="#compiler-rt">compiler-rt</a>, <A href="#klee">KLEE</a>,
     and <a href="#mc">machine code toolkit</a> sub-projects.</li>
 <li>Debug information now includes line numbers when optimizations are enabled.
     This allows statistical sampling tools like oprofile and Shark to map
@@ -529,17 +529,28 @@ expose new optimization opportunities:</p>
 
 <div class="doc_text">
 
-<p>In addition to a large array of bug fixes and minor performance tweaks, this
+<p>In addition to a large array of minor performance tweaks and bug fixes, this
 release includes a few major enhancements and additions to the optimizers:</p>
 
 <ul>
 
-<li>SRoA improvements for vector unions, memset, arbitrary weird bitfield accesses etc.  It now produces "strange" sized integers.</li>
-<li>Inliner reuse stack space when inlining arrays?</li>
-<li>Enabled GVN Load PRE.</li>
-<li>New Static Single Information (SSI) construction pass (not used by anything yet, experimental).</li>
-<li>LSR promotes int induction variables to 64-bit on 64-bit targets, major perf boost for numerical code.</li>
-<li>LSR now analyzes pointer expressions (e.g. getelementptrs), not just integers.</li>
+<li>The <a href="Passes.html#scalarrepl">Scalar Replacement of Aggregates</a>
+    pass has many improvements that allow it to better promote vector unions,
+    variables which are memset, and much more strange code that can happen do
+    to bitfield accesses to register operations.  An interesting change is that
+    it now produces "unusual" integer sizes (like i1704) in some cases and lets
+    other optimizers clean things up.</li>
+<li>The <a href="Passes.html#loop-reduce">Loop Strength Reduction</a> pass now
+    promotes small integer induction variables to 64-bit on 64-bit targets,
+    which provides a major performance boost many for numerical code.  It also
+    promotes shorts to int on 32-bit hosts, etc.  LSR now also analyzes pointer
+    expressions (e.g. getelementptrs), as well as integers.</li>
+<li>The <a href="Passes.html#gvn">GVN</a> pass now eliminates partial
+    redundancies of loads in simple cases.</li>
+<li>The <a href="Passes.html#inline">Inliner</a> now reuses stack space when
+    inlining similiar arrays from multiple callees into one caller.</li>
+<li>LLVM includes a new experimental Static Single Information (SSI)
+    construction pass.</li>
 </li>
 
 </ul>
@@ -559,34 +570,43 @@ it run faster:</p>
 
 <ul>
 
-<li>    -asm-verbose now prints location info (with -g) and loop nest info.</li>
+<li>The <tt>llc -asm-verbose</tt> option (exposed from llvm-gcc and clang as
+    <tt>-fverbose-asm</tt>) now adds a lot of useful information in comments to
+    the generated .s file.  This information includes location information (if
+    built with <tt>-g</tt>) and loop nest information.</li>
+<li>The code generator now supports a new MachineVerifier pass which is useful
+    for finding bugs in targets and ccodegen passes.</li>
+<li>The Machine LICM is now enabled by default.  It hoists instructions out of
+    loops (such as constant pool loads, loads from readonly stubs, vector
+    constant synthesization code, etc) and is currently configured to only do so
+    when the hoisted operation can be rematerialized.</li>
+<li>The Machine Sinking pass is now enabled by default.  This pass moves
+    side-effect free operations down the CFG so that they are executed on fewer
+    paths through a function.</li>
 <li>Tblgen now supports multiclass inheritance and a number of new string and
     list operations like !(subst), !(foreach), !car, !cdr, !null, !if, !cast.
     These make the .td files more expressive and allow more aggressive factoring
     of duplication across instruction patterns.</li>
-<li>New MachineVerifier pass.</li>
-<li>Machine LICM, hoists things like constant pool loads, loads from readonly stubs, vector constant synthesization code, etc.</li>
-<li>Machine Sinking</li>
-<li>target-specific intrinsics (r63765)</li>
+<li>Target-specific intrinsics can now be added without having to hack VMCore to
+    add them.  This makes it easier to maintain out-of-tree targets.</li>
 <li>Regalloc improvements for commuting, various spiller peephole optimizations, cross-class coalescing.</li>
 <li><tt>llc -enable-value-prop</tt>, propagation of value info (sign/zero ext info) from one MBB to another</li>
 <li>Regalloc hints for allocation stuff: Evan r73381/r73671.  Finished/enabled?</li>
 <li>Stack slot coloring for register spills (denser stack frames)</li>
 <li>SelectionDAGS: New BuildVectorSDNode (r65296), and ISD::VECTOR_SHUFFLE (r69952 / PR2957)</li>
-<li>Experimental support for shrink wrapping support in PEI.</li>
-<li>Experimental support for writing ELF .o files directly from the compiler,
-    it works well for many simple C testcases, but doesn't support exception
-    handling, debug info, inline assembly, etc.</li>
+<li>The Prolog/Epilog Insertion Pass now has experimental support for performing
+    the "shrink wrapping" optimization, which moves spills and reloads around in
+    the CFG to avoid doing saves on paths that don't need them.</li>
+<li>LLVM includes new experimental support for writing ELF .o files directly
+    from the compiler.  It works well for many simple C testcases, but doesn't
+    support exception handling, debug info, inline assembly, etc.</li>
 <li>Targets can now specify register allocation hints through
-   MachineRegisterInfo:: setRegAllocationHint. A regalloc hint consists 1) hint
-   type, 2) physical register number. A hint type of zero specifies a register
-   allocation preference. Other hint type values are target specific which are
-   resolved by TargetRegisterInfo::ResolveRegAllocHint. An example of which is
-   the ARM target can uses register hint to request that the register allocator
-   provide an even / odd register pair to two virtual registers.  It is
-   important to note the register allocation hints are just hints.  There is no
-   guarantee the register allocators will be able to satisfy the hints.</li>
-   
+    MachineRegisterInfo:: setRegAllocationHint. A regalloc hint consists of hint
+    type and physical register number. A hint type of zero specifies a register
+    allocation preference. Other hint type values are target specific which are
+    resolved by TargetRegisterInfo::ResolveRegAllocHint. An example of which is
+    the ARM target can uses register hint to request that the register allocator
+    provide an even / odd register pair to two virtual registers.</li>
 </ul>
 </div>
 
