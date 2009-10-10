@@ -78,7 +78,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#anders-aa">-anders-aa</a></td><td>Andersen's Interprocedural Alias Analysis</td></tr>
 <tr><td><a href="#basicaa">-basicaa</a></td><td>Basic Alias Analysis (default AA impl)</td></tr>
 <tr><td><a href="#basiccg">-basiccg</a></td><td>Basic CallGraph Construction</td></tr>
-<tr><td><a href="#basicvn">-basicvn</a></td><td>Basic Value Numbering (default GVN impl)</td></tr>
 <tr><td><a href="#codegenprepare">-codegenprepare</a></td><td>Optimize for code generation</td></tr>
 <tr><td><a href="#count-aa">-count-aa</a></td><td>Count Alias Analysis Query Responses</td></tr>
 <tr><td><a href="#debug-aa">-debug-aa</a></td><td>AA use debugger</td></tr>
@@ -90,7 +89,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#globalsmodref-aa">-globalsmodref-aa</a></td><td>Simple mod/ref analysis for globals</td></tr>
 <tr><td><a href="#instcount">-instcount</a></td><td>Counts the various types of Instructions</td></tr>
 <tr><td><a href="#intervals">-intervals</a></td><td>Interval Partition Construction</td></tr>
-<tr><td><a href="#load-vn">-load-vn</a></td><td>Load Value Numbering</td></tr>
 <tr><td><a href="#loops">-loops</a></td><td>Natural Loop Construction</td></tr>
 <tr><td><a href="#memdep">-memdep</a></td><td>Memory Dependence Analysis</td></tr>
 <tr><td><a href="#no-aa">-no-aa</a></td><td>No Alias Analysis (always returns 'may' alias)</td></tr>
@@ -125,11 +123,9 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#deadtypeelim">-deadtypeelim</a></td><td>Dead Type Elimination</td></tr>
 <tr><td><a href="#die">-die</a></td><td>Dead Instruction Elimination</td></tr>
 <tr><td><a href="#dse">-dse</a></td><td>Dead Store Elimination</td></tr>
-<tr><td><a href="#gcse">-gcse</a></td><td>Global Common Subexpression Elimination</td></tr>
 <tr><td><a href="#globaldce">-globaldce</a></td><td>Dead Global Elimination</td></tr>
 <tr><td><a href="#globalopt">-globalopt</a></td><td>Global Variable Optimizer</td></tr>
 <tr><td><a href="#gvn">-gvn</a></td><td>Global Value Numbering</td></tr>
-<tr><td><a href="#gvnpre">-gvnpre</a></td><td>Global Value Numbering/Partial Redundancy Elimination</td></tr>
 <tr><td><a href="#indmemrem">-indmemrem</a></td><td>Indirect Malloc and Free Removal</td></tr>
 <tr><td><a href="#indvars">-indvars</a></td><td>Canonicalize Induction Variables</td></tr>
 <tr><td><a href="#inline">-inline</a></td><td>Function Integration/Inlining</td></tr>
@@ -161,7 +157,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#mem2reg">-mem2reg</a></td><td>Promote Memory to Register</td></tr>
 <tr><td><a href="#memcpyopt">-memcpyopt</a></td><td>Optimize use of memcpy and friends</td></tr>
 <tr><td><a href="#mergereturn">-mergereturn</a></td><td>Unify function exit nodes</td></tr>
-<tr><td><a href="#predsimplify">-predsimplify</a></td><td>Predicate Simplifier</td></tr>
 <tr><td><a href="#prune-eh">-prune-eh</a></td><td>Remove unused exception handling info</td></tr>
 <tr><td><a href="#raiseallocs">-raiseallocs</a></td><td>Raise allocations from calls to instructions</td></tr>
 <tr><td><a href="#reassociate">-reassociate</a></td><td>Reassociate expressions</td></tr>
@@ -304,25 +299,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="basicvn">Basic Value Numbering (default Value Numbering impl)</a>
-</div>
-<div class="doc_text">
-  <p>
-  This is the default implementation of the <code>ValueNumbering</code>
-  interface.  It walks the SSA def-use chains to trivially identify
-  lexically identical expressions.  This does not require any ahead of time
-  analysis, so it is a very fast default implementation.
-  </p>
-  <p>
-  The ValueNumbering analysis passes are mostly deprecated. They are only used
-  by the <a href="#gcse">Global Common Subexpression Elimination pass</a>, which
-  is deprecated by the <a href="#gvn">Global Value Numbering pass</a> (which
-  does its value numbering on its own).
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
   <a name="codegenprepare">Optimize for code generation</a>
 </div>
 <div class="doc_text">
@@ -456,28 +432,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <p>
   In this way, the interval partition may be used to reduce a flow graph down
   to its degenerate single node interval partition (unless it is irreducible).
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="load-vn">Load Value Numbering</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass value numbers load and call instructions.  To do this, it finds
-  lexically identical load instructions, and uses alias analysis to determine
-  which loads are guaranteed to produce the same value.  To value number call
-  instructions, it looks for calls to functions that do not write to memory
-  which do not have intervening instructions that clobber the memory that is
-  read from.
-  </p>
-  
-  <p>
-  This pass builds off of another value numbering pass to implement value
-  numbering for non-load and non-call instructions.  It uses Alias Analysis so
-  that it can disambiguate the load instructions.  The more powerful these base
-  analyses are, the more powerful the resultant value numbering will be.
   </p>
 </div>
 
@@ -865,23 +819,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="gcse">Global Common Subexpression Elimination</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass is designed to be a very quick global transformation that
-  eliminates global common subexpressions from a function.  It does this by
-  using an existing value numbering analysis pass to identify the common
-  subexpressions, eliminating them when possible.
-  </p>
-  <p>
-  This pass is deprecated by the <a href="#gvn">Global Value Numbering pass</a>
-  (which does a better job with its own value numbering).
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
   <a name="globaldce">Dead Global Elimination</a>
 </div>
 <div class="doc_text">
@@ -912,35 +849,11 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 </div>
 <div class="doc_text">
   <p>
-  This pass performs global value numbering to eliminate fully redundant
-  instructions.  It also performs simple dead load elimination.
-  </p>
-  <p>
-  Note that this pass does the value numbering itself, it does not use the
-  ValueNumbering analysis passes.
+  This pass performs global value numbering to eliminate fully and partially
+  redundant instructions.  It also performs redundant load elimination.
   </p>
 </div>
 
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="gvnpre">Global Value Numbering/Partial Redundancy Elimination</a>
-</div>
-<div class="doc_text">
-  <p>
-  This pass performs a hybrid of global value numbering and partial redundancy
-  elimination, known as GVN-PRE.  It performs partial redundancy elimination on
-  values, rather than lexical expressions, allowing a more comprehensive view 
-  the optimization.  It replaces redundant values with uses of earlier 
-  occurences of the same value.  While this is beneficial in that it eliminates
-  unneeded computation, it also increases register pressure by creating large
-  live ranges, and should be used with caution on platforms that are very 
-  sensitive to register pressure.
-  </p>
-  <p>
-  Note that this pass does the value numbering itself, it does not use the
-  ValueNumbering analysis passes.
-  </p>
-</div>
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
@@ -1574,28 +1487,6 @@ if (X &lt; 3) {</pre>
   Ensure that functions have at most one <tt>ret</tt> instruction in them.
   Additionally, it keeps track of which node is the new exit node of the CFG.
   </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="predsimplify">Predicate Simplifier</a>
-</div>
-<div class="doc_text">
-  <p>
-  Path-sensitive optimizer. In a branch where <tt>x == y</tt>, replace uses of
-  <tt>x</tt> with <tt>y</tt>. Permits further optimization, such as the 
-  elimination of the unreachable call:
-  </p>
-  
-<blockquote><pre
->void test(int *p, int *q)
-{
-  if (p != q)
-    return;
-
-  if (*p != *q)
-    foo(); // unreachable
-}</pre></blockquote>
 </div>
 
 <!-------------------------------------------------------------------------- -->
