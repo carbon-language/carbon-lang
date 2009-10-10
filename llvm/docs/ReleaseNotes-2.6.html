@@ -759,17 +759,44 @@ releases of LLVM.</p>
 
 <div class="doc_text">
 
+<p>This release includes a number of new APIs that are used internally, which
+   may also be useful for external clients.
+</p>
+
 <ul>
-<li>
-  New PrettyStackTrace, crashes of llvm tools should give some indication of what the compiler was doing at the time of the crash (e.g. running a pass), and print out command line arguments.
-  StringRef class, Twine class.
-    New WeakVH and AssertingVH and CallbackVH classes.
-  New llvm/ADT/Triple class.
- llvm_report_error() error handling API (llvm/Support/ErrorHandling.h)
-  New llvm/System/Atomic.h, llvm/System/RWMutex.h for portable atomic ops, rw locks.
-  New SourceMgr, SMLoc classes for simple parsers with caret diagnostics and #include support, (used by
-    tablegen, llvm-mc, the .ll parser, FileCheck, etc)
-</li>
+<li>New <a href="http://llvm.org/doxygen/PrettyStackTrace_8h-source.html">
+    PrettyStackTrace classes</a> allows crashes of llvm tools (and applications
+    that integrate them) to provide more detailed indication of what the
+    compiler was doing at the time of the crash (e.g. running a pass).
+    At the top level for each LLVM tool, it includes the command line arguments.
+    </li>
+<li>New <a href="http://llvm.org/doxygen/StringRef_8h-source.html">StringRef</a>
+    and <a href="http://llvm.org/doxygen/Twine_8h-source.html">Twine</a> classes
+    make operations on character ranges and
+    string concatenation to be more efficient.  StringRef is just a <tt>const
+    char*</tt> with a length, Twine is a light-weight rope.</li>
+<li>LLVM has new WeakVH, AssertingVH, and CallbackVH classes, which make it
+    easier to write LLVM IR transformations.  WeakVH is automatically drops to
+    null when the referenced Value is deleted, and is updated across a
+    replaceAllUsesWith operation.  AssertingVH aborts the program if the
+    referenced value is destroyed while it is being referenced.  CallbackVH is
+    a customizable class for handling value references.  See <a
+    href="http://llvm.org/doxygen/ValueHandle_8h-source.html">ValueHandle.h</a> 
+    for more information.</li>
+<li>The new '<a href="http://llvm.org/doxygen/Triple_8h-source.html">Triple
+    </a>' class centralizes a lot of logic that reasons about target
+    triples.</li>
+<li>The new '<a href="http://llvm.org/doxygen/ErrorHandling.h_8h-source.html">
+    llvm_report_error()</a>' set of APIs allows tools to embed the LLVM
+    optimizer and backend and recover from previously unrecoverable errors.</li>
+<li>LLVM has new abstractions for <a 
+    href="http://llvm.org/doxygen/Atomic_8h-source.html">atomic operations</a>
+    and <a href="http://llvm.org/doxygen/RWMutex_8h-source.html">reader/writer
+    locks</a>.</li>
+<li>LLVM has new <a href="http://llvm.org/doxygen/SourceMgr_8h-source.html">
+    SourceMgr and SMLoc classes</a> which implement caret diagnostics and basic
+    include stack processing for simple parsers. It is used by tablegen,
+    llvm-mc, the .ll parser and FileCheck.</li>
 </ul>
 
 
@@ -794,17 +821,21 @@ correct use counts, and has support for edge profiling with reduced runtime
 overhead.  Combined, the generated profile information is both more correct and
 imposes about half as much overhead (2.6. from 12% to 6% overhead on SPEC
 CPU2000).</li>
-<li>Many extensions to the C APIs.</li>
+<li>The C bindings (in the llvm/include/llvm-c directory) include many newly
+    supported APIs.</li>
 <li>LLVM 2.6 includes a brand new experimental LLVM bindings to the Ada2005
-programming language.</li>
+    programming language.</li>
 
-<li>LLVMC:
-
-* Dynamic plugins now work on Windows.
-* New option property: init. Makes possible to provide default values for
- options defined in plugins (interface to cl::init).
-* New example: Skeleton, shows how to create a standalone LLVMC-based driver.
-* New example: mcc16, a driver for the PIC16 toolchain.</li>
+<li>The LLVMC driver has several new features:
+  <ul>
+  <li>Dynamic plugins now work on Windows.</li>
+  <li>New option property: init. Makes possible to provide default values for
+      options defined in plugins (interface to cl::init).</li>
+  <li>New example: Skeleton, shows how to create a standalone LLVMC-based
+      driver.</li>
+  <li>New example: mcc16, a driver for the PIC16 toolchain.</li>
+  </ul>
+</li>
 
 </ul>
 
