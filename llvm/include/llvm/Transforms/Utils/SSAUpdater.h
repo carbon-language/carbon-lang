@@ -60,6 +60,10 @@ public:
   /// AddAvailableValue - Indicate that a rewritten value is available at the
   /// end of the specified block with the specified value.
   void AddAvailableValue(BasicBlock *BB, Value *V);
+
+  /// HasValueForBlock - Return true if the SSAUpdater already has a value for
+  /// the specified block.
+  bool HasValueForBlock(BasicBlock *BB) const;
   
   /// GetValueAtEndOfBlock - Construct SSA form, materializing a value that is
   /// live at the end of the specified block.

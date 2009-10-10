@@ -56,6 +56,12 @@ void SSAUpdater::Initialize(Value *ProtoValue) {
   PrototypeValue = ProtoValue;
 }
 
+/// HasValueForBlock - Return true if the SSAUpdater already has a value for
+/// the specified block.
+bool SSAUpdater::HasValueForBlock(BasicBlock *BB) const {
+  return getAvailableVals(AV).count(BB);
+}
+
 /// AddAvailableValue - Indicate that a rewritten value is available in the
 /// specified block with the specified value.
 void SSAUpdater::AddAvailableValue(BasicBlock *BB, Value *V) {
