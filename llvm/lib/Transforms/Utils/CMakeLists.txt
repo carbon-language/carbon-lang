@@ -19,6 +19,7 @@ add_llvm_library(LLVMTransformUtils
   LowerSwitch.cpp
   Mem2Reg.cpp
   PromoteMemoryToRegister.cpp
+  SSAUpdater.cpp
   SSI.cpp
   SimplifyCFG.cpp
   UnifyFunctionExitNodes.cpp
