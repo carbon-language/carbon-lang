@@ -19,6 +19,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
@@ -27,7 +28,6 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -472,7 +472,6 @@ bool JumpThreading::ProcessSwitchOnDuplicateCond(BasicBlock *PredBB,
   if (PredBB == DestBB)
     return false;
   
-  
   SwitchInst *PredSI = cast<SwitchInst>(PredBB->getTerminator());
   SwitchInst *DestSI = cast<SwitchInst>(DestBB->getTerminator());
 
@@ -905,18 +904,6 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
         << ", across block:\n    "
         << *BB << "\n");
   
-  // Jump Threading can not update SSA properties correctly if the values
-  // defined in the duplicated block are used outside of the block itself.  For
-  // this reason, we spill all values that are used outside of BB to the stack.
-  for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
-    if (!I->isUsedOutsideOfBlock(BB))
-      continue;
-    
-    // We found a use of I outside of BB.  Create a new stack slot to
-    // break this inter-block usage pattern.
-    DemoteRegToStack(*I);
-  }
- 
   // We are going to have to map operands from the original BB block to the new
   // copy of the block 'NewBB'.  If there are PHI nodes in BB, evaluate them to
   // account for entry from PredBB.
@@ -954,8 +941,8 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
   
   // Check to see if SuccBB has PHI nodes. If so, we need to add entries to the
   // PHI nodes for NewBB now.
-  for (BasicBlock::iterator PNI = SuccBB->begin(); isa<PHINode>(PNI); ++PNI) {
-    PHINode *PN = cast<PHINode>(PNI);
+  for (BasicBlock::iterator PNI = SuccBB->begin();
+       PHINode *PN = dyn_cast<PHINode>(PNI); ++PNI) {
     // Ok, we have a PHI node.  Figure out what the incoming value was for the
     // DestBlock.
     Value *IV = PN->getIncomingValueForBlock(BB);
@@ -968,6 +955,46 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
     }
     PN->addIncoming(IV, NewBB);
   }
+  
+  // If there were values defined in BB that are used outside the block, then we
+  // now have to update all uses of the value to use either the original value,
+  // the cloned value, or some PHI derived value.  This can require arbitrary
+  // PHI insertion, of which we are prepared to do, clean these up now.
+  SSAUpdater SSAUpdate;
+  SmallVector<Use*, 16> UsesToRename;
+  for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
+    // Scan all uses of this instruction to see if it is used outside of its
+    // block, and if so, record them in UsesToRename.
+    for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
+         ++UI) {
+      Instruction *User = cast<Instruction>(*UI);
+      if (PHINode *UserPN = dyn_cast<PHINode>(User)) {
+        if (UserPN->getIncomingBlock(UI) == BB)
+          continue;
+      } else if (User->getParent() == BB)
+        continue;
+      
+      UsesToRename.push_back(&UI.getUse());
+    }
+    
+    // If there are no uses outside the block, we're done with this instruction.
+    if (UsesToRename.empty())
+      continue;
+    
+    DEBUG(errs() << "JT: Renaming non-local uses of: " << *I << "\n");
+
+    // We found a use of I outside of BB.  Rename all uses of I that are outside
+    // its block to be uses of the appropriate PHI node etc.  See ValuesInBlocks
+    // with the two values we know.
+    SSAUpdate.Initialize(I);
+    SSAUpdate.AddAvailableValue(BB, I);
+    SSAUpdate.AddAvailableValue(NewBB, ValueMapping[I]);
+    
+    while (!UsesToRename.empty())
+      SSAUpdate.RewriteUse(*UsesToRename.pop_back_val());
+    DEBUG(errs() << "\n");
+  }
+  
   
   // Ok, NewBB is good to go.  Update the terminator of PredBB to jump to
   // NewBB instead of BB.  This eliminates predecessors from BB, which requires
