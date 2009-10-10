@@ -854,31 +854,32 @@ on LLVM 2.5, this section lists some "gotchas" that you may run into upgrading
 from the previous release.</p>
 
 <ul>
-
-<li>The Itanium (IA64) backend has been removed.  It was not supported and
-    had bitrotted.</li>
+<li>The Itanium (IA64) backend has been removed.  It was not actively supported
+    and had bitrotted.</li>
 <li>The BigBlock register allocator has been removed, it had also bitrotted.</li>
 <li>The C Backend (-march=c) is no longer considered part of the LLVM release
 criteria.  We still want it to work, but no one is maintaining it and it lacks
 support for arbitrary precision integers and other important IR features.</li>
-</ul>
 
-  LLVM build now builds all libraries as .a files instead of some
+<li>All LLVM tools now default to overwriting their output file, behaving more
+    like standard unix tools.  Previously, this only happened with the '-f'
+    option.</li>
+<li>LLVM build now builds all libraries as .a files instead of some
   libraries as relinked .o files.  This requires some APIs like
-  InitializeAllTargets.h.  TargetRegistry! 
-
-
+  InitializeAllTargets.h.
+  </li>
+</ul>
 
 
 <p>In addition, many APIs have changed in this release.  Some of the major LLVM
 API changes are:</p>
 
-
-  API Cleanup:
-    no use of hash_set/hash_map, no more llvm::OStream
-    Use raw_ostream for everything, killed off llvm/Streams.h and DOUT
-
 <ul>
+<li>All uses of hash_set and hash_map have been removed from the LLVM tree and
+    the wrapper headers have been removed.</li>
+<li>The llvm/Streams.h and DOUT member of Debug.h have been removed.  The
+    llvm::Ostream class has been completely removed and replaced with uses of
+    raw_ostream.</li>
 <li>LLVM's global uniquing tables for <tt>Type</tt>s and <tt>Constant</tt>s have
     been privatized into members of an <tt>LLVMContext</tt>.  A number of APIs
     now take an <tt>LLVMContext</tt> as a parameter.  To smooth the transition
@@ -911,7 +912,9 @@ used.</li>
 and <tt>Twine</tt> classes instead of passing <tt>const char*</tt>
 or <tt>std::string</tt>, as described in
 the <a href="ProgrammersManual.html#string_apis">Programmer's Manual</a>. Most
-clients should be unaffected by this transition, unless they are used to <tt>Value::getName()</tt> returning a string. Here are some tips on updating to 2.6:
+clients should be unaffected by this transition, unless they are used to
+<tt>Value::getName()</tt> returning a string. Here are some tips on updating to
+2.6:
   <ul>
     <li><tt>getNameStr()</tt> is still available, and matches the old
       behavior. Replacing <tt>getName()</tt> calls with this is an safe option,
@@ -937,7 +940,9 @@ clients should be unaffected by this transition, unless they are used to <tt>Val
 </li>
 
 <li>The registration interfaces for backend Targets has changed (what was
-previously TargetMachineRegistry). For backend authors, see the <a href="WritingAnLLVMBackend.html#TargetRegistration">Writing An LLVM Backend</a> guide. For clients, the notable API changes are:
+previously TargetMachineRegistry). For backend authors, see the <a
+href="WritingAnLLVMBackend.html#TargetRegistration">Writing An LLVM Backend</a>
+guide. For clients, the notable API changes are:
   <ul>
     <li><tt>TargetMachineRegistry</tt> has been renamed
       to <tt>TargetRegistry</tt>.</li>
@@ -946,13 +951,6 @@ previously TargetMachineRegistry). For backend authors, see the <a href="Writing
       function to find targets.</li>
   </ul>
 </li>
-
-<li>llvm-dis now fails if the output file exists, instead of dumping to stdout.
-FIXME: describe any other tool changes due to the raw_fd_ostream change.  FIXME:
-This is not an API change, maybe there should be a tool changes section?</li>
-<li>temporarily due to Context API change passes should call doInitialization()
-method of the pass they inherit from, otherwise Context is NULL.
-FIXME: remove this entry when this is no longer needed.<li>
 </ul>
 
 </div>
@@ -971,9 +969,10 @@ FIXME: remove this entry when this is no longer needed.<li>
 
 <ul>
 <li>Intel and AMD machines (IA32, X86-64, AMD64, EMT-64) running Red Hat
-Linux, Fedora Core, FreeBSD and AuroraUX (and probably other unix-like systems).</li>
+    Linux, Fedora Core, FreeBSD and AuroraUX (and probably other unix-like
+    systems).</li>
 <li>PowerPC and X86-based Mac OS X systems, running 10.3 and above in 32-bit
-and 64-bit modes.</li>
+    and 64-bit modes.</li>
 <li>Intel and AMD machines running on Win32 using MinGW libraries (native).</li>
 <li>Intel and AMD machines running on Win32 with the Cygwin libraries (limited
     support is available for native builds with Visual C++).</li>
@@ -1027,9 +1026,11 @@ components, please contact us on the <a
 href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 
 <ul>
-<li>The MSIL, Alpha, SPU, MIPS, and PIC16 backends are experimental.</li>
+<li>The MSIL, Alpha, SPU, MIPS, PIC16, Blackfin, MSP430 and SystemZ backends are
+    experimental.</li>
 <li>The <tt>llc</tt> "<tt>-filetype=asm</tt>" (the default) is the only
-    supported value for this option.</li>
+    supported value for this option.  The ELF writer is experimental.</li>
+<li>The implementation of Andersen's Alias Analysis has many known bugs.</li>
 </ul>
 
 </div>
@@ -1118,7 +1119,6 @@ results (<a href="http://llvm.org/PR1388">PR1388</a>).</li>
 <div class="doc_text">
 
 <ul>
-<li>The O32 ABI is not fully supported.</li>
 <li>64-bit MIPS targets are not supported yet.</li>
 </ul>
 
@@ -1165,10 +1165,6 @@ appropriate nops inserted to ensure restartability.</li>
 </div>
 
 <div class="doc_text">
-
-<p>llvm-gcc does not currently support <a href="http://llvm.org/PR869">Link-Time
-Optimization</a> on most platforms "out-of-the-box".  Please inquire on the
-LLVMdev mailing list if you are interested.</p>
 
 <p>The only major language feature of GCC not supported by llvm-gcc is
     the <tt>__builtin_apply</tt> family of builtins.   However, some extensions
