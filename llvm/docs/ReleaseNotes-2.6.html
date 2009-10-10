@@ -170,7 +170,7 @@ compilation.</p>
 
 <p>
 VMKit version 0.26 builds with LLVM 2.6 and you can find it on its
-<a href="http://vmkit.llvm.org/releases/">webpage</a>. The release includes
+<a href="http://vmkit.llvm.org/releases/">web page</a>. The release includes
 bug fixes, cleanup and new features. The major changes are:</p>
 
 <ul>
@@ -179,7 +179,7 @@ bug fixes, cleanup and new features. The major changes are:</p>
     files.</li>
 <li>Cooperative garbage collection. </li>
 <li>Fast subtype checking (paper from Click et al [JGI'02]). </li>
-<li>Implementation of a two-word header for Java objects instead of the orginal
+<li>Implementation of a two-word header for Java objects instead of the original
     three-word header. </li>
 <li>Better Java specification-compliance: division by zero checks, stack
     overflow checks, finalization and references support. </li>
@@ -365,7 +365,7 @@ the D Programming Language using the LLVM optimizer and code generator.
 The LDC project works great with the LLVM 2.6 release.  General improvements in
 this
 cycle have included new inline asm constraint handling, better debug info
-support, general bugfixes, and better x86-64 support.  This has allowed
+support, general bug fixes, and better x86-64 support.  This has allowed
 some major improvements in LDC, getting us much closer to being as
 fully featured as the original DMD compiler from DigitalMars.
 </p>
@@ -544,7 +544,7 @@ release includes a few major enhancements and additions to the optimizers:</p>
 <li>The <a href="Passes.html#gvn">GVN</a> pass now eliminates partial
     redundancies of loads in simple cases.</li>
 <li>The <a href="Passes.html#inline">Inliner</a> now reuses stack space when
-    inlining similiar arrays from multiple callees into one caller.</li>
+    inlining similar arrays from multiple callees into one caller.</li>
 <li>LLVM includes a new experimental Static Single Information (SSI)
     construction pass.</li>
 </li>
@@ -571,9 +571,9 @@ it run faster:</p>
     the generated .s file.  This information includes location information (if
     built with <tt>-g</tt>) and loop nest information.</li>
 <li>The code generator now supports a new MachineVerifier pass which is useful
-    for finding bugs in targets and ccodegen passes.</li>
+    for finding bugs in targets and codegen passes.</li>
 <li>The Machine LICM is now enabled by default.  It hoists instructions out of
-    loops (such as constant pool loads, loads from readonly stubs, vector
+    loops (such as constant pool loads, loads from read-only stubs, vector
     constant synthesization code, etc) and is currently configured to only do so
     when the hoisted operation can be rematerialized.</li>
 <li>The Machine Sinking pass is now enabled by default.  This pass moves
