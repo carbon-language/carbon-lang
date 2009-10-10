@@ -54,6 +54,8 @@ private:
   PointerIntPair<ValueHandleBase**, 2, HandleBaseKind> PrevPair;
   ValueHandleBase *Next;
   Value *VP;
+  
+  explicit ValueHandleBase(const ValueHandleBase&); // DO NOT IMPLEMENT.
 public:
   explicit ValueHandleBase(HandleBaseKind Kind)
     : PrevPair(0, Kind), Next(0), VP(0) {}
@@ -130,6 +132,13 @@ public:
   WeakVH(Value *P) : ValueHandleBase(Weak, P) {}
   WeakVH(const WeakVH &RHS)
     : ValueHandleBase(Weak, RHS) {}
+
+  Value *operator=(Value *RHS) {
+    return ValueHandleBase::operator=(RHS);
+  }
+  Value *operator=(const ValueHandleBase &RHS) {
+    return ValueHandleBase::operator=(RHS);
+  }
 
   operator Value*() const {
     return getValPtr();
