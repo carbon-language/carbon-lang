@@ -92,11 +92,10 @@ Almost dead code.
 <div class="doc_text">
 <p>
 The LLVM 2.6 distribution currently consists of code from the core LLVM
-repository &mdash;which roughly includes the LLVM optimizers, code generators
-and supporting tools &mdash; and the llvm-gcc repository.  In addition to this
-code, the LLVM Project includes other sub-projects that are in development.  The
-two which are the most actively developed are the <a href="#clang">Clang
-Project</a> and the <a href="#vmkit">VMKit Project</a>.
+repository (which roughly includes the LLVM optimizers, code generators
+and supporting tools), the Clang repository and the llvm-gcc repository.  In
+addition to this code, the LLVM Project includes other sub-projects that are in
+development.  Here we include updates on these subprojects.
 </p>
 
 </div>
@@ -112,8 +111,12 @@ Project</a> and the <a href="#vmkit">VMKit Project</a>.
 <p>The <a href="http://clang.llvm.org/">Clang project</a> is an effort to build
 a set of new 'LLVM native' front-end technologies for the C family of languages.
 LLVM 2.6 is the first release to officially include Clang, and it provides a
-production quality C and Objective-C compiler.  If you are interested in fast
-compiles and good diagnostics, we encourage you to try it out.</p>
+production quality C and Objective-C compiler.  If you are interested in <a 
+href="http://clang.llvm.org/performance.html">fast compiles</a> and
+<a href="http://clang.llvm.org/diagnostics.html">good diagnostics</a>, we
+encourage you to try it out.  Clang currently compiles typical Objective-C code
+3x faster than GCC and compiles C code about 30% faster than GCC at -O0 -g
+(which is when the most pressure is on the frontend).</p>
 
 <p>In addition to supporting these languages, C++ support is also <a
 href="http://clang.llvm.org/cxx_status.html">well under way</a>, and mainline
@@ -127,7 +130,7 @@ list</a>.</p>
 
 <ul>
 <li>C and Objective-C support are now considered production quality.</li>
-<li>AuroraUX / FreeBSD &amp; OpenBSD Toolchain support.</li>
+<li>AuroraUX, FreeBSD, and OpenBSD are now supported.</li>
 <li>Most of Objective-C 2.0 is now supported with the GNU runtime.</li>
 <li>Many many bugs are fixed and many features have been added.</li>
 </ul>
@@ -201,8 +204,9 @@ is a simple library that provides an implementation of the low-level
 target-specific hooks required by code generation and other runtime components.
 For example, when compiling for a 32-bit target, converting a double to a 64-bit
 unsigned integer is compiling into a runtime call to the "__fixunsdfdi"
-function. The compiler-rt library provides optimized implementations of this and
-other low-level routines.</p>
+function. The compiler-rt library provides highly optimized implementations of
+this and other low-level routines (some are 3x faster than the equivalent
+libgcc routines).</p>
 
 <p>
 All of the code in the compiler-rt project is available under the standard LLVM
@@ -281,6 +285,14 @@ other situations.
   <a name="externalproj">External Projects Using LLVM 2.6</a>
 </div>
 <!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>An exciting aspect of LLVM is that it is used as an enabling technology for
+   a lot of other language and tools projects.  This section lists some of the
+   projects that have already been updated to work with LLVM 2.6.</p>
+</div>
+
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -440,16 +452,14 @@ in this section.
     enables support for <a href="LinkTimeOptimization.html">transparent
     link-time optimization</a> on ELF targets when used with the Gold binutils
     linker.</li>
-<li>LLVM now supports doing optimization and code generation on multiple threads
-    by allowing multiple "LLVMContext" objects to exist.  Please see the <a 
-    href="ProgrammersManual.html#threading">threading entry in the Programmer's
-    Manual</a> for more information.</li>
+<li>LLVM now supports doing optimization and code generation on multiple 
+    threads.  Please see the <a href="ProgrammersManual.html#threading">LLVM
+    Programmer's Manual</a> for more information.</li>
 <li>LLVM now has experimental support for <a
     href="http://nondot.org/~sabre/LLVMNotes/EmbeddedMetadata.txt">embedded
     metadata</a> in LLVM IR, though the implementation is not guaranteed to be
     final and the .bc file format may change in future releases.  Debug info 
-    does not yet use this format in LLVM 2.6.</p>
-    
+    does not yet use this format in LLVM 2.6.</li>
 </ul>
 
 </div>
@@ -460,18 +470,54 @@ in this section.
 </div>
 
 <div class="doc_text">
-<p>LLVM IR has several new features that are used by our existing front-ends and
-can be useful if you are writing a front-end for LLVM:</p>
+<p>LLVM IR has several new features for better support of new targets and that
+expose new optimization opportunities:</p>
 
 <ul>
-<li>Getelementpr instruction now allows any integer type for array/pointer indexes.</li>
-<li>Inbounds for GEP</li>
-<li>NSW/NUW/exact div</li>
-<li>LSR promotes int induction variables to 64-bit on 64-bit targets, major perf boost for numerical code.</li>
-<li>LSR now analyzes pointer expressions (e.g. getelementptrs), not just integers.</li>
-<li>new linkage types linkonce_odr, weak_odr, linker_private, and available_externally.</li>
-<li>New fadd, fsub, fmul instructions and classes. </li>
-<li>Target intrinsics can now return multiple results.</li>
+<li>The <a href="LangRef.html#i_add">add</a>, <a 
+    href="LangRef.html#i_sub">sub</a>, and <a href="LangRef.html#i_mul">mul</a>
+    instructions have been split into integer and floating point version (like
+    divide and remainder), introducing new <a
+    href="LangRef.html#i_fadd">fadd</a>, <a href="LangRef.html#i_fsub">fsub</a>,
+    and <a href="LangRef.html#i_fmul">fmul</a> instructions.</li>
+<li>The <a href="LangRef.html#i_add">add</a>, <a 
+    href="LangRef.html#i_sub">sub</a>, and <a href="LangRef.html#i_mul">mul</a>
+    instructions now support optional "nsw" and "nuw" bits which indicate that
+    the operation is guaranteed to not overflow (in the signed or
+    unsigned case, respectively).  This gives the optimizer more information and
+    can be used for things C signed integer values, which are undefined on
+    overflow.</li>
+<li>The <a href="LangRef.html#i_sdiv">sdiv</a> instruction now supports an
+    optional "exact" flag which indicates that the result of the division is
+    guaranteed to have a remainder of zero.  This is useful to optimize pointer
+    subtraction in C.</li>
+<li>The <a href="LangRef.html#i_getelementptr">getelementptr</a> instruction now
+    supports arbitrary integer index values for array/pointer indices.  This
+    allows for better better code generation on 16-bit targets like PIC16.</li>
+<li>The <a href="LangRef.html#i_getelementptr">getelementptr</a> instruction now
+    supports an "inbounds" optimization hint that tells the optimizer that the
+    pointer is guaranteed to be within its allocated object.</li>
+<li>LLVM now support a series of new linkage types for global values which allow
+    for better optimization and new capabilities:
+    <ul>
+    <li><a href="LangRef.html#linkage_linkonce">linkonce_odr</a> and
+        <a href="LangRef.html#linkage_weak">weak_odr</a> have the same linkage
+        semantics as the non-"odr" linkage types.  The difference is that these
+        linkage types indicate that all definitions of the specified function
+        are guaranteed to have the same semantics.  This allows inlining
+        templates functions in C++ but not inlining weak functions in C,
+        which previously both got the same linkage type.</li>
+    <li><a href="LangRef.html#linkage_available_externally">available_externally
+        </a> is a new linkage type that gives the optimizer visibility into the
+        definition of a function (allowing inlining and side effect analysis)
+        but that does not cause code to be generated.  This allows better
+        optimization of "GNU inline" functions, extern templates, etc.</li>
+    <li><a href="LangRef.html#linkage_linker_private">linker_private</a> is a
+        new linkage type (which is only useful on Mac OS X) that is used for
+        some metadata generation and other obscure things.</li>
+    </ul></li>
+<li>Finally, target-specific intrinsics can now return multiple values, which
+    is useful for modeling target operations with multiple results.</li>
 </ul>
 
 </div>
@@ -492,6 +538,8 @@ release includes a few major enhancements and additions to the optimizers:</p>
 <li>Inliner reuse stack space when inlining arrays?</li>
 <li>Enabled GVN Load PRE.</li>
 <li>New Static Single Information (SSI) construction pass (not used by anything yet, experimental).</li>
+<li>LSR promotes int induction variables to 64-bit on 64-bit targets, major perf boost for numerical code.</li>
+<li>LSR now analyzes pointer expressions (e.g. getelementptrs), not just integers.</li>
 </li>
 
 </ul>
