@@ -18,6 +18,9 @@ namespace llvm {
   class Value;
   class BasicBlock;
   class Use;
+  class PHINode;
+  template<typename T>
+  class SmallVectorImpl;
   
 /// SSAUpdater - This class updates SSA form for a set of values defined in
 /// multiple blocks.  This is used when code duplication or another unstructured
@@ -40,8 +43,14 @@ class SSAUpdater {
   /// should be empty.
   //std::vector<std::pair<BasicBlock*, TrackingVH<Value> > > IncomingPredInfo;
   void *IPI;
+  
+  /// InsertedPHIs - If this is non-null, the SSAUpdater adds all PHI nodes that
+  /// it creates to the vector.
+  SmallVectorImpl<PHINode*> *InsertedPHIs;
 public:
-  SSAUpdater();
+  /// SSAUpdater constructor.  If InsertedPHIs is specified, it will be filled
+  /// in with all PHI Nodes created by rewriting.
+  SSAUpdater(SmallVectorImpl<PHINode*> *InsertedPHIs = 0);
   ~SSAUpdater();
   
   /// Initialize - Reset this object to get ready for a new set of SSA

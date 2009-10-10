@@ -33,7 +33,8 @@ static IncomingPredInfoTy &getIncomingPredInfo(void *IPI) {
 }
 
 
-SSAUpdater::SSAUpdater() : AV(0), PrototypeValue(0), IPI(0) {}
+SSAUpdater::SSAUpdater(SmallVectorImpl<PHINode*> *NewPHI)
+  : AV(0), PrototypeValue(0), IPI(0), InsertedPHIs(NewPHI) {}
 
 SSAUpdater::~SSAUpdater() {
   delete &getAvailableVals(AV);
@@ -158,6 +159,10 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
     InsertedPHI->eraseFromParent();
     return ConstVal;
   }
+
+  // If the client wants to know about all new instructions, tell it.
+  if (InsertedPHIs) InsertedPHIs->push_back(InsertedPHI);
+  
   DEBUG(errs() << "  Inserted PHI: " << *InsertedPHI << "\n");
   return InsertedPHI;
 }
@@ -313,6 +318,9 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
     InsertedVal = ConstVal;
   } else {
     DEBUG(errs() << "  Inserted PHI: " << *InsertedPHI << "\n");
+    
+    // If the client wants to know about all new instructions, tell it.
+    if (InsertedPHIs) InsertedPHIs->push_back(InsertedPHI);
   }
   
   return InsertedVal;
