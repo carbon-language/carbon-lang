@@ -64,11 +64,11 @@ void SSAUpdater::AddAvailableValue(BasicBlock *BB, Value *V) {
   getAvailableVals(AV)[BB] = V;
 }
 
-/// GetValueInBlock - Construct SSA form, materializing a value in the
+/// GetValueAtEndOfBlock - Construct SSA form, materializing a value in the
 /// specified block.
-Value *SSAUpdater::GetValueInBlock(BasicBlock *BB) {
+Value *SSAUpdater::GetValueAtEndOfBlock(BasicBlock *BB) {
   assert(getIncomingPredInfo(IPI).empty() && "Unexpected Internal State");
-  Value *Res = GetValueInBlockInternal(BB);
+  Value *Res = GetValueAtEndOfBlockInternal(BB);
   assert(getIncomingPredInfo(IPI).empty() && "Unexpected Internal State");
   return Res;
 }
@@ -81,16 +81,16 @@ void SSAUpdater::RewriteUse(Use &U) {
   if (PHINode *UserPN = dyn_cast<PHINode>(User))
     UseBB = UserPN->getIncomingBlock(U);
   
-  U.set(GetValueInBlock(UseBB));
+  U.set(GetValueAtEndOfBlock(UseBB));
 }
 
 
-/// GetValueInBlock - Check to see if AvailableVals has an entry for the
-/// specified BB and if so, return it.  If not, construct SSA form by walking
-/// predecessors inserting PHI nodes as needed until we get to a block where the
-/// value is available.
+/// GetValueAtEndOfBlockInternal - Check to see if AvailableVals has an entry
+/// for the specified BB and if so, return it.  If not, construct SSA form by
+/// walking predecessors inserting PHI nodes as needed until we get to a block
+/// where the value is available.
 ///
-Value *SSAUpdater::GetValueInBlockInternal(BasicBlock *BB) {
+Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
   AvailableValsTy &AvailableVals = getAvailableVals(AV);
   
   // Query AvailableVals by doing an insertion of null.
@@ -138,7 +138,7 @@ Value *SSAUpdater::GetValueInBlockInternal(BasicBlock *BB) {
   if (PHINode *SomePhi = dyn_cast<PHINode>(BB->begin())) {
     for (unsigned i = 0, e = SomePhi->getNumIncomingValues(); i != e; ++i) {
       BasicBlock *PredBB = SomePhi->getIncomingBlock(i);
-      Value *PredVal = GetValueInBlockInternal(PredBB);
+      Value *PredVal = GetValueAtEndOfBlockInternal(PredBB);
       IncomingPredInfo.push_back(std::make_pair(PredBB, PredVal));
       
       // Compute SingularValue.
@@ -151,7 +151,7 @@ Value *SSAUpdater::GetValueInBlockInternal(BasicBlock *BB) {
     bool isFirstPred = true;
     for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
       BasicBlock *PredBB = *PI;
-      Value *PredVal = GetValueInBlockInternal(PredBB);
+      Value *PredVal = GetValueAtEndOfBlockInternal(PredBB);
       IncomingPredInfo.push_back(std::make_pair(PredBB, PredVal));
       
       // Compute SingularValue.

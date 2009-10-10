@@ -52,16 +52,16 @@ public:
   /// specified block with the specified value.
   void AddAvailableValue(BasicBlock *BB, Value *V);
   
-  /// GetValueInBlock - Construct SSA form, materializing a value in the
-  /// specified block.
-  Value *GetValueInBlock(BasicBlock *BB);
+  /// GetValueAtEndOfBlock - Construct SSA form, materializing a value that is
+  /// live at the end of the specified block.
+  Value *GetValueAtEndOfBlock(BasicBlock *BB);
   
   /// RewriteUse - Rewrite a use of the symbolic value.  This handles PHI nodes,
   /// which use their value in the corresponding predecessor.
   void RewriteUse(Use &U);
   
 private:
-  Value *GetValueInBlockInternal(BasicBlock *BB);
+  Value *GetValueAtEndOfBlockInternal(BasicBlock *BB);
   void operator=(const SSAUpdater&); // DO NOT IMPLEMENT
   SSAUpdater(const SSAUpdater&);     // DO NOT IMPLEMENT
 };
