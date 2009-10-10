@@ -197,9 +197,8 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
   for (Value::use_iterator UI = Instr->use_begin(), E = Instr->use_end();
        UI != E;) {
     BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-    if (PHINode *P = dyn_cast<PHINode>(*UI)) {
+    if (PHINode *P = dyn_cast<PHINode>(*UI))
       UserBB = P->getIncomingBlock(UI);
-    }
     
     // If the user is in the loop, don't rewrite it!
     if (UserBB == Instr->getParent() || inLoop(UserBB)) {
@@ -231,12 +230,11 @@ void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
   for (Loop::block_iterator BB = L->block_begin(), BE = L->block_end();
        BB != BE; ++BB) {
     for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end(); I != E; ++I)
-      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE;
-           ++UI) {
+      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
+           UI != UE; ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (PHINode* p = dyn_cast<PHINode>(*UI)) {
+        if (PHINode *p = dyn_cast<PHINode>(*UI))
           UserBB = p->getIncomingBlock(UI);
-        }
         
         if (*BB != UserBB && !inLoop(UserBB)) {
           AffectedValues.insert(I);
@@ -288,7 +286,7 @@ Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
   Phis.insert(std::make_pair(BB, PN));
                                  
   // Fill in the incoming values for the block.
-  for (BasicBlock** PI = PredCache.GetPreds(BBN); *PI; ++PI)
+  for (BasicBlock **PI = PredCache.GetPreds(BBN); *PI; ++PI)
     PN->addIncoming(GetValueForBlock(DT->getNode(*PI), OrigInst, Phis), *PI);
   return PN;
 }

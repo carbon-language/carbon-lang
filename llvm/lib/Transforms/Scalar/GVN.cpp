@@ -816,8 +816,9 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, Instruction *Orig,
   else
     NumPreds = std::distance(pred_begin(BB), pred_end(BB));
 
-  // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
-  // now, then get values to fill in the incoming values for the PHI.
+  // Otherwise, we may need to insert a PHI node.  Do so now, then get values to
+  // fill in the incoming values for the PHI.  If the PHI ends up not being
+  // needed, we can always remove it later.
   PHINode *PN = PHINode::Create(Orig->getType(), Orig->getName()+".rle",
                                 BB->begin());
   PN->reserveOperandSpace(NumPreds);
@@ -832,7 +833,8 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, Instruction *Orig,
 
   VN.getAliasAnalysis()->copyValue(Orig, PN);
 
-  // Attempt to collapse PHI nodes that are trivially redundant
+  // Attempt to collapse PHI nodes that are trivially redundant.  This happens
+  // when we construct a PHI that ends up not being needed.
   Value *v = CollapsePhi(PN);
   if (!v) {
     // Cache our phi construction results
@@ -1777,8 +1779,8 @@ Value *GVN::AttemptRedundancyElimination(Instruction *orig, unsigned valno) {
   // If we didn't find instances, give up.  Otherwise, perform phi construction.
   if (Results.size() == 0)
     return 0;
-  else
-    return GetValueForBlock(BaseBlock, orig, Results, true);
+  
+  return GetValueForBlock(BaseBlock, orig, Results, true);
 }
 
 /// processInstruction - When calculating availability, handle an instruction
