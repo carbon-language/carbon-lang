@@ -31,7 +31,7 @@
           <li><a href="#linkage_weak">'<tt>weak</tt>' Linkage</a></li>
           <li><a href="#linkage_appending">'<tt>appending</tt>' Linkage</a></li>
           <li><a href="#linkage_externweak">'<tt>extern_weak</tt>' Linkage</a></li>
-          <li><a href="#linkage_linkonce">'<tt>linkonce_odr</tt>' Linkage</a></li>
+          <li><a href="#linkage_linkonce_odr">'<tt>linkonce_odr</tt>' Linkage</a></li>
           <li><a href="#linkage_weak">'<tt>weak_odr</tt>' Linkage</a></li>
           <li><a href="#linkage_external">'<tt>externally visible</tt>' Linkage</a></li>
           <li><a href="#linkage_dllimport">'<tt>dllimport</tt>' Linkage</a></li>
@@ -586,8 +586,8 @@ define i32 @main() {                                              <i>; i32()* </
       is weak until linked, if not linked, the symbol becomes null instead of
       being an undefined reference.</dd>
 
-  <dt><tt><b><a name="linkage_linkonce">linkonce_odr</a></b></tt>: </dt>
-  <dt><tt><b><a name="linkage_weak">weak_odr</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_linkonce_odr">linkonce_odr</a></b></tt>: </dt>
+  <dt><tt><b><a name="linkage_weak_odr">weak_odr</a></b></tt>: </dt>
   <dd>Some languages allow differing globals to be merged, such as two functions
       with different semantics.  Other languages, such as <tt>C++</tt>, ensure
       that only equivalent globals are ever merged (the "one definition rule" -
