@@ -107,7 +107,7 @@ public:
                                    AliasAnalysis *AA = 0) const {
     return MI->getOpcode() == IMPLICIT_DEF ||
            (MI->getDesc().isRematerializable() &&
-            (isReallyTriviallyReMaterializable(MI) ||
+            (isReallyTriviallyReMaterializable(MI, AA) ||
              isReallyTriviallyReMaterializableGeneric(MI, AA)));
   }
 
@@ -118,7 +118,8 @@ protected:
   /// taking into consideration its operands. This predicate must return false
   /// if the instruction has any side effects other than producing a value, or
   /// if it requres any address registers that are not always available.
-  virtual bool isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
+  virtual bool isReallyTriviallyReMaterializable(const MachineInstr *MI,
+                                                 AliasAnalysis *AA) const {
     return false;
   }
 

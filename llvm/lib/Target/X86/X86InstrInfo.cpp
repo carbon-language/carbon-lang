@@ -782,31 +782,9 @@ static bool regIsPICBase(unsigned BaseReg, const MachineRegisterInfo &MRI) {
   return isPICBase;
 }
 
-/// CanRematLoadWithDispOperand - Return true if a load with the specified
-/// operand is a candidate for remat: for this to be true we need to know that
-/// the load will always return the same value, even if moved.
-static bool CanRematLoadWithDispOperand(const MachineOperand &MO,
-                                        X86TargetMachine &TM) {
-  // Loads from constant pool entries can be remat'd.
-  if (MO.isCPI()) return true;
-  
-  // We can remat globals in some cases.
-  if (MO.isGlobal()) {
-    // If this is a load of a stub, not of the global, we can remat it.  This
-    // access will always return the address of the global.
-    if (isGlobalStubReference(MO.getTargetFlags()))
-      return true;
-    
-    // If the global itself is constant, we can remat the load.
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(MO.getGlobal()))
-      if (GV->isConstant())
-        return true;
-  }
-  return false;
-}
- 
 bool
-X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
+X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
+                                                AliasAnalysis *AA) const {
   switch (MI->getOpcode()) {
   default: break;
     case X86::MOV8rm:
@@ -825,7 +803,7 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
       if (MI->getOperand(1).isReg() &&
           MI->getOperand(2).isImm() &&
           MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
-          CanRematLoadWithDispOperand(MI->getOperand(4), TM)) {
+          MI->isInvariantLoad(AA)) {
         unsigned BaseReg = MI->getOperand(1).getReg();
         if (BaseReg == 0 || BaseReg == X86::RIP)
           return true;

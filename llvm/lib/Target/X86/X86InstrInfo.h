@@ -451,7 +451,8 @@ public:
   unsigned isLoadFromStackSlot(const MachineInstr *MI, int &FrameIndex) const;
   unsigned isStoreToStackSlot(const MachineInstr *MI, int &FrameIndex) const;
 
-  bool isReallyTriviallyReMaterializable(const MachineInstr *MI) const;
+  bool isReallyTriviallyReMaterializable(const MachineInstr *MI,
+                                         AliasAnalysis *AA) const;
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, unsigned SubIdx,
                      const MachineInstr *Orig) const;
