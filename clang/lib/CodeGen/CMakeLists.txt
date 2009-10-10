@@ -19,6 +19,7 @@ add_clang_library(clangCodeGen
   CGObjCGNU.cpp
   CGObjCMac.cpp
   CGRecordLayoutBuilder.cpp
+  CGRtti.cpp
   CGStmt.cpp
   CodeGenFunction.cpp
   CodeGenModule.cpp
