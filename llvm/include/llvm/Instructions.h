@@ -1913,7 +1913,7 @@ public:
   /// getIncomingBlock - Return incoming basic block #i.
   ///
   BasicBlock *getIncomingBlock(unsigned i) const {
-    return static_cast<BasicBlock*>(getOperand(i*2+1));
+    return cast<BasicBlock>(getOperand(i*2+1));
   }
   
   /// getIncomingBlock - Return incoming basic block corresponding
@@ -1921,7 +1921,7 @@ public:
   ///
   BasicBlock *getIncomingBlock(const Use &U) const {
     assert(this == U.getUser() && "Iterator doesn't point to PHI's Uses?");
-    return static_cast<BasicBlock*>((&U + 1)->get());
+    return cast<BasicBlock>((&U + 1)->get());
   }
   
   /// getIncomingBlock - Return incoming basic block corresponding
