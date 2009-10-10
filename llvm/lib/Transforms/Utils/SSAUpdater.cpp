@@ -64,13 +64,102 @@ void SSAUpdater::AddAvailableValue(BasicBlock *BB, Value *V) {
   getAvailableVals(AV)[BB] = V;
 }
 
-/// GetValueAtEndOfBlock - Construct SSA form, materializing a value in the
-/// specified block.
+/// GetValueAtEndOfBlock - Construct SSA form, materializing a value that is
+/// live at the end of the specified block.
 Value *SSAUpdater::GetValueAtEndOfBlock(BasicBlock *BB) {
   assert(getIncomingPredInfo(IPI).empty() && "Unexpected Internal State");
   Value *Res = GetValueAtEndOfBlockInternal(BB);
   assert(getIncomingPredInfo(IPI).empty() && "Unexpected Internal State");
   return Res;
+}
+
+/// GetValueInMiddleOfBlock - Construct SSA form, materializing a value that
+/// is live in the middle of the specified block.
+///
+/// GetValueInMiddleOfBlock is the same as GetValueAtEndOfBlock except in one
+/// important case: if there is a definition of the rewritten value after the
+/// 'use' in BB.  Consider code like this:
+///
+///      X1 = ...
+///   SomeBB:
+///      use(X)
+///      X2 = ...
+///      br Cond, SomeBB, OutBB
+///
+/// In this case, there are two values (X1 and X2) added to the AvailableVals
+/// set by the client of the rewriter, and those values are both live out of
+/// their respective blocks.  However, the use of X happens in the *middle* of
+/// a block.  Because of this, we need to insert a new PHI node in SomeBB to
+/// merge the appropriate values, and this value isn't live out of the block.
+///
+Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
+  // If there is no definition of the renamed variable in this block, just use
+  // GetValueAtEndOfBlock to do our work.
+  if (!getAvailableVals(AV).count(BB))
+    return GetValueAtEndOfBlock(BB);
+  
+  // Otherwise, we have the hard case.  Get the live-in values for each
+  // predecessor.
+  SmallVector<std::pair<BasicBlock*, Value*>, 8> PredValues;
+  Value *SingularValue = 0;
+  
+  // We can get our predecessor info by walking the pred_iterator list, but it
+  // is relatively slow.  If we already have PHI nodes in this block, walk one
+  // of them to get the predecessor list instead.
+  if (PHINode *SomePhi = dyn_cast<PHINode>(BB->begin())) {
+    for (unsigned i = 0, e = SomePhi->getNumIncomingValues(); i != e; ++i) {
+      BasicBlock *PredBB = SomePhi->getIncomingBlock(i);
+      Value *PredVal = GetValueAtEndOfBlock(PredBB);
+      PredValues.push_back(std::make_pair(PredBB, PredVal));
+      
+      // Compute SingularValue.
+      if (i == 0)
+        SingularValue = PredVal;
+      else if (PredVal != SingularValue)
+        SingularValue = 0;
+    }
+  } else {
+    bool isFirstPred = true;
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+      BasicBlock *PredBB = *PI;
+      Value *PredVal = GetValueAtEndOfBlock(PredBB);
+      PredValues.push_back(std::make_pair(PredBB, PredVal));
+      
+      // Compute SingularValue.
+      if (isFirstPred) {
+        SingularValue = PredVal;
+        isFirstPred = false;
+      } else if (PredVal != SingularValue)
+        SingularValue = 0;
+    }
+  }
+  
+  // If there are no predecessors, just return undef.
+  if (PredValues.empty())
+    return UndefValue::get(PrototypeValue->getType());
+  
+  // Otherwise, if all the merged values are the same, just use it.
+  if (SingularValue != 0)
+    return SingularValue;
+  
+  // Otherwise, we do need a PHI: insert one now.
+  PHINode *InsertedPHI = PHINode::Create(PrototypeValue->getType(),
+                                         PrototypeValue->getName(),
+                                         &BB->front());
+  InsertedPHI->reserveOperandSpace(PredValues.size());
+  
+  // Fill in all the predecessors of the PHI.
+  for (unsigned i = 0, e = PredValues.size(); i != e; ++i)
+    InsertedPHI->addIncoming(PredValues[i].second, PredValues[i].first);
+  
+  // See if the PHI node can be merged to a single value.  This can happen in
+  // loop cases when we get a PHI of itself and one other value.
+  if (Value *ConstVal = InsertedPHI->hasConstantValue()) {
+    InsertedPHI->eraseFromParent();
+    return ConstVal;
+  }
+  DEBUG(errs() << "  Inserted PHI: " << *InsertedPHI << "\n");
+  return InsertedPHI;
 }
 
 /// RewriteUse - Rewrite a use of the symbolic value.  This handles PHI nodes,
@@ -81,7 +170,7 @@ void SSAUpdater::RewriteUse(Use &U) {
   if (PHINode *UserPN = dyn_cast<PHINode>(User))
     UseBB = UserPN->getIncomingBlock(U);
   
-  U.set(GetValueAtEndOfBlock(UseBB));
+  U.set(GetValueInMiddleOfBlock(UseBB));
 }
 
 

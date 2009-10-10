@@ -48,16 +48,40 @@ public:
   /// updates.  ProtoValue is the value used to name PHI nodes.
   void Initialize(Value *ProtoValue);
   
-  /// AddAvailableValue - Indicate that a rewritten value is available in the
-  /// specified block with the specified value.
+  /// AddAvailableValue - Indicate that a rewritten value is available at the
+  /// end of the specified block with the specified value.
   void AddAvailableValue(BasicBlock *BB, Value *V);
   
   /// GetValueAtEndOfBlock - Construct SSA form, materializing a value that is
   /// live at the end of the specified block.
   Value *GetValueAtEndOfBlock(BasicBlock *BB);
   
+  /// GetValueInMiddleOfBlock - Construct SSA form, materializing a value that
+  /// is live in the middle of the specified block.
+  ///
+  /// GetValueInMiddleOfBlock is the same as GetValueAtEndOfBlock except in one
+  /// important case: if there is a definition of the rewritten value after the
+  /// 'use' in BB.  Consider code like this:
+  ///
+  ///      X1 = ...
+  ///   SomeBB:
+  ///      use(X)
+  ///      X2 = ...
+  ///      br Cond, SomeBB, OutBB
+  ///
+  /// In this case, there are two values (X1 and X2) added to the AvailableVals
+  /// set by the client of the rewriter, and those values are both live out of
+  /// their respective blocks.  However, the use of X happens in the *middle* of
+  /// a block.  Because of this, we need to insert a new PHI node in SomeBB to
+  /// merge the appropriate values, and this value isn't live out of the block.
+  ///
+  Value *GetValueInMiddleOfBlock(BasicBlock *BB);
+  
   /// RewriteUse - Rewrite a use of the symbolic value.  This handles PHI nodes,
-  /// which use their value in the corresponding predecessor.
+  /// which use their value in the corresponding predecessor.  Note that this
+  /// will not work if the use is supposed to be rewritten to a value defined in
+  /// the same block as the use, but above it.  Any 'AddAvailableValue's added
+  /// for the use's block will be considered to be below it.
   void RewriteUse(Use &U);
   
 private:
