@@ -671,30 +671,26 @@ def OR16rm : Pseudo<(outs GR16:$dst), (ins GR16:$src1, memsrc:$src2),
 let isTwoAddress = 0 in {
 def OR8mr  : Pseudo<(outs), (ins memdst:$dst, GR8:$src),
                 "bis.b\t{$src, $dst}",
-                [(store (or (load addr:$dst), GR8:$src), addr:$dst),
-                 (implicit SRW)]>;
+                [(store (or (load addr:$dst), GR8:$src), addr:$dst)]>;
 def OR16mr : Pseudo<(outs), (ins memdst:$dst, GR16:$src),
                 "bis.w\t{$src, $dst}",
-                [(store (or (load addr:$dst), GR16:$src), addr:$dst),
-                 (implicit SRW)]>;
+                [(store (or (load addr:$dst), GR16:$src), addr:$dst)]>;
 
 def OR8mi  : Pseudo<(outs), (ins memdst:$dst, i8imm:$src),
                 "bis.b\t{$src, $dst}",
-                [(store (or (load addr:$dst), (i8 imm:$src)), addr:$dst),
-                 (implicit SRW)]>;
+                [(store (or (load addr:$dst), (i8 imm:$src)), addr:$dst)]>;
 def OR16mi : Pseudo<(outs), (ins memdst:$dst, i16imm:$src),
                 "bis.w\t{$src, $dst}",
-                [(store (or (load addr:$dst), (i16 imm:$src)), addr:$dst),
-                 (implicit SRW)]>;
+                [(store (or (load addr:$dst), (i16 imm:$src)), addr:$dst)]>;
 
 def OR8mm  : Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
                 "bis.b\t{$src, $dst}",
-                [(store (or (load addr:$dst), (i8 (load addr:$src))), addr:$dst),
-                 (implicit SRW)]>;
+                [(store (or (i8 (load addr:$dst)),
+                            (i8 (load addr:$src))), addr:$dst)]>;
 def OR16mm : Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
                 "bis.w\t{$src, $dst}",
-                [(store (or (load addr:$dst), (i16 (load addr:$src))), addr:$dst),
-                 (implicit SRW)]>;
+                 [(store (or (i16 (load addr:$dst)),
+                             (i16 (load addr:$src))), addr:$dst)]>;
 }
 
 } // isTwoAddress = 1
