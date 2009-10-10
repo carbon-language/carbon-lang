@@ -44,6 +44,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/SSAUpdater.h"
 #include <cstdio>
 using namespace llvm;
 
@@ -704,10 +705,6 @@ namespace {
     ValueTable VN;
     DenseMap<BasicBlock*, ValueNumberScope*> localAvail;
 
-    typedef DenseMap<Value*, SmallPtrSet<Instruction*, 4> > PhiMapType;
-    PhiMapType phiMap;
-
-
     // This transformation requires dominator postdominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<DominatorTree>();
@@ -727,9 +724,6 @@ namespace {
     bool processNonLocalLoad(LoadInst* L,
                              SmallVectorImpl<Instruction*> &toErase);
     bool processBlock(BasicBlock *BB);
-    Value *GetValueForBlock(BasicBlock *BB, Instruction *orig,
-                            DenseMap<BasicBlock*, Value*> &Phis,
-                            bool top_level = false);
     void dump(DenseMap<uint32_t, Value*>& d);
     bool iterateOnFunction(Function &F);
     Value *CollapsePhi(PHINode* p);
@@ -783,84 +777,6 @@ Value *GVN::CollapsePhi(PHINode *PN) {
     if (isSafeReplacement(PN, Inst))
       return Inst;
   return 0;
-}
-
-/// GetValueForBlock - Get the value to use within the specified basic block.
-/// available values are in Phis.
-Value *GVN::GetValueForBlock(BasicBlock *BB, Instruction *Orig,
-                             DenseMap<BasicBlock*, Value*> &Phis,
-                             bool TopLevel) {
-
-  // If we have already computed this value, return the previously computed val.
-  DenseMap<BasicBlock*, Value*>::iterator V = Phis.find(BB);
-  if (V != Phis.end() && !TopLevel) return V->second;
-
-  // If the block is unreachable, just return undef, since this path
-  // can't actually occur at runtime.
-  if (!DT->isReachableFromEntry(BB))
-    return Phis[BB] = UndefValue::get(Orig->getType());
-
-  if (BasicBlock *Pred = BB->getSinglePredecessor()) {
-    Value *ret = GetValueForBlock(Pred, Orig, Phis);
-    Phis[BB] = ret;
-    return ret;
-  }
-
-  // Get the number of predecessors of this block so we can reserve space later.
-  // If there is already a PHI in it, use the #preds from it, otherwise count.
-  // Getting it from the PHI is constant time.
-  unsigned NumPreds;
-  if (PHINode *ExistingPN = dyn_cast<PHINode>(BB->begin()))
-    NumPreds = ExistingPN->getNumIncomingValues();
-  else
-    NumPreds = std::distance(pred_begin(BB), pred_end(BB));
-
-  // Otherwise, we may need to insert a PHI node.  Do so now, then get values to
-  // fill in the incoming values for the PHI.  If the PHI ends up not being
-  // needed, we can always remove it later.
-  PHINode *PN = PHINode::Create(Orig->getType(), Orig->getName()+".rle",
-                                BB->begin());
-  PN->reserveOperandSpace(NumPreds);
-
-  Phis.insert(std::make_pair(BB, PN));
-
-  // Fill in the incoming values for the block.
-  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-    Value *val = GetValueForBlock(*PI, Orig, Phis);
-    PN->addIncoming(val, *PI);
-  }
-
-  VN.getAliasAnalysis()->copyValue(Orig, PN);
-
-  // Attempt to collapse PHI nodes that are trivially redundant.  This happens
-  // when we construct a PHI that ends up not being needed.
-  Value *v = CollapsePhi(PN);
-  if (!v) {
-    // Cache our phi construction results
-    if (LoadInst* L = dyn_cast<LoadInst>(Orig))
-      phiMap[L->getPointerOperand()].insert(PN);
-    else
-      phiMap[Orig].insert(PN);
-
-    return PN;
-  }
-
-  PN->replaceAllUsesWith(v);
-  if (isa<PointerType>(v->getType()))
-    MD->invalidateCachedPointerInfo(v);
-
-  for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
-       E = Phis.end(); I != E; ++I)
-    if (I->second == PN)
-      I->second = v;
-
-  DEBUG(errs() << "GVN removed: " << *PN << '\n');
-  MD->removeInstruction(PN);
-  PN->eraseFromParent();
-  DEBUG(verifyRemoved(PN));
-
-  Phis[BB] = v;
-  return v;
 }
 
 /// IsValueFullyAvailableInBlock - Return true if we can prove that the value
@@ -1235,22 +1151,26 @@ struct AvailableValueInBlock {
   }
 };
 
-/// GetAvailableBlockValues - Given the ValuesPerBlock list, convert all of the
-/// available values to values of the expected LoadTy in their blocks and insert
-/// the new values into BlockReplValues.
-static void 
-GetAvailableBlockValues(DenseMap<BasicBlock*, Value*> &BlockReplValues,
-                  const SmallVector<AvailableValueInBlock, 16> &ValuesPerBlock,
-                        const Type *LoadTy,
-                        const TargetData *TD) {
-
+/// ConstructSSAForLoadSet - Given a set of loads specified by ValuesPerBlock,
+/// construct SSA form, allowing us to eliminate LI.  This returns the value
+/// that should be used at LI's definition site.
+static Value *ConstructSSAForLoadSet(LoadInst *LI, 
+                         SmallVectorImpl<AvailableValueInBlock> &ValuesPerBlock,
+                                     const TargetData *TD,
+                                     AliasAnalysis *AA) {
+  SmallVector<PHINode*, 8> NewPHIs;
+  SSAUpdater SSAUpdate(&NewPHIs);
+  SSAUpdate.Initialize(LI);
+  
+  const Type *LoadTy = LI->getType();
+  
   for (unsigned i = 0, e = ValuesPerBlock.size(); i != e; ++i) {
     BasicBlock *BB = ValuesPerBlock[i].BB;
     Value *AvailableVal = ValuesPerBlock[i].V;
     unsigned Offset = ValuesPerBlock[i].Offset;
     
-    Value *&BlockEntry = BlockReplValues[BB];
-    if (BlockEntry) continue;
+    if (SSAUpdate.HasValueForBlock(BB))
+      continue;
     
     if (AvailableVal->getType() != LoadTy) {
       assert(TD && "Need target data to handle type mismatch case");
@@ -1259,17 +1179,28 @@ GetAvailableBlockValues(DenseMap<BasicBlock*, Value*> &BlockReplValues,
       
       if (Offset) {
         DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\n"
-            << *ValuesPerBlock[i].V << '\n'
-            << *AvailableVal << '\n' << "\n\n\n");
+              << *ValuesPerBlock[i].V << '\n'
+              << *AvailableVal << '\n' << "\n\n\n");
       }
       
       
       DEBUG(errs() << "GVN COERCED NONLOCAL VAL:\n"
-                   << *ValuesPerBlock[i].V << '\n'
-                   << *AvailableVal << '\n' << "\n\n\n");
+            << *ValuesPerBlock[i].V << '\n'
+            << *AvailableVal << '\n' << "\n\n\n");
     }
-    BlockEntry = AvailableVal;
+    
+    SSAUpdate.AddAvailableValue(BB, AvailableVal);
   }
+  
+  // Perform PHI construction.
+  Value *V = SSAUpdate.GetValueInMiddleOfBlock(LI->getParent());
+  
+  // If new PHI nodes were created, notify alias analysis.
+  if (isa<PointerType>(V->getType()))
+    for (unsigned i = 0, e = NewPHIs.size(); i != e; ++i)
+      AA->copyValue(LI, NewPHIs[i]);
+
+  return V;
 }
 
 /// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
@@ -1395,33 +1326,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // load, then it is fully redundant and we can use PHI insertion to compute
   // its value.  Insert PHIs and remove the fully redundant value now.
   if (UnavailableBlocks.empty()) {
-    // Use cached PHI construction information from previous runs
-    SmallPtrSet<Instruction*, 4> &p = phiMap[LI->getPointerOperand()];
-    // FIXME: What does phiMap do? Are we positive it isn't getting invalidated?
-    for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
-         I != E; ++I) {
-      if ((*I)->getParent() == LI->getParent()) {
-        DEBUG(errs() << "GVN REMOVING NONLOCAL LOAD #1: " << *LI << '\n');
-        LI->replaceAllUsesWith(*I);
-        if (isa<PointerType>((*I)->getType()))
-          MD->invalidateCachedPointerInfo(*I);
-        toErase.push_back(LI);
-        NumGVNLoad++;
-        return true;
-      }
-
-      ValuesPerBlock.push_back(AvailableValueInBlock::get((*I)->getParent(),
-                                                          *I));
-    }
-
     DEBUG(errs() << "GVN REMOVING NONLOCAL LOAD: " << *LI << '\n');
-
-    // Convert the block information to a map, and insert coersions as needed.
-    DenseMap<BasicBlock*, Value*> BlockReplValues;
-    GetAvailableBlockValues(BlockReplValues, ValuesPerBlock, LI->getType(), TD);
     
     // Perform PHI construction.
-    Value *V = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
+    Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD,
+                                      VN.getAliasAnalysis());
     LI->replaceAllUsesWith(V);
 
     if (isa<PHINode>(V))
@@ -1565,17 +1474,12 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
                                 LI->getAlignment(),
                                 UnavailablePred->getTerminator());
 
-  SmallPtrSet<Instruction*, 4> &p = phiMap[LI->getPointerOperand()];
-  for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
-       I != E; ++I)
-    ValuesPerBlock.push_back(AvailableValueInBlock::get((*I)->getParent(), *I));
-
-  DenseMap<BasicBlock*, Value*> BlockReplValues;
-  GetAvailableBlockValues(BlockReplValues, ValuesPerBlock, LI->getType(), TD);
-  BlockReplValues[UnavailablePred] = NewLoad;
+  // Add the newly created load.
+  ValuesPerBlock.push_back(AvailableValueInBlock::get(UnavailablePred,NewLoad));
 
   // Perform PHI construction.
-  Value *V = GetValueForBlock(LI->getParent(), LI, BlockReplValues, true);
+  Value *V = ConstructSSAForLoadSet(LI, ValuesPerBlock, TD,
+                                    VN.getAliasAnalysis());
   LI->replaceAllUsesWith(V);
   if (isa<PHINode>(V))
     V->takeName(LI);
@@ -1780,10 +1684,6 @@ bool GVN::processInstruction(Instruction *I,
     Value *constVal = CollapsePhi(p);
 
     if (constVal) {
-      for (PhiMapType::iterator PI = phiMap.begin(), PE = phiMap.end();
-           PI != PE; ++PI)
-        PI->second.erase(p);
-
       p->replaceAllUsesWith(constVal);
       if (isa<PointerType>(constVal->getType()))
         MD->invalidateCachedPointerInfo(constVal);
@@ -2092,7 +1992,6 @@ bool GVN::iterateOnFunction(Function &F) {
 
 void GVN::cleanupGlobalSets() {
   VN.clear();
-  phiMap.clear();
 
   for (DenseMap<BasicBlock*, ValueNumberScope*>::iterator
        I = localAvail.begin(), E = localAvail.end(); I != E; ++I)
@@ -2104,18 +2003,6 @@ void GVN::cleanupGlobalSets() {
 /// internal data structures.
 void GVN::verifyRemoved(const Instruction *Inst) const {
   VN.verifyRemoved(Inst);
-
-  // Walk through the PHI map to make sure the instruction isn't hiding in there
-  // somewhere.
-  for (PhiMapType::iterator
-         I = phiMap.begin(), E = phiMap.end(); I != E; ++I) {
-    assert(I->first != Inst && "Inst is still a key in PHI map!");
-
-    for (SmallPtrSet<Instruction*, 4>::iterator
-           II = I->second.begin(), IE = I->second.end(); II != IE; ++II) {
-      assert(*II != Inst && "Inst is still a value in PHI map!");
-    }
-  }
 
   // Walk through the value number scope to make sure the instruction isn't
   // ferreted away in it.

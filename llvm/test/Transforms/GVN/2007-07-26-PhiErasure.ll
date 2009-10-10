@@ -1,4 +1,4 @@
-; RUN: opt < %s -gvn -S | grep {tmp298316 = phi i32 }
+; RUN: opt < %s -gvn -S | not grep phi
 
 	%struct..0anon = type { i32 }
 	%struct.FILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
@@ -23,6 +23,6 @@ cond_next2943:		; preds = %cond_true2935, %bb2928
 
 bb2982.preheader:		; preds = %cond_next2943
 	%tmp298316 = load i32* @n_spills, align 4		; <i32> [#uses=0]
-	ret i32 0
+	ret i32 %tmp298316
 
 }
