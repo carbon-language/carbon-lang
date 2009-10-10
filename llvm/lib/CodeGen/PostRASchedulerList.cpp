@@ -229,6 +229,8 @@ static bool isSchedulingBoundary(const MachineInstr *MI,
 }
 
 bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
+  AA = &getAnalysis<AliasAnalysis>();
+
   // Check for explicit enable/disable of post-ra scheduling.
   if (EnablePostRAScheduler.getPosition() > 0) {
     if (!EnablePostRAScheduler)
