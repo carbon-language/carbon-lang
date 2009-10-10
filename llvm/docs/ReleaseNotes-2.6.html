@@ -553,6 +553,30 @@ release includes a few major enhancements and additions to the optimizers:</p>
 
 </div>
 
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="executionengine">Interpreter and JIT Improvements</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+<li>LLVM has a new "EngineBuilder" class which makes it more obvious how to
+    set up and configure an ExecutionEngine (a JIT or interpreter).</li>
+<li>The JIT now supports generating more than 16M of code.</li>
+<li>When configured with --with-oprofile, the JIT can now inform oprofile about
+     JIT'd code, allowing oprofile to get line number and function name
+     information for JIT'd functions.</li>
+<li>When "libffi" is available, the LLVM interpreter now uses it, which supports
+    calling almost arbitrary external (natively compiled) functions.</li>
+<li>Clients of the JIT can now register a 'JITEventListener' object to receive
+    callbacks when the JIT emits or frees machine code. The OProfile support
+    uses this mechanism.</li>
+</ul>
+
+</div>
+
 <!--=========================================================================-->
 <div class="doc_subsection">
 <a name="codegen">Target Independent Code Generator Improvements</a>
@@ -579,7 +603,7 @@ it run faster:</p>
 <li>The Machine Sinking pass is now enabled by default.  This pass moves
     side-effect free operations down the CFG so that they are executed on fewer
     paths through a function.</li>
-<li>The code generator now performs "Stack slot coloring" of register spills,
+<li>The code generator now performs "stack slot coloring" of register spills,
     which allows spill slots to be reused.  This leads to smaller stack frames
     in cases where there are lots of register spills.</li>
 <li>The register allocator has many improvements to take better advantage of
@@ -594,7 +618,10 @@ it run faster:</p>
 <li>The instruction selector is better at propagating information about values
     (such as whether they are sign/zero extended etc) across basic block
     boundaries.</li>
-<li>SelectionDAGS: New BuildVectorSDNode (r65296), and ISD::VECTOR_SHUFFLE (r69952 / PR2957)</li>
+<li>The SelectionDAG datastructure has new nodes for representing buildvector
+    and <a href="http://llvm.org/PR2957">vector shuffle</a> operations.  This
+    makes operations and pattern matching more efficient and easier to get
+    right.</li>
 <li>The Prolog/Epilog Insertion Pass now has experimental support for performing
     the "shrink wrapping" optimization, which moves spills and reloads around in
     the CFG to avoid doing saves on paths that don't need them.</li>
@@ -622,15 +649,28 @@ it run faster:</p>
 
 <ul>
 
-<li>Preliminary support for addrspace 256 -> GS, 257 -> FS, known problems: CodeGenerator.html#x86_memory</li>
-<li>Support for softfloat modes, typically used by OS kernels.</li>
-
-<li>X86-64: better modeling of implicit zero extensions, eliminates a lot of redundant zexts</li>
-<li>X86-64 TLS support for local exec and initial exec.</li>
-<li>Better modeling of H registers as subregs.</li>
-<li>Vector icmp/fcmp now work with SSE codegen.</li>
-<li>SSE 4.2 support.</li>
-<li>all global variable reference logic is now in ClassifyGlobalReference.</li>
+<li>SSE 4.2 builtins are now supported.</li>
+<li>GCC-compatible soft float modes are now supported, which are typically used
+    by OS kernels.</li>
+<li>X86-64 now models implicit zero extensions better, which allows the code
+    generator to remove a lot of redundant zexts.  It also models the 8-bit "H"
+    registers as sugregs, which allows they to be used in some tricky
+    situations.</li>
+<li>X86-64 now supports the "local exec" and "initial exec" thread local storage
+    model.</li>
+<li>The vector forms of the <a href="LangRef.html#i_icmp">icmp</a> and <a
+    href="LangRef.html#i_fcmp">fcmp</a> instructions now select to efficient
+    SSE operations.</li>
+<li>The X86 backend has preliminary support for <a 
+    href="CodeGenerator.html#x86_memory">mapping address spaces to segment
+    register references</a>.  This allows you to write GS or FS relative memory
+    accesses directly in LLVM IR for cases where you know exactly what you're
+    doing (such as in an OS kernel).  There are some known problems with this
+    support, but it works in simple cases.</li>
+<li>The X86 code generator has been refactored to move all global variable
+    reference logic to one place
+    (<tt>X86Subtarget::ClassifyGlobalReference</tt>) which
+    makes it easier to reason about.</li>
 </li>
 </ul>
 
@@ -675,16 +715,19 @@ it run faster:</p>
 
 <li>Preliminary support for processors, such as the Cortex-A8 and Cortex-A9,
 that implement version v7-A of the ARM architecture.  The ARM backend now
-supports both the Thumb2 and Advanced SIMD (Neon) instruction sets. The
-AAPCS-VFP "hard float" calling conventions are also supported with the
-<tt>-float-abi=hard</tt> flag. These features are still somewhat experimental
-and subject to change. The Neon intrinsics, in particular, may change in future
-releases of LLVM.
+supports both the Thumb2 and Advanced SIMD (Neon) instruction sets.</li>
+
+<li>The AAPCS-VFP "hard float" calling conventions are also supported with the
+<tt>-float-abi=hard</tt> flag.</li>
+
+<li>The ARM calling convention code is now tblgen generated instead of C++
+    code.</li>
 </li>
 
-  ARM AAPCS-VFP hard float ABI is supported. 
-  ARM calling convention code is now tblgen generated instead of manual.
-  ARM: NEON support. neonfp for doing single precision fp with neon instead of VFP.
+
+<p>These features are still somewhat experimental
+and subject to change. The Neon intrinsics, in particular, may change in future
+releases of LLVM.</p>
 
 </ul>
 
@@ -711,35 +754,13 @@ releases of LLVM.
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="executionengine">Interpreter and JIT Improvements</a>
-</div>
-
-<div class="doc_text">
-
-<ul>
-<li>The JIT now supports generating more than 16M of code.</li>
-<li>When configured with --with-oprofile, the JIT can now inform oprofile about
-     JIT'd code, allowing oprofile to get line number and function name
-     information for JIT'd functions.</li>
-<li>When "libffi" is available, the LLVM interpreter now uses it, which supports
-    calling almost arbitrary external (natively compiled) functions.</li>
-<li>Clients of the JIT can now register a 'JITEventListener' object to receive
-    callbacks when the JIT emits or frees machine code. The OProfile support
-    uses this mechanism.</li>
-</ul>
-
-</div>
-
-
-<!--=========================================================================-->
-<div class="doc_subsection">
 <a name="newapis">New Useful APIs</a>
 </div>
 
 <div class="doc_text">
 
 <ul>
-<li>New EngineBuilder class for creating JITs: r76276</li>
+<li>
   New PrettyStackTrace, crashes of llvm tools should give some indication of what the compiler was doing at the time of the crash (e.g. running a pass), and print out command line arguments.
   StringRef class, Twine class.
     New WeakVH and AssertingVH and CallbackVH classes.
@@ -748,7 +769,7 @@ releases of LLVM.
   New llvm/System/Atomic.h, llvm/System/RWMutex.h for portable atomic ops, rw locks.
   New SourceMgr, SMLoc classes for simple parsers with caret diagnostics and #include support, (used by
     tablegen, llvm-mc, the .ll parser, FileCheck, etc)
-
+</li>
 </ul>
 
 
