@@ -579,16 +579,21 @@ it run faster:</p>
 <li>The Machine Sinking pass is now enabled by default.  This pass moves
     side-effect free operations down the CFG so that they are executed on fewer
     paths through a function.</li>
+<li>The code generator now performs "Stack slot coloring" of register spills,
+    which allows spill slots to be reused.  This leads to smaller stack frames
+    in cases where there are lots of register spills.</li>
+<li>The register allocator has many improvements to take better advantage of
+    commutable operations, various spiller peephole optimizations, and can now
+    coalesce cross-register-class copies.</li>
 <li>Tblgen now supports multiclass inheritance and a number of new string and
     list operations like !(subst), !(foreach), !car, !cdr, !null, !if, !cast.
     These make the .td files more expressive and allow more aggressive factoring
     of duplication across instruction patterns.</li>
 <li>Target-specific intrinsics can now be added without having to hack VMCore to
     add them.  This makes it easier to maintain out-of-tree targets.</li>
-<li>Regalloc improvements for commuting, various spiller peephole optimizations, cross-class coalescing.</li>
-<li><tt>llc -enable-value-prop</tt>, propagation of value info (sign/zero ext info) from one MBB to another</li>
-<li>Regalloc hints for allocation stuff: Evan r73381/r73671.  Finished/enabled?</li>
-<li>Stack slot coloring for register spills (denser stack frames)</li>
+<li>The instruction selector is better at propagating information about values
+    (such as whether they are sign/zero extended etc) across basic block
+    boundaries.</li>
 <li>SelectionDAGS: New BuildVectorSDNode (r65296), and ISD::VECTOR_SHUFFLE (r69952 / PR2957)</li>
 <li>The Prolog/Epilog Insertion Pass now has experimental support for performing
     the "shrink wrapping" optimization, which moves spills and reloads around in
