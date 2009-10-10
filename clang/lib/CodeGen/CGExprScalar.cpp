@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenFunction.h"
+#include "CGObjCRuntime.h"
 #include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -748,7 +749,10 @@ Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {
 }
 
 Value *ScalarExprEmitter::VisitBlockDeclRefExpr(const BlockDeclRefExpr *E) {
-  return Builder.CreateLoad(CGF.GetAddrOfBlockDecl(E), false, "tmp");
+  llvm::Value *V = CGF.GetAddrOfBlockDecl(E);
+  if (E->getType().isObjCGCWeak())
+    return CGF.CGM.getObjCRuntime().EmitObjCWeakRead(CGF, V);
+  return Builder.CreateLoad(V, false, "tmp");
 }
 
 //===----------------------------------------------------------------------===//
