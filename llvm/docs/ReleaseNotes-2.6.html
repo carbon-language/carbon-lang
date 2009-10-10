@@ -489,7 +489,7 @@ expose new optimization opportunities:</p>
     subtraction in C.</li>
 <li>The <a href="LangRef.html#i_getelementptr">getelementptr</a> instruction now
     supports arbitrary integer index values for array/pointer indices.  This
-    allows for better better code generation on 16-bit targets like PIC16.</li>
+    allows for better code generation on 16-bit targets like PIC16.</li>
 <li>The <a href="LangRef.html#i_getelementptr">getelementptr</a> instruction now
     supports an "inbounds" optimization hint that tells the optimizer that the
     pointer is guaranteed to be within its allocated object.</li>
@@ -627,7 +627,7 @@ it run faster:</p>
 
 <li>X86-64: better modeling of implicit zero extensions, eliminates a lot of redundant zexts</li>
 <li>X86-64 TLS support for local exec and initial exec.</li>
-<li>Better modeling of H registerts as subregs.</li>
+<li>Better modeling of H registers as subregs.</li>
 <li>Vector icmp/fcmp now work with SSE codegen.</li>
 <li>SSE 4.2 support.</li>
 <li>all global variable reference logic is now in ClassifyGlobalReference.</li>
@@ -872,7 +872,7 @@ clients should be unaffected by this transition, unless they are used to <tt>Val
     <li>If you were using <tt>getName().c_str()</tt> to get a <tt>const
         char*</tt> pointer to the name, you can use <tt>getName().data()</tt>.
         Note that this string (as before), may not be the entire name if the
-        name containts embedded null characters.</li>
+        name contains embedded null characters.</li>
 
     <li>If you were using operator plus on the result of <tt>getName()</tt> and
       treating the result as an <tt>std::string</tt>, you can either
