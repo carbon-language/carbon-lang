@@ -4818,6 +4818,11 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                                   Method->getResultType().getNonReferenceType(),
                                   RParenLoc));
 
+  // Check for a valid return type.
+  if (CheckCallReturnType(Method->getResultType(), MemExpr->getMemberLoc(), 
+                          TheCall.get(), Method))
+    return true;
+  
   // Convert the object argument (for a non-static member function call).
   if (!Method->isStatic() &&
       PerformObjectArgumentInitialization(ObjectArg, Method))
