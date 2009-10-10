@@ -199,7 +199,7 @@ The new LLVM <a href="http://compiler-rt.llvm.org/">compiler-rt project</a>
 is a simple library that provides an implementation of the low-level
 target-specific hooks required by code generation and other runtime components.
 For example, when compiling for a 32-bit target, converting a double to a 64-bit
-unsigned integer is compiling into a runtime call to the "__fixunsdfdi"
+unsigned integer is compiled into a runtime call to the "__fixunsdfdi"
 function. The compiler-rt library provides highly optimized implementations of
 this and other low-level routines (some are 3x faster than the equivalent
 libgcc routines).</p>
@@ -405,8 +405,8 @@ compiler.</p>
 <div class="doc_text">
 <p>
 <a href="http://code.google.com/p/llvm-lua/">LLVM-Lua</a> uses LLVM to add JIT
-&amp; static compiling support to the Lua VM.  Lua bytecode is analyzed to
-remove type checks, then LLVM is used to compile those bytecodes down to machine
+and static compiling support to the Lua VM.  Lua bytecode is analyzed to
+remove type checks, then LLVM is used to compile the bytecode down to machine
 code.</p>
 </div>
 
@@ -472,7 +472,7 @@ expose new optimization opportunities:</p>
 <ul>
 <li>The <a href="LangRef.html#i_add">add</a>, <a 
     href="LangRef.html#i_sub">sub</a>, and <a href="LangRef.html#i_mul">mul</a>
-    instructions have been split into integer and floating point version (like
+    instructions have been split into integer and floating point versions (like
     divide and remainder), introducing new <a
     href="LangRef.html#i_fadd">fadd</a>, <a href="LangRef.html#i_fsub">fsub</a>,
     and <a href="LangRef.html#i_fmul">fmul</a> instructions.</li>
@@ -481,11 +481,11 @@ expose new optimization opportunities:</p>
     instructions now support optional "nsw" and "nuw" bits which indicate that
     the operation is guaranteed to not overflow (in the signed or
     unsigned case, respectively).  This gives the optimizer more information and
-    can be used for things C signed integer values, which are undefined on
+    can be used for things like C signed integer values, which are undefined on
     overflow.</li>
 <li>The <a href="LangRef.html#i_sdiv">sdiv</a> instruction now supports an
     optional "exact" flag which indicates that the result of the division is
-    guaranteed to have a remainder of zero.  This is useful to optimize pointer
+    guaranteed to have a remainder of zero.  This is useful for optimizing pointer
     subtraction in C.</li>
 <li>The <a href="LangRef.html#i_getelementptr">getelementptr</a> instruction now
     supports arbitrary integer index values for array/pointer indices.  This
@@ -532,13 +532,13 @@ release includes a few major enhancements and additions to the optimizers:</p>
 
 <li>The <a href="Passes.html#scalarrepl">Scalar Replacement of Aggregates</a>
     pass has many improvements that allow it to better promote vector unions,
-    variables which are memset, and much more strange code that can happen do
-    to bitfield accesses to register operations.  An interesting change is that
+    variables which are memset, and much more strange code that can happen to
+    do bitfield accesses to register operations.  An interesting change is that
     it now produces "unusual" integer sizes (like i1704) in some cases and lets
     other optimizers clean things up.</li>
 <li>The <a href="Passes.html#loop-reduce">Loop Strength Reduction</a> pass now
     promotes small integer induction variables to 64-bit on 64-bit targets,
-    which provides a major performance boost many for numerical code.  It also
+    which provides a major performance boost for much numerical code.  It also
     promotes shorts to int on 32-bit hosts, etc.  LSR now also analyzes pointer
     expressions (e.g. getelementptrs), as well as integers.</li>
 <li>The <a href="Passes.html#gvn">GVN</a> pass now eliminates partial
@@ -605,8 +605,8 @@ it run faster:</p>
     MachineRegisterInfo:: setRegAllocationHint. A regalloc hint consists of hint
     type and physical register number. A hint type of zero specifies a register
     allocation preference. Other hint type values are target specific which are
-    resolved by TargetRegisterInfo::ResolveRegAllocHint. An example of which is
-    the ARM target can uses register hint to request that the register allocator
+    resolved by TargetRegisterInfo::ResolveRegAllocHint. An example is the ARM
+    target which uses register hints to request that the register allocator
     provide an even / odd register pair to two virtual registers.</li>
 </ul>
 </div>
@@ -804,8 +804,8 @@ from the previous release.</p>
 <ul>
 
 <li>The Itanium (IA64) backend has been removed.  It was not supported and
-    bitrotted.</li>
-<li>The BigBlock register allocator has been removed, it also bitrotted.</li>
+    had bitrotted.</li>
+<li>The BigBlock register allocator has been removed, it had also bitrotted.</li>
 <li>The C Backend (-march=c) is no longer considered part of the LLVM release
 criteria.  We still want it to work, but no one is maintaining it and it lacks
 support for arbitrary precision integers and other important IR features.</li>
@@ -876,7 +876,7 @@ clients should be unaffected by this transition, unless they are used to <tt>Val
 
     <li>If you were using operator plus on the result of <tt>getName()</tt> and
       treating the result as an <tt>std::string</tt>, you can either
-      uses <tt>Twine::str</tt> to get the result as an <tt>std::string</tt>, or
+      use <tt>Twine::str</tt> to get the result as an <tt>std::string</tt>, or
       could move to a <tt>Twine</tt> based design.</li>
 
     <li><tt>isName()</tt> should be replaced with comparison
@@ -895,10 +895,10 @@ previously TargetMachineRegistry). For backend authors, see the <a href="Writing
   </ul>
 </li>
 
-<li>llvm-dis now fails if output file exists, instead of dumping to stdout.
+<li>llvm-dis now fails if the output file exists, instead of dumping to stdout.
 FIXME: describe any other tool changes due to the raw_fd_ostream change.  FIXME:
 This is not an API change, maybe there should be a tool changes section?</li>
-<li>temporarely due to Context API change passes should call doInitialization()
+<li>temporarily due to Context API change passes should call doInitialization()
 method of the pass they inherit from, otherwise Context is NULL.
 FIXME: remove this entry when this is no longer needed.<li>
 </ul>
