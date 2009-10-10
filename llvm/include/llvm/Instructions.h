@@ -1910,19 +1910,29 @@ public:
     return i/2;
   }
 
-  /// getIncomingBlock - Return incoming basic block corresponding
-  /// to value use iterator
-  ///
-  template <typename U>
-  BasicBlock *getIncomingBlock(value_use_iterator<U> I) const {
-    assert(this == *I && "Iterator doesn't point to PHI's Uses?");
-    return static_cast<BasicBlock*>((&I.getUse() + 1)->get());
-  }
-  /// getIncomingBlock - Return incoming basic block number x
+  /// getIncomingBlock - Return incoming basic block #i.
   ///
   BasicBlock *getIncomingBlock(unsigned i) const {
     return static_cast<BasicBlock*>(getOperand(i*2+1));
   }
+  
+  /// getIncomingBlock - Return incoming basic block corresponding
+  /// to an operand of the PHI.
+  ///
+  BasicBlock *getIncomingBlock(const Use &U) const {
+    assert(this == U.getUser() && "Iterator doesn't point to PHI's Uses?");
+    return static_cast<BasicBlock*>((&U + 1)->get());
+  }
+  
+  /// getIncomingBlock - Return incoming basic block corresponding
+  /// to value use iterator.
+  ///
+  template <typename U>
+  BasicBlock *getIncomingBlock(value_use_iterator<U> I) const {
+    return getIncomingBlock(I.getUse());
+  }
+  
+  
   void setIncomingBlock(unsigned i, BasicBlock *BB) {
     setOperand(i*2+1, BB);
   }
