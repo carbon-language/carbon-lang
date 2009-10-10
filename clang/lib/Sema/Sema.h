@@ -3519,6 +3519,8 @@ public:
 
   bool IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType);
 
+  bool CheckExceptionSpecCompatibility(Expr *From, QualType ToType);
+
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const char *Flavor,
                                  bool AllowExplicit = false,

@@ -3630,6 +3630,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       CastExpr::CastKind CK = CastExpr::CK_NoOp;
       if (DerivedToBase)
         CK = CastExpr::CK_DerivedToBase;
+      else if(CheckExceptionSpecCompatibility(Init, T1))
+        return true;
       ImpCastExprToType(Init, T1, CK, /*isLvalue=*/true);
     }
   }
@@ -3703,7 +3705,9 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
                                cast<CXXMethodDecl>(Best->Function), 
                                Owned(Init));
         Init = InitConversion.takeAs<Expr>();
-                                    
+
+        if (CheckExceptionSpecCompatibility(Init, T1))
+          return true;
         ImpCastExprToType(Init, T1, CastExpr::CK_UserDefinedConversion, 
                           /*isLvalue=*/true);
       }
@@ -3792,6 +3796,8 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       CastExpr::CastKind CK = CastExpr::CK_NoOp;
       if (DerivedToBase)
         CK = CastExpr::CK_DerivedToBase;
+      else if(CheckExceptionSpecCompatibility(Init, T1))
+        return true;
       ImpCastExprToType(Init, T1, CK, /*isLvalue=*/false);
     }
     return false;

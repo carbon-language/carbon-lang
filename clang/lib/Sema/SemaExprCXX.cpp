@@ -1197,7 +1197,11 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   // Perform the second implicit conversion
   switch (SCS.Second) {
   case ICK_Identity:
-    // Nothing to do.
+    // If both sides are functions (or pointers/references to them), there could
+    // be incompatible exception declarations.
+    if (CheckExceptionSpecCompatibility(From, ToType))
+      return true;
+    // Nothing else to do.
     break;
 
   case ICK_Integral_Promotion:
@@ -1235,6 +1239,8 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     CastExpr::CastKind Kind = CastExpr::CK_Unknown;
     if (CheckMemberPointerConversion(From, ToType, Kind))
       return true;
+    if (CheckExceptionSpecCompatibility(From, ToType))
+      return true;
     ImpCastExprToType(From, ToType, Kind);
     break;
   }
@@ -1267,6 +1273,38 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   }
 
   return false;
+}
+
+bool Sema::CheckExceptionSpecCompatibility(Expr *From, QualType ToType)
+{
+  // First we check for applicability.
+  // Target type must be a function, function pointer or function reference.
+  if (const PointerType *PtrTy = ToType->getAs<PointerType>())
+    ToType = PtrTy->getPointeeType();
+  else if (const ReferenceType *RefTy = ToType->getAs<ReferenceType>())
+    ToType = RefTy->getPointeeType();
+
+  const FunctionProtoType *ToFunc = ToType->getAs<FunctionProtoType>();
+  if (!ToFunc)
+    return false;
+
+  // SourceType must be a function or function pointer.
+  // References are treated as functions.
+  QualType FromType = From->getType();
+  if (const PointerType *PtrTy = FromType->getAs<PointerType>())
+    FromType = PtrTy->getPointeeType();
+
+  const FunctionProtoType *FromFunc = FromType->getAs<FunctionProtoType>();
+  if (!FromFunc)
+    return false;
+
+  // Now we've got the correct types on both sides, check their compatibility.
+  // This means that the source of the conversion can only throw a subset of
+  // the exceptions of the target, and any exception specs on arguments or
+  // return types must be equivalent.
+  return CheckExceptionSpecSubset(diag::err_incompatible_exception_specs,
+                                  0, ToFunc, From->getSourceRange().getBegin(),
+                                  FromFunc, SourceLocation());
 }
 
 Sema::OwningExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,

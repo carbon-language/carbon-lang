@@ -363,6 +363,8 @@ def err_mismatched_exception_spec : Error<
 def err_override_exception_spec : Error<
   "exception specification of overriding function is more lax than "
   "base version">;
+def err_incompatible_exception_specs : Error<
+  "target exception specification is not superset of source">;
 
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<

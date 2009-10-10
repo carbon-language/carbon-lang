@@ -1512,6 +1512,9 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
   // FIXME: As usual, we could be more specific in our error messages, but
   // that better waits until we've got types with source locations.
 
+  if (!SubLoc.isValid())
+    SubLoc = SuperLoc;
+
   // If superset contains everything, we're done.
   if (!Superset->hasExceptionSpec() || Superset->hasAnyExceptionSpec())
     return false;
@@ -1519,7 +1522,8 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
   // It does not. If the subset contains everything, we've failed.
   if (!Subset->hasExceptionSpec() || Subset->hasAnyExceptionSpec()) {
     Diag(SubLoc, DiagID);
-    Diag(SuperLoc, NoteID);
+    if (NoteID != 0)
+      Diag(SuperLoc, NoteID);
     return true;
   }
 
@@ -1584,7 +1588,8 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
     }
     if (!Contained) {
       Diag(SubLoc, DiagID);
-      Diag(SuperLoc, NoteID);
+      if (NoteID != 0)
+        Diag(SuperLoc, NoteID);
       return true;
     }
   }
