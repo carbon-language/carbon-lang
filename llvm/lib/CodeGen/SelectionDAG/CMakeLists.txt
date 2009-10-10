@@ -2,6 +2,7 @@ add_llvm_library(LLVMSelectionDAG
   CallingConvLower.cpp
   DAGCombiner.cpp
   FastISel.cpp
+  InstrEmitter.cpp
   LegalizeDAG.cpp
   LegalizeFloatTypes.cpp
   LegalizeIntegerTypes.cpp
@@ -13,7 +14,6 @@ add_llvm_library(LLVMSelectionDAG
   ScheduleDAGList.cpp
   ScheduleDAGRRList.cpp
   ScheduleDAGSDNodes.cpp
-  ScheduleDAGSDNodesEmit.cpp
   SelectionDAG.cpp
   SelectionDAGBuild.cpp
   SelectionDAGISel.cpp

@@ -1,4 +1,4 @@
-//===---- ScheduleDAGEmit.cpp - Emit routines for the ScheduleDAG class ---===//
+//==--- InstrEmitter.cpp - Emit MachineInstrs for the SelectionDAG class ---==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This implements the Emit routines for the ScheduleDAG class, which creates
-// MachineInstrs according to the computed schedule.
+// This implements the Emit routines for the SelectionDAG class, which creates
+// MachineInstrs based on the decisions of the SelectionDAG instruction
+// selection.
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "pre-RA-sched"
-#include "ScheduleDAGSDNodes.h"
+#define DEBUG_TYPE "instr-emitter"
+#include "InstrEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -29,9 +30,34 @@
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
+/// CountResults - The results of target nodes have register or immediate
+/// operands first, then an optional chain, and optional flag operands (which do
+/// not go into the resulting MachineInstr).
+unsigned InstrEmitter::CountResults(SDNode *Node) {
+  unsigned N = Node->getNumValues();
+  while (N && Node->getValueType(N - 1) == MVT::Flag)
+    --N;
+  if (N && Node->getValueType(N - 1) == MVT::Other)
+    --N;    // Skip over chain result.
+  return N;
+}
+
+/// CountOperands - The inputs to target nodes have any actual inputs first,
+/// followed by an optional chain operand, then an optional flag operand.
+/// Compute the number of actual operands that will go into the resulting
+/// MachineInstr.
+unsigned InstrEmitter::CountOperands(SDNode *Node) {
+  unsigned N = Node->getNumOperands();
+  while (N && Node->getOperand(N - 1).getValueType() == MVT::Flag)
+    --N;
+  if (N && Node->getOperand(N - 1).getValueType() == MVT::Other)
+    --N; // Ignore chain if it exists.
+  return N;
+}
+
 /// EmitCopyFromReg - Generate machine code for an CopyFromReg node or an
 /// implicit physical register output.
-void ScheduleDAGSDNodes::
+void InstrEmitter::
 EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
                 unsigned SrcReg, DenseMap<SDValue, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
@@ -101,7 +127,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
   
   // Figure out the register class to create for the destreg.
   if (VRBase) {
-    DstRC = MRI.getRegClass(VRBase);
+    DstRC = MRI->getRegClass(VRBase);
   } else if (UseRC) {
     assert(UseRC->hasType(VT) && "Incompatible phys register def and uses!");
     DstRC = UseRC;
@@ -115,8 +141,8 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
     VRBase = SrcReg;
   } else {
     // Create the reg, emit the copy.
-    VRBase = MRI.createVirtualRegister(DstRC);
-    bool Emitted = TII->copyRegToReg(*BB, InsertPos, VRBase, SrcReg,
+    VRBase = MRI->createVirtualRegister(DstRC);
+    bool Emitted = TII->copyRegToReg(*MBB, InsertPos, VRBase, SrcReg,
                                      DstRC, SrcRC);
 
     assert(Emitted && "Unable to issue a copy instruction!\n");
@@ -133,8 +159,8 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
 
 /// getDstOfCopyToRegUse - If the only use of the specified result number of
 /// node is a CopyToReg, return its destination register. Return 0 otherwise.
-unsigned ScheduleDAGSDNodes::getDstOfOnlyCopyToRegUse(SDNode *Node,
-                                                      unsigned ResNo) const {
+unsigned InstrEmitter::getDstOfOnlyCopyToRegUse(SDNode *Node,
+                                                unsigned ResNo) const {
   if (!Node->hasOneUse())
     return 0;
 
@@ -149,7 +175,7 @@ unsigned ScheduleDAGSDNodes::getDstOfOnlyCopyToRegUse(SDNode *Node,
   return 0;
 }
 
-void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
+void InstrEmitter::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                        const TargetInstrDesc &II,
                                        bool IsClone, bool IsCloned,
                                        DenseMap<SDValue, unsigned> &VRBaseMap) {
@@ -179,7 +205,7 @@ void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
             User->getOperand(2).getResNo() == i) {
           unsigned Reg = cast<RegisterSDNode>(User->getOperand(1))->getReg();
           if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-            const TargetRegisterClass *RegRC = MRI.getRegClass(Reg);
+            const TargetRegisterClass *RegRC = MRI->getRegClass(Reg);
             if (RegRC == RC) {
               VRBase = Reg;
               MI->addOperand(MachineOperand::CreateReg(Reg, true));
@@ -193,7 +219,7 @@ void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
     // the machine instruction.
     if (VRBase == 0) {
       assert(RC && "Isn't a register operand!");
-      VRBase = MRI.createVirtualRegister(RC);
+      VRBase = MRI->createVirtualRegister(RC);
       MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     }
 
@@ -208,8 +234,8 @@ void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
 
 /// getVR - Return the virtual register corresponding to the specified result
 /// of the specified node.
-unsigned ScheduleDAGSDNodes::getVR(SDValue Op,
-                                   DenseMap<SDValue, unsigned> &VRBaseMap) {
+unsigned InstrEmitter::getVR(SDValue Op,
+                             DenseMap<SDValue, unsigned> &VRBaseMap) {
   if (Op.isMachineOpcode() &&
       Op.getMachineOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
     // Add an IMPLICIT_DEF instruction before every use.
@@ -218,9 +244,10 @@ unsigned ScheduleDAGSDNodes::getVR(SDValue Op,
     // does not include operand register class info.
     if (!VReg) {
       const TargetRegisterClass *RC = TLI->getRegClassFor(Op.getValueType());
-      VReg = MRI.createVirtualRegister(RC);
+      VReg = MRI->createVirtualRegister(RC);
     }
-    BuildMI(BB, Op.getDebugLoc(), TII->get(TargetInstrInfo::IMPLICIT_DEF),VReg);
+    BuildMI(MBB, Op.getDebugLoc(),
+            TII->get(TargetInstrInfo::IMPLICIT_DEF), VReg);
     return VReg;
   }
 
@@ -234,10 +261,10 @@ unsigned ScheduleDAGSDNodes::getVR(SDValue Op,
 /// specified machine instr. Insert register copies if the register is
 /// not in the required register class.
 void
-ScheduleDAGSDNodes::AddRegisterOperand(MachineInstr *MI, SDValue Op,
-                                       unsigned IIOpNum,
-                                       const TargetInstrDesc *II,
-                                       DenseMap<SDValue, unsigned> &VRBaseMap) {
+InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
+                                 unsigned IIOpNum,
+                                 const TargetInstrDesc *II,
+                                 DenseMap<SDValue, unsigned> &VRBaseMap) {
   assert(Op.getValueType() != MVT::Other &&
          Op.getValueType() != MVT::Flag &&
          "Chain and flag operands should occur at end of operand list!");
@@ -252,15 +279,15 @@ ScheduleDAGSDNodes::AddRegisterOperand(MachineInstr *MI, SDValue Op,
   // If the instruction requires a register in a different class, create
   // a new virtual register and copy the value into it.
   if (II) {
-    const TargetRegisterClass *SrcRC = MRI.getRegClass(VReg);
+    const TargetRegisterClass *SrcRC = MRI->getRegClass(VReg);
     const TargetRegisterClass *DstRC = 0;
     if (IIOpNum < II->getNumOperands())
       DstRC = II->OpInfo[IIOpNum].getRegClass(TRI);
     assert((DstRC || (TID.isVariadic() && IIOpNum >= TID.getNumOperands())) &&
            "Don't have operand info for this instruction!");
     if (DstRC && SrcRC != DstRC && !SrcRC->hasSuperClass(DstRC)) {
-      unsigned NewVReg = MRI.createVirtualRegister(DstRC);
-      bool Emitted = TII->copyRegToReg(*BB, InsertPos, NewVReg, VReg,
+      unsigned NewVReg = MRI->createVirtualRegister(DstRC);
+      bool Emitted = TII->copyRegToReg(*MBB, InsertPos, NewVReg, VReg,
                                        DstRC, SrcRC);
       assert(Emitted && "Unable to issue a copy instruction!\n");
       (void) Emitted;
@@ -275,10 +302,10 @@ ScheduleDAGSDNodes::AddRegisterOperand(MachineInstr *MI, SDValue Op,
 /// specifies the instruction information for the node, and IIOpNum is the
 /// operand number (in the II) that we are adding. IIOpNum and II are used for 
 /// assertions only.
-void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
-                                    unsigned IIOpNum,
-                                    const TargetInstrDesc *II,
-                                    DenseMap<SDValue, unsigned> &VRBaseMap) {
+void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
+                              unsigned IIOpNum,
+                              const TargetInstrDesc *II,
+                              DenseMap<SDValue, unsigned> &VRBaseMap) {
   if (Op.isMachineOpcode()) {
     AddRegisterOperand(MI, Op, IIOpNum, II, VRBaseMap);
   } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
@@ -304,18 +331,19 @@ void ScheduleDAGSDNodes::AddOperand(MachineInstr *MI, SDValue Op,
     const Type *Type = CP->getType();
     // MachineConstantPool wants an explicit alignment.
     if (Align == 0) {
-      Align = TM.getTargetData()->getPrefTypeAlignment(Type);
+      Align = TM->getTargetData()->getPrefTypeAlignment(Type);
       if (Align == 0) {
         // Alignment of vector types.  FIXME!
-        Align = TM.getTargetData()->getTypeAllocSize(Type);
+        Align = TM->getTargetData()->getTypeAllocSize(Type);
       }
     }
     
     unsigned Idx;
+    MachineConstantPool *MCP = MF->getConstantPool();
     if (CP->isMachineConstantPoolEntry())
-      Idx = ConstPool->getConstantPoolIndex(CP->getMachineCPVal(), Align);
+      Idx = MCP->getConstantPoolIndex(CP->getMachineCPVal(), Align);
     else
-      Idx = ConstPool->getConstantPoolIndex(CP->getConstVal(), Align);
+      Idx = MCP->getConstantPoolIndex(CP->getConstVal(), Align);
     MI->addOperand(MachineOperand::CreateCPI(Idx, Offset,
                                              CP->getTargetFlags()));
   } else if (ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Op)) {
@@ -346,8 +374,8 @@ getSuperRegisterRegClass(const TargetRegisterClass *TRC,
 
 /// EmitSubregNode - Generate machine code for subreg nodes.
 ///
-void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node, 
-                                        DenseMap<SDValue, unsigned> &VRBaseMap){
+void InstrEmitter::EmitSubregNode(SDNode *Node, 
+                                  DenseMap<SDValue, unsigned> &VRBaseMap){
   unsigned VRBase = 0;
   unsigned Opc = Node->getMachineOpcode();
   
@@ -370,12 +398,12 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     unsigned SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
 
     // Create the extract_subreg machine instruction.
-    MachineInstr *MI = BuildMI(MF, Node->getDebugLoc(),
+    MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(),
                                TII->get(TargetInstrInfo::EXTRACT_SUBREG));
 
     // Figure out the register class to create for the destreg.
     unsigned VReg = getVR(Node->getOperand(0), VRBaseMap);
-    const TargetRegisterClass *TRC = MRI.getRegClass(VReg);
+    const TargetRegisterClass *TRC = MRI->getRegClass(VReg);
     const TargetRegisterClass *SRC = TRC->getSubRegisterRegClass(SubIdx);
     assert(SRC && "Invalid subregister index in EXTRACT_SUBREG");
 
@@ -383,17 +411,17 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     // Note that if we're going to directly use an existing register,
     // it must be precisely the required class, and not a subclass
     // thereof.
-    if (VRBase == 0 || SRC != MRI.getRegClass(VRBase)) {
+    if (VRBase == 0 || SRC != MRI->getRegClass(VRBase)) {
       // Create the reg
       assert(SRC && "Couldn't find source register class");
-      VRBase = MRI.createVirtualRegister(SRC);
+      VRBase = MRI->createVirtualRegister(SRC);
     }
 
     // Add def, source, and subreg index
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
     MI->addOperand(MachineOperand::CreateImm(SubIdx));
-    BB->insert(InsertPos, MI);
+    MBB->insert(InsertPos, MI);
   } else if (Opc == TargetInstrInfo::INSERT_SUBREG ||
              Opc == TargetInstrInfo::SUBREG_TO_REG) {
     SDValue N0 = Node->getOperand(0);
@@ -401,7 +429,7 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     SDValue N2 = Node->getOperand(2);
     unsigned SubReg = getVR(N1, VRBaseMap);
     unsigned SubIdx = cast<ConstantSDNode>(N2)->getZExtValue();
-    const TargetRegisterClass *TRC = MRI.getRegClass(SubReg);
+    const TargetRegisterClass *TRC = MRI->getRegClass(SubReg);
     const TargetRegisterClass *SRC =
       getSuperRegisterRegClass(TRC, SubIdx,
                                Node->getValueType(0));
@@ -410,14 +438,14 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     // Note that if we're going to directly use an existing register,
     // it must be precisely the required class, and not a subclass
     // thereof.
-    if (VRBase == 0 || SRC != MRI.getRegClass(VRBase)) {
+    if (VRBase == 0 || SRC != MRI->getRegClass(VRBase)) {
       // Create the reg
       assert(SRC && "Couldn't find source register class");
-      VRBase = MRI.createVirtualRegister(SRC);
+      VRBase = MRI->createVirtualRegister(SRC);
     }
 
     // Create the insert_subreg or subreg_to_reg machine instruction.
-    MachineInstr *MI = BuildMI(MF, Node->getDebugLoc(), TII->get(Opc));
+    MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(), TII->get(Opc));
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     
     // If creating a subreg_to_reg, then the first input operand
@@ -430,7 +458,7 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     // Add the subregster being inserted
     AddOperand(MI, N1, 0, 0, VRBaseMap);
     MI->addOperand(MachineOperand::CreateImm(SubIdx));
-    BB->insert(InsertPos, MI);
+    MBB->insert(InsertPos, MI);
   } else
     llvm_unreachable("Node is not insert_subreg, extract_subreg, or subreg_to_reg");
      
@@ -445,17 +473,17 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
 /// register is constrained to be in a particular register class.
 ///
 void
-ScheduleDAGSDNodes::EmitCopyToRegClassNode(SDNode *Node,
-                                       DenseMap<SDValue, unsigned> &VRBaseMap) {
+InstrEmitter::EmitCopyToRegClassNode(SDNode *Node,
+                                     DenseMap<SDValue, unsigned> &VRBaseMap) {
   unsigned VReg = getVR(Node->getOperand(0), VRBaseMap);
-  const TargetRegisterClass *SrcRC = MRI.getRegClass(VReg);
+  const TargetRegisterClass *SrcRC = MRI->getRegClass(VReg);
 
   unsigned DstRCIdx = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
   const TargetRegisterClass *DstRC = TRI->getRegClass(DstRCIdx);
 
   // Create the new VReg in the destination class and emit a copy.
-  unsigned NewVReg = MRI.createVirtualRegister(DstRC);
-  bool Emitted = TII->copyRegToReg(*BB, InsertPos, NewVReg, VReg,
+  unsigned NewVReg = MRI->createVirtualRegister(DstRC);
+  bool Emitted = TII->copyRegToReg(*MBB, InsertPos, NewVReg, VReg,
                                    DstRC, SrcRC);
   assert(Emitted &&
          "Unable to issue a copy instruction for a COPY_TO_REGCLASS node!\n");
@@ -469,8 +497,8 @@ ScheduleDAGSDNodes::EmitCopyToRegClassNode(SDNode *Node,
 
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
-void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
-                                  DenseMap<SDValue, unsigned> &VRBaseMap,
+void InstrEmitter::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
+                            DenseMap<SDValue, unsigned> &VRBaseMap,
                          DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
   // If machine instruction
   if (Node->isMachineOpcode()) {
@@ -507,7 +535,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
 #endif
 
     // Create the new machine instruction.
-    MachineInstr *MI = BuildMI(MF, Node->getDebugLoc(), II);
+    MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(), II);
     
     // Add result register values for things that are defined by this
     // instruction.
@@ -531,10 +559,10 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     if (II.usesCustomDAGSchedInsertionHook()) {
       // Insert this instruction into the basic block using a target
       // specific inserter which may returns a new basic block.
-      BB = TLI->EmitInstrWithCustomInserter(MI, BB, EM);
-      InsertPos = BB->end();
+      MBB = TLI->EmitInstrWithCustomInserter(MI, MBB, EM);
+      InsertPos = MBB->end();
     } else {
-      BB->insert(InsertPos, MI);
+      MBB->insert(InsertPos, MI);
     }
 
     // Additional results must be an physical register def.
@@ -551,7 +579,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
   switch (Node->getOpcode()) {
   default:
 #ifndef NDEBUG
-    Node->dump(DAG);
+    Node->dump();
 #endif
     llvm_unreachable("This target-independent node should have been selected!");
     break;
@@ -576,17 +604,17 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     const TargetRegisterClass *SrcTRC = 0, *DstTRC = 0;
     // Get the register classes of the src/dst.
     if (TargetRegisterInfo::isVirtualRegister(SrcReg))
-      SrcTRC = MRI.getRegClass(SrcReg);
+      SrcTRC = MRI->getRegClass(SrcReg);
     else
       SrcTRC = TRI->getPhysicalRegisterRegClass(SrcReg,SrcVal.getValueType());
 
     if (TargetRegisterInfo::isVirtualRegister(DestReg))
-      DstTRC = MRI.getRegClass(DestReg);
+      DstTRC = MRI->getRegClass(DestReg);
     else
       DstTRC = TRI->getPhysicalRegisterRegClass(DestReg,
                                             Node->getOperand(1).getValueType());
 
-    bool Emitted = TII->copyRegToReg(*BB, InsertPos, DestReg, SrcReg,
+    bool Emitted = TII->copyRegToReg(*MBB, InsertPos, DestReg, SrcReg,
                                      DstTRC, SrcTRC);
     assert(Emitted && "Unable to issue a copy instruction!\n");
     (void) Emitted;
@@ -603,7 +631,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
       --NumOps;  // Ignore the flag operand.
       
     // Create the inline asm machine instruction.
-    MachineInstr *MI = BuildMI(MF, Node->getDebugLoc(),
+    MachineInstr *MI = BuildMI(*MF, Node->getDebugLoc(),
                                TII->get(TargetInstrInfo::INLINEASM));
 
     // Add the asm string as an external symbol operand.
@@ -645,44 +673,21 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
         break;
       }
     }
-    BB->insert(InsertPos, MI);
+    MBB->insert(InsertPos, MI);
     break;
   }
   }
 }
 
-/// EmitSchedule - Emit the machine code in scheduled order.
-MachineBasicBlock *ScheduleDAGSDNodes::
-EmitSchedule(DenseMap<MachineBasicBlock*, MachineBasicBlock*> *EM) {
-  DenseMap<SDValue, unsigned> VRBaseMap;
-  DenseMap<SUnit*, unsigned> CopyVRBaseMap;
-  for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
-    SUnit *SU = Sequence[i];
-    if (!SU) {
-      // Null SUnit* is a noop.
-      EmitNoop();
-      continue;
-    }
-
-    // For pre-regalloc scheduling, create instructions corresponding to the
-    // SDNode and any flagged SDNodes and append them to the block.
-    if (!SU->getNode()) {
-      // Emit a copy.
-      EmitPhysRegCopy(SU, CopyVRBaseMap);
-      continue;
-    }
-
-    SmallVector<SDNode *, 4> FlaggedNodes;
-    for (SDNode *N = SU->getNode()->getFlaggedNode(); N;
-         N = N->getFlaggedNode())
-      FlaggedNodes.push_back(N);
-    while (!FlaggedNodes.empty()) {
-      EmitNode(FlaggedNodes.back(), SU->OrigNode != SU, SU->isCloned,
-               VRBaseMap, EM);
-      FlaggedNodes.pop_back();
-    }
-    EmitNode(SU->getNode(), SU->OrigNode != SU, SU->isCloned, VRBaseMap, EM);
-  }
-
-  return BB;
+/// InstrEmitter - Construct an InstrEmitter and set it to start inserting
+/// at the given position in the given block.
+InstrEmitter::InstrEmitter(MachineBasicBlock *mbb,
+                           MachineBasicBlock::iterator insertpos)
+  : MF(mbb->getParent()),
+    MRI(&MF->getRegInfo()),
+    TM(&MF->getTarget()),
+    TII(TM->getInstrInfo()),
+    TRI(TM->getRegisterInfo()),
+    TLI(TM->getTargetLowering()),
+    MBB(mbb), InsertPos(insertpos) {
 }
