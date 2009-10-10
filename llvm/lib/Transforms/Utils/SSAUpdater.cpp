@@ -207,9 +207,9 @@ Value *SSAUpdater::GetValueInBlockInternal(BasicBlock *BB) {
   InsertedPHI->reserveOperandSpace(IncomingPredInfo.size()-FirstPredInfoEntry);
   
   // Fill in all the predecessors of the PHI.
-  for (std::vector<std::pair<BasicBlock*, TrackingVH<Value> > >::iterator I =
-       IncomingPredInfo.begin()+FirstPredInfoEntry, E = IncomingPredInfo.end();
-       I != E; ++I)
+  for (IncomingPredInfoTy::iterator I =
+         IncomingPredInfo.begin()+FirstPredInfoEntry,
+       E = IncomingPredInfo.end(); I != E; ++I)
     InsertedPHI->addIncoming(I->second, I->first);
   
   // Drop the entries we added in IncomingPredInfo to restore the stack.
