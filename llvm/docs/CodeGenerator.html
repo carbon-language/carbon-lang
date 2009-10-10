@@ -1812,24 +1812,27 @@ define fastcc i32 @tailcaller(i32 %in1, i32 %in2) {
 
 <div class="doc_code">
 <pre>
-Base + [1,2,4,8] * IndexReg + Disp32
+SegmentReg: Base + [1,2,4,8] * IndexReg + Disp32
 </pre>
 </div>
 
-<p>In order to represent this, LLVM tracks no less than 4 operands for each
+<p>In order to represent this, LLVM tracks no less than 5 operands for each
    memory operand of this form.  This means that the "load" form of
    '<tt>mov</tt>' has the following <tt>MachineOperand</tt>s in this order:</p>
 
 <div class="doc_code">
 <pre>
-Index:        0     |    1        2       3           4
-Meaning:   DestReg, | BaseReg,  Scale, IndexReg, Displacement
-OperandTy: VirtReg, | VirtReg, UnsImm, VirtReg,   SignExtImm
+Index:        0     |    1        2       3           4          5
+Meaning:   DestReg, | BaseReg,  Scale, IndexReg, Displacement Segment
+OperandTy: VirtReg, | VirtReg, UnsImm, VirtReg,   SignExtImm  PhysReg
 </pre>
 </div>
 
 <p>Stores, and all other instructions, treat the four memory operands in the
-   same way and in the same order.</p>
+   same way and in the same order.  If the segment register is unspecified
+   (regno = 0), then no segment override is generated.  "Lea" operations do not
+   have a segment register specified, so they only have 4 operands for their
+   memory reference.</p>
 
 </div>
 
