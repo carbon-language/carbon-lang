@@ -12681,9 +12681,6 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
                                        const TargetData *TD) {
   SmallVector<BasicBlock*, 256> Worklist;
   Worklist.push_back(BB);
-  
-  std::vector<Instruction*> InstrsForInstCombineWorklist;
-  InstrsForInstCombineWorklist.reserve(128);
 
   while (!Worklist.empty()) {
     BB = Worklist.back();
@@ -12730,7 +12727,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
         DBI_Prev = 0;
       }
 
-      InstrsForInstCombineWorklist.push_back(Inst);
+      IC.Worklist.Add(Inst);
     }
 
     // Recursively visit successors.  If this is a branch or switch on a
@@ -12762,16 +12759,6 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
     for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
       Worklist.push_back(TI->getSuccessor(i));
   }
-  
-  // Once we've found all of the instructions to add to instcombine's worklist,
-  // add them in reverse order.  This way instcombine will visit from the top
-  // of the function down.  This jives well with the way that it adds all uses
-  // of instructions to the worklist after doing a transformation, thus avoiding
-  // some N^2 behavior in pathological cases.
-  for (std::vector<Instruction*>::reverse_iterator
-       I = InstrsForInstCombineWorklist.rbegin(),
-       E = InstrsForInstCombineWorklist.rend(); I != E; ++I)
-    IC.Worklist.Add(*I);
 }
 
 bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
