@@ -651,51 +651,47 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
 /// inputs to the phi node.
 /// 
 bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
+  BasicBlock *BB = PN->getParent();
+  
   // See if the phi node has any constant integer or undef values.  If so, we
   // can determine where the corresponding predecessor will branch.
-  Constant *PredCst = 0;
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     Value *PredVal = PN->getIncomingValue(i);
+    
+    // Check to see if this input is a constant integer.  If so, the direction
+    // of the branch is predictable.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(PredVal)) {
-      PredCst = CI;
-      break;
+      // Merge any common predecessors that will act the same.
+      BasicBlock *PredBB = FactorCommonPHIPreds(PN, CI);
+      
+      BasicBlock *SuccBB;
+      if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
+        SuccBB = BI->getSuccessor(CI->isZero());
+      else {
+        SwitchInst *SI = cast<SwitchInst>(BB->getTerminator());
+        SuccBB = SI->getSuccessor(SI->findCaseValue(CI));
+      }
+      
+      // Ok, try to thread it!
+      return ThreadEdge(BB, PredBB, SuccBB);
     }
     
+    // If the input is an undef, then it doesn't matter which way it will go.
+    // Pick an arbitrary dest and thread the edge.
     if (UndefValue *UV = dyn_cast<UndefValue>(PredVal)) {
-      PredCst = UV;
-      break;
+      // Merge any common predecessors that will act the same.
+      BasicBlock *PredBB = FactorCommonPHIPreds(PN, UV);
+      BasicBlock *SuccBB =
+        BB->getTerminator()->getSuccessor(GetBestDestForJumpOnUndef(BB));
+      
+      // Ok, try to thread it!
+      return ThreadEdge(BB, PredBB, SuccBB);
     }
-  } 
+  }
   
   // If no incoming value has a constant, we don't know the destination of any
   // predecessors.
-  if (PredCst == 0) {
-    return false;
-  }
-  
-  // See if the cost of duplicating this block is low enough.
-  BasicBlock *BB = PN->getParent();
-  
-  // If so, we can actually do this threading.  Merge any common predecessors
-  // that will act the same.
-  BasicBlock *PredBB = FactorCommonPHIPreds(PN, PredCst);
-    
-  TerminatorInst *BBTerm = BB->getTerminator();
-  
-  // Next, figure out which successor we are threading to.
-  BasicBlock *SuccBB;
-  if (isa<UndefValue>(PredCst)) {
-    // If the branch was going off an undef from PredBB, pick an arbitrary dest.
-    SuccBB = BBTerm->getSuccessor(GetBestDestForJumpOnUndef(BB));
-  } else if (BranchInst *BI = dyn_cast<BranchInst>(BBTerm))
-    SuccBB = BI->getSuccessor(cast<ConstantInt>(PredCst)->isZero());
-  else {
-    SwitchInst *SI = cast<SwitchInst>(BBTerm);
-    SuccBB = SI->getSuccessor(SI->findCaseValue(cast<ConstantInt>(PredCst)));
-  }
-  
-  // Ok, try to thread it!
-  return ThreadEdge(BB, PredBB, SuccBB);
+  return false;
 }
 
 /// ProcessJumpOnLogicalPHI - PN's basic block contains a conditional branch
