@@ -2656,14 +2656,14 @@ static bool isSignBitCheck(ICmpInst::Predicate pred, ConstantInt *RHS,
 
 Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
-  Value *Op0 = I.getOperand(0);
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (isa<UndefValue>(I.getOperand(1)))              // undef * X -> 0
+  if (isa<UndefValue>(Op1))              // undef * X -> 0
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   // Simplify mul instructions with a constant RHS.
-  if (Constant *Op1 = dyn_cast<Constant>(I.getOperand(1))) {
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+  if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1C)) {
 
       // ((X << C1)*C2) == (X * (C2 << C1))
       if (BinaryOperator *SI = dyn_cast<BinaryOperator>(Op0))
@@ -2673,7 +2673,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
                                         ConstantExpr::getShl(CI, ShOp));
 
       if (CI->isZero())
-        return ReplaceInstUsesWith(I, Op1);  // X * 0  == 0
+        return ReplaceInstUsesWith(I, Op1C);  // X * 0  == 0
       if (CI->equalsInt(1))                  // X * 1  == X
         return ReplaceInstUsesWith(I, Op0);
       if (CI->isAllOnesValue())              // X * -1 == 0 - X
@@ -2684,11 +2684,11 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         return BinaryOperator::CreateShl(Op0,
                  ConstantInt::get(Op0->getType(), Val.logBase2()));
       }
-    } else if (isa<VectorType>(Op1->getType())) {
-      if (Op1->isNullValue())
-        return ReplaceInstUsesWith(I, Op1);
+    } else if (isa<VectorType>(Op1C->getType())) {
+      if (Op1C->isNullValue())
+        return ReplaceInstUsesWith(I, Op1C);
 
-      if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
+      if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1C)) {
         if (Op1V->isAllOnesValue())              // X * -1 == 0 - X
           return BinaryOperator::CreateNeg(Op0, I.getName());
 
@@ -2703,10 +2703,10 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
       if (Op0I->getOpcode() == Instruction::Add && Op0I->hasOneUse() &&
-          isa<ConstantInt>(Op0I->getOperand(1)) && isa<ConstantInt>(Op1)) {
+          isa<ConstantInt>(Op0I->getOperand(1)) && isa<ConstantInt>(Op1C)) {
         // Canonicalize (X+C1)*C2 -> X*C2+C1*C2.
-        Value *Add = Builder->CreateMul(Op0I->getOperand(0), Op1, "tmp");
-        Value *C1C2 = Builder->CreateMul(Op1, Op0I->getOperand(1));
+        Value *Add = Builder->CreateMul(Op0I->getOperand(0), Op1C, "tmp");
+        Value *C1C2 = Builder->CreateMul(Op1C, Op0I->getOperand(1));
         return BinaryOperator::CreateAdd(Add, C1C2);
         
       }
@@ -2722,23 +2722,23 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   }
 
   if (Value *Op0v = dyn_castNegVal(Op0))     // -X * -Y = X*Y
-    if (Value *Op1v = dyn_castNegVal(I.getOperand(1)))
+    if (Value *Op1v = dyn_castNegVal(Op1))
       return BinaryOperator::CreateMul(Op0v, Op1v);
 
   // (X / Y) *  Y = X - (X % Y)
   // (X / Y) * -Y = (X % Y) - X
   {
-    Value *Op1 = I.getOperand(1);
+    Value *Op1C = Op1;
     BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0);
     if (!BO ||
         (BO->getOpcode() != Instruction::UDiv && 
          BO->getOpcode() != Instruction::SDiv)) {
-      Op1 = Op0;
-      BO = dyn_cast<BinaryOperator>(I.getOperand(1));
+      Op1C = Op0;
+      BO = dyn_cast<BinaryOperator>(Op1);
     }
-    Value *Neg = dyn_castNegVal(Op1);
+    Value *Neg = dyn_castNegVal(Op1C);
     if (BO && BO->hasOneUse() &&
-        (BO->getOperand(1) == Op1 || BO->getOperand(1) == Neg) &&
+        (BO->getOperand(1) == Op1C || BO->getOperand(1) == Neg) &&
         (BO->getOpcode() == Instruction::UDiv ||
          BO->getOpcode() == Instruction::SDiv)) {
       Value *Op0BO = BO->getOperand(0), *Op1BO = BO->getOperand(1);
@@ -2746,10 +2746,9 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       // If the division is exact, X % Y is zero.
       if (SDivOperator *SDiv = dyn_cast<SDivOperator>(BO))
         if (SDiv->isExact()) {
-          if (Op1BO == Op1)
+          if (Op1BO == Op1C)
             return ReplaceInstUsesWith(I, Op0BO);
-          else
-            return BinaryOperator::CreateNeg(Op0BO);
+          return BinaryOperator::CreateNeg(Op0BO);
         }
 
       Value *Rem;
@@ -2759,7 +2758,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         Rem = Builder->CreateSRem(Op0BO, Op1BO);
       Rem->takeName(BO);
 
-      if (Op1BO == Op1)
+      if (Op1BO == Op1C)
         return BinaryOperator::CreateSub(Op0BO, Rem);
       return BinaryOperator::CreateSub(Rem, Op0BO);
     }
@@ -2767,15 +2766,15 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
   /// i1 mul -> i1 and.
   if (I.getType() == Type::getInt1Ty(*Context))
-    return BinaryOperator::CreateAnd(Op0, I.getOperand(1));
+    return BinaryOperator::CreateAnd(Op0, Op1);
 
   // X*(1 << Y) --> X << Y
   // (1 << Y)*X --> X << Y
   {
     Value *Y;
     if (match(Op0, m_Shl(m_One(), m_Value(Y))))
-      return BinaryOperator::CreateShl(I.getOperand(1), Y);
-    if (match(I.getOperand(1), m_Shl(m_One(), m_Value(Y))))
+      return BinaryOperator::CreateShl(Op1, Y);
+    if (match(Op1, m_Shl(m_One(), m_Value(Y))))
       return BinaryOperator::CreateShl(Op0, Y);
   }
   
@@ -2788,9 +2787,9 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     
     Value *BoolCast = 0, *OtherOp = 0;
     if (MaskedValueIsZero(Op0, Negative2))
-      BoolCast = Op0, OtherOp = I.getOperand(1);
-    else if (MaskedValueIsZero(I.getOperand(1), Negative2))
-      BoolCast = I.getOperand(1), OtherOp = Op0;
+      BoolCast = Op0, OtherOp = Op1;
+    else if (MaskedValueIsZero(Op1, Negative2))
+      BoolCast = Op1, OtherOp = Op0;
 
     if (BoolCast) {
       Value *V = Builder->CreateSub(Constant::getNullValue(I.getType()),
@@ -2804,17 +2803,17 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
 Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
-  Value *Op0 = I.getOperand(0);
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   // Simplify mul instructions with a constant RHS...
-  if (Constant *Op1 = dyn_cast<Constant>(I.getOperand(1))) {
-    if (ConstantFP *Op1F = dyn_cast<ConstantFP>(Op1)) {
+  if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
+    if (ConstantFP *Op1F = dyn_cast<ConstantFP>(Op1C)) {
       // "In IEEE floating point, x*1 is not equivalent to x for nans.  However,
       // ANSI says we can drop signals, so we can do this anyway." (from GCC)
       if (Op1F->isExactlyValue(1.0))
         return ReplaceInstUsesWith(I, Op0);  // Eliminate 'mul double %X, 1.0'
-    } else if (isa<VectorType>(Op1->getType())) {
-      if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
+    } else if (isa<VectorType>(Op1C->getType())) {
+      if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1C)) {
         // As above, vector X*splat(1.0) -> X in all defined cases.
         if (Constant *Splat = Op1V->getSplatValue()) {
           if (ConstantFP *F = dyn_cast<ConstantFP>(Splat))
@@ -2835,7 +2834,7 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
   }
 
   if (Value *Op0v = dyn_castFNegVal(Op0))     // -X * -Y = X*Y
-    if (Value *Op1v = dyn_castFNegVal(I.getOperand(1)))
+    if (Value *Op1v = dyn_castFNegVal(Op1))
       return BinaryOperator::CreateFMul(Op0v, Op1v);
 
   return Changed ? &I : 0;
