@@ -238,12 +238,25 @@ KLEE.</p>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="dragonegg">Dragon Egg: An LLVM backend plugin for GCC</a>
+<a name="dragonegg">DragonEgg: GCC-4.5 as an LLVM frontend</a>
 </div>
 
 <div class="doc_text">
 <p>
-<b>Duncan needs to write me</b>.
+The goal of <a href="http://dragonegg.llvm.org/">DragonEgg</a> is to make
+gcc-4.5 act like llvm-gcc without requiring any gcc modifications whatsoever.
+DragonEgg is a shared library (llvm.so) that is loaded by gcc at runtime.  It
+uses the new gcc plugin architecture to disable the GCC optimizers and code
+generators, and schedule the LLVM optimizers and code generators (or direct
+output of LLVM IR) instead.  Currently only Linux and Darwin are supported,
+and only on x86-32 and x86-64.  It should be easy to add additional unix-like
+architectures and other processor families.  Since gcc-4.5 has not yet been
+released, neither has <a href="http://dragonegg.llvm.org/">DragonEgg</a>.
+To build <a href="http://dragonegg.llvm.org/">DragonEgg</a> you will need to
+check out the development versions of <a href="http://gcc.gnu.org/svn.html/">
+gcc</a>, <a href="http://llvm.org/docs/GettingStarted.html#checkout">llvm</a>
+and <a href="http://dragonegg.llvm.org/">DragonEgg</a> from their respective
+subversion repositories.
 </p>
 
 </div>
