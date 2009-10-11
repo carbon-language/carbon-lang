@@ -682,6 +682,9 @@ it run faster:</p>
 <li>The vector forms of the <a href="LangRef.html#i_icmp">icmp</a> and <a
     href="LangRef.html#i_fcmp">fcmp</a> instructions now select to efficient
     SSE operations.</li>
+<li>Support for the win64 calling conventions have improved.  The primary
+    missing feature is support for varargs function definitions.  It seems to
+    work well for many win64 JIT purposes.</li>
 <li>The X86 backend has preliminary support for <a 
     href="CodeGenerator.html#x86_memory">mapping address spaces to segment
     register references</a>.  This allows you to write GS or FS relative memory
@@ -748,7 +751,8 @@ supports both the Thumb2 and Advanced SIMD (Neon) instruction sets.</li>
 
 <p>These features are still somewhat experimental
 and subject to change. The Neon intrinsics, in particular, may change in future
-releases of LLVM.</p>
+releases of LLVM.  ARMv7 support has progressed a lot on top of tree since 2.6
+branched.</p>
 
 </ul>
 
