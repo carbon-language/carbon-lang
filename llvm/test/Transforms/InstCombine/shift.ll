@@ -309,3 +309,37 @@ define i1 @test27(i32 %x) nounwind {
   ret i1 %z
 }
  
+define i8 @test28(i8 %x) {
+entry:
+; CHECK: @test28
+; CHECK:     icmp slt i8 %x, 0
+; CHECK-NEXT:     br i1 
+	%tmp1 = lshr i8 %x, 7
+	%cond1 = icmp ne i8 %tmp1, 0
+	br i1 %cond1, label %bb1, label %bb2
+
+bb1:
+	ret i8 0
+
+bb2:
+	ret i8 1
+}
+
+define i8 @test28a(i8 %x, i8 %y) {
+entry:
+; This shouldn't be transformed.
+; CHECK: @test28a
+; CHECK:     %tmp1 = lshr i8 %x, 7
+; CHECK:     %cond1 = icmp eq i8 %tmp1, 0
+; CHECK:     br i1 %cond1, label %bb2, label %bb1
+	%tmp1 = lshr i8 %x, 7
+	%cond1 = icmp ne i8 %tmp1, 0
+	br i1 %cond1, label %bb1, label %bb2
+bb1:
+	ret i8 %tmp1
+bb2:
+        %tmp2 = add i8 %tmp1, %y
+	ret i8 %tmp2
+}
+
+
