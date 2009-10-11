@@ -611,8 +611,9 @@ it run faster:</p>
 
 <ul>
 
-<li>The <tt>llc -asm-verbose</tt> option (exposed from llvm-gcc and clang as
-    <tt>-fverbose-asm</tt>) now adds a lot of useful information in comments to
+<li>The <tt>llc -asm-verbose</tt> option (exposed from llvm-gcc as (<tt>-dA</tt>) 
+    and clang as <tt>-fverbose-asm</tt> or <tt>-dA</tt>) now adds a lot of 
+    useful information in comments to
     the generated .s file.  This information includes location information (if
     built with <tt>-g</tt>) and loop nest information.</li>
 <li>The code generator now supports a new MachineVerifier pass which is useful
