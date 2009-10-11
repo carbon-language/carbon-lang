@@ -6,7 +6,9 @@ declare i32 @f1()
 declare i32 @f2()
 declare void @f3()
 
-define i32 @test(i1 %cond) {
+define i32 @test1(i1 %cond) {
+; CHECK: @test1
+
 	br i1 %cond, label %T1, label %F1
 
 T1:
@@ -37,6 +39,7 @@ F2:
 
 ;; cond is known false on Entry -> F1 edge!
 define i32 @test2(i1 %cond) {
+; CHECK: @test2
 Entry:
 	br i1 %cond, label %T1, label %F1
 
@@ -56,4 +59,19 @@ Merge:
 F2:
 	call void @f3()
 	ret i32 12
+}
+
+
+; Undef handling.
+define i32 @test3(i1 %cond) {
+; CHECK: @test3
+; CHECK-NEXT: T1:
+; CHECK-NEXT: ret i32 42
+	br i1 undef, label %T1, label %F1
+
+T1:
+	ret i32 42
+
+F1:
+	ret i32 17
 }
