@@ -1154,8 +1154,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   QualType ClassTy;
-  ClassTy = getContext().getTagDeclType(RD);
-  mangleCXXVtable(CGM.getMangleContext(), ClassTy, Out);
+  mangleCXXVtable(CGM.getMangleContext(), RD, Out);
   llvm::GlobalVariable::LinkageTypes linktype;
   linktype = llvm::GlobalValue::WeakAnyLinkage;
   std::vector<llvm::Constant *> methods;

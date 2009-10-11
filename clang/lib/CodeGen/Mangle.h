@@ -63,8 +63,10 @@ namespace clang {
                             llvm::raw_ostream &os);
   void mangleGuardVariable(MangleContext &Context, const VarDecl *D,
                            llvm::raw_ostream &os);
-  void mangleCXXVtable(MangleContext &Context, QualType T, llvm::raw_ostream &os);
-  void mangleCXXRtti(MangleContext &Context, QualType T, llvm::raw_ostream &os);
+  void mangleCXXVtable(MangleContext &Context, const CXXRecordDecl *RD,
+                       llvm::raw_ostream &os);
+  void mangleCXXRtti(MangleContext &Context, const CXXRecordDecl *RD, 
+                     llvm::raw_ostream &os);
   void mangleCXXCtor(MangleContext &Context, const CXXConstructorDecl *D, 
                      CXXCtorType Type, llvm::raw_ostream &os);
   void mangleCXXDtor(MangleContext &Context, const CXXDestructorDecl *D, 
