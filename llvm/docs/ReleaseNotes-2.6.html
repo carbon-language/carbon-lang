@@ -650,7 +650,7 @@ it run faster:</p>
     from the compiler.  It works well for many simple C testcases, but doesn't
     support exception handling, debug info, inline assembly, etc.</li>
 <li>Targets can now specify register allocation hints through
-    MachineRegisterInfo:: setRegAllocationHint. A regalloc hint consists of hint
+    MachineRegisterInfo::setRegAllocationHint. A regalloc hint consists of hint
     type and physical register number. A hint type of zero specifies a register
     allocation preference. Other hint type values are target specific which are
     resolved by TargetRegisterInfo::ResolveRegAllocHint. An example is the ARM
@@ -675,7 +675,7 @@ it run faster:</p>
     by OS kernels.</li>
 <li>X86-64 now models implicit zero extensions better, which allows the code
     generator to remove a lot of redundant zexts.  It also models the 8-bit "H"
-    registers as sugregs, which allows they to be used in some tricky
+    registers as sugregs, which allows them to be used in some tricky
     situations.</li>
 <li>X86-64 now supports the "local exec" and "initial exec" thread local storage
     model.</li>
@@ -741,8 +741,8 @@ supports both the Thumb2 and Advanced SIMD (Neon) instruction sets.</li>
 <li>The AAPCS-VFP "hard float" calling conventions are also supported with the
 <tt>-float-abi=hard</tt> flag.</li>
 
-<li>The ARM calling convention code is now tblgen generated instead of C++
-    code.</li>
+<li>The ARM calling convention code is now tblgen generated instead of resorting
+    to C++ code.</li>
 </li>
 
 
