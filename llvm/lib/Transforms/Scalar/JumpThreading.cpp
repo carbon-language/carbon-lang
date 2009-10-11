@@ -450,9 +450,11 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
           << "' folding condition to '" << BranchDir << "': "
           << *BB->getTerminator() << '\n');
     ++NumFolds;
+    Value *OldCond = DestBI->getCondition();
     DestBI->setCondition(ConstantInt::get(Type::getInt1Ty(BB->getContext()),
                                           BranchDir));
     ConstantFoldTerminator(BB);
+    RecursivelyDeleteTriviallyDeadInstructions(OldCond);
     return true;
   }
  

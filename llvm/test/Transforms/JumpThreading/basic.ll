@@ -139,3 +139,36 @@ F2:
 	ret i32 %B
 }
 
+
+;; Lexically duplicated conditionals should be threaded.
+
+
+define i32 @test6(i32 %A) {
+; CHECK: @test6
+	%tmp455 = icmp eq i32 %A, 42
+	br i1 %tmp455, label %BB1, label %BB2
+        
+BB2:
+; CHECK: call i32 @f1()
+; CHECK-NEXT: call void @f3()
+; CHECK-NEXT: ret i32 4
+	call i32 @f1()
+	br label %BB1
+        
+
+BB1:
+	%tmp459 = icmp eq i32 %A, 42
+	br i1 %tmp459, label %BB3, label %BB4
+
+BB3:
+	call i32 @f2()
+        ret i32 3
+
+BB4:
+	call void @f3()
+	ret i32 4
+}
+
+
+
+
