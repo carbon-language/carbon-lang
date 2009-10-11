@@ -230,10 +230,13 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   // C++ [class.virtual]p12:
   //   Explicit qualification with the scope operator (5.1) suppresses the
   //   virtual call mechanism.
+  //
+  // We also don't emit a virtual call if the base expression has a record type
+  // because then we know what the type is.
   llvm::Value *Callee;
-  if (MD->isVirtual() && !ME->hasQualifier())
-    // FIXME: push getCanonicalDecl as a conversion using the static type system (CanCXXMethodDecl).
-    Callee = BuildVirtualCall(MD->getCanonicalDecl(), This, Ty);
+  if (MD->isVirtual() && !ME->hasQualifier() && 
+      !ME->getBase()->getType()->isRecordType())
+    Callee = BuildVirtualCall(MD, This, Ty);
   else if (const CXXDestructorDecl *Destructor
              = dyn_cast<CXXDestructorDecl>(MD))
     Callee = CGM.GetAddrOfFunction(GlobalDecl(Destructor, Dtor_Complete), Ty);
@@ -795,8 +798,6 @@ CodeGenFunction::GetVirtualCXXBaseClassOffset(llvm::Value *This,
 llvm::Value *
 CodeGenFunction::BuildVirtualCall(const CXXMethodDecl *MD, llvm::Value *&This,
                                   const llvm::Type *Ty) {
-  // FIXME: If we know the dynamic type, we don't have to do a virtual dispatch.
-
   int64_t Index = CGM.getVtableInfo().getMethodVtableIndex(MD);
   
   Ty = llvm::PointerType::get(Ty, 0);
