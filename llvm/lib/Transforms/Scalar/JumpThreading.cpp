@@ -74,8 +74,7 @@ namespace {
     void FindLoopHeaders(Function &F);
     
     bool ProcessBlock(BasicBlock *BB);
-    bool ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB,
-                    unsigned JumpThreadCost);
+    bool ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB);
     BasicBlock *FactorCommonPHIPreds(PHINode *PN, Value *Val);
     bool ProcessBranchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
     bool ProcessSwitchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
@@ -179,46 +178,6 @@ BasicBlock *JumpThreading::FactorCommonPHIPreds(PHINode *PN, Value *Val) {
                                 ".thr_comm", this);
 }
   
-
-/// getJumpThreadDuplicationCost - Return the cost of duplicating this block to
-/// thread across it.
-static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
-  /// Ignore PHI nodes, these will be flattened when duplication happens.
-  BasicBlock::const_iterator I = BB->getFirstNonPHI();
-
-  // Sum up the cost of each instruction until we get to the terminator.  Don't
-  // include the terminator because the copy won't include it.
-  unsigned Size = 0;
-  for (; !isa<TerminatorInst>(I); ++I) {
-    // Debugger intrinsics don't incur code size.
-    if (isa<DbgInfoIntrinsic>(I)) continue;
-    
-    // If this is a pointer->pointer bitcast, it is free.
-    if (isa<BitCastInst>(I) && isa<PointerType>(I->getType()))
-      continue;
-    
-    // All other instructions count for at least one unit.
-    ++Size;
-    
-    // Calls are more expensive.  If they are non-intrinsic calls, we model them
-    // as having cost of 4.  If they are a non-vector intrinsic, we model them
-    // as having cost of 2 total, and if they are a vector intrinsic, we model
-    // them as having cost 1.
-    if (const CallInst *CI = dyn_cast<CallInst>(I)) {
-      if (!isa<IntrinsicInst>(CI))
-        Size += 3;
-      else if (!isa<VectorType>(CI->getType()))
-        Size += 1;
-    }
-  }
-  
-  // Threading through a switch statement is particularly profitable.  If this
-  // block ends in a switch, decrease its cost to make it more likely to happen.
-  if (isa<SwitchInst>(I))
-    Size = Size > 6 ? Size-6 : 0;
-  
-  return Size;
-}
 
 /// GetBestDestForBranchOnUndef - If we determine that the specified block ends
 /// in an undefined jump, decide which block is best to revector to.
@@ -450,21 +409,13 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
     ConstantFoldTerminator(BB);
     return true;
   }
-  
-  // Otherwise we need to thread from PredBB to DestBB's successor which
-  // involves code duplication.  Check to see if it is worth it.
-  unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
-  if (JumpThreadCost > Threshold) {
-    DEBUG(errs() << "  Not threading BB '" << BB->getName()
-          << "' - Cost is too high: " << JumpThreadCost << "\n");
-    return false;
-  }
+ 
   
   // Next, figure out which successor we are threading to.
   BasicBlock *SuccBB = DestBI->getSuccessor(!BranchDir);
   
   // Ok, try to thread it!
-  return ThreadEdge(BB, PredBB, SuccBB, JumpThreadCost);
+  return ThreadEdge(BB, PredBB, SuccBB);
 }
 
 /// ProcessSwitchOnDuplicateCond - We found a block and a predecessor of that
@@ -724,18 +675,11 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
   
   // See if the cost of duplicating this block is low enough.
   BasicBlock *BB = PN->getParent();
-  unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
-  if (JumpThreadCost > Threshold) {
-    DEBUG(errs() << "  Not threading BB '" << BB->getName()
-          << "' - Cost is too high: " << JumpThreadCost << "\n");
-    return false;
-  }
   
   // If so, we can actually do this threading.  Merge any common predecessors
   // that will act the same.
   BasicBlock *PredBB = FactorCommonPHIPreds(PN, PredCst);
-  
-  
+    
   TerminatorInst *BBTerm = BB->getTerminator();
   
   // Next, figure out which successor we are threading to.
@@ -751,7 +695,7 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
   }
   
   // Ok, try to thread it!
-  return ThreadEdge(BB, PredBB, SuccBB, JumpThreadCost);
+  return ThreadEdge(BB, PredBB, SuccBB);
 }
 
 /// ProcessJumpOnLogicalPHI - PN's basic block contains a conditional branch
@@ -795,14 +739,6 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
   if (PredNo == ~0U)
     return false;
   
-  // See if the cost of duplicating this block is low enough.
-  unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
-  if (JumpThreadCost > Threshold) {
-    DEBUG(errs() << "  Not threading BB '" << BB->getName()
-          << "' - Cost is too high: " << JumpThreadCost << "\n");
-    return false;
-  }
-
   // If so, we can actually do this threading.  Merge any common predecessors
   // that will act the same.
   BasicBlock *PredBB = FactorCommonPHIPreds(PN, PredCst);
@@ -814,7 +750,7 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
   BasicBlock *SuccBB = BB->getTerminator()->getSuccessor(isAnd);
   
   // Ok, try to thread it!
-  return ThreadEdge(BB, PredBB, SuccBB, JumpThreadCost);
+  return ThreadEdge(BB, PredBB, SuccBB);
 }
 
 /// GetResultOfComparison - Given an icmp/fcmp predicate and the left and right
@@ -881,14 +817,6 @@ bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
   if (PredVal == 0)
     return false;
   
-  // See if the cost of duplicating this block is low enough.
-  unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
-  if (JumpThreadCost > Threshold) {
-    DEBUG(errs() << "  Not threading BB '" << BB->getName()
-          << "' - Cost is too high: " << JumpThreadCost << "\n");
-    return false;
-  }
-  
   // If so, we can actually do this threading.  Merge any common predecessors
   // that will act the same.
   BasicBlock *PredBB = FactorCommonPHIPreds(PN, PredVal);
@@ -897,7 +825,47 @@ bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
   BasicBlock *SuccBB = BB->getTerminator()->getSuccessor(!TrueDirection);
   
   // Ok, try to thread it!
-  return ThreadEdge(BB, PredBB, SuccBB, JumpThreadCost);
+  return ThreadEdge(BB, PredBB, SuccBB);
+}
+
+/// getJumpThreadDuplicationCost - Return the cost of duplicating this block to
+/// thread across it.
+static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
+  /// Ignore PHI nodes, these will be flattened when duplication happens.
+  BasicBlock::const_iterator I = BB->getFirstNonPHI();
+  
+  // Sum up the cost of each instruction until we get to the terminator.  Don't
+  // include the terminator because the copy won't include it.
+  unsigned Size = 0;
+  for (; !isa<TerminatorInst>(I); ++I) {
+    // Debugger intrinsics don't incur code size.
+    if (isa<DbgInfoIntrinsic>(I)) continue;
+    
+    // If this is a pointer->pointer bitcast, it is free.
+    if (isa<BitCastInst>(I) && isa<PointerType>(I->getType()))
+      continue;
+    
+    // All other instructions count for at least one unit.
+    ++Size;
+    
+    // Calls are more expensive.  If they are non-intrinsic calls, we model them
+    // as having cost of 4.  If they are a non-vector intrinsic, we model them
+    // as having cost of 2 total, and if they are a vector intrinsic, we model
+    // them as having cost 1.
+    if (const CallInst *CI = dyn_cast<CallInst>(I)) {
+      if (!isa<IntrinsicInst>(CI))
+        Size += 3;
+      else if (!isa<VectorType>(CI->getType()))
+        Size += 1;
+    }
+  }
+  
+  // Threading through a switch statement is particularly profitable.  If this
+  // block ends in a switch, decrease its cost to make it more likely to happen.
+  if (isa<SwitchInst>(I))
+    Size = Size > 6 ? Size-6 : 0;
+  
+  return Size;
 }
 
 
@@ -905,8 +873,14 @@ bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
 /// edge from PredBB to SuccBB across BB.  Transform the IR to reflect this
 /// change.
 bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, 
-                               BasicBlock *SuccBB, unsigned JumpThreadCost) {
-
+                               BasicBlock *SuccBB) {
+  unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
+  if (JumpThreadCost > Threshold) {
+    DEBUG(errs() << "  Not threading BB '" << BB->getName()
+          << "' - Cost is too high: " << JumpThreadCost << "\n");
+    return false;
+  }
+  
   // If threading to the same block as we come from, we would infinite loop.
   if (SuccBB == BB) {
     DEBUG(errs() << "  Not threading across BB '" << BB->getName()
