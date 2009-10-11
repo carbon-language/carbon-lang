@@ -87,6 +87,18 @@ struct zero_ty {
 /// m_Zero() - Match an arbitrary zero/null constant.
 inline zero_ty m_Zero() { return zero_ty(); }
 
+struct one_ty {
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (const ConstantInt *C = dyn_cast<ConstantInt>(V))
+      return C->isOne();
+    return false;
+  }
+};
+
+/// m_One() - Match a an integer 1.
+inline one_ty m_One() { return one_ty(); }
+  
 
 template<typename Class>
 struct bind_ty {
