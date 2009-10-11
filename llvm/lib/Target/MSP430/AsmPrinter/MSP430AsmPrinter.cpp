@@ -64,6 +64,9 @@ namespace {
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant,
                          const char *ExtraCode);
+    bool PrintAsmMemoryOperand(const MachineInstr *MI,
+                               unsigned OpNo, unsigned AsmVariant,
+                               const char *ExtraCode);
 
     void emitFunctionHeader(const MachineFunction &MF);
     bool runOnMachineFunction(MachineFunction &F);
@@ -259,6 +262,16 @@ bool MSP430AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     return true; // Unknown modifier.
 
   printOperand(MI, OpNo);
+  return false;
+}
+
+bool MSP430AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
+                                             unsigned OpNo, unsigned AsmVariant,
+                                             const char *ExtraCode) {
+  if (ExtraCode && ExtraCode[0]) {
+    return true; // Unknown modifier.
+  }
+  printSrcMemOperand(MI, OpNo);
   return false;
 }
 
