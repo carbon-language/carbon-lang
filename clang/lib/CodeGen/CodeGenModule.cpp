@@ -39,7 +39,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CompileOptions &compileOpts,
                              Diagnostic &diags)
   : BlockModule(C, M, TD, Types, *this), Context(C),
     Features(C.getLangOptions()), CompileOpts(compileOpts), TheModule(M),
-    TheTargetData(TD), Diags(diags), Types(C, M, TD), MangleCtx(C), Runtime(0),
+    TheTargetData(TD), Diags(diags), Types(C, M, TD), MangleCtx(C), 
+    VtableInfo(*this), Runtime(0),
     MemCpyFn(0), MemMoveFn(0), MemSetFn(0), CFConstantStringClassRef(0),
     VMContext(M.getContext()) {
 

@@ -298,7 +298,8 @@ void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
   llvm::Value *FuncPtr;
   
   if (MD->isVirtual()) {
-    uint64_t Index = CGF.CGM.GetVtableIndex(MD->getCanonicalDecl());
+    int64_t Index = 
+      CGF.CGM.getVtableInfo().getMethodVtableIndex(MD);
     
     FuncPtr = llvm::ConstantInt::get(PtrDiffTy, Index + 1);
   } else {
