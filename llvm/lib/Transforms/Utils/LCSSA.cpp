@@ -33,22 +33,19 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Support/Compiler.h"
+#include "llvm/Transforms/Utils/SSAUpdater.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/PredIteratorCache.h"
-#include <map>
 using namespace llvm;
 
 STATISTIC(NumLCSSA, "Number of live out of a loop variables");
 
 namespace {
-  struct VISIBILITY_HIDDEN LCSSA : public LoopPass {
+  struct LCSSA : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
     LCSSA() : LoopPass(&ID) {}
 
@@ -83,20 +80,14 @@ namespace {
       AU.addPreserved<DominanceFrontier>();
     }
   private:
-    void ProcessInstruction(Instruction* Instr,
-                            const SmallVector<BasicBlock*, 8>& exitBlocks);
+    bool ProcessInstruction(Instruction *Inst,
+                            const SmallVectorImpl<BasicBlock*> &ExitBlocks);
     
     /// verifyAnalysis() - Verify loop nest.
     virtual void verifyAnalysis() const {
       // Check the special guarantees that LCSSA makes.
       assert(L->isLCSSAForm() && "LCSSA form not preserved!");
     }
-
-    void getLoopValuesUsedOutsideLoop(Loop *L,
-                                 SmallVectorImpl<Instruction*> &AffectedValues);
-
-    Value *GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
-                            DenseMap<DomTreeNode*, Value*> &Phis);
 
     /// inLoop - returns true if the given block is within the current loop
     bool inLoop(BasicBlock *B) const {
@@ -111,178 +102,163 @@ static RegisterPass<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
 Pass *llvm::createLCSSAPass() { return new LCSSA(); }
 const PassInfo *const llvm::LCSSAID = &X;
 
+
+/// BlockDominatesAnExit - Return true if the specified block dominates at least
+/// one of the blocks in the specified list.
+static bool BlockDominatesAnExit(BasicBlock *BB,
+                                 const SmallVectorImpl<BasicBlock*> &ExitBlocks,
+                                 DominatorTree *DT) {
+  DomTreeNode *DomNode = DT->getNode(BB);
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
+    if (DT->dominates(DomNode, DT->getNode(ExitBlocks[i])))
+      return true;
+
+  return false;
+}
+
+
 /// runOnFunction - Process all loops in the function, inner-most out.
-bool LCSSA::runOnLoop(Loop *l, LPPassManager &LPM) {
-  L = l;
-  PredCache.clear();
+bool LCSSA::runOnLoop(Loop *TheLoop, LPPassManager &LPM) {
+  L = TheLoop;
   
   LI = &LPM.getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTree>();
 
+  // Get the set of exiting blocks.
+  SmallVector<BasicBlock*, 8> ExitBlocks;
+  L->getExitBlocks(ExitBlocks);
+  
+  if (ExitBlocks.empty())
+    return false;
+  
   // Speed up queries by creating a sorted vector of blocks.
   LoopBlocks.clear();
   LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
   array_pod_sort(LoopBlocks.begin(), LoopBlocks.end());
   
-  SmallVector<Instruction*, 16> AffectedValues;
-  getLoopValuesUsedOutsideLoop(L, AffectedValues);
+  // Look at all the instructions in the loop, checking to see if they have uses
+  // outside the loop.  If so, rewrite those uses.
+  bool MadeChange = false;
   
-  // If no values are affected, we can save a lot of work, since we know that
-  // nothing will be changed.
-  if (AffectedValues.empty())
-    return false;
-
-  SmallVector<BasicBlock*, 8> ExitBlocks;
-  L->getExitBlocks(ExitBlocks);
-  
-  // Iterate over all affected values for this loop and insert Phi nodes
-  // for them in the appropriate exit blocks.
-  for (SmallVectorImpl<Instruction*>::iterator I = AffectedValues.begin(),
-       E = AffectedValues.end(); I != E; ++I)
-    ProcessInstruction(*I, ExitBlocks);
+  for (Loop::block_iterator BBI = L->block_begin(), E = L->block_end();
+       BBI != E; ++BBI) {
+    BasicBlock *BB = *BBI;
+    
+    // For large loops, avoid use-scanning by using dominance information:  In
+    // particular, if a block does not dominate any of the loop exits, then none
+    // of the values defined in the block could be used outside the loop.
+    if (!BlockDominatesAnExit(BB, ExitBlocks, DT))
+      continue;
+    
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end();
+         I != E; ++I) {
+      // Reject two common cases fast: instructions with no uses (like stores)
+      // and instructions with one use that is in the same block as this.
+      if (I->use_empty() ||
+          (I->hasOneUse() && I->use_back()->getParent() == BB &&
+           !isa<PHINode>(I->use_back())))
+        continue;
+      
+      MadeChange |= ProcessInstruction(I, ExitBlocks);
+    }
+  }
   
   assert(L->isLCSSAForm());
-  
-  return true;
+  PredCache.clear();
+
+  return MadeChange;
 }
 
-/// processInstruction - Given a live-out instruction, insert LCSSA Phi nodes,
-/// eliminate all out-of-loop uses.
-void LCSSA::ProcessInstruction(Instruction *Instr,
-                               const SmallVector<BasicBlock*, 8> &ExitBlocks) {
+/// isExitBlock - Return true if the specified block is in the list.
+static bool isExitBlock(BasicBlock *BB,
+                        const SmallVectorImpl<BasicBlock*> &ExitBlocks) {
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
+    if (ExitBlocks[i] == BB)
+      return true;
+  return false;
+}
+
+/// ProcessInstruction - Given an instruction in the loop, check to see if it
+/// has any uses that are outside the current loop.  If so, insert LCSSA PHI
+/// nodes and rewrite the uses.
+bool LCSSA::ProcessInstruction(Instruction *Inst,
+                               const SmallVectorImpl<BasicBlock*> &ExitBlocks) {
+  SmallVector<Use*, 16> UsesToRewrite;
+  
+  BasicBlock *InstBB = Inst->getParent();
+  
+  for (Value::use_iterator UI = Inst->use_begin(), E = Inst->use_end();
+       UI != E; ++UI) {
+    BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
+    if (PHINode *PN = dyn_cast<PHINode>(*UI))
+      UserBB = PN->getIncomingBlock(UI);
+    
+    if (InstBB != UserBB && !inLoop(UserBB))
+      UsesToRewrite.push_back(&UI.getUse());
+  }
+  
+  // If there are no uses outside the loop, exit with no change.
+  if (UsesToRewrite.empty()) return false;
+  
   ++NumLCSSA; // We are applying the transformation
-
-  // Keep track of the blocks that have the value available already.
-  DenseMap<DomTreeNode*, Value*> Phis;
-
-  BasicBlock *DomBB = Instr->getParent();
 
   // Invoke instructions are special in that their result value is not available
   // along their unwind edge. The code below tests to see whether DomBB dominates
   // the value, so adjust DomBB to the normal destination block, which is
   // effectively where the value is first usable.
-  if (InvokeInst *Inv = dyn_cast<InvokeInst>(Instr))
+  BasicBlock *DomBB = Inst->getParent();
+  if (InvokeInst *Inv = dyn_cast<InvokeInst>(Inst))
     DomBB = Inv->getNormalDest();
 
   DomTreeNode *DomNode = DT->getNode(DomBB);
 
-  // Insert the LCSSA phi's into the exit blocks (dominated by the value), and
-  // add them to the Phi's map.
-  for (SmallVector<BasicBlock*, 8>::const_iterator BBI = ExitBlocks.begin(),
+  SSAUpdater SSAUpdate;
+  SSAUpdate.Initialize(Inst);
+  
+  // Insert the LCSSA phi's into all of the exit blocks dominated by the
+  // value., and add them to the Phi's map.
+  for (SmallVectorImpl<BasicBlock*>::const_iterator BBI = ExitBlocks.begin(),
       BBE = ExitBlocks.end(); BBI != BBE; ++BBI) {
-    BasicBlock *BB = *BBI;
-    DomTreeNode *ExitBBNode = DT->getNode(BB);
-    Value *&Phi = Phis[ExitBBNode];
-    if (!Phi && DT->dominates(DomNode, ExitBBNode)) {
-      PHINode *PN = PHINode::Create(Instr->getType(), Instr->getName()+".lcssa",
-                                    BB->begin());
-      PN->reserveOperandSpace(PredCache.GetNumPreds(BB));
+    BasicBlock *ExitBB = *BBI;
+    if (!DT->dominates(DomNode, DT->getNode(ExitBB))) continue;
+    
+    // If we already inserted something for this BB, don't reprocess it.
+    if (SSAUpdate.HasValueForBlock(ExitBB)) continue;
+    
+    PHINode *PN = PHINode::Create(Inst->getType(), Inst->getName()+".lcssa",
+                                  ExitBB->begin());
+    PN->reserveOperandSpace(PredCache.GetNumPreds(ExitBB));
 
-      // Remember that this phi makes the value alive in this block.
-      Phi = PN;
-
-      // Add inputs from inside the loop for this PHI.
-      for (BasicBlock** PI = PredCache.GetPreds(BB); *PI; ++PI)
-        PN->addIncoming(Instr, *PI);
-    }
+    // Add inputs from inside the loop for this PHI.
+    for (BasicBlock **PI = PredCache.GetPreds(ExitBB); *PI; ++PI)
+      PN->addIncoming(Inst, *PI);
+    
+    // Remember that this phi makes the value alive in this block.
+    SSAUpdate.AddAvailableValue(ExitBB, PN);
   }
   
-  
-  // Record all uses of Instr outside the loop.  We need to rewrite these.  The
-  // LCSSA phis won't be included because they use the value in the loop.
-  for (Value::use_iterator UI = Instr->use_begin(), E = Instr->use_end();
-       UI != E;) {
-    BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-    if (PHINode *P = dyn_cast<PHINode>(*UI))
-      UserBB = P->getIncomingBlock(UI);
-    
-    // If the user is in the loop, don't rewrite it!
-    if (UserBB == Instr->getParent() || inLoop(UserBB)) {
-      ++UI;
+  // Rewrite all uses outside the loop in terms of the new PHIs we just
+  // inserted.
+  for (unsigned i = 0, e = UsesToRewrite.size(); i != e; ++i) {
+    // If this use is in an exit block, rewrite to use the newly inserted PHI.
+    // This is required for correctness because SSAUpdate doesn't handle uses in
+    // the same block.  It assumes the PHI we inserted is at the end of the
+    // block.
+    Instruction *User = cast<Instruction>(UsesToRewrite[i]->getUser());
+    BasicBlock *UserBB = User->getParent();
+    if (PHINode *PN = dyn_cast<PHINode>(User))
+      UserBB = PN->getIncomingBlock(*UsesToRewrite[i]);
+
+    if (isa<PHINode>(UserBB->begin()) &&
+        isExitBlock(UserBB, ExitBlocks)) {
+      UsesToRewrite[i]->set(UserBB->begin());
       continue;
     }
     
-    // Otherwise, patch up uses of the value with the appropriate LCSSA Phi,
-    // inserting PHI nodes into join points where needed.
-    Value *Val = GetValueForBlock(DT->getNode(UserBB), Instr, Phis);
-    
-    // Preincrement the iterator to avoid invalidating it when we change the
-    // value.
-    Use &U = UI.getUse();
-    ++UI;
-    U.set(Val);
-  }
-}
-
-/// getLoopValuesUsedOutsideLoop - Return any values defined in the loop that
-/// are used by instructions outside of it.
-void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
-                                SmallVectorImpl<Instruction*> &AffectedValues) {
-  // FIXME: For large loops, we may be able to avoid a lot of use-scanning
-  // by using dominance information.  In particular, if a block does not
-  // dominate any of the loop exits, then none of the values defined in the
-  // block could be used outside the loop.
-  for (Loop::block_iterator BB = L->block_begin(), BE = L->block_end();
-       BB != BE; ++BB) {
-    for (BasicBlock::iterator I = (*BB)->begin(), E = (*BB)->end(); I != E; ++I)
-      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE; ++UI) {
-        BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (PHINode *PN = dyn_cast<PHINode>(*UI))
-          UserBB = PN->getIncomingBlock(UI);
-        
-        if (*BB != UserBB && !inLoop(UserBB)) {
-          AffectedValues.push_back(I);
-          break;
-        }
-      }
-  }
-}
-
-/// GetValueForBlock - Get the value to use within the specified basic block.
-/// available values are in Phis.
-Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
-                               DenseMap<DomTreeNode*, Value*> &Phis) {
-  // If there is no dominator info for this BB, it is unreachable.
-  if (BB == 0)
-    return UndefValue::get(OrigInst->getType());
-                                 
-  // If we have already computed this value, return the previously computed val.
-  if (Phis.count(BB)) return Phis[BB];
-
-  DomTreeNode *IDom = BB->getIDom();
-
-  // Otherwise, there are two cases: we either have to insert a PHI node or we
-  // don't.  We need to insert a PHI node if this block is not dominated by one
-  // of the exit nodes from the loop (the loop could have multiple exits, and
-  // though the value defined *inside* the loop dominated all its uses, each
-  // exit by itself may not dominate all the uses).
-  //
-  // The simplest way to check for this condition is by checking to see if the
-  // idom is in the loop.  If so, we *know* that none of the exit blocks
-  // dominate this block.  Note that we *know* that the block defining the
-  // original instruction is in the idom chain, because if it weren't, then the
-  // original value didn't dominate this use.
-  if (!inLoop(IDom->getBlock())) {
-    // Idom is not in the loop, we must still be "below" the exit block and must
-    // be fully dominated by the value live in the idom.
-    Value* val = GetValueForBlock(IDom, OrigInst, Phis);
-    Phis.insert(std::make_pair(BB, val));
-    return val;
+    // Otherwise, do full PHI insertion.
+    SSAUpdate.RewriteUse(*UsesToRewrite[i]);
   }
   
-  BasicBlock *BBN = BB->getBlock();
-  
-  // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
-  // now, then get values to fill in the incoming values for the PHI.
-  PHINode *PN = PHINode::Create(OrigInst->getType(),
-                                OrigInst->getName() + ".lcssa", BBN->begin());
-  PN->reserveOperandSpace(PredCache.GetNumPreds(BBN));
-  Phis.insert(std::make_pair(BB, PN));
-                                 
-  // Fill in the incoming values for the block.
-  for (BasicBlock **PI = PredCache.GetPreds(BBN); *PI; ++PI)
-    PN->addIncoming(GetValueForBlock(DT->getNode(*PI), OrigInst, Phis), *PI);
-  return PN;
+  return true;
 }
 
