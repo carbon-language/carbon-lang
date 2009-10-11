@@ -62,6 +62,10 @@ void r7() throw(float); // expected-error {{exception specification in declarati
 void r8() throw(int);
 void r8() throw(const int);
 
+// Multiple appearances don't matter.
+void r9() throw(int, int);
+void r9() throw(int, int);
+
 struct A
 {
 };
