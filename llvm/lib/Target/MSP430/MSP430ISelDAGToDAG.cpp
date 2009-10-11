@@ -30,7 +30,11 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/Statistic.h"
+
 using namespace llvm;
+
+STATISTIC(NumLoadMoved, "Number of loads moved below TokenFactor");
 
 /// MSP430DAGToDAGISel - MSP430 specific code to select MSP430 machine
 /// instructions for SelectionDAG operations.
@@ -60,6 +64,7 @@ namespace {
   #include "MSP430GenDAGISel.inc"
 
   private:
+    void PreprocessForRMW();
     SDNode *Select(SDValue Op);
     bool SelectAddr(SDValue Op, SDValue Addr, SDValue &Base, SDValue &Disp);
 
@@ -143,9 +148,131 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   return false;
 }
 
+/// MoveBelowTokenFactor - Replace TokenFactor operand with load's chain operand
+/// and move load below the TokenFactor. Replace store's chain operand with
+/// load's chain result.
+/// Shamelessly stolen from X86.
+static void MoveBelowTokenFactor(SelectionDAG *CurDAG, SDValue Load,
+                                 SDValue Store, SDValue TF) {
+  SmallVector<SDValue, 4> Ops;
+  bool isRMW = false;
+  SDValue TF0, TF1, NewTF;
+  for (unsigned i = 0, e = TF.getNode()->getNumOperands(); i != e; ++i)
+    if (Load.getNode() == TF.getOperand(i).getNode()) {
+      TF0 = Load.getOperand(0);
+      Ops.push_back(TF0);
+    } else {
+      TF1 = TF.getOperand(i);
+      Ops.push_back(TF1);
+      if (LoadSDNode* LD = dyn_cast<LoadSDNode>(TF1))
+        isRMW = !LD->isVolatile();
+    }
+
+  if (isRMW && TF1.getOperand(0).getNode() == TF0.getNode())
+    NewTF = TF0;
+  else
+    NewTF = CurDAG->UpdateNodeOperands(TF, &Ops[0], Ops.size());
+
+  SDValue NewLoad = CurDAG->UpdateNodeOperands(Load, NewTF,
+                                               Load.getOperand(1),
+                                               Load.getOperand(2));
+  CurDAG->UpdateNodeOperands(Store, NewLoad.getValue(1), Store.getOperand(1),
+                             Store.getOperand(2), Store.getOperand(3));
+}
+
+/// isRMWLoad - Return true if N is a load that's part of RMW sub-DAG. The chain
+/// produced by the load must only be used by the store's chain operand,
+/// otherwise this may produce a cycle in the DAG.
+/// Shamelessly stolen from X86. FIXME: Should we make this function common?
+static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
+                      SDValue &Load) {
+  if (N.getOpcode() == ISD::BIT_CONVERT)
+    N = N.getOperand(0);
+
+  LoadSDNode *LD = dyn_cast<LoadSDNode>(N);
+  if (!LD || LD->isVolatile())
+    return false;
+  if (LD->getAddressingMode() != ISD::UNINDEXED)
+    return false;
+
+  ISD::LoadExtType ExtType = LD->getExtensionType();
+  if (ExtType != ISD::NON_EXTLOAD && ExtType != ISD::EXTLOAD)
+    return false;
+
+  if (N.hasOneUse() &&
+      LD->hasNUsesOfValue(1, 1) &&
+      N.getOperand(1) == Address &&
+      LD->isOperandOf(Chain.getNode())) {
+    Load = N;
+    return true;
+  }
+  return false;
+}
+
+/// PreprocessForRMW - Preprocess the DAG to make instruction selection better.
+/// Shamelessly stolen from X86.
+void MSP430DAGToDAGISel::PreprocessForRMW() {
+  for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
+         E = CurDAG->allnodes_end(); I != E; ++I) {
+    if (!ISD::isNON_TRUNCStore(I))
+      continue;
+
+    SDValue Chain = I->getOperand(0);
+    if (Chain.getNode()->getOpcode() != ISD::TokenFactor)
+      continue;
+
+    SDValue N1 = I->getOperand(1); // Value to store
+    SDValue N2 = I->getOperand(2); // Address of store
+
+    if (!N1.hasOneUse())
+      continue;
+
+    bool RModW = false;
+    SDValue Load;
+    unsigned Opcode = N1.getNode()->getOpcode();
+    switch (Opcode) {
+      case ISD::ADD:
+      case ISD::AND:
+      case ISD::OR:
+      case ISD::XOR:
+      case ISD::ADDC:
+      case ISD::ADDE: {
+        SDValue N10 = N1.getOperand(0);
+        SDValue N11 = N1.getOperand(1);
+        RModW = isRMWLoad(N10, Chain, N2, Load);
+
+        if (!RModW && isRMWLoad(N11, Chain, N2, Load)) {
+          // Swap the operands, making the RMW load the first operand seems
+          // to help selection and prevent token chain loops.
+          N1 = CurDAG->UpdateNodeOperands(N1, N11, N10);
+          RModW = true;
+        }
+       break;
+      }
+      case ISD::SUB:
+      case ISD::SUBC:
+      case ISD::SUBE: {
+        SDValue N10 = N1.getOperand(0);
+        RModW = isRMWLoad(N10, Chain, N2, Load);
+        break;
+      }
+    }
+
+    if (RModW) {
+      MoveBelowTokenFactor(CurDAG, Load, SDValue(I, 0), Chain);
+      ++NumLoadMoved;
+    }
+  }
+}
+
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
 void MSP430DAGToDAGISel::InstructionSelect() {
+  PreprocessForRMW();
+
+  DEBUG(errs() << "Selection DAG after RMW preprocessing:\n");
+  DEBUG(CurDAG->dump());
+
   DEBUG(BB->dump());
 
   // Codegen the basic block.
