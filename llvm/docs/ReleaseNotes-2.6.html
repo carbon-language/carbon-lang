@@ -132,7 +132,7 @@ list</a>.</p>
 <li>C and Objective-C support are now considered production quality.</li>
 <li>AuroraUX, FreeBSD, and OpenBSD are now supported.</li>
 <li>Most of Objective-C 2.0 is now supported with the GNU runtime.</li>
-<li>Many many bugs are fixed and many features have been added.</li>
+<li>Many many bugs are fixed and lots of features have been added.</li>
 </ul>
 </div>
 
@@ -461,7 +461,7 @@ in this section.
 <li>New <a href="#compiler-rt">compiler-rt</a>, <A href="#klee">KLEE</a>,
     and <a href="#mc">machine code toolkit</a> sub-projects.</li>
 <li>Debug information now includes line numbers when optimizations are enabled.
-    This allows statistical sampling tools like oprofile and Shark to map
+    This allows statistical sampling tools like OProfile and Shark to map
     samples back to source lines.</li>
 <li>LLVM now includes new experimental backends to support the MSP430, SystemZ,
     and BlackFin architectures.</li>
@@ -586,8 +586,8 @@ release includes a few major enhancements and additions to the optimizers:</p>
 <li>LLVM has a new "EngineBuilder" class which makes it more obvious how to
     set up and configure an ExecutionEngine (a JIT or interpreter).</li>
 <li>The JIT now supports generating more than 16M of code.</li>
-<li>When configured with --with-oprofile, the JIT can now inform oprofile about
-     JIT'd code, allowing oprofile to get line number and function name
+<li>When configured with --with-oprofile, the JIT can now inform OProfile about
+     JIT'd code, allowing OProfile to get line number and function name
      information for JIT'd functions.</li>
 <li>When "libffi" is available, the LLVM interpreter now uses it, which supports
     calling almost arbitrary external (natively compiled) functions.</li>
@@ -619,8 +619,8 @@ it run faster:</p>
     for finding bugs in targets and codegen passes.</li>
 <li>The Machine LICM is now enabled by default.  It hoists instructions out of
     loops (such as constant pool loads, loads from read-only stubs, vector
-    constant synthesization code, etc) and is currently configured to only do so
-    when the hoisted operation can be rematerialized.</li>
+    constant synthesization code, etc.) and is currently configured to only do
+    so when the hoisted operation can be rematerialized.</li>
 <li>The Machine Sinking pass is now enabled by default.  This pass moves
     side-effect free operations down the CFG so that they are executed on fewer
     paths through a function.</li>
@@ -637,7 +637,7 @@ it run faster:</p>
 <li>Target-specific intrinsics can now be added without having to hack VMCore to
     add them.  This makes it easier to maintain out-of-tree targets.</li>
 <li>The instruction selector is better at propagating information about values
-    (such as whether they are sign/zero extended etc) across basic block
+    (such as whether they are sign/zero extended etc.) across basic block
     boundaries.</li>
 <li>The SelectionDAG datastructure has new nodes for representing buildvector
     and <a href="http://llvm.org/PR2957">vector shuffle</a> operations.  This
@@ -1026,7 +1026,7 @@ there isn't already one.</p>
 using the stock GCC 3.x.x series 'out the box',
 See: <a href="#brokengcc">Broken versions of GCC and other tools</a>.
 However, A <a href="http://pkg.auroraux.org/GCC">Modern GCC Build</a>
-for x86/x64 has been made available from the third party AuroraUX Project
+for x86/x86-64 has been made available from the third party AuroraUX Project
 that has been meticulously tested for bootstrapping LLVM &amp; Clang.</li>
 </ul>
 
@@ -1224,7 +1224,8 @@ itself, Qt, Mozilla, etc.</p>
 <div class="doc_text">
 <ul>
 <li>Fortran support generally works, but there are still several unresolved bugs
-    in Bugzilla.  Please see the tools/gfortran component for details.</li>
+    in <a href="http://llvm.org/bugs/">Bugzilla</a>.  Please see the
+    tools/gfortran component for details.</li>
 </ul>
 </div>
 
