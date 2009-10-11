@@ -143,12 +143,20 @@ list</a>.</p>
 
 <div class="doc_text">
 
-<p><b>UPDATE!</b> Previously announced in the 2.4 and 2.5 LLVM releases, the Clang project also
+<p>Previously announced in the 2.4 and 2.5 LLVM releases, the Clang project also
 includes an early stage static source code analysis tool for <a
 href="http://clang.llvm.org/StaticAnalysis.html">automatically finding bugs</a>
 in C and Objective-C programs. The tool performs checks to find
-bugs that occur on a specific path within a program.
-The set of checks performed by the static analyzer continues to expand, and
+bugs that occur on a specific path within a program.</p>
+
+<p>In the LLVM 2.6 time-frame, the analyzer core has undergone several important
+improvements and cleanups and now includes a new <em>Checker</em> interface that
+is intended to eventually serve as a basis for domain-specific checks. Further,
+in addition to generating HTML files for reporting analysis results, the
+analyzer can now also emit bug reports in a structured XML format that is
+intended to be easily readable by other programs.</p>
+
+<p>The set of checks performed by the static analyzer continues to expand, and
 future plans for the tool include full source-level inter-procedural analysis
 and deeper checks such as buffer overrun detection. There are many opportunities
 to extend and enhance the static analyzer, and anyone interested in working on
