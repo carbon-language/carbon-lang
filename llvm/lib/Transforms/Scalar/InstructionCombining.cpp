@@ -2661,7 +2661,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   if (isa<UndefValue>(I.getOperand(1)))              // undef * X -> 0
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
-  // Simplify mul instructions with a constant RHS...
+  // Simplify mul instructions with a constant RHS.
   if (Constant *Op1 = dyn_cast<Constant>(I.getOperand(1))) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
 
@@ -2765,9 +2765,20 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     }
   }
 
+  /// i1 mul -> i1 and.
   if (I.getType() == Type::getInt1Ty(*Context))
     return BinaryOperator::CreateAnd(Op0, I.getOperand(1));
 
+  // X*(1 << Y) --> X << Y
+  // (1 << Y)*X --> X << Y
+  {
+    Value *Y;
+    if (match(Op0, m_Shl(m_One(), m_Value(Y))))
+      return BinaryOperator::CreateShl(I.getOperand(1), Y);
+    if (match(I.getOperand(1), m_Shl(m_One(), m_Value(Y))))
+      return BinaryOperator::CreateShl(Op0, Y);
+  }
+  
   // If one of the operands of the multiply is a cast from a boolean value, then
   // we know the bool is either zero or one, so this is a 'masking' multiply.
   // See if we can simplify things based on how the boolean was originally

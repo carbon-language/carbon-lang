@@ -88,3 +88,11 @@ define <16 x i8> @test14(<16 x i8> %a) {
         %b = mul <16 x i8> %a, zeroinitializer
         ret <16 x i8> %b
 }
+
+; rdar://7293527
+define i32 @test15(i32 %A, i32 %B) {
+entry:
+  %shl = shl i32 1, %B
+  %m = mul i32 %shl, %A
+  ret i32 %m
+}
