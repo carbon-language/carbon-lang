@@ -130,7 +130,7 @@ list</a>.</p>
 
 <ul>
 <li>C and Objective-C support are now considered production quality.</li>
-<li>AuroraUX, FreeBSD, and OpenBSD are now supported.</li>
+<li>AuroraUX, FreeBSD and OpenBSD are now supported.</li>
 <li>Most of Objective-C 2.0 is now supported with the GNU runtime.</li>
 <li>Many many bugs are fixed and lots of features have been added.</li>
 </ul>
@@ -325,7 +325,7 @@ such as type feedback, method inlining, and uncommon traps are all used to
 remove dynamism from ruby execution and increase performance.</p>
 
 <p>Since LLVM 2.5, Rubinius has made several major leaps forward, implementing
-a counter based JIT, type feedback, and speculative method inlining.
+a counter based JIT, type feedback and speculative method inlining.
 </p>
 
 </div>
@@ -340,7 +340,7 @@ a counter based JIT, type feedback, and speculative method inlining.
 <p>
 <a href="http://macruby.org">MacRuby</a> is an implementation of Ruby on top of
 core Mac OS X technologies, such as the Objective-C common runtime and garbage
-collector, and the CoreFoundation framework. It is principally developed by
+collector and the CoreFoundation framework. It is principally developed by
 Apple and aims at enabling the creation of full-fledged Mac OS X applications.
 </p>
 
@@ -386,7 +386,7 @@ the D Programming Language using the LLVM optimizer and code generator.
 The LDC project works great with the LLVM 2.6 release.  General improvements in
 this
 cycle have included new inline asm constraint handling, better debug info
-support, general bug fixes, and better x86-64 support.  This has allowed
+support, general bug fixes and better x86-64 support.  This has allowed
 some major improvements in LDC, getting it much closer to being as
 fully featured as the original DMD compiler from DigitalMars.
 </p>
@@ -401,7 +401,7 @@ fully featured as the original DMD compiler from DigitalMars.
 <p>
 <a href="http://code.roadsend.com/rphp">Roadsend PHP</a> (rphp) is an open
 source implementation of the PHP programming 
-language that uses LLVM for its optimizer, JIT, and static compiler. This is a 
+language that uses LLVM for its optimizer, JIT and static compiler. This is a 
 reimplementation of an earlier project that is now based on LLVM.</p>
 </div>
 
@@ -441,7 +441,7 @@ code.</p>
 
 <div class="doc_text">
 
-<p>This release includes a huge number of bug fixes, performance tweaks, and
+<p>This release includes a huge number of bug fixes, performance tweaks and
 minor improvements.  Some of the major improvements and new features are listed
 in this section.
 </p>
@@ -492,13 +492,13 @@ expose new optimization opportunities:</p>
 
 <ul>
 <li>The <a href="LangRef.html#i_add">add</a>, <a 
-    href="LangRef.html#i_sub">sub</a>, and <a href="LangRef.html#i_mul">mul</a>
+    href="LangRef.html#i_sub">sub</a> and <a href="LangRef.html#i_mul">mul</a>
     instructions have been split into integer and floating point versions (like
     divide and remainder), introducing new <a
     href="LangRef.html#i_fadd">fadd</a>, <a href="LangRef.html#i_fsub">fsub</a>,
     and <a href="LangRef.html#i_fmul">fmul</a> instructions.</li>
 <li>The <a href="LangRef.html#i_add">add</a>, <a 
-    href="LangRef.html#i_sub">sub</a>, and <a href="LangRef.html#i_mul">mul</a>
+    href="LangRef.html#i_sub">sub</a> and <a href="LangRef.html#i_mul">mul</a>
     instructions now support optional "nsw" and "nuw" bits which indicate that
     the operation is guaranteed to not overflow (in the signed or
     unsigned case, respectively).  This gives the optimizer more information and
@@ -796,7 +796,7 @@ releases of LLVM.</p>
     make operations on character ranges and
     string concatenation to be more efficient.  StringRef is just a <tt>const
     char*</tt> with a length, Twine is a light-weight rope.</li>
-<li>LLVM has new WeakVH, AssertingVH, and CallbackVH classes, which make it
+<li>LLVM has new WeakVH, AssertingVH and CallbackVH classes, which make it
     easier to write LLVM IR transformations.  WeakVH is automatically drops to
     null when the referenced Value is deleted, and is updated across a
     replaceAllUsesWith operation.  AssertingVH aborts the program if the
@@ -909,13 +909,13 @@ API changes are:</p>
     context which can be passed in any and all cases where a context is 
     required.
 <li>The <tt>getABITypeSize</tt> methods are now called <tt>getAllocSize</tt>.</li>
-<li>The <tt>Add</tt>, <tt>Sub</tt>, and <tt>Mul</tt> operators are no longer
+<li>The <tt>Add</tt>, <tt>Sub</tt> and <tt>Mul</tt> operators are no longer
     overloaded for floating-point types. Floating-point addition, subtraction,
     and multiplication are now represented with new operators <tt>FAdd</tt>,
-    <tt>FSub</tt>, and <tt>FMul</tt>. In the <tt>IRBuilder</tt> API,
-    <tt>CreateAdd</tt>, <tt>CreateSub</tt>, <tt>CreateMul</tt>, and
+    <tt>FSub</tt> and <tt>FMul</tt>. In the <tt>IRBuilder</tt> API,
+    <tt>CreateAdd</tt>, <tt>CreateSub</tt>, <tt>CreateMul</tt> and
     <tt>CreateNeg</tt> should only be used for integer arithmetic now;
-    <tt>CreateFAdd</tt>, <tt>CreateFSub</tt>, <tt>CreateFMul</tt>, and
+    <tt>CreateFAdd</tt>, <tt>CreateFSub</tt>, <tt>CreateFMul</tt> and
     <tt>CreateFNeg</tt> should now be used for floating-point arithmetic.</li>
 <li>The DynamicLibrary class can no longer be constructed, its functionality has
     moved to static member functions.</li>
