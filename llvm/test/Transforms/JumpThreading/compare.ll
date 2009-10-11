@@ -1,5 +1,5 @@
 ; There should be no phi nodes left.
-; RUN: opt < %s -jump-threading -simplifycfg -mem2reg -S | not grep {phi i32}
+; RUN: opt < %s -jump-threading  -S | not grep {phi i32}
 
 declare i32 @f1()
 declare i32 @f2()

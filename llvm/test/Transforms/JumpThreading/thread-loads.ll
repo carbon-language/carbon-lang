@@ -1,4 +1,4 @@
-; RUN: opt < %s -jump-threading -mem2reg -simplifycfg -S | grep {ret i32 1}
+; RUN: opt < %s -jump-threading -simplifycfg -S | grep {ret i32 1}
 ; rdar://6402033
 
 ; Test that we can thread through the block with the partially redundant load (%2).

@@ -1,6 +1,6 @@
-; RUN: opt < %s -jump-threading -simplifycfg -mem2reg -S | grep {ret i32 %v1}
+; RUN: opt < %s -jump-threading -S | FileCheck %s
 ; There should be no uncond branches left.
-; RUN: opt < %s -jump-threading -simplifycfg -mem2reg -S | not grep {br label}
+; RUN: opt < %s -jump-threading -S | not grep {br label}
 
 declare i32 @f1()
 declare i32 @f2()
@@ -23,10 +23,14 @@ Merge:
 	br i1 %A, label %T2, label %F2
 
 T2:
+; CHECK: T2:
+; CHECK: ret i32 %v1
 	call void @f3()
 	ret i32 %B
 
 F2:
+; CHECK: F2:
+; CHECK: ret i32 %v2
 	ret i32 %B
 }
 
@@ -37,6 +41,8 @@ Entry:
 	br i1 %cond, label %T1, label %F1
 
 T1:
+; CHECK: %v1 = call i32 @f1()
+; CHECK: ret i32 47
 	%v1 = call i32 @f1()
 	br label %Merge
 
