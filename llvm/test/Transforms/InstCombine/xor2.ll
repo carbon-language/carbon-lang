@@ -30,3 +30,14 @@ define i32 @test2(i32 %tmp1) {
         %ov110 = xor i32 %ov3, 153
         ret i32 %ov110
 }
+
+define i32 @test3(i32 %tmp1) {
+; CHECK:      @test3
+; CHECK-NEXT:   or i32 %tmp1, 8 
+; CHECK-NEXT:   and i32
+; CHECK-NEXT:   ret i32
+  %ovm = or i32 %tmp1, 145 
+  %ov31 = and i32 %ovm, 177
+  %ov110 = xor i32 %ov31, 153
+  ret i32 %ov110
+}

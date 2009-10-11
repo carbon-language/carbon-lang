@@ -1047,6 +1047,33 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     if (ShrinkDemandedConstant(I, 1, DemandedMask))
       return I;
     
+    // If our LHS is an 'and' and if it has one use, and if any of the bits we
+    // are flipping are known to be set, then the xor is just resetting those
+    // bits to zero.  We can just knock out bits from the 'and' and the 'xor',
+    // simplifying both of them.
+    if (Instruction *LHSInst = dyn_cast<Instruction>(I->getOperand(0)))
+      if (LHSInst->getOpcode() == Instruction::And && LHSInst->hasOneUse() &&
+          isa<ConstantInt>(I->getOperand(1)) &&
+          isa<ConstantInt>(LHSInst->getOperand(1)) &&
+          (LHSKnownOne & RHSKnownOne & DemandedMask) != 0) {
+        ConstantInt *AndRHS = cast<ConstantInt>(LHSInst->getOperand(1));
+        ConstantInt *XorRHS = cast<ConstantInt>(I->getOperand(1));
+        APInt NewMask = ~(LHSKnownOne & RHSKnownOne & DemandedMask);
+        
+        Constant *AndC =
+          ConstantInt::get(I->getType(), NewMask & AndRHS->getValue());
+        Instruction *NewAnd = 
+          BinaryOperator::CreateAnd(I->getOperand(0), AndC, "tmp");
+        InsertNewInstBefore(NewAnd, *I);
+        
+        Constant *XorC =
+          ConstantInt::get(I->getType(), NewMask & XorRHS->getValue());
+        Instruction *NewXor =
+          BinaryOperator::CreateXor(NewAnd, XorC, "tmp");
+        return InsertNewInstBefore(NewXor, *I);
+      }
+          
+          
     RHSKnownZero = KnownZeroOut;
     RHSKnownOne  = KnownOneOut;
     break;
