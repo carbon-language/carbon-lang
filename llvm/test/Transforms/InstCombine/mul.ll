@@ -105,5 +105,12 @@ define i32 @test16(i32 %b, i1 %c) {
         ret i32 %e
 }
 
+; X * Y (when Y is 0 or 1) --> x & (0-Y)
+define i32 @test17(i32 %a, i32 %b) {
+  %a.lobit = lshr i32 %a, 31
+  %e = mul i32 %a.lobit, %b
+  ret i32 %e
+}
+
 
 
