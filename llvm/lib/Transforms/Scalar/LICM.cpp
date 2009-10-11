@@ -35,6 +35,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -139,6 +140,10 @@ namespace {
     /// pass without iteration.
     ///
     void HoistRegion(DomTreeNode *N);
+
+    // Cleanup debug information (remove stoppoints with no coressponding
+    // instructions).
+    void CleanupDbgInfoRegion(DomTreeNode *N);
 
     /// inSubLoop - Little predicate that returns true if the specified basic
     /// block is in a subloop of the current one, not the current one itself.
@@ -287,6 +292,7 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   //
   SinkRegion(DT->getNode(L->getHeader()));
   HoistRegion(DT->getNode(L->getHeader()));
+  CleanupDbgInfoRegion(DT->getNode(L->getHeader()));
 
   // Now that all loop invariants have been removed from the loop, promote any
   // memory references to scalars that we can...
@@ -338,6 +344,35 @@ void LICM::SinkRegion(DomTreeNode *N) {
   }
 }
 
+void LICM::CleanupDbgInfoRegion(DomTreeNode *N) {
+  BasicBlock *BB = N->getBlock();
+
+  // If this subregion is not in the top level loop at all, exit.
+  if (!CurLoop->contains(BB)) return;
+
+  // We are processing blocks in reverse dfo, so process children first...
+  const std::vector<DomTreeNode*> &Children = N->getChildren();
+  for (unsigned i = 0, e = Children.size(); i != e; ++i)
+    CleanupDbgInfoRegion(Children[i]);
+
+  // Only need to process the contents of this block if it is not part of a
+  // subloop (which would already have been processed).
+  if (inSubLoop(BB)) return;
+
+  // We modify the basicblock, so don't cache end()
+  for (BasicBlock::iterator I=BB->begin(); I != BB->end();) {
+    Instruction *Last = 0;
+    // Remove consecutive dbgstoppoints, leave only last
+    do {
+      if (Last) {
+        Last->eraseFromParent();
+        Changed = true;
+      }
+      Last = I;
+      ++I;
+    } while (isa<DbgStopPointInst>(Last) && isa<DbgStopPointInst>(I));
+  }
+}
 
 /// HoistRegion - Walk the specified region of the CFG (defined by all blocks
 /// dominated by the specified block, and that are in the current loop) in depth
@@ -392,6 +427,10 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
       Size = AA->getTypeStoreSize(LI->getType());
     return !pointerInvalidatedByLoop(LI->getOperand(0), Size);
   } else if (CallInst *CI = dyn_cast<CallInst>(&I)) {
+    if (isa<DbgStopPointInst>(CI)) {
+      // Don't hoist/sink dbgstoppoints, we handle them separately
+      return false;
+    }
     // Handle obvious cases efficiently.
     AliasAnalysis::ModRefBehavior Behavior = AA->getModRefBehavior(CI);
     if (Behavior == AliasAnalysis::DoesNotAccessMemory)
@@ -489,7 +528,6 @@ void LICM::sink(Instruction &I) {
       // Move the instruction to the start of the exit block, after any PHI
       // nodes in it.
       I.removeFromParent();
-
       BasicBlock::iterator InsertPt = ExitBlocks[0]->getFirstNonPHI();
       ExitBlocks[0]->getInstList().insert(InsertPt, &I);
     }
