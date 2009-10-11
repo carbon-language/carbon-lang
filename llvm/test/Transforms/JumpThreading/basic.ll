@@ -105,3 +105,37 @@ F2:
 	ret i32 %B
 }
 
+
+;; This tests that the branch in 'merge' can be cloned up into T1.
+define i32 @test5(i1 %cond, i1 %cond2) {
+; CHECK: @test5
+
+	br i1 %cond, label %T1, label %F1
+
+T1:
+; CHECK: T1:
+; CHECK-NEXT:   %v1 = call i32 @f1()
+; CHECK-NEXT:   %cond3 = icmp eq i32 %v1, 412
+; CHECK-NEXT:   br i1 %cond3, label %T2, label %F2
+
+	%v1 = call i32 @f1()
+        %cond3 = icmp eq i32 %v1, 412
+	br label %Merge
+
+F1:
+	%v2 = call i32 @f2()
+	br label %Merge
+
+Merge:
+	%A = phi i1 [%cond3, %T1], [%cond2, %F1]
+	%B = phi i32 [%v1, %T1], [%v2, %F1]
+	br i1 %A, label %T2, label %F2
+
+T2:
+	call void @f3()
+	ret i32 %B
+
+F2:
+	ret i32 %B
+}
+

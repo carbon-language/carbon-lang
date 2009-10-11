@@ -33,6 +33,7 @@ using namespace llvm;
 
 STATISTIC(NumThreads, "Number of jumps threaded");
 STATISTIC(NumFolds,   "Number of terminators folded");
+STATISTIC(NumDupes,   "Number of branch blocks duplicated to eliminate phi");
 
 static cl::opt<unsigned>
 Threshold("jump-threading-threshold", 
@@ -75,6 +76,9 @@ namespace {
     
     bool ProcessBlock(BasicBlock *BB);
     bool ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB);
+    bool DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
+                                          BasicBlock *PredBB);
+
     BasicBlock *FactorCommonPHIPreds(PHINode *PN, Value *Val);
     bool ProcessBranchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
     bool ProcessSwitchOnDuplicateCond(BasicBlock *PredBB, BasicBlock *DestBB);
@@ -118,7 +122,7 @@ bool JumpThreading::runOnFunction(Function &F) {
       if (pred_begin(BB) == pred_end(BB) &&
           BB != &BB->getParent()->getEntryBlock()) {
         DEBUG(errs() << "  JT: Deleting dead block '" << BB->getName()
-              << "' with terminator: " << *BB->getTerminator());
+              << "' with terminator: " << *BB->getTerminator() << '\n');
         LoopHeaders.erase(BB);
         DeleteDeadBlock(BB);
         Changed = true;
@@ -131,6 +135,48 @@ bool JumpThreading::runOnFunction(Function &F) {
   LoopHeaders.clear();
   return EverChanged;
 }
+
+/// getJumpThreadDuplicationCost - Return the cost of duplicating this block to
+/// thread across it.
+static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
+  /// Ignore PHI nodes, these will be flattened when duplication happens.
+  BasicBlock::const_iterator I = BB->getFirstNonPHI();
+  
+  // Sum up the cost of each instruction until we get to the terminator.  Don't
+  // include the terminator because the copy won't include it.
+  unsigned Size = 0;
+  for (; !isa<TerminatorInst>(I); ++I) {
+    // Debugger intrinsics don't incur code size.
+    if (isa<DbgInfoIntrinsic>(I)) continue;
+    
+    // If this is a pointer->pointer bitcast, it is free.
+    if (isa<BitCastInst>(I) && isa<PointerType>(I->getType()))
+      continue;
+    
+    // All other instructions count for at least one unit.
+    ++Size;
+    
+    // Calls are more expensive.  If they are non-intrinsic calls, we model them
+    // as having cost of 4.  If they are a non-vector intrinsic, we model them
+    // as having cost of 2 total, and if they are a vector intrinsic, we model
+    // them as having cost 1.
+    if (const CallInst *CI = dyn_cast<CallInst>(I)) {
+      if (!isa<IntrinsicInst>(CI))
+        Size += 3;
+      else if (!isa<VectorType>(CI->getType()))
+        Size += 1;
+    }
+  }
+  
+  // Threading through a switch statement is particularly profitable.  If this
+  // block ends in a switch, decrease its cost to make it more likely to happen.
+  if (isa<SwitchInst>(I))
+    Size = Size > 6 ? Size-6 : 0;
+  
+  return Size;
+}
+
+
 
 /// FindLoopHeaders - We do not want jump threading to turn proper loop
 /// structures into irreducible loops.  Doing this breaks up the loop nesting
@@ -243,7 +289,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // other blocks.
   if (isa<ConstantInt>(Condition)) {
     DEBUG(errs() << "  In block '" << BB->getName()
-          << "' folding terminator: " << *BB->getTerminator());
+          << "' folding terminator: " << *BB->getTerminator() << '\n');
     ++NumFolds;
     ConstantFoldTerminator(BB);
     return true;
@@ -262,7 +308,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     }
     
     DEBUG(errs() << "  In block '" << BB->getName()
-          << "' folding undef terminator: " << *BBTerm);
+          << "' folding undef terminator: " << *BBTerm << '\n');
     BranchInst::Create(BBTerm->getSuccessor(BestSucc), BBTerm);
     BBTerm->eraseFromParent();
     return true;
@@ -389,7 +435,7 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
     BranchDir = false;
   else {
     DEBUG(errs() << "  In block '" << PredBB->getName()
-          << "' folding terminator: " << *PredBB->getTerminator());
+          << "' folding terminator: " << *PredBB->getTerminator() << '\n');
     ++NumFolds;
     ConstantFoldTerminator(PredBB);
     return true;
@@ -402,7 +448,7 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
   if (BB->getSinglePredecessor()) {
     DEBUG(errs() << "  In block '" << BB->getName()
           << "' folding condition to '" << BranchDir << "': "
-          << *BB->getTerminator());
+          << *BB->getTerminator() << '\n');
     ++NumFolds;
     DestBI->setCondition(ConstantInt::get(Type::getInt1Ty(BB->getContext()),
                                           BranchDir));
@@ -689,10 +735,30 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
     }
   }
   
-  // If no incoming value has a constant, we don't know the destination of any
-  // predecessors.
+  // If the incoming values are all variables, we don't know the destination of
+  // any predecessors.  However, if any of the predecessor blocks end in an
+  // unconditional branch, we can *duplicate* the jump into that block in order
+  // to further encourage jump threading and to eliminate cases where we have
+  // branch on a phi of an icmp (branch on icmp is much better).
+
+  // We don't want to do this tranformation for switches, because we don't
+  // really want to duplicate a switch.
+  if (isa<SwitchInst>(BB->getTerminator()))
+    return false;
+  
+  // Look for unconditional branch predecessors.
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    BasicBlock *PredBB = PN->getIncomingBlock(i);
+    if (BranchInst *PredBr = dyn_cast<BranchInst>(PredBB->getTerminator()))
+      if (PredBr->isUnconditional() &&
+          // Try to duplicate BB into PredBB.
+          DuplicateCondBranchOnPHIIntoPred(BB, PredBB))
+        return true;
+  }
+
   return false;
 }
+
 
 /// ProcessJumpOnLogicalPHI - PN's basic block contains a conditional branch
 /// whose condition is an AND/OR where one side is PN.  If PN has constant
@@ -824,59 +890,36 @@ bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
   return ThreadEdge(BB, PredBB, SuccBB);
 }
 
-/// getJumpThreadDuplicationCost - Return the cost of duplicating this block to
-/// thread across it.
-static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
-  /// Ignore PHI nodes, these will be flattened when duplication happens.
-  BasicBlock::const_iterator I = BB->getFirstNonPHI();
-  
-  // Sum up the cost of each instruction until we get to the terminator.  Don't
-  // include the terminator because the copy won't include it.
-  unsigned Size = 0;
-  for (; !isa<TerminatorInst>(I); ++I) {
-    // Debugger intrinsics don't incur code size.
-    if (isa<DbgInfoIntrinsic>(I)) continue;
-    
-    // If this is a pointer->pointer bitcast, it is free.
-    if (isa<BitCastInst>(I) && isa<PointerType>(I->getType()))
-      continue;
-    
-    // All other instructions count for at least one unit.
-    ++Size;
-    
-    // Calls are more expensive.  If they are non-intrinsic calls, we model them
-    // as having cost of 4.  If they are a non-vector intrinsic, we model them
-    // as having cost of 2 total, and if they are a vector intrinsic, we model
-    // them as having cost 1.
-    if (const CallInst *CI = dyn_cast<CallInst>(I)) {
-      if (!isa<IntrinsicInst>(CI))
-        Size += 3;
-      else if (!isa<VectorType>(CI->getType()))
-        Size += 1;
-    }
-  }
-  
-  // Threading through a switch statement is particularly profitable.  If this
-  // block ends in a switch, decrease its cost to make it more likely to happen.
-  if (isa<SwitchInst>(I))
-    Size = Size > 6 ? Size-6 : 0;
-  
-  return Size;
-}
 
+/// AddPHINodeEntriesForMappedBlock - We're adding 'NewPred' as a new
+/// predecessor to the PHIBB block.  If it has PHI nodes, add entries for
+/// NewPred using the entries from OldPred (suitably mapped).
+static void AddPHINodeEntriesForMappedBlock(BasicBlock *PHIBB,
+                                            BasicBlock *OldPred,
+                                            BasicBlock *NewPred,
+                                     DenseMap<Instruction*, Value*> &ValueMap) {
+  for (BasicBlock::iterator PNI = PHIBB->begin();
+       PHINode *PN = dyn_cast<PHINode>(PNI); ++PNI) {
+    // Ok, we have a PHI node.  Figure out what the incoming value was for the
+    // DestBlock.
+    Value *IV = PN->getIncomingValueForBlock(OldPred);
+    
+    // Remap the value if necessary.
+    if (Instruction *Inst = dyn_cast<Instruction>(IV)) {
+      DenseMap<Instruction*, Value*>::iterator I = ValueMap.find(Inst);
+      if (I != ValueMap.end())
+        IV = I->second;
+    }
+    
+    PN->addIncoming(IV, NewPred);
+  }
+}
 
 /// ThreadEdge - We have decided that it is safe and profitable to thread an
 /// edge from PredBB to SuccBB across BB.  Transform the IR to reflect this
 /// change.
 bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, 
                                BasicBlock *SuccBB) {
-  unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
-  if (JumpThreadCost > Threshold) {
-    DEBUG(errs() << "  Not threading BB '" << BB->getName()
-          << "' - Cost is too high: " << JumpThreadCost << "\n");
-    return false;
-  }
-  
   // If threading to the same block as we come from, we would infinite loop.
   if (SuccBB == BB) {
     DEBUG(errs() << "  Not threading across BB '" << BB->getName()
@@ -894,6 +937,13 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
     return false;
   }
 
+  unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
+  if (JumpThreadCost > Threshold) {
+    DEBUG(errs() << "  Not threading BB '" << BB->getName()
+          << "' - Cost is too high: " << JumpThreadCost << "\n");
+    return false;
+  }
+  
   // And finally, do it!
   DEBUG(errs() << "  Threading edge from '" << PredBB->getName() << "' to '"
         << SuccBB->getName() << "' with cost: " << JumpThreadCost
@@ -937,20 +987,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
   
   // Check to see if SuccBB has PHI nodes. If so, we need to add entries to the
   // PHI nodes for NewBB now.
-  for (BasicBlock::iterator PNI = SuccBB->begin();
-       PHINode *PN = dyn_cast<PHINode>(PNI); ++PNI) {
-    // Ok, we have a PHI node.  Figure out what the incoming value was for the
-    // DestBlock.
-    Value *IV = PN->getIncomingValueForBlock(BB);
-    
-    // Remap the value if necessary.
-    if (Instruction *Inst = dyn_cast<Instruction>(IV)) {
-      DenseMap<Instruction*, Value*>::iterator I = ValueMapping.find(Inst);
-      if (I != ValueMapping.end())
-        IV = I->second;
-    }
-    PN->addIncoming(IV, NewBB);
-  }
+  AddPHINodeEntriesForMappedBlock(SuccBB, BB, NewBB, ValueMapping);
   
   // If there were values defined in BB that are used outside the block, then we
   // now have to update all uses of the value to use either the original value,
@@ -1021,3 +1058,120 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
   ++NumThreads;
   return true;
 }
+
+/// DuplicateCondBranchOnPHIIntoPred - PredBB contains an unconditional branch
+/// to BB which contains an i1 PHI node and a conditional branch on that PHI.
+/// If we can duplicate the contents of BB up into PredBB do so now, this
+/// improves the odds that the branch will be on an analyzable instruction like
+/// a compare.
+bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
+                                                     BasicBlock *PredBB) {
+  // If BB is a loop header, then duplicating this block outside the loop would
+  // cause us to transform this into an irreducible loop, don't do this.
+  // See the comments above FindLoopHeaders for justifications and caveats.
+  if (LoopHeaders.count(BB)) {
+    DEBUG(errs() << "  Not duplicating loop header '" << BB->getName()
+          << "' into predecessor block '" << PredBB->getName()
+          << "' - it might create an irreducible loop!\n");
+    return false;
+  }
+  
+  unsigned DuplicationCost = getJumpThreadDuplicationCost(BB);
+  if (DuplicationCost > Threshold) {
+    DEBUG(errs() << "  Not duplicating BB '" << BB->getName()
+          << "' - Cost is too high: " << DuplicationCost << "\n");
+    return false;
+  }
+  
+  // Okay, we decided to do this!  Clone all the instructions in BB onto the end
+  // of PredBB.
+  DEBUG(errs() << "  Duplicating block '" << BB->getName() << "' into end of '"
+        << PredBB->getName() << "' to eliminate branch on phi.  Cost: "
+        << DuplicationCost << " block is:" << *BB << "\n");
+  
+  // We are going to have to map operands from the original BB block into the
+  // PredBB block.  Evaluate PHI nodes in BB.
+  DenseMap<Instruction*, Value*> ValueMapping;
+  
+  BasicBlock::iterator BI = BB->begin();
+  for (; PHINode *PN = dyn_cast<PHINode>(BI); ++BI)
+    ValueMapping[PN] = PN->getIncomingValueForBlock(PredBB);
+  
+  BranchInst *OldPredBranch = cast<BranchInst>(PredBB->getTerminator());
+  
+  // Clone the non-phi instructions of BB into PredBB, keeping track of the
+  // mapping and using it to remap operands in the cloned instructions.
+  for (; BI != BB->end(); ++BI) {
+    Instruction *New = BI->clone();
+    New->setName(BI->getName());
+    PredBB->getInstList().insert(OldPredBranch, New);
+    ValueMapping[BI] = New;
+    
+    // Remap operands to patch up intra-block references.
+    for (unsigned i = 0, e = New->getNumOperands(); i != e; ++i)
+      if (Instruction *Inst = dyn_cast<Instruction>(New->getOperand(i))) {
+        DenseMap<Instruction*, Value*>::iterator I = ValueMapping.find(Inst);
+        if (I != ValueMapping.end())
+          New->setOperand(i, I->second);
+      }
+  }
+  
+  // Check to see if the targets of the branch had PHI nodes. If so, we need to
+  // add entries to the PHI nodes for branch from PredBB now.
+  BranchInst *BBBranch = cast<BranchInst>(BB->getTerminator());
+  AddPHINodeEntriesForMappedBlock(BBBranch->getSuccessor(0), BB, PredBB,
+                                  ValueMapping);
+  AddPHINodeEntriesForMappedBlock(BBBranch->getSuccessor(1), BB, PredBB,
+                                  ValueMapping);
+  
+  // If there were values defined in BB that are used outside the block, then we
+  // now have to update all uses of the value to use either the original value,
+  // the cloned value, or some PHI derived value.  This can require arbitrary
+  // PHI insertion, of which we are prepared to do, clean these up now.
+  SSAUpdater SSAUpdate;
+  SmallVector<Use*, 16> UsesToRename;
+  for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
+    // Scan all uses of this instruction to see if it is used outside of its
+    // block, and if so, record them in UsesToRename.
+    for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
+         ++UI) {
+      Instruction *User = cast<Instruction>(*UI);
+      if (PHINode *UserPN = dyn_cast<PHINode>(User)) {
+        if (UserPN->getIncomingBlock(UI) == BB)
+          continue;
+      } else if (User->getParent() == BB)
+        continue;
+      
+      UsesToRename.push_back(&UI.getUse());
+    }
+    
+    // If there are no uses outside the block, we're done with this instruction.
+    if (UsesToRename.empty())
+      continue;
+    
+    DEBUG(errs() << "JT: Renaming non-local uses of: " << *I << "\n");
+    
+    // We found a use of I outside of BB.  Rename all uses of I that are outside
+    // its block to be uses of the appropriate PHI node etc.  See ValuesInBlocks
+    // with the two values we know.
+    SSAUpdate.Initialize(I);
+    SSAUpdate.AddAvailableValue(BB, I);
+    SSAUpdate.AddAvailableValue(PredBB, ValueMapping[I]);
+    
+    while (!UsesToRename.empty())
+      SSAUpdate.RewriteUse(*UsesToRename.pop_back_val());
+    DEBUG(errs() << "\n");
+  }
+  
+  // PredBB no longer jumps to BB, remove entries in the PHI node for the edge
+  // that we nuked.
+  BB->removePredecessor(PredBB);
+  
+  // Remove the unconditional branch at the end of the PredBB block.
+  OldPredBranch->eraseFromParent();
+  
+  ++NumDupes;
+  return true;
+}
+
+
