@@ -4041,34 +4041,32 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   }
 
   if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(Op1)) {
-    const APInt& AndRHSMask = AndRHS->getValue();
+    const APInt &AndRHSMask = AndRHS->getValue();
     APInt NotAndRHS(~AndRHSMask);
 
     // Optimize a variety of ((val OP C1) & C2) combinations...
-    if (isa<BinaryOperator>(Op0)) {
-      Instruction *Op0I = cast<Instruction>(Op0);
+    if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
       Value *Op0LHS = Op0I->getOperand(0);
       Value *Op0RHS = Op0I->getOperand(1);
       switch (Op0I->getOpcode()) {
+      default: break;
       case Instruction::Xor:
       case Instruction::Or:
         // If the mask is only needed on one incoming arm, push it up.
-        if (Op0I->hasOneUse()) {
-          if (MaskedValueIsZero(Op0LHS, NotAndRHS)) {
-            // Not masking anything out for the LHS, move to RHS.
-            Value *NewRHS = Builder->CreateAnd(Op0RHS, AndRHS,
-                                               Op0RHS->getName()+".masked");
-            return BinaryOperator::Create(
-                       cast<BinaryOperator>(Op0I)->getOpcode(), Op0LHS, NewRHS);
-          }
-          if (!isa<Constant>(Op0RHS) &&
-              MaskedValueIsZero(Op0RHS, NotAndRHS)) {
-            // Not masking anything out for the RHS, move to LHS.
-            Value *NewLHS = Builder->CreateAnd(Op0LHS, AndRHS,
-                                               Op0LHS->getName()+".masked");
-            return BinaryOperator::Create(
-                       cast<BinaryOperator>(Op0I)->getOpcode(), NewLHS, Op0RHS);
-          }
+        if (!Op0I->hasOneUse()) break;
+          
+        if (MaskedValueIsZero(Op0LHS, NotAndRHS)) {
+          // Not masking anything out for the LHS, move to RHS.
+          Value *NewRHS = Builder->CreateAnd(Op0RHS, AndRHS,
+                                             Op0RHS->getName()+".masked");
+          return BinaryOperator::Create(Op0I->getOpcode(), Op0LHS, NewRHS);
+        }
+        if (!isa<Constant>(Op0RHS) &&
+            MaskedValueIsZero(Op0RHS, NotAndRHS)) {
+          // Not masking anything out for the RHS, move to LHS.
+          Value *NewLHS = Builder->CreateAnd(Op0LHS, AndRHS,
+                                             Op0LHS->getName()+".masked");
+          return BinaryOperator::Create(Op0I->getOpcode(), NewLHS, Op0RHS);
         }
 
         break;
@@ -5045,7 +5043,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   
   
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
-    if (RHS == ConstantInt::getTrue(*Context) && Op0->hasOneUse()) {
+    if (RHS->isOne() && Op0->hasOneUse()) {
       // xor (cmp A, B), true = not (cmp A, B) = !cmp A, B
       if (ICmpInst *ICI = dyn_cast<ICmpInst>(Op0))
         return new ICmpInst(ICI->getInversePredicate(),
