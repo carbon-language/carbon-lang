@@ -2783,39 +2783,21 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   // we know the bool is either zero or one, so this is a 'masking' multiply.
   // See if we can simplify things based on how the boolean was originally
   // formed.
-  CastInst *BoolCast = 0;
-  if (ZExtInst *CI = dyn_cast<ZExtInst>(Op0))
-    if (CI->getOperand(0)->getType() == Type::getInt1Ty(*Context))
-      BoolCast = CI;
-  if (!BoolCast)
-    if (ZExtInst *CI = dyn_cast<ZExtInst>(I.getOperand(1)))
+  {
+    Value *BoolCast = 0, *OtherOp = 0;
+    if (ZExtInst *CI = dyn_cast<ZExtInst>(Op0))
       if (CI->getOperand(0)->getType() == Type::getInt1Ty(*Context))
-        BoolCast = CI;
-  if (BoolCast) {
-    if (ICmpInst *SCI = dyn_cast<ICmpInst>(BoolCast->getOperand(0))) {
-      Value *SCIOp0 = SCI->getOperand(0), *SCIOp1 = SCI->getOperand(1);
-      const Type *SCOpTy = SCIOp0->getType();
-      bool TIS = false;
-      
-      // If the icmp is true iff the sign bit of X is set, then convert this
-      // multiply into a shift/and combination.
-      if (isa<ConstantInt>(SCIOp1) &&
-          isSignBitCheck(SCI->getPredicate(), cast<ConstantInt>(SCIOp1), TIS) &&
-          TIS) {
-        // Shift the X value right to turn it into "all signbits".
-        Constant *Amt = ConstantInt::get(SCIOp0->getType(),
-                                          SCOpTy->getPrimitiveSizeInBits()-1);
-        Value *V = Builder->CreateAShr(SCIOp0, Amt,
-                                    BoolCast->getOperand(0)->getName()+".mask");
-
-        // If the multiply type is not the same as the source type, sign extend
-        // or truncate to the multiply type.
-        if (I.getType() != V->getType())
-          V = Builder->CreateIntCast(V, I.getType(), true);
-
-        Value *OtherOp = Op0 == BoolCast ? I.getOperand(1) : Op0;
-        return BinaryOperator::CreateAnd(V, OtherOp);
-      }
+        BoolCast = CI, OtherOp = I.getOperand(1);
+    if (!BoolCast)
+      if (ZExtInst *CI = dyn_cast<ZExtInst>(I.getOperand(1)))
+        if (CI->getOperand(0)->getType() == Type::getInt1Ty(*Context))
+          BoolCast = CI, OtherOp = Op0;
+    
+    if (BoolCast) {
+      // X * Y (where Y is 0 or 1) -> X & (0-Y)
+      Value *V = Builder->CreateSub(Constant::getNullValue(I.getType()),
+                                    BoolCast, "tmp");
+      return BinaryOperator::CreateAnd(V, OtherOp);
     }
   }
 

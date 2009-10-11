@@ -34,3 +34,11 @@ entry:
   %V = icmp eq <2 x i64> %x, undef
   ret <2 x i1> %V
 }
+
+define i32 @test6(i32 %a, i32 %b) {
+        %c = icmp sle i32 %a, -1
+        %d = zext i1 %c to i32
+        %e = sub i32 0, %d
+        %f = and i32 %e, %b
+        ret i32 %f
+}

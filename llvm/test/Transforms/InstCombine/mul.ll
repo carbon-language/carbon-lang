@@ -96,3 +96,14 @@ entry:
   %m = mul i32 %shl, %A
   ret i32 %m
 }
+
+; X * Y (when Y is 0 or 1) --> x & (0-Y)
+define i32 @test16(i32 %b, i1 %c) {
+        %d = zext i1 %c to i32          ; <i32> [#uses=1]
+        ; e = b & (a >> 31)
+        %e = mul i32 %d, %b             ; <i32> [#uses=1]
+        ret i32 %e
+}
+
+
+
