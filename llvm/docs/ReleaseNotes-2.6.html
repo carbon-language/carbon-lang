@@ -458,12 +458,12 @@ in this section.
 <p>LLVM 2.6 includes several major new capabilities:</p>
 
 <ul>
-<li>New <a href="#compiler-rt">compiler-rt</a>, <A href="#klee">KLEE</a>,
+<li>New <a href="#compiler-rt">compiler-rt</a>, <A href="#klee">KLEE</a>
     and <a href="#mc">machine code toolkit</a> sub-projects.</li>
 <li>Debug information now includes line numbers when optimizations are enabled.
     This allows statistical sampling tools like OProfile and Shark to map
     samples back to source lines.</li>
-<li>LLVM now includes new experimental backends to support the MSP430, SystemZ,
+<li>LLVM now includes new experimental backends to support the MSP430, SystemZ
     and BlackFin architectures.</li>
 <li>LLVM supports a new <a href="GoldPlugin.html">Gold Linker Plugin</a> which
     enables support for <a href="LinkTimeOptimization.html">transparent
@@ -910,7 +910,7 @@ API changes are:</p>
     required.
 <li>The <tt>getABITypeSize</tt> methods are now called <tt>getAllocSize</tt>.</li>
 <li>The <tt>Add</tt>, <tt>Sub</tt> and <tt>Mul</tt> operators are no longer
-    overloaded for floating-point types. Floating-point addition, subtraction,
+    overloaded for floating-point types. Floating-point addition, subtraction
     and multiplication are now represented with new operators <tt>FAdd</tt>,
     <tt>FSub</tt> and <tt>FMul</tt>. In the <tt>IRBuilder</tt> API,
     <tt>CreateAdd</tt>, <tt>CreateSub</tt>, <tt>CreateMul</tt> and
