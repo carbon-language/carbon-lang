@@ -156,9 +156,9 @@ void fnptrs()
 
   // return types and arguments must match exactly, no inheritance allowed
   void (*(*t7)())() throw(B1) = &s8;       // valid
-  void (*(*t8)())() throw(A) = &s8;        // invalid
-  void (*(*t9)())() throw(D) = &s8;        // invalid
+  void (*(*t8)())() throw(A) = &s8;        // expected-error {{return types differ}} expected-error {{incompatible type}}
+  void (*(*t9)())() throw(D) = &s8;        // expected-error {{return types differ}} expected-error {{incompatible type}}
   void (*t10)(void (*)() throw(B1)) = &s9; // valid   expected-warning{{disambiguated}}
-  void (*t11)(void (*)() throw(A)) = &s9;  // invalid expected-warning{{disambiguated}}
-  void (*t12)(void (*)() throw(D)) = &s9;  // invalid expected-warning{{disambiguated}}
+  void (*t11)(void (*)() throw(A)) = &s9;  // expected-error {{argument types differ}} expected-error {{incompatible type}} expected-warning{{disambiguated}}
+  void (*t12)(void (*)() throw(D)) = &s9;  // expected-error {{argument types differ}} expected-error {{incompatible type}} expected-warning{{disambiguated}}
 }

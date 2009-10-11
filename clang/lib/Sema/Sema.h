@@ -482,9 +482,15 @@ public:
   bool CheckEquivalentExceptionSpec(
       const FunctionProtoType *Old, SourceLocation OldLoc,
       const FunctionProtoType *New, SourceLocation NewLoc);
+  bool CheckEquivalentExceptionSpec(unsigned DiagID, unsigned NoteID,
+      const FunctionProtoType *Old, SourceLocation OldLoc,
+      const FunctionProtoType *New, SourceLocation NewLoc);
   bool CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
       const FunctionProtoType *Superset, SourceLocation SuperLoc,
       const FunctionProtoType *Subset, SourceLocation SubLoc);
+  bool CheckParamExceptionSpec(unsigned NoteID,
+      const FunctionProtoType *Target, SourceLocation TargetLoc,
+      const FunctionProtoType *Source, SourceLocation SourceLoc);
 
   QualType ObjCGetTypeForMethodDefinition(DeclPtrTy D);
 

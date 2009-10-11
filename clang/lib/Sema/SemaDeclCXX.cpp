@@ -4629,16 +4629,6 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   return false;
 }
 
-bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
-                                                const CXXMethodDecl *Old) {
-  return CheckExceptionSpecSubset(diag::err_override_exception_spec,
-                                  diag::note_overridden_virtual_function,
-                                  Old->getType()->getAs<FunctionProtoType>(),
-                                  Old->getLocation(),
-                                  New->getType()->getAs<FunctionProtoType>(),
-                                  New->getLocation());
-}
-
 /// ActOnCXXEnterDeclInitializer - Invoked when we are about to parse an
 /// initializer for the declaration 'Dcl'.
 /// After this method is called, according to [C++ 3.4.1p13], if 'Dcl' is a
