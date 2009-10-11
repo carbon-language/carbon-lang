@@ -220,6 +220,28 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
   return Size;
 }
 
+/// GetBestDestForBranchOnUndef - If we determine that the specified block ends
+/// in an undefined jump, decide which block is best to revector to.
+///
+/// Since we can pick an arbitrary destination, we pick the successor with the
+/// fewest predecessors.  This should reduce the in-degree of the others.
+///
+static unsigned GetBestDestForJumpOnUndef(BasicBlock *BB) {
+  TerminatorInst *BBTerm = BB->getTerminator();
+  unsigned MinSucc = 0;
+  BasicBlock *TestBB = BBTerm->getSuccessor(MinSucc);
+  // Compute the successor with the minimum number of predecessors.
+  unsigned MinNumPreds = std::distance(pred_begin(TestBB), pred_end(TestBB));
+  for (unsigned i = 1, e = BBTerm->getNumSuccessors(); i != e; ++i) {
+    TestBB = BBTerm->getSuccessor(i);
+    unsigned NumPreds = std::distance(pred_begin(TestBB), pred_end(TestBB));
+    if (NumPreds < MinNumPreds)
+      MinSucc = i;
+  }
+  
+  return MinSucc;
+}
+
 /// ProcessBlock - If there are any predecessors whose control can be threaded
 /// through to a successor, transform them now.
 bool JumpThreading::ProcessBlock(BasicBlock *BB) {
@@ -269,31 +291,20 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   }
   
   // If the terminator is branching on an undef, we can pick any of the
-  // successors to branch to.  Since this is arbitrary, we pick the successor
-  // with the fewest predecessors.  This should reduce the in-degree of the
-  // others.
+  // successors to branch to.  Let GetBestDestForJumpOnUndef decide.
   if (isa<UndefValue>(Condition)) {
-    TerminatorInst *BBTerm = BB->getTerminator();
-    unsigned MinSucc = 0;
-    BasicBlock *TestBB = BBTerm->getSuccessor(MinSucc);
-    // Compute the successor with the minimum number of predecessors.
-    unsigned MinNumPreds = std::distance(pred_begin(TestBB), pred_end(TestBB));
-    for (unsigned i = 1, e = BBTerm->getNumSuccessors(); i != e; ++i) {
-      TestBB = BBTerm->getSuccessor(i);
-      unsigned NumPreds = std::distance(pred_begin(TestBB), pred_end(TestBB));
-      if (NumPreds < MinNumPreds)
-        MinSucc = i;
-    }
+    unsigned BestSucc = GetBestDestForJumpOnUndef(BB);
     
     // Fold the branch/switch.
+    TerminatorInst *BBTerm = BB->getTerminator();
     for (unsigned i = 0, e = BBTerm->getNumSuccessors(); i != e; ++i) {
-      if (i == MinSucc) continue;
+      if (i == BestSucc) continue;
       BBTerm->getSuccessor(i)->removePredecessor(BB);
     }
     
     DEBUG(errs() << "  In block '" << BB->getName()
           << "' folding undef terminator: " << *BBTerm);
-    BranchInst::Create(BBTerm->getSuccessor(MinSucc), BBTerm);
+    BranchInst::Create(BBTerm->getSuccessor(BestSucc), BBTerm);
     BBTerm->eraseFromParent();
     return true;
   }
@@ -684,22 +695,32 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
 }
 
 
-/// ProcessJumpOnPHI - We have a conditional branch of switch on a PHI node in
+/// ProcessJumpOnPHI - We have a conditional branch or switch on a PHI node in
 /// the current block.  See if there are any simplifications we can do based on
 /// inputs to the phi node.
 /// 
 bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
-  // See if the phi node has any constant values.  If so, we can determine where
-  // the corresponding predecessor will branch.
-  ConstantInt *PredCst = 0;
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-    if ((PredCst = dyn_cast<ConstantInt>(PN->getIncomingValue(i))))
+  // See if the phi node has any constant integer or undef values.  If so, we
+  // can determine where the corresponding predecessor will branch.
+  Constant *PredCst = 0;
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    Value *PredVal = PN->getIncomingValue(i);
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(PredVal)) {
+      PredCst = CI;
       break;
+    }
+    
+    if (UndefValue *UV = dyn_cast<UndefValue>(PredVal)) {
+      PredCst = UV;
+      break;
+    }
+  } 
   
   // If no incoming value has a constant, we don't know the destination of any
   // predecessors.
-  if (PredCst == 0)
+  if (PredCst == 0) {
     return false;
+  }
   
   // See if the cost of duplicating this block is low enough.
   BasicBlock *BB = PN->getParent();
@@ -714,14 +735,19 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
   // that will act the same.
   BasicBlock *PredBB = FactorCommonPHIPreds(PN, PredCst);
   
+  
+  TerminatorInst *BBTerm = BB->getTerminator();
+  
   // Next, figure out which successor we are threading to.
   BasicBlock *SuccBB;
-  if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
-    SuccBB = BI->getSuccessor(PredCst ==
-                                   ConstantInt::getFalse(PredBB->getContext()));
+  if (isa<UndefValue>(PredCst)) {
+    // If the branch was going off an undef from PredBB, pick an arbitrary dest.
+    SuccBB = BBTerm->getSuccessor(GetBestDestForJumpOnUndef(BB));
+  } else if (BranchInst *BI = dyn_cast<BranchInst>(BBTerm))
+    SuccBB = BI->getSuccessor(cast<ConstantInt>(PredCst)->isZero());
   else {
-    SwitchInst *SI = cast<SwitchInst>(BB->getTerminator());
-    SuccBB = SI->getSuccessor(SI->findCaseValue(PredCst));
+    SwitchInst *SI = cast<SwitchInst>(BBTerm);
+    SuccBB = SI->getSuccessor(SI->findCaseValue(cast<ConstantInt>(PredCst)));
   }
   
   // Ok, try to thread it!
