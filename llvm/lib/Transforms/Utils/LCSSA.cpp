@@ -34,15 +34,14 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/PredIteratorCache.h"
-#include <algorithm>
 #include <map>
 using namespace llvm;
 
@@ -62,9 +61,6 @@ namespace {
     
     virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 
-    void ProcessInstruction(Instruction* Instr,
-                            const SmallVector<BasicBlock*, 8>& exitBlocks);
-    
     /// This transformation requires natural loop information & requires that
     /// loop preheaders be inserted into the CFG.  It maintains both of these,
     /// as well as the CFG.  It also requires dominator information.
@@ -87,7 +83,9 @@ namespace {
       AU.addPreserved<DominanceFrontier>();
     }
   private:
-
+    void ProcessInstruction(Instruction* Instr,
+                            const SmallVector<BasicBlock*, 8>& exitBlocks);
+    
     /// verifyAnalysis() - Verify loop nest.
     virtual void verifyAnalysis() const {
       // Check the special guarantees that LCSSA makes.
@@ -95,14 +93,13 @@ namespace {
     }
 
     void getLoopValuesUsedOutsideLoop(Loop *L,
-                                      SetVector<Instruction*> &AffectedValues,
-                                 const SmallVector<BasicBlock*, 8>& exitBlocks);
+                                 SmallVectorImpl<Instruction*> &AffectedValues);
 
     Value *GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
                             DenseMap<DomTreeNode*, Value*> &Phis);
 
     /// inLoop - returns true if the given block is within the current loop
-    bool inLoop(BasicBlock* B) {
+    bool inLoop(BasicBlock *B) const {
       return std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), B);
     }
   };
@@ -122,28 +119,27 @@ bool LCSSA::runOnLoop(Loop *l, LPPassManager &LPM) {
   LI = &LPM.getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTree>();
 
-  // Speed up queries by creating a sorted list of blocks
+  // Speed up queries by creating a sorted vector of blocks.
   LoopBlocks.clear();
   LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
-  std::sort(LoopBlocks.begin(), LoopBlocks.end());
+  array_pod_sort(LoopBlocks.begin(), LoopBlocks.end());
   
-  SmallVector<BasicBlock*, 8> exitBlocks;
-  L->getExitBlocks(exitBlocks);
-  
-  SetVector<Instruction*> AffectedValues;
-  getLoopValuesUsedOutsideLoop(L, AffectedValues, exitBlocks);
+  SmallVector<Instruction*, 16> AffectedValues;
+  getLoopValuesUsedOutsideLoop(L, AffectedValues);
   
   // If no values are affected, we can save a lot of work, since we know that
   // nothing will be changed.
   if (AffectedValues.empty())
     return false;
+
+  SmallVector<BasicBlock*, 8> ExitBlocks;
+  L->getExitBlocks(ExitBlocks);
   
   // Iterate over all affected values for this loop and insert Phi nodes
-  // for them in the appropriate exit blocks
-  
-  for (SetVector<Instruction*>::iterator I = AffectedValues.begin(),
+  // for them in the appropriate exit blocks.
+  for (SmallVectorImpl<Instruction*>::iterator I = AffectedValues.begin(),
        E = AffectedValues.end(); I != E; ++I)
-    ProcessInstruction(*I, exitBlocks);
+    ProcessInstruction(*I, ExitBlocks);
   
   assert(L->isLCSSAForm());
   
@@ -153,7 +149,7 @@ bool LCSSA::runOnLoop(Loop *l, LPPassManager &LPM) {
 /// processInstruction - Given a live-out instruction, insert LCSSA Phi nodes,
 /// eliminate all out-of-loop uses.
 void LCSSA::ProcessInstruction(Instruction *Instr,
-                               const SmallVector<BasicBlock*, 8>& exitBlocks) {
+                               const SmallVector<BasicBlock*, 8> &ExitBlocks) {
   ++NumLCSSA; // We are applying the transformation
 
   // Keep track of the blocks that have the value available already.
@@ -172,8 +168,8 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
 
   // Insert the LCSSA phi's into the exit blocks (dominated by the value), and
   // add them to the Phi's map.
-  for (SmallVector<BasicBlock*, 8>::const_iterator BBI = exitBlocks.begin(),
-      BBE = exitBlocks.end(); BBI != BBE; ++BBI) {
+  for (SmallVector<BasicBlock*, 8>::const_iterator BBI = ExitBlocks.begin(),
+      BBE = ExitBlocks.end(); BBI != BBE; ++BBI) {
     BasicBlock *BB = *BBI;
     DomTreeNode *ExitBBNode = DT->getNode(BB);
     Value *&Phi = Phis[ExitBBNode];
@@ -221,8 +217,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
 /// getLoopValuesUsedOutsideLoop - Return any values defined in the loop that
 /// are used by instructions outside of it.
 void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
-                                      SetVector<Instruction*> &AffectedValues,
-                                const SmallVector<BasicBlock*, 8>& exitBlocks) {
+                                SmallVectorImpl<Instruction*> &AffectedValues) {
   // FIXME: For large loops, we may be able to avoid a lot of use-scanning
   // by using dominance information.  In particular, if a block does not
   // dominate any of the loop exits, then none of the values defined in the
@@ -233,11 +228,11 @@ void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
       for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
            UI != UE; ++UI) {
         BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
-        if (PHINode *p = dyn_cast<PHINode>(*UI))
-          UserBB = p->getIncomingBlock(UI);
+        if (PHINode *PN = dyn_cast<PHINode>(*UI))
+          UserBB = PN->getIncomingBlock(UI);
         
         if (*BB != UserBB && !inLoop(UserBB)) {
-          AffectedValues.insert(I);
+          AffectedValues.push_back(I);
           break;
         }
       }
