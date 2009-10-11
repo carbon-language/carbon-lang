@@ -155,7 +155,7 @@ let isCall = 1 in
   let Defs = [R12W, R13W, R14W, R15W, SRW],
       Uses = [SPW] in {
     def CALLi     : Pseudo<(outs), (ins i16imm:$dst, variable_ops),
-                           "call\t${dst:call}", [(MSP430call imm:$dst)]>;
+                           "call\t$dst", [(MSP430call imm:$dst)]>;
     def CALLr     : Pseudo<(outs), (ins GR16:$dst, variable_ops),
                            "call\t$dst", [(MSP430call GR16:$dst)]>;
     def CALLm     : Pseudo<(outs), (ins memsrc:$dst, variable_ops),
