@@ -141,10 +141,6 @@ namespace {
     ///
     void HoistRegion(DomTreeNode *N);
 
-    // Cleanup debug information (remove stoppoints with no coressponding
-    // instructions).
-    void CleanupDbgInfoRegion(DomTreeNode *N);
-
     /// inSubLoop - Little predicate that returns true if the specified basic
     /// block is in a subloop of the current one, not the current one itself.
     ///
@@ -292,7 +288,6 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   //
   SinkRegion(DT->getNode(L->getHeader()));
   HoistRegion(DT->getNode(L->getHeader()));
-  CleanupDbgInfoRegion(DT->getNode(L->getHeader()));
 
   // Now that all loop invariants have been removed from the loop, promote any
   // memory references to scalars that we can...
@@ -341,36 +336,6 @@ void LICM::SinkRegion(DomTreeNode *N) {
       ++II;
       sink(I);
     }
-  }
-}
-
-void LICM::CleanupDbgInfoRegion(DomTreeNode *N) {
-  BasicBlock *BB = N->getBlock();
-
-  // If this subregion is not in the top level loop at all, exit.
-  if (!CurLoop->contains(BB)) return;
-
-  // We are processing blocks in reverse dfo, so process children first...
-  const std::vector<DomTreeNode*> &Children = N->getChildren();
-  for (unsigned i = 0, e = Children.size(); i != e; ++i)
-    CleanupDbgInfoRegion(Children[i]);
-
-  // Only need to process the contents of this block if it is not part of a
-  // subloop (which would already have been processed).
-  if (inSubLoop(BB)) return;
-
-  // We modify the basicblock, so don't cache end()
-  for (BasicBlock::iterator I=BB->begin(); I != BB->end();) {
-    Instruction *Last = 0;
-    // Remove consecutive dbgstoppoints, leave only last
-    do {
-      if (Last) {
-        Last->eraseFromParent();
-        Changed = true;
-      }
-      Last = I;
-      ++I;
-    } while (isa<DbgStopPointInst>(Last) && isa<DbgStopPointInst>(I));
   }
 }
 
