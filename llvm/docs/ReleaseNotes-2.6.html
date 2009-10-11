@@ -1027,6 +1027,12 @@ href="http://llvm.org/bugs/">LLVM bug database</a> and submit a bug if
 there isn't already one.</p>
 
 <ul>
+<li>The llvm-gcc bootstrap will fail with some versions of binutils (e.g. 2.15)
+    with a message of "<tt><a href="http://llvm.org/PR5004">Error: can not do 8
+    byte pc-relative relocation</a></tt>" when building C++ code.  We intend to
+    fix this on mainline, but a workaround for 2.6 is to upgrade to binutils
+    2.17 or later.</li>
+    
 <li>LLVM will not correctly compile on Solaris and/or OpenSolaris
 using the stock GCC 3.x.x series 'out the box',
 See: <a href="#brokengcc">Broken versions of GCC and other tools</a>.
