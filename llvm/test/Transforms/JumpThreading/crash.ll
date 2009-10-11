@@ -23,3 +23,34 @@ bb110:		; preds = %bb
 }
 
 declare %struct.system__secondary_stack__mark_id @system__secondary_stack__ss_mark()
+
+
+
+define fastcc void @findratio(double* nocapture %res1, double* nocapture %res2) nounwind ssp {
+entry:
+  br label %bb12
+
+bb6.us:                                        
+  %tmp = icmp eq i32 undef, undef              
+  %tmp1 = fsub double undef, undef             
+  %tmp2 = fcmp ult double %tmp1, 0.000000e+00  
+  br i1 %tmp, label %bb6.us, label %bb13
+
+
+bb12:                                            
+  %tmp3 = fcmp ult double undef, 0.000000e+00  
+  br label %bb13
+
+bb13:                                            
+  %.lcssa31 = phi double [ undef, %bb12 ], [ %tmp1, %bb6.us ]
+  %.lcssa30 = phi i1 [ %tmp3, %bb12 ], [ %tmp2, %bb6.us ] 
+  br i1 %.lcssa30, label %bb15, label %bb61
+
+bb15:                                            
+  %tmp4 = fsub double -0.000000e+00, %.lcssa31   
+  ret void
+
+
+bb61:                                            
+  ret void
+}
