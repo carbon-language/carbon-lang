@@ -5,6 +5,14 @@ target triple = "msp430-generic-generic"
 @foo = common global i8 0, align 1
 @bar = common global i8 0, align 1
 
+define void @mov() nounwind {
+; CHECK: mov:
+; CHECK: mov.b	&bar, &foo
+        %1 = load i8* @bar
+        store i8 %1, i8* @foo
+        ret void
+}
+
 define void @add() nounwind {
 ; CHECK: add:
 ; CHECK: add.b	&bar, &foo

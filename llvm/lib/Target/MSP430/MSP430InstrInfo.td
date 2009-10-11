@@ -243,6 +243,13 @@ def MOV16mr : Pseudo<(outs), (ins memdst:$dst, GR16:$src),
                 "mov.w\t{$src, $dst}",
                 [(store GR16:$src, addr:$dst)]>;
 
+def MOV8mm  : Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
+                "mov.b\t{$src, $dst}",
+                [(store (i8 (load addr:$src)), addr:$dst)]>;
+def MOV16mm : Pseudo<(outs), (ins memdst:$dst, memsrc:$src),
+                "mov.w\t{$src, $dst}",
+                [(store (i16 (load addr:$src)), addr:$dst)]>;
+
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions
 
