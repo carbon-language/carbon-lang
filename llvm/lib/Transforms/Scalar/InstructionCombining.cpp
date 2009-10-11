@@ -12472,28 +12472,6 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
       if (EI->getOperand(0) == VecOp && ExtractedIdx == InsertedIdx)
         return ReplaceInstUsesWith(IE, VecOp);      
       
-      // We could theoretically do this for ANY input.  However, doing so could
-      // turn chains of insertelement instructions into a chain of shufflevector
-      // instructions, and right now we do not merge shufflevectors.  As such,
-      // only do this in a situation where it is clear that there is benefit.
-      if (isa<UndefValue>(VecOp) || isa<ConstantAggregateZero>(VecOp)) {
-        // Turn this into shuffle(EIOp0, VecOp, Mask).  The result has all of
-        // the values of VecOp, except then one read from EIOp0.
-        // Build a new shuffle mask.
-        std::vector<Constant*> Mask;
-        if (isa<UndefValue>(VecOp))
-          Mask.assign(NumVectorElts, UndefValue::get(Type::getInt32Ty(*Context)));
-        else {
-          assert(isa<ConstantAggregateZero>(VecOp) && "Unknown thing");
-          Mask.assign(NumVectorElts, ConstantInt::get(Type::getInt32Ty(*Context),
-                                                       NumVectorElts));
-        } 
-        Mask[InsertedIdx] = 
-                           ConstantInt::get(Type::getInt32Ty(*Context), ExtractedIdx);
-        return new ShuffleVectorInst(EI->getOperand(0), VecOp,
-                                     ConstantVector::get(Mask));
-      }
-      
       // If this insertelement isn't used by some other insertelement, turn it
       // (and any insertelements it points to), into one big shuffle.
       if (!IE.hasOneUse() || !isa<InsertElementInst>(IE.use_back())) {
