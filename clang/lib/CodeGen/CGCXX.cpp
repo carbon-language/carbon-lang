@@ -214,6 +214,10 @@ static bool canDevirtualizeMemberFunctionCalls(const Expr *Base) {
   if (isa<CXXTemporaryObjectExpr>(Base))
     return true;
   
+  // Check if this is a call expr that returns a record type.
+  if (const CallExpr *CE = dyn_cast<CallExpr>(Base))
+    return CE->getCallReturnType()->isRecordType();
+  
   // We can't devirtualize the call.
   return false;
 }
