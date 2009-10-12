@@ -1894,6 +1894,24 @@ bool DwarfDebug::ExtractScopeInformation(MachineFunction *MF) {
   return !DbgScopeMap.empty();
 }
 
+static DISubprogram getDISubprogram(MDNode *N) {
+
+  DIDescriptor D(N);
+  if (D.isNull())
+    return DISubprogram();
+
+  if (D.isCompileUnit()) 
+    return DISubprogram();
+
+  if (D.isSubprogram())
+    return DISubprogram(N);
+
+  if (D.isLexicalBlock())
+    return getDISubprogram(DILexicalBlock(N).getContext().getNode());
+
+  assert (0 && "Unexpected Descriptor!");
+}
+
 /// BeginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
 void DwarfDebug::BeginFunction(MachineFunction *MF) {
@@ -1923,7 +1941,7 @@ void DwarfDebug::BeginFunction(MachineFunction *MF) {
   if (!FDL.isUnknown()) {
     DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
     unsigned LabelID = 0;
-    DISubprogram SP(DLT.CompileUnit);
+    DISubprogram SP = getDISubprogram(DLT.CompileUnit);
     if (!SP.isNull())
       LabelID = RecordSourceLine(SP.getLineNumber(), 0, DLT.CompileUnit);
     else
