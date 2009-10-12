@@ -952,11 +952,11 @@ MachineBasicBlock *ARMConstantIslands::AcceptWater(water_iterator IP) {
 /// group, prefer the water that's farthest away.
 bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
                                       MachineBasicBlock *&NewMBB) {
-  water_iterator IPThatWouldPad;
-  MachineBasicBlock* WaterBBThatWouldPad = NULL;
   if (WaterList.empty())
     return false;
 
+  bool FoundWaterThatWouldPad = false;
+  water_iterator IPThatWouldPad;
   for (water_iterator IP = prior(WaterList.end()),
          B = WaterList.begin();; --IP) {
     MachineBasicBlock* WaterBB = *IP;
@@ -966,8 +966,8 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
           (BBOffsets[WBBId] + BBSizes[WBBId])%4 != 0) {
         // This is valid Water, but would introduce padding.  Remember
         // it in case we don't find any Water that doesn't do this.
-        if (!WaterBBThatWouldPad) {
-          WaterBBThatWouldPad = WaterBB;
+        if (!FoundWaterThatWouldPad) {
+          FoundWaterThatWouldPad = true;
           IPThatWouldPad = IP;
         }
       } else {
@@ -978,7 +978,7 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
     if (IP == B)
       break;
   }
-  if (isThumb && WaterBBThatWouldPad) {
+  if (FoundWaterThatWouldPad) {
     NewMBB = AcceptWater(IPThatWouldPad);
     return true;
   }
