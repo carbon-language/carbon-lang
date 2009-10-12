@@ -15,4 +15,7 @@ void f(A a, A *ap, A& ar) {
 
   // CHECK: call void %  
   ar.f();
+  
+  // CHECK: call void @_ZN1A1fEv
+  A().f();
 }

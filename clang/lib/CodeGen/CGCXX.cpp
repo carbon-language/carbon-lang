@@ -206,7 +206,13 @@ static bool canDevirtualizeMemberFunctionCalls(const Expr *Base) {
       // This is a record decl. We know the type and can devirtualize it.
       return VD->getType()->isRecordType();
     }
+    
+    return false;
   }
+  
+  // We can always devirtualize calls on temporaries.
+  if (isa<CXXTemporaryObjectExpr>(Base))
+    return true;
   
   // We can't devirtualize the call.
   return false;
