@@ -5,13 +5,13 @@ struct E {};
 
 struct R {
     operator A*();
-    operator E*();
+    operator E*();	// expected-note{{candidate function}}
 };
 
 
 struct S {
     operator A*();
-    operator E*();
+    operator E*();	// expected-note{{candidate function}}
 };
 
 struct B  : R {
@@ -41,5 +41,6 @@ void foo1(C1 c1, int A::* pmf) {
 
 void foo1(C1 c1, int E::* pmf) {
         // FIXME. Error reporting needs much improvement here.
-        int i = c1->*pmf;	// expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'struct C1'}}
+        int i = c1->*pmf;	// expected-error {{left hand operand to ->* must be a pointer to class compatible with the right hand operand, but is 'struct C1'}} \
+                                // expected-note {{because of ambiguity in conversion of 'struct C1' to 'struct E *'}}
 }

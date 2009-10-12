@@ -780,6 +780,8 @@ def err_ovl_deleted_member_call : Error<
 def err_ovl_candidate : Note<"candidate function">;
 def err_ovl_candidate_not_viable : Note<"function not viable because"
                                         " of ambiguity in conversion of argument %0">;
+def note_ambiguous_type_conversion: Note<
+    "because of ambiguity in conversion of %0 to %1">;
 def err_ovl_template_candidate : Note<
   "candidate function template specialization %0">;
 def err_ovl_candidate_deleted : Note<

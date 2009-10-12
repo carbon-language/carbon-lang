@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify -std=c++0x %s
 
-struct A {};    // expected-note {{candidate function}}
+struct A {};    
 
 struct BASE {
   operator A(); // expected-note {{candidate function}}

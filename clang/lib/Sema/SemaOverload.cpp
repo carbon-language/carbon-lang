@@ -464,7 +464,8 @@ Sema::TryImplicitConversion(Expr* From, QualType ToType,
     if (UserDefResult == OR_Ambiguous) {
       for (OverloadCandidateSet::iterator Cand = Conversions.begin();
            Cand != Conversions.end(); ++Cand)
-        ICS.ConversionFunctionSet.push_back(Cand->Function);
+        if (Cand->Viable)
+          ICS.ConversionFunctionSet.push_back(Cand->Function);
     }
   }
 
@@ -3976,6 +3977,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
                               SourceLocation OpLoc) {
   OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                              LastCand = CandidateSet.end();
+  bool Reported = false;
   for (; Cand != LastCand; ++Cand) {
     if (Cand->Viable || !OnlyViable) {
       if (Cand->Function) {
@@ -4052,6 +4054,33 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
           << Cand->BuiltinTypes.ParamTypes[0] 
           << Cand->BuiltinTypes.ParamTypes[1] 
           << BinaryOperator::getOpcodeStr(Opc);
+      }
+      else if (!Cand->Viable && !Reported) {
+        // Non-viability might be due to ambiguous user-defined conversions,
+        // needed for built-in operators. Report them as well, but only once
+        // as we have typically many built-in candidates.
+        assert(Cand->Conversions.size() == 2 &&
+               "builtin-binary-operator-not-binary");
+        for (unsigned ArgIdx = 0; ArgIdx < 2; ++ArgIdx) {
+          const ImplicitConversionSequence &ICS = Cand->Conversions[ArgIdx];
+          if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion ||
+              ICS.ConversionFunctionSet.empty())
+            continue;
+          if (CXXConversionDecl *Func = dyn_cast<CXXConversionDecl>(
+                         Cand->Conversions[ArgIdx].ConversionFunctionSet[0])) {
+            QualType FromTy = 
+              QualType(
+                     static_cast<Type*>(ICS.UserDefined.Before.FromTypePtr),0);
+            Diag(OpLoc,diag::note_ambiguous_type_conversion)
+                  << FromTy << Func->getConversionType();
+          }
+          for (unsigned j = 0; j < ICS.ConversionFunctionSet.size(); j++) {
+            FunctionDecl *Func = 
+              Cand->Conversions[ArgIdx].ConversionFunctionSet[j];
+            Diag(Func->getLocation(),diag::err_ovl_candidate);
+          }
+        }
+        Reported = true;
       }
     }
   }
@@ -4704,7 +4733,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       assert(Result.isInvalid() && 
              "C++ binary operator overloading is missing candidates!");
       if (Result.isInvalid())
-        PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false);
+        PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false, Opc, OpLoc);
       return move(Result);
     }
 
