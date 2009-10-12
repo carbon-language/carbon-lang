@@ -3973,7 +3973,7 @@ Sema::BestViableFunction(OverloadCandidateSet& CandidateSet,
 void
 Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
                               bool OnlyViable,
-                              BinaryOperator::Opcode Opc,
+                              const char *Opc,
                               SourceLocation OpLoc) {
   OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                              LastCand = CandidateSet.end();
@@ -4048,20 +4048,22 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
         Diag(Cand->Surrogate->getLocation(), diag::err_ovl_surrogate_cand)
           << FnType;
       } else if (OnlyViable) {
-        assert(Cand->Conversions.size() == 2 && 
+        assert(Cand->Conversions.size() <= 2 && 
                "builtin-binary-operator-not-binary");
-        Diag(OpLoc, diag::err_ovl_builtin_candidate) 
-          << Cand->BuiltinTypes.ParamTypes[0] 
-          << Cand->BuiltinTypes.ParamTypes[1] 
-          << BinaryOperator::getOpcodeStr(Opc);
+        if (Cand->Conversions.size() == 1)
+          Diag(OpLoc, diag::err_ovl_builtin_unary_candidate)
+                << Opc << Cand->BuiltinTypes.ParamTypes[0];
+        else
+          Diag(OpLoc, diag::err_ovl_builtin_binary_candidate)
+                << Opc << Cand->BuiltinTypes.ParamTypes[0]
+                << Cand->BuiltinTypes.ParamTypes[1];
       }
       else if (!Cand->Viable && !Reported) {
         // Non-viability might be due to ambiguous user-defined conversions,
         // needed for built-in operators. Report them as well, but only once
         // as we have typically many built-in candidates.
-        assert(Cand->Conversions.size() == 2 &&
-               "builtin-binary-operator-not-binary");
-        for (unsigned ArgIdx = 0; ArgIdx < 2; ++ArgIdx) {
+        unsigned NoOperands = Cand->Conversions.size();
+        for (unsigned ArgIdx = 0; ArgIdx < NoOperands; ++ArgIdx) {
           const ImplicitConversionSequence &ICS = Cand->Conversions[ArgIdx];
           if (ICS.ConversionKind != ImplicitConversionSequence::BadConversion ||
               ICS.ConversionFunctionSet.empty())
@@ -4559,7 +4561,8 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
       Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
           << UnaryOperator::getOpcodeStr(Opc)
           << Input->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true, 
+                              UnaryOperator::getOpcodeStr(Opc), OpLoc);
       return ExprError();
 
     case OR_Deleted:
@@ -4733,7 +4736,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       assert(Result.isInvalid() && 
              "C++ binary operator overloading is missing candidates!");
       if (Result.isInvalid())
-        PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false, Opc, OpLoc);
+        PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/false, 
+                                BinaryOperator::getOpcodeStr(Opc), OpLoc);
       return move(Result);
     }
 
@@ -4741,7 +4745,8 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       Diag(OpLoc,  diag::err_ovl_ambiguous_oper)
           << BinaryOperator::getOpcodeStr(Opc)
           << Args[0]->getSourceRange() << Args[1]->getSourceRange();
-      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true, Opc, OpLoc);
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true, 
+                              BinaryOperator::getOpcodeStr(Opc), OpLoc);
       return ExprError();
 
     case OR_Deleted:
