@@ -6,5 +6,6 @@ struct A {
 };
 
 void f(A *a) {
+  // CHECK: call void %
   a->f('c');
 }
