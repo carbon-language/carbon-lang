@@ -198,6 +198,20 @@ RValue CodeGenFunction::EmitCXXMemberCall(const CXXMethodDecl *MD,
                   Callee, Args, MD);
 }
 
+/// canDevirtualizeMemberFunctionCalls - Checks whether virtual calls on given
+/// expr can be devirtualized.
+static bool canDevirtualizeMemberFunctionCalls(const Expr *Base) {
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Base)) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
+      // This is a record decl. We know the type and can devirtualize it.
+      return VD->getType()->isRecordType();
+    }
+  }
+  
+  // We can't devirtualize the call.
+  return false;
+}
+
 RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   if (isa<BinaryOperator>(CE->getCallee())) 
     return EmitCXXMemberPointerCallExpr(CE);
@@ -235,7 +249,7 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   // because then we know what the type is.
   llvm::Value *Callee;
   if (MD->isVirtual() && !ME->hasQualifier() && 
-      !ME->getBase()->getType()->isRecordType())
+      !canDevirtualizeMemberFunctionCalls(ME->getBase()))
     Callee = BuildVirtualCall(MD, This, Ty);
   else if (const CXXDestructorDecl *Destructor
              = dyn_cast<CXXDestructorDecl>(MD))
