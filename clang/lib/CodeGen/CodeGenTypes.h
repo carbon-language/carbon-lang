@@ -61,9 +61,17 @@ namespace CodeGen {
     /// is a member pointer, or a struct that contains a member pointer.
     bool ContainsMemberPointer;
 
+    /// KeyFunction - The key function of the record layout (if one exists),
+    /// which is the first non-pure virtual function that is not inline at the
+    /// point of class definition.
+    /// See http://www.codesourcery.com/public/cxx-abi/abi.html#vague-vtable.
+    const CXXMethodDecl *KeyFunction;
+    
   public:
-    CGRecordLayout(const llvm::Type *T, bool ContainsMemberPointer)
-      : LLVMType(T), ContainsMemberPointer(ContainsMemberPointer) { }
+    CGRecordLayout(const llvm::Type *T, bool ContainsMemberPointer,
+                   const CXXMethodDecl *KeyFunction)
+      : LLVMType(T), ContainsMemberPointer(ContainsMemberPointer),
+        KeyFunction(KeyFunction) { }
 
     /// getLLVMType - Return llvm type associated with this record.
     const llvm::Type *getLLVMType() const {
@@ -74,6 +82,9 @@ namespace CodeGen {
       return ContainsMemberPointer;
     }
 
+    const CXXMethodDecl *getKeyFunction() const {
+      return KeyFunction;
+    }
   };
 
 /// CodeGenTypes - This class organizes the cross-module state that is used

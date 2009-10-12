@@ -326,6 +326,31 @@ void CGRecordLayoutBuilder::CheckForMemberPointer(const FieldDecl *FD) {
 
 }
 
+static const CXXMethodDecl *GetKeyFunction(const RecordDecl *D) {
+  const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D);
+  if (!RD || !RD->isDynamicClass())
+    return 0;
+  
+  for (CXXRecordDecl::method_iterator I = RD->method_begin(), 
+       E = RD->method_end(); I != E; ++I) {
+    const CXXMethodDecl *MD = *I;
+    
+    if (!MD->isVirtual())
+      continue;
+    
+    if (MD->isPure())
+      continue;
+
+    if (MD->getBody())
+      continue;
+
+    // We found it.
+    return MD;
+  }
+  
+  return 0;
+}
+
 CGRecordLayout *
 CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
                                      const RecordDecl *D) {
@@ -355,5 +380,7 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
     Types.addBitFieldInfo(Info.FD, Info.FieldNo, Info.Start, Info.Size);
   }
 
-  return new CGRecordLayout(Ty, Builder.ContainsMemberPointer);
+  const CXXMethodDecl *KeyFunction = GetKeyFunction(D);
+
+  return new CGRecordLayout(Ty, Builder.ContainsMemberPointer, KeyFunction);
 }
