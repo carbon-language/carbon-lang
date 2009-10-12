@@ -411,6 +411,16 @@ void ValueHandleBase::AddToExistingUseList(ValueHandleBase **List) {
   }
 }
 
+void ValueHandleBase::AddToExistingUseListAfter(ValueHandleBase *List) {
+  assert(List && "Must insert after existing node");
+
+  Next = List->Next;
+  setPrevPtr(&List->Next);
+  List->Next = this;
+  if (Next)
+    Next->setPrevPtr(&Next);
+}
+
 /// AddToUseList - Add this ValueHandle to the use list for VP.
 void ValueHandleBase::AddToUseList() {
   assert(VP && "Null pointer doesn't have a use list!");
@@ -490,37 +500,46 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
   ValueHandleBase *Entry = pImpl->ValueHandles[V];
   assert(Entry && "Value bit set but no entries exist");
 
-  while (Entry) {
-    // Advance pointer to avoid invalidation.
-    ValueHandleBase *ThisNode = Entry;
-    Entry = Entry->Next;
+  // We use a local ValueHandleBase as an iterator so that
+  // ValueHandles can add and remove themselves from the list without
+  // breaking our iteration.  This is not really an AssertingVH; we
+  // just have to give ValueHandleBase some kind.
+  for (ValueHandleBase Iterator(Assert, *Entry); Entry; Entry = Iterator.Next) {
+    Iterator.RemoveFromUseList();
+    Iterator.AddToExistingUseListAfter(Entry);
+    assert(Entry->Next == &Iterator && "Loop invariant broken.");
 
-    switch (ThisNode->getKind()) {
+    switch (Entry->getKind()) {
     case Assert:
-#ifndef NDEBUG      // Only in -g mode...
-      errs() << "While deleting: " << *V->getType() << " %" << V->getNameStr()
-             << "\n";
-#endif
-      llvm_unreachable("An asserting value handle still pointed to this"
-                       " value!");
+      break;
     case Tracking:
       // Mark that this value has been deleted by setting it to an invalid Value
       // pointer.
-      ThisNode->operator=(DenseMapInfo<Value *>::getTombstoneKey());
+      Entry->operator=(DenseMapInfo<Value *>::getTombstoneKey());
       break;
     case Weak:
       // Weak just goes to null, which will unlink it from the list.
-      ThisNode->operator=(0);
+      Entry->operator=(0);
       break;
     case Callback:
       // Forward to the subclass's implementation.
-      static_cast<CallbackVH*>(ThisNode)->deleted();
+      static_cast<CallbackVH*>(Entry)->deleted();
       break;
     }
   }
 
-  // All callbacks and weak references should be dropped by now.
-  assert(!V->HasValueHandle && "All references to V were not removed?");
+  // All callbacks, weak references, and assertingVHs should be dropped by now.
+  if (V->HasValueHandle) {
+#ifndef NDEBUG      // Only in +Asserts mode...
+    errs() << "While deleting: " << *V->getType() << " %" << V->getNameStr()
+           << "\n";
+    if (pImpl->ValueHandles[V]->getKind() == Assert)
+      llvm_unreachable("An asserting value handle still pointed to this"
+                       " value!");
+
+#endif
+    llvm_unreachable("All references to V were not removed?");
+  }
 }
 
 
@@ -535,12 +554,16 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
 
   assert(Entry && "Value bit set but no entries exist");
 
-  while (Entry) {
-    // Advance pointer to avoid invalidation.
-    ValueHandleBase *ThisNode = Entry;
-    Entry = Entry->Next;
+  // We use a local ValueHandleBase as an iterator so that
+  // ValueHandles can add and remove themselves from the list without
+  // breaking our iteration.  This is not really an AssertingVH; we
+  // just have to give ValueHandleBase some kind.
+  for (ValueHandleBase Iterator(Assert, *Entry); Entry; Entry = Iterator.Next) {
+    Iterator.RemoveFromUseList();
+    Iterator.AddToExistingUseListAfter(Entry);
+    assert(Entry->Next == &Iterator && "Loop invariant broken.");
 
-    switch (ThisNode->getKind()) {
+    switch (Entry->getKind()) {
     case Assert:
       // Asserting handle does not follow RAUW implicitly.
       break;
@@ -553,11 +576,11 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
       // FALLTHROUGH
     case Weak:
       // Weak goes to the new value, which will unlink it from Old's list.
-      ThisNode->operator=(New);
+      Entry->operator=(New);
       break;
     case Callback:
       // Forward to the subclass's implementation.
-      static_cast<CallbackVH*>(ThisNode)->allUsesReplacedWith(New);
+      static_cast<CallbackVH*>(Entry)->allUsesReplacedWith(New);
       break;
     }
   }

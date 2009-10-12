@@ -11,6 +11,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/ADT/OwningPtr.h"
 
 #include "gtest/gtest.h"
 
@@ -325,6 +326,86 @@ TEST_F(ValueHandle, CallbackVH_DeletionCanRAUW) {
   EXPECT_EQ(Constant::getNullValue(Type::getInt32Ty(getGlobalContext())), RVH.AURWArgument);
   EXPECT_EQ(Constant::getNullValue(Type::getInt32Ty(getGlobalContext())),
             BitcastUser->getOperand(0));
+}
+
+TEST_F(ValueHandle, DestroyingOtherVHOnSameValueDoesntBreakIteration) {
+  // When a CallbackVH modifies other ValueHandles in its callbacks,
+  // that shouldn't interfere with non-modified ValueHandles receiving
+  // their appropriate callbacks.
+  //
+  // We create the active CallbackVH in the middle of a palindromic
+  // arrangement of other VHs so that the bad behavior would be
+  // triggered in whichever order callbacks run.
+
+  class DestroyingVH : public CallbackVH {
+  public:
+    OwningPtr<WeakVH> ToClear[2];
+    DestroyingVH(Value *V) {
+      ToClear[0].reset(new WeakVH(V));
+      setValPtr(V);
+      ToClear[1].reset(new WeakVH(V));
+    }
+    virtual void deleted() {
+      ToClear[0].reset();
+      ToClear[1].reset();
+      CallbackVH::deleted();
+    }
+    virtual void allUsesReplacedWith(Value *) {
+      ToClear[0].reset();
+      ToClear[1].reset();
+    }
+  };
+
+  {
+    WeakVH ShouldBeVisited1(BitcastV.get());
+    DestroyingVH C(BitcastV.get());
+    WeakVH ShouldBeVisited2(BitcastV.get());
+
+    BitcastV->replaceAllUsesWith(ConstantV);
+    EXPECT_EQ(ConstantV, static_cast<Value*>(ShouldBeVisited1));
+    EXPECT_EQ(ConstantV, static_cast<Value*>(ShouldBeVisited2));
+  }
+
+  {
+    WeakVH ShouldBeVisited1(BitcastV.get());
+    DestroyingVH C(BitcastV.get());
+    WeakVH ShouldBeVisited2(BitcastV.get());
+
+    BitcastV.reset();
+    EXPECT_EQ(NULL, static_cast<Value*>(ShouldBeVisited1));
+    EXPECT_EQ(NULL, static_cast<Value*>(ShouldBeVisited2));
+  }
+}
+
+TEST_F(ValueHandle, AssertingVHCheckedLast) {
+  // If a CallbackVH exists to clear out a group of AssertingVHs on
+  // Value deletion, the CallbackVH should get a chance to do so
+  // before the AssertingVHs assert.
+
+  class ClearingVH : public CallbackVH {
+  public:
+    AssertingVH<Value> *ToClear[2];
+    ClearingVH(Value *V,
+               AssertingVH<Value> &A0, AssertingVH<Value> &A1)
+      : CallbackVH(V) {
+      ToClear[0] = &A0;
+      ToClear[1] = &A1;
+    }
+
+    virtual void deleted() {
+      *ToClear[0] = 0;
+      *ToClear[1] = 0;
+      CallbackVH::deleted();
+    }
+  };
+
+  AssertingVH<Value> A1, A2;
+  A1 = BitcastV.get();
+  ClearingVH C(BitcastV.get(), A1, A2);
+  A2 = BitcastV.get();
+  // C.deleted() should run first, clearing the two AssertingVHs,
+  // which should prevent them from asserting.
+  BitcastV.reset();
 }
 
 }

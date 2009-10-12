@@ -111,9 +111,14 @@ private:
   HandleBaseKind getKind() const { return PrevPair.getInt(); }
   void setPrevPtr(ValueHandleBase **Ptr) { PrevPair.setPointer(Ptr); }
 
-  /// AddToExistingUseList - Add this ValueHandle to the use list for VP,
-  /// where List is known to point into the existing use list.
+  /// AddToExistingUseList - Add this ValueHandle to the use list for VP, where
+  /// List is the address of either the head of the list or a Next node within
+  /// the existing use list.
   void AddToExistingUseList(ValueHandleBase **List);
+
+  /// AddToExistingUseListAfter - Add this ValueHandle to the use list after
+  /// Node.
+  void AddToExistingUseListAfter(ValueHandleBase *Node);
 
   /// AddToUseList - Add this ValueHandle to the use list for VP.
   void AddToUseList();
