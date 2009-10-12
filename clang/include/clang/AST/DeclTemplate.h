@@ -518,6 +518,10 @@ public:
   /// specialization from the function template.
   const TemplateArgumentList *TemplateArguments;
 
+  /// \brief The point at which this function template specialization was
+  /// first instantiated. 
+  SourceLocation PointOfInstantiation;
+  
   /// \brief Retrieve the template from which this function was specialized.
   FunctionTemplateDecl *getTemplate() const { return Template.getPointer(); }
 
@@ -533,6 +537,21 @@ public:
     Template.setInt(TSK - 1);
   }
 
+  /// \brief Retrieve the first point of instantiation of this function
+  /// template specialization.
+  ///
+  /// The point of instantiation may be an invalid source location if this
+  /// function has yet to be instantiated.
+  SourceLocation getPointOfInstantiation() const { 
+    return PointOfInstantiation; 
+  }
+  
+  /// \brief Set the (first) point of instantiation of this function template
+  /// specialization.
+  void setPointOfInstantiation(SourceLocation POI) {
+    PointOfInstantiation = POI;
+  }
+  
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, TemplateArguments->getFlatArgumentList(),
             TemplateArguments->flat_size(),
@@ -556,10 +575,13 @@ class MemberSpecializationInfo {
   // manner in which the instantiation occurred (in the lower two bits).
   llvm::PointerIntPair<NamedDecl *, 2> MemberAndTSK;
   
+  // The point at which this member was first instantiated.
+  SourceLocation PointOfInstantiation;
+  
 public:
   explicit 
   MemberSpecializationInfo(NamedDecl *IF, TemplateSpecializationKind TSK)
-    : MemberAndTSK(IF, TSK - 1) {
+    : MemberAndTSK(IF, TSK - 1), PointOfInstantiation() {
     assert(TSK != TSK_Undeclared && 
            "Cannot encode undeclared template specializations for members");
   }
@@ -578,6 +600,18 @@ public:
     assert(TSK != TSK_Undeclared && 
            "Cannot encode undeclared template specializations for members");
     MemberAndTSK.setInt(TSK - 1);
+  }
+  
+  /// \brief Retrieve the first point of instantiation of this member. 
+  /// If the point of instantiation is an invalid location, then this member
+  /// has not yet been instantiated.
+  SourceLocation getPointOfInstantiation() const { 
+    return PointOfInstantiation; 
+  }
+  
+  /// \brief Set the first point of instantiation.
+  void setPointOfInstantiation(SourceLocation POI) {
+    PointOfInstantiation = POI;
   }
 };
   

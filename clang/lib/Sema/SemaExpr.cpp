@@ -6199,10 +6199,28 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     // Implicit instantiation of function templates and member functions of
     // class templates.
-    if (!Function->getBody() && 
-        Function->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
-      PendingImplicitInstantiations.push_back(std::make_pair(Function, Loc));
-
+    if (!Function->getBody() &&
+        Function->getTemplateSpecializationKind() 
+                                                == TSK_ImplicitInstantiation) {
+      bool AlreadyInstantiated = false;
+      if (FunctionTemplateSpecializationInfo *SpecInfo
+                                = Function->getTemplateSpecializationInfo()) {
+        if (SpecInfo->getPointOfInstantiation().isInvalid())
+          SpecInfo->setPointOfInstantiation(Loc);
+        else
+          AlreadyInstantiated = true;
+      } else if (MemberSpecializationInfo *MSInfo 
+                                  = Function->getMemberSpecializationInfo()) {
+        if (MSInfo->getPointOfInstantiation().isInvalid())
+          MSInfo->setPointOfInstantiation(Loc);
+        else
+          AlreadyInstantiated = true;
+      }
+      
+      if (!AlreadyInstantiated)
+        PendingImplicitInstantiations.push_back(std::make_pair(Function, Loc));
+    }
+    
     // FIXME: keep track of references to static functions
     Function->setUsed(true);
     return;
@@ -6211,9 +6229,15 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
     // Implicit instantiation of static data members of class templates.
     if (Var->isStaticDataMember() &&
-        Var->getInstantiatedFromStaticDataMember() &&
-        Var->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
-      PendingImplicitInstantiations.push_back(std::make_pair(Var, Loc));
+        Var->getInstantiatedFromStaticDataMember()) {
+      MemberSpecializationInfo *MSInfo = Var->getMemberSpecializationInfo();
+      assert(MSInfo && "Missing member specialization information?");
+      if (MSInfo->getPointOfInstantiation().isInvalid() &&
+          MSInfo->getTemplateSpecializationKind()== TSK_ImplicitInstantiation) {
+        MSInfo->setPointOfInstantiation(Loc);
+        PendingImplicitInstantiations.push_back(std::make_pair(Var, Loc));
+      }
+    }
 
     // FIXME: keep track of references to static data?
 

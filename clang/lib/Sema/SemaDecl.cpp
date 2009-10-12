@@ -4279,14 +4279,22 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
           // Diagnose attempts to redefine a tag.
           if (TUK == TUK_Definition) {
             if (TagDecl *Def = PrevTagDecl->getDefinition(Context)) {
-              Diag(NameLoc, diag::err_redefinition) << Name;
-              Diag(Def->getLocation(), diag::note_previous_definition);
-              // If this is a redefinition, recover by making this
-              // struct be anonymous, which will make any later
-              // references get the previous definition.
-              Name = 0;
-              PrevDecl = 0;
-              Invalid = true;
+              // If we're defining a specialization and the previous definition
+              // is from an implicit instantiation, don't emit an error
+              // here; we'll catch this in the general case below.
+              if (!isExplicitSpecialization ||
+                  !isa<CXXRecordDecl>(Def) ||
+                  cast<CXXRecordDecl>(Def)->getTemplateSpecializationKind() 
+                                               == TSK_ExplicitSpecialization) {
+                Diag(NameLoc, diag::err_redefinition) << Name;
+                Diag(Def->getLocation(), diag::note_previous_definition);
+                // If this is a redefinition, recover by making this
+                // struct be anonymous, which will make any later
+                // references get the previous definition.
+                Name = 0;
+                PrevDecl = 0;
+                Invalid = true;
+              }
             } else {
               // If the type is currently being defined, complain
               // about a nested redefinition.

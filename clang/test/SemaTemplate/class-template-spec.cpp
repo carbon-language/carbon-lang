@@ -20,7 +20,8 @@ int test_incomplete_specs(A<double, double> *a1,
                           A<double> *a2)
 {
   (void)a1->x; // expected-error{{incomplete definition of type 'A<double, double>'}}
-  (void)a2->x; // expected-error{{implicit instantiation of undefined template 'struct A<double, int>'}}
+  (void)a2->x; // expected-error{{implicit instantiation of undefined template 'struct A<double, int>'}} \
+               // expected-note{{first required here}}
 }
 
 typedef float FLOAT;
@@ -70,7 +71,8 @@ namespace N {
 }
 
 // Diagnose specialization errors
-struct A<double> { }; // expected-error{{template specialization requires 'template<>'}}
+struct A<double> { }; // expected-error{{template specialization requires 'template<>'}} \
+                      // expected-error{{after instantiation}}
 
 template<> struct ::A<double>;
 

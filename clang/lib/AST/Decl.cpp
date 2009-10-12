@@ -374,8 +374,7 @@ SourceRange VarDecl::getSourceRange() const {
 }
 
 VarDecl *VarDecl::getInstantiatedFromStaticDataMember() {
-  if (MemberSpecializationInfo *MSI
-        = getASTContext().getInstantiatedFromStaticDataMember(this))
+  if (MemberSpecializationInfo *MSI = getMemberSpecializationInfo())
     return cast<VarDecl>(MSI->getInstantiatedFrom());
   
   return 0;
@@ -389,9 +388,12 @@ TemplateSpecializationKind VarDecl::getTemplateSpecializationKind() {
   return TSK_Undeclared;
 }
 
+MemberSpecializationInfo *VarDecl::getMemberSpecializationInfo() {
+  return getASTContext().getInstantiatedFromStaticDataMember(this);
+}
+
 void VarDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
-  MemberSpecializationInfo *MSI
-    = getASTContext().getInstantiatedFromStaticDataMember(this);
+  MemberSpecializationInfo *MSI = getMemberSpecializationInfo();
   assert(MSI && "Not an instantiated static data member?");
   MSI->setTemplateSpecializationKind(TSK);
 }
@@ -703,11 +705,14 @@ OverloadedOperatorKind FunctionDecl::getOverloadedOperator() const {
 }
 
 FunctionDecl *FunctionDecl::getInstantiatedFromMemberFunction() const {
-  if (MemberSpecializationInfo *Info 
-        = TemplateOrSpecialization.dyn_cast<MemberSpecializationInfo*>())
+  if (MemberSpecializationInfo *Info = getMemberSpecializationInfo())
     return cast<FunctionDecl>(Info->getInstantiatedFrom());
   
   return 0;
+}
+
+MemberSpecializationInfo *FunctionDecl::getMemberSpecializationInfo() const {
+  return TemplateOrSpecialization.dyn_cast<MemberSpecializationInfo*>();
 }
 
 void 

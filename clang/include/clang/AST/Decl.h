@@ -593,6 +593,11 @@ public:
   /// template specialization or instantiation this is.
   TemplateSpecializationKind getTemplateSpecializationKind();
   
+  /// \brief If this variable is an instantiation of a static data member of a
+  /// class template specialization, retrieves the member specialization
+  /// information.
+  MemberSpecializationInfo *getMemberSpecializationInfo();
+  
   /// \brief For a static data member that was instantiated from a static
   /// data member of a class template, set the template specialiation kind.
   void setTemplateSpecializationKind(TemplateSpecializationKind TSK);
@@ -1075,6 +1080,11 @@ public:
   /// declaration returned by getInstantiatedFromMemberFunction().
   FunctionDecl *getInstantiatedFromMemberFunction() const;
 
+  /// \brief If this function is an instantiation of a member function of a
+  /// class template specialization, retrieves the member specialization
+  /// information.
+  MemberSpecializationInfo *getMemberSpecializationInfo() const;
+                       
   /// \brief Specify that this record is an instantiation of the
   /// member function FD.
   void setInstantiationOfMemberFunction(FunctionDecl *FD,
@@ -1104,6 +1114,14 @@ public:
   /// specialization.
   bool isFunctionTemplateSpecialization() const {
     return getPrimaryTemplate() != 0;
+  }
+       
+  /// \brief If this function is actually a function template specialization,
+  /// retrieve information about this function template specialization. 
+  /// Otherwise, returns NULL.
+  FunctionTemplateSpecializationInfo *getTemplateSpecializationInfo() const {
+    return TemplateOrSpecialization.
+             dyn_cast<FunctionTemplateSpecializationInfo*>();
   }
                        
   /// \brief Retrieve the primary template that this function template

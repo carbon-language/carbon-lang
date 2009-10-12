@@ -434,11 +434,14 @@ void CXXRecordDecl::addConversionFunction(FunctionTemplateDecl *ConvDecl) {
 }
 
 CXXRecordDecl *CXXRecordDecl::getInstantiatedFromMemberClass() const {
-  if (MemberSpecializationInfo *MSInfo
-        = TemplateOrInstantiation.dyn_cast<MemberSpecializationInfo *>())
+  if (MemberSpecializationInfo *MSInfo = getMemberSpecializationInfo())
     return cast<CXXRecordDecl>(MSInfo->getInstantiatedFrom());
   
   return 0;
+}
+
+MemberSpecializationInfo *CXXRecordDecl::getMemberSpecializationInfo() const {
+  return TemplateOrInstantiation.dyn_cast<MemberSpecializationInfo *>();
 }
 
 void 
@@ -456,8 +459,7 @@ TemplateSpecializationKind CXXRecordDecl::getTemplateSpecializationKind() {
         = dyn_cast<ClassTemplateSpecializationDecl>(this))
     return Spec->getSpecializationKind();
   
-  if (MemberSpecializationInfo *MSInfo
-      = TemplateOrInstantiation.dyn_cast<MemberSpecializationInfo *>())
+  if (MemberSpecializationInfo *MSInfo = getMemberSpecializationInfo())
     return MSInfo->getTemplateSpecializationKind();
   
   return TSK_Undeclared;
@@ -471,8 +473,7 @@ CXXRecordDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
     return;
   }
   
-  if (MemberSpecializationInfo *MSInfo
-        = TemplateOrInstantiation.dyn_cast<MemberSpecializationInfo *>()) {
+  if (MemberSpecializationInfo *MSInfo = getMemberSpecializationInfo()) {
     MSInfo->setTemplateSpecializationKind(TSK);
     return;
   }

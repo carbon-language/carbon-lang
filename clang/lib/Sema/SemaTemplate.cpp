@@ -2820,7 +2820,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                        TemplateNameLoc, isPartialSpecialization,
                                        TSK_ExplicitSpecialization))
     return true;
-
+  
   // The canonical type
   QualType CanonType;
   if (PrevDecl && 
@@ -2918,6 +2918,24 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     CanonType = Context.getTypeDeclType(Specialization);
   }
 
+  // C++ [temp.expl.spec]p6:
+  //   If a template, a member template or the member of a class template is
+  //   explicitly specialized then that specialization shall be declared 
+  //   before the first use of that specialization that would cause an implicit
+  //   instantiation to take place, in every translation unit in which such a 
+  //   use occurs; no diagnostic is required.
+  if (PrevDecl && PrevDecl->getPointOfInstantiation().isValid()) {
+    SourceRange Range(TemplateNameLoc, RAngleLoc);
+    Diag(TemplateNameLoc, diag::err_specialization_after_instantiation)
+      << Context.getTypeDeclType(Specialization) << Range;
+
+    Diag(PrevDecl->getPointOfInstantiation(), 
+         diag::note_instantiation_required_here)
+      << (PrevDecl->getTemplateSpecializationKind() 
+                                                != TSK_ImplicitInstantiation);
+    return true;
+  }
+  
   // If this is not a friend, note that this is an explicit specialization.
   if (TUK != TUK_Friend)
     Specialization->setSpecializationKind(TSK_ExplicitSpecialization);
@@ -2925,8 +2943,6 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   // Check that this isn't a redefinition of this specialization.
   if (TUK == TUK_Definition) {
     if (RecordDecl *Def = Specialization->getDefinition(Context)) {
-      // FIXME: Should also handle explicit specialization after implicit
-      // instantiation with a special diagnostic.
       SourceRange Range(TemplateNameLoc, RAngleLoc);
       Diag(TemplateNameLoc, diag::err_redefinition)
         << Context.getTypeDeclType(Specialization) << Range;
@@ -3106,7 +3122,7 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
     return true;
   
   // FIXME: Check if the prior specialization has a point of instantiation.
-  // If so, we have run afoul of C++ [temp.expl.spec]p6.
+  // If so, we have run afoul of .
   
   // Check the scope of this explicit specialization.
   if (CheckTemplateSpecializationScope(*this, 
@@ -3114,11 +3130,29 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                                        Specialization, FD->getLocation(), 
                                        false, TSK_ExplicitSpecialization))
     return true;
+
+  // C++ [temp.expl.spec]p6:
+  //   If a template, a member template or the member of a class template is
+  //   explicitly specialized then that spe- cialization shall be declared 
+  //   before the first use of that specialization that would cause an implicit
+  //   instantiation to take place, in every translation unit in which such a 
+  //   use occurs; no diagnostic is required.
+  FunctionTemplateSpecializationInfo *SpecInfo
+    = Specialization->getTemplateSpecializationInfo();
+  assert(SpecInfo && "Function template specialization info missing?");
+  if (SpecInfo->getPointOfInstantiation().isValid()) {
+    Diag(FD->getLocation(), diag::err_specialization_after_instantiation)
+      << FD;
+    Diag(SpecInfo->getPointOfInstantiation(), 
+         diag::note_instantiation_required_here)
+      << (Specialization->getTemplateSpecializationKind() 
+                                                != TSK_ImplicitInstantiation);
+    return true;
+  }
   
   // Mark the prior declaration as an explicit specialization, so that later
   // clients know that this is an explicit specialization.
-  // FIXME: Check for prior explicit instantiations?
-  Specialization->setTemplateSpecializationKind(TSK_ExplicitSpecialization);
+  SpecInfo->setTemplateSpecializationKind(TSK_ExplicitSpecialization);
   
   // Turn the given function declaration into a function template
   // specialization, with the template arguments from the previous
@@ -3156,6 +3190,8 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
   // Try to find the member we are instantiating.
   NamedDecl *Instantiation = 0;
   NamedDecl *InstantiatedFrom = 0;
+  MemberSpecializationInfo *MSInfo = 0;
+
   if (!PrevDecl) {
     // Nowhere to look anyway.
   } else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Member)) {
@@ -3164,6 +3200,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
         if (Context.hasSameType(Function->getType(), Method->getType())) {
           Instantiation = Method;
           InstantiatedFrom = Method->getInstantiatedFromMemberFunction();
+          MSInfo = Method->getMemberSpecializationInfo();
           break;
         }
       }
@@ -3173,11 +3210,13 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
       if (PrevVar->isStaticDataMember()) {
         Instantiation = PrevDecl;
         InstantiatedFrom = PrevVar->getInstantiatedFromStaticDataMember();
+        MSInfo = PrevVar->getMemberSpecializationInfo();
       }
   } else if (isa<RecordDecl>(Member)) {
     if (CXXRecordDecl *PrevRecord = dyn_cast<CXXRecordDecl>(PrevDecl)) {
       Instantiation = PrevDecl;
       InstantiatedFrom = PrevRecord->getInstantiatedFromMemberClass();
+      MSInfo = PrevRecord->getMemberSpecializationInfo();
     }
   }
   
@@ -3188,14 +3227,27 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
     return false;
   }
   
-  // FIXME: Check if the prior declaration has a point of instantiation.
-  // If so, we have run afoul of C++ [temp.expl.spec]p6.
-  
   // Make sure that this is a specialization of a member.
   if (!InstantiatedFrom) {
     Diag(Member->getLocation(), diag::err_spec_member_not_instantiated)
       << Member;
     Diag(Instantiation->getLocation(), diag::note_specialized_decl);
+    return true;
+  }
+  
+  // C++ [temp.expl.spec]p6:
+  //   If a template, a member template or the member of a class template is
+  //   explicitly specialized then that spe- cialization shall be declared 
+  //   before the first use of that specialization that would cause an implicit
+  //   instantiation to take place, in every translation unit in which such a 
+  //   use occurs; no diagnostic is required.
+  assert(MSInfo && "Member specialization info missing?");
+  if (MSInfo->getPointOfInstantiation().isValid()) {
+    Diag(Member->getLocation(), diag::err_specialization_after_instantiation)
+      << Member;
+    Diag(MSInfo->getPointOfInstantiation(), 
+         diag::note_instantiation_required_here)
+      << (MSInfo->getTemplateSpecializationKind() != TSK_ImplicitInstantiation);
     return true;
   }
   
@@ -3206,8 +3258,6 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
                                        false, TSK_ExplicitSpecialization))
     return true;
 
-  // FIXME: Check for specialization-after-instantiation errors and such.
-  
   // Note that this is an explicit instantiation of a member.
   // the original declaration to note that it is an explicit specialization
   // (if it was previously an implicit instantiation). This latter step
