@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=msp430 | FileCheck %s
+; RUN: llc -march=msp430 < %s | FileCheck %s
 target datalayout = "e-p:16:8:8-i8:8:8-i8:8:8-i32:8:8"
 target triple = "msp430-generic-generic"
 @foo = common global i8 0, align 1

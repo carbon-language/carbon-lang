@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=sparc --relocation-model=pic | grep _GLOBAL_OFFSET_TABLE_
+; RUN: llc -march=sparc --relocation-model=pic < %s | grep _GLOBAL_OFFSET_TABLE_
 
 @foo = global i32 0                               ; <i32*> [#uses=1]
 
