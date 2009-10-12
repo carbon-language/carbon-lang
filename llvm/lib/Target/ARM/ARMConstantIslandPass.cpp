@@ -757,8 +757,7 @@ bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
                        BBSizes[Water->getNumber()];
 
   // If the CPE is to be inserted before the instruction, that will raise
-  // the offset of the instruction.  (Currently applies only to ARM, so
-  // no alignment compensation attempted here.)
+  // the offset of the instruction.
   if (CPEOffset < UserOffset)
     UserOffset += U.CPEMI->getOperand(2).getImm();
 
