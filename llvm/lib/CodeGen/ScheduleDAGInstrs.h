@@ -121,7 +121,6 @@ namespace llvm {
     SmallSet<unsigned, 8> LoopLiveInRegs;
 
   public:
-    MachineBasicBlock *BB;                // Current basic block
     MachineBasicBlock::iterator Begin;    // The beginning of the range to
                                           // be scheduled. The range extends
                                           // to InsertPos.
