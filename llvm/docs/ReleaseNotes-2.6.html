@@ -637,7 +637,8 @@ it run faster:</p>
     commutable operations, various spiller peephole optimizations, and can now
     coalesce cross-register-class copies.</li>
 <li>Tblgen now supports multiclass inheritance and a number of new string and
-    list operations like !(subst), !(foreach), !car, !cdr, !null, !if, !cast.
+    list operations like <tt>!(subst)</tt>, <tt>!(foreach)</tt>, <tt>!car</tt>,
+    <tt>!cdr</tt>, <tt>!null</tt>, <tt>!if</tt>, <tt>!cast</tt>.
     These make the .td files more expressive and allow more aggressive factoring
     of duplication across instruction patterns.</li>
 <li>Target-specific intrinsics can now be added without having to hack VMCore to
@@ -656,12 +657,13 @@ it run faster:</p>
     from the compiler.  It works well for many simple C testcases, but doesn't
     support exception handling, debug info, inline assembly, etc.</li>
 <li>Targets can now specify register allocation hints through
-    MachineRegisterInfo::setRegAllocationHint. A regalloc hint consists of hint
-    type and physical register number. A hint type of zero specifies a register
-    allocation preference. Other hint type values are target specific which are
-    resolved by TargetRegisterInfo::ResolveRegAllocHint. An example is the ARM
-    target which uses register hints to request that the register allocator
-    provide an even / odd register pair to two virtual registers.</li>
+    <tt>MachineRegisterInfo::setRegAllocationHint</tt>. A regalloc hint consists
+    of hint type and physical register number. A hint type of zero specifies a
+    register allocation preference. Other hint type values are target specific
+    which are resolved by <tt>TargetRegisterInfo::ResolveRegAllocHint</tt>. An
+    example is the ARM target which uses register hints to request that the
+    register allocator provide an even / odd register pair to two virtual
+    registers.</li>
 </ul>
 </div>
 
@@ -804,12 +806,13 @@ branched.</p>
     make operations on character ranges and
     string concatenation to be more efficient.  StringRef is just a <tt>const
     char*</tt> with a length, Twine is a light-weight rope.</li>
-<li>LLVM has new WeakVH, AssertingVH and CallbackVH classes, which make it
-    easier to write LLVM IR transformations.  WeakVH is automatically drops to
-    null when the referenced Value is deleted, and is updated across a
-    replaceAllUsesWith operation.  AssertingVH aborts the program if the
-    referenced value is destroyed while it is being referenced.  CallbackVH is
-    a customizable class for handling value references.  See <a
+<li>LLVM has new <tt>WeakVH</tt>, <tt>AssertingVH</tt> and <tt>CallbackVH</tt>
+    classes, which make it easier to write LLVM IR transformations.  <tt>WeakVH</tt>
+    is automatically drops to null when the referenced <tt>Value</tt> is deleted,
+    and is updated across a <tt>replaceAllUsesWith</tt> operation.
+    <tt>AssertingVH</tt> aborts the program if the
+    referenced value is destroyed while it is being referenced.  <tt>CallbackVH</tt>
+    is a customizable class for handling value references.  See <a
     href="http://llvm.org/doxygen/ValueHandle_8h-source.html">ValueHandle.h</a> 
     for more information.</li>
 <li>The new '<a href="http://llvm.org/doxygen/Triple_8h-source.html">Triple
@@ -823,9 +826,9 @@ branched.</p>
     and <a href="http://llvm.org/doxygen/RWMutex_8h-source.html">reader/writer
     locks</a>.</li>
 <li>LLVM has new <a href="http://llvm.org/doxygen/SourceMgr_8h-source.html">
-    SourceMgr and SMLoc classes</a> which implement caret diagnostics and basic
-    include stack processing for simple parsers. It is used by tablegen,
-    llvm-mc, the .ll parser and FileCheck.</li>
+    <tt>SourceMgr</tt> and <tt>SMLoc</tt> classes</a> which implement caret
+    diagnostics and basic include stack processing for simple parsers. It is
+    used by tablegen, llvm-mc, the .ll parser and FileCheck.</li>
 </ul>
 
 
@@ -859,7 +862,7 @@ CPU2000).</li>
   <ul>
   <li>Dynamic plugins now work on Windows.</li>
   <li>New option property: init. Makes possible to provide default values for
-      options defined in plugins (interface to cl::init).</li>
+      options defined in plugins (interface to <tt>cl::init</tt>).</li>
   <li>New example: Skeleton, shows how to create a standalone LLVMC-based
       driver.</li>
   <li>New example: mcc16, a driver for the PIC16 toolchain.</li>
