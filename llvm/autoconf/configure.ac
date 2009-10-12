@@ -175,6 +175,11 @@ AC_CACHE_CHECK([type of operating system we're going to host on],
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="MingW"
     llvm_cv_platform_type="Win32" ;;
+  *-*-haiku*)
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
+    llvm_cv_os_type="Haiku"
+    llvm_cv_platform_type="Unix" ;;  
   *-unknown-eabi*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
@@ -223,6 +228,8 @@ AC_CACHE_CHECK([type of operating system we're going to target],
     llvm_cv_target_os_type="Win32" ;;
   *-*-mingw*)
     llvm_cv_target_os_type="MingW" ;;
+  *-*-haiku*)
+    llvm_cv_target_os_type="Haiku" ;;  
   *-unknown-eabi*)
     llvm_cv_target_os_type="Freestanding" ;;
   *)
@@ -960,7 +967,9 @@ AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],
 dnl pthread locking functions are optional - but llvm will not be thread-safe
 dnl without locks.
 if test "$ENABLE_THREADS" -eq 1 ; then
-  AC_CHECK_LIB(pthread,pthread_mutex_init)
+  AC_SEARCH_LIBS(pthread_mutex_init,pthread,
+                 AC_DEFINE([HAVE_PTHREAD],[1],
+                           [Have pthread]))
   AC_SEARCH_LIBS(pthread_mutex_lock,pthread,
                  AC_DEFINE([HAVE_PTHREAD_MUTEX_LOCK],[1],
                            [Have pthread_mutex_lock]))

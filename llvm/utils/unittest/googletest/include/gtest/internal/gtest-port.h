@@ -185,6 +185,8 @@
 #define GTEST_OS_ZOS
 #elif defined(__sun) && defined(__SVR4)
 #define GTEST_OS_SOLARIS
+#elif defined(__HAIKU__)
+#define GTEST_OS_HAIKU
 #endif  // _MSC_VER
 
 // Determines whether ::std::string and ::string are available.
@@ -225,7 +227,7 @@
 // TODO(wan@google.com): uses autoconf to detect whether ::std::wstring
 //   is available.
 
-#if defined(GTEST_OS_CYGWIN) || defined(GTEST_OS_SOLARIS)
+#if defined(GTEST_OS_CYGWIN) || defined(GTEST_OS_SOLARIS) || defined(GTEST_OS_HAIKU)
 // At least some versions of cygwin don't support ::std::wstring.
 // Solaris' libc++ doesn't support it either.
 #define GTEST_HAS_STD_WSTRING 0

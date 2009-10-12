@@ -91,7 +91,7 @@ Process::GetTotalMemoryUsage()
   malloc_statistics_t Stats;
   malloc_zone_statistics(malloc_default_zone(), &Stats);
   return Stats.size_allocated;   // darwin
-#elif defined(HAVE_GETRUSAGE)
+#elif defined(HAVE_GETRUSAGE) && !defined(__HAIKU__)
   struct rusage usage;
   ::getrusage(RUSAGE_SELF, &usage);
   return usage.ru_maxrss;
