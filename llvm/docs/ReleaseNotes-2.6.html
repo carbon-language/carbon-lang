@@ -909,9 +909,9 @@ API changes are:</p>
 <ul>
 <li>All uses of hash_set and hash_map have been removed from the LLVM tree and
     the wrapper headers have been removed.</li>
-<li>The llvm/Streams.h and DOUT member of Debug.h have been removed.  The
-    llvm::Ostream class has been completely removed and replaced with uses of
-    raw_ostream.</li>
+<li>The llvm/Streams.h and <tt>DOUT</tt> member of Debug.h have been removed.  The
+    <tt>llvm::Ostream</tt> class has been completely removed and replaced with
+    uses of raw_ostream.</li>
 <li>LLVM's global uniquing tables for <tt>Type</tt>s and <tt>Constant</tt>s have
     been privatized into members of an <tt>LLVMContext</tt>.  A number of APIs
     now take an <tt>LLVMContext</tt> as a parameter.  To smooth the transition
@@ -928,7 +928,7 @@ API changes are:</p>
     <tt>CreateNeg</tt> should only be used for integer arithmetic now;
     <tt>CreateFAdd</tt>, <tt>CreateFSub</tt>, <tt>CreateFMul</tt> and
     <tt>CreateFNeg</tt> should now be used for floating-point arithmetic.</li>
-<li>The DynamicLibrary class can no longer be constructed, its functionality has
+<li>The <tt>DynamicLibrary</tt> class can no longer be constructed, its functionality has
     moved to static member functions.</li>
 <li><tt>raw_fd_ostream</tt>'s constructor for opening a given filename now
     takes an extra <tt>Force</tt> argument. If <tt>Force</tt> is set to
@@ -937,8 +937,8 @@ API changes are:</p>
     be silently truncated (which is the behavior before this flag was
     added).</li>
 <li><tt>SCEVHandle</tt> no longer exists, because reference counting is no
-longer done for <tt>SCEV*</tt> objects, instead <tt>const SCEV*</tt> should be
-used.</li>
+    longer done for <tt>SCEV*</tt> objects, instead <tt>const SCEV*</tt>
+    should be used.</li>
 
 <li>Many APIs, notably <tt>llvm::Value</tt>, now use the <tt>StringRef</tt>
 and <tt>Twine</tt> classes instead of passing <tt>const char*</tt>
@@ -961,7 +961,7 @@ clients should be unaffected by this transition, unless they are used to
         Note that this string (as before), may not be the entire name if the
         name contains embedded null characters.</li>
 
-    <li>If you were using operator plus on the result of <tt>getName()</tt> and
+    <li>If you were using <tt>operator +</tt> on the result of <tt>getName()</tt> and
       treating the result as an <tt>std::string</tt>, you can either
       use <tt>Twine::str</tt> to get the result as an <tt>std::string</tt>, or
       could move to a <tt>Twine</tt> based design.</li>
@@ -972,7 +972,7 @@ clients should be unaffected by this transition, unless they are used to
 </li>
 
 <li>The registration interfaces for backend Targets has changed (what was
-previously TargetMachineRegistry). For backend authors, see the <a
+previously <tt>TargetMachineRegistry</tt>). For backend authors, see the <a
 href="WritingAnLLVMBackend.html#TargetRegistration">Writing An LLVM Backend</a>
 guide. For clients, the notable API changes are:
   <ul>
@@ -1269,9 +1269,9 @@ and <a href="http://llvm.org/PR2421">cxg2021</a> ACATS tests fail
 If the compiler is built with checks disabled then <a href="http://llvm.org/PR2010">c393010</a>
 causes the compiler to go into an infinite loop, using up all system memory.</li>
 <li>Some GCC specific Ada tests continue to crash the compiler.</li>
-<li>The -E binder option (exception backtraces)
+<li>The <tt>-E</tt> binder option (exception backtraces)
 <a href="http://llvm.org/PR1982">does not work</a> and will result in programs
-crashing if an exception is raised.  Workaround: do not use -E.</li>
+crashing if an exception is raised.  Workaround: do not use <tt>-E</tt>.</li>
 <li>Only discrete types <a href="http://llvm.org/PR1981">are allowed to start
 or finish at a non-byte offset</a> in a record.  Workaround: do not pack records
 or use representation clauses that result in a field of a non-discrete type
@@ -1287,14 +1287,14 @@ ignored</a>.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-	<a name="ocaml-bindingse">Known problems with the O'Caml bindings</a>
+	<a name="ocaml-bindings">Known problems with the O'Caml bindings</a>
 </div>
 
 <div class="doc_text">
 
-<p>The Llvm.Linkage module is broken, and has incorrect values. Only
-Llvm.Linkage.External, Llvm.Linkage.Available_externally, and
-Llvm.Linkage.Link_once will be correct. If you need any of the other linkage
+<p>The <tt>Llvm.Linkage</tt> module is broken, and has incorrect values. Only
+<tt>Llvm.Linkage.External</tt>, <tt>Llvm.Linkage.Available_externally</tt>, and
+<tt>Llvm.Linkage.Link_once</tt> will be correct. If you need any of the other linkage
 modes, you'll have to write an external C library in order to expose the
 functionality. This has been fixed in the trunk.</p>
 </div>
