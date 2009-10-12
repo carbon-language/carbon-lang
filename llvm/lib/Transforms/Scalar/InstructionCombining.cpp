@@ -101,6 +101,20 @@ namespace {
         Add(I);
     }
     
+    /// AddInitialGroup - Add the specified batch of stuff in reverse order.
+    /// which should only be done when the worklist is empty and when the group
+    /// has no duplicates.
+    void AddInitialGroup(Instruction *const *List, unsigned NumEntries) {
+      assert(Worklist.empty() && "Worklist must be empty to add initial group");
+      Worklist.reserve(NumEntries+16);
+      DEBUG(errs() << "IC: ADDING: " << NumEntries << " instrs to worklist\n");
+      for (; NumEntries; --NumEntries) {
+        Instruction *I = List[NumEntries-1];
+        WorklistMap.insert(std::make_pair(I, Worklist.size()));
+        Worklist.push_back(I);
+      }
+    }
+    
     // Remove - remove I from the worklist if it exists.
     void Remove(Instruction *I) {
       DenseMap<Instruction*, unsigned>::iterator It = WorklistMap.find(I);
@@ -12663,6 +12677,9 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
                                        const TargetData *TD) {
   SmallVector<BasicBlock*, 256> Worklist;
   Worklist.push_back(BB);
+  
+  std::vector<Instruction*> InstrsForInstCombineWorklist;
+  InstrsForInstCombineWorklist.reserve(128);
 
   while (!Worklist.empty()) {
     BB = Worklist.back();
@@ -12671,7 +12688,6 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
     // We have now visited this block!  If we've already been here, ignore it.
     if (!Visited.insert(BB)) continue;
 
-    DbgInfoIntrinsic *DBI_Prev = NULL;
     for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
       Instruction *Inst = BBI++;
       
@@ -12692,24 +12708,8 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
         Inst->eraseFromParent();
         continue;
       }
-     
-      // If there are two consecutive llvm.dbg.stoppoint calls then
-      // it is likely that the optimizer deleted code in between these
-      // two intrinsics. 
-      DbgInfoIntrinsic *DBI_Next = dyn_cast<DbgInfoIntrinsic>(Inst);
-      if (DBI_Next) {
-        if (DBI_Prev
-            && DBI_Prev->getIntrinsicID() == llvm::Intrinsic::dbg_stoppoint
-            && DBI_Next->getIntrinsicID() == llvm::Intrinsic::dbg_stoppoint) {
-          IC.Worklist.Remove(DBI_Prev);
-          DBI_Prev->eraseFromParent();
-        }
-        DBI_Prev = DBI_Next;
-      } else {
-        DBI_Prev = 0;
-      }
 
-      IC.Worklist.Add(Inst);
+      InstrsForInstCombineWorklist.push_back(Inst);
     }
 
     // Recursively visit successors.  If this is a branch or switch on a
@@ -12741,6 +12741,14 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
     for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
       Worklist.push_back(TI->getSuccessor(i));
   }
+  
+  // Once we've found all of the instructions to add to instcombine's worklist,
+  // add them in reverse order.  This way instcombine will visit from the top
+  // of the function down.  This jives well with the way that it adds all uses
+  // of instructions to the worklist after doing a transformation, thus avoiding
+  // some N^2 behavior in pathological cases.
+  IC.Worklist.AddInitialGroup(&InstrsForInstCombineWorklist[0],
+                              InstrsForInstCombineWorklist.size());
 }
 
 bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
