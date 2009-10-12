@@ -165,8 +165,7 @@ namespace {
     int LookForExistingCPEntry(CPUser& U, unsigned UserOffset);
     bool LookForWater(CPUser&U, unsigned UserOffset,
                       MachineBasicBlock *&NewMBB);
-    MachineBasicBlock* AcceptWater(MachineBasicBlock *WaterBB,
-                                   water_iterator IP);
+    MachineBasicBlock *AcceptWater(water_iterator IP);
     void CreateNewWater(unsigned CPUserIndex, unsigned UserOffset,
                       MachineBasicBlock** NewMBB);
     bool HandleConstantPoolUser(MachineFunction &MF, unsigned CPUserIndex);
@@ -932,9 +931,8 @@ static inline unsigned getUnconditionalBrDisp(int Opc) {
 }
 
 /// AcceptWater - Small amount of common code factored out of the following.
-
-MachineBasicBlock* ARMConstantIslands::AcceptWater(MachineBasicBlock *WaterBB,
-                                                   water_iterator IP) {
+///
+MachineBasicBlock *ARMConstantIslands::AcceptWater(water_iterator IP) {
   DEBUG(errs() << "found water in range\n");
   // Remove the original WaterList entry; we want subsequent
   // insertions in this vicinity to go after the one we're
@@ -942,7 +940,7 @@ MachineBasicBlock* ARMConstantIslands::AcceptWater(MachineBasicBlock *WaterBB,
   // of times we have to move the same CPE more than once.
   WaterList.erase(IP);
   // CPE goes before following block (NewMBB).
-  return next(MachineFunction::iterator(WaterBB));
+  return next(MachineFunction::iterator(*IP));
 }
 
 /// LookForWater - look for an existing entry in the WaterList in which
@@ -973,7 +971,7 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
           IPThatWouldPad = IP;
         }
       } else {
-        NewMBB = AcceptWater(WaterBB, IP);
+        NewMBB = AcceptWater(IP);
         return true;
       }
     }
@@ -981,7 +979,7 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
       break;
   }
   if (isThumb && WaterBBThatWouldPad) {
-    NewMBB = AcceptWater(WaterBBThatWouldPad, IPThatWouldPad);
+    NewMBB = AcceptWater(IPThatWouldPad);
     return true;
   }
   return false;
