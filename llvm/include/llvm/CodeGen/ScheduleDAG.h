@@ -518,21 +518,6 @@ namespace llvm {
     void EmitNoop();
 
     void EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
-
-  private:
-    /// EmitLiveInCopy - Emit a copy for a live in physical register. If the
-    /// physical register has only a single copy use, then coalesced the copy
-    /// if possible.
-    void EmitLiveInCopy(MachineBasicBlock *MBB,
-                        MachineBasicBlock::iterator &InsertPos,
-                        unsigned VirtReg, unsigned PhysReg,
-                        const TargetRegisterClass *RC,
-                        DenseMap<MachineInstr*, unsigned> &CopyRegMap);
-
-    /// EmitLiveInCopies - If this is the first basic block in the function,
-    /// and if it has live ins that need to be copied into vregs, emit the
-    /// copies into the top of the block.
-    void EmitLiveInCopies(MachineBasicBlock *MBB);
   };
 
   class SUnitIterator : public std::iterator<std::forward_iterator_tag,
