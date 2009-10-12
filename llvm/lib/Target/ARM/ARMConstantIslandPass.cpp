@@ -956,28 +956,29 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
                                       MachineBasicBlock *&NewMBB) {
   water_iterator IPThatWouldPad;
   MachineBasicBlock* WaterBBThatWouldPad = NULL;
-  if (!WaterList.empty()) {
-    for (water_iterator IP = prior(WaterList.end()),
-           B = WaterList.begin();; --IP) {
-      MachineBasicBlock* WaterBB = *IP;
-      if (WaterIsInRange(UserOffset, WaterBB, U)) {
-        unsigned WBBId = WaterBB->getNumber();
-        if (isThumb &&
-            (BBOffsets[WBBId] + BBSizes[WBBId])%4 != 0) {
-          // This is valid Water, but would introduce padding.  Remember
-          // it in case we don't find any Water that doesn't do this.
-          if (!WaterBBThatWouldPad) {
-            WaterBBThatWouldPad = WaterBB;
-            IPThatWouldPad = IP;
-          }
-        } else {
-          NewMBB = AcceptWater(WaterBB, IP);
-          return true;
+  if (WaterList.empty())
+    return false;
+
+  for (water_iterator IP = prior(WaterList.end()),
+         B = WaterList.begin();; --IP) {
+    MachineBasicBlock* WaterBB = *IP;
+    if (WaterIsInRange(UserOffset, WaterBB, U)) {
+      unsigned WBBId = WaterBB->getNumber();
+      if (isThumb &&
+          (BBOffsets[WBBId] + BBSizes[WBBId])%4 != 0) {
+        // This is valid Water, but would introduce padding.  Remember
+        // it in case we don't find any Water that doesn't do this.
+        if (!WaterBBThatWouldPad) {
+          WaterBBThatWouldPad = WaterBB;
+          IPThatWouldPad = IP;
         }
+      } else {
+        NewMBB = AcceptWater(WaterBB, IP);
+        return true;
       }
-      if (IP == B)
-        break;
     }
+    if (IP == B)
+      break;
   }
   if (isThumb && WaterBBThatWouldPad) {
     NewMBB = AcceptWater(WaterBBThatWouldPad, IPThatWouldPad);
