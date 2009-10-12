@@ -31,11 +31,7 @@ llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
                                                     const char *Name) {
   if (!Builder.isNamePreserving())
     Name = "";
-  llvm::AllocaInst *AI = new llvm::AllocaInst(Ty, 0, Name, AllocaInsertPt);
-#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
-  Builder.SetDebugLocation(AI);
-#endif
-  return AI;
+  return new llvm::AllocaInst(Ty, 0, Name, AllocaInsertPt);
 }
 
 /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
