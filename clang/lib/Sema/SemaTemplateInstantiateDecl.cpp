@@ -390,7 +390,8 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   CXXRecordDecl *RecordInst
     = CXXRecordDecl::Create(SemaRef.Context, Pattern->getTagKind(), Owner,
                             Pattern->getLocation(), Pattern->getIdentifier(),
-                            Pattern->getTagKeywordLoc(), /*PrevDecl=*/ NULL);
+                            Pattern->getTagKeywordLoc(), /*PrevDecl=*/ NULL,
+                            /*DelayTypeCreation=*/true);
 
   ClassTemplateDecl *Inst
     = ClassTemplateDecl::Create(SemaRef.Context, Owner, D->getLocation(),
@@ -398,7 +399,10 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   RecordInst->setDescribedClassTemplate(Inst);
   Inst->setAccess(D->getAccess());
   Inst->setInstantiatedFromMemberTemplate(D);
-
+  
+  // Trigger creation of the type for the instantiation.
+  SemaRef.Context.getTypeDeclType(RecordInst);
+  
   Owner->addDecl(Inst);
   return Inst;
 }

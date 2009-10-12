@@ -574,6 +574,9 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   DeclContext *SemanticContext;
   LookupResult Previous;
   if (SS.isNotEmpty() && !SS.isInvalid()) {
+    if (RequireCompleteDeclContext(SS))
+      return true;
+
     SemanticContext = computeDeclContext(SS, true);
     if (!SemanticContext) {
       // FIXME: Produce a reasonable diagnostic here
