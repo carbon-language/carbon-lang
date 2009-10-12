@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine -S | notcast
+; RUN: opt < %s -instcombine -S | FileCheck %s
 
 define i32 @mul(i32 %x, i32 %y) {
   %A = trunc i32 %x to i8
@@ -6,6 +6,9 @@ define i32 @mul(i32 %x, i32 %y) {
   %C = mul i8 %A, %B
   %D = zext i8 %C to i32
   ret i32 %D
+; CHECK: %C = mul i32 %x, %y
+; CHECK: %D = and i32 %C, 255
+; CHECK: ret i32 %D
 }
 
 define i32 @select1(i1 %cond, i32 %x, i32 %y, i32 %z) {
@@ -16,6 +19,10 @@ define i32 @select1(i1 %cond, i32 %x, i32 %y, i32 %z) {
   %E = select i1 %cond, i8 %C, i8 %D
   %F = zext i8 %E to i32
   ret i32 %F
+; CHECK: %D = add i32 %x, %y
+; CHECK: %E = select i1 %cond, i32 %z, i32 %D
+; CHECK: %F = and i32 %E, 255
+; CHECK: ret i32 %F
 }
 
 define i8 @select2(i1 %cond, i8 %x, i8 %y, i8 %z) {
@@ -26,4 +33,7 @@ define i8 @select2(i1 %cond, i8 %x, i8 %y, i8 %z) {
   %E = select i1 %cond, i32 %C, i32 %D
   %F = trunc i32 %E to i8
   ret i8 %F
+; CHECK: %D = add i8 %x, %y
+; CHECK: %E = select i1 %cond, i8 %z, i8 %D
+; CHECK: ret i8 %E
 }
