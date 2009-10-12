@@ -946,10 +946,11 @@ MachineBasicBlock *ARMConstantIslands::AcceptWater(water_iterator IP) {
 /// LookForWater - look for an existing entry in the WaterList in which
 /// we can place the CPE referenced from U so it's within range of U's MI.
 /// Returns true if found, false if not.  If it returns true, NewMBB
-/// is set to the WaterList entry.
-/// For ARM, we prefer the water that's farthest away. For Thumb, prefer
-/// water that will not introduce padding to water that will; within each
-/// group, prefer the water that's farthest away.
+/// is set to the WaterList entry.  For Thumb, prefer water that will not
+/// introduce padding to water that will.  To ensure that this pass
+/// terminates, the CPE location for a particular CPUser is only allowed to
+/// move to a lower address, so search backward from the end of the list and
+/// prefer the first water that is in range.
 bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
                                       MachineBasicBlock *&NewMBB) {
   if (WaterList.empty())
@@ -960,7 +961,9 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
   for (water_iterator IP = prior(WaterList.end()),
          B = WaterList.begin();; --IP) {
     MachineBasicBlock* WaterBB = *IP;
-    if (WaterIsInRange(UserOffset, WaterBB, U)) {
+    // Check if water is in range and at a lower address than the current one.
+    if (WaterIsInRange(UserOffset, WaterBB, U) &&
+        WaterBB->getNumber() < U.CPEMI->getParent()->getNumber()) {
       unsigned WBBId = WaterBB->getNumber();
       if (isThumb &&
           (BBOffsets[WBBId] + BBSizes[WBBId])%4 != 0) {
@@ -1109,10 +1112,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
   // We will be generating a new clone.  Get a UID for it.
   unsigned ID = AFI->createConstPoolEntryUId();
 
-  // Look for water where we can place this CPE.  We look for the farthest one
-  // away that will work.  Forward references only for now (although later
-  // we might find some that are backwards).
-
+  // Look for water where we can place this CPE.
   if (!LookForWater(U, UserOffset, NewMBB)) {
     // No water found.
     DEBUG(errs() << "No water found\n");
