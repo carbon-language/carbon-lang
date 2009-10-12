@@ -190,7 +190,7 @@ private:
     // Enqueue all blocks to ensure the dataflow values are computed
     // for every block.  Not all blocks are guaranteed to reach the exit block.
     for (CFG::iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
-      WorkList.enqueue(&*I);
+      WorkList.enqueue(&**I);
 
     while (!WorkList.isEmpty()) {
       const CFGBlock* B = WorkList.dequeue();
