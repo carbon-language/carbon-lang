@@ -143,27 +143,6 @@ void TargetInstrInfoImpl::reMaterialize(MachineBasicBlock &MBB,
   MBB.insert(I, MI);
 }
 
-bool TargetInstrInfoImpl::isDeadInstruction(const MachineInstr *MI) const {
-  const TargetInstrDesc &TID = MI->getDesc();
-  if (TID.mayLoad() || TID.mayStore() || TID.isCall() || TID.isTerminator() ||
-      TID.isCall() || TID.isBarrier() || TID.isReturn() ||
-      TID.hasUnmodeledSideEffects())
-    return false;
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || !MO.getReg())
-      continue;
-    if (MO.isDef() && !MO.isDead())
-      return false;
-    if (MO.isUse() && MO.isKill())
-      // FIXME: We can't remove kill markers or else the scavenger will assert.
-      // An alternative is to add a ADD pseudo instruction to replace kill
-      // markers.
-      return false;
-  }
-  return true;
-}
-
 unsigned
 TargetInstrInfoImpl::GetFunctionSizeInBytes(const MachineFunction &MF) const {
   unsigned FnSize = 0;
