@@ -167,7 +167,7 @@ namespace {
                       MachineBasicBlock *&NewMBB);
     MachineBasicBlock *AcceptWater(water_iterator IP);
     void CreateNewWater(unsigned CPUserIndex, unsigned UserOffset,
-                      MachineBasicBlock** NewMBB);
+                        MachineBasicBlock *&NewMBB);
     bool HandleConstantPoolUser(MachineFunction &MF, unsigned CPUserIndex);
     void RemoveDeadCPEMI(MachineInstr *CPEMI);
     bool RemoveUnusedCPEntries();
@@ -992,12 +992,12 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
 /// CPUsers[CPUserIndex], so create a place to put the CPE.  The end of the
 /// block is used if in range, and the conditional branch munged so control
 /// flow is correct.  Otherwise the block is split to create a hole with an
-/// unconditional branch around it.  In either case *NewMBB is set to a
+/// unconditional branch around it.  In either case NewMBB is set to a
 /// block following which the new island can be inserted (the WaterList
 /// is not adjusted).
-
 void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
-                        unsigned UserOffset, MachineBasicBlock** NewMBB) {
+                                        unsigned UserOffset,
+                                        MachineBasicBlock *&NewMBB) {
   CPUser &U = CPUsers[CPUserIndex];
   MachineInstr *UserMI = U.MI;
   MachineInstr *CPEMI  = U.CPEMI;
@@ -1019,7 +1019,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     DEBUG(errs() << "Split at end of block\n");
     if (&UserMBB->back() == UserMI)
       assert(BBHasFallthrough(UserMBB) && "Expected a fallthrough BB!");
-    *NewMBB = next(MachineFunction::iterator(UserMBB));
+    NewMBB = next(MachineFunction::iterator(UserMBB));
     // Add an unconditional branch from UserMBB to fallthrough block.
     // Record it for branch lengthening; this new branch will not get out of
     // range, but if the preceding conditional branch is out of range, the
@@ -1027,7 +1027,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     // range, so the machinery has to know about it.
     int UncondBr = isThumb ? ((isThumb2) ? ARM::t2B : ARM::tB) : ARM::B;
     BuildMI(UserMBB, DebugLoc::getUnknownLoc(),
-            TII->get(UncondBr)).addMBB(*NewMBB);
+            TII->get(UncondBr)).addMBB(NewMBB);
     unsigned MaxDisp = getUnconditionalBrDisp(UncondBr);
     ImmBranches.push_back(ImmBranch(&UserMBB->back(),
                           MaxDisp, false, UncondBr));
@@ -1082,7 +1082,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
       }
     }
     DEBUG(errs() << "Split in middle of big block\n");
-    *NewMBB = SplitBlockBeforeInstr(prior(MI));
+    NewMBB = SplitBlockBeforeInstr(prior(MI));
   }
 }
 
@@ -1116,7 +1116,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
   if (!LookForWater(U, UserOffset, NewMBB)) {
     // No water found.
     DEBUG(errs() << "No water found\n");
-    CreateNewWater(CPUserIndex, UserOffset, &NewMBB);
+    CreateNewWater(CPUserIndex, UserOffset, NewMBB);
   }
 
   // Okay, we know we can put an island before NewMBB now, do it!
