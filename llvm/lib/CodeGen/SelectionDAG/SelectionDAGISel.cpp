@@ -385,6 +385,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB,
         DILocation DILoc(Dbg);
         DebugLoc Loc = ExtractDebugLocation(DILoc, MF->getDebugLocInfo());
         SDL->setCurDebugLoc(Loc);
+        if (MF->getDefaultDebugLoc().isUnknown())
+          MF->setDefaultDebugLoc(Loc);
       }
     }
     if (!isa<TerminatorInst>(I))
