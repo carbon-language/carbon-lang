@@ -50,7 +50,7 @@ private:
 
   bool ParseMemory(ARMOperand &Op);
 
-  bool ParseShift(enum ShiftType *St, const MCExpr *ShiftAmount);
+  bool ParseShift(enum ShiftType *St, const MCExpr *&ShiftAmount);
 
   bool ParseOperand(ARMOperand &Op);
 
@@ -414,7 +414,7 @@ bool ARMAsmParser::ParseMemory(ARMOperand &Op) {
 ///   ( lsl | lsr | asr | ror ) , # shift_amount
 ///   rrx
 /// and returns true if it parses a shift otherwise it returns false.
-bool ARMAsmParser::ParseShift(ShiftType *St, const MCExpr *ShiftAmount) {
+bool ARMAsmParser::ParseShift(ShiftType *St, const MCExpr *&ShiftAmount) {
   const AsmToken &Tok = getLexer().getTok();
   if (Tok.isNot(AsmToken::Identifier))
     return true;
