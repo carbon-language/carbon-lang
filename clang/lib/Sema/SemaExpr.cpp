@@ -6290,10 +6290,8 @@ void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
     return;
   }
 
-  // We want to insert before the start of the expression...
   SourceLocation Open = E->getSourceRange().getBegin();
-  // ...and one character after the end.
-  SourceLocation Close = E->getSourceRange().getEnd().getFileLocWithOffset(1);
+  SourceLocation Close = PP.getLocForEndOfToken(E->getSourceRange().getEnd());
   
   Diag(Loc, diag::warn_condition_is_assignment)
     << E->getSourceRange()
