@@ -37,6 +37,14 @@ add_clang_library(clangFrontend
   Warnings.cpp
   )
 
+IF(MSVC)
+  get_target_property(NON_ANSI_COMPILE_FLAGS clangFrontend COMPILE_FLAGS)
+  string(REPLACE /Za
+    "" NON_ANSI_COMPILE_FLAGS
+    ${NON_ANSI_COMPILE_FLAGS})
+  set_target_properties(clangFrontend PROPERTIES COMPILE_FLAGS ${NON_ANSI_COMPILE_FLAGS})
+ENDIF(MSVC)
+
 add_dependencies(clangFrontend 
   ClangDiagnosticFrontend 
   ClangDiagnosticLex

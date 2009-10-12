@@ -61,6 +61,12 @@ public:
   ///  libstdc++.
   void AddGnuCPlusPlusIncludePaths(const std::string &Base, const char *Arch);
 
+  /// AddMinGWCPlusPlusIncludePaths - Add the necessary paths to suport a MinGW
+  ///  libstdc++.
+  void AddMinGWCPlusPlusIncludePaths(const std::string &Base,
+                                     const char *Arch,
+                                     const char *Version);
+
   /// AddDefaultEnvVarPaths - Adds list of paths from default environment
   ///  variables such as CPATH.
   void AddDefaultEnvVarPaths(const LangOptions &Lang);

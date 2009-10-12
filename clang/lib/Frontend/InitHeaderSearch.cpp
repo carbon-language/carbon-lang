@@ -21,6 +21,10 @@
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
 #include <cstdio>
+#ifdef _MSC_VER
+  #define WIN32_LEAN_AND_MEAN 1
+  #include <windows.h>
+#endif
 using namespace clang;
 
 void InitHeaderSearch::AddPath(const llvm::StringRef &Path,
@@ -105,16 +109,19 @@ void InitHeaderSearch::AddGnuCPlusPlusIncludePaths(const std::string &Base,
     AddPath(Base + "/backward", System, true, false, false);
 }
 
-#if defined(LLVM_ON_WIN32)
+void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(const std::string &Base,
+                                                     const char *Arch,
+                                                     const char *Version) {
+    std::string localBase = Base + "/" + Arch + "/" + Version + "/include";
+    AddPath(localBase, System, true, false, false);
+    AddPath(localBase + "/c++", System, true, false, false);
+    AddPath(localBase + "/c++/backward", System, true, false, false);
+}
 
-#if 0 // Yikes!  Can't include windows.h.
-  #if LLVM_ON_WIN32
-    #define WIN32_LEAN_AND_MEAN 1
-    #include <windows.h>
-  #endif
-
-  // Read Windows registry string.
-bool getWindowsRegistryString(const char *keyPath, const char *valueName,
+  // FIXME: This probably should goto to some platform utils place.
+#ifdef _MSC_VER
+  // Read registry string.
+bool getSystemRegistryString(const char *keyPath, const char *valueName,
                        char *value, size_t maxLength) {
   HKEY hRootKey = NULL;
   HKEY hKey = NULL;
@@ -142,29 +149,65 @@ bool getWindowsRegistryString(const char *keyPath, const char *valueName,
     return(false);
   long lResult = RegOpenKeyEx(hRootKey, subKey, 0, KEY_READ, &hKey);
   if (lResult == ERROR_SUCCESS) {
-    lResult = RegQueryValueEx(hKey, valueName, NULL, &valueType, (LPBYTE)value,
-                              &valueSize);
+    lResult = RegQueryValueEx(hKey, valueName, NULL, &valueType,
+      (LPBYTE)value, &valueSize);
     if (lResult == ERROR_SUCCESS)
       returnValue = true;
-    RegCloseKey(kKey);
+    RegCloseKey(hKey);
   }
   return(returnValue);
 }
+#else // _MSC_VER
+  // Read registry string.
+bool getSystemRegistryString(const char *, const char *, char *, size_t) {
+  return(false);
+}
+#endif // _MSC_VER
 
   // Get Visual Studio installation directory.
 bool getVisualStudioDir(std::string &path) {
-  char vs80comntools[256];
-  char vs90comntools[256];
-  const char* vscomntools = NULL;
-  bool has80 = getWindowsRegistryString(
+  // Try the Windows registry first.
+  char vs80IDEInstallDir[256];
+  char vs90IDEInstallDir[256];
+  const char* vsIDEInstallDir = NULL;
+  bool has80 = getSystemRegistryString(
     "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\8.0",
-    "InstallDir", vs80comntools, sizeof(vs80comntools) - 1);
-  bool has90 = getWindowsRegistryString(
+    "InstallDir", vs80IDEInstallDir, sizeof(vs80IDEInstallDir) - 1);
+  bool has90 = getSystemRegistryString(
     "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\VisualStudio\\9.0",
-    "InstallDir", vs90comntools, sizeof(vs90comntools) - 1);
+    "InstallDir", vs90IDEInstallDir, sizeof(vs90IDEInstallDir) - 1);
     // If we have both vc80 and vc90, pick version we were compiled with. 
   if (has80 && has90) {
     #ifdef _MSC_VER
+      #if (_MSC_VER >= 1500)  // VC90
+          vsIDEInstallDir = vs90IDEInstallDir;
+      #elif (_MSC_VER == 1400) // VC80
+          vsIDEInstallDir = vs80IDEInstallDir;
+      #else
+          vsIDEInstallDir = vs90IDEInstallDir;
+      #endif
+    #else
+      vsIDEInstallDir = vs90IDEInstallDir;
+    #endif
+  }
+  else if (has90)
+    vsIDEInstallDir = vs90IDEInstallDir;
+  else if (has80)
+    vsIDEInstallDir = vs80IDEInstallDir;
+  if (vsIDEInstallDir && *vsIDEInstallDir) {
+    char *p = (char*)strstr(vsIDEInstallDir, "\\Common7\\IDE");
+    if (p)
+      *p = '\0';
+    path = vsIDEInstallDir;
+    return(true);
+  }
+  else {
+    // Try the environment.
+    const char* vs90comntools = getenv("VS90COMNTOOLS");
+    const char* vs80comntools = getenv("VS80COMNTOOLS");
+    const char* vscomntools = NULL;
+      // If we have both vc80 and vc90, pick version we were compiled with. 
+    if (vs90comntools && vs80comntools) {
       #if (_MSC_VER >= 1500)  // VC90
           vscomntools = vs90comntools;
       #elif (_MSC_VER == 1400) // VC80
@@ -172,54 +215,23 @@ bool getVisualStudioDir(std::string &path) {
       #else
           vscomntools = vs90comntools;
       #endif
-    #else
+    }
+    else if (vs90comntools)
       vscomntools = vs90comntools;
-    #endif
+    else if (vs80comntools)
+      vscomntools = vs80comntools;
+    if (vscomntools && *vscomntools) {
+      char *p = (char*)strstr(vscomntools, "\\Common7\\Tools");
+      if (p)
+        *p = '\0';
+      path = vscomntools;
+      return(true);
+    }
+    else
+      return(false);
   }
-  else if (has90)
-    vscomntools = vs90comntools;
-  else if (has80)
-    vscomntools = vs80comntools;
-  else
-    return(false);
-  char *p = strstr(vscomntools, "\\Common7\\ide");
-  if (p)
-    *p = '\0';
-  path = vscomntools;
-  return(true);
+  return(false);
 }
-#else
-
-  // Get Visual Studio installation directory.
-bool getVisualStudioDir(std::string &path) {
-  const char* vs90comntools = getenv("VS90COMNTOOLS");
-  const char* vs80comntools = getenv("VS80COMNTOOLS");
-  const char* vscomntools = NULL;
-    // If we have both vc80 and vc90, pick version we were compiled with. 
-  if (vs90comntools && vs80comntools) {
-    #if (_MSC_VER >= 1500)  // VC90
-        vscomntools = vs90comntools;
-    #elif (_MSC_VER == 1400) // VC80
-        vscomntools = vs80comntools;
-    #else
-        vscomntools = vs90comntools;
-    #endif
-  }
-  else if (vs90comntools)
-    vscomntools = vs90comntools;
-  else if (vs80comntools)
-    vscomntools = vs80comntools;
-  else
-    return(false);
-  char *p = (char*)strstr(vscomntools, "\\Common7\\Tools");
-  if (p)
-    *p = '\0';
-  path = vscomntools;
-  return(true);
-}
-#endif
-
-#endif // LLVM_ON_WIN32
 
 void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
                                                    const llvm::Triple &triple) {
@@ -229,59 +241,56 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
   switch (os) {
   case llvm::Triple::Win32:
     {
-      #if defined(_MSC_VER)
-        std::string VSDir;
-        if (getVisualStudioDir(VSDir)) {
-          VSDir += "\\VC\\include";
-          AddPath(VSDir, System, false, false, false);
-        }
-        else {
-            // Default install paths.
-          AddPath("C:\\Program Files\\Microsoft Visual Studio 9.0\\VC\\include",
-            System, false, false, false);
-          AddPath("C:\\Program Files\\Microsoft Visual Studio 8\\VC\\include",
-            System, false, false, false);
-            // For some clang developers.
-          AddPath("G:\\Program Files\\Microsoft Visual Studio 9.0\\VC\\include",
-            System, false, false, false);
-        }
-      #else
+      std::string VSDir;
+      if (getVisualStudioDir(VSDir)) {
+        AddPath(VSDir + "\\VC\\include", System, false, false, false);
+        AddPath(VSDir + "\\VC\\PlatformSDK\\Include",
+          System, false, false, false);
+      }
+      else {
           // Default install paths.
-        AddPath("/Program Files/Microsoft Visual Studio 9.0/VC/include",
+        AddPath("C:/Program Files/Microsoft Visual Studio 9.0/VC/include",
           System, false, false, false);
-        AddPath("/Program Files/Microsoft Visual Studio 8/VC/include",
+        AddPath(
+        "C:/Program Files/Microsoft Visual Studio 9.0/VC/PlatformSDK/Include",
           System, false, false, false);
-      #endif
+        AddPath("C:/Program Files/Microsoft Visual Studio 8/VC/include",
+          System, false, false, false);
+        AddPath(
+        "C:/Program Files/Microsoft Visual Studio 8/VC/PlatformSDK/Include",
+          System, false, false, false);
+          // For some clang developers.
+        AddPath("G:/Program Files/Microsoft Visual Studio 9.0/VC/include",
+          System, false, false, false);
+        AddPath(
+        "G:/Program Files/Microsoft Visual Studio 9.0/VC/PlatformSDK/Include",
+          System, false, false, false);
+      }
     }
     break;
   case llvm::Triple::Cygwin:
     if (Lang.CPlusPlus) {
-      AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include", System, false, false,
-              false);
-      AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include/c++", System, false, false,
-              false);
+      AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include",
+        System, false, false, false);
+      AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include/c++",
+        System, false, false, false);
     }
     AddPath("/usr/include", System, false, false, false);
     break;
-  case llvm::Triple::MinGW32:
   case llvm::Triple::MinGW64:
+    if (Lang.CPlusPlus) { // I'm guessing here.
+      // Try gcc 4.4.0
+      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw64", "4.4.0");
+      // Try gcc 4.3.0
+      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw64", "4.3.0");
+    }
+    // Fall through.
+  case llvm::Triple::MinGW32:
     if (Lang.CPlusPlus) {
       // Try gcc 4.4.0
-      // FIXME: This can just use AddGnuCPlusPlusIncludePaths, right?
-      AddPath("c:/mingw/lib/gcc/mingw32/4.4.0/include/c++",
-              System, true, false, false);
-      AddPath("c:/mingw/lib/gcc/mingw32/4.4.0/include/c++/mingw32",
-              System, true, false, false);
-      AddPath("c:/mingw/lib/gcc/mingw32/4.4.0/include/c++/backward",
-              System, true, false, false);
+      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.4.0");
       // Try gcc 4.3.0
-      // FIXME: This can just use AddGnuCPlusPlusIncludePaths, right?
-      AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++",
-              System, true, false, false);
-      AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++/mingw32",
-              System, true, false, false);
-      AddPath("c:/mingw/lib/gcc/mingw32/4.3.0/include/c++/backward",
-              System, true, false, false);
+      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.3.0");
     }
     AddPath("c:/mingw/include", System, true, false, false);
     break;
