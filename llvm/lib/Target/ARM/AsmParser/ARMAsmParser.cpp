@@ -216,8 +216,8 @@ bool ARMAsmParser::ParseRegister(ARMOperand &Op) {
 // Try to parse a register list.  The first token must be a '{' when called
 // for now.
 bool ARMAsmParser::ParseRegisterList(ARMOperand &Op) {
-  const AsmToken &LCurlyTok = getLexer().getTok();
-  assert(LCurlyTok.is(AsmToken::LCurly) && "Token is not an Left Curly Brace");
+  assert(getLexer().getTok().is(AsmToken::LCurly) &&
+	 "Token is not an Left Curly Brace");
   getLexer().Lex(); // Eat left curly brace token.
 
   const AsmToken &RegTok = getLexer().getTok();
@@ -264,8 +264,8 @@ bool ARMAsmParser::ParseRegisterList(ARMOperand &Op) {
 // TODO Only preindexing and postindexing addressing are started, unindexed
 // with option, etc are still to do.
 bool ARMAsmParser::ParseMemory(ARMOperand &Op) {
-  const AsmToken &LBracTok = getLexer().getTok();
-  assert(LBracTok.is(AsmToken::LBrac) && "Token is not an Left Bracket");
+  assert(getLexer().getTok().is(AsmToken::LBrac) &&
+         "Token is not an Left Bracket");
   getLexer().Lex(); // Eat left bracket token.
 
   const AsmToken &BaseRegTok = getLexer().getTok();
