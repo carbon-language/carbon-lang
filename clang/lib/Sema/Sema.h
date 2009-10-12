@@ -3675,6 +3675,20 @@ public:
                                  SourceLocation lbrac, SourceLocation rbrac,
                                  QualType &ReturnType);
 
+  /// CheckBooleanCondition - Diagnose problems involving the use of
+  /// the given expression as a boolean condition (e.g. in an if
+  /// statement).  Also performs the standard function and array
+  /// decays, possibly changing the input variable.
+  ///
+  /// \param Loc - A location associated with the condition, e.g. the
+  /// 'if' keyword.
+  /// \return true iff there were any errors
+  bool CheckBooleanCondition(Expr *&CondExpr, SourceLocation Loc);
+
+  /// DiagnoseAssignmentAsCondition - Given that an expression is
+  /// being used as a boolean condition, warn if it's an assignment.
+  void DiagnoseAssignmentAsCondition(Expr *E);
+
   /// CheckCXXBooleanCondition - Returns true if conversion to bool is invalid.
   bool CheckCXXBooleanCondition(Expr *&CondExpr);
 

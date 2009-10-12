@@ -6268,3 +6268,56 @@ bool Sema::CheckCallReturnType(QualType ReturnType, SourceLocation Loc,
   return false;
 }
 
+// Diagnose the common s/=/==/ typo.  Note that adding parentheses
+// will prevent this condition from triggering, which is what we want.
+void Sema::DiagnoseAssignmentAsCondition(Expr *E) {
+  SourceLocation Loc;
+
+  if (isa<BinaryOperator>(E)) {
+    BinaryOperator *Op = cast<BinaryOperator>(E);
+    if (Op->getOpcode() != BinaryOperator::Assign)
+      return;
+
+    Loc = Op->getOperatorLoc();
+  } else if (isa<CXXOperatorCallExpr>(E)) {
+    CXXOperatorCallExpr *Op = cast<CXXOperatorCallExpr>(E);
+    if (Op->getOperator() != OO_Equal)
+      return;
+
+    Loc = Op->getOperatorLoc();
+  } else {
+    // Not an assignment.
+    return;
+  }
+
+  // We want to insert before the start of the expression...
+  SourceLocation Open = E->getSourceRange().getBegin();
+  // ...and one character after the end.
+  SourceLocation Close = E->getSourceRange().getEnd().getFileLocWithOffset(1);
+  
+  Diag(Loc, diag::warn_condition_is_assignment)
+    << E->getSourceRange()
+    << CodeModificationHint::CreateInsertion(Open, "(")
+    << CodeModificationHint::CreateInsertion(Close, ")");
+}
+
+bool Sema::CheckBooleanCondition(Expr *&E, SourceLocation Loc) {
+  DiagnoseAssignmentAsCondition(E);
+
+  if (!E->isTypeDependent()) {
+    DefaultFunctionArrayConversion(E);
+
+    QualType T = E->getType();
+
+    if (getLangOptions().CPlusPlus) {
+      if (CheckCXXBooleanCondition(E)) // C++ 6.4p4
+        return true;
+    } else if (!T->isScalarType()) { // C99 6.8.4.1p1
+      Diag(Loc, diag::err_typecheck_statement_requires_scalar)
+        << T << E->getSourceRange();
+      return true;
+    }
+  }
+
+  return false;
+}

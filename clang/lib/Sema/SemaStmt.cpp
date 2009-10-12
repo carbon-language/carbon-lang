@@ -214,20 +214,9 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
   Expr *condExpr = CondResult.takeAs<Expr>();
 
   assert(condExpr && "ActOnIfStmt(): missing expression");
-
-  if (!condExpr->isTypeDependent()) {
-    DefaultFunctionArrayConversion(condExpr);
-    // Take ownership again until we're past the error checking.
+  if (CheckBooleanCondition(condExpr, IfLoc)) {
     CondResult = condExpr;
-    QualType condType = condExpr->getType();
-
-    if (getLangOptions().CPlusPlus) {
-      if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
-        return StmtError();
-    } else if (!condType->isScalarType()) // C99 6.8.4.1p1
-      return StmtError(Diag(IfLoc,
-                            diag::err_typecheck_statement_requires_scalar)
-                       << condType << condExpr->getSourceRange());
+    return StmtError();
   }
 
   Stmt *thenStmt = ThenVal.takeAs<Stmt>();
@@ -577,18 +566,9 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, StmtArg Body) {
   Expr *condExpr = CondArg.takeAs<Expr>();
   assert(condExpr && "ActOnWhileStmt(): missing expression");
 
-  if (!condExpr->isTypeDependent()) {
-    DefaultFunctionArrayConversion(condExpr);
+  if (CheckBooleanCondition(condExpr, WhileLoc)) {
     CondArg = condExpr;
-    QualType condType = condExpr->getType();
-
-    if (getLangOptions().CPlusPlus) {
-      if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
-        return StmtError();
-    } else if (!condType->isScalarType()) // C99 6.8.5p2
-      return StmtError(Diag(WhileLoc,
-                            diag::err_typecheck_statement_requires_scalar)
-                       << condType << condExpr->getSourceRange());
+    return StmtError();
   }
 
   Stmt *bodyStmt = Body.takeAs<Stmt>();
@@ -605,18 +585,9 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
   Expr *condExpr = Cond.takeAs<Expr>();
   assert(condExpr && "ActOnDoStmt(): missing expression");
 
-  if (!condExpr->isTypeDependent()) {
-    DefaultFunctionArrayConversion(condExpr);
+  if (CheckBooleanCondition(condExpr, DoLoc)) {
     Cond = condExpr;
-    QualType condType = condExpr->getType();
-
-    if (getLangOptions().CPlusPlus) {
-      if (CheckCXXBooleanCondition(condExpr)) // C++ 6.4p4
-        return StmtError();
-    } else if (!condType->isScalarType()) // C99 6.8.5p2
-      return StmtError(Diag(DoLoc,
-                            diag::err_typecheck_statement_requires_scalar)
-                       << condType << condExpr->getSourceRange());
+    return StmtError();
   }
 
   Stmt *bodyStmt = Body.takeAs<Stmt>();
@@ -632,7 +603,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
                    StmtArg first, ExprArg second, ExprArg third,
                    SourceLocation RParenLoc, StmtArg body) {
   Stmt *First  = static_cast<Stmt*>(first.get());
-  Expr *Second = static_cast<Expr*>(second.get());
+  Expr *Second = second.takeAs<Expr>();
   Expr *Third  = static_cast<Expr*>(third.get());
   Stmt *Body  = static_cast<Stmt*>(body.get());
 
@@ -652,17 +623,9 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
       }
     }
   }
-  if (Second && !Second->isTypeDependent()) {
-    DefaultFunctionArrayConversion(Second);
-    QualType SecondType = Second->getType();
-
-    if (getLangOptions().CPlusPlus) {
-      if (CheckCXXBooleanCondition(Second)) // C++ 6.4p4
-        return StmtError();
-    } else if (!SecondType->isScalarType()) // C99 6.8.5p2
-      return StmtError(Diag(ForLoc,
-                            diag::err_typecheck_statement_requires_scalar)
-        << SecondType << Second->getSourceRange());
+  if (Second && CheckBooleanCondition(Second, ForLoc)) {
+    second = Second;
+    return StmtError();
   }
 
   DiagnoseUnusedExprResult(First);
@@ -670,7 +633,6 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   DiagnoseUnusedExprResult(Body);
 
   first.release();
-  second.release();
   third.release();
   body.release();
   return Owned(new (Context) ForStmt(First, Second, Third, Body, ForLoc,
