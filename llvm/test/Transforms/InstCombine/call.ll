@@ -1,5 +1,5 @@
 ; Ignore stderr, we expect warnings there
-; RUN: opt < %s -instcombine 2> /dev/null -S | CheckFile %s
+; RUN: opt < %s -instcombine 2> /dev/null -S | FileCheck %s
 
 
 ; Simple case, argument translatable without changing the value
