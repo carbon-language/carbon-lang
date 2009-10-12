@@ -2824,7 +2824,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   //   X * Y (where Y is 0 or 1) -> X & (0-Y)
   if (!isa<VectorType>(I.getType())) {
     // -2 is "-1 << 1" so it is all bits set except the low one.
-    APInt Negative2(I.getType()->getPrimitiveSizeInBits(), -2, true);
+    APInt Negative2(I.getType()->getPrimitiveSizeInBits(), (uint64_t)-2, true);
     
     Value *BoolCast = 0, *OtherOp = 0;
     if (MaskedValueIsZero(Op0, Negative2))
