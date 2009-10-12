@@ -53,8 +53,8 @@ define i32 @test4() {
         %X = call i32 bitcast (i8 ()* @test4a to i32 ()*)( )            ; <i32> [#uses=1]
         ret i32 %X
 ; CHECK: %X1 = call i8 @test4a()
-%tmp = zext i8 %X1 to i32
-ret i32 %tmp
+; CHECK: %tmp = zext i8 %X1 to i32
+; CHECK: ret i32 %tmp
 }
 
 
