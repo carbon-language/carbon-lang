@@ -605,7 +605,8 @@ void LICM::sink(Instruction &I) {
 /// that is safe to hoist, this instruction is called to do the dirty work.
 ///
 void LICM::hoist(Instruction &I) {
-  DEBUG(errs() << "LICM hoisting to " << Preheader->getName() << ": " << I);
+  DEBUG(errs() << "LICM hoisting to " << Preheader->getName() << ": "
+        << I << "\n");
 
   // Remove the instruction from its current basic block... but don't delete the
   // instruction.
