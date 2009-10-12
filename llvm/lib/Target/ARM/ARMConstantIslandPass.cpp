@@ -70,6 +70,8 @@ namespace {
     /// to a return, unreachable, or unconditional branch).
     std::vector<MachineBasicBlock*> WaterList;
 
+    typedef std::vector<MachineBasicBlock*>::iterator water_iterator;
+
     /// CPUser - One user of a constant pool, keeping the machine instruction
     /// pointer, the constant pool being referenced, and the max displacement
     /// allowed from the instruction to the CP.
@@ -164,7 +166,7 @@ namespace {
     bool LookForWater(CPUser&U, unsigned UserOffset,
                       MachineBasicBlock** NewMBB);
     MachineBasicBlock* AcceptWater(MachineBasicBlock *WaterBB,
-                        std::vector<MachineBasicBlock*>::iterator IP);
+                                   water_iterator IP);
     void CreateNewWater(unsigned CPUserIndex, unsigned UserOffset,
                       MachineBasicBlock** NewMBB);
     bool HandleConstantPoolUser(MachineFunction &MF, unsigned CPUserIndex);
@@ -608,7 +610,7 @@ void ARMConstantIslands::UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB) {
 
   // Next, update WaterList.  Specifically, we need to add NewMBB as having
   // available water after it.
-  std::vector<MachineBasicBlock*>::iterator IP =
+  water_iterator IP =
     std::lower_bound(WaterList.begin(), WaterList.end(), NewBB,
                      CompareMBBNumbers);
   WaterList.insert(IP, NewBB);
@@ -670,7 +672,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   // available water after it (but not if it's already there, which happens
   // when splitting before a conditional branch that is followed by an
   // unconditional branch - in that case we want to insert NewBB).
-  std::vector<MachineBasicBlock*>::iterator IP =
+  water_iterator IP =
     std::lower_bound(WaterList.begin(), WaterList.end(), OrigBB,
                      CompareMBBNumbers);
   MachineBasicBlock* WaterBB = *IP;
@@ -932,7 +934,7 @@ static inline unsigned getUnconditionalBrDisp(int Opc) {
 /// AcceptWater - Small amount of common code factored out of the following.
 
 MachineBasicBlock* ARMConstantIslands::AcceptWater(MachineBasicBlock *WaterBB,
-                          std::vector<MachineBasicBlock*>::iterator IP) {
+                                                   water_iterator IP) {
   DEBUG(errs() << "found water in range\n");
   // Remove the original WaterList entry; we want subsequent
   // insertions in this vicinity to go after the one we're
@@ -952,10 +954,10 @@ MachineBasicBlock* ARMConstantIslands::AcceptWater(MachineBasicBlock *WaterBB,
 /// group, prefer the water that's farthest away.
 bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
                                       MachineBasicBlock** NewMBB) {
-  std::vector<MachineBasicBlock*>::iterator IPThatWouldPad;
+  water_iterator IPThatWouldPad;
   MachineBasicBlock* WaterBBThatWouldPad = NULL;
   if (!WaterList.empty()) {
-    for (std::vector<MachineBasicBlock*>::iterator IP = prior(WaterList.end()),
+    for (water_iterator IP = prior(WaterList.end()),
            B = WaterList.begin();; --IP) {
       MachineBasicBlock* WaterBB = *IP;
       if (WaterIsInRange(UserOffset, WaterBB, U)) {
