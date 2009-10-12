@@ -389,6 +389,9 @@ void LLVMDumpValue(LLVMValueRef Val) {
   unwrap(Val)->dump();
 }
 
+void LLVMReplaceAllUsesWith(LLVMValueRef OldVal, LLVMValueRef NewVal) {
+  unwrap(OldVal)->replaceAllUsesWith(unwrap(NewVal));
+}
 
 /*--.. Conversion functions ................................................--*/
 
@@ -399,6 +402,31 @@ void LLVMDumpValue(LLVMValueRef Val) {
 
 LLVM_FOR_EACH_VALUE_SUBCLASS(LLVM_DEFINE_VALUE_CAST)
 
+/*--.. Operations on Uses ..................................................--*/
+LLVMUseIteratorRef LLVMGetFirstUse(LLVMValueRef Val) {
+  Value *V = unwrap(Val);
+  Value::use_iterator I = V->use_begin();
+  if (I == V->use_end())
+    return 0;
+  return wrap(&(I.getUse()));
+}
+
+LLVMUseIteratorRef LLVMGetNextUse(LLVMUseIteratorRef UR) {
+  return wrap(unwrap(UR)->getNext());
+}
+
+LLVMValueRef LLVMGetUser(LLVMUseIteratorRef UR) {
+  return wrap(unwrap(UR)->getUser());
+}
+
+LLVMValueRef LLVMGetUsedValue(LLVMUseIteratorRef UR) {
+  return wrap(unwrap(UR)->get());
+}
+
+/*--.. Operations on Users .................................................--*/
+LLVMValueRef LLVMGetOperand(LLVMValueRef Val, unsigned Index) {
+  return wrap(unwrap<User>(Val)->getOperand(Index));
+}
 
 /*--.. Operations on constants of any type .................................--*/
 
@@ -465,6 +493,14 @@ LLVMValueRef LLVMConstRealOfStringAndSize(LLVMTypeRef RealTy, const char Str[],
   return wrap(ConstantFP::get(unwrap(RealTy), StringRef(Str, SLen)));
 }
 
+unsigned long long LLVMConstIntGetZExtValue(LLVMValueRef ConstantVal) {
+  return unwrap<ConstantInt>(ConstantVal)->getZExtValue();
+}
+
+long long LLVMConstIntGetSExtValue(LLVMValueRef ConstantVal) {
+  return unwrap<ConstantInt>(ConstantVal)->getSExtValue();
+}
+
 /*--.. Operations on composite constants ...................................--*/
 
 LLVMValueRef LLVMConstStringInContext(LLVMContextRef C, const char *Str,
@@ -505,6 +541,10 @@ LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
 }
 
 /*--.. Constant expressions ................................................--*/
+
+LLVMOpcode LLVMGetConstOpcode(LLVMValueRef ConstantVal) {
+  return (LLVMOpcode)unwrap<ConstantExpr>(ConstantVal)->getOpcode();
+}
 
 LLVMValueRef LLVMAlignOf(LLVMTypeRef Ty) {
   return wrap(ConstantExpr::getAlignOf(unwrap(Ty)));
@@ -1027,7 +1067,10 @@ void LLVMDeleteGlobal(LLVMValueRef GlobalVar) {
 }
 
 LLVMValueRef LLVMGetInitializer(LLVMValueRef GlobalVar) {
-  return wrap(unwrap<GlobalVariable>(GlobalVar)->getInitializer());
+  GlobalVariable* GV = unwrap<GlobalVariable>(GlobalVar);
+  if ( !GV->hasInitializer() )
+    return 0;
+  return wrap(GV->getInitializer());
 }
 
 void LLVMSetInitializer(LLVMValueRef GlobalVar, LLVMValueRef ConstantVal) {
@@ -1149,6 +1192,13 @@ void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   Func->setAttributes(PALnew);
 }
 
+LLVMAttribute LLVMGetFunctionAttr(LLVMValueRef Fn) {
+  Function *Func = unwrap<Function>(Fn);
+  const AttrListPtr PAL = Func->getAttributes();
+  Attributes attr = PAL.getFnAttributes();
+  return (LLVMAttribute)attr;
+}
+
 /*--.. Operations on parameters ............................................--*/
 
 unsigned LLVMCountParams(LLVMValueRef FnRef) {
@@ -1214,6 +1264,14 @@ void LLVMAddAttribute(LLVMValueRef Arg, LLVMAttribute PA) {
 void LLVMRemoveAttribute(LLVMValueRef Arg, LLVMAttribute PA) {
   unwrap<Argument>(Arg)->removeAttr(PA);
 }
+
+LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg) {
+  Argument *A = unwrap<Argument>(Arg);
+  Attributes attr = A->getParent()->getAttributes().getParamAttributes(
+    A->getArgNo()+1);
+  return (LLVMAttribute)attr;
+}
+  
 
 void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align) {
   unwrap<Argument>(Arg)->addAttr(
