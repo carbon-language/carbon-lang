@@ -71,6 +71,7 @@ Almost dead code.
   ELF Writer?  How stable?
   <li>PostRA scheduler improvements, ARM adoption (David Goodwin).</li>
   2.7 supports the GDB 7.0 jit interfaces for debug info.
+  2.7 eliminates ADT/iterator.h
  -->
 
  <!-- for announcement email:
@@ -591,9 +592,9 @@ release includes a few major enhancements and additions to the optimizers:</p>
 <li>LLVM has a new "EngineBuilder" class which makes it more obvious how to
     set up and configure an ExecutionEngine (a JIT or interpreter).</li>
 <li>The JIT now supports generating more than 16M of code.</li>
-<li>When configured with --with-oprofile, the JIT can now inform OProfile about
-     JIT'd code, allowing OProfile to get line number and function name
-     information for JIT'd functions.</li>
+<li>When configured with <tt>--with-oprofile</tt>, the JIT can now inform
+     OProfile about JIT'd code, allowing OProfile to get line number and function
+     name information for JIT'd functions.</li>
 <li>When "libffi" is available, the LLVM interpreter now uses it, which supports
     calling almost arbitrary external (natively compiled) functions.</li>
 <li>Clients of the JIT can now register a 'JITEventListener' object to receive
@@ -1261,7 +1262,7 @@ which does support trampolines.</li>
 <li>The Ada front-end <a href="http://llvm.org/PR2007">fails to bootstrap</a>.
 This is due to lack of LLVM support for <tt>setjmp</tt>/<tt>longjmp</tt> style
 exception handling, which is used internally by the compiler.
-Workaround: configure with --disable-bootstrap.</li>
+Workaround: configure with <tt>--disable-bootstrap</tt>.</li>
 <li>The c380004, <a href="http://llvm.org/PR2010">c393010</a>
 and <a href="http://llvm.org/PR2421">cxg2021</a> ACATS tests fail
 (c380004 also fails with gcc-4.2 mainline).
