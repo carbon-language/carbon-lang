@@ -216,6 +216,17 @@ non-obvious ways.  Here are some hints and tips:<p>
     the list of specified optimizations to be randomized and applied to the 
     program. This process will repeat until a bug is found or the user
     kills <tt>bugpoint</tt>.
+
+<li><p><tt>bugpoint</tt> does not understand the <tt>-O</tt> option
+    that is used to specify optimization level to <tt>opt</tt>. You
+    can use e.g.</p>
+
+<div class="doc_code">
+<p><tt>opt -O2 -debug-pass=Arguments foo.bc -disable-output</tt></p>
+</div>
+
+    <p>to get a list of passes that are used with <tt>-O2</tt> and
+    then pass this list to <tt>bugpoint</tt>.</p>
     
 </ol>
 
