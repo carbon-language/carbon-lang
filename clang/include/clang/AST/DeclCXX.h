@@ -397,10 +397,10 @@ class CXXRecordDecl : public RecordDecl {
     TemplateOrInstantiation;
   
   void getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
-          const llvm::SmallPtrSet<QualType, 8> &TopConversionsTypeSet,
-          const llvm::SmallPtrSet<QualType, 8> &HiddenConversionTypes);
+          const llvm::SmallPtrSet<CanQualType, 8> &TopConversionsTypeSet,
+          const llvm::SmallPtrSet<CanQualType, 8> &HiddenConversionTypes);
   void collectConversionFunctions(
-    llvm::SmallPtrSet<QualType, 8>& ConversionsTypeSet);
+    llvm::SmallPtrSet<CanQualType, 8>& ConversionsTypeSet);
   
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,

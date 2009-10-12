@@ -287,14 +287,15 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
 
 void
 CXXRecordDecl::collectConversionFunctions(
-                        llvm::SmallPtrSet<QualType, 8>& ConversionsTypeSet) {
+                        llvm::SmallPtrSet<CanQualType, 8>& ConversionsTypeSet) 
+{
   OverloadedFunctionDecl *TopConversions = getConversionFunctions();
   for (OverloadedFunctionDecl::function_iterator
        TFunc = TopConversions->function_begin(),
        TFuncEnd = TopConversions->function_end();
        TFunc != TFuncEnd; ++TFunc) {
     NamedDecl *TopConv = TFunc->get();
-    QualType TConvType;
+    CanQualType TConvType;
     if (FunctionTemplateDecl *TConversionTemplate =
         dyn_cast<FunctionTemplateDecl>(TopConv))
       TConvType = 
@@ -317,8 +318,9 @@ CXXRecordDecl::collectConversionFunctions(
 /// in current class.
 void
 CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
-                const llvm::SmallPtrSet<QualType, 8> &TopConversionsTypeSet,                               
-                const llvm::SmallPtrSet<QualType, 8> &HiddenConversionTypes) {
+                const llvm::SmallPtrSet<CanQualType, 8> &TopConversionsTypeSet,                               
+                const llvm::SmallPtrSet<CanQualType, 8> &HiddenConversionTypes) 
+{
   bool inTopClass = (RD == this);
   QualType ClassType = getASTContext().getTypeDeclType(this);
   if (const RecordType *Record = ClassType->getAs<RecordType>()) {
@@ -332,7 +334,7 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
       NamedDecl *Conv = Func->get();
       // Only those conversions not exact match of conversions in current
       // class are candidateconversion routines.
-      QualType ConvType;
+      CanQualType ConvType;
       if (FunctionTemplateDecl *ConversionTemplate = 
             dyn_cast<FunctionTemplateDecl>(Conv))
         ConvType = 
@@ -360,7 +362,7 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
   if (getNumBases() == 0 && getNumVBases() == 0)
     return;
   
-  llvm::SmallPtrSet<QualType, 8> ConversionFunctions;
+  llvm::SmallPtrSet<CanQualType, 8> ConversionFunctions;
   if (!inTopClass)
     collectConversionFunctions(ConversionFunctions);
   
@@ -397,7 +399,7 @@ CXXRecordDecl::getVisibleConversionFunctions() {
   // If visible conversion list is already evaluated, return it.
   if (ComputedVisibleConversions)
     return &VisibleConversions;
-  llvm::SmallPtrSet<QualType, 8> TopConversionsTypeSet;
+  llvm::SmallPtrSet<CanQualType, 8> TopConversionsTypeSet;
   collectConversionFunctions(TopConversionsTypeSet);
   getNestedVisibleConversionFunctions(this, TopConversionsTypeSet,
                                       TopConversionsTypeSet);
