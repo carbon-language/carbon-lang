@@ -796,7 +796,7 @@ branched.</p>
 
 <ul>
 <li>New <a href="http://llvm.org/doxygen/PrettyStackTrace_8h-source.html">
-    PrettyStackTrace classes</a> allows crashes of llvm tools (and applications
+    <tt>PrettyStackTrace</tt> class</a> allows crashes of llvm tools (and applications
     that integrate them) to provide more detailed indication of what the
     compiler was doing at the time of the crash (e.g. running a pass).
     At the top level for each LLVM tool, it includes the command line arguments.
@@ -804,8 +804,8 @@ branched.</p>
 <li>New <a href="http://llvm.org/doxygen/StringRef_8h-source.html">StringRef</a>
     and <a href="http://llvm.org/doxygen/Twine_8h-source.html">Twine</a> classes
     make operations on character ranges and
-    string concatenation to be more efficient.  StringRef is just a <tt>const
-    char*</tt> with a length, Twine is a light-weight rope.</li>
+    string concatenation to be more efficient.  <tt>StringRef</tt> is just a <tt>const
+    char*</tt> with a length, <tt>Twine</tt> is a light-weight rope.</li>
 <li>LLVM has new <tt>WeakVH</tt>, <tt>AssertingVH</tt> and <tt>CallbackVH</tt>
     classes, which make it easier to write LLVM IR transformations.  <tt>WeakVH</tt>
     is automatically drops to null when the referenced <tt>Value</tt> is deleted,
@@ -889,12 +889,12 @@ from the previous release.</p>
 <li>The Itanium (IA64) backend has been removed.  It was not actively supported
     and had bitrotted.</li>
 <li>The BigBlock register allocator has been removed, it had also bitrotted.</li>
-<li>The C Backend (-march=c) is no longer considered part of the LLVM release
+<li>The C Backend (<tt>-march=c</tt>) is no longer considered part of the LLVM release
 criteria.  We still want it to work, but no one is maintaining it and it lacks
 support for arbitrary precision integers and other important IR features.</li>
 
 <li>All LLVM tools now default to overwriting their output file, behaving more
-    like standard unix tools.  Previously, this only happened with the '-f'
+    like standard unix tools.  Previously, this only happened with the '<tt>-f</tt>'
     option.</li>
 <li>LLVM build now builds all libraries as .a files instead of some
   libraries as relinked .o files.  This requires some APIs like
@@ -907,11 +907,11 @@ support for arbitrary precision integers and other important IR features.</li>
 API changes are:</p>
 
 <ul>
-<li>All uses of hash_set and hash_map have been removed from the LLVM tree and
-    the wrapper headers have been removed.</li>
+<li>All uses of <tt>hash_set</tt> and <tt>hash_map</tt> have been removed from
+    the LLVM tree and the wrapper headers have been removed.</li>
 <li>The llvm/Streams.h and <tt>DOUT</tt> member of Debug.h have been removed.  The
     <tt>llvm::Ostream</tt> class has been completely removed and replaced with
-    uses of raw_ostream.</li>
+    uses of <tt>raw_ostream</tt>.</li>
 <li>LLVM's global uniquing tables for <tt>Type</tt>s and <tt>Constant</tt>s have
     been privatized into members of an <tt>LLVMContext</tt>.  A number of APIs
     now take an <tt>LLVMContext</tt> as a parameter.  To smooth the transition
