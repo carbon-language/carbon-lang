@@ -254,7 +254,7 @@ Blocks in a bitstream denote nested regions of the stream, and are identified by
 a content-specific id number (for example, LLVM IR uses an ID of 12 to represent
 function bodies).  Block IDs 0-7 are reserved for <a href="#stdblocks">standard blocks</a>
 whose meaning is defined by Bitcode; block IDs 8 and greater are
-application specific. Nested blocks capture the hierachical structure of the data
+application specific. Nested blocks capture the hierarchical structure of the data
 encoded in it, and various properties are associated with blocks as the file is
 parsed.  Block definitions allow the reader to efficiently skip blocks
 in constant time if the reader wants a summary of blocks, or if it wants to

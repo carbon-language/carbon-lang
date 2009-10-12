@@ -1022,7 +1022,7 @@ files that use them.  This is called the internal storage model.</p>
 code from the storage of the value parsed.  For example, lets say that we have a
 '<tt>-debug</tt>' option that we would like to use to enable debug information
 across the entire body of our program.  In this case, the boolean value
-controlling the debug code should be globally accessable (in a header file, for
+controlling the debug code should be globally accessible (in a header file, for
 example) yet the command line option processing code should not be exposed to
 all of these clients (requiring lots of .cpp files to #include
 <tt>CommandLine.h</tt>).</p>
@@ -1107,7 +1107,7 @@ a command line option.  Look <a href="#value_desc_example">here</a> for an
 example.</li>
 
 <li><a name="cl::init">The <b><tt>cl::init</tt></b></a> attribute specifies an
-inital value for a <a href="#cl::opt">scalar</a> option.  If this attribute is
+initial value for a <a href="#cl::opt">scalar</a> option.  If this attribute is
 not specified then the command line option value defaults to the value created
 by the default constructor for the type. <b>Warning</b>: If you specify both
 <b><tt>cl::init</tt></b> and <b><tt>cl::location</tt></b> for an option,
@@ -1178,7 +1178,7 @@ href="#cl::list">cl::list</a></tt>.  These modifiers give you the ability to
 tweak how options are parsed and how <tt>--help</tt> output is generated to fit
 your application well.</p>
 
-<p>These options fall into five main catagories:</p>
+<p>These options fall into five main categories:</p>
 
 <ol>
 <li><a href="#hiding">Hiding an option from <tt>--help</tt> output</a></li>
@@ -1190,9 +1190,9 @@ your application well.</p>
 <li><a href="#misc">Miscellaneous option modifiers</a></li>
 </ol>
 
-<p>It is not possible to specify two options from the same catagory (you'll get
+<p>It is not possible to specify two options from the same category (you'll get
 a runtime error) to a single option, except for options in the miscellaneous
-catagory.  The CommandLine library specifies defaults for all of these settings
+category.  The CommandLine library specifies defaults for all of these settings
 that are the most useful in practice and the most common, which mean that you
 usually shouldn't have to worry about these.</p>
 
@@ -1536,7 +1536,7 @@ not be available, it can't just look in <tt>argv[0]</tt>), the name of the
 environment variable to examine, the optional
 <a href="#description">additional extra text</a> to emit when the
 <tt>--help</tt> option is invoked, and the boolean
-switch that controls whether <a href="#response">reponse files</a>
+switch that controls whether <a href="#response">response files</a>
 should be read.</p>
 
 <p><tt>cl::ParseEnvironmentOptions</tt> will break the environment

@@ -685,7 +685,7 @@ Stop.
 <p>Also, there are a number of other limitations of the C backend that cause it
    to produce code that does not fully conform to the C++ ABI on most
    platforms. Some of the C++ programs in LLVM's test suite are known to fail
-   when compiled with the C back end because of ABI incompatiblities with
+   when compiled with the C back end because of ABI incompatibilities with
    standard C++ libraries.</p>
 </div>
 
@@ -700,7 +700,7 @@ Stop.
    portable is by using the preprocessor to include platform-specific code. In
    practice, information about other platforms is lost after preprocessing, so
    the result is inherently dependent on the platform that the preprocessing was
-   targetting.</p>
+   targeting.</p>
 
 <p>Another example is <tt>sizeof</tt>. It's common for <tt>sizeof(long)</tt> to
    vary between platforms. In most C front-ends, <tt>sizeof</tt> is expanded to

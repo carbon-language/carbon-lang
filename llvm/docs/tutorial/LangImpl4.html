@@ -209,7 +209,7 @@ requires a pointer to the <tt>Module</tt> (through the <tt>ModuleProvider</tt>)
 to construct itself.  Once it is set up, we use a series of "add" calls to add
 a bunch of LLVM passes.  The first pass is basically boilerplate, it adds a pass
 so that later optimizations know how the data structures in the program are
-layed out.  The "<tt>TheExecutionEngine</tt>" variable is related to the JIT,
+laid out.  The "<tt>TheExecutionEngine</tt>" variable is related to the JIT,
 which we will get to in the next section.</p>
 
 <p>In this case, we choose to add 4 optimization passes.  The passes we chose

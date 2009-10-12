@@ -650,7 +650,7 @@ even if the source lives in multiple files.</p>
 <p>The <tt>DEBUG_WITH_TYPE</tt> macro is also available for situations where you
 would like to set <tt>DEBUG_TYPE</tt>, but only for one specific <tt>DEBUG</tt>
 statement. It takes an additional first parameter, which is the type to use. For
-example, the preceeding example could be written as:</p>
+example, the preceding example could be written as:</p>
 
 
 <div class="doc_code">
@@ -2983,7 +2983,7 @@ the <tt>lib/VMCore</tt> directory.</p>
   <dt><tt>VectorType</tt></dt>
   <dd>Subclass of SequentialType for vector types. A 
   vector type is similar to an ArrayType but is distinguished because it is 
-  a first class type wherease ArrayType is not. Vector types are used for 
+  a first class type whereas ArrayType is not. Vector types are used for 
   vector operations and are usually small vectors of of an integer or floating 
   point type.</dd>
   <dt><tt>StructType</tt></dt>
@@ -3552,7 +3552,7 @@ of a list of <a href="#BasicBlock"><tt>BasicBlock</tt></a>s, a list of formal
 <p>The list of <a href="#BasicBlock"><tt>BasicBlock</tt></a>s is the most
 commonly used part of <tt>Function</tt> objects.  The list imposes an implicit
 ordering of the blocks in the function, which indicate how the code will be
-layed out by the backend.  Additionally, the first <a
+laid out by the backend.  Additionally, the first <a
 href="#BasicBlock"><tt>BasicBlock</tt></a> is the implicit entry node for the
 <tt>Function</tt>.  It is not legal in LLVM to explicitly branch to this initial
 block.  There are no implicit exit nodes, and in fact there may be multiple exit
@@ -3682,7 +3682,7 @@ Superclasses: <a href="#GlobalValue"><tt>GlobalValue</tt></a>,
 <a href="#User"><tt>User</tt></a>,
 <a href="#Value"><tt>Value</tt></a></p>
 
-<p>Global variables are represented with the (suprise suprise)
+<p>Global variables are represented with the (surprise surprise)
 <tt>GlobalVariable</tt> class. Like functions, <tt>GlobalVariable</tt>s are also
 subclasses of <a href="#GlobalValue"><tt>GlobalValue</tt></a>, and as such are
 always referenced by their address (global values must live in memory, so their
@@ -3732,7 +3732,7 @@ never change at runtime).</p>
 
   <li><tt><a href="#Constant">Constant</a> *getInitializer()</tt>
 
-    <p>Returns the intial value for a <tt>GlobalVariable</tt>.  It is not legal
+    <p>Returns the initial value for a <tt>GlobalVariable</tt>.  It is not legal
     to call this method if there is no initializer.</p></li>
 </ul>
 

@@ -2019,7 +2019,7 @@ Classifications</a> </div>
 <div class="doc_text">
 
 <p>The string '<tt>undef</tt>' can be used anywhere a constant is expected, and
-   indicates that the user of the value may recieve an unspecified bit-pattern.
+   indicates that the user of the value may receive an unspecified bit-pattern.
    Undefined values may be of any type (other than label or void) and be used
    anywhere a constant is permitted.</p>
 
@@ -2118,7 +2118,7 @@ number of reasons, but the short answer is that an undef "variable" can
 arbitrarily change its value over its "live range".  This is true because the
 "variable" doesn't actually <em>have a live range</em>.  Instead, the value is
 logically read from arbitrary registers that happen to be around when needed,
-so the value is not neccesarily consistent over time.  In fact, %A and %C need
+so the value is not necessarily consistent over time.  In fact, %A and %C need
 to have the same semantics or the core LLVM "replace all uses with" concept
 would not hold.</p>
 
@@ -2300,7 +2300,7 @@ has undefined behavior.</p>
    the two digit hex code.  For example: "<tt>!"test\00"</tt>".</p>
 
 <p>Metadata nodes are represented with notation similar to structure constants
-   (a comma separated list of elements, surrounded by braces and preceeded by an
+   (a comma separated list of elements, surrounded by braces and preceded by an
    exclamation point).  For example: "<tt>!{ metadata !"test\00", i32
    10}</tt>".</p>
 
@@ -2619,8 +2619,8 @@ IfUnequal:
 <p>The <tt>switch</tt> instruction specifies a table of values and
    destinations. When the '<tt>switch</tt>' instruction is executed, this table
    is searched for the given value.  If the value is found, control flow is
-   transfered to the corresponding destination; otherwise, control flow is
-   transfered to the default destination.</p>
+   transferred to the corresponding destination; otherwise, control flow is
+   transferred to the default destination.</p>
 
 <h5>Implementation:</h5>
 <p>Depending on properties of the target machine and the particular

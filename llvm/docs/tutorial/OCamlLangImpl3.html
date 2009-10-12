@@ -159,7 +159,7 @@ uses "the foo::get(..)" idiom instead of "new foo(..)" or "foo::Create(..)".</p>
 </div>
 
 <p>References to variables are also quite simple using LLVM.  In the simple
-version of Kaleidoscope, we assume that the variable has already been emited
+version of Kaleidoscope, we assume that the variable has already been emitted
 somewhere and its value is available.  In practice, the only values that can be
 in the <tt>Codegen.named_values</tt> map are function arguments.  This code
 simply checks to see that the specified name is in the map (if not, an unknown
@@ -323,7 +323,7 @@ code above.</p>
 first, we want to allow 'extern'ing a function more than once, as long as the
 prototypes for the externs match (since all arguments have the same type, we
 just have to check that the number of arguments match).  Second, we want to
-allow 'extern'ing a function and then definining a body for it.  This is useful
+allow 'extern'ing a function and then defining a body for it.  This is useful
 when defining mutually recursive functions.</p>
 
 <div class="doc_code">

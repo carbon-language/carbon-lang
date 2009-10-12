@@ -166,7 +166,7 @@ $ llvm-gcc a.o main.o -o main # &lt;-- standard link command without any modific
     provided by the linker on various platform are not unique. This means, 
     this new tool needs to support all such features and platforms in one 
     super tool or a separate tool per platform is required. This increases 
-    maintance cost for link time optimizer significantly, which is not 
+    maintenance cost for link time optimizer significantly, which is not 
     necessary. This approach also requires staying synchronized with linker 
     developements on various platforms, which is not the main focus of the link 
     time optimizer. Finally, this approach increases end user's build time due 
@@ -189,7 +189,7 @@ $ llvm-gcc a.o main.o -o main # &lt;-- standard link command without any modific
   user-supplied information, such as a list of exported symbols. LLVM 
   optimizer collects control flow information, data flow information and knows 
   much more about program structure from the optimizer's point of view. 
-  Our goal is to take advantage of tight intergration between the linker and 
+  Our goal is to take advantage of tight integration between the linker and 
   the optimizer by sharing this information during various linking phases.
 </p>
 </div>

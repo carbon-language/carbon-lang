@@ -453,7 +453,7 @@ available, from the most general to the most specific.</p>
 <p>When choosing a superclass for your Pass, you should choose the <b>most
 specific</b> class possible, while still being able to meet the requirements
 listed.  This gives the LLVM Pass Infrastructure information necessary to
-optimize how passes are run, so that the resultant compiler isn't unneccesarily
+optimize how passes are run, so that the resultant compiler isn't unnecessarily
 slow.</p>
 
 </div>
@@ -492,7 +492,7 @@ invalidated, and are never "run".</p>
 href="http://llvm.org/doxygen/classllvm_1_1ModulePass.html">ModulePass</a></tt>"
 class is the most general of all superclasses that you can use.  Deriving from
 <tt>ModulePass</tt> indicates that your pass uses the entire program as a unit,
-refering to function bodies in no predictable order, or adding and removing
+referring to function bodies in no predictable order, or adding and removing
 functions.  Because nothing is known about the behavior of <tt>ModulePass</tt>
 subclasses, no optimization can be done for their execution.</p>
 
