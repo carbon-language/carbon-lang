@@ -210,8 +210,12 @@ static bool canDevirtualizeMemberFunctionCalls(const Expr *Base) {
     return false;
   }
   
-  // We can always devirtualize calls on temporaries.
+  // We can always devirtualize calls on temporary object expressions.
   if (isa<CXXTemporaryObjectExpr>(Base))
+    return true;
+  
+  // And calls on bound temporaries.
+  if (isa<CXXBindTemporaryExpr>(Base))
     return true;
   
   // Check if this is a call expr that returns a record type.

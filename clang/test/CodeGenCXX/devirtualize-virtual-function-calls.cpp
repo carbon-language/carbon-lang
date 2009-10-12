@@ -29,3 +29,19 @@ void f(A a, A *ap, A& ar) {
   // CHECK: call void @_ZN1A1fEv
   a.h().f();
 }
+
+struct B {
+  virtual void f();
+  ~B();
+  
+  B h();
+};
+
+
+void f() {
+  // CHECK: call void @_ZN1B1fEv
+  B().f();
+  
+  // CHECK: call void @_ZN1B1fEv
+  B().h().f();
+}
