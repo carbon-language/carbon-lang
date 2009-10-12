@@ -5,9 +5,9 @@ define i64 @test_sext_zext(i16 %A) {
         %c1 = zext i16 %A to i32                ; <i32> [#uses=1]
         %c2 = sext i32 %c1 to i64               ; <i64> [#uses=1]
         ret i64 %c2
-CHECK-NOT: %c1
-CHECK: %c2 = zext i16 %A to i64
-CHECK: ret i64 %c2
+; CHECK-NOT: %c1
+; CHECK: %c2 = zext i16 %A to i64
+; CHECK: ret i64 %c2
 }
 
 ; PR3599
@@ -31,6 +31,6 @@ entry:
 	%tmp16 = or i32 %tmp15, %tmp6		; <i32> [#uses=1]
 	%tmp17 = or i32 %tmp16, %tmp3		; <i32> [#uses=1]
 	ret i32 %tmp17
-CHECK: ret i1 true
+; CHECK: ret i1 true
 }
 
