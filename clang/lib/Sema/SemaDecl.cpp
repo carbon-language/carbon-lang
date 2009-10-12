@@ -2810,7 +2810,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     // function templates or member functions of class templates, per
     // C++ [temp.expl.spec]p2.
     if (!IsFunctionDefinition && !isFriend &&
-        NewFD->getTemplateSpecializationKind() != TSK_ExplicitSpecialization) {
+        !isFunctionTemplateSpecialization && !isExplicitSpecialization) {
       Diag(NewFD->getLocation(), diag::err_out_of_line_declaration)
         << D.getCXXScopeSpec().getRange();
       NewFD->setInvalidDecl();
@@ -2979,9 +2979,17 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
         return NewFD->setInvalidDecl();
 
       if (FunctionTemplateDecl *OldTemplateDecl
-            = dyn_cast<FunctionTemplateDecl>(OldDecl))
+                                    = dyn_cast<FunctionTemplateDecl>(OldDecl)) {
         NewFD->setPreviousDeclaration(OldTemplateDecl->getTemplatedDecl());
-      else {
+        FunctionTemplateDecl *NewTemplateDecl
+          = NewFD->getDescribedFunctionTemplate();
+        assert(NewTemplateDecl && "Template/non-template mismatch");
+        if (CXXMethodDecl *Method 
+              = dyn_cast<CXXMethodDecl>(NewTemplateDecl->getTemplatedDecl())) {
+          Method->setAccess(OldTemplateDecl->getAccess());
+          NewTemplateDecl->setAccess(OldTemplateDecl->getAccess());
+        }
+      } else {
         if (isa<CXXMethodDecl>(NewFD)) // Set access for out-of-line definitions
           NewFD->setAccess(OldDecl->getAccess());
         NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));

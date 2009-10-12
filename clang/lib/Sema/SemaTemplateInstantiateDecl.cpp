@@ -431,7 +431,9 @@ TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
 
   // Link the instantiated function template declaration to the function
   // template from which it was instantiated.
-  FunctionTemplateDecl *InstTemplate = InstMethod->getDescribedFunctionTemplate();
+  FunctionTemplateDecl *InstTemplate 
+    = InstMethod->getDescribedFunctionTemplate();
+  InstTemplate->setAccess(D->getAccess());
   assert(InstTemplate && "VisitCXXMethodDecl didn't create a template!");
   InstTemplate->setInstantiatedFromMemberTemplate(D);
   Owner->addDecl(InstTemplate);
