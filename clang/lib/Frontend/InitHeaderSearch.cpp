@@ -349,7 +349,7 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
           break;
         case llvm::Triple::Solaris:
           // AuroraUX
-          AddGnuCPlusPlusIncludePaths("/Opt/gcc4/include/c++/4.2.4",
+          AddGnuCPlusPlusIncludePaths("/opt/gcc4/include/c++/4.2.4",
                                       "i386-pc-solaris2.11");
           break;
         default:
