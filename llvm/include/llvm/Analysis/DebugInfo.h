@@ -26,6 +26,8 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ValueHandle.h"
 
+#define ATTACH_DEBUG_INFO_TO_AN_INSN 1
+
 namespace llvm {
   class BasicBlock;
   class Constant;
