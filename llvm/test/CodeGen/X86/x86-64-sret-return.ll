@@ -1,9 +1,11 @@
-; RUN: llc < %s
+; RUN: llc < %s | FileCheck %s
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 target triple = "x86_64-apple-darwin8"
 	%struct.foo = type { [4 x i64] }
 
+; CHECK: bar:
+; CHECK: movq %rdi, %rax
 define void @bar(%struct.foo* noalias sret  %agg.result, %struct.foo* %d) nounwind  {
 entry:
 	%d_addr = alloca %struct.foo*		; <%struct.foo**> [#uses=2]
@@ -51,4 +53,11 @@ entry:
 
 return:		; preds = %entry
 	ret void
+}
+
+; CHECK: foo:
+; CHECK: movq %rdi, %rax
+define void @foo({ i64 }* noalias nocapture sret %agg.result) nounwind {
+  store { i64 } { i64 0 }, { i64 }* %agg.result
+  ret void
 }

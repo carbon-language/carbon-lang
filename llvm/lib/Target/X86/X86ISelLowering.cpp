@@ -1162,6 +1162,9 @@ X86TargetLowering::LowerReturn(SDValue Chain,
 
     Chain = DAG.getCopyToReg(Chain, dl, X86::RAX, Val, Flag);
     Flag = Chain.getValue(1);
+
+    // RAX now acts like a return value.
+    MF.getRegInfo().addLiveOut(X86::RAX);
   }
 
   RetOps[0] = Chain;  // Update chain.
