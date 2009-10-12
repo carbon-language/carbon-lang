@@ -98,7 +98,7 @@
 #cmakedefine HAVE_FCNTL_H ${HAVE_FCNTL_H}
 
 /* Set to 1 if the finite function is found in <ieeefp.h> */
-#undef HAVE_FINITE_IN_IEEEFP_H
+#cmakedefine HAVE_FINITE_IN_IEEEFP_H ${HAVE_FINITE_IN_IEEEFP_H}
 
 /* Define to 1 if you have the `floorf' function. */
 #cmakedefine HAVE_FLOORF ${HAVE_FLOORF}
@@ -289,7 +289,7 @@
 #undef HAVE_ROUNDF
 
 /* Define to 1 if you have the `sbrk' function. */
-#undef HAVE_SBRK
+#cmakedefine HAVE_SBRK ${HAVE_SBRK}
 
 /* Define to 1 if you have the `setenv' function. */
 #cmakedefine HAVE_SETENV ${HAVE_SETENV}

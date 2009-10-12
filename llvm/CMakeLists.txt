@@ -221,6 +221,10 @@ endif( MSVC )
 
 include_directories( ${LLVM_BINARY_DIR}/include ${LLVM_MAIN_INCLUDE_DIR})
 
+if( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )
+   SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-include llvm/System/Solaris.h")
+endif( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )
+
 include(AddLLVM)
 include(TableGen)
 
