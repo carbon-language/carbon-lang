@@ -164,7 +164,7 @@ namespace {
     bool DecrementOldEntry(unsigned CPI, MachineInstr* CPEMI);
     int LookForExistingCPEntry(CPUser& U, unsigned UserOffset);
     bool LookForWater(CPUser&U, unsigned UserOffset,
-                      MachineBasicBlock** NewMBB);
+                      MachineBasicBlock *&NewMBB);
     MachineBasicBlock* AcceptWater(MachineBasicBlock *WaterBB,
                                    water_iterator IP);
     void CreateNewWater(unsigned CPUserIndex, unsigned UserOffset,
@@ -947,13 +947,13 @@ MachineBasicBlock* ARMConstantIslands::AcceptWater(MachineBasicBlock *WaterBB,
 
 /// LookForWater - look for an existing entry in the WaterList in which
 /// we can place the CPE referenced from U so it's within range of U's MI.
-/// Returns true if found, false if not.  If it returns true, *NewMBB
+/// Returns true if found, false if not.  If it returns true, NewMBB
 /// is set to the WaterList entry.
 /// For ARM, we prefer the water that's farthest away. For Thumb, prefer
 /// water that will not introduce padding to water that will; within each
 /// group, prefer the water that's farthest away.
 bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
-                                      MachineBasicBlock** NewMBB) {
+                                      MachineBasicBlock *&NewMBB) {
   water_iterator IPThatWouldPad;
   MachineBasicBlock* WaterBBThatWouldPad = NULL;
   if (!WaterList.empty()) {
@@ -971,7 +971,7 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
             IPThatWouldPad = IP;
           }
         } else {
-          *NewMBB = AcceptWater(WaterBB, IP);
+          NewMBB = AcceptWater(WaterBB, IP);
           return true;
         }
       }
@@ -980,7 +980,7 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
     }
   }
   if (isThumb && WaterBBThatWouldPad) {
-    *NewMBB = AcceptWater(WaterBBThatWouldPad, IPThatWouldPad);
+    NewMBB = AcceptWater(WaterBBThatWouldPad, IPThatWouldPad);
     return true;
   }
   return false;
@@ -1114,7 +1114,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
   // away that will work.  Forward references only for now (although later
   // we might find some that are backwards).
 
-  if (!LookForWater(U, UserOffset, &NewMBB)) {
+  if (!LookForWater(U, UserOffset, NewMBB)) {
     // No water found.
     DEBUG(errs() << "No water found\n");
     CreateNewWater(CPUserIndex, UserOffset, &NewMBB);
