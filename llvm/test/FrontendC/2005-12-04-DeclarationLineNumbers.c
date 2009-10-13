@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -g -o - | grep {llvm.dbg.stoppoint.*i32 14}
+// RUN: %llvmgcc %s -S -g -o - | grep DW_TAG_compile_unit | count 1
 // PR664: ensure that line #'s are emitted for declarations
 
 
