@@ -781,8 +781,7 @@ void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
     
     // Anything that uses the instructions in this basic block should have their
     // uses replaced with undefs.
-    if (!I->use_empty())
-      I->replaceAllUsesWith(UndefValue::get(I->getType()));
+    I->replaceAllUsesWith(UndefValue::get(I->getType()));
   }
   
   // If this is the edge to the header block for a loop, remove the loop and

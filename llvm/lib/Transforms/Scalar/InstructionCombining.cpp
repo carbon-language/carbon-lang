@@ -9979,8 +9979,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       new StoreInst(ConstantInt::getTrue(*Context),
                 UndefValue::get(Type::getInt1PtrTy(*Context)), 
                                   OldCall);
-      if (!OldCall->use_empty())
-        OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
+      OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
       if (isa<CallInst>(OldCall))   // Not worth removing an invoke here.
         return EraseInstFromFunction(*OldCall);
       return 0;
@@ -9994,9 +9993,8 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
                UndefValue::get(Type::getInt1PtrTy(*Context)),
                   CS.getInstruction());
 
-    if (!CS.getInstruction()->use_empty())
-      CS.getInstruction()->
-        replaceAllUsesWith(UndefValue::get(CS.getInstruction()->getType()));
+    CS.getInstruction()->
+      replaceAllUsesWith(UndefValue::get(CS.getInstruction()->getType()));
 
     if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
       // Don't break the CFG, insert a dummy cond branch.
@@ -10251,7 +10249,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     }
   }
 
-  
+
   if (!Caller->use_empty())
     Caller->replaceAllUsesWith(NV);
   
@@ -10398,7 +10396,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
           setCallingConv(cast<CallInst>(Caller)->getCallingConv());
         cast<CallInst>(NewCaller)->setAttributes(NewPAL);
       }
-      if (Caller->getType() != Type::getVoidTy(*Context) && !Caller->use_empty())
+      if (Caller->getType() != Type::getVoidTy(*Context))
         Caller->replaceAllUsesWith(NewCaller);
       Caller->eraseFromParent();
       Worklist.Remove(Caller);
@@ -12781,8 +12779,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
             ++NumDeadInst;
             MadeIRChange = true;
           }
-          if (!I->use_empty())
-            I->replaceAllUsesWith(UndefValue::get(I->getType()));
+          I->replaceAllUsesWith(UndefValue::get(I->getType()));
           I->eraseFromParent();
         }
       }
