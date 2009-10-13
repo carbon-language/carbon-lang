@@ -121,7 +121,6 @@ public:
     i = VBIndex.find(B);
     if (i != VBIndex.end())
       return i->second;
-    // FIXME: temporal botch, is this data here, by the time we need it?
 
     assert(false && "FIXME: Locate the containing virtual base first");
     return 0;
