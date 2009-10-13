@@ -309,6 +309,10 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
   // Notify all ValueHandles (if present) that this value is going away.
   if (HasValueHandle)
     ValueHandleBase::ValueIsRAUWd(this, New);
+  if (HasMetadata) {
+    LLVMContext &Context = getContext();
+    Context.pImpl->TheMetadata.ValueIsRAUWd(this, New);
+  }
 
   while (!use_empty()) {
     Use &U = *UseList;

@@ -361,6 +361,7 @@ public:
   void ValueIsDeleted(const Instruction *Inst) {
     removeMDs(Inst);
   }
+  void ValueIsRAUWd(Value *V1, Value *V2);
 
   /// ValueIsCloned - This handler is used to update metadata store
   /// when In1 is cloned to create In2.

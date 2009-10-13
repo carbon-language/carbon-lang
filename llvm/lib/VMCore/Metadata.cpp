@@ -404,3 +404,15 @@ void MetadataContext::ValueIsCloned(const Instruction *In1, Instruction *In2) {
     if (MDNode *MD = dyn_cast_or_null<MDNode>(I->second))
       addMD(I->first, MD, In2);
 }
+
+/// ValueIsRAUWd - This handler is used when V1's all uses are replaced by
+/// V2.
+void MetadataContext::ValueIsRAUWd(Value *V1, Value *V2) {
+  Instruction *I1 = dyn_cast<Instruction>(V1);
+  Instruction *I2 = dyn_cast<Instruction>(V2);
+  if (!I1 || !I2)
+    return;
+
+  // FIXME : Give custom handlers a chance to override this.
+  ValueIsCloned(I1, I2);
+}
