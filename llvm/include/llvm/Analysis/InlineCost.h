@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_UTILS_INLINECOST_H
-#define LLVM_TRANSFORMS_UTILS_INLINECOST_H
+#ifndef LLVM_ANALYSIS_INLINECOST_H
+#define LLVM_ANALYSIS_INLINECOST_H
 
 #include <cassert>
 #include <climits>

@@ -18,11 +18,11 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/Analysis/InlineCost.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/InlinerPass.h"
-#include "llvm/Transforms/Utils/InlineCost.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 using namespace llvm;
