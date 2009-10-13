@@ -2156,14 +2156,10 @@ bool ARMDAGToDAGISel::
 SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
                              std::vector<SDValue> &OutOps) {
   assert(ConstraintCode == 'm' && "unexpected asm memory constraint");
-
-  SDValue Base, Offset, Opc;
-  if (!SelectAddrMode2(Op, Op, Base, Offset, Opc))
-    return true;
-
-  OutOps.push_back(Base);
-  OutOps.push_back(Offset);
-  OutOps.push_back(Opc);
+  // Require the address to be in a register.  That is safe for all ARM
+  // variants and it is hard to do anything much smarter without knowing
+  // how the operand is used.
+  OutOps.push_back(Op);
   return false;
 }
 

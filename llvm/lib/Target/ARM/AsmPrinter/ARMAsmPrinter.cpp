@@ -1017,7 +1017,10 @@ bool ARMAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                           const char *ExtraCode) {
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
-  printAddrMode2Operand(MI, OpNum);
+
+  const MachineOperand &MO = MI->getOperand(OpNum);
+  assert(MO.isReg() && "unexpected inline asm memory operand");
+  O << "[" << getRegisterName(MO.getReg()) << "]";
   return false;
 }
 
