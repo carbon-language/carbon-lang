@@ -7018,8 +7018,9 @@ LLVM</a>.</p>
    object's lifetime.</p>
 
 <h5>Arguments:</h5>
-<p>The first argument is a the size of the object, or -1 if it is variable
-   sized.  The second argument is a pointer to the object.</p>
+<p>The first argument is a constant integer representing the size of the
+   object, or -1 if it is variable sized.  The second argument is a pointer to
+   the object.</p>
 
 <h5>Semantics:</h5>
 <p>This intrinsic indicates that before this point in the code, the value of the
@@ -7047,8 +7048,9 @@ LLVM</a>.</p>
    object's lifetime.</p>
 
 <h5>Arguments:</h5>
-<p>The first argument is a the size of the object, or -1 if it is variable
-   sized.  The second argument is a pointer to the object.</p>
+<p>The first argument is a constant integer representing the size of the
+   object, or -1 if it is variable sized.  The second argument is a pointer to
+   the object.</p>
 
 <h5>Semantics:</h5>
 <p>This intrinsic indicates that after this point in the code, the value of the
@@ -7075,8 +7077,9 @@ LLVM</a>.</p>
    a memory object will not change.</p>
 
 <h5>Arguments:</h5>
-<p>The first argument is a the size of the object, or -1 if it is variable
-   sized.  The second argument is a pointer to the object.</p>
+<p>The first argument is a constant integer representing the size of the
+   object, or -1 if it is variable sized.  The second argument is a pointer to
+   the object.</p>
 
 <h5>Semantics:</h5>
 <p>This intrinsic indicates that until an <tt>llvm.invariant.end</tt> that uses
@@ -7103,8 +7106,9 @@ LLVM</a>.</p>
 
 <h5>Arguments:</h5>
 <p>The first argument is the matching <tt>llvm.invariant.start</tt> intrinsic.
-   The second argument is a the size of the object, or -1 if it is variable
-   sized and the third argument is a pointer to the object.</p>
+   The second argument is a constant integer representing the size of the
+   object, or -1 if it is variable sized and the third argument is a pointer
+   to the object.</p>
 
 <h5>Semantics:</h5>
 <p>This intrinsic indicates that the memory is mutable again.</p>
