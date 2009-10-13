@@ -1112,7 +1112,6 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     // Finally, remove the old call, replacing any uses with the new one.
     CI->replaceAllUsesWith(NewCall);
 
-
     CI->eraseFromParent();
   }
 }
