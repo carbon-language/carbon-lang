@@ -117,6 +117,8 @@ public:
                     const Stmt *s)
     : LocationContext(StackFrame, ctx, parent), CallSite(s) {}
 
+  Stmt const *getCallSite() const { return CallSite; }
+
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getAnalysisContext(), getParent(), CallSite);
   }

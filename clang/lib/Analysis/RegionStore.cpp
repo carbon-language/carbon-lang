@@ -353,6 +353,9 @@ public:
   void RemoveDeadBindings(GRState &state, Stmt* Loc, SymbolReaper& SymReaper,
                           llvm::SmallVectorImpl<const MemRegion*>& RegionRoots);
 
+  const GRState *EnterStackFrame(const GRState *state,
+                                 const StackFrameContext *frame);
+
   //===------------------------------------------------------------------===//
   // Region "extents".
   //===------------------------------------------------------------------===//
@@ -1818,6 +1821,25 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
 
   // Write the store back.
   state.setStore(store);
+}
+
+GRState const *RegionStoreManager::EnterStackFrame(GRState const *state,
+                                               StackFrameContext const *frame) {
+  FunctionDecl const *FD = cast<FunctionDecl>(frame->getDecl());
+  CallExpr const *CE = cast<CallExpr>(frame->getCallSite());
+
+  FunctionDecl::param_const_iterator PI = FD->param_begin();
+
+  CallExpr::const_arg_iterator AI = CE->arg_begin(), AE = CE->arg_end();
+
+  // Copy the arg expression value to the arg variables.
+  for (; AI != AE; ++AI, ++PI) {
+    SVal ArgVal = state->getSVal(*AI);
+    MemRegion *R = MRMgr.getVarRegion(*PI, frame);
+    state = Bind(state, ValMgr.makeLoc(R), ArgVal);
+  }
+
+  return state;
 }
 
 //===----------------------------------------------------------------------===//

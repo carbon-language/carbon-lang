@@ -32,6 +32,7 @@ class Stmt;
 class Expr;
 class ObjCIvarDecl;
 class SubRegionMap;
+class StackFrameContext;
 
 class StoreManager {
 protected:
@@ -155,6 +156,13 @@ public:
   virtual const GRState *setExtent(const GRState *state,
                                     const MemRegion *region, SVal extent) {
     return state;
+  }
+
+  /// EnterStackFrame - Let the StoreManager to do something when execution
+  /// engine is about to execute into a callee.
+  virtual const GRState *EnterStackFrame(const GRState *state,
+                                         const StackFrameContext *frame) {
+    assert(0 && "EnterStackFrame() is not supported in this Store Model.");
   }
 
   virtual void print(Store store, llvm::raw_ostream& Out,
