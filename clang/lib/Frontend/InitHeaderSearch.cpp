@@ -365,14 +365,13 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
           break;
       }
     }
-
-    AddPath("/usr/local/include", System, false, false, false);
-
-    AddPath("/usr/include", System, false, false, false);
-    AddPath("/System/Library/Frameworks", System, true, false, true);
-    AddPath("/Library/Frameworks", System, true, false, true);
     break;
   }
+
+  AddPath("/usr/local/include", System, false, false, false);
+  AddPath("/usr/include", System, false, false, false);
+  AddPath("/System/Library/Frameworks", System, true, false, true);
+  AddPath("/Library/Frameworks", System, true, false, true);
 }
 
 void InitHeaderSearch::AddDefaultEnvVarPaths(const LangOptions &Lang) {
