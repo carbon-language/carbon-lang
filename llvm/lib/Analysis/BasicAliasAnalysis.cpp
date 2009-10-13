@@ -27,6 +27,7 @@
 #include "llvm/Operator.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
@@ -201,7 +202,10 @@ namespace {
     static char ID; // Class identification, replacement for typeinfo
     BasicAliasAnalysis() : NoAA(&ID) {}
     AliasResult alias(const Value *V1, unsigned V1Size,
-                      const Value *V2, unsigned V2Size);
+                      const Value *V2, unsigned V2Size) {
+      SmallSet<const Value*, 16> VisitedPHIs;
+      return aliasCheck(V1, V1Size, V2, V2Size, VisitedPHIs);
+    }
 
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
     ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
@@ -218,7 +222,16 @@ namespace {
     // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
     // against another.
     AliasResult aliasGEP(const Value *V1, unsigned V1Size,
-                         const Value *V2, unsigned V2Size);
+                         const Value *V2, unsigned V2Size,
+                         SmallSet<const Value*, 16> &VisitedPHIs);
+
+    AliasResult aliasPHI(const Value *V1, unsigned V1Size,
+                         const Value *V2, unsigned V2Size,
+                         SmallSet<const Value*, 16> &VisitedPHIs);
+
+    AliasResult aliasCheck(const Value *V1, unsigned V1Size,
+                           const Value *V2, unsigned V2Size,
+                           SmallSet<const Value*, 16> &VisitedPHIs);
 
     // CheckGEPInstructions - Check two GEP instructions with known
     // must-aliasing base pointers.  This checks to see if the index expressions
@@ -339,7 +352,8 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 //
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
-                             const Value *V2, unsigned V2Size) {
+                             const Value *V2, unsigned V2Size,
+                             SmallSet<const Value*, 16> &VisitedPHIs) {
   // If we have two gep instructions with must-alias'ing base pointers, figure
   // out if the indexes to the GEP tell us anything about the derived pointer.
   // Note that we also handle chains of getelementptr instructions as well as
@@ -359,8 +373,8 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
         GEP1->getOperand(0)->getType() == GEP2->getOperand(0)->getType() &&
         // All operands are the same, ignoring the base.
         std::equal(GEP1->op_begin()+1, GEP1->op_end(), GEP2->op_begin()+1))
-      return alias(GEP1->getOperand(0), V1Size, GEP2->getOperand(0), V2Size);
-    
+      return aliasCheck(GEP1->getOperand(0), V1Size,
+                        GEP2->getOperand(0), V2Size, VisitedPHIs);
     
     // Drill down into the first non-gep value, to test for must-aliasing of
     // the base pointers.
@@ -377,7 +391,8 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
     const Value *BasePtr2 = GEP2->getOperand(0);
 
     // Do the base pointers alias?
-    AliasResult BaseAlias = alias(BasePtr1, ~0U, BasePtr2, ~0U);
+    AliasResult BaseAlias = aliasCheck(BasePtr1, ~0U, BasePtr2, ~0U,
+                                       VisitedPHIs);
     if (BaseAlias == NoAlias) return NoAlias;
     if (BaseAlias == MustAlias) {
       // If the base pointers alias each other exactly, check to see if we can
@@ -413,7 +428,7 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
   SmallVector<Value*, 16> GEPOperands;
   const Value *BasePtr = GetGEPOperands(V1, GEPOperands);
 
-  AliasResult R = alias(BasePtr, V1Size, V2, V2Size);
+  AliasResult R = aliasCheck(BasePtr, V1Size, V2, V2Size, VisitedPHIs);
   if (R == MustAlias) {
     // If there is at least one non-zero constant index, we know they cannot
     // alias.
@@ -462,12 +477,47 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
   return MayAlias;
 }
 
-// alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
-// as array references.
+AliasAnalysis::AliasResult
+BasicAliasAnalysis::aliasPHI(const Value *V1, unsigned V1Size,
+                             const Value *V2, unsigned V2Size,
+                             SmallSet<const Value*, 16> &VisitedPHIs) {
+  // The PHI node has already been visited, avoid recursion any further.
+  if (!VisitedPHIs.insert(V1))
+    return MayAlias;
+
+  SmallSet<Value*, 4> UniqueSrc;
+  SmallVector<Value*, 4> V1Srcs;
+  const PHINode *PN = cast<PHINode>(V1);
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    Value *PV1 = PN->getIncomingValue(i);
+    if (isa<PHINode>(PV1))
+      // If any of the source itself is a PHI, return MayAlias conservatively
+      // to avoid compile time explosion.
+      return MayAlias;
+    if (UniqueSrc.insert(PV1))
+      V1Srcs.push_back(PV1);
+  }
+
+  // If all sources of the PHI node NoAlias or MustAlias V2, then returns
+  // NoAlias / MustAlias. Otherwise, returns MayAlias.
+  AliasResult Alias = aliasCheck(V1Srcs[0], V1Size, V2, V2Size, VisitedPHIs);
+  for (unsigned i = 1, e = V1Srcs.size(); i != e; ++i) {
+    Value *V = V1Srcs[i];
+    AliasResult ThisAlias = aliasCheck(V, V1Size, V2, V2Size, VisitedPHIs);
+    if (ThisAlias != Alias)
+      return MayAlias;
+  }
+
+  return Alias;
+}
+
+// aliasCheck - Provide a bunch of ad-hoc rules to disambiguate in common cases,
+// such as array references.
 //
 AliasAnalysis::AliasResult
-BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
-                          const Value *V2, unsigned V2Size) {
+BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
+                               const Value *V2, unsigned V2Size,
+                               SmallSet<const Value*, 16> &VisitedPHIs) {
   // Strip off any casts if they exist.
   V1 = V1->stripPointerCasts();
   V2 = V2->stripPointerCasts();
@@ -521,7 +571,14 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     std::swap(V1Size, V2Size);
   }
   if (isGEP(V1))
-    return aliasGEP(V1, V1Size, V2, V2Size);
+    return aliasGEP(V1, V1Size, V2, V2Size, VisitedPHIs);
+
+  if (isa<PHINode>(V2) && !isa<PHINode>(V1)) {
+    std::swap(V1, V2);
+    std::swap(V1Size, V2Size);
+  }
+  if (isa<PHINode>(V1))
+    return aliasPHI(V1, V1Size, V2, V2Size, VisitedPHIs);
 
   return MayAlias;
 }
