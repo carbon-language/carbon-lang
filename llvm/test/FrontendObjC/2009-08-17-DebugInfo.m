@@ -6,7 +6,6 @@
 // RUN: echo {break randomFunc\n} > %t.in 
 // RUN: gdb -q -batch -n -x %t.in %t.exe | tee %t.out | \
 // RUN:   grep {Breakpoint 1 at 0x.*: file 2009-08-17-DebugInfo.m, line 21}
-// XTARGET: darwin
 // XFAIL: *
 @interface MyClass
 {
