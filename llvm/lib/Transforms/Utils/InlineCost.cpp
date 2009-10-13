@@ -21,7 +21,7 @@ using namespace llvm;
 // CountCodeReductionForConstant - Figure out an approximation for how many
 // instructions will be constant folded if the specified value is constant.
 //
-unsigned InlineCostAnalyzer::FunctionInfo::
+unsigned InlineCostAnalyzer::RegionInfo::
          CountCodeReductionForConstant(Value *V) {
   unsigned Reduction = 0;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
@@ -77,7 +77,7 @@ unsigned InlineCostAnalyzer::FunctionInfo::
 // the function will be if it is inlined into a context where an argument
 // becomes an alloca.
 //
-unsigned InlineCostAnalyzer::FunctionInfo::
+unsigned InlineCostAnalyzer::RegionInfo::
          CountCodeReductionForAlloca(Value *V) {
   if (!isa<PointerType>(V->getType())) return 0;  // Not a pointer
   unsigned Reduction = 0;
@@ -99,84 +99,84 @@ unsigned InlineCostAnalyzer::FunctionInfo::
   return Reduction;
 }
 
-/// analyzeFunction - Fill in the current structure with information gleaned
-/// from the specified function.
-void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
-  unsigned NumInsts = 0, NumBlocks = 0, NumVectorInsts = 0, NumRets = 0;
+/// analyzeBasicBlock - Fill in the current structure with information gleaned
+/// from the specified block.
+void InlineCostAnalyzer::RegionInfo::analyzeBasicBlock(const BasicBlock *BB) {
+  ++NumBlocks;
 
-  // Look at the size of the callee.  Each basic block counts as 20 units, and
-  // each instruction counts as 5.
-  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-    for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
-         II != E; ++II) {
-      if (isa<PHINode>(II)) continue;           // PHI nodes don't count.
+  for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
+       II != E; ++II) {
+    if (isa<PHINode>(II)) continue;           // PHI nodes don't count.
 
-      // Special handling for calls.
-      if (isa<CallInst>(II) || isa<InvokeInst>(II)) {
-        if (isa<DbgInfoIntrinsic>(II))
-          continue;  // Debug intrinsics don't count as size.
-        
-        CallSite CS = CallSite::get(const_cast<Instruction*>(&*II));
-        
-        // If this function contains a call to setjmp or _setjmp, never inline
-        // it.  This is a hack because we depend on the user marking their local
-        // variables as volatile if they are live across a setjmp call, and they
-        // probably won't do this in callers.
-        if (Function *F = CS.getCalledFunction())
-          if (F->isDeclaration() && 
-              (F->getName() == "setjmp" || F->getName() == "_setjmp")) {
-            NeverInline = true;
-            return;
-          }
-
-        // Calls often compile into many machine instructions.  Bump up their
-        // cost to reflect this.
-        if (!isa<IntrinsicInst>(II))
-          NumInsts += InlineConstants::CallPenalty;
-      }
+    // Special handling for calls.
+    if (isa<CallInst>(II) || isa<InvokeInst>(II)) {
+      if (isa<DbgInfoIntrinsic>(II))
+        continue;  // Debug intrinsics don't count as size.
       
-      // These, too, are calls.
-      if (isa<MallocInst>(II) || isa<FreeInst>(II))
-	NumInsts += InlineConstants::CallPenalty;
-
-      if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
-        if (!AI->isStaticAlloca())
-          this->usesDynamicAlloca = true;
-      }
-
-      if (isa<ExtractElementInst>(II) || isa<VectorType>(II->getType()))
-        ++NumVectorInsts; 
+      CallSite CS = CallSite::get(const_cast<Instruction*>(&*II));
       
-      // Noop casts, including ptr <-> int,  don't count.
-      if (const CastInst *CI = dyn_cast<CastInst>(II)) {
-        if (CI->isLosslessCast() || isa<IntToPtrInst>(CI) || 
-            isa<PtrToIntInst>(CI))
-          continue;
-      } else if (const GetElementPtrInst *GEPI =
-                 dyn_cast<GetElementPtrInst>(II)) {
-        // If a GEP has all constant indices, it will probably be folded with
-        // a load/store.
-        if (GEPI->hasAllConstantIndices())
-          continue;
-      }
+      // If this function contains a call to setjmp or _setjmp, never inline
+      // it.  This is a hack because we depend on the user marking their local
+      // variables as volatile if they are live across a setjmp call, and they
+      // probably won't do this in callers.
+      if (Function *F = CS.getCalledFunction())
+        if (F->isDeclaration() && 
+            (F->getName() == "setjmp" || F->getName() == "_setjmp")) {
+          NeverInline = true;
+          return;
+        }
 
-      if (isa<ReturnInst>(II))
-        ++NumRets;
-      
-      ++NumInsts;
+      // Calls often compile into many machine instructions.  Bump up their
+      // cost to reflect this.
+      if (!isa<IntrinsicInst>(II))
+        NumInsts += InlineConstants::CallPenalty;
+    }
+    
+    // These, too, are calls.
+    if (isa<MallocInst>(II) || isa<FreeInst>(II))
+      NumInsts += InlineConstants::CallPenalty;
+
+    if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
+      if (!AI->isStaticAlloca())
+        this->usesDynamicAlloca = true;
     }
 
-    ++NumBlocks;
+    if (isa<ExtractElementInst>(II) || isa<VectorType>(II->getType()))
+      ++NumVectorInsts; 
+    
+    // Noop casts, including ptr <-> int,  don't count.
+    if (const CastInst *CI = dyn_cast<CastInst>(II)) {
+      if (CI->isLosslessCast() || isa<IntToPtrInst>(CI) || 
+          isa<PtrToIntInst>(CI))
+        continue;
+    } else if (const GetElementPtrInst *GEPI =
+               dyn_cast<GetElementPtrInst>(II)) {
+      // If a GEP has all constant indices, it will probably be folded with
+      // a load/store.
+      if (GEPI->hasAllConstantIndices())
+        continue;
+    }
+
+    if (isa<ReturnInst>(II))
+      ++NumRets;
+    
+    ++NumInsts;
   }
+}
+
+/// analyzeFunction - Fill in the current structure with information gleaned
+/// from the specified function.
+void InlineCostAnalyzer::RegionInfo::analyzeFunction(Function *F) {
+  // Look at the size of the callee.  Each basic block counts as 20 units, and
+  // each instruction counts as 5.
+  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
+    analyzeBasicBlock(&*BB);
 
   // A function with exactly one return has it removed during the inlining
   // process (see InlineFunction), so don't count it.
+  // FIXME: This knowledge should really be encoded outside of RegionInfo.
   if (NumRets==1)
     --NumInsts;
-
-  this->NumBlocks      = NumBlocks;
-  this->NumInsts       = NumInsts;
-  this->NumVectorInsts = NumVectorInsts;
 
   // Check out all of the arguments to the function, figuring out how much
   // code can be eliminated if one of the arguments is a constant.
@@ -229,7 +229,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
     InlineCost += InlineConstants::NoreturnPenalty;
   
   // Get information about the callee...
-  FunctionInfo &CalleeFI = CachedFunctionInfo[Callee];
+  RegionInfo &CalleeFI = CachedFunctionInfo[Callee];
   
   // If we haven't calculated this information yet, do so now.
   if (CalleeFI.NumBlocks == 0)
@@ -240,7 +240,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
     return InlineCost::getNever();
 
   // FIXME: It would be nice to kill off CalleeFI.NeverInline. Then we
-  // could move this up and avoid computing the FunctionInfo for
+  // could move this up and avoid computing the RegionInfo for
   // things we are going to just return always inline for. This
   // requires handling setjmp somewhere else, however.
   if (!Callee->isDeclaration() && Callee->hasFnAttr(Attribute::AlwaysInline))
@@ -248,7 +248,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
     
   if (CalleeFI.usesDynamicAlloca) {
     // Get infomation about the caller...
-    FunctionInfo &CallerFI = CachedFunctionInfo[Caller];
+    RegionInfo &CallerFI = CachedFunctionInfo[Caller];
 
     // If we haven't calculated this information yet, do so now.
     if (CallerFI.NumBlocks == 0)
@@ -316,7 +316,7 @@ float InlineCostAnalyzer::getInlineFudgeFactor(CallSite CS) {
   Function *Callee = CS.getCalledFunction();
   
   // Get information about the callee...
-  FunctionInfo &CalleeFI = CachedFunctionInfo[Callee];
+  RegionInfo &CalleeFI = CachedFunctionInfo[Callee];
   
   // If we haven't calculated this information yet, do so now.
   if (CalleeFI.NumBlocks == 0)

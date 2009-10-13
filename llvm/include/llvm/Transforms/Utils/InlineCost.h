@@ -23,6 +23,7 @@ namespace llvm {
 
   class Value;
   class Function;
+  class BasicBlock;
   class CallSite;
   template<class PtrType, unsigned SmallSize>
   class SmallPtrSet;
@@ -96,9 +97,9 @@ namespace llvm {
         : ConstantWeight(CWeight), AllocaWeight(AWeight) {}
     };
     
-    // FunctionInfo - For each function, calculate the size of it in blocks and
-    // instructions.
-    struct FunctionInfo {
+    // RegionInfo - Calculate size and a few related metrics for a set of
+    // basic blocks.
+    struct RegionInfo {
       /// NeverInline - True if this callee should never be inlined into a
       /// caller.
       bool NeverInline;
@@ -115,17 +116,24 @@ namespace llvm {
       /// kernels.
       unsigned NumVectorInsts;
       
+      /// NumRets - Keep track of how many Ret instructions the block contains.
+      unsigned NumRets;
+
       /// ArgumentWeights - Each formal argument of the function is inspected to
       /// see if it is used in any contexts where making it a constant or alloca
       /// would reduce the code size.  If so, we add some value to the argument
       /// entry here.
       std::vector<ArgInfo> ArgumentWeights;
       
-      FunctionInfo() : NeverInline(false), usesDynamicAlloca(false), NumInsts(0),
-                       NumBlocks(0), NumVectorInsts(0) {}
+      RegionInfo() : NeverInline(false), usesDynamicAlloca(false), NumInsts(0),
+                     NumBlocks(0), NumVectorInsts(0), NumRets(0) {}
       
-      /// analyzeFunction - Fill in the current structure with information
-      /// gleaned from the specified function.
+      /// analyzeBasicBlock - Add information about the specified basic block
+      /// to the current structure.
+      void analyzeBasicBlock(const BasicBlock *BB);
+
+      /// analyzeFunction - Add information about the specified function
+      /// to the current structure.
       void analyzeFunction(Function *F);
 
       /// CountCodeReductionForConstant - Figure out an approximation for how
@@ -140,7 +148,7 @@ namespace llvm {
       unsigned CountCodeReductionForAlloca(Value *V);
     };
 
-    std::map<const Function *, FunctionInfo> CachedFunctionInfo;
+    std::map<const Function *, RegionInfo> CachedFunctionInfo;
 
   public:
 
