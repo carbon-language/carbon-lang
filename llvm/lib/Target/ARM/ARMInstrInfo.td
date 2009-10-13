@@ -416,17 +416,20 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode,
   def ri : AI1<opcod, (outs), (ins GPR:$a, so_imm:$b), DPFrm, IIC_iCMPi,
                opc, " $a, $b",
                [(opnode GPR:$a, so_imm:$b)]> {
+    let Inst{20} = 1;
     let Inst{25} = 1;
   }
   def rr : AI1<opcod, (outs), (ins GPR:$a, GPR:$b), DPFrm, IIC_iCMPr,
                opc, " $a, $b",
                [(opnode GPR:$a, GPR:$b)]> {
+    let Inst{20} = 1;
     let Inst{25} = 0;
     let isCommutable = Commutable;
   }
   def rs : AI1<opcod, (outs), (ins GPR:$a, so_reg:$b), DPSoRegFrm, IIC_iCMPsr,
                opc, " $a, $b",
                [(opnode GPR:$a, so_reg:$b)]> {
+    let Inst{20} = 1;
     let Inst{25} = 0;
   }
 }
@@ -934,6 +937,7 @@ def MOVi16 : AI1<0b1000, (outs GPR:$dst), (ins i32imm:$src),
                  "movw", " $dst, $src",
                  [(set GPR:$dst, imm0_65535:$src)]>,
                  Requires<[IsARM, HasV6T2]> {
+  let Inst{20} = 0;
   let Inst{25} = 1;
 }
 
@@ -945,6 +949,7 @@ def MOVTi16 : AI1<0b1010, (outs GPR:$dst), (ins GPR:$src, i32imm:$imm),
                         (or (and GPR:$src, 0xffff), 
                             lo16AllZero:$imm))]>, UnaryDP,
                   Requires<[IsARM, HasV6T2]> {
+  let Inst{20} = 0;
   let Inst{25} = 1;
 }
 
