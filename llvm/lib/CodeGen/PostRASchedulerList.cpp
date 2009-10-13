@@ -643,8 +643,18 @@ bool SchedulePostRATDList::BreakAntiDependencies() {
       Max = SU;
   }
 
-  DEBUG(errs() << "Critical path has total latency "
-        << (Max->getDepth() + Max->Latency) << "\n");
+#ifndef NDEBUG
+  {
+    DEBUG(errs() << "Critical path has total latency "
+          << (Max->getDepth() + Max->Latency) << "\n");
+    DEBUG(errs() << "Available regs:");
+    for (unsigned Reg = 0; Reg < TRI->getNumRegs(); ++Reg) {
+      if (KillIndices[Reg] == ~0u)
+        DEBUG(errs() << " " << TRI->getName(Reg));
+    }
+    DEBUG(errs() << '\n');
+  }
+#endif
 
   // Track progress along the critical path through the SUnit graph as we walk
   // the instructions.
