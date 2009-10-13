@@ -56,9 +56,11 @@ STATISTIC(NumSelects , "Number of selects unswitched");
 STATISTIC(NumTrivial , "Number of unswitches that are trivial");
 STATISTIC(NumSimplify, "Number of simplifications of unswitched code");
 
+// The specific value of 50 here was chosen based only on intuition and a
+// few specific examples.
 static cl::opt<unsigned>
 Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
-          cl::init(10), cl::Hidden);
+          cl::init(50), cl::Hidden);
   
 namespace {
   class LoopUnswitch : public LoopPass {
@@ -406,27 +408,13 @@ unsigned LoopUnswitch::getLoopUnswitchCost(Value *LIC) {
   if (IsTrivialUnswitchCondition(LIC))
     return 0;
   
-  // FIXME: This is really overly conservative.  However, more liberal 
-  // estimations have thus far resulted in excessive unswitching, which is bad
-  // both in compile time and in code size.  This should be replaced once
-  // someone figures out how a good estimation.
-  return currentLoop->getBlocks().size();
-  
+  // FIXME: This is really overly conservative and brain dead.
   unsigned Cost = 0;
-  // FIXME: this is brain dead.  It should take into consideration code
-  // shrinkage.
   for (Loop::block_iterator I = currentLoop->block_begin(), 
          E = currentLoop->block_end();
-       I != E; ++I) {
-    BasicBlock *BB = *I;
-    // Do not include empty blocks in the cost calculation.  This happen due to
-    // loop canonicalization and will be removed.
-    if (BB->begin() == BasicBlock::iterator(BB->getTerminator()))
-      continue;
-    
-    // Count basic blocks.
-    ++Cost;
-  }
+       I != E; ++I)
+    // Count instructions.
+    Cost += (*I)->size();
 
   return Cost;
 }
