@@ -166,6 +166,102 @@ TEST_F(JITTest, FarCallToKnownFunction) {
   EXPECT_EQ(8, TestFunctionPtr());
 }
 
+// Test a function C which calls A and B which call each other.
+TEST_F(JITTest, NonLazyCompilationStillNeedsStubs) {
+  TheJIT->DisableLazyCompilation();
+
+  const FunctionType *Func1Ty =
+      cast<FunctionType>(TypeBuilder<void(void), false>::get(Context));
+  std::vector<const Type*> arg_types;
+  arg_types.push_back(Type::getInt1Ty(Context));
+  const FunctionType *FuncTy = FunctionType::get(
+      Type::getVoidTy(Context), arg_types, false);
+  Function *Func1 = Function::Create(Func1Ty, Function::ExternalLinkage,
+                                     "func1", M);
+  Function *Func2 = Function::Create(FuncTy, Function::InternalLinkage,
+                                     "func2", M);
+  Function *Func3 = Function::Create(FuncTy, Function::InternalLinkage,
+                                     "func3", M);
+  BasicBlock *Block1 = BasicBlock::Create(Context, "block1", Func1);
+  BasicBlock *Block2 = BasicBlock::Create(Context, "block2", Func2);
+  BasicBlock *True2 = BasicBlock::Create(Context, "cond_true", Func2);
+  BasicBlock *False2 = BasicBlock::Create(Context, "cond_false", Func2);
+  BasicBlock *Block3 = BasicBlock::Create(Context, "block3", Func3);
+  BasicBlock *True3 = BasicBlock::Create(Context, "cond_true", Func3);
+  BasicBlock *False3 = BasicBlock::Create(Context, "cond_false", Func3);
+
+  // Make Func1 call Func2(0) and Func3(0).
+  IRBuilder<> Builder(Block1);
+  Builder.CreateCall(Func2, ConstantInt::getTrue(Context));
+  Builder.CreateCall(Func3, ConstantInt::getTrue(Context));
+  Builder.CreateRetVoid();
+
+  // void Func2(bool b) { if (b) { Func3(false); return; } return; }
+  Builder.SetInsertPoint(Block2);
+  Builder.CreateCondBr(Func2->arg_begin(), True2, False2);
+  Builder.SetInsertPoint(True2);
+  Builder.CreateCall(Func3, ConstantInt::getFalse(Context));
+  Builder.CreateRetVoid();
+  Builder.SetInsertPoint(False2);
+  Builder.CreateRetVoid();
+
+  // void Func3(bool b) { if (b) { Func2(false); return; } return; }
+  Builder.SetInsertPoint(Block3);
+  Builder.CreateCondBr(Func3->arg_begin(), True3, False3);
+  Builder.SetInsertPoint(True3);
+  Builder.CreateCall(Func2, ConstantInt::getFalse(Context));
+  Builder.CreateRetVoid();
+  Builder.SetInsertPoint(False3);
+  Builder.CreateRetVoid();
+
+  // Compile the function to native code
+  void (*F1Ptr)() =
+     reinterpret_cast<void(*)()>((intptr_t)TheJIT->getPointerToFunction(Func1));
+
+  F1Ptr();
+}
+
+// Regression test for PR5162.  This used to trigger an AssertingVH inside the
+// JIT's Function to stub mapping.
+TEST_F(JITTest, NonLazyLeaksNoStubs) {
+  TheJIT->DisableLazyCompilation();
+
+  // Create two functions with a single basic block each.
+  const FunctionType *FuncTy =
+      cast<FunctionType>(TypeBuilder<int(), false>::get(Context));
+  Function *Func1 = Function::Create(FuncTy, Function::ExternalLinkage,
+                                     "func1", M);
+  Function *Func2 = Function::Create(FuncTy, Function::InternalLinkage,
+                                     "func2", M);
+  BasicBlock *Block1 = BasicBlock::Create(Context, "block1", Func1);
+  BasicBlock *Block2 = BasicBlock::Create(Context, "block2", Func2);
+
+  // The first function calls the second and returns the result
+  IRBuilder<> Builder(Block1);
+  Value *Result = Builder.CreateCall(Func2);
+  Builder.CreateRet(Result);
+
+  // The second function just returns a constant
+  Builder.SetInsertPoint(Block2);
+  Builder.CreateRet(ConstantInt::get(TypeBuilder<int, false>::get(Context),42));
+
+  // Compile the function to native code
+  (void)TheJIT->getPointerToFunction(Func1);
+
+  // Free the JIT state for the functions
+  TheJIT->freeMachineCodeForFunction(Func1);
+  TheJIT->freeMachineCodeForFunction(Func2);
+
+  // Delete the first function (and show that is has no users)
+  EXPECT_EQ(Func1->getNumUses(), 0u);
+  Func1->eraseFromParent();
+
+  // Delete the second function (and show that it has no users - it had one,
+  // func1 but that's gone now)
+  EXPECT_EQ(Func2->getNumUses(), 0u);
+  Func2->eraseFromParent();
+}
+
 // This code is copied from JITEventListenerTest, but it only runs once for all
 // the tests in this directory.  Everything seems fine, but that's strange
 // behavior.

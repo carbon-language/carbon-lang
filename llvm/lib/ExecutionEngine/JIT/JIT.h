@@ -16,6 +16,7 @@
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/PassManager.h"
+#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
 
@@ -33,7 +34,7 @@ private:
 
   /// PendingFunctions - Functions which have not been code generated yet, but
   /// were called from a function being code generated.
-  std::vector<Function*> PendingFunctions;
+  std::vector<AssertingVH<Function> > PendingFunctions;
 
 public:
   explicit JITState(ModuleProvider *MP) : PM(MP), MP(MP) {}
@@ -43,7 +44,7 @@ public:
   }
   
   ModuleProvider *getMP() const { return MP; }
-  std::vector<Function*> &getPendingFunctions(const MutexGuard &L) {
+  std::vector<AssertingVH<Function> > &getPendingFunctions(const MutexGuard &L){
     return PendingFunctions;
   }
 };

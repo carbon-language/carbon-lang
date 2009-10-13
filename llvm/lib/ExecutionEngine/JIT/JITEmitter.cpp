@@ -64,7 +64,7 @@ namespace {
   class JITResolverState {
   public:
     typedef std::map<AssertingVH<Function>, void*> FunctionToStubMapTy;
-    typedef std::map<void*, Function*> StubToFunctionMapTy;
+    typedef std::map<void*, AssertingVH<Function> > StubToFunctionMapTy;
     typedef std::map<AssertingVH<GlobalValue>, void*> GlobalToIndirectSymMapTy;
   private:
     /// FunctionToStubMap - Keep track of the stub created for a particular
@@ -198,9 +198,9 @@ void *JITResolver::getFunctionStub(Function *F) {
 
   // Call the lazy resolver function unless we are JIT'ing non-lazily, in which
   // case we must resolve the symbol now.
-  void *Actual =  TheJIT->isLazyCompilationDisabled() 
+  void *Actual = TheJIT->isLazyCompilationDisabled()
     ? (void *)0 : (void *)(intptr_t)LazyResolverFn;
-   
+  
   // If this is an external declaration, attempt to resolve the address now
   // to place in the stub.
   if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode()) {
@@ -231,14 +231,14 @@ void *JITResolver::getFunctionStub(Function *F) {
   // Finally, keep track of the stub-to-Function mapping so that the
   // JITCompilerFn knows which function to compile!
   state.getStubToFunctionMap(locked)[Stub] = F;
-  
+
   // If we are JIT'ing non-lazily but need to call a function that does not
   // exist yet, add it to the JIT's work list so that we can fill in the stub
   // address later.
   if (!Actual && TheJIT->isLazyCompilationDisabled())
     if (!F->isDeclaration() || F->hasNotBeenReadFromBitcode())
       TheJIT->addPendingFunction(F);
-  
+
   return Stub;
 }
 
@@ -696,11 +696,8 @@ void *JITEmitter::getPointerToGVIndirectSym(GlobalValue *V, void *Reference,
 }
 
 void JITEmitter::AddStubToCurrentFunction(void *StubAddr) {
-  if (!TheJIT->areDlsymStubsEnabled())
-    return;
-  
   assert(CurFn && "Stub added to current function, but current function is 0!");
-  
+
   SmallVectorImpl<void*> &StubsUsed = CurFnStubUses[CurFn];
   StubsUsed.push_back(StubAddr);
 
