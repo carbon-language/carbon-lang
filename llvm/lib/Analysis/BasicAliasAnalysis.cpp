@@ -215,6 +215,11 @@ namespace {
     bool pointsToConstantMemory(const Value *P);
 
   private:
+    // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
+    // against another.
+    AliasResult aliasGEP(const Value *V1, unsigned V1Size,
+                         const Value *V2, unsigned V2Size);
+
     // CheckGEPInstructions - Check two GEP instructions with known
     // must-aliasing base pointers.  This checks to see if the index expressions
     // preclude the pointers from aliasing...
@@ -329,61 +334,12 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
   return NoAA::getModRefInfo(CS1, CS2);
 }
 
-
-// alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
-// as array references.
+// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
+// against another.
 //
 AliasAnalysis::AliasResult
-BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
-                          const Value *V2, unsigned V2Size) {
-  // Strip off any casts if they exist.
-  V1 = V1->stripPointerCasts();
-  V2 = V2->stripPointerCasts();
-
-  // Are we checking for alias of the same value?
-  if (V1 == V2) return MustAlias;
-
-  if (!isa<PointerType>(V1->getType()) || !isa<PointerType>(V2->getType()))
-    return NoAlias;  // Scalars cannot alias each other
-
-  // Figure out what objects these things are pointing to if we can.
-  const Value *O1 = V1->getUnderlyingObject();
-  const Value *O2 = V2->getUnderlyingObject();
-
-  if (O1 != O2) {
-    // If V1/V2 point to two different objects we know that we have no alias.
-    if (isIdentifiedObject(O1) && isIdentifiedObject(O2))
-      return NoAlias;
-  
-    // Arguments can't alias with local allocations or noalias calls.
-    if ((isa<Argument>(O1) && (isa<AllocationInst>(O2) || isNoAliasCall(O2))) ||
-        (isa<Argument>(O2) && (isa<AllocationInst>(O1) || isNoAliasCall(O1))))
-      return NoAlias;
-
-    // Most objects can't alias null.
-    if ((isa<ConstantPointerNull>(V2) && isKnownNonNull(O1)) ||
-        (isa<ConstantPointerNull>(V1) && isKnownNonNull(O2)))
-      return NoAlias;
-  }
-  
-  // If the size of one access is larger than the entire object on the other
-  // side, then we know such behavior is undefined and can assume no alias.
-  LLVMContext &Context = V1->getContext();
-  if (TD)
-    if ((V1Size != ~0U && isObjectSmallerThan(O2, V1Size, Context, *TD)) ||
-        (V2Size != ~0U && isObjectSmallerThan(O1, V2Size, Context, *TD)))
-      return NoAlias;
-  
-  // If one pointer is the result of a call/invoke and the other is a
-  // non-escaping local object, then we know the object couldn't escape to a
-  // point where the call could return it.
-  if ((isa<CallInst>(O1) || isa<InvokeInst>(O1)) &&
-      isNonEscapingLocalObject(O2) && O1 != O2)
-    return NoAlias;
-  if ((isa<CallInst>(O2) || isa<InvokeInst>(O2)) &&
-      isNonEscapingLocalObject(O1) && O1 != O2)
-    return NoAlias;
-  
+BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
+                             const Value *V2, unsigned V2Size) {
   // If we have two gep instructions with must-alias'ing base pointers, figure
   // out if the indexes to the GEP tell us anything about the derived pointer.
   // Note that we also handle chains of getelementptr instructions as well as
@@ -451,63 +407,121 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   // instruction.  If one pointer is a GEP with a non-zero index of the other
   // pointer, we know they cannot alias.
   //
-  if (isGEP(V2)) {
+  if (V1Size == ~0U || V2Size == ~0U)
+    return MayAlias;
+
+  SmallVector<Value*, 16> GEPOperands;
+  const Value *BasePtr = GetGEPOperands(V1, GEPOperands);
+
+  AliasResult R = alias(BasePtr, V1Size, V2, V2Size);
+  if (R == MustAlias) {
+    // If there is at least one non-zero constant index, we know they cannot
+    // alias.
+    bool ConstantFound = false;
+    bool AllZerosFound = true;
+    for (unsigned i = 0, e = GEPOperands.size(); i != e; ++i)
+      if (const Constant *C = dyn_cast<Constant>(GEPOperands[i])) {
+        if (!C->isNullValue()) {
+          ConstantFound = true;
+          AllZerosFound = false;
+          break;
+        }
+      } else {
+        AllZerosFound = false;
+      }
+
+    // If we have getelementptr <ptr>, 0, 0, 0, 0, ... and V2 must aliases
+    // the ptr, the end result is a must alias also.
+    if (AllZerosFound)
+      return MustAlias;
+
+    if (ConstantFound) {
+      if (V2Size <= 1 && V1Size <= 1)  // Just pointer check?
+        return NoAlias;
+
+      // Otherwise we have to check to see that the distance is more than
+      // the size of the argument... build an index vector that is equal to
+      // the arguments provided, except substitute 0's for any variable
+      // indexes we find...
+      if (TD &&
+          cast<PointerType>(BasePtr->getType())->getElementType()->isSized()) {
+        for (unsigned i = 0; i != GEPOperands.size(); ++i)
+          if (!isa<ConstantInt>(GEPOperands[i]))
+            GEPOperands[i] = Constant::getNullValue(GEPOperands[i]->getType());
+        int64_t Offset =
+          TD->getIndexedOffset(BasePtr->getType(),
+                               &GEPOperands[0],
+                               GEPOperands.size());
+
+        if (Offset >= (int64_t)V2Size || Offset <= -(int64_t)V1Size)
+          return NoAlias;
+      }
+    }
+  }
+
+  return MayAlias;
+}
+
+// alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
+// as array references.
+//
+AliasAnalysis::AliasResult
+BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
+                          const Value *V2, unsigned V2Size) {
+  // Strip off any casts if they exist.
+  V1 = V1->stripPointerCasts();
+  V2 = V2->stripPointerCasts();
+
+  // Are we checking for alias of the same value?
+  if (V1 == V2) return MustAlias;
+
+  if (!isa<PointerType>(V1->getType()) || !isa<PointerType>(V2->getType()))
+    return NoAlias;  // Scalars cannot alias each other
+
+  // Figure out what objects these things are pointing to if we can.
+  const Value *O1 = V1->getUnderlyingObject();
+  const Value *O2 = V2->getUnderlyingObject();
+
+  if (O1 != O2) {
+    // If V1/V2 point to two different objects we know that we have no alias.
+    if (isIdentifiedObject(O1) && isIdentifiedObject(O2))
+      return NoAlias;
+  
+    // Arguments can't alias with local allocations or noalias calls.
+    if ((isa<Argument>(O1) && (isa<AllocationInst>(O2) || isNoAliasCall(O2))) ||
+        (isa<Argument>(O2) && (isa<AllocationInst>(O1) || isNoAliasCall(O1))))
+      return NoAlias;
+
+    // Most objects can't alias null.
+    if ((isa<ConstantPointerNull>(V2) && isKnownNonNull(O1)) ||
+        (isa<ConstantPointerNull>(V1) && isKnownNonNull(O2)))
+      return NoAlias;
+  }
+  
+  // If the size of one access is larger than the entire object on the other
+  // side, then we know such behavior is undefined and can assume no alias.
+  LLVMContext &Context = V1->getContext();
+  if (TD)
+    if ((V1Size != ~0U && isObjectSmallerThan(O2, V1Size, Context, *TD)) ||
+        (V2Size != ~0U && isObjectSmallerThan(O1, V2Size, Context, *TD)))
+      return NoAlias;
+  
+  // If one pointer is the result of a call/invoke and the other is a
+  // non-escaping local object, then we know the object couldn't escape to a
+  // point where the call could return it.
+  if ((isa<CallInst>(O1) || isa<InvokeInst>(O1)) &&
+      isNonEscapingLocalObject(O2) && O1 != O2)
+    return NoAlias;
+  if ((isa<CallInst>(O2) || isa<InvokeInst>(O2)) &&
+      isNonEscapingLocalObject(O1) && O1 != O2)
+    return NoAlias;
+
+  if (!isGEP(V1) && isGEP(V2)) {
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
   }
-
-  if (V1Size != ~0U && V2Size != ~0U)
-    if (isGEP(V1)) {
-      SmallVector<Value*, 16> GEPOperands;
-      const Value *BasePtr = GetGEPOperands(V1, GEPOperands);
-
-      AliasResult R = alias(BasePtr, V1Size, V2, V2Size);
-      if (R == MustAlias) {
-        // If there is at least one non-zero constant index, we know they cannot
-        // alias.
-        bool ConstantFound = false;
-        bool AllZerosFound = true;
-        for (unsigned i = 0, e = GEPOperands.size(); i != e; ++i)
-          if (const Constant *C = dyn_cast<Constant>(GEPOperands[i])) {
-            if (!C->isNullValue()) {
-              ConstantFound = true;
-              AllZerosFound = false;
-              break;
-            }
-          } else {
-            AllZerosFound = false;
-          }
-
-        // If we have getelementptr <ptr>, 0, 0, 0, 0, ... and V2 must aliases
-        // the ptr, the end result is a must alias also.
-        if (AllZerosFound)
-          return MustAlias;
-
-        if (ConstantFound) {
-          if (V2Size <= 1 && V1Size <= 1)  // Just pointer check?
-            return NoAlias;
-
-          // Otherwise we have to check to see that the distance is more than
-          // the size of the argument... build an index vector that is equal to
-          // the arguments provided, except substitute 0's for any variable
-          // indexes we find...
-          if (TD && cast<PointerType>(
-                BasePtr->getType())->getElementType()->isSized()) {
-            for (unsigned i = 0; i != GEPOperands.size(); ++i)
-              if (!isa<ConstantInt>(GEPOperands[i]))
-                GEPOperands[i] =
-                  Constant::getNullValue(GEPOperands[i]->getType());
-            int64_t Offset =
-              TD->getIndexedOffset(BasePtr->getType(),
-                                   &GEPOperands[0],
-                                   GEPOperands.size());
-
-            if (Offset >= (int64_t)V2Size || Offset <= -(int64_t)V1Size)
-              return NoAlias;
-          }
-        }
-      }
-    }
+  if (isGEP(V1))
+    return aliasGEP(V1, V1Size, V2, V2Size);
 
   return MayAlias;
 }
