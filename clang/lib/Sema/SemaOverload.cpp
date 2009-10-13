@@ -4698,9 +4698,16 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                                                  OpLoc);
         UsualUnaryConversions(FnExpr);
 
-        Expr *CE = new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
-                                                     Args, 2, ResultTy, OpLoc);
-        return MaybeBindToTemporary(CE);
+        ExprOwningPtr<CXXOperatorCallExpr> 
+          TheCall(this, new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
+                                                          Args, 2, ResultTy, 
+                                                          OpLoc));
+        
+        if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall.get(), 
+                                FnDecl))
+          return ExprError();
+
+        return MaybeBindToTemporary(TheCall.release());
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
@@ -5171,10 +5178,16 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
   Expr *FnExpr = new (Context) DeclRefExpr(Method, Method->getType(),
                                            SourceLocation());
   UsualUnaryConversions(FnExpr);
-  Base = new (Context) CXXOperatorCallExpr(Context, OO_Arrow, FnExpr, &Base, 1,
-                                 Method->getResultType().getNonReferenceType(),
-                                 Method->getLocation());
-  return Owned(Base);
+  
+  QualType ResultTy = Method->getResultType().getNonReferenceType();
+  ExprOwningPtr<CXXOperatorCallExpr> 
+    TheCall(this, new (Context) CXXOperatorCallExpr(Context, OO_Arrow, FnExpr, 
+                                                    &Base, 1, ResultTy, OpLoc));
+
+  if (CheckCallReturnType(Method->getResultType(), OpLoc, TheCall.get(), 
+                          Method))
+          return ExprError();
+  return move(TheCall);
 }
 
 /// FixOverloadedFunctionReference - E is an expression that refers to

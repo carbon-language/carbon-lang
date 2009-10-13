@@ -1993,7 +1993,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
     CTypes.insert(Context.getCanonicalType(BaseType));
     
     while (BaseType->isRecordType()) {
-      Base = BuildOverloadedArrowExpr(S, move(Base), BaseExpr->getExprLoc());
+      Base = BuildOverloadedArrowExpr(S, move(Base), OpLoc);
       BaseExpr = (Expr*)Base.get();
       if (BaseExpr == NULL)
         return ExprError();
