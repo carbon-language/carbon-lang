@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 
 using namespace clang;
@@ -33,7 +34,40 @@ public:
 void CallInliner::EvalCall(ExplodedNodeSet& Dst, GRExprEngine& Engine,
                            GRStmtNodeBuilder& Builder, CallExpr* CE, SVal L,
                            ExplodedNode* Pred) {
-  assert(0 && "TO BE IMPLEMENTED");
+  FunctionDecl const *FD = L.getAsFunctionDecl();
+  if (!FD)
+    return; // GRExprEngine is responsible for the autotransition.
+
+  // Make a new LocationContext.
+  StackFrameContext const *LocCtx =
+  Engine.getAnalysisManager().getStackFrame(FD, Pred->getLocationContext(), CE);
+
+  CFGBlock const *Entry = &(LocCtx->getCFG()->getEntry());
+
+  assert (Entry->empty() && "Entry block must be empty.");
+
+  assert (Entry->succ_size() == 1 && "Entry block must have 1 successor.");
+
+  // Get the solitary successor.
+  CFGBlock const *SuccB = *(Entry->succ_begin());
+
+  // Construct an edge representing the starting location in the function.
+  BlockEdge Loc(Entry, SuccB, LocCtx);
+
+  GRState const *state = Builder.GetState(Pred);  
+  state = Engine.getStoreManager().EnterStackFrame(state, LocCtx);
+
+  bool isNew;
+  ExplodedNode *SuccN = Engine.getGraph().getNode(Loc, state, &isNew);
+  SuccN->addPredecessor(Pred, Engine.getGraph());
+
+  Builder.Deferred.erase(Pred);
+
+  // This is a hack. We really should not use the GRStmtNodeBuilder.
+  if (isNew)
+    Builder.getWorkList()->Enqueue(SuccN);
+
+  Builder.HasGeneratedNode = true;
 }
   
 GRTransferFuncs *clang::CreateCallInliner(ASTContext &ctx) {
