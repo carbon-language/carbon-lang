@@ -34,6 +34,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/InlineCost.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Dominators.h"
@@ -408,15 +409,14 @@ unsigned LoopUnswitch::getLoopUnswitchCost(Value *LIC) {
   if (IsTrivialUnswitchCondition(LIC))
     return 0;
   
-  // FIXME: This is really overly conservative and brain dead.
-  unsigned Cost = 0;
+  // FIXME: This is overly conservative because it does not take into
+  // consideration code simplification opportunities.
+  CodeMetrics Metrics;
   for (Loop::block_iterator I = currentLoop->block_begin(), 
          E = currentLoop->block_end();
        I != E; ++I)
-    // Count instructions.
-    Cost += (*I)->size();
-
-  return Cost;
+    Metrics.analyzeBasicBlock(*I);
+  return Metrics.NumInsts;
 }
 
 /// UnswitchIfProfitable - We have found that we can unswitch currentLoop when
