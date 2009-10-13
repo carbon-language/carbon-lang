@@ -991,6 +991,9 @@ public:
 
   /// \brief If the callee is a FunctionDecl, return it. Otherwise return 0.
   FunctionDecl *getDirectCallee();
+  const FunctionDecl *getDirectCallee() const {
+    return const_cast<CallExpr*>(this)->getDirectCallee();
+  }
 
   /// getNumArgs - Return the number of actual arguments to this call.
   ///

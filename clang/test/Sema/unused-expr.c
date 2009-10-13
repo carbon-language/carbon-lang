@@ -25,7 +25,7 @@ void bar(volatile int *VP, int *P, int A,
   __real__ VC;
   
   // We know this can't change errno because of -fno-math-errno.
-  sqrt(A);  // expected-warning {{expression result unused}}
+  sqrt(A);  // expected-warning {{ignoring return value of function declared with const attribute}}
 }
 
 extern void t1();
@@ -73,4 +73,8 @@ void t4(int a) {
   for (;;b == 1) {} // expected-warning{{expression result unused}}
 }
 
-
+// rdar://7186119
+int t5f(void) __attribute__((warn_unused_result));
+void t5() {
+  t5f();   // expected-warning {{ignoring return value of function declared with warn_unused_result}}
+}

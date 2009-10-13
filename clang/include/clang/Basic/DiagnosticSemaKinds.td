@@ -1859,6 +1859,9 @@ def warn_unused_expr : Warning<"expression result unused">,
 def warn_unused_property_expr : Warning<
   "property access result unused - getters should not have side effects">,
   InGroup<UnusedValue>;
+def warn_unused_call : Warning<
+  "ignoring return value of function declared with %0 attribute">,
+  InGroup<UnusedValue>;
 
 def err_incomplete_type_used_in_type_trait_expr : Error<
   "incomplete type %0 used in type trait expression">;

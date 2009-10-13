@@ -9,9 +9,9 @@ int foo() {
   if (fn1() < 0 || fn2(2,1) < 0 || fn3(2) < 0)  // no warnings
     return -1;
   
-  fn1();  // expected-warning {{expression result unused}}
-  fn2(92, 21);  // expected-warning {{expression result unused}}
-  fn3(42);  // expected-warning {{expression result unused}}
+  fn1();  // expected-warning {{ignoring return value of function declared with warn_unused_result attribute}}
+  fn2(92, 21);  // expected-warning {{ignoring return value of function declared with pure attribute}}
+  fn3(42);  // expected-warning {{ignoring return value of function declared with const attribute}}
   return 0;
 }
 

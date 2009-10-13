@@ -80,6 +80,25 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
   E = E->IgnoreParens();
   if (isa<ObjCImplicitSetterGetterRefExpr>(E))
     DiagID = diag::warn_unused_property_expr;
+  
+  if (const CallExpr *CE = dyn_cast<CallExpr>(E)) {
+    // If the callee has attribute pure, const, or warn_unused_result, warn with
+    // a more specific message to make it clear what is happening.
+    if (const FunctionDecl *FD = CE->getDirectCallee()) {
+      if (FD->getAttr<WarnUnusedResultAttr>()) {
+        Diag(Loc, diag::warn_unused_call) << R1 << R2 << "warn_unused_result";
+        return;
+      }
+      if (FD->getAttr<PureAttr>()) {
+        Diag(Loc, diag::warn_unused_call) << R1 << R2 << "pure";
+        return;
+      }
+      if (FD->getAttr<ConstAttr>()) {
+        Diag(Loc, diag::warn_unused_call) << R1 << R2 << "const";
+        return;
+      }
+    }        
+  }
 
   Diag(Loc, DiagID) << R1 << R2;
 }

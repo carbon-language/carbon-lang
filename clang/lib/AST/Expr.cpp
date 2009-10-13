@@ -692,21 +692,22 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
   case CXXMemberCallExprClass: {
     // If this is a direct call, get the callee.
     const CallExpr *CE = cast<CallExpr>(this);
-    const Expr *CalleeExpr = CE->getCallee()->IgnoreParenCasts();
-    if (const DeclRefExpr *CalleeDRE = dyn_cast<DeclRefExpr>(CalleeExpr)) {
+    if (const FunctionDecl *FD = CE->getDirectCallee()) {
       // If the callee has attribute pure, const, or warn_unused_result, warn
       // about it. void foo() { strlen("bar"); } should warn.
-      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(CalleeDRE->getDecl()))
-        if (FD->getAttr<WarnUnusedResultAttr>() ||
-            FD->getAttr<PureAttr>() || FD->getAttr<ConstAttr>()) {
-          Loc = CE->getCallee()->getLocStart();
-          R1 = CE->getCallee()->getSourceRange();
+      //
+      // Note: If new cases are added here, DiagnoseUnusedExprResult should be
+      // updated to match for QoI.
+      if (FD->getAttr<WarnUnusedResultAttr>() ||
+          FD->getAttr<PureAttr>() || FD->getAttr<ConstAttr>()) {
+        Loc = CE->getCallee()->getLocStart();
+        R1 = CE->getCallee()->getSourceRange();
 
-          if (unsigned NumArgs = CE->getNumArgs())
-            R2 = SourceRange(CE->getArg(0)->getLocStart(),
-                             CE->getArg(NumArgs-1)->getLocEnd());
-          return true;
-        }
+        if (unsigned NumArgs = CE->getNumArgs())
+          R2 = SourceRange(CE->getArg(0)->getLocStart(),
+                           CE->getArg(NumArgs-1)->getLocEnd());
+        return true;
+      }
     }
     return false;
   }
