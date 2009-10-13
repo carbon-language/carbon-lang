@@ -537,7 +537,8 @@ bool ARMAsmParser::ParseOperand(ARMOperand &Op) {
     if (!ParseRegisterList(Op))
       return false;
   case AsmToken::Hash:
-    // $42 -> immediate.
+    // #42 -> immediate.
+    // TODO: ":lower16:" and ":upper16:" modifiers after # before immediate
     getLexer().Lex();
     const MCExpr *Val;
     if (getParser().ParseExpression(Val))
