@@ -126,7 +126,7 @@ private:
   /// SelectDYN_ALLOC - Select dynamic alloc for Thumb.
   SDNode *SelectDYN_ALLOC(SDValue Op);
 
-  /// SelectV6T2BitfielsOp - Select SBFX/UBFX instructions for ARM.
+  /// SelectV6T2BitfieldExtractOp - Select SBFX/UBFX instructions for ARM.
   SDNode *SelectV6T2BitfieldExtractOp(SDValue Op, unsigned Opc);
 
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
