@@ -1369,44 +1369,11 @@ SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
   return DAG.getNode(ARMISD::PIC_ADD, dl, PtrVT, Result, PICLabel);
 }
 
-static SDValue LowerNeonVLDIntrinsic(SDValue Op, SelectionDAG &DAG,
-                                     unsigned NumVecs) {
-  SDNode *Node = Op.getNode();
-  EVT VT = Node->getValueType(0);
-
-  // No expansion needed for 64-bit vectors.
-  if (VT.is64BitVector())
-    return SDValue();
-
-  // FIXME: We need to expand VLD3 and VLD4 of 128-bit vectors into separate
-  // operations to load the even and odd registers.
-  return SDValue();
-}
-
-static SDValue LowerNeonVSTIntrinsic(SDValue Op, SelectionDAG &DAG,
-                                     unsigned NumVecs) {
-  SDNode *Node = Op.getNode();
-  EVT VT = Node->getOperand(3).getValueType();
-
-  // No expansion needed for 64-bit vectors.
-  if (VT.is64BitVector())
-    return SDValue();
-
-  // FIXME: We need to expand VST3 and VST4 of 128-bit vectors into separate
-  // operations to store the even and odd registers.
-  return SDValue();
-}
-
 static SDValue LowerNeonVLDLaneIntrinsic(SDValue Op, SelectionDAG &DAG,
                                          unsigned NumVecs) {
-  SDNode *Node = Op.getNode();
-  EVT VT = Node->getValueType(0);
-
-  if (!VT.is64BitVector())
-    return SDValue(); // unimplemented
-
   // Change the lane number operand to be a TargetConstant; otherwise it
   // will be legalized into a register.
+  SDNode *Node = Op.getNode();
   ConstantSDNode *Lane = dyn_cast<ConstantSDNode>(Node->getOperand(NumVecs+3));
   if (!Lane) {
     assert(false && "vld lane number must be a constant");
@@ -1419,14 +1386,9 @@ static SDValue LowerNeonVLDLaneIntrinsic(SDValue Op, SelectionDAG &DAG,
 
 static SDValue LowerNeonVSTLaneIntrinsic(SDValue Op, SelectionDAG &DAG,
                                          unsigned NumVecs) {
-  SDNode *Node = Op.getNode();
-  EVT VT = Node->getOperand(3).getValueType();
-
-  if (!VT.is64BitVector())
-    return SDValue(); // unimplemented
-
   // Change the lane number operand to be a TargetConstant; otherwise it
   // will be legalized into a register.
+  SDNode *Node = Op.getNode();
   ConstantSDNode *Lane = dyn_cast<ConstantSDNode>(Node->getOperand(NumVecs+3));
   if (!Lane) {
     assert(false && "vst lane number must be a constant");
@@ -1441,20 +1403,12 @@ SDValue
 ARMTargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) {
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
   switch (IntNo) {
-  case Intrinsic::arm_neon_vld3:
-    return LowerNeonVLDIntrinsic(Op, DAG, 3);
-  case Intrinsic::arm_neon_vld4:
-    return LowerNeonVLDIntrinsic(Op, DAG, 4);
   case Intrinsic::arm_neon_vld2lane:
     return LowerNeonVLDLaneIntrinsic(Op, DAG, 2);
   case Intrinsic::arm_neon_vld3lane:
     return LowerNeonVLDLaneIntrinsic(Op, DAG, 3);
   case Intrinsic::arm_neon_vld4lane:
     return LowerNeonVLDLaneIntrinsic(Op, DAG, 4);
-  case Intrinsic::arm_neon_vst3:
-    return LowerNeonVSTIntrinsic(Op, DAG, 3);
-  case Intrinsic::arm_neon_vst4:
-    return LowerNeonVSTIntrinsic(Op, DAG, 4);
   case Intrinsic::arm_neon_vst2lane:
     return LowerNeonVSTLaneIntrinsic(Op, DAG, 2);
   case Intrinsic::arm_neon_vst3lane:
