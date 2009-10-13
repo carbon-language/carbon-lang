@@ -305,7 +305,7 @@ other situations.
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="externalproj">External Projects Using LLVM 2.6</a>
+  <a name="externalproj">External Open Source Projects Using LLVM 2.6</a>
 </div>
 <!-- *********************************************************************** -->
 
@@ -435,6 +435,23 @@ compiler.</p>
 and static compiling support to the Lua VM.  Lua bytecode is analyzed to
 remove type checks, then LLVM is used to compile the bytecode down to machine
 code.</p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="icedtea">IcedTea Java Virtual Machine Implementation</a>
+</div>
+
+<div class="doc_text">
+<p>
+<a href="http://icedtea.classpath.org/wiki/Main_Page">IcedTea</a> provides a
+harness to build OpenJDK using only free software build tools and to provide
+replacements for the not-yet free parts of OpenJDK.  One of the extensions that
+IcedTea provides is a new JIT compiler named <a
+href="http://icedtea.classpath.org/wiki/ZeroSharkFaq">Shark</a> which uses LLVM
+to provide native code generation without introducing processor-dependent
+code.
+</p>
 </div>
 
 
