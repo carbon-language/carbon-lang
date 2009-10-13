@@ -1415,6 +1415,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
         default: llvm_unreachable("unhandled vld2 type");
@@ -1424,7 +1425,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2i32: Opc = ARM::VLD2d32; break;
         case MVT::v1i64: Opc = ARM::VLD2d64; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
         return CurDAG->getMachineNode(Opc, dl, VT, VT, MVT::Other, Ops, 4);
       }
@@ -1437,7 +1437,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       case MVT::v4f32: Opc = ARM::VLD2q32; RegVT = MVT::v2f32; break;
       case MVT::v4i32: Opc = ARM::VLD2q32; RegVT = MVT::v2i32; break;
       }
-      SDValue Chain = N->getOperand(0);
       const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
       std::vector<EVT> ResTys(4, RegVT);
       ResTys.push_back(MVT::Other);
@@ -1454,6 +1453,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
         default: llvm_unreachable("unhandled vld3 type");
@@ -1463,7 +1463,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2i32: Opc = ARM::VLD3d32; break;
         case MVT::v1i64: Opc = ARM::VLD3d64; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
         return CurDAG->getMachineNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 4);
       }
@@ -1482,7 +1481,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       case MVT::v4i32:
         Opc = ARM::VLD3q32a; Opc2 = ARM::VLD3q32b; RegVT = MVT::v2i32; break;
       }
-      SDValue Chain = N->getOperand(0);
       // Enable writeback to the address register.
       MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
 
@@ -1512,6 +1510,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
         default: llvm_unreachable("unhandled vld4 type");
@@ -1521,7 +1520,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2i32: Opc = ARM::VLD4d32; break;
         case MVT::v1i64: Opc = ARM::VLD4d64; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
         std::vector<EVT> ResTys(4, VT);
         ResTys.push_back(MVT::Other);
@@ -1542,7 +1540,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       case MVT::v4i32:
         Opc = ARM::VLD4q32a; Opc2 = ARM::VLD4q32b; RegVT = MVT::v2i32; break;
       }
-      SDValue Chain = N->getOperand(0);
       // Enable writeback to the address register.
       MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
 
@@ -1574,6 +1571,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
+      unsigned Lane = cast<ConstantSDNode>(N->getOperand(5))->getZExtValue();
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
         default: llvm_unreachable("unhandled vld2lane type");
@@ -1582,10 +1581,9 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2f32:
         case MVT::v2i32: Opc = ARM::VLD2LNd32; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                                 N->getOperand(3), N->getOperand(4),
-                                N->getOperand(5), Chain };
+                                getI32Imm(Lane), Chain };
         return CurDAG->getMachineNode(Opc, dl, VT, VT, MVT::Other, Ops, 7);
       }
       // Quad registers are handled by extracting subregs, doing the load,
@@ -1610,8 +1608,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         RegVT = MVT::v2i32;
         break;
       }
-      SDValue Chain = N->getOperand(0);
-      unsigned Lane = cast<ConstantSDNode>(N->getOperand(5))->getZExtValue();
       unsigned NumElts = RegVT.getVectorNumElements();
       int SubregIdx = (Lane < NumElts) ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
 
@@ -1641,6 +1637,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
+      unsigned Lane = cast<ConstantSDNode>(N->getOperand(6))->getZExtValue();
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
         default: llvm_unreachable("unhandled vld3lane type");
@@ -1649,10 +1647,9 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2f32:
         case MVT::v2i32: Opc = ARM::VLD3LNd32; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                                 N->getOperand(3), N->getOperand(4),
-                                N->getOperand(5), N->getOperand(6), Chain };
+                                N->getOperand(5), getI32Imm(Lane), Chain };
         return CurDAG->getMachineNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 8);
       }
       // Quad registers are handled by extracting subregs, doing the load,
@@ -1677,8 +1674,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         RegVT = MVT::v2i32;
         break;
       }
-      SDValue Chain = N->getOperand(0);
-      unsigned Lane = cast<ConstantSDNode>(N->getOperand(6))->getZExtValue();
       unsigned NumElts = RegVT.getVectorNumElements();
       int SubregIdx = (Lane < NumElts) ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
 
@@ -1714,6 +1709,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
+      unsigned Lane = cast<ConstantSDNode>(N->getOperand(7))->getZExtValue();
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
         default: llvm_unreachable("unhandled vld4lane type");
@@ -1722,11 +1719,10 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2f32:
         case MVT::v2i32: Opc = ARM::VLD4LNd32; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                                 N->getOperand(3), N->getOperand(4),
                                 N->getOperand(5), N->getOperand(6),
-                                N->getOperand(7), Chain };
+                                getI32Imm(Lane), Chain };
         std::vector<EVT> ResTys(4, VT);
         ResTys.push_back(MVT::Other);
         return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 9);
@@ -1753,8 +1749,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         RegVT = MVT::v2i32;
         break;
       }
-      SDValue Chain = N->getOperand(0);
-      unsigned Lane = cast<ConstantSDNode>(N->getOperand(7))->getZExtValue();
       unsigned NumElts = RegVT.getVectorNumElements();
       int SubregIdx = (Lane < NumElts) ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
 
@@ -1797,6 +1791,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
       VT = N->getOperand(3).getValueType();
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
@@ -1807,7 +1802,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2i32: Opc = ARM::VST2d32; break;
         case MVT::v1i64: Opc = ARM::VST2d64; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                                 N->getOperand(3), N->getOperand(4), Chain };
         return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 6);
@@ -1821,7 +1815,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       case MVT::v4f32: Opc = ARM::VST2q32; RegVT = MVT::v2f32; break;
       case MVT::v4i32: Opc = ARM::VST2q32; RegVT = MVT::v2i32; break;
       }
-      SDValue Chain = N->getOperand(0);
       SDValue D0 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
                                                   N->getOperand(3));
       SDValue D1 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
@@ -1839,6 +1832,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
       VT = N->getOperand(3).getValueType();
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
@@ -1849,7 +1843,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2i32: Opc = ARM::VST3d32; break;
         case MVT::v1i64: Opc = ARM::VST3d64; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                                 N->getOperand(3), N->getOperand(4),
                                 N->getOperand(5), Chain };
@@ -1870,7 +1863,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       case MVT::v4i32:
         Opc = ARM::VST3q32a; Opc2 = ARM::VST3q32b; RegVT = MVT::v2i32; break;
       }
-      SDValue Chain = N->getOperand(0);
       // Enable writeback to the address register.
       MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
 
@@ -1904,6 +1896,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
       VT = N->getOperand(3).getValueType();
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
@@ -1914,7 +1907,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2i32: Opc = ARM::VST4d32; break;
         case MVT::v1i64: Opc = ARM::VST4d64; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                                 N->getOperand(3), N->getOperand(4),
                                 N->getOperand(5), N->getOperand(6), Chain };
@@ -1935,7 +1927,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       case MVT::v4i32:
         Opc = ARM::VST4q32a; Opc2 = ARM::VST4q32b; RegVT = MVT::v2i32; break;
       }
-      SDValue Chain = N->getOperand(0);
       // Enable writeback to the address register.
       MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
 
@@ -1975,6 +1966,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
+      unsigned Lane = cast<ConstantSDNode>(N->getOperand(5))->getZExtValue();
       VT = N->getOperand(3).getValueType();
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
@@ -1984,10 +1977,9 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2f32:
         case MVT::v2i32: Opc = ARM::VST2LNd32; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                                 N->getOperand(3), N->getOperand(4),
-                                N->getOperand(5), Chain };
+                                getI32Imm(Lane), Chain };
         return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 7);
       }
       // Quad registers are handled by extracting subregs and then doing
@@ -2012,8 +2004,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         RegVT = MVT::v2i32;
         break;
       }
-      SDValue Chain = N->getOperand(0);
-      unsigned Lane = cast<ConstantSDNode>(N->getOperand(5))->getZExtValue();
       unsigned NumElts = RegVT.getVectorNumElements();
       int SubregIdx = (Lane < NumElts) ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
 
@@ -2031,6 +2021,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
+      unsigned Lane = cast<ConstantSDNode>(N->getOperand(6))->getZExtValue();
       VT = N->getOperand(3).getValueType();
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
@@ -2040,10 +2032,9 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2f32:
         case MVT::v2i32: Opc = ARM::VST3LNd32; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                                 N->getOperand(3), N->getOperand(4),
-                                N->getOperand(5), N->getOperand(6), Chain };
+                                N->getOperand(5), getI32Imm(Lane), Chain };
         return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 8);
       }
       // Quad registers are handled by extracting subregs and then doing
@@ -2068,8 +2059,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         RegVT = MVT::v2i32;
         break;
       }
-      SDValue Chain = N->getOperand(0);
-      unsigned Lane = cast<ConstantSDNode>(N->getOperand(6))->getZExtValue();
       unsigned NumElts = RegVT.getVectorNumElements();
       int SubregIdx = (Lane < NumElts) ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
 
@@ -2089,6 +2078,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       SDValue MemAddr, MemUpdate, MemOpc;
       if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
         return NULL;
+      SDValue Chain = N->getOperand(0);
+      unsigned Lane = cast<ConstantSDNode>(N->getOperand(7))->getZExtValue();
       VT = N->getOperand(3).getValueType();
       if (VT.is64BitVector()) {
         switch (VT.getSimpleVT().SimpleTy) {
@@ -2098,11 +2089,10 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         case MVT::v2f32:
         case MVT::v2i32: Opc = ARM::VST4LNd32; break;
         }
-        SDValue Chain = N->getOperand(0);
         const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
                                 N->getOperand(3), N->getOperand(4),
                                 N->getOperand(5), N->getOperand(6),
-                                N->getOperand(7), Chain };
+                                getI32Imm(Lane), Chain };
         return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 9);
       }
       // Quad registers are handled by extracting subregs and then doing
@@ -2127,8 +2117,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
         RegVT = MVT::v2i32;
         break;
       }
-      SDValue Chain = N->getOperand(0);
-      unsigned Lane = cast<ConstantSDNode>(N->getOperand(7))->getZExtValue();
       unsigned NumElts = RegVT.getVectorNumElements();
       int SubregIdx = (Lane < NumElts) ? ARM::DSUBREG_0 : ARM::DSUBREG_1;
 
