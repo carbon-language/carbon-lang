@@ -172,7 +172,7 @@ namespace llvm {
 
     /// resetCachedFunctionInfo - erase any cached cost info for this function.
     void resetCachedCostInfo(Function* Caller) {
-      CachedFunctionInfo[Caller].Metrics.NumBlocks = 0;
+      CachedFunctionInfo[Caller] = FunctionInfo();
     }
   };
 }
