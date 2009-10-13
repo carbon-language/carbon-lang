@@ -716,6 +716,12 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
   assert(T->isDependentType() && "Class template type is not dependent?");
   (void)T;
 
+  // If we are providing an explicit specialization of a member that is a 
+  // class template, make a note of that.
+  if (PrevClassTemplate && 
+      PrevClassTemplate->getInstantiatedFromMemberTemplate())
+    PrevClassTemplate->setMemberSpecialization();
+  
   // Set the access specifier.
   if (!Invalid && TUK != TUK_Friend)
     SetMemberAccessSpecifier(NewTemplate, PrevClassTemplate, AS);

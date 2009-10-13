@@ -737,8 +737,8 @@ FunctionTemplateDecl *FunctionDecl::getPrimaryTemplate() const {
 const TemplateArgumentList *
 FunctionDecl::getTemplateSpecializationArgs() const {
   if (FunctionTemplateSpecializationInfo *Info
-      = TemplateOrSpecialization
-      .dyn_cast<FunctionTemplateSpecializationInfo*>()) {
+        = TemplateOrSpecialization
+            .dyn_cast<FunctionTemplateSpecializationInfo*>()) {
     return Info->TemplateArguments;
   }
   return 0;

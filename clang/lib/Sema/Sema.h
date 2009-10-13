@@ -551,6 +551,7 @@ public:
                                      bool IsFunctionDefinition,
                                      bool &Redeclaration);
   void CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
+                                bool IsExplicitSpecialization,
                                 bool &Redeclaration,
                                 bool &OverloadableAttrRequired);
   void CheckMain(FunctionDecl *FD);

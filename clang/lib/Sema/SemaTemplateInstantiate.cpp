@@ -46,15 +46,31 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D) {
         break;
 
       Result.addOuterTemplateArguments(&Spec->getTemplateInstantiationArgs());
+      
+      // If this class template specialization was instantiated from a 
+      // specialized member that is a class template, we're done.
+      assert(Spec->getSpecializedTemplate() && "No class template?");
+      if (Spec->getSpecializedTemplate()->isMemberSpecialization())
+        break;
     }
-
     // Add template arguments from a function template specialization.
     else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Ctx)) {
-      // FIXME: Check whether this is an explicit specialization.
+      if (Function->getTemplateSpecializationKind() 
+            == TSK_ExplicitSpecialization)
+        break;
+          
       if (const TemplateArgumentList *TemplateArgs
-            = Function->getTemplateSpecializationArgs())
+            = Function->getTemplateSpecializationArgs()) {
+        // Add the template arguments for this specialization.
         Result.addOuterTemplateArguments(TemplateArgs);
 
+        // If this function was instantiated from a specialized member that is
+        // a function template, we're done.
+        assert(Function->getPrimaryTemplate() && "No function template?");
+        if (Function->getPrimaryTemplate()->isMemberSpecialization())
+          break;
+      }
+      
       // If this is a friend declaration and it declares an entity at
       // namespace scope, take arguments from its lexical parent
       // instead of its semantic parent.
@@ -940,9 +956,15 @@ Sema::InstantiateClassTemplateSpecialization(
     //   -- If no matches are found, the instantiation is generated
     //      from the primary template.
     ClassTemplateDecl *OrigTemplate = Template;
-    while (OrigTemplate->getInstantiatedFromMemberTemplate())
+    while (OrigTemplate->getInstantiatedFromMemberTemplate()) {
+      // If we've found an explicit specialization of this class template,
+      // stop here and use that as the pattern.
+      if (OrigTemplate->isMemberSpecialization())
+        break;
+      
       OrigTemplate = OrigTemplate->getInstantiatedFromMemberTemplate();
-
+    }
+    
     Pattern = OrigTemplate->getTemplatedDecl();
   }
 

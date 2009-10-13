@@ -621,7 +621,7 @@ protected:
   /// \brief Data that is common to all of the declarations of a given
   /// function template.
   struct Common {
-    Common() : InstantiatedFromMember(0) { }
+    Common() : InstantiatedFromMember(0, false) { }
 
     /// \brief The function template specializations for this function
     /// template, including explicit specializations and instantiations.
@@ -629,7 +629,10 @@ protected:
 
     /// \brief The member function template from which this was most
     /// directly instantiated (or null).
-    FunctionTemplateDecl *InstantiatedFromMember;
+    ///
+    /// The boolean value indicates whether this member function template
+    /// was explicitly specialized.
+    llvm::PointerIntPair<FunctionTemplateDecl*, 1, bool> InstantiatedFromMember;
   };
 
   /// \brief A pointer to the previous declaration (if this is a redeclaration)
@@ -704,14 +707,40 @@ public:
   /// \returns NULL if this is not an instantiation of a member function
   /// template.
   FunctionTemplateDecl *getInstantiatedFromMemberTemplate() {
-    return getCommonPtr()->InstantiatedFromMember;
+    return getCommonPtr()->InstantiatedFromMember.getPointer();
   }
 
   void setInstantiatedFromMemberTemplate(FunctionTemplateDecl *FTD) {
-    assert(!getCommonPtr()->InstantiatedFromMember);
-    getCommonPtr()->InstantiatedFromMember = FTD;
+    assert(!getCommonPtr()->InstantiatedFromMember.getPointer());
+    getCommonPtr()->InstantiatedFromMember.setPointer(FTD);
   }
 
+  /// \brief Determines whether this template was a specialization of a 
+  /// member template.
+  ///
+  /// In the following example, the function template \c X<int>::f is a 
+  /// member specialization.
+  ///
+  /// \code
+  /// template<typename T>
+  /// struct X {
+  ///   template<typename U> void f(T, U);
+  /// };
+  ///
+  /// template<> template<typename T>
+  /// void X<int>::f(int, T);
+  /// \endcode
+  bool isMemberSpecialization() {
+    return getCommonPtr()->InstantiatedFromMember.getInt();
+  }
+  
+  /// \brief Note that this member template is a specialization.
+  void setMemberSpecialization() {
+    assert(getCommonPtr()->InstantiatedFromMember.getPointer() &&
+           "Only member templates can be member template specializations");
+    getCommonPtr()->InstantiatedFromMember.setInt(true);
+  }
+  
   /// Create a template function node.
   static FunctionTemplateDecl *Create(ASTContext &C, DeclContext *DC,
                                       SourceLocation L,
@@ -1163,7 +1192,7 @@ protected:
   /// \brief Data that is common to all of the declarations of a given
   /// class template.
   struct Common {
-    Common() : InstantiatedFromMember(0) {}
+    Common() : InstantiatedFromMember(0, 0) {}
 
     /// \brief The class template specializations for this class
     /// template, including explicit specializations and instantiations.
@@ -1179,9 +1208,15 @@ protected:
 
     /// \brief The templated member class from which this was most
     /// directly instantiated (or null).
-    ClassTemplateDecl *InstantiatedFromMember;
+    ///
+    /// The boolean value indicates whether this member class template
+    /// was explicitly specialized.
+    llvm::PointerIntPair<ClassTemplateDecl *, 1, bool> InstantiatedFromMember;
   };
 
+  // FIXME: Combine PreviousDeclaration with CommonPtr, as in 
+  // FunctionTemplateDecl.
+  
   /// \brief Previous declaration of this class template.
   ClassTemplateDecl *PreviousDeclaration;
 
@@ -1280,14 +1315,40 @@ public:
   ///
   /// \returns null if this is not an instantiation of a member class template.
   ClassTemplateDecl *getInstantiatedFromMemberTemplate() const {
-    return CommonPtr->InstantiatedFromMember;
+    return CommonPtr->InstantiatedFromMember.getPointer();
   }
 
   void setInstantiatedFromMemberTemplate(ClassTemplateDecl *CTD) {
-    assert(!CommonPtr->InstantiatedFromMember);
-    CommonPtr->InstantiatedFromMember = CTD;
+    assert(!CommonPtr->InstantiatedFromMember.getPointer());
+    CommonPtr->InstantiatedFromMember.setPointer(CTD);
   }
 
+  /// \brief Determines whether this template was a specialization of a 
+  /// member template.
+  ///
+  /// In the following example, the member template \c X<int>::Inner is a 
+  /// member specialization.
+  ///
+  /// \code
+  /// template<typename T>
+  /// struct X {
+  ///   template<typename U> struct Inner;
+  /// };
+  ///
+  /// template<> template<typename T>
+  /// struct X<int>::Inner { /* ... */ };
+  /// \endcode
+  bool isMemberSpecialization() {
+    return CommonPtr->InstantiatedFromMember.getInt();
+  }
+  
+  /// \brief Note that this member template is a specialization.
+  void setMemberSpecialization() {
+    assert(CommonPtr->InstantiatedFromMember.getPointer() &&
+           "Only member templates can be member template specializations");
+    CommonPtr->InstantiatedFromMember.setInt(true);
+  }
+  
   // Implement isa/cast/dyncast support
   static bool classof(const Decl *D)
   { return D->getKind() == ClassTemplate; }

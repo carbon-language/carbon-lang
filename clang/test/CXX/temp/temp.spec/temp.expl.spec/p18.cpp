@@ -7,10 +7,14 @@ template<class T1> class A {
 }; 
 
 template<> template<class X>
-class A<int>::B { }; 
+class A<long>::B { }; 
 
+// FIXME: If we make the explicit specialization of A<long>::B, above, into
+// a specialization of A<int>::B, our diagnostic is correct but not very 
+// helpful.
 template<> template<> template<class T>
   void A<int>::B<double>::mf1(T t) { } 
 
+// FIXME: This diagnostic could probably be better.
 template<class Y> template<>
   void A<Y>::B<double>::mf2() { } // expected-error{{does not refer}}

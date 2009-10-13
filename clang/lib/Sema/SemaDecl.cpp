@@ -1735,6 +1735,10 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
       return DeclPtrTy();
     }
 
+    if (!DC->isDependentContext() && 
+        RequireCompleteDeclContext(D.getCXXScopeSpec()))
+      return DeclPtrTy();
+    
     LookupResult Res;
     LookupQualifiedName(Res, DC, Name, LookupOrdinaryName, true);
     PrevDecl = Res.getAsSingleDecl(Context);
@@ -2807,11 +2811,11 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   } else if (isExplicitSpecialization && isa<CXXMethodDecl>(NewFD) &&
              CheckMemberSpecialization(NewFD, PrevDecl))
     NewFD->setInvalidDecl();
-           
+    
   // Perform semantic checking on the function declaration.
   bool OverloadableAttrRequired = false; // FIXME: HACK!
-  CheckFunctionDeclaration(NewFD, PrevDecl, Redeclaration,
-                           /*FIXME:*/OverloadableAttrRequired);
+  CheckFunctionDeclaration(NewFD, PrevDecl, isExplicitSpecialization,
+                           Redeclaration, /*FIXME:*/OverloadableAttrRequired);
 
   if (D.getCXXScopeSpec().isSet() && !NewFD->isInvalidDecl()) {
     // An out-of-line member function declaration must also be a
@@ -2914,8 +2918,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 /// that have been instantiated via C++ template instantiation (called
 /// via InstantiateDecl).
 ///
+/// \param IsExplicitSpecialiation whether this new function declaration is
+/// an explicit specialization of the previous declaration.
+///
 /// This sets NewFD->isInvalidDecl() to true if there was an error.
 void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
+                                    bool IsExplicitSpecialization,
                                     bool &Redeclaration,
                                     bool &OverloadableAttrRequired) {
   // If NewFD is already known erroneous, don't do any of this checking.
@@ -2990,7 +2998,7 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
 
       if (FunctionTemplateDecl *OldTemplateDecl
                                     = dyn_cast<FunctionTemplateDecl>(OldDecl)) {
-        NewFD->setPreviousDeclaration(OldTemplateDecl->getTemplatedDecl());
+        NewFD->setPreviousDeclaration(OldTemplateDecl->getTemplatedDecl());        
         FunctionTemplateDecl *NewTemplateDecl
           = NewFD->getDescribedFunctionTemplate();
         assert(NewTemplateDecl && "Template/non-template mismatch");
@@ -2998,6 +3006,14 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
               = dyn_cast<CXXMethodDecl>(NewTemplateDecl->getTemplatedDecl())) {
           Method->setAccess(OldTemplateDecl->getAccess());
           NewTemplateDecl->setAccess(OldTemplateDecl->getAccess());
+        }
+        
+        // If this is an explicit specialization of a member that is a function
+        // template, mark it as a member specialization.
+        if (IsExplicitSpecialization && 
+            NewTemplateDecl->getInstantiatedFromMemberTemplate()) {
+          NewTemplateDecl->setMemberSpecialization();
+          assert(OldTemplateDecl->isMemberSpecialization());
         }
       } else {
         if (isa<CXXMethodDecl>(NewFD)) // Set access for out-of-line definitions

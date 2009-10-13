@@ -581,7 +581,7 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
       PrevDecl = 0;
   }
   
-  SemaRef.CheckFunctionDeclaration(Function, PrevDecl, Redeclaration,
+  SemaRef.CheckFunctionDeclaration(Function, PrevDecl, false, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
   // If the original function was part of a friend declaration,
@@ -748,7 +748,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
 
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
-  SemaRef.CheckFunctionDeclaration(Method, PrevDecl, Redeclaration,
+  SemaRef.CheckFunctionDeclaration(Method, PrevDecl, false, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
   if (!FunctionTemplate && (!Method->isInvalidDecl() || !PrevDecl) &&
@@ -1057,9 +1057,15 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   // Find the function body that we'll be substituting.
   const FunctionDecl *PatternDecl = 0;
   if (FunctionTemplateDecl *Primary = Function->getPrimaryTemplate()) {
-    while (Primary->getInstantiatedFromMemberTemplate())
+    while (Primary->getInstantiatedFromMemberTemplate()) {
+      // If we have hit a point where the user provided a specialization of
+      // this template, we're done looking.
+      if (Primary->isMemberSpecialization())
+        break;
+      
       Primary = Primary->getInstantiatedFromMemberTemplate();
-
+    }
+    
     PatternDecl = Primary->getTemplatedDecl();
   } else
     PatternDecl = Function->getInstantiatedFromMemberFunction();
