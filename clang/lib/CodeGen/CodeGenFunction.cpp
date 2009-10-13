@@ -448,7 +448,7 @@ unsigned CodeGenFunction::GetIDForAddrOfLabel(const LabelStmt *L) {
 }
 
 void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
-  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+  const llvm::Type *BP = llvm::Type::getInt8PtrTy(VMContext);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
 
