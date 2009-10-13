@@ -282,6 +282,7 @@ void CodeGenFunction::EmitGotoStmt(const GotoStmt &S) {
   EmitBranchThroughCleanup(getBasicBlockForLabel(S.getLabel()));
 }
 
+
 void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
   // Emit initial switch which will be patched up later by
   // EmitIndirectSwitches(). We need a default dest, so we use the
@@ -289,11 +290,17 @@ void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
   llvm::Value *V = Builder.CreatePtrToInt(EmitScalarExpr(S.getTarget()),
                                           llvm::Type::getInt32Ty(VMContext),
                                           "addr");
-  llvm::SwitchInst *I = Builder.CreateSwitch(V, Builder.GetInsertBlock());
-  IndirectSwitches.push_back(I);
+  llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
+  
 
-  // Clear the insertion point to indicate we are in unreachable code.
-  Builder.ClearInsertionPoint();
+  // Get the basic block for the indirect goto.
+  llvm::BasicBlock *IndGotoBB = GetIndirectGotoBlock();
+  
+  // The first instruction in the block has to be the PHI for the switch dest,
+  // add an entry for this branch.
+  cast<llvm::PHINode>(IndGotoBB->begin())->addIncoming(V, CurBB);
+  
+  EmitBranch(IndGotoBB);
 }
 
 void CodeGenFunction::EmitIfStmt(const IfStmt &S) {

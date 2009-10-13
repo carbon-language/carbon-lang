@@ -189,10 +189,12 @@ private:
   /// labels inside getIDForAddrOfLabel().
   std::map<const LabelStmt*, unsigned> LabelIDs;
 
-  /// IndirectSwitches - Record the list of switches for indirect
-  /// gotos. Emission of the actual switching code needs to be delayed until all
-  /// AddrLabelExprs have been seen.
-  std::vector<llvm::SwitchInst*> IndirectSwitches;
+  /// IndirectGotoSwitch - The first time an indirect goto is seen we create a
+  /// block with the switch for the indirect gotos.  Every time we see the
+  /// address of a label taken, we add the label to the indirect goto.  Every
+  /// subsequent indirect goto is codegen'd as a jump to the
+  /// IndirectGotoSwitch's basic block.
+  llvm::SwitchInst *IndirectGotoSwitch;
 
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
   /// decls.
@@ -555,6 +557,7 @@ public:
   static unsigned getAccessedFieldNo(unsigned Idx, const llvm::Constant *Elts);
 
   unsigned GetIDForAddrOfLabel(const LabelStmt *L);
+  llvm::BasicBlock *GetIndirectGotoBlock();
 
   /// EmitMemSetToZero - Generate code to memset a value of the given type to 0.
   void EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty);
@@ -1013,10 +1016,6 @@ public:
   void EmitBranchOnBoolExpr(const Expr *Cond, llvm::BasicBlock *TrueBlock,
                             llvm::BasicBlock *FalseBlock);
 private:
-
-  /// EmitIndirectSwitches - Emit code for all of the switch
-  /// instructions in IndirectSwitches.
-  void EmitIndirectSwitches();
 
   void EmitReturnOfRValue(RValue RV, QualType Ty);
 
