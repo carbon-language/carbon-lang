@@ -11,3 +11,23 @@ bar();
 int test2() { return; }
 void test3() { return 4; }
 
+
+void test4() {
+bar:
+baz:
+blong:
+bing:
+ ;
+static long x = &&bar; // - &&baz;
+static long y = &&baz;
+  &&bing;
+  &&blong;
+  if (y)
+    goto *y;
+
+  goto *x;
+}
+
+// PR3869
+int test5(long long b) { goto *b; }
+
