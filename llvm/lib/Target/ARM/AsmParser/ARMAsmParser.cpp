@@ -92,6 +92,7 @@ struct ARMOperand {
   enum {
     Token,
     Register,
+    Immediate,
     Memory
   } Kind;
 
@@ -106,6 +107,10 @@ struct ARMOperand {
       unsigned RegNum;
       bool Writeback;
     } Reg;
+
+    struct {
+      const MCExpr *Val;
+    } Imm;
 
     // This is for all forms of ARM address expressions
     struct {
@@ -134,6 +139,11 @@ struct ARMOperand {
     return Reg.RegNum;
   }
 
+  const MCExpr *getImm() const {
+    assert(Kind == Immediate && "Invalid access!");
+    return Imm.Val;
+  }
+
   bool isToken() const {return Kind == Token; }
 
   bool isReg() const { return Kind == Register; }
@@ -156,6 +166,13 @@ struct ARMOperand {
     Res.Kind = Register;
     Res.Reg.RegNum = RegNum;
     Res.Reg.Writeback = Writeback;
+    return Res;
+  }
+
+  static ARMOperand CreateImm(const MCExpr *Val) {
+    ARMOperand Res;
+    Res.Kind = Immediate;
+    Res.Imm.Val = Val;
     return Res;
   }
 
@@ -217,7 +234,7 @@ bool ARMAsmParser::ParseRegister(ARMOperand &Op) {
 // for now.
 bool ARMAsmParser::ParseRegisterList(ARMOperand &Op) {
   assert(getLexer().getTok().is(AsmToken::LCurly) &&
-	 "Token is not an Left Curly Brace");
+         "Token is not an Left Curly Brace");
   getLexer().Lex(); // Eat left curly brace token.
 
   const AsmToken &RegTok = getLexer().getTok();
@@ -498,7 +515,8 @@ bool ARMAsmParser::MatchInstruction(SmallVectorImpl<ARMOperand> &Operands,
       Mnemonic == "str" ||
       Mnemonic == "ldmfd" ||
       Mnemonic == "ldr" ||
-      Mnemonic == "mov")
+      Mnemonic == "mov" ||
+      Mnemonic == "sub")
     return false;
 
   return true;
@@ -517,9 +535,15 @@ bool ARMAsmParser::ParseOperand(ARMOperand &Op) {
       return false;
   case AsmToken::LCurly:
     if (!ParseRegisterList(Op))
-      return(false);
+      return false;
   case AsmToken::Hash:
-    return Error(getLexer().getTok().getLoc(), "immediates not yet supported");
+    // $42 -> immediate.
+    getLexer().Lex();
+    const MCExpr *Val;
+    if (getParser().ParseExpression(Val))
+      return true;
+    Op = ARMOperand::CreateImm(Val);
+    return false;
   default:
     return Error(getLexer().getTok().getLoc(), "unexpected token in operand");
   }
