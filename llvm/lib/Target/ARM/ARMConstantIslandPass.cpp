@@ -933,13 +933,14 @@ static inline unsigned getUnconditionalBrDisp(int Opc) {
 ///
 MachineBasicBlock *ARMConstantIslands::AcceptWater(water_iterator IP) {
   DEBUG(errs() << "found water in range\n");
+  MachineBasicBlock *WaterBB = *IP;
   // Remove the original WaterList entry; we want subsequent
   // insertions in this vicinity to go after the one we're
   // about to insert.  This considerably reduces the number
   // of times we have to move the same CPE more than once.
   WaterList.erase(IP);
   // CPE goes before following block (NewMBB).
-  return next(MachineFunction::iterator(*IP));
+  return next(MachineFunction::iterator(WaterBB));
 }
 
 /// LookForWater - look for an existing entry in the WaterList in which
