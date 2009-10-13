@@ -444,7 +444,7 @@ void CodeGenFunction::ErrorUnsupported(const Stmt *S, const char *Type,
 
 unsigned CodeGenFunction::GetIDForAddrOfLabel(const LabelStmt *L) {
   // Use LabelIDs.size() as the new ID if one hasn't been assigned.
-  return LabelIDs.insert(std::make_pair(L, LabelIDs.size())).first->second;
+  return LabelIDs.insert(std::make_pair(L, LabelIDs.size()+1)).first->second;
 }
 
 void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
