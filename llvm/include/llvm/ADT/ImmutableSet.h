@@ -947,15 +947,19 @@ public:
 
   class Factory {
     typename TreeTy::Factory F;
+    const bool Canonicalize;
 
   public:
-    Factory() {}
+    Factory(bool canonicalize = true)
+      : Canonicalize(canonicalize) {}
 
-    Factory(BumpPtrAllocator& Alloc)
-      : F(Alloc) {}
+    Factory(BumpPtrAllocator& Alloc, bool canonicalize = true)
+      : F(Alloc), Canonicalize(canonicalize) {}
 
     /// GetEmptySet - Returns an immutable set that contains no elements.
-    ImmutableSet GetEmptySet() { return ImmutableSet(F.GetEmptyTree()); }
+    ImmutableSet GetEmptySet() {
+      return ImmutableSet(F.GetEmptyTree());
+    }
 
     /// Add - Creates a new immutable set that contains all of the values
     ///  of the original set with the addition of the specified value.  If
@@ -965,7 +969,8 @@ public:
     ///  The memory allocated to represent the set is released when the
     ///  factory object that created the set is destroyed.
     ImmutableSet Add(ImmutableSet Old, value_type_ref V) {
-      return ImmutableSet(F.GetCanonicalTree(F.Add(Old.Root,V)));
+      TreeTy *NewT = F.Add(Old.Root, V);
+      return ImmutableSet(Canonicalize ? F.GetCanonicalTree(NewT) : NewT);
     }
 
     /// Remove - Creates a new immutable set that contains all of the values
@@ -976,7 +981,8 @@ public:
     ///  The memory allocated to represent the set is released when the
     ///  factory object that created the set is destroyed.
     ImmutableSet Remove(ImmutableSet Old, value_type_ref V) {
-      return ImmutableSet(F.GetCanonicalTree(F.Remove(Old.Root,V)));
+      TreeTy *NewT = F.Remove(Old.Root, V);
+      return ImmutableSet(Canonicalize ? F.GetCanonicalTree(NewT) : NewT);
     }
 
     BumpPtrAllocator& getAllocator() { return F.getAllocator(); }
