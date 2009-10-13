@@ -94,8 +94,8 @@ public:
         llvm::Constant *m = wrap(BaseOffset);
         m = wrap((0?700:0) + BaseOffset);
         if (updateVBIndex)
-          VBIndex[Base] = -(offsets.size()*LLVMPointerWidth/8)
-            - 3*LLVMPointerWidth/8;
+          VBIndex[Base] = (ssize_t)(-(offsets.size()*LLVMPointerWidth/8)
+                                    - 3*LLVMPointerWidth/8);
         offsets.push_back(m);
       }
       GenerateVBaseOffsets(offsets, Base, Offset, updateVBIndex);
