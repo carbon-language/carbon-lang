@@ -8,7 +8,6 @@ add_llvm_library(LLVMTransformUtils
   CloneModule.cpp
   CodeExtractor.cpp
   DemoteRegToStack.cpp
-  InlineCost.cpp
   InlineFunction.cpp
   InstructionNamer.cpp
   LCSSA.cpp
