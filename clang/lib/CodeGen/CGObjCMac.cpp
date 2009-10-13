@@ -104,8 +104,7 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                                                unsigned CVRQualifiers,
                                                llvm::Value *Offset) {
   // Compute (type*) ( (char *) BaseValue + Offset)
-  llvm::Type *I8Ptr =
-      llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(CGF.getLLVMContext()));
+  const llvm::Type *I8Ptr = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   QualType IvarTy = Ivar->getType();
   const llvm::Type *LTy = CGF.CGM.getTypes().ConvertTypeForMem(IvarTy);
   llvm::Value *V = CGF.Builder.CreateBitCast(BaseValue, I8Ptr);
@@ -556,7 +555,7 @@ public:
   /// SetJmpFn - LLVM _setjmp function.
   llvm::Constant *getSetJmpFn() {
     std::vector<const llvm::Type*> Params;
-    Params.push_back(llvm::PointerType::getUnqual(llvm::Type::getInt32Ty(VMContext)));
+    Params.push_back(llvm::Type::getInt32PtrTy(VMContext));
     return
       CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::getInt32Ty(VMContext),
                                                         Params, false),
@@ -3208,7 +3207,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   bool hasUnion = false;
 
   unsigned int WordsToScan, WordsToSkip;
-  const llvm::Type *PtrTy = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+  const llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
   if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
     return llvm::Constant::getNullValue(PtrTy);
 
@@ -3535,7 +3534,7 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   IntTy = Types.ConvertType(Ctx.IntTy);
   LongTy = Types.ConvertType(Ctx.LongTy);
   LongLongTy = Types.ConvertType(Ctx.LongLongTy);
-  Int8PtrTy = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+  Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
 
   ObjectPtrTy = Types.ConvertType(Ctx.getObjCIdType());
   PtrObjectPtrTy = llvm::PointerType::getUnqual(ObjectPtrTy);
@@ -3823,7 +3822,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
 
   // Exceptions
   const llvm::Type *StackPtrTy = llvm::ArrayType::get(
-    llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext)), 4);
+    llvm::Type::getInt8PtrTy(VMContext), 4);
 
   ExceptionDataTy =
     llvm::StructType::get(VMContext, llvm::ArrayType::get(llvm::Type::getInt32Ty(VMContext),

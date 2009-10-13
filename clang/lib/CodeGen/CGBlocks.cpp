@@ -414,8 +414,7 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
 
   BlockLiteral =
     Builder.CreateBitCast(BlockLiteral,
-                          llvm::PointerType::getUnqual(
-                              llvm::Type::getInt8Ty(VMContext)),
+                          llvm::Type::getInt8PtrTy(VMContext),
                           "tmp");
 
   // Add the block literal.

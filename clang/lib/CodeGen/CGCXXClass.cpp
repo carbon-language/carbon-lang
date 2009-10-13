@@ -144,8 +144,7 @@ CodeGenFunction::GetAddressCXXOfBaseClass(llvm::Value *BaseValue,
     EmitBlock(CastNotNull);
   }
   
-  const llvm::Type *Int8PtrTy = 
-    llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
 
   llvm::Value *Offset = 
     GetCXXBaseClassOffset(*this, BaseValue, ClassDecl, BaseClassDecl);

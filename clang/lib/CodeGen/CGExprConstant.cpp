@@ -826,8 +826,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
 
         // Apply offset if necessary.
         if (!Offset->isNullValue()) {
-          const llvm::Type *Type =
-            llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+          const llvm::Type *Type = llvm::Type::getInt8PtrTy(VMContext);
           llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, Type);
           Casted = llvm::ConstantExpr::getGetElementPtr(Casted, &Offset, 1);
           C = llvm::ConstantExpr::getBitCast(Casted, C->getType());

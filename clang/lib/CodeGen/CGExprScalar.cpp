@@ -789,8 +789,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
         if (!isInc)
           size = -size;
         Inc = llvm::ConstantInt::get(Inc->getType(), size);
-        const llvm::Type *i8Ty =
-          llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+        const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
         InVal = Builder.CreateBitCast(InVal, i8Ty);
         NextVal = Builder.CreateGEP(InVal, Inc, "add.ptr");
         llvm::Value *lhs = LV.getAddress();
@@ -799,8 +798,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
       } else
         NextVal = Builder.CreateInBoundsGEP(InVal, Inc, "ptrincdec");
     } else {
-      const llvm::Type *i8Ty =
-        llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+      const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
       NextVal = Builder.CreateBitCast(InVal, i8Ty, "tmp");
       NextVal = Builder.CreateGEP(NextVal, Inc, "ptrincdec");
       NextVal = Builder.CreateBitCast(NextVal, InVal->getType());
@@ -1159,8 +1157,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
       llvm::ConstantInt::get(Idx->getType(),
                              CGF.getContext().getTypeSize(OIT) / 8);
     Idx = Builder.CreateMul(Idx, InterfaceSize);
-    const llvm::Type *i8Ty =
-        llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+    const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
     Value *Casted = Builder.CreateBitCast(Ptr, i8Ty);
     Value *Res = Builder.CreateGEP(Casted, Idx, "add.ptr");
     return Builder.CreateBitCast(Res, Ptr->getType());
@@ -1170,8 +1167,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   // GNU void* casts amount to no-ops since our void* type is i8*, but this is
   // future proof.
   if (ElementType->isVoidType() || ElementType->isFunctionType()) {
-    const llvm::Type *i8Ty =
-        llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+    const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
     Value *Casted = Builder.CreateBitCast(Ptr, i8Ty);
     Value *Res = Builder.CreateGEP(Casted, Idx, "add.ptr");
     return Builder.CreateBitCast(Res, Ptr->getType());
@@ -1225,8 +1221,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
         llvm::ConstantInt::get(Idx->getType(),
                                CGF.getContext().getTypeSize(OIT) / 8);
       Idx = Builder.CreateMul(Idx, InterfaceSize);
-      const llvm::Type *i8Ty =
-        llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+      const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
       Value *LHSCasted = Builder.CreateBitCast(Ops.LHS, i8Ty);
       Value *Res = Builder.CreateGEP(LHSCasted, Idx, "add.ptr");
       return Builder.CreateBitCast(Res, Ops.LHS->getType());
@@ -1236,8 +1231,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     // extensions. The GNU void* casts amount to no-ops since our void* type is
     // i8*, but this is future proof.
     if (LHSElementType->isVoidType() || LHSElementType->isFunctionType()) {
-      const llvm::Type *i8Ty =
-        llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+      const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
       Value *LHSCasted = Builder.CreateBitCast(Ops.LHS, i8Ty);
       Value *Res = Builder.CreateGEP(LHSCasted, Idx, "sub.ptr");
       return Builder.CreateBitCast(Res, Ops.LHS->getType());

@@ -384,8 +384,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy,
       } else if (SeltTy->isPointerType()) {
         // FIXME: It would be really nice if this could come out as the proper
         // pointer type.
-        llvm::Type *PtrTy =
-          llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+        const llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
         return ABIArgInfo::getCoerce(PtrTy);
       } else if (SeltTy->isVectorType()) {
         // 64- and 128-bit vectors are never returned in a
@@ -455,7 +454,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty,
 
 llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                       CodeGenFunction &CGF) const {
-  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(CGF.getLLVMContext()));
+  const llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
 
   CGBuilderTy &Builder = CGF.Builder;
@@ -1589,8 +1588,7 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
 llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                       CodeGenFunction &CGF) const {
   // FIXME: Need to handle alignment
-  const llvm::Type *BP =
-      llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(CGF.getLLVMContext()));
+  const llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   const llvm::Type *BPP = llvm::PointerType::getUnqual(BP);
 
   CGBuilderTy &Builder = CGF.Builder;

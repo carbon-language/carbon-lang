@@ -1917,8 +1917,8 @@ llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
             IvarOffsetGV, Name);
     } else {
       IvarOffsetPointer = new llvm::GlobalVariable(TheModule,
-              llvm::PointerType::getUnqual(llvm::Type::getInt32Ty(VMContext)),
-              false, llvm::GlobalValue::ExternalLinkage, 0, Name);
+              llvm::Type::getInt32PtrTy(VMContext), false,
+              llvm::GlobalValue::ExternalLinkage, 0, Name);
     }
   }
   return IvarOffsetPointer;

@@ -231,8 +231,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const ValueDecl *D) {
 
   std::vector<const llvm::Type *> Types;
   
-  const llvm::PointerType *Int8PtrTy
-    = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+  const llvm::PointerType *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
 
   llvm::PATypeHolder ByRefTypeHolder = llvm::OpaqueType::get(VMContext);
   
@@ -345,8 +344,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
     if (!DidCallStackSave) {
       // Save the stack.
-      const llvm::Type *LTy =
-        llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+      const llvm::Type *LTy = llvm::Type::getInt8PtrTy(VMContext);
       llvm::Value *Stack = CreateTempAlloca(LTy, "saved_stack");
 
       llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stacksave);
@@ -433,8 +431,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   }
 
   if (isByRef) {
-    const llvm::PointerType *PtrToInt8Ty
-      = llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(VMContext));
+    const llvm::PointerType *PtrToInt8Ty = llvm::Type::getInt8PtrTy(VMContext);
 
     EnsureInsertPoint();
     llvm::Value *isa_field = Builder.CreateStructGEP(DeclPtr, 0);
