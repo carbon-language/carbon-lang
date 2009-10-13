@@ -832,6 +832,18 @@ void SelectionDAG::clear() {
   Root = getEntryNode();
 }
 
+SDValue SelectionDAG::getSExtOrTrunc(SDValue Op, DebugLoc DL, EVT VT) {
+  return VT.bitsGT(Op.getValueType()) ?
+    getNode(ISD::SIGN_EXTEND, DL, VT, Op) :
+    getNode(ISD::TRUNCATE, DL, VT, Op);
+}
+
+SDValue SelectionDAG::getZExtOrTrunc(SDValue Op, DebugLoc DL, EVT VT) {
+  return VT.bitsGT(Op.getValueType()) ?
+    getNode(ISD::ZERO_EXTEND, DL, VT, Op) :
+    getNode(ISD::TRUNCATE, DL, VT, Op);
+}
+
 SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, DebugLoc DL, EVT VT) {
   if (Op.getValueType() == VT) return Op;
   APInt Imm = APInt::getLowBitsSet(Op.getValueSizeInBits(),

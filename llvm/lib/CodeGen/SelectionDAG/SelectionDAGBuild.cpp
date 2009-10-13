@@ -1429,12 +1429,7 @@ void SelectionDAGLowering::visitJumpTableHeader(JumpTable &JT,
   // can be used as an index into the jump table in a subsequent basic block.
   // This value may be smaller or larger than the target's pointer type, and
   // therefore require extension or truncating.
-  if (VT.bitsGT(TLI.getPointerTy()))
-    SwitchOp = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
-                           TLI.getPointerTy(), SUB);
-  else
-    SwitchOp = DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(),
-                           TLI.getPointerTy(), SUB);
+  SwitchOp = DAG.getZExtOrTrunc(SUB, getCurDebugLoc(), TLI.getPointerTy());
 
   unsigned JumpTableReg = FuncInfo.MakeReg(TLI.getPointerTy());
   SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), getCurDebugLoc(),
@@ -1482,13 +1477,7 @@ void SelectionDAGLowering::visitBitTestHeader(BitTestBlock &B) {
                                   SUB, DAG.getConstant(B.Range, VT),
                                   ISD::SETUGT);
 
-  SDValue ShiftOp;
-  if (VT.bitsGT(TLI.getPointerTy()))
-    ShiftOp = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
-                          TLI.getPointerTy(), SUB);
-  else
-    ShiftOp = DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(),
-                          TLI.getPointerTy(), SUB);
+  SDValue ShiftOp = DAG.getZExtOrTrunc(SUB, getCurDebugLoc(), TLI.getPointerTy());
 
   B.Reg = FuncInfo.MakeReg(TLI.getPointerTy());
   SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), getCurDebugLoc(),
@@ -2336,12 +2325,7 @@ void SelectionDAGLowering::visitPtrToInt(User &I) {
   SDValue N = getValue(I.getOperand(0));
   EVT SrcVT = N.getValueType();
   EVT DestVT = TLI.getValueType(I.getType());
-  SDValue Result;
-  if (DestVT.bitsLT(SrcVT))
-    Result = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(), DestVT, N);
-  else
-    // Note: ZERO_EXTEND can handle cases where the sizes are equal too
-    Result = DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(), DestVT, N);
+  SDValue Result = DAG.getZExtOrTrunc(N, getCurDebugLoc(), DestVT);
   setValue(&I, Result);
 }
 
@@ -2351,12 +2335,7 @@ void SelectionDAGLowering::visitIntToPtr(User &I) {
   SDValue N = getValue(I.getOperand(0));
   EVT SrcVT = N.getValueType();
   EVT DestVT = TLI.getValueType(I.getType());
-  if (DestVT.bitsLT(SrcVT))
-    setValue(&I, DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(), DestVT, N));
-  else
-    // Note: ZERO_EXTEND can handle cases where the sizes are equal too
-    setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(),
-                             DestVT, N));
+  setValue(&I, DAG.getZExtOrTrunc(N, getCurDebugLoc(), DestVT));
 }
 
 void SelectionDAGLowering::visitBitCast(User &I) {
@@ -2692,12 +2671,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
 
       // If the index is smaller or larger than intptr_t, truncate or extend
       // it.
-      if (IdxN.getValueType().bitsLT(N.getValueType()))
-        IdxN = DAG.getNode(ISD::SIGN_EXTEND, getCurDebugLoc(),
-                           N.getValueType(), IdxN);
-      else if (IdxN.getValueType().bitsGT(N.getValueType()))
-        IdxN = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
-                           N.getValueType(), IdxN);
+      IdxN = DAG.getSExtOrTrunc(IdxN, getCurDebugLoc(), N.getValueType());
 
       // If this is a multiply by a power of two, turn it into a shl
       // immediately.  This is a very common case.
@@ -2742,12 +2716,7 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
   
   
   EVT IntPtr = TLI.getPointerTy();
-  if (IntPtr.bitsLT(AllocSize.getValueType()))
-    AllocSize = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(),
-                            IntPtr, AllocSize);
-  else if (IntPtr.bitsGT(AllocSize.getValueType()))
-    AllocSize = DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(),
-                            IntPtr, AllocSize);
+  AllocSize = DAG.getZExtOrTrunc(AllocSize, getCurDebugLoc(), IntPtr);
 
   // Handle alignment.  If the requested alignment is less than or equal to
   // the stack alignment, ignore it.  If the size is greater than or equal to
@@ -4030,12 +3999,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
     MVT::SimpleValueType VT =
       (Intrinsic == Intrinsic::eh_selector_i32 ? MVT::i32 : MVT::i64);
-    if (Op.getValueType().getSimpleVT() < VT)
-      Op = DAG.getNode(ISD::SIGN_EXTEND, dl, VT, Op);
-    else if (Op.getValueType().getSimpleVT() < VT)
-      Op = DAG.getNode(ISD::TRUNCATE, dl, VT, Op);
-    
-    setValue(&I, Op);
+    setValue(&I, DAG.getSExtOrTrunc(Op, dl, VT));
     return 0;
   }
 
@@ -4082,13 +4046,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
   case Intrinsic::eh_dwarf_cfa: {
     EVT VT = getValue(I.getOperand(1)).getValueType();
-    SDValue CfaArg;
-    if (VT.bitsGT(TLI.getPointerTy()))
-      CfaArg = DAG.getNode(ISD::TRUNCATE, dl,
-                           TLI.getPointerTy(), getValue(I.getOperand(1)));
-    else
-      CfaArg = DAG.getNode(ISD::SIGN_EXTEND, dl,
-                           TLI.getPointerTy(), getValue(I.getOperand(1)));
+    SDValue CfaArg = DAG.getSExtOrTrunc(getValue(I.getOperand(1)), dl,
+                                        TLI.getPointerTy());
 
     SDValue Offset = DAG.getNode(ISD::ADD, dl,
                                  TLI.getPointerTy(),
@@ -5552,10 +5511,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   
   EVT IntPtr = TLI.getPointerTy();
 
-  if (IntPtr.bitsLT(Src.getValueType()))
-    Src = DAG.getNode(ISD::TRUNCATE, getCurDebugLoc(), IntPtr, Src);
-  else if (IntPtr.bitsGT(Src.getValueType()))
-    Src = DAG.getNode(ISD::ZERO_EXTEND, getCurDebugLoc(), IntPtr, Src);
+  Src = DAG.getZExtOrTrunc(Src, getCurDebugLoc(), IntPtr);
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;

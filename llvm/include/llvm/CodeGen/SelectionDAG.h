@@ -381,6 +381,14 @@ public:
   SDValue getVectorShuffle(EVT VT, DebugLoc dl, SDValue N1, SDValue N2, 
                            const int *MaskElts);
 
+  /// getSExtOrTrunc - Convert Op, which must be of integer type, to the
+  /// integer type VT, by either sign-extending or truncating it.
+  SDValue getSExtOrTrunc(SDValue Op, DebugLoc DL, EVT VT);
+
+  /// getZExtOrTrunc - Convert Op, which must be of integer type, to the
+  /// integer type VT, by either zero-extending or truncating it.
+  SDValue getZExtOrTrunc(SDValue Op, DebugLoc DL, EVT VT);
+
   /// getZeroExtendInReg - Return the expression required to zero extend the Op
   /// value assuming it was the smaller SrcTy value.
   SDValue getZeroExtendInReg(SDValue Op, DebugLoc DL, EVT SrcTy);
