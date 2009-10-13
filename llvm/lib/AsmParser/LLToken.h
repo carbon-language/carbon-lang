@@ -62,6 +62,7 @@ namespace lltok {
     kw_module,
     kw_asm,
     kw_sideeffect,
+    kw_msasm,
     kw_gc,
     kw_dbg,
     kw_c,

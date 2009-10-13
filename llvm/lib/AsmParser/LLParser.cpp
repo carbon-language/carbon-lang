@@ -1959,16 +1959,17 @@ bool LLParser::ParseValID(ValID &ID) {
     return false;
 
   case lltok::kw_asm: {
-    // ValID ::= 'asm' SideEffect? STRINGCONSTANT ',' STRINGCONSTANT
-    bool HasSideEffect;
+    // ValID ::= 'asm' SideEffect? MsAsm? STRINGCONSTANT ',' STRINGCONSTANT
+    bool HasSideEffect, MsAsm;
     Lex.Lex();
     if (ParseOptionalToken(lltok::kw_sideeffect, HasSideEffect) ||
+        ParseOptionalToken(lltok::kw_msasm, MsAsm) ||
         ParseStringConstant(ID.StrVal) ||
         ParseToken(lltok::comma, "expected comma in inline asm expression") ||
         ParseToken(lltok::StringConstant, "expected constraint string"))
       return true;
     ID.StrVal2 = Lex.getStrVal();
-    ID.UIntVal = HasSideEffect;
+    ID.UIntVal = HasSideEffect | ((unsigned)MsAsm<<1);
     ID.Kind = ValID::t_InlineAsm;
     return false;
   }
@@ -2368,7 +2369,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
       PTy ? dyn_cast<FunctionType>(PTy->getElementType()) : 0;
     if (!FTy || !InlineAsm::Verify(FTy, ID.StrVal2))
       return Error(ID.Loc, "invalid type for inline asm constraint string");
-    V = InlineAsm::get(FTy, ID.StrVal, ID.StrVal2, ID.UIntVal);
+    V = InlineAsm::get(FTy, ID.StrVal, ID.StrVal2, ID.UIntVal&1, ID.UIntVal>>1);
     return false;
   } else if (ID.Kind == ValID::t_Metadata) {
     V = ID.MetadataVal;

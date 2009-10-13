@@ -1164,7 +1164,8 @@ bool BitcodeReader::ParseConstants() {
     case bitc::CST_CODE_INLINEASM: {
       if (Record.size() < 2) return Error("Invalid INLINEASM record");
       std::string AsmStr, ConstrStr;
-      bool HasSideEffects = Record[0];
+      bool HasSideEffects = Record[0] & 1;
+      bool IsMsAsm = Record[0] >> 1;
       unsigned AsmStrSize = Record[1];
       if (2+AsmStrSize >= Record.size())
         return Error("Invalid INLINEASM record");
@@ -1178,7 +1179,7 @@ bool BitcodeReader::ParseConstants() {
         ConstrStr += (char)Record[3+AsmStrSize+i];
       const PointerType *PTy = cast<PointerType>(CurTy);
       V = InlineAsm::get(cast<FunctionType>(PTy->getElementType()),
-                         AsmStr, ConstrStr, HasSideEffects);
+                         AsmStr, ConstrStr, HasSideEffects, IsMsAsm);
       break;
     }
     }

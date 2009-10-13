@@ -529,6 +529,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(module);
   KEYWORD(asm);
   KEYWORD(sideeffect);
+  KEYWORD(msasm);
   KEYWORD(gc);
 
   KEYWORD(ccc);
