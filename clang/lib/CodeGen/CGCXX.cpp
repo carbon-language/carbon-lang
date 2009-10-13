@@ -278,10 +278,11 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
 RValue
 CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E) {
   const BinaryOperator *BO = cast<BinaryOperator>(E->getCallee());
-  const DeclRefExpr *BaseExpr = cast<DeclRefExpr>(BO->getLHS());
-  const DeclRefExpr *MemFn = cast<DeclRefExpr>(BO->getRHS());
+  const Expr *BaseExpr = BO->getLHS();
+  const Expr *MemFnExpr = BO->getRHS();
   
-  const MemberPointerType *MPT = MemFn->getType()->getAs<MemberPointerType>();
+  const MemberPointerType *MPT = 
+    MemFnExpr->getType()->getAs<MemberPointerType>();
   const FunctionProtoType *FPT = 
     MPT->getPointeeType()->getAs<FunctionProtoType>();
   const CXXRecordDecl *RD = 
@@ -296,8 +297,8 @@ CodeGenFunction::EmitCXXMemberPointerCallExpr(const CXXMemberCallExpr *E) {
 
   // Get the member function pointer.
   llvm::Value *MemFnPtr = 
-    CreateTempAlloca(ConvertType(MemFn->getType()), "mem.fn");
-  EmitAggExpr(MemFn, MemFnPtr, /*VolatileDest=*/false);
+    CreateTempAlloca(ConvertType(MemFnExpr->getType()), "mem.fn");
+  EmitAggExpr(MemFnExpr, MemFnPtr, /*VolatileDest=*/false);
 
   // Emit the 'this' pointer.
   llvm::Value *This;
