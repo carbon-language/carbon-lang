@@ -9979,7 +9979,10 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       new StoreInst(ConstantInt::getTrue(*Context),
                 UndefValue::get(Type::getInt1PtrTy(*Context)), 
                                   OldCall);
-      OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
+      // If OldCall dues not return void then replaceAllUsesWith undef.
+      // This allows ValueHandlers and custom metadata to adjust itself.
+      if (OldCall->getType() != Type::getVoidTy(*Context))
+        OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
       if (isa<CallInst>(OldCall))   // Not worth removing an invoke here.
         return EraseInstFromFunction(*OldCall);
       return 0;
@@ -9993,8 +9996,11 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
                UndefValue::get(Type::getInt1PtrTy(*Context)),
                   CS.getInstruction());
 
-    CS.getInstruction()->
-      replaceAllUsesWith(UndefValue::get(CS.getInstruction()->getType()));
+    // If CS dues not return void then replaceAllUsesWith undef.
+    // This allows ValueHandlers and custom metadata to adjust itself.
+    if (CS.getInstruction()->getType() != Type::getVoidTy(*Context))
+      CS.getInstruction()->
+        replaceAllUsesWith(UndefValue::get(CS.getInstruction()->getType()));
 
     if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
       // Don't break the CFG, insert a dummy cond branch.
@@ -12779,7 +12785,12 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
             ++NumDeadInst;
             MadeIRChange = true;
           }
-          I->replaceAllUsesWith(UndefValue::get(I->getType()));
+
+
+          // If I is not void type then replaceAllUsesWith undef.
+          // This allows ValueHandlers and custom metadata to adjust itself.
+          if (I->getType() != Type::getVoidTy(*Context))
+            I->replaceAllUsesWith(UndefValue::get(I->getType()));
           I->eraseFromParent();
         }
       }
