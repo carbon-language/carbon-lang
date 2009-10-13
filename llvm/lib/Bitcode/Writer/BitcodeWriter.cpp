@@ -580,12 +580,14 @@ static void WriteMetadataAttachment(const Function &F,
           Record.push_back(VE.getValueID(ND));
         }
       }
-      if (!StartedMetadataBlock)  {
-        Stream.EnterSubblock(bitc::METADATA_ATTACHMENT_ID, 3);
-        StartedMetadataBlock = true;
+      if (!Record.empty()) {
+        if (!StartedMetadataBlock)  {
+          Stream.EnterSubblock(bitc::METADATA_ATTACHMENT_ID, 3);
+          StartedMetadataBlock = true;
+        }
+        Stream.EmitRecord(bitc::METADATA_ATTACHMENT, Record, 0);
+        Record.clear();
       }
-      Stream.EmitRecord(bitc::METADATA_ATTACHMENT, Record, 0);
-      Record.clear();
     }
 
   if (StartedMetadataBlock)
