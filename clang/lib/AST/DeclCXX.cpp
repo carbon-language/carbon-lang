@@ -192,7 +192,8 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context,
     const CXXMethodDecl* Method = cast<CXXMethodDecl>(*Op);
     if (Method->isStatic())
       continue;
-    // TODO: Skip templates? Or is this implicitly done due to parameter types?
+    if (Method->getPrimaryTemplate())
+      continue;
     const FunctionProtoType *FnType =
       Method->getType()->getAs<FunctionProtoType>();
     assert(FnType && "Overloaded operator has no prototype.");
@@ -259,6 +260,11 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
   const FunctionProtoType *FnType = OpDecl->getType()->getAs<FunctionProtoType>();
   assert(FnType && "Overloaded operator has no proto function type.");
   assert(FnType->getNumArgs() == 1 && !FnType->isVariadic());
+  
+  // Copy assignment operators must be non-templates.
+  if (OpDecl->getPrimaryTemplate() || OpDecl->getDescribedFunctionTemplate())
+    return;
+  
   QualType ArgType = FnType->getArgType(0);
   if (const LValueReferenceType *Ref = ArgType->getAs<LValueReferenceType>())
     ArgType = Ref->getPointeeType();
@@ -694,7 +700,9 @@ CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
   //   const volatile X&, and either there are no other parameters
   //   or else all other parameters have default arguments (8.3.6).
   if ((getNumParams() < 1) ||
-      (getNumParams() > 1 && !getParamDecl(1)->hasDefaultArg()))
+      (getNumParams() > 1 && !getParamDecl(1)->hasDefaultArg()) ||
+      (getPrimaryTemplate() != 0) ||
+      (getDescribedFunctionTemplate() != 0))
     return false;
 
   const ParmVarDecl *Param = getParamDecl(0);
