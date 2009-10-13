@@ -983,12 +983,14 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
       } else if (getLang().CPlusPlus && Tok.is(tok::kw_operator)) {
         // We have a reference to a member operator, e.g., t.operator int or
         // t.operator+.
+        SourceLocation OperatorLoc = Tok.getLocation();
+        
         if (OverloadedOperatorKind Op = TryParseOperatorFunctionId()) {
           if (!LHS.isInvalid())
             LHS = Actions.ActOnOverloadedOperatorReferenceExpr(CurScope,
                                                                move(LHS), OpLoc,
                                                                OpKind,
-                                                           Tok.getLocation(),
+                                                               OperatorLoc,
                                                                Op, &SS);
           // TryParseOperatorFunctionId already consumed our token, so
           // don't bother
@@ -997,7 +999,7 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
             LHS = Actions.ActOnConversionOperatorReferenceExpr(CurScope,
                                                                move(LHS), OpLoc,
                                                                OpKind,
-                                                           Tok.getLocation(),
+                                                               OperatorLoc,
                                                                ConvType, &SS);
         } else {
           // Don't emit a diagnostic; ParseConversionFunctionId does it for us
