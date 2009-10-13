@@ -12,6 +12,7 @@ add_llvm_library(LLVMAnalysis
   DbgInfoPrinter.cpp
   DebugInfo.cpp
   IVUsers.cpp
+  InlineCost.cpp
   InstCount.cpp
   Interval.cpp
   IntervalPartition.cpp
