@@ -303,8 +303,8 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
         //   Default function arguments shall not be specified in a declaration
         //   or a definition for one of the following explicit specializations:
         //     - the explicit specialization of a function template;
-        //     — the explicit specialization of a member function template;
-        //     — the explicit specialization of a member function of a class 
+        //     - the explicit specialization of a member function template;
+        //     - the explicit specialization of a member function of a class 
         //       template where the class template specialization to which the
         //       member function specialization belongs is implicitly 
         //       instantiated.
