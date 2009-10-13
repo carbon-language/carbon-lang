@@ -5050,6 +5050,10 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
                                                     ResultTy, RParenLoc));
   delete [] MethodArgs;
 
+  if (CheckCallReturnType(Method->getResultType(), LParenLoc, TheCall.get(), 
+                          Method))
+    return true;
+  
   // We may have default arguments. If so, we need to allocate more
   // slots in the call for them.
   if (NumArgs < NumArgsInProto)

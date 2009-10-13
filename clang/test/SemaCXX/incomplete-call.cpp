@@ -1,13 +1,14 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-struct A; // expected-note 8 {{forward declaration of 'struct A'}}
+struct A; // expected-note 10 {{forward declaration of 'struct A'}}
 
 A f(); // expected-note {{note: 'f' declared here}}
 
 struct B {
   A f(); // expected-note {{'f' declared here}}
-  A operator()(); // expected-note {{'operator()' declared here}}
+  A operator()(); // expected-note 2 {{'operator()' declared here}}
   operator A(); // expected-note {{'operator A' declared here}}
   A operator!(); // expected-note 2 {{'operator!' declared here}}
+  A operator++(int); // expected-note {{'operator++' declared here}}
 };
 
 void g() {
@@ -26,4 +27,6 @@ void g() {
   b.operator!(); // expected-error {{calling 'operator!' with incomplete return type 'struct A'}}
   
   !b; // expected-error {{calling 'operator!' with incomplete return type 'struct A'}}
+  b(); // expected-error {{calling 'operator()' with incomplete return type 'struct A'}}
+  b++; // expected-error {{calling 'operator++' with incomplete return type 'struct A'}}
 }

@@ -1572,9 +1572,7 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
         }
 
         // Determine the result type
-        QualType ResultTy
-          = FnDecl->getType()->getAs<FunctionType>()->getResultType();
-        ResultTy = ResultTy.getNonReferenceType();
+        QualType ResultTy = FnDecl->getResultType().getNonReferenceType();
 
         // Build the actual expression node.
         Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
@@ -1583,9 +1581,15 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
 
         Input.release();
         Args[0] = Arg;
-        return Owned(new (Context) CXXOperatorCallExpr(Context, OverOp, FnExpr,
-                                                       Args, 2, ResultTy,
-                                                       OpLoc));
+        
+        ExprOwningPtr<CXXOperatorCallExpr> 
+          TheCall(this, new (Context) CXXOperatorCallExpr(Context, OverOp, 
+                                                          FnExpr, Args, 2, 
+                                                          ResultTy, OpLoc));
+        
+        if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall.get(), 
+                                FnDecl))
+          return ExprError();
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
