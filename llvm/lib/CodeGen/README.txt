@@ -206,3 +206,32 @@ Stack coloring improvments:
    not spill slots.
 2. Reorder objects to fill in gaps between objects.
    e.g. 4, 1, <gap>, 4, 1, 1, 1, <gap>, 4 => 4, 1, 1, 1, 1, 4, 4
+
+//===---------------------------------------------------------------------===//
+
+The scheduler should be able to sort nearby instructions by their address. For
+example, in an expanded memset sequence it's not uncommon to see code like this:
+
+  movl $0, 4(%rdi)
+  movl $0, 8(%rdi)
+  movl $0, 12(%rdi)
+  movl $0, 0(%rdi)
+
+Each of the stores is independent, and the scheduler is currently making an
+arbitrary decision about the order.
+
+//===---------------------------------------------------------------------===//
+
+Another opportunitiy in this code is that the $0 could be moved to a register:
+
+  movl $0, 4(%rdi)
+  movl $0, 8(%rdi)
+  movl $0, 12(%rdi)
+  movl $0, 0(%rdi)
+
+This would save substantial code size, especially for longer sequences like
+this. It would be easy to have a rule telling isel to avoid matching MOV32mi
+if the immediate has more than some fixed number of uses. It's more involved
+to teach the register allocator how to do late folding to recover from
+excessive register pressure.
+
