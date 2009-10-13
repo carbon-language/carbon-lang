@@ -162,7 +162,7 @@ public:
   /// engine is about to execute into a callee.
   virtual const GRState *EnterStackFrame(const GRState *state,
                                          const StackFrameContext *frame) {
-    assert(0 && "EnterStackFrame() is not supported in this Store Model.");
+    return state;
   }
 
   virtual void print(Store store, llvm::raw_ostream& Out,
