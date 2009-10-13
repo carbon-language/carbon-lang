@@ -201,6 +201,36 @@ public:
     return DeclSpec::TST_unspecified;
   }
 
+  /// \brief Action called as part of error recovery when the parser has 
+  /// determined that the given name must refer to a type, but 
+  /// \c getTypeName() did not return a result.
+  ///
+  /// This callback permits the action to give a detailed diagnostic when an
+  /// unknown type name is encountered and, potentially, to try to recover
+  /// by producing a new type in \p SuggestedType.
+  ///
+  /// \param II the name that should be a type.
+  ///
+  /// \param IILoc the location of the name in the source.
+  ///
+  /// \param S the scope in which name lookup was performed.
+  ///
+  /// \param SS if non-NULL, the C++ scope specifier that preceded the name.
+  ///
+  /// \param SuggestedType if the action sets this type to a non-NULL type,
+  /// the parser will recovery by consuming the type name token and then 
+  /// pretending that the given type was the type it parsed.
+  ///
+  /// \returns true if a diagnostic was emitted, false otherwise. When false,
+  /// the parser itself will emit a generic "unknown type name" diagnostic.
+  virtual bool DiagnoseUnknownTypeName(const IdentifierInfo &II, 
+                                       SourceLocation IILoc,
+                                       Scope *S,
+                                       const CXXScopeSpec *SS,
+                                       TypeTy *&SuggestedType) {
+    return false;
+  }
+                                       
   /// isCurrentClassName - Return true if the specified name is the
   /// name of the innermost C++ class type currently being defined.
   virtual bool isCurrentClassName(const IdentifierInfo &II, Scope *S,

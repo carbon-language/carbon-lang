@@ -67,4 +67,4 @@ namespace foo {
 
 static foo::x  test1;  // ok
 
-static foo::X  test2;  // typo: expected-error {{unknown type name 'X'}}
+static foo::X  test2;  // typo: expected-error {{no type named 'X' in}}

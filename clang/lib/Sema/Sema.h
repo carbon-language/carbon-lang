@@ -523,7 +523,12 @@ public:
                               Scope *S, const CXXScopeSpec *SS,
                               bool isClassName = false);
   virtual DeclSpec::TST isTagName(IdentifierInfo &II, Scope *S);
-
+  virtual bool DiagnoseUnknownTypeName(const IdentifierInfo &II, 
+                                       SourceLocation IILoc,
+                                       Scope *S,
+                                       const CXXScopeSpec *SS,
+                                       TypeTy *&SuggestedType);
+  
   virtual DeclPtrTy ActOnDeclarator(Scope *S, Declarator &D) {
     return HandleDeclarator(S, D, MultiTemplateParamsArg(*this), false);
   }

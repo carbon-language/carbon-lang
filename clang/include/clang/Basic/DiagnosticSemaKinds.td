@@ -104,7 +104,7 @@ def err_using_requires_qualname : Error<
 def err_using_typename_non_type : Error<
   "'typename' keyword used on a non-type">;
 def err_using_decl_nested_name_specifier_is_not_a_base_class : Error<
-  "using declaration refers into %0, which is not a base class of %1">;
+  "using declaration refers into '%0', which is not a base class of %1">;
 def err_using_decl_can_not_refer_to_class_member : Error<
   "using declaration can not refer to class member">;
  def err_using_decl_can_not_refer_to_namespace : Error<
@@ -990,7 +990,7 @@ def err_template_spec_extra_headers : Error<
   "extraneous template parameter list in template specialization or "
   "out-of-line template definition">;
 def err_template_qualified_declarator_no_match : Error<
-  "nested name specifier %0 for declaration does not refer into a class, "
+  "nested name specifier '%0' for declaration does not refer into a class, "
   "class template or class template partial specialization">;
 
 // C++ Class Template Partial Specialization
@@ -1111,6 +1111,8 @@ def err_typename_nested_not_type : Error<
     "typename specifier refers to non-type member %0 in %1">;
 def note_typename_refers_here : Note<
     "referenced member %0 is declared here">;
+def err_typename_missing : Error<
+  "missing 'typename' prior to dependent type name '%0%1'">;
 
 def err_template_kw_refers_to_non_template : Error<
     "%0 following the 'template' keyword does not refer to a template">;

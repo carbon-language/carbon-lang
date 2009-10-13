@@ -67,7 +67,7 @@ class A {
   class facet {};
 };
 
-A::UndeclaredSoFar y; // expected-error {{ unknown type name 'UndeclaredSoFar' }}
+A::UndeclaredSoFar y; // expected-error {{no type named 'UndeclaredSoFar' in 'class A'}}
 
 class PreDeclared;
 

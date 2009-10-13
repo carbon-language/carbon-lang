@@ -43,12 +43,12 @@ namespace N {
 
 N::X<N::A>::type *ip4 = &i;
 N::X<N::B>::type *ip5 = &i; // expected-note{{in instantiation of template class 'struct N::X<struct N::B>' requested here}} \
-// expected-error{{unknown type name 'type'}}
+// expected-error{{no type named 'type' in}}
 N::X<N::C>::type *ip6 = &i; // expected-note{{in instantiation of template class 'struct N::X<struct N::C>' requested here}} \
-// expected-error{{unknown type name 'type'}}
+// expected-error{{no type named 'type' in}}
 
 N::X<int>::type fail1; // expected-note{{in instantiation of template class 'struct N::X<int>' requested here}} \
-// expected-error{{unknown type name 'type'}}
+// expected-error{{no type named 'type' in}}
 
 template<typename T>
 struct Y {
@@ -70,6 +70,6 @@ struct C {
 
 ::Y<A>::type ip7 = &i;
 ::Y<B>::type ip8 = &i; // expected-note{{in instantiation of template class 'struct Y<struct B>' requested here}} \
-// expected-error{{unknown type name 'type'}}
+// expected-error{{no type named 'type' in}}
 ::Y<C>::type ip9 = &i; // expected-note{{in instantiation of template class 'struct Y<struct C>' requested here}} \
-// expected-error{{unknown type name 'type'}}
+// expected-error{{no type named 'type' in}}

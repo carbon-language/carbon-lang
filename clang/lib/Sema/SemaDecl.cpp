@@ -23,6 +23,7 @@
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -199,6 +200,36 @@ DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
   return DeclSpec::TST_unspecified;
 }
 
+bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II, 
+                                   SourceLocation IILoc,
+                                   Scope *S,
+                                   const CXXScopeSpec *SS,
+                                   TypeTy *&SuggestedType) {
+  // We don't have anything to suggest (yet).
+  SuggestedType = 0;
+  
+  // FIXME: Should we move the logic that tries to recover from a missing tag
+  // (struct, union, enum) from Parser::ParseImplicitInt here, instead?
+  
+  if (!SS)
+    Diag(IILoc, diag::err_unknown_typename) << &II;
+  else if (DeclContext *DC = computeDeclContext(*SS, false))
+    Diag(IILoc, diag::err_typename_nested_not_found) 
+      << &II << DC << SS->getRange();
+  else if (isDependentScopeSpecifier(*SS)) {
+    Diag(SS->getRange().getBegin(), diag::err_typename_missing)
+      << (NestedNameSpecifier *)SS->getScopeRep() << II.getName() 
+      << SourceRange(SS->getRange().getBegin(), IILoc)
+      << CodeModificationHint::CreateInsertion(SS->getRange().getBegin(),
+                                               "typename ");
+    SuggestedType = ActOnTypenameType(SourceLocation(), *SS, II, IILoc).get();
+  } else {
+    assert(SS && SS->isInvalid() && 
+           "Invalid scope specifier has already been diagnosed");
+  }
+  
+  return true;
+}
 
 // Determines the context to return to after temporarily entering a
 // context.  This depends in an unnecessarily complicated way on the

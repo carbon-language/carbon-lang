@@ -688,13 +688,36 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
     }
   }
 
-  // Since this is almost certainly an invalid type name, emit a
-  // diagnostic that says it, eat the token, and mark the declspec as
-  // invalid.
-  SourceRange R;
-  if (SS) R = SS->getRange();
+  // This is almost certainly an invalid type name. Let the action emit a 
+  // diagnostic and attempt to recover.
+  Action::TypeTy *T = 0;
+  if (Actions.DiagnoseUnknownTypeName(*Tok.getIdentifierInfo(), Loc,
+                                      CurScope, SS, T)) {
+    // The action emitted a diagnostic, so we don't have to.
+    if (T) {
+      // The action has suggested that the type T could be used. Set that as
+      // the type in the declaration specifiers, consume the would-be type
+      // name token, and we're done.
+      const char *PrevSpec;
+      unsigned DiagID;
+      DS.SetTypeSpecType(DeclSpec::TST_typename, Loc, PrevSpec, DiagID, T, 
+                         false);
+      DS.SetRangeEnd(Tok.getLocation());
+      ConsumeToken();
+      
+      // There may be other declaration specifiers after this.
+      return true;
+    }
+    
+    // Fall through; the action had no suggestion for us.
+  } else {
+    // The action did not emit a diagnostic, so emit one now.
+    SourceRange R;
+    if (SS) R = SS->getRange();
+    Diag(Loc, diag::err_unknown_typename) << Tok.getIdentifierInfo() << R;
+  }
 
-  Diag(Loc, diag::err_unknown_typename) << Tok.getIdentifierInfo() << R;
+  // Mark this as an error.
   const char *PrevSpec;
   unsigned DiagID;
   DS.SetTypeSpecType(DeclSpec::TST_error, Loc, PrevSpec, DiagID);

@@ -117,6 +117,7 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
     llvm::raw_string_ostream OS(S);
     reinterpret_cast<NestedNameSpecifier*> (Val)->print(OS,
                                                         Context.PrintingPolicy);
+    NeedQuotes = false;
   } else {
     assert(Kind == Diagnostic::ak_declcontext);
     DeclContext *DC = reinterpret_cast<DeclContext *> (Val);

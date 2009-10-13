@@ -12,5 +12,5 @@ add_pointer<float>::type test2(int * ptr) {
 }
 
 add_pointer<int&>::type // expected-note{{in instantiation of template class 'struct add_pointer<int &>' requested here}} \
-// expected-error {{unknown type name 'type'}}
+// expected-error {{no type named 'type' in 'struct add_pointer<int &>'}}
 test3(); 
