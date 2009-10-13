@@ -18,7 +18,9 @@ baz:
 blong:
 bing:
  ;
-static long x = &&bar; // - &&baz;
+
+// PR5131
+static long x = &&bar - &&baz;
 static long y = &&baz;
   &&bing;
   &&blong;

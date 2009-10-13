@@ -1256,13 +1256,22 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
   }
   case ImplicitValueInitExprClass:
     return true;
-  case ParenExprClass: {
+  case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
-  }
   case UnaryOperatorClass: {
     const UnaryOperator* Exp = cast<UnaryOperator>(this);
     if (Exp->getOpcode() == UnaryOperator::Extension)
       return Exp->getSubExpr()->isConstantInitializer(Ctx);
+    break;
+  }
+  case BinaryOperatorClass: {
+    // Special case &&foo - &&bar.  It would be nice to generalize this somehow
+    // but this handles the common case.
+    const BinaryOperator *Exp = cast<BinaryOperator>(this);
+    if (Exp->getOpcode() == BinaryOperator::Sub &&
+        isa<AddrLabelExpr>(Exp->getLHS()->IgnoreParenNoopCasts(Ctx)) &&
+        isa<AddrLabelExpr>(Exp->getRHS()->IgnoreParenNoopCasts(Ctx)))
+      return true;
     break;
   }
   case ImplicitCastExprClass:

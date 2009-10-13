@@ -402,7 +402,7 @@ public:
   llvm::Constant *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
     return Visit(E->getInitializer());
   }
-  
+    
   llvm::Constant *EmitMemberFunctionPointer(CXXMethodDecl *MD) {
     assert(MD->isInstance() && "Member function must not be static!");
     
@@ -444,6 +444,27 @@ public:
     }
     
     return 0;
+  }
+    
+  llvm::Constant *VisitBinSub(BinaryOperator *E) {
+    // This must be a pointer/pointer subtraction.  This only happens for
+    // address of label.
+    if (!isa<AddrLabelExpr>(E->getLHS()->IgnoreParenNoopCasts(CGM.getContext())) ||
+       !isa<AddrLabelExpr>(E->getRHS()->IgnoreParenNoopCasts(CGM.getContext())))
+      return 0;
+    
+    llvm::Constant *LHS = CGM.EmitConstantExpr(E->getLHS(),
+                                               E->getLHS()->getType(), CGF);
+    llvm::Constant *RHS = CGM.EmitConstantExpr(E->getRHS(),
+                                               E->getRHS()->getType(), CGF);
+
+    const llvm::Type *ResultType = ConvertType(E->getType());
+    LHS = llvm::ConstantExpr::getPtrToInt(LHS, ResultType);
+    RHS = llvm::ConstantExpr::getPtrToInt(RHS, ResultType);
+        
+    // No need to divide by element size, since addr of label is always void*,
+    // which has size 1 in GNUish.
+    return llvm::ConstantExpr::getSub(LHS, RHS);
   }
     
   llvm::Constant *VisitCastExpr(CastExpr* E) {
