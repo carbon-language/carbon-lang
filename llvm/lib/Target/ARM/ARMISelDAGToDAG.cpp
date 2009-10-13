@@ -126,6 +126,9 @@ private:
   /// SelectDYN_ALLOC - Select dynamic alloc for Thumb.
   SDNode *SelectDYN_ALLOC(SDValue Op);
 
+  /// SelectV6T2BitfielsOp - Select SBFX/UBFX instructions for ARM.
+  SDNode *SelectV6T2BitfieldExtractOp(SDValue Op, unsigned Opc);
+
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
   virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
@@ -137,6 +140,31 @@ private:
   SDNode *PairDRegs(EVT VT, SDValue V0, SDValue V1);
 };
 }
+
+/// isInt32Immediate - This method tests to see if the node is a 32-bit constant
+/// operand. If so Imm will receive the 32-bit value.
+static bool isInt32Immediate(SDNode *N, unsigned &Imm) {
+  if (N->getOpcode() == ISD::Constant && N->getValueType(0) == MVT::i32) {
+    Imm = cast<ConstantSDNode>(N)->getZExtValue();
+    return true;
+  }
+  return false;
+}
+
+// isInt32Immediate - This method tests to see if a constant operand.
+// If so Imm will receive the 32 bit value.
+static bool isInt32Immediate(SDValue N, unsigned &Imm) {
+  return isInt32Immediate(N.getNode(), Imm);
+}
+
+// isOpcWithIntImmediate - This method tests to see if the node is a specific
+// opcode and that it has a immediate integer right operand.
+// If so Imm will receive the 32 bit value.
+static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
+  return N->getOpcode() == Opc &&
+         isInt32Immediate(N->getOperand(1).getNode(), Imm);
+}
+
 
 void ARMDAGToDAGISel::InstructionSelect() {
   DEBUG(BB->dump());
@@ -942,6 +970,32 @@ SDNode *ARMDAGToDAGISel::PairDRegs(EVT VT, SDValue V0, SDValue V1) {
                                 VT, SDValue(Pair, 0), V1, SubReg1);
 }
 
+SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDValue Op,
+                                                     unsigned Opc) {
+  if (!Subtarget->hasV6T2Ops())
+    return NULL;
+    
+  unsigned Shl_imm = 0;
+  if (isOpcWithIntImmediate(Op.getOperand(0).getNode(), ISD::SHL, Shl_imm)){
+    assert(Shl_imm > 0 && Shl_imm < 32 && "bad amount in shift node!");
+    unsigned Srl_imm = 0;
+    if (isInt32Immediate(Op.getOperand(1), Srl_imm)) {
+      assert(Srl_imm > 0 && Srl_imm < 32 && "bad amount in shift node!");
+      unsigned Width = 32 - Srl_imm;
+      int LSB = Srl_imm - Shl_imm;
+      if ((LSB + Width) > 32)
+        return NULL;
+      SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
+      SDValue Ops[] = { Op.getOperand(0).getOperand(0),
+                        CurDAG->getTargetConstant(LSB, MVT::i32),
+                        CurDAG->getTargetConstant(Width, MVT::i32),
+                        getAL(CurDAG), Reg0 };
+      return CurDAG->SelectNodeTo(Op.getNode(), Opc, MVT::i32, Ops, 5);
+    }
+  }
+  return NULL;
+}
+
 SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
   SDNode *N = Op.getNode();
   DebugLoc dl = N->getDebugLoc();
@@ -1019,6 +1073,16 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
   }
   case ARMISD::DYN_ALLOC:
     return SelectDYN_ALLOC(Op);
+  case ISD::SRL:
+    if (SDNode *I = SelectV6T2BitfieldExtractOp(Op,
+                      Subtarget->isThumb() ? ARM::t2UBFX : ARM::UBFX))
+      return I;
+    break;
+  case ISD::SRA:
+    if (SDNode *I = SelectV6T2BitfieldExtractOp(Op,
+                      Subtarget->isThumb() ? ARM::t2SBFX : ARM::SBFX))
+      return I;
+    break;
   case ISD::MUL:
     if (Subtarget->isThumb1Only())
       break;

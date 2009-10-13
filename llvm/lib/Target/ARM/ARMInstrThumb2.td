@@ -767,6 +767,12 @@ def t2BFC : T2I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
                 IIC_iALUi, "bfc", " $dst, $imm",
                 [(set GPR:$dst, (and GPR:$src, bf_inv_mask_imm:$imm))]>;
 
+def t2SBFX : T2I<(outs GPR:$dst), (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
+                 IIC_iALUi, "sbfx", " $dst, $src, $lsb, $width", []>;
+
+def t2UBFX : T2I<(outs GPR:$dst), (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
+                 IIC_iALUi, "ubfx", " $dst, $src, $lsb, $width", []>;
+
 // FIXME: A8.6.18  BFI - Bitfield insert (Encoding T1)
 
 defm t2ORN  : T2I_bin_irs<"orn", BinOpFrag<(or  node:$LHS, (not node:$RHS))>>;

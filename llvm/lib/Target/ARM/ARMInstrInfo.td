@@ -284,6 +284,10 @@ def so_imm2part_2 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(V, MVT::i32);
 }]>;
 
+/// imm0_31 predicate - True if the 32-bit immediate is in the range [0,31].
+def imm0_31 : Operand<i32>, PatLeaf<(imm), [{
+  return (int32_t)N->getZExtValue() < 32;
+}]>;
 
 // Define ARM specific addressing modes.
 
@@ -1013,6 +1017,24 @@ defm UXTAH : AI_bin_rrot<0b01101111, "uxtah",
 //defm UXTAB16 : xxx<"uxtab16", 0xff00ff>;
 
 // TODO: UXT(A){B|H}16
+
+def SBFX  : I<(outs GPR:$dst),
+              (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
+               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iALUi,
+               "sbfx", " $dst, $src, $lsb, $width", "", []>,
+               Requires<[IsARM, HasV6T2]> {
+  let Inst{27-21} = 0b0111101;
+  let Inst{6-4}   = 0b101;
+}
+
+def UBFX  : I<(outs GPR:$dst),
+              (ins GPR:$src, imm0_31:$lsb, imm0_31:$width),
+               AddrMode1, Size4Bytes, IndexModeNone, DPFrm, IIC_iALUi,
+               "ubfx", " $dst, $src, $lsb, $width", "", []>,
+               Requires<[IsARM, HasV6T2]> {
+  let Inst{27-21} = 0b0111111;
+  let Inst{6-4}   = 0b101;
+}
 
 //===----------------------------------------------------------------------===//
 //  Arithmetic Instructions.
