@@ -757,7 +757,7 @@ struct test13_D : test13_NV1, virtual test13_B2 {
   virtual void Dd() { }
   virtual void D2() { }
   virtual void fooNV1() { }
-} test13_d;
+};
 
 // CHECK-LP64:__ZTV8test13_D:
 // CHECK-LP64-NEXT: .quad 24
@@ -842,6 +842,95 @@ struct test13_D : test13_NV1, virtual test13_B2 {
 // CHECK-LP32-NEXT: .long __ZTv0_n32_N9test13_B22B2Ev
 
 
+class test14 {
+public:
+    virtual void initWithInt(int a);
+    static test14 *withInt(int a);
+};
+
+void test14::initWithInt(int a) { }
+
+test14 *test14::withInt(int a) {
+  test14 *me = new test14;
+  me->initWithInt(a);
+  return me;
+}
+
+
+struct test15_B {
+  virtual test15_B *foo1() { return 0; }
+  virtual test15_B *foo2() { return 0; }
+  virtual test15_B *foo3() { return 0; }
+  int i;
+};
+
+struct test15_NV1 {
+  virtual void fooNV1() { }
+  int i;
+};
+
+struct test15_B2 : test15_NV1, virtual test15_B {
+  virtual test15_B2 *foo1() { return 0; }
+  virtual test15_B2 *foo2() { return 0; }
+  int i;
+};
+
+struct test15_D : test15_NV1, virtual test15_B2 {
+  virtual test15_D *foo1() { return 0; }
+};
+
+// CHECK-LP64:__ZTV8test15_D:
+// CHECK-LP64-NEXT: .quad 32
+// CHECK-LP64-NEXT: .quad 16
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI8test15_D
+// CHECK-LP64-NEXT: .quad __ZN10test15_NV16fooNV1Ev
+// CHECK-LP64-NEXT: .quad __ZN8test15_D4foo1Ev
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad 18446744073709551600
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad 16
+// CHECK-LP64-NEXT: .quad 18446744073709551600
+// CHECK-LP64-NEXT: .quad __ZTI8test15_D
+// CHECK-LP64-NEXT: .quad __ZN10test15_NV16fooNV1Ev
+// CHECK-LP64-NEXT: .quad __ZTcv0_n40_v0_n24_N8test15_D4foo1Ev
+// CHECK-LP64-NEXT: .quad __ZN9test15_B24foo2Ev
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad 18446744073709551600
+// CHECK-LP64-NEXT: .quad 18446744073709551584
+// CHECK-LP64-NEXT: .quad 18446744073709551584
+// CHECK-LP64-NEXT: .quad __ZTI8test15_D
+// CHECK-LP64-NEXT: .quad __ZTcv0_n24_v0_n32_N8test15_D4foo1Ev
+// CHECK-LP64-NEXT: .quad __ZTcv0_n32_v0_n24_N9test15_B24foo2Ev
+// CHECK-LP64-NEXT: .quad __ZN8test15_B4foo3Ev
+
+// CHECK-LP32:__ZTV8test15_D:
+// CHECK-LP32-NEXT: .long 20
+// CHECK-LP32-NEXT: .long 8
+// CHECK-LP32-NEXT: .space 4
+// CHECK-LP32-NEXT: .long __ZTI8test15_D
+// CHECK-LP32-NEXT: .long __ZN10test15_NV16fooNV1Ev
+// CHECK-LP32-NEXT: .long __ZN8test15_D4foo1Ev
+// CHECK-LP32-NEXT: .space 4
+// CHECK-LP32-NEXT: .long 4294967288
+// CHECK-LP32-NEXT: .space 4
+// CHECK-LP32-NEXT: .long 12
+// CHECK-LP32-NEXT: .long 4294967288
+// CHECK-LP32-NEXT: .long __ZTI8test15_D
+// CHECK-LP32-NEXT: .long __ZN10test15_NV16fooNV1Ev
+// CHECK-LP32-NEXT: .long __ZTcv0_n20_v0_n12_N8test15_D4foo1Ev
+// CHECK-LP32-NEXT: .long __ZN9test15_B24foo2Ev
+// CHECK-LP32-NEXT: .space 4
+// CHECK-LP32-NEXT: .long 4294967284
+// CHECK-LP32-NEXT: .long 4294967276
+// CHECK-LP32-NEXT: .long 4294967276
+// CHECK-LP32-NEXT: .long __ZTI8test15_D
+// CHECK-LP32-NEXT: .long __ZTcv0_n12_v0_n16_N8test15_D4foo1Ev
+// CHECK-LP32-NEXT: .long __ZTcv0_n16_v0_n12_N9test15_B24foo2Ev
+// CHECK-LP32-NEXT: .long __ZN8test15_B4foo3Ev
+
+
+
 // CHECK-LP64: __ZTV1B:
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .quad __ZTI1B
@@ -920,20 +1009,8 @@ struct test13_D : test13_NV1, virtual test13_B2 {
 // CHECK-LP64-NEXT: .quad __ZN2D14bar4Ev
 // CHECK-LP64-NEXT: .quad __ZN2D14bar5Ev
 
-class test14 {
-public:
-    virtual void initWithInt(int a);
-    static test14 *withInt(int a);
-};
-
-void test14::initWithInt(int a) { }
-
-test14 *test14::withInt(int a) {
-  test14 *me = new test14;
-  me->initWithInt(a);
-  return me;
-}
-
+test15_D d15;
+test13_D d13;
 test11_D d11;
 test10_D d10;
 test9_D d9;

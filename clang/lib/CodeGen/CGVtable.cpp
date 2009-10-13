@@ -47,7 +47,8 @@ private:
   typedef llvm::DenseMap<const CXXMethodDecl *, CallOffset> Thunks_t;
   Thunks_t Thunks;
   typedef llvm::DenseMap<const CXXMethodDecl *,
-                         std::pair<CallOffset, CallOffset> > CovariantThunks_t;
+                         std::pair<std::pair<CallOffset, CallOffset>,
+                                   CanQualType> > CovariantThunks_t;
   CovariantThunks_t CovariantThunks;
   std::vector<Index_t> VCalls;
   typedef CXXRecordDecl::method_iterator method_iter;
@@ -81,7 +82,8 @@ public:
   }
 
   void GenerateVBaseOffsets(std::vector<llvm::Constant *> &offsets,
-                            const CXXRecordDecl *RD, uint64_t Offset) {
+                            const CXXRecordDecl *RD, uint64_t Offset,
+                            bool updateVBIndex) {
     for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
            e = RD->bases_end(); i != e; ++i) {
       const CXXRecordDecl *Base =
@@ -91,11 +93,12 @@ public:
         int64_t BaseOffset = -(Offset/8) + BLayout.getVBaseClassOffset(Base)/8;
         llvm::Constant *m = wrap(BaseOffset);
         m = wrap((0?700:0) + BaseOffset);
-        VBIndex[Base] = -(offsets.size()*LLVMPointerWidth/8)
-          - 3*LLVMPointerWidth/8;
+        if (updateVBIndex)
+          VBIndex[Base] = -(offsets.size()*LLVMPointerWidth/8)
+            - 3*LLVMPointerWidth/8;
         offsets.push_back(m);
       }
-      GenerateVBaseOffsets(offsets, Base, Offset);
+      GenerateVBaseOffsets(offsets, Base, Offset, updateVBIndex);
     }
   }
 
@@ -153,7 +156,12 @@ public:
         CallOffset ReturnOffset = std::make_pair(0, 0);
         if (oret != ret) {
           // FIXME: calculate offsets for covariance
-          ReturnOffset = std::make_pair(42,getVbaseOffset(oret, ret));
+          Index_t nv = 0;
+          if (CovariantThunks.count(OMD)) {
+            oret = CovariantThunks[OMD].second;
+            CovariantThunks.erase(OMD);
+          }
+          ReturnOffset = std::make_pair(nv, getVbaseOffset(oret, ret));
         }
         Index[MD] = i;
         submethods[i] = m;
@@ -174,7 +182,9 @@ public:
           // FIXME: calculate non-virtual offset
           ThisOffset = std::make_pair(0, -((idx+extra+2)*LLVMPointerWidth/8));
           if (ReturnOffset.first || ReturnOffset.second)
-            CovariantThunks[MD] = std::make_pair(ThisOffset, ReturnOffset);
+            CovariantThunks[MD] = std::make_pair(std::make_pair(ThisOffset,
+                                                                ReturnOffset),
+                                                 oret);
           else
             Thunks[MD] = ThisOffset;
           return true;
@@ -208,10 +218,10 @@ public:
          i != e; ++i) {
       const CXXMethodDecl *MD = i->first;
       Index_t idx = Index[MD];
-      Index_t nv_t = i->second.first.first;
-      Index_t v_t = i->second.first.second;
-      Index_t nv_r = i->second.second.first;
-      Index_t v_r = i->second.second.second;
+      Index_t nv_t = i->second.first.first.first;
+      Index_t v_t = i->second.first.first.second;
+      Index_t nv_r = i->second.first.second.first;
+      Index_t v_r = i->second.first.second.second;
       submethods[idx] = CGM.BuildCovariantThunk(MD, Extern, nv_t, v_t, nv_r,
                                                 v_r);
     }
@@ -385,7 +395,7 @@ public:
 
     std::vector<llvm::Constant *> offsets;
     extra = 0;
-    GenerateVBaseOffsets(offsets, RD, Offset);
+    GenerateVBaseOffsets(offsets, RD, Offset, !ForVirtualBase);
     if (ForVirtualBase)
       extra = offsets.size();
 
