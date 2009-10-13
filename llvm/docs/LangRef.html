@@ -2338,8 +2338,10 @@ has undefined behavior.</p>
    to <a href="#moduleasm"> Module-Level Inline Assembly</a>) through the use of
    a special value.  This value represents the inline assembler as a string
    (containing the instructions to emit), a list of operand constraints (stored
-   as a string), and a flag that indicates whether or not the inline asm
-   expression has side effects.  An example inline assembler expression is:</p>
+   as a string), a flag that indicates whether or not the inline asm
+   expression has side effects, and a flag indicating whether the asm came
+   originally from an asm block.  An example inline assembler
+   expression is:</p>
 
 <div class="doc_code">
 <pre>
@@ -2366,6 +2368,18 @@ i32 (i32) asm "bswap $0", "=r,r"
 call void asm sideeffect "eieio", ""()
 </pre>
 </div>
+
+<p>Inline asms derived from asm blocks are similarly marked with the
+   '<tt>msasm</tt>' keyword:</p>
+
+<div class="doc_code">
+<pre>
+call void asm msasm "eieio", ""()
+</pre>
+</div>
+
+<p>If both keywords appear the '<tt>sideeffect</tt>' keyword must come
+   first.</p>
 
 <p>TODO: The format of the asm and constraints string still need to be
    documented here.  Constraints on what can be done (e.g. duplication, moving,
