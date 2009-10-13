@@ -4347,8 +4347,6 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
                               Declarator &D,
                               bool IsDefinition,
                               MultiTemplateParamsArg TemplateParams) {
-  // FIXME: do something with template parameters
-
   const DeclSpec &DS = D.getDeclSpec();
 
   assert(DS.isFriendSpecified());
@@ -4404,6 +4402,7 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
   // Recover from invalid scope qualifiers as if they just weren't there.
   NamedDecl *PrevDecl = 0;
   if (!ScopeQual.isInvalid() && ScopeQual.isSet()) {
+    // FIXME: RequireCompleteDeclContext
     DC = computeDeclContext(ScopeQual);
 
     // FIXME: handle dependent contexts
@@ -4479,7 +4478,7 @@ Sema::ActOnFriendFunctionDecl(Scope *S,
 
   bool Redeclaration = false;
   NamedDecl *ND = ActOnFunctionDeclarator(S, D, DC, T, DInfo, PrevDecl,
-                                          MultiTemplateParamsArg(*this),
+                                          move(TemplateParams),
                                           IsDefinition,
                                           Redeclaration);
   if (!ND) return DeclPtrTy();

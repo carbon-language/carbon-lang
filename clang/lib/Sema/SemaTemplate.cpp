@@ -2720,7 +2720,16 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
         }
       }
     }
-  } else if (!TemplateParams && TUK != TUK_Friend) {
+  } else if (TemplateParams) {
+    if (TUK == TUK_Friend)
+      Diag(KWLoc, diag::err_template_spec_friend)
+        << CodeModificationHint::CreateRemoval(
+                                SourceRange(TemplateParams->getTemplateLoc(),
+                                            TemplateParams->getRAngleLoc()))
+        << SourceRange(LAngleLoc, RAngleLoc);
+    else
+      isExplicitSpecialization = true;
+  } else if (TUK != TUK_Friend) {
     Diag(KWLoc, diag::err_template_spec_needs_header)
       << CodeModificationHint::CreateInsertion(KWLoc, "template<> ");
     isExplicitSpecialization = true;

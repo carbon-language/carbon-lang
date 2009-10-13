@@ -2575,9 +2575,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // lexical context will be different from the semantic context.
   NewFD->setLexicalDeclContext(CurContext);
 
-  if (isFriend)
-    NewFD->setObjectOfFriendDecl(/* PreviouslyDeclared= */ PrevDecl != NULL);
-
   // Match up the template parameter lists with the scope specifier, then
   // determine whether we have a template or a template specialization.
   FunctionTemplateDecl *FunctionTemplate = 0;
@@ -2639,6 +2636,19 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       CurClass->setHasTrivialCopyAssignment(false);
     }
   }
+
+  if (isFriend) {
+    if (FunctionTemplate) {
+      FunctionTemplate->setObjectOfFriendDecl(
+                                   /* PreviouslyDeclared= */ PrevDecl != NULL);
+      FunctionTemplate->setAccess(AS_public);
+    }
+    else
+      NewFD->setObjectOfFriendDecl(/* PreviouslyDeclared= */ PrevDecl != NULL);
+
+    NewFD->setAccess(AS_public);
+  }
+
 
   if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD)) {
     // Look for virtual methods in base classes that this method might override.

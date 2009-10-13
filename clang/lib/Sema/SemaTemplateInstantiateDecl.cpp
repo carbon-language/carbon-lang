@@ -47,7 +47,8 @@ namespace {
     Decl *VisitEnumDecl(EnumDecl *D);
     Decl *VisitEnumConstantDecl(EnumConstantDecl *D);
     Decl *VisitFriendDecl(FriendDecl *D);
-    Decl *VisitFunctionDecl(FunctionDecl *D);
+    Decl *VisitFunctionDecl(FunctionDecl *D,
+                            TemplateParameterList *TemplateParams = 0);
     Decl *VisitCXXRecordDecl(CXXRecordDecl *D);
     Decl *VisitCXXMethodDecl(CXXMethodDecl *D,
                              TemplateParameterList *TemplateParams = 0);
@@ -280,6 +281,9 @@ Decl *TemplateDeclInstantiator::VisitFriendDecl(FriendDecl *D) {
     NamedDecl *ND = D->getFriendDecl();
     assert(ND && "friend decl must be a decl or a type!");
 
+    // FIXME: We have a problem here, because the nested call to Visit(ND)
+    // will inject the thing that the friend references into the current
+    // owner, which is wrong.
     Decl *NewND = Visit(ND);
     if (!NewND) return 0;
 
@@ -423,24 +427,31 @@ TemplateDeclInstantiator::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   if (!InstParams)
     return NULL;
 
-  // FIXME: Handle instantiation of nested function templates that aren't
-  // member function templates. This could happen inside a FriendDecl.
-  assert(isa<CXXMethodDecl>(D->getTemplatedDecl()));
-  CXXMethodDecl *InstMethod
-    = cast_or_null<CXXMethodDecl>(
-                 VisitCXXMethodDecl(cast<CXXMethodDecl>(D->getTemplatedDecl()),
-                                    InstParams));
-  if (!InstMethod)
+  FunctionDecl *Instantiated = 0;
+  if (CXXMethodDecl *DMethod = dyn_cast<CXXMethodDecl>(D->getTemplatedDecl()))
+    Instantiated = cast_or_null<FunctionDecl>(VisitCXXMethodDecl(DMethod, 
+                                                                 InstParams));
+  else
+    Instantiated = cast_or_null<FunctionDecl>(VisitFunctionDecl(
+                                                          D->getTemplatedDecl(), 
+                                                                InstParams));
+  
+  if (!Instantiated)
     return 0;
 
   // Link the instantiated function template declaration to the function
   // template from which it was instantiated.
   FunctionTemplateDecl *InstTemplate 
-    = InstMethod->getDescribedFunctionTemplate();
+    = Instantiated->getDescribedFunctionTemplate();
   InstTemplate->setAccess(D->getAccess());
-  assert(InstTemplate && "VisitCXXMethodDecl didn't create a template!");
-  InstTemplate->setInstantiatedFromMemberTemplate(D);
-  Owner->addDecl(InstTemplate);
+  assert(InstTemplate && 
+         "VisitFunctionDecl/CXXMethodDecl didn't create a template!");
+  if (!InstTemplate->getInstantiatedFromMemberTemplate())
+    InstTemplate->setInstantiatedFromMemberTemplate(D);
+  
+  // Add non-friends into the owner.
+  if (!InstTemplate->getFriendObjectKind())
+    Owner->addDecl(InstTemplate);
   return InstTemplate;
 }
 
@@ -478,12 +489,13 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
 ///   1) instantiating function templates
 ///   2) substituting friend declarations
 /// FIXME: preserve function definitions in case #2
-Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
+  Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
+                                       TemplateParameterList *TemplateParams) {
   // Check whether there is already a function template specialization for
   // this declaration.
   FunctionTemplateDecl *FunctionTemplate = D->getDescribedFunctionTemplate();
   void *InsertPos = 0;
-  if (FunctionTemplate) {
+  if (FunctionTemplate && !TemplateParams) {
     llvm::FoldingSetNodeID ID;
     FunctionTemplateSpecializationInfo::Profile(ID,
                              TemplateArgs.getInnermost().getFlatArgumentList(),
@@ -521,27 +533,79 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
     Params[P]->setOwningFunction(Function);
   Function->setParams(SemaRef.Context, Params.data(), Params.size());
 
-  // If the original function was part of a friend declaration,
-  // inherit its namespace state and add it to the owner.
-  if (Decl::FriendObjectKind FOK = D->getFriendObjectKind()) {
-    bool WasDeclared = (FOK == Decl::FOK_Declared);
-    Function->setObjectOfFriendDecl(WasDeclared);
-    if (!Owner->isDependentContext())
-      DC->makeDeclVisibleInContext(Function, /* Recoverable = */ false);
-
-    Function->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
+  if (TemplateParams) {
+    // Our resulting instantiation is actually a function template, since we
+    // are substituting only the outer template parameters. For example, given
+    //
+    //   template<typename T>
+    //   struct X {
+    //     template<typename U> friend void f(T, U);
+    //   };
+    //
+    //   X<int> x;
+    //
+    // We are instantiating the friend function template "f" within X<int>, 
+    // which means substituting int for T, but leaving "f" as a friend function
+    // template.
+    // Build the function template itself.
+    FunctionTemplate = FunctionTemplateDecl::Create(SemaRef.Context, Owner,
+                                                    Function->getLocation(),
+                                                    Function->getDeclName(),
+                                                    TemplateParams, Function);
+    Function->setDescribedFunctionTemplate(FunctionTemplate);
+    FunctionTemplate->setLexicalDeclContext(D->getLexicalDeclContext());
   }
-
+    
   if (InitFunctionInstantiation(Function, D))
     Function->setInvalidDecl();
 
   bool Redeclaration = false;
   bool OverloadableAttrRequired = false;
+    
   NamedDecl *PrevDecl = 0;
+  if (TemplateParams || !FunctionTemplate) {
+    // Look only into the namespace where the friend would be declared to 
+    // find a previous declaration. This is the innermost enclosing namespace, 
+    // as described in ActOnFriendFunctionDecl.
+    Sema::LookupResult R;
+    SemaRef.LookupQualifiedName(R, DC, Function->getDeclName(), 
+                              Sema::LookupOrdinaryName, true);
+    
+    PrevDecl = R.getAsSingleDecl(SemaRef.Context);
+
+    // In C++, the previous declaration we find might be a tag type
+    // (class or enum). In this case, the new declaration will hide the
+    // tag type. Note that this does does not apply if we're declaring a
+    // typedef (C++ [dcl.typedef]p4).
+    if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
+      PrevDecl = 0;
+  }
+  
   SemaRef.CheckFunctionDeclaration(Function, PrevDecl, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
-  if (FunctionTemplate) {
+  // If the original function was part of a friend declaration,
+  // inherit its namespace state and add it to the owner.
+  NamedDecl *FromFriendD 
+      = TemplateParams? cast<NamedDecl>(D->getDescribedFunctionTemplate()) : D;
+  if (FromFriendD->getFriendObjectKind()) {
+    NamedDecl *ToFriendD = 0;
+    if (TemplateParams) {
+      ToFriendD = cast<NamedDecl>(FunctionTemplate);
+      PrevDecl = FunctionTemplate->getPreviousDeclaration();
+    } else {
+      ToFriendD = Function;
+      PrevDecl = Function->getPreviousDeclaration();
+    }
+    ToFriendD->setObjectOfFriendDecl(PrevDecl != NULL);
+    if (!Owner->isDependentContext() && !PrevDecl)
+      DC->makeDeclVisibleInContext(ToFriendD, /* Recoverable = */ false);
+
+    if (!TemplateParams)
+      Function->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
+  }
+
+  if (FunctionTemplate && !TemplateParams) {
     // Record this function template specialization.
     Function->setFunctionTemplateSpecialization(SemaRef.Context,
                                                 FunctionTemplate,
@@ -687,7 +751,8 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
   SemaRef.CheckFunctionDeclaration(Method, PrevDecl, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
 
-  if (!FunctionTemplate && (!Method->isInvalidDecl() || !PrevDecl))
+  if (!FunctionTemplate && (!Method->isInvalidDecl() || !PrevDecl) &&
+      !Method->getFriendObjectKind())
     Owner->addDecl(Method);
 
   return Method;

@@ -971,6 +971,8 @@ def err_specialization_after_instantiation : Error<
   "explicit specialization of %0 after instantiation">;
 def note_instantiation_required_here : Note<
   "%select{implicit|explicit}0 instantiation first required here">;
+def err_template_spec_friend : Error<
+  "template specialization declaration cannot be a friend">;
 
 // C++ class template specializations and out-of-line definitions
 def err_template_spec_needs_header : Error<
