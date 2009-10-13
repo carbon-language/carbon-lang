@@ -162,6 +162,9 @@ public:
     return LastNode ? (LastNode->isSink() ? NULL : LastNode) : NULL;
   }
 
+  // FIXME: This should not be exposed.
+  GRWorkList *getWorkList() { return Eng.WList; }
+
   void SetCleanedState(const GRState* St) {
     CleanedState = St;
   }
