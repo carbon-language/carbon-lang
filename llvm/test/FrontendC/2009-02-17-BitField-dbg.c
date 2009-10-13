@@ -5,7 +5,6 @@
 // RUN: echo {ptype mystruct} > %t2
 // RUN: gdb -q -batch -n -x %t2 2009-02-17-BitField-dbg.o | \
 // RUN:   tee 2009-02-17-BitField-dbg.out | grep "int a : 4"
-// XFAIL: *
 
 struct {
   int  a:4;
