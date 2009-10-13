@@ -1860,33 +1860,26 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   } else if (isa<UnwindInst>(BB->begin())) {
     // Check to see if the first instruction in this block is just an unwind.
     // If so, replace any invoke instructions which use this as an exception
-    // destination with call instructions, and any unconditional branch
-    // predecessor with an unwind.
+    // destination with call instructions.
     //
     SmallVector<BasicBlock*, 8> Preds(pred_begin(BB), pred_end(BB));
     while (!Preds.empty()) {
       BasicBlock *Pred = Preds.back();
-      if (BranchInst *BI = dyn_cast<BranchInst>(Pred->getTerminator())) {
-        if (BI->isUnconditional()) {
-          Pred->getInstList().pop_back();  // nuke uncond branch
-          new UnwindInst(Pred->getContext(), Pred);            // Use unwind.
-          Changed = true;
-        }
-      } else if (InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator()))
+      if (InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator()))
         if (II->getUnwindDest() == BB) {
           // Insert a new branch instruction before the invoke, because this
-          // is now a fall through...
+          // is now a fall through.
           BranchInst *BI = BranchInst::Create(II->getNormalDest(), II);
           Pred->getInstList().remove(II);   // Take out of symbol table
 
-          // Insert the call now...
+          // Insert the call now.
           SmallVector<Value*,8> Args(II->op_begin()+3, II->op_end());
           CallInst *CI = CallInst::Create(II->getCalledValue(),
                                           Args.begin(), Args.end(),
                                           II->getName(), BI);
           CI->setCallingConv(II->getCallingConv());
           CI->setAttributes(II->getAttributes());
-          // If the invoke produced a value, the Call now does instead
+          // If the invoke produced a value, the Call now does instead.
           II->replaceAllUsesWith(CI);
           delete II;
           Changed = true;
