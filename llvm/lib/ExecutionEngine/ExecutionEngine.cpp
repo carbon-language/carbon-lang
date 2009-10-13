@@ -46,7 +46,9 @@ ExecutionEngine *(*ExecutionEngine::InterpCtor)(ModuleProvider *MP,
 ExecutionEngine::EERegisterFn ExecutionEngine::ExceptionTableRegister = 0;
 
 
-ExecutionEngine::ExecutionEngine(ModuleProvider *P) : LazyFunctionCreator(0) {
+ExecutionEngine::ExecutionEngine(ModuleProvider *P)
+  : EEState(*this),
+    LazyFunctionCreator(0) {
   LazyCompilationDisabled = false;
   GVCompilationDisabled   = false;
   SymbolSearchingDisabled = false;
@@ -115,8 +117,8 @@ Function *ExecutionEngine::FindFunctionNamed(const char *FnName) {
 
 void *ExecutionEngineState::RemoveMapping(
   const MutexGuard &, const GlobalValue *ToUnmap) {
-  std::map<AssertingVH<const GlobalValue>, void *>::iterator I =
-    GlobalAddressMap.find(ToUnmap);
+  std::map<MapUpdatingCVH, void *>::iterator I =
+    GlobalAddressMap.find(getVH(ToUnmap));
   void *OldVal;
   if (I == GlobalAddressMap.end())
     OldVal = 0;
@@ -139,14 +141,14 @@ void ExecutionEngine::addGlobalMapping(const GlobalValue *GV, void *Addr) {
 
   DEBUG(errs() << "JIT: Map \'" << GV->getName() 
         << "\' to [" << Addr << "]\n";);
-  void *&CurVal = state.getGlobalAddressMap(locked)[GV];
+  void *&CurVal = EEState.getGlobalAddressMap(locked)[EEState.getVH(GV)];
   assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
   CurVal = Addr;
   
   // If we are using the reverse mapping, add it too
-  if (!state.getGlobalAddressReverseMap(locked).empty()) {
+  if (!EEState.getGlobalAddressReverseMap(locked).empty()) {
     AssertingVH<const GlobalValue> &V =
-      state.getGlobalAddressReverseMap(locked)[Addr];
+      EEState.getGlobalAddressReverseMap(locked)[Addr];
     assert((V == 0 || GV == 0) && "GlobalMapping already established!");
     V = GV;
   }
@@ -157,8 +159,8 @@ void ExecutionEngine::addGlobalMapping(const GlobalValue *GV, void *Addr) {
 void ExecutionEngine::clearAllGlobalMappings() {
   MutexGuard locked(lock);
   
-  state.getGlobalAddressMap(locked).clear();
-  state.getGlobalAddressReverseMap(locked).clear();
+  EEState.getGlobalAddressMap(locked).clear();
+  EEState.getGlobalAddressReverseMap(locked).clear();
 }
 
 /// clearGlobalMappingsFromModule - Clear all global mappings that came from a
@@ -167,11 +169,11 @@ void ExecutionEngine::clearGlobalMappingsFromModule(Module *M) {
   MutexGuard locked(lock);
   
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI) {
-    state.RemoveMapping(locked, FI);
+    EEState.RemoveMapping(locked, FI);
   }
   for (Module::global_iterator GI = M->global_begin(), GE = M->global_end(); 
        GI != GE; ++GI) {
-    state.RemoveMapping(locked, GI);
+    EEState.RemoveMapping(locked, GI);
   }
 }
 
@@ -181,25 +183,25 @@ void ExecutionEngine::clearGlobalMappingsFromModule(Module *M) {
 void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
   MutexGuard locked(lock);
 
-  std::map<AssertingVH<const GlobalValue>, void *> &Map =
-    state.getGlobalAddressMap(locked);
+  std::map<ExecutionEngineState::MapUpdatingCVH, void *> &Map =
+    EEState.getGlobalAddressMap(locked);
 
   // Deleting from the mapping?
   if (Addr == 0) {
-    return state.RemoveMapping(locked, GV);
+    return EEState.RemoveMapping(locked, GV);
   }
   
-  void *&CurVal = Map[GV];
+  void *&CurVal = Map[EEState.getVH(GV)];
   void *OldVal = CurVal;
 
-  if (CurVal && !state.getGlobalAddressReverseMap(locked).empty())
-    state.getGlobalAddressReverseMap(locked).erase(CurVal);
+  if (CurVal && !EEState.getGlobalAddressReverseMap(locked).empty())
+    EEState.getGlobalAddressReverseMap(locked).erase(CurVal);
   CurVal = Addr;
   
   // If we are using the reverse mapping, add it too
-  if (!state.getGlobalAddressReverseMap(locked).empty()) {
+  if (!EEState.getGlobalAddressReverseMap(locked).empty()) {
     AssertingVH<const GlobalValue> &V =
-      state.getGlobalAddressReverseMap(locked)[Addr];
+      EEState.getGlobalAddressReverseMap(locked)[Addr];
     assert((V == 0 || GV == 0) && "GlobalMapping already established!");
     V = GV;
   }
@@ -212,9 +214,9 @@ void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
 void *ExecutionEngine::getPointerToGlobalIfAvailable(const GlobalValue *GV) {
   MutexGuard locked(lock);
   
-  std::map<AssertingVH<const GlobalValue>, void*>::iterator I =
-    state.getGlobalAddressMap(locked).find(GV);
-  return I != state.getGlobalAddressMap(locked).end() ? I->second : 0;
+  std::map<ExecutionEngineState::MapUpdatingCVH, void*>::iterator I =
+    EEState.getGlobalAddressMap(locked).find(EEState.getVH(GV));
+  return I != EEState.getGlobalAddressMap(locked).end() ? I->second : 0;
 }
 
 /// getGlobalValueAtAddress - Return the LLVM global value object that starts
@@ -224,17 +226,17 @@ const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
   MutexGuard locked(lock);
 
   // If we haven't computed the reverse mapping yet, do so first.
-  if (state.getGlobalAddressReverseMap(locked).empty()) {
-    for (std::map<AssertingVH<const GlobalValue>, void *>::iterator
-         I = state.getGlobalAddressMap(locked).begin(),
-         E = state.getGlobalAddressMap(locked).end(); I != E; ++I)
-      state.getGlobalAddressReverseMap(locked).insert(std::make_pair(I->second,
+  if (EEState.getGlobalAddressReverseMap(locked).empty()) {
+    for (std::map<ExecutionEngineState::MapUpdatingCVH, void *>::iterator
+         I = EEState.getGlobalAddressMap(locked).begin(),
+         E = EEState.getGlobalAddressMap(locked).end(); I != E; ++I)
+      EEState.getGlobalAddressReverseMap(locked).insert(std::make_pair(I->second,
                                                                      I->first));
   }
 
   std::map<void *, AssertingVH<const GlobalValue> >::iterator I =
-    state.getGlobalAddressReverseMap(locked).find(Addr);
-  return I != state.getGlobalAddressReverseMap(locked).end() ? I->second : 0;
+    EEState.getGlobalAddressReverseMap(locked).find(Addr);
+  return I != EEState.getGlobalAddressReverseMap(locked).end() ? I->second : 0;
 }
 
 // CreateArgv - Turn a vector of strings into a nice argv style array of
@@ -474,7 +476,7 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
     return getPointerToFunction(F);
 
   MutexGuard locked(lock);
-  void *p = state.getGlobalAddressMap(locked)[GV];
+  void *p = EEState.getGlobalAddressMap(locked)[EEState.getVH(GV)];
   if (p)
     return p;
 
@@ -484,7 +486,7 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
     EmitGlobalVariable(GVar);
   else
     llvm_unreachable("Global hasn't had an address allocated yet!");
-  return state.getGlobalAddressMap(locked)[GV];
+  return EEState.getGlobalAddressMap(locked)[EEState.getVH(GV)];
 }
 
 /// This function converts a Constant* into a GenericValue. The interesting 
@@ -1068,4 +1070,19 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   size_t GVSize = (size_t)getTargetData()->getTypeAllocSize(ElTy);
   NumInitBytes += (unsigned)GVSize;
   ++NumGlobals;
+}
+
+ExecutionEngineState::MapUpdatingCVH::MapUpdatingCVH(
+  ExecutionEngineState &EES, const GlobalValue *GV)
+  : CallbackVH(const_cast<GlobalValue*>(GV)), EES(EES) {}
+
+void ExecutionEngineState::MapUpdatingCVH::deleted() {
+  MutexGuard locked(EES.EE.lock);
+  EES.RemoveMapping(locked, *this);  // Destroys *this.
+}
+
+void ExecutionEngineState::MapUpdatingCVH::allUsesReplacedWith(
+  Value *new_value) {
+  assert(false && "The ExecutionEngine doesn't know how to handle a"
+         " RAUW on a value it has a global mapping for.");
 }

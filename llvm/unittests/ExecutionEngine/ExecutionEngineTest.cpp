@@ -113,4 +113,17 @@ TEST_F(ExecutionEngineTest, ClearModuleMappings) {
   EXPECT_EQ(G2, Engine->getGlobalValueAtAddress(&Mem1));
 }
 
+TEST_F(ExecutionEngineTest, DestructionRemovesGlobalMapping) {
+  GlobalVariable *G1 =
+    NewExtGlobal(Type::getInt32Ty(getGlobalContext()), "Global1");
+  int32_t Mem1 = 3;
+  Engine->addGlobalMapping(G1, &Mem1);
+  // Make sure the reverse mapping is enabled.
+  EXPECT_EQ(G1, Engine->getGlobalValueAtAddress(&Mem1));
+  // When the GV goes away, the ExecutionEngine should remove any
+  // mappings that refer to it.
+  G1->eraseFromParent();
+  EXPECT_EQ(NULL, Engine->getGlobalValueAtAddress(&Mem1));
+}
+
 }
