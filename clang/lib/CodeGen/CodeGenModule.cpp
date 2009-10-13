@@ -1110,8 +1110,9 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     NewCall->setCallingConv(CI->getCallingConv());
 
     // Finally, remove the old call, replacing any uses with the new one.
-    if (!CI->use_empty())
-      CI->replaceAllUsesWith(NewCall);
+    CI->replaceAllUsesWith(NewCall);
+
+
     CI->eraseFromParent();
   }
 }
