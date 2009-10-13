@@ -3903,10 +3903,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
   Decl *Referenced = 0;
   switch (Result.getKind()) {
   case LookupResult::NotFound:
-    if (Ctx->isTranslationUnit())
-      DiagID = diag::err_typename_nested_not_found_global;
-    else
-      DiagID = diag::err_typename_nested_not_found;
+    DiagID = diag::err_typename_nested_not_found;
     break;
 
   case LookupResult::Found:
@@ -3933,10 +3930,7 @@ Sema::CheckTypenameType(NestedNameSpecifier *NNS, const IdentifierInfo &II,
 
   // If we get here, it's because name lookup did not find a
   // type. Emit an appropriate diagnostic and return an error.
-  if (NamedDecl *NamedCtx = dyn_cast<NamedDecl>(Ctx))
-    Diag(Range.getEnd(), DiagID) << Range << Name << NamedCtx;
-  else
-    Diag(Range.getEnd(), DiagID) << Range << Name;
+  Diag(Range.getEnd(), DiagID) << Range << Name << Ctx;
   if (Referenced)
     Diag(Referenced->getLocation(), diag::note_typename_refers_here)
       << Name;

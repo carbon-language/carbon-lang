@@ -802,12 +802,11 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
     else {
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
-      if (SS && !SS->isEmpty()) {
-        DiagnoseMissingMember(Loc, Name,
-                              (NestedNameSpecifier *)SS->getScopeRep(),
-                              SS->getRange());
-        return ExprError();
-      } else if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
+      if (SS && !SS->isEmpty())
+        return ExprError(Diag(Loc, diag::err_no_member)
+                           << Name << computeDeclContext(*SS, false)
+                           << SS->getRange());
+      else if (Name.getNameKind() == DeclarationName::CXXOperatorName ||
                Name.getNameKind() == DeclarationName::CXXConversionFunctionName)
         return ExprError(Diag(Loc, diag::err_undeclared_use)
           << Name.getAsString());
@@ -2185,8 +2184,8 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     LookupQualifiedName(Result, DC, MemberName, LookupMemberName, false);
 
     if (Result.empty())
-      return ExprError(Diag(MemberLoc, diag::err_typecheck_no_member_deprecated)
-               << MemberName << BaseExpr->getSourceRange());
+      return ExprError(Diag(MemberLoc, diag::err_no_member)
+               << MemberName << DC << BaseExpr->getSourceRange());
     if (Result.isAmbiguous()) {
       DiagnoseAmbiguousLookup(Result, MemberName, MemberLoc,
                               BaseExpr->getSourceRange());
@@ -5689,8 +5688,8 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         = dyn_cast_or_null<FieldDecl>(R.getAsSingleDecl(Context));
       // FIXME: Leaks Res
       if (!MemberDecl)
-        return ExprError(Diag(BuiltinLoc, diag::err_typecheck_no_member_deprecated)
-         << OC.U.IdentInfo << SourceRange(OC.LocStart, OC.LocEnd));
+        return ExprError(Diag(BuiltinLoc, diag::err_no_member)
+         << OC.U.IdentInfo << RD << SourceRange(OC.LocStart, OC.LocEnd));
 
       // FIXME: C++: Verify that MemberDecl isn't a static field.
       // FIXME: Verify that MemberDecl isn't a bitfield.

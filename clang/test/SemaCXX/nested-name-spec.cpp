@@ -35,9 +35,9 @@ class C2 {
   int x;
 };
 
-void C2::m() const { } // expected-error{{out-of-line definition does not match any declaration in 'C2'}}
+void C2::m() const { } // expected-error{{out-of-line definition of 'm' does not match any declaration in 'class C2'}}
 
-void C2::f(int) { } // expected-error{{out-of-line definition does not match any declaration in 'C2'}}
+void C2::f(int) { } // expected-error{{out-of-line definition of 'f' does not match any declaration in 'class C2'}}
 
 void C2::m() {
   x = 0;
@@ -125,7 +125,7 @@ class Operators {
   operator bool();
 };
 
-Operators Operators::operator+(const Operators&) { // expected-error{{out-of-line definition does not match any declaration in 'Operators'}}
+Operators Operators::operator+(const Operators&) { // expected-error{{out-of-line definition of 'operator+' does not match any declaration in 'class Operators'}}
   Operators ops;
   return ops;
 }
@@ -143,13 +143,13 @@ namespace A {
   void g(int&); // expected-note{{member declaration nearly matches}}
 } 
 
-void A::f() {} // expected-error{{out-of-line definition does not match any declaration in 'A'}}
+void A::f() {} // expected-error{{out-of-line definition of 'f' does not match any declaration in namespace 'A'}}
 
-void A::g(const int&) { } // expected-error{{out-of-line definition does not match any declaration in 'A'}}
+void A::g(const int&) { } // expected-error{{out-of-line definition of 'g' does not match any declaration in namespace 'A'}}
 
 struct Struct { };
 
-void Struct::f() { } // expected-error{{out-of-line definition does not match any declaration in 'Struct'}}
+void Struct::f() { } // expected-error{{out-of-line definition of 'f' does not match any declaration in 'struct Struct'}}
 
 void global_func(int);
 void global_func2(int);

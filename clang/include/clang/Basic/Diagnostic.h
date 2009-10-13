@@ -15,6 +15,7 @@
 #define LLVM_CLANG_DIAGNOSTIC_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/Support/type_traits.h"
 #include <string>
 #include <vector>
 #include <cassert>
@@ -24,6 +25,7 @@ namespace llvm {
 }
 
 namespace clang {
+  class DeclContext;
   class DiagnosticBuilder;
   class DiagnosticClient;
   class IdentifierInfo;
@@ -158,7 +160,8 @@ public:
     ak_qualtype,        // QualType
     ak_declarationname, // DeclarationName
     ak_nameddecl,       // NamedDecl *
-    ak_nestednamespec   // NestedNameSpecifier *
+    ak_nestednamespec,  // NestedNameSpecifier *
+    ak_declcontext      // DeclContext *
   };
 
 private:
@@ -613,6 +616,20 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   return DB;
 }
 
+// Adds a DeclContext to the diagnostic. The enable_if template magic is here
+// so that we only match those arguments that are (statically) DeclContexts;
+// other arguments that derive from DeclContext (e.g., RecordDecls) will not
+// match.
+template<typename T>
+inline
+typename llvm::enable_if<llvm::is_same<T, DeclContext>, 
+                         const DiagnosticBuilder &>::type
+operator<<(const DiagnosticBuilder &DB, T *DC) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(DC),
+                  Diagnostic::ak_declcontext);
+  return DB;
+}
+  
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            const SourceRange &R) {
   DB.AddSourceRange(R);

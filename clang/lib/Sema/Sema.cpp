@@ -23,6 +23,54 @@
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;
 
+/// \brief Convert the given type to a string suitable for printing as part of 
+/// a diagnostic. 
+///
+/// \param Context the context in which the type was allocated
+/// \param Ty the type to print
+static std::string ConvertTypeToDiagnosticString(ASTContext &Context,
+                                                 QualType Ty) {
+  // FIXME: Playing with std::string is really slow.
+  std::string S = Ty.getAsString(Context.PrintingPolicy);
+  
+  // If this is a sugared type (like a typedef, typeof, etc), then unwrap one
+  // level of the sugar so that the type is more obvious to the user.
+  QualType DesugaredTy = Ty.getDesugaredType();
+  
+  if (Ty != DesugaredTy &&
+      // If the desugared type is a vector type, we don't want to expand it,
+      // it will turn into an attribute mess. People want their "vec4".
+      !isa<VectorType>(DesugaredTy) &&
+      
+      // Don't aka just because we saw an elaborated type...
+      (!isa<ElaboratedType>(Ty) ||
+       cast<ElaboratedType>(Ty)->desugar() != DesugaredTy) &&
+      
+      // ...or a qualified name type...
+      (!isa<QualifiedNameType>(Ty) ||
+       cast<QualifiedNameType>(Ty)->desugar() != DesugaredTy) &&
+      
+      // ...or a non-dependent template specialization.
+      (!isa<TemplateSpecializationType>(Ty) || Ty->isDependentType()) &&
+      
+      // Don't desugar magic Objective-C types.
+      Ty.getUnqualifiedType() != Context.getObjCIdType() &&
+      Ty.getUnqualifiedType() != Context.getObjCClassType() &&
+      Ty.getUnqualifiedType() != Context.getObjCSelType() &&
+      Ty.getUnqualifiedType() != Context.getObjCProtoType() &&
+      
+      // Not va_list.
+      Ty.getUnqualifiedType() != Context.getBuiltinVaListType()) {
+    S = "'"+S+"' (aka '";
+    S += DesugaredTy.getAsString(Context.PrintingPolicy);
+    S += "')";
+    return S;
+  }
+
+  S = "'" + S + "'";
+  return S;
+}
+                                       
 /// ConvertQualTypeToStringFn - This function is used to pretty print the
 /// specified QualType as a string in diagnostics.
 static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
@@ -33,50 +81,14 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
   ASTContext &Context = *static_cast<ASTContext*>(Cookie);
 
   std::string S;
+  bool NeedQuotes = true;
   if (Kind == Diagnostic::ak_qualtype) {
     assert(ModLen == 0 && ArgLen == 0 &&
            "Invalid modifier for QualType argument");
 
     QualType Ty(QualType::getFromOpaquePtr(reinterpret_cast<void*>(Val)));
-
-    // FIXME: Playing with std::string is really slow.
-    S = Ty.getAsString(Context.PrintingPolicy);
-
-    // If this is a sugared type (like a typedef, typeof, etc), then unwrap one
-    // level of the sugar so that the type is more obvious to the user.
-    QualType DesugaredTy = Ty.getDesugaredType();
-
-    if (Ty != DesugaredTy &&
-        // If the desugared type is a vector type, we don't want to expand it,
-        // it will turn into an attribute mess. People want their "vec4".
-        !isa<VectorType>(DesugaredTy) &&
-
-        // Don't aka just because we saw an elaborated type...
-        (!isa<ElaboratedType>(Ty) ||
-         cast<ElaboratedType>(Ty)->desugar() != DesugaredTy) &&
-
-        // ...or a qualified name type...
-        (!isa<QualifiedNameType>(Ty) ||
-         cast<QualifiedNameType>(Ty)->desugar() != DesugaredTy) &&
-
-        // ...or a non-dependent template specialization.
-        (!isa<TemplateSpecializationType>(Ty) || Ty->isDependentType()) &&
-
-        // Don't desugar magic Objective-C types.
-        Ty.getUnqualifiedType() != Context.getObjCIdType() &&
-        Ty.getUnqualifiedType() != Context.getObjCClassType() &&
-        Ty.getUnqualifiedType() != Context.getObjCSelType() &&
-        Ty.getUnqualifiedType() != Context.getObjCProtoType() &&
-
-        // Not va_list.
-        Ty.getUnqualifiedType() != Context.getBuiltinVaListType()) {
-      S = "'"+S+"' (aka '";
-      S += DesugaredTy.getAsString(Context.PrintingPolicy);
-      S += "')";
-      Output.append(S.begin(), S.end());
-      return;
-    }
-
+    S = ConvertTypeToDiagnosticString(Context, Ty);
+    NeedQuotes = false;
   } else if (Kind == Diagnostic::ak_declarationname) {
 
     DeclarationName N = DeclarationName::getFromOpaqueInteger(Val);
@@ -101,16 +113,50 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
     reinterpret_cast<NamedDecl*>(Val)->getNameForDiagnostic(S,
                                                          Context.PrintingPolicy,
                                                             Qualified);
-  } else {
+  } else if (Kind == Diagnostic::ak_nestednamespec) {
     llvm::raw_string_ostream OS(S);
-    assert(Kind == Diagnostic::ak_nestednamespec);
     reinterpret_cast<NestedNameSpecifier*> (Val)->print(OS,
                                                         Context.PrintingPolicy);
+  } else {
+    assert(Kind == Diagnostic::ak_declcontext);
+    DeclContext *DC = reinterpret_cast<DeclContext *> (Val);
+    NeedQuotes = false;
+    if (!DC) {
+      assert(false && "Should never have a null declaration context");
+      S = "unknown context";
+    } else if (DC->isTranslationUnit()) {
+      // FIXME: Get these strings from some localized place
+      if (Context.getLangOptions().CPlusPlus)
+        S = "the global namespace";
+      else
+        S = "the global scope";
+    } else if (TypeDecl *Type = dyn_cast<TypeDecl>(DC)) {
+      S = ConvertTypeToDiagnosticString(Context, Context.getTypeDeclType(Type));
+      NeedQuotes = false;
+    } else {
+      // FIXME: Get these strings from some localized place
+      NamedDecl *ND = cast<NamedDecl>(DC);
+      if (isa<NamespaceDecl>(ND))
+        S += "namespace ";
+      else if (isa<ObjCMethodDecl>(ND))
+        S += "method ";
+      else if (isa<FunctionDecl>(ND))
+        S += "function ";
+
+      S += "'";
+      ND->getNameForDiagnostic(S, Context.PrintingPolicy, true);
+      S += "'";
+      NeedQuotes = false;
+    }
   }
 
-  Output.push_back('\'');
+  if (NeedQuotes)
+    Output.push_back('\'');
+  
   Output.append(S.begin(), S.end());
-  Output.push_back('\'');
+  
+  if (NeedQuotes)
+    Output.push_back('\'');
 }
 
 
@@ -361,31 +407,6 @@ NamedDecl *Sema::getCurFunctionOrMethodDecl() {
   if (isa<ObjCMethodDecl>(DC) || isa<FunctionDecl>(DC))
     return cast<NamedDecl>(DC);
   return 0;
-}
-
-void Sema::DiagnoseMissingMember(SourceLocation MemberLoc,
-                                 DeclarationName Member,
-                                 NestedNameSpecifier *NNS, SourceRange Range) {
-  switch (NNS->getKind()) {
-  default: assert(0 && "Unexpected nested name specifier kind!");
-  case NestedNameSpecifier::TypeSpec: {
-    const Type *Ty = Context.getCanonicalType(NNS->getAsType());
-    RecordDecl *RD = cast<RecordType>(Ty)->getDecl();
-    Diag(MemberLoc, diag::err_typecheck_record_no_member)
-      << Member << RD->getTagKind() << RD << Range;
-    break;
-  }
-  case NestedNameSpecifier::Namespace: {
-    Diag(MemberLoc, diag::err_typecheck_namespace_no_member)
-       << Member << NNS->getAsNamespace() << Range;
-    break;
-  }
-  case NestedNameSpecifier::Global: {
-    Diag(MemberLoc, diag::err_typecheck_global_namespace_no_member)
-      << Member << Range;
-    break;
-  }
-  }
 }
 
 Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {

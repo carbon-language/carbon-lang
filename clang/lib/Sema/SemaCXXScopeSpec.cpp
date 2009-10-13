@@ -471,9 +471,7 @@ Sema::CXXScopeTy *Sema::BuildCXXNestedNameSpecifier(Scope *S,
   if (SD)
     DiagID = diag::err_expected_class_or_namespace;
   else if (SS.isSet()) {
-    DiagnoseMissingMember(IdLoc, DeclarationName(&II),
-                          (NestedNameSpecifier *)SS.getScopeRep(),
-                          SS.getRange());
+    Diag(IdLoc, diag::err_no_member) << &II << LookupCtx << SS.getRange();
     return 0;
   } else
     DiagID = diag::err_undeclared_var_use;

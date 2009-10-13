@@ -3720,9 +3720,6 @@ public:
                       QualType FieldTy, const Expr *BitWidth,
                       bool *ZeroWidth = 0);
 
-  void DiagnoseMissingMember(SourceLocation MemberLoc, DeclarationName Member,
-                             NestedNameSpecifier *NNS, SourceRange Range);
-
   /// adjustFunctionParamType - Converts the type of a function parameter to a
   // type that can be passed as an argument type to
   /// ASTContext::getFunctionType.

@@ -2229,10 +2229,9 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   } else if (D.getCXXScopeSpec().isSet()) {
     // No previous declaration in the qualifying scope.
-    NestedNameSpecifier *NNS =
-      (NestedNameSpecifier *)D.getCXXScopeSpec().getScopeRep();
-    DiagnoseMissingMember(D.getIdentifierLoc(), Name, NNS,
-                          D.getCXXScopeSpec().getRange());
+    Diag(D.getIdentifierLoc(), diag::err_no_member)
+      << Name << computeDeclContext(D.getCXXScopeSpec(), true)
+      << D.getCXXScopeSpec().getRange();
     NewVD->setInvalidDecl();
   }
 
@@ -2844,7 +2843,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // matches (e.g., those that differ only in cv-qualifiers and
       // whether the parameter types are references).
       Diag(D.getIdentifierLoc(), diag::err_member_def_does_not_match)
-        << cast<NamedDecl>(DC) << D.getCXXScopeSpec().getRange();
+        << Name << DC << D.getCXXScopeSpec().getRange();
       NewFD->setInvalidDecl();
 
       LookupResult Prev;

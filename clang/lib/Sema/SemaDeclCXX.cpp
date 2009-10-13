@@ -2767,7 +2767,8 @@ NamedDecl *Sema::BuildUsingDeclaration(SourceLocation UsingLoc,
   LookupQualifiedName(R, LookupContext, Name, LookupOrdinaryName);
 
   if (R.empty()) {
-    DiagnoseMissingMember(IdentLoc, Name, NNS, SS.getRange());
+    Diag(IdentLoc, diag::err_no_member) 
+      << Name << LookupContext << SS.getRange();
     return 0;
   }
 

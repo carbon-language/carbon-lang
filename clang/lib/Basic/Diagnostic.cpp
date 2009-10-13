@@ -802,6 +802,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     case Diagnostic::ak_declarationname:
     case Diagnostic::ak_nameddecl:
     case Diagnostic::ak_nestednamespec:
+    case Diagnostic::ak_declcontext:
       getDiags()->ConvertArgToString(getArgKind(ArgNo), getRawArg(ArgNo),
                                      Modifier, ModifierLen,
                                      Argument, ArgumentLen, OutStr);

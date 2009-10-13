@@ -16,7 +16,7 @@ namespace N {
 int i;
 
 typename N::A::type *ip1 = &i;
-typename N::B::type *ip2 = &i; // expected-error{{ no type named 'type' in 'B'}}
+typename N::B::type *ip2 = &i; // expected-error{{no type named 'type' in 'struct N::B'}}
 typename N::C::type *ip3 = &i; // expected-error{{typename specifier refers to non-type member 'type'}}
 
 void test(double d) {
@@ -33,7 +33,8 @@ void test(double d) {
 namespace N {
   template<typename T>
   struct X {
-    typedef typename T::type type; // expected-error 2{{no type named 'type' in 'B'}} \
+    typedef typename T::type type; // expected-error {{no type named 'type' in 'struct N::B'}} \
+    // expected-error {{no type named 'type' in 'struct B'}} \
     // FIXME: location info for error above isn't very good \
     // expected-error 2{{typename specifier refers to non-type member 'type'}} \
     // expected-error{{type 'int' cannot be used prior to '::' because it has no members}}

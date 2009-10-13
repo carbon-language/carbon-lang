@@ -1107,10 +1107,8 @@ def note_explicit_instantiation_candidate : Note<
   
 // C++ typename-specifiers
 def err_typename_nested_not_found : Error<"no type named %0 in %1">;
-def err_typename_nested_not_found_global : Error<
-    "no type named %0 in the global namespace">;
 def err_typename_nested_not_type : Error<
-    "typename specifier refers to non-type member %0">;
+    "typename specifier refers to non-type member %0 in %1">;
 def note_typename_refers_here : Note<
     "referenced member %0 is declared here">;
 
@@ -1405,17 +1403,11 @@ def warn_subscript_is_char : Warning<"array subscript is of type 'char'">,
   InGroup<CharSubscript>, DefaultIgnore;
 
 def err_typecheck_incomplete_tag : Error<"incomplete definition of type %0">;
-def err_typecheck_no_member_deprecated : Error<"no member named %0">;
-def err_typecheck_record_no_member : Error<
-  "no member named %0 in %select{struct|union|class|enum}1 %q2">;
-def err_typecheck_namespace_no_member : Error<
-  "no member named %0 in namespace %q1">;
-def err_typecheck_global_namespace_no_member : Error<
-  "no member named %0 in the global namespace">;
+def err_no_member : Error<"no member named %0 in %1">;
 
 def err_member_redeclared : Error<"class member cannot be redeclared">;
 def err_member_def_does_not_match : Error<
-  "out-of-line definition does not match any declaration in %0">;
+  "out-of-line definition of %0 does not match any declaration in %1">;
 def err_nonstatic_member_out_of_line : Error<
   "non-static data member defined out-of-line">;
 def err_qualified_typedef_declarator : Error<
