@@ -4526,9 +4526,7 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
       }
 
       // Determine the result type
-      QualType ResultTy
-        = FnDecl->getType()->getAs<FunctionType>()->getResultType();
-      ResultTy = ResultTy.getNonReferenceType();
+      QualType ResultTy = FnDecl->getResultType().getNonReferenceType();
 
       // Build the actual expression node.
       Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
@@ -4537,9 +4535,15 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
 
       input.release();
 
-      Expr *CE = new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
-                                                   &Input, 1, ResultTy, OpLoc);
-      return MaybeBindToTemporary(CE);
+      ExprOwningPtr<CallExpr> TheCall(this,
+        new (Context) CXXOperatorCallExpr(Context, Op, FnExpr,
+                                          &Input, 1, ResultTy, OpLoc));
+      
+      if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall.get(), 
+                              FnDecl))
+        return ExprError();
+
+      return MaybeBindToTemporary(TheCall.release());
     } else {
       // We matched a built-in operator. Convert the arguments, then
       // break out so that we will build the appropriate built-in
