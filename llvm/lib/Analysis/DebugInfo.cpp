@@ -969,8 +969,6 @@ void DebugInfoFinder::processModule(Module &M) {
 #ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
   MetadataContext &TheMetadata = M.getContext().getMetadata();
   unsigned MDDbgKind = TheMetadata.getMDKind("dbg");
-  if (!MDDbgKind)
-    return;
 #endif
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
@@ -987,15 +985,17 @@ void DebugInfoFinder::processModule(Module &M) {
         else if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
           processDeclare(DDI);
 #ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
-        else if (MDNode *L = TheMetadata.getMD(MDDbgKind, BI)) {
-          DILocation Loc(L);
-          DIScope S(Loc.getScope().getNode());
-          if (S.isCompileUnit())
-            addCompileUnit(DICompileUnit(S.getNode()));
-          else if (S.isSubprogram())
-            processSubprogram(DISubprogram(S.getNode()));
-          else if (S.isLexicalBlock())
-            processLexicalBlock(DILexicalBlock(S.getNode()));
+        else if (MDDbgKind) {
+          if (MDNode *L = TheMetadata.getMD(MDDbgKind, BI)) {
+            DILocation Loc(L);
+            DIScope S(Loc.getScope().getNode());
+            if (S.isCompileUnit())
+              addCompileUnit(DICompileUnit(S.getNode()));
+            else if (S.isSubprogram())
+              processSubprogram(DISubprogram(S.getNode()));
+            else if (S.isLexicalBlock())
+              processLexicalBlock(DILexicalBlock(S.getNode()));
+          }
         }
 #endif
       }
