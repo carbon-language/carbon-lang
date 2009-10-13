@@ -121,10 +121,8 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
       // probably won't do this in callers.
       if (Function *F = CS.getCalledFunction())
         if (F->isDeclaration() && 
-            (F->getName() == "setjmp" || F->getName() == "_setjmp")) {
+            (F->getName() == "setjmp" || F->getName() == "_setjmp"))
           NeverInline = true;
-          return;
-        }
 
       // Calls often compile into many machine instructions.  Bump up their
       // cost to reflect this.
