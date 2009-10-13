@@ -289,7 +289,7 @@ let Properties = [IntrNoMem] in {
 
 //===------------------ Exception Handling Intrinsics----------------------===//
 //
-def int_eh_exception    : Intrinsic<[llvm_ptr_ty]>;
+def int_eh_exception    : Intrinsic<[llvm_ptr_ty], [], [IntrReadMem]>;
 def int_eh_selector_i32 : Intrinsic<[llvm_i32_ty],
                                     [llvm_ptr_ty, llvm_ptr_ty, llvm_vararg_ty]>;
 def int_eh_selector_i64 : Intrinsic<[llvm_i64_ty],
