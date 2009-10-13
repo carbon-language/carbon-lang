@@ -1234,6 +1234,11 @@ public:
     return BitWidth - 1 - countLeadingZeros();
   }
 
+  /// @returns the ceil log base 2 of this APInt.
+  unsigned ceilLogBase2() const {
+    return BitWidth - (*this - 1).countLeadingZeros();
+  }
+
   /// @returns the log base 2 of this APInt if its an exact power of two, -1
   /// otherwise
   int32_t exactLogBase2() const {

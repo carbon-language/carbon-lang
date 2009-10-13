@@ -315,6 +315,17 @@ TEST(APIntTest, StringBitsNeeded16) {
   EXPECT_EQ(9U, APInt::getBitsNeeded("-20", 16));
 }
 
+TEST(APIntTest, Log2) {
+  EXPECT_EQ(APInt(15, 7).logBase2(), 2);
+  EXPECT_EQ(APInt(15, 7).ceilLogBase2(), 3);
+  EXPECT_EQ(APInt(15, 7).exactLogBase2(), -1);
+  EXPECT_EQ(APInt(15, 8).logBase2(), 3);
+  EXPECT_EQ(APInt(15, 8).ceilLogBase2(), 3);
+  EXPECT_EQ(APInt(15, 8).exactLogBase2(), 3);
+  EXPECT_EQ(APInt(15, 9).logBase2(), 3);
+  EXPECT_EQ(APInt(15, 9).ceilLogBase2(), 4);
+  EXPECT_EQ(APInt(15, 9).exactLogBase2(), -1);
+}
 
 #ifdef GTEST_HAS_DEATH_TEST
 TEST(APIntTest, StringDeath) {
