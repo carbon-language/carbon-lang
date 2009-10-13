@@ -101,3 +101,12 @@ void t14(struct S *P) {
 }
 
 
+// PR4938
+int t16() {
+  int a,b;
+  asm ( "nop;"
+       :"=%c" (a)
+       : "r" (b)
+       );
+  return 0;
+}

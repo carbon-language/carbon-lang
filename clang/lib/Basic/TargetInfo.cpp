@@ -188,6 +188,9 @@ bool TargetInfo::validateOutputConstraint(ConstraintInfo &Info) const {
       }
     case '&': // early clobber.
       break;
+    case '%': // commutative.
+      // FIXME: Check that there is a another register after this one.
+      break;
     case 'r': // general register.
       Info.setAllowsRegister();
       break;
