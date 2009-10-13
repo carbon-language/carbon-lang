@@ -421,6 +421,22 @@ def int_atomic_load_umax : Intrinsic<[llvm_anyint_ty],
                                      [IntrWriteArgMem, NoCapture<0>]>,
                            GCCBuiltin<"__sync_fetch_and_umax">;
 
+//===------------------------- Memory Use Markers -------------------------===//
+//
+def int_lifetime_start  : Intrinsic<[llvm_void_ty],
+                                    [llvm_i64_ty, llvm_ptr_ty],
+                                    [IntrWriteArgMem, NoCapture<1>]>;
+def int_lifetime_end    : Intrinsic<[llvm_void_ty],
+                                    [llvm_i64_ty, llvm_ptr_ty],
+                                    [IntrWriteArgMem, NoCapture<1>]>;
+def int_invariant_start : Intrinsic<[llvm_descriptor_ty],
+                                    [llvm_i64_ty, llvm_ptr_ty],
+                                    [IntrReadArgMem, NoCapture<1>]>;
+def int_invariant_end   : Intrinsic<[llvm_void_ty],
+                                    [llvm_descriptor_ty, llvm_i64_ty,
+                                     llvm_ptr_ty],
+                                    [IntrWriteArgMem, NoCapture<2>]>;
+
 //===-------------------------- Other Intrinsics --------------------------===//
 //
 def int_flt_rounds : Intrinsic<[llvm_i32_ty]>,

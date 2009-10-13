@@ -273,6 +273,14 @@
           <li><a href="#int_atomic_load_umin"><tt>llvm.atomic.load.umin</tt></a></li>
         </ol>
       </li>
+      <li><a href="#int_memorymarkers">Memory Use Markers</a>
+        <ol>
+          <li><a href="#int_lifetime_start"><tt>llvm.lifetime.start</tt></a></li>
+          <li><a href="#int_lifetime_end"><tt>llvm.lifetime.end</tt></a></li>
+          <li><a href="#int_invariant_start"><tt>llvm.invariant.start</tt></a></li>
+          <li><a href="#int_invariant_end"><tt>llvm.invariant.end</tt></a></li>
+        </ol>
+      </li>
       <li><a href="#int_general">General intrinsics</a>
         <ol>
           <li><a href="#int_var_annotation">
@@ -6977,6 +6985,129 @@ LLVM</a>.</p>
                                 <i>; yields {i32}:result3 = 8</i>
 %memval1  = load i32* %ptr      <i>; yields {i32}:memval1 = 30</i>
 </pre>
+
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="int_memorymarkers">Memory Use Markers</a>
+</div>
+
+<div class="doc_text">
+
+<p>This class of intrinsics exists to information about the lifetime of memory
+   objects and ranges where variables are immutable.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_lifetime_start">'<tt>llvm.lifetime.start</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare void @llvm.lifetime.start(i64 &lt;size&gt;, i8* nocapture &lt;ptr&gt;)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.lifetime.start</tt>' intrinsic specifies the start of a memory
+   object's lifetime.</p>
+
+<h5>Arguments:</h5>
+<p>The first argument is a the size of the object, or -1 if it is variable
+   sized.  The second argument is a pointer to the object.</p>
+
+<h5>Semantics:</h5>
+<p>This intrinsic indicates that before this point in the code, the value of the
+   memory pointed to by <tt>ptr</tt> is dead.  This means that it is known to
+   never be used and has an undefined value.  A load from the pointer that is
+   preceded by this intrinsic can be replaced with
+   <tt>'<a href="#undefvalues">undef</a>'</tt>.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_lifetime_end">'<tt>llvm.lifetime.end</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare void @llvm.lifetime.end(i64 &lt;size&gt;, i8* nocapture &lt;ptr&gt;)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.lifetime.end</tt>' intrinsic specifies the end of a memory
+   object's lifetime.</p>
+
+<h5>Arguments:</h5>
+<p>The first argument is a the size of the object, or -1 if it is variable
+   sized.  The second argument is a pointer to the object.</p>
+
+<h5>Semantics:</h5>
+<p>This intrinsic indicates that after this point in the code, the value of the
+   memory pointed to by <tt>ptr</tt> is dead.  This means that it is known to
+   never be used and has an undefined value.  Any stores into the memory object
+   following this intrinsic may be removed as dead.
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_invariant_start">'<tt>llvm.invariant.start</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare {}* @llvm.invariant.start(i64 &lt;size&gt;, i8* nocapture &lt;ptr&gt;) readonly
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.invariant.start</tt>' intrinsic specifies that the contents of
+   a memory object will not change.</p>
+
+<h5>Arguments:</h5>
+<p>The first argument is a the size of the object, or -1 if it is variable
+   sized.  The second argument is a pointer to the object.</p>
+
+<h5>Semantics:</h5>
+<p>This intrinsic indicates that until an <tt>llvm.invariant.end</tt> that uses
+   the return value, the referenced memory location is constant and
+   unchanging.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_invariant_end">'<tt>llvm.invariant.end</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare void @llvm.invariant.end({}* &lt;start&gt;, i64 &lt;size&gt;, i8* nocapture &lt;ptr&gt;)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.invariant.end</tt>' intrinsic specifies that the contents of
+   a memory object are mutable.</p>
+
+<h5>Arguments:</h5>
+<p>The first argument is the matching <tt>llvm.invariant.start</tt> intrinsic.
+   The second argument is a the size of the object, or -1 if it is variable
+   sized and the third argument is a pointer to the object.</p>
+
+<h5>Semantics:</h5>
+<p>This intrinsic indicates that the memory is mutable again.</p>
 
 </div>
 
