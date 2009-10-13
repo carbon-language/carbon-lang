@@ -225,16 +225,11 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     // the allocation, return Def.  This means that there is no dependence and
     // the access can be optimized based on that.  For example, a load could
     // turn into undef.
-    if (AllocationInst *AI = dyn_cast<AllocationInst>(Inst)) {
-      Value *AccessPtr = MemPtr->getUnderlyingObject();
-      
-      if (AccessPtr == AI ||
-          AA->alias(AI, 1, AccessPtr, 1) == AliasAnalysis::MustAlias)
-        return MemDepResult::getDef(AI);
-      continue;
-    }
-    
-    if (isMalloc(Inst)) {
+    // Note: Only determine this to be a malloc if Inst is the malloc call, not
+    // a subsequent bitcast of the malloc call result.  There can be stores to
+    // the malloced memory between the malloc call and its bitcast uses, and we
+    // need to continue scanning until the malloc call.
+    if (isa<AllocationInst>(Inst) || extractMallocCall(Inst)) {
       Value *AccessPtr = MemPtr->getUnderlyingObject();
       
       if (AccessPtr == Inst ||
