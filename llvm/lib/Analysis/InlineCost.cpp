@@ -21,7 +21,7 @@ using namespace llvm;
 // CountCodeReductionForConstant - Figure out an approximation for how many
 // instructions will be constant folded if the specified value is constant.
 //
-unsigned InlineCostAnalyzer::RegionInfo::
+unsigned InlineCostAnalyzer::FunctionInfo::
          CountCodeReductionForConstant(Value *V) {
   unsigned Reduction = 0;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
@@ -77,7 +77,7 @@ unsigned InlineCostAnalyzer::RegionInfo::
 // the function will be if it is inlined into a context where an argument
 // becomes an alloca.
 //
-unsigned InlineCostAnalyzer::RegionInfo::
+unsigned InlineCostAnalyzer::FunctionInfo::
          CountCodeReductionForAlloca(Value *V) {
   if (!isa<PointerType>(V->getType())) return 0;  // Not a pointer
   unsigned Reduction = 0;
@@ -101,7 +101,7 @@ unsigned InlineCostAnalyzer::RegionInfo::
 
 /// analyzeBasicBlock - Fill in the current structure with information gleaned
 /// from the specified block.
-void InlineCostAnalyzer::RegionInfo::analyzeBasicBlock(const BasicBlock *BB) {
+void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
   ++NumBlocks;
 
   for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
@@ -166,17 +166,22 @@ void InlineCostAnalyzer::RegionInfo::analyzeBasicBlock(const BasicBlock *BB) {
 
 /// analyzeFunction - Fill in the current structure with information gleaned
 /// from the specified function.
-void InlineCostAnalyzer::RegionInfo::analyzeFunction(Function *F) {
-  // Look at the size of the callee.  Each basic block counts as 20 units, and
-  // each instruction counts as 5.
+void CodeMetrics::analyzeFunction(Function *F) {
+  // Look at the size of the callee.
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
     analyzeBasicBlock(&*BB);
+}
+
+/// analyzeFunction - Fill in the current structure with information gleaned
+/// from the specified function.
+void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
+  Metrics.analyzeFunction(F);
 
   // A function with exactly one return has it removed during the inlining
   // process (see InlineFunction), so don't count it.
-  // FIXME: This knowledge should really be encoded outside of RegionInfo.
-  if (NumRets==1)
-    --NumInsts;
+  // FIXME: This knowledge should really be encoded outside of FunctionInfo.
+  if (Metrics.NumRets==1)
+    --Metrics.NumInsts;
 
   // Check out all of the arguments to the function, figuring out how much
   // code can be eliminated if one of the arguments is a constant.
@@ -184,8 +189,6 @@ void InlineCostAnalyzer::RegionInfo::analyzeFunction(Function *F) {
     ArgumentWeights.push_back(ArgInfo(CountCodeReductionForConstant(I),
                                       CountCodeReductionForAlloca(I)));
 }
-
-
 
 // getInlineCost - The heuristic used to determine if we should inline the
 // function call or not.
@@ -229,35 +232,35 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
     InlineCost += InlineConstants::NoreturnPenalty;
   
   // Get information about the callee...
-  RegionInfo &CalleeFI = CachedFunctionInfo[Callee];
+  FunctionInfo &CalleeFI = CachedFunctionInfo[Callee];
   
   // If we haven't calculated this information yet, do so now.
-  if (CalleeFI.NumBlocks == 0)
+  if (CalleeFI.Metrics.NumBlocks == 0)
     CalleeFI.analyzeFunction(Callee);
 
   // If we should never inline this, return a huge cost.
-  if (CalleeFI.NeverInline)
+  if (CalleeFI.Metrics.NeverInline)
     return InlineCost::getNever();
 
   // FIXME: It would be nice to kill off CalleeFI.NeverInline. Then we
-  // could move this up and avoid computing the RegionInfo for
+  // could move this up and avoid computing the FunctionInfo for
   // things we are going to just return always inline for. This
   // requires handling setjmp somewhere else, however.
   if (!Callee->isDeclaration() && Callee->hasFnAttr(Attribute::AlwaysInline))
     return InlineCost::getAlways();
     
-  if (CalleeFI.usesDynamicAlloca) {
+  if (CalleeFI.Metrics.usesDynamicAlloca) {
     // Get infomation about the caller...
-    RegionInfo &CallerFI = CachedFunctionInfo[Caller];
+    FunctionInfo &CallerFI = CachedFunctionInfo[Caller];
 
     // If we haven't calculated this information yet, do so now.
-    if (CallerFI.NumBlocks == 0)
+    if (CallerFI.Metrics.NumBlocks == 0)
       CallerFI.analyzeFunction(Caller);
 
     // Don't inline a callee with dynamic alloca into a caller without them.
     // Functions containing dynamic alloca's are inefficient in various ways;
     // don't create more inefficiency.
-    if (!CallerFI.usesDynamicAlloca)
+    if (!CallerFI.Metrics.usesDynamicAlloca)
       return InlineCost::getNever();
   }
 
@@ -305,7 +308,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS,
   InlineCost += Caller->size()/15;
   
   // Look at the size of the callee. Each instruction counts as 5.
-  InlineCost += CalleeFI.NumInsts*5;
+  InlineCost += CalleeFI.Metrics.NumInsts*5;
 
   return llvm::InlineCost::get(InlineCost);
 }
@@ -316,22 +319,22 @@ float InlineCostAnalyzer::getInlineFudgeFactor(CallSite CS) {
   Function *Callee = CS.getCalledFunction();
   
   // Get information about the callee...
-  RegionInfo &CalleeFI = CachedFunctionInfo[Callee];
+  FunctionInfo &CalleeFI = CachedFunctionInfo[Callee];
   
   // If we haven't calculated this information yet, do so now.
-  if (CalleeFI.NumBlocks == 0)
+  if (CalleeFI.Metrics.NumBlocks == 0)
     CalleeFI.analyzeFunction(Callee);
 
   float Factor = 1.0f;
   // Single BB functions are often written to be inlined.
-  if (CalleeFI.NumBlocks == 1)
+  if (CalleeFI.Metrics.NumBlocks == 1)
     Factor += 0.5f;
 
   // Be more aggressive if the function contains a good chunk (if it mades up
   // at least 10% of the instructions) of vector instructions.
-  if (CalleeFI.NumVectorInsts > CalleeFI.NumInsts/2)
+  if (CalleeFI.Metrics.NumVectorInsts > CalleeFI.Metrics.NumInsts/2)
     Factor += 2.0f;
-  else if (CalleeFI.NumVectorInsts > CalleeFI.NumInsts/10)
+  else if (CalleeFI.Metrics.NumVectorInsts > CalleeFI.Metrics.NumInsts/10)
     Factor += 1.5f;
   return Factor;
 }
