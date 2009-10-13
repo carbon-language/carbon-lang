@@ -1998,7 +1998,7 @@ Sema::ActOnStartCXXMemberReference(Scope *S, ExprArg Base, SourceLocation OpLoc,
       if (BaseExpr == NULL)
         return ExprError();
       if (CXXOperatorCallExpr *OpCall = dyn_cast<CXXOperatorCallExpr>(BaseExpr))
-        Locations.push_back(OpCall->getOperatorLoc());
+        Locations.push_back(OpCall->getDirectCallee()->getLocation());
       BaseType = BaseExpr->getType();
       CanQualType CBaseType = Context.getCanonicalType(BaseType);
       if (!CTypes.insert(CBaseType)) {
