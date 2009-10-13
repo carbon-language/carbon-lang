@@ -1590,6 +1590,8 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
         if (CheckCallReturnType(FnDecl->getResultType(), OpLoc, TheCall.get(), 
                                 FnDecl))
           return ExprError();
+        return Owned(TheCall.release());
+
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
@@ -1700,9 +1702,7 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
         }
 
         // Determine the result type
-        QualType ResultTy
-          = FnDecl->getType()->getAs<FunctionType>()->getResultType();
-        ResultTy = ResultTy.getNonReferenceType();
+        QualType ResultTy = FnDecl->getResultType().getNonReferenceType();
 
         // Build the actual expression node.
         Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
@@ -1713,9 +1713,16 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
         Idx.release();
         Args[0] = LHSExp;
         Args[1] = RHSExp;
-        return Owned(new (Context) CXXOperatorCallExpr(Context, OO_Subscript,
-                                                       FnExpr, Args, 2,
-                                                       ResultTy, LLoc));
+        
+        ExprOwningPtr<CXXOperatorCallExpr> 
+          TheCall(this, new (Context) CXXOperatorCallExpr(Context, OO_Subscript, 
+                                                          FnExpr, Args, 2, 
+                                                          ResultTy, RLoc));
+        if (CheckCallReturnType(FnDecl->getResultType(), LLoc, TheCall.get(), 
+                                FnDecl))
+          return ExprError();
+
+        return Owned(TheCall.release());
       } else {
         // We matched a built-in operator. Convert the arguments, then
         // break out so that we will build the appropriate built-in
