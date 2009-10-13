@@ -296,6 +296,22 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
           << NewParam->getDefaultArgRange();
         Diag(Old->getLocation(), diag::note_template_prev_declaration)
           << false;
+      } else if (New->getTemplateSpecializationKind()
+                   != TSK_ImplicitInstantiation &&
+                 New->getTemplateSpecializationKind() != TSK_Undeclared) {
+        // C++ [temp.expr.spec]p21:
+        //   Default function arguments shall not be specified in a declaration
+        //   or a definition for one of the following explicit specializations:
+        //     - the explicit specialization of a function template;
+        //     — the explicit specialization of a member function template;
+        //     — the explicit specialization of a member function of a class 
+        //       template where the class template specialization to which the
+        //       member function specialization belongs is implicitly 
+        //       instantiated.
+        Diag(NewParam->getLocation(), diag::err_template_spec_default_arg)
+          << (New->getTemplateSpecializationKind() ==TSK_ExplicitSpecialization)
+          << New->getDeclName()
+          << NewParam->getDefaultArgRange();
       } else if (New->getDeclContext()->isDependentContext()) {
         // C++ [dcl.fct.default]p6 (DR217):
         //   Default arguments for a member function of a class template shall 
