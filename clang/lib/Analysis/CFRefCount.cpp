@@ -971,7 +971,13 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
 
     switch (strlen(FName)) {
       default: break;
-
+      case 14:
+        if (!memcmp(FName, "pthread_create", 14)) {
+          // Part of: <rdar://problem/7299394>.  This will be addressed
+          // better with IPA.
+          S = getPersistentStopSummary();
+        }
+        break;
 
       case 17:
         // Handle: id NSMakeCollectable(CFTypeRef)

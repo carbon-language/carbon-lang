@@ -967,6 +967,37 @@ void rdar_7184450_pos(CGContextRef myContext, CGFloat x, CGPoint myStartPoint,
 }
 
 //===----------------------------------------------------------------------===//
+// <rdar://problem/7299394> clang false positive: retained instance passed to
+//                          thread in pthread_create marked as leak
+//
+// Until we have full IPA, the analyzer should stop tracking the reference
+// count of objects passed to pthread_create.
+//
+//===----------------------------------------------------------------------===//
+
+struct _opaque_pthread_t {};
+struct _opaque_pthread_attr_t {};
+typedef struct _opaque_pthread_t *__darwin_pthread_t;
+typedef struct _opaque_pthread_attr_t __darwin_pthread_attr_t;
+typedef __darwin_pthread_t pthread_t;
+typedef __darwin_pthread_attr_t pthread_attr_t;
+
+int pthread_create(pthread_t * restrict, const pthread_attr_t * restrict,
+                   void *(*)(void *), void * restrict);
+
+void *rdar_7299394_start_routine(void *p) {
+  [((id) p) release];
+  return 0;
+}
+void rdar_7299394(pthread_attr_t *attr, pthread_t *thread, void *args) {
+  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // no-warning
+  pthread_create(thread, attr, rdar_7299394_start_routine, number);
+}
+void rdar_7299394_positive(pthread_attr_t *attr, pthread_t *thread) {
+  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // expected-warning{{leak}}
+}
+
+//===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
 //===----------------------------------------------------------------------===//
 
