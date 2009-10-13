@@ -840,9 +840,6 @@ bool BitcodeReader::ParseMetadata() {
       for (unsigned i = 1; i != RecordLength; ++i)
         Name[i-1] = Record[i];
       MetadataContext &TheMetadata = Context.getMetadata();
-      assert(TheMetadata.MDHandlerNames.find(Name.str())
-             == TheMetadata.MDHandlerNames.end() &&
-             "Already registered MDKind!");
       TheMetadata.MDHandlerNames[Name.str()] = Kind;
       break;
     }
