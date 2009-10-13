@@ -1281,6 +1281,13 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
     // cast-to-union extension.
     if (getType()->isRecordType())
       return cast<CastExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
+      
+    // Integer->integer casts can be handled here, which is important for
+    // things like (int)(&&x-&&y).  Scary but true.
+    if (getType()->isIntegerType() &&
+        cast<CastExpr>(this)->getSubExpr()->getType()->isIntegerType())
+      return cast<CastExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
+      
     break;
   }
   return isEvaluatable(Ctx);

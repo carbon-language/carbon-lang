@@ -548,7 +548,18 @@ public:
       // Explicit and implicit no-op casts
       QualType Ty = E->getType(), SubTy = E->getSubExpr()->getType();
       if (CGM.getContext().hasSameUnqualifiedType(Ty, SubTy))
-          return Visit(E->getSubExpr());
+        return Visit(E->getSubExpr());
+
+      // Handle integer->integer casts for address-of-label differences.
+      if (Ty->isIntegerType() && SubTy->isIntegerType() &&
+          CGF) {
+        llvm::Value *Src = Visit(E->getSubExpr());
+        if (Src == 0) return 0;
+        
+        // Use EmitScalarConversion to perform the conversion.
+        return cast<llvm::Constant>(CGF->EmitScalarConversion(Src, SubTy, Ty));
+      }
+      
       return 0;
     }
     }
