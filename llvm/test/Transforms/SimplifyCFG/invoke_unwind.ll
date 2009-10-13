@@ -1,14 +1,14 @@
 ; This testcase checks to see if the simplifycfg pass is converting invoke
 ; instructions to call instructions if the handler just rethrows the exception.
 
-; If this test is successful, the function should be reduced to 'call; ret'
-
-; RUN: opt < %s -simplifycfg -S | \
-; RUN:   not egrep {\\(invoke\\)|\\(br\\)}
+; RUN: opt < %s -simplifycfg -S | FileCheck %s
 
 declare void @bar()
 
-define i32 @test() {
+define i32 @test1() {
+; CHECK: @test1
+; CHECK-NEXT: call void @bar()
+; CHECK-NEXT: ret i32 0
         invoke void @bar( )
                         to label %Ok unwind label %Rethrow
 Ok:             ; preds = %0
