@@ -3910,7 +3910,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         return 0;
       DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
       DISubprogram SP(FSI.getSubprogram());
-      DICompileUnit CU(PrevLocTpl.CompileUnit);
+      DICompileUnit CU(PrevLocTpl.Scope);
       unsigned LabelID = DW->RecordInlinedFnStart(SP, CU,
                                                   PrevLocTpl.Line,
                                                   PrevLocTpl.Col);

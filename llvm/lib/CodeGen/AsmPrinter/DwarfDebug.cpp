@@ -1842,14 +1842,14 @@ bool DwarfDebug::ExtractScopeInformation(MachineFunction *MF) {
       if (DL.isUnknown())
         continue;
       DebugLocTuple DLT = MF->getDebugLocTuple(DL);
-      if (!DLT.CompileUnit)
+      if (!DLT.Scope)
         continue;
       // There is no need to create another DIE for compile unit. For all
       // other scopes, create one DbgScope now. This will be translated 
       // into a scope DIE at the end.
-      DIDescriptor D(DLT.CompileUnit);
+      DIDescriptor D(DLT.Scope);
       if (!D.isCompileUnit()) {
-        DbgScope *Scope = getDbgScope(DLT.CompileUnit, MInsn);
+        DbgScope *Scope = getDbgScope(DLT.Scope, MInsn);
         Scope->setLastInsn(MInsn);
       }
     }
@@ -1942,11 +1942,11 @@ void DwarfDebug::BeginFunction(MachineFunction *MF) {
   if (!FDL.isUnknown()) {
     DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
     unsigned LabelID = 0;
-    DISubprogram SP = getDISubprogram(DLT.CompileUnit);
+    DISubprogram SP = getDISubprogram(DLT.Scope);
     if (!SP.isNull())
-      LabelID = RecordSourceLine(SP.getLineNumber(), 0, DLT.CompileUnit);
+      LabelID = RecordSourceLine(SP.getLineNumber(), 0, DLT.Scope);
     else
-      LabelID = RecordSourceLine(DLT.Line, DLT.Col, DLT.CompileUnit);
+      LabelID = RecordSourceLine(DLT.Line, DLT.Col, DLT.Scope);
     Asm->printLabel(LabelID);
     O << '\n';
   }
@@ -1954,7 +1954,7 @@ void DwarfDebug::BeginFunction(MachineFunction *MF) {
   DebugLoc FDL = MF->getDefaultDebugLoc();
   if (!FDL.isUnknown()) {
     DebugLocTuple DLT = MF->getDebugLocTuple(FDL);
-    unsigned LabelID = RecordSourceLine(DLT.Line, DLT.Col, DLT.CompileUnit);
+    unsigned LabelID = RecordSourceLine(DLT.Line, DLT.Col, DLT.Scope);
     Asm->printLabel(LabelID);
     O << '\n';
   }

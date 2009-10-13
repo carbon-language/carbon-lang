@@ -385,10 +385,9 @@ bool FastISel::SelectCall(User *I) {
       
       DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
       DISubprogram SP(FSI->getSubprogram());
-      unsigned LabelID = DW->RecordInlinedFnStart(SP,
-                                                  DICompileUnit(PrevLocTpl.CompileUnit),
-                                                  PrevLocTpl.Line,
-                                                  PrevLocTpl.Col);
+      unsigned LabelID = 
+        DW->RecordInlinedFnStart(SP,DICompileUnit(PrevLocTpl.Scope),
+                                 PrevLocTpl.Line, PrevLocTpl.Col);
       const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
       BuildMI(MBB, DL, II).addImm(LabelID);
       return true;

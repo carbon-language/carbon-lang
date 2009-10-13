@@ -710,7 +710,7 @@ void JITEmitter::processDebugLoc(DebugLoc DL, bool BeforePrintingInsn) {
     DebugLocTuple CurDLT = EmissionDetails.MF->getDebugLocTuple(DL);
 
     if (BeforePrintingInsn) {
-      if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT) {
+      if (CurDLT.Scope != 0 && PrevDLT != CurDLT) {
         JITEvent_EmittedFunctionDetails::LineStart NextLine;
         NextLine.Address = getCurrentPCValue();
         NextLine.Loc = DL;

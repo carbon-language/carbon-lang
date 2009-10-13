@@ -1362,9 +1362,9 @@ void AsmPrinter::processDebugLoc(const MachineInstr *MI,
     if (!DL.isUnknown()) {
       DebugLocTuple CurDLT = MF->getDebugLocTuple(DL);
       if (BeforePrintingInsn) {
-        if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT) {
+        if (CurDLT.Scope != 0 && PrevDLT != CurDLT) {
 	  unsigned L = DW->RecordSourceLine(CurDLT.Line, CurDLT.Col,
-	  				    CurDLT.CompileUnit);
+	  				    CurDLT.Scope);
           printLabel(L);
 #ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
           DW->SetDbgScopeBeginLabels(MI, L);
@@ -1773,9 +1773,10 @@ void AsmPrinter::EmitComments(const MachineInstr &MI) const {
   // Print source line info.
   O.PadToColumn(MAI->getCommentColumn());
   O << MAI->getCommentString() << " SrcLine ";
-  if (DLT.CompileUnit) {
-    DICompileUnit CU(DLT.CompileUnit);
-    O << CU.getFilename() << " ";
+  if (DLT.Scope) {
+    DICompileUnit CU(DLT.Scope);
+    if (!CU.isNull())
+      O << CU.getFilename() << " ";
   }
   O << DLT.Line;
   if (DLT.Col != 0) 

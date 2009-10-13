@@ -258,7 +258,7 @@ void PIC16DbgInfo::ChangeDebugLoc(const MachineFunction &MF,
   if (! EmitDebugDirectives) return;
   assert (! DL.isUnknown()  && "can't change to invalid debug loc");
 
-  MDNode *CU = MF.getDebugLocTuple(DL).CompileUnit;
+  MDNode *CU = MF.getDebugLocTuple(DL).Scope;
   unsigned line = MF.getDebugLocTuple(DL).Line;
 
   SwitchToCU(CU);

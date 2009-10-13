@@ -24,19 +24,19 @@ namespace llvm {
   /// DebugLocTuple - Debug location tuple of filename id, line and column.
   ///
   struct DebugLocTuple {
-    MDNode *CompileUnit;
-    MDNode *InlinedLoc;
+    MDNode *Scope;
+    MDNode *InlinedAtLoc;
     unsigned Line, Col;
 
     DebugLocTuple()
-      : CompileUnit(0), InlinedLoc(0), Line(~0U), Col(~0U) {};
+      : Scope(0), InlinedAtLoc(0), Line(~0U), Col(~0U) {};
 
     DebugLocTuple(MDNode *n, MDNode *i, unsigned l, unsigned c)
-      : CompileUnit(n), InlinedLoc(i), Line(l), Col(c) {};
+      : Scope(n), InlinedAtLoc(i), Line(l), Col(c) {};
 
     bool operator==(const DebugLocTuple &DLT) const {
-      return CompileUnit == DLT.CompileUnit &&
-        InlinedLoc == DLT.InlinedLoc &&
+      return Scope == DLT.Scope &&
+        InlinedAtLoc == DLT.InlinedAtLoc &&
         Line == DLT.Line && Col == DLT.Col;
     }
     bool operator!=(const DebugLocTuple &DLT) const {
@@ -74,16 +74,16 @@ namespace llvm {
       return DebugLocTuple((MDNode*)~1U, (MDNode*)~1U, ~1U, ~1U);
     }
     static unsigned getHashValue(const DebugLocTuple &Val) {
-      return DenseMapInfo<MDNode*>::getHashValue(Val.CompileUnit) ^
-             DenseMapInfo<MDNode*>::getHashValue(Val.InlinedLoc) ^
+      return DenseMapInfo<MDNode*>::getHashValue(Val.Scope) ^
+             DenseMapInfo<MDNode*>::getHashValue(Val.InlinedAtLoc) ^
              DenseMapInfo<unsigned>::getHashValue(Val.Line) ^
              DenseMapInfo<unsigned>::getHashValue(Val.Col);
     }
     static bool isEqual(const DebugLocTuple &LHS, const DebugLocTuple &RHS) {
-      return LHS.CompileUnit == RHS.CompileUnit &&
-             LHS.InlinedLoc  == RHS.InlinedLoc &&
-             LHS.Line        == RHS.Line &&
-             LHS.Col         == RHS.Col;
+      return LHS.Scope        == RHS.Scope &&
+             LHS.InlinedAtLoc == RHS.InlinedAtLoc &&
+             LHS.Line         == RHS.Line &&
+             LHS.Col          == RHS.Col;
     }
 
     static bool isPod() { return true; }

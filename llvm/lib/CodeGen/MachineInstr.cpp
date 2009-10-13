@@ -1082,11 +1082,12 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   if (!debugLoc.isUnknown()) {
     const MachineFunction *MF = getParent()->getParent();
     DebugLocTuple DLT = MF->getDebugLocTuple(debugLoc);
-    DICompileUnit CU(DLT.CompileUnit);
-    OS << " [dbg: "
-       << CU.getDirectory() << '/' << CU.getFilename() << ","
-       << DLT.Line << ","
-       << DLT.Col  << "]";
+    DICompileUnit CU(DLT.Scope);
+    if (!CU.isNull())
+      OS << " [dbg: "
+         << CU.getDirectory() << '/' << CU.getFilename() << ","
+         << DLT.Line << ","
+         << DLT.Col  << "]";
   }
 
   OS << "\n";
