@@ -284,6 +284,27 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       if (!passedAsArg)
         return NoModRef;
     }
+
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction())) {
+      switch (II->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::atomic_cmp_swap:
+      case Intrinsic::atomic_swap:
+      case Intrinsic::atomic_load_add:
+      case Intrinsic::atomic_load_sub:
+      case Intrinsic::atomic_load_and:
+      case Intrinsic::atomic_load_nand:
+      case Intrinsic::atomic_load_or:
+      case Intrinsic::atomic_load_xor:
+      case Intrinsic::atomic_load_max:
+      case Intrinsic::atomic_load_min:
+      case Intrinsic::atomic_load_umax:
+      case Intrinsic::atomic_load_umin:
+        if (alias(II->getOperand(1), Size, P, Size) == NoAlias)
+          return NoModRef;
+        break;
+      }
+    }
   }
 
   // The AliasAnalysis base class has some smarts, lets use them.
