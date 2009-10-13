@@ -47,9 +47,11 @@ public:
   /// stored.
   int64_t getMethodVtableIndex(const CXXMethodDecl *MD);
   
-  /// getVirtualBaseOffsetIndex - Return the index (relative to the vtable address 
-  /// point) where the offset of the  given virtual base of the given class is 
-  // stored.
+  /// getVirtualBaseOffsetIndex - Return the index (relative to the vtable
+  /// address point) where the offset of the virtual base that contains the
+  /// given Base is stored, otherwise, if no virtual base contains the given
+  /// class, return 0.  Base must be a virtual base class or an unambigious
+  /// base.
   int64_t getVirtualBaseOffsetIndex(const CXXRecordDecl *RD, 
                                     const CXXRecordDecl *VBase);
 };

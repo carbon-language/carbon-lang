@@ -83,22 +83,30 @@ public:
 
   void GenerateVBaseOffsets(std::vector<llvm::Constant *> &offsets,
                             const CXXRecordDecl *RD, uint64_t Offset,
-                            bool updateVBIndex) {
+                            bool updateVBIndex, Index_t current_vbindex) {
     for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
            e = RD->bases_end(); i != e; ++i) {
       const CXXRecordDecl *Base =
         cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+      Index_t next_vbindex = current_vbindex;
       if (i->isVirtual() && !SeenVBase.count(Base)) {
         SeenVBase.insert(Base);
         int64_t BaseOffset = -(Offset/8) + BLayout.getVBaseClassOffset(Base)/8;
         llvm::Constant *m = wrap(BaseOffset);
         m = wrap((0?700:0) + BaseOffset);
-        if (updateVBIndex)
-          VBIndex[Base] = (ssize_t)(-(offsets.size()*LLVMPointerWidth/8)
-                                    - 3*LLVMPointerWidth/8);
+        if (updateVBIndex) {
+          next_vbindex = (ssize_t)(-(offsets.size()*LLVMPointerWidth/8)
+                                   - 3*LLVMPointerWidth/8);
+          VBIndex[Base] = next_vbindex;
+        }
         offsets.push_back(m);
       }
-      GenerateVBaseOffsets(offsets, Base, Offset, updateVBIndex);
+      // We also record offsets for non-virtual bases to closest enclosing
+      // virtual base.  We do this so that we don't have to search
+      // for the nearst virtual base class when generating thunks.
+      if (updateVBIndex && VBIndex.count(Base) == 0)
+        VBIndex[Base] = next_vbindex;
+      GenerateVBaseOffsets(offsets, Base, Offset, updateVBIndex, next_vbindex);
     }
   }
 
@@ -122,7 +130,7 @@ public:
     if (i != VBIndex.end())
       return i->second;
 
-    assert(false && "FIXME: Locate the containing virtual base first");
+    assert(false && "FIXME: Base not found");
     return 0;
   }
 
@@ -188,13 +196,19 @@ public:
             Thunks[MD] = ThisOffset;
           return true;
         }
-#if 0
+
         // FIXME: finish off
         int64_t O = VCallOffset[OMD] - Offset/8;
-        if (O) {
-          Thunks[MD] = std::make_pair(O, 0);
+        if (O || ReturnOffset.first || ReturnOffset.second) {
+          CallOffset ThisOffset = std::make_pair(O, 0);
+          
+          if (ReturnOffset.first || ReturnOffset.second)
+            CovariantThunks[MD] = std::make_pair(std::make_pair(ThisOffset,
+                                                                ReturnOffset),
+                                                 oret);
+          else
+            Thunks[MD] = ThisOffset;
         }
-#endif
         return true;
       }
     }
@@ -394,7 +408,7 @@ public:
 
     std::vector<llvm::Constant *> offsets;
     extra = 0;
-    GenerateVBaseOffsets(offsets, RD, Offset, !ForVirtualBase);
+    GenerateVBaseOffsets(offsets, RD, Offset, !ForVirtualBase, 0);
     if (ForVirtualBase)
       extra = offsets.size();
 
