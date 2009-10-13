@@ -57,7 +57,7 @@ int f7(int *p) {
 
 int f8(int *p) {
   extern int *baz();
-  if (p = baz()) // expected-warning{{Although the value}}
+  if ((p = baz())) // expected-warning{{Although the value}}
     return 1;
   return 0;
 }
