@@ -49,6 +49,17 @@ struct is_class
     enum { value = sizeof(char) == sizeof(dont_use::is_class_helper<T>(0)) };
 };
 
+/// \brief Metafunction that determines whether the two given types are 
+/// equivalent.
+template<typename T, typename U>
+struct is_same {
+  static const bool value = false;
+};
+
+template<typename T>
+struct is_same<T, T> {
+  static const bool value = true;
+};
   
 // enable_if_c - Enable/disable a template based on a metafunction
 template<bool Cond, typename T = void>
