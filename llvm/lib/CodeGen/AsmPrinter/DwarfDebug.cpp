@@ -23,9 +23,10 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/Timer.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/System/Path.h"
 using namespace llvm;
 
@@ -1909,7 +1910,7 @@ static DISubprogram getDISubprogram(MDNode *N) {
   if (D.isLexicalBlock())
     return getDISubprogram(DILexicalBlock(N).getContext().getNode());
 
-  assert (0 && "Unexpected Descriptor!");
+  llvm_unreachable("Unexpected Descriptor!");
 }
 
 /// BeginFunction - Gather pre-function debug information.  Assumes being
