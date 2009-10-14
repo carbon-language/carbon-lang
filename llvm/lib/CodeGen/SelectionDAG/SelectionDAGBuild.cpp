@@ -3973,8 +3973,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
 
-  case Intrinsic::eh_selector_i32:
-  case Intrinsic::eh_selector_i64: {
+  case Intrinsic::eh_selector: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
 
     if (CurMBB->isLandingPad())
@@ -3997,27 +3996,22 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
     DAG.setRoot(Op.getValue(1));
 
-    MVT::SimpleValueType VT =
-      (Intrinsic == Intrinsic::eh_selector_i32 ? MVT::i32 : MVT::i64);
-    setValue(&I, DAG.getSExtOrTrunc(Op, dl, VT));
+    setValue(&I, DAG.getSExtOrTrunc(Op, dl, MVT::i32));
     return 0;
   }
 
-  case Intrinsic::eh_typeid_for_i32:
-  case Intrinsic::eh_typeid_for_i64: {
+  case Intrinsic::eh_typeid_for: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-    EVT VT = (Intrinsic == Intrinsic::eh_typeid_for_i32 ?
-                         MVT::i32 : MVT::i64);
 
     if (MMI) {
       // Find the type id for the given typeinfo.
       GlobalVariable *GV = ExtractTypeInfo(I.getOperand(1));
 
       unsigned TypeID = MMI->getTypeIDFor(GV);
-      setValue(&I, DAG.getConstant(TypeID, VT));
+      setValue(&I, DAG.getConstant(TypeID, MVT::i32));
     } else {
       // Return something different to eh_selector.
-      setValue(&I, DAG.getConstant(1, VT));
+      setValue(&I, DAG.getConstant(1, MVT::i32));
     }
 
     return 0;

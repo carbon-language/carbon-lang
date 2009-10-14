@@ -120,6 +120,31 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
     break;
 
+  case 'e':
+    //  The old llvm.eh.selector.i32 is equivalent to the new llvm.eh.selector.
+    if (Name.compare("llvm.eh.selector.i32") == 0) {
+      F->setName("llvm.eh.selector");
+      NewFn = F;
+      return true;
+    }
+    //  The old llvm.eh.typeid.for.i32 is equivalent to llvm.eh.typeid.for.
+    if (Name.compare("llvm.eh.typeid.for.i32") == 0) {
+      F->setName("llvm.eh.typeid.for");
+      NewFn = F;
+      return true;
+    }
+    //  Convert the old llvm.eh.selector.i64 to a call to llvm.eh.selector.
+    if (Name.compare("llvm.eh.selector.i64") == 0) {
+      NewFn = Intrinsic::getDeclaration(M, Intrinsic::eh_selector);
+      return true;
+    }
+    //  Convert the old llvm.eh.typeid.for.i64 to a call to llvm.eh.typeid.for.
+    if (Name.compare("llvm.eh.typeid.for.i64") == 0) {
+      NewFn = Intrinsic::getDeclaration(M, Intrinsic::eh_typeid_for);
+      return true;
+    }
+    break;
+
   case 'p':
     //  This upgrades the llvm.part.select overloaded intrinsic names to only 
     //  use one type specifier in the name. We only care about the old format
@@ -406,6 +431,27 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     }
 
     //  Clean up the old call now that it has been completely upgraded.
+    CI->eraseFromParent();
+  }
+  break;
+  case Intrinsic::eh_selector:
+  case Intrinsic::eh_typeid_for: {
+    // Only the return type changed.
+    SmallVector<Value*, 8> Operands(CI->op_begin() + 1, CI->op_end());
+    CallInst *NewCI = CallInst::Create(NewFn, Operands.begin(), Operands.end(),
+                                       "upgraded." + CI->getName(), CI);
+    NewCI->setTailCall(CI->isTailCall());
+    NewCI->setCallingConv(CI->getCallingConv());
+
+    //  Handle any uses of the old CallInst.
+    if (!CI->use_empty()) {
+      //  Construct an appropriate cast from the new return type to the old.
+      CastInst *RetCast =
+        CastInst::Create(CastInst::getCastOpcode(NewCI, true,
+                                                 F->getReturnType(), true),
+                         NewCI, F->getReturnType(), NewCI->getName(), CI);
+      CI->replaceAllUsesWith(RetCast);
+    }
     CI->eraseFromParent();
   }
   break;

@@ -442,15 +442,11 @@ bool FastISel::SelectCall(User *I) {
     }
     break;
   }
-  case Intrinsic::eh_selector_i32:
-  case Intrinsic::eh_selector_i64: {
+  case Intrinsic::eh_selector: {
     EVT VT = TLI.getValueType(I->getType());
     switch (TLI.getOperationAction(ISD::EHSELECTION, VT)) {
     default: break;
     case TargetLowering::Expand: {
-      EVT VT = (IID == Intrinsic::eh_selector_i32 ?
-                           MVT::i32 : MVT::i64);
-
       if (MMI) {
         if (MBB->isLandingPad())
           AddCatchInfo(*cast<CallInst>(I), MMI, MBB);
@@ -464,12 +460,25 @@ bool FastISel::SelectCall(User *I) {
         }
 
         unsigned Reg = TLI.getExceptionSelectorRegister();
-        const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
+        EVT SrcVT = TLI.getPointerTy();
+        const TargetRegisterClass *RC = TLI.getRegClassFor(SrcVT);
         unsigned ResultReg = createResultReg(RC);
-        bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg,
-                                             Reg, RC, RC);
+        bool InsertedCopy = TII.copyRegToReg(*MBB, MBB->end(), ResultReg, Reg,
+                                             RC, RC);
         assert(InsertedCopy && "Can't copy address registers!");
         InsertedCopy = InsertedCopy;
+
+        // Cast the register to the type of the selector.
+        if (SrcVT.bitsGT(MVT::i32))
+          ResultReg = FastEmit_r(SrcVT.getSimpleVT(), MVT::i32, ISD::TRUNCATE,
+                                 ResultReg);
+        else if (SrcVT.bitsLT(MVT::i32))
+          ResultReg = FastEmit_r(SrcVT.getSimpleVT(), MVT::i32,
+                                 ISD::SIGN_EXTEND, ResultReg);
+        if (ResultReg == 0)
+          // Unhandled operand. Halt "fast" selection and bail.
+          return false;
+
         UpdateValueMap(I, ResultReg);
       } else {
         unsigned ResultReg =
