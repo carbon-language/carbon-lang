@@ -967,8 +967,8 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
 
     // FIXME: This should all be refactored into a chain of "summary lookup"
     //  filters.
-    assert (ScratchArgs.isEmpty());
-
+    assert(ScratchArgs.isEmpty());
+    
     switch (strlen(FName)) {
       default: break;
       case 14:
@@ -1046,7 +1046,17 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
           // This should be addressed using a API table.  This strcmp is also
           // a little gross, but there is no need to super optimize here.
           ScratchArgs = AF.Add(ScratchArgs, 1, DecRef);
-          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,
+                                   DoNothing);
+        }
+        else if (!memcmp(FName, "CVPixelBufferCreateWithBytes", 28)) {
+          // FIXES: <rdar://problem/7283567>
+          // Eventually this can be improved by recognizing that the pixel
+          // buffer passed to CVPixelBufferCreateWithBytes is released via
+          // a callback and doing full IPA to make sure this is done correctly.
+          ScratchArgs = AF.Add(ScratchArgs, 7, StopTracking);
+          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,
+                                   DoNothing);
         }
         break;
 
@@ -1056,6 +1066,19 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
           // This should be addressed using a API table.
           ScratchArgs = AF.Add(ScratchArgs, 2, DecRef);
           S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+        }
+        break;
+        
+      case 34:
+        if (!memcmp(FName, "CVPixelBufferCreateWithPlanarBytes", 34)) {
+          // FIXES: <rdar://problem/7283567>
+          // Eventually this can be improved by recognizing that the pixel
+          // buffer passed to CVPixelBufferCreateWithPlanarBytes is released
+          // via a callback and doing full IPA to make sure this is done
+          // correctly.
+          ScratchArgs = AF.Add(ScratchArgs, 12, StopTracking);
+          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,
+                                   DoNothing);
         }
         break;
     }
