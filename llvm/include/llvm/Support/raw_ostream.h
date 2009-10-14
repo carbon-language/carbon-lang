@@ -233,7 +233,9 @@ public:
   /// @param bold bold/brighter text, default false
   /// @param bg if true change the background, default: change foreground
   /// @returns itself so it can be used within << invocations
-  virtual raw_ostream &changeColor(enum Colors, bool, bool) { return *this; }
+  virtual raw_ostream &changeColor(enum Colors, bool bold = false,
+				   bool bg = false)
+  { (void)bold; (void)bg; return *this; }
 
   /// Resets the colors to terminal defaults. Call this when you are done
   /// outputting colored text, or before program exit.
