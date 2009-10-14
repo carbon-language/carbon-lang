@@ -41,11 +41,9 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
 
   // C++ 15.4p2: A type denoted in an exception-specification shall not denote
   //   an incomplete type.
-  // FIXME: This isn't right. This will supress diagnostics from template
-  // instantiation and then simply emit the invalid type diagnostic.
-  if (RequireCompleteType(Range.getBegin(), T, 0))
-    return Diag(Range.getBegin(), diag::err_incomplete_in_exception_spec)
-      << Range << T << /*direct*/0;
+  if (RequireCompleteType(Range.getBegin(), T,
+      PDiag(diag::err_incomplete_in_exception_spec) << /*direct*/0 << Range))
+    return true;
 
   // C++ 15.4p2: A type denoted in an exception-specification shall not denote
   //   an incomplete type a pointer or reference to an incomplete type, other
@@ -60,9 +58,9 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
   } else
     return false;
 
-  if (!T->isVoidType() && RequireCompleteType(Range.getBegin(), T, 0))
-    return Diag(Range.getBegin(), diag::err_incomplete_in_exception_spec)
-      << Range << T << /*indirect*/kind;
+  if (!T->isVoidType() && RequireCompleteType(Range.getBegin(), T,
+      PDiag(diag::err_incomplete_in_exception_spec) << /*direct*/kind << Range))
+    return true;
 
   return false;
 }

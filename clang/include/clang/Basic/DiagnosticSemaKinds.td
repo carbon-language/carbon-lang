@@ -356,7 +356,7 @@ def err_distant_exception_spec : Error<
   "exception specifications are not allowed beyond a single level "
   "of indirection">;
 def err_incomplete_in_exception_spec : Error<
-  "%select{|pointer to |reference to }1incomplete type %0 is not allowed "
+  "%select{|pointer to |reference to }0incomplete type %1 is not allowed "
   "in exception specification">;
 def err_mismatched_exception_spec : Error<
   "exception specification in declaration does not match previous declaration">;

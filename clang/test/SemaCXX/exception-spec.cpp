@@ -24,7 +24,7 @@ void (**j)() throw(int); // expected-error {{not allowed beyond a single}}
 // Pointer to function returning pointer to pointer to function with spec
 void (**(*h())())() throw(int); // expected-error {{not allowed beyond a single}}
 
-struct Incomplete;
+struct Incomplete; // expected-note 3 {{forward declaration}}
 
 // Exception spec must not have incomplete types, or pointers to them, except
 // void.
@@ -180,3 +180,8 @@ void mfnptr()
   void (Str1::*pfn2)() = &Str1::f; // valid
   void (Str1::*pfn3)() throw() = &Str1::f; // expected-error {{not superset}} expected-error {{incompatible type}}
 }
+
+// Don't suppress errors in template instantiation.
+template <typename T> struct TEx; // expected-note {{template is declared here}}
+
+void tf() throw(TEx<int>); // expected-error {{implicit instantiation of undefined template}}
