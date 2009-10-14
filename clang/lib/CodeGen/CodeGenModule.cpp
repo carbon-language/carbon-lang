@@ -1113,6 +1113,10 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     if (!CI->use_empty())
       CI->replaceAllUsesWith(NewCall);
 
+    // Copy any custom metadata attached with CI.
+    llvm::MetadataContext &TheMetadata = CI->getContext().getMetadata();
+    TheMetadata.copyMD(CI, NewCall);
+
     CI->eraseFromParent();
   }
 }
