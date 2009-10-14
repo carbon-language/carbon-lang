@@ -66,8 +66,7 @@ NoOutput("disable-output",
          cl::desc("Do not write result bitcode file"), cl::Hidden);
 
 static cl::opt<bool>
-OutputAssembly("S",
-         cl::desc("Write output as LLVM assembly"), cl::Hidden);
+OutputAssembly("S", cl::desc("Write output as LLVM assembly"));
 
 static cl::opt<bool>
 NoVerify("disable-verify", cl::desc("Do not verify result module"), cl::Hidden);
