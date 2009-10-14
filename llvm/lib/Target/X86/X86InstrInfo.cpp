@@ -853,7 +853,7 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
 /// isSafeToClobberEFLAGS - Return true if it's safe insert an instruction that
 /// would clobber the EFLAGS condition register. Note the result may be
 /// conservative. If it cannot definitely determine the safety after visiting
-/// two instructions it assumes it's not safe.
+/// a few instructions in each direction it assumes it's not safe.
 static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I) {
   // It's always safe to clobber EFLAGS at the end of a block.
@@ -861,11 +861,13 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
     return true;
 
   // For compile time consideration, if we are not able to determine the
-  // safety after visiting 2 instructions, we will assume it's not safe.
-  for (unsigned i = 0; i < 2; ++i) {
+  // safety after visiting 4 instructions in each direction, we will assume
+  // it's not safe.
+  MachineBasicBlock::iterator Iter = I;
+  for (unsigned i = 0; i < 4; ++i) {
     bool SeenDef = false;
-    for (unsigned j = 0, e = I->getNumOperands(); j != e; ++j) {
-      MachineOperand &MO = I->getOperand(j);
+    for (unsigned j = 0, e = Iter->getNumOperands(); j != e; ++j) {
+      MachineOperand &MO = Iter->getOperand(j);
       if (!MO.isReg())
         continue;
       if (MO.getReg() == X86::EFLAGS) {
@@ -878,10 +880,33 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
     if (SeenDef)
       // This instruction defines EFLAGS, no need to look any further.
       return true;
-    ++I;
+    ++Iter;
 
     // If we make it to the end of the block, it's safe to clobber EFLAGS.
-    if (I == MBB.end())
+    if (Iter == MBB.end())
+      return true;
+  }
+
+  Iter = I;
+  for (unsigned i = 0; i < 4; ++i) {
+    // If we make it to the beginning of the block, it's safe to clobber
+    // EFLAGS iff EFLAGS is not live-in.
+    if (Iter == MBB.begin())
+      return !MBB.isLiveIn(X86::EFLAGS);
+
+    --Iter;
+    bool SawKill = false;
+    for (unsigned j = 0, e = Iter->getNumOperands(); j != e; ++j) {
+      MachineOperand &MO = Iter->getOperand(j);
+      if (MO.isReg() && MO.getReg() == X86::EFLAGS) {
+        if (MO.isDef()) return MO.isDead();
+        if (MO.isKill()) SawKill = true;
+      }
+    }
+
+    if (SawKill)
+      // This instruction kills EFLAGS and doesn't redefine it, so
+      // there's no need to look further.
       return true;
   }
 
