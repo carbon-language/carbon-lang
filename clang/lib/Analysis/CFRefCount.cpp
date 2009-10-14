@@ -3232,10 +3232,8 @@ void CFRefCount::EvalReturn(ExplodedNodeSet& Dst,
           // returned object is suppose to be an Objective-C object, we have
           // a leak (as the caller expects a GC'ed object) because no
           // method should return ownership unless it returns a CF object.
-          X = X ^ RefVal::ErrorGCLeakReturned;
-
-          // Keep this false until this is properly tested.
           hasError = true;
+          X = X ^ RefVal::ErrorGCLeakReturned;
         }
         else if (!RE.isOwned()) {
           // Either we are using GC and the returned object is a CF type
