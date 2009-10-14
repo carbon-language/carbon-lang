@@ -1708,9 +1708,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN: {
     unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
-    EVT VT = N->getValueType(0);
-    unsigned Opc = 0;
-
     switch (IntNo) {
     default:
       break;
