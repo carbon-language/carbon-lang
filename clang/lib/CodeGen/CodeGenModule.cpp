@@ -1058,9 +1058,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
   // Set the llvm linkage type as appropriate.
   GVALinkage Linkage = GetLinkageForVariable(getContext(), D);
-  if (D->isInAnonymousNamespace())
-    GV->setLinkage(llvm::Function::InternalLinkage);
-  else if (Linkage == GVA_Internal)
+  if (Linkage == GVA_Internal)
     GV->setLinkage(llvm::Function::InternalLinkage);
   else if (D->hasAttr<DLLImportAttr>())
     GV->setLinkage(llvm::Function::DLLImportLinkage);
