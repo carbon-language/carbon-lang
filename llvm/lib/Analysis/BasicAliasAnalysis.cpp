@@ -428,49 +428,54 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
   SmallVector<Value*, 16> GEPOperands;
   const Value *BasePtr = GetGEPOperands(V1, GEPOperands);
 
-  AliasResult R = aliasCheck(BasePtr, V1Size, V2, V2Size);
-  if (R == MustAlias) {
-    // If there is at least one non-zero constant index, we know they cannot
-    // alias.
-    bool ConstantFound = false;
-    bool AllZerosFound = true;
-    for (unsigned i = 0, e = GEPOperands.size(); i != e; ++i)
-      if (const Constant *C = dyn_cast<Constant>(GEPOperands[i])) {
-        if (!C->isNullValue()) {
-          ConstantFound = true;
-          AllZerosFound = false;
-          break;
-        }
-      } else {
+  AliasResult R = aliasCheck(BasePtr, ~0U, V2, V2Size);
+  if (R != MustAlias)
+    // If V2 may alias GEP base pointer, conservatively returns MayAlias.
+    // If V2 is known not to alias GEP base pointer, then the two values
+    // cannot alias per GEP semantics: "A pointer value formed from a
+    // getelementptr instruction is associated with the addresses associated
+    // with the first operand of the getelementptr".
+    return R;
+
+  // If there is at least one non-zero constant index, we know they cannot
+  // alias.
+  bool ConstantFound = false;
+  bool AllZerosFound = true;
+  for (unsigned i = 0, e = GEPOperands.size(); i != e; ++i)
+    if (const Constant *C = dyn_cast<Constant>(GEPOperands[i])) {
+      if (!C->isNullValue()) {
+        ConstantFound = true;
         AllZerosFound = false;
+        break;
       }
+    } else {
+      AllZerosFound = false;
+    }
 
-    // If we have getelementptr <ptr>, 0, 0, 0, 0, ... and V2 must aliases
-    // the ptr, the end result is a must alias also.
-    if (AllZerosFound)
-      return MustAlias;
+  // If we have getelementptr <ptr>, 0, 0, 0, 0, ... and V2 must aliases
+  // the ptr, the end result is a must alias also.
+  if (AllZerosFound)
+    return MustAlias;
 
-    if (ConstantFound) {
-      if (V2Size <= 1 && V1Size <= 1)  // Just pointer check?
+  if (ConstantFound) {
+    if (V2Size <= 1 && V1Size <= 1)  // Just pointer check?
+      return NoAlias;
+
+    // Otherwise we have to check to see that the distance is more than
+    // the size of the argument... build an index vector that is equal to
+    // the arguments provided, except substitute 0's for any variable
+    // indexes we find...
+    if (TD &&
+        cast<PointerType>(BasePtr->getType())->getElementType()->isSized()) {
+      for (unsigned i = 0; i != GEPOperands.size(); ++i)
+        if (!isa<ConstantInt>(GEPOperands[i]))
+          GEPOperands[i] = Constant::getNullValue(GEPOperands[i]->getType());
+      int64_t Offset = TD->getIndexedOffset(BasePtr->getType(),
+                                            &GEPOperands[0],
+                                            GEPOperands.size());
+
+      if (Offset >= (int64_t)V2Size || Offset <= -(int64_t)V1Size)
         return NoAlias;
-
-      // Otherwise we have to check to see that the distance is more than
-      // the size of the argument... build an index vector that is equal to
-      // the arguments provided, except substitute 0's for any variable
-      // indexes we find...
-      if (TD &&
-          cast<PointerType>(BasePtr->getType())->getElementType()->isSized()) {
-        for (unsigned i = 0; i != GEPOperands.size(); ++i)
-          if (!isa<ConstantInt>(GEPOperands[i]))
-            GEPOperands[i] = Constant::getNullValue(GEPOperands[i]->getType());
-        int64_t Offset =
-          TD->getIndexedOffset(BasePtr->getType(),
-                               &GEPOperands[0],
-                               GEPOperands.size());
-
-        if (Offset >= (int64_t)V2Size || Offset <= -(int64_t)V1Size)
-          return NoAlias;
-      }
     }
   }
 
@@ -492,7 +497,9 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, unsigned PNSize,
     Value *PV1 = PN->getIncomingValue(i);
     if (isa<PHINode>(PV1))
       // If any of the source itself is a PHI, return MayAlias conservatively
-      // to avoid compile time explosion.
+      // to avoid compile time explosion. The worst possible case is if both
+      // sides are PHI nodes. In which case, this is O(m x n) time where 'm'
+      // and 'n' are the number of PHI sources.
       return MayAlias;
     if (UniqueSrc.insert(PV1))
       V1Srcs.push_back(PV1);
