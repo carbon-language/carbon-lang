@@ -117,14 +117,14 @@ bool Sema::CheckEquivalentExceptionSpec(
   bool Success = true;
   // Both have a definite exception spec. Collect the first set, then compare
   // to the second.
-  llvm::SmallPtrSet<const Type*, 8> OldTypes, NewTypes;
+  llvm::SmallPtrSet<CanQualType, 8> OldTypes, NewTypes;
   for (FunctionProtoType::exception_iterator I = Old->exception_begin(),
        E = Old->exception_end(); I != E; ++I)
-    OldTypes.insert(Context.getCanonicalType(*I).getTypePtr());
+    OldTypes.insert(Context.getCanonicalType(*I).getUnqualifiedType());
 
   for (FunctionProtoType::exception_iterator I = New->exception_begin(),
        E = New->exception_end(); I != E && Success; ++I) {
-    const Type *TypePtr = Context.getCanonicalType(*I).getTypePtr();
+    CanQualType TypePtr = Context.getCanonicalType(*I).getUnqualifiedType();
     if(OldTypes.count(TypePtr))
       NewTypes.insert(TypePtr);
     else
