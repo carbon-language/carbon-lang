@@ -212,17 +212,17 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
         isEarlyClobber()) {
       OS << '<';
       bool NeedComma = false;
-      if (isImplicit()) {
-        if (NeedComma) OS << ',';
-        OS << (isDef() ? "imp-def" : "imp-use");
-        NeedComma = true;
-      } else if (isDef()) {
+      if (isDef()) {
         if (NeedComma) OS << ',';
         if (isEarlyClobber())
           OS << "earlyclobber,";
+        if (isImplicit())
+          OS << "imp-";
         OS << "def";
         NeedComma = true;
-      }
+      } else if (isImplicit())
+          OS << "imp-use";
+
       if (isKill() || isDead() || isUndef()) {
         if (NeedComma) OS << ',';
         if (isKill())  OS << "kill";
