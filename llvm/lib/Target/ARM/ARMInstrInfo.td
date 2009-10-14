@@ -377,12 +377,15 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
   def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
                IIC_iALUr, opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]> {
+    let Inst{4} = 0;
     let Inst{25} = 0;
     let isCommutable = Commutable;
   }
   def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                IIC_iALUsr, opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]> {
+    let Inst{4} = 1;
+    let Inst{7} = 0;
     let Inst{25} = 0;
   }
 }
@@ -401,11 +404,14 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                IIC_iALUr, opc, "s $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]> {
     let isCommutable = Commutable;
+    let Inst{4} = 0;
     let Inst{25} = 0;
   }
   def rs : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                IIC_iALUsr, opc, "s $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]> {
+    let Inst{4} = 1;
+    let Inst{7} = 0;
     let Inst{25} = 0;
   }
 }
@@ -426,6 +432,7 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode,
   def rr : AI1<opcod, (outs), (ins GPR:$a, GPR:$b), DPFrm, IIC_iCMPr,
                opc, " $a, $b",
                [(opnode GPR:$a, GPR:$b)]> {
+    let Inst{4} = 0;
     let Inst{20} = 1;
     let Inst{25} = 0;
     let isCommutable = Commutable;
@@ -433,6 +440,8 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode,
   def rs : AI1<opcod, (outs), (ins GPR:$a, so_reg:$b), DPSoRegFrm, IIC_iCMPsr,
                opc, " $a, $b",
                [(opnode GPR:$a, so_reg:$b)]> {
+    let Inst{4} = 1;
+    let Inst{7} = 0;
     let Inst{20} = 1;
     let Inst{25} = 0;
   }
@@ -486,12 +495,15 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
                Requires<[IsARM, CarryDefIsUnused]> {
     let isCommutable = Commutable;
+    let Inst{4} = 0;
     let Inst{25} = 0;
   }
   def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                 DPSoRegFrm, IIC_iALUsr, opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
                Requires<[IsARM, CarryDefIsUnused]> {
+    let Inst{4} = 1;
+    let Inst{7} = 0;
     let Inst{25} = 0;
   }
   // Carry setting variants
@@ -507,6 +519,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
                Requires<[IsARM, CarryDefIsUsed]> {
     let Defs = [CPSR];
+    let Inst{4} = 0;
     let Inst{25} = 0;
   }
   def Srs : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
@@ -514,6 +527,8 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
                Requires<[IsARM, CarryDefIsUsed]> {
     let Defs = [CPSR];
+    let Inst{4} = 1;
+    let Inst{7} = 0;
     let Inst{25} = 0;
   }
 }
@@ -924,10 +939,18 @@ def STM : AXI4st<(outs),
 
 let neverHasSideEffects = 1 in
 def MOVr : AsI1<0b1101, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMOVr,
-                "mov", " $dst, $src", []>, UnaryDP;
+                "mov", " $dst, $src", []>, UnaryDP {
+  let Inst{4} = 0;
+  let Inst{25} = 0;
+}
+
 def MOVs : AsI1<0b1101, (outs GPR:$dst), (ins so_reg:$src), 
                 DPSoRegFrm, IIC_iMOVsr,
-                "mov", " $dst, $src", [(set GPR:$dst, so_reg:$src)]>, UnaryDP;
+                "mov", " $dst, $src", [(set GPR:$dst, so_reg:$src)]>, UnaryDP {
+  let Inst{4} = 1;
+  let Inst{7} = 0;
+  let Inst{25} = 0;
+}
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOVi : AsI1<0b1101, (outs GPR:$dst), (ins so_imm:$src), DPFrm, IIC_iMOVi,
@@ -1146,10 +1169,15 @@ def BFC    : I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
 
 def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPFrm, IIC_iMOVr,
                   "mvn", " $dst, $src",
-                  [(set GPR:$dst, (not GPR:$src))]>, UnaryDP;
+                  [(set GPR:$dst, (not GPR:$src))]>, UnaryDP {
+  let Inst{4} = 0;
+}
 def  MVNs  : AsI1<0b1111, (outs GPR:$dst), (ins so_reg:$src), DPSoRegFrm,
                   IIC_iMOVsr, "mvn", " $dst, $src",
-                  [(set GPR:$dst, (not so_reg:$src))]>, UnaryDP;
+                  [(set GPR:$dst, (not so_reg:$src))]>, UnaryDP {
+  let Inst{4} = 1;
+  let Inst{7} = 0;
+}
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def  MVNi  : AsI1<0b1111, (outs GPR:$dst), (ins so_imm:$imm), DPFrm, 
                   IIC_iMOVi, "mvn", " $dst, $imm",
@@ -1461,20 +1489,27 @@ def : ARMPat<(ARMcmpZ GPR:$src, so_imm_neg:$imm),
 def MOVCCr : AI1<0b1101, (outs GPR:$dst), (ins GPR:$false, GPR:$true), DPFrm,
                 IIC_iCMOVr, "mov", " $dst, $true",
       [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $dst">, UnaryDP;
+                RegConstraint<"$false = $dst">, UnaryDP {
+  let Inst{4} = 0;
+  let Inst{25} = 0;
+}
 
 def MOVCCs : AI1<0b1101, (outs GPR:$dst),
                         (ins GPR:$false, so_reg:$true), DPSoRegFrm, IIC_iCMOVsr,
                 "mov", " $dst, $true",
    [/*(set GPR:$dst, (ARMcmov GPR:$false, so_reg:$true, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $dst">, UnaryDP;
+                RegConstraint<"$false = $dst">, UnaryDP {
+  let Inst{4} = 1;
+  let Inst{7} = 0;
+  let Inst{25} = 0;
+}
 
 def MOVCCi : AI1<0b1101, (outs GPR:$dst),
                         (ins GPR:$false, so_imm:$true), DPFrm, IIC_iCMOVi,
                 "mov", " $dst, $true",
    [/*(set GPR:$dst, (ARMcmov GPR:$false, so_imm:$true, imm:$cc, CCR:$ccr))*/]>,
                 RegConstraint<"$false = $dst">, UnaryDP {
-    let Inst{25} = 1;
+  let Inst{25} = 1;
 }
 
 
