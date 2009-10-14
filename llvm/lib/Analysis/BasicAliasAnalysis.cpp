@@ -220,16 +220,16 @@ namespace {
 
   private:
     // VisitedPHIs - Track PHI nodes visited by a aliasCheck() call.
-    SmallSet<const Value*, 16> VisitedPHIs;
+    SmallSet<const PHINode*, 16> VisitedPHIs;
 
     // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
     // against another.
     AliasResult aliasGEP(const Value *V1, unsigned V1Size,
                          const Value *V2, unsigned V2Size);
 
-    // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a PHI instruction
+    // aliasPHI - Provide a bunch of ad-hoc rules to disambiguate a PHI instruction
     // against another.
-    AliasResult aliasPHI(const Value *V1, unsigned V1Size,
+    AliasResult aliasPHI(const PHINode *PN, unsigned PNSize,
                          const Value *V2, unsigned V2Size);
 
     AliasResult aliasCheck(const Value *V1, unsigned V1Size,
@@ -477,18 +477,17 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
   return MayAlias;
 }
 
-// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a PHI instruction
+// aliasPHI - Provide a bunch of ad-hoc rules to disambiguate a PHI instruction
 // against another.
 AliasAnalysis::AliasResult
-BasicAliasAnalysis::aliasPHI(const Value *V1, unsigned V1Size,
+BasicAliasAnalysis::aliasPHI(const PHINode *PN, unsigned PNSize,
                              const Value *V2, unsigned V2Size) {
   // The PHI node has already been visited, avoid recursion any further.
-  if (!VisitedPHIs.insert(V1))
+  if (!VisitedPHIs.insert(PN))
     return MayAlias;
 
   SmallSet<Value*, 4> UniqueSrc;
   SmallVector<Value*, 4> V1Srcs;
-  const PHINode *PN = cast<PHINode>(V1);
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     Value *PV1 = PN->getIncomingValue(i);
     if (isa<PHINode>(PV1))
@@ -499,13 +498,18 @@ BasicAliasAnalysis::aliasPHI(const Value *V1, unsigned V1Size,
       V1Srcs.push_back(PV1);
   }
 
+  AliasResult Alias = aliasCheck(V1Srcs[0], PNSize, V2, V2Size);
+  // Early exit if the check of the first PHI source against V2 is MayAlias.
+  // Other results are not possible.
+  if (Alias == MayAlias)
+    return MayAlias;
+
   // If all sources of the PHI node NoAlias or MustAlias V2, then returns
   // NoAlias / MustAlias. Otherwise, returns MayAlias.
-  AliasResult Alias = aliasCheck(V1Srcs[0], V1Size, V2, V2Size);
   for (unsigned i = 1, e = V1Srcs.size(); i != e; ++i) {
     Value *V = V1Srcs[i];
-    AliasResult ThisAlias = aliasCheck(V, V1Size, V2, V2Size);
-    if (ThisAlias != Alias)
+    AliasResult ThisAlias = aliasCheck(V, PNSize, V2, V2Size);
+    if (ThisAlias != Alias || ThisAlias == MayAlias)
       return MayAlias;
   }
 
@@ -577,8 +581,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
   }
-  if (isa<PHINode>(V1))
-    return aliasPHI(V1, V1Size, V2, V2Size);
+  if (const PHINode *PN = dyn_cast<PHINode>(V1))
+    return aliasPHI(PN, V1Size, V2, V2Size);
 
   return MayAlias;
 }
