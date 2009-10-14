@@ -2769,10 +2769,21 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
     for (LookupResult::iterator Oper = Operators.begin(),
                              OperEnd = Operators.end();
          Oper != OperEnd;
-         ++Oper)
-      AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Args[0],
-                         Args+1, NumArgs - 1, CandidateSet,
-                         /*SuppressUserConversions=*/false);
+         ++Oper) {
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Oper)) {
+        AddMethodCandidate(Method, Args[0], Args+1, NumArgs - 1, CandidateSet,
+                           /*SuppressUserConversions=*/false);
+        continue;
+      }
+      
+      assert(isa<FunctionTemplateDecl>(*Oper) && 
+             isa<CXXMethodDecl>(cast<FunctionTemplateDecl>(*Oper)
+                                                        ->getTemplatedDecl()) &&
+             "Expected a member function template");
+      AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(*Oper), false, 0, 0, 
+                                 Args[0], Args+1, NumArgs - 1, CandidateSet, 
+                                 /*SuppressUserConversions=*/false);
+    }
   }
 }
 
