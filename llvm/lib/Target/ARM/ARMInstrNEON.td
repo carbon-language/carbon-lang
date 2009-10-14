@@ -1951,9 +1951,9 @@ defm VPADDLu  : N2VPLInt_QHS<0b11, 0b11, 0b00, 0b00101, 0, "vpaddl.u",
                              int_arm_neon_vpaddlu>;
 
 //   VPADAL   : Vector Pairwise Add and Accumulate Long
-defm VPADALs  : N2VPLInt2_QHS<0b11, 0b11, 0b00, 0b00100, 0, "vpadal.s",
+defm VPADALs  : N2VPLInt2_QHS<0b11, 0b11, 0b00, 0b01100, 0, "vpadal.s",
                               int_arm_neon_vpadals>;
-defm VPADALu  : N2VPLInt2_QHS<0b11, 0b11, 0b00, 0b00101, 0, "vpadal.u",
+defm VPADALu  : N2VPLInt2_QHS<0b11, 0b11, 0b00, 0b01101, 0, "vpadal.u",
                               int_arm_neon_vpadalu>;
 
 //   VPMAX    : Vector Pairwise Maximum
