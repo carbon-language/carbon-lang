@@ -323,10 +323,21 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
       // The last partial def kills the register.
       LastPartDef->addOperand(MachineOperand::CreateReg(Reg, false/*IsDef*/,
                                                 true/*IsImp*/, true/*IsKill*/));
-    else
+    else {
+      MachineOperand *MO =
+        LastRefOrPartRef->findRegisterDefOperand(Reg, false, TRI);
+      bool NeedEC = MO->isEarlyClobber() && MO->getReg() != Reg;
       // If the last reference is the last def, then it's not used at all.
       // That is, unless we are currently processing the last reference itself.
       LastRefOrPartRef->addRegisterDead(Reg, TRI, true);
+      if (NeedEC) {
+        // If we are adding a subreg def and the superreg def is marked early
+        // clobber, add an early clobber marker to the subreg def.
+        MO = LastRefOrPartRef->findRegisterDefOperand(Reg);
+        if (MO)
+          MO->setIsEarlyClobber();
+      }
+    }
   } else if (!PhysRegUse[Reg]) {
     // Partial uses. Mark register def dead and add implicit def of
     // sub-registers which are used.
