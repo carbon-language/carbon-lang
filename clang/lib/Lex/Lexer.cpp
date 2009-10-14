@@ -238,6 +238,7 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
 
   // Create a lexer starting at the beginning of this token.
   Lexer TheLexer(Loc, LangOpts, Buffer.first, StrData, Buffer.second);
+  TheLexer.SetCommentRetentionState(true);
   Token TheTok;
   TheLexer.LexFromRawLexer(TheTok);
   return TheTok.getLength();
