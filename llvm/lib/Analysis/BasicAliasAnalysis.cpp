@@ -203,8 +203,10 @@ namespace {
     BasicAliasAnalysis() : NoAA(&ID) {}
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size) {
+      assert(VisitedPHIs.empty() && "VisitedPHIs must be cleared after use!");
+      AliasResult Alias = aliasCheck(V1, V1Size, V2, V2Size);
       VisitedPHIs.clear();
-      return aliasCheck(V1, V1Size, V2, V2Size);
+      return Alias;
     }
 
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
