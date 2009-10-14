@@ -5425,10 +5425,10 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   llvm::Value *llvm_eh_exception =
     CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
-  llvm::Value *llvm_eh_selector_i64 =
-    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector_i64);
-  llvm::Value *llvm_eh_typeid_for_i64 =
-    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_typeid_for_i64);
+  llvm::Value *llvm_eh_selector =
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector);
+  llvm::Value *llvm_eh_typeid_for =
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_typeid_for);
   llvm::Value *Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
   llvm::Value *RethrowPtr = CGF.CreateTempAlloca(Exc->getType(), "_rethrow");
 
@@ -5490,7 +5490,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   }
 
   llvm::Value *Selector =
-    CGF.Builder.CreateCall(llvm_eh_selector_i64,
+    CGF.Builder.CreateCall(llvm_eh_selector,
                            SelectorArgs.begin(), SelectorArgs.end(),
                            "selector");
   for (unsigned i = 0, e = Handlers.size(); i != e; ++i) {
@@ -5506,7 +5506,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       llvm::BasicBlock *Match = CGF.createBasicBlock("match");
       Next = CGF.createBasicBlock("catch.next");
       llvm::Value *Id =
-        CGF.Builder.CreateCall(llvm_eh_typeid_for_i64,
+        CGF.Builder.CreateCall(llvm_eh_typeid_for,
                                CGF.Builder.CreateBitCast(SelectorArgs[i+2],
                                                          ObjCTypes.Int8PtrTy));
       CGF.Builder.CreateCondBr(CGF.Builder.CreateICmpEQ(Selector, Id),
@@ -5557,7 +5557,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       Args.push_back(ObjCTypes.getEHPersonalityPtr());
       Args.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
                                             0));
-      CGF.Builder.CreateCall(llvm_eh_selector_i64, Args.begin(), Args.end());
+      CGF.Builder.CreateCall(llvm_eh_selector, Args.begin(), Args.end());
       CGF.Builder.CreateStore(Exc, RethrowPtr);
       CGF.EmitBranchThroughCleanup(FinallyRethrow);
 
@@ -5589,7 +5589,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       Args.push_back(ObjCTypes.getEHPersonalityPtr());
       Args.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
                                             0));
-      CGF.Builder.CreateCall(llvm_eh_selector_i64, Args.begin(), Args.end());
+      CGF.Builder.CreateCall(llvm_eh_selector, Args.begin(), Args.end());
       CGF.Builder.CreateStore(Exc, RethrowPtr);
       CGF.EmitBranchThroughCleanup(FinallyRethrow);
 

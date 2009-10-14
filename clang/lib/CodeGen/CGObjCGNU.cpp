@@ -1643,17 +1643,12 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // Get the correct versions of the exception handling intrinsics
   llvm::TargetData td = llvm::TargetData::TargetData(&TheModule);
-  int PointerWidth = td.getTypeSizeInBits(PtrTy);
-  assert((PointerWidth == 32 || PointerWidth == 64) &&
-    "Can't yet handle exceptions if pointers are not 32 or 64 bits");
   llvm::Value *llvm_eh_exception =
     CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_exception);
-  llvm::Value *llvm_eh_selector = PointerWidth == 32 ?
-    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector_i32) :
-    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector_i64);
-  llvm::Value *llvm_eh_typeid_for = PointerWidth == 32 ?
-    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_typeid_for_i32) :
-    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_typeid_for_i64);
+  llvm::Value *llvm_eh_selector =
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_selector);
+  llvm::Value *llvm_eh_typeid_for =
+    CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_typeid_for);
 
   // Exception object
   llvm::Value *Exc = CGF.Builder.CreateCall(llvm_eh_exception, "exc");
