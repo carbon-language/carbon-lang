@@ -767,7 +767,7 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
     unsigned CurrentScratchReg = 0;
     bool havePrevValue = false;
     unsigned PrevScratchReg = 0;
-    int PrevValue;
+    int PrevValue = 0;
     MachineInstr *PrevLastUseMI = NULL;
     unsigned PrevLastUseOp = 0;
     bool trackingCurrentValue = false;
