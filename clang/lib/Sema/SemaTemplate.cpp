@@ -3573,26 +3573,21 @@ Sema::ActOnExplicitInstantiation(Scope *S,
     return true;
   }
 
+  // What kind of explicit instantiation? (for C++0x, GNU extern templates).
+  TemplateSpecializationKind TSK
+    = ExternLoc.isInvalid()? TSK_ExplicitInstantiationDefinition
+                           : TSK_ExplicitInstantiationDeclaration;
+  
   // C++0x [temp.explicit]p2:
   //   [...] An explicit instantiation shall appear in an enclosing
   //   namespace of its template. [...]
   //
   // This is C++ DR 275.
-  if (getLangOptions().CPlusPlus0x) {
-    // FIXME: In C++98, we would like to turn these errors into warnings,
-    // dependent on a -Wc++0x flag.
-    DeclContext *PatternContext
-      = Pattern->getDeclContext()->getEnclosingNamespaceContext();
-    if (!CurContext->Encloses(PatternContext)) {
-      Diag(TemplateLoc, diag::err_explicit_instantiation_out_of_scope)
-        << Record << cast<NamedDecl>(PatternContext) << SS.getRange();
-      Diag(Pattern->getLocation(), diag::note_previous_declaration);
-    }
-  }
-
-  TemplateSpecializationKind TSK
-    = ExternLoc.isInvalid()? TSK_ExplicitInstantiationDefinition
-                           : TSK_ExplicitInstantiationDeclaration;
+  if (CheckTemplateSpecializationScope(*this, Record, 
+                                       Record->getPreviousDeclaration(),
+                                       NameLoc, false, 
+                                       TSK))
+    return true;  
 
   if (!Record->getDefinition(Context)) {
     // If the class has a definition, instantiate it (and all of its
