@@ -974,9 +974,7 @@ AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],
 dnl pthread locking functions are optional - but llvm will not be thread-safe
 dnl without locks.
 if test "$ENABLE_THREADS" -eq 1 ; then
-  AC_SEARCH_LIBS(pthread_mutex_init,pthread,
-                 AC_DEFINE([HAVE_PTHREAD],[1],
-                           [Have pthread]))
+  AC_CHECK_LIB(pthread, pthread_mutex_init)
   AC_SEARCH_LIBS(pthread_mutex_lock,pthread,
                  AC_DEFINE([HAVE_PTHREAD_MUTEX_LOCK],[1],
                            [Have pthread_mutex_lock]))

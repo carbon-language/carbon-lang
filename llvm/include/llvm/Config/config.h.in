@@ -193,6 +193,9 @@
 /* Define to 1 if you have the `psapi' library (-lpsapi). */
 #undef HAVE_LIBPSAPI
 
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
+
 /* Define to 1 if you have the `udis86' library (-ludis86). */
 #undef HAVE_LIBUDIS86
 
@@ -281,9 +284,6 @@
 
 /* Define to have the %a format string */
 #undef HAVE_PRINTF_A
-
-/* Have pthread */
-#undef HAVE_PTHREAD
 
 /* Have pthread_getspecific */
 #undef HAVE_PTHREAD_GETSPECIFIC

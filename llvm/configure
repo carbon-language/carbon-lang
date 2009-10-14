@@ -28033,12 +28033,14 @@ fi
 
 
 if test "$ENABLE_THREADS" -eq 1 ; then
-  { echo "$as_me:$LINENO: checking for library containing pthread_mutex_init" >&5
-echo $ECHO_N "checking for library containing pthread_mutex_init... $ECHO_C" >&6; }
-if test "${ac_cv_search_pthread_mutex_init+set}" = set; then
+
+{ echo "$as_me:$LINENO: checking for pthread_mutex_init in -lpthread" >&5
+echo $ECHO_N "checking for pthread_mutex_init in -lpthread... $ECHO_C" >&6; }
+if test "${ac_cv_lib_pthread_pthread_mutex_init+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  ac_func_search_save_LIBS=$LIBS
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpthread  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -28061,14 +28063,7 @@ return pthread_mutex_init ();
   return 0;
 }
 _ACEOF
-for ac_lib in '' pthread; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  rm -f conftest.$ac_objext conftest$ac_exeext
+rm -f conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -28102,37 +28097,26 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_search_pthread_mutex_init=$ac_res
+  ac_cv_lib_pthread_pthread_mutex_init=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-
+	ac_cv_lib_pthread_pthread_mutex_init=no
 fi
 
 rm -f core conftest.err conftest.$ac_objext \
-      conftest$ac_exeext
-  if test "${ac_cv_search_pthread_mutex_init+set}" = set; then
-  break
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
 fi
-done
-if test "${ac_cv_search_pthread_mutex_init+set}" = set; then
-  :
-else
-  ac_cv_search_pthread_mutex_init=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_search_pthread_mutex_init" >&5
-echo "${ECHO_T}$ac_cv_search_pthread_mutex_init" >&6; }
-ac_res=$ac_cv_search_pthread_mutex_init
-if test "$ac_res" != no; then
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_PTHREAD 1
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_pthread_pthread_mutex_init" >&5
+echo "${ECHO_T}$ac_cv_lib_pthread_pthread_mutex_init" >&6; }
+if test $ac_cv_lib_pthread_pthread_mutex_init = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBPTHREAD 1
 _ACEOF
+
+  LIBS="-lpthread $LIBS"
 
 fi
 
