@@ -793,6 +793,8 @@ def err_ovl_builtin_unary_candidate : Note<
 def err_ovl_no_viable_function_in_init : Error<
   "no matching constructor for initialization of %0">;
 def err_ovl_ambiguous_init : Error<"call to constructor of %0 is ambiguous">;
+def err_ref_init_ambiguous : Error<
+  "reference initialization of type %0 with initializer of type %1 is ambiguous">;
 def err_ovl_deleted_init : Error<
   "call to %select{unavailable|deleted}0 constructor of %1">;
 def err_ovl_ambiguous_oper : Error<

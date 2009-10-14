@@ -3731,7 +3731,16 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
       break;
 
     case OR_Ambiguous:
-      assert(false && "Ambiguous reference binding conversions not implemented.");
+      if (ICS) {
+        for (OverloadCandidateSet::iterator Cand = CandidateSet.begin();
+             Cand != CandidateSet.end(); ++Cand)
+          if (Cand->Viable)
+            ICS->ConversionFunctionSet.push_back(Cand->Function);
+        break;
+      }
+      Diag(DeclLoc, diag::err_ref_init_ambiguous) << DeclType << Init->getType()
+            << Init->getSourceRange();
+      PrintOverloadCandidates(CandidateSet, /*OnlyViable=*/true);
       return true;
 
     case OR_No_Viable_Function:
