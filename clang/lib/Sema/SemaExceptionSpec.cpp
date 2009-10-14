@@ -100,7 +100,7 @@ bool Sema::CheckEquivalentExceptionSpec(
 /// they allow exactly the same set of exception types. It does not matter how
 /// that is achieved. See C++ [except.spec]p2.
 bool Sema::CheckEquivalentExceptionSpec(
-    unsigned DiagID, unsigned NoteID,
+    const PartialDiagnostic &DiagID, const PartialDiagnostic & NoteID,
     const FunctionProtoType *Old, SourceLocation OldLoc,
     const FunctionProtoType *New, SourceLocation NewLoc) {
   bool OldAny = !Old->hasExceptionSpec() || Old->hasAnyExceptionSpec();
@@ -109,7 +109,7 @@ bool Sema::CheckEquivalentExceptionSpec(
     return false;
   if (OldAny || NewAny) {
     Diag(NewLoc, DiagID);
-    if (NoteID != 0)
+    if (NoteID.getDiagID() != 0)
       Diag(OldLoc, NoteID);
     return true;
   }
@@ -137,7 +137,7 @@ bool Sema::CheckEquivalentExceptionSpec(
     return false;
   }
   Diag(NewLoc, DiagID);
-  if (NoteID != 0)
+  if (NoteID.getDiagID() != 0)
     Diag(OldLoc, NoteID);
   return true;
 }
@@ -145,7 +145,8 @@ bool Sema::CheckEquivalentExceptionSpec(
 /// CheckExceptionSpecSubset - Check whether the second function type's
 /// exception specification is a subset (or equivalent) of the first function
 /// type. This is used by override and pointer assignment checks.
-bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
+bool Sema::CheckExceptionSpecSubset(
+    const PartialDiagnostic &DiagID, const PartialDiagnostic & NoteID,
     const FunctionProtoType *Superset, SourceLocation SuperLoc,
     const FunctionProtoType *Subset, SourceLocation SubLoc) {
   // FIXME: As usual, we could be more specific in our error messages, but
@@ -161,7 +162,7 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
   // It does not. If the subset contains everything, we've failed.
   if (!Subset->hasExceptionSpec() || Subset->hasAnyExceptionSpec()) {
     Diag(SubLoc, DiagID);
-    if (NoteID != 0)
+    if (NoteID.getDiagID() != 0)
       Diag(SuperLoc, NoteID);
     return true;
   }
@@ -230,7 +231,7 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
     }
     if (!Contained) {
       Diag(SubLoc, DiagID);
-      if (NoteID != 0)
+      if (NoteID.getDiagID() != 0)
         Diag(SuperLoc, NoteID);
       return true;
     }
@@ -240,7 +241,7 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
 }
 
 static bool CheckSpecForTypesEquivalent(Sema &S,
-    unsigned DiagID, unsigned NoteID,
+    const PartialDiagnostic &DiagID, const PartialDiagnostic & NoteID,
     QualType Target, SourceLocation TargetLoc,
     QualType Source, SourceLocation SourceLoc)
 {
@@ -260,21 +261,23 @@ static bool CheckSpecForTypesEquivalent(Sema &S,
 /// assignment and override compatibility check. We do not check the parameters
 /// of parameter function pointers recursively, as no sane programmer would
 /// even be able to write such a function type.
-bool Sema::CheckParamExceptionSpec(unsigned NoteID,
+bool Sema::CheckParamExceptionSpec(const PartialDiagnostic & NoteID,
     const FunctionProtoType *Target, SourceLocation TargetLoc,
     const FunctionProtoType *Source, SourceLocation SourceLoc)
 {
-  if (CheckSpecForTypesEquivalent(*this, diag::err_return_type_specs_differ, 0,
+  if (CheckSpecForTypesEquivalent(*this,
+                           PDiag(diag::err_deep_exception_specs_differ) << 0, 0,
                                   Target->getResultType(), TargetLoc,
                                   Source->getResultType(), SourceLoc))
     return true;
 
-  // We shouldn't even testing this unless the arguments are otherwise
+  // We shouldn't even be testing this unless the arguments are otherwise
   // compatible.
   assert(Target->getNumArgs() == Source->getNumArgs() &&
          "Functions have different argument counts.");
   for (unsigned i = 0, E = Target->getNumArgs(); i != E; ++i) {
-    if (CheckSpecForTypesEquivalent(*this, diag::err_arg_type_specs_differ, 0,
+    if (CheckSpecForTypesEquivalent(*this,
+                           PDiag(diag::err_deep_exception_specs_differ) << 1, 0,
                                     Target->getArgType(i), TargetLoc,
                                     Source->getArgType(i), SourceLoc))
       return true;

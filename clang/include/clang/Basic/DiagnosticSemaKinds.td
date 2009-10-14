@@ -365,10 +365,8 @@ def err_override_exception_spec : Error<
   "base version">;
 def err_incompatible_exception_specs : Error<
   "target exception specification is not superset of source">;
-def err_return_type_specs_differ : Error<
-  "exception specifications of return types differ">;
-def err_arg_type_specs_differ : Error<
-  "exception specifications of argument types differ">;
+def err_deep_exception_specs_differ : Error<
+  "exception specifications of %select{return|argument}0 types differ">;
 
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<
