@@ -1836,7 +1836,7 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
   if (RD->isAbstract())
     AbstractClassUsageDiagnoser(*this, RD);
 
-  if (!RD->isDependentType())
+  if (!RD->isDependentType() && !RD->isInvalidDecl())
     AddImplicitlyDeclaredMembersToClass(RD);
 }
 

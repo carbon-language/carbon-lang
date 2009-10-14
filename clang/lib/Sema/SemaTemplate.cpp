@@ -3647,6 +3647,19 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     return true;
   }
 
+  // C++0x [temp.explicit]p1:
+  //   [...] An explicit instantiation of a function template shall not use the
+  //   inline or constexpr specifiers.
+  // Presumably, this also applies to member functions of class templates as
+  // well.
+  if (D.getDeclSpec().isInlineSpecified() && getLangOptions().CPlusPlus0x)
+    Diag(D.getDeclSpec().getInlineSpecLoc(), 
+         diag::err_explicit_instantiation_inline)
+      << CodeModificationHint::CreateRemoval(
+                              SourceRange(D.getDeclSpec().getInlineSpecLoc()));
+  
+  // FIXME: check for constexpr specifier.
+  
   // Determine what kind of explicit instantiation we have.
   TemplateSpecializationKind TSK
     = ExternLoc.isInvalid()? TSK_ExplicitInstantiationDefinition

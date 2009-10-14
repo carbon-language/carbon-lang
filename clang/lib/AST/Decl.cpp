@@ -380,7 +380,7 @@ VarDecl *VarDecl::getInstantiatedFromStaticDataMember() {
   return 0;
 }
 
-TemplateSpecializationKind VarDecl::getTemplateSpecializationKind() {
+TemplateSpecializationKind VarDecl::getTemplateSpecializationKind() const {
   if (MemberSpecializationInfo *MSI
         = getASTContext().getInstantiatedFromStaticDataMember(this))
     return MSI->getTemplateSpecializationKind();

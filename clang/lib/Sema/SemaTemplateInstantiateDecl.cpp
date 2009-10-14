@@ -246,8 +246,10 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
                                             D->getTypeSpecStartLoc(),
                                             D->getAccess(),
                                             0);
-  if (!Field)
+  if (!Field) {
+    cast<Decl>(Owner)->setInvalidDecl();
     return 0;
+  }
 
   if (Invalid)
     Field->setInvalidDecl();

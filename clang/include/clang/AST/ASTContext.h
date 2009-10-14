@@ -174,7 +174,7 @@ class ASTContext {
   /// This mapping will contain an entry that maps from the VarDecl for
   /// X<int>::value to the corresponding VarDecl for X<T>::value (within the
   /// class template X) and will be marked TSK_ImplicitInstantiation.
-  llvm::DenseMap<VarDecl *, MemberSpecializationInfo *> 
+  llvm::DenseMap<const VarDecl *, MemberSpecializationInfo *> 
     InstantiatedFromStaticDataMember;
 
   /// \brief Keeps track of the UnresolvedUsingDecls from which UsingDecls
@@ -267,7 +267,8 @@ public:
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member
   /// from which it was instantiated.
-  MemberSpecializationInfo *getInstantiatedFromStaticDataMember(VarDecl *Var);
+  MemberSpecializationInfo *getInstantiatedFromStaticDataMember(
+                                                           const VarDecl *Var);
 
   /// \brief Note that the static data member \p Inst is an instantiation of
   /// the static data member template \p Tmpl of a class template.

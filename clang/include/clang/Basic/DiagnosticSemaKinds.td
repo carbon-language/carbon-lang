@@ -1104,7 +1104,9 @@ def err_explicit_instantiation_ambiguous : Error<
   "partial ordering for explicit instantiation of %0 is ambiguous">;
 def note_explicit_instantiation_candidate : Note<
   "explicit instantiation candidate function template here %0">;
-  
+def err_explicit_instantiation_inline : Error<
+  "explicit instantiation cannot be 'inline'">;
+
 // C++ typename-specifiers
 def err_typename_nested_not_found : Error<"no type named %0 in %1">;
 def err_typename_nested_not_type : Error<

@@ -233,9 +233,9 @@ void ASTContext::InitBuiltinTypes() {
 }
 
 MemberSpecializationInfo *
-ASTContext::getInstantiatedFromStaticDataMember(VarDecl *Var) {
+ASTContext::getInstantiatedFromStaticDataMember(const VarDecl *Var) {
   assert(Var->isStaticDataMember() && "Not a static data member");
-  llvm::DenseMap<VarDecl *, MemberSpecializationInfo *>::iterator Pos
+  llvm::DenseMap<const VarDecl *, MemberSpecializationInfo *>::iterator Pos
     = InstantiatedFromStaticDataMember.find(Var);
   if (Pos == InstantiatedFromStaticDataMember.end())
     return 0;
