@@ -359,6 +359,20 @@ void MetadataContext::removeMDs(const Instruction *Inst) {
   MetadataStore.erase(I);
 }
 
+/// copyMD - If metadata is attached with Instruction In1 then attach
+/// the same metadata to In2.
+void MetadataContext::copyMD(Instruction *In1, Instruction *In2) {
+  assert (In1 && In2 && "Invalid instruction!");
+   MDStoreTy::iterator I = MetadataStore.find(In1);
+  if (I == MetadataStore.end())
+    return;
+
+  MDMapTy &In1Info = I->second;
+  MDMapTy In2Info;
+  for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
+    if (MDNode *MD = dyn_cast_or_null<MDNode>(I->second))
+      addMD(I->first, MD, In2);
+}
 
 /// getMD - Get the metadata of given kind attached with an Instruction.
 /// If the metadata is not found then return 0.
@@ -416,3 +430,4 @@ void MetadataContext::ValueIsRAUWd(Value *V1, Value *V2) {
   // FIXME : Give custom handlers a chance to override this.
   ValueIsCloned(I1, I2);
 }
+

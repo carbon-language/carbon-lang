@@ -351,6 +351,10 @@ public:
   /// removeMDs - Remove all metadata attached with an instruction.
   void removeMDs(const Instruction *Inst);
 
+  /// copyMD - If metadata is attached with Instruction In1 then attach
+  /// the same metadata to In2.
+  void copyMD(Instruction *In1, Instruction *In2);
+
   /// getHandlerNames - Get handler names. This is used by bitcode
   /// writer.
   const StringMap<unsigned> *getHandlerNames();
