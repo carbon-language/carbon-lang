@@ -166,3 +166,17 @@ void fnptrs()
   void (*t11)(void (*)() throw(A)) = &s9;  // expected-error {{argument types differ}} expected-error {{incompatible type}} expected-warning{{disambiguated}}
   void (*t12)(void (*)() throw(D)) = &s9;  // expected-error {{argument types differ}} expected-error {{incompatible type}} expected-warning{{disambiguated}}
 }
+
+// Member function stuff
+
+struct Str1 { void f() throw(int); }; // expected-note {{previous declaration}}
+void Str1::f() // expected-error {{does not match previous declaration}}
+{
+}
+
+void mfnptr()
+{
+  void (Str1::*pfn1)() throw(int) = &Str1::f; // valid
+  void (Str1::*pfn2)() = &Str1::f; // valid
+  void (Str1::*pfn3)() throw() = &Str1::f; // expected-error {{not superset}} expected-error {{incompatible type}}
+}

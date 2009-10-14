@@ -26,6 +26,8 @@ static const FunctionProtoType *GetUnderlyingFunction(QualType T)
     T = PtrTy->getPointeeType();
   else if (const ReferenceType *RefTy = T->getAs<ReferenceType>())
     T = RefTy->getPointeeType();
+  else if (const MemberPointerType *MPTy = T->getAs<MemberPointerType>())
+    T = MPTy->getPointeeType();
   return T->getAs<FunctionProtoType>();
 }
 
@@ -171,6 +173,9 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
        SubE = Subset->exception_end(); SubI != SubE; ++SubI) {
     // Take one type from the subset.
     QualType CanonicalSubT = Context.getCanonicalType(*SubI);
+    // Unwrap pointers and references so that we can do checks within a class
+    // hierarchy. Don't unwrap member pointers; they don't have hierarchy
+    // conversions on the pointee.
     bool SubIsPointer = false;
     if (const ReferenceType *RefTy = CanonicalSubT->getAs<ReferenceType>())
       CanonicalSubT = RefTy->getPointeeType();
