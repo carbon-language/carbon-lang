@@ -936,18 +936,15 @@ def err_template_arg_extra_parens : Error<
 
 // C++ template specialization
 def err_template_spec_unknown_kind : Error<
-  "can only provide an explicit %select{<error>|<error>|specialization|"
-  "instantiation|instantiation}0 for a class template, function template, or "
-  "a member function, static data member, or member class of a class template">;
+  "can only provide an explicit specialization for a class template, function "
+  "template, or a member function, static data member, or member class of a "
+  "class template">;
 def note_specialized_entity : Note<
-  "explicitly %select{<error>|<error>|specialized|instantiated|instantiated}0 "
-  "declaration is here">;
+  "explicitly specialized declaration is here">;
 def err_template_spec_decl_function_scope : Error<
-  "explicit %select{<error>|<error>|specialization|instantiation|"
-  "instantiation}0 of %1 in function scope">;
+  "explicit specialization of %0 in function scope">;
 def err_template_spec_decl_class_scope : Error<
-  "explicit %select{<error>|<error>|specialization|instantiation|"
-  "instantiation}0 of %1 in class scope">;
+  "explicit specialization of %0 in class scope">;
 def err_template_spec_decl_out_of_scope_global : Error<
   "%select{class template|class template partial|function template|member "
   "function|static data member|member class}0 specialization of %1 must "

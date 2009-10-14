@@ -2398,12 +2398,11 @@ static TemplateSpecializationKind getTemplateSpecializationKind(NamedDecl *D) {
   return TSK_Undeclared;
 }
 
-/// \brief Check whether a specialization or explicit instantiation is
-/// well-formed in the current context.
+/// \brief Check whether a specialization is well-formed in the current 
+/// context.
 ///
-/// This routine determines whether a template specialization or
-/// explicit instantiation can be declared in the current context
-/// (C++ [temp.expl.spec]p2, C++0x [temp.explicit]p2).
+/// This routine determines whether a template specialization can be declared
+/// in the current context (C++ [temp.expl.spec]p2).
 ///
 /// \param S the semantic analysis object for which this check is being
 /// performed.
@@ -2421,17 +2420,13 @@ static TemplateSpecializationKind getTemplateSpecializationKind(NamedDecl *D) {
 /// \param IsPartialSpecialization whether this is a partial specialization of
 /// a class template.
 ///
-/// \param TSK the kind of specialization or explicit instantiation being 
-/// performed.
-///
 /// \returns true if there was an error that we cannot recover from, false
 /// otherwise.
 static bool CheckTemplateSpecializationScope(Sema &S,
                                              NamedDecl *Specialized,
                                              NamedDecl *PrevDecl,
                                              SourceLocation Loc,
-                                             bool IsPartialSpecialization,
-                                             TemplateSpecializationKind TSK) {
+                                             bool IsPartialSpecialization) {
   // Keep these "kind" numbers in sync with the %select statements in the
   // various diagnostics emitted by this routine.
   int EntityKind = 0;
@@ -2449,8 +2444,8 @@ static bool CheckTemplateSpecializationScope(Sema &S,
   else if (isa<RecordDecl>(Specialized))
     EntityKind = 5;
   else {
-    S.Diag(Loc, diag::err_template_spec_unknown_kind) << TSK;
-    S.Diag(Specialized->getLocation(), diag::note_specialized_entity) << TSK;
+    S.Diag(Loc, diag::err_template_spec_unknown_kind);
+    S.Diag(Specialized->getLocation(), diag::note_specialized_entity);
     return true;
   }
 
@@ -2469,13 +2464,13 @@ static bool CheckTemplateSpecializationScope(Sema &S,
   //   declared.
   if (S.CurContext->getLookupContext()->isFunctionOrMethod()) {
     S.Diag(Loc, diag::err_template_spec_decl_function_scope)
-      << TSK << Specialized;
+      << Specialized;
     return true;
   }
 
   if (S.CurContext->isRecord() && !IsPartialSpecialization) {
     S.Diag(Loc, diag::err_template_spec_decl_class_scope)
-      << TSK << Specialized;
+      << Specialized;
     return true;
   }
   
@@ -2487,43 +2482,36 @@ static bool CheckTemplateSpecializationScope(Sema &S,
   DeclContext *SpecializedContext 
     = Specialized->getDeclContext()->getEnclosingNamespaceContext();
   DeclContext *DC = S.CurContext->getEnclosingNamespaceContext();
-  if (TSK == TSK_ExplicitSpecialization) {
-    if ((!PrevDecl || 
-         getTemplateSpecializationKind(PrevDecl) == TSK_Undeclared ||
-         getTemplateSpecializationKind(PrevDecl) == TSK_ImplicitInstantiation)){
-      // There is no prior declaration of this entity, so this
-      // specialization must be in the same context as the template
-      // itself.
-      if (!DC->Equals(SpecializedContext)) {
-        if (isa<TranslationUnitDecl>(SpecializedContext))
-          S.Diag(Loc, diag::err_template_spec_decl_out_of_scope_global)
-          << EntityKind << Specialized;
-        else if (isa<NamespaceDecl>(SpecializedContext))
-          S.Diag(Loc, diag::err_template_spec_decl_out_of_scope)
-          << EntityKind << Specialized
-          << cast<NamedDecl>(SpecializedContext);
-        
-        S.Diag(Specialized->getLocation(), diag::note_specialized_entity) 
-          << TSK;
-        ComplainedAboutScope = true;
-      }
+  if ((!PrevDecl || 
+       getTemplateSpecializationKind(PrevDecl) == TSK_Undeclared ||
+       getTemplateSpecializationKind(PrevDecl) == TSK_ImplicitInstantiation)){
+    // There is no prior declaration of this entity, so this
+    // specialization must be in the same context as the template
+    // itself.
+    if (!DC->Equals(SpecializedContext)) {
+      if (isa<TranslationUnitDecl>(SpecializedContext))
+        S.Diag(Loc, diag::err_template_spec_decl_out_of_scope_global)
+        << EntityKind << Specialized;
+      else if (isa<NamespaceDecl>(SpecializedContext))
+        S.Diag(Loc, diag::err_template_spec_decl_out_of_scope)
+        << EntityKind << Specialized
+        << cast<NamedDecl>(SpecializedContext);
+      
+      S.Diag(Specialized->getLocation(), diag::note_specialized_entity);
+      ComplainedAboutScope = true;
     }
   }
   
   // Make sure that this redeclaration (or definition) occurs in an enclosing 
-  // namespace. We perform this check for explicit specializations and, in 
-  // C++0x, for explicit instantiations as well (per DR275).
-  // FIXME: -Wc++0x should make these warnings.
+  // namespace.
   // Note that HandleDeclarator() performs this check for explicit 
   // specializations of function templates, static data members, and member
   // functions, so we skip the check here for those kinds of entities.
   // FIXME: HandleDeclarator's diagnostics aren't quite as good, though.
   // Should we refactor that check, so that it occurs later?
   if (!ComplainedAboutScope && !DC->Encloses(SpecializedContext) &&
-      ((TSK == TSK_ExplicitSpecialization &&
-        !(isa<FunctionTemplateDecl>(Specialized) || isa<VarDecl>(Specialized) ||
-          isa<FunctionDecl>(Specialized))) || 
-        S.getLangOptions().CPlusPlus0x)) {
+      !(isa<FunctionTemplateDecl>(Specialized) || isa<VarDecl>(Specialized) ||
+        isa<FunctionDecl>(Specialized))) {
     if (isa<TranslationUnitDecl>(SpecializedContext))
       S.Diag(Loc, diag::err_template_spec_redecl_global_scope)
         << EntityKind << Specialized;
@@ -2532,7 +2520,7 @@ static bool CheckTemplateSpecializationScope(Sema &S,
         << EntityKind << Specialized
         << cast<NamedDecl>(SpecializedContext);
   
-    S.Diag(Specialized->getLocation(), diag::note_specialized_entity) << TSK;
+    S.Diag(Specialized->getLocation(), diag::note_specialized_entity);
   }
   
   // FIXME: check for specialization-after-instantiation errors and such.
@@ -2835,8 +2823,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   // the current scope.
   if (TUK != TUK_Friend &&
       CheckTemplateSpecializationScope(*this, ClassTemplate, PrevDecl, 
-                                       TemplateNameLoc, isPartialSpecialization,
-                                       TSK_ExplicitSpecialization))
+                                       TemplateNameLoc, 
+                                       isPartialSpecialization))
     return true;
   
   // The canonical type
@@ -3146,7 +3134,7 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   if (CheckTemplateSpecializationScope(*this, 
                                        Specialization->getPrimaryTemplate(),
                                        Specialization, FD->getLocation(), 
-                                       false, TSK_ExplicitSpecialization))
+                                       false))
     return true;
 
   // C++ [temp.expl.spec]p6:
@@ -3273,7 +3261,7 @@ Sema::CheckMemberSpecialization(NamedDecl *Member, NamedDecl *&PrevDecl) {
   if (CheckTemplateSpecializationScope(*this, 
                                        InstantiatedFrom,
                                        Instantiation, Member->getLocation(), 
-                                       false, TSK_ExplicitSpecialization))
+                                       false))
     return true;
 
   // Note that this is an explicit instantiation of a member.
