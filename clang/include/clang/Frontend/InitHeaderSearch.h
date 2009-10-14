@@ -59,7 +59,9 @@ public:
 
   /// AddGnuCPlusPlusIncludePaths - Add the necessary paths to suport a gnu
   ///  libstdc++.
-  void AddGnuCPlusPlusIncludePaths(const std::string &Base, const char *Arch);
+  void AddGnuCPlusPlusIncludePaths(const std::string &Base, const char *Dir32,
+                                   const char *Dir64,
+                                   const llvm::Triple &triple);
 
   /// AddMinGWCPlusPlusIncludePaths - Add the necessary paths to suport a MinGW
   ///  libstdc++.
