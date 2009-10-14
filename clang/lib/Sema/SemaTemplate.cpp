@@ -45,7 +45,7 @@ static NamedDecl *isAcceptableTemplateName(ASTContext &Context, NamedDecl *D) {
     //   which could be the current specialization or another
     //   specialization.
     if (Record->isInjectedClassName()) {
-      Record = cast<CXXRecordDecl>(Record->getCanonicalDecl());
+      Record = cast<CXXRecordDecl>(Record->getDeclContext());
       if (Record->getDescribedClassTemplate())
         return Record->getDescribedClassTemplate();
 

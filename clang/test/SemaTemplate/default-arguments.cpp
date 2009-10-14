@@ -22,3 +22,23 @@ template<class T, bool = a<T>::v> struct p { }; // expected-error {{no member na
 
 template struct p<bool>; // expected-note {{in instantiation of default argument for 'p<bool>' required here}}
 template struct p<int>;
+
+// PR5187
+template<typename T, typename U>
+struct A;
+
+template<typename T, typename U = T>
+struct A;
+
+template<typename T, typename U>
+struct A {
+  void f(A<T>);
+};
+
+template<typename T>
+struct B { };
+
+template<>
+struct B<void> {
+  typedef B<void*> type;
+};
