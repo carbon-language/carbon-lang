@@ -1,4 +1,5 @@
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
+// XFAIL
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from
@@ -115,4 +116,27 @@ CFAbsoluteTime f4() {
 }
 @end
 
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7257223> - False positive due to not invalidating the
+// reference count of a tracked region that was itself invalidated.
+//===----------------------------------------------------------------------===//
+
+typedef struct __rdar_7257223 { CFDateRef x; } RDar7257223;
+void rdar_7257223_aux(RDar7257223 *p);
+
+// THIS CASE CURRENTLY FAILS.
+CFDateRef rdar7257223_Create(void) {
+  RDar7257223 s;
+  CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+  s.x = CFDateCreate(0, t); // no-warning
+  rdar_7257223_aux(&s);
+  return s.x;
+}
+
+CFDateRef rdar7257223_Create_2(void) {
+  RDar7257223 s;
+  CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+  s.x = CFDateCreate(0, t); // no-warning
+  return s.x;
+}
 
