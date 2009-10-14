@@ -671,6 +671,10 @@ ifeq ($(HOST_OS),SunOS)
 CPP.BaseFlags += -include llvm/System/Solaris.h
 endif
 
+ifeq ($(HOST_OS),AuroraUX)
+CPP.BaseFlags += -include llvm/System/Solaris.h
+endif # !HOST_OS - AuroraUX.
+
 LD.Flags      += -L$(LibDir) -L$(LLVMLibDir)
 CPP.BaseFlags += -D_GNU_SOURCE -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 # All -I flags should go here, so that they don't confuse llvm-config.
