@@ -373,7 +373,23 @@ SourceRange VarDecl::getSourceRange() const {
   return SourceRange(getLocation(), getLocation());
 }
 
-VarDecl *VarDecl::getInstantiatedFromStaticDataMember() {
+bool VarDecl::isOutOfLine() const {
+  if (!isStaticDataMember())
+    return false;
+  
+  if (Decl::isOutOfLine())
+    return true;
+  
+  // If this static data member was instantiated from a static data member of
+  // a class template, check whether that static data member was defined 
+  // out-of-line.
+  if (VarDecl *VD = getInstantiatedFromStaticDataMember())
+    return VD->isOutOfLine();
+  
+  return false;
+}
+
+VarDecl *VarDecl::getInstantiatedFromStaticDataMember() const {
   if (MemberSpecializationInfo *MSI = getMemberSpecializationInfo())
     return cast<VarDecl>(MSI->getInstantiatedFrom());
   
@@ -388,7 +404,7 @@ TemplateSpecializationKind VarDecl::getTemplateSpecializationKind() const {
   return TSK_Undeclared;
 }
 
-MemberSpecializationInfo *VarDecl::getMemberSpecializationInfo() {
+MemberSpecializationInfo *VarDecl::getMemberSpecializationInfo() const {
   return getASTContext().getInstantiatedFromStaticDataMember(this);
 }
 
@@ -809,7 +825,6 @@ FunctionDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
 }
 
 bool FunctionDecl::isOutOfLine() const {
-  // FIXME: Should we restrict this to member functions?
   if (Decl::isOutOfLine())
     return true;
   

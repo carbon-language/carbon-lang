@@ -584,10 +584,14 @@ public:
     return getDeclContext()->isRecord();
   }
 
+  /// \brief Determine whether this is or was instantiated from an out-of-line 
+  /// definition of a static data member.
+  bool isOutOfLine() const;
+  
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member
   /// from which it was instantiated.
-  VarDecl *getInstantiatedFromStaticDataMember();
+  VarDecl *getInstantiatedFromStaticDataMember() const;
 
   /// \brief If this variable is a static data member, determine what kind of 
   /// template specialization or instantiation this is.
@@ -596,7 +600,7 @@ public:
   /// \brief If this variable is an instantiation of a static data member of a
   /// class template specialization, retrieves the member specialization
   /// information.
-  MemberSpecializationInfo *getMemberSpecializationInfo();
+  MemberSpecializationInfo *getMemberSpecializationInfo() const;
   
   /// \brief For a static data member that was instantiated from a static
   /// data member of a class template, set the template specialiation kind.

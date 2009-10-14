@@ -541,7 +541,12 @@ bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
     }
   }
       
-  return VD->getStorageClass() == VarDecl::Static;
+  // Static data may be deferred, but out-of-line static data members
+  // cannot be.
+  // FIXME: What if the initializer has side effects?
+  return VD->isInAnonymousNamespace() ||
+         (VD->getStorageClass() == VarDecl::Static &&
+          !(VD->isStaticDataMember() && VD->isOutOfLine()));
 }
 
 void CodeGenModule::EmitGlobal(GlobalDecl GD) {
@@ -928,6 +933,37 @@ void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
   EmitGlobalVarDefinition(D);
 }
 
+static CodeGenModule::GVALinkage
+GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
+  // Everything located semantically within an anonymous namespace is
+  // always internal.
+  if (VD->isInAnonymousNamespace())
+    return CodeGenModule::GVA_Internal;
+
+  // Handle linkage for static data members.
+  if (VD->isStaticDataMember()) {
+    switch (VD->getTemplateSpecializationKind()) {
+    case TSK_Undeclared:
+    case TSK_ExplicitSpecialization:
+    case TSK_ExplicitInstantiationDefinition:
+      return CodeGenModule::GVA_StrongExternal;
+      
+    case TSK_ExplicitInstantiationDeclaration:
+      assert(false && "Variable should not be instantiated");
+      // Fall through to treat this like any other instantiation.
+        
+    case TSK_ImplicitInstantiation:
+      return CodeGenModule::GVA_TemplateInstantiation;
+    }
+  }
+  
+  // Static variables get internal linkage.
+  if (VD->getStorageClass() == VarDecl::Static)
+    return CodeGenModule::GVA_Internal;
+
+  return CodeGenModule::GVA_StrongExternal;
+}
+
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::Constant *Init = 0;
   QualType ASTTy = D->getType();
@@ -1021,9 +1057,10 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   GV->setAlignment(getContext().getDeclAlignInBytes(D));
 
   // Set the llvm linkage type as appropriate.
+  GVALinkage Linkage = GetLinkageForVariable(getContext(), D);
   if (D->isInAnonymousNamespace())
     GV->setLinkage(llvm::Function::InternalLinkage);
-  else if (D->getStorageClass() == VarDecl::Static)
+  else if (Linkage == GVA_Internal)
     GV->setLinkage(llvm::Function::InternalLinkage);
   else if (D->hasAttr<DLLImportAttr>())
     GV->setLinkage(llvm::Function::DLLImportLinkage);
@@ -1034,7 +1071,9 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       GV->setLinkage(llvm::GlobalVariable::WeakODRLinkage);
     else
       GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);
-  } else if (!CompileOpts.NoCommon &&
+  } else if (Linkage == GVA_TemplateInstantiation)
+    GV->setLinkage(llvm::GlobalVariable::WeakAnyLinkage);   
+  else if (!CompileOpts.NoCommon &&
            !D->hasExternalStorage() && !D->getInit() &&
            !D->getAttr<SectionAttr>()) {
     GV->setLinkage(llvm::GlobalVariable::CommonLinkage);

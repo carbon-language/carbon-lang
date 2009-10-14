@@ -1191,14 +1191,14 @@ void Sema::InstantiateStaticDataMemberDefinition(
   }
 
   // Never instantiate an explicit specialization.
-  if (Def->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+  if (Var->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
     return;
   
   // C++0x [temp.explicit]p9:
   //   Except for inline functions, other explicit instantiation declarations
   //   have the effect of suppressing the implicit instantiation of the entity
   //   to which they refer.
-  if (Def->getTemplateSpecializationKind() 
+  if (Var->getTemplateSpecializationKind() 
         == TSK_ExplicitInstantiationDeclaration)
     return;
 
@@ -1218,12 +1218,14 @@ void Sema::InstantiateStaticDataMemberDefinition(
   DeclContext *PreviousContext = CurContext;
   CurContext = Var->getDeclContext();
 
+  VarDecl *OldVar = Var;
   Var = cast_or_null<VarDecl>(SubstDecl(Def, Var->getDeclContext(),
                                           getTemplateInstantiationArgs(Var)));
-
   CurContext = PreviousContext;
 
   if (Var) {
+    Var->setPreviousDeclaration(OldVar);
+    Var->setTemplateSpecializationKind(OldVar->getTemplateSpecializationKind());
     DeclGroupRef DG(Var);
     Consumer.HandleTopLevelDecl(DG);
   }
