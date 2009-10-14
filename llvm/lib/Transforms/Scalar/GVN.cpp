@@ -1826,7 +1826,7 @@ bool GVN::performPRE(Function& F) {
 
       if (isa<AllocationInst>(CurInst) ||
           isa<TerminatorInst>(CurInst) || isa<PHINode>(CurInst) ||
-          (CurInst->getType() == Type::getVoidTy(F.getContext())) ||
+          CurInst->getType()->isVoidTy() ||
           CurInst->mayReadFromMemory() || CurInst->mayHaveSideEffects() ||
           isa<DbgInfoIntrinsic>(CurInst))
         continue;

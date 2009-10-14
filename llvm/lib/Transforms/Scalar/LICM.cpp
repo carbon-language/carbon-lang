@@ -489,7 +489,7 @@ void LICM::sink(Instruction &I) {
       // If I has users in unreachable blocks, eliminate.
       // If I is not void type then replaceAllUsesWith undef.
       // This allows ValueHandlers and custom metadata to adjust itself.
-      if (I.getType() != Type::getVoidTy(I.getContext()))
+      if (!I.getType()->isVoidTy())
         I.replaceAllUsesWith(UndefValue::get(I.getType()));
       I.eraseFromParent();
     } else {
@@ -505,7 +505,7 @@ void LICM::sink(Instruction &I) {
     // If I has users in unreachable blocks, eliminate.
     // If I is not void type then replaceAllUsesWith undef.
     // This allows ValueHandlers and custom metadata to adjust itself.
-    if (I.getType() != Type::getVoidTy(I.getContext()))
+    if (!I.getType()->isVoidTy())
       I.replaceAllUsesWith(UndefValue::get(I.getType()));
     I.eraseFromParent();
   } else {
@@ -516,7 +516,7 @@ void LICM::sink(Instruction &I) {
     // Firstly, we create a stack object to hold the value...
     AllocaInst *AI = 0;
 
-    if (I.getType() != Type::getVoidTy(I.getContext())) {
+    if (!I.getType()->isVoidTy()) {
       AI = new AllocaInst(I.getType(), 0, I.getName(),
                           I.getParent()->getParent()->getEntryBlock().begin());
       CurAST->add(AI);

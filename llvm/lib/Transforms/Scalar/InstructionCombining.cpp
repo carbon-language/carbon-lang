@@ -9981,7 +9981,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
                                   OldCall);
       // If OldCall dues not return void then replaceAllUsesWith undef.
       // This allows ValueHandlers and custom metadata to adjust itself.
-      if (OldCall->getType() != Type::getVoidTy(*Context))
+      if (!OldCall->getType()->isVoidTy())
         OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
       if (isa<CallInst>(OldCall))   // Not worth removing an invoke here.
         return EraseInstFromFunction(*OldCall);
@@ -9998,7 +9998,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
 
     // If CS dues not return void then replaceAllUsesWith undef.
     // This allows ValueHandlers and custom metadata to adjust itself.
-    if (CS.getInstruction()->getType() != Type::getVoidTy(*Context))
+    if (!CS.getInstruction()->getType()->isVoidTy())
       CS.getInstruction()->
         replaceAllUsesWith(UndefValue::get(CS.getInstruction()->getType()));
 
@@ -10077,7 +10077,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
     if (!Caller->use_empty() &&
         // void -> non-void is handled specially
-        NewRetTy != Type::getVoidTy(*Context) && !CastInst::isCastable(NewRetTy, OldRetTy))
+        !NewRetTy->isVoidTy() && !CastInst::isCastable(NewRetTy, OldRetTy))
       return false;   // Cannot transform this return value.
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
@@ -10209,7 +10209,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   if (Attributes FnAttrs =  CallerPAL.getFnAttributes())
     attrVec.push_back(AttributeWithIndex::get(~0, FnAttrs));
 
-  if (NewRetTy == Type::getVoidTy(*Context))
+  if (NewRetTy->isVoidTy())
     Caller->setName("");   // Void type should not have a name.
 
   const AttrListPtr &NewCallerPAL = AttrListPtr::get(attrVec.begin(),
@@ -10235,7 +10235,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   // Insert a cast of the return type as necessary.
   Value *NV = NC;
   if (OldRetTy != NV->getType() && !Caller->use_empty()) {
-    if (NV->getType() != Type::getVoidTy(*Context)) {
+    if (!NV->getType()->isVoidTy()) {
       Instruction::CastOps opcode = CastInst::getCastOpcode(NC, false, 
                                                             OldRetTy, false);
       NV = NC = CastInst::Create(opcode, NC, OldRetTy, "tmp");
@@ -10402,7 +10402,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
           setCallingConv(cast<CallInst>(Caller)->getCallingConv());
         cast<CallInst>(NewCaller)->setAttributes(NewPAL);
       }
-      if (Caller->getType() != Type::getVoidTy(*Context))
+      if (!Caller->getType()->isVoidTy())
         Caller->replaceAllUsesWith(NewCaller);
       Caller->eraseFromParent();
       Worklist.Remove(Caller);
@@ -12789,7 +12789,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
           // If I is not void type then replaceAllUsesWith undef.
           // This allows ValueHandlers and custom metadata to adjust itself.
-          if (I->getType() != Type::getVoidTy(*Context))
+          if (!I->getType()->isVoidTy())
             I->replaceAllUsesWith(UndefValue::get(I->getType()));
           I->eraseFromParent();
         }
