@@ -501,7 +501,7 @@ namespace llvm {
     /// operand use/def information
     ///
     virtual void ComputeOperandLatency(SUnit *, SUnit *,
-                                       SDep&) const { };
+                                       SDep&) const { }
 
     /// Schedule - Order nodes according to selected style, filling
     /// in the Sequence member.

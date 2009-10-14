@@ -988,8 +988,8 @@ public:
     BumpPtrAllocator& getAllocator() { return F.getAllocator(); }
 
   private:
-    Factory(const Factory& RHS) {};
-    void operator=(const Factory& RHS) {};
+    Factory(const Factory& RHS) {}
+    void operator=(const Factory& RHS) {}
   };
 
   friend class Factory;

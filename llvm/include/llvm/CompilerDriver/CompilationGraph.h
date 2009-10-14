@@ -43,7 +43,7 @@ namespace llvmc {
   class Edge : public llvm::RefCountedBaseVPTR<Edge> {
   public:
     Edge(const std::string& T) : ToolName_(T) {}
-    virtual ~Edge() {};
+    virtual ~Edge() {}
 
     const std::string& ToolName() const { return ToolName_; }
     virtual unsigned Weight(const InputLanguagesSet& InLangs) const = 0;

@@ -29,10 +29,10 @@ namespace llvm {
     unsigned Line, Col;
 
     DebugLocTuple()
-      : Scope(0), InlinedAtLoc(0), Line(~0U), Col(~0U) {};
+      : Scope(0), InlinedAtLoc(0), Line(~0U), Col(~0U) {}
 
     DebugLocTuple(MDNode *n, MDNode *i, unsigned l, unsigned c)
-      : Scope(n), InlinedAtLoc(i), Line(l), Col(c) {};
+      : Scope(n), InlinedAtLoc(i), Line(l), Col(c) {}
 
     bool operator==(const DebugLocTuple &DLT) const {
       return Scope == DLT.Scope &&
