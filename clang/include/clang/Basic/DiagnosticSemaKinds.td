@@ -1085,6 +1085,9 @@ def note_nontemplate_decl_here : Note<
     "non-templated declaration is here">;
 def err_explicit_instantiation_out_of_scope : Error<
   "explicit instantiation of %0 not in a namespace enclosing %1">;
+def err_explicit_instantiation_must_be_global : Error<
+  "explicit instantiation of %0 must occur at global scope">;
+  
 def err_explicit_instantiation_requires_name : Error<
   "explicit instantiation declaration requires a name">;
 def err_explicit_instantiation_of_typedef : Error<
@@ -1106,6 +1109,12 @@ def note_explicit_instantiation_candidate : Note<
   "explicit instantiation candidate function template here %0">;
 def err_explicit_instantiation_inline : Error<
   "explicit instantiation cannot be 'inline'">;
+def err_explicit_instantiation_without_qualified_id : Error<
+  "qualifier in explicit instantiation of %q0 requires a template-id">;
+def err_explicit_instantiation_without_qualified_id_quals : Error<
+  "qualifier in explicit instantiation of '%0%1' requires a template-id">;
+def err_explicit_instantiation_unqualified_wrong_namespace : Error<
+  "explicit instantiation of %q0 must occur in %1">;
 
 // C++ typename-specifiers
 def err_typename_nested_not_found : Error<"no type named %0 in %1">;

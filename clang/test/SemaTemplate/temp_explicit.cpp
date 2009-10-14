@@ -15,7 +15,6 @@ template class N::X1<int>;
 template class ::N::X1<int, float>;
 
 using namespace N;
-template class X1<float>;
 
 // Check for some bogus syntax that probably means that the user
 // wanted to write an explicit specialization, but forgot the '<>'
