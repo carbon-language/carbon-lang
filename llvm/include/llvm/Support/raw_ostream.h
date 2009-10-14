@@ -51,7 +51,7 @@ private:
   /// for a \see write_impl() call to handle the data which has been put into
   /// this buffer.
   char *OutBufStart, *OutBufEnd, *OutBufCur;
-  
+
   enum BufferKind {
     Unbuffered = 0,
     InternalBuffer,
@@ -211,7 +211,7 @@ public:
     return *this;
   }
 
-  raw_ostream &operator<<(double N);  
+  raw_ostream &operator<<(double N);
 
   /// write_hex - Output \arg N in hexadecimal, without any prefix or padding.
   raw_ostream &write_hex(unsigned long long N);
@@ -224,8 +224,8 @@ public:
 
   /// indent - Insert 'NumSpaces' spaces.
   raw_ostream &indent(unsigned NumSpaces);
-  
-  
+
+
   /// Changes the foreground color of text that will be output from this point
   /// forward.
   /// @param colors ANSI color to use, the special SAVEDCOLOR can be used to
@@ -233,9 +233,8 @@ public:
   /// @param bold bold/brighter text, default false
   /// @param bg if true change the background, default: change foreground
   /// @returns itself so it can be used within << invocations
-  virtual raw_ostream &changeColor(enum Colors, bool bold = false,
-				   bool bg = false)
-  { (void)bold; (void)bg; return *this; }
+  virtual raw_ostream &changeColor(enum Colors, bool = false,
+				   bool = false) { return *this; }
 
   /// Resets the colors to terminal defaults. Call this when you are done
   /// outputting colored text, or before program exit.
@@ -254,7 +253,7 @@ private:
   /// write_impl - The is the piece of the class that is implemented
   /// by subclasses.  This writes the \args Size bytes starting at
   /// \arg Ptr to the underlying stream.
-  /// 
+  ///
   /// This function is guaranteed to only be called at a point at which it is
   /// safe for the subclass to install a new buffer via SetBuffer.
   ///
@@ -332,7 +331,7 @@ class raw_fd_ostream : public raw_ostream {
   virtual size_t preferred_buffer_size();
 
 public:
-  
+
   enum {
     /// F_Excl - When opening a file, this flag makes raw_fd_ostream
     /// report an error if the file already exists.
@@ -347,7 +346,7 @@ public:
     /// make this distinction.
     F_Binary = 4
   };
-  
+
   /// raw_fd_ostream - Open the specified file for writing. If an error occurs,
   /// information about the error is put into ErrorInfo, and the stream should
   /// be immediately destroyed; the string will be empty if no error occurred.
@@ -360,10 +359,10 @@ public:
 
   /// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If
   /// ShouldClose is true, this closes the file when the stream is destroyed.
-  raw_fd_ostream(int fd, bool shouldClose, 
-                 bool unbuffered=false) : raw_ostream(unbuffered), FD(fd), 
+  raw_fd_ostream(int fd, bool shouldClose,
+                 bool unbuffered=false) : raw_ostream(unbuffered), FD(fd),
                                           ShouldClose(shouldClose) {}
-  
+
   ~raw_fd_ostream();
 
   /// close - Manually flush the stream and close the file.
@@ -466,7 +465,7 @@ public:
 class raw_null_ostream : public raw_ostream {
   /// write_impl - See raw_ostream::write_impl.
   virtual void write_impl(const char *Ptr, size_t size);
-  
+
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
   virtual uint64_t current_pos();
