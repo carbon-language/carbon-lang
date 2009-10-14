@@ -197,10 +197,6 @@ public:
       this->TLSSupported = false;
     }
 
-  virtual const char *getUnicodeStringSymbolPrefix() const {
-    return "__utf16_string_";
-  }
-
   virtual const char *getUnicodeStringSection() const {
     return "__TEXT,__ustring";
   }

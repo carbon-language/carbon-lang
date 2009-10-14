@@ -300,12 +300,6 @@ public:
 
   virtual bool useGlobalsForAutomaticVariables() const { return false; }
 
-  /// getUnicodeStringSymbolPrefix - Get the default symbol prefix to
-  /// use for string literals.
-  virtual const char *getUnicodeStringSymbolPrefix() const {
-    return ".str";
-  }
-
   /// getUnicodeStringSection - Return the section to use for unicode
   /// string literals, or 0 if no special section is used.
   virtual const char *getUnicodeStringSection() const {
@@ -317,14 +311,6 @@ public:
   virtual const char *getCFStringSection() const {
     return "__DATA,__cfstring";
   }
-
-  /// getCFStringDataSection - Return the section to use for the
-  /// constant string data associated with a CFString literal, or 0 if
-  /// no special section is used.
-  virtual const char *getCFStringDataSection() const {
-    return "__TEXT,__cstring,cstring_literals";
-  }
-
 
   /// isValidSectionSpecifier - This is an optional hook that targets can
   /// implement to perform semantic checking on attribute((section("foo")))

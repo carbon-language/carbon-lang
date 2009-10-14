@@ -1434,27 +1434,24 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   // String pointer.
   llvm::Constant *C = llvm::ConstantArray::get(VMContext, Entry.getKey().str());
 
-  const char *Sect, *Prefix;
-  bool isConstant;
+  const char *Sect = 0;
   llvm::GlobalValue::LinkageTypes Linkage;
+  bool isConstant;
   if (isUTF16) {
-    Prefix = getContext().Target.getUnicodeStringSymbolPrefix();
     Sect = getContext().Target.getUnicodeStringSection();
-    // FIXME: why do utf strings get "l" labels instead of "L" labels?
+    // FIXME: why do utf strings get "_" labels instead of "L" labels?
     Linkage = llvm::GlobalValue::InternalLinkage;
-    // FIXME: Why does GCC not set constant here?
-    isConstant = false;
-  } else {
-    Prefix = ".str";
-    Sect = getContext().Target.getCFStringDataSection();
-    Linkage = llvm::GlobalValue::PrivateLinkage;
-    // FIXME: -fwritable-strings should probably affect this, but we
-    // are following gcc here.
+    // Note: -fwritable-strings doesn't make unicode CFStrings writable, but
+    // does make plain ascii ones writable.
     isConstant = true;
+  } else {
+    Linkage = llvm::GlobalValue::PrivateLinkage;
+    isConstant = !Features.WritableStrings;
   }
+  
   llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(getModule(), C->getType(), isConstant,
-                             Linkage, C, Prefix);
+    new llvm::GlobalVariable(getModule(), C->getType(), isConstant, Linkage, C,
+                             ".str");
   if (Sect)
     GV->setSection(Sect);
   if (isUTF16) {
