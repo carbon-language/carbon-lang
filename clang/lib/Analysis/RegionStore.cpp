@@ -220,28 +220,26 @@ public:
   ///  StringLiteral.  Within RegionStore a StringLiteral has an
   ///  associated StringRegion, and the lvalue of a StringLiteral is
   ///  the lvalue of that region.
-  SVal getLValueString(const GRState *state, const StringLiteral* S);
+  SVal getLValueString(const StringLiteral* S);
 
   /// getLValueCompoundLiteral - Returns an SVal representing the
   ///   lvalue of a compound literal.  Within RegionStore a compound
   ///   literal has an associated region, and the lvalue of the
   ///   compound literal is the lvalue of that region.
-  SVal getLValueCompoundLiteral(const GRState *state, const CompoundLiteralExpr*);
+  SVal getLValueCompoundLiteral(const CompoundLiteralExpr*);
 
   /// getLValueVar - Returns an SVal that represents the lvalue of a
   ///  variable.  Within RegionStore a variable has an associated
   ///  VarRegion, and the lvalue of the variable is the lvalue of that region.
-  SVal getLValueVar(const GRState *ST, const VarDecl *VD,
-                    const LocationContext *LC);
+  SVal getLValueVar(const VarDecl *VD, const LocationContext *LC);
 
-  SVal getLValueIvar(const GRState *state, const ObjCIvarDecl* D, SVal Base);
+  SVal getLValueIvar(const ObjCIvarDecl* D, SVal Base);
 
-  SVal getLValueField(const GRState *state, SVal Base, const FieldDecl* D);
+  SVal getLValueField(const FieldDecl* D, SVal Base);
 
-  SVal getLValueFieldOrIvar(const GRState *state, SVal Base, const Decl* D);
+  SVal getLValueFieldOrIvar(const Decl* D, SVal Base);
 
-  SVal getLValueElement(const GRState *state, QualType elementType,
-                        SVal Base, SVal Offset);
+  SVal getLValueElement(QualType elementType, SVal Offset, SVal Base);
 
 
   /// ArrayToPointer - Emulates the "decay" of an array to a pointer
@@ -561,15 +559,14 @@ const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
 ///  StringLiteral.  Within RegionStore a StringLiteral has an
 ///  associated StringRegion, and the lvalue of a StringLiteral is the
 ///  lvalue of that region.
-SVal RegionStoreManager::getLValueString(const GRState *St,
-                                         const StringLiteral* S) {
+SVal RegionStoreManager::getLValueString(const StringLiteral* S) {
   return loc::MemRegionVal(MRMgr.getStringRegion(S));
 }
 
 /// getLValueVar - Returns an SVal that represents the lvalue of a
 ///  variable.  Within RegionStore a variable has an associated
 ///  VarRegion, and the lvalue of the variable is the lvalue of that region.
-SVal RegionStoreManager::getLValueVar(const GRState *ST, const VarDecl *VD,
+SVal RegionStoreManager::getLValueVar(const VarDecl *VD, 
                                       const LocationContext *LC) {
   return loc::MemRegionVal(MRMgr.getVarRegion(VD, LC));
 }
@@ -578,23 +575,20 @@ SVal RegionStoreManager::getLValueVar(const GRState *ST, const VarDecl *VD,
 ///   of a compound literal.  Within RegionStore a compound literal
 ///   has an associated region, and the lvalue of the compound literal
 ///   is the lvalue of that region.
-SVal RegionStoreManager::getLValueCompoundLiteral(const GRState *St,
-                                                const CompoundLiteralExpr* CL) {
+SVal 
+RegionStoreManager::getLValueCompoundLiteral(const CompoundLiteralExpr* CL) {
   return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL));
 }
 
-SVal RegionStoreManager::getLValueIvar(const GRState *St, const ObjCIvarDecl* D,
-                                       SVal Base) {
-  return getLValueFieldOrIvar(St, Base, D);
+SVal RegionStoreManager::getLValueIvar(const ObjCIvarDecl* D, SVal Base) {
+  return getLValueFieldOrIvar(D, Base);
 }
 
-SVal RegionStoreManager::getLValueField(const GRState *St, SVal Base,
-                                        const FieldDecl* D) {
-  return getLValueFieldOrIvar(St, Base, D);
+SVal RegionStoreManager::getLValueField(const FieldDecl* D, SVal Base) {
+  return getLValueFieldOrIvar(D, Base);
 }
 
-SVal RegionStoreManager::getLValueFieldOrIvar(const GRState *St, SVal Base,
-                                              const Decl* D) {
+SVal RegionStoreManager::getLValueFieldOrIvar(const Decl* D, SVal Base) {
   if (Base.isUnknownOrUndef())
     return Base;
 
@@ -630,9 +624,8 @@ SVal RegionStoreManager::getLValueFieldOrIvar(const GRState *St, SVal Base,
   return loc::MemRegionVal(MRMgr.getFieldRegion(cast<FieldDecl>(D), BaseR));
 }
 
-SVal RegionStoreManager::getLValueElement(const GRState *St,
-                                          QualType elementType,
-                                          SVal Base, SVal Offset) {
+SVal RegionStoreManager::getLValueElement(QualType elementType, SVal Offset, 
+                                          SVal Base) {
 
   // If the base is an unknown or undefined value, just return it back.
   // FIXME: For absolute pointer addresses, we just return that value back as

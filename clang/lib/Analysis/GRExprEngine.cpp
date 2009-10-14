@@ -1042,8 +1042,8 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A,
 
     for (ExplodedNodeSet::iterator I2=Tmp2.begin(),E2=Tmp2.end();I2!=E2; ++I2) {
       const GRState* state = GetState(*I2);
-      SVal V = state->getLValue(A->getType(), state->getSVal(Base),
-                                state->getSVal(Idx));
+      SVal V = state->getLValue(A->getType(), state->getSVal(Idx),
+                                state->getSVal(Base));
 
       if (asLValue)
         MakeNode(Dst, A, *I2, state->BindExpr(A, V),
@@ -1075,7 +1075,7 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, ExplodedNode* Pred,
     // FIXME: Should we insert some assumption logic in here to determine
     // if "Base" is a valid piece of memory?  Before we put this assumption
     // later when using FieldOffset lvals (which we no longer have).
-    SVal L = state->getLValue(state->getSVal(Base), Field);
+    SVal L = state->getLValue(Field, state->getSVal(Base));
 
     if (asLValue)
       MakeNode(Dst, M, *I, state->BindExpr(M, L),

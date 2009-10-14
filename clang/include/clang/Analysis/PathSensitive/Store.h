@@ -89,23 +89,17 @@ public:
   //   caller's responsibility to 'delete' the returned map.
   virtual SubRegionMap *getSubRegionMap(const GRState *state) = 0;
 
-  virtual SVal getLValueVar(const GRState *ST, const VarDecl *VD,
-                            const LocationContext *LC) = 0;
+  virtual SVal getLValueVar(const VarDecl *VD, const LocationContext *LC) = 0;
 
-  virtual SVal getLValueString(const GRState *state,
-                               const StringLiteral* sl) = 0;
+  virtual SVal getLValueString(const StringLiteral* sl) = 0;
 
-  virtual SVal getLValueCompoundLiteral(const GRState *state,
-                                        const CompoundLiteralExpr* cl) = 0;
+  virtual SVal getLValueCompoundLiteral(const CompoundLiteralExpr* cl) = 0;
 
-  virtual SVal getLValueIvar(const GRState *state, const ObjCIvarDecl* decl,
-                             SVal base) = 0;
+  virtual SVal getLValueIvar(const ObjCIvarDecl* decl, SVal base) = 0;
 
-  virtual SVal getLValueField(const GRState *state, SVal base,
-                              const FieldDecl* D) = 0;
+  virtual SVal getLValueField(const FieldDecl* D, SVal Base) = 0;
 
-  virtual SVal getLValueElement(const GRState *state, QualType elementType,
-                                SVal base, SVal offset) = 0;
+  virtual SVal getLValueElement(QualType elementType, SVal offset, SVal Base)=0;
 
   // FIXME: Make out-of-line.
   virtual SVal getSizeInElements(const GRState *state, const MemRegion *region){

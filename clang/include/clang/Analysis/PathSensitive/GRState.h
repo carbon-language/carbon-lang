@@ -243,10 +243,10 @@ public:
   SVal getLValue(const ObjCIvarDecl *decl, SVal base) const;
 
   /// Get the lvalue for a field reference.
-  SVal getLValue(SVal Base, const FieldDecl *decl) const;
+  SVal getLValue(const FieldDecl *decl, SVal Base) const;
 
   /// Get the lvalue for an array index.
-  SVal getLValue(QualType ElementType, SVal Base, SVal Idx) const;
+  SVal getLValue(QualType ElementType, SVal Idx, SVal Base) const;
 
   const llvm::APSInt *getSymVal(SymbolRef sym) const;
 
@@ -623,27 +623,27 @@ inline const GRState *GRState::bindLoc(SVal LV, SVal V) const {
 
 inline SVal GRState::getLValue(const VarDecl* VD,
                                const LocationContext *LC) const {
-  return getStateManager().StoreMgr->getLValueVar(this, VD, LC);
+  return getStateManager().StoreMgr->getLValueVar(VD, LC);
 }
 
 inline SVal GRState::getLValue(const StringLiteral *literal) const {
-  return getStateManager().StoreMgr->getLValueString(this, literal);
+  return getStateManager().StoreMgr->getLValueString(literal);
 }
 
 inline SVal GRState::getLValue(const CompoundLiteralExpr *literal) const {
-  return getStateManager().StoreMgr->getLValueCompoundLiteral(this, literal);
+  return getStateManager().StoreMgr->getLValueCompoundLiteral(literal);
 }
 
 inline SVal GRState::getLValue(const ObjCIvarDecl *D, SVal Base) const {
-  return getStateManager().StoreMgr->getLValueIvar(this, D, Base);
+  return getStateManager().StoreMgr->getLValueIvar(D, Base);
 }
 
-inline SVal GRState::getLValue(SVal Base, const FieldDecl* D) const {
-  return getStateManager().StoreMgr->getLValueField(this, Base, D);
+inline SVal GRState::getLValue(const FieldDecl* D, SVal Base) const {
+  return getStateManager().StoreMgr->getLValueField(D, Base);
 }
 
-inline SVal GRState::getLValue(QualType ElementType, SVal Base, SVal Idx) const{
-  return getStateManager().StoreMgr->getLValueElement(this, ElementType, Base, Idx);
+inline SVal GRState::getLValue(QualType ElementType, SVal Idx, SVal Base) const{
+  return getStateManager().StoreMgr->getLValueElement(ElementType, Idx, Base);
 }
 
 inline const llvm::APSInt *GRState::getSymVal(SymbolRef sym) const {

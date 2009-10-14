@@ -73,15 +73,12 @@ public:
     return state;
   }
 
-  SVal getLValueVar(const GRState *state, const VarDecl *VD,
-                    const LocationContext *LC);
-  SVal getLValueString(const GRState *state, const StringLiteral *S);
-  SVal getLValueCompoundLiteral(const GRState *state,
-                                const CompoundLiteralExpr *CL);
-  SVal getLValueIvar(const GRState *state, const ObjCIvarDecl* D, SVal Base);
-  SVal getLValueField(const GRState *state, SVal Base, const FieldDecl *D);
-  SVal getLValueElement(const GRState *state, QualType elementType,
-                        SVal Base, SVal Offset);
+  SVal getLValueVar(const VarDecl *VD, const LocationContext *LC);
+  SVal getLValueString(const StringLiteral *S);
+  SVal getLValueCompoundLiteral(const CompoundLiteralExpr *CL);
+  SVal getLValueIvar(const ObjCIvarDecl* D, SVal Base);
+  SVal getLValueField(const FieldDecl *D, SVal Base);
+  SVal getLValueElement(QualType elementType, SVal Offset, SVal Base);
 
   /// ArrayToPointer - Used by GRExprEngine::VistCast to handle implicit
   ///  conversions between arrays and pointers.
@@ -126,24 +123,20 @@ StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
 }
 
-SVal BasicStoreManager::getLValueVar(const GRState *state, const VarDecl* VD,
+SVal BasicStoreManager::getLValueVar(const VarDecl* VD, 
                                      const LocationContext *LC) {
   return ValMgr.makeLoc(MRMgr.getVarRegion(VD, LC));
 }
 
-SVal BasicStoreManager::getLValueString(const GRState *state,
-                                        const StringLiteral* S) {
+SVal BasicStoreManager::getLValueString(const StringLiteral* S) {
   return ValMgr.makeLoc(MRMgr.getStringRegion(S));
 }
 
-SVal BasicStoreManager::getLValueCompoundLiteral(const GRState *state,
-                                                 const CompoundLiteralExpr* CL){
+SVal BasicStoreManager::getLValueCompoundLiteral(const CompoundLiteralExpr* CL){
   return ValMgr.makeLoc(MRMgr.getCompoundLiteralRegion(CL));
 }
 
-SVal BasicStoreManager::getLValueIvar(const GRState *state,
-                                      const ObjCIvarDecl* D,
-                                      SVal Base) {
+SVal BasicStoreManager::getLValueIvar(const ObjCIvarDecl* D, SVal Base) {
 
   if (Base.isUnknownOrUndef())
     return Base;
@@ -158,8 +151,7 @@ SVal BasicStoreManager::getLValueIvar(const GRState *state,
   return UnknownVal();
 }
 
-SVal BasicStoreManager::getLValueField(const GRState *state, SVal Base,
-                                       const FieldDecl* D) {
+SVal BasicStoreManager::getLValueField(const FieldDecl* D, SVal Base) {
 
   if (Base.isUnknownOrUndef())
     return Base;
@@ -190,9 +182,8 @@ SVal BasicStoreManager::getLValueField(const GRState *state, SVal Base,
   return ValMgr.makeLoc(MRMgr.getFieldRegion(D, BaseR));
 }
 
-SVal BasicStoreManager::getLValueElement(const GRState *state,
-                                         QualType elementType,
-                                         SVal Base, SVal Offset) {
+SVal BasicStoreManager::getLValueElement(QualType elementType,
+                                         SVal Offset, SVal Base) {
 
   if (Base.isUnknownOrUndef())
     return Base;
