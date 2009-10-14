@@ -30,9 +30,9 @@ void f1(struct s **pval) {
   int *tbool = ((void*)0);
   struct s *t = *pval;
   pval = &(t->value);
-  tbool = (int *)pval; // Should record the cast-to type here.
+  tbool = (int *)pval; // use the cast-to type 'int *' to create element region.
   char c = (unsigned char) *tbool; // Should use cast-to type to create symbol.
-  if (*tbool == -1)
+  if (*tbool == -1) // here load the element region with the correct type 'int'
     (void)3;
 }
 
