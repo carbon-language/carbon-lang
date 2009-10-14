@@ -1350,7 +1350,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   PresumedLoc PLoc = SM.getPresumedLoc(Decl->getLocation());
   unsigned LineNo = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
-  std::string Name = Decl->getNameAsString();
+  std::string Name = Var->getName();
 
   QualType T = Decl->getType();
   if (T->isIncompleteArrayType()) {
