@@ -133,6 +133,13 @@ private:
   SDNode *SelectVLD(SDValue Op, unsigned NumVecs, unsigned *DOpcodes,
                     unsigned *QOpcodes0, unsigned *QOpcodes1);
 
+  /// SelectVST - Select NEON store intrinsics.  NumVecs should
+  /// be 2, 3 or 4.  The opcode arrays specify the instructions used for
+  /// stores of D registers and even subregs and odd subregs of Q registers.
+  /// For NumVecs == 2, QOpcodes1 is not used.
+  SDNode *SelectVST(SDValue Op, unsigned NumVecs, unsigned *DOpcodes,
+                    unsigned *QOpcodes0, unsigned *QOpcodes1);
+
   /// SelectVLDSTLane - Select NEON load/store lane intrinsics.  NumVecs should
   /// be 2, 3 or 4.  The opcode arrays specify the instructions used for
   /// load/store of D registers and even subregs and odd subregs of Q registers.
@@ -1063,13 +1070,13 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDValue Op, unsigned NumVecs,
     ResTys.push_back(MemAddr.getValueType());
     ResTys.push_back(MVT::Other);
 
-    // Load the even subreg.
+    // Load the even subregs.
     unsigned Opc = QOpcodes0[OpcodeIndex];
     const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc, Chain };
     SDNode *VLdA = CurDAG->getMachineNode(Opc, dl, ResTys, OpsA, 4);
     Chain = SDValue(VLdA, NumVecs+1);
 
-    // Load the odd subreg.
+    // Load the odd subregs.
     Opc = QOpcodes1[OpcodeIndex];
     const SDValue OpsB[] = { SDValue(VLdA, NumVecs), MemUpdate, MemOpc, Chain };
     SDNode *VLdB = CurDAG->getMachineNode(Opc, dl, ResTys, OpsB, 4);
@@ -1082,6 +1089,95 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDValue Op, unsigned NumVecs,
     }
   }
   ReplaceUses(SDValue(N, NumVecs), Chain);
+  return NULL;
+}
+
+SDNode *ARMDAGToDAGISel::SelectVST(SDValue Op, unsigned NumVecs,
+                                   unsigned *DOpcodes, unsigned *QOpcodes0,
+                                   unsigned *QOpcodes1) {
+  assert(NumVecs >=2 && NumVecs <= 4 && "VST NumVecs out-of-range");
+  SDNode *N = Op.getNode();
+  DebugLoc dl = N->getDebugLoc();
+
+  SDValue MemAddr, MemUpdate, MemOpc;
+  if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
+    return NULL;
+
+  SDValue Chain = N->getOperand(0);
+  EVT VT = N->getOperand(3).getValueType();
+  bool is64BitVector = VT.is64BitVector();
+
+  unsigned OpcodeIndex;
+  switch (VT.getSimpleVT().SimpleTy) {
+  default: llvm_unreachable("unhandled vst type");
+    // Double-register operations:
+  case MVT::v8i8:  OpcodeIndex = 0; break;
+  case MVT::v4i16: OpcodeIndex = 1; break;
+  case MVT::v2f32:
+  case MVT::v2i32: OpcodeIndex = 2; break;
+  case MVT::v1i64: OpcodeIndex = 3; break;
+    // Quad-register operations:
+  case MVT::v16i8: OpcodeIndex = 0; break;
+  case MVT::v8i16: OpcodeIndex = 1; break;
+  case MVT::v4f32:
+  case MVT::v4i32: OpcodeIndex = 2; break;
+  }
+
+  SmallVector<SDValue, 8> Ops;
+  Ops.push_back(MemAddr);
+  Ops.push_back(MemUpdate);
+  Ops.push_back(MemOpc);
+
+  if (is64BitVector) {
+    unsigned Opc = DOpcodes[OpcodeIndex];
+    for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+      Ops.push_back(N->getOperand(Vec+3));
+    Ops.push_back(Chain);
+    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), NumVecs+4);
+  }
+
+  EVT RegVT = GetNEONSubregVT(VT);
+  if (NumVecs == 2) {
+    // Quad registers are directly supported for VST2,
+    // storing 2 pairs of D regs.
+    unsigned Opc = QOpcodes0[OpcodeIndex];
+    for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
+                                                   N->getOperand(Vec+3)));
+      Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
+                                                   N->getOperand(Vec+3)));
+    }
+    Ops.push_back(Chain);
+    return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops.data(), 8);
+  }
+
+  // Otherwise, quad registers are stored with two separate instructions,
+  // where one stores the even registers and the other stores the odd registers.
+
+  // Enable writeback to the address register.
+  MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
+
+  // Store the even subregs.
+  for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+    Ops.push_back(CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
+                                                 N->getOperand(Vec+3)));
+  Ops.push_back(Chain);
+  unsigned Opc = QOpcodes0[OpcodeIndex];
+  SDNode *VStA = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
+                                        MVT::Other, Ops.data(), NumVecs+4);
+  Chain = SDValue(VStA, 1);
+
+  // Store the odd subregs.
+  Ops[0] = SDValue(VStA, 0); // MemAddr
+  for (unsigned Vec = 0; Vec < NumVecs; ++Vec)
+    Ops[Vec+3] = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
+                                                N->getOperand(Vec+3));
+  Ops[NumVecs+3] = Chain;
+  Opc = QOpcodes1[OpcodeIndex];
+  SDNode *VStB = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
+                                        MVT::Other, Ops.data(), NumVecs+4);
+  Chain = SDValue(VStB, 1);
+  ReplaceUses(SDValue(N, 0), Chain);
   return NULL;
 }
 
@@ -1664,178 +1760,26 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     }
 
     case Intrinsic::arm_neon_vst2: {
-      SDValue MemAddr, MemUpdate, MemOpc;
-      if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
-        return NULL;
-      SDValue Chain = N->getOperand(0);
-      VT = N->getOperand(3).getValueType();
-      if (VT.is64BitVector()) {
-        switch (VT.getSimpleVT().SimpleTy) {
-        default: llvm_unreachable("unhandled vst2 type");
-        case MVT::v8i8:  Opc = ARM::VST2d8; break;
-        case MVT::v4i16: Opc = ARM::VST2d16; break;
-        case MVT::v2f32:
-        case MVT::v2i32: Opc = ARM::VST2d32; break;
-        case MVT::v1i64: Opc = ARM::VST2d64; break;
-        }
-        const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
-                                N->getOperand(3), N->getOperand(4), Chain };
-        return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 6);
-      }
-      // Quad registers are stored as pairs of double registers.
-      EVT RegVT;
-      switch (VT.getSimpleVT().SimpleTy) {
-      default: llvm_unreachable("unhandled vst2 type");
-      case MVT::v16i8: Opc = ARM::VST2q8; RegVT = MVT::v8i8; break;
-      case MVT::v8i16: Opc = ARM::VST2q16; RegVT = MVT::v4i16; break;
-      case MVT::v4f32: Opc = ARM::VST2q32; RegVT = MVT::v2f32; break;
-      case MVT::v4i32: Opc = ARM::VST2q32; RegVT = MVT::v2i32; break;
-      }
-      SDValue D0 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
-                                                  N->getOperand(3));
-      SDValue D1 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
-                                                  N->getOperand(3));
-      SDValue D2 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
-                                                  N->getOperand(4));
-      SDValue D3 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
-                                                  N->getOperand(4));
-      const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
-                              D0, D1, D2, D3, Chain };
-      return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 8);
+      unsigned DOpcodes[] = { ARM::VST2d8, ARM::VST2d16,
+                              ARM::VST2d32, ARM::VST2d64 };
+      unsigned QOpcodes[] = { ARM::VST2q8, ARM::VST2q16, ARM::VST2q32 };
+      return SelectVST(Op, 2, DOpcodes, QOpcodes, 0);
     }
 
     case Intrinsic::arm_neon_vst3: {
-      SDValue MemAddr, MemUpdate, MemOpc;
-      if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
-        return NULL;
-      SDValue Chain = N->getOperand(0);
-      VT = N->getOperand(3).getValueType();
-      if (VT.is64BitVector()) {
-        switch (VT.getSimpleVT().SimpleTy) {
-        default: llvm_unreachable("unhandled vst3 type");
-        case MVT::v8i8:  Opc = ARM::VST3d8; break;
-        case MVT::v4i16: Opc = ARM::VST3d16; break;
-        case MVT::v2f32:
-        case MVT::v2i32: Opc = ARM::VST3d32; break;
-        case MVT::v1i64: Opc = ARM::VST3d64; break;
-        }
-        const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
-                                N->getOperand(3), N->getOperand(4),
-                                N->getOperand(5), Chain };
-        return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 7);
-      }
-      // Quad registers are stored with two separate instructions, where one
-      // stores the even registers and the other stores the odd registers.
-      EVT RegVT;
-      unsigned Opc2 = 0;
-      switch (VT.getSimpleVT().SimpleTy) {
-      default: llvm_unreachable("unhandled vst3 type");
-      case MVT::v16i8:
-        Opc = ARM::VST3q8a;  Opc2 = ARM::VST3q8b;  RegVT = MVT::v8i8; break;
-      case MVT::v8i16:
-        Opc = ARM::VST3q16a; Opc2 = ARM::VST3q16b; RegVT = MVT::v4i16; break;
-      case MVT::v4f32:
-        Opc = ARM::VST3q32a; Opc2 = ARM::VST3q32b; RegVT = MVT::v2f32; break;
-      case MVT::v4i32:
-        Opc = ARM::VST3q32a; Opc2 = ARM::VST3q32b; RegVT = MVT::v2i32; break;
-      }
-      // Enable writeback to the address register.
-      MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
-
-      SDValue D0 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
-                                                  N->getOperand(3));
-      SDValue D2 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
-                                                  N->getOperand(4));
-      SDValue D4 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
-                                                  N->getOperand(5));
-      const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc, D0, D2, D4, Chain };
-      SDNode *VStA = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
-                                            MVT::Other, OpsA, 7);
-      Chain = SDValue(VStA, 1);
-
-      SDValue D1 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
-                                                  N->getOperand(3));
-      SDValue D3 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
-                                                  N->getOperand(4));
-      SDValue D5 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
-                                                  N->getOperand(5));
-      MemAddr = SDValue(VStA, 0);
-      const SDValue OpsB[] = { MemAddr, MemUpdate, MemOpc, D1, D3, D5, Chain };
-      SDNode *VStB = CurDAG->getMachineNode(Opc2, dl, MemAddr.getValueType(),
-                                            MVT::Other, OpsB, 7);
-      Chain = SDValue(VStB, 1);
-      ReplaceUses(SDValue(N, 0), Chain);
-      return NULL;
+      unsigned DOpcodes[] = { ARM::VST3d8, ARM::VST3d16,
+                              ARM::VST3d32, ARM::VST3d64 };
+      unsigned QOpcodes0[] = { ARM::VST3q8a, ARM::VST3q16a, ARM::VST3q32a };
+      unsigned QOpcodes1[] = { ARM::VST3q8b, ARM::VST3q16b, ARM::VST3q32b };
+      return SelectVST(Op, 3, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vst4: {
-      SDValue MemAddr, MemUpdate, MemOpc;
-      if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
-        return NULL;
-      SDValue Chain = N->getOperand(0);
-      VT = N->getOperand(3).getValueType();
-      if (VT.is64BitVector()) {
-        switch (VT.getSimpleVT().SimpleTy) {
-        default: llvm_unreachable("unhandled vst4 type");
-        case MVT::v8i8:  Opc = ARM::VST4d8; break;
-        case MVT::v4i16: Opc = ARM::VST4d16; break;
-        case MVT::v2f32:
-        case MVT::v2i32: Opc = ARM::VST4d32; break;
-        case MVT::v1i64: Opc = ARM::VST4d64; break;
-        }
-        const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc,
-                                N->getOperand(3), N->getOperand(4),
-                                N->getOperand(5), N->getOperand(6), Chain };
-        return CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 8);
-      }
-      // Quad registers are stored with two separate instructions, where one
-      // stores the even registers and the other stores the odd registers.
-      EVT RegVT;
-      unsigned Opc2 = 0;
-      switch (VT.getSimpleVT().SimpleTy) {
-      default: llvm_unreachable("unhandled vst4 type");
-      case MVT::v16i8:
-        Opc = ARM::VST4q8a;  Opc2 = ARM::VST4q8b;  RegVT = MVT::v8i8; break;
-      case MVT::v8i16:
-        Opc = ARM::VST4q16a; Opc2 = ARM::VST4q16b; RegVT = MVT::v4i16; break;
-      case MVT::v4f32:
-        Opc = ARM::VST4q32a; Opc2 = ARM::VST4q32b; RegVT = MVT::v2f32; break;
-      case MVT::v4i32:
-        Opc = ARM::VST4q32a; Opc2 = ARM::VST4q32b; RegVT = MVT::v2i32; break;
-      }
-      // Enable writeback to the address register.
-      MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
-
-      SDValue D0 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
-                                                  N->getOperand(3));
-      SDValue D2 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
-                                                  N->getOperand(4));
-      SDValue D4 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
-                                                  N->getOperand(5));
-      SDValue D6 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_0, dl, RegVT,
-                                                  N->getOperand(6));
-      const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc,
-                               D0, D2, D4, D6, Chain };
-      SDNode *VStA = CurDAG->getMachineNode(Opc, dl, MemAddr.getValueType(),
-                                            MVT::Other, OpsA, 8);
-      Chain = SDValue(VStA, 1);
-
-      SDValue D1 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
-                                                  N->getOperand(3));
-      SDValue D3 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
-                                                  N->getOperand(4));
-      SDValue D5 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
-                                                  N->getOperand(5));
-      SDValue D7 = CurDAG->getTargetExtractSubreg(ARM::DSUBREG_1, dl, RegVT,
-                                                  N->getOperand(6));
-      MemAddr = SDValue(VStA, 0);
-      const SDValue OpsB[] = { MemAddr, MemUpdate, MemOpc,
-                               D1, D3, D5, D7, Chain };
-      SDNode *VStB = CurDAG->getMachineNode(Opc2, dl, MemAddr.getValueType(),
-                                            MVT::Other, OpsB, 8);
-      Chain = SDValue(VStB, 1);
-      ReplaceUses(SDValue(N, 0), Chain);
-      return NULL;
+      unsigned DOpcodes[] = { ARM::VST4d8, ARM::VST4d16,
+                              ARM::VST4d32, ARM::VST4d64 };
+      unsigned QOpcodes0[] = { ARM::VST4q8a, ARM::VST4q16a, ARM::VST4q32a };
+      unsigned QOpcodes1[] = { ARM::VST4q8b, ARM::VST4q16b, ARM::VST4q32b };
+      return SelectVST(Op, 4, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vst2lane: {
