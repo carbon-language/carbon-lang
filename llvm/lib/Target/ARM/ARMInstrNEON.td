@@ -2038,7 +2038,7 @@ defm VSHLs    : N3VInt_QHSD<0, 0, 0b0100, 0, IIC_VSHLiD, IIC_VSHLiD, IIC_VSHLiQ,
 defm VSHLu    : N3VInt_QHSD<1, 0, 0b0100, 0, IIC_VSHLiD, IIC_VSHLiD, IIC_VSHLiQ,
                             IIC_VSHLiQ, "vshl.u", int_arm_neon_vshiftu, 0>;
 //   VSHL     : Vector Shift Left (Immediate)
-defm VSHLi    : N2VSh_QHSD<0, 1, 0b0111, 1, IIC_VSHLiD, "vshl.i", NEONvshl>;
+defm VSHLi    : N2VSh_QHSD<0, 1, 0b0101, 1, IIC_VSHLiD, "vshl.i", NEONvshl>;
 //   VSHR     : Vector Shift Right (Immediate)
 defm VSHRs    : N2VSh_QHSD<0, 1, 0b0000, 1, IIC_VSHLiD, "vshr.s", NEONvshrs>;
 defm VSHRu    : N2VSh_QHSD<1, 1, 0b0000, 1, IIC_VSHLiD, "vshr.u", NEONvshru>;
