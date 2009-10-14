@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -fasm-blocks -S -o - | FileCheck %s
+// RUN: %llvmgxx %s -fasm-blocks -S -o - | FileCheck %s
 // Complicated expression as jump target
 // XFAIL: *
 // XTARGET: x86,i386,i686
