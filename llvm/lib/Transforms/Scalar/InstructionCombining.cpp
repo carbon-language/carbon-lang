@@ -12836,7 +12836,15 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     // See if we can trivially sink this instruction to a successor basic block.
     if (I->hasOneUse()) {
       BasicBlock *BB = I->getParent();
-      BasicBlock *UserParent = cast<Instruction>(I->use_back())->getParent();
+      Instruction *UserInst = cast<Instruction>(I->use_back());
+      BasicBlock *UserParent;
+      
+      // Get the block the use occurs in.
+      if (PHINode *PN = dyn_cast<PHINode>(UserInst))
+        UserParent = PN->getIncomingBlock(I->use_begin().getUse());
+      else
+        UserParent = UserInst->getParent();
+      
       if (UserParent != BB) {
         bool UserIsSuccessor = false;
         // See if the user is one of our successors.
@@ -12849,8 +12857,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         // If the user is one of our immediate successors, and if that successor
         // only has us as a predecessors (we'd have to split the critical edge
         // otherwise), we can keep going.
-        if (UserIsSuccessor && !isa<PHINode>(I->use_back()) &&
-            next(pred_begin(UserParent)) == pred_end(UserParent))
+        if (UserIsSuccessor && UserParent->getSinglePredecessor())
           // Okay, the CFG is simple enough, try to sink this instruction.
           MadeIRChange |= TryToSinkInstruction(I, UserParent);
       }
