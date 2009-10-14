@@ -126,6 +126,13 @@ private:
   /// SelectDYN_ALLOC - Select dynamic alloc for Thumb.
   SDNode *SelectDYN_ALLOC(SDValue Op);
 
+  /// SelectVLD - Select NEON load intrinsics.  NumVecs should
+  /// be 2, 3 or 4.  The opcode arrays specify the instructions used for
+  /// loads of D registers and even subregs and odd subregs of Q registers.
+  /// For NumVecs == 2, QOpcodes1 is not used.
+  SDNode *SelectVLD(SDValue Op, unsigned NumVecs, unsigned *DOpcodes,
+                    unsigned *QOpcodes0, unsigned *QOpcodes1);
+
   /// SelectVLDSTLane - Select NEON load/store lane intrinsics.  NumVecs should
   /// be 2, 3 or 4.  The opcode arrays specify the instructions used for
   /// load/store of D registers and even subregs and odd subregs of Q registers.
@@ -990,6 +997,94 @@ static EVT GetNEONSubregVT(EVT VT) {
   }
 }
 
+SDNode *ARMDAGToDAGISel::SelectVLD(SDValue Op, unsigned NumVecs,
+                                   unsigned *DOpcodes, unsigned *QOpcodes0,
+                                   unsigned *QOpcodes1) {
+  assert(NumVecs >=2 && NumVecs <= 4 && "VLD NumVecs out-of-range");
+  SDNode *N = Op.getNode();
+  DebugLoc dl = N->getDebugLoc();
+
+  SDValue MemAddr, MemUpdate, MemOpc;
+  if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
+    return NULL;
+
+  SDValue Chain = N->getOperand(0);
+  EVT VT = N->getValueType(0);
+  bool is64BitVector = VT.is64BitVector();
+
+  unsigned OpcodeIndex;
+  switch (VT.getSimpleVT().SimpleTy) {
+  default: llvm_unreachable("unhandled vld type");
+    // Double-register operations:
+  case MVT::v8i8:  OpcodeIndex = 0; break;
+  case MVT::v4i16: OpcodeIndex = 1; break;
+  case MVT::v2f32:
+  case MVT::v2i32: OpcodeIndex = 2; break;
+  case MVT::v1i64: OpcodeIndex = 3; break;
+    // Quad-register operations:
+  case MVT::v16i8: OpcodeIndex = 0; break;
+  case MVT::v8i16: OpcodeIndex = 1; break;
+  case MVT::v4f32:
+  case MVT::v4i32: OpcodeIndex = 2; break;
+  }
+
+  if (is64BitVector) {
+    unsigned Opc = DOpcodes[OpcodeIndex];
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
+    std::vector<EVT> ResTys(NumVecs, VT);
+    ResTys.push_back(MVT::Other);
+    return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 4);
+  }
+
+  EVT RegVT = GetNEONSubregVT(VT);
+  if (NumVecs == 2) {
+    // Quad registers are directly supported for VLD2,
+    // loading 2 pairs of D regs.
+    unsigned Opc = QOpcodes0[OpcodeIndex];
+    const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
+    std::vector<EVT> ResTys(4, VT);
+    ResTys.push_back(MVT::Other);
+    SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 4);
+    Chain = SDValue(VLd, 4);
+
+    // Combine the even and odd subregs to produce the result.
+    for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
+      SDNode *Q = PairDRegs(VT, SDValue(VLd, 2*Vec), SDValue(VLd, 2*Vec+1));
+      ReplaceUses(SDValue(N, Vec), SDValue(Q, 0));
+    }
+  } else {
+    // Otherwise, quad registers are loaded with two separate instructions,
+    // where one loads the even registers and the other loads the odd registers.
+
+    // Enable writeback to the address register.
+    MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
+
+    std::vector<EVT> ResTys(NumVecs, RegVT);
+    ResTys.push_back(MemAddr.getValueType());
+    ResTys.push_back(MVT::Other);
+
+    // Load the even subreg.
+    unsigned Opc = QOpcodes0[OpcodeIndex];
+    const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc, Chain };
+    SDNode *VLdA = CurDAG->getMachineNode(Opc, dl, ResTys, OpsA, 4);
+    Chain = SDValue(VLdA, NumVecs+1);
+
+    // Load the odd subreg.
+    Opc = QOpcodes1[OpcodeIndex];
+    const SDValue OpsB[] = { SDValue(VLdA, NumVecs), MemUpdate, MemOpc, Chain };
+    SDNode *VLdB = CurDAG->getMachineNode(Opc, dl, ResTys, OpsB, 4);
+    Chain = SDValue(VLdB, NumVecs+1);
+
+    // Combine the even and odd subregs to produce the result.
+    for (unsigned Vec = 0; Vec < NumVecs; ++Vec) {
+      SDNode *Q = PairDRegs(VT, SDValue(VLdA, Vec), SDValue(VLdB, Vec));
+      ReplaceUses(SDValue(N, Vec), SDValue(Q, 0));
+    }
+  }
+  ReplaceUses(SDValue(N, NumVecs), Chain);
+  return NULL;
+}
+
 SDNode *ARMDAGToDAGISel::SelectVLDSTLane(SDValue Op, bool IsLoad,
                                          unsigned NumVecs, unsigned *DOpcodes,
                                          unsigned *QOpcodes0,
@@ -1525,159 +1620,26 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       break;
 
     case Intrinsic::arm_neon_vld2: {
-      SDValue MemAddr, MemUpdate, MemOpc;
-      if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
-        return NULL;
-      SDValue Chain = N->getOperand(0);
-      if (VT.is64BitVector()) {
-        switch (VT.getSimpleVT().SimpleTy) {
-        default: llvm_unreachable("unhandled vld2 type");
-        case MVT::v8i8:  Opc = ARM::VLD2d8; break;
-        case MVT::v4i16: Opc = ARM::VLD2d16; break;
-        case MVT::v2f32:
-        case MVT::v2i32: Opc = ARM::VLD2d32; break;
-        case MVT::v1i64: Opc = ARM::VLD2d64; break;
-        }
-        const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
-        return CurDAG->getMachineNode(Opc, dl, VT, VT, MVT::Other, Ops, 4);
-      }
-      // Quad registers are loaded as pairs of double registers.
-      EVT RegVT;
-      switch (VT.getSimpleVT().SimpleTy) {
-      default: llvm_unreachable("unhandled vld2 type");
-      case MVT::v16i8: Opc = ARM::VLD2q8; RegVT = MVT::v8i8; break;
-      case MVT::v8i16: Opc = ARM::VLD2q16; RegVT = MVT::v4i16; break;
-      case MVT::v4f32: Opc = ARM::VLD2q32; RegVT = MVT::v2f32; break;
-      case MVT::v4i32: Opc = ARM::VLD2q32; RegVT = MVT::v2i32; break;
-      }
-      const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
-      std::vector<EVT> ResTys(4, RegVT);
-      ResTys.push_back(MVT::Other);
-      SDNode *VLd = CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 4);
-      SDNode *Q0 = PairDRegs(VT, SDValue(VLd, 0), SDValue(VLd, 1));
-      SDNode *Q1 = PairDRegs(VT, SDValue(VLd, 2), SDValue(VLd, 3));
-      ReplaceUses(SDValue(N, 0), SDValue(Q0, 0));
-      ReplaceUses(SDValue(N, 1), SDValue(Q1, 0));
-      ReplaceUses(SDValue(N, 2), SDValue(VLd, 4));
-      return NULL;
+      unsigned DOpcodes[] = { ARM::VLD2d8, ARM::VLD2d16,
+                              ARM::VLD2d32, ARM::VLD2d64 };
+      unsigned QOpcodes[] = { ARM::VLD2q8, ARM::VLD2q16, ARM::VLD2q32 };
+      return SelectVLD(Op, 2, DOpcodes, QOpcodes, 0);
     }
 
     case Intrinsic::arm_neon_vld3: {
-      SDValue MemAddr, MemUpdate, MemOpc;
-      if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
-        return NULL;
-      SDValue Chain = N->getOperand(0);
-      if (VT.is64BitVector()) {
-        switch (VT.getSimpleVT().SimpleTy) {
-        default: llvm_unreachable("unhandled vld3 type");
-        case MVT::v8i8:  Opc = ARM::VLD3d8; break;
-        case MVT::v4i16: Opc = ARM::VLD3d16; break;
-        case MVT::v2f32:
-        case MVT::v2i32: Opc = ARM::VLD3d32; break;
-        case MVT::v1i64: Opc = ARM::VLD3d64; break;
-        }
-        const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
-        return CurDAG->getMachineNode(Opc, dl, VT, VT, VT, MVT::Other, Ops, 4);
-      }
-      // Quad registers are loaded with two separate instructions, where one
-      // loads the even registers and the other loads the odd registers.
-      EVT RegVT;
-      unsigned Opc2 = 0;
-      switch (VT.getSimpleVT().SimpleTy) {
-      default: llvm_unreachable("unhandled vld3 type");
-      case MVT::v16i8:
-        Opc = ARM::VLD3q8a;  Opc2 = ARM::VLD3q8b;  RegVT = MVT::v8i8; break;
-      case MVT::v8i16:
-        Opc = ARM::VLD3q16a; Opc2 = ARM::VLD3q16b; RegVT = MVT::v4i16; break;
-      case MVT::v4f32:
-        Opc = ARM::VLD3q32a; Opc2 = ARM::VLD3q32b; RegVT = MVT::v2f32; break;
-      case MVT::v4i32:
-        Opc = ARM::VLD3q32a; Opc2 = ARM::VLD3q32b; RegVT = MVT::v2i32; break;
-      }
-      // Enable writeback to the address register.
-      MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
-
-      std::vector<EVT> ResTys(3, RegVT);
-      ResTys.push_back(MemAddr.getValueType());
-      ResTys.push_back(MVT::Other);
-
-      const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc, Chain };
-      SDNode *VLdA = CurDAG->getMachineNode(Opc, dl, ResTys, OpsA, 4);
-      Chain = SDValue(VLdA, 4);
-
-      const SDValue OpsB[] = { SDValue(VLdA, 3), MemUpdate, MemOpc, Chain };
-      SDNode *VLdB = CurDAG->getMachineNode(Opc2, dl, ResTys, OpsB, 4);
-      Chain = SDValue(VLdB, 4);
-
-      SDNode *Q0 = PairDRegs(VT, SDValue(VLdA, 0), SDValue(VLdB, 0));
-      SDNode *Q1 = PairDRegs(VT, SDValue(VLdA, 1), SDValue(VLdB, 1));
-      SDNode *Q2 = PairDRegs(VT, SDValue(VLdA, 2), SDValue(VLdB, 2));
-      ReplaceUses(SDValue(N, 0), SDValue(Q0, 0));
-      ReplaceUses(SDValue(N, 1), SDValue(Q1, 0));
-      ReplaceUses(SDValue(N, 2), SDValue(Q2, 0));
-      ReplaceUses(SDValue(N, 3), Chain);
-      return NULL;
+      unsigned DOpcodes[] = { ARM::VLD3d8, ARM::VLD3d16,
+                              ARM::VLD3d32, ARM::VLD3d64 };
+      unsigned QOpcodes0[] = { ARM::VLD3q8a, ARM::VLD3q16a, ARM::VLD3q32a };
+      unsigned QOpcodes1[] = { ARM::VLD3q8b, ARM::VLD3q16b, ARM::VLD3q32b };
+      return SelectVLD(Op, 3, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vld4: {
-      SDValue MemAddr, MemUpdate, MemOpc;
-      if (!SelectAddrMode6(Op, N->getOperand(2), MemAddr, MemUpdate, MemOpc))
-        return NULL;
-      SDValue Chain = N->getOperand(0);
-      if (VT.is64BitVector()) {
-        switch (VT.getSimpleVT().SimpleTy) {
-        default: llvm_unreachable("unhandled vld4 type");
-        case MVT::v8i8:  Opc = ARM::VLD4d8; break;
-        case MVT::v4i16: Opc = ARM::VLD4d16; break;
-        case MVT::v2f32:
-        case MVT::v2i32: Opc = ARM::VLD4d32; break;
-        case MVT::v1i64: Opc = ARM::VLD4d64; break;
-        }
-        const SDValue Ops[] = { MemAddr, MemUpdate, MemOpc, Chain };
-        std::vector<EVT> ResTys(4, VT);
-        ResTys.push_back(MVT::Other);
-        return CurDAG->getMachineNode(Opc, dl, ResTys, Ops, 4);
-      }
-      // Quad registers are loaded with two separate instructions, where one
-      // loads the even registers and the other loads the odd registers.
-      EVT RegVT;
-      unsigned Opc2 = 0;
-      switch (VT.getSimpleVT().SimpleTy) {
-      default: llvm_unreachable("unhandled vld4 type");
-      case MVT::v16i8:
-        Opc = ARM::VLD4q8a;  Opc2 = ARM::VLD4q8b;  RegVT = MVT::v8i8; break;
-      case MVT::v8i16:
-        Opc = ARM::VLD4q16a; Opc2 = ARM::VLD4q16b; RegVT = MVT::v4i16; break;
-      case MVT::v4f32:
-        Opc = ARM::VLD4q32a; Opc2 = ARM::VLD4q32b; RegVT = MVT::v2f32; break;
-      case MVT::v4i32:
-        Opc = ARM::VLD4q32a; Opc2 = ARM::VLD4q32b; RegVT = MVT::v2i32; break;
-      }
-      // Enable writeback to the address register.
-      MemOpc = CurDAG->getTargetConstant(ARM_AM::getAM6Opc(true), MVT::i32);
-
-      std::vector<EVT> ResTys(4, RegVT);
-      ResTys.push_back(MemAddr.getValueType());
-      ResTys.push_back(MVT::Other);
-
-      const SDValue OpsA[] = { MemAddr, MemUpdate, MemOpc, Chain };
-      SDNode *VLdA = CurDAG->getMachineNode(Opc, dl, ResTys, OpsA, 4);
-      Chain = SDValue(VLdA, 5);
-
-      const SDValue OpsB[] = { SDValue(VLdA, 4), MemUpdate, MemOpc, Chain };
-      SDNode *VLdB = CurDAG->getMachineNode(Opc2, dl, ResTys, OpsB, 4);
-      Chain = SDValue(VLdB, 5);
-
-      SDNode *Q0 = PairDRegs(VT, SDValue(VLdA, 0), SDValue(VLdB, 0));
-      SDNode *Q1 = PairDRegs(VT, SDValue(VLdA, 1), SDValue(VLdB, 1));
-      SDNode *Q2 = PairDRegs(VT, SDValue(VLdA, 2), SDValue(VLdB, 2));
-      SDNode *Q3 = PairDRegs(VT, SDValue(VLdA, 3), SDValue(VLdB, 3));
-      ReplaceUses(SDValue(N, 0), SDValue(Q0, 0));
-      ReplaceUses(SDValue(N, 1), SDValue(Q1, 0));
-      ReplaceUses(SDValue(N, 2), SDValue(Q2, 0));
-      ReplaceUses(SDValue(N, 3), SDValue(Q3, 0));
-      ReplaceUses(SDValue(N, 4), Chain);
-      return NULL;
+      unsigned DOpcodes[] = { ARM::VLD4d8, ARM::VLD4d16,
+                              ARM::VLD4d32, ARM::VLD4d64 };
+      unsigned QOpcodes0[] = { ARM::VLD4q8a, ARM::VLD4q16a, ARM::VLD4q32a };
+      unsigned QOpcodes1[] = { ARM::VLD4q8b, ARM::VLD4q16b, ARM::VLD4q32b };
+      return SelectVLD(Op, 4, DOpcodes, QOpcodes0, QOpcodes1);
     }
 
     case Intrinsic::arm_neon_vld2lane: {
