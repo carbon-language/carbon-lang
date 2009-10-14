@@ -332,6 +332,22 @@ public:
     }
   }
 
+// #define D(X) do { X; } while (0)
+#define D(X)
+
+  void insertVCalls(int InsertionPoint) {
+    llvm::Constant *e = 0;
+    D(VCalls.insert(VCalls.begin(), 673));
+    D(VCalls.push_back(672));
+    methods.insert(methods.begin() + InsertionPoint, VCalls.size()/*+2*/, e);
+    // The vcalls come first...
+    for (std::vector<Index_t>::reverse_iterator i = VCalls.rbegin(),
+           e = VCalls.rend();
+         i != e; ++i)
+      methods[InsertionPoint++] = wrap((0?600:0) + *i);
+    VCalls.clear();
+  }
+
   Index_t end(const CXXRecordDecl *RD, std::vector<llvm::Constant *> &offsets,
               const ASTRecordLayout &Layout,
               const CXXRecordDecl *PrimaryBase,
@@ -341,24 +357,27 @@ public:
     extra = 0;
     // FIXME: Cleanup.
     if (!ForVirtualBase) {
+      D(methods.push_back(wrap(666)));
       // then virtual base offsets...
       for (std::vector<llvm::Constant *>::reverse_iterator i = offsets.rbegin(),
              e = offsets.rend(); i != e; ++i)
         methods.push_back(*i);
+      D(methods.push_back(wrap(667)));
     }
 
-    // The vcalls come first...
-    for (std::vector<Index_t>::reverse_iterator i=VCalls.rbegin(),
-           e=VCalls.rend();
-         i != e; ++i)
-      methods.push_back(wrap((0?600:0) + *i));
-    VCalls.clear();
+    bool DeferVCalls = MorallyVirtual || ForVirtualBase;
+    int VCallInsertionPoint = methods.size();
+    if (!DeferVCalls) {
+      insertVCalls(VCallInsertionPoint);
+    }
 
     if (ForVirtualBase) {
+      D(methods.push_back(wrap(668)));
       // then virtual base offsets...
       for (std::vector<llvm::Constant *>::reverse_iterator i = offsets.rbegin(),
              e = offsets.rend(); i != e; ++i)
         methods.push_back(*i);
+      D(methods.push_back(wrap(669)));
     }
 
     methods.push_back(wrap(-(Offset/8)));
@@ -372,6 +391,14 @@ public:
     // and then the non-virtual bases.
     NonVirtualBases(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual,
                     MorallyVirtual, Offset);
+
+    if (ForVirtualBase) {
+      D(methods.push_back(wrap(670)));
+      insertVCalls(VCallInsertionPoint);
+      AddressPoint += VCalls.size();
+      D(methods.push_back(wrap(671)));
+    }
+    
     return AddressPoint;
   }
 
@@ -450,6 +477,7 @@ public:
         // Mark it so we don't output it twice.
         IndirectPrimary.insert(Base);
         StartNewTable();
+        VCall.clear();
         int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
         GenerateVtableForBase(Base, true, BaseOffset, true, Path);
       }
