@@ -145,7 +145,10 @@ class DbgConcreteScope;
 class VISIBILITY_HIDDEN DbgScope {
   DbgScope *Parent;                   // Parent to this scope.
   DIDescriptor Desc;                  // Debug info descriptor for scope.
-                                      // Either subprogram or block.
+                                      // FIXME use WeakVH for Desc.
+  WeakVH InlinedAt;                   // If this scope represents inlined
+                                      // function body then this is the location
+                                      // where this body is inlined.
   unsigned StartLabelID;              // Label ID of the beginning of scope.
   unsigned EndLabelID;                // Label ID of the end of scope.
   const MachineInstr *LastInsn;       // Last instruction of this scope.
@@ -157,14 +160,17 @@ class VISIBILITY_HIDDEN DbgScope {
   // Private state for dump()
   mutable unsigned IndentLevel;
 public:
-  DbgScope(DbgScope *P, DIDescriptor D)
-    : Parent(P), Desc(D), StartLabelID(0), EndLabelID(0), LastInsn(0),
-      FirstInsn(0), IndentLevel(0) {}
+  DbgScope(DbgScope *P, DIDescriptor D, MDNode *I = 0)
+    : Parent(P), Desc(D), InlinedAt(I), StartLabelID(0), EndLabelID(0), 
+      LastInsn(0), FirstInsn(0), IndentLevel(0) {}
   virtual ~DbgScope();
 
   // Accessors.
   DbgScope *getParent()          const { return Parent; }
   DIDescriptor getDesc()         const { return Desc; }
+  MDNode *getInlinedAt()   const { 
+    return dyn_cast_or_null<MDNode>(InlinedAt); 
+  }
   unsigned getStartLabelID()     const { return StartLabelID; }
   unsigned getEndLabelID()       const { return EndLabelID; }
   SmallVector<DbgScope *, 4> &getScopes() { return Scopes; }
@@ -1296,29 +1302,39 @@ DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
 
 /// getOrCreateScope - Returns the scope associated with the given descriptor.
 ///
-DbgScope *DwarfDebug::getDbgScope(MDNode *N, const MachineInstr *MI) {
+DbgScope *DwarfDebug::getDbgScope(MDNode *N, const MachineInstr *MI,
+                                  MDNode *InlinedAt) {
   DbgScope *&Slot = DbgScopeMap[N];
   if (Slot) return Slot;
 
   DbgScope *Parent = NULL;
 
-  DIDescriptor Scope(N);
-  if (Scope.isCompileUnit()) {
-    return NULL;
-  } else if (Scope.isSubprogram()) {
-    DISubprogram SP(N);
-    DIDescriptor ParentDesc = SP.getContext();
-    if (!ParentDesc.isNull() && !ParentDesc.isCompileUnit())
-      Parent = getDbgScope(ParentDesc.getNode(), MI);
-  } else if (Scope.isLexicalBlock()) {
-    DILexicalBlock DB(N);
-    DIDescriptor ParentDesc = DB.getContext();
-    if (!ParentDesc.isNull())
-      Parent = getDbgScope(ParentDesc.getNode(), MI);
-  } else
-    assert (0 && "Unexpected scope info");
+  if (InlinedAt) {
+    DILocation IL(InlinedAt);
+    assert (!IL.isNull() && "Invalid InlindAt location!");
+    DenseMap<MDNode *, DbgScope *>::iterator DSI = 
+      DbgScopeMap.find(IL.getScope().getNode());
+    assert (DSI != DbgScopeMap.end() && "Unable to find InlineAt scope!");
+    Parent = DSI->second;
+  } else {
+    DIDescriptor Scope(N);
+    if (Scope.isCompileUnit()) {
+      return NULL;
+    } else if (Scope.isSubprogram()) {
+      DISubprogram SP(N);
+      DIDescriptor ParentDesc = SP.getContext();
+      if (!ParentDesc.isNull() && !ParentDesc.isCompileUnit())
+        Parent = getDbgScope(ParentDesc.getNode(), MI, InlinedAt);
+    } else if (Scope.isLexicalBlock()) {
+      DILexicalBlock DB(N);
+      DIDescriptor ParentDesc = DB.getContext();
+      if (!ParentDesc.isNull())
+        Parent = getDbgScope(ParentDesc.getNode(), MI, InlinedAt);
+    } else
+      assert (0 && "Unexpected scope info");
+  }
 
-  Slot = new DbgScope(Parent, DIDescriptor(N));
+  Slot = new DbgScope(Parent, DIDescriptor(N), InlinedAt);
   Slot->setFirstInsn(MI);
 
   if (Parent)
@@ -1795,7 +1811,10 @@ void DwarfDebug::CollectVariableInfo() {
     DIVariable DV (Var);
     if (DV.isNull()) continue;
     unsigned VSlot = VI->second;
-    DbgScope *Scope = getDbgScope(DV.getContext().getNode(),  NULL);
+    DenseMap<MDNode *, DbgScope *>::iterator DSI = 
+      DbgScopeMap.find(DV.getContext().getNode());
+    assert (DSI != DbgScopeMap.end() && "Unable to find variable scope!");
+    DbgScope *Scope = DSI->second;
     Scope->AddVariable(new DbgVariable(DV, VSlot, false));
   }
 }
@@ -1849,7 +1868,7 @@ bool DwarfDebug::ExtractScopeInformation(MachineFunction *MF) {
       // into a scope DIE at the end.
       DIDescriptor D(DLT.Scope);
       if (!D.isCompileUnit()) {
-        DbgScope *Scope = getDbgScope(DLT.Scope, MInsn);
+        DbgScope *Scope = getDbgScope(DLT.Scope, MInsn, DLT.InlinedAtLoc);
         Scope->setLastInsn(MInsn);
       }
     }

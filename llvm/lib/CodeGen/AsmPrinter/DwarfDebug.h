@@ -364,7 +364,7 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// getDbgScope - Returns the scope associated with the given descriptor.
   ///
   DbgScope *getOrCreateScope(MDNode *N);
-  DbgScope *getDbgScope(MDNode *N, const MachineInstr *MI);
+  DbgScope *getDbgScope(MDNode *N, const MachineInstr *MI, MDNode *InlinedAt);
 
   /// ConstructDbgScope - Construct the components of a scope.
   ///
