@@ -166,6 +166,7 @@ TEST_F(JITTest, FarCallToKnownFunction) {
   EXPECT_EQ(8, TestFunctionPtr());
 }
 
+#if !defined(__arm__) && !defined(__ppc__)
 // Test a function C which calls A and B which call each other.
 TEST_F(JITTest, NonLazyCompilationStillNeedsStubs) {
   TheJIT->DisableLazyCompilation();
@@ -220,6 +221,7 @@ TEST_F(JITTest, NonLazyCompilationStillNeedsStubs) {
 
   F1Ptr();
 }
+#endif
 
 // Regression test for PR5162.  This used to trigger an AssertingVH inside the
 // JIT's Function to stub mapping.
