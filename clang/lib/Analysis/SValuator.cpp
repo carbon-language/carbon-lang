@@ -133,18 +133,15 @@ SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
 
     StoreManager &storeMgr = ValMgr.getStateManager().getStoreManager();
 
-    // Delegate to store manager to get the result of casting a region
-    // to a different type.
-    const StoreManager::CastResult& Res = storeMgr.CastRegion(state, R, castTy);
-
-    // Inspect the result.  If the MemRegion* returned is NULL, this
-    // expression evaluates to UnknownVal.
-    R = Res.getRegion();
+    // Delegate to store manager to get the result of casting a region to a
+    // different type.  If the MemRegion* returned is NULL, this expression
+    // evaluates to UnknownVal.
+    R = storeMgr.CastRegion(R, castTy);
 
     if (R)
-      return CastResult(Res.getState(), loc::MemRegionVal(R));
+      return CastResult(state, loc::MemRegionVal(R));
 
-    return CastResult(Res.getState(), UnknownVal());
+    return CastResult(state, UnknownVal());
   }
 
   // All other cases.

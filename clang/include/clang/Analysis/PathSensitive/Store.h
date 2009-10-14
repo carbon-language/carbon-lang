@@ -122,8 +122,7 @@ public:
   /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
   ///  a MemRegion* to a specific location type.  'R' is the region being
   ///  casted and 'CastToTy' the result type of the cast.
-  CastResult CastRegion(const GRState *state, const MemRegion *region,
-                        QualType CastToTy);
+  const MemRegion *CastRegion(const MemRegion *region, QualType CastToTy);
 
   /// EvalBinOp - Perform pointer arithmetic.
   virtual SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,
@@ -173,9 +172,8 @@ public:
   virtual void iterBindings(Store store, BindingsHandler& f) = 0;
 
 protected:
-  CastResult MakeElementRegion(const GRState *state, const MemRegion *region,
-                               QualType pointeeTy, QualType castToTy,
-                               uint64_t index = 0);
+  const MemRegion *MakeElementRegion(const MemRegion *Base,
+                                     QualType pointeeTy, uint64_t index = 0);
 
   /// CastRetrievedVal - Used by subclasses of StoreManager to implement
   ///  implicit casts that arise from loads from regions that are reinterpreted

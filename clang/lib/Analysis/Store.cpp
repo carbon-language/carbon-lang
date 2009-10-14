@@ -20,14 +20,10 @@ StoreManager::StoreManager(GRStateManager &stateMgr)
   : ValMgr(stateMgr.getValueManager()), StateMgr(stateMgr),
     MRMgr(ValMgr.getRegionManager()) {}
 
-StoreManager::CastResult
-StoreManager::MakeElementRegion(const GRState *state, const MemRegion *region,
-                                QualType pointeeTy, QualType castToTy,
-                                uint64_t index) {
-  // Create a new ElementRegion.
+const MemRegion *StoreManager::MakeElementRegion(const MemRegion *Base,
+                                                 QualType EleTy, uint64_t index) {
   SVal idx = ValMgr.makeArrayIndex(index);
-  return CastResult(state, MRMgr.getElementRegion(pointeeTy, idx, region,
-                                                  ValMgr.getContext()));
+  return MRMgr.getElementRegion(EleTy, idx, Base, ValMgr.getContext());
 }
 
 // FIXME: Merge with the implementation of the same method in MemRegion.cpp
@@ -41,15 +37,13 @@ static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
   return true;
 }
 
-StoreManager::CastResult
-StoreManager::CastRegion(const GRState *state, const MemRegion* R,
-                         QualType CastToTy) {
+const MemRegion *StoreManager::CastRegion(const MemRegion *R, QualType CastToTy) {
 
   ASTContext& Ctx = StateMgr.getContext();
 
   // Handle casts to Objective-C objects.
   if (CastToTy->isObjCObjectPointerType())
-    return CastResult(state, R->getBaseRegion());
+    return R->getBaseRegion();
 
   if (CastToTy->isBlockPointerType()) {
     // FIXME: We may need different solutions, depending on the symbol
@@ -57,11 +51,11 @@ StoreManager::CastRegion(const GRState *state, const MemRegion* R,
     // as Objective-C objects.  This could possibly be handled by enhancing
     // our reasoning of downcasts of symbolic objects.
     if (isa<CodeTextRegion>(R) || isa<SymbolicRegion>(R))
-      return CastResult(state, R);
+      return R;
 
     // We don't know what to make of it.  Return a NULL region, which
     // will be interpretted as UnknownVal.
-    return CastResult(state, NULL);
+    return NULL;
   }
 
   // Now assume we are casting from pointer to pointer. Other cases should
@@ -71,14 +65,14 @@ StoreManager::CastRegion(const GRState *state, const MemRegion* R,
 
   // Handle casts to void*.  We just pass the region through.
   if (CanonPointeeTy.getUnqualifiedType() == Ctx.VoidTy)
-    return CastResult(state, R);
+    return R;
 
   // Handle casts from compatible types.
   if (R->isBoundable())
     if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
       QualType ObjTy = Ctx.getCanonicalType(TR->getValueType(Ctx));
       if (CanonPointeeTy == ObjTy)
-        return CastResult(state, R);
+        return R;
     }
 
   // Process region cast according to the kind of the region being cast.
@@ -93,10 +87,10 @@ StoreManager::CastRegion(const GRState *state, const MemRegion* R,
     }
     case MemRegion::CodeTextRegionKind: {
       // CodeTextRegion should be cast to only a function or block pointer type,
-      // although they can in practice be casted to anything, e.g, void*,
-      // char*, etc.
-      // Just pass the region through.
-      break;
+      // although they can in practice be casted to anything, e.g, void*, char*,
+      // etc.  
+      // Just return the region.
+      return R;
     }
 
     case MemRegion::StringRegionKind:
@@ -108,7 +102,7 @@ StoreManager::CastRegion(const GRState *state, const MemRegion* R,
     case MemRegion::FieldRegionKind:
     case MemRegion::ObjCIvarRegionKind:
     case MemRegion::VarRegionKind:
-      return MakeElementRegion(state, R, PointeeTy, CastToTy);
+      return MakeElementRegion(R, PointeeTy);
 
     case MemRegion::ElementRegionKind: {
       // If we are casting from an ElementRegion to another type, the
@@ -137,7 +131,7 @@ StoreManager::CastRegion(const GRState *state, const MemRegion* R,
       // If we cannot compute a raw offset, throw up our hands and return
       // a NULL MemRegion*.
       if (!baseR)
-        return CastResult(state, NULL);
+        return NULL;
 
       int64_t off = rawOff.getByteOffset();
 
@@ -149,11 +143,11 @@ StoreManager::CastRegion(const GRState *state, const MemRegion* R,
           QualType ObjTy = Ctx.getCanonicalType(TR->getValueType(Ctx));
           QualType CanonPointeeTy = Ctx.getCanonicalType(PointeeTy);
           if (CanonPointeeTy == ObjTy)
-            return CastResult(state, baseR);
+            return baseR;
         }
 
         // Otherwise, create a new ElementRegion at offset 0.
-        return MakeElementRegion(state, baseR, PointeeTy, CastToTy, 0);
+        return MakeElementRegion(baseR, PointeeTy);
       }
 
       // We have a non-zero offset from the base region.  We want to determine
@@ -183,15 +177,15 @@ StoreManager::CastRegion(const GRState *state, const MemRegion* R,
       if (!newSuperR) {
         // Create an intermediate ElementRegion to represent the raw byte.
         // This will be the super region of the final ElementRegion.
-        SVal idx = ValMgr.makeArrayIndex(off);
-        newSuperR = MRMgr.getElementRegion(Ctx.CharTy, idx, baseR, Ctx);
+        newSuperR = MakeElementRegion(baseR, Ctx.CharTy, off);
       }
 
-      return MakeElementRegion(state, newSuperR, PointeeTy, CastToTy, newIndex);
+      return MakeElementRegion(newSuperR, PointeeTy, newIndex);
     }
   }
 
-  return CastResult(state, R);
+  assert(0 && "unreachable");
+  return 0;
 }
 
 
