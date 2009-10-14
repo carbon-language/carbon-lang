@@ -500,8 +500,8 @@ namespace llvm {
     /// ComputeOperandLatency - Override dependence edge latency using
     /// operand use/def information
     ///
-    virtual void ComputeOperandLatency(SUnit *Def, SUnit *Use,
-                                       SDep& dep) const { };
+    virtual void ComputeOperandLatency(SUnit *, SUnit *,
+                                       SDep&) const { };
 
     /// Schedule - Order nodes according to selected style, filling
     /// in the Sequence member.

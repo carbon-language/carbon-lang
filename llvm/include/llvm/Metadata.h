@@ -181,7 +181,7 @@ public:
   /// duplicates
   void Profile(FoldingSetNodeID &ID) const;
 
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
+  virtual void replaceUsesOfWithOnConstant(Value *, Value *, Use *) {
     llvm_unreachable("This should never be called because MDNodes have no ops");
   }
 
@@ -291,7 +291,7 @@ public:
     return false;
   }
 
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
+  virtual void replaceUsesOfWithOnConstant(Value *, Value *, Use *) {
     llvm_unreachable(
                 "This should never be called because NamedMDNodes have no ops");
   }
@@ -361,7 +361,7 @@ public:
 
   /// ValueIsDeleted - This handler is used to update metadata store
   /// when a value is deleted.
-  void ValueIsDeleted(const Value *V) {}
+  void ValueIsDeleted(const Value *) {}
   void ValueIsDeleted(const Instruction *Inst) {
     removeMDs(Inst);
   }

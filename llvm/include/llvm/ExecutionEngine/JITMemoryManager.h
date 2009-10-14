@@ -149,7 +149,7 @@ public:
   /// CheckInvariants - For testing only.  Return true if all internal
   /// invariants are preserved, or return false and set ErrorStr to a helpful
   /// error message.
-  virtual bool CheckInvariants(std::string &ErrorStr) {
+  virtual bool CheckInvariants(std::string &) {
     return true;
   }
 

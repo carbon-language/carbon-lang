@@ -57,8 +57,8 @@ public:
   }
 
   static inline bool classof(const Operator *) { return true; }
-  static inline bool classof(const Instruction *I) { return true; }
-  static inline bool classof(const ConstantExpr *I) { return true; }
+  static inline bool classof(const Instruction *) { return true; }
+  static inline bool classof(const ConstantExpr *) { return true; }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) || isa<ConstantExpr>(V);
   }

@@ -660,7 +660,7 @@ template<>
 class parser<std::string> : public basic_parser<std::string> {
 public:
   // parse - Return true on error.
-  bool parse(Option &, StringRef ArgName, StringRef Arg, std::string &Value) {
+  bool parse(Option &, StringRef, StringRef Arg, std::string &Value) {
     Value = Arg.str();
     return false;
   }
@@ -681,7 +681,7 @@ template<>
 class parser<char> : public basic_parser<char> {
 public:
   // parse - Return true on error.
-  bool parse(Option &, StringRef ArgName, StringRef Arg, char &Value) {
+  bool parse(Option &, StringRef, StringRef Arg, char &Value) {
     Value = Arg[0];
     return false;
   }
