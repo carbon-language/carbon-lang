@@ -30,44 +30,6 @@ It also increase the likelyhood the store may become dead.
 
 //===---------------------------------------------------------------------===//
 
-I think we should have a "hasSideEffects" flag (which is automatically set for
-stuff that "isLoad" "isCall" etc), and the remat pass should eventually be able
-to remat any instruction that has no side effects, if it can handle it and if
-profitable.
-
-For now, I'd suggest having the remat stuff work like this:
-
-1. I need to spill/reload this thing.
-2. Check to see if it has side effects.
-3. Check to see if it is simple enough: e.g. it only has one register
-destination and no register input.
-4. If so, clone the instruction, do the xform, etc.
-
-Advantages of this are:
-
-1. the .td file describes the behavior of the instructions, not the way the
-   algorithm should work.
-2. as remat gets smarter in the future, we shouldn't have to be changing the .td
-   files.
-3. it is easier to explain what the flag means in the .td file, because you
-   don't have to pull in the explanation of how the current remat algo works.
-
-Some potential added complexities:
-
-1. Some instructions have to be glued to it's predecessor or successor. All of
-   the PC relative instructions and condition code setting instruction. We could
-   mark them as hasSideEffects, but that's not quite right. PC relative loads
-   from constantpools can be remat'ed, for example. But it requires more than
-   just cloning the instruction. Some instructions can be remat'ed but it
-   expands to more than one instruction. But allocator will have to make a
-   decision.
-
-4. As stated in 3, not as simple as cloning in some cases. The target will have
-   to decide how to remat it. For example, an ARM 2-piece constant generation
-   instruction is remat'ed as a load from constantpool.
-
-//===---------------------------------------------------------------------===//
-
 bb27 ...
         ...
         %reg1037 = ADDri %reg1039, 1
