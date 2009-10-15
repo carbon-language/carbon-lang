@@ -1098,6 +1098,22 @@ CVReturn rdar_7283567_2(CFAllocatorRef allocator, size_t width, size_t height,
 }
 
 //===----------------------------------------------------------------------===//
+// <rdar://problem/7306898> clang thinks [NSCursor dragCopyCursor] returns a
+//                          retained reference
+//===----------------------------------------------------------------------===//
+
+@interface NSCursor : NSObject
++ (NSCursor *)dragCopyCursor;
+@end
+
+void rdar7306898(void) {
+  // 'dragCopyCursor' does not follow Cocoa's fundamental rule.  It is a noun, not an sentence
+  // implying a 'copy' of something.
+  NSCursor *c =  [NSCursor dragCopyCursor]; // no-warning
+  NSNumber *number = [[NSNumber alloc] initWithInt:5]; // expected-warning{{leak}}
+}
+
+//===----------------------------------------------------------------------===//
 // Tests of ownership attributes.
 //===----------------------------------------------------------------------===//
 

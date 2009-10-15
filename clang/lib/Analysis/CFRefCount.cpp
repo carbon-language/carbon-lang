@@ -1009,7 +1009,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
           // Part of <rdar://problem/6961230>. (IOKit)
           // This should be addressed using a API table.
           ScratchArgs = AF.Add(ScratchArgs, 2, DecRef);
-          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
+          S = getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,DoNothing);
         }
         break;
 
@@ -1432,16 +1432,14 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   addNSObjectClsMethSummary(GetUnarySelector("allocWithZone", Ctx), Summ);
 
   // Create the [NSAssertionHandler currentHander] summary.
-  addClsMethSummary(&Ctx.Idents.get("NSAssertionHandler"),
-                GetNullarySelector("currentHandler", Ctx),
+  addClassMethSummary("NSAssertionHandler", "currentHandler",
                 getPersistentSummary(RetEffect::MakeNotOwned(RetEffect::ObjC)));
 
   // Create the [NSAutoreleasePool addObject:] summary.
   ScratchArgs = AF.Add(ScratchArgs, 0, Autorelease);
-  addClsMethSummary(&Ctx.Idents.get("NSAutoreleasePool"),
-                    GetUnarySelector("addObject", Ctx),
-                    getPersistentSummary(RetEffect::MakeNoRet(),
-                                         DoNothing, Autorelease));
+  addClassMethSummary("NSAutoreleasePool", "addObject",
+                      getPersistentSummary(RetEffect::MakeNoRet(),
+                                           DoNothing, Autorelease));
 
   // Create the summaries for [NSObject performSelector...].  We treat
   // these as 'stop tracking' for the arguments because they are often
