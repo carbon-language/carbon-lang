@@ -1006,14 +1006,12 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
                                BBSizes[UserMBB->getNumber()];
   assert(OffsetOfNextBlock== BBOffsets[UserMBB->getNumber()+1]);
 
-  // If the use is at the end of the block, or the end of the block
-  // is within range, make new water there.  (The addition below is
-  // for the unconditional branch we will be adding:  4 bytes on ARM + Thumb2,
-  // 2 on Thumb1.  Possible Thumb1 alignment padding is allowed for
+  // If the block does not end in an unconditional branch already, and if the
+  // end of the block is within range, make new water there.  (The addition
+  // below is for the unconditional branch we will be adding: 4 bytes on ARM +
+  // Thumb2, 2 on Thumb1.  Possible Thumb1 alignment padding is allowed for
   // inside OffsetIsInRange.
-  // If the block ends in an unconditional branch already, it is water,
-  // and is known to be out of range, so we'll always be adding a branch.)
-  if (&UserMBB->back() == UserMI ||
+  if (BBHasFallthrough(UserMBB) &&
       OffsetIsInRange(UserOffset, OffsetOfNextBlock + (isThumb1 ? 2: 4),
                       U.MaxDisp, U.NegOk, U.IsSoImm)) {
     DEBUG(errs() << "Split at end of block\n");
