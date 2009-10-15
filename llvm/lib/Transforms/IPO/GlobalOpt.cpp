@@ -950,12 +950,14 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                                      BitCastInst *BCI,
                                                      LLVMContext &Context,
                                                      TargetData* TD) {
+  DEBUG(errs() << "PROMOTING MALLOC GLOBAL: " << *GV
+               << "  CALL = " << *CI << "  BCI = " << *BCI << '\n');
+
   const Type *IntPtrTy = TD->getIntPtrType(Context);
   
-  DEBUG(errs() << "PROMOTING MALLOC GLOBAL: " << *GV << "  MALLOC = " << *CI);
-
-  ConstantInt *NElements = cast<ConstantInt>(getMallocArraySize(CI,
-                                                                Context, TD));
+  Value* ArraySize = getMallocArraySize(CI, Context, TD);
+  assert(ArraySize && "not a malloc whose array size can be determined");
+  ConstantInt *NElements = cast<ConstantInt>(ArraySize);
   if (NElements->getZExtValue() != 1) {
     // If we have an array allocation, transform it to a single element
     // allocation to make the code below simpler.
@@ -976,9 +978,6 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 
   // Create the new global variable.  The contents of the malloc'd memory is
   // undefined, so initialize with an undef value.
-  // FIXME: This new global should have the alignment returned by malloc.  Code
-  // could depend on malloc returning large alignment (on the mac, 16 bytes) but
-  // this would only guarantee some lower alignment.
   const Type *MAT = getMallocAllocatedType(CI);
   Constant *Init = UndefValue::get(MAT);
   GlobalVariable *NewGV = new GlobalVariable(*GV->getParent(), 
@@ -1892,16 +1891,17 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
   // transform the program to use global memory instead of malloc'd memory.
   // This eliminates dynamic allocation, avoids an indirection accessing the
   // data, and exposes the resultant global to further GlobalOpt.
-  if (ConstantInt *NElements =
-              dyn_cast<ConstantInt>(getMallocArraySize(CI, Context, TD))) {
-    // Restrict this transformation to only working on small allocations
-    // (2048 bytes currently), as we don't want to introduce a 16M global or
-    // something.
-    if (TD && 
-        NElements->getZExtValue() * TD->getTypeAllocSize(AllocTy) < 2048) {
-      GVI = OptimizeGlobalAddressOfMalloc(GV, CI, BCI, Context, TD);
-      return true;
-    }
+  Value *NElems = getMallocArraySize(CI, Context, TD);
+  if (NElems) {
+    if (ConstantInt *NElements = dyn_cast<ConstantInt>(NElems))
+      // Restrict this transformation to only working on small allocations
+      // (2048 bytes currently), as we don't want to introduce a 16M global or
+      // something.
+      if (TD && 
+          NElements->getZExtValue() * TD->getTypeAllocSize(AllocTy) < 2048) {
+        GVI = OptimizeGlobalAddressOfMalloc(GV, CI, BCI, Context, TD);
+        return true;
+      }
   }
   
   // If the allocation is an array of structures, consider transforming this
