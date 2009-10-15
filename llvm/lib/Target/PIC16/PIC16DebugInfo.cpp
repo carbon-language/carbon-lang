@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PIC16.h"
+#include "PIC16ABINames.h"
 #include "PIC16DebugInfo.h" 
 #include "llvm/GlobalVariable.h"
 #include "llvm/CodeGen/MachineFunction.h"

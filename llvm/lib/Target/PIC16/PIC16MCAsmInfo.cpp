@@ -16,6 +16,7 @@
 // FIXME: Layering violation to get enums and static function, should be moved
 // to separate headers.
 #include "PIC16.h"
+#include "PIC16ABINames.h"
 #include "PIC16ISelLowering.h"
 using namespace llvm;
 

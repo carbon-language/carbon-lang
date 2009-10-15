@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pic16-lower"
+#include "PIC16ABINames.h"
 #include "PIC16ISelLowering.h"
 #include "PIC16TargetObjectFile.h"
 #include "PIC16TargetMachine.h"

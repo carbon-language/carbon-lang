@@ -10,6 +10,8 @@
 #ifndef LLVM_TARGET_PIC16_TARGETOBJECTFILE_H
 #define LLVM_TARGET_PIC16_TARGETOBJECTFILE_H
 
+#include "PIC16.h"
+#include "PIC16ABINames.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/ADT/StringMap.h"
 #include <vector>
@@ -19,7 +21,7 @@ namespace llvm {
   class GlobalVariable;
   class Module;
   class PIC16TargetMachine;
-  class MCSectionPIC16;
+  class PIC16Section;
   
   enum { DataBankSize = 80 };
 
@@ -29,91 +31,124 @@ namespace llvm {
   /// again and printing only those that match the current section. 
   /// Keeping values inside the sections make printing a section much easier.
   ///
-  /// FIXME: MOVE ALL THIS STUFF TO MCSectionPIC16.
+  /// FIXME: MOVE ALL THIS STUFF TO PIC16Section.
   ///
-  struct PIC16Section {
-    const MCSectionPIC16 *S_; // Connection to actual Section.
-    unsigned Size;  // Total size of the objects contained.
-    bool SectionPrinted;
-    std::vector<const GlobalVariable*> Items;
-    
-    PIC16Section(const MCSectionPIC16 *s) {
-      S_ = s;
-      Size = 0;
-      SectionPrinted = false;
-    }
-    bool isPrinted() const { return SectionPrinted; }
-    void setPrintedStatus(bool status) { SectionPrinted = status; } 
-  };
-  
+
+  /// PIC16TargetObjectFile - PIC16 Object file. Contains data and code
+  /// sections. 
+  // PIC16 Object File has two types of sections.
+  // 1. Standard Sections
+  //    1.1 un-initialized global data 
+  //    1.2 initialized global data
+  //    1.3 program memory data
+  //    1.4 local variables of functions.
+  // 2. User defined sections
+  //    2.1 Objects placed in a specific section. (By _Section() macro)
+  //    2.2 Objects placed at a specific address. (By _Address() macro)
   class PIC16TargetObjectFile : public TargetLoweringObjectFile {
     /// SectionsByName - Bindings of names to allocated sections.
-    mutable StringMap<MCSectionPIC16*> SectionsByName;
+    mutable StringMap<PIC16Section*> SectionsByName;
 
     const TargetMachine *TM;
     
-    const MCSectionPIC16 *getPIC16Section(const char *Name,
-                                          SectionKind K, 
-                                          int Address = -1, 
-                                          int Color = -1) const;
-  public:
-    mutable std::vector<PIC16Section*> BSSSections;
-    mutable std::vector<PIC16Section*> IDATASections;
-    mutable std::vector<PIC16Section*> AutosSections;
-    mutable std::vector<PIC16Section*> ROSections;
-    mutable PIC16Section *ExternalVarDecls;
-    mutable PIC16Section *ExternalVarDefs;
+    /// Lists of sections.
+    /// Standard Data Sections.
+    mutable std::vector<PIC16Section *> UDATASections_;
+    mutable std::vector<PIC16Section *> IDATASections_;
+    mutable PIC16Section * ROMDATASection_;
 
+    /// Standard Auto Sections.
+    mutable std::vector<PIC16Section *> AUTOSections_;
+ 
+    /// User specified sections.
+    mutable std::vector<PIC16Section *> USERSections_;
+
+    
+    /// Find or Create a PIC16 Section, without adding it to any
+    /// section list.
+    PIC16Section *getPIC16Section(const std::string &Name,
+                                   PIC16SectionType Ty, 
+                                   const std::string &Address = "", 
+                                   int Color = -1) const;
+
+    /// Convenience functions. These wrappers also take care of adding 
+    /// the newly created section to the appropriate sections list.
+
+    /// Find or Create PIC16 Standard Data Section.
+    PIC16Section *getPIC16DataSection(const std::string &Name,
+                                       PIC16SectionType Ty, 
+                                       const std::string &Address = "", 
+                                       int Color = -1) const;
+
+    /// Find or Create PIC16 Standard Auto Section.
+    PIC16Section *getPIC16AutoSection(const std::string &Name,
+                                       PIC16SectionType Ty = UDATA_OVR,
+                                       const std::string &Address = "", 
+                                       int Color = -1) const;
+
+    /// Find or Create PIC16 Standard Auto Section.
+    PIC16Section *getPIC16UserSection(const std::string &Name,
+                                       PIC16SectionType Ty, 
+                                       const std::string &Address = "", 
+                                       int Color = -1) const;
+
+    /// Allocate Un-initialized data to a standard UDATA section. 
+    const MCSection *allocateUDATA(const GlobalVariable *GV) const;
+
+    /// Allocate Initialized data to a standard IDATA section. 
+    const MCSection *allocateIDATA(const GlobalVariable *GV) const;
+
+    /// Allocate ROM data to the standard ROMDATA section. 
+    const MCSection *allocateROMDATA(const GlobalVariable *GV) const;
+
+    /// Allocate an AUTO variable to an AUTO section.
+    const MCSection *allocateAUTO(const GlobalVariable *GV) const;
+    
+    /// Allocate DATA in user specified section.
+    const MCSection *allocateInGivenSection(const GlobalVariable *GV) const;
+
+    /// Allocate DATA at user specified address.
+    const MCSection *allocateAtGivenAddress(const GlobalVariable *GV,
+                                            const std::string &Addr) const;
+   
+    public:
     PIC16TargetObjectFile();
     ~PIC16TargetObjectFile();
-    
     void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
-    
+    /// Override section allocations for user specified sections.
     virtual const MCSection *
     getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
                              Mangler *Mang, const TargetMachine &TM) const;
     
+    /// Select sections for Data and Auto variables(globals).
     virtual const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
                                                     SectionKind Kind,
                                                     Mangler *Mang,
                                                     const TargetMachine&) const;
 
-    const MCSection *getSectionForFunction(const std::string &FnName) const;
-    const MCSection *getSectionForFunctionFrame(const std::string &FnName)const;
-    
-    
-  private:
-    std::string getSectionNameForSym(const std::string &Sym) const;
+    /// Return a code section for a function.
+    const PIC16Section *SectionForCode (const std::string &FnName) const;
 
-    const MCSection *getBSSSectionForGlobal(const GlobalVariable *GV) const;
-    const MCSection *getIDATASectionForGlobal(const GlobalVariable *GV) const;
-    const MCSection *getSectionForAuto(const GlobalVariable *GV) const;
-    const MCSection *CreateBSSSectionForGlobal(const GlobalVariable *GV,
-                                               std::string Addr = "") const;
-    const MCSection *CreateIDATASectionForGlobal(const GlobalVariable *GV,
-                                                 std::string Addr = "") const;
-    const MCSection *getROSectionForGlobal(const GlobalVariable *GV) const;
-    const MCSection *CreateROSectionForGlobal(const GlobalVariable *GV,
-                                              std::string Addr = "") const;
-    const MCSection *CreateSectionForGlobal(const GlobalVariable *GV,
-                                            Mangler *Mang,
-                                            const std::string &Addr = "") const;
-  public:
-    void SetSectionForGVs(Module &M);
-    const std::vector<PIC16Section*> &getBSSSections() const {
-      return BSSSections;
+    /// Return a frame section for a function.
+    const PIC16Section *SectionForFrame (const std::string &FnName) const;
+
+    /// Accessors for various section lists.
+    const std::vector<PIC16Section *> &UDATASections() const {
+      return UDATASections_;
     }
-    const std::vector<PIC16Section*> &getIDATASections() const {
-      return IDATASections;
+    const std::vector<PIC16Section *> &IDATASections() const {
+      return IDATASections_;
     }
-    const std::vector<PIC16Section*> &getAutosSections() const {
-      return AutosSections;
+    const PIC16Section *ROMDATASection() const {
+      return ROMDATASection_;
     }
-    const std::vector<PIC16Section*> &getROSections() const {
-      return ROSections;
+    const std::vector<PIC16Section *> &AUTOSections() const {
+      return AUTOSections_;
     }
-    
+    const std::vector<PIC16Section *> &USERSections() const {
+      return USERSections_;
+    }
   };
 } // end namespace llvm
 
