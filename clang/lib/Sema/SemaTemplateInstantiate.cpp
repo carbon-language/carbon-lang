@@ -1014,7 +1014,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
               TSK_ExplicitSpecialization)
           continue;
         
-        Function->setTemplateSpecializationKind(TSK);
+        Function->setTemplateSpecializationKind(TSK, PointOfInstantiation);
       }
       
       if (!Function->getBody() && TSK == TSK_ExplicitInstantiationDefinition)
@@ -1025,7 +1025,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
         if (Var->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
           continue;
         
-        Var->setTemplateSpecializationKind(TSK);
+        Var->setTemplateSpecializationKind(TSK, PointOfInstantiation);
         
         if (TSK == TSK_ExplicitInstantiationDefinition)
           InstantiateStaticDataMemberDefinition(PointOfInstantiation, Var);
