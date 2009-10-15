@@ -1,4 +1,11 @@
-; RUN: llc < %s -mtriple=i386-apple-darwin | grep align | count 1
+; RUN: llc < %s -mtriple=i386-apple-darwin | FileCheck %s
+
+; CodeGen should align the top of the loop, which differs from the loop
+; header in this case.
+
+; CHECK: jmp LBB1_2
+; CHECK: .align
+; CHECK: LBB1_1:
 
 @A = common global [100 x i32] zeroinitializer, align 32		; <[100 x i32]*> [#uses=1]
 

@@ -24,7 +24,7 @@
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
-STATISTIC(NumHeaderAligned, "Number of loop header aligned");
+STATISTIC(NumLoopsAligned,  "Number of loops aligned");
 STATISTIC(NumIntraElim,     "Number of intra loop branches eliminated");
 STATISTIC(NumIntraMoved,    "Number of intra loop branches moved");
 
@@ -41,9 +41,6 @@ namespace {
     /// unconditional branches.
     SmallVector<std::pair<MachineBasicBlock*,MachineBasicBlock*>, 4>
     UncondJmpMBBs;
-
-    /// LoopHeaders - A list of BBs which are loop headers.
-    SmallVector<MachineBasicBlock*, 4> LoopHeaders;
 
   public:
     static char ID;
@@ -62,9 +59,8 @@ namespace {
 
   private:
     bool OptimizeIntraLoopEdges();
-    bool HeaderShouldBeAligned(MachineBasicBlock *MBB, MachineLoop *L,
-                               SmallPtrSet<MachineBasicBlock*, 4> &DoNotAlign);
     bool AlignLoops(MachineFunction &MF);
+    bool AlignLoop(MachineFunction &MF, MachineLoop *L, unsigned Align);
   };
 
   char CodePlacementOpt::ID = 0;
@@ -233,55 +229,10 @@ bool CodePlacementOpt::OptimizeIntraLoopEdges() {
       ChangedMBBs.insert(FtMBB);
     }
     Changed = true;
-
-    // If BB is the loop latch, we may have a new loop headr.
-    if (MBB == L->getLoopLatch()) {
-      assert(MLI->isLoopHeader(SuccMBB) &&
-             "Only succ of loop latch is not the header?");
-      if (HasOneIntraSucc && IntraSucc)
-        std::replace(LoopHeaders.begin(),LoopHeaders.end(), SuccMBB, IntraSucc);
-    }
   }
 
   ++NumIntraMoved;
   return Changed;
-}
-
-/// HeaderShouldBeAligned - Return true if the specified loop header block
-/// should be aligned. For now, we will not align it if all the predcessors
-/// (i.e. loop back edges) are laid out above the header. FIXME: Do not
-/// align small loops.
-bool
-CodePlacementOpt::HeaderShouldBeAligned(MachineBasicBlock *MBB, MachineLoop *L,
-                               SmallPtrSet<MachineBasicBlock*, 4> &DoNotAlign) {
-  if (DoNotAlign.count(MBB))
-    return false;
-
-  bool BackEdgeBelow = false;
-  for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
-         PE = MBB->pred_end(); PI != PE; ++PI) {
-    MachineBasicBlock *PredMBB = *PI;
-    if (PredMBB == MBB || PredMBB->getNumber() > MBB->getNumber()) {
-      BackEdgeBelow = true;
-      break;
-    }
-  }
-
-  if (!BackEdgeBelow)
-    return false;
-
-  // Ok, we are going to align this loop header. If it's an inner loop,
-  // do not align its outer loop.
-  MachineBasicBlock *PreHeader = L->getLoopPreheader();
-  if (PreHeader) {
-    MachineLoop *L = MLI->getLoopFor(PreHeader);
-    if (L) {
-      MachineBasicBlock *HeaderBlock = L->getHeader();
-      HeaderBlock->setAlignment(0);
-      DoNotAlign.insert(HeaderBlock);
-    }
-  }
-  return true;
 }
 
 /// AlignLoops - Align loop headers to target preferred alignments.
@@ -295,25 +246,36 @@ bool CodePlacementOpt::AlignLoops(MachineFunction &MF) {
   if (!Align)
     return false;  // Don't care about loop alignment.
 
-  // Make sure blocks are numbered in order
-  MF.RenumberBlocks();
-
   bool Changed = false;
-  SmallPtrSet<MachineBasicBlock*, 4> DoNotAlign;
-  for (unsigned i = 0, e = LoopHeaders.size(); i != e; ++i) {
-    MachineBasicBlock *HeaderMBB = LoopHeaders[i];
-    MachineBasicBlock *PredMBB = prior(MachineFunction::iterator(HeaderMBB));
-    MachineLoop *L = MLI->getLoopFor(HeaderMBB);
-    if (L == MLI->getLoopFor(PredMBB))
-      // If previously BB is in the same loop, don't align this BB. We want
-      // to prevent adding noop's inside a loop.
-      continue;
-    if (HeaderShouldBeAligned(HeaderMBB, L, DoNotAlign)) {
-      HeaderMBB->setAlignment(Align);
-      Changed = true;
-      ++NumHeaderAligned;
-    }
+
+  for (MachineLoopInfo::iterator I = MLI->begin(), E = MLI->end();
+       I != E; ++I)
+    Changed |= AlignLoop(MF, *I, Align);
+
+  return Changed;
+}
+
+bool CodePlacementOpt::AlignLoop(MachineFunction &MF, MachineLoop *L,
+                                 unsigned Align) {
+  bool Changed = false;
+
+  // Do alignment for nested loops.
+  for (MachineLoop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+    Changed |= AlignLoop(MF, *I, Align);
+
+  MachineBasicBlock *TopMBB = L->getHeader();
+  if (TopMBB == MF.begin()) return Changed;
+
+  MachineBasicBlock *PredMBB = prior(MachineFunction::iterator(TopMBB));
+  while (MLI->getLoopFor(PredMBB) == L) {
+    TopMBB = PredMBB;
+    if (TopMBB == MF.begin()) return Changed;
+    PredMBB = prior(MachineFunction::iterator(TopMBB));
   }
+
+  TopMBB->setAlignment(Align);
+  Changed = true;
+  ++NumLoopsAligned;
 
   return Changed;
 }
@@ -326,7 +288,7 @@ bool CodePlacementOpt::runOnMachineFunction(MachineFunction &MF) {
   TLI = MF.getTarget().getTargetLowering();
   TII = MF.getTarget().getInstrInfo();
 
-  // Analyze the BBs first and keep track of loop headers and BBs that
+  // Analyze the BBs first and keep track of BBs that
   // end with an unconditional jmp to another block in the same loop.
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *MBB = I;
@@ -335,8 +297,6 @@ bool CodePlacementOpt::runOnMachineFunction(MachineFunction &MF) {
     MachineLoop *L = MLI->getLoopFor(MBB);
     if (!L)
       continue;
-    if (MLI->isLoopHeader(MBB))
-      LoopHeaders.push_back(MBB);
 
     MachineBasicBlock *TBB = 0, *FBB = 0;
     SmallVector<MachineOperand, 4> Cond;
@@ -352,7 +312,6 @@ bool CodePlacementOpt::runOnMachineFunction(MachineFunction &MF) {
 
   ChangedMBBs.clear();
   UncondJmpMBBs.clear();
-  LoopHeaders.clear();
 
   return Changed;
 }
