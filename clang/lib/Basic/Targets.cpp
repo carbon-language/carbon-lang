@@ -1573,8 +1573,8 @@ namespace {
     }
     virtual bool validateAsmConstraint(const char *&Name,
                                        TargetInfo::ConstraintInfo &info) const {
-      // FIXME: implement
-      return true;
+      // No target constraints for now.
+      return false;
     }
     virtual const char *getClobbers() const {
       // FIXME: Is this really right?
