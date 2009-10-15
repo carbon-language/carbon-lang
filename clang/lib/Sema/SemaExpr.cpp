@@ -2917,15 +2917,18 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       if (BO->getOpcode() == BinaryOperator::PtrMemD ||
           BO->getOpcode() == BinaryOperator::PtrMemI) {
         const FunctionProtoType *FPT = cast<FunctionProtoType>(BO->getType());
-        QualType ReturnTy = FPT->getResultType();
+        QualType ResultTy = FPT->getResultType().getNonReferenceType();
       
-        CXXMemberCallExpr *CE = 
-          new (Context) CXXMemberCallExpr(Context, BO, Args, NumArgs,
-                                          ReturnTy.getNonReferenceType(),
-                                          RParenLoc);
+        ExprOwningPtr<CXXMemberCallExpr> 
+          TheCall(this, new (Context) CXXMemberCallExpr(Context, BO, Args, 
+                                                        NumArgs, ResultTy,
+                                                        RParenLoc));
         
-        ExprOwningPtr<CXXMemberCallExpr> TheCall(this, CE);
-        
+        if (CheckCallReturnType(FPT->getResultType(), 
+                                BO->getRHS()->getSourceRange().getBegin(), 
+                                TheCall.get(), 0))
+          return ExprError();
+
         if (ConvertArgumentsForCall(&*TheCall, BO, 0, FPT, Args, NumArgs, 
                                     RParenLoc))
           return ExprError();

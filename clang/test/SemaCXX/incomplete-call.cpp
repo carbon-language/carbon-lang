@@ -1,5 +1,5 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-struct A; // expected-note 13 {{forward declaration of 'struct A'}}
+struct A; // expected-note 14 {{forward declaration of 'struct A'}}
 
 A f(); // expected-note {{note: 'f' declared here}}
 
@@ -35,4 +35,8 @@ void g() {
   b[0]; // expected-error {{calling 'operator[]' with incomplete return type 'struct A'}}
   b + 1; // expected-error {{calling 'operator+' with incomplete return type 'struct A'}}
   b->f(); // expected-error {{calling 'operator->' with incomplete return type 'struct A'}}
+  
+  A (B::*mfp)() = 0;
+  (b.*mfp)(); // expected-error {{calling function with incomplete return type 'struct A'}}
+  
 }
