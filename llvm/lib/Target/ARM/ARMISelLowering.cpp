@@ -2695,18 +2695,10 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   SDValue Vec = Op.getOperand(0);
   SDValue Lane = Op.getOperand(1);
-
-  // FIXME: This is invalid for 8 and 16-bit elements - the information about
-  // sign / zero extension is lost!
-  Op = DAG.getNode(ARMISD::VGETLANEu, dl, MVT::i32, Vec, Lane);
-  Op = DAG.getNode(ISD::AssertZext, dl, MVT::i32, Op, DAG.getValueType(VT));
-
-  if (VT.bitsLT(MVT::i32))
-    Op = DAG.getNode(ISD::TRUNCATE, dl, VT, Op);
-  else if (VT.bitsGT(MVT::i32))
-    Op = DAG.getNode(ISD::ANY_EXTEND, dl, VT, Op);
-
-  return Op;
+  assert(VT == MVT::i32 &&
+         Vec.getValueType().getVectorElementType().getSizeInBits() < 32 &&
+         "unexpected type for custom-lowering vector extract");
+  return DAG.getNode(ARMISD::VGETLANEu, dl, MVT::i32, Vec, Lane);
 }
 
 static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
