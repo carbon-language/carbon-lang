@@ -604,7 +604,8 @@ public:
   
   /// \brief For a static data member that was instantiated from a static
   /// data member of a class template, set the template specialiation kind.
-  void setTemplateSpecializationKind(TemplateSpecializationKind TSK);
+  void setTemplateSpecializationKind(TemplateSpecializationKind TSK,
+                        SourceLocation PointOfInstantiation = SourceLocation());
   
   /// isFileVarDecl - Returns true for file scoped variable declaration.
   bool isFileVarDecl() const {
@@ -1170,7 +1171,16 @@ public:
 
   /// \brief Determine what kind of template instantiation this function
   /// represents.
-  void setTemplateSpecializationKind(TemplateSpecializationKind TSK);
+  void setTemplateSpecializationKind(TemplateSpecializationKind TSK,
+                        SourceLocation PointOfInstantiation = SourceLocation());
+
+  /// \brief Retrieve the (first) point of instantiation of a function template
+  /// specialization or a member of a class template specialization.
+  ///
+  /// \returns the first point of instantiation, if this function was 
+  /// instantiated from a template; otherwie, returns an invalid source 
+  /// location.
+  SourceLocation getPointOfInstantiation() const;
 
   /// \brief Determine whether this is or was instantiated from an out-of-line 
   /// definition of a member function.

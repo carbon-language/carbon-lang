@@ -408,10 +408,15 @@ MemberSpecializationInfo *VarDecl::getMemberSpecializationInfo() const {
   return getASTContext().getInstantiatedFromStaticDataMember(this);
 }
 
-void VarDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
+void VarDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK,
+                                         SourceLocation PointOfInstantiation) {
   MemberSpecializationInfo *MSI = getMemberSpecializationInfo();
   assert(MSI && "Not an instantiated static data member?");
   MSI->setTemplateSpecializationKind(TSK);
+  if (TSK != TSK_ExplicitSpecialization &&
+      PointOfInstantiation.isValid() &&
+      MSI->getPointOfInstantiation().isInvalid())
+    MSI->setPointOfInstantiation(PointOfInstantiation);
 }
 
 bool VarDecl::isTentativeDefinition(ASTContext &Context) const {
@@ -812,16 +817,37 @@ TemplateSpecializationKind FunctionDecl::getTemplateSpecializationKind() const {
 }
 
 void
-FunctionDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
+FunctionDecl::setTemplateSpecializationKind(TemplateSpecializationKind TSK,
+                                          SourceLocation PointOfInstantiation) {
+  if (FunctionTemplateSpecializationInfo *FTSInfo
+        = TemplateOrSpecialization.dyn_cast<
+                                    FunctionTemplateSpecializationInfo*>()) {
+    FTSInfo->setTemplateSpecializationKind(TSK);
+    if (TSK != TSK_ExplicitSpecialization &&
+        PointOfInstantiation.isValid() &&
+        FTSInfo->getPointOfInstantiation().isInvalid())
+      FTSInfo->setPointOfInstantiation(PointOfInstantiation);
+  } else if (MemberSpecializationInfo *MSInfo
+             = TemplateOrSpecialization.dyn_cast<MemberSpecializationInfo*>()) {
+    MSInfo->setTemplateSpecializationKind(TSK);
+    if (TSK != TSK_ExplicitSpecialization &&
+        PointOfInstantiation.isValid() &&
+        MSInfo->getPointOfInstantiation().isInvalid())
+      MSInfo->setPointOfInstantiation(PointOfInstantiation);
+  } else
+    assert(false && "Function cannot have a template specialization kind");
+}
+
+SourceLocation FunctionDecl::getPointOfInstantiation() const {
   if (FunctionTemplateSpecializationInfo *FTSInfo
         = TemplateOrSpecialization.dyn_cast<
                                         FunctionTemplateSpecializationInfo*>())
-    FTSInfo->setTemplateSpecializationKind(TSK);
+    return FTSInfo->getPointOfInstantiation();
   else if (MemberSpecializationInfo *MSInfo
              = TemplateOrSpecialization.dyn_cast<MemberSpecializationInfo*>())
-    MSInfo->setTemplateSpecializationKind(TSK);
-  else
-    assert(false && "Function cannot have a template specialization kind");
+    return MSInfo->getPointOfInstantiation();
+  
+  return SourceLocation();
 }
 
 bool FunctionDecl::isOutOfLine() const {

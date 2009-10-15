@@ -3980,7 +3980,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
       return DeclPtrTy();
     
     // Instantiate static data member.
-    Prev->setTemplateSpecializationKind(TSK);
+    Prev->setTemplateSpecializationKind(TSK, D.getIdentifierLoc());
     if (TSK == TSK_ExplicitInstantiationDefinition)
       InstantiateStaticDataMemberDefinition(D.getIdentifierLoc(), Prev, false,
                                             /*DefinitionRequired=*/true);
@@ -4054,9 +4054,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   if (!Specialization)
     return true;
   
-  // FIXME: Use CheckSpecializationInstantiationRedecl
-  switch (Specialization->getTemplateSpecializationKind()) {
-  case TSK_Undeclared:
+  if (Specialization->getTemplateSpecializationKind() == TSK_Undeclared) {
     Diag(D.getIdentifierLoc(), 
          diag::err_explicit_instantiation_member_function_not_instantiated)
       << Specialization
@@ -4064,35 +4062,30 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
           TSK_ExplicitSpecialization);
     Diag(Specialization->getLocation(), diag::note_explicit_instantiation_here);
     return true;
-
-  case TSK_ExplicitSpecialization:
-    // C++ [temp.explicit]p4:
-    //   For a given set of template parameters, if an explicit instantiation
-    //   of a template appears after a declaration of an explicit 
-    //   specialization for that template, the explicit instantiation has no 
-    //   effect.
-    break;      
-
-  case TSK_ExplicitInstantiationDefinition:
-    // FIXME: Check that we aren't trying to perform an explicit instantiation
-    // declaration now.
-    // Fall through
-      
-  case TSK_ImplicitInstantiation:
-  case TSK_ExplicitInstantiationDeclaration:
-    // Instantiate the function, if this is an explicit instantiation 
-    // definition.
-    if (TSK == TSK_ExplicitInstantiationDefinition)
-      InstantiateFunctionDefinition(D.getIdentifierLoc(), Specialization, 
-                                    false, /*DefinitionRequired=*/true);
-      
-    Specialization->setTemplateSpecializationKind(TSK);
-    break;
-  }
-
-  // Check the scope of this explicit instantiation.
-  FunctionTemplateDecl *FunTmpl = Specialization->getPrimaryTemplate();
+  } 
   
+  FunctionDecl *PrevDecl = Specialization->getPreviousDeclaration();
+  if (PrevDecl) {
+    bool SuppressNew = false;
+    if (CheckSpecializationInstantiationRedecl(*this, D.getIdentifierLoc(), TSK,
+                                               PrevDecl, 
+                                     PrevDecl->getTemplateSpecializationKind(), 
+                                          PrevDecl->getPointOfInstantiation(),
+                                               SuppressNew))
+      return true;
+    
+    // FIXME: We may still want to build some representation of this
+    // explicit specialization.
+    if (SuppressNew)
+      return DeclPtrTy();
+  }
+  
+  if (TSK == TSK_ExplicitInstantiationDefinition)
+    InstantiateFunctionDefinition(D.getIdentifierLoc(), Specialization, 
+                                  false, /*DefinitionRequired=*/true);
+      
+  Specialization->setTemplateSpecializationKind(TSK, D.getIdentifierLoc());
+ 
   // C++0x [temp.explicit]p2:
   //   If the explicit instantiation is for a member function, a member class 
   //   or a static data member of a class template specialization, the name of
@@ -4100,6 +4093,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   //   name shall be a simple-template-id.
   //
   // C++98 has the same restriction, just worded differently.
+  FunctionTemplateDecl *FunTmpl = Specialization->getPrimaryTemplate();
   if (D.getKind() != Declarator::DK_TemplateId && !FunTmpl &&
       D.getCXXScopeSpec().isSet() && 
       !ScopeSpecifierHasTemplateId(D.getCXXScopeSpec()))
