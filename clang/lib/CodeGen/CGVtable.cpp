@@ -56,6 +56,8 @@ private:
   const bool Extern;
   const uint32_t LLVMPointerWidth;
   Index_t extra;
+  int CurrentVBaseOffset;
+  typedef std::vector<std::pair<const CXXRecordDecl *, int64_t> > Path_t;
 public:
   VtableBuilder(std::vector<llvm::Constant *> &meth,
                 const CXXRecordDecl *c,
@@ -63,7 +65,8 @@ public:
     : methods(meth), Class(c), BLayout(cgm.getContext().getASTRecordLayout(c)),
       rtti(cgm.GenerateRtti(c)), VMContext(cgm.getModule().getContext()),
       CGM(cgm), Extern(true),
-      LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)) {
+      LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)),
+      CurrentVBaseOffset(0) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
   }
 
@@ -187,7 +190,10 @@ public:
           VCall[MD] = idx;
           CallOffset ThisOffset;
           // FIXME: calculate non-virtual offset
-          ThisOffset = std::make_pair(0, -((idx+extra+2)*LLVMPointerWidth/8));
+          ThisOffset = std::make_pair(0 /* -CurrentVBaseOffset/8 + Offset/8 */,
+                                      -((idx+extra+2)*LLVMPointerWidth/8));
+          // FIXME: Do we always have to build a covariant thunk to save oret,
+          // which is the containing virtual base class?
           if (ReturnOffset.first || ReturnOffset.second)
             CovariantThunks[MD] = std::make_pair(std::make_pair(ThisOffset,
                                                                 ReturnOffset),
@@ -199,6 +205,7 @@ public:
 
         // FIXME: finish off
         int64_t O = VCallOffset[OMD] - Offset/8;
+        // int64_t O = CurrentVBaseOffset/8 - Offset/8;
         if (O || ReturnOffset.first || ReturnOffset.second) {
           CallOffset ThisOffset = std::make_pair(O, 0);
           
@@ -241,10 +248,8 @@ public:
     CovariantThunks.clear();
   }
 
-  void OverrideMethods(std::vector<std::pair<const CXXRecordDecl *,
-                       int64_t> > *Path, bool MorallyVirtual) {
-      for (std::vector<std::pair<const CXXRecordDecl *,
-             int64_t> >::reverse_iterator i =Path->rbegin(),
+  void OverrideMethods(Path_t *Path, bool MorallyVirtual) {
+    for (Path_t::reverse_iterator i = Path->rbegin(),
            e = Path->rend(); i != e; ++i) {
       const CXXRecordDecl *RD = i->first;
       int64_t Offset = i->second;
@@ -314,7 +319,8 @@ public:
   void NonVirtualBases(const CXXRecordDecl *RD, const ASTRecordLayout &Layout,
                        const CXXRecordDecl *PrimaryBase,
                        bool PrimaryBaseWasVirtual, bool MorallyVirtual,
-                       int64_t Offset) {
+                       int64_t Offset, Path_t *Path) {
+    Path->push_back(std::make_pair(RD, Offset));
     for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
            e = RD->bases_end(); i != e; ++i) {
       if (i->isVirtual())
@@ -324,12 +330,11 @@ public:
       if (Base != PrimaryBase || PrimaryBaseWasVirtual) {
         uint64_t o = Offset + Layout.getBaseClassOffset(Base);
         StartNewTable();
-        std::vector<std::pair<const CXXRecordDecl *,
-          int64_t> > S;
-        S.push_back(std::make_pair(RD, Offset));
-        GenerateVtableForBase(Base, MorallyVirtual, o, false, &S);
+        CurrentVBaseOffset = Offset;
+        GenerateVtableForBase(Base, MorallyVirtual, o, false, Path);
       }
     }
+    Path->pop_back();
   }
 
 // #define D(X) do { X; } while (0)
@@ -352,7 +357,13 @@ public:
               const ASTRecordLayout &Layout,
               const CXXRecordDecl *PrimaryBase,
               bool PrimaryBaseWasVirtual, bool MorallyVirtual,
-              int64_t Offset, bool ForVirtualBase) {
+              int64_t Offset, bool ForVirtualBase, Path_t *Path) {
+    bool alloc = false;
+    if (Path == 0) {
+      alloc = true;
+      Path = new Path_t;
+    }
+
     StartNewTable();
     extra = 0;
     // FIXME: Cleanup.
@@ -390,7 +401,7 @@ public:
 
     // and then the non-virtual bases.
     NonVirtualBases(RD, Layout, PrimaryBase, PrimaryBaseWasVirtual,
-                    MorallyVirtual, Offset);
+                    MorallyVirtual, Offset, Path);
 
     if (ForVirtualBase) {
       D(methods.push_back(wrap(670)));
@@ -399,6 +410,9 @@ public:
       D(methods.push_back(wrap(671)));
     }
     
+    if (alloc) {
+      delete Path;
+    }
     return AddressPoint;
   }
 
@@ -424,8 +438,7 @@ public:
   int64_t GenerateVtableForBase(const CXXRecordDecl *RD,
                                 bool MorallyVirtual = false, int64_t Offset = 0,
                                 bool ForVirtualBase = false,
-                                std::vector<std::pair<const CXXRecordDecl *,
-                                int64_t> > *Path = 0) {
+                                Path_t *Path = 0) {
     if (!RD->isDynamicClass())
       return 0;
 
@@ -453,18 +466,16 @@ public:
       OverrideMethods(Path, MorallyVirtual);
 
     return end(RD, offsets, Layout, PrimaryBase, PrimaryBaseWasVirtual,
-               MorallyVirtual, Offset, ForVirtualBase);
+               MorallyVirtual, Offset, ForVirtualBase, Path);
   }
 
   void GenerateVtableForVBases(const CXXRecordDecl *RD,
                                int64_t Offset = 0,
-                               std::vector<std::pair<const CXXRecordDecl *,
-                               int64_t> > *Path = 0) {
+                               Path_t *Path = 0) {
     bool alloc = false;
     if (Path == 0) {
       alloc = true;
-      Path = new std::vector<std::pair<const CXXRecordDecl *,
-        int64_t> >;
+      Path = new Path_t;
     }
     // FIXME: We also need to override using all paths to a virtual base,
     // right now, we just process the first path
@@ -479,13 +490,16 @@ public:
         StartNewTable();
         VCall.clear();
         int64_t BaseOffset = BLayout.getVBaseClassOffset(Base);
+        CurrentVBaseOffset = BaseOffset;
         GenerateVtableForBase(Base, true, BaseOffset, true, Path);
       }
       int64_t BaseOffset = Offset;
       if (i->isVirtual())
         BaseOffset = BLayout.getVBaseClassOffset(Base);
-      if (Base->getNumVBases())
+      if (Base->getNumVBases()) {
+        CurrentVBaseOffset = BaseOffset;
         GenerateVtableForVBases(Base, BaseOffset, Path);
+      }
     }
     Path->pop_back();
     if (alloc)
