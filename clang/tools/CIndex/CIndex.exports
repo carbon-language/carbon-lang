@@ -18,6 +18,7 @@ _clang_getURI
 _clang_loadDeclaration
 _clang_loadTranslationUnit
 _clang_createTranslationUnit
+_clang_createTranslationUnitFromSourceFile
 _clang_disposeTranslationUnit
 _clang_isDeclaration
 _clang_isReference

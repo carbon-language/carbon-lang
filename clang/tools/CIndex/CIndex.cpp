@@ -23,6 +23,9 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/ASTUnit.h"
 #include <cstdio>
+#include <dlfcn.h>
+#include "llvm/System/Path.h"
+
 using namespace clang;
 using namespace idx;
 
@@ -241,9 +244,27 @@ public:
 
 extern "C" {
 
+static const char *clangPath;
+
 CXIndex clang_createIndex() 
 {
   // FIXME: Program is leaked.
+  
+  // Find the location where this library lives (libCIndex.dylib).
+  // We do the lookup here to avoid poking dladdr too many times.
+  // This silly cast below avoids a C++ warning.
+  Dl_info info;
+  if (dladdr((void *)(uintptr_t)clang_createTranslationUnit, &info) == 0)
+    assert(0 && "Call to dladdr() failed");
+
+  llvm::sys::Path CIndexPath(info.dli_fname);
+  std::string CIndexDir = CIndexPath.getDirname();
+  
+  // We now have the CIndex directory, locate clang relative to it.
+  std::string ClangPath = CIndexDir + "/../bin/clang";
+  
+  clangPath = ClangPath.c_str();
+  
   return new Indexer(*new Program());
 }
 
@@ -264,6 +285,47 @@ CXTranslationUnit clang_createTranslationUnit(
   
   return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getDiagnostics(),
                                   CXXIdx->getFileManager(), &ErrMsg);
+}
+
+CXTranslationUnit clang_createTranslationUnitFromSourceFile(
+  CXIndex CIdx, 
+  const char *source_filename,
+  int num_command_line_args, const char **command_line_args) 
+{
+  // Generate a temporary name for the AST file.
+  char astTmpFile[L_tmpnam];
+
+  // Build up the arguments for involking clang.
+  const char * argv[ARG_MAX];
+  int argc = 0;
+  argv[argc++] = clangPath;
+  argv[argc++] = "-emit-ast";
+  argv[argc++] = source_filename;
+  argv[argc++] = "-o";
+  argv[argc++] = tmpnam(astTmpFile);
+  for (int i = num_command_line_args; i < num_command_line_args; i++)
+    argv[argc++] = command_line_args[i];
+  argv[argc] = 0;
+  
+  // Generate the AST file in a separate process.
+  pid_t child_pid = fork();
+  if (child_pid == 0) { // Child process
+  
+    // Execute the command, passing the appropriate arguments.
+    execv(argv[0], (char *const *)argv);
+    
+    // If execv returns, it failed.
+    assert(0 && "execv() failed");
+  } else { // This is run by the parent.
+     int child_status;
+     pid_t tpid;
+     do { // Wait for the child to terminate.
+       tpid = wait(&child_status);
+     } while (tpid != child_pid);
+     
+     // Finally, we create the translation unit from the ast file.
+     return clang_createTranslationUnit(CIdx, astTmpFile);
+  }
 }
 
 void clang_disposeTranslationUnit(

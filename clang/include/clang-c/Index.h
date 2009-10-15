@@ -109,6 +109,12 @@ const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
 CXTranslationUnit clang_createTranslationUnit(
   CXIndex, const char *ast_filename
 );
+CXTranslationUnit clang_createTranslationUnitFromSourceFile(
+  CXIndex CIdx, 
+  const char *source_filename,
+  int num_clang_command_line_args, 
+  const char **clang_command_line_args
+);
 void clang_disposeTranslationUnit(CXTranslationUnit);
 
 /*
