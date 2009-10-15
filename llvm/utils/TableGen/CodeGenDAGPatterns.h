@@ -584,6 +584,8 @@ public:
     return intrinsic_wo_chain_sdnode;
   }
   
+  bool hasTargetIntrinsics() { return !TgtIntrinsics.empty(); }
+
 private:
   void ParseNodeInfo();
   void ParseNodeTransforms();

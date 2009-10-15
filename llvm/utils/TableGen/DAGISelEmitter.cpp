@@ -2067,8 +2067,16 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
      << "  errs() << \"Cannot yet select: \";\n"
      << "  unsigned iid = cast<ConstantSDNode>(N.getOperand("
      << "N.getOperand(0).getValueType() == MVT::Other))->getZExtValue();\n"
-     << " llvm_report_error(\"Cannot yet select: intrinsic %\" +\n"
-     << "Intrinsic::getName((Intrinsic::ID)iid));\n"
+     << "  if (iid < Intrinsic::num_intrinsics)\n"
+     << "    llvm_report_error(\"Cannot yet select: intrinsic %\" + "
+     << "Intrinsic::getName((Intrinsic::ID)iid));\n";
+  if (CGP.hasTargetIntrinsics()) {
+    OS << "  else if (const TargetIntrinsicInfo *tii = TM.getIntrinsicInfo())\n"
+       << "    llvm_report_error(Twine(\"Cannot yet select: target intrinsic "
+       << "%\") + tii->getName(iid));\n";
+  }
+  OS << "  else\n"
+     << "    llvm_report_error(\"Cannot yet select: invalid intrinsic\");\n"
      << "}\n\n";
 }
 

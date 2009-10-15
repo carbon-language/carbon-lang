@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -5404,14 +5405,16 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::EH_RETURN: return "EH_RETURN";
   case ISD::ConstantPool:  return "ConstantPool";
   case ISD::ExternalSymbol: return "ExternalSymbol";
-  case ISD::INTRINSIC_WO_CHAIN: {
-    unsigned IID = cast<ConstantSDNode>(getOperand(0))->getZExtValue();
-    return Intrinsic::getName((Intrinsic::ID)IID);
-  }
+  case ISD::INTRINSIC_WO_CHAIN:
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN: {
-    unsigned IID = cast<ConstantSDNode>(getOperand(1))->getZExtValue();
-    return Intrinsic::getName((Intrinsic::ID)IID);
+    unsigned OpNo = getOpcode() == ISD::INTRINSIC_WO_CHAIN ? 0 : 1;
+    unsigned IID = cast<ConstantSDNode>(getOperand(OpNo))->getZExtValue();
+    if (IID < Intrinsic::num_intrinsics)
+      return Intrinsic::getName((Intrinsic::ID)IID);
+    else if (const TargetIntrinsicInfo *TII = G->getTarget().getIntrinsicInfo())
+      return TII->getName(IID);
+    llvm_unreachable("Invalid intrinsic ID");
   }
 
   case ISD::BUILD_VECTOR:   return "BUILD_VECTOR";
