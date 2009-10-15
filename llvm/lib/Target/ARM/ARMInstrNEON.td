@@ -1381,7 +1381,7 @@ multiclass N3VLInt3SL_HS<bit op24, bits<4> op11_8,
 multiclass N3VLInt3_QHS<bit op24, bit op23, bits<4> op11_8, bit op4,
                         string OpcodeStr, Intrinsic IntOp>
   : N3VLInt3_HS<op24, op23, op11_8, op4, OpcodeStr, IntOp> {
-  def v8i16 : N3VLInt3<op24, op23, 0b01, op11_8, op4, IIC_VMACi16D,
+  def v8i16 : N3VLInt3<op24, op23, 0b00, op11_8, op4, IIC_VMACi16D,
                        !strconcat(OpcodeStr, "8"), v8i16, v8i8, IntOp>;
 }
 
