@@ -107,8 +107,12 @@ bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
     // Finalize IT mask.
     ARMCC::CondCodes OCC = ARMCC::getOppositeCondition(CC);
     unsigned Mask = 0, Pos = 3;
-    while (MBBI != E && Pos) {
+    // Branches, including tricky ones like LDM_RET, need to end an IT
+    // block so check the instruction we just put in the block.
+    while (MBBI != E && Pos &&
+           (!MI->getDesc().isBranch() && !MI->getDesc().isReturn())) {
       MachineInstr *NMI = &*MBBI;
+      MI = NMI;
       DebugLoc ndl = NMI->getDebugLoc();
       unsigned NPredReg = 0;
       ARMCC::CondCodes NCC = getPredicate(NMI, NPredReg);
