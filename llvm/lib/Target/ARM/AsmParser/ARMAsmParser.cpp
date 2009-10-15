@@ -383,50 +383,55 @@ bool ARMAsmParser::ParseMemory(ARMOperand &Op) {
     Writeback = true;
     getLexer().Lex(); // Eat right bracket token.
 
-    const AsmToken &CommaTok = getLexer().getTok();
-    if (CommaTok.isNot(AsmToken::Comma))
-      return Error(CommaTok.getLoc(), "',' expected");
-    getLexer().Lex(); // Eat comma token.
-
-    const AsmToken &NextTok = getLexer().getTok();
-    if (NextTok.is(AsmToken::Plus))
-      getLexer().Lex(); // Eat plus token.
-    else if (NextTok.is(AsmToken::Minus)) {
-      Negative = true;
-      getLexer().Lex(); // Eat minus token
-    }
-
-    // See if there is a register following the "[Rn]," we have so far.
-    const AsmToken &OffsetRegTok = getLexer().getTok();
-    int OffsetRegNum = MatchRegisterName(OffsetRegTok.getString());
+    int OffsetRegNum = 0;
     bool OffsetRegShifted = false;
     enum ShiftType ShiftType;
     const MCExpr *ShiftAmount;
     const MCExpr *Offset;
-    if (OffsetRegNum != -1) {
-      OffsetIsReg = true;
-      getLexer().Lex(); // Eat identifier token for the offset register.
-      // Look for a comma then a shift
-      const AsmToken &Tok = getLexer().getTok();
-      if (Tok.is(AsmToken::Comma)) {
-        getLexer().Lex(); // Eat comma token.
 
-        const AsmToken &Tok = getLexer().getTok();
-        if (ParseShift(&ShiftType, ShiftAmount))
-          return Error(Tok.getLoc(), "shift expected");
-        OffsetRegShifted = true;
+    const AsmToken &NextTok = getLexer().getTok();
+    if (NextTok.isNot(AsmToken::EndOfStatement)) {
+      if (NextTok.isNot(AsmToken::Comma))
+	return Error(NextTok.getLoc(), "',' expected");
+      getLexer().Lex(); // Eat comma token.
+
+      const AsmToken &PlusMinusTok = getLexer().getTok();
+      if (PlusMinusTok.is(AsmToken::Plus))
+	getLexer().Lex(); // Eat plus token.
+      else if (PlusMinusTok.is(AsmToken::Minus)) {
+	Negative = true;
+	getLexer().Lex(); // Eat minus token
+      }
+
+      // See if there is a register following the "[Rn]," we have so far.
+      const AsmToken &OffsetRegTok = getLexer().getTok();
+      OffsetRegNum = MatchRegisterName(OffsetRegTok.getString());
+      if (OffsetRegNum != -1) {
+	OffsetIsReg = true;
+	getLexer().Lex(); // Eat identifier token for the offset register.
+	// Look for a comma then a shift
+	const AsmToken &Tok = getLexer().getTok();
+	if (Tok.is(AsmToken::Comma)) {
+	  getLexer().Lex(); // Eat comma token.
+
+	  const AsmToken &Tok = getLexer().getTok();
+	  if (ParseShift(&ShiftType, ShiftAmount))
+	    return Error(Tok.getLoc(), "shift expected");
+	  OffsetRegShifted = true;
+	}
+      }
+      else { // "[Rn]," we have so far was not followed by "Rm"
+	// Look for #offset following the "[Rn],"
+	const AsmToken &HashTok = getLexer().getTok();
+	if (HashTok.isNot(AsmToken::Hash))
+	  return Error(HashTok.getLoc(), "'#' expected");
+	getLexer().Lex(); // Eat hash token.
+
+	if (getParser().ParseExpression(Offset))
+	 return true;
       }
     }
-    else { // "[Rn]," we have so far was not followed by "Rm"
-      // Look for #offset following the "[Rn],"
-      const AsmToken &HashTok = getLexer().getTok();
-      if (HashTok.isNot(AsmToken::Hash))
-        return Error(HashTok.getLoc(), "'#' expected");
-      getLexer().Lex(); // Eat hash token.
 
-      if (getParser().ParseExpression(Offset))
-       return true;
-    }
     Op = ARMOperand::CreateMem(BaseRegNum, OffsetIsReg, Offset, OffsetRegNum,
                                OffsetRegShifted, ShiftType, ShiftAmount,
                                Preindexed, Postindexed, Negative, Writeback);
