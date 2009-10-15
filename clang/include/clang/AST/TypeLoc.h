@@ -196,9 +196,10 @@ public:
 /// getExtraLocalDataSize(); getExtraLocalData() will then point to
 /// this extra memory.
 ///
-/// TypeLocs with an inner type should override hasInnerType() and
-/// getInnerType(); getInnerTypeLoc() will then point to this inner
-/// type's location data.
+/// TypeLocs with an inner type should define
+///   QualType getInnerType() const
+/// and getInnerTypeLoc() will then point to this inner type's
+/// location data.
 template <class Base, class Derived, class TypeClass, class LocalData>
 class ConcreteTypeLoc : public Base {
 
@@ -253,26 +254,24 @@ protected:
     return static_cast<char*>(Base::Data) + asDerived()->getLocalDataSize();
   }
 
-  bool hasInnerType() const {
-    return false;
-  }
+  struct HasNoInnerType {};
+  HasNoInnerType getInnerType() const { return HasNoInnerType(); }
 
   TypeLoc getInnerTypeLoc() const {
-    assert(asDerived()->hasInnerType());
     return TypeLoc(asDerived()->getInnerType(), getNonLocalData());
   }
 
 private:
   unsigned getInnerTypeSize() const {
-    if (asDerived()->hasInnerType())
-      return getInnerTypeLoc().getFullDataSize();
+    return getInnerTypeSize(asDerived()->getInnerType());
+  }
+
+  unsigned getInnerTypeSize(HasNoInnerType _) const {
     return 0;
   }
 
-  // Required here because my metaprogramming is too weak to avoid it.
-  QualType getInnerType() const {
-    assert(0 && "getInnerType() not overridden");
-    return QualType();
+  unsigned getInnerTypeSize(QualType _) const {
+    return getInnerTypeLoc().getFullDataSize();
   }
 };
 
@@ -413,7 +412,6 @@ public:
     return getNumProtocols() * sizeof(SourceLocation);
   }
 
-  bool hasInnerType() const { return true; }
   QualType getInnerType() const { return getTypePtr()->getBaseType(); }
 };
 
@@ -448,7 +446,6 @@ public:
     return SourceRange(getStarLoc(), getStarLoc());
   }
 
-  bool hasInnerType() const { return true; }
   QualType getInnerType() const { return getTypePtr()->getPointeeType(); }
 };
 
@@ -483,7 +480,6 @@ public:
     return SourceRange(getCaretLoc(), getCaretLoc());
   }
 
-  bool hasInnerType() const { return true; }
   QualType getInnerType() const { return getTypePtr()->getPointeeType(); }
 };
 
@@ -518,7 +514,6 @@ public:
     return SourceRange(getStarLoc(), getStarLoc());
   }
 
-  bool hasInnerType() const { return true; }
   QualType getInnerType() const { return getTypePtr()->getPointeeType(); }
 };
 
@@ -553,7 +548,6 @@ public:
     return SourceRange(getAmpLoc(), getAmpLoc());
   }
 
-  bool hasInnerType() const { return true; }
   QualType getInnerType() const { return getTypePtr()->getPointeeType(); }
 };
 
@@ -615,7 +609,6 @@ public:
     return getNumArgs() * sizeof(ParmVarDecl*);
   }
 
-  bool hasInnerType() const { return true; }
   QualType getInnerType() const { return getTypePtr()->getResultType(); }
 };
 
@@ -664,7 +657,6 @@ public:
     return SourceRange(getLBracketLoc(), getRBracketLoc());
   }
 
-  bool hasInnerType() const { return true; }
   QualType getInnerType() const { return getTypePtr()->getElementType(); }
 };
 
