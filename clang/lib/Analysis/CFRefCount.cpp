@@ -1441,6 +1441,11 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
                       getPersistentSummary(RetEffect::MakeNoRet(),
                                            DoNothing, Autorelease));
 
+  // Create a summary for [NSCursor dragCopyCursor].
+  addClassMethSummary("NSCursor", "dragCopyCursor",
+                      getPersistentSummary(RetEffect::MakeNoRet(), DoNothing,
+                                           DoNothing));
+
   // Create the summaries for [NSObject performSelector...].  We treat
   // these as 'stop tracking' for the arguments because they are often
   // used for delegates that can release the object.  When we have better
