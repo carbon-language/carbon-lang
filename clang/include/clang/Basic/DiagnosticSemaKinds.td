@@ -1112,6 +1112,8 @@ def err_explicit_instantiation_without_qualified_id_quals : Error<
   "qualifier in explicit instantiation of '%0%1' requires a template-id">;
 def err_explicit_instantiation_unqualified_wrong_namespace : Error<
   "explicit instantiation of %q0 must occur in %1">;
+def err_explicit_instantiation_undefined_member_class : Error<
+  "explicit instantiation of undefined member class %0 of class template %1">;
 
 // C++ typename-specifiers
 def err_typename_nested_not_found : Error<"no type named %0 in %1">;

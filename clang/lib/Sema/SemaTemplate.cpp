@@ -3651,12 +3651,20 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   CheckExplicitInstantiationScope(*this, Record, NameLoc, true);
 
   if (!Record->getDefinition(Context)) {
-    // If the class has a definition, instantiate it (and all of its
-    // members, recursively).
-    Pattern = cast_or_null<CXXRecordDecl>(Pattern->getDefinition(Context));
-    if (Pattern && InstantiateClass(TemplateLoc, Record, Pattern,
-                                    getTemplateInstantiationArgs(Record),
-                                    TSK))
+    // C++ [temp.explicit]p3:
+    //   A definition of a member class of a class template shall be in scope 
+    //   at the point of an explicit instantiation of the member class.
+    CXXRecordDecl *Def 
+      = cast_or_null<CXXRecordDecl>(Pattern->getDefinition(Context));
+    if (!Def) {
+      Diag(TemplateLoc, diag::err_explicit_instantiation_undefined_member_class)
+        << Record->getDeclName() << Record->getDeclContext();
+      Diag(Pattern->getLocation(), diag::note_forward_declaration)
+        << Pattern;
+      return true;
+    } else if (InstantiateClass(TemplateLoc, Record, Def,
+                                getTemplateInstantiationArgs(Record),
+                                TSK))
       return true;
   } else // Instantiate all of the members of the class.
     InstantiateClassMembers(TemplateLoc, Record,
