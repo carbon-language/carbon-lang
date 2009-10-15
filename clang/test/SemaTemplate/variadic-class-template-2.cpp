@@ -14,6 +14,6 @@ template struct TS2<int, int>;
 
 template <typename = int, typename ...> struct TS3 {}; // expected-note{{template parameter is declared here}}
 template struct TS3<>; // expected-note{{previous explicit instantiation is here}}
-template struct TS3<int>; // expected-error{{duplicate explicit instantiation of 'TS3<>'}}
+template struct TS3<int>; // expected-error{{duplicate explicit instantiation of 'TS3}}
 template struct TS3<int, int>;
 template struct TS3<10>; // expected-error{{template argument for template type parameter must be a type}}

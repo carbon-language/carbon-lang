@@ -3630,54 +3630,18 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   
   ClassTemplateSpecializationDecl *Specialization = 0;
 
-  bool SpecializationRequiresInstantiation = true;
   if (PrevDecl) {
-    if (PrevDecl->getSpecializationKind()
-          == TSK_ExplicitInstantiationDefinition) {
-      // This particular specialization has already been declared or
-      // instantiated. We cannot explicitly instantiate it.
-      Diag(TemplateNameLoc, diag::err_explicit_instantiation_duplicate)
-        << Context.getTypeDeclType(PrevDecl);
-      Diag(PrevDecl->getLocation(),
-           diag::note_previous_explicit_instantiation);
+    bool SuppressNew = false;
+    if (CheckSpecializationInstantiationRedecl(*this, TemplateNameLoc, TSK,
+                                               PrevDecl, 
+                                              PrevDecl->getSpecializationKind(), 
+                                            PrevDecl->getPointOfInstantiation(),
+                                               SuppressNew))
       return DeclPtrTy::make(PrevDecl);
-    }
 
-    if (PrevDecl->getSpecializationKind() == TSK_ExplicitSpecialization) {
-      // C++ DR 259, C++0x [temp.explicit]p4:
-      //   For a given set of template parameters, if an explicit
-      //   instantiation of a template appears after a declaration of
-      //   an explicit specialization for that template, the explicit
-      //   instantiation has no effect.
-      if (!getLangOptions().CPlusPlus0x) {
-        Diag(TemplateNameLoc,
-             diag::ext_explicit_instantiation_after_specialization)
-          << Context.getTypeDeclType(PrevDecl);
-        Diag(PrevDecl->getLocation(),
-             diag::note_previous_template_specialization);
-      }
-
-      // Create a new class template specialization declaration node
-      // for this explicit specialization. This node is only used to
-      // record the existence of this explicit instantiation for
-      // accurate reproduction of the source code; we don't actually
-      // use it for anything, since it is semantically irrelevant.
-      Specialization
-        = ClassTemplateSpecializationDecl::Create(Context,
-                                             ClassTemplate->getDeclContext(),
-                                                  TemplateNameLoc,
-                                                  ClassTemplate,
-                                                  Converted, 0);
-      Specialization->setLexicalDeclContext(CurContext);
-      CurContext->addDecl(Specialization);
+    if (SuppressNew)
       return DeclPtrTy::make(PrevDecl);
-    }
-
-    // If we have already (implicitly) instantiated this
-    // specialization, there is less work to do.
-    if (PrevDecl->getSpecializationKind() == TSK_ImplicitInstantiation)
-      SpecializationRequiresInstantiation = false;
-
+    
     if (PrevDecl->getSpecializationKind() == TSK_ImplicitInstantiation ||
         PrevDecl->getSpecializationKind() == TSK_Undeclared) {
       // Since the only prior class template specialization with these
@@ -3688,7 +3652,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
       Specialization->setLocation(TemplateNameLoc);
       PrevDecl = 0;
     }
-  } 
+  }
   
   if (!Specialization) {
     // Create a new class template specialization declaration node for
@@ -3741,11 +3705,13 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   //
   // This check comes when we actually try to perform the
   // instantiation.
-  if (SpecializationRequiresInstantiation)
+  ClassTemplateSpecializationDecl *Def
+    = cast_or_null<ClassTemplateSpecializationDecl>(
+                                        Specialization->getDefinition(Context));
+  if (!Def)
     InstantiateClassTemplateSpecialization(Specialization, TSK);
   else // Instantiate the members of this class template specialization.
-    InstantiateClassTemplateSpecializationMembers(TemplateLoc, Specialization,
-                                                  TSK);
+    InstantiateClassTemplateSpecializationMembers(TemplateNameLoc, Def, TSK);
 
   return DeclPtrTy::make(Specialization);
 }
@@ -3836,7 +3802,9 @@ Sema::ActOnExplicitInstantiation(Scope *S,
       return TagD;
   }
   
-  if (!Record->getDefinition(Context)) {
+  CXXRecordDecl *RecordDef
+    = cast_or_null<CXXRecordDecl>(Record->getDefinition(Context));
+  if (!RecordDef) {
     // C++ [temp.explicit]p3:
     //   A definition of a member class of a class template shall be in scope 
     //   at the point of an explicit instantiation of the member class.
@@ -3848,12 +3816,12 @@ Sema::ActOnExplicitInstantiation(Scope *S,
       Diag(Pattern->getLocation(), diag::note_forward_declaration)
         << Pattern;
       return true;
-    } else if (InstantiateClass(TemplateLoc, Record, Def,
+    } else if (InstantiateClass(NameLoc, Record, Def,
                                 getTemplateInstantiationArgs(Record),
                                 TSK))
       return true;
   } else // Instantiate all of the members of the class.
-    InstantiateClassMembers(TemplateLoc, Record,
+    InstantiateClassMembers(NameLoc, RecordDef,
                             getTemplateInstantiationArgs(Record), TSK);
 
   // FIXME: We don't have any representation for explicit instantiations of
