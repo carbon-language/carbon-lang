@@ -56,6 +56,7 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PatternMatch.h"
+#include "llvm/Support/TargetFolder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -186,7 +187,7 @@ namespace {
 
     /// Builder - This is an IRBuilder that automatically inserts new
     /// instructions into the worklist when they are created.
-    typedef IRBuilder<true, ConstantFolder, InstCombineIRInserter> BuilderTy;
+    typedef IRBuilder<true, TargetFolder, InstCombineIRInserter> BuilderTy;
     BuilderTy *Builder;
         
     static char ID; // Pass identification, replacement for typeid
@@ -12704,14 +12705,15 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
       }
       
       // ConstantProp instruction if trivially constant.
-      if (Constant *C = ConstantFoldInstruction(Inst, BB->getContext(), TD)) {
-        DEBUG(errs() << "IC: ConstFold to: " << *C << " from: "
-                     << *Inst << '\n');
-        Inst->replaceAllUsesWith(C);
-        ++NumConstProp;
-        Inst->eraseFromParent();
-        continue;
-      }
+      if (!Inst->use_empty() && isa<Constant>(Inst->getOperand(0)))
+        if (Constant *C = ConstantFoldInstruction(Inst, BB->getContext(), TD)) {
+          DEBUG(errs() << "IC: ConstFold to: " << *C << " from: "
+                       << *Inst << '\n');
+          Inst->replaceAllUsesWith(C);
+          ++NumConstProp;
+          Inst->eraseFromParent();
+          continue;
+        }
 
       InstrsForInstCombineWorklist.push_back(Inst);
     }
@@ -12757,7 +12759,6 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
 
 bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
   MadeIRChange = false;
-  TD = getAnalysisIfAvailable<TargetData>();
   
   DEBUG(errs() << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
         << F.getNameStr() << "\n");
@@ -12810,16 +12811,17 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     }
 
     // Instruction isn't dead, see if we can constant propagate it.
-    if (Constant *C = ConstantFoldInstruction(I, F.getContext(), TD)) {
-      DEBUG(errs() << "IC: ConstFold to: " << *C << " from: " << *I << '\n');
+    if (!I->use_empty() && isa<Constant>(I->getOperand(0)))
+      if (Constant *C = ConstantFoldInstruction(I, F.getContext(), TD)) {
+        DEBUG(errs() << "IC: ConstFold to: " << *C << " from: " << *I << '\n');
 
-      // Add operands to the worklist.
-      ReplaceInstUsesWith(*I, C);
-      ++NumConstProp;
-      EraseInstFromFunction(*I);
-      MadeIRChange = true;
-      continue;
-    }
+        // Add operands to the worklist.
+        ReplaceInstUsesWith(*I, C);
+        ++NumConstProp;
+        EraseInstFromFunction(*I);
+        MadeIRChange = true;
+        continue;
+      }
 
     if (TD) {
       // See if we can constant fold its operands.
@@ -12927,12 +12929,13 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 bool InstCombiner::runOnFunction(Function &F) {
   MustPreserveLCSSA = mustPreserveAnalysisID(LCSSAID);
   Context = &F.getContext();
-  
+  TD = getAnalysisIfAvailable<TargetData>();
+
   
   /// Builder - This is an IRBuilder that automatically inserts new
   /// instructions into the worklist when they are created.
-  IRBuilder<true, ConstantFolder, InstCombineIRInserter> 
-    TheBuilder(F.getContext(), ConstantFolder(F.getContext()),
+  IRBuilder<true, TargetFolder, InstCombineIRInserter> 
+    TheBuilder(F.getContext(), TargetFolder(TD, F.getContext()),
                InstCombineIRInserter(Worklist));
   Builder = &TheBuilder;
   
