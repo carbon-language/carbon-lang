@@ -53,13 +53,11 @@ namespace llvm {
     void EmitDefinedVars (Module &M);
     void EmitIData (Module &M);
     void EmitUData (Module &M);
-    void EmitAllAutos (Module &M);
+    void EmitAutos (std::string FunctName);
+    void EmitRemainingAutos ();
     void EmitRomData (Module &M);
-    void EmitUserSections (Module &M);
     void EmitFunctionFrame(MachineFunction &MF);
     void printLibcallDecls();
-    void EmitUninitializedDataSection(const PIC16Section *S);
-    void EmitInitializedDataSection(const PIC16Section *S);
   protected:
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
@@ -76,8 +74,6 @@ namespace llvm {
     PIC16DbgInfo DbgInfo;
     const PIC16MCAsmInfo *PMAI;
     std::list<const char *> LibcallDecls; // List of extern decls.
-    std::vector<const GlobalVariable *> ExternalVarDecls;
-    std::vector<const GlobalVariable *> ExternalVarDefs;
   };
 } // end of namespace
 

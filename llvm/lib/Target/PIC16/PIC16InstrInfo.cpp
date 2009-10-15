@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "PIC16.h"
-#include "PIC16ABINames.h"
 #include "PIC16InstrInfo.h"
 #include "PIC16TargetMachine.h"
 #include "PIC16GenInstrInfo.inc"
