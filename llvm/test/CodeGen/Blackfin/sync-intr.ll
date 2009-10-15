@@ -2,8 +2,11 @@
 
 define void @f() nounwind {
 entry:
+        ; CHECK-NOT: llvm.bfin
         ; CHECK: csync;
         call void @llvm.bfin.csync()
+
+        ; CHECK-NOT: llvm.bfin
         ; CHECK: ssync;
         call void @llvm.bfin.ssync()
 	ret void

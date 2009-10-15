@@ -20,6 +20,7 @@
 #include "BlackfinInstrInfo.h"
 #include "BlackfinSubtarget.h"
 #include "BlackfinISelLowering.h"
+#include "BlackfinIntrinsicInfo.h"
 
 namespace llvm {
 
@@ -29,6 +30,7 @@ namespace llvm {
     BlackfinTargetLowering TLInfo;
     BlackfinInstrInfo InstrInfo;
     TargetFrameInfo FrameInfo;
+    BlackfinIntrinsicInfo IntrinsicInfo;
   public:
     BlackfinTargetMachine(const Target &T, const std::string &TT,
                           const std::string &FS);
@@ -47,6 +49,9 @@ namespace llvm {
     virtual const TargetData *getTargetData() const { return &DataLayout; }
     virtual bool addInstSelector(PassManagerBase &PM,
                                  CodeGenOpt::Level OptLevel);
+    const TargetIntrinsicInfo *getIntrinsicInfo() const {
+      return &IntrinsicInfo;
+    }
   };
 
 } // end namespace llvm
