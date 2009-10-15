@@ -3197,11 +3197,13 @@ public:
 
   void InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                      FunctionDecl *Function,
-                                     bool Recursive = false);
+                                     bool Recursive = false,
+                                     bool DefinitionRequired = false);
   void InstantiateStaticDataMemberDefinition(
                                      SourceLocation PointOfInstantiation,
                                      VarDecl *Var,
-                                     bool Recursive = false);
+                                     bool Recursive = false,
+                                     bool DefinitionRequired = false);
 
   void InstantiateMemInitializers(CXXConstructorDecl *New,
                                   const CXXConstructorDecl *Tmpl,

@@ -3657,8 +3657,8 @@ Sema::ActOnExplicitInstantiation(Scope *S,
     CXXRecordDecl *Def 
       = cast_or_null<CXXRecordDecl>(Pattern->getDefinition(Context));
     if (!Def) {
-      Diag(TemplateLoc, diag::err_explicit_instantiation_undefined_member_class)
-        << Record->getDeclName() << Record->getDeclContext();
+      Diag(TemplateLoc, diag::err_explicit_instantiation_undefined_member)
+        << 0 << Record->getDeclName() << Record->getDeclContext();
       Diag(Pattern->getLocation(), diag::note_forward_declaration)
         << Pattern;
       return true;
@@ -3787,7 +3787,8 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     // FIXME: Check for prior specializations and such.
     Prev->setTemplateSpecializationKind(TSK);
     if (TSK == TSK_ExplicitInstantiationDefinition)
-      InstantiateStaticDataMemberDefinition(D.getIdentifierLoc(), Prev, false);
+      InstantiateStaticDataMemberDefinition(D.getIdentifierLoc(), Prev, false,
+                                            /*DefinitionRequired=*/true);
     
     // FIXME: Create an ExplicitInstantiation node?
     return DeclPtrTy();
@@ -3887,7 +3888,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     // definition.
     if (TSK == TSK_ExplicitInstantiationDefinition)
       InstantiateFunctionDefinition(D.getIdentifierLoc(), Specialization, 
-                                    false);
+                                    false, /*DefinitionRequired=*/true);
       
     Specialization->setTemplateSpecializationKind(TSK);
     break;

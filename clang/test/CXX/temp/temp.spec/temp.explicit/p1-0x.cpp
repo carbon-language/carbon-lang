@@ -2,7 +2,7 @@
 
 template<typename T>
 struct X {
-  void f();
+  void f() {}
 };
 
 template inline void X<int>::f(); // expected-error{{'inline'}}

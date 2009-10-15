@@ -1044,9 +1044,14 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
 ///
 /// \param Recursive if true, recursively instantiates any functions that
 /// are required by this instantiation.
+///
+/// \param DefinitionRequired if true, then we are performing an explicit
+/// instantiation where the body of the function is required. Complain if
+/// there is no such body.
 void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                          FunctionDecl *Function,
-                                         bool Recursive) {
+                                         bool Recursive,
+                                         bool DefinitionRequired) {
   if (Function->isInvalidDecl())
     return;
 
@@ -1075,8 +1080,24 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   if (PatternDecl)
     Pattern = PatternDecl->getBody(PatternDecl);
 
-  if (!Pattern)
+  if (!Pattern) {
+    if (DefinitionRequired) {
+      if (Function->getPrimaryTemplate())
+        Diag(PointOfInstantiation, 
+             diag::err_explicit_instantiation_undefined_func_template)
+          << Function->getPrimaryTemplate();
+      else
+        Diag(PointOfInstantiation, 
+             diag::err_explicit_instantiation_undefined_member)
+          << 1 << Function->getDeclName() << Function->getDeclContext();
+      
+      if (PatternDecl)
+        Diag(PatternDecl->getLocation(), 
+             diag::note_explicit_instantiation_here);
+    }
+      
     return;
+  }
 
   // C++0x [temp.explicit]p9:
   //   Except for inline functions, other explicit instantiation declarations
@@ -1161,10 +1182,15 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 ///
 /// \param Recursive if true, recursively instantiates any functions that
 /// are required by this instantiation.
+///
+/// \param DefinitionRequired if true, then we are performing an explicit
+/// instantiation where an out-of-line definition of the member variable
+/// is required. Complain if there is no such definition.
 void Sema::InstantiateStaticDataMemberDefinition(
                                           SourceLocation PointOfInstantiation,
                                                  VarDecl *Var,
-                                                 bool Recursive) {
+                                                 bool Recursive,
+                                                 bool DefinitionRequired) {
   if (Var->isInvalidDecl())
     return;
 
@@ -1187,6 +1213,13 @@ void Sema::InstantiateStaticDataMemberDefinition(
     // so we won't perform any instantiation. Rather, we rely on the user to
     // instantiate this definition (or provide a specialization for it) in
     // another translation unit.
+    if (DefinitionRequired) {
+      Diag(PointOfInstantiation, 
+           diag::err_explicit_instantiation_undefined_member)
+        << 2 << Var->getDeclName() << Var->getDeclContext();
+      Diag(Def->getLocation(), diag::note_explicit_instantiation_here);
+    }    
+    
     return;
   }
 

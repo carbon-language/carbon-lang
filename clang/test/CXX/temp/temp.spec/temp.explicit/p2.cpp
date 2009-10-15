@@ -35,7 +35,7 @@ namespace N {
   };
   
   template<typename T>
-  void f1(T); // expected-note{{explicit instantiation refers here}}
+  void f1(T) {}; // expected-note{{explicit instantiation refers here}}
 }
 using namespace N;
 
