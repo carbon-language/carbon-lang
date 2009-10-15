@@ -307,29 +307,40 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
         return NoModRef;
     }
 
-    if (TD) {
-      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction())) {
-        switch (II->getIntrinsicID()) {
-        default: break;
-        case Intrinsic::atomic_cmp_swap:
-        case Intrinsic::atomic_swap:
-        case Intrinsic::atomic_load_add:
-        case Intrinsic::atomic_load_sub:
-        case Intrinsic::atomic_load_and:
-        case Intrinsic::atomic_load_nand:
-        case Intrinsic::atomic_load_or:
-        case Intrinsic::atomic_load_xor:
-        case Intrinsic::atomic_load_max:
-        case Intrinsic::atomic_load_min:
-        case Intrinsic::atomic_load_umax:
-        case Intrinsic::atomic_load_umin: {
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction())) {
+      switch (II->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::atomic_cmp_swap:
+      case Intrinsic::atomic_swap:
+      case Intrinsic::atomic_load_add:
+      case Intrinsic::atomic_load_sub:
+      case Intrinsic::atomic_load_and:
+      case Intrinsic::atomic_load_nand:
+      case Intrinsic::atomic_load_or:
+      case Intrinsic::atomic_load_xor:
+      case Intrinsic::atomic_load_max:
+      case Intrinsic::atomic_load_min:
+      case Intrinsic::atomic_load_umax:
+      case Intrinsic::atomic_load_umin:
+        if (TD) {
           Value *Op1 = II->getOperand(1);
           unsigned Op1Size = TD->getTypeStoreSize(Op1->getType());
           if (alias(Op1, Op1Size, P, Size) == NoAlias)
             return NoModRef;
-          break;
         }
-        }
+        break;
+      case Intrinsic::lifetime_start:
+      case Intrinsic::lifetime_end:
+      case Intrinsic::invariant_start: {
+        unsigned PtrSize = cast<ConstantInt>(II->getOperand(1))->getZExtValue();
+        if (alias(II->getOperand(2), PtrSize, P, Size) == NoAlias)
+          return NoModRef;
+      }
+      case Intrinsic::invariant_end: {
+        unsigned PtrSize = cast<ConstantInt>(II->getOperand(2))->getZExtValue();
+        if (alias(II->getOperand(3), PtrSize, P, Size) == NoAlias)
+          return NoModRef;
+      }
       }
     }
   }
