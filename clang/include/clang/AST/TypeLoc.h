@@ -179,11 +179,13 @@ public:
 
 
 /// A metaprogramming base class for TypeLoc classes which correspond
-/// to a particular Type subclass.
+/// to a particular Type subclass.  It is accepted for a single
+/// TypeLoc class to correspond to multiple Type classes.
 ///
 /// \param Base a class from which to derive
 /// \param Derived the class deriving from this one
-/// \param TypeClass the concrete Type subclass which this 
+/// \param TypeClass the concrete Type subclass associated with this
+///   location type
 /// \param LocalData the structure type of local location data for
 ///   this type
 ///
@@ -194,7 +196,9 @@ public:
 /// getExtraLocalDataSize(); getExtraLocalData() will then point to
 /// this extra memory.
 ///
-/// TypeLocs with an inner type should override ha
+/// TypeLocs with an inner type should override hasInnerType() and
+/// getInnerType(); getInnerTypeLoc() will then point to this inner
+/// type's location data.
 template <class Base, class Derived, class TypeClass, class LocalData>
 class ConcreteTypeLoc : public Base {
 
