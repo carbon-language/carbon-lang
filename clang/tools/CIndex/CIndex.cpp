@@ -292,16 +292,15 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   const char *source_filename,
   int num_command_line_args, const char **command_line_args) 
 {
-  // Generate a temporary name for the AST file.
-  char astTmpFile[L_tmpnam];
-
   // Build up the arguments for involking clang.
-  const char * argv[ARG_MAX];
   int argc = 0;
+  const char * argv[ARG_MAX];
   argv[argc++] = clangPath;
   argv[argc++] = "-emit-ast";
   argv[argc++] = source_filename;
   argv[argc++] = "-o";
+  // Generate a temporary name for the AST file.
+  char astTmpFile[L_tmpnam];
   argv[argc++] = tmpnam(astTmpFile);
   for (int i = num_command_line_args; i < num_command_line_args; i++)
     argv[argc++] = command_line_args[i];
@@ -316,16 +315,16 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
     
     // If execv returns, it failed.
     assert(0 && "execv() failed");
-  } else { // This is run by the parent.
-     int child_status;
-     pid_t tpid;
-     do { // Wait for the child to terminate.
-       tpid = wait(&child_status);
-     } while (tpid != child_pid);
-     
-     // Finally, we create the translation unit from the ast file.
-     return clang_createTranslationUnit(CIdx, astTmpFile);
-  }
+  }  
+  // This is run by the parent.
+  int child_status;
+  pid_t tpid;
+  do { // Wait for the child to terminate.
+    tpid = wait(&child_status);
+  } while (tpid != child_pid);
+  
+  // Finally, we create the translation unit from the ast file.
+  return clang_createTranslationUnit(CIdx, astTmpFile);
 }
 
 void clang_disposeTranslationUnit(
