@@ -1115,28 +1115,6 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
     }
   }
 
-  // Special case: the current region represents a cast and it and the super
-  // region both have pointer types or intptr_t types.  If so, perform the
-  // retrieve from the super region and appropriately "cast" the value.
-  // This is needed to support OSAtomicCompareAndSwap and friends or other
-  // loads that treat integers as pointers and vis versa.
-  if (R->getIndex().isZeroConstant()) {
-    if (const TypedRegion *superTR = dyn_cast<TypedRegion>(superR)) {
-      ASTContext &Ctx = getContext();
-      if (IsAnyPointerOrIntptr(superTR->getValueType(Ctx), Ctx)) {
-        QualType valTy = R->getValueType(Ctx);
-        if (IsAnyPointerOrIntptr(valTy, Ctx)) {
-          // Retrieve the value from the super region.  This will be casted to
-          // valTy when we return to 'Retrieve'.
-          const SValuator::CastResult &cr = Retrieve(state,
-                                                     loc::MemRegionVal(superR),
-                                                     valTy);
-          return cr.getSVal();
-        }
-      }
-    }
-  }
-
   // Check if the immediate super region has a direct binding.
   if (Optional<SVal> V = getDirectBinding(B, superR)) {
     if (SymbolRef parentSym = V->getAsSymbol())

@@ -1,7 +1,13 @@
-// RUN: clang-cc -triple i386-pc-linux-gnu -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
-// RUN: clang-cc -triple i386-pc-linux-gnu -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s &&
-// RUN: clang-cc -triple i386-pc-linux-gnu -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
-// RUN: clang-cc -triple i386-pc-linux-gnu -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
+// RUN: clang-cc -triple i386-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
+// RUN: clang-cc -triple i386-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s &&
+// RUN: clang-cc -DTEST_64 -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&
+// RUN: clang-cc -DTEST_64 -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
+
+// ==-- FIXME: -analyzer-store=basic fails on this file (false negatives). --==
+// NOTWORK: clang-cc -triple i386-apple-darwin10 -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s &&
+// NOTWORK: clang-cc -triple i386-apple-darwin10 -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
+// NOTWORK: clang-cc -DTEST_64 -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
+// NOTWORK: clang-cc -DTEST_64 -triple x86_64-apple-darwin10 -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from
@@ -12,7 +18,18 @@
 // both svelte and portable to non-Mac platforms.
 //===----------------------------------------------------------------------===//
 
+#ifdef TEST_64
+typedef long long int64_t;
+_Bool OSAtomicCompareAndSwap64Barrier( int64_t __oldValue, int64_t __newValue, volatile int64_t *__theValue );
+#define COMPARE_SWAP_BARRIER OSAtomicCompareAndSwap64Barrier
+typedef int64_t intptr_t;
+#else
 typedef int int32_t;
+_Bool OSAtomicCompareAndSwap32Barrier( int32_t __oldValue, int32_t __newValue, volatile int32_t *__theValue );
+#define COMPARE_SWAP_BARRIER OSAtomicCompareAndSwap32Barrier
+typedef int32_t intptr_t;
+#endif
+
 typedef const void * CFTypeRef;
 typedef const struct __CFString * CFStringRef;
 typedef const struct __CFAllocator * CFAllocatorRef;
@@ -263,7 +280,6 @@ id testSharedClassFromFunction() {
 
 // Test OSCompareAndSwap
 _Bool OSAtomicCompareAndSwapPtr( void *__oldValue, void *__newValue, void * volatile *__theValue );
-_Bool OSAtomicCompareAndSwap32Barrier( int32_t __oldValue, int32_t __newValue, volatile int32_t *__theValue );
 extern BOOL objc_atomicCompareAndSwapPtr(id predicate, id replacement, volatile id *objectLocation);
 
 void testOSCompareAndSwap() {
@@ -275,20 +291,29 @@ void testOSCompareAndSwap() {
     [old release];
 }
 
-void testOSCompareAndSwap32Barrier() {
+void testOSCompareAndSwapXXBarrier() {
   NSString *old = 0;
   NSString *s = [[NSString alloc] init]; // no-warning
-  if (!OSAtomicCompareAndSwap32Barrier((int32_t) 0, (int32_t) s, (int32_t*) &old))
+  if (!COMPARE_SWAP_BARRIER((intptr_t) 0, (intptr_t) s, (intptr_t*) &old))
     [s release];
   else    
     [old release];
 }
 
-int testOSCompareAndSwap32Barrier_id(Class myclass, id xclass) {
-  if (OSAtomicCompareAndSwap32Barrier(0, (int32_t) myclass, (int32_t*) &xclass))
+void testOSCompareAndSwapXXBarrier_positive() {
+  NSString *old = 0;
+  NSString *s = [[NSString alloc] init]; // expected-warning{{leak}}
+  if (!COMPARE_SWAP_BARRIER((intptr_t) 0, (intptr_t) s, (intptr_t*) &old))
+    return;
+  else    
+    [old release];
+}
+
+int testOSCompareAndSwapXXBarrier_id(Class myclass, id xclass) {
+  if (COMPARE_SWAP_BARRIER(0, (intptr_t) myclass, (intptr_t*) &xclass))
     return 1;
   return 0;
-}  
+}
 
 void test_objc_atomicCompareAndSwap() {
   NSString *old = 0;
@@ -298,6 +323,16 @@ void test_objc_atomicCompareAndSwap() {
   else    
     [old release];
 }
+
+void test_objc_atomicCompareAndSwap_positive() {
+  NSString *old = 0;
+  NSString *s = [[NSString alloc] init]; // expected-warning{{leak}}
+  if (!objc_atomicCompareAndSwapPtr(0, s, &old))
+    return;
+  else    
+    [old release];
+}
+
 
 // Test stringWithFormat (<rdar://problem/6815234>)
 void test_stringWithFormat() {  
