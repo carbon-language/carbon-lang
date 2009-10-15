@@ -382,7 +382,6 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   , HasFMA4(false)
   , IsBTMemSlow(false)
   , DarwinVers(0)
-  , IsLinux(false)
   , stackAlignment(8)
   // FIXME: this is a known good value for Yonah. How about others?
   , MaxInlineSizeThreshold(128)
@@ -434,7 +433,6 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
     } else if (TT.find("linux") != std::string::npos) {
       // Linux doesn't imply ELF, but we don't currently support anything else.
       TargetType = isELF;
-      IsLinux = true;
     } else if (TT.find("cygwin") != std::string::npos) {
       TargetType = isCygwin;
     } else if (TT.find("mingw") != std::string::npos) {
