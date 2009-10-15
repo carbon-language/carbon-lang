@@ -676,6 +676,7 @@ AuroraUX::AuroraUX(const HostInfo &Host, const llvm::Triple& Triple)
   getFilePaths().push_back("/usr/lib");
   getFilePaths().push_back("/usr/sfw/lib");
   getFilePaths().push_back("/opt/gcc4/lib");
+  getFilePaths().push_back("/opt/gcc4/lib/gcc/i386-pc-solaris2.11/4.2.4");
 
 }
 

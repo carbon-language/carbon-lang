@@ -400,6 +400,8 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
           AddPath("/usr/include/c++/4.2", System, true, false, false);
           break;
         case llvm::Triple::Solaris:
+          // Solaris - Fall though..
+        case llvm::Triple::AuroraUX:
           // AuroraUX
           AddGnuCPlusPlusIncludePaths("/opt/gcc4/include/c++/4.2.4",
                                       "i386-pc-solaris2.11",

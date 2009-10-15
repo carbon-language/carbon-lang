@@ -2164,13 +2164,14 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if ((!Args.hasArg(options::OPT_nostdlib)) &&
      (!Args.hasArg(options::OPT_shared))) {
     CmdArgs.push_back("-e");
-    CmdArgs.push_back("__start");
+    CmdArgs.push_back("_start");
   }
 
   if (Args.hasArg(options::OPT_static)) {
     CmdArgs.push_back("-Bstatic");
+    CmdArgs.push_back("-dn");
   } else {
-    CmdArgs.push_back("--eh-frame-hdr");
+//    CmdArgs.push_back("--eh-frame-hdr");
     CmdArgs.push_back("-Bdynamic");
     if (Args.hasArg(options::OPT_shared)) {
       CmdArgs.push_back("-shared");
@@ -2193,11 +2194,14 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared)) {
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crt0.o")));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crt1.o")));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
       CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbegin.o")));
     } else {
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbeginS.o")));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
+//      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbeginS.o")));
     }
+    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtn.o")));
   }
 
   CmdArgs.push_back(MakeFormattedString(Args,
@@ -2242,8 +2246,8 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_nostartfiles)) {
     if (!Args.hasArg(options::OPT_shared))
       CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtend.o")));
-    else
-      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtendS.o")));
+//    else
+//      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtendS.o")));
   }
 
   const char *Exec =
