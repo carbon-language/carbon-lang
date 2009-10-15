@@ -24,6 +24,7 @@
 #include "clang/Frontend/ASTUnit.h"
 #include <cstdio>
 #include <dlfcn.h>
+#include <sys/wait.h>
 #include "llvm/System/Path.h"
 
 using namespace clang;
