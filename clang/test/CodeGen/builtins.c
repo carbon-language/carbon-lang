@@ -117,7 +117,7 @@ int main() {
 
 
 
-char *strcat(char *, char const *) {}
+char *strcat(char *a, char const *b) {}
 
 void foo() {
  __builtin_strcat(0, 0);
