@@ -28,9 +28,11 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
+#include <algorithm>
 using namespace llvm;
 
 STATISTIC(NumCPEs,       "Number of constpool entries");
@@ -69,6 +71,10 @@ namespace {
     /// (i.e. blocks that don't fall through to the following block, due
     /// to a return, unreachable, or unconditional branch).
     std::vector<MachineBasicBlock*> WaterList;
+
+    /// NewWaterList - The subset of WaterList that was created since the
+    /// previous iteration by inserting unconditional branches.
+    SmallSet<MachineBasicBlock*, 4> NewWaterList;
 
     typedef std::vector<MachineBasicBlock*>::iterator water_iterator;
 
@@ -175,9 +181,7 @@ namespace {
     void AdjustBBOffsetsAfter(MachineBasicBlock *BB, int delta);
     bool DecrementOldEntry(unsigned CPI, MachineInstr* CPEMI);
     int LookForExistingCPEntry(CPUser& U, unsigned UserOffset);
-    bool LookForWater(CPUser&U, unsigned UserOffset,
-                      MachineBasicBlock *&NewMBB);
-    MachineBasicBlock *AcceptWater(water_iterator IP);
+    bool LookForWater(CPUser&U, unsigned UserOffset, water_iterator &WaterIter);
     void CreateNewWater(unsigned CPUserIndex, unsigned UserOffset,
                         MachineBasicBlock *&NewMBB);
     bool HandleConstantPoolUser(MachineFunction &MF, unsigned CPUserIndex);
@@ -297,6 +301,10 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
     if (CPChange && ++NoCPIters > 30)
       llvm_unreachable("Constant Island pass failed to converge!");
     DEBUG(dumpBBs());
+    
+    // Clear NewWaterList now.  If we split a block for branches, it should
+    // appear as "new water" for the next iteration of constant pool placement.
+    NewWaterList.clear();
 
     bool BRChange = false;
     for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i)
@@ -629,7 +637,7 @@ void ARMConstantIslands::UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB) {
 
 
 /// Split the basic block containing MI into two blocks, which are joined by
-/// an unconditional branch.  Update datastructures and renumber blocks to
+/// an unconditional branch.  Update data structures and renumber blocks to
 /// account for this change and returns the newly created block.
 MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   MachineBasicBlock *OrigBB = MI->getParent();
@@ -691,6 +699,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
     WaterList.insert(next(IP), NewBB);
   else
     WaterList.insert(IP, OrigBB);
+  NewWaterList.insert(OrigBB);
 
   // Figure out how large the first NewMBB is.  (It cannot
   // contain a constpool_entry or tablejump.)
@@ -941,30 +950,16 @@ static inline unsigned getUnconditionalBrDisp(int Opc) {
   return ((1<<23)-1)*4;
 }
 
-/// AcceptWater - Small amount of common code factored out of the following.
-///
-MachineBasicBlock *ARMConstantIslands::AcceptWater(water_iterator IP) {
-  DEBUG(errs() << "found water in range\n");
-  MachineBasicBlock *WaterBB = *IP;
-  // Remove the original WaterList entry; we want subsequent
-  // insertions in this vicinity to go after the one we're
-  // about to insert.  This considerably reduces the number
-  // of times we have to move the same CPE more than once.
-  WaterList.erase(IP);
-  // CPE goes before following block (NewMBB).
-  return next(MachineFunction::iterator(WaterBB));
-}
-
-/// LookForWater - look for an existing entry in the WaterList in which
+/// LookForWater - Look for an existing entry in the WaterList in which
 /// we can place the CPE referenced from U so it's within range of U's MI.
-/// Returns true if found, false if not.  If it returns true, NewMBB
+/// Returns true if found, false if not.  If it returns true, WaterIter
 /// is set to the WaterList entry.  For Thumb, prefer water that will not
 /// introduce padding to water that will.  To ensure that this pass
 /// terminates, the CPE location for a particular CPUser is only allowed to
 /// move to a lower address, so search backward from the end of the list and
 /// prefer the first water that is in range.
 bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
-                                      MachineBasicBlock *&NewMBB) {
+                                      water_iterator &WaterIter) {
   if (WaterList.empty())
     return false;
 
@@ -973,9 +968,17 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
   for (water_iterator IP = prior(WaterList.end()),
          B = WaterList.begin();; --IP) {
     MachineBasicBlock* WaterBB = *IP;
-    // Check if water is in range and at a lower address than the current one.
-    if (WaterBB->getNumber() < U.HighWaterMark->getNumber() &&
-        WaterIsInRange(UserOffset, WaterBB, U)) {
+    // Check if water is in range and is either at a lower address than the
+    // current "high water mark" or a new water block that was created since
+    // the previous iteration by inserting an unconditional branch.  In the
+    // latter case, we want to allow resetting the high water mark back to
+    // this new water since we haven't seen it before.  Inserting branches
+    // should be relatively uncommon and when it does happen, we want to be
+    // sure to take advantage of it for all the CPEs near that block, so that
+    // we don't insert more branches than necessary.
+    if (WaterIsInRange(UserOffset, WaterBB, U) &&
+        (WaterBB->getNumber() < U.HighWaterMark->getNumber() ||
+         NewWaterList.count(WaterBB))) {
       unsigned WBBId = WaterBB->getNumber();
       if (isThumb &&
           (BBOffsets[WBBId] + BBSizes[WBBId])%4 != 0) {
@@ -986,7 +989,7 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
           IPThatWouldPad = IP;
         }
       } else {
-        NewMBB = AcceptWater(IP);
+        WaterIter = IP;
         return true;
       }
     }
@@ -994,7 +997,7 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
       break;
   }
   if (FoundWaterThatWouldPad) {
-    NewMBB = AcceptWater(IPThatWouldPad);
+    WaterIter = IPThatWouldPad;
     return true;
   }
   return false;
@@ -1107,7 +1110,6 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
   MachineInstr *CPEMI  = U.CPEMI;
   unsigned CPI = CPEMI->getOperand(1).getIndex();
   unsigned Size = CPEMI->getOperand(2).getImm();
-  MachineBasicBlock *NewMBB;
   // Compute this only once, it's expensive.  The 4 or 8 is the value the
   // hardware keeps in the PC.
   unsigned UserOffset = GetOffsetOf(UserMI) + (isThumb ? 4 : 8);
@@ -1123,14 +1125,50 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
   unsigned ID = AFI->createConstPoolEntryUId();
 
   // Look for water where we can place this CPE.
-  if (!LookForWater(U, UserOffset, NewMBB)) {
+  MachineBasicBlock *NewIsland = MF.CreateMachineBasicBlock();
+  MachineBasicBlock *NewMBB;
+  water_iterator IP;
+  if (LookForWater(U, UserOffset, IP)) {
+    DEBUG(errs() << "found water in range\n");
+    MachineBasicBlock *WaterBB = *IP;
+
+    // If the original WaterList entry was "new water" on this iteration,
+    // propagate that to the new island.  This is just keeping NewWaterList
+    // updated to match the WaterList, which will be updated below.
+    if (NewWaterList.count(WaterBB)) {
+      NewWaterList.erase(WaterBB);
+      NewWaterList.insert(NewIsland);
+    }
+    // The new CPE goes before the following block (NewMBB).
+    NewMBB = next(MachineFunction::iterator(WaterBB));
+
+  } else {
     // No water found.
     DEBUG(errs() << "No water found\n");
     CreateNewWater(CPUserIndex, UserOffset, NewMBB);
+
+    // SplitBlockBeforeInstr adds to WaterList, which is important when it is
+    // called while handling branches so that the water will be seen on the
+    // next iteration for constant pools, but in this context, we don't want
+    // it.  Check for this so it will be removed from the WaterList.
+    // Also remove any entry from NewWaterList.
+    MachineBasicBlock *WaterBB = prior(MachineFunction::iterator(NewMBB));
+    IP = std::find(WaterList.begin(), WaterList.end(), WaterBB);
+    if (IP != WaterList.end())
+      NewWaterList.erase(WaterBB);
+
+    // We are adding new water.  Update NewWaterList.
+    NewWaterList.insert(NewIsland);
   }
 
+  // Remove the original WaterList entry; we want subsequent insertions in
+  // this vicinity to go after the one we're about to insert.  This
+  // considerably reduces the number of times we have to move the same CPE
+  // more than once and is also important to ensure the algorithm terminates.
+  if (IP != WaterList.end())
+    WaterList.erase(IP);
+
   // Okay, we know we can put an island before NewMBB now, do it!
-  MachineBasicBlock *NewIsland = MF.CreateMachineBasicBlock();
   MF.insert(NewMBB, NewIsland);
 
   // Update internal data structures to account for the newly inserted MBB.
