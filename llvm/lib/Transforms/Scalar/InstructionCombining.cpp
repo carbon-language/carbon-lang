@@ -12676,16 +12676,19 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 /// many instructions are dead or constant).  Additionally, if we find a branch
 /// whose condition is a known constant, we only visit the reachable successors.
 ///
-static void AddReachableCodeToWorklist(BasicBlock *BB, 
+static bool AddReachableCodeToWorklist(BasicBlock *BB, 
                                        SmallPtrSet<BasicBlock*, 64> &Visited,
                                        InstCombiner &IC,
                                        const TargetData *TD) {
+  bool MadeIRChange = false;
   SmallVector<BasicBlock*, 256> Worklist;
   Worklist.push_back(BB);
   
   std::vector<Instruction*> InstrsForInstCombineWorklist;
   InstrsForInstCombineWorklist.reserve(128);
 
+  SmallPtrSet<ConstantExpr*, 64> FoldedConstants;
+  
   while (!Worklist.empty()) {
     BB = Worklist.back();
     Worklist.pop_back();
@@ -12714,6 +12717,29 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
           Inst->eraseFromParent();
           continue;
         }
+      
+      
+      
+      if (TD) {
+        // See if we can constant fold its operands.
+        for (User::op_iterator i = Inst->op_begin(), e = Inst->op_end();
+             i != e; ++i) {
+          ConstantExpr *CE = dyn_cast<ConstantExpr>(i);
+          if (CE == 0) continue;
+          
+          // If we already folded this constant, don't try again.
+          if (!FoldedConstants.insert(CE))
+            continue;
+          
+          Constant *NewC =
+            ConstantFoldConstantExpression(CE, BB->getContext(), TD);
+          if (NewC && NewC != CE) {
+            *i = NewC;
+            MadeIRChange = true;
+          }
+        }
+      }
+      
 
       InstrsForInstCombineWorklist.push_back(Inst);
     }
@@ -12755,6 +12781,8 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
   // some N^2 behavior in pathological cases.
   IC.Worklist.AddInitialGroup(&InstrsForInstCombineWorklist[0],
                               InstrsForInstCombineWorklist.size());
+  
+  return MadeIRChange;
 }
 
 bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
@@ -12768,7 +12796,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     // the reachable instructions.  Ignore blocks that are not reachable.  Keep
     // track of which blocks we visit.
     SmallPtrSet<BasicBlock*, 64> Visited;
-    AddReachableCodeToWorklist(F.begin(), Visited, *this, TD);
+    MadeIRChange |= AddReachableCodeToWorklist(F.begin(), Visited, *this, TD);
 
     // Do a quick scan over the function.  If we find any blocks that are
     // unreachable, remove any instructions inside of them.  This prevents
@@ -12786,7 +12814,6 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
             ++NumDeadInst;
             MadeIRChange = true;
           }
-
 
           // If I is not void type then replaceAllUsesWith undef.
           // This allows ValueHandlers and custom metadata to adjust itself.
@@ -12822,18 +12849,6 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         MadeIRChange = true;
         continue;
       }
-
-    if (TD) {
-      // See if we can constant fold its operands.
-      for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
-        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(i))
-          if (Constant *NewC = ConstantFoldConstantExpression(CE,   
-                                  F.getContext(), TD))
-            if (NewC != CE) {
-              *i = NewC;
-              MadeIRChange = true;
-            }
-    }
 
     // See if we can trivially sink this instruction to a successor basic block.
     if (I->hasOneUse()) {
