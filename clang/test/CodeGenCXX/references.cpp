@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify -emit-llvm -o %t %s
+// RUN: clang-cc -verify -emit-llvm -o - %s | FileCheck %s
 
 void t1() {
   extern int& a;
@@ -99,4 +99,11 @@ void f(A* a) {
 // PR5122
 void *foo = 0;
 void * const & kFoo = foo;
+
+struct D : C { D(); ~D(); };
+
+void h() {
+  // CHECK: call void @_ZN1DD1Ev
+  const C& c = D();
+}
 

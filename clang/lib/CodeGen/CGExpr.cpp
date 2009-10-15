@@ -78,6 +78,26 @@ RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E,
 RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
                                                    QualType DestType,
                                                    bool IsInitializer) {
+  if (const CXXExprWithTemporaries *TE = dyn_cast<CXXExprWithTemporaries>(E)) {
+    // If we shouldn't destroy the temporaries, just emit the
+    // child expression.
+    if (!TE->shouldDestroyTemporaries())
+      return EmitReferenceBindingToExpr(TE->getSubExpr(), DestType,
+                                        IsInitializer);
+    
+    // Keep track of the current cleanup stack depth.
+    unsigned OldNumLiveTemporaries = LiveTemporaries.size();
+    
+    RValue RV = EmitReferenceBindingToExpr(TE->getSubExpr(), DestType,
+                                           IsInitializer);
+    
+    // Pop temporaries.
+    while (LiveTemporaries.size() > OldNumLiveTemporaries)
+      PopCXXTemporary();
+    
+    return RV;
+  }
+  
   RValue Val;
   if (E->isLvalue(getContext()) == Expr::LV_Valid) {
     // Emit the expr as an lvalue.
@@ -86,9 +106,21 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
       return RValue::get(LV.getAddress());
     Val = EmitLoadOfLValue(LV, E->getType());
   } else {
-    // FIXME: Initializers don't work with casts yet. For example
-    // const A& a = B();
-    // if B inherits from A.
+    const CXXRecordDecl *BaseClassDecl = 0;
+    const CXXRecordDecl *DerivedClassDecl = 0;
+    
+    if (const CastExpr *CE = 
+          dyn_cast<CastExpr>(E->IgnoreParenNoopCasts(getContext()))) {
+      if (CE->getCastKind() == CastExpr::CK_DerivedToBase) {
+        E = CE->getSubExpr();
+        
+        BaseClassDecl = 
+          cast<CXXRecordDecl>(CE->getType()->getAs<RecordType>()->getDecl());
+        DerivedClassDecl = 
+          cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
+      }
+    }
+      
     Val = EmitAnyExprToTemp(E, /*IsAggLocVolatile=*/false,
                             IsInitializer);
 
@@ -105,6 +137,16 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
           }
         }
       }
+    }
+    
+    // Check if need to perform the derived-to-base cast.
+    if (BaseClassDecl) {
+      llvm::Value *Derived = Val.getAggregateAddr();
+      
+      llvm::Value *Base = 
+        GetAddressCXXOfBaseClass(Derived, DerivedClassDecl, BaseClassDecl, 
+                                 /*NullCheckValue=*/false);
+      return RValue::get(Base);
     }
   }
 
