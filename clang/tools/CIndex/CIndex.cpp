@@ -25,6 +25,7 @@
 #include <cstdio>
 #include <dlfcn.h>
 #include <sys/wait.h>
+#include <vector>
 #include "llvm/System/Path.h"
 
 using namespace clang;
@@ -293,26 +294,25 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   const char *source_filename,
   int num_command_line_args, const char **command_line_args) 
 {
-  // Build up the arguments for involking clang.
-  int argc = 0;
-  const char * argv[ARG_MAX];
-  argv[argc++] = clangPath;
-  argv[argc++] = "-emit-ast";
-  argv[argc++] = source_filename;
-  argv[argc++] = "-o";
+  // Build up the arguments for involing clang.
+  std::vector<const char *> argv;
+  argv.push_back(clangPath);
+  argv.push_back("-emit-ast");
+  argv.push_back(source_filename);
+  argv.push_back("-o");
   // Generate a temporary name for the AST file.
   char astTmpFile[L_tmpnam];
-  argv[argc++] = tmpnam(astTmpFile);
+  argv.push_back(tmpnam(astTmpFile));
   for (int i = num_command_line_args; i < num_command_line_args; i++)
-    argv[argc++] = command_line_args[i];
-  argv[argc] = 0;
-  
+    argv.push_back(command_line_args[i]);
+  argv.push_back(NULL);
+
   // Generate the AST file in a separate process.
   pid_t child_pid = fork();
   if (child_pid == 0) { // Child process
   
     // Execute the command, passing the appropriate arguments.
-    execv(argv[0], (char *const *)argv);
+    execv(argv[0], (char *const *)&argv[0]);
     
     // If execv returns, it failed.
     assert(0 && "execv() failed");
