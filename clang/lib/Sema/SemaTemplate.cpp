@@ -3818,8 +3818,11 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   CheckExplicitInstantiationScope(*this, Record, NameLoc, true);
   
   // Verify that it is okay to explicitly instantiate here.
-  if (CXXRecordDecl *PrevDecl 
-        = cast_or_null<CXXRecordDecl>(Record->getPreviousDeclaration())) {
+  CXXRecordDecl *PrevDecl 
+    = cast_or_null<CXXRecordDecl>(Record->getPreviousDeclaration());
+  if (!PrevDecl && Record->getDefinition(Context))
+    PrevDecl = Record;
+  if (PrevDecl) {
     MemberSpecializationInfo *MSInfo = PrevDecl->getMemberSpecializationInfo();
     bool SuppressNew = false;
     assert(MSInfo && "No member specialization information?");
@@ -4065,6 +4068,9 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   } 
   
   FunctionDecl *PrevDecl = Specialization->getPreviousDeclaration();
+  if (!PrevDecl && Specialization->isThisDeclarationADefinition())
+    PrevDecl = Specialization;
+
   if (PrevDecl) {
     bool SuppressNew = false;
     if (CheckSpecializationInstantiationRedecl(*this, D.getIdentifierLoc(), TSK,

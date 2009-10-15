@@ -1258,7 +1258,10 @@ void Sema::InstantiateStaticDataMemberDefinition(
 
   if (Var) {
     Var->setPreviousDeclaration(OldVar);
-    Var->setTemplateSpecializationKind(OldVar->getTemplateSpecializationKind());
+    MemberSpecializationInfo *MSInfo = OldVar->getMemberSpecializationInfo();
+    assert(MSInfo && "Missing member specialization information?");
+    Var->setTemplateSpecializationKind(MSInfo->getTemplateSpecializationKind(),
+                                       MSInfo->getPointOfInstantiation());
     DeclGroupRef DG(Var);
     Consumer.HandleTopLevelDecl(DG);
   }
