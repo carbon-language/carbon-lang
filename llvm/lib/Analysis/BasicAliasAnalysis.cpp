@@ -358,11 +358,13 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
         if (alias(II->getOperand(2), PtrSize, P, Size) == NoAlias)
           return NoModRef;
       }
+      break;
       case Intrinsic::invariant_end: {
         unsigned PtrSize = cast<ConstantInt>(II->getOperand(2))->getZExtValue();
         if (alias(II->getOperand(3), PtrSize, P, Size) == NoAlias)
           return NoModRef;
       }
+      break;
       }
     }
   }
