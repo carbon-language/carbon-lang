@@ -43,14 +43,19 @@ typedef mach_port_name_t mach_port_t;
 typedef signed char BOOL;
 typedef struct _NSZone NSZone;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
-@protocol NSObject  - (BOOL)isEqual:(id)object;
+@protocol NSObject
+- (BOOL)isEqual:(id)object;
 - (id)retain;
 - (oneway void)release;
 @end  @protocol NSCopying  - (id)copyWithZone:(NSZone *)zone;
 @end  @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
-@end    @interface NSObject <NSObject> {
-}
-@end  typedef float CGFloat;
+@end
+@interface NSObject <NSObject> {}
++ (id)allocWithZone:(NSZone *)zone;
++ (id)alloc;
+- (void)dealloc;
+@end
+typedef float CGFloat;
 typedef double NSTimeInterval;
 @interface NSDate : NSObject <NSCopying, NSCoding>  - (NSTimeInterval)timeIntervalSinceReferenceDate;
 @end      enum {
@@ -74,6 +79,9 @@ kDAReturnSuccess = 0,     kDAReturnError = (((0x3e)&0x3f)<<26) | (((0x368)&0xfff
 typedef mach_error_t DAReturn;
 typedef const struct __DADissenter * DADissenterRef;
 extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn status, CFStringRef string );
+@interface NSNumber : NSObject
+ - (id)initWithInt:(int)value;
+ @end
 
 //===----------------------------------------------------------------------===//
 // Test cases.
@@ -138,5 +146,32 @@ CFDateRef rdar7257223_Create_2(void) {
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
   s.x = CFDateCreate(0, t); // no-warning
   return s.x;
+}
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7283470>
+//===----------------------------------------------------------------------===//
+
+void rdar7283470(void) {
+  NSNumber *numbers[] = {
+    [[NSNumber alloc] initWithInt:1], // no-warning
+    [[NSNumber alloc] initWithInt:2], // no-warning
+    [[NSNumber alloc] initWithInt:3], // no-warning
+    [[NSNumber alloc] initWithInt:4], // no-warning
+    [[NSNumber alloc] initWithInt:5]  // no-warning
+  };
+  
+  for (unsigned i = 0 ; i < sizeof(numbers) / sizeof(numbers[0]) ; ++i)
+    [numbers[i] release];
+}
+
+void rdar7283470_positive(void) {
+  NSNumber *numbers[] = {
+    [[NSNumber alloc] initWithInt:1], // expected-warning{{leak}}
+    [[NSNumber alloc] initWithInt:2], // expected-warning{{leak}}
+    [[NSNumber alloc] initWithInt:3], // expected-warning{{leak}}
+    [[NSNumber alloc] initWithInt:4], // expected-warning{{leak}}
+    [[NSNumber alloc] initWithInt:5]  // expected-warning{{leak}} 
+  };
 }
 
