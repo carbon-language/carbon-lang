@@ -3038,6 +3038,173 @@ Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
   return DeclPtrTy();
 }
 
+/// \brief Diagnose cases where we have an explicit template specialization 
+/// before/after an explicit template instantiation, producing diagnostics
+/// for those cases where they are required and determining whether the 
+/// new specialization/instantiation will have any effect.
+///
+/// \param S the semantic analysis object.
+///
+/// \param NewLoc the location of the new explicit specialization or 
+/// instantiation.
+///
+/// \param NewTSK the kind of the new explicit specialization or instantiation.
+///
+/// \param PrevDecl the previous declaration of the entity.
+///
+/// \param PrevTSK the kind of the old explicit specialization or instantiatin.
+///
+/// \param PrevPointOfInstantiation if valid, indicates where the previus 
+/// declaration was instantiated (either implicitly or explicitly).
+///
+/// \param SuppressNew will be set to true to indicate that the new 
+/// specialization or instantiation has no effect and should be ignored.
+///
+/// \returns true if there was an error that should prevent the introduction of
+/// the new declaration into the AST, false otherwise.
+static bool 
+CheckSpecializationInstantiationRedecl(Sema &S,
+                                       SourceLocation NewLoc,
+                                       TemplateSpecializationKind NewTSK,
+                                       NamedDecl *PrevDecl,
+                                       TemplateSpecializationKind PrevTSK,
+                                       SourceLocation PrevPointOfInstantiation,
+                                       bool &SuppressNew) {
+  SuppressNew = false;
+  
+  switch (NewTSK) {
+  case TSK_Undeclared:
+  case TSK_ImplicitInstantiation:
+    assert(false && "Don't check implicit instantiations here");
+    return false;
+    
+  case TSK_ExplicitSpecialization:
+    switch (PrevTSK) {
+    case TSK_Undeclared:
+    case TSK_ExplicitSpecialization:
+      // Okay, we're just specializing something that is either already 
+      // explicitly specialized or has merely been mentioned without any
+      // instantiation.
+      return false;
+
+    case TSK_ImplicitInstantiation:
+      if (PrevPointOfInstantiation.isInvalid()) {
+        // The declaration itself has not actually been instantiated, so it is
+        // still okay to specialize it.
+        return false;
+      }
+      // Fall through
+        
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ExplicitInstantiationDefinition:
+      assert((PrevTSK == TSK_ImplicitInstantiation || 
+              PrevPointOfInstantiation.isValid()) && 
+             "Explicit instantiation without point of instantiation?");
+        
+      // C++ [temp.expl.spec]p6:
+      //   If a template, a member template or the member of a class template 
+      //   is explicitly specialized then that specialization shall be declared
+      //   before the first use of that specialization that would cause an 
+      //   implicit instantiation to take place, in every translation unit in
+      //   which such a use occurs; no diagnostic is required.
+      S.Diag(NewLoc, diag::err_specialization_after_instantiation)
+        << PrevDecl;
+      S.Diag(PrevPointOfInstantiation, diag::note_instantiation_required_here)
+        << (PrevTSK != TSK_ImplicitInstantiation);
+      
+      return true;
+    }
+    break;
+      
+  case TSK_ExplicitInstantiationDeclaration:
+    switch (PrevTSK) {
+    case TSK_ExplicitInstantiationDeclaration:
+      // This explicit instantiation declaration is redundant (that's okay).
+      SuppressNew = true;
+      return false;
+        
+    case TSK_Undeclared:
+    case TSK_ImplicitInstantiation:
+      // We're explicitly instantiating something that may have already been
+      // implicitly instantiated; that's fine.
+      return false;
+        
+    case TSK_ExplicitSpecialization:
+      // C++0x [temp.explicit]p4:
+      //   For a given set of template parameters, if an explicit instantiation
+      //   of a template appears after a declaration of an explicit 
+      //   specialization for that template, the explicit instantiation has no
+      //   effect.
+      return false;
+        
+    case TSK_ExplicitInstantiationDefinition:
+      // C++0x [temp.explicit]p10:
+      //   If an entity is the subject of both an explicit instantiation 
+      //   declaration and an explicit instantiation definition in the same 
+      //   translation unit, the definition shall follow the declaration.
+      S.Diag(NewLoc, 
+             diag::err_explicit_instantiation_declaration_after_definition);
+      S.Diag(PrevPointOfInstantiation, 
+             diag::note_explicit_instantiation_definition_here);
+      assert(PrevPointOfInstantiation.isValid() &&
+             "Explicit instantiation without point of instantiation?");
+      SuppressNew = true;
+      return false;
+    }
+    break;
+      
+  case TSK_ExplicitInstantiationDefinition:
+    switch (PrevTSK) {
+    case TSK_Undeclared:
+    case TSK_ImplicitInstantiation:
+      // We're explicitly instantiating something that may have already been
+      // implicitly instantiated; that's fine.
+      return false;
+        
+    case TSK_ExplicitSpecialization:
+      // C++ DR 259, C++0x [temp.explicit]p4:
+      //   For a given set of template parameters, if an explicit
+      //   instantiation of a template appears after a declaration of
+      //   an explicit specialization for that template, the explicit
+      //   instantiation has no effect.
+      //
+      // In C++98/03 mode, we only give an extension warning here, because it 
+      // is not not harmful to try to explicitly instantiate something that
+      // has been explicitly specialized.
+      if (!S.getLangOptions().CPlusPlus0x) {
+        S.Diag(NewLoc, diag::ext_explicit_instantiation_after_specialization)
+          << PrevDecl;
+        S.Diag(PrevDecl->getLocation(),
+             diag::note_previous_template_specialization);
+      }
+      SuppressNew = true;
+      return false;
+        
+    case TSK_ExplicitInstantiationDeclaration:
+      // We're explicity instantiating a definition for something for which we
+      // were previously asked to suppress instantiations. That's fine. 
+      return false;
+        
+    case TSK_ExplicitInstantiationDefinition:
+      // C++0x [temp.spec]p5:
+      //   For a given template and a given set of template-arguments,
+      //     - an explicit instantiation definition shall appear at most once
+      //       in a program,
+      S.Diag(NewLoc, diag::err_explicit_instantiation_duplicate)
+        << PrevDecl;
+      S.Diag(PrevPointOfInstantiation, 
+             diag::note_previous_explicit_instantiation);
+      SuppressNew = true;
+      return false;        
+    }
+    break;
+  }
+  
+  assert(false && "Missing specialization/instantiation case?");
+         
+  return false;
+}
+
 /// \brief Perform semantic analysis for the given function template 
 /// specialization.
 ///
@@ -3649,7 +3816,23 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   //
   // This is C++ DR 275.
   CheckExplicitInstantiationScope(*this, Record, NameLoc, true);
-
+  
+  // Verify that it is okay to explicitly instantiate here.
+  if (CXXRecordDecl *PrevDecl 
+        = cast_or_null<CXXRecordDecl>(Record->getPreviousDeclaration())) {
+    MemberSpecializationInfo *MSInfo = PrevDecl->getMemberSpecializationInfo();
+    bool SuppressNew = false;
+    assert(MSInfo && "No member specialization information?");
+    if (CheckSpecializationInstantiationRedecl(*this, TemplateLoc, TSK, 
+                                               PrevDecl,
+                                        MSInfo->getTemplateSpecializationKind(),
+                                             MSInfo->getPointOfInstantiation(), 
+                                               SuppressNew))
+      return true;
+    if (SuppressNew)
+      return TagD;
+  }
+  
   if (!Record->getDefinition(Context)) {
     // C++ [temp.explicit]p3:
     //   A definition of a member class of a class template shall be in scope 
@@ -3783,8 +3966,20 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     // Check the scope of this explicit instantiation.
     CheckExplicitInstantiationScope(*this, Prev, D.getIdentifierLoc(), true);
     
+    // Verify that it is okay to explicitly instantiate here.
+    MemberSpecializationInfo *MSInfo = Prev->getMemberSpecializationInfo();
+    assert(MSInfo && "Missing static data member specialization info?");
+    bool SuppressNew = false;
+    if (CheckSpecializationInstantiationRedecl(*this, D.getIdentifierLoc(), TSK, 
+                                               Prev,
+                                        MSInfo->getTemplateSpecializationKind(),
+                                              MSInfo->getPointOfInstantiation(), 
+                                               SuppressNew))
+      return true;
+    if (SuppressNew)
+      return DeclPtrTy();
+    
     // Instantiate static data member.
-    // FIXME: Check for prior specializations and such.
     Prev->setTemplateSpecializationKind(TSK);
     if (TSK == TSK_ExplicitInstantiationDefinition)
       InstantiateStaticDataMemberDefinition(D.getIdentifierLoc(), Prev, false,
@@ -3859,6 +4054,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   if (!Specialization)
     return true;
   
+  // FIXME: Use CheckSpecializationInstantiationRedecl
   switch (Specialization->getTemplateSpecializationKind()) {
   case TSK_Undeclared:
     Diag(D.getIdentifierLoc(), 

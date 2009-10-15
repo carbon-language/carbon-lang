@@ -769,6 +769,13 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   }
   Pattern = PatternDef;
 
+  // \brief Record the point of instantiation.
+  if (MemberSpecializationInfo *MSInfo 
+        = Instantiation->getMemberSpecializationInfo()) {
+    MSInfo->setTemplateSpecializationKind(TSK);
+    MSInfo->setPointOfInstantiation(PointOfInstantiation);
+  }
+  
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Instantiation);
   if (Inst)
     return true;

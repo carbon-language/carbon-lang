@@ -1117,6 +1117,11 @@ def err_explicit_instantiation_undefined_member : Error<
   "static data member}0 %1 of class template %2">;
 def err_explicit_instantiation_undefined_func_template : Error<
   "explicit instantiation of undefined function template %0">;
+def err_explicit_instantiation_declaration_after_definition : Error<
+  "explicit instantiation declaration (with 'extern') follows explicit "
+  "instantiation definition (without 'extern')">;
+def note_explicit_instantiation_definition_here : Note<
+  "explicit instantiation definition is here">;
   
 // C++ typename-specifiers
 def err_typename_nested_not_found : Error<"no type named %0 in %1">;
