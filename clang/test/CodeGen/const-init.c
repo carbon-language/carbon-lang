@@ -1,6 +1,6 @@
 // RUN: clang-cc -triple i386-pc-linux-gnu -verify -emit-llvm -o - %s | FileCheck %s
 
-#include <stdint.h>
+typedef __INTPTR_TYPE__          intptr_t;
 
 // Brace-enclosed string array initializers
 char a[] = { "asdf" };

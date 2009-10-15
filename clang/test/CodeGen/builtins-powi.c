@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 void test(long double a, int b) {
   printf("%Lf**%d: %08x %08x %016Lx\n", 

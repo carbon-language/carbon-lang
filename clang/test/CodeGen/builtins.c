@@ -2,7 +2,6 @@
 // RUN: not grep __builtin %t
 
 #include <stdio.h>
-#include <math.h>
 
 void p(char *str, int x) {
   printf("%s: %d\n", str, x);
@@ -118,7 +117,7 @@ int main() {
 
 
 
-void strcat() {}
+char *strcat(char *, char const *) {}
 
 void foo() {
  __builtin_strcat(0, 0);
