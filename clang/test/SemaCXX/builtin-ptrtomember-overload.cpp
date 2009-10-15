@@ -16,3 +16,15 @@ void foo(C c, B b, int A::* pmf) {
 	int i = b->*pmf;
 }
 
+struct D {
+ operator const D *();
+};
+
+struct DPtr {
+ operator volatile int D::*();
+};
+
+int test(D d, DPtr dptr) {
+ return d->*dptr;
+}
+

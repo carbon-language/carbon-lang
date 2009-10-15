@@ -2884,7 +2884,8 @@ public:
     : SemaRef(SemaRef), Context(SemaRef.Context) { }
 
   void AddTypesConvertedFrom(QualType Ty, bool AllowUserConversions,
-                             bool AllowExplicitConversions);
+                             bool AllowExplicitConversions,
+                             const Qualifiers &VisibleTypeConversionsQuals);
 
   /// pointer_begin - First pointer type found;
   iterator pointer_begin() { return PointerTypes.begin(); }
@@ -2984,7 +2985,8 @@ BuiltinCandidateTypeSet::AddMemberPointerWithMoreQualifiedTypeVariants(
 void
 BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
                                                bool AllowUserConversions,
-                                               bool AllowExplicitConversions) {
+                                               bool AllowExplicitConversions,
+                                               const Qualifiers &VisibleQuals) {
   // Only deal with canonical types.
   Ty = Context.getCanonicalType(Ty);
 
@@ -3022,10 +3024,10 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
         QualType BaseTy = Context.getCanonicalType(Base->getType());
         BaseTy = Context.getCVRQualifiedType(BaseTy.getUnqualifiedType(),
                                           PointeeTy.getCVRQualifiers());
-
         // Add the pointer type, recursively, so that we get all of
         // the indirect base classes, too.
-        AddTypesConvertedFrom(Context.getPointerType(BaseTy), false, false);
+        AddTypesConvertedFrom(Context.getPointerType(BaseTy), false, false,
+                              VisibleQuals);
       }
     }
   } else if (Ty->isMemberPointerType()) {
@@ -3056,8 +3058,10 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
         if (ConvTemplate)
           continue;
 
-        if (AllowExplicitConversions || !Conv->isExplicit())
-          AddTypesConvertedFrom(Conv->getConversionType(), false, false);
+        if (AllowExplicitConversions || !Conv->isExplicit()) {
+          AddTypesConvertedFrom(Conv->getConversionType(), false, false, 
+                                VisibleQuals);
+        }
       }
     }
   }
@@ -3089,6 +3093,58 @@ static void AddBuiltinAssignmentOperatorCandidates(Sema &S,
   }
 }
 
+/// CollectVRQualifiers - This routine returns Volatile/Restrict qualifiers
+/// , if any, found in visible type conversion functions found in ArgExpr's
+/// type.
+static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
+    Qualifiers VRQuals;
+    const RecordType *TyRec;
+    if (const MemberPointerType *RHSMPType =
+        ArgExpr->getType()->getAs<MemberPointerType>())
+      TyRec = cast<RecordType>(RHSMPType->getClass());
+    else
+      TyRec = ArgExpr->getType()->getAs<RecordType>();
+    if (!TyRec) {
+      // Just to be safe, asssume the worst case.
+      VRQuals.addVolatile();
+      VRQuals.addRestrict();
+      return VRQuals;
+    }
+    
+    CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
+    OverloadedFunctionDecl *Conversions =
+    ClassDecl->getVisibleConversionFunctions();
+    
+    for (OverloadedFunctionDecl::function_iterator Func
+         = Conversions->function_begin();
+         Func != Conversions->function_end(); ++Func) {
+      if (CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(*Func)) {
+        QualType CanTy = Context.getCanonicalType(Conv->getConversionType());
+        if (const ReferenceType *ResTypeRef = CanTy->getAs<ReferenceType>())
+          CanTy = ResTypeRef->getPointeeType();
+        // Need to go down the pointer/mempointer chain and add qualifiers
+        // as see them.
+        bool done = false;
+        while (!done) {
+          if (const PointerType *ResTypePtr = CanTy->getAs<PointerType>())
+            CanTy = ResTypePtr->getPointeeType();
+          else if (const MemberPointerType *ResTypeMPtr = 
+                CanTy->getAs<MemberPointerType>())
+            CanTy = ResTypeMPtr->getPointeeType();
+          else
+            done = true;
+          if (CanTy.isVolatileQualified())
+            VRQuals.addVolatile();
+          if (CanTy.isRestrictQualified())
+            VRQuals.addRestrict();
+          if (VRQuals.hasRestrict() && VRQuals.hasVolatile())
+            return VRQuals;
+        }
+      }
+    }
+    return VRQuals;
+}
+  
 /// AddBuiltinOperatorCandidates - Add the appropriate built-in
 /// operator overloads to the candidate set (C++ [over.built]), based
 /// on the operator @p Op and the arguments given. For example, if the
@@ -3123,6 +3179,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   // Find all of the types that the arguments can convert to, but only
   // if the operator we're looking at has built-in operator candidates
   // that make use of these types.
+  Qualifiers VisibleTypeConversionsQuals;
+  VisibleTypeConversionsQuals.addConst();
   BuiltinCandidateTypeSet CandidateTypes(*this);
   if (Op == OO_Less || Op == OO_Greater || Op == OO_LessEqual ||
       Op == OO_GreaterEqual || Op == OO_EqualEqual || Op == OO_ExclaimEqual ||
@@ -3131,11 +3189,15 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       Op == OO_ArrowStar || Op == OO_PlusPlus || Op == OO_MinusMinus ||
       (Op == OO_Star && NumArgs == 1) || Op == OO_Conditional) {
     for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
+      VisibleTypeConversionsQuals += CollectVRQualifiers(Context, Args[ArgIdx]);
+      
+    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
       CandidateTypes.AddTypesConvertedFrom(Args[ArgIdx]->getType(),
                                            true,
                                            (Op == OO_Exclaim ||
                                             Op == OO_AmpAmp ||
-                                            Op == OO_PipePipe));
+                                            Op == OO_PipePipe),
+                                           VisibleTypeConversionsQuals);
   }
 
   bool isComparison = false;
@@ -3202,14 +3264,17 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
       else
         AddBuiltinCandidate(ArithTy, ParamTypes, Args, 2, CandidateSet);
-
-      // Volatile version
-      ParamTypes[0]
-        = Context.getLValueReferenceType(Context.getVolatileType(ArithTy));
-      if (NumArgs == 1)
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
-      else
-        AddBuiltinCandidate(ArithTy, ParamTypes, Args, 2, CandidateSet);
+      // heuristic to reduce number of builtin candidates in the set.
+      // Add volatile version only if there are conversions to a volatile type.
+      if (VisibleTypeConversionsQuals.hasVolatile()) {
+        // Volatile version
+        ParamTypes[0]
+          = Context.getLValueReferenceType(Context.getVolatileType(ArithTy));
+        if (NumArgs == 1)
+          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 1, CandidateSet);
+        else
+          AddBuiltinCandidate(ArithTy, ParamTypes, Args, 2, CandidateSet);
+      }
     }
 
     // C++ [over.built]p5:
@@ -3238,7 +3303,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       else
         AddBuiltinCandidate(*Ptr, ParamTypes, Args, 2, CandidateSet);
 
-      if (!Context.getCanonicalType(*Ptr).isVolatileQualified()) {
+      if (!Context.getCanonicalType(*Ptr).isVolatileQualified() &&
+          VisibleTypeConversionsQuals.hasVolatile()) {
         // With volatile
         ParamTypes[0]
           = Context.getLValueReferenceType(Context.getVolatileType(*Ptr));
@@ -3708,6 +3774,13 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
           C1 = QualType(Q1.strip(PointerTy->getPointeeType()), 0);
           if (!isa<RecordType>(C1))
             continue;
+          // heuristic to reduce number of builtin candidates in the set.
+          // Add volatile/restrict version only if there are conversions to a
+          // volatile/restrict type.
+          if (!VisibleTypeConversionsQuals.hasVolatile() && Q1.hasVolatile())
+            continue;
+          if (!VisibleTypeConversionsQuals.hasRestrict() && Q1.hasRestrict())
+            continue;
         }
         for (BuiltinCandidateTypeSet::iterator
              MemPtr = CandidateTypes.member_pointer_begin(),
@@ -3721,6 +3794,12 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
           QualType ParamTypes[2] = { *Ptr, *MemPtr };
           // build CV12 T&
           QualType T = mptr->getPointeeType();
+          if (!VisibleTypeConversionsQuals.hasVolatile() && 
+              T.isVolatileQualified())
+            continue;
+          if (!VisibleTypeConversionsQuals.hasRestrict() && 
+              T.isRestrictQualified())
+            continue;
           T = Q1.apply(T);
           QualType ResultTy = Context.getLValueReferenceType(T);
           AddBuiltinCandidate(ResultTy, ParamTypes, Args, 2, CandidateSet);
