@@ -142,10 +142,15 @@ void Clang::AddPreprocessingOptions(const Driver &D,
       continue;
 
     if (A->getOption().matches(options::OPT_include)) {
+      // Use PCH if the user requested it, except for C++ (for now).
+      bool UsePCH = D.CCCUsePCH;
+      if (types::isCXX(Inputs[0].getType()))
+        UsePCH = false;
+
       bool FoundPTH = false;
       bool FoundPCH = false;
       llvm::sys::Path P(A->getValue(Args));
-      if (D.CCCUsePCH) {
+      if (UsePCH) {
         P.appendSuffix("pch");
         if (P.exists())
           FoundPCH = true;
@@ -164,8 +169,8 @@ void Clang::AddPreprocessingOptions(const Driver &D,
       if (!FoundPCH && !FoundPTH) {
         P.appendSuffix("gch");
         if (P.exists()) {
-          FoundPCH = D.CCCUsePCH;
-          FoundPTH = !D.CCCUsePCH;
+          FoundPCH = UsePCH;
+          FoundPTH = !UsePCH;
         }
         else
           P.eraseSuffix();
@@ -173,7 +178,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
 
       if (FoundPCH || FoundPTH) {
         A->claim();
-        if (D.CCCUsePCH)
+        if (UsePCH)
           CmdArgs.push_back("-include-pch");
         else
           CmdArgs.push_back("-include-pth");
@@ -528,7 +533,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("-E");
   } else if (isa<PrecompileJobAction>(JA)) {
-    if (D.CCCUsePCH)
+    // Use PCH if the user requested it, except for C++ (for now).
+    bool UsePCH = D.CCCUsePCH;
+    if (types::isCXX(Inputs[0].getType()))
+      UsePCH = false;
+
+    if (UsePCH)
       CmdArgs.push_back("-emit-pch");
     else
       CmdArgs.push_back("-emit-pth");
