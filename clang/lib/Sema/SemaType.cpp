@@ -1333,6 +1333,9 @@ Sema::GetDeclaratorInfoForDeclarator(Declarator &D, QualType T, unsigned Skip) {
 
   for (unsigned i = Skip, e = D.getNumTypeObjects(); i != e; ++i) {
     assert(!CurrTL.isNull());
+    
+    // Don't bother recording source locations for qualifiers.
+    CurrTL = CurrTL.getUnqualifiedLoc();
 
     DeclaratorChunk &DeclType = D.getTypeObject(i);
     switch (DeclType.Kind) {

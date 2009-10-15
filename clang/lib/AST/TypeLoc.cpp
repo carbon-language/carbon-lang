@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Support/raw_ostream.h"
 #include "clang/AST/TypeLocVisitor.h"
 using namespace clang;
 
@@ -24,7 +25,7 @@ namespace {
 class TypeLocRanger : public TypeLocVisitor<TypeLocRanger, SourceRange> {
 public:
 #define ABSTRACT_TYPELOC(CLASS)
-#define TYPELOC(CLASS, PARENT, TYPE) \
+#define TYPELOC(CLASS, PARENT) \
     SourceRange Visit##CLASS(CLASS TyLoc) { return TyLoc.getSourceRange(); }
 #include "clang/AST/TypeLocNodes.def"
 
@@ -42,25 +43,14 @@ SourceRange TypeLoc::getSourceRange() const {
   return TypeLocRanger().Visit(*this);
 }
 
-/// \brief Returns the size of type source info data block for the given type.
-unsigned TypeLoc::getFullDataSizeForType(QualType Ty) {
-  return TypeLoc(Ty, 0).getFullDataSize();
-}
-
 /// \brief Find the TypeSpecLoc that is part of this TypeLoc.
 TypeSpecLoc TypeLoc::getTypeSpecLoc() const {
   if (isNull())
     return TypeSpecLoc();
-
-  if (const DeclaratorLoc *DL = dyn_cast<DeclaratorLoc>(this))
+  UnqualTypeLoc Cur = getUnqualifiedLoc();
+  if (const DeclaratorLoc *DL = dyn_cast<DeclaratorLoc>(&Cur))
     return DL->getTypeSpecLoc();
-  return cast<TypeSpecLoc>(*this);
-}
-
-/// \brief Find the TypeSpecLoc that is part of this TypeLoc and return its
-/// SourceRange.
-SourceRange TypeLoc::getTypeSpecRange() const {
-  return getTypeSpecLoc().getSourceRange();
+  return cast<TypeSpecLoc>(Cur);
 }
 
 namespace {
@@ -69,7 +59,7 @@ namespace {
 class TypeSizer : public TypeLocVisitor<TypeSizer, unsigned> {
 public:
 #define ABSTRACT_TYPELOC(CLASS)
-#define TYPELOC(CLASS, PARENT, TYPE) \
+#define TYPELOC(CLASS, PARENT) \
     unsigned Visit##CLASS(CLASS TyLoc) { return TyLoc.getFullDataSize(); }
 #include "clang/AST/TypeLocNodes.def"
 
@@ -82,9 +72,9 @@ public:
 }
 
 /// \brief Returns the size of the type source info data block.
-unsigned TypeLoc::getFullDataSize() const {
-  if (isNull()) return 0;
-  return TypeSizer().Visit(*this);
+unsigned TypeLoc::getFullDataSizeForType(QualType Ty) {
+  if (Ty.isNull()) return 0;
+  return TypeSizer().Visit(TypeLoc(Ty, 0));
 }
 
 namespace {
@@ -93,13 +83,16 @@ namespace {
 /// TypeLoc is a PointerLoc and next TypeLoc is for "int".
 class NextLoc : public TypeLocVisitor<NextLoc, TypeLoc> {
 public:
-#define TYPELOC(CLASS, PARENT, TYPE)
+#define TYPELOC(CLASS, PARENT)
 #define DECLARATOR_TYPELOC(CLASS, TYPE) \
-    TypeLoc Visit##CLASS(CLASS TyLoc);
+  TypeLoc Visit##CLASS(CLASS TyLoc);
 #include "clang/AST/TypeLocNodes.def"
 
   TypeLoc VisitTypeSpecLoc(TypeLoc TyLoc) { return TypeLoc(); }
   TypeLoc VisitObjCProtocolListLoc(ObjCProtocolListLoc TL);
+  TypeLoc VisitQualifiedLoc(QualifiedLoc TyLoc) {
+    return TyLoc.getUnqualifiedLoc();
+  }
 
   TypeLoc VisitTypeLoc(TypeLoc TyLoc) {
     assert(0 && "A declarator loc wrapper was not handled!");
@@ -135,7 +128,10 @@ TypeLoc NextLoc::VisitArrayLoc(ArrayLoc TL) {
 /// \brief Get the next TypeLoc pointed by this TypeLoc, e.g for "int*" the
 /// TypeLoc is a PointerLoc and next TypeLoc is for "int".
 TypeLoc TypeLoc::getNextTypeLoc() const {
-  return NextLoc().Visit(*this);
+  //llvm::errs() << "getNextTypeLoc: Ty=" << Ty << ", Data=" << Data << "\n";
+  TypeLoc Tmp = NextLoc().Visit(*this);
+  //llvm::errs() << "  result: Ty=" << Tmp.Ty << ", Data=" << Tmp.Data << "\n";
+  return Tmp;
 }
 
 //===----------------------------------------------------------------------===//
@@ -150,7 +146,7 @@ public:
 
 }
 
-bool TypeSpecLoc::classof(const TypeLoc *TL) {
+bool TypeSpecLoc::classof(const UnqualTypeLoc *TL) {
   return TypeSpecChecker().Visit(*TL);
 }
 
@@ -163,7 +159,7 @@ namespace {
 /// \brief Return the TypeSpecLoc for the visited DeclaratorLoc.
 class TypeSpecGetter : public TypeLocVisitor<TypeSpecGetter, TypeSpecLoc> {
 public:
-#define TYPELOC(CLASS, PARENT, TYPE)
+#define TYPELOC(CLASS, PARENT)
 #define DECLARATOR_TYPELOC(CLASS, TYPE) \
     TypeSpecLoc Visit##CLASS(CLASS TyLoc) { return TyLoc.getTypeSpecLoc(); }
 #include "clang/AST/TypeLocNodes.def"
@@ -171,6 +167,10 @@ public:
   TypeSpecLoc VisitTypeLoc(TypeLoc TyLoc) {
     assert(0 && "A declarator loc wrapper was not handled!");
     return TypeSpecLoc();
+  }
+
+  TypeSpecLoc VisitQualifiedLoc(QualifiedLoc TyLoc) {
+    return Visit(TyLoc.getUnqualifiedLoc());
   }
 };
 
@@ -190,7 +190,7 @@ public:
 
 }
 
-bool DeclaratorLoc::classof(const TypeLoc *TL) {
+bool DeclaratorLoc::classof(const UnqualTypeLoc *TL) {
   return DeclaratorLocChecker().Visit(*TL);
 }
 
@@ -208,163 +208,8 @@ public:
 
 }
 
-bool DefaultTypeSpecLoc::classof(const TypeLoc *TL) {
-  return DefaultTypeSpecLocChecker().Visit(*TL);
+bool DefaultTypeSpecLoc::classofType(const Type *Ty) {
+  return
+    DefaultTypeSpecLocChecker().Visit(UnqualTypeLoc(const_cast<Type*>(Ty), 0));
 }
-
-//===----------------------------------------------------------------------===//
-// TypedefLoc Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class TypedefLocChecker : public TypeLocVisitor<TypedefLocChecker, bool> {
-public:
-  bool VisitTypedefLoc(TypedefLoc TyLoc) { return true; }
-};
-
-}
-
-bool TypedefLoc::classof(const TypeLoc *TL) {
-  return TypedefLocChecker().Visit(*TL);
-}
-
-//===----------------------------------------------------------------------===//
-// ObjCInterfaceLoc Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class ObjCInterfaceLocChecker :
-  public TypeLocVisitor<ObjCInterfaceLocChecker, bool> {
-public:
-  bool VisitObjCInterfaceLoc(ObjCInterfaceLoc TyLoc) { return true; }
-};
-
-}
-
-bool ObjCInterfaceLoc::classof(const TypeLoc *TL) {
-  return ObjCInterfaceLocChecker().Visit(*TL);
-}
-
-//===----------------------------------------------------------------------===//
-// ObjCProtocolListLoc Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class ObjCProtocolListLocChecker :
-  public TypeLocVisitor<ObjCProtocolListLocChecker, bool> {
-public:
-  bool VisitObjCProtocolListLoc(ObjCProtocolListLoc TyLoc) { return true; }
-};
-
-}
-
-bool ObjCProtocolListLoc::classof(const TypeLoc *TL) {
-  return ObjCProtocolListLocChecker().Visit(*TL);
-}
-
-//===----------------------------------------------------------------------===//
-// PointerLoc Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class PointerLocChecker : public TypeLocVisitor<PointerLocChecker, bool> {
-public:
-  bool VisitPointerLoc(PointerLoc TyLoc) { return true; }
-};
-
-}
-
-bool PointerLoc::classof(const TypeLoc *TL) {
-  return PointerLocChecker().Visit(*TL);
-}
-
-//===----------------------------------------------------------------------===//
-// BlockPointerLoc Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class BlockPointerLocChecker :
-           public TypeLocVisitor<BlockPointerLocChecker, bool> {
-public:
-  bool VisitBlockPointerLoc(BlockPointerLoc TyLoc) { return true; }
-};
-
-}
-
-bool BlockPointerLoc::classof(const TypeLoc *TL) {
-  return BlockPointerLocChecker().Visit(*TL);
-}
-
-//===----------------------------------------------------------------------===//
-// MemberPointerLoc Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class MemberPointerLocChecker :
-           public TypeLocVisitor<MemberPointerLocChecker, bool> {
-public:
-  bool VisitMemberPointerLoc(MemberPointerLoc TyLoc) { return true; }
-};
-
-}
-
-bool MemberPointerLoc::classof(const TypeLoc *TL) {
-  return MemberPointerLocChecker().Visit(*TL);
-}
-
-//===----------------------------------------------------------------------===//
-// ReferenceLoc Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class ReferenceLocChecker : public TypeLocVisitor<ReferenceLocChecker, bool> {
-public:
-  bool VisitReferenceLoc(ReferenceLoc TyLoc) { return true; }
-};
-
-}
-
-bool ReferenceLoc::classof(const TypeLoc *TL) {
-  return ReferenceLocChecker().Visit(*TL);
-}
-
-//===----------------------------------------------------------------------===//
-// FunctionLoc Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class FunctionLocChecker : public TypeLocVisitor<FunctionLocChecker, bool> {
-public:
-  bool VisitFunctionLoc(FunctionLoc TyLoc) { return true; }
-};
-
-}
-
-bool FunctionLoc::classof(const TypeLoc *TL) {
-  return FunctionLocChecker().Visit(*TL);
-}
-
-//===----------------------------------------------------------------------===//
-// ArrayLoc Implementation
-//===----------------------------------------------------------------------===//
-
-namespace {
-
-class ArrayLocChecker : public TypeLocVisitor<ArrayLocChecker, bool> {
-public:
-  bool VisitArrayLoc(ArrayLoc TyLoc) { return true; }
-};
-
-}
-
-bool ArrayLoc::classof(const TypeLoc *TL) {
-  return ArrayLocChecker().Visit(*TL);
-}
+ 

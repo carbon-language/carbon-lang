@@ -162,7 +162,7 @@ public:
     : Reader(Reader), Record(Record), Idx(Idx) { }
 
 #define ABSTRACT_TYPELOC(CLASS)
-#define TYPELOC(CLASS, PARENT, TYPE) \
+#define TYPELOC(CLASS, PARENT) \
     void Visit##CLASS(CLASS TyLoc);
 #include "clang/AST/TypeLocNodes.def"
 
@@ -173,6 +173,9 @@ public:
 
 }
 
+void TypeLocReader::VisitQualifiedLoc(QualifiedLoc TyLoc) {
+  // nothing to do
+}
 void TypeLocReader::VisitDefaultTypeSpecLoc(DefaultTypeSpecLoc TyLoc) {
   TyLoc.setStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }

@@ -12,7 +12,9 @@
 //  base class (e.g., "TypeSpecLoc" or "DeclaratorLoc"), and the Type subclass
 //  that the TypeLoc is associated with.
 //
-//    TYPELOC(Class, Base, Type) - Description of the TypeLoc subclass.
+//    TYPELOC(Class, Base) - A TypeLoc subclass.
+//
+//    UNQUAL_TYPELOC(Class, Base, Type) - An UnqualTypeLoc subclass.
 //
 //    ABSTRACT_TYPELOC(Class) - Refers to TypeSpecLoc and DeclaratorLoc.
 //
@@ -23,16 +25,20 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef UNQUAL_TYPELOC
+#  define UNQUAL_TYPELOC(Class, Base, Type) TYPELOC(Class, Base)
+#endif
+
 #ifndef ABSTRACT_TYPELOC
-#  define ABSTRACT_TYPELOC(Class) TYPELOC(Class, TypeLoc, Type)
+#  define ABSTRACT_TYPELOC(Class) TYPELOC(Class, TypeLoc)
 #endif
 
 #ifndef TYPESPEC_TYPELOC
-#  define TYPESPEC_TYPELOC(Class, Type) TYPELOC(Class, TypeSpecLoc, Type)
+#  define TYPESPEC_TYPELOC(Class, Type) UNQUAL_TYPELOC(Class, TypeSpecLoc, Type)
 #endif
 
 #ifndef DECLARATOR_TYPELOC
-#  define DECLARATOR_TYPELOC(Class, Type) TYPELOC(Class, DeclaratorLoc, Type)
+#  define DECLARATOR_TYPELOC(Class, Type) UNQUAL_TYPELOC(Class, DeclaratorLoc, Type)
 #endif
 
 TYPESPEC_TYPELOC(DefaultTypeSpecLoc, Type)
@@ -47,9 +53,11 @@ DECLARATOR_TYPELOC(FunctionLoc, FunctionType)
 DECLARATOR_TYPELOC(ArrayLoc, ArrayType)
 ABSTRACT_TYPELOC(DeclaratorLoc)
 ABSTRACT_TYPELOC(TypeSpecLoc)
+TYPELOC(QualifiedLoc, TypeLoc)
 
 
 #undef DECLARATOR_TYPELOC
 #undef TYPESPEC_TYPELOC
 #undef ABSTRACT_TYPELOC
+#undef UNQUAL_TYPELOC
 #undef TYPELOC

@@ -25,12 +25,14 @@ template<typename ImplClass, typename RetTy=void>
 class TypeLocVisitor {
   class TypeDispatch : public TypeVisitor<TypeDispatch, RetTy> {
     ImplClass *Impl;
-    TypeLoc TyLoc;
+    UnqualTypeLoc TyLoc;
 
   public:
-    TypeDispatch(ImplClass *impl, TypeLoc &tyLoc) : Impl(impl), TyLoc(tyLoc) { }
+    TypeDispatch(ImplClass *impl, UnqualTypeLoc &tyLoc) 
+      : Impl(impl), TyLoc(tyLoc) { }
+#define TYPELOC(CLASS, BASE)
 #define ABSTRACT_TYPELOC(CLASS)
-#define TYPELOC(CLASS, PARENT, TYPE)                              \
+#define UNQUAL_TYPELOC(CLASS, PARENT, TYPE)                       \
     RetTy Visit##TYPE(TYPE *) {                                   \
       return Impl->Visit##CLASS(reinterpret_cast<CLASS&>(TyLoc)); \
     }
@@ -39,13 +41,22 @@ class TypeLocVisitor {
 
 public:
   RetTy Visit(TypeLoc TyLoc) {
-    TypeDispatch TD(static_cast<ImplClass*>(this), TyLoc);
-    return TD.Visit(TyLoc.getSourceType().getTypePtr());
+    if (isa<QualifiedLoc>(TyLoc))
+      return static_cast<ImplClass*>(this)->
+        VisitQualifiedLoc(cast<QualifiedLoc>(TyLoc));
+
+    return Visit(cast<UnqualTypeLoc>(TyLoc));
   }
 
-#define TYPELOC(CLASS, PARENT, TYPE) RetTy Visit##CLASS(CLASS TyLoc) {       \
-  DISPATCH(PARENT);                                                          \
-}
+  RetTy Visit(UnqualTypeLoc TyLoc) {
+    TypeDispatch TD(static_cast<ImplClass*>(this), TyLoc);
+    return TD.Visit(TyLoc.getSourceTypePtr());
+  }
+
+#define TYPELOC(CLASS, PARENT)      \
+  RetTy Visit##CLASS(CLASS TyLoc) { \
+    DISPATCH(PARENT);               \
+  }
 #include "clang/AST/TypeLocNodes.def"
 
   RetTy VisitTypeLoc(TypeLoc TyLoc) { return RetTy(); }

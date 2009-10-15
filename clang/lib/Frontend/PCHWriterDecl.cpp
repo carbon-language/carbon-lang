@@ -160,7 +160,7 @@ public:
     : Writer(Writer), Record(Record) { }
 
 #define ABSTRACT_TYPELOC(CLASS)
-#define TYPELOC(CLASS, PARENT, TYPE) \
+#define TYPELOC(CLASS, PARENT) \
     void Visit##CLASS(CLASS TyLoc);
 #include "clang/AST/TypeLocNodes.def"
 
@@ -171,6 +171,9 @@ public:
 
 }
 
+void TypeLocWriter::VisitQualifiedLoc(QualifiedLoc TyLoc) {
+  // nothing to do here
+}
 void TypeLocWriter::VisitDefaultTypeSpecLoc(DefaultTypeSpecLoc TyLoc) {
   Writer.AddSourceLocation(TyLoc.getStartLoc(), Record);
 }
