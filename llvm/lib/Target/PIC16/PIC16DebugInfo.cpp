@@ -30,10 +30,10 @@ void PIC16DbgInfo::PopulateDebugInfo (DIType Ty, unsigned short &TypeNo,
                                       std::string &TagName) {
   if (Ty.isBasicType())
     PopulateBasicTypeInfo (Ty, TypeNo);
-  else if (Ty.isDerivedType())
-    PopulateDerivedTypeInfo (Ty, TypeNo, HasAux, Aux, TagName);
   else if (Ty.isCompositeType())
     PopulateCompositeTypeInfo (Ty, TypeNo, HasAux, Aux, TagName);
+  else if (Ty.isDerivedType())
+    PopulateDerivedTypeInfo (Ty, TypeNo, HasAux, Aux, TagName);
   else {
     TypeNo = PIC16Dbg::T_NULL;
     HasAux = false;
@@ -190,7 +190,7 @@ unsigned PIC16DbgInfo::GetTypeDebugNumber(std::string &type)  {
 ///
 short PIC16DbgInfo::getStorageClass(DIGlobalVariable DIGV) {
   short ClassNo;
-  if (PAN::isLocalName(DIGV.getGlobal()->getName())) {
+  if (PAN::isLocalName(DIGV.getName())) {
     // Generating C_AUTO here fails due to error in linker. Change it once
     // linker is fixed.
     ClassNo = PIC16Dbg::C_STAT;
@@ -446,7 +446,8 @@ void PIC16DbgInfo::EmitVarDebugInfo(Module &M) {
     bool HasAux = false;
     int Aux[PIC16Dbg::AuxSize] = { 0 };
     std::string TagName = "";
-    std::string VarName = MAI->getGlobalPrefix()+DIGV.getGlobal()->getNameStr();
+    std::string VarName = DIGV.getName();
+    VarName = MAI->getGlobalPrefix() + VarName;
     PopulateDebugInfo(Ty, TypeNo, HasAux, Aux, TagName);
     // Emit debug info only if type information is availaible.
     if (TypeNo != PIC16Dbg::T_NULL) {
