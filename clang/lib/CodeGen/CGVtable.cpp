@@ -119,6 +119,43 @@ public:
 
   Index_t VBlookup(CXXRecordDecl *D, CXXRecordDecl *B);
 
+  Index_t getNVOffset_1(const CXXRecordDecl *D, const CXXRecordDecl *B,
+    Index_t Offset = 0) {
+
+    if (B == D)
+      return Offset;
+
+    const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(D);
+    for (CXXRecordDecl::base_class_const_iterator i = D->bases_begin(),
+           e = D->bases_end(); i != e; ++i) {
+      const CXXRecordDecl *Base =
+        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+      int64_t BaseOffset = 0;
+      if (!i->isVirtual())
+        BaseOffset = Offset + Layout.getBaseClassOffset(Base);
+      int64_t o = getNVOffset_1(Base, B, BaseOffset);
+      if (o >= 0)
+        return o;
+    }
+
+    return -1;
+  }
+
+  /// getNVOffset - Returns the non-virtual offset for the given (B) base of the
+  /// derived class D.
+  Index_t getNVOffset(QualType qB, QualType qD) {
+    qD = qD->getAs<PointerType>()->getPointeeType();
+    qB = qB->getAs<PointerType>()->getPointeeType();
+    CXXRecordDecl *D = cast<CXXRecordDecl>(qD->getAs<RecordType>()->getDecl());
+    CXXRecordDecl *B = cast<CXXRecordDecl>(qB->getAs<RecordType>()->getDecl());
+    int64_t o = getNVOffset_1(D, B);
+    if (o >= 0)
+      return o;
+
+    assert(false && "FIXME: non-virtual base not found");
+    return 0;
+  }
+
   /// getVbaseOffset - Returns the index into the vtable for the virtual base
   /// offset for the given (B) virtual base of the derived class D.
   Index_t getVbaseOffset(QualType qB, QualType qD) {
@@ -138,8 +175,10 @@ public:
   }
 
   bool OverrideMethod(const CXXMethodDecl *MD, llvm::Constant *m,
-                      bool MorallyVirtual, Index_t Offset) {
+                      bool MorallyVirtual, Index_t OverrideOffset,
+                      Index_t Offset) {
     typedef CXXMethodDecl::method_iterator meth_iter;
+    // FIXME: Should OverrideOffset's be Offset?
 
     // FIXME: Don't like the nested loops.  For very large inheritance
     // heirarchies we could have a table on the side with the final overridder
@@ -166,11 +205,12 @@ public:
         CallOffset ReturnOffset = std::make_pair(0, 0);
         if (oret != ret) {
           // FIXME: calculate offsets for covariance
-          Index_t nv = 0;
           if (CovariantThunks.count(OMD)) {
             oret = CovariantThunks[OMD].second;
             CovariantThunks.erase(OMD);
           }
+          // FIXME: Double check oret
+          Index_t nv = getNVOffset(oret, ret)/8;
           ReturnOffset = std::make_pair(nv, getVbaseOffset(oret, ret));
         }
         Index[MD] = i;
@@ -180,17 +220,16 @@ public:
         if (MorallyVirtual) {
           Index_t &idx = VCall[OMD];
           if (idx == 0) {
-            VCallOffset[MD] = Offset/8;
+            VCallOffset[MD] = OverrideOffset/8;
             idx = VCalls.size()+1;
             VCalls.push_back(0);
           } else {
             VCallOffset[MD] = VCallOffset[OMD];
-            VCalls[idx-1] = -VCallOffset[OMD] + Offset/8;
+            VCalls[idx-1] = -VCallOffset[OMD] + OverrideOffset/8;
           }
           VCall[MD] = idx;
           CallOffset ThisOffset;
-          // FIXME: calculate non-virtual offset
-          ThisOffset = std::make_pair(0 /* -CurrentVBaseOffset/8 + Offset/8 */,
+          ThisOffset = std::make_pair(CurrentVBaseOffset/8 - Offset/8,
                                       -((idx+extra+2)*LLVMPointerWidth/8));
           // FIXME: Do we always have to build a covariant thunk to save oret,
           // which is the containing virtual base class?
@@ -204,8 +243,8 @@ public:
         }
 
         // FIXME: finish off
-        int64_t O = VCallOffset[OMD] - Offset/8;
-        // int64_t O = CurrentVBaseOffset/8 - Offset/8;
+        int64_t O = VCallOffset[OMD] - OverrideOffset/8;
+        // int64_t O = CurrentVBaseOffset/8 - OverrideOffset/8;
         if (O || ReturnOffset.first || ReturnOffset.second) {
           CallOffset ThisOffset = std::make_pair(O, 0);
           
@@ -248,11 +287,11 @@ public:
     CovariantThunks.clear();
   }
 
-  void OverrideMethods(Path_t *Path, bool MorallyVirtual) {
+  void OverrideMethods(Path_t *Path, bool MorallyVirtual, int64_t Offset) {
     for (Path_t::reverse_iterator i = Path->rbegin(),
            e = Path->rend(); i != e; ++i) {
       const CXXRecordDecl *RD = i->first;
-      int64_t Offset = i->second;
+      int64_t OverrideOffset = i->second;
       for (method_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
            ++mi) {
         if (!mi->isVirtual())
@@ -272,7 +311,7 @@ public:
           m = wrap(CGM.GetAddrOfFunction(MD, Ty));
         }
 
-        OverrideMethod(MD, m, MorallyVirtual, Offset);
+        OverrideMethod(MD, m, MorallyVirtual, OverrideOffset, Offset);
       }
     }
   }
@@ -291,7 +330,7 @@ public:
     }
     
     // If we can find a previously allocated slot for this, reuse it.
-    if (OverrideMethod(MD, m, MorallyVirtual, Offset))
+    if (OverrideMethod(MD, m, MorallyVirtual, Offset, Offset))
       return;
 
     // else allocate a new slot.
@@ -344,7 +383,7 @@ public:
     llvm::Constant *e = 0;
     D(VCalls.insert(VCalls.begin(), 673));
     D(VCalls.push_back(672));
-    methods.insert(methods.begin() + InsertionPoint, VCalls.size()/*+2*/, e);
+    methods.insert(methods.begin() + InsertionPoint, VCalls.size(), e);
     // The vcalls come first...
     for (std::vector<Index_t>::reverse_iterator i = VCalls.rbegin(),
            e = VCalls.rend();
@@ -380,7 +419,9 @@ public:
     int VCallInsertionPoint = methods.size();
     if (!DeferVCalls) {
       insertVCalls(VCallInsertionPoint);
-    }
+    } else
+      // FIXME: just for extra, or for all uses of VCalls.size post this?
+      extra = -VCalls.size();
 
     if (ForVirtualBase) {
       D(methods.push_back(wrap(668)));
@@ -463,7 +504,7 @@ public:
     AddMethods(RD, MorallyVirtual, Offset);
 
     if (Path)
-      OverrideMethods(Path, MorallyVirtual);
+      OverrideMethods(Path, MorallyVirtual, Offset);
 
     return end(RD, offsets, Layout, PrimaryBase, PrimaryBaseWasVirtual,
                MorallyVirtual, Offset, ForVirtualBase, Path);
