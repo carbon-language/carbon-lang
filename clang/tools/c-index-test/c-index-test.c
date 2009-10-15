@@ -91,6 +91,7 @@ int main(int argc, char **argv) {
 
   if (!strcmp(argv[2], "all")) {
     clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
+    clang_disposeTranslationUnit(TU);
     return 1;
   }
   /* Perform some simple filtering. */
@@ -101,6 +102,7 @@ int main(int argc, char **argv) {
   else if (!strcmp(argv[2], "typedef")) K = CXCursor_TypedefDecl;
 
   clang_loadTranslationUnit(TU, TranslationUnitVisitor, &K);
+  clang_disposeTranslationUnit(TU);
   return 1;
   }
 }

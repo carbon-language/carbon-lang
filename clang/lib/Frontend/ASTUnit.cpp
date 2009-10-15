@@ -24,8 +24,11 @@
 
 using namespace clang;
 
-ASTUnit::ASTUnit(Diagnostic &_Diags) : Diags(_Diags) { }
-ASTUnit::~ASTUnit() { }
+ASTUnit::ASTUnit(Diagnostic &_Diags) : Diags(_Diags), tempFile(false) { }
+ASTUnit::~ASTUnit() { 
+  if (tempFile)
+    unlink(getPCHFileName().c_str());
+}
 
 namespace {
 
@@ -78,6 +81,10 @@ public:
 
 const std::string &ASTUnit::getOriginalSourceFileName() {
   return dyn_cast<PCHReader>(Ctx->getExternalSource())->getOriginalSourceFile();
+}
+
+const std::string &ASTUnit::getPCHFileName() {
+  return dyn_cast<PCHReader>(Ctx->getExternalSource())->getFileName();
 }
 
 FileManager &ASTUnit::getFileManager() {

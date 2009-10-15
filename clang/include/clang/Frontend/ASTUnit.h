@@ -38,7 +38,8 @@ class ASTUnit {
   llvm::OwningPtr<TargetInfo>       Target;
   llvm::OwningPtr<Preprocessor>     PP;
   llvm::OwningPtr<ASTContext>       Ctx;
-
+  bool                              tempFile;
+  
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
   ASTUnit(Diagnostic &_Diag);
@@ -60,7 +61,10 @@ public:
 
   FileManager &getFileManager();
   const std::string &getOriginalSourceFileName();
+  const std::string &getPCHFileName();
 
+  void unlinkTemporaryFile() { tempFile = true; }
+  
   /// \brief Create a ASTUnit from a PCH file.
   ///
   /// \param Filename - The PCH file to load.

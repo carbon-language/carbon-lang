@@ -325,7 +325,10 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   } while (tpid != child_pid);
   
   // Finally, we create the translation unit from the ast file.
-  return clang_createTranslationUnit(CIdx, astTmpFile);
+  ASTUnit *ATU = static_cast<ASTUnit *>(
+                   clang_createTranslationUnit(CIdx, astTmpFile));
+  ATU->unlinkTemporaryFile();
+  return ATU;
 }
 
 void clang_disposeTranslationUnit(
