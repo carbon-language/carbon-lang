@@ -56,6 +56,14 @@ private:
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
 
+  bool ParseDirectiveThumb(SMLoc L);
+
+  bool ParseDirectiveThumbFunc(SMLoc L);
+
+  bool ParseDirectiveCode(SMLoc L);
+
+  bool ParseDirectiveSyntax(SMLoc L);
+
   // TODO - For now hacked versions of the next two are in here in this file to
   // allow some parser testing until the table gen versions are implemented.
 
@@ -230,8 +238,8 @@ bool ARMAsmParser::ParseRegister(ARMOperand &Op) {
   return false;
 }
 
-// Try to parse a register list.  The first token must be a '{' when called
-// for now.
+// Parse a register list, return false if successful else return true or an 
+// error.  The first token must be a '{' when called.
 bool ARMAsmParser::ParseRegisterList(ARMOperand &Op) {
   assert(getLexer().getTok().is(AsmToken::LCurly) &&
          "Token is not an Left Curly Brace");
@@ -277,7 +285,8 @@ bool ARMAsmParser::ParseRegisterList(ARMOperand &Op) {
   return false;
 }
 
-// Try to parse an arm memory expression.  It must start with a '[' token.
+// Parse an arm memory expression, return false if successful else return true
+// or an error.  The first token must be a '[' when called.
 // TODO Only preindexing and postindexing addressing are started, unindexed
 // with option, etc are still to do.
 bool ARMAsmParser::ParseMemory(ARMOperand &Op) {
@@ -465,7 +474,7 @@ bool ARMAsmParser::ParseShift(ShiftType *St, const MCExpr *&ShiftAmount) {
   return false;
 }
 
-// A hack to allow some testing
+// A hack to allow some testing, to be replaced by a real table gen version.
 int ARMAsmParser::MatchRegisterName(const StringRef &Name) {
   if (Name == "r0" || Name == "R0")
     return 0;
@@ -504,7 +513,7 @@ int ARMAsmParser::MatchRegisterName(const StringRef &Name) {
   return -1;
 }
 
-// A hack to allow some testing
+// A hack to allow some testing, to be replaced by a real table gen version.
 bool ARMAsmParser::MatchInstruction(SmallVectorImpl<ARMOperand> &Operands,
                                     MCInst &Inst) {
   struct ARMOperand Op0 = Operands[0];
@@ -516,40 +525,49 @@ bool ARMAsmParser::MatchInstruction(SmallVectorImpl<ARMOperand> &Operands,
       Mnemonic == "ldmfd" ||
       Mnemonic == "ldr" ||
       Mnemonic == "mov" ||
-      Mnemonic == "sub")
+      Mnemonic == "sub" ||
+      Mnemonic == "bl" ||
+      Mnemonic == "push" ||
+      Mnemonic == "blx" ||
+      Mnemonic == "pop")
     return false;
 
   return true;
 }
 
-// TODO - this is a work in progress
+// Parse a arm instruction operand.  For now this parses the operand regardless
+// of the mnemonic.
 bool ARMAsmParser::ParseOperand(ARMOperand &Op) {
   switch (getLexer().getKind()) {
   case AsmToken::Identifier:
     if (!ParseRegister(Op))
       return false;
-    // TODO parse other operands that start with an identifier like labels
-    return Error(getLexer().getTok().getLoc(), "labels not yet supported");
+    // This was not a register so parse other operands that start with an
+    // identifier (like labels) as expressions and create them as immediates.
+    const MCExpr *IdVal;
+    if (getParser().ParseExpression(IdVal))
+      return true;
+    Op = ARMOperand::CreateImm(IdVal);
+    return false;
   case AsmToken::LBrac:
-    if (!ParseMemory(Op))
-      return false;
+    return ParseMemory(Op);
   case AsmToken::LCurly:
-    if (!ParseRegisterList(Op))
-      return false;
+    return ParseRegisterList(Op);
   case AsmToken::Hash:
     // #42 -> immediate.
     // TODO: ":lower16:" and ":upper16:" modifiers after # before immediate
     getLexer().Lex();
-    const MCExpr *Val;
-    if (getParser().ParseExpression(Val))
+    const MCExpr *ImmVal;
+    if (getParser().ParseExpression(ImmVal))
       return true;
-    Op = ARMOperand::CreateImm(Val);
+    Op = ARMOperand::CreateImm(ImmVal);
     return false;
   default:
     return Error(getLexer().getTok().getLoc(), "unexpected token in operand");
   }
 }
 
+// Parse an arm instruction mnemonic followed by its operands.
 bool ARMAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
   SmallVector<ARMOperand, 7> Operands;
 
@@ -579,10 +597,19 @@ bool ARMAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
   return true;
 }
 
+/// ParseDirective parses the arm specific directives
 bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getIdentifier();
   if (IDVal == ".word")
     return ParseDirectiveWord(4, DirectiveID.getLoc());
+  else if (IDVal == ".thumb")
+    return ParseDirectiveThumb(DirectiveID.getLoc());
+  else if (IDVal == ".thumb_func")
+    return ParseDirectiveThumbFunc(DirectiveID.getLoc());
+  else if (IDVal == ".code")
+    return ParseDirectiveCode(DirectiveID.getLoc());
+  else if (IDVal == ".syntax")
+    return ParseDirectiveSyntax(DirectiveID.getLoc());
   return true;
 }
 
@@ -608,6 +635,93 @@ bool ARMAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
   }
 
   getLexer().Lex();
+  return false;
+}
+
+/// ParseDirectiveThumb
+///  ::= .thumb
+bool ARMAsmParser::ParseDirectiveThumb(SMLoc L) {
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return Error(L, "unexpected token in directive");
+  getLexer().Lex();
+
+  // TODO: set thumb mode
+  // TODO: tell the MC streamer the mode
+  // getParser().getStreamer().Emit???();
+  return false;
+}
+
+/// ParseDirectiveThumbFunc
+///  ::= .thumbfunc symbol_name
+bool ARMAsmParser::ParseDirectiveThumbFunc(SMLoc L) {
+  const AsmToken &Tok = getLexer().getTok();
+  if (Tok.isNot(AsmToken::Identifier) && Tok.isNot(AsmToken::String))
+    return Error(L, "unexpected token in .syntax directive");
+  StringRef SymbolName = getLexer().getTok().getIdentifier();
+  getLexer().Lex(); // Consume the identifier token.
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return Error(L, "unexpected token in directive");
+  getLexer().Lex();
+
+  // TODO: mark symbol as a thumb symbol
+  // getParser().getStreamer().Emit???();
+  return false;
+}
+
+/// ParseDirectiveSyntax
+///  ::= .syntax unified | divided
+bool ARMAsmParser::ParseDirectiveSyntax(SMLoc L) {
+  const AsmToken &Tok = getLexer().getTok();
+  if (Tok.isNot(AsmToken::Identifier))
+    return Error(L, "unexpected token in .syntax directive");
+  const StringRef &Mode = Tok.getString();
+  bool unified_syntax;
+  if (Mode == "unified" || Mode == "UNIFIED") {
+    getLexer().Lex();
+    unified_syntax = true;
+  }
+  else if (Mode == "divided" || Mode == "DIVIDED") {
+    getLexer().Lex();
+    unified_syntax = false;
+  }
+  else
+    return Error(L, "unrecognized syntax mode in .syntax directive");
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return Error(getLexer().getTok().getLoc(), "unexpected token in directive");
+  getLexer().Lex();
+
+  // TODO tell the MC streamer the mode
+  // getParser().getStreamer().Emit???();
+  return false;
+}
+
+/// ParseDirectiveCode
+///  ::= .code 16 | 32
+bool ARMAsmParser::ParseDirectiveCode(SMLoc L) {
+  const AsmToken &Tok = getLexer().getTok();
+  if (Tok.isNot(AsmToken::Integer))
+    return Error(L, "unexpected token in .code directive");
+  int64_t Val = getLexer().getTok().getIntVal();
+  bool thumb_mode;
+  if (Val == 16) {
+    getLexer().Lex();
+    thumb_mode = true;
+  }
+  else if (Val == 32) {
+    getLexer().Lex();
+    thumb_mode = false;
+  }
+  else
+    return Error(L, "invalid operand to .code directive");
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return Error(getLexer().getTok().getLoc(), "unexpected token in directive");
+  getLexer().Lex();
+
+  // TODO tell the MC streamer the mode
+  // getParser().getStreamer().Emit???();
   return false;
 }
 
