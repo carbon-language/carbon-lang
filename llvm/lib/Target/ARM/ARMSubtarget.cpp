@@ -103,7 +103,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
 
   // Set CPU specific features.
   if (CPUString == "cortex-a8") {
-    // On Cortext-a8, it's faster to perform some single-precision FP
+    // On Cortex-a8, it's faster to perform some single-precision FP
     // operations with NEON instructions.
     if (UseNEONFP.getPosition() == 0)
       UseNEONForSinglePrecisionFP = true;
