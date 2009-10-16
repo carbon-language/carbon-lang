@@ -22,7 +22,8 @@
 
 using namespace llvm;
 
-ExactHazardRecognizer::ExactHazardRecognizer(const InstrItineraryData &LItinData) :
+ExactHazardRecognizer::
+ExactHazardRecognizer(const InstrItineraryData &LItinData) :
   ScheduleHazardRecognizer(), ItinData(LItinData) 
 {
   // Determine the maximum depth of any itinerary. This determines the
