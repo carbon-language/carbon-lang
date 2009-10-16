@@ -222,7 +222,7 @@ namespace {
 
   private:
     // VisitedPHIs - Track PHI nodes visited by a aliasCheck() call.
-    SmallSet<const PHINode*, 16> VisitedPHIs;
+    SmallPtrSet<const PHINode*, 16> VisitedPHIs;
 
     // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
     // against another.
@@ -533,7 +533,7 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, unsigned PNSize,
   if (!VisitedPHIs.insert(PN))
     return MayAlias;
 
-  SmallSet<Value*, 4> UniqueSrc;
+  SmallPtrSet<Value*, 4> UniqueSrc;
   SmallVector<Value*, 4> V1Srcs;
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     Value *PV1 = PN->getIncomingValue(i);
@@ -557,7 +557,7 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, unsigned PNSize,
   // NoAlias / MustAlias. Otherwise, returns MayAlias.
   for (unsigned i = 1, e = V1Srcs.size(); i != e; ++i) {
     Value *V = V1Srcs[i];
-    AliasResult ThisAlias = aliasCheck(V, PNSize, V2, V2Size);
+    AliasResult ThisAlias = aliasCheck(V2, V2Size, V, PNSize);
     if (ThisAlias != Alias || ThisAlias == MayAlias)
       return MayAlias;
   }
