@@ -2873,7 +2873,8 @@ class BuiltinCandidateTypeSet  {
   /// Context - The AST context in which we will build the type sets.
   ASTContext &Context;
 
-  bool AddPointerWithMoreQualifiedTypeVariants(QualType Ty);
+  bool AddPointerWithMoreQualifiedTypeVariants(QualType Ty,
+                                               const Qualifiers &VisibleQuals);
   bool AddMemberPointerWithMoreQualifiedTypeVariants(QualType Ty);
 
 public:
@@ -2916,7 +2917,8 @@ public:
 ///
 /// FIXME: what to do about extended qualifiers?
 bool
-BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty) {
+BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty
+                                            ,const Qualifiers &VisibleQuals) {
 
   // Insert this type.
   if (!PointerTypes.insert(Ty))
@@ -2927,11 +2929,16 @@ BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty) {
 
   QualType PointeeTy = PointerTy->getPointeeType();
   unsigned BaseCVR = PointeeTy.getCVRQualifiers();
-
+  bool hasVolatile = VisibleQuals.hasVolatile();
+  bool hasRestrict = VisibleQuals.hasRestrict();
+  
   // Iterate through all strict supersets of BaseCVR.
   for (unsigned CVR = BaseCVR+1; CVR <= Qualifiers::CVRMask; ++CVR) {
     if ((CVR | BaseCVR) != CVR) continue;
-    
+    // Skip over Volatile/Restrict if no Volatile/Restrict found anywhere
+    // in the types.
+    if ((CVR & Qualifiers::Volatile) && !hasVolatile) continue;
+    if ((CVR & Qualifiers::Restrict) && !hasRestrict) continue;
     QualType QPointeeTy = Context.getCVRQualifiedType(PointeeTy, CVR);
     PointerTypes.insert(Context.getPointerType(QPointeeTy));
   }
@@ -3003,7 +3010,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
 
     // Insert our type, and its more-qualified variants, into the set
     // of types.
-    if (!AddPointerWithMoreQualifiedTypeVariants(Ty))
+    if (!AddPointerWithMoreQualifiedTypeVariants(Ty, VisibleQuals))
       return;
 
     // Add 'cv void*' to our set of types.
@@ -3011,7 +3018,8 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
       QualType QualVoid
         = Context.getCVRQualifiedType(Context.VoidTy,
                                    PointeeTy.getCVRQualifiers());
-      AddPointerWithMoreQualifiedTypeVariants(Context.getPointerType(QualVoid));
+      AddPointerWithMoreQualifiedTypeVariants(Context.getPointerType(QualVoid),
+                                              VisibleQuals);
     }
 
     // If this is a pointer to a class type, add pointers to its bases
@@ -3105,7 +3113,7 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
     else
       TyRec = ArgExpr->getType()->getAs<RecordType>();
     if (!TyRec) {
-      // Just to be safe, asssume the worst case.
+      // Just to be safe, assume the worst case.
       VRQuals.addVolatile();
       VRQuals.addRestrict();
       return VRQuals;
