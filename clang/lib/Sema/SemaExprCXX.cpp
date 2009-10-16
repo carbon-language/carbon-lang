@@ -1043,6 +1043,40 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
   return PerformImplicitConversion(From, ToType, ICS, Flavor);
 }
 
+/// BuildCXXDerivedToBaseExpr - This routine generates the suitable AST
+/// for the derived to base conversion of the expression 'From'. All
+/// necessary information is passed in ICS.
+bool 
+Sema::BuildCXXDerivedToBaseExpr(Expr *&From, CastExpr::CastKind CastKind,
+                                     const ImplicitConversionSequence& ICS,
+                                     const char *Flavor) {
+  QualType  BaseType = 
+    QualType::getFromOpaquePtr(ICS.UserDefined.After.ToTypePtr);
+  // Must do additional defined to base conversion.
+  QualType  DerivedType = 
+    QualType::getFromOpaquePtr(ICS.UserDefined.After.FromTypePtr);
+
+  From = new (Context) ImplicitCastExpr(
+                                        DerivedType.getNonReferenceType(),
+                                        CastKind, 
+                                        From, 
+                                        DerivedType->isLValueReferenceType());
+  From = new (Context) ImplicitCastExpr(BaseType.getNonReferenceType(),
+                                        CastExpr::CK_DerivedToBase, From, 
+                                        BaseType->isLValueReferenceType());
+  ASTOwningVector<&ActionBase::DeleteExpr> ConstructorArgs(*this);
+  OwningExprResult FromResult =
+  BuildCXXConstructExpr(
+                        ICS.UserDefined.After.CopyConstructor->getLocation(),
+                        BaseType,
+                        ICS.UserDefined.After.CopyConstructor,
+                        MultiExprArg(*this, (void **)&From, 1));
+  if (FromResult.isInvalid())
+    return true;
+  From = FromResult.takeAs<Expr>();
+  return false;
+}
+
 /// PerformImplicitConversion - Perform an implicit conversion of the
 /// expression From to the type ToType using the pre-computed implicit
 /// conversion sequence ICS. Returns true if there was an error, false
@@ -1095,13 +1129,19 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
 
       if (CastArg.isInvalid())
         return true;
+    
+      if (ICS.UserDefined.After.Second == ICK_Derived_To_Base &&
+          ICS.UserDefined.After.CopyConstructor) {
+        From = CastArg.takeAs<Expr>();
+        return BuildCXXDerivedToBaseExpr(From, CastKind, ICS, Flavor);
+      }
       
       From = new (Context) ImplicitCastExpr(ToType.getNonReferenceType(),
-                                            CastKind, CastArg.takeAs<Expr>(), 
+                                            CastKind, CastArg.takeAs<Expr>(),
                                             ToType->isLValueReferenceType());
       return false;
-    }
-
+  }
+      
   case ImplicitConversionSequence::EllipsisConversion:
     assert(false && "Cannot perform an ellipsis conversion");
     return false;

@@ -3552,6 +3552,10 @@ public:
   bool PerformImplicitConversion(Expr *&From, QualType ToType,
                                  const StandardConversionSequence& SCS,
                                  const char *Flavor);
+  
+  bool BuildCXXDerivedToBaseExpr(Expr *&From, CastExpr::CastKind CastKind,
+                                 const ImplicitConversionSequence& ICS,
+                                 const char *Flavor);
 
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).

@@ -566,6 +566,10 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
       assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
              "EmitCXXConstructorCall - user declared copy constructor");
       const Expr *E = (*ArgBeg);
+      // FIXME. This may not be correct. But till now, we were skipping
+      // code gen of trivial copy constructors regardless of their arguments.
+      if (isa<CXXZeroInitValueExpr>(E))
+        return;
       QualType Ty = E->getType();
       llvm::Value *Src = EmitLValue(E).getAddress();
       EmitAggregateCopy(This, Src, Ty);
@@ -590,12 +594,15 @@ void
 CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
                                       const CXXConstructExpr *E) {
   assert(Dest && "Must have a destination!");
-
-  const CXXRecordDecl *RD =
-  cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
-  if (RD->hasTrivialConstructor())
+  const CXXConstructorDecl *CD = E->getConstructor();
+  // For a copy constructor, even if it is trivial, must fall thru so
+  // its argument is code-gen'ed.
+  if (!CD->isCopyConstructor(getContext())) {
+    const CXXRecordDecl *RD =
+      cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
+    if (RD->hasTrivialConstructor())
     return;
-
+  }
   // Code gen optimization to eliminate copy constructor and return
   // its first argument instead.
   if (getContext().getLangOptions().ElideConstructors && E->isElidable()) {
@@ -604,7 +611,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
     return;
   }
   // Call the constructor.
-  EmitCXXConstructorCall(E->getConstructor(), Ctor_Complete, Dest,
+  EmitCXXConstructorCall(CD, Ctor_Complete, Dest,
                          E->arg_begin(), E->arg_end());
 }
 
