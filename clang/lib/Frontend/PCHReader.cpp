@@ -335,8 +335,6 @@ void PCHValidator::ReadCounter(unsigned Value) {
   PP.setCounterValue(Value);
 }
 
-
-
 //===----------------------------------------------------------------------===//
 // PCH reader implementation
 //===----------------------------------------------------------------------===//
@@ -345,7 +343,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
                      const char *isysroot)
   : Listener(new PCHValidator(PP, *this)), SourceMgr(PP.getSourceManager()),
     FileMgr(PP.getFileManager()), Diags(PP.getDiagnostics()),
-    SemaObj(0), PP(&PP), Context(Context), Consumer(0),
+    SemaObj(0), PP(&PP), Context(Context), StatCache(0), Consumer(0),
     IdentifierTableData(0), IdentifierLookupTable(0),
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
@@ -362,7 +360,7 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context,
 PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
                      Diagnostic &Diags, const char *isysroot)
   : SourceMgr(SourceMgr), FileMgr(FileMgr), Diags(Diags),
-    SemaObj(0), PP(0), Context(0), Consumer(0),
+    SemaObj(0), PP(0), Context(0), StatCache(0), Consumer(0),
     IdentifierTableData(0), IdentifierLookupTable(0),
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
@@ -794,7 +792,7 @@ public:
     // If we don't get a hit in the PCH file just forward to 'stat'.
     if (I == Cache->end()) {
       ++NumStatMisses;
-      return ::stat(path, buf);
+      return StatSysCallCache::stat(path, buf);
     }
 
     ++NumStatHits;
@@ -1352,13 +1350,16 @@ PCHReader::ReadPCHBlock() {
       }
       break;
 
-    case pch::STAT_CACHE:
-      FileMgr.setStatCache(
-                  new PCHStatCache((const unsigned char *)BlobStart + Record[0],
-                                   (const unsigned char *)BlobStart,
-                                   NumStatHits, NumStatMisses));
+    case pch::STAT_CACHE: {
+      PCHStatCache *MyStatCache = 
+        new PCHStatCache((const unsigned char *)BlobStart + Record[0],
+                         (const unsigned char *)BlobStart,
+                         NumStatHits, NumStatMisses);
+      FileMgr.addStatCache(MyStatCache);
+      StatCache = MyStatCache;
       break;
-
+    }
+        
     case pch::EXT_VECTOR_DECLS:
       if (!ExtVectorDecls.empty()) {
         Error("duplicate EXT_VECTOR_DECLS record in PCH file");
@@ -1466,7 +1467,8 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
         SourceMgr.ClearPreallocatedSLocEntries();
 
         // Remove the stat cache.
-        FileMgr.setStatCache(0);
+        if (StatCache)
+          FileMgr.removeStatCache((PCHStatCache*)StatCache);
 
         return IgnorePCH;
       }

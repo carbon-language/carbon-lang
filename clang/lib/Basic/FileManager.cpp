@@ -149,6 +149,41 @@ FileManager::~FileManager() {
   delete &UniqueFiles;
 }
 
+void FileManager::addStatCache(StatSysCallCache *statCache, bool AtBeginning) {
+  assert(statCache && "No stat cache provided?");
+  if (AtBeginning || StatCache.get() == 0) {
+    statCache->setNextStatCache(StatCache.take());
+    StatCache.reset(statCache);
+    return;
+  }
+  
+  StatSysCallCache *LastCache = StatCache.get();
+  while (LastCache->getNextStatCache())
+    LastCache = LastCache->getNextStatCache();
+  
+  LastCache->setNextStatCache(statCache);
+}
+
+void FileManager::removeStatCache(StatSysCallCache *statCache) {
+  if (!statCache)
+    return;
+  
+  if (StatCache.get() == statCache) {
+    // This is the first stat cache.
+    StatCache.reset(StatCache->takeNextStatCache());
+    return;
+  }
+  
+  // Find the stat cache in the list.
+  StatSysCallCache *PrevCache = StatCache.get();
+  while (PrevCache && PrevCache->getNextStatCache() != statCache)
+    PrevCache = PrevCache->getNextStatCache();
+  if (PrevCache)
+    PrevCache->setNextStatCache(statCache->getNextStatCache());
+  else
+    assert(false && "Stat cache not found for removal");
+}
+
 /// getDirectory - Lookup, cache, and verify the specified directory.  This
 /// returns null if the directory doesn't exist.
 ///
@@ -290,8 +325,8 @@ void FileManager::PrintStats() const {
 }
 
 int MemorizeStatCalls::stat(const char *path, struct stat *buf) {
-  int result = ::stat(path, buf);
-
+  int result = StatSysCallCache::stat(path, buf);
+  
   if (result != 0) {
     // Cache failed 'stat' results.
     struct stat empty;

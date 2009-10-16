@@ -679,7 +679,8 @@ public:
     CacheTy::iterator I = Cache.find(path);
 
     // If we don't get a hit in the PTH file just forward to 'stat'.
-    if (I == Cache.end()) return ::stat(path, buf);
+    if (I == Cache.end()) 
+      return StatSysCallCache::stat(path, buf);
 
     const PTHStatData& Data = *I;
 

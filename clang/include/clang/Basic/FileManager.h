@@ -71,16 +71,38 @@ public:
   }
 };
 
-// FIXME: This is a lightweight shim that is used by FileManager to cache
-//  'stat' system calls.  We will use it with PTH to identify if caching
-//  stat calls in PTH files is a performance win.
+/// \brief Abstract interface for introducing a FileManager cache for 'stat'
+/// system calls, which is used by precompiled and pretokenized headers to
+/// improve performance.
 class StatSysCallCache {
+protected:
+  llvm::OwningPtr<StatSysCallCache> NextStatCache;
+  
 public:
   virtual ~StatSysCallCache() {}
-  virtual int stat(const char *path, struct stat *buf) = 0;
+  virtual int stat(const char *path, struct stat *buf) {
+    if (getNextStatCache())
+      return getNextStatCache()->stat(path, buf);
+    
+    return ::stat(path, buf);
+  }
+  
+  /// \brief Sets the next stat call cache in the chain of stat caches.
+  /// Takes ownership of the given stat cache.
+  void setNextStatCache(StatSysCallCache *Cache) {
+    NextStatCache.reset(Cache);
+  }
+  
+  /// \brief Retrieve the next stat call cache in the chain.
+  StatSysCallCache *getNextStatCache() { return NextStatCache.get(); }
+
+  /// \brief Retrieve the next stat call cache in the chain, transferring
+  /// ownership of this cache (and, transitively, all of the remaining caches)
+  /// to the caller.
+  StatSysCallCache *takeNextStatCache() { return NextStatCache.take(); }
 };
 
-/// \brief A stat listener that can be used by FileManager to keep
+/// \brief A stat "cache" that can be used by FileManager to keep
 /// track of the results of stat() calls that occur throughout the
 /// execution of the front end.
 class MemorizeStatCalls : public StatSysCallCache {
@@ -144,13 +166,22 @@ public:
   FileManager();
   ~FileManager();
 
-  /// setStatCache - Installs the provided StatSysCallCache object within
-  ///  the FileManager.  Ownership of this object is transferred to the
-  ///  FileManager.
-  void setStatCache(StatSysCallCache *statCache) {
-    StatCache.reset(statCache);
-  }
+  /// \brief Installs the provided StatSysCallCache object within
+  /// the FileManager. 
+  ///
+  /// Ownership of this object is transferred to the FileManager.
+  ///
+  /// \param statCache the new stat cache to install. Ownership of this
+  /// object is transferred to the FileManager.
+  ///
+  /// \param AtBeginning whether this new stat cache must be installed at the
+  /// beginning of the chain of stat caches. Otherwise, it will be added to
+  /// the end of the chain.
+  void addStatCache(StatSysCallCache *statCache, bool AtBeginning = false);
 
+  /// \brief Removes the provided StatSysCallCache object from the file manager.
+  void removeStatCache(StatSysCallCache *statCache);
+  
   /// getDirectory - Lookup, cache, and verify the specified directory.  This
   /// returns null if the directory doesn't exist.
   ///

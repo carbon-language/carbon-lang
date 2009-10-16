@@ -45,7 +45,7 @@ if(PYTHONINTERP_FOUND)
                   ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                   -sv ${CLANG_TEST_EXTRA_ARGS}
                   ${CMAKE_CURRENT_BINARY_DIR}/${testdir}
-                  DEPENDS clang clang-cc index-test
+                  DEPENDS clang clang-cc index-test c-index-test
                   COMMENT "Running Clang regression tests in ${testdir}")
   endforeach()
 
@@ -62,7 +62,7 @@ if(PYTHONINTERP_FOUND)
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                 -sv ${CLANG_TEST_EXTRA_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
-                DEPENDS clang clang-cc index-test
+                DEPENDS clang clang-cc index-test c-index-test
                 COMMENT "Running Clang regression tests")
 
   add_custom_target(clang-c++tests
@@ -78,6 +78,6 @@ if(PYTHONINTERP_FOUND)
                 ${LLVM_SOURCE_DIR}/utils/lit/lit.py
                 -sv ${CLANG_TEST_EXTRA_ARGS}
                 ${CMAKE_CURRENT_SOURCE_DIR}/../utils/C++Tests
-                DEPENDS clang clang-cc index-test
+                DEPENDS clang clang-cc index-test c-index-test
                 COMMENT "Running Clang regression tests")
 endif()  

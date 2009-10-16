@@ -122,7 +122,7 @@ Preprocessor::~Preprocessor() {
 
 void Preprocessor::setPTHManager(PTHManager* pm) {
   PTH.reset(pm);
-  FileMgr.setStatCache(PTH->createStatCache());
+  FileMgr.addStatCache(PTH->createStatCache());
 }
 
 void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {

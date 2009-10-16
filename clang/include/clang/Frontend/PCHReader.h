@@ -169,6 +169,11 @@ private:
   /// \brief The AST context into which we'll read the PCH file.
   ASTContext *Context;
 
+  /// \brief The PCH stat cache installed by this PCHReader, if any.
+  ///
+  /// The dynamic type of this stat cache is always PCHStatCache
+  void *StatCache;
+      
   /// \brief The AST consumer.
   ASTConsumer *Consumer;
 
@@ -492,8 +497,8 @@ public:
   /// \param isysroot If non-NULL, the system include path specified by the
   /// user. This is only used with relocatable PCH files. If non-NULL,
   /// a relocatable PCH file will use the default path "/".
-      PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
-                Diagnostic &Diags, const char *isysroot = 0);
+  PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
+            Diagnostic &Diags, const char *isysroot = 0);
   ~PCHReader();
 
   /// \brief Load the precompiled header designated by the given file

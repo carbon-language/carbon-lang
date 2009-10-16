@@ -516,7 +516,7 @@ public:
   ~StatListener() {}
 
   int stat(const char *path, struct stat *buf) {
-    int result = ::stat(path, buf);
+    int result = StatSysCallCache::stat(path, buf);
 
     if (result != 0) // Failed 'stat'.
       PM.insert(path, PTHEntry());
@@ -553,7 +553,8 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   PTHWriter PW(*OS, PP);
 
   // Install the 'stat' system call listener in the FileManager.
-  PP.getFileManager().setStatCache(new StatListener(PW.getPM()));
+  StatListener *StatCache = new StatListener(PW.getPM());
+  PP.getFileManager().addStatCache(StatCache, /*AtBeginning=*/true);
 
   // Lex through the entire file.  This will populate SourceManager with
   // all of the header information.
@@ -562,7 +563,7 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   do { PP.Lex(Tok); } while (Tok.isNot(tok::eof));
 
   // Generate the PTH file.
-  PP.getFileManager().setStatCache(0);
+  PP.getFileManager().removeStatCache(StatCache);
   PW.GeneratePTH(&MainFileName);
 }
 
