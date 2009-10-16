@@ -292,7 +292,7 @@ bool AsmParser::ParseAbsoluteExpression(int64_t &Res) {
   if (ParseExpression(Expr))
     return true;
 
-  if (!Expr->EvaluateAsAbsolute(Ctx, Res))
+  if (!Expr->EvaluateAsAbsolute(Res))
     return Error(StartLoc, "expected absolute expression");
 
   return false;

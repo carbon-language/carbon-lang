@@ -346,8 +346,7 @@ void MCMachOStreamer::EmitValueToOffset(const MCExpr *Offset,
                                         unsigned char Value) {
   MCValue RelocOffset;
 
-  if (!AddValueSymbols(Offset)->EvaluateAsRelocatable(getContext(),
-                                                      RelocOffset))
+  if (!AddValueSymbols(Offset)->EvaluateAsRelocatable(RelocOffset))
     return llvm_report_error("expected relocatable expression");
 
   new MCOrgFragment(RelocOffset, Value, CurSectionData);

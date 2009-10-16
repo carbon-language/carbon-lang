@@ -62,14 +62,14 @@ public:
   ///
   /// @param Res - The absolute value, if evaluation succeeds.
   /// @result - True on success.
-  bool EvaluateAsAbsolute(MCContext &Ctx, int64_t &Res) const;
+  bool EvaluateAsAbsolute(int64_t &Res) const;
 
   /// EvaluateAsRelocatable - Try to evaluate the expression to a relocatable
   /// value, i.e. an expression of the fixed form (a - b + constant).
   ///
   /// @param Res - The relocatable value, if evaluation succeeds.
   /// @result - True on success.
-  bool EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const;
+  bool EvaluateAsRelocatable(MCValue &Res) const;
 
   /// @}
 

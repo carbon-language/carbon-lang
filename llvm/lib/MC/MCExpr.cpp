@@ -141,10 +141,10 @@ const MCSymbolRefExpr *MCSymbolRefExpr::Create(const StringRef &Name,
 
 /* *** */
 
-bool MCExpr::EvaluateAsAbsolute(MCContext &Ctx, int64_t &Res) const {
+bool MCExpr::EvaluateAsAbsolute(int64_t &Res) const {
   MCValue Value;
   
-  if (!EvaluateAsRelocatable(Ctx, Value) || !Value.isAbsolute())
+  if (!EvaluateAsRelocatable(Value) || !Value.isAbsolute())
     return false;
 
   Res = Value.getConstant();
@@ -173,7 +173,7 @@ static bool EvaluateSymbolicAdd(const MCValue &LHS, const MCSymbol *RHS_A,
   return true;
 }
 
-bool MCExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
+bool MCExpr::EvaluateAsRelocatable(MCValue &Res) const {
   switch (getKind()) {
   case Constant:
     Res = MCValue::get(cast<MCConstantExpr>(this)->getValue());
@@ -184,7 +184,7 @@ bool MCExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
 
     // Evaluate recursively if this is a variable.
     if (Sym.isVariable())
-      return Sym.getValue()->EvaluateAsRelocatable(Ctx, Res);
+      return Sym.getValue()->EvaluateAsRelocatable(Res);
 
     Res = MCValue::get(&Sym, 0, 0);
     return true;
@@ -194,7 +194,7 @@ bool MCExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
     const MCUnaryExpr *AUE = cast<MCUnaryExpr>(this);
     MCValue Value;
 
-    if (!AUE->getSubExpr()->EvaluateAsRelocatable(Ctx, Value))
+    if (!AUE->getSubExpr()->EvaluateAsRelocatable(Value))
       return false;
 
     switch (AUE->getOpcode()) {
@@ -227,8 +227,8 @@ bool MCExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
     const MCBinaryExpr *ABE = cast<MCBinaryExpr>(this);
     MCValue LHSValue, RHSValue;
     
-    if (!ABE->getLHS()->EvaluateAsRelocatable(Ctx, LHSValue) ||
-        !ABE->getRHS()->EvaluateAsRelocatable(Ctx, RHSValue))
+    if (!ABE->getLHS()->EvaluateAsRelocatable(LHSValue) ||
+        !ABE->getRHS()->EvaluateAsRelocatable(RHSValue))
       return false;
 
     // We only support a few operations on non-constant expressions, handle
