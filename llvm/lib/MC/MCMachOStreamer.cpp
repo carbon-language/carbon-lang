@@ -198,7 +198,9 @@ void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   assert((Symbol->isUndefined() || Symbol->isAbsolute()) &&
          "Cannot define a symbol twice!");
 
-  llvm_unreachable("FIXME: Not yet implemented!");
+  // FIXME: Lift context changes into super class.
+  // FIXME: Set associated section.
+  Symbol->setValue(Value);
 }
 
 void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
