@@ -33,11 +33,6 @@ namespace llvm {
     /// Symbols - Bindings of names to symbols.
     StringMap<MCSymbol*> Symbols;
 
-    /// SymbolValues - Bindings of symbols to values.
-    //
-    // FIXME: Is there a good reason to not just put this in the MCSymbol?
-    DenseMap<const MCSymbol*, const MCExpr*> SymbolValues;
-
     /// Allocator - Allocator object used for creating machine code objects.
     ///
     /// We use a bump pointer allocator to avoid the need to track all allocated
@@ -74,28 +69,6 @@ namespace llvm {
 
     /// LookupSymbol - Get the symbol for @param Name, or null.
     MCSymbol *LookupSymbol(const StringRef &Name) const;
-
-    /// @}
-    /// @name Symbol Value Table
-    /// @{
-
-    /// ClearSymbolValue - Erase the variable binding for @arg Symbol, if one
-    /// exists.
-    void ClearSymbolValue(const MCSymbol *Symbol) {
-      SymbolValues.erase(Symbol);
-    }
-
-    /// SetSymbolValue - Set the variable binding for @arg Symbol to @arg Value.
-    void SetSymbolValue(const MCSymbol *Symbol, const MCExpr *Value) {
-      assert(Value && "Invalid variable assignment!");
-      SymbolValues.insert(std::make_pair(Symbol, Value));
-    }
-
-    /// GetSymbolValue - Return the current variable value for @arg Symbol, or
-    /// null if @arg Symbol is not a variable.
-    const MCExpr *GetSymbolValue(const MCSymbol *Symbol) const {
-      return SymbolValues.lookup(Symbol);
-    }
 
     /// @}
 

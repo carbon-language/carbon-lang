@@ -20,6 +20,7 @@
 
 namespace llvm {
   class MCAsmInfo;
+  class MCExpr;
   class MCSection;
   class MCContext;
   class raw_ostream;
@@ -45,6 +46,9 @@ namespace llvm {
     /// absolute symbols.
     const MCSection *Section;
 
+    /// Value - If non-null, the value for a variable symbol.
+    const MCExpr *Value;
+
     /// IsTemporary - True if this is an assembler temporary label, which
     /// typically does not survive in the .o file's symbol table.  Usually
     /// "Lfoo" or ".foo".
@@ -52,9 +56,9 @@ namespace llvm {
 
   private:  // MCContext creates and uniques these.
     friend class MCContext;
-    MCSymbol(const StringRef &_Name, bool _IsTemporary) 
-      : Name(_Name), Section(0), IsTemporary(_IsTemporary) {}
-    
+    MCSymbol(const StringRef &_Name, bool _IsTemporary)
+      : Name(_Name), Section(0), Value(0), IsTemporary(_IsTemporary) {}
+
     MCSymbol(const MCSymbol&);       // DO NOT IMPLEMENT
     void operator=(const MCSymbol&); // DO NOT IMPLEMENT
   public:
@@ -68,6 +72,10 @@ namespace llvm {
     bool isTemporary() const {
       return IsTemporary;
     }
+
+    /// @}
+    /// @name Associated Sections
+    /// @{
 
     /// isDefined - Check if this symbol is defined (i.e., it has an address).
     ///
@@ -103,6 +111,23 @@ namespace llvm {
 
     /// setAbsolute - Mark the symbol as absolute.
     void setAbsolute() { Section = AbsolutePseudoSection; }
+
+    /// @}
+    /// @name Variable Symbols
+    /// @{
+
+    /// isVariable - Check if this is a variable symbol.
+    bool isVariable() const {
+      return Value != 0;
+    }
+
+    /// getValue() - Get the value for variable symbols, or null if the symbol
+    /// is not a variable.
+    const MCExpr *getValue() const { return Value; }
+
+    void setValue(const MCExpr *Value) {
+      this->Value = Value;
+    }
 
     /// @}
 
