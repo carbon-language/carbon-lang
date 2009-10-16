@@ -78,6 +78,15 @@ public:
   /// \brief Skips past any qualifiers, if this is qualified.
   UnqualTypeLoc getUnqualifiedLoc() const;
 
+  /// \brief Initializes this to state that every location in this
+  /// type is the given location.
+  ///
+  /// This method exists to provide a simple transition for code that
+  /// relies on location-less types.
+  void initialize(SourceLocation Loc) const {
+    initializeImpl(*this, Loc);
+  }
+
   friend bool operator==(const TypeLoc &LHS, const TypeLoc &RHS) {
     return LHS.Ty == RHS.Ty && LHS.Data == RHS.Data;
   }
@@ -87,6 +96,9 @@ public:
   }
 
   static bool classof(const TypeLoc *TL) { return true; }
+
+private:
+  static void initializeImpl(TypeLoc TL, SourceLocation Loc);
 };
 
 /// \brief Wrapper of type source information for a type with
@@ -119,6 +131,16 @@ public:
 
   UnqualTypeLoc getUnqualifiedLoc() const {
     return UnqualTypeLoc(getSourceTypePtr(), Data);
+  }
+
+  /// Initializes the local data of this type source info block to
+  /// provide no information.
+  void initializeLocal(SourceLocation Loc) {
+    // do nothing
+  }
+
+  TypeLoc getNextTypeLoc() const {
+    return getUnqualifiedLoc();
   }
 
   /// \brief Returns the size of the type source info data block that is
@@ -230,6 +252,10 @@ public:
     return TypeClass::classof(Ty);
   }
 
+  TypeLoc getNextTypeLoc() const {
+    return getNextTypeLoc(asDerived()->getInnerType());
+  }
+
 protected:
   TypeClass *getTypePtr() const {
     return cast<TypeClass>(Base::getSourceTypePtr());
@@ -273,6 +299,14 @@ private:
   unsigned getInnerTypeSize(QualType _) const {
     return getInnerTypeLoc().getFullDataSize();
   }
+
+  TypeLoc getNextTypeLoc(HasNoInnerType _) const {
+    return TypeLoc();
+  }
+
+  TypeLoc getNextTypeLoc(QualType T) const {
+    return TypeLoc(T, getNonLocalData());
+  }
 };
 
 
@@ -297,6 +331,10 @@ public:
     return SourceRange(getStartLoc(), getStartLoc());
   }
 
+  void initializeLocal(SourceLocation Loc) {
+    setStartLoc(Loc);
+  }
+
   static bool classofType(const Type *T);
 };
 
@@ -317,6 +355,10 @@ public:
   }
   SourceRange getSourceRange() const {
     return SourceRange(getNameLoc(), getNameLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setNameLoc(Loc);
   }
 
   TypedefDecl *getTypedefDecl() const {
@@ -343,6 +385,10 @@ public:
   }
   SourceRange getSourceRange() const {
     return SourceRange(getNameLoc(), getNameLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setNameLoc(Loc);
   }
 
   ObjCInterfaceDecl *getIFaceDecl() const {
@@ -406,6 +452,13 @@ public:
     return SourceRange(getLAngleLoc(), getRAngleLoc());
   }
 
+  void initializeLocal(SourceLocation Loc) {
+    setLAngleLoc(Loc);
+    setRAngleLoc(Loc);
+    for (unsigned i = 0, e = getNumProtocols(); i != e; ++i)
+      setProtocolLoc(i, Loc);
+  }
+
   /// \brief Returns the size of the type source info data block that is
   /// specific to this type.
   unsigned getExtraLocalDataSize() const {
@@ -446,6 +499,10 @@ public:
     return SourceRange(getStarLoc(), getStarLoc());
   }
 
+  void initializeLocal(SourceLocation Loc) {
+    setStarLoc(Loc);
+  }
+
   QualType getInnerType() const { return getTypePtr()->getPointeeType(); }
 };
 
@@ -478,6 +535,10 @@ public:
 
   SourceRange getSourceRange() const {
     return SourceRange(getCaretLoc(), getCaretLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setCaretLoc(Loc);
   }
 
   QualType getInnerType() const { return getTypePtr()->getPointeeType(); }
@@ -514,6 +575,10 @@ public:
     return SourceRange(getStarLoc(), getStarLoc());
   }
 
+  void initializeLocal(SourceLocation Loc) {
+    setStarLoc(Loc);
+  }
+
   QualType getInnerType() const { return getTypePtr()->getPointeeType(); }
 };
 
@@ -546,6 +611,10 @@ public:
 
   SourceRange getSourceRange() const {
     return SourceRange(getAmpLoc(), getAmpLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setAmpLoc(Loc);
   }
 
   QualType getInnerType() const { return getTypePtr()->getPointeeType(); }
@@ -603,6 +672,13 @@ public:
     return SourceRange(getLParenLoc(), getRParenLoc());
   }
 
+  void initializeLocal(SourceLocation Loc) {
+    setLParenLoc(Loc);
+    setRParenLoc(Loc);
+    for (unsigned i = 0, e = getNumArgs(); i != e; ++i)
+      setArg(i, NULL);
+  }
+
   /// \brief Returns the size of the type source info data block that is
   /// specific to this type.
   unsigned getExtraLocalDataSize() const {
@@ -655,6 +731,12 @@ public:
   }
   SourceRange getSourceRange() const {
     return SourceRange(getLBracketLoc(), getRBracketLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    setLBracketLoc(Loc);
+    setRBracketLoc(Loc);
+    setSizeExpr(NULL);
   }
 
   QualType getInnerType() const { return getTypePtr()->getElementType(); }

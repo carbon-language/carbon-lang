@@ -91,7 +91,7 @@ public:
   TypeLoc VisitTypeSpecLoc(TypeLoc TyLoc) { return TypeLoc(); }
   TypeLoc VisitObjCProtocolListLoc(ObjCProtocolListLoc TL);
   TypeLoc VisitQualifiedLoc(QualifiedLoc TyLoc) {
-    return TyLoc.getUnqualifiedLoc();
+    return TyLoc.getNextTypeLoc();
   }
 
   TypeLoc VisitTypeLoc(TypeLoc TyLoc) {
@@ -103,35 +103,50 @@ public:
 }
 
 TypeLoc NextLoc::VisitObjCProtocolListLoc(ObjCProtocolListLoc TL) {
-  return TL.getBaseTypeLoc();
+  return TL.getNextTypeLoc();
 }
 
 TypeLoc NextLoc::VisitPointerLoc(PointerLoc TL) {
-  return TL.getPointeeLoc();
+  return TL.getNextTypeLoc();
 }
 TypeLoc NextLoc::VisitMemberPointerLoc(MemberPointerLoc TL) {
-  return TL.getPointeeLoc();
+  return TL.getNextTypeLoc();
 }
 TypeLoc NextLoc::VisitBlockPointerLoc(BlockPointerLoc TL) {
-  return TL.getPointeeLoc();
+  return TL.getNextTypeLoc();
 }
 TypeLoc NextLoc::VisitReferenceLoc(ReferenceLoc TL) {
-  return TL.getPointeeLoc();
+  return TL.getNextTypeLoc();
 }
 TypeLoc NextLoc::VisitFunctionLoc(FunctionLoc TL) {
-  return TL.getResultLoc();
+  return TL.getNextTypeLoc();
 }
 TypeLoc NextLoc::VisitArrayLoc(ArrayLoc TL) {
-  return TL.getElementLoc();
+  return TL.getNextTypeLoc();
 }
 
 /// \brief Get the next TypeLoc pointed by this TypeLoc, e.g for "int*" the
 /// TypeLoc is a PointerLoc and next TypeLoc is for "int".
 TypeLoc TypeLoc::getNextTypeLoc() const {
-  //llvm::errs() << "getNextTypeLoc: Ty=" << Ty << ", Data=" << Data << "\n";
-  TypeLoc Tmp = NextLoc().Visit(*this);
-  //llvm::errs() << "  result: Ty=" << Tmp.Ty << ", Data=" << Tmp.Data << "\n";
-  return Tmp;
+  return NextLoc().Visit(*this);
+}
+
+namespace {
+struct TypeLocInitializer : public TypeLocVisitor<TypeLocInitializer> {
+  SourceLocation Loc;
+  TypeLocInitializer(SourceLocation Loc) : Loc(Loc) {}
+  
+#define ABSTRACT_TYPELOC(CLASS)
+#define TYPELOC(CLASS, PARENT) \
+  void Visit##CLASS(CLASS TyLoc) { TyLoc.initializeLocal(Loc); }
+#include "clang/AST/TypeLocNodes.def"
+};
+}
+
+void TypeLoc::initializeImpl(TypeLoc TL, SourceLocation Loc) {
+  do {
+    TypeLocInitializer(Loc).Visit(TL);
+  } while (TL = TL.getNextTypeLoc());
 }
 
 //===----------------------------------------------------------------------===//
