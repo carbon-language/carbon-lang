@@ -1789,6 +1789,7 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned ResNo) {
 
   case ISD::BIT_CONVERT:        Res = WidenVecOp_BIT_CONVERT(N); break;
   case ISD::CONCAT_VECTORS:     Res = WidenVecOp_CONCAT_VECTORS(N); break;
+  case ISD::EXTRACT_SUBVECTOR:  Res = WidenVecOp_EXTRACT_SUBVECTOR(N); break;
   case ISD::EXTRACT_VECTOR_ELT: Res = WidenVecOp_EXTRACT_VECTOR_ELT(N); break;
   case ISD::STORE:              Res = WidenVecOp_STORE(N); break;
 
@@ -1891,6 +1892,12 @@ SDValue DAGTypeLegalizer::WidenVecOp_CONCAT_VECTORS(SDNode *N) {
                                DAG.getIntPtrConstant(j));
   }
   return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], NumElts);
+}
+
+SDValue DAGTypeLegalizer::WidenVecOp_EXTRACT_SUBVECTOR(SDNode *N) {
+  SDValue InOp = GetWidenedVector(N->getOperand(0));
+  return DAG.getNode(ISD::EXTRACT_SUBVECTOR, N->getDebugLoc(),
+                     N->getValueType(0), InOp, N->getOperand(1));
 }
 
 SDValue DAGTypeLegalizer::WidenVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
