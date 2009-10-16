@@ -2189,7 +2189,7 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
     if (Args.hasArg(options::OPT_shared)) {
       CmdArgs.push_back("-shared");
     } else {
-      CmdArgs.push_back("-dynamic-linker");
+      CmdArgs.push_back("--dynamic-linker");
       CmdArgs.push_back("/lib/ld.so.1"); // 64Bit Path /lib/amd64/ld.so.1
     }
   }
