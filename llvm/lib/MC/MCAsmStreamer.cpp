@@ -125,6 +125,7 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   OS << '\n';
 
   // FIXME: Lift context changes into super class.
+  // FIXME: Set associated section.
   Symbol->setValue(Value);
 }
 

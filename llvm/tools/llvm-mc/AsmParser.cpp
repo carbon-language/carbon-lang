@@ -741,14 +741,25 @@ bool AsmParser::ParseAssignment(const StringRef &Name) {
   // Eat the end of statement marker.
   Lexer.Lex();
 
-  // Diagnose assignment to a label.
-  //
-  // FIXME: Diagnostics. Note the location of the definition as a label.
+  // Validate that the LHS is allowed to be a variable (either it has not been
+  // used as a symbol, or it is an absolute symbol).
+  MCSymbol *Sym = getContext().LookupSymbol(Name);
+  if (Sym) {
+    // Diagnose assignment to a label.
+    //
+    // FIXME: Diagnostics. Note the location of the definition as a label.
+    // FIXME: Diagnose assignment to protected identifier (e.g., register name).
+    if (!Sym->isUndefined() && !Sym->isAbsolute())
+      return Error(EqualLoc, "redefinition of '" + Name + "'");
+    else if (!Sym->isVariable())
+      return Error(EqualLoc, "invalid assignment to '" + Name + "'");
+    else if (!isa<MCConstantExpr>(Sym->getValue()))
+      return Error(EqualLoc, "invalid reassignment of non-absolute variable '" +
+                   Name + "'");
+  } else
+    Sym = CreateSymbol(Name);
+
   // FIXME: Handle '.'.
-  // FIXME: Diagnose assignment to protected identifier (e.g., register name).
-  MCSymbol *Sym = CreateSymbol(Name);
-  if (!Sym->isUndefined() && !Sym->isAbsolute())
-    return Error(EqualLoc, "symbol has already been defined");
 
   // Do the assignment.
   Out.EmitAssignment(Sym, Value);
