@@ -27,11 +27,11 @@ UseNEONFP("arm-use-neon-fp",
           cl::init(false), cl::Hidden);
 
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
-                           bool isThumb)
+                           bool isT)
   : ARMArchVersion(V4T)
   , ARMFPUType(None)
   , UseNEONForSinglePrecisionFP(UseNEONFP)
-  , IsThumb(isThumb)
+  , IsThumb(isT)
   , ThumbMode(Thumb1)
   , PostRAScheduler(false)
   , IsR9Reserved(ReserveR9)
@@ -98,9 +98,11 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   if (isTargetDarwin())
     IsR9Reserved = ReserveR9 | (ARMArchVersion < V6);
 
+  if (!isThumb() || hasThumb2())
+    PostRAScheduler = true;
+
   // Set CPU specific features.
   if (CPUString == "cortex-a8") {
-    PostRAScheduler = true;
     // On Cortext-a8, it's faster to perform some single-precision FP
     // operations with NEON instructions.
     if (UseNEONFP.getPosition() == 0)

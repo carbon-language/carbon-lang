@@ -7,13 +7,13 @@
 
 define i64 @t(i64 %a) nounwind readonly {
 entry:
-;V6:      ldrd r2, [r2]
+;V6:   ldrd r2, [r2]
 
-;V5:      ldr r3, [r2]
-;V5-NEXT: ldr r2, [r2, #+4]
+;V5:   ldr r3, [r2]
+;V5:   ldr r2, [r2, #+4]
 
-;EABI:      ldr r3, [r2]
-;EABI-NEXT: ldr r2, [r2, #+4]
+;EABI: ldr r3, [r2]
+;EABI: ldr r2, [r2, #+4]
 
 	%0 = load i64** @b, align 4
 	%1 = load i64* %0, align 4
