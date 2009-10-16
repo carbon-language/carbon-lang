@@ -1,5 +1,4 @@
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
-// XFAIL
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from
@@ -80,8 +79,12 @@ typedef mach_error_t DAReturn;
 typedef const struct __DADissenter * DADissenterRef;
 extern DADissenterRef DADissenterCreate( CFAllocatorRef allocator, DAReturn status, CFStringRef string );
 @interface NSNumber : NSObject
- - (id)initWithInt:(int)value;
- @end
+- (id)initWithInt:(int)value;
+@end
+typedef unsigned long NSUInteger;
+@interface NSArray : NSObject
+-(id) initWithObjects:(const id *)objects count:(NSUInteger) cnt;
+@end
 
 //===----------------------------------------------------------------------===//
 // Test cases.
@@ -124,15 +127,14 @@ CFAbsoluteTime f4() {
 }
 @end
 
-//===----------------------------------------------------------------------===//
-// <rdar://problem/7257223> - False positive due to not invalidating the
-// reference count of a tracked region that was itself invalidated.
-//===----------------------------------------------------------------------===//
+//===------------------------------------------------------------------------------------------===//
+// <rdar://problem/7257223> (also <rdar://problem/7283470>) - False positive due to not invalidating
+//  the reference count of a tracked region that was itself invalidated.
+//===------------------------------------------------------------------------------------------===//
 
 typedef struct __rdar_7257223 { CFDateRef x; } RDar7257223;
 void rdar_7257223_aux(RDar7257223 *p);
 
-// THIS CASE CURRENTLY FAILS.
 CFDateRef rdar7257223_Create(void) {
   RDar7257223 s;
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
@@ -147,10 +149,6 @@ CFDateRef rdar7257223_Create_2(void) {
   s.x = CFDateCreate(0, t); // no-warning
   return s.x;
 }
-
-//===----------------------------------------------------------------------===//
-// <rdar://problem/7283470>
-//===----------------------------------------------------------------------===//
 
 void rdar7283470(void) {
   NSNumber *numbers[] = {
@@ -173,5 +171,37 @@ void rdar7283470_positive(void) {
     [[NSNumber alloc] initWithInt:4], // expected-warning{{leak}}
     [[NSNumber alloc] initWithInt:5]  // expected-warning{{leak}} 
   };
+}
+
+void rdar7283470_2(void) {
+  NSNumber *numbers[] = {
+    [[NSNumber alloc] initWithInt:1], // no-warning
+    [[NSNumber alloc] initWithInt:2], // no-warning
+    [[NSNumber alloc] initWithInt:3], // no-warning
+    [[NSNumber alloc] initWithInt:4], // no-warning
+    [[NSNumber alloc] initWithInt:5]  // no-warning
+  };
+  
+  NSArray *s_numbers =[[NSArray alloc] initWithObjects:&numbers[0] count:sizeof(numbers) / sizeof(numbers[0])];
+  
+  for (unsigned i = 0 ; i < sizeof(numbers) / sizeof(numbers[0]) ; ++i)
+    [numbers[i] release];
+  
+  [s_numbers release];
+}
+
+void rdar7283470_2_positive(void) {
+  NSNumber *numbers[] = {
+    [[NSNumber alloc] initWithInt:1], // no-warning
+    [[NSNumber alloc] initWithInt:2], // no-warning
+    [[NSNumber alloc] initWithInt:3], // no-warning
+    [[NSNumber alloc] initWithInt:4], // no-warning
+    [[NSNumber alloc] initWithInt:5]  // no-warning
+  };
+  
+  NSArray *s_numbers =[[NSArray alloc] initWithObjects: &numbers[0] count:sizeof(numbers) / sizeof(numbers[0])]; // expected-warning{{leak}}
+  
+  for (unsigned i = 0 ; i < sizeof(numbers) / sizeof(numbers[0]) ; ++i)
+    [numbers[i] release];
 }
 

@@ -49,7 +49,8 @@ public:
                                  QualType T = QualType());
 
   const GRState *InvalidateRegion(const GRState *state, const MemRegion *R,
-                                  const Expr *E, unsigned Count);
+                                  const Expr *E, unsigned Count,
+                                  InvalidatedSymbols *IS);
 
   const GRState *Bind(const GRState *state, Loc L, SVal V) {
     return state->makeWithStore(BindInternal(state->getStore(), L, V));
@@ -623,11 +624,20 @@ StoreManager::BindingsHandler::~BindingsHandler() {}
 const GRState *BasicStoreManager::InvalidateRegion(const GRState *state,
                                                    const MemRegion *R,
                                                    const Expr *E,
-                                                   unsigned Count) {
+                                                   unsigned Count,
+                                                   InvalidatedSymbols *IS) {
   R = R->getBaseRegion();
 
   if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
       return state;
+
+  if (IS) {
+    BindingsTy B = GetBindings(state->getStore());
+    if (BindingsTy::data_type *Val = B.lookup(R)) {
+      if (SymbolRef Sym = Val->getAsSymbol())
+        IS->insert(Sym);
+    }
+  }
 
   QualType T = cast<TypedRegion>(R)->getValueType(R->getContext());
   SVal V = ValMgr.getConjuredSymbolVal(R, E, T, Count);

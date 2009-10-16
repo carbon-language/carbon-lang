@@ -2859,14 +2859,13 @@ void CFRefCount::EvalSummary(ExplodedNodeSet& Dst,
           // FIXME: What about layers of ElementRegions?
         }
 
-        // Is the invalidated variable something that we were tracking?
-        SymbolRef Sym = state->getSValAsScalarOrLoc(R).getAsLocSymbol();
-
-        // Remove any existing reference-count binding.
-        if (Sym)
-          state = state->remove<RefBindings>(Sym);
-
-        state = StoreMgr.InvalidateRegion(state, R, *I, Count);
+        StoreManager::InvalidatedSymbols IS;
+        state = StoreMgr.InvalidateRegion(state, R, *I, Count, &IS);
+        for (StoreManager::InvalidatedSymbols::iterator I = IS.begin(),
+             E = IS.end(); I!=E; ++I) {
+          // Remove any existing reference-count binding.
+          state = state->remove<RefBindings>(*I);
+        }
       }
       else {
         // Nuke all other arguments passed by reference.

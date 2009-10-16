@@ -141,9 +141,12 @@ public:
                                             const VarDecl *VD,
                                             const LocationContext *LC) = 0;
 
+  typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
+  
   virtual const GRState *InvalidateRegion(const GRState *state,
                                           const MemRegion *R,
-                                          const Expr *E, unsigned Count) = 0;
+                                          const Expr *E, unsigned Count,
+                                          InvalidatedSymbols *IS) = 0;
 
   // FIXME: Make out-of-line.
   virtual const GRState *setExtent(const GRState *state,

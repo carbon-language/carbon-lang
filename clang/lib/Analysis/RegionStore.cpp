@@ -262,7 +262,8 @@ public:
   //===-------------------------------------------------------------------===//
 
   const GRState *InvalidateRegion(const GRState *state, const MemRegion *R,
-                                  const Expr *E, unsigned Count);
+                                  const Expr *E, unsigned Count,
+                                  InvalidatedSymbols *IS);
 
 private:
   void RemoveSubRegionBindings(RegionBindings &B, const MemRegion *R,
@@ -455,7 +456,8 @@ void RegionStoreManager::RemoveSubRegionBindings(RegionBindings &B,
 const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
                                                     const MemRegion *R,
                                                     const Expr *Ex,
-                                                    unsigned Count) {
+                                                    unsigned Count,
+                                                    InvalidatedSymbols *IS) {
   ASTContext& Ctx = StateMgr.getContext();
 
   // Strip away casts.
@@ -490,9 +492,21 @@ const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
     if (Optional<SVal> V = getDirectBinding(B, R)) {
       if (const MemRegion *RV = V->getAsRegion())
         WorkList.push_back(RV);
+      
+      // A symbol?  Mark it touched by the invalidation.
+      if (IS) {
+        if (SymbolRef Sym = V->getAsSymbol())
+          IS->insert(Sym);
+      }
     }
 
-    // Handle region.
+    // Symbolic region?  Mark that symbol touched by the invalidation.
+    if (IS) {
+      if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R))
+        IS->insert(SR->getSymbol());
+    }
+
+    // Handle the region itself.
     if (isa<AllocaRegion>(R) || isa<SymbolicRegion>(R) ||
         isa<ObjCObjectRegion>(R)) {
       // Invalidate the region by setting its default value to
@@ -1376,7 +1390,7 @@ const GRState *RegionStoreManager::Bind(const GRState *state, Loc L, SVal V) {
         // For now, just invalidate the fields of the struct/union/class.
         // FIXME: Precisely handle the fields of the record.
         if (superTy->isRecordType())
-          return InvalidateRegion(state, superR, NULL, 0);
+          return InvalidateRegion(state, superR, NULL, 0, NULL);
       }
     }
   }
