@@ -705,7 +705,7 @@ void CXXNameMangler::mangleType(QualType T) {
   // Only operate on the canonical type!
   T = Context.getASTContext().getCanonicalType(T);
 
-  bool IsSubstitutable = !isa<BuiltinType>(T);
+  bool IsSubstitutable = T.hasQualifiers() || !isa<BuiltinType>(T);
   if (IsSubstitutable && mangleSubstitution(T))
     return;
 

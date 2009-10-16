@@ -54,3 +54,8 @@ template<typename T> void ft3(S1<T>, S1<char>) {  }
 // CHECK: @_ZN2NS3ft3IiEEvNS_2S1IT_EENS1_IcEE
 template void ft3<int>(S1<int>, S1<char>);
 }
+
+// PR5196
+// CHECK: @_Z1fPKcS0_
+void f(const char*, const char*) {}
+
