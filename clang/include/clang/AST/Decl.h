@@ -47,6 +47,9 @@ class DeclaratorInfo {
   friend class ASTContext;
   DeclaratorInfo(QualType ty) : Ty(ty) { }
 public:
+  /// \brief Return the type wrapped by this type source info.
+  QualType getType() const { return Ty; }
+
   /// \brief Return the TypeLoc wrapper for the type source info.
   TypeLoc getTypeLoc() const;
 };
