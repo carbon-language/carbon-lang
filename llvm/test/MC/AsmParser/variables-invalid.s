@@ -1,4 +1,4 @@
-// RUN: not llvm-mc %s 2> %t
+// RUN: not llvm-mc -triple i386-unknown-unknown %s 2> %t
 // RUN: FileCheck --input-file %t %s
 
         .data

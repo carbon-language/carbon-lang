@@ -1,4 +1,4 @@
-// RUN: llvm-mc %s
+// RUN: llvm-mc -triple i386-unknown-unknown %s
 
         .data
         t0_v0 = 1
