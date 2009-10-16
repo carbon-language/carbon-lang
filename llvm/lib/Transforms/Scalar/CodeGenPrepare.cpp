@@ -73,6 +73,7 @@ namespace {
                             DenseMap<Value*,Value*> &SunkAddrs);
     bool OptimizeInlineAsmInst(Instruction *I, CallSite CS,
                                DenseMap<Value*,Value*> &SunkAddrs);
+    bool MoveExtToFormExtLoad(Instruction *I);
     bool OptimizeExtUses(Instruction *I);
     void findLoopBackEdges(const Function &F);
   };
@@ -731,6 +732,43 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
   return MadeChange;
 }
 
+/// MoveExtToFormExtLoad - Move a zext or sext fed by a load into the same
+/// basic block as the load, unless conditions are unfavorable. This allows
+/// SelectionDAG to fold the extend into the load.
+///
+bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *I) {
+  // Look for a load being extended.
+  LoadInst *LI = dyn_cast<LoadInst>(I->getOperand(0));
+  if (!LI) return false;
+
+  // If they're already in the same block, there's nothing to do.
+  if (LI->getParent() == I->getParent())
+    return false;
+
+  // If the load has other users and the truncate is not free, this probably
+  // isn't worthwhile.
+  if (!LI->hasOneUse() &&
+      TLI && !TLI->isTruncateFree(I->getType(), LI->getType()))
+    return false;
+
+  // Check whether the target supports casts folded into loads.
+  unsigned LType;
+  if (isa<ZExtInst>(I))
+    LType = ISD::ZEXTLOAD;
+  else {
+    assert(isa<SExtInst>(I) && "Unexpected ext type!");
+    LType = ISD::SEXTLOAD;
+  }
+  if (TLI && !TLI->isLoadExtLegal(LType, TLI->getValueType(LI->getType())))
+    return false;
+
+  // Move the extend into the same block as the load, so that SelectionDAG
+  // can fold it.
+  I->removeFromParent();
+  I->insertAfter(LI);
+  return true;
+}
+
 bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   BasicBlock *DefBB = I->getParent();
 
@@ -846,8 +884,10 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
         MadeChange |= Change;
       }
 
-      if (!Change && (isa<ZExtInst>(I) || isa<SExtInst>(I)))
+      if (!Change && (isa<ZExtInst>(I) || isa<SExtInst>(I))) {
+        MadeChange |= MoveExtToFormExtLoad(I);
         MadeChange |= OptimizeExtUses(I);
+      }
     } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
       MadeChange |= OptimizeCmpExpression(CI);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
