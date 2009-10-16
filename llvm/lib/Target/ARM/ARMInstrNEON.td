@@ -1903,8 +1903,8 @@ defm VABDLs   : N3VLInt_QHS<0,1,0b0111,0, IIC_VBINi4Q, "vabdl.s", int_arm_neon_v
 defm VABDLu   : N3VLInt_QHS<1,1,0b0111,0, IIC_VBINi4Q, "vabdl.u", int_arm_neon_vabdlu, 0>;
 
 //   VABA     : Vector Absolute Difference and Accumulate
-defm VABAs    : N3VInt3_QHS<0,1,0b0101,0, "vaba.s", int_arm_neon_vabas>;
-defm VABAu    : N3VInt3_QHS<1,1,0b0101,0, "vaba.u", int_arm_neon_vabau>;
+defm VABAs    : N3VInt3_QHS<0,0,0b0111,1, "vaba.s", int_arm_neon_vabas>;
+defm VABAu    : N3VInt3_QHS<1,0,0b0111,1, "vaba.u", int_arm_neon_vabau>;
 
 //   VABAL    : Vector Absolute Difference and Accumulate Long (Q += | D - D |)
 defm VABALs   : N3VLInt3_QHS<0,1,0b0101,0, "vabal.s", int_arm_neon_vabals>;
