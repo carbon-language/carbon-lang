@@ -82,9 +82,14 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 #ifndef NDEBUG
   static bool IsFirst = true;
   if (IsFirst) {
-    for (unsigned i = 1; i != NumDiagEntries; ++i)
+    for (unsigned i = 1; i != NumDiagEntries; ++i) {
+      assert(StaticDiagInfo[i-1].DiagID != StaticDiagInfo[i].DiagID &&
+             "Diag ID conflict, the enums at the start of clang::diag (in "
+             "Diagnostic.h) probably need to be increased");
+
       assert(StaticDiagInfo[i-1] < StaticDiagInfo[i] &&
              "Improperly sorted diag info");
+    }
     IsFirst = false;
   }
 #endif
