@@ -368,6 +368,21 @@ static bool CmpCaseVals(const std::pair<llvm::APSInt, CaseStmt*>& lhs,
   return false;
 }
 
+/// GetTypeBeforeIntegralPromotion - Returns the pre-promotion type of
+/// potentially integral-promoted expression @p expr.
+static QualType GetTypeBeforeIntegralPromotion(const Expr* expr) {
+  const ImplicitCastExpr *ImplicitCast =
+      dyn_cast_or_null<ImplicitCastExpr>(expr);
+  if (ImplicitCast != NULL) {
+    const Expr *ExprBeforePromotion = ImplicitCast->getSubExpr();
+    QualType TypeBeforePromotion = ExprBeforePromotion->getType();
+    if (TypeBeforePromotion->isIntegralType()) {
+      return TypeBeforePromotion;
+    }
+  }
+  return expr->getType();
+}
+
 Action::OwningStmtResult
 Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
                             StmtArg Body) {
@@ -382,6 +397,16 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   Expr *CondExpr = SS->getCond();
   QualType CondType = CondExpr->getType();
 
+  // C++ 6.4.2.p2:
+  // Integral promotions are performed (on the switch condition).
+  //
+  // A case value unrepresentable by the original switch condition
+  // type (before the promotion) doesn't make sense, even when it can
+  // be represented by the promoted type.  Therefore we need to find
+  // the pre-promotion type of the switch condition.
+  QualType CondTypeBeforePromotion =
+      GetTypeBeforeIntegralPromotion(CondExpr);
+
   if (!CondExpr->isTypeDependent() &&
       !CondType->isIntegerType()) { // C99 6.8.4.2p1
     Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer)
@@ -395,8 +420,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
     = CondExpr->isTypeDependent() || CondExpr->isValueDependent();
   unsigned CondWidth
     = HasDependentValue? 0
-                       : static_cast<unsigned>(Context.getTypeSize(CondType));
-  bool CondIsSigned = CondType->isSignedIntegerType();
+      : static_cast<unsigned>(Context.getTypeSize(CondTypeBeforePromotion));
+  bool CondIsSigned = CondTypeBeforePromotion->isSignedIntegerType();
 
   // Accumulate all of the case values in a vector so that we can sort them
   // and detect duplicates.  This vector contains the APInt for the case after

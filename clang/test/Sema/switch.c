@@ -68,3 +68,10 @@ void test5(int z) {
   }
 } 
 
+void test6() {
+  const char ch = 'a';
+  switch(ch) {
+    case 1234:  // expected-warning {{overflow converting case value}}
+      break;
+  }
+}
