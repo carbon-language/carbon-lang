@@ -1289,7 +1289,7 @@ void Stmt::printPretty(llvm::raw_ostream &OS, ASTContext& Context,
     return;
   }
 
-  if (Policy.Dump) {
+  if (Policy.Dump && &Context) {
     dump(Context.getSourceManager());
     return;
   }

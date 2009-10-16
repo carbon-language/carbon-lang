@@ -928,10 +928,10 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
   std::vector<uint32_t> SLocEntryOffsets;
   RecordData PreloadSLocs;
   SLocEntryOffsets.reserve(SourceMgr.sloc_entry_size() - 1);
-  for (SourceManager::sloc_entry_iterator
-         SLoc = SourceMgr.sloc_entry_begin() + 1,
-         SLocEnd = SourceMgr.sloc_entry_end();
-       SLoc != SLocEnd; ++SLoc) {
+  for (unsigned I = 1, N = SourceMgr.sloc_entry_size(); I != N; ++I) {
+    // Get this source location entry.
+    const SrcMgr::SLocEntry *SLoc = &SourceMgr.getSLocEntry(I);
+    
     // Record the offset of this source-location entry.
     SLocEntryOffsets.push_back(Stream.GetCurrentBitNo());
 
@@ -1006,9 +1006,8 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
 
       // Compute the token length for this macro expansion.
       unsigned NextOffset = SourceMgr.getNextOffset();
-      SourceManager::sloc_entry_iterator NextSLoc = SLoc;
-      if (++NextSLoc != SLocEnd)
-        NextOffset = NextSLoc->getOffset();
+      if (I + 1 != N)
+        NextOffset = SourceMgr.getSLocEntry(I + 1).getOffset();
       Record.push_back(NextOffset - SLoc->getOffset() - 1);
       Stream.EmitRecordWithAbbrev(SLocInstantiationAbbrv, Record);
     }

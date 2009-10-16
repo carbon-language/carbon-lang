@@ -685,26 +685,19 @@ public:
   ///
   void PrintStats() const;
 
-  // Iteration over the source location entry table.
-  typedef std::vector<SrcMgr::SLocEntry>::const_iterator sloc_entry_iterator;
-
-  sloc_entry_iterator sloc_entry_begin() const {
-    return SLocEntryTable.begin();
-  }
-
-  sloc_entry_iterator sloc_entry_end() const {
-    return SLocEntryTable.end();
-  }
-
   unsigned sloc_entry_size() const { return SLocEntryTable.size(); }
 
-  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {
-    assert(FID.ID < SLocEntryTable.size() && "Invalid id");
+  const SrcMgr::SLocEntry &getSLocEntry(unsigned ID) const {
+    assert(ID < SLocEntryTable.size() && "Invalid id");
     if (ExternalSLocEntries &&
-        FID.ID < SLocEntryLoaded.size() &&
-        !SLocEntryLoaded[FID.ID])
-      ExternalSLocEntries->ReadSLocEntry(FID.ID);
-    return SLocEntryTable[FID.ID];
+        ID < SLocEntryLoaded.size() &&
+        !SLocEntryLoaded[ID])
+      ExternalSLocEntries->ReadSLocEntry(ID);
+    return SLocEntryTable[ID];
+  }
+  
+  const SrcMgr::SLocEntry &getSLocEntry(FileID FID) const {    
+    return getSLocEntry(FID.ID);
   }
 
   unsigned getNextOffset() const { return NextOffset; }
