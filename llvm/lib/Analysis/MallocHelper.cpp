@@ -234,7 +234,7 @@ static bool isConstantOne(Value *val) {
 /// determined.
 Value* llvm::getMallocArraySize(CallInst* CI, LLVMContext &Context,
                                 const TargetData* TD) {
-  if (isSafeToGetMallocArraySize(CI, Context, TD))
+  if (!isSafeToGetMallocArraySize(CI, Context, TD))
     return NULL;
 
   // Match CreateMalloc's use of constant 1 array-size for non-array mallocs.
