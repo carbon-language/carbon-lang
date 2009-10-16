@@ -88,6 +88,7 @@ void PCHDeclWriter::VisitDecl(Decl *D) {
   Record.push_back(D->isImplicit());
   Record.push_back(D->isUsed());
   Record.push_back(D->getAccess());
+  Record.push_back(D->getPCHLevel());
 }
 
 void PCHDeclWriter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
@@ -448,6 +449,7 @@ void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
       !D->isImplicit() &&
       !D->isUsed() &&
       D->getAccess() == AS_none &&
+      D->getPCHLevel() == 0 &&
       D->getStorageClass() == 0 &&
       !D->hasCXXDirectInitializer() && // Can params have this ever?
       D->getObjCDeclQualifier() == 0)
@@ -523,6 +525,7 @@ void PCHWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isImplicit
   Abv->Add(BitCodeAbbrevOp(0));                       // isUsed
   Abv->Add(BitCodeAbbrevOp(AS_none));                 // C++ AccessSpecifier
+  Abv->Add(BitCodeAbbrevOp(0));                       // PCH level
 
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier

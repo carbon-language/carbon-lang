@@ -117,6 +117,17 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
 );
 void clang_disposeTranslationUnit(CXTranslationUnit);
 
+/**
+ * \brief Indicate to Clang that it should only enumerate "local" declarations
+ * when loading any new translation units.
+ *
+ * A "local" declaration is one that belongs in the translation unit itself and
+ * not in a precompiled header that was used by the translation unit.
+ *
+ * FIXME: Remove this hook.
+ */
+void clang_wantOnlyLocalDeclarations(CXIndex);
+  
 /*
    Usage: clang_loadTranslationUnit(). Will load the toplevel declarations
    within a translation unit, issuing a 'callback' for each one.

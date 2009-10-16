@@ -88,14 +88,24 @@ class TUVisitor : public DeclVisitor<TUVisitor> {
   CXTranslationUnitIterator Callback;
   CXClientData CData;
   
+  // MaxPCHLevel - the maximum PCH level of declarations that we will pass on
+  // to the visitor. Declarations with a PCH level greater than this value will
+  // be suppressed.
+  unsigned MaxPCHLevel;
+  
   void Call(enum CXCursorKind CK, NamedDecl *ND) {
+    // Filter any declarations that have a PCH level greater than what we allow.
+    if (ND->getPCHLevel() > MaxPCHLevel)
+      return;
+    
     CXCursor C = { CK, ND, 0 };
     Callback(TUnit, C, CData);
   }
 public:
   TUVisitor(CXTranslationUnit CTU, 
-            CXTranslationUnitIterator cback, CXClientData D) : 
-    TUnit(CTU), Callback(cback), CData(D) {}
+            CXTranslationUnitIterator cback, CXClientData D,
+            unsigned MaxPCHLevel) : 
+    TUnit(CTU), Callback(cback), CData(D), MaxPCHLevel(MaxPCHLevel) {}
   
   void VisitTranslationUnitDecl(TranslationUnitDecl *D) {
     VisitDeclContext(dyn_cast<DeclContext>(D));
@@ -154,16 +164,27 @@ class CDeclVisitor : public DeclVisitor<CDeclVisitor> {
   CXDeclIterator Callback;
   CXClientData CData;
   
+  // MaxPCHLevel - the maximum PCH level of declarations that we will pass on
+  // to the visitor. Declarations with a PCH level greater than this value will
+  // be suppressed.
+  unsigned MaxPCHLevel;
+  
   void Call(enum CXCursorKind CK, NamedDecl *ND) {
     // Disable the callback when the context is equal to the visiting decl.
     if (CDecl == ND && !clang_isReference(CK))
       return;
+    
+    // Filter any declarations that have a PCH level greater than what we allow.
+    if (ND->getPCHLevel() > MaxPCHLevel)
+      return;
+    
     CXCursor C = { CK, ND, 0 };
     Callback(CDecl, C, CData);
   }
 public:
-  CDeclVisitor(CXDecl C, CXDeclIterator cback, CXClientData D) : 
-    CDecl(C), Callback(cback), CData(D) {}
+  CDeclVisitor(CXDecl C, CXDeclIterator cback, CXClientData D, 
+               unsigned MaxPCHLevel) : 
+    CDecl(C), Callback(cback), CData(D), MaxPCHLevel(MaxPCHLevel) {}
     
   void VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
     // Issue callbacks for the containing class.
@@ -242,6 +263,20 @@ public:
   }
 };
 
+class CIndexer : public Indexer {
+public:  
+  explicit CIndexer(Program &prog) : Indexer(prog), OnlyLocalDecls(false) { }
+
+  /// \brief Whether we only want to see "local" declarations (that did not
+  /// come from a previous precompiled header). If false, we want to see all
+  /// declarations.
+  bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
+  void setOnlyLocalDecls(bool Local = true) { OnlyLocalDecls = Local; }
+  
+private:
+  bool OnlyLocalDecls;
+};
+  
 }
 
 extern "C" {
@@ -267,13 +302,13 @@ CXIndex clang_createIndex()
   
   clangPath = ClangPath.c_str();
   
-  return new Indexer(*new Program());
+  return new CIndexer(*new Program());
 }
 
 void clang_disposeIndex(CXIndex CIdx)
 {
   assert(CIdx && "Passed null CXIndex");
-  delete static_cast<Indexer *>(CIdx);
+  delete static_cast<CIndexer *>(CIdx);
 }
 
 // FIXME: need to pass back error info.
@@ -281,12 +316,13 @@ CXTranslationUnit clang_createTranslationUnit(
   CXIndex CIdx, const char *ast_filename) 
 {
   assert(CIdx && "Passed null CXIndex");
-  Indexer *CXXIdx = static_cast<Indexer *>(CIdx);
+  CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
   std::string astName(ast_filename);
   std::string ErrMsg;
   
   return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getDiagnostics(),
-                                  CXXIdx->getFileManager(), &ErrMsg);
+                                  CXXIdx->getFileManager(), &ErrMsg,
+                                  CXXIdx->getOnlyLocalDecls());
 }
 
 CXTranslationUnit clang_createTranslationUnitFromSourceFile(
@@ -338,6 +374,10 @@ void clang_disposeTranslationUnit(
   delete static_cast<ASTUnit *>(CTUnit);
 }
 
+void clang_wantOnlyLocalDeclarations(CXIndex CIdx) {
+  static_cast<CIndexer *>(CIdx)->setOnlyLocalDecls(true);
+}
+  
 const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit)
 {
   assert(CTUnit && "Passed null CXTranslationUnit");
@@ -353,7 +393,8 @@ void clang_loadTranslationUnit(CXTranslationUnit CTUnit,
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
   ASTContext &Ctx = CXXUnit->getASTContext();
   
-  TUVisitor DVisit(CTUnit, callback, CData);
+  TUVisitor DVisit(CTUnit, callback, CData, 
+                   CXXUnit->getOnlyLocalDecls()? 1 : Decl::MaxPCHLevel);
   DVisit.Visit(Ctx.getTranslationUnitDecl());
 }
 
@@ -363,7 +404,8 @@ void clang_loadDeclaration(CXDecl Dcl,
 {
   assert(Dcl && "Passed null CXDecl");
   
-  CDeclVisitor DVisit(Dcl, callback, CData);
+  CDeclVisitor DVisit(Dcl, callback, CData,
+                      static_cast<Decl *>(Dcl)->getPCHLevel());
   DVisit.Visit(static_cast<Decl *>(Dcl));
 }
 

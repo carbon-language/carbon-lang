@@ -94,9 +94,10 @@ FileManager &ASTUnit::getFileManager() {
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   Diagnostic &Diags,
                                   FileManager &FileMgr,
-                                  std::string *ErrMsg) {
+                                  std::string *ErrMsg,
+                                  bool OnlyLocalDecls) {
   llvm::OwningPtr<ASTUnit> AST(new ASTUnit(Diags));
-
+  AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->HeaderInfo.reset(new HeaderSearch(FileMgr));
 
   // Gather Info for preprocessor construction later on.

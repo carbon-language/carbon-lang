@@ -86,10 +86,16 @@ int main(int argc, char **argv) {
   }
   {
   CXIndex Idx = clang_createIndex();
+  if (!strcmp(argv[2], "local"))
+    clang_wantOnlyLocalDeclarations(Idx);
   CXTranslationUnit TU = clang_createTranslationUnit(Idx, argv[1]);
+  if (!TU) {
+    fprintf(stderr, "Unable to load translation unit!\n");
+    return 1;
+  }
   enum CXCursorKind K = CXCursor_NotImplemented;
 
-  if (!strcmp(argv[2], "all")) {
+  if (!strcmp(argv[2], "all") || !strcmp(argv[2], "local")) {
     clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
     clang_disposeTranslationUnit(TU);
     return 1;

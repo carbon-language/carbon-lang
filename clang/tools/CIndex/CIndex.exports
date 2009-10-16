@@ -28,3 +28,4 @@ _clang_getCursorSpelling
 _clang_getCursorKindSpelling
 _clang_getDefinitionSpellingAndExtent
 _clang_getTranslationUnitSpelling
+_clang_wantOnlyLocalDeclarations

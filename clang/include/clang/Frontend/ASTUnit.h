@@ -40,6 +40,11 @@ class ASTUnit {
   llvm::OwningPtr<ASTContext>       Ctx;
   bool                              tempFile;
   
+  // OnlyLocalDecls - when true, walking this AST should only visit declarations
+  // that come from the AST itself, not from included precompiled headers.
+  // FIXME: This is temporary; eventually, CIndex will always do this.
+  bool                              OnlyLocalDecls;
+  
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
   ASTUnit(Diagnostic &_Diag);
@@ -65,6 +70,8 @@ public:
 
   void unlinkTemporaryFile() { tempFile = true; }
   
+  bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
+  
   /// \brief Create a ASTUnit from a PCH file.
   ///
   /// \param Filename - The PCH file to load.
@@ -80,7 +87,8 @@ public:
   static ASTUnit *LoadFromPCHFile(const std::string &Filename,
                                   Diagnostic &Diags,
                                   FileManager &FileMgr,
-                                  std::string *ErrMsg = 0);
+                                  std::string *ErrMsg = 0,
+                                  bool OnlyLocalDecls = false);
 };
 
 } // namespace clang

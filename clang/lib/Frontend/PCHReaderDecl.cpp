@@ -86,6 +86,7 @@ void PCHDeclReader::VisitDecl(Decl *D) {
   D->setImplicit(Record[Idx++]);
   D->setUsed(Record[Idx++]);
   D->setAccess((AccessSpecifier)Record[Idx++]);
+  D->setPCHLevel(Record[Idx++] + 1);
 }
 
 void PCHDeclReader::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
