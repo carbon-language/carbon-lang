@@ -769,7 +769,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // option.
   if (Arg *Std = Args.getLastArg(options::OPT_std_EQ, options::OPT_ansi)) {
     if (Std->getOption().matches(options::OPT_ansi))
-      CmdArgs.push_back("-std=c89");
+      if (types::isCXX(InputType))
+          CmdArgs.push_back("-std=c++98");
+      else
+          CmdArgs.push_back("-std=c89");
     else
       Std->render(Args, CmdArgs);
 
