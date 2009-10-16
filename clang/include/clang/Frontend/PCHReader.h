@@ -542,6 +542,10 @@ public:
   /// comments in the source code.
   virtual void ReadComments(std::vector<SourceRange> &Comments);
 
+  /// \brief Reads a declarator info from the given record.
+  virtual DeclaratorInfo *GetDeclaratorInfo(const RecordData &Record,
+                                            unsigned &Idx);
+
   /// \brief Resolve a type ID into a type, potentially building a new
   /// type.
   virtual QualType GetType(pch::TypeID ID);

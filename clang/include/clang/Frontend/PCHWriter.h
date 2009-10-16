@@ -254,6 +254,9 @@ public:
   /// \brief Emit a reference to a type.
   void AddTypeRef(QualType T, RecordData &Record);
 
+  /// \brief Emits a reference to a declarator info.
+  void AddDeclaratorInfo(DeclaratorInfo *DInfo, RecordData &Record);
+
   /// \brief Emit a reference to a declaration.
   void AddDeclRef(const Decl *D, RecordData &Record);
 

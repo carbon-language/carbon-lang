@@ -18,7 +18,6 @@
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/TypeLocVisitor.h"
 using namespace clang;
 
 
@@ -150,84 +149,11 @@ void PCHDeclReader::VisitEnumConstantDecl(EnumConstantDecl *ECD) {
   ECD->setInitVal(Reader.ReadAPSInt(Record, Idx));
 }
 
-namespace {
-
-class TypeLocReader : public TypeLocVisitor<TypeLocReader> {
-  PCHReader &Reader;
-  const PCHReader::RecordData &Record;
-  unsigned &Idx;
-
-public:
-  TypeLocReader(PCHReader &Reader, const PCHReader::RecordData &Record,
-                unsigned &Idx)
-    : Reader(Reader), Record(Record), Idx(Idx) { }
-
-#define ABSTRACT_TYPELOC(CLASS)
-#define TYPELOC(CLASS, PARENT) \
-    void Visit##CLASS(CLASS TyLoc);
-#include "clang/AST/TypeLocNodes.def"
-
-  void VisitTypeLoc(TypeLoc TyLoc) {
-    assert(0 && "A type loc wrapper was not handled!");
-  }
-};
-
-}
-
-void TypeLocReader::VisitQualifiedLoc(QualifiedLoc TyLoc) {
-  // nothing to do
-}
-void TypeLocReader::VisitDefaultTypeSpecLoc(DefaultTypeSpecLoc TyLoc) {
-  TyLoc.setStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
-void TypeLocReader::VisitTypedefLoc(TypedefLoc TyLoc) {
-  TyLoc.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
-void TypeLocReader::VisitObjCInterfaceLoc(ObjCInterfaceLoc TyLoc) {
-  TyLoc.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
-void TypeLocReader::VisitObjCProtocolListLoc(ObjCProtocolListLoc TyLoc) {
-  TyLoc.setLAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  TyLoc.setRAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  for (unsigned i = 0, e = TyLoc.getNumProtocols(); i != e; ++i)
-    TyLoc.setProtocolLoc(i, SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
-void TypeLocReader::VisitPointerLoc(PointerLoc TyLoc) {
-  TyLoc.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
-void TypeLocReader::VisitBlockPointerLoc(BlockPointerLoc TyLoc) {
-  TyLoc.setCaretLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
-void TypeLocReader::VisitMemberPointerLoc(MemberPointerLoc TyLoc) {
-  TyLoc.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
-void TypeLocReader::VisitReferenceLoc(ReferenceLoc TyLoc) {
-  TyLoc.setAmpLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
-void TypeLocReader::VisitFunctionLoc(FunctionLoc TyLoc) {
-  TyLoc.setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  TyLoc.setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  for (unsigned i = 0, e = TyLoc.getNumArgs(); i != e; ++i)
-    TyLoc.setArg(i, cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
-}
-void TypeLocReader::VisitArrayLoc(ArrayLoc TyLoc) {
-  TyLoc.setLBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  TyLoc.setRBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  if (Record[Idx++])
-    TyLoc.setSizeExpr(Reader.ReadDeclExpr());
-}
-
 void PCHDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
   VisitValueDecl(DD);
-  QualType InfoTy = Reader.GetType(Record[Idx++]);
-  if (InfoTy.isNull())
-    return;
-
-  DeclaratorInfo *DInfo = Reader.getContext()->CreateDeclaratorInfo(InfoTy);
-  TypeLocReader TLR(Reader, Record, Idx);
-  for (TypeLoc TL = DInfo->getTypeLoc(); !TL.isNull(); TL = TL.getNextTypeLoc())
-    TLR.Visit(TL);
-  DD->setDeclaratorInfo(DInfo);
+  DeclaratorInfo *DInfo = Reader.GetDeclaratorInfo(Record, Idx);
+  if (DInfo)
+    DD->setDeclaratorInfo(DInfo);
 }
 
 void PCHDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
