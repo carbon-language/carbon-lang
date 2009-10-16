@@ -96,6 +96,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case OpenBSD: return "openbsd";
   case Solaris: return "solaris";
   case Win32: return "win32";
+  case Haiku: return "haiku";
   }
 
   return "<invalid>";
@@ -276,6 +277,8 @@ void Triple::Parse() const {
     OS = Solaris;
   else if (OSName.startswith("win32"))
     OS = Win32;
+  else if (OSName.startswith("haiku"))
+  	OS = Haiku;
   else
     OS = UnknownOS;
 

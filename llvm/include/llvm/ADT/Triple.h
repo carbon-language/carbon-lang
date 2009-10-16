@@ -95,7 +95,8 @@ public:
     NetBSD,
     OpenBSD,
     Solaris,
-    Win32
+    Win32,
+    Haiku
   };
   
 private:
