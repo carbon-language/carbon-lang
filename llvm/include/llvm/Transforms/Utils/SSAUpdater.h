@@ -21,7 +21,7 @@ namespace llvm {
   class PHINode;
   template<typename T>
   class SmallVectorImpl;
-  
+
 /// SSAUpdater - This class updates SSA form for a set of values defined in
 /// multiple blocks.  This is used when code duplication or another unstructured
 /// transformation wants to rewrite a set of uses of one value with uses of a
@@ -33,17 +33,17 @@ class SSAUpdater {
   /// eliminate them, and want the WeakVH to track this.
   //typedef DenseMap<BasicBlock*, TrackingVH<Value> > AvailableValsTy;
   void *AV;
-  
+
   /// PrototypeValue is an arbitrary representative value, which we derive names
   /// and a type for PHI nodes.
   Value *PrototypeValue;
-  
+
   /// IncomingPredInfo - We use this as scratch space when doing our recursive
   /// walk.  This should only be used in GetValueInBlockInternal, normally it
   /// should be empty.
   //std::vector<std::pair<BasicBlock*, TrackingVH<Value> > > IncomingPredInfo;
   void *IPI;
-  
+
   /// InsertedPHIs - If this is non-null, the SSAUpdater adds all PHI nodes that
   /// it creates to the vector.
   SmallVectorImpl<PHINode*> *InsertedPHIs;
@@ -52,11 +52,11 @@ public:
   /// in with all PHI Nodes created by rewriting.
   SSAUpdater(SmallVectorImpl<PHINode*> *InsertedPHIs = 0);
   ~SSAUpdater();
-  
+
   /// Initialize - Reset this object to get ready for a new set of SSA
   /// updates.  ProtoValue is the value used to name PHI nodes.
   void Initialize(Value *ProtoValue);
-  
+
   /// AddAvailableValue - Indicate that a rewritten value is available at the
   /// end of the specified block with the specified value.
   void AddAvailableValue(BasicBlock *BB, Value *V);
@@ -64,11 +64,11 @@ public:
   /// HasValueForBlock - Return true if the SSAUpdater already has a value for
   /// the specified block.
   bool HasValueForBlock(BasicBlock *BB) const;
-  
+
   /// GetValueAtEndOfBlock - Construct SSA form, materializing a value that is
   /// live at the end of the specified block.
   Value *GetValueAtEndOfBlock(BasicBlock *BB);
-  
+
   /// GetValueInMiddleOfBlock - Construct SSA form, materializing a value that
   /// is live in the middle of the specified block.
   ///
@@ -89,14 +89,14 @@ public:
   /// merge the appropriate values, and this value isn't live out of the block.
   ///
   Value *GetValueInMiddleOfBlock(BasicBlock *BB);
-  
+
   /// RewriteUse - Rewrite a use of the symbolic value.  This handles PHI nodes,
   /// which use their value in the corresponding predecessor.  Note that this
   /// will not work if the use is supposed to be rewritten to a value defined in
   /// the same block as the use, but above it.  Any 'AddAvailableValue's added
   /// for the use's block will be considered to be below it.
   void RewriteUse(Use &U);
-  
+
 private:
   Value *GetValueAtEndOfBlockInternal(BasicBlock *BB);
   void operator=(const SSAUpdater&); // DO NOT IMPLEMENT

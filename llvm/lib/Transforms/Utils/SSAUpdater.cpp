@@ -48,7 +48,7 @@ void SSAUpdater::Initialize(Value *ProtoValue) {
     AV = new AvailableValsTy();
   else
     getAvailableVals(AV).clear();
-  
+
   if (IPI == 0)
     IPI = new IncomingPredInfoTy();
   else
@@ -104,12 +104,12 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
   // GetValueAtEndOfBlock to do our work.
   if (!getAvailableVals(AV).count(BB))
     return GetValueAtEndOfBlock(BB);
-  
+
   // Otherwise, we have the hard case.  Get the live-in values for each
   // predecessor.
   SmallVector<std::pair<BasicBlock*, Value*>, 8> PredValues;
   Value *SingularValue = 0;
-  
+
   // We can get our predecessor info by walking the pred_iterator list, but it
   // is relatively slow.  If we already have PHI nodes in this block, walk one
   // of them to get the predecessor list instead.
@@ -118,7 +118,7 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
       BasicBlock *PredBB = SomePhi->getIncomingBlock(i);
       Value *PredVal = GetValueAtEndOfBlock(PredBB);
       PredValues.push_back(std::make_pair(PredBB, PredVal));
-      
+
       // Compute SingularValue.
       if (i == 0)
         SingularValue = PredVal;
@@ -131,7 +131,7 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
       BasicBlock *PredBB = *PI;
       Value *PredVal = GetValueAtEndOfBlock(PredBB);
       PredValues.push_back(std::make_pair(PredBB, PredVal));
-      
+
       // Compute SingularValue.
       if (isFirstPred) {
         SingularValue = PredVal;
@@ -140,25 +140,25 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
         SingularValue = 0;
     }
   }
-  
+
   // If there are no predecessors, just return undef.
   if (PredValues.empty())
     return UndefValue::get(PrototypeValue->getType());
-  
+
   // Otherwise, if all the merged values are the same, just use it.
   if (SingularValue != 0)
     return SingularValue;
-  
+
   // Otherwise, we do need a PHI: insert one now.
   PHINode *InsertedPHI = PHINode::Create(PrototypeValue->getType(),
                                          PrototypeValue->getName(),
                                          &BB->front());
   InsertedPHI->reserveOperandSpace(PredValues.size());
-  
+
   // Fill in all the predecessors of the PHI.
   for (unsigned i = 0, e = PredValues.size(); i != e; ++i)
     InsertedPHI->addIncoming(PredValues[i].second, PredValues[i].first);
-  
+
   // See if the PHI node can be merged to a single value.  This can happen in
   // loop cases when we get a PHI of itself and one other value.
   if (Value *ConstVal = InsertedPHI->hasConstantValue()) {
@@ -168,7 +168,7 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
 
   // If the client wants to know about all new instructions, tell it.
   if (InsertedPHIs) InsertedPHIs->push_back(InsertedPHI);
-  
+
   DEBUG(errs() << "  Inserted PHI: " << *InsertedPHI << "\n");
   return InsertedPHI;
 }
@@ -180,7 +180,7 @@ void SSAUpdater::RewriteUse(Use &U) {
   BasicBlock *UseBB = User->getParent();
   if (PHINode *UserPN = dyn_cast<PHINode>(User))
     UseBB = UserPN->getIncomingBlock(U);
-  
+
   U.set(GetValueInMiddleOfBlock(UseBB));
 }
 
@@ -192,11 +192,11 @@ void SSAUpdater::RewriteUse(Use &U) {
 ///
 Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
   AvailableValsTy &AvailableVals = getAvailableVals(AV);
-  
+
   // Query AvailableVals by doing an insertion of null.
   std::pair<AvailableValsTy::iterator, bool> InsertRes =
   AvailableVals.insert(std::make_pair(BB, WeakVH()));
-  
+
   // Handle the case when the insertion fails because we have already seen BB.
   if (!InsertRes.second) {
     // If the insertion failed, there are two cases.  The first case is that the
@@ -204,7 +204,7 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
     // return the value.
     if (InsertRes.first->second != 0)
       return InsertRes.first->second;
-    
+
     // Otherwise, if the value we find is null, then this is the value is not
     // known but it is being computed elsewhere in our recursion.  This means
     // that we have a cycle.  Handle this by inserting a PHI node and returning
@@ -214,7 +214,7 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
     PHINode::Create(PrototypeValue->getType(), PrototypeValue->getName(),
                     &BB->front());
   }
-  
+
   // Okay, the value isn't in the map and we just inserted a null in the entry
   // to indicate that we're processing the block.  Since we have no idea what
   // value is in this block, we have to recurse through our predecessors.
@@ -225,13 +225,13 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
   // of the recursion, just use IncomingPredInfo as an explicit stack.
   IncomingPredInfoTy &IncomingPredInfo = getIncomingPredInfo(IPI);
   unsigned FirstPredInfoEntry = IncomingPredInfo.size();
-  
+
   // As we're walking the predecessors, keep track of whether they are all
   // producing the same value.  If so, this value will capture it, if not, it
   // will get reset to null.  We distinguish the no-predecessor case explicitly
   // below.
   TrackingVH<Value> SingularValue;
-  
+
   // We can get our predecessor info by walking the pred_iterator list, but it
   // is relatively slow.  If we already have PHI nodes in this block, walk one
   // of them to get the predecessor list instead.
@@ -240,7 +240,7 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
       BasicBlock *PredBB = SomePhi->getIncomingBlock(i);
       Value *PredVal = GetValueAtEndOfBlockInternal(PredBB);
       IncomingPredInfo.push_back(std::make_pair(PredBB, PredVal));
-      
+
       // Compute SingularValue.
       if (i == 0)
         SingularValue = PredVal;
@@ -253,7 +253,7 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
       BasicBlock *PredBB = *PI;
       Value *PredVal = GetValueAtEndOfBlockInternal(PredBB);
       IncomingPredInfo.push_back(std::make_pair(PredBB, PredVal));
-      
+
       // Compute SingularValue.
       if (isFirstPred) {
         SingularValue = PredVal;
@@ -262,19 +262,19 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
         SingularValue = 0;
     }
   }
-  
+
   // If there are no predecessors, then we must have found an unreachable block
   // just return 'undef'.  Since there are no predecessors, InsertRes must not
   // be invalidated.
   if (IncomingPredInfo.size() == FirstPredInfoEntry)
     return InsertRes.first->second = UndefValue::get(PrototypeValue->getType());
-  
+
   /// Look up BB's entry in AvailableVals.  'InsertRes' may be invalidated.  If
   /// this block is involved in a loop, a no-entry PHI node will have been
   /// inserted as InsertedVal.  Otherwise, we'll still have the null we inserted
   /// above.
   TrackingVH<Value> &InsertedVal = AvailableVals[BB];
-  
+
   // If all the predecessor values are the same then we don't need to insert a
   // PHI.  This is the simple and common case.
   if (SingularValue) {
@@ -291,31 +291,31 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
     } else {
       InsertedVal = SingularValue;
     }
-    
+
     // Drop the entries we added in IncomingPredInfo to restore the stack.
     IncomingPredInfo.erase(IncomingPredInfo.begin()+FirstPredInfoEntry,
                            IncomingPredInfo.end());
     return InsertedVal;
   }
-  
+
   // Otherwise, we do need a PHI: insert one now if we don't already have one.
   if (InsertedVal == 0)
     InsertedVal = PHINode::Create(PrototypeValue->getType(),
                                   PrototypeValue->getName(), &BB->front());
-  
+
   PHINode *InsertedPHI = cast<PHINode>(InsertedVal);
   InsertedPHI->reserveOperandSpace(IncomingPredInfo.size()-FirstPredInfoEntry);
-  
+
   // Fill in all the predecessors of the PHI.
   for (IncomingPredInfoTy::iterator I =
          IncomingPredInfo.begin()+FirstPredInfoEntry,
        E = IncomingPredInfo.end(); I != E; ++I)
     InsertedPHI->addIncoming(I->second, I->first);
-  
+
   // Drop the entries we added in IncomingPredInfo to restore the stack.
   IncomingPredInfo.erase(IncomingPredInfo.begin()+FirstPredInfoEntry,
                          IncomingPredInfo.end());
-  
+
   // See if the PHI node can be merged to a single value.  This can happen in
   // loop cases when we get a PHI of itself and one other value.
   if (Value *ConstVal = InsertedPHI->hasConstantValue()) {
@@ -324,12 +324,10 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
     InsertedVal = ConstVal;
   } else {
     DEBUG(errs() << "  Inserted PHI: " << *InsertedPHI << "\n");
-    
+
     // If the client wants to know about all new instructions, tell it.
     if (InsertedPHIs) InsertedPHIs->push_back(InsertedPHI);
   }
-  
+
   return InsertedVal;
 }
-
-
