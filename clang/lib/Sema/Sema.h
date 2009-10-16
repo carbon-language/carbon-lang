@@ -3661,7 +3661,8 @@ public:
   // Since vectors are an extension, there are no C standard reference for this.
   // We allow casting between vectors and integer datatypes of the same size.
   // returns true if the cast is invalid
-  bool CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty);
+  bool CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty,
+                       CastExpr::CastKind &Kind);
 
   // CheckExtVectorCast - check type constraints for extended vectors.
   // Since vectors are an extension, there are no C standard reference for this.

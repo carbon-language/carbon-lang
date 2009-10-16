@@ -3170,7 +3170,10 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
       Diag(TyR.getBegin(), diag::ext_typecheck_cast_nonscalar)
         << castType << castExpr->getSourceRange();
       Kind = CastExpr::CK_NoOp;
-    } else if (castType->isUnionType()) {
+      return false;
+    }
+    
+    if (castType->isUnionType()) {
       // GCC cast to union extension
       RecordDecl *RD = castType->getAs<RecordType>()->getDecl();
       RecordDecl::field_iterator Field, FieldEnd;
@@ -3187,28 +3190,35 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
         return Diag(TyR.getBegin(), diag::err_typecheck_cast_to_union_no_type)
           << castExpr->getType() << castExpr->getSourceRange();
       Kind = CastExpr::CK_ToUnion;
-    } else {
-      // Reject any other conversions to non-scalar types.
-      return Diag(TyR.getBegin(), diag::err_typecheck_cond_expect_scalar)
-        << castType << castExpr->getSourceRange();
+      return false;
     }
-  } else if (!castExpr->getType()->isScalarType() &&
-             !castExpr->getType()->isVectorType()) {
+    
+    // Reject any other conversions to non-scalar types.
+    return Diag(TyR.getBegin(), diag::err_typecheck_cond_expect_scalar)
+      << castType << castExpr->getSourceRange();
+  }
+  
+  if (!castExpr->getType()->isScalarType() && 
+      !castExpr->getType()->isVectorType()) {
     return Diag(castExpr->getLocStart(),
                 diag::err_typecheck_expect_scalar_operand)
       << castExpr->getType() << castExpr->getSourceRange();
-  } else if (castType->isExtVectorType()) {
-    if (CheckExtVectorCast(TyR, castType, castExpr->getType()))
-      return true;
-  } else if (castType->isVectorType()) {
-    if (CheckVectorCast(TyR, castType, castExpr->getType()))
-      return true;
-  } else if (castExpr->getType()->isVectorType()) {
-    if (CheckVectorCast(TyR, castExpr->getType(), castType))
-      return true;
-  } else if (getLangOptions().ObjC1 && isa<ObjCSuperExpr>(castExpr)) {
+  }
+  
+  if (castType->isExtVectorType()) {
+    // FIXME: Set the cast kind.
+    return CheckExtVectorCast(TyR, castType, castExpr->getType());
+  }
+
+  if (castType->isVectorType())
+    return CheckVectorCast(TyR, castType, castExpr->getType(), Kind);
+  if (castExpr->getType()->isVectorType())
+    return CheckVectorCast(TyR, castExpr->getType(), castType, Kind);
+
+  if (getLangOptions().ObjC1 && isa<ObjCSuperExpr>(castExpr))
     return Diag(castExpr->getLocStart(), diag::err_illegal_super_cast) << TyR;
-  } else if (!castType->isArithmeticType()) {
+  
+  if (!castType->isArithmeticType()) {
     QualType castExprType = castExpr->getType();
     if (!castExprType->isIntegralType() && castExprType->isArithmeticType())
       return Diag(castExpr->getLocStart(),
@@ -3225,7 +3235,8 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
   return false;
 }
 
-bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty) {
+bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty,
+                           CastExpr::CastKind &Kind) {
   assert(VectorTy->isVectorType() && "Not a vector type!");
 
   if (Ty->isVectorType() || Ty->isIntegerType()) {
@@ -3240,6 +3251,7 @@ bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty) {
                 diag::err_invalid_conversion_between_vector_and_scalar)
       << VectorTy << Ty << R;
 
+  Kind = CastExpr::CK_BitCast;
   return false;
 }
 
