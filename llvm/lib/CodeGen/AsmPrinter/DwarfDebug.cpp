@@ -1811,10 +1811,18 @@ void DwarfDebug::CollectVariableInfo() {
     DIVariable DV (Var);
     if (DV.isNull()) continue;
     unsigned VSlot = VI->second;
+    DbgScope *Scope = NULL;
     DenseMap<MDNode *, DbgScope *>::iterator DSI = 
       DbgScopeMap.find(DV.getContext().getNode());
-    assert (DSI != DbgScopeMap.end() && "Unable to find variable scope!");
-    DbgScope *Scope = DSI->second;
+    if (DSI != DbgScopeMap.end()) 
+      Scope = DSI->second;
+    else 
+      // There is not any instruction assocated with this scope, so get
+      // a new scope.
+      Scope = getDbgScope(DV.getContext().getNode(), 
+                          NULL /* Not an instruction */,
+                          NULL /* Not inlined */);
+    assert (Scope && "Unable to find variable scope!");
     Scope->AddVariable(new DbgVariable(DV, VSlot, false));
   }
 }
