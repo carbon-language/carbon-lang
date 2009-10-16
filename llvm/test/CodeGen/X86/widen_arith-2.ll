@@ -1,9 +1,8 @@
-; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx -o %t
-; RUN: grep paddb  %t | count 1
-; RUN: grep pand %t | count 1
+; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx  | FileCheck %s
+; CHECK: paddb
+; CHECK: pand
 
 ; widen v8i8 to v16i8 (checks even power of 2 widening with add & and)
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 
 define void @update(i64* %dst_i, i64* %src_i, i32 %n) nounwind {
 entry:

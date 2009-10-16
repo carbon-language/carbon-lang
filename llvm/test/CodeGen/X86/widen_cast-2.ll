@@ -1,6 +1,11 @@
-; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx -o %t
-; RUN: grep pextrd  %t | count 5
-; RUN: grep movd  %t | count 3
+; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx | FileCheck %s
+; CHECK: pextrd
+; CHECK: pextrd
+; CHECK: movd
+; CHECK: pextrd
+; CHECK: pextrd
+; CHECK: pextrd
+; CHECK: movd
 
 ; bitcast v14i16 to v7i32
 

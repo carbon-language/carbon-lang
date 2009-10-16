@@ -1,14 +1,12 @@
-; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx -o %t
-; RUN: grep paddb  %t | count 1
-; RUN: grep pextrb %t | count 1
-; RUN: not grep pextrw %t
+; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx |  FileCheck %s
 
 ; Widen a v3i8 to v16i8 to use a vector add
 
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
-
 define void @update(<3 x i8>* %dst, <3 x i8>* %src, i32 %n) nounwind {
 entry:
+; CHECK-NOT: pextrw
+; CHECK: paddb
+; CHECK: pextrb
 	%dst.addr = alloca <3 x i8>*		; <<3 x i8>**> [#uses=2]
 	%src.addr = alloca <3 x i8>*		; <<3 x i8>**> [#uses=2]
 	%n.addr = alloca i32		; <i32*> [#uses=2]

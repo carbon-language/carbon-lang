@@ -1,7 +1,7 @@
-; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx -o %t
-; RUN: grep paddw  %t | count 1
-; RUN: grep movd  %t | count 1
-; RUN: grep pextrd  %t | count 1
+; RUN: llc -march=x86 -mattr=+sse42 < %s -disable-mmx | FileCheck %s
+; CHECK: paddw
+; CHECK: pextrd
+; CHECK: movd
 
 ; bitcast a v4i16 to v2i32
 

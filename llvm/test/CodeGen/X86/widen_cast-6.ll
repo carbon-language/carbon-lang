@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -mattr=+sse41 -disable-mmx -o %t
-; RUN: grep movd  %t | count 1
+; RUN: llc < %s -march=x86 -mattr=+sse41 -disable-mmx | FileCheck %s
+; CHECK: movd
 
 ; Test bit convert that requires widening in the operand.
 

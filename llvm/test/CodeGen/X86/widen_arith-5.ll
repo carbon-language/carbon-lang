@@ -1,10 +1,9 @@
-; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx -o %t
-; RUN: grep pmulld  %t | count 1
-; RUN: grep psubd  %t | count 1
-; RUN: grep movaps %t | count 1
+; RUN: llc < %s -march=x86-64 -mattr=+sse42 -disable-mmx  | FileCheck %s
+; CHECK: movaps
+; CHECK: pmulld
+; CHECK: psubd
 
 ; widen a v3i32 to v4i32 to do a vector multiple and a subtraction
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 
 define void @update(<3 x i32>* %dst, <3 x i32>* %src, i32 %n) nounwind {
 entry:

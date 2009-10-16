@@ -1,5 +1,12 @@
-; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx -o %t
-; RUN: grep sarb  %t | count 8
+; RUN: llc < %s -march=x86 -mattr=+sse42 -disable-mmx | FileCheck %s
+; CHECK: sarb
+; CHECK: sarb
+; CHECK: sarb
+; CHECK: sarb
+; CHECK: sarb
+; CHECK: sarb
+; CHECK: sarb
+; CHECK: sarb
 
 ; v8i8 that is widen to v16i8 then split
 ; FIXME: This is widen to v16i8 and split to 16 and we then rebuild the vector.
