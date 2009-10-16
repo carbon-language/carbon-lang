@@ -3669,7 +3669,8 @@ public:
   // We allow casting between vectors and integer datatypes of the same size,
   // or vectors and the element type of that vector.
   // returns true if the cast is invalid
-  bool CheckExtVectorCast(SourceRange R, QualType VectorTy, QualType Ty);
+  bool CheckExtVectorCast(SourceRange R, QualType VectorTy, Expr *&CastExpr,
+                          CastExpr::CastKind &Kind);
 
   /// CXXCheckCStyleCast - Check constraints of a C-style or function-style
   /// cast under C++ semantics.

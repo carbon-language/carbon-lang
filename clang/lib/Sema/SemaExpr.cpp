@@ -3205,11 +3205,9 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
       << castExpr->getType() << castExpr->getSourceRange();
   }
   
-  if (castType->isExtVectorType()) {
-    // FIXME: Set the cast kind.
-    return CheckExtVectorCast(TyR, castType, castExpr->getType());
-  }
-
+  if (castType->isExtVectorType()) 
+    return CheckExtVectorCast(TyR, castType, castExpr, Kind);
+  
   if (castType->isVectorType())
     return CheckVectorCast(TyR, castType, castExpr->getType(), Kind);
   if (castExpr->getType()->isVectorType())
@@ -3217,6 +3215,9 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
 
   if (getLangOptions().ObjC1 && isa<ObjCSuperExpr>(castExpr))
     return Diag(castExpr->getLocStart(), diag::err_illegal_super_cast) << TyR;
+  
+  if (isa<ObjCSelectorExpr>(castExpr))
+    return Diag(castExpr->getLocStart(), diag::err_cast_selector_expr);
   
   if (!castType->isArithmeticType()) {
     QualType castExprType = castExpr->getType();
@@ -3230,8 +3231,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
                   diag::err_cast_pointer_to_non_pointer_int)
         << castType << castExpr->getSourceRange();
   }
-  if (isa<ObjCSelectorExpr>(castExpr))
-    return Diag(castExpr->getLocStart(), diag::err_cast_selector_expr);
+  
   return false;
 }
 
@@ -3255,15 +3255,19 @@ bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty,
   return false;
 }
 
-bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, QualType SrcTy) {
+bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, Expr *&CastExpr, 
+                              CastExpr::CastKind &Kind) {
   assert(DestTy->isExtVectorType() && "Not an extended vector type!");
-
+  
+  QualType SrcTy = CastExpr->getType();
+  
   // If SrcTy is a VectorType, the total size must match to explicitly cast to
   // an ExtVectorType.
   if (SrcTy->isVectorType()) {
     if (Context.getTypeSize(DestTy) != Context.getTypeSize(SrcTy))
       return Diag(R.getBegin(),diag::err_invalid_conversion_between_ext_vectors)
         << DestTy << SrcTy << R;
+    Kind = CastExpr::CK_BitCast;
     return false;
   }
 
@@ -3274,6 +3278,11 @@ bool Sema::CheckExtVectorCast(SourceRange R, QualType DestTy, QualType SrcTy) {
     return Diag(R.getBegin(),
                 diag::err_invalid_conversion_between_vector_and_scalar)
       << DestTy << SrcTy << R;
+  
+  // FIXME: Pass a cast kind to the implicit cast expr.
+  ImpCastExprToType(CastExpr, DestTy->getAs<ExtVectorType>()->getElementType());
+  
+  Kind = CastExpr::CK_VectorSplat;
   return false;
 }
 

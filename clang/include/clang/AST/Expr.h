@@ -1402,7 +1402,12 @@ public:
     CK_PointerToIntegral,
     
     /// CK_ToVoid - Cast to void.
-    CK_ToVoid
+    CK_ToVoid,
+    
+    /// CK_VectorSplat - Casting from an integer/floating type to an extended
+    /// vector type with the same element type as the src type. Splats the 
+    /// src expression into the destionation expression.
+    CK_VectorSplat
   };
 
 private:
