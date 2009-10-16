@@ -78,10 +78,12 @@ DebugMod("postra-sched-debugmod",
 namespace {
   class VISIBILITY_HIDDEN PostRAScheduler : public MachineFunctionPass {
     AliasAnalysis *AA;
+    CodeGenOpt::Level OptLevel;
 
   public:
     static char ID;
-    PostRAScheduler() : MachineFunctionPass(&ID) {}
+    PostRAScheduler(CodeGenOpt::Level ol) :
+      MachineFunctionPass(&ID), OptLevel(ol) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -238,7 +240,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   } else {
     // Check that post-RA scheduling is enabled for this target.
     const TargetSubtarget &ST = Fn.getTarget().getSubtarget<TargetSubtarget>();
-    if (!ST.enablePostRAScheduler())
+    if (!ST.enablePostRAScheduler(OptLevel))
       return false;
   }
 
@@ -1195,6 +1197,6 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
 
-FunctionPass *llvm::createPostRAScheduler() {
-  return new PostRAScheduler();
+FunctionPass *llvm::createPostRAScheduler(CodeGenOpt::Level OptLevel) {
+  return new PostRAScheduler(OptLevel);
 }

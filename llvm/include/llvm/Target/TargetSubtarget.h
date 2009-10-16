@@ -14,6 +14,8 @@
 #ifndef LLVM_TARGET_TARGETSUBTARGET_H
 #define LLVM_TARGET_TARGETSUBTARGET_H
 
+#include "llvm/Target/TargetMachine.h"
+
 namespace llvm {
 
 class SDep;
@@ -39,9 +41,12 @@ public:
   /// should be attempted.
   virtual unsigned getSpecialAddressLatency() const { return 0; }
 
-  // enablePostRAScheduler - Return true to enable
-  // post-register-allocation scheduling.
-  virtual bool enablePostRAScheduler() const { return false; }
+  // enablePostRAScheduler - If the target can benefit from post-regalloc
+  // scheduling and the specified optimization level meets the requirement
+  // return true to enable post-register-allocation scheduling.
+  virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel) const {
+    return false;
+  }
 
   // adjustSchedDependency - Perform target specific adjustments to
   // the latency of a schedule dependency.

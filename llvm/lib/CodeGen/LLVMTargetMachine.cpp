@@ -323,7 +323,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Second pass scheduler.
   if (OptLevel != CodeGenOpt::None) {
-    PM.add(createPostRAScheduler());
+    PM.add(createPostRAScheduler(OptLevel));
     printAndVerify(PM);
   }
 

@@ -15,13 +15,13 @@
 #ifndef LLVM_CODEGEN_PASSES_H
 #define LLVM_CODEGEN_PASSES_H
 
+#include "llvm/Target/TargetMachine.h"
 #include <string>
 
 namespace llvm {
 
   class FunctionPass;
   class PassInfo;
-  class TargetMachine;
   class TargetLowering;
   class RegisterCoalescer;
   class raw_ostream;
@@ -119,8 +119,9 @@ namespace llvm {
   ///
   FunctionPass *createLowerSubregsPass();
 
-  /// createPostRAScheduler - under development.
-  FunctionPass *createPostRAScheduler();
+  /// createPostRAScheduler - This pass performs post register allocation
+  /// scheduling.
+  FunctionPass *createPostRAScheduler(CodeGenOpt::Level OptLevel);
 
   /// BranchFolding Pass - This pass performs machine code CFG based
   /// optimizations to delete branches to branches, eliminate branches to

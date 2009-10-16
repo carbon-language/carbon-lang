@@ -215,6 +215,13 @@ public:
   /// indicating the number of scheduling cycles of backscheduling that
   /// should be attempted.
   unsigned getSpecialAddressLatency() const;
+
+  /// enablePostRAScheduler - X86 target is enabling post-alloc scheduling
+  /// at 'More' optimization level.
+  bool enablePostRAScheduler(CodeGenOpt::Level OptLevel) const {
+    // FIXME: This causes llvm to miscompile itself on i386. :-(
+    return false/*OptLevel >= CodeGenOpt::Default*/;
+  }
 };
 
 } // End llvm namespace
