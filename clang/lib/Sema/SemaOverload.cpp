@@ -4148,13 +4148,20 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
       } else if (OnlyViable) {
         assert(Cand->Conversions.size() <= 2 && 
                "builtin-binary-operator-not-binary");
-        if (Cand->Conversions.size() == 1)
-          Diag(OpLoc, diag::err_ovl_builtin_unary_candidate)
-                << Opc << Cand->BuiltinTypes.ParamTypes[0];
-        else
-          Diag(OpLoc, diag::err_ovl_builtin_binary_candidate)
-                << Opc << Cand->BuiltinTypes.ParamTypes[0]
-                << Cand->BuiltinTypes.ParamTypes[1];
+        std::string TypeStr("operator");
+        TypeStr += Opc;
+        TypeStr += "(";
+        TypeStr += Cand->BuiltinTypes.ParamTypes[0].getAsString();
+        if (Cand->Conversions.size() == 1) {
+          TypeStr += ")";
+          Diag(OpLoc, diag::err_ovl_builtin_unary_candidate) << TypeStr;
+        }
+        else {
+          TypeStr += ", ";
+          TypeStr += Cand->BuiltinTypes.ParamTypes[1].getAsString();
+          TypeStr += ")";
+          Diag(OpLoc, diag::err_ovl_builtin_binary_candidate) << TypeStr;
+        }
       }
       else if (!Cand->Viable && !Reported) {
         // Non-viability might be due to ambiguous user-defined conversions,
