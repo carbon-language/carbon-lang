@@ -349,7 +349,15 @@ SVal SimpleSValuator::EvalBinOpNN(const GRState *state,
       // Does the symbol simplify to a constant?
       if (Sym->getType(ValMgr.getContext())->isIntegerType())
         if (const llvm::APSInt *Constant = state->getSymVal(Sym)) {
-          // What should we convert it to?
+          // For shifts, there is no need to perform any conversions
+          // of the constant.
+          if (BinaryOperator::isShiftOp(op)) {
+            lhs = nonloc::ConcreteInt(*Constant);
+            continue;
+          }
+          
+          // Other cases: do an implicit conversion.  This shouldn't be
+          // necessary once we support truncation/extension of symbolic values.
           if (nonloc::ConcreteInt *rhs_I = dyn_cast<nonloc::ConcreteInt>(&rhs)){
             BasicValueFactory &BVF = ValMgr.getBasicValueFactory();
             lhs = nonloc::ConcreteInt(BVF.Convert(rhs_I->getValue(),

@@ -691,4 +691,16 @@ void test_constant_symbol(signed char x) {
   }
 }
 
+// Test constant-folding of symbolic values, where a folded symbolic value is used in a
+// bitshift operation.  This previously caused a crash because it triggered an assertion
+// in APSInt.
+void test_symbol_fold_with_shift(unsigned int * p, unsigned int n,
+                                const unsigned int * grumpkin, unsigned int dn) {
+  unsigned int i;
+  unsigned int tempsub[8];
+  unsigned int *solgrumpkin = tempsub + n;
+  for (i = 0; i < n; i++)
+    solgrumpkin[i] = (i < dn) ? ~grumpkin[i] : 0xFFFFFFFF;
+  for (i <<= 5; i < (n << 5); i++) {}
+}
 
