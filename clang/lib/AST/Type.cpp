@@ -37,18 +37,6 @@ void Type::Destroy(ASTContext& C) {
   C.Deallocate(this);
 }
 
-void ConstantArrayWithExprType::Destroy(ASTContext& C) {
-  // FIXME: destruction of SizeExpr commented out due to resource contention.
-  // SizeExpr->Destroy(C);
-  // See FIXME in SemaDecl.cpp:1536: if we were able to either steal
-  // or clone the SizeExpr there, then here we could freely delete it.
-  // Since we do not know how to steal or clone, we keep a pointer to
-  // a shared resource, but we cannot free it.
-  // (There probably is a trivial solution ... for people knowing clang!).
-  this->~ConstantArrayWithExprType();
-  C.Deallocate(this);
-}
-
 void VariableArrayType::Destroy(ASTContext& C) {
   if (SizeExpr)
     SizeExpr->Destroy(C);
@@ -177,8 +165,6 @@ bool Type::isDerivedType() const {
   case Pointer:
   case VariableArray:
   case ConstantArray:
-  case ConstantArrayWithExpr:
-  case ConstantArrayWithoutExpr:
   case IncompleteArray:
   case FunctionProto:
   case FunctionNoProto:
@@ -1109,29 +1095,6 @@ void ConstantArrayType::getAsStringInternal(std::string &S, const PrintingPolicy
   S += ']';
 
   getElementType().getAsStringInternal(S, Policy);
-}
-
-void ConstantArrayWithExprType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
-  if (Policy.ConstantArraySizeAsWritten) {
-    std::string SStr;
-    llvm::raw_string_ostream s(SStr);
-    getSizeExpr()->printPretty(s, 0, Policy);
-    S += '[';
-    S += s.str();
-    S += ']';
-    getElementType().getAsStringInternal(S, Policy);
-  }
-  else
-    ConstantArrayType::getAsStringInternal(S, Policy);
-}
-
-void ConstantArrayWithoutExprType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
-  if (Policy.ConstantArraySizeAsWritten) {
-    S += "[]";
-    getElementType().getAsStringInternal(S, Policy);
-  }
-  else
-    ConstantArrayType::getAsStringInternal(S, Policy);
 }
 
 void IncompleteArrayType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {

@@ -846,8 +846,6 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
                            Unit);
 
   case Type::ConstantArray:
-  case Type::ConstantArrayWithExpr:
-  case Type::ConstantArrayWithoutExpr:
   case Type::VariableArray:
   case Type::IncompleteArray:
     return CreateType(cast<ArrayType>(Ty), Unit);

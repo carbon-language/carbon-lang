@@ -406,12 +406,8 @@ namespace clang {
       TYPE_OBJC_PROTOCOL_LIST       = 23,
       /// \brief a DecltypeType record.
       TYPE_DECLTYPE                 = 24,
-      /// \brief A ConstantArrayWithExprType record.
-      TYPE_CONSTANT_ARRAY_WITH_EXPR = 25,
-      /// \brief A ConstantArrayWithoutExprType record.
-      TYPE_CONSTANT_ARRAY_WITHOUT_EXPR = 26,
       /// \brief An ElaboratedType record.
-      TYPE_ELABORATED               = 27
+      TYPE_ELABORATED               = 25
     };
 
     /// \brief The type IDs for special types constructed by semantic

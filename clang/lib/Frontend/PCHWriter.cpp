@@ -117,23 +117,6 @@ void PCHTypeWriter::VisitConstantArrayType(const ConstantArrayType *T) {
   Code = pch::TYPE_CONSTANT_ARRAY;
 }
 
-void PCHTypeWriter
-::VisitConstantArrayWithExprType(const ConstantArrayWithExprType *T) {
-  VisitArrayType(T);
-  Writer.AddSourceLocation(T->getLBracketLoc(), Record);
-  Writer.AddSourceLocation(T->getRBracketLoc(), Record);
-  Writer.AddAPInt(T->getSize(), Record);
-  Writer.AddStmt(T->getSizeExpr());
-  Code = pch::TYPE_CONSTANT_ARRAY_WITH_EXPR;
-}
-
-void PCHTypeWriter
-::VisitConstantArrayWithoutExprType(const ConstantArrayWithoutExprType *T) {
-  VisitArrayType(T);
-  Writer.AddAPInt(T->getSize(), Record);
-  Code = pch::TYPE_CONSTANT_ARRAY_WITHOUT_EXPR;
-}
-
 void PCHTypeWriter::VisitIncompleteArrayType(const IncompleteArrayType *T) {
   VisitArrayType(T);
   Code = pch::TYPE_INCOMPLETE_ARRAY;

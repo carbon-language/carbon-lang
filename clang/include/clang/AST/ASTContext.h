@@ -431,22 +431,6 @@ public:
                                 ArrayType::ArraySizeModifier ASM,
                                 unsigned EltTypeQuals);
 
-  /// getConstantArrayWithExprType - Return a reference to the type for a
-  /// constant array of the specified element type.
-  QualType getConstantArrayWithExprType(QualType EltTy,
-                                        const llvm::APInt &ArySize,
-                                        Expr *ArySizeExpr,
-                                        ArrayType::ArraySizeModifier ASM,
-                                        unsigned EltTypeQuals,
-                                        SourceRange Brackets);
-
-  /// getConstantArrayWithoutExprType - Return a reference to the type
-  /// for a constant array of the specified element type.
-  QualType getConstantArrayWithoutExprType(QualType EltTy,
-                                           const llvm::APInt &ArySize,
-                                           ArrayType::ArraySizeModifier ASM,
-                                           unsigned EltTypeQuals);
-
   /// getVectorType - Return the unique reference to a vector type of
   /// the specified element type and size. VectorType must be a built-in type.
   QualType getVectorType(QualType VectorType, unsigned NumElts);

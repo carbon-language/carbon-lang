@@ -571,8 +571,6 @@ ASTContext::getTypeInfo(const Type *T) {
     Align = getTypeAlign(cast<ArrayType>(T)->getElementType());
     break;
 
-  case Type::ConstantArrayWithExpr:
-  case Type::ConstantArrayWithoutExpr:
   case Type::ConstantArray: {
     const ConstantArrayType *CAT = cast<ConstantArrayType>(T);
 
@@ -1354,53 +1352,6 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   ConstantArrayType *New = new(*this,TypeAlignment)
     ConstantArrayType(EltTy, Canonical, ArySize, ASM, EltTypeQuals);
   ConstantArrayTypes.InsertNode(New, InsertPos);
-  Types.push_back(New);
-  return QualType(New, 0);
-}
-
-/// getConstantArrayWithExprType - Return a reference to the type for
-/// an array of the specified element type.
-QualType
-ASTContext::getConstantArrayWithExprType(QualType EltTy,
-                                         const llvm::APInt &ArySizeIn,
-                                         Expr *ArySizeExpr,
-                                         ArrayType::ArraySizeModifier ASM,
-                                         unsigned EltTypeQuals,
-                                         SourceRange Brackets) {
-  // Convert the array size into a canonical width matching the pointer
-  // size for the target.
-  llvm::APInt ArySize(ArySizeIn);
-  ArySize.zextOrTrunc(Target.getPointerWidth(EltTy.getAddressSpace()));
-
-  // Compute the canonical ConstantArrayType.
-  QualType Canonical = getConstantArrayType(getCanonicalType(EltTy),
-                                            ArySize, ASM, EltTypeQuals);
-  // Since we don't unique expressions, it isn't possible to unique VLA's
-  // that have an expression provided for their size.
-  ConstantArrayWithExprType *New = new(*this, TypeAlignment)
-    ConstantArrayWithExprType(EltTy, Canonical, ArySize, ArySizeExpr,
-                              ASM, EltTypeQuals, Brackets);
-  Types.push_back(New);
-  return QualType(New, 0);
-}
-
-/// getConstantArrayWithoutExprType - Return a reference to the type for
-/// an array of the specified element type.
-QualType
-ASTContext::getConstantArrayWithoutExprType(QualType EltTy,
-                                            const llvm::APInt &ArySizeIn,
-                                            ArrayType::ArraySizeModifier ASM,
-                                            unsigned EltTypeQuals) {
-  // Convert the array size into a canonical width matching the pointer
-  // size for the target.
-  llvm::APInt ArySize(ArySizeIn);
-  ArySize.zextOrTrunc(Target.getPointerWidth(EltTy.getAddressSpace()));
-
-  // Compute the canonical ConstantArrayType.
-  QualType Canonical = getConstantArrayType(getCanonicalType(EltTy),
-                                            ArySize, ASM, EltTypeQuals);
-  ConstantArrayWithoutExprType *New = new(*this, TypeAlignment)
-    ConstantArrayWithoutExprType(EltTy, Canonical, ArySize, ASM, EltTypeQuals);
   Types.push_back(New);
   return QualType(New, 0);
 }

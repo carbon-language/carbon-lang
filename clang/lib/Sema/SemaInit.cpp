@@ -109,9 +109,9 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, Sema &S) {
     llvm::APSInt ConstVal(32);
     ConstVal = StrLength;
     // Return a new array type (C99 6.7.8p22).
-    DeclT = S.Context.getConstantArrayWithoutExprType(IAT->getElementType(),
-                                                      ConstVal,
-                                                      ArrayType::Normal, 0);
+    DeclT = S.Context.getConstantArrayType(IAT->getElementType(),
+                                           ConstVal,
+                                           ArrayType::Normal, 0);
     return;
   }
 

@@ -340,29 +340,6 @@ public:
                                     const llvm::APInt &Size,
                                     unsigned IndexTypeQuals);
 
-  /// \brief Build a new constant array type given the element type, size
-  /// modifier, (known) size of the array, size expression, and index type
-  /// qualifiers.
-  ///
-  /// By default, performs semantic analysis when building the array type.
-  /// Subclasses may override this routine to provide different behavior.
-  QualType RebuildConstantArrayWithExprType(QualType ElementType,
-                                            ArrayType::ArraySizeModifier SizeMod,
-                                            const llvm::APInt &Size,
-                                            Expr *SizeExpr,
-                                            unsigned IndexTypeQuals,
-                                            SourceRange BracketsRange);
-
-  /// \brief Build a new constant array type given the element type, size
-  /// modifier, (known) size of the array, and index type qualifiers.
-  ///
-  /// By default, performs semantic analysis when building the array type.
-  /// Subclasses may override this routine to provide different behavior.
-  QualType RebuildConstantArrayWithoutExprType(QualType ElementType,
-                                               ArrayType::ArraySizeModifier SizeMod,
-                                               const llvm::APInt &Size,
-                                               unsigned IndexTypeQuals);
-
   /// \brief Build a new incomplete array type given the element type, size
   /// modifier, and index type qualifiers.
   ///
@@ -2074,52 +2051,6 @@ TreeTransform<Derived>::TransformConstantArrayType(const ConstantArrayType *T) {
                                                T->getSizeModifier(),
                                                T->getSize(),
                                                T->getIndexTypeCVRQualifiers());
-}
-
-template<typename Derived>
-QualType
-TreeTransform<Derived>::TransformConstantArrayWithExprType(
-                                      const ConstantArrayWithExprType *T) {
-  QualType ElementType = getDerived().TransformType(T->getElementType());
-  if (ElementType.isNull())
-    return QualType();
-
-  // Array bounds are not potentially evaluated contexts
-  EnterExpressionEvaluationContext Unevaluated(SemaRef, Action::Unevaluated);
-
-  Sema::OwningExprResult Size = getDerived().TransformExpr(T->getSizeExpr());
-  if (Size.isInvalid())
-    return QualType();
-
-  if (!getDerived().AlwaysRebuild() &&
-      ElementType == T->getElementType() &&
-      Size.get() == T->getSizeExpr())
-    return QualType(T, 0);
-
-  return getDerived().RebuildConstantArrayWithExprType(ElementType,
-                                                       T->getSizeModifier(),
-                                                       T->getSize(),
-                                                       Size.takeAs<Expr>(),
-                                               T->getIndexTypeCVRQualifiers(),
-                                                       T->getBracketsRange());
-}
-
-template<typename Derived>
-QualType
-TreeTransform<Derived>::TransformConstantArrayWithoutExprType(
-                                      const ConstantArrayWithoutExprType *T) {
-  QualType ElementType = getDerived().TransformType(T->getElementType());
-  if (ElementType.isNull())
-    return QualType();
-
-  if (!getDerived().AlwaysRebuild() &&
-      ElementType == T->getElementType())
-    return QualType(T, 0);
-
-  return getDerived().RebuildConstantArrayWithoutExprType(ElementType,
-                                                       T->getSizeModifier(),
-                                                       T->getSize(),
-                                             T->getIndexTypeCVRQualifiers());
 }
 
 template<typename Derived>
@@ -4545,29 +4476,6 @@ TreeTransform<Derived>::RebuildConstantArrayType(QualType ElementType,
                                                  unsigned IndexTypeQuals) {
   return getDerived().RebuildArrayType(ElementType, SizeMod, &Size, 0,
                                         IndexTypeQuals, SourceRange());
-}
-
-template<typename Derived>
-QualType
-TreeTransform<Derived>::RebuildConstantArrayWithExprType(QualType ElementType,
-                                          ArrayType::ArraySizeModifier SizeMod,
-                                                      const llvm::APInt &Size,
-                                                         Expr *SizeExpr,
-                                                      unsigned IndexTypeQuals,
-                                                    SourceRange BracketsRange) {
-  return getDerived().RebuildArrayType(ElementType, SizeMod, &Size, SizeExpr,
-                                       IndexTypeQuals, BracketsRange);
-}
-
-template<typename Derived>
-QualType
-TreeTransform<Derived>::RebuildConstantArrayWithoutExprType(
-                                                        QualType ElementType,
-                                          ArrayType::ArraySizeModifier SizeMod,
-                                                       const llvm::APInt &Size,
-                                                     unsigned IndexTypeQuals) {
-  return getDerived().RebuildArrayType(ElementType, SizeMod, &Size, 0,
-                                       IndexTypeQuals, SourceRange());
 }
 
 template<typename Derived>

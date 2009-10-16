@@ -610,8 +610,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
           << ArraySize->getSourceRange();
       }
     }
-    T = Context.getConstantArrayWithExprType(T, ConstVal, ArraySize,
-                                             ASM, Quals, Brackets);
+    T = Context.getConstantArrayType(T, ConstVal, ASM, Quals);
   }
   // If this is not C99, extwarn about VLA's and C99 array size modifiers.
   if (!getLangOptions().C99) {

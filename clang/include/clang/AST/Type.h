@@ -1239,8 +1239,6 @@ public:
 
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray ||
-           T->getTypeClass() == ConstantArrayWithExpr ||
-           T->getTypeClass() == ConstantArrayWithoutExpr ||
            T->getTypeClass() == VariableArray ||
            T->getTypeClass() == IncompleteArray ||
            T->getTypeClass() == DependentSizedArray;
@@ -1285,84 +1283,9 @@ public:
     ID.AddInteger(TypeQuals);
   }
   static bool classof(const Type *T) {
-    return T->getTypeClass() == ConstantArray ||
-           T->getTypeClass() == ConstantArrayWithExpr ||
-           T->getTypeClass() == ConstantArrayWithoutExpr;
+    return T->getTypeClass() == ConstantArray;
   }
   static bool classof(const ConstantArrayType *) { return true; }
-};
-
-/// ConstantArrayWithExprType - This class represents C arrays with a
-/// constant size specified by means of an integer constant expression.
-/// For example 'int A[sizeof(int)]' has ConstantArrayWithExprType where
-/// the element type is 'int' and the size expression is 'sizeof(int)'.
-/// These types are non-canonical.
-class ConstantArrayWithExprType : public ConstantArrayType {
-  /// SizeExpr - The ICE occurring in the concrete syntax.
-  Expr *SizeExpr;
-  /// Brackets - The left and right array brackets.
-  SourceRange Brackets;
-
-  ConstantArrayWithExprType(QualType et, QualType can,
-                            const llvm::APInt &size, Expr *e,
-                            ArraySizeModifier sm, unsigned tq,
-                            SourceRange brackets)
-    : ConstantArrayType(ConstantArrayWithExpr, et, can, size, sm, tq),
-      SizeExpr(e), Brackets(brackets) {}
-  friend class ASTContext;  // ASTContext creates these.
-  virtual void Destroy(ASTContext& C);
-
-public:
-  Expr *getSizeExpr() const { return SizeExpr; }
-  SourceRange getBracketsRange() const { return Brackets; }
-  SourceLocation getLBracketLoc() const { return Brackets.getBegin(); }
-  SourceLocation getRBracketLoc() const { return Brackets.getEnd(); }
-
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
-  bool isSugared() const { return false; }
-  QualType desugar() const { return QualType(this, 0); }
-
-  static bool classof(const Type *T) {
-    return T->getTypeClass() == ConstantArrayWithExpr;
-  }
-  static bool classof(const ConstantArrayWithExprType *) { return true; }
-
-  void Profile(llvm::FoldingSetNodeID &ID) {
-    assert(0 && "Cannot unique ConstantArrayWithExprTypes.");
-  }
-};
-
-/// ConstantArrayWithoutExprType - This class represents C arrays with a
-/// constant size that was not specified by an integer constant expression,
-/// but inferred by static semantics.
-/// For example 'int A[] = { 0, 1, 2 }' has ConstantArrayWithoutExprType.
-/// These types are non-canonical: the corresponding canonical type,
-/// having the size specified in an APInt object, is a ConstantArrayType.
-class ConstantArrayWithoutExprType : public ConstantArrayType {
-
-  ConstantArrayWithoutExprType(QualType et, QualType can,
-                               const llvm::APInt &size,
-                               ArraySizeModifier sm, unsigned tq)
-    : ConstantArrayType(ConstantArrayWithoutExpr, et, can, size, sm, tq) {}
-  friend class ASTContext;  // ASTContext creates these.
-
-public:
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-
-  bool isSugared() const { return false; }
-  QualType desugar() const { return QualType(this, 0); }
-
-  static bool classof(const Type *T) {
-    return T->getTypeClass() == ConstantArrayWithoutExpr;
-  }
-  static bool classof(const ConstantArrayWithoutExprType *) { return true; }
-
-  void Profile(llvm::FoldingSetNodeID &ID) {
-    assert(0 && "Cannot unique ConstantArrayWithoutExprTypes.");
-  }
 };
 
 /// IncompleteArrayType - This class represents C arrays with an unspecified

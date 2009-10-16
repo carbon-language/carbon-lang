@@ -1839,30 +1839,6 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
                                          ASM, IndexTypeQuals);
   }
 
-  case pch::TYPE_CONSTANT_ARRAY_WITH_EXPR: {
-    QualType ElementType = GetType(Record[0]);
-    ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
-    unsigned IndexTypeQuals = Record[2];
-    SourceLocation LBLoc = SourceLocation::getFromRawEncoding(Record[3]);
-    SourceLocation RBLoc = SourceLocation::getFromRawEncoding(Record[4]);
-    unsigned Idx = 5;
-    llvm::APInt Size = ReadAPInt(Record, Idx);
-    return Context->getConstantArrayWithExprType(ElementType,
-                                                 Size, ReadTypeExpr(),
-                                                 ASM, IndexTypeQuals,
-                                                 SourceRange(LBLoc, RBLoc));
-  }
-
-  case pch::TYPE_CONSTANT_ARRAY_WITHOUT_EXPR: {
-    QualType ElementType = GetType(Record[0]);
-    ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
-    unsigned IndexTypeQuals = Record[2];
-    unsigned Idx = 3;
-    llvm::APInt Size = ReadAPInt(Record, Idx);
-    return Context->getConstantArrayWithoutExprType(ElementType, Size,
-                                                    ASM, IndexTypeQuals);
-  }
-
   case pch::TYPE_INCOMPLETE_ARRAY: {
     QualType ElementType = GetType(Record[0]);
     ArrayType::ArraySizeModifier ASM = (ArrayType::ArraySizeModifier)Record[1];
