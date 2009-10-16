@@ -148,7 +148,7 @@ int main(int argc, char **argv, char * const *envp) {
     return 1;
   case ' ': break;
   case '0': OLvl = CodeGenOpt::None; break;
-  case '1':
+  case '1': OLvl = CodeGenOpt::Less; break;
   case '2': OLvl = CodeGenOpt::Default; break;
   case '3': OLvl = CodeGenOpt::Aggressive; break;
   }

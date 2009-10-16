@@ -74,9 +74,10 @@ namespace FileModel {
 // Code generation optimization level.
 namespace CodeGenOpt {
   enum Level {
-    Default,
-    None,
-    Aggressive
+    None,        // -O0
+    Less,        // -O1
+    Default,     // -O2, -Os
+    Aggressive   // -O3
   };
 }
 
