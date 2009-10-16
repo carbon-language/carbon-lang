@@ -73,9 +73,6 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   DbgInfo.BeginFunction(MF);
 
-  // Emit the autos section of function.
-  // EmitAutos(CurrentFnName);
-
   // Now emit the instructions of function in its code section.
   const MCSection *fCodeSection 
     = getObjFileLowering().SectionForCode(CurrentFnName);
@@ -329,15 +326,11 @@ void PIC16AsmPrinter::EmitDefinedVars(Module &M) {
 
 // Emit initialized data placed in ROM.
 void PIC16AsmPrinter::EmitRomData(Module &M) {
-  // Print ROM Data section.
-  const PIC16Section *ROSection = PTOF->ROMDATASection();
-  if (ROSection == NULL) return; 
-  EmitInitializedDataSection(ROSection);
+  EmitSingleSection(PTOF->ROMDATASection());
 }
 
 bool PIC16AsmPrinter::doFinalization(Module &M) {
   printLibcallDecls();
-  // EmitRemainingAutos();
   DbgInfo.EndModule(M);
   O << "\n\t" << "END\n";
   return AsmPrinter::doFinalization(M);
@@ -402,20 +395,13 @@ void PIC16AsmPrinter::EmitInitializedDataSection(const PIC16Section *S) {
    }
 }
 
+// Print all IDATA sections.
 void PIC16AsmPrinter::EmitIData(Module &M) {
-
-  // Print all IDATA sections.
-  const std::vector<PIC16Section *> &IDATASections = PTOF->IDATASections();
-  for (unsigned i = 0; i < IDATASections.size(); i++) {
-    O << "\n";
-    if (IDATASections[i]->getName().find("llvm.") != std::string::npos)
-      continue;
-    
-    EmitInitializedDataSection(IDATASections[i]);
-    }
+  EmitSectionList (M, PTOF->IDATASections());
 }
 
-void PIC16AsmPrinter::EmitUninitializedDataSection(const PIC16Section *S) {
+void PIC16AsmPrinter::
+EmitUninitializedDataSection(const PIC16Section *S) {
     const TargetData *TD = TM.getTargetData();
     OutStreamer.SwitchSection(S);
     std::vector<const GlobalVariable*> Items = S->Items;
@@ -428,41 +414,52 @@ void PIC16AsmPrinter::EmitUninitializedDataSection(const PIC16Section *S) {
     }
 }
 
+// Print all UDATA sections.
 void PIC16AsmPrinter::EmitUData(Module &M) {
-  // Print all UDATA sections.
-  const std::vector<PIC16Section*> &UDATASections = PTOF->UDATASections();
-  for (unsigned i = 0; i < UDATASections.size(); i++) {
-    O << "\n";
-    EmitUninitializedDataSection(UDATASections[i]);
-  }
+  EmitSectionList (M, PTOF->UDATASections());
 }
 
+// Print all USER sections.
 void PIC16AsmPrinter::EmitUserSections(Module &M) {
-  const std::vector<PIC16Section*> &USERSections = PTOF->USERSections();
-  for (unsigned i = 0; i < USERSections.size(); i++) {
-    O << "\n";
-    const PIC16Section *S = USERSections[i];
-    if (S->isUDATA_Type()) {
-      EmitUninitializedDataSection(S);
-    } else if (S->isIDATA_Type() || S->isROMDATA_Type()) {
-      EmitInitializedDataSection(S);
-    } else {
-      llvm_unreachable ("unknow user section type");
-    }
-  }
+  EmitSectionList (M, PTOF->USERSections());
 }
 
+// Print all AUTO sections.
 void PIC16AsmPrinter::EmitAllAutos(Module &M) {
-  // Print all AUTO sections.
-  const std::vector<PIC16Section*> &AUTOSections = PTOF->AUTOSections();
-  for (unsigned i = 0; i < AUTOSections.size(); i++) {
-    O << "\n";
-    EmitUninitializedDataSection(AUTOSections[i]);
-  }
+  EmitSectionList (M, PTOF->AUTOSections());
 }
 
 extern "C" void LLVMInitializePIC16AsmPrinter() { 
   RegisterAsmPrinter<PIC16AsmPrinter> X(ThePIC16Target);
 }
 
+// Emit one data section using correct section emitter based on section type.
+void PIC16AsmPrinter::EmitSingleSection(const PIC16Section *S) {
+  if (S == NULL) return;
+
+  switch (S->getType()) {
+    default: llvm_unreachable ("unknow user section type");
+    case UDATA:
+    case UDATA_SHR:
+    case UDATA_OVR:
+      EmitUninitializedDataSection(S);
+      break;
+    case IDATA:
+    case ROMDATA:
+      EmitInitializedDataSection(S);
+      break;
+  }
+}
+
+// Emit a list of sections.
+void PIC16AsmPrinter::
+EmitSectionList(Module &M, const std::vector<PIC16Section *> &SList) {
+  for (unsigned i = 0; i < SList.size(); i++) {
+    // Exclude llvm specific metadata sections.
+    if (SList[i]->getName().find("llvm.") != std::string::npos)
+      continue;
+    O << "\n";
+    EmitSingleSection(SList[i]);
+  }
+}
 

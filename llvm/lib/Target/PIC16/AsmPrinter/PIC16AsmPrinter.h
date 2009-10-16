@@ -60,6 +60,9 @@ namespace llvm {
     void printLibcallDecls();
     void EmitUninitializedDataSection(const PIC16Section *S);
     void EmitInitializedDataSection(const PIC16Section *S);
+    void EmitSingleSection(const PIC16Section *S);
+    void EmitSectionList(Module &M, 
+                         const std::vector< PIC16Section *> &SList);
   protected:
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);

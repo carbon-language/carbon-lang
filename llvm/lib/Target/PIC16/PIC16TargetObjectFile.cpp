@@ -22,6 +22,9 @@ using namespace llvm;
 PIC16TargetObjectFile::PIC16TargetObjectFile() {
 }
 
+PIC16TargetObjectFile::~PIC16TargetObjectFile() {
+}
+
 /// Find a pic16 section. If not found, create one.
 PIC16Section *PIC16TargetObjectFile::
 getPIC16Section(const std::string &Name, PIC16SectionType Ty, 
@@ -104,19 +107,11 @@ getPIC16UserSection(const std::string &Name, PIC16SectionType Ty,
   return Entry;
 }
 
-/// Do some standard llvm stuff. PIC16 really does not need any of this.
+/// Do some standard initialization.
 void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
   TargetLoweringObjectFile::Initialize(Ctx, tm);
   TM = &tm;
   
-  // BSSSection = getPIC16DataSection("udata.#", UDATA);
-  // ReadOnlySection = getPIC16DataSection("romdata.#", ROMDATA);
-  // DataSection = getPIC16DataSection("idata.#", IDATA);
-  
-  // Need because otherwise a .text symbol is emitted by DwarfWriter
-  // in BeginModule, and gpasm cribbs for that .text symbol.
-  // FIXME: below
-  // TextSection = getPIC16DataSection("", UDATA);
   ROMDATASection_ = NULL;
 }
 
@@ -254,22 +249,7 @@ PIC16TargetObjectFile::SelectSectionForGlobal(const GlobalValue *GV1,
   return TargetLoweringObjectFile::SelectSectionForGlobal(GV, Kind, Mang,TM);
 }
 
-PIC16TargetObjectFile::~PIC16TargetObjectFile() {
-#if 0
-  for (unsigned i = 0; i < UDATASections_.size(); i++)
-    delete UDATASections_[i]; 
-  for (unsigned i = 0; i < IDATASections_.size(); i++)
-    delete IDATASections_[i]; 
-  
-  delete ROMDATASection_;
 
-  for (unsigned i = 0; i < AUTOSections_.size(); i++)
-    delete AUTOSections_[i]; 
-
-  for (unsigned i = 0; i < USERSections_.size(); i++)
-    delete USERSections_[i];
-#endif
-}
 
 
 /// getExplicitSectionGlobal - Allow the target to completely override

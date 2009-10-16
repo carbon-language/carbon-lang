@@ -40,6 +40,7 @@ namespace llvm {
     // Global variables do not have any '.' in their names.
     // These are maily function names and global variable names.
     // Example - @foo,  @i
+    // Static local variables - @<func>.<var>
     // -------------------------------------------------------
     // Functions and auto variables.
     // Names are mangled as <prefix><funcname>.<tag>.<varname>
@@ -67,8 +68,12 @@ namespace llvm {
     // SECTION Names
     // uninitialized globals - @udata.<num>.#
     // initialized globals - @idata.<num>.#
+    // Program memory data - @romdata.#
+    // Variables with user defined section name - <user_defined_section>
+    // Variables with user defined address - @<var>.user_section.<address>.#
     // Function frame - @<func>.frame_section.
     // Function autos - @<func>.autos_section.
+    // Overlay sections - @<color>.##
     // Declarations - Enclosed in comments. No section for them.
     //----------------------------------------------------------
     
