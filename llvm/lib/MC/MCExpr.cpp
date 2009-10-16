@@ -181,10 +181,9 @@ bool MCExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
 
   case SymbolRef: {
     const MCSymbol &Sym = cast<MCSymbolRefExpr>(this)->getSymbol();
-    if (const MCValue *Value = Ctx.GetSymbolValue(&Sym))
-      Res = *Value;
-    else
-      Res = MCValue::get(&Sym, 0, 0);
+    if (const MCExpr *Value = Ctx.GetSymbolValue(&Sym))
+      return Value->EvaluateAsRelocatable(Ctx, Res);
+    Res = MCValue::get(&Sym, 0, 0);
     return true;
   }
 

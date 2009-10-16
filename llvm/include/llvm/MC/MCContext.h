@@ -15,7 +15,7 @@
 #include "llvm/Support/Allocator.h"
 
 namespace llvm {
-  class MCValue;
+  class MCExpr;
   class MCSection;
   class MCSymbol;
   class StringRef;
@@ -36,7 +36,7 @@ namespace llvm {
     /// SymbolValues - Bindings of symbols to values.
     //
     // FIXME: Is there a good reason to not just put this in the MCSymbol?
-    DenseMap<const MCSymbol*, MCValue> SymbolValues;
+    DenseMap<const MCSymbol*, const MCExpr*> SymbolValues;
 
     /// Allocator - Allocator object used for creating machine code objects.
     ///
@@ -63,7 +63,7 @@ namespace llvm {
     /// @param IsTemporary - Whether this symbol is an assembler temporary,
     /// which should not survive into the symbol table for the translation unit.
     MCSymbol *GetOrCreateSymbol(const StringRef &Name);
-    
+
     /// CreateTemporarySymbol - Create a new temporary symbol with the specified
     /// @param Name.
     ///
@@ -79,22 +79,30 @@ namespace llvm {
     /// @name Symbol Value Table
     /// @{
 
-    /// ClearSymbolValue - Erase a value binding for @arg Symbol, if one exists.
-    void ClearSymbolValue(const MCSymbol *Symbol);
+    /// ClearSymbolValue - Erase the variable binding for @arg Symbol, if one
+    /// exists.
+    void ClearSymbolValue(const MCSymbol *Symbol) {
+      SymbolValues.erase(Symbol);
+    }
 
-    /// SetSymbolValue - Set the value binding for @arg Symbol to @arg Value.
-    void SetSymbolValue(const MCSymbol *Symbol, const MCValue &Value);
+    /// SetSymbolValue - Set the variable binding for @arg Symbol to @arg Value.
+    void SetSymbolValue(const MCSymbol *Symbol, const MCExpr *Value) {
+      assert(Value && "Invalid variable assignment!");
+      SymbolValues.insert(std::make_pair(Symbol, Value));
+    }
 
-    /// GetSymbolValue - Return the current value for @arg Symbol, or null if
-    /// none exists.
-    const MCValue *GetSymbolValue(const MCSymbol *Symbol) const;
+    /// GetSymbolValue - Return the current variable value for @arg Symbol, or
+    /// null if @arg Symbol is not a variable.
+    const MCExpr *GetSymbolValue(const MCSymbol *Symbol) const {
+      return SymbolValues.lookup(Symbol);
+    }
 
     /// @}
 
     void *Allocate(unsigned Size, unsigned Align = 8) {
       return Allocator.Allocate(Size, Align);
     }
-    void Deallocate(void *Ptr) { 
+    void Deallocate(void *Ptr) {
     }
   };
 
