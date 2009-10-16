@@ -124,8 +124,8 @@ public:
     return TypeLoc(QualType::getFromOpaquePtr(Ty.TyPtr), Ty.Data);
   }
 
-  Decl *dyn_AsDecl() const { return getKind() == N_Decl ? D : 0; }
-  Stmt *dyn_AsStmt() const { return getKind() == N_Stmt ? Stm : 0; }
+  Decl *dyn_AsDecl() const { return isValid() && getKind() == N_Decl ? D : 0; }
+  Stmt *dyn_AsStmt() const { return isValid() && getKind() == N_Stmt ? Stm : 0; }
   NamedRef dyn_AsNamedRef() const {
     return getKind() == N_Type ? AsNamedRef() : NamedRef();
   }

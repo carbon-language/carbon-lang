@@ -22,11 +22,12 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/System/Path.h"
 #include <cstdio>
 #include <dlfcn.h>
 #include <sys/wait.h>
 #include <vector>
-#include "llvm/System/Path.h"
 
 using namespace clang;
 using namespace idx;
@@ -823,7 +824,18 @@ const char *clang_getCursorSource(CXCursor C)
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
   
   SourceLocation SLoc = getLocationFromCursor(C, SourceMgr, ND);
-  return SourceMgr.getBufferName(SLoc);
+  if (SLoc.isFileID())
+    return SourceMgr.getBufferName(SLoc);
+
+  // Retrieve the file in which the macro was instantiated, then provide that
+  // buffer name.
+  // FIXME: Do we want to give specific macro-instantiation information?
+  const llvm::MemoryBuffer *Buffer 
+    = SourceMgr.getBuffer(SourceMgr.getDecomposedSpellingLoc(SLoc).first);
+  if (!Buffer)
+    return 0;
+
+  return Buffer->getBufferIdentifier();
 }
 
 void clang_getDefinitionSpellingAndExtent(CXCursor C, 
