@@ -4812,9 +4812,16 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   UsualUnaryConversions(lex);
   UsualUnaryConversions(rex);
 
-  if (lex->getType()->isScalarType() && rex->getType()->isScalarType())
-    return Context.IntTy;
-  return InvalidOperands(Loc, lex, rex);
+  if (!lex->getType()->isScalarType() || !rex->getType()->isScalarType())
+    return InvalidOperands(Loc, lex, rex);
+    
+  if (Context.getLangOptions().CPlusPlus) {
+    // C++ [expr.log.and]p2
+    // C++ [expr.log.or]p2
+    return Context.BoolTy;
+  }
+
+  return Context.IntTy;
 }
 
 /// IsReadonlyProperty - Verify that otherwise a valid l-value expression
