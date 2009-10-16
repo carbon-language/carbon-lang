@@ -12,21 +12,21 @@ a:
         .long 0
 
         .text
-foo:    
+foo:
 // CHECK: addl $24, a$b(%eax)
-        addl $24, "a$b"(%eax)    
+        addl $24, "a$b"(%eax)
 // CHECK: addl $24, a$b+10(%eax)
         addl $24, ("a$b" + 10)(%eax)
-        
+
 // CHECK: b$c = 10
 "b$c" = 10
-// CHECK: addl $b$c, %eax
+// CHECK: addl $10, %eax
         addl "b$c", %eax
-        
+
 // CHECK: "a 0" = 11
         .set "a 0", 11
-        
-// CHECK: .long "a 0"
+
+// CHECK: .long 11
         .long "a 0"
 
 // XXCHCK: .section "a 1,a 2"
@@ -48,12 +48,12 @@ foo:
         .lcomm "a 7", 1
 
 // FIXME: We don't bother to support .lsym.
-        
+
 // CHECX: .lsym "a 8",1
 //        .lsym "a 8", 1
 
 // CHECK: "a 9" = a-b
         .set "a 9", a - b
-        
+
 // CHECK: .long "a 9"
         .long "a 9"

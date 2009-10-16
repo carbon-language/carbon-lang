@@ -123,9 +123,12 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   OS << " = ";
   Value->print(OS, &MAI);
   OS << '\n';
+
+  // FIXME: Lift context changes into super class.
+  Symbol->setValue(Value);
 }
 
-void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol, 
+void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                         SymbolAttr Attribute) {
   switch (Attribute) {
   case Global: OS << ".globl"; break;

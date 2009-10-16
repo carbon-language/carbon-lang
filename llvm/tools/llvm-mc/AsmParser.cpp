@@ -21,6 +21,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmParser.h"
@@ -220,12 +221,22 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res) {
     Res = MCUnaryExpr::CreateLNot(Res, getContext());
     return false;
   case AsmToken::String:
-  case AsmToken::Identifier:
-    // This is a label, this should be parsed as part of an expression, to
-    // handle things like LFOO+4.
-    Res = MCSymbolRefExpr::Create(Lexer.getTok().getIdentifier(), getContext());
+  case AsmToken::Identifier: {
+    // This is a symbol reference.
+    MCSymbol *Sym = CreateSymbol(Lexer.getTok().getIdentifier());
     Lexer.Lex(); // Eat identifier.
+
+    // If this is an absolute variable reference, substitute it now to preserve
+    // semantics in the face of reassignment.
+    if (Sym->getValue() && isa<MCConstantExpr>(Sym->getValue())) {
+      Res = Sym->getValue();
+      return false;
+    }
+
+    // Otherwise create a symbol ref.
+    Res = MCSymbolRefExpr::Create(Sym, getContext());
     return false;
+  }
   case AsmToken::Integer:
     Res = MCConstantExpr::Create(Lexer.getTok().getIntVal(), getContext());
     Lexer.Lex(); // Eat token.
