@@ -132,18 +132,18 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
 void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                         SymbolAttr Attribute) {
   switch (Attribute) {
-  case Global: OS << ".globl"; break;
-  case Hidden: OS << ".hidden"; break;
+  case Global:         OS << ".globl";           break;
+  case Hidden:         OS << ".hidden";          break;
   case IndirectSymbol: OS << ".indirect_symbol"; break;
-  case Internal: OS << ".internal"; break;
-  case LazyReference: OS << ".lazy_reference"; break;
-  case NoDeadStrip: OS << ".no_dead_strip"; break;
-  case PrivateExtern: OS << ".private_extern"; break;
-  case Protected: OS << ".protected"; break;
-  case Reference: OS << ".reference"; break;
-  case Weak: OS << ".weak"; break;
+  case Internal:       OS << ".internal";        break;
+  case LazyReference:  OS << ".lazy_reference";  break;
+  case NoDeadStrip:    OS << ".no_dead_strip";   break;
+  case PrivateExtern:  OS << ".private_extern";  break;
+  case Protected:      OS << ".protected";       break;
+  case Reference:      OS << ".reference";       break;
+  case Weak:           OS << ".weak";            break;
   case WeakDefinition: OS << ".weak_definition"; break;
-  case WeakReference: OS << ".weak_reference"; break;
+  case WeakReference:  OS << ".weak_reference";  break;
   }
 
   OS << ' ';

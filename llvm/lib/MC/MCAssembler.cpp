@@ -51,7 +51,7 @@ class MachObjectWriter {
     Header_Magic32 = 0xFEEDFACE,
     Header_Magic64 = 0xFEEDFACF
   };
-  
+
   static const unsigned Header32Size = 28;
   static const unsigned Header64Size = 32;
   static const unsigned SegmentLoadCommand32Size = 56;
@@ -130,7 +130,7 @@ class MachObjectWriter {
   bool IsLSB;
 
 public:
-  MachObjectWriter(raw_ostream &_OS, bool _IsLSB = true) 
+  MachObjectWriter(raw_ostream &_OS, bool _IsLSB = true)
     : OS(_OS), IsLSB(_IsLSB) {
   }
 
@@ -173,10 +173,10 @@ public:
 
   void WriteZeros(unsigned N) {
     const char Zeros[16] = { 0 };
-    
+
     for (unsigned i = 0, e = N / 16; i != e; ++i)
       OS << StringRef(Zeros, 16);
-    
+
     OS << StringRef(Zeros, N % 16);
   }
 
@@ -187,7 +187,7 @@ public:
   }
 
   /// @}
-  
+
   void WriteHeader32(unsigned NumLoadCommands, unsigned LoadCommandsSize,
                      bool SubsectionsViaSymbols) {
     uint32_t Flags = 0;
@@ -387,7 +387,7 @@ public:
     Write32(MSD.StringIndex);
     Write8(Type);
     Write8(MSD.SectionIndex);
-    
+
     // The Mach-O streamer uses the lowest 16-bits of the flags for the 'desc'
     // value.
     Write16(Flags);
@@ -464,7 +464,7 @@ public:
          Target.getConstant()))
       return ComputeScatteredRelocationInfo(Asm, Fixup, Target,
                                             SymbolMap, Relocs);
-        
+
     // See <reloc.h>.
     uint32_t Address = Fixup.Fragment->getOffset() + Fixup.Offset;
     uint32_t Value = 0;
@@ -481,7 +481,7 @@ public:
     } else {
       const MCSymbol *Symbol = Target.getSymA();
       MCSymbolData *SD = SymbolMap.lookup(Symbol);
-      
+
       if (Symbol->isUndefined()) {
         IsExtern = 1;
         Index = SD->getIndex();
@@ -517,7 +517,7 @@ public:
                  (Type      << 28));
     Relocs.push_back(MRE);
   }
-  
+
   void BindIndirectSymbols(MCAssembler &Asm,
                            DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap) {
     // This is the point where 'as' creates actual symbols for indirect symbols
@@ -710,7 +710,7 @@ public:
     if (NumSymbols)
       ComputeSymbolTable(Asm, StringTable, LocalSymbolData, ExternalSymbolData,
                          UndefinedSymbolData);
-  
+
     // The section data starts after the header, the segment load command (and
     // section headers) and the symbol table.
     unsigned NumLoadCommands = 1;
@@ -740,7 +740,7 @@ public:
 
       SectionDataSize = std::max(SectionDataSize,
                                  SD.getAddress() + SD.getSize());
-      SectionDataFileSize = std::max(SectionDataFileSize, 
+      SectionDataFileSize = std::max(SectionDataFileSize,
                                      SD.getAddress() + SD.getFileSize());
     }
 
@@ -755,9 +755,9 @@ public:
                   Asm.getSubsectionsViaSymbols());
     WriteSegmentLoadCommand32(NumSections, VMSize,
                               SectionDataStart, SectionDataSize);
-  
+
     // ... and then the section headers.
-    // 
+    //
     // We also compute the section relocations while we do this. Note that
     // compute relocation info will also update the fixup to have the correct
     // value; this will be overwrite the appropriate data in the fragment when
@@ -781,7 +781,7 @@ public:
       WriteSection32(SD, SectionStart, RelocTableEnd, NumRelocs);
       RelocTableEnd += NumRelocs * RelocationInfoSize;
     }
-    
+
     // Write the symbol table load command, if used.
     if (NumSymbols) {
       unsigned FirstLocalSymbol = 0;
@@ -930,7 +930,7 @@ MCSectionData::LookupFixup(const MCFragment *Fragment, uint64_t Offset) const {
 
   return 0;
 }
-                                                       
+
 /* *** */
 
 MCSymbolData::MCSymbolData() : Symbol(0) {}
@@ -967,7 +967,7 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
     switch (F.getKind()) {
     case MCFragment::FT_Align: {
       MCAlignFragment &AF = cast<MCAlignFragment>(F);
-      
+
       uint64_t Size = OffsetToAlignment(Address, AF.getAlignment());
       if (Size > AF.getMaxBytesToEmit())
         AF.setFileSize(0);
@@ -1016,12 +1016,12 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
 
       // FIXME: We need a way to communicate this error.
       if (OrgOffset < Offset)
-        llvm_report_error("invalid .org offset '" + Twine(OrgOffset) + 
+        llvm_report_error("invalid .org offset '" + Twine(OrgOffset) +
                           "' (at offset '" + Twine(Offset) + "'");
-        
+
       F.setFileSize(OrgOffset - Offset);
       break;
-    }      
+    }
 
     case MCFragment::FT_ZeroFill: {
       MCZeroFillFragment &ZFF = cast<MCZeroFillFragment>(F);
@@ -1053,7 +1053,7 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
                           MachObjectWriter &MOW) {
   uint64_t Start = OS.tell();
   (void) Start;
-    
+
   ++EmittedFragments;
 
   // FIXME: Embed in fragments instead?
@@ -1066,8 +1066,8 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
     // multiple .align directives to enforce the semantics it wants), but is
     // severe enough that we want to report it. How to handle this?
     if (Count * AF.getValueSize() != AF.getFileSize())
-      llvm_report_error("undefined .align directive, value size '" + 
-                        Twine(AF.getValueSize()) + 
+      llvm_report_error("undefined .align directive, value size '" +
+                        Twine(AF.getValueSize()) +
                         "' is not a divisor of padding size '" +
                         Twine(AF.getFileSize()) + "'");
 
@@ -1121,7 +1121,7 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
     }
     break;
   }
-    
+
   case MCFragment::FT_Org: {
     MCOrgFragment &OF = cast<MCOrgFragment>(F);
 
@@ -1151,7 +1151,7 @@ static void WriteFileData(raw_ostream &OS, const MCSectionData &SD,
 
   uint64_t Start = OS.tell();
   (void) Start;
-      
+
   for (MCSectionData::const_iterator it = SD.begin(),
          ie = SD.end(); it != ie; ++it)
     WriteFileData(OS, *it, MOW);

@@ -121,9 +121,7 @@ public:
 
   static const MCSymbolRefExpr *Create(const MCSymbol *Symbol, MCContext &Ctx);
   static const MCSymbolRefExpr *Create(const StringRef &Name, MCContext &Ctx);
-  
-  
-  
+
   /// @}
   /// @name Accessors
   /// @{
