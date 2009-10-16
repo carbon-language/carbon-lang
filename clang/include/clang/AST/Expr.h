@@ -1673,7 +1673,8 @@ public:
   /// predicates to categorize the respective opcodes.
   bool isMultiplicativeOp() const { return Opc >= Mul && Opc <= Rem; }
   bool isAdditiveOp() const { return Opc == Add || Opc == Sub; }
-  bool isShiftOp() const { return Opc == Shl || Opc == Shr; }
+  static bool isShiftOp(Opcode Opc) { return Opc == Shl || Opc == Shr; }
+  bool isShiftOp() const { return isShiftOp(Opc); }
   bool isBitwiseOp() const { return Opc >= And && Opc <= Or; }
 
   static bool isRelationalOp(Opcode Opc) { return Opc >= LT && Opc <= GE; }
