@@ -125,6 +125,7 @@ namespace llvm {
   public:
 
     /* We support the following floating point semantics.  */
+    static const fltSemantics IEEEhalf;
     static const fltSemantics IEEEsingle;
     static const fltSemantics IEEEdouble;
     static const fltSemantics IEEEquad;
@@ -321,12 +322,14 @@ namespace llvm {
     opStatus roundSignificandWithExponent(const integerPart *, unsigned int,
                                           int, roundingMode);
 
+    APInt convertHalfAPFloatToAPInt() const;
     APInt convertFloatAPFloatToAPInt() const;
     APInt convertDoubleAPFloatToAPInt() const;
     APInt convertQuadrupleAPFloatToAPInt() const;
     APInt convertF80LongDoubleAPFloatToAPInt() const;
     APInt convertPPCDoubleDoubleAPFloatToAPInt() const;
     void initFromAPInt(const APInt& api, bool isIEEE = false);
+    void initFromHalfAPInt(const APInt& api);
     void initFromFloatAPInt(const APInt& api);
     void initFromDoubleAPInt(const APInt& api);
     void initFromQuadrupleAPInt(const APInt &api);
