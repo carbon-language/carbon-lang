@@ -9,7 +9,10 @@
 
 #define DEBUG_TYPE "assembler"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Target/TargetMachOWriterInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
@@ -397,6 +400,7 @@ public:
   };
   void ComputeScatteredRelocationInfo(MCAssembler &Asm,
                                       MCSectionData::Fixup &Fixup,
+                                      const MCValue &Target,
                              DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
                                      std::vector<MachRelocationEntry> &Relocs) {
     uint32_t Address = Fixup.Fragment->getOffset() + Fixup.Offset;
@@ -404,13 +408,12 @@ public:
     unsigned Type = RIT_Vanilla;
 
     // See <reloc.h>.
-
-    const MCSymbol *A = Fixup.Value.getSymA();
+    const MCSymbol *A = Target.getSymA();
     MCSymbolData *SD = SymbolMap.lookup(A);
     uint32_t Value = SD->getFragment()->getAddress() + SD->getOffset();
     uint32_t Value2 = 0;
 
-    if (const MCSymbol *B = Fixup.Value.getSymB()) {
+    if (const MCSymbol *B = Target.getSymB()) {
       Type = RIT_LocalDifference;
 
       MCSymbolData *SD = SymbolMap.lookup(B);
@@ -421,7 +424,7 @@ public:
     assert((1U << Log2Size) == Fixup.Size && "Invalid fixup size!");
 
     // The value which goes in the fixup is current value of the expression.
-    Fixup.FixedValue = Value - Value2 + Fixup.Value.getConstant();
+    Fixup.FixedValue = Value - Value2 + Target.getConstant();
 
     MachRelocationEntry MRE;
     MRE.Word0 = ((Address   <<  0) |
@@ -450,13 +453,17 @@ public:
                              MCSectionData::Fixup &Fixup,
                              DenseMap<const MCSymbol*,MCSymbolData*> &SymbolMap,
                              std::vector<MachRelocationEntry> &Relocs) {
-    // If this is a local symbol plus an offset or a difference, then we need a
+    MCValue Target;
+    if (!Fixup.Value->EvaluateAsRelocatable(Target))
+      llvm_report_error("expected relocatable expression");
+
+    // If this is a difference or a local symbol plus an offset, then we need a
     // scattered relocation entry.
-    if (Fixup.Value.getSymB()) // a - b
-      return ComputeScatteredRelocationInfo(Asm, Fixup, SymbolMap, Relocs);
-    if (Fixup.Value.getSymA() && Fixup.Value.getConstant())
-      if (!Fixup.Value.getSymA()->isUndefined())
-        return ComputeScatteredRelocationInfo(Asm, Fixup, SymbolMap, Relocs);
+    if (Target.getSymB() ||
+        (Target.getSymA() && !Target.getSymA()->isUndefined() &&
+         Target.getConstant()))
+      return ComputeScatteredRelocationInfo(Asm, Fixup, Target,
+                                            SymbolMap, Relocs);
         
     // See <reloc.h>.
     uint32_t Address = Fixup.Fragment->getOffset() + Fixup.Offset;
@@ -466,13 +473,13 @@ public:
     unsigned IsExtern = 0;
     unsigned Type = 0;
 
-    if (Fixup.Value.isAbsolute()) { // constant
+    if (Target.isAbsolute()) { // constant
       // SymbolNum of 0 indicates the absolute section.
       Type = RIT_Vanilla;
       Value = 0;
       llvm_unreachable("FIXME: Not yet implemented!");
     } else {
-      const MCSymbol *Symbol = Fixup.Value.getSymA();
+      const MCSymbol *Symbol = Target.getSymA();
       MCSymbolData *SD = SymbolMap.lookup(Symbol);
       
       if (Symbol->isUndefined()) {
@@ -495,7 +502,7 @@ public:
     }
 
     // The value which goes in the fixup is current value of the expression.
-    Fixup.FixedValue = Value + Fixup.Value.getConstant();
+    Fixup.FixedValue = Value + Target.getConstant();
 
     unsigned Log2Size = Log2_32(Fixup.Size);
     assert((1U << Log2Size) == Fixup.Size && "Invalid fixup size!");
@@ -978,8 +985,12 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
 
       F.setFileSize(F.getMaxFileSize());
 
+      MCValue Target;
+      if (!FF.getValue().EvaluateAsRelocatable(Target))
+        llvm_report_error("expected relocatable expression");
+
       // If the fill value is constant, thats it.
-      if (FF.getValue().isAbsolute())
+      if (Target.isAbsolute())
         break;
 
       // Otherwise, add fixups for the values.
@@ -994,9 +1005,13 @@ void MCAssembler::LayoutSection(MCSectionData &SD) {
     case MCFragment::FT_Org: {
       MCOrgFragment &OF = cast<MCOrgFragment>(F);
 
-      if (!OF.getOffset().isAbsolute())
+      MCValue Target;
+      if (!OF.getOffset().EvaluateAsRelocatable(Target))
+        llvm_report_error("expected relocatable expression");
+
+      if (!Target.isAbsolute())
         llvm_unreachable("FIXME: Not yet implemented!");
-      uint64_t OrgOffset = OF.getOffset().getConstant();
+      uint64_t OrgOffset = Target.getConstant();
       uint64_t Offset = Address - SD.getAddress();
 
       // FIXME: We need a way to communicate this error.
@@ -1077,10 +1092,15 @@ static void WriteFileData(raw_ostream &OS, const MCFragment &F,
     MCFillFragment &FF = cast<MCFillFragment>(F);
 
     int64_t Value = 0;
-    if (FF.getValue().isAbsolute())
-      Value = FF.getValue().getConstant();
+
+    MCValue Target;
+    if (!FF.getValue().EvaluateAsRelocatable(Target))
+      llvm_report_error("expected relocatable expression");
+
+    if (Target.isAbsolute())
+      Value = Target.getConstant();
     for (uint64_t i = 0, e = FF.getCount(); i != e; ++i) {
-      if (!FF.getValue().isAbsolute()) {
+      if (!Target.isAbsolute()) {
         // Find the fixup.
         //
         // FIXME: Find a better way to write in the fixes.

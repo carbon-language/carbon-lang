@@ -13,7 +13,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/MC/MCValue.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
 #include <vector> // FIXME: Shouldn't be needed.
@@ -22,8 +21,10 @@ namespace llvm {
 class raw_ostream;
 class MCAssembler;
 class MCContext;
+class MCExpr;
 class MCSection;
 class MCSectionData;
+class MCSymbol;
 
 class MCFragment : public ilist_node<MCFragment> {
   MCFragment(const MCFragment&);     // DO NOT IMPLEMENT
@@ -174,7 +175,7 @@ public:
 
 class MCFillFragment : public MCFragment {
   /// Value - Value to use for filling bytes.
-  MCValue Value;
+  const MCExpr *Value;
 
   /// ValueSize - The size (in bytes) of \arg Value to use when filling.
   unsigned ValueSize;
@@ -183,10 +184,10 @@ class MCFillFragment : public MCFragment {
   uint64_t Count;
 
 public:
-  MCFillFragment(MCValue _Value, unsigned _ValueSize, uint64_t _Count,
+  MCFillFragment(const MCExpr &_Value, unsigned _ValueSize, uint64_t _Count,
                  MCSectionData *SD = 0) 
     : MCFragment(FT_Fill, SD),
-      Value(_Value), ValueSize(_ValueSize), Count(_Count) {}
+      Value(&_Value), ValueSize(_ValueSize), Count(_Count) {}
 
   /// @name Accessors
   /// @{
@@ -195,7 +196,7 @@ public:
     return ValueSize * Count;
   }
 
-  MCValue getValue() const { return Value; }
+  const MCExpr &getValue() const { return *Value; }
   
   unsigned getValueSize() const { return ValueSize; }
 
@@ -211,15 +212,15 @@ public:
 
 class MCOrgFragment : public MCFragment {
   /// Offset - The offset this fragment should start at.
-  MCValue Offset;
+  const MCExpr *Offset;
 
   /// Value - Value to use for filling bytes.  
   int8_t Value;
 
 public:
-  MCOrgFragment(MCValue _Offset, int8_t _Value, MCSectionData *SD = 0)
+  MCOrgFragment(const MCExpr &_Offset, int8_t _Value, MCSectionData *SD = 0)
     : MCFragment(FT_Org, SD),
-      Offset(_Offset), Value(_Value) {}
+      Offset(&_Offset), Value(_Value) {}
 
   /// @name Accessors
   /// @{
@@ -229,7 +230,7 @@ public:
     return ~UINT64_C(0);
   }
 
-  MCValue getOffset() const { return Offset; }
+  const MCExpr &getOffset() const { return *Offset; }
   
   uint8_t getValue() const { return Value; }
 
@@ -294,10 +295,7 @@ public:
     uint64_t Offset;
 
     /// Value - The expression to eventually write into the fragment.
-    //
-    // FIXME: We could probably get away with requiring the client to pass in an
-    // owned reference whose lifetime extends past that of the fixup.
-    MCValue Value;
+    const MCExpr *Value;
 
     /// Size - The fixup size.
     unsigned Size;
@@ -308,9 +306,9 @@ public:
     uint64_t FixedValue;
 
   public:
-    Fixup(MCFragment &_Fragment, uint64_t _Offset, const MCValue &_Value, 
+    Fixup(MCFragment &_Fragment, uint64_t _Offset, const MCExpr &_Value,
           unsigned _Size) 
-      : Fragment(&_Fragment), Offset(_Offset), Value(_Value), Size(_Size),
+      : Fragment(&_Fragment), Offset(_Offset), Value(&_Value), Size(_Size),
         FixedValue(0) {}
   };
 
