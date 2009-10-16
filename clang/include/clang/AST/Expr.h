@@ -1399,7 +1399,10 @@ public:
     CK_IntegralToPointer,
     
     /// CK_PointerToIntegral - Pointer to integral
-    CK_PointerToIntegral
+    CK_PointerToIntegral,
+    
+    /// CK_ToVoid - Cast to void.
+    CK_ToVoid
   };
 
 private:

@@ -3157,7 +3157,11 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
   // type needs to be scalar.
   if (castType->isVoidType()) {
     // Cast to void allows any expr type.
-  } else if (!castType->isScalarType() && !castType->isVectorType()) {
+    Kind = CastExpr::CK_ToVoid;
+    return false;
+  }
+  
+  if (!castType->isScalarType() && !castType->isVectorType()) {
     if (Context.getCanonicalType(castType).getUnqualifiedType() ==
         Context.getCanonicalType(castExpr->getType().getUnqualifiedType()) &&
         (castType->isStructureType() || castType->isUnionType())) {

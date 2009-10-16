@@ -426,6 +426,8 @@ const char *CastExpr::getCastKindName() const {
     return "IntegralToPointer";
   case CastExpr::CK_PointerToIntegral:
     return "PointerToIntegral";
+  case CastExpr::CK_ToVoid:
+    return "ToVoid";
   }
 
   assert(0 && "Unhandled cast kind!");
