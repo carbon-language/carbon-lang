@@ -37,6 +37,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::Enum:      // enum X;
   case Decl::EnumConstant: // enum ? { X = ? }
   case Decl::CXXRecord: // struct/union/class X; [C++]
+  case Decl::UsingDirective: // using X; [C++]
     // None of these decls require codegen support.
     return;
 
