@@ -30,9 +30,8 @@ namespace {
 
     virtual bool runOnFunction(Function &F) {
       HelloCounter++;
-      std::string fname = F.getName();
-      EscapeString(fname);
-      errs() << "Hello: " << fname << "\n";
+      errs() << "Hello: ";
+      errs().write_escaped(F.getName()) << '\n';
       return false;
     }
   };
@@ -49,9 +48,8 @@ namespace {
 
     virtual bool runOnFunction(Function &F) {
       HelloCounter++;
-      std::string fname = F.getName();
-      EscapeString(fname);
-      errs() << "Hello: " << fname << "\n";
+      errs() << "Hello: ";
+      errs().write_escaped(F.getName()) << '\n';
       return false;
     }
 

@@ -10,9 +10,10 @@
 #ifndef TBLGEN_STRING_TO_OFFSET_TABLE_H
 #define TBLGEN_STRING_TO_OFFSET_TABLE_H
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 
@@ -38,9 +39,13 @@ public:
   }
   
   void EmitString(raw_ostream &O) {
+    // Escape the string.
+    SmallString<256> Str;
+    raw_svector_ostream(Str).write_escaped(AggregateString);
+    AggregateString = Str.str();
+
     O << "    \"";
     unsigned CharsPrinted = 0;
-    EscapeString(AggregateString);
     for (unsigned i = 0, e = AggregateString.size(); i != e; ++i) {
       if (CharsPrinted > 70) {
         O << "\"\n    \"";
