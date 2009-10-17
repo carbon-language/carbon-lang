@@ -322,7 +322,7 @@ SystemZTargetLowering::LowerCCCArguments(SDValue Chain,
       // from this parameter
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
       ArgValue = DAG.getLoad(LocVT, dl, Chain, FIN,
-                             PseudoSourceValue::getFixedStack(FI), 0);
+                             PseudoSourceValue::getStackObject(FI), 0);
     }
 
     // If this is an 8/16/32-bit value, it is really passed promoted to 64

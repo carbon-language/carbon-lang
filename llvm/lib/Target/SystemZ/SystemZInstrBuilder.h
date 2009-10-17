@@ -115,7 +115,7 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
   if (TID.mayStore())
     Flags |= MachineMemOperand::MOStore;
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
+    MF.getMachineMemOperand(PseudoSourceValue::getStackObject(FI),
                             Flags, Offset,
                             MFI.getObjectSize(FI),
                             MFI.getObjectAlignment(FI));

@@ -47,9 +47,9 @@ namespace llvm {
       return V->getValueID() == PseudoSourceValueVal;
     }
 
-    /// A pseudo source value referencing a fixed stack frame entry,
-    /// e.g., a spill slot.
-    static const PseudoSourceValue *getFixedStack(int FI);
+    /// A pseudo source value referencing a stack frame entry,
+    /// e.g., a spill slot or an incoming argument on stack.
+    static const PseudoSourceValue *getStackObject(int FI);
 
     /// A pseudo source value referencing the area below the stack frame of
     /// a function, e.g., the argument space.

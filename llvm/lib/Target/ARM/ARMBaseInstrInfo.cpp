@@ -671,7 +671,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   MachineFrameInfo &MFI = *MF.getFrameInfo();
 
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
+    MF.getMachineMemOperand(PseudoSourceValue::getStackObject(FI),
                             MachineMemOperand::MOStore, 0,
                             MFI.getObjectSize(FI),
                             MFI.getObjectAlignment(FI));
@@ -709,7 +709,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   MachineFrameInfo &MFI = *MF.getFrameInfo();
 
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
+    MF.getMachineMemOperand(PseudoSourceValue::getStackObject(FI),
                             MachineMemOperand::MOLoad, 0,
                             MFI.getObjectSize(FI),
                             MFI.getObjectAlignment(FI));

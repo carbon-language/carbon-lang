@@ -3514,7 +3514,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
   if (!PtrVal)
     if (const FrameIndexSDNode *FI =
           dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      PtrVal = PseudoSourceValue::getFixedStack(FI->getIndex());
+      PtrVal = PseudoSourceValue::getStackObject(FI->getIndex());
 
   MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
@@ -3567,7 +3567,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
   if (!PtrVal)
     if (const FrameIndexSDNode *FI =
           dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      PtrVal = PseudoSourceValue::getFixedStack(FI->getIndex());
+      PtrVal = PseudoSourceValue::getStackObject(FI->getIndex());
 
   MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
@@ -3714,7 +3714,7 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, DebugLoc dl,
   if (!SV)
     if (const FrameIndexSDNode *FI =
           dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      SV = PseudoSourceValue::getFixedStack(FI->getIndex());
+      SV = PseudoSourceValue::getStackObject(FI->getIndex());
 
   MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOLoad;
@@ -3813,7 +3813,7 @@ SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
   if (!SV)
     if (const FrameIndexSDNode *FI =
           dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      SV = PseudoSourceValue::getFixedStack(FI->getIndex());
+      SV = PseudoSourceValue::getStackObject(FI->getIndex());
 
   MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOStore;
@@ -3859,7 +3859,7 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
   if (!SV)
     if (const FrameIndexSDNode *FI =
           dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      SV = PseudoSourceValue::getFixedStack(FI->getIndex());
+      SV = PseudoSourceValue::getStackObject(FI->getIndex());
 
   MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOStore;
