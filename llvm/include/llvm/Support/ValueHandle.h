@@ -361,7 +361,7 @@ public:
   /// _before_ any of the uses have actually been replaced.  If WeakVH were
   /// implemented as a CallbackVH, it would use this method to call
   /// setValPtr(new_value).  AssertingVH would do nothing in this method.
-  virtual void allUsesReplacedWith(Value *new_value) {}
+  virtual void allUsesReplacedWith(Value *) {}
 };
 
 // Specialize simplify_type to allow CallbackVH to participate in
