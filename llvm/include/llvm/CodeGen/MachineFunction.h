@@ -267,6 +267,9 @@ public:
   void splice(iterator InsertPt, iterator MBBI) {
     BasicBlocks.splice(InsertPt, BasicBlocks, MBBI);
   }
+  void splice(iterator InsertPt, iterator MBBI, iterator MBBE) {
+    BasicBlocks.splice(InsertPt, BasicBlocks, MBBI, MBBE);
+  }
 
   void remove(iterator MBBI) {
     BasicBlocks.remove(MBBI);
