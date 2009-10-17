@@ -62,7 +62,7 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   BugReporter& BR;
   ASTContext &Ctx;
 
-  bool isNSString(const ObjCInterfaceType *T, const char* suffix);
+  bool isNSString(const ObjCInterfaceType *T, llvm::StringRef suffix);
   bool AuditNSString(ExplodedNode* N, const ObjCMessageExpr* ME);
 
   void Warn(ExplodedNode* N, const Expr* E, const std::string& s);
@@ -114,18 +114,8 @@ bool BasicObjCFoundationChecks::Audit(ExplodedNode* N,
   if (!ReceiverType)
     return false;
 
-  const char* name = ReceiverType->getDecl()->getIdentifier()->getName();
-
-  if (!name)
-    return false;
-
-  if (name[0] != 'N' || name[1] != 'S')
-    return false;
-
-  name += 2;
-
-  // FIXME: Make all of this faster.
-  if (isNSString(ReceiverType, name))
+  if (isNSString(ReceiverType,
+                 ReceiverType->getDecl()->getIdentifier()->getNameStr()))
     return AuditNSString(N, ME);
 
   return false;
@@ -158,8 +148,8 @@ bool BasicObjCFoundationChecks::CheckNilArg(ExplodedNode* N, unsigned Arg) {
 //===----------------------------------------------------------------------===//
 
 bool BasicObjCFoundationChecks::isNSString(const ObjCInterfaceType *T,
-                                           const char* suffix) {
-  return !strcmp("String", suffix) || !strcmp("MutableString", suffix);
+                                           llvm::StringRef ClassName) {
+  return ClassName == "NSString" || ClassName == "NSMutableString";
 }
 
 bool BasicObjCFoundationChecks::AuditNSString(ExplodedNode* N,
