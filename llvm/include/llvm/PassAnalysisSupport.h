@@ -20,13 +20,12 @@
 #define LLVM_PASS_ANALYSIS_SUPPORT_H
 
 #include <vector>
+#include "llvm/Pass.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
 class StringRef;
-
-// No need to include Pass.h, we are being included by it!
 
 //===----------------------------------------------------------------------===//
 // AnalysisUsage - Represent the analysis usage information of a pass.  This
