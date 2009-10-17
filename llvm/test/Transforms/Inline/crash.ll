@@ -51,7 +51,38 @@ entry:
   unreachable
 }
 
-
-
-
 declare fastcc void @list_Rplacd1284() nounwind ssp
+
+
+
+
+;============================
+; PR5208
+
+define void @AAA() {
+entry:
+  %A = alloca i8, i32 undef, align 1
+  invoke fastcc void @XXX()
+          to label %invcont98 unwind label %lpad156 
+
+invcont98:                          
+  unreachable
+
+lpad156:                            
+  unreachable
+}
+
+declare fastcc void @YYY()
+
+define internal fastcc void @XXX() {
+entry:
+  %B = alloca i8, i32 undef, align 1
+  invoke fastcc void @YYY()
+          to label %bb260 unwind label %lpad
+
+bb260:                              
+  ret void
+
+lpad:                               
+  unwind
+}

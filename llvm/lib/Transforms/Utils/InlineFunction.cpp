@@ -444,18 +444,15 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
   if (InlinedFunctionInfo.ContainsDynamicAllocas) {
     Module *M = Caller->getParent();
     // Get the two intrinsics we care about.
-    Constant *StackSave, *StackRestore;
-    StackSave    = Intrinsic::getDeclaration(M, Intrinsic::stacksave);
-    StackRestore = Intrinsic::getDeclaration(M, Intrinsic::stackrestore);
+    Function *StackSave = Intrinsic::getDeclaration(M, Intrinsic::stacksave);
+    Function *StackRestore=Intrinsic::getDeclaration(M,Intrinsic::stackrestore);
 
     // If we are preserving the callgraph, add edges to the stacksave/restore
     // functions for the calls we insert.
     CallGraphNode *StackSaveCGN = 0, *StackRestoreCGN = 0, *CallerNode = 0;
     if (CG) {
-      // We know that StackSave/StackRestore are Function*'s, because they are
-      // intrinsics which must have the right types.
-      StackSaveCGN    = CG->getOrInsertFunction(cast<Function>(StackSave));
-      StackRestoreCGN = CG->getOrInsertFunction(cast<Function>(StackRestore));
+      StackSaveCGN    = CG->getOrInsertFunction(StackSave);
+      StackRestoreCGN = CG->getOrInsertFunction(StackRestore);
       CallerNode = (*CG)[Caller];
     }
 
@@ -480,7 +477,8 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
       for (Function::iterator BB = FirstNewBlock, E = Caller->end();
            BB != E; ++BB)
         if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-          CallInst::Create(StackRestore, SavedPtr, "", UI);
+          CallInst *CI = CallInst::Create(StackRestore, SavedPtr, "", UI);
+          if (CG) CallerNode->addCalledFunction(CI, StackRestoreCGN);
           ++NumStackRestores;
         }
     }
