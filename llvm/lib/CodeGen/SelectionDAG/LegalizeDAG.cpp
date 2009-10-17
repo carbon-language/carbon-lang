@@ -643,7 +643,7 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
 
   // Store the vector.
   SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Tmp1, StackPtr,
-                            PseudoSourceValue::getStackObject(SPFI), 0);
+                            PseudoSourceValue::getFixedStack(SPFI), 0);
 
   // Truncate or zero extend offset to target pointer type.
   unsigned CastOpc = IdxVT.bitsGT(PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
@@ -654,10 +654,10 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
   SDValue StackPtr2 = DAG.getNode(ISD::ADD, dl, IdxVT, Tmp3, StackPtr);
   // Store the scalar value.
   Ch = DAG.getTruncStore(Ch, dl, Tmp2, StackPtr2,
-                         PseudoSourceValue::getStackObject(SPFI), 0, EltVT);
+                         PseudoSourceValue::getFixedStack(SPFI), 0, EltVT);
   // Load the updated vector.
   return DAG.getLoad(VT, dl, Ch, StackPtr,
-                     PseudoSourceValue::getStackObject(SPFI), 0);
+                     PseudoSourceValue::getFixedStack(SPFI), 0);
 }
 
 
@@ -1518,7 +1518,7 @@ SDValue SelectionDAGLegalize::ExpandVectorBuildThroughStack(SDNode* Node) {
   DebugLoc dl = Node->getDebugLoc();
   SDValue FIPtr = DAG.CreateStackTemporary(VT);
   int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
-  const Value *SV = PseudoSourceValue::getStackObject(FI);
+  const Value *SV = PseudoSourceValue::getFixedStack(FI);
 
   // Emit a store of each element to the stack slot.
   SmallVector<SDValue, 8> Stores;
@@ -1714,7 +1714,7 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
 
   FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(FIPtr);
   int SPFI = StackPtrFI->getIndex();
-  const Value *SV = PseudoSourceValue::getStackObject(SPFI);
+  const Value *SV = PseudoSourceValue::getFixedStack(SPFI);
 
   unsigned SrcSize = SrcOp.getValueType().getSizeInBits();
   unsigned SlotSize = SlotVT.getSizeInBits();
@@ -1755,10 +1755,10 @@ SDValue SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
 
   SDValue Ch = DAG.getTruncStore(DAG.getEntryNode(), dl, Node->getOperand(0),
                                  StackPtr,
-                                 PseudoSourceValue::getStackObject(SPFI), 0,
+                                 PseudoSourceValue::getFixedStack(SPFI), 0,
                                  Node->getValueType(0).getVectorElementType());
   return DAG.getLoad(Node->getValueType(0), dl, Ch, StackPtr,
-                     PseudoSourceValue::getStackObject(SPFI), 0);
+                     PseudoSourceValue::getFixedStack(SPFI), 0);
 }
 
 

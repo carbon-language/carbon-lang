@@ -309,7 +309,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
       //from this parameter
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i16);
       InVals.push_back(DAG.getLoad(VA.getLocVT(), dl, Chain, FIN,
-                                   PseudoSourceValue::getStackObject(FI), 0));
+                                   PseudoSourceValue::getFixedStack(FI), 0));
     }
   }
 

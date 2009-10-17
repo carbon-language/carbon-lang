@@ -2235,7 +2235,7 @@ StoreTailCallArgumentsToStackSlot(SelectionDAG &DAG,
     int FI = TailCallArgs[i].FrameIdx;
     // Store relative to framepointer.
     MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, FIN,
-                                       PseudoSourceValue::getStackObject(FI),
+                                       PseudoSourceValue::getFixedStack(FI),
                                        0));
   }
 }
@@ -2261,7 +2261,7 @@ static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG,
     EVT VT = isPPC64 ? MVT::i64 : MVT::i32;
     SDValue NewRetAddrFrIdx = DAG.getFrameIndex(NewRetAddr, VT);
     Chain = DAG.getStore(Chain, dl, OldRetAddr, NewRetAddrFrIdx,
-                         PseudoSourceValue::getStackObject(NewRetAddr), 0);
+                         PseudoSourceValue::getFixedStack(NewRetAddr), 0);
 
     // When using the 32/64-bit SVR4 ABI there is no need to move the FP stack
     // slot as the FP is never overwritten.
@@ -2271,7 +2271,7 @@ static SDValue EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG,
       int NewFPIdx = MF.getFrameInfo()->CreateFixedObject(SlotSize, NewFPLoc);
       SDValue NewFramePtrIdx = DAG.getFrameIndex(NewFPIdx, VT);
       Chain = DAG.getStore(Chain, dl, OldFP, NewFramePtrIdx,
-                           PseudoSourceValue::getStackObject(NewFPIdx), 0);
+                           PseudoSourceValue::getFixedStack(NewFPIdx), 0);
     }
   }
   return Chain;
@@ -3388,7 +3388,7 @@ SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
 
   // STD the extended value into the stack slot.
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getStackObject(FrameIdx),
+    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIdx),
                             MachineMemOperand::MOStore, 0, 8, 8);
   SDValue Ops[] = { DAG.getEntryNode(), Ext64, FIdx };
   SDValue Store =

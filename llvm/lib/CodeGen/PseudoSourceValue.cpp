@@ -52,31 +52,29 @@ void PseudoSourceValue::printCustom(raw_ostream &O) const {
 }
 
 namespace {
-  /// StackObjectPseudoSourceValue - A specialized PseudoSourceValue
-  /// for holding StackObject values, which must include a frame
+  /// FixedStackPseudoSourceValue - A specialized PseudoSourceValue
+  /// for holding FixedStack values, which must include a frame
   /// index.
-  class VISIBILITY_HIDDEN StackObjectPseudoSourceValue
+  class VISIBILITY_HIDDEN FixedStackPseudoSourceValue
     : public PseudoSourceValue {
     const int FI;
   public:
-    explicit StackObjectPseudoSourceValue(int fi) : FI(fi) {}
+    explicit FixedStackPseudoSourceValue(int fi) : FI(fi) {}
 
     virtual bool isConstant(const MachineFrameInfo *MFI) const;
 
     virtual void printCustom(raw_ostream &OS) const {
-      if (FI < 0)
-        OS << "Fixed";
-      OS << "StackObject" << FI;
+      OS << "FixedStack" << FI;
     }
   };
 }
 
 static ManagedStatic<std::map<int, const PseudoSourceValue *> > FSValues;
 
-const PseudoSourceValue *PseudoSourceValue::getStackObject(int FI) {
+const PseudoSourceValue *PseudoSourceValue::getFixedStack(int FI) {
   const PseudoSourceValue *&V = (*FSValues)[FI];
   if (!V)
-    V = new StackObjectPseudoSourceValue(FI);
+    V = new FixedStackPseudoSourceValue(FI);
   return V;
 }
 
@@ -91,7 +89,6 @@ bool PseudoSourceValue::isConstant(const MachineFrameInfo *) const {
   return false;
 }
 
-bool
-StackObjectPseudoSourceValue::isConstant(const MachineFrameInfo *MFI) const {
+bool FixedStackPseudoSourceValue::isConstant(const MachineFrameInfo *MFI) const{
   return MFI && MFI->isImmutableObjectIndex(FI);
 }
