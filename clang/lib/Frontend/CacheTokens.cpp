@@ -20,11 +20,12 @@
 #include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Path.h"
-#include "llvm/ADT/StringMap.h"
 
 // FIXME: put this somewhere else?
 #ifndef S_ISDIR
@@ -69,7 +70,7 @@ public:
 
   bool isFile() const { return Kind == IsFE; }
 
-  const char* getCString() const {
+  llvm::StringRef getString() const {
     return Kind == IsFE ? FE->getName() : Path;
   }
 
@@ -113,14 +114,14 @@ public:
   typedef const PTHEntry& data_type_ref;
 
   static unsigned ComputeHash(PTHEntryKeyVariant V) {
-    return BernsteinHash(V.getCString());
+    return llvm::HashString(V.getString());
   }
 
   static std::pair<unsigned,unsigned>
   EmitKeyDataLength(llvm::raw_ostream& Out, PTHEntryKeyVariant V,
                     const PTHEntry& E) {
 
-    unsigned n = strlen(V.getCString()) + 1 + 1;
+    unsigned n = V.getString().size() + 1 + 1;
     ::Emit16(Out, n);
 
     unsigned m = V.getRepresentationLength() + (V.isFile() ? 4 + 4 : 0);
@@ -133,7 +134,7 @@ public:
     // Emit the entry kind.
     ::Emit8(Out, (unsigned) V.getKind());
     // Emit the string.
-    Out.write(V.getCString(), n - 1);
+    Out.write(V.getString().data(), n - 1);
   }
 
   static void EmitData(llvm::raw_ostream& Out, PTHEntryKeyVariant V,
@@ -585,7 +586,7 @@ public:
   typedef data_type data_type_ref;
 
   static unsigned ComputeHash(PTHIdKey* key) {
-    return BernsteinHash(key->II->getName());
+    return llvm::HashString(key->II->getNameStr());
   }
 
   static std::pair<unsigned,unsigned>
