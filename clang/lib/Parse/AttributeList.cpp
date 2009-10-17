@@ -45,18 +45,15 @@ AttributeList::~AttributeList() {
 }
 
 AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
-  const char *Str = Name->getName();
-  unsigned Len = Name->getLength();
+  llvm::StringRef AttrName = Name->getNameStr();
 
   // Normalize the attribute name, __foo__ becomes foo.
-  if (Len > 4 && Str[0] == '_' && Str[1] == '_' &&
-      Str[Len - 2] == '_' && Str[Len - 1] == '_') {
-    Str += 2;
-    Len -= 4;
-  }
+  if (AttrName.startswith("__") && AttrName.endswith("__"))
+    AttrName = AttrName.substr(2, AttrName.size() - 4);
 
   // FIXME: Hand generating this is neither smart nor efficient.
-  switch (Len) {
+  const char *Str = AttrName.data();
+  switch (AttrName.size()) {
   case 4:
     if (!memcmp(Str, "weak", 4)) return AT_weak;
     if (!memcmp(Str, "pure", 4)) return AT_pure;
