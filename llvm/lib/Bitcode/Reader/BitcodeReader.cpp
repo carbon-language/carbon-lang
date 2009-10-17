@@ -2044,14 +2044,21 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     }
 
     case bitc::FUNC_CODE_INST_MALLOC: { // MALLOC: [instty, op, align]
+      // Autoupgrade malloc instruction to malloc call.
       if (Record.size() < 3)
         return Error("Invalid MALLOC record");
       const PointerType *Ty =
         dyn_cast_or_null<PointerType>(getTypeByID(Record[0]));
       Value *Size = getFnValueByID(Record[1], Type::getInt32Ty(Context));
-      unsigned Align = Record[2];
       if (!Ty || !Size) return Error("Invalid MALLOC record");
-      I = new MallocInst(Ty->getElementType(), Size, (1 << Align) >> 1);
+      if (!CurBB) return Error("Invalid malloc instruction with no BB");
+      const Type* Int32Ty = IntegerType::getInt32Ty(CurBB->getContext());
+      if (Size->getType() != Int32Ty)
+        Size = CastInst::CreateIntegerCast(Size, Int32Ty, false /*ZExt*/,
+                                           "", CurBB);
+      Value* Malloc = CallInst::CreateMalloc(CurBB, Int32Ty,
+                                             Ty->getElementType(), Size, NULL);
+      I = cast<Instruction>(Malloc);
       InstructionList.push_back(I);
       break;
     }

@@ -29,6 +29,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
@@ -121,7 +122,7 @@ static bool isUnmovableInstruction(Instruction *I) {
   if (I->getOpcode() == Instruction::PHI ||
       I->getOpcode() == Instruction::Alloca ||
       I->getOpcode() == Instruction::Load ||
-      I->getOpcode() == Instruction::Malloc ||
+      I->getOpcode() == Instruction::Malloc || isMalloc(I) ||
       I->getOpcode() == Instruction::Invoke ||
       (I->getOpcode() == Instruction::Call &&
        !isa<DbgInfoIntrinsic>(I)) ||

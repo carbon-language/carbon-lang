@@ -602,6 +602,9 @@ lltok::Kind LLLexer::LexIdentifier() {
     // Scan CurPtr ahead, seeing if there is just whitespace before the newline.
     if (JustWhitespaceNewLine(CurPtr))
       return lltok::kw_zeroext;
+  } else if (Len == 6 && !memcmp(StartChar, "malloc", 6)) {
+    // Autoupgrade malloc instruction
+    return lltok::kw_malloc;
   }
 
   // Keywords for instructions.
@@ -641,7 +644,6 @@ lltok::Kind LLLexer::LexIdentifier() {
   INSTKEYWORD(unwind,      Unwind);
   INSTKEYWORD(unreachable, Unreachable);
 
-  INSTKEYWORD(malloc,      Malloc);
   INSTKEYWORD(alloca,      Alloca);
   INSTKEYWORD(free,        Free);
   INSTKEYWORD(load,        Load);

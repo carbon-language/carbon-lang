@@ -69,6 +69,27 @@ bool LLParser::Run() {
 /// ValidateEndOfModule - Do final validity and sanity checks at the end of the
 /// module.
 bool LLParser::ValidateEndOfModule() {
+  // Update auto-upgraded malloc calls from "autoupgrade_malloc" to "malloc".
+  if (MallocF) {
+    MallocF->setName("malloc");
+    // If setName() does not set the name to "malloc", then there is already a 
+    // declaration of "malloc".  In that case, iterate over all calls to MallocF
+    // and get them to call the declared "malloc" instead.
+    if (MallocF->getName() != "malloc") {
+      Function* realMallocF = M->getFunction("malloc");
+      for (User::use_iterator UI = MallocF->use_begin(), UE= MallocF->use_end();
+           UI != UE; ) {
+        User* user = *UI;
+        UI++;
+        if (CallInst *Call = dyn_cast<CallInst>(user))
+          Call->setCalledFunction(realMallocF);
+      }
+      if (!realMallocF->doesNotAlias(0)) realMallocF->setDoesNotAlias(0);
+      MallocF->eraseFromParent();
+      MallocF = NULL;
+    }
+  }
+
   if (!ForwardRefTypes.empty())
     return Error(ForwardRefTypes.begin()->second.second,
                  "use of undefined type named '" +
@@ -2783,8 +2804,8 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_call:           return ParseCall(Inst, PFS, false);
   case lltok::kw_tail:           return ParseCall(Inst, PFS, true);
   // Memory.
-  case lltok::kw_alloca:
-  case lltok::kw_malloc:         return ParseAlloc(Inst, PFS, KeywordVal);
+  case lltok::kw_alloca:         return ParseAlloc(Inst, PFS);
+  case lltok::kw_malloc:         return ParseAlloc(Inst, PFS, BB, false);
   case lltok::kw_free:           return ParseFree(Inst, PFS);
   case lltok::kw_load:           return ParseLoad(Inst, PFS, false);
   case lltok::kw_store:          return ParseStore(Inst, PFS, false);
@@ -3445,7 +3466,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
 ///   ::= 'malloc' Type (',' TypeAndValue)? (',' OptionalInfo)?
 ///   ::= 'alloca' Type (',' TypeAndValue)? (',' OptionalInfo)?
 bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
-                          unsigned Opc) {
+                          BasicBlock* BB, bool isAlloca) {
   PATypeHolder Ty(Type::getVoidTy(Context));
   Value *Size = 0;
   LocTy SizeLoc;
@@ -3466,10 +3487,21 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
   if (Size && Size->getType() != Type::getInt32Ty(Context))
     return Error(SizeLoc, "element count must be i32");
 
-  if (Opc == Instruction::Malloc)
-    Inst = new MallocInst(Ty, Size, Alignment);
-  else
+  if (isAlloca)
     Inst = new AllocaInst(Ty, Size, Alignment);
+  else {
+    // Autoupgrade old malloc instruction to malloc call.
+    const Type* IntPtrTy = Type::getInt32Ty(Context);
+    const Type* Int8PtrTy = PointerType::getUnqual(Type::getInt8Ty(Context));
+    if (!MallocF)
+      // Prototype malloc as "void *autoupgrade_malloc(int32)".
+      MallocF = cast<Function>(M->getOrInsertFunction("autoupgrade_malloc",
+                               Int8PtrTy, IntPtrTy, NULL));
+      // "autoupgrade_malloc" updated to "malloc" in ValidateEndOfModule().
+
+    Inst = cast<Instruction>(CallInst::CreateMalloc(BB, IntPtrTy, Ty,
+                                                    Size, MallocF));
+  }
   return false;
 }
 

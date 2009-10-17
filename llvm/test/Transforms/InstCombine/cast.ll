@@ -102,8 +102,8 @@ define i32* @test12() {
         %p = malloc [4 x i8]            ; <[4 x i8]*> [#uses=1]
         %c = bitcast [4 x i8]* %p to i32*               ; <i32*> [#uses=1]
         ret i32* %c
-; CHECK: %p = malloc i32
-; CHECK: ret i32* %p
+; CHECK: %malloccall = tail call i8* @malloc(i32 ptrtoint ([4 x i8]* getelementptr ([4 x i8]* null, i32 1) to i32))
+; CHECK: ret i32* %c
 }
 
 define i8* @test13(i64 %A) {
@@ -274,9 +274,9 @@ define void @test32(double** %tmp) {
         %tmp8.upgrd.1 = bitcast [16 x i8]* %tmp8 to double*             ; <double*> [#uses=1]
         store double* %tmp8.upgrd.1, double** %tmp
         ret void
-; CHECK: %tmp81 = malloc [2 x double]
-; CHECK: %tmp81.sub = getelementptr inbounds [2 x double]* %tmp81, i64 0, i64 0
-; CHECK: store double* %tmp81.sub, double** %tmp
+; CHECK: %malloccall = tail call i8* @malloc(i32 ptrtoint ([16 x i8]* getelementptr ([16 x i8]* null, i32 1) to i32))
+; CHECK: %tmp8.upgrd.1 = bitcast i8* %malloccall to double*
+; CHECK: store double* %tmp8.upgrd.1, double** %tmp
 ; CHECK: ret void
 }
 

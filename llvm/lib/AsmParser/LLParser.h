@@ -75,9 +75,11 @@ namespace llvm {
     std::map<std::string, std::pair<GlobalValue*, LocTy> > ForwardRefVals;
     std::map<unsigned, std::pair<GlobalValue*, LocTy> > ForwardRefValIDs;
     std::vector<GlobalValue*> NumberedVals;
+    Function* MallocF;
   public:
     LLParser(MemoryBuffer *F, SourceMgr &SM, SMDiagnostic &Err, Module *m) : 
-      Context(m->getContext()), Lex(F, SM, Err, m->getContext()), M(m) {}
+      Context(m->getContext()), Lex(F, SM, Err, m->getContext()),
+      M(m), MallocF(NULL) {}
     bool Run();
 
     LLVMContext& getContext() { return Context; }
@@ -276,7 +278,8 @@ namespace llvm {
     bool ParseShuffleVector(Instruction *&I, PerFunctionState &PFS);
     bool ParsePHI(Instruction *&I, PerFunctionState &PFS);
     bool ParseCall(Instruction *&I, PerFunctionState &PFS, bool isTail);
-    bool ParseAlloc(Instruction *&I, PerFunctionState &PFS, unsigned Opc);
+    bool ParseAlloc(Instruction *&I, PerFunctionState &PFS,
+                    BasicBlock *BB = 0, bool isAlloca = true);
     bool ParseFree(Instruction *&I, PerFunctionState &PFS);
     bool ParseLoad(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
     bool ParseStore(Instruction *&I, PerFunctionState &PFS, bool isVolatile);

@@ -1,4 +1,4 @@
-//===- RaiseAllocations.cpp - Convert @malloc & @free calls to insts ------===//
+//===- RaiseAllocations.cpp - Convert @free calls to insts ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the RaiseAllocations pass which convert malloc and free
-// calls to malloc and free instructions.
+// This file defines the RaiseAllocations pass which convert free calls to free
+// instructions.
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,19 +29,19 @@ using namespace llvm;
 STATISTIC(NumRaised, "Number of allocations raised");
 
 namespace {
-  // RaiseAllocations - Turn @malloc and @free calls into the appropriate
+  // RaiseAllocations - Turn @free calls into the appropriate
   // instruction.
   //
   class VISIBILITY_HIDDEN RaiseAllocations : public ModulePass {
-    Function *MallocFunc;   // Functions in the module we are processing
-    Function *FreeFunc;     // Initialized by doPassInitializationVirt
+    Function *FreeFunc;   // Functions in the module we are processing
+                          // Initialized by doPassInitializationVirt
   public:
     static char ID; // Pass identification, replacement for typeid
     RaiseAllocations() 
-      : ModulePass(&ID), MallocFunc(0), FreeFunc(0) {}
+      : ModulePass(&ID), FreeFunc(0) {}
 
     // doPassInitialization - For the raise allocations pass, this finds a
-    // declaration for malloc and free if they exist.
+    // declaration for free if it exists.
     //
     void doInitialization(Module &M);
 
@@ -61,50 +61,16 @@ ModulePass *llvm::createRaiseAllocationsPass() {
 }
 
 
-// If the module has a symbol table, they might be referring to the malloc and
-// free functions.  If this is the case, grab the method pointers that the
-// module is using.
+// If the module has a symbol table, they might be referring to the free 
+// function.  If this is the case, grab the method pointers that the module is
+// using.
 //
-// Lookup @malloc and @free in the symbol table, for later use.  If they don't
+// Lookup @free in the symbol table, for later use.  If they don't
 // exist, or are not external, we do not worry about converting calls to that
 // function into the appropriate instruction.
 //
 void RaiseAllocations::doInitialization(Module &M) {
-  // Get Malloc and free prototypes if they exist!
-  MallocFunc = M.getFunction("malloc");
-  if (MallocFunc) {
-    const FunctionType* TyWeHave = MallocFunc->getFunctionType();
-
-    // Get the expected prototype for malloc
-    const FunctionType *Malloc1Type = 
-      FunctionType::get(Type::getInt8PtrTy(M.getContext()),
-                      std::vector<const Type*>(1,
-                                      Type::getInt64Ty(M.getContext())), false);
-
-    // Chck to see if we got the expected malloc
-    if (TyWeHave != Malloc1Type) {
-      // Check to see if the prototype is wrong, giving us i8*(i32) * malloc
-      // This handles the common declaration of: 'void *malloc(unsigned);'
-      const FunctionType *Malloc2Type = 
-        FunctionType::get(PointerType::getUnqual(
-                          Type::getInt8Ty(M.getContext())),
-                          std::vector<const Type*>(1, 
-                                      Type::getInt32Ty(M.getContext())), false);
-      if (TyWeHave != Malloc2Type) {
-        // Check to see if the prototype is missing, giving us 
-        // i8*(...) * malloc
-        // This handles the common declaration of: 'void *malloc();'
-        const FunctionType *Malloc3Type = 
-          FunctionType::get(PointerType::getUnqual(
-                                    Type::getInt8Ty(M.getContext())), 
-                                    true);
-        if (TyWeHave != Malloc3Type)
-          // Give up
-          MallocFunc = 0;
-      }
-    }
-  }
-
+  // Get free prototype if it exists!
   FreeFunc = M.getFunction("free");
   if (FreeFunc) {
     const FunctionType* TyWeHave = FreeFunc->getFunctionType();
@@ -138,72 +104,18 @@ void RaiseAllocations::doInitialization(Module &M) {
   }
 
   // Don't mess with locally defined versions of these functions...
-  if (MallocFunc && !MallocFunc->isDeclaration()) MallocFunc = 0;
   if (FreeFunc && !FreeFunc->isDeclaration())     FreeFunc = 0;
 }
 
 // run - Transform calls into instructions...
 //
 bool RaiseAllocations::runOnModule(Module &M) {
-  // Find the malloc/free prototypes...
+  // Find the free prototype...
   doInitialization(M);
   
   bool Changed = false;
 
-  // First, process all of the malloc calls...
-  if (MallocFunc) {
-    std::vector<User*> Users(MallocFunc->use_begin(), MallocFunc->use_end());
-    std::vector<Value*> EqPointers;   // Values equal to MallocFunc
-    while (!Users.empty()) {
-      User *U = Users.back();
-      Users.pop_back();
-
-      if (Instruction *I = dyn_cast<Instruction>(U)) {
-        CallSite CS = CallSite::get(I);
-        if (CS.getInstruction() && !CS.arg_empty() &&
-            (CS.getCalledFunction() == MallocFunc ||
-             std::find(EqPointers.begin(), EqPointers.end(),
-                       CS.getCalledValue()) != EqPointers.end())) {
-
-          Value *Source = *CS.arg_begin();
-
-          // If no prototype was provided for malloc, we may need to cast the
-          // source size.
-          if (Source->getType() != Type::getInt32Ty(M.getContext()))
-            Source = 
-              CastInst::CreateIntegerCast(Source, 
-                                          Type::getInt32Ty(M.getContext()), 
-                                          false/*ZExt*/,
-                                          "MallocAmtCast", I);
-
-          MallocInst *MI = new MallocInst(Type::getInt8Ty(M.getContext()),
-                                          Source, "", I);
-          MI->takeName(I);
-          I->replaceAllUsesWith(MI);
-
-          // If the old instruction was an invoke, add an unconditional branch
-          // before the invoke, which will become the new terminator.
-          if (InvokeInst *II = dyn_cast<InvokeInst>(I))
-            BranchInst::Create(II->getNormalDest(), I);
-
-          // Delete the old call site
-          I->eraseFromParent();
-          Changed = true;
-          ++NumRaised;
-        }
-      } else if (GlobalValue *GV = dyn_cast<GlobalValue>(U)) {
-        Users.insert(Users.end(), GV->use_begin(), GV->use_end());
-        EqPointers.push_back(GV);
-      } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
-        if (CE->isCast()) {
-          Users.insert(Users.end(), CE->use_begin(), CE->use_end());
-          EqPointers.push_back(CE);
-        }
-      }
-    }
-  }
-
-  // Next, process all free calls...
+  // Process all free calls...
   if (FreeFunc) {
     std::vector<User*> Users(FreeFunc->use_begin(), FreeFunc->use_end());
     std::vector<Value*> EqPointers;   // Values equal to FreeFunc

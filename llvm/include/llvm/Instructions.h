@@ -1047,7 +1047,7 @@ public:
                              const Twine &Name = "");
   static Value *CreateMalloc(BasicBlock *InsertAtEnd, const Type *IntPtrTy,
                              const Type *AllocTy, Value *ArraySize = 0,
-                             const Twine &Name = "");
+                             Function* MallocF = 0, const Twine &Name = "");
 
   ~CallInst();
 
@@ -1151,6 +1151,11 @@ public:
   /// instruction
   const Value *getCalledValue() const { return Op<0>(); }
         Value *getCalledValue()       { return Op<0>(); }
+
+  /// setCalledFunction - Set the function called
+  void setCalledFunction(Value* Fn) {
+    Op<0>() = Fn;
+  }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CallInst *) { return true; }

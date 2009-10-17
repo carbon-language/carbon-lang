@@ -24,6 +24,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Target/TargetData.h"
 using namespace llvm;
 
 STATISTIC(NumBounceSites, "Number of sites modified");
@@ -66,20 +67,28 @@ bool IndMemRemPass::runOnModule(Module &M) {
   }
   if (Function* F = M.getFunction("malloc")) {
     if (F->isDeclaration() && F->arg_size() == 1 && !F->use_empty()) {
-      Function* FN = Function::Create(F->getFunctionType(), 
-                                      GlobalValue::LinkOnceAnyLinkage,
-                                      "malloc_llvm_bounce", &M);
-      FN->setDoesNotAlias(0);
-      BasicBlock* bb = BasicBlock::Create(M.getContext(), "entry",FN);
-      Instruction* c = CastInst::CreateIntegerCast(
-          FN->arg_begin(), Type::getInt32Ty(M.getContext()), false, "c", bb);
-      Instruction* a = new MallocInst(Type::getInt8Ty(M.getContext()),
-                                      c, "m", bb);
-      ReturnInst::Create(M.getContext(), a, bb);
-      ++NumBounce;
-      NumBounceSites += F->getNumUses();
-      F->replaceAllUsesWith(FN);
-      changed = true;
+      TargetData* TD = getAnalysisIfAvailable<TargetData>();
+      if (TD) { 
+        Function* FN = Function::Create(F->getFunctionType(), 
+                                        GlobalValue::LinkOnceAnyLinkage,
+                                        "malloc_llvm_bounce", &M);
+        F->replaceAllUsesWith(FN);
+        FN->setDoesNotAlias(0);
+        BasicBlock* bb = BasicBlock::Create(M.getContext(), "entry", FN);
+        const Type* IntPtrTy = TD->getIntPtrType(M.getContext());
+        Value* c = FN->arg_begin();
+        if (FN->arg_begin()->getType() != IntPtrTy)
+          c = CastInst::CreateIntegerCast(FN->arg_begin(), IntPtrTy, false,
+                                          "c", bb);
+        Value* a = CallInst::CreateMalloc(bb, IntPtrTy,
+                                          Type::getInt8Ty(M.getContext()),
+                                          c, NULL, "m");
+        bb->getInstList().push_back(cast<Instruction>(a));
+        ReturnInst::Create(M.getContext(), a, bb);
+        ++NumBounce;
+        NumBounceSites += F->getNumUses();
+        changed = true;
+      }
     }
   }
   return changed;
