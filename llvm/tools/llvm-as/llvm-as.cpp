@@ -50,34 +50,7 @@ static cl::opt<bool>
 DisableVerify("disable-verify", cl::Hidden,
               cl::desc("Do not run verifier on input LLVM (dangerous!)"));
 
-int main(int argc, char **argv) {
-  // Print a stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal();
-  PrettyStackTraceProgram X(argc, argv);
-  LLVMContext &Context = getGlobalContext();
-  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-  cl::ParseCommandLineOptions(argc, argv, "llvm .ll -> .bc assembler\n");
-
-  // Parse the file now...
-  SMDiagnostic Err;
-  std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename, Err, Context));
-  if (M.get() == 0) {
-    Err.Print(argv[0], errs());
-    return 1;
-  }
-
-  if (!DisableVerify) {
-    std::string Err;
-    if (verifyModule(*M.get(), ReturnStatusAction, &Err)) {
-      errs() << argv[0]
-             << ": assembly parsed, but does not verify as correct!\n";
-      errs() << Err;
-      return 1;
-    } 
-  }
-
-  if (DumpAsm) errs() << "Here's the assembly:\n" << *M.get();
-
+static void WriteOutputFile(const Module *M) {
   // Infer the output filename if needed.
   if (OutputFilename.empty()) {
     if (InputFilename == "-") {
@@ -106,12 +79,43 @@ int main(int argc, char **argv) {
                       raw_fd_ostream::F_Binary));
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
+    exit(1);
+  }
+
+  if (Force || !CheckBitcodeOutputToConsole(*Out, true))
+    WriteBitcodeToFile(M, *Out);
+}
+
+int main(int argc, char **argv) {
+  // Print a stack trace if we signal out.
+  sys::PrintStackTraceOnErrorSignal();
+  PrettyStackTraceProgram X(argc, argv);
+  LLVMContext &Context = getGlobalContext();
+  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+  cl::ParseCommandLineOptions(argc, argv, "llvm .ll -> .bc assembler\n");
+
+  // Parse the file now...
+  SMDiagnostic Err;
+  std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename, Err, Context));
+  if (M.get() == 0) {
+    Err.Print(argv[0], errs());
     return 1;
   }
 
+  if (!DisableVerify) {
+    std::string Err;
+    if (verifyModule(*M.get(), ReturnStatusAction, &Err)) {
+      errs() << argv[0]
+             << ": assembly parsed, but does not verify as correct!\n";
+      errs() << Err;
+      return 1;
+    }
+  }
+
+  if (DumpAsm) errs() << "Here's the assembly:\n" << *M.get();
+
   if (!DisableOutput)
-    if (Force || !CheckBitcodeOutputToConsole(*Out, true))
-      WriteBitcodeToFile(M.get(), *Out);
+    WriteOutputFile(M.get());
+
   return 0;
 }
-
