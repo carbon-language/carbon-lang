@@ -1655,8 +1655,7 @@ void SelectionDAGLegalize::ExpandDYNAMIC_STACKALLOC(SDNode* Node,
 }
 
 /// LegalizeSetCCCondCode - Legalize a SETCC with given LHS and RHS and
-/// condition code CC on the current target. This routine assumes LHS and rHS
-/// have already been legalized by LegalizeSetCCOperands. It expands SETCC with
+/// condition code CC on the current target. This routine expands SETCC with
 /// illegal condition code into AND / OR of multiple SETCC values.
 void SelectionDAGLegalize::LegalizeSetCCCondCode(EVT VT,
                                                  SDValue &LHS, SDValue &RHS,
