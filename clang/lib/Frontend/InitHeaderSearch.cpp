@@ -369,6 +369,12 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
                                       "x86_64-unknown-linux-gnu",
                                       "x86_64-unknown-linux-gnu",
                                       triple);
+          // Gentoo x86 2009.1 stable
+          AddGnuCPlusPlusIncludePaths(
+             "/usr/lib/gcc/i686-pc-linux-gnu/4.3.4/include/g++-v4",
+             "i686-pc-linux-gnu",
+             "i686-pc-linux-gnu",
+             triple);
           // Gentoo x86 2009.0 stable
           AddGnuCPlusPlusIncludePaths(
              "/usr/lib/gcc/i686-pc-linux-gnu/4.3.2/include/g++-v4",
