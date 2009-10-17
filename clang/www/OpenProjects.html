@@ -97,6 +97,11 @@ supported.</li>
 that demonstrates the problem down to something small.  There are many ways to
 do this; ask on cfe-dev for advice.</p>
 
+<li><b>StringRef'ize APIs</b>: A thankless but incredibly useful project is
+StringRef'izing (converting to use <tt>llvm::StringRef</tt> instead of <tt>const
+char *</tt> or <tt>std::string</tt>) various clang interfaces. This generally
+simplifies the code and makes it more efficient.</li>
+
 </div>
 </body>
 </html>
