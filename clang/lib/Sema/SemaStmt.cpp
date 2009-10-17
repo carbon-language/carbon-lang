@@ -407,11 +407,20 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtArg Switch,
   QualType CondTypeBeforePromotion =
       GetTypeBeforeIntegralPromotion(CondExpr);
 
-  if (!CondExpr->isTypeDependent() &&
-      !CondType->isIntegerType()) { // C99 6.8.4.2p1
-    Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer)
-      << CondType << CondExpr->getSourceRange();
-    return StmtError();
+  if (!CondExpr->isTypeDependent()) {
+    if (!CondType->isIntegerType()) { // C99 6.8.4.2p1
+      Diag(SwitchLoc, diag::err_typecheck_statement_requires_integer)
+          << CondType << CondExpr->getSourceRange();
+      return StmtError();
+    }
+
+    if (CondTypeBeforePromotion->isBooleanType()) {
+      // switch(bool_expr) {...} is often a programmer error, e.g.
+      //   switch(n && mask) { ... }  // Doh - should be "n & mask".
+      // One can always use an if statement instead of switch(bool_expr).
+      Diag(SwitchLoc, diag::warn_bool_switch_condition)
+          << CondExpr->getSourceRange();
+    }
   }
 
   // Get the bitwidth of the switched-on value before promotions.  We must

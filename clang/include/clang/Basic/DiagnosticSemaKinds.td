@@ -2166,6 +2166,8 @@ def err_break_not_in_loop_or_switch : Error<
 def err_default_not_in_switch : Error<
   "'default' statement not in switch statement">;
 def err_case_not_in_switch : Error<"'case' statement not in switch statement">;
+def warn_bool_switch_condition : Warning<
+  "switch condition is a bool">;
 def warn_case_value_overflow : Warning<
   "overflow converting case value to switch condition type (%0 to %1)">;
 def err_duplicate_case : Error<"duplicate case value '%0'">;
