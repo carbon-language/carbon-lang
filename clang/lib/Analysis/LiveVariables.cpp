@@ -21,9 +21,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
-
-#include <string.h>
-#include <stdio.h>
+#include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
 
@@ -341,20 +339,19 @@ void LiveVariables::dumpLiveness(const ValTy& V, SourceManager& SM) const {
   for (AnalysisDataTy::decl_iterator I = AD.begin_decl(),
                                      E = AD.end_decl(); I!=E; ++I)
     if (V.getDeclBit(I->second)) {
-      fprintf(stderr, "  %s <", I->first->getIdentifier()->getName());
+      llvm::errs() << "  " << I->first->getIdentifier()->getNameStr() << " <";
       I->first->getLocation().dump(SM);
-      fprintf(stderr, ">\n");
+      llvm::errs() << ">\n";
     }
 }
 
 void LiveVariables::dumpBlockLiveness(SourceManager& M) const {
   for (BlockDataMapTy::iterator I = getBlockDataMap().begin(),
        E = getBlockDataMap().end(); I!=E; ++I) {
-    fprintf(stderr, "\n[ B%d (live variables at block exit) ]\n",
-            I->first->getBlockID());
-
+    llvm::errs() << "\n[ B" << I->first->getBlockID()
+                 << " (live variables at block exit) ]\n";
     dumpLiveness(I->second,M);
   }
 
-  fprintf(stderr,"\n");
+  llvm::errs() << "\n";
 }
