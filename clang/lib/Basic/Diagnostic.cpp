@@ -25,6 +25,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include <vector>
 #include <map>
 #include <cstring>
@@ -762,9 +763,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
         HandlePluralModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
       } else {
         assert(ModifierLen == 0 && "Unknown integer modifier");
-        // FIXME: Optimize
-        std::string S = llvm::itostr(Val);
-        OutStr.append(S.begin(), S.end());
+        llvm::raw_svector_ostream(OutStr) << Val;
       }
       break;
     }
@@ -779,10 +778,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
         HandlePluralModifier((unsigned)Val, Argument, ArgumentLen, OutStr);
       } else {
         assert(ModifierLen == 0 && "Unknown integer modifier");
-
-        // FIXME: Optimize
-        std::string S = llvm::utostr_32(Val);
-        OutStr.append(S.begin(), S.end());
+        llvm::raw_svector_ostream(OutStr) << Val;
       }
       break;
     }
@@ -798,9 +794,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
         continue;
       }
 
-      OutStr.push_back('\'');
-      OutStr.append(II->getName(), II->getName() + II->getLength());
-      OutStr.push_back('\'');
+      llvm::raw_svector_ostream(OutStr) << '\'' << II->getNameStr() << '\'';
       break;
     }
     case Diagnostic::ak_qualtype:
