@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringExtras.h"
 #include <cassert>
 using namespace llvm;
 
@@ -46,20 +47,6 @@ void StringMapImpl::init(unsigned InitSize) {
 }
 
 
-/// HashString - Compute a hash code for the specified string.
-///
-static unsigned HashString(const char *Start, const char *End) {
-  // Bernstein hash function.
-  unsigned int Result = 0;
-  // TODO: investigate whether a modified bernstein hash function performs
-  // better: http://eternallyconfuzzled.com/tuts/algorithms/jsw_tut_hashing.aspx
-  //   X*33+c -> X*33^c
-  while (Start != End)
-    Result = Result * 33 + *Start++;
-  Result = Result + (Result >> 5);
-  return Result;
-}
-
 /// LookupBucketFor - Look up the bucket that the specified string should end
 /// up in.  If it already exists as a key in the map, the Item pointer for the
 /// specified bucket will be non-null.  Otherwise, it will be null.  In either
@@ -71,7 +58,7 @@ unsigned StringMapImpl::LookupBucketFor(const StringRef &Name) {
     init(16);
     HTSize = NumBuckets;
   }
-  unsigned FullHashValue = HashString(Name.begin(), Name.end());
+  unsigned FullHashValue = HashString(Name);
   unsigned BucketNo = FullHashValue & (HTSize-1);
   
   unsigned ProbeAmt = 1;
@@ -126,7 +113,7 @@ unsigned StringMapImpl::LookupBucketFor(const StringRef &Name) {
 int StringMapImpl::FindKey(const StringRef &Key) const {
   unsigned HTSize = NumBuckets;
   if (HTSize == 0) return -1;  // Really empty table?
-  unsigned FullHashValue = HashString(Key.begin(), Key.end());
+  unsigned FullHashValue = HashString(Key);
   unsigned BucketNo = FullHashValue & (HTSize-1);
   
   unsigned ProbeAmt = 1;
