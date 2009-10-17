@@ -95,8 +95,7 @@ int Main(int argc, char** argv) {
       (argc, argv, "LLVM Compiler Driver (Work In Progress)", true);
 
     PluginLoader Plugins;
-    Plugins.PopulateLanguageMap(langMap);
-    Plugins.PopulateCompilationGraph(graph);
+    Plugins.RunInitialization(langMap, graph);
 
     if (CheckGraph) {
       int ret = graph.Check();

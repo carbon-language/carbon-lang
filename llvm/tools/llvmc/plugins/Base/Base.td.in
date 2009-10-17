@@ -65,6 +65,18 @@ def OptList : OptionList<[
     (help "Pass options to opt"))
 ]>;
 
+// Option preprocessor.
+
+def Preprocess : OptionPreprocessor<
+(case (and (switch_on "O3"), (any_switch_on ["O0", "O1", "O2"])),
+           (unset_option ["O0", "O1", "O2"]),
+      (and (switch_on "O2"), (any_switch_on ["O0", "O1"])),
+           (unset_option ["O0", "O1"]),
+      (and (switch_on "O1"), (switch_on "O0")),
+           (unset_option "O0"))
+>;
+
+
 // Tools
 
 class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<

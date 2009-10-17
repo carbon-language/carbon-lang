@@ -68,6 +68,8 @@ def not_empty;
 def default;
 def single_input_file;
 def multiple_input_files;
+def any_switch_on;
+def any_not_empty;
 
 // Possible actions.
 
@@ -76,7 +78,9 @@ def forward;
 def forward_as;
 def stop_compilation;
 def unpack_values;
+def warning;
 def error;
+def unset_option;
 
 // Increase/decrease the edge weight.
 def inc_weight;
@@ -90,9 +94,14 @@ class PluginPriority<int p> {
       int priority = p;
 }
 
-// Option list - used to specify aliases and sometimes help strings.
+// Option list - a single place to specify options.
 class OptionList<list<dag> l> {
       list<dag> options = l;
+}
+
+// Option preprocessor - actions taken during plugin loading.
+class OptionPreprocessor<dag d> {
+      dag preprocessor = d;
 }
 
 // Map from suffixes to language names

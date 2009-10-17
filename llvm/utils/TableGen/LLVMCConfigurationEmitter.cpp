@@ -351,6 +351,9 @@ class OptionDescriptions {
 public:
   /// FindOption - exception-throwing wrapper for find().
   const OptionDescription& FindOption(const std::string& OptName) const;
+  /// FindSwitch - wrapper for FindOption that throws in case the option is not
+  /// a switch.
+  const OptionDescription& FindSwitch(const std::string& OptName) const;
 
   /// insertDescription - Insert new OptionDescription into
   /// OptionDescriptions list
@@ -370,6 +373,15 @@ OptionDescriptions::FindOption(const std::string& OptName) const
     return I->second;
   else
     throw OptName + ": no such option!";
+}
+
+const OptionDescription&
+OptionDescriptions::FindSwitch(const std::string& OptName) const
+{
+  const OptionDescription& OptDesc = this->FindOption(OptName);
+  if (!OptDesc.isSwitch())
+    throw OptName + ": incorrect option type - should be a switch!";
+  return OptDesc;
 }
 
 void OptionDescriptions::InsertDescription (const OptionDescription& o)
@@ -996,32 +1008,31 @@ bool EmitCaseTest0Args(const std::string& TestName, raw_ostream& O) {
   return false;
 }
 
-
-/// EmitCaseTest1Arg - Helper function used by EmitCaseConstructHandler().
-bool EmitCaseTest1Arg(const std::string& TestName,
-                      const DagInit& d,
-                      const OptionDescriptions& OptDescs,
-                      raw_ostream& O) {
-  checkNumberOfArguments(&d, 1);
+/// EmitCaseTest1ArgStr - Helper function used by EmitCaseTest1Arg();
+bool EmitCaseTest1ArgStr(const std::string& TestName,
+                         const DagInit& d,
+                         const OptionDescriptions& OptDescs,
+                         raw_ostream& O) {
   const std::string& OptName = InitPtrToString(d.getArg(0));
 
   if (TestName == "switch_on") {
-    const OptionDescription& OptDesc = OptDescs.FindOption(OptName);
-    if (!OptDesc.isSwitch())
-      throw OptName + ": incorrect option type - should be a switch!";
+    const OptionDescription& OptDesc = OptDescs.FindSwitch(OptName);
     O << OptDesc.GenVariableName();
     return true;
-  } else if (TestName == "input_languages_contain") {
+  }
+  else if (TestName == "input_languages_contain") {
     O << "InLangs.count(\"" << OptName << "\") != 0";
     return true;
-  } else if (TestName == "in_language") {
+  }
+  else if (TestName == "in_language") {
     // This works only for single-argument Tool::GenerateAction. Join
     // tools can process several files in different languages simultaneously.
 
     // TODO: make this work with Edge::Weight (if possible).
     O << "LangMap.GetLanguage(inFile) == \"" << OptName << '\"';
     return true;
-  } else if (TestName == "not_empty" || TestName == "empty") {
+  }
+  else if (TestName == "not_empty" || TestName == "empty") {
     const char* Test = (TestName == "empty") ? "" : "!";
 
     if (OptName == "o") {
@@ -1039,6 +1050,47 @@ bool EmitCaseTest1Arg(const std::string& TestName,
   }
 
   return false;
+}
+
+/// EmitCaseTest1ArgList - Helper function used by EmitCaseTest1Arg();
+bool EmitCaseTest1ArgList(const std::string& TestName,
+                          const DagInit& d,
+                          const OptionDescriptions& OptDescs,
+                          raw_ostream& O) {
+  const ListInit& L = *static_cast<ListInit*>(d.getArg(0));
+
+  if (TestName == "any_switch_on") {
+    bool isFirst = true;
+
+    for (ListInit::const_iterator B = L.begin(), E = L.end(); B != E; ++B) {
+      const std::string& OptName = InitPtrToString(*B);
+      const OptionDescription& OptDesc = OptDescs.FindSwitch(OptName);
+
+      if (isFirst)
+        isFirst = false;
+      else
+        O << " || ";
+      O << OptDesc.GenVariableName();
+    }
+
+    return true;
+  }
+
+  // TODO: implement any_not_empty, any_empty, switch_on [..], empty [..]
+
+  return false;
+}
+
+/// EmitCaseTest1Arg - Helper function used by EmitCaseConstructHandler();
+bool EmitCaseTest1Arg(const std::string& TestName,
+                      const DagInit& d,
+                      const OptionDescriptions& OptDescs,
+                      raw_ostream& O) {
+  checkNumberOfArguments(&d, 1);
+  if (typeid(*d.getArg(0)) == typeid(ListInit))
+    return EmitCaseTest1ArgList(TestName, d, OptDescs, O);
+  else
+    return EmitCaseTest1ArgStr(TestName, d, OptDescs, O);
 }
 
 /// EmitCaseTest2Args - Helper function used by EmitCaseConstructHandler().
@@ -1130,10 +1182,14 @@ void EmitCaseTest(const DagInit& d, unsigned IndentLevel,
     throw TestName + ": unknown edge property!";
 }
 
-// Emit code that handles the 'case' construct.
-// Takes a function object that should emit code for every case clause.
-// Callback's type is
-// void F(Init* Statement, unsigned IndentLevel, raw_ostream& O).
+/// EmitCaseConstructHandler - Emit code that handles the 'case'
+/// construct. Takes a function object that should emit code for every case
+/// clause.
+/// Callback's type is void F(Init* Statement, unsigned IndentLevel,
+/// raw_ostream& O).
+/// EmitElseIf parameter controls the type of condition that is emitted ('if
+/// (..) {...} else if (...) {} ... else {...}' vs. 'if (..)  {...} if(...)
+/// {...} ...').
 template <typename F>
 void EmitCaseConstructHandler(const Init* Dag, unsigned IndentLevel,
                               F Callback, bool EmitElseIf,
@@ -1876,10 +1932,108 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
   O << '\n';
 }
 
-/// EmitPopulateLanguageMap - Emit the PopulateLanguageMap() function.
+/// PreprocessOptionsCallback - Helper function passed to
+/// EmitCaseConstructHandler() by EmitPreprocessOptions().
+class PreprocessOptionsCallback {
+  const OptionDescriptions& OptDescs_;
+
+  void onUnsetOption(Init* i, unsigned IndentLevel, raw_ostream& O) {
+    const std::string& OptName = InitPtrToString(i);
+    const OptionDescription& OptDesc = OptDescs_.FindOption(OptName);
+    const OptionType::OptionType OptType = OptDesc.Type;
+
+    if (OptType == OptionType::Switch) {
+      O.indent(IndentLevel) << OptDesc.GenVariableName() << " = false;\n";
+    }
+    else if (OptType == OptionType::Parameter
+             || OptType == OptionType::Prefix) {
+      O.indent(IndentLevel) << OptDesc.GenVariableName() << " = \"\";\n";
+    }
+    else {
+      throw std::string("'unset_option' can only be applied to "
+                        "switches or parameter/prefix options.");
+    }
+  }
+
+  void processDag(const Init* I, unsigned IndentLevel, raw_ostream& O)
+  {
+    const DagInit& d = InitPtrToDag(I);
+    const std::string& OpName = d.getOperator()->getAsString();
+
+    // TOFIX: there is some duplication between this function and
+    // EmitActionHandler.
+    if (OpName == "warning") {
+      checkNumberOfArguments(&d, 1);
+      O.indent(IndentLevel) << "llvm::errs() << \""
+                            << InitPtrToString(d.getArg(0)) << "\";\n";
+    }
+    else if (OpName == "error") {
+      checkNumberOfArguments(&d, 1);
+      O.indent(IndentLevel) << "throw std::runtime_error(\""
+                            << InitPtrToString(d.getArg(0))
+                            << "\");\n";
+    }
+    else if (OpName == "unset_option") {
+      checkNumberOfArguments(&d, 1);
+      Init* I = d.getArg(0);
+      if (typeid(*I) == typeid(ListInit)) {
+        const ListInit& DagList = *static_cast<const ListInit*>(I);
+        for (ListInit::const_iterator B = DagList.begin(), E = DagList.end();
+             B != E; ++B)
+          this->onUnsetOption(*B, IndentLevel, O);
+      }
+      else {
+        this->onUnsetOption(I, IndentLevel, O);
+      }
+    }
+    else {
+      throw "Unknown operator in the option preprocessor: '" + OpName + "'!"
+        "\nOnly 'warning', 'error' and 'unset_option' are allowed.";
+    }
+  }
+
+public:
+
+  // TODO: Remove duplication.
+  void operator()(const Init* I, unsigned IndentLevel, raw_ostream& O) {
+    if (typeid(*I) == typeid(ListInit)) {
+      const ListInit& DagList = *static_cast<const ListInit*>(I);
+      for (ListInit::const_iterator B = DagList.begin(), E = DagList.end();
+           B != E; ++B)
+        this->processDag(*B, IndentLevel, O);
+    }
+    else {
+      this->processDag(I, IndentLevel, O);
+    }
+  }
+
+  PreprocessOptionsCallback(const OptionDescriptions& OptDescs)
+  : OptDescs_(OptDescs)
+  {}
+};
+
+/// EmitPreprocessOptions - Emit the PreprocessOptionsLocal() function.
+void EmitPreprocessOptions (const RecordKeeper& Records,
+                            const OptionDescriptions& OptDecs, raw_ostream& O)
+{
+  O << "void PreprocessOptionsLocal() {\n";
+
+  const RecordVector& OptionPreprocessors =
+    Records.getAllDerivedDefinitions("OptionPreprocessor");
+
+  for (RecordVector::const_iterator B = OptionPreprocessors.begin(),
+         E = OptionPreprocessors.end(); B!=E; ++B) {
+    DagInit* Case = (*B)->getValueAsDag("preprocessor");
+    EmitCaseConstructHandler(Case, Indent1, PreprocessOptionsCallback(OptDecs),
+                             false, OptDecs, O);
+  }
+
+  O << "}\n\n";
+}
+
+/// EmitPopulateLanguageMap - Emit the PopulateLanguageMapLocal() function.
 void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
 {
-  // Generate code
   O << "void PopulateLanguageMapLocal(LanguageMap& langMap) {\n";
 
   // Get the relevant field out of RecordKeeper
@@ -1922,17 +2076,16 @@ void IncDecWeight (const Init* i, unsigned IndentLevel,
     O.indent(IndentLevel) << "ret -= ";
   }
   else if (OpName == "error") {
-    O.indent(IndentLevel)
-      << "throw std::runtime_error(\"" <<
-      (d.getNumArgs() >= 1 ? InitPtrToString(d.getArg(0))
-       : "Unknown error!")
-      << "\");\n";
+    checkNumberOfArguments(&d, 1);
+    O.indent(IndentLevel) << "throw std::runtime_error(\""
+                          << InitPtrToString(d.getArg(0))
+                          << "\");\n";
     return;
   }
-
-  else
-    throw "Unknown operator in edge properties list: " + OpName + '!' +
+  else {
+    throw "Unknown operator in edge properties list: '" + OpName + "'!"
       "\nOnly 'inc_weight', 'dec_weight' and 'error' are allowed.";
+  }
 
   if (d.getNumArgs() > 0)
     O << InitPtrToInt(d.getArg(0)) << ";\n";
@@ -1981,7 +2134,7 @@ void EmitEdgeClasses (const RecordVector& EdgeVector,
   }
 }
 
-/// EmitPopulateCompilationGraph - Emit the PopulateCompilationGraph()
+/// EmitPopulateCompilationGraph - Emit the PopulateCompilationGraphLocal()
 /// function.
 void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
                                    const ToolDescriptions& ToolDescs,
@@ -2110,6 +2263,8 @@ void EmitRegisterPlugin(int Priority, raw_ostream& O) {
   O << "struct Plugin : public llvmc::BasePlugin {\n\n";
   O.indent(Indent1) << "int Priority() const { return "
                     << Priority << "; }\n\n";
+  O.indent(Indent1) << "void PreprocessOptions() const\n";
+  O.indent(Indent1) << "{ PreprocessOptionsLocal(); }\n\n";
   O.indent(Indent1) << "void PopulateLanguageMap(LanguageMap& langMap) const\n";
   O.indent(Indent1) << "{ PopulateLanguageMapLocal(langMap); }\n\n";
   O.indent(Indent1)
@@ -2129,7 +2284,8 @@ void EmitIncludes(raw_ostream& O) {
     << "#include \"llvm/CompilerDriver/Tool.h\"\n\n"
 
     << "#include \"llvm/ADT/StringExtras.h\"\n"
-    << "#include \"llvm/Support/CommandLine.h\"\n\n"
+    << "#include \"llvm/Support/CommandLine.h\"\n"
+    << "#include \"llvm/Support/raw_ostream.h\"\n\n"
 
     << "#include <cstdlib>\n"
     << "#include <stdexcept>\n\n"
@@ -2229,8 +2385,11 @@ void EmitPluginCode(const PluginData& Data, raw_ostream& O) {
 
   O << "namespace {\n\n";
 
-  // Emit PopulateLanguageMap() function
-  // (a language map maps from file extensions to language names).
+  // Emit PreprocessOptionsLocal() function.
+  EmitPreprocessOptions(Records, Data.OptDescs, O);
+
+  // Emit PopulateLanguageMapLocal() function
+  // (language map maps from file extensions to language names).
   EmitPopulateLanguageMap(Records, O);
 
   // Emit Tool classes.
@@ -2241,7 +2400,7 @@ void EmitPluginCode(const PluginData& Data, raw_ostream& O) {
   // Emit Edge# classes.
   EmitEdgeClasses(Data.Edges, Data.OptDescs, O);
 
-  // Emit PopulateCompilationGraph() function.
+  // Emit PopulateCompilationGraphLocal() function.
   EmitPopulateCompilationGraph(Data.Edges, Data.ToolDescs, O);
 
   // Emit code for plugin registration.
