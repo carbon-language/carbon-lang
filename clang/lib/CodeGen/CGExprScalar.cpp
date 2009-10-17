@@ -1379,18 +1379,20 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 }
 
 Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
+  const llvm::Type *ResTy = ConvertType(E->getType());
+  
   // If we have 0 && RHS, see if we can elide RHS, if so, just return 0.
   // If we have 1 && X, just emit X without inserting the control flow.
   if (int Cond = CGF.ConstantFoldsToSimpleInteger(E->getLHS())) {
     if (Cond == 1) { // If we have 1 && X, just emit X.
       Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
-      // ZExt result to int.
-      return Builder.CreateZExt(RHSCond, CGF.LLVMIntTy, "land.ext");
+      // ZExt result to int or bool.
+      return Builder.CreateZExtOrBitCast(RHSCond, ResTy, "land.ext");
     }
 
-    // 0 && RHS: If it is safe, just elide the RHS, and return 0.
+    // 0 && RHS: If it is safe, just elide the RHS, and return 0/false.
     if (!CGF.ContainsLabel(E->getRHS()))
-      return llvm::Constant::getNullValue(CGF.LLVMIntTy);
+      return llvm::Constant::getNullValue(ResTy);
   }
 
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("land.end");
@@ -1423,22 +1425,24 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
   PN->addIncoming(RHSCond, RHSBlock);
 
   // ZExt result to int.
-  return Builder.CreateZExt(PN, CGF.LLVMIntTy, "land.ext");
+  return Builder.CreateZExtOrBitCast(PN, ResTy, "land.ext");
 }
 
 Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
+  const llvm::Type *ResTy = ConvertType(E->getType());
+  
   // If we have 1 || RHS, see if we can elide RHS, if so, just return 1.
   // If we have 0 || X, just emit X without inserting the control flow.
   if (int Cond = CGF.ConstantFoldsToSimpleInteger(E->getLHS())) {
     if (Cond == -1) { // If we have 0 || X, just emit X.
       Value *RHSCond = CGF.EvaluateExprAsBool(E->getRHS());
-      // ZExt result to int.
-      return Builder.CreateZExt(RHSCond, CGF.LLVMIntTy, "lor.ext");
+      // ZExt result to int or bool.
+      return Builder.CreateZExtOrBitCast(RHSCond, ResTy, "lor.ext");
     }
 
-    // 1 || RHS: If it is safe, just elide the RHS, and return 1.
+    // 1 || RHS: If it is safe, just elide the RHS, and return 1/true.
     if (!CGF.ContainsLabel(E->getRHS()))
-      return llvm::ConstantInt::get(CGF.LLVMIntTy, 1);
+      return llvm::ConstantInt::get(ResTy, 1);
   }
 
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("lor.end");
@@ -1474,7 +1478,7 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
   PN->addIncoming(RHSCond, RHSBlock);
 
   // ZExt result to int.
-  return Builder.CreateZExt(PN, CGF.LLVMIntTy, "lor.ext");
+  return Builder.CreateZExtOrBitCast(PN, ResTy, "lor.ext");
 }
 
 Value *ScalarExprEmitter::VisitBinComma(const BinaryOperator *E) {
