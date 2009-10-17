@@ -383,6 +383,8 @@ def note_ambig_member_ref_object_type : Note<
   "lookup in the object type %0 refers here">;
 def note_ambig_member_ref_scope : Note<
   "lookup from the current scope refers here">;
+def err_qualified_member_nonclass : Error<
+  "qualified member access refers to a member in %0">;
 
 // C++ class members
 def err_storageclass_invalid_for_member : Error<

@@ -2184,6 +2184,12 @@ Sema::BuildMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       // If the member name was a qualified-id, look into the
       // nested-name-specifier.
       DC = computeDeclContext(*SS, false);
+      
+      if (!isa<TypeDecl>(DC)) {
+        Diag(MemberLoc, diag::err_qualified_member_nonclass)
+          << DC << SS->getRange();
+        return ExprError();
+      }
 
       // FIXME: If DC is not computable, we should build a
       // CXXUnresolvedMemberExpr.

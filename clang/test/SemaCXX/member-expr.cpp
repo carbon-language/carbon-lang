@@ -31,3 +31,14 @@ int f0(B *b) {
   return b->f0->f0; // expected-error{{member reference base type 'struct A *()' is not a structure or union}} \
   // expected-note{{perhaps you meant to call this function}}
 }
+
+int i;
+
+namespace C {
+  int i;
+}
+
+void test2(X *xp) {
+  xp->::i = 7; // expected-error{{qualified member access refers to a member in the global namespace}}
+  xp->C::i = 7; // expected-error{{qualified member access refers to a member in namespace 'C'}}
+}
