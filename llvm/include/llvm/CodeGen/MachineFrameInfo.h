@@ -86,6 +86,10 @@ class MachineFrameInfo {
 
   // StackObject - Represent a single object allocated on the stack.
   struct StackObject {
+    // SPOffset - The offset of this object from the stack pointer on entry to
+    // the function.  This field has no meaning for a variable sized element.
+    int64_t SPOffset;
+    
     // The size of this object on the stack. 0 means a variable sized object,
     // ~0ULL means a dead object.
     uint64_t Size;
@@ -98,12 +102,8 @@ class MachineFrameInfo {
     // default, fixed objects are immutable unless marked otherwise.
     bool isImmutable;
 
-    // SPOffset - The offset of this object from the stack pointer on entry to
-    // the function.  This field has no meaning for a variable sized element.
-    int64_t SPOffset;
-    
     StackObject(uint64_t Sz, unsigned Al, int64_t SP = 0, bool IM = false)
-      : Size(Sz), Alignment(Al), isImmutable(IM), SPOffset(SP) {}
+      : SPOffset(SP), Size(Sz), Alignment(Al), isImmutable(IM) {}
   };
 
   /// Objects - The list of stack objects allocated...
