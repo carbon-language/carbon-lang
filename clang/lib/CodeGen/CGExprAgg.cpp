@@ -285,6 +285,7 @@ void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
 void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
   // We have a member function pointer.
   const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
+  (void) MPT;
   assert(MPT->getPointeeType()->isFunctionProtoType() &&
          "Unexpected member pointer type!");
   
