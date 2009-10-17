@@ -1604,29 +1604,8 @@ RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
 //===----------------------------------------------------------------------===//
 
 namespace {
-class VISIBILITY_HIDDEN RBDNode
-  : public std::pair<const GRState*, const MemRegion *> {
-public:
-  RBDNode(const GRState *st, const MemRegion *r)
-    : std::pair<const GRState*, const MemRegion*>(st, r) {}
-  
-  const GRState *getState() const { return first; }
-  const MemRegion *getRegion() const { return second; }
-};
-
-enum VisitFlag { NotVisited = 0, VisitedFromSubRegion, VisitedFromSuperRegion };
-
-class RBDItem : public RBDNode {
-private:
-  const VisitFlag VF;
-  
-public:
-  RBDItem(const GRState *st, const MemRegion *r, VisitFlag vf)
-    : RBDNode(st, r), VF(vf) {}
-
-  VisitFlag getVisitFlag() const { return VF; }
-};
-} // end anonymous namespace
+typedef std::pair<const GRState*, const MemRegion *> RBDNode;
+}
   
 void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
                                             SymbolReaper& SymReaper,
@@ -1652,27 +1631,26 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   
   // Process the "intermediate" roots to find if they are referenced by
   // real roots.
-  llvm::SmallVector<RBDItem, 10> WorkList;
-  llvm::DenseMap<const MemRegion*,unsigned> IntermediateVisited;
+  llvm::SmallVector<RBDNode, 10> WorkList;
+  llvm::SmallSet<const MemRegion*, 10> IntermediateVisited;
   
   while (!IntermediateRoots.empty()) {
     const MemRegion* R = IntermediateRoots.back();
     IntermediateRoots.pop_back();
     
-    unsigned &visited = IntermediateVisited[R];
-    if (visited)
+    if (IntermediateVisited.count(R))
       continue;
-    visited = 1;
+    IntermediateVisited.insert(R);
     
     if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
       if (SymReaper.isLive(Loc, VR->getDecl()))
-        WorkList.push_back(RBDItem(&state, VR, VisitedFromSuperRegion));
+        WorkList.push_back(std::make_pair(&state, VR));
       continue;
     }
     
     if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
       if (SymReaper.isLive(SR->getSymbol()))
-        WorkList.push_back(RBDItem(&state, SR, VisitedFromSuperRegion));
+        WorkList.push_back(std::make_pair(&state, SR));
       continue;
     }
     
@@ -1685,54 +1663,40 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   // Enqueue the RegionRoots onto WorkList.
   for (llvm::SmallVectorImpl<const MemRegion*>::iterator I=RegionRoots.begin(),
        E=RegionRoots.end(); I!=E; ++I) {
-    WorkList.push_back(RBDItem(&state, *I, VisitedFromSuperRegion));
+    WorkList.push_back(std::make_pair(&state, *I));
   }
   RegionRoots.clear();
   
-  // Process the worklist.
-  typedef llvm::DenseMap<std::pair<const GRState*, const MemRegion*>, VisitFlag>
-          VisitMap;
-    
-  VisitMap Visited;
+  llvm::SmallSet<RBDNode, 10> Visited;
   
   while (!WorkList.empty()) {
-    RBDItem N = WorkList.back();
+    RBDNode N = WorkList.back();
     WorkList.pop_back();
     
     // Have we visited this node before?
-    VisitFlag &VF = Visited[N];
-    if (VF >= N.getVisitFlag())
+    if (Visited.count(N))
       continue;
-    
-    const MemRegion *R = N.getRegion();
-    const GRState *state_N = N.getState();
-    
-    // Enqueue subregions?
-    if (N.getVisitFlag() == VisitedFromSuperRegion) {
-      RegionStoreSubRegionMap *M;
-      
-      if (&state == state_N)
-        M = SubRegions.get();
-      else {
-        RegionStoreSubRegionMap *& SM = SC[state_N];
-        if (!SM)
-          SM = getRegionStoreSubRegionMap(state_N->getStore());
-        M = SM;
-      }
-      
-      RegionStoreSubRegionMap::iterator I, E;
-      for (llvm::tie(I, E) = M->begin_end(R); I != E; ++I)
-        WorkList.push_back(RBDItem(state_N, *I, VisitedFromSuperRegion));
-    }
+    Visited.insert(N);
 
-    // At this point, if we have already visited this region before, we are
-    // done. 
-    if (VF != NotVisited) {
-      VF = N.getVisitFlag();
-      continue;
-    }
-    VF = N.getVisitFlag();
+    const MemRegion *R = N.second;
+    const GRState *state_N = N.first;
     
+    // Enqueue subregions.
+    RegionStoreSubRegionMap *M;
+      
+    if (&state == state_N)
+      M = SubRegions.get();
+    else {
+      RegionStoreSubRegionMap *& SM = SC[state_N];
+      if (!SM)
+        SM = getRegionStoreSubRegionMap(state_N->getStore());
+      M = SM;
+    }
+    
+    RegionStoreSubRegionMap::iterator I, E;
+    for (llvm::tie(I, E) = M->begin_end(R); I != E; ++I)
+      WorkList.push_back(std::make_pair(state_N, *I));
+
     // Enqueue the super region.
     if (const SubRegion *SR = dyn_cast<SubRegion>(R)) {
       const MemRegion *superR = SR->getSuperRegion();
@@ -1740,11 +1704,9 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
         // If 'R' is a field or an element, we want to keep the bindings
         // for the other fields and elements around.  The reason is that
         // pointer arithmetic can get us to the other fields or elements.
-        // FIXME: add an assertion that this is always true.
-
         assert(isa<FieldRegion>(R) || isa<ElementRegion>(R) 
                || isa<ObjCIvarRegion>(R));
-        WorkList.push_back(RBDItem(state_N, superR, VisitedFromSuperRegion));
+        WorkList.push_back(std::make_pair(state_N, superR));
       }
     }
 
@@ -1765,8 +1727,7 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
             dyn_cast<nonloc::LazyCompoundVal>(V.getPointer())) {
       
         const LazyCompoundValData *D = LCV->getCVData();
-        WorkList.push_back(RBDItem(D->getState(), D->getRegion(),
-                                   VisitedFromSuperRegion));
+        WorkList.push_back(std::make_pair(D->getState(), D->getRegion()));
       }
       else {
         // Update the set of live symbols.
@@ -1776,7 +1737,7 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
         
         // If V is a region, then add it to the worklist.
         if (const MemRegion *RX = V->getAsRegion())
-          WorkList.push_back(RBDItem(state_N, RX, VisitedFromSuperRegion));
+          WorkList.push_back(std::make_pair(state_N, RX));
       }
     }
   }
@@ -1787,7 +1748,7 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   for (RegionBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
     const MemRegion* R = I.getKey();
     // If this region live?  Is so, none of its symbols are dead.
-    if (Visited.find(std::make_pair(&state, R)) != Visited.end())
+    if (Visited.count(std::make_pair(&state, R)))
       continue;
 
     // Remove this dead region from the store.
