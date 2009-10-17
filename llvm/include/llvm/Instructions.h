@@ -37,8 +37,7 @@ class DominatorTree;
 //                             AllocationInst Class
 //===----------------------------------------------------------------------===//
 
-/// AllocationInst - This class is the common base class of MallocInst and
-/// AllocaInst.
+/// AllocationInst - This class is the base class of AllocaInst.
 ///
 class AllocationInst : public UnaryInstruction {
 protected:
@@ -85,56 +84,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const AllocationInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == Instruction::Alloca ||
-           I->getOpcode() == Instruction::Malloc;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-};
-
-
-//===----------------------------------------------------------------------===//
-//                                MallocInst Class
-//===----------------------------------------------------------------------===//
-
-/// MallocInst - an instruction to allocated memory on the heap
-///
-class MallocInst : public AllocationInst {
-public:
-  explicit MallocInst(const Type *Ty, Value *ArraySize = 0,
-                      const Twine &NameStr = "",
-                      Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Malloc,
-                     0, NameStr, InsertBefore) {}
-  MallocInst(const Type *Ty, Value *ArraySize,
-             const Twine &NameStr, BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Malloc, 0, NameStr, InsertAtEnd) {}
-
-  MallocInst(const Type *Ty, const Twine &NameStr,
-             Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, 0, Malloc, 0, NameStr, InsertBefore) {}
-  MallocInst(const Type *Ty, const Twine &NameStr,
-             BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, 0, Malloc, 0, NameStr, InsertAtEnd) {}
-
-  MallocInst(const Type *Ty, Value *ArraySize,
-             unsigned Align, const Twine &NameStr,
-             BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Malloc,
-                     Align, NameStr, InsertAtEnd) {}
-  MallocInst(const Type *Ty, Value *ArraySize,
-             unsigned Align, const Twine &NameStr = "", 
-             Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize,
-                     Malloc, Align, NameStr, InsertBefore) {}
-
-  virtual MallocInst *clone() const;
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const MallocInst *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return (I->getOpcode() == Instruction::Malloc);
+    return I->getOpcode() == Instruction::Alloca;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));

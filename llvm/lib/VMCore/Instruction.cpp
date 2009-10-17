@@ -127,7 +127,6 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Xor: return "xor";
 
   // Memory instructions...
-  case Malloc:        return "malloc";
   case Free:          return "free";
   case Alloca:        return "alloca";
   case Load:          return "load";
@@ -442,7 +441,6 @@ bool Instruction::isSafeToSpeculativelyExecute() const {
                   // overflow-checking arithmetic, etc.)
   case VAArg:
   case Alloca:
-  case Malloc:
   case Invoke:
   case PHI:
   case Store:

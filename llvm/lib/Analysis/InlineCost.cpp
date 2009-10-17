@@ -131,7 +131,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
     }
     
     // These, too, are calls.
-    if (isa<MallocInst>(II) || isa<FreeInst>(II))
+    if (isa<FreeInst>(II))
       NumInsts += InlineConstants::CallPenalty;
 
     if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {

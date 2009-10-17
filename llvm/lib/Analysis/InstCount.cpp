@@ -76,11 +76,11 @@ FunctionPass *llvm::createInstCountPass() { return new InstCount(); }
 bool InstCount::runOnFunction(Function &F) {
   unsigned StartMemInsts =
     NumGetElementPtrInst + NumLoadInst + NumStoreInst + NumCallInst +
-    NumInvokeInst + NumAllocaInst + NumMallocInst + NumFreeInst;
+    NumInvokeInst + NumAllocaInst + NumFreeInst;
   visit(F);
   unsigned EndMemInsts =
     NumGetElementPtrInst + NumLoadInst + NumStoreInst + NumCallInst +
-    NumInvokeInst + NumAllocaInst + NumMallocInst + NumFreeInst;
+    NumInvokeInst + NumAllocaInst + NumFreeInst;
   TotalMemInst += EndMemInsts-StartMemInsts;
   return false;
 }

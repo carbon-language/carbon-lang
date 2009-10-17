@@ -1054,13 +1054,6 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
       Vals.push_back(VE.getValueID(I.getOperand(i)));
     break;
 
-  case Instruction::Malloc:
-    Code = bitc::FUNC_CODE_INST_MALLOC;
-    Vals.push_back(VE.getTypeID(I.getType()));
-    Vals.push_back(VE.getValueID(I.getOperand(0))); // size.
-    Vals.push_back(Log2_32(cast<MallocInst>(I).getAlignment())+1);
-    break;
-
   case Instruction::Free:
     Code = bitc::FUNC_CODE_INST_FREE;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);

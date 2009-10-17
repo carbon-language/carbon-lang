@@ -3315,7 +3315,7 @@ bool LLParser::ParseShuffleVector(Instruction *&Inst, PerFunctionState &PFS) {
 }
 
 /// ParsePHI
-///   ::= 'phi' Type '[' Value ',' Value ']' (',' '[' Value ',' Valueß ']')*
+///   ::= 'phi' Type '[' Value ',' Value ']' (',' '[' Value ',' Value√ü ']')*
 bool LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
   PATypeHolder Ty(Type::getVoidTy(Context));
   Value *Op0, *Op1;

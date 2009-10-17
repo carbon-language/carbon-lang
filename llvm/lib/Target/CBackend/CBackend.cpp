@@ -302,7 +302,6 @@ namespace {
     void visitInlineAsm(CallInst &I);
     bool visitBuiltinCall(CallInst &I, Intrinsic::ID ID, bool &WroteCallee);
 
-    void visitMallocInst(MallocInst &I);
     void visitAllocaInst(AllocaInst &I);
     void visitFreeInst  (FreeInst   &I);
     void visitLoadInst  (LoadInst   &I);
@@ -3405,10 +3404,6 @@ void CWriter::visitInlineAsm(CallInst &CI) {
   Out << ")";
 }
 
-void CWriter::visitMallocInst(MallocInst &I) {
-  llvm_unreachable("lowerallocations pass didn't work!");
-}
-
 void CWriter::visitAllocaInst(AllocaInst &I) {
   Out << '(';
   printType(Out, I.getType());
@@ -3690,7 +3685,7 @@ bool CTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
   if (FileType != TargetMachine::AssemblyFile) return true;
 
   PM.add(createGCLoweringPass());
-  PM.add(createLowerAllocationsPass(true));
+  PM.add(createLowerAllocationsPass());
   PM.add(createLowerInvokePass());
   PM.add(createCFGSimplificationPass());   // clean up after lower invoke.
   PM.add(new CBackendNameAllUsedStructsAndMergeFunctions());

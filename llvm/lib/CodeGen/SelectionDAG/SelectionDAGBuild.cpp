@@ -5485,48 +5485,6 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   DAG.setRoot(Chain);
 }
 
-
-void SelectionDAGLowering::visitMalloc(MallocInst &I) {
-  SDValue Src = getValue(I.getOperand(0));
-
-  // Scale up by the type size in the original i32 type width.  Various
-  // mid-level optimizers may make assumptions about demanded bits etc from the
-  // i32-ness of the optimizer: we do not want to promote to i64 and then
-  // multiply on 64-bit targets.
-  // FIXME: Malloc inst should go away: PR715.
-  uint64_t ElementSize = TD->getTypeAllocSize(I.getType()->getElementType());
-  if (ElementSize != 1) {
-    // Src is always 32-bits, make sure the constant fits.
-    assert(Src.getValueType() == MVT::i32);
-    ElementSize = (uint32_t)ElementSize;
-    Src = DAG.getNode(ISD::MUL, getCurDebugLoc(), Src.getValueType(),
-                      Src, DAG.getConstant(ElementSize, Src.getValueType()));
-  }
-  
-  EVT IntPtr = TLI.getPointerTy();
-
-  Src = DAG.getZExtOrTrunc(Src, getCurDebugLoc(), IntPtr);
-
-  TargetLowering::ArgListTy Args;
-  TargetLowering::ArgListEntry Entry;
-  Entry.Node = Src;
-  Entry.Ty = TLI.getTargetData()->getIntPtrType(*DAG.getContext());
-  Args.push_back(Entry);
-
-  bool isTailCall = PerformTailCallOpt &&
-                    isInTailCallPosition(&I, Attribute::None, TLI);
-  std::pair<SDValue,SDValue> Result =
-    TLI.LowerCallTo(getRoot(), I.getType(), false, false, false, false,
-                    0, CallingConv::C, isTailCall,
-                    /*isReturnValueUsed=*/true,
-                    DAG.getExternalSymbol("malloc", IntPtr),
-                    Args, DAG, getCurDebugLoc());
-  if (Result.first.getNode())
-    setValue(&I, Result.first);  // Pointers always fit in registers
-  if (Result.second.getNode())
-    DAG.setRoot(Result.second);
-}
-
 void SelectionDAGLowering::visitFree(FreeInst &I) {
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;

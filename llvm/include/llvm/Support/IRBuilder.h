@@ -429,10 +429,6 @@ public:
   // Instruction creation methods: Memory Instructions
   //===--------------------------------------------------------------------===//
 
-  MallocInst *CreateMalloc(const Type *Ty, Value *ArraySize = 0,
-                           const Twine &Name = "") {
-    return Insert(new MallocInst(Ty, ArraySize), Name);
-  }
   AllocaInst *CreateAlloca(const Type *Ty, Value *ArraySize = 0,
                            const Twine &Name = "") {
     return Insert(new AllocaInst(Ty, ArraySize), Name);

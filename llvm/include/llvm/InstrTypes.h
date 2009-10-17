@@ -116,8 +116,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const UnaryInstruction *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == Instruction::Malloc ||
-           I->getOpcode() == Instruction::Alloca ||
+    return I->getOpcode() == Instruction::Alloca ||
            I->getOpcode() == Instruction::Free ||
            I->getOpcode() == Instruction::Load ||
            I->getOpcode() == Instruction::VAArg ||

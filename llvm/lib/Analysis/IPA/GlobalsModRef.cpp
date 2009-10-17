@@ -303,7 +303,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
       // Check the value being stored.
       Value *Ptr = SI->getOperand(0)->getUnderlyingObject();
 
-      if (isa<MallocInst>(Ptr) || isMalloc(Ptr)) {
+      if (isMalloc(Ptr)) {
         // Okay, easy case.
       } else if (CallInst *CI = dyn_cast<CallInst>(Ptr)) {
         Function *F = CI->getCalledFunction();
@@ -439,8 +439,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
           if (cast<StoreInst>(*II).isVolatile())
             // Treat volatile stores as reading memory somewhere.
             FunctionEffect |= Ref;
-        } else if (isa<MallocInst>(*II) || isa<FreeInst>(*II) ||
-                   isMalloc(&cast<Instruction>(*II))) {
+        } else if (isMalloc(&cast<Instruction>(*II)) || isa<FreeInst>(*II)) {
           FunctionEffect |= ModRef;
         }
 

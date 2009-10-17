@@ -6300,16 +6300,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           return SelectInst::Create(LHSI->getOperand(0), Op1, Op2);
         break;
       }
-      case Instruction::Malloc:
-        // If we have (malloc != null), and if the malloc has a single use, we
-        // can assume it is successful and remove the malloc.
-        if (LHSI->hasOneUse() && isa<ConstantPointerNull>(RHSC)) {
-          Worklist.Add(LHSI);
-          return ReplaceInstUsesWith(I,
-                                     ConstantInt::get(Type::getInt1Ty(*Context),
-                                                      !I.isTrueWhenEqual()));
-        }
-        break;
       case Instruction::Call:
         // If we have (malloc != null), and if the malloc has a single use, we
         // can assume it is successful and remove the malloc.
@@ -7809,11 +7799,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
     Amt = AllocaBuilder.CreateAdd(Amt, Off, "tmp");
   }
   
-  AllocationInst *New;
-  if (isa<MallocInst>(AI))
-    New = AllocaBuilder.CreateMalloc(CastElTy, Amt);
-  else
-    New = AllocaBuilder.CreateAlloca(CastElTy, Amt);
+  AllocationInst *New = AllocaBuilder.CreateAlloca(CastElTy, Amt);
   New->setAlignment(AI.getAlignment());
   New->takeName(&AI);
   
@@ -11213,15 +11199,8 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
     if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
       const Type *NewTy = 
         ArrayType::get(AI.getAllocatedType(), C->getZExtValue());
-      AllocationInst *New = 0;
-
-      // Create and insert the replacement instruction...
-      if (isa<MallocInst>(AI))
-        New = Builder->CreateMalloc(NewTy, 0, AI.getName());
-      else {
-        assert(isa<AllocaInst>(AI) && "Unknown type of allocation inst!");
-        New = Builder->CreateAlloca(NewTy, 0, AI.getName());
-      }
+      assert(isa<AllocaInst>(AI) && "Unknown type of allocation inst!");
+      AllocationInst *New = Builder->CreateAlloca(NewTy, 0, AI.getName());
       New->setAlignment(AI.getAlignment());
 
       // Scan to the end of the allocation instructions, to skip over a block of
@@ -11294,12 +11273,6 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
     }
   }
   
-  // Change free(malloc) into nothing, if the malloc has a single use.
-  if (MallocInst *MI = dyn_cast<MallocInst>(Op))
-    if (MI->hasOneUse()) {
-      EraseInstFromFunction(FI);
-      return EraseInstFromFunction(*MI);
-    }
   if (isMalloc(Op)) {
     if (CallInst* CI = extractMallocCallFromBitCast(Op)) {
       if (Op->hasOneUse() && CI->hasOneUse()) {

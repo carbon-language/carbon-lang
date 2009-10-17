@@ -60,7 +60,6 @@ class MachineFunction;
 class MachineInstr;
 class MachineModuleInfo;
 class MachineRegisterInfo;
-class MallocInst;
 class PHINode;
 class PtrToIntInst;
 class ReturnInst;
@@ -529,7 +528,6 @@ private:
   void visitGetElementPtr(User &I);
   void visitSelect(User &I);
 
-  void visitMalloc(MallocInst &I);
   void visitFree(FreeInst &I);
   void visitAlloca(AllocaInst &I);
   void visitLoad(LoadInst &I);

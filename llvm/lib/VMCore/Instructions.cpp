@@ -847,7 +847,7 @@ static Value *getAISize(LLVMContext &Context, Value *Amt) {
     assert(!isa<BasicBlock>(Amt) &&
            "Passed basic block into allocation size parameter! Use other ctor");
     assert(Amt->getType() == Type::getInt32Ty(Context) &&
-           "Malloc/Allocation array size is not a 32-bit integer!");
+           "Allocation array size is not a 32-bit integer!");
   }
   return Amt;
 }
@@ -3075,18 +3075,6 @@ ExtractValueInst *ExtractValueInst::clone() const {
 }
 InsertValueInst *InsertValueInst::clone() const {
   InsertValueInst *New = new InsertValueInst(*this);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
-}
-
-MallocInst *MallocInst::clone() const {
-  MallocInst *New = new MallocInst(getAllocatedType(),
-                                   (Value*)getOperand(0),
-                                   getAlignment());
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
     LLVMContext &Context = getContext();

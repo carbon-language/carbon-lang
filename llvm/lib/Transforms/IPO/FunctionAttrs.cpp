@@ -153,7 +153,7 @@ bool FunctionAttrs::AddReadAttrs(const std::vector<CallGraphNode *> &SCC) {
         // Writes memory.  Just give up.
         return false;
 
-      if (isa<MallocInst>(I))
+      if (isMalloc(I))
         // malloc claims not to write memory!  PR3754.
         return false;
 
@@ -267,7 +267,6 @@ bool FunctionAttrs::IsFunctionMallocLike(Function *F,
 
         // Check whether the pointer came from an allocation.
         case Instruction::Alloca:
-        case Instruction::Malloc:
           break;
         case Instruction::Call:
           if (isMalloc(RVI))
