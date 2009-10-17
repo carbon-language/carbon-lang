@@ -775,11 +775,17 @@ void FillInEdgeVector(RecordVector::const_iterator B,
 /// CalculatePriority - Calculate the priority of this plugin.
 int CalculatePriority(RecordVector::const_iterator B,
                       RecordVector::const_iterator E) {
-  int total = 0;
-  for (; B!=E; ++B) {
-    total += static_cast<int>((*B)->getValueAsInt("priority"));
+  int priority = 0;
+
+  if (B != E) {
+    priority  = static_cast<int>((*B)->getValueAsInt("priority"));
+
+    if (++B != E)
+      throw std::string("More than one 'PluginPriority' instance found: "
+                        "most probably an error!");
   }
-  return total;
+
+  return priority;
 }
 
 /// NotInGraph - Helper function object for FilterNotInGraph.
