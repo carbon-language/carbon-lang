@@ -77,7 +77,10 @@ void PrettyStackTraceParserEntry::print(llvm::raw_ostream &OS) const {
 
   const Preprocessor &PP = P.getPreprocessor();
   Tok.getLocation().print(OS, PP.getSourceManager());
-  OS << ": current parser token '" << PP.getSpelling(Tok) << "'\n";
+  if (Tok.isAnnotation())
+    OS << ": at annotation token \n";
+  else
+    OS << ": current parser token '" << PP.getSpelling(Tok) << "'\n";
 }
 
 
