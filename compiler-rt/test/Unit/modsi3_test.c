@@ -1,34 +1,33 @@
-//===-- modsi3_test.c - Test __modsi3 -------------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file tests __modsi3 for the compiler_rt library.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- modsi3_test.c - Test __modsi3 -------------------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ *
+ * This file tests __modsi3 for the compiler_rt library.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 #include "int_lib.h"
 #include <stdio.h>
 
-// Returns: a % b
+/* Returns: a % b */
 
 si_int __modsi3(si_int a, si_int b);
 
-int test__modsi3(si_int a, si_int b, si_int expected)
-{
+int test__modsi3(si_int a, si_int b, si_int expected) {
     si_int x = __modsi3(a, b);
     if (x != expected)
-        printf("error in __modsi3: %d %% %d = %d, expected %d\n",
+        fprintf(stderr, "error in __modsi3: %d %% %d = %d, expected %d\n",
                a, b, x, expected);
     return x != expected;
 }
 
-int main()
-{
+int main() {
     if (test__modsi3(0, 1, 0))
         return 1;
     if (test__modsi3(0, -1, 0))

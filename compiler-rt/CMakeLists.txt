@@ -51,4 +51,4 @@ ADD_SUBDIRECTORY( lib )
 
 # Tests are being ignored for until the very basics are working.
 #INCLUDE( MacroAddCheckTest )
-#ADD_SUBDIRECTORY( test )
+ADD_SUBDIRECTORY( test )

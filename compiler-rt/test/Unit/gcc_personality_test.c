@@ -1,11 +1,12 @@
-//===-- gcc_personality_test.c - Tests __gcc_personality_v0 -------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
+/* ===-- gcc_personality_test.c - Tests __gcc_personality_v0 -------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is distributed under the University of Illinois Open Source
+ * License. See LICENSE.TXT for details.
+ *
+ * ===----------------------------------------------------------------------===
+ */
 
 
 #include <stdlib.h>
@@ -19,28 +20,23 @@ extern void done_foo();
 extern void done_bar();
 
 
-//
-// foo() is called by main() in gcc_personality_test_helper.cxx.
-// done_bar() is implemented in C++ and will throw an exception.
-// main() will catch the exception and verify that the cleanup
-// routines for foo() and bar() were called by the personality
-// function.
-//
+/*
+ * foo() is called by main() in gcc_personality_test_helper.cxx.
+ * done_bar() is implemented in C++ and will throw an exception.
+ * main() will catch the exception and verify that the cleanup
+ * routines for foo() and bar() were called by the personality
+ * function.
+ */
 
-
-void bar()
-{
+void bar() {
     int x __attribute__((cleanup(bar_clean))) = 0;
     register_bar_local(&x);
     done_bar();
 }
 
-void foo()
-{
+void foo() {
     int x __attribute__((cleanup(foo_clean))) = 0;
     register_foo_local(&x);
     bar();
     done_foo();
 }
-
-

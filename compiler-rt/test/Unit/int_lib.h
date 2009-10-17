@@ -45,7 +45,7 @@ typedef union
         si_int high;
         su_int low;
 #endif /* _YUGA_LITTLE_ENDIAN */
-    };
+    }s;
 } dwords;
 
 typedef union
@@ -60,7 +60,7 @@ typedef union
         su_int high;
         su_int low;
 #endif /* _YUGA_LITTLE_ENDIAN */
-    };
+    }s;
 } udwords;
 
 #if __x86_64
@@ -80,7 +80,7 @@ typedef union
         di_int high;
         du_int low;
 #endif /* _YUGA_LITTLE_ENDIAN */
-    };
+    }s;
 } twords;
 
 typedef union
@@ -95,7 +95,7 @@ typedef union
         du_int high;
         du_int low;
 #endif /* _YUGA_LITTLE_ENDIAN */
-    };
+    }s;
 } utwords;
 
 inline
