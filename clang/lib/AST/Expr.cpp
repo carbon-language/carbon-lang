@@ -1744,26 +1744,20 @@ unsigned ExtVectorElementExpr::getNumElements() const {
 
 /// containsDuplicateElements - Return true if any element access is repeated.
 bool ExtVectorElementExpr::containsDuplicateElements() const {
-  const char *compStr = Accessor->getName();
-  unsigned length = Accessor->getLength();
+  llvm::StringRef Comp = Accessor->getNameStr();
 
   // Halving swizzles do not contain duplicate elements.
-  if (!strcmp(compStr, "hi") || !strcmp(compStr, "lo") ||
-      !strcmp(compStr, "even") || !strcmp(compStr, "odd"))
+  if (Comp == "hi" || Comp == "lo" || Comp == "even" || Comp == "odd")
     return false;
 
   // Advance past s-char prefix on hex swizzles.
-  if (*compStr == 's' || *compStr == 'S') {
-    compStr++;
-    length--;
-  }
+  if (Comp[0] == 's' || Comp[0] == 'S')
+    Comp = Comp.substr(1);
 
-  for (unsigned i = 0; i != length-1; i++) {
-    const char *s = compStr+i;
-    for (const char c = *s++; *s; s++)
-      if (c == *s)
+  for (unsigned i = 0, e = Comp.size(); i != e; ++i)
+    if (Comp.substr(i + 1).find(Comp[i]) != llvm::StringRef::npos)
         return true;
-  }
+
   return false;
 }
 
