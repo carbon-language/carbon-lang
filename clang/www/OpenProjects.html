@@ -102,6 +102,13 @@ StringRef'izing (converting to use <tt>llvm::StringRef</tt> instead of <tt>const
 char *</tt> or <tt>std::string</tt>) various clang interfaces. This generally
 simplifies the code and makes it more efficient.</li>
 
+<li><b>Universal Driver</b>: Clang is inherently a cross compiler. We would like
+to define a new model for cross compilation which provides a great user
+experience -- it should be easy to cross compile applications, install support
+for new architectures, access different compilers and tools, and be consistent
+across different platforms. See the <a href="UniversalDriver.html">Universal
+Driver</a> web page for more information.</li>
+
 </div>
 </body>
 </html>
