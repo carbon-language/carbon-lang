@@ -3527,10 +3527,37 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
     // Block scope. C99 6.7p7: If an identifier for an object is declared with
     // no linkage (C99 6.2.2p6), the type for the object shall be complete...
     if (IDecl->isBlockVarDecl() && !IDecl->hasExternalStorage()) {
-      if (!IDecl->isInvalidDecl() &&
-          RequireCompleteType(IDecl->getLocation(), T,
-                              diag::err_typecheck_decl_incomplete_type))
-        IDecl->setInvalidDecl();
+      if (T->isDependentType()) {
+        // If T is dependent, we should not require a complete type.
+        // (RequireCompleteType shouldn't be called with dependent types.)
+        // But we still can at least check if we've got an array of unspecified
+        // size without an initializer.
+        if (!IDecl->isInvalidDecl() && T->isIncompleteArrayType() &&
+            !IDecl->getInit()) {
+          Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type)
+            << T;
+          IDecl->setInvalidDecl();
+        }
+      } else if (!IDecl->isInvalidDecl()) {
+        // If T is an incomplete array type with an initializer list that is
+        // dependent on something, its size has not been fixed. We could attempt
+        // to fix the size for such arrays, but we would still have to check
+        // here for initializers containing a C++0x vararg expansion, e.g.
+        // template <typename... Args> void f(Args... args) {
+        //   int vals[] = { args };
+        // }
+        const IncompleteArrayType *IAT = T->getAs<IncompleteArrayType>();
+        Expr *Init = IDecl->getInit();
+        if (IAT && Init &&
+            (Init->isTypeDependent() || Init->isValueDependent())) {
+          // Check that the member type of the array is complete, at least.
+          if (RequireCompleteType(IDecl->getLocation(), IAT->getElementType(),
+                                  diag::err_typecheck_decl_incomplete_type))
+            IDecl->setInvalidDecl();
+        } else if (RequireCompleteType(IDecl->getLocation(), T,
+                                      diag::err_typecheck_decl_incomplete_type))
+          IDecl->setInvalidDecl();
+      }
     }
     // File scope. C99 6.9.2p2: A declaration of an identifier for an
     // object that has file scope without an initializer, and without a
