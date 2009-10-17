@@ -40,10 +40,6 @@ using namespace llvm;
 // Useful predicates
 //===----------------------------------------------------------------------===//
 
-static const GEPOperator *isGEP(const Value *V) {
-  return dyn_cast<GEPOperator>(V);
-}
-
 static const Value *GetGEPOperands(const Value *V, 
                                    SmallVector<Value*, 16> &GEPOps) {
   assert(GEPOps.empty() && "Expect empty list to populate!");
@@ -53,7 +49,7 @@ static const Value *GetGEPOperands(const Value *V,
   // Accumulate all of the chained indexes into the operand array
   V = cast<User>(V)->getOperand(0);
 
-  while (const User *G = isGEP(V)) {
+  while (const GEPOperator *G = dyn_cast<GEPOperator>(V)) {
     if (!isa<Constant>(GEPOps[0]) || isa<GlobalValue>(GEPOps[0]) ||
         !cast<Constant>(GEPOps[0])->isNullValue())
       break;  // Don't handle folding arbitrary pointer offsets yet...
@@ -402,7 +398,7 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
   // Note that we also handle chains of getelementptr instructions as well as
   // constant expression getelementptrs here.
   //
-  if (isGEP(V1) && isGEP(V2)) {
+  if (isa<GEPOperator>(V1) && isa<GEPOperator>(V2)) {
     const User *GEP1 = cast<User>(V1);
     const User *GEP2 = cast<User>(V2);
     
@@ -421,13 +417,13 @@ BasicAliasAnalysis::aliasGEP(const Value *V1, unsigned V1Size,
     
     // Drill down into the first non-gep value, to test for must-aliasing of
     // the base pointers.
-    while (isGEP(GEP1->getOperand(0)) &&
+    while (isa<GEPOperator>(GEP1->getOperand(0)) &&
            GEP1->getOperand(1) ==
            Constant::getNullValue(GEP1->getOperand(1)->getType()))
       GEP1 = cast<User>(GEP1->getOperand(0));
     const Value *BasePtr1 = GEP1->getOperand(0);
 
-    while (isGEP(GEP2->getOperand(0)) &&
+    while (isa<GEPOperator>(GEP2->getOperand(0)) &&
            GEP2->getOperand(1) ==
            Constant::getNullValue(GEP2->getOperand(1)->getType()))
       GEP2 = cast<User>(GEP2->getOperand(0));
@@ -619,11 +615,11 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
       isNonEscapingLocalObject(O1) && O1 != O2)
     return NoAlias;
 
-  if (!isGEP(V1) && isGEP(V2)) {
+  if (!isa<GEPOperator>(V1) && isa<GEPOperator>(V2)) {
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
   }
-  if (isGEP(V1))
+  if (isa<GEPOperator>(V1))
     return aliasGEP(V1, V1Size, V2, V2Size);
 
   if (isa<PHINode>(V2) && !isa<PHINode>(V1)) {
