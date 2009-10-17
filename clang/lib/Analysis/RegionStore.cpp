@@ -1602,15 +1602,13 @@ RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
 //===----------------------------------------------------------------------===//
 // State pruning.
 //===----------------------------------------------------------------------===//
-
-namespace {
-typedef std::pair<const GRState*, const MemRegion *> RBDNode;
-}
   
 void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
                                             SymbolReaper& SymReaper,
                            llvm::SmallVectorImpl<const MemRegion*>& RegionRoots)
 {
+  typedef std::pair<const GRState*, const MemRegion *> RBDNode;
+
   Store store = state.getStore();
   RegionBindings B = GetRegionBindings(store);
 
