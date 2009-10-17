@@ -64,7 +64,7 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
           Ref = clang_getCursor(Unit, clang_getCursorSource(Cursor),
                                 curLine, curColumn);
           if (Ref.kind == CXCursor_NoDeclFound) {
-            // Nothing found here; that's fine.
+            /* Nothing found here; that's fine. */
           } else if (Ref.kind != CXCursor_FunctionDecl) {
             printf("// CHECK: %s:%d:%d: ", basename(clang_getCursorSource(Ref)),
                                              curLine, curColumn);
