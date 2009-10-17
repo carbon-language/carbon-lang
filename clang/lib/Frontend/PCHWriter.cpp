@@ -1063,6 +1063,7 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
 
   // Loop over all the macro definitions that are live at the end of the file,
   // emitting each to the PP section.
+  // FIXME: Make sure that this sees macros defined in included PCH files.
   for (Preprocessor::macro_iterator I = PP.macro_begin(), E = PP.macro_end();
        I != E; ++I) {
     // FIXME: This emits macros in hash table order, we should do it in a stable
@@ -1886,7 +1887,6 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (StatCalls && !isysroot)
     WriteStatCache(*StatCalls, isysroot);
   WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
-  WritePreprocessor(PP);
   WriteComments(Context);
   // Write the record of special types.
   Record.clear();
@@ -1919,6 +1919,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   }
   Stream.ExitBlock();
   
+  WritePreprocessor(PP);
   WriteMethodPool(SemaRef);
   WriteIdentifierTable(PP);
 

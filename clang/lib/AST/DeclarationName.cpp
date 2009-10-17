@@ -60,7 +60,7 @@ bool operator<(DeclarationName LHS, DeclarationName RHS) {
 
 DeclarationName::DeclarationName(Selector Sel) {
   if (!Sel.getAsOpaquePtr()) {
-    Ptr = StoredObjCZeroArgSelector;
+    Ptr = 0;
     return;
   }
 
