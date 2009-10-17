@@ -81,7 +81,7 @@ static NamingConvention deriveNamingConvention(Selector S) {
   if (!II)
     return NoConvention;
 
-  const char *s = II->getName();
+  const char *s = II->getNameStart();
 
   // A method/function name may contain a prefix.  We don't know it is there,
   // however, until we encounter the first '_'.
@@ -208,35 +208,14 @@ static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
 // Type querying functions.
 //===----------------------------------------------------------------------===//
 
-static bool hasPrefix(const char* s, const char* prefix) {
-  if (!prefix)
-    return true;
-
-  char c = *s;
-  char cP = *prefix;
-
-  while (c != '\0' && cP != '\0') {
-    if (c != cP) break;
-    c = *(++s);
-    cP = *(++prefix);
-  }
-
-  return cP == '\0';
-}
-
-static bool hasSuffix(const char* s, const char* suffix) {
-  const char* loc = strstr(s, suffix);
-  return loc && strcmp(suffix, loc) == 0;
-}
-
 static bool isRefType(QualType RetTy, const char* prefix,
                       ASTContext* Ctx = 0, const char* name = 0) {
 
   // Recursively walk the typedef stack, allowing typedefs of reference types.
   while (1) {
     if (TypedefType* TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
-      const char* TDName = TD->getDecl()->getIdentifier()->getName();
-      if (hasPrefix(TDName, prefix) && hasSuffix(TDName, "Ref"))
+      llvm::StringRef TDName = TD->getDecl()->getIdentifier()->getNameStr();
+      if (TDName.startswith(prefix) && TDName.endswith("Ref"))
         return true;
 
       RetTy = TD->getDecl()->getUnderlyingType();
@@ -254,7 +233,7 @@ static bool isRefType(QualType RetTy, const char* prefix,
     return false;
 
   // Does the name start with the prefix?
-  return hasPrefix(name, prefix);
+  return llvm::StringRef(name).startswith(prefix);
 }
 
 //===----------------------------------------------------------------------===//
