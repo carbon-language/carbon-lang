@@ -936,9 +936,9 @@ let test_builder () =
   group "memory"; begin
     let bb08 = append_block context "Bb08" fn in
     let b = builder_at_end context bb08 in
-    
-    (* RUN: grep {Inst20.*malloc.*i8 } < %t.ll
-     * RUN: grep {Inst21.*malloc.*i8.*P1} < %t.ll
+
+    (* RUN: grep {Inst20.*malloc} < %t.ll
+     * RUN: grep {Inst21.*malloc} < %t.ll
      * RUN: grep {Inst22.*alloca.*i32 } < %t.ll
      * RUN: grep {Inst23.*alloca.*i32.*P2} < %t.ll
      * RUN: grep {free.*Inst20} < %t.ll

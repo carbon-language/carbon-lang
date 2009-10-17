@@ -460,10 +460,10 @@ static Value *checkArraySize(Value *Amt, const Type *IntPtrTy) {
   return Amt;
 }
 
-static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
-                           const Type *IntPtrTy, const Type *AllocTy,
-                           Value *ArraySize, Function* MallocF, 
-                           const Twine &NameStr) {
+static Instruction *createMalloc(Instruction *InsertBefore,
+                                 BasicBlock *InsertAtEnd, const Type *IntPtrTy,
+                                 const Type *AllocTy, Value *ArraySize,
+                                 Function *MallocF, const Twine &NameStr) {
   assert(((!InsertBefore && InsertAtEnd) || (InsertBefore && !InsertAtEnd)) &&
          "createMalloc needs either InsertBefore or InsertAtEnd");
 
@@ -507,7 +507,7 @@ static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
   if (!MallocF->doesNotAlias(0)) MallocF->setDoesNotAlias(0);
   const PointerType *AllocPtrType = PointerType::getUnqual(AllocTy);
   CallInst *MCall = NULL;
-  Value    *Result = NULL;
+  Instruction *Result = NULL;
   if (InsertBefore) {
     MCall = CallInst::Create(MallocF, AllocSize, "malloccall", InsertBefore);
     Result = MCall;
@@ -536,9 +536,9 @@ static Value *createMalloc(Instruction *InsertBefore, BasicBlock *InsertAtEnd,
 ///    constant 1.
 /// 2. Call malloc with that argument.
 /// 3. Bitcast the result of the malloc call to the specified type.
-Value *CallInst::CreateMalloc(Instruction *InsertBefore, const Type *IntPtrTy,
-                              const Type *AllocTy, Value *ArraySize,
-                              const Twine &Name) {
+Instruction *CallInst::CreateMalloc(Instruction *InsertBefore,
+                                    const Type *IntPtrTy, const Type *AllocTy,
+                                    Value *ArraySize, const Twine &Name) {
   return createMalloc(InsertBefore, NULL, IntPtrTy, AllocTy, 
                       ArraySize, NULL, Name);
 }
@@ -551,9 +551,10 @@ Value *CallInst::CreateMalloc(Instruction *InsertBefore, const Type *IntPtrTy,
 /// 3. Bitcast the result of the malloc call to the specified type.
 /// Note: This function does not add the bitcast to the basic block, that is the
 /// responsibility of the caller.
-Value *CallInst::CreateMalloc(BasicBlock *InsertAtEnd, const Type *IntPtrTy,
-                              const Type *AllocTy, Value *ArraySize, 
-                              Function* MallocF, const Twine &Name) {
+Instruction *CallInst::CreateMalloc(BasicBlock *InsertAtEnd,
+                                    const Type *IntPtrTy, const Type *AllocTy,
+                                    Value *ArraySize, Function* MallocF,
+                                    const Twine &Name) {
   return createMalloc(NULL, InsertAtEnd, IntPtrTy, AllocTy,
                       ArraySize, MallocF, Name);
 }

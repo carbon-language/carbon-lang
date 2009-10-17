@@ -992,12 +992,14 @@ public:
   ///    constant 1.
   /// 2. Call malloc with that argument.
   /// 3. Bitcast the result of the malloc call to the specified type.
-  static Value *CreateMalloc(Instruction *InsertBefore, const Type *IntPtrTy,
-                             const Type *AllocTy, Value *ArraySize = 0,
-                             const Twine &Name = "");
-  static Value *CreateMalloc(BasicBlock *InsertAtEnd, const Type *IntPtrTy,
-                             const Type *AllocTy, Value *ArraySize = 0,
-                             Function* MallocF = 0, const Twine &Name = "");
+  static Instruction *CreateMalloc(Instruction *InsertBefore,
+                                   const Type *IntPtrTy, const Type *AllocTy,
+                                   Value *ArraySize = 0,
+                                   const Twine &Name = "");
+  static Instruction *CreateMalloc(BasicBlock *InsertAtEnd,
+                                   const Type *IntPtrTy, const Type *AllocTy,
+                                   Value *ArraySize = 0, Function* MallocF = 0,
+                                   const Twine &Name = "");
 
   ~CallInst();
 
