@@ -153,8 +153,9 @@ void CodePlacementOpt::UpdateTerminator(MachineBasicBlock *MBB) {
 
   MachineBasicBlock *TBB = 0, *FBB = 0;
   SmallVector<MachineOperand, 4> Cond;
-  assert(!TII->AnalyzeBranch(*MBB, TBB, FBB, Cond) &&
-         "UpdateTerminators requires analyzable predecessors!");
+  bool B = TII->AnalyzeBranch(*MBB, TBB, FBB, Cond);
+  (void) B;
+  assert(!B && "UpdateTerminators requires analyzable predecessors!");
   if (Cond.empty()) {
     if (TBB) {
       // The block has an unconditional branch. If its successor is now
