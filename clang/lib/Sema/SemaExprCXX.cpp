@@ -1222,8 +1222,13 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
       if (DiagnoseUseOfDecl(Fn, From->getSourceRange().getBegin()))
         return true;
 
-      FixOverloadedFunctionReference(From, Fn);
+      bool WasAddrOf = FixOverloadedFunctionReference(From, Fn);
       FromType = From->getType();
+      // If there's already an address-of operator in the expression, we have
+      // the right type already, and the code below would just introduce an
+      // invalid additional pointer level.
+      if (WasAddrOf)
+        break;
     }
     FromType = Context.getPointerType(FromType);
     ImpCastExprToType(From, FromType, CastExpr::CK_FunctionToPointerDecay);

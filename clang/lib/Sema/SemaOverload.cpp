@@ -5300,10 +5300,12 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
 /// perhaps a '&' around it). We have resolved the overloaded function
 /// to the function declaration Fn, so patch up the expression E to
 /// refer (possibly indirectly) to Fn.
-void Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
+/// Returns true if the function reference used an explicit address-of operator.
+bool Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
   if (ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
-    FixOverloadedFunctionReference(PE->getSubExpr(), Fn);
+    bool ret = FixOverloadedFunctionReference(PE->getSubExpr(), Fn);
     E->setType(PE->getSubExpr()->getType());
+    return ret;
   } else if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(E)) {
     assert(UnOp->getOpcode() == UnaryOperator::AddrOf &&
            "Can only take the address of an overloaded function");
@@ -5322,11 +5324,12 @@ void Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
           = Context.getTypeDeclType(cast<RecordDecl>(Method->getDeclContext()));
         E->setType(Context.getMemberPointerType(Fn->getType(),
                                                 ClassType.getTypePtr()));
-        return;
+        return true;
       }
     }
     FixOverloadedFunctionReference(UnOp->getSubExpr(), Fn);
     E->setType(Context.getPointerType(UnOp->getSubExpr()->getType()));
+    return true;
   } else if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E)) {
     assert((isa<OverloadedFunctionDecl>(DR->getDecl()) ||
             isa<FunctionTemplateDecl>(DR->getDecl())) &&
@@ -5339,6 +5342,7 @@ void Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
   } else {
     assert(false && "Invalid reference to overloaded function");
   }
+  return false;
 }
 
 } // end namespace clang
