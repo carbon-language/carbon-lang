@@ -47,6 +47,38 @@ welcome!</p>
 
 <p>See also <a href="http://llvm.org/PR4127">PR4127</a>.</p>
 
+<h2>Existing Solutions and Related Work</h2>
+
+<ul>
+  <li>gcc's command line arguments <tt>-V</tt>, <tt>-B</tt>, <tt>-b</tt> are
+    generic but limited solutions to related problems. Similarly, <tt>-m32</tt>
+    and <tt>-m64</tt> solve a small subset of the problem for specific
+    architectures.</li>
+
+  <li>gcc's <a href="http://www.airs.com/ian/configure/configure_8.html">multilibs</a>
+    solve the part of the problem that relates to finding appropriate libraries
+    and include files based on particular feature support (soft float,
+    etc.).</li>
+
+  <li>Apple's "driver driver" supported by gcc and clang solve a subset of the
+    problem by supporting <tt>-arch</tt>. Apple also provides a tool chain which
+    supports <a href="http://en.wikipedia.org/wiki/Universal_binary">universal
+    binaries</a> and object files which may include data for multiple
+    architectures. See <a href="http://developer.apple.com/mac/library/technotes/tn2005/tn2137.html">TN2137</a>
+    for an example of how this is used.</li>
+
+  <li>Many operating systems and environments solve the problem by installing
+    complete development environments (including the IDE, tools, header files,
+    and libraries) for a single tool chain. This is cumbersome for users and
+    does not match well with tools which are inherently capable of cross
+    compiling.</li>
+
+  <li>The Debian <a href="http://wiki.debian.org/ArmEabiPort">ArmEabiPort</a>
+    wiki page for their work to support the ARM EABI provide an interesting
+    glimpse into how related issues impact the operating system distribution.</li>
+
+</ul>
+
 </div>
 </body>
 </html>
