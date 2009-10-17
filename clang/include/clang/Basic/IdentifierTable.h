@@ -342,8 +342,11 @@ public:
 
     return *II;
   }
+  IdentifierInfo &CreateIdentifierInfo(llvm::StringRef Name) {
+    return CreateIdentifierInfo(Name.begin(), Name.end());
+  }
 
-  IdentifierInfo &get(const llvm::StringRef& Name) {
+  IdentifierInfo &get(llvm::StringRef Name) {
     return get(Name.begin(), Name.end());
   }
 
