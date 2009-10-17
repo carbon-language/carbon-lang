@@ -24,6 +24,14 @@ def OptList : OptionList<[
     (help "Stop after checking the input for syntax errors")),
  (switch_option "opt",
     (help "Enable opt")),
+ (switch_option "O0",
+    (help "Turn off optimization")),
+ (switch_option "O1",
+    (help "Optimization level 1")),
+ (switch_option "O2",
+    (help "Optimization level 2")),
+ (switch_option "O3",
+    (help "Optimization level 3")),
  (switch_option "S",
     (help "Stop after compilation, do not assemble")),
  (switch_option "c",
@@ -87,6 +95,9 @@ class llvm_gcc_based <string cmd_prefix, string in_lang, string E_ext> : Tool<
          (not_empty "include"), (forward "include"),
          (not_empty "I"), (forward "I"),
          (not_empty "D"), (forward "D"),
+         (switch_on "O1"), (forward "O1"),
+         (switch_on "O2"), (forward "O2"),
+         (switch_on "O3"), (forward "O3"),
          (not_empty "MF"), (forward "MF"),
          (not_empty "MT"), (forward "MT"))),
  (sink)
@@ -103,7 +114,10 @@ def opt : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (actions (case (not_empty "Wo,"), (unpack_values "Wo,"))),
+ (actions (case (not_empty "Wo,"), (unpack_values "Wo,"),
+                (switch_on "O1"), (forward "O1"),
+                (switch_on "O2"), (forward "O2"),
+                (switch_on "O3"), (forward "O3"))),
  (cmd_line "opt -f $INFILE -o $OUTFILE")
 ]>;
 
@@ -132,6 +146,10 @@ def llc : Tool<
  (cmd_line "llc -f $INFILE -o $OUTFILE"),
  (actions (case
           (switch_on "S"), (stop_compilation),
+          (switch_on "O0"), (forward "O0"),
+          (switch_on "O1"), (forward "O1"),
+          (switch_on "O2"), (forward "O2"),
+          (switch_on "O3"), (forward "O3"),
           (not_empty "Wllc,"), (unpack_values "Wllc,")))
 ]>;
 
