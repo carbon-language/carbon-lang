@@ -212,16 +212,12 @@ static bool isRefType(QualType RetTy, const char* prefix,
                       ASTContext* Ctx = 0, const char* name = 0) {
 
   // Recursively walk the typedef stack, allowing typedefs of reference types.
-  while (1) {
-    if (TypedefType* TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
-      llvm::StringRef TDName = TD->getDecl()->getIdentifier()->getNameStr();
-      if (TDName.startswith(prefix) && TDName.endswith("Ref"))
-        return true;
+  while (TypedefType* TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
+    llvm::StringRef TDName = TD->getDecl()->getIdentifier()->getNameStr();
+    if (TDName.startswith(prefix) && TDName.endswith("Ref"))
+      return true;
 
-      RetTy = TD->getDecl()->getUnderlyingType();
-      continue;
-    }
-    break;
+    RetTy = TD->getDecl()->getUnderlyingType();
   }
 
   if (!Ctx || !name)
