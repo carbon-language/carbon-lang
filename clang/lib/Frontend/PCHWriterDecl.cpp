@@ -535,80 +535,64 @@ static bool isRequiredDecl(const Decl *D, ASTContext &Context) {
   }
 }
 
-/// \brief Write a block containing all of the declarations.
-void PCHWriter::WriteDeclsBlock(ASTContext &Context) {
-  // Enter the declarations block.
-  Stream.EnterSubblock(pch::DECLS_BLOCK_ID, 3);
-
-  // Output the abbreviations that we will use in this block.
-  WriteDeclsBlockAbbrevs();
-
-  // Emit all of the declarations.
+void PCHWriter::WriteDecl(ASTContext &Context, Decl *D) {
   RecordData Record;
   PCHDeclWriter W(*this, Context, Record);
-  while (!DeclsToEmit.empty()) {
-    // Pull the next declaration off the queue
-    Decl *D = DeclsToEmit.front();
-    DeclsToEmit.pop();
 
-    // If this declaration is also a DeclContext, write blocks for the
-    // declarations that lexically stored inside its context and those
-    // declarations that are visible from its context. These blocks
-    // are written before the declaration itself so that we can put
-    // their offsets into the record for the declaration.
-    uint64_t LexicalOffset = 0;
-    uint64_t VisibleOffset = 0;
-    DeclContext *DC = dyn_cast<DeclContext>(D);
-    if (DC) {
-      LexicalOffset = WriteDeclContextLexicalBlock(Context, DC);
-      VisibleOffset = WriteDeclContextVisibleBlock(Context, DC);
-    }
-
-    // Determine the ID for this declaration
-    pch::DeclID &ID = DeclIDs[D];
-    if (ID == 0)
-      ID = DeclIDs.size();
-
-    unsigned Index = ID - 1;
-
-    // Record the offset for this declaration
-    if (DeclOffsets.size() == Index)
-      DeclOffsets.push_back(Stream.GetCurrentBitNo());
-    else if (DeclOffsets.size() < Index) {
-      DeclOffsets.resize(Index+1);
-      DeclOffsets[Index] = Stream.GetCurrentBitNo();
-    }
-
-    // Build and emit a record for this declaration
-    Record.clear();
-    W.Code = (pch::DeclCode)0;
-    W.AbbrevToUse = 0;
-    W.Visit(D);
-    if (DC) W.VisitDeclContext(DC, LexicalOffset, VisibleOffset);
-
-    if (!W.Code) {
-      fprintf(stderr, "Cannot serialize declaration of kind %s\n",
-              D->getDeclKindName());
-      assert(false && "Unhandled declaration kind while generating PCH");
-      exit(-1);
-    }
-    Stream.EmitRecord(W.Code, Record, W.AbbrevToUse);
-
-    // If the declaration had any attributes, write them now.
-    if (D->hasAttrs())
-      WriteAttributeRecord(D->getAttrs());
-
-    // Flush any expressions that were written as part of this declaration.
-    FlushStmts();
-
-    // Note "external" declarations so that we can add them to a record in the
-    // PCH file later.
-    //
-    // FIXME: This should be renamed, the predicate is much more complicated.
-    if (isRequiredDecl(D, Context))
-      ExternalDefinitions.push_back(ID);
+  // If this declaration is also a DeclContext, write blocks for the
+  // declarations that lexically stored inside its context and those
+  // declarations that are visible from its context. These blocks
+  // are written before the declaration itself so that we can put
+  // their offsets into the record for the declaration.
+  uint64_t LexicalOffset = 0;
+  uint64_t VisibleOffset = 0;
+  DeclContext *DC = dyn_cast<DeclContext>(D);
+  if (DC) {
+    LexicalOffset = WriteDeclContextLexicalBlock(Context, DC);
+    VisibleOffset = WriteDeclContextVisibleBlock(Context, DC);
   }
 
-  // Exit the declarations block
-  Stream.ExitBlock();
+  // Determine the ID for this declaration
+  pch::DeclID &ID = DeclIDs[D];
+  if (ID == 0)
+    ID = DeclIDs.size();
+
+  unsigned Index = ID - 1;
+
+  // Record the offset for this declaration
+  if (DeclOffsets.size() == Index)
+    DeclOffsets.push_back(Stream.GetCurrentBitNo());
+  else if (DeclOffsets.size() < Index) {
+    DeclOffsets.resize(Index+1);
+    DeclOffsets[Index] = Stream.GetCurrentBitNo();
+  }
+
+  // Build and emit a record for this declaration
+  Record.clear();
+  W.Code = (pch::DeclCode)0;
+  W.AbbrevToUse = 0;
+  W.Visit(D);
+  if (DC) W.VisitDeclContext(DC, LexicalOffset, VisibleOffset);
+
+  if (!W.Code) {
+    fprintf(stderr, "Cannot serialize declaration of kind %s\n",
+            D->getDeclKindName());
+    assert(false && "Unhandled declaration kind while generating PCH");
+    exit(-1);
+  }
+  Stream.EmitRecord(W.Code, Record, W.AbbrevToUse);
+
+  // If the declaration had any attributes, write them now.
+  if (D->hasAttrs())
+    WriteAttributeRecord(D->getAttrs());
+
+  // Flush any expressions that were written as part of this declaration.
+  FlushStmts();
+
+  // Note "external" declarations so that we can add them to a record in the
+  // PCH file later.
+  //
+  // FIXME: This should be renamed, the predicate is much more complicated.
+  if (isRequiredDecl(D, Context))
+    ExternalDefinitions.push_back(Index + 1);
 }

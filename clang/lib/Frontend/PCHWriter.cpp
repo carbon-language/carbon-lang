@@ -461,8 +461,8 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(PP_MACRO_FUNCTION_LIKE);
   RECORD(PP_TOKEN);
 
-  // Types block.
-  BLOCK(TYPES_BLOCK);
+  // Decls and Types block.
+  BLOCK(DECLTYPES_BLOCK);
   RECORD(TYPE_EXT_QUAL);
   RECORD(TYPE_FIXED_WIDTH_INT);
   RECORD(TYPE_COMPLEX);
@@ -486,11 +486,6 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(TYPE_OBJC_INTERFACE);
   RECORD(TYPE_OBJC_OBJECT_POINTER);
   RECORD(TYPE_OBJC_PROTOCOL_LIST);
-  // Statements and Exprs can occur in the Types block.
-  AddStmtsExprs(Stream, Record);
-
-  // Decls block.
-  BLOCK(DECLS_BLOCK);
   RECORD(DECL_ATTR);
   RECORD(DECL_TRANSLATION_UNIT);
   RECORD(DECL_TYPEDEF);
@@ -520,7 +515,7 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(DECL_BLOCK);
   RECORD(DECL_CONTEXT_LEXICAL);
   RECORD(DECL_CONTEXT_VISIBLE);
-  // Statements and Exprs can occur in the Decls block.
+  // Statements and Exprs can occur in the Decls and Types block.
   AddStmtsExprs(Stream, Record);
 #undef RECORD
 #undef BLOCK
@@ -1201,22 +1196,6 @@ void PCHWriter::WriteType(QualType T) {
   FlushStmts();
 }
 
-/// \brief Write a block containing all of the types.
-void PCHWriter::WriteTypesBlock(ASTContext &Context) {
-  // Enter the types block.
-  Stream.EnterSubblock(pch::TYPES_BLOCK_ID, 2);
-
-  // Emit all of the types that need to be emitted (so far).
-  while (!TypesToEmit.empty()) {
-    QualType T = TypesToEmit.front();
-    TypesToEmit.pop();
-    WriteType(T);
-  }
-
-  // Exit the types block
-  Stream.ExitBlock();
-}
-
 //===----------------------------------------------------------------------===//
 // Declaration Serialization
 //===----------------------------------------------------------------------===//
@@ -1859,7 +1838,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // The translation unit is the first declaration we'll emit.
   DeclIDs[Context.getTranslationUnitDecl()] = 1;
-  DeclsToEmit.push(Context.getTranslationUnitDecl());
+  DeclTypesToEmit.push(Context.getTranslationUnitDecl());
 
   // Make sure that we emit IdentifierInfos (and any attached
   // declarations) for builtins.
@@ -1928,13 +1907,18 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Keep writing types and declarations until all types and
   // declarations have been written.
-  do {
-    if (!DeclsToEmit.empty())
-      WriteDeclsBlock(Context);
-    if (!TypesToEmit.empty())
-      WriteTypesBlock(Context);
-  } while (!(DeclsToEmit.empty() && TypesToEmit.empty()));
-
+  Stream.EnterSubblock(pch::DECLTYPES_BLOCK_ID, 3);
+  WriteDeclsBlockAbbrevs();
+  while (!DeclTypesToEmit.empty()) {
+    DeclOrType DOT = DeclTypesToEmit.front();
+    DeclTypesToEmit.pop();
+    if (DOT.isType())
+      WriteType(DOT.getType());
+    else
+      WriteDecl(Context, DOT.getDecl());
+  }
+  Stream.ExitBlock();
+  
   WriteMethodPool(SemaRef);
   WriteIdentifierTable(PP);
 
@@ -2068,7 +2052,7 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
       // Assign it a new ID.  This is the only time we enqueue a
       // qualified type, and it has no CV qualifiers.
       ID = NextTypeID++;
-      TypesToEmit.push(T);
+      DeclTypesToEmit.push(T);
     }
     
     // Encode the type qualifiers in the type reference.
@@ -2122,7 +2106,7 @@ void PCHWriter::AddTypeRef(QualType T, RecordData &Record) {
     // We haven't seen this type before. Assign it a new ID and put it
     // into the queue of types to emit.
     ID = NextTypeID++;
-    TypesToEmit.push(T);
+    DeclTypesToEmit.push(T);
   }
 
   // Encode the type qualifiers in the type reference.
@@ -2140,7 +2124,7 @@ void PCHWriter::AddDeclRef(const Decl *D, RecordData &Record) {
     // We haven't seen this declaration before. Give it a new ID and
     // enqueue it in the list of declarations to emit.
     ID = DeclIDs.size();
-    DeclsToEmit.push(const_cast<Decl *>(D));
+    DeclTypesToEmit.push(const_cast<Decl *>(D));
   }
 
   Record.push_back(ID);

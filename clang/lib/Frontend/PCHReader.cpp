@@ -382,7 +382,7 @@ Expr *PCHReader::ReadDeclExpr() {
 }
 
 Expr *PCHReader::ReadTypeExpr() {
-  return dyn_cast_or_null<Expr>(ReadStmt(Stream));
+  return dyn_cast_or_null<Expr>(ReadStmt(DeclsCursor));
 }
 
 
@@ -1157,15 +1157,7 @@ PCHReader::ReadPCHBlock() {
 
     if (Code == llvm::bitc::ENTER_SUBBLOCK) {
       switch (Stream.ReadSubBlockID()) {
-      case pch::TYPES_BLOCK_ID: // Skip types block (lazily loaded)
-      default:  // Skip unknown content.
-        if (Stream.SkipBlock()) {
-          Error("malformed block record in PCH file");
-          return Failure;
-        }
-        break;
-
-      case pch::DECLS_BLOCK_ID:
+      case pch::DECLTYPES_BLOCK_ID:
         // We lazily load the decls block, but we want to set up the
         // DeclsCursor cursor to point into it.  Clone our current bitcode
         // cursor to it, enter the block and read the abbrevs in that block.
@@ -1173,7 +1165,7 @@ PCHReader::ReadPCHBlock() {
         DeclsCursor = Stream;
         if (Stream.SkipBlock() ||  // Skip with the main cursor.
             // Read the abbrevs.
-            ReadBlockAbbrevs(DeclsCursor, pch::DECLS_BLOCK_ID)) {
+            ReadBlockAbbrevs(DeclsCursor, pch::DECLTYPES_BLOCK_ID)) {
           Error("malformed block record in PCH file");
           return Failure;
         }
@@ -1773,15 +1765,15 @@ void PCHReader::ReadComments(std::vector<SourceRange> &Comments) {
 QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   // Keep track of where we are in the stream, then jump back there
   // after reading this type.
-  SavedStreamPosition SavedPosition(Stream);
+  SavedStreamPosition SavedPosition(DeclsCursor);
 
   // Note that we are loading a type record.
   LoadingTypeOrDecl Loading(*this);
 
-  Stream.JumpToBit(Offset);
+  DeclsCursor.JumpToBit(Offset);
   RecordData Record;
-  unsigned Code = Stream.ReadCode();
-  switch ((pch::TypeCode)Stream.ReadRecord(Code, Record)) {
+  unsigned Code = DeclsCursor.ReadCode();
+  switch ((pch::TypeCode)DeclsCursor.ReadRecord(Code, Record)) {
   case pch::TYPE_EXT_QUAL: {
     assert(Record.size() == 2 &&
            "Incorrect encoding of extended qualifier type");
@@ -2045,6 +2037,8 @@ void TypeLocReader::VisitArrayLoc(ArrayLoc TyLoc) {
   TyLoc.setRBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   if (Record[Idx++])
     TyLoc.setSizeExpr(Reader.ReadDeclExpr());
+  else
+    TyLoc.setSizeExpr(0);
 }
 
 DeclaratorInfo *PCHReader::GetDeclaratorInfo(const RecordData &Record,

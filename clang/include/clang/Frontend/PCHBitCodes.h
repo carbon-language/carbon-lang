@@ -86,38 +86,33 @@ namespace clang {
       PREPROCESSOR_BLOCK_ID,
 
       /// \brief The block containing the definitions of all of the
-      /// types used within the PCH file.
-      TYPES_BLOCK_ID,
-
-      /// \brief The block containing the definitions of all of the
-      /// declarations stored in the PCH file.
-      DECLS_BLOCK_ID
+      /// types and decls used within the PCH file.
+      DECLTYPES_BLOCK_ID
     };
 
     /// \brief Record types that occur within the PCH block itself.
     enum PCHRecordTypes {
-      /// \brief Offset of each type within the types block.
+      /// \brief Record code for the offsets of each type.
       ///
       /// The TYPE_OFFSET constant describes the record that occurs
-      /// within the block identified by TYPE_OFFSETS_BLOCK_ID within
-      /// the PCH file. The record itself is an array of offsets that
-      /// point into the types block (identified by TYPES_BLOCK_ID in
-      /// the PCH file). The index into the array is based on the ID
+      /// within the PCH block. The record itself is an array of offsets that
+      /// point into the declarations and types block (identified by 
+      /// DECLTYPES_BLOCK_ID). The index into the array is based on the ID
       /// of a type. For a given type ID @c T, the lower three bits of
       /// @c T are its qualifiers (const, volatile, restrict), as in
       /// the QualType class. The upper bits, after being shifted and
       /// subtracting NUM_PREDEF_TYPE_IDS, are used to index into the
       /// TYPE_OFFSET block to determine the offset of that type's
-      /// corresponding record within the TYPES_BLOCK_ID block.
+      /// corresponding record within the DECLTYPES_BLOCK_ID block.
       TYPE_OFFSET = 1,
 
       /// \brief Record code for the offsets of each decl.
       ///
       /// The DECL_OFFSET constant describes the record that occurs
-      /// within the block identifier by DECL_OFFSETS_BLOCK_ID within
-      /// the PCH file. The record itself is an array of offsets that
-      /// point into the declarations block (identified by
-      /// DECLS_BLOCK_ID). The declaration ID is an index into this
+      /// within the block identified by DECL_OFFSETS_BLOCK_ID within
+      /// the PCH block. The record itself is an array of offsets that
+      /// point into the declarations and types block (identified by
+      /// DECLTYPES_BLOCK_ID). The declaration ID is an index into this
       /// record, after subtracting one to account for the use of
       /// declaration ID 0 for a NULL declaration pointer. Index 0 is
       /// reserved for the translation unit declaration.
@@ -353,8 +348,8 @@ namespace clang {
 
     /// \brief Record codes for each kind of type.
     ///
-    /// These constants describe the records that can occur within a
-    /// block identified by TYPES_BLOCK_ID in the PCH file. Each
+    /// These constants describe the type records that can occur within a
+    /// block identified by DECLTYPES_BLOCK_ID in the PCH file. Each
     /// constant describes a record for a specific type class in the
     /// AST.
     enum TypeCode {
@@ -444,13 +439,13 @@ namespace clang {
 
     /// \brief Record codes for each kind of declaration.
     ///
-    /// These constants describe the records that can occur within a
-    /// declarations block (identified by DECLS_BLOCK_ID). Each
+    /// These constants describe the declaration records that can occur within
+    /// a declarations block (identified by DECLS_BLOCK_ID). Each
     /// constant describes a record for a specific declaration class
     /// in the AST.
     enum DeclCode {
       /// \brief Attributes attached to a declaration.
-      DECL_ATTR = 1,
+      DECL_ATTR = 50,
       /// \brief A TranslationUnitDecl record.
       DECL_TRANSLATION_UNIT,
       /// \brief A TypedefDecl record.
@@ -525,14 +520,14 @@ namespace clang {
     /// \brief Record codes for each kind of statement or expression.
     ///
     /// These constants describe the records that describe statements
-    /// or expressions. These records can occur within either the type
-    /// or declaration blocks, so they begin with record values of
-    /// 50.  Each constant describes a record for a specific
-    /// statement or expression class in the AST.
+    /// or expressions. These records  occur within type and declarations
+    /// block, so they begin with record values of 100.  Each constant 
+    /// describes a record for a specific statement or expression class in the
+    /// AST.
     enum StmtCode {
       /// \brief A marker record that indicates that we are at the end
       /// of an expression.
-      STMT_STOP = 50,
+      STMT_STOP = 100,
       /// \brief A NULL expression.
       STMT_NULL_PTR,
       /// \brief A NullStmt record.

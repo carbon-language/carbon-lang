@@ -73,6 +73,33 @@ private:
   /// \brief The bitstream writer used to emit this precompiled header.
   llvm::BitstreamWriter &Stream;
 
+  /// \brief Stores a declaration or a type to be written to the PCH file.
+  class DeclOrType {
+  public:
+    DeclOrType(Decl *D) : Stored(D), IsType(false) { }
+    DeclOrType(QualType T) : Stored(T.getAsOpaquePtr()), IsType(true) { }
+    
+    bool isType() const { return IsType; }
+    bool isDecl() const { return !IsType; }
+    
+    QualType getType() const {
+      assert(isType() && "Not a type!");
+      return QualType::getFromOpaquePtr(Stored);
+    }
+    
+    Decl *getDecl() const {
+      assert(isDecl() && "Not a decl!");
+      return static_cast<Decl *>(Stored);
+    }
+    
+  private:
+    void *Stored;
+    bool IsType;
+  };
+  
+  /// \brief The declarations and types to emit.
+  std::queue<DeclOrType> DeclTypesToEmit;
+  
   /// \brief Map that provides the ID numbers of each declaration within
   /// the output stream.
   ///
@@ -84,10 +111,6 @@ private:
   /// \brief Offset of each declaration in the bitstream, indexed by
   /// the declaration's ID.
   std::vector<uint32_t> DeclOffsets;
-
-  /// \brief Queue containing the declarations that we still need to
-  /// emit.
-  std::queue<Decl *> DeclsToEmit;
 
   /// \brief Map that provides the ID numbers of each type within the
   /// output stream.
@@ -106,10 +129,6 @@ private:
 
   /// \brief The type ID that will be assigned to the next new type.
   pch::TypeID NextTypeID;
-
-  /// \brief Queue containing the types that we still need to
-  /// emit.
-  std::queue<QualType> TypesToEmit;
 
   /// \brief Map that provides the ID numbers of each identifier in
   /// the output stream.
@@ -189,18 +208,17 @@ private:
   void WritePreprocessor(const Preprocessor &PP);
   void WriteComments(ASTContext &Context);
   void WriteType(QualType T);
-  void WriteTypesBlock(ASTContext &Context);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);
   uint64_t WriteDeclContextVisibleBlock(ASTContext &Context, DeclContext *DC);
 
-  void WriteDeclsBlock(ASTContext &Context);
   void WriteMethodPool(Sema &SemaRef);
   void WriteIdentifierTable(Preprocessor &PP);
   void WriteAttributeRecord(const Attr *Attr);
 
   unsigned ParmVarDeclAbbrev;
   void WriteDeclsBlockAbbrevs();
-
+  void WriteDecl(ASTContext &Context, Decl *D);
+  
 public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
