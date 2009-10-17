@@ -20,8 +20,9 @@
 #include "clang/Lex/PTHManager.h"
 #include "clang/Lex/Token.h"
 #include "clang/Lex/Preprocessor.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <sys/stat.h>
 using namespace clang;
@@ -308,7 +309,7 @@ public:
   typedef std::pair<unsigned char, const char*> internal_key_type;
 
   static unsigned ComputeHash(internal_key_type x) {
-    return BernsteinHash(x.second);
+    return llvm::HashString(x.second);
   }
 
   static std::pair<unsigned, unsigned>
@@ -363,7 +364,7 @@ public:
   }
 
   static unsigned ComputeHash(const internal_key_type& a) {
-    return BernsteinHash(a.first, a.second);
+    return llvm::HashString(llvm::StringRef(a.first, a.second));
   }
 
   // This hopefully will just get inlined and removed by the optimizer.

@@ -28,6 +28,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -410,7 +411,7 @@ public:
     unsigned R = 5381;
     for (unsigned I = 0; I != N; ++I)
       if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(I))
-        R = clang::BernsteinHashPartial(II->getName(), II->getLength(), R);
+        R = llvm::HashString(II->getName(), R);
     return R;
   }
 
@@ -520,7 +521,7 @@ public:
   }
 
   static unsigned ComputeHash(const internal_key_type& a) {
-    return BernsteinHash(a.first, a.second);
+    return llvm::HashString(llvm::StringRef(a.first, a.second));
   }
 
   // This hopefully will just get inlined and removed by the optimizer.
@@ -730,7 +731,7 @@ class VISIBILITY_HIDDEN PCHStatLookupTrait {
   typedef PCHStatData data_type;
 
   static unsigned ComputeHash(const char *path) {
-    return BernsteinHash(path);
+    return llvm::HashString(path);
   }
 
   static internal_key_type GetInternalKey(const char *path) { return path; }

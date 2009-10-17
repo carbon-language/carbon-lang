@@ -31,6 +31,7 @@
 #include "clang/Basic/Version.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -707,7 +708,7 @@ public:
   typedef const data_type& data_type_ref;
 
   static unsigned ComputeHash(const char *path) {
-    return BernsteinHash(path);
+    return llvm::HashString(path);
   }
 
   std::pair<unsigned,unsigned>
@@ -1295,7 +1296,7 @@ public:
     unsigned R = 5381;
     for (unsigned I = 0; I != N; ++I)
       if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(I))
-        R = clang::BernsteinHashPartial(II->getName(), II->getLength(), R);
+        R = llvm::HashString(II->getName(), R);
     return R;
   }
 
@@ -1504,7 +1505,7 @@ public:
     : Writer(Writer), PP(PP) { }
 
   static unsigned ComputeHash(const IdentifierInfo* II) {
-    return clang::BernsteinHash(II->getName());
+    return llvm::HashString(II->getName());
   }
 
   std::pair<unsigned,unsigned>
