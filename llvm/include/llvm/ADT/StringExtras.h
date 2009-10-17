@@ -217,11 +217,6 @@ void SplitString(const std::string &Source,
                  std::vector<std::string> &OutFragments,
                  const char *Delimiters = " \t\n\v\f\r");
 
-/// UnescapeString - Modify the argument string, turning two character sequences
-/// like '\\' 'n' into '\n'.  This handles: \e \a \b \f \n \r \t \v \' \\ and
-/// \num (where num is a 1-3 byte octal value).
-void UnescapeString(std::string &Str);
-
 /// HashString - Hash funtion for strings.
 ///
 /// This is the Bernstein hash function.
