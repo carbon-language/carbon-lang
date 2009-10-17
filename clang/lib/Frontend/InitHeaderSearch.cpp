@@ -386,6 +386,11 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
                                       "i486-pc-linux-gnu",
                                       "i486-pc-linux-gnu",
                                       triple);
+          // Ubuntu 9.04
+          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3",
+                                      "i486-linux-gnu",
+                                      "i486-linux-gnu",
+                                      triple);
           // Gentoo amd64 stable
           AddGnuCPlusPlusIncludePaths(
              "/usr/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/g++-v4",
