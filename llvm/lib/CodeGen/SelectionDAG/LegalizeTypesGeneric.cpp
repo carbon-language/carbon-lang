@@ -115,7 +115,8 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
   // Create the stack frame object.  Make sure it is aligned for both
   // the source and expanded destination types.
   unsigned Alignment =
-    TLI.getTargetData()->getPrefTypeAlignment(NOutVT.getTypeForEVT(*DAG.getContext()));
+    TLI.getTargetData()->getPrefTypeAlignment(NOutVT.
+                                              getTypeForEVT(*DAG.getContext()));
   SDValue StackPtr = DAG.CreateStackTemporary(InVT, Alignment);
   int SPFI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
   const Value *SV = PseudoSourceValue::getFixedStack(SPFI);
