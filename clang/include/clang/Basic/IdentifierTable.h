@@ -241,6 +241,8 @@ public:
   ///  Unlike the version in IdentifierTable, this returns a pointer instead
   ///  of a reference.  If the pointer is NULL then the IdentifierInfo cannot
   ///  be found.
+  //
+  // FIXME: Move to StringRef API.
   virtual IdentifierInfo* get(const char *NameStart, const char *NameEnd) = 0;
 };
 
