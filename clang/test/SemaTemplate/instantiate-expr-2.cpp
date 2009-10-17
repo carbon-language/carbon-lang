@@ -178,3 +178,18 @@ namespace N10 {
   
   template class A<int>;
 }
+
+namespace N12 {
+  // PR5224
+  template<typename T>
+  struct A { typedef int t0; };
+  
+  struct C  {
+    C(int);
+    
+    template<typename T>
+    static C *f0(T a0) {return new C((typename A<T>::t0) 1);   }
+  };
+
+  void f0(int **a) { C::f0(a); }
+}

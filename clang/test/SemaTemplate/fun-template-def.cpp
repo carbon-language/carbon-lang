@@ -35,7 +35,7 @@ T f1(T t1, U u1, int i1)
     dynamic_cast<U>(const_cast<T>(i1)))));
 
   new U(i1, t1);
-  new int(t1, u1); // expected-error {{initializer of a builtin type can only take one argument}}
+  new int(t1, u1);
   new (t1, u1) int;
   delete t1;
 

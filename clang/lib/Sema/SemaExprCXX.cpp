@@ -418,6 +418,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   FunctionDecl *OperatorDelete = 0;
   Expr **PlaceArgs = (Expr**)PlacementArgs.get();
   unsigned NumPlaceArgs = PlacementArgs.size();
+    
   if (!AllocType->isDependentType() &&
       !Expr::hasAnyTypeDependentArguments(PlaceArgs, NumPlaceArgs) &&
       FindAllocationFunctions(StartLoc,
@@ -448,7 +449,9 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   Expr **ConsArgs = (Expr**)ConstructorArgs.get();
   const RecordType *RT;
   unsigned NumConsArgs = ConstructorArgs.size();
-  if (AllocType->isDependentType()) {
+  
+  if (AllocType->isDependentType() || 
+      Expr::hasAnyTypeDependentArguments(ConsArgs, NumConsArgs)) {
     // Skip all the checks.
   } else if ((RT = AllocType->getAs<RecordType>()) &&
              !AllocType->isAggregateType()) {
@@ -491,7 +494,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   }
 
   // FIXME: Also check that the destructor is accessible. (C++ 5.3.4p16)
-
+  
   PlacementArgs.release();
   ConstructorArgs.release();
   ArraySizeE.release();
