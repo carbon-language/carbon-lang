@@ -266,7 +266,9 @@ public:
 
 class CIndexer : public Indexer {
 public:  
-  explicit CIndexer(Program &prog) : Indexer(prog), OnlyLocalDecls(false) { }
+  explicit CIndexer(Program *prog) : Indexer(*prog), OnlyLocalDecls(false) {}
+
+  virtual ~CIndexer() { delete &getProgram(); }
 
   /// \brief Whether we only want to see "local" declarations (that did not
   /// come from a previous precompiled header). If false, we want to see all
@@ -286,8 +288,6 @@ static const char *clangPath;
 
 CXIndex clang_createIndex() 
 {
-  // FIXME: Program is leaked.
-  
   // Find the location where this library lives (libCIndex.dylib).
   // We do the lookup here to avoid poking dladdr too many times.
   // This silly cast below avoids a C++ warning.
@@ -303,7 +303,7 @@ CXIndex clang_createIndex()
   
   clangPath = ClangPath.c_str();
   
-  return new CIndexer(*new Program());
+  return new CIndexer(new Program());
 }
 
 void clang_disposeIndex(CXIndex CIdx)
