@@ -339,10 +339,10 @@ namespace {
     void WriteValue(const Value *V) {
       if (!V) return;
       if (isa<Instruction>(V)) {
-        MessagesStr << *V;
+        MessagesStr << *V << '\n';
       } else {
         WriteAsOperand(MessagesStr, V, true, Mod);
-        MessagesStr << "\n";
+        MessagesStr << '\n';
       }
     }
 
