@@ -15,6 +15,7 @@
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 
@@ -65,9 +66,9 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
   if (Tok.is(tok::identifier)) {
     const IdentifierInfo *FieldName = Tok.getIdentifierInfo();
 
-    std::string NewSyntax(".");
-    NewSyntax += FieldName->getName();
-    NewSyntax += " = ";
+    llvm::SmallString<256> NewSyntax;
+    llvm::raw_svector_ostream(NewSyntax) << '.' << FieldName->getNameStr()
+                                         << " = ";
 
     SourceLocation NameLoc = ConsumeToken(); // Eat the identifier.
 
@@ -77,7 +78,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     Diag(Tok, diag::ext_gnu_old_style_field_designator)
       << CodeModificationHint::CreateReplacement(SourceRange(NameLoc,
                                                              ColonLoc),
-                                                 NewSyntax);
+                                                 NewSyntax.str());
 
     Designation D;
     D.AddDesignator(Designator::getField(FieldName, SourceLocation(), NameLoc));
