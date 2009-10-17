@@ -15,6 +15,7 @@
 #define LLVM_CLANG_DIAGNOSTIC_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/type_traits.h"
 #include <string>
 #include <vector>
@@ -107,7 +108,7 @@ public:
   /// \brief Create a code modification hint that inserts the given
   /// code string at a specific location.
   static CodeModificationHint CreateInsertion(SourceLocation InsertionLoc,
-                                              const std::string &Code) {
+                                              llvm::StringRef Code) {
     CodeModificationHint Hint;
     Hint.InsertionLoc = InsertionLoc;
     Hint.CodeToInsert = Code;
@@ -125,7 +126,7 @@ public:
   /// \brief Create a code modification hint that replaces the given
   /// source range with the given code string.
   static CodeModificationHint CreateReplacement(SourceRange RemoveRange,
-                                                const std::string &Code) {
+                                                llvm::StringRef Code) {
     CodeModificationHint Hint;
     Hint.RemoveRange = RemoveRange;
     Hint.InsertionLoc = RemoveRange.getBegin();
@@ -546,7 +547,7 @@ public:
   /// return Diag(...);
   operator bool() const { return true; }
 
-  void AddString(const std::string &S) const {
+  void AddString(llvm::StringRef S) const {
     assert(NumArgs < Diagnostic::MaxArguments &&
            "Too many arguments to diagnostic!");
     if (DiagObj) {
@@ -581,7 +582,7 @@ public:
 };
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           const std::string &S) {
+                                           llvm::StringRef S) {
   DB.AddString(S);
   return DB;
 }
