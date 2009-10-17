@@ -16,6 +16,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 
 using namespace clang;
@@ -153,7 +154,7 @@ tok::PPKeywordKind IdentifierInfo::getPPKeywordID() const {
 
   unsigned Len = getLength();
   if (Len < 2) return tok::pp_not_keyword;
-  const char *Name = getName();
+  const char *Name = getNameStart();
   switch (HASH(Len, Name[0], Name[2])) {
   default: return tok::pp_not_keyword;
   CASE( 2, 'i', '\0', if);
@@ -301,24 +302,15 @@ IdentifierInfo *Selector::getIdentifierInfoForSlot(unsigned argIndex) const {
 }
 
 std::string MultiKeywordSelector::getName() const {
-  std::string Result;
-  unsigned Length = 0;
+  llvm::SmallString<256> Str;
+  llvm::raw_svector_ostream OS(Str);
   for (keyword_iterator I = keyword_begin(), E = keyword_end(); I != E; ++I) {
     if (*I)
-      Length += (*I)->getLength();
-    ++Length;  // :
+      OS << (*I)->getNameStr();
+    OS << ':';
   }
 
-  Result.reserve(Length);
-
-  for (keyword_iterator I = keyword_begin(), E = keyword_end(); I != E; ++I) {
-    if (*I)
-      Result.insert(Result.end(), (*I)->getName(),
-                    (*I)->getName()+(*I)->getLength());
-    Result.push_back(':');
-  }
-
-  return Result;
+  return OS.str();
 }
 
 std::string Selector::getAsString() const {
@@ -330,11 +322,12 @@ std::string Selector::getAsString() const {
 
     // If the number of arguments is 0 then II is guaranteed to not be null.
     if (getNumArgs() == 0)
-      return II->getName();
+      return II->getNameStr();
 
-    std::string Res = II ? II->getName() : "";
-    Res += ":";
-    return Res;
+    if (!II)
+      return ":";
+
+    return II->getNameStr().str() + ":";
   }
 
   // We have a multiple keyword selector (no embedded flags).
