@@ -1,15 +1,21 @@
-; A very rudimentary test on AliasAnalysis::getModRefInfo.
-; RUN: opt < %s -print-all-alias-modref-info -aa-eval -disable-output |& \
-; RUN: not grep NoModRef
+; RUN: opt < %s -basicaa -gvn -S | FileCheck %s
 
-define i32 @callee() {
-        %X = alloca { i32, i32 }                ; <{ i32, i32 }*> [#uses=1]
-        %Y = getelementptr { i32, i32 }* %X, i64 0, i32 0               ; <i32*> [#uses=1]
-        %Z = load i32* %Y               ; <i32> [#uses=1]
-        ret i32 %Z
+declare void @llvm.memset.i32(i8*, i8, i32, i32)
+
+declare void @external(i32*) 
+
+define i32 @test0(i8* %P) {
+  %A = alloca i32
+  call void @external(i32* %A)
+  
+  store i32 0, i32* %A
+  
+  call void @llvm.memset.i32(i8* %P, i8 0, i32 42, i32 1)
+  
+  %B = load i32* %A
+  ret i32 %B
+  
+; CHECK: @test0
+; CHECK: ret i32 0
 }
 
-define i32 @caller() {
-        %X = call i32 @callee( )                ; <i32> [#uses=1]
-        ret i32 %X
-}
