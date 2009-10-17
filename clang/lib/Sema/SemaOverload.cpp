@@ -4334,8 +4334,11 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   // If there were 0 or 1 matches, we're done.
   if (Matches.empty())
     return 0;
-  else if (Matches.size() == 1)
-    return *Matches.begin();
+  else if (Matches.size() == 1) {
+    FunctionDecl *Result = *Matches.begin();
+    MarkDeclarationReferenced(From->getLocStart(), Result);
+    return Result;
+  }
 
   // C++ [over.over]p4:
   //   If more than one function is selected, [...]
@@ -4351,14 +4354,17 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     // two-pass algorithm (similar to the one used to identify the
     // best viable function in an overload set) that identifies the
     // best function template (if it exists).
-    llvm::SmallVector<FunctionDecl *, 8> TemplateMatches(Matches.begin(), 
+    llvm::SmallVector<FunctionDecl *, 8> TemplateMatches(Matches.begin(),
                                                          Matches.end());
-    return getMostSpecialized(TemplateMatches.data(), TemplateMatches.size(), 
-                              TPOC_Other, From->getLocStart(),
-                              PDiag(),
-                              PDiag(diag::err_addr_ovl_ambiguous)
-                              << TemplateMatches[0]->getDeclName(), 
-                              PDiag(diag::err_ovl_template_candidate));
+    FunctionDecl *Result =
+        getMostSpecialized(TemplateMatches.data(), TemplateMatches.size(),
+                           TPOC_Other, From->getLocStart(),
+                           PDiag(),
+                           PDiag(diag::err_addr_ovl_ambiguous)
+                               << TemplateMatches[0]->getDeclName(),
+                           PDiag(diag::err_ovl_template_candidate));
+    MarkDeclarationReferenced(From->getLocStart(), Result);
+    return Result;
   }
 
   //   [...] any function template specializations in the set are
@@ -4370,8 +4376,11 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   
   // [...] After such eliminations, if any, there shall remain exactly one
   // selected function.
-  if (RemainingMatches.size() == 1)
-    return RemainingMatches.front();
+  if (RemainingMatches.size() == 1) {
+    FunctionDecl *Result = RemainingMatches.front();
+    MarkDeclarationReferenced(From->getLocStart(), Result);
+    return Result;
+  }
 
   // FIXME: We should probably return the same thing that BestViableFunction
   // returns (even if we issue the diagnostics here).
