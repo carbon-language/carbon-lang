@@ -1741,11 +1741,10 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
         // for the other fields and elements around.  The reason is that
         // pointer arithmetic can get us to the other fields or elements.
         // FIXME: add an assertion that this is always true.
-        VisitFlag NewVisit =
-          isa<FieldRegion>(R) || isa<ElementRegion>(R) || isa<ObjCIvarRegion>(R)
-          ? VisitedFromSuperRegion : VisitedFromSubRegion;
-        
-        WorkList.push_back(RBDItem(state_N, superR, NewVisit));
+
+        assert(isa<FieldRegion>(R) || isa<ElementRegion>(R) 
+               || isa<ObjCIvarRegion>(R));
+        WorkList.push_back(RBDItem(state_N, superR, VisitedFromSuperRegion));
       }
     }
 
