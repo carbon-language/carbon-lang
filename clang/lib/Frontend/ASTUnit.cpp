@@ -95,7 +95,8 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   Diagnostic &Diags,
                                   FileManager &FileMgr,
                                   std::string *ErrMsg,
-                                  bool OnlyLocalDecls) {
+                                  bool OnlyLocalDecls,
+                                  bool UseBumpAllocator) {
   llvm::OwningPtr<ASTUnit> AST(new ASTUnit(Diags));
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->HeaderInfo.reset(new HeaderSearch(FileMgr));
@@ -146,7 +147,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                 PP.getIdentifierTable(),
                                 PP.getSelectorTable(),
                                 PP.getBuiltinInfo(),
-                                /* FreeMemory = */ true,
+                                /* FreeMemory = */ !UseBumpAllocator,
                                 /* size_reserve = */0));
   ASTContext &Context = *AST->Ctx.get();
 

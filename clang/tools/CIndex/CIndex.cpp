@@ -323,7 +323,8 @@ CXTranslationUnit clang_createTranslationUnit(
   
   return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getDiagnostics(),
                                   CXXIdx->getFileManager(), &ErrMsg,
-                                  CXXIdx->getOnlyLocalDecls());
+                                  CXXIdx->getOnlyLocalDecls(),
+                                  /* UseBumpAllocator = */ true);
 }
 
 CXTranslationUnit clang_createTranslationUnitFromSourceFile(

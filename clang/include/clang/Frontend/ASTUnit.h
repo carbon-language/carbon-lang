@@ -88,7 +88,8 @@ public:
                                   Diagnostic &Diags,
                                   FileManager &FileMgr,
                                   std::string *ErrMsg = 0,
-                                  bool OnlyLocalDecls = false);
+                                  bool OnlyLocalDecls = false,
+                                  bool UseBumpAllocator = false);
 };
 
 } // namespace clang
