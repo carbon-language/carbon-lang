@@ -25,8 +25,10 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
 #include <cstdio>
+#ifndef _MSC_VER
 #include <dlfcn.h>
 #include <sys/wait.h>
+#endif
 #include <vector>
 
 using namespace clang;
@@ -288,6 +290,10 @@ static const char *clangPath;
 
 CXIndex clang_createIndex() 
 {
+  // FIXME: This is a hack to unbreak the MSVC build.
+#ifdef _MSC_VER
+  llvm::sys::Path CIndexPath("");
+#else
   // Find the location where this library lives (libCIndex.dylib).
   // We do the lookup here to avoid poking dladdr too many times.
   // This silly cast below avoids a C++ warning.
@@ -296,6 +302,7 @@ CXIndex clang_createIndex()
     assert(0 && "Call to dladdr() failed");
 
   llvm::sys::Path CIndexPath(info.dli_fname);
+#endif
   std::string CIndexDir = CIndexPath.getDirname();
   
   // We now have the CIndex directory, locate clang relative to it.
@@ -332,6 +339,10 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   const char *source_filename,
   int num_command_line_args, const char **command_line_args) 
 {
+  // FIXME: This is a hack to unbreak the build.
+#ifdef _MSC_VER
+  return 0;
+#else
   // Build up the arguments for involing clang.
   std::vector<const char *> argv;
   argv.push_back(clangPath);
@@ -367,6 +378,7 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
                    clang_createTranslationUnit(CIdx, astTmpFile));
   ATU->unlinkTemporaryFile();
   return ATU;
+#endif
 }
 
 void clang_disposeTranslationUnit(
