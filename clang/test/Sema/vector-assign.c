@@ -5,7 +5,7 @@ typedef signed int v1s __attribute__ ((vector_size (4)));
 typedef float v2f __attribute__ ((vector_size(8)));
 typedef signed short v4ss __attribute__ ((vector_size (8)));
 
-void f() {
+void test1() {
   v2s v1;
   v2u v2;
   v1s v3;
@@ -39,7 +39,15 @@ void f() {
 }
 
 // PR2263
-float f2(__attribute__((vector_size(16))) float a, int b) {
+float test2(__attribute__((vector_size(16))) float a, int b) {
    return a[b];
 }
 
+// PR4838
+typedef long long __attribute__((__vector_size__(2 * sizeof(long long))))
+longlongvec;
+
+void test3a(longlongvec *);
+void test3(const unsigned *src) {
+  test3a(src);  // expected-warning {{incompatible pointer types passing 'unsigned int const *', expected 'longlongvec *'}}
+}

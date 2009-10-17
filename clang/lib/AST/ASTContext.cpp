@@ -3930,7 +3930,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
 unsigned ASTContext::getIntWidth(QualType T) {
   if (T == BoolTy)
     return 1;
-  if (FixedWidthIntType* FWIT = dyn_cast<FixedWidthIntType>(T)) {
+  if (FixedWidthIntType *FWIT = dyn_cast<FixedWidthIntType>(T)) {
     return FWIT->getWidth();
   }
   // For builtin types, just use the standard type sizing method
@@ -3939,10 +3939,18 @@ unsigned ASTContext::getIntWidth(QualType T) {
 
 QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
   assert(T->isSignedIntegerType() && "Unexpected type");
-  if (const EnumType* ETy = T->getAs<EnumType>())
+  
+  // Turn <4 x signed int> -> <4 x unsigned int>
+  if (const VectorType *VTy = T->getAs<VectorType>())
+    return getVectorType(getCorrespondingUnsignedType(VTy->getElementType()),
+                         VTy->getNumElements());
+
+  // For enums, we return the unsigned version of the base type.
+  if (const EnumType *ETy = T->getAs<EnumType>())
     T = ETy->getDecl()->getIntegerType();
-  const BuiltinType* BTy = T->getAs<BuiltinType>();
-  assert (BTy && "Unexpected signed integer type");
+  
+  const BuiltinType *BTy = T->getAs<BuiltinType>();
+  assert(BTy && "Unexpected signed integer type");
   switch (BTy->getKind()) {
   case BuiltinType::Char_S:
   case BuiltinType::SChar:

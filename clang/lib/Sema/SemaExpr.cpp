@@ -3753,16 +3753,16 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
     // Check if the pointee types are compatible ignoring the sign.
     // We explicitly check for char so that we catch "char" vs
     // "unsigned char" on systems where "char" is unsigned.
-    if (lhptee->isCharType()) {
+    if (lhptee->isCharType())
       lhptee = Context.UnsignedCharTy;
-    } else if (lhptee->isSignedIntegerType()) {
+    else if (lhptee->isSignedIntegerType())
       lhptee = Context.getCorrespondingUnsignedType(lhptee);
-    }
-    if (rhptee->isCharType()) {
+    
+    if (rhptee->isCharType())
       rhptee = Context.UnsignedCharTy;
-    } else if (rhptee->isSignedIntegerType()) {
+    else if (rhptee->isSignedIntegerType())
       rhptee = Context.getCorrespondingUnsignedType(rhptee);
-    }
+
     if (lhptee == rhptee) {
       // Types are compatible ignoring the sign. Qualifier incompatibility
       // takes priority over sign incompatibility because the sign
