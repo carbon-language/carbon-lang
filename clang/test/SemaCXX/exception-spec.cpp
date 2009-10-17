@@ -185,3 +185,6 @@ void mfnptr()
 template <typename T> struct TEx; // expected-note {{template is declared here}}
 
 void tf() throw(TEx<int>); // expected-error {{implicit instantiation of undefined template}}
+
+// DR 437, class throws itself. FIXME: See Sema::CheckSpecifiedExceptionType.
+//struct DR437 { void f() throw(DR437); };
