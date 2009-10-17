@@ -681,21 +681,23 @@ void *rdar7152418_bar();
   return 1;
 }
 
+//===----------------------------------------------------------------------===//
 // Test constant-folding of symbolic values, automatically handling type
-// conversions of the symbol as necessary.  Previously this would crash
-// once we started eagerly evaluating symbols whose values were constrained
-// to a single value.
-void test_constant_symbol(signed char x) {
+// conversions of the symbol as necessary.
+//===----------------------------------------------------------------------===//
+
+
+// Previously this would crash once we started eagerly evaluating symbols whose 
+// values were constrained to a single value.
+void test_symbol_fold_1(signed char x) {
   while (1) {
     if (x == ((signed char) 0)) {}
   }
 }
 
-// Test constant-folding of symbolic values, where a folded symbolic value is used in a
-// bitshift operation.  This previously caused a crash because it triggered an assertion
-// in APSInt.
-void test_symbol_fold_with_shift(unsigned int * p, unsigned int n,
-                                const unsigned int * grumpkin, unsigned int dn) {
+// This previously caused a crash because it triggered an assertion in APSInt.
+void test_symbol_fold_2(unsigned int * p, unsigned int n,
+                        const unsigned int * grumpkin, unsigned int dn) {
   unsigned int i;
   unsigned int tempsub[8];
   unsigned int *solgrumpkin = tempsub + n;
@@ -703,4 +705,16 @@ void test_symbol_fold_with_shift(unsigned int * p, unsigned int n,
     solgrumpkin[i] = (i < dn) ? ~grumpkin[i] : 0xFFFFFFFF;
   for (i <<= 5; i < (n << 5); i++) {}
 }
+
+// This previously caused a crash because it triggered an assertion in APSInt.
+// 'x' would evaluate to a 8-bit constant (because of the return value of
+// test_symbol_fold_3_aux()) which would not get properly promoted to an
+// integer.
+char test_symbol_fold_3_aux(void);
+unsigned test_symbol_fold_3(void) {
+  unsigned x = test_symbol_fold_3_aux();
+  if (x == 54)
+    return (x << 8) | 0x5;
+  return 0;
+}  
 
