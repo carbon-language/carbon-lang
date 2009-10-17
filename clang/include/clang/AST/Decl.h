@@ -101,7 +101,7 @@ public:
   /// and that it be a simple identifier.
   const char *getNameAsCString() const {
     assert(getIdentifier() && "Name is not a simple identifier");
-    return getIdentifier()->getName();
+    return getIdentifier()->getNameStart();
   }
 
   /// getDeclName - Get the actual, stored name of the declaration,

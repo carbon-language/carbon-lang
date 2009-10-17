@@ -947,13 +947,17 @@ public:
   /// getNameAsCString - Get the name of identifier for the class
   /// interface associated with this implementation as a C string
   /// (const char*).
+  //
+  // FIXME: Move to StringRef API.
   const char *getNameAsCString() const {
-    return Id ? Id->getName() : "";
+    return Id ? Id->getNameStart() : "";
   }
 
   /// @brief Get the name of the class associated with this interface.
+  //
+  // FIXME: Move to StringRef API.
   std::string getNameAsString() const {
-    return Id ? Id->getName() : "";
+    return Id ? Id->getNameStr() : "";
   }
 
   static bool classof(const Decl *D) { return D->getKind() == ObjCCategoryImpl;}
@@ -998,12 +1002,16 @@ public:
   /// getNameAsCString - Get the name of identifier for the class
   /// interface associated with this implementation as a C string
   /// (const char*).
+  //
+  // FIXME: Move to StringRef API.
   const char *getNameAsCString() const {
     assert(getIdentifier() && "Name is not a simple identifier");
-    return getIdentifier()->getName();
+    return getIdentifier()->getNameStart();
   }
 
   /// @brief Get the name of the class associated with this interface.
+  //
+  // FIXME: Move to StringRef API.
   std::string getNameAsString() const {
     return getClassInterface()->getNameAsString();
   }
