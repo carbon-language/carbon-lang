@@ -127,4 +127,20 @@ TEST(raw_ostreamTest, TinyBuffer) {
   EXPECT_EQ("hello1world", OS.str());
 }
 
+TEST(raw_ostreamTest, WriteEscaped) {
+  std::string Str;
+
+  Str = "";
+  raw_string_ostream(Str).write_escaped("hi");
+  EXPECT_EQ("hi", Str);
+
+  Str = "";
+  raw_string_ostream(Str).write_escaped("\\\t\n\"");
+  EXPECT_EQ("\\\\\\t\\n\\\"", Str);
+
+  Str = "";
+  raw_string_ostream(Str).write_escaped("\1\10\200");
+  EXPECT_EQ("\\001\\010\\200", Str);
+}
+
 }
