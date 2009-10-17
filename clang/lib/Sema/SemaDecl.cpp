@@ -3968,9 +3968,7 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   }
 
   // Extension in C99.  Legal in C90, but warn about it.
-  static const unsigned int BuiltinLen = strlen("__builtin_");
-  if (II.getLength() > BuiltinLen &&
-      std::equal(II.getName(), II.getName() + BuiltinLen, "__builtin_"))
+  if (II.getNameStr().startswith("__builtin_"))
     Diag(Loc, diag::warn_builtin_unknown) << &II;
   else if (getLangOptions().C99)
     Diag(Loc, diag::ext_implicit_function_decl) << &II;
