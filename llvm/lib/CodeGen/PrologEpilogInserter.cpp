@@ -259,7 +259,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
       // the TargetRegisterClass if the stack alignment is smaller. Use the
       // min.
       Align = std::min(Align, StackAlign);
-      FrameIdx = FFI->CreateStackObject(RC->getSize(), Align);
+      FrameIdx = FFI->CreateStackObject(RC->getSize(), Align, true);
       if ((unsigned)FrameIdx < MinCSFrameIndex) MinCSFrameIndex = FrameIdx;
       if ((unsigned)FrameIdx > MaxCSFrameIndex) MaxCSFrameIndex = FrameIdx;
     } else {

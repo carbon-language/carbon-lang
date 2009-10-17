@@ -118,7 +118,7 @@ int VirtRegMap::assignVirt2StackSlot(unsigned virtReg) {
          "attempt to assign stack slot to already spilled register");
   const TargetRegisterClass* RC = MF->getRegInfo().getRegClass(virtReg);
   int SS = MF->getFrameInfo()->CreateStackObject(RC->getSize(),
-                                                RC->getAlignment());
+                                              RC->getAlignment(), /*isSS*/true);
   if (LowSpillSlot == NO_STACK_SLOT)
     LowSpillSlot = SS;
   if (HighSpillSlot == NO_STACK_SLOT || SS > HighSpillSlot)
@@ -162,7 +162,7 @@ int VirtRegMap::getEmergencySpillSlot(const TargetRegisterClass *RC) {
   if (I != EmergencySpillSlots.end())
     return I->second;
   int SS = MF->getFrameInfo()->CreateStackObject(RC->getSize(),
-                                                RC->getAlignment());
+                                              RC->getAlignment(), /*isSS*/true);
   if (LowSpillSlot == NO_STACK_SLOT)
     LowSpillSlot = SS;
   if (HighSpillSlot == NO_STACK_SLOT || SS > HighSpillSlot)

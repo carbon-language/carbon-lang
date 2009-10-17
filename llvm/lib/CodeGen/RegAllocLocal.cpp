@@ -263,7 +263,7 @@ int RALocal::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
 
   // Allocate a new stack object for this spill location...
   int FrameIdx = MF->getFrameInfo()->CreateStackObject(RC->getSize(),
-                                                       RC->getAlignment());
+                                                       RC->getAlignment(),true);
 
   // Assign the slot...
   StackSlotForVirtReg[VirtReg] = FrameIdx;

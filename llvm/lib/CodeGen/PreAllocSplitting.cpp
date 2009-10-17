@@ -952,7 +952,7 @@ MachineInstr* PreAllocSplitting::FoldSpill(unsigned vreg,
   if (I != IntervalSSMap.end()) {
     SS = I->second;
   } else {
-    SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());    
+    SS = MFI->CreateStackObject(RC->getSize(), RC->getAlignment());
   }
   
   MachineInstr* FMI = TII->foldMemoryOperand(*MBB->getParent(),
