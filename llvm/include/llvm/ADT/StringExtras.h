@@ -222,10 +222,6 @@ void SplitString(const std::string &Source,
 /// \num (where num is a 1-3 byte octal value).
 void UnescapeString(std::string &Str);
 
-/// EscapeString - Modify the argument string, turning '\\' and anything that
-/// doesn't satisfy std::isprint into an escape sequence.
-void EscapeString(std::string &Str);
-
 /// HashString - Hash funtion for strings.
 ///
 /// This is the Bernstein hash function.

@@ -86,29 +86,3 @@ void llvm::UnescapeString(std::string &Str) {
     }
   }
 }
-
-/// EscapeString - Modify the argument string, turning '\\' and anything that
-/// doesn't satisfy std::isprint into an escape sequence.
-void llvm::EscapeString(std::string &Str) {
-  for (unsigned i = 0; i != Str.size(); ++i) {
-    if (Str[i] == '\\') {
-      ++i;
-      Str.insert(Str.begin()+i, '\\');
-    } else if (Str[i] == '\t') {
-      Str[i++] = '\\';
-      Str.insert(Str.begin()+i, 't');
-    } else if (Str[i] == '"') {
-      Str.insert(Str.begin()+i++, '\\');
-    } else if (Str[i] == '\n') {
-      Str[i++] = '\\';
-      Str.insert(Str.begin()+i, 'n');
-    } else if (!std::isprint(Str[i])) {
-      // Always expand to a 3-digit octal escape.
-      unsigned Char = Str[i];
-      Str[i++] = '\\';
-      Str.insert(Str.begin()+i++, '0'+((Char/64) & 7));
-      Str.insert(Str.begin()+i++, '0'+((Char/8)  & 7));
-      Str.insert(Str.begin()+i  , '0'+( Char     & 7));
-    }
-  }
-}
