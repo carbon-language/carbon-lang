@@ -24,10 +24,10 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
+#include "llvm/System/Program.h"
 #include <cstdio>
 #ifndef _MSC_VER
 #include <dlfcn.h>
-#include <sys/wait.h>
 #endif
 #include <vector>
 
@@ -356,22 +356,8 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   argv.push_back(NULL);
 
   // Generate the AST file in a separate process.
-  pid_t child_pid = fork();
-  if (child_pid == 0) { // Child process
-  
-    // Execute the command, passing the appropriate arguments.
-    execv(argv[0], (char *const *)&argv[0]);
-    
-    // If execv returns, it failed.
-    assert(0 && "execv() failed");
-  }  
-  // This is run by the parent.
-  int child_status;
-  pid_t tpid;
-  do { // Wait for the child to terminate.
-    tpid = wait(&child_status);
-  } while (tpid != child_pid);
-  
+  llvm::sys::Program::ExecuteAndWait(llvm::sys::Path(argv[0]), &argv[0]);
+
   // Finally, we create the translation unit from the ast file.
   ASTUnit *ATU = static_cast<ASTUnit *>(
                    clang_createTranslationUnit(CIdx, astTmpFile));
