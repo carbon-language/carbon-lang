@@ -1,6 +1,6 @@
-// RUN: clang-cc %s -emit-llvm -o - | not grep 'extractelement' &&
-// RUN: clang-cc %s -emit-llvm -o - | not grep 'insertelement' &&
-// RUN: clang-cc %s -emit-llvm -o - | grep 'shufflevector'
+// RUN: clang-cc %s -x cl -emit-llvm -o - | not grep 'extractelement' &&
+// RUN: clang-cc %s -x cl -emit-llvm -o - | not grep 'insertelement' &&
+// RUN: clang-cc %s -x cl -emit-llvm -o - | grep 'shufflevector'
 
 typedef __attribute__(( ext_vector_type(2) )) float float2;
 typedef __attribute__(( ext_vector_type(4) )) float float4;
@@ -13,3 +13,5 @@ float4 test2(float4 V) {
   float2 W = V.ww;
   return W.xyxy + W.yxyx;
 }
+
+float4 test3(float4 V1, float4 V2) { return (float4)(V1.zw, V2.xy); }
