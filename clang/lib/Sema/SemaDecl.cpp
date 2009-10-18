@@ -3727,12 +3727,13 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
     for (int i = FTI.NumArgs; i != 0; /* decrement in loop */) {
       --i;
       if (FTI.ArgInfo[i].Param == 0) {
-        std::string Code = "  int ";
-        Code += FTI.ArgInfo[i].Ident->getName();
-        Code += ";\n";
+        llvm::SmallString<256> Code;
+        llvm::raw_svector_ostream(Code) << "  int "
+                                        << FTI.ArgInfo[i].Ident->getNameStr()
+                                        << ";\n";
         Diag(FTI.ArgInfo[i].IdentLoc, diag::ext_param_not_declared)
           << FTI.ArgInfo[i].Ident
-          << CodeModificationHint::CreateInsertion(LocAfterDecls, Code);
+          << CodeModificationHint::CreateInsertion(LocAfterDecls, Code.str());
 
         // Implicitly declare the argument as type 'int' for lack of a better
         // type.

@@ -1256,6 +1256,8 @@ Parser::OwningStmtResult Parser::ParseAsmStatement(bool &msAsm) {
 ///         asm-string-literal '(' expression ')'
 ///         '[' identifier ']' asm-string-literal '(' expression ')'
 ///
+//
+// FIXME: Avoid unnecessary std::string trashing.
 bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
                                  llvm::SmallVectorImpl<ExprTy*> &Constraints,
                                  llvm::SmallVectorImpl<ExprTy*> &Exprs) {
@@ -1281,7 +1283,7 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
       IdentifierInfo *II = Tok.getIdentifierInfo();
       ConsumeToken();
 
-      Names.push_back(std::string(II->getName(), II->getLength()));
+      Names.push_back(II->getNameStr());
       MatchRHSPunctuation(tok::r_square, Loc);
     } else
       Names.push_back(std::string());

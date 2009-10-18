@@ -1254,7 +1254,7 @@ void FunctionProtoType::getAsStringInternal(std::string &S, const PrintingPolicy
 void TypedefType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
-  InnerString = getDecl()->getIdentifier()->getName() + InnerString;
+  InnerString = getDecl()->getIdentifier()->getNameStr().str() + InnerString;
 }
 
 void TemplateTypeParmType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
@@ -1265,7 +1265,7 @@ void TemplateTypeParmType::getAsStringInternal(std::string &InnerString, const P
     InnerString = "type-parameter-" + llvm::utostr_32(Depth) + '-' +
       llvm::utostr_32(Index) + InnerString;
   else
-    InnerString = Name->getName() + InnerString;
+    InnerString = Name->getNameStr().str() + InnerString;
 }
 
 void SubstTemplateTypeParmType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
@@ -1541,7 +1541,7 @@ void TagType::getAsStringInternal(std::string &InnerString, const PrintingPolicy
                                            TemplateArgs.getFlatArgumentList(),
                                            TemplateArgs.flat_size(),
                                            Policy);
-        MyPart = Spec->getIdentifier()->getName() + TemplateArgsStr;
+        MyPart = Spec->getIdentifier()->getNameStr().str() + TemplateArgsStr;
       } else if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
         if (TypedefDecl *Typedef = Tag->getTypedefForAnonDecl())
           MyPart = Typedef->getIdentifier()->getName();

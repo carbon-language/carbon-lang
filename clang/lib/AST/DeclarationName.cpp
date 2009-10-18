@@ -51,7 +51,7 @@ public:
 bool operator<(DeclarationName LHS, DeclarationName RHS) {
   if (IdentifierInfo *LhsId = LHS.getAsIdentifierInfo())
     if (IdentifierInfo *RhsId = RHS.getAsIdentifierInfo())
-      return strcmp(LhsId->getName(), RhsId->getName()) < 0;
+      return LhsId->getNameStr() < RhsId->getNameStr();
 
   return LHS.getAsOpaqueInteger() < RHS.getAsOpaqueInteger();
 }

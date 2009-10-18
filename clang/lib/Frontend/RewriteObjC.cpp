@@ -675,7 +675,7 @@ static std::string getIvarAccessString(ObjCInterfaceDecl *ClassDecl,
   S = "((struct ";
   S += ClassDecl->getIdentifier()->getName();
   S += "_IMPL *)self)->";
-  S += OID->getNameAsCString();
+  S += OID->getName();
   return S;
 }
 
@@ -2265,7 +2265,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   if (clsName) { // class message.
     // FIXME: We need to fix Sema (and the AST for ObjCMessageExpr) to handle
     // the 'super' idiom within a class method.
-    if (!strcmp(clsName->getName(), "super")) {
+    if (clsName->getNameStr() == "super") {
       MsgSendFlavor = MsgSendSuperFunctionDecl;
       if (MsgSendStretFlavor)
         MsgSendStretFlavor = MsgSendSuperStretFunctionDecl;
