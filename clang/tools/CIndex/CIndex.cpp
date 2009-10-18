@@ -22,11 +22,15 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "llvm/Config/config.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
 #include <cstdio>
-#ifndef _MSC_VER
+#ifdef LLVM_ON_WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
 #include <dlfcn.h>
 #endif
 #include <vector>
@@ -292,11 +296,16 @@ const llvm::sys::Path& CIndexer::getClangPath() {
   if (!ClangPath.empty())
     return ClangPath;
 
-  // FIXME: This is a hack to unbreak the MSVC build.
-#ifdef _MSC_VER
-  llvm::sys::Path CIndexPath("");
-#else
   // Find the location where this library lives (libCIndex.dylib).
+#ifdef LLVM_ON_WIN32
+  MEMORY_BASIC_INFORMATION mbi;
+  char path[MAX_PATH];
+  VirtualQuery(void *)(uintptr_t)clang_createTranslationUnit, &mbi,
+               sizeof(mbi));
+  GetModuleFileNameA((HINSTANCE)mbi.AllocationBase, path, MAX_PATH);
+
+  llvm::sys::Path CIndexPath(path);
+#else
   // This silly cast below avoids a C++ warning.
   Dl_info info;
   if (dladdr((void *)(uintptr_t)clang_createTranslationUnit, &info) == 0)
@@ -351,10 +360,6 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   const char *source_filename,
   int num_command_line_args, const char **command_line_args) 
 {
-  // FIXME: This is a hack to unbreak the build.
-#ifdef _MSC_VER
-  return 0;
-#else
   // Build up the arguments for involing clang.
   llvm::sys::Path ClangPath = static_cast<CIndexer *>(CIdx)->getClangPath();
   std::vector<const char *> argv;
@@ -377,7 +382,6 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
                    clang_createTranslationUnit(CIdx, astTmpFile));
   ATU->unlinkTemporaryFile();
   return ATU;
-#endif
 }
 
 void clang_disposeTranslationUnit(
