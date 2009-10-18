@@ -107,3 +107,26 @@ void h() {
   const C& c = D();
 }
 
+namespace T {
+  struct A {
+    A();
+    ~A();
+  };
+
+  struct B {
+    B();
+    ~B();
+    A f();
+  };
+
+  void f() {
+    // CHECK: call void @_ZN1T1BC1Ev
+    // CHECK: call void @_ZN1T1B1fEv
+    // CHECK: call void @_ZN1T1BD1Ev
+    const A& a = B().f();
+    // CHECK: call void @_ZN1T1fEv
+    f();
+    // CHECK: call void @_ZN1T1AD1Ev
+  }
+}
+

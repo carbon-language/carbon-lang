@@ -78,24 +78,18 @@ RValue CodeGenFunction::EmitAnyExprToTemp(const Expr *E,
 RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
                                                    QualType DestType,
                                                    bool IsInitializer) {
+  bool ShouldDestroyTemporaries = false;
+  unsigned OldNumLiveTemporaries = 0;
+  
   if (const CXXExprWithTemporaries *TE = dyn_cast<CXXExprWithTemporaries>(E)) {
-    // If we shouldn't destroy the temporaries, just emit the
-    // child expression.
-    if (!TE->shouldDestroyTemporaries())
-      return EmitReferenceBindingToExpr(TE->getSubExpr(), DestType,
-                                        IsInitializer);
+    ShouldDestroyTemporaries = TE->shouldDestroyTemporaries();
+
+    if (ShouldDestroyTemporaries) {
+      // Keep track of the current cleanup stack depth.
+      OldNumLiveTemporaries = LiveTemporaries.size();
+    }
     
-    // Keep track of the current cleanup stack depth.
-    unsigned OldNumLiveTemporaries = LiveTemporaries.size();
-    
-    RValue RV = EmitReferenceBindingToExpr(TE->getSubExpr(), DestType,
-                                           IsInitializer);
-    
-    // Pop temporaries.
-    while (LiveTemporaries.size() > OldNumLiveTemporaries)
-      PopCXXTemporary();
-    
-    return RV;
+    E = TE->getSubExpr();
   }
   
   RValue Val;
@@ -105,6 +99,12 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
     if (LV.isSimple())
       return RValue::get(LV.getAddress());
     Val = EmitLoadOfLValue(LV, E->getType());
+    
+    if (ShouldDestroyTemporaries) {
+      // Pop temporaries.
+      while (LiveTemporaries.size() > OldNumLiveTemporaries)
+        PopCXXTemporary();
+    }      
   } else {
     const CXXRecordDecl *BaseClassDecl = 0;
     const CXXRecordDecl *DerivedClassDecl = 0;
@@ -124,6 +124,12 @@ RValue CodeGenFunction::EmitReferenceBindingToExpr(const Expr* E,
     Val = EmitAnyExprToTemp(E, /*IsAggLocVolatile=*/false,
                             IsInitializer);
 
+    if (ShouldDestroyTemporaries) {
+      // Pop temporaries.
+      while (LiveTemporaries.size() > OldNumLiveTemporaries)
+        PopCXXTemporary();
+    }      
+    
     if (IsInitializer) {
       // We might have to destroy the temporary variable.
       if (const RecordType *RT = E->getType()->getAs<RecordType>()) {
