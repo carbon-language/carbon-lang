@@ -944,20 +944,29 @@ public:
 
   ObjCCategoryDecl *getCategoryClass() const;
 
+  /// getName - Get the name of identifier for the class interface associated
+  /// with this implementation as a StringRef.
+  //
+  // FIXME: This is a bad API, we are overriding the NamedDecl::getName, to mean
+  // something different.
+  llvm::StringRef getName() const {
+    return Id ? Id->getNameStart() : "";
+  }
+
   /// getNameAsCString - Get the name of identifier for the class
   /// interface associated with this implementation as a C string
   /// (const char*).
   //
-  // FIXME: Move to StringRef API.
+  // FIXME: Deprecated, move clients to getName().
   const char *getNameAsCString() const {
     return Id ? Id->getNameStart() : "";
   }
 
   /// @brief Get the name of the class associated with this interface.
   //
-  // FIXME: Move to StringRef API.
+  // FIXME: Deprecated, move clients to getName().
   std::string getNameAsString() const {
-    return Id ? Id->getNameStr() : "";
+    return getName();
   }
 
   static bool classof(const Decl *D) { return D->getKind() == ObjCCategoryImpl;}
