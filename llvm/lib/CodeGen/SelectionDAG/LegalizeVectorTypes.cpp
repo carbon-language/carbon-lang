@@ -1057,7 +1057,8 @@ SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
   EVT EltVT = VecVT.getVectorElementType();
   DebugLoc dl = N->getDebugLoc();
   SDValue StackPtr = DAG.CreateStackTemporary(VecVT);
-  const Value *SV = PseudoSourceValue::getStack();
+  int SPFI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
+  const Value *SV = PseudoSourceValue::getFixedStack(SPFI);
   SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr, SV, 0);
 
   // Load back the required element.

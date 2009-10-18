@@ -143,11 +143,8 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
     Flags |= MachineMemOperand::MOLoad;
   if (TID.mayStore())
     Flags |= MachineMemOperand::MOStore;
-  const Value *SV = (MFI.isFixedObjectIndex(FI) ||
-                     MFI.isSpillSlotObjectIndex(FI))
-    ? PseudoSourceValue::getFixedStack(FI) : PseudoSourceValue::getStack();
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(SV,
+    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FI),
                             Flags, Offset,
                             MFI.getObjectSize(FI),
                             MFI.getObjectAlignment(FI));

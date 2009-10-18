@@ -639,9 +639,11 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
   EVT PtrVT = TLI.getPointerTy();
   SDValue StackPtr = DAG.CreateStackTemporary(VT);
 
+  int SPFI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
+
   // Store the vector.
   SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Tmp1, StackPtr,
-                            PseudoSourceValue::getStack(), 0);
+                            PseudoSourceValue::getFixedStack(SPFI), 0);
 
   // Truncate or zero extend offset to target pointer type.
   unsigned CastOpc = IdxVT.bitsGT(PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
@@ -652,10 +654,10 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
   SDValue StackPtr2 = DAG.getNode(ISD::ADD, dl, IdxVT, Tmp3, StackPtr);
   // Store the scalar value.
   Ch = DAG.getTruncStore(Ch, dl, Tmp2, StackPtr2,
-                         PseudoSourceValue::getStack(), 0, EltVT);
+                         PseudoSourceValue::getFixedStack(SPFI), 0, EltVT);
   // Load the updated vector.
   return DAG.getLoad(VT, dl, Ch, StackPtr,
-                     PseudoSourceValue::getStack(), 0);
+                     PseudoSourceValue::getFixedStack(SPFI), 0);
 }
 
 
@@ -1515,7 +1517,8 @@ SDValue SelectionDAGLegalize::ExpandVectorBuildThroughStack(SDNode* Node) {
   EVT OpVT = Node->getOperand(0).getValueType();
   DebugLoc dl = Node->getDebugLoc();
   SDValue FIPtr = DAG.CreateStackTemporary(VT);
-  const Value *SV = PseudoSourceValue::getStack();
+  int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
+  const Value *SV = PseudoSourceValue::getFixedStack(FI);
 
   // Emit a store of each element to the stack slot.
   SmallVector<SDValue, 8> Stores;
@@ -1709,17 +1712,20 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
                                               getTypeForEVT(*DAG.getContext()));
   SDValue FIPtr = DAG.CreateStackTemporary(SlotVT, SrcAlign);
 
+  FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(FIPtr);
+  int SPFI = StackPtrFI->getIndex();
+  const Value *SV = PseudoSourceValue::getFixedStack(SPFI);
+
   unsigned SrcSize = SrcOp.getValueType().getSizeInBits();
   unsigned SlotSize = SlotVT.getSizeInBits();
   unsigned DestSize = DestVT.getSizeInBits();
   unsigned DestAlign =
-    TLI.getTargetData()->getPrefTypeAlignment(DestVT.
-                                              getTypeForEVT(*DAG.getContext()));
+    TLI.getTargetData()->getPrefTypeAlignment(DestVT.getTypeForEVT(*DAG.getContext()));
 
   // Emit a store to the stack slot.  Use a truncstore if the input value is
   // later than DestVT.
   SDValue Store;
-  const Value *SV = PseudoSourceValue::getStack();
+
   if (SrcSize > SlotSize)
     Store = DAG.getTruncStore(DAG.getEntryNode(), dl, SrcOp, FIPtr,
                               SV, 0, SlotVT, false, SrcAlign);
@@ -1744,12 +1750,15 @@ SDValue SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
   // then load the whole vector back out.
   SDValue StackPtr = DAG.CreateStackTemporary(Node->getValueType(0));
 
+  FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(StackPtr);
+  int SPFI = StackPtrFI->getIndex();
+
   SDValue Ch = DAG.getTruncStore(DAG.getEntryNode(), dl, Node->getOperand(0),
                                  StackPtr,
-                                 PseudoSourceValue::getStack(), 0,
+                                 PseudoSourceValue::getFixedStack(SPFI), 0,
                                  Node->getValueType(0).getVectorElementType());
   return DAG.getLoad(Node->getValueType(0), dl, Ch, StackPtr,
-                     PseudoSourceValue::getStack(), 0);
+                     PseudoSourceValue::getFixedStack(SPFI), 0);
 }
 
 

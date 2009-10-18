@@ -466,10 +466,8 @@ void StackSlotColoring::RewriteInstruction(MachineInstr *MI, int OldFI,
   // Update the memory references. This changes the MachineMemOperands
   // directly. They may be in use by multiple instructions, however all
   // instructions using OldFI are being rewritten to use NewFI.
-  const Value *OldSV = MFI->isFixedObjectIndex(OldFI)
-    ? PseudoSourceValue::getFixedStack(OldFI) : PseudoSourceValue::getStack();
-  const Value *NewSV = MFI->isFixedObjectIndex(NewFI)
-    ? PseudoSourceValue::getFixedStack(NewFI) : PseudoSourceValue::getStack();
+  const Value *OldSV = PseudoSourceValue::getFixedStack(OldFI);
+  const Value *NewSV = PseudoSourceValue::getFixedStack(NewFI);
   for (MachineInstr::mmo_iterator I = MI->memoperands_begin(),
        E = MI->memoperands_end(); I != E; ++I)
     if ((*I)->getValue() == OldSV)

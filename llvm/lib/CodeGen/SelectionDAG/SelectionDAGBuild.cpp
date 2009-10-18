@@ -4196,11 +4196,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     SDValue FIN = DAG.getFrameIndex(FI, PtrTy);
 
     // Store the stack protector onto the stack.
-    const Value *SV = MFI->isFixedObjectIndex(FI)
-      ? PseudoSourceValue::getFixedStack(FI)
-      : PseudoSourceValue::getStack();
     SDValue Result = DAG.getStore(getRoot(), getCurDebugLoc(), Src, FIN,
-                                  SV, 0, true);
+                                  PseudoSourceValue::getFixedStack(FI),
+                                  0, true);
     setValue(&I, Result);
     DAG.setRoot(Result);
     return 0;

@@ -106,10 +106,19 @@ static const Value *getUnderlyingObjectForInstr(const MachineInstr *MI) {
     return 0;
 
   V = getUnderlyingObject(V);
-  if (!isa<PseudoSourceValue>(V) && !isIdentifiedObject(V))
-    return 0;
+  if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V)) {
+    // For now, ignore PseudoSourceValues which may alias LLVM IR values
+    // because the code that uses this function has no way to cope with
+    // such aliases.
+    if (PSV->isAliased())
+      return 0;
+    return V;
+  }
 
-  return V;
+  if (isIdentifiedObject(V))
+    return V;
+
+  return 0;
 }
 
 void ScheduleDAGInstrs::StartBlock(MachineBasicBlock *BB) {

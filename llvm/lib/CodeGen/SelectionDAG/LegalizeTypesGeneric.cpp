@@ -118,7 +118,8 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
     TLI.getTargetData()->getPrefTypeAlignment(NOutVT.
                                               getTypeForEVT(*DAG.getContext()));
   SDValue StackPtr = DAG.CreateStackTemporary(InVT, Alignment);
-  const Value *SV = PseudoSourceValue::getStack();
+  int SPFI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
+  const Value *SV = PseudoSourceValue::getFixedStack(SPFI);
 
   // Emit a store to the stack slot.
   SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, InOp, StackPtr, SV, 0);
