@@ -25,6 +25,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -824,25 +825,43 @@ public:
 /// DominatorTree GraphTraits specialization so the DominatorTree can be
 /// iterable by generic graph iterators.
 ///
-template <> struct GraphTraits<DomTreeNode *> {
+template <> struct GraphTraits<DomTreeNode*> {
   typedef DomTreeNode NodeType;
   typedef NodeType::iterator  ChildIteratorType;
 
   static NodeType *getEntryNode(NodeType *N) {
     return N;
   }
-  static inline ChildIteratorType child_begin(NodeType* N) {
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return N->begin();
   }
-  static inline ChildIteratorType child_end(NodeType* N) {
+  static inline ChildIteratorType child_end(NodeType *N) {
     return N->end();
+  }
+
+  typedef df_iterator<DomTreeNode*> nodes_iterator;
+
+  static nodes_iterator nodes_begin(DomTreeNode *N) {
+    return df_begin(getEntryNode(N));
+  }
+
+  static nodes_iterator nodes_end(DomTreeNode *N) {
+    return df_end(getEntryNode(N));
   }
 };
 
 template <> struct GraphTraits<DominatorTree*>
-  : public GraphTraits<DomTreeNode *> {
+  : public GraphTraits<DomTreeNode*> {
   static NodeType *getEntryNode(DominatorTree *DT) {
     return DT->getRootNode();
+  }
+
+  static nodes_iterator nodes_begin(DominatorTree *N) {
+    return df_begin(getEntryNode(N));
+  }
+
+  static nodes_iterator nodes_end(DominatorTree *N) {
+    return df_end(getEntryNode(N));
   }
 };
 

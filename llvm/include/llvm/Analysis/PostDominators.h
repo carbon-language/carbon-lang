@@ -74,6 +74,21 @@ struct PostDominatorTree : public FunctionPass {
 
 FunctionPass* createPostDomTree();
 
+template <> struct GraphTraits<PostDominatorTree*>
+  : public GraphTraits<DomTreeNode*> {
+  static NodeType *getEntryNode(PostDominatorTree *DT) {
+    return DT->getRootNode();
+  }
+
+  static nodes_iterator nodes_begin(PostDominatorTree *N) {
+    return df_begin(getEntryNode(N));
+  }
+
+  static nodes_iterator nodes_end(PostDominatorTree *N) {
+    return df_end(getEntryNode(N));
+  }
+};
+
 /// PostDominanceFrontier Class - Concrete subclass of DominanceFrontier that is
 /// used to compute the a post-dominance frontier.
 ///
