@@ -1100,11 +1100,11 @@ public:
   }
 
   /// getCalledValue - Get a pointer to the function that is invoked by this
-  /// instruction
+  /// instruction.
   const Value *getCalledValue() const { return Op<0>(); }
         Value *getCalledValue()       { return Op<0>(); }
 
-  /// setCalledFunction - Set the function called
+  /// setCalledFunction - Set the function called.
   void setCalledFunction(Value* Fn) {
     Op<0>() = Fn;
   }
