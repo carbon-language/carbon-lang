@@ -53,6 +53,10 @@ class GoogleTest(object):
 
     def execute(self, test, litConfig):
         testPath,testName = os.path.split(test.getSourcePath())
+        if not os.path.exists(testPath):
+            # Handle GTest typed tests, whose name includes a '/'.
+            testPath, namePrefix = os.path.split(testPath)
+            testName = os.path.join(namePrefix, testName)
 
         cmd = [testPath, '--gtest_filter=' + testName]
         out, err, exitCode = TestRunner.executeCommand(cmd)
