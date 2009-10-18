@@ -1,14 +1,17 @@
-// RUN: clang-cc -emit-llvm %s -o %t -triple=x86_64-apple-darwin9 && 
+// RUN: clang-cc -emit-llvm %s -o - -triple=x86_64-apple-darwin9 | FileCheck %s
 struct A {
   A();
   ~A();
   void f();
 };
 
-// RUN: grep "call void @_ZN1AC1Ev" %t | count 2 &&
-// RUN: grep "call void @_ZN1AD1Ev" %t | count 2 &&
 void f1() {
+  // CHECK: call void @_ZN1AC1Ev
+  // CHECK: call void @_ZN1AD1Ev
   (void)A();
+
+  // CHECK: call void @_ZN1AC1Ev
+  // CHECK: call void @_ZN1AD1Ev
   A().f();
 }
 
@@ -20,9 +23,9 @@ struct B {
 
 B g();
 
-// RUN: grep "call void @_ZN1BC1Ev" %t | count 0 &&
-// RUN: grep "call void @_ZN1BD1Ev" %t | count 1 &&
 void f2() {
+  // CHECK-NOT: call void @_ZN1BC1Ev
+  // CHECK: call void @_ZN1BD1Ev
   (void)g();
 }
 
@@ -34,9 +37,10 @@ struct C {
   C f();
 };
 
-// RUN: grep "call void @_ZN1CC1Ev" %t | count 1 &&
-// RUN: grep "call void @_ZN1CD1Ev" %t | count 2 &&
 void f3() {
+  // CHECK: call void @_ZN1CC1Ev
+  // CHECK: call void @_ZN1CD1Ev
+  // CHECK: call void @_ZN1CD1Ev
   C().f();
 }
 
@@ -48,9 +52,10 @@ struct D {
   D operator()();
 };
 
-// RUN: grep "call void @_ZN1DC1Ev" %t | count 1 &&
-// RUN: grep "call void @_ZN1DD1Ev" %t | count 2 &&
 void f4() {
+  // CHECK call void @_ZN1DC1Ev
+  // CHECK call void @_ZN1DD1Ev
+  // CHECK call void @_ZN1DD1Ev
   D()();
 }
 
@@ -62,10 +67,17 @@ struct E {
   E operator!();
 };
 
-// RUN: grep "call void @_ZN1EC1Ev" %t | count 3 &&
-// RUN: grep "call void @_ZN1ED1Ev" %t | count 5 &&
 void f5() {
+  // CHECK: call void @_ZN1EC1Ev
+  // CHECK: call void @_ZN1EC1Ev
+  // CHECK: call void @_ZN1ED1Ev
+  // CHECK: call void @_ZN1ED1Ev
+  // CHECK: call void @_ZN1ED1Ev
   E() + E();
+  
+  // CHECK: call void @_ZN1EC1Ev
+  // CHECK: call void @_ZN1ED1Ev
+  // CHECK: call void @_ZN1ED1Ev
   !E();
 }
 
@@ -75,9 +87,9 @@ struct F {
   F& f();
 };
 
-// RUN: grep "call void @_ZN1FC1Ev" %t | count 1 &&
-// RUN: grep "call void @_ZN1FD1Ev" %t | count 1 
 void f6() {
+  // CHECK: call void @_ZN1FC1Ev
+  // CHECK: call void @_ZN1FD1Ev
   F().f();
 }
 
