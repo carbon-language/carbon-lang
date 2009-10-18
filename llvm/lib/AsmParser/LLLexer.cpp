@@ -603,7 +603,8 @@ lltok::Kind LLLexer::LexIdentifier() {
     if (JustWhitespaceNewLine(CurPtr))
       return lltok::kw_zeroext;
   } else if (Len == 6 && !memcmp(StartChar, "malloc", 6)) {
-    // Autoupgrade malloc instruction
+    // FIXME: Remove in LLVM 3.0.
+    // Autoupgrade malloc instruction.
     return lltok::kw_malloc;
   }
 

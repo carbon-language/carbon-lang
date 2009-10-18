@@ -70,6 +70,7 @@ bool LLParser::Run() {
 /// module.
 bool LLParser::ValidateEndOfModule() {
   // Update auto-upgraded malloc calls from "autoupgrade_malloc" to "malloc".
+  // FIXME: Remove in LLVM 3.0.
   if (MallocF) {
     MallocF->setName("malloc");
     // If setName() does not set the name to "malloc", then there is already a 
