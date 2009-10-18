@@ -370,7 +370,7 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   // Generate a temporary name for the AST file.
   char astTmpFile[L_tmpnam];
   argv.push_back(tmpnam(astTmpFile));
-  for (int i = num_command_line_args; i < num_command_line_args; i++)
+  for (int i = 0; i < num_command_line_args; i++)
     argv.push_back(command_line_args[i]);
   argv.push_back(NULL);
 
