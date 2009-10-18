@@ -1877,6 +1877,11 @@ QualType Sema::
 CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
                         const IdentifierInfo *CompName,
                         SourceLocation CompLoc) {
+  // FIXME: Share logic with ExtVectorElementExpr::containsDuplicateElements,
+  // see FIXME there.
+  //
+  // FIXME: This logic can be greatly simplified by splitting it along
+  // halving/not halving and reworking the component checking.
   const ExtVectorType *vecType = baseType->getAs<ExtVectorType>();
 
   // The vector accessor can't exceed the number of elements.
