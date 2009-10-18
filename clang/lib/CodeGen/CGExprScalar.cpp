@@ -181,48 +181,7 @@ public:
 
   Value *VisitPredefinedExpr(Expr *E) { return EmitLValue(E).getAddress(); }
 
-  Value *VisitInitListExpr(InitListExpr *E) {
-    bool Ignore = TestAndClearIgnoreResultAssign();
-    (void)Ignore;
-    assert (Ignore == false && "init list ignored");
-    unsigned NumInitElements = E->getNumInits();
-
-    if (E->hadArrayRangeDesignator()) {
-      CGF.ErrorUnsupported(E, "GNU array range designator extension");
-    }
-
-    const llvm::VectorType *VType =
-      dyn_cast<llvm::VectorType>(ConvertType(E->getType()));
-
-    // We have a scalar in braces. Just use the first element.
-    if (!VType)
-      return Visit(E->getInit(0));
-
-    unsigned NumVectorElements = VType->getNumElements();
-    const llvm::Type *ElementType = VType->getElementType();
-
-    // Emit individual vector element stores.
-    llvm::Value *V = llvm::UndefValue::get(VType);
-
-    // Emit initializers
-    unsigned i;
-    for (i = 0; i < NumInitElements; ++i) {
-      Value *NewV = Visit(E->getInit(i));
-      Value *Idx =
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(CGF.getLLVMContext()), i);
-      V = Builder.CreateInsertElement(V, NewV, Idx);
-    }
-
-    // Emit remaining default initializers
-    for (/* Do not initialize i*/; i < NumVectorElements; ++i) {
-      Value *Idx =
-        llvm::ConstantInt::get(llvm::Type::getInt32Ty(CGF.getLLVMContext()), i);
-      llvm::Value *NewV = llvm::Constant::getNullValue(ElementType);
-      V = Builder.CreateInsertElement(V, NewV, Idx);
-    }
-
-    return V;
-  }
+  Value *VisitInitListExpr(InitListExpr *E);
 
   Value *VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
     return llvm::Constant::getNullValue(ConvertType(E->getType()));
@@ -614,6 +573,174 @@ Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
                               IdxSigned,
                               "vecidxcast");
   return Builder.CreateExtractElement(Base, Idx, "vecext");
+}
+
+static llvm::Constant *getMaskElt(llvm::ShuffleVectorInst *SVI, unsigned Idx,
+                                  unsigned Off, const llvm::Type *I32Ty) {
+  int MV = SVI->getMaskValue(Idx);
+  if (MV == -1) 
+    return llvm::UndefValue::get(I32Ty);
+  return llvm::ConstantInt::get(I32Ty, Off+MV);
+}
+
+Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
+  bool Ignore = TestAndClearIgnoreResultAssign();
+  (void)Ignore;
+  assert (Ignore == false && "init list ignored");
+  unsigned NumInitElements = E->getNumInits();
+  
+  if (E->hadArrayRangeDesignator())
+    CGF.ErrorUnsupported(E, "GNU array range designator extension");
+  
+  const llvm::VectorType *VType =
+    dyn_cast<llvm::VectorType>(ConvertType(E->getType()));
+  
+  // We have a scalar in braces. Just use the first element.
+  if (!VType)
+    return Visit(E->getInit(0));
+  
+  unsigned ResElts = VType->getNumElements();
+  const llvm::Type *I32Ty = llvm::Type::getInt32Ty(CGF.getLLVMContext());
+  
+  // Loop over initializers collecting the Value for each, and remembering 
+  // whether the source was swizzle (ExtVectorElementExpr).  This will allow
+  // us to fold the shuffle for the swizzle into the shuffle for the vector
+  // initializer, since LLVM optimizers generally do not want to touch
+  // shuffles.
+  unsigned CurIdx = 0;
+  bool VIsUndefShuffle = false;
+  llvm::Value *V = llvm::UndefValue::get(VType);
+  for (unsigned i = 0; i != NumInitElements; ++i) {
+    Expr *IE = E->getInit(i);
+    Value *Init = Visit(IE);
+    llvm::SmallVector<llvm::Constant*, 16> Args;
+    
+    const llvm::VectorType *VVT = dyn_cast<llvm::VectorType>(Init->getType());
+    
+    // Handle scalar elements.  If the scalar initializer is actually one
+    // element of a different vector of the same width, use shuffle instead of 
+    // extract+insert.
+    if (!VVT) {
+      if (isa<ExtVectorElementExpr>(IE)) {
+        llvm::ExtractElementInst *EI = cast<llvm::ExtractElementInst>(Init);
+
+        if (EI->getVectorOperandType()->getNumElements() == ResElts) {
+          llvm::ConstantInt *C = cast<llvm::ConstantInt>(EI->getIndexOperand());
+          Value *LHS = 0, *RHS = 0;
+          if (CurIdx == 0) {
+            // insert into undef -> shuffle (src, undef)
+            Args.push_back(C);
+            for (unsigned j = 1; j != ResElts; ++j)
+              Args.push_back(llvm::UndefValue::get(I32Ty));
+
+            LHS = EI->getVectorOperand();
+            RHS = V;
+            VIsUndefShuffle = true;
+          } else if (VIsUndefShuffle) {
+            // insert into undefshuffle && size match -> shuffle (v, src)
+            llvm::ShuffleVectorInst *SVV = cast<llvm::ShuffleVectorInst>(V);
+            for (unsigned j = 0; j != CurIdx; ++j)
+              Args.push_back(getMaskElt(SVV, j, 0, I32Ty));
+            Args.push_back(llvm::ConstantInt::get(I32Ty, 
+                                                  ResElts + C->getZExtValue()));
+            for (unsigned j = CurIdx + 1; j != ResElts; ++j)
+              Args.push_back(llvm::UndefValue::get(I32Ty));
+            
+            LHS = cast<llvm::ShuffleVectorInst>(V)->getOperand(0);
+            RHS = EI->getVectorOperand();
+            VIsUndefShuffle = false;
+          }
+          if (!Args.empty()) {
+            llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], ResElts);
+            V = Builder.CreateShuffleVector(LHS, RHS, Mask);
+            ++CurIdx;
+            continue;
+          }
+        }
+      }
+      Value *Idx = llvm::ConstantInt::get(I32Ty, CurIdx);
+      V = Builder.CreateInsertElement(V, Init, Idx, "vecinit");
+      VIsUndefShuffle = false;
+      ++CurIdx;
+      continue;
+    }
+    
+    unsigned InitElts = VVT->getNumElements();
+
+    // If the initializer is an ExtVecEltExpr (a swizzle), and the swizzle's 
+    // input is the same width as the vector being constructed, generate an
+    // optimized shuffle of the swizzle input into the result.
+    if (isa<ExtVectorElementExpr>(IE)) {
+      llvm::ShuffleVectorInst *SVI = cast<llvm::ShuffleVectorInst>(Init);
+      Value *SVOp = SVI->getOperand(0);
+      const llvm::VectorType *OpTy = cast<llvm::VectorType>(SVOp->getType());
+      
+      if (OpTy->getNumElements() == ResElts) {
+        unsigned Offset = (CurIdx == 0) ? 0 : ResElts;
+        
+        for (unsigned j = 0; j != CurIdx; ++j) {
+          // If the current vector initializer is a shuffle with undef, merge
+          // this shuffle directly into it.
+          if (VIsUndefShuffle) {
+            Args.push_back(getMaskElt(cast<llvm::ShuffleVectorInst>(V), j, 0,
+                                      I32Ty));
+          } else {
+            Args.push_back(llvm::ConstantInt::get(I32Ty, j));
+          }
+        }
+        for (unsigned j = 0, je = InitElts; j != je; ++j)
+          Args.push_back(getMaskElt(SVI, j, Offset, I32Ty));
+        for (unsigned j = CurIdx + InitElts; j != ResElts; ++j)
+          Args.push_back(llvm::UndefValue::get(I32Ty));
+
+        if (VIsUndefShuffle)
+          V = cast<llvm::ShuffleVectorInst>(V)->getOperand(0);
+
+        Init = SVOp;
+      }
+    }
+
+    // Extend init to result vector length, and then shuffle its contribution
+    // to the vector initializer into V.
+    if (Args.empty()) {
+      for (unsigned j = 0; j != InitElts; ++j)
+        Args.push_back(llvm::ConstantInt::get(I32Ty, j));
+      for (unsigned j = InitElts; j != ResElts; ++j)
+        Args.push_back(llvm::UndefValue::get(I32Ty));
+      llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], ResElts);
+      Init = Builder.CreateShuffleVector(Init, llvm::UndefValue::get(VVT),
+                                         Mask, "vecext");
+
+      Args.clear();
+      for (unsigned j = 0; j != CurIdx; ++j)
+        Args.push_back(llvm::ConstantInt::get(I32Ty, j));
+      for (unsigned j = 0; j != InitElts; ++j)
+        Args.push_back(llvm::ConstantInt::get(I32Ty, j+ResElts));
+      for (unsigned j = CurIdx + InitElts; j != ResElts; ++j)
+        Args.push_back(llvm::UndefValue::get(I32Ty));
+    }
+
+    // If V is undef, make sure it ends up on the RHS of the shuffle to aid
+    // merging subsequent shuffles into this one.
+    if (CurIdx == 0)
+      std::swap(V, Init);
+    llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], ResElts);
+    V = Builder.CreateShuffleVector(V, Init, Mask, "vecinit");
+    VIsUndefShuffle = isa<llvm::UndefValue>(Init);
+    CurIdx += InitElts;
+  }
+  
+  // FIXME: evaluate codegen vs. shuffling against constant null vector.
+  // Emit remaining default initializers.
+  const llvm::Type *EltTy = VType->getElementType();
+  
+  // Emit remaining default initializers
+  for (/* Do not initialize i*/; CurIdx < ResElts; ++CurIdx) {
+    Value *Idx = llvm::ConstantInt::get(I32Ty, CurIdx);
+    llvm::Value *Init = llvm::Constant::getNullValue(EltTy);
+    V = Builder.CreateInsertElement(V, Init, Idx, "vecinit");
+  }
+  return V;
 }
 
 // VisitCastExpr - Emit code for an explicit or implicit cast.  Implicit casts
