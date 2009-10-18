@@ -268,8 +268,7 @@ public:
 
 class CIndexer : public Indexer {
 public:  
-  explicit CIndexer(Program *prog, std::string &path)
-    : Indexer(*prog), OnlyLocalDecls(false), ClangPath(path) {}
+  explicit CIndexer(Program *prog) : Indexer(*prog), OnlyLocalDecls(false) {}
 
   virtual ~CIndexer() { delete &getProgram(); }
 
@@ -279,24 +278,25 @@ public:
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
   void setOnlyLocalDecls(bool Local = true) { OnlyLocalDecls = Local; }
 
-  const std::string& getClangPath() { return ClangPath; }
+  /// \brief Get the path of the clang binary.
+  static const llvm::sys::Path& getClangPath();
 private:
   bool OnlyLocalDecls;
-  std::string ClangPath;
+  static llvm::sys::Path ClangPath;
 };
-  
-}
 
-extern "C" {
+llvm::sys::Path CIndexer::ClangPath;
 
-CXIndex clang_createIndex() 
-{
+const llvm::sys::Path& CIndexer::getClangPath() {
+  // Did we already compute the path?
+  if (!ClangPath.empty())
+    return ClangPath;
+
   // FIXME: This is a hack to unbreak the MSVC build.
 #ifdef _MSC_VER
   llvm::sys::Path CIndexPath("");
 #else
   // Find the location where this library lives (libCIndex.dylib).
-  // We do the lookup here to avoid poking dladdr too many times.
   // This silly cast below avoids a C++ warning.
   Dl_info info;
   if (dladdr((void *)(uintptr_t)clang_createTranslationUnit, &info) == 0)
@@ -304,12 +304,25 @@ CXIndex clang_createIndex()
 
   llvm::sys::Path CIndexPath(info.dli_fname);
 #endif
-  std::string CIndexDir = CIndexPath.getDirname();
-  
+
   // We now have the CIndex directory, locate clang relative to it.
-  std::string ClangPath = CIndexDir + "/../bin/clang";
-  
-  return new CIndexer(new Program(), ClangPath);
+  CIndexPath.eraseComponent();
+  CIndexPath.eraseComponent();
+  CIndexPath.appendComponent("bin");
+  CIndexPath.appendComponent("clang");
+
+  // Cache our result.
+  ClangPath = CIndexPath;
+  return ClangPath;
+}
+
+}
+
+extern "C" {
+
+CXIndex clang_createIndex() 
+{  
+  return new CIndexer(new Program());
 }
 
 void clang_disposeIndex(CXIndex CIdx)
@@ -343,8 +356,9 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   return 0;
 #else
   // Build up the arguments for involing clang.
+  llvm::sys::Path ClangPath = static_cast<CIndexer *>(CIdx)->getClangPath();
   std::vector<const char *> argv;
-  argv.push_back(static_cast<CIndexer *>(CIdx)->getClangPath().c_str());
+  argv.push_back(ClangPath.c_str());
   argv.push_back("-emit-ast");
   argv.push_back(source_filename);
   argv.push_back("-o");
@@ -356,7 +370,7 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   argv.push_back(NULL);
 
   // Generate the AST file in a separate process.
-  llvm::sys::Program::ExecuteAndWait(llvm::sys::Path(argv[0]), &argv[0]);
+  llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0]);
 
   // Finally, we create the translation unit from the ast file.
   ASTUnit *ATU = static_cast<ASTUnit *>(
