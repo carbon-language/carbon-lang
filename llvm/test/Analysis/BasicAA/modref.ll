@@ -40,12 +40,23 @@ define i8 @test1() {
 
 define i8 @test2(i8* %P) {
 ; CHECK: @test2
-  %P2 = getelementptr i8* %P, i32 1000
+  %P2 = getelementptr i8* %P, i32 127
   store i8 1, i8* %P2  ;; Not dead across memset
   call void @llvm.memset.i8(i8* %P, i8 2, i8 127, i32 0)
   %A = load i8* %P2
   ret i8 %A
 ; CHECK: ret i8 1
+}
+
+define i8 @test2a(i8* %P) {
+; CHECK: @test2
+  %P2 = getelementptr i8* %P, i32 126
+  store i8 1, i8* %P2  ;; Dead, clobbered by memset.
+  call void @llvm.memset.i8(i8* %P, i8 2, i8 127, i32 0)
+  %A = load i8* %P2
+  ret i8 %A
+; CHECK: %A = load i8* %P2
+; CHECK: ret i8 %A
 }
 
 define void @test3(i8* %P) {
