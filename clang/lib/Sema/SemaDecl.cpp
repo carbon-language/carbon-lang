@@ -218,7 +218,7 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
       << &II << DC << SS->getRange();
   else if (isDependentScopeSpecifier(*SS)) {
     Diag(SS->getRange().getBegin(), diag::err_typename_missing)
-      << (NestedNameSpecifier *)SS->getScopeRep() << II.getName() 
+      << (NestedNameSpecifier *)SS->getScopeRep() << II.getName()
       << SourceRange(SS->getRange().getBegin(), IILoc)
       << CodeModificationHint::CreateInsertion(SS->getRange().getBegin(),
                                                "typename ");
@@ -3729,7 +3729,7 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
       if (FTI.ArgInfo[i].Param == 0) {
         llvm::SmallString<256> Code;
         llvm::raw_svector_ostream(Code) << "  int "
-                                        << FTI.ArgInfo[i].Ident->getNameStr()
+                                        << FTI.ArgInfo[i].Ident->getName()
                                         << ";\n";
         Diag(FTI.ArgInfo[i].IdentLoc, diag::ext_param_not_declared)
           << FTI.ArgInfo[i].Ident
@@ -3996,7 +3996,7 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   }
 
   // Extension in C99.  Legal in C90, but warn about it.
-  if (II.getNameStr().startswith("__builtin_"))
+  if (II.getName().startswith("__builtin_"))
     Diag(Loc, diag::warn_builtin_unknown) << &II;
   else if (getLangOptions().C99)
     Diag(Loc, diag::ext_implicit_function_decl) << &II;

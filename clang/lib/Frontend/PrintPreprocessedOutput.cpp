@@ -399,7 +399,7 @@ static void PrintPreprocessedTokens(Preprocessor &PP, Token &Tok,
     }
 
     if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
-      OS << II->getNameStr();
+      OS << II->getName();
     } else if (Tok.isLiteral() && !Tok.needsCleaning() &&
                Tok.getLiteralData()) {
       OS.write(Tok.getLiteralData(), Tok.getLength());
@@ -434,7 +434,7 @@ namespace {
   struct SortMacrosByID {
     typedef std::pair<IdentifierInfo*, MacroInfo*> id_macro_pair;
     bool operator()(const id_macro_pair &LHS, const id_macro_pair &RHS) const {
-      return LHS.first->getNameStr() < RHS.first->getNameStr();
+      return LHS.first->getName() < RHS.first->getName();
     }
   };
 }

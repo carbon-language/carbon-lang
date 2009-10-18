@@ -339,7 +339,7 @@ void LiveVariables::dumpLiveness(const ValTy& V, SourceManager& SM) const {
   for (AnalysisDataTy::decl_iterator I = AD.begin_decl(),
                                      E = AD.end_decl(); I!=E; ++I)
     if (V.getDeclBit(I->second)) {
-      llvm::errs() << "  " << I->first->getIdentifier()->getNameStr() << " <";
+      llvm::errs() << "  " << I->first->getIdentifier()->getName() << " <";
       I->first->getLocation().dump(SM);
       llvm::errs() << ">\n";
     }

@@ -67,7 +67,7 @@ Parser::OwningExprResult Parser::ParseInitializerWithPotentialDesignator() {
     const IdentifierInfo *FieldName = Tok.getIdentifierInfo();
 
     llvm::SmallString<256> NewSyntax;
-    llvm::raw_svector_ostream(NewSyntax) << '.' << FieldName->getNameStr()
+    llvm::raw_svector_ostream(NewSyntax) << '.' << FieldName->getName()
                                          << " = ";
 
     SourceLocation NameLoc = ConsumeToken(); // Eat the identifier.

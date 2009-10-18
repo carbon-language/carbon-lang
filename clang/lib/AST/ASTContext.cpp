@@ -2924,6 +2924,7 @@ static void EncodeBitField(const ASTContext *Context, std::string& S,
   S += llvm::utostr(N);
 }
 
+// FIXME: Use SmallString for accumulating string.
 void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool ExpandPointedToStructures,
                                             bool ExpandStructures,

@@ -586,7 +586,7 @@ public:
   typedef data_type data_type_ref;
 
   static unsigned ComputeHash(PTHIdKey* key) {
-    return llvm::HashString(key->II->getNameStr());
+    return llvm::HashString(key->II->getName());
   }
 
   static std::pair<unsigned,unsigned>

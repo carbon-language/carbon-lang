@@ -2265,7 +2265,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   if (clsName) { // class message.
     // FIXME: We need to fix Sema (and the AST for ObjCMessageExpr) to handle
     // the 'super' idiom within a class method.
-    if (clsName->getNameStr() == "super") {
+    if (clsName->getName() == "super") {
       MsgSendFlavor = MsgSendSuperFunctionDecl;
       if (MsgSendStretFlavor)
         MsgSendStretFlavor = MsgSendSuperStretFunctionDecl;

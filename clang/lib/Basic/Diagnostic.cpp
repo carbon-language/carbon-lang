@@ -794,7 +794,7 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
         continue;
       }
 
-      llvm::raw_svector_ostream(OutStr) << '\'' << II->getNameStr() << '\'';
+      llvm::raw_svector_ostream(OutStr) << '\'' << II->getName() << '\'';
       break;
     }
     case Diagnostic::ak_qualtype:

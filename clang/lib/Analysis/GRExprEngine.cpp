@@ -207,7 +207,7 @@ const GRState* GRExprEngine::getInitialState(const LocationContext *InitLoc) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // Precondition: the first argument of 'main' is an integer guaranteed
     //  to be > 0.
-    if (FD->getIdentifier()->getNameStr() == "main" &&
+    if (FD->getIdentifier()->getName() == "main" &&
         FD->getNumParams() > 0) {
       const ParmVarDecl *PD = FD->getParamDecl(0);
       QualType T = PD->getType();

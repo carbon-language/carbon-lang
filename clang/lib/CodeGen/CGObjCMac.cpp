@@ -3502,11 +3502,11 @@ void CGObjCMac::FinishModule() {
     llvm::raw_svector_ostream OS(Asm);
     for (llvm::SetVector<IdentifierInfo*>::iterator I = LazySymbols.begin(),
            e = LazySymbols.end(); I != e; ++I)
-      OS << "\t.lazy_reference .objc_class_name_" << (*I)->getNameStr() << "\n";
+      OS << "\t.lazy_reference .objc_class_name_" << (*I)->getName() << "\n";
     for (llvm::SetVector<IdentifierInfo*>::iterator I = DefinedSymbols.begin(),
            e = DefinedSymbols.end(); I != e; ++I)
-      OS << "\t.objc_class_name_" << (*I)->getNameStr() << "=0\n"
-         << "\t.globl .objc_class_name_" << (*I)->getNameStr() << "\n";
+      OS << "\t.objc_class_name_" << (*I)->getName() << "=0\n"
+         << "\t.globl .objc_class_name_" << (*I)->getName() << "\n";
 
     CGM.getModule().setModuleInlineAsm(OS.str());
   }
@@ -5673,7 +5673,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                  llvm::GlobalValue::ExternalLinkage,
                                  0,
                                  ("OBJC_EHTYPE_$_" +
-                                  ID->getIdentifier()->getNameStr()));
+                                  ID->getIdentifier()->getName()));
   }
 
   // Otherwise we need to either make a new entry or fill in the
@@ -5705,7 +5705,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                      llvm::GlobalValue::WeakAnyLinkage,
                                      Init,
                                      ("OBJC_EHTYPE_$_" +
-                                      ID->getIdentifier()->getNameStr()));
+                                      ID->getIdentifier()->getName()));
   }
 
   if (CGM.getLangOptions().getVisibilityMode() == LangOptions::Hidden)

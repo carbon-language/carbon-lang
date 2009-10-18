@@ -101,7 +101,7 @@ public:
   /// identifier.
   llvm::StringRef getName() const {
     assert(getIdentifier() && "Name is not a simple identifier");
-    return getIdentifier()->getNameStr();
+    return getIdentifier()->getName();
   }
 
   /// getNameAsCString - Get the name of identifier for this declaration as a

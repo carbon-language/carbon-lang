@@ -1236,7 +1236,7 @@ static bool isCharSpecialization(QualType T, const char *Name) {
   if (!isCharType(TemplateArgs[0].getAsType()))
     return false;
   
-  return SD->getIdentifier()->getNameStr() == Name;
+  return SD->getIdentifier()->getName() == Name;
 }
 
 bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {

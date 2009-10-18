@@ -104,13 +104,8 @@ public:
     return (((unsigned) p[0]) | (((unsigned) p[1]) << 8)) - 1;
   }
 
-  // FIXME: Deprecated.
-  const char *getName() const {
-    return getNameStart();
-  }
-
-  /// getNameStr - Return the actual identifier string.
-  llvm::StringRef getNameStr() const {
+  /// getName - Return the actual identifier string.
+  llvm::StringRef getName() const {
     return llvm::StringRef(getNameStart(), getLength());
   }
 
@@ -477,7 +472,7 @@ public:
                                       const IdentifierInfo *Name) {
     llvm::SmallString<100> SelectorName;
     SelectorName = "set";
-    SelectorName += Name->getNameStr();
+    SelectorName += Name->getName();
     SelectorName[3] = toupper(SelectorName[3]);
     IdentifierInfo *SetterName =
       &Idents.get(SelectorName.data(),

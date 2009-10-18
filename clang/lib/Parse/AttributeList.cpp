@@ -45,7 +45,7 @@ AttributeList::~AttributeList() {
 }
 
 AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
-  llvm::StringRef AttrName = Name->getNameStr();
+  llvm::StringRef AttrName = Name->getName();
 
   // Normalize the attribute name, __foo__ becomes foo.
   if (AttrName.startswith("__") && AttrName.endswith("__"))

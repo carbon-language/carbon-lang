@@ -115,7 +115,7 @@ bool BasicObjCFoundationChecks::Audit(ExplodedNode* N,
     return false;
 
   if (isNSString(ReceiverType,
-                 ReceiverType->getDecl()->getIdentifier()->getNameStr()))
+                 ReceiverType->getDecl()->getIdentifier()->getName()))
     return AuditNSString(N, ME);
 
   return false;

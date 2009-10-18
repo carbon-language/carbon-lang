@@ -51,7 +51,7 @@ public:
 bool operator<(DeclarationName LHS, DeclarationName RHS) {
   if (IdentifierInfo *LhsId = LHS.getAsIdentifierInfo())
     if (IdentifierInfo *RhsId = RHS.getAsIdentifierInfo())
-      return LhsId->getNameStr() < RhsId->getNameStr();
+      return LhsId->getName() < RhsId->getName();
 
   return LHS.getAsOpaqueInteger() < RHS.getAsOpaqueInteger();
 }

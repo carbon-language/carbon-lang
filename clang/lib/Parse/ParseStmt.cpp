@@ -1283,7 +1283,7 @@ bool Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
       IdentifierInfo *II = Tok.getIdentifierInfo();
       ConsumeToken();
 
-      Names.push_back(II->getNameStr());
+      Names.push_back(II->getName());
       MatchRHSPunctuation(tok::r_square, Loc);
     } else
       Names.push_back(std::string());

@@ -306,7 +306,7 @@ std::string MultiKeywordSelector::getName() const {
   llvm::raw_svector_ostream OS(Str);
   for (keyword_iterator I = keyword_begin(), E = keyword_end(); I != E; ++I) {
     if (*I)
-      OS << (*I)->getNameStr();
+      OS << (*I)->getName();
     OS << ':';
   }
 
@@ -322,12 +322,12 @@ std::string Selector::getAsString() const {
 
     // If the number of arguments is 0 then II is guaranteed to not be null.
     if (getNumArgs() == 0)
-      return II->getNameStr();
+      return II->getName();
 
     if (!II)
       return ":";
 
-    return II->getNameStr().str() + ":";
+    return II->getName().str() + ":";
   }
 
   // We have a multiple keyword selector (no embedded flags).

@@ -1754,7 +1754,7 @@ unsigned ExtVectorElementExpr::getNumElements() const {
 bool ExtVectorElementExpr::containsDuplicateElements() const {
   // FIXME: Refactor this code to an accessor on the AST node which returns the
   // "type" of component access, and share with code below and in Sema.
-  llvm::StringRef Comp = Accessor->getNameStr();
+  llvm::StringRef Comp = Accessor->getName();
 
   // Halving swizzles do not contain duplicate elements.
   if (Comp == "hi" || Comp == "lo" || Comp == "even" || Comp == "odd")

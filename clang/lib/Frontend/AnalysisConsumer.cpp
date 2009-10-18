@@ -196,7 +196,7 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
     case Decl::Function: {
       FunctionDecl* FD = cast<FunctionDecl>(D);
 
-      if (Opts.AnalyzeSpecificFunction.size() > 0 &&
+      if (!Opts.AnalyzeSpecificFunction.empty() &&
           Opts.AnalyzeSpecificFunction != FD->getIdentifier()->getName())
         break;
 

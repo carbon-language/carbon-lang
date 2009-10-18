@@ -1255,7 +1255,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   unsigned NumArgs  = getFunctionOrMethodNumArgs(d);
   unsigned FirstIdx = 1;
 
-  llvm::StringRef Format = Attr.getParameterName()->getNameStr();
+  llvm::StringRef Format = Attr.getParameterName()->getName();
 
   // Normalize the argument, __foo__ becomes foo.
   if (Format.startswith("__") && Format.endswith("__"))
@@ -1265,7 +1265,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   FormatAttrKind Kind = getFormatAttrKind(Format);
   if (Kind == InvalidFormat) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported)
-      << "format" << Attr.getParameterName()->getNameStr();
+      << "format" << Attr.getParameterName()->getName();
     return;
   }
 
@@ -1503,7 +1503,7 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  llvm::StringRef Str = Attr.getParameterName()->getNameStr();
+  llvm::StringRef Str = Attr.getParameterName()->getName();
 
   // Normalize the attribute name, __foo__ becomes foo.
   if (Str.startswith("__") && Str.endswith("__"))

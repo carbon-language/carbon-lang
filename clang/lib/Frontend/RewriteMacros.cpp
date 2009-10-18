@@ -128,12 +128,12 @@ void clang::RewriteMacrosInInput(Preprocessor &PP, llvm::raw_ostream *OS) {
       // comment the line out.
       if (RawTokens[CurRawTok].is(tok::identifier)) {
         const IdentifierInfo *II = RawTokens[CurRawTok].getIdentifierInfo();
-        if (II->getNameStr() == "warning") {
+        if (II->getName() == "warning") {
           // Comment out #warning.
           RB.InsertTextAfter(SM.getFileOffset(RawTok.getLocation()), "//");
-        } else if (II->getNameStr() == "pragma" &&
+        } else if (II->getName() == "pragma" &&
                    RawTokens[CurRawTok+1].is(tok::identifier) &&
-                   (RawTokens[CurRawTok+1].getIdentifierInfo()->getNameStr() ==
+                   (RawTokens[CurRawTok+1].getIdentifierInfo()->getName() ==
                     "mark")) {
           // Comment out #pragma mark.
           RB.InsertTextAfter(SM.getFileOffset(RawTok.getLocation()), "//");
