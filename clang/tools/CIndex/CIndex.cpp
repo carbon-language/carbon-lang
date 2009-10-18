@@ -268,7 +268,8 @@ public:
 
 class CIndexer : public Indexer {
 public:  
-  explicit CIndexer(Program *prog) : Indexer(*prog), OnlyLocalDecls(false) {}
+  explicit CIndexer(Program *prog, std::string &path)
+    : Indexer(*prog), OnlyLocalDecls(false), ClangPath(path) {}
 
   virtual ~CIndexer() { delete &getProgram(); }
 
@@ -277,16 +278,16 @@ public:
   /// declarations.
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
   void setOnlyLocalDecls(bool Local = true) { OnlyLocalDecls = Local; }
-  
+
+  const std::string& getClangPath() { return ClangPath; }
 private:
   bool OnlyLocalDecls;
+  std::string ClangPath;
 };
   
 }
 
 extern "C" {
-
-static const char *clangPath;
 
 CXIndex clang_createIndex() 
 {
@@ -308,9 +309,7 @@ CXIndex clang_createIndex()
   // We now have the CIndex directory, locate clang relative to it.
   std::string ClangPath = CIndexDir + "/../bin/clang";
   
-  clangPath = ClangPath.c_str();
-  
-  return new CIndexer(new Program());
+  return new CIndexer(new Program(), ClangPath);
 }
 
 void clang_disposeIndex(CXIndex CIdx)
@@ -345,7 +344,7 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
 #else
   // Build up the arguments for involing clang.
   std::vector<const char *> argv;
-  argv.push_back(clangPath);
+  argv.push_back(static_cast<CIndexer *>(CIdx)->getClangPath().c_str());
   argv.push_back("-emit-ast");
   argv.push_back(source_filename);
   argv.push_back("-o");
