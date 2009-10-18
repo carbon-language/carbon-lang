@@ -700,7 +700,16 @@ Value *ScalarExprEmitter::EmitCastExpr(const CastExpr *CE) {
 
   case CastExpr::CK_IntegralToPointer: {
     Value *Src = Visit(const_cast<Expr*>(E));
-    return Builder.CreateIntToPtr(Src, ConvertType(DestTy));
+    
+    // First, convert to the correct width so that we control the kind of
+    // extension.
+    const llvm::Type *MiddleTy =
+      llvm::IntegerType::get(VMContext, CGF.LLVMPointerWidth);
+    bool InputSigned = E->getType()->isSignedIntegerType();
+    llvm::Value* IntResult =
+      Builder.CreateIntCast(Src, MiddleTy, InputSigned, "conv");
+    
+    return Builder.CreateIntToPtr(IntResult, ConvertType(DestTy));
   }
 
   case CastExpr::CK_PointerToIntegral: {

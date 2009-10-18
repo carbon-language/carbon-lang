@@ -1407,7 +1407,19 @@ public:
     /// CK_VectorSplat - Casting from an integer/floating type to an extended
     /// vector type with the same element type as the src type. Splats the 
     /// src expression into the destionation expression.
-    CK_VectorSplat
+    CK_VectorSplat,
+    
+    /// CK_IntegralCast - Casting between integral types of different size.
+    CK_IntegralCast,
+
+    /// CK_IntegralToFloating - Integral to floating point.
+    CK_IntegralToFloating,
+    
+    /// CK_FloatingToIntegral - Floating point to integral.
+    CK_FloatingToIntegral,
+    
+    /// CK_FloatingCast - Casting between floating types of different size.
+    CK_FloatingCast
   };
 
 private:

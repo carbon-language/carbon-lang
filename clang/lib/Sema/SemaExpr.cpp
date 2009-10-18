@@ -3153,6 +3153,40 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
   return Owned(E);
 }
 
+static CastExpr::CastKind getScalarCastKind(ASTContext &Context,
+                                            QualType SrcTy, QualType DestTy) {
+  if (Context.getCanonicalType(SrcTy).getUnqualifiedType() ==
+      Context.getCanonicalType(DestTy).getUnqualifiedType())
+    return CastExpr::CK_NoOp;
+
+  if (SrcTy->hasPointerRepresentation()) {
+    if (DestTy->hasPointerRepresentation())
+      return CastExpr::CK_BitCast;
+    if (DestTy->isIntegerType())
+      return CastExpr::CK_PointerToIntegral;
+  }
+  
+  if (SrcTy->isIntegerType()) {
+    if (DestTy->isIntegerType())
+      return CastExpr::CK_IntegralCast;
+    if (DestTy->hasPointerRepresentation())
+      return CastExpr::CK_IntegralToPointer;
+    if (DestTy->isRealFloatingType())
+      return CastExpr::CK_IntegralToFloating;
+  }
+  
+  if (SrcTy->isRealFloatingType()) {
+    if (DestTy->isRealFloatingType())
+      return CastExpr::CK_FloatingCast;
+    if (DestTy->isIntegerType())
+      return CastExpr::CK_FloatingToIntegral;
+  }
+  
+  // FIXME: Assert here.
+  // assert(false && "Unhandled cast combination!");
+  return CastExpr::CK_Unknown;
+}
+
 /// CheckCastTypes - Check type constraints for casting between types.
 bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
                           CastExpr::CastKind& Kind,
@@ -3242,7 +3276,8 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
                   diag::err_cast_pointer_to_non_pointer_int)
         << castType << castExpr->getSourceRange();
   }
-  
+
+  Kind = getScalarCastKind(Context, castExpr->getType(), castType);
   return false;
 }
 

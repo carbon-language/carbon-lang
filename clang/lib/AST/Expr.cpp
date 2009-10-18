@@ -430,6 +430,12 @@ const char *CastExpr::getCastKindName() const {
     return "ToVoid";
   case CastExpr::CK_VectorSplat:
     return "VectorSplat";
+  case CastExpr::CK_IntegralCast:
+    return "IntegralCast";
+  case CastExpr::CK_IntegralToFloating:
+    return "IntegralToFloating";
+  case CastExpr::CK_FloatingToIntegral:
+    return "FloatingToIntegral";
   }
 
   assert(0 && "Unhandled cast kind!");
