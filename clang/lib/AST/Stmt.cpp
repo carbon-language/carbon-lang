@@ -117,7 +117,7 @@ void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {
 }
 
 const char *LabelStmt::getName() const {
-  return getID()->getName();
+  return getID()->getNameStart();
 }
 
 // This is defined here to avoid polluting Stmt.h with importing Expr.h

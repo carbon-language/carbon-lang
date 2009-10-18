@@ -2289,9 +2289,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
       ClsExprs.push_back(StringLiteral::Create(*Context,
-                                        SuperDecl->getIdentifier()->getName(),
-                                        SuperDecl->getIdentifier()->getLength(),
-                                        false, argType, SourceLocation()));
+                                     SuperDecl->getIdentifier()->getNameStart(),
+                                     SuperDecl->getIdentifier()->getLength(),
+                                     false, argType, SourceLocation()));
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetMetaClassFunctionDecl,
                                                    &ClsExprs[0],
                                                    ClsExprs.size());
@@ -2343,7 +2343,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
       ClsExprs.push_back(StringLiteral::Create(*Context,
-                                               clsName->getName(),
+                                               clsName->getNameStart(),
                                                clsName->getLength(),
                                                false, argType,
                                                SourceLocation()));
@@ -2375,9 +2375,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
       ClsExprs.push_back(StringLiteral::Create(*Context,
-                                        SuperDecl->getIdentifier()->getName(),
-                                        SuperDecl->getIdentifier()->getLength(),
-                                        false, argType, SourceLocation()));
+                                     SuperDecl->getIdentifier()->getNameStart(),
+                                     SuperDecl->getIdentifier()->getLength(),
+                                     false, argType, SourceLocation()));
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                    &ClsExprs[0],
                                                    ClsExprs.size());

@@ -591,7 +591,7 @@ public:
 
   static std::pair<unsigned,unsigned>
   EmitKeyDataLength(llvm::raw_ostream& Out, const PTHIdKey* key, uint32_t) {
-    unsigned n = strlen(key->II->getName()) + 1;
+    unsigned n = key->II->getLength() + 1;
     ::Emit16(Out, n);
     return std::make_pair(n, sizeof(uint32_t));
   }
@@ -600,7 +600,7 @@ public:
     // Record the location of the key data.  This is used when generating
     // the mapping from persistent IDs to strings.
     key->FileOffset = Out.tell();
-    Out.write(key->II->getName(), n);
+    Out.write(key->II->getNameStart(), n);
   }
 
   static void EmitData(llvm::raw_ostream& Out, PTHIdKey*, uint32_t pID,

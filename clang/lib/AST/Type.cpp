@@ -1502,11 +1502,11 @@ void TagType::getAsStringInternal(std::string &InnerString, const PrintingPolicy
   const char *Kind = Policy.SuppressTagKind? 0 : getDecl()->getKindName();
   const char *ID;
   if (const IdentifierInfo *II = getDecl()->getIdentifier())
-    ID = II->getName();
+    ID = II->getNameStart();
   else if (TypedefDecl *Typedef = getDecl()->getTypedefForAnonDecl()) {
     Kind = 0;
     assert(Typedef->getIdentifier() && "Typedef without identifier?");
-    ID = Typedef->getIdentifier()->getName();
+    ID = Typedef->getIdentifier()->getNameStart();
   } else
     ID = "<anonymous>";
 

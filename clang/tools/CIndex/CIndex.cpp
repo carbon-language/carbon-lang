@@ -473,7 +473,7 @@ const char *clang_getDeclSpelling(CXDecl AnonDecl)
     return OMD->getSelector().getAsString().c_str();
   }    
   if (ND->getIdentifier())
-    return ND->getIdentifier()->getName();
+    return ND->getIdentifier()->getNameStart();
   else 
     return "";
 }
@@ -513,22 +513,22 @@ const char *clang_getCursorSpelling(CXCursor C)
         {
         ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing interface decl");
-        return OID->getSuperClass()->getIdentifier()->getName();
+        return OID->getSuperClass()->getIdentifier()->getNameStart();
         }
       case CXCursor_ObjCClassRef: 
         {
         if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND)) {
-          return OID->getIdentifier()->getName();
+          return OID->getIdentifier()->getNameStart();
         }
         ObjCCategoryDecl *OID = dyn_cast<ObjCCategoryDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing category decl");
-        return OID->getClassInterface()->getIdentifier()->getName();
+        return OID->getClassInterface()->getIdentifier()->getNameStart();
         }
       case CXCursor_ObjCProtocolRef: 
         {
         ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing protocol decl");
-        return OID->getIdentifier()->getName();
+        return OID->getIdentifier()->getNameStart();
         }
       case CXCursor_ObjCSelectorRef:
         {
@@ -544,7 +544,7 @@ const char *clang_getCursorSpelling(CXCursor C)
         DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
                                  static_cast<Stmt *>(C.stmt));
         assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
-        return DRE->getDecl()->getIdentifier()->getName();
+        return DRE->getDecl()->getIdentifier()->getNameStart();
         }
       default:
         return "<not implemented>";

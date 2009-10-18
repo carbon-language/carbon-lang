@@ -234,7 +234,7 @@ unsigned Preprocessor::getSpelling(const Token &Tok,
   // If this token is an identifier, just return the string from the identifier
   // table, which is very quick.
   if (const IdentifierInfo *II = Tok.getIdentifierInfo()) {
-    Buffer = II->getName();
+    Buffer = II->getNameStart();
     return II->getLength();
   }
 

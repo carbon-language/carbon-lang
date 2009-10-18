@@ -95,7 +95,7 @@ TokenConcatenation::TokenConcatenation(Preprocessor &pp) : PP(pp) {
 static char GetFirstChar(Preprocessor &PP, const Token &Tok) {
   if (IdentifierInfo *II = Tok.getIdentifierInfo()) {
     // Avoid spelling identifiers, the most common form of token.
-    return II->getName()[0];
+    return II->getNameStart()[0];
   } else if (!Tok.needsCleaning()) {
     if (Tok.isLiteral() && Tok.getLiteralData()) {
       return *Tok.getLiteralData();

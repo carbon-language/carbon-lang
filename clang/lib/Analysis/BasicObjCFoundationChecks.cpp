@@ -45,9 +45,9 @@ static const ObjCInterfaceType* GetReceiverType(const ObjCMessageExpr* ME) {
 }
 
 static const char* GetReceiverNameType(const ObjCMessageExpr* ME) {
-  const ObjCInterfaceType *ReceiverType = GetReceiverType(ME);
-  return ReceiverType ? ReceiverType->getDecl()->getIdentifier()->getName()
-                      : NULL;
+  if (const ObjCInterfaceType *ReceiverType = GetReceiverType(ME))
+    return ReceiverType->getDecl()->getIdentifier()->getNameStart();
+  return NULL;
 }
 
 namespace {

@@ -1445,10 +1445,9 @@ static void MarkNoReturnFunction(const FunctionDecl *FD, CallExpr *CE,
     // HACK: Some functions are not marked noreturn, and don't return.
     //  Here are a few hardwired ones.  If this takes too long, we can
     //  potentially cache these results.
-    const char* s = FD->getIdentifier()->getName();
-    unsigned n = strlen(s);
+    const char* s = FD->getIdentifier()->getNameStart();
 
-    switch (n) {
+    switch (FD->getIdentifier()->getLength()) {
     default:
       break;
 

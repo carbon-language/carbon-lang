@@ -1885,7 +1885,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   const ExtVectorType *vecType = baseType->getAs<ExtVectorType>();
 
   // The vector accessor can't exceed the number of elements.
-  const char *compStr = CompName->getName();
+  const char *compStr = CompName->getNameStart();
 
   // This flag determines whether or not the component is one of the four
   // special names that indicate a subset of exactly half the elements are
@@ -1922,7 +1922,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
   // Ensure no component accessor exceeds the width of the vector type it
   // operates on.
   if (!HalvingSwizzle) {
-    compStr = CompName->getName();
+    compStr = CompName->getNameStart();
 
     if (HexSwizzle)
       compStr++;

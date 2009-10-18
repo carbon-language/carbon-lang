@@ -96,14 +96,6 @@ LexNextToken:
   //===--------------------------------------==//
   // Process the token.
   //===--------------------------------------==//
-#if 0
-  SourceManager& SM = PP->getSourceManager();
-  llvm::errs() << SM.getFileEntryForID(FileID)->getName()
-    << ':' << SM.getLogicalLineNumber(Tok.getLocation())
-    << ':' << SM.getLogicalColumnNumber(Tok.getLocation())
-    << '\n';
-#endif
-
   if (TKind == tok::eof) {
     // Save the end-of-file token.
     EofToken = Tok;
@@ -563,7 +555,7 @@ IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {
 
   // Store the new IdentifierInfo in the cache.
   PerIDCache[PersistentID] = II;
-  assert(II->getName() && II->getName()[0] != '\0');
+  assert(II->getNameStart() && II->getNameStart()[0] != '\0');
   return II;
 }
 

@@ -1594,7 +1594,7 @@ public:
   std::pair<unsigned,unsigned>
     EmitKeyDataLength(llvm::raw_ostream& Out, const IdentifierInfo* II,
                       pch::IdentID ID) {
-    unsigned KeyLen = strlen(II->getName()) + 1;
+    unsigned KeyLen = II->getLength() + 1;
     unsigned DataLen = 4; // 4 bytes for the persistent ID << 1
     if (isInterestingIdentifier(II)) {
       DataLen += 2; // 2 bytes for builtin ID, flags
@@ -1619,7 +1619,7 @@ public:
     // Record the location of the key data.  This is used when generating
     // the mapping from persistent IDs to strings.
     Writer.SetIdentifierOffset(II, Out.tell());
-    Out.write(II->getName(), KeyLen);
+    Out.write(II->getNameStart(), KeyLen);
   }
 
   void EmitData(llvm::raw_ostream& Out, const IdentifierInfo* II,

@@ -1071,7 +1071,7 @@ void Preprocessor::HandleIncludeDirective(Token &IncludeTok,
   // we allow macros that expand to nothing after the filename, because this
   // falls into the category of "#include pp-tokens new-line" specified in
   // C99 6.10.2p4.
-  CheckEndOfDirective(IncludeTok.getIdentifierInfo()->getName(), true);
+  CheckEndOfDirective(IncludeTok.getIdentifierInfo()->getNameStart(), true);
 
   // Check that we don't have infinite #include recursion.
   if (IncludeMacroStack.size() == MaxAllowedIncludeStackDepth-1) {

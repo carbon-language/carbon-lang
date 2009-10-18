@@ -825,7 +825,7 @@ llvm::Constant *
 CodeGenModule::CreateRuntimeFunction(const llvm::FunctionType *FTy,
                                      const char *Name) {
   // Convert Name to be a uniqued string from the IdentifierInfo table.
-  Name = getContext().Idents.get(Name).getName();
+  Name = getContext().Idents.get(Name).getNameStart();
   return GetOrCreateLLVMFunction(Name, FTy, GlobalDecl());
 }
 
@@ -911,7 +911,7 @@ llvm::Constant *
 CodeGenModule::CreateRuntimeVariable(const llvm::Type *Ty,
                                      const char *Name) {
   // Convert Name to be a uniqued string from the IdentifierInfo table.
-  Name = getContext().Idents.get(Name).getName();
+  Name = getContext().Idents.get(Name).getNameStart();
   return GetOrCreateLLVMGlobal(Name, llvm::PointerType::getUnqual(Ty), 0);
 }
 
@@ -1254,7 +1254,7 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
 
   // Unique the name through the identifier table.
   const char *AliaseeName = AA->getAliasee().c_str();
-  AliaseeName = getContext().Idents.get(AliaseeName).getName();
+  AliaseeName = getContext().Idents.get(AliaseeName).getNameStart();
 
   // Create a reference to the named value.  This ensures that it is emitted
   // if a deferred decl.
@@ -1341,7 +1341,7 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
     cast<llvm::FunctionType>(getTypes().ConvertType(Type));
 
   // Unique the name through the identifier table.
-  Name = getContext().Idents.get(Name).getName();
+  Name = getContext().Idents.get(Name).getNameStart();
   return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl(FD));
 }
 

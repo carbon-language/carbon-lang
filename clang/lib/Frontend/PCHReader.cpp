@@ -1505,7 +1505,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
       IdentifierInfo *II = Identifiers[I];
       // Look in the on-disk hash table for an entry for
       PCHIdentifierLookupTrait Info(*this, II);
-      std::pair<const char*, unsigned> Key(II->getName(), II->getLength());
+      std::pair<const char*, unsigned> Key(II->getNameStart(), II->getLength());
       PCHIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Info);
       if (Pos == IdTable->end())
         continue;

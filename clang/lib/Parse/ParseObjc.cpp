@@ -428,7 +428,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
         return;
       }
 
-      if (II->getName()[0] == 's') {
+      if (II->getNameStart()[0] == 's') {
         DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_setter);
         DS.setSetterName(Tok.getIdentifierInfo());
         ConsumeToken();  // consume method name

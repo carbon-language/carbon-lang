@@ -931,7 +931,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
     // [PR 3337] Use 'getAs<FunctionType>' to strip away any typedefs on the
     // function's type.
     const FunctionType* FT = FD->getType()->getAs<FunctionType>();
-    const char* FName = FD->getIdentifier()->getName();
+    const char* FName = FD->getIdentifier()->getNameStart();
 
     // Strip away preceding '_'.  Doing this here will effect all the checks
     // down below.

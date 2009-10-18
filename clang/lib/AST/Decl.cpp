@@ -231,6 +231,8 @@ std::string NamedDecl::getQualifiedNameAsString() const {
 }
 
 std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
+  // FIXME: Collect contexts, then accumulate names to avoid unnecessary
+  // std::string thrashing.
   std::vector<std::string> Names;
   std::string QualName;
   const DeclContext *Ctx = getDeclContext();
@@ -252,7 +254,7 @@ std::string NamedDecl::getQualifiedNameAsString(const PrintingPolicy &P) const {
                                            TemplateArgs.getFlatArgumentList(),
                                            TemplateArgs.flat_size(),
                                            P);
-      Names.push_back(Spec->getIdentifier()->getName() + TemplateArgsStr);
+      Names.push_back(Spec->getIdentifier()->getNameStart() + TemplateArgsStr);
     } else if (const NamedDecl *ND = dyn_cast<NamedDecl>(Ctx))
       Names.push_back(ND->getNameAsString());
     else
