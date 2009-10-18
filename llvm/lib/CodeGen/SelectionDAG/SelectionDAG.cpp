@@ -3507,16 +3507,22 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
                                 SDValue Ptr, SDValue Cmp,
                                 SDValue Swp, const Value* PtrVal,
                                 unsigned Alignment) {
+  MachineFunction &MF = getMachineFunction();
+  MachineFrameInfo *FrameInfo = MF.getFrameInfo();
+
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(MemVT);
 
   // Check if the memory reference references a frame index
   if (!PtrVal)
     if (const FrameIndexSDNode *FI =
-          dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      PtrVal = PseudoSourceValue::getFixedStack(FI->getIndex());
+        dyn_cast<const FrameIndexSDNode>(Ptr.getNode())) {
+      if (FrameInfo->isFixedObjectIndex(FI->getIndex()))
+        PtrVal = PseudoSourceValue::getFixedStack(FI->getIndex());
+      else
+        PtrVal = PseudoSourceValue::getStack();
+    }
 
-  MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
 
   // For now, atomics are considered to be volatile always.
@@ -3560,16 +3566,21 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, DebugLoc dl, EVT MemVT,
                                 SDValue Ptr, SDValue Val,
                                 const Value* PtrVal,
                                 unsigned Alignment) {
+  MachineFunction &MF = getMachineFunction();
+  MachineFrameInfo *FrameInfo = MF.getFrameInfo();
+
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(MemVT);
 
   // Check if the memory reference references a frame index
   if (!PtrVal)
     if (const FrameIndexSDNode *FI =
-          dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      PtrVal = PseudoSourceValue::getFixedStack(FI->getIndex());
+        dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
+      if (FrameInfo->isFixedObjectIndex(FI->getIndex()))
+        PtrVal = PseudoSourceValue::getFixedStack(FI->getIndex());
+      else
+        PtrVal = PseudoSourceValue::getStack();
 
-  MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
 
   // For now, atomics are considered to be volatile always.
@@ -3707,16 +3718,21 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, DebugLoc dl,
                       SDValue Ptr, SDValue Offset,
                       const Value *SV, int SVOffset, EVT MemVT,
                       bool isVolatile, unsigned Alignment) {
+  MachineFunction &MF = getMachineFunction();
+  MachineFrameInfo *FrameInfo = MF.getFrameInfo();
+
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(VT);
 
   // Check if the memory reference references a frame index
   if (!SV)
     if (const FrameIndexSDNode *FI =
-          dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      SV = PseudoSourceValue::getFixedStack(FI->getIndex());
+        dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
+      if (FrameInfo->isFixedObjectIndex(FI->getIndex()))
+        SV = PseudoSourceValue::getFixedStack(FI->getIndex());
+      else
+        SV = PseudoSourceValue::getStack();
 
-  MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOLoad;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;
@@ -3806,16 +3822,21 @@ SelectionDAG::getIndexedLoad(SDValue OrigLoad, DebugLoc dl, SDValue Base,
 SDValue SelectionDAG::getStore(SDValue Chain, DebugLoc dl, SDValue Val,
                                SDValue Ptr, const Value *SV, int SVOffset,
                                bool isVolatile, unsigned Alignment) {
+  MachineFunction &MF = getMachineFunction();
+  MachineFrameInfo *FrameInfo = MF.getFrameInfo();
+
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(Val.getValueType());
 
   // Check if the memory reference references a frame index
   if (!SV)
     if (const FrameIndexSDNode *FI =
-          dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      SV = PseudoSourceValue::getFixedStack(FI->getIndex());
+        dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
+      if (FrameInfo->isFixedObjectIndex(FI->getIndex()))
+        SV = PseudoSourceValue::getFixedStack(FI->getIndex());
+      else
+        SV = PseudoSourceValue::getStack();
 
-  MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOStore;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;
@@ -3852,16 +3873,21 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, DebugLoc dl, SDValue Val,
                                     SDValue Ptr, const Value *SV,
                                     int SVOffset, EVT SVT,
                                     bool isVolatile, unsigned Alignment) {
+  MachineFunction &MF = getMachineFunction();
+  MachineFrameInfo *FrameInfo = MF.getFrameInfo();
+
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0
     Alignment = getEVTAlignment(SVT);
 
   // Check if the memory reference references a frame index
   if (!SV)
     if (const FrameIndexSDNode *FI =
-          dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
-      SV = PseudoSourceValue::getFixedStack(FI->getIndex());
+        dyn_cast<const FrameIndexSDNode>(Ptr.getNode()))
+      if (FrameInfo->isFixedObjectIndex(FI->getIndex()))
+        SV = PseudoSourceValue::getFixedStack(FI->getIndex());
+      else
+        SV = PseudoSourceValue::getStack();
 
-  MachineFunction &MF = getMachineFunction();
   unsigned Flags = MachineMemOperand::MOStore;
   if (isVolatile)
     Flags |= MachineMemOperand::MOVolatile;

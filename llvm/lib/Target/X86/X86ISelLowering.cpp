@@ -1562,7 +1562,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i64);
         SDValue Store =
           DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                       PseudoSourceValue::getFixedStack(RegSaveFrameIndex),
+                       PseudoSourceValue::getStack(),
                        Offset);
         MemOps.push_back(Store);
         Offset += 8;
@@ -1765,9 +1765,8 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     case CCValAssign::Indirect: {
       // Store the argument.
       SDValue SpillSlot = DAG.CreateStackTemporary(VA.getValVT());
-      int FI = cast<FrameIndexSDNode>(SpillSlot)->getIndex();
       Chain = DAG.getStore(Chain, dl, Arg, SpillSlot,
-                           PseudoSourceValue::getFixedStack(FI), 0);
+                           PseudoSourceValue::getStack(), 0);
       Arg = SpillSlot;
       break;
     }
@@ -4868,7 +4867,7 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
   SDValue Chain = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
                                StackSlot,
-                               PseudoSourceValue::getFixedStack(SSFI), 0);
+                               PseudoSourceValue::getStack(), 0);
   return BuildFILD(Op, SrcVT, Chain, StackSlot, DAG);
 }
 
@@ -4909,7 +4908,7 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
     Ops.push_back(InFlag);
     Chain = DAG.getNode(X86ISD::FST, dl, Tys, &Ops[0], Ops.size());
     Result = DAG.getLoad(Op.getValueType(), dl, Chain, StackSlot,
-                         PseudoSourceValue::getFixedStack(SSFI), 0);
+                         PseudoSourceValue::getStack(), 0);
   }
 
   return Result;
@@ -5124,7 +5123,7 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) {
   if (isScalarFPTypeInSSEReg(Op.getOperand(0).getValueType())) {
     assert(DstTy == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, dl, Value, StackSlot,
-                         PseudoSourceValue::getFixedStack(SSFI), 0);
+                         PseudoSourceValue::getStack(), 0);
     SDVTList Tys = DAG.getVTList(Op.getOperand(0).getValueType(), MVT::Other);
     SDValue Ops[] = {
       Chain, StackSlot, DAG.getValueType(Op.getOperand(0).getValueType())
@@ -7719,6 +7718,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
   // stores were performed.
   const BasicBlock *LLVM_BB = MBB->getBasicBlock();
   MachineFunction *F = MBB->getParent();
+  MachineFrameInfo *MFI = F->getFrameInfo();
   MachineFunction::iterator MBBIter = MBB;
   ++MBBIter;
   MachineBasicBlock *XMMSaveMBB = F->CreateMachineBasicBlock(LLVM_BB);
@@ -7750,13 +7750,14 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
   }
 
   // In the XMM save block, save all the XMM argument registers.
+  const Value *SV = MFI->isFixedObjectIndex(RegSaveFrameIndex)
+    ? PseudoSourceValue::getFixedStack(RegSaveFrameIndex)
+    : PseudoSourceValue::getStack();
   for (int i = 3, e = MI->getNumOperands(); i != e; ++i) {
     int64_t Offset = (i - 3) * 16 + VarArgsFPOffset;
     MachineMemOperand *MMO =
-      F->getMachineMemOperand(
-        PseudoSourceValue::getFixedStack(RegSaveFrameIndex),
-        MachineMemOperand::MOStore, Offset,
-        /*Size=*/16, /*Align=*/16);
+      F->getMachineMemOperand(SV, MachineMemOperand::MOStore, Offset,
+                              /*Size=*/16, /*Align=*/16);
     BuildMI(XMMSaveMBB, DL, TII->get(X86::MOVAPSmr))
       .addFrameIndex(RegSaveFrameIndex)
       .addImm(/*Scale=*/1)

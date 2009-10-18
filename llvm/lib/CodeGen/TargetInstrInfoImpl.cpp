@@ -186,8 +186,11 @@ TargetInstrInfo::foldMemoryOperand(MachineFunction &MF,
          "Folded a use to a non-load!");
   const MachineFrameInfo &MFI = *MF.getFrameInfo();
   assert(MFI.getObjectOffset(FrameIndex) != -1);
+  const Value *SV = MFI.isFixedObjectIndex(FrameIndex)
+    ? PseudoSourceValue::getFixedStack(FrameIndex)
+    : PseudoSourceValue::getStack();
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIndex),
+    MF.getMachineMemOperand(SV,
                             Flags, /*Offset=*/0,
                             MFI.getObjectSize(FrameIndex),
                             MFI.getObjectAlignment(FrameIndex));

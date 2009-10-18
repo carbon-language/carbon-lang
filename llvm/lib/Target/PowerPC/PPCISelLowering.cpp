@@ -2225,7 +2225,7 @@ struct TailCallArgumentInfo {
 /// StoreTailCallArgumentsToStackSlot - Stores arguments to their stack slot.
 static void
 StoreTailCallArgumentsToStackSlot(SelectionDAG &DAG,
-                                           SDValue Chain,
+                                  SDValue Chain,
                    const SmallVector<TailCallArgumentInfo, 8> &TailCallArgs,
                    SmallVector<SDValue, 8> &MemOpChains,
                    DebugLoc dl) {
@@ -3388,7 +3388,7 @@ SDValue PPCTargetLowering::LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
 
   // STD the extended value into the stack slot.
   MachineMemOperand *MMO =
-    MF.getMachineMemOperand(PseudoSourceValue::getFixedStack(FrameIdx),
+    MF.getMachineMemOperand(PseudoSourceValue::getStack(),
                             MachineMemOperand::MOStore, 0, 8, 8);
   SDValue Ops[] = { DAG.getEntryNode(), Ext64, FIdx };
   SDValue Store =
