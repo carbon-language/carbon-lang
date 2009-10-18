@@ -1502,20 +1502,17 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_missing_parameter_name);
     return;
   }
-  const char *Str = Name->getName();
-  unsigned Len = Name->getLength();
+
+  llvm::StringRef Str = Attr.getParameterName()->getNameStr();
 
   // Normalize the attribute name, __foo__ becomes foo.
-  if (Len > 4 && Str[0] == '_' && Str[1] == '_' &&
-      Str[Len - 2] == '_' && Str[Len - 1] == '_') {
-    Str += 2;
-    Len -= 4;
-  }
+  if (Str.startswith("__") && Str.endswith("__"))
+    Str = Str.substr(2, Str.size() - 4);
 
   unsigned DestWidth = 0;
   bool IntegerMode = true;
   bool ComplexMode = false;
-  switch (Len) {
+  switch (Str.size()) {
   case 2:
     switch (Str[0]) {
     case 'Q': DestWidth = 8; break;
@@ -1537,13 +1534,13 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   case 4:
     // FIXME: glibc uses 'word' to define register_t; this is narrower than a
     // pointer on PIC16 and other embedded platforms.
-    if (!memcmp(Str, "word", 4))
+    if (Str == "word")
       DestWidth = S.Context.Target.getPointerWidth(0);
-    if (!memcmp(Str, "byte", 4))
+    else if (Str == "byte")
       DestWidth = S.Context.Target.getCharWidth();
     break;
   case 7:
-    if (!memcmp(Str, "pointer", 7))
+    if (Str == "pointer")
       DestWidth = S.Context.Target.getPointerWidth(0);
     break;
   }
