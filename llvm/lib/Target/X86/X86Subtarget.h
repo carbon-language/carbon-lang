@@ -220,7 +220,7 @@ public:
   /// at 'More' optimization level.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel) const {
     // FIXME: This causes llvm to miscompile itself on i386. :-(
-    return OptLevel >= CodeGenOpt::Default;
+    return false /*OptLevel >= CodeGenOpt::Default*/;
   }
 };
 
