@@ -436,6 +436,8 @@ const char *CastExpr::getCastKindName() const {
     return "IntegralToFloating";
   case CastExpr::CK_FloatingToIntegral:
     return "FloatingToIntegral";
+  case CastExpr::CK_FloatingCast:
+    return "FloatingCast";
   }
 
   assert(0 && "Unhandled cast kind!");
