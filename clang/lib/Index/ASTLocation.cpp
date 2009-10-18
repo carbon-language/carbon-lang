@@ -101,7 +101,7 @@ void ASTLocation::print(llvm::raw_ostream &OS) const {
     break;
     
   case N_Type: {
-    QualType T = AsTypeLoc().getSourceType();
+    QualType T = AsTypeLoc().getType();
     OS << "[Type: " << T->getTypeClassName() << " " << T.getAsString();
   }
   }

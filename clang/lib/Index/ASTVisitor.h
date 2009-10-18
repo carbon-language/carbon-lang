@@ -123,14 +123,14 @@ public:
       BaseTypeLocVisitor::Visit(TL);
   }
   
-  void VisitArrayLoc(ArrayLoc TL) {
-    BaseTypeLocVisitor::VisitArrayLoc(TL);
+  void VisitArrayLoc(ArrayTypeLoc TL) {
+    BaseTypeLocVisitor::VisitArrayTypeLoc(TL);
     if (TL.getSizeExpr())
       Visit(TL.getSizeExpr());
   }
   
-  void VisitFunctionLoc(FunctionLoc TL) {
-    BaseTypeLocVisitor::VisitFunctionLoc(TL);
+  void VisitFunctionTypeLoc(FunctionTypeLoc TL) {
+    BaseTypeLocVisitor::VisitFunctionTypeLoc(TL);
     for (unsigned i = 0; i != TL.getNumArgs(); ++i)
       Visit(TL.getArg(i));
   }

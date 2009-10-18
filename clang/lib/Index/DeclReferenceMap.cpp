@@ -31,8 +31,8 @@ public:
   void VisitMemberExpr(MemberExpr *Node);
   void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
   
-  void VisitTypedefLoc(TypedefLoc TL);
-  void VisitObjCInterfaceLoc(ObjCInterfaceLoc TL);
+  void VisitTypedefTypeLoc(TypedefTypeLoc TL);
+  void VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL);
 };
 
 } // anonymous namespace
@@ -55,12 +55,12 @@ void RefMapper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   Map.insert(std::make_pair(Node->getDecl(), ASTLocation(CurrentDecl, Node)));
 }
 
-void RefMapper::VisitTypedefLoc(TypedefLoc TL) {
+void RefMapper::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
   NamedDecl *ND = TL.getTypedefDecl();
   Map.insert(std::make_pair(ND, ASTLocation(CurrentDecl, ND, TL.getNameLoc())));
 }
 
-void RefMapper::VisitObjCInterfaceLoc(ObjCInterfaceLoc TL) {
+void RefMapper::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   NamedDecl *ND = TL.getIFaceDecl();
   Map.insert(std::make_pair(ND, ASTLocation(CurrentDecl, ND, TL.getNameLoc())));
 }

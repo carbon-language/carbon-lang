@@ -91,7 +91,7 @@ public:
   ASTLocation(const Decl *parentDecl, TypeLoc tyLoc)
     : ParentDecl(const_cast<Decl*>(parentDecl), N_Type) {
     if (tyLoc) {
-      Ty.TyPtr = tyLoc.getSourceType().getAsOpaquePtr();
+      Ty.TyPtr = tyLoc.getType().getAsOpaquePtr();
       Ty.Data = tyLoc.getOpaqueData();
     } else
       ParentDecl.setPointer(0);

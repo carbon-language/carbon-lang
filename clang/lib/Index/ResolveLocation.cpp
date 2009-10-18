@@ -120,11 +120,11 @@ public:
   TypeLocResolver(ASTContext &ctx, SourceLocation loc, Decl *pd)
     : LocResolverBase(ctx, loc), ParentDecl(pd) { }
 
-  ASTLocation VisitTypedefLoc(TypedefLoc TL);
-  ASTLocation VisitFunctionLoc(FunctionLoc TL);
-  ASTLocation VisitArrayLoc(ArrayLoc TL);
-  ASTLocation VisitObjCInterfaceLoc(ObjCInterfaceLoc TL);
-  ASTLocation VisitObjCProtocolListLoc(ObjCProtocolListLoc TL);
+  ASTLocation VisitTypedefTypeLoc(TypedefTypeLoc TL);
+  ASTLocation VisitFunctionTypeLoc(FunctionTypeLoc TL);
+  ASTLocation VisitArrayTypeLoc(ArrayTypeLoc TL);
+  ASTLocation VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL);
+  ASTLocation VisitObjCProtocolListTypeLoc(ObjCProtocolListTypeLoc TL);
   ASTLocation VisitTypeLoc(TypeLoc TL);
 };
 
@@ -349,7 +349,7 @@ ASTLocation DeclLocResolver::VisitDecl(Decl *D) {
   return ASTLocation(D);
 }
 
-ASTLocation TypeLocResolver::VisitTypedefLoc(TypedefLoc TL) {
+ASTLocation TypeLocResolver::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
   assert(ContainsLocation(TL) &&
          "Should visit only after verifying that loc is in range");
   if (ContainsLocation(TL.getNameLoc()))
@@ -357,7 +357,7 @@ ASTLocation TypeLocResolver::VisitTypedefLoc(TypedefLoc TL) {
   return ASTLocation(ParentDecl, TL);
 }
 
-ASTLocation TypeLocResolver::VisitFunctionLoc(FunctionLoc TL) {
+ASTLocation TypeLocResolver::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
   assert(ContainsLocation(TL) &&
          "Should visit only after verifying that loc is in range");
 
@@ -373,7 +373,7 @@ ASTLocation TypeLocResolver::VisitFunctionLoc(FunctionLoc TL) {
   return ASTLocation(ParentDecl, TL);
 }
 
-ASTLocation TypeLocResolver::VisitArrayLoc(ArrayLoc TL) {
+ASTLocation TypeLocResolver::VisitArrayTypeLoc(ArrayTypeLoc TL) {
   assert(ContainsLocation(TL) &&
          "Should visit only after verifying that loc is in range");
 
@@ -384,7 +384,7 @@ ASTLocation TypeLocResolver::VisitArrayLoc(ArrayLoc TL) {
   return ASTLocation(ParentDecl, TL);
 }
 
-ASTLocation TypeLocResolver::VisitObjCInterfaceLoc(ObjCInterfaceLoc TL) {
+ASTLocation TypeLocResolver::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   assert(ContainsLocation(TL) &&
          "Should visit only after verifying that loc is in range");
   if (ContainsLocation(TL.getNameLoc()))
@@ -392,7 +392,7 @@ ASTLocation TypeLocResolver::VisitObjCInterfaceLoc(ObjCInterfaceLoc TL) {
   return ASTLocation(ParentDecl, TL);
 }
 
-ASTLocation TypeLocResolver::VisitObjCProtocolListLoc(ObjCProtocolListLoc TL) {
+ASTLocation TypeLocResolver::VisitObjCProtocolListTypeLoc(ObjCProtocolListTypeLoc TL) {
   assert(ContainsLocation(TL) &&
          "Should visit only after verifying that loc is in range");
 

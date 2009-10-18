@@ -17,6 +17,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/TypeLoc.h"
+#include "clang/AST/TypeLocVisitor.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Parse/DeclSpec.h"
@@ -1298,28 +1299,102 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   return T;
 }
 
-static void FillTypeSpecLoc(TypeLoc TSL, const DeclSpec &DS) {
-  if (TSL.isNull()) return;
+namespace {
+  class TypeSpecLocFiller : public TypeLocVisitor<TypeSpecLocFiller> {
+    const DeclSpec &DS;
 
-  if (TypedefLoc *TL = dyn_cast<TypedefLoc>(&TSL)) {
-    TL->setNameLoc(DS.getTypeSpecTypeLoc());
+  public:
+    TypeSpecLocFiller(const DeclSpec &DS) : DS(DS) {}
 
-  } else if (ObjCInterfaceLoc *TL = dyn_cast<ObjCInterfaceLoc>(&TSL)) {
-    TL->setNameLoc(DS.getTypeSpecTypeLoc());
+    void VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
+      Visit(TL.getUnqualifiedLoc());
+    }
+    void VisitTypedefTypeLoc(TypedefTypeLoc TL) {
+      TL.setNameLoc(DS.getTypeSpecTypeLoc());
+    }
+    void VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
+      TL.setNameLoc(DS.getTypeSpecTypeLoc());
+    }
+    void VisitObjCProtocolListTypeLoc(ObjCProtocolListTypeLoc TL) {
+      assert(TL.getNumProtocols() == DS.getNumProtocolQualifiers());
+      TL.setLAngleLoc(DS.getProtocolLAngleLoc());
+      TL.setRAngleLoc(DS.getSourceRange().getEnd());
+      for (unsigned i = 0; i != DS.getNumProtocolQualifiers(); ++i)
+        TL.setProtocolLoc(i, DS.getProtocolLocs()[i]);
 
-  } else if (ObjCProtocolListLoc *PLL = dyn_cast<ObjCProtocolListLoc>(&TSL)) {
-    assert(PLL->getNumProtocols() == DS.getNumProtocolQualifiers());
-    PLL->setLAngleLoc(DS.getProtocolLAngleLoc());
-    PLL->setRAngleLoc(DS.getSourceRange().getEnd());
-    for (unsigned i = 0; i != DS.getNumProtocolQualifiers(); ++i)
-      PLL->setProtocolLoc(i, DS.getProtocolLocs()[i]);
-    FillTypeSpecLoc(PLL->getBaseTypeLoc(), DS);
+      TypeLoc BaseLoc = TL.getBaseTypeLoc();
+      if (BaseLoc)
+        Visit(TL.getBaseTypeLoc());
+    }
+    void VisitTypeLoc(TypeLoc TL) {
+      // FIXME: add other typespec types and change this to an assert.
+      TL.initialize(DS.getTypeSpecTypeLoc());
+    }
+  };
 
-  } else {
-    //FIXME: Other typespecs.
-    DefaultTypeSpecLoc &DTL = cast<DefaultTypeSpecLoc>(TSL);
-    DTL.setStartLoc(DS.getSourceRange().getBegin());
-  }
+  class DeclaratorLocFiller : public TypeLocVisitor<DeclaratorLocFiller> {
+    const DeclaratorChunk &Chunk;
+
+  public:
+    DeclaratorLocFiller(const DeclaratorChunk &Chunk) : Chunk(Chunk) {}
+
+    void VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
+      llvm::llvm_unreachable("qualified type locs not expected here!");
+    }
+
+    void VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL) {
+      assert(Chunk.Kind == DeclaratorChunk::BlockPointer);
+      TL.setCaretLoc(Chunk.Loc);
+    }
+    void VisitPointerTypeLoc(PointerTypeLoc TL) {
+      assert(Chunk.Kind == DeclaratorChunk::Pointer);
+      TL.setStarLoc(Chunk.Loc);
+    }
+    void VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
+      assert(Chunk.Kind == DeclaratorChunk::Pointer);
+      TL.setStarLoc(Chunk.Loc);
+    }
+    void VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL) {
+      assert(Chunk.Kind == DeclaratorChunk::MemberPointer);
+      TL.setStarLoc(Chunk.Loc);
+      // FIXME: nested name specifier
+    }
+    void VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL) {
+      assert(Chunk.Kind == DeclaratorChunk::Reference);
+      assert(Chunk.Ref.LValueRef);
+      TL.setAmpLoc(Chunk.Loc);
+    }
+    void VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL) {
+      assert(Chunk.Kind == DeclaratorChunk::Reference);
+      assert(!Chunk.Ref.LValueRef);
+      TL.setAmpAmpLoc(Chunk.Loc);
+    }
+    void VisitArrayTypeLoc(ArrayTypeLoc TL) {
+      assert(Chunk.Kind == DeclaratorChunk::Array);
+      TL.setLBracketLoc(Chunk.Loc);
+      TL.setRBracketLoc(Chunk.EndLoc);
+      TL.setSizeExpr(static_cast<Expr*>(Chunk.Arr.NumElts));
+    }
+    void VisitFunctionTypeLoc(FunctionTypeLoc TL) {
+      assert(Chunk.Kind == DeclaratorChunk::Function);
+      TL.setLParenLoc(Chunk.Loc);
+      TL.setRParenLoc(Chunk.EndLoc);
+
+      const DeclaratorChunk::FunctionTypeInfo &FTI = Chunk.Fun;
+      for (unsigned i = 0, e = FTI.NumArgs, tpi = 0; i != e; ++i) {
+        ParmVarDecl *Param = FTI.ArgInfo[i].Param.getAs<ParmVarDecl>();
+        if (Param) {
+          assert(tpi < TL.getNumArgs());
+          TL.setArg(tpi++, Param);
+        }
+      }
+      // FIXME: exception specs
+    }
+
+    void VisitTypeLoc(TypeLoc TL) {
+      llvm::llvm_unreachable("unsupported TypeLoc kind in declarator!");
+    }
+  };
 }
 
 /// \brief Create and instantiate a DeclaratorInfo with type source information.
@@ -1328,70 +1403,14 @@ static void FillTypeSpecLoc(TypeLoc TSL, const DeclSpec &DS) {
 DeclaratorInfo *
 Sema::GetDeclaratorInfoForDeclarator(Declarator &D, QualType T, unsigned Skip) {
   DeclaratorInfo *DInfo = Context.CreateDeclaratorInfo(T);
-  TypeLoc CurrTL = DInfo->getTypeLoc();
+  UnqualTypeLoc CurrTL = DInfo->getTypeLoc().getUnqualifiedLoc();
 
   for (unsigned i = Skip, e = D.getNumTypeObjects(); i != e; ++i) {
-    assert(!CurrTL.isNull());
-    
-    // Don't bother recording source locations for qualifiers.
-    CurrTL = CurrTL.getUnqualifiedLoc();
-
-    DeclaratorChunk &DeclType = D.getTypeObject(i);
-    switch (DeclType.Kind) {
-    default: assert(0 && "Unknown decltype!");
-    case DeclaratorChunk::BlockPointer: {
-      BlockPointerLoc &BPL = cast<BlockPointerLoc>(CurrTL);
-      BPL.setCaretLoc(DeclType.Loc);
-      break;
-    }
-    case DeclaratorChunk::Pointer: {
-      //FIXME: ObjCObject pointers.
-      PointerLoc &PL = cast<PointerLoc>(CurrTL);
-      PL.setStarLoc(DeclType.Loc);
-      break;
-    }
-    case DeclaratorChunk::Reference: {
-      ReferenceLoc &RL = cast<ReferenceLoc>(CurrTL);
-      RL.setAmpLoc(DeclType.Loc);
-      break;
-    }
-    case DeclaratorChunk::Array: {
-      DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
-      ArrayLoc &AL = cast<ArrayLoc>(CurrTL);
-      AL.setLBracketLoc(DeclType.Loc);
-      AL.setRBracketLoc(DeclType.EndLoc);
-      AL.setSizeExpr(static_cast<Expr*>(ATI.NumElts));
-      //FIXME: Star location for [*].
-      break;
-    }
-    case DeclaratorChunk::Function: {
-      const DeclaratorChunk::FunctionTypeInfo &FTI = DeclType.Fun;
-      FunctionLoc &FL = cast<FunctionLoc>(CurrTL);
-      FL.setLParenLoc(DeclType.Loc);
-      FL.setRParenLoc(DeclType.EndLoc);
-      for (unsigned i = 0, e = FTI.NumArgs, tpi = 0; i != e; ++i) {
-        ParmVarDecl *Param = FTI.ArgInfo[i].Param.getAs<ParmVarDecl>();
-        if (Param) {
-          assert(tpi < FL.getNumArgs());
-          FL.setArg(tpi++, Param);
-        }
-      }
-      break;
-      //FIXME: Exception specs.
-    }
-    case DeclaratorChunk::MemberPointer: {
-      MemberPointerLoc &MPL = cast<MemberPointerLoc>(CurrTL);
-      MPL.setStarLoc(DeclType.Loc);
-      //FIXME: Class location.
-      break;
-    }
-
-    }
-
-    CurrTL = CurrTL.getNextTypeLoc();
+    DeclaratorLocFiller(D.getTypeObject(i)).Visit(CurrTL);
+    CurrTL = CurrTL.getNextTypeLoc().getUnqualifiedLoc();
   }
   
-  FillTypeSpecLoc(CurrTL, D.getDeclSpec());
+  TypeSpecLocFiller(D.getDeclSpec()).Visit(CurrTL);
 
   return DInfo;
 }

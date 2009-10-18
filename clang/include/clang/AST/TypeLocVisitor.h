@@ -15,46 +15,38 @@
 
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeVisitor.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace clang {
 
-#define DISPATCH(CLASS) \
-  return static_cast<ImplClass*>(this)->Visit ## CLASS(cast<CLASS>(TyLoc))
+#define DISPATCH(CLASSNAME) \
+  return static_cast<ImplClass*>(this)-> \
+    Visit##CLASSNAME(cast<CLASSNAME>(TyLoc))
 
 template<typename ImplClass, typename RetTy=void>
 class TypeLocVisitor {
-  class TypeDispatch : public TypeVisitor<TypeDispatch, RetTy> {
-    ImplClass *Impl;
-    UnqualTypeLoc TyLoc;
-
-  public:
-    TypeDispatch(ImplClass *impl, UnqualTypeLoc &tyLoc) 
-      : Impl(impl), TyLoc(tyLoc) { }
-#define TYPELOC(CLASS, BASE)
-#define ABSTRACT_TYPELOC(CLASS)
-#define UNQUAL_TYPELOC(CLASS, PARENT, TYPE)                       \
-    RetTy Visit##TYPE(TYPE *) {                                   \
-      return Impl->Visit##CLASS(reinterpret_cast<CLASS&>(TyLoc)); \
-    }
-#include "clang/AST/TypeLocNodes.def"
-  };
-
 public:
   RetTy Visit(TypeLoc TyLoc) {
-    if (isa<QualifiedLoc>(TyLoc))
-      return static_cast<ImplClass*>(this)->
-        VisitQualifiedLoc(cast<QualifiedLoc>(TyLoc));
-
-    return Visit(cast<UnqualTypeLoc>(TyLoc));
+    switch (TyLoc.getTypeLocClass()) {
+#define ABSTRACT_TYPELOC(CLASS, PARENT)
+#define TYPELOC(CLASS, PARENT) \
+    case TypeLoc::CLASS: DISPATCH(CLASS##TypeLoc);
+#include "clang/AST/TypeLocNodes.def"
+    }
+    llvm::llvm_unreachable("unexpected type loc class!");
   }
 
   RetTy Visit(UnqualTypeLoc TyLoc) {
-    TypeDispatch TD(static_cast<ImplClass*>(this), TyLoc);
-    return TD.Visit(TyLoc.getSourceTypePtr());
+    switch (TyLoc.getTypeLocClass()) {
+#define ABSTRACT_TYPELOC(CLASS, PARENT)
+#define TYPELOC(CLASS, PARENT) \
+    case TypeLoc::CLASS: DISPATCH(CLASS##TypeLoc);
+#include "clang/AST/TypeLocNodes.def"
+    }
   }
 
 #define TYPELOC(CLASS, PARENT)      \
-  RetTy Visit##CLASS(CLASS TyLoc) { \
+  RetTy Visit##CLASS##TypeLoc(CLASS##TypeLoc TyLoc) { \
     DISPATCH(PARENT);               \
   }
 #include "clang/AST/TypeLocNodes.def"

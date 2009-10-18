@@ -336,8 +336,15 @@ NamedDecl *NamedDecl::getUnderlyingDecl() {
 //===----------------------------------------------------------------------===//
 
 SourceLocation DeclaratorDecl::getTypeSpecStartLoc() const {
-  if (DeclInfo)
-    return DeclInfo->getTypeLoc().getTypeSpecRange().getBegin();
+  if (DeclInfo) {
+    TypeLoc TL = DeclInfo->getTypeLoc();
+    while (true) {
+      TypeLoc NextTL = TL.getNextTypeLoc();
+      if (!NextTL)
+        return TL.getSourceRange().getBegin();
+      TL = NextTL;
+    }
+  }
   return SourceLocation();
 }
 

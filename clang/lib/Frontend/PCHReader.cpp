@@ -1985,61 +1985,136 @@ public:
                 unsigned &Idx)
     : Reader(Reader), Record(Record), Idx(Idx) { }
 
-#define ABSTRACT_TYPELOC(CLASS)
+  // We want compile-time assurance that we've enumerated all of
+  // these, so unfortunately we have to declare them first, then
+  // define them out-of-line.
+#define ABSTRACT_TYPELOC(CLASS, PARENT)
 #define TYPELOC(CLASS, PARENT) \
-    void Visit##CLASS(CLASS TyLoc);
+  void Visit##CLASS##TypeLoc(CLASS##TypeLoc TyLoc);
 #include "clang/AST/TypeLocNodes.def"
 
-  void VisitTypeLoc(TypeLoc TyLoc) {
-    assert(0 && "A type loc wrapper was not handled!");
-  }
+  void VisitFunctionTypeLoc(FunctionTypeLoc);
+  void VisitArrayTypeLoc(ArrayTypeLoc);
 };
 
 }
 
-void TypeLocReader::VisitQualifiedLoc(QualifiedLoc TyLoc) {
+void TypeLocReader::VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
   // nothing to do
 }
-void TypeLocReader::VisitDefaultTypeSpecLoc(DefaultTypeSpecLoc TyLoc) {
-  TyLoc.setStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+void TypeLocReader::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
-void TypeLocReader::VisitTypedefLoc(TypedefLoc TyLoc) {
-  TyLoc.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+void TypeLocReader::VisitFixedWidthIntTypeLoc(FixedWidthIntTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
-void TypeLocReader::VisitObjCInterfaceLoc(ObjCInterfaceLoc TyLoc) {
-  TyLoc.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+void TypeLocReader::VisitComplexTypeLoc(ComplexTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
-void TypeLocReader::VisitObjCProtocolListLoc(ObjCProtocolListLoc TyLoc) {
-  TyLoc.setLAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  TyLoc.setRAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  for (unsigned i = 0, e = TyLoc.getNumProtocols(); i != e; ++i)
-    TyLoc.setProtocolLoc(i, SourceLocation::getFromRawEncoding(Record[Idx++]));
+void TypeLocReader::VisitPointerTypeLoc(PointerTypeLoc TL) {
+  TL.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
-void TypeLocReader::VisitPointerLoc(PointerLoc TyLoc) {
-  TyLoc.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+void TypeLocReader::VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL) {
+  TL.setCaretLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
-void TypeLocReader::VisitBlockPointerLoc(BlockPointerLoc TyLoc) {
-  TyLoc.setCaretLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+void TypeLocReader::VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL) {
+  TL.setAmpLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
-void TypeLocReader::VisitMemberPointerLoc(MemberPointerLoc TyLoc) {
-  TyLoc.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+void TypeLocReader::VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL) {
+  TL.setAmpAmpLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
-void TypeLocReader::VisitReferenceLoc(ReferenceLoc TyLoc) {
-  TyLoc.setAmpLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+void TypeLocReader::VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL) {
+  TL.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
-void TypeLocReader::VisitFunctionLoc(FunctionLoc TyLoc) {
-  TyLoc.setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  TyLoc.setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  for (unsigned i = 0, e = TyLoc.getNumArgs(); i != e; ++i)
-    TyLoc.setArg(i, cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
-}
-void TypeLocReader::VisitArrayLoc(ArrayLoc TyLoc) {
-  TyLoc.setLBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  TyLoc.setRBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+void TypeLocReader::VisitArrayTypeLoc(ArrayTypeLoc TL) {
+  TL.setLBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setRBracketLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   if (Record[Idx++])
-    TyLoc.setSizeExpr(Reader.ReadDeclExpr());
+    TL.setSizeExpr(Reader.ReadDeclExpr());
   else
-    TyLoc.setSizeExpr(0);
+    TL.setSizeExpr(0);
+}
+void TypeLocReader::VisitConstantArrayTypeLoc(ConstantArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+void TypeLocReader::VisitIncompleteArrayTypeLoc(IncompleteArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+void TypeLocReader::VisitVariableArrayTypeLoc(VariableArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+void TypeLocReader::VisitDependentSizedArrayTypeLoc(
+                                            DependentSizedArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+void TypeLocReader::VisitDependentSizedExtVectorTypeLoc(
+                                        DependentSizedExtVectorTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitVectorTypeLoc(VectorTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitExtVectorTypeLoc(ExtVectorTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
+  TL.setLParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setRParenLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i) {
+    TL.setArg(i, cast<ParmVarDecl>(Reader.GetDecl(Record[Idx++])));
+  }
+}
+void TypeLocReader::VisitFunctionProtoTypeLoc(FunctionProtoTypeLoc TL) {
+  VisitFunctionTypeLoc(TL);
+}
+void TypeLocReader::VisitFunctionNoProtoTypeLoc(FunctionNoProtoTypeLoc TL) {
+  VisitFunctionTypeLoc(TL);
+}
+void TypeLocReader::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitDecltypeTypeLoc(DecltypeTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitRecordTypeLoc(RecordTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitEnumTypeLoc(EnumTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitTemplateSpecializationTypeLoc(
+                                           TemplateSpecializationTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitQualifiedNameTypeLoc(QualifiedNameTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitTypenameTypeLoc(TypenameTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
+  TL.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitObjCProtocolListTypeLoc(ObjCProtocolListTypeLoc TL) {
+  TL.setLAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setRAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
+    TL.setProtocolLoc(i, SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 DeclaratorInfo *PCHReader::GetDeclaratorInfo(const RecordData &Record,

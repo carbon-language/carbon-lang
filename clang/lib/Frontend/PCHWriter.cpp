@@ -259,60 +259,131 @@ public:
   TypeLocWriter(PCHWriter &Writer, PCHWriter::RecordData &Record)
     : Writer(Writer), Record(Record) { }
 
-#define ABSTRACT_TYPELOC(CLASS)
+#define ABSTRACT_TYPELOC(CLASS, PARENT)
 #define TYPELOC(CLASS, PARENT) \
-    void Visit##CLASS(CLASS TyLoc);
+    void Visit##CLASS##TypeLoc(CLASS##TypeLoc TyLoc);
 #include "clang/AST/TypeLocNodes.def"
 
-  void VisitTypeLoc(TypeLoc TyLoc) {
-    assert(0 && "A type loc wrapper was not handled!");
-  }
+  void VisitArrayTypeLoc(ArrayTypeLoc TyLoc);
+  void VisitFunctionTypeLoc(FunctionTypeLoc TyLoc);
 };
 
 }
 
-void TypeLocWriter::VisitQualifiedLoc(QualifiedLoc TyLoc) {
-  // nothing to do here
+void TypeLocWriter::VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
+  // nothing to do
 }
-void TypeLocWriter::VisitDefaultTypeSpecLoc(DefaultTypeSpecLoc TyLoc) {
-  Writer.AddSourceLocation(TyLoc.getStartLoc(), Record);
+void TypeLocWriter::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
-void TypeLocWriter::VisitTypedefLoc(TypedefLoc TyLoc) {
-  Writer.AddSourceLocation(TyLoc.getNameLoc(), Record);
+void TypeLocWriter::VisitFixedWidthIntTypeLoc(FixedWidthIntTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
-void TypeLocWriter::VisitObjCInterfaceLoc(ObjCInterfaceLoc TyLoc) {
-  Writer.AddSourceLocation(TyLoc.getNameLoc(), Record);
+void TypeLocWriter::VisitComplexTypeLoc(ComplexTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
-void TypeLocWriter::VisitObjCProtocolListLoc(ObjCProtocolListLoc TyLoc) {
-  Writer.AddSourceLocation(TyLoc.getLAngleLoc(), Record);
-  Writer.AddSourceLocation(TyLoc.getRAngleLoc(), Record);
-  for (unsigned i = 0, e = TyLoc.getNumProtocols(); i != e; ++i)
-    Writer.AddSourceLocation(TyLoc.getProtocolLoc(i), Record);
+void TypeLocWriter::VisitPointerTypeLoc(PointerTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getStarLoc(), Record);
 }
-void TypeLocWriter::VisitPointerLoc(PointerLoc TyLoc) {
-  Writer.AddSourceLocation(TyLoc.getStarLoc(), Record);
+void TypeLocWriter::VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getCaretLoc(), Record);
 }
-void TypeLocWriter::VisitBlockPointerLoc(BlockPointerLoc TyLoc) {
-  Writer.AddSourceLocation(TyLoc.getCaretLoc(), Record);
+void TypeLocWriter::VisitLValueReferenceTypeLoc(LValueReferenceTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getAmpLoc(), Record);
 }
-void TypeLocWriter::VisitMemberPointerLoc(MemberPointerLoc TyLoc) {
-  Writer.AddSourceLocation(TyLoc.getStarLoc(), Record);
+void TypeLocWriter::VisitRValueReferenceTypeLoc(RValueReferenceTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getAmpAmpLoc(), Record);
 }
-void TypeLocWriter::VisitReferenceLoc(ReferenceLoc TyLoc) {
-  Writer.AddSourceLocation(TyLoc.getAmpLoc(), Record);
+void TypeLocWriter::VisitMemberPointerTypeLoc(MemberPointerTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getStarLoc(), Record);
 }
-void TypeLocWriter::VisitFunctionLoc(FunctionLoc TyLoc) {
-  Writer.AddSourceLocation(TyLoc.getLParenLoc(), Record);
-  Writer.AddSourceLocation(TyLoc.getRParenLoc(), Record);
-  for (unsigned i = 0, e = TyLoc.getNumArgs(); i != e; ++i)
-    Writer.AddDeclRef(TyLoc.getArg(i), Record);
+void TypeLocWriter::VisitArrayTypeLoc(ArrayTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getLBracketLoc(), Record);
+  Writer.AddSourceLocation(TL.getRBracketLoc(), Record);
+  Record.push_back(TL.getSizeExpr() ? 1 : 0);
+  if (TL.getSizeExpr())
+    Writer.AddStmt(TL.getSizeExpr());
 }
-void TypeLocWriter::VisitArrayLoc(ArrayLoc TyLoc) {
-  Writer.AddSourceLocation(TyLoc.getLBracketLoc(), Record);
-  Writer.AddSourceLocation(TyLoc.getRBracketLoc(), Record);
-  Record.push_back(TyLoc.getSizeExpr() ? 1 : 0);
-  if (TyLoc.getSizeExpr())
-    Writer.AddStmt(TyLoc.getSizeExpr());
+void TypeLocWriter::VisitConstantArrayTypeLoc(ConstantArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+void TypeLocWriter::VisitIncompleteArrayTypeLoc(IncompleteArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+void TypeLocWriter::VisitVariableArrayTypeLoc(VariableArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+void TypeLocWriter::VisitDependentSizedArrayTypeLoc(
+                                            DependentSizedArrayTypeLoc TL) {
+  VisitArrayTypeLoc(TL);
+}
+void TypeLocWriter::VisitDependentSizedExtVectorTypeLoc(
+                                        DependentSizedExtVectorTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitVectorTypeLoc(VectorTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitExtVectorTypeLoc(ExtVectorTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getLParenLoc(), Record);
+  Writer.AddSourceLocation(TL.getRParenLoc(), Record);
+  for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i)
+    Writer.AddDeclRef(TL.getArg(i), Record);
+}
+void TypeLocWriter::VisitFunctionProtoTypeLoc(FunctionProtoTypeLoc TL) {
+  VisitFunctionTypeLoc(TL);
+}
+void TypeLocWriter::VisitFunctionNoProtoTypeLoc(FunctionNoProtoTypeLoc TL) {
+  VisitFunctionTypeLoc(TL);
+}
+void TypeLocWriter::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitDecltypeTypeLoc(DecltypeTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitRecordTypeLoc(RecordTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitEnumTypeLoc(EnumTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitTemplateSpecializationTypeLoc(
+                                           TemplateSpecializationTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitQualifiedNameTypeLoc(QualifiedNameTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitTypenameTypeLoc(TypenameTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getStarLoc(), Record);
+}
+void TypeLocWriter::VisitObjCProtocolListTypeLoc(ObjCProtocolListTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
+  Writer.AddSourceLocation(TL.getRAngleLoc(), Record);
+  for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
+    Writer.AddSourceLocation(TL.getProtocolLoc(i), Record);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2032,7 +2103,7 @@ void PCHWriter::AddDeclaratorInfo(DeclaratorInfo *DInfo, RecordData &Record) {
     return;
   }
 
-  AddTypeRef(DInfo->getTypeLoc().getSourceType(), Record);
+  AddTypeRef(DInfo->getType(), Record);
   TypeLocWriter TLW(*this, Record);
   for (TypeLoc TL = DInfo->getTypeLoc(); !TL.isNull(); TL = TL.getNextTypeLoc())
     TLW.Visit(TL);  
