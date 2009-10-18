@@ -41,7 +41,7 @@ namespace llvm {
 
     /// isAliased - Test whether the memory pointed to by this
     /// PseudoSourceValue may also be pointed to by an LLVM IR Value.
-    virtual bool isAliased() const;
+    virtual bool isAliased(const MachineFrameInfo *) const;
 
     /// classof - Methods for support type inquiry through isa, cast, and
     /// dyn_cast:
