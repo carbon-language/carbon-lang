@@ -320,6 +320,27 @@ public:
     : OSTargetInfo<Target>(triple) {}
 };
 
+// AuroraUX target
+template<typename Target>
+class AuroraUXTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                                std::vector<char> &Defs) const {
+    DefineStd(Defs, "sun", Opts);
+    DefineStd(Defs, "unix", Opts);
+    Define(Defs, "__ELF__");
+    Define(Defs, "__svr4__");
+    Define(Defs, "__SVR4");
+  }
+public:
+  AuroraUXTargetInfo(const std::string& triple)
+    : OSTargetInfo<Target>(triple) {
+    this->UserLabelPrefix = "";
+    this->WCharType = this->SignedLong;
+    // FIXME: WIntType should be SignedLong
+  }
+};
+
 // Solaris target
 template<typename Target>
 class SolarisTargetInfo : public OSTargetInfo<Target> {
@@ -1456,6 +1477,14 @@ void SparcV8TargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
 } // end anonymous namespace.
 
 namespace {
+class AuroraUXSparcV8TargetInfo : public AuroraUXTargetInfo<SparcV8TargetInfo> {
+public:
+  AuroraUXSparcV8TargetInfo(const std::string& triple) :
+      AuroraUXTargetInfo<SparcV8TargetInfo>(triple) {
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
+  }
+};
 class SolarisSparcV8TargetInfo : public SolarisTargetInfo<SparcV8TargetInfo> {
 public:
   SolarisSparcV8TargetInfo(const std::string& triple) :
@@ -1846,6 +1875,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
     return new PPC64TargetInfo(T);
 
   case llvm::Triple::sparc:
+    if (os == llvm::Triple::AuroraUX)
+      return new AuroraUXSparcV8TargetInfo(T);
     if (os == llvm::Triple::Solaris)
       return new SolarisSparcV8TargetInfo(T);
     return new SparcV8TargetInfo(T);
@@ -1858,6 +1889,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
 
   case llvm::Triple::x86:
     switch (os) {
+    case llvm::Triple::AuroraUX:
+      return new AuroraUXTargetInfo<X86_32TargetInfo>(T);
     case llvm::Triple::Darwin:
       return new DarwinI386TargetInfo(T);
     case llvm::Triple::Linux:
@@ -1884,6 +1917,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
 
   case llvm::Triple::x86_64:
     switch (os) {
+    case llvm::Triple::AuroraUX:
+      return new AuroraUXTargetInfo<X86_64TargetInfo>(T);
     case llvm::Triple::Darwin:
       return new DarwinX86_64TargetInfo(T);
     case llvm::Triple::Linux:
