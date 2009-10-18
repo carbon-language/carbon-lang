@@ -16,6 +16,7 @@
 #define LLVM_LINKALLPASSES_H
 
 #include "llvm/Analysis/AliasSetTracker.h"
+#include "llvm/Analysis/DomPrinter.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/Passes.h"
@@ -62,6 +63,10 @@ namespace {
       (void) llvm::createDeadInstEliminationPass();
       (void) llvm::createDeadStoreEliminationPass();
       (void) llvm::createDeadTypeEliminationPass();
+      (void) llvm::createDomOnlyPrinterPass();
+      (void) llvm::createDomPrinterPass();
+      (void) llvm::createDomOnlyViewerPass();
+      (void) llvm::createDomViewerPass();
       (void) llvm::createEdgeProfilerPass();
       (void) llvm::createOptimalEdgeProfilerPass();
       (void) llvm::createFunctionInliningPass();
@@ -98,6 +103,10 @@ namespace {
       (void) llvm::createPromoteMemoryToRegisterPass();
       (void) llvm::createDemoteRegisterToMemoryPass();
       (void) llvm::createPruneEHPass();
+      (void) llvm::createPostDomOnlyPrinterPass();
+      (void) llvm::createPostDomPrinterPass();
+      (void) llvm::createPostDomOnlyViewerPass();
+      (void) llvm::createPostDomViewerPass();
       (void) llvm::createRaiseAllocationsPass();
       (void) llvm::createReassociatePass();
       (void) llvm::createSCCPPass();
