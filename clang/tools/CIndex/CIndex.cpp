@@ -300,7 +300,7 @@ const llvm::sys::Path& CIndexer::getClangPath() {
 #ifdef LLVM_ON_WIN32
   MEMORY_BASIC_INFORMATION mbi;
   char path[MAX_PATH];
-  VirtualQuery(void *)(uintptr_t)clang_createTranslationUnit, &mbi,
+  VirtualQuery((void *)(uintptr_t)clang_createTranslationUnit, &mbi,
                sizeof(mbi));
   GetModuleFileNameA((HINSTANCE)mbi.AllocationBase, path, MAX_PATH);
 
