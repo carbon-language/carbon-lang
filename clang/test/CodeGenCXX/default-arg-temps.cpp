@@ -15,11 +15,18 @@ public:
 
 void g() {
   // RUN: grep "call void @_ZN1TC1Ev" %t | count 4 &&
-  // RUN: grep "call void @_ZN1TD1Ev" %t | count 4
+  // RUN: grep "call void @_ZN1TD1Ev" %t | count 4 &&
   f();
   f();
 
   X a;
   X b(a);
   X c = a;
+}
+
+
+// RUN: grep memset %t
+class obj{ int a; float b; double d; };
+void h() {
+  obj o = obj();
 }

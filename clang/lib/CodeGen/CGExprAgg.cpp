@@ -112,6 +112,7 @@ public:
   void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
   void VisitCXXConstructExpr(const CXXConstructExpr *E);
   void VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E);
+  void VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E);
 
   void VisitVAArgExpr(VAArgExpr *E);
 
@@ -437,6 +438,11 @@ AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
 
 void AggExprEmitter::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *E) {
   CGF.EmitCXXExprWithTemporaries(E, DestPtr, VolatileDest, IsInitializer);
+}
+
+void AggExprEmitter::VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
+  LValue lvalue = LValue::MakeAddr(DestPtr, Qualifiers());
+  EmitNullInitializationToLValue(lvalue, E->getType());
 }
 
 void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
