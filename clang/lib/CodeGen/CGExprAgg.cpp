@@ -215,6 +215,12 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
     break;
   }
       
+  case CastExpr::CK_BitCast: {
+    // This must be a member function pointer cast.
+    Visit(E->getSubExpr());
+    break;
+  }
+
   case CastExpr::CK_BaseToDerivedMemberPointer: {
     QualType SrcType = E->getSubExpr()->getType();
     

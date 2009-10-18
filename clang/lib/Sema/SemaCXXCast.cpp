@@ -943,6 +943,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
     }
 
     // A valid member pointer cast.
+    Kind = CastExpr::CK_BitCast;
     return TC_Success;
   }
 
@@ -1044,6 +1045,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
 
   // Not casting away constness, so the only remaining check is for compatible
   // pointer categories.
+  Kind = CastExpr::CK_BitCast;
 
   if (SrcType->isFunctionPointerType()) {
     if (DestType->isFunctionPointerType()) {
@@ -1085,8 +1087,10 @@ bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
   // This test is outside everything else because it's the only case where
   // a non-lvalue-reference target type does not lead to decay.
   // C++ 5.2.9p4: Any expression can be explicitly converted to type "cv void".
-  if (CastTy->isVoidType())
+  if (CastTy->isVoidType()) {
+    Kind = CastExpr::CK_ToVoid;
     return false;
+  }
 
   // If the type is dependent, we won't do any other semantic analysis now.
   if (CastTy->isDependentType() || CastExpr->isTypeDependent())

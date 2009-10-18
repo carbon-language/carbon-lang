@@ -542,7 +542,11 @@ public:
         return CS;
       }          
     }
-        
+
+    case CastExpr::CK_BitCast: 
+      // This must be a member function pointer cast.
+      return Visit(E->getSubExpr());
+
     default: {
       // FIXME: This should be handled by the CK_NoOp cast kind.
       // Explicit and implicit no-op casts

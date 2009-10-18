@@ -71,3 +71,19 @@ namespace PR5177 {
 
   void bar(B1 b2) { while (b2()) ; }
 }
+
+// PR5138
+namespace PR5138 {
+  struct foo {
+      virtual void bar(foo *);
+  };
+
+  extern "C" {
+    void baz(foo *);
+  }
+  
+  void (foo::*ptr1)(void *) = (void (foo::*)(void *))&foo::bar;
+  void (*ptr2)(void *) = (void (*)(void *))&baz;
+
+  void (foo::*ptr3)(void) = (void (foo::*)(void))&foo::bar;
+}
