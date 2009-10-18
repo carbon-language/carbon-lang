@@ -78,11 +78,9 @@ struct DOTGraphTraits<PostDominatorTree*>
 namespace {
 template <class Analysis, bool OnlyBBS>
 struct GenericGraphViewer : public FunctionPass {
-
-  static char ID;
   std::string Name;
 
-  GenericGraphViewer(std::string GraphName) : FunctionPass(&ID) {
+  GenericGraphViewer(std::string GraphName, const void *ID) : FunctionPass(ID) {
     Name = GraphName;
   }
 
@@ -104,27 +102,27 @@ struct GenericGraphViewer : public FunctionPass {
 struct DomViewer
   : public GenericGraphViewer<DominatorTree, false> {
   static char ID;
-  DomViewer() : GenericGraphViewer<DominatorTree, false>("dom"){}
+  DomViewer() : GenericGraphViewer<DominatorTree, false>("dom", &ID){}
 };
 
 struct DomOnlyViewer
   : public GenericGraphViewer<DominatorTree, true> {
   static char ID;
-  DomOnlyViewer() : GenericGraphViewer<DominatorTree, true>("domonly"){}
+  DomOnlyViewer() : GenericGraphViewer<DominatorTree, true>("domonly", &ID){}
 };
 
 struct PostDomViewer
   : public GenericGraphViewer<PostDominatorTree, false> {
   static char ID;
   PostDomViewer() :
-    GenericGraphViewer<PostDominatorTree, false>("postdom"){}
+    GenericGraphViewer<PostDominatorTree, false>("postdom", &ID){}
 };
 
 struct PostDomOnlyViewer
   : public GenericGraphViewer<PostDominatorTree, true> {
   static char ID;
   PostDomOnlyViewer() :
-    GenericGraphViewer<PostDominatorTree, true>("postdomonly"){}
+    GenericGraphViewer<PostDominatorTree, true>("postdomonly", &ID){}
 };
 } // end anonymous namespace
 
