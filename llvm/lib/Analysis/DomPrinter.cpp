@@ -19,7 +19,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DomPrinter.h"
-
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/CFGPrinter.h"
@@ -148,10 +147,10 @@ namespace {
 template <class Analysis, bool OnlyBBS>
 struct GenericGraphPrinter : public FunctionPass {
 
-  static char ID;
   std::string Name;
 
-  GenericGraphPrinter(std::string GraphName) : FunctionPass(&ID) {
+  GenericGraphPrinter(std::string GraphName, const void *ID)
+    : FunctionPass(ID) {
     Name = GraphName;
   }
 
@@ -181,27 +180,27 @@ struct GenericGraphPrinter : public FunctionPass {
 struct DomPrinter
   : public GenericGraphPrinter<DominatorTree, false> {
   static char ID;
-  DomPrinter() : GenericGraphPrinter<DominatorTree, false>("dom"){}
+  DomPrinter() : GenericGraphPrinter<DominatorTree, false>("dom", &ID) {}
 };
 
 struct DomOnlyPrinter
   : public GenericGraphPrinter<DominatorTree, true> {
   static char ID;
-  DomOnlyPrinter() : GenericGraphPrinter<DominatorTree, true>("domonly"){}
+  DomOnlyPrinter() : GenericGraphPrinter<DominatorTree, true>("domonly", &ID) {}
 };
 
 struct PostDomPrinter
   : public GenericGraphPrinter<PostDominatorTree, false> {
   static char ID;
   PostDomPrinter() :
-    GenericGraphPrinter<PostDominatorTree, false>("postdom"){}
+    GenericGraphPrinter<PostDominatorTree, false>("postdom", &ID) {}
 };
 
 struct PostDomOnlyPrinter
   : public GenericGraphPrinter<PostDominatorTree, true> {
   static char ID;
   PostDomOnlyPrinter() :
-    GenericGraphPrinter<PostDominatorTree, true>("postdomonly"){}
+    GenericGraphPrinter<PostDominatorTree, true>("postdomonly", &ID) {}
 };
 } // end anonymous namespace
 
