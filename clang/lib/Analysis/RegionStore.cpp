@@ -1630,7 +1630,7 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   // Process the "intermediate" roots to find if they are referenced by
   // real roots.
   llvm::SmallVector<RBDNode, 10> WorkList;
-  llvm::SmallSet<const MemRegion*, 10> IntermediateVisited;
+  llvm::DenseSet<const MemRegion*> IntermediateVisited;
   
   while (!IntermediateRoots.empty()) {
     const MemRegion* R = IntermediateRoots.back();
@@ -1665,7 +1665,7 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   }
   RegionRoots.clear();
   
-  llvm::SmallSet<RBDNode, 10> Visited;
+  llvm::DenseSet<RBDNode> Visited;
   
   while (!WorkList.empty()) {
     RBDNode N = WorkList.back();
