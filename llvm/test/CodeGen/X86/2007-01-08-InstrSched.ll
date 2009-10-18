@@ -11,9 +11,12 @@ define float @foo(float %x) nounwind {
     %tmp14 = fadd float %tmp12, %tmp7
     ret float %tmp14
 
-; CHECK:      mulss	LCPI1_2(%rip)
+; CHECK:      mulss	LCPI1_3(%rip)
+; CHECK-NEXT: mulss	LCPI1_0(%rip)
+; CHECK-NEXT: mulss	LCPI1_1(%rip)
+; CHECK-NEXT: mulss	LCPI1_2(%rip)
 ; CHECK-NEXT: addss
-; CHECK-NEXT: mulss	LCPI1_3(%rip)
+; CHECK-NEXT: addss
 ; CHECK-NEXT: addss
 ; CHECK-NEXT: ret
 }

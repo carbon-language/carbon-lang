@@ -219,8 +219,7 @@ public:
   /// enablePostRAScheduler - X86 target is enabling post-alloc scheduling
   /// at 'More' optimization level.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel) const {
-    // FIXME: This causes llvm to miscompile itself on i386. :-(
-    return false /*OptLevel >= CodeGenOpt::Default*/;
+    return OptLevel >= CodeGenOpt::Default;
   }
 };
 

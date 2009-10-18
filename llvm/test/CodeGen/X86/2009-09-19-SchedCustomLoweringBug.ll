@@ -9,9 +9,7 @@ entry:
   br label %bb
 
 bb:                                               ; preds = %bb1, %entry
-; CHECK:      movl %e
-; CHECK-NEXT: addl $1
-; CHECK-NEXT: movl %e
+; CHECK:      addl $1
 ; CHECK-NEXT: adcl $0
   %i.0 = phi i64 [ 0, %entry ], [ %0, %bb1 ]      ; <i64> [#uses=1]
   %0 = add nsw i64 %i.0, 1                        ; <i64> [#uses=2]

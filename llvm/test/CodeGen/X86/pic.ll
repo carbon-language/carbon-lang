@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-pc-linux-gnu -relocation-model=pic -asm-verbose=false | FileCheck %s -check-prefix=LINUX
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu -relocation-model=pic -asm-verbose=false -post-RA-scheduler=false | FileCheck %s -check-prefix=LINUX
 
 @ptr = external global i32* 
 @dst = external global i32 

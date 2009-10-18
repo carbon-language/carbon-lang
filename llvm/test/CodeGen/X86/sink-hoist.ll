@@ -6,10 +6,10 @@
 ; that it's conditionally evaluated.
 
 ; CHECK: foo:
-; CHECK-NEXT: divsd
-; CHECK:      testb $1, %dil
-; CHECK-NEXT: jne
 ; CHECK:      divsd
+; CHECK-NEXT: testb $1, %dil
+; CHECK-NEXT: jne
+; CHECK-NEXT: divsd
 
 define double @foo(double %x, double %y, i1 %c) nounwind {
   %a = fdiv double %x, 3.2

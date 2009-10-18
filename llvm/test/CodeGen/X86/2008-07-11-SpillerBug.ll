@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -relocation-model=static -disable-fp-elim | FileCheck %s
+; RUN: llc < %s -march=x86 -relocation-model=static -disable-fp-elim -post-RA-scheduler=false | FileCheck %s
 ; PR2536
 
 
