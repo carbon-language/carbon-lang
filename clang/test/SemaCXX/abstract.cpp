@@ -123,3 +123,18 @@ struct K {
 struct L : public K {
  void f();
 };
+
+// PR5222
+namespace PR5222 {
+  struct A {
+    virtual A *clone() = 0;
+  };
+  struct B : public A {
+    virtual B *clone() = 0;
+  };
+  struct C : public B {
+    virtual C *clone();
+  };
+
+  C c;  
+}

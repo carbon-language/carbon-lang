@@ -1658,12 +1658,10 @@ namespace {
       // Traverse the record, looking for methods.
       if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*i)) {
         // If the method is pure virtual, add it to the methods vector.
-        if (MD->isPure()) {
+        if (MD->isPure())
           Methods.push_back(MD);
-          continue;
-        }
 
-        // Otherwise, record all the overridden methods in our set.
+        // Record all the overridden methods in our set.
         for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
              E = MD->end_overridden_methods(); I != E; ++I) {
           // Keep track of the overridden methods.
