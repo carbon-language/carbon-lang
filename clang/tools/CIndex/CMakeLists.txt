@@ -22,6 +22,13 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     )
 endif()
 
+if(MSVC)
+  # windows.h doesn't compile with /Za
+  get_target_property(NON_ANSI_COMPILE_FLAGS CIndex COMPILE_FLAGS)
+  string(REPLACE /Za "" NON_ANSI_COMPILE_FLAGS ${NON_ANSI_COMPILE_FLAGS})
+  set_target_properties(CIndex PROPERTIES COMPILE_FLAGS ${NON_ANSI_COMPILE_FLAGS})
+endif(MSVC)
+
 set_target_properties(CIndex
   PROPERTIES
   LINKER_LANGUAGE CXX)
