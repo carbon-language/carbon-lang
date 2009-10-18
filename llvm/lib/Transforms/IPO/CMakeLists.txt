@@ -9,7 +9,6 @@ add_llvm_library(LLVMipo
   GlobalOpt.cpp
   IPConstantPropagation.cpp
   IPO.cpp
-  IndMemRemoval.cpp
   InlineAlways.cpp
   InlineSimple.cpp
   Inliner.cpp

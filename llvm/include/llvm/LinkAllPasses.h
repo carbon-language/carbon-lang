@@ -124,7 +124,6 @@ namespace {
       (void) llvm::createCondPropagationPass();
       (void) llvm::createNullProfilerRSPass();
       (void) llvm::createRSProfilingPass();
-      (void) llvm::createIndMemRemPass();
       (void) llvm::createInstCountPass();
       (void) llvm::createCodeGenLICMPass();
       (void) llvm::createCodeGenPreparePass();

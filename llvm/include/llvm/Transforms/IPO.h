@@ -185,10 +185,6 @@ Pass *createSingleLoopExtractorPass();
 ///
 ModulePass *createBlockExtractorPass(const std::vector<BasicBlock*> &BTNE);
 
-/// createIndMemRemPass - This pass removes potential indirect calls of
-/// malloc and free
-ModulePass *createIndMemRemPass();
-
 /// createStripDeadPrototypesPass - This pass removes any function declarations
 /// (prototypes) that are not used.
 ModulePass *createStripDeadPrototypesPass();
