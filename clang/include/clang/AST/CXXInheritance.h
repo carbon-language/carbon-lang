@@ -63,7 +63,8 @@ struct CXXBasePathElement {
 /// structure, which captures both the link from a derived class to one of its
 /// direct bases and identification describing which base class
 /// subobject is being used.
-struct CXXBasePath : public llvm::SmallVector<CXXBasePathElement, 4> {
+class CXXBasePath : public llvm::SmallVector<CXXBasePathElement, 4> {
+public:
   /// \brief The set of declarations found inside this base class
   /// subobject.
   DeclContext::lookup_result Decls;
