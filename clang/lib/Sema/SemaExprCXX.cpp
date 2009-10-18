@@ -2202,9 +2202,14 @@ Sema::OwningExprResult Sema::BuildCXXCastArgument(SourceLocation CastLoc,
                                 MultiExprArg(*this, (void **)&From, 1),
                                 CastLoc, ConstructorArgs))
       return ExprError();
-                                
-    return BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method), 
-                                 move_arg(ConstructorArgs));
+    
+    OwningExprResult Result = 
+      BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method), 
+                            move_arg(ConstructorArgs));
+    if (Result.isInvalid())
+      return ExprError();
+    
+    return MaybeBindToTemporary(Result.takeAs<Expr>());
   }
 
   case CastExpr::CK_UserDefinedConversion: {
@@ -2216,7 +2221,7 @@ Sema::OwningExprResult Sema::BuildCXXCastArgument(SourceLocation CastLoc,
     
     // Create an implicit call expr that calls it.
     CXXMemberCallExpr *CE = BuildCXXMemberCallExpr(From, Method);
-    return Owned(CE);
+    return MaybeBindToTemporary(CE);
   }
   }
 }    

@@ -93,3 +93,25 @@ void f6() {
   F().f();
 }
 
+struct G {
+  G();
+  G(A);
+  ~G();
+  operator A();
+};
+
+void a(const A&);
+
+void f7() {
+  // CHECK: call void @_ZN1AC1Ev
+  // CHECK: call void @_Z1aRK1A
+  // CHECK: call void @_ZN1AD1Ev
+  a(A());
+  
+  // CHECK: call void @_ZN1GC1Ev
+  // CHECK: call void @_ZN1Gcv1AEv
+  // CHECK: call void @_Z1aRK1A
+  // CHECK: call void @_ZN1AD1Ev
+  // CHECK: call void @_ZN1GD1Ev
+  a(G());
+}
