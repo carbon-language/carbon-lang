@@ -96,13 +96,32 @@ public:
   /// name (C++ constructor, Objective-C selector, etc.).
   IdentifierInfo *getIdentifier() const { return Name.getAsIdentifierInfo(); }
 
+  /// getName - Get the name of identifier for this declaration as a StringRef.
+  /// This requires that the declaration have a name and that it be a simple
+  /// identifier.
+  llvm::StringRef getName() const {
+    assert(getIdentifier() && "Name is not a simple identifier");
+    return getIdentifier()->getNameStr();
+  }
+
   /// getNameAsCString - Get the name of identifier for this declaration as a
   /// C string (const char*).  This requires that the declaration have a name
   /// and that it be a simple identifier.
+  //
+  // FIXME: Deprecated, move clients to getName().
   const char *getNameAsCString() const {
     assert(getIdentifier() && "Name is not a simple identifier");
     return getIdentifier()->getNameStart();
   }
+
+  /// getNameAsString - Get a human-readable name for the declaration, even if
+  /// it is one of the special kinds of names (C++ constructor, Objective-C
+  /// selector, etc).  Creating this name requires expensive string
+  /// manipulation, so it should be called only when performance doesn't matter.
+  /// For simple declarations, getNameAsCString() should suffice.
+  //
+  // FIXME: Deprecated, move clients to getName().
+  std::string getNameAsString() const { return Name.getAsString(); }
 
   /// getDeclName - Get the actual, stored name of the declaration,
   /// which may be a special name.
@@ -110,13 +129,6 @@ public:
 
   /// \brief Set the name of this declaration.
   void setDeclName(DeclarationName N) { Name = N; }
-
-  /// getNameAsString - Get a human-readable name for the declaration, even if
-  /// it is one of the special kinds of names (C++ constructor, Objective-C
-  /// selector, etc).  Creating this name requires expensive string
-  /// manipulation, so it should be called only when performance doesn't matter.
-  /// For simple declarations, getNameAsCString() should suffice.
-  std::string getNameAsString() const { return Name.getAsString(); }
 
   /// getQualifiedNameAsString - Returns human-readable qualified name for
   /// declaration, like A::B::i, for i being member of namespace A::B.
