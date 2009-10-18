@@ -210,6 +210,14 @@ void PCHTypeWriter::VisitElaboratedType(const ElaboratedType *T) {
 }
 
 void
+PCHTypeWriter::VisitSubstTemplateTypeParmType(
+                                        const SubstTemplateTypeParmType *T) {
+  Writer.AddTypeRef(QualType(T->getReplacedParameter(), 0), Record);
+  Writer.AddTypeRef(T->getReplacementType(), Record);
+  Code = pch::TYPE_SUBST_TEMPLATE_TYPE_PARM;
+}
+
+void
 PCHTypeWriter::VisitTemplateSpecializationType(
                                        const TemplateSpecializationType *T) {
   // FIXME: Serialize this type (C++ only)
@@ -361,6 +369,10 @@ void TypeLocWriter::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
 void TypeLocWriter::VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+}
+void TypeLocWriter::VisitSubstTemplateTypeParmTypeLoc(
+                                            SubstTemplateTypeParmTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
 void TypeLocWriter::VisitTemplateSpecializationTypeLoc(

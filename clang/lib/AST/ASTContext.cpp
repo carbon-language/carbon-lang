@@ -747,6 +747,11 @@ ASTContext::getTypeInfo(const Type *T) {
     break;
   }
 
+  case Type::SubstTemplateTypeParm: {
+    return getTypeInfo(cast<SubstTemplateTypeParmType>(T)->
+                       getReplacementType().getTypePtr());
+  }
+
   case Type::Elaborated: {
     return getTypeInfo(cast<ElaboratedType>(T)->getUnderlyingType().getTypePtr());
   }
@@ -1692,6 +1697,29 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
     TypedefType(Type::Typedef, Decl, Canonical);
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
+}
+
+/// \brief Retrieve a substitution-result type.
+QualType
+ASTContext::getSubstTemplateTypeParmType(const TemplateTypeParmType *Parm,
+                                         QualType Replacement) {
+  assert(Replacement->isCanonical()
+         && "replacement types must always be canonical");
+
+  llvm::FoldingSetNodeID ID;
+  SubstTemplateTypeParmType::Profile(ID, Parm, Replacement);
+  void *InsertPos = 0;
+  SubstTemplateTypeParmType *SubstParm
+    = SubstTemplateTypeParmTypes.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (!SubstParm) {
+    SubstParm = new (*this, TypeAlignment)
+      SubstTemplateTypeParmType(Parm, Replacement);
+    Types.push_back(SubstParm);
+    SubstTemplateTypeParmTypes.InsertNode(SubstParm, InsertPos);
+  }
+
+  return QualType(SubstParm, 0);
 }
 
 /// \brief Retrieve the template type parameter type for a template

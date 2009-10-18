@@ -23,6 +23,101 @@
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;
 
+/// Determines whether we should have an a.k.a. clause when
+/// pretty-printing a type.  There are two main criteria:
+///
+/// 1) Some types provide very minimal sugar that doesn't impede the
+///    user's understanding --- for example, elaborated type
+///    specifiers.  If this is all the sugar we see, we don't want an
+///    a.k.a. clause.
+/// 2) Some types are technically sugared but are much more familiar
+///    when seen in their sugared form --- for example, va_list,
+///    vector types, and the magic Objective C types.  We don't
+///    want to desugar these, even if we do produce an a.k.a. clause.
+static bool ShouldAKA(ASTContext &Context, QualType QT,
+                      QualType& DesugaredQT) {
+
+  bool AKA = false;
+  QualifierCollector Qc;
+
+  while (true) {
+    const Type *Ty = Qc.strip(QT);
+
+    // Don't aka just because we saw an elaborated type...
+    if (isa<ElaboratedType>(Ty)) {
+      QT = cast<ElaboratedType>(Ty)->desugar();
+      continue;
+    }
+
+    // ...or a qualified name type...
+    if (isa<QualifiedNameType>(Ty)) {
+      QT = cast<QualifiedNameType>(Ty)->desugar();
+      continue;
+    }
+
+    // ...or a substituted template type parameter.
+    if (isa<SubstTemplateTypeParmType>(Ty)) {
+      QT = cast<SubstTemplateTypeParmType>(Ty)->desugar();
+      continue;
+    }
+      
+    // Don't desugar template specializations. 
+    if (isa<TemplateSpecializationType>(Ty))
+      break;
+
+    // Don't desugar magic Objective-C types.
+    if (QualType(Ty,0) == Context.getObjCIdType() ||
+        QualType(Ty,0) == Context.getObjCClassType() ||
+        QualType(Ty,0) == Context.getObjCSelType() ||
+        QualType(Ty,0) == Context.getObjCProtoType())
+      break;
+
+    // Don't desugar va_list.
+    if (QualType(Ty,0) == Context.getBuiltinVaListType())
+      break;
+
+    // Otherwise, do a single-step desugar.
+    QualType Underlying;
+    bool IsSugar = false;
+    switch (Ty->getTypeClass()) {
+#define ABSTRACT_TYPE(Class, Base)
+#define TYPE(Class, Base) \
+    case Type::Class: { \
+      const Class##Type *CTy = cast<Class##Type>(Ty); \
+      if (CTy->isSugared()) { \
+        IsSugar = true; \
+        Underlying = CTy->desugar(); \
+      } \
+      break; \
+    }
+#include "clang/AST/TypeNodes.def"
+    }
+
+    // If it wasn't sugared, we're done.
+    if (!IsSugar)
+      break;
+
+    // If the desugared type is a vector type, we don't want to expand
+    // it, it will turn into an attribute mess. People want their "vec4".
+    if (isa<VectorType>(Underlying))
+      break;
+
+    // Otherwise, we're tearing through something opaque; note that
+    // we'll eventually need an a.k.a. clause and keep going.
+    AKA = true;
+    QT = Underlying;
+    continue;
+  }
+
+  // If we ever tore through opaque sugar
+  if (AKA) {
+    DesugaredQT = Qc.apply(QT);
+    return true;
+  }
+
+  return false;
+}
+
 /// \brief Convert the given type to a string suitable for printing as part of 
 /// a diagnostic. 
 ///
@@ -33,34 +128,11 @@ static std::string ConvertTypeToDiagnosticString(ASTContext &Context,
   // FIXME: Playing with std::string is really slow.
   std::string S = Ty.getAsString(Context.PrintingPolicy);
   
-  // If this is a sugared type (like a typedef, typeof, etc), then unwrap one
-  // level of the sugar so that the type is more obvious to the user.
-  QualType DesugaredTy = Ty.getDesugaredType();
-  
-  if (Ty != DesugaredTy &&
-      // If the desugared type is a vector type, we don't want to expand it,
-      // it will turn into an attribute mess. People want their "vec4".
-      !isa<VectorType>(DesugaredTy) &&
-      
-      // Don't aka just because we saw an elaborated type...
-      (!isa<ElaboratedType>(Ty) ||
-       cast<ElaboratedType>(Ty)->desugar() != DesugaredTy) &&
-      
-      // ...or a qualified name type...
-      (!isa<QualifiedNameType>(Ty) ||
-       cast<QualifiedNameType>(Ty)->desugar() != DesugaredTy) &&
-      
-      // ...or a non-dependent template specialization.
-      (!isa<TemplateSpecializationType>(Ty) || Ty->isDependentType()) &&
-      
-      // Don't desugar magic Objective-C types.
-      Ty.getUnqualifiedType() != Context.getObjCIdType() &&
-      Ty.getUnqualifiedType() != Context.getObjCClassType() &&
-      Ty.getUnqualifiedType() != Context.getObjCSelType() &&
-      Ty.getUnqualifiedType() != Context.getObjCProtoType() &&
-      
-      // Not va_list.
-      Ty.getUnqualifiedType() != Context.getBuiltinVaListType()) {
+  // Consider producing an a.k.a. clause if removing all the direct
+  // sugar gives us something "significantly different".
+
+  QualType DesugaredTy;
+  if (ShouldAKA(Context, Ty, DesugaredTy)) {
     S = "'"+S+"' (aka '";
     S += DesugaredTy.getAsString(Context.PrintingPolicy);
     S += "')";

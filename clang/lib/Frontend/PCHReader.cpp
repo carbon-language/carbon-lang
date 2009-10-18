@@ -1968,6 +1968,15 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
       Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
     return Context->getObjCProtocolListType(OIT, Protos.data(), NumProtos);
   }
+
+  case pch::TYPE_SUBST_TEMPLATE_TYPE_PARM: {
+    unsigned Idx = 0;
+    QualType Parm = GetType(Record[Idx++]);
+    QualType Replacement = GetType(Record[Idx++]);
+    return
+      Context->getSubstTemplateTypeParmType(cast<TemplateTypeParmType>(Parm),
+                                            Replacement);
+  }
   }
   // Suppress a GCC warning
   return QualType();
@@ -2092,6 +2101,10 @@ void TypeLocReader::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 void TypeLocReader::VisitTemplateTypeParmTypeLoc(TemplateTypeParmTypeLoc TL) {
+  TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitSubstTemplateTypeParmTypeLoc(
+                                            SubstTemplateTypeParmTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 void TypeLocReader::VisitTemplateSpecializationTypeLoc(

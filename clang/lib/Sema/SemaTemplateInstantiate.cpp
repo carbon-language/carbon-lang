@@ -613,7 +613,11 @@ TemplateInstantiator::TransformTemplateTypeParmType(
              == TemplateArgument::Type &&
            "Template argument kind mismatch");
 
-    return TemplateArgs(T->getDepth(), T->getIndex()).getAsType();
+    QualType Replacement
+      = TemplateArgs(T->getDepth(), T->getIndex()).getAsType();
+
+    // TODO: only do this uniquing once, at the start of instantiation.
+    return getSema().Context.getSubstTemplateTypeParmType(T, Replacement);
   }
 
   // The template type parameter comes from an inner template (e.g.,

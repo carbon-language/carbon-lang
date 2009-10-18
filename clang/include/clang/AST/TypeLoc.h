@@ -364,6 +364,16 @@ class BuiltinTypeLoc : public TypeSpecTypeLoc<BuiltinTypeLoc,
                                               BuiltinType> {
 };
 
+/// \brief Wrapper for template type parameters.
+class TemplateTypeParmTypeLoc : public TypeSpecTypeLoc<TemplateTypeParmTypeLoc,
+                                                       TemplateTypeParmType> {
+};
+
+/// \brief Wrapper for substituted template type parameters.
+class SubstTemplateTypeParmTypeLoc :
+    public TypeSpecTypeLoc<SubstTemplateTypeParmTypeLoc,
+                           SubstTemplateTypeParmType> {
+};
 
 /// \brief Wrapper for source info for ObjC interfaces.
 class ObjCInterfaceTypeLoc : public TypeSpecTypeLoc<ObjCInterfaceTypeLoc,
@@ -714,7 +724,6 @@ class VariableArrayTypeLoc :
                                      VariableArrayType> {
 };
 
-
 // None of these types have proper implementations yet.
 
 class VectorTypeLoc : public TypeSpecTypeLoc<VectorTypeLoc, VectorType> {
@@ -764,10 +773,6 @@ class EnumTypeLoc : public InheritingConcreteTypeLoc<TagTypeLoc,
 
 class ElaboratedTypeLoc : public TypeSpecTypeLoc<ElaboratedTypeLoc,
                                                  ElaboratedType> {
-};
-
-class TemplateTypeParmTypeLoc : public TypeSpecTypeLoc<TemplateTypeParmTypeLoc,
-                                                       TemplateTypeParmType> {
 };
 
 class TemplateSpecializationTypeLoc

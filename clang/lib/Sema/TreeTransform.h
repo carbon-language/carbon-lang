@@ -2329,6 +2329,13 @@ QualType TreeTransform<Derived>::TransformTemplateTypeParmType(
 }
 
 template<typename Derived>
+QualType TreeTransform<Derived>::TransformSubstTemplateTypeParmType(
+                                         const SubstTemplateTypeParmType *T) {
+  // Nothing to do
+  return QualType(T, 0);
+}
+
+template<typename Derived>
 QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
                                         const TemplateSpecializationType *T) {
   TemplateName Template

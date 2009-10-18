@@ -402,7 +402,9 @@ namespace clang {
       /// \brief a DecltypeType record.
       TYPE_DECLTYPE                 = 24,
       /// \brief An ElaboratedType record.
-      TYPE_ELABORATED               = 25
+      TYPE_ELABORATED               = 25,
+      /// \brief A SubstTemplateTypeParmType record.
+      TYPE_SUBST_TEMPLATE_TYPE_PARM = 26
     };
 
     /// \brief The type IDs for special types constructed by semantic

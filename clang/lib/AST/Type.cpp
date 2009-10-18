@@ -628,6 +628,7 @@ bool Type::isSpecifierType() const {
   case TypeOfExpr:
   case TypeOf:
   case TemplateTypeParm:
+  case SubstTemplateTypeParm:
   case TemplateSpecialization:
   case QualifiedName:
   case Typename:
@@ -1265,6 +1266,10 @@ void TemplateTypeParmType::getAsStringInternal(std::string &InnerString, const P
       llvm::utostr_32(Index) + InnerString;
   else
     InnerString = Name->getName() + InnerString;
+}
+
+void SubstTemplateTypeParmType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
+  getReplacementType().getAsStringInternal(InnerString, Policy);
 }
 
 std::string

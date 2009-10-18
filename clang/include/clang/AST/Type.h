@@ -2142,6 +2142,59 @@ public:
   static bool classof(const TemplateTypeParmType *T) { return true; }
 };
 
+/// \brief Represents the result of substituting a type for a template
+/// type parameter.
+///
+/// Within an instantiated template, all template type parameters have
+/// been replaced with these.  They are used solely to record that a
+/// type was originally written as a template type parameter;
+/// therefore they are never canonical.
+class SubstTemplateTypeParmType : public Type, public llvm::FoldingSetNode {
+  // The original type parameter.
+  const TemplateTypeParmType *Replaced;
+
+  SubstTemplateTypeParmType(const TemplateTypeParmType *Param, QualType Canon)
+    : Type(SubstTemplateTypeParm, Canon, Canon->isDependentType()),
+      Replaced(Param) { }
+
+  friend class ASTContext;
+
+public:
+  IdentifierInfo *getName() const { return Replaced->getName(); }
+
+  /// Gets the template parameter that was substituted for.
+  const TemplateTypeParmType *getReplacedParameter() const {
+    return Replaced;
+  }
+
+  /// Gets the type that was substituted for the template
+  /// parameter.
+  QualType getReplacementType() const {
+    return getCanonicalTypeInternal();
+  }
+
+  virtual void getAsStringInternal(std::string &InnerString,
+                                   const PrintingPolicy &Policy) const;
+
+  bool isSugared() const { return true; }
+  QualType desugar() const { return getReplacementType(); }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, getReplacedParameter(), getReplacementType());
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      const TemplateTypeParmType *Replaced,
+                      QualType Replacement) {
+    ID.AddPointer(Replaced);
+    ID.AddPointer(Replacement.getAsOpaquePtr());
+  }
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == SubstTemplateTypeParm;
+  }
+  static bool classof(const SubstTemplateTypeParmType *T) { return true; }
+};
+
 /// \brief Represents the type of a template specialization as written
 /// in the source code.
 ///
