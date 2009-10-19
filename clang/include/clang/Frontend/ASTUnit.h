@@ -16,6 +16,8 @@
 
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "clang/Frontend/TextDiagnosticBuffer.h"
+#include "clang/Basic/FileManager.h"
 #include <string>
 
 namespace clang {
@@ -23,6 +25,7 @@ namespace clang {
   class FileEntry;
   class SourceManager;
   class Diagnostic;
+  class TextDiagnosticBuffer;
   class HeaderSearch;
   class TargetInfo;
   class Preprocessor;
@@ -32,7 +35,10 @@ namespace clang {
 /// \brief Utility class for loading a ASTContext from a PCH file.
 ///
 class ASTUnit {
-  Diagnostic                       &Diags;
+  TextDiagnosticBuffer DiagClient;
+  Diagnostic Diags;
+  FileManager FileMgr;
+
   SourceManager                     SourceMgr;
   llvm::OwningPtr<HeaderSearch>     HeaderInfo;
   llvm::OwningPtr<TargetInfo>       Target;
@@ -47,7 +53,7 @@ class ASTUnit {
   
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
-  ASTUnit(Diagnostic &_Diag);
+  ASTUnit();
 
 public:
   ~ASTUnit();
@@ -64,7 +70,9 @@ public:
   const Diagnostic &getDiagnostic() const { return Diags; }
         Diagnostic &getDiagnostic()       { return Diags; }
 
-  FileManager &getFileManager();
+  const FileManager &getFileManager() const { return FileMgr; }
+        FileManager &getFileManager()       { return FileMgr; }
+  
   const std::string &getOriginalSourceFileName();
   const std::string &getPCHFileName();
 
@@ -85,8 +93,6 @@ public:
   ///
   /// \returns - The initialized ASTUnit or null if the PCH failed to load.
   static ASTUnit *LoadFromPCHFile(const std::string &Filename,
-                                  Diagnostic &Diags,
-                                  FileManager &FileMgr,
                                   std::string *ErrMsg = 0,
                                   bool OnlyLocalDecls = false,
                                   bool UseBumpAllocator = false);

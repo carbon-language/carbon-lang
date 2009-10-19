@@ -347,8 +347,7 @@ CXTranslationUnit clang_createTranslationUnit(
   std::string astName(ast_filename);
   std::string ErrMsg;
   
-  return ASTUnit::LoadFromPCHFile(astName, CXXIdx->getDiagnostics(),
-                                  CXXIdx->getFileManager(), &ErrMsg,
+  return ASTUnit::LoadFromPCHFile(astName, &ErrMsg,
                                   CXXIdx->getOnlyLocalDecls(),
                                   /* UseBumpAllocator = */ true);
 }

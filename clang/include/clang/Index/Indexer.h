@@ -14,13 +14,11 @@
 #ifndef LLVM_CLANG_INDEX_INDEXER_H
 #define LLVM_CLANG_INDEX_INDEXER_H
 
-#include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Index/IndexProvider.h"
 #include "clang/Index/Entity.h"
 #include "clang/Index/GlobalSelector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/DenseMap.h"
-#include "clang/Basic/FileManager.h"
 #include <map>
 
 namespace clang {
@@ -39,15 +37,9 @@ public:
   typedef std::map<GlobalSelector, TUSetTy> SelMapTy;
 
   explicit Indexer(Program &prog) :
-    Prog(prog), Diags(&DiagClient) { }
+    Prog(prog) { }
 
   Program &getProgram() const { return Prog; }
-
-  Diagnostic &getDiagnostics() { return Diags; }
-  const Diagnostic &getDiagnostics() const { return Diags; }
-
-  FileManager &getFileManager() { return FileMgr; }
-  const FileManager &getFileManager() const { return FileMgr; }
 
   /// \brief Find all Entities and map them to the given translation unit.
   void IndexAST(TranslationUnit *TU);
@@ -59,9 +51,6 @@ public:
 
 private:
   Program &Prog;
-  TextDiagnosticBuffer DiagClient;
-  Diagnostic Diags;
-  FileManager FileMgr;
 
   MapTy Map;
   CtxTUMapTy CtxTUMap;

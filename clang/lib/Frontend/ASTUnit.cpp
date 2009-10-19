@@ -25,7 +25,9 @@
 
 using namespace clang;
 
-ASTUnit::ASTUnit(Diagnostic &_Diags) : Diags(_Diags), tempFile(false) { }
+ASTUnit::ASTUnit() : tempFile(false) {
+  Diags.setClient(&DiagClient);
+}
 ASTUnit::~ASTUnit() { 
   if (tempFile)
     llvm::sys::Path(getPCHFileName()).eraseFromDisk();
@@ -88,19 +90,13 @@ const std::string &ASTUnit::getPCHFileName() {
   return dyn_cast<PCHReader>(Ctx->getExternalSource())->getFileName();
 }
 
-FileManager &ASTUnit::getFileManager() {
-  return HeaderInfo->getFileMgr();
-}
-
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
-                                  Diagnostic &Diags,
-                                  FileManager &FileMgr,
                                   std::string *ErrMsg,
                                   bool OnlyLocalDecls,
                                   bool UseBumpAllocator) {
-  llvm::OwningPtr<ASTUnit> AST(new ASTUnit(Diags));
+  llvm::OwningPtr<ASTUnit> AST(new ASTUnit());
   AST->OnlyLocalDecls = OnlyLocalDecls;
-  AST->HeaderInfo.reset(new HeaderSearch(FileMgr));
+  AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
 
   // Gather Info for preprocessor construction later on.
 
@@ -113,7 +109,7 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   llvm::OwningPtr<PCHReader> Reader;
   llvm::OwningPtr<ExternalASTSource> Source;
 
-  Reader.reset(new PCHReader(AST->getSourceManager(), FileMgr, AST->Diags));
+  Reader.reset(new PCHReader(AST->getSourceManager(), AST->getFileManager(), AST->Diags));
   Reader->setListener(new PCHInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 

@@ -2188,8 +2188,7 @@ static void ProcessASTInputFile(const std::string &InFile, ProgActions PA,
                                 Diagnostic &Diags, FileManager &FileMgr,
                                 llvm::LLVMContext& Context) {
   std::string Error;
-  llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, Diags, FileMgr,
-                                                        &Error));
+  llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromPCHFile(InFile, &Error));
   if (!AST) {
     Diags.Report(FullSourceLoc(), diag::err_fe_invalid_ast_file) << Error;
     return;

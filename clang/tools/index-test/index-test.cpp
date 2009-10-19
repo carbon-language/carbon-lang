@@ -225,8 +225,7 @@ int main(int argc, char **argv) {
     std::string ErrMsg;
     llvm::OwningPtr<ASTUnit> AST;
 
-    AST.reset(ASTUnit::LoadFromPCHFile(InFile, Idxer.getDiagnostics(),
-                                       Idxer.getFileManager(), &ErrMsg));
+    AST.reset(ASTUnit::LoadFromPCHFile(InFile, &ErrMsg));
     if (!AST) {
       llvm::errs() << "[" << InFile << "] Error: " << ErrMsg << '\n';
       return 1;
@@ -244,7 +243,7 @@ int main(int argc, char **argv) {
 
   if (!PointAtLocation.empty()) {
     const std::string &Filename = PointAtLocation[0].FileName;
-    const FileEntry *File = Idxer.getFileManager().getFile(Filename);
+    const FileEntry *File = FirstAST->getFileManager().getFile(Filename);
     if (File == 0) {
       llvm::errs() << "File '" << Filename << "' does not exist\n";
       return 1;
@@ -253,7 +252,7 @@ int main(int argc, char **argv) {
     // Safety check. Using an out-of-date AST file will only lead to crashes
     // or incorrect results.
     // FIXME: Check all the source files that make up the AST file.
-    const FileEntry *ASTFile = Idxer.getFileManager().getFile(FirstFile);
+    const FileEntry *ASTFile = FirstAST->getFileManager().getFile(FirstFile);
     if (File->getModificationTime() > ASTFile->getModificationTime()) {
       llvm::errs() << "[" << FirstFile << "] Error: " <<
         "Pointing at a source file which was modified after creating "
