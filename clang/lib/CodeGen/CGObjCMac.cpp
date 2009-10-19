@@ -850,7 +850,7 @@ protected:
   /// \param[out] NameOut - The return value.
   void GetNameForMethod(const ObjCMethodDecl *OMD,
                         const ObjCContainerDecl *CD,
-                        std::string &NameOut);
+                        llvm::SmallVectorImpl<char> &NameOut);
 
   /// GetMethodVarName - Return a unique constant for the given
   /// selector's name. The return value has type char *.
@@ -2302,7 +2302,7 @@ llvm::Constant *CGObjCMac::EmitMethodList(llvm::Twine Name,
 
 llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
                                                 const ObjCContainerDecl *CD) {
-  std::string Name;
+  llvm::SmallString<256> Name;
   GetNameForMethod(OMD, CD, Name);
 
   CodeGenTypes &Types = CGM.getTypes();
@@ -2311,7 +2311,7 @@ llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
   llvm::Function *Method =
     llvm::Function::Create(MethodTy,
                            llvm::GlobalValue::InternalLinkage,
-                           Name,
+                           Name.str(),
                            &CGM.getModule());
   MethodDefinitions.insert(std::make_pair(OMD, Method));
 
@@ -3449,21 +3449,15 @@ CGObjCCommonMac::GetPropertyTypeString(const ObjCPropertyDecl *PD,
 
 void CGObjCCommonMac::GetNameForMethod(const ObjCMethodDecl *D,
                                        const ObjCContainerDecl *CD,
-                                       std::string &NameOut) {
-  NameOut = '\01';
-  NameOut += (D->isInstanceMethod() ? '-' : '+');
-  NameOut += '[';
+                                       llvm::SmallVectorImpl<char> &Name) {
+  llvm::raw_svector_ostream OS(Name);
   assert (CD && "Missing container decl in GetNameForMethod");
-  NameOut += CD->getNameAsString();
+  OS << '\01' << (D->isInstanceMethod() ? '-' : '+')
+     << '[' << CD->getName();
   if (const ObjCCategoryImplDecl *CID =
-      dyn_cast<ObjCCategoryImplDecl>(D->getDeclContext())) {
-    NameOut += '(';
-    NameOut += CID->getNameAsString();
-    NameOut+= ')';
-  }
-  NameOut += ' ';
-  NameOut += D->getSelector().getAsString();
-  NameOut += ']';
+      dyn_cast<ObjCCategoryImplDecl>(D->getDeclContext()))
+    OS << '(' << CID->getNameAsString() << ')';
+  OS << ' ' << D->getSelector().getAsString() << ']';
 }
 
 void CGObjCMac::FinishModule() {
