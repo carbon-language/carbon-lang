@@ -300,7 +300,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
 
   // If the target knows how to save/restore the register, let it do so;
   // otherwise, use the emergency stack spill slot.
-  if (!TRI->saveScavengerRegister(*MBB, I, RC, SReg)) {
+  if (!TRI->saveScavengerRegister(*MBB, I, UseMI, RC, SReg)) {
     // Spill the scavenged register before I.
     assert(ScavengingFrameIndex >= 0 &&
            "Cannot scavenge register without an emergency spill slot!");
@@ -310,8 +310,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
 
     // Restore the scavenged register before its use (or first terminator).
     TII->loadRegFromStackSlot(*MBB, UseMI, SReg, ScavengingFrameIndex, RC);
-  } else
-    TRI->restoreScavengerRegister(*MBB, UseMI, RC, SReg);
+  }
 
   ScavengeRestore = prior(UseMI);
 

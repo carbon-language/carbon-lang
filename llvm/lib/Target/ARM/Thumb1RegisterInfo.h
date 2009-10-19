@@ -57,12 +57,9 @@ public:
 
   bool saveScavengerRegister(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator I,
+                             MachineBasicBlock::iterator &UseMI,
                              const TargetRegisterClass *RC,
                              unsigned Reg) const;
-  void restoreScavengerRegister(MachineBasicBlock &MBB,
-                                MachineBasicBlock::iterator I,
-                                const TargetRegisterClass *RC,
-                                unsigned Reg) const;
   unsigned eliminateFrameIndex(MachineBasicBlock::iterator II,
                                int SPAdj, int *Value = NULL,
                                RegScavenger *RS = NULL) const;

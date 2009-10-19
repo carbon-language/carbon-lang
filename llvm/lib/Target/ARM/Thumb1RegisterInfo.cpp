@@ -394,29 +394,46 @@ rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   return 0;
 }
 
-/// saveScavengerRegister - Save the register so it can be used by the
+/// saveScavengerRegister - Spill the register so it can be used by the
 /// register scavenger. Return true.
-bool Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
-                                               MachineBasicBlock::iterator I,
-                                               const TargetRegisterClass *RC,
-                                               unsigned Reg) const {
+bool
+Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
+                                          MachineBasicBlock::iterator I,
+                                          MachineBasicBlock::iterator &UseMI,
+                                          const TargetRegisterClass *RC,
+                                          unsigned Reg) const {
   // Thumb1 can't use the emergency spill slot on the stack because
   // ldr/str immediate offsets must be positive, and if we're referencing
   // off the frame pointer (if, for example, there are alloca() calls in
   // the function, the offset will be negative. Use R12 instead since that's
   // a call clobbered register that we know won't be used in Thumb1 mode.
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  BuildMI(MBB, I, DL, TII.get(ARM::tMOVtgpr2gpr)).
+    addReg(ARM::R12, RegState::Define).addReg(Reg, RegState::Kill);
 
-  TII.copyRegToReg(MBB, I, ARM::R12, Reg, ARM::GPRRegisterClass, RC);
+  // The UseMI is where we would like to restore the register. If there's
+  // interference with R12 before then, however, we'll need to restore it
+  // before that instead and adjust the UseMI.
+  bool done = false;
+  for (MachineBasicBlock::iterator II = I; !done && II != UseMI ; ++II) {
+    // If this instruction affects R12, adjust our restore point.
+    for (unsigned i = 0, e = II->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = II->getOperand(i);
+      if (!MO.isReg() || MO.isUndef() || !MO.getReg() ||
+          TargetRegisterInfo::isVirtualRegister(MO.getReg()))
+        continue;
+      if (MO.getReg() == ARM::R12) {
+        UseMI = II;
+        done = true;
+        break;
+      }
+    }
+  }
+  // Restore the register from R12
+  BuildMI(MBB, UseMI, DL, TII.get(ARM::tMOVgpr2tgpr)).
+    addReg(Reg, RegState::Define).addReg(ARM::R12, RegState::Kill);
+
   return true;
-}
-
-/// restoreScavengerRegister - restore a registers saved by
-// saveScavengerRegister().
-void Thumb1RegisterInfo::restoreScavengerRegister(MachineBasicBlock &MBB,
-                                               MachineBasicBlock::iterator I,
-                                               const TargetRegisterClass *RC,
-                                               unsigned Reg) const {
-  TII.copyRegToReg(MBB, I, Reg, ARM::R12, RC, ARM::GPRRegisterClass);
 }
 
 unsigned
