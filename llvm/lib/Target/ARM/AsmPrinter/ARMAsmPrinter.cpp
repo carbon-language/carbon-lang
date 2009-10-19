@@ -17,6 +17,7 @@
 #include "ARMAddressingModes.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMMachineFunctionInfo.h"
+#include "ARMInstPrinter.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
@@ -73,6 +74,10 @@ namespace {
     virtual const char *getPassName() const {
       return "ARM Assembly Printer";
     }
+    
+    void printMCInst(const MCInst *MI) {
+      ARMInstPrinter(O, *MAI).printInstruction(MI);
+    }      
 
     void printOperand(const MachineInstr *MI, int OpNum,
                       const char *Modifier = 0);
