@@ -20,7 +20,7 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-//MetadataBase implementation
+// MetadataBase implementation.
 //
 
 /// resizeOperands - Metadata keeps track of other metadata uses using 
@@ -48,7 +48,7 @@ void MetadataBase::resizeOperands(unsigned NumOps) {
   if (OldOps) Use::zap(OldOps, OldOps + e, true);
 }
 //===----------------------------------------------------------------------===//
-//MDString implementation
+// MDString implementation.
 //
 MDString *MDString::get(LLVMContext &Context, const StringRef &Str) {
   LLVMContextImpl *pImpl = Context.pImpl;
@@ -56,16 +56,15 @@ MDString *MDString::get(LLVMContext &Context, const StringRef &Str) {
   StringMapEntry<MDString *> &Entry = 
     pImpl->MDStringCache.GetOrCreateValue(Str);
   MDString *&S = Entry.getValue();
-  if (!S) S = new MDString(Context, Entry.getKeyData(),
-                           Entry.getKeyLength());
-
-  return S;
+  if (S) return S;
+  
+  return S = new MDString(Context, Entry.getKeyData(), Entry.getKeyLength());
 }
 
 //===----------------------------------------------------------------------===//
-//MDNode implementation
+// MDNode implementation.
 //
-MDNode::MDNode(LLVMContext &C, Value*const* Vals, unsigned NumVals)
+MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals)
   : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
   NumOperands = 0;
   resizeOperands(NumVals);
@@ -91,19 +90,20 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
   for (unsigned i = 0; i != NumVals; ++i)
     ID.AddPointer(Vals[i]);
 
-  pImpl->ConstantsLock.reader_acquire();
   void *InsertPoint;
-  MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-  pImpl->ConstantsLock.reader_release();
-  
-  if (!N) {
-    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
+  MDNode *N;
+  {
+    sys::SmartScopedReader<true> Reader(pImpl->ConstantsLock);
     N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-    if (!N) {
-      // InsertPoint will have been set by the FindNodeOrInsertPos call.
-      N = new MDNode(Context, Vals, NumVals);
-      pImpl->MDNodeSet.InsertNode(N, InsertPoint);
-    }
+  }  
+  if (N) return N;
+  
+  sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
+  N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
+  if (!N) {
+    // InsertPoint will have been set by the FindNodeOrInsertPos call.
+    N = new MDNode(Context, Vals, NumVals);
+    pImpl->MDNodeSet.InsertNode(N, InsertPoint);
   }
 
   return N;
@@ -209,10 +209,10 @@ void MDNode::replaceElement(Value *From, Value *To) {
 }
 
 //===----------------------------------------------------------------------===//
-//NamedMDNode implementation
+// NamedMDNode implementation.
 //
 NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
-                         MetadataBase*const* MDs, 
+                         MetadataBase *const *MDs, 
                          unsigned NumMDs, Module *ParentModule)
   : MetadataBase(Type::getMetadataTy(C), Value::NamedMDNodeVal), Parent(0) {
   setName(N);
@@ -229,7 +229,7 @@ NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
 }
 
 NamedMDNode *NamedMDNode::Create(const NamedMDNode *NMD, Module *M) {
-  assert (NMD && "Invalid source NamedMDNode!");
+  assert(NMD && "Invalid source NamedMDNode!");
   SmallVector<MetadataBase *, 4> Elems;
   for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i)
     Elems.push_back(NMD->getElement(i));
@@ -254,13 +254,13 @@ NamedMDNode::~NamedMDNode() {
 }
 
 //===----------------------------------------------------------------------===//
-//Metadata implementation
+// MetadataContext implementation.
 //
 
 /// RegisterMDKind - Register a new metadata kind and return its ID.
 /// A metadata kind can be registered only once. 
 unsigned MetadataContext::RegisterMDKind(const char *Name) {
-  assert (validName(Name) && "Invalid custome metadata name!");
+  assert(validName(Name) && "Invalid custome metadata name!");
   unsigned Count = MDHandlerNames.size();
   assert(MDHandlerNames.find(Name) == MDHandlerNames.end() 
          && "Already registered MDKind!");
@@ -292,7 +292,7 @@ bool MetadataContext::validName(const char *Name) {
 /// getMDKind - Return metadata kind. If the requested metadata kind
 /// is not registered then return 0.
 unsigned MetadataContext::getMDKind(const char *Name) {
-  assert (validName(Name) && "Invalid custome metadata name!");
+  assert(validName(Name) && "Invalid custome metadata name!");
   StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
   if (I == MDHandlerNames.end())
     return 0;
@@ -302,7 +302,7 @@ unsigned MetadataContext::getMDKind(const char *Name) {
 
 /// addMD - Attach the metadata of given kind with an Instruction.
 void MetadataContext::addMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
-  assert (Node && "Unable to add custome metadata");
+  assert(Node && "Invalid null MDNode");
   Inst->HasMetadata = true;
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end()) {
@@ -349,7 +349,7 @@ void MetadataContext::removeMD(unsigned Kind, Instruction *Inst) {
 void MetadataContext::removeMDs(const Instruction *Inst) {
   // Find Metadata handles for this instruction.
   MDStoreTy::iterator I = MetadataStore.find(Inst);
-  assert (I != MetadataStore.end() && "Invalid custom metadata info!");
+  assert(I != MetadataStore.end() && "Invalid custom metadata info!");
   MDMapTy &Info = I->second;
   
   // FIXME : Give all metadata handlers a chance to adjust.
@@ -362,7 +362,7 @@ void MetadataContext::removeMDs(const Instruction *Inst) {
 /// copyMD - If metadata is attached with Instruction In1 then attach
 /// the same metadata to In2.
 void MetadataContext::copyMD(Instruction *In1, Instruction *In2) {
-  assert (In1 && In2 && "Invalid instruction!");
+  assert(In1 && In2 && "Invalid instruction!");
    MDStoreTy::iterator I = MetadataStore.find(In1);
   if (I == MetadataStore.end())
     return;
@@ -389,12 +389,13 @@ MDNode *MetadataContext::getMD(unsigned MDKind, const Instruction *Inst) {
 }
 
 /// getMDs - Get the metadata attached with an Instruction.
-const MetadataContext::MDMapTy *MetadataContext::getMDs(const Instruction *Inst) {
+const MetadataContext::MDMapTy *
+MetadataContext::getMDs(const Instruction *Inst) {
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end())
     return NULL;
   
-  return &(I->second);
+  return &I->second;
 }
 
 /// getHandlerNames - Get handler names. This is used by bitcode
@@ -408,7 +409,7 @@ const StringMap<unsigned> *MetadataContext::getHandlerNames() {
 void MetadataContext::ValueIsCloned(const Instruction *In1, Instruction *In2) {
   // Find Metadata handles for In1.
   MDStoreTy::iterator I = MetadataStore.find(In1);
-  assert (I != MetadataStore.end() && "Invalid custom metadata info!");
+  assert(I != MetadataStore.end() && "Invalid custom metadata info!");
 
   // FIXME : Give all metadata handlers a chance to adjust.
 

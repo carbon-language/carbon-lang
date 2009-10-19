@@ -47,12 +47,6 @@ protected:
 
   void resizeOperands(unsigned NumOps);
 public:
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  This always returns false because getNullValue will never
-  /// produce metadata.
-  virtual bool isNullValue() const {
-    return false;
-  }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const MetadataBase *) { return true; }
@@ -85,15 +79,17 @@ public:
   
   StringRef getString() const { return Str; }
 
-  unsigned length() const { return Str.size(); }
+  unsigned getLength() const { return Str.size(); }
 
+  typedef StringRef::iterator iterator;
+  
   /// begin() - Pointer to the first byte of the string.
   ///
-  const char *begin() const { return Str.begin(); }
+  iterator begin() const { return Str.begin(); }
 
   /// end() - Pointer to one byte past the end of the string.
   ///
-  const char *end() const { return Str.end(); }
+  iterator end() const { return Str.end(); }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const MDString *) { return true; }
@@ -133,7 +129,7 @@ class MDNode : public MetadataBase, public FoldingSetNode {
   SmallVector<ElementVH, 4> Node;
 
 protected:
-  explicit MDNode(LLVMContext &C, Value*const* Vals, unsigned NumVals);
+  explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals);
 public:
   // Do not allocate any space for operands.
   void *operator new(size_t s) {
@@ -141,7 +137,7 @@ public:
   }
   // Constructors and destructors.
   static MDNode *get(LLVMContext &Context, 
-                     Value* const* Vals, unsigned NumVals);
+                     Value *const *Vals, unsigned NumVals);
 
   /// dropAllReferences - Remove all uses and clear node vector.
   void dropAllReferences();
@@ -151,7 +147,7 @@ public:
   
   /// getElement - Return specified element.
   Value *getElement(unsigned i) const {
-    assert (getNumElements() > i && "Invalid element number!");
+    assert(getNumElements() > i && "Invalid element number!");
     return Node[i];
   }
 
@@ -170,20 +166,9 @@ public:
   elem_iterator elem_begin()             { return Node.begin(); }
   elem_iterator elem_end()               { return Node.end();   }
 
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  This always returns false because getNullValue will never
-  /// produce metadata.
-  virtual bool isNullValue() const {
-    return false;
-  }
-
   /// Profile - calculate a unique identifier for this MDNode to collapse
   /// duplicates
   void Profile(FoldingSetNodeID &ID) const;
-
-  virtual void replaceUsesOfWithOnConstant(Value *, Value *, Use *) {
-    llvm_unreachable("This should never be called because MDNodes have no ops");
-  }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const MDNode *) { return true; }
@@ -229,7 +214,7 @@ class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   typedef SmallVectorImpl<WeakMetadataVH>::iterator elem_iterator;
 
 protected:
-  explicit NamedMDNode(LLVMContext &C, const Twine &N, MetadataBase*const* Vals, 
+  explicit NamedMDNode(LLVMContext &C, const Twine &N, MetadataBase*const *Vals, 
                        unsigned NumVals, Module *M = 0);
 public:
   // Do not allocate any space for operands.
@@ -237,7 +222,7 @@ public:
     return User::operator new(s, 0);
   }
   static NamedMDNode *Create(LLVMContext &C, const Twine &N, 
-                             MetadataBase*const*MDs, 
+                             MetadataBase *const *MDs, 
                              unsigned NumMDs, Module *M = 0) {
     return new NamedMDNode(C, N, MDs, NumMDs, M);
   }
@@ -261,7 +246,7 @@ public:
 
   /// getElement - Return specified element.
   MetadataBase *getElement(unsigned i) const {
-    assert (getNumElements() > i && "Invalid element number!");
+    assert(getNumElements() > i && "Invalid element number!");
     return Node[i];
   }
 
@@ -283,18 +268,6 @@ public:
   const_elem_iterator elem_end() const   { return Node.end();   }
   elem_iterator elem_begin()             { return Node.begin(); }
   elem_iterator elem_end()               { return Node.end();   }
-
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  This always returns false because getNullValue will never
-  /// produce metadata.
-  virtual bool isNullValue() const {
-    return false;
-  }
-
-  virtual void replaceUsesOfWithOnConstant(Value *, Value *, Use *) {
-    llvm_unreachable(
-                "This should never be called because NamedMDNodes have no ops");
-  }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const NamedMDNode *) { return true; }
