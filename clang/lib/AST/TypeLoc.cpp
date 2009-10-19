@@ -92,5 +92,5 @@ namespace {
 void TypeLoc::initializeImpl(TypeLoc TL, SourceLocation Loc) {
   do {
     TypeLocInitializer(Loc).Visit(TL);
-  } while (TL = TL.getNextTypeLoc());
+  } while ((TL = TL.getNextTypeLoc()));
 }
