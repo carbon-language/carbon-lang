@@ -251,7 +251,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   if (SuccToSinkTo->isLandingPad())
     return false;
   
-  // If is not possible to sink an instruction into its own block.  This can
+  // It is not possible to sink an instruction into its own block.  This can
   // happen with loops.
   if (MI->getParent() == SuccToSinkTo)
     return false;
