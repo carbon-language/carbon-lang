@@ -384,11 +384,11 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   argv.push_back(NULL);
 
   // Generate the AST file in a separate process.
-#ifdef LLVM_ON_WIN32
-  llvm::sys::Path DevNull("/dev/null")
-  llvm::sys::Path *Redirects[] = { &DevNull, &DevNull, &DevNull, NULL };
-  llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0],
-                                     !displayDiagnostics ? Redirects : NULL);
+#ifndef LLVM_ON_WIN32
+  llvm::sys::Path DevNull("/dev/null");
+  const llvm::sys::Path *Redirects[] = { &DevNull, &DevNull, &DevNull, NULL };
+  llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0], NULL,
+                                     !displayDiagnostics ? &Redirects[0] :NULL);
 #else
   // FIXME: I don't know what is the equivalent '/dev/null' redirect for
   // Windows for this API.
