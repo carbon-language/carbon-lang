@@ -1338,8 +1338,7 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     // FIXME: MOVE TO SHARED PLACE.
     unsigned Id = (unsigned)MI->getOperand(2).getImm();
     const char *Prefix = MAI->getPrivateGlobalPrefix();
-    MCSymbol *Label =
-      OutContext.GetOrCreateSymbol(Twine(Prefix)+"PC"+Twine(Id));
+    MCSymbol *Label =OutContext.GetOrCreateSymbol(Twine(Prefix)+"PC"+Twine(Id));
     OutStreamer.EmitLabel(Label);
     
     
@@ -1362,8 +1361,11 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
 
     EmitAlignment(2);
 
-    O << MAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
-      << '_' << LabelId << ":\n";
+    const char *Prefix = MAI->getPrivateGlobalPrefix();
+    MCSymbol *Label = OutContext.GetOrCreateSymbol(Twine(Prefix)+"CPI"+
+                                                   Twine(getFunctionNumber())+
+                                                   "_"+ Twine(LabelId));
+    OutStreamer.EmitLabel(Label);
 
     const MachineConstantPoolEntry &MCPE = MCP->getConstants()[CPIdx];
     if (MCPE.isMachineConstantPoolEntry())
