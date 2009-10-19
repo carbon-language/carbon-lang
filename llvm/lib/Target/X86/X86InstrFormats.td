@@ -224,10 +224,10 @@ class S3I<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
 
 class SS38I<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSSE3]>;
+      : Ii8<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSSE3]>;
 class SS3AI<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSSE3]>;
+      : Ii8<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSSE3]>;
 
 // SSE4.1 Instruction Templates:
 // 
