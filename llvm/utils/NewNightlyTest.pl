@@ -584,49 +584,35 @@ ChangeDir( $LLVMSrcDir , "llvm source directory") ;
 # Build the entire tree, saving build messages to the build log
 #
 ##############################################################
-if (!$NOCHECKOUT && !$NOBUILD) {
-  my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
-  RunLoggedCommand("(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) ",
-                   $BuildLog, "CONFIGURE");
-  # Build the entire tree, capturing the output into $BuildLog
-  RunAppendingLoggedCommand("(time -p $NICE $MAKECMD clean)", $BuildLog, "BUILD CLEAN");
-  RunAppendingLoggedCommand("(time -p $NICE $MAKECMD $MAKEOPTS)", $BuildLog, "BUILD");
+sub BuildLLVM {
+  if (!$NOCHECKOUT && !$NOBUILD) {
+    my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
+    RunLoggedCommand("(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) ",
+                     $BuildLog, "CONFIGURE");
+    # Build the entire tree, capturing the output into $BuildLog
+    RunAppendingLoggedCommand("(time -p $NICE $MAKECMD clean)", $BuildLog, "BUILD CLEAN");
+    RunAppendingLoggedCommand("(time -p $NICE $MAKECMD $MAKEOPTS)", $BuildLog, "BUILD");
+  }
+
+  # Check for build error.
+  my $HadError = 0, $Status = "OK";
+  if ($NOBUILD) {
+    $Status = "Skipped by user";
+  }
+  elsif (`grep '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
+    `grep '^$MAKECMD: \*\*\*.*Stop.' $BuildLog | wc -l`+0) {
+    $Status = "Error: compilation aborted";
+    $HadError = 1;
+  }
+
+  return ($HadError, $Status);
 }
+($BuildError, $BuildStatus) = BuildLLVM();
 
-##############################################################
-#
-# Get some statistics about the build...
-#
-##############################################################
-
-# Get the time taken by the configure script
-my $ConfigTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$BuildLog";
-my $ConfigTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$BuildLog";
-my $ConfigTime  = $ConfigTimeU+$ConfigTimeS;  # ConfigTime = User+System
-my $ConfigWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$BuildLog";
-
-$ConfigTime=-1 unless $ConfigTime;
-$ConfigWallTime=-1 unless $ConfigWallTime;
-
-my $BuildTimeU = GetRegexNum "^user", 1, "([0-9.]+)", "$BuildLog";
-my $BuildTimeS = GetRegexNum "^sys", 1, "([0-9.]+)", "$BuildLog";
-my $BuildTime  = $BuildTimeU+$BuildTimeS;  # BuildTime = User+System
-my $BuildWallTime = GetRegexNum "^real", 1, "([0-9.]+)","$BuildLog";
-
-$BuildTime=-1 unless $BuildTime;
-$BuildWallTime=-1 unless $BuildWallTime;
-
-my $BuildError = 0, $BuildStatus = "OK";
-if ($NOBUILD) {
-  $BuildStatus = "Skipped by user";
+if ($BuildError) {
+    if( $VERBOSE) { print  "\n***ERROR BUILDING TREE\n\n"; }
+    $NODEJAGNU=1;
 }
-elsif (`grep '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
-  `grep '^$MAKECMD: \*\*\*.*Stop.' $BuildLog | wc -l`+0) {
-  $BuildStatus = "Error: compilation aborted";
-  $BuildError = 1;
-  if( $VERBOSE) { print  "\n***ERROR BUILDING TREE\n\n"; }
-}
-if ($BuildError) { $NODEJAGNU=1; }
 
 ##############################################################
 #
@@ -844,10 +830,28 @@ if(!$BuildError){
 
 if ( $VERBOSE ) { print "SEND THE DATA VIA THE POST REQUEST\n"; }
 
+# Checkout info.
 my $CheckoutTime_Wall = GetRegex "([0-9.]+)", `grep '^real' $COLog`;
 my $CheckoutTime_User = GetRegex "([0-9.]+)", `grep '^user' $COLog`;
 my $CheckoutTime_Sys = GetRegex "([0-9.]+)", `grep '^sys' $COLog`;
 my $CheckoutTime_CPU = $CVSCheckoutTime_User + $CVSCheckoutTime_Sys;
+
+# Configure info.
+my $ConfigTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$BuildLog";
+my $ConfigTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$BuildLog";
+my $ConfigTime  = $ConfigTimeU+$ConfigTimeS;  # ConfigTime = User+System
+my $ConfigWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$BuildLog";
+$ConfigTime=-1 unless $ConfigTime;
+$ConfigWallTime=-1 unless $ConfigWallTime;
+
+# Build info.
+my $BuildTimeU = GetRegexNum "^user", 1, "([0-9.]+)", "$BuildLog";
+my $BuildTimeS = GetRegexNum "^sys", 1, "([0-9.]+)", "$BuildLog";
+my $BuildTime  = $BuildTimeU+$BuildTimeS;  # BuildTime = User+System
+my $BuildWallTime = GetRegexNum "^real", 1, "([0-9.]+)","$BuildLog";
+$BuildTime=-1 unless $BuildTime;
+$BuildWallTime=-1 unless $BuildWallTime;
+
 
 my %hash_of_data = (
   'machine_data' => $machine_data,
