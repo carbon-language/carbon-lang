@@ -173,7 +173,7 @@ namespace {
         else {
           // FIXME: Remove this when Darwin transition to @GOT like syntax.
           Name = Mang->getMangledName(GV, "$non_lazy_ptr", true);
-          MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.c_str());
+          MCSymbol *Sym = OutContext.GetOrCreateSymbol(StringRef(Name));
           
           MachineModuleInfoMachO &MMIMachO =
             MMI->getObjFileInfo<MachineModuleInfoMachO>();
@@ -1336,10 +1336,11 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     
     // Emit the label.
     // FIXME: MOVE TO SHARED PLACE.
-    SmallString<60> Name;
     unsigned Id = (unsigned)MI->getOperand(2).getImm();
-    raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "PC" << Id;
-    OutStreamer.EmitLabel(OutContext.GetOrCreateSymbol(Name.str()));
+    const char *Prefix = MAI->getPrivateGlobalPrefix();
+    MCSymbol *Label =
+      OutContext.GetOrCreateSymbol(Twine(Prefix)+"PC"+Twine(Id));
+    OutStreamer.EmitLabel(Label);
     
     
     // Form and emit tha dd.

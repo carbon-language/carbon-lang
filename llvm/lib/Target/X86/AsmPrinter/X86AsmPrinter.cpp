@@ -288,12 +288,12 @@ void X86AsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     std::string Name = Mang->makeNameProper(MO.getSymbolName());
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
       Name += "$stub";
-      MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name);
+      MCSymbol *Sym = OutContext.GetOrCreateSymbol(StringRef(Name));
       const MCSymbol *&StubSym =
         MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
       if (StubSym == 0) {
         Name.erase(Name.end()-5, Name.end());
-        StubSym = OutContext.GetOrCreateSymbol(Name);
+        StubSym = OutContext.GetOrCreateSymbol(StringRef(Name));
       }
     }
     

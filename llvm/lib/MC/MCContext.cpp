@@ -8,10 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCContext.h"
-
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/Twine.h"
 using namespace llvm;
 
 MCContext::MCContext() {
@@ -37,6 +38,13 @@ MCSymbol *MCContext::GetOrCreateSymbol(const StringRef &Name) {
 
   return Entry = new (*this) MCSymbol(Name, false);
 }
+
+MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
+  SmallString<128> NameSV;
+  Name.toVector(NameSV);
+  return GetOrCreateSymbol(NameSV.str());
+}
+
 
 MCSymbol *MCContext::CreateTemporarySymbol(const StringRef &Name) {
   // If unnamed, just create a symbol.

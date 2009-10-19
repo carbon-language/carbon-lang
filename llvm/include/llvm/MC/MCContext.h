@@ -19,6 +19,7 @@ namespace llvm {
   class MCSection;
   class MCSymbol;
   class StringRef;
+  class Twine;
 
   /// MCContext - Context object for machine code objects.  This class owns all
   /// of the sections that it creates.
@@ -58,6 +59,7 @@ namespace llvm {
     /// @param IsTemporary - Whether this symbol is an assembler temporary,
     /// which should not survive into the symbol table for the translation unit.
     MCSymbol *GetOrCreateSymbol(const StringRef &Name);
+    MCSymbol *GetOrCreateSymbol(const Twine &Name);
 
     /// CreateTemporarySymbol - Create a new temporary symbol with the specified
     /// @param Name.
