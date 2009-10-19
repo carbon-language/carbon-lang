@@ -34,10 +34,8 @@ STATISTIC(NumSunk, "Number of machine instructions sunk");
 
 namespace {
   class VISIBILITY_HIDDEN MachineSinking : public MachineFunctionPass {
-    const TargetMachine   *TM;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
-    MachineFunction       *CurMF; // Current MachineFunction
     MachineRegisterInfo  *RegInfo; // Machine register information
     MachineDominatorTree *DT;   // Machine dominator tree
     AliasAnalysis *AA;
@@ -92,19 +90,16 @@ bool MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
   return true;
 }
 
-
-
 bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(errs() << "******** Machine Sinking ********\n");
   
-  CurMF = &MF;
-  TM = &CurMF->getTarget();
-  TII = TM->getInstrInfo();
-  TRI = TM->getRegisterInfo();
-  RegInfo = &CurMF->getRegInfo();
+  const TargetMachine &TM = MF.getTarget();
+  TII = TM.getInstrInfo();
+  TRI = TM.getRegisterInfo();
+  RegInfo = &MF.getRegInfo();
   DT = &getAnalysis<MachineDominatorTree>();
   AA = &getAnalysis<AliasAnalysis>();
-  AllocatableSet = TRI->getAllocatableSet(*CurMF);
+  AllocatableSet = TRI->getAllocatableSet(MF);
 
   bool EverMadeChange = false;
   
@@ -112,7 +107,7 @@ bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
     bool MadeChange = false;
 
     // Process all basic blocks.
-    for (MachineFunction::iterator I = CurMF->begin(), E = CurMF->end(); 
+    for (MachineFunction::iterator I = MF.begin(), E = MF.end(); 
          I != E; ++I)
       MadeChange |= ProcessBlock(*I);
     
