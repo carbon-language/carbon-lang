@@ -278,7 +278,7 @@ my $DejagnuLog = "$Prefix-Dejagnu-testrun.log";
 my $DejagnuSum = "$Prefix-Dejagnu-testrun.sum";
 my $DejagnuTestsLog = "$Prefix-DejagnuTests-Log.txt";
 if (! -d $WebDir) {
-  mkdir $WebDir, 0777;
+  mkdir $WebDir, 0777 or die "Unable to create web directory: '$WebDir'.";
   if($VERBOSE){
     warn "$WebDir did not exist; creating it.\n";
   }
@@ -344,28 +344,6 @@ sub RunAppendingLoggedCommand {
       }
       system "$Command 2>&1 >> $Log";
   }
-}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# DiffFiles - Diff the current version of the file against the last version of
-# the file, reporting things added and removed.  This is used to report, for
-# example, added and removed warnings.  This returns a pair (added, removed)
-#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sub DiffFiles {
-  my $Suffix = shift;
-  my @Others = GetDir $Suffix;
-  if (@Others == 0) {  # No other files?  We added all entries...
-    return (`cat $WebDir/$DATE$Suffix`, "");
-  }
-# Diff the files now...
-  my @Diffs = split "\n", `diff $WebDir/$DATE$Suffix $WebDir/$Others[0]`;
-  my $Added   = join "\n", grep /^</, @Diffs;
-  my $Removed = join "\n", grep /^>/, @Diffs;
-  $Added =~ s/^< //gm;
-  $Removed =~ s/^> //gm;
-  return ($Added, $Removed);
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -723,40 +701,8 @@ $DejagnuTestResults =
 $DejagnuTime     = "0.0" unless $DejagnuTime;
 $DejagnuWallTime = "0.0" unless $DejagnuWallTime;
 
-##############################################################
-#
-# Get warnings from the build
-#
-##############################################################
 if (!$NODEJAGNU) {
   if ( $VERBOSE ) { print "BUILD INFORMATION COLLECTION STAGE\n"; }
-  my @Warn = split "\n", `egrep 'warning:|Entering dir' $BuildLog`;
-  my @Warnings;
-  my $CurDir = "";
-
-  foreach $Warning (@Warn) {
-    if ($Warning =~ m/Entering directory \`([^\`]+)\'/) {
-      $CurDir = $1;                 # Keep track of directory warning is in...
-      # Remove buildir prefix if included
-      if ($CurDir =~ m#$LLVMSrcDir/(.*)#) { $CurDir = $1; }
-    } else {
-      push @Warnings, "$CurDir/$Warning";     # Add directory to warning...
-    }
-  }
-  my $WarningsFile =  join "\n", @Warnings;
-  $WarningsFile =~ s/:[0-9]+:/::/g;
-
-  # Emit the warnings file, so we can diff...
-  WriteFile "$WebDir/$DATE-Warnings.txt", $WarningsFile . "\n";
-  my ($WarningsAdded, $WarningsRemoved) = DiffFiles "-Warnings.txt";
-
-  # Output something to stdout if something has changed
-  #print "ADDED   WARNINGS:\n$WarningsAdded\n\n" if (length $WarningsAdded);
-  #print "REMOVED WARNINGS:\n$WarningsRemoved\n\n" if (length $WarningsRemoved);
-
-  #my @TmpWarningsAdded = split "\n", $WarningsAdded; ~PJ on upgrade
-  #my @TmpWarningsRemoved = split "\n", $WarningsRemoved; ~PJ on upgrade
-
 } #endif !NODEGAGNU
 
 ##############################################################
@@ -959,7 +905,7 @@ my %hash_of_data = (
   'configtime_cpu'=> $ConfigTime,
   'buildtime_wall' => $BuildWallTime,
   'buildtime_cpu' => $BuildTime,
-  'warnings' => $WarningsFile,
+  'warnings' => "",
   'cvsusercommitlist' => "",
   'cvsuserupdatelist' => "",
   'cvsaddedfiles' => "",
@@ -973,8 +919,8 @@ my %hash_of_data = (
   'multisource_programstable' => $MultiSourceProgramsTable,
   'externalsource_programstable' => $ExternalProgramsTable,
   'llcbeta_options' => $multisource_llcbeta_options,
-  'warnings_removed' => $WarningsRemoved,
-  'warnings_added' => $WarningsAdded,
+  'warnings_removed' => "",
+  'warnings_added' => "",
   'passing_tests' => $passes,
   'expfail_tests' => $xfails,
   'unexpfail_tests' => $fails,
