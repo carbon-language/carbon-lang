@@ -232,7 +232,6 @@ ConstantInt::ConstantInt(const IntegerType *Ty, const APInt& V)
 
 ConstantInt* ConstantInt::getTrue(LLVMContext &Context) {
   LLVMContextImpl *pImpl = Context.pImpl;
-  sys::SmartScopedWriter<true>(pImpl->ConstantsLock);
   if (pImpl->TheTrueVal)
     return pImpl->TheTrueVal;
   else
@@ -242,7 +241,6 @@ ConstantInt* ConstantInt::getTrue(LLVMContext &Context) {
 
 ConstantInt* ConstantInt::getFalse(LLVMContext &Context) {
   LLVMContextImpl *pImpl = Context.pImpl;
-  sys::SmartScopedWriter<true>(pImpl->ConstantsLock);
   if (pImpl->TheFalseVal)
     return pImpl->TheFalseVal;
   else
@@ -261,22 +259,9 @@ ConstantInt *ConstantInt::get(LLVMContext &Context, const APInt& V) {
   const IntegerType *ITy = IntegerType::get(Context, V.getBitWidth());
   // get an existing value or the insertion position
   DenseMapAPIntKeyInfo::KeyTy Key(V, ITy);
-  
-  Context.pImpl->ConstantsLock.reader_acquire();
   ConstantInt *&Slot = Context.pImpl->IntConstants[Key]; 
-  Context.pImpl->ConstantsLock.reader_release();
-    
-  if (!Slot) {
-    sys::SmartScopedWriter<true> Writer(Context.pImpl->ConstantsLock);
-    ConstantInt *&NewSlot = Context.pImpl->IntConstants[Key]; 
-    if (!Slot) {
-      NewSlot = new ConstantInt(ITy, V);
-    }
-    
-    return NewSlot;
-  } else {
-    return Slot;
-  }
+  if (!Slot) Slot = new ConstantInt(ITy, V);
+  return Slot;
 }
 
 Constant* ConstantInt::get(const Type* Ty, uint64_t V, bool isSigned) {
@@ -405,32 +390,24 @@ ConstantFP* ConstantFP::get(LLVMContext &Context, const APFloat& V) {
   
   LLVMContextImpl* pImpl = Context.pImpl;
   
-  pImpl->ConstantsLock.reader_acquire();
   ConstantFP *&Slot = pImpl->FPConstants[Key];
-  pImpl->ConstantsLock.reader_release();
     
   if (!Slot) {
-    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
-    ConstantFP *&NewSlot = pImpl->FPConstants[Key];
-    if (!NewSlot) {
-      const Type *Ty;
-      if (&V.getSemantics() == &APFloat::IEEEsingle)
-        Ty = Type::getFloatTy(Context);
-      else if (&V.getSemantics() == &APFloat::IEEEdouble)
-        Ty = Type::getDoubleTy(Context);
-      else if (&V.getSemantics() == &APFloat::x87DoubleExtended)
-        Ty = Type::getX86_FP80Ty(Context);
-      else if (&V.getSemantics() == &APFloat::IEEEquad)
-        Ty = Type::getFP128Ty(Context);
-      else {
-        assert(&V.getSemantics() == &APFloat::PPCDoubleDouble && 
-               "Unknown FP format");
-        Ty = Type::getPPC_FP128Ty(Context);
-      }
-      NewSlot = new ConstantFP(Ty, V);
+    const Type *Ty;
+    if (&V.getSemantics() == &APFloat::IEEEsingle)
+      Ty = Type::getFloatTy(Context);
+    else if (&V.getSemantics() == &APFloat::IEEEdouble)
+      Ty = Type::getDoubleTy(Context);
+    else if (&V.getSemantics() == &APFloat::x87DoubleExtended)
+      Ty = Type::getX86_FP80Ty(Context);
+    else if (&V.getSemantics() == &APFloat::IEEEquad)
+      Ty = Type::getFP128Ty(Context);
+    else {
+      assert(&V.getSemantics() == &APFloat::PPCDoubleDouble && 
+             "Unknown FP format");
+      Ty = Type::getPPC_FP128Ty(Context);
     }
-    
-    return NewSlot;
+    Slot = new ConstantFP(Ty, V);
   }
   
   return Slot;
@@ -1908,7 +1885,6 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = ConstantAggregateZero::get(getType());
   } else {
     // Check to see if we have this array type already.
-    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
     bool Exists;
     LLVMContextImpl::ArrayConstantsTy::MapTy::iterator I =
       pImpl->ArrayConstants.InsertOrGetItem(Lookup, Exists);
@@ -1987,7 +1963,6 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = ConstantAggregateZero::get(getType());
   } else {
     // Check to see if we have this array type already.
-    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
     bool Exists;
     LLVMContextImpl::StructConstantsTy::MapTy::iterator I =
       pImpl->StructConstants.InsertOrGetItem(Lookup, Exists);

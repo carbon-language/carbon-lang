@@ -52,7 +52,6 @@ void MetadataBase::resizeOperands(unsigned NumOps) {
 //
 MDString *MDString::get(LLVMContext &Context, const StringRef &Str) {
   LLVMContextImpl *pImpl = Context.pImpl;
-  sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
   StringMapEntry<MDString *> &Entry = 
     pImpl->MDStringCache.GetOrCreateValue(Str);
   MDString *&S = Entry.getValue();
@@ -93,12 +92,10 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
   void *InsertPoint;
   MDNode *N;
   {
-    sys::SmartScopedReader<true> Reader(pImpl->ConstantsLock);
     N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
   }  
   if (N) return N;
   
-  sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
   N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
   if (!N) {
     // InsertPoint will have been set by the FindNodeOrInsertPos call.
@@ -118,7 +115,6 @@ void MDNode::dropAllReferences() {
 MDNode::~MDNode() {
   {
     LLVMContextImpl *pImpl = getType()->getContext().pImpl;
-    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
     pImpl->MDNodeSet.RemoveNode(this);
   }
   dropAllReferences();
@@ -147,10 +143,7 @@ void MDNode::replaceElement(Value *From, Value *To) {
     return;
 
   // Remove "this" from the context map. 
-  {
-    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
-    pImpl->MDNodeSet.RemoveNode(this);
-  }
+  pImpl->MDNodeSet.RemoveNode(this);
 
   // MDNode only lists metadata elements in operand list, because MDNode
   // used by MDNode is considered a valid use. However on the side, MDNode
@@ -186,10 +179,8 @@ void MDNode::replaceElement(Value *From, Value *To) {
   // node with updated "this" node.
   FoldingSetNodeID ID;
   Profile(ID);
-  pImpl->ConstantsLock.reader_acquire();
   void *InsertPoint;
   MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-  pImpl->ConstantsLock.reader_release();
 
   if (N) {
     N->replaceAllUsesWith(this);
@@ -197,14 +188,11 @@ void MDNode::replaceElement(Value *From, Value *To) {
     N = 0;
   }
 
-  {
-    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
-    N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
-    if (!N) {
-      // InsertPoint will have been set by the FindNodeOrInsertPos call.
-      N = this;
-      pImpl->MDNodeSet.InsertNode(N, InsertPoint);
-    }
+  N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
+  if (!N) {
+    // InsertPoint will have been set by the FindNodeOrInsertPos call.
+    N = this;
+    pImpl->MDNodeSet.InsertNode(N, InsertPoint);
   }
 }
 

@@ -96,7 +96,6 @@ struct DenseMapAPFloatKeyInfo {
 
 class LLVMContextImpl {
 public:
-  sys::SmartRWMutex<true> ConstantsLock;
   typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*, 
                          DenseMapAPIntKeyInfo> IntMapTy;
   IntMapTy IntConstants;
