@@ -1313,6 +1313,7 @@ extern "C" void LLVMInitializeARMAsmPrinter() {
 void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   ARMMCInstLower MCInstLowering(OutContext, *Mang, getFunctionNumber(), *MAI);
   switch (MI->getOpcode()) {
+  default: break;
   case TargetInstrInfo::DBG_LABEL:
   case TargetInstrInfo::EH_LABEL:
   case TargetInstrInfo::GC_LABEL:
@@ -1327,7 +1328,29 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   case TargetInstrInfo::IMPLICIT_DEF:
     printImplicitDef(MI);
     return;
-  default: break;
+  case ARM::PICADD: { // FIXME: Remove asm string from td file.
+    // This is a pseudo op for a label + instruction sequence, which looks like:
+    // LPC0:
+    //     add r0, pc, r0
+    // This adds the address of LPC0 to r0.
+    
+    // Emit the label.
+    // FIXME: MOVE TO SHARED PLACE.
+    SmallString<60> Name;
+    int Id = (int)MI->getOperand(2).getImm();
+    raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix() << "PC" << Id;
+    OutStreamer.EmitLabel(OutContext.GetOrCreateSymbol(Name.str()));
+    
+    
+    // Form and emit tha dd.
+    MCInst AddInst;
+    AddInst.setOpcode(ARM::ADDrr);
+    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+    AddInst.addOperand(MCOperand::CreateReg(ARM::PC));
+    AddInst.addOperand(MCOperand::CreateReg(MI->getOperand(1).getReg()));
+    printMCInst(&AddInst);
+    return;
+  }
   }
       
   MCInst TmpInst;

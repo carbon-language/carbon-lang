@@ -71,7 +71,6 @@ public:
   
   void printPredicateOperand(const MCInst *MI, unsigned OpNum) {}
   void printSBitModifierOperand(const MCInst *MI, unsigned OpNum) {}
-  void printPCLabel(const MCInst *MI, unsigned OpNum) {}
   void printRegisterList(const MCInst *MI, unsigned OpNum);
   void printCPInstOperand(const MCInst *MI, unsigned OpNum,
                           const char *Modifier) {}
@@ -79,9 +78,9 @@ public:
   void printJT2BlockOperand(const MCInst *MI, unsigned OpNum) {}
   void printTBAddrMode(const MCInst *MI, unsigned OpNum) {}
   void printNoHashImmediate(const MCInst *MI, unsigned OpNum) {}
-  
-  
-  // FIXME:
+
+  void printPCLabel(const MCInst *MI, unsigned OpNum);  
+  // FIXME: Implement.
   void PrintSpecial(const MCInst *MI, const char *Kind) {}
 };
   
