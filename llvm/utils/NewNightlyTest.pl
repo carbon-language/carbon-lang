@@ -48,8 +48,6 @@ use Socket;
 #  -release         Build an LLVM Release version
 #  -release-asserts Build an LLVM ReleaseAsserts version
 #  -disable-bindings     Disable building LLVM bindings.
-#  -cvstag          Check out a specific CVS tag to build LLVM (useful for
-#                   testing release branches)
 #  -with-clang      Checkout Clang source into tools/clang.
 #  -compileflags    Next argument specifies extra options passed to make when
 #                   building LLVM.
@@ -92,12 +90,10 @@ use Socket;
 #  -ldflags         Next argument specifies that linker options that override
 #                   the default.
 #
-# CVSROOT is the CVS repository from which the tree will be checked out,
-#  specified either in the full :method:user@host:/dir syntax, or
-#  just /dir if using a local repo.
+# CVSROOT is ignored, it is passed for backwards compatibility.
 # BUILDDIR is the directory where sources for this test run will be checked out
 #  AND objects for this test run will be built. This directory MUST NOT
-#  exist before the script is run; it will be created by the cvs checkout
+#  exist before the script is run; it will be created by the svn checkout
 #  process and erased (unless -noremove is specified; see above.)
 # WEBDIR is the directory into which the test results web page will be written,
 #  AND in which the "index.html" is assumed to be a symlink to the most recent
@@ -115,8 +111,6 @@ my $SVNURL     = $ENV{"SVNURL"};
 $SVNURL        = 'http://llvm.org/svn/llvm-project' unless $SVNURL;
 my $TestSVNURL = $ENV{"TestSVNURL"};
 $TestSVNURL    = 'http://llvm.org/svn/llvm-project' unless $TestSVNURL;
-my $CVSRootDir = $ENV{'CVSROOT'};
-$CVSRootDir    = "/home/vadve/shared/PublicCVS" unless $CVSRootDir;
 my $BuildDir   = $ENV{'BUILDDIR'};
 $BuildDir      = "$HOME/buildtest" unless $BuildDir;
 my $WebDir     = $ENV{'WEBDIR'};
@@ -206,8 +200,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                              " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++";
                              $GCCPATH=$ARGV[0]; shift;  next; }
   else                     { $GCCPATH=""; }
-  if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; }
-  else                     { $CVSCOOPT="";}
   if (/^-target/)          { $CONFIGUREARGS .= " --target=$ARGV[0]";
                              shift; next; }
   if (/^-cflags/)          { $MAKEOPTS = "$MAKEOPTS C.Flags=\'$ARGV[0]\'";
@@ -254,16 +246,14 @@ if (@ARGV != 0 and @ARGV != 3 and $VERBOSE) {
 }
 
 if (@ARGV == 3) {
-  $CVSRootDir = $ARGV[0];
+  # ARGV[0] used to be the CVS root, ignored for backward compatibility.
   $BuildDir   = $ARGV[1];
   $WebDir     = $ARGV[2];
 }
 
-if ($CVSRootDir eq "" or
-    $BuildDir   eq "" or
+if ($BuildDir   eq "" or
     $WebDir     eq "") {
-  die("please specify a cvs root directory, a build directory, and a ".
-       "web directory");
+  die("please specify a build directory, and a web directory");
  }
 
 if ($nickname eq "") {
@@ -577,7 +567,7 @@ $starttime = `date "+20%y-%m-%d %H:%M:%S"`;
 
 ##############################################################
 #
-# Create the CVS repository directory
+# Create the source repository directory
 #
 ##############################################################
 if (!$NOCHECKOUT) {
@@ -601,7 +591,7 @@ if (!$NOCHECKOUT) {
 
 ##############################################################
 #
-# Check out the llvm tree, using either SVN or CVS
+# Check out the llvm tree with SVN
 #
 ##############################################################
 if (!$NOCHECKOUT) {
@@ -621,7 +611,7 @@ ChangeDir( $LLVMSrcDir , "llvm source directory") ;
 
 ##############################################################
 #
-# Get some static statistics about the current state of CVS
+# Get some static statistics about the current source code
 #
 # This can probably be put on the server side
 #
@@ -1110,7 +1100,7 @@ if ($SUBMIT || !($SUBMITAUX eq "")) {
 
 ##############################################################
 #
-# Remove the cvs tree...
+# Remove the source tree...
 #
 ##############################################################
 system ( "$NICE rm -rf $BuildDir")
