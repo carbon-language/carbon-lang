@@ -130,3 +130,9 @@ namespace T {
   }
 }
 
+// PR5227.
+namespace PR5227 {
+void f(int &a) {
+  (a = 10) = 20;
+}
+}

@@ -1367,6 +1367,16 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
   if (E->getOpcode() != BinaryOperator::Assign)
     return EmitUnsupportedLValue(E, "binary l-value expression");
 
+  if (!hasAggregateLLVMType(E->getType())) {
+    // Emit the LHS as an l-value.
+    LValue LV = EmitLValue(E->getLHS());
+    
+    llvm::Value *RHS = EmitScalarExpr(E->getRHS());
+    EmitStoreOfScalar(RHS, LV.getAddress(), LV.isVolatileQualified(), 
+                      E->getType());
+    return LV;
+  }
+  
   llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
   EmitAggExpr(E, Temp, false);
   // FIXME: Are these qualifiers correct?
