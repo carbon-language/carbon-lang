@@ -166,7 +166,7 @@ TEST_F(JITTest, FarCallToKnownFunction) {
   EXPECT_EQ(8, TestFunctionPtr());
 }
 
-#if !defined(__arm__) && !defined(__ppc__)
+#if !defined(__arm__) && !defined(__POWERPC__) && !defined(__ppc__)
 // Test a function C which calls A and B which call each other.
 TEST_F(JITTest, NonLazyCompilationStillNeedsStubs) {
   TheJIT->DisableLazyCompilation();
