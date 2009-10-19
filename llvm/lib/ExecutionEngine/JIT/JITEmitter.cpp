@@ -63,17 +63,20 @@ static JIT *TheJIT = 0;
 namespace {
   class JITResolverState {
   public:
-    typedef std::map<AssertingVH<Function>, void*> FunctionToStubMapTy;
-    typedef std::map<void*, AssertingVH<Function> > StubToFunctionMapTy;
+    typedef DenseMap<AssertingVH<Function>, void*> FunctionToStubMapTy;
+    typedef std::map<void*, AssertingVH<Function> > CallSiteToFunctionMapTy;
+    typedef DenseMap<AssertingVH<Function>, SmallPtrSet<void*, 1> >
+            FunctionToCallSitesMapTy;
     typedef std::map<AssertingVH<GlobalValue>, void*> GlobalToIndirectSymMapTy;
   private:
     /// FunctionToStubMap - Keep track of the stub created for a particular
     /// function so that we can reuse them if necessary.
     FunctionToStubMapTy FunctionToStubMap;
 
-    /// StubToFunctionMap - Keep track of the function that each stub
-    /// corresponds to.
-    StubToFunctionMapTy StubToFunctionMap;
+    /// CallSiteToFunctionMap - Keep track of the function that each lazy call
+    /// site corresponds to, and vice versa.
+    CallSiteToFunctionMapTy CallSiteToFunctionMap;
+    FunctionToCallSitesMapTy FunctionToCallSitesMap;
 
     /// GlobalToIndirectSymMap - Keep track of the indirect symbol created for a
     /// particular GlobalVariable so that we can reuse them if necessary.
@@ -85,14 +88,78 @@ namespace {
       return FunctionToStubMap;
     }
 
-    StubToFunctionMapTy& getStubToFunctionMap(const MutexGuard& locked) {
-      assert(locked.holds(TheJIT->lock));
-      return StubToFunctionMap;
-    }
-
     GlobalToIndirectSymMapTy& getGlobalToIndirectSymMap(const MutexGuard& locked) {
       assert(locked.holds(TheJIT->lock));
       return GlobalToIndirectSymMap;
+    }
+
+    pair<void *, Function *> LookupFunctionFromCallSite(
+        const MutexGuard &locked, void *CallSite) const {
+      assert(locked.holds(TheJIT->lock));
+
+      // The address given to us for the stub may not be exactly right, it might be
+      // a little bit after the stub.  As such, use upper_bound to find it.
+      CallSiteToFunctionMapTy::const_iterator I =
+        CallSiteToFunctionMap.upper_bound(CallSite);
+      assert(I != CallSiteToFunctionMap.begin() &&
+             "This is not a known call site!");
+      --I;
+      return *I;
+    }
+
+    void AddCallSite(const MutexGuard &locked, void *CallSite, Function *F) {
+      assert(locked.holds(TheJIT->lock));
+
+      assert(CallSiteToFunctionMap.insert(std::make_pair(CallSite, F)).second &&
+             "Pair was already in CallSiteToFunctionMap");
+      FunctionToCallSitesMap[F].insert(CallSite);
+    }
+
+    // Returns the Function of the stub if a stub was erased, or NULL if there
+    // was no stub.  This function uses the call-site->function map to find a
+    // relevant function, but asserts that only stubs and not other call sites
+    // will be passed in.
+    Function *EraseStub(const MutexGuard &locked, void *Stub) {
+      CallSiteToFunctionMapTy::iterator C2F_I =
+        CallSiteToFunctionMap.find(Stub);
+      if (C2F_I == CallSiteToFunctionMap.end()) {
+        // Not a stub.
+        return NULL;
+      }
+
+      Function *const F = C2F_I->second;
+#ifndef NDEBUG
+      void *RealStub = FunctionToStubMap.lookup(F);
+      assert(RealStub == Stub &&
+             "Call-site that wasn't a stub pass in to EraseStub");
+#endif
+      FunctionToStubMap.erase(F);
+      CallSiteToFunctionMap.erase(C2F_I);
+
+      // Remove the stub from the function->call-sites map, and remove the whole
+      // entry from the map if that was the last call site.
+      FunctionToCallSitesMapTy::iterator F2C_I = FunctionToCallSitesMap.find(F);
+      assert(F2C_I != FunctionToCallSitesMap.end() &&
+             "FunctionToCallSitesMap broken");
+      assert(F2C_I->second.erase(Stub) &&
+             "FunctionToCallSitesMap broken");
+      if (F2C_I->second.empty())
+        FunctionToCallSitesMap.erase(F2C_I);
+
+      return F;
+    }
+
+    void EraseAllCallSites(const MutexGuard &locked, Function *F) {
+      assert(locked.holds(TheJIT->lock));
+      FunctionToCallSitesMapTy::iterator F2C = FunctionToCallSitesMap.find(F);
+      if (F2C == FunctionToCallSitesMap.end())
+        return;
+      for (SmallPtrSet<void*, 1>::const_iterator I = F2C->second.begin(),
+             E = F2C->second.end(); I != E; ++I) {
+        assert(CallSiteToFunctionMap.erase(*I) == 1 &&
+               "Missing call site->function mapping");
+      }
+      FunctionToCallSitesMap.erase(F2C);
     }
   };
 
@@ -100,7 +167,7 @@ namespace {
   /// have not yet been compiled.
   class JITResolver {
     typedef JITResolverState::FunctionToStubMapTy FunctionToStubMapTy;
-    typedef JITResolverState::StubToFunctionMapTy StubToFunctionMapTy;
+    typedef JITResolverState::CallSiteToFunctionMapTy CallSiteToFunctionMapTy;
     typedef JITResolverState::GlobalToIndirectSymMapTy GlobalToIndirectSymMapTy;
 
     /// LazyResolverFn - The target lazy resolver function that we actually
@@ -154,7 +221,7 @@ namespace {
     void *AddCallbackAtLocation(Function *F, void *Location) {
       MutexGuard locked(TheJIT->lock);
       /// Get the target-specific JIT resolver function.
-      state.getStubToFunctionMap(locked)[Location] = F;
+      state.AddCallSite(locked, Location, F);
       return (void*)(intptr_t)LazyResolverFn;
     }
     
@@ -183,8 +250,7 @@ void *JITResolver::getFunctionStubIfAvailable(Function *F) {
   MutexGuard locked(TheJIT->lock);
 
   // If we already have a stub for this function, recycle it.
-  void *&Stub = state.getFunctionToStubMap(locked)[F];
-  return Stub;
+  return state.getFunctionToStubMap(locked).lookup(F);
 }
 
 /// getFunctionStub - This returns a pointer to a function stub, creating
@@ -230,7 +296,7 @@ void *JITResolver::getFunctionStub(Function *F) {
 
   // Finally, keep track of the stub-to-Function mapping so that the
   // JITCompilerFn knows which function to compile!
-  state.getStubToFunctionMap(locked)[Stub] = F;
+  state.AddCallSite(locked, Stub, F);
 
   // If we are JIT'ing non-lazily but need to call a function that does not
   // exist yet, add it to the JIT's work list so that we can fill in the stub
@@ -291,10 +357,11 @@ void JITResolver::getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
                                     SmallVectorImpl<void*> &Ptrs) {
   MutexGuard locked(TheJIT->lock);
   
-  FunctionToStubMapTy &FM = state.getFunctionToStubMap(locked);
+  const FunctionToStubMapTy &FM = state.getFunctionToStubMap(locked);
   GlobalToIndirectSymMapTy &GM = state.getGlobalToIndirectSymMap(locked);
   
-  for (FunctionToStubMapTy::iterator i = FM.begin(), e = FM.end(); i != e; ++i){
+  for (FunctionToStubMapTy::const_iterator i = FM.begin(), e = FM.end();
+       i != e; ++i){
     Function *F = i->first;
     if (F->isDeclaration() && F->hasExternalLinkage()) {
       GVs.push_back(i->first);
@@ -310,20 +377,15 @@ void JITResolver::getRelocatableGVs(SmallVectorImpl<GlobalValue*> &GVs,
 
 GlobalValue *JITResolver::invalidateStub(void *Stub) {
   MutexGuard locked(TheJIT->lock);
-  
-  FunctionToStubMapTy &FM = state.getFunctionToStubMap(locked);
-  StubToFunctionMapTy &SM = state.getStubToFunctionMap(locked);
+
   GlobalToIndirectSymMapTy &GM = state.getGlobalToIndirectSymMap(locked);
-  
+
   // Look up the cheap way first, to see if it's a function stub we are
   // invalidating.  If so, remove it from both the forward and reverse maps.
-  if (SM.find(Stub) != SM.end()) {
-    Function *F = SM[Stub];
-    SM.erase(Stub);
-    FM.erase(F);
+  if (Function *F = state.EraseStub(locked, Stub)) {
     return F;
   }
-  
+
   // Otherwise, it might be an indirect symbol stub.  Find it and remove it.
   for (GlobalToIndirectSymMapTy::iterator i = GM.begin(), e = GM.end();
        i != e; ++i) {
@@ -361,14 +423,12 @@ void *JITResolver::JITCompilerFn(void *Stub) {
     // JIT lock to be unlocked.
     MutexGuard locked(TheJIT->lock);
 
-    // The address given to us for the stub may not be exactly right, it might be
-    // a little bit after the stub.  As such, use upper_bound to find it.
-    StubToFunctionMapTy::iterator I =
-      JR.state.getStubToFunctionMap(locked).upper_bound(Stub);
-    assert(I != JR.state.getStubToFunctionMap(locked).begin() &&
-           "This is not a known stub!");
-    F = (--I)->second;
-    ActualPtr = I->first;
+    // The address given to us for the stub may not be exactly right, it might
+    // be a little bit after the stub.  As such, use upper_bound to find it.
+    pair<void*, Function*> I =
+      JR.state.LookupFunctionFromCallSite(locked, Stub);
+    F = I.second;
+    ActualPtr = I.first;
   }
 
   // If we have already code generated the function, just return the address.
@@ -383,25 +443,21 @@ void *JITResolver::JITCompilerFn(void *Stub) {
                         + F->getName() + "' when lazy compiles are disabled!");
     }
   
-    // We might like to remove the stub from the StubToFunction map.
-    // We can't do that! Multiple threads could be stuck, waiting to acquire the
-    // lock above. As soon as the 1st function finishes compiling the function,
-    // the next one will be released, and needs to be able to find the function
-    // it needs to call.
-    //JR.state.getStubToFunctionMap(locked).erase(I);
-
     DEBUG(errs() << "JIT: Lazily resolving function '" << F->getName()
           << "' In stub ptr = " << Stub << " actual ptr = "
           << ActualPtr << "\n");
 
     Result = TheJIT->getPointerToFunction(F);
   }
-  
-  // Reacquire the lock to erase the stub in the map.
+
+  // Reacquire the lock to update the GOT map.
   MutexGuard locked(TheJIT->lock);
 
-  // We don't need to reuse this stub in the future, as F is now compiled.
-  JR.state.getFunctionToStubMap(locked).erase(F);
+  // We might like to remove the call site from the CallSiteToFunction map, but
+  // we can't do that! Multiple threads could be stuck, waiting to acquire the
+  // lock above. As soon as the 1st function finishes compiling the function,
+  // the next one will be released, and needs to be able to find the function it
+  // needs to call.
 
   // FIXME: We could rewrite all references to this stub if we knew them.
 

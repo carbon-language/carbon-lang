@@ -238,6 +238,31 @@ template<> struct simplify_type<const AssertingVH<Value> > {
 template<> struct simplify_type<AssertingVH<Value> >
   : public simplify_type<const AssertingVH<Value> > {};
 
+// Specialize DenseMapInfo to allow AssertingVH to participate in DenseMap.
+template<typename T>
+struct DenseMapInfo<AssertingVH<T> > {
+  typedef DenseMapInfo<T*> PointerInfo;
+  static inline AssertingVH<T> getEmptyKey() {
+    return AssertingVH<T>(PointerInfo::getEmptyKey());
+  }
+  static inline T* getTombstoneKey() {
+    return AssertingVH<T>(PointerInfo::getTombstoneKey());
+  }
+  static unsigned getHashValue(const AssertingVH<T> &Val) {
+    return PointerInfo::getHashValue(Val);
+  }
+  static bool isEqual(const AssertingVH<T> &LHS, const AssertingVH<T> &RHS) {
+    return LHS == RHS;
+  }
+  static bool isPod() {
+#ifdef NDEBUG
+    return true;
+#else
+    return false;
+#endif
+  }
+};
+
 /// TrackingVH - This is a value handle that tracks a Value (or Value subclass),
 /// even across RAUW operations.
 ///
