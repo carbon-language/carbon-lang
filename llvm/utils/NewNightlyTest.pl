@@ -159,7 +159,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-notest$/)         { $NOTEST = 1; next; }
   if (/^-norunningtests$/) { next; } # Backward compatibility, ignored.
   if (/^-parallel-jobs$/)  { $PARALLELJOBS = "$ARGV[0]"; shift; next;}
-  if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j$PARALLELJOBS -l3.0"; next; }
+  if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j$PARALLELJOBS"; next; }
   if (/^-with-clang$/)     { $WITHCLANG = 1; next; }
   if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
                              "OPTIMIZE_OPTION=-O2"; $BUILDTYPE="release"; next;}
@@ -360,7 +360,7 @@ sub ChangeDir { # directory, logical name
   if ( $VERBOSE ) { print "Changing To: $name ($dir)\n"; }
   $result = chdir($dir);
   if (!$result) {
-    print "ERROR!!! Cannot change directory to: $name ($dir) because $!";
+    print "ERROR!!! Cannot change directory to: $name ($dir) because $!\n";
     return false;
   }
   return true;
@@ -534,7 +534,7 @@ sub BuildLLVM {
   RunLoggedCommand("(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) ",
                    $ConfigureLog, "CONFIGURE");
   # Build the entire tree, capturing the output into $BuildLog
-  RunAppendingLoggedCommand("($NICE $MAKECMD clean)", $BuildLog, "BUILD CLEAN");
+  RunAppendingLoggedCommand("($NICE $MAKECMD $MAKEOPTS clean)", $BuildLog, "BUILD CLEAN");
   RunAppendingLoggedCommand("(time -p $NICE $MAKECMD $MAKEOPTS)", $BuildLog, "BUILD");
 
   if (`grep '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
@@ -549,6 +549,7 @@ sub BuildLLVM {
 sub RunDejaGNUTests {
   # Run the feature and regression tests, results are put into testrun.sum and
   # the full log in testrun.log.
+  system "rm -f test/testrun.log test/testrun.sum";
   RunLoggedCommand("(time -p $MAKECMD $MAKEOPTS check)", $DejagnuLog, "DEJAGNU");
 
   # Copy the testrun.log and testrun.sum to our webdir.
@@ -686,6 +687,9 @@ if (!$NOTEST && !$BuildError) {
 
 $endtime = `date "+20%y-%m-%d %H:%M:%S"`;
 
+# The last bit of logic is to remove the build and web dirs, after sending data
+# to the server.
+
 ##############################################################
 #
 # Accumulate the information to send to the server.
@@ -721,8 +725,6 @@ if ($LLVMGCCPATH ne "") {
 }
 (split '\n', $llvmgcc_version_long)[1] =~ /Target: (.+)/;
 my $targetTriple = $1;
-
-if ( $VERBOSE ) { print "SEND THE DATA VIA THE POST REQUEST\n"; }
 
 # Logs.
 my $ConfigureLogData = ReadFile $ConfigureLog;
@@ -760,6 +762,8 @@ $DejagnuWallTime = GetRegex "^real ([0-9.]+)", $DejagnuLogData;
 $DejagnuTime     = "0.0" unless $DejagnuTime;
 $DejagnuWallTime = "0.0" unless $DejagnuWallTime;
 
+if ( $VERBOSE ) { print "SEND THE DATA VIA THE POST REQUEST\n"; }
+
 my %hash_of_data = (
   'machine_data' => $machine_data,
   'build_data' => $ConfigureLogData . $BuildLogData,
@@ -773,6 +777,22 @@ my %hash_of_data = (
   'configtime_cpu'=> $ConfigTime,
   'buildtime_wall' => $BuildWallTime,
   'buildtime_cpu' => $BuildTime,
+  'buildstatus' => $BuildStatus,
+  'singlesource_programstable' => $SingleSourceProgramsTable,
+  'multisource_programstable' => $MultiSourceProgramsTable,
+  'externalsource_programstable' => $ExternalProgramsTable,
+  'llcbeta_options' => $llcbeta_options,
+  'passing_tests' => $passes,
+  'expfail_tests' => $xfails,
+  'unexpfail_tests' => $fails,
+  'all_tests' => $all_tests,
+  'dejagnutests_results' => $DejagnuTestResults,
+  'dejagnutests_log' => $DejagnuLogData,
+  'starttime' => $starttime,
+  'endtime' => $endtime,
+  'target_triple' => $targetTriple,
+
+  # Unused, but left around for backwards compatability.
   'warnings' => "",
   'cvsusercommitlist' => "",
   'cvsuserupdatelist' => "",
@@ -782,26 +802,12 @@ my %hash_of_data = (
   'lines_of_code' => "",
   'cvs_file_count' => 0,
   'cvs_dir_count' => 0,
-  'buildstatus' => $BuildStatus,
-  'singlesource_programstable' => $SingleSourceProgramsTable,
-  'multisource_programstable' => $MultiSourceProgramsTable,
-  'externalsource_programstable' => $ExternalProgramsTable,
-  'llcbeta_options' => $llcbeta_options,
   'warnings_removed' => "",
   'warnings_added' => "",
-  'passing_tests' => $passes,
-  'expfail_tests' => $xfails,
-  'unexpfail_tests' => $fails,
-  'all_tests' => $all_tests,
   'new_tests' => "",
   'removed_tests' => "",
-  'dejagnutests_results' => $DejagnuTestResults,
-  'dejagnutests_log' => $DejagnuLogData,
-  'starttime' => $starttime,
-  'endtime' => $endtime,
   'o_file_sizes' => "",
-  'a_file_sizes' => "",
-  'target_triple' => $targetTriple
+  'a_file_sizes' => ""
 );
 
 if ($SUBMIT || !($SUBMITAUX eq "")) {
