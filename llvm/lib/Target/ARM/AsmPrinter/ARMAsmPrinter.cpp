@@ -63,10 +63,6 @@ namespace {
     /// MachineFunction.
     const MachineConstantPool *MCP;
 
-    /// HiddenGVNonLazyPtrs - Keeps the set of GlobalValues with hidden
-    /// visibility that require non-lazy-pointers for indirect access.
-    StringMap<std::string> HiddenGVNonLazyPtrs;
-
   public:
     explicit ARMAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                            const MCAsmInfo *T, bool V)
@@ -159,17 +155,26 @@ namespace {
           Name = Mang->getMangledName(GV);
         else {
           // FIXME: Remove this when Darwin transition to @GOT like syntax.
-          std::string SymName = Mang->getMangledName(GV);
           Name = Mang->getMangledName(GV, "$non_lazy_ptr", true);
-          if (GV->hasHiddenVisibility())
-            HiddenGVNonLazyPtrs[SymName] = Name;
-          else {
-            MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.c_str());
+          MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.c_str());
+
+          if (GV->hasHiddenVisibility()) {
+            const MCSymbol *&StubSym =
+              MMI->getObjFileInfo<MachineModuleInfoMachO>()
+                       .getHiddenGVStubEntry(Sym);
+            if (StubSym == 0) {
+              //NameStr.clear();
+              //Mang->getNameWithPrefix(NameStr, GV, false);
+              std::string SymName = Mang->getMangledName(GV);
+              StubSym = OutContext.GetOrCreateSymbol(SymName.c_str());
+            }
+          } else {
             const MCSymbol *&StubSym =
               MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(Sym);
             if (StubSym == 0) {
               //NameStr.clear();
               //Mang->getNameWithPrefix(NameStr, GV, false);
+              std::string SymName = Mang->getMangledName(GV);
               StubSym = OutContext.GetOrCreateSymbol(SymName.c_str());
             }
           }
@@ -1265,13 +1270,15 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
       }
     }
 
-    if (!HiddenGVNonLazyPtrs.empty()) {
+    Stubs = MMIMacho.GetHiddenGVStubList();
+    if (!Stubs.empty()) {
       OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
       EmitAlignment(2);
-      for (StringMap<std::string>::iterator I = HiddenGVNonLazyPtrs.begin(),
-             E = HiddenGVNonLazyPtrs.end(); I != E; ++I) {
-        O << I->second << ":\n";
-        O << "\t.long " << I->getKeyData() << "\n";
+      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+        Stubs[i].first->print(O, MAI);
+        O << ":\n\t.long ";
+        Stubs[i].second->print(O, MAI);
+        O << "\n";
       }
     }
 
