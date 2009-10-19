@@ -595,7 +595,7 @@ sub TestDirectory {
   return ($ProgramsTable, $LLCBetaOpts);
 }
 
-# Run all the nightly tests and return the program tables and the number of
+# Run all the nightly tests and return the program tables and the list of tests,
 # passes, fails, and xfails.
 sub RunNightlyTest() {
   ($SSProgs, $llcbeta_options) = TestDirectory("SingleSource");
@@ -625,7 +625,8 @@ sub RunNightlyTest() {
   }
 
   # Compile passes, fails, xfails.
-  my @TestSuiteResultLines = split "\n", (ReadFile "$Prefix-Tests.txt");
+  my $All = (ReadFile "$Prefix-Tests.txt");
+  my @TestSuiteResultLines = split "\n", $All;
   my ($Passes, $Fails, $XFails) = "";
 
   for ($x=0; $x < @TestSuiteResultLines; $x++) {
@@ -640,7 +641,7 @@ sub RunNightlyTest() {
     }
   }
 
-  return ($SSProgs, $MSProgs, $ExtProgs, $Passes, $Fails, $XFails);
+  return ($SSProgs, $MSProgs, $ExtProgs, $All, $Passes, $Fails, $XFails);
 }
 
 ##############################################################
@@ -677,10 +678,10 @@ if (!$NODEJAGNU && !$BuildError) {
 
 # Run the llvm-test tests.
 my ($SingleSourceProgramsTable, $MultiSourceProgramsTable, $ExternalProgramsTable,
-    $passes, $fails, $xfails) = "";
+    $all_tests, $passes, $fails, $xfails) = "";
 if (!$NOTEST && !$BuildError) {
   ($SingleSourceProgramsTable, $MultiSourceProgramsTable, $ExternalProgramsTable,
-   $passes, $fails, $xfails) = RunNightlyTest();
+   $all_tests, $passes, $fails, $xfails) = RunNightlyTest();
 }
 
 $endtime = `date "+20%y-%m-%d %H:%M:%S"`;
@@ -791,7 +792,7 @@ my %hash_of_data = (
   'passing_tests' => $passes,
   'expfail_tests' => $xfails,
   'unexpfail_tests' => $fails,
-  'all_tests' => $dejagnu_test_list,
+  'all_tests' => $all_tests,
   'new_tests' => "",
   'removed_tests' => "",
   'dejagnutests_results' => $DejagnuTestResults,
