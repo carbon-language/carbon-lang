@@ -27,13 +27,14 @@
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
 #include <cstdio>
+#include <vector>
+
 #ifdef LLVM_ON_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
 #include <dlfcn.h>
 #endif
-#include <vector>
 
 using namespace clang;
 using namespace idx;
