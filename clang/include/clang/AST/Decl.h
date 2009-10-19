@@ -100,8 +100,8 @@ public:
   /// This requires that the declaration have a name and that it be a simple
   /// identifier.
   llvm::StringRef getName() const {
-    assert(getIdentifier() && "Name is not a simple identifier");
-    return getIdentifier()->getName();
+    assert(Name.isIdentifier() && "Name is not a simple identifier");
+    return getIdentifier() ? getIdentifier()->getName() : "";
   }
 
   /// getNameAsCString - Get the name of identifier for this declaration as a
@@ -110,8 +110,8 @@ public:
   //
   // FIXME: Deprecated, move clients to getName().
   const char *getNameAsCString() const {
-    assert(getIdentifier() && "Name is not a simple identifier");
-    return getIdentifier()->getNameStart();
+    assert(Name.isIdentifier() && "Name is not a simple identifier");
+    return getIdentifier() ? getIdentifier()->getNameStart() : "";
   }
 
   /// getNameAsString - Get a human-readable name for the declaration, even if
