@@ -157,26 +157,16 @@ namespace {
           // FIXME: Remove this when Darwin transition to @GOT like syntax.
           Name = Mang->getMangledName(GV, "$non_lazy_ptr", true);
           MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.c_str());
-
-          if (GV->hasHiddenVisibility()) {
-            const MCSymbol *&StubSym =
-              MMI->getObjFileInfo<MachineModuleInfoMachO>()
-                       .getHiddenGVStubEntry(Sym);
-            if (StubSym == 0) {
-              //NameStr.clear();
-              //Mang->getNameWithPrefix(NameStr, GV, false);
-              std::string SymName = Mang->getMangledName(GV);
-              StubSym = OutContext.GetOrCreateSymbol(SymName.c_str());
-            }
-          } else {
-            const MCSymbol *&StubSym =
-              MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(Sym);
-            if (StubSym == 0) {
-              //NameStr.clear();
-              //Mang->getNameWithPrefix(NameStr, GV, false);
-              std::string SymName = Mang->getMangledName(GV);
-              StubSym = OutContext.GetOrCreateSymbol(SymName.c_str());
-            }
+          
+          MachineModuleInfoMachO &MMIMachO =
+            MMI->getObjFileInfo<MachineModuleInfoMachO>();
+          const MCSymbol *&StubSym =
+            GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(Sym) :
+                                        MMIMachO.getGVStubEntry(Sym);
+          if (StubSym == 0) {
+            SmallString<128> NameStr;
+            Mang->getNameWithPrefix(NameStr, GV, false);
+            StubSym = OutContext.GetOrCreateSymbol(NameStr.str());
           }
         }
       } else
