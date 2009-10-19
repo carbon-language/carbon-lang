@@ -73,7 +73,7 @@ public:
   void printSBitModifierOperand(const MCInst *MI, unsigned OpNum) {}
   void printRegisterList(const MCInst *MI, unsigned OpNum);
   void printCPInstOperand(const MCInst *MI, unsigned OpNum,
-                          const char *Modifier) {}
+                          const char *Modifier);
   void printJTBlockOperand(const MCInst *MI, unsigned OpNum) {}
   void printJT2BlockOperand(const MCInst *MI, unsigned OpNum) {}
   void printTBAddrMode(const MCInst *MI, unsigned OpNum) {}

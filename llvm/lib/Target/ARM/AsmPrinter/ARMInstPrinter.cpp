@@ -159,6 +159,11 @@ void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum) {
 }
 
 
+void ARMInstPrinter::printCPInstOperand(const MCInst *MI, unsigned OpNum,
+                                        const char *Modifier) {
+  // FIXME: remove this.
+  abort();
+}
 
 void ARMInstPrinter::printPCLabel(const MCInst *MI, unsigned OpNum) {
   // FIXME: remove this.
