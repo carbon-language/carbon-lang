@@ -507,43 +507,38 @@ const char *clang_getCursorSpelling(CXCursor C)
   
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
-      case CXCursor_ObjCSuperClassRef: 
-        {
+      case CXCursor_ObjCSuperClassRef: {
         ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing interface decl");
         return OID->getSuperClass()->getIdentifier()->getNameStart();
-        }
-      case CXCursor_ObjCClassRef: 
-        {
+      }
+      case CXCursor_ObjCClassRef: {
         if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND)) {
           return OID->getIdentifier()->getNameStart();
         }
         ObjCCategoryDecl *OID = dyn_cast<ObjCCategoryDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing category decl");
         return OID->getClassInterface()->getIdentifier()->getNameStart();
-        }
-      case CXCursor_ObjCProtocolRef: 
-        {
+      }
+      case CXCursor_ObjCProtocolRef: {
         ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing protocol decl");
         return OID->getIdentifier()->getNameStart();
-        }
-      case CXCursor_ObjCSelectorRef:
-        {
+      }
+      case CXCursor_ObjCSelectorRef: {
         ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
                                  static_cast<Stmt *>(C.stmt));
         assert(OME && "clang_getCursorLine(): Missing message expr");
         return OME->getSelector().getAsString().c_str();
-        }
+      }
       case CXCursor_VarRef:
       case CXCursor_FunctionRef:
-      case CXCursor_EnumConstantRef:
-        {
+      case CXCursor_EnumConstantRef: {
         DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
                                  static_cast<Stmt *>(C.stmt));
         assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
         return DRE->getDecl()->getIdentifier()->getNameStart();
-        }
+      }
       default:
         return "<not implemented>";
     }
@@ -745,8 +740,7 @@ static SourceLocation getLocationFromCursor(CXCursor C,
                                             NamedDecl *ND) {
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
-      case CXCursor_ObjCClassRef: 
-        {
+      case CXCursor_ObjCClassRef: {
         if (isa<ObjCInterfaceDecl>(ND)) {
           // FIXME: This is a hack (storing the parent decl in the stmt slot).
           NamedDecl *parentDecl = static_cast<NamedDecl *>(C.stmt);
@@ -755,56 +749,49 @@ static SourceLocation getLocationFromCursor(CXCursor C,
         ObjCCategoryDecl *OID = dyn_cast<ObjCCategoryDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing category decl");
         return OID->getClassInterface()->getLocation();
-        }
-      case CXCursor_ObjCSuperClassRef: 
-        {
+      }
+      case CXCursor_ObjCSuperClassRef: {
         ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing interface decl");
         return OID->getSuperClassLoc();
-        }
-      case CXCursor_ObjCProtocolRef: 
-        {
+      }
+      case CXCursor_ObjCProtocolRef: {
         ObjCProtocolDecl *OID = dyn_cast<ObjCProtocolDecl>(ND);
         assert(OID && "clang_getCursorLine(): Missing protocol decl");
         return OID->getLocation();
-        }
-      case CXCursor_ObjCSelectorRef:
-        {
+      }
+      case CXCursor_ObjCSelectorRef: {
         ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(
                                  static_cast<Stmt *>(C.stmt));
         assert(OME && "clang_getCursorLine(): Missing message expr");
         return OME->getLeftLoc(); /* FIXME: should be a range */
-        }
+      }
       case CXCursor_VarRef:
       case CXCursor_FunctionRef:
-      case CXCursor_EnumConstantRef:
-        {
+      case CXCursor_EnumConstantRef: {
         DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(
                                  static_cast<Stmt *>(C.stmt));
         assert(DRE && "clang_getCursorLine(): Missing decl ref expr");
         return DRE->getLocation();
-        }
+      }
       default:
         return SourceLocation();
     }
   } else { // We have a declaration or a definition.
     SourceLocation SLoc;
     switch (ND->getKind()) {
-      case Decl::ObjCInterface: 
-        {
+      case Decl::ObjCInterface: {
         SLoc = dyn_cast<ObjCInterfaceDecl>(ND)->getClassLoc();
         break;
-        }
-      case Decl::ObjCProtocol: 
-        {
+      }
+      case Decl::ObjCProtocol: {
         SLoc = ND->getLocation(); /* FIXME: need to get the name location. */
         break;
-        }
-      default: 
-        {
+      }
+      default: {
         SLoc = ND->getLocation();
         break;
-        }
+      }
     }
     if (SLoc.isInvalid())
       return SourceLocation();
