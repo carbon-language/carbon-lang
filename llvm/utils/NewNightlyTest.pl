@@ -269,6 +269,7 @@ if ($CONFIG_PATH ne "") {
 #
 ##############################################################
 my $Prefix = "$WebDir/$DATE";
+my $ConfigureLog = "$Prefix-Configure-Log.txt";
 my $BuildLog = "$Prefix-Build-Log.txt";
 my $COLog = "$Prefix-CVS-Log.txt";
 my $SingleSourceLog = "$Prefix-SingleSource-ProgramTest.txt.gz";
@@ -276,7 +277,7 @@ my $MultiSourceLog = "$Prefix-MultiSource-ProgramTest.txt.gz";
 my $ExternalLog = "$Prefix-External-ProgramTest.txt.gz";
 my $DejagnuLog = "$Prefix-Dejagnu-testrun.log";
 my $DejagnuSum = "$Prefix-Dejagnu-testrun.sum";
-my $DejagnuTestsLog = "$Prefix-DejagnuTests-Log.txt";
+my $DejagnuLog = "$Prefix-DejagnuTests-Log.txt";
 if (! -d $WebDir) {
   mkdir $WebDir, 0777 or die "Unable to create web directory: '$WebDir'.";
   if($VERBOSE){
@@ -346,25 +347,13 @@ sub RunAppendingLoggedCommand {
   }
 }
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub GetRegex {   # (Regex with ()'s, value)
-  $_[1] =~ /$_[0]/m;
-  return $1
-    if (defined($1));
+  if ($_[1] =~ /$_[0]/m) {
+    return $1;
+  }
   return "0";
 }
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sub GetRegexNum {
-  my ($Regex, $Num, $Regex2, $File) = @_;
-  my @Items = split "\n", `grep '$Regex' $File`;
-  return GetRegex $Regex2, $Items[$Num];
-}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub ChangeDir { # directory, logical name
   my ($dir,$name) = @_;
   chomp($dir);
@@ -377,8 +366,6 @@ sub ChangeDir { # directory, logical name
   return true;
 }
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub ReadFile {
   if (open (FILE, $_[0])) {
     undef $/;
@@ -392,47 +379,17 @@ sub ReadFile {
   }
 }
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub WriteFile {  # (filename, contents)
   open (FILE, ">$_[0]") or die "Could not open file '$_[0]' for writing!\n";
   print FILE $_[1];
   close FILE;
 }
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 sub CopyFile { #filename, newfile
   my ($file, $newfile) = @_;
   chomp($file);
   if ($VERBOSE) { print "Copying $file to $newfile\n"; }
   copy($file, $newfile);
-}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sub AddRecord {
-  my ($Val, $Filename,$WebDir) = @_;
-  my @Records;
-  if (open FILE, "$WebDir/$Filename") {
-    @Records = grep !/$DATE/, split "\n", <FILE>;
-    close FILE;
-  }
-  push @Records, "$DATE: $Val";
-  WriteFile "$WebDir/$Filename", (join "\n", @Records) . "\n";
-}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# FormatTime - Convert a time from 1m23.45 into 83.45
-#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sub FormatTime {
-  my $Time = shift;
-  if ($Time =~ m/([0-9]+)m([0-9.]+)/) {
-    $Time = sprintf("%7.4f", $1*60.0+$2);
-  }
-  return $Time;
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -588,9 +545,9 @@ sub BuildLLVM {
   if (!$NOCHECKOUT && !$NOBUILD) {
     my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
     RunLoggedCommand("(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) ",
-                     $BuildLog, "CONFIGURE");
+                     $ConfigureLog, "CONFIGURE");
     # Build the entire tree, capturing the output into $BuildLog
-    RunAppendingLoggedCommand("(time -p $NICE $MAKECMD clean)", $BuildLog, "BUILD CLEAN");
+    RunAppendingLoggedCommand("($NICE $MAKECMD clean)", $BuildLog, "BUILD CLEAN");
     RunAppendingLoggedCommand("(time -p $NICE $MAKECMD $MAKEOPTS)", $BuildLog, "BUILD");
   }
 
@@ -619,34 +576,21 @@ if ($BuildError) {
 # Running dejagnu tests
 #
 ##############################################################
-my $DejagnuTestResults=""; # String containing the results of the dejagnu
-my $dejagnu_output = "$DejagnuTestsLog";
+
+# String containing the results of the dejagnu
+my $DejagnuTestResults="Dejagnu skipped by user choice.";
+
 if (!$NODEJAGNU) {
   #Run the feature and regression tests, results are put into testrun.sum
   #Full log in testrun.log
-  RunLoggedCommand("(time -p $MAKECMD $MAKEOPTS check)", $dejagnu_output, "DEJAGNU");
+  RunLoggedCommand("(time -p $MAKECMD $MAKEOPTS check)", $DejagnuLog, "DEJAGNU");
 
   #Copy the testrun.log and testrun.sum to our webdir
   CopyFile("test/testrun.log", $DejagnuLog);
   CopyFile("test/testrun.sum", $DejagnuSum);
   #can be done on server
   $DejagnuTestResults = GetDejagnuTestResults($DejagnuSum, $DejagnuLog);
-  $unexpfail_tests = $DejagnuTestResults;
 }
-
-#Extract time of dejagnu tests
-my $DejagnuTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$dejagnu_output";
-my $DejagnuTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$dejagnu_output";
-$DejagnuTime  = $DejagnuTimeU+$DejagnuTimeS;  # DejagnuTime = User+System
-$DejagnuWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$dejagnu_output";
-$DejagnuTestResults =
-  "Dejagnu skipped by user choice." unless $DejagnuTestResults;
-$DejagnuTime     = "0.0" unless $DejagnuTime;
-$DejagnuWallTime = "0.0" unless $DejagnuWallTime;
-
-if (!$NODEJAGNU) {
-  if ( $VERBOSE ) { print "BUILD INFORMATION COLLECTION STAGE\n"; }
-} #endif !NODEGAGNU
 
 ##############################################################
 #
@@ -665,6 +609,7 @@ sub TestDirectory {
   my $ProgramTestLog = "$Prefix-$SubDir-ProgramTest.txt";
 
   # Run the programs tests... creating a report.nightly.csv file
+  my $LLCBetaOpts = "";
   if (!$NOTEST) {
     if( $VERBOSE) {
       print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
@@ -673,7 +618,7 @@ sub TestDirectory {
     RunLoggedCommand("$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
                      "$TESTFLAGS TEST=nightly",
                      $ProgramTestLog, "TEST DIRECTORY $SubDir");
-    $llcbeta_options=`$MAKECMD print-llcbeta-option`;
+    $LLCBetaOpts = `$MAKECMD print-llcbeta-option`;
   }
 
   my $ProgramsTable;
@@ -696,8 +641,8 @@ sub TestDirectory {
   $ProgramsTable = ReadFile "report.nightly.csv";
 
   ChangeDir( "../../..", "Programs Test Parent Directory" );
-  return ($ProgramsTable, $llcbeta_options);
-} #end sub TestDirectory
+  return ($ProgramsTable, $LLCBetaOpts);
+}
 
 ##############################################################
 #
@@ -705,8 +650,7 @@ sub TestDirectory {
 #
 ##############################################################
 if (!$BuildError) {
-  ($SingleSourceProgramsTable, $llcbeta_options) =
-    TestDirectory("SingleSource");
+  ($SingleSourceProgramsTable, $llcbeta_options) = TestDirectory("SingleSource");
   WriteFile "$Prefix-SingleSource-Performance.txt", $SingleSourceProgramsTable;
   ($MultiSourceProgramsTable, $llcbeta_options) = TestDirectory("MultiSource");
   WriteFile "$Prefix-MultiSource-Performance.txt", $MultiSourceProgramsTable;
@@ -732,32 +676,22 @@ if (!$BuildError) {
                " | sort > $Prefix-Performance.txt";
   }
 
-  ##############################################################
-  #
-  #
-  # gathering tests added removed broken information here
-  #
-  #
-  ##############################################################
-  my $dejagnu_test_list = ReadFile "$Prefix-Tests.txt";
-  my @DEJAGNU = split "\n", $dejagnu_test_list;
+  # Compile passes, fails, xfails.
+  my @TestSuiteResultLines = split "\n", (ReadFile "$Prefix-Tests.txt");
   my ($passes, $fails, $xfails) = "";
 
-  if(!$NODEJAGNU) {
-    for ($x=0; $x<@DEJAGNU; $x++) {
-      if ($DEJAGNU[$x] =~ m/^PASS:/) {
-        $passes.="$DEJAGNU[$x]\n";
-      }
-      elsif ($DEJAGNU[$x] =~ m/^FAIL:/) {
-        $fails.="$DEJAGNU[$x]\n";
-      }
-      elsif ($DEJAGNU[$x] =~ m/^XFAIL:/) {
-        $xfails.="$DEJAGNU[$x]\n";
-      }
+  for ($x=0; $x < @TestSuiteResultLines; $x++) {
+    if (@TestSuiteResultLines[$x] =~ m/^PASS:/) {
+      $passes .= "$TestSuiteResultLines[$x]\n";
+    }
+    elsif (@TestSuiteResultLines[$x] =~ m/^FAIL:/) {
+      $fails .= "$TestSuiteResultLines[$x]\n";
+    }
+    elsif (@TestSuiteResultLines[$x] =~ m/^XFAIL:/) {
+      $xfails .= "$TestSuiteResultLines[$x]\n";
     }
   }
-
-} #end if !$BuildError
+}
 
 ##############################################################
 #
@@ -781,46 +715,24 @@ $machine_data = "uname: ".`uname -a`.
                 "date: ".`date \"+20%y-%m-%d\"`.
                 "time: ".`date +\"%H:%M:%S\"`;
 
-my @BUILD_DATA;
-my $build_data;
-@BUILD_DATA = ReadFile "$BuildLog";
-$build_data = join("\n", @BUILD_DATA);
-
-my (@DEJAGNU_LOG, @DEJAGNU_SUM, @DEJAGNULOG_FULL, @GCC_VERSION);
-my ($dejagnutests_log ,$dejagnutests_sum, $dejagnulog_full) = "";
-my ($gcc_version, $gcc_version_long) = "";
-
-$gcc_version_long="";
+my $gcc_version_long = "";
 if ($GCCPATH ne "") {
-	$gcc_version_long = `$GCCPATH/gcc --version`;
+  $gcc_version_long = `$GCCPATH/gcc --version`;
 } elsif ($ENV{"CC"}) {
-	$gcc_version_long = `$ENV{"CC"} --version`;
+  $gcc_version_long = `$ENV{"CC"} --version`;
 } else {
-	$gcc_version_long = `gcc --version`;
+  $gcc_version_long = `gcc --version`;
 }
-@GCC_VERSION = split '\n', $gcc_version_long;
-$gcc_version = $GCC_VERSION[0];
+my $gcc_version = (split '\n', $gcc_version_long)[0];
 
-$llvmgcc_version_long="";
+my $llvmgcc_version_long = "";
 if ($LLVMGCCPATH ne "") {
   $llvmgcc_version_long = `$LLVMGCCPATH/llvm-gcc -v 2>&1`;
 } else {
   $llvmgcc_version_long = `llvm-gcc -v 2>&1`;
 }
-@LLVMGCC_VERSION = split '\n', $llvmgcc_version_long;
-$llvmgcc_versionTarget = $LLVMGCC_VERSION[1];
-$llvmgcc_versionTarget =~ /Target: (.+)/;
-$targetTriple = $1;
-
-if(!$BuildError){
-  @DEJAGNU_LOG = ReadFile "$DejagnuLog";
-  @DEJAGNU_SUM = ReadFile "$DejagnuSum";
-  $dejagnutests_log = join("\n", @DEJAGNU_LOG);
-  $dejagnutests_sum = join("\n", @DEJAGNU_SUM);
-
-  @DEJAGNULOG_FULL = ReadFile "$DejagnuTestsLog";
-  $dejagnulog_full = join("\n", @DEJAGNULOG_FULL);
-}
+(split '\n', $llvmgcc_version_long)[1] =~ /Target: (.+)/;
+my $targetTriple = $1;
 
 ##############################################################
 #
@@ -830,32 +742,45 @@ if(!$BuildError){
 
 if ( $VERBOSE ) { print "SEND THE DATA VIA THE POST REQUEST\n"; }
 
+# Logs.
+my $ConfigureLogData = ReadFile $ConfigureLog;
+my $BuildLogData = ReadFile $BuildLog;
+my $DejagnuLogData = ReadFile $DejagnuLog;
+my $CheckoutLogData = ReadFile $COLog;
+
 # Checkout info.
-my $CheckoutTime_Wall = GetRegex "([0-9.]+)", `grep '^real' $COLog`;
-my $CheckoutTime_User = GetRegex "([0-9.]+)", `grep '^user' $COLog`;
-my $CheckoutTime_Sys = GetRegex "([0-9.]+)", `grep '^sys' $COLog`;
+my $CheckoutTime_Wall = GetRegex "^real ([0-9.]+)", $CheckoutLogData;
+my $CheckoutTime_User = GetRegex "^user ([0-9.]+)", $CheckoutLogData;
+my $CheckoutTime_Sys = GetRegex "^sys ([0-9.]+)", $CheckoutLogData;
 my $CheckoutTime_CPU = $CVSCheckoutTime_User + $CVSCheckoutTime_Sys;
 
 # Configure info.
-my $ConfigTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$BuildLog";
-my $ConfigTimeS = GetRegexNum "^sys", 0, "([0-9.]+)", "$BuildLog";
+my $ConfigTimeU = GetRegex "^user ([0-9.]+)", $ConfigureLogData;
+my $ConfigTimeS = GetRegex "^sys ([0-9.]+)", $ConfigureLogData;
 my $ConfigTime  = $ConfigTimeU+$ConfigTimeS;  # ConfigTime = User+System
-my $ConfigWallTime = GetRegexNum "^real", 0,"([0-9.]+)","$BuildLog";
+my $ConfigWallTime = GetRegex "^real ([0-9.]+)",$ConfigureLogData;
 $ConfigTime=-1 unless $ConfigTime;
 $ConfigWallTime=-1 unless $ConfigWallTime;
 
 # Build info.
-my $BuildTimeU = GetRegexNum "^user", 1, "([0-9.]+)", "$BuildLog";
-my $BuildTimeS = GetRegexNum "^sys", 1, "([0-9.]+)", "$BuildLog";
+my $BuildTimeU = GetRegex "^user ([0-9.]+)", $BuildLogData;
+my $BuildTimeS = GetRegex "^sys ([0-9.]+)", $BuildLogData;
 my $BuildTime  = $BuildTimeU+$BuildTimeS;  # BuildTime = User+System
-my $BuildWallTime = GetRegexNum "^real", 1, "([0-9.]+)","$BuildLog";
+my $BuildWallTime = GetRegex "^real ([0-9.]+)", $BuildLogData;
 $BuildTime=-1 unless $BuildTime;
 $BuildWallTime=-1 unless $BuildWallTime;
 
+# DejaGNU info.
+my $DejagnuTimeU = GetRegex "^user ([0-9.]+)", $DejagnuLogData;
+my $DejagnuTimeS = GetRegex "^sys ([0-9.]+)", $DejagnuLogData;
+$DejagnuTime  = $DejagnuTimeU+$DejagnuTimeS;  # DejagnuTime = User+System
+$DejagnuWallTime = GetRegex "^real ([0-9.]+)", $DejagnuLogData;
+$DejagnuTime     = "0.0" unless $DejagnuTime;
+$DejagnuWallTime = "0.0" unless $DejagnuWallTime;
 
 my %hash_of_data = (
   'machine_data' => $machine_data,
-  'build_data' => $build_data,
+  'build_data' => $ConfigureLogData . $BuildLogData,
   'gcc_version' => $gcc_version,
   'nickname' => $nickname,
   'dejagnutime_wall' => $DejagnuWallTime,
@@ -879,7 +804,7 @@ my %hash_of_data = (
   'singlesource_programstable' => $SingleSourceProgramsTable,
   'multisource_programstable' => $MultiSourceProgramsTable,
   'externalsource_programstable' => $ExternalProgramsTable,
-  'llcbeta_options' => $multisource_llcbeta_options,
+  'llcbeta_options' => $llcbeta_options,
   'warnings_removed' => "",
   'warnings_added' => "",
   'passing_tests' => $passes,
@@ -889,7 +814,7 @@ my %hash_of_data = (
   'new_tests' => "",
   'removed_tests' => "",
   'dejagnutests_results' => $DejagnuTestResults,
-  'dejagnutests_log' => $dejagnulog_full,
+  'dejagnutests_log' => $DejagnuLogData,
   'starttime' => $starttime,
   'endtime' => $endtime,
   'o_file_sizes' => "",
