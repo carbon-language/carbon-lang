@@ -27,12 +27,12 @@ namespace llvm {
 /// X86MCInstLower - This class is used to lower an MachineInstr into an MCInst.
 class VISIBILITY_HIDDEN X86MCInstLower {
   MCContext &Ctx;
-  Mangler *Mang;
+  Mangler &Mang;
   X86AsmPrinter &AsmPrinter;
 
   const X86Subtarget &getSubtarget() const;
 public:
-  X86MCInstLower(MCContext &ctx, Mangler *mang, X86AsmPrinter &asmprinter)
+  X86MCInstLower(MCContext &ctx, Mangler &mang, X86AsmPrinter &asmprinter)
     : Ctx(ctx), Mang(mang), AsmPrinter(asmprinter) {}
   
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;

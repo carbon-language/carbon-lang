@@ -59,7 +59,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
     isImplicitlyPrivate = true;
   
   SmallString<128> Name;
-  Mang->getNameWithPrefix(Name, GV, isImplicitlyPrivate);
+  Mang.getNameWithPrefix(Name, GV, isImplicitlyPrivate);
   
   if (getSubtarget().isTargetCygMing()) {
     X86COFFMachineModuleInfo &COFFMMI = 
@@ -86,7 +86,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
     const MCSymbol *&StubSym = getMachOMMI().getGVStubEntry(Sym);
     if (StubSym == 0) {
       Name.clear();
-      Mang->getNameWithPrefix(Name, GV, false);
+      Mang.getNameWithPrefix(Name, GV, false);
       StubSym = Ctx.GetOrCreateSymbol(Name.str());
     }
     return Sym;
@@ -97,7 +97,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
     const MCSymbol *&StubSym = getMachOMMI().getHiddenGVStubEntry(Sym);
     if (StubSym == 0) {
       Name.clear();
-      Mang->getNameWithPrefix(Name, GV, false);
+      Mang.getNameWithPrefix(Name, GV, false);
       StubSym = Ctx.GetOrCreateSymbol(Name.str());
     }
     return Sym;
@@ -108,7 +108,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
     const MCSymbol *&StubSym = getMachOMMI().getFnStubEntry(Sym);
     if (StubSym == 0) {
       Name.clear();
-      Mang->getNameWithPrefix(Name, GV, false);
+      Mang.getNameWithPrefix(Name, GV, false);
       StubSym = Ctx.GetOrCreateSymbol(Name.str());
     }
     return Sym;
@@ -393,7 +393,7 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 
 
 void X86AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
-  X86MCInstLower MCInstLowering(OutContext, Mang, *this);
+  X86MCInstLower MCInstLowering(OutContext, *Mang, *this);
   switch (MI->getOpcode()) {
   case TargetInstrInfo::DBG_LABEL:
   case TargetInstrInfo::EH_LABEL:
