@@ -425,14 +425,26 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
 
   if (L) {
     if (IsLoopEntry) {
-      if (Loop *PredLoop = LI->getLoopFor(Preds[0])) {
-        // Add the new block to the nearest enclosing loop (and not an
-        // adjacent loop).
-        while (PredLoop && !PredLoop->contains(BB))
-          PredLoop = PredLoop->getParentLoop();
-        if (PredLoop)
-          PredLoop->addBasicBlockToLoop(NewBB, LI->getBase());
-      }
+      // Add the new block to the nearest enclosing loop (and not an
+      // adjacent loop). To find this, examine each of the predecessors and
+      // determine which loops enclose them, and select the most-nested loop
+      // which contains the loop containing the block being split.
+      Loop *InnermostPredLoop = 0;
+      for (unsigned i = 0; i != NumPreds; ++i)
+        if (Loop *PredLoop = LI->getLoopFor(Preds[i])) {
+          // Seek a loop which actually contains the block being split (to
+          // avoid adjacent loops).
+          while (PredLoop && !PredLoop->contains(BB))
+            PredLoop = PredLoop->getParentLoop();
+          // Select the most-nested of these loops which contains the block.
+          if (PredLoop &&
+              PredLoop->contains(BB) &&
+              (!InnermostPredLoop ||
+               InnermostPredLoop->getLoopDepth() < PredLoop->getLoopDepth()))
+            InnermostPredLoop = PredLoop;
+        }
+      if (InnermostPredLoop)
+        InnermostPredLoop->addBasicBlockToLoop(NewBB, LI->getBase());
     } else {
       L->addBasicBlockToLoop(NewBB, LI->getBase());
       if (SplitMakesNewLoopHeader)
