@@ -155,7 +155,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   # List command line options here...
   if (/^-config$/)         { $CONFIG_PATH = "$ARGV[0]"; shift; next; }
   if (/^-nocheckout$/)     { $NOCHECKOUT = 1; next; }
-  if (/^-nocvsstats$/)     { $NOCVSSTATS = 1; next; }
   if (/^-noremove$/)       { $NOREMOVE = 1; next; }
   if (/^-noremoveatend$/)  { $NOREMOVEATEND = 1; next; }
   if (/^-noremoveresults$/){ $NOREMOVERESULTS = 1; next; }
@@ -621,93 +620,6 @@ my $CheckoutTime_User = GetRegex "([0-9.]+)", `grep '^user' $COLog`;
 my $CheckoutTime_Sys = GetRegex "([0-9.]+)", `grep '^sys' $COLog`;
 my $CheckoutTime_CPU = $CVSCheckoutTime_User + $CVSCheckoutTime_Sys;
 
-my $NumFilesInCVS = 0;
-my $NumDirsInCVS  = 0;
-$NumFilesInCVS = `egrep '^A' $COLog | wc -l` + 0;
-$NumDirsInCVS  = `sed -e 's#/[^/]*\$##' $COLog | sort | uniq | wc -l` + 0;
-
-##############################################################
-#
-# Extract some information from the CVS history... use a hash so no duplicate
-# stuff is stored. This gets the history from the previous days worth
-# of cvs activity and parses it.
-#
-##############################################################
-
-# This just computes a reasonably accurate #of seconds since 2000. It doesn't
-# have to be perfect as its only used for comparing date ranges within a couple
-# of days.
-sub ConvertToSeconds {
-  my ($sec, $min, $hour, $day, $mon, $yr) = @_;
-  my $Result = ($yr - 2000) * 12;
-  $Result += $mon;
-  $Result *= 31;
-  $Result += $day;
-  $Result *= 24;
-  $Result += $hour;
-  $Result *= 60;
-  $Result += $min;
-  $Result *= 60;
-  $Result += $sec;
-  return $Result;
-}
-
-my (%AddedFiles, %ModifiedFiles, %RemovedFiles, %UsersCommitted, %UsersUpdated);
-
-if (!$NOCVSSTATS) {
-  if ($VERBOSE) { print "CHANGE HISTORY ANALYSIS STAGE\n"; }
-
-  @SVNHistory = split /<logentry/, `svn log --non-interactive --xml --verbose -r{$DATE}:HEAD`;
-  # Skip very first entry because it is the XML header cruft
-  shift @SVNHistory;
-  my $Now = time();
-  foreach $Record (@SVNHistory) {
-      my @Lines = split "\n", $Record;
-      my ($Author, $Date, $Revision);
-      # Get the date and see if its one we want to process.
-      my ($Year, $Month, $Day, $Hour, $Min, $Sec);
-      if ($Lines[3] =~ /<date>(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/){
-          $Year = $1; $Month = $2; $Day = $3; $Hour = $4; $Min = $5; $Sec = $6;
-      }
-      my $Then = ConvertToSeconds($Sec, $Min, $Hour, $Day, $Month, $Year);
-      # Get the current date and compute when "yesterday" is.
-      my ($NSec, $NMin, $NHour, $NDay, $NMon, $NYear) = gmtime();
-      my $Now = ConvertToSeconds( $NSec, $NMin, $NHour, $NDay, $NMon, $NYear);
-      if (($Now - 24*60*60) > $Then) {
-          next;
-      }
-      if ($Lines[1] =~ /   revision="([0-9]*)">/) {
-          $Revision = $1;
-      }
-      if ($Lines[2] =~ /<author>([^<]*)<\/author>/) {
-          $Author = $1;
-      }
-      $UsersCommitted{$Author} = 1;
-      $Date = $Year . "-" . $Month . "-" . $Day;
-      $Time = $Hour . ":" . $Min . ":" . $Sec;
-      print "Rev: $Revision, Author: $Author, Date: $Date, Time: $Time\n";
-      for ($i = 6; $i < $#Lines; $i += 2 ) {
-          if ($Lines[$i] =~ /^   action="(.)">([^<]*)</) {
-              if ($1 == "A") {
-                  $AddedFiles{$2} = 1;
-              } elsif ($1 == 'D') {
-                  $RemovedFiles{$2} = 1;
-              } elsif ($1 == 'M' || $1 == 'R' || $1 == 'C') {
-                  $ModifiedFiles{$2} = 1;
-              } else {
-                  print "UNMATCHABLE: $Lines[$i]\n";
-              }
-          }
-      }
-  }
-}#!NOCVSSTATS
-
-my $CVSAddedFiles = join "\n", sort keys %AddedFiles;
-my $CVSModifiedFiles = join "\n", sort keys %ModifiedFiles;
-my $CVSRemovedFiles = join "\n", sort keys %RemovedFiles;
-my $UserCommitList = join "\n", sort keys %UsersCommitted;
-my $UserUpdateList = join "\n", sort keys %UsersUpdated;
-
 ##############################################################
 #
 # Build the entire tree, saving build messages to the build log
@@ -727,15 +639,6 @@ if (!$NOCHECKOUT && !$NOBUILD) {
 # Get some statistics about the build...
 #
 ##############################################################
-#this can de done on server
-#my @Linked = split '\n', `grep Linking $BuildLog`;
-#my $NumExecutables = scalar(grep(/executable/, @Linked));
-#my $NumLibraries   = scalar(grep(!/executable/, @Linked));
-#my $NumObjects     = `grep ']\: Compiling ' $BuildLog | wc -l` + 0;
-
-# Get the number of lines of source code. Must be here after the build is done
-# because countloc.sh uses the llvm-config script which must be built.
-my $LOC = `utils/countloc.sh -topdir $LLVMSrcDir`;
 
 # Get the time taken by the configure script
 my $ConfigTimeU = GetRegexNum "^user", 0, "([0-9.]+)", "$BuildLog";
@@ -1058,14 +961,14 @@ my %hash_of_data = (
   'buildtime_wall' => $BuildWallTime,
   'buildtime_cpu' => $BuildTime,
   'warnings' => $WarningsFile,
-  'cvsusercommitlist' => $UserCommitList,
-  'cvsuserupdatelist' => $UserUpdateList,
-  'cvsaddedfiles' => $CVSAddedFiles,
-  'cvsmodifiedfiles' => $CVSModifiedFiles,
-  'cvsremovedfiles' => $CVSRemovedFiles,
-  'lines_of_code' => $LOC,
-  'cvs_file_count' => $NumFilesInCVS,
-  'cvs_dir_count' => $NumDirsInCVS,
+  'cvsusercommitlist' => "",
+  'cvsuserupdatelist' => "",
+  'cvsaddedfiles' => "",
+  'cvsmodifiedfiles' => "",
+  'cvsremovedfiles' => "",
+  'lines_of_code' => "",
+  'cvs_file_count' => 0,
+  'cvs_dir_count' => 0,
   'buildstatus' => $BuildStatus,
   'singlesource_programstable' => $SingleSourceProgramsTable,
   'multisource_programstable' => $MultiSourceProgramsTable,
