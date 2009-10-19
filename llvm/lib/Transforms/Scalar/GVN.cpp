@@ -429,31 +429,24 @@ uint32_t ValueTable::lookup_or_add(Value *V) {
 
   if (CallInst* C = dyn_cast<CallInst>(V)) {
     if (AA->doesNotAccessMemory(C)) {
-      Expression e = create_expression(C);
-
-      DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
-      if (EI != expressionNumbering.end()) {
-        valueNumbering.insert(std::make_pair(V, EI->second));
-        return EI->second;
-      } else {
-        expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-        valueNumbering.insert(std::make_pair(V, nextValueNumber));
-
-        return nextValueNumber++;
-      }
+      Expression exp = create_expression(C);
+      uint32_t& e = expressionNumbering[exp];
+      if (!e) e = nextValueNumber++;
+      valueNumbering[V] = e;
+      return e;
     } else if (AA->onlyReadsMemory(C)) {
-      Expression e = create_expression(C);
-
-      if (expressionNumbering.find(e) == expressionNumbering.end()) {
-        expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-        valueNumbering.insert(std::make_pair(V, nextValueNumber));
-        return nextValueNumber++;
+      Expression exp = create_expression(C);
+      uint32_t& e = expressionNumbering[exp];
+      if (!e) {
+        e = nextValueNumber++;
+        valueNumbering[V] = e;
+        return e;
       }
 
       MemDepResult local_dep = MD->getDependency(C);
 
       if (!local_dep.isDef() && !local_dep.isNonLocal()) {
-        valueNumbering.insert(std::make_pair(V, nextValueNumber));
+        valueNumbering[V] =  nextValueNumber;
         return nextValueNumber++;
       }
 
@@ -461,7 +454,7 @@ uint32_t ValueTable::lookup_or_add(Value *V) {
         CallInst* local_cdep = cast<CallInst>(local_dep.getInst());
 
         if (local_cdep->getNumOperands() != C->getNumOperands()) {
-          valueNumbering.insert(std::make_pair(V, nextValueNumber));
+          valueNumbering[V] = nextValueNumber;
           return nextValueNumber++;
         }
 
@@ -469,13 +462,13 @@ uint32_t ValueTable::lookup_or_add(Value *V) {
           uint32_t c_vn = lookup_or_add(C->getOperand(i));
           uint32_t cd_vn = lookup_or_add(local_cdep->getOperand(i));
           if (c_vn != cd_vn) {
-            valueNumbering.insert(std::make_pair(V, nextValueNumber));
+            valueNumbering[V] = nextValueNumber;
             return nextValueNumber++;
           }
         }
 
         uint32_t v = lookup_or_add(local_cdep);
-        valueNumbering.insert(std::make_pair(V, v));
+        valueNumbering[V] = v;
         return v;
       }
 
@@ -513,137 +506,81 @@ uint32_t ValueTable::lookup_or_add(Value *V) {
       }
 
       if (!cdep) {
-        valueNumbering.insert(std::make_pair(V, nextValueNumber));
+        valueNumbering[V] = nextValueNumber;
         return nextValueNumber++;
       }
 
       if (cdep->getNumOperands() != C->getNumOperands()) {
-        valueNumbering.insert(std::make_pair(V, nextValueNumber));
+        valueNumbering[V] = nextValueNumber;
         return nextValueNumber++;
       }
       for (unsigned i = 1; i < C->getNumOperands(); ++i) {
         uint32_t c_vn = lookup_or_add(C->getOperand(i));
         uint32_t cd_vn = lookup_or_add(cdep->getOperand(i));
         if (c_vn != cd_vn) {
-          valueNumbering.insert(std::make_pair(V, nextValueNumber));
+          valueNumbering[V] = nextValueNumber;
           return nextValueNumber++;
         }
       }
 
       uint32_t v = lookup_or_add(cdep);
-      valueNumbering.insert(std::make_pair(V, v));
+      valueNumbering[V] = v;
       return v;
 
     } else {
-      valueNumbering.insert(std::make_pair(V, nextValueNumber));
+      valueNumbering[V] = nextValueNumber;
       return nextValueNumber++;
     }
   } else if (BinaryOperator* BO = dyn_cast<BinaryOperator>(V)) {
-    Expression e = create_expression(BO);
-
-    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
-    if (EI != expressionNumbering.end()) {
-      valueNumbering.insert(std::make_pair(V, EI->second));
-      return EI->second;
-    } else {
-      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-      valueNumbering.insert(std::make_pair(V, nextValueNumber));
-
-      return nextValueNumber++;
-    }
+    Expression exp = create_expression(BO);
+    uint32_t& e = expressionNumbering[exp];
+    if (!e) e = nextValueNumber++;
+    valueNumbering[V] = e;
+    return e;
   } else if (CmpInst* C = dyn_cast<CmpInst>(V)) {
-    Expression e = create_expression(C);
-
-    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
-    if (EI != expressionNumbering.end()) {
-      valueNumbering.insert(std::make_pair(V, EI->second));
-      return EI->second;
-    } else {
-      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-      valueNumbering.insert(std::make_pair(V, nextValueNumber));
-
-      return nextValueNumber++;
-    }
+    Expression exp = create_expression(C);
+    uint32_t& e = expressionNumbering[exp];
+    if (!e) e = nextValueNumber++;
+    valueNumbering[V] = e;
+    return e;
   } else if (ShuffleVectorInst* U = dyn_cast<ShuffleVectorInst>(V)) {
-    Expression e = create_expression(U);
-
-    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
-    if (EI != expressionNumbering.end()) {
-      valueNumbering.insert(std::make_pair(V, EI->second));
-      return EI->second;
-    } else {
-      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-      valueNumbering.insert(std::make_pair(V, nextValueNumber));
-
-      return nextValueNumber++;
-    }
+    Expression exp = create_expression(U);
+    uint32_t& e = expressionNumbering[exp];
+    if (!e) e = nextValueNumber++;
+    valueNumbering[V] = e;
+    return e;
   } else if (ExtractElementInst* U = dyn_cast<ExtractElementInst>(V)) {
-    Expression e = create_expression(U);
-
-    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
-    if (EI != expressionNumbering.end()) {
-      valueNumbering.insert(std::make_pair(V, EI->second));
-      return EI->second;
-    } else {
-      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-      valueNumbering.insert(std::make_pair(V, nextValueNumber));
-
-      return nextValueNumber++;
-    }
+    Expression exp = create_expression(U);
+    uint32_t& e = expressionNumbering[exp];
+    if (!e) e = nextValueNumber++;
+    valueNumbering[V] = e;
+    return e;
   } else if (InsertElementInst* U = dyn_cast<InsertElementInst>(V)) {
-    Expression e = create_expression(U);
-
-    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
-    if (EI != expressionNumbering.end()) {
-      valueNumbering.insert(std::make_pair(V, EI->second));
-      return EI->second;
-    } else {
-      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-      valueNumbering.insert(std::make_pair(V, nextValueNumber));
-
-      return nextValueNumber++;
-    }
+    Expression exp = create_expression(U);
+    uint32_t& e = expressionNumbering[exp];
+    if (!e) e = nextValueNumber++;
+    valueNumbering[V] = e;
+    return e;
   } else if (SelectInst* U = dyn_cast<SelectInst>(V)) {
-    Expression e = create_expression(U);
-
-    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
-    if (EI != expressionNumbering.end()) {
-      valueNumbering.insert(std::make_pair(V, EI->second));
-      return EI->second;
-    } else {
-      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-      valueNumbering.insert(std::make_pair(V, nextValueNumber));
-
-      return nextValueNumber++;
-    }
+    Expression exp = create_expression(U);
+    uint32_t& e = expressionNumbering[exp];
+    if (!e) e = nextValueNumber++;
+    valueNumbering[V] = e;
+    return e;
   } else if (CastInst* U = dyn_cast<CastInst>(V)) {
-    Expression e = create_expression(U);
-
-    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
-    if (EI != expressionNumbering.end()) {
-      valueNumbering.insert(std::make_pair(V, EI->second));
-      return EI->second;
-    } else {
-      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-      valueNumbering.insert(std::make_pair(V, nextValueNumber));
-
-      return nextValueNumber++;
-    }
+    Expression exp = create_expression(U);
+    uint32_t& e = expressionNumbering[exp];
+    if (!e) e = nextValueNumber++;
+    valueNumbering[V] = e;
+    return e;
   } else if (GetElementPtrInst* U = dyn_cast<GetElementPtrInst>(V)) {
-    Expression e = create_expression(U);
-
-    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
-    if (EI != expressionNumbering.end()) {
-      valueNumbering.insert(std::make_pair(V, EI->second));
-      return EI->second;
-    } else {
-      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-      valueNumbering.insert(std::make_pair(V, nextValueNumber));
-
-      return nextValueNumber++;
-    }
+    Expression exp = create_expression(U);
+    uint32_t& e = expressionNumbering[exp];
+    if (!e) e = nextValueNumber++;
+    valueNumbering[V] = e;
+    return e;
   } else {
-    valueNumbering.insert(std::make_pair(V, nextValueNumber));
+    valueNumbering[V] = nextValueNumber;
     return nextValueNumber++;
   }
 }
