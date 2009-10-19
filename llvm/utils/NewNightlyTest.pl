@@ -649,49 +649,56 @@ sub TestDirectory {
 # Calling sub TestDirectory
 #
 ##############################################################
-if (!$BuildError) {
-  ($SingleSourceProgramsTable, $llcbeta_options) = TestDirectory("SingleSource");
-  WriteFile "$Prefix-SingleSource-Performance.txt", $SingleSourceProgramsTable;
-  ($MultiSourceProgramsTable, $llcbeta_options) = TestDirectory("MultiSource");
-  WriteFile "$Prefix-MultiSource-Performance.txt", $MultiSourceProgramsTable;
-  if ( ! $NOEXTERNALS ) {
-    ($ExternalProgramsTable, $llcbeta_options) = TestDirectory("External");
-    WriteFile "$Prefix-External-Performance.txt", $ExternalProgramsTable;
-    system "cat $Prefix-SingleSource-Tests.txt " .
-               "$Prefix-MultiSource-Tests.txt ".
-               "$Prefix-External-Tests.txt | sort > $Prefix-Tests.txt";
-    system "cat $Prefix-SingleSource-Performance.txt " .
-               "$Prefix-MultiSource-Performance.txt ".
-               "$Prefix-External-Performance.txt | sort > $Prefix-Performance.txt";
-  } else {
-    $ExternalProgramsTable = "External TEST STAGE SKIPPED\n";
-    if ( $VERBOSE ) {
-      print "External TEST STAGE SKIPPED\n";
+sub RunNightlyTest() {
+  if (!$BuildError) {
+    ($SSProgs, $llcbeta_options) = TestDirectory("SingleSource");
+    WriteFile "$Prefix-SingleSource-Performance.txt", $SSProgs;
+    ($MSProgs, $llcbeta_options) = TestDirectory("MultiSource");
+    WriteFile "$Prefix-MultiSource-Performance.txt", $MSProgs;
+    if ( ! $NOEXTERNALS ) {
+      ($ExtProgs, $llcbeta_options) = TestDirectory("External");
+      WriteFile "$Prefix-External-Performance.txt", $ExtProgs;
+      system "cat $Prefix-SingleSource-Tests.txt " .
+                 "$Prefix-MultiSource-Tests.txt ".
+                 "$Prefix-External-Tests.txt | sort > $Prefix-Tests.txt";
+      system "cat $Prefix-SingleSource-Performance.txt " .
+                 "$Prefix-MultiSource-Performance.txt ".
+                 "$Prefix-External-Performance.txt | sort > $Prefix-Performance.txt";
+    } else {
+      $ExtProgs = "External TEST STAGE SKIPPED\n";
+      if ( $VERBOSE ) {
+        print "External TEST STAGE SKIPPED\n";
+      }
+      system "cat $Prefix-SingleSource-Tests.txt " .
+                 "$Prefix-MultiSource-Tests.txt ".
+                 " | sort > $Prefix-Tests.txt";
+      system "cat $Prefix-SingleSource-Performance.txt " .
+                 "$Prefix-MultiSource-Performance.txt ".
+                 " | sort > $Prefix-Performance.txt";
     }
-    system "cat $Prefix-SingleSource-Tests.txt " .
-               "$Prefix-MultiSource-Tests.txt ".
-               " | sort > $Prefix-Tests.txt";
-    system "cat $Prefix-SingleSource-Performance.txt " .
-               "$Prefix-MultiSource-Performance.txt ".
-               " | sort > $Prefix-Performance.txt";
+
+    # Compile passes, fails, xfails.
+    my @TestSuiteResultLines = split "\n", (ReadFile "$Prefix-Tests.txt");
+    my ($Passes, $Fails, $XFails) = "";
+
+    for ($x=0; $x < @TestSuiteResultLines; $x++) {
+      if (@TestSuiteResultLines[$x] =~ m/^PASS:/) {
+        $Passes .= "$TestSuiteResultLines[$x]\n";
+      }
+      elsif (@TestSuiteResultLines[$x] =~ m/^FAIL:/) {
+        $Fails .= "$TestSuiteResultLines[$x]\n";
+      }
+      elsif (@TestSuiteResultLines[$x] =~ m/^XFAIL:/) {
+        $XFails .= "$TestSuiteResultLines[$x]\n";
+      }
+    }
   }
 
-  # Compile passes, fails, xfails.
-  my @TestSuiteResultLines = split "\n", (ReadFile "$Prefix-Tests.txt");
-  my ($passes, $fails, $xfails) = "";
-
-  for ($x=0; $x < @TestSuiteResultLines; $x++) {
-    if (@TestSuiteResultLines[$x] =~ m/^PASS:/) {
-      $passes .= "$TestSuiteResultLines[$x]\n";
-    }
-    elsif (@TestSuiteResultLines[$x] =~ m/^FAIL:/) {
-      $fails .= "$TestSuiteResultLines[$x]\n";
-    }
-    elsif (@TestSuiteResultLines[$x] =~ m/^XFAIL:/) {
-      $xfails .= "$TestSuiteResultLines[$x]\n";
-    }
-  }
+  return ($SSProgs, $MSProgs, $ExtProgs, $Passes, $Fails, $XFails)
 }
+
+my ($SingleSourceProgramsTable, $MultiSourceProgramsTable, $ExternalProgramsTable,
+    $passes, $fails, $xfails) = RunNightlyTest();
 
 ##############################################################
 #
