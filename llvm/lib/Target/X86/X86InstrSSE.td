@@ -197,6 +197,12 @@ def SHUFFLE_get_pshuflw_imm : SDNodeXForm<vector_shuffle, [{
   return getI8Imm(X86::getShufflePSHUFLWImmediate(N));
 }]>;
 
+// SHUFFLE_get_palign_imm xform function: convert vector_shuffle mask to
+// a PALIGNR imm.
+def SHUFFLE_get_palign_imm : SDNodeXForm<vector_shuffle, [{
+  return getI8Imm(X86::getShufflePALIGNRImmediate(N));
+}]>;
+
 def splat_lo : PatFrag<(ops node:$lhs, node:$rhs),
                        (vector_shuffle node:$lhs, node:$rhs), [{
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
@@ -282,6 +288,11 @@ def pshuflw : PatFrag<(ops node:$lhs, node:$rhs),
                       (vector_shuffle node:$lhs, node:$rhs), [{
   return X86::isPSHUFLWMask(cast<ShuffleVectorSDNode>(N));
 }], SHUFFLE_get_pshuflw_imm>;
+
+def palign : PatFrag<(ops node:$lhs, node:$rhs),
+                     (vector_shuffle node:$lhs, node:$rhs), [{
+  return X86::isPALIGNRMask(cast<ShuffleVectorSDNode>(N));
+}], SHUFFLE_get_palign_imm>;
 
 //===----------------------------------------------------------------------===//
 // SSE scalar FP Instructions
@@ -2062,6 +2073,7 @@ defm PACKSSDW : PDI_binop_rm_int<0x6B, "packssdw", int_x86_sse2_packssdw_128>;
 defm PACKUSWB : PDI_binop_rm_int<0x67, "packuswb", int_x86_sse2_packuswb_128>;
 
 // Shuffle and unpack instructions
+let AddedComplexity = 5 in {
 def PSHUFDri : PDIi8<0x70, MRMSrcReg,
                      (outs VR128:$dst), (ins VR128:$src1, i8imm:$src2),
                      "pshufd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -2073,6 +2085,7 @@ def PSHUFDmi : PDIi8<0x70, MRMSrcMem,
                      [(set VR128:$dst, (v4i32 (pshufd:$src2
                                              (bc_v4i32(memopv2i64 addr:$src1)),
                                              (undef))))]>;
+}                                             
 
 // SSE2 with ImmT == Imm8 and XS prefix.
 def PSHUFHWri : Ii8<0x70, MRMSrcReg,
@@ -2838,6 +2851,26 @@ let Constraints = "$src1 = $dst" in {
                               (bitconvert (memopv4i32 addr:$src2)),
                               imm:$src3))]>, OpSize;
 }
+
+// palignr patterns.
+let AddedComplexity = 5 in {
+def : Pat<(v4i32 (palign:$src3 VR128:$src1, VR128:$src2)),
+          (PALIGNR128rr VR128:$src2, VR128:$src1,
+                        (SHUFFLE_get_palign_imm VR128:$src3))>,
+      Requires<[HasSSSE3]>;
+def : Pat<(v4f32 (palign:$src3 VR128:$src1, VR128:$src2)),
+          (PALIGNR128rr VR128:$src2, VR128:$src1,
+                        (SHUFFLE_get_palign_imm VR128:$src3))>,
+      Requires<[HasSSSE3]>;
+def : Pat<(v8i16 (palign:$src3 VR128:$src1, VR128:$src2)),
+          (PALIGNR128rr VR128:$src2, VR128:$src1,
+                        (SHUFFLE_get_palign_imm VR128:$src3))>,
+      Requires<[HasSSSE3]>;
+def : Pat<(v16i8 (palign:$src3 VR128:$src1, VR128:$src2)),
+          (PALIGNR128rr VR128:$src2, VR128:$src1,
+                        (SHUFFLE_get_palign_imm VR128:$src3))>,
+      Requires<[HasSSSE3]>;
+}      
 
 def : Pat<(X86pshufb VR128:$src, VR128:$mask),
           (PSHUFBrr128 VR128:$src, VR128:$mask)>, Requires<[HasSSSE3]>;

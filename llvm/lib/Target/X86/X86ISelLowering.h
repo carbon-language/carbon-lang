@@ -323,20 +323,26 @@ namespace llvm {
     /// specifies a shuffle of elements that is suitable for input to MOVDDUP.
     bool isMOVDDUPMask(ShuffleVectorSDNode *N);
 
+    /// isPALIGNRMask - Return true if the specified VECTOR_SHUFFLE operand
+    /// specifies a shuffle of elements that is suitable for input to PALIGNR.
+    bool isPALIGNRMask(ShuffleVectorSDNode *N);
+
     /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
     /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
     /// instructions.
     unsigned getShuffleSHUFImmediate(SDNode *N);
 
     /// getShufflePSHUFHWImmediate - Return the appropriate immediate to shuffle
-    /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFHW
-    /// instructions.
+    /// the specified VECTOR_SHUFFLE mask with PSHUFHW instruction.
     unsigned getShufflePSHUFHWImmediate(SDNode *N);
 
-    /// getShufflePSHUFKWImmediate - Return the appropriate immediate to shuffle
-    /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFLW
-    /// instructions.
+    /// getShufflePSHUFLWImmediate - Return the appropriate immediate to shuffle
+    /// the specified VECTOR_SHUFFLE mask with PSHUFLW instruction.
     unsigned getShufflePSHUFLWImmediate(SDNode *N);
+
+    /// getShufflePALIGNRImmediate - Return the appropriate immediate to shuffle
+    /// the specified VECTOR_SHUFFLE mask with the PALIGNR instruction.
+    unsigned getShufflePALIGNRImmediate(SDNode *N);
 
     /// isZeroNode - Returns true if Elt is a constant zero or a floating point
     /// constant +0.0.
