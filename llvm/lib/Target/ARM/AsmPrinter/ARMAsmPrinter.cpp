@@ -38,7 +38,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
@@ -49,7 +48,7 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
-  class VISIBILITY_HIDDEN ARMAsmPrinter : public AsmPrinter {
+  class ARMAsmPrinter : public AsmPrinter {
 
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
     /// make the right decision when printing asm code for different targets.
@@ -149,8 +148,8 @@ namespace {
 
     void printMachineInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);
-    bool doFinalization(Module &M);
     void EmitStartOfAsmFile(Module &M);
+    void EmitEndOfAsmFile(Module &M);
 
     /// EmitMachineConstantPoolValue - Print a machine constantpool value to
     /// the .s file.
@@ -1256,7 +1255,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 }
 
 
-bool ARMAsmPrinter::doFinalization(Module &M) {
+void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (Subtarget->isTargetDarwin()) {
     // All darwin targets use mach-o.
     TargetLoweringObjectFileMachO &TLOFMacho =
@@ -1294,8 +1293,6 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     // generates code that does this, it is always safe to set.
     O << "\t.subsections_via_symbols\n";
   }
-
-  return AsmPrinter::doFinalization(M);
 }
 
 // Force static initialization.
