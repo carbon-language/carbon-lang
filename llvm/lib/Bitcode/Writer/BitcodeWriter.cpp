@@ -517,9 +517,7 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
       }
 
       // Code: [strchar x N]
-      const char *StrBegin = MDS->begin();
-      for (unsigned i = 0, e = MDS->length(); i != e; ++i)
-        Record.push_back(StrBegin[i]);
+      Record.append(MDS->begin(), MDS->end());
 
       // Emit the finished record.
       Stream.EmitRecord(bitc::METADATA_STRING, Record, MDSAbbrev);
