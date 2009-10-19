@@ -214,6 +214,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
     // Move the end of the interesting region right until we've
     // pulled in something else interesting.
     if (CaretEnd != SourceLength) {
+      assert(CaretEnd < SourceLength && "Unexpected caret position!");
       unsigned NewEnd = CaretEnd;
 
       // Skip over any whitespace we see here; we're looking for
@@ -319,6 +320,11 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
   const char *LineEnd = TokPtr;
   while (*LineEnd != '\n' && *LineEnd != '\r' && *LineEnd != '\0')
     ++LineEnd;
+
+  // FIXME: This shouldn't be necessary, but the CaretEndColNo can extend past
+  // the source line length as currently being computed. See
+  // test/Misc/message-length.c.
+  CaretEndColNo = std::min(CaretEndColNo, unsigned(LineEnd - LineStart));
 
   // Copy the line of code into an std::string for ease of manipulation.
   std::string SourceLine(LineStart, LineEnd);

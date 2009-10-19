@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -fmessage-length=72 %s 2>&1 | tee /tmp/out.txt | FileCheck -strict-whitespace %s &&
+// RUN: clang -fsyntax-only -fmessage-length=72 %s 2>&1 | FileCheck -strict-whitespace %s &&
 // RUN: clang -fsyntax-only -fmessage-length=1 %s
 
 // Hack so we can check things better, force the file name and line.
@@ -29,4 +29,4 @@ void a_very_long_line(int *ip, float *FloatPointer) {
 
 
 // CHECK: FILE:23:78
-// CHECK: {{^  ...some long comment text and a brace, eh {} $}}
+// CHECK: {{^  ...// some long comment text and a brace, eh {} $}}
