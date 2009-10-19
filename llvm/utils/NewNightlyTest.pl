@@ -546,56 +546,38 @@ $starttime = `date "+20%y-%m-%d %H:%M:%S"`;
 # Create the source repository directory
 #
 ##############################################################
-if (!$NOCHECKOUT) {
-  if (-d $BuildDir) {
-    if (!$NOREMOVE) {
-      if ( $VERBOSE ) {
-        print "Build directory exists! Removing it\n";
+sub CheckoutSource {
+  if (!$NOCHECKOUT) {
+    if (-d $BuildDir) {
+      if (!$NOREMOVE) {
+        if ( $VERBOSE ) {
+          print "Build directory exists! Removing it\n";
+        }
+        system "rm -rf $BuildDir";
+        mkdir $BuildDir or die "Could not create checkout directory $BuildDir!";
+      } else {
+        if ( $VERBOSE ) {
+          print "Build directory exists!\n";
+        }
       }
-      system "rm -rf $BuildDir";
-      mkdir $BuildDir or die "Could not create checkout directory $BuildDir!";
     } else {
-      if ( $VERBOSE ) {
-        print "Build directory exists!\n";
-      }
+      mkdir $BuildDir or die "Could not create checkout directory $BuildDir!";
     }
-  } else {
-    mkdir $BuildDir or die "Could not create checkout directory $BuildDir!";
+
+    ChangeDir( $BuildDir, "checkout directory" );
+    my $SVNCMD = "$NICE svn co --non-interactive";
+    RunLoggedCommand("( time -p $SVNCMD $SVNURL/llvm/trunk llvm; cd llvm/projects ; " .
+                     "  $SVNCMD $TestSVNURL/test-suite/trunk llvm-test )", $COLog,
+                     "CHECKOUT LLVM");
+    if ($WITHCLANG) {
+        RunLoggedCommand("( cd llvm/tools ; " .
+                         "  $SVNCMD $SVNURL/cfe/trunk clang )", $COLog,
+                         "CHECKOUT CLANG");
+    }
   }
 }
-
-
-##############################################################
-#
-# Check out the llvm tree with SVN
-#
-##############################################################
-if (!$NOCHECKOUT) {
-  ChangeDir( $BuildDir, "checkout directory" );
-  my $SVNCMD = "$NICE svn co --non-interactive $SVNURL";
-  my $SVNCMD2 = "$NICE svn co --non-interactive $TestSVNURL";
-  RunLoggedCommand("( time -p $SVNCMD/llvm/trunk llvm; cd llvm/projects ; " .
-                   "$SVNCMD2/test-suite/trunk llvm-test )", $COLog,
-                   "CHECKOUT LLVM");
-  if ($WITHCLANG) {
-      my $SVNCMD = "$NICE svn co --non-interactive $SVNURL/cfe/trunk";
-      RunLoggedCommand("( time -p cd llvm/tools ; $SVNCMD clang )", $COLog,
-                       "CHECKOUT CLANG");
-  }
-}
+CheckoutSource();
 ChangeDir( $LLVMSrcDir , "llvm source directory") ;
-
-##############################################################
-#
-# Get some static statistics about the current source code
-#
-# This can probably be put on the server side
-#
-##############################################################
-my $CheckoutTime_Wall = GetRegex "([0-9.]+)", `grep '^real' $COLog`;
-my $CheckoutTime_User = GetRegex "([0-9.]+)", `grep '^user' $COLog`;
-my $CheckoutTime_Sys = GetRegex "([0-9.]+)", `grep '^sys' $COLog`;
-my $CheckoutTime_CPU = $CVSCheckoutTime_User + $CVSCheckoutTime_Sys;
 
 ##############################################################
 #
@@ -651,7 +633,7 @@ if ($BuildError) { $NODEJAGNU=1; }
 # Running dejagnu tests
 #
 ##############################################################
-my $DejangnuTestResults=""; # String containing the results of the dejagnu
+my $DejagnuTestResults=""; # String containing the results of the dejagnu
 my $dejagnu_output = "$DejagnuTestsLog";
 if (!$NODEJAGNU) {
   #Run the feature and regression tests, results are put into testrun.sum
@@ -813,11 +795,6 @@ $machine_data = "uname: ".`uname -a`.
                 "date: ".`date \"+20%y-%m-%d\"`.
                 "time: ".`date +\"%H:%M:%S\"`;
 
-my @CVS_DATA;
-my $cvs_data;
-@CVS_DATA = ReadFile "$COLog";
-$cvs_data = join("\n", @CVS_DATA);
-
 my @BUILD_DATA;
 my $build_data;
 @BUILD_DATA = ReadFile "$BuildLog";
@@ -866,6 +843,11 @@ if(!$BuildError){
 ##############################################################
 
 if ( $VERBOSE ) { print "SEND THE DATA VIA THE POST REQUEST\n"; }
+
+my $CheckoutTime_Wall = GetRegex "([0-9.]+)", `grep '^real' $COLog`;
+my $CheckoutTime_User = GetRegex "([0-9.]+)", `grep '^user' $COLog`;
+my $CheckoutTime_Sys = GetRegex "([0-9.]+)", `grep '^sys' $COLog`;
+my $CheckoutTime_CPU = $CVSCheckoutTime_User + $CVSCheckoutTime_Sys;
 
 my %hash_of_data = (
   'machine_data' => $machine_data,
