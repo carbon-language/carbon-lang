@@ -120,6 +120,9 @@ public:
   /// manipulation, so it should be called only when performance doesn't matter.
   /// For simple declarations, getNameAsCString() should suffice.
   //
+  // FIXME: This function should be renamed to indicate that it is not just an
+  // alternate form of getName(), and clients should move as appropriate.
+  //
   // FIXME: Deprecated, move clients to getName().
   std::string getNameAsString() const { return Name.getAsString(); }
 
