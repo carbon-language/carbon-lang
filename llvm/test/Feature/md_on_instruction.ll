@@ -1,5 +1,4 @@
-; RUN: llvm-as < %s -disable-output
-
+; RUN: llvm-as < %s | llvm-dis | grep " !dbg " | count 4
 define i32 @foo() nounwind ssp {
 entry:
   %retval = alloca i32                            ; <i32*> [#uses=2]
