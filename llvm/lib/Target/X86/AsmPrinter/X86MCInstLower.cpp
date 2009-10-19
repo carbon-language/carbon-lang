@@ -38,10 +38,8 @@ MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
 
 
 MCSymbol *X86MCInstLower::GetPICBaseSymbol() const {
-  SmallString<60> Name;
-  raw_svector_ostream(Name) << AsmPrinter.MAI->getPrivateGlobalPrefix()
-    << AsmPrinter.getFunctionNumber() << "$pb";
-  return Ctx.GetOrCreateSymbol(Name.str());
+  return Ctx.GetOrCreateSymbol(Twine(AsmPrinter.MAI->getPrivateGlobalPrefix())+
+                               Twine(AsmPrinter.getFunctionNumber())+"$pb");
 }
 
 
@@ -449,10 +447,9 @@ void X86AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     //   MYGLOBAL + (. - PICBASE)
     // However, we can't generate a ".", so just emit a new label here and refer
     // to it.  We know that this operand flag occurs at most once per function.
-    SmallString<64> Name;
-    raw_svector_ostream(Name) << MAI->getPrivateGlobalPrefix()
-      << "picbaseref" << getFunctionNumber();
-    MCSymbol *DotSym = OutContext.GetOrCreateSymbol(Name.str());
+    const char *Prefix = MAI->getPrivateGlobalPrefix();
+    MCSymbol *DotSym = OutContext.GetOrCreateSymbol(Twine(Prefix)+"picbaseref"+
+                                                    Twine(getFunctionNumber()));
     OutStreamer.EmitLabel(DotSym);
     
     // Now that we have emitted the label, lower the complex operand expression.
