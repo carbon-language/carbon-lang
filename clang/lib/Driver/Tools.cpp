@@ -2162,7 +2162,7 @@ void auroraux::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(C, "as"));
+    Args.MakeArgString(getToolChain().GetProgramPath(C, "gas"));
   Dest.addCommand(new Command(JA, Exec, CmdArgs));
 }
 
