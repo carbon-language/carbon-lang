@@ -368,19 +368,15 @@ def MOVSX64rm32: RI<0x63, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
 // Use movzbl instead of movzbq when the destination is a register; it's
 // equivalent due to implicit zero-extending, and it has a smaller encoding.
 def MOVZX64rr8 : I<0xB6, MRMSrcReg, (outs GR64:$dst), (ins GR8 :$src),
-                   "movz{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                   [(set GR64:$dst, (zext GR8:$src))]>, TB;
+                   "", [(set GR64:$dst, (zext GR8:$src))]>, TB;
 def MOVZX64rm8 : I<0xB6, MRMSrcMem, (outs GR64:$dst), (ins i8mem :$src),
-                   "movz{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                   [(set GR64:$dst, (zextloadi64i8 addr:$src))]>, TB;
+                   "", [(set GR64:$dst, (zextloadi64i8 addr:$src))]>, TB;
 // Use movzwl instead of movzwq when the destination is a register; it's
 // equivalent due to implicit zero-extending, and it has a smaller encoding.
 def MOVZX64rr16: I<0xB7, MRMSrcReg, (outs GR64:$dst), (ins GR16:$src),
-                   "movz{wl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                   [(set GR64:$dst, (zext GR16:$src))]>, TB;
+                   "", [(set GR64:$dst, (zext GR16:$src))]>, TB;
 def MOVZX64rm16: I<0xB7, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
-                   "movz{wl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                   [(set GR64:$dst, (zextloadi64i16 addr:$src))]>, TB;
+                   "", [(set GR64:$dst, (zextloadi64i16 addr:$src))]>, TB;
 
 // There's no movzlq instruction, but movl can be used for this purpose, using
 // implicit zero-extension. The preferred way to do 32-bit-to-64-bit zero
@@ -390,11 +386,9 @@ def MOVZX64rm16: I<0xB7, MRMSrcMem, (outs GR64:$dst), (ins i16mem:$src),
 // necessarily all zero. In such cases, we fall back to these explicit zext
 // instructions.
 def MOVZX64rr32 : I<0x89, MRMDestReg, (outs GR64:$dst), (ins GR32:$src),
-                    "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                    [(set GR64:$dst, (zext GR32:$src))]>;
+                    "", [(set GR64:$dst, (zext GR32:$src))]>;
 def MOVZX64rm32 : I<0x8B, MRMSrcMem, (outs GR64:$dst), (ins i32mem:$src),
-                    "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                    [(set GR64:$dst, (zextloadi64i32 addr:$src))]>;
+                    "", [(set GR64:$dst, (zextloadi64i32 addr:$src))]>;
 
 // Any instruction that defines a 32-bit result leaves the high half of the
 // register. Truncate can be lowered to EXTRACT_SUBREG. CopyFromReg may
@@ -1455,8 +1449,7 @@ def : Pat<(i64 0),
 // Materialize i64 constant where top 32-bits are zero.
 let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
-                        "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                        [(set GR64:$dst, i64immZExt32:$src)]>;
+                        "", [(set GR64:$dst, i64immZExt32:$src)]>;
 
 //===----------------------------------------------------------------------===//
 // Thread Local Storage Instructions

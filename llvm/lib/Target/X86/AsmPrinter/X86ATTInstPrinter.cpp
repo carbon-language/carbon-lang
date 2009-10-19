@@ -57,9 +57,7 @@ void X86ATTInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
   }
 }
 
-void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
-                                     const char *Modifier) {
-  assert(Modifier == 0 && "Modifiers should not be used");
+void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo) {
   
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {

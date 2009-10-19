@@ -32,8 +32,7 @@ public:
   static const char *getRegisterName(unsigned RegNo);
 
 
-  void printOperand(const MCInst *MI, unsigned OpNo,
-                    const char *Modifier = 0);
+  void printOperand(const MCInst *MI, unsigned OpNo);
   void printMemReference(const MCInst *MI, unsigned Op);
   void printLeaMemReference(const MCInst *MI, unsigned Op);
   void printSSECC(const MCInst *MI, unsigned Op);

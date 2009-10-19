@@ -3392,11 +3392,9 @@ def BT32mi8 : Ii8<0xBA, MRM4m, (outs), (ins i32mem:$src1, i32i8imm:$src2),
 // of the register here. This has a smaller encoding and avoids a
 // partial-register update.
 def MOVSX16rr8 : I<0xBE, MRMSrcReg, (outs GR16:$dst), (ins GR8 :$src),
-                   "movs{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                   [(set GR16:$dst, (sext GR8:$src))]>, TB;
+                   "", [(set GR16:$dst, (sext GR8:$src))]>, TB;
 def MOVSX16rm8 : I<0xBE, MRMSrcMem, (outs GR16:$dst), (ins i8mem :$src),
-                   "movs{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                   [(set GR16:$dst, (sextloadi16i8 addr:$src))]>, TB;
+                   "", [(set GR16:$dst, (sextloadi16i8 addr:$src))]>, TB;
 def MOVSX32rr8 : I<0xBE, MRMSrcReg, (outs GR32:$dst), (ins GR8 :$src),
                    "movs{bl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (sext GR8:$src))]>, TB;
@@ -3414,11 +3412,9 @@ def MOVSX32rm16: I<0xBF, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
 // of the register here. This has a smaller encoding and avoids a
 // partial-register update.
 def MOVZX16rr8 : I<0xB6, MRMSrcReg, (outs GR16:$dst), (ins GR8 :$src),
-                   "movz{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                   [(set GR16:$dst, (zext GR8:$src))]>, TB;
+                   "", [(set GR16:$dst, (zext GR8:$src))]>, TB;
 def MOVZX16rm8 : I<0xB6, MRMSrcMem, (outs GR16:$dst), (ins i8mem :$src),
-                   "movz{bl|x}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
-                   [(set GR16:$dst, (zextloadi16i8 addr:$src))]>, TB;
+                   "", [(set GR16:$dst, (zextloadi16i8 addr:$src))]>, TB;
 def MOVZX32rr8 : I<0xB6, MRMSrcReg, (outs GR32:$dst), (ins GR8 :$src),
                    "movz{bl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (zext GR8:$src))]>, TB;
@@ -3474,9 +3470,8 @@ def MOV8r0   : I<0x30, MRMInitReg, (outs GR8 :$dst), (ins),
                  [(set GR8:$dst, 0)]>;
 // Use xorl instead of xorw since we don't care about the high 16 bits,
 // it's smaller, and it avoids a partial-register update.
-def MOV16r0  : I<0x31, MRMInitReg,  (outs GR16:$dst), (ins),
-                 "xor{l}\t${dst:subreg32}, ${dst:subreg32}",
-                 [(set GR16:$dst, 0)]>;
+def MOV16r0  : I<0x31, MRMInitReg, (outs GR16:$dst), (ins),
+                 "", [(set GR16:$dst, 0)]>;
 def MOV32r0  : I<0x31, MRMInitReg,  (outs GR32:$dst), (ins),
                  "xor{l}\t$dst, $dst",
                  [(set GR32:$dst, 0)]>;
