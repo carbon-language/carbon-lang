@@ -493,16 +493,11 @@ sub SendData {
 
 ##############################################################
 #
-# Getting Start timestamp
+# Individual Build & Test Functions
 #
 ##############################################################
-$starttime = `date "+20%y-%m-%d %H:%M:%S"`;
 
-##############################################################
-#
-# Create the source repository directory
-#
-##############################################################
+# Create the source repository directory.
 sub CheckoutSource {
   if (!$NOCHECKOUT) {
     if (-d $BuildDir) {
@@ -533,14 +528,8 @@ sub CheckoutSource {
     }
   }
 }
-CheckoutSource();
-ChangeDir( $LLVMSrcDir , "llvm source directory") ;
 
-##############################################################
-#
-# Build the entire tree, saving build messages to the build log
-#
-##############################################################
+# Build the entire tree, saving build messages to the build log.
 sub BuildLLVM {
   if (!$NOCHECKOUT && !$NOBUILD) {
     my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
@@ -564,43 +553,27 @@ sub BuildLLVM {
 
   return ($HadError, $Status);
 }
-($BuildError, $BuildStatus) = BuildLLVM();
 
-if ($BuildError) {
-    if( $VERBOSE) { print  "\n***ERROR BUILDING TREE\n\n"; }
-    $NODEJAGNU=1;
+# Running dejagnu tests and save results to log.
+sub RunDejaGNUTests {
+  my $Res = "Dejagnu skipped by user choice.";
+
+  if (!$NODEJAGNU) {
+    #Run the feature and regression tests, results are put into testrun.sum
+    #Full log in testrun.log
+    RunLoggedCommand("(time -p $MAKECMD $MAKEOPTS check)", $DejagnuLog, "DEJAGNU");
+
+    #Copy the testrun.log and testrun.sum to our webdir
+    CopyFile("test/testrun.log", $DejagnuLog);
+    CopyFile("test/testrun.sum", $DejagnuSum);
+
+    $Res = GetDejagnuTestResults($DejagnuSum, $DejagnuLog);
+  }
+
+  return $Res;
 }
 
-##############################################################
-#
-# Running dejagnu tests
-#
-##############################################################
-
-# String containing the results of the dejagnu
-my $DejagnuTestResults="Dejagnu skipped by user choice.";
-
-if (!$NODEJAGNU) {
-  #Run the feature and regression tests, results are put into testrun.sum
-  #Full log in testrun.log
-  RunLoggedCommand("(time -p $MAKECMD $MAKEOPTS check)", $DejagnuLog, "DEJAGNU");
-
-  #Copy the testrun.log and testrun.sum to our webdir
-  CopyFile("test/testrun.log", $DejagnuLog);
-  CopyFile("test/testrun.sum", $DejagnuSum);
-  #can be done on server
-  $DejagnuTestResults = GetDejagnuTestResults($DejagnuSum, $DejagnuLog);
-}
-
-##############################################################
-#
-# If we built the tree successfully, run the nightly programs tests...
-#
-# A set of tests to run is passed in (i.e. "SingleSource" "MultiSource"
-# "External")
-#
-##############################################################
-
+# Run the named tests (i.e. "SingleSource" "MultiSource" "External")
 sub TestDirectory {
   my $SubDir = shift;
   ChangeDir( "$LLVMTestDir/$SubDir",
@@ -644,11 +617,8 @@ sub TestDirectory {
   return ($ProgramsTable, $LLCBetaOpts);
 }
 
-##############################################################
-#
-# Calling sub TestDirectory
-#
-##############################################################
+# Run all the nightly tests and return the program tables and the number of
+# passes, fails, and xfails.
 sub RunNightlyTest() {
   if (!$BuildError) {
     ($SSProgs, $llcbeta_options) = TestDirectory("SingleSource");
@@ -694,25 +664,36 @@ sub RunNightlyTest() {
     }
   }
 
-  return ($SSProgs, $MSProgs, $ExtProgs, $Passes, $Fails, $XFails)
+  return ($SSProgs, $MSProgs, $ExtProgs, $Passes, $Fails, $XFails);
 }
 
+##############################################################
+#
+# The actual NewNightlyTest logic.
+#
+##############################################################
+
+$starttime = `date "+20%y-%m-%d %H:%M:%S"`;
+
+CheckoutSource();
+ChangeDir( $LLVMSrcDir , "llvm source directory") ;
+($BuildError, $BuildStatus) = BuildLLVM();
+if ($BuildError) {
+    if( $VERBOSE) { print  "\n***ERROR BUILDING TREE\n\n"; }
+    $NODEJAGNU=1;
+}
+my $DejagnuTestResults = RunDejaGNUTests();
 my ($SingleSourceProgramsTable, $MultiSourceProgramsTable, $ExternalProgramsTable,
     $passes, $fails, $xfails) = RunNightlyTest();
 
-##############################################################
-#
-# Getting end timestamp
-#
-##############################################################
 $endtime = `date "+20%y-%m-%d %H:%M:%S"`;
 
+##############################################################
+#
+# Accumulate the information to send to the server.
+#
+##############################################################
 
-##############################################################
-#
-# Place all the logs neatly into one humungous file
-#
-##############################################################
 if ( $VERBOSE ) { print "PREPARING LOGS TO BE SENT TO SERVER\n"; }
 
 $machine_data = "uname: ".`uname -a`.
@@ -722,6 +703,7 @@ $machine_data = "uname: ".`uname -a`.
                 "date: ".`date \"+20%y-%m-%d\"`.
                 "time: ".`date +\"%H:%M:%S\"`;
 
+# Get gcc version.
 my $gcc_version_long = "";
 if ($GCCPATH ne "") {
   $gcc_version_long = `$GCCPATH/gcc --version`;
@@ -732,6 +714,7 @@ if ($GCCPATH ne "") {
 }
 my $gcc_version = (split '\n', $gcc_version_long)[0];
 
+# Get llvm-gcc target triple.
 my $llvmgcc_version_long = "";
 if ($LLVMGCCPATH ne "") {
   $llvmgcc_version_long = `$LLVMGCCPATH/llvm-gcc -v 2>&1`;
@@ -740,12 +723,6 @@ if ($LLVMGCCPATH ne "") {
 }
 (split '\n', $llvmgcc_version_long)[1] =~ /Target: (.+)/;
 my $targetTriple = $1;
-
-##############################################################
-#
-# Send data via a post request
-#
-##############################################################
 
 if ( $VERBOSE ) { print "SEND THE DATA VIA THE POST REQUEST\n"; }
 
