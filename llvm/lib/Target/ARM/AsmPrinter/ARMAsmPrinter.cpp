@@ -310,25 +310,25 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
                                  const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   switch (MO.getType()) {
+  default:
+    assert(0 && "<unknown operand type>");
   case MachineOperand::MO_Register: {
     unsigned Reg = MO.getReg();
-    if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-      if (Modifier && strcmp(Modifier, "dregpair") == 0) {
-        unsigned DRegLo = TRI->getSubReg(Reg, 5); // arm_dsubreg_0
-        unsigned DRegHi = TRI->getSubReg(Reg, 6); // arm_dsubreg_1
-        O << '{'
-          << getRegisterName(DRegLo) << ',' << getRegisterName(DRegHi)
-          << '}';
-      } else if (Modifier && strcmp(Modifier, "lane") == 0) {
-        unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);
-        unsigned DReg = TRI->getMatchingSuperReg(Reg, RegNum & 1 ? 2 : 1,
-                                                 &ARM::DPR_VFP2RegClass);
-        O << getRegisterName(DReg) << '[' << (RegNum & 1) << ']';
-      } else {
-        O << getRegisterName(Reg);
-      }
-    } else
-      llvm_unreachable("not implemented");
+    assert(TargetRegisterInfo::isPhysicalRegister(Reg));
+    if (Modifier && strcmp(Modifier, "dregpair") == 0) {
+      unsigned DRegLo = TRI->getSubReg(Reg, 5); // arm_dsubreg_0
+      unsigned DRegHi = TRI->getSubReg(Reg, 6); // arm_dsubreg_1
+      O << '{'
+        << getRegisterName(DRegLo) << ',' << getRegisterName(DRegHi)
+        << '}';
+    } else if (Modifier && strcmp(Modifier, "lane") == 0) {
+      unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);
+      unsigned DReg = TRI->getMatchingSuperReg(Reg, RegNum & 1 ? 2 : 1,
+                                               &ARM::DPR_VFP2RegClass);
+      O << getRegisterName(DReg) << '[' << (RegNum & 1) << ']';
+    } else {
+      O << getRegisterName(Reg);
+    }
     break;
   }
   case MachineOperand::MO_Immediate: {
@@ -376,8 +376,6 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     O << MAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << MO.getIndex();
     break;
-  default:
-    O << "<unknown operand type>"; abort (); break;
   }
 }
 

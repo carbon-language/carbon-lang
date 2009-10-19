@@ -31,7 +31,7 @@ public:
 
 
   void printOperand(const MCInst *MI, unsigned OpNo,
-                    const char *Modifier = 0) {}
+                    const char *Modifier = 0);
     
   void printSOImmOperand(const MCInst *MI, unsigned OpNum) {}
   void printSOImm2PartOperand(const MCInst *MI, unsigned OpNum) {}
