@@ -116,13 +116,10 @@ void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op) {
 
 void ARMInstPrinter::printAddrMode4Operand(const MCInst *MI, unsigned OpNum,
                                            const char *Modifier) {
-  // FIXME: ENABLE assert.
-  //assert((Modifier == 0 || Modifier[0] == 0) && "Cannot print modifiers");
-  
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
   ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MO2.getImm());
-  if (0 && Modifier && strcmp(Modifier, "submode") == 0) {
+  if (Modifier && strcmp(Modifier, "submode") == 0) {
     if (MO1.getReg() == ARM::SP) {
       // FIXME
       bool isLDM = (MI->getOpcode() == ARM::LDM ||
@@ -132,7 +129,7 @@ void ARMInstPrinter::printAddrMode4Operand(const MCInst *MI, unsigned OpNum,
       O << ARM_AM::getAMSubModeAltStr(Mode, isLDM);
     } else
       O << ARM_AM::getAMSubModeStr(Mode);
-  } else if (0 && Modifier && strcmp(Modifier, "wide") == 0) {
+  } else if (Modifier && strcmp(Modifier, "wide") == 0) {
     ARM_AM::AMSubMode Mode = ARM_AM::getAM4SubMode(MO2.getImm());
     if (Mode == ARM_AM::ia)
       O << ".w";
@@ -147,12 +144,7 @@ void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum) {
   O << "{";
   // Always skip the first operand, it's the optional (and implicit writeback).
   for (unsigned i = OpNum+1, e = MI->getNumOperands(); i != e; ++i) {
-#if 0 // FIXME: HANDLE WHEN LOWERING??
-    if (MI->getOperand(i).isImplicit())
-      continue;
-#endif
     if (i != OpNum+1) O << ", ";
-    
     O << getRegisterName(MI->getOperand(i).getReg());
   }
   O << "}";
