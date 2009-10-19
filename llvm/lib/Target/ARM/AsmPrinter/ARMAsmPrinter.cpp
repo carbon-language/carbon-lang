@@ -22,12 +22,13 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -61,10 +62,6 @@ namespace {
     /// MCP - Keep a pointer to constantpool entries of the current
     /// MachineFunction.
     const MachineConstantPool *MCP;
-
-    /// GVNonLazyPtrs - Keeps the set of GlobalValues that require
-    /// non-lazy-pointers for indirect access.
-    StringMap<std::string> GVNonLazyPtrs;
 
     /// HiddenGVNonLazyPtrs - Keeps the set of GlobalValues with hidden
     /// visibility that require non-lazy-pointers for indirect access.
@@ -166,8 +163,16 @@ namespace {
           Name = Mang->getMangledName(GV, "$non_lazy_ptr", true);
           if (GV->hasHiddenVisibility())
             HiddenGVNonLazyPtrs[SymName] = Name;
-          else
-            GVNonLazyPtrs[SymName] = Name;
+          else {
+            MCSymbol *Sym = OutContext.GetOrCreateSymbol(Name.c_str());
+            const MCSymbol *&StubSym =
+              MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(Sym);
+            if (StubSym == 0) {
+              //NameStr.clear();
+              //Mang->getNameWithPrefix(NameStr, GV, false);
+              StubSym = OutContext.GetOrCreateSymbol(SymName.c_str());
+            }
+          }
         }
       } else
         Name = Mang->makeNameProper(ACPV->getSymbol());
@@ -1240,19 +1245,23 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
     // All darwin targets use mach-o.
     TargetLoweringObjectFileMachO &TLOFMacho =
       static_cast<TargetLoweringObjectFileMachO &>(getObjFileLowering());
+    MachineModuleInfoMachO &MMIMacho =
+      MMI->getObjFileInfo<MachineModuleInfoMachO>();
 
     O << '\n';
 
     // Output non-lazy-pointers for external and common global variables.
-    if (!GVNonLazyPtrs.empty()) {
+    MachineModuleInfoMachO::SymbolListTy Stubs = MMIMacho.GetGVStubList();
+    
+    if (!Stubs.empty()) {
       // Switch with ".non_lazy_symbol_pointer" directive.
       OutStreamer.SwitchSection(TLOFMacho.getNonLazySymbolPointerSection());
       EmitAlignment(2);
-      for (StringMap<std::string>::iterator I = GVNonLazyPtrs.begin(),
-           E = GVNonLazyPtrs.end(); I != E; ++I) {
-        O << I->second << ":\n";
-        O << "\t.indirect_symbol " << I->getKeyData() << "\n";
-        O << "\t.long\t0\n";
+      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+        Stubs[i].first->print(O, MAI);
+        O << ":\n\t.indirect_symbol ";
+        Stubs[i].second->print(O, MAI);
+        O << "\n\t.long\t0\n";
       }
     }
 
