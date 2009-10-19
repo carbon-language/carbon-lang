@@ -112,9 +112,7 @@ $SVNURL        = 'http://llvm.org/svn/llvm-project' unless $SVNURL;
 my $TestSVNURL = $ENV{"TestSVNURL"};
 $TestSVNURL    = 'http://llvm.org/svn/llvm-project' unless $TestSVNURL;
 my $BuildDir   = $ENV{'BUILDDIR'};
-$BuildDir      = "$HOME/buildtest" unless $BuildDir;
 my $WebDir     = $ENV{'WEBDIR'};
-$WebDir        = "$HOME/cvs/testresults-X86" unless $WebDir;
 
 my $LLVMSrcDir   = $ENV{'LLVMSRCDIR'};
 $LLVMSrcDir    = "$BuildDir/llvm" unless $LLVMSrcDir;
@@ -221,10 +219,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   print "Unknown option: $_ : ignoring!\n";
 }
 
-if (!($CONFIG_PATH eq "")) {
-  die "error: -config mode is not yet implemented,";
-}
-
 if ($ENV{'LLVMGCCDIR'}) {
   $CONFIGUREARGS .= " --with-llvmgccdir=" . $ENV{'LLVMGCCDIR'};
   $LLVMGCCPATH = $ENV{'LLVMGCCDIR'} . '/bin';
@@ -237,14 +231,15 @@ if ($CONFIGUREARGS !~ /--disable-jit/) {
   $CONFIGUREARGS .= " --enable-jit";
 }
 
-if (@ARGV != 0 and @ARGV != 3 and $VERBOSE) {
-  foreach $x (@ARGV) {
-    print "$x\n";
-  }
-  print "Must specify 0 or 3 options!";
+if (@ARGV != 0 and @ARGV != 3) {
+  die "error: must specify 0 or 3 options!";
 }
 
 if (@ARGV == 3) {
+  if ($CONFIG_PATH ne "") {
+      die "error: arguments are unsupported in -config mode,";
+  }
+
   # ARGV[0] used to be the CVS root, ignored for backward compatibility.
   $BuildDir   = $ARGV[1];
   $WebDir     = $ARGV[2];
@@ -262,6 +257,10 @@ if ($nickname eq "") {
 
 if ($BUILDTYPE ne "release" && $BUILDTYPE ne "release-asserts") {
   $BUILDTYPE = "debug";
+}
+
+if ($CONFIG_PATH ne "") {
+  die "error: -config mode is not yet implemented,";
 }
 
 ##############################################################
