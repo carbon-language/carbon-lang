@@ -82,7 +82,6 @@ use Socket;
 #  -parallel        Run parallel jobs with GNU Make (see -parallel-jobs).
 #  -parallel-jobs   The number of parallel Make jobs to use (default is two).
 #  -verbose         Turn on some debug output
-#  -debug           Print information useful only to maintainers of this script.
 #  -nice            Checkout/Configure/Build with "nice" to reduce impact
 #                   on busy servers.
 #  -f2c             Next argument specifies path to F2C utility
@@ -194,7 +193,6 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-test-opts$/)      { $PROGTESTOPTS .= " $ARGV[0]"; shift; next; }
   if (/^-verbose$/)        { $VERBOSE = 1; next; }
   if (/^-teelogs$/)        { $TEELOGS = 1; next; }
-  if (/^-debug$/)          { $DEBUG = 1; next; }
   if (/^-nice$/)           { $NICE = "nice "; next; }
   if (/^-f2c$/)            { $CONFIGUREARGS .= " --with-f2c=$ARGV[0]";
                              shift; next; }
