@@ -499,78 +499,63 @@ sub SendData {
 
 # Create the source repository directory.
 sub CheckoutSource {
-  if (!$NOCHECKOUT) {
-    if (-d $BuildDir) {
-      if (!$NOREMOVE) {
-        if ( $VERBOSE ) {
-          print "Build directory exists! Removing it\n";
-        }
-        system "rm -rf $BuildDir";
-        mkdir $BuildDir or die "Could not create checkout directory $BuildDir!";
-      } else {
-        if ( $VERBOSE ) {
-          print "Build directory exists!\n";
-        }
+  if (-d $BuildDir) {
+    if (!$NOREMOVE) {
+      if ( $VERBOSE ) {
+        print "Build directory exists! Removing it\n";
       }
-    } else {
+      system "rm -rf $BuildDir";
       mkdir $BuildDir or die "Could not create checkout directory $BuildDir!";
+    } else {
+      if ( $VERBOSE ) {
+        print "Build directory exists!\n";
+      }
     }
+  } else {
+    mkdir $BuildDir or die "Could not create checkout directory $BuildDir!";
+  }
 
-    ChangeDir( $BuildDir, "checkout directory" );
-    my $SVNCMD = "$NICE svn co --non-interactive";
-    RunLoggedCommand("( time -p $SVNCMD $SVNURL/llvm/trunk llvm; cd llvm/projects ; " .
-                     "  $SVNCMD $TestSVNURL/test-suite/trunk llvm-test )", $COLog,
-                     "CHECKOUT LLVM");
-    if ($WITHCLANG) {
-        RunLoggedCommand("( cd llvm/tools ; " .
-                         "  $SVNCMD $SVNURL/cfe/trunk clang )", $COLog,
-                         "CHECKOUT CLANG");
-    }
+  ChangeDir( $BuildDir, "checkout directory" );
+  my $SVNCMD = "$NICE svn co --non-interactive";
+  RunLoggedCommand("( time -p $SVNCMD $SVNURL/llvm/trunk llvm; cd llvm/projects ; " .
+                   "  $SVNCMD $TestSVNURL/test-suite/trunk llvm-test )", $COLog,
+                   "CHECKOUT LLVM");
+  if ($WITHCLANG) {
+      RunLoggedCommand("( cd llvm/tools ; " .
+                       "  $SVNCMD $SVNURL/cfe/trunk clang )", $COLog,
+                       "CHECKOUT CLANG");
   }
 }
 
-# Build the entire tree, saving build messages to the build log.
+# Build the entire tree, saving build messages to the build log. Returns false
+# on build failure.
 sub BuildLLVM {
-  if (!$NOCHECKOUT && !$NOBUILD) {
-    my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
-    RunLoggedCommand("(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) ",
-                     $ConfigureLog, "CONFIGURE");
-    # Build the entire tree, capturing the output into $BuildLog
-    RunAppendingLoggedCommand("($NICE $MAKECMD clean)", $BuildLog, "BUILD CLEAN");
-    RunAppendingLoggedCommand("(time -p $NICE $MAKECMD $MAKEOPTS)", $BuildLog, "BUILD");
+  my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
+  RunLoggedCommand("(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) ",
+                   $ConfigureLog, "CONFIGURE");
+  # Build the entire tree, capturing the output into $BuildLog
+  RunAppendingLoggedCommand("($NICE $MAKECMD clean)", $BuildLog, "BUILD CLEAN");
+  RunAppendingLoggedCommand("(time -p $NICE $MAKECMD $MAKEOPTS)", $BuildLog, "BUILD");
+
+  if (`grep '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
+      `grep '^$MAKECMD: \*\*\*.*Stop.' $BuildLog | wc -l` + 0) {
+    return 0;
   }
 
-  # Check for build error.
-  my $HadError = 0, $Status = "OK";
-  if ($NOBUILD) {
-    $Status = "Skipped by user";
-  }
-  elsif (`grep '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
-    `grep '^$MAKECMD: \*\*\*.*Stop.' $BuildLog | wc -l`+0) {
-    $Status = "Error: compilation aborted";
-    $HadError = 1;
-  }
-
-  return ($HadError, $Status);
+  return 1;
 }
 
 # Running dejagnu tests and save results to log.
 sub RunDejaGNUTests {
-  my $Res = "Dejagnu skipped by user choice.";
+  # Run the feature and regression tests, results are put into testrun.sum and
+  # the full log in testrun.log.
+  RunLoggedCommand("(time -p $MAKECMD $MAKEOPTS check)", $DejagnuLog, "DEJAGNU");
 
-  if (!$NODEJAGNU) {
-    #Run the feature and regression tests, results are put into testrun.sum
-    #Full log in testrun.log
-    RunLoggedCommand("(time -p $MAKECMD $MAKEOPTS check)", $DejagnuLog, "DEJAGNU");
+  # Copy the testrun.log and testrun.sum to our webdir.
+  CopyFile("test/testrun.log", $DejagnuLog);
+  CopyFile("test/testrun.sum", $DejagnuSum);
 
-    #Copy the testrun.log and testrun.sum to our webdir
-    CopyFile("test/testrun.log", $DejagnuLog);
-    CopyFile("test/testrun.sum", $DejagnuSum);
-
-    $Res = GetDejagnuTestResults($DejagnuSum, $DejagnuLog);
-  }
-
-  return $Res;
+  return GetDejagnuTestResults($DejagnuSum, $DejagnuLog);
 }
 
 # Run the named tests (i.e. "SingleSource" "MultiSource" "External")
@@ -581,35 +566,28 @@ sub TestDirectory {
 
   my $ProgramTestLog = "$Prefix-$SubDir-ProgramTest.txt";
 
-  # Run the programs tests... creating a report.nightly.csv file
+  # Run the programs tests... creating a report.nightly.csv file.
   my $LLCBetaOpts = "";
-  if (!$NOTEST) {
-    if( $VERBOSE) {
-      print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
-            "$TESTFLAGS TEST=nightly > $ProgramTestLog 2>&1\n";
-    }
-    RunLoggedCommand("$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
-                     "$TESTFLAGS TEST=nightly",
-                     $ProgramTestLog, "TEST DIRECTORY $SubDir");
-    $LLCBetaOpts = `$MAKECMD print-llcbeta-option`;
+  if( $VERBOSE) {
+    print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
+          "$TESTFLAGS TEST=nightly > $ProgramTestLog 2>&1\n";
   }
+  RunLoggedCommand("$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
+                   "$TESTFLAGS TEST=nightly",
+                   $ProgramTestLog, "TEST DIRECTORY $SubDir");
+  $LLCBetaOpts = `$MAKECMD print-llcbeta-option`;
 
   my $ProgramsTable;
   if (`grep '^$MAKECMD\[^:]: .*Error' $ProgramTestLog | wc -l` + 0) {
-    $TestError = 1;
     $ProgramsTable="Error running test $SubDir\n";
     print "ERROR TESTING\n";
   } elsif (`grep '^$MAKECMD\[^:]: .*No rule to make target' $ProgramTestLog | wc -l` + 0) {
-    $TestError = 1;
     $ProgramsTable="Makefile error running tests $SubDir!\n";
     print "ERROR TESTING\n";
   } else {
-    $TestError = 0;
-  #
-  # Create a list of the tests which were run...
-  #
-  system "egrep 'TEST-(PASS|FAIL)' < $ProgramTestLog ".
-         "| sort > $Prefix-$SubDir-Tests.txt";
+    # Create a list of the tests which were run...
+    system "egrep 'TEST-(PASS|FAIL)' < $ProgramTestLog ".
+           "| sort > $Prefix-$SubDir-Tests.txt";
   }
   $ProgramsTable = ReadFile "report.nightly.csv";
 
@@ -620,47 +598,45 @@ sub TestDirectory {
 # Run all the nightly tests and return the program tables and the number of
 # passes, fails, and xfails.
 sub RunNightlyTest() {
-  if (!$BuildError) {
-    ($SSProgs, $llcbeta_options) = TestDirectory("SingleSource");
-    WriteFile "$Prefix-SingleSource-Performance.txt", $SSProgs;
-    ($MSProgs, $llcbeta_options) = TestDirectory("MultiSource");
-    WriteFile "$Prefix-MultiSource-Performance.txt", $MSProgs;
-    if ( ! $NOEXTERNALS ) {
-      ($ExtProgs, $llcbeta_options) = TestDirectory("External");
-      WriteFile "$Prefix-External-Performance.txt", $ExtProgs;
-      system "cat $Prefix-SingleSource-Tests.txt " .
-                 "$Prefix-MultiSource-Tests.txt ".
-                 "$Prefix-External-Tests.txt | sort > $Prefix-Tests.txt";
-      system "cat $Prefix-SingleSource-Performance.txt " .
-                 "$Prefix-MultiSource-Performance.txt ".
-                 "$Prefix-External-Performance.txt | sort > $Prefix-Performance.txt";
-    } else {
-      $ExtProgs = "External TEST STAGE SKIPPED\n";
-      if ( $VERBOSE ) {
-        print "External TEST STAGE SKIPPED\n";
-      }
-      system "cat $Prefix-SingleSource-Tests.txt " .
-                 "$Prefix-MultiSource-Tests.txt ".
-                 " | sort > $Prefix-Tests.txt";
-      system "cat $Prefix-SingleSource-Performance.txt " .
-                 "$Prefix-MultiSource-Performance.txt ".
-                 " | sort > $Prefix-Performance.txt";
+  ($SSProgs, $llcbeta_options) = TestDirectory("SingleSource");
+  WriteFile "$Prefix-SingleSource-Performance.txt", $SSProgs;
+  ($MSProgs, $llcbeta_options) = TestDirectory("MultiSource");
+  WriteFile "$Prefix-MultiSource-Performance.txt", $MSProgs;
+  if ( ! $NOEXTERNALS ) {
+    ($ExtProgs, $llcbeta_options) = TestDirectory("External");
+    WriteFile "$Prefix-External-Performance.txt", $ExtProgs;
+    system "cat $Prefix-SingleSource-Tests.txt " .
+               "$Prefix-MultiSource-Tests.txt ".
+               "$Prefix-External-Tests.txt | sort > $Prefix-Tests.txt";
+    system "cat $Prefix-SingleSource-Performance.txt " .
+               "$Prefix-MultiSource-Performance.txt ".
+               "$Prefix-External-Performance.txt | sort > $Prefix-Performance.txt";
+  } else {
+    $ExtProgs = "External TEST STAGE SKIPPED\n";
+    if ( $VERBOSE ) {
+      print "External TEST STAGE SKIPPED\n";
     }
+    system "cat $Prefix-SingleSource-Tests.txt " .
+               "$Prefix-MultiSource-Tests.txt ".
+               " | sort > $Prefix-Tests.txt";
+    system "cat $Prefix-SingleSource-Performance.txt " .
+               "$Prefix-MultiSource-Performance.txt ".
+               " | sort > $Prefix-Performance.txt";
+  }
 
-    # Compile passes, fails, xfails.
-    my @TestSuiteResultLines = split "\n", (ReadFile "$Prefix-Tests.txt");
-    my ($Passes, $Fails, $XFails) = "";
+  # Compile passes, fails, xfails.
+  my @TestSuiteResultLines = split "\n", (ReadFile "$Prefix-Tests.txt");
+  my ($Passes, $Fails, $XFails) = "";
 
-    for ($x=0; $x < @TestSuiteResultLines; $x++) {
-      if (@TestSuiteResultLines[$x] =~ m/^PASS:/) {
-        $Passes .= "$TestSuiteResultLines[$x]\n";
-      }
-      elsif (@TestSuiteResultLines[$x] =~ m/^FAIL:/) {
-        $Fails .= "$TestSuiteResultLines[$x]\n";
-      }
-      elsif (@TestSuiteResultLines[$x] =~ m/^XFAIL:/) {
-        $XFails .= "$TestSuiteResultLines[$x]\n";
-      }
+  for ($x=0; $x < @TestSuiteResultLines; $x++) {
+    if (@TestSuiteResultLines[$x] =~ m/^PASS:/) {
+      $Passes .= "$TestSuiteResultLines[$x]\n";
+    }
+    elsif (@TestSuiteResultLines[$x] =~ m/^FAIL:/) {
+      $Fails .= "$TestSuiteResultLines[$x]\n";
+    }
+    elsif (@TestSuiteResultLines[$x] =~ m/^XFAIL:/) {
+      $XFails .= "$TestSuiteResultLines[$x]\n";
     }
   }
 
@@ -675,16 +651,37 @@ sub RunNightlyTest() {
 
 $starttime = `date "+20%y-%m-%d %H:%M:%S"`;
 
-CheckoutSource();
-ChangeDir( $LLVMSrcDir , "llvm source directory") ;
-($BuildError, $BuildStatus) = BuildLLVM();
-if ($BuildError) {
-    if( $VERBOSE) { print  "\n***ERROR BUILDING TREE\n\n"; }
-    $NODEJAGNU=1;
+if (!$NOCHECKOUT) {
+  CheckoutSource();
 }
-my $DejagnuTestResults = RunDejaGNUTests();
+
+# Build LLVM.
+my $BuildError = 0, $BuildStatus = "OK";
+ChangeDir( $LLVMSrcDir , "llvm source directory") ;
+if ($NOCHECKOUT || $NOBUILD) {
+  $BuildStatus = "Skipped by user";
+} else {
+  if (!BuildLLVM()) {
+    if( $VERBOSE) { print  "\n***ERROR BUILDING TREE\n\n"; }
+    $BuildError = 1;
+    $BuildStatus = "Error: compilation aborted";
+    $NODEJAGNU=1;
+  }
+}
+
+# Run DejaGNU.
+my $DejagnuTestResults = "Dejagnu skipped by user choice.";
+if (!$NODEJAGNU && !$BuildError) {
+  $DejagnuTestResults = RunDejaGNUTests();
+}
+
+# Run the llvm-test tests.
 my ($SingleSourceProgramsTable, $MultiSourceProgramsTable, $ExternalProgramsTable,
-    $passes, $fails, $xfails) = RunNightlyTest();
+    $passes, $fails, $xfails) = "";
+if (!$NOTEST && !$BuildError) {
+  ($SingleSourceProgramsTable, $MultiSourceProgramsTable, $ExternalProgramsTable,
+   $passes, $fails, $xfails) = RunNightlyTest();
+}
 
 $endtime = `date "+20%y-%m-%d %H:%M:%S"`;
 
