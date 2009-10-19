@@ -1008,21 +1008,30 @@ public:
     return getClassInterface()->getIdentifier();
   }
 
+  /// getName - Get the name of identifier for the class interface associated
+  /// with this implementation as a StringRef.
+  //
+  // FIXME: This is a bad API, we are overriding the NamedDecl::getName, to mean
+  // something different.
+  llvm::StringRef getName() const {
+    assert(getIdentifier() && "Name is not a simple identifier");
+    return getIdentifier()->getName();
+  }
+
   /// getNameAsCString - Get the name of identifier for the class
   /// interface associated with this implementation as a C string
   /// (const char*).
   //
   // FIXME: Move to StringRef API.
   const char *getNameAsCString() const {
-    assert(getIdentifier() && "Name is not a simple identifier");
-    return getIdentifier()->getNameStart();
+    return getName().data();
   }
 
   /// @brief Get the name of the class associated with this interface.
   //
   // FIXME: Move to StringRef API.
   std::string getNameAsString() const {
-    return getClassInterface()->getNameAsString();
+    return getName();
   }
 
   const ObjCInterfaceDecl *getSuperClass() const { return SuperClass; }
