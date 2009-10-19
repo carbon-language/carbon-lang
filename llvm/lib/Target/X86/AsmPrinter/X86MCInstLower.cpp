@@ -306,6 +306,8 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MI->dump();
       llvm_unreachable("unknown operand type");
     case MachineOperand::MO_Register:
+      // Ignore all implicit register operands.
+      if (MO.isImplicit()) continue;
       MCOp = MCOperand::CreateReg(MO.getReg());
       break;
     case MachineOperand::MO_Immediate:
