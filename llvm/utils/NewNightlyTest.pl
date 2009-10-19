@@ -15,61 +15,15 @@ use Socket;
 # Syntax:   NightlyTest.pl [OPTIONS] [CVSROOT BUILDDIR WEBDIR]
 #   where
 # OPTIONS may include one or more of the following:
-#  -nocheckout      Do not create, checkout, update, or configure
-#                   the source tree.
-#  -noremove        Do not remove the BUILDDIR after it has been built.
-#  -noremoveresults Do not remove the WEBDIR after it has been built.
-#  -nobuild         Do not build llvm. If tests are enabled perform them
-#                   on the llvm build specified in the build directory
-#  -notest          Do not even attempt to run the test programs.
-#  -nodejagnu       Do not run feature or regression tests
-#  -parallel        Run parallel jobs with GNU Make (see -parallel-jobs).
-#  -parallel-jobs   The number of parallel Make jobs to use (default is two).
-#  -with-clang      Checkout Clang source into tools/clang.
-#  -release         Build an LLVM Release version
-#  -release-asserts Build an LLVM ReleaseAsserts version
-#  -enable-llcbeta  Enable testing of beta features in llc.
-#  -enable-lli      Enable testing of lli (interpreter) features, default is off
-#  -disable-pic	    Disable building with Position Independent Code.
-#  -disable-llc     Disable LLC tests in the nightly tester.
-#  -disable-jit     Disable JIT tests in the nightly tester.
-#  -disable-cbe     Disable C backend tests in the nightly tester.
-#  -disable-lto     Disable link time optimization.
-#  -disable-bindings     Disable building LLVM bindings.
-#  -verbose         Turn on some debug output
-#  -debug           Print information useful only to maintainers of this script.
-#  -nice            Checkout/Configure/Build with "nice" to reduce impact
-#                   on busy servers.
-#  -f2c             Next argument specifies path to F2C utility
-#  -nickname        The next argument specifieds the nickname this script
-#                   will submit to the nightlytest results repository.
-#  -gccpath         Path to gcc/g++ used to build LLVM
-#  -cvstag          Check out a specific CVS tag to build LLVM (useful for
-#                   testing release branches)
-#  -usecvs          Check code out from the (old) CVS Repository instead of from
-#                   the standard Subversion repository.
-#  -target          Specify the target triplet
-#  -cflags          Next argument specifies that C compilation options that
-#                   override the default.
-#  -cxxflags        Next argument specifies that C++ compilation options that
-#                   override the default.
-#  -ldflags         Next argument specifies that linker options that override
-#                   the default.
-#  -test-cflags     Next argument specifies that C compilation options that
-#                   override the default when running the testsuite.
-#  -test-cxxflags   Next argument specifies that C++ compilation options that
-#                   override the default when running the testsuite.
-#  -compileflags    Next argument specifies extra options passed to make when
-#                   building LLVM.
-#  -use-gmake       Use gmake instead of the default make command to build
-#                   llvm and run tests.
 #
-#  ---------------- Options to configure llvm-test ----------------------------
-#  -extraflags      Next argument specifies extra options that are passed to
-#                   compile the tests.
-#  -noexternals     Do not run the external tests (for cases where povray
-#                   or SPEC are not installed)
-#  -with-externals  Specify a directory where the external tests are located.
+# MAIN OPTIONS:
+#  -config LLVMPATH If specified, use an existing LLVM build and only run and
+#                   report the test information. The LLVMCONFIG argument should
+#                   be the path to the llvm-config executable in the LLVM build.
+#                   This should be the first argument if given. NOT YET
+#                   IMPLEMENTED.
+#  -nickname NAME   The NAME argument specifieds the nickname this script
+#                   will submit to the nightlytest results repository.
 #  -submit-server   Specifies a server to submit the test results too. If this
 #                   option is not specified it defaults to
 #                   llvm.org. This is basically just the address of the
@@ -82,6 +36,64 @@ use Socket;
 #                   normal submit script. The script will be passed the path to
 #                   the "sentdata.txt" file as its sole argument.
 #  -nosubmit        Do not report the test results back to a submit server.
+#
+#
+# BUILD OPTIONS (not used with -config):
+#  -nocheckout      Do not create, checkout, update, or configure
+#                   the source tree.
+#  -noremove        Do not remove the BUILDDIR after it has been built.
+#  -noremoveresults Do not remove the WEBDIR after it has been built.
+#  -nobuild         Do not build llvm. If tests are enabled perform them
+#                   on the llvm build specified in the build directory
+#  -release         Build an LLVM Release version
+#  -release-asserts Build an LLVM ReleaseAsserts version
+#  -disable-bindings     Disable building LLVM bindings.
+#  -cvstag          Check out a specific CVS tag to build LLVM (useful for
+#                   testing release branches)
+#  -usecvs          Check code out from the (old) CVS Repository instead of from
+#                   the standard Subversion repository.
+#  -with-clang      Checkout Clang source into tools/clang.
+#  -compileflags    Next argument specifies extra options passed to make when
+#                   building LLVM.
+#  -use-gmake       Use gmake instead of the default make command to build
+#                   llvm and run tests.
+#
+# TESTING OPTIONS:
+#  -notest          Do not even attempt to run the test programs.
+#  -nodejagnu       Do not run feature or regression tests
+#  -enable-llcbeta  Enable testing of beta features in llc.
+#  -enable-lli      Enable testing of lli (interpreter) features, default is off
+#  -disable-pic	    Disable building with Position Independent Code.
+#  -disable-llc     Disable LLC tests in the nightly tester.
+#  -disable-jit     Disable JIT tests in the nightly tester.
+#  -disable-cbe     Disable C backend tests in the nightly tester.
+#  -disable-lto     Disable link time optimization.
+#  -test-cflags     Next argument specifies that C compilation options that
+#                   override the default when running the testsuite.
+#  -test-cxxflags   Next argument specifies that C++ compilation options that
+#                   override the default when running the testsuite.
+#  -extraflags      Next argument specifies extra options that are passed to
+#                   compile the tests.
+#  -noexternals     Do not run the external tests (for cases where povray
+#                   or SPEC are not installed)
+#  -with-externals  Specify a directory where the external tests are located.
+#
+# OTHER OPTIONS:
+#  -parallel        Run parallel jobs with GNU Make (see -parallel-jobs).
+#  -parallel-jobs   The number of parallel Make jobs to use (default is two).
+#  -verbose         Turn on some debug output
+#  -debug           Print information useful only to maintainers of this script.
+#  -nice            Checkout/Configure/Build with "nice" to reduce impact
+#                   on busy servers.
+#  -f2c             Next argument specifies path to F2C utility
+#  -gccpath         Path to gcc/g++ used to build LLVM
+#  -target          Specify the target triplet
+#  -cflags          Next argument specifies that C compilation options that
+#                   override the default.
+#  -cxxflags        Next argument specifies that C++ compilation options that
+#                   override the default.
+#  -ldflags         Next argument specifies that linker options that override
+#                   the default.
 #
 # CVSROOT is the CVS repository from which the tree will be checked out,
 #  specified either in the full :method:user@host:/dir syntax, or
@@ -133,6 +145,7 @@ my $DATE = sprintf "%4d-%02d-%02d_%02d-%02d", $TIME[5]+1900, $TIME[4]+1, $TIME[3
 # Parse arguments...
 #
 ##############################################################
+$CONFIG_PATH="";
 $CONFIGUREARGS="";
 $nickname="";
 $NOTEST=0;
@@ -150,6 +163,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   last if /^--$/;  # Stop processing arguments on --
 
   # List command line options here...
+  if (/^-config$/)         { $CONFIG_PATH = "$ARGV[0]"; shift; next; }
   if (/^-nocheckout$/)     { $NOCHECKOUT = 1; next; }
   if (/^-nocvsstats$/)     { $NOCVSSTATS = 1; next; }
   if (/^-noremove$/)       { $NOREMOVE = 1; next; }
@@ -222,6 +236,10 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   print "Unknown option: $_ : ignoring!\n";
 }
 
+if (!($CONFIG_PATH eq "")) {
+  die "error: -config mode is not yet implemented,";
+}
+
 if ($ENV{'LLVMGCCDIR'}) {
   $CONFIGUREARGS .= " --with-llvmgccdir=" . $ENV{'LLVMGCCDIR'};
   $LLVMGCCPATH = $ENV{'LLVMGCCDIR'} . '/bin';
@@ -265,7 +283,7 @@ if ($BUILDTYPE ne "release" && $BUILDTYPE ne "release-asserts") {
 
 ##############################################################
 #
-#define the file names we'll use
+# Define the file names we'll use
 #
 ##############################################################
 my $Prefix = "$WebDir/$DATE";
@@ -303,6 +321,7 @@ if ($VERBOSE) {
 # Helper functions
 #
 ##############################################################
+
 sub GetDir {
   my $Suffix = shift;
   opendir DH, $WebDir;
@@ -499,10 +518,10 @@ sub GetDejagnuTestResults { # (filename, log)
 # to our central server via the post method
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sub SendData{
+sub SendData {
     $host = $_[0];
     $file = $_[1];
-    $variables=$_[2];
+    $variables = $_[2];
 
     # Write out the "...-sentdata.txt" file.
 
@@ -517,7 +536,7 @@ sub SendData{
         system "$SUBMITAUX \"$Prefix-sentdata.txt\"";
     }
 
-    if (!$SUBMIT) { 
+    if (!$SUBMIT) {
         return "Skipped standard submit.\n";
     }
 
@@ -531,9 +550,9 @@ sub SendData{
     }
 
     # Send the data to the server.
-    # 
+    #
     # FIXME: This code should be more robust?
-    
+
     $port=80;
     $socketaddr= sockaddr_in $port, inet_aton $host or die "Bad hostname\n";
     socket SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp') or
