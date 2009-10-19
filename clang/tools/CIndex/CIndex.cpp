@@ -350,15 +350,16 @@ void clang_disposeIndex(CXIndex CIdx)
 
 // FIXME: need to pass back error info.
 CXTranslationUnit clang_createTranslationUnit(
-  CXIndex CIdx, const char *ast_filename) 
+  CXIndex CIdx, const char *ast_filename, int displayDiagnostics) 
 {
   assert(CIdx && "Passed null CXIndex");
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
   std::string astName(ast_filename);
   std::string ErrMsg;
+  DiagnosticClient *diagClient = displayDiagnostics
+                                  ? NULL : new IgnoreDiagnosticsClient();
   
-  return ASTUnit::LoadFromPCHFile(astName, &ErrMsg,
-                                  new IgnoreDiagnosticsClient(),
+  return ASTUnit::LoadFromPCHFile(astName, &ErrMsg, diagClient,
                                   CXXIdx->getOnlyLocalDecls(),
                                   /* UseBumpAllocator = */ true);
 }
@@ -366,8 +367,8 @@ CXTranslationUnit clang_createTranslationUnit(
 CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   CXIndex CIdx, 
   const char *source_filename,
-  int num_command_line_args, const char **command_line_args) 
-{
+  int num_command_line_args, const char **command_line_args,
+  int displayDiagnostics)  {
   // Build up the arguments for involing clang.
   llvm::sys::Path ClangPath = static_cast<CIndexer *>(CIdx)->getClangPath();
   std::vector<const char *> argv;
@@ -383,11 +384,21 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   argv.push_back(NULL);
 
   // Generate the AST file in a separate process.
+#ifdef LLVM_ON_WIN32
+  llvm::sys::Path DevNull("/dev/null")
+  llvm::sys::Path *Redirects[] = { &DevNull, &DevNull, &DevNull, NULL };
+  llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0],
+                                     !displayDiagnostics ? Redirects : NULL);
+#else
+  // FIXME: I don't know what is the equivalent '/dev/null' redirect for
+  // Windows for this API.
   llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0]);
+#endif
 
   // Finally, we create the translation unit from the ast file.
   ASTUnit *ATU = static_cast<ASTUnit *>(
-                   clang_createTranslationUnit(CIdx, astTmpFile));
+                   clang_createTranslationUnit(CIdx, astTmpFile,
+                                               displayDiagnostics));
   ATU->unlinkTemporaryFile();
   return ATU;
 }

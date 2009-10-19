@@ -107,15 +107,26 @@ void clang_disposeIndex(CXIndex);
 const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
 
 CXTranslationUnit clang_createTranslationUnit(
-  CXIndex, const char *ast_filename
+  CXIndex, const char *ast_filename,
+  int displayDiagnostics
 );
+
+/**
+ * \brief Destroy the specified CXTranslationUnit object.
+ */ 
+void clang_disposeTranslationUnit(CXTranslationUnit);
+
+/**
+ * \brief Return the CXTranslationUnit for a given source file and the provided command line
+ *   arguments one would pass to the compiler.
+ */
 CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   CXIndex CIdx, 
   const char *source_filename,
   int num_clang_command_line_args, 
-  const char **clang_command_line_args
+  const char **clang_command_line_args,
+  int displayDiagnostics
 );
-void clang_disposeTranslationUnit(CXTranslationUnit);
 
 /**
  * \brief Indicate to Clang that it should only enumerate "local" declarations

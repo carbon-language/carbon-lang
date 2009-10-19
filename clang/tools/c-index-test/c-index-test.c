@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
   if (!strcmp(argv[2], "local"))
     clang_wantOnlyLocalDeclarations(Idx);
 
-  TU = clang_createTranslationUnit(Idx, argv[1]);
+  TU = clang_createTranslationUnit(Idx, argv[1], /* displayDiagnostics= */ 1);
 
   if (!TU) {
     fprintf(stderr, "Unable to load translation unit!\n");
