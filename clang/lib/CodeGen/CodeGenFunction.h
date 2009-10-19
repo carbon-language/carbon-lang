@@ -34,6 +34,7 @@ namespace llvm {
   class LLVMContext;
   class Module;
   class SwitchInst;
+  class Twine;
   class Value;
 }
 
@@ -508,7 +509,7 @@ public:
   /// CreateTempAlloca - This creates a alloca and inserts it into the entry
   /// block.
   llvm::AllocaInst *CreateTempAlloca(const llvm::Type *Ty,
-                                     const char *Name = "tmp");
+                                     const llvm::Twine &Name = "tmp");
 
   /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
   /// expression and compare the result against zero, returning an Int1Ty value.

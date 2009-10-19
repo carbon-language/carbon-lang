@@ -28,9 +28,9 @@ using namespace CodeGen;
 /// CreateTempAlloca - This creates a alloca and inserts it into the entry
 /// block.
 llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
-                                                    const char *Name) {
+                                                    const llvm::Twine &Name) {
   if (!Builder.isNamePreserving())
-    Name = "";
+    return new llvm::AllocaInst(Ty, 0, "", AllocaInsertPt);
   return new llvm::AllocaInst(Ty, 0, Name, AllocaInsertPt);
 }
 
