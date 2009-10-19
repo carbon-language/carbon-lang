@@ -62,13 +62,6 @@ namespace {
     /// MachineFunction.
     const MachineConstantPool *MCP;
 
-    /// We name each basic block in a Function with a unique number, so
-    /// that we can consistently refer to them later. This is cleared
-    /// at the beginning of each call to runOnMachineFunction().
-    ///
-    typedef std::map<const Value *, unsigned> ValueMapTy;
-    ValueMapTy NumberForBB;
-
     /// GVNonLazyPtrs - Keeps the set of GlobalValues that require
     /// non-lazy-pointers for indirect access.
     StringMap<std::string> GVNonLazyPtrs;
