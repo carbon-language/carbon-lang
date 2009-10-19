@@ -253,7 +253,8 @@ public:
   /// Identifiers and selectors are returned unmodified. Sublcasses may
   /// override this function to provide alternate behavior.
   DeclarationName TransformDeclarationName(DeclarationName Name,
-                                           SourceLocation Loc);
+                                           SourceLocation Loc,
+                                           QualType ObjectType = QualType());
 
   /// \brief Transform the given template name.
   ///
@@ -276,6 +277,10 @@ public:
   QualType Transform##CLASS##Type(const CLASS##Type *T);
 #include "clang/AST/TypeNodes.def"
 
+  QualType 
+  TransformTemplateSpecializationType(const TemplateSpecializationType *T,
+                                      QualType ObjectType);
+  
   OwningStmtResult TransformCompoundStmt(CompoundStmt *S, bool IsStmtExpr);
 
 #define STMT(Node, Parent)                        \
@@ -1734,7 +1739,8 @@ TreeTransform<Derived>::TransformNestedNameSpecifier(NestedNameSpecifier *NNS,
 template<typename Derived>
 DeclarationName
 TreeTransform<Derived>::TransformDeclarationName(DeclarationName Name,
-                                                 SourceLocation Loc) {
+                                                 SourceLocation Loc,
+                                                 QualType ObjectType) {
   if (!Name)
     return Name;
 
@@ -1751,7 +1757,14 @@ TreeTransform<Derived>::TransformDeclarationName(DeclarationName Name,
   case DeclarationName::CXXDestructorName:
   case DeclarationName::CXXConversionFunctionName: {
     TemporaryBase Rebase(*this, Loc, Name);
-    QualType T = getDerived().TransformType(Name.getCXXNameType());
+    QualType T;
+    if (!ObjectType.isNull() && 
+        isa<TemplateSpecializationType>(Name.getCXXNameType())) {
+      TemplateSpecializationType *SpecType
+        = cast<TemplateSpecializationType>(Name.getCXXNameType());
+      T = TransformTemplateSpecializationType(SpecType, ObjectType);
+    } else
+      T = getDerived().TransformType(Name.getCXXNameType());
     if (T.isNull())
       return DeclarationName();
 
@@ -1814,7 +1827,8 @@ TreeTransform<Derived>::TransformTemplateName(TemplateName Name,
       return TemplateName();
 
     if (!getDerived().AlwaysRebuild() &&
-        NNS == DTN->getQualifier())
+        NNS == DTN->getQualifier() &&
+        ObjectType.isNull())
       return Name;
 
     return getDerived().RebuildTemplateName(NNS, *DTN->getName(), ObjectType);
@@ -2336,10 +2350,18 @@ QualType TreeTransform<Derived>::TransformSubstTemplateTypeParmType(
 }
 
 template<typename Derived>
+inline QualType 
+TreeTransform<Derived>::TransformTemplateSpecializationType(
+                                          const TemplateSpecializationType *T) {
+  return TransformTemplateSpecializationType(T, QualType());
+}
+  
+template<typename Derived>
 QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
-                                        const TemplateSpecializationType *T) {
+                                        const TemplateSpecializationType *T,
+                                                          QualType ObjectType) {
   TemplateName Template
-    = getDerived().TransformTemplateName(T->getTemplateName());
+    = getDerived().TransformTemplateName(T->getTemplateName(), ObjectType);
   if (Template.isNull())
     return QualType();
 
@@ -4186,7 +4208,7 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
   // refer to a built-in type!).
   NamedDecl *FirstQualifierInScope
     = cast_or_null<NamedDecl>(
-              getDerived().TransformDecl(E->getFirstQualifierFoundInScope()));
+               getDerived().TransformDecl(E->getFirstQualifierFoundInScope()));
 
   NestedNameSpecifier *Qualifier = 0;
   if (E->getQualifier()) {
@@ -4199,7 +4221,8 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
   }
 
   DeclarationName Name
-    = getDerived().TransformDeclarationName(E->getMember(), E->getMemberLoc());
+    = getDerived().TransformDeclarationName(E->getMember(), E->getMemberLoc(),
+                                       QualType::getFromOpaquePtr(ObjectType));
   if (!Name)
     return SemaRef.ExprError();
 

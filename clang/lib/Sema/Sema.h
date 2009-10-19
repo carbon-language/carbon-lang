@@ -2108,6 +2108,15 @@ public:
                                bool HasTrailingLParen);
 
   virtual OwningExprResult
+  ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
+                               SourceLocation OpLoc,
+                               tok::TokenKind OpKind,
+                               SourceRange TypeRange,
+                               TypeTy *Type,
+                               const CXXScopeSpec &SS,
+                               bool HasTrailingLParen);
+    
+  virtual OwningExprResult
   ActOnOverloadedOperatorReferenceExpr(Scope *S, ExprArg Base,
                                        SourceLocation OpLoc,
                                        tok::TokenKind OpKind,

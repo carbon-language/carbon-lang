@@ -2099,6 +2099,8 @@ Sema::ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
                                        ClassName);
   else {
     TypeTy *BaseTy = getTypeName(*ClassName, ClassNameLoc, S, &SS);
+    
+    // FIXME: If Base is dependent, we might not be able to resolve it here.
     if (!BaseTy) {
       Diag(ClassNameLoc, diag::err_ident_in_pseudo_dtor_not_a_type)
         << ClassName;
@@ -2108,25 +2110,41 @@ Sema::ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
     BaseType = GetTypeFromParser(BaseTy);
   }
 
-  CanQualType CanBaseType = Context.getCanonicalType(BaseType);
-  DeclarationName DtorName =
-    Context.DeclarationNames.getCXXDestructorName(CanBaseType);
+  return ActOnDestructorReferenceExpr(S, move(Base), OpLoc, OpKind,
+                                      SourceRange(ClassNameLoc),
+                                      BaseType.getAsOpaquePtr(),
+                                      SS, HasTrailingLParen);
+}
 
+Sema::OwningExprResult
+Sema::ActOnDestructorReferenceExpr(Scope *S, ExprArg Base,
+                             SourceLocation OpLoc,
+                             tok::TokenKind OpKind,
+                             SourceRange TypeRange,
+                             TypeTy *T,
+                             const CXXScopeSpec &SS,
+                             bool HasTrailingLParen) {
+  QualType Type = QualType::getFromOpaquePtr(T);
+  CanQualType CanType = Context.getCanonicalType(Type);
+  DeclarationName DtorName =
+    Context.DeclarationNames.getCXXDestructorName(CanType);
+  
   OwningExprResult Result
-    = BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, ClassNameLoc,
-                               DtorName, DeclPtrTy(), &SS);
+    = BuildMemberReferenceExpr(S, move(Base), OpLoc, OpKind, 
+                               TypeRange.getBegin(), DtorName, DeclPtrTy(), 
+                               &SS);
   if (Result.isInvalid() || HasTrailingLParen)
     return move(Result);
-
+  
   // The only way a reference to a destructor can be used is to
   // immediately call them. Since the next token is not a '(', produce a
   // diagnostic and build the call now.
   Expr *E = (Expr *)Result.get();
-  SourceLocation ExpectedLParenLoc = PP.getLocForEndOfToken(E->getLocEnd());
+  SourceLocation ExpectedLParenLoc = PP.getLocForEndOfToken(TypeRange.getEnd());
   Diag(E->getLocStart(), diag::err_dtor_expr_without_call)
     << isa<CXXPseudoDestructorExpr>(E)
     << CodeModificationHint::CreateInsertion(ExpectedLParenLoc, "()");
-
+  
   return ActOnCallExpr(0, move(Result), ExpectedLParenLoc,
                        MultiExprArg(*this, 0, 0), 0, ExpectedLParenLoc);
 }

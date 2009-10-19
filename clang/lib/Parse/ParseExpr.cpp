@@ -972,13 +972,41 @@ Parser::ParsePostfixExpressionSuffix(OwningExprResult LHS) {
           return ExprError();
         }
 
-        if (!LHS.isInvalid())
-          LHS = Actions.ActOnDestructorReferenceExpr(CurScope, move(LHS),
-                                                     OpLoc, OpKind,
-                                                     Tok.getLocation(),
-                                                     Tok.getIdentifierInfo(),
-                                                     SS,
-                                               NextToken().is(tok::l_paren));
+        if (NextToken().is(tok::less)) {
+          // class-name: 
+          //     ~ simple-template-id
+          TemplateTy Template 
+            = Actions.ActOnDependentTemplateName(SourceLocation(),
+                                                 *Tok.getIdentifierInfo(),   
+                                                 Tok.getLocation(),
+                                                 SS,
+                                                 ObjectType);
+          if (AnnotateTemplateIdToken(Template, TNK_Type_template, &SS, 
+                                      SourceLocation(), true))
+            return ExprError();
+          
+          assert(Tok.is(tok::annot_typename) && 
+                 "AnnotateTemplateIdToken didn't work?");
+          if (!LHS.isInvalid())
+            LHS = Actions.ActOnDestructorReferenceExpr(CurScope, move(LHS),
+                                                       OpLoc, OpKind,
+                                                       Tok.getAnnotationRange(),
+                                                       Tok.getAnnotationValue(),
+                                                       SS,
+                                                 NextToken().is(tok::l_paren));                                                                   
+        } else {
+          // class-name: 
+          //     ~ identifier
+          if (!LHS.isInvalid())
+            LHS = Actions.ActOnDestructorReferenceExpr(CurScope, move(LHS),
+                                                       OpLoc, OpKind,
+                                                       Tok.getLocation(),
+                                                       Tok.getIdentifierInfo(),
+                                                       SS,
+                                                 NextToken().is(tok::l_paren));
+        }
+        
+        // Consume the identifier or template-id token.
         ConsumeToken();
       } else if (getLang().CPlusPlus && Tok.is(tok::kw_operator)) {
         // We have a reference to a member operator, e.g., t.operator int or
