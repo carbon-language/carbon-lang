@@ -237,7 +237,9 @@ def executeTclScriptInternal(test, litConfig, tmpBase, commands, cwd):
     for c in cmds[1:]:
         cmd = ShUtil.Seq(cmd, '&&', c)
 
-    if litConfig.useTclAsSh:
+    # FIXME: This is lame, we shouldn't need bash. See PR5240.
+    bashPath = litConfig.getBashPath()
+    if litConfig.useTclAsSh and bashPath:
         script = tmpBase + '.script'
 
         # Write script file
@@ -252,7 +254,7 @@ def executeTclScriptInternal(test, litConfig, tmpBase, commands, cwd):
             print >>sys.stdout
             return '', '', 0
 
-        command = ['/bin/bash', script]
+        command = [litConfig.getBashPath(), script]
         out,err,exitCode = executeCommand(command, cwd=cwd,
                                           env=test.config.environment)
 
