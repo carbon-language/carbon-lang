@@ -269,8 +269,6 @@ bool FunctionAttrs::IsFunctionMallocLike(Function *F,
         case Instruction::Alloca:
           break;
         case Instruction::Call:
-          if (isMalloc(RVI))
-            break;
         case Instruction::Invoke: {
           CallSite CS(RVI);
           if (CS.paramHasAttr(0, Attribute::NoAlias))
