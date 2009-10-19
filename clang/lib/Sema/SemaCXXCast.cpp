@@ -1113,6 +1113,9 @@ bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
   unsigned msg = diag::err_bad_cxx_cast_generic;
   TryCastResult tcr = TryConstCast(*this, CastExpr, CastTy, /*CStyle*/true,
                                    msg);
+  if (tcr == TC_Success)
+    Kind = CastExpr::CK_NoOp;
+
   if (tcr == TC_NotApplicable) {
     // ... or if that is not possible, a static_cast, ignoring const, ...
     tcr = TryStaticCast(*this, CastExpr, CastTy, /*CStyle*/true, R, msg,
