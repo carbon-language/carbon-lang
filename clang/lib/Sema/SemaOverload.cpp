@@ -3201,6 +3201,9 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   // that make use of these types.
   Qualifiers VisibleTypeConversionsQuals;
   VisibleTypeConversionsQuals.addConst();
+  for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
+    VisibleTypeConversionsQuals += CollectVRQualifiers(Context, Args[ArgIdx]);
+  
   BuiltinCandidateTypeSet CandidateTypes(*this);
   if (Op == OO_Less || Op == OO_Greater || Op == OO_LessEqual ||
       Op == OO_GreaterEqual || Op == OO_EqualEqual || Op == OO_ExclaimEqual ||
@@ -3208,9 +3211,6 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       Op == OO_PlusEqual || Op == OO_MinusEqual || Op == OO_Subscript ||
       Op == OO_ArrowStar || Op == OO_PlusPlus || Op == OO_MinusMinus ||
       (Op == OO_Star && NumArgs == 1) || Op == OO_Conditional) {
-    for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
-      VisibleTypeConversionsQuals += CollectVRQualifiers(Context, Args[ArgIdx]);
-      
     for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
       CandidateTypes.AddTypesConvertedFrom(Args[ArgIdx]->getType(),
                                            true,
@@ -3636,7 +3636,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
                           /*IsAssigmentOperator=*/Op == OO_Equal);
 
-      if (!Context.getCanonicalType(*Ptr).isVolatileQualified()) {
+      if (!Context.getCanonicalType(*Ptr).isVolatileQualified() &&
+          VisibleTypeConversionsQuals.hasVolatile()) {
         // volatile version
         ParamTypes[0]
           = Context.getLValueReferenceType(Context.getVolatileType(*Ptr));
@@ -3672,10 +3673,12 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
                             /*IsAssigmentOperator=*/Op == OO_Equal);
 
         // Add this built-in operator as a candidate (VQ is 'volatile').
-        ParamTypes[0] = Context.getVolatileType(ArithmeticTypes[Left]);
-        ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
-                            /*IsAssigmentOperator=*/Op == OO_Equal);
+        if (VisibleTypeConversionsQuals.hasVolatile()) {
+          ParamTypes[0] = Context.getVolatileType(ArithmeticTypes[Left]);
+          ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
+          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet,
+                              /*IsAssigmentOperator=*/Op == OO_Equal);
+        }
       }
     }
     break;
