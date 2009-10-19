@@ -1515,6 +1515,7 @@ def XCHG64rm : RI<0x87, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val)
 }
 
 // Optimized codegen when the non-memory output is not used.
+let Defs = [EFLAGS] in {
 // FIXME: Use normal add / sub instructions and add lock prefix dynamically.
 def LOCK_ADD64mr : RI<0x03, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
                       "lock\n\t"
@@ -1544,7 +1545,7 @@ def LOCK_INC64m : RI<0xFF, MRM0m, (outs), (ins i64mem:$dst),
 def LOCK_DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst),
                       "lock\n\t"
                       "dec{q}\t$dst", []>, LOCK;
-
+}
 // Atomic exchange, and, or, xor
 let Constraints = "$val = $dst", Defs = [EFLAGS],
                   usesCustomDAGSchedInserter = 1 in {
