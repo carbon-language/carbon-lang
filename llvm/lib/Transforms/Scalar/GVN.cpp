@@ -78,13 +78,10 @@ namespace {
                             SHUFFLE, SELECT, TRUNC, ZEXT, SEXT, FPTOUI,
                             FPTOSI, UITOFP, SITOFP, FPTRUNC, FPEXT,
                             PTRTOINT, INTTOPTR, BITCAST, GEP, CALL, CONSTANT,
-                            EMPTY, TOMBSTONE };
+                            INSERTVALUE, EXTRACTVALUE, EMPTY, TOMBSTONE };
 
     ExpressionOpcode opcode;
     const Type* type;
-    uint32_t firstVN;
-    uint32_t secondVN;
-    uint32_t thirdVN;
     SmallVector<uint32_t, 4> varargs;
     Value *function;
 
@@ -99,12 +96,6 @@ namespace {
       else if (type != other.type)
         return false;
       else if (function != other.function)
-        return false;
-      else if (firstVN != other.firstVN)
-        return false;
-      else if (secondVN != other.secondVN)
-        return false;
-      else if (thirdVN != other.thirdVN)
         return false;
       else {
         if (varargs.size() != other.varargs.size())
@@ -146,6 +137,10 @@ namespace {
       Expression create_expression(GetElementPtrInst* G);
       Expression create_expression(CallInst* C);
       Expression create_expression(Constant* C);
+      Expression create_expression(ExtractValueInst* C);
+      Expression create_expression(InsertValueInst* C);
+      
+      uint32_t lookup_or_add_call(CallInst* C);
     public:
       ValueTable() : nextValueNumber(1) { }
       uint32_t lookup_or_add(Value *V);
@@ -176,13 +171,8 @@ template <> struct DenseMapInfo<Expression> {
   static unsigned getHashValue(const Expression e) {
     unsigned hash = e.opcode;
 
-    hash = e.firstVN + hash * 37;
-    hash = e.secondVN + hash * 37;
-    hash = e.thirdVN + hash * 37;
-
     hash = ((unsigned)((uintptr_t)e.type >> 4) ^
-            (unsigned)((uintptr_t)e.type >> 9)) +
-           hash * 37;
+            (unsigned)((uintptr_t)e.type >> 9));
 
     for (SmallVector<uint32_t, 4>::const_iterator I = e.varargs.begin(),
          E = e.varargs.end(); I != E; ++I)
@@ -290,9 +280,6 @@ Expression ValueTable::create_expression(CallInst* C) {
   Expression e;
 
   e.type = C->getType();
-  e.firstVN = 0;
-  e.secondVN = 0;
-  e.thirdVN = 0;
   e.function = C->getCalledFunction();
   e.opcode = Expression::CALL;
 
@@ -305,10 +292,8 @@ Expression ValueTable::create_expression(CallInst* C) {
 
 Expression ValueTable::create_expression(BinaryOperator* BO) {
   Expression e;
-
-  e.firstVN = lookup_or_add(BO->getOperand(0));
-  e.secondVN = lookup_or_add(BO->getOperand(1));
-  e.thirdVN = 0;
+  e.varargs.push_back(lookup_or_add(BO->getOperand(0)));
+  e.varargs.push_back(lookup_or_add(BO->getOperand(1)));
   e.function = 0;
   e.type = BO->getType();
   e.opcode = getOpcode(BO);
@@ -319,9 +304,8 @@ Expression ValueTable::create_expression(BinaryOperator* BO) {
 Expression ValueTable::create_expression(CmpInst* C) {
   Expression e;
 
-  e.firstVN = lookup_or_add(C->getOperand(0));
-  e.secondVN = lookup_or_add(C->getOperand(1));
-  e.thirdVN = 0;
+  e.varargs.push_back(lookup_or_add(C->getOperand(0)));
+  e.varargs.push_back(lookup_or_add(C->getOperand(1)));
   e.function = 0;
   e.type = C->getType();
   e.opcode = getOpcode(C);
@@ -332,9 +316,7 @@ Expression ValueTable::create_expression(CmpInst* C) {
 Expression ValueTable::create_expression(CastInst* C) {
   Expression e;
 
-  e.firstVN = lookup_or_add(C->getOperand(0));
-  e.secondVN = 0;
-  e.thirdVN = 0;
+  e.varargs.push_back(lookup_or_add(C->getOperand(0)));
   e.function = 0;
   e.type = C->getType();
   e.opcode = getOpcode(C);
@@ -345,9 +327,9 @@ Expression ValueTable::create_expression(CastInst* C) {
 Expression ValueTable::create_expression(ShuffleVectorInst* S) {
   Expression e;
 
-  e.firstVN = lookup_or_add(S->getOperand(0));
-  e.secondVN = lookup_or_add(S->getOperand(1));
-  e.thirdVN = lookup_or_add(S->getOperand(2));
+  e.varargs.push_back(lookup_or_add(S->getOperand(0)));
+  e.varargs.push_back(lookup_or_add(S->getOperand(1)));
+  e.varargs.push_back(lookup_or_add(S->getOperand(2)));
   e.function = 0;
   e.type = S->getType();
   e.opcode = Expression::SHUFFLE;
@@ -358,9 +340,8 @@ Expression ValueTable::create_expression(ShuffleVectorInst* S) {
 Expression ValueTable::create_expression(ExtractElementInst* E) {
   Expression e;
 
-  e.firstVN = lookup_or_add(E->getOperand(0));
-  e.secondVN = lookup_or_add(E->getOperand(1));
-  e.thirdVN = 0;
+  e.varargs.push_back(lookup_or_add(E->getOperand(0)));
+  e.varargs.push_back(lookup_or_add(E->getOperand(1)));
   e.function = 0;
   e.type = E->getType();
   e.opcode = Expression::EXTRACT;
@@ -371,9 +352,9 @@ Expression ValueTable::create_expression(ExtractElementInst* E) {
 Expression ValueTable::create_expression(InsertElementInst* I) {
   Expression e;
 
-  e.firstVN = lookup_or_add(I->getOperand(0));
-  e.secondVN = lookup_or_add(I->getOperand(1));
-  e.thirdVN = lookup_or_add(I->getOperand(2));
+  e.varargs.push_back(lookup_or_add(I->getOperand(0)));
+  e.varargs.push_back(lookup_or_add(I->getOperand(1)));
+  e.varargs.push_back(lookup_or_add(I->getOperand(2)));
   e.function = 0;
   e.type = I->getType();
   e.opcode = Expression::INSERT;
@@ -384,9 +365,9 @@ Expression ValueTable::create_expression(InsertElementInst* I) {
 Expression ValueTable::create_expression(SelectInst* I) {
   Expression e;
 
-  e.firstVN = lookup_or_add(I->getCondition());
-  e.secondVN = lookup_or_add(I->getTrueValue());
-  e.thirdVN = lookup_or_add(I->getFalseValue());
+  e.varargs.push_back(lookup_or_add(I->getCondition()));
+  e.varargs.push_back(lookup_or_add(I->getTrueValue()));
+  e.varargs.push_back(lookup_or_add(I->getFalseValue()));
   e.function = 0;
   e.type = I->getType();
   e.opcode = Expression::SELECT;
@@ -397,9 +378,7 @@ Expression ValueTable::create_expression(SelectInst* I) {
 Expression ValueTable::create_expression(GetElementPtrInst* G) {
   Expression e;
 
-  e.firstVN = lookup_or_add(G->getPointerOperand());
-  e.secondVN = 0;
-  e.thirdVN = 0;
+  e.varargs.push_back(lookup_or_add(G->getPointerOperand()));
   e.function = 0;
   e.type = G->getType();
   e.opcode = Expression::GEP;
@@ -407,6 +386,35 @@ Expression ValueTable::create_expression(GetElementPtrInst* G) {
   for (GetElementPtrInst::op_iterator I = G->idx_begin(), E = G->idx_end();
        I != E; ++I)
     e.varargs.push_back(lookup_or_add(*I));
+
+  return e;
+}
+
+Expression ValueTable::create_expression(ExtractValueInst* E) {
+  Expression e;
+
+  e.varargs.push_back(lookup_or_add(E->getAggregateOperand()));
+  for (ExtractValueInst::idx_iterator II = E->idx_begin(), IE = E->idx_end();
+       II != IE; ++II)
+    e.varargs.push_back(*II);
+  e.function = 0;
+  e.type = E->getType();
+  e.opcode = Expression::EXTRACTVALUE;
+
+  return e;
+}
+
+Expression ValueTable::create_expression(InsertValueInst* E) {
+  Expression e;
+
+  e.varargs.push_back(lookup_or_add(E->getAggregateOperand()));
+  e.varargs.push_back(lookup_or_add(E->getInsertedValueOperand()));
+  for (InsertValueInst::idx_iterator II = E->idx_begin(), IE = E->idx_end();
+       II != IE; ++II)
+    e.varargs.push_back(*II);
+  e.function = 0;
+  e.type = E->getType();
+  e.opcode = Expression::INSERTVALUE;
 
   return e;
 }
@@ -420,6 +428,112 @@ void ValueTable::add(Value *V, uint32_t num) {
   valueNumbering.insert(std::make_pair(V, num));
 }
 
+uint32_t ValueTable::lookup_or_add_call(CallInst* C) {
+  if (AA->doesNotAccessMemory(C)) {
+    Expression exp = create_expression(C);
+    uint32_t& e = expressionNumbering[exp];
+    if (!e) e = nextValueNumber++;
+    valueNumbering[C] = e;
+    return e;
+  } else if (AA->onlyReadsMemory(C)) {
+    Expression exp = create_expression(C);
+    uint32_t& e = expressionNumbering[exp];
+    if (!e) {
+      e = nextValueNumber++;
+      valueNumbering[C] = e;
+      return e;
+    }
+
+    MemDepResult local_dep = MD->getDependency(C);
+
+    if (!local_dep.isDef() && !local_dep.isNonLocal()) {
+      valueNumbering[C] =  nextValueNumber;
+      return nextValueNumber++;
+    }
+
+    if (local_dep.isDef()) {
+      CallInst* local_cdep = cast<CallInst>(local_dep.getInst());
+
+      if (local_cdep->getNumOperands() != C->getNumOperands()) {
+        valueNumbering[C] = nextValueNumber;
+        return nextValueNumber++;
+      }
+
+      for (unsigned i = 1; i < C->getNumOperands(); ++i) {
+        uint32_t c_vn = lookup_or_add(C->getOperand(i));
+        uint32_t cd_vn = lookup_or_add(local_cdep->getOperand(i));
+        if (c_vn != cd_vn) {
+          valueNumbering[C] = nextValueNumber;
+          return nextValueNumber++;
+        }
+      }
+
+      uint32_t v = lookup_or_add(local_cdep);
+      valueNumbering[C] = v;
+      return v;
+    }
+
+    // Non-local case.
+    const MemoryDependenceAnalysis::NonLocalDepInfo &deps =
+      MD->getNonLocalCallDependency(CallSite(C));
+    // FIXME: call/call dependencies for readonly calls should return def, not
+    // clobber!  Move the checking logic to MemDep!
+    CallInst* cdep = 0;
+
+    // Check to see if we have a single dominating call instruction that is
+    // identical to C.
+    for (unsigned i = 0, e = deps.size(); i != e; ++i) {
+      const MemoryDependenceAnalysis::NonLocalDepEntry *I = &deps[i];
+      // Ignore non-local dependencies.
+      if (I->second.isNonLocal())
+        continue;
+
+      // We don't handle non-depedencies.  If we already have a call, reject
+      // instruction dependencies.
+      if (I->second.isClobber() || cdep != 0) {
+        cdep = 0;
+        break;
+      }
+
+      CallInst *NonLocalDepCall = dyn_cast<CallInst>(I->second.getInst());
+      // FIXME: All duplicated with non-local case.
+      if (NonLocalDepCall && DT->properlyDominates(I->first, C->getParent())){
+        cdep = NonLocalDepCall;
+        continue;
+      }
+
+      cdep = 0;
+      break;
+    }
+
+    if (!cdep) {
+      valueNumbering[C] = nextValueNumber;
+      return nextValueNumber++;
+    }
+
+    if (cdep->getNumOperands() != C->getNumOperands()) {
+      valueNumbering[C] = nextValueNumber;
+      return nextValueNumber++;
+    }
+    for (unsigned i = 1; i < C->getNumOperands(); ++i) {
+      uint32_t c_vn = lookup_or_add(C->getOperand(i));
+      uint32_t cd_vn = lookup_or_add(cdep->getOperand(i));
+      if (c_vn != cd_vn) {
+        valueNumbering[C] = nextValueNumber;
+        return nextValueNumber++;
+      }
+    }
+
+    uint32_t v = lookup_or_add(cdep);
+    valueNumbering[C] = v;
+    return v;
+
+  } else {
+    valueNumbering[C] = nextValueNumber;
+    return nextValueNumber++;
+  }
+}
+
 /// lookup_or_add - Returns the value number for the specified value, assigning
 /// it a new number if it did not have one before.
 uint32_t ValueTable::lookup_or_add(Value *V) {
@@ -427,162 +541,84 @@ uint32_t ValueTable::lookup_or_add(Value *V) {
   if (VI != valueNumbering.end())
     return VI->second;
 
-  if (CallInst* C = dyn_cast<CallInst>(V)) {
-    if (AA->doesNotAccessMemory(C)) {
-      Expression exp = create_expression(C);
-      uint32_t& e = expressionNumbering[exp];
-      if (!e) e = nextValueNumber++;
-      valueNumbering[V] = e;
-      return e;
-    } else if (AA->onlyReadsMemory(C)) {
-      Expression exp = create_expression(C);
-      uint32_t& e = expressionNumbering[exp];
-      if (!e) {
-        e = nextValueNumber++;
-        valueNumbering[V] = e;
-        return e;
-      }
-
-      MemDepResult local_dep = MD->getDependency(C);
-
-      if (!local_dep.isDef() && !local_dep.isNonLocal()) {
-        valueNumbering[V] =  nextValueNumber;
-        return nextValueNumber++;
-      }
-
-      if (local_dep.isDef()) {
-        CallInst* local_cdep = cast<CallInst>(local_dep.getInst());
-
-        if (local_cdep->getNumOperands() != C->getNumOperands()) {
-          valueNumbering[V] = nextValueNumber;
-          return nextValueNumber++;
-        }
-
-        for (unsigned i = 1; i < C->getNumOperands(); ++i) {
-          uint32_t c_vn = lookup_or_add(C->getOperand(i));
-          uint32_t cd_vn = lookup_or_add(local_cdep->getOperand(i));
-          if (c_vn != cd_vn) {
-            valueNumbering[V] = nextValueNumber;
-            return nextValueNumber++;
-          }
-        }
-
-        uint32_t v = lookup_or_add(local_cdep);
-        valueNumbering[V] = v;
-        return v;
-      }
-
-      // Non-local case.
-      const MemoryDependenceAnalysis::NonLocalDepInfo &deps =
-        MD->getNonLocalCallDependency(CallSite(C));
-      // FIXME: call/call dependencies for readonly calls should return def, not
-      // clobber!  Move the checking logic to MemDep!
-      CallInst* cdep = 0;
-
-      // Check to see if we have a single dominating call instruction that is
-      // identical to C.
-      for (unsigned i = 0, e = deps.size(); i != e; ++i) {
-        const MemoryDependenceAnalysis::NonLocalDepEntry *I = &deps[i];
-        // Ignore non-local dependencies.
-        if (I->second.isNonLocal())
-          continue;
-
-        // We don't handle non-depedencies.  If we already have a call, reject
-        // instruction dependencies.
-        if (I->second.isClobber() || cdep != 0) {
-          cdep = 0;
-          break;
-        }
-
-        CallInst *NonLocalDepCall = dyn_cast<CallInst>(I->second.getInst());
-        // FIXME: All duplicated with non-local case.
-        if (NonLocalDepCall && DT->properlyDominates(I->first, C->getParent())){
-          cdep = NonLocalDepCall;
-          continue;
-        }
-
-        cdep = 0;
-        break;
-      }
-
-      if (!cdep) {
-        valueNumbering[V] = nextValueNumber;
-        return nextValueNumber++;
-      }
-
-      if (cdep->getNumOperands() != C->getNumOperands()) {
-        valueNumbering[V] = nextValueNumber;
-        return nextValueNumber++;
-      }
-      for (unsigned i = 1; i < C->getNumOperands(); ++i) {
-        uint32_t c_vn = lookup_or_add(C->getOperand(i));
-        uint32_t cd_vn = lookup_or_add(cdep->getOperand(i));
-        if (c_vn != cd_vn) {
-          valueNumbering[V] = nextValueNumber;
-          return nextValueNumber++;
-        }
-      }
-
-      uint32_t v = lookup_or_add(cdep);
-      valueNumbering[V] = v;
-      return v;
-
-    } else {
-      valueNumbering[V] = nextValueNumber;
-      return nextValueNumber++;
-    }
-  } else if (BinaryOperator* BO = dyn_cast<BinaryOperator>(V)) {
-    Expression exp = create_expression(BO);
-    uint32_t& e = expressionNumbering[exp];
-    if (!e) e = nextValueNumber++;
-    valueNumbering[V] = e;
-    return e;
-  } else if (CmpInst* C = dyn_cast<CmpInst>(V)) {
-    Expression exp = create_expression(C);
-    uint32_t& e = expressionNumbering[exp];
-    if (!e) e = nextValueNumber++;
-    valueNumbering[V] = e;
-    return e;
-  } else if (ShuffleVectorInst* U = dyn_cast<ShuffleVectorInst>(V)) {
-    Expression exp = create_expression(U);
-    uint32_t& e = expressionNumbering[exp];
-    if (!e) e = nextValueNumber++;
-    valueNumbering[V] = e;
-    return e;
-  } else if (ExtractElementInst* U = dyn_cast<ExtractElementInst>(V)) {
-    Expression exp = create_expression(U);
-    uint32_t& e = expressionNumbering[exp];
-    if (!e) e = nextValueNumber++;
-    valueNumbering[V] = e;
-    return e;
-  } else if (InsertElementInst* U = dyn_cast<InsertElementInst>(V)) {
-    Expression exp = create_expression(U);
-    uint32_t& e = expressionNumbering[exp];
-    if (!e) e = nextValueNumber++;
-    valueNumbering[V] = e;
-    return e;
-  } else if (SelectInst* U = dyn_cast<SelectInst>(V)) {
-    Expression exp = create_expression(U);
-    uint32_t& e = expressionNumbering[exp];
-    if (!e) e = nextValueNumber++;
-    valueNumbering[V] = e;
-    return e;
-  } else if (CastInst* U = dyn_cast<CastInst>(V)) {
-    Expression exp = create_expression(U);
-    uint32_t& e = expressionNumbering[exp];
-    if (!e) e = nextValueNumber++;
-    valueNumbering[V] = e;
-    return e;
-  } else if (GetElementPtrInst* U = dyn_cast<GetElementPtrInst>(V)) {
-    Expression exp = create_expression(U);
-    uint32_t& e = expressionNumbering[exp];
-    if (!e) e = nextValueNumber++;
-    valueNumbering[V] = e;
-    return e;
-  } else {
+  if (!isa<Instruction>(V)) {
     valueNumbering[V] = nextValueNumber;
     return nextValueNumber++;
   }
+  
+  Instruction* I = cast<Instruction>(V);
+  Expression exp;
+  switch (I->getOpcode()) {
+    case Instruction::Call:
+      return lookup_or_add_call(cast<CallInst>(I));
+    case Instruction::Add:
+    case Instruction::FAdd:
+    case Instruction::Sub:
+    case Instruction::FSub:
+    case Instruction::Mul:
+    case Instruction::FMul:
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+    case Instruction::FDiv:
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::FRem:
+    case Instruction::Shl:
+    case Instruction::LShr:
+    case Instruction::AShr:
+    case Instruction::And:
+    case Instruction::Or :
+    case Instruction::Xor:
+      exp = create_expression(cast<BinaryOperator>(I));
+      break;
+    case Instruction::ICmp:
+    case Instruction::FCmp:
+      exp = create_expression(cast<CmpInst>(I));
+      break;
+    case Instruction::Trunc:
+    case Instruction::ZExt:
+    case Instruction::SExt:
+    case Instruction::FPToUI:
+    case Instruction::FPToSI:
+    case Instruction::UIToFP:
+    case Instruction::SIToFP:
+    case Instruction::FPTrunc:
+    case Instruction::FPExt:
+    case Instruction::PtrToInt:
+    case Instruction::IntToPtr:
+    case Instruction::BitCast:
+      exp = create_expression(cast<CastInst>(I));
+      break;
+    case Instruction::Select:
+      exp = create_expression(cast<SelectInst>(I));
+      break;
+    case Instruction::ExtractElement:
+      exp = create_expression(cast<ExtractElementInst>(I));
+      break;
+    case Instruction::InsertElement:
+      exp = create_expression(cast<InsertElementInst>(I));
+      break;
+    case Instruction::ShuffleVector:
+      exp = create_expression(cast<ShuffleVectorInst>(I));
+      break;
+    case Instruction::ExtractValue:
+      exp = create_expression(cast<ExtractValueInst>(I));
+      break;
+    case Instruction::InsertValue:
+      exp = create_expression(cast<InsertValueInst>(I));
+      break;      
+    case Instruction::GetElementPtr:
+      exp = create_expression(cast<GetElementPtrInst>(I));
+      break;
+    default:
+      valueNumbering[V] = nextValueNumber;
+      return nextValueNumber++;
+  }
+
+  uint32_t& e = expressionNumbering[exp];
+  if (!e) e = nextValueNumber++;
+  valueNumbering[V] = e;
+  return e;
 }
 
 /// lookup - Returns the value number of the specified value. Fails if
