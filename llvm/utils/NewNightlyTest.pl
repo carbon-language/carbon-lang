@@ -646,31 +646,6 @@ elsif (`grep '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
 }
 if ($BuildError) { $NODEJAGNU=1; }
 
-my $a_file_sizes="";
-my $o_file_sizes="";
-if (!$BuildError) {
-  print "Organizing size of .o and .a files\n"
-    if ( $VERBOSE );
-  ChangeDir( "$LLVMObjDir", "Build Directory" );
-
-  my @dirs = ('utils', 'lib', 'tools');
-  if($BUILDTYPE eq "release"){
-    push @dirs, 'Release';
-  } elsif($BUILDTYPE eq "release-asserts") {
-    push @dirs, 'Release-Asserts';
-  } else {
-    push @dirs, 'Debug';
-  }
-
-  find(sub {
-      $a_file_sizes .= (-s $_)." $File::Find::name $BUILDTYPE\n" if /\.a$/i;
-      $o_file_sizes .= (-s $_)." $File::Find::name $BUILDTYPE\n" if /\.o$/i;
-    }, @dirs);
-} else {
-  $a_file_sizes="No data due to a bad build.";
-  $o_file_sizes="No data due to a bad build.";
-}
-
 ##############################################################
 #
 # Running dejagnu tests
@@ -931,8 +906,8 @@ my %hash_of_data = (
   'dejagnutests_log' => $dejagnulog_full,
   'starttime' => $starttime,
   'endtime' => $endtime,
-  'o_file_sizes' => $o_file_sizes,
-  'a_file_sizes' => $a_file_sizes,
+  'o_file_sizes' => "",
+  'a_file_sizes' => "",
   'target_triple' => $targetTriple
 );
 
