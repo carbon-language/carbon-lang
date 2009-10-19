@@ -23,9 +23,11 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
+
 #include <cstdio>
 #include <vector>
 
@@ -40,7 +42,6 @@ using namespace clang;
 using namespace idx;
 
 namespace {
-
 static enum CXCursorKind TranslateDeclRefExpr(DeclRefExpr *DRE) 
 {
   NamedDecl *D = DRE->getDecl();
@@ -89,6 +90,14 @@ public:
   }
 };
 #endif
+  
+/// IgnoreDiagnosticsClient - A DiagnosticsClient that just ignores emitted
+/// warnings and errors.
+class VISIBILITY_HIDDEN IgnoreDiagnosticsClient : public DiagnosticClient {
+public:
+  virtual ~IgnoreDiagnosticsClient() {}
+  virtual void HandleDiagnostic(Diagnostic::Level, const DiagnosticInfo &) {}  
+};
 
 // Translation Unit Visitor.
 class TUVisitor : public DeclVisitor<TUVisitor> {
@@ -349,6 +358,7 @@ CXTranslationUnit clang_createTranslationUnit(
   std::string ErrMsg;
   
   return ASTUnit::LoadFromPCHFile(astName, &ErrMsg,
+                                  new IgnoreDiagnosticsClient(),
                                   CXXIdx->getOnlyLocalDecls(),
                                   /* UseBumpAllocator = */ true);
 }

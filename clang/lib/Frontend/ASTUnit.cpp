@@ -25,12 +25,15 @@
 
 using namespace clang;
 
-ASTUnit::ASTUnit() : tempFile(false) {
-  Diags.setClient(&DiagClient);
+ASTUnit::ASTUnit(DiagnosticClient *diagClient) : tempFile(false) {      
+  Diags.setClient(diagClient ? diagClient : new TextDiagnosticBuffer());
 }
 ASTUnit::~ASTUnit() { 
   if (tempFile)
     llvm::sys::Path(getPCHFileName()).eraseFromDisk();
+  
+  //  The ASTUnit object owns the DiagnosticClient.
+  delete Diags.getClient();
 }
 
 namespace {
@@ -92,9 +95,10 @@ const std::string &ASTUnit::getPCHFileName() {
 
 ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
                                   std::string *ErrMsg,
+                                  DiagnosticClient *diagClient,
                                   bool OnlyLocalDecls,
                                   bool UseBumpAllocator) {
-  llvm::OwningPtr<ASTUnit> AST(new ASTUnit());
+  llvm::OwningPtr<ASTUnit> AST(new ASTUnit(diagClient));
   AST->OnlyLocalDecls = OnlyLocalDecls;
   AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager()));
 
@@ -109,7 +113,8 @@ ASTUnit *ASTUnit::LoadFromPCHFile(const std::string &Filename,
   llvm::OwningPtr<PCHReader> Reader;
   llvm::OwningPtr<ExternalASTSource> Source;
 
-  Reader.reset(new PCHReader(AST->getSourceManager(), AST->getFileManager(), AST->Diags));
+  Reader.reset(new PCHReader(AST->getSourceManager(), AST->getFileManager(),
+                             AST->Diags));
   Reader->setListener(new PCHInfoCollector(LangInfo, HeaderInfo, TargetTriple,
                                            Predefines, Counter));
 

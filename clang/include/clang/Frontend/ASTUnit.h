@@ -35,7 +35,6 @@ namespace clang {
 /// \brief Utility class for loading a ASTContext from a PCH file.
 ///
 class ASTUnit {
-  TextDiagnosticBuffer DiagClient;
   Diagnostic Diags;
   FileManager FileMgr;
 
@@ -56,6 +55,7 @@ class ASTUnit {
   ASTUnit();
 
 public:
+  ASTUnit(DiagnosticClient *diagClient = NULL);
   ~ASTUnit();
 
   const SourceManager &getSourceManager() const { return SourceMgr; }
@@ -84,7 +84,9 @@ public:
   ///
   /// \param Filename - The PCH file to load.
   ///
-  /// \param Diags - The Diagnostic implementation to use.
+  /// \param diagClient - The diagnostics client to use.  Specify NULL
+  /// to use a default client that emits warnings/errors to standard error.
+  /// The ASTUnit objects takes ownership of this object.
   ///
   /// \param FileMgr - The FileManager to use.
   ///
@@ -94,6 +96,7 @@ public:
   /// \returns - The initialized ASTUnit or null if the PCH failed to load.
   static ASTUnit *LoadFromPCHFile(const std::string &Filename,
                                   std::string *ErrMsg = 0,
+                                  DiagnosticClient *diagClient = NULL,
                                   bool OnlyLocalDecls = false,
                                   bool UseBumpAllocator = false);
 };
