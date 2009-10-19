@@ -77,6 +77,7 @@ use Socket;
 # OTHER OPTIONS:
 #  -parallel        Run parallel jobs with GNU Make (see -parallel-jobs).
 #  -parallel-jobs   The number of parallel Make jobs to use (default is two).
+#  -parallel-test   Allow parallel execution of llvm-test
 #  -verbose         Turn on some debug output
 #  -nice            Checkout/Configure/Build with "nice" to reduce impact
 #                   on busy servers.
@@ -160,6 +161,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-norunningtests$/) { next; } # Backward compatibility, ignored.
   if (/^-parallel-jobs$/)  { $PARALLELJOBS = "$ARGV[0]"; shift; next;}
   if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j$PARALLELJOBS"; next; }
+  if (/^-parallel-test$/)  { $PROGTESTOPTS .= " ENABLE_PARALLEL_REPORT=1"; next; }
   if (/^-with-clang$/)     { $WITHCLANG = 1; next; }
   if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
                              "OPTIMIZE_OPTION=-O2"; $BUILDTYPE="release"; next;}
