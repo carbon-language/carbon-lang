@@ -13,8 +13,9 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "ARMInstPrinter.h"
+#include "ARMAddressingModes.h"
 #include "llvm/MC/MCInst.h"
-//#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
 //#include "llvm/MC/MCExpr.h"
 //#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -46,4 +47,35 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     //O << '$';
     //Op.getExpr()->print(O, &MAI);
   }
+}
+
+static void printSOImm(raw_ostream &O, int64_t V, bool VerboseAsm,
+                       const MCAsmInfo *MAI) {
+  // Break it up into two parts that make up a shifter immediate.
+  V = ARM_AM::getSOImmVal(V);
+  assert(V != -1 && "Not a valid so_imm value!");
+  
+  unsigned Imm = ARM_AM::getSOImmValImm(V);
+  unsigned Rot = ARM_AM::getSOImmValRot(V);
+  
+  // Print low-level immediate formation info, per
+  // A5.1.3: "Data-processing operands - Immediate".
+  if (Rot) {
+    O << "#" << Imm << ", " << Rot;
+    // Pretty printed version.
+    if (VerboseAsm)
+      O << ' ' << MAI->getCommentString()
+      << ' ' << (int)ARM_AM::rotr32(Imm, Rot);
+  } else {
+    O << "#" << Imm;
+  }
+}
+
+
+/// printSOImmOperand - SOImm is 4-bit rotate amount in bits 8-11 with 8-bit
+/// immediate in bits 0-7.
+void ARMInstPrinter::printSOImmOperand(const MCInst *MI, unsigned OpNum) {
+  const MCOperand &MO = MI->getOperand(OpNum);
+  assert(MO.isImm() && "Not a valid so_imm value!");
+  printSOImm(O, MO.getImm(), VerboseAsm, &MAI);
 }

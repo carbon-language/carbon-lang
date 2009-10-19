@@ -20,8 +20,10 @@ namespace llvm {
   class MCOperand;
   
 class ARMInstPrinter : public MCInstPrinter {
+  bool VerboseAsm;
 public:
-  ARMInstPrinter(raw_ostream &O, const MCAsmInfo &MAI) : MCInstPrinter(O, MAI){}
+  ARMInstPrinter(raw_ostream &O, const MCAsmInfo &MAI, bool verboseAsm)
+    : MCInstPrinter(O, MAI), VerboseAsm(verboseAsm) {}
 
   virtual void printInst(const MCInst *MI);
   
@@ -33,7 +35,9 @@ public:
   void printOperand(const MCInst *MI, unsigned OpNo,
                     const char *Modifier = 0);
     
-  void printSOImmOperand(const MCInst *MI, unsigned OpNum) {}
+  void printSOImmOperand(const MCInst *MI, unsigned OpNum);
+  
+  
   void printSOImm2PartOperand(const MCInst *MI, unsigned OpNum) {}
   void printSORegOperand(const MCInst *MI, unsigned OpNum) {}
   void printAddrMode2Operand(const MCInst *MI, unsigned OpNum) {}

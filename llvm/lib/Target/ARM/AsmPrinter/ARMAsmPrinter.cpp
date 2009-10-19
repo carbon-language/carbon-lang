@@ -85,7 +85,7 @@ namespace {
     }
     
     void printMCInst(const MCInst *MI) {
-      ARMInstPrinter(O, *MAI).printInstruction(MI);
+      ARMInstPrinter(O, *MAI, VerboseAsm).printInstruction(MI);
     }
     
     void printInstructionThroughMCStreamer(const MachineInstr *MI);
