@@ -2539,6 +2539,18 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
     Candidate.Viable = false;
     return;
   }
+  
+  // We won't go through a user-define type conversion function to convert a 
+  // derived to base as such conversions are given Conversion Rank. They only
+  // go through a copy constructor. 13.3.3.1.2-p4 [over.ics.user]
+  QualType FromCanon
+    = Context.getCanonicalType(From->getType().getUnqualifiedType());
+  QualType ToCanon = Context.getCanonicalType(ToType).getUnqualifiedType();
+  if (FromCanon == ToCanon || IsDerivedFrom(FromCanon, ToCanon)) {
+    Candidate.Viable = false;
+    return;
+  }
+  
 
   // To determine what the conversion from the result of calling the
   // conversion function to the type we're eventually trying to

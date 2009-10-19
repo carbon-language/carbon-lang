@@ -5,6 +5,7 @@
 // RUN: true
 
 extern "C" int printf(...);
+extern "C" void exit(int);
 
 struct A {
  A (const A&) { printf("A::A(const A&)\n"); }
@@ -44,8 +45,35 @@ int main()
     func(x);
 }
 
+struct Base;
+
+struct Root {
+  operator Base&() { exit(1); }
+};
+
+struct Derived;
+
+struct Base : Root {
+  Base(const Base&) { printf("Base::(const Base&)\n"); }
+  Base() { printf("Base::Base()\n"); }
+  operator Derived&() { exit(1); }
+};
+
+struct Derived : Base {
+};
+
+void foo(Base) {}
+
+void test(Derived bb)
+{
+	// CHECK-LP64-NOT: call     __ZN4BasecvR7DerivedEv
+	// CHECK-LP32-NOT: call     L__ZN4BasecvR7DerivedEv
+        foo(bb);
+}
 // CHECK-LP64: call     __ZN1XcvR1BEv
 // CHECK-LP64: call     __ZN1AC1ERKS_
 
 // CHECK-LP32: call     L__ZN1XcvR1BEv
 // CHECK-LP32: call     L__ZN1AC1ERKS_
+
+
