@@ -45,7 +45,7 @@ public:
   void printAddrMode3Operand(const MCInst *MI, unsigned OpNum) {}
   void printAddrMode3OffsetOperand(const MCInst *MI, unsigned OpNum) {}
   void printAddrMode4Operand(const MCInst *MI, unsigned OpNum,
-                             const char *Modifier = 0) {}
+                             const char *Modifier = 0);
   void printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
                              const char *Modifier = 0) {}
   void printAddrMode6Operand(const MCInst *MI, unsigned OpNum) {}
@@ -72,7 +72,7 @@ public:
   void printPredicateOperand(const MCInst *MI, unsigned OpNum) {}
   void printSBitModifierOperand(const MCInst *MI, unsigned OpNum) {}
   void printPCLabel(const MCInst *MI, unsigned OpNum) {}
-  void printRegisterList(const MCInst *MI, unsigned OpNum) {}
+  void printRegisterList(const MCInst *MI, unsigned OpNum);
   void printCPInstOperand(const MCInst *MI, unsigned OpNum,
                           const char *Modifier) {}
   void printJTBlockOperand(const MCInst *MI, unsigned OpNum) {}
