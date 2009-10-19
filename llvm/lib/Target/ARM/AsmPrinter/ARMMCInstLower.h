@@ -13,6 +13,7 @@
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
+  class MCAsmInfo;
   class MCContext;
   class MCInst;
   class MCOperand;
@@ -26,24 +27,27 @@ namespace llvm {
 /// ARMMCInstLower - This class is used to lower an MachineInstr into an MCInst.
 class VISIBILITY_HIDDEN ARMMCInstLower {
   MCContext &Ctx;
-  Mangler *Mang;
+  Mangler &Mang;
+  
+  const unsigned CurFunctionNumber;
+  const MCAsmInfo &MAI;
 
   //const ARMSubtarget &getSubtarget() const;
 public:
-  ARMMCInstLower(MCContext &ctx, Mangler *mang)
-    : Ctx(ctx), Mang(mang) {}
+  ARMMCInstLower(MCContext &ctx, Mangler &mang, unsigned FuncNum,
+                 const MCAsmInfo &mai)
+    : Ctx(ctx), Mang(mang), CurFunctionNumber(FuncNum), MAI(mai) {}
   
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
-/*
- MCSymbol *GetPICBaseSymbol() const;
-  
+  //MCSymbol *GetPICBaseSymbol() const;
   MCSymbol *GetGlobalAddressSymbol(const MachineOperand &MO) const;
-  MCSymbol *GetExternalSymbolSymbol(const MachineOperand &MO) const;
+  //MCSymbol *GetExternalSymbolSymbol(const MachineOperand &MO) const;
   MCSymbol *GetJumpTableSymbol(const MachineOperand &MO) const;
   MCSymbol *GetConstantPoolIndexSymbol(const MachineOperand &MO) const;
   MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;
   
+/*
 private:
   MachineModuleInfoMachO &getMachOMMI() const;
  */

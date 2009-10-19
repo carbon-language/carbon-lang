@@ -16,9 +16,8 @@
 #include "ARMAddressingModes.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
-//#include "llvm/MC/MCExpr.h"
-//#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/FormattedStream.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/Support/raw_ostream.h"
 #include "ARMGenInstrNames.inc"
 using namespace llvm;
 
@@ -34,7 +33,8 @@ void ARMInstPrinter::printInst(const MCInst *MI) { printInstruction(MI); }
 
 void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                   const char *Modifier) {
-  assert((Modifier == 0 || Modifier[0] == 0) && "Cannot print modifiers");
+  // FIXME: TURN ASSERT ON.
+  //assert((Modifier == 0 || Modifier[0] == 0) && "Cannot print modifiers");
   
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
@@ -43,9 +43,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << '#' << Op.getImm();
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
-    assert(0 && "UNIMP");
-    //O << '$';
-    //Op.getExpr()->print(O, &MAI);
+    Op.getExpr()->print(O, &MAI);
   }
 }
 

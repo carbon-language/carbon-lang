@@ -1311,7 +1311,7 @@ extern "C" void LLVMInitializeARMAsmPrinter() {
 //===----------------------------------------------------------------------===//
 
 void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
-  ARMMCInstLower MCInstLowering(OutContext, Mang);
+  ARMMCInstLower MCInstLowering(OutContext, *Mang, getFunctionNumber(), *MAI);
   switch (MI->getOpcode()) {
   case TargetInstrInfo::DBG_LABEL:
   case TargetInstrInfo::EH_LABEL:
