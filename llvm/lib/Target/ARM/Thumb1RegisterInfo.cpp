@@ -845,7 +845,6 @@ void Thumb1RegisterInfo::emitEpilogue(MachineFunction &MF,
 
   if (VARegSaveSize) {
     // Epilogue for vararg functions: pop LR to R3 and branch off it.
-    // FIXME: Verify this is still ok when R3 is no longer being reserved.
     AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tPOP)))
       .addReg(0) // No write back.
       .addReg(ARM::R3, RegState::Define);

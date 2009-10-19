@@ -740,8 +740,7 @@ unsigned ARMBaseRegisterInfo::getRegisterPairEven(unsigned Reg,
   case ARM::R1:
     return ARM::R0;
   case ARM::R3:
-    // FIXME!
-    return STI.isThumb1Only() ? 0 : ARM::R2;
+    return ARM::R2;
   case ARM::R5:
     return ARM::R4;
   case ARM::R7:
@@ -830,8 +829,7 @@ unsigned ARMBaseRegisterInfo::getRegisterPairOdd(unsigned Reg,
   case ARM::R0:
     return ARM::R1;
   case ARM::R2:
-    // FIXME!
-    return STI.isThumb1Only() ? 0 : ARM::R3;
+    return ARM::R3;
   case ARM::R4:
     return ARM::R5;
   case ARM::R6:

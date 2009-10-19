@@ -222,12 +222,9 @@ def tGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
-  // FIXME: We are reserving r3 in Thumb mode in case the PEI needs to use it
-  // to generate large stack offset. Make it available once we have register
-  // scavenging.
   let MethodBodies = [{
     static const unsigned THUMB_tGPR_AO[] = {
-      ARM::R0, ARM::R1, ARM::R2,
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
       ARM::R4, ARM::R5, ARM::R6, ARM::R7 };
 
     // FP is R7, only low registers available.

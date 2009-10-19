@@ -196,14 +196,6 @@ This is especially bad when dynamic alloca is used. The all fixed size stack
 objects are referenced off the frame pointer with negative offsets. See
 oggenc for an example.
 
-//===---------------------------------------------------------------------===//
-
-We are reserving R3 as a scratch register under thumb mode. So if it is live in
-to the function, we save / restore R3 to / from R12. Until register scavenging
-is done, we should save R3 to a high callee saved reg at emitPrologue time
-(when hasFP is true or stack size is large) and restore R3 from that register
-instead. This allows us to at least get rid of the save to r12 everytime it is
-used.
 
 //===---------------------------------------------------------------------===//
 

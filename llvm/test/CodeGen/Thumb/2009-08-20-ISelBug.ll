@@ -11,7 +11,7 @@
 
 define arm_apcscc i32 @t(%struct.asl_file_t* %s, i64 %off, i64* %out) nounwind optsize {
 ; CHECK: t:
-; CHECK: adds r4, #8
+; CHECK: adds r3, #8
 entry:
   %val = alloca i64, align 4                      ; <i64*> [#uses=3]
   %0 = icmp eq %struct.asl_file_t* %s, null       ; <i1> [#uses=1]
