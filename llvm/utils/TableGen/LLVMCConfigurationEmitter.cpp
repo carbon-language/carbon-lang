@@ -1279,12 +1279,21 @@ public:
     : Callback_(Callback), O_(O)
   {}
 
-  // TODO: Handle lists here.
   void operator() (const Init* Statement, unsigned IndentLevel) {
+
     // Ignore nested 'case' DAG.
     if (!(dynamic_cast<const DagInit*>(Statement) &&
-          GetOperatorName(static_cast<const DagInit*>(Statement)) == "case"))
-      Callback_(Statement, (IndentLevel + Indent1), O_);
+          GetOperatorName(static_cast<const DagInit*>(Statement)) == "case")) {
+      if (typeid(*Statement) == typeid(ListInit)) {
+        const ListInit& DagList = *static_cast<const ListInit*>(Statement);
+        for (ListInit::const_iterator B = DagList.begin(), E = DagList.end();
+             B != E; ++B)
+          Callback_(*B, (IndentLevel + Indent1), O_);
+      }
+      else {
+        Callback_(Statement, (IndentLevel + Indent1), O_);
+      }
+    }
     O_.indent(IndentLevel) << "}\n";
   }
 
@@ -1602,10 +1611,33 @@ void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
   }
 }
 
-/// EmitActionHandler - Emit code that handles actions. Used by
-/// EmitGenerateActionMethod() as an argument to
-/// EmitCaseConstructHandler().
-class EmitActionHandler {
+/// ActionHandlingCallbackBase - Base class of EmitActionHandlersCallback and
+/// EmitPreprocessOptionsCallback.
+struct ActionHandlingCallbackBase {
+
+  void onErrorDag(const DagInit& d,
+                  unsigned IndentLevel, raw_ostream& O) const
+  {
+    O.indent(IndentLevel)
+      << "throw std::runtime_error(\"" <<
+      (d.getNumArgs() >= 1 ? InitPtrToString(d.getArg(0))
+       : "Unknown error!")
+      << "\");\n";
+  }
+
+  void onWarningDag(const DagInit& d,
+                    unsigned IndentLevel, raw_ostream& O) const
+  {
+    checkNumberOfArguments(&d, 1);
+    O.indent(IndentLevel) << "llvm::errs() << \""
+                          << InitPtrToString(d.getArg(0)) << "\";\n";
+  }
+
+};
+
+/// EmitActionHandlersCallback - Emit code that handles actions. Used by
+/// EmitGenerateActionMethod() as an argument to EmitCaseConstructHandler().
+class EmitActionHandlersCallback : ActionHandlingCallbackBase {
   const OptionDescriptions& OptDescs;
 
   void processActionDag(const Init* Statement, unsigned IndentLevel,
@@ -1625,10 +1657,10 @@ class EmitActionHandler {
         O.indent(IndentLevel) << "vec.push_back(\"" << *B << "\");\n";
     }
     else if (ActionName == "error") {
-      O.indent(IndentLevel) << "throw std::runtime_error(\"" <<
-        (Dag.getNumArgs() >= 1 ? InitPtrToString(Dag.getArg(0))
-         : "Unknown error!")
-        << "\");\n";
+      this->onErrorDag(Dag, IndentLevel, O);
+    }
+    else if (ActionName == "warning") {
+      this->onWarningDag(Dag, IndentLevel, O);
     }
     else if (ActionName == "forward") {
       checkNumberOfArguments(&Dag, 1);
@@ -1682,21 +1714,13 @@ class EmitActionHandler {
     }
   }
  public:
-  EmitActionHandler(const OptionDescriptions& OD)
+  EmitActionHandlersCallback(const OptionDescriptions& OD)
     : OptDescs(OD) {}
 
-  void operator()(const Init* Statement, unsigned IndentLevel,
-                  raw_ostream& O) const
+  void operator()(const Init* Statement,
+                  unsigned IndentLevel, raw_ostream& O) const
   {
-    if (typeid(*Statement) == typeid(ListInit)) {
-      const ListInit& DagList = *static_cast<const ListInit*>(Statement);
-      for (ListInit::const_iterator B = DagList.begin(), E = DagList.end();
-           B != E; ++B)
-        this->processActionDag(*B, IndentLevel, O);
-    }
-    else {
-      this->processActionDag(Statement, IndentLevel, O);
-    }
+    this->processActionDag(Statement, IndentLevel, O);
   }
 };
 
@@ -1791,7 +1815,7 @@ void EmitGenerateActionMethod (const ToolDescription& D,
 
   // For every understood option, emit handling code.
   if (D.Actions)
-    EmitCaseConstructHandler(D.Actions, Indent2, EmitActionHandler(OptDescs),
+    EmitCaseConstructHandler(D.Actions, Indent2, EmitActionHandlersCallback(OptDescs),
                              false, OptDescs, O);
 
   O << '\n';
@@ -2009,9 +2033,9 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
   O << '\n';
 }
 
-/// PreprocessOptionsCallback - Helper function passed to
+/// EmitPreprocessOptionsCallback - Helper function passed to
 /// EmitCaseConstructHandler() by EmitPreprocessOptions().
-class PreprocessOptionsCallback {
+class EmitPreprocessOptionsCallback : ActionHandlingCallbackBase {
   const OptionDescriptions& OptDescs_;
 
   void onUnsetOption(Init* i, unsigned IndentLevel, raw_ostream& O) {
@@ -2037,18 +2061,11 @@ class PreprocessOptionsCallback {
     const DagInit& d = InitPtrToDag(I);
     const std::string& OpName = GetOperatorName(d);
 
-    // TOFIX: there is some duplication between this function and
-    // EmitActionHandler.
     if (OpName == "warning") {
-      checkNumberOfArguments(&d, 1);
-      O.indent(IndentLevel) << "llvm::errs() << \""
-                            << InitPtrToString(d.getArg(0)) << "\";\n";
+      this->onWarningDag(d, IndentLevel, O);
     }
     else if (OpName == "error") {
-      checkNumberOfArguments(&d, 1);
-      O.indent(IndentLevel) << "throw std::runtime_error(\""
-                            << InitPtrToString(d.getArg(0))
-                            << "\");\n";
+      this->onWarningDag(d, IndentLevel, O);
     }
     else if (OpName == "unset_option") {
       checkNumberOfArguments(&d, 1);
@@ -2071,20 +2088,11 @@ class PreprocessOptionsCallback {
 
 public:
 
-  // TODO: Remove duplication.
   void operator()(const Init* I, unsigned IndentLevel, raw_ostream& O) {
-    if (typeid(*I) == typeid(ListInit)) {
-      const ListInit& DagList = *static_cast<const ListInit*>(I);
-      for (ListInit::const_iterator B = DagList.begin(), E = DagList.end();
-           B != E; ++B)
-        this->processDag(*B, IndentLevel, O);
-    }
-    else {
       this->processDag(I, IndentLevel, O);
-    }
   }
 
-  PreprocessOptionsCallback(const OptionDescriptions& OptDescs)
+  EmitPreprocessOptionsCallback(const OptionDescriptions& OptDescs)
   : OptDescs_(OptDescs)
   {}
 };
@@ -2101,7 +2109,8 @@ void EmitPreprocessOptions (const RecordKeeper& Records,
   for (RecordVector::const_iterator B = OptionPreprocessors.begin(),
          E = OptionPreprocessors.end(); B!=E; ++B) {
     DagInit* Case = (*B)->getValueAsDag("preprocessor");
-    EmitCaseConstructHandler(Case, Indent1, PreprocessOptionsCallback(OptDecs),
+    EmitCaseConstructHandler(Case, Indent1,
+                             EmitPreprocessOptionsCallback(OptDecs),
                              false, OptDecs, O);
   }
 
