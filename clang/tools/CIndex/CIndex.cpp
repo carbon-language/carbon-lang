@@ -283,13 +283,11 @@ public:
   void setOnlyLocalDecls(bool Local = true) { OnlyLocalDecls = Local; }
 
   /// \brief Get the path of the clang binary.
-  static const llvm::sys::Path& getClangPath();
+  const llvm::sys::Path& getClangPath();
 private:
   bool OnlyLocalDecls;
-  static llvm::sys::Path ClangPath;
+  llvm::sys::Path ClangPath;
 };
-
-llvm::sys::Path CIndexer::ClangPath;
 
 const llvm::sys::Path& CIndexer::getClangPath() {
   // Did we already compute the path?
