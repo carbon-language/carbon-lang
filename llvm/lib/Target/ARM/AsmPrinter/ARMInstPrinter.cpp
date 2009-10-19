@@ -77,3 +77,37 @@ void ARMInstPrinter::printSOImmOperand(const MCInst *MI, unsigned OpNum) {
   assert(MO.isImm() && "Not a valid so_imm value!");
   printSOImm(O, MO.getImm(), VerboseAsm, &MAI);
 }
+
+
+
+void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op) {
+  const MCOperand &MO1 = MI->getOperand(Op);
+  const MCOperand &MO2 = MI->getOperand(Op+1);
+  const MCOperand &MO3 = MI->getOperand(Op+2);
+  
+  if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
+    printOperand(MI, Op);
+    return;
+  }
+  
+  O << "[" << getRegisterName(MO1.getReg());
+  
+  if (!MO2.getReg()) {
+    if (ARM_AM::getAM2Offset(MO3.getImm()))  // Don't print +0.
+      O << ", #"
+      << (char)ARM_AM::getAM2Op(MO3.getImm())
+      << ARM_AM::getAM2Offset(MO3.getImm());
+    O << "]";
+    return;
+  }
+  
+  O << ", "
+  << (char)ARM_AM::getAM2Op(MO3.getImm())
+  << getRegisterName(MO2.getReg());
+  
+  if (unsigned ShImm = ARM_AM::getAM2Offset(MO3.getImm()))
+    O << ", "
+    << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO3.getImm()))
+    << " #" << ShImm;
+  O << "]";
+}  

@@ -40,7 +40,7 @@ public:
   
   void printSOImm2PartOperand(const MCInst *MI, unsigned OpNum) {}
   void printSORegOperand(const MCInst *MI, unsigned OpNum) {}
-  void printAddrMode2Operand(const MCInst *MI, unsigned OpNum) {}
+  void printAddrMode2Operand(const MCInst *MI, unsigned OpNum);
   void printAddrMode2OffsetOperand(const MCInst *MI, unsigned OpNum) {}
   void printAddrMode3Operand(const MCInst *MI, unsigned OpNum) {}
   void printAddrMode3OffsetOperand(const MCInst *MI, unsigned OpNum) {}
