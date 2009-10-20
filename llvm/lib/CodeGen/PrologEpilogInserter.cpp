@@ -778,6 +778,8 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
     // directly.
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
       MachineInstr *MI = I;
+      bool isDefInsn = false;
+      bool isKillInsn = false;
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
         if (MI->getOperand(i).isReg()) {
           MachineOperand &MO = MI->getOperand(i);
@@ -802,6 +804,12 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             }
             continue;
           }
+          // If this is a def, remember that this insn defines the value.
+          // This lets us properly consider insns which re-use the scratch
+          // register, such as r2 = sub r2, #imm, in the middle of the
+          // scratch range.
+          if (MO.isDef())
+            isDefInsn = true;
 
           // Have we already allocated a scratch register for this virtual?
           if (Reg != CurrentVirtReg) {
@@ -866,19 +874,20 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
           assert (CurrentScratchReg && "Missing scratch register!");
           MI->getOperand(i).setReg(CurrentScratchReg);
 
-          // If this is the last use of the register, stop tracking it.
           if (MI->getOperand(i).isKill()) {
-            PrevScratchReg = CurrentScratchReg;
-            PrevLastUseMI = MI;
+            isKillInsn = true;
             PrevLastUseOp = i;
-            CurrentScratchReg = CurrentVirtReg = 0;
-            havePrevValue = trackingCurrentValue;
-            // Re-scan the operands of this instruction to catch definitions
-            // of the scratch register we're using. This is to handle things
-            // like ldr "r2, [scratch]" where scratch is r2.
-            i = 0;
+            PrevLastUseMI = MI;
           }
         }
+      // If this is the last use of the scratch, stop tracking it. The
+      // last use will be a kill operand in an instruction that does
+      // not also define the scratch register.
+      if (isKillInsn && !isDefInsn) {
+        PrevScratchReg = CurrentScratchReg;
+        CurrentScratchReg = CurrentVirtReg = 0;
+        havePrevValue = trackingCurrentValue;
+      }
       RS->forward(MI);
     }
   }
