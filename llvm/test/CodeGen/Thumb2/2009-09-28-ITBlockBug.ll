@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -break-anti-dependencies=none | FileCheck %s
 
 %struct.pix_pos = type { i32, i32, i32, i32, i32, i32 }
 
