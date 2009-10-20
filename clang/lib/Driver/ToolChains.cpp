@@ -54,7 +54,6 @@ DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
   GCCVersion[2] = _GCCVersion[2];
 
   // Set up the tool chain paths to match gcc.
-
   ToolChainDir = "i686-apple-darwin";
   ToolChainDir += llvm::utostr(DarwinVersion[0]);
   ToolChainDir += "/";
@@ -63,6 +62,24 @@ DarwinGCC::DarwinGCC(const HostInfo &Host, const llvm::Triple& Triple,
   ToolChainDir += llvm::utostr(GCCVersion[1]);
   ToolChainDir += '.';
   ToolChainDir += llvm::utostr(GCCVersion[2]);
+
+  // Try the next major version if that tool chain dir is invalid.
+  if (!llvm::sys::Path(ToolChainDir).exists()) {
+    std::string Next = "i686-apple-darwin";
+    Next += llvm::utostr(DarwinVersion[0] + 1);
+    Next += "/";
+    Next += llvm::utostr(GCCVersion[0]);
+    Next += '.';
+    Next += llvm::utostr(GCCVersion[1]);
+    Next += '.';
+    Next += llvm::utostr(GCCVersion[2]);
+
+    // Use that if it exists, otherwise hope the user isn't linking.
+    //
+    // FIXME: Drop dependency on gcc's tool chain.
+    if (llvm::sys::Path(Next).exists())
+      ToolChainDir = Next;
+  }
 
   std::string Path;
   if (getArchName() == "x86_64") {
