@@ -29,7 +29,7 @@
 @end
 
 @implementation Subclass
-- (NSString *)token;	// expected-warning {{semicolon at start of method definition is ignored}}
+- (NSString *)token;	// expected-warning {{semicolon before method body is ignored}}
 {
   NSMutableString *result = nil;
 

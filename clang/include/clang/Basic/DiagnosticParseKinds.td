@@ -202,8 +202,8 @@ def warn_expected_implementation : Warning<
 def error_property_ivar_decl : Error<
   "property synthesize requires specification of an ivar">;
 def warn_semicolon_before_method_nody : Warning<
-  "semicolon at start of method definition is ignored">,
-  InGroup<DiagGroup<"semicolon-at-method-body">>;
+  "semicolon before method body is ignored">,
+  InGroup<DiagGroup<"semicolon-before-method-body">>;
 
 def err_expected_field_designator : Error<
   "expected a field designator, such as '.field = 4'">;
