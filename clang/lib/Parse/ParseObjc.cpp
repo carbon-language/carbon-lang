@@ -1371,8 +1371,11 @@ Parser::DeclPtrTy Parser::ParseObjCMethodDefinition() {
                                         "parsing Objective-C method");
 
   // parse optional ';'
-  if (Tok.is(tok::semi))
+  if (Tok.is(tok::semi)) {
+    if (ObjCImpDecl)
+      Diag(Tok, diag::warn_semicolon_before_method_nody);
     ConsumeToken();
+  }
 
   // We should have an opening brace now.
   if (Tok.isNot(tok::l_brace)) {

@@ -30,7 +30,7 @@ typedef struct _NSZone NSZone;
 @end
 
 @implementation XCRefactoringTransformation
-- (NSDictionary *)setUpInfoForTransformKey:(NSString *)transformKey outError:(NSError **)outError; {
+- (NSDictionary *)setUpInfoForTransformKey:(NSString *)transformKey outError:(NSError **)outError {
     @try {}
     // the exception name is optional (weird)
     @catch (NSException *) {}
