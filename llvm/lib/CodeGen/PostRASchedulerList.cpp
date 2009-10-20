@@ -209,8 +209,7 @@ namespace {
     void PrescanInstruction(MachineInstr *MI, unsigned Count);
     void ScanInstruction(MachineInstr *MI, unsigned Count);
     bool BreakAntiDependencies(bool CriticalPathOnly);
-    unsigned FindSuitableFreeRegister(unsigned AntiDepReg,
-                                      unsigned LastNewReg);
+    unsigned FindSuitableFreeRegister(unsigned AntiDepReg);
 
     void ReleaseSucc(SUnit *SU, SDep *SuccEdge);
     void ReleaseSuccessors(SUnit *SU);
@@ -595,7 +594,7 @@ void SchedulePostRATDList::PrescanInstruction(MachineInstr *MI, unsigned Count) 
     }
   }
 
-  DEBUG(errs() << "\tGroups:");
+  DEBUG(errs() << "\tDef Groups:");
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg() || !MO.isDef()) continue;
@@ -637,6 +636,8 @@ void SchedulePostRATDList::PrescanInstruction(MachineInstr *MI, unsigned Count) 
 
 void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
                                            unsigned Count) {
+  DEBUG(errs() << "\tUse Groups:");
+
   // Scan the register uses for this instruction and update
   // live-ranges, groups and RegRefs.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -645,6 +646,8 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
     unsigned Reg = MO.getReg();
     if (Reg == 0) continue;
     
+    DEBUG(errs() << " " << TRI->getName(Reg) << "=g" << GetGroup(Reg)); 
+
     // It wasn't previously live but now it is, this is a kill. Forget
     // the previous live-range information and start a new live-range
     // for the register.
@@ -653,6 +656,7 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
       DefIndices[Reg] = ~0u;
       RegRefs.erase(Reg);
       LeaveGroup(Reg);
+      DEBUG(errs() << "->g" << GetGroup(Reg) << "(last-use)");
     }
     // Repeat, for subregisters.
     for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
@@ -663,7 +667,16 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
         DefIndices[SubregReg] = ~0u;
         RegRefs.erase(SubregReg);
         LeaveGroup(SubregReg);
+        DEBUG(errs() << "->g" << GetGroup(SubregReg) << "(last-use)");
       }
+    }
+
+    // If MI's uses have special allocation requirement, don't allow
+    // any use registers to be changed. Also assume all registers
+    // used in a call must not be changed (ABI).
+    if (MI->getDesc().isCall() || MI->getDesc().hasExtraSrcRegAllocReq()) {
+      DEBUG(if (GetGroup(Reg) != 0) errs() << "->g0(alloc-req)");
+      UnionGroups(Reg, 0);
     }
 
     // Note register reference...
@@ -674,6 +687,8 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
     RegRefs.insert(std::make_pair(Reg, RR));
   }
   
+  DEBUG(errs() << '\n');
+
   // Form a group of all defs and uses of a KILL instruction to ensure
   // that all registers are renamed as a group.
   if (MI->getOpcode() == TargetInstrInfo::KILL) {
@@ -694,8 +709,7 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
   }
 }
 
-unsigned SchedulePostRATDList::FindSuitableFreeRegister(unsigned AntiDepReg,
-                                                        unsigned LastNewReg) {
+unsigned SchedulePostRATDList::FindSuitableFreeRegister(unsigned AntiDepReg) {
   // Collect all registers in the same group as AntiDepReg. These all
   // need to be renamed together if we are to break the
   // anti-dependence.
@@ -846,12 +860,6 @@ bool SchedulePostRATDList::BreakAntiDependencies(bool CriticalPathOnly) {
   std::string dbgStr;
 #endif
 
-  // TODO: If we tracked more than one register here, we could potentially
-  // fix that remaining critical edge too. This is a little more involved,
-  // because unlike the most recent register, less recent registers should
-  // still be considered, though only if no other registers are available.
-  unsigned LastNewReg[TargetRegisterInfo::FirstVirtualRegister] = {};
-
   // Attempt to break anti-dependence edges. Walk the instructions
   // from the bottom up, tracking information about liveness as we go
   // to help determine which registers are available.
@@ -969,12 +977,8 @@ bool SchedulePostRATDList::BreakAntiDependencies(bool CriticalPathOnly) {
     DEBUG(if (!dbgStr.empty()) errs() << dbgStr << '\n');
 
     // Look for a suitable register to use to break the anti-dependence.
-    //
-    // TODO: Instead of picking the first free register, consider which might
-    // be the best.
     if (AntiDepReg != 0) {
-      if (unsigned NewReg = FindSuitableFreeRegister(AntiDepReg,
-                                                     LastNewReg[AntiDepReg])) {
+      if (unsigned NewReg = FindSuitableFreeRegister(AntiDepReg)) {
         DEBUG(errs() << "\tBreaking anti-dependence edge on "
               << TRI->getName(AntiDepReg)
               << " with " << RegRefs.count(AntiDepReg) << " references"
@@ -1008,7 +1012,6 @@ bool SchedulePostRATDList::BreakAntiDependencies(bool CriticalPathOnly) {
              "Kill and Def maps aren't consistent for AntiDepReg!");
 
         Changed = true;
-        LastNewReg[AntiDepReg] = NewReg;
         ++NumFixedAnti;
       }
     }
