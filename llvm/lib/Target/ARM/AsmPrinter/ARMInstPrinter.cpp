@@ -284,6 +284,36 @@ void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
   O << "]";
 }
 
+void ARMInstPrinter::printAddrMode6Operand(const MCInst *MI, unsigned OpNum) {
+  const MCOperand &MO1 = MI->getOperand(OpNum);
+  const MCOperand &MO2 = MI->getOperand(OpNum+1);
+  const MCOperand &MO3 = MI->getOperand(OpNum+2);
+  
+  // FIXME: No support yet for specifying alignment.
+  O << '[' << getRegisterName(MO1.getReg()) << ']';
+  
+  if (ARM_AM::getAM6WBFlag(MO3.getImm())) {
+    if (MO2.getReg() == 0)
+      O << '!';
+    else
+      O << ", " << getRegisterName(MO2.getReg());
+  }
+}
+
+void ARMInstPrinter::printAddrModePCOperand(const MCInst *MI, unsigned OpNum,
+                                            const char *Modifier) {
+  assert(0 && "FIXME: Implement printAddrModePCOperand");
+}
+
+void ARMInstPrinter::printBitfieldInvMaskImmOperand (const MCInst *MI,
+                                                     unsigned OpNum) {
+  const MCOperand &MO = MI->getOperand(OpNum);
+  uint32_t v = ~MO.getImm();
+  int32_t lsb = CountTrailingZeros_32(v);
+  int32_t width = (32 - CountLeadingZeros_32 (v)) - lsb;
+  assert(MO.isImm() && "Not a valid bf_inv_mask_imm value!");
+  O << '#' << lsb << ", #" << width;
+}
 
 void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum) {
   O << "{";
