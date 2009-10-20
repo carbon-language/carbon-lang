@@ -4289,6 +4289,10 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       OvlExpr = UnOp->getSubExpr()->IgnoreParens();
   }
 
+  bool HasExplicitTemplateArgs = false;
+  const TemplateArgument *ExplicitTemplateArgs = 0;
+  unsigned NumExplicitTemplateArgs = 0;
+  
   // Try to dig out the overloaded function.
   FunctionTemplateDecl *FunctionTemplate = 0;
   if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(OvlExpr)) {
@@ -4298,9 +4302,17 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
     Ovl = dyn_cast<OverloadedFunctionDecl>(ME->getMemberDecl());
     FunctionTemplate = dyn_cast<FunctionTemplateDecl>(ME->getMemberDecl());
     // FIXME: Explicit template arguments
+  } else if (TemplateIdRefExpr *TIRE = dyn_cast<TemplateIdRefExpr>(OvlExpr)) {
+    TemplateName Name = TIRE->getTemplateName();
+    Ovl = Name.getAsOverloadedFunctionDecl();
+    FunctionTemplate = 
+      dyn_cast_or_null<FunctionTemplateDecl>(Name.getAsTemplateDecl());
+    
+    HasExplicitTemplateArgs = true;
+    ExplicitTemplateArgs = TIRE->getTemplateArgs();
+    NumExplicitTemplateArgs = TIRE->getNumTemplateArgs();
   }
-  // FIXME: TemplateIdRefExpr?
-
+  
   // If there's no overloaded function declaration or function template,
   // we're done.
   if (!Ovl && !FunctionTemplate)
@@ -4345,8 +4357,9 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       FunctionDecl *Specialization = 0;
       TemplateDeductionInfo Info(Context);
       if (TemplateDeductionResult Result
-            = DeduceTemplateArguments(FunctionTemplate, /*FIXME*/false,
-                                      /*FIXME:*/0, /*FIXME:*/0,
+            = DeduceTemplateArguments(FunctionTemplate, HasExplicitTemplateArgs,
+                                      ExplicitTemplateArgs,
+                                      NumExplicitTemplateArgs,
                                       FunctionType, Specialization, Info)) {
         // FIXME: make a note of the failed deduction for diagnostics.
         (void)Result;
