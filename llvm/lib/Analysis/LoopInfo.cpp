@@ -292,6 +292,9 @@ bool Loop::isLoopSimplifyForm() const {
   // Normal-form loops have a single backedge.
   if (!getLoopLatch())
     return false;
+  // Sort the blocks vector so that we can use binary search to do quick
+  // lookups.
+  SmallPtrSet<BasicBlock *, 16> LoopBBs(block_begin(), block_end());
   // Each predecessor of each exit block of a normal loop is contained
   // within the loop.
   SmallVector<BasicBlock *, 4> ExitBlocks;
@@ -299,7 +302,7 @@ bool Loop::isLoopSimplifyForm() const {
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
     for (pred_iterator PI = pred_begin(ExitBlocks[i]),
          PE = pred_end(ExitBlocks[i]); PI != PE; ++PI)
-      if (!contains(*PI))
+      if (!LoopBBs.count(*PI))
         return false;
   // All the requirements are met.
   return true;
