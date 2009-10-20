@@ -1098,6 +1098,28 @@ CVReturn rdar_7283567_2(CFAllocatorRef allocator, size_t width, size_t height,
 }
 
 //===----------------------------------------------------------------------===//
+// <rdar://problem/7265711> allow 'new', 'copy', 'alloc', 'init' prefix to
+//  start before '_' when determining Cocoa fundamental rule
+//
+// Previously the retain/release checker just skipped prefixes before the
+// first '_' entirely.  Now the checker honors the prefix if it results in a
+// recognizable naming convention (e.g., 'new', 'init').
+//===----------------------------------------------------------------------===//
+
+@interface RDar7265711 {}
+- (id) new_stuff;
+@end
+
+void rdar7265711_a(RDar7265711 *x) {
+  id y = [x new_stuff]; // expected-warning{{leak}}
+}
+
+void rdar7265711_b(RDar7265711 *x) {
+  id y = [x new_stuff]; // no-warning
+  [y release];
+}
+
+//===----------------------------------------------------------------------===//
 // <rdar://problem/7306898> clang thinks [NSCursor dragCopyCursor] returns a
 //                          retained reference
 //===----------------------------------------------------------------------===//

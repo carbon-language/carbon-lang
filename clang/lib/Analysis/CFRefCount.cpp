@@ -93,12 +93,14 @@ static NamingConvention deriveNamingConvention(Selector S) {
     // Skip '_'.
     if (*s == '_') {
       if (InPossiblePrefix) {
+        // If we already have a convention, return it.  Otherwise, skip
+        // the prefix as if it wasn't there.
+        if (C != NoConvention)
+          break;
+        
         InPossiblePrefix = false;
         AtBeginning = true;
-        // Discard whatever 'convention' we
-        // had already derived since it occurs
-        // in the prefix.
-        C = NoConvention;
+        assert(C == NoConvention);
       }
       ++s;
       continue;
