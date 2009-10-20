@@ -154,15 +154,19 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
 
   std::string S;
   bool NeedQuotes = true;
-  if (Kind == Diagnostic::ak_qualtype) {
+  
+  switch (Kind) {
+  default: assert(0 && "unknown ArgumentKind");
+  case Diagnostic::ak_qualtype: {
     assert(ModLen == 0 && ArgLen == 0 &&
            "Invalid modifier for QualType argument");
 
     QualType Ty(QualType::getFromOpaquePtr(reinterpret_cast<void*>(Val)));
     S = ConvertTypeToDiagnosticString(Context, Ty);
     NeedQuotes = false;
-  } else if (Kind == Diagnostic::ak_declarationname) {
-
+    break;
+  }
+  case Diagnostic::ak_declarationname: {
     DeclarationName N = DeclarationName::getFromOpaqueInteger(Val);
     S = N.getAsString();
 
@@ -173,7 +177,9 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
     else
       assert(ModLen == 0 && ArgLen == 0 &&
              "Invalid modifier for DeclarationName argument");
-  } else if (Kind == Diagnostic::ak_nameddecl) {
+    break;
+  }
+  case Diagnostic::ak_nameddecl: {
     bool Qualified;
     if (ModLen == 1 && Modifier[0] == 'q' && ArgLen == 0)
       Qualified = true;
@@ -182,22 +188,22 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
            "Invalid modifier for NamedDecl* argument");
       Qualified = false;
     }
-    reinterpret_cast<NamedDecl*>(Val)->getNameForDiagnostic(S,
-                                                         Context.PrintingPolicy,
-                                                            Qualified);
-  } else if (Kind == Diagnostic::ak_nestednamespec) {
+    reinterpret_cast<NamedDecl*>(Val)->
+      getNameForDiagnostic(S, Context.PrintingPolicy, Qualified);
+    break;
+  }
+  case Diagnostic::ak_nestednamespec: {
     llvm::raw_string_ostream OS(S);
-    reinterpret_cast<NestedNameSpecifier*> (Val)->print(OS,
-                                                        Context.PrintingPolicy);
+    reinterpret_cast<NestedNameSpecifier*>(Val)->print(OS,
+                                                       Context.PrintingPolicy);
     NeedQuotes = false;
-  } else {
-    assert(Kind == Diagnostic::ak_declcontext);
+    break;
+  }
+  case Diagnostic::ak_declcontext: {
     DeclContext *DC = reinterpret_cast<DeclContext *> (Val);
-    NeedQuotes = false;
-    if (!DC) {
-      assert(false && "Should never have a null declaration context");
-      S = "unknown context";
-    } else if (DC->isTranslationUnit()) {
+    assert(DC && "Should never have a null declaration context");
+    
+    if (DC->isTranslationUnit()) {
       // FIXME: Get these strings from some localized place
       if (Context.getLangOptions().CPlusPlus)
         S = "the global namespace";
@@ -205,7 +211,6 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
         S = "the global scope";
     } else if (TypeDecl *Type = dyn_cast<TypeDecl>(DC)) {
       S = ConvertTypeToDiagnosticString(Context, Context.getTypeDeclType(Type));
-      NeedQuotes = false;
     } else {
       // FIXME: Get these strings from some localized place
       NamedDecl *ND = cast<NamedDecl>(DC);
@@ -219,8 +224,10 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
       S += "'";
       ND->getNameForDiagnostic(S, Context.PrintingPolicy, true);
       S += "'";
-      NeedQuotes = false;
     }
+    NeedQuotes = false;
+    break;
+  }
   }
 
   if (NeedQuotes)
