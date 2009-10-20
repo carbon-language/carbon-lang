@@ -122,6 +122,8 @@ public:
 
   virtual bool requiresRegisterScavenging(const MachineFunction &MF) const;
 
+  virtual bool requiresFrameIndexScavenging(const MachineFunction &MF) const;
+
   virtual bool hasReservedCallFrame(MachineFunction &MF) const;
 
   virtual void eliminateCallFramePseudoInstr(MachineFunction &MF,

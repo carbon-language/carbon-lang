@@ -785,11 +785,6 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
           if (Reg == 0)
             continue;
           if (!TargetRegisterInfo::isVirtualRegister(Reg)) {
-            // If we have an active scavenged register, we shouldn't be
-            // seeing any references to it.
-            assert (Reg != CurrentScratchReg
-                    && "overlapping use of scavenged frame index register!");
-
             // If we have a previous scratch reg, check and see if anything
             // here kills whatever value is in there.
             if (Reg == PrevScratchReg) {

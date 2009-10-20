@@ -934,6 +934,10 @@ bool ARMBaseRegisterInfo::
 requiresRegisterScavenging(const MachineFunction &MF) const {
   return true;
 }
+bool ARMBaseRegisterInfo::
+requiresFrameIndexScavenging(const MachineFunction &MF) const {
+  return true;
+}
 
 // hasReservedCallFrame - Under normal circumstances, when a frame pointer is
 // not required, we reserve argument space for call sites in the function
@@ -1010,17 +1014,6 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
-/// findScratchRegister - Find a 'free' ARM register. If register scavenger
-/// is not being used, R12 is available. Otherwise, try for a call-clobbered
-/// register first and then a spilled callee-saved register if that fails.
-static
-unsigned findScratchRegister(RegScavenger *RS, const TargetRegisterClass *RC,
-                             ARMFunctionInfo *AFI) {
-  unsigned Reg = RS ? RS->FindUnusedReg(RC) : (unsigned) ARM::R12;
-  assert(!AFI->isThumb1OnlyFunction());
-  return Reg;
-}
-
 unsigned
 ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                          int SPAdj, int *Value,
@@ -1075,14 +1068,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
           (MI.getDesc().TSFlags & ARMII::AddrModeMask) == ARMII::AddrMode4) &&
          "This code isn't needed if offset already handled!");
 
-  // Insert a set of r12 with the full address: r12 = sp + offset
-  // If the offset we have is too large to fit into the instruction, we need
-  // to form it with a series of ADDri's.  Do this by taking 8-bit chunks
-  // out of 'Offset'.
-  unsigned ScratchReg = findScratchRegister(RS, ARM::GPRRegisterClass, AFI);
-  if (ScratchReg == 0)
-    // No register is "free". Scavenge a register.
-    ScratchReg = RS->scavengeRegister(ARM::GPRRegisterClass, II, SPAdj);
+  unsigned ScratchReg = 0;
   int PIdx = MI.findFirstPredOperandIdx();
   ARMCC::CondCodes Pred = (PIdx == -1)
     ? ARMCC::AL : (ARMCC::CondCodes)MI.getOperand(PIdx).getImm();
@@ -1091,6 +1077,8 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // Must be addrmode4.
     MI.getOperand(i).ChangeToRegister(FrameReg, false, false, false);
   else {
+    ScratchReg = MF.getRegInfo().createVirtualRegister(ARM::GPRRegisterClass);
+    *Value = Offset;
     if (!AFI->isThumbFunction())
       emitARMRegPlusImmediate(MBB, II, MI.getDebugLoc(), ScratchReg, FrameReg,
                               Offset, Pred, PredReg, TII);
@@ -1101,7 +1089,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
     MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
   }
-  return 0;
+  return ScratchReg;
 }
 
 /// Move iterator pass the next bunch of callee save load / store ops for
