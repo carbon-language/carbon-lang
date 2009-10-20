@@ -1935,13 +1935,42 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
     }
   }
 
+  // conversion of A::* to B::* is better than conversion of A::* to C::*,
 
-  // FIXME: conversion of A::* to B::* is better than conversion of
-  // A::* to C::*,
-
-  // FIXME: conversion of B::* to C::* is better than conversion of
-  // A::* to C::*, and
-
+  if (SCS1.Second == ICK_Pointer_Member && SCS2.Second == ICK_Pointer_Member &&
+      FromType1->isMemberPointerType() && FromType2->isMemberPointerType() &&
+      ToType1->isMemberPointerType() && ToType2->isMemberPointerType()) {
+    const MemberPointerType * FromMemPointer1 = 
+                                        FromType1->getAs<MemberPointerType>();
+    const MemberPointerType * ToMemPointer1 = 
+                                          ToType1->getAs<MemberPointerType>();
+    const MemberPointerType * FromMemPointer2 = 
+                                          FromType2->getAs<MemberPointerType>();
+    const MemberPointerType * ToMemPointer2 = 
+                                          ToType2->getAs<MemberPointerType>();
+    const Type *FromPointeeType1 = FromMemPointer1->getClass();
+    const Type *ToPointeeType1 = ToMemPointer1->getClass();
+    const Type *FromPointeeType2 = FromMemPointer2->getClass();
+    const Type *ToPointeeType2 = ToMemPointer2->getClass();
+    QualType FromPointee1 = QualType(FromPointeeType1, 0).getUnqualifiedType();
+    QualType ToPointee1 = QualType(ToPointeeType1, 0).getUnqualifiedType();
+    QualType FromPointee2 = QualType(FromPointeeType2, 0).getUnqualifiedType();
+    QualType ToPointee2 = QualType(ToPointeeType2, 0).getUnqualifiedType();
+    if (FromPointee1 == FromPointee2 && ToPointee1 != ToPointee2) {
+      if (IsDerivedFrom(ToPointee1, ToPointee2))
+        return ImplicitConversionSequence::Worse;
+      else if (IsDerivedFrom(ToPointee2, ToPointee1))
+        return ImplicitConversionSequence::Better;
+    }
+    // conversion of B::* to C::* is better than conversion of A::* to C::*
+    if (ToPointee1 == ToPointee2 && FromPointee1 != FromPointee2) {
+      if (IsDerivedFrom(FromPointee1, FromPointee2))
+        return ImplicitConversionSequence::Better;
+      else if (IsDerivedFrom(FromPointee2, FromPointee1))
+        return ImplicitConversionSequence::Worse;
+    }
+  }
+  
   if (SCS1.CopyConstructor && SCS2.CopyConstructor &&
       SCS1.Second == ICK_Derived_To_Base) {
     //   -- conversion of C to B is better than conversion of C to A,
