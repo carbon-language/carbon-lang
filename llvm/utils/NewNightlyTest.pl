@@ -164,11 +164,10 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-parallel-test$/)  { $PROGTESTOPTS .= " ENABLE_PARALLEL_REPORT=1"; next; }
   if (/^-with-clang$/)     { $WITHCLANG = 1; next; }
   if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
-                             "OPTIMIZE_OPTION=-O2"; $BUILDTYPE="release"; next;}
+                             "OPTIMIZE_OPTION=-O2"; next;}
   if (/^-release-asserts$/){ $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1 ".
                              "DISABLE_ASSERTIONS=1 ".
-                             "OPTIMIZE_OPTION=-O2";
-                             $BUILDTYPE="release-asserts"; next;}
+                             "OPTIMIZE_OPTION=-O2"; next;}
   if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
   if (/^-disable-pic$/)    { $CONFIGUREARGS .= " --enable-pic=no"; next; }
   if (/^-enable-lli$/)     { $PROGTESTOPTS .= " ENABLE_LLI=1";
@@ -255,10 +254,6 @@ if ($BuildDir   eq "" or
 if ($nickname eq "") {
   die ("Please invoke NewNightlyTest.pl with command line option " .
        "\"-nickname <nickname>\"");
-}
-
-if ($BUILDTYPE ne "release" && $BUILDTYPE ne "release-asserts") {
-  $BUILDTYPE = "debug";
 }
 
 if ($CONFIG_PATH ne "") {
