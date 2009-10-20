@@ -246,18 +246,22 @@ if (@ARGV == 3) {
   $WebDir     = $ARGV[2];
 }
 
-if ($BuildDir   eq "" or
-    $WebDir     eq "") {
-  die("please specify a build directory, and a web directory");
- }
+if ($CONFIG_PATH ne "") {
+  $BuildDir = "";
+  $SVNURL = $TestSVNURL = "";
+  if ($WebDir     eq "") {
+    die("please specify a web directory");
+  }
+} else {
+  if ($BuildDir   eq "" or
+      $WebDir     eq "") {
+    die("please specify a build directory, and a web directory");
+  }
+}
 
 if ($nickname eq "") {
   die ("Please invoke NewNightlyTest.pl with command line option " .
        "\"-nickname <nickname>\"");
-}
-
-if ($CONFIG_PATH ne "") {
-  die "error: -config mode is not yet implemented,";
 }
 
 ##############################################################
@@ -265,32 +269,18 @@ if ($CONFIG_PATH ne "") {
 # Define the file names we'll use
 #
 ##############################################################
+
 my $Prefix = "$WebDir/$DATE";
-my $ConfigureLog = "$Prefix-Configure-Log.txt";
-my $BuildLog = "$Prefix-Build-Log.txt";
-my $COLog = "$Prefix-CVS-Log.txt";
 my $SingleSourceLog = "$Prefix-SingleSource-ProgramTest.txt.gz";
 my $MultiSourceLog = "$Prefix-MultiSource-ProgramTest.txt.gz";
 my $ExternalLog = "$Prefix-External-ProgramTest.txt.gz";
-my $DejagnuLog = "$Prefix-Dejagnu-testrun.log";
-my $DejagnuSum = "$Prefix-Dejagnu-testrun.sum";
-my $DejagnuLog = "$Prefix-DejagnuTests-Log.txt";
-if (! -d $WebDir) {
-  mkdir $WebDir, 0777 or die "Unable to create web directory: '$WebDir'.";
-  if($VERBOSE){
-    warn "$WebDir did not exist; creating it.\n";
-  }
-}
 
-if ($VERBOSE) {
-  print "INITIALIZED\n";
-  print "SVN URL  = $SVNURL\n";
-  print "COLog    = $COLog\n";
-  print "BuildDir = $BuildDir\n";
-  print "WebDir   = $WebDir\n";
-  print "Prefix   = $Prefix\n";
-  print "BuildLog = $BuildLog\n";
-}
+# These are only valid in non-config mode.
+my $ConfigureLog = "", $BuildLog = "", $COLog = "";
+my $DejagnuLog = "", $DejagnuSum = "", $DejagnuLog = "";
+
+# Are we in config mode?
+my $ConfigMode = 0;
 
 ##############################################################
 #
@@ -496,6 +486,7 @@ sub SendData {
 
 # Create the source repository directory.
 sub CheckoutSource {
+  die "Invalid call!" unless $ConfigMode == 0;
   if (-d $BuildDir) {
     if (!$NOREMOVE) {
       if ( $VERBOSE ) {
@@ -527,6 +518,7 @@ sub CheckoutSource {
 # Build the entire tree, saving build messages to the build log. Returns false
 # on build failure.
 sub BuildLLVM {
+  die "Invalid call!" unless $ConfigMode == 0;
   my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
   RunLoggedCommand("(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) ",
                    $ConfigureLog, "CONFIGURE");
@@ -544,6 +536,7 @@ sub BuildLLVM {
 
 # Running dejagnu tests and save results to log.
 sub RunDejaGNUTests {
+  die "Invalid call!" unless $ConfigMode == 0;
   # Run the feature and regression tests, results are put into testrun.sum and
   # the full log in testrun.log.
   system "rm -f test/testrun.log test/testrun.sum";
@@ -563,6 +556,12 @@ sub TestDirectory {
              "Programs Test Subdirectory" ) || return ("", "");
 
   my $ProgramTestLog = "$Prefix-$SubDir-ProgramTest.txt";
+
+  # Make sure to clean things if in non-config mode.
+  if ($ConfigMode == 1) {
+    RunLoggedCommand("$MAKECMD -k $MAKEOPTS $PROGTESTOPTS clean $TESTFLAGS",
+                     $ProgramTestLog, "TEST DIRECTORY $SubDir");
+  }
 
   # Run the programs tests... creating a report.nightly.csv file.
   my $LLCBetaOpts = "";
@@ -640,34 +639,83 @@ sub RunNightlyTest() {
 
 ##############################################################
 #
+# Initialize filenames
+#
+##############################################################
+
+if (! -d $WebDir) {
+  mkdir $WebDir, 0777 or die "Unable to create web directory: '$WebDir'.";
+  if($VERBOSE){
+    warn "$WebDir did not exist; creating it.\n";
+  }
+}
+
+if ($CONFIG_PATH ne "") {
+  $ConfigMode = 1;
+  $LLVMSrcDir = GetRegex "^(.*)\\s+", `$CONFIG_PATH --src-root`;
+  $LLVMObjDir = GetRegex "^(.*)\\s+", `$CONFIG_PATH --obj-root`;
+  # FIXME: Add llvm-config hook for this?
+  $LLVMTestDir = $LLVMObjDir . "/projects/test-suite";
+} else {
+  $ConfigureLog = "$Prefix-Configure-Log.txt";
+  $BuildLog = "$Prefix-Build-Log.txt";
+  $COLog = "$Prefix-CVS-Log.txt";
+  $DejagnuLog = "$Prefix-Dejagnu-testrun.log";
+  $DejagnuSum = "$Prefix-Dejagnu-testrun.sum";
+  $DejagnuLog = "$Prefix-DejagnuTests-Log.txt";
+}
+
+if ($VERBOSE) {
+  if ($CONFIG_PATH ne "") {
+    print "INITIALIZED (config mode)\n";
+    print "WebDir    = $WebDir\n";
+    print "Prefix    = $Prefix\n";
+    print "LLVM Src  = $LLVMSrcDir\n";
+    print "LLVM Obj  = $LLVMObjDir\n";
+    print "LLVM Test = $LLVMTestDir\n";
+  } else {
+    print "INITIALIZED\n";
+    print "SVN URL  = $SVNURL\n";
+    print "COLog    = $COLog\n";
+    print "BuildDir = $BuildDir\n";
+    print "WebDir   = $WebDir\n";
+    print "Prefix   = $Prefix\n";
+    print "BuildLog = $BuildLog\n";
+  }
+}
+
+##############################################################
+#
 # The actual NewNightlyTest logic.
 #
 ##############################################################
 
 $starttime = `date "+20%y-%m-%d %H:%M:%S"`;
 
-if (!$NOCHECKOUT) {
-  CheckoutSource();
-}
-
-# Build LLVM.
 my $BuildError = 0, $BuildStatus = "OK";
-ChangeDir( $LLVMSrcDir , "llvm source directory") ;
-if ($NOCHECKOUT || $NOBUILD) {
-  $BuildStatus = "Skipped by user";
-} else {
-  if (!BuildLLVM()) {
-    if( $VERBOSE) { print  "\n***ERROR BUILDING TREE\n\n"; }
-    $BuildError = 1;
-    $BuildStatus = "Error: compilation aborted";
-    $NODEJAGNU=1;
-  }
-}
-
-# Run DejaGNU.
 my $DejagnuTestResults = "Dejagnu skipped by user choice.";
-if (!$NODEJAGNU && !$BuildError) {
-  $DejagnuTestResults = RunDejaGNUTests();
+if ($ConfigMode == 0) {
+  if (!$NOCHECKOUT) {
+    CheckoutSource();
+  }
+
+  # Build LLVM.
+  ChangeDir( $LLVMSrcDir , "llvm source directory") ;
+  if ($NOCHECKOUT || $NOBUILD) {
+    $BuildStatus = "Skipped by user";
+  } else {
+    if (!BuildLLVM()) {
+      if( $VERBOSE) { print  "\n***ERROR BUILDING TREE\n\n"; }
+      $BuildError = 1;
+      $BuildStatus = "Error: compilation aborted";
+      $NODEJAGNU=1;
+    }
+  }
+
+  # Run DejaGNU.
+  if (!$NODEJAGNU && !$BuildError) {
+    $DejagnuTestResults = RunDejaGNUTests();
+  }
 }
 
 # Run the llvm-test tests.
@@ -720,10 +768,13 @@ if ($LLVMGCCPATH ne "") {
 my $targetTriple = $1;
 
 # Logs.
-my $ConfigureLogData = ReadFile $ConfigureLog;
-my $BuildLogData = ReadFile $BuildLog;
-my $DejagnuLogData = ReadFile $DejagnuLog;
-my $CheckoutLogData = ReadFile $COLog;
+my ($ConfigureLogData, $BuildLogData, $DejagnuLogData, $CheckoutLogData) = "";
+if ($ConfigMode == 0) {
+  $ConfigureLogData = ReadFile $ConfigureLog;
+  $BuildLogData = ReadFile $BuildLog;
+  $DejagnuLogData = ReadFile $DejagnuLog;
+  $CheckoutLogData = ReadFile $COLog;
+}
 
 # Checkout info.
 my $CheckoutTime_Wall = GetRegex "^real ([0-9.]+)", $CheckoutLogData;
