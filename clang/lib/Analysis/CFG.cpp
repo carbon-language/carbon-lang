@@ -22,6 +22,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/OwningPtr.h"
 
 using namespace clang;
 
@@ -51,7 +52,7 @@ static SourceLocation GetEndLoc(Decl* D) {
 ///
 class VISIBILITY_HIDDEN CFGBuilder {
   ASTContext *Context;
-  CFG* cfg;
+  llvm::OwningPtr<CFG> cfg;
 
   CFGBlock* Block;
   CFGBlock* Succ;
@@ -78,8 +79,6 @@ public:
                           Block(NULL), Succ(NULL),
                           ContinueTargetBlock(NULL), BreakTargetBlock(NULL),
                           SwitchTerminatedBlock(NULL), DefaultCaseBlock(NULL) {}
-
-  ~CFGBuilder() { delete cfg; }
 
   // buildCFG - Used by external clients to construct the CFG.
   CFG* buildCFG(Stmt *Statement, ASTContext *C);
@@ -195,7 +194,7 @@ static VariableArrayType* FindVA(Type* t) {
 ///  NULL.
 CFG* CFGBuilder::buildCFG(Stmt* Statement, ASTContext* C) {
   Context = C;
-  assert(cfg);
+  assert(cfg.get());
   if (!Statement)
     return NULL;
 
@@ -210,7 +209,8 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement, ASTContext* C) {
 
   // Visit the statements and create the CFG.
   CFGBlock* B = addStmt(Statement);
-  if (!B) B = Succ;
+  if (!B)
+    B = Succ;
 
   if (B) {
     // Finalize the last constructed block.  This usually involves reversing the
@@ -254,17 +254,12 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement, ASTContext* C) {
   // Create an empty entry block that has no predecessors.
   cfg->setEntry(createBlock());
 
-  if (badCFG) {
-    delete cfg;
-    cfg = NULL;
+  if (badCFG)
     return NULL;
-  }
 
   // NULL out cfg so that repeated calls to the builder will fail and that the
   // ownership of the constructed CFG is passed to the caller.
-  CFG* t = cfg;
-  cfg = NULL;
-  return t;
+  return cfg.take();
 }
 
 /// createBlock - Used to lazily create blocks that are connected
