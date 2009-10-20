@@ -38,6 +38,17 @@ namespace llvm {
 class MachineLoop : public LoopBase<MachineBasicBlock, MachineLoop> {
 public:
   MachineLoop();
+
+  /// getTopBlock - Return the "top" block in the loop, which is the first
+  /// block in the linear layout, ignoring any parts of the loop not
+  /// contiguous with the part the contains the header.
+  MachineBasicBlock *getTopBlock();
+
+  /// getBottomBlock - Return the "bottom" block in the loop, which is the last
+  /// block in the linear layout, ignoring any parts of the loop not
+  /// contiguous with the part the contains the header.
+  MachineBasicBlock *getBottomBlock();
+
 private:
   friend class LoopInfoBase<MachineBasicBlock, MachineLoop>;
   explicit MachineLoop(MachineBasicBlock *MBB)

@@ -43,3 +43,31 @@ void MachineLoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineDominatorTree>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
+
+MachineBasicBlock *MachineLoop::getTopBlock() {
+  MachineBasicBlock *TopMBB = getHeader();
+  MachineFunction::iterator Begin = TopMBB->getParent()->begin();
+  if (TopMBB != Begin) {
+    MachineBasicBlock *PriorMBB = prior(MachineFunction::iterator(TopMBB));
+    while (contains(PriorMBB)) {
+      TopMBB = PriorMBB;
+      if (TopMBB == Begin) break;
+      PriorMBB = prior(MachineFunction::iterator(TopMBB));
+    }
+  }
+  return TopMBB;
+}
+
+MachineBasicBlock *MachineLoop::getBottomBlock() {
+  MachineBasicBlock *BotMBB = getHeader();
+  MachineFunction::iterator End = BotMBB->getParent()->end();
+  if (BotMBB != prior(End)) {
+    MachineBasicBlock *NextMBB = next(MachineFunction::iterator(BotMBB));
+    while (contains(NextMBB)) {
+      BotMBB = NextMBB;
+      if (BotMBB == next(MachineFunction::iterator(BotMBB))) break;
+      NextMBB = next(MachineFunction::iterator(BotMBB));
+    }
+  }
+  return BotMBB;
+}
