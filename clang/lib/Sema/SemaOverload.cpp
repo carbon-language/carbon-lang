@@ -1934,9 +1934,8 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
         return ImplicitConversionSequence::Worse;
     }
   }
-
-  // conversion of A::* to B::* is better than conversion of A::* to C::*,
-
+  
+  // Ranking of member-pointer types.
   if (SCS1.Second == ICK_Pointer_Member && SCS2.Second == ICK_Pointer_Member &&
       FromType1->isMemberPointerType() && FromType2->isMemberPointerType() &&
       ToType1->isMemberPointerType() && ToType2->isMemberPointerType()) {
@@ -1956,6 +1955,7 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
     QualType ToPointee1 = QualType(ToPointeeType1, 0).getUnqualifiedType();
     QualType FromPointee2 = QualType(FromPointeeType2, 0).getUnqualifiedType();
     QualType ToPointee2 = QualType(ToPointeeType2, 0).getUnqualifiedType();
+    // conversion of A::* to B::* is better than conversion of A::* to C::*,
     if (FromPointee1 == FromPointee2 && ToPointee1 != ToPointee2) {
       if (IsDerivedFrom(ToPointee1, ToPointee2))
         return ImplicitConversionSequence::Worse;
