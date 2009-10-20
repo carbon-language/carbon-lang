@@ -54,3 +54,38 @@ bb15:
 bb61:                                            
   ret void
 }
+
+
+; PR5258
+define i32 @test(i1 %cond, i1 %cond2, i32 %a) {
+A:
+  br i1 %cond, label %F, label %A1
+F:
+  br label %A1
+
+A1:  
+  %d = phi i1 [false, %A], [true, %F]
+  %e = add i32 %a, %a
+  br i1 %d, label %B, label %G
+  
+G:
+  br i1 %cond2, label %B, label %D
+  
+B:
+  %f = phi i32 [%e, %G], [%e, %A1]
+  %b = add i32 0, 0
+  switch i32 %a, label %C [
+    i32 7, label %D
+    i32 8, label %D
+    i32 9, label %D
+  ]
+
+C:
+  br label %D
+  
+D:
+  %c = phi i32 [%e, %B], [%e, %B], [%e, %B], [%f, %C], [%e, %G]
+  ret i32 %c
+E:
+  ret i32 412
+}
