@@ -36,7 +36,12 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+static cl::opt<bool>
+ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(true),
+          cl::desc("Reuse repeated frame index values"));
 
 unsigned ARMBaseRegisterInfo::getRegisterNumbering(unsigned RegEnum,
                                                    bool *isSPVFP) {
@@ -1088,6 +1093,8 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                              Offset, Pred, PredReg, TII);
     }
     MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
+    if (!ReuseFrameIndexVals)
+      ScratchReg = 0;
   }
   return ScratchReg;
 }
