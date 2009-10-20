@@ -1306,6 +1306,8 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
 void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   ARMMCInstLower MCInstLowering(OutContext, *Mang, *this);
   switch (MI->getOpcode()) {
+  case ARM::t2MOVi32imm:
+    assert(0 && "Should be lowered by thumb2it pass");
   default: break;
   case TargetInstrInfo::DBG_LABEL:
   case TargetInstrInfo::EH_LABEL:
@@ -1441,8 +1443,6 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     
     return;
   }
-      
-  // FIXME: Handle t2MOVi32imm also.
   }
       
   MCInst TmpInst;
