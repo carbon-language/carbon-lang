@@ -138,7 +138,6 @@ namespace {
     void SplitExitEdges(Loop *L, const SmallVector<BasicBlock *, 8> &ExitBlocks);
 
     bool UnswitchIfProfitable(Value *LoopCond, Constant *Val);
-    unsigned getLoopUnswitchCost(Value *LIC);
     void UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
                                   BasicBlock *ExitBlock);
     void UnswitchNontrivialCondition(Value *LIC, Constant *OnVal, Loop *L);
@@ -400,25 +399,6 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
   return true;
 }
 
-/// getLoopUnswitchCost - Return the cost (code size growth) that will happen if
-/// we choose to unswitch current loop on the specified value.
-///
-unsigned LoopUnswitch::getLoopUnswitchCost(Value *LIC) {
-  // If the condition is trivial, always unswitch.  There is no code growth for
-  // this case.
-  if (IsTrivialUnswitchCondition(LIC))
-    return 0;
-  
-  // FIXME: This is overly conservative because it does not take into
-  // consideration code simplification opportunities.
-  CodeMetrics Metrics;
-  for (Loop::block_iterator I = currentLoop->block_begin(), 
-         E = currentLoop->block_end();
-       I != E; ++I)
-    Metrics.analyzeBasicBlock(*I);
-  return Metrics.NumInsts;
-}
-
 /// UnswitchIfProfitable - We have found that we can unswitch currentLoop when
 /// LoopCond == Val to simplify the loop.  If we decide that this is profitable,
 /// unswitch the loop, reprocess the pieces, then return true.
@@ -427,24 +407,35 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
   initLoopData();
   Function *F = loopHeader->getParent();
 
+  // If the condition is trivial, always unswitch.  There is no code growth for
+  // this case.
+  if (!IsTrivialUnswitchCondition(LoopCond)) {
+    // Check to see if it would be profitable to unswitch current loop.
 
-  // Check to see if it would be profitable to unswitch current loop.
-  unsigned Cost = getLoopUnswitchCost(LoopCond);
+    // Do not do non-trivial unswitch while optimizing for size.
+    if (OptimizeForSize || F->hasFnAttr(Attribute::OptimizeForSize))
+      return false;
 
-  // Do not do non-trivial unswitch while optimizing for size.
-  if (Cost && OptimizeForSize)
-    return false;
-  if (Cost && !F->isDeclaration() && F->hasFnAttr(Attribute::OptimizeForSize))
-    return false;
+    // FIXME: This is overly conservative because it does not take into
+    // consideration code simplification opportunities and code that can
+    // be shared by the resultant unswitched loops.
+    CodeMetrics Metrics;
+    for (Loop::block_iterator I = currentLoop->block_begin(), 
+           E = currentLoop->block_end();
+         I != E; ++I)
+      Metrics.analyzeBasicBlock(*I);
 
-  if (Cost > Threshold) {
-    // FIXME: this should estimate growth by the amount of code shared by the
-    // resultant unswitched loops.
-    //
-    DEBUG(errs() << "NOT unswitching loop %"
-          << currentLoop->getHeader()->getName() << ", cost too high: "
-          << currentLoop->getBlocks().size() << "\n");
-    return false;
+    // Limit the number of instructions to avoid causing significant code
+    // expansion, and the number of basic blocks, to avoid loops with
+    // large numbers of branches which cause loop unswitching to go crazy.
+    // This is a very ad-hoc heuristic.
+    if (Metrics.NumInsts > Threshold ||
+        Metrics.NumBlocks * 5 > Threshold) {
+      DEBUG(errs() << "NOT unswitching loop %"
+            << currentLoop->getHeader()->getName() << ", cost too high: "
+            << currentLoop->getBlocks().size() << "\n");
+      return false;
+    }
   }
 
   Constant *CondVal;
