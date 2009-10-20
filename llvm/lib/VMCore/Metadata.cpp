@@ -245,10 +245,10 @@ NamedMDNode::~NamedMDNode() {
 // MetadataContext implementation.
 //
 
-/// RegisterMDKind - Register a new metadata kind and return its ID.
+/// registerMDKind - Register a new metadata kind and return its ID.
 /// A metadata kind can be registered only once. 
-unsigned MetadataContext::RegisterMDKind(const char *Name) {
-  assert(validName(Name) && "Invalid custome metadata name!");
+unsigned MetadataContext::registerMDKind(const char *Name) {
+  assert(isValidName(Name) && "Invalid custome metadata name!");
   unsigned Count = MDHandlerNames.size();
   assert(MDHandlerNames.find(Name) == MDHandlerNames.end() 
          && "Already registered MDKind!");
@@ -256,8 +256,8 @@ unsigned MetadataContext::RegisterMDKind(const char *Name) {
   return Count + 1;
 }
 
-/// validName - Return true if Name is a valid custom metadata handler name.
-bool MetadataContext::validName(const char *Name) {
+/// isValidName - Return true if Name is a valid custom metadata handler name.
+bool MetadataContext::isValidName(const char *Name) {
   if (!Name)
     return false;
 
@@ -280,7 +280,7 @@ bool MetadataContext::validName(const char *Name) {
 /// getMDKind - Return metadata kind. If the requested metadata kind
 /// is not registered then return 0.
 unsigned MetadataContext::getMDKind(const char *Name) {
-  assert(validName(Name) && "Invalid custome metadata name!");
+  assert(isValidName(Name) && "Invalid custome metadata name!");
   StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
   if (I == MDHandlerNames.end())
     return 0;
@@ -288,7 +288,7 @@ unsigned MetadataContext::getMDKind(const char *Name) {
   return I->getValue();
 }
 
-/// addMD - Attach the metadata of given kind with an Instruction.
+/// addMD - Attach the metadata of given kind to an Instruction.
 void MetadataContext::addMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
   assert(Node && "Invalid null MDNode");
   Inst->HasMetadata = true;
@@ -362,7 +362,7 @@ void MetadataContext::copyMD(Instruction *In1, Instruction *In2) {
       addMD(I->first, MD, In2);
 }
 
-/// getMD - Get the metadata of given kind attached with an Instruction.
+/// getMD - Get the metadata of given kind attached to an Instruction.
 /// If the metadata is not found then return 0.
 MDNode *MetadataContext::getMD(unsigned MDKind, const Instruction *Inst) {
   MDStoreTy::iterator I = MetadataStore.find(Inst);
@@ -376,7 +376,7 @@ MDNode *MetadataContext::getMD(unsigned MDKind, const Instruction *Inst) {
   return NULL;
 }
 
-/// getMDs - Get the metadata attached with an Instruction.
+/// getMDs - Get the metadata attached to an Instruction.
 const MetadataContext::MDMapTy *
 MetadataContext::getMDs(const Instruction *Inst) {
   MDStoreTy::iterator I = MetadataStore.find(Inst);

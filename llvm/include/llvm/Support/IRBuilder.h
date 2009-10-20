@@ -139,7 +139,7 @@ public:
     if (MDKind == 0) 
       MDKind = Context.getMetadata().getMDKind("dbg");
     if (MDKind == 0)
-      MDKind = Context.getMetadata().RegisterMDKind("dbg");
+      MDKind = Context.getMetadata().registerMDKind("dbg");
     CurDbgLocation = L;
   }
 

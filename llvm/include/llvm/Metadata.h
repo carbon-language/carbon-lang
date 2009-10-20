@@ -295,25 +295,25 @@ private:
   StringMap<unsigned> MDHandlerNames;
 
 public:
-  /// RegisterMDKind - Register a new metadata kind and return its ID.
+  /// registerMDKind - Register a new metadata kind and return its ID.
   /// A metadata kind can be registered only once. 
-  unsigned RegisterMDKind(const char *Name);
+  unsigned registerMDKind(const char *Name);
 
   /// getMDKind - Return metadata kind. If the requested metadata kind
   /// is not registered then return 0.
   unsigned getMDKind(const char *Name);
 
-  /// validName - Return true if Name is a valid custom metadata handler name.
-  bool validName(const char *Name);
+  /// isValidName - Return true if Name is a valid custom metadata handler name.
+  bool isValidName(const char *Name);
 
-  /// getMD - Get the metadata of given kind attached with an Instruction.
+  /// getMD - Get the metadata of given kind attached to an Instruction.
   /// If the metadata is not found then return 0.
   MDNode *getMD(unsigned Kind, const Instruction *Inst);
 
-  /// getMDs - Get the metadata attached with an Instruction.
+  /// getMDs - Get the metadata attached to an Instruction.
   const MDMapTy *getMDs(const Instruction *Inst);
 
-  /// addMD - Attach the metadata of given kind with an Instruction.
+  /// addMD - Attach the metadata of given kind to an Instruction.
   void addMD(unsigned Kind, MDNode *Node, Instruction *Inst);
   
   /// removeMD - Remove metadata of given kind attached with an instuction.
