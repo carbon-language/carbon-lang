@@ -103,3 +103,12 @@ void test14() {
   __m64 mask = (__m64)((__v4hi)a > (__v4hi)a);
 }
 
+
+// PR5242
+typedef unsigned long *test15_t;
+
+test15_t test15(void) {
+  return (test15_t)0 + (test15_t)0;  // expected-error {{invalid operands to binary expression ('test15_t' (aka 'unsigned long *') and 'test15_t')}}
+}
+
+

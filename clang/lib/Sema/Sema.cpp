@@ -24,7 +24,7 @@
 using namespace clang;
 
 /// Determines whether we should have an a.k.a. clause when
-/// pretty-printing a type.  There are two main criteria:
+/// pretty-printing a type.  There are three main criteria:
 ///
 /// 1) Some types provide very minimal sugar that doesn't impede the
 ///    user's understanding --- for example, elaborated type
@@ -34,9 +34,15 @@ using namespace clang;
 ///    when seen in their sugared form --- for example, va_list,
 ///    vector types, and the magic Objective C types.  We don't
 ///    want to desugar these, even if we do produce an a.k.a. clause.
+/// 3) Some types may have already been desugared previously in this diagnostic.
+///    if this is the case, doing another "aka" would just be clutter.
+///
 static bool ShouldAKA(ASTContext &Context, QualType QT,
-                      QualType& DesugaredQT) {
-
+                      const Diagnostic::ArgumentValue *PrevArgs,
+                      unsigned NumPrevArgs,
+                      QualType &DesugaredQT) {
+  QualType InputTy = QT;
+  
   bool AKA = false;
   QualifierCollector Qc;
 
@@ -109,13 +115,23 @@ static bool ShouldAKA(ASTContext &Context, QualType QT,
     continue;
   }
 
-  // If we ever tore through opaque sugar
-  if (AKA) {
-    DesugaredQT = Qc.apply(QT);
-    return true;
-  }
+  // If we never tore through opaque sugar, don't print aka.
+  if (!AKA) return false;
 
-  return false;
+  // If we did, check to see if we already desugared this type in this
+  // diagnostic.  If so, don't do it again.
+  for (unsigned i = 0; i != NumPrevArgs; ++i) {
+    // TODO: Handle ak_declcontext case.
+    if (PrevArgs[i].first == Diagnostic::ak_qualtype) {
+      void *Ptr = (void*)PrevArgs[i].second;
+      QualType PrevTy(QualType::getFromOpaquePtr(Ptr));
+      if (PrevTy == InputTy)
+        return false;
+    }
+  }
+  
+  DesugaredQT = Qc.apply(QT);
+  return true;
 }
 
 /// \brief Convert the given type to a string suitable for printing as part of 
@@ -123,8 +139,10 @@ static bool ShouldAKA(ASTContext &Context, QualType QT,
 ///
 /// \param Context the context in which the type was allocated
 /// \param Ty the type to print
-static std::string ConvertTypeToDiagnosticString(ASTContext &Context,
-                                                 QualType Ty) {
+static std::string
+ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
+                              const Diagnostic::ArgumentValue *PrevArgs,
+                              unsigned NumPrevArgs) {
   // FIXME: Playing with std::string is really slow.
   std::string S = Ty.getAsString(Context.PrintingPolicy);
   
@@ -132,7 +150,7 @@ static std::string ConvertTypeToDiagnosticString(ASTContext &Context,
   // sugar gives us something "significantly different".
 
   QualType DesugaredTy;
-  if (ShouldAKA(Context, Ty, DesugaredTy)) {
+  if (ShouldAKA(Context, Ty, PrevArgs, NumPrevArgs, DesugaredTy)) {
     S = "'"+S+"' (aka '";
     S += DesugaredTy.getAsString(Context.PrintingPolicy);
     S += "')";
@@ -164,7 +182,7 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
            "Invalid modifier for QualType argument");
 
     QualType Ty(QualType::getFromOpaquePtr(reinterpret_cast<void*>(Val)));
-    S = ConvertTypeToDiagnosticString(Context, Ty);
+    S = ConvertTypeToDiagnosticString(Context, Ty, PrevArgs, NumPrevArgs);
     NeedQuotes = false;
     break;
   }
@@ -212,7 +230,8 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
       else
         S = "the global scope";
     } else if (TypeDecl *Type = dyn_cast<TypeDecl>(DC)) {
-      S = ConvertTypeToDiagnosticString(Context, Context.getTypeDeclType(Type));
+      S = ConvertTypeToDiagnosticString(Context, Context.getTypeDeclType(Type),
+                                        PrevArgs, NumPrevArgs);
     } else {
       // FIXME: Get these strings from some localized place
       NamedDecl *ND = cast<NamedDecl>(DC);
