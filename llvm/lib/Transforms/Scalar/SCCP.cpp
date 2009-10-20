@@ -1229,7 +1229,10 @@ CallOverdefined:
     TMRVI = TrackedMultipleRetVals.find(std::make_pair(F, 0));
     if (TMRVI == TrackedMultipleRetVals.end())
       goto CallOverdefined;
-    
+
+    // Need to mark as overdefined, otherwise it stays undefined which
+    // creates extractvalue undef, <idx>
+    markOverdefined(I);
     // If we are tracking this callee, propagate the return values of the call
     // into this call site.  We do this by walking all the uses. Single-index
     // ExtractValueInst uses can be tracked; anything more complicated is
@@ -1270,7 +1273,6 @@ CallOverdefined:
       mergeInValue(IV, AI, getValueState(*CAI));
   }
 }
-
 
 void SCCPSolver::Solve() {
   // Process the work lists until they are empty!
