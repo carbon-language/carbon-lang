@@ -65,6 +65,11 @@ public:
       AScope(ScopeDecl), DisplayedFunction(!displayProgress),
       VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
       EagerlyAssume(eager), TrimGraph(trim) {}
+  
+  void ClearContexts() {
+    LocCtxMgr.clear();
+    AnaCtxMgr.clear();
+  }
 
   StoreManagerCreator getStoreManagerCreator() {
     return CreateStoreMgr;

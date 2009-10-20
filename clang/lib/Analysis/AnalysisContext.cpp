@@ -33,6 +33,12 @@ AnalysisContextManager::~AnalysisContextManager() {
     delete I->second;
 }
 
+void AnalysisContextManager::clear() {
+  for (ContextMap::iterator I = Contexts.begin(), E = Contexts.end(); I!=E; ++I)
+    delete I->second;
+  Contexts.clear();
+}
+
 Stmt *AnalysisContext::getBody() {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     return FD->getBody();
@@ -101,6 +107,21 @@ void ScopeContext::Profile(llvm::FoldingSetNodeID &ID, AnalysisContext *ctx,
                            const LocationContext *parent, const Stmt *s) {
   LocationContext::Profile(ID, Scope, ctx, parent);
   ID.AddPointer(s);
+}
+
+LocationContextManager::~LocationContextManager() {
+  clear();
+}
+
+void LocationContextManager::clear() {
+  for (llvm::FoldingSet<LocationContext>::iterator I = Contexts.begin(),
+       E = Contexts.end(); I != E; ) {    
+    LocationContext *LC = &*I;
+    ++I;
+    delete LC;
+  }
+  
+  Contexts.clear();
 }
 
 StackFrameContext*

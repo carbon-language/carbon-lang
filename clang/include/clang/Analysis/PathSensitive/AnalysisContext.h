@@ -60,6 +60,9 @@ public:
   ~AnalysisContextManager();
 
   AnalysisContext *getContext(const Decl *D);
+  
+  // Discard all previously created AnalysisContexts.
+  void clear();
 };
 
 class LocationContext : public llvm::FoldingSetNode {
@@ -155,12 +158,17 @@ class LocationContextManager {
   llvm::FoldingSet<LocationContext> Contexts;
 
 public:
+  ~LocationContextManager();
+  
   StackFrameContext *getStackFrame(AnalysisContext *ctx,
                                    const LocationContext *parent,
                                    const Stmt *s);
 
   ScopeContext *getScope(AnalysisContext *ctx, const LocationContext *parent,
                          const Stmt *s);
+  
+  /// Discard all previously created LocationContext objects.
+  void clear();
 };
 
 } // end clang namespace
