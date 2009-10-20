@@ -40,7 +40,7 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        bool FreeMem, unsigned size_reserve) :
   GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0),
   ObjCFastEnumerationStateTypeDecl(0), FILEDecl(0), jmp_bufDecl(0),
-  sigjmp_bufDecl(0), SourceMgr(SM), LangOpts(LOpts),
+  sigjmp_bufDecl(0), BlockDescriptorType(0), SourceMgr(SM), LangOpts(LOpts),
   LoadedExternalComments(false), FreeMemory(FreeMem), Target(t),
   Idents(idents), Selectors(sels),
   BuiltinInfo(builtins), ExternalSource(0), PrintingPolicy(LOpts) {
@@ -2690,6 +2690,113 @@ QualType ASTContext::getObjCFastEnumerationStateType() {
   }
 
   return getTagDeclType(ObjCFastEnumerationStateTypeDecl);
+}
+
+QualType ASTContext::getBlockDescriptorType() {
+  if (BlockDescriptorType)
+    return getTagDeclType(BlockDescriptorType);
+
+  RecordDecl *T;
+  // FIXME: Needs the FlagAppleBlock bit.
+  T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+                         &Idents.get("__block_descriptor"));
+  
+  QualType FieldTypes[] = {
+    UnsignedLongTy,
+    UnsignedLongTy,
+  };
+
+  const char *FieldNames[] = {
+    "reserved",
+    "Size",
+  };
+
+  for (size_t i = 0; i < 2; ++i) {
+    FieldDecl *Field = FieldDecl::Create(*this,
+                                         T,
+                                         SourceLocation(),
+                                         &Idents.get(FieldNames[i]),
+                                         FieldTypes[i], /*DInfo=*/0,
+                                         /*BitWidth=*/0,
+                                         /*Mutable=*/false);
+    T->addDecl(Field);
+  }
+
+  T->completeDefinition(*this);
+
+  BlockDescriptorType = T;
+
+  return getTagDeclType(BlockDescriptorType);
+}
+
+void ASTContext::setBlockDescriptorType(QualType T) {
+  const RecordType *Rec = T->getAs<RecordType>();
+  assert(Rec && "Invalid BlockDescriptorType");
+  BlockDescriptorType = Rec->getDecl();
+}
+
+QualType ASTContext::getBlockParmType() {
+  // FIXME: Move up
+  static int UniqueBlockParmTypeID = 0;
+  char Name[36];
+  sprintf(Name, "__block_literal_%u", ++UniqueBlockParmTypeID);
+  RecordDecl *T;
+  T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+                         &Idents.get(Name));
+
+#define REV2
+#ifdef REV2
+  cast<TagDecl>(T)->startDefinition();
+#endif
+
+  return getPointerType(getTagDeclType(T));
+}
+
+void ASTContext::completeBlockParmType(QualType Ty,
+  llvm::SmallVector<const Expr *, 8> &BlockDeclRefDecls) {
+  RecordDecl *PT = Ty->getPointeeType()->getAs<RecordType>()->getDecl();
+  llvm::StringRef Name = PT->getIdentifier()->getName();
+
+  RecordDecl *T;
+#ifdef REV2
+  T = PT;
+#else
+  T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+                         &Idents.get(Name), SourceLocation(), PT);
+
+  cast<TagDecl>(T)->startDefinition();
+#endif
+  
+  QualType FieldTypes[] = {
+    getPointerType(VoidPtrTy),
+    IntTy,
+    IntTy,
+    getPointerType(VoidPtrTy),
+    getPointerType(getBlockDescriptorType()),
+  };
+
+  const char *FieldNames[] = {
+    "__isa",
+    "__flags",
+    "__reserved",
+    "__FuncPtr",
+    "__descriptor"
+  };
+
+  for (size_t i = 0; i < 5; ++i) {
+    FieldDecl *Field = FieldDecl::Create(*this,
+                                         T,
+                                         SourceLocation(),
+                                         &Idents.get(FieldNames[i]),
+                                         FieldTypes[i], /*DInfo=*/0,
+                                         /*BitWidth=*/0,
+                                         /*Mutable=*/false);
+    // FIXME: Do this instead or addDecl?
+    // PushOnScopeChains(FieldTypes, S);
+    T->addDecl(Field);
+  }
+
+  T->completeDefinition(*this);
 }
 
 void ASTContext::setObjCFastEnumerationStateType(QualType T) {

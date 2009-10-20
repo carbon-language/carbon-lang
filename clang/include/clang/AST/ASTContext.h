@@ -144,6 +144,9 @@ class ASTContext {
   /// \brief The type for the C sigjmp_buf type.
   TypeDecl *sigjmp_bufDecl;
 
+  /// \brief Type for the Block descriptor for Blocks CodeGen.
+  RecordDecl *BlockDescriptorType;
+
   /// \brief Keeps track of all declaration attributes.
   ///
   /// Since so few decls have attrs, we keep them in a hash map instead of
@@ -390,6 +393,27 @@ public:
   /// getBlockPointerType - Return the uniqued reference to the type for a block
   /// of the specified type.
   QualType getBlockPointerType(QualType T);
+
+  /// This gets the struct used to keep track of the descriptor for pointer to
+  /// blocks.
+  QualType getBlockDescriptorType();
+
+  // Set the type for a Block descriptor type.
+  void setBlockDescriptorType(QualType T);
+  /// Get the BlockDescriptorType type, or NULL if it hasn't yet been built.
+  QualType getRawBlockdescriptorType() {
+    if (BlockDescriptorType)
+      return getTagDeclType(BlockDescriptorType);
+    return QualType();
+  }
+
+  /// This gets the struct used to keep track of pointer to blocks, complete
+  /// with captured variables.
+  QualType getBlockParmType();
+
+  /// This completes a type created by getBlockParmType.
+  void completeBlockParmType(QualType Ty,
+                         llvm::SmallVector<const Expr *, 8> &BlockDeclRefDecls);
 
   /// getLValueReferenceType - Return the uniqued reference to the type for an
   /// lvalue reference to the specified type.

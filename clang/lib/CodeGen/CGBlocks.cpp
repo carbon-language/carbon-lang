@@ -632,11 +632,15 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
 
   const BlockDecl *BD = BExpr->getBlockDecl();
 
+  IdentifierInfo *II
+    = &CGM.getContext().Idents.get(".block_descriptor");
+
+  QualType ParmTy = getContext().getBlockParmType();
   // FIXME: This leaks
   ImplicitParamDecl *SelfDecl =
     ImplicitParamDecl::Create(getContext(), 0,
-                              SourceLocation(), 0,
-                              getContext().getPointerType(getContext().VoidTy));
+                              SourceLocation(), II,
+                              ParmTy);
 
   Args.push_back(std::make_pair(SelfDecl, SelfDecl->getType()));
   BlockStructDecl = SelfDecl;
@@ -700,6 +704,22 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
     Builder.SetInsertPoint(resume);
 
   FinishFunction(cast<CompoundStmt>(BExpr->getBody())->getRBracLoc());
+
+  // And now finish off the type for the parameter, since now we know 
+  // BlockDeclRefDecls is complete.
+  getContext().completeBlockParmType(ParmTy, BlockDeclRefDecls);
+
+#define REV2
+#ifdef REV2
+  TagDecl *TD = ParmTy->getPointeeType()->getAs<RecordType>()->getDecl();
+  CGM.UpdateCompletedType(TD);
+#else
+  TagDecl *TD = ParmTy->getPointeeType()->getAs<RecordType>()->getDecl();
+  TagDecl::redecl_iterator rdi = TD->redecls_begin();
+  ++rdi;
+  TD = *rdi;
+  CGM.UpdateCompletedType(TD);
+#endif
 
   // The runtime needs a minimum alignment of a void *.
   uint64_t MinAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
