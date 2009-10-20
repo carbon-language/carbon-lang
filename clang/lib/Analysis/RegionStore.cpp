@@ -1244,8 +1244,8 @@ SVal RegionStoreManager::RetrieveObjCIvar(const GRState* state,
 
   const MemRegion *superR = R->getSuperRegion();
 
-  // Check if the super region has a binding.
-  if (Optional<SVal> V = getDirectBinding(B, superR)) {
+  // Check if the super region has a default binding.
+  if (Optional<SVal> V = getDefaultBinding(B, superR)) {
     if (SymbolRef parentSym = V->getAsSymbol())
       return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
 
@@ -1792,7 +1792,7 @@ GRState const *RegionStoreManager::EnterStackFrame(GRState const *state,
 void RegionStoreManager::print(Store store, llvm::raw_ostream& OS,
                                const char* nl, const char *sep) {
   RegionBindings B = GetRegionBindings(store);
-  OS << "Store (direct bindings):" << nl;
+  OS << "Store (direct and default bindings):" << nl;
 
   for (RegionBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
     OS << ' ' << I.getKey() << " : " << I.getData() << nl;

@@ -141,9 +141,11 @@ again:
   }
 }
 
+//===----------------------------------------------------------------------===//
 // Reduced test case from <rdar://problem/7114618>.
 // Basically a null check is performed on the field value, which is then
 // assigned to a variable and then checked again.
+//===----------------------------------------------------------------------===//
 struct s_7114618 { int *p; };
 void test_rdar_7114618(struct s_7114618 *s) {
   if (s->p) {
@@ -168,9 +170,11 @@ void f() {
   }
 }
 
+//===----------------------------------------------------------------------===//
 // <rdar://problem/7185607>
 // Bit-fields of a struct should be invalidated when blasting the entire
 // struct with an integer constant.
+//===----------------------------------------------------------------------===//
 struct test_7185607 {
   int x : 10;
   int y : 22;
@@ -181,9 +185,11 @@ int rdar_test_7185607() {
   return s.x; // no-warning
 }
 
+//===----------------------------------------------------------------------===//
 // <rdar://problem/7242006> [RegionStore] compound literal assignment with
 //  floats not honored
 // This test case is mirrored in misc-ps.m, but this case is a negative.
+//===----------------------------------------------------------------------===//
 typedef float CGFloat;
 typedef struct _NSSize {
     CGFloat width;
@@ -195,9 +201,11 @@ CGFloat rdar7242006_negative(CGFloat x) {
   return y.width; // expected-warning{{garbage}}
 }
 
+//===----------------------------------------------------------------------===//
 // <rdar://problem/7249340> - Allow binding of values to symbolic regions.
 // This test case shows how RegionStore tracks the value bound to 'x'
 // after the assignment.
+//===----------------------------------------------------------------------===//
 typedef int* ptr_rdar_7249340;
 void rdar_7249340(ptr_rdar_7249340 x) {
   *x = 1;
@@ -207,11 +215,13 @@ void rdar_7249340(ptr_rdar_7249340 x) {
   *p = 0xDEADBEEF; // no-warning
 }
 
+//===----------------------------------------------------------------------===//
 // <rdar://problem/7249327> - This test case tests both value tracking of
 // array values and that we handle symbolic values that are casted
 // between different integer types.  Note the assignment 'n = *a++'; here
 // 'n' is and 'int' and '*a' is 'unsigned'.  Previously we got a false positive
 // at 'x += *b++' (undefined value) because we got a false path.
+//===----------------------------------------------------------------------===//
 int rdar_7249327_aux(void);
 
 void rdar_7249327(unsigned int A[2*32]) {
@@ -237,8 +247,10 @@ void rdar_7249327(unsigned int A[2*32]) {
     x += *b++; // no-warning
 }
 
+//===----------------------------------------------------------------------===//
 // <rdar://problem/6914474> - Check that 'x' is invalidated because its
 // address is passed in as a value to a struct.
+//===----------------------------------------------------------------------===//
 struct doodad_6914474 { int *v; };
 extern void prod_6914474(struct doodad_6914474 *d);
 int rdar_6914474(void) {
@@ -278,8 +290,11 @@ int test_handle_array_wrapper() {
   return p->z;  // no-warning
 }
 
+//===----------------------------------------------------------------------===//
 // <rdar://problem/7261075> [RegionStore] crash when 
 //   handling load: '*((unsigned int *)"????")'
+//===----------------------------------------------------------------------===//
+
 int rdar_7261075(void) {
   unsigned int var = 0;
   if (var == *((unsigned int *)"????"))
@@ -287,8 +302,11 @@ int rdar_7261075(void) {
   return 0;
 }
 
+//===----------------------------------------------------------------------===//
 // <rdar://problem/7275774> false path due to limited pointer 
 //                          arithmetic constraints
+//===----------------------------------------------------------------------===//
+
 void rdar_7275774(void *data, unsigned n) {
   if (!(data || n == 0))
     return;
@@ -300,6 +318,57 @@ void rdar_7275774(void *data, unsigned n) {
     // If we reach here, 'p' cannot be null.  If 'p' is null, then 'n' must
     // be '0', meaning that this branch is not feasible.
     *p = *q; // no-warning
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7312221>
+//
+//  Test that Objective-C instance variables aren't prematurely pruned
+//  from the analysis state.
+//===----------------------------------------------------------------------===//
+
+struct rdar_7312221_value { int x; };
+
+@interface RDar7312221
+{
+  struct rdar_7312221_value *y;
+}
+- (void) doSomething_7312221;
+@end
+
+extern struct rdar_7312221_value *rdar_7312221_helper();
+extern int rdar_7312221_helper_2(id o);
+extern void rdar_7312221_helper_3(int z);
+
+@implementation RDar7312221
+- (void) doSomething_7312221 {
+  if (y == 0) {
+    y = rdar_7312221_helper();
+    if (y != 0) {
+      y->x = rdar_7312221_helper_2(self);
+      // The following use of 'y->x' previously triggered a null dereference, as the value of 'y'
+      // before 'y = rdar_7312221_helper()' would be used.
+      rdar_7312221_helper_3(y->x); // no-warning
+    }
+  }
+}
+@end
+
+struct rdar_7312221_container {
+  struct rdar_7312221_value *y;
+};
+
+extern int rdar_7312221_helper_4(struct rdar_7312221_container *s);
+
+// This test case essentially matches the one in [RDar7312221 doSomething_7312221].
+void doSomething_7312221_with_struct(struct rdar_7312221_container *Self) {
+  if (Self->y == 0) {
+    Self->y = rdar_7312221_helper();
+    if (Self->y != 0) {
+      Self->y->x = rdar_7312221_helper_4(Self);
+      rdar_7312221_helper_3(Self->y->x); // no-warning
+    }
   }
 }
 
