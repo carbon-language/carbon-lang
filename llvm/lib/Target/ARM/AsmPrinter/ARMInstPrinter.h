@@ -40,13 +40,13 @@ public:
   
   void printSORegOperand(const MCInst *MI, unsigned OpNum);
   void printAddrMode2Operand(const MCInst *MI, unsigned OpNum);
-  void printAddrMode2OffsetOperand(const MCInst *MI, unsigned OpNum) {}
-  void printAddrMode3Operand(const MCInst *MI, unsigned OpNum) {}
-  void printAddrMode3OffsetOperand(const MCInst *MI, unsigned OpNum) {}
+  void printAddrMode2OffsetOperand(const MCInst *MI, unsigned OpNum);
+  void printAddrMode3Operand(const MCInst *MI, unsigned OpNum);
+  void printAddrMode3OffsetOperand(const MCInst *MI, unsigned OpNum);
   void printAddrMode4Operand(const MCInst *MI, unsigned OpNum,
                              const char *Modifier = 0);
   void printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
-                             const char *Modifier = 0) {}
+                             const char *Modifier = 0);
   void printAddrMode6Operand(const MCInst *MI, unsigned OpNum) {}
   void printAddrModePCOperand(const MCInst *MI, unsigned OpNum,
                               const char *Modifier = 0) {}
@@ -76,7 +76,7 @@ public:
   void printJTBlockOperand(const MCInst *MI, unsigned OpNum) {}
   void printJT2BlockOperand(const MCInst *MI, unsigned OpNum) {}
   void printTBAddrMode(const MCInst *MI, unsigned OpNum) {}
-  void printNoHashImmediate(const MCInst *MI, unsigned OpNum) {}
+  void printNoHashImmediate(const MCInst *MI, unsigned OpNum);
 
   void printPCLabel(const MCInst *MI, unsigned OpNum);  
   // FIXME: Implement.

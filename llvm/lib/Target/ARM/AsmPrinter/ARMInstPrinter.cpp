@@ -33,15 +33,34 @@ void ARMInstPrinter::printInst(const MCInst *MI) { printInstruction(MI); }
 
 void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                   const char *Modifier) {
-  // FIXME: TURN ASSERT ON.
-  //assert((Modifier == 0 || Modifier[0] == 0) && "Cannot print modifiers");
-  
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
-    O << getRegisterName(Op.getReg());
+    unsigned Reg = Op.getReg();
+    if (Modifier && strcmp(Modifier, "dregpair") == 0) {
+      // FIXME: Breaks e.g. ARM/vmul.ll.
+      assert(0);
+      /*
+      unsigned DRegLo = TRI->getSubReg(Reg, 5); // arm_dsubreg_0
+      unsigned DRegHi = TRI->getSubReg(Reg, 6); // arm_dsubreg_1
+      O << '{'
+      << getRegisterName(DRegLo) << ',' << getRegisterName(DRegHi)
+      << '}';*/
+    } else if (Modifier && strcmp(Modifier, "lane") == 0) {
+      assert(0);
+      /*
+      unsigned RegNum = ARMRegisterInfo::getRegisterNumbering(Reg);
+      unsigned DReg = TRI->getMatchingSuperReg(Reg, RegNum & 1 ? 2 : 1,
+                                               &ARM::DPR_VFP2RegClass);
+      O << getRegisterName(DReg) << '[' << (RegNum & 1) << ']';
+       */
+    } else {
+      O << getRegisterName(Reg);
+    }
   } else if (Op.isImm()) {
+    assert((Modifier == 0 || Modifier[0] == 0) && "No modifiers supported");
     O << '#' << Op.getImm();
   } else {
+    assert((Modifier == 0 || Modifier[0] == 0) && "No modifiers supported");
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     Op.getExpr()->print(O, &MAI);
   }
@@ -143,6 +162,64 @@ void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op) {
   O << "]";
 }  
 
+void ARMInstPrinter::printAddrMode2OffsetOperand(const MCInst *MI,
+                                                 unsigned OpNum) {
+  const MCOperand &MO1 = MI->getOperand(OpNum);
+  const MCOperand &MO2 = MI->getOperand(OpNum+1);
+  
+  if (!MO1.getReg()) {
+    unsigned ImmOffs = ARM_AM::getAM2Offset(MO2.getImm());
+    assert(ImmOffs && "Malformed indexed load / store!");
+    O << '#' << (char)ARM_AM::getAM2Op(MO2.getImm()) << ImmOffs;
+    return;
+  }
+  
+  O << (char)ARM_AM::getAM2Op(MO2.getImm()) << getRegisterName(MO1.getReg());
+  
+  if (unsigned ShImm = ARM_AM::getAM2Offset(MO2.getImm()))
+    O << ", "
+    << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO2.getImm()))
+    << " #" << ShImm;
+}
+
+void ARMInstPrinter::printAddrMode3Operand(const MCInst *MI, unsigned OpNum) {
+  const MCOperand &MO1 = MI->getOperand(OpNum);
+  const MCOperand &MO2 = MI->getOperand(OpNum+1);
+  const MCOperand &MO3 = MI->getOperand(OpNum+2);
+  
+  O << '[' << getRegisterName(MO1.getReg());
+  
+  if (MO2.getReg()) {
+    O << ", " << (char)ARM_AM::getAM3Op(MO3.getImm())
+      << getRegisterName(MO2.getReg()) << ']';
+    return;
+  }
+  
+  if (unsigned ImmOffs = ARM_AM::getAM3Offset(MO3.getImm()))
+    O << ", #"
+    << (char)ARM_AM::getAM3Op(MO3.getImm())
+    << ImmOffs;
+  O << ']';
+}
+
+void ARMInstPrinter::printAddrMode3OffsetOperand(const MCInst *MI,
+                                                 unsigned OpNum) {
+  const MCOperand &MO1 = MI->getOperand(OpNum);
+  const MCOperand &MO2 = MI->getOperand(OpNum+1);
+  
+  if (MO1.getReg()) {
+    O << (char)ARM_AM::getAM3Op(MO2.getImm())
+    << getRegisterName(MO1.getReg());
+    return;
+  }
+  
+  unsigned ImmOffs = ARM_AM::getAM3Offset(MO2.getImm());
+  assert(ImmOffs && "Malformed indexed load / store!");
+  O << "#"
+  << (char)ARM_AM::getAM3Op(MO2.getImm())
+  << ImmOffs;
+}
+
 
 void ARMInstPrinter::printAddrMode4Operand(const MCInst *MI, unsigned OpNum,
                                            const char *Modifier) {
@@ -169,6 +246,44 @@ void ARMInstPrinter::printAddrMode4Operand(const MCInst *MI, unsigned OpNum,
       O << "!";
   }
 }
+
+void ARMInstPrinter::printAddrMode5Operand(const MCInst *MI, unsigned OpNum,
+                                           const char *Modifier) {
+  const MCOperand &MO1 = MI->getOperand(OpNum);
+  const MCOperand &MO2 = MI->getOperand(OpNum+1);
+  
+  if (!MO1.isReg()) {   // FIXME: This is for CP entries, but isn't right.
+    printOperand(MI, OpNum);
+    return;
+  }
+  
+  if (Modifier && strcmp(Modifier, "submode") == 0) {
+    ARM_AM::AMSubMode Mode = ARM_AM::getAM5SubMode(MO2.getImm());
+    if (MO1.getReg() == ARM::SP) {
+      bool isFLDM = (MI->getOpcode() == ARM::FLDMD ||
+                     MI->getOpcode() == ARM::FLDMS);
+      O << ARM_AM::getAMSubModeAltStr(Mode, isFLDM);
+    } else
+      O << ARM_AM::getAMSubModeStr(Mode);
+    return;
+  } else if (Modifier && strcmp(Modifier, "base") == 0) {
+    // Used for FSTM{D|S} and LSTM{D|S} operations.
+    O << getRegisterName(MO1.getReg());
+    if (ARM_AM::getAM5WBFlag(MO2.getImm()))
+      O << "!";
+    return;
+  }
+  
+  O << "[" << getRegisterName(MO1.getReg());
+  
+  if (unsigned ImmOffs = ARM_AM::getAM5Offset(MO2.getImm())) {
+    O << ", #"
+      << (char)ARM_AM::getAM5Op(MO2.getImm())
+      << ImmOffs*4;
+  }
+  O << "]";
+}
+
 
 void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum) {
   O << "{";
@@ -200,6 +315,11 @@ void ARMInstPrinter::printCPInstOperand(const MCInst *MI, unsigned OpNum,
   // FIXME: remove this.
   abort();
 }
+
+void ARMInstPrinter::printNoHashImmediate(const MCInst *MI, unsigned OpNum) {
+  O << MI->getOperand(OpNum).getImm();
+}
+
 
 void ARMInstPrinter::printPCLabel(const MCInst *MI, unsigned OpNum) {
   // FIXME: remove this.
