@@ -1,4 +1,4 @@
-// RUN: clang-cc -verify -emit-llvm -o - %s | FileCheck %s
+// RUN: clang-cc -triple x86_64-apple-darwin -verify -emit-llvm -o - %s | FileCheck %s
 
 void t1() {
   extern int& a;
