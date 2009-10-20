@@ -2286,6 +2286,8 @@ static unsigned TranslateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
   case ISD::SETNE:   return X86::COND_NE;
   case ISD::SETUO:   return X86::COND_P;
   case ISD::SETO:    return X86::COND_NP;
+  case ISD::SETOEQ:
+  case ISD::SETUNE:  return X86::COND_INVALID;
   }
 }
 
@@ -5566,6 +5568,8 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) {
 
   bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
   unsigned X86CC = TranslateX86CC(CC, isFP, Op0, Op1, DAG);
+  if (X86CC == X86::COND_INVALID)
+    return SDValue();
 
   SDValue Cond = EmitCmp(Op0, Op1, X86CC, DAG);
   return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
@@ -5714,8 +5718,11 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   SDValue CC;
 
-  if (Cond.getOpcode() == ISD::SETCC)
-    Cond = LowerSETCC(Cond, DAG);
+  if (Cond.getOpcode() == ISD::SETCC) {
+    SDValue NewCond = LowerSETCC(Cond, DAG);
+    if (NewCond.getNode())
+      Cond = NewCond;
+  }
 
   // If condition flag is set by a X86ISD::CMP, then use it as the condition
   // setting operand in place of the X86ISD::SETCC.
@@ -5788,8 +5795,11 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   SDValue CC;
 
-  if (Cond.getOpcode() == ISD::SETCC)
-    Cond = LowerSETCC(Cond, DAG);
+  if (Cond.getOpcode() == ISD::SETCC) {
+    SDValue NewCond = LowerSETCC(Cond, DAG);
+    if (NewCond.getNode())
+      Cond = NewCond;
+  }
 #if 0
   // FIXME: LowerXALUO doesn't handle these!!
   else if (Cond.getOpcode() == X86ISD::ADD  ||
@@ -6338,6 +6348,7 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     SDValue LHS = Op.getOperand(1);
     SDValue RHS = Op.getOperand(2);
     unsigned X86CC = TranslateX86CC(CC, true, LHS, RHS, DAG);
+    assert(X86CC != X86::COND_INVALID && "Unexpected illegal condition!");
     SDValue Cond = DAG.getNode(Opc, dl, MVT::i32, LHS, RHS);
     SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
                                 DAG.getConstant(X86CC, MVT::i8), Cond);
