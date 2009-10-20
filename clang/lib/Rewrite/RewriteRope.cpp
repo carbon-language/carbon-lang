@@ -798,9 +798,8 @@ RopePiece RewriteRope::MakeRopeString(const char *Start, const char *End) {
   memcpy(AllocBuffer->Data, Start, Len);
   AllocOffs = Len;
 
-  // Start out the new allocation with a refcount of 1, since we have an
-  // internal reference to it.
-  AllocBuffer->addRef();
+  // Return a RopePiece that wraps 'AllocBuffer'.  The constructor of RopePiece
+  // will increment the reference count of AllocBuffer.
   return RopePiece(AllocBuffer, 0, Len);
 }
 
