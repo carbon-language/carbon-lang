@@ -1301,13 +1301,6 @@ void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
   }
 }
 
-// Force static initialization.
-extern "C" void LLVMInitializeARMAsmPrinter() {
-  RegisterAsmPrinter<ARMAsmPrinter> X(TheARMTarget);
-  RegisterAsmPrinter<ARMAsmPrinter> Y(TheThumbTarget);
-}
-
-
 //===----------------------------------------------------------------------===//
 
 void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
@@ -1457,3 +1450,26 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
   
   printMCInst(&TmpInst);
 }
+
+//===----------------------------------------------------------------------===//
+// Target Registry Stuff
+//===----------------------------------------------------------------------===//
+
+static MCInstPrinter *createARMMCInstPrinter(const Target &T,
+                                             unsigned SyntaxVariant,
+                                             const MCAsmInfo &MAI,
+                                             raw_ostream &O) {
+  if (SyntaxVariant == 0)
+    return new ARMInstPrinter(O, MAI, false);
+  return 0;
+}
+
+// Force static initialization.
+extern "C" void LLVMInitializeARMAsmPrinter() {
+  RegisterAsmPrinter<ARMAsmPrinter> X(TheARMTarget);
+  RegisterAsmPrinter<ARMAsmPrinter> Y(TheThumbTarget);
+
+  TargetRegistry::RegisterMCInstPrinter(TheARMTarget, createARMMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheThumbTarget, createARMMCInstPrinter);
+}
+

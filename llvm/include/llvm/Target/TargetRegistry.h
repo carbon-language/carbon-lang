@@ -387,6 +387,15 @@ namespace llvm {
         T.MCDisassemblerCtorFn = Fn;
     }
 
+    /// RegisterMCInstPrinter - Register a MCInstPrinter implementation for the
+    /// given target.
+    /// 
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct an MCInstPrinter for the target.
     static void RegisterMCInstPrinter(Target &T,
                                       Target::MCInstPrinterCtorTy Fn) {
       if (!T.MCInstPrinterCtorFn)
@@ -395,7 +404,7 @@ namespace llvm {
     
     /// RegisterCodeEmitter - Register a MCCodeEmitter implementation for the
     /// given target.
-    /// 
+    ///
     /// Clients are responsible for ensuring that registration doesn't occur
     /// while another thread is attempting to access the registry. Typically
     /// this is done by initializing all targets at program startup.

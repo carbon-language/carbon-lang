@@ -534,8 +534,17 @@ bool ARMAsmParser::MatchInstruction(SmallVectorImpl<ARMOperand> &Operands,
       Mnemonic == "bl" ||
       Mnemonic == "push" ||
       Mnemonic == "blx" ||
-      Mnemonic == "pop")
+      Mnemonic == "pop") {
+    // Hard-coded to a valid instruction, till we have a real matcher.
+    Inst = MCInst();
+    Inst.setOpcode(ARM::MOVr);
+    Inst.addOperand(MCOperand::CreateReg(2));
+    Inst.addOperand(MCOperand::CreateReg(2));
+    Inst.addOperand(MCOperand::CreateImm(0));
+    Inst.addOperand(MCOperand::CreateImm(0));
+    Inst.addOperand(MCOperand::CreateReg(0));
     return false;
+  }
 
   return true;
 }
