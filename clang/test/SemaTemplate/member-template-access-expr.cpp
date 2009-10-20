@@ -24,8 +24,7 @@ struct XDerived : public X {
 };
 
 void test_f1(XDerived xd) {
-  // FIXME: Not quite functional yet.
-//  int &ir = f1<X>(xd);
+  int &ir = f1<X>(xd);
 }
 
 // PR5213

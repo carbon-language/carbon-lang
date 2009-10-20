@@ -236,6 +236,19 @@ public:
   /// Subclasses may override this function to provide alternate behavior.
   Decl *TransformDefinition(Decl *D) { return getDerived().TransformDecl(D); }
 
+  /// \brief Transform the given declaration, which was the first part of a
+  /// nested-name-specifier in a member access expression.
+  ///
+  /// This specific declaration transformation only applies to the first 
+  /// identifier in a nested-name-specifier of a member access expression, e.g.,
+  /// the \c T in \c x->T::member
+  ///
+  /// By default, invokes TransformDecl() to transform the declaration.
+  /// Subclasses may override this function to provide alternate behavior.
+  NamedDecl *TransformFirstQualifierInScope(NamedDecl *D, SourceLocation Loc) { 
+    return cast_or_null<NamedDecl>(getDerived().TransformDecl(D)); 
+  }
+  
   /// \brief Transform the given nested-name-specifier.
   ///
   /// By default, transforms all of the types and declarations within the
@@ -4195,6 +4208,7 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
   if (Base.isInvalid())
     return SemaRef.ExprError();
 
+  // Start the member reference and compute the object's type.
   Sema::TypeTy *ObjectType = 0;
   Base = SemaRef.ActOnStartCXXMemberReference(0, move(Base),
                                               E->getOperatorLoc(),
@@ -4203,12 +4217,12 @@ TreeTransform<Derived>::TransformCXXUnresolvedMemberExpr(
   if (Base.isInvalid())
     return SemaRef.ExprError();
 
-  // FIXME: The first qualifier found might be a template type parameter,
-  // in which case there is no transformed declaration to refer to (it might
-  // refer to a built-in type!).
+  // Transform the first part of the nested-name-specifier that qualifies
+  // the member name.
   NamedDecl *FirstQualifierInScope
-    = cast_or_null<NamedDecl>(
-               getDerived().TransformDecl(E->getFirstQualifierFoundInScope()));
+    = getDerived().TransformFirstQualifierInScope(
+                                          E->getFirstQualifierFoundInScope(),
+                                          E->getQualifierRange().getBegin());
 
   NestedNameSpecifier *Qualifier = 0;
   if (E->getQualifier()) {

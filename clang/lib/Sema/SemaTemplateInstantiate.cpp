@@ -400,6 +400,10 @@ namespace {
     /// instantiating it.
     Decl *TransformDefinition(Decl *D);
 
+    /// \bried Transform the first qualifier within a scope by instantiating the
+    /// declaration.
+    NamedDecl *TransformFirstQualifierInScope(NamedDecl *D, SourceLocation Loc);
+      
     /// \brief Rebuild the exception declaration and register the declaration
     /// as an instantiated local.
     VarDecl *RebuildExceptionDecl(VarDecl *ExceptionDecl, QualType T,
@@ -455,6 +459,31 @@ Decl *TemplateInstantiator::TransformDefinition(Decl *D) {
 
   getSema().CurrentInstantiationScope->InstantiatedLocal(D, Inst);
   return Inst;
+}
+
+NamedDecl *
+TemplateInstantiator::TransformFirstQualifierInScope(NamedDecl *D, 
+                                                     SourceLocation Loc) {
+  // If the first part of the nested-name-specifier was a template type 
+  // parameter, instantiate that type parameter down to a tag type.
+  if (TemplateTypeParmDecl *TTPD = dyn_cast_or_null<TemplateTypeParmDecl>(D)) {
+    const TemplateTypeParmType *TTP 
+      = cast<TemplateTypeParmType>(getSema().Context.getTypeDeclType(TTPD));
+    if (TTP->getDepth() < TemplateArgs.getNumLevels()) {
+      QualType T = TemplateArgs(TTP->getDepth(), TTP->getIndex()).getAsType();
+      if (T.isNull())
+        return cast_or_null<NamedDecl>(TransformDecl(D));
+      
+      if (const TagType *Tag = T->getAs<TagType>())
+        return Tag->getDecl();
+      
+      // The resulting type is not a tag; complain.
+      getSema().Diag(Loc, diag::err_nested_name_spec_non_tag) << T;
+      return 0;
+    }
+  }
+  
+  return cast_or_null<NamedDecl>(TransformDecl(D));
 }
 
 VarDecl *
