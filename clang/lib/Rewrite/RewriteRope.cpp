@@ -154,6 +154,7 @@ namespace {
     ~RopePieceBTreeLeaf() {
       if (PrevLeaf || NextLeaf)
         removeFromLeafInOrder();
+      clear();
     }
 
     bool isFull() const { return NumPieces == 2*WidthFactor; }
