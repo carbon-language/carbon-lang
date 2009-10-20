@@ -332,8 +332,9 @@ void ARMInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNum) {
 }
 
 void ARMInstPrinter::printSBitModifierOperand(const MCInst *MI, unsigned OpNum){
-  if (unsigned Reg = MI->getOperand(OpNum).getReg()) {
-    assert(Reg == ARM::CPSR && "Expect ARM CPSR register!");
+  if (MI->getOperand(OpNum).getReg()) {
+    assert(MI->getOperand(OpNum).getReg() == ARM::CPSR &&
+           "Expect ARM CPSR register!");
     O << 's';
   }
 }
