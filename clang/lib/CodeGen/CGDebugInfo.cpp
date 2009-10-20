@@ -173,10 +173,14 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT,
   uint64_t Align = M->getContext().getTypeAlign(BT);
   uint64_t Offset = 0;
 
-  return DebugFactory.CreateBasicType(Unit,
-                                  BT->getName(M->getContext().getLangOptions()),
-                                      Unit, 0, Size, Align,
-                                      Offset, /*flags*/ 0, Encoding);
+  llvm::DIType DbgTy = 
+    DebugFactory.CreateBasicType(Unit,
+                                 BT->getName(M->getContext().getLangOptions()),
+                                 Unit, 0, Size, Align,
+                                 Offset, /*flags*/ 0, Encoding);
+
+  TypeCache[QualType(BT, 0).getAsOpaquePtr()] = DbgTy.getNode();
+  return DbgTy;
 }
 
 llvm::DIType CGDebugInfo::CreateType(const ComplexType *Ty,
@@ -190,9 +194,12 @@ llvm::DIType CGDebugInfo::CreateType(const ComplexType *Ty,
   uint64_t Align = M->getContext().getTypeAlign(Ty);
   uint64_t Offset = 0;
 
-  return DebugFactory.CreateBasicType(Unit, "complex",
-                                      Unit, 0, Size, Align,
-                                      Offset, /*flags*/ 0, Encoding);
+  llvm::DIType DbgTy = 
+    DebugFactory.CreateBasicType(Unit, "complex",
+                                 Unit, 0, Size, Align,
+                                 Offset, /*flags*/ 0, Encoding);
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
+  return DbgTy;
 }
 
 /// CreateCVRType - Get the qualified type from the cache or create
@@ -226,8 +233,11 @@ llvm::DIType CGDebugInfo::CreateQualifiedType(QualType Ty, llvm::DICompileUnit U
 
   // No need to fill in the Name, Line, Size, Alignment, Offset in case of
   // CVR derived types.
-  return DebugFactory.CreateDerivedType(Tag, Unit, "", llvm::DICompileUnit(),
-                                        0, 0, 0, 0, 0, FromTy);
+  llvm::DIType DbgTy =
+    DebugFactory.CreateDerivedType(Tag, Unit, "", llvm::DICompileUnit(),
+                                   0, 0, 0, 0, 0, FromTy);
+  TypeCache[Ty.getAsOpaquePtr()] = DbgTy.getNode();
+  return DbgTy;
 }
 
 llvm::DIType CGDebugInfo::CreateType(const ObjCObjectPointerType *Ty,
@@ -238,9 +248,12 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCObjectPointerType *Ty,
   uint64_t Size = M->getContext().getTypeSize(Ty);
   uint64_t Align = M->getContext().getTypeAlign(Ty);
 
-  return DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type, Unit,
-                                        "", llvm::DICompileUnit(),
-                                        0, Size, Align, 0, 0, EltTy);
+  llvm::DIType DbgTy =
+    DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type, Unit,
+                                   "", llvm::DICompileUnit(),
+                                   0, Size, Align, 0, 0, EltTy);
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
+  return DbgTy;
 }
 
 llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
@@ -251,9 +264,10 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
   uint64_t Size = M->getContext().getTypeSize(Ty);
   uint64_t Align = M->getContext().getTypeAlign(Ty);
 
-  return DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type, Unit,
-                                        "", llvm::DICompileUnit(),
-                                        0, Size, Align, 0, 0, EltTy);
+  return
+    DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type, Unit,
+                                   "", llvm::DICompileUnit(),
+                                   0, Size, Align, 0, 0, EltTy);
 }
 
 llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
@@ -401,8 +415,11 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
   PresumedLoc PLoc = SM.getPresumedLoc(DefLoc);
   unsigned Line = PLoc.isInvalid() ? 0 : PLoc.getLine();
 
-  return DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_typedef, Unit,
-                                        TyName, DefUnit, Line, 0, 0, 0, 0, Src);
+  llvm::DIType DbgTy = 
+    DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_typedef, Unit,
+                                   TyName, DefUnit, Line, 0, 0, 0, 0, Src);
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
+  return DbgTy;
 }
 
 llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
@@ -424,10 +441,13 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   llvm::DIArray EltTypeArray =
     DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
 
-  return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
-                                          Unit, "", llvm::DICompileUnit(),
-                                          0, 0, 0, 0, 0,
-                                          llvm::DIType(), EltTypeArray);
+  llvm::DIType DbgTy =
+    DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
+                                     Unit, "", llvm::DICompileUnit(),
+                                     0, 0, 0, 0, 0,
+                                     llvm::DIType(), EltTypeArray);
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
+  return DbgTy;
 }
 
 /// CreateType - get structure or union type.
@@ -713,10 +733,14 @@ llvm::DIType CGDebugInfo::CreateType(const EnumType *Ty,
     Align = M->getContext().getTypeAlign(Ty);
   }
 
-  return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
-                                          Unit, EnumName, DefUnit, Line,
-                                          Size, Align, 0, 0,
-                                          llvm::DIType(), EltArray);
+  llvm::DIType DbgTy = 
+    DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
+                                     Unit, EnumName, DefUnit, Line,
+                                     Size, Align, 0, 0,
+                                     llvm::DIType(), EltArray);
+  
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
+  return DbgTy;
 }
 
 llvm::DIType CGDebugInfo::CreateType(const TagType *Ty,
@@ -767,11 +791,15 @@ llvm::DIType CGDebugInfo::CreateType(const ArrayType *Ty,
   llvm::DIArray SubscriptArray =
     DebugFactory.GetOrCreateArray(Subscripts.data(), Subscripts.size());
 
-  return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_array_type,
-                                          Unit, "", llvm::DICompileUnit(),
-                                          0, Size, Align, 0, 0,
-                                          getOrCreateType(EltTy, Unit),
-                                          SubscriptArray);
+  llvm::DIType DbgTy = 
+    DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_array_type,
+                                     Unit, "", llvm::DICompileUnit(),
+                                     0, Size, Align, 0, 0,
+                                     getOrCreateType(EltTy, Unit),
+                                     SubscriptArray);
+  
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = DbgTy.getNode();
+  return DbgTy;
 }
 
 
@@ -793,7 +821,6 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 
   // Otherwise create the type.
   llvm::DIType Res = CreateTypeNode(Ty, Unit);
-  TypeCache.insert(std::make_pair(Ty.getAsOpaquePtr(), Res.getNode()));
   return Res;
 }
 
