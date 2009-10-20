@@ -254,12 +254,7 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement, ASTContext* C) {
   // Create an empty entry block that has no predecessors.
   cfg->setEntry(createBlock());
 
-  if (badCFG)
-    return NULL;
-
-  // NULL out cfg so that repeated calls to the builder will fail and that the
-  // ownership of the constructed CFG is passed to the caller.
-  return cfg.take();
+  return badCFG ? NULL : cfg.take();
 }
 
 /// createBlock - Used to lazily create blocks that are connected
