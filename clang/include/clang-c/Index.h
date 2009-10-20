@@ -113,6 +113,30 @@ typedef void *CXEntity;
  *
  * - displayDiagnostics: when non-zero, diagnostics will be output. If zero,
  * diagnostics will be ignored.
+ *
+ * Here is an example:
+ *
+ *   // excludeDeclsFromPCH = 1, displayDiagnostics = 1
+ *   Idx = clang_createIndex(1, 1);
+ *
+ *   // IndexTest.pch was produced with the following command:
+ *   // "clang -x c IndexTest.h -emit-ast -o IndexTest.pch"
+ *   TU = clang_createTranslationUnit(Idx, "IndexTest.pch");
+ *
+ *   // This will load all the symbols from 'IndexTest.pch'
+ *   clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
+ *   clang_disposeTranslationUnit(TU);
+ *
+ *   // This will load all the symbols from 'IndexTest.c', excluding symbols
+ *   // from 'IndexTest.pch'.
+ *   char *args[] = { "-Xclang", "-include-pch=IndexTest.pch", 0 };
+ *   TU = clang_createTranslationUnitFromSourceFile(Idx, "IndexTest.c", 2, args);
+ *   clang_loadTranslationUnit(TU, TranslationUnitVisitor, 0);
+ *   clang_disposeTranslationUnit(TU);
+ *
+ * This process of creating the 'pch', loading it separately, and using it (via
+ * -include-pch) allows 'excludeDeclsFromPCH' to remove redundant callbacks
+ * (which gives the indexer the same performance benefit as the compiler).
  */
 CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics);
