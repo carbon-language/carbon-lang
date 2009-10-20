@@ -3710,12 +3710,13 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
         // Add this built-in operator as a candidate (VQ is empty).
         ParamTypes[0] = Context.getLValueReferenceType(ArithmeticTypes[Left]);
         AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
-
-        // Add this built-in operator as a candidate (VQ is 'volatile').
-        ParamTypes[0] = ArithmeticTypes[Left];
-        ParamTypes[0] = Context.getVolatileType(ParamTypes[0]);
-        ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
-        AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+        if (VisibleTypeConversionsQuals.hasVolatile()) {
+          // Add this built-in operator as a candidate (VQ is 'volatile').
+          ParamTypes[0] = ArithmeticTypes[Left];
+          ParamTypes[0] = Context.getVolatileType(ParamTypes[0]);
+          ParamTypes[0] = Context.getLValueReferenceType(ParamTypes[0]);
+          AddBuiltinCandidate(ParamTypes[0], ParamTypes, Args, 2, CandidateSet);
+        }
       }
     }
     break;
