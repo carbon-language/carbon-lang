@@ -13,6 +13,7 @@
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
+  class AsmPrinter;
   class MCAsmInfo;
   class MCContext;
   class MCInst;
@@ -28,15 +29,12 @@ namespace llvm {
 class VISIBILITY_HIDDEN ARMMCInstLower {
   MCContext &Ctx;
   Mangler &Mang;
-  
-  const unsigned CurFunctionNumber;
-  const MCAsmInfo &MAI;
+  AsmPrinter &Printer;
 
   //const ARMSubtarget &getSubtarget() const;
 public:
-  ARMMCInstLower(MCContext &ctx, Mangler &mang, unsigned FuncNum,
-                 const MCAsmInfo &mai)
-    : Ctx(ctx), Mang(mang), CurFunctionNumber(FuncNum), MAI(mai) {}
+  ARMMCInstLower(MCContext &ctx, Mangler &mang, AsmPrinter &printer)
+    : Ctx(ctx), Mang(mang), Printer(printer) {}
   
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
