@@ -571,10 +571,6 @@ sub TestDirectory {
 
   # Run the programs tests... creating a report.nightly.csv file.
   my $LLCBetaOpts = "";
-  if( $VERBOSE) {
-    print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
-          "$TESTFLAGS TEST=nightly > $ProgramTestLog 2>&1\n";
-  }
   RunLoggedCommand("$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
                    "$TESTFLAGS TEST=nightly",
                    $ProgramTestLog, "TEST DIRECTORY $SubDir");
