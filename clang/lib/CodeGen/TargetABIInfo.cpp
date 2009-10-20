@@ -1744,10 +1744,9 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
     return *(TheABIInfo = new SystemZABIInfo());
 
   case llvm::Triple::x86:
-    if (Triple.getOS() == llvm::Triple::Darwin)
-      return *(TheABIInfo = new X86_32ABIInfo(Context, true, true));
-
     switch (Triple.getOS()) {
+    case llvm::Triple::Darwin:
+      return *(TheABIInfo = new X86_32ABIInfo(Context, true, true))
     case llvm::Triple::Cygwin:
     case llvm::Triple::DragonFly:
     case llvm::Triple::MinGW32:
