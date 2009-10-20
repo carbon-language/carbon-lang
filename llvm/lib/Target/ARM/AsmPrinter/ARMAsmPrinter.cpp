@@ -1392,6 +1392,8 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
       // Predicate.
       TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
       TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
+
+      TmpInst.addOperand(MCOperand::CreateReg(0));          // cc_out
       printMCInst(&TmpInst);
       O << '\n';
     }
