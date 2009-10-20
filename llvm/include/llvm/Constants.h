@@ -22,15 +22,16 @@
 #define LLVM_CONSTANTS_H
 
 #include "llvm/Constant.h"
-#include "llvm/Type.h"
 #include "llvm/OperandTraits.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
+#include <vector>
 
 namespace llvm {
 
 class ArrayType;
+class IntegerType;
 class StructType;
 class PointerType;
 class VectorType;

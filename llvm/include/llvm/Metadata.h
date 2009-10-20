@@ -13,15 +13,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MDNODE_H
-#define LLVM_MDNODE_H
+#ifndef LLVM_METADATA_H
+#define LLVM_METADATA_H
 
 #include "llvm/User.h"
 #include "llvm/Type.h"
-#include "llvm/OperandTraits.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/ilist_node.h"
