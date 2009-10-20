@@ -2603,7 +2603,19 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
            tri_->isSuperRegister(*AS, SpillReg));
 
   bool Cut = false;
-  LiveInterval &pli = getInterval(SpillReg);
+  SmallVector<unsigned, 4> PRegs;
+  if (hasInterval(SpillReg))
+    PRegs.push_back(SpillReg);
+  else {
+    SmallSet<unsigned, 4> Added;
+    for (const unsigned* AS = tri_->getSubRegisters(SpillReg); *AS; ++AS)
+      if (Added.insert(*AS) && hasInterval(*AS)) {
+        PRegs.push_back(*AS);
+        for (const unsigned* ASS = tri_->getSubRegisters(*AS); *ASS; ++ASS)
+          Added.insert(*ASS);
+      }
+  }
+
   SmallPtrSet<MachineInstr*, 8> SeenMIs;
   for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(li.reg),
          E = mri_->reg_end(); I != E; ++I) {
@@ -2613,8 +2625,12 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
       continue;
     SeenMIs.insert(MI);
     LiveIndex Index = getInstructionIndex(MI);
-    if (pli.liveAt(Index)) {
-      vrm.addEmergencySpill(SpillReg, MI);
+    for (unsigned i = 0, e = PRegs.size(); i != e; ++i) {
+      unsigned PReg = PRegs[i];
+      LiveInterval &pli = getInterval(PReg);
+      if (!pli.liveAt(Index))
+        continue;
+      vrm.addEmergencySpill(PReg, MI);
       LiveIndex StartIdx = getLoadIndex(Index);
       LiveIndex EndIdx = getNextSlot(getStoreIndex(Index));
       if (pli.isInOneLiveRange(StartIdx, EndIdx)) {
@@ -2626,12 +2642,12 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
         Msg << "Ran out of registers during register allocation!";
         if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {
           Msg << "\nPlease check your inline asm statement for invalid "
-               << "constraints:\n";
+              << "constraints:\n";
           MI->print(Msg, tm_);
         }
         llvm_report_error(Msg.str());
       }
-      for (const unsigned* AS = tri_->getSubRegisters(SpillReg); *AS; ++AS) {
+      for (const unsigned* AS = tri_->getSubRegisters(PReg); *AS; ++AS) {
         if (!hasInterval(*AS))
           continue;
         LiveInterval &spli = getInterval(*AS);
