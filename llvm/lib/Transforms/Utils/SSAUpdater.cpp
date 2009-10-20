@@ -178,10 +178,18 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
 void SSAUpdater::RewriteUse(Use &U) {
   Instruction *User = cast<Instruction>(U.getUser());
   BasicBlock *UseBB = User->getParent();
-  if (PHINode *UserPN = dyn_cast<PHINode>(User))
+  PHINode *UserPN = dyn_cast<PHINode>(User);
+  if (UserPN)
     UseBB = UserPN->getIncomingBlock(U);
 
-  U.set(GetValueInMiddleOfBlock(UseBB));
+  Value *V = GetValueInMiddleOfBlock(UseBB);
+  U.set(V);
+  if (UserPN) {
+    // Incoming value from the same BB must be consistent
+    for (unsigned i=0;i<UserPN->getNumIncomingValues();i++)
+      if (UserPN->getIncomingBlock(i) == UseBB)
+        UserPN->setIncomingValue(i, V);
+  }
 }
 
 
