@@ -164,6 +164,10 @@ public:
     ak_nestednamespec,  // NestedNameSpecifier *
     ak_declcontext      // DeclContext *
   };
+  
+  /// ArgumentValue - This typedef represents on argument value, which is a
+  /// union discriminated by ArgumentKind, with a value.
+  typedef std::pair<ArgumentKind, intptr_t> ArgumentValue;
 
 private:
   unsigned char AllExtensionsSilenced; // Used by __extension__
@@ -203,10 +207,17 @@ private:
   /// ArgToStringFn - A function pointer that converts an opaque diagnostic
   /// argument to a strings.  This takes the modifiers and argument that was
   /// present in the diagnostic.
+  ///
+  /// The PrevArgs array (whose length is NumPrevArgs) indicates the previous
+  /// arguments formatted for this diagnostic.  Implementations of this function
+  /// can use this information to avoid redundancy across arguments.
+  ///
   /// This is a hack to avoid a layering violation between libbasic and libsema.
   typedef void (*ArgToStringFnTy)(ArgumentKind Kind, intptr_t Val,
                                   const char *Modifier, unsigned ModifierLen,
                                   const char *Argument, unsigned ArgumentLen,
+                                  const ArgumentValue *PrevArgs,
+                                  unsigned NumPrevArgs,
                                   llvm::SmallVectorImpl<char> &Output,
                                   void *Cookie);
   void *ArgToStringCookie;
@@ -311,9 +322,10 @@ public:
   void ConvertArgToString(ArgumentKind Kind, intptr_t Val,
                           const char *Modifier, unsigned ModLen,
                           const char *Argument, unsigned ArgLen,
+                          const ArgumentValue *PrevArgs, unsigned NumPrevArgs,
                           llvm::SmallVectorImpl<char> &Output) const {
-    ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen, Output,
-                  ArgToStringCookie);
+    ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen,
+                  PrevArgs, NumPrevArgs, Output, ArgToStringCookie);
   }
 
   void SetArgToStringFn(ArgToStringFnTy Fn, void *Cookie) {

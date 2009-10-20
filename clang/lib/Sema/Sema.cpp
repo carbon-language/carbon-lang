@@ -148,6 +148,8 @@ static std::string ConvertTypeToDiagnosticString(ASTContext &Context,
 static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
                                  const char *Modifier, unsigned ModLen,
                                  const char *Argument, unsigned ArgLen,
+                                 const Diagnostic::ArgumentValue *PrevArgs,
+                                 unsigned NumPrevArgs,
                                  llvm::SmallVectorImpl<char> &Output,
                                  void *Cookie) {
   ASTContext &Context = *static_cast<ASTContext*>(Cookie);

@@ -190,6 +190,8 @@ namespace clang {
 static void DummyArgToStringFn(Diagnostic::ArgumentKind AK, intptr_t QT,
                                const char *Modifier, unsigned ML,
                                const char *Argument, unsigned ArgLen,
+                               const Diagnostic::ArgumentValue *PrevArgs,
+                               unsigned NumPrevArgs,
                                llvm::SmallVectorImpl<char> &Output,
                                void *Cookie) {
   const char *Str = "<can't format argument>";
@@ -685,6 +687,12 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
   const char *DiagStr = getDiags()->getDescription(getID());
   const char *DiagEnd = DiagStr+strlen(DiagStr);
 
+  /// FormattedArgs - Keep track of all of the arguments formatted by
+  /// ConvertArgToString and pass them into subsequent calls to
+  /// ConvertArgToString, allowing the implementation to avoid redundancies in
+  /// obvious cases.
+  llvm::SmallVector<Diagnostic::ArgumentValue, 8> FormattedArgs;
+  
   while (DiagStr != DiagEnd) {
     if (DiagStr[0] != '%') {
       // Append non-%0 substrings to Str if we have one.
@@ -732,7 +740,9 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     assert(isdigit(*DiagStr) && "Invalid format for argument in diagnostic");
     unsigned ArgNo = *DiagStr++ - '0';
 
-    switch (getArgKind(ArgNo)) {
+    Diagnostic::ArgumentKind Kind = getArgKind(ArgNo);
+    
+    switch (Kind) {
     // ---- STRINGS ----
     case Diagnostic::ak_std_string: {
       const std::string &S = getArgStdStr(ArgNo);
@@ -802,11 +812,23 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     case Diagnostic::ak_nameddecl:
     case Diagnostic::ak_nestednamespec:
     case Diagnostic::ak_declcontext:
-      getDiags()->ConvertArgToString(getArgKind(ArgNo), getRawArg(ArgNo),
+      getDiags()->ConvertArgToString(Kind, getRawArg(ArgNo),
                                      Modifier, ModifierLen,
-                                     Argument, ArgumentLen, OutStr);
+                                     Argument, ArgumentLen,
+                                     FormattedArgs.data(), FormattedArgs.size(),
+                                     OutStr);
       break;
     }
+    
+    // Remember this argument info for subsequent formatting operations.  Turn
+    // std::strings into a null terminated string to make it be the same case as
+    // all the other ones.
+    if (Kind != Diagnostic::ak_std_string)
+      FormattedArgs.push_back(std::make_pair(Kind, getRawArg(ArgNo)));
+    else
+      FormattedArgs.push_back(std::make_pair(Diagnostic::ak_c_string,
+                                        (intptr_t)getArgStdStr(ArgNo).c_str()));
+    
   }
 }
 
