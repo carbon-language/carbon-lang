@@ -40,7 +40,7 @@
 using namespace llvm;
 
 static cl::opt<bool>
-ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(true),
+ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(false),
           cl::desc("Reuse repeated frame index values"));
 
 unsigned ARMBaseRegisterInfo::getRegisterNumbering(unsigned RegEnum,
