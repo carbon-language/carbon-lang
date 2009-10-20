@@ -4381,15 +4381,17 @@ SDValue DAGCombiner::visitFP_EXTEND(SDNode *N) {
 
 SDValue DAGCombiner::visitFNEG(SDNode *N) {
   SDValue N0 = N->getOperand(0);
+  EVT VT = N->getValueType(0);
 
   if (isNegatibleForFree(N0, LegalOperations))
     return GetNegatedExpression(N0, DAG, LegalOperations);
 
   // Transform fneg(bitconvert(x)) -> bitconvert(x^sign) to avoid loading
   // constant pool values.
-  if (N0.getOpcode() == ISD::BIT_CONVERT && N0.getNode()->hasOneUse() &&
-      N0.getOperand(0).getValueType().isInteger() &&
-      !N0.getOperand(0).getValueType().isVector()) {
+  if (N0.getOpcode() == ISD::BIT_CONVERT && 
+      !VT.isVector() &&
+      N0.getNode()->hasOneUse() &&
+      N0.getOperand(0).getValueType().isInteger()) {
     SDValue Int = N0.getOperand(0);
     EVT IntVT = Int.getValueType();
     if (IntVT.isInteger() && !IntVT.isVector()) {
@@ -4397,7 +4399,7 @@ SDValue DAGCombiner::visitFNEG(SDNode *N) {
               DAG.getConstant(APInt::getSignBit(IntVT.getSizeInBits()), IntVT));
       AddToWorkList(Int.getNode());
       return DAG.getNode(ISD::BIT_CONVERT, N->getDebugLoc(),
-                         N->getValueType(0), Int);
+                         VT, Int);
     }
   }
 
