@@ -3324,7 +3324,7 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
             << Init->getSourceRange();
           VDecl->setInvalidDecl();
         } else if (!VDecl->getType()->isDependentType())
-          ImpCastExprToType(Init, VDecl->getType());
+          ImpCastExprToType(Init, VDecl->getType(), CastExpr::CK_IntegralCast);
       }
     }
   } else if (VDecl->isFileVarDecl()) {
@@ -5606,7 +5606,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
     // Adjust the Expr initializer and type.
     if (ECD->getInitExpr())
       ECD->setInitExpr(new (Context) ImplicitCastExpr(NewTy,
-                                                      CastExpr::CK_Unknown,
+                                                      CastExpr::CK_IntegralCast,
                                                       ECD->getInitExpr(),
                                                       /*isLvalue=*/false));
     if (getLangOptions().CPlusPlus)

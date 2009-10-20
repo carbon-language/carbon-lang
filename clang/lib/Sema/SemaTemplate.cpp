@@ -1706,7 +1706,7 @@ bool Sema::CheckTemplateArgumentAddressOfObjectOrFunction(Expr *Arg,
   bool Invalid = false;
 
   // See through any implicit casts we added to fix the type.
-  if (ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(Arg))
+  while (ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(Arg))
     Arg = Cast->getSubExpr();
 
   // C++0x allows nullptr, and there's no further checking to be done for that.
@@ -1808,7 +1808,7 @@ Sema::CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member) {
   bool Invalid = false;
 
   // See through any implicit casts we added to fix the type.
-  if (ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(Arg))
+  while (ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(Arg))
     Arg = Cast->getSubExpr();
 
   // C++0x allows nullptr, and there's no further checking to be done for that.
@@ -1936,7 +1936,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     } else if (IsIntegralPromotion(Arg, ArgType, ParamType) ||
                !ParamType->isEnumeralType()) {
       // This is an integral promotion or conversion.
-      ImpCastExprToType(Arg, ParamType);
+      ImpCastExprToType(Arg, ParamType, CastExpr::CK_IntegralCast);
     } else {
       // We can't perform this conversion.
       Diag(Arg->getSourceRange().getBegin(),
@@ -2025,10 +2025,13 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     } else if (ArgType->isNullPtrType() && (ParamType->isPointerType() ||
                  ParamType->isMemberPointerType())) {
       ArgType = ParamType;
-      ImpCastExprToType(Arg, ParamType);
+      if (ParamType->isMemberPointerType())
+        ImpCastExprToType(Arg, ParamType, CastExpr::CK_NullToMemberPointer);
+      else
+        ImpCastExprToType(Arg, ParamType, CastExpr::CK_BitCast);
     } else if (ArgType->isFunctionType() && ParamType->isPointerType()) {
       ArgType = Context.getPointerType(ArgType);
-      ImpCastExprToType(Arg, ArgType);
+      ImpCastExprToType(Arg, ArgType, CastExpr::CK_FunctionToPointerDecay);
     } else if (FunctionDecl *Fn
                  = ResolveAddressOfOverloadedFunction(Arg, ParamType, true)) {
       if (DiagnoseUseOfDecl(Fn, Arg->getSourceRange().getBegin()))
@@ -2038,7 +2041,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       ArgType = Arg->getType();
       if (ArgType->isFunctionType() && ParamType->isPointerType()) {
         ArgType = Context.getPointerType(Arg->getType());
-        ImpCastExprToType(Arg, ArgType);
+        ImpCastExprToType(Arg, ArgType, CastExpr::CK_FunctionToPointerDecay);
       }
     }
 
@@ -2083,15 +2086,15 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 
     if (ArgType->isNullPtrType()) {
       ArgType = ParamType;
-      ImpCastExprToType(Arg, ParamType);
+      ImpCastExprToType(Arg, ParamType, CastExpr::CK_BitCast);
     } else if (ArgType->isArrayType()) {
       ArgType = Context.getArrayDecayedType(ArgType);
-      ImpCastExprToType(Arg, ArgType);
+      ImpCastExprToType(Arg, ArgType, CastExpr::CK_ArrayToPointerDecay);
     }
 
     if (IsQualificationConversion(ArgType, ParamType)) {
       ArgType = ParamType;
-      ImpCastExprToType(Arg, ParamType);
+      ImpCastExprToType(Arg, ParamType, CastExpr::CK_NoOp);
     }
 
     if (!Context.hasSameUnqualifiedType(ArgType, ParamType)) {
@@ -2162,9 +2165,9 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   if (Context.hasSameUnqualifiedType(ParamType, ArgType)) {
     // Types match exactly: nothing more to do here.
   } else if (ArgType->isNullPtrType()) {
-    ImpCastExprToType(Arg, ParamType);
+    ImpCastExprToType(Arg, ParamType, CastExpr::CK_NullToMemberPointer);
   } else if (IsQualificationConversion(ArgType, ParamType)) {
-    ImpCastExprToType(Arg, ParamType);
+    ImpCastExprToType(Arg, ParamType, CastExpr::CK_NoOp);
   } else {
     // We can't perform this conversion.
     Diag(Arg->getSourceRange().getBegin(),

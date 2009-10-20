@@ -636,7 +636,11 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     // Implicitly convert integers and pointers to 'id' but emit a warning.
     Diag(lbrac, diag::warn_bad_receiver_type)
       << RExpr->getType() << RExpr->getSourceRange();
-    ImpCastExprToType(RExpr, Context.getObjCIdType());
+    if (ReceiverCType->isPointerType())
+      ImpCastExprToType(RExpr, Context.getObjCIdType(), CastExpr::CK_BitCast);
+    else
+      ImpCastExprToType(RExpr, Context.getObjCIdType(),
+                        CastExpr::CK_IntegralToPointer);
   } else {
     // Reject other random receiver types (e.g. structs).
     Diag(lbrac, diag::err_bad_receiver_type)

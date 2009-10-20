@@ -381,8 +381,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
 
   // If the first type needs to be converted (e.g. void** -> int*), do it now.
   if (BuiltinFT->getArgType(0) != FirstArg->getType()) {
-    ImpCastExprToType(FirstArg, BuiltinFT->getArgType(0), CastExpr::CK_Unknown,
-                      /*isLvalue=*/false);
+    ImpCastExprToType(FirstArg, BuiltinFT->getArgType(0), CastExpr::CK_BitCast);
     TheCall->setArg(0, FirstArg);
   }
 

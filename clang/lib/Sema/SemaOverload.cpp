@@ -2563,7 +2563,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   DeclRefExpr ConversionRef(Conversion, Conversion->getType(),
                             SourceLocation());
   ImplicitCastExpr ConversionFn(Context.getPointerType(Conversion->getType()),
-                                CastExpr::CK_Unknown,
+                                CastExpr::CK_FunctionToPointerDecay,
                                 &ConversionRef, false);
 
   // Note that it is safe to allocate CallExpr on the stack here because

@@ -411,7 +411,8 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
       }
     }
     
-    ImpCastExprToType(ArraySize, Context.getSizeType());
+    ImpCastExprToType(ArraySize, Context.getSizeType(),
+                      CastExpr::CK_IntegralCast);
   }
 
   FunctionDecl *OperatorNew = 0;
@@ -1253,17 +1254,33 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
 
   case ICK_Integral_Promotion:
-  case ICK_Floating_Promotion:
-  case ICK_Complex_Promotion:
   case ICK_Integral_Conversion:
+    ImpCastExprToType(From, ToType, CastExpr::CK_IntegralCast);
+    break;
+
+  case ICK_Floating_Promotion:
   case ICK_Floating_Conversion:
+    ImpCastExprToType(From, ToType, CastExpr::CK_FloatingCast);
+    break;
+
+  case ICK_Complex_Promotion:
   case ICK_Complex_Conversion:
+    ImpCastExprToType(From, ToType, CastExpr::CK_Unknown);
+    break;
+
   case ICK_Floating_Integral:
+    if (ToType->isFloatingType())
+      ImpCastExprToType(From, ToType, CastExpr::CK_IntegralToFloating);
+    else
+      ImpCastExprToType(From, ToType, CastExpr::CK_FloatingToIntegral);
+    break;
+
   case ICK_Complex_Real:
+    ImpCastExprToType(From, ToType, CastExpr::CK_Unknown);
+    break;
+
   case ICK_Compatible_Conversion:
-      // FIXME: Go deeper to get the unqualified type!
-    FromType = ToType.getUnqualifiedType();
-    ImpCastExprToType(From, FromType);
+    ImpCastExprToType(From, ToType, CastExpr::CK_NoOp);
     break;
 
   case ICK_Pointer_Conversion: {
@@ -1293,8 +1310,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     break;
   }
   case ICK_Boolean_Conversion:
-    FromType = Context.BoolTy;
-    ImpCastExprToType(From, FromType);
+    ImpCastExprToType(From, Context.BoolTy, CastExpr::CK_Unknown);
     break;
 
   default:
@@ -1311,7 +1327,7 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
     // FIXME: Not sure about lvalue vs rvalue here in the presence of rvalue
     // references.
     ImpCastExprToType(From, ToType.getNonReferenceType(),
-                      CastExpr::CK_Unknown,
+                      CastExpr::CK_NoOp,
                       ToType->isLValueReferenceType());
     break;
 
@@ -1739,12 +1755,12 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   const MemberPointerType *RMemPtr = RTy->getAs<MemberPointerType>();
   if (LMemPtr && 
       RHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
-    ImpCastExprToType(RHS, LTy);
+    ImpCastExprToType(RHS, LTy, CastExpr::CK_NullToMemberPointer);
     return LTy;
   }
   if (RMemPtr && 
       LHS->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
-    ImpCastExprToType(LHS, RTy);
+    ImpCastExprToType(LHS, RTy, CastExpr::CK_NullToMemberPointer);
     return RTy;
   }
   if (LMemPtr && RMemPtr) {
@@ -1835,11 +1851,17 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   //   one operand is a null pointer constant, the composite pointer type is
   //   the type of the other operand.
   if (E1->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
-    ImpCastExprToType(E1, T2);
+    if (T2->isMemberPointerType())
+      ImpCastExprToType(E1, T2, CastExpr::CK_NullToMemberPointer);
+    else
+      ImpCastExprToType(E1, T2, CastExpr::CK_IntegralToPointer);
     return T2;
   }
   if (E2->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull)) {
-    ImpCastExprToType(E2, T1);
+    if (T1->isMemberPointerType())
+      ImpCastExprToType(E2, T1, CastExpr::CK_NullToMemberPointer);
+    else
+      ImpCastExprToType(E2, T1, CastExpr::CK_IntegralToPointer);
     return T1;
   }
 
