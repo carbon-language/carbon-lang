@@ -3593,6 +3593,7 @@ def LXADD8  : I<0xC0, MRMSrcMem, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
 
 // Optimized codegen when the non-memory output is not used.
 // FIXME: Use normal add / sub instructions and add lock prefix dynamically.
+let Defs = [EFLAGS] in {
 def LOCK_ADD8mr  : I<0x00, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
                     "lock\n\t"
                     "add{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
@@ -3662,6 +3663,7 @@ def LOCK_DEC16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst),
 def LOCK_DEC32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst),
                     "lock\n\t"
                     "dec{l}\t$dst", []>, LOCK;
+}
 
 // Atomic exchange, and, or, xor
 let Constraints = "$val = $dst", Defs = [EFLAGS],
