@@ -303,6 +303,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::CXXReinterpretCastExprClass:
   case Expr::CXXConstCastExprClass:
     return EmitCastLValue(cast<CastExpr>(E));
+  case Expr::CXXZeroInitValueExprClass:
+    return EmitNullInitializationLValue(cast<CXXZeroInitValueExpr>(E));
   }
 }
 
@@ -1311,6 +1313,18 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     return LValue::MakeAddr(Temp, MakeQualifiers(E->getType()));
     }
   }
+}
+
+LValue CodeGenFunction::EmitNullInitializationLValue(
+                                              const CXXZeroInitValueExpr *E) {
+  QualType Ty = E->getType();
+  const llvm::Type *LTy = ConvertTypeForMem(Ty);
+  llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
+  unsigned Align = getContext().getTypeAlign(Ty)/8;
+  Alloc->setAlignment(Align);
+  LValue lvalue = LValue::MakeAddr(Alloc, Qualifiers());
+  EmitMemSetToZero(lvalue.getAddress(), Ty);
+  return lvalue;
 }
 
 //===--------------------------------------------------------------------===//

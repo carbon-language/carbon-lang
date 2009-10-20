@@ -566,10 +566,6 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
       assert(!ClassDecl->hasUserDeclaredCopyConstructor() &&
              "EmitCXXConstructorCall - user declared copy constructor");
       const Expr *E = (*ArgBeg);
-      // FIXME. This may not be correct. But till now, we were skipping
-      // code gen of trivial copy constructors regardless of their arguments.
-      if (isa<CXXZeroInitValueExpr>(E))
-        return;
       QualType Ty = E->getType();
       llvm::Value *Src = EmitLValue(E).getAddress();
       EmitAggregateCopy(This, Src, Ty);

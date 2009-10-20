@@ -817,7 +817,8 @@ public:
   LValue EmitCompoundLiteralLValue(const CompoundLiteralExpr *E);
   LValue EmitConditionalOperatorLValue(const ConditionalOperator *E);
   LValue EmitCastLValue(const CastExpr *E);
-
+  LValue EmitNullInitializationLValue(const CXXZeroInitValueExpr *E);
+  
   llvm::Value *EmitIvarOffset(const ObjCInterfaceDecl *Interface,
                               const ObjCIvarDecl *Ivar);
   LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
