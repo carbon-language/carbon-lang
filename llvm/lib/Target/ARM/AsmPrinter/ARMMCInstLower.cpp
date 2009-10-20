@@ -54,6 +54,22 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   return Ctx.GetOrCreateSymbol(Name.str());
 }
 
+MCSymbol *ARMMCInstLower::
+GetExternalSymbolSymbol(const MachineOperand &MO) const {
+  SmallString<128> Name;
+  Name += Printer.MAI->getGlobalPrefix();
+  Name += MO.getSymbolName();
+  
+  // FIXME: HANDLE PLT references how??
+  switch (MO.getTargetFlags()) {
+  default: assert(0 && "Unknown target flag on GV operand");
+  case 0: break;
+  }
+  
+  return Ctx.GetOrCreateSymbol(Name.str());
+}
+
+
 
 MCSymbol *ARMMCInstLower::
 GetJumpTableSymbol(const MachineOperand &MO) const {
@@ -133,11 +149,9 @@ void ARMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_GlobalAddress:
       MCOp = LowerSymbolOperand(MO, GetGlobalAddressSymbol(MO));
       break;
-#if 0
     case MachineOperand::MO_ExternalSymbol:
       MCOp = LowerSymbolOperand(MO, GetExternalSymbolSymbol(MO));
       break;
-#endif
     case MachineOperand::MO_JumpTableIndex:
       MCOp = LowerSymbolOperand(MO, GetJumpTableSymbol(MO));
       break;
