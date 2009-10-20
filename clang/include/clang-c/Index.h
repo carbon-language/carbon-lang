@@ -99,46 +99,52 @@ typedef struct {
 } CXCursor;  
 
 /* A unique token for looking up "visible" CXDecls from a CXTranslationUnit. */
-typedef void *CXEntity;     
+typedef void *CXEntity;
 
-CXIndex clang_createIndex();
+/**  
+ * \brief clang_createIndex() provides a shared context for creating
+ * translation units. It provides two options:
+ *
+ * - excludeDeclarationsFromPCH: When non-zero, allows enumeration of "local"
+ * declarations (when loading any new translation units). A "local" declaration
+ * is one that belongs in the translation unit itself and not in a precompiled 
+ * header that was used by the translation unit. If zero, all declarations
+ * will be enumerated.
+ *
+ * - displayDiagnostics: when non-zero, diagnostics will be output. If zero,
+ * diagnostics will be ignored.
+ */
+CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
+                          int displayDiagnostics);
 void clang_disposeIndex(CXIndex);
 
 const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
 
+/* 
+ * \brief Create a translation unit from an AST file (-emit-ast).
+ */
 CXTranslationUnit clang_createTranslationUnit(
-  CXIndex, const char *ast_filename,
-  int displayDiagnostics
+  CXIndex, const char *ast_filename
 );
-
 /**
  * \brief Destroy the specified CXTranslationUnit object.
  */ 
 void clang_disposeTranslationUnit(CXTranslationUnit);
 
 /**
- * \brief Return the CXTranslationUnit for a given source file and the provided command line
- *   arguments one would pass to the compiler.
+ * \brief Return the CXTranslationUnit for a given source file and the provided
+ * command line arguments one would pass to the compiler.
+ *
+ * Note: If provided, this routine will strip the '-o <outputfile>' command 
+ * line arguments.
  */
 CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   CXIndex CIdx, 
   const char *source_filename,
   int num_clang_command_line_args, 
-  const char **clang_command_line_args,
-  int displayDiagnostics
+  const char **clang_command_line_args
 );
 
-/**
- * \brief Indicate to Clang that it should only enumerate "local" declarations
- * when loading any new translation units.
- *
- * A "local" declaration is one that belongs in the translation unit itself and
- * not in a precompiled header that was used by the translation unit.
- *
- * FIXME: Remove this hook.
- */
-void clang_wantOnlyLocalDeclarations(CXIndex);
-  
 /*
    Usage: clang_loadTranslationUnit(). Will load the toplevel declarations
    within a translation unit, issuing a 'callback' for each one.

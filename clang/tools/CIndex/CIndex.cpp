@@ -282,7 +282,9 @@ public:
 
 class CIndexer : public Indexer {
 public:  
-  explicit CIndexer(Program *prog) : Indexer(*prog), OnlyLocalDecls(false) {}
+  explicit CIndexer(Program *prog) : Indexer(*prog), 
+                                     OnlyLocalDecls(false), 
+                                     DisplayDiagnostics(false) {}
 
   virtual ~CIndexer() { delete &getProgram(); }
 
@@ -292,10 +294,17 @@ public:
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
   void setOnlyLocalDecls(bool Local = true) { OnlyLocalDecls = Local; }
 
+  void setDisplayDiagnostics(bool Display = true) { 
+    DisplayDiagnostics = Display;
+  }
+  bool getDisplayDiagnostics() const { return DisplayDiagnostics; }
+  
   /// \brief Get the path of the clang binary.
   const llvm::sys::Path& getClangPath();
 private:
   bool OnlyLocalDecls;
+  bool DisplayDiagnostics;
+  
   llvm::sys::Path ClangPath;
 };
 
@@ -337,9 +346,15 @@ const llvm::sys::Path& CIndexer::getClangPath() {
 
 extern "C" {
 
-CXIndex clang_createIndex() 
+CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
+                          int displayDiagnostics) 
 {  
-  return new CIndexer(new Program());
+  CIndexer *CIdxr = new CIndexer(new Program());
+  if (excludeDeclarationsFromPCH)
+    CIdxr->setOnlyLocalDecls();
+  if (displayDiagnostics)
+    CIdxr->setDisplayDiagnostics();
+  return CIdxr;
 }
 
 void clang_disposeIndex(CXIndex CIdx)
@@ -350,16 +365,16 @@ void clang_disposeIndex(CXIndex CIdx)
 
 // FIXME: need to pass back error info.
 CXTranslationUnit clang_createTranslationUnit(
-  CXIndex CIdx, const char *ast_filename, int displayDiagnostics) 
+  CXIndex CIdx, const char *ast_filename) 
 {
   assert(CIdx && "Passed null CXIndex");
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
   std::string astName(ast_filename);
   std::string ErrMsg;
-  DiagnosticClient *diagClient = displayDiagnostics
-                                  ? NULL : new IgnoreDiagnosticsClient();
   
-  return ASTUnit::LoadFromPCHFile(astName, &ErrMsg, diagClient,
+  return ASTUnit::LoadFromPCHFile(astName, &ErrMsg, 
+                                  CXXIdx->getDisplayDiagnostics() ? 
+                                    NULL : new IgnoreDiagnosticsClient(),
                                   CXXIdx->getOnlyLocalDecls(),
                                   /* UseBumpAllocator = */ true);
 }
@@ -367,8 +382,10 @@ CXTranslationUnit clang_createTranslationUnit(
 CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   CXIndex CIdx, 
   const char *source_filename,
-  int num_command_line_args, const char **command_line_args,
-  int displayDiagnostics)  {
+  int num_command_line_args, const char **command_line_args)  {
+  assert(CIdx && "Passed null CXIndex");
+  CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
+
   // Build up the arguments for involing clang.
   llvm::sys::Path ClangPath = static_cast<CIndexer *>(CIdx)->getClangPath();
   std::vector<const char *> argv;
@@ -379,16 +396,22 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   // Generate a temporary name for the AST file.
   char astTmpFile[L_tmpnam];
   argv.push_back(tmpnam(astTmpFile));
-  for (int i = 0; i < num_command_line_args; i++)
-    argv.push_back(command_line_args[i]);
+  for (int i = 0; i < num_command_line_args; i++) {
+    if (command_line_args[i] && strcmp(command_line_args[i], "-o") != 0)
+      argv.push_back(command_line_args[i]);
+    else { 
+      if (++i < num_command_line_args) // Skip "-o"...
+        i++; // ...and the following argument as well.
+    }
+  }
   argv.push_back(NULL);
 
-  // Generate the AST file in a separate process.
 #ifndef LLVM_ON_WIN32
   llvm::sys::Path DevNull("/dev/null");
   const llvm::sys::Path *Redirects[] = { &DevNull, &DevNull, &DevNull, NULL };
   llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0], NULL,
-                                     !displayDiagnostics ? &Redirects[0] :NULL);
+                                     !CXXIdx->getDisplayDiagnostics() ? 
+                                       &Redirects[0] : NULL);
 #else
   // FIXME: I don't know what is the equivalent '/dev/null' redirect for
   // Windows for this API.
@@ -397,9 +420,9 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
 
   // Finally, we create the translation unit from the ast file.
   ASTUnit *ATU = static_cast<ASTUnit *>(
-                   clang_createTranslationUnit(CIdx, astTmpFile,
-                                               displayDiagnostics));
-  ATU->unlinkTemporaryFile();
+                   clang_createTranslationUnit(CIdx, astTmpFile));
+  if (ATU)
+    ATU->unlinkTemporaryFile();
   return ATU;
 }
 
@@ -408,10 +431,6 @@ void clang_disposeTranslationUnit(
 {
   assert(CTUnit && "Passed null CXTranslationUnit");
   delete static_cast<ASTUnit *>(CTUnit);
-}
-
-void clang_wantOnlyLocalDeclarations(CXIndex CIdx) {
-  static_cast<CIndexer *>(CIdx)->setOnlyLocalDecls(true);
 }
   
 const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit)
