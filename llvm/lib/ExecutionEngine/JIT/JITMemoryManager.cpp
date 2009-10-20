@@ -297,9 +297,6 @@ namespace {
 
     uint8_t *GOTBase;     // Target Specific reserved memory
     void *DlsymTable;     // Stub external symbol information
-
-    std::map<const Function*, MemoryRangeHeader*> FunctionBlocks;
-    std::map<const Function*, MemoryRangeHeader*> TableBlocks;
   public:
     DefaultJITMemoryManager();
     ~DefaultJITMemoryManager();
@@ -414,7 +411,6 @@ namespace {
              "Mismatched function start/end!");
 
       uintptr_t BlockSize = FunctionEnd - (uint8_t *)CurBlock;
-      FunctionBlocks[F] = CurBlock;
 
       // Release the memory at the end of this block that isn't needed.
       FreeMemoryList =CurBlock->TrimAllocationToSize(FreeMemoryList, BlockSize);
@@ -464,7 +460,6 @@ namespace {
              "Mismatched table start/end!");
       
       uintptr_t BlockSize = TableEnd - (uint8_t *)CurBlock;
-      TableBlocks[F] = CurBlock;
 
       // Release the memory at the end of this block that isn't needed.
       FreeMemoryList =CurBlock->TrimAllocationToSize(FreeMemoryList, BlockSize);
@@ -478,45 +473,30 @@ namespace {
       return DlsymTable;
     }
     
-    /// deallocateMemForFunction - Deallocate all memory for the specified
+    void deallocateBlock(void *Block) {
+      // Find the block that is allocated for this function.
+      MemoryRangeHeader *MemRange = static_cast<MemoryRangeHeader*>(Block) - 1;
+      assert(MemRange->ThisAllocated && "Block isn't allocated!");
+
+      // Fill the buffer with garbage!
+      if (PoisonMemory) {
+        memset(MemRange+1, 0xCD, MemRange->BlockSize-sizeof(*MemRange));
+      }
+
+      // Free the memory.
+      FreeMemoryList = MemRange->FreeBlock(FreeMemoryList);
+    }
+
+    /// deallocateFunctionBody - Deallocate all memory for the specified
     /// function body.
-    void deallocateMemForFunction(const Function *F) {
-      std::map<const Function*, MemoryRangeHeader*>::iterator
-        I = FunctionBlocks.find(F);
-      if (I == FunctionBlocks.end()) return;
-      
-      // Find the block that is allocated for this function.
-      MemoryRangeHeader *MemRange = I->second;
-      assert(MemRange->ThisAllocated && "Block isn't allocated!");
+    void deallocateFunctionBody(void *Body) {
+      deallocateBlock(Body);
+    }
 
-      // Fill the buffer with garbage!
-      if (PoisonMemory) {
-        memset(MemRange+1, 0xCD, MemRange->BlockSize-sizeof(*MemRange));
-      }
-
-      // Free the memory.
-      FreeMemoryList = MemRange->FreeBlock(FreeMemoryList);
-      
-      // Finally, remove this entry from FunctionBlocks.
-      FunctionBlocks.erase(I);
-      
-      I = TableBlocks.find(F);
-      if (I == TableBlocks.end()) return;
-      
-      // Find the block that is allocated for this function.
-      MemRange = I->second;
-      assert(MemRange->ThisAllocated && "Block isn't allocated!");
-
-      // Fill the buffer with garbage!
-      if (PoisonMemory) {
-        memset(MemRange+1, 0xCD, MemRange->BlockSize-sizeof(*MemRange));
-      }
-
-      // Free the memory.
-      FreeMemoryList = MemRange->FreeBlock(FreeMemoryList);
-      
-      // Finally, remove this entry from TableBlocks.
-      TableBlocks.erase(I);
+    /// deallocateExceptionTable - Deallocate memory for the specified
+    /// exception table.
+    void deallocateExceptionTable(void *ET) {
+      deallocateBlock(ET);
     }
 
     /// setMemoryWritable - When code generation is in progress,

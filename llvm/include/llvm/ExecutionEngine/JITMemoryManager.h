@@ -132,9 +132,11 @@ public:
   ///
   virtual uint8_t *allocateGlobal(uintptr_t Size, unsigned Alignment) = 0;
 
-  /// deallocateMemForFunction - Free JIT memory for the specified function.
-  /// This is never called when the JIT is currently emitting a function.
-  virtual void deallocateMemForFunction(const Function *F) = 0;
+  /// deallocateFunctionBody - Free the specified function body.  The argument
+  /// must be the return value from a call to startFunctionBody() that hasn't
+  /// been deallocated yet.  This is never called when the JIT is currently
+  /// emitting a function.
+  virtual void deallocateFunctionBody(void *Body) = 0;
   
   /// startExceptionTable - When we finished JITing the function, if exception
   /// handling is set, we emit the exception table.
@@ -145,6 +147,12 @@ public:
   /// the exception table.
   virtual void endExceptionTable(const Function *F, uint8_t *TableStart,
                                  uint8_t *TableEnd, uint8_t* FrameRegister) = 0;
+
+  /// deallocateExceptionTable - Free the specified exception table's memory.
+  /// The argument must be the return value from a call to startExceptionTable()
+  /// that hasn't been deallocated yet.  This is never called when the JIT is
+  /// currently emitting an exception table.
+  virtual void deallocateExceptionTable(void *ET) = 0;
 
   /// CheckInvariants - For testing only.  Return true if all internal
   /// invariants are preserved, or return false and set ErrorStr to a helpful

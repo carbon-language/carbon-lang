@@ -42,6 +42,7 @@
 #include "llvm/System/Disassembler.h"
 #include "llvm/System/Memory.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -548,6 +549,13 @@ namespace {
     /// finishFunction.
     JITEvent_EmittedFunctionDetails EmissionDetails;
 
+    struct EmittedCode {
+      void *FunctionBody;
+      void *ExceptionTable;
+      EmittedCode() : FunctionBody(0), ExceptionTable(0) {}
+    };
+    DenseMap<const Function *, EmittedCode> EmittedFunctions;
+
     // CurFnStubUses - For a given Function, a vector of stubs that it
     // references.  This facilitates the JIT detecting that a stub is no
     // longer used, so that it may be deallocated.
@@ -1011,7 +1019,8 @@ void JITEmitter::startFunction(MachineFunction &F) {
   BufferBegin = CurBufferPtr = MemMgr->startFunctionBody(F.getFunction(),
                                                          ActualSize);
   BufferEnd = BufferBegin+ActualSize;
-  
+  EmittedFunctions[F.getFunction()].FunctionBody = BufferBegin;
+
   // Ensure the constant pool/jump table info is at least 4-byte aligned.
   emitAlignment(16);
 
@@ -1201,6 +1210,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     BufferBegin = CurBufferPtr = MemMgr->startExceptionTable(F.getFunction(),
                                                              ActualSize);
     BufferEnd = BufferBegin+ActualSize;
+    EmittedFunctions[F.getFunction()].ExceptionTable = BufferBegin;
     uint8_t *EhStart;
     uint8_t *FrameRegister = DE->EmitDwarfTable(F, *this, FnStart, FnEnd,
                                                 EhStart);
@@ -1244,7 +1254,13 @@ void JITEmitter::retryWithMoreMemory(MachineFunction &F) {
 /// deallocateMemForFunction - Deallocate all memory for the specified
 /// function body.  Also drop any references the function has to stubs.
 void JITEmitter::deallocateMemForFunction(const Function *F) {
-  MemMgr->deallocateMemForFunction(F);
+  DenseMap<const Function *, EmittedCode>::iterator Emitted =
+    EmittedFunctions.find(F);
+  if (Emitted != EmittedFunctions.end()) {
+    MemMgr->deallocateFunctionBody(Emitted->second.FunctionBody);
+    MemMgr->deallocateExceptionTable(Emitted->second.ExceptionTable);
+    EmittedFunctions.erase(Emitted);
+  }
 
   // TODO: Do we need to unregister exception handling information from libgcc
   // here?

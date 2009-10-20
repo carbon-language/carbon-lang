@@ -32,37 +32,36 @@ TEST(JITMemoryManagerTest, NoAllocations) {
   OwningPtr<JITMemoryManager> MemMgr(
       JITMemoryManager::CreateDefaultMemManager());
   uintptr_t size;
-  uint8_t *start;
   std::string Error;
 
   // Allocate the functions.
   OwningPtr<Function> F1(makeFakeFunction());
   size = 1024;
-  start = MemMgr->startFunctionBody(F1.get(), size);
-  memset(start, 0xFF, 1024);
-  MemMgr->endFunctionBody(F1.get(), start, start + 1024);
+  uint8_t *FunctionBody1 = MemMgr->startFunctionBody(F1.get(), size);
+  memset(FunctionBody1, 0xFF, 1024);
+  MemMgr->endFunctionBody(F1.get(), FunctionBody1, FunctionBody1 + 1024);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
 
   OwningPtr<Function> F2(makeFakeFunction());
   size = 1024;
-  start = MemMgr->startFunctionBody(F2.get(), size);
-  memset(start, 0xFF, 1024);
-  MemMgr->endFunctionBody(F2.get(), start, start + 1024);
+  uint8_t *FunctionBody2 = MemMgr->startFunctionBody(F2.get(), size);
+  memset(FunctionBody2, 0xFF, 1024);
+  MemMgr->endFunctionBody(F2.get(), FunctionBody2, FunctionBody2 + 1024);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
 
   OwningPtr<Function> F3(makeFakeFunction());
   size = 1024;
-  start = MemMgr->startFunctionBody(F3.get(), size);
-  memset(start, 0xFF, 1024);
-  MemMgr->endFunctionBody(F3.get(), start, start + 1024);
+  uint8_t *FunctionBody3 = MemMgr->startFunctionBody(F3.get(), size);
+  memset(FunctionBody3, 0xFF, 1024);
+  MemMgr->endFunctionBody(F3.get(), FunctionBody3, FunctionBody3 + 1024);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
 
   // Deallocate them out of order, in case that matters.
-  MemMgr->deallocateMemForFunction(F2.get());
+  MemMgr->deallocateFunctionBody(FunctionBody2);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
-  MemMgr->deallocateMemForFunction(F1.get());
+  MemMgr->deallocateFunctionBody(FunctionBody1);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
-  MemMgr->deallocateMemForFunction(F3.get());
+  MemMgr->deallocateFunctionBody(FunctionBody3);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
 }
 
@@ -72,7 +71,6 @@ TEST(JITMemoryManagerTest, TestCodeAllocation) {
   OwningPtr<JITMemoryManager> MemMgr(
       JITMemoryManager::CreateDefaultMemManager());
   uintptr_t size;
-  uint8_t *start;
   std::string Error;
 
   // Big functions are a little less than the largest block size.
@@ -83,26 +81,26 @@ TEST(JITMemoryManagerTest, TestCodeAllocation) {
   // Allocate big functions
   OwningPtr<Function> F1(makeFakeFunction());
   size = bigFuncSize;
-  start = MemMgr->startFunctionBody(F1.get(), size);
+  uint8_t *FunctionBody1 = MemMgr->startFunctionBody(F1.get(), size);
   ASSERT_LE(bigFuncSize, size);
-  memset(start, 0xFF, bigFuncSize);
-  MemMgr->endFunctionBody(F1.get(), start, start + bigFuncSize);
+  memset(FunctionBody1, 0xFF, bigFuncSize);
+  MemMgr->endFunctionBody(F1.get(), FunctionBody1, FunctionBody1 + bigFuncSize);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
 
   OwningPtr<Function> F2(makeFakeFunction());
   size = bigFuncSize;
-  start = MemMgr->startFunctionBody(F2.get(), size);
+  uint8_t *FunctionBody2 = MemMgr->startFunctionBody(F2.get(), size);
   ASSERT_LE(bigFuncSize, size);
-  memset(start, 0xFF, bigFuncSize);
-  MemMgr->endFunctionBody(F2.get(), start, start + bigFuncSize);
+  memset(FunctionBody2, 0xFF, bigFuncSize);
+  MemMgr->endFunctionBody(F2.get(), FunctionBody2, FunctionBody2 + bigFuncSize);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
 
   OwningPtr<Function> F3(makeFakeFunction());
   size = bigFuncSize;
-  start = MemMgr->startFunctionBody(F3.get(), size);
+  uint8_t *FunctionBody3 = MemMgr->startFunctionBody(F3.get(), size);
   ASSERT_LE(bigFuncSize, size);
-  memset(start, 0xFF, bigFuncSize);
-  MemMgr->endFunctionBody(F3.get(), start, start + bigFuncSize);
+  memset(FunctionBody3, 0xFF, bigFuncSize);
+  MemMgr->endFunctionBody(F3.get(), FunctionBody3, FunctionBody3 + bigFuncSize);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
 
   // Check that each large function took it's own slab.
@@ -111,43 +109,46 @@ TEST(JITMemoryManagerTest, TestCodeAllocation) {
   // Allocate small functions
   OwningPtr<Function> F4(makeFakeFunction());
   size = smallFuncSize;
-  start = MemMgr->startFunctionBody(F4.get(), size);
+  uint8_t *FunctionBody4 = MemMgr->startFunctionBody(F4.get(), size);
   ASSERT_LE(smallFuncSize, size);
-  memset(start, 0xFF, smallFuncSize);
-  MemMgr->endFunctionBody(F4.get(), start, start + smallFuncSize);
+  memset(FunctionBody4, 0xFF, smallFuncSize);
+  MemMgr->endFunctionBody(F4.get(), FunctionBody4,
+                          FunctionBody4 + smallFuncSize);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
 
   OwningPtr<Function> F5(makeFakeFunction());
   size = smallFuncSize;
-  start = MemMgr->startFunctionBody(F5.get(), size);
+  uint8_t *FunctionBody5 = MemMgr->startFunctionBody(F5.get(), size);
   ASSERT_LE(smallFuncSize, size);
-  memset(start, 0xFF, smallFuncSize);
-  MemMgr->endFunctionBody(F5.get(), start, start + smallFuncSize);
+  memset(FunctionBody5, 0xFF, smallFuncSize);
+  MemMgr->endFunctionBody(F5.get(), FunctionBody5,
+                          FunctionBody5 + smallFuncSize);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
 
   OwningPtr<Function> F6(makeFakeFunction());
   size = smallFuncSize;
-  start = MemMgr->startFunctionBody(F6.get(), size);
+  uint8_t *FunctionBody6 = MemMgr->startFunctionBody(F6.get(), size);
   ASSERT_LE(smallFuncSize, size);
-  memset(start, 0xFF, smallFuncSize);
-  MemMgr->endFunctionBody(F6.get(), start, start + smallFuncSize);
+  memset(FunctionBody6, 0xFF, smallFuncSize);
+  MemMgr->endFunctionBody(F6.get(), FunctionBody6,
+                          FunctionBody6 + smallFuncSize);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
 
   // Check that the small functions didn't allocate any new slabs.
   EXPECT_EQ(3U, MemMgr->GetNumCodeSlabs());
 
   // Deallocate them out of order, in case that matters.
-  MemMgr->deallocateMemForFunction(F2.get());
+  MemMgr->deallocateFunctionBody(FunctionBody2);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
-  MemMgr->deallocateMemForFunction(F1.get());
+  MemMgr->deallocateFunctionBody(FunctionBody1);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
-  MemMgr->deallocateMemForFunction(F4.get());
+  MemMgr->deallocateFunctionBody(FunctionBody4);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
-  MemMgr->deallocateMemForFunction(F3.get());
+  MemMgr->deallocateFunctionBody(FunctionBody3);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
-  MemMgr->deallocateMemForFunction(F5.get());
+  MemMgr->deallocateFunctionBody(FunctionBody5);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
-  MemMgr->deallocateMemForFunction(F6.get());
+  MemMgr->deallocateFunctionBody(FunctionBody6);
   EXPECT_TRUE(MemMgr->CheckInvariants(Error)) << Error;
 }
 
