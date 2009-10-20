@@ -82,10 +82,6 @@ SRC_DIR=$DIR/src
 rm -rf $SRC_DIR || exit 1
 mkdir $SRC_DIR || exit 1
 ln -s $ORIG_SRC_DIR/* $SRC_DIR/ || exit 1
-# We can't use the top-level Makefile as-is.  Remove the soft link:
-rm $SRC_DIR/Makefile || exit 1
-# Now create our own by editing the top-level Makefile, deleting every line marked "Apple-style":
-sed -e '/[Aa]pple-style/d' -e '/include.*GNUmakefile/d' $ORIG_SRC_DIR/Makefile > $SRC_DIR/Makefile || exit 1
 
 # Build the LLVM tree universal.
 mkdir -p $DIR/obj-llvm || exit 1

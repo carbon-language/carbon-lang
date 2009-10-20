@@ -19,7 +19,6 @@ LEVEL := .
 #
 # When cross-compiling, there are some things (tablegen) that need to
 # be build for the build system first.
-ifndef RC_ARCHS  # Normal build (not "Apple-style").
 ifeq ($(BUILD_DIRS_ONLY),1)
   DIRS := lib/System lib/Support utils
   OPTIONAL_DIRS :=
@@ -212,8 +211,3 @@ happiness: update all check unittests
 
 .NOTPARALLEL:
 
-else # Building "Apple-style."
-# N.B. In an Apple-style build, once configuration is done, lines
-# marked "Apple-style" are removed with sed!  See utils/buildit/build_llvm.
-include utils/buildit/GNUmakefile # Building "Apple-style."
-endif # Building "Apple-style."
