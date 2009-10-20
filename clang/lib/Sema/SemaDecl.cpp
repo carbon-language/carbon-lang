@@ -1059,6 +1059,8 @@ void Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
 /// NeverFallThrough iff we never fall off the end of the statement.  We assume
 /// that functions not marked noreturn will return.
 Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
+  // FIXME: Eventually share this CFG object when we have other warnings based
+  // of the CFG.  This can be done using AnalysisContext.
   llvm::OwningPtr<CFG> cfg (CFG::buildCFG(Root, &Context));
 
   // FIXME: They should never return 0, fix that, delete this code.
