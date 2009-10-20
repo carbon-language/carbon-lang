@@ -873,6 +873,10 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             PrevLastUseOp = i;
             CurrentScratchReg = CurrentVirtReg = 0;
             havePrevValue = trackingCurrentValue;
+            // Re-scan the operands of this instruction to catch definitions
+            // of the scratch register we're using. This is to handle things
+            // like ldr "r2, [scratch]" where scratch is r2.
+            i = 0;
           }
         }
       RS->forward(MI);
