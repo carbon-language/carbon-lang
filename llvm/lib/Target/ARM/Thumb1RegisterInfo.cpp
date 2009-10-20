@@ -77,18 +77,6 @@ Thumb1RegisterInfo::getPhysicalRegisterRegClass(unsigned Reg, EVT VT) const {
   return TargetRegisterInfo::getPhysicalRegisterRegClass(Reg, VT);
 }
 
-bool
-Thumb1RegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
-  return true;
-}
-
-bool
-Thumb1RegisterInfo::requiresFrameIndexScavenging(const MachineFunction &MF)
-  const {
-  return true;
-}
-
-
 bool Thumb1RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
   const MachineFrameInfo *FFI = MF.getFrameInfo();
   unsigned CFSize = FFI->getMaxCallFrameSize();
