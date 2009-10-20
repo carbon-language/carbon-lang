@@ -576,7 +576,10 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
 }
 
 llvm::Value *CodeGenFunction::LoadBlockStruct() {
-  return Builder.CreateLoad(LocalDeclMap[getBlockStructDecl()], "self");
+  llvm::Value *V = Builder.CreateLoad(LocalDeclMap[getBlockStructDecl()],
+                                      "self");
+  // For now, we codegen based upon byte offsets.
+  return Builder.CreateBitCast(V, PtrToInt8Ty);
 }
 
 llvm::Function *
