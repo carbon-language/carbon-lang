@@ -34,14 +34,6 @@ namespace {
     const TargetInstrInfo *TII;
     const TargetLowering  *TLI;
 
-    /// ChangedMBBs - BBs which are modified by OptimizeIntraLoopEdges.
-    SmallPtrSet<MachineBasicBlock*, 8> ChangedMBBs;
-
-    /// UncondJmpMBBs - A list of BBs which are in loops and end with
-    /// unconditional branches.
-    SmallVector<std::pair<MachineBasicBlock*,MachineBasicBlock*>, 4>
-    UncondJmpMBBs;
-
   public:
     static char ID;
     CodePlacementOpt() : MachineFunctionPass(&ID) {}
@@ -58,7 +50,19 @@ namespace {
     }
 
   private:
-    bool OptimizeIntraLoopEdges();
+    bool HasFallthrough(MachineBasicBlock *MBB);
+    bool HasAnalyzableTerminator(MachineBasicBlock *MBB);
+    void Splice(MachineFunction &MF,
+                MachineFunction::iterator InsertPt,
+                MachineFunction::iterator Begin,
+                MachineFunction::iterator End);
+    void UpdateTerminator(MachineBasicBlock *MBB);
+    bool EliminateUnconditionalJumpsToTop(MachineFunction &MF,
+                                          MachineLoop *L);
+    bool MoveDiscontiguousLoopBlocks(MachineFunction &MF,
+                                     MachineLoop *L);
+    bool OptimizeIntraLoopEdgesInLoopNest(MachineFunction &MF, MachineLoop *L);
+    bool OptimizeIntraLoopEdges(MachineFunction &MF);
     bool AlignLoops(MachineFunction &MF);
     bool AlignLoop(MachineFunction &MF, MachineLoop *L, unsigned Align);
   };
@@ -70,168 +74,354 @@ FunctionPass *llvm::createCodePlacementOptPass() {
   return new CodePlacementOpt();
 }
 
-/// OptimizeBackEdges - Place loop back edges to move unconditional branches
-/// out of the loop.
+/// HasFallthrough - Test whether the given branch has a fallthrough, either as
+/// a plain fallthrough or as a fallthrough case of a conditional branch.
 ///
-///       A:
-///       ...
-///       <fallthrough to B>
+bool CodePlacementOpt::HasFallthrough(MachineBasicBlock *MBB) {
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  SmallVector<MachineOperand, 4> Cond;
+  if (TII->AnalyzeBranch(*MBB, TBB, FBB, Cond))
+    return false;
+  // This conditional branch has no fallthrough.
+  if (FBB)
+    return false;
+  // An unconditional branch has no fallthrough.
+  if (Cond.empty() && TBB)
+    return false;
+  // It has a fallthrough.
+  return true;
+}
+
+/// HasAnalyzableTerminator - Test whether AnalyzeBranch will succeed on MBB.
+/// This is called before major changes are begun to test whether it will be
+/// possible to complete the changes.
 ///
-///       B:  --> loop header
-///       ...
-///       jcc <cond> C, [exit]
+/// Target-specific code is hereby encouraged to make AnalyzeBranch succeed
+/// whenever possible.
 ///
-///       C:
-///       ...
-///       jmp B
-///
-/// ==>
-///
-///       A:
-///       ...
-///       jmp B
-///
-///       C:
-///       ...
-///       <fallthough to B>
-///       
-///       B:  --> loop header
-///       ...
-///       jcc <cond> C, [exit]
-///
-bool CodePlacementOpt::OptimizeIntraLoopEdges() {
-  if (!TLI->shouldOptimizeCodePlacement())
+bool CodePlacementOpt::HasAnalyzableTerminator(MachineBasicBlock *MBB) {
+  // Conservatively ignore EH landing pads.
+  if (MBB->isLandingPad()) return false;
+
+  // Ignore blocks which look like they might have EH-related control flow.
+  // At the time of this writing, there are blocks which AnalyzeBranch
+  // thinks end in single uncoditional branches, yet which have two CFG
+  // successors. Code in this file is not prepared to reason about such things.
+  if (!MBB->empty() && MBB->back().getOpcode() == TargetInstrInfo::EH_LABEL)
     return false;
 
-  bool Changed = false;
-  for (unsigned i = 0, e = UncondJmpMBBs.size(); i != e; ++i) {
-    MachineBasicBlock *MBB = UncondJmpMBBs[i].first;
-    MachineBasicBlock *SuccMBB = UncondJmpMBBs[i].second;
-    MachineLoop *L = MLI->getLoopFor(MBB);
-    assert(L && "BB is expected to be in a loop!");
+  // Aggressively handle return blocks and similar constructs.
+  if (MBB->succ_empty()) return true;
 
-    if (ChangedMBBs.count(MBB)) {
-      // BB has been modified, re-analyze.
-      MachineBasicBlock *TBB = 0, *FBB = 0;
-      SmallVector<MachineOperand, 4> Cond;
-      if (TII->AnalyzeBranch(*MBB, TBB, FBB, Cond) || !Cond.empty())
-        continue;
-      if (MLI->getLoopFor(TBB) != L || TBB->isLandingPad())
-        continue;
-      SuccMBB = TBB;
+  // Ask the target's AnalyzeBranch if it can handle this block.
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  SmallVector<MachineOperand, 4> Cond;
+  // Make the the terminator is understood.
+  if (TII->AnalyzeBranch(*MBB, TBB, FBB, Cond))
+    return false;
+  // Make sure we have the option of reversing the condition.
+  if (!Cond.empty() && TII->ReverseBranchCondition(Cond))
+    return false;
+  return true;
+}
+
+/// Splice - Move the sequence of instructions [Begin,End) to just before
+/// InsertPt. Update branch instructions as needed to account for broken
+/// fallthrough edges and to take advantage of newly exposed fallthrough
+/// opportunities.
+///
+void CodePlacementOpt::Splice(MachineFunction &MF,
+                              MachineFunction::iterator InsertPt,
+                              MachineFunction::iterator Begin,
+                              MachineFunction::iterator End) {
+  assert(Begin != MF.begin() && End != MF.begin() && InsertPt != MF.begin() &&
+         "Splice can't change the entry block!");
+  MachineFunction::iterator OldBeginPrior = prior(Begin);
+  MachineFunction::iterator OldEndPrior = prior(End);
+
+  MF.splice(InsertPt, Begin, End);
+
+  UpdateTerminator(prior(Begin));
+  UpdateTerminator(OldBeginPrior);
+  UpdateTerminator(OldEndPrior);
+}
+
+/// UpdateTerminator - Update the terminator instructions in MBB to account
+/// for changes to the layout. If the block previously used a fallthrough,
+/// it may now need a branch, and if it previously used branching it may now
+/// be able to use a fallthrough.
+///
+void CodePlacementOpt::UpdateTerminator(MachineBasicBlock *MBB) {
+  // A block with no successors has no concerns with fall-through edges.
+  if (MBB->succ_empty()) return;
+
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  SmallVector<MachineOperand, 4> Cond;
+  bool B = TII->AnalyzeBranch(*MBB, TBB, FBB, Cond);
+  (void) B;
+  assert(!B && "UpdateTerminators requires analyzable predecessors!");
+  if (Cond.empty()) {
+    if (TBB) {
+      // The block has an unconditional branch. If its successor is now
+      // its layout successor, delete the branch.
+      if (MBB->isLayoutSuccessor(TBB))
+        TII->RemoveBranch(*MBB);
     } else {
-      assert(MLI->getLoopFor(SuccMBB) == L &&
-             "Successor is not in the same loop!");
+      // The block has an unconditional fallthrough. If its successor is not
+      // its layout successor, insert a branch.
+      TBB = *MBB->succ_begin();
+      if (!MBB->isLayoutSuccessor(TBB))
+        TII->InsertBranch(*MBB, TBB, 0, Cond);
     }
+  } else {
+    if (FBB) {
+      // The block has a non-fallthrough conditional branch. If one of its
+      // successors is its layout successor, rewrite it to a fallthrough
+      // conditional branch.
+      if (MBB->isLayoutSuccessor(TBB)) {
+        TII->RemoveBranch(*MBB);
+        TII->ReverseBranchCondition(Cond);
+        TII->InsertBranch(*MBB, FBB, 0, Cond);
+      } else if (MBB->isLayoutSuccessor(FBB)) {
+        TII->RemoveBranch(*MBB);
+        TII->InsertBranch(*MBB, TBB, 0, Cond);
+      }
+    } else {
+      // The block has a fallthrough conditional branch.
+      MachineBasicBlock *MBBA = *MBB->succ_begin();
+      MachineBasicBlock *MBBB = *next(MBB->succ_begin());
+      if (MBBA == TBB) std::swap(MBBB, MBBA);
+      if (MBB->isLayoutSuccessor(TBB)) {
+        TII->RemoveBranch(*MBB);
+        TII->ReverseBranchCondition(Cond);
+        TII->InsertBranch(*MBB, MBBA, 0, Cond);
+      } else if (!MBB->isLayoutSuccessor(MBBA)) {
+        TII->RemoveBranch(*MBB);
+        TII->InsertBranch(*MBB, TBB, MBBA, Cond);
+      }
+    }
+  }
+}
 
-    if (MBB->isLayoutSuccessor(SuccMBB)) {
-      // Successor is right after MBB, just eliminate the unconditional jmp.
-      // Can this happen?
-      TII->RemoveBranch(*MBB);
-      ChangedMBBs.insert(MBB);
-      ++NumIntraElim;
+/// EliminateUnconditionalJumpsToTop - Move blocks which unconditionally jump
+/// to the loop top to the top of the loop so that they have a fall through.
+/// This can introduce a branch on entry to the loop, but it can eliminate a
+/// branch within the loop. See the @simple case in
+/// test/CodeGen/X86/loop_blocks.ll for an example of this.
+bool CodePlacementOpt::EliminateUnconditionalJumpsToTop(MachineFunction &MF,
+                                                        MachineLoop *L) {
+  bool Changed = false;
+  MachineBasicBlock *TopMBB = L->getTopBlock();
+
+  bool BotHasFallthrough = HasFallthrough(L->getBottomBlock());
+
+  if (TopMBB == MF.begin() ||
+      HasAnalyzableTerminator(prior(MachineFunction::iterator(TopMBB)))) {
+  new_top:
+    for (MachineBasicBlock::pred_iterator PI = TopMBB->pred_begin(),
+         PE = TopMBB->pred_end(); PI != PE; ++PI) {
+      MachineBasicBlock *Pred = *PI;
+      if (Pred == TopMBB) continue;
+      if (HasFallthrough(Pred)) continue;
+      if (!L->contains(Pred)) continue;
+
+      // Verify that we can analyze all the loop entry edges before beginning
+      // any changes which will require us to be able to analyze them.
+      if (Pred == MF.begin())
+        continue;
+      if (!HasAnalyzableTerminator(Pred))
+        continue;
+      if (!HasAnalyzableTerminator(prior(MachineFunction::iterator(Pred))))
+        continue;
+
+      // Move the block.
       Changed = true;
-      continue;
-    }
 
-    // Now check if the predecessor is fallthrough from any BB. If there is,
-    // that BB should be from outside the loop since edge will become a jmp.
-    bool OkToMove = true;
-    MachineBasicBlock *FtMBB = 0, *FtTBB = 0, *FtFBB = 0;
-    SmallVector<MachineOperand, 4> FtCond;    
-    for (MachineBasicBlock::pred_iterator PI = SuccMBB->pred_begin(),
-           PE = SuccMBB->pred_end(); PI != PE; ++PI) {
-      MachineBasicBlock *PredMBB = *PI;
-      if (PredMBB->isLayoutSuccessor(SuccMBB)) {
-        if (TII->AnalyzeBranch(*PredMBB, FtTBB, FtFBB, FtCond)) {
-          OkToMove = false;
+      // Move it and all the blocks that can reach it via fallthrough edges
+      // exclusively, to keep existing fallthrough edges intact.
+      MachineFunction::iterator Begin = Pred;
+      MachineFunction::iterator End = next(Begin);
+      while (Begin != MF.begin()) {
+        MachineFunction::iterator Prior = prior(Begin);
+        if (Prior == MF.begin())
+          break;
+        // Stop when a non-fallthrough edge is found.
+        if (!HasFallthrough(Prior))
+          break;
+        // Stop if a block which could fall-through out of the loop is found.
+        if (Prior->isSuccessor(End))
+          break;
+        // If we've reached the top, stop scanning.
+        if (Prior == MachineFunction::iterator(TopMBB)) {
+          // We know top currently has a fall through (because we just checked
+          // it) which would be lost if we do the transformation, so it isn't
+          // worthwhile to do the transformation unless it would expose a new
+          // fallthrough edge.
+          if (!Prior->isSuccessor(End))
+            goto next_pred;
+          // Otherwise we can stop scanning and procede to move the blocks.
           break;
         }
-        if (!FtTBB)
-          FtTBB = SuccMBB;
-        else if (!FtFBB) {
-          assert(FtFBB != SuccMBB && "Unexpected control flow!");
-          FtFBB = SuccMBB;
-        }
-        
-        // A fallthrough.
-        FtMBB = PredMBB;
-        MachineLoop *PL = MLI->getLoopFor(PredMBB);
-        if (PL && (PL == L || PL->getLoopDepth() >= L->getLoopDepth()))
-          OkToMove = false;
-
-        break;
-      }
-    }
-
-    if (!OkToMove)
-      continue;
-
-    // Is it profitable? If SuccMBB can fallthrough itself, that can be changed
-    // into a jmp.
-    MachineBasicBlock *TBB = 0, *FBB = 0;
-    SmallVector<MachineOperand, 4> Cond;
-    if (TII->AnalyzeBranch(*SuccMBB, TBB, FBB, Cond))
-      continue;
-    if (!TBB && Cond.empty())
-      TBB = next(MachineFunction::iterator(SuccMBB));
-    else if (!FBB && !Cond.empty())
-      FBB = next(MachineFunction::iterator(SuccMBB));
-
-    // This calculate the cost of the transformation. Also, it finds the *only*
-    // intra-loop edge if there is one.
-    int Cost = 0;
-    bool HasOneIntraSucc = true;
-    MachineBasicBlock *IntraSucc = 0;
-    for (MachineBasicBlock::succ_iterator SI = SuccMBB->succ_begin(),
-           SE = SuccMBB->succ_end(); SI != SE; ++SI) {
-      MachineBasicBlock *SSMBB = *SI;
-      if (MLI->getLoopFor(SSMBB) == L) {
-        if (!IntraSucc)
-          IntraSucc = SSMBB;
-        else
-          HasOneIntraSucc = false;
+        // If we hit a switch or something complicated, don't move anything
+        // for this predecessor.
+        if (!HasAnalyzableTerminator(prior(MachineFunction::iterator(Prior))))
+          break;
+        // Ok, the block prior to Begin will be moved along with the rest.
+        // Extend the range to include it.
+        Begin = Prior;
+        ++NumIntraMoved;
       }
 
-      if (SuccMBB->isLayoutSuccessor(SSMBB))
-        // This will become a jmp.
-        ++Cost;
-      else if (MBB->isLayoutSuccessor(SSMBB)) {
-        // One of the successor will become the new fallthrough.
-        if (SSMBB == FBB) {
-          FBB = 0;
-          --Cost;
-        } else if (!FBB && SSMBB == TBB && Cond.empty()) {
-          TBB = 0;
-          --Cost;
-        } else if (!Cond.empty() && !TII->ReverseBranchCondition(Cond)) {
-          assert(SSMBB == TBB);
-          TBB = FBB;
-          FBB = 0;
-          --Cost;
-        }
-      }
-    }
-    if (Cost)
-      continue;
+      // Move the blocks.
+      Splice(MF, TopMBB, Begin, End);
 
-    // Now, let's move the successor to below the BB to eliminate the jmp.
-    SuccMBB->moveAfter(MBB);
-    TII->RemoveBranch(*MBB);
-    TII->RemoveBranch(*SuccMBB);
-    if (TBB)
-      TII->InsertBranch(*SuccMBB, TBB, FBB, Cond);
-    ChangedMBBs.insert(MBB);
-    ChangedMBBs.insert(SuccMBB);
-    if (FtMBB) {
-      TII->RemoveBranch(*FtMBB);
-      TII->InsertBranch(*FtMBB, FtTBB, FtFBB, FtCond);
-      ChangedMBBs.insert(FtMBB);
+      // Update TopMBB.
+      TopMBB = L->getTopBlock();
+
+      // We have a new loop top. Iterate on it. We shouldn't have to do this
+      // too many times if BranchFolding has done a reasonable job.
+      goto new_top;
+    next_pred:;
     }
-    Changed = true;
   }
 
-  ++NumIntraMoved;
+  // If the loop previously didn't exit with a fall-through and it now does,
+  // we eliminated a branch.
+  if (Changed &&
+      !BotHasFallthrough &&
+      HasFallthrough(L->getBottomBlock())) {
+    ++NumIntraElim;
+    BotHasFallthrough = true;
+  }
+
+  return Changed;
+}
+
+/// MoveDiscontiguousLoopBlocks - Move any loop blocks that are not in the
+/// portion of the loop contiguous with the header. This usually makes the loop
+/// contiguous, provided that AnalyzeBranch can handle all the relevant
+/// branching. See the @cfg_islands case in test/CodeGen/X86/loop_blocks.ll
+/// for an example of this.
+bool CodePlacementOpt::MoveDiscontiguousLoopBlocks(MachineFunction &MF,
+                                                   MachineLoop *L) {
+  bool Changed = false;
+  MachineBasicBlock *TopMBB = L->getTopBlock();
+  MachineBasicBlock *BotMBB = L->getBottomBlock();
+
+  // Determine a position to move orphaned loop blocks to. If TopMBB is not
+  // entered via fallthrough and BotMBB is exited via fallthrough, prepend them
+  // to the top of the loop to avoid loosing that fallthrough. Otherwise append
+  // them to the bottom, even if it previously had a fallthrough, on the theory
+  // that it's worth an extra branch to keep the loop contiguous.
+  MachineFunction::iterator InsertPt = next(MachineFunction::iterator(BotMBB));
+  bool InsertAtTop = false;
+  if (TopMBB != MF.begin() &&
+      !HasFallthrough(prior(MachineFunction::iterator(TopMBB))) &&
+      HasFallthrough(BotMBB)) {
+    InsertPt = TopMBB;
+    InsertAtTop = true;
+  }
+
+  // Keep a record of which blocks are in the portion of the loop contiguous
+  // with the loop header.
+  SmallPtrSet<MachineBasicBlock *, 8> ContiguousBlocks;
+  for (MachineFunction::iterator I = TopMBB,
+       E = next(MachineFunction::iterator(BotMBB)); I != E; ++I)
+    ContiguousBlocks.insert(I);
+
+  // Find non-contigous blocks and fix them.
+  if (InsertPt != MF.begin() && HasAnalyzableTerminator(prior(InsertPt)))
+    for (MachineLoop::block_iterator BI = L->block_begin(), BE = L->block_end();
+         BI != BE; ++BI) {
+      MachineBasicBlock *BB = *BI;
+
+      // Verify that we can analyze all the loop entry edges before beginning
+      // any changes which will require us to be able to analyze them.
+      if (!HasAnalyzableTerminator(BB))
+        continue;
+      if (!HasAnalyzableTerminator(prior(MachineFunction::iterator(BB))))
+        continue;
+
+      // If the layout predecessor is part of the loop, this block will be
+      // processed along with it. This keeps them in their relative order.
+      if (BB != MF.begin() &&
+          L->contains(prior(MachineFunction::iterator(BB))))
+        continue;
+
+      // Check to see if this block is already contiguous with the main
+      // portion of the loop.
+      if (!ContiguousBlocks.insert(BB))
+        continue;
+
+      // Move the block.
+      Changed = true;
+
+      // Process this block and all loop blocks contiguous with it, to keep
+      // them in their relative order.
+      MachineFunction::iterator Begin = BB;
+      MachineFunction::iterator End = next(MachineFunction::iterator(BB));
+      for (; End != MF.end(); ++End) {
+        if (!L->contains(End)) break;
+        if (!HasAnalyzableTerminator(End)) break;
+        ContiguousBlocks.insert(End);
+        ++NumIntraMoved;
+      }
+
+      // If we're inserting at the bottom of the loop, and the code we're
+      // moving originally had fall-through successors, bring the sucessors
+      // up with the loop blocks to preserve the fall-through edges.
+      if (!InsertAtTop)
+        for (; End != MF.end(); ++End) {
+          if (L->contains(End)) break;
+          if (!HasAnalyzableTerminator(End)) break;
+          if (!HasFallthrough(prior(End))) break;
+        }
+
+      // Move the blocks. This may invalidate TopMBB and/or BotMBB, but
+      // we don't need them anymore at this point.
+      Splice(MF, InsertPt, Begin, End);
+    }
+
+  return Changed;
+}
+
+/// OptimizeIntraLoopEdgesInLoopNest - Reposition loop blocks to minimize
+/// intra-loop branching and to form contiguous loops.
+///
+/// This code takes the approach of making minor changes to the existing
+/// layout to fix specific loop-oriented problems. Also, it depends on
+/// AnalyzeBranch, which can't understand complex control instructions.
+///
+bool CodePlacementOpt::OptimizeIntraLoopEdgesInLoopNest(MachineFunction &MF,
+                                                        MachineLoop *L) {
+  bool Changed = false;
+
+  // Do optimization for nested loops.
+  for (MachineLoop::iterator I = L->begin(), E = L->end(); I != E; ++I)
+    Changed |= OptimizeIntraLoopEdgesInLoopNest(MF, *I);
+
+  // Do optimization for this loop.
+  Changed |= EliminateUnconditionalJumpsToTop(MF, L);
+  Changed |= MoveDiscontiguousLoopBlocks(MF, L);
+
+  return Changed;
+}
+
+/// OptimizeIntraLoopEdges - Reposition loop blocks to minimize
+/// intra-loop branching and to form contiguous loops.
+///
+bool CodePlacementOpt::OptimizeIntraLoopEdges(MachineFunction &MF) {
+  bool Changed = false;
+
+  if (!TLI->shouldOptimizeCodePlacement())
+    return Changed;
+
+  // Do optimization for each loop in the function.
+  for (MachineLoopInfo::iterator I = MLI->begin(), E = MLI->end();
+       I != E; ++I)
+    if (!(*I)->getParentLoop())
+      Changed |= OptimizeIntraLoopEdgesInLoopNest(MF, *I);
+
   return Changed;
 }
 
@@ -255,6 +445,8 @@ bool CodePlacementOpt::AlignLoops(MachineFunction &MF) {
   return Changed;
 }
 
+/// AlignLoop - Align loop headers to target preferred alignments.
+///
 bool CodePlacementOpt::AlignLoop(MachineFunction &MF, MachineLoop *L,
                                  unsigned Align) {
   bool Changed = false;
@@ -263,17 +455,7 @@ bool CodePlacementOpt::AlignLoop(MachineFunction &MF, MachineLoop *L,
   for (MachineLoop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     Changed |= AlignLoop(MF, *I, Align);
 
-  MachineBasicBlock *TopMBB = L->getHeader();
-  if (TopMBB == MF.begin()) return Changed;
-
-  MachineBasicBlock *PredMBB = prior(MachineFunction::iterator(TopMBB));
-  while (MLI->getLoopFor(PredMBB) == L) {
-    TopMBB = PredMBB;
-    if (TopMBB == MF.begin()) return Changed;
-    PredMBB = prior(MachineFunction::iterator(TopMBB));
-  }
-
-  TopMBB->setAlignment(Align);
+  L->getTopBlock()->setAlignment(Align);
   Changed = true;
   ++NumLoopsAligned;
 
@@ -288,30 +470,9 @@ bool CodePlacementOpt::runOnMachineFunction(MachineFunction &MF) {
   TLI = MF.getTarget().getTargetLowering();
   TII = MF.getTarget().getInstrInfo();
 
-  // Analyze the BBs first and keep track of BBs that
-  // end with an unconditional jmp to another block in the same loop.
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
-    MachineBasicBlock *MBB = I;
-    if (MBB->isLandingPad())
-      continue;
-    MachineLoop *L = MLI->getLoopFor(MBB);
-    if (!L)
-      continue;
-
-    MachineBasicBlock *TBB = 0, *FBB = 0;
-    SmallVector<MachineOperand, 4> Cond;
-    if (TII->AnalyzeBranch(*MBB, TBB, FBB, Cond) || !Cond.empty())
-      continue;
-    if (MLI->getLoopFor(TBB) == L && !TBB->isLandingPad())
-      UncondJmpMBBs.push_back(std::make_pair(MBB, TBB));
-  }
-
-  bool Changed = OptimizeIntraLoopEdges();
+  bool Changed = OptimizeIntraLoopEdges(MF);
 
   Changed |= AlignLoops(MF);
-
-  ChangedMBBs.clear();
-  UncondJmpMBBs.clear();
 
   return Changed;
 }
