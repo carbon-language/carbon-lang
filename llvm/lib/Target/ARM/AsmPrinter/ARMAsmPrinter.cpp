@@ -1375,6 +1375,45 @@ void ARMAsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI) {
     
     return;
   }
+  case ARM::MOVi2pieces: { // FIXME: Remove asmstring from td file.
+    // This is a hack that lowers as a two instruction sequence.
+    unsigned DstReg = MI->getOperand(0).getReg();
+    unsigned ImmVal = (unsigned)MI->getOperand(1).getImm();
+
+    unsigned SOImmValV1 = ARM_AM::getSOImmTwoPartFirst(ImmVal);
+    unsigned SOImmValV2 = ARM_AM::getSOImmTwoPartSecond(ImmVal);
+    
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::MOVi);
+      TmpInst.addOperand(MCOperand::CreateReg(DstReg));
+      TmpInst.addOperand(MCOperand::CreateImm(SOImmValV1));
+      
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
+      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
+      printMCInst(&TmpInst);
+      O << '\n';
+    }
+
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::ORRri);
+      TmpInst.addOperand(MCOperand::CreateReg(DstReg));     // dstreg
+      TmpInst.addOperand(MCOperand::CreateReg(DstReg));     // inreg
+      TmpInst.addOperand(MCOperand::CreateImm(SOImmValV2)); // so_imm
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(MI->getOperand(2).getImm()));
+      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(3).getReg()));
+      
+      TmpInst.addOperand(MCOperand::CreateReg(0));          // cc_out
+      printMCInst(&TmpInst);
+    }
+    return; 
+  }
+      // FIXME: Also MOVi32imm.
+
+      
   }
       
   MCInst TmpInst;

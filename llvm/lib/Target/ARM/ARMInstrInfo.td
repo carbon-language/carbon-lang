@@ -1582,8 +1582,9 @@ def : ARMPat<(xor GPR:$LHS, so_imm2part:$RHS),
                     (so_imm2part_2 imm:$RHS))>;
 
 // 32-bit immediate using movw + movt.
-// This is a single pseudo instruction to make it re-materializable. Remove
-// when we can do generalized remat.
+// This is a single pseudo instruction, the benefit is that it can be remat'd
+// as a single unit instead of having to handle reg inputs.
+// FIXME: Remove this when we can do generalized remat.
 let isReMaterializable = 1 in
 def MOVi32imm : AI1x2<(outs GPR:$dst), (ins i32imm:$src), Pseudo, IIC_iMOVi,
                      "movw", " $dst, ${src:lo16}\n\tmovt${p} $dst, ${src:hi16}",

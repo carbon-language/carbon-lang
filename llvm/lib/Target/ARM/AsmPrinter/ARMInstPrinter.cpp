@@ -79,6 +79,37 @@ void ARMInstPrinter::printSOImmOperand(const MCInst *MI, unsigned OpNum) {
   printSOImm(O, MO.getImm(), VerboseAsm, &MAI);
 }
 
+/// printSOImm2PartOperand - SOImm is broken into two pieces using a 'mov'
+/// followed by an 'orr' to materialize.
+void ARMInstPrinter::printSOImm2PartOperand(const MCInst *MI, unsigned OpNum) {
+  // FIXME: REMOVE this method.
+  abort();
+}
+
+// so_reg is a 4-operand unit corresponding to register forms of the A5.1
+// "Addressing Mode 1 - Data-processing operands" forms.  This includes:
+//    REG 0   0           - e.g. R5
+//    REG REG 0,SH_OPC    - e.g. R5, ROR R3
+//    REG 0   IMM,SH_OPC  - e.g. R5, LSL #3
+void ARMInstPrinter::printSORegOperand(const MCInst *MI, unsigned OpNum) {
+  const MCOperand &MO1 = MI->getOperand(OpNum);
+  const MCOperand &MO2 = MI->getOperand(OpNum+1);
+  const MCOperand &MO3 = MI->getOperand(OpNum+2);
+  
+  O << getRegisterName(MO1.getReg());
+  
+  // Print the shift opc.
+  O << ", "
+    << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(MO3.getImm()))
+    << ' ';
+  
+  if (MO2.getReg()) {
+    O << getRegisterName(MO2.getReg());
+    assert(ARM_AM::getSORegOffset(MO3.getImm()) == 0);
+  } else {
+    O << "#" << ARM_AM::getSORegOffset(MO3.getImm());
+  }
+}
 
 
 void ARMInstPrinter::printAddrMode2Operand(const MCInst *MI, unsigned Op) {
