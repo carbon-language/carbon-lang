@@ -12,14 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "asm-printer"
+#include "ARM.h" // FIXME: FACTOR ENUMS BETTER.
 #include "ARMInstPrinter.h"
 #include "ARMAddressingModes.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/raw_ostream.h"
-#include "ARMGenInstrNames.inc"
-#include "ARMGenRegisterNames.inc"
 using namespace llvm;
 
 // Include the auto-generated portion of the assembly writer.
@@ -179,6 +178,12 @@ void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum) {
     O << getRegisterName(MI->getOperand(i).getReg());
   }
   O << "}";
+}
+
+void ARMInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNum) {
+  ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(OpNum).getImm();
+  if (CC != ARMCC::AL)
+    O << ARMCondCodeToString(CC);
 }
 
 
