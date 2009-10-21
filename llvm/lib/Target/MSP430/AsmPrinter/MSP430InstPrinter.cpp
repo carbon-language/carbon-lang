@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "asm-printer"
+#include "MSP430InstrInfo.h"
 #include "MSP430InstPrinter.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -74,4 +75,31 @@ void MSP430InstPrinter::printSrcMemOperand(const MCInst *MI, unsigned OpNo,
     llvm_unreachable("Unsupported memory operand");
   }
 
+}
+void MSP430InstPrinter::printCCOperand(const MCInst *MI, unsigned OpNo) {
+  unsigned CC = MI->getOperand(OpNo).getImm();
+
+  switch (CC) {
+  default:
+   llvm_unreachable("Unsupported CC code");
+   break;
+  case MSP430::COND_E:
+   O << "eq";
+   break;
+  case MSP430::COND_NE:
+   O << "ne";
+   break;
+  case MSP430::COND_HS:
+   O << "hs";
+   break;
+  case MSP430::COND_LO:
+   O << "lo";
+   break;
+  case MSP430::COND_GE:
+   O << "ge";
+   break;
+  case MSP430::COND_L:
+   O << 'l';
+   break;
+  }
 }

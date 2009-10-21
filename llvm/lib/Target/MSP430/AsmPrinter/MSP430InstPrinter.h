@@ -39,8 +39,7 @@ namespace llvm
     void printSrcMemOperand(const MCInst *MI, unsigned OpNo,
                             const char *Modifier = 0);
 
-    void printCCOperand(const MCInst *MI, unsigned OpNo) {
-    }
+    void printCCOperand(const MCInst *MI, unsigned OpNo);
 
   };
 }

@@ -13,6 +13,7 @@
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
+  class AsmPrinter;
   class MCAsmInfo;
   class MCContext;
   class MCInst;
@@ -29,13 +30,10 @@ class VISIBILITY_HIDDEN MSP430MCInstLower {
   MCContext &Ctx;
   Mangler &Mang;
 
-  const unsigned CurFunctionNumber;
-  const MCAsmInfo &MAI;
-
+  AsmPrinter &Printer;
 public:
-  MSP430MCInstLower(MCContext &ctx, Mangler &mang, unsigned FuncNum,
-                    const MCAsmInfo &mai)
-    : Ctx(ctx), Mang(mang), CurFunctionNumber(FuncNum), MAI(mai) {}
+  MSP430MCInstLower(MCContext &ctx, Mangler &mang, AsmPrinter &printer)
+    : Ctx(ctx), Mang(mang), Printer(printer) {}
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
   MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;

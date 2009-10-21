@@ -13,6 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "MSP430MCInstLower.h"
+#include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -43,8 +45,9 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
 MCSymbol *MSP430MCInstLower::
 GetJumpTableSymbol(const MachineOperand &MO) const {
   SmallString<256> Name;
-  raw_svector_ostream(Name) << MAI.getPrivateGlobalPrefix() << "JTI"
-    << CurFunctionNumber << '_' << MO.getIndex();
+  raw_svector_ostream(Name) << Printer.MAI->getPrivateGlobalPrefix() << "JTI"
+                            << Printer.getFunctionNumber() << '_'
+                            << MO.getIndex();
 
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
@@ -58,8 +61,9 @@ GetJumpTableSymbol(const MachineOperand &MO) const {
 MCSymbol *MSP430MCInstLower::
 GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
   SmallString<256> Name;
-  raw_svector_ostream(Name) << MAI.getPrivateGlobalPrefix() << "CPI"
-    << CurFunctionNumber << '_' << MO.getIndex();
+  raw_svector_ostream(Name) << Printer.MAI->getPrivateGlobalPrefix() << "CPI"
+                            << Printer.getFunctionNumber() << '_'
+                            << MO.getIndex();
 
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
@@ -107,12 +111,10 @@ void MSP430MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_Immediate:
       MCOp = MCOperand::CreateImm(MO.getImm());
       break;
-#if 0
     case MachineOperand::MO_MachineBasicBlock:
       MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
-                       AsmPrinter.GetMBBSymbol(MO.getMBB()->getNumber()), Ctx));
+                         Printer.GetMBBSymbol(MO.getMBB()->getNumber()), Ctx));
       break;
-#endif
     case MachineOperand::MO_GlobalAddress:
       MCOp = LowerSymbolOperand(MO, GetGlobalAddressSymbol(MO));
       break;
