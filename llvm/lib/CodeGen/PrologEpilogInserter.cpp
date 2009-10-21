@@ -729,10 +729,12 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 /// the instruciton range. Return the operand number of the kill in Operand.
 static MachineBasicBlock::iterator
 findLastUseReg(MachineBasicBlock::iterator I, MachineBasicBlock::iterator ME,
-               unsigned Reg, unsigned *Operand) {
+               unsigned Reg) {
   // Scan forward to find the last use of this virtual register
   for (++I; I != ME; ++I) {
     MachineInstr *MI = I;
+    bool isDefInsn = false;
+    bool isKillInsn = false;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
       if (MI->getOperand(i).isReg()) {
         unsigned OpReg = MI->getOperand(i).getReg();
@@ -740,13 +742,14 @@ findLastUseReg(MachineBasicBlock::iterator I, MachineBasicBlock::iterator ME,
           continue;
         assert (OpReg == Reg
                 && "overlapping use of scavenged index register!");
-        // If this is the killing use, we're done
-        if (MI->getOperand(i).isKill()) {
-          if (Operand)
-            *Operand = i;
-          return I;
-        }
+        // If this is the killing use, we have a candidate.
+        if (MI->getOperand(i).isKill())
+          isKillInsn = true;
+        else if (MI->getOperand(i).isDef())
+          isDefInsn = true;
       }
+    if (isKillInsn && !isDefInsn)
+      return I;
   }
   // If we hit the end of the basic block, there was no kill of
   // the virtual register, which is wrong.
@@ -763,10 +766,13 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
        E = Fn.end(); BB != E; ++BB) {
     RS->enterBasicBlock(BB);
 
+    // FIXME: The logic flow in this function is still too convoluted.
+    // It needs a cleanup refactoring. Do that in preparation for tracking
+    // more than one scratch register value and using ranges to find
+    // available scratch registers.
     unsigned CurrentVirtReg = 0;
     unsigned CurrentScratchReg = 0;
     bool havePrevValue = false;
-    unsigned PrevScratchReg = 0;
     int PrevValue = 0;
     MachineInstr *PrevLastUseMI = NULL;
     unsigned PrevLastUseOp = 0;
@@ -776,11 +782,13 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
 
     // The instruction stream may change in the loop, so check BB->end()
     // directly.
-    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
+    for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
       MachineInstr *MI = I;
       bool isDefInsn = false;
       bool isKillInsn = false;
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
+      bool clobbersScratchReg = false;
+      bool DoIncr = true;
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         if (MI->getOperand(i).isReg()) {
           MachineOperand &MO = MI->getOperand(i);
           unsigned Reg = MO.getReg();
@@ -789,17 +797,14 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
           if (!TargetRegisterInfo::isVirtualRegister(Reg)) {
             // If we have a previous scratch reg, check and see if anything
             // here kills whatever value is in there.
-            if (Reg == PrevScratchReg) {
+            if (Reg == CurrentScratchReg) {
               if (MO.isUse()) {
                 // Two-address operands implicitly kill
-                if (MO.isKill() || MI->isRegTiedToDefOperand(i)) {
-                  havePrevValue = false;
-                  PrevScratchReg = 0;
-                }
+                if (MO.isKill() || MI->isRegTiedToDefOperand(i))
+                  clobbersScratchReg = true;
               } else {
                 assert (MO.isDef());
-                havePrevValue = false;
-                PrevScratchReg = 0;
+                clobbersScratchReg = true;
               }
             }
             continue;
@@ -840,37 +845,46 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
               // for the virtual register are exclusively for the purpose
               // of populating the value in the register. That's reasonable
               // for these frame index registers, but it's still a very, very
-              // strong assumption. Perhaps this implies that the frame index
-              // elimination should be before register allocation, with
-              // conservative heuristics since we'll know less then, and
-              // the reuse calculations done directly when doing the code-gen?
+              // strong assumption. rdar://7322732. Better would be to
+              // explicitly check each instruction in the range for references
+              // to the virtual register. Only delete those insns that
+              // touch the virtual register.
 
               // Find the last use of the new virtual register. Remove all
               // instruction between here and there, and update the current
               // instruction to reference the last use insn instead.
               MachineBasicBlock::iterator LastUseMI =
-                findLastUseReg(I, BB->end(), Reg, &i);
+                findLastUseReg(I, BB->end(), Reg);
+
               // Remove all instructions up 'til the last use, since they're
               // just calculating the value we already have.
               BB->erase(I, LastUseMI);
               MI = I = LastUseMI;
-              e = MI->getNumOperands();
 
-              CurrentScratchReg = PrevScratchReg;
-              // Extend the live range of the register
+              // Extend the live range of the scratch register
               PrevLastUseMI->getOperand(PrevLastUseOp).setIsKill(false);
               RS->setUsed(CurrentScratchReg);
-            } else {
               CurrentVirtReg = Reg;
-              const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(Reg);
-              CurrentScratchReg = RS->FindUnusedReg(RC);
-              if (CurrentScratchReg == 0)
-                // No register is "free". Scavenge a register.
-                CurrentScratchReg = RS->scavengeRegister(RC, I, SPAdj);
 
-              PrevValue = Value;
+              // We deleted the instruction we were scanning the operands of.
+              // Jump back to the instruction iterator loop. Don't increment
+              // past this instruction since we updated the iterator already.
+              DoIncr = false;
+              break;
             }
+
+            // Scavenge a new scratch register
+            CurrentVirtReg = Reg;
+            const TargetRegisterClass *RC = Fn.getRegInfo().getRegClass(Reg);
+            CurrentScratchReg = RS->FindUnusedReg(RC);
+            if (CurrentScratchReg == 0)
+              // No register is "free". Scavenge a register.
+              CurrentScratchReg = RS->scavengeRegister(RC, I, SPAdj);
+
+            PrevValue = Value;
           }
+          // replace this reference to the virtual register with the
+          // scratch register.
           assert (CurrentScratchReg && "Missing scratch register!");
           MI->getOperand(i).setReg(CurrentScratchReg);
 
@@ -880,15 +894,26 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
             PrevLastUseMI = MI;
           }
         }
+      }
       // If this is the last use of the scratch, stop tracking it. The
       // last use will be a kill operand in an instruction that does
       // not also define the scratch register.
       if (isKillInsn && !isDefInsn) {
-        PrevScratchReg = CurrentScratchReg;
-        CurrentScratchReg = CurrentVirtReg = 0;
+        CurrentVirtReg = 0;
         havePrevValue = trackingCurrentValue;
       }
-      RS->forward(MI);
+      // Similarly, notice if instruction clobbered the value in the
+      // register we're tracking for possible later reuse. This is noted
+      // above, but enforced here since the value is still live while we
+      // process the rest of the operands of the instruction.
+      if (clobbersScratchReg) {
+        havePrevValue = false;
+        CurrentScratchReg = 0;
+      }
+      if (DoIncr) {
+        RS->forward(I);
+        ++I;
+      }
     }
   }
 }
