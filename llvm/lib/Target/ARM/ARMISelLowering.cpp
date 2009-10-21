@@ -2361,8 +2361,11 @@ static bool isVREVMask(const SmallVectorImpl<int> &M, EVT VT,
   assert((BlockSize==16 || BlockSize==32 || BlockSize==64) &&
          "Only possible block sizes for VREV are: 16, 32, 64");
 
-  unsigned NumElts = VT.getVectorNumElements();
   unsigned EltSz = VT.getVectorElementType().getSizeInBits();
+  if (EltSz == 64)
+    return false;
+
+  unsigned NumElts = VT.getVectorNumElements();
   unsigned BlockElts = M[0] + 1;
 
   if (BlockSize <= EltSz || BlockSize != BlockElts * EltSz)
@@ -2379,6 +2382,10 @@ static bool isVREVMask(const SmallVectorImpl<int> &M, EVT VT,
 
 static bool isVTRNMask(const SmallVectorImpl<int> &M, EVT VT,
                        unsigned &WhichResult) {
+  unsigned EltSz = VT.getVectorElementType().getSizeInBits();
+  if (EltSz == 64)
+    return false;
+
   unsigned NumElts = VT.getVectorNumElements();
   WhichResult = (M[0] == 0 ? 0 : 1);
   for (unsigned i = 0; i < NumElts; i += 2) {
@@ -2391,6 +2398,10 @@ static bool isVTRNMask(const SmallVectorImpl<int> &M, EVT VT,
 
 static bool isVUZPMask(const SmallVectorImpl<int> &M, EVT VT,
                        unsigned &WhichResult) {
+  unsigned EltSz = VT.getVectorElementType().getSizeInBits();
+  if (EltSz == 64)
+    return false;
+
   unsigned NumElts = VT.getVectorNumElements();
   WhichResult = (M[0] == 0 ? 0 : 1);
   for (unsigned i = 0; i != NumElts; ++i) {
@@ -2399,7 +2410,7 @@ static bool isVUZPMask(const SmallVectorImpl<int> &M, EVT VT,
   }
 
   // VUZP.32 for 64-bit vectors is a pseudo-instruction alias for VTRN.32.
-  if (VT.is64BitVector() && VT.getVectorElementType().getSizeInBits() == 32)
+  if (VT.is64BitVector() && EltSz == 32)
     return false;
 
   return true;
@@ -2407,6 +2418,10 @@ static bool isVUZPMask(const SmallVectorImpl<int> &M, EVT VT,
 
 static bool isVZIPMask(const SmallVectorImpl<int> &M, EVT VT,
                        unsigned &WhichResult) {
+  unsigned EltSz = VT.getVectorElementType().getSizeInBits();
+  if (EltSz == 64)
+    return false;
+
   unsigned NumElts = VT.getVectorNumElements();
   WhichResult = (M[0] == 0 ? 0 : 1);
   unsigned Idx = WhichResult * NumElts / 2;
@@ -2418,7 +2433,7 @@ static bool isVZIPMask(const SmallVectorImpl<int> &M, EVT VT,
   }
 
   // VZIP.32 for 64-bit vectors is a pseudo-instruction alias for VTRN.32.
-  if (VT.is64BitVector() && VT.getVectorElementType().getSizeInBits() == 32)
+  if (VT.is64BitVector() && EltSz == 32)
     return false;
 
   return true;
