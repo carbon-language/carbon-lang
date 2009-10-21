@@ -349,8 +349,9 @@ separate option groups syntactically.
 
    - ``multi_val n`` - this option takes *n* arguments (can be useful in some
      special cases). Usage example: ``(parameter_list_option "foo", (multi_val
-     3))``. Only list options can have this attribute; you can, however, use
-     the ``one_or_more`` and ``zero_or_one`` properties.
+     3))``; the command-line syntax is '-foo a b c'. Only list options can have
+     this attribute; you can, however, use the ``one_or_more``, ``zero_or_one``
+     and ``required`` properties.
 
    - ``init`` - this option has a default value, either a string (if it is a
      parameter), or a boolean (if it is a switch; boolean constants are called
