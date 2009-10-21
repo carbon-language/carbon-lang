@@ -69,6 +69,25 @@ def t2_so_imm_neg : Operand<i32>,
   return ARM_AM::getT2SOImmVal(-((int)N->getZExtValue())) != -1;
 }], t2_so_imm_neg_XFORM>;
 
+// Break t2_so_imm's up into two pieces.  This handles immediates with up to 16
+// bits set in them.  This uses t2_so_imm2part to match and t2_so_imm2part_[12]
+// to get the first/second pieces.
+def t2_so_imm2part : Operand<i32>,
+                  PatLeaf<(imm), [{
+      return ARM_AM::isT2SOImmTwoPartVal((unsigned)N->getZExtValue());
+    }]> {
+}
+
+def t2_so_imm2part_1 : SDNodeXForm<imm, [{
+  unsigned V = ARM_AM::getT2SOImmTwoPartFirst((unsigned)N->getZExtValue());
+  return CurDAG->getTargetConstant(V, MVT::i32);
+}]>;
+
+def t2_so_imm2part_2 : SDNodeXForm<imm, [{
+  unsigned V = ARM_AM::getT2SOImmTwoPartSecond((unsigned)N->getZExtValue());
+  return CurDAG->getTargetConstant(V, MVT::i32);
+}]>;
+
 /// imm1_31 predicate - True if the 32-bit immediate is in the range [1,31].
 def imm1_31 : PatLeaf<(i32 imm), [{
   return (int32_t)N->getZExtValue() >= 1 && (int32_t)N->getZExtValue() < 32;
@@ -1130,6 +1149,20 @@ def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
+
+// Two piece so_imms.
+def : T2Pat<(or GPR:$LHS, t2_so_imm2part:$RHS),
+             (t2ORRri (t2ORRri GPR:$LHS, (t2_so_imm2part_1 imm:$RHS)),
+                    (t2_so_imm2part_2 imm:$RHS))>;
+def : T2Pat<(xor GPR:$LHS, t2_so_imm2part:$RHS),
+             (t2EORri (t2EORri GPR:$LHS, (t2_so_imm2part_1 imm:$RHS)),
+                    (t2_so_imm2part_2 imm:$RHS))>;
+def : T2Pat<(add GPR:$LHS, t2_so_imm2part:$RHS),
+             (t2ADDri (t2ADDri GPR:$LHS, (t2_so_imm2part_1 imm:$RHS)),
+                    (t2_so_imm2part_2 imm:$RHS))>;
+def : T2Pat<(sub GPR:$LHS, t2_so_imm2part:$RHS),
+             (t2SUBri (t2SUBri GPR:$LHS, (t2_so_imm2part_1 imm:$RHS)),
+                    (t2_so_imm2part_2 imm:$RHS))>;
 
 // ConstantPool, GlobalAddress, and JumpTable
 def : T2Pat<(ARMWrapper  tglobaladdr :$dst), (t2LEApcrel tglobaladdr :$dst)>;

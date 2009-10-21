@@ -10,29 +10,32 @@ define i32 @t2_const_var2_1_ok_1(i32 %lhs) {
     ret i32 %ret
 }
 
-define i32 @t2_const_var2_1_fail_1(i32 %lhs) {
-;CHECK: t2_const_var2_1_fail_1:
-;CHECK: movt
+define i32 @t2_const_var2_1_ok_2(i32 %lhs) {
+;CHECK: t2_const_var2_1_ok_2:
+;CHECK: #11206656
+;CHECK: #187
     %ret = add i32 %lhs, 11206843 ; 0x00ab00bb
     ret i32 %ret
 }
 
-define i32 @t2_const_var2_1_fail_2(i32 %lhs) {
-;CHECK: t2_const_var2_1_fail_2:
-;CHECK: movt
+define i32 @t2_const_var2_1_ok_3(i32 %lhs) {
+;CHECK: t2_const_var2_1_ok_3:
+;CHECK: #11206827
+;CHECK: #16777216
     %ret = add i32 %lhs, 27984043 ; 0x01ab00ab
     ret i32 %ret
 }
 
-define i32 @t2_const_var2_1_fail_3(i32 %lhs) {
-;CHECK: t2_const_var2_1_fail_3:
-;CHECK: movt
+define i32 @t2_const_var2_1_ok_4(i32 %lhs) {
+;CHECK: t2_const_var2_1_ok_4:
+;CHECK: #16777472
+;CHECK: #11206827
     %ret = add i32 %lhs, 27984299 ; 0x01ab01ab
     ret i32 %ret
 }
 
-define i32 @t2_const_var2_1_fail_4(i32 %lhs) {
-;CHECK: t2_const_var2_1_fail_4:
+define i32 @t2_const_var2_1_fail_1(i32 %lhs) {
+;CHECK: t2_const_var2_1_fail_1:
 ;CHECK: movt
     %ret = add i32 %lhs, 28027649 ; 0x01abab01
     ret i32 %ret
@@ -46,29 +49,31 @@ define i32 @t2_const_var2_2_ok_1(i32 %lhs) {
     ret i32 %ret
 }
 
-define i32 @t2_const_var2_2_fail_1(i32 %lhs) {
-;CHECK: t2_const_var2_2_fail_1:
-;CHECK: movt
+define i32 @t2_const_var2_2_ok_2(i32 %lhs) {
+;CHECK: t2_const_var2_2_ok_2:
+;CHECK: #-1426063360
+;CHECK: #47616
     %ret = add i32 %lhs, 2868951552 ; 0xab00ba00
     ret i32 %ret
 }
 
-define i32 @t2_const_var2_2_fail_2(i32 %lhs) {
-;CHECK: t2_const_var2_2_fail_2:
-;CHECK: movt
+define i32 @t2_const_var2_2_ok_3(i32 %lhs) {
+;CHECK: t2_const_var2_2_ok_3:
+;CHECK: #-1426019584
     %ret = add i32 %lhs, 2868947728 ; 0xab00ab10
     ret i32 %ret
 }
 
-define i32 @t2_const_var2_2_fail_3(i32 %lhs) {
-;CHECK: t2_const_var2_2_fail_3:
-;CHECK: movt
+define i32 @t2_const_var2_2_ok_4(i32 %lhs) {
+;CHECK: t2_const_var2_2_ok_4:
+;CHECK: #-1426019584
+;CHECK: #1048592
     %ret = add i32 %lhs, 2869996304 ; 0xab10ab10
     ret i32 %ret
 }
 
-define i32 @t2_const_var2_2_fail_4(i32 %lhs) {
-;CHECK: t2_const_var2_2_fail_4:
+define i32 @t2_const_var2_2_fail_1(i32 %lhs) {
+;CHECK: t2_const_var2_2_fail_1:
 ;CHECK: movt
     %ret = add i32 %lhs, 279685904 ; 0x10abab10
     ret i32 %ret
@@ -125,9 +130,10 @@ define i32 @t2_const_var3_2_ok_1(i32 %lhs) {
     ret i32 %ret
 }
 
-define i32 @t2_const_var3_2_fail_1(i32 %lhs) {
-;CHECK: t2_const_var3_2_fail_1:
-;CHECK: movt
+define i32 @t2_const_var3_2_ok_2(i32 %lhs) {
+;CHECK: t2_const_var3_2_ok_2:
+;CHECK: #2097152
+;CHECK: #1843200
     %ret = add i32 %lhs, 3940352 ; 0b00000000001111000010000000000000
     ret i32 %ret
 }

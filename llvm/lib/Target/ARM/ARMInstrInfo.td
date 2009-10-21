@@ -1583,6 +1583,12 @@ def : ARMPat<(or GPR:$LHS, so_imm2part:$RHS),
 def : ARMPat<(xor GPR:$LHS, so_imm2part:$RHS),
              (EORri (EORri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
                     (so_imm2part_2 imm:$RHS))>;
+def : ARMPat<(add GPR:$LHS, so_imm2part:$RHS),
+             (ADDri (ADDri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
+                    (so_imm2part_2 imm:$RHS))>;
+def : ARMPat<(sub GPR:$LHS, so_imm2part:$RHS),
+             (SUBri (SUBri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
+                    (so_imm2part_2 imm:$RHS))>;
 
 // 32-bit immediate using movw + movt.
 // This is a single pseudo instruction, the benefit is that it can be remat'd
