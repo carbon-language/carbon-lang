@@ -32,7 +32,7 @@ MSP430TargetMachine::MSP430TargetMachine(const Target &T,
   LLVMTargetMachine(T, TT),
   Subtarget(TT, FS),
   // FIXME: Check TargetData string.
-  DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"),
+  DataLayout("e-p:16:16:16-i8:8:8-i16:16:16-i32:16:32"),
   InstrInfo(*this), TLInfo(*this),
   FrameInfo(TargetFrameInfo::StackGrowsDown, 2, -2) { }
 
