@@ -45,6 +45,30 @@ void MSP430InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << '#' << Op.getImm();
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
-    assert(0 && "Unimplemented!");
+    Op.getExpr()->print(O, &MAI);
   }
+}
+
+void MSP430InstPrinter::printSrcMemOperand(const MCInst *MI, unsigned OpNo,
+                                           const char *Modifier) {
+  const MCOperand &Base = MI->getOperand(OpNo);
+  const MCOperand &Disp = MI->getOperand(OpNo+1);
+
+  if (Disp.isImm() && !Base.isReg())
+    printOperand(MI, OpNo);
+  else if (Base.isReg()) {
+    if (Disp.getImm()) {
+      O << Disp.getImm() << '(';
+      printOperand(MI, OpNo);
+      O << ')';
+    } else {
+      O << '@';
+      printOperand(MI, OpNo);
+    }
+  } else {
+    Base.dump();
+    Disp.dump();
+    llvm_unreachable("Unsupported memory operand");
+  }
+
 }

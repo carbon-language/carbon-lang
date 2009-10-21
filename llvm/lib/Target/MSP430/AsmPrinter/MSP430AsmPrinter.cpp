@@ -295,7 +295,7 @@ bool MSP430AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 void MSP430AsmPrinter::printInstructionThroughMCStreamer(const MachineInstr *MI)
 {
 
-  MSP430MCInstLower MCInstLowering(OutContext, Mang);
+  MSP430MCInstLower MCInstLowering(OutContext, *Mang, getFunctionNumber(), *MAI);
 
   switch (MI->getOpcode()) {
   case TargetInstrInfo::DBG_LABEL:

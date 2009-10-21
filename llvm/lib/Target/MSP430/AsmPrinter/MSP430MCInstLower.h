@@ -27,17 +27,22 @@ namespace llvm {
   /// into an MCInst.
 class VISIBILITY_HIDDEN MSP430MCInstLower {
   MCContext &Ctx;
-  Mangler *Mang;
+  Mangler &Mang;
 
-  #if 0
   const unsigned CurFunctionNumber;
   const MCAsmInfo &MAI;
-  #endif
 
 public:
-  MSP430MCInstLower(MCContext &ctx, Mangler *mang) : Ctx(ctx), Mang(mang) {}
-
+  MSP430MCInstLower(MCContext &ctx, Mangler &mang, unsigned FuncNum,
+                    const MCAsmInfo &mai)
+    : Ctx(ctx), Mang(mang), CurFunctionNumber(FuncNum), MAI(mai) {}
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
+
+  MCOperand LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const;
+
+  MCSymbol *GetGlobalAddressSymbol(const MachineOperand &MO) const;
+  MCSymbol *GetJumpTableSymbol(const MachineOperand &MO) const;
+  MCSymbol *GetConstantPoolIndexSymbol(const MachineOperand &MO) const;
 };
 
 }
