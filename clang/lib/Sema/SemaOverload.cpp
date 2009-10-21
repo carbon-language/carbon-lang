@@ -3053,32 +3053,6 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
     // of types.
     if (!AddPointerWithMoreQualifiedTypeVariants(Ty, VisibleQuals))
       return;
-
-    // Add 'cv void*' to our set of types.
-    if (!Ty->isVoidType()) {
-      QualType QualVoid
-        = Context.getCVRQualifiedType(Context.VoidTy,
-                                   PointeeTy.getCVRQualifiers());
-      AddPointerWithMoreQualifiedTypeVariants(Context.getPointerType(QualVoid),
-                                              VisibleQuals);
-    }
-
-    // If this is a pointer to a class type, add pointers to its bases
-    // (with the same level of cv-qualification as the original
-    // derived class, of course).
-    if (const RecordType *PointeeRec = PointeeTy->getAs<RecordType>()) {
-      CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(PointeeRec->getDecl());
-      for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
-           Base != ClassDecl->bases_end(); ++Base) {
-        QualType BaseTy = Context.getCanonicalType(Base->getType());
-        BaseTy = Context.getCVRQualifiedType(BaseTy.getUnqualifiedType(),
-                                          PointeeTy.getCVRQualifiers());
-        // Add the pointer type, recursively, so that we get all of
-        // the indirect base classes, too.
-        AddTypesConvertedFrom(Context.getPointerType(BaseTy), false, false,
-                              VisibleQuals);
-      }
-    }
   } else if (Ty->isMemberPointerType()) {
     // Member pointers are far easier, since the pointee can't be converted.
     if (!AddMemberPointerWithMoreQualifiedTypeVariants(Ty))
@@ -3224,7 +3198,17 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     Context.UnsignedIntTy, Context.UnsignedLongTy, Context.UnsignedLongLongTy,
     Context.FloatTy, Context.DoubleTy, Context.LongDoubleTy
   };
-
+  assert(ArithmeticTypes[FirstPromotedIntegralType] == Context.IntTy &&
+         "Invalid first promoted integral type");
+  assert(ArithmeticTypes[LastPromotedIntegralType - 1] 
+           == Context.UnsignedLongLongTy &&
+         "Invalid last promoted integral type");
+  assert(ArithmeticTypes[FirstPromotedArithmeticType] == Context.IntTy &&
+         "Invalid first promoted arithmetic type");
+  assert(ArithmeticTypes[LastPromotedArithmeticType - 1] 
+            == Context.LongDoubleTy &&
+         "Invalid last promoted arithmetic type");
+         
   // Find all of the types that the arguments can convert to, but only
   // if the operator we're looking at has built-in operator candidates
   // that make use of these types.

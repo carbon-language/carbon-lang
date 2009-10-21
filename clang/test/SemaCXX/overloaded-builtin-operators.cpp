@@ -150,3 +150,28 @@ void test_with_ptrs(VolatileIntPtr vip, ConstIntPtr cip, ShortRef sr,
 void test_assign_restrictions(ShortRef& sr) {
   sr = (short)0; // expected-error{{no viable overloaded '='}}
 }
+
+struct Base { };
+struct Derived1 : Base { };
+struct Derived2 : Base { };
+
+template<typename T>
+struct ConvertibleToPtrOf {
+  operator T*();
+};
+
+bool test_with_base_ptrs(ConvertibleToPtrOf<Derived1> d1, 
+                         ConvertibleToPtrOf<Derived2> d2) {
+  return d1 == d2; // expected-error{{invalid operands}}
+}
+
+// DR425
+struct A {
+  template< typename T > operator T() const;
+};
+
+void test_dr425(A a) {
+  // FIXME: lots of candidates here!
+  (void)(1.0f * a); // expected-error{{ambiguous}} \
+                    // expected-note 81{{candidate}}
+}
