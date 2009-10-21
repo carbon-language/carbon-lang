@@ -73,24 +73,29 @@ llvm::Constant *BlockModule::getNSConcreteStackBlock() {
   return NSConcreteStackBlock;
 }
 
-static void CollectBlockDeclRefInfo(const Stmt *S,
-                                    CodeGenFunction::BlockInfo &Info) {
+static void CollectBlockDeclRefInfo(
+  const Stmt *S, CodeGenFunction::BlockInfo &Info,
+  llvm::SmallSet<const DeclContext *, 16> &InnerContexts) {
   for (Stmt::const_child_iterator I = S->child_begin(), E = S->child_end();
        I != E; ++I)
     if (*I)
-      CollectBlockDeclRefInfo(*I, Info);
+      CollectBlockDeclRefInfo(*I, Info, InnerContexts);
 
   // We want to ensure we walk down into block literals so we can find
   // all nested BlockDeclRefExprs.
-  if (const BlockExpr *BE = dyn_cast<BlockExpr>(S))
-    CollectBlockDeclRefInfo(BE->getBody(), Info);
+  if (const BlockExpr *BE = dyn_cast<BlockExpr>(S)) {
+    InnerContexts.insert(cast<DeclContext>(BE->getBlockDecl()));
+    CollectBlockDeclRefInfo(BE->getBody(), Info, InnerContexts);
+  }
 
-  if (const BlockDeclRefExpr *DE = dyn_cast<BlockDeclRefExpr>(S)) {
+  if (const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(S)) {
     // FIXME: Handle enums.
-    if (isa<FunctionDecl>(DE->getDecl()))
+    if (isa<FunctionDecl>(BDRE->getDecl()))
       return;
 
-    Info.DeclRefs.push_back(DE);
+    // Only Decls that escape are added.
+    if (!InnerContexts.count(BDRE->getDecl()->getDeclContext()))
+      Info.DeclRefs.push_back(BDRE);
   }
 }
 
@@ -130,7 +135,9 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
   std::string Name = CurFn->getName();
   CodeGenFunction::BlockInfo Info(0, Name.c_str());
-  CollectBlockDeclRefInfo(BE->getBody(), Info);
+  llvm::SmallSet<const DeclContext *, 16> InnerContexts;
+  InnerContexts.insert(BE->getBlockDecl());
+  CollectBlockDeclRefInfo(BE->getBody(), Info, InnerContexts);
 
   // Check if the block can be global.
   // FIXME: This test doesn't work for nested blocks yet.  Longer term, I'd like

@@ -2757,8 +2757,8 @@ QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
   //    struct __Block_byref_1_X *__forwarding;
   //    unsigned int __flags;
   //    unsigned int __size;
-  //    void *__copy_helper;
-  //    void *__destroy_helper;
+  //    void *__copy_helper;		// as needed
+  //    void *__destroy_help		// as needed
   //    int X;
   //  } *
 
