@@ -567,44 +567,45 @@ SDValue MSP430TargetLowering::LowerExternalSymbol(SDValue Op,
   return DAG.getNode(MSP430ISD::Wrapper, dl, getPointerTy(), Result);;
 }
 
-static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, unsigned &TargetCC,
+static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
                        ISD::CondCode CC,
                        DebugLoc dl, SelectionDAG &DAG) {
   // FIXME: Handle bittests someday
   assert(!LHS.getValueType().isFloatingPoint() && "We don't handle FP yet");
 
   // FIXME: Handle jump negative someday
-  TargetCC = MSP430::COND_INVALID;
+  MSP430CC::CondCodes TCC = MSP430CC::COND_INVALID;
   switch (CC) {
   default: llvm_unreachable("Invalid integer condition!");
   case ISD::SETEQ:
-    TargetCC = MSP430::COND_E;  // aka COND_Z
+    TCC = MSP430CC::COND_E;     // aka COND_Z
     break;
   case ISD::SETNE:
-    TargetCC = MSP430::COND_NE; // aka COND_NZ
+    TCC = MSP430CC::COND_NE;    // aka COND_NZ
     break;
   case ISD::SETULE:
     std::swap(LHS, RHS);        // FALLTHROUGH
   case ISD::SETUGE:
-    TargetCC = MSP430::COND_HS; // aka COND_C
+    TCC = MSP430CC::COND_HS;    // aka COND_C
     break;
   case ISD::SETUGT:
     std::swap(LHS, RHS);        // FALLTHROUGH
   case ISD::SETULT:
-    TargetCC = MSP430::COND_LO; // aka COND_NC
+    TCC = MSP430CC::COND_LO;    // aka COND_NC
     break;
   case ISD::SETLE:
     std::swap(LHS, RHS);        // FALLTHROUGH
   case ISD::SETGE:
-    TargetCC = MSP430::COND_GE;
+    TCC = MSP430CC::COND_GE;
     break;
   case ISD::SETGT:
     std::swap(LHS, RHS);        // FALLTHROUGH
   case ISD::SETLT:
-    TargetCC = MSP430::COND_L;
+    TCC = MSP430CC::COND_L;
     break;
   }
 
+  TargetCC = DAG.getConstant(TCC, MVT::i8);
   return DAG.getNode(MSP430ISD::CMP, dl, MVT::Flag, LHS, RHS);
 }
 
@@ -617,13 +618,11 @@ SDValue MSP430TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
   SDValue Dest  = Op.getOperand(4);
   DebugLoc dl   = Op.getDebugLoc();
 
-  unsigned TargetCC = MSP430::COND_INVALID;
+  SDValue TargetCC;
   SDValue Flag = EmitCMP(LHS, RHS, TargetCC, CC, dl, DAG);
 
   return DAG.getNode(MSP430ISD::BR_CC, dl, Op.getValueType(),
-                     Chain,
-                     Dest, DAG.getConstant(TargetCC, MVT::i8),
-                     Flag);
+                     Chain, Dest, TargetCC, Flag);
 }
 
 SDValue MSP430TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
@@ -634,14 +633,14 @@ SDValue MSP430TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
   DebugLoc dl    = Op.getDebugLoc();
 
-  unsigned TargetCC = MSP430::COND_INVALID;
+  SDValue TargetCC;
   SDValue Flag = EmitCMP(LHS, RHS, TargetCC, CC, dl, DAG);
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
   SmallVector<SDValue, 4> Ops;
   Ops.push_back(TrueV);
   Ops.push_back(FalseV);
-  Ops.push_back(DAG.getConstant(TargetCC, MVT::i8));
+  Ops.push_back(TargetCC);
   Ops.push_back(Flag);
 
   return DAG.getNode(MSP430ISD::SELECT_CC, dl, VTs, &Ops[0], Ops.size());

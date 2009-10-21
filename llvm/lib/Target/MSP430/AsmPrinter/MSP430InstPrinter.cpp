@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "asm-printer"
+#include "MSP430.h"
 #include "MSP430InstrInfo.h"
 #include "MSP430InstPrinter.h"
 #include "llvm/MC/MCInst.h"
@@ -19,7 +20,6 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
-#include "MSP430GenInstrNames.inc"
 using namespace llvm;
 
 
@@ -94,22 +94,22 @@ void MSP430InstPrinter::printCCOperand(const MCInst *MI, unsigned OpNo) {
   default:
    llvm_unreachable("Unsupported CC code");
    break;
-  case MSP430::COND_E:
+  case MSP430CC::COND_E:
    O << "eq";
    break;
-  case MSP430::COND_NE:
+  case MSP430CC::COND_NE:
    O << "ne";
    break;
-  case MSP430::COND_HS:
+  case MSP430CC::COND_HS:
    O << "hs";
    break;
-  case MSP430::COND_LO:
+  case MSP430CC::COND_LO:
    O << "lo";
    break;
-  case MSP430::COND_GE:
+  case MSP430CC::COND_GE:
    O << "ge";
    break;
-  case MSP430::COND_L:
+  case MSP430CC::COND_L:
    O << 'l';
    break;
   }

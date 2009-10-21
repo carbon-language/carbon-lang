@@ -250,22 +250,22 @@ void MSP430AsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum) {
   default:
    llvm_unreachable("Unsupported CC code");
    break;
-  case MSP430::COND_E:
+  case MSP430CC::COND_E:
    O << "eq";
    break;
-  case MSP430::COND_NE:
+  case MSP430CC::COND_NE:
    O << "ne";
    break;
-  case MSP430::COND_HS:
+  case MSP430CC::COND_HS:
    O << "hs";
    break;
-  case MSP430::COND_LO:
+  case MSP430CC::COND_LO:
    O << "lo";
    break;
-  case MSP430::COND_GE:
+  case MSP430CC::COND_GE:
    O << "ge";
    break;
-  case MSP430::COND_L:
+  case MSP430CC::COND_L:
    O << 'l';
    break;
   }
