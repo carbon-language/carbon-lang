@@ -110,6 +110,7 @@ class MDNode : public MetadataBase, public FoldingSetNode {
   // Use CallbackVH to hold MDNOde elements.
   struct ElementVH : public CallbackVH {
     MDNode *Parent;
+    ElementVH() {}
     ElementVH(Value *V, MDNode *P) : CallbackVH(V), Parent(P) {}
     ~ElementVH() {}
 
@@ -124,7 +125,8 @@ class MDNode : public MetadataBase, public FoldingSetNode {
   // Replace each instance of F from the element list of this node with T.
   void replaceElement(Value *F, Value *T);
 
-  SmallVector<ElementVH, 4> Node;
+  ElementVH *Node;
+  unsigned NodeSize;
 
 protected:
   explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals);
@@ -150,19 +152,7 @@ public:
   }
 
   /// getNumElements - Return number of MDNode elements.
-  unsigned getNumElements() const {
-    return Node.size();
-  }
-
-  // Element access
-  typedef SmallVectorImpl<ElementVH>::const_iterator const_elem_iterator;
-  typedef SmallVectorImpl<ElementVH>::iterator elem_iterator;
-  /// elem_empty - Return true if MDNode is empty.
-  bool elem_empty() const                { return Node.empty(); }
-  const_elem_iterator elem_begin() const { return Node.begin(); }
-  const_elem_iterator elem_end() const   { return Node.end();   }
-  elem_iterator elem_begin()             { return Node.begin(); }
-  elem_iterator elem_end()               { return Node.end();   }
+  unsigned getNumElements() const { return NodeSize; }
 
   /// Profile - calculate a unique identifier for this MDNode to collapse
   /// duplicates

@@ -214,10 +214,9 @@ void ValueEnumerator::EnumerateMetadata(const MetadataBase *MD) {
     MDValues.push_back(std::make_pair(MD, 1U));
     MDValueMap[MD] = MDValues.size();
     MDValueID = MDValues.size();
-    for (MDNode::const_elem_iterator I = N->elem_begin(), E = N->elem_end();
-         I != E; ++I) {
-      if (*I)
-        EnumerateValue(*I);
+    for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {    
+      if (Value *V = N->getElement(i))
+        EnumerateValue(V);
       else
         EnumerateType(Type::getVoidTy(MD->getContext()));
     }

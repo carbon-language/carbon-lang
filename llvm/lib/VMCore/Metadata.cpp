@@ -67,6 +67,9 @@ MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals)
   : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
   NumOperands = 0;
   resizeOperands(NumVals);
+  NodeSize = NumVals;
+  Node = new ElementVH[NodeSize];
+  ElementVH *Ptr = Node;
   for (unsigned i = 0; i != NumVals; ++i) {
     // Only record metadata uses.
     if (MetadataBase *MB = dyn_cast_or_null<MetadataBase>(Vals[i]))
@@ -74,13 +77,13 @@ MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals)
     else if(Vals[i] && 
             Vals[i]->getType()->getTypeID() == Type::MetadataTyID)
       OperandList[NumOperands++] = Vals[i];
-    Node.push_back(ElementVH(Vals[i], this));
+    *Ptr++ = ElementVH(Vals[i], this);
   }
 }
 
 void MDNode::Profile(FoldingSetNodeID &ID) const {
-  for (const_elem_iterator I = elem_begin(), E = elem_end(); I != E; ++I)
-    ID.AddPointer(*I);
+  for (unsigned i = 0, e = getNumElements(); i != e; ++i)
+    ID.AddPointer(getElement(i));
 }
 
 MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
@@ -109,7 +112,8 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
 /// dropAllReferences - Remove all uses and clear node vector.
 void MDNode::dropAllReferences() {
   User::dropAllReferences();
-  Node.clear();
+  delete [] Node;
+  Node = NULL;
 }
 
 MDNode::~MDNode() {
@@ -132,9 +136,8 @@ void MDNode::replaceElement(Value *From, Value *To) {
   // From in this MDNode's element list.
   SmallVector<unsigned, 4> Indexes;
   unsigned Index = 0;
-  for (SmallVector<ElementVH, 4>::iterator I = Node.begin(),
-         E = Node.end(); I != E; ++I, ++Index) {
-    Value *V = *I;
+  for (unsigned i = 0, e = getNumElements(); i != e; ++i, ++Index) {
+    Value *V = getElement(i);
     if (V && V == From) 
       Indexes.push_back(Index);
   }

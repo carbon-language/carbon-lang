@@ -818,9 +818,8 @@ void SlotTracker::CreateMetadataSlot(const MDNode *N) {
   unsigned DestSlot = mdnNext++;
   mdnMap[N] = DestSlot;
 
-  for (MDNode::const_elem_iterator MDI = N->elem_begin(),
-         MDE = N->elem_end(); MDI != MDE; ++MDI) {
-    const Value *TV = *MDI;
+  for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
+    const Value *TV = N->getElement(i);
     if (TV)
       if (const MDNode *N2 = dyn_cast<MDNode>(TV))
         CreateMetadataSlot(N2);
@@ -906,9 +905,8 @@ static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
     Out << '!' << i << " = metadata ";
     const MDNode *Node = Nodes[i];
     Out << "!{";
-    for (MDNode::const_elem_iterator NI = Node->elem_begin(),
-           NE = Node->elem_end(); NI != NE;) {
-      const Value *V = *NI;
+    for (unsigned mi = 0, me = Node->getNumElements(); mi != me; ++mi) {
+      const Value *V = Node->getElement(mi);
       if (!V)
         Out << "null";
       else if (const MDNode *N = dyn_cast<MDNode>(V)) {
@@ -916,11 +914,12 @@ static void WriteMDNodes(formatted_raw_ostream &Out, TypePrinting &TypePrinter,
         Out << '!' << Machine.getMetadataSlot(N);
       }
       else {
-        TypePrinter.print((*NI)->getType(), Out);
+        TypePrinter.print(V->getType(), Out);
         Out << ' ';
-        WriteAsOperandInternal(Out, *NI, &TypePrinter, &Machine);
+        WriteAsOperandInternal(Out, Node->getElement(mi), 
+                               &TypePrinter, &Machine);
       }
-      if (++NI != NE)
+      if (mi + 1 != me)
         Out << ", ";
     }
 
