@@ -418,10 +418,6 @@ const llvm::Type *BlockModule::getGenericExtendedBlockLiteralType() {
   return GenericExtendedBlockLiteralType;
 }
 
-bool BlockFunction::BlockRequiresCopying(QualType Ty) {
-  return CGM.BlockRequiresCopying(Ty);
-}
-
 RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
   const BlockPointerType *BPT =
     E->getCallee()->getType()->getAs<BlockPointerType>();

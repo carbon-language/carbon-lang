@@ -115,15 +115,8 @@ public:
     PtrToInt8Ty = llvm::Type::getInt8PtrTy(M.getContext());
   }
 
-  bool BlockRequiresCopying(QualType Ty) {
-    if (Ty->isBlockPointerType())
-      return true;
-    if (getContext().isObjCNSObjectType(Ty))
-      return true;
-    if (Ty->isObjCObjectPointerType())
-      return true;
-    return false;
-  }
+  bool BlockRequiresCopying(QualType Ty)
+    { return getContext().BlockRequiresCopying(Ty); }
 };
 
 class BlockFunction : public BlockBase {
@@ -224,7 +217,8 @@ public:
   llvm::Value *getBlockObjectDispose();
   void BuildBlockRelease(llvm::Value *DeclPtr, int flag = BLOCK_FIELD_IS_BYREF);
 
-  bool BlockRequiresCopying(QualType Ty);
+  bool BlockRequiresCopying(QualType Ty)
+    { return getContext().BlockRequiresCopying(Ty); }
 };
 
 }  // end namespace CodeGen
