@@ -287,14 +287,14 @@ private:
 public:
   /// registerMDKind - Register a new metadata kind and return its ID.
   /// A metadata kind can be registered only once. 
-  unsigned registerMDKind(const char *Name);
+  unsigned registerMDKind(const StringRef Name);
 
   /// getMDKind - Return metadata kind. If the requested metadata kind
   /// is not registered then return 0.
-  unsigned getMDKind(const char *Name);
+  unsigned getMDKind(const StringRef Name) const;
 
   /// isValidName - Return true if Name is a valid custom metadata handler name.
-  bool isValidName(const char *Name);
+  static bool isValidName(const StringRef Name);
 
   /// getMD - Get the metadata of given kind attached to an Instruction.
   /// If the metadata is not found then return 0.
