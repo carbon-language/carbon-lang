@@ -204,11 +204,11 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
 
 Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   bool Invalid = false;
-  QualType T = D->getType();
-  if (T->isDependentType())  {
-    T = SemaRef.SubstType(T, TemplateArgs,
-                          D->getLocation(), D->getDeclName());
-    if (!T.isNull() && T->isFunctionType()) {
+  DeclaratorInfo *DI = D->getDeclaratorInfo();
+  if (DI->getType()->isDependentType())  {
+    DI = SemaRef.SubstType(DI, TemplateArgs,
+                           D->getLocation(), D->getDeclName());
+    if (DI && DI->getType()->isFunctionType()) {
       // C++ [temp.arg.type]p3:
       //   If a declaration acquires a function type through a type
       //   dependent on a template-parameter and this causes a
@@ -238,8 +238,8 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
       BitWidth = InstantiatedBitWidth.takeAs<Expr>();
   }
 
-  FieldDecl *Field = SemaRef.CheckFieldDecl(D->getDeclName(), T,
-                                            D->getDeclaratorInfo(),
+  FieldDecl *Field = SemaRef.CheckFieldDecl(D->getDeclName(),
+                                            DI->getType(), DI,
                                             cast<RecordDecl>(Owner),
                                             D->getLocation(),
                                             D->isMutable(),
