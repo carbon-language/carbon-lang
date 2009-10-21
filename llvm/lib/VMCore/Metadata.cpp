@@ -250,10 +250,8 @@ NamedMDNode::~NamedMDNode() {
 unsigned MetadataContext::registerMDKind(const char *Name) {
   assert(isValidName(Name) && "Invalid custome metadata name!");
   unsigned Count = MDHandlerNames.size();
-  assert(MDHandlerNames.find(Name) == MDHandlerNames.end() 
-         && "Already registered MDKind!");
-  MDHandlerNames[Name] = Count + 1;
-  return Count + 1;
+  assert(MDHandlerNames.count(Name) == 0 && "Already registered MDKind!");
+  return MDHandlerNames[Name] = Count + 1;
 }
 
 /// isValidName - Return true if Name is a valid custom metadata handler name.
@@ -280,10 +278,11 @@ bool MetadataContext::isValidName(const char *Name) {
 /// getMDKind - Return metadata kind. If the requested metadata kind
 /// is not registered then return 0.
 unsigned MetadataContext::getMDKind(const char *Name) {
-  assert(isValidName(Name) && "Invalid custome metadata name!");
   StringMap<unsigned>::iterator I = MDHandlerNames.find(Name);
-  if (I == MDHandlerNames.end())
+  if (I == MDHandlerNames.end()) {
+    assert(isValidName(Name) && "Invalid custome metadata name!");
     return 0;
+  }
 
   return I->getValue();
 }
@@ -292,15 +291,13 @@ unsigned MetadataContext::getMDKind(const char *Name) {
 void MetadataContext::addMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
   assert(Node && "Invalid null MDNode");
   Inst->HasMetadata = true;
-  MDStoreTy::iterator I = MetadataStore.find(Inst);
-  if (I == MetadataStore.end()) {
-    MDMapTy Info;
+  MDMapTy &Info = MetadataStore[Inst];
+  if (Info.empty()) {
     Info.push_back(std::make_pair(MDKind, Node));
     MetadataStore.insert(std::make_pair(Inst, Info));
     return;
   }
 
-  MDMapTy &Info = I->second;
   // If there is an entry for this MDKind then replace it.
   for (unsigned i = 0, e = Info.size(); i != e; ++i) {
     MDPairTy &P = Info[i];
@@ -333,30 +330,20 @@ void MetadataContext::removeMD(unsigned Kind, Instruction *Inst) {
   return;
 }
   
-/// removeMDs - Remove all metadata attached with an instruction.
-void MetadataContext::removeMDs(const Instruction *Inst) {
-  // Find Metadata handles for this instruction.
-  MDStoreTy::iterator I = MetadataStore.find(Inst);
-  assert(I != MetadataStore.end() && "Invalid custom metadata info!");
-  MDMapTy &Info = I->second;
-  
-  // FIXME : Give all metadata handlers a chance to adjust.
-  
-  // Remove the entries for this instruction.
-  Info.clear();
-  MetadataStore.erase(I);
+/// removeAllMetadata - Remove all metadata attached with an instruction.
+void MetadataContext::removeAllMetadata(Instruction *Inst) {
+  MetadataStore.erase(Inst);
+  Inst->HasMetadata = false;
 }
 
 /// copyMD - If metadata is attached with Instruction In1 then attach
 /// the same metadata to In2.
 void MetadataContext::copyMD(Instruction *In1, Instruction *In2) {
   assert(In1 && In2 && "Invalid instruction!");
-   MDStoreTy::iterator I = MetadataStore.find(In1);
-  if (I == MetadataStore.end())
+  MDMapTy &In1Info = MetadataStore[In1];
+  if (In1Info.empty())
     return;
 
-  MDMapTy &In1Info = I->second;
-  MDMapTy In2Info;
   for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
     if (MDNode *MD = dyn_cast_or_null<MDNode>(I->second))
       addMD(I->first, MD, In2);
@@ -365,11 +352,10 @@ void MetadataContext::copyMD(Instruction *In1, Instruction *In2) {
 /// getMD - Get the metadata of given kind attached to an Instruction.
 /// If the metadata is not found then return 0.
 MDNode *MetadataContext::getMD(unsigned MDKind, const Instruction *Inst) {
-  MDStoreTy::iterator I = MetadataStore.find(Inst);
-  if (I == MetadataStore.end())
+  MDMapTy &Info = MetadataStore[Inst];
+  if (Info.empty())
     return NULL;
-  
-  MDMapTy &Info = I->second;
+
   for (MDMapTy::iterator I = Info.begin(), E = Info.end(); I != E; ++I)
     if (I->first == MDKind)
       return dyn_cast_or_null<MDNode>(I->second);

@@ -145,7 +145,7 @@ public:
   
   /// getElement - Return specified element.
   Value *getElement(unsigned i) const {
-    assert(getNumElements() > i && "Invalid element number!");
+    assert(i < getNumElements() && "Invalid element number!");
     return Node[i];
   }
 
@@ -211,6 +211,7 @@ class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   SmallVector<WeakMetadataVH, 4> Node;
   typedef SmallVectorImpl<WeakMetadataVH>::iterator elem_iterator;
 
+  void setParent(Module *M) { Parent = M; }
 protected:
   explicit NamedMDNode(LLVMContext &C, const Twine &N, MetadataBase*const *Vals, 
                        unsigned NumVals, Module *M = 0);
@@ -240,11 +241,10 @@ public:
   /// getParent - Get the module that holds this named metadata collection.
   inline Module *getParent() { return Parent; }
   inline const Module *getParent() const { return Parent; }
-  void setParent(Module *M) { Parent = M; }
 
   /// getElement - Return specified element.
   MetadataBase *getElement(unsigned i) const {
-    assert(getNumElements() > i && "Invalid element number!");
+    assert(i < getNumElements() && "Invalid element number!");
     return Node[i];
   }
 
@@ -255,7 +255,7 @@ public:
 
   /// addElement - Add metadata element.
   void addElement(MetadataBase *M) {
-    resizeOperands(0);
+    resizeOperands(NumOperands + 1);
     OperandList[NumOperands++] = M;
     Node.push_back(WeakMetadataVH(M));
   }
@@ -319,8 +319,8 @@ public:
   /// removeMD - Remove metadata of given kind attached with an instuction.
   void removeMD(unsigned Kind, Instruction *Inst);
   
-  /// removeMDs - Remove all metadata attached with an instruction.
-  void removeMDs(const Instruction *Inst);
+  /// removeAllMetadata - Remove all metadata attached with an instruction.
+  void removeAllMetadata(Instruction *Inst);
 
   /// copyMD - If metadata is attached with Instruction In1 then attach
   /// the same metadata to In2.
@@ -333,8 +333,8 @@ public:
   /// ValueIsDeleted - This handler is used to update metadata store
   /// when a value is deleted.
   void ValueIsDeleted(const Value *) {}
-  void ValueIsDeleted(const Instruction *Inst) {
-    removeMDs(Inst);
+  void ValueIsDeleted(Instruction *Inst) {
+    removeAllMetadata(Inst);
   }
   void ValueIsRAUWd(Value *V1, Value *V2);
 
