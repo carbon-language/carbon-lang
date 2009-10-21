@@ -267,7 +267,7 @@ def  VLD4q32b : VLD4WB<0b1000, "vld4.32">;
 
 //   VLD2LN   : Vector Load (single 2-element structure to one lane)
 class VLD2LN<bits<4> op11_8, string OpcodeStr>
-  : NLdSt<1,0b10,op11_8,0b0001, (outs DPR:$dst1, DPR:$dst2),
+  : NLdSt<1,0b10,op11_8,0b0000, (outs DPR:$dst1, DPR:$dst2),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
           IIC_VLD2,
           !strconcat(OpcodeStr, "\t\\{$dst1[$lane],$dst2[$lane]\\}, $addr"),
@@ -287,7 +287,7 @@ def VLD2LNq32b: VLD2LN<0b1001, "vld2.32">;
 
 //   VLD3LN   : Vector Load (single 3-element structure to one lane)
 class VLD3LN<bits<4> op11_8, string OpcodeStr>
-  : NLdSt<1,0b10,op11_8,0b0010, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
+  : NLdSt<1,0b10,op11_8,0b0000, (outs DPR:$dst1, DPR:$dst2, DPR:$dst3),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
           nohash_imm:$lane), IIC_VLD3,
           !strconcat(OpcodeStr,
@@ -308,7 +308,7 @@ def VLD3LNq32b: VLD3LN<0b1010, "vld3.32">;
 
 //   VLD4LN   : Vector Load (single 4-element structure to one lane)
 class VLD4LN<bits<4> op11_8, string OpcodeStr>
-  : NLdSt<1,0b10,op11_8,0b0011,
+  : NLdSt<1,0b10,op11_8,0b0000,
           (outs DPR:$dst1, DPR:$dst2, DPR:$dst3, DPR:$dst4),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
           nohash_imm:$lane), IIC_VLD4,
@@ -450,7 +450,7 @@ def  VST4q32b : VST4WB<0b1000, "vst4.32">;
 
 //   VST2LN   : Vector Store (single 2-element structure from one lane)
 class VST2LN<bits<4> op11_8, string OpcodeStr>
-  : NLdSt<1,0b00,op11_8,0b0001, (outs),
+  : NLdSt<1,0b00,op11_8,0b0000, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, nohash_imm:$lane),
           IIC_VST,
           !strconcat(OpcodeStr, "\t\\{$src1[$lane],$src2[$lane]\\}, $addr"),
@@ -470,7 +470,7 @@ def VST2LNq32b: VST2LN<0b1000, "vst2.32">;
 
 //   VST3LN   : Vector Store (single 3-element structure from one lane)
 class VST3LN<bits<4> op11_8, string OpcodeStr>
-  : NLdSt<1,0b00,op11_8,0b0010, (outs),
+  : NLdSt<1,0b00,op11_8,0b0000, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3,
            nohash_imm:$lane), IIC_VST,
           !strconcat(OpcodeStr,
@@ -490,7 +490,7 @@ def VST3LNq32b: VST3LN<0b1010, "vst3.32">;
 
 //   VST4LN   : Vector Store (single 4-element structure from one lane)
 class VST4LN<bits<4> op11_8, string OpcodeStr>
-  : NLdSt<1,0b00,op11_8,0b0011, (outs),
+  : NLdSt<1,0b00,op11_8,0b0000, (outs),
           (ins addrmode6:$addr, DPR:$src1, DPR:$src2, DPR:$src3, DPR:$src4,
            nohash_imm:$lane), IIC_VST,
           !strconcat(OpcodeStr,
