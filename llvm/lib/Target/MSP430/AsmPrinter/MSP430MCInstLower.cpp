@@ -41,6 +41,19 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
   return Ctx.GetOrCreateSymbol(Name.str());
 }
 
+MCSymbol *MSP430MCInstLower::
+GetExternalSymbolSymbol(const MachineOperand &MO) const {
+  SmallString<128> Name;
+  Name += Printer.MAI->getGlobalPrefix();
+  Name += MO.getSymbolName();
+
+  switch (MO.getTargetFlags()) {
+  default: assert(0 && "Unknown target flag on GV operand");
+  case 0: break;
+  }
+
+  return Ctx.GetOrCreateSymbol(Name.str());
+}
 
 MCSymbol *MSP430MCInstLower::
 GetJumpTableSymbol(const MachineOperand &MO) const {
@@ -118,11 +131,9 @@ void MSP430MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_GlobalAddress:
       MCOp = LowerSymbolOperand(MO, GetGlobalAddressSymbol(MO));
       break;
-#if 0
     case MachineOperand::MO_ExternalSymbol:
       MCOp = LowerSymbolOperand(MO, GetExternalSymbolSymbol(MO));
       break;
-#endif
     case MachineOperand::MO_JumpTableIndex:
       MCOp = LowerSymbolOperand(MO, GetJumpTableSymbol(MO));
       break;
