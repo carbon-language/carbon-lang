@@ -163,7 +163,6 @@ int main(int argc, char **argv, char * const *envp) {
     exit(1);
   }
 
-  EE->RegisterJITEventListener(createMacOSJITEventListener());
   EE->RegisterJITEventListener(createOProfileJITEventListener());
 
   if (NoLazyCompilation)
