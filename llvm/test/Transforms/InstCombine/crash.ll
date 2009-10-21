@@ -44,3 +44,58 @@ entry:
   store i32 %ins, i32* %arrayidx20
   ret void
 }
+
+; PR5262
+@tmp2 = global i64 0                              ; <i64*> [#uses=1]
+
+declare void @use(i64) nounwind
+
+define void @foo(i1) nounwind align 2 {
+; <label>:1
+  br i1 %0, label %2, label %3
+
+; <label>:2                                       ; preds = %1
+  br label %3
+
+; <label>:3                                       ; preds = %2, %1
+  %4 = phi i8 [ 1, %2 ], [ 0, %1 ]                ; <i8> [#uses=1]
+  %5 = icmp eq i8 %4, 0                           ; <i1> [#uses=1]
+  %6 = load i64* @tmp2, align 8                   ; <i64> [#uses=1]
+  %7 = select i1 %5, i64 0, i64 %6                ; <i64> [#uses=1]
+  br label %8
+
+; <label>:8                                       ; preds = %3
+  call void @use(i64 %7)
+  ret void
+}
+
+%t0 = type { i32, i32 }
+%t1 = type { i32, i32, i32, i32, i32* }
+
+declare %t0* @bar2(i64)
+
+define void @bar3(i1, i1) nounwind align 2 {
+; <label>:2
+  br i1 %1, label %10, label %3
+
+; <label>:3                                       ; preds = %2
+  %4 = getelementptr inbounds %t0* null, i64 0, i32 1 ; <i32*> [#uses=0]
+  %5 = getelementptr inbounds %t1* null, i64 0, i32 4 ; <i32**> [#uses=1]
+  %6 = load i32** %5, align 8                     ; <i32*> [#uses=1]
+  %7 = icmp ne i32* %6, null                      ; <i1> [#uses=1]
+  %8 = zext i1 %7 to i32                          ; <i32> [#uses=1]
+  %9 = add i32 %8, 0                              ; <i32> [#uses=1]
+  br label %10
+
+; <label>:10                                      ; preds = %3, %2
+  %11 = phi i32 [ %9, %3 ], [ 0, %2 ]             ; <i32> [#uses=1]
+  br i1 %1, label %12, label %13
+
+; <label>:12                                      ; preds = %10
+  br label %13
+
+; <label>:13                                      ; preds = %12, %10
+  %14 = zext i32 %11 to i64                       ; <i64> [#uses=1]
+  %15 = tail call %t0* @bar2(i64 %14) nounwind      ; <%0*> [#uses=0]
+  ret void
+}

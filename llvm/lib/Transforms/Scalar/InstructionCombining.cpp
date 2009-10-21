@@ -1985,6 +1985,42 @@ static Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI,
   return 0;
 }
 
+// Check whether all the operands of the PHI dominate the PHI node,
+// knowing that the PHI's operands either dominate BB, or are defined in the BB.
+static bool checkPHI(PHINode *PN, BasicBlock *BB)
+{
+  BasicBlock *phiBB = PN->getParent();
+  for (unsigned i=0;i<PN->getNumIncomingValues();i++) {
+    Instruction *I = dyn_cast<Instruction>(PN->getIncomingValue(i));
+    if (!I)
+      continue;
+    BasicBlock *pBB = I->getParent();
+    if (pBB == BB) {
+      // another PHI in same BB is always before PN (PN is last phi).
+      if (isa<PHINode>(I))
+        continue;
+      // An instruction in the same BB, and not a phi, this is after PN.
+      return false;
+    }
+    if (phiBB == BB)
+      continue;
+    // We don't have dominator info, so just check that the instruction
+    // is not defined in on of the BB on the unique path between BB and phiBB.
+    // If there is no such unique path, or pBB equals to one of the BBs on that
+    // path we know that this operand doesn't dominate the PHI node.
+    BasicBlock *B = PN->getIncomingBlock(i);
+    while ((B = B->getUniquePredecessor())) {
+      if (pBB == B)
+        return false;
+      if (B == phiBB)
+        break;
+    }
+    // No unique path -> doesn't dominate
+    if (!B)
+      return false;
+  }
+  return true;
+}
 
 /// FoldOpIntoPhi - Given a binary operator, cast instruction, or select which
 /// has a PHI node as operand #0, see if we can fold the instruction into the
@@ -2036,9 +2072,13 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
   // Okay, we can do the transformation: create the new PHI node.
   PHINode *NewPN = PHINode::Create(I.getType(), "");
   NewPN->reserveOperandSpace(PN->getNumOperands()/2);
-  InsertNewInstBefore(NewPN, *PN);
-  NewPN->takeName(PN);
+  // We must the PHI node as the last PHI, because it may use one of the other
+  // PHIs.
+  BasicBlock::iterator BBIt = PN;
+  while (isa<PHINode>(BBIt)) ++BBIt;
+  InsertNewInstBefore(NewPN, *BBIt);
 
+  SmallVector<Instruction*, 2> tmpWorklist;
   // Next, add all of the operands to the PHI.
   if (SelectInst *SI = dyn_cast<SelectInst>(&I)) {
     // We only currently try to fold the condition of a select when it is a phi,
@@ -2058,7 +2098,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
         InV = SelectInst::Create(PN->getIncomingValue(i), TrueVInPred,
                                  FalseVInPred,
                                  "phitmp", NonConstBB->getTerminator());
-        Worklist.Add(cast<Instruction>(InV));
+        tmpWorklist.push_back(cast<Instruction>(InV));
       }
       NewPN->addIncoming(InV, ThisBB);
     }
@@ -2084,8 +2124,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
                                 NonConstBB->getTerminator());
         else
           llvm_unreachable("Unknown binop!");
-        
-        Worklist.Add(cast<Instruction>(InV));
+        tmpWorklist.push_back(cast<Instruction>(InV));
       }
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
@@ -2101,11 +2140,26 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I,
         InV = CastInst::Create(CI->getOpcode(), PN->getIncomingValue(i), 
                                I.getType(), "phitmp", 
                                NonConstBB->getTerminator());
-        Worklist.Add(cast<Instruction>(InV));
+        tmpWorklist.push_back(cast<Instruction>(InV));
       }
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
   }
+  // The PHI's operands must dominate the PHI, if we can't prove that
+  // undo this transformation.
+  if (!checkPHI(NewPN, I.getParent())) {
+    Worklist.Remove(NewPN);
+    NewPN->eraseFromParent();
+    while (!tmpWorklist.empty()) {
+      tmpWorklist.pop_back_val()->eraseFromParent();
+    }
+    return 0;
+  }
+  while (!tmpWorklist.empty()) {
+    Worklist.Add(tmpWorklist.pop_back_val());
+  }
+  NewPN->takeName(PN);
+  Worklist.Add(PN);
   return ReplaceInstUsesWith(I, NewPN);
 }
 
