@@ -123,16 +123,17 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
 
 Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // Do substitution on the type of the declaration
-  QualType T = SemaRef.SubstType(D->getType(), TemplateArgs,
-                                 D->getTypeSpecStartLoc(),
-                                 D->getDeclName());
-  if (T.isNull())
+  DeclaratorInfo *DI = SemaRef.SubstType(D->getDeclaratorInfo(),
+                                         TemplateArgs,
+                                         D->getTypeSpecStartLoc(),
+                                         D->getDeclName());
+  if (!DI)
     return 0;
 
   // Build the instantiated declaration
   VarDecl *Var = VarDecl::Create(SemaRef.Context, Owner,
                                  D->getLocation(), D->getIdentifier(),
-                                 T, D->getDeclaratorInfo(),
+                                 DI->getType(), DI,
                                  D->getStorageClass());
   Var->setThreadSpecified(D->isThreadSpecified());
   Var->setCXXDirectInitializer(D->hasCXXDirectInitializer());
