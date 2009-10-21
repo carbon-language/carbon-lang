@@ -51,7 +51,7 @@ public:
   void printAddrModePCOperand(const MCInst *MI, unsigned OpNum,
                               const char *Modifier = 0);
     
-  void printBitfieldInvMaskImmOperand (const MCInst *MI, unsigned OpNum);
+  void printBitfieldInvMaskImmOperand(const MCInst *MI, unsigned OpNum);
   
   void printThumbITMask(const MCInst *MI, unsigned OpNum) {}
   void printThumbAddrModeRROperand(const MCInst *MI, unsigned OpNum) {}
