@@ -655,7 +655,8 @@ static enum CXCursorKind TranslateKind(Decl *D) {
 // CXCursor Operations.
 //
 CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name, 
-                         unsigned line, unsigned column)
+                         unsigned line, unsigned column, 
+                         CXDecl RelativeToDecl)
 {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
@@ -670,7 +671,8 @@ CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name,
   SourceLocation SLoc = 
     CXXUnit->getSourceManager().getLocation(File, line, column);
                                                                 
-  ASTLocation ALoc = ResolveLocationInAST(CXXUnit->getASTContext(), SLoc);
+  ASTLocation ALoc = ResolveLocationInAST(CXXUnit->getASTContext(), SLoc,
+                                      static_cast<NamedDecl *>(RelativeToDecl));
   
   Decl *Dcl = ALoc.getParentDecl();
   if (ALoc.isNamedRef())

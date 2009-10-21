@@ -18,7 +18,8 @@
 namespace clang {
   class ASTContext;
   class SourceLocation;
-
+  class Decl;
+  
 namespace idx {
   class ASTLocation;
 
@@ -26,7 +27,8 @@ namespace idx {
 ///
 /// \returns the resolved ASTLocation or an invalid ASTLocation if the source
 /// location could not be resolved.
-ASTLocation ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc);
+ASTLocation ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc, 
+                                 Decl *RelativeToDecl = 0);
 
 } // end namespace idx
 

@@ -497,9 +497,12 @@ void LocResolverBase::print(Stmt *Node) {
 
 /// \brief Returns the AST node that a source location points to.
 ///
-ASTLocation idx::ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc) {
+ASTLocation idx::ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc,
+                                      Decl *RelativeToDecl) {
   if (Loc.isInvalid())
     return ASTLocation();
 
+  if (RelativeToDecl)
+    return DeclLocResolver(Ctx, Loc).Visit(RelativeToDecl);    
   return DeclLocResolver(Ctx, Loc).Visit(Ctx.getTranslationUnitDecl());
 }
