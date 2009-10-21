@@ -310,6 +310,8 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
 
     // Restore the scavenged register before its use (or first terminator).
     TII->loadRegFromStackSlot(*MBB, UseMI, SReg, ScavengingFrameIndex, RC);
+    II = prior(UseMI);
+    TRI->eliminateFrameIndex(II, SPAdj, NULL, this);
   }
 
   ScavengeRestore = prior(UseMI);
