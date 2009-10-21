@@ -774,23 +774,23 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
 }
 
 ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
-  QualType OrigT = SemaRef.SubstType(D->getOriginalType(), TemplateArgs,
-                                           D->getLocation(), D->getDeclName());
-  if (OrigT.isNull())
+  DeclaratorInfo *OrigT = SemaRef.SubstType(D->DeclaratorInfo(), TemplateArgs,
+                                            D->getLocation(), D->getDeclName());
+  if (!OrigT)
     return 0;
 
-  QualType T = SemaRef.adjustParameterType(OrigT);
+  QualType T = SemaRef.adjustParameterType(OrigT->getType());
 
   // Allocate the parameter
   ParmVarDecl *Param = 0;
-  if (T == OrigT)
+  if (T == OrigT->getType())
     Param = ParmVarDecl::Create(SemaRef.Context, Owner, D->getLocation(),
-                                D->getIdentifier(), T, D->getDeclaratorInfo(),
+                                D->getIdentifier(), T, OrigT,
                                 D->getStorageClass(), 0);
   else
     Param = OriginalParmVarDecl::Create(SemaRef.Context, Owner,
                                         D->getLocation(), D->getIdentifier(),
-                                        T, D->getDeclaratorInfo(), OrigT,
+                                        T, OrigT, OrigT->getType(),
                                         D->getStorageClass(), 0);
 
   // Mark the default argument as being uninstantiated.
