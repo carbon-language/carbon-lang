@@ -100,6 +100,8 @@ void MSP430MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MI->dump();
       assert(0 && "unknown operand type");
     case MachineOperand::MO_Register:
+      // Ignore all implicit register operands.
+      if (MO.isImplicit()) continue;
       MCOp = MCOperand::CreateReg(MO.getReg());
       break;
     case MachineOperand::MO_Immediate:
