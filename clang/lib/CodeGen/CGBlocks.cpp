@@ -678,9 +678,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   IdentifierInfo *II = &CGM.getContext().Idents.get(".block_descriptor");
 
   // Allocate all BlockDeclRefDecls, so we can calculate the right ParmTy below.
-  // FIXME: Resolve testsuite problems, then enable.
-  if (0)
-    AllocateAllBlockDeclRefs(Info, this);
+  AllocateAllBlockDeclRefs(Info, this);
 
   QualType ParmTy = getContext().getBlockParmType(BlockDeclRefDecls);
   // FIXME: This leaks
