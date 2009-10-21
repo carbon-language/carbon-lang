@@ -19,6 +19,7 @@ struct B1  : virtual V{
 
 class A  : public B, public B1 {
 public:
+  A() : f(1.0), d(2.0), Ai(3) {}
   float f;
   double d;
   int Ai;
@@ -38,6 +39,5 @@ int main()
   printf("%d\n", &A::B1::iV);
   printf("%d\n", &A::B::V::iV);
   printf("%d\n", &A::B1::V::iV);
-  // FIXME. NYI
-  //  printf(" %d, %f, %f  \n", a1.*pa, a1.f, a1.d);
+  printf("%d, %f, %f  \n", a1.*pa, a1.*pf, a1.*pd);
 }
