@@ -1530,15 +1530,18 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // actually have the same type.  See if we know how to reuse the stored
     // value (depending on its type).
     const TargetData *TD = 0;
-    if (StoredVal->getType() != L->getType() &&
-        (TD = getAnalysisIfAvailable<TargetData>())) {
-      StoredVal = CoerceAvailableValueToLoadType(StoredVal, L->getType(),
-                                                 L, *TD);
-      if (StoredVal == 0)
+    if (StoredVal->getType() != L->getType()) {
+      if ((TD = getAnalysisIfAvailable<TargetData>())) {
+        StoredVal = CoerceAvailableValueToLoadType(StoredVal, L->getType(),
+                                                   L, *TD);
+        if (StoredVal == 0)
+          return false;
+        
+        DEBUG(errs() << "GVN COERCED STORE:\n" << *DepSI << '\n' << *StoredVal
+                     << '\n' << *L << "\n\n\n");
+      }
+      else 
         return false;
-      
-      DEBUG(errs() << "GVN COERCED STORE:\n" << *DepSI << '\n' << *StoredVal
-                   << '\n' << *L << "\n\n\n");
     }
 
     // Remove it!
@@ -1557,14 +1560,17 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     // the same type.  See if we know how to reuse the previously loaded value
     // (depending on its type).
     const TargetData *TD = 0;
-    if (DepLI->getType() != L->getType() &&
-        (TD = getAnalysisIfAvailable<TargetData>())) {
-      AvailableVal = CoerceAvailableValueToLoadType(DepLI, L->getType(), L,*TD);
-      if (AvailableVal == 0)
-        return false;
+    if (DepLI->getType() != L->getType()) {
+      if ((TD = getAnalysisIfAvailable<TargetData>())) {
+        AvailableVal = CoerceAvailableValueToLoadType(DepLI, L->getType(), L,*TD);
+        if (AvailableVal == 0)
+          return false;
       
-      DEBUG(errs() << "GVN COERCED LOAD:\n" << *DepLI << "\n" << *AvailableVal
-                   << "\n" << *L << "\n\n\n");
+        DEBUG(errs() << "GVN COERCED LOAD:\n" << *DepLI << "\n" << *AvailableVal
+                     << "\n" << *L << "\n\n\n");
+      }
+      else 
+        return false;
     }
     
     // Remove it!
