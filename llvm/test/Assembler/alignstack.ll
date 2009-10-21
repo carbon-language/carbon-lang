@@ -5,7 +5,7 @@ target triple = "i386-apple-darwin10.0"
 define void @test1() nounwind {
 ; CHECK: test1
 ; CHECK: sideeffect
-; CHECK-NOT: msasm
+; CHECK-NOT: alignstack
 	tail call void asm sideeffect "mov", "~{dirflag},~{fpsr},~{flags}"() nounwind
 	ret void
 ; CHECK: ret
@@ -13,23 +13,23 @@ define void @test1() nounwind {
 define void @test2() nounwind {
 ; CHECK: test2
 ; CHECK: sideeffect
-; CHECK: msasm
-	tail call void asm sideeffect msasm "mov", "~{dirflag},~{fpsr},~{flags}"() nounwind
+; CHECK: alignstack
+	tail call void asm sideeffect alignstack "mov", "~{dirflag},~{fpsr},~{flags}"() nounwind
 	ret void
 ; CHECK: ret
 }
 define void @test3() nounwind {
 ; CHECK: test3
 ; CHECK-NOT: sideeffect
-; CHECK: msasm
-	tail call void asm msasm "mov", "~{dirflag},~{fpsr},~{flags}"() nounwind
+; CHECK: alignstack
+	tail call void asm alignstack "mov", "~{dirflag},~{fpsr},~{flags}"() nounwind
 	ret void
 ; CHECK: ret
 }
 define void @test4() nounwind {
 ; CHECK: test4
 ; CHECK-NOT: sideeffect
-; CHECK-NOT: msasm
+; CHECK-NOT: alignstack
 	tail call void asm  "mov", "~{dirflag},~{fpsr},~{flags}"() nounwind
 	ret void
 ; CHECK: ret

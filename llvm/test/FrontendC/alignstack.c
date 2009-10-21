@@ -6,7 +6,7 @@
 void Method3()
 {
 // CHECK: Method3
-// CHECK-NOT: msasm
+// CHECK-NOT: alignstack
     asm("foo:");
 // CHECK: return
 }
@@ -14,7 +14,7 @@ void Method3()
 void Method4()
 {
 // CHECK: Method4
-// CHECK: msasm
+// CHECK: alignstack
   asm {
     bar:
   }
