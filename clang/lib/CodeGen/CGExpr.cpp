@@ -866,6 +866,9 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     llvm::Value *V = LocalDeclMap[IPD];
     assert(V && "BlockVarDecl not entered in LocalDeclMap?");
     return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
+  } else if (const QualifiedDeclRefExpr *QDRExpr = 
+             dyn_cast<QualifiedDeclRefExpr>(E)) {
+    return EmitPointerToDataMemberLValue(QDRExpr);
   }
   assert(0 && "Unimp declref");
   //an invalid LValue, but the assert will
@@ -1512,6 +1515,24 @@ LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
   return LValue::MakeAddr(RV.getAggregateAddr(), MakeQualifiers(E->getType()));
 }
 
+
+LValue CodeGenFunction::EmitPointerToDataMemberLValue(
+                                              const QualifiedDeclRefExpr *E) {
+  const FieldDecl *Field = cast<FieldDecl>(E->getDecl());
+  const NestedNameSpecifier *NNSpec = E->getQualifier();
+  const Type *NNSpecType = NNSpec->getAsType();
+  QualType NNSpecTy = getContext().getCanonicalType(QualType(NNSpecType, 0));
+  NNSpecTy = getContext().getPointerType(NNSpecTy);
+  llvm::Value *V = llvm::Constant::getNullValue(ConvertType(NNSpecTy));
+  LValue MemExpLV = EmitLValueForField(V, const_cast<FieldDecl*>(Field), 
+                                       /*isUnion*/false, /*Qualifiers*/0);
+  const llvm::Type* ResultType = ConvertType(
+                                             getContext().getPointerDiffType());
+  V = Builder.CreatePtrToInt(MemExpLV.getAddress(), ResultType, 
+                             "datamember");
+  LValue LV = LValue::MakeAddr(V, MakeQualifiers(E->getType()));
+  return LV;
+}
 
 RValue CodeGenFunction::EmitCall(llvm::Value *Callee, QualType CalleeType,
                                  CallExpr::const_arg_iterator ArgBeg,
