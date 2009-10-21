@@ -374,8 +374,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineType("__INTPTR_TYPE__", TI.getIntPtrType(), Buf);
   DefineType("__SIZE_TYPE__", TI.getSizeType(), Buf);
   DefineType("__WCHAR_TYPE__", TI.getWCharType(), Buf);
-  // FIXME: TargetInfo hookize __WINT_TYPE__.
-  DefineBuiltinMacro(Buf, "__WINT_TYPE__=int");
+  DefineType("__WINT_TYPE__", TI.getWIntType(), Buf);
 
   DefineFloatMacros(Buf, "FLT", &TI.getFloatFormat());
   DefineFloatMacros(Buf, "DBL", &TI.getDoubleFormat());

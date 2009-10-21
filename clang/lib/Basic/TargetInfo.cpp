@@ -43,6 +43,7 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   UIntMaxType = UnsignedLongLong;
   IntPtrType = SignedLong;
   WCharType = SignedInt;
+  WIntType = SignedInt;
   Char16Type = UnsignedShort;
   Char32Type = UnsignedInt;
   Int64Type = SignedLongLong;
