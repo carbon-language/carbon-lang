@@ -1963,7 +1963,7 @@ QualType TreeTransform<Derived>::TransformType(QualType T) {
   // Temporary workaround.  All of these transformations should
   // eventually turn into transformations on TypeLocs.
   DeclaratorInfo *DI = getSema().Context.CreateDeclaratorInfo(T);
-  DI->getTypeLoc().initialize(getBaseLocation());
+  DI->getTypeLoc().initialize(getDerived().getBaseLocation());
   
   DeclaratorInfo *NewDI = getDerived().TransformType(DI);
 
