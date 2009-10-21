@@ -3569,7 +3569,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
         if (DiagnoseUseOfDecl(Fn, DeclLoc))
           return true;
 
-        FixOverloadedFunctionReference(Init, Fn);
+        Init = FixOverloadedFunctionReference(Init, Fn);
       }
 
       T2 = Fn->getType();

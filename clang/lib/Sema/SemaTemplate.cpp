@@ -2037,7 +2037,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       if (DiagnoseUseOfDecl(Fn, Arg->getSourceRange().getBegin()))
         return true;
 
-      FixOverloadedFunctionReference(Arg, Fn);
+      Arg = FixOverloadedFunctionReference(Arg, Fn);
       ArgType = Arg->getType();
       if (ArgType->isFunctionType() && ParamType->isPointerType()) {
         ArgType = Context.getPointerType(Arg->getType());

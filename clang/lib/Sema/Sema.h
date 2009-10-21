@@ -929,7 +929,7 @@ public:
 
   FunctionDecl *ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                                    bool Complain);
-  bool FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
+  Expr *FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn);
 
   void AddOverloadedCallCandidates(NamedDecl *Callee,
                                    DeclarationName &UnqualifiedName,
