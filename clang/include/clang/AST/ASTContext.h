@@ -412,7 +412,10 @@ public:
   QualType getBlockParmType(llvm::SmallVector<const Expr *, 8> &BDRDs);
 
   /// This builds the struct used for __block variables.
-  QualType BuildByRefType(QualType Ty);
+  QualType BuildByRefType(const char *DeclName, QualType Ty);
+
+  /// Returns true iff we need copy/dispose helpers for the given type.
+  bool BlockRequiresCopying(QualType Ty);
 
   /// getLValueReferenceType - Return the uniqued reference to the type for an
   /// lvalue reference to the specified type.

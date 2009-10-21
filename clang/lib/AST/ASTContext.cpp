@@ -2741,17 +2741,72 @@ void ASTContext::setBlockDescriptorType(QualType T) {
   BlockDescriptorType = Rec->getDecl();
 }
 
-QualType ASTContext::BuildByRefType(QualType Ty) {
-  //  type = struct __Block_byref_1_done {
+bool ASTContext::BlockRequiresCopying(QualType Ty) {
+  if (Ty->isBlockPointerType())
+    return true;
+  if (isObjCNSObjectType(Ty))
+    return true;
+  if (Ty->isObjCObjectPointerType())
+    return true;
+  return false;
+}
+
+QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
+  //  type = struct __Block_byref_1_X {
   //    void *__isa;
-  //    struct __Block_byref_1_done *__forwarding;
+  //    struct __Block_byref_1_X *__forwarding;
   //    unsigned int __flags;
   //    unsigned int __size;
-  //    int done;
+  //    void *__copy_helper;
+  //    void *__destroy_helper;
+  //    int X;
   //  } *
 
-  // FIXME: Build up reference type.
-  return getPointerType(VoidPtrTy);
+  bool HasCopyAndDispose = BlockRequiresCopying(Ty);
+
+  // FIXME: Move up
+  static int UniqueBlockByRefTypeID = 0;
+  char Name[36];
+  sprintf(Name, "__Block_byref_%d_%s", ++UniqueBlockByRefTypeID, DeclName);
+  RecordDecl *T;
+  T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
+                         &Idents.get(Name));
+  T->startDefinition();
+  QualType Int32Ty = IntTy;
+  assert(getIntWidth(IntTy) == 32 && "non-32bit int not supported");
+  QualType FieldTypes[] = {
+    getPointerType(VoidPtrTy),
+    getPointerType(getTagDeclType(T)),
+    Int32Ty,
+    Int32Ty,
+    getPointerType(VoidPtrTy),
+    getPointerType(VoidPtrTy),
+    Ty
+  };
+
+  const char *FieldNames[] = {
+    "__isa",
+    "__forwarding",
+    "__flags",
+    "__size",
+    "__copy_helper",
+    "__destroy_helper",
+    DeclName,
+  };
+
+  for (size_t i = 0; i < 7; ++i) {
+    if (!HasCopyAndDispose && i >=4 && i <= 5)
+      continue;
+    FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
+                                         &Idents.get(FieldNames[i]),
+                                         FieldTypes[i], /*DInfo=*/0,
+                                         /*BitWidth=*/0, /*Mutable=*/false);
+    T->addDecl(Field);
+  }
+
+  T->completeDefinition(*this);
+
+  return getPointerType(getTagDeclType(T));
 }
 
 
@@ -2799,7 +2854,8 @@ QualType ASTContext::getBlockParmType(
     QualType FieldType = E->getType();
 
     if (BDRE && BDRE->isByRef())
-      FieldType = BuildByRefType(FieldType);
+      FieldType = BuildByRefType(BDRE->getDecl()->getNameAsCString(),
+                                 FieldType);
 
     FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
                                          Name, FieldType, /*DInfo=*/0,
