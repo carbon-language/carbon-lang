@@ -259,23 +259,17 @@ unsigned MetadataContext::registerMDKind(const StringRef Name) {
 
 /// isValidName - Return true if Name is a valid custom metadata handler name.
 bool MetadataContext::isValidName(const StringRef MDName) {
-  const char *Name = MDName.data();
-  if (!Name)
+  if (MDName.empty())
     return false;
 
-  if (!isalpha(*Name))
+  if (!isalpha(MDName[1]))
     return false;
 
-  unsigned Length = strlen(Name);  
-  unsigned Count = 1;
-  ++Name;
-  while (Name &&
-         (isalnum(*Name) || *Name == '_' || *Name == '-' || *Name == '.')) {
-    ++Name;
-    ++Count;
+  for (StringRef::iterator I = MDName.begin() + 1, E = MDName.end(); I != E;
+       ++I) {
+    if (!isalnum(*I) && *I != '_' && *I != '-' && *I != '.')
+        return false;
   }
-  if (Length != Count)
-    return false;
   return true;
 }
 
