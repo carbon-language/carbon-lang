@@ -467,7 +467,7 @@ struct PointerLikeLocInfo {
 template <class Derived, class TypeClass, class LocalData = PointerLikeLocInfo>
 class PointerLikeTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc, Derived,
                                                   TypeClass, LocalData> {
-protected:
+public:  
   SourceLocation getSigilLoc() const {
     return this->getLocalData()->StarLoc;
   }
@@ -475,7 +475,6 @@ protected:
     this->getLocalData()->StarLoc = Loc;
   }
 
-public:  
   TypeLoc getPointeeLoc() const {
     return this->getInnerTypeLoc();
   }
@@ -537,8 +536,10 @@ class ReferenceTypeLoc : public PointerLikeTypeLoc<ReferenceTypeLoc,
                                                    ReferenceType> {
 };
 
-class LValueReferenceTypeLoc : public PointerLikeTypeLoc<LValueReferenceTypeLoc,
-                                                         LValueReferenceType> {
+class LValueReferenceTypeLoc :
+    public InheritingConcreteTypeLoc<ReferenceTypeLoc,
+                                     LValueReferenceTypeLoc,
+                                     LValueReferenceType> {
 public:
   SourceLocation getAmpLoc() const {
     return getSigilLoc();
@@ -548,8 +549,10 @@ public:
   }
 };
 
-class RValueReferenceTypeLoc : public PointerLikeTypeLoc<RValueReferenceTypeLoc,
-                                                         RValueReferenceType> {
+class RValueReferenceTypeLoc :
+    public InheritingConcreteTypeLoc<ReferenceTypeLoc,
+                                     RValueReferenceTypeLoc,
+                                     RValueReferenceType> {
 public:
   SourceLocation getAmpAmpLoc() const {
     return getSigilLoc();
