@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "MSP430.h"
 #include "MSP430InstrInfo.h"
+#include "MSP430InstPrinter.h"
 #include "MSP430MCAsmInfo.h"
 #include "MSP430TargetMachine.h"
 #include "llvm/Constants.h"
@@ -52,6 +53,9 @@ namespace {
       return "MSP430 Assembly Printer";
     }
 
+    void printMCInst(const MCInst *MI) {
+      MSP430InstPrinter(O, *MAI).printInstruction(MI);
+    }
     void printOperand(const MachineInstr *MI, int OpNum,
                       const char* Modifier = 0);
     void printSrcMemOperand(const MachineInstr *MI, int OpNum,
