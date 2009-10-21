@@ -420,7 +420,8 @@ namespace {
 
     /// \brief Transforms a template type parameter type by performing
     /// substitution of the corresponding template type argument.
-    QualType TransformTemplateTypeParmType(const TemplateTypeParmType *T);
+    QualType TransformTemplateTypeParmType(TypeLocBuilder &TLB,
+                                           TemplateTypeParmTypeLoc TL);
   };
 }
 
@@ -625,8 +626,9 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
 }
 
 QualType
-TemplateInstantiator::TransformTemplateTypeParmType(
-                                              const TemplateTypeParmType *T) {
+TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
+                                                TemplateTypeParmTypeLoc TL) {
+  TemplateTypeParmType *T = TL.getTypePtr();
   if (T->getDepth() < TemplateArgs.getNumLevels()) {
     // Replace the template type parameter with its corresponding
     // template argument.
@@ -635,8 +637,12 @@ TemplateInstantiator::TransformTemplateTypeParmType(
     // because we are performing instantiation from explicitly-specified
     // template arguments in a function template class, but there were some
     // arguments left unspecified.
-    if (!TemplateArgs.hasTemplateArgument(T->getDepth(), T->getIndex()))
-      return QualType(T, 0);
+    if (!TemplateArgs.hasTemplateArgument(T->getDepth(), T->getIndex())) {
+      TemplateTypeParmTypeLoc NewTL
+        = TLB.push<TemplateTypeParmTypeLoc>(TL.getType());
+      NewTL.setNameLoc(TL.getNameLoc());
+      return TL.getType();
+    }
 
     assert(TemplateArgs(T->getDepth(), T->getIndex()).getKind()
              == TemplateArgument::Type &&
@@ -646,18 +652,27 @@ TemplateInstantiator::TransformTemplateTypeParmType(
       = TemplateArgs(T->getDepth(), T->getIndex()).getAsType();
 
     // TODO: only do this uniquing once, at the start of instantiation.
-    return getSema().Context.getSubstTemplateTypeParmType(T, Replacement);
+    QualType Result
+      = getSema().Context.getSubstTemplateTypeParmType(T, Replacement);
+    SubstTemplateTypeParmTypeLoc NewTL
+      = TLB.push<SubstTemplateTypeParmTypeLoc>(Result);
+    NewTL.setNameLoc(TL.getNameLoc());
+    return Result;
   }
 
   // The template type parameter comes from an inner template (e.g.,
   // the template parameter list of a member template inside the
   // template we are instantiating). Create a new template type
   // parameter with the template "level" reduced by one.
-  return getSema().Context.getTemplateTypeParmType(
-                                  T->getDepth() - TemplateArgs.getNumLevels(),
-                                                   T->getIndex(),
-                                                   T->isParameterPack(),
-                                                   T->getName());
+  QualType Result
+    = getSema().Context.getTemplateTypeParmType(T->getDepth()
+                                                 - TemplateArgs.getNumLevels(),
+                                                T->getIndex(),
+                                                T->isParameterPack(),
+                                                T->getName());
+  TemplateTypeParmTypeLoc NewTL = TLB.push<TemplateTypeParmTypeLoc>(Result);
+  NewTL.setNameLoc(TL.getNameLoc());
+  return Result;
 }
 
 /// \brief Perform substitution on the type T with a given set of template

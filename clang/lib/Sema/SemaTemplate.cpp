@@ -4265,12 +4265,27 @@ namespace {
     /// \brief Transforms a typename type by determining whether the type now
     /// refers to a member of the current instantiation, and then
     /// type-checking and building a QualifiedNameType (when possible).
-    QualType TransformTypenameType(const TypenameType *T);
+    QualType TransformTypenameType(TypeLocBuilder &TLB, TypenameTypeLoc TL);
+    QualType TransformTypenameType(TypenameType *T);
   };
 }
 
 QualType
-CurrentInstantiationRebuilder::TransformTypenameType(const TypenameType *T) {
+CurrentInstantiationRebuilder::TransformTypenameType(TypeLocBuilder &TLB,
+                                                     TypenameTypeLoc TL) {
+  QualType Result = TransformTypenameType(TL.getTypePtr());
+  if (Result.isNull())
+    return QualType();
+
+  TypenameTypeLoc NewTL = TLB.push<TypenameTypeLoc>(Result);
+  NewTL.setNameLoc(TL.getNameLoc());
+
+  return Result;
+}
+
+QualType
+CurrentInstantiationRebuilder::TransformTypenameType(TypenameType *T) {
+
   NestedNameSpecifier *NNS
     = TransformNestedNameSpecifier(T->getQualifier(),
                               /*FIXME:*/SourceRange(getBaseLocation()));
