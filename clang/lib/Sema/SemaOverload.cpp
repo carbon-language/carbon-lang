@@ -5086,6 +5086,11 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Object, Args, NumArgs,
                        CandidateSet, /*SuppressUserConversions=*/false);
 
+  if (RequireCompleteType(LParenLoc, Object->getType(), 
+                          PartialDiagnostic(diag::err_incomplete_object_call)
+                            << Object->getSourceRange()))
+    return true;
+  
   // C++ [over.call.object]p2:
   //   In addition, for each conversion function declared in T of the
   //   form
@@ -5103,33 +5108,30 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   //   functions for each conversion function declared in an
   //   accessible base class provided the function is not hidden
   //   within T by another intervening declaration.
+  // FIXME: Look in base classes for more conversion operators!
+  OverloadedFunctionDecl *Conversions
+    = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
+  for (OverloadedFunctionDecl::function_iterator
+         Func = Conversions->function_begin(),
+         FuncEnd = Conversions->function_end();
+       Func != FuncEnd; ++Func) {
+    CXXConversionDecl *Conv;
+    FunctionTemplateDecl *ConvTemplate;
+    GetFunctionAndTemplate(*Func, Conv, ConvTemplate);
 
-  if (!RequireCompleteType(SourceLocation(), Object->getType(), 0)) {
-    // FIXME: Look in base classes for more conversion operators!
-    OverloadedFunctionDecl *Conversions
-      = cast<CXXRecordDecl>(Record->getDecl())->getConversionFunctions();
-    for (OverloadedFunctionDecl::function_iterator
-           Func = Conversions->function_begin(),
-           FuncEnd = Conversions->function_end();
-         Func != FuncEnd; ++Func) {
-      CXXConversionDecl *Conv;
-      FunctionTemplateDecl *ConvTemplate;
-      GetFunctionAndTemplate(*Func, Conv, ConvTemplate);
+    // Skip over templated conversion functions; they aren't
+    // surrogates.
+    if (ConvTemplate)
+      continue;
 
-      // Skip over templated conversion functions; they aren't
-      // surrogates.
-      if (ConvTemplate)
-        continue;
+    // Strip the reference type (if any) and then the pointer type (if
+    // any) to get down to what might be a function type.
+    QualType ConvType = Conv->getConversionType().getNonReferenceType();
+    if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
+      ConvType = ConvPtrType->getPointeeType();
 
-      // Strip the reference type (if any) and then the pointer type (if
-      // any) to get down to what might be a function type.
-      QualType ConvType = Conv->getConversionType().getNonReferenceType();
-      if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
-        ConvType = ConvPtrType->getPointeeType();
-
-      if (const FunctionProtoType *Proto = ConvType->getAs<FunctionProtoType>())
-        AddSurrogateCandidate(Conv, Proto, Object, Args, NumArgs, CandidateSet);
-    }
+    if (const FunctionProtoType *Proto = ConvType->getAs<FunctionProtoType>())
+      AddSurrogateCandidate(Conv, Proto, Object, Args, NumArgs, CandidateSet);
   }
 
   // Perform overload resolution.
