@@ -38,7 +38,8 @@ Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple,
   DarwinVersion[2] = _DarwinVersion[2];
 
   llvm::raw_string_ostream(MacosxVersionMin)
-    << "10." << DarwinVersion[0] - 4 << '.' << DarwinVersion[1];
+    << "10." << std::max(0, (int)DarwinVersion[0] - 4) << '.'
+    << DarwinVersion[1];
 
   // FIXME: Lift default up.
   IPhoneOSVersionMin = "3.0";
