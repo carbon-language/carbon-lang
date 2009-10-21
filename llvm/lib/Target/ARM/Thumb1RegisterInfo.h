@@ -40,6 +40,9 @@ public:
   const TargetRegisterClass *
     getPhysicalRegisterRegClass(unsigned Reg, EVT VT = MVT::Other) const;
 
+  bool requiresRegisterScavenging(const MachineFunction &MF) const;
+  bool requiresFrameIndexScavenging(const MachineFunction &MF) const;
+
   bool hasReservedCallFrame(MachineFunction &MF) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
