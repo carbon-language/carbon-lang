@@ -59,9 +59,19 @@ public:
                                            MachineBasicBlock::iterator MI,
                                  const std::vector<CalleeSavedInfo> &CSI) const;
 
-  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB,
-                             const SmallVectorImpl<MachineOperand> &Cond) const;
+  // Branch folding goodness
+  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
+  bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
+  bool isUnpredicatedTerminator(const MachineInstr *MI) const;
+  bool AnalyzeBranch(MachineBasicBlock &MBB,
+                     MachineBasicBlock *&TBB, MachineBasicBlock *&FBB,
+                     SmallVectorImpl<MachineOperand> &Cond,
+                     bool AllowModify) const;
+
+  unsigned RemoveBranch(MachineBasicBlock &MBB) const;
+  unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                        MachineBasicBlock *FBB,
+                        const SmallVectorImpl<MachineOperand> &Cond) const;
 
 };
 

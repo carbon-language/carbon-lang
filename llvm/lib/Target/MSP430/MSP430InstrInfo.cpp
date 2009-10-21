@@ -151,6 +151,164 @@ MSP430InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
+unsigned MSP430InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+  MachineBasicBlock::iterator I = MBB.end();
+  unsigned Count = 0;
+
+  while (I != MBB.begin()) {
+    --I;
+    if (I->getOpcode() != MSP430::JMP &&
+        I->getOpcode() != MSP430::JCC)
+      break;
+    // Remove the branch.
+    I->eraseFromParent();
+    I = MBB.end();
+    ++Count;
+  }
+
+  return Count;
+}
+
+
+bool MSP430InstrInfo::
+ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
+  assert(Cond.size() == 1 && "Invalid Xbranch condition!");
+
+  MSP430CC::CondCodes CC = static_cast<MSP430CC::CondCodes>(Cond[0].getImm());
+
+  switch (CC) {
+  default:
+    assert(0 && "Invalid branch condition!");
+    break;
+  case MSP430CC::COND_E:
+    CC = MSP430CC::COND_NE;
+    break;
+  case MSP430CC::COND_NE:
+    CC = MSP430CC::COND_E;
+    break;
+  case MSP430CC::COND_L:
+    CC = MSP430CC::COND_GE;
+    break;
+  case MSP430CC::COND_GE:
+    CC = MSP430CC::COND_L;
+    break;
+  case MSP430CC::COND_HS:
+    CC = MSP430CC::COND_LO;
+    break;
+  case MSP430CC::COND_LO:
+    CC = MSP430CC::COND_HS;
+    break;
+  }
+
+  Cond[0].setImm(CC);
+  return false;
+}
+
+bool MSP430InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB)const{
+  if (MBB.empty()) return false;
+
+  switch (MBB.back().getOpcode()) {
+  case MSP430::RET:   // Return.
+  case MSP430::JMP:   // Uncond branch.
+    return true;
+  default: return false;
+  }
+}
+
+bool MSP430InstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (!TID.isTerminator()) return false;
+
+  // Conditional branch is a special case.
+  if (TID.isBranch() && !TID.isBarrier())
+    return true;
+  if (!TID.isPredicable())
+    return true;
+  return !isPredicated(MI);
+}
+
+bool MSP430InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
+                                    MachineBasicBlock *&TBB,
+                                    MachineBasicBlock *&FBB,
+                                    SmallVectorImpl<MachineOperand> &Cond,
+                                    bool AllowModify) const {
+  // Start from the bottom of the block and work up, examining the
+  // terminator instructions.
+  MachineBasicBlock::iterator I = MBB.end();
+  while (I != MBB.begin()) {
+    --I;
+    // Working from the bottom, when we see a non-terminator
+    // instruction, we're done.
+    if (!isUnpredicatedTerminator(I))
+      break;
+
+    // A terminator that isn't a branch can't easily be handled
+    // by this analysis.
+    if (!I->getDesc().isBranch())
+      return true;
+
+    // Handle unconditional branches.
+    if (I->getOpcode() == MSP430::JMP) {
+      if (!AllowModify) {
+        TBB = I->getOperand(0).getMBB();
+        continue;
+      }
+
+      // If the block has any instructions after a JMP, delete them.
+      while (next(I) != MBB.end())
+        next(I)->eraseFromParent();
+      Cond.clear();
+      FBB = 0;
+
+      // Delete the JMP if it's equivalent to a fall-through.
+      if (MBB.isLayoutSuccessor(I->getOperand(0).getMBB())) {
+        TBB = 0;
+        I->eraseFromParent();
+        I = MBB.end();
+        continue;
+      }
+
+      // TBB is used to indicate the unconditinal destination.
+      TBB = I->getOperand(0).getMBB();
+      continue;
+    }
+
+    // Handle conditional branches.
+    assert(I->getOpcode() == MSP430::JCC && "Invalid conditional branch");
+    MSP430CC::CondCodes BranchCode =
+      static_cast<MSP430CC::CondCodes>(I->getOperand(1).getImm());
+    if (BranchCode == MSP430CC::COND_INVALID)
+      return true;  // Can't handle weird stuff.
+
+    // Working from the bottom, handle the first conditional branch.
+    if (Cond.empty()) {
+      FBB = TBB;
+      TBB = I->getOperand(0).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(BranchCode));
+      continue;
+    }
+
+    // Handle subsequent conditional branches. Only handle the case where all
+    // conditional branches branch to the same destination.
+    assert(Cond.size() == 1);
+    assert(TBB);
+
+    // Only handle the case where all conditional branches branch to
+    // the same destination.
+    if (TBB != I->getOperand(0).getMBB())
+      return true;
+
+    MSP430CC::CondCodes OldBranchCode = (MSP430CC::CondCodes)Cond[0].getImm();
+    // If the conditions are the same, we can leave them alone.
+    if (OldBranchCode == BranchCode)
+      continue;
+
+    return true;
+  }
+
+  return false;
+}
+
 unsigned
 MSP430InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                               MachineBasicBlock *FBB,
@@ -172,7 +330,13 @@ MSP430InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
   // Conditional branch.
   unsigned Count = 0;
-  llvm_unreachable("Implement conditional branches!");
+  BuildMI(&MBB, dl, get(MSP430::JCC)).addMBB(TBB).addImm(Cond[0].getImm());
+  ++Count;
 
+  if (FBB) {
+    // Two-way Conditional branch. Insert the second branch.
+    BuildMI(&MBB, dl, get(MSP430::JMP)).addMBB(FBB);
+    ++Count;
+  }
   return Count;
 }

@@ -40,5 +40,3 @@ way (currently they emit explicit comparison).
 10. Handle imm in comparisons in better way (see comment in MSP430InstrInfo.td)
 
 11. Implement hooks for better memory op folding, etc.
-
-12. Implement branch folding.
