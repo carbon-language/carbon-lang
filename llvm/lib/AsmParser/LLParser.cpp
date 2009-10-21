@@ -69,7 +69,7 @@ bool LLParser::Run() {
 /// ValidateEndOfModule - Do final validity and sanity checks at the end of the
 /// module.
 bool LLParser::ValidateEndOfModule() {
-  // Update auto-upgraded malloc calls from "autoupgrade_malloc" to "malloc".
+  // Update auto-upgraded malloc calls to "malloc".
   // FIXME: Remove in LLVM 3.0.
   if (MallocF) {
     MallocF->setName("malloc");
@@ -77,15 +77,10 @@ bool LLParser::ValidateEndOfModule() {
     // declaration of "malloc".  In that case, iterate over all calls to MallocF
     // and get them to call the declared "malloc" instead.
     if (MallocF->getName() != "malloc") {
-      Function* realMallocF = M->getFunction("malloc");
-      for (User::use_iterator UI = MallocF->use_begin(), UE= MallocF->use_end();
-           UI != UE; ) {
-        User* user = *UI;
-        UI++;
-        if (CallInst *Call = dyn_cast<CallInst>(user))
-          Call->setCalledFunction(realMallocF);
-      }
-      if (!realMallocF->doesNotAlias(0)) realMallocF->setDoesNotAlias(0);
+      Constant* RealMallocF = M->getFunction("malloc");
+      if (RealMallocF->getType() != MallocF->getType())
+        RealMallocF = ConstantExpr::getBitCast(RealMallocF, MallocF->getType());
+      MallocF->replaceAllUsesWith(RealMallocF);
       MallocF->eraseFromParent();
       MallocF = NULL;
     }
@@ -3482,21 +3477,21 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
   if (Size && Size->getType() != Type::getInt32Ty(Context))
     return Error(SizeLoc, "element count must be i32");
 
-  if (isAlloca)
+  if (isAlloca) {
     Inst = new AllocaInst(Ty, Size, Alignment);
-  else {
-    // Autoupgrade old malloc instruction to malloc call.
-    const Type* IntPtrTy = Type::getInt32Ty(Context);
-    const Type* Int8PtrTy = PointerType::getUnqual(Type::getInt8Ty(Context));
-    if (!MallocF)
-      // Prototype malloc as "void *autoupgrade_malloc(int32)".
-      MallocF = cast<Function>(M->getOrInsertFunction("autoupgrade_malloc",
-                               Int8PtrTy, IntPtrTy, NULL));
-      // "autoupgrade_malloc" updated to "malloc" in ValidateEndOfModule().
-
-    Inst = cast<Instruction>(CallInst::CreateMalloc(BB, IntPtrTy, Ty,
-                                                    Size, MallocF));
+    return false;
   }
+
+  // Autoupgrade old malloc instruction to malloc call.
+  // FIXME: Remove in LLVM 3.0.
+  const Type *IntPtrTy = Type::getInt32Ty(Context);
+  const Type *Int8PtrTy = Type::getInt8PtrTy(Context);
+  if (!MallocF)
+    // Prototype malloc as "void *(int32)".
+    // This function is renamed as "malloc" in ValidateEndOfModule().
+    MallocF = cast<Function>(M->getOrInsertFunction(NULL, Int8PtrTy, 
+                                                    IntPtrTy, NULL));
+  Inst = CallInst::CreateMalloc(BB, IntPtrTy, Ty, Size, MallocF);
   return false;
 }
 

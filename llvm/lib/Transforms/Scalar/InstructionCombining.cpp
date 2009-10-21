@@ -6359,10 +6359,28 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         // can assume it is successful and remove the malloc.
         if (isMalloc(LHSI) && LHSI->hasOneUse() &&
             isa<ConstantPointerNull>(RHSC)) {
-          Worklist.Add(LHSI);
-          return ReplaceInstUsesWith(I,
+          // Need to explicitly erase malloc call here, instead of adding it to
+          // Worklist, because it won't get DCE'd from the Worklist since
+          // isInstructionTriviallyDead() returns false for function calls.
+          // It is OK to replace LHSI/MallocCall with Undef because the 
+          // instruction that uses it will be erased via Worklist.
+          if (extractMallocCall(LHSI)) {
+            LHSI->replaceAllUsesWith(UndefValue::get(LHSI->getType()));
+            EraseInstFromFunction(*LHSI);
+            return ReplaceInstUsesWith(I,
                                      ConstantInt::get(Type::getInt1Ty(*Context),
                                                       !I.isTrueWhenEqual()));
+          }
+          if (CallInst* MallocCall = extractMallocCallFromBitCast(LHSI))
+            if (MallocCall->hasOneUse()) {
+              MallocCall->replaceAllUsesWith(
+                                        UndefValue::get(MallocCall->getType()));
+              EraseInstFromFunction(*MallocCall);
+              Worklist.Add(LHSI); // The malloc's bitcast use.
+              return ReplaceInstUsesWith(I,
+                                     ConstantInt::get(Type::getInt1Ty(*Context),
+                                                      !I.isTrueWhenEqual()));
+            }
         }
         break;
       }

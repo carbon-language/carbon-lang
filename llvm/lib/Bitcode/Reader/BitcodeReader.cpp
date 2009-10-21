@@ -2045,6 +2045,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
 
     case bitc::FUNC_CODE_INST_MALLOC: { // MALLOC: [instty, op, align]
       // Autoupgrade malloc instruction to malloc call.
+      // FIXME: Remove in LLVM 3.0.
       if (Record.size() < 3)
         return Error("Invalid MALLOC record");
       const PointerType *Ty =
@@ -2052,13 +2053,9 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       Value *Size = getFnValueByID(Record[1], Type::getInt32Ty(Context));
       if (!Ty || !Size) return Error("Invalid MALLOC record");
       if (!CurBB) return Error("Invalid malloc instruction with no BB");
-      const Type* Int32Ty = IntegerType::getInt32Ty(CurBB->getContext());
-      if (Size->getType() != Int32Ty)
-        Size = CastInst::CreateIntegerCast(Size, Int32Ty, false /*ZExt*/,
-                                           "", CurBB);
-      Value* Malloc = CallInst::CreateMalloc(CurBB, Int32Ty,
-                                             Ty->getElementType(), Size, NULL);
-      I = cast<Instruction>(Malloc);
+      const Type *Int32Ty = IntegerType::getInt32Ty(CurBB->getContext());
+      I = CallInst::CreateMalloc(CurBB, Int32Ty, Ty->getElementType(),
+                                 Size, NULL);
       InstructionList.push_back(I);
       break;
     }
