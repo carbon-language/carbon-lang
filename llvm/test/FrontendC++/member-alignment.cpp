@@ -1,5 +1,5 @@
 // RUN: %llvmgxx -S -emit-llvm %s -o - | FileCheck %s
-// XFAIL: arm
+// XFAIL: arm,powerpc
 
 // rdar://7268289
 
