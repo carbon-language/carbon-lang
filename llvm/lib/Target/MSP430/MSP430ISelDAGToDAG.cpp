@@ -151,28 +151,15 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
 /// MoveBelowTokenFactor - Replace TokenFactor operand with load's chain operand
 /// and move load below the TokenFactor. Replace store's chain operand with
 /// load's chain result.
-/// Shamelessly stolen from X86.
 static void MoveBelowTokenFactor(SelectionDAG *CurDAG, SDValue Load,
                                  SDValue Store, SDValue TF) {
   SmallVector<SDValue, 4> Ops;
-  bool isRMW = false;
-  SDValue TF0, TF1, NewTF;
   for (unsigned i = 0, e = TF.getNode()->getNumOperands(); i != e; ++i)
-    if (Load.getNode() == TF.getOperand(i).getNode()) {
-      TF0 = Load.getOperand(0);
-      Ops.push_back(TF0);
-    } else {
-      TF1 = TF.getOperand(i);
-      Ops.push_back(TF1);
-      if (LoadSDNode* LD = dyn_cast<LoadSDNode>(TF1))
-        isRMW = !LD->isVolatile();
-    }
-
-  if (isRMW && TF1.getOperand(0).getNode() == TF0.getNode())
-    NewTF = TF0;
-  else
-    NewTF = CurDAG->UpdateNodeOperands(TF, &Ops[0], Ops.size());
-
+    if (Load.getNode() == TF.getOperand(i).getNode())
+      Ops.push_back(Load.getOperand(0));
+    else
+      Ops.push_back(TF.getOperand(i));
+  SDValue NewTF = CurDAG->UpdateNodeOperands(TF, &Ops[0], Ops.size());
   SDValue NewLoad = CurDAG->UpdateNodeOperands(Load, NewTF,
                                                Load.getOperand(1),
                                                Load.getOperand(2));
@@ -180,10 +167,9 @@ static void MoveBelowTokenFactor(SelectionDAG *CurDAG, SDValue Load,
                              Store.getOperand(2), Store.getOperand(3));
 }
 
-/// isRMWLoad - Return true if N is a load that's part of RMW sub-DAG. The chain
-/// produced by the load must only be used by the store's chain operand,
-/// otherwise this may produce a cycle in the DAG.
-/// Shamelessly stolen from X86. FIXME: Should we make this function common?
+/// isRMWLoad - Return true if N is a load that's part of RMW sub-DAG.
+/// The chain produced by the load must only be used by the store's chain
+/// operand, otherwise this may produce a cycle in the DAG.
 static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
                       SDValue &Load) {
   if (N.getOpcode() == ISD::BIT_CONVERT)
@@ -210,52 +196,86 @@ static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
 }
 
 /// PreprocessForRMW - Preprocess the DAG to make instruction selection better.
-/// Shamelessly stolen from X86.
+/// This is only run if not in -O0 mode.
+/// This allows the instruction selector to pick more read-modify-write
+/// instructions. This is a common case:
+///
+///     [Load chain]
+///         ^
+///         |
+///       [Load]
+///       ^    ^
+///       |    |
+///      /      \-
+///     /         |
+/// [TokenFactor] [Op]
+///     ^          ^
+///     |          |
+///      \        /
+///       \      /
+///       [Store]
+///
+/// The fact the store's chain operand != load's chain will prevent the
+/// (store (op (load))) instruction from being selected. We can transform it to:
+///
+///     [Load chain]
+///         ^
+///         |
+///    [TokenFactor]
+///         ^
+///         |
+///       [Load]
+///       ^    ^
+///       |    |
+///       |     \-
+///       |       |
+///       |     [Op]
+///       |       ^
+///       |       |
+///       \      /
+///        \    /
+///       [Store]
 void MSP430DAGToDAGISel::PreprocessForRMW() {
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
          E = CurDAG->allnodes_end(); I != E; ++I) {
     if (!ISD::isNON_TRUNCStore(I))
       continue;
-
     SDValue Chain = I->getOperand(0);
+
     if (Chain.getNode()->getOpcode() != ISD::TokenFactor)
       continue;
 
-    SDValue N1 = I->getOperand(1); // Value to store
-    SDValue N2 = I->getOperand(2); // Address of store
-
-    if (!N1.hasOneUse())
+    SDValue N1 = I->getOperand(1);
+    SDValue N2 = I->getOperand(2);
+    if ((N1.getValueType().isFloatingPoint() &&
+         !N1.getValueType().isVector()) ||
+        !N1.hasOneUse())
       continue;
 
     bool RModW = false;
     SDValue Load;
     unsigned Opcode = N1.getNode()->getOpcode();
     switch (Opcode) {
-      case ISD::ADD:
-      case ISD::AND:
-      case ISD::OR:
-      case ISD::XOR:
-      case ISD::ADDC:
-      case ISD::ADDE: {
-        SDValue N10 = N1.getOperand(0);
-        SDValue N11 = N1.getOperand(1);
-        RModW = isRMWLoad(N10, Chain, N2, Load);
-
-        if (!RModW && isRMWLoad(N11, Chain, N2, Load)) {
-          // Swap the operands, making the RMW load the first operand seems
-          // to help selection and prevent token chain loops.
-          N1 = CurDAG->UpdateNodeOperands(N1, N11, N10);
-          RModW = true;
-        }
-       break;
-      }
-      case ISD::SUB:
-      case ISD::SUBC:
-      case ISD::SUBE: {
-        SDValue N10 = N1.getOperand(0);
-        RModW = isRMWLoad(N10, Chain, N2, Load);
-        break;
-      }
+    case ISD::ADD:
+    case ISD::AND:
+    case ISD::OR:
+    case ISD::XOR:
+    case ISD::ADDC:
+    case ISD::ADDE: {
+      SDValue N10 = N1.getOperand(0);
+      SDValue N11 = N1.getOperand(1);
+      RModW = isRMWLoad(N10, Chain, N2, Load);
+      if (!RModW)
+        RModW = isRMWLoad(N11, Chain, N2, Load);
+      break;
+    }
+    case ISD::SUB:
+    case ISD::SUBC:
+    case ISD::SUBE: {
+      SDValue N10 = N1.getOperand(0);
+      RModW = isRMWLoad(N10, Chain, N2, Load);
+      break;
+    }
     }
 
     if (RModW) {

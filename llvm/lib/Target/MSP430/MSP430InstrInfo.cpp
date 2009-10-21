@@ -169,7 +169,6 @@ unsigned MSP430InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   return Count;
 }
 
-
 bool MSP430InstrInfo::
 ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   assert(Cond.size() == 1 && "Invalid Xbranch condition!");
