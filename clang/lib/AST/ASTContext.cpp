@@ -943,8 +943,14 @@ void ASTContext::setObjCImplementation(ObjCCategoryDecl *CatD,
 /// \param T the type that will be the basis for type source info. This type
 /// should refer to how the declarator was written in source code, not to
 /// what type semantic analysis resolved the declarator to.
-DeclaratorInfo *ASTContext::CreateDeclaratorInfo(QualType T) {
-  unsigned DataSize = TypeLoc::getFullDataSizeForType(T);
+DeclaratorInfo *ASTContext::CreateDeclaratorInfo(QualType T,
+                                                 unsigned DataSize) {
+  if (!DataSize)
+    DataSize = TypeLoc::getFullDataSizeForType(T);
+  else
+    assert(DataSize == TypeLoc::getFullDataSizeForType(T) &&
+           "incorrect data size provided to CreateDeclaratorInfo!");
+
   DeclaratorInfo *DInfo =
     (DeclaratorInfo*)BumpAlloc.Allocate(sizeof(DeclaratorInfo) + DataSize, 8);
   new (DInfo) DeclaratorInfo(T);

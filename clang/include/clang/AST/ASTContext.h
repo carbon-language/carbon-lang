@@ -1059,7 +1059,10 @@ public:
   /// \param T the type that will be the basis for type source info. This type
   /// should refer to how the declarator was written in source code, not to
   /// what type semantic analysis resolved the declarator to.
-  DeclaratorInfo *CreateDeclaratorInfo(QualType T);
+  ///
+  /// \param Size the size of the type info to create, or 0 if the size
+  /// should be calculated based on the type.
+  DeclaratorInfo *CreateDeclaratorInfo(QualType T, unsigned Size = 0);
 
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
