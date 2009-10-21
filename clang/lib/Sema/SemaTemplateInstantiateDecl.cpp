@@ -204,11 +204,11 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
 
 Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   bool Invalid = false;
-  DeclaratorInfo *DI = D->getDeclaratorInfo();
-  if (DI->getType()->isDependentType())  {
-    DI = SemaRef.SubstType(DI, TemplateArgs,
-                           D->getLocation(), D->getDeclName());
-    if (DI && DI->getType()->isFunctionType()) {
+  QualType T = D->getType();
+  if (T->isDependentType())  {
+    T = SemaRef.SubstType(T, TemplateArgs,
+                          D->getLocation(), D->getDeclName());
+    if (!T.isNull() && T->isFunctionType()) {
       // C++ [temp.arg.type]p3:
       //   If a declaration acquires a function type through a type
       //   dependent on a template-parameter and this causes a
@@ -238,8 +238,8 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
       BitWidth = InstantiatedBitWidth.takeAs<Expr>();
   }
 
-  FieldDecl *Field = SemaRef.CheckFieldDecl(D->getDeclName(),
-                                            DI->getType(), DI,
+  FieldDecl *Field = SemaRef.CheckFieldDecl(D->getDeclName(), T,
+                                            D->getDeclaratorInfo(),
                                             cast<RecordDecl>(Owner),
                                             D->getLocation(),
                                             D->isMutable(),
@@ -774,23 +774,23 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
 }
 
 ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
-  DeclaratorInfo *OrigT = SemaRef.SubstType(D->DeclaratorInfo(), TemplateArgs,
-                                            D->getLocation(), D->getDeclName());
-  if (!OrigT)
+  QualType OrigT = SemaRef.SubstType(D->getOriginalType(), TemplateArgs,
+                                           D->getLocation(), D->getDeclName());
+  if (OrigT.isNull())
     return 0;
 
-  QualType T = SemaRef.adjustParameterType(OrigT->getType());
+  QualType T = SemaRef.adjustParameterType(OrigT);
 
   // Allocate the parameter
   ParmVarDecl *Param = 0;
-  if (T == OrigT->getType())
+  if (T == OrigT)
     Param = ParmVarDecl::Create(SemaRef.Context, Owner, D->getLocation(),
-                                D->getIdentifier(), T, OrigT,
+                                D->getIdentifier(), T, D->getDeclaratorInfo(),
                                 D->getStorageClass(), 0);
   else
     Param = OriginalParmVarDecl::Create(SemaRef.Context, Owner,
                                         D->getLocation(), D->getIdentifier(),
-                                        T, OrigT, OrigT->getType(),
+                                        T, D->getDeclaratorInfo(), OrigT,
                                         D->getStorageClass(), 0);
 
   // Mark the default argument as being uninstantiated.
