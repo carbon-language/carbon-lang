@@ -51,9 +51,9 @@ define <8 x i16> @t3(<8 x i16> %A, <8 x i16> %B) nounwind {
 	%tmp = shufflevector <8 x i16> %A, <8 x i16> %A, <8 x i32> < i32 8, i32 3, i32 2, i32 13, i32 7, i32 6, i32 5, i32 4 >
 	ret <8 x i16> %tmp
 ; X64: t3:
-; X64: 	pshuflw	$44, %xmm0, %xmm1
 ; X64: 	pextrw	$5, %xmm0, %eax
-; X64: 	pshufhw	$27, %xmm1, %xmm0
+; X64: 	pshuflw	$44, %xmm0, %xmm0
+; X64: 	pshufhw	$27, %xmm0, %xmm0
 ; X64: 	pinsrw	$3, %eax, %xmm0
 ; X64: 	ret
 }
@@ -168,11 +168,11 @@ define internal void @t10() nounwind {
         ret void
 ; X64: 	t10:
 ; X64: 		pextrw	$4, %xmm0, %eax
-; X64: 		pextrw	$6, %xmm0, %ecx
+; X64: 		pextrw	$6, %xmm0, %edx
 ; X64: 		movlhps	%xmm1, %xmm1
 ; X64: 		pshuflw	$8, %xmm1, %xmm1
 ; X64: 		pinsrw	$2, %eax, %xmm1
-; X64: 		pinsrw	$3, %ecx, %xmm1
+; X64: 		pinsrw	$3, %edx, %xmm1
 }
 
 
@@ -250,9 +250,9 @@ entry:
         %tmp9 = shufflevector <16 x i8> %tmp8, <16 x i8> %T0,  <16 x i32> < i32 0, i32 1, i32 2, i32 17,  i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef , i32 undef >
         ret <16 x i8> %tmp9
 ; X64: 	t16:
-; X64: 		pextrw	$8, %xmm0, %ecx
 ; X64: 		pinsrw	$0, %eax, %xmm1
-; X64: 		pinsrw	$1, %ecx, %xmm1
+; X64: 		pextrw	$8, %xmm0, %eax
+; X64: 		pinsrw	$1, %eax, %xmm1
 ; X64: 		pextrw	$1, %xmm1, %ecx
 ; X64: 		movd	%xmm1, %edx
 ; X64: 		pinsrw	$0, %edx, %xmm1

@@ -1,7 +1,7 @@
-; RUN: llc < %s -march=x86-64 -post-RA-scheduler -break-anti-dependencies=none > %t
+; RUN: llc < %s -march=x86-64 -post-RA-scheduler -break-anti-dependencies=false > %t
 ; RUN:   grep {%xmm0} %t | count 14
 ; RUN:   not grep {%xmm1} %t
-; RUN: llc < %s -march=x86-64 -post-RA-scheduler -break-anti-dependencies=critical > %t
+; RUN: llc < %s -march=x86-64 -post-RA-scheduler -break-anti-dependencies > %t
 ; RUN:   grep {%xmm0} %t | count 7
 ; RUN:   grep {%xmm1} %t | count 7
 
