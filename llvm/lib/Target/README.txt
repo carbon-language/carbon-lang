@@ -1644,3 +1644,10 @@ Instcombine should be able to optimize away the loads (and thus the globals).
 See also PR4973
 
 //===---------------------------------------------------------------------===//
+
+IPSCCP is propagating elements of first class aggregates, but is not propagating
+the entire aggregate itself.  This leads it to miss opportunities, for example
+in test/Transforms/SCCP/ipsccp-basic.ll:test5b.
+
+//===---------------------------------------------------------------------===//
+
