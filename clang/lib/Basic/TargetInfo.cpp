@@ -74,6 +74,57 @@ const char *TargetInfo::getTypeName(IntType T) {
   }
 }
 
+/// getTypeConstantSuffix - Return the constant suffix for the specified
+/// integer type enum. For example, SignedLong -> "L".
+const char *TargetInfo::getTypeConstantSuffix(IntType T) {
+  switch (T) {
+  default: assert(0 && "not an integer!");
+  case SignedShort:
+  case SignedInt:        return "";
+  case SignedLong:       return "L";
+  case SignedLongLong:   return "LL";
+  case UnsignedShort:
+  case UnsignedInt:      return "U";
+  case UnsignedLong:     return "UL";
+  case UnsignedLongLong: return "ULL";
+  }
+}
+
+/// getTypeWidth - Return the width (in bits) of the specified integer type 
+/// enum. For example, SignedInt -> getIntWidth().
+unsigned TargetInfo::getTypeWidth(IntType T) const {
+  switch (T) {
+  default: assert(0 && "not an integer!");
+  case SignedShort:      return getShortWidth();
+  case UnsignedShort:    return getShortWidth();
+  case SignedInt:        return getIntWidth();
+  case UnsignedInt:      return getIntWidth();
+  case SignedLong:       return getLongWidth();
+  case UnsignedLong:     return getLongWidth();
+  case SignedLongLong:   return getLongLongWidth();
+  case UnsignedLongLong: return getLongLongWidth();
+  };
+}
+
+/// getTypeSigned - Return whether an integer types is signed. Returns true if
+/// the type is signed; false otherwise.
+bool TargetInfo::getTypeSigned(IntType T) const {
+  switch (T) {
+  default: assert(0 && "not an integer!");
+  case SignedShort:
+  case SignedInt:
+  case SignedLong:
+  case SignedLongLong:   
+    return true;
+  case UnsignedShort:
+  case UnsignedInt:
+  case UnsignedLong:
+  case UnsignedLongLong: 
+    return false;
+  };
+}
+
+
 //===----------------------------------------------------------------------===//
 
 
