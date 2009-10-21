@@ -35,6 +35,16 @@ void MSP430InstPrinter::printInst(const MCInst *MI) {
   printInstruction(MI);
 }
 
+void MSP430InstPrinter::printPCRelImmOperand(const MCInst *MI, unsigned OpNo) {
+  const MCOperand &Op = MI->getOperand(OpNo);
+  if (Op.isImm())
+    O << Op.getImm();
+  else {
+    assert(Op.isExpr() && "unknown pcrel immediate operand");
+    Op.getExpr()->print(O, &MAI);
+  }
+}
+
 void MSP430InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                      const char *Modifier) {
   const MCOperand &Op = MI->getOperand(OpNo);
@@ -44,8 +54,7 @@ void MSP430InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << '#' << Op.getImm();
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
-    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    O << (isMemOp ? '&' : '#');
+    O << '#';
     Op.getExpr()->print(O, &MAI);
   }
 }
@@ -56,9 +65,10 @@ void MSP430InstPrinter::printSrcMemOperand(const MCInst *MI, unsigned OpNo,
   const MCOperand &Disp = MI->getOperand(OpNo+1);
 
   // FIXME: move global to displacement field!
-  if (Base.isExpr())
-    printOperand(MI, OpNo, "mem");
-  else if (Disp.isImm() && !Base.isReg())
+  if (Base.isExpr()) {
+    O << '&';
+    Base.getExpr()->print(O, &MAI);
+  } else if (Disp.isImm() && !Base.isReg())
     printOperand(MI, OpNo);
   else if (Base.isReg()) {
     if (Disp.getImm()) {
@@ -74,8 +84,8 @@ void MSP430InstPrinter::printSrcMemOperand(const MCInst *MI, unsigned OpNo,
     Disp.dump();
     llvm_unreachable("Unsupported memory operand");
   }
-
 }
+
 void MSP430InstPrinter::printCCOperand(const MCInst *MI, unsigned OpNo) {
   unsigned CC = MI->getOperand(OpNo).getImm();
 

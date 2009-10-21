@@ -71,7 +71,9 @@ def memdst : Operand<i16> {
 }
 
 // Branch targets have OtherVT type.
-def brtarget : Operand<OtherVT>;
+def brtarget : Operand<OtherVT> {
+  let PrintMethod = "printPCRelImmOperand";
+}
 
 // Operand for printing out a condition code.
 def cc : Operand<i8> {

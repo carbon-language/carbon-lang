@@ -65,6 +65,9 @@ namespace {
     }
     void printOperand(const MachineInstr *MI, int OpNum,
                       const char* Modifier = 0);
+    void printPCRelImmOperand(const MachineInstr *MI, int OpNum) {
+      printOperand(MI, OpNum);
+    }
     void printSrcMemOperand(const MachineInstr *MI, int OpNum,
                             const char* Modifier = 0);
     void printCCOperand(const MachineInstr *MI, int OpNum);
