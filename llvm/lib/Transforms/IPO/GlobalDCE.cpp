@@ -150,7 +150,8 @@ bool GlobalDCE::runOnModule(Module &M) {
   AliveGlobals.clear();
 
   // Remove dead metadata.
-  Changed |= M.getContext().RemoveDeadMetadata();
+  // FIXME - Enable this.
+  // Changed |= M.getContext().RemoveDeadMetadata();
   return Changed;
 }
 
