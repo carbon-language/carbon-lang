@@ -9,7 +9,7 @@
 LEVEL = ../../../..
 TARGET = PIC16
 LIBRARYNAME = LLVMpic16passes
-BUILD_ARCHIVE = 1
+LOADABLE_MODULE = 1
 
 
 
