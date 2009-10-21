@@ -53,6 +53,45 @@ bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   return true;
 }
 
+static int getFunctionColor(const Function *F) {
+  if (F->hasSection()) {
+    std::string Sectn = F->getSection();
+    std::string StrToFind = "Overlay=";
+    unsigned Pos = Sectn.find(StrToFind);
+
+    // Retreive the color number if the key is found.
+    if (Pos != std::string::npos) {
+      Pos += StrToFind.length();
+      std::string Color = "";
+      char c = Sectn.at(Pos);
+      // A Color can only consist of digits.
+      while (c >= '0' && c<= '9') {
+        Color.append(1,c);
+        Pos++;
+        if (Pos >= Sectn.length())
+          break;
+        c = Sectn.at(Pos);
+      }
+      return atoi(Color.c_str());
+    }
+  }
+
+  // Color was not set for function, so return -1.
+  return -1;
+}
+
+// Color the Auto section of the given function. 
+void PIC16AsmPrinter::ColorAutoSection(const Function *F) {
+  std::string SectionName = PAN::getAutosSectionName(CurrentFnName);
+  PIC16Section* Section = PTOF->findPIC16Section(SectionName);
+  if (Section != NULL) {
+    int Color = getFunctionColor(F);
+    if (Color >= 0)
+      Section->setColor(Color);
+  }
+}
+
+
 /// runOnMachineFunction - This emits the frame section, autos section and 
 /// assembly for each instruction. Also takes care of function begin debug
 /// directive and file begin debug directive (if required) for the function.
@@ -67,6 +106,9 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Get the mangled name.
   const Function *F = MF.getFunction();
   CurrentFnName = Mang->getMangledName(F);
+
+  // Put the color information from function to its auto section.
+  ColorAutoSection(F);
 
   // Emit the function frame (args and temps).
   EmitFunctionFrame(MF);
@@ -255,7 +297,6 @@ bool PIC16AsmPrinter::doInitialization(Module &M) {
   EmitDefinedVars(M);
   EmitIData(M);
   EmitUData(M);
-  EmitAllAutos(M);
   EmitRomData(M);
   EmitUserSections(M);
   return Result;
@@ -330,6 +371,7 @@ void PIC16AsmPrinter::EmitRomData(Module &M) {
 }
 
 bool PIC16AsmPrinter::doFinalization(Module &M) {
+  EmitAllAutos(M);
   printLibcallDecls();
   DbgInfo.EndModule(M);
   O << "\n\t" << "END\n";
@@ -343,8 +385,10 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   // Emit the data section name.
   O << "\n"; 
   
-  const MCSection *fPDataSection =
-    getObjFileLowering().SectionForFrame(CurrentFnName);
+  PIC16Section *fPDataSection = const_cast<PIC16Section *>(getObjFileLowering().
+                                SectionForFrame(CurrentFnName));
+ 
+  fPDataSection->setColor(getFunctionColor(F)); 
   OutStreamer.SwitchSection(fPDataSection);
   
   // Emit function frame label

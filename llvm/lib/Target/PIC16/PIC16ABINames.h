@@ -304,6 +304,21 @@ namespace llvm {
         }
       }
     }
+
+    /// Return Overlay Name for the section.
+    /// The ABI Convention is: @<Color>.##.<section_tag>
+    /// The section_tag is retrieved from the SectName parameter and
+    /// and Color is passed in parameter.
+    static inline std::string  getOverlayName(std::string SectName, int Color) {
+      // FIXME: Only autos_section and frame_section are colored.
+      // So check and assert if the passed SectName does not have AUTOS_SECTION
+      // or FRAME_SECTION tag in it.
+      std::ostringstream o;
+      o << getTagName(PREFIX_SYMBOL) << Color << ".##" 
+        << SectName.substr(SectName.find("."));
+
+      return o.str();
+    } 
   }; // class PAN.
 } // end namespace llvm;
 

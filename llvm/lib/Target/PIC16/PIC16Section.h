@@ -57,6 +57,7 @@ namespace llvm {
 
     /// Return the Color of the section.
     int getColor() const { return Color; }
+    void setColor(int color) { Color = color; }
 
     /// Return the size of the section.
     unsigned getSize() const { return Size; }

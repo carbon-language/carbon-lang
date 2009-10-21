@@ -116,6 +116,9 @@ namespace llvm {
     ~PIC16TargetObjectFile();
     void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
+    /// Return the section with the given Name. Null if not found.
+    PIC16Section *findPIC16Section(const std::string &Name);
+
     /// Override section allocations for user specified sections.
     virtual const MCSection *
     getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind, 
@@ -126,6 +129,7 @@ namespace llvm {
                                                     SectionKind Kind,
                                                     Mangler *Mang,
                                                     const TargetMachine&) const;
+
 
     /// Return a code section for a function.
     const PIC16Section *SectionForCode (const std::string &FnName) const;

@@ -68,8 +68,13 @@ PIC16Section *PIC16Section::Create(const StringRef &Name,
 // A generic way to print all types of sections.
 void PIC16Section::PrintSwitchToSection(const MCAsmInfo &MAI,
                                           raw_ostream &OS) const {
-  // Print name.
-  OS << getName() << '\t';
+ 
+  // If the section is overlaid(i.e. it has a color), print overlay name for 
+  // it. Otherwise print its normal name.
+  if (Color != -1)
+    OS << PAN::getOverlayName(getName(), Color) << '\t';
+  else
+    OS << getName() << '\t';
 
   // Print type.
   switch (getType()) {

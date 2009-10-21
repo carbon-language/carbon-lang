@@ -63,6 +63,7 @@ namespace llvm {
     void EmitSingleSection(const PIC16Section *S);
     void EmitSectionList(Module &M, 
                          const std::vector< PIC16Section *> &SList);
+    void ColorAutoSection(const Function *F);
   protected:
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
