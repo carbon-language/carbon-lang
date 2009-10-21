@@ -307,7 +307,6 @@ void MetadataContext::addMD(unsigned MDKind, MDNode *Node, Instruction *Inst) {
 
   // Otherwise add a new entry.
   Info.push_back(std::make_pair(MDKind, Node));
-  return;
 }
 
 /// removeMD - Remove metadata of given kind attached with an instuction.
@@ -324,8 +323,6 @@ void MetadataContext::removeMD(unsigned Kind, Instruction *Inst) {
       return;
     }
   }
-
-  return;
 }
   
 /// removeAllMetadata - Remove all metadata attached with an instruction.
