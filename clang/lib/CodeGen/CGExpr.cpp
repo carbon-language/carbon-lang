@@ -1519,9 +1519,10 @@ LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
 LValue CodeGenFunction::EmitPointerToDataMemberLValue(
                                               const QualifiedDeclRefExpr *E) {
   const FieldDecl *Field = cast<FieldDecl>(E->getDecl());
-  const NestedNameSpecifier *NNSpec = E->getQualifier();
-  const Type *NNSpecType = NNSpec->getAsType();
-  QualType NNSpecTy = getContext().getCanonicalType(QualType(NNSpecType, 0));
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Field->getDeclContext());
+  QualType NNSpecTy = 
+    getContext().getCanonicalType(
+      getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(ClassDecl)));
   NNSpecTy = getContext().getPointerType(NNSpecTy);
   llvm::Value *V = llvm::Constant::getNullValue(ConvertType(NNSpecTy));
   LValue MemExpLV = EmitLValueForField(V, const_cast<FieldDecl*>(Field), 
