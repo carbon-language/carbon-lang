@@ -36,8 +36,6 @@ void MSP430InstPrinter::printInst(const MCInst *MI) {
 
 void MSP430InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                      const char *Modifier) {
-  assert((Modifier == 0 || Modifier[0] == 0) && "Cannot print modifiers");
-
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isReg()) {
     O << getRegisterName(Op.getReg());
@@ -45,6 +43,8 @@ void MSP430InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << '#' << Op.getImm();
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
+    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    O << (isMemOp ? '&' : '#');
     Op.getExpr()->print(O, &MAI);
   }
 }
@@ -54,7 +54,10 @@ void MSP430InstPrinter::printSrcMemOperand(const MCInst *MI, unsigned OpNo,
   const MCOperand &Base = MI->getOperand(OpNo);
   const MCOperand &Disp = MI->getOperand(OpNo+1);
 
-  if (Disp.isImm() && !Base.isReg())
+  // FIXME: move global to displacement field!
+  if (Base.isExpr())
+    printOperand(MI, OpNo, "mem");
+  else if (Disp.isImm() && !Base.isReg())
     printOperand(MI, OpNo);
   else if (Base.isReg()) {
     if (Disp.getImm()) {
