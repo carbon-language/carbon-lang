@@ -220,8 +220,10 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
           OS << "imp-";
         OS << "def";
         NeedComma = true;
-      } else if (isImplicit())
+      } else if (isImplicit()) {
           OS << "imp-use";
+          NeedComma = true;
+      }
 
       if (isKill() || isDead() || isUndef()) {
         if (NeedComma) OS << ',';
