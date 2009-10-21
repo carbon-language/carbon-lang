@@ -33,3 +33,18 @@ using namespace llvm;
 void MSP430InstPrinter::printInst(const MCInst *MI) {
   printInstruction(MI);
 }
+
+void MSP430InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
+                                     const char *Modifier) {
+  assert((Modifier == 0 || Modifier[0] == 0) && "Cannot print modifiers");
+
+  const MCOperand &Op = MI->getOperand(OpNo);
+  if (Op.isReg()) {
+    O << getRegisterName(Op.getReg());
+  } else if (Op.isImm()) {
+    O << '#' << Op.getImm();
+  } else {
+    assert(Op.isExpr() && "unknown operand kind in printOperand");
+    assert(0 && "Unimplemented!");
+  }
+}

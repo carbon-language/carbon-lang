@@ -16,7 +16,7 @@
 
 #include "llvm/MC/MCInstPrinter.h"
 
-namespace llvm 
+namespace llvm
 {
 
   class MCOperand;
@@ -34,10 +34,10 @@ namespace llvm
     static const char *getRegisterName(unsigned RegNo);
 
     void printOperand(const MCInst *MI, unsigned OpNo,
-                      const char *Modifier = 0) {
-    }
+                      const char *Modifier = 0);
+
     void printSrcMemOperand(const MCInst *MI, unsigned OpNo,
-                           const char *Modifier = 0) {
+                            const char *Modifier = 0) {
     }
     void printCCOperand(const MCInst *MI, unsigned OpNo) {
     }
