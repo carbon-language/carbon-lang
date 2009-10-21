@@ -146,6 +146,18 @@ void checkedIncrement(I& P, I E, S ErrorString) {
     throw ErrorString;
 }
 
+// apply is needed because C++'s syntax doesn't let us construct a function
+// object and call it in the same statement.
+template<typename F, typename T0>
+void apply(F Fun, T0& Arg0) {
+  return Fun(Arg0);
+}
+
+template<typename F, typename T0, typename T1>
+void apply(F Fun, T0& Arg0, T1& Arg1) {
+  return Fun(Arg0, Arg1);
+}
+
 //===----------------------------------------------------------------------===//
 /// Back-end specific code
 
@@ -156,6 +168,10 @@ namespace OptionType {
 
   enum OptionType { Alias, Switch, Parameter, ParameterList,
                     Prefix, PrefixList};
+
+  bool IsAlias(OptionType t) {
+    return (t == Alias);
+  }
 
   bool IsList (OptionType t) {
     return (t == ParameterList || t == PrefixList);
@@ -245,11 +261,11 @@ struct OptionDescription {
   bool isReallyHidden() const;
   void setReallyHidden();
 
-  bool isParameter() const
-  { return OptionType::IsParameter(this->Type); }
-
   bool isSwitch() const
   { return OptionType::IsSwitch(this->Type); }
+
+  bool isParameter() const
+  { return OptionType::IsParameter(this->Type); }
 
   bool isList() const
   { return OptionType::IsList(this->Type); }
@@ -272,7 +288,7 @@ void OptionDescription::Merge (const OptionDescription& other)
 }
 
 bool OptionDescription::isAlias() const {
-  return Type == OptionType::Alias;
+  return OptionType::IsAlias(this->Type);
 }
 
 bool OptionDescription::isMultiVal() const {
@@ -365,9 +381,14 @@ class OptionDescriptions {
 public:
   /// FindOption - exception-throwing wrapper for find().
   const OptionDescription& FindOption(const std::string& OptName) const;
-  /// FindSwitch - wrapper for FindOption that throws in case the option is not
-  /// a switch.
+
+  // Wrappers for FindOption that throw an exception in case the option has a
+  // wrong type.
   const OptionDescription& FindSwitch(const std::string& OptName) const;
+  const OptionDescription& FindParameter(const std::string& OptName) const;
+  const OptionDescription& FindList(const std::string& OptName) const;
+  const OptionDescription&
+  FindListOrParameter(const std::string& OptName) const;
 
   /// insertDescription - Insert new OptionDescription into
   /// OptionDescriptions list
@@ -380,8 +401,7 @@ public:
 };
 
 const OptionDescription&
-OptionDescriptions::FindOption(const std::string& OptName) const
-{
+OptionDescriptions::FindOption(const std::string& OptName) const {
   const_iterator I = Descriptions.find(OptName);
   if (I != Descriptions.end())
     return I->second;
@@ -390,16 +410,39 @@ OptionDescriptions::FindOption(const std::string& OptName) const
 }
 
 const OptionDescription&
-OptionDescriptions::FindSwitch(const std::string& OptName) const
-{
+OptionDescriptions::FindSwitch(const std::string& OptName) const {
   const OptionDescription& OptDesc = this->FindOption(OptName);
   if (!OptDesc.isSwitch())
     throw OptName + ": incorrect option type - should be a switch!";
   return OptDesc;
 }
 
-void OptionDescriptions::InsertDescription (const OptionDescription& o)
-{
+const OptionDescription&
+OptionDescriptions::FindList(const std::string& OptName) const {
+  const OptionDescription& OptDesc = this->FindOption(OptName);
+  if (!OptDesc.isList())
+    throw OptName + ": incorrect option type - should be a list!";
+  return OptDesc;
+}
+
+const OptionDescription&
+OptionDescriptions::FindParameter(const std::string& OptName) const {
+  const OptionDescription& OptDesc = this->FindOption(OptName);
+  if (!OptDesc.isParameter())
+    throw OptName + ": incorrect option type - should be a parameter!";
+  return OptDesc;
+}
+
+const OptionDescription&
+OptionDescriptions::FindListOrParameter(const std::string& OptName) const {
+  const OptionDescription& OptDesc = this->FindOption(OptName);
+  if (!OptDesc.isList() && !OptDesc.isParameter())
+    throw OptName
+      + ": incorrect option type - should be a list or parameter!";
+  return OptDesc;
+}
+
+void OptionDescriptions::InsertDescription (const OptionDescription& o) {
   container_type::iterator I = Descriptions.find(o.Name);
   if (I != Descriptions.end()) {
     OptionDescription& D = I->second;
@@ -1067,6 +1110,93 @@ bool EmitCaseTest0Args(const std::string& TestName, raw_ostream& O) {
   return false;
 }
 
+/// EmitListTest - Helper function used by EmitCaseTest1ArgList().
+template <typename F>
+void EmitListTest(const ListInit& L, const char* LogicOp,
+                  F Callback, raw_ostream& O)
+{
+  // This is a lot like EmitLogicalOperationTest, but works on ListInits instead
+  // of Dags...
+  bool isFirst = true;
+  for (ListInit::const_iterator B = L.begin(), E = L.end(); B != E; ++B) {
+    if (isFirst)
+      isFirst = false;
+    else
+      O << " || ";
+    Callback(InitPtrToString(*B), O);
+  }
+}
+
+// Callbacks for use with EmitListTest.
+
+class EmitSwitchOn {
+  const OptionDescriptions& OptDescs_;
+public:
+  EmitSwitchOn(const OptionDescriptions& OptDescs) : OptDescs_(OptDescs)
+  {}
+
+  void operator()(const std::string& OptName, raw_ostream& O) const {
+    const OptionDescription& OptDesc = OptDescs_.FindSwitch(OptName);
+    O << OptDesc.GenVariableName();
+  }
+};
+
+class EmitEmptyTest {
+  bool EmitNegate_;
+  const OptionDescriptions& OptDescs_;
+public:
+  EmitEmptyTest(bool EmitNegate, const OptionDescriptions& OptDescs)
+    : EmitNegate_(EmitNegate), OptDescs_(OptDescs)
+  {}
+
+  void operator()(const std::string& OptName, raw_ostream& O) const {
+    const char* Neg = (EmitNegate_ ? "!" : "");
+    if (OptName == "o") {
+      O << Neg << "OutputFilename.empty()";
+    }
+    else {
+      const OptionDescription& OptDesc = OptDescs_.FindListOrParameter(OptName);
+      O << Neg << OptDesc.GenVariableName() << ".empty()";
+    }
+  }
+};
+
+
+/// EmitCaseTest1ArgList - Helper function used by EmitCaseTest1Arg();
+bool EmitCaseTest1ArgList(const std::string& TestName,
+                          const DagInit& d,
+                          const OptionDescriptions& OptDescs,
+                          raw_ostream& O) {
+  const ListInit& L = *static_cast<ListInit*>(d.getArg(0));
+
+  if (TestName == "any_switch_on") {
+    EmitListTest(L, "||", EmitSwitchOn(OptDescs), O);
+    return true;
+  }
+  else if (TestName == "switch_on") {
+    EmitListTest(L, "&&", EmitSwitchOn(OptDescs), O);
+    return true;
+  }
+  else if (TestName == "any_not_empty") {
+    EmitListTest(L, "||", EmitEmptyTest(true, OptDescs), O);
+    return true;
+  }
+  else if (TestName == "any_empty") {
+    EmitListTest(L, "||", EmitEmptyTest(false, OptDescs), O);
+    return true;
+  }
+  else if (TestName == "not_empty") {
+    EmitListTest(L, "&&", EmitEmptyTest(true, OptDescs), O);
+    return true;
+  }
+  else if (TestName == "empty") {
+    EmitListTest(L, "&&", EmitEmptyTest(false, OptDescs), O);
+    return true;
+  }
+
+  return false;
+}
+
 /// EmitCaseTest1ArgStr - Helper function used by EmitCaseTest1Arg();
 bool EmitCaseTest1ArgStr(const std::string& TestName,
                          const DagInit& d,
@@ -1075,8 +1205,7 @@ bool EmitCaseTest1ArgStr(const std::string& TestName,
   const std::string& OptName = InitPtrToString(d.getArg(0));
 
   if (TestName == "switch_on") {
-    const OptionDescription& OptDesc = OptDescs.FindSwitch(OptName);
-    O << OptDesc.GenVariableName();
+    apply(EmitSwitchOn(OptDescs), OptName, O);
     return true;
   }
   else if (TestName == "input_languages_contain") {
@@ -1092,50 +1221,10 @@ bool EmitCaseTest1ArgStr(const std::string& TestName,
     return true;
   }
   else if (TestName == "not_empty" || TestName == "empty") {
-    const char* Test = (TestName == "empty") ? "" : "!";
-
-    if (OptName == "o") {
-      O << Test << "OutputFilename.empty()";
-      return true;
-    }
-    else {
-      const OptionDescription& OptDesc = OptDescs.FindOption(OptName);
-      if (OptDesc.isSwitch())
-        throw OptName
-          + ": incorrect option type - should be a list or parameter!";
-      O << Test << OptDesc.GenVariableName() << ".empty()";
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/// EmitCaseTest1ArgList - Helper function used by EmitCaseTest1Arg();
-bool EmitCaseTest1ArgList(const std::string& TestName,
-                          const DagInit& d,
-                          const OptionDescriptions& OptDescs,
-                          raw_ostream& O) {
-  const ListInit& L = *static_cast<ListInit*>(d.getArg(0));
-
-  if (TestName == "any_switch_on") {
-    bool isFirst = true;
-
-    for (ListInit::const_iterator B = L.begin(), E = L.end(); B != E; ++B) {
-      const std::string& OptName = InitPtrToString(*B);
-      const OptionDescription& OptDesc = OptDescs.FindSwitch(OptName);
-
-      if (isFirst)
-        isFirst = false;
-      else
-        O << " || ";
-      O << OptDesc.GenVariableName();
-    }
-
+    bool EmitNegate = (TestName == "not_empty");
+    apply(EmitEmptyTest(EmitNegate, OptDescs), OptName, O);
     return true;
   }
-
-  // TODO: implement any_not_empty, any_empty, switch_on [..], empty [..]
 
   return false;
 }
@@ -1161,17 +1250,14 @@ bool EmitCaseTest2Args(const std::string& TestName,
   checkNumberOfArguments(&d, 2);
   const std::string& OptName = InitPtrToString(d.getArg(0));
   const std::string& OptArg = InitPtrToString(d.getArg(1));
-  const OptionDescription& OptDesc = OptDescs.FindOption(OptName);
 
   if (TestName == "parameter_equals") {
-    if (!OptDesc.isParameter())
-      throw OptName + ": incorrect option type - should be a parameter!";
+    const OptionDescription& OptDesc = OptDescs.FindParameter(OptName);
     O << OptDesc.GenVariableName() << " == \"" << OptArg << "\"";
     return true;
   }
   else if (TestName == "element_in_list") {
-    if (!OptDesc.isList())
-      throw OptName + ": incorrect option type - should be a list!";
+    const OptionDescription& OptDesc = OptDescs.FindList(OptName);
     const std::string& VarName = OptDesc.GenVariableName();
     O << "std::find(" << VarName << ".begin(),\n";
     O.indent(IndentLevel + Indent1)
