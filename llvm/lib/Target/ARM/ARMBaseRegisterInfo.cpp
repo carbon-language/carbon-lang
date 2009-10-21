@@ -40,6 +40,11 @@
 using namespace llvm;
 
 static cl::opt<bool>
+ScavengeFrameIndexVals("arm-virtual-frame-index-vals", cl::Hidden,
+          cl::init(false),
+          cl::desc("Resolve frame index values via scavenging in PEI"));
+
+static cl::opt<bool>
 ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(false),
           cl::desc("Reuse repeated frame index values"));
 
@@ -941,7 +946,7 @@ requiresRegisterScavenging(const MachineFunction &MF) const {
 }
 bool ARMBaseRegisterInfo::
 requiresFrameIndexScavenging(const MachineFunction &MF) const {
-  return true;
+  return ScavengeFrameIndexVals;
 }
 
 // hasReservedCallFrame - Under normal circumstances, when a frame pointer is
@@ -1019,6 +1024,17 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
+/// findScratchRegister - Find a 'free' ARM register. If register scavenger
+/// is not being used, R12 is available. Otherwise, try for a call-clobbered
+/// register first and then a spilled callee-saved register if that fails.
+static
+unsigned findScratchRegister(RegScavenger *RS, const TargetRegisterClass *RC,
+                             ARMFunctionInfo *AFI) {
+  unsigned Reg = RS ? RS->FindUnusedReg(RC) : (unsigned) ARM::R12;
+  assert(!AFI->isThumb1OnlyFunction());
+  return Reg;
+}
+
 unsigned
 ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                          int SPAdj, int *Value,
@@ -1082,8 +1098,19 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // Must be addrmode4.
     MI.getOperand(i).ChangeToRegister(FrameReg, false, false, false);
   else {
-    ScratchReg = MF.getRegInfo().createVirtualRegister(ARM::GPRRegisterClass);
-    *Value = Offset;
+    if (!ScavengeFrameIndexVals) {
+      // Insert a set of r12 with the full address: r12 = sp + offset
+      // If the offset we have is too large to fit into the instruction, we need
+      // to form it with a series of ADDri's.  Do this by taking 8-bit chunks
+      // out of 'Offset'.
+      ScratchReg = findScratchRegister(RS, ARM::GPRRegisterClass, AFI);
+      if (ScratchReg == 0)
+        // No register is "free". Scavenge a register.
+        ScratchReg = RS->scavengeRegister(ARM::GPRRegisterClass, II, SPAdj);
+    } else {
+      ScratchReg = MF.getRegInfo().createVirtualRegister(ARM::GPRRegisterClass);
+      *Value = Offset;
+    }
     if (!AFI->isThumbFunction())
       emitARMRegPlusImmediate(MBB, II, MI.getDebugLoc(), ScratchReg, FrameReg,
                               Offset, Pred, PredReg, TII);
@@ -1093,7 +1120,7 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                              Offset, Pred, PredReg, TII);
     }
     MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
-    if (!ReuseFrameIndexVals)
+    if (!ReuseFrameIndexVals || !ScavengeFrameIndexVals)
       ScratchReg = 0;
   }
   return ScratchReg;
