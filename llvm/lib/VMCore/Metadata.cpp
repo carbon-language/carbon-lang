@@ -23,30 +23,6 @@ using namespace llvm;
 // MetadataBase implementation.
 //
 
-/// resizeOperands - Metadata keeps track of other metadata uses using 
-/// OperandList. Resize this list to hold anticipated number of metadata
-/// operands.
-void MetadataBase::resizeOperands(unsigned NumOps) {
-  unsigned e = getNumOperands();
-  if (NumOps == 0) {
-    NumOps = e*2;
-    if (NumOps < 2) NumOps = 2;  
-  } else if (NumOps > NumOperands) {
-    // No resize needed.
-    if (ReservedSpace >= NumOps) return;
-  } else if (NumOps == NumOperands) {
-    if (ReservedSpace == NumOps) return;
-  } else {
-    return;
-  }
-
-  ReservedSpace = NumOps;
-  Use *OldOps = OperandList;
-  Use *NewOps = allocHungoffUses(NumOps);
-  std::copy(OldOps, OldOps + e, NewOps);
-  OperandList = NewOps;
-  if (OldOps) Use::zap(OldOps, OldOps + e, true);
-}
 //===----------------------------------------------------------------------===//
 // MDString implementation.
 //
@@ -65,20 +41,11 @@ MDString *MDString::get(LLVMContext &Context, const StringRef &Str) {
 //
 MDNode::MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals)
   : MetadataBase(Type::getMetadataTy(C), Value::MDNodeVal) {
-  NumOperands = 0;
-  resizeOperands(NumVals);
   NodeSize = NumVals;
   Node = new ElementVH[NodeSize];
   ElementVH *Ptr = Node;
-  for (unsigned i = 0; i != NumVals; ++i) {
-    // Only record metadata uses.
-    if (MetadataBase *MB = dyn_cast_or_null<MetadataBase>(Vals[i]))
-      OperandList[NumOperands++] = MB;
-    else if(Vals[i] && 
-            Vals[i]->getType()->getTypeID() == Type::MetadataTyID)
-      OperandList[NumOperands++] = Vals[i];
+  for (unsigned i = 0; i != NumVals; ++i) 
     *Ptr++ = ElementVH(Vals[i], this);
-  }
 }
 
 void MDNode::Profile(FoldingSetNodeID &ID) const {
@@ -109,19 +76,14 @@ MDNode *MDNode::get(LLVMContext &Context, Value*const* Vals, unsigned NumVals) {
   return N;
 }
 
-/// dropAllReferences - Remove all uses and clear node vector.
-void MDNode::dropAllReferences() {
-  User::dropAllReferences();
-  delete [] Node;
-  Node = NULL;
-}
-
+/// ~MDNode - Destroy MDNode.
 MDNode::~MDNode() {
   {
     LLVMContextImpl *pImpl = getType()->getContext().pImpl;
     pImpl->MDNodeSet.RemoveNode(this);
   }
-  dropAllReferences();
+  delete [] Node;
+  Node = NULL;
 }
 
 // Replace value from this node's element list.
@@ -147,27 +109,6 @@ void MDNode::replaceElement(Value *From, Value *To) {
 
   // Remove "this" from the context map. 
   pImpl->MDNodeSet.RemoveNode(this);
-
-  // MDNode only lists metadata elements in operand list, because MDNode
-  // used by MDNode is considered a valid use. However on the side, MDNode
-  // using a non-metadata value is not considered a "use" of non-metadata
-  // value.
-  SmallVector<unsigned, 4> OpIndexes;
-  unsigned OpIndex = 0;
-  for (User::op_iterator OI = op_begin(), OE = op_end();
-       OI != OE; ++OI, OpIndex++) {
-    if (*OI == From)
-      OpIndexes.push_back(OpIndex);
-  }
-  if (MetadataBase *MDTo = dyn_cast_or_null<MetadataBase>(To)) {
-    for (SmallVector<unsigned, 4>::iterator OI = OpIndexes.begin(),
-           OE = OpIndexes.end(); OI != OE; ++OI)
-      setOperand(*OI, MDTo);
-  } else {
-    for (SmallVector<unsigned, 4>::iterator OI = OpIndexes.begin(),
-           OE = OpIndexes.end(); OI != OE; ++OI)
-      setOperand(*OI, 0);
-  }
 
   // Replace From element(s) in place.
   for (SmallVector<unsigned, 4>::iterator I = Indexes.begin(), E = Indexes.end(); 
@@ -207,14 +148,10 @@ NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
                          unsigned NumMDs, Module *ParentModule)
   : MetadataBase(Type::getMetadataTy(C), Value::NamedMDNodeVal), Parent(0) {
   setName(N);
-  NumOperands = 0;
-  resizeOperands(NumMDs);
 
-  for (unsigned i = 0; i != NumMDs; ++i) {
-    if (MDs[i])
-      OperandList[NumOperands++] = MDs[i];
+  for (unsigned i = 0; i != NumMDs; ++i)
     Node.push_back(WeakMetadataVH(MDs[i]));
-  }
+
   if (ParentModule)
     ParentModule->getNamedMDList().push_back(this);
 }
@@ -236,7 +173,6 @@ void NamedMDNode::eraseFromParent() {
 
 /// dropAllReferences - Remove all uses and clear node vector.
 void NamedMDNode::dropAllReferences() {
-  User::dropAllReferences();
   Node.clear();
 }
 

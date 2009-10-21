@@ -16,7 +16,7 @@
 #ifndef LLVM_METADATA_H
 #define LLVM_METADATA_H
 
-#include "llvm/User.h"
+#include "llvm/Value.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -33,17 +33,11 @@ class LLVMContext;
 
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
-class MetadataBase : public User {
-private:
-  /// ReservedSpace - The number of operands actually allocated.  NumOperands is
-  /// the number actually in use.
-  unsigned ReservedSpace;
-
+class MetadataBase : public Value {
 protected:
   MetadataBase(const Type *Ty, unsigned scid)
-    : User(Ty, scid, NULL, 0), ReservedSpace(0) {}
+    : Value(Ty, scid) {}
 
-  void resizeOperands(unsigned NumOps);
 public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -60,8 +54,6 @@ public:
 /// MDString is always unnamd.
 class MDString : public MetadataBase {
   MDString(const MDString &);            // DO NOT IMPLEMENT
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-  unsigned getNumOperands();             // DO NOT IMPLEMENT
 
   StringRef Str;
 protected:
@@ -69,10 +61,6 @@ protected:
     : MetadataBase(Type::getMetadataTy(C), Value::MDStringVal), Str(begin, l) {}
 
 public:
-  // Do not allocate any space for operands.
-  void *operator new(size_t s) {
-    return User::operator new(s, 0);
-  }
   static MDString *get(LLVMContext &Context, const StringRef &Str);
   
   StringRef getString() const { return Str; }
@@ -102,9 +90,6 @@ public:
 /// MDNode is always unnamed.
 class MDNode : public MetadataBase, public FoldingSetNode {
   MDNode(const MDNode &);                // DO NOT IMPLEMENT
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-  // getNumOperands - Make this only available for private uses.
-  unsigned getNumOperands() { return User::getNumOperands();  }
 
   friend class ElementVH;
   // Use CallbackVH to hold MDNOde elements.
@@ -131,16 +116,9 @@ class MDNode : public MetadataBase, public FoldingSetNode {
 protected:
   explicit MDNode(LLVMContext &C, Value *const *Vals, unsigned NumVals);
 public:
-  // Do not allocate any space for operands.
-  void *operator new(size_t s) {
-    return User::operator new(s, 0);
-  }
   // Constructors and destructors.
   static MDNode *get(LLVMContext &Context, 
                      Value *const *Vals, unsigned NumVals);
-
-  /// dropAllReferences - Remove all uses and clear node vector.
-  void dropAllReferences();
 
   /// ~MDNode - Destroy MDNode.
   ~MDNode();
@@ -193,9 +171,6 @@ class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   friend class LLVMContextImpl;
 
   NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-  // getNumOperands - Make this only available for private uses.
-  unsigned getNumOperands() { return User::getNumOperands();  }
 
   Module *Parent;
   SmallVector<WeakMetadataVH, 4> Node;
@@ -206,10 +181,6 @@ protected:
   explicit NamedMDNode(LLVMContext &C, const Twine &N, MetadataBase*const *Vals, 
                        unsigned NumVals, Module *M = 0);
 public:
-  // Do not allocate any space for operands.
-  void *operator new(size_t s) {
-    return User::operator new(s, 0);
-  }
   static NamedMDNode *Create(LLVMContext &C, const Twine &N, 
                              MetadataBase *const *MDs, 
                              unsigned NumMDs, Module *M = 0) {
@@ -245,8 +216,6 @@ public:
 
   /// addElement - Add metadata element.
   void addElement(MetadataBase *M) {
-    resizeOperands(NumOperands + 1);
-    OperandList[NumOperands++] = M;
     Node.push_back(WeakMetadataVH(M));
   }
 

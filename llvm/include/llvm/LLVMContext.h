@@ -33,7 +33,6 @@ class LLVMContext {
 public:
   LLVMContextImpl* const pImpl;
   MetadataContext &getMetadata();
-  bool RemoveDeadMetadata();
   LLVMContext();
   ~LLVMContext();
 };

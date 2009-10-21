@@ -250,8 +250,6 @@ static bool StripDebugInfo(Module &M) {
   if (NMD)
     NMD->eraseFromParent();
 
-  // Remove dead metadata.
-  M.getContext().RemoveDeadMetadata();
   return true;
 }
 

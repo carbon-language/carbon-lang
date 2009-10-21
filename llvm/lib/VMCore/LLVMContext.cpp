@@ -45,32 +45,6 @@ GetElementPtrConstantExpr::GetElementPtrConstantExpr
     OperandList[i+1] = IdxList[i];
 }
 
-bool LLVMContext::RemoveDeadMetadata() {
-  std::vector<WeakVH> DeadMDNodes;
-  bool Changed = false;
-  while (1) {
-
-    for (FoldingSet<MDNode>::iterator 
-           I = pImpl->MDNodeSet.begin(),
-           E = pImpl->MDNodeSet.end(); I != E; ++I) {
-      MDNode *N = &(*I);
-      if (N->use_empty()) 
-        DeadMDNodes.push_back(WeakVH(N));
-    }
-    
-    if (DeadMDNodes.empty())
-      return Changed;
-
-    while (!DeadMDNodes.empty()) {
-      Value *V = DeadMDNodes.back(); DeadMDNodes.pop_back();
-      if (const MDNode *N = dyn_cast_or_null<MDNode>(V))
-        if (N->use_empty())
-          delete N;
-    }
-  }
-  return Changed;
-}
-
 MetadataContext &LLVMContext::getMetadata() {
   return pImpl->TheMetadata;
 }
