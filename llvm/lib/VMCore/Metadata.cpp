@@ -262,7 +262,7 @@ bool MetadataContext::isValidName(const StringRef MDName) {
   if (MDName.empty())
     return false;
 
-  if (!isalpha(MDName[1]))
+  if (!isalpha(MDName[0]))
     return false;
 
   for (StringRef::iterator I = MDName.begin() + 1, E = MDName.end(); I != E;
