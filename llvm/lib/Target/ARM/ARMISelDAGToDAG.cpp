@@ -1427,6 +1427,43 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       }
     }
     break;
+  case ISD::AND: {
+    // (and (or x, c2), c1) and top 16-bits of c1 and c2 match, lower 16-bits
+    // of c1 are 0xffff, and lower 16-bit of c2 are 0. That is, the top 16-bits
+    // are entirely contributed by c2 and lower 16-bits are entirely contributed
+    // by x. That's equal to (or (and x, 0xffff), (and c1, 0xffff0000)).
+    // Select it to: "movt x, ((c1 & 0xffff) >> 16)
+    EVT VT = Op.getValueType();
+    if (VT != MVT::i32)
+      break;
+    unsigned Opc = (Subtarget->isThumb() && Subtarget->hasThumb2())
+      ? ARM::t2MOVTi16
+      : (Subtarget->hasV6T2Ops() ? ARM::MOVTi16 : 0);
+    if (!Opc)
+      break;
+    SDValue N0 = Op.getOperand(0), N1 = Op.getOperand(1);
+    ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+    if (!N1C)
+      break;
+    if (N0.getOpcode() == ISD::OR && N0.getNode()->hasOneUse()) {
+      SDValue N2 = N0.getOperand(1);
+      ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2);
+      if (!N2C)
+        break;
+      unsigned N1CVal = N1C->getZExtValue();
+      unsigned N2CVal = N2C->getZExtValue();
+      if ((N1CVal & 0xffff0000U) == (N2CVal & 0xffff0000U) &&
+          (N1CVal & 0xffffU) == 0xffffU &&
+          (N2CVal & 0xffffU) == 0x0U) {
+        SDValue Imm16 = CurDAG->getTargetConstant((N2CVal & 0xFFFF0000U) >> 16,
+                                                  MVT::i32);
+        SDValue Ops[] = { N0.getOperand(0), Imm16,
+                          getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
+        return CurDAG->getMachineNode(Opc, dl, VT, Ops, 4);
+      }
+    }
+    break;
+  }
   case ARMISD::FMRRD:
     return CurDAG->getMachineNode(ARM::FMRRD, dl, MVT::i32, MVT::i32,
                                   Op.getOperand(0), getAL(CurDAG),

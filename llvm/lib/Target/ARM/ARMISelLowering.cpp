@@ -3022,7 +3022,6 @@ static SDValue PerformSUBCombine(SDNode *N,
   return SDValue();
 }
 
-
 /// PerformFMRRDCombine - Target-specific dag combine xforms for ARMISD::FMRRD.
 static SDValue PerformFMRRDCombine(SDNode *N,
                                    TargetLowering::DAGCombinerInfo &DCI) {

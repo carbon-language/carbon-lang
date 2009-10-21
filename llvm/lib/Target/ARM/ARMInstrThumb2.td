@@ -666,6 +666,8 @@ def t2MOVTi16 : T2I<(outs GPR:$dst), (ins GPR:$src, i32imm:$imm), IIC_iMOVi,
                     [(set GPR:$dst,
                           (or (and GPR:$src, 0xffff), lo16AllZero:$imm))]>;
 
+def : T2Pat<(or GPR:$src, 0xffff0000), (t2MOVTi16 GPR:$src, 0xffff)>;
+
 //===----------------------------------------------------------------------===//
 //  Extend Instructions.
 //

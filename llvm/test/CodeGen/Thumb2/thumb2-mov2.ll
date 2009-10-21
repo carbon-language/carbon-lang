@@ -2,10 +2,7 @@
 
 define i32 @t2MOVTi16_ok_1(i32 %a) {
 ; CHECK: t2MOVTi16_ok_1:
-; CHECK:      movs r1, #0
-; CHECK-NEXT: movt r1, #1234
-; CHECK:      movw r1, #65535
-; CHECK-NEXT: movt r1, #1234
+; CHECK: movt r0, #1234
     %1 = and i32 %a, 65535
     %2 = shl i32 1234, 16
     %3 = or  i32 %1, %2
@@ -15,10 +12,7 @@ define i32 @t2MOVTi16_ok_1(i32 %a) {
 
 define i32 @t2MOVTi16_test_1(i32 %a) {
 ; CHECK: t2MOVTi16_test_1:
-; CHECK:      movs r1, #0
-; CHECK-NEXT: movt r1, #1234
-; CHECK:      movw r1, #65535
-; CHECK-NEXT: movt r1, #1234
+; CHECK: movt r0, #1234
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
     %3 = or  i32   %1, 255  ; This give us 0xFFFF in %3
@@ -31,10 +25,7 @@ define i32 @t2MOVTi16_test_1(i32 %a) {
 
 define i32 @t2MOVTi16_test_2(i32 %a) {
 ; CHECK: t2MOVTi16_test_2:
-; CHECK:      movs r1, #0
-; CHECK-NEXT: movt r1, #1234
-; CHECK:      movw r1, #65535
-; CHECK-NEXT: movt r1, #1234
+; CHECK: movt r0, #1234
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
     %3 = or  i32   %1, 255  ; This give us 0xFFFF in %3
@@ -48,10 +39,7 @@ define i32 @t2MOVTi16_test_2(i32 %a) {
 
 define i32 @t2MOVTi16_test_3(i32 %a) {
 ; CHECK: t2MOVTi16_test_3:
-; CHECK:      movs r1, #0
-; CHECK-NEXT: movt r1, #1234
-; CHECK:      movw r1, #65535
-; CHECK-NEXT: movt r1, #1234
+; CHECK: movt r0, #1234
     %1 = shl i32  255,   8
     %2 = shl i32 1234,   8
     %3 = or  i32   %1, 255  ; This give us 0xFFFF in %3
