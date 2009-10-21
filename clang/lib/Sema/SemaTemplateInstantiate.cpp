@@ -702,6 +702,22 @@ TemplateInstantiator::TransformTemplateTypeParmType(TypeLocBuilder &TLB,
 ///
 /// \returns If the instantiation succeeds, the instantiated
 /// type. Otherwise, produces diagnostics and returns a NULL type.
+DeclaratorInfo *Sema::SubstType(DeclaratorInfo *T,
+                                const MultiLevelTemplateArgumentList &Args,
+                                SourceLocation Loc,
+                                DeclarationName Entity) {
+  assert(!ActiveTemplateInstantiations.empty() &&
+         "Cannot perform an instantiation without some context on the "
+         "instantiation stack");
+  
+  if (!T->getType()->isDependentType())
+    return T;
+
+  TemplateInstantiator Instantiator(*this, Args, Loc, Entity);
+  return Instantiator.TransformType(T);
+}
+
+/// Deprecated form of the above.
 QualType Sema::SubstType(QualType T,
                          const MultiLevelTemplateArgumentList &TemplateArgs,
                          SourceLocation Loc, DeclarationName Entity) {

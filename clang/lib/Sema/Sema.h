@@ -3152,6 +3152,10 @@ public:
 
   void PerformPendingImplicitInstantiations();
 
+  DeclaratorInfo *SubstType(DeclaratorInfo *T,
+                            const MultiLevelTemplateArgumentList &TemplateArgs,
+                            SourceLocation Loc, DeclarationName Entity);
+
   QualType SubstType(QualType T,
                      const MultiLevelTemplateArgumentList &TemplateArgs,
                      SourceLocation Loc, DeclarationName Entity);
