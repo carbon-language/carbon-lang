@@ -1262,15 +1262,26 @@ class N2V<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
   let Inst{4} = op4;
 }
 
+// NEON Vector Duplicate (scalar).
+// Inst{19-16} is specified by subclasses.
+class N2VDup<bits<2> op24_23, bits<2> op21_20, bits<5> op11_7, bit op6, bit op4,
+             dag oops, dag iops, InstrItinClass itin,
+             string asm, string cstr, list<dag> pattern>
+  : NDataI<oops, iops, itin, asm, cstr, pattern> {
+  let Inst{24-23} = op24_23;
+  let Inst{21-20} = op21_20;
+  let Inst{11-7} = op11_7;
+  let Inst{6} = op6;
+  let Inst{4} = op4;
+}
+
 // NEON 2 vector register with immediate.
-class N2VImm<bit op24, bit op23, bits<6> op21_16, bits<4> op11_8, bit op7,
-             bit op6, bit op4,
+class N2VImm<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
              dag oops, dag iops, InstrItinClass itin,
              string asm, string cstr, list<dag> pattern>
   : NDataI<oops, iops, itin, asm, cstr, pattern> {
   let Inst{24} = op24;
   let Inst{23} = op23;
-  let Inst{21-16} = op21_16;
   let Inst{11-8} = op11_8;
   let Inst{7} = op7;
   let Inst{6} = op6;
