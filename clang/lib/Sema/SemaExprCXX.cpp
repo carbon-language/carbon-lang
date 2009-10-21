@@ -1530,7 +1530,7 @@ static bool FindConditionalOverload(Sema &Self, Expr *&LHS, Expr *&RHS,
                                     SourceLocation Loc) {
   Expr *Args[2] = { LHS, RHS };
   OverloadCandidateSet CandidateSet;
-  Self.AddBuiltinOperatorCandidates(OO_Conditional, Args, 2, CandidateSet);
+  Self.AddBuiltinOperatorCandidates(OO_Conditional, Loc, Args, 2, CandidateSet);
 
   OverloadCandidateSet::iterator Best;
   switch (Self.BestViableFunction(CandidateSet, Loc, Best)) {

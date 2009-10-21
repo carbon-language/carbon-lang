@@ -2764,7 +2764,7 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
   ArgumentDependentLookup(OpName, Args, NumArgs, Functions);
   AddFunctionCandidates(Functions, Args, NumArgs, CandidateSet);
   AddMemberOperatorCandidates(Op, OpLoc, Args, NumArgs, CandidateSet, OpRange);
-  AddBuiltinOperatorCandidates(Op, Args, NumArgs, CandidateSet);
+  AddBuiltinOperatorCandidates(Op, OpLoc, Args, NumArgs, CandidateSet);
 }
 
 /// \brief Add overload candidates for overloaded operators that are
@@ -2925,7 +2925,9 @@ public:
   BuiltinCandidateTypeSet(Sema &SemaRef)
     : SemaRef(SemaRef), Context(SemaRef.Context) { }
 
-  void AddTypesConvertedFrom(QualType Ty, bool AllowUserConversions,
+  void AddTypesConvertedFrom(QualType Ty, 
+                             SourceLocation Loc,
+                             bool AllowUserConversions,
                              bool AllowExplicitConversions,
                              const Qualifiers &VisibleTypeConversionsQuals);
 
@@ -2958,8 +2960,8 @@ public:
 ///
 /// FIXME: what to do about extended qualifiers?
 bool
-BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty
-                                            ,const Qualifiers &VisibleQuals) {
+BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty,
+                                             const Qualifiers &VisibleQuals) {
 
   // Insert this type.
   if (!PointerTypes.insert(Ty))
@@ -3032,6 +3034,7 @@ BuiltinCandidateTypeSet::AddMemberPointerWithMoreQualifiedTypeVariants(
 /// type.
 void
 BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
+                                               SourceLocation Loc,
                                                bool AllowUserConversions,
                                                bool AllowExplicitConversions,
                                                const Qualifiers &VisibleQuals) {
@@ -3061,7 +3064,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
     EnumerationTypes.insert(Ty);
   } else if (AllowUserConversions) {
     if (const RecordType *TyRec = Ty->getAs<RecordType>()) {
-      if (SemaRef.RequireCompleteType(SourceLocation(), Ty, 0)) {
+      if (SemaRef.RequireCompleteType(Loc, Ty, 0)) {
         // No conversion functions in incomplete types.
         return;
       }
@@ -3082,7 +3085,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
           continue;
 
         if (AllowExplicitConversions || !Conv->isExplicit()) {
-          AddTypesConvertedFrom(Conv->getConversionType(), false, false, 
+          AddTypesConvertedFrom(Conv->getConversionType(), Loc, false, false, 
                                 VisibleQuals);
         }
       }
@@ -3175,6 +3178,7 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
 /// operator+(int, int)" to cover integer addition.
 void
 Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
+                                   SourceLocation OpLoc,
                                    Expr **Args, unsigned NumArgs,
                                    OverloadCandidateSet& CandidateSet) {
   // The set of "promoted arithmetic types", which are the arithmetic
@@ -3226,6 +3230,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
       (Op == OO_Star && NumArgs == 1) || Op == OO_Conditional) {
     for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
       CandidateTypes.AddTypesConvertedFrom(Args[ArgIdx]->getType(),
+                                           OpLoc,
                                            true,
                                            (Op == OO_Exclaim ||
                                             Op == OO_AmpAmp ||
@@ -4656,7 +4661,7 @@ Sema::OwningExprResult Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc,
   AddMemberOperatorCandidates(Op, OpLoc, &Args[0], NumArgs, CandidateSet);
 
   // Add builtin operator candidates.
-  AddBuiltinOperatorCandidates(Op, &Args[0], NumArgs, CandidateSet);
+  AddBuiltinOperatorCandidates(Op, OpLoc, &Args[0], NumArgs, CandidateSet);
 
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;
@@ -4816,7 +4821,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   AddMemberOperatorCandidates(Op, OpLoc, Args, 2, CandidateSet);
 
   // Add builtin operator candidates.
-  AddBuiltinOperatorCandidates(Op, Args, 2, CandidateSet);
+  AddBuiltinOperatorCandidates(Op, OpLoc, Args, 2, CandidateSet);
 
   // Perform overload resolution.
   OverloadCandidateSet::iterator Best;

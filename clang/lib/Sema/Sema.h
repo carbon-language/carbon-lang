@@ -908,6 +908,7 @@ public:
                            bool IsAssignmentOperator = false,
                            unsigned NumContextualBoolArguments = 0);
   void AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
+                                    SourceLocation OpLoc,
                                     Expr **Args, unsigned NumArgs,
                                     OverloadCandidateSet& CandidateSet);
   void AddArgumentDependentLookupCandidates(DeclarationName Name,

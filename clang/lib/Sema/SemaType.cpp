@@ -1673,6 +1673,8 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
                                          PartialDiagnostic> Note) {
   unsigned diag = PD.getDiagID();
 
+  // FIXME: Add this assertion to make sure we always get instantiation points.
+  //  assert(!Loc.isInvalid() && "Invalid location in RequireCompleteType");
   // FIXME: Add this assertion to help us flush out problems with
   // checking for dependent types and type-dependent expressions.
   //
