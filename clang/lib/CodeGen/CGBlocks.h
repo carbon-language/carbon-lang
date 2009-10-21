@@ -165,11 +165,7 @@ public:
 
     /// ByCopyDeclRefs - Variables from parent scopes that have been imported
     /// into this block.
-    llvm::SmallVector<const BlockDeclRefExpr *, 8> ByCopyDeclRefs;
-
-    // ByRefDeclRefs - __block variables from parent scopes that have been
-    // imported into this block.
-    llvm::SmallVector<const BlockDeclRefExpr *, 8> ByRefDeclRefs;
+    llvm::SmallVector<const BlockDeclRefExpr *, 8> DeclRefs;
 
     BlockInfo(const llvm::Type *blt, const char *n)
       : BlockLiteralTy(blt), Name(n) {

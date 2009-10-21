@@ -356,6 +356,7 @@ public:
   void BlockForwardSelf();
   llvm::Value *LoadBlockStruct();
 
+  uint64_t AllocateBlockDecl(const BlockDeclRefExpr *E);
   llvm::Value *GetAddrOfBlockDecl(const BlockDeclRefExpr *E);
   const llvm::Type *BuildByRefType(const ValueDecl *D);
 

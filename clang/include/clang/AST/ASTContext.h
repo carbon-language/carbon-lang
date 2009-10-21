@@ -409,11 +409,10 @@ public:
 
   /// This gets the struct used to keep track of pointer to blocks, complete
   /// with captured variables.
-  QualType getBlockParmType();
+  QualType getBlockParmType(llvm::SmallVector<const Expr *, 8> &BDRDs);
 
-  /// This completes a type created by getBlockParmType.
-  void completeBlockParmType(QualType Ty,
-                         llvm::SmallVector<const Expr *, 8> &BlockDeclRefDecls);
+  /// This builds the struct used for __block variables.
+  QualType BuildByRefType(QualType Ty);
 
   /// getLValueReferenceType - Return the uniqued reference to the type for an
   /// lvalue reference to the specified type.

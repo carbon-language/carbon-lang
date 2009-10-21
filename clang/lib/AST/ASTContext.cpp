@@ -2741,7 +2741,22 @@ void ASTContext::setBlockDescriptorType(QualType T) {
   BlockDescriptorType = Rec->getDecl();
 }
 
-QualType ASTContext::getBlockParmType() {
+QualType ASTContext::BuildByRefType(QualType Ty) {
+  //  type = struct __Block_byref_1_done {
+  //    void *__isa;
+  //    struct __Block_byref_1_done *__forwarding;
+  //    unsigned int __flags;
+  //    unsigned int __size;
+  //    int done;
+  //  } *
+
+  // FIXME: Build up reference type.
+  return getPointerType(VoidPtrTy);
+}
+
+
+QualType ASTContext::getBlockParmType(
+  llvm::SmallVector<const Expr *, 8> &BlockDeclRefDecls) {
   // FIXME: Move up
   static int UniqueBlockParmTypeID = 0;
   char Name[36];
@@ -2749,30 +2764,6 @@ QualType ASTContext::getBlockParmType() {
   RecordDecl *T;
   T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
                          &Idents.get(Name));
-
-#define REV2
-#ifdef REV2
-  cast<TagDecl>(T)->startDefinition();
-#endif
-
-  return getPointerType(getTagDeclType(T));
-}
-
-void ASTContext::completeBlockParmType(QualType Ty,
-  llvm::SmallVector<const Expr *, 8> &BlockDeclRefDecls) {
-  RecordDecl *PT = Ty->getPointeeType()->getAs<RecordType>()->getDecl();
-  llvm::StringRef Name = PT->getIdentifier()->getName();
-
-  RecordDecl *T;
-#ifdef REV2
-  T = PT;
-#else
-  T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
-                         &Idents.get(Name), SourceLocation(), PT);
-
-  cast<TagDecl>(T)->startDefinition();
-#endif
-  
   QualType FieldTypes[] = {
     getPointerType(VoidPtrTy),
     IntTy,
@@ -2790,19 +2781,35 @@ void ASTContext::completeBlockParmType(QualType Ty,
   };
 
   for (size_t i = 0; i < 5; ++i) {
-    FieldDecl *Field = FieldDecl::Create(*this,
-                                         T,
-                                         SourceLocation(),
+    FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
                                          &Idents.get(FieldNames[i]),
                                          FieldTypes[i], /*DInfo=*/0,
-                                         /*BitWidth=*/0,
-                                         /*Mutable=*/false);
-    // FIXME: Do this instead or addDecl?
-    // PushOnScopeChains(FieldTypes, S);
+                                         /*BitWidth=*/0, /*Mutable=*/false);
+    T->addDecl(Field);
+  }
+
+  for (size_t i = 0; i < BlockDeclRefDecls.size(); ++i) {
+    const Expr *E = BlockDeclRefDecls[i];
+    const BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(E);
+    clang::IdentifierInfo *Name = 0;
+    if (BDRE) {
+      const ValueDecl *D = BDRE->getDecl();
+      Name = &Idents.get(D->getName());
+    }
+    QualType FieldType = E->getType();
+
+    if (BDRE && BDRE->isByRef())
+      FieldType = BuildByRefType(FieldType);
+
+    FieldDecl *Field = FieldDecl::Create(*this, T, SourceLocation(),
+                                         Name, FieldType, /*DInfo=*/0,
+                                         /*BitWidth=*/0, /*Mutable=*/false);
     T->addDecl(Field);
   }
 
   T->completeDefinition(*this);
+
+  return getPointerType(getTagDeclType(T));
 }
 
 void ASTContext::setObjCFastEnumerationStateType(QualType T) {
