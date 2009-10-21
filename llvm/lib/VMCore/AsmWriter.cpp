@@ -1205,8 +1205,8 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
     Out << "asm ";
     if (IA->hasSideEffects())
       Out << "sideeffect ";
-    if (IA->isMsAsm())
-      Out << "msasm ";
+    if (IA->isAlignStack())
+      Out << "alignstack ";
     Out << '"';
     PrintEscapedString(IA->getAsmString(), Out);
     Out << "\", \"";

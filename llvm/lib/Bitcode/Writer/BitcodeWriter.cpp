@@ -678,7 +678,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
 
     if (const InlineAsm *IA = dyn_cast<InlineAsm>(V)) {
       Record.push_back(unsigned(IA->hasSideEffects()) |
-                       unsigned(IA->isMsAsm()) << 1);
+                       unsigned(IA->isAlignStack()) << 1);
 
       // Add the asm string.
       const std::string &AsmStr = IA->getAsmString();

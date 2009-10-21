@@ -28,18 +28,20 @@ InlineAsm::~InlineAsm() {
 
 InlineAsm *InlineAsm::get(const FunctionType *Ty, const StringRef &AsmString,
                           const StringRef &Constraints, bool hasSideEffects,
-                          bool isMsAsm) {
+                          bool isAlignStack) {
   // FIXME: memoize!
-  return new InlineAsm(Ty, AsmString, Constraints, hasSideEffects, isMsAsm);  
+  return new InlineAsm(Ty, AsmString, Constraints, hasSideEffects, 
+                       isAlignStack);
 }
 
 InlineAsm::InlineAsm(const FunctionType *Ty, const StringRef &asmString,
                      const StringRef &constraints, bool hasSideEffects,
-                     bool isMsAsm)
+                     bool isAlignStack)
   : Value(PointerType::getUnqual(Ty), 
           Value::InlineAsmVal), 
     AsmString(asmString), 
-    Constraints(constraints), HasSideEffects(hasSideEffects), IsMsAsm(isMsAsm) {
+    Constraints(constraints), HasSideEffects(hasSideEffects), 
+    IsAlignStack(isAlignStack) {
 
   // Do various checks on the constraint string and type.
   assert(Verify(Ty, constraints) && "Function type not legal for constraints!");

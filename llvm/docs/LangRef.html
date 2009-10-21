@@ -2339,9 +2339,9 @@ has undefined behavior.</p>
    a special value.  This value represents the inline assembler as a string
    (containing the instructions to emit), a list of operand constraints (stored
    as a string), a flag that indicates whether or not the inline asm
-   expression has side effects, and a flag indicating whether the asm came
-   originally from an asm block.  An example inline assembler
-   expression is:</p>
+   expression has side effects, and a flag indicating whether the function
+   containing the asm needs to align its stack conservatively.  An example
+   inline assembler expression is:</p>
 
 <div class="doc_code">
 <pre>
@@ -2369,12 +2369,16 @@ call void asm sideeffect "eieio", ""()
 </pre>
 </div>
 
-<p>Inline asms derived from asm blocks are similarly marked with the
-   '<tt>msasm</tt>' keyword:</p>
+<p>In some cases inline asms will contain code that will not work unless the
+   stack is aligned in some way, such as calls or SSE instructions on x86,
+   yet will not contain code that does that alignment within the asm.
+   The compiler should make conservative assumptions about what the asm might
+   contain and should generate its usual stack alignment code in the prologue
+   if the '<tt>alignstack</tt>' keyword is present:</p>
 
 <div class="doc_code">
 <pre>
-call void asm msasm "eieio", ""()
+call void asm alignstack "eieio", ""()
 </pre>
 </div>
 

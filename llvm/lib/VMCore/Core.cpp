@@ -885,9 +885,9 @@ LLVMValueRef LLVMConstInsertValue(LLVMValueRef AggConstant,
 
 LLVMValueRef LLVMConstInlineAsm(LLVMTypeRef Ty, const char *AsmString, 
                                 const char *Constraints, int HasSideEffects,
-                                int IsMsAsm) {
+                                int IsAlignStack) {
   return wrap(InlineAsm::get(dyn_cast<FunctionType>(unwrap(Ty)), AsmString, 
-                             Constraints, HasSideEffects, IsMsAsm));
+                             Constraints, HasSideEffects, IsAlignStack));
 }
 
 /*--.. Operations on global variables, functions, and aliases (globals) ....--*/

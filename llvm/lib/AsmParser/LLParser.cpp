@@ -1974,17 +1974,17 @@ bool LLParser::ParseValID(ValID &ID) {
     return false;
 
   case lltok::kw_asm: {
-    // ValID ::= 'asm' SideEffect? MsAsm? STRINGCONSTANT ',' STRINGCONSTANT
-    bool HasSideEffect, MsAsm;
+    // ValID ::= 'asm' SideEffect? AlignStack? STRINGCONSTANT ',' STRINGCONSTANT
+    bool HasSideEffect, AlignStack;
     Lex.Lex();
     if (ParseOptionalToken(lltok::kw_sideeffect, HasSideEffect) ||
-        ParseOptionalToken(lltok::kw_msasm, MsAsm) ||
+        ParseOptionalToken(lltok::kw_alignstack, AlignStack) ||
         ParseStringConstant(ID.StrVal) ||
         ParseToken(lltok::comma, "expected comma in inline asm expression") ||
         ParseToken(lltok::StringConstant, "expected constraint string"))
       return true;
     ID.StrVal2 = Lex.getStrVal();
-    ID.UIntVal = HasSideEffect | ((unsigned)MsAsm<<1);
+    ID.UIntVal = HasSideEffect | ((unsigned)AlignStack<<1);
     ID.Kind = ValID::t_InlineAsm;
     return false;
   }
