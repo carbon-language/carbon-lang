@@ -29,7 +29,7 @@ namespace llvm {
     typedef const char *iterator;
     static const size_t npos = ~size_t(0);
     typedef size_t size_type;
-    
+
   private:
     /// The start of the string, in an external buffer.
     const char *Data;
@@ -45,15 +45,15 @@ namespace llvm {
     /*implicit*/ StringRef() : Data(0), Length(0) {}
 
     /// Construct a string ref from a cstring.
-    /*implicit*/ StringRef(const char *Str) 
+    /*implicit*/ StringRef(const char *Str)
       : Data(Str) { if (Str) Length = ::strlen(Str); else Length = 0; }
- 
+
     /// Construct a string ref from a pointer and length.
-    /*implicit*/ StringRef(const char *data, unsigned length)
+    /*implicit*/ StringRef(const char *data, size_t length)
       : Data(data), Length(length) {}
 
     /// Construct a string ref from an std::string.
-    /*implicit*/ StringRef(const std::string &Str) 
+    /*implicit*/ StringRef(const std::string &Str)
       : Data(Str.c_str()), Length(Str.length()) {}
 
     /// @}
@@ -83,7 +83,7 @@ namespace llvm {
       assert(!empty());
       return Data[0];
     }
-    
+
     /// back - Get the last character in the string.
     char back() const {
       assert(!empty());
@@ -93,7 +93,7 @@ namespace llvm {
     /// equals - Check for string equality, this is more efficient than
     /// compare() when the relative ordering of inequal strings isn't needed.
     bool equals(const StringRef &RHS) const {
-      return (Length == RHS.Length && 
+      return (Length == RHS.Length &&
               memcmp(Data, RHS.Data, RHS.Length) == 0);
     }
 
@@ -117,9 +117,9 @@ namespace llvm {
     /// @name Operator Overloads
     /// @{
 
-    char operator[](size_t Index) const { 
+    char operator[](size_t Index) const {
       assert(Index < Length && "Invalid index!");
-      return Data[Index]; 
+      return Data[Index];
     }
 
     /// @}
@@ -135,7 +135,7 @@ namespace llvm {
     /// @{
 
     /// startswith - Check if this string starts with the given \arg Prefix.
-    bool startswith(const StringRef &Prefix) const { 
+    bool startswith(const StringRef &Prefix) const {
       return substr(0, Prefix.Length).equals(Prefix);
     }
 
@@ -164,7 +164,7 @@ namespace llvm {
     /// \return - The index of the first occurence of \arg Str, or npos if not
     /// found.
     size_t find(const StringRef &Str) const;
-    
+
     /// rfind - Search for the last character \arg C in the string.
     ///
     /// \return - The index of the last occurence of \arg C, or npos if not
@@ -179,29 +179,29 @@ namespace llvm {
       }
       return npos;
     }
-    
+
     /// rfind - Search for the last string \arg Str in the string.
     ///
     /// \return - The index of the last occurence of \arg Str, or npos if not
     /// found.
     size_t rfind(const StringRef &Str) const;
-    
+
     /// find_first_of - Find the first instance of the specified character or
     /// return npos if not in string.  Same as find.
     size_type find_first_of(char C) const { return find(C); }
-    
+
     /// find_first_of - Find the first character from the string 'Chars' in the
     /// current string or return npos if not in string.
     size_type find_first_of(StringRef Chars) const;
-    
+
     /// find_first_not_of - Find the first character in the string that is not
     /// in the string 'Chars' or return npos if all are in string. Same as find.
     size_type find_first_not_of(StringRef Chars) const;
-    
+
     /// @}
     /// @name Helpful Algorithms
     /// @{
-    
+
     /// count - Return the number of occurrences of \arg C in the string.
     size_t count(char C) const {
       size_t Count = 0;
@@ -210,11 +210,11 @@ namespace llvm {
           ++Count;
       return Count;
     }
-    
+
     /// count - Return the number of non-overlapped occurrences of \arg Str in
     /// the string.
     size_t count(const StringRef &Str) const;
-    
+
     /// getAsInteger - Parse the current string as an integer of the specified
     /// radix.  If Radix is specified as zero, this does radix autosensing using
     /// extended C rules: 0 is octal, 0x is hex, 0b is binary.
@@ -229,7 +229,7 @@ namespace llvm {
     bool getAsInteger(unsigned Radix, unsigned &Result) const;
 
     // TODO: Provide overloads for int/unsigned that check for overflow.
-    
+
     /// @}
     /// @name Substring Operations
     /// @{
@@ -308,24 +308,24 @@ namespace llvm {
     return LHS.equals(RHS);
   }
 
-  inline bool operator!=(const StringRef &LHS, const StringRef &RHS) { 
+  inline bool operator!=(const StringRef &LHS, const StringRef &RHS) {
     return !(LHS == RHS);
   }
-  
+
   inline bool operator<(const StringRef &LHS, const StringRef &RHS) {
-    return LHS.compare(RHS) == -1; 
+    return LHS.compare(RHS) == -1;
   }
 
   inline bool operator<=(const StringRef &LHS, const StringRef &RHS) {
-    return LHS.compare(RHS) != 1; 
+    return LHS.compare(RHS) != 1;
   }
 
   inline bool operator>(const StringRef &LHS, const StringRef &RHS) {
-    return LHS.compare(RHS) == 1; 
+    return LHS.compare(RHS) == 1;
   }
 
   inline bool operator>=(const StringRef &LHS, const StringRef &RHS) {
-    return LHS.compare(RHS) != -1; 
+    return LHS.compare(RHS) != -1;
   }
 
   /// @}
