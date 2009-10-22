@@ -1261,6 +1261,24 @@ Sema::OwningExprResult Sema::BuildTemplateIdExpr(TemplateName Template,
   // template arguments that we have against the template name, if the template
   // name refers to a single template. That's not a terribly common case,
   // though.
+  
+  // Cope with an implicit member access in a C++ non-static member function.
+  NamedDecl *D = Template.getAsTemplateDecl();
+  if (!D)
+    D = Template.getAsOverloadedFunctionDecl();
+  
+  QualType ThisType, MemberType;
+  if (D && isImplicitMemberReference(/*FIXME:??*/0, D, TemplateNameLoc, 
+                                     ThisType, MemberType)) {
+    Expr *This = new (Context) CXXThisExpr(SourceLocation(), ThisType);
+    return Owned(MemberExpr::Create(Context, This, true,
+                                    /*FIXME:*/0, /*FIXME:*/SourceRange(),
+                                    D, TemplateNameLoc, true,
+                                    LAngleLoc, TemplateArgs,
+                                    NumTemplateArgs, RAngleLoc,
+                                    Context.OverloadTy));
+  }
+  
   return Owned(TemplateIdRefExpr::Create(Context,
                                          /*FIXME: New type?*/Context.OverloadTy,
                                          /*FIXME: Necessary?*/0,

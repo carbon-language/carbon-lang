@@ -75,3 +75,16 @@ void test_destruct(X2 *x2p, int *ip) {
   destruct(ip);
   destruct_intptr<int>(ip);
 }
+
+// PR5220
+class X3 {
+protected:
+  template <int> float* &f0();
+  template <int> const float* &f0() const;
+  void f1() {
+    (void)static_cast<float*>(f0<0>());
+  }
+  void f1() const{
+    (void)f0<0>();
+  }
+};
