@@ -20,8 +20,6 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ValueHandle.h"
@@ -30,6 +28,7 @@ namespace llvm {
 class Constant;
 class Instruction;
 class LLVMContext;
+class MetadataContextImpl;
 
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
@@ -224,20 +223,15 @@ public:
 /// must start with an alphabet. The regular expression used to check name
 /// is [a-zA-Z$._][a-zA-Z$._0-9]*
 class MetadataContext {
+  // DO NOT IMPLEMENT
+  MetadataContext(MetadataContext&);
+  void operator=(MetadataContext&);
+
+  MetadataContextImpl *const pImpl;
 public:
-  typedef std::pair<unsigned, TrackingVH<MDNode> > MDPairTy;
-  typedef SmallVector<MDPairTy, 2> MDMapTy;
-  typedef DenseMap<const Instruction *, MDMapTy> MDStoreTy;
-  friend class BitcodeReader;
-private:
+  MetadataContext();
+  ~MetadataContext();
 
-  /// MetadataStore - Collection of metadata used in this context.
-  MDStoreTy MetadataStore;
-
-  /// MDHandlerNames - Map to hold metadata handler names.
-  StringMap<unsigned> MDHandlerNames;
-
-public:
   /// registerMDKind - Register a new metadata kind and return its ID.
   /// A metadata kind can be registered only once. 
   unsigned registerMDKind(StringRef Name);
@@ -254,7 +248,8 @@ public:
   MDNode *getMD(unsigned Kind, const Instruction *Inst);
 
   /// getMDs - Get the metadata attached to an Instruction.
-  void getMDs(const Instruction *Inst, SmallVectorImpl<MDPairTy> &MDs) const;
+  void getMDs(const Instruction *Inst, 
+        SmallVectorImpl<std::pair<unsigned, TrackingVH<MDNode> > > &MDs) const;
 
   /// addMD - Attach the metadata of given kind to an Instruction.
   void addMD(unsigned Kind, MDNode *Node, Instruction *Inst);
@@ -276,9 +271,7 @@ public:
   /// ValueIsDeleted - This handler is used to update metadata store
   /// when a value is deleted.
   void ValueIsDeleted(const Value *) {}
-  void ValueIsDeleted(Instruction *Inst) {
-    removeAllMetadata(Inst);
-  }
+  void ValueIsDeleted(Instruction *Inst);
   void ValueIsRAUWd(Value *V1, Value *V2);
 
   /// ValueIsCloned - This handler is used to update metadata store

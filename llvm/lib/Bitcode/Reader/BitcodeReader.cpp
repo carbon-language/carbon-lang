@@ -840,7 +840,15 @@ bool BitcodeReader::ParseMetadata() {
       for (unsigned i = 1; i != RecordLength; ++i)
         Name[i-1] = Record[i];
       MetadataContext &TheMetadata = Context.getMetadata();
-      TheMetadata.MDHandlerNames[Name.str()] = Kind;
+      unsigned ExistingKind = TheMetadata.getMDKind(Name.str());
+      if (ExistingKind == 0) {
+        unsigned NewKind = TheMetadata.registerMDKind(Name.str());
+        assert (Kind == NewKind 
+                && "Unable to handle custom metadata mismatch!");
+      } else {
+        assert (ExistingKind == Kind 
+                && "Unable to handle custom metadata mismatch!");
+      }
       break;
     }
     }
