@@ -7,6 +7,7 @@ _clang_getCursorFromDecl
 _clang_getCursorKind
 _clang_getCursorLine
 _clang_getCursorSource
+_clang_getCursorWithHint
 _clang_getDeclarationName
 _clang_getDeclSpelling
 _clang_getDeclLine
@@ -20,6 +21,7 @@ _clang_loadTranslationUnit
 _clang_createTranslationUnit
 _clang_createTranslationUnitFromSourceFile
 _clang_disposeTranslationUnit
+_clang_initCXLookupHint
 _clang_isDeclaration
 _clang_isReference
 _clang_isDefinition

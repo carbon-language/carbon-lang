@@ -60,9 +60,13 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
             curColumn = 1;
           } else if (*startBuf != '\t')
             curColumn++;
+          
+          CXLookupHint hint;
+          clang_initCXLookupHint(&hint);
+          hint.decl = Cursor.decl;
 
-          Ref = clang_getCursor(Unit, clang_getCursorSource(Cursor),
-                                curLine, curColumn, Cursor.decl);
+          Ref = clang_getCursorWithHint(Unit, clang_getCursorSource(Cursor),
+                                        curLine, curColumn, &hint);
           if (Ref.kind == CXCursor_NoDeclFound) {
             /* Nothing found here; that's fine. */
           } else if (Ref.kind != CXCursor_FunctionDecl) {

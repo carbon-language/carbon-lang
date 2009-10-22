@@ -251,13 +251,24 @@ const char *clang_getDeclSource(CXDecl);
 /**
    Usage: clang_getCursor() will translate a source/line/column position
    into an AST cursor (to derive semantic information from the source code).
-   If 'RelativeToDecl' is NULL, the entire translation unit will be searched.
-   Note that searching the entire translation unit can be slow.
-   Otherwise, the "search" for the AST cursor will start at 'RelativeToDecl'.
  */
 CXCursor clang_getCursor(CXTranslationUnit, const char *source_name, 
-                         unsigned line, unsigned column, 
-                         CXDecl RelativeToDecl);
+                         unsigned line, unsigned column);
+
+/**
+   Usage: clang_getCursorWithHint() provides the same functionality as
+   clang_getCursor() except that it takes an option 'hint' argument.
+   The 'hint' is a temporary CXLookupHint object (whose lifetime is managed by 
+   the caller) that should be initialized with clang_initCXLookupHint().
+
+   FIXME: Add a better comment once getCursorWithHint() has more functionality.
+ */                         
+typedef CXCursor CXLookupHint;
+CXCursor clang_getCursorWithHint(CXTranslationUnit, const char *source_name, 
+                                 unsigned line, unsigned column, 
+                                 CXLookupHint *hint);
+
+void clang_initCXLookupHint(CXLookupHint *hint);
 
 enum CXCursorKind clang_getCursorKind(CXCursor);
 unsigned clang_isDeclaration(enum CXCursorKind);

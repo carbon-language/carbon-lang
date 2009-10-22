@@ -695,12 +695,25 @@ static enum CXCursorKind TranslateKind(Decl *D) {
 //
 // CXCursor Operations.
 //
+void clang_initCXLookupHint(CXLookupHint *hint) {
+  memset(hint, 0, sizeof(*hint));
+}
+
 CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name, 
-                         unsigned line, unsigned column, 
-                         CXDecl RelativeToDecl)
+                         unsigned line, unsigned column) {
+  return clang_getCursorWithHint(CTUnit, source_name, line, column, NULL);
+}
+  
+CXCursor clang_getCursorWithHint(CXTranslationUnit CTUnit,
+                                 const char *source_name, 
+                                 unsigned line, unsigned column, 
+                                 CXLookupHint *hint)
 {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
+  
+  // FIXME: Make this better.
+  CXDecl RelativeToDecl = hint ? hint->decl : NULL;
   
   FileManager &FMgr = CXXUnit->getFileManager();
   const FileEntry *File = FMgr.getFile(source_name, 
