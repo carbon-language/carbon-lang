@@ -103,16 +103,18 @@ bool ARMBaseTargetMachine::addPreRegAlloc(PassManagerBase &PM,
 bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM,
                                         CodeGenOpt::Level OptLevel) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb1.
-  if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only()) {
+  if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
     PM.add(createARMLoadStoreOptimizationPass());
-    PM.add(createIfConverterPass());
-  }
 
   return true;
 }
 
 bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel) {
+  // FIXME: temporarily disabling load / store optimization pass for Thumb1.
+  if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
+    PM.add(createIfConverterPass());
+
   if (Subtarget.isThumb2()) {
     PM.add(createThumb2ITBlockPass());
     PM.add(createThumb2SizeReductionPass());

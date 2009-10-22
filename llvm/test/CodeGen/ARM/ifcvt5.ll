@@ -11,8 +11,7 @@ entry:
 
 define void @t1(i32 %a, i32 %b) {
 ; CHECK: t1:
-; CHECK: movge
-; CHECK: blge _foo
+; CHECK: ldmltfd sp!, {r7, pc}
 entry:
 	%tmp1 = icmp sgt i32 %a, 10		; <i1> [#uses=1]
 	br i1 %tmp1, label %cond_true, label %UnifiedReturnBlock
