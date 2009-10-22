@@ -1988,6 +1988,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.ObjCIdRedefinitionType, Record);
   AddTypeRef(Context.ObjCClassRedefinitionType, Record);
   AddTypeRef(Context.getRawBlockdescriptorType(), Record);
+  AddTypeRef(Context.getRawBlockdescriptorExtendedType(), Record);
   Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
 
   // Keep writing types and declarations until all types and

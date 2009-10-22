@@ -438,7 +438,9 @@ namespace clang {
       /// \brief Objective-C "Class" redefinition type
       SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 11,
       /// \brief Block descriptor type for Blocks CodeGen
-      SPECIAL_TYPE_BLOCK_DESCRIPTOR            = 12
+      SPECIAL_TYPE_BLOCK_DESCRIPTOR            = 12,
+      /// \brief Block extedned descriptor type for Blocks CodeGen
+      SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR   = 13
     };
 
     /// \brief Record codes for each kind of declaration.

@@ -1591,6 +1591,9 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
     Context->ObjCClassRedefinitionType = GetType(ObjCClassRedef);
   if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_BLOCK_DESCRIPTOR])
     Context->setBlockDescriptorType(GetType(String));
+  if (unsigned String
+      = SpecialTypes[pch::SPECIAL_TYPE_BLOCK_EXTENDED_DESCRIPTOR])
+    Context->setBlockDescriptorExtendedType(GetType(String));
 }
 
 /// \brief Retrieve the name of the original source file name

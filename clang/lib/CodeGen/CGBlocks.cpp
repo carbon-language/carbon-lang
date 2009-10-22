@@ -486,8 +486,10 @@ uint64_t CodeGenFunction::AllocateBlockDecl(const BlockDeclRefExpr *E) {
     return offset;
 
   // Don't run the expensive check, unless we have to.
-  if (!BlockHasCopyDispose && BlockRequiresCopying(E->getType()))
-    BlockHasCopyDispose = true;
+  if (!BlockHasCopyDispose)
+    if (E->isByRef()
+        || BlockRequiresCopying(E->getType()))
+      BlockHasCopyDispose = true;
 
   // if not, allocate one now.
   offset = getBlockOffset(E);
@@ -680,7 +682,8 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
   // Allocate all BlockDeclRefDecls, so we can calculate the right ParmTy below.
   AllocateAllBlockDeclRefs(Info, this);
 
-  QualType ParmTy = getContext().getBlockParmType(BlockDeclRefDecls);
+  QualType ParmTy = getContext().getBlockParmType(BlockHasCopyDispose,
+                                                  BlockDeclRefDecls);
   // FIXME: This leaks
   ImplicitParamDecl *SelfDecl =
     ImplicitParamDecl::Create(getContext(), 0,

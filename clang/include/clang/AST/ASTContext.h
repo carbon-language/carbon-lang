@@ -147,6 +147,9 @@ class ASTContext {
   /// \brief Type for the Block descriptor for Blocks CodeGen.
   RecordDecl *BlockDescriptorType;
 
+  /// \brief Type for the Block descriptor for Blocks CodeGen.
+  RecordDecl *BlockDescriptorExtendedType;
+
   /// \brief Keeps track of all declaration attributes.
   ///
   /// Since so few decls have attrs, we keep them in a hash map instead of
@@ -407,9 +410,24 @@ public:
     return QualType();
   }
 
+  /// This gets the struct used to keep track of the extended descriptor for
+  /// pointer to blocks.
+  QualType getBlockDescriptorExtendedType();
+
+  // Set the type for a Block descriptor extended type.
+  void setBlockDescriptorExtendedType(QualType T);
+  /// Get the BlockDescriptorExtendedType type, or NULL if it hasn't yet been
+  /// built.
+  QualType getRawBlockdescriptorExtendedType() {
+    if (BlockDescriptorExtendedType)
+      return getTagDeclType(BlockDescriptorExtendedType);
+    return QualType();
+  }
+
   /// This gets the struct used to keep track of pointer to blocks, complete
   /// with captured variables.
-  QualType getBlockParmType(llvm::SmallVector<const Expr *, 8> &BDRDs);
+  QualType getBlockParmType(bool BlockHasCopyDispose,
+                            llvm::SmallVector<const Expr *, 8> &BDRDs);
 
   /// This builds the struct used for __block variables.
   QualType BuildByRefType(const char *DeclName, QualType Ty);
