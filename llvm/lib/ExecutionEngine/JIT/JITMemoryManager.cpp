@@ -490,13 +490,13 @@ namespace {
     /// deallocateFunctionBody - Deallocate all memory for the specified
     /// function body.
     void deallocateFunctionBody(void *Body) {
-      deallocateBlock(Body);
+      if (Body) deallocateBlock(Body);
     }
 
     /// deallocateExceptionTable - Deallocate memory for the specified
     /// exception table.
     void deallocateExceptionTable(void *ET) {
-      deallocateBlock(ET);
+      if (ET) deallocateBlock(ET);
     }
 
     /// setMemoryWritable - When code generation is in progress,
