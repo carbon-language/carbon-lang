@@ -582,14 +582,16 @@ ASTContext::getTypeInfo(const Type *T) {
   }
   case Type::ExtVector:
   case Type::Vector: {
-    std::pair<uint64_t, unsigned> EltInfo =
-      getTypeInfo(cast<VectorType>(T)->getElementType());
-    Width = EltInfo.first*cast<VectorType>(T)->getNumElements();
+    const VectorType *VT = cast<VectorType>(T);
+    std::pair<uint64_t, unsigned> EltInfo = getTypeInfo(VT->getElementType());
+    Width = EltInfo.first*VT->getNumElements();
     Align = Width;
     // If the alignment is not a power of 2, round up to the next power of 2.
     // This happens for non-power-of-2 length vectors.
-    // FIXME: this should probably be a target property.
-    Align = 1 << llvm::Log2_32_Ceil(Align);
+    if (VT->getNumElements() & (VT->getNumElements()-1)) {
+      Align = llvm::NextPowerOf2(Align);
+      Width = llvm::RoundUpToAlignment(Width, Align);
+    }
     break;
   }
 
@@ -748,14 +750,13 @@ ASTContext::getTypeInfo(const Type *T) {
     break;
   }
 
-  case Type::SubstTemplateTypeParm: {
+  case Type::SubstTemplateTypeParm:
     return getTypeInfo(cast<SubstTemplateTypeParmType>(T)->
                        getReplacementType().getTypePtr());
-  }
 
-  case Type::Elaborated: {
-    return getTypeInfo(cast<ElaboratedType>(T)->getUnderlyingType().getTypePtr());
-  }
+  case Type::Elaborated:
+    return getTypeInfo(cast<ElaboratedType>(T)->getUnderlyingType()
+                         .getTypePtr());
 
   case Type::Typedef: {
     const TypedefDecl *Typedef = cast<TypedefType>(T)->getDecl();
