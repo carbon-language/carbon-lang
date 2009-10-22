@@ -285,9 +285,9 @@ public:
   /// the same metadata to In2.
   void copyMD(Instruction *In1, Instruction *In2);
 
-  /// getHandlerNames - Get handler names. This is used by bitcode
-  /// writer.
-  void getHandlerNames(SmallVectorImpl<std::pair<unsigned, StringRef> >&N) const;
+  /// getHandlerNames - Populate client supplied smallvector using custome
+  /// metadata name and ID.
+  void getHandlerNames(SmallVectorImpl<std::pair<unsigned, StringRef> >&) const;
 
   /// ValueIsDeleted - This handler is used to update metadata store
   /// when a value is deleted.
