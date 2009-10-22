@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Config/config.h"
 #include "plugin-api.h"
 
 #include "llvm-c/lto.h"
