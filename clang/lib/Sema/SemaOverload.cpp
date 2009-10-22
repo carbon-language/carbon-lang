@@ -5383,6 +5383,8 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
                                                 ClassType.getTypePtr()));
         return E;
       }
+      // FIXME: TemplateIdRefExpr referring to a member function template
+      // specialization!
     }
     Expr *NewExpr = FixOverloadedFunctionReference(UnOp->getSubExpr(), Fn);
     UnOp->setSubExpr(NewExpr);
@@ -5399,10 +5401,17 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
     MemExpr->setMemberDecl(Fn);
     E->setType(Fn->getType());
   } else if (TemplateIdRefExpr *TID = dyn_cast<TemplateIdRefExpr>(E)) {
-    // FIXME: Should we create QualifiedDeclRefExprs here too?
     // FIXME: We should capture the template arguments here.
-    E = new (Context) DeclRefExpr(Fn, Fn->getType(), 
-                                  TID->getSourceRange().getBegin());
+    if (NestedNameSpecifier *Qualifier = TID->getQualifier())
+      E = new (Context) QualifiedDeclRefExpr(Fn, Fn->getType(),
+                                             TID->getTemplateNameLoc(),
+                                             /*FIXME?*/false, /*FIXME?*/false,
+                                             TID->getQualifierRange(),
+                                             Qualifier);
+    else
+      E = new (Context) DeclRefExpr(Fn, Fn->getType(), 
+                                    TID->getTemplateNameLoc());
+    
     TID->Destroy(Context);
   } else {
     assert(false && "Invalid reference to overloaded function");
