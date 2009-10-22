@@ -32,7 +32,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 

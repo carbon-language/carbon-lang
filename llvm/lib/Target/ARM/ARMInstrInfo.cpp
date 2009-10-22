@@ -22,7 +22,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
-#include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
 ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
