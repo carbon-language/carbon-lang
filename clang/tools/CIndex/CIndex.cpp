@@ -27,6 +27,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <cstdio>
 #include <vector>
@@ -372,11 +373,19 @@ CXTranslationUnit clang_createTranslationUnit(
   std::string astName(ast_filename);
   std::string ErrMsg;
   
-  return ASTUnit::LoadFromPCHFile(astName, &ErrMsg, 
-                                  CXXIdx->getDisplayDiagnostics() ? 
-                                    NULL : new IgnoreDiagnosticsClient(),
-                                  CXXIdx->getOnlyLocalDecls(),
-                                  /* UseBumpAllocator = */ true);
+  CXTranslationUnit TU =
+    ASTUnit::LoadFromPCHFile(astName, &ErrMsg, 
+                           CXXIdx->getDisplayDiagnostics() ? 
+                           NULL : new IgnoreDiagnosticsClient(),
+                           CXXIdx->getOnlyLocalDecls(),
+                           /* UseBumpAllocator = */ true);
+  
+  if (CXXIdx->getDisplayDiagnostics() && !ErrMsg.empty()) {
+    (llvm::errs() << "clang_createTranslationUnit: " << ErrMsg 
+                  << '\n').flush();
+  }
+  
+  return TU;
 }
 
 CXTranslationUnit clang_createTranslationUnitFromSourceFile(
@@ -429,10 +438,21 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
 
 #ifndef LLVM_ON_WIN32
   llvm::sys::Path DevNull("/dev/null");
+  std::string ErrMsg;
   const llvm::sys::Path *Redirects[] = { &DevNull, &DevNull, &DevNull, NULL };
-  llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0], NULL,
-                                     !CXXIdx->getDisplayDiagnostics() ? 
-                                       &Redirects[0] : NULL);
+  llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0], /* env */ NULL,
+      /* redirects */ !CXXIdx->getDisplayDiagnostics() ? &Redirects[0] : NULL,
+      /* secondsToWait */ 0, /* memoryLimits */ 0, &ErrMsg);
+  
+  if (CXXIdx->getDisplayDiagnostics() && !ErrMsg.empty()) {
+    llvm::errs() << "clang_createTranslationUnitFromSourceFile: " << ErrMsg 
+      << '\n' << "Arguments: \n";
+    for (std::vector<const char*>::iterator I = argv.begin(), E = argv.end();
+         I!=E; ++I)
+      if (*I) llvm::errs() << ' ' << *I << '\n';
+     
+    (llvm::errs() << '\n').flush();
+  }
 #else
   // FIXME: I don't know what is the equivalent '/dev/null' redirect for
   // Windows for this API.
