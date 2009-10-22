@@ -21,7 +21,6 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
