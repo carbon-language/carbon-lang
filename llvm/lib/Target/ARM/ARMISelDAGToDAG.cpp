@@ -1287,7 +1287,7 @@ SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDValue Op,
       assert(Srl_imm > 0 && Srl_imm < 32 && "bad amount in shift node!");
       unsigned Width = 32 - Srl_imm;
       int LSB = Srl_imm - Shl_imm;
-      if ((LSB + Width) > 32)
+      if (LSB < 0)
         return NULL;
       SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
       SDValue Ops[] = { Op.getOperand(0).getOperand(0),
