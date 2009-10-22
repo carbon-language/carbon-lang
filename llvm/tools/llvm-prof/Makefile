@@ -10,7 +10,6 @@ LEVEL = ../..
 
 TOOLNAME = llvm-prof
 LINK_COMPONENTS = bitreader analysis
-REQUIRES_EH := 1
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1

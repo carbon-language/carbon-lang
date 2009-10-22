@@ -255,41 +255,34 @@ int main(int argc, char **argv) {
 
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-  try {
-    cl::ParseCommandLineOptions(argc, argv, "llvm profile dump decoder\n");
-
-    // Read in the bitcode file...
-    std::string ErrorMessage;
-    Module *M = 0;
-    if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(BitcodeFile,
-                                                            &ErrorMessage)) {
-      M = ParseBitcodeFile(Buffer, Context, &ErrorMessage);
-      delete Buffer;
-    }
-    if (M == 0) {
-      errs() << argv[0] << ": " << BitcodeFile << ": "
-        << ErrorMessage << "\n";
-      return 1;
-    }
-
-    // Read the profiling information. This is redundant since we load it again
-    // using the standard profile info provider pass, but for now this gives us
-    // access to additional information not exposed via the ProfileInfo
-    // interface.
-    ProfileInfoLoader PIL(argv[0], ProfileDataFile, *M);
-
-    // Run the printer pass.
-    PassManager PassMgr;
-    PassMgr.add(createProfileLoaderPass(ProfileDataFile));
-    PassMgr.add(new ProfileInfoPrinterPass(PIL));
-    PassMgr.run(*M);
-
-    return 0;
-  } catch (const std::string& msg) {
-    errs() << argv[0] << ": " << msg << "\n";
-  } catch (...) {
-    errs() << argv[0] << ": Unexpected unknown exception occurred.\n";
-  }
   
-  return 1;
+  cl::ParseCommandLineOptions(argc, argv, "llvm profile dump decoder\n");
+
+  // Read in the bitcode file...
+  std::string ErrorMessage;
+  Module *M = 0;
+  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(BitcodeFile,
+                                                          &ErrorMessage)) {
+    M = ParseBitcodeFile(Buffer, Context, &ErrorMessage);
+    delete Buffer;
+  }
+  if (M == 0) {
+    errs() << argv[0] << ": " << BitcodeFile << ": "
+      << ErrorMessage << "\n";
+    return 1;
+  }
+
+  // Read the profiling information. This is redundant since we load it again
+  // using the standard profile info provider pass, but for now this gives us
+  // access to additional information not exposed via the ProfileInfo
+  // interface.
+  ProfileInfoLoader PIL(argv[0], ProfileDataFile, *M);
+
+  // Run the printer pass.
+  PassManager PassMgr;
+  PassMgr.add(createProfileLoaderPass(ProfileDataFile));
+  PassMgr.add(new ProfileInfoPrinterPass(PIL));
+  PassMgr.run(*M);
+
+  return 0;
 }
