@@ -254,7 +254,7 @@ public:
   MDNode *getMD(unsigned Kind, const Instruction *Inst);
 
   /// getMDs - Get the metadata attached to an Instruction.
-  const MDMapTy *getMDs(const Instruction *Inst);
+  void getMDs(const Instruction *Inst, SmallVectorImpl<MDPairTy> &MDs) const;
 
   /// addMD - Attach the metadata of given kind to an Instruction.
   void addMD(unsigned Kind, MDNode *Node, Instruction *Inst);

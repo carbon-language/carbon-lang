@@ -294,13 +294,15 @@ MDNode *MetadataContext::getMD(unsigned MDKind, const Instruction *Inst) {
 }
 
 /// getMDs - Get the metadata attached to an Instruction.
-const MetadataContext::MDMapTy *
-MetadataContext::getMDs(const Instruction *Inst) {
+void MetadataContext::
+getMDs(const Instruction *Inst, SmallVectorImpl<MDPairTy> &MDs) const {
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end())
-    return NULL;
-  
-  return &I->second;
+    return;
+  for (MDMapTy::iterator MI = I->second.begin(), ME = I->second.end();
+       MI != ME; ++MI)
+    MDs.push_back(std::make_pair(MI->first, MI->second));
+  std::sort(MDs.begin(), MDs.end());
 }
 
 /// getHandlerNames - Populate client supplied smallvector using custome

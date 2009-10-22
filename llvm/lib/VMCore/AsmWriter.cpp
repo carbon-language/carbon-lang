@@ -680,6 +680,8 @@ void SlotTracker::processFunction() {
   ST_DEBUG("Inserting Instructions:\n");
 
   MetadataContext &TheMetadata = TheFunction->getContext().getMetadata();
+  typedef SmallVector<std::pair<unsigned, TrackingVH<MDNode> >, 2> MDMapTy;
+  MDMapTy MDs;
 
   // Add all of the basic blocks and instructions with no names.
   for (Function::const_iterator BB = TheFunction->begin(),
@@ -696,11 +698,11 @@ void SlotTracker::processFunction() {
           CreateMetadataSlot(N);
 
       // Process metadata attached with this instruction.
-      const MetadataContext::MDMapTy *MDs = TheMetadata.getMDs(I);
-      if (MDs)
-        for (MetadataContext::MDMapTy::const_iterator MI = MDs->begin(),
-               ME = MDs->end(); MI != ME; ++MI)
-          CreateMetadataSlot(MI->second);
+      MDs.clear();
+      TheMetadata.getMDs(I, MDs);
+      for (MDMapTy::const_iterator MI = MDs.begin(), ME = MDs.end(); MI != ME; 
+           ++MI)
+        CreateMetadataSlot(MI->second);
     }
   }
 
@@ -2034,12 +2036,13 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   // Print Metadata info
   if (!MDNames.empty()) {
     MetadataContext &TheMetadata = I.getContext().getMetadata();
-    const MetadataContext::MDMapTy *MDMap = TheMetadata.getMDs(&I);
-    if (MDMap)
-      for (MetadataContext::MDMapTy::const_iterator MI = MDMap->begin(),
-             ME = MDMap->end(); MI != ME; ++MI)
-        Out << ", !" << MDNames[MI->first]
-            << " !" << Machine.getMetadataSlot(MI->second);
+    typedef SmallVector<std::pair<unsigned, TrackingVH<MDNode> >, 2> MDMapTy;
+    MDMapTy MDs;
+    TheMetadata.getMDs(&I, MDs);
+    for (MDMapTy::const_iterator MI = MDs.begin(), ME = MDs.end(); MI != ME; 
+         ++MI)
+      Out << ", !" << MDNames[MI->first]
+          << " !" << Machine.getMetadataSlot(MI->second);
   }
   printInfoComment(I);
 }

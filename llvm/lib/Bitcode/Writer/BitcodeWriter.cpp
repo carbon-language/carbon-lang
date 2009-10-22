@@ -561,14 +561,16 @@ static void WriteMetadataAttachment(const Function &F,
   // Write metadata attachments
   // METADATA_ATTACHMENT - [m x [value, [n x [id, mdnode]]]
   MetadataContext &TheMetadata = F.getContext().getMetadata();
+  typedef SmallVector<std::pair<unsigned, TrackingVH<MDNode> >, 2> MDMapTy;
+  MDMapTy MDs;
   for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
          I != E; ++I) {
-      const MetadataContext::MDMapTy *P = TheMetadata.getMDs(I);
-      if (!P) continue;
+      MDs.clear();
+      TheMetadata.getMDs(I, MDs);
       bool RecordedInstruction = false;
-      for (MetadataContext::MDMapTy::const_iterator PI = P->begin(), 
-             PE = P->end(); PI != PE; ++PI) {
+      for (MDMapTy::const_iterator PI = MDs.begin(), PE = MDs.end();
+             PI != PE; ++PI) {
         if (RecordedInstruction == false) {
           Record.push_back(VE.getInstructionID(I));
           RecordedInstruction = true;

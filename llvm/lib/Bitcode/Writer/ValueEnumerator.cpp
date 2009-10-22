@@ -87,6 +87,8 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
       EnumerateType(I->getType());
 
     MetadataContext &TheMetadata = F->getContext().getMetadata();
+    typedef SmallVector<std::pair<unsigned, TrackingVH<MDNode> >, 2> MDMapTy;
+    MDMapTy MDs;
     for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E;++I){
         for (User::const_op_iterator OI = I->op_begin(), E = I->op_end();
@@ -99,11 +101,11 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
           EnumerateAttributes(II->getAttributes());
 
         // Enumerate metadata attached with this instruction.
-        const MetadataContext::MDMapTy *MDs = TheMetadata.getMDs(I);
-        if (MDs)
-          for (MetadataContext::MDMapTy::const_iterator MI = MDs->begin(),
-                 ME = MDs->end(); MI != ME; ++MI)
-            EnumerateMetadata(MI->second);
+        MDs.clear();
+        TheMetadata.getMDs(I, MDs);
+        for (MDMapTy::const_iterator MI = MDs.begin(), ME = MDs.end(); MI != ME;
+             ++MI)
+          EnumerateMetadata(MI->second);
       }
   }
 
