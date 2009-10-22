@@ -16,7 +16,6 @@
 #include "ARM.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
