@@ -871,28 +871,7 @@ void DwarfException::EmitExceptionTable() {
     Asm->EOL("Next action");
   }
 
-  // Emit the Catch Clauses. The code for the catch clauses following the same
-  // try is similar to a switch statement. The catch clause action record
-  // informs the runtime about the type of a catch clause and about the
-  // associated switch value.
-  //
-  //  Action Record Fields:
-  //
-  //   * Filter Value
-  //     Positive value, starting at 1. Index in the types table of the
-  //     __typeinfo for the catch-clause type. 1 is the first word preceding
-  //     TTBase, 2 is the second word, and so on. Used by the runtime to check
-  //     if the thrown exception type matches the catch-clause type. Back-end
-  //     generated switch statements check against this value.
-  //
-  //   * Next
-  //     Signed offset, in bytes from the start of this field, to the next
-  //     chained action record, or zero if none.
-  //
-  // The order of the action records determined by the next field is the order
-  // of the catch clauses as they appear in the source code, and must be kept in
-  // the same order. As a result, changing the order of the catch clause would
-  // change the semantics of the program.
+  // Emit the Catch TypeInfos.
   for (std::vector<GlobalVariable *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalVariable *GV = *I;
@@ -907,12 +886,15 @@ void DwarfException::EmitExceptionTable() {
     Asm->EOL("TypeInfo");
   }
 
-  // Emit the Type Table.
+  // Emit the Exception Specifications.
   for (std::vector<unsigned>::const_iterator
          I = FilterIds.begin(), E = FilterIds.end(); I < E; ++I) {
     unsigned TypeID = *I;
     Asm->EmitULEB128Bytes(TypeID);
-    Asm->EOL("Filter TypeInfo index");
+    if (TypeID != 0)
+      Asm->EOL("Exception specification");
+    else
+      Asm->EOL();
   }
 
   Asm->EmitAlignment(2, 0, 0, false);
