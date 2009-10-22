@@ -2529,14 +2529,17 @@ public:
                                             DeclSpec::TST TagSpec,
                                             SourceLocation TagLoc);
 
-  OwningExprResult BuildTemplateIdExpr(TemplateName Template,
+  OwningExprResult BuildTemplateIdExpr(NestedNameSpecifier *Qualifier,
+                                       SourceRange QualifierRange,
+                                       TemplateName Template,
                                        SourceLocation TemplateNameLoc,
                                        SourceLocation LAngleLoc,
                                        const TemplateArgument *TemplateArgs,
                                        unsigned NumTemplateArgs,
                                        SourceLocation RAngleLoc);
 
-  virtual OwningExprResult ActOnTemplateIdExpr(TemplateTy Template,
+  virtual OwningExprResult ActOnTemplateIdExpr(const CXXScopeSpec &SS,
+                                               TemplateTy Template,
                                                SourceLocation TemplateNameLoc,
                                                SourceLocation LAngleLoc,
                                                ASTTemplateArgsPtr TemplateArgs,

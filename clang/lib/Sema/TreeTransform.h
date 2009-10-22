@@ -1445,13 +1445,16 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildTemplateIdExpr(TemplateName Template,
+  OwningExprResult RebuildTemplateIdExpr(NestedNameSpecifier *Qualifier,
+                                         SourceRange QualifierRange,
+                                         TemplateName Template,
                                          SourceLocation TemplateLoc,
                                          SourceLocation LAngleLoc,
                                          TemplateArgument *TemplateArgs,
                                          unsigned NumTemplateArgs,
                                          SourceLocation RAngleLoc) {
-    return getSema().BuildTemplateIdExpr(Template, TemplateLoc,
+    return getSema().BuildTemplateIdExpr(Qualifier, QualifierRange,
+                                         Template, TemplateLoc,
                                          LAngleLoc,
                                          TemplateArgs, NumTemplateArgs,
                                          RAngleLoc);
@@ -4369,8 +4372,8 @@ Sema::OwningExprResult
 TreeTransform<Derived>::TransformUnresolvedDeclRefExpr(
                                                     UnresolvedDeclRefExpr *E) {
   NestedNameSpecifier *NNS
-  = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
-                                              E->getQualifierRange());
+    = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
+                                                E->getQualifierRange());
   if (!NNS)
     return SemaRef.ExprError();
 
@@ -4399,6 +4402,14 @@ TreeTransform<Derived>::TransformTemplateIdRefExpr(TemplateIdRefExpr *E) {
   if (Template.isNull())
     return SemaRef.ExprError();
 
+  NestedNameSpecifier *Qualifier = 0;
+  if (E->getQualifier()) {
+    Qualifier = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
+                                                      E->getQualifierRange());
+    if (!Qualifier)
+      return SemaRef.ExprError();
+  }
+  
   llvm::SmallVector<TemplateArgument, 4> TransArgs;
   for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
     TemplateArgument TransArg
@@ -4415,7 +4426,8 @@ TreeTransform<Derived>::TransformTemplateIdRefExpr(TemplateIdRefExpr *E) {
   // FIXME: It's possible that we'll find out now that the template name
   // actually refers to a type, in which case the caller is actually dealing
   // with a functional cast. Give a reasonable error message!
-  return getDerived().RebuildTemplateIdExpr(Template, E->getTemplateNameLoc(),
+  return getDerived().RebuildTemplateIdExpr(Qualifier, E->getQualifierRange(),
+                                            Template, E->getTemplateNameLoc(),
                                             E->getLAngleLoc(),
                                             TransArgs.data(),
                                             TransArgs.size(),

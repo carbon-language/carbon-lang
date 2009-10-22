@@ -356,7 +356,8 @@ Parser::OwningExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
                                        TemplateId->NumArgs);
 
     OwningExprResult Result
-      = Actions.ActOnTemplateIdExpr(TemplateTy::make(TemplateId->Template),
+      = Actions.ActOnTemplateIdExpr(SS, 
+                                    TemplateTy::make(TemplateId->Template),
                                     TemplateId->TemplateNameLoc,
                                     TemplateId->LAngleLoc,
                                     TemplateArgsPtr,

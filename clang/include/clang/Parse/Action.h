@@ -1719,9 +1719,25 @@ public:
   /// possibly checking well-formedness of the template arguments. It does not
   /// imply the declaration of any entity.
   ///
+  /// \param SS  The scope specifier that may precede the template name.
+  ///
   /// \param Template  A template whose specialization results in a
   /// function or a dependent template.
-  virtual OwningExprResult ActOnTemplateIdExpr(TemplateTy Template,
+  ///
+  /// \param TemplateNameLoc The location of the template name.
+  /// 
+  /// \param LAngleLoc The location of the left angle bracket ('<') that starts 
+  /// the template argument list.
+  ///
+  /// \param TemplateArgs The template arguments in the template argument list,
+  /// which may be empty.
+  ///
+  /// \param TemplateArgLocs The locations of the template arguments.
+  ///
+  /// \param RAngleLoc The location of the right angle bracket ('>') that 
+  /// closes the template argument list.
+  virtual OwningExprResult ActOnTemplateIdExpr(const CXXScopeSpec &SS,
+                                               TemplateTy Template,
                                                SourceLocation TemplateNameLoc,
                                                SourceLocation LAngleLoc,
                                                ASTTemplateArgsPtr TemplateArgs,

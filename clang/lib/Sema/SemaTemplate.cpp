@@ -1251,7 +1251,9 @@ Sema::TypeResult Sema::ActOnTagTemplateIdType(TypeResult TypeResult,
   return ElabType.getAsOpaquePtr();
 }
 
-Sema::OwningExprResult Sema::BuildTemplateIdExpr(TemplateName Template,
+Sema::OwningExprResult Sema::BuildTemplateIdExpr(NestedNameSpecifier *Qualifier,
+                                                 SourceRange QualifierRange,
+                                                 TemplateName Template,
                                                  SourceLocation TemplateNameLoc,
                                                  SourceLocation LAngleLoc,
                                            const TemplateArgument *TemplateArgs,
@@ -1267,28 +1269,30 @@ Sema::OwningExprResult Sema::BuildTemplateIdExpr(TemplateName Template,
   if (!D)
     D = Template.getAsOverloadedFunctionDecl();
   
+  CXXScopeSpec SS;
+  SS.setRange(QualifierRange);
+  SS.setScopeRep(Qualifier);
   QualType ThisType, MemberType;
-  if (D && isImplicitMemberReference(/*FIXME:??*/0, D, TemplateNameLoc, 
+  if (D && isImplicitMemberReference(&SS, D, TemplateNameLoc, 
                                      ThisType, MemberType)) {
     Expr *This = new (Context) CXXThisExpr(SourceLocation(), ThisType);
     return Owned(MemberExpr::Create(Context, This, true,
-                                    /*FIXME:*/0, /*FIXME:*/SourceRange(),
+                                    Qualifier, QualifierRange,
                                     D, TemplateNameLoc, true,
                                     LAngleLoc, TemplateArgs,
                                     NumTemplateArgs, RAngleLoc,
                                     Context.OverloadTy));
   }
   
-  return Owned(TemplateIdRefExpr::Create(Context,
-                                         /*FIXME: New type?*/Context.OverloadTy,
-                                         /*FIXME: Necessary?*/0,
-                                         /*FIXME: Necessary?*/SourceRange(),
+  return Owned(TemplateIdRefExpr::Create(Context, Context.OverloadTy,
+                                         Qualifier, QualifierRange,
                                          Template, TemplateNameLoc, LAngleLoc,
                                          TemplateArgs,
                                          NumTemplateArgs, RAngleLoc));
 }
 
-Sema::OwningExprResult Sema::ActOnTemplateIdExpr(TemplateTy TemplateD,
+Sema::OwningExprResult Sema::ActOnTemplateIdExpr(const CXXScopeSpec &SS,
+                                                 TemplateTy TemplateD,
                                                  SourceLocation TemplateNameLoc,
                                                  SourceLocation LAngleLoc,
                                               ASTTemplateArgsPtr TemplateArgsIn,
@@ -1301,7 +1305,9 @@ Sema::OwningExprResult Sema::ActOnTemplateIdExpr(TemplateTy TemplateD,
   translateTemplateArguments(TemplateArgsIn, TemplateArgLocs, TemplateArgs);
   TemplateArgsIn.release();
 
-  return BuildTemplateIdExpr(Template, TemplateNameLoc, LAngleLoc,
+  return BuildTemplateIdExpr((NestedNameSpecifier *)SS.getScopeRep(),
+                             SS.getRange(),
+                             Template, TemplateNameLoc, LAngleLoc,
                              TemplateArgs.data(), TemplateArgs.size(),
                              RAngleLoc);
 }
