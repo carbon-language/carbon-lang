@@ -1529,14 +1529,19 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     Invalid = true;
   }
 
+  // Mock up a declarator.
+  Declarator Dc(DS, Declarator::TypeNameContext);
+  DeclaratorInfo *DInfo = 0;
+  GetTypeForDeclarator(Dc, S, &DInfo);
+  assert(DInfo && "couldn't build declarator info for anonymous struct/union");
+
   // Create a declaration for this anonymous struct/union.
   NamedDecl *Anon = 0;
   if (RecordDecl *OwningClass = dyn_cast<RecordDecl>(Owner)) {
     Anon = FieldDecl::Create(Context, OwningClass, Record->getLocation(),
                              /*IdentifierInfo=*/0,
                              Context.getTypeDeclType(Record),
-                             // FIXME: Type source info.
-                             /*DInfo=*/0,
+                             DInfo,
                              /*BitWidth=*/0, /*Mutable=*/false);
     Anon->setAccess(AS_public);
     if (getLangOptions().CPlusPlus)
@@ -1563,8 +1568,7 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     Anon = VarDecl::Create(Context, Owner, Record->getLocation(),
                            /*IdentifierInfo=*/0,
                            Context.getTypeDeclType(Record),
-                           // FIXME: Type source info.
-                           /*DInfo=*/0,
+                           DInfo,
                            SC);
   }
   Anon->setImplicit();
