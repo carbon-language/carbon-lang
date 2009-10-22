@@ -30,6 +30,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/GlobalVariable.h"
 #include <cerrno>
 #include <cmath>
 using namespace llvm;
@@ -92,6 +93,37 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
   return false;
 }
 
+/// ConstantFoldLoadFromConstPtr - Return the value that a load from C would
+/// produce if it is constant and determinable.  If this is not determinable,
+/// return null.
+Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
+                                             const TargetData *TD) {
+  // First, try the easy cases:
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
+    if (GV->isConstant() && GV->hasDefinitiveInitializer())
+      return GV->getInitializer();
+
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+    if (CE->getOpcode() == Instruction::GetElementPtr) {
+      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
+        if (GV->isConstant() && GV->hasDefinitiveInitializer())
+          if (Constant *V = 
+               ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE))
+            return V;
+    }
+  }
+
+  return 0;
+}
+
+static Constant *ConstantFoldLoadInst(const LoadInst *LI, const TargetData *TD){
+  if (LI->isVolatile()) return 0;
+  
+  if (Constant *C = dyn_cast<Constant>(LI->getOperand(0)))
+    return ConstantFoldLoadFromConstPtr(C, TD);
+    
+  return 0;
+}
 
 /// SymbolicallyEvaluateBinop - One of Op0/Op1 is a constant expression.
 /// Attempt to symbolically evaluate the result of a binary operator merging
@@ -379,6 +411,9 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, LLVMContext &Context,
     return ConstantFoldCompareInstOperands(CI->getPredicate(),
                                            Ops.data(), Ops.size(), 
                                            Context, TD);
+  
+  if (const LoadInst *LI = dyn_cast<LoadInst>(I))
+    return ConstantFoldLoadInst(LI, TD);
   
   return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
                                   Ops.data(), Ops.size(), Context, TD);

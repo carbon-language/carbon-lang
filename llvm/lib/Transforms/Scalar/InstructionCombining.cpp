@@ -11454,6 +11454,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   if (Value *AvailableVal = FindAvailableLoadedValue(Op, LI.getParent(), BBI,6))
     return ReplaceInstUsesWith(LI, AvailableVal);
 
+  // load(gep null, ...) -> unreachable
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {
     const Value *GEPI0 = GEPI->getOperand(0);
     // TODO: Consider a target hook for valid address spaces for this xform.
@@ -11468,49 +11469,24 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     }
   } 
 
-  if (Constant *C = dyn_cast<Constant>(Op)) {
-    // load null/undef -> undef
-    // TODO: Consider a target hook for valid address spaces for this xform.
-    if (isa<UndefValue>(C) ||
-        (C->isNullValue() && LI.getPointerAddressSpace() == 0)) {
-      // Insert a new store to null instruction before the load to indicate that
-      // this code is not reachable.  We do this instead of inserting an
-      // unreachable instruction directly because we cannot modify the CFG.
-      new StoreInst(UndefValue::get(LI.getType()),
-                    Constant::getNullValue(Op->getType()), &LI);
-      return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
-    }
-
-    // Instcombine load (constant global) into the value loaded.
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
-      if (GV->isConstant() && GV->hasDefinitiveInitializer())
-        return ReplaceInstUsesWith(LI, GV->getInitializer());
-
-    // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded.
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op)) {
-      if (CE->getOpcode() == Instruction::GetElementPtr) {
-        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
-          if (GV->isConstant() && GV->hasDefinitiveInitializer())
-            if (Constant *V = 
-               ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE))
-              return ReplaceInstUsesWith(LI, V);
-        if (CE->getOperand(0)->isNullValue()) {
-          // Insert a new store to null instruction before the load to indicate
-          // that this code is not reachable.  We do this instead of inserting
-          // an unreachable instruction directly because we cannot modify the
-          // CFG.
-          new StoreInst(UndefValue::get(LI.getType()),
-                        Constant::getNullValue(Op->getType()), &LI);
-          return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
-        }
-
-      } else if (CE->isCast()) {
-        if (Instruction *Res = InstCombineLoadCast(*this, LI, TD))
-          return Res;
-      }
-    }
+  // load null/undef -> unreachable
+  // TODO: Consider a target hook for valid address spaces for this xform.
+  if (isa<UndefValue>(Op) ||
+      (isa<ConstantPointerNull>(Op) && LI.getPointerAddressSpace() == 0)) {
+    // Insert a new store to null instruction before the load to indicate that
+    // this code is not reachable.  We do this instead of inserting an
+    // unreachable instruction directly because we cannot modify the CFG.
+    new StoreInst(UndefValue::get(LI.getType()),
+                  Constant::getNullValue(Op->getType()), &LI);
+    return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
   }
-    
+
+  // Instcombine load (constantexpr_cast global) -> cast (load global)
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op))
+    if (CE->isCast())
+      if (Instruction *Res = InstCombineLoadCast(*this, LI, TD))
+        return Res;
+  
   // If this load comes from anywhere in a constant global, and if the global
   // is all undef or zero, we know what it loads.
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op->getUnderlyingObject())){
