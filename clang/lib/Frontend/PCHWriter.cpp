@@ -248,15 +248,6 @@ PCHTypeWriter::VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
   Code = pch::TYPE_OBJC_OBJECT_POINTER;
 }
 
-void PCHTypeWriter::VisitObjCProtocolListType(const ObjCProtocolListType *T) {
-  Writer.AddTypeRef(T->getBaseType(), Record);
-  Record.push_back(T->getNumProtocols());
-  for (ObjCProtocolListType::qual_iterator I = T->qual_begin(),
-       E = T->qual_end(); I != E; ++I)
-    Writer.AddDeclRef(*I, Record);
-  Code = pch::TYPE_OBJC_PROTOCOL_LIST;
-}
-
 namespace {
 
 class TypeLocWriter : public TypeLocVisitor<TypeLocWriter> {
@@ -387,15 +378,20 @@ void TypeLocWriter::VisitTypenameTypeLoc(TypenameTypeLoc TL) {
 }
 void TypeLocWriter::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
-}
-void TypeLocWriter::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
-  Writer.AddSourceLocation(TL.getStarLoc(), Record);
-}
-void TypeLocWriter::VisitObjCProtocolListTypeLoc(ObjCProtocolListTypeLoc TL) {
   Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
   Writer.AddSourceLocation(TL.getRAngleLoc(), Record);
   for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
     Writer.AddSourceLocation(TL.getProtocolLoc(i), Record);
+}
+void TypeLocWriter::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getStarLoc(), Record);
+  Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
+  Writer.AddSourceLocation(TL.getRAngleLoc(), Record);
+  Record.push_back(TL.hasBaseTypeAsWritten());
+  Record.push_back(TL.hasProtocolsAsWritten());
+  if (TL.hasProtocolsAsWritten())
+    for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
+      Writer.AddSourceLocation(TL.getProtocolLoc(i), Record);
 }
 
 //===----------------------------------------------------------------------===//
@@ -569,7 +565,6 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(TYPE_ENUM);
   RECORD(TYPE_OBJC_INTERFACE);
   RECORD(TYPE_OBJC_OBJECT_POINTER);
-  RECORD(TYPE_OBJC_PROTOCOL_LIST);
   RECORD(DECL_ATTR);
   RECORD(DECL_TRANSLATION_UNIT);
   RECORD(DECL_TYPEDEF);

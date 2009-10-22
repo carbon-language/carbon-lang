@@ -86,7 +86,6 @@ NON_CANONICAL_TYPE(QualifiedName, Type)
 DEPENDENT_TYPE(Typename, Type)
 TYPE(ObjCInterface, Type)
 TYPE(ObjCObjectPointer, Type)
-NON_CANONICAL_TYPE(ObjCProtocolList, Type)
 
 // These types are always leaves in the type hierarchy.
 #ifdef LEAF_TYPE
@@ -94,7 +93,6 @@ LEAF_TYPE(Enum)
 LEAF_TYPE(Builtin)
 LEAF_TYPE(FixedWidthInt)
 LEAF_TYPE(ObjCInterface)
-LEAF_TYPE(ObjCObjectPointer)
 LEAF_TYPE(TemplateTypeParm)
 #undef LEAF_TYPE
 #endif

@@ -448,7 +448,7 @@ public:
   //
   QualType adjustParameterType(QualType T);
   QualType ConvertDeclSpecToType(const DeclSpec &DS, SourceLocation DeclLoc,
-                                 bool &IsInvalid, QualType &SourceTy);
+                                 bool &IsInvalid);
   void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
   QualType BuildPointerType(QualType T, unsigned Quals,
                             SourceLocation Loc, DeclarationName Entity);
@@ -3754,22 +3754,6 @@ public:
   bool VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
                       QualType FieldTy, const Expr *BitWidth,
                       bool *ZeroWidth = 0);
-
-  /// adjustFunctionParamType - Converts the type of a function parameter to a
-  // type that can be passed as an argument type to
-  /// ASTContext::getFunctionType.
-  ///
-  /// C++ [dcl.fct]p3: "...Any cv-qualifier modifying a parameter type is
-  /// deleted. Such cv-qualifiers affect only the definition of the parameter 
-  /// within the body of the function; they do not affect the function type. 
-  QualType adjustFunctionParamType(QualType T) const {
-    if (!Context.getLangOptions().CPlusPlus)
-      return T;
-    return 
-      T->isDependentType() ? T.getUnqualifiedType()
-                            : T.getDesugaredType().getUnqualifiedType();
-    
-  }
 
   /// \name Code completion
   //@{

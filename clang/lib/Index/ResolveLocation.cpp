@@ -120,11 +120,12 @@ public:
   TypeLocResolver(ASTContext &ctx, SourceLocation loc, Decl *pd)
     : LocResolverBase(ctx, loc), ParentDecl(pd) { }
 
+  ASTLocation VisitBuiltinTypeLoc(BuiltinTypeLoc TL);
   ASTLocation VisitTypedefTypeLoc(TypedefTypeLoc TL);
   ASTLocation VisitFunctionTypeLoc(FunctionTypeLoc TL);
   ASTLocation VisitArrayTypeLoc(ArrayTypeLoc TL);
   ASTLocation VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL);
-  ASTLocation VisitObjCProtocolListTypeLoc(ObjCProtocolListTypeLoc TL);
+  ASTLocation VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL);
   ASTLocation VisitTypeLoc(TypeLoc TL);
 };
 
@@ -349,6 +350,24 @@ ASTLocation DeclLocResolver::VisitDecl(Decl *D) {
   return ASTLocation(D);
 }
 
+ASTLocation TypeLocResolver::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
+  // Continue the 'id' magic by making the builtin type (which cannot
+  // actually be spelled) map to the typedef.
+  BuiltinType *T = TL.getTypePtr();
+  if (T->getKind() == BuiltinType::ObjCId) {
+    TypedefDecl *D = Ctx.getObjCIdType()->getAs<TypedefType>()->getDecl();
+    return ASTLocation(ParentDecl, D, TL.getNameLoc());
+  }
+
+  // Same thing with 'Class'.
+  if (T->getKind() == BuiltinType::ObjCClass) {
+    TypedefDecl *D = Ctx.getObjCClassType()->getAs<TypedefType>()->getDecl();
+    return ASTLocation(ParentDecl, D, TL.getNameLoc());
+  }
+
+  return ASTLocation(ParentDecl, TL);
+}
+
 ASTLocation TypeLocResolver::VisitTypedefTypeLoc(TypedefTypeLoc TL) {
   assert(ContainsLocation(TL) &&
          "Should visit only after verifying that loc is in range");
@@ -389,12 +408,6 @@ ASTLocation TypeLocResolver::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) 
          "Should visit only after verifying that loc is in range");
   if (ContainsLocation(TL.getNameLoc()))
     return ASTLocation(ParentDecl, TL.getIFaceDecl(), TL.getNameLoc());
-  return ASTLocation(ParentDecl, TL);
-}
-
-ASTLocation TypeLocResolver::VisitObjCProtocolListTypeLoc(ObjCProtocolListTypeLoc TL) {
-  assert(ContainsLocation(TL) &&
-         "Should visit only after verifying that loc is in range");
 
   for (unsigned i = 0; i != TL.getNumProtocols(); ++i) {
     SourceLocation L = TL.getProtocolLoc(i);
@@ -403,6 +416,24 @@ ASTLocation TypeLocResolver::VisitObjCProtocolListTypeLoc(ObjCProtocolListTypeLo
       break;
     if (RP == ContainsLoc)
       return ASTLocation(ParentDecl, TL.getProtocol(i), L);
+  }
+
+  return ASTLocation(ParentDecl, TL);
+}
+
+ASTLocation TypeLocResolver::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
+  assert(ContainsLocation(TL) &&
+         "Should visit only after verifying that loc is in range");
+
+  if (TL.hasProtocolsAsWritten()) {
+    for (unsigned i = 0; i != TL.getNumProtocols(); ++i) {
+      SourceLocation L = TL.getProtocolLoc(i);
+      RangePos RP = CheckRange(L);
+      if (RP == AfterLoc)
+        break;
+      if (RP == ContainsLoc)
+        return ASTLocation(ParentDecl, TL.getProtocol(i), L);
+    }
   }
 
   return ASTLocation(ParentDecl, TL);

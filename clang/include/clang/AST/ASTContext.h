@@ -87,7 +87,6 @@ class ASTContext {
   llvm::FoldingSet<TypenameType> TypenameTypes;
   llvm::FoldingSet<ObjCInterfaceType> ObjCInterfaceTypes;
   llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
-  llvm::FoldingSet<ObjCProtocolListType> ObjCProtocolListTypes;
   llvm::FoldingSet<ElaboratedType> ElaboratedTypes;
 
   llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
@@ -437,7 +436,7 @@ public:
 
   /// getLValueReferenceType - Return the uniqued reference to the type for an
   /// lvalue reference to the specified type.
-  QualType getLValueReferenceType(QualType T);
+  QualType getLValueReferenceType(QualType T, bool SpelledAsLValue = true);
 
   /// getRValueReferenceType - Return the uniqued reference to the type for an
   /// rvalue reference to the specified type.
@@ -546,10 +545,6 @@ public:
   QualType getObjCObjectPointerType(QualType OIT,
                                     ObjCProtocolDecl **ProtocolList = 0,
                                     unsigned NumProtocols = 0);
-
-  QualType getObjCProtocolListType(QualType T,
-                                   ObjCProtocolDecl **Protocols,
-                                   unsigned NumProtocols);
 
   /// getTypeOfType - GCC extension.
   QualType getTypeOfExprType(Expr *e);
@@ -846,6 +841,12 @@ public:
   const Type *getCanonicalType(const Type *T) {
     return T->getCanonicalTypeInternal().getTypePtr();
   }
+
+  /// getCanonicalParamType - Return the canonical parameter type
+  /// corresponding to the specific potentially non-canonical one.
+  /// Qualifiers are stripped off, functions are turned into function
+  /// pointers, and arrays decay one level into pointers.
+  CanQualType getCanonicalParamType(QualType T);
 
   /// \brief Determine whether the given types are equivalent.
   bool hasSameType(QualType T1, QualType T2) {

@@ -555,10 +555,6 @@ ASTContext::getTypeInfo(const Type *T) {
     assert(false && "Should not see dependent types");
     break;
 
-  case Type::ObjCProtocolList:
-    assert(false && "Should not see protocol list types");
-    break;
-
   case Type::FunctionNoProto:
   case Type::FunctionProto:
     // GCC extension: alignof(function) = 32 bits
@@ -1235,22 +1231,25 @@ QualType ASTContext::getBlockPointerType(QualType T) {
 
 /// getLValueReferenceType - Return the uniqued reference to the type for an
 /// lvalue reference to the specified type.
-QualType ASTContext::getLValueReferenceType(QualType T) {
+QualType ASTContext::getLValueReferenceType(QualType T, bool SpelledAsLValue) {
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  ReferenceType::Profile(ID, T);
+  ReferenceType::Profile(ID, T, SpelledAsLValue);
 
   void *InsertPos = 0;
   if (LValueReferenceType *RT =
         LValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(RT, 0);
 
+  const ReferenceType *InnerRef = T->getAs<ReferenceType>();
+
   // If the referencee type isn't canonical, this won't be a canonical type
   // either, so fill in the canonical type field.
   QualType Canonical;
-  if (!T.isCanonical()) {
-    Canonical = getLValueReferenceType(getCanonicalType(T));
+  if (!SpelledAsLValue || InnerRef || !T.isCanonical()) {
+    QualType PointeeType = (InnerRef ? InnerRef->getPointeeType() : T);
+    Canonical = getLValueReferenceType(getCanonicalType(PointeeType));
 
     // Get the new insert position for the node we care about.
     LValueReferenceType *NewIP =
@@ -1259,9 +1258,11 @@ QualType ASTContext::getLValueReferenceType(QualType T) {
   }
 
   LValueReferenceType *New
-    = new (*this, TypeAlignment) LValueReferenceType(T, Canonical);
+    = new (*this, TypeAlignment) LValueReferenceType(T, Canonical,
+                                                     SpelledAsLValue);
   Types.push_back(New);
   LValueReferenceTypes.InsertNode(New, InsertPos);
+
   return QualType(New, 0);
 }
 
@@ -1271,18 +1272,21 @@ QualType ASTContext::getRValueReferenceType(QualType T) {
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  ReferenceType::Profile(ID, T);
+  ReferenceType::Profile(ID, T, false);
 
   void *InsertPos = 0;
   if (RValueReferenceType *RT =
         RValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(RT, 0);
 
+  const ReferenceType *InnerRef = T->getAs<ReferenceType>();
+
   // If the referencee type isn't canonical, this won't be a canonical type
   // either, so fill in the canonical type field.
   QualType Canonical;
-  if (!T.isCanonical()) {
-    Canonical = getRValueReferenceType(getCanonicalType(T));
+  if (InnerRef || !T.isCanonical()) {
+    QualType PointeeType = (InnerRef ? InnerRef->getPointeeType() : T);
+    Canonical = getRValueReferenceType(getCanonicalType(PointeeType));
 
     // Get the new insert position for the node we care about.
     RValueReferenceType *NewIP =
@@ -1603,12 +1607,6 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
                                      unsigned TypeQuals, bool hasExceptionSpec,
                                      bool hasAnyExceptionSpec, unsigned NumExs,
                                      const QualType *ExArray, bool NoReturn) {
-  if (LangOpts.CPlusPlus) {
-    for (unsigned i = 0; i != NumArgs; ++i)
-      assert(!ArgArray[i].hasQualifiers() && 
-             "C++ arguments can't have toplevel qualifiers!");
-  }
-  
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
@@ -1622,11 +1620,9 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
     return QualType(FTP, 0);
 
   // Determine whether the type being created is already canonical or not.
-  bool isCanonical = ResultTy.isCanonical();
-  if (hasExceptionSpec)
-    isCanonical = false;
+  bool isCanonical = !hasExceptionSpec && ResultTy.isCanonical();
   for (unsigned i = 0; i != NumArgs && isCanonical; ++i)
-    if (!ArgArray[i].isCanonical())
+    if (!ArgArray[i].isCanonicalAsParam())
       isCanonical = false;
 
   // If this type isn't canonical, get the canonical version of it.
@@ -1636,7 +1632,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
     llvm::SmallVector<QualType, 16> CanonicalArgs;
     CanonicalArgs.reserve(NumArgs);
     for (unsigned i = 0; i != NumArgs; ++i)
-      CanonicalArgs.push_back(getCanonicalType(ArgArray[i]));
+      CanonicalArgs.push_back(getCanonicalParamType(ArgArray[i]));
 
     Canonical = getFunctionType(getCanonicalType(ResultTy),
                                 CanonicalArgs.data(), NumArgs,
@@ -1920,7 +1916,17 @@ static bool CmpProtocolNames(const ObjCProtocolDecl *LHS,
   return LHS->getDeclName() < RHS->getDeclName();
 }
 
-static void SortAndUniqueProtocols(ObjCProtocolDecl **&Protocols,
+static bool areSortedAndUniqued(ObjCProtocolDecl **Protocols,
+                                unsigned NumProtocols) {
+  if (NumProtocols == 0) return true;
+
+  for (unsigned i = 1; i != NumProtocols; ++i)
+    if (!CmpProtocolNames(Protocols[i-1], Protocols[i]))
+      return false;
+  return true;
+}
+
+static void SortAndUniqueProtocols(ObjCProtocolDecl **Protocols,
                                    unsigned &NumProtocols) {
   ObjCProtocolDecl **ProtocolsEnd = Protocols+NumProtocols;
 
@@ -1937,10 +1943,6 @@ static void SortAndUniqueProtocols(ObjCProtocolDecl **&Protocols,
 QualType ASTContext::getObjCObjectPointerType(QualType InterfaceT,
                                               ObjCProtocolDecl **Protocols,
                                               unsigned NumProtocols) {
-  // Sort the protocol list alphabetically to canonicalize it.
-  if (NumProtocols)
-    SortAndUniqueProtocols(Protocols, NumProtocols);
-
   llvm::FoldingSetNodeID ID;
   ObjCObjectPointerType::Profile(ID, InterfaceT, Protocols, NumProtocols);
 
@@ -1949,9 +1951,31 @@ QualType ASTContext::getObjCObjectPointerType(QualType InterfaceT,
               ObjCObjectPointerTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(QT, 0);
 
+  // Sort the protocol list alphabetically to canonicalize it.
+  QualType Canonical;
+  if (!InterfaceT.isCanonical() || 
+      !areSortedAndUniqued(Protocols, NumProtocols)) {
+    if (!areSortedAndUniqued(Protocols, NumProtocols)) {
+      llvm::SmallVector<ObjCProtocolDecl*, 8> Sorted(NumProtocols);
+      unsigned UniqueCount = NumProtocols;
+
+      std::copy(Protocols, Protocols + NumProtocols, Sorted.begin());
+      SortAndUniqueProtocols(&Sorted[0], UniqueCount);
+
+      Canonical = getObjCObjectPointerType(getCanonicalType(InterfaceT),
+                                           &Sorted[0], UniqueCount);
+    } else {
+      Canonical = getObjCObjectPointerType(getCanonicalType(InterfaceT),
+                                           Protocols, NumProtocols);
+    }
+
+    // Regenerate InsertPos.
+    ObjCObjectPointerTypes.FindNodeOrInsertPos(ID, InsertPos);
+  }
+
   // No Match;
   ObjCObjectPointerType *QType = new (*this, TypeAlignment)
-    ObjCObjectPointerType(InterfaceT, Protocols, NumProtocols);
+    ObjCObjectPointerType(Canonical, InterfaceT, Protocols, NumProtocols);
 
   Types.push_back(QType);
   ObjCObjectPointerTypes.InsertNode(QType, InsertPos);
@@ -1962,10 +1986,6 @@ QualType ASTContext::getObjCObjectPointerType(QualType InterfaceT,
 /// specified ObjC interface decl. The list of protocols is optional.
 QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
                        ObjCProtocolDecl **Protocols, unsigned NumProtocols) {
-  if (NumProtocols)
-    // Sort the protocol list alphabetically to canonicalize it.
-    SortAndUniqueProtocols(Protocols, NumProtocols);
-
   llvm::FoldingSetNodeID ID;
   ObjCInterfaceType::Profile(ID, Decl, Protocols, NumProtocols);
 
@@ -1974,31 +1994,26 @@ QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
       ObjCInterfaceTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(QT, 0);
 
-  // No Match;
+  // Sort the protocol list alphabetically to canonicalize it.
+  QualType Canonical;
+  if (NumProtocols && !areSortedAndUniqued(Protocols, NumProtocols)) {
+    llvm::SmallVector<ObjCProtocolDecl*, 8> Sorted(NumProtocols);
+    std::copy(Protocols, Protocols + NumProtocols, Sorted.begin());
+
+    unsigned UniqueCount = NumProtocols;
+    SortAndUniqueProtocols(&Sorted[0], UniqueCount);
+
+    Canonical = getObjCInterfaceType(Decl, &Sorted[0], UniqueCount);
+
+    ObjCInterfaceTypes.FindNodeOrInsertPos(ID, InsertPos);
+  }
+
   ObjCInterfaceType *QType = new (*this, TypeAlignment)
-    ObjCInterfaceType(const_cast<ObjCInterfaceDecl*>(Decl),
+    ObjCInterfaceType(Canonical, const_cast<ObjCInterfaceDecl*>(Decl),
                       Protocols, NumProtocols);
+
   Types.push_back(QType);
   ObjCInterfaceTypes.InsertNode(QType, InsertPos);
-  return QualType(QType, 0);
-}
-
-QualType ASTContext::getObjCProtocolListType(QualType T,
-                                             ObjCProtocolDecl **Protocols,
-                                             unsigned NumProtocols) {
-  llvm::FoldingSetNodeID ID;
-  ObjCProtocolListType::Profile(ID, T, Protocols, NumProtocols);
-
-  void *InsertPos = 0;
-  if (ObjCProtocolListType *QT =
-      ObjCProtocolListTypes.FindNodeOrInsertPos(ID, InsertPos))
-    return QualType(QT, 0);
-
-  // No Match;
-  ObjCProtocolListType *QType = new (*this, TypeAlignment)
-    ObjCProtocolListType(T, Protocols, NumProtocols);
-  Types.push_back(QType);
-  ObjCProtocolListTypes.InsertNode(QType, InsertPos);
   return QualType(QType, 0);
 }
 
@@ -2154,6 +2169,24 @@ QualType ASTContext::getPointerDiffType() const {
 //===----------------------------------------------------------------------===//
 //                              Type Operators
 //===----------------------------------------------------------------------===//
+
+CanQualType ASTContext::getCanonicalParamType(QualType T) {
+  // Push qualifiers into arrays, and then discard any remaining
+  // qualifiers.
+  T = getCanonicalType(T);
+  const Type *Ty = T.getTypePtr();
+
+  QualType Result;
+  if (isa<ArrayType>(Ty)) {
+    Result = getArrayDecayedType(QualType(Ty,0));
+  } else if (isa<FunctionType>(Ty)) {
+    Result = getPointerType(QualType(Ty, 0));
+  } else {
+    Result = QualType(Ty, 0);
+  }
+
+  return CanQualType::CreateUnsafe(Result);
+}
 
 /// getCanonicalType - Return the canonical (structural) type corresponding to
 /// the specified potentially non-canonical type.  The non-canonical version

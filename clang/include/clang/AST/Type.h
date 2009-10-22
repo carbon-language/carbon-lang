@@ -444,6 +444,7 @@ public:
   }
 
   bool isCanonical() const;
+  bool isCanonicalAsParam() const;
 
   /// isNull - Return true if this QualType doesn't point to a type yet.
   bool isNull() const {
@@ -1093,19 +1094,50 @@ public:
 class ReferenceType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;
 
+  /// True if the type was originally spelled with an lvalue sigil.
+  /// This is never true of rvalue references but can also be false
+  /// on lvalue references because of C++0x [dcl.typedef]p9,
+  /// as follows:
+  ///
+  ///   typedef int &ref;    // lvalue, spelled lvalue
+  ///   typedef int &&rvref; // rvalue
+  ///   ref &a;              // lvalue, inner ref, spelled lvalue
+  ///   ref &&a;             // lvalue, inner ref
+  ///   rvref &a;            // lvalue, inner ref, spelled lvalue
+  ///   rvref &&a;           // rvalue, inner ref
+  bool SpelledAsLValue;
+
+  /// True if the inner type is a reference type.  This only happens
+  /// in non-canonical forms.
+  bool InnerRef;
+
 protected:
-  ReferenceType(TypeClass tc, QualType Referencee, QualType CanonicalRef) :
+  ReferenceType(TypeClass tc, QualType Referencee, QualType CanonicalRef,
+                bool SpelledAsLValue) :
     Type(tc, CanonicalRef, Referencee->isDependentType()),
-    PointeeType(Referencee) {
+    PointeeType(Referencee), SpelledAsLValue(SpelledAsLValue),
+    InnerRef(Referencee->isReferenceType()) {
   }
 public:
-  QualType getPointeeType() const { return PointeeType; }
+  bool isSpelledAsLValue() const { return SpelledAsLValue; }
+
+  QualType getPointeeTypeAsWritten() const { return PointeeType; }
+  QualType getPointeeType() const {
+    // FIXME: this might strip inner qualifiers; okay?
+    const ReferenceType *T = this;
+    while (T->InnerRef)
+      T = T->PointeeType->getAs<ReferenceType>();
+    return T->PointeeType;
+  }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getPointeeType());
+    Profile(ID, PointeeType, SpelledAsLValue);
   }
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType Referencee) {
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      QualType Referencee,
+                      bool SpelledAsLValue) {
     ID.AddPointer(Referencee.getAsOpaquePtr());
+    ID.AddBoolean(SpelledAsLValue);
   }
 
   static bool classof(const Type *T) {
@@ -1118,9 +1150,10 @@ public:
 /// LValueReferenceType - C++ [dcl.ref] - Lvalue reference
 ///
 class LValueReferenceType : public ReferenceType {
-  LValueReferenceType(QualType Referencee, QualType CanonicalRef) :
-    ReferenceType(LValueReference, Referencee, CanonicalRef) {
-  }
+  LValueReferenceType(QualType Referencee, QualType CanonicalRef,
+                      bool SpelledAsLValue) :
+    ReferenceType(LValueReference, Referencee, CanonicalRef, SpelledAsLValue)
+  {}
   friend class ASTContext; // ASTContext creates these
 public:
   virtual void getAsStringInternal(std::string &InnerString,
@@ -1139,7 +1172,7 @@ public:
 ///
 class RValueReferenceType : public ReferenceType {
   RValueReferenceType(QualType Referencee, QualType CanonicalRef) :
-    ReferenceType(RValueReference, Referencee, CanonicalRef) {
+    ReferenceType(RValueReference, Referencee, CanonicalRef, false) {
   }
   friend class ASTContext; // ASTContext creates these
 public:
@@ -2433,9 +2466,9 @@ class ObjCInterfaceType : public Type, public llvm::FoldingSetNode {
   // List is sorted on protocol name. No protocol is enterred more than once.
   llvm::SmallVector<ObjCProtocolDecl*, 4> Protocols;
 
-  ObjCInterfaceType(ObjCInterfaceDecl *D,
+  ObjCInterfaceType(QualType Canonical, ObjCInterfaceDecl *D,
                     ObjCProtocolDecl **Protos, unsigned NumP) :
-    Type(ObjCInterface, QualType(), /*Dependent=*/false),
+    Type(ObjCInterface, Canonical, /*Dependent=*/false),
     Decl(D), Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -2481,8 +2514,9 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
   // List is sorted on protocol name. No protocol is entered more than once.
   llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
 
-  ObjCObjectPointerType(QualType T, ObjCProtocolDecl **Protos, unsigned NumP) :
-    Type(ObjCObjectPointer, QualType(), /*Dependent=*/false),
+  ObjCObjectPointerType(QualType Canonical, QualType T,
+                        ObjCProtocolDecl **Protos, unsigned NumP) :
+    Type(ObjCObjectPointer, Canonical, /*Dependent=*/false),
     PointeeType(T), Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
 
@@ -2547,49 +2581,6 @@ public:
   static bool classof(const ObjCObjectPointerType *) { return true; }
 };
 
-/// \brief An ObjC Protocol list that qualifies a type.
-///
-/// This is used only for keeping detailed type source information, it should
-/// not participate in the semantics of the type system.
-/// The protocol list is not canonicalized.
-class ObjCProtocolListType : public Type, public llvm::FoldingSetNode {
-  QualType BaseType;
-
-  // List of protocols for this protocol conforming object type.
-  llvm::SmallVector<ObjCProtocolDecl*, 4> Protocols;
-
-  ObjCProtocolListType(QualType T, ObjCProtocolDecl **Protos, unsigned NumP) :
-    Type(ObjCProtocolList, QualType(), /*Dependent=*/false),
-    BaseType(T), Protocols(Protos, Protos+NumP) { }
-  friend class ASTContext;  // ASTContext creates these.
-
-public:
-  QualType getBaseType() const { return BaseType; }
-
-  /// \brief Provides access to the list of protocols qualifying the base type.
-  typedef llvm::SmallVector<ObjCProtocolDecl*, 4>::const_iterator qual_iterator;
-
-  qual_iterator qual_begin() const { return Protocols.begin(); }
-  qual_iterator qual_end() const   { return Protocols.end(); }
-  bool qual_empty() const { return Protocols.size() == 0; }
-
-  /// \brief Return the number of qualifying protocols.
-  unsigned getNumProtocols() const { return Protocols.size(); }
-
-  bool isSugared() const { return false; }
-  QualType desugar() const { return QualType(this, 0); }
-
-  void Profile(llvm::FoldingSetNodeID &ID);
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType T,
-                      ObjCProtocolDecl **protocols, unsigned NumProtocols);
-  virtual void getAsStringInternal(std::string &InnerString,
-                                   const PrintingPolicy &Policy) const;
-  static bool classof(const Type *T) {
-    return T->getTypeClass() == ObjCProtocolList;
-  }
-  static bool classof(const ObjCProtocolListType *) { return true; }
-};
-
 /// A qualifier set is used to build a set of qualifiers.
 class QualifierCollector : public Qualifiers {
   ASTContext *Context;
@@ -2631,6 +2622,13 @@ inline bool QualType::isCanonical() const {
   if (hasQualifiers())
     return T->isCanonicalUnqualified() && !isa<ArrayType>(T);
   return T->isCanonicalUnqualified();
+}
+
+inline bool QualType::isCanonicalAsParam() const {
+  if (hasQualifiers()) return false;
+  const Type *T = getTypePtr();
+  return T->isCanonicalUnqualified() &&
+           !isa<FunctionType>(T) && !isa<ArrayType>(T);
 }
 
 inline void QualType::removeConst() {

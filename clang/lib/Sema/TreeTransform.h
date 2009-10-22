@@ -514,14 +514,6 @@ public:
                                   SourceRange(getDerived().getBaseLocation()));
   }
 
-  /// \brief Rebuild an objective C protocol list type.
-  QualType RebuildObjCProtocolListType(QualType BaseType,
-                                       ObjCProtocolDecl **Protocols,
-                                       unsigned NumProtocols) {
-    return SemaRef.Context.getObjCProtocolListType(BaseType, Protocols,
-                                                   NumProtocols);
-  }
-
   /// \brief Build a new nested-name-specifier given the prefix and an
   /// identifier that names the next step in the nested-name-specifier.
   ///
@@ -2808,50 +2800,16 @@ template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformObjCInterfaceType(TypeLocBuilder &TLB,
                                                    ObjCInterfaceTypeLoc TL) {
-  return TransformTypeSpecType(TLB, TL);
+  assert(false && "TransformObjCInterfaceType unimplemented");
+  return QualType();
 }
 
 template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformObjCObjectPointerType(TypeLocBuilder &TLB,
                                                ObjCObjectPointerTypeLoc TL) {
-  TransformPointerLikeType(ObjCObjectPointerType);
-}
-
-template<typename Derived>
-QualType TreeTransform<Derived>::TransformObjCProtocolListType(
-                                                TypeLocBuilder &TLB,
-                                                ObjCProtocolListTypeLoc TL) {
-  ObjCProtocolListType *T = TL.getTypePtr();
-  QualType BaseType = T->getBaseType();
-  if (!BaseType.isNull()) {
-    BaseType = getDerived().TransformType(TLB, TL.getBaseTypeLoc());
-    if (BaseType.isNull())
-      return QualType();
-  } 
-
-  QualType Result = TL.getType();
-  if (getDerived().AlwaysRebuild() ||
-      BaseType != T->getBaseType()) {
-    // TODO: transform these?
-    llvm::SmallVector<ObjCProtocolDecl*,4> Protocols(T->getNumProtocols());
-    std::copy(T->qual_begin(), T->qual_end(), Protocols.begin());
-    Result = getDerived().RebuildObjCProtocolListType(BaseType,
-                                                      &Protocols[0],
-                                                      T->getNumProtocols());
-    if (Result.isNull())
-      return QualType();
-  }
-
-  ObjCProtocolListTypeLoc NewTL = TLB.push<ObjCProtocolListTypeLoc>(Result);
-  NewTL.setLAngleLoc(TL.getLAngleLoc());
-  NewTL.setRAngleLoc(TL.getRAngleLoc());
-
-  assert(NewTL.getNumProtocols() == TL.getNumProtocols());
-  for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
-    NewTL.setProtocolLoc(i, TL.getProtocolLoc(i));
-
-  return Result;
+  assert(false && "TransformObjCObjectPointerType unimplemented");
+  return QualType();
 }
 
 //===----------------------------------------------------------------------===//

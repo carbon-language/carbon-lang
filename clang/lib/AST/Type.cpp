@@ -724,18 +724,6 @@ void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getPointeeType(), 0, 0);
 }
 
-void ObjCProtocolListType::Profile(llvm::FoldingSetNodeID &ID,
-                                   QualType OIT, ObjCProtocolDecl **protocols,
-                                   unsigned NumProtocols) {
-  ID.AddPointer(OIT.getAsOpaquePtr());
-  for (unsigned i = 0; i != NumProtocols; i++)
-    ID.AddPointer(protocols[i]);
-}
-
-void ObjCProtocolListType::Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getBaseType(), &Protocols[0], getNumProtocols());
-}
-
 /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
 /// potentially looking through *all* consequtive typedefs.  This returns the
 /// sum of the type qualifiers, so if you have:
@@ -1059,10 +1047,10 @@ void LValueReferenceType::getAsStringInternal(std::string &S, const PrintingPoli
 
   // Handle things like 'int (&A)[4];' correctly.
   // FIXME: this should include vectors, but vectors use attributes I guess.
-  if (isa<ArrayType>(getPointeeType()))
+  if (isa<ArrayType>(getPointeeTypeAsWritten()))
     S = '(' + S + ')';
 
-  getPointeeType().getAsStringInternal(S, Policy);
+  getPointeeTypeAsWritten().getAsStringInternal(S, Policy);
 }
 
 void RValueReferenceType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
@@ -1070,10 +1058,10 @@ void RValueReferenceType::getAsStringInternal(std::string &S, const PrintingPoli
 
   // Handle things like 'int (&&A)[4];' correctly.
   // FIXME: this should include vectors, but vectors use attributes I guess.
-  if (isa<ArrayType>(getPointeeType()))
+  if (isa<ArrayType>(getPointeeTypeAsWritten()))
     S = '(' + S + ')';
 
-  getPointeeType().getAsStringInternal(S, Policy);
+  getPointeeTypeAsWritten().getAsStringInternal(S, Policy);
 }
 
 void MemberPointerType::getAsStringInternal(std::string &S, const PrintingPolicy &Policy) const {
@@ -1460,25 +1448,6 @@ void ObjCObjectPointerType::getAsStringInternal(std::string &InnerString,
   else if (!InnerString.empty()) // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
 
-  InnerString = ObjCQIString + InnerString;
-}
-
-void ObjCProtocolListType::getAsStringInternal(std::string &InnerString,
-                                           const PrintingPolicy &Policy) const {
-  if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
-    InnerString = ' ' + InnerString;
-
-  std::string ObjCQIString = getBaseType().getAsString(Policy);
-  ObjCQIString += '<';
-  bool isFirst = true;
-  for (qual_iterator I = qual_begin(), E = qual_end(); I != E; ++I) {
-    if (isFirst)
-      isFirst = false;
-    else
-      ObjCQIString += ',';
-    ObjCQIString += (*I)->getNameAsString();
-  }
-  ObjCQIString += '>';
   InnerString = ObjCQIString + InnerString;
 }
 

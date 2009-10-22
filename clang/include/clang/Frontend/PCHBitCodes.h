@@ -397,14 +397,12 @@ namespace clang {
       TYPE_OBJC_INTERFACE           = 21,
       /// \brief An ObjCObjectPointerType record.
       TYPE_OBJC_OBJECT_POINTER      = 22,
-      /// \brief An ObjCProtocolListType record.
-      TYPE_OBJC_PROTOCOL_LIST       = 23,
       /// \brief a DecltypeType record.
-      TYPE_DECLTYPE                 = 24,
+      TYPE_DECLTYPE                 = 23,
       /// \brief An ElaboratedType record.
-      TYPE_ELABORATED               = 25,
+      TYPE_ELABORATED               = 24,
       /// \brief A SubstTemplateTypeParmType record.
-      TYPE_SUBST_TEMPLATE_TYPE_PARM = 26
+      TYPE_SUBST_TEMPLATE_TYPE_PARM = 25
     };
 
     /// \brief The type IDs for special types constructed by semantic

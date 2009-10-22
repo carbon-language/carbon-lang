@@ -248,7 +248,12 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
     FD = PrimaryTemplate->getTemplatedDecl();
   }
 
-  mangleBareFunctionType(FD->getType()->getAs<FunctionType>(), MangleReturnType);
+  // Do the canonicalization out here because parameter types can
+  // undergo additional canonicalization (e.g. array decay).
+  FunctionType *FT = cast<FunctionType>(Context.getASTContext()
+                                          .getCanonicalType(FD->getType()));
+
+  mangleBareFunctionType(FT, MangleReturnType);
 }
 
 static bool isStdNamespace(const DeclContext *DC) {

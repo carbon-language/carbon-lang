@@ -4281,8 +4281,7 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S,
   // friend templates because ActOnTag never produces a ClassTemplateDecl
   // for a TUK_Friend.
   bool invalid = false;
-  QualType SourceTy;
-  QualType T = ConvertDeclSpecToType(DS, Loc, invalid, SourceTy);
+  QualType T = ConvertDeclSpecToType(DS, Loc, invalid);
   if (invalid) return DeclPtrTy();
 
   // This is definitely an error in C++98.  It's probably meant to

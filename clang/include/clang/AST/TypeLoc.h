@@ -375,48 +375,52 @@ class SubstTemplateTypeParmTypeLoc :
                            SubstTemplateTypeParmType> {
 };
 
-/// \brief Wrapper for source info for ObjC interfaces.
-class ObjCInterfaceTypeLoc : public TypeSpecTypeLoc<ObjCInterfaceTypeLoc,
-                                                    ObjCInterfaceType> {
-public:
-  ObjCInterfaceDecl *getIFaceDecl() const {
-    return getTypePtr()->getDecl();
-  }
-};
-
 
 struct ObjCProtocolListLocInfo {
-  SourceLocation LAngleLoc, RAngleLoc;
+  SourceLocation LAngleLoc;
+  SourceLocation RAngleLoc;
 };
 
-/// \brief Wrapper for source info for ObjC protocol lists.
-class ObjCProtocolListTypeLoc
-  : public ConcreteTypeLoc<UnqualTypeLoc,
-                           ObjCProtocolListTypeLoc,
-                           ObjCProtocolListType,
-                           ObjCProtocolListLocInfo> {
+// A helper class for defining ObjC TypeLocs that can qualified with
+// protocols.
+//
+// TypeClass basically has to be either ObjCInterfaceType or
+// ObjCObjectPointerType.
+template <class Derived, class TypeClass, class LocalData>
+class ObjCProtocolListTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
+                                                       Derived,
+                                                       TypeClass,
+                                                       LocalData> {
   // SourceLocations are stored after Info, one for each Protocol.
   SourceLocation *getProtocolLocArray() const {
-    return (SourceLocation*) getExtraLocalData();
+    return (SourceLocation*) this->getExtraLocalData();
+  }
+
+protected:
+  void initializeLocalBase(SourceLocation Loc) {
+    setLAngleLoc(Loc);
+    setRAngleLoc(Loc);
+    for (unsigned i = 0, e = getNumProtocols(); i != e; ++i)
+      setProtocolLoc(i, Loc);
   }
 
 public:
   SourceLocation getLAngleLoc() const {
-    return getLocalData()->LAngleLoc;
+    return this->getLocalData()->LAngleLoc;
   }
   void setLAngleLoc(SourceLocation Loc) {
-    getLocalData()->LAngleLoc = Loc;
+    this->getLocalData()->LAngleLoc = Loc;
   }
 
   SourceLocation getRAngleLoc() const {
-    return getLocalData()->RAngleLoc;
+    return this->getLocalData()->RAngleLoc;
   }
   void setRAngleLoc(SourceLocation Loc) {
-    getLocalData()->RAngleLoc = Loc;
+    this->getLocalData()->RAngleLoc = Loc;
   }
 
   unsigned getNumProtocols() const {
-    return getTypePtr()->getNumProtocols();
+    return this->getTypePtr()->getNumProtocols();
   }
 
   SourceLocation getProtocolLoc(unsigned i) const {
@@ -430,33 +434,122 @@ public:
 
   ObjCProtocolDecl *getProtocol(unsigned i) const {
     assert(i < getNumProtocols() && "Index is out of bounds!");
-    return *(getTypePtr()->qual_begin() + i);
+    return *(this->getTypePtr()->qual_begin() + i);
   }
   
-  TypeLoc getBaseTypeLoc() const {
-    return getInnerTypeLoc();
-  }
-
   SourceRange getSourceRange() const {
     return SourceRange(getLAngleLoc(), getRAngleLoc());
   }
 
   void initializeLocal(SourceLocation Loc) {
-    setLAngleLoc(Loc);
-    setRAngleLoc(Loc);
-    for (unsigned i = 0, e = getNumProtocols(); i != e; ++i)
-      setProtocolLoc(i, Loc);
+    initializeLocalBase(Loc);
   }
 
-  /// \brief Returns the size of the type source info data block that is
-  /// specific to this type.
   unsigned getExtraLocalDataSize() const {
-    return getNumProtocols() * sizeof(SourceLocation);
+    return this->getNumProtocols() * sizeof(SourceLocation);
   }
-
-  QualType getInnerType() const { return getTypePtr()->getBaseType(); }
 };
 
+
+struct ObjCInterfaceLocInfo : ObjCProtocolListLocInfo {
+  SourceLocation NameLoc;
+};
+
+/// \brief Wrapper for source info for ObjC interfaces.
+class ObjCInterfaceTypeLoc :
+    public ObjCProtocolListTypeLoc<ObjCInterfaceTypeLoc,
+                                   ObjCInterfaceType,
+                                   ObjCInterfaceLocInfo> {
+public:
+  ObjCInterfaceDecl *getIFaceDecl() const {
+    return getTypePtr()->getDecl();
+  }
+
+  SourceLocation getNameLoc() const {
+    return getLocalData()->NameLoc;
+  }
+
+  void setNameLoc(SourceLocation Loc) {
+    getLocalData()->NameLoc = Loc;
+  }
+
+  SourceRange getSourceRange() const {
+    if (getNumProtocols()) 
+      return SourceRange(getNameLoc(), getRAngleLoc());
+    else
+      return SourceRange(getNameLoc(), getNameLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    initializeLocalBase(Loc);
+    setNameLoc(Loc);
+  }
+};
+
+
+struct ObjCObjectPointerLocInfo : ObjCProtocolListLocInfo {
+  SourceLocation StarLoc;
+  bool HasProtocols;
+  bool HasBaseType;
+};
+
+/// Wraps an ObjCPointerType with source location information.  Note
+/// that not all ObjCPointerTypes actually have a star location; nor
+/// are protocol locations necessarily written in the source just
+/// because they're present on the type.
+class ObjCObjectPointerTypeLoc :
+    public ObjCProtocolListTypeLoc<ObjCObjectPointerTypeLoc,
+                                   ObjCObjectPointerType,
+                                   ObjCObjectPointerLocInfo> {
+public:
+  bool hasProtocolsAsWritten() const {
+    return getLocalData()->HasProtocols;
+  }
+
+  void setHasProtocolsAsWritten(bool HasProtocols) {
+    getLocalData()->HasProtocols = HasProtocols;
+  }
+
+  bool hasBaseTypeAsWritten() const {
+    return getLocalData()->HasBaseType;
+  }
+
+  void setHasBaseTypeAsWritten(bool HasBaseType) {
+    getLocalData()->HasBaseType = HasBaseType;
+  }
+
+  SourceLocation getStarLoc() const {
+    return getLocalData()->StarLoc;
+  }
+
+  void setStarLoc(SourceLocation Loc) {
+    getLocalData()->StarLoc = Loc;
+  }
+
+  SourceRange getSourceRange() const {
+    // Being written with protocols is incompatible with being written
+    // with a star.
+    if (hasProtocolsAsWritten())
+      return SourceRange(getLAngleLoc(), getRAngleLoc());
+    else
+      return SourceRange(getStarLoc(), getStarLoc());
+  }
+
+  void initializeLocal(SourceLocation Loc) {
+    initializeLocalBase(Loc);
+    setHasProtocolsAsWritten(false);
+    setHasBaseTypeAsWritten(false);
+    setStarLoc(Loc);
+  }
+
+  TypeLoc getBaseTypeLoc() const {
+    return getInnerTypeLoc();
+  }
+
+  QualType getInnerType() const {
+    return getTypePtr()->getPointeeType();
+  }
+};
 
 
 struct PointerLikeLocInfo {
@@ -534,6 +627,10 @@ public:
 
 class ReferenceTypeLoc : public PointerLikeTypeLoc<ReferenceTypeLoc,
                                                    ReferenceType> {
+public:
+  QualType getInnerType() const {
+    return getTypePtr()->getPointeeTypeAsWritten();
+  }
 };
 
 class LValueReferenceTypeLoc :
@@ -558,20 +655,6 @@ public:
     return getSigilLoc();
   }
   void setAmpAmpLoc(SourceLocation Loc) {
-    setSigilLoc(Loc);
-  }
-};
-
-/// Wraps an ObjCPointerType with source location information.  Note
-/// that not all ObjCPointerTypes actually have a star location.
-class ObjCObjectPointerTypeLoc :
-    public PointerLikeTypeLoc<ObjCObjectPointerTypeLoc,
-                              ObjCObjectPointerType> {
-public:
-  SourceLocation getStarLoc() const {
-    return getSigilLoc();
-  }
-  void setStarLoc(SourceLocation Loc) {
     setSigilLoc(Loc);
   }
 };

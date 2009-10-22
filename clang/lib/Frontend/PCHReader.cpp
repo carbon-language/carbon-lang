@@ -1964,16 +1964,6 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     return Context->getObjCObjectPointerType(OIT, Protos.data(), NumProtos);
   }
 
-  case pch::TYPE_OBJC_PROTOCOL_LIST: {
-    unsigned Idx = 0;
-    QualType OIT = GetType(Record[Idx++]);
-    unsigned NumProtos = Record[Idx++];
-    llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
-    for (unsigned I = 0; I != NumProtos; ++I)
-      Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
-    return Context->getObjCProtocolListType(OIT, Protos.data(), NumProtos);
-  }
-
   case pch::TYPE_SUBST_TEMPLATE_TYPE_PARM: {
     unsigned Idx = 0;
     QualType Parm = GetType(Record[Idx++]);
@@ -2124,15 +2114,20 @@ void TypeLocReader::VisitTypenameTypeLoc(TypenameTypeLoc TL) {
 }
 void TypeLocReader::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
   TL.setNameLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
-void TypeLocReader::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
-  TL.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-}
-void TypeLocReader::VisitObjCProtocolListTypeLoc(ObjCProtocolListTypeLoc TL) {
   TL.setLAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   TL.setRAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
     TL.setProtocolLoc(i, SourceLocation::getFromRawEncoding(Record[Idx++]));
+}
+void TypeLocReader::VisitObjCObjectPointerTypeLoc(ObjCObjectPointerTypeLoc TL) {
+  TL.setStarLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setLAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setRAngleLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TL.setHasBaseTypeAsWritten(Record[Idx++]);
+  TL.setHasProtocolsAsWritten(Record[Idx++]);
+  if (TL.hasProtocolsAsWritten())
+    for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
+      TL.setProtocolLoc(i, SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 DeclaratorInfo *PCHReader::GetDeclaratorInfo(const RecordData &Record,
