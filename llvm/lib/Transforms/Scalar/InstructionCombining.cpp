@@ -11364,7 +11364,8 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
         if (Constant *CSrc = dyn_cast<Constant>(CastOp))
           if (ASrcTy->getNumElements() != 0) {
             Value *Idxs[2];
-            Idxs[0] = Idxs[1] = Constant::getNullValue(Type::getInt32Ty(*Context));
+            Idxs[0] = Constant::getNullValue(Type::getInt32Ty(*Context));
+            Idxs[1] = Idxs[0];
             CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs, 2);
             SrcTy = cast<PointerType>(CastOp->getType());
             SrcPTy = SrcTy->getElementType();
@@ -11453,17 +11454,6 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       if (Instruction *Res = InstCombineLoadCast(*this, LI, TD))
         return Res;
   
-  // If this load comes from anywhere in a constant global, and if the global
-  // is all undef or zero, we know what it loads.
-  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op->getUnderlyingObject())){
-    if (GV->isConstant() && GV->hasDefinitiveInitializer()) {
-      if (GV->getInitializer()->isNullValue())
-        return ReplaceInstUsesWith(LI, Constant::getNullValue(LI.getType()));
-      else if (isa<UndefValue>(GV->getInitializer()))
-        return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
-    }
-  }
-
   if (Op->hasOneUse()) {
     // Change select and PHI nodes to select values instead of addresses: this
     // helps alias analysis out a lot, allows many others simplifications, and

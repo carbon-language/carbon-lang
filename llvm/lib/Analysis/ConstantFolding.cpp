@@ -103,45 +103,59 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
     if (GV->isConstant() && GV->hasDefinitiveInitializer())
       return GV->getInitializer();
 
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-    if (CE->getOpcode() == Instruction::GetElementPtr) {
-      if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
-        if (GV->isConstant() && GV->hasDefinitiveInitializer())
-          if (Constant *V = 
-               ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE))
-            return V;
-    }
-    
-    // Instead of loading constant c string, use corresponding integer value
-    // directly if string length is small enough.
-    std::string Str;
-    if (TD && GetConstantStringInfo(CE->getOperand(0), Str) && !Str.empty()) {
-      unsigned len = Str.length();
-      const Type *Ty = cast<PointerType>(CE->getType())->getElementType();
-      unsigned numBits = Ty->getPrimitiveSizeInBits();
-      // Replace LI with immediate integer store.
-      if ((numBits >> 3) == len + 1) {
-        APInt StrVal(numBits, 0);
-        APInt SingleChar(numBits, 0);
-        if (TD->isLittleEndian()) {
-          for (signed i = len-1; i >= 0; i--) {
-            SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
-            StrVal = (StrVal << 8) | SingleChar;
-          }
-        } else {
-          for (unsigned i = 0; i < len; i++) {
-            SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
-            StrVal = (StrVal << 8) | SingleChar;
-          }
-          // Append NULL at the end.
-          SingleChar = 0;
+  // If the loaded value isn't a constant expr, we can't handle it.
+  ConstantExpr *CE = dyn_cast<ConstantExpr>(C);
+  if (!CE) return 0;
+  
+  if (CE->getOpcode() == Instruction::GetElementPtr) {
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
+      if (GV->isConstant() && GV->hasDefinitiveInitializer())
+        if (Constant *V = 
+             ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE))
+          return V;
+  }
+  
+  // Instead of loading constant c string, use corresponding integer value
+  // directly if string length is small enough.
+  std::string Str;
+  if (TD && GetConstantStringInfo(CE->getOperand(0), Str) && !Str.empty()) {
+    unsigned len = Str.length();
+    const Type *Ty = cast<PointerType>(CE->getType())->getElementType();
+    unsigned numBits = Ty->getPrimitiveSizeInBits();
+    // Replace LI with immediate integer store.
+    if ((numBits >> 3) == len + 1) {
+      APInt StrVal(numBits, 0);
+      APInt SingleChar(numBits, 0);
+      if (TD->isLittleEndian()) {
+        for (signed i = len-1; i >= 0; i--) {
+          SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
           StrVal = (StrVal << 8) | SingleChar;
         }
-        return ConstantInt::get(CE->getContext(), StrVal);
+      } else {
+        for (unsigned i = 0; i < len; i++) {
+          SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
+          StrVal = (StrVal << 8) | SingleChar;
+        }
+        // Append NULL at the end.
+        SingleChar = 0;
+        StrVal = (StrVal << 8) | SingleChar;
       }
+      return ConstantInt::get(CE->getContext(), StrVal);
     }
   }
-
+  
+  // If this load comes from anywhere in a constant global, and if the global
+  // is all undef or zero, we know what it loads.
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getUnderlyingObject())){
+    if (GV->isConstant() && GV->hasDefinitiveInitializer()) {
+      const Type *ResTy = cast<PointerType>(C->getType())->getElementType();
+      if (GV->getInitializer()->isNullValue())
+        return Constant::getNullValue(ResTy);
+      if (isa<UndefValue>(GV->getInitializer()))
+        return UndefValue::get(ResTy);
+    }
+  }
+  
   return 0;
 }
 
