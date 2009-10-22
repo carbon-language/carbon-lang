@@ -9274,13 +9274,43 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
   return Changed ? &SI : 0;
 }
 
-/// isDefinedInBB - Return true if the value is an instruction defined in the
-/// specified basicblock.
-static bool isDefinedInBB(const Value *V, const BasicBlock *BB) {
-  const Instruction *I = dyn_cast<Instruction>(V);
-  return I != 0 && I->getParent() == BB;
-}
 
+/// CanSelectOperandBeMappingIntoPredBlock - SI is a select whose condition is a
+/// PHI node (but the two may be in different blocks).  See if the true/false
+/// values (V) are live in all of the predecessor blocks of the PHI.  For
+/// example, cases like this cannot be mapped:
+///
+///   X = phi [ C1, BB1], [C2, BB2]
+///   Y = add
+///   Z = select X, Y, 0
+///
+/// because Y is not live in BB1/BB2.
+///
+static bool CanSelectOperandBeMappingIntoPredBlock(const Value *V,
+                                                   const SelectInst &SI) {
+  // If the value is a non-instruction value like a constant or argument, it
+  // can always be mapped.
+  const Instruction *I = dyn_cast<Instruction>(V);
+  if (I == 0) return true;
+  
+  // If V is a PHI node defined in the same block as the condition PHI, we can
+  // map the arguments.
+  const PHINode *CondPHI = cast<PHINode>(SI.getCondition());
+  
+  if (const PHINode *VP = dyn_cast<PHINode>(I))
+    if (VP->getParent() == CondPHI->getParent())
+      return true;
+  
+  // Otherwise, if the PHI and select are defined in the same block and if V is
+  // defined in a different block, then we can transform it.
+  if (SI.getParent() == CondPHI->getParent() &&
+      I->getParent() != CondPHI->getParent())
+    return true;
+  
+  // Otherwise we have a 'hard' case and we can't tell without doing more
+  // detailed dominator based analysis, punt.
+  return false;
+}
 
 Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   Value *CondVal = SI.getCondition();
@@ -9493,16 +9523,13 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       return FoldI;
   }
 
-  // See if we can fold the select into a phi node.  The true/false values have
-  // to be live in the predecessor blocks.  If they are instructions in SI's
-  // block, we can't map to the predecessor.
-  if (isa<PHINode>(SI.getCondition()) &&
-      (!isDefinedInBB(SI.getTrueValue(), SI.getParent()) ||
-       isa<PHINode>(SI.getTrueValue())) &&
-      (!isDefinedInBB(SI.getFalseValue(), SI.getParent()) ||
-       isa<PHINode>(SI.getFalseValue())))
-    if (Instruction *NV = FoldOpIntoPhi(SI))
-      return NV;
+  // See if we can fold the select into a phi node if the condition is a select.
+  if (isa<PHINode>(SI.getCondition())) 
+    // The true/false values have to be live in the PHI predecessor's blocks.
+    if (CanSelectOperandBeMappingIntoPredBlock(TrueVal, SI) &&
+        CanSelectOperandBeMappingIntoPredBlock(FalseVal, SI))
+      if (Instruction *NV = FoldOpIntoPhi(SI))
+        return NV;
 
   if (BinaryOperator::isNot(CondVal)) {
     SI.setOperand(0, BinaryOperator::getNotArgument(CondVal));

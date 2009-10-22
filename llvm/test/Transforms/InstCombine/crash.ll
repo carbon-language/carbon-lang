@@ -1,4 +1,4 @@
-; RUN: opt < %s -instcombine | llvm-dis
+; RUN: opt < %s -instcombine -S
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "i386-apple-darwin10.0"
 
@@ -98,4 +98,30 @@ define void @bar3(i1, i1) nounwind align 2 {
   %14 = zext i32 %11 to i64                       ; <i64> [#uses=1]
   %15 = tail call %t0* @bar2(i64 %14) nounwind      ; <%0*> [#uses=0]
   ret void
+}
+
+
+
+
+; PR5262
+; Make sure the PHI node gets put in a place where all of its operands dominate
+; it.
+define i64 @test4(i1 %c, i64* %P) nounwind align 2 {
+BB0:
+  br i1 %c, label %BB1, label %BB2
+
+BB1:
+  br label %BB2
+
+BB2:
+  %v5_ = phi i1 [ true, %BB0], [false, %BB1]
+  %v6 = load i64* %P
+  br label %l8
+
+l8:
+  br label %l10
+  
+l10:
+  %v11 = select i1 %v5_, i64 0, i64 %v6
+  ret i64 %v11
 }
