@@ -57,7 +57,7 @@ static int getFunctionColor(const Function *F) {
   if (F->hasSection()) {
     std::string Sectn = F->getSection();
     std::string StrToFind = "Overlay=";
-    unsigned Pos = Sectn.find(StrToFind);
+    std::string::size_type Pos = Sectn.find(StrToFind);
 
     // Retreive the color number if the key is found.
     if (Pos != std::string::npos) {
