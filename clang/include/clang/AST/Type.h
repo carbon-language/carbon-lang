@@ -443,6 +443,8 @@ public:
     return getTypePtr();
   }
 
+  bool isCanonical() const;
+
   /// isNull - Return true if this QualType doesn't point to a type yet.
   bool isNull() const {
     return Value.getPointer().isNull();
@@ -702,7 +704,9 @@ protected:
 public:
   TypeClass getTypeClass() const { return static_cast<TypeClass>(TC); }
 
-  bool isCanonical() const { return CanonicalType.getTypePtr() == this; }
+  bool isCanonicalUnqualified() const {
+    return CanonicalType.getTypePtr() == this;
+  }
 
   /// Types are partitioned into 3 broad categories (C99 6.2.5p1):
   /// object types, function types, and incomplete types.
@@ -2621,6 +2625,13 @@ public:
 
 
 // Inline function definitions.
+
+inline bool QualType::isCanonical() const {
+  const Type *T = getTypePtr();
+  if (hasQualifiers())
+    return T->isCanonicalUnqualified() && !isa<ArrayType>(T);
+  return T->isCanonicalUnqualified();
+}
 
 inline void QualType::removeConst() {
   removeFastQualifiers(Qualifiers::Const);

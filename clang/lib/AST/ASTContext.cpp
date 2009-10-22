@@ -1151,7 +1151,7 @@ QualType ASTContext::getComplexType(QualType T) {
   // If the pointee type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   QualType Canonical;
-  if (!T->isCanonical()) {
+  if (!T.isCanonical()) {
     Canonical = getComplexType(getCanonicalType(T));
 
     // Get the new insert position for the node we care about.
@@ -1188,7 +1188,7 @@ QualType ASTContext::getPointerType(QualType T) {
   // If the pointee type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   QualType Canonical;
-  if (!T->isCanonical()) {
+  if (!T.isCanonical()) {
     Canonical = getPointerType(getCanonicalType(T));
 
     // Get the new insert position for the node we care about.
@@ -1218,7 +1218,7 @@ QualType ASTContext::getBlockPointerType(QualType T) {
   // If the block pointee type isn't canonical, this won't be a canonical
   // type either so fill in the canonical type field.
   QualType Canonical;
-  if (!T->isCanonical()) {
+  if (!T.isCanonical()) {
     Canonical = getBlockPointerType(getCanonicalType(T));
 
     // Get the new insert position for the node we care about.
@@ -1249,7 +1249,7 @@ QualType ASTContext::getLValueReferenceType(QualType T) {
   // If the referencee type isn't canonical, this won't be a canonical type
   // either, so fill in the canonical type field.
   QualType Canonical;
-  if (!T->isCanonical()) {
+  if (!T.isCanonical()) {
     Canonical = getLValueReferenceType(getCanonicalType(T));
 
     // Get the new insert position for the node we care about.
@@ -1281,7 +1281,7 @@ QualType ASTContext::getRValueReferenceType(QualType T) {
   // If the referencee type isn't canonical, this won't be a canonical type
   // either, so fill in the canonical type field.
   QualType Canonical;
-  if (!T->isCanonical()) {
+  if (!T.isCanonical()) {
     Canonical = getRValueReferenceType(getCanonicalType(T));
 
     // Get the new insert position for the node we care about.
@@ -1313,7 +1313,7 @@ QualType ASTContext::getMemberPointerType(QualType T, const Type *Cls) {
   // If the pointee or class type isn't canonical, this won't be a canonical
   // type either, so fill in the canonical type field.
   QualType Canonical;
-  if (!T->isCanonical()) {
+  if (!T.isCanonical()) {
     Canonical = getMemberPointerType(getCanonicalType(T),getCanonicalType(Cls));
 
     // Get the new insert position for the node we care about.
@@ -1353,7 +1353,7 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   // If the element type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   QualType Canonical;
-  if (!EltTy->isCanonical()) {
+  if (!EltTy.isCanonical()) {
     Canonical = getConstantArrayType(getCanonicalType(EltTy), ArySize,
                                      ASM, EltTypeQuals);
     // Get the new insert position for the node we care about.
@@ -1448,7 +1448,7 @@ QualType ASTContext::getIncompleteArrayType(QualType EltTy,
   // either, so fill in the canonical type field.
   QualType Canonical;
 
-  if (!EltTy->isCanonical()) {
+  if (!EltTy.isCanonical()) {
     Canonical = getIncompleteArrayType(getCanonicalType(EltTy),
                                        ASM, EltTypeQuals);
 
@@ -1484,7 +1484,7 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts) {
   // If the element type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   QualType Canonical;
-  if (!vecType->isCanonical()) {
+  if (!vecType.isCanonical()) {
     Canonical = getVectorType(getCanonicalType(vecType), NumElts);
 
     // Get the new insert position for the node we care about.
@@ -1516,7 +1516,7 @@ QualType ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) {
   // If the element type isn't canonical, this won't be a canonical type either,
   // so fill in the canonical type field.
   QualType Canonical;
-  if (!vecType->isCanonical()) {
+  if (!vecType.isCanonical()) {
     Canonical = getExtVectorType(getCanonicalType(vecType), NumElts);
 
     // Get the new insert position for the node we care about.
@@ -1580,7 +1580,7 @@ QualType ASTContext::getFunctionNoProtoType(QualType ResultTy, bool NoReturn) {
     return QualType(FT, 0);
 
   QualType Canonical;
-  if (!ResultTy->isCanonical()) {
+  if (!ResultTy.isCanonical()) {
     Canonical = getFunctionNoProtoType(getCanonicalType(ResultTy), NoReturn);
 
     // Get the new insert position for the node we care about.
@@ -1622,11 +1622,11 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
     return QualType(FTP, 0);
 
   // Determine whether the type being created is already canonical or not.
-  bool isCanonical = ResultTy->isCanonical();
+  bool isCanonical = ResultTy.isCanonical();
   if (hasExceptionSpec)
     isCanonical = false;
   for (unsigned i = 0; i != NumArgs && isCanonical; ++i)
-    if (!ArgArray[i]->isCanonical())
+    if (!ArgArray[i].isCanonical())
       isCanonical = false;
 
   // If this type isn't canonical, get the canonical version of it.
@@ -1711,7 +1711,7 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
 QualType
 ASTContext::getSubstTemplateTypeParmType(const TemplateTypeParmType *Parm,
                                          QualType Replacement) {
-  assert(Replacement->isCanonical()
+  assert(Replacement.isCanonical()
          && "replacement types must always be canonical");
 
   llvm::FoldingSetNodeID ID;
@@ -2499,7 +2499,7 @@ int ASTContext::getFloatingTypeOrder(QualType LHS, QualType RHS) {
 /// routine will assert if passed a built-in type that isn't an integer or enum,
 /// or if it is not canonicalized.
 unsigned ASTContext::getIntegerRank(Type *T) {
-  assert(T->isCanonical() && "T should be canonicalized");
+  assert(T->isCanonicalUnqualified() && "T should be canonicalized");
   if (EnumType* ET = dyn_cast<EnumType>(T))
     T = ET->getDecl()->getIntegerType().getTypePtr();
 
@@ -3628,7 +3628,7 @@ Qualifiers::GC ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
 /// compatible.
 static bool areCompatVectorTypes(const VectorType *LHS,
                                  const VectorType *RHS) {
-  assert(LHS->isCanonical() && RHS->isCanonical());
+  assert(LHS->isCanonicalUnqualified() && RHS->isCanonicalUnqualified());
   return LHS->getElementType() == RHS->getElementType() &&
          LHS->getNumElements() == RHS->getNumElements();
 }

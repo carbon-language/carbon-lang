@@ -221,7 +221,7 @@ DeduceTemplateArguments(ASTContext &Context,
                         QualType Arg,
                         Sema::TemplateDeductionInfo &Info,
                         llvm::SmallVectorImpl<TemplateArgument> &Deduced) {
-  assert(Arg->isCanonical() && "Argument type must be canonical");
+  assert(Arg.isCanonical() && "Argument type must be canonical");
 
   // Check whether the template argument is a dependent template-id.
   // FIXME: This is untested code; it can be tested when we implement
@@ -313,7 +313,7 @@ DeduceTemplateArguments(ASTContext &Context,
 /// that corresponds to T. Otherwise, returns T.
 static QualType getUnqualifiedArrayType(ASTContext &Context, QualType T,
                                         Qualifiers &Quals) {
-  assert(T->isCanonical() && "Only operates on canonical types");
+  assert(T.isCanonical() && "Only operates on canonical types");
   if (!isa<ArrayType>(T)) {
     Quals = T.getQualifiers();
     return T.getUnqualifiedType();

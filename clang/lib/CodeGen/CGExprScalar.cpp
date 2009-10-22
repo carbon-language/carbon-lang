@@ -365,7 +365,7 @@ public:
 /// EmitConversionToBool - Convert the specified expression value to a
 /// boolean (i1) truth value.  This is equivalent to "Val != 0".
 Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
-  assert(SrcType->isCanonical() && "EmitScalarConversion strips typedefs");
+  assert(SrcType.isCanonical() && "EmitScalarConversion strips typedefs");
 
   if (SrcType->isRealFloatingType()) {
     // Compare against 0.0 for fp scalars.

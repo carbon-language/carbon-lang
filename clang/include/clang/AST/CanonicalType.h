@@ -660,7 +660,7 @@ CanQual<T> CanQual<T>::getFromOpaquePtr(void *Ptr) {
 
 template<typename T>
 CanQual<T> CanQual<T>::CreateUnsafe(QualType Other) {
-  assert((Other.isNull() || Other->isCanonical()) && "Type is not canonical!");
+  assert((Other.isNull() || Other.isCanonical()) && "Type is not canonical!");
   assert((Other.isNull() || isa<T>(Other.getTypePtr())) &&
          "Dynamic type does not meet the static type's requires");
   CanQual<T> Result;

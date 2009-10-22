@@ -299,7 +299,7 @@ void TemplateArgumentListBuilder::Append(const TemplateArgument& Arg) {
   switch (Arg.getKind()) {
     default: break;
     case TemplateArgument::Type:
-      assert(Arg.getAsType()->isCanonical() && "Type must be canonical!");
+      assert(Arg.getAsType().isCanonical() && "Type must be canonical!");
       break;
   }
 
