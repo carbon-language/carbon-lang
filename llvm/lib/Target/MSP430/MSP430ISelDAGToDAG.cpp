@@ -165,10 +165,10 @@ bool MSP430DAGToDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
   if (OptLevel == CodeGenOpt::None) return false;
 
   /// RMW preprocessing creates the following code:
-  ///       [Load1]
-  ///       ^     ^
-  ///       |      \
-  ///       |       \
+  ///         [Load1]
+  ///         ^     ^
+  ///        /      |
+  ///       /       |
   ///       [Load2] |
   ///       ^    ^  |
   ///       |    |  |
@@ -328,16 +328,16 @@ static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
 /// We also recognize the case where second operand of Op is load as well and
 /// move it below token factor as well creating DAG as follows:
 ///
-///     [Load chain]
-///         ^
-///         |
-///    [TokenFactor]
-///         ^
-///         |
-///       [Load1]
-///       ^     ^
-///       |      \
-///       |       \
+///       [Load chain]
+///            ^
+///            |
+///      [TokenFactor]
+///            ^
+///            |
+///         [Load1]
+///         ^     ^
+///        /      |
+///       /       |
 ///       [Load2] |
 ///       ^    ^  |
 ///       |    |  |
