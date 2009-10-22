@@ -127,6 +127,15 @@ QuietA("quiet", cl::desc("Alias for -q"), cl::aliasopt(Quiet));
 static cl::opt<bool>
 AnalyzeOnly("analyze", cl::desc("Only perform analysis, no optimization"));
 
+static cl::opt<std::string>
+DefaultDataLayout("default-data-layout", 
+          cl::desc("data layout string to use if not specified by module"),
+          cl::value_desc("layout-string"), cl::init(""));
+
+static cl::opt<bool>
+NoDefaultDataLayout("no-default-data-layout",
+  cl::desc("no data layout assumptions unless module specifies data layout"));
+
 // ---------- Define Printers for module and function passes ------------
 namespace {
 
@@ -388,12 +397,21 @@ int main(int argc, char **argv) {
     PassManager Passes;
 
     // Add an appropriate TargetData instance for this module...
-    Passes.add(new TargetData(M.get()));
+    TargetData *TD = 0;
+    const std::string &ModuleDataLayout = M.get()->getDataLayout();
+    if (!ModuleDataLayout.empty())
+      TD = new TargetData(ModuleDataLayout);
+    else if (!NoDefaultDataLayout)
+      TD = new TargetData(DefaultDataLayout);
+
+    if (TD)
+      Passes.add(TD);
 
     FunctionPassManager *FPasses = NULL;
     if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
       FPasses = new FunctionPassManager(new ExistingModuleProvider(M.get()));
-      FPasses->add(new TargetData(M.get()));
+      if (TD)
+        FPasses->add(new TargetData(*TD));
     }
 
     // If the -strip-debug command line option was specified, add it.  If
