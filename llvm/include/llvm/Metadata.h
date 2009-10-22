@@ -61,7 +61,7 @@ protected:
     : MetadataBase(Type::getMetadataTy(C), Value::MDStringVal), Str(begin, l) {}
 
 public:
-  static MDString *get(LLVMContext &Context, const StringRef &Str);
+  static MDString *get(LLVMContext &Context, StringRef Str);
   
   StringRef getString() const { return Str; }
 
@@ -256,14 +256,14 @@ private:
 public:
   /// registerMDKind - Register a new metadata kind and return its ID.
   /// A metadata kind can be registered only once. 
-  unsigned registerMDKind(const StringRef Name);
+  unsigned registerMDKind(StringRef Name);
 
   /// getMDKind - Return metadata kind. If the requested metadata kind
   /// is not registered then return 0.
-  unsigned getMDKind(const StringRef Name) const;
+  unsigned getMDKind(StringRef Name) const;
 
   /// isValidName - Return true if Name is a valid custom metadata handler name.
-  static bool isValidName(const StringRef Name);
+  static bool isValidName(StringRef Name);
 
   /// getMD - Get the metadata of given kind attached to an Instruction.
   /// If the metadata is not found then return 0.
