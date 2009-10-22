@@ -742,11 +742,11 @@ void CheckBadCall::PreVisitCallExpr(CheckerContext &C, const CallExpr *CE) {
   }
 }
 
-class VISIBILITY_HIDDEN CheckBadDiv : public CheckerVisitor<CheckBadDiv> {
+class VISIBILITY_HIDDEN CheckDivZero : public CheckerVisitor<CheckDivZero> {
   DivZero *BT;
 public:
-  CheckBadDiv() : BT(0) {}
-  ~CheckBadDiv() {}
+  CheckDivZero() : BT(0) {}
+  ~CheckDivZero() {}
 
   const void *getTag() {
     static int x;
@@ -756,8 +756,8 @@ public:
   void PreVisitBinaryOperator(CheckerContext &C, const BinaryOperator *B);
 };
 
-void CheckBadDiv::PreVisitBinaryOperator(CheckerContext &C,
-                                         const BinaryOperator *B) {
+void CheckDivZero::PreVisitBinaryOperator(CheckerContext &C,
+                                          const BinaryOperator *B) {
   BinaryOperator::Opcode Op = B->getOpcode();
   if (Op != BinaryOperator::Div &&
       Op != BinaryOperator::Rem &&
@@ -792,7 +792,8 @@ void CheckBadDiv::PreVisitBinaryOperator(CheckerContext &C,
     return;
   }
 
-  // If we get here, then the denom should not be zero.
+  // If we get here, then the denom should not be zero. We abandon the implicit
+  // zero denom case for now.
   if (stateNotZero != C.getState())
     C.addTransition(C.GenerateNode(B, stateNotZero));
 }
@@ -828,5 +829,5 @@ void GRExprEngine::RegisterInternalChecks() {
   registerCheck(new CheckAttrNonNull());
   registerCheck(new CheckUndefinedArg());
   registerCheck(new CheckBadCall());
-  registerCheck(new CheckBadDiv());
+  registerCheck(new CheckDivZero());
 }
