@@ -569,14 +569,12 @@ static void WriteMetadataAttachment(const Function &F,
       bool RecordedInstruction = false;
       for (MetadataContext::MDMapTy::const_iterator PI = P->begin(), 
              PE = P->end(); PI != PE; ++PI) {
-        if (MDNode *ND = dyn_cast_or_null<MDNode>(PI->second)) {
-          if (RecordedInstruction == false) {
-            Record.push_back(VE.getInstructionID(I));
-            RecordedInstruction = true;
-          }
-          Record.push_back(PI->first);
-          Record.push_back(VE.getValueID(ND));
+        if (RecordedInstruction == false) {
+          Record.push_back(VE.getInstructionID(I));
+          RecordedInstruction = true;
         }
+        Record.push_back(PI->first);
+        Record.push_back(VE.getValueID(PI->second));
       }
       if (!Record.empty()) {
         if (!StartedMetadataBlock)  {

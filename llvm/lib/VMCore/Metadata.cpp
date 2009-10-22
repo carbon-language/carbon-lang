@@ -34,7 +34,7 @@ MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   if (S) return S;
   
   return S = 
-    new MDString(Context, StringRef(Entry.getKeyData(), Entry.getKeyLength()));
+    new MDString(Context, Entry.getKey());
 }
 
 //===----------------------------------------------------------------------===//
@@ -151,7 +151,7 @@ NamedMDNode::NamedMDNode(LLVMContext &C, const Twine &N,
   setName(N);
 
   for (unsigned i = 0; i != NumMDs; ++i)
-    Node.push_back(WeakMetadataVH(MDs[i]));
+    Node.push_back(TrackingVH<MetadataBase>(MDs[i]));
 
   if (ParentModule)
     ParentModule->getNamedMDList().push_back(this);
@@ -277,8 +277,7 @@ void MetadataContext::copyMD(Instruction *In1, Instruction *In2) {
     return;
 
   for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
-    if (MDNode *MD = dyn_cast_or_null<MDNode>(I->second))
-      addMD(I->first, MD, In2);
+    addMD(I->first, I->second, In2);
 }
 
 /// getMD - Get the metadata of given kind attached to an Instruction.
@@ -290,7 +289,7 @@ MDNode *MetadataContext::getMD(unsigned MDKind, const Instruction *Inst) {
 
   for (MDMapTy::iterator I = Info.begin(), E = Info.end(); I != E; ++I)
     if (I->first == MDKind)
-      return dyn_cast_or_null<MDNode>(I->second);
+      return I->second;
   return NULL;
 }
 
@@ -326,8 +325,7 @@ void MetadataContext::ValueIsCloned(const Instruction *In1, Instruction *In2) {
   MDMapTy &In1Info = I->second;
   MDMapTy In2Info;
   for (MDMapTy::iterator I = In1Info.begin(), E = In1Info.end(); I != E; ++I)
-    if (MDNode *MD = dyn_cast_or_null<MDNode>(I->second))
-      addMD(I->first, MD, In2);
+    addMD(I->first, I->second, In2);
 }
 
 /// ValueIsRAUWd - This handler is used when V1's all uses are replaced by

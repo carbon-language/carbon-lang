@@ -700,8 +700,7 @@ void SlotTracker::processFunction() {
       if (MDs)
         for (MetadataContext::MDMapTy::const_iterator MI = MDs->begin(),
                ME = MDs->end(); MI != ME; ++MI)
-          if (MDNode *MDN = dyn_cast_or_null<MDNode>(MI->second))
-            CreateMetadataSlot(MDN);
+          CreateMetadataSlot(MI->second);
     }
   }
 
@@ -2039,9 +2038,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     if (MDMap)
       for (MetadataContext::MDMapTy::const_iterator MI = MDMap->begin(),
              ME = MDMap->end(); MI != ME; ++MI)
-        if (const MDNode *MD = dyn_cast_or_null<MDNode>(MI->second))
-          Out << ", !" << MDNames[MI->first]
-              << " !" << Machine.getMetadataSlot(MD);
+        Out << ", !" << MDNames[MI->first]
+            << " !" << Machine.getMetadataSlot(MI->second);
   }
   printInfoComment(I);
 }

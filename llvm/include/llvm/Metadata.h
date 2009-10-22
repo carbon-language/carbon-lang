@@ -144,23 +144,6 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// WeakMetadataVH - a weak value handle for metadata.
-class WeakMetadataVH : public WeakVH {
-public:
-  WeakMetadataVH() : WeakVH() {}
-  WeakMetadataVH(MetadataBase *M) : WeakVH(M) {}
-  WeakMetadataVH(const WeakMetadataVH &RHS) : WeakVH(RHS) {}
-  
-  operator Value*() const {
-    llvm_unreachable("WeakMetadataVH only handles Metadata");
-  }
-
-  operator MetadataBase*() const {
-   return dyn_cast_or_null<MetadataBase>(getValPtr());
-  }
-};
-
-//===----------------------------------------------------------------------===//
 /// NamedMDNode - a tuple of other metadata. 
 /// NamedMDNode is always named. All NamedMDNode element has a type of metadata.
 template<typename ValueSubClass, typename ItemParentClass>
@@ -173,8 +156,7 @@ class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
 
   Module *Parent;
-  SmallVector<WeakMetadataVH, 4> Node;
-  typedef SmallVectorImpl<WeakMetadataVH>::iterator elem_iterator;
+  SmallVector<TrackingVH<MetadataBase>, 4> Node;
 
   void setParent(Module *M) { Parent = M; }
 protected:
@@ -216,10 +198,12 @@ public:
 
   /// addElement - Add metadata element.
   void addElement(MetadataBase *M) {
-    Node.push_back(WeakMetadataVH(M));
+    Node.push_back(TrackingVH<MetadataBase>(M));
   }
 
-  typedef SmallVectorImpl<WeakMetadataVH>::const_iterator const_elem_iterator;
+  typedef SmallVectorImpl<TrackingVH<MetadataBase> >::iterator elem_iterator;
+  typedef SmallVectorImpl<TrackingVH<MetadataBase> >::const_iterator 
+    const_elem_iterator;
   bool elem_empty() const                { return Node.empty(); }
   const_elem_iterator elem_begin() const { return Node.begin(); }
   const_elem_iterator elem_end() const   { return Node.end();   }
@@ -241,7 +225,7 @@ public:
 /// is [a-zA-Z$._][a-zA-Z$._0-9]*
 class MetadataContext {
 public:
-  typedef std::pair<unsigned, WeakVH> MDPairTy;
+  typedef std::pair<unsigned, TrackingVH<MDNode> > MDPairTy;
   typedef SmallVector<MDPairTy, 2> MDMapTy;
   typedef DenseMap<const Instruction *, MDMapTy> MDStoreTy;
   friend class BitcodeReader;

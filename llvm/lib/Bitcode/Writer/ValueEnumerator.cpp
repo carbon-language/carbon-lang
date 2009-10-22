@@ -103,8 +103,7 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
         if (MDs)
           for (MetadataContext::MDMapTy::const_iterator MI = MDs->begin(),
                  ME = MDs->end(); MI != ME; ++MI)
-            if (MDNode *MDN = dyn_cast_or_null<MDNode>(MI->second))
-              EnumerateMetadata(MDN);
+            EnumerateMetadata(MI->second);
       }
   }
 

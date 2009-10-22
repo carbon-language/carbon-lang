@@ -150,7 +150,8 @@ class MachineModuleInfo : public ImmutablePass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  typedef SmallVector< std::pair< WeakMetadataVH, unsigned>, 4 > VariableDbgInfoMapTy;
+  typedef SmallVector< std::pair<TrackingVH<MDNode>, unsigned>, 4 > 
+    VariableDbgInfoMapTy;
   VariableDbgInfoMapTy VariableDbgInfo;
 
   MachineModuleInfo();
