@@ -83,6 +83,7 @@ option</a></li>
       <li><a href="#dss_stringmap">"llvm/ADT/StringMap.h"</a></li>
       <li><a href="#dss_indexedmap">"llvm/ADT/IndexedMap.h"</a></li>
       <li><a href="#dss_densemap">"llvm/ADT/DenseMap.h"</a></li>
+      <li><a href="#dss_valuemap">"llvm/ADT/ValueMap.h"</a></li>
       <li><a href="#dss_map">&lt;map&gt;</a></li>
       <li><a href="#dss_othermap">Other Map-Like Container Options</a></li>
     </ul></li>
@@ -1487,6 +1488,23 @@ or values are large.  Finally, you must implement a partial specialization of
 DenseMapInfo for the key that you want, if it isn't already supported.  This
 is required to tell DenseMap about two special marker values (which can never be
 inserted into the map) that it needs internally.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_valuemap">"llvm/ADT/ValueMap.h"</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+ValueMap is a wrapper around a <a href="#dss_densemap">DenseMap</a> mapping
+Value*s (or subclasses) to another type.  When a Value is deleted or RAUW'ed,
+ValueMap will update itself so the new version of the key is mapped to the same
+value, just as if the key were a WeakVH.  You can configure exactly how this
+happens, and what else happens on these two events, by passing
+a <code>Config</code> parameter to the ValueMap template.</p>
 
 </div>
 
