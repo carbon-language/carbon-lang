@@ -54,6 +54,7 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
         CXCursor Ref;
 
         while (startBuf < endBuf) {
+          CXLookupHint hint;
           if (*startBuf == '\n') {
             startBuf++;
             curLine++;
@@ -61,7 +62,6 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
           } else if (*startBuf != '\t')
             curColumn++;
           
-          CXLookupHint hint;
           clang_initCXLookupHint(&hint);
           hint.decl = Cursor.decl;
 
