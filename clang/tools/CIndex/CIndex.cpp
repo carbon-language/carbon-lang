@@ -380,7 +380,7 @@ CXTranslationUnit clang_createTranslationUnit(
                            CXXIdx->getOnlyLocalDecls(),
                            /* UseBumpAllocator = */ true);
   
-  if (CXXIdx->getDisplayDiagnostics() && !ErrMsg.empty()) {
+  if (!ErrMsg.empty()) {
     (llvm::errs() << "clang_createTranslationUnit: " << ErrMsg 
                   << '\n').flush();
   }
@@ -444,7 +444,7 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
       /* redirects */ !CXXIdx->getDisplayDiagnostics() ? &Redirects[0] : NULL,
       /* secondsToWait */ 0, /* memoryLimits */ 0, &ErrMsg);
   
-  if (CXXIdx->getDisplayDiagnostics() && !ErrMsg.empty()) {
+  if (!ErrMsg.empty()) {
     llvm::errs() << "clang_createTranslationUnitFromSourceFile: " << ErrMsg 
       << '\n' << "Arguments: \n";
     for (std::vector<const char*>::iterator I = argv.begin(), E = argv.end();
