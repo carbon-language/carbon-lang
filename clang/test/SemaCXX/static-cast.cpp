@@ -133,3 +133,14 @@ void t_529_9()
   (void)static_cast<int A::*>((int H::*)0); // expected-error {{ambiguous conversion from pointer to member of derived class 'struct H'}}
   (void)static_cast<int A::*>((int F::*)0); // expected-error {{conversion from pointer to member of class 'struct F'}}
 }
+
+// PR 5261 - static_cast should instantiate template if possible
+namespace pr5261 {
+  struct base {};
+  template<typename E> struct derived : public base {};
+  template<typename E> struct outer {
+    base *pb;
+    ~outer() { (void)static_cast<derived<E>*>(pb); }
+  };
+  outer<int> EntryList;
+}

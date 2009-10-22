@@ -175,7 +175,7 @@ Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
 /// DestType casts away constness as defined in C++ 5.2.11p8ff. This is used by
 /// the cast checkers.  Both arguments must denote pointer (possibly to member)
 /// types.
-bool
+static bool
 CastsAwayConstness(Sema &Self, QualType SrcType, QualType DestType) {
   // Casting away constness is defined in C++ 5.2.11p8 with reference to
   // C++ 4.4. We piggyback on Sema::IsQualificationConversion for this, since
@@ -605,6 +605,11 @@ TryCastResult
 TryStaticDowncast(Sema &Self, QualType SrcType, QualType DestType,
                   bool CStyle, const SourceRange &OpRange, QualType OrigSrcType,
                   QualType OrigDestType, unsigned &msg) {
+  // We can only work with complete types. But don't complain if it doesn't work
+  if (Self.RequireCompleteType(OpRange.getBegin(), SrcType, PDiag(0)) ||
+      Self.RequireCompleteType(OpRange.getBegin(), DestType, PDiag(0)))
+    return TC_NotApplicable;
+
   // Downcast can only happen in class hierarchies, so we need classes.
   if (!DestType->isRecordType() || !SrcType->isRecordType()) {
     return TC_NotApplicable;
