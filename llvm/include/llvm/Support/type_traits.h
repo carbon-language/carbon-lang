@@ -87,6 +87,15 @@ struct is_base_of {
       sizeof(char) == sizeof(dont_use::base_of_helper<Base>((Derived*)0));
 };
 
+// remove_pointer - Metafunction to turn Foo* into Foo.  Defined in
+// C++0x [meta.trans.ptr].
+template <typename T> struct remove_pointer { typedef T type; };
+template <typename T> struct remove_pointer<T*> { typedef T type; };
+template <typename T> struct remove_pointer<T*const> { typedef T type; };
+template <typename T> struct remove_pointer<T*volatile> { typedef T type; };
+template <typename T> struct remove_pointer<T*const volatile> {
+    typedef T type; };
+
 }
 
 #endif
