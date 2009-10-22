@@ -159,12 +159,20 @@ void clang_disposeTranslationUnit(CXTranslationUnit);
  * \brief Return the CXTranslationUnit for a given source file and the provided
  * command line arguments one would pass to the compiler.
  *
- * Note: If provided, this routine will strip the '-o <outputfile>' command 
- * line arguments.
+ * Note: The 'source_filename' argument is optional.  If the caller provides a NULL pointer,
+ *  the name of the source file is expected to reside in the specified command line arguments.
+ *
+ * Note: When encountered in 'clang_command_line_args', the following options are ignored:
+ *
+ *   '-c'
+ *   '-emit-ast'
+ *   '-fsyntax-only'
+ *   '-o <output file>'  (both '-o' and '<output file>' are ignored)
+ *
  */
 CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   CXIndex CIdx, 
-  const char *source_filename,
+  const char *source_filename /* specify NULL if the source file is in clang_command_line_args */,
   int num_clang_command_line_args, 
   const char **clang_command_line_args
 );

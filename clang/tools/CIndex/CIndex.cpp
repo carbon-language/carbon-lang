@@ -386,24 +386,45 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   assert(CIdx && "Passed null CXIndex");
   CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
 
-  // Build up the arguments for involing clang.
-  llvm::sys::Path ClangPath = static_cast<CIndexer *>(CIdx)->getClangPath();
+  // Build up the arguments for invoking 'clang'.
   std::vector<const char *> argv;
+  
+  // First add the complete path to the 'clang' executable.
+  llvm::sys::Path ClangPath = static_cast<CIndexer *>(CIdx)->getClangPath();
   argv.push_back(ClangPath.c_str());
+  
+  // Add the '-emit-ast' option as our execution mode for 'clang'.
   argv.push_back("-emit-ast");
-  argv.push_back(source_filename);
-  argv.push_back("-o");
+  
+  // The 'source_filename' argument is optional.  If the caller does not
+  // specify it then it is assumed that the source file is specified
+  // in the actual argument list.
+  if (source_filename)  
+    argv.push_back(source_filename);  
+
   // Generate a temporary name for the AST file.
+  argv.push_back("-o");
   char astTmpFile[L_tmpnam];
   argv.push_back(tmpnam(astTmpFile));
-  for (int i = 0; i < num_command_line_args; i++) {
-    if (command_line_args[i] && strcmp(command_line_args[i], "-o") != 0)
-      argv.push_back(command_line_args[i]);
-    else { 
-      if (++i < num_command_line_args) // Skip "-o"...
-        i++; // ...and the following argument as well.
+
+  // Process the compiler options, stripping off '-o', '-c', '-fsyntax-only'.
+  for (int i = 0; i < num_command_line_args; ++i)
+    if (const char *arg = command_line_args[i]) {
+      if (strcmp(arg, "-o") == 0) {
+        ++i; // Also skip the matching argument.
+        continue;
+      }
+      if (strcmp(arg, "-emit-ast") == 0 ||
+          strcmp(arg, "-c") == 0 ||
+          strcmp(arg, "-fsyntax-only") == 0) {
+        continue;
+      }
+
+      // Keep the argument.
+      argv.push_back(arg);
     }
-  }
+    
+  // Add the null terminator.
   argv.push_back(NULL);
 
 #ifndef LLVM_ON_WIN32
