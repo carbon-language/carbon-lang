@@ -70,6 +70,7 @@ def single_input_file;
 def multiple_input_files;
 def any_switch_on;
 def any_not_empty;
+def any_empty;
 
 // Possible actions.
 
