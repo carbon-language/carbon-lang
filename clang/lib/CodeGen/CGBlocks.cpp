@@ -648,14 +648,8 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
       LocalDeclMap[VD] = i->second;
   }
 
-  // FIXME: We need to rearrange the code for copy/dispose so we have this
-  // sooner, so we can calculate offsets correctly.
-  if (!BlockHasCopyDispose)
-    BlockOffset = CGM.getTargetData()
-      .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8;
-  else
-    BlockOffset = CGM.getTargetData()
-      .getTypeStoreSizeInBits(CGM.getGenericExtendedBlockLiteralType()) / 8;
+  BlockOffset = CGM.getTargetData()
+    .getTypeStoreSizeInBits(CGM.getGenericBlockLiteralType()) / 8;
   BlockAlign = getContext().getTypeAlign(getContext().VoidPtrTy) / 8;
 
   const FunctionType *BlockFunctionType = BExpr->getFunctionType();
