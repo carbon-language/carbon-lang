@@ -244,7 +244,7 @@ Program::Wait(unsigned secondsToWait,
   int status;
   uint64_t pid = reinterpret_cast<uint64_t>(Data_);
   pid_t child = static_cast<pid_t>(pid);
-  while (wait(&status) != child)
+  while (waitpid(pid, &status, 0) != child)
     if (secondsToWait && errno == EINTR) {
       // Kill the child.
       kill(child, SIGKILL);
