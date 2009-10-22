@@ -602,11 +602,13 @@ static void WriteModuleMetadataStore(const Module *M,
   // Write metadata kinds
   // METADATA_KIND - [n x [id, name]]
   MetadataContext &TheMetadata = M->getContext().getMetadata();
-  const StringMap<unsigned> *Kinds = TheMetadata.getHandlerNames();
-  for (StringMap<unsigned>::const_iterator
-         I = Kinds->begin(), E = Kinds->end(); I != E; ++I) {
-    Record.push_back(I->second);
-    StringRef KName = I->first();
+  SmallVector<std::pair<unsigned, StringRef>, 4> Names;
+  TheMetadata.getHandlerNames(Names);
+  for (SmallVector<std::pair<unsigned, StringRef>, 4>::iterator 
+         I = Names.begin(),
+         E = Names.end(); I != E; ++I) {
+    Record.push_back(I->first);
+    StringRef KName = I->second;
     for (unsigned i = 0, e = KName.size(); i != e; ++i)
       Record.push_back(KName[i]);
     if (!StartedMetadataBlock)  {

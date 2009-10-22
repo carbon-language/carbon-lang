@@ -1295,7 +1295,7 @@ class AssemblyWriter {
   TypePrinting TypePrinter;
   AssemblyAnnotationWriter *AnnotationWriter;
   std::vector<const Type*> NumberedTypes;
-  DenseMap<unsigned, const char *> MDNames;
+  DenseMap<unsigned, StringRef> MDNames;
 
 public:
   inline AssemblyWriter(formatted_raw_ostream &o, SlotTracker &Mac,
@@ -1306,11 +1306,12 @@ public:
     // FIXME: Provide MDPrinter
     if (M) {
       MetadataContext &TheMetadata = M->getContext().getMetadata();
-      const StringMap<unsigned> *Names = TheMetadata.getHandlerNames();
-      for (StringMapConstIterator<unsigned> I = Names->begin(),
-             E = Names->end(); I != E; ++I) {
-        const StringMapEntry<unsigned> &Entry = *I;
-        MDNames[I->second] = Entry.getKeyData();
+      SmallVector<std::pair<unsigned, StringRef>, 4> Names;
+      TheMetadata.getHandlerNames(Names);
+      for (SmallVector<std::pair<unsigned, StringRef>, 4>::iterator 
+             I = Names.begin(),
+             E = Names.end(); I != E; ++I) {
+      MDNames[I->first] = I->second;
       }
     }
   }

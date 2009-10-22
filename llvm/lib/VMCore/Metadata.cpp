@@ -305,9 +305,12 @@ MetadataContext::getMDs(const Instruction *Inst) {
 }
 
 /// getHandlerNames - Get handler names. This is used by bitcode
-/// writer.
-const StringMap<unsigned> *MetadataContext::getHandlerNames() {
-  return &MDHandlerNames;
+/// writer and aswm writer.
+void MetadataContext::
+getHandlerNames(SmallVectorImpl<std::pair<unsigned, StringRef> >&Names) const {
+  for (StringMap<unsigned>::const_iterator I = MDHandlerNames.begin(),
+         E = MDHandlerNames.end(); I != E; ++I) 
+    Names.push_back(std::make_pair(I->second, I->first()));
 }
 
 /// ValueIsCloned - This handler is used to update metadata store

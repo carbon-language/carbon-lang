@@ -287,7 +287,7 @@ public:
 
   /// getHandlerNames - Get handler names. This is used by bitcode
   /// writer.
-  const StringMap<unsigned> *getHandlerNames();
+  void getHandlerNames(SmallVectorImpl<std::pair<unsigned, StringRef> >&N) const;
 
   /// ValueIsDeleted - This handler is used to update metadata store
   /// when a value is deleted.
