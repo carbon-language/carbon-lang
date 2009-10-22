@@ -92,6 +92,7 @@ public:
   void VisitCallExpr(const CallExpr *E);
   void VisitStmtExpr(const StmtExpr *E);
   void VisitBinaryOperator(const BinaryOperator *BO);
+  void VisitPointerToDataMemberBinaryOperator(const BinaryOperator *BO);
   void VisitBinAssign(const BinaryOperator *E);
   void VisitBinComma(const BinaryOperator *E);
   void VisitUnaryAddrOf(const UnaryOperator *E);
@@ -328,7 +329,16 @@ void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
 }
 
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
-  CGF.ErrorUnsupported(E, "aggregate binary expression");
+  if (E->getOpcode() == BinaryOperator::PtrMemD)
+    VisitPointerToDataMemberBinaryOperator(E);
+  else
+    CGF.ErrorUnsupported(E, "aggregate binary expression");
+}
+
+void AggExprEmitter::VisitPointerToDataMemberBinaryOperator(
+                                                    const BinaryOperator *E) {
+  LValue LV = CGF.EmitPointerToDataMemberBinaryExpr(E);
+  EmitFinalDestCopy(E, LV);
 }
 
 void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {

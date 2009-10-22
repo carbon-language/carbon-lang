@@ -106,7 +106,6 @@ public:
     return 0;
   }
   Value *VisitExpr(Expr *S);
-  Value *VisitPointerToDataMemberBinaryExpr(const BinaryOperator *BExpr);
   
   Value *VisitParenExpr(ParenExpr *PE) { return Visit(PE->getSubExpr()); }
 
@@ -539,34 +538,16 @@ EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
 
 Value *ScalarExprEmitter::VisitExpr(Expr *E) {
   if (const BinaryOperator *BExpr = dyn_cast<BinaryOperator>(E))
-    if (BExpr->getOpcode() == BinaryOperator::PtrMemD)
-      return VisitPointerToDataMemberBinaryExpr(BExpr);
+    if (BExpr->getOpcode() == BinaryOperator::PtrMemD) {
+      LValue LV = CGF.EmitPointerToDataMemberBinaryExpr(BExpr);
+      Value *InVal = CGF.EmitLoadOfLValue(LV, E->getType()).getScalarVal();
+      return InVal;
+    }
   
   CGF.ErrorUnsupported(E, "scalar expression");
   if (E->getType()->isVoidType())
     return 0;
   return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
-}
-
-Value *ScalarExprEmitter::VisitPointerToDataMemberBinaryExpr(
-                                                    const BinaryOperator *E) {
-  Value *BaseV = EmitLValue(E->getLHS()).getAddress();
-  const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
-  BaseV = Builder.CreateBitCast(BaseV, i8Ty);
-  Value *OffsetV = EmitLoadOfLValue(E->getRHS());
-  const llvm::Type* ResultType = ConvertType(
-                                        CGF.getContext().getPointerDiffType());
-  OffsetV = Builder.CreateBitCast(OffsetV, ResultType);
-  Value *AddV = Builder.CreateInBoundsGEP(BaseV, OffsetV, "add.ptr");
-  QualType Ty = E->getRHS()->getType();
-  const MemberPointerType *MemPtrType = Ty->getAs<MemberPointerType>();
-  Ty = MemPtrType->getPointeeType();
-  const llvm::Type* PType = 
-  ConvertType(CGF.getContext().getPointerType(Ty));
-  AddV = Builder.CreateBitCast(AddV, PType);
-  LValue LV = LValue::MakeAddr(AddV, CGF.MakeQualifiers(Ty));
-  Value *InVal = CGF.EmitLoadOfLValue(LV, Ty).getScalarVal();
-  return InVal;
 }
 
 Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {

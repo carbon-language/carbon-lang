@@ -2,6 +2,12 @@
 
 extern "C" int printf(...);
 
+struct F {
+  F() : iF(1), fF(2.0) {}
+  int iF;
+  float fF;
+};
+
 struct V {
   double d;
   int iV;
@@ -23,7 +29,27 @@ public:
   float f;
   double d;
   int Ai;
+  F Af;
 }; 
+
+void pr(const F& b) {
+  printf(" %d %f\n", b.iF, b.fF);
+}
+
+void test_aggr_pdata(A& a1) {
+  F A::* af = &A::Af;
+  pr(a1.*af);
+
+  (a1.*af).iF = 100;
+  (a1.*af).fF = 200.00;
+  printf(" %d %f\n", (a1.*af).iF, (a1.*af).fF);
+  pr(a1.*af);
+
+  (a1.*af).iF++;
+  (a1.*af).fF--;
+  --(a1.*af).fF;
+  pr(a1.*af);
+}
 
 int main() 
 {
@@ -40,4 +66,5 @@ int main()
   printf("%d\n", &A::B::V::iV);
   printf("%d\n", &A::B1::V::iV);
   printf("%d, %f, %f  \n", a1.*pa, a1.*pf, a1.*pd);
+  test_aggr_pdata(a1);
 }

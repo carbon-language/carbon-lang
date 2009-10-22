@@ -845,7 +845,8 @@ public:
   LValue EmitObjCKVCRefLValue(const ObjCImplicitSetterGetterRefExpr *E);
   LValue EmitObjCSuperExprLValue(const ObjCSuperExpr *E);
   LValue EmitStmtExprLValue(const StmtExpr *E);
-
+  LValue EmitPointerToDataMemberBinaryExpr(const BinaryOperator *E);
+  
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission
   //===--------------------------------------------------------------------===//

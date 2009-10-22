@@ -1379,6 +1379,9 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
     return EmitLValue(E->getRHS());
   }
 
+  if (E->getOpcode() == BinaryOperator::PtrMemD)
+    return EmitPointerToDataMemberBinaryExpr(E);
+  
   // Can only get l-value for binary operator expressions which are a
   // simple assignment of aggregate type.
   if (E->getOpcode() != BinaryOperator::Assign)
@@ -1560,3 +1563,25 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee, QualType CalleeType,
                                                  CallingConvention),
                   Callee, Args, TargetDecl);
 }
+
+LValue CodeGenFunction::EmitPointerToDataMemberBinaryExpr(
+                                                    const BinaryOperator *E) {
+  llvm::Value *BaseV = EmitLValue(E->getLHS()).getAddress();
+  const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(getLLVMContext());
+  BaseV = Builder.CreateBitCast(BaseV, i8Ty);
+  LValue RHSLV = EmitLValue(E->getRHS());
+  llvm::Value *OffsetV = 
+    EmitLoadOfLValue(RHSLV, E->getRHS()->getType()).getScalarVal();
+  const llvm::Type* ResultType = ConvertType(getContext().getPointerDiffType());
+  OffsetV = Builder.CreateBitCast(OffsetV, ResultType);
+  llvm::Value *AddV = Builder.CreateInBoundsGEP(BaseV, OffsetV, "add.ptr");
+  QualType Ty = E->getRHS()->getType();
+  const MemberPointerType *MemPtrType = Ty->getAs<MemberPointerType>();
+  Ty = MemPtrType->getPointeeType();
+  const llvm::Type* PType = 
+  ConvertType(getContext().getPointerType(Ty));
+  AddV = Builder.CreateBitCast(AddV, PType);
+  LValue LV = LValue::MakeAddr(AddV, MakeQualifiers(Ty));
+  return LV;
+}
+
