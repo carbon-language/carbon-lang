@@ -4601,7 +4601,7 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
       N->InitOperands(new SDUse[NumOps], Ops, NumOps);
       N->OperandsNeedDelete = true;
     } else
-      MN->InitOperands(MN->OperandList, Ops, NumOps);
+      N->InitOperands(N->OperandList, Ops, NumOps);
   }
 
   // Delete any nodes that are still dead after adding the uses for the
