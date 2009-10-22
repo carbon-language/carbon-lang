@@ -2127,18 +2127,18 @@ class EmitPreprocessOptionsCallback : ActionHandlingCallbackBase {
   void onUnsetOption(Init* i, unsigned IndentLevel, raw_ostream& O) {
     const std::string& OptName = InitPtrToString(i);
     const OptionDescription& OptDesc = OptDescs_.FindOption(OptName);
-    const OptionType::OptionType OptType = OptDesc.Type;
 
-    if (OptType == OptionType::Switch) {
+    if (OptDesc.isSwitch()) {
       O.indent(IndentLevel) << OptDesc.GenVariableName() << " = false;\n";
     }
-    else if (OptType == OptionType::Parameter
-             || OptType == OptionType::Prefix) {
+    else if (OptDesc.isParameter()) {
       O.indent(IndentLevel) << OptDesc.GenVariableName() << " = \"\";\n";
     }
+    else if (OptDesc.isList()) {
+      O.indent(IndentLevel) << OptDesc.GenVariableName() << ".clear();\n";
+    }
     else {
-      throw std::string("'unset_option' can only be applied to "
-                        "switches or parameter/prefix options.");
+      throw "Can't apply 'unset_option' to alias option '" + OptName + "'";
     }
   }
 
