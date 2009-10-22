@@ -945,15 +945,15 @@ bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
       }
     }
     
-    // If this block doesn't fall through (e.g. it ends with an uncond branch or
-    // has no successors) and if the pred falls through into this block, and if
-    // it would otherwise fall through into the block after this, move this
-    // block to the end of the function.
+    // If this block has no successors (e.g. it is a return block or ends with
+    // a call to a no-return function like abort or __cxa_throw) and if the pred
+    // falls through into this block, and if it would otherwise fall through
+    // into the block after this, move this block to the end of the function.
     //
     // We consider it more likely that execution will stay in the function (e.g.
     // due to loops) than it is to exit it.  This asserts in loops etc, moving
     // the assert condition out of the loop body.
-    if (!PriorCond.empty() && PriorFBB == 0 &&
+    if (MBB->succ_empty() && !PriorCond.empty() && PriorFBB == 0 &&
         MachineFunction::iterator(PriorTBB) == FallThrough &&
         !CanFallThrough(MBB)) {
       bool DoTransform = true;

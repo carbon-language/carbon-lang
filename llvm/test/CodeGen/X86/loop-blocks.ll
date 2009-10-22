@@ -74,16 +74,16 @@ exit:
 ; CHECK: yet_more_involved:
 ;      CHECK:   jmp .LBB3_1
 ; CHECK-NEXT:   align
-; CHECK-NEXT: .LBB3_7:
-; CHECK-NEXT:   call block_a_true_func
-; CHECK-NEXT:   jmp .LBB3_4
-; CHECK-NEXT: .LBB3_2:
+; CHECK-NEXT: .LBB3_3:
 ; CHECK-NEXT:   call bar99
 ; CHECK-NEXT:   call get
 ; CHECK-NEXT:   cmpl $2999, %eax
-; CHECK-NEXT:   jle .LBB3_7
+; CHECK-NEXT:   jg .LBB3_5
+; CHECK-NEXT:   call block_a_true_func
+; CHECK-NEXT:   jmp .LBB3_6
+; CHECK-NEXT: .LBB3_5:
 ; CHECK-NEXT:   call block_a_false_func
-; CHECK-NEXT: .LBB3_4:
+; CHECK-NEXT: .LBB3_6:
 ; CHECK-NEXT:   call block_a_merge_func
 ; CHECK-NEXT: .LBB3_1:
 ; CHECK-NEXT:   call body
