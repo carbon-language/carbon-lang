@@ -26,5 +26,5 @@ float f1(void) {
 
 // PR5265
 typedef float __attribute__((ext_vector_type (3))) float3;
-int test2[(sizeof(float3) == sizeof(float3)*2-1)];
+int test2[(sizeof(float3) == sizeof(float4)*2-1)];
 
