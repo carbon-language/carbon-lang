@@ -974,6 +974,9 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
     if (Advance) {
       ++Position;
       ++MBBI;
+      if (MBBI == E)
+        // Reach the end of the block, try merging the memory instructions.
+        TryMerge = true;
     } else
       TryMerge = true;
 
