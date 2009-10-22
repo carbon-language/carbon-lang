@@ -1,5 +1,4 @@
 ; RUN: llc -march=msp430 < %s | FileCheck %s
-; XFAIL: *
 target datalayout = "e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"
 target triple = "msp430-generic-generic"
 @foo = common global i16 0, align 2

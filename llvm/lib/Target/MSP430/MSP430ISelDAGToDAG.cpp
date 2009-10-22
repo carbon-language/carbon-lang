@@ -65,6 +65,9 @@ namespace {
       return "MSP430 DAG->DAG Pattern Instruction Selection";
     }
 
+    bool IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
+                                    SDNode *Root) const;
+
     virtual bool
     SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
                                  std::vector<SDValue> &OutOps);
@@ -73,6 +76,7 @@ namespace {
   #include "MSP430GenDAGISel.inc"
 
   private:
+    DenseMap<SDNode*, SDNode*> RMWStores;
     void PreprocessForRMW();
     SDNode *Select(SDValue Op);
     bool SelectAddr(SDValue Op, SDValue Addr, SDValue &Base, SDValue &Disp);
@@ -139,7 +143,6 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue Op, SDValue Addr,
   return true;
 }
 
-
 bool MSP430DAGToDAGISel::
 SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
                              std::vector<SDValue> &OutOps) {
@@ -156,6 +159,42 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
   OutOps.push_back(Op1);
   return false;
 }
+
+bool MSP430DAGToDAGISel::IsLegalAndProfitableToFold(SDNode *N, SDNode *U,
+                                                    SDNode *Root) const {
+  if (OptLevel == CodeGenOpt::None) return false;
+
+  /// RMW preprocessing creates the following code:
+  ///       [Load1]
+  ///       ^     ^
+  ///       |      \
+  ///       |       \
+  ///       [Load2] |
+  ///       ^    ^  |
+  ///       |    |  |
+  ///       |     \-|
+  ///       |       |
+  ///       |     [Op]
+  ///       |       ^
+  ///       |       |
+  ///       \      /
+  ///        \    /
+  ///       [Store]
+  ///
+  /// The path Store => Load2 => Load1 is via chain. Note that in general it is
+  /// not allowed to fold Load1 into Op (and Store) since it will creates a
+  /// cycle. However, this is perfectly legal for the loads moved below the
+  /// TokenFactor by PreprocessForRMW. Query the map Store => Load1 (created
+  /// during preprocessing) to determine whether it's legal to introduce such
+  /// "cycle" for a moment.
+  DenseMap<SDNode*, SDNode*>::iterator I = RMWStores.find(Root);
+  if (I != RMWStores.end() && I->second == N)
+    return true;
+
+  // Proceed to 'generic' cycle finder code
+  return SelectionDAGISel::IsLegalAndProfitableToFold(N, U, Root);
+}
+
 
 /// MoveBelowTokenFactor - Replace TokenFactor operand with load's chain operand
 /// and move load below the TokenFactor. Replace store's chain operand with
@@ -176,11 +215,43 @@ static void MoveBelowTokenFactor(SelectionDAG *CurDAG, SDValue Load,
                              Store.getOperand(2), Store.getOperand(3));
 }
 
-/// isRMWLoad - Return true if N is a load that's part of RMW sub-DAG.
-/// The chain produced by the load must only be used by the store's chain
-/// operand, otherwise this may produce a cycle in the DAG.
-static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
-                      SDValue &Load) {
+/// MoveBelowTokenFactor2 - Replace TokenFactor operand with load's chain operand
+/// and move load below the TokenFactor. Replace store's chain operand with
+/// load's chain result. This a version which sinks two loads below token factor.
+/// Look into PreprocessForRMW comments for explanation of transform.
+static void MoveBelowTokenFactor2(SelectionDAG *CurDAG,
+                                  SDValue Load1, SDValue Load2,
+                                  SDValue Store, SDValue TF) {
+  SmallVector<SDValue, 4> Ops;
+  for (unsigned i = 0, e = TF.getNode()->getNumOperands(); i != e; ++i) {
+    SDNode* N = TF.getOperand(i).getNode();
+    if (Load2.getNode() == N)
+      Ops.push_back(Load2.getOperand(0));
+    else if (Load1.getNode() != N)
+      Ops.push_back(TF.getOperand(i));
+  }
+
+  SDValue NewTF = SDValue(CurDAG->MorphNodeTo(TF.getNode(),
+                                  TF.getOpcode(),
+                                  TF.getNode()->getVTList(),
+                                  &Ops[0], Ops.size()), TF.getResNo());
+  SDValue NewLoad2 = CurDAG->UpdateNodeOperands(Load2, NewTF,
+                                                Load2.getOperand(1),
+                                                Load2.getOperand(2));
+
+  SDValue NewLoad1 = CurDAG->UpdateNodeOperands(Load1, NewLoad2.getValue(1),
+                                                Load1.getOperand(1),
+                                                Load1.getOperand(2));
+
+  CurDAG->UpdateNodeOperands(Store,
+                             NewLoad1.getValue(1),
+                             Store.getOperand(1),
+                             Store.getOperand(2), Store.getOperand(3));
+}
+
+/// isAllowedToSink - return true if N a load which can be moved below token
+/// factor. Basically, the load should be non-volatile and has single use.
+static bool isLoadAllowedToSink(SDValue N, SDValue Chain) {
   if (N.getOpcode() == ISD::BIT_CONVERT)
     N = N.getOperand(0);
 
@@ -194,10 +265,19 @@ static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
   if (ExtType != ISD::NON_EXTLOAD && ExtType != ISD::EXTLOAD)
     return false;
 
-  if (N.hasOneUse() &&
-      LD->hasNUsesOfValue(1, 1) &&
-      N.getOperand(1) == Address &&
-      LD->isOperandOf(Chain.getNode())) {
+  return (N.hasOneUse() &&
+          LD->hasNUsesOfValue(1, 1) &&
+          LD->isOperandOf(Chain.getNode()));
+}
+
+
+/// isRMWLoad - Return true if N is a load that's part of RMW sub-DAG.
+/// The chain produced by the load must only be used by the store's chain
+/// operand, otherwise this may produce a cycle in the DAG.
+static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
+                      SDValue &Load) {
+  if (isLoadAllowedToSink(N, Chain) &&
+      N.getOperand(1) == Address) {
     Load = N;
     return true;
   }
@@ -244,6 +324,34 @@ static bool isRMWLoad(SDValue N, SDValue Chain, SDValue Address,
 ///       \      /
 ///        \    /
 ///       [Store]
+///
+/// We also recognize the case where second operand of Op is load as well and
+/// move it below token factor as well creating DAG as follows:
+///
+///     [Load chain]
+///         ^
+///         |
+///    [TokenFactor]
+///         ^
+///         |
+///       [Load1]
+///       ^     ^
+///       |      \
+///       |       \
+///       [Load2] |
+///       ^    ^  |
+///       |    |  |
+///       |     \-|
+///       |       |
+///       |     [Op]
+///       |       ^
+///       |       |
+///       \      /
+///        \    /
+///       [Store]
+///
+/// This allows selection of mem-mem instructions. Yay!
+
 void MSP430DAGToDAGISel::PreprocessForRMW() {
   for (SelectionDAG::allnodes_iterator I = CurDAG->allnodes_begin(),
          E = CurDAG->allnodes_end(); I != E; ++I) {
@@ -261,8 +369,8 @@ void MSP430DAGToDAGISel::PreprocessForRMW() {
         !N1.hasOneUse())
       continue;
 
-    bool RModW = false;
-    SDValue Load;
+    unsigned RModW = 0;
+    SDValue Load1, Load2;
     unsigned Opcode = N1.getNode()->getOpcode();
     switch (Opcode) {
     case ISD::ADD:
@@ -273,23 +381,44 @@ void MSP430DAGToDAGISel::PreprocessForRMW() {
     case ISD::ADDE: {
       SDValue N10 = N1.getOperand(0);
       SDValue N11 = N1.getOperand(1);
-      RModW = isRMWLoad(N10, Chain, N2, Load);
-      if (!RModW)
-        RModW = isRMWLoad(N11, Chain, N2, Load);
+      if (isRMWLoad(N10, Chain, N2, Load1)) {
+        if (isLoadAllowedToSink(N11, Chain)) {
+          Load2 = N11;
+          RModW = 2;
+        } else
+          RModW = 1;
+      } else if (isRMWLoad(N11, Chain, N2, Load1)) {
+        if (isLoadAllowedToSink(N10, Chain)) {
+          Load2 = N10;
+          RModW = 2;
+        } else
+          RModW = 1;
+      }
       break;
     }
     case ISD::SUB:
     case ISD::SUBC:
     case ISD::SUBE: {
       SDValue N10 = N1.getOperand(0);
-      RModW = isRMWLoad(N10, Chain, N2, Load);
+      SDValue N11 = N1.getOperand(1);
+      if (isRMWLoad(N10, Chain, N2, Load1)) {
+        if (isLoadAllowedToSink(N11, Chain)) {
+          Load2 = N11;
+          RModW = 2;
+        } else
+          RModW = 1;
+      }
       break;
     }
     }
 
-    if (RModW) {
-      MoveBelowTokenFactor(CurDAG, Load, SDValue(I, 0), Chain);
-      ++NumLoadMoved;
+    NumLoadMoved += RModW;
+    if (RModW == 1)
+      MoveBelowTokenFactor(CurDAG, Load1, SDValue(I, 0), Chain);
+    else if (RModW == 2) {
+      MoveBelowTokenFactor2(CurDAG, Load1, Load2, SDValue(I, 0), Chain);
+      SDNode* Store = I;
+      RMWStores[Store] = Load2.getNode();
     }
   }
 }
@@ -318,6 +447,7 @@ void MSP430DAGToDAGISel::InstructionSelect() {
   DEBUG(errs() << "===== Instruction selection ends:\n");
 
   CurDAG->RemoveDeadNodes();
+  RMWStores.clear();
 }
 
 SDNode *MSP430DAGToDAGISel::Select(SDValue Op) {
