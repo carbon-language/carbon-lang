@@ -11345,40 +11345,6 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
   Value *CastOp = CI->getOperand(0);
   LLVMContext *Context = IC.getContext();
 
-  if (TD) {
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(CI)) {
-      // Instead of loading constant c string, use corresponding integer value
-      // directly if string length is small enough.
-      std::string Str;
-      if (GetConstantStringInfo(CE->getOperand(0), Str) && !Str.empty()) {
-        unsigned len = Str.length();
-        const Type *Ty = cast<PointerType>(CE->getType())->getElementType();
-        unsigned numBits = Ty->getPrimitiveSizeInBits();
-        // Replace LI with immediate integer store.
-        if ((numBits >> 3) == len + 1) {
-          APInt StrVal(numBits, 0);
-          APInt SingleChar(numBits, 0);
-          if (TD->isLittleEndian()) {
-            for (signed i = len-1; i >= 0; i--) {
-              SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
-              StrVal = (StrVal << 8) | SingleChar;
-            }
-          } else {
-            for (unsigned i = 0; i < len; i++) {
-              SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
-              StrVal = (StrVal << 8) | SingleChar;
-            }
-            // Append NULL at the end.
-            SingleChar = 0;
-            StrVal = (StrVal << 8) | SingleChar;
-          }
-          Value *NL = ConstantInt::get(*Context, StrVal);
-          return IC.ReplaceInstUsesWith(LI, NL);
-        }
-      }
-    }
-  }
-
   const PointerType *DestTy = cast<PointerType>(CI->getType());
   const Type *DestPTy = DestTy->getElementType();
   if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {

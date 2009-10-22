@@ -24,13 +24,13 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Target/TargetData.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/GlobalVariable.h"
 #include <cerrno>
 #include <cmath>
 using namespace llvm;
@@ -110,6 +110,35 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
           if (Constant *V = 
                ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE))
             return V;
+    }
+    
+    // Instead of loading constant c string, use corresponding integer value
+    // directly if string length is small enough.
+    std::string Str;
+    if (TD && GetConstantStringInfo(CE->getOperand(0), Str) && !Str.empty()) {
+      unsigned len = Str.length();
+      const Type *Ty = cast<PointerType>(CE->getType())->getElementType();
+      unsigned numBits = Ty->getPrimitiveSizeInBits();
+      // Replace LI with immediate integer store.
+      if ((numBits >> 3) == len + 1) {
+        APInt StrVal(numBits, 0);
+        APInt SingleChar(numBits, 0);
+        if (TD->isLittleEndian()) {
+          for (signed i = len-1; i >= 0; i--) {
+            SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
+            StrVal = (StrVal << 8) | SingleChar;
+          }
+        } else {
+          for (unsigned i = 0; i < len; i++) {
+            SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
+            StrVal = (StrVal << 8) | SingleChar;
+          }
+          // Append NULL at the end.
+          SingleChar = 0;
+          StrVal = (StrVal << 8) | SingleChar;
+        }
+        return ConstantInt::get(CE->getContext(), StrVal);
+      }
     }
   }
 
@@ -675,15 +704,15 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
           C = UndefValue::get(ATy->getElementType());
         else
           return 0;
-      } else if (const VectorType *PTy = dyn_cast<VectorType>(*I)) {
-        if (CI->getZExtValue() >= PTy->getNumElements())
+      } else if (const VectorType *VTy = dyn_cast<VectorType>(*I)) {
+        if (CI->getZExtValue() >= VTy->getNumElements())
           return 0;
         if (ConstantVector *CP = dyn_cast<ConstantVector>(C))
           C = CP->getOperand(CI->getZExtValue());
         else if (isa<ConstantAggregateZero>(C))
-          C = Constant::getNullValue(PTy->getElementType());
+          C = Constant::getNullValue(VTy->getElementType());
         else if (isa<UndefValue>(C))
-          C = UndefValue::get(PTy->getElementType());
+          C = UndefValue::get(VTy->getElementType());
         else
           return 0;
       } else {
