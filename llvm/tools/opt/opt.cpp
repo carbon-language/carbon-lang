@@ -346,198 +346,187 @@ void AddStandardLinkPasses(PassManager &PM) {
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   LLVMContext &Context = getGlobalContext();
-  try {
-    cl::ParseCommandLineOptions(argc, argv,
-      "llvm .bc -> .bc modular optimizer and analysis printer\n");
-    sys::PrintStackTraceOnErrorSignal();
+  
+  cl::ParseCommandLineOptions(argc, argv,
+    "llvm .bc -> .bc modular optimizer and analysis printer\n");
+  sys::PrintStackTraceOnErrorSignal();
 
-    // Allocate a full target machine description only if necessary.
-    // FIXME: The choice of target should be controllable on the command line.
-    std::auto_ptr<TargetMachine> target;
+  // Allocate a full target machine description only if necessary.
+  // FIXME: The choice of target should be controllable on the command line.
+  std::auto_ptr<TargetMachine> target;
 
-    SMDiagnostic Err;
+  SMDiagnostic Err;
 
-    // Load the input module...
-    std::auto_ptr<Module> M;
-    M.reset(ParseIRFile(InputFilename, Err, Context));
+  // Load the input module...
+  std::auto_ptr<Module> M;
+  M.reset(ParseIRFile(InputFilename, Err, Context));
 
-    if (M.get() == 0) {
-      Err.Print(argv[0], errs());
+  if (M.get() == 0) {
+    Err.Print(argv[0], errs());
+    return 1;
+  }
+
+  // Figure out what stream we are supposed to write to...
+  // FIXME: outs() is not binary!
+  raw_ostream *Out = &outs();  // Default to printing to stdout...
+  if (OutputFilename != "-") {
+    // Make sure that the Output file gets unlinked from the disk if we get a
+    // SIGINT
+    sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+
+    std::string ErrorInfo;
+    Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
+                             raw_fd_ostream::F_Binary);
+    if (!ErrorInfo.empty()) {
+      errs() << ErrorInfo << '\n';
+      delete Out;
       return 1;
     }
+  }
 
-    // Figure out what stream we are supposed to write to...
-    // FIXME: outs() is not binary!
-    raw_ostream *Out = &outs();  // Default to printing to stdout...
-    if (OutputFilename != "-") {
-      // Make sure that the Output file gets unlinked from the disk if we get a
-      // SIGINT
-      sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+  // If the output is set to be emitted to standard out, and standard out is a
+  // console, print out a warning message and refuse to do it.  We don't
+  // impress anyone by spewing tons of binary goo to a terminal.
+  if (!Force && !NoOutput && !OutputAssembly)
+    if (CheckBitcodeOutputToConsole(*Out, !Quiet))
+      NoOutput = true;
 
-      std::string ErrorInfo;
-      Out = new raw_fd_ostream(OutputFilename.c_str(), ErrorInfo,
-                               raw_fd_ostream::F_Binary);
-      if (!ErrorInfo.empty()) {
-        errs() << ErrorInfo << '\n';
-        delete Out;
-        return 1;
-      }
-    }
+  // Create a PassManager to hold and optimize the collection of passes we are
+  // about to build...
+  //
+  PassManager Passes;
 
-    // If the output is set to be emitted to standard out, and standard out is a
-    // console, print out a warning message and refuse to do it.  We don't
-    // impress anyone by spewing tons of binary goo to a terminal.
-    if (!Force && !NoOutput && !OutputAssembly)
-      if (CheckBitcodeOutputToConsole(*Out, !Quiet))
-        NoOutput = true;
+  // Add an appropriate TargetData instance for this module...
+  TargetData *TD = 0;
+  const std::string &ModuleDataLayout = M.get()->getDataLayout();
+  if (!ModuleDataLayout.empty())
+    TD = new TargetData(ModuleDataLayout);
+  else if (!NoDefaultDataLayout)
+    TD = new TargetData(DefaultDataLayout);
 
-    // Create a PassManager to hold and optimize the collection of passes we are
-    // about to build...
-    //
-    PassManager Passes;
+  if (TD)
+    Passes.add(TD);
 
-    // Add an appropriate TargetData instance for this module...
-    TargetData *TD = 0;
-    const std::string &ModuleDataLayout = M.get()->getDataLayout();
-    if (!ModuleDataLayout.empty())
-      TD = new TargetData(ModuleDataLayout);
-    else if (!NoDefaultDataLayout)
-      TD = new TargetData(DefaultDataLayout);
-
+  FunctionPassManager *FPasses = NULL;
+  if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
+    FPasses = new FunctionPassManager(new ExistingModuleProvider(M.get()));
     if (TD)
-      Passes.add(TD);
+      FPasses->add(new TargetData(*TD));
+  }
 
-    FunctionPassManager *FPasses = NULL;
-    if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
-      FPasses = new FunctionPassManager(new ExistingModuleProvider(M.get()));
-      if (TD)
-        FPasses->add(new TargetData(*TD));
-    }
+  // If the -strip-debug command line option was specified, add it.  If
+  // -std-compile-opts was also specified, it will handle StripDebug.
+  if (StripDebug && !StandardCompileOpts)
+    addPass(Passes, createStripSymbolsPass(true));
 
-    // If the -strip-debug command line option was specified, add it.  If
-    // -std-compile-opts was also specified, it will handle StripDebug.
-    if (StripDebug && !StandardCompileOpts)
-      addPass(Passes, createStripSymbolsPass(true));
-
-    // Create a new optimization pass for each one specified on the command line
-    for (unsigned i = 0; i < PassList.size(); ++i) {
-      // Check to see if -std-compile-opts was specified before this option.  If
-      // so, handle it.
-      if (StandardCompileOpts &&
-          StandardCompileOpts.getPosition() < PassList.getPosition(i)) {
-        AddStandardCompilePasses(Passes);
-        StandardCompileOpts = false;
-      }
-
-      if (StandardLinkOpts &&
-          StandardLinkOpts.getPosition() < PassList.getPosition(i)) {
-        AddStandardLinkPasses(Passes);
-        StandardLinkOpts = false;
-      }
-
-      if (OptLevelO1 && OptLevelO1.getPosition() < PassList.getPosition(i)) {
-        AddOptimizationPasses(Passes, *FPasses, 1);
-        OptLevelO1 = false;
-      }
-
-      if (OptLevelO2 && OptLevelO2.getPosition() < PassList.getPosition(i)) {
-        AddOptimizationPasses(Passes, *FPasses, 2);
-        OptLevelO2 = false;
-      }
-
-      if (OptLevelO3 && OptLevelO3.getPosition() < PassList.getPosition(i)) {
-        AddOptimizationPasses(Passes, *FPasses, 3);
-        OptLevelO3 = false;
-      }
-
-      const PassInfo *PassInf = PassList[i];
-      Pass *P = 0;
-      if (PassInf->getNormalCtor())
-        P = PassInf->getNormalCtor()();
-      else
-        errs() << argv[0] << ": cannot create pass: "
-               << PassInf->getPassName() << "\n";
-      if (P) {
-        bool isBBPass = dynamic_cast<BasicBlockPass*>(P) != 0;
-        bool isLPass = !isBBPass && dynamic_cast<LoopPass*>(P) != 0;
-        bool isFPass = !isLPass && dynamic_cast<FunctionPass*>(P) != 0;
-        bool isCGSCCPass = !isFPass && dynamic_cast<CallGraphSCCPass*>(P) != 0;
-
-        addPass(Passes, P);
-
-        if (AnalyzeOnly) {
-          if (isBBPass)
-            Passes.add(new BasicBlockPassPrinter(PassInf));
-          else if (isLPass)
-            Passes.add(new LoopPassPrinter(PassInf));
-          else if (isFPass)
-            Passes.add(new FunctionPassPrinter(PassInf));
-          else if (isCGSCCPass)
-            Passes.add(new CallGraphSCCPassPrinter(PassInf));
-          else
-            Passes.add(new ModulePassPrinter(PassInf));
-        }
-      }
-
-      if (PrintEachXForm)
-        Passes.add(createPrintModulePass(&errs()));
-    }
-
-    // If -std-compile-opts was specified at the end of the pass list, add them.
-    if (StandardCompileOpts) {
+  // Create a new optimization pass for each one specified on the command line
+  for (unsigned i = 0; i < PassList.size(); ++i) {
+    // Check to see if -std-compile-opts was specified before this option.  If
+    // so, handle it.
+    if (StandardCompileOpts &&
+        StandardCompileOpts.getPosition() < PassList.getPosition(i)) {
       AddStandardCompilePasses(Passes);
       StandardCompileOpts = false;
     }
 
-    if (StandardLinkOpts) {
+    if (StandardLinkOpts &&
+        StandardLinkOpts.getPosition() < PassList.getPosition(i)) {
       AddStandardLinkPasses(Passes);
       StandardLinkOpts = false;
     }
 
-    if (OptLevelO1) {
+    if (OptLevelO1 && OptLevelO1.getPosition() < PassList.getPosition(i)) {
       AddOptimizationPasses(Passes, *FPasses, 1);
+      OptLevelO1 = false;
     }
 
-    if (OptLevelO2) {
+    if (OptLevelO2 && OptLevelO2.getPosition() < PassList.getPosition(i)) {
       AddOptimizationPasses(Passes, *FPasses, 2);
+      OptLevelO2 = false;
     }
 
-    if (OptLevelO3) {
+    if (OptLevelO3 && OptLevelO3.getPosition() < PassList.getPosition(i)) {
       AddOptimizationPasses(Passes, *FPasses, 3);
+      OptLevelO3 = false;
     }
 
-    if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
-      FPasses->doInitialization();
-      for (Module::iterator I = M.get()->begin(), E = M.get()->end();
-           I != E; ++I)
-        FPasses->run(*I);
+    const PassInfo *PassInf = PassList[i];
+    Pass *P = 0;
+    if (PassInf->getNormalCtor())
+      P = PassInf->getNormalCtor()();
+    else
+      errs() << argv[0] << ": cannot create pass: "
+             << PassInf->getPassName() << "\n";
+    if (P) {
+      bool isBBPass = dynamic_cast<BasicBlockPass*>(P) != 0;
+      bool isLPass = !isBBPass && dynamic_cast<LoopPass*>(P) != 0;
+      bool isFPass = !isLPass && dynamic_cast<FunctionPass*>(P) != 0;
+      bool isCGSCCPass = !isFPass && dynamic_cast<CallGraphSCCPass*>(P) != 0;
+
+      addPass(Passes, P);
+
+      if (AnalyzeOnly) {
+        if (isBBPass)
+          Passes.add(new BasicBlockPassPrinter(PassInf));
+        else if (isLPass)
+          Passes.add(new LoopPassPrinter(PassInf));
+        else if (isFPass)
+          Passes.add(new FunctionPassPrinter(PassInf));
+        else if (isCGSCCPass)
+          Passes.add(new CallGraphSCCPassPrinter(PassInf));
+        else
+          Passes.add(new ModulePassPrinter(PassInf));
+      }
     }
 
-    // Check that the module is well formed on completion of optimization
-    if (!NoVerify && !VerifyEach)
-      Passes.add(createVerifierPass());
-
-    // Write bitcode or assembly  out to disk or outs() as the last step...
-    if (!NoOutput && !AnalyzeOnly) {
-      if (OutputAssembly)
-        Passes.add(createPrintModulePass(Out));
-      else
-        Passes.add(createBitcodeWriterPass(*Out));
-    }
-
-    // Now that we have all of the passes ready, run them.
-    Passes.run(*M.get());
-
-    // Delete the raw_fd_ostream.
-    if (Out != &outs())
-      delete Out;
-    return 0;
-
-  } catch (const std::string& msg) {
-    errs() << argv[0] << ": " << msg << "\n";
-  } catch (...) {
-    errs() << argv[0] << ": Unexpected unknown exception occurred.\n";
+    if (PrintEachXForm)
+      Passes.add(createPrintModulePass(&errs()));
   }
-  llvm_shutdown();
-  return 1;
+
+  // If -std-compile-opts was specified at the end of the pass list, add them.
+  if (StandardCompileOpts) {
+    AddStandardCompilePasses(Passes);
+    StandardCompileOpts = false;
+  }
+
+  if (StandardLinkOpts) {
+    AddStandardLinkPasses(Passes);
+    StandardLinkOpts = false;
+  }
+
+  if (OptLevelO1)
+    AddOptimizationPasses(Passes, *FPasses, 1);
+
+  if (OptLevelO2)
+    AddOptimizationPasses(Passes, *FPasses, 2);
+
+  if (OptLevelO3)
+    AddOptimizationPasses(Passes, *FPasses, 3);
+
+  if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
+    FPasses->doInitialization();
+    for (Module::iterator I = M.get()->begin(), E = M.get()->end();
+         I != E; ++I)
+      FPasses->run(*I);
+  }
+
+  // Check that the module is well formed on completion of optimization
+  if (!NoVerify && !VerifyEach)
+    Passes.add(createVerifierPass());
+
+  // Write bitcode or assembly  out to disk or outs() as the last step...
+  if (!NoOutput && !AnalyzeOnly) {
+    if (OutputAssembly)
+      Passes.add(createPrintModulePass(Out));
+    else
+      Passes.add(createBitcodeWriterPass(*Out));
+  }
+
+  // Now that we have all of the passes ready, run them.
+  Passes.run(*M.get());
+
+  // Delete the raw_fd_ostream.
+  if (Out != &outs())
+    delete Out;
+  return 0;
 }
