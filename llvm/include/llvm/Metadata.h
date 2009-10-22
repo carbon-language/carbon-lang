@@ -57,8 +57,8 @@ class MDString : public MetadataBase {
 
   StringRef Str;
 protected:
-  explicit MDString(LLVMContext &C, const char *begin, unsigned l)
-    : MetadataBase(Type::getMetadataTy(C), Value::MDStringVal), Str(begin, l) {}
+  explicit MDString(LLVMContext &C, StringRef S)
+    : MetadataBase(Type::getMetadataTy(C), Value::MDStringVal), Str(S) {}
 
 public:
   static MDString *get(LLVMContext &Context, StringRef Str);

@@ -33,7 +33,8 @@ MDString *MDString::get(LLVMContext &Context, StringRef Str) {
   MDString *&S = Entry.getValue();
   if (S) return S;
   
-  return S = new MDString(Context, Entry.getKeyData(), Entry.getKeyLength());
+  return S = 
+    new MDString(Context, StringRef(Entry.getKeyData(), Entry.getKeyLength()));
 }
 
 //===----------------------------------------------------------------------===//
