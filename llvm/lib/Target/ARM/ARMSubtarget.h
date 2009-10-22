@@ -128,7 +128,9 @@ protected:
   
   /// enablePostRAScheduler - True at 'More' optimization except
   /// for Thumb1.
-  bool enablePostRAScheduler(CodeGenOpt::Level OptLevel) const {
+  bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
+                             TargetSubtarget::AntiDepBreakMode& mode) const {
+    mode = TargetSubtarget::ANTIDEP_NONE;
     return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
   }
 

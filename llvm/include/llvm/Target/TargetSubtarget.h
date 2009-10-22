@@ -33,6 +33,10 @@ class TargetSubtarget {
 protected: // Can only create subclasses...
   TargetSubtarget();
 public:
+  // AntiDepBreakMode - Type of anti-dependence breaking that should
+  // be performed before post-RA scheduling.
+  typedef enum { ANTIDEP_NONE, ANTIDEP_CRITICAL, ANTIDEP_ALL } AntiDepBreakMode;
+
   virtual ~TargetSubtarget();
 
   /// getSpecialAddressLatency - For targets where it is beneficial to
@@ -43,8 +47,10 @@ public:
 
   // enablePostRAScheduler - If the target can benefit from post-regalloc
   // scheduling and the specified optimization level meets the requirement
-  // return true to enable post-register-allocation scheduling.
-  virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel) const {
+  // return true to enable post-register-allocation scheduling. 
+  virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
+                                     AntiDepBreakMode& mode) const {
+    mode = ANTIDEP_NONE;
     return false;
   }
 

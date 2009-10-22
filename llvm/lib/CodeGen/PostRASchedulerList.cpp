@@ -128,6 +128,9 @@ namespace {
     /// AA - AliasAnalysis for making memory reference queries.
     AliasAnalysis *AA;
 
+    /// AntiDepMode - Anti-dependence breaking mode
+    TargetSubtarget::AntiDepBreakMode AntiDepMode;
+
     /// Classes - For live regs that are only used in one register class in a
     /// live range, the register class. If the register is not live, the
     /// corresponding value is null. If the register is live but used in
@@ -156,10 +159,11 @@ namespace {
                          const MachineLoopInfo &MLI,
                          const MachineDominatorTree &MDT,
                          ScheduleHazardRecognizer *HR,
-                         AliasAnalysis *aa)
+                         AliasAnalysis *aa,
+                         TargetSubtarget::AntiDepBreakMode adm)
       : ScheduleDAGInstrs(MF, MLI, MDT), Topo(SUnits),
         AllocatableSet(TRI->getAllocatableSet(MF)),
-        HazardRec(HR), AA(aa) {}
+      HazardRec(HR), AA(aa), AntiDepMode(adm) {}
 
     ~SchedulePostRATDList() {
       delete HazardRec;
@@ -234,14 +238,21 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   AA = &getAnalysis<AliasAnalysis>();
 
   // Check for explicit enable/disable of post-ra scheduling.
+  TargetSubtarget::AntiDepBreakMode AntiDepMode = TargetSubtarget::ANTIDEP_NONE;
   if (EnablePostRAScheduler.getPosition() > 0) {
     if (!EnablePostRAScheduler)
       return false;
   } else {
     // Check that post-RA scheduling is enabled for this target.
     const TargetSubtarget &ST = Fn.getTarget().getSubtarget<TargetSubtarget>();
-    if (!ST.enablePostRAScheduler(OptLevel))
+    if (!ST.enablePostRAScheduler(OptLevel, AntiDepMode))
       return false;
+  }
+
+  // Check for antidep breaking override...
+  if (EnableAntiDepBreaking.getPosition() > 0) {
+    AntiDepMode = (EnableAntiDepBreaking) ? 
+      TargetSubtarget::ANTIDEP_CRITICAL : TargetSubtarget::ANTIDEP_NONE;
   }
 
   DEBUG(errs() << "PostRAScheduler\n");
@@ -253,7 +264,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     (ScheduleHazardRecognizer *)new ExactHazardRecognizer(InstrItins) :
     (ScheduleHazardRecognizer *)new SimpleHazardRecognizer();
 
-  SchedulePostRATDList Scheduler(Fn, MLI, MDT, HR, AA);
+  SchedulePostRATDList Scheduler(Fn, MLI, MDT, HR, AA, AntiDepMode);
 
   // Loop over all of the basic blocks
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
@@ -393,7 +404,7 @@ void SchedulePostRATDList::Schedule() {
   // Build the scheduling graph.
   BuildSchedGraph(AA);
 
-  if (EnableAntiDepBreaking) {
+  if (AntiDepMode != TargetSubtarget::ANTIDEP_NONE) {
     if (BreakAntiDependencies()) {
       // We made changes. Update the dependency graph.
       // Theoretically we could update the graph in place:
