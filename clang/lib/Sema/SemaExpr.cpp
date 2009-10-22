@@ -941,95 +941,31 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
 
   // We may have found a field within an anonymous union or struct
   // (C++ [class.union]).
+  // FIXME: This needs to happen post-isImplicitMemberReference?
   if (FieldDecl *FD = dyn_cast<FieldDecl>(D))
     if (cast<RecordDecl>(FD->getDeclContext())->isAnonymousStructOrUnion())
       return BuildAnonymousStructUnionMemberReference(Loc, FD);
 
-  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
-    if (!MD->isStatic()) {
-      // C++ [class.mfct.nonstatic]p2:
-      //   [...] if name lookup (3.4.1) resolves the name in the
-      //   id-expression to a nonstatic nontype member of class X or of
-      //   a base class of X, the id-expression is transformed into a
-      //   class member access expression (5.2.5) using (*this) (9.3.2)
-      //   as the postfix-expression to the left of the '.' operator.
-      DeclContext *Ctx = 0;
-      QualType MemberType;
-      if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
-        Ctx = FD->getDeclContext();
-        MemberType = FD->getType();
+  // Cope with an implicit member access in a C++ non-static member function.
+  QualType ThisType, MemberType;
+  if (isImplicitMemberReference(SS, D, Loc, ThisType, MemberType)) {
+    Expr *This = new (Context) CXXThisExpr(SourceLocation(), ThisType);
+    MarkDeclarationReferenced(Loc, D);
+    if (PerformObjectMemberConversion(This, D))
+      return ExprError();
 
-        if (const ReferenceType *RefType = MemberType->getAs<ReferenceType>())
-          MemberType = RefType->getPointeeType();
-        else if (!FD->isMutable())
-          MemberType
-            = Context.getQualifiedType(MemberType,
-                            Qualifiers::fromCVRMask(MD->getTypeQualifiers()));
-      } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
-        if (!Method->isStatic()) {
-          Ctx = Method->getParent();
-          MemberType = Method->getType();
-        }
-      } else if (FunctionTemplateDecl *FunTmpl
-                   = dyn_cast<FunctionTemplateDecl>(D)) {
-        if (CXXMethodDecl *Method
-              = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl())) {
-          if (!Method->isStatic()) {
-            Ctx = Method->getParent();
-            MemberType = Context.OverloadTy;
-          }
-        }
-      } else if (OverloadedFunctionDecl *Ovl
-                   = dyn_cast<OverloadedFunctionDecl>(D)) {
-        // FIXME: We need an abstraction for iterating over one or more function
-        // templates or functions. This code is far too repetitive!
-        for (OverloadedFunctionDecl::function_iterator
-               Func = Ovl->function_begin(),
-               FuncEnd = Ovl->function_end();
-             Func != FuncEnd; ++Func) {
-          CXXMethodDecl *DMethod = 0;
-          if (FunctionTemplateDecl *FunTmpl
-                = dyn_cast<FunctionTemplateDecl>(*Func))
-            DMethod = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
-          else
-            DMethod = dyn_cast<CXXMethodDecl>(*Func);
-
-          if (DMethod && !DMethod->isStatic()) {
-            Ctx = DMethod->getDeclContext();
-            MemberType = Context.OverloadTy;
-            break;
-          }
-        }
-      }
-
-      if (Ctx && Ctx->isRecord()) {
-        QualType CtxType = Context.getTagDeclType(cast<CXXRecordDecl>(Ctx));
-        QualType ThisType = Context.getTagDeclType(MD->getParent());
-        if ((Context.getCanonicalType(CtxType)
-               == Context.getCanonicalType(ThisType)) ||
-            IsDerivedFrom(ThisType, CtxType)) {
-          // Build the implicit member access expression.
-          Expr *This = new (Context) CXXThisExpr(SourceLocation(),
-                                                 MD->getThisType(Context));
-          MarkDeclarationReferenced(Loc, D);
-          if (PerformObjectMemberConversion(This, D))
-            return ExprError();
-
-          bool ShouldCheckUse = true;
-          if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
-            // Don't diagnose the use of a virtual member function unless it's
-            // explicitly qualified.
-            if (MD->isVirtual() && (!SS || !SS->isSet()))
-              ShouldCheckUse = false;
-          }
-
-          if (ShouldCheckUse && DiagnoseUseOfDecl(D, Loc))
-            return ExprError();
-          return Owned(BuildMemberExpr(Context, This, true, SS, D,
-                                       Loc, MemberType));
-        }
-      }
+    bool ShouldCheckUse = true;
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+      // Don't diagnose the use of a virtual member function unless it's
+      // explicitly qualified.
+      if (MD->isVirtual() && (!SS || !SS->isSet()))
+        ShouldCheckUse = false;
     }
+
+    if (ShouldCheckUse && DiagnoseUseOfDecl(D, Loc))
+      return ExprError();
+    return Owned(BuildMemberExpr(Context, This, true, SS, D,
+                                 Loc, MemberType));
   }
 
   if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {

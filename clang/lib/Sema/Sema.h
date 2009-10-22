@@ -2353,6 +2353,10 @@ public:
                                  FunctionDecl::StorageClass& SC);
   DeclPtrTy ActOnConversionDeclarator(CXXConversionDecl *Conversion);
 
+  bool isImplicitMemberReference(const CXXScopeSpec *SS, NamedDecl *D,
+                                 SourceLocation NameLoc, QualType &ThisType,
+                                 QualType &MemberType);
+  
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes
   //

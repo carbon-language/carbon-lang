@@ -2276,3 +2276,84 @@ Sema::OwningExprResult Sema::ActOnFinishFullExpr(ExprArg Arg) {
 
   return Owned(FullExpr);
 }
+
+/// \brief Determine whether a reference to the given declaration in the 
+/// current context is an implicit member access 
+/// (C++ [class.mfct.non-static]p2).
+///
+/// FIXME: Should Objective-C also use this approach?
+///
+/// \param SS if non-NULL, the C++ nested-name-specifier that precedes the 
+/// name of the declaration referenced.
+///
+/// \param D the declaration being referenced from the current scope.
+///
+/// \param NameLoc the location of the name in the source.
+///
+/// \param ThisType if the reference to this declaration is an implicit member
+/// access, will be set to the type of the "this" pointer to be used when
+/// building that implicit member access.
+///
+/// \param MemberType if the reference to this declaration is an implicit
+/// member access, will be set to the type of the member being referenced
+/// (for use at the type of the resulting member access expression).
+///
+/// \returns true if this is an implicit member reference (in which case 
+/// \p ThisType and \p MemberType will be set), or false if it is not an
+/// implicit member reference.
+bool Sema::isImplicitMemberReference(const CXXScopeSpec *SS, NamedDecl *D,
+                                     SourceLocation NameLoc, QualType &ThisType,
+                                     QualType &MemberType) {
+  // If this isn't a C++ method, then it isn't an implicit member reference.
+  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext);
+  if (!MD || MD->isStatic())
+    return false;
+  
+  // C++ [class.mfct.nonstatic]p2:
+  //   [...] if name lookup (3.4.1) resolves the name in the
+  //   id-expression to a nonstatic nontype member of class X or of
+  //   a base class of X, the id-expression is transformed into a
+  //   class member access expression (5.2.5) using (*this) (9.3.2)
+  //   as the postfix-expression to the left of the '.' operator.
+  DeclContext *Ctx = 0;
+  if (FieldDecl *FD = dyn_cast<FieldDecl>(D)) {
+    Ctx = FD->getDeclContext();
+    MemberType = FD->getType();
+    
+    if (const ReferenceType *RefType = MemberType->getAs<ReferenceType>())
+      MemberType = RefType->getPointeeType();
+    else if (!FD->isMutable())
+      MemberType
+        = Context.getQualifiedType(MemberType,
+                           Qualifiers::fromCVRMask(MD->getTypeQualifiers()));
+  } else {
+    for (OverloadIterator Ovl(D), OvlEnd; Ovl != OvlEnd; ++Ovl) {
+      CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Ovl);
+      FunctionTemplateDecl *FunTmpl = 0;
+      if (!Method && (FunTmpl = dyn_cast<FunctionTemplateDecl>(*Ovl)))
+        Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
+      
+      if (Method && !Method->isStatic()) {
+        Ctx = Method->getParent();
+        if (isa<CXXMethodDecl>(D) && !FunTmpl)
+          MemberType = Method->getType();
+        else
+          MemberType = Context.OverloadTy;
+        break;
+      }
+    }
+  } 
+  
+  if (!Ctx || !Ctx->isRecord())
+    return false;
+  
+  // Determine whether the declaration(s) we found are actually in a base 
+  // class. If not, this isn't an implicit member reference.
+  ThisType = MD->getThisType(Context);
+  QualType CtxType = Context.getTypeDeclType(cast<CXXRecordDecl>(Ctx));
+  QualType ClassType
+    = Context.getTypeDeclType(cast<CXXRecordDecl>(MD->getParent()));
+  return Context.hasSameType(CtxType, ClassType) || 
+         IsDerivedFrom(ClassType, CtxType);
+}
+
