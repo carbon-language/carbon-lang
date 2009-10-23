@@ -618,10 +618,21 @@ TemplateInstantiator::TransformDeclRefExpr(DeclRefExpr *E) {
   // FIXME: Is this correct? Maybe FindInstantiatedDecl should do this?
   InstD = InstD->getUnderlyingDecl();
 
-  // FIXME: nested-name-specifier for QualifiedDeclRefExpr
+  CXXScopeSpec SS;
+  NestedNameSpecifier *Qualifier = 0;
+  if (E->getQualifier()) {
+    Qualifier = TransformNestedNameSpecifier(E->getQualifier(),
+                                             E->getQualifierRange());
+    if (!Qualifier)
+      return SemaRef.ExprError();
+    
+    SS.setScopeRep(Qualifier);
+    SS.setRange(E->getQualifierRange());
+  }
+  
   return SemaRef.BuildDeclarationNameExpr(E->getLocation(), InstD,
                                           /*FIXME:*/false,
-                                          /*FIXME:*/0,
+                                          &SS,
                                           /*FIXME:*/false);
 }
 

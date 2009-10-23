@@ -297,7 +297,7 @@ void AggExprEmitter::VisitUnaryAddrOf(const UnaryOperator *E) {
   assert(MPT->getPointeeType()->isFunctionProtoType() &&
          "Unexpected member pointer type!");
   
-  const QualifiedDeclRefExpr *DRE = cast<QualifiedDeclRefExpr>(E->getSubExpr());
+  const DeclRefExpr *DRE = cast<DeclRefExpr>(E->getSubExpr());
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(DRE->getDecl());
 
   const llvm::Type *PtrDiffTy = 

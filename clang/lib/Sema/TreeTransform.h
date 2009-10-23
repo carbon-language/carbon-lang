@@ -781,10 +781,15 @@ public:
   ///
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildDeclRefExpr(NamedDecl *ND, SourceLocation Loc) {
+  OwningExprResult RebuildDeclRefExpr(NestedNameSpecifier *Qualifier,
+                                      SourceRange QualifierRange,
+                                      NamedDecl *ND, SourceLocation Loc) {
+    CXXScopeSpec SS;
+    SS.setScopeRep(Qualifier);
+    SS.setRange(QualifierRange);
     return getSema().BuildDeclarationNameExpr(Loc, ND,
                                               /*FIXME:*/false,
-                                              /*SS=*/0,
+                                              &SS,
                                               /*FIXME:*/false);
   }
 
@@ -1390,26 +1395,6 @@ public:
                                          SourceLocation RParenLoc) {
     return getSema().ActOnUnaryTypeTrait(Trait, StartLoc, LParenLoc,
                                          T.getAsOpaquePtr(), RParenLoc);
-  }
-
-  /// \brief Build a new qualified declaration reference expression.
-  ///
-  /// By default, performs semantic analysis to build the new expression.
-  /// Subclasses may override this routine to provide different behavior.
-  OwningExprResult RebuildQualifiedDeclRefExpr(NestedNameSpecifier *NNS,
-                                               SourceRange QualifierRange,
-                                               NamedDecl *ND,
-                                               SourceLocation Location,
-                                               bool IsAddressOfOperand) {
-    CXXScopeSpec SS;
-    SS.setRange(QualifierRange);
-    SS.setScopeRep(NNS);
-    return getSema().ActOnDeclarationNameExpr(/*Scope=*/0,
-                                              Location,
-                                              ND->getDeclName(),
-                                              /*Trailing lparen=*/false,
-                                              &SS,
-                                              IsAddressOfOperand);
   }
 
   /// \brief Build a new (previously unresolved) declaration reference
@@ -3276,15 +3261,40 @@ TreeTransform<Derived>::TransformPredefinedExpr(PredefinedExpr *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformDeclRefExpr(DeclRefExpr *E) {
+  NestedNameSpecifier *Qualifier = 0;
+  if (E->getQualifier()) {
+    Qualifier = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
+                                                       E->getQualifierRange());
+    if (!Qualifier)
+      return SemaRef.ExprError();
+  }
+  
   NamedDecl *ND
     = dyn_cast_or_null<NamedDecl>(getDerived().TransformDecl(E->getDecl()));
   if (!ND)
     return SemaRef.ExprError();
 
-  if (!getDerived().AlwaysRebuild() && ND == E->getDecl())
+  if (!getDerived().AlwaysRebuild() && 
+      Qualifier == E->getQualifier() &&
+      ND == E->getDecl() &&
+      !E->hasExplicitTemplateArgumentList())
     return SemaRef.Owned(E->Retain());
 
-  return getDerived().RebuildDeclRefExpr(ND, E->getLocation());
+  // FIXME: We're losing the explicit template arguments in this transformation.
+
+  llvm::SmallVector<TemplateArgument, 4> TransArgs;
+  for (unsigned I = 0, N = E->getNumTemplateArgs(); I != N; ++I) {
+    TemplateArgument TransArg
+      = getDerived().TransformTemplateArgument(E->getTemplateArgs()[I]);
+    if (TransArg.isNull())
+      return SemaRef.ExprError();
+    
+    TransArgs.push_back(TransArg);
+  }
+  
+  // FIXME: Pass the qualifier/qualifier range along.
+  return getDerived().RebuildDeclRefExpr(Qualifier, E->getQualifierRange(),
+                                         ND, E->getLocation());
 }
 
 template<typename Derived>
@@ -4297,32 +4307,6 @@ TreeTransform<Derived>::TransformUnaryTypeTraitExpr(UnaryTypeTraitExpr *E) {
                                             /*FIXME:*/FakeLParenLoc,
                                             T,
                                             E->getLocEnd());
-}
-
-template<typename Derived>
-Sema::OwningExprResult
-TreeTransform<Derived>::TransformQualifiedDeclRefExpr(QualifiedDeclRefExpr *E) {
-  NestedNameSpecifier *NNS
-    = getDerived().TransformNestedNameSpecifier(E->getQualifier(),
-                                                E->getQualifierRange());
-  if (!NNS)
-    return SemaRef.ExprError();
-
-  NamedDecl *ND
-    = dyn_cast_or_null<NamedDecl>(getDerived().TransformDecl(E->getDecl()));
-  if (!ND)
-    return SemaRef.ExprError();
-
-  if (!getDerived().AlwaysRebuild() &&
-      NNS == E->getQualifier() &&
-      ND == E->getDecl())
-    return SemaRef.Owned(E->Retain());
-
-  return getDerived().RebuildQualifiedDeclRefExpr(NNS,
-                                                  E->getQualifierRange(),
-                                                  ND,
-                                                  E->getLocation(),
-                                                  /*FIXME:*/false);
 }
 
 template<typename Derived>

@@ -1171,8 +1171,7 @@ void Sema::CodeCompleteCase(Scope *S) {
         // At the XXX, our completions are TagDecl::TK_union,
         // TagDecl::TK_struct, and TagDecl::TK_class, rather than TK_union,
         // TK_struct, and TK_class.
-        if (QualifiedDeclRefExpr *QDRE = dyn_cast<QualifiedDeclRefExpr>(DRE))
-          Qualifier = QDRE->getQualifier();
+        Qualifier = DRE->getQualifier();
       }
   }
   

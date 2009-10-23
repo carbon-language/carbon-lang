@@ -1845,7 +1845,7 @@ Sema::CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member) {
   //   template-parameter shall be one of: [...]
   //
   //     -- a pointer to member expressed as described in 5.3.1.
-  QualifiedDeclRefExpr *DRE = 0;
+  DeclRefExpr *DRE = 0;
 
   // Ignore (and complain about) any excess parentheses.
   while (ParenExpr *Parens = dyn_cast<ParenExpr>(Arg)) {
@@ -1860,8 +1860,11 @@ Sema::CheckTemplateArgumentPointerToMember(Expr *Arg, NamedDecl *&Member) {
   }
 
   if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(Arg))
-    if (UnOp->getOpcode() == UnaryOperator::AddrOf)
-      DRE = dyn_cast<QualifiedDeclRefExpr>(UnOp->getSubExpr());
+    if (UnOp->getOpcode() == UnaryOperator::AddrOf) {
+      DRE = dyn_cast<DeclRefExpr>(UnOp->getSubExpr());
+      if (DRE && !DRE->getQualifier())
+        DRE = 0;
+    }
 
   if (!DRE)
     return Diag(Arg->getSourceRange().getBegin(),

@@ -322,47 +322,221 @@ public:
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
+/// \brief Represents the qualifier that may precede a C++ name, e.g., the
+/// "std::" in "std::sort".
+struct NameQualifier {
+  /// \brief The nested name specifier.
+  NestedNameSpecifier *NNS;
+  
+  /// \brief The source range covered by the nested name specifier.
+  SourceRange Range;
+};
+
+/// \brief Represents an explicit template argument list in C++, e.g.,
+/// the "<int>" in "sort<int>".
+struct ExplicitTemplateArgumentList {
+  /// \brief The source location of the left angle bracket ('<');
+  SourceLocation LAngleLoc;
+  
+  /// \brief The source location of the right angle bracket ('>');
+  SourceLocation RAngleLoc;
+  
+  /// \brief The number of template arguments in TemplateArgs.
+  /// The actual template arguments (if any) are stored after the
+  /// ExplicitTemplateArgumentList structure.
+  unsigned NumTemplateArgs;
+  
+  /// \brief Retrieve the template arguments
+  TemplateArgument *getTemplateArgs() {
+    return reinterpret_cast<TemplateArgument *> (this + 1);
+  }
+  
+  /// \brief Retrieve the template arguments
+  const TemplateArgument *getTemplateArgs() const {
+    return reinterpret_cast<const TemplateArgument *> (this + 1);
+  }
+};
+  
 /// DeclRefExpr - [C99 6.5.1p2] - A reference to a declared variable, function,
 /// enum, etc.
 class DeclRefExpr : public Expr {
-  NamedDecl *D;
+  enum {
+    // Flag on DecoratedD that specifies when this declaration reference 
+    // expression has a C++ nested-name-specifier.
+    HasQualifierFlag = 0x01,
+    // Flag on DecoratedD that specifies when this declaration reference 
+    // expression has an explicit C++ template argument list.
+    HasExplicitTemplateArgumentListFlag = 0x02
+  };
+  
+  // DecoratedD - The declaration that we are referencing, plus two bits to 
+  // indicate whether (1) the declaration's name was explicitly qualified and
+  // (2) the declaration's name was followed by an explicit template 
+  // argument list.
+  llvm::PointerIntPair<NamedDecl *, 2> DecoratedD;
+  
+  // Loc - The location of the declaration name itself.
   SourceLocation Loc;
 
+  /// \brief Retrieve the qualifier that preceded the declaration name, if any.
+  NameQualifier *getNameQualifier() {
+    if (DecoratedD.getInt() & HasQualifierFlag == 0)
+      return 0;
+    
+    return reinterpret_cast<NameQualifier *> (this + 1);
+  }
+  
+  /// \brief Retrieve the qualifier that preceded the member name, if any.
+  const NameQualifier *getNameQualifier() const {
+    return const_cast<DeclRefExpr *>(this)->getNameQualifier();
+  }
+  
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name, if any.
+  ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() {
+    if (DecoratedD.getInt() & HasExplicitTemplateArgumentListFlag == 0)
+      return 0;
+    
+    if (DecoratedD.getInt() & HasQualifierFlag == 0)
+      return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
+    
+    return reinterpret_cast<ExplicitTemplateArgumentList *>(
+                                                      getNameQualifier() + 1);
+  }
+  
+  /// \brief Retrieve the explicit template argument list that followed the
+  /// member template name, if any.
+  const ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() const {
+    return const_cast<DeclRefExpr *>(this)->getExplicitTemplateArgumentList();
+  }
+  
+  DeclRefExpr(NestedNameSpecifier *Qualifier, SourceRange QualifierRange,
+              NamedDecl *D, SourceLocation NameLoc,
+              bool HasExplicitTemplateArgumentList,
+              SourceLocation LAngleLoc,
+              const TemplateArgument *ExplicitTemplateArgs,
+              unsigned NumExplicitTemplateArgs,
+              SourceLocation RAngleLoc,
+              QualType T, bool TD, bool VD);
+  
 protected:
   // FIXME: Eventually, this constructor will go away and all subclasses
   // will have to provide the type- and value-dependent flags.
   DeclRefExpr(StmtClass SC, NamedDecl *d, QualType t, SourceLocation l) :
-    Expr(SC, t), D(d), Loc(l) {}
+    Expr(SC, t), DecoratedD(d, 0), Loc(l) {}
 
   DeclRefExpr(StmtClass SC, NamedDecl *d, QualType t, SourceLocation l, bool TD,
               bool VD) :
-    Expr(SC, t, TD, VD), D(d), Loc(l) {}
+    Expr(SC, t, TD, VD), DecoratedD(d, 0), Loc(l) {}
 
 public:
   // FIXME: Eventually, this constructor will go away and all clients
   // will have to provide the type- and value-dependent flags.
   DeclRefExpr(NamedDecl *d, QualType t, SourceLocation l) :
-    Expr(DeclRefExprClass, t), D(d), Loc(l) {}
+    Expr(DeclRefExprClass, t), DecoratedD(d, 0), Loc(l) {}
 
   DeclRefExpr(NamedDecl *d, QualType t, SourceLocation l, bool TD, bool VD) :
-    Expr(DeclRefExprClass, t, TD, VD), D(d), Loc(l) {}
+    Expr(DeclRefExprClass, t, TD, VD), DecoratedD(d, 0), Loc(l) {}
 
   /// \brief Construct an empty declaration reference expression.
   explicit DeclRefExpr(EmptyShell Empty)
     : Expr(DeclRefExprClass, Empty) { }
 
-  NamedDecl *getDecl() { return D; }
-  const NamedDecl *getDecl() const { return D; }
-  void setDecl(NamedDecl *NewD) { D = NewD; }
+  static DeclRefExpr *Create(ASTContext &Context,
+                             NestedNameSpecifier *Qualifier,
+                             SourceRange QualifierRange,
+                             NamedDecl *D,
+                             SourceLocation NameLoc,
+                             QualType T, bool TD, bool VD);
+  
+  static DeclRefExpr *Create(ASTContext &Context,
+                             NestedNameSpecifier *Qualifier,
+                             SourceRange QualifierRange,
+                             NamedDecl *D,
+                             SourceLocation NameLoc,
+                             bool HasExplicitTemplateArgumentList,
+                             SourceLocation LAngleLoc,
+                             const TemplateArgument *ExplicitTemplateArgs,
+                             unsigned NumExplicitTemplateArgs,
+                             SourceLocation RAngleLoc,
+                             QualType T, bool TD, bool VD);
+  
+  NamedDecl *getDecl() { return DecoratedD.getPointer(); }
+  const NamedDecl *getDecl() const { return DecoratedD.getPointer(); }
+  void setDecl(NamedDecl *NewD) { DecoratedD.setPointer(NewD); }
 
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+  virtual SourceRange getSourceRange() const;
 
+  /// \brief Determine whether this declaration reference was preceded by a
+  /// C++ nested-name-specifier, e.g., \c N::foo.
+  bool hasQualifier() const { return DecoratedD.getInt() & HasQualifierFlag; }
+  
+  /// \brief If the name was qualified, retrieves the source range of
+  /// the nested-name-specifier that precedes the name. Otherwise,
+  /// returns an empty source range.
+  SourceRange getQualifierRange() const {
+    if (!hasQualifier())
+      return SourceRange();
+    
+    return getNameQualifier()->Range;
+  }
+  
+  /// \brief If the name was qualified, retrieves the nested-name-specifier 
+  /// that precedes the name. Otherwise, returns NULL.
+  NestedNameSpecifier *getQualifier() const {
+    if (!hasQualifier())
+      return 0;
+    
+    return getNameQualifier()->NNS;
+  }
+  
+  /// \brief Determines whether this member expression actually had a C++
+  /// template argument list explicitly specified, e.g., x.f<int>.
+  bool hasExplicitTemplateArgumentList() const {
+    return DecoratedD.getInt() & HasExplicitTemplateArgumentListFlag;
+  }
+  
+  /// \brief Retrieve the location of the left angle bracket following the
+  /// member name ('<'), if any.
+  SourceLocation getLAngleLoc() const {
+    if (!hasExplicitTemplateArgumentList())
+      return SourceLocation();
+    
+    return getExplicitTemplateArgumentList()->LAngleLoc;
+  }
+  
+  /// \brief Retrieve the template arguments provided as part of this
+  /// template-id.
+  const TemplateArgument *getTemplateArgs() const {
+    if (!hasExplicitTemplateArgumentList())
+      return 0;
+    
+    return getExplicitTemplateArgumentList()->getTemplateArgs();
+  }
+  
+  /// \brief Retrieve the number of template arguments provided as part of this
+  /// template-id.
+  unsigned getNumTemplateArgs() const {
+    if (!hasExplicitTemplateArgumentList())
+      return 0;
+    
+    return getExplicitTemplateArgumentList()->NumTemplateArgs;
+  }
+  
+  /// \brief Retrieve the location of the right angle bracket following the
+  /// template arguments ('>').
+  SourceLocation getRAngleLoc() const {
+    if (!hasExplicitTemplateArgumentList())
+      return SourceLocation();
+    
+    return getExplicitTemplateArgumentList()->RAngleLoc;
+  }
+  
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == DeclRefExprClass ||
-           T->getStmtClass() == CXXConditionDeclExprClass ||
-           T->getStmtClass() == QualifiedDeclRefExprClass;
+           T->getStmtClass() == CXXConditionDeclExprClass;
   }
   static bool classof(const DeclRefExpr *) { return true; }
 
@@ -1060,41 +1234,6 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-};
-
-/// \brief Represents the qualifier that may precede a C++ name, e.g., the
-/// "std::" in "std::sort".
-struct NameQualifier {
-  /// \brief The nested name specifier.
-  NestedNameSpecifier *NNS;
-
-  /// \brief The source range covered by the nested name specifier.
-  SourceRange Range;
-};
-
-/// \brief Represents an explicit template argument list in C++, e.g.,
-/// the "<int>" in "sort<int>".
-struct ExplicitTemplateArgumentList {
-  /// \brief The source location of the left angle bracket ('<');
-  SourceLocation LAngleLoc;
-
-  /// \brief The source location of the right angle bracket ('>');
-  SourceLocation RAngleLoc;
-
-  /// \brief The number of template arguments in TemplateArgs.
-  /// The actual template arguments (if any) are stored after the
-  /// ExplicitTemplateArgumentList structure.
-  unsigned NumTemplateArgs;
-
-  /// \brief Retrieve the template arguments
-  TemplateArgument *getTemplateArgs() {
-    return reinterpret_cast<TemplateArgument *> (this + 1);
-  }
-
-  /// \brief Retrieve the template arguments
-  const TemplateArgument *getTemplateArgs() const {
-    return reinterpret_cast<const TemplateArgument *> (this + 1);
-  }
 };
 
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.  X->F and X.F.

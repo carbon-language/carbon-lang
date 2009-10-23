@@ -206,7 +206,9 @@ void StmtProfiler::VisitExpr(Expr *S) {
 
 void StmtProfiler::VisitDeclRefExpr(DeclRefExpr *S) {
   VisitExpr(S);
+  VisitNestedNameSpecifier(S->getQualifier());
   VisitDecl(S->getDecl());
+  VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
 }
 
 void StmtProfiler::VisitPredefinedExpr(PredefinedExpr *S) {
@@ -519,11 +521,6 @@ void StmtProfiler::VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *S) {
   VisitExpr(S);
   ID.AddInteger(S->getTrait());
   VisitType(S->getQueriedType());
-}
-
-void StmtProfiler::VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *S) {
-  VisitDeclRefExpr(S);
-  VisitNestedNameSpecifier(S->getQualifier());
 }
 
 void StmtProfiler::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *S) {

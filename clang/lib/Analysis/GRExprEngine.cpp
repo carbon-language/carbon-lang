@@ -409,7 +409,6 @@ void GRExprEngine::Visit(Stmt* S, ExplodedNode* Pred, ExplodedNodeSet& Dst) {
     }
 
     case Stmt::DeclRefExprClass:
-    case Stmt::QualifiedDeclRefExprClass:
       VisitDeclRefExpr(cast<DeclRefExpr>(S), Pred, Dst, false);
       break;
 
@@ -522,7 +521,6 @@ void GRExprEngine::VisitLValue(Expr* Ex, ExplodedNode* Pred,
       return;
 
     case Stmt::DeclRefExprClass:
-    case Stmt::QualifiedDeclRefExprClass:
       VisitDeclRefExpr(cast<DeclRefExpr>(Ex), Pred, Dst, true);
       return;
 

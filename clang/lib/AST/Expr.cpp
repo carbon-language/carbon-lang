@@ -30,6 +30,91 @@ using namespace clang;
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
+DeclRefExpr::DeclRefExpr(NestedNameSpecifier *Qualifier, 
+                         SourceRange QualifierRange,
+                         NamedDecl *D, SourceLocation NameLoc,
+                         bool HasExplicitTemplateArgumentList,
+                         SourceLocation LAngleLoc,
+                         const TemplateArgument *ExplicitTemplateArgs,
+                         unsigned NumExplicitTemplateArgs,
+                         SourceLocation RAngleLoc,
+                         QualType T, bool TD, bool VD)
+  : Expr(DeclRefExprClass, T, TD, VD),
+    DecoratedD(D,
+               (Qualifier? HasQualifierFlag : 0) |
+               (HasExplicitTemplateArgumentList? 
+                                    HasExplicitTemplateArgumentListFlag : 0)),
+    Loc(NameLoc) {
+  if (Qualifier) {
+    NameQualifier *NQ = getNameQualifier();
+    NQ->NNS = Qualifier;
+    NQ->Range = QualifierRange;
+  }
+      
+  if (HasExplicitTemplateArgumentList) {
+    ExplicitTemplateArgumentList *ETemplateArgs
+      = getExplicitTemplateArgumentList();
+    ETemplateArgs->LAngleLoc = LAngleLoc;
+    ETemplateArgs->RAngleLoc = RAngleLoc;
+    ETemplateArgs->NumTemplateArgs = NumExplicitTemplateArgs;
+    
+    TemplateArgument *TemplateArgs = ETemplateArgs->getTemplateArgs();
+    for (unsigned I = 0; I < NumExplicitTemplateArgs; ++I)
+      new (TemplateArgs + I) TemplateArgument(ExplicitTemplateArgs[I]);
+  }
+}
+
+DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
+                                 NestedNameSpecifier *Qualifier,
+                                 SourceRange QualifierRange,
+                                 NamedDecl *D,
+                                 SourceLocation NameLoc,
+                                 QualType T, bool TD, bool VD) {
+  return Create(Context, Qualifier, QualifierRange, D, NameLoc,
+                false, SourceLocation(), 0, 0, SourceLocation(),
+                T, TD, VD);
+}
+
+DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
+                                 NestedNameSpecifier *Qualifier,
+                                 SourceRange QualifierRange,
+                                 NamedDecl *D,
+                                 SourceLocation NameLoc,
+                                 bool HasExplicitTemplateArgumentList,
+                                 SourceLocation LAngleLoc,
+                                 const TemplateArgument *ExplicitTemplateArgs,
+                                 unsigned NumExplicitTemplateArgs,
+                                 SourceLocation RAngleLoc,
+                                 QualType T, bool TD, bool VD) {
+  std::size_t Size = sizeof(DeclRefExpr);
+  if (Qualifier != 0)
+    Size += sizeof(NameQualifier);
+  
+  if (HasExplicitTemplateArgumentList)
+    Size += sizeof(ExplicitTemplateArgumentList) +
+            sizeof(TemplateArgument) * NumExplicitTemplateArgs;
+  
+  void *Mem = Context.Allocate(Size, llvm::alignof<DeclRefExpr>());
+  return new (Mem) DeclRefExpr(Qualifier, QualifierRange, D, NameLoc,
+                               HasExplicitTemplateArgumentList,
+                               LAngleLoc, 
+                               ExplicitTemplateArgs, 
+                               NumExplicitTemplateArgs,
+                               RAngleLoc,
+                               T, TD, VD);
+}
+
+SourceRange DeclRefExpr::getSourceRange() const {
+  // FIXME: Does not handle multi-token names well, e.g., operator[].
+  SourceRange R(Loc);
+  
+  if (hasQualifier())
+    R.setBegin(getQualifierRange().getBegin());
+  if (hasExplicitTemplateArgumentList())
+    R.setEnd(getRAngleLoc());
+  return R;
+}
+
 // FIXME: Maybe this should use DeclPrinter with a special "print predefined
 // expr" policy instead.
 std::string PredefinedExpr::ComputeName(ASTContext &Context, IdentType IT,
@@ -855,8 +940,7 @@ Expr::isLvalueResult Expr::isLvalueInternal(ASTContext &Ctx) const {
     if (cast<ArraySubscriptExpr>(this)->getBase()->getType()->isVectorType())
       return cast<ArraySubscriptExpr>(this)->getBase()->isLvalue(Ctx);
     return LV_Valid;
-  case DeclRefExprClass:
-  case QualifiedDeclRefExprClass: { // C99 6.5.1p2
+  case DeclRefExprClass: { // C99 6.5.1p2
     const NamedDecl *RefdDecl = cast<DeclRefExpr>(this)->getDecl();
     if (DeclCanBeLvalue(RefdDecl, Ctx))
       return LV_Valid;
@@ -1133,8 +1217,7 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
     return cast<ImplicitCastExpr>(this)->getSubExpr()->isOBJCGCCandidate(Ctx);
   case CStyleCastExprClass:
     return cast<CStyleCastExpr>(this)->getSubExpr()->isOBJCGCCandidate(Ctx);
-  case DeclRefExprClass:
-  case QualifiedDeclRefExprClass: {
+  case DeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(this)->getDecl();
     if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
       if (VD->hasGlobalStorage())
@@ -1432,7 +1515,6 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     return ICEDiag(2, E->getLocStart());
   }
   case Expr::DeclRefExprClass:
-  case Expr::QualifiedDeclRefExprClass:
     if (isa<EnumConstantDecl>(cast<DeclRefExpr>(E)->getDecl()))
       return NoDiag();
     if (Ctx.getLangOptions().CPlusPlus &&

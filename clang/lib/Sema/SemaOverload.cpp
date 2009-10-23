@@ -5370,18 +5370,19 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
       if (Method->isStatic()) {
         // Do nothing: static member functions aren't any different
         // from non-member functions.
-      } else if (QualifiedDeclRefExpr *DRE
-                 = dyn_cast<QualifiedDeclRefExpr>(UnOp->getSubExpr())) {
-        // We have taken the address of a pointer to member
-        // function. Perform the computation here so that we get the
-        // appropriate pointer to member type.
-        DRE->setDecl(Fn);
-        DRE->setType(Fn->getType());
-        QualType ClassType
-          = Context.getTypeDeclType(cast<RecordDecl>(Method->getDeclContext()));
-        E->setType(Context.getMemberPointerType(Fn->getType(),
-                                                ClassType.getTypePtr()));
-        return E;
+      } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(UnOp->getSubExpr())) {
+        if (DRE->getQualifier()) {
+          // We have taken the address of a pointer to member
+          // function. Perform the computation here so that we get the
+          // appropriate pointer to member type.
+          DRE->setDecl(Fn);
+          DRE->setType(Fn->getType());
+          QualType ClassType
+            = Context.getTypeDeclType(cast<RecordDecl>(Method->getDeclContext()));
+          E->setType(Context.getMemberPointerType(Fn->getType(),
+                                                  ClassType.getTypePtr()));
+          return E;
+        }
       }
       // FIXME: TemplateIdRefExpr referring to a member function template
       // specialization!
@@ -5401,18 +5402,20 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
     MemExpr->setMemberDecl(Fn);
     E->setType(Fn->getType());
   } else if (TemplateIdRefExpr *TID = dyn_cast<TemplateIdRefExpr>(E)) {
-    // FIXME: We should capture the template arguments here.
-    if (NestedNameSpecifier *Qualifier = TID->getQualifier())
-      E = new (Context) QualifiedDeclRefExpr(Fn, Fn->getType(),
-                                             TID->getTemplateNameLoc(),
-                                             /*FIXME?*/false, /*FIXME?*/false,
-                                             TID->getQualifierRange(),
-                                             Qualifier);
-    else
-      E = new (Context) DeclRefExpr(Fn, Fn->getType(), 
-                                    TID->getTemplateNameLoc());
+    E = DeclRefExpr::Create(Context, 
+                            TID->getQualifier(), TID->getQualifierRange(),
+                            Fn, TID->getTemplateNameLoc(), 
+                            true,
+                            TID->getLAngleLoc(),
+                            TID->getTemplateArgs(),
+                            TID->getNumTemplateArgs(),
+                            TID->getRAngleLoc(),
+                            Fn->getType(), 
+                            /*FIXME?*/false, /*FIXME?*/false);
     
-    TID->Destroy(Context);
+    // FIXME: Don't destroy TID here, since we need its template arguments
+    // to survive.
+    // TID->Destroy(Context);
   } else {
     assert(false && "Invalid reference to overloaded function");
   }

@@ -434,7 +434,7 @@ public:
         E->getType()->getAs<MemberPointerType>()) {
       QualType T = MPT->getPointeeType();
       if (T->isFunctionProtoType()) {
-        QualifiedDeclRefExpr *DRE = cast<QualifiedDeclRefExpr>(E->getSubExpr());
+        DeclRefExpr *DRE = cast<DeclRefExpr>(E->getSubExpr());
         
         return EmitMemberFunctionPointer(cast<CXXMethodDecl>(DRE->getDecl()));
       }
@@ -739,8 +739,7 @@ public:
                                      E->getType().getAddressSpace());
       return C;
     }
-    case Expr::DeclRefExprClass:
-    case Expr::QualifiedDeclRefExprClass: {
+    case Expr::DeclRefExprClass: {
       NamedDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
         return CGM.GetAddrOfFunction(FD);

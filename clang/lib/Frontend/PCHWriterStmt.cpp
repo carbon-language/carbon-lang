@@ -314,6 +314,8 @@ void PCHStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
   VisitExpr(E);
   Writer.AddDeclRef(E->getDecl(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
+  // FIXME: write qualifier
+  // FIXME: write explicit template arguments
   Code = pch::EXPR_DECL_REF;
 }
 

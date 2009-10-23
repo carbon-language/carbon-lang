@@ -446,9 +446,7 @@ Sema::OwningExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                   isAddressOfOperand);
 }
 
-/// BuildDeclRefExpr - Build either a DeclRefExpr or a
-/// QualifiedDeclRefExpr based on whether or not SS is a
-/// nested-name-specifier.
+/// BuildDeclRefExpr - Build a DeclRefExpr.
 Sema::OwningExprResult
 Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
                        bool TypeDependent, bool ValueDependent,
@@ -476,15 +474,11 @@ Sema::BuildDeclRefExpr(NamedDecl *D, QualType Ty, SourceLocation Loc,
 
   MarkDeclarationReferenced(Loc, D);
 
-  Expr *E;
-  if (SS && !SS->isEmpty()) {
-    E = new (Context) QualifiedDeclRefExpr(D, Ty, Loc, TypeDependent,
-                                          ValueDependent, SS->getRange(),
-                  static_cast<NestedNameSpecifier *>(SS->getScopeRep()));
-  } else
-    E = new (Context) DeclRefExpr(D, Ty, Loc, TypeDependent, ValueDependent);
-
-  return Owned(E);
+  return Owned(DeclRefExpr::Create(Context, 
+                              SS? (NestedNameSpecifier *)SS->getScopeRep() : 0, 
+                                   SS? SS->getRange() : SourceRange(), 
+                                   D, Loc, 
+                                   Ty, TypeDependent, ValueDependent));
 }
 
 /// getObjectForAnonymousRecordDecl - Retrieve the (unnamed) field or
@@ -2738,16 +2732,12 @@ void Sema::DeconstructCallFunction(Expr *FnExpr,
                cast<UnaryOperator>(FnExpr)->getOpcode()
                == UnaryOperator::AddrOf) {
       FnExpr = cast<UnaryOperator>(FnExpr)->getSubExpr();
-    } else if (QualifiedDeclRefExpr *QDRExpr 
-                 = dyn_cast<QualifiedDeclRefExpr>(FnExpr)) {
-      // Qualified names disable ADL (C++0x [basic.lookup.argdep]p1).
-      ArgumentDependentLookup = false;
-      Qualifier = QDRExpr->getQualifier();
-      QualifierRange = QDRExpr->getQualifierRange();
-      Function = dyn_cast<NamedDecl>(QDRExpr->getDecl());
-      break;
     } else if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(FnExpr)) {
       Function = dyn_cast<NamedDecl>(DRExpr->getDecl());
+      if ((Qualifier = DRExpr->getQualifier())) {
+        ArgumentDependentLookup = false;
+        QualifierRange = DRExpr->getQualifierRange();
+      }      
       break;
     } else if (UnresolvedFunctionNameExpr *DepName
                = dyn_cast<UnresolvedFunctionNameExpr>(FnExpr)) {
@@ -2933,16 +2923,10 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
         return ExprError();
 
       // Update Fn to refer to the actual function selected.
-      Expr *NewFn = 0;
-      if (Qualifier)
-        NewFn = new (Context) QualifiedDeclRefExpr(FDecl, FDecl->getType(),
-                                                   Fn->getLocStart(),
-                                                   false, false,
-                                                   QualifierRange,
-                                                   Qualifier);
-      else
-        NewFn = new (Context) DeclRefExpr(FDecl, FDecl->getType(),
-                                          Fn->getLocStart());
+      // FIXME: Use FixOverloadedFunctionReference?
+      Expr *NewFn = DeclRefExpr::Create(Context, Qualifier, QualifierRange, FDecl, 
+                                        Fn->getLocStart(), FDecl->getType(), false, 
+                                        false);
       Fn->Destroy(Context);
       Fn = NewFn;
     }
@@ -5083,7 +5067,6 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
 static NamedDecl *getPrimaryDecl(Expr *E) {
   switch (E->getStmtClass()) {
   case Stmt::DeclRefExprClass:
-  case Stmt::QualifiedDeclRefExprClass:
     return cast<DeclRefExpr>(E)->getDecl();
   case Stmt::MemberExprClass:
     // If this is an arrow operator, the address is an offset from
@@ -5199,7 +5182,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
       // Okay: we can take the address of a field.
       // Could be a pointer to member, though, if there is an explicit
       // scope qualifier for the class.
-      if (isa<QualifiedDeclRefExpr>(op)) {
+      if (isa<DeclRefExpr>(op) && cast<DeclRefExpr>(op)->getQualifier()) {
         DeclContext *Ctx = dcl->getDeclContext();
         if (Ctx && Ctx->isRecord()) {
           if (FD->getType()->isReferenceType()) {
@@ -5216,7 +5199,8 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     } else if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(dcl)) {
       // Okay: we can take the address of a function.
       // As above.
-      if (isa<QualifiedDeclRefExpr>(op) && MD->isInstance())
+      if (isa<DeclRefExpr>(op) && cast<DeclRefExpr>(op)->getQualifier() &&
+          MD->isInstance())
         return Context.getMemberPointerType(op->getType(),
               Context.getTypeDeclType(MD->getParent()).getTypePtr());
     } else if (!isa<FunctionDecl>(dcl))

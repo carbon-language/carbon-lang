@@ -473,14 +473,14 @@ void StmtPrinter::VisitExpr(Expr *Node) {
 }
 
 void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
+  if (NestedNameSpecifier *Qualifier = Node->getQualifier())
+    Qualifier->print(OS, Policy);
   OS << Node->getDecl()->getNameAsString();
-}
-
-void StmtPrinter::VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *Node) {
-  NamedDecl *D = Node->getDecl();
-
-  Node->getQualifier()->print(OS, Policy);
-  OS << D->getNameAsString();
+  if (Node->hasExplicitTemplateArgumentList())
+    OS << TemplateSpecializationType::PrintTemplateArgumentList(
+                                                    Node->getTemplateArgs(),
+                                                    Node->getNumTemplateArgs(),
+                                                    Policy);  
 }
 
 void StmtPrinter::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *Node) {

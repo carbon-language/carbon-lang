@@ -245,7 +245,6 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::VAArgExprClass:
     return EmitVAArgExprLValue(cast<VAArgExpr>(E));
   case Expr::DeclRefExprClass:
-  case Expr::QualifiedDeclRefExprClass:
     return EmitDeclRefLValue(cast<DeclRefExpr>(E));
   case Expr::ParenExprClass:return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
   case Expr::PredefinedExprClass:
@@ -866,9 +865,9 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     llvm::Value *V = LocalDeclMap[IPD];
     assert(V && "BlockVarDecl not entered in LocalDeclMap?");
     return LValue::MakeAddr(V, MakeQualifiers(E->getType()));
-  } else if (const QualifiedDeclRefExpr *QDRExpr = 
-             dyn_cast<QualifiedDeclRefExpr>(E)) {
-    return EmitPointerToDataMemberLValue(QDRExpr);
+  } else if (E->getQualifier()) {
+    // FIXME: the qualifier check does not seem sufficient here
+    return EmitPointerToDataMemberLValue(E);
   }
   assert(0 && "Unimp declref");
   //an invalid LValue, but the assert will
@@ -1519,8 +1518,7 @@ LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
 }
 
 
-LValue CodeGenFunction::EmitPointerToDataMemberLValue(
-                                              const QualifiedDeclRefExpr *E) {
+LValue CodeGenFunction::EmitPointerToDataMemberLValue(const DeclRefExpr *E) {
   const FieldDecl *Field = cast<FieldDecl>(E->getDecl());
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Field->getDeclContext());
   QualType NNSpecTy = 
