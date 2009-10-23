@@ -61,6 +61,7 @@ namespace {
                                     ClassTemplatePartialSpecializationDecl *D);
     Decl *VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
+    Decl *VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
     Decl *VisitUnresolvedUsingDecl(UnresolvedUsingDecl *D);
 
     // Base case. FIXME: Remove once we can instantiate everything.
@@ -824,6 +825,8 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
                                  D->wasDeclaredWithTypename(),
                                  D->isParameterPack());
 
+  // FIXME: Do we actually want to perform substitution here? I don't think
+  // we do.
   if (D->hasDefaultArgument()) {
     QualType DefaultPattern = D->getDefaultArgument();
     QualType DefaultInst
@@ -837,6 +840,42 @@ Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(
   }
 
   return Inst;
+}
+
+Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
+                                                 NonTypeTemplateParmDecl *D) {
+  // Substitute into the type of the non-type template parameter.
+  QualType T;
+  DeclaratorInfo *DI = D->getDeclaratorInfo();
+  if (DI) {
+    DI = SemaRef.SubstType(DI, TemplateArgs, D->getLocation(),
+                           D->getDeclName());
+    if (DI) T = DI->getType();
+  } else {
+    T = SemaRef.SubstType(D->getType(), TemplateArgs, D->getLocation(),
+                          D->getDeclName());
+    DI = 0;
+  }
+  if (T.isNull())
+    return 0;
+  
+  // Check that this type is acceptable for a non-type template parameter.
+  bool Invalid = false;
+  T = SemaRef.CheckNonTypeTemplateParameterType(T, D->getLocation());
+  if (T.isNull()) {
+    T = SemaRef.Context.IntTy;
+    Invalid = true;
+  }
+  
+  NonTypeTemplateParmDecl *Param
+    = NonTypeTemplateParmDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+                                      D->getDepth() - 1, D->getPosition(),
+                                      D->getIdentifier(), T, DI);
+  if (Invalid)
+    Param->setInvalidDecl();
+  
+  Param->setDefaultArgument(D->getDefaultArgument());
+  return Param;
 }
 
 Decl *

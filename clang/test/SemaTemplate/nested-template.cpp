@@ -101,3 +101,10 @@ struct X0<T*> {
   template<typename U>
   void f(U u = T()) { }
 };
+
+// PR5103
+template<typename>
+struct X1 {
+  template<typename, bool = false> struct B { };
+};
+template struct X1<int>::B<bool>;
