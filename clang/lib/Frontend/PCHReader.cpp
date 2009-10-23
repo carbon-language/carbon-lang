@@ -2515,6 +2515,9 @@ IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
     // All of the strings in the PCH file are preceded by a 16-bit
     // length. Extract that 16-bit length to avoid having to execute
     // strlen().
+    // NOTE: 'StrLenPtr' is an 'unsigned char*' so that we load bytes as
+    //  unsigned integers.  This is important to avoid integer overflow when
+    //  we cast them to 'unsigned'.
     const unsigned char *StrLenPtr = (const unsigned char*) Str - 2;
     unsigned StrLen = (((unsigned) StrLenPtr[0])
                        | (((unsigned) StrLenPtr[1]) << 8)) - 1;
