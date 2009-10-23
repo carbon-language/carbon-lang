@@ -1547,11 +1547,13 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee, QualType CalleeType,
   assert(CalleeType->isFunctionPointerType() &&
          "Call must have function pointer type!");
 
-  QualType FnType = CalleeType->getAs<PointerType>()->getPointeeType();
-  QualType ResultType = FnType->getAs<FunctionType>()->getResultType();
+  CalleeType = getContext().getCanonicalType(CalleeType);
+
+  QualType FnType = cast<PointerType>(CalleeType)->getPointeeType();
+  QualType ResultType = cast<FunctionType>(FnType)->getResultType();
 
   CallArgList Args;
-  EmitCallArgs(Args, FnType->getAs<FunctionProtoType>(), ArgBeg, ArgEnd);
+  EmitCallArgs(Args, dyn_cast<FunctionProtoType>(FnType), ArgBeg, ArgEnd);
 
   // FIXME: We should not need to do this, it should be part of the function
   // type.
