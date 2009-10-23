@@ -2855,8 +2855,10 @@ QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
 
   // FIXME: Move up
   static int UniqueBlockByRefTypeID = 0;
-  char Name[36];
+  // FIXME. This is error prone. Luckinly stack-canary stuff caught it.
+  char Name[128];
   sprintf(Name, "__Block_byref_%d_%s", ++UniqueBlockByRefTypeID, DeclName);
+  assert((strlen(Name) < sizeof(Name)) && "BuildByRefType - buffer overflow");
   RecordDecl *T;
   T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
                          &Idents.get(Name));
@@ -2904,8 +2906,10 @@ QualType ASTContext::getBlockParmType(
   llvm::SmallVector<const Expr *, 8> &BlockDeclRefDecls) {
   // FIXME: Move up
   static int UniqueBlockParmTypeID = 0;
-  char Name[36];
+  // FIXME. This is error prone. Luckinly stack-canary stuff caught it.
+  char Name[128];
   sprintf(Name, "__block_literal_%u", ++UniqueBlockParmTypeID);
+  assert((strlen(Name) < sizeof(Name)) && "getBlockParmType - buffer overflow");
   RecordDecl *T;
   T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
                          &Idents.get(Name));
