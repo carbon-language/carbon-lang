@@ -42,6 +42,7 @@ struct foo2 {
 struct foo2 foo2;
 
 
+// Radar 7325611
 // CHECK: "barfoo"
 typedef int barfoo;
 barfoo foo() {
