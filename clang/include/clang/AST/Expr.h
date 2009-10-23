@@ -380,7 +380,7 @@ class DeclRefExpr : public Expr {
 
   /// \brief Retrieve the qualifier that preceded the declaration name, if any.
   NameQualifier *getNameQualifier() {
-    if (DecoratedD.getInt() & HasQualifierFlag == 0)
+    if ((DecoratedD.getInt() & HasQualifierFlag) == 0)
       return 0;
     
     return reinterpret_cast<NameQualifier *> (this + 1);
@@ -394,10 +394,10 @@ class DeclRefExpr : public Expr {
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name, if any.
   ExplicitTemplateArgumentList *getExplicitTemplateArgumentList() {
-    if (DecoratedD.getInt() & HasExplicitTemplateArgumentListFlag == 0)
+    if ((DecoratedD.getInt() & HasExplicitTemplateArgumentListFlag) == 0)
       return 0;
     
-    if (DecoratedD.getInt() & HasQualifierFlag == 0)
+    if ((DecoratedD.getInt() & HasQualifierFlag) == 0)
       return reinterpret_cast<ExplicitTemplateArgumentList *>(this + 1);
     
     return reinterpret_cast<ExplicitTemplateArgumentList *>(
