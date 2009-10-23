@@ -2331,7 +2331,8 @@ QualType TreeTransform<Derived>::TransformDependentSizedExtVectorType(
 
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
-      (ElementType != T->getElementType() && Size.get() != T->getSizeExpr())) {
+      ElementType != T->getElementType() ||
+      Size.get() != T->getSizeExpr()) {
     Result = getDerived().RebuildDependentSizedExtVectorType(ElementType,
                                                          move(Size),
                                                          T->getAttributeLoc());

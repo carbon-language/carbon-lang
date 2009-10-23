@@ -45,3 +45,16 @@ struct make5 {
   typedef int_ptr __attribute__((ext_vector_type(Length))) type; // expected-error{{invalid vector type}}             
 };
 
+template<int Length>
+struct make6 {
+  typedef int __attribute__((ext_vector_type(Length))) type;
+};
+
+int test_make6() {
+  make6<4>::type x;
+  x.w = 7;
+
+  make6<2>::type y;
+  y.x = -1;
+  y.w = -1; // expected-error{{vector component access exceeds type}}
+}
