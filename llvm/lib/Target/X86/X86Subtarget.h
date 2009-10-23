@@ -220,7 +220,7 @@ public:
   /// at 'More' optimization level.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              TargetSubtarget::AntiDepBreakMode& mode) const {
-    mode = TargetSubtarget::ANTIDEP_NONE;
+    mode = TargetSubtarget::ANTIDEP_CRITICAL;
     return OptLevel >= CodeGenOpt::Default;
   }
 };
