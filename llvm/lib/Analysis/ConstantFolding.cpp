@@ -93,6 +93,178 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
   return false;
 }
 
+/// ReadDataFromGlobal - Recursive helper to read bits out of global.  C is the
+/// constant being copied out of. ByteOffset is an offset into C.  CurPtr is the
+/// pointer to copy results into and BytesLeft is the number of bytes left in
+/// the CurPtr buffer.  TD is the target data.
+static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
+                               unsigned char *CurPtr, unsigned BytesLeft,
+                               const TargetData &TD) {
+  assert(ByteOffset <= TD.getTypeAllocSize(C->getType()) &&
+         "Out of range access");
+  
+  if (isa<ConstantAggregateZero>(C) || isa<UndefValue>(C))
+    return true;
+  
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
+    if (CI->getBitWidth() > 64 ||
+        (CI->getBitWidth() & 7) != 0)
+      return false;
+    
+    uint64_t Val = CI->getZExtValue();
+    unsigned IntBytes = unsigned(CI->getBitWidth()/8);
+    
+    for (unsigned i = 0; i != BytesLeft && ByteOffset != IntBytes; ++i) {
+      CurPtr[i] = (unsigned char)(Val >> ByteOffset * 8);
+      ++ByteOffset;
+    }
+    return true;
+  }
+  
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
+    if (CFP->getType()->isDoubleTy()) {
+      C = ConstantExpr::getBitCast(C, Type::getInt64Ty(C->getContext()));
+      return ReadDataFromGlobal(C, ByteOffset, CurPtr, BytesLeft, TD);
+    }
+    if (CFP->getType()->isFloatTy()){
+      C = ConstantExpr::getBitCast(C, Type::getInt32Ty(C->getContext()));
+      return ReadDataFromGlobal(C, ByteOffset, CurPtr, BytesLeft, TD);
+    }
+  }
+
+  if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
+    const StructLayout *SL = TD.getStructLayout(CS->getType());
+    unsigned Index = SL->getElementContainingOffset(ByteOffset);
+    uint64_t CurEltOffset = SL->getElementOffset(Index);
+    ByteOffset -= CurEltOffset;
+    
+    while (1) {
+      // If the element access is to the element itself and not to tail padding,
+      // read the bytes from the element.
+      uint64_t EltSize = TD.getTypeAllocSize(CS->getOperand(Index)->getType());
+
+      if (ByteOffset < EltSize &&
+          !ReadDataFromGlobal(CS->getOperand(Index), ByteOffset, CurPtr,
+                              BytesLeft, TD))
+        return false;
+      
+      ++Index;
+      
+      // Check to see if we read from the last struct element, if so we're done.
+      if (Index == CS->getType()->getNumElements())
+        return true;
+
+      // If we read all of the bytes we needed from this element we're done.
+      uint64_t NextEltOffset = SL->getElementOffset(Index);
+
+      if (BytesLeft <= NextEltOffset-CurEltOffset-ByteOffset)
+        return true;
+
+      // Move to the next element of the struct.
+      BytesLeft -= NextEltOffset-CurEltOffset-ByteOffset;
+      ByteOffset = 0;
+      CurEltOffset = NextEltOffset;
+    }
+    // not reached.
+  }
+
+  if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
+    uint64_t EltSize = TD.getTypeAllocSize(CA->getType()->getElementType());
+    uint64_t Index = ByteOffset / EltSize;
+    uint64_t Offset = ByteOffset - Index * EltSize;
+    for (; Index != CA->getType()->getNumElements(); ++Index) {
+      if (!ReadDataFromGlobal(CA->getOperand(Index), Offset, CurPtr,
+                              BytesLeft, TD))
+        return false;
+      if (EltSize >= BytesLeft)
+        return true;
+      
+      Offset = 0;
+      BytesLeft -= EltSize;
+      CurPtr += EltSize;
+    }
+    return true;
+  }
+  
+  if (ConstantVector *CV = dyn_cast<ConstantVector>(C)) {
+    uint64_t EltSize = TD.getTypeAllocSize(CV->getType()->getElementType());
+    uint64_t Index = ByteOffset / EltSize;
+    uint64_t Offset = ByteOffset - Index * EltSize;
+    for (; Index != CV->getType()->getNumElements(); ++Index) {
+      if (!ReadDataFromGlobal(CV->getOperand(Index), Offset, CurPtr,
+                              BytesLeft, TD))
+        return false;
+      if (EltSize >= BytesLeft)
+        return true;
+      
+      Offset = 0;
+      BytesLeft -= EltSize;
+      CurPtr += EltSize;
+    }
+    return true;
+  }
+  
+  // Otherwise, unknown initializer type.
+  return false;
+}
+
+static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
+                                                 const TargetData &TD) {
+  const Type *InitializerTy = cast<PointerType>(C->getType())->getElementType();
+  const IntegerType *IntType = dyn_cast<IntegerType>(InitializerTy);
+  
+  // If this isn't an integer load we can't fold it directly.
+  if (!IntType) {
+    // If this is a float/double load, we can try folding it as an int32/64 load
+    // and then bitcast the result.  This can be useful for union cases.
+    const Type *MapTy;
+    if (InitializerTy->isFloatTy())
+      MapTy = Type::getInt32PtrTy(C->getContext());
+    else if (InitializerTy->isDoubleTy())
+      MapTy = Type::getInt64PtrTy(C->getContext());
+    else
+      return 0;
+
+    C = ConstantExpr::getBitCast(C, MapTy);
+    if (Constant *Res = FoldReinterpretLoadFromConstPtr(C, TD))
+      return ConstantExpr::getBitCast(Res, InitializerTy);
+    return 0;
+  }
+  
+  unsigned BytesLoaded = (IntType->getBitWidth() + 7) / 8;
+  if (BytesLoaded > 8 || BytesLoaded == 0) return 0;
+  
+  GlobalValue *GVal;
+  int64_t Offset;
+  if (!IsConstantOffsetFromGlobal(C, GVal, Offset, TD))
+    return 0;
+  
+  GlobalVariable *GV = dyn_cast<GlobalVariable>(GVal);
+  if (!GV || !GV->isConstant() || !GV->hasInitializer() ||
+      !GV->hasDefinitiveInitializer() ||
+      !GV->getInitializer()->getType()->isSized())
+    return 0;
+
+  // If we're loading off the beginning of the global, some bytes may be valid,
+  // but we don't try to handle this.
+  if (Offset < 0) return 0;
+  
+  // If we're not accessing anything in this constant, the result is undefined.
+  if (uint64_t(Offset) >= TD.getTypeAllocSize(GV->getInitializer()->getType()))
+    return UndefValue::get(IntType);
+  
+  unsigned char RawBytes[8] = {0};
+  if (!ReadDataFromGlobal(GV->getInitializer(), Offset, RawBytes,
+                          BytesLoaded, TD))
+    return 0;
+
+  uint64_t ResultVal = 0;
+  for (unsigned i = 0; i != BytesLoaded; ++i)
+    ResultVal |= (uint64_t)RawBytes[i] << (i * 8);
+
+  return ConstantInt::get(IntType, ResultVal);
+}
+
 /// ConstantFoldLoadFromConstPtr - Return the value that a load from C would
 /// produce if it is constant and determinable.  If this is not determinable,
 /// return null.
@@ -119,20 +291,20 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
   // directly if string length is small enough.
   std::string Str;
   if (TD && GetConstantStringInfo(CE->getOperand(0), Str) && !Str.empty()) {
-    unsigned len = Str.length();
+    unsigned StrLen = Str.length();
     const Type *Ty = cast<PointerType>(CE->getType())->getElementType();
-    unsigned numBits = Ty->getPrimitiveSizeInBits();
+    unsigned NumBits = Ty->getPrimitiveSizeInBits();
     // Replace LI with immediate integer store.
-    if ((numBits >> 3) == len + 1) {
-      APInt StrVal(numBits, 0);
-      APInt SingleChar(numBits, 0);
+    if ((NumBits >> 3) == StrLen + 1) {
+      APInt StrVal(NumBits, 0);
+      APInt SingleChar(NumBits, 0);
       if (TD->isLittleEndian()) {
-        for (signed i = len-1; i >= 0; i--) {
+        for (signed i = StrLen-1; i >= 0; i--) {
           SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
           StrVal = (StrVal << 8) | SingleChar;
         }
       } else {
-        for (unsigned i = 0; i < len; i++) {
+        for (unsigned i = 0; i < StrLen; i++) {
           SingleChar = (uint64_t) Str[i] & UCHAR_MAX;
           StrVal = (StrVal << 8) | SingleChar;
         }
@@ -156,6 +328,11 @@ Constant *llvm::ConstantFoldLoadFromConstPtr(Constant *C,
     }
   }
   
+  // Try hard to fold loads from bitcasted strange and non-type-safe things.  We
+  // currently don't do any of this for big endian systems.  It can be
+  // generalized in the future if someone is interested.
+  if (TD && TD->isLittleEndian())
+    return FoldReinterpretLoadFromConstPtr(CE, *TD);
   return 0;
 }
 
@@ -164,7 +341,7 @@ static Constant *ConstantFoldLoadInst(const LoadInst *LI, const TargetData *TD){
   
   if (Constant *C = dyn_cast<Constant>(LI->getOperand(0)))
     return ConstantFoldLoadFromConstPtr(C, TD);
-    
+
   return 0;
 }
 
