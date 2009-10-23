@@ -117,6 +117,8 @@ def err_expected_semi_after_static_assert : Error<
   "expected ';' after static_assert">;
 def err_expected_semi_for : Error<"expected ';' in 'for' statement specifier">;
 def err_expected_colon_after : Error<"expected ':' after %0">;
+def err_pointer_to_member_type : Error<
+  "invalid use of pointer to member type after %0">;
 def err_label_end_of_compound_statement : Error<
   "label at end of compound statement: expected statement">;
 def err_expected_string_literal : Error<"expected string literal">;

@@ -212,7 +212,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                           PDiag(diag::err_invalid_incomplete_type_use)
                             << FullRange))
     return ExprError();
-
+  
   if (RequireNonAbstractType(TyBeginLoc, Ty,
                              diag::err_allocation_of_abstract_type))
     return ExprError();
