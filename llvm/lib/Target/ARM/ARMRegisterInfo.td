@@ -129,9 +129,6 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
-  // FIXME: We are reserving r12 in case the PEI needs to use it to
-  // generate large stack offset. Make it available once we have register
-  // scavenging. Similarly r3 is reserved in Thumb mode for now.
   let MethodBodies = [{
     // FP is R11, R9 is available.
     static const unsigned ARM_GPR_AO_1[] = {
