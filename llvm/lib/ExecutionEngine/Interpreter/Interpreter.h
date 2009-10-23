@@ -139,7 +139,7 @@ public:
   void visitBinaryOperator(BinaryOperator &I);
   void visitICmpInst(ICmpInst &I);
   void visitFCmpInst(FCmpInst &I);
-  void visitAllocationInst(AllocationInst &I);
+  void visitAllocaInst(AllocaInst &I);
   void visitFreeInst(FreeInst &I);
   void visitLoadInst(LoadInst &I);
   void visitStoreInst(StoreInst &I);

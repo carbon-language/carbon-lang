@@ -321,7 +321,7 @@ namespace {
     void visitUserOp1(Instruction &I);
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
     void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
-    void visitAllocationInst(AllocationInst &AI);
+    void visitAllocaInst(AllocaInst &AI);
     void visitExtractValueInst(ExtractValueInst &EVI);
     void visitInsertValueInst(InsertValueInst &IVI);
 
@@ -1282,7 +1282,7 @@ void Verifier::visitStoreInst(StoreInst &SI) {
   visitInstruction(SI);
 }
 
-void Verifier::visitAllocationInst(AllocationInst &AI) {
+void Verifier::visitAllocaInst(AllocaInst &AI) {
   const PointerType *PTy = AI.getType();
   Assert1(PTy->getAddressSpace() == 0, 
           "Allocation instruction pointer not in the generic address space!",

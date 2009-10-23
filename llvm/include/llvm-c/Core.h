@@ -455,8 +455,7 @@ void LLVMDisposeTypeHandle(LLVMTypeHandleRef TypeHandle);
         macro(UnreachableInst)              \
         macro(UnwindInst)                   \
     macro(UnaryInstruction)                 \
-      macro(AllocationInst)                 \
-        macro(AllocaInst)                   \
+      macro(AllocaInst)                     \
       macro(CastInst)                       \
         macro(BitCastInst)                  \
         macro(FPExtInst)                    \

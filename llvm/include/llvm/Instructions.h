@@ -34,22 +34,28 @@ class LLVMContext;
 class DominatorTree;
 
 //===----------------------------------------------------------------------===//
-//                             AllocationInst Class
+//                                AllocaInst Class
 //===----------------------------------------------------------------------===//
 
-/// AllocationInst - This class is the base class of AllocaInst.
+/// AllocaInst - an instruction to allocate memory on the stack
 ///
-class AllocationInst : public UnaryInstruction {
-protected:
-  AllocationInst(const Type *Ty, Value *ArraySize, 
-                 unsigned iTy, unsigned Align, const Twine &Name = "", 
-                 Instruction *InsertBefore = 0);
-  AllocationInst(const Type *Ty, Value *ArraySize,
-                 unsigned iTy, unsigned Align, const Twine &Name,
-                 BasicBlock *InsertAtEnd);
+class AllocaInst : public UnaryInstruction {
 public:
+  explicit AllocaInst(const Type *Ty, Value *ArraySize = 0,
+                      const Twine &Name = "", Instruction *InsertBefore = 0);
+  AllocaInst(const Type *Ty, Value *ArraySize, 
+             const Twine &Name, BasicBlock *InsertAtEnd);
+
+  AllocaInst(const Type *Ty, const Twine &Name, Instruction *InsertBefore = 0);
+  AllocaInst(const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd);
+
+  AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
+             const Twine &Name = "", Instruction *InsertBefore = 0);
+  AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
+             const Twine &Name, BasicBlock *InsertAtEnd);
+
   // Out of line virtual method, so the vtable, etc. has a home.
-  virtual ~AllocationInst();
+  virtual ~AllocaInst();
 
   /// isArrayAllocation - Return true if there is an allocation size parameter
   /// to the allocation instruction that is not 1.
@@ -79,62 +85,12 @@ public:
   unsigned getAlignment() const { return (1u << SubclassData) >> 1; }
   void setAlignment(unsigned Align);
 
-  virtual AllocationInst *clone() const = 0;
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const AllocationInst *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == Instruction::Alloca;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-};
-
-
-//===----------------------------------------------------------------------===//
-//                                AllocaInst Class
-//===----------------------------------------------------------------------===//
-
-/// AllocaInst - an instruction to allocate memory on the stack
-///
-class AllocaInst : public AllocationInst {
-public:
-  explicit AllocaInst(const Type *Ty,
-                      Value *ArraySize = 0,
-                      const Twine &NameStr = "",
-                      Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Alloca,
-                     0, NameStr, InsertBefore) {}
-  AllocaInst(const Type *Ty,
-             Value *ArraySize, const Twine &NameStr,
-             BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Alloca, 0, NameStr, InsertAtEnd) {}
-
-  AllocaInst(const Type *Ty, const Twine &NameStr,
-             Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, 0, Alloca, 0, NameStr, InsertBefore) {}
-  AllocaInst(const Type *Ty, const Twine &NameStr,
-             BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, 0, Alloca, 0, NameStr, InsertAtEnd) {}
-
-  AllocaInst(const Type *Ty, Value *ArraySize,
-             unsigned Align, const Twine &NameStr = "",
-             Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Alloca,
-                     Align, NameStr, InsertBefore) {}
-  AllocaInst(const Type *Ty, Value *ArraySize,
-             unsigned Align, const Twine &NameStr,
-             BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Alloca,
-                     Align, NameStr, InsertAtEnd) {}
-
-  virtual AllocaInst *clone() const;
-
   /// isStaticAlloca - Return true if this alloca is in the entry block of the
   /// function and is a constant size.  If so, the code generator will fold it
   /// into the prolog/epilog code, so it is basically free.
   bool isStaticAlloca() const;
+
+  virtual AllocaInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const AllocaInst *) { return true; }

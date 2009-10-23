@@ -239,7 +239,7 @@ bool llvm::isNoAliasCall(const Value *V) {
 ///    NoAlias returns
 ///
 bool llvm::isIdentifiedObject(const Value *V) {
-  if (isa<AllocationInst>(V) || isNoAliasCall(V))
+  if (isa<AllocaInst>(V) || isNoAliasCall(V))
     return true;
   if (isa<GlobalValue>(V) && !isa<GlobalAlias>(V))
     return true;

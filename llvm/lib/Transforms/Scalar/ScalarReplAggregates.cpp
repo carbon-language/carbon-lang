@@ -100,32 +100,32 @@ namespace {
 
     void MarkUnsafe(AllocaInfo &I) { I.isUnsafe = true; }
 
-    int isSafeAllocaToScalarRepl(AllocationInst *AI);
+    int isSafeAllocaToScalarRepl(AllocaInst *AI);
 
-    void isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
+    void isSafeUseOfAllocation(Instruction *User, AllocaInst *AI,
                                AllocaInfo &Info);
-    void isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI,
+    void isSafeElementUse(Value *Ptr, bool isFirstElt, AllocaInst *AI,
                          AllocaInfo &Info);
-    void isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI,
+    void isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocaInst *AI,
                                         unsigned OpNo, AllocaInfo &Info);
-    void isSafeUseOfBitCastedAllocation(BitCastInst *User, AllocationInst *AI,
+    void isSafeUseOfBitCastedAllocation(BitCastInst *User, AllocaInst *AI,
                                         AllocaInfo &Info);
     
-    void DoScalarReplacement(AllocationInst *AI, 
-                             std::vector<AllocationInst*> &WorkList);
+    void DoScalarReplacement(AllocaInst *AI, 
+                             std::vector<AllocaInst*> &WorkList);
     void CleanupGEP(GetElementPtrInst *GEP);
-    void CleanupAllocaUsers(AllocationInst *AI);
-    AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocationInst *Base);
+    void CleanupAllocaUsers(AllocaInst *AI);
+    AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocaInst *Base);
     
-    void RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
+    void RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocaInst *AI,
                                     SmallVector<AllocaInst*, 32> &NewElts);
     
     void RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
-                                      AllocationInst *AI,
+                                      AllocaInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts);
-    void RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocationInst *AI,
+    void RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
                                        SmallVector<AllocaInst*, 32> &NewElts);
-    void RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
+    void RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts);
     
     bool CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
@@ -135,7 +135,7 @@ namespace {
                                      uint64_t Offset, IRBuilder<> &Builder);
     Value *ConvertScalar_InsertValue(Value *StoredVal, Value *ExistingVal,
                                      uint64_t Offset, IRBuilder<> &Builder);
-    static Instruction *isOnlyCopiedFromConstantGlobal(AllocationInst *AI);
+    static Instruction *isOnlyCopiedFromConstantGlobal(AllocaInst *AI);
   };
 }
 
@@ -213,18 +213,18 @@ static uint64_t getNumSAElements(const Type *T) {
 // them if they are only used by getelementptr instructions.
 //
 bool SROA::performScalarRepl(Function &F) {
-  std::vector<AllocationInst*> WorkList;
+  std::vector<AllocaInst*> WorkList;
 
   // Scan the entry basic block, adding any alloca's and mallocs to the worklist
   BasicBlock &BB = F.getEntryBlock();
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I)
-    if (AllocationInst *A = dyn_cast<AllocationInst>(I))
+    if (AllocaInst *A = dyn_cast<AllocaInst>(I))
       WorkList.push_back(A);
 
   // Process the worklist
   bool Changed = false;
   while (!WorkList.empty()) {
-    AllocationInst *AI = WorkList.back();
+    AllocaInst *AI = WorkList.back();
     WorkList.pop_back();
     
     // Handle dead allocas trivially.  These can be formed by SROA'ing arrays
@@ -335,8 +335,8 @@ bool SROA::performScalarRepl(Function &F) {
 
 /// DoScalarReplacement - This alloca satisfied the isSafeAllocaToScalarRepl
 /// predicate, do SROA now.
-void SROA::DoScalarReplacement(AllocationInst *AI, 
-                               std::vector<AllocationInst*> &WorkList) {
+void SROA::DoScalarReplacement(AllocaInst *AI, 
+                               std::vector<AllocaInst*> &WorkList) {
   DEBUG(errs() << "Found inst to SROA: " << *AI << '\n');
   SmallVector<AllocaInst*, 32> ElementAllocas;
   if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
@@ -455,7 +455,7 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
 /// getelementptr instruction of an array aggregate allocation.  isFirstElt
 /// indicates whether Ptr is known to the start of the aggregate.
 ///
-void SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocationInst *AI,
+void SROA::isSafeElementUse(Value *Ptr, bool isFirstElt, AllocaInst *AI,
                             AllocaInfo &Info) {
   for (Value::use_iterator I = Ptr->use_begin(), E = Ptr->use_end();
        I != E; ++I) {
@@ -520,7 +520,7 @@ static bool AllUsersAreLoads(Value *Ptr) {
 /// isSafeUseOfAllocation - Check to see if this user is an allowed use for an
 /// aggregate allocation.
 ///
-void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
+void SROA::isSafeUseOfAllocation(Instruction *User, AllocaInst *AI,
                                  AllocaInfo &Info) {
   if (BitCastInst *C = dyn_cast<BitCastInst>(User))
     return isSafeUseOfBitCastedAllocation(C, AI, Info);
@@ -605,7 +605,7 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
 /// isSafeMemIntrinsicOnAllocation - Return true if the specified memory
 /// intrinsic can be promoted by SROA.  At this point, we know that the operand
 /// of the memintrinsic is a pointer to the beginning of the allocation.
-void SROA::isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI,
+void SROA::isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocaInst *AI,
                                           unsigned OpNo, AllocaInfo &Info) {
   // If not constant length, give up.
   ConstantInt *Length = dyn_cast<ConstantInt>(MI->getLength());
@@ -632,7 +632,7 @@ void SROA::isSafeMemIntrinsicOnAllocation(MemIntrinsic *MI, AllocationInst *AI,
 
 /// isSafeUseOfBitCastedAllocation - Return true if all users of this bitcast
 /// are 
-void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI,
+void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocaInst *AI,
                                           AllocaInfo &Info) {
   for (Value::use_iterator UI = BC->use_begin(), E = BC->use_end();
        UI != E; ++UI) {
@@ -690,7 +690,7 @@ void SROA::isSafeUseOfBitCastedAllocation(BitCastInst *BC, AllocationInst *AI,
 /// RewriteBitCastUserOfAlloca - BCInst (transitively) bitcasts AI, or indexes
 /// to its first element.  Transform users of the cast to use the new values
 /// instead.
-void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
+void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocaInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts) {
   Value::use_iterator UI = BCInst->use_begin(), UE = BCInst->use_end();
   while (UI != UE) {
@@ -729,7 +729,7 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
 /// RewriteMemIntrinUserOfAlloca - MI is a memcpy/memset/memmove from or to AI.
 /// Rewrite it to copy or set the elements of the scalarized memory.
 void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
-                                        AllocationInst *AI,
+                                        AllocaInst *AI,
                                         SmallVector<AllocaInst*, 32> &NewElts) {
   
   // If this is a memcpy/memmove, construct the other pointer as the
@@ -905,8 +905,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
 /// RewriteStoreUserOfWholeAlloca - We found an store of an integer that
 /// overwrites the entire allocation.  Extract out the pieces of the stored
 /// integer and store them individually.
-void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
-                                         AllocationInst *AI,
+void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI, AllocaInst *AI,
                                          SmallVector<AllocaInst*, 32> &NewElts){
   // Extract each element out of the integer according to its structure offset
   // and store the element value to the individual alloca.
@@ -1029,7 +1028,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
 
 /// RewriteLoadUserOfWholeAlloca - We found an load of the entire allocation to
 /// an integer.  Load the individual pieces to form the aggregate value.
-void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
+void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
                                         SmallVector<AllocaInst*, 32> &NewElts) {
   // Extract each element out of the NewElts according to its structure offset
   // and form the result value.
@@ -1162,7 +1161,7 @@ static bool HasPadding(const Type *Ty, const TargetData &TD) {
 /// an aggregate can be broken down into elements.  Return 0 if not, 3 if safe,
 /// or 1 if safe after canonicalization has been performed.
 ///
-int SROA::isSafeAllocaToScalarRepl(AllocationInst *AI) {
+int SROA::isSafeAllocaToScalarRepl(AllocaInst *AI) {
   // Loop over the use list of the alloca.  We can only transform it if all of
   // the users are safe to transform.
   AllocaInfo Info;
@@ -1245,7 +1244,7 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
 
 /// CleanupAllocaUsers - If SROA reported that it can promote the specified
 /// allocation, but only if cleaned up, perform the cleanups required.
-void SROA::CleanupAllocaUsers(AllocationInst *AI) {
+void SROA::CleanupAllocaUsers(AllocaInst *AI) {
   // At this point, we know that the end result will be SROA'd and promoted, so
   // we can insert ugly code if required so long as sroa+mem2reg will clean it
   // up.
@@ -1853,7 +1852,7 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, Instruction *&TheCopy,
 /// isOnlyCopiedFromConstantGlobal - Return true if the specified alloca is only
 /// modified by a copy from a constant global.  If we can prove this, we can
 /// replace any uses of the alloca with uses of the global directly.
-Instruction *SROA::isOnlyCopiedFromConstantGlobal(AllocationInst *AI) {
+Instruction *SROA::isOnlyCopiedFromConstantGlobal(AllocaInst *AI) {
   Instruction *TheCopy = 0;
   if (::isOnlyCopiedFromConstantGlobal(AI, TheCopy, false))
     return TheCopy;

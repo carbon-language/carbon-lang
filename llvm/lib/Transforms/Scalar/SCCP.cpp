@@ -410,7 +410,7 @@ private:
   void visitCallSite      (CallSite CS);
   void visitUnwindInst    (TerminatorInst &I) { /*returns void*/ }
   void visitUnreachableInst(TerminatorInst &I) { /*returns void*/ }
-  void visitAllocationInst(Instruction &I) { markOverdefined(&I); }
+  void visitAllocaInst    (Instruction &I) { markOverdefined(&I); }
   void visitVANextInst    (Instruction &I) { markOverdefined(&I); }
   void visitVAArgInst     (Instruction &I) { markOverdefined(&I); }
   void visitFreeInst      (Instruction &I) { /*returns void*/ }

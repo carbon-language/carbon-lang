@@ -1966,7 +1966,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << " unwind ";
     writeOperand(II->getUnwindDest(), true);
 
-  } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(&I)) {
+  } else if (const AllocaInst *AI = dyn_cast<AllocaInst>(&I)) {
     Out << ' ';
     TypePrinter.print(AI->getType()->getElementType(), Out);
     if (!AI->getArraySize() || AI->isArrayAllocation()) {

@@ -80,7 +80,7 @@ static bool isKnownNonNull(const Value *V) {
 /// object that never escapes from the function.
 static bool isNonEscapingLocalObject(const Value *V) {
   // If this is a local allocation, check to see if it escapes.
-  if (isa<AllocationInst>(V) || isNoAliasCall(V))
+  if (isa<AllocaInst>(V) || isNoAliasCall(V))
     return !PointerMayBeCaptured(V, false);
 
   // If this is an argument that corresponds to a byval or noalias argument,
@@ -104,7 +104,7 @@ static bool isObjectSmallerThan(const Value *V, unsigned Size,
   const Type *AccessTy;
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     AccessTy = GV->getType()->getElementType();
-  } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(V)) {
+  } else if (const AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
     if (!AI->isArrayAllocation())
       AccessTy = AI->getType()->getElementType();
     else
@@ -587,8 +587,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, unsigned V1Size,
       return NoAlias;
   
     // Arguments can't alias with local allocations or noalias calls.
-    if ((isa<Argument>(O1) && (isa<AllocationInst>(O2) || isNoAliasCall(O2))) ||
-        (isa<Argument>(O2) && (isa<AllocationInst>(O1) || isNoAliasCall(O1))))
+    if ((isa<Argument>(O1) && (isa<AllocaInst>(O2) || isNoAliasCall(O2))) ||
+        (isa<Argument>(O2) && (isa<AllocaInst>(O1) || isNoAliasCall(O1))))
       return NoAlias;
 
     // Most objects can't alias null.

@@ -1243,7 +1243,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     Instruction *DepInst = DepInfo.getInst();
 
     // Loading the allocation -> undef.
-    if (isa<AllocationInst>(DepInst) || isMalloc(DepInst)) {
+    if (isa<AllocaInst>(DepInst) || isMalloc(DepInst)) {
       ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
                                              UndefValue::get(LI->getType())));
       continue;
@@ -1585,7 +1585,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   // If this load really doesn't depend on anything, then we must be loading an
   // undef value.  This can happen when loading for a fresh allocation with no
   // intervening stores, for example.
-  if (isa<AllocationInst>(DepInst) || isMalloc(DepInst)) {
+  if (isa<AllocaInst>(DepInst) || isMalloc(DepInst)) {
     L->replaceAllUsesWith(UndefValue::get(L->getType()));
     toErase.push_back(L);
     NumGVNLoad++;
@@ -1653,7 +1653,7 @@ bool GVN::processInstruction(Instruction *I,
 
   // Allocations are always uniquely numbered, so we can save time and memory
   // by fast failing them.
-  } else if (isa<AllocationInst>(I) || isa<TerminatorInst>(I)) {
+  } else if (isa<AllocaInst>(I) || isa<TerminatorInst>(I)) {
     localAvail[I->getParent()]->table.insert(std::make_pair(Num, I));
     return false;
   }
@@ -1803,7 +1803,7 @@ bool GVN::performPRE(Function& F) {
          BE = CurrentBlock->end(); BI != BE; ) {
       Instruction *CurInst = BI++;
 
-      if (isa<AllocationInst>(CurInst) ||
+      if (isa<AllocaInst>(CurInst) ||
           isa<TerminatorInst>(CurInst) || isa<PHINode>(CurInst) ||
           CurInst->getType()->isVoidTy() ||
           CurInst->mayReadFromMemory() || CurInst->mayHaveSideEffects() ||

@@ -50,7 +50,7 @@ unsigned InlineCostAnalyzer::FunctionInfo::
       // Unfortunately, we don't know the pointer that may get propagated here,
       // so we can't make this decision.
       if (Inst.mayReadFromMemory() || Inst.mayHaveSideEffects() ||
-          isa<AllocationInst>(Inst)) 
+          isa<AllocaInst>(Inst)) 
         continue;
 
       bool AllOperandsConstant = true;

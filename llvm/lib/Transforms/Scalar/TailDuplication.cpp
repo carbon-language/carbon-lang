@@ -129,7 +129,7 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI,
     if (isa<CallInst>(I) || isa<InvokeInst>(I)) return false;
 
     // Also alloca and malloc.
-    if (isa<AllocationInst>(I)) return false;
+    if (isa<AllocaInst>(I)) return false;
 
     // Some vector instructions can expand into a number of instructions.
     if (isa<ShuffleVectorInst>(I) || isa<ExtractElementInst>(I) ||

@@ -470,7 +470,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   }
 
   case Instruction::Alloca: {
-    AllocationInst *AI = cast<AllocationInst>(V);
+    AllocaInst *AI = cast<AllocaInst>(V);
     unsigned Align = AI->getAlignment();
     if (Align == 0 && TD)
       Align = TD->getABITypeAlignment(AI->getType()->getElementType());

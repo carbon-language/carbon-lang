@@ -838,7 +838,7 @@ void BranchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 
 
 //===----------------------------------------------------------------------===//
-//                        AllocationInst Implementation
+//                        AllocaInst Implementation
 //===----------------------------------------------------------------------===//
 
 static Value *getAISize(LLVMContext &Context, Value *Amt) {
@@ -853,20 +853,54 @@ static Value *getAISize(LLVMContext &Context, Value *Amt) {
   return Amt;
 }
 
-AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
-                               unsigned Align, const Twine &Name,
-                               Instruction *InsertBefore)
-  : UnaryInstruction(PointerType::getUnqual(Ty), iTy,
+AllocaInst::AllocaInst(const Type *Ty, Value *ArraySize,
+                       const Twine &Name, Instruction *InsertBefore)
+  : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
+                     getAISize(Ty->getContext(), ArraySize), InsertBefore) {
+  setAlignment(0);
+  assert(Ty != Type::getVoidTy(Ty->getContext()) && "Cannot allocate void!");
+  setName(Name);
+}
+
+AllocaInst::AllocaInst(const Type *Ty, Value *ArraySize,
+                       const Twine &Name, BasicBlock *InsertAtEnd)
+  : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
+                     getAISize(Ty->getContext(), ArraySize), InsertAtEnd) {
+  setAlignment(0);
+  assert(Ty != Type::getVoidTy(Ty->getContext()) && "Cannot allocate void!");
+  setName(Name);
+}
+
+AllocaInst::AllocaInst(const Type *Ty, const Twine &Name,
+                       Instruction *InsertBefore)
+  : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
+                     getAISize(Ty->getContext(), 0), InsertBefore) {
+  setAlignment(0);
+  assert(Ty != Type::getVoidTy(Ty->getContext()) && "Cannot allocate void!");
+  setName(Name);
+}
+
+AllocaInst::AllocaInst(const Type *Ty, const Twine &Name,
+                       BasicBlock *InsertAtEnd)
+  : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
+                     getAISize(Ty->getContext(), 0), InsertAtEnd) {
+  setAlignment(0);
+  assert(Ty != Type::getVoidTy(Ty->getContext()) && "Cannot allocate void!");
+  setName(Name);
+}
+
+AllocaInst::AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
+                       const Twine &Name, Instruction *InsertBefore)
+  : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
                      getAISize(Ty->getContext(), ArraySize), InsertBefore) {
   setAlignment(Align);
   assert(Ty != Type::getVoidTy(Ty->getContext()) && "Cannot allocate void!");
   setName(Name);
 }
 
-AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
-                               unsigned Align, const Twine &Name,
-                               BasicBlock *InsertAtEnd)
-  : UnaryInstruction(PointerType::getUnqual(Ty), iTy,
+AllocaInst::AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
+                       const Twine &Name, BasicBlock *InsertAtEnd)
+  : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
                      getAISize(Ty->getContext(), ArraySize), InsertAtEnd) {
   setAlignment(Align);
   assert(Ty != Type::getVoidTy(Ty->getContext()) && "Cannot allocate void!");
@@ -874,22 +908,22 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
 }
 
 // Out of line virtual method, so the vtable, etc has a home.
-AllocationInst::~AllocationInst() {
+AllocaInst::~AllocaInst() {
 }
 
-void AllocationInst::setAlignment(unsigned Align) {
+void AllocaInst::setAlignment(unsigned Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   SubclassData = Log2_32(Align) + 1;
   assert(getAlignment() == Align && "Alignment representation error!");
 }
 
-bool AllocationInst::isArrayAllocation() const {
+bool AllocaInst::isArrayAllocation() const {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(getOperand(0)))
     return CI->getZExtValue() != 1;
   return true;
 }
 
-const Type *AllocationInst::getAllocatedType() const {
+const Type *AllocaInst::getAllocatedType() const {
   return getType()->getElementType();
 }
 

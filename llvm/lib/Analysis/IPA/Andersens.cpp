@@ -594,11 +594,12 @@ namespace {
     void visitReturnInst(ReturnInst &RI);
     void visitInvokeInst(InvokeInst &II) { visitCallSite(CallSite(&II)); }
     void visitCallInst(CallInst &CI) { 
-      if (isMalloc(&CI)) visitAllocationInst(CI);
+      if (isMalloc(&CI)) visitAlloc(CI);
       else visitCallSite(CallSite(&CI)); 
     }
     void visitCallSite(CallSite CS);
-    void visitAllocationInst(Instruction &I);
+    void visitAllocaInst(AllocaInst &I);
+    void visitAlloc(Instruction &I);
     void visitLoadInst(LoadInst &LI);
     void visitStoreInst(StoreInst &SI);
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
@@ -792,7 +793,7 @@ void Andersens::IdentifyObjects(Module &M) {
       // object.
       if (isa<PointerType>(II->getType())) {
         ValueNodes[&*II] = NumObjects++;
-        if (AllocationInst *AI = dyn_cast<AllocationInst>(&*II))
+        if (AllocaInst *AI = dyn_cast<AllocaInst>(&*II))
           ObjectNodes[AI] = NumObjects++;
         else if (isMalloc(&*II))
           ObjectNodes[&*II] = NumObjects++;
@@ -1167,7 +1168,11 @@ void Andersens::visitInstruction(Instruction &I) {
   }
 }
 
-void Andersens::visitAllocationInst(Instruction &I) {
+void Andersens::visitAllocaInst(AllocaInst &I) {
+  visitAlloc(I);
+}
+
+void Andersens::visitAlloc(Instruction &I) {
   unsigned ObjectIndex = getObject(&I);
   GraphNodes[ObjectIndex].setValue(&I);
   Constraints.push_back(Constraint(Constraint::AddressOf, getNodeValue(I),
@@ -2819,7 +2824,7 @@ void Andersens::PrintNode(const Node *N) const {
   else
     errs() << "(unnamed)";
 
-  if (isa<GlobalValue>(V) || isa<AllocationInst>(V) || isMalloc(V))
+  if (isa<GlobalValue>(V) || isa<AllocaInst>(V) || isMalloc(V))
     if (N == &GraphNodes[getObject(V)])
       errs() << "<mem>";
 }

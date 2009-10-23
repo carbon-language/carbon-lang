@@ -720,7 +720,7 @@ void Interpreter::SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF){
 //                     Memory Instruction Implementations
 //===----------------------------------------------------------------------===//
 
-void Interpreter::visitAllocationInst(AllocationInst &I) {
+void Interpreter::visitAllocaInst(AllocaInst &I) {
   ExecutionContext &SF = ECStack.back();
 
   const Type *Ty = I.getType()->getElementType();  // Type to be allocated

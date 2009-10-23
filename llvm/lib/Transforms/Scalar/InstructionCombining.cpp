@@ -284,7 +284,7 @@ namespace {
     Instruction *visitInvokeInst(InvokeInst &II);
     Instruction *visitPHINode(PHINode &PN);
     Instruction *visitGetElementPtrInst(GetElementPtrInst &GEP);
-    Instruction *visitAllocationInst(AllocationInst &AI);
+    Instruction *visitAllocaInst(AllocaInst &AI);
     Instruction *visitFreeInst(FreeInst &FI);
     Instruction *visitLoadInst(LoadInst &LI);
     Instruction *visitStoreInst(StoreInst &SI);
@@ -425,7 +425,7 @@ namespace {
                               bool isSub, Instruction &I);
     Instruction *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
                                  bool isSigned, bool Inside, Instruction &IB);
-    Instruction *PromoteCastOfAllocation(BitCastInst &CI, AllocationInst &AI);
+    Instruction *PromoteCastOfAllocation(BitCastInst &CI, AllocaInst &AI);
     Instruction *MatchBSwap(BinaryOperator &I);
     bool SimplifyStoreAtEndOfBlock(StoreInst &SI);
     Instruction *SimplifyMemTransfer(MemIntrinsic *MI);
@@ -7745,7 +7745,7 @@ static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
 /// PromoteCastOfAllocation - If we find a cast of an allocation instruction,
 /// try to eliminate the cast by moving the type information into the alloc.
 Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
-                                                   AllocationInst &AI) {
+                                                   AllocaInst &AI) {
   const PointerType *PTy = cast<PointerType>(CI.getType());
   
   BuilderTy AllocaBuilder(*Builder);
@@ -7817,7 +7817,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
     Amt = AllocaBuilder.CreateAdd(Amt, Off, "tmp");
   }
   
-  AllocationInst *New = AllocaBuilder.CreateAlloca(CastElTy, Amt);
+  AllocaInst *New = AllocaBuilder.CreateAlloca(CastElTy, Amt);
   New->setAlignment(AI.getAlignment());
   New->takeName(&AI);
   
@@ -8878,7 +8878,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     // size, rewrite the allocation instruction to allocate the "right" type.
     // There is no need to modify malloc calls because it is their bitcast that
     // needs to be cleaned up.
-    if (AllocationInst *AI = dyn_cast<AllocationInst>(Src))
+    if (AllocaInst *AI = dyn_cast<AllocaInst>(Src))
       if (Instruction *V = PromoteCastOfAllocation(CI, *AI))
         return V;
     
@@ -11199,7 +11199,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       if (Offset == 0) {
         // If the bitcast is of an allocation, and the allocation will be
         // converted to match the type of the cast, don't touch this.
-        if (isa<AllocationInst>(BCI->getOperand(0)) ||
+        if (isa<AllocaInst>(BCI->getOperand(0)) ||
             isMalloc(BCI->getOperand(0))) {
           // See if the bitcast simplifies, if so, don't nuke this GEP yet.
           if (Instruction *I = visitBitCast(*BCI)) {
@@ -11238,21 +11238,21 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   return 0;
 }
 
-Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
+Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
   // Convert: malloc Ty, C - where C is a constant != 1 into: malloc [C x Ty], 1
   if (AI.isArrayAllocation()) {  // Check C != 1
     if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
       const Type *NewTy = 
         ArrayType::get(AI.getAllocatedType(), C->getZExtValue());
       assert(isa<AllocaInst>(AI) && "Unknown type of allocation inst!");
-      AllocationInst *New = Builder->CreateAlloca(NewTy, 0, AI.getName());
+      AllocaInst *New = Builder->CreateAlloca(NewTy, 0, AI.getName());
       New->setAlignment(AI.getAlignment());
 
       // Scan to the end of the allocation instructions, to skip over a block of
       // allocas if possible...also skip interleaved debug info
       //
       BasicBlock::iterator It = New;
-      while (isa<AllocationInst>(*It) || isa<DbgInfoIntrinsic>(*It)) ++It;
+      while (isa<AllocaInst>(*It) || isa<DbgInfoIntrinsic>(*It)) ++It;
 
       // Now that I is pointing to the first non-allocation-inst in the block,
       // insert our getelementptr instruction...
