@@ -1139,6 +1139,10 @@ Sema::PerformImplicitConversion(Expr *&From, QualType ToType,
         From = CastArg.takeAs<Expr>();
         return BuildCXXDerivedToBaseExpr(From, CastKind, ICS, Flavor);
       }
+    
+      if (ICS.UserDefined.After.Second == ICK_Pointer_Member &&
+          ToType.getNonReferenceType()->isMemberFunctionPointerType())
+        CastKind = CastExpr::CK_BaseToDerivedMemberPointer;
       
       From = new (Context) ImplicitCastExpr(ToType.getNonReferenceType(),
                                             CastKind, CastArg.takeAs<Expr>(),
