@@ -2761,7 +2761,7 @@ void Sema::AddOperatorCandidates(OverloadedOperatorKind Op, Scope *S,
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(Op);
   if (S)
     LookupOverloadedOperatorName(Op, S, T1, T2, Functions);
-  ArgumentDependentLookup(OpName, Args, NumArgs, Functions);
+  ArgumentDependentLookup(OpName, /*Operator*/true, Args, NumArgs, Functions);
   AddFunctionCandidates(Functions, Args, NumArgs, CandidateSet);
   AddMemberOperatorCandidates(Op, OpLoc, Args, NumArgs, CandidateSet, OpRange);
   AddBuiltinOperatorCandidates(Op, OpLoc, Args, NumArgs, CandidateSet);
@@ -3908,7 +3908,7 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
     }
 
   // FIXME: Pass in the explicit template arguments?
-  ArgumentDependentLookup(Name, Args, NumArgs, Functions);
+  ArgumentDependentLookup(Name, /*Operator*/false, Args, NumArgs, Functions);
 
   // Erase all of the candidates we already knew about.
   // FIXME: This is suboptimal. Is there a better way?

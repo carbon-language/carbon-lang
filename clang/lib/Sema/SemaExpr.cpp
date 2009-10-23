@@ -5435,7 +5435,7 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
       Expr *Args[2] = { lhs, rhs };
       DeclarationName OpName
         = Context.DeclarationNames.getCXXOperatorName(OverOp);
-      ArgumentDependentLookup(OpName, Args, 2, Functions);
+      ArgumentDependentLookup(OpName, /*Operator*/true, Args, 2, Functions);
     }
 
     // Build the (potentially-overloaded, potentially-dependent)
@@ -5553,7 +5553,7 @@ Action::OwningExprResult Sema::ActOnUnaryOp(Scope *S, SourceLocation OpLoc,
                                    Functions);
       DeclarationName OpName
         = Context.DeclarationNames.getCXXOperatorName(OverOp);
-      ArgumentDependentLookup(OpName, &Input, 1, Functions);
+      ArgumentDependentLookup(OpName, /*Operator*/true, &Input, 1, Functions);
     }
 
     return CreateOverloadedUnaryOp(OpLoc, Opc, Functions, move(input));

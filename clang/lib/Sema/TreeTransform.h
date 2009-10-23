@@ -5107,7 +5107,8 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
   unsigned NumArgs = 1 + (SecondExpr != 0);
   DeclarationName OpName
     = SemaRef.Context.DeclarationNames.getCXXOperatorName(Op);
-  SemaRef.ArgumentDependentLookup(OpName, Args, NumArgs, Functions);
+  SemaRef.ArgumentDependentLookup(OpName, /*Operator*/true, Args, NumArgs,
+                                  Functions);
 
   // Create the overloaded operator invocation for unary operators.
   if (NumArgs == 1 || isPostIncDec) {

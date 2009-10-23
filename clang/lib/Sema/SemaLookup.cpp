@@ -1561,7 +1561,7 @@ static void CollectFunctionDecl(Sema::FunctionSet &Functions,
     Functions.insert(FunTmpl);
 }
 
-void Sema::ArgumentDependentLookup(DeclarationName Name,
+void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
                                    Expr **Args, unsigned NumArgs,
                                    FunctionSet &Functions) {
   // Find all of the associated namespaces and classes based on the
@@ -1571,6 +1571,13 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
   FindAssociatedClassesAndNamespaces(Args, NumArgs,
                                      AssociatedNamespaces,
                                      AssociatedClasses);
+
+  QualType T1, T2;
+  if (Operator) {
+    T1 = Args[0]->getType();
+    if (NumArgs >= 2)
+      T2 = Args[1]->getType();
+  }
 
   // C++ [basic.lookup.argdep]p3:
   //   Let X be the lookup set produced by unqualified lookup (3.4.1)
@@ -1608,7 +1615,10 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
           continue;
       }
 
-      CollectFunctionDecl(Functions, D);
+      FunctionDecl *Fn;
+      if (!Operator || !(Fn = dyn_cast<FunctionDecl>(D)) ||
+          IsAcceptableNonMemberOperatorCandidate(Fn, T1, T2, Context))
+        CollectFunctionDecl(Functions, D);
     }
   }
 }

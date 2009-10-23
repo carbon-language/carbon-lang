@@ -1377,7 +1377,7 @@ public:
                                     QualType T1, QualType T2,
                                     FunctionSet &Functions);
 
-  void ArgumentDependentLookup(DeclarationName Name,
+  void ArgumentDependentLookup(DeclarationName Name, bool Operator,
                                Expr **Args, unsigned NumArgs,
                                FunctionSet &Functions);
 
