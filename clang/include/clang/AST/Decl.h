@@ -768,7 +768,11 @@ public:
     Init = (UnparsedDefaultArgument *)0;
   }
 
-  QualType getOriginalType() const;
+  QualType getOriginalType() const {
+    if (getDeclaratorInfo())
+      return getDeclaratorInfo()->getType();
+    return getType();
+  }
 
   /// setOwningFunction - Sets the function declaration that owns this
   /// ParmVarDecl. Since ParmVarDecls are often created before the
@@ -778,39 +782,9 @@ public:
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
-    return (D->getKind() == ParmVar ||
-            D->getKind() == OriginalParmVar);
+    return (D->getKind() == ParmVar);
   }
   static bool classof(const ParmVarDecl *D) { return true; }
-};
-
-/// OriginalParmVarDecl - Represent a parameter to a function, when
-/// the type of the parameter has been promoted. This node represents the
-/// parameter to the function with its original type.
-///
-class OriginalParmVarDecl : public ParmVarDecl {
-  friend class ParmVarDecl;
-protected:
-  QualType OriginalType;
-private:
-  OriginalParmVarDecl(DeclContext *DC, SourceLocation L,
-                              IdentifierInfo *Id, QualType T,
-                              DeclaratorInfo *DInfo,
-                              QualType OT, StorageClass S,
-                              Expr *DefArg)
-  : ParmVarDecl(OriginalParmVar, DC, L, Id, T, DInfo, S, DefArg),
-    OriginalType(OT) {}
-public:
-  static OriginalParmVarDecl *Create(ASTContext &C, DeclContext *DC,
-                                     SourceLocation L,IdentifierInfo *Id,
-                                     QualType T, DeclaratorInfo *DInfo,
-                                     QualType OT, StorageClass S, Expr *DefArg);
-
-  void setOriginalType(QualType T) { OriginalType = T; }
-
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == OriginalParmVar; }
-  static bool classof(const OriginalParmVarDecl *D) { return true; }
 };
 
 /// FunctionDecl - An instance of this class is created to represent a

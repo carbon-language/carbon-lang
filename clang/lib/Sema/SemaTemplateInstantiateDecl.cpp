@@ -56,7 +56,6 @@ namespace {
     Decl *VisitCXXDestructorDecl(CXXDestructorDecl *D);
     Decl *VisitCXXConversionDecl(CXXConversionDecl *D);
     ParmVarDecl *VisitParmVarDecl(ParmVarDecl *D);
-    Decl *VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
     Decl *VisitClassTemplateDecl(ClassTemplateDecl *D);
     Decl *VisitClassTemplatePartialSpecializationDecl(
                                     ClassTemplatePartialSpecializationDecl *D);
@@ -776,24 +775,27 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
 }
 
 ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
-  QualType OrigT = SemaRef.SubstType(D->getOriginalType(), TemplateArgs,
-                                           D->getLocation(), D->getDeclName());
-  if (OrigT.isNull())
+  QualType T;
+  DeclaratorInfo *DI = D->getDeclaratorInfo();
+  if (DI) {
+    DI = SemaRef.SubstType(DI, TemplateArgs, D->getLocation(),
+                           D->getDeclName());
+    if (DI) T = DI->getType();
+  } else {
+    T = SemaRef.SubstType(D->getType(), TemplateArgs, D->getLocation(),
+                          D->getDeclName());
+    DI = 0;
+  }
+
+  if (T.isNull())
     return 0;
 
-  QualType T = SemaRef.adjustParameterType(OrigT);
+  T = SemaRef.adjustParameterType(T);
 
   // Allocate the parameter
-  ParmVarDecl *Param = 0;
-  if (T == OrigT)
-    Param = ParmVarDecl::Create(SemaRef.Context, Owner, D->getLocation(),
-                                D->getIdentifier(), T, D->getDeclaratorInfo(),
-                                D->getStorageClass(), 0);
-  else
-    Param = OriginalParmVarDecl::Create(SemaRef.Context, Owner,
-                                        D->getLocation(), D->getIdentifier(),
-                                        T, D->getDeclaratorInfo(), OrigT,
-                                        D->getStorageClass(), 0);
+  ParmVarDecl *Param
+    = ParmVarDecl::Create(SemaRef.Context, Owner, D->getLocation(),
+                          D->getIdentifier(), T, DI, D->getStorageClass(), 0);
 
   // Mark the default argument as being uninstantiated.
   if (D->hasUninstantiatedDefaultArg())
@@ -806,15 +808,6 @@ ParmVarDecl *TemplateDeclInstantiator::VisitParmVarDecl(ParmVarDecl *D) {
   // to check for 'void' parameter types here.
   SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Param);
   return Param;
-}
-
-Decl *
-TemplateDeclInstantiator::VisitOriginalParmVarDecl(OriginalParmVarDecl *D) {
-  // Since parameter types can decay either before or after
-  // instantiation, we simply treat OriginalParmVarDecls as
-  // ParmVarDecls the same way, and create one or the other depending
-  // on what happens after template instantiation.
-  return VisitParmVarDecl(D);
 }
 
 Decl *TemplateDeclInstantiator::VisitTemplateTypeParmDecl(

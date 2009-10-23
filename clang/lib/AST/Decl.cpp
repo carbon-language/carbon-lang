@@ -91,13 +91,6 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ParmVarDecl(ParmVar, DC, L, Id, T, DInfo, S, DefArg);
 }
 
-QualType ParmVarDecl::getOriginalType() const {
-  if (const OriginalParmVarDecl *PVD =
-      dyn_cast<OriginalParmVarDecl>(this))
-    return PVD->OriginalType;
-  return getType();
-}
-
 SourceRange ParmVarDecl::getDefaultArgRange() const {
   if (const Expr *E = getInit())
     return E->getSourceRange();
@@ -138,14 +131,6 @@ bool VarDecl::isExternC() const {
   }
 
   return false;
-}
-
-OriginalParmVarDecl *OriginalParmVarDecl::Create(
-                                 ASTContext &C, DeclContext *DC,
-                                 SourceLocation L, IdentifierInfo *Id,
-                                 QualType T, DeclaratorInfo *DInfo,
-                                 QualType OT, StorageClass S, Expr *DefArg) {
-  return new (C) OriginalParmVarDecl(DC, L, Id, T, DInfo, OT, S, DefArg);
 }
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,

@@ -52,7 +52,6 @@ namespace {
     void VisitFieldDecl(FieldDecl *D);
     void VisitVarDecl(VarDecl *D);
     void VisitParmVarDecl(ParmVarDecl *D);
-    void VisitOriginalParmVarDecl(OriginalParmVarDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
     void VisitOverloadedFunctionDecl(OverloadedFunctionDecl *D);
     void VisitNamespaceDecl(NamespaceDecl *D);
@@ -489,7 +488,7 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
 
   std::string Name = D->getNameAsString();
   QualType T = D->getType();
-  if (OriginalParmVarDecl *Parm = dyn_cast<OriginalParmVarDecl>(D))
+  if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D))
     T = Parm->getOriginalType();
   T.getAsStringInternal(Name, Policy);
   Out << Name;
@@ -505,10 +504,6 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
 }
 
 void DeclPrinter::VisitParmVarDecl(ParmVarDecl *D) {
-  VisitVarDecl(D);
-}
-
-void DeclPrinter::VisitOriginalParmVarDecl(OriginalParmVarDecl *D) {
   VisitVarDecl(D);
 }
 

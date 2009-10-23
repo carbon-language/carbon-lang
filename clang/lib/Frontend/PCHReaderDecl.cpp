@@ -52,7 +52,6 @@ namespace {
     void VisitVarDecl(VarDecl *VD);
     void VisitImplicitParamDecl(ImplicitParamDecl *PD);
     void VisitParmVarDecl(ParmVarDecl *PD);
-    void VisitOriginalParmVarDecl(OriginalParmVarDecl *PD);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *AD);
     void VisitBlockDecl(BlockDecl *BD);
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
@@ -368,11 +367,6 @@ void PCHDeclReader::VisitImplicitParamDecl(ImplicitParamDecl *PD) {
 void PCHDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
   VisitVarDecl(PD);
   PD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
-}
-
-void PCHDeclReader::VisitOriginalParmVarDecl(OriginalParmVarDecl *PD) {
-  VisitParmVarDecl(PD);
-  PD->setOriginalType(Reader.GetType(Record[Idx++]));
 }
 
 void PCHDeclReader::VisitFileScopeAsmDecl(FileScopeAsmDecl *AD) {
@@ -695,10 +689,6 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   case pch::DECL_PARM_VAR:
     D = ParmVarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0,
                             VarDecl::None, 0);
-    break;
-  case pch::DECL_ORIGINAL_PARM_VAR:
-    D = OriginalParmVarDecl::Create(*Context, 0, SourceLocation(), 0,
-                                    QualType(),0, QualType(), VarDecl::None, 0);
     break;
   case pch::DECL_FILE_SCOPE_ASM:
     D = FileScopeAsmDecl::Create(*Context, 0, SourceLocation(), 0);

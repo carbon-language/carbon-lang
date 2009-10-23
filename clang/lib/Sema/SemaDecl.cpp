@@ -3668,16 +3668,9 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
 
   QualType T = adjustParameterType(parmDeclType);
 
-  ParmVarDecl *New;
-  if (T == parmDeclType) // parameter type did not need adjustment
-    New = ParmVarDecl::Create(Context, CurContext,
-                              D.getIdentifierLoc(), II,
-                              parmDeclType, DInfo, StorageClass,
-                              0);
-  else // keep track of both the adjusted and unadjusted types
-    New = OriginalParmVarDecl::Create(Context, CurContext,
-                                      D.getIdentifierLoc(), II, T, DInfo,
-                                      parmDeclType, StorageClass, 0);
+  ParmVarDecl *New
+    = ParmVarDecl::Create(Context, CurContext, D.getIdentifierLoc(), II,
+                          T, DInfo, StorageClass, 0);
 
   if (D.isInvalidType())
     New->setInvalidDecl();

@@ -1707,29 +1707,22 @@ Sema::DeclPtrTy Sema::ActOnMethodDeclaration(
   llvm::SmallVector<ParmVarDecl*, 16> Params;
 
   for (unsigned i = 0, e = Sel.getNumArgs(); i != e; ++i) {
-    QualType ArgType, UnpromotedArgType;
+    QualType ArgType;
+    DeclaratorInfo *DI;
 
     if (ArgInfo[i].Type == 0) {
-      UnpromotedArgType = ArgType = Context.getObjCIdType();
+      ArgType = Context.getObjCIdType();
+      DI = 0;
     } else {
-      UnpromotedArgType = ArgType = GetTypeFromParser(ArgInfo[i].Type);
+      ArgType = GetTypeFromParser(ArgInfo[i].Type, &DI);
       // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
       ArgType = adjustParameterType(ArgType);
     }
 
-    ParmVarDecl* Param;
-    if (ArgType == UnpromotedArgType)
-      Param = ParmVarDecl::Create(Context, ObjCMethod, ArgInfo[i].NameLoc,
-                                  ArgInfo[i].Name, ArgType,
-                                  /*DInfo=*/0, //FIXME: Pass info here.
-                                  VarDecl::None, 0);
-    else
-      Param = OriginalParmVarDecl::Create(Context, ObjCMethod,
-                                          ArgInfo[i].NameLoc,
-                                          ArgInfo[i].Name, ArgType,
-                                          /*DInfo=*/0, //FIXME: Pass info here.
-                                          UnpromotedArgType,
-                                          VarDecl::None, 0);
+    ParmVarDecl* Param
+      = ParmVarDecl::Create(Context, ObjCMethod, ArgInfo[i].NameLoc,
+                            ArgInfo[i].Name, ArgType, DI,
+                            VarDecl::None, 0);
 
     if (ArgType->isObjCInterfaceType()) {
       Diag(ArgInfo[i].NameLoc,

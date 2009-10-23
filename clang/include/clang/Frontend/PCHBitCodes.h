@@ -496,8 +496,6 @@ namespace clang {
       DECL_IMPLICIT_PARAM,
       /// \brief A ParmVarDecl record.
       DECL_PARM_VAR,
-      /// \brief An OriginalParmVarDecl record.
-      DECL_ORIGINAL_PARM_VAR,
       /// \brief A FileScopeAsmDecl record.
       DECL_FILE_SCOPE_ASM,
       /// \brief A BlockDecl record.

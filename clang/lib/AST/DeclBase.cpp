@@ -199,7 +199,6 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case Var:
     case ImplicitParam:
     case ParmVar:
-    case OriginalParmVar:
     case NonTypeTemplateParm:
     case Using:
     case UnresolvedUsing:

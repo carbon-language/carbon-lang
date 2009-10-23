@@ -57,7 +57,6 @@ public:
         DISPATCH_CASE(Function,FunctionDecl)
         DISPATCH_CASE(Var,VarDecl)
         DISPATCH_CASE(ParmVar,ParmVarDecl)       // FIXME: (same)
-        DISPATCH_CASE(OriginalParmVar,OriginalParmVarDecl) // FIXME: (same)
         DISPATCH_CASE(ImplicitParam,ImplicitParamDecl)
         DISPATCH_CASE(EnumConstant,EnumConstantDecl)
         DISPATCH_CASE(Typedef,TypedefDecl)
@@ -70,7 +69,6 @@ public:
 
   DEFAULT_DISPATCH(VarDecl)
   DEFAULT_DISPATCH(FunctionDecl)
-  DEFAULT_DISPATCH_VARDECL(OriginalParmVarDecl)
   DEFAULT_DISPATCH_VARDECL(ParmVarDecl)
   DEFAULT_DISPATCH(ImplicitParamDecl)
   DEFAULT_DISPATCH(EnumConstantDecl)
