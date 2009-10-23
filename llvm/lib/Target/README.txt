@@ -1594,23 +1594,8 @@ int int_char(char m) {if(m>7) return 0; return m;}
 
 //===---------------------------------------------------------------------===//
 
-Instcombine should replace the load with a constant in:
-
-  static const char x[4] = {'a', 'b', 'c', 'd'};
-  
-  unsigned int y(void) {
-    return *(unsigned int *)x;
-  }
-
-It currently only does this transformation when the size of the constant 
-is the same as the size of the integer (so, try x[5]) and the last byte 
-is a null (making it a C string). There's no need for these restrictions.
-
-//===---------------------------------------------------------------------===//
-
-InstCombine's "turn load from constant into constant" optimization should be
-more aggressive in the presence of bitcasts.  For example, because of unions,
-this code:
+libanalysis is not aggressively folding vector bitcasts.  For example, the
+constant expressions generated when compiling this code:
 
 union vec2d {
     double e[2];
@@ -1624,24 +1609,23 @@ vec2d foo () {
     return (vec2d){ .v = a.v + b.v * (vec2d){{5,5}}.v };
 }
 
-Compiles into:
+in X86-32 end up being:
 
-@a = internal constant %0 { [2 x double] 
-           [double 1.000000e+00, double 2.000000e+00] }, align 16
-@b = internal constant %0 { [2 x double]
-           [double 3.000000e+00, double 4.000000e+00] }, align 16
-...
-define void @foo(%struct.vec2d* noalias nocapture sret %agg.result) nounwind {
+define void @foo(%union.vec2d* noalias nocapture sret %agg.result) nounwind ssp {
 entry:
-	%0 = load <2 x double>* getelementptr (%struct.vec2d* 
-           bitcast (%0* @a to %struct.vec2d*), i32 0, i32 0), align 16
-	%1 = load <2 x double>* getelementptr (%struct.vec2d* 
-           bitcast (%0* @b to %struct.vec2d*), i32 0, i32 0), align 16
+  %agg.result.0 = getelementptr %union.vec2d* %agg.result, i32 0, i32 0 ; <<2 x double>*> [#uses=1]
+  store <2 x double> fadd (<2 x double> bitcast (<1 x i128> <i128 85070591730234615870450834276742070272> to <2 x double>), <2 x double> fmul (<2 x double> bitcast (<1 x i128> <i128 85153668479971173112514077617450647552> to <2 x double>), <2 x double> <double 5.000000e+00, double 5.000000e+00>)), <2 x double>* %agg.result.0, align 16
+  ret void
+}
 
+and in X86-64 mode:
 
-Instcombine should be able to optimize away the loads (and thus the globals).
-
-See also PR4973
+define %0 @foo() nounwind readnone ssp {
+entry:
+  %mrv5 = insertvalue %0 undef, double extractelement (<2 x double> fadd (<2 x double> bitcast (<1 x i128> <i128 85070591730234615870450834276742070272> to <2 x double>), <2 x double> fmul (<2 x double> bitcast (<1 x i128> <i128 85153668479971173112514077617450647552> to <2 x double>), <2 x double> bitcast (<1 x i128> <i128 85174437667405312423031577302488055808> to <2 x double>))), i32 0), 0 ; <%0> [#uses=1]
+  %mrv6 = insertvalue %0 %mrv5, double extractelement (<2 x double> fadd (<2 x double> bitcast (<1 x i128> <i128 85070591730234615870450834276742070272> to <2 x double>), <2 x double> fmul (<2 x double> bitcast (<1 x i128> <i128 85153668479971173112514077617450647552> to <2 x double>), <2 x double> bitcast (<1 x i128> <i128 85174437667405312423031577302488055808> to <2 x double>))), i32 1), 1 ; <%0> [#uses=1]
+  ret %0 %mrv6
+}
 
 //===---------------------------------------------------------------------===//
 
