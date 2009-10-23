@@ -5361,8 +5361,14 @@ Sema::BuildOverloadedArrowExpr(Scope *S, ExprArg BaseIn, SourceLocation OpLoc) {
 Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
   if (ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
     Expr *NewExpr = FixOverloadedFunctionReference(PE->getSubExpr(), Fn);
-    NewExpr->setType(PE->getSubExpr()->getType());
-    return NewExpr;
+    PE->setSubExpr(NewExpr);
+    PE->setType(NewExpr->getType());
+  } else if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E)) {
+    Expr *NewExpr = FixOverloadedFunctionReference(ICE->getSubExpr(), Fn);
+    assert(Context.hasSameType(ICE->getSubExpr()->getType(), 
+                               NewExpr->getType()) &&
+           "Implicit cast type cannot be determined from overload");
+    ICE->setSubExpr(NewExpr);
   } else if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(E)) {
     assert(UnOp->getOpcode() == UnaryOperator::AddrOf &&
            "Can only take the address of an overloaded function");
@@ -5394,8 +5400,9 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
     return UnOp;
   } else if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E)) {
     assert((isa<OverloadedFunctionDecl>(DR->getDecl()) ||
-            isa<FunctionTemplateDecl>(DR->getDecl())) &&
-           "Expected overloaded function or function template");
+            isa<FunctionTemplateDecl>(DR->getDecl()) ||
+            isa<FunctionDecl>(DR->getDecl())) &&
+           "Expected function or function template");
     DR->setDecl(Fn);
     E->setType(Fn->getType());
   } else if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(E)) {
@@ -5416,6 +5423,12 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
     // FIXME: Don't destroy TID here, since we need its template arguments
     // to survive.
     // TID->Destroy(Context);
+  } else if (isa<UnresolvedFunctionNameExpr>(E)) {
+    return DeclRefExpr::Create(Context, 
+                               /*Qualifier=*/0,
+                               /*QualifierRange=*/SourceRange(),
+                               Fn, E->getLocStart(),
+                               Fn->getType(), false, false);
   } else {
     assert(false && "Invalid reference to overloaded function");
   }

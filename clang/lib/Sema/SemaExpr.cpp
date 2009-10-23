@@ -2922,13 +2922,7 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
       if (!FDecl)
         return ExprError();
 
-      // Update Fn to refer to the actual function selected.
-      // FIXME: Use FixOverloadedFunctionReference?
-      Expr *NewFn = DeclRefExpr::Create(Context, Qualifier, QualifierRange, FDecl, 
-                                        Fn->getLocStart(), FDecl->getType(), false, 
-                                        false);
-      Fn->Destroy(Context);
-      Fn = NewFn;
+      Fn = FixOverloadedFunctionReference(Fn, FDecl);
     }
   }
 
