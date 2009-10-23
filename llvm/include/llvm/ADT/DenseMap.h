@@ -454,12 +454,12 @@ public:
     return Ptr != RHS.Ptr;
   }
 
-  inline DenseMapIterator& operator++() {          // Preincrement
+  inline DenseMapIterator& operator++() {  // Preincrement
     ++Ptr;
     AdvancePastEmptyBuckets();
     return *this;
   }
-  DenseMapIterator operator++(int) {        // Postincrement
+  DenseMapIterator operator++(int) {  // Postincrement
     DenseMapIterator tmp = *this; ++*this; return tmp;
   }
 

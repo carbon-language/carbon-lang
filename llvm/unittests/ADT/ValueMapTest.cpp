@@ -187,7 +187,7 @@ struct LockMutex : ValueMapConfig<KeyT> {
     *Data.CalledRAUW = true;
     EXPECT_FALSE(Data.M->tryacquire()) << "Mutex should already be locked.";
   }
-  static void onDeleted(const ExtraData &Data, KeyT Old) {
+  static void onDelete(const ExtraData &Data, KeyT Old) {
     *Data.CalledDeleted = true;
     EXPECT_FALSE(Data.M->tryacquire()) << "Mutex should already be locked.";
   }
@@ -238,7 +238,7 @@ struct CountOps : ValueMapConfig<KeyT> {
   static void onRAUW(const ExtraData &Data, KeyT Old, KeyT New) {
     ++*Data.RAUWs;
   }
-  static void onDeleted(const ExtraData &Data, KeyT Old) {
+  static void onDelete(const ExtraData &Data, KeyT Old) {
     ++*Data.Deletions;
   }
 };
@@ -270,7 +270,7 @@ struct ModifyingConfig : ValueMapConfig<KeyT> {
   static void onRAUW(ExtraData Map, KeyT Old, KeyT New) {
     (*Map)->erase(Old);
   }
-  static void onDeleted(ExtraData Map, KeyT Old) {
+  static void onDelete(ExtraData Map, KeyT Old) {
     (*Map)->erase(Old);
   }
 };

@@ -7,7 +7,19 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the ValueMap class.
+// This file defines the ValueMap class.  ValueMap maps Value* or any subclass
+// to an arbitrary other type.  It provides the DenseMap interface but updates
+// itself to remain safe when keys are RAUWed or deleted.  By default, when a
+// key is RAUWed from V1 to V2, the old mapping V1->target is removed, and a new
+// mapping V2->target is added.  If V2 already existed, its old target is
+// overwritten.  When a key is deleted, its mapping is removed.
+//
+// You can override a ValueMap's Config parameter to control exactly what
+// happens on RAUW and destruction and to get called back on each event.  It's
+// legal to call back into the ValueMap from a Config's callbacks.  Config
+// parameters should inherit from ValueMapConfig<KeyT> to get default
+// implementations of all the methods ValueMap uses.  See ValueMapConfig for
+// documentation of the functions you can override.
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,6 +43,9 @@ class ValueMapIterator;
 template<typename DenseMapT, typename KeyT>
 class ValueMapConstIterator;
 
+/// This class defines the default behavior for configurable aspects of
+/// ValueMap<>.  User Configs should inherit from this class to be as compatible
+/// as possible with future versions of ValueMap.
 template<typename KeyT>
 struct ValueMapConfig {
   /// If FollowRAUW is true, the ValueMap will update mappings on RAUW. If it's
@@ -46,27 +61,17 @@ struct ValueMapConfig {
   template<typename ExtraDataT>
   static void onRAUW(const ExtraDataT &Data, KeyT Old, KeyT New) {}
   template<typename ExtraDataT>
-  static void onDeleted(const ExtraDataT &Data, KeyT Old) {}
+  static void onDelete(const ExtraDataT &Data, KeyT Old) {}
 
   /// Returns a mutex that should be acquired around any changes to the map.
   /// This is only acquired from the CallbackVH (and held around calls to onRAUW
-  /// and onDeleted) and not inside other ValueMap methods.  NULL means that no
+  /// and onDelete) and not inside other ValueMap methods.  NULL means that no
   /// mutex is necessary.
   template<typename ExtraDataT>
   static sys::Mutex *getMutex(const ExtraDataT &Data) { return NULL; }
 };
 
-/// ValueMap maps Value* or any subclass to an arbitrary other
-/// type. It provides the DenseMap interface.  When the key values are
-/// deleted or RAUWed, ValueMap relies on the Config to decide what to
-/// do.  Config parameters should inherit from ValueMapConfig<KeyT> to
-/// get default implementations of all the methods ValueMap uses.
-///
-/// By default, when a key is RAUWed from V1 to V2, the old mapping
-/// V1->target is removed, and a new mapping V2->target is added.  If
-/// V2 already existed, its old target is overwritten.  When a key is
-/// deleted, its mapping is removed.  You can override Config to get
-/// called back on each event.
+/// See the file comment.
 template<typename KeyT, typename ValueT, typename Config = ValueMapConfig<KeyT>,
          typename ValueInfoT = DenseMapInfo<ValueT> >
 class ValueMap {
@@ -177,6 +182,9 @@ public:
   }
 
 private:
+  // Takes a key being looked up in the map and wraps it into a
+  // ValueMapCallbackVH, the actual key type of the map.  We use a helper
+  // function because ValueMapCVH is constructed with a second parameter.
   ValueMapCVH Wrap(KeyT key) const {
     // The only way the resulting CallbackVH could try to modify *this (making
     // the const_cast incorrect) is if it gets inserted into the map.  But then
@@ -186,6 +194,8 @@ private:
   }
 };
 
+// This CallbackVH updates its ValueMap when the contained Value changes,
+// according to the user's preferences expressed through the Config object.
 template<typename KeyT, typename ValueT, typename Config, typename ValueInfoT>
 class ValueMapCallbackVH : public CallbackVH {
   friend class ValueMap<KeyT, ValueT, Config, ValueInfoT>;
@@ -208,7 +218,7 @@ public:
     sys::Mutex *M = Config::getMutex(Copy.Map->Data);
     if (M)
       M->acquire();
-    Config::onDeleted(Copy.Map->Data, Copy.Unwrap());  // May destroy *this.
+    Config::onDelete(Copy.Map->Data, Copy.Unwrap());  // May destroy *this.
     Copy.Map->Map.erase(Copy);  // Definitely destroys *this.
     if (M)
       M->release();
@@ -279,7 +289,7 @@ public:
   struct ValueTypeProxy {
     const KeyT first;
     ValueT& second;
-    ValueTypeProxy *operator->()  { return this; }
+    ValueTypeProxy *operator->() { return this; }
     operator std::pair<KeyT, ValueT>() const {
       return std::make_pair(first, second);
     }
@@ -301,11 +311,11 @@ public:
     return I != RHS.I;
   }
 
-  inline ValueMapIterator& operator++() {          // Preincrement
+  inline ValueMapIterator& operator++() {  // Preincrement
     ++I;
     return *this;
   }
-  ValueMapIterator operator++(int) {        // Postincrement
+  ValueMapIterator operator++(int) {  // Postincrement
     ValueMapIterator tmp = *this; ++*this; return tmp;
   }
 };
@@ -329,7 +339,7 @@ public:
   struct ValueTypeProxy {
     const KeyT first;
     const ValueT& second;
-    ValueTypeProxy *operator->()  { return this; }
+    ValueTypeProxy *operator->() { return this; }
     operator std::pair<KeyT, ValueT>() const {
       return std::make_pair(first, second);
     }
@@ -351,11 +361,11 @@ public:
     return I != RHS.I;
   }
 
-  inline ValueMapConstIterator& operator++() {          // Preincrement
+  inline ValueMapConstIterator& operator++() {  // Preincrement
     ++I;
     return *this;
   }
-  ValueMapConstIterator operator++(int) {        // Postincrement
+  ValueMapConstIterator operator++(int) {  // Postincrement
     ValueMapConstIterator tmp = *this; ++*this; return tmp;
   }
 };
