@@ -117,8 +117,7 @@ Function *ExecutionEngine::FindFunctionNamed(const char *FnName) {
 
 void *ExecutionEngineState::RemoveMapping(
   const MutexGuard &, const GlobalValue *ToUnmap) {
-  std::map<MapUpdatingCVH, void *>::iterator I =
-    GlobalAddressMap.find(getVH(ToUnmap));
+  GlobalAddressMapTy::iterator I = GlobalAddressMap.find(ToUnmap);
   void *OldVal;
   if (I == GlobalAddressMap.end())
     OldVal = 0;
@@ -141,7 +140,7 @@ void ExecutionEngine::addGlobalMapping(const GlobalValue *GV, void *Addr) {
 
   DEBUG(errs() << "JIT: Map \'" << GV->getName() 
         << "\' to [" << Addr << "]\n";);
-  void *&CurVal = EEState.getGlobalAddressMap(locked)[EEState.getVH(GV)];
+  void *&CurVal = EEState.getGlobalAddressMap(locked)[GV];
   assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
   CurVal = Addr;
   
@@ -183,7 +182,7 @@ void ExecutionEngine::clearGlobalMappingsFromModule(Module *M) {
 void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
   MutexGuard locked(lock);
 
-  std::map<ExecutionEngineState::MapUpdatingCVH, void *> &Map =
+  ExecutionEngineState::GlobalAddressMapTy &Map =
     EEState.getGlobalAddressMap(locked);
 
   // Deleting from the mapping?
@@ -191,7 +190,7 @@ void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
     return EEState.RemoveMapping(locked, GV);
   }
   
-  void *&CurVal = Map[EEState.getVH(GV)];
+  void *&CurVal = Map[GV];
   void *OldVal = CurVal;
 
   if (CurVal && !EEState.getGlobalAddressReverseMap(locked).empty())
@@ -214,8 +213,8 @@ void *ExecutionEngine::updateGlobalMapping(const GlobalValue *GV, void *Addr) {
 void *ExecutionEngine::getPointerToGlobalIfAvailable(const GlobalValue *GV) {
   MutexGuard locked(lock);
   
-  std::map<ExecutionEngineState::MapUpdatingCVH, void*>::iterator I =
-    EEState.getGlobalAddressMap(locked).find(EEState.getVH(GV));
+  ExecutionEngineState::GlobalAddressMapTy::iterator I =
+    EEState.getGlobalAddressMap(locked).find(GV);
   return I != EEState.getGlobalAddressMap(locked).end() ? I->second : 0;
 }
 
@@ -227,7 +226,7 @@ const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
 
   // If we haven't computed the reverse mapping yet, do so first.
   if (EEState.getGlobalAddressReverseMap(locked).empty()) {
-    for (std::map<ExecutionEngineState::MapUpdatingCVH, void *>::iterator
+    for (ExecutionEngineState::GlobalAddressMapTy::iterator
          I = EEState.getGlobalAddressMap(locked).begin(),
          E = EEState.getGlobalAddressMap(locked).end(); I != E; ++I)
       EEState.getGlobalAddressReverseMap(locked).insert(std::make_pair(I->second,
@@ -476,7 +475,7 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
     return getPointerToFunction(F);
 
   MutexGuard locked(lock);
-  void *p = EEState.getGlobalAddressMap(locked)[EEState.getVH(GV)];
+  void *p = EEState.getGlobalAddressMap(locked)[GV];
   if (p)
     return p;
 
@@ -486,7 +485,7 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
     EmitGlobalVariable(GVar);
   else
     llvm_unreachable("Global hasn't had an address allocated yet!");
-  return EEState.getGlobalAddressMap(locked)[EEState.getVH(GV)];
+  return EEState.getGlobalAddressMap(locked)[GV];
 }
 
 /// This function converts a Constant* into a GenericValue. The interesting 
@@ -1072,17 +1071,22 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   ++NumGlobals;
 }
 
-ExecutionEngineState::MapUpdatingCVH::MapUpdatingCVH(
-  ExecutionEngineState &EES, const GlobalValue *GV)
-  : CallbackVH(const_cast<GlobalValue*>(GV)), EES(EES) {}
-
-void ExecutionEngineState::MapUpdatingCVH::deleted() {
-  MutexGuard locked(EES.EE.lock);
-  EES.RemoveMapping(locked, *this);  // Destroys *this.
+ExecutionEngineState::ExecutionEngineState(ExecutionEngine &EE)
+  : EE(EE), GlobalAddressMap(this) {
 }
 
-void ExecutionEngineState::MapUpdatingCVH::allUsesReplacedWith(
-  Value *new_value) {
+sys::Mutex *ExecutionEngineState::AddressMapConfig::getMutex(
+  ExecutionEngineState *EES) {
+  return &EES->EE.lock;
+}
+void ExecutionEngineState::AddressMapConfig::onDelete(
+  ExecutionEngineState *EES, const GlobalValue *Old) {
+  void *OldVal = EES->GlobalAddressMap.lookup(Old);
+  EES->GlobalAddressReverseMap.erase(OldVal);
+}
+
+void ExecutionEngineState::AddressMapConfig::onRAUW(
+  ExecutionEngineState *, const GlobalValue *, const GlobalValue *) {
   assert(false && "The ExecutionEngine doesn't know how to handle a"
          " RAUW on a value it has a global mapping for.");
 }

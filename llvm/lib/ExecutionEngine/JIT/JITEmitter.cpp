@@ -46,6 +46,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/ValueMap.h"
 #include <algorithm>
 #ifndef NDEBUG
 #include <iomanip>
@@ -62,12 +63,29 @@ static JIT *TheJIT = 0;
 // JIT lazy compilation code.
 //
 namespace {
+  class JITResolverState;
+
+  template<typename ValueTy>
+  struct NoRAUWValueMapConfig : public ValueMapConfig<ValueTy> {
+    typedef JITResolverState *ExtraData;
+    static void onRAUW(JITResolverState *, Value *Old, Value *New) {
+      assert(false && "The JIT doesn't know how to handle a"
+             " RAUW on a value it has emitted.");
+    }
+  };
+
+  struct CallSiteValueMapConfig : public NoRAUWValueMapConfig<Function*> {
+    typedef JITResolverState *ExtraData;
+    static void onDelete(JITResolverState *JRS, Function *F);
+  };
+
   class JITResolverState {
   public:
-    typedef DenseMap<AssertingVH<Function>, void*> FunctionToStubMapTy;
+    typedef ValueMap<Function*, void*, NoRAUWValueMapConfig<Function*> >
+      FunctionToStubMapTy;
     typedef std::map<void*, AssertingVH<Function> > CallSiteToFunctionMapTy;
-    typedef DenseMap<AssertingVH<Function>, SmallPtrSet<void*, 1> >
-            FunctionToCallSitesMapTy;
+    typedef ValueMap<Function *, SmallPtrSet<void*, 1>,
+                     CallSiteValueMapConfig> FunctionToCallSitesMapTy;
     typedef std::map<AssertingVH<GlobalValue>, void*> GlobalToIndirectSymMapTy;
   private:
     /// FunctionToStubMap - Keep track of the stub created for a particular
@@ -84,6 +102,9 @@ namespace {
     GlobalToIndirectSymMapTy GlobalToIndirectSymMap;
 
   public:
+    JITResolverState() : FunctionToStubMap(this),
+                         FunctionToCallSitesMap(this) {}
+
     FunctionToStubMapTy& getFunctionToStubMap(const MutexGuard& locked) {
       assert(locked.holds(TheJIT->lock));
       return FunctionToStubMap;
@@ -111,8 +132,10 @@ namespace {
     void AddCallSite(const MutexGuard &locked, void *CallSite, Function *F) {
       assert(locked.holds(TheJIT->lock));
 
-      assert(CallSiteToFunctionMap.insert(std::make_pair(CallSite, F)).second &&
-             "Pair was already in CallSiteToFunctionMap");
+      bool Inserted = CallSiteToFunctionMap.insert(
+          std::make_pair(CallSite, F)).second;
+      (void)Inserted;
+      assert(Inserted && "Pair was already in CallSiteToFunctionMap");
       FunctionToCallSitesMap[F].insert(CallSite);
     }
 
@@ -142,8 +165,9 @@ namespace {
       FunctionToCallSitesMapTy::iterator F2C_I = FunctionToCallSitesMap.find(F);
       assert(F2C_I != FunctionToCallSitesMap.end() &&
              "FunctionToCallSitesMap broken");
-      assert(F2C_I->second.erase(Stub) &&
-             "FunctionToCallSitesMap broken");
+      bool Erased = F2C_I->second.erase(Stub);
+      (void)Erased;
+      assert(Erased && "FunctionToCallSitesMap broken");
       if (F2C_I->second.empty())
         FunctionToCallSitesMap.erase(F2C_I);
 
@@ -152,13 +176,17 @@ namespace {
 
     void EraseAllCallSites(const MutexGuard &locked, Function *F) {
       assert(locked.holds(TheJIT->lock));
+      EraseAllCallSitesPrelocked(F);
+    }
+    void EraseAllCallSitesPrelocked(Function *F) {
       FunctionToCallSitesMapTy::iterator F2C = FunctionToCallSitesMap.find(F);
       if (F2C == FunctionToCallSitesMap.end())
         return;
       for (SmallPtrSet<void*, 1>::const_iterator I = F2C->second.begin(),
              E = F2C->second.end(); I != E; ++I) {
-        assert(CallSiteToFunctionMap.erase(*I) == 1 &&
-               "Missing call site->function mapping");
+        bool Erased = CallSiteToFunctionMap.erase(*I);
+        (void)Erased;
+        assert(Erased && "Missing call site->function mapping");
       }
       FunctionToCallSitesMap.erase(F2C);
     }
@@ -244,6 +272,10 @@ namespace {
 }
 
 JITResolver *JITResolver::TheJITResolver = 0;
+
+void CallSiteValueMapConfig::onDelete(JITResolverState *JRS, Function *F) {
+  JRS->EraseAllCallSitesPrelocked(F);
+}
 
 /// getFunctionStubIfAvailable - This returns a pointer to a function stub
 /// if it has already been created.

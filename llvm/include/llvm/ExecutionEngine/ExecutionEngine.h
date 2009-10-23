@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/ValueMap.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/Target/TargetMachine.h"
@@ -42,26 +43,23 @@ class Type;
 
 class ExecutionEngineState {
 public:
-  class MapUpdatingCVH : public CallbackVH {
-    ExecutionEngineState &EES;
-
-  public:
-    MapUpdatingCVH(ExecutionEngineState &EES, const GlobalValue *GV);
-
-    operator const GlobalValue*() const {
-      return cast<GlobalValue>(getValPtr());
-    }
-
-    virtual void deleted();
-    virtual void allUsesReplacedWith(Value *new_value);
+  struct AddressMapConfig : public ValueMapConfig<const GlobalValue*> {
+    typedef ExecutionEngineState *ExtraData;
+    static sys::Mutex *getMutex(ExecutionEngineState *EES);
+    static void onDelete(ExecutionEngineState *EES, const GlobalValue *Old);
+    static void onRAUW(ExecutionEngineState *, const GlobalValue *,
+                       const GlobalValue *);
   };
+
+  typedef ValueMap<const GlobalValue *, void *, AddressMapConfig>
+      GlobalAddressMapTy;
 
 private:
   ExecutionEngine &EE;
 
   /// GlobalAddressMap - A mapping between LLVM global values and their
   /// actualized version...
-  std::map<MapUpdatingCVH, void *> GlobalAddressMap;
+  GlobalAddressMapTy GlobalAddressMap;
 
   /// GlobalAddressReverseMap - This is the reverse mapping of GlobalAddressMap,
   /// used to convert raw addresses into the LLVM global value that is emitted
@@ -70,13 +68,9 @@ private:
   std::map<void *, AssertingVH<const GlobalValue> > GlobalAddressReverseMap;
 
 public:
-  ExecutionEngineState(ExecutionEngine &EE) : EE(EE) {}
+  ExecutionEngineState(ExecutionEngine &EE);
 
-  MapUpdatingCVH getVH(const GlobalValue *GV) {
-    return MapUpdatingCVH(*this, GV);
-  }
-
-  std::map<MapUpdatingCVH, void *> &
+  GlobalAddressMapTy &
   getGlobalAddressMap(const MutexGuard &) {
     return GlobalAddressMap;
   }
@@ -485,14 +479,7 @@ class EngineBuilder {
   }
 
   ExecutionEngine *create();
-
 };
-
-inline bool operator<(const ExecutionEngineState::MapUpdatingCVH& lhs,
-                      const ExecutionEngineState::MapUpdatingCVH& rhs) {
-    return static_cast<const GlobalValue*>(lhs) <
-        static_cast<const GlobalValue*>(rhs);
-}
 
 } // End llvm namespace
 

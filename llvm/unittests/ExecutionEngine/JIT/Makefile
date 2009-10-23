@@ -9,7 +9,7 @@
 
 LEVEL = ../../..
 TESTNAME = JIT
-LINK_COMPONENTS := core support jit native
+LINK_COMPONENTS := asmparser core support jit native
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
