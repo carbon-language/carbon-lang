@@ -77,3 +77,13 @@ define i128 @test9() {
 ; @test9
 ; CHECK: ret i128 112312312
 }
+
+; vector load.
+define <2 x i64> @test10() {
+  %r = load <2 x i64>* bitcast({i64, i64}* @test3 to <2 x i64>*)
+  ret <2 x i64> %r
+
+; @test10
+; CHECK: ret <2 x i64> <i64 112312312, i64 0>
+}
+

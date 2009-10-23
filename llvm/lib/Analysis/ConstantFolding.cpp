@@ -210,24 +210,30 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
 
 static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
                                                  const TargetData &TD) {
-  const Type *InitializerTy = cast<PointerType>(C->getType())->getElementType();
-  const IntegerType *IntType = dyn_cast<IntegerType>(InitializerTy);
+  const Type *LoadTy = cast<PointerType>(C->getType())->getElementType();
+  const IntegerType *IntType = dyn_cast<IntegerType>(LoadTy);
   
   // If this isn't an integer load we can't fold it directly.
   if (!IntType) {
     // If this is a float/double load, we can try folding it as an int32/64 load
-    // and then bitcast the result.  This can be useful for union cases.
+    // and then bitcast the result.  This can be useful for union cases.  Note
+    // that address spaces don't matter here since we're not going to result in
+    // an actual new load.
     const Type *MapTy;
-    if (InitializerTy->isFloatTy())
+    if (LoadTy->isFloatTy())
       MapTy = Type::getInt32PtrTy(C->getContext());
-    else if (InitializerTy->isDoubleTy())
+    else if (LoadTy->isDoubleTy())
       MapTy = Type::getInt64PtrTy(C->getContext());
-    else
+    else if (isa<VectorType>(LoadTy)) {
+      MapTy = IntegerType::get(C->getContext(),
+                               TD.getTypeAllocSizeInBits(LoadTy));
+      MapTy = PointerType::getUnqual(MapTy);
+    } else
       return 0;
 
     C = ConstantExpr::getBitCast(C, MapTy);
     if (Constant *Res = FoldReinterpretLoadFromConstPtr(C, TD))
-      return ConstantExpr::getBitCast(Res, InitializerTy);
+      return ConstantExpr::getBitCast(Res, LoadTy);
     return 0;
   }
   
