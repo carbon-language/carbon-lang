@@ -1,4 +1,4 @@
-//===--- DeclCXX.cpp - C++ Declaration AST Node Implementation ------------===//
+//===--- DeclTemplate.cpp - Template Declaration AST Node Implementation --===//
 //
 //                     The LLVM Compiler Infrastructure
 //
