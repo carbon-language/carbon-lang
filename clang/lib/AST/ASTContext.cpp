@@ -138,9 +138,9 @@ void ASTContext::PrintStats() const {
 }
 
 
-void ASTContext::InitBuiltinType(QualType &R, BuiltinType::Kind K) {
+void ASTContext::InitBuiltinType(CanQualType &R, BuiltinType::Kind K) {
   BuiltinType *Ty = new (*this, TypeAlignment) BuiltinType(K);
-  R = QualType(Ty, 0);
+  R = CanQualType::CreateUnsafe(QualType(Ty, 0));
   Types.push_back(Ty);
 }
 
@@ -3600,9 +3600,9 @@ TemplateName ASTContext::getDependentTemplateName(NestedNameSpecifier *NNS,
 /// getFromTargetType - Given one of the integer types provided by
 /// TargetInfo, produce the corresponding type. The unsigned @p Type
 /// is actually a value of type @c TargetInfo::IntType.
-QualType ASTContext::getFromTargetType(unsigned Type) const {
+CanQualType ASTContext::getFromTargetType(unsigned Type) const {
   switch (Type) {
-  case TargetInfo::NoInt: return QualType();
+  case TargetInfo::NoInt: return CanQualType();
   case TargetInfo::SignedShort: return ShortTy;
   case TargetInfo::UnsignedShort: return UnsignedShortTy;
   case TargetInfo::SignedInt: return IntTy;
@@ -3614,7 +3614,7 @@ QualType ASTContext::getFromTargetType(unsigned Type) const {
   }
 
   assert(false && "Unhandled TargetInfo::IntType value");
-  return QualType();
+  return CanQualType();
 }
 
 //===----------------------------------------------------------------------===//

@@ -180,7 +180,7 @@ static const llvm::Type* getTypeForFormat(llvm::LLVMContext &VMContext,
 }
 
 const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
-  const clang::Type &Ty = *Context.getCanonicalType(T);
+  const clang::Type &Ty = *Context.getCanonicalType(T).getTypePtr();
 
   switch (Ty.getTypeClass()) {
 #define TYPE(Class, Base)

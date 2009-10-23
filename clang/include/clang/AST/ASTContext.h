@@ -301,22 +301,22 @@ public:
   const char *getCommentForDecl(const Decl *D);
 
   // Builtin Types.
-  QualType VoidTy;
-  QualType BoolTy;
-  QualType CharTy;
-  QualType WCharTy;  // [C++ 3.9.1p5], integer type in C99.
-  QualType Char16Ty; // [C++0x 3.9.1p5], integer type in C99.
-  QualType Char32Ty; // [C++0x 3.9.1p5], integer type in C99.
-  QualType SignedCharTy, ShortTy, IntTy, LongTy, LongLongTy, Int128Ty;
-  QualType UnsignedCharTy, UnsignedShortTy, UnsignedIntTy, UnsignedLongTy;
-  QualType UnsignedLongLongTy, UnsignedInt128Ty;
-  QualType FloatTy, DoubleTy, LongDoubleTy;
-  QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
-  QualType VoidPtrTy, NullPtrTy;
-  QualType OverloadTy;
-  QualType DependentTy;
-  QualType UndeducedAutoTy;
-  QualType ObjCBuiltinIdTy, ObjCBuiltinClassTy;
+  CanQualType VoidTy;
+  CanQualType BoolTy;
+  CanQualType CharTy;
+  CanQualType WCharTy;  // [C++ 3.9.1p5], integer type in C99.
+  CanQualType Char16Ty; // [C++0x 3.9.1p5], integer type in C99.
+  CanQualType Char32Ty; // [C++0x 3.9.1p5], integer type in C99.
+  CanQualType SignedCharTy, ShortTy, IntTy, LongTy, LongLongTy, Int128Ty;
+  CanQualType UnsignedCharTy, UnsignedShortTy, UnsignedIntTy, UnsignedLongTy;
+  CanQualType UnsignedLongLongTy, UnsignedInt128Ty;
+  CanQualType FloatTy, DoubleTy, LongDoubleTy;
+  CanQualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
+  CanQualType VoidPtrTy, NullPtrTy;
+  CanQualType OverloadTy;
+  CanQualType DependentTy;
+  CanQualType UndeducedAutoTy;
+  CanQualType ObjCBuiltinIdTy, ObjCBuiltinClassTy;
 
   ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels,
@@ -387,10 +387,16 @@ public:
   /// getComplexType - Return the uniqued reference to the type for a complex
   /// number with the specified element type.
   QualType getComplexType(QualType T);
+  CanQualType getComplexType(CanQualType T) {
+    return CanQualType::CreateUnsafe(getComplexType((QualType) T));
+  }
 
   /// getPointerType - Return the uniqued reference to the type for a pointer to
   /// the specified type.
   QualType getPointerType(QualType T);
+  CanQualType getPointerType(CanQualType T) {
+    return CanQualType::CreateUnsafe(getPointerType((QualType) T));
+  }
 
   /// getBlockPointerType - Return the uniqued reference to the type for a block
   /// of the specified type.
@@ -739,7 +745,7 @@ public:
   QualType GetBuiltinType(unsigned ID, GetBuiltinTypeError &Error);
 
 private:
-  QualType getFromTargetType(unsigned Type) const;
+  CanQualType getFromTargetType(unsigned Type) const;
 
   //===--------------------------------------------------------------------===//
   //                         Type Predicates.
@@ -1096,7 +1102,7 @@ private:
   void operator=(const ASTContext&); // DO NOT IMPLEMENT
 
   void InitBuiltinTypes();
-  void InitBuiltinType(QualType &R, BuiltinType::Kind K);
+  void InitBuiltinType(CanQualType &R, BuiltinType::Kind K);
 
   // Return the ObjC type encoding for a given type.
   void getObjCEncodingForTypeImpl(QualType t, std::string &S,

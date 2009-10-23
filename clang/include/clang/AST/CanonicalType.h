@@ -64,21 +64,16 @@ public:
   CanQual(const CanQual<U>& Other,
           typename llvm::enable_if<llvm::is_base_of<T, U>, int>::type = 0);
 
-  /// \brief Implicit conversion to the underlying pointer.
-  ///
-  /// Also provides the ability to use canonical types in a boolean context,
-  /// e.g.,
-  /// @code
-  ///   if (CanQual<PointerType> Ptr = T->getAs<PointerType>()) { ... }
-  /// @endcode
-  operator const T*() const { return getTypePtr(); }
-
   /// \brief Retrieve the underlying type pointer, which refers to a
   /// canonical type.
   T *getTypePtr() const { return cast_or_null<T>(Stored.getTypePtr()); }
 
   /// \brief Implicit conversion to a qualified type.
   operator QualType() const { return Stored; }
+
+  bool isNull() const {
+    return Stored.isNull();
+  }
 
   /// \brief Retrieve a canonical type pointer with a different static type,
   /// upcasting or downcasting as needed.
@@ -125,8 +120,10 @@ public:
   /// \brief Retrieve the unqualified form of this type.
   CanQual<T> getUnqualifiedType() const;
 
-  CanQual<T> getQualifiedType(unsigned TQs) const {
-    return CanQual<T>::CreateUnsafe(QualType(getTypePtr(), TQs));
+  /// \brief Retrieves a version of this type with const applied.
+  /// Note that this does not always yield a canonical type.
+  QualType withConst() const {
+    return Stored.withConst();
   }
 
   /// \brief Determines whether this canonical type is more qualified than

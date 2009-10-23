@@ -1643,15 +1643,15 @@ DeduceTemplateArgumentsDuringPartialOrdering(ASTContext &Context,
   //   performed on the types used for partial ordering: 
   //     - If P is a reference type, P is replaced by the type referred to. 
   CanQual<ReferenceType> ParamRef = Param->getAs<ReferenceType>();
-  if (ParamRef)
+  if (!ParamRef.isNull())
     Param = ParamRef->getPointeeType();
   
   //     - If A is a reference type, A is replaced by the type referred to.
   CanQual<ReferenceType> ArgRef = Arg->getAs<ReferenceType>();
-  if (ArgRef)
+  if (!ArgRef.isNull())
     Arg = ArgRef->getPointeeType();
   
-  if (QualifierComparisons && ParamRef && ArgRef) {
+  if (QualifierComparisons && !ParamRef.isNull() && !ArgRef.isNull()) {
     // C++0x [temp.deduct.partial]p6:
     //   If both P and A were reference types (before being replaced with the 
     //   type referred to above), determine which of the two types (if any) is 
