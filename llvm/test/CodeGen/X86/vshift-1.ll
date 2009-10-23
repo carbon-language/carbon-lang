@@ -63,7 +63,7 @@ entry:
 ; CHECK: shift3b:
 ; CHECK: movzwl
 ; CHECK: movd
-; CHECK: psllw
+; CHECK-NEXT: psllw
   %0 = insertelement <8 x i16> undef, i16 %amt, i32 0
   %1 = insertelement <8 x i16> %0, i16 %amt, i32 1
   %2 = insertelement <8 x i16> %0, i16 %amt, i32 2

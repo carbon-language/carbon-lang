@@ -168,11 +168,11 @@ define internal void @t10() nounwind {
         ret void
 ; X64: 	t10:
 ; X64: 		pextrw	$4, %xmm0, %eax
+; X64: 		pextrw	$6, %xmm0, %edx
 ; X64: 		movlhps	%xmm1, %xmm1
 ; X64: 		pshuflw	$8, %xmm1, %xmm1
 ; X64: 		pinsrw	$2, %eax, %xmm1
-; X64: 		pextrw	$6, %xmm0, %eax
-; X64: 		pinsrw	$3, %eax, %xmm1
+; X64: 		pinsrw	$3, %edx, %xmm1
 }
 
 
