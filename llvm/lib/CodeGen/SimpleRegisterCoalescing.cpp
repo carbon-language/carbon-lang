@@ -2556,6 +2556,7 @@ static bool isZeroLengthInterval(LiveInterval *li, LiveIntervals *li_) {
   return true;
 }
 
+
 void SimpleRegisterCoalescing::CalculateSpillWeights() {
   SmallSet<unsigned, 4> Processed;
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
@@ -2566,9 +2567,11 @@ void SimpleRegisterCoalescing::CalculateSpillWeights() {
     unsigned loopDepth = loop ? loop->getLoopDepth() : 0;
     bool isExit = loop ? loop->isLoopExit(MBB) : false;
 
-    for (MachineBasicBlock::iterator mii = MBB->begin(), mie = MBB->end();
+    for (MachineBasicBlock::const_iterator mii = MBB->begin(), mie = MBB->end();
          mii != mie; ++mii) {
-      MachineInstr *MI = mii;
+      const MachineInstr *MI = mii;
+      if (tii_->isIdentityCopy(*MI))
+        continue;
 
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         const MachineOperand &mopi = MI->getOperand(i);

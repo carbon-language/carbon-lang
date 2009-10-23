@@ -133,11 +133,32 @@ private:
                                                 AliasAnalysis *AA) const;
 
 public:
-  /// Return true if the instruction is a register to register move and return
-  /// the source and dest operands and their sub-register indices by reference.
+  /// isMoveInstr - Return true if the instruction is a register to register
+  /// move and return the source and dest operands and their sub-register
+  /// indices by reference.
   virtual bool isMoveInstr(const MachineInstr& MI,
                            unsigned& SrcReg, unsigned& DstReg,
                            unsigned& SrcSubIdx, unsigned& DstSubIdx) const {
+    return false;
+  }
+
+  /// isIdentityCopy - Return true if the instruction is a copy (or
+  /// extract_subreg, insert_subreg, subreg_to_reg) where the source and
+  /// destination registers are the same.
+  bool isIdentityCopy(const MachineInstr &MI) const {
+    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+    if (isMoveInstr(MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
+        SrcReg == DstReg)
+      return true;
+
+    if (MI.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG &&
+        MI.getOperand(0).getReg() == MI.getOperand(1).getReg())
+    return true;
+
+    if ((MI.getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
+         MI.getOpcode() == TargetInstrInfo::SUBREG_TO_REG) &&
+        MI.getOperand(0).getReg() == MI.getOperand(2).getReg())
+      return true;
     return false;
   }
   
