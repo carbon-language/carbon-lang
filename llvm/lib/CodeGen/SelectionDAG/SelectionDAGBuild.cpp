@@ -2666,7 +2666,8 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
       }
 
       // N = N + Idx * ElementSize;
-      uint64_t ElementSize = TD->getTypeAllocSize(Ty);
+      APInt ElementSize = APInt(TLI.getPointerTy().getSizeInBits(),
+                                TD->getTypeAllocSize(Ty));
       SDValue IdxN = getValue(Idx);
 
       // If the index is smaller or larger than intptr_t, truncate or extend
@@ -2676,13 +2677,13 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
       // If this is a multiply by a power of two, turn it into a shl
       // immediately.  This is a very common case.
       if (ElementSize != 1) {
-        if (isPowerOf2_64(ElementSize)) {
-          unsigned Amt = Log2_64(ElementSize);
+        if (ElementSize.isPowerOf2()) {
+          unsigned Amt = ElementSize.logBase2();
           IdxN = DAG.getNode(ISD::SHL, getCurDebugLoc(),
                              N.getValueType(), IdxN,
                              DAG.getConstant(Amt, TLI.getPointerTy()));
         } else {
-          SDValue Scale = DAG.getIntPtrConstant(ElementSize);
+          SDValue Scale = DAG.getConstant(ElementSize, TLI.getPointerTy());
           IdxN = DAG.getNode(ISD::MUL, getCurDebugLoc(),
                              N.getValueType(), IdxN, Scale);
         }
