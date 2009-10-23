@@ -4,6 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 @test1 = constant {{i32,i8},i32} {{i32,i8} { i32 -559038737, i8 186 }, i32 -889275714 }
 @test2 = constant double 1.0
+@test3 = constant {i64, i64} { i64 123, i64 112312312 }
 
 ; Simple load
 define i32 @test1() {
@@ -65,4 +66,14 @@ define double @test8() {
 
 ; @test8
 ; CHECK: ret double 0xDEADBEBA
+}
+
+
+; i128 load.
+define i128 @test9() {
+  %r = load i128* bitcast({i64, i64}* @test3 to i128*)
+  ret i128 %r
+
+; @test9
+; CHECK: ret i128 112312312
 }

@@ -232,7 +232,7 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
   }
   
   unsigned BytesLoaded = (IntType->getBitWidth() + 7) / 8;
-  if (BytesLoaded > 8 || BytesLoaded == 0) return 0;
+  if (BytesLoaded > 32 || BytesLoaded == 0) return 0;
   
   GlobalValue *GVal;
   int64_t Offset;
@@ -253,16 +253,18 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
   if (uint64_t(Offset) >= TD.getTypeAllocSize(GV->getInitializer()->getType()))
     return UndefValue::get(IntType);
   
-  unsigned char RawBytes[8] = {0};
+  unsigned char RawBytes[32] = {0};
   if (!ReadDataFromGlobal(GV->getInitializer(), Offset, RawBytes,
                           BytesLoaded, TD))
     return 0;
 
-  uint64_t ResultVal = 0;
-  for (unsigned i = 0; i != BytesLoaded; ++i)
-    ResultVal |= (uint64_t)RawBytes[i] << (i * 8);
+  APInt ResultVal(IntType->getBitWidth(), 0);
+  for (unsigned i = 0; i != BytesLoaded; ++i) {
+    ResultVal <<= 8;
+    ResultVal |= APInt(IntType->getBitWidth(), RawBytes[BytesLoaded-1-i]);
+  }
 
-  return ConstantInt::get(IntType, ResultVal);
+  return ConstantInt::get(IntType->getContext(), ResultVal);
 }
 
 /// ConstantFoldLoadFromConstPtr - Return the value that a load from C would
