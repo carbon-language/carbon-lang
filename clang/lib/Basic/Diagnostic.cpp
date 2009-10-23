@@ -230,6 +230,8 @@ Diagnostic::~Diagnostic() {
 
 
 void Diagnostic::pushMappings() {
+  // Avoids undefined behavior when the stack has to resize.
+  DiagMappingsStack.reserve(DiagMappingsStack.size() + 1);
   DiagMappingsStack.push_back(DiagMappingsStack.back());
 }
 
