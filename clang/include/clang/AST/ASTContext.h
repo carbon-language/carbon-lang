@@ -1085,6 +1085,12 @@ public:
   /// should be calculated based on the type.
   DeclaratorInfo *CreateDeclaratorInfo(QualType T, unsigned Size = 0);
 
+  /// \brief Allocate a DeclaratorInfo where all locations have been
+  /// initialized to a given location, which defaults to the empty
+  /// location.
+  DeclaratorInfo *
+  getTrivialDeclaratorInfo(QualType T, SourceLocation Loc = SourceLocation());
+
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
   void operator=(const ASTContext&); // DO NOT IMPLEMENT

@@ -955,6 +955,13 @@ DeclaratorInfo *ASTContext::CreateDeclaratorInfo(QualType T,
   return DInfo;
 }
 
+DeclaratorInfo *ASTContext::getTrivialDeclaratorInfo(QualType T,
+                                                     SourceLocation L) {
+  DeclaratorInfo *DI = CreateDeclaratorInfo(T);
+  DI->getTypeLoc().initialize(L);
+  return DI;
+}
+
 /// getInterfaceLayoutImpl - Get or compute information about the
 /// layout of the given interface.
 ///
