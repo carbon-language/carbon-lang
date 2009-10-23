@@ -2830,11 +2830,11 @@ APFloat::convertHalfAPFloatToAPInt() const
     myexponent = 0;
     mysignificand = 0;
   } else if (category==fcInfinity) {
-    myexponent = 0xff;
+    myexponent = 0x1f;
     mysignificand = 0;
   } else {
     assert(category == fcNaN && "Unknown category!");
-    myexponent = 0xff;
+    myexponent = 0x1f;
     mysignificand = (uint32_t)*significandParts();
   }
 
@@ -3089,7 +3089,7 @@ APFloat::initFromHalfAPInt(const APInt & api)
 {
   assert(api.getBitWidth()==16);
   uint32_t i = (uint32_t)*api.getRawData();
-  uint32_t myexponent = (i >> 15) & 0x1f;
+  uint32_t myexponent = (i >> 10) & 0x1f;
   uint32_t mysignificand = i & 0x3ff;
 
   initialize(&APFloat::IEEEhalf);
