@@ -88,7 +88,7 @@ public:
 
   /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
   /// start of a new function.
-  void EmitFunctionStart(const char *Name, QualType ReturnType,
+  void EmitFunctionStart(const char *Name, QualType FnType,
                          llvm::Function *Fn, CGBuilderTy &Builder);
 
   /// EmitRegionStart - Emit a call to llvm.dbg.region.start to indicate start

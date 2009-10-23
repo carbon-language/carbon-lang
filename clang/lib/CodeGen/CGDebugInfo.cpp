@@ -888,7 +888,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
 
 /// EmitFunctionStart - Constructs the debug code for entering a function -
 /// "llvm.dbg.func.start.".
-void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
+void CGDebugInfo::EmitFunctionStart(const char *Name, QualType FnType,
                                     llvm::Function *Fn,
                                     CGBuilderTy &Builder) {
   const char *LinkageName = Name;
@@ -906,7 +906,7 @@ void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
 
   llvm::DISubprogram SP =
     DebugFactory.CreateSubprogram(Unit, Name, Name, LinkageName, Unit, LineNo,
-                                  getOrCreateType(ReturnType, Unit),
+                                  getOrCreateType(FnType, Unit),
                                   Fn->hasInternalLinkage(), true/*definition*/);
 
 #ifndef ATTACH_DEBUG_INFO_TO_AN_INSN

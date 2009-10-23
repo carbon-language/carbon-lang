@@ -167,18 +167,20 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
 
   Builder.SetInsertPoint(EntryBB);
 
+  QualType FnType = getContext().getFunctionType(RetTy, 0, 0, false, 0);
+
   // Emit subprogram debug descriptor.
   // FIXME: The cast here is a huge hack.
   if (CGDebugInfo *DI = getDebugInfo()) {
     DI->setLocation(StartLoc);
     if (isa<FunctionDecl>(D)) {
-      DI->EmitFunctionStart(CGM.getMangledName(GD), RetTy, CurFn, Builder);
+      DI->EmitFunctionStart(CGM.getMangledName(GD), FnType, CurFn, Builder);
     } else {
       // Just use LLVM function name.
 
       // FIXME: Remove unnecessary conversion to std::string when API settles.
       DI->EmitFunctionStart(std::string(Fn->getName()).c_str(),
-                            RetTy, CurFn, Builder);
+                            FnType, CurFn, Builder);
     }
   }
 
