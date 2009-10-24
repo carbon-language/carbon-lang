@@ -103,6 +103,8 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
   assert(ByteOffset <= TD.getTypeAllocSize(C->getType()) &&
          "Out of range access");
   
+  // If this element is zero or undefined, we can just return since *CurPtr is
+  // zero initialized.
   if (isa<ConstantAggregateZero>(C) || isa<UndefValue>(C))
     return true;
   
@@ -115,7 +117,7 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
     unsigned IntBytes = unsigned(CI->getBitWidth()/8);
     
     for (unsigned i = 0; i != BytesLeft && ByteOffset != IntBytes; ++i) {
-      CurPtr[i] = (unsigned char)(Val >> ByteOffset * 8);
+      CurPtr[i] = (unsigned char)(Val >> (ByteOffset * 8));
       ++ByteOffset;
     }
     return true;
@@ -130,6 +132,7 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
       C = ConstantExpr::getBitCast(C, Type::getInt32Ty(C->getContext()));
       return ReadDataFromGlobal(C, ByteOffset, CurPtr, BytesLeft, TD);
     }
+    return false;
   }
 
   if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
@@ -247,8 +250,7 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
     return 0;
   
   GlobalVariable *GV = dyn_cast<GlobalVariable>(GVal);
-  if (!GV || !GV->isConstant() || !GV->hasInitializer() ||
-      !GV->hasDefinitiveInitializer() ||
+  if (!GV || !GV->isConstant() || !GV->hasDefinitiveInitializer() ||
       !GV->getInitializer()->getType()->isSized())
     return 0;
 
