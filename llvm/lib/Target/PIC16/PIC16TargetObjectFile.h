@@ -56,6 +56,7 @@ namespace llvm {
     mutable std::vector<PIC16Section *> UDATASections_;
     mutable std::vector<PIC16Section *> IDATASections_;
     mutable PIC16Section * ROMDATASection_;
+    mutable PIC16Section * SHAREDUDATASection_;
 
     /// Standard Auto Sections.
     mutable std::vector<PIC16Section *> AUTOSections_;
@@ -110,6 +111,10 @@ namespace llvm {
     /// Allocate DATA at user specified address.
     const MCSection *allocateAtGivenAddress(const GlobalVariable *GV,
                                             const std::string &Addr) const;
+
+    /// Allocate a shared variable to SHARED section.
+    const MCSection *allocateSHARED(const GlobalVariable *GV,
+                                    Mangler *Mang) const;
    
     public:
     PIC16TargetObjectFile();
@@ -146,6 +151,9 @@ namespace llvm {
     }
     const PIC16Section *ROMDATASection() const {
       return ROMDATASection_;
+    }
+    const PIC16Section *SHAREDUDATASection() const {
+      return SHAREDUDATASection_;
     }
     const std::vector<PIC16Section *> &AUTOSections() const {
       return AUTOSections_;
