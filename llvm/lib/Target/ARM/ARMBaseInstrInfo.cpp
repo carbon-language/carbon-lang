@@ -729,7 +729,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     assert((RC == ARM::QPRRegisterClass ||
             RC == ARM::QPR_VFP2RegisterClass) && "Unknown regclass!");
     // FIXME: Neon instructions should support predicates
-    BuildMI(MBB, I, DL, get(ARM::VLDRQ), DestReg).addFrameIndex(FI).addImm(0).addMemOperand(MMO);
+    BuildMI(MBB, I, DL, get(ARM::VLDRQ), DestReg).addFrameIndex(FI).addImm(0).
+      addMemOperand(MMO);
   }
 }
 
