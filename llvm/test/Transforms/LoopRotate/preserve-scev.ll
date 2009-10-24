@@ -1,4 +1,4 @@
-; RUN: opt < %s -loop-rotate -loop-reduce -disable-output
+; RUN: opt < %s -loop-rotate -loop-reduce -verify-dom-info -verify-loop-info -disable-output
 
 define fastcc void @foo() nounwind {
 BB:

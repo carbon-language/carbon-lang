@@ -1,4 +1,4 @@
-; RUN: opt < %s -loop-rotate -disable-output
+; RUN: opt < %s -loop-rotate -verify-dom-info -verify-loop-info -disable-output
 
 define void @InterpretSEIMessage(i8* %msg) {
 entry:

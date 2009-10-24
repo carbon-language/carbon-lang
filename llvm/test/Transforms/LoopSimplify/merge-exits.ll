@@ -1,4 +1,4 @@
-; RUN: opt < %s -loopsimplify -loop-rotate -instcombine -indvars -S > %t
+; RUN: opt < %s -loopsimplify -loop-rotate -instcombine -indvars -S -verify-loop-info -verify-dom-info > %t
 ; RUN: not grep sext %t
 ; RUN: grep {phi i64} %t | count 1
 
