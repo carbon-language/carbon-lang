@@ -2854,11 +2854,10 @@ QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
   bool HasCopyAndDispose = BlockRequiresCopying(Ty);
 
   // FIXME: Move up
-  static int UniqueBlockByRefTypeID = 0;
-  // FIXME. This is error prone. Luckinly stack-canary stuff caught it.
-  char Name[128];
+  static unsigned int UniqueBlockByRefTypeID = 0;
+  char * Name = 
+    (char*)alloca(strlen("__Block_byref_") + 10 + 1 + strlen(DeclName) + 1);
   sprintf(Name, "__Block_byref_%d_%s", ++UniqueBlockByRefTypeID, DeclName);
-  assert((strlen(Name) < sizeof(Name)) && "BuildByRefType - buffer overflow");
   RecordDecl *T;
   T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
                          &Idents.get(Name));
@@ -2905,11 +2904,10 @@ QualType ASTContext::getBlockParmType(
   bool BlockHasCopyDispose,
   llvm::SmallVector<const Expr *, 8> &BlockDeclRefDecls) {
   // FIXME: Move up
-  static int UniqueBlockParmTypeID = 0;
-  // FIXME. This is error prone. Luckinly stack-canary stuff caught it.
-  char Name[128];
+  static unsigned int UniqueBlockParmTypeID = 0;
+  char * Name = 
+    (char*)alloca(strlen("__block_literal_") + 10 + 1);
   sprintf(Name, "__block_literal_%u", ++UniqueBlockParmTypeID);
-  assert((strlen(Name) < sizeof(Name)) && "getBlockParmType - buffer overflow");
   RecordDecl *T;
   T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
                          &Idents.get(Name));
