@@ -63,21 +63,30 @@ def executeShCmd(cmd, cfg, cwd, results):
     # output. This is null until we have seen some output using
     # stderr.
     for i,j in enumerate(cmd.commands):
+        # Apply the redirections, we use (N,) as a sentinal to indicate stdin,
+        # stdout, stderr for N equal to 0, 1, or 2 respectively. Redirects to or
+        # from a file are represented with a list [file, mode, file-object]
+        # where file-object is initially None.
         redirects = [(0,), (1,), (2,)]
         for r in j.redirects:
             if r[0] == ('>',2):
                 redirects[2] = [r[1], 'w', None]
+            elif r[0] == ('>>',2):
+                redirects[2] = [r[1], 'a', None]
             elif r[0] == ('>&',2) and r[1] in '012':
                 redirects[2] = redirects[int(r[1])]
             elif r[0] == ('>&',) or r[0] == ('&>',):
                 redirects[1] = redirects[2] = [r[1], 'w', None]
             elif r[0] == ('>',):
                 redirects[1] = [r[1], 'w', None]
+            elif r[0] == ('>>',):
+                redirects[1] = [r[1], 'a', None]
             elif r[0] == ('<',):
                 redirects[0] = [r[1], 'r', None]
             else:
                 raise NotImplementedError,"Unsupported redirect: %r" % (r,)
 
+        # Map from the final redirections to something subprocess can handle.
         final_redirects = []
         for index,r in enumerate(redirects):
             if r == (0,):
