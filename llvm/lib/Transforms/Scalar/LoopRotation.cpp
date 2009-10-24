@@ -21,6 +21,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
@@ -32,16 +33,6 @@ using namespace llvm;
 STATISTIC(NumRotated, "Number of loops rotated");
 namespace {
 
-  class RenameData {
-  public:
-    RenameData(Instruction *O, Value *P, Instruction *H) 
-      : Original(O), PreHeader(P), Header(H) { }
-  public:
-    Instruction *Original; // Original instruction
-    Value *PreHeader; // Original pre-header replacement
-    Instruction *Header; // New header replacement
-  };
-  
   class LoopRotate : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
@@ -71,25 +62,12 @@ namespace {
     /// Initialize local data
     void initialize();
 
-    /// Make sure all Exit block PHINodes have required incoming values.
-    /// If incoming value is constant or defined outside the loop then
-    /// PHINode may not have an entry for original pre-header. 
-    void  updateExitBlock();
-
-    /// Return true if this instruction is used outside original header.
-    bool usedOutsideOriginalHeader(Instruction *In);
-
-    /// Find Replacement information for instruction. Return NULL if it is
-    /// not available.
-    const RenameData *findReplacementData(Instruction *I);
-
     /// After loop rotation, loop pre-header has multiple sucessors.
     /// Insert one forwarding basic block to ensure that loop pre-header
     /// has only one successor.
     void preserveCanonicalLoopForm(LPPassManager &LPM);
 
   private:
-
     Loop *L;
     BasicBlock *OrigHeader;
     BasicBlock *OrigPreHeader;
@@ -97,7 +75,6 @@ namespace {
     BasicBlock *NewHeader;
     BasicBlock *Exit;
     LPPassManager *LPM_Ptr;
-    SmallVector<RenameData, MAX_HEADER_SIZE> LoopHeaderInfo;
   };
 }
   
@@ -199,199 +176,94 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
          "New header doesn't have one pred!");
   FoldSingleEntryPHINodes(NewHeader);
 
-  // Copy PHI nodes and other instructions from the original header
-  // into the original pre-header. Unlike the original header, the original
-  // pre-header is not a member of the loop.
-  //
-  // The new loop header is the one and only successor of original header that
-  // is inside the loop. All other original header successors are outside 
-  // the loop. Copy PHI Nodes from the original header into the new loop header.
-  // Add second incoming value, from original loop pre-header into these phi 
-  // nodes. If a value defined in original header is used outside original 
-  // header then new loop header will need new phi nodes with two incoming 
-  // values, one definition from original header and second definition is 
-  // from original loop pre-header.
-
-  // Remove terminator from Original pre-header. Original pre-header will
-  // receive a clone of original header terminator as a new terminator.
-  OrigPreHeader->getInstList().pop_back();
+  // Begin by walking OrigHeader and populating ValueMap with an entry for
+  // each Instruction.
   BasicBlock::iterator I = OrigHeader->begin(), E = OrigHeader->end();
-  PHINode *PN = 0;
-  for (; (PN = dyn_cast<PHINode>(I)); ++I) {
-    // PHI nodes are not copied into original pre-header. Instead their values
-    // are directly propagated.
-    Value *NPV = PN->getIncomingValueForBlock(OrigPreHeader);
+  DenseMap<const Value *, Value *> ValueMap;
 
-    // Create a new PHI node with two incoming values for NewHeader.
-    // One incoming value is from OrigLatch (through OrigHeader) and the
-    // second incoming value is from original pre-header.
-    PHINode *NH = PHINode::Create(PN->getType(), PN->getName(),
-                                  NewHeader->begin());
-    NH->addIncoming(PN->getIncomingValueForBlock(OrigLatch), OrigHeader);
-    NH->addIncoming(NPV, OrigPreHeader);
-    
-    // "In" can be replaced by NH at various places.
-    LoopHeaderInfo.push_back(RenameData(PN, NPV, NH));
-  }
+  // For PHI nodes, the value available in OldPreHeader is just the
+  // incoming value from OldPreHeader.
+  for (; PHINode *PN = dyn_cast<PHINode>(I); ++I)
+    ValueMap[PN] = PN->getIncomingValue(PN->getBasicBlockIndex(OrigPreHeader));
 
-  // Now, handle non-phi instructions.
+  // For the rest of the instructions, create a clone in the OldPreHeader.
+  TerminatorInst *LoopEntryBranch = OrigPreHeader->getTerminator();
   for (; I != E; ++I) {
-    Instruction *In = I;
-    assert(!isa<PHINode>(In) && "PHINode is not expected here");
-    
-    // This is not a PHI instruction. Insert its clone into original pre-header.
-    // If this instruction is using a value from same basic block then
-    // update it to use value from cloned instruction.
-    Instruction *C = In->clone();
-    C->setName(In->getName());
-    OrigPreHeader->getInstList().push_back(C);
-
-    for (unsigned opi = 0, e = In->getNumOperands(); opi != e; ++opi) {
-      Instruction *OpInsn = dyn_cast<Instruction>(In->getOperand(opi));
-      if (!OpInsn) continue;  // Ignore non-instruction values.
-      if (const RenameData *D = findReplacementData(OpInsn))
-        C->setOperand(opi, D->PreHeader);
-    }
-
-    // If this instruction is used outside this basic block then
-    // create new PHINode for this instruction.
-    Instruction *NewHeaderReplacement = NULL;
-    if (usedOutsideOriginalHeader(In)) {
-      PHINode *PN = PHINode::Create(In->getType(), In->getName(),
-                                    NewHeader->begin());
-      PN->addIncoming(In, OrigHeader);
-      PN->addIncoming(C, OrigPreHeader);
-      NewHeaderReplacement = PN;
-    }
-    LoopHeaderInfo.push_back(RenameData(In, C, NewHeaderReplacement));
+    Instruction *C = I->clone();
+    C->setName(I->getName());
+    C->insertBefore(LoopEntryBranch);
+    ValueMap[I] = C;
   }
 
-  // Rename uses of original header instructions to reflect their new
-  // definitions (either from original pre-header node or from newly created
-  // new header PHINodes.
-  //
-  // Original header instructions are used in
-  // 1) Original header:
-  //
-  //    If instruction is used in non-phi instructions then it is using
-  //    defintion from original heder iteself. Do not replace this use
-  //    with definition from new header or original pre-header.
-  //
-  //    If instruction is used in phi node then it is an incoming 
-  //    value. Rename its use to reflect new definition from new-preheader
-  //    or new header.
-  //
-  // 2) Inside loop but not in original header
-  //
-  //    Replace this use to reflect definition from new header.
-  for (unsigned LHI = 0, LHI_E = LoopHeaderInfo.size(); LHI != LHI_E; ++LHI) {
-    const RenameData &ILoopHeaderInfo = LoopHeaderInfo[LHI];
+  // Along with all the other instructions, we just cloned OrigHeader's
+  // terminator into OrigPreHeader. Fix up the PHI nodes in each of OrigHeader's
+  // successors by duplicating their incoming values for OrigHeader.
+  TerminatorInst *TI = OrigHeader->getTerminator();
+  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+    for (BasicBlock::iterator BI = TI->getSuccessor(i)->begin();
+         PHINode *PN = dyn_cast<PHINode>(BI); ++BI)
+      PN->addIncoming(PN->getIncomingValueForBlock(OrigHeader), OrigPreHeader);
 
-    if (!ILoopHeaderInfo.Header)
-      continue;
+  // Now that OrigPreHeader has a clone of OrigHeader's terminator, remove
+  // OrigPreHeader's old terminator (the original branch into the loop), and
+  // remove the corresponding incoming values from the PHI nodes in OrigHeader.
+  LoopEntryBranch->eraseFromParent();
+  for (I = OrigHeader->begin(); PHINode *PN = dyn_cast<PHINode>(I); ++I)
+    PN->removeIncomingValue(PN->getBasicBlockIndex(OrigPreHeader));
 
-    Instruction *OldPhi = ILoopHeaderInfo.Original;
-    Instruction *NewPhi = ILoopHeaderInfo.Header;
+  // Now fix up users of the instructions in OrigHeader, insertting PHI nodes
+  // as necessary.
+  SSAUpdater SSA;
+  for (I = OrigHeader->begin(); I != E; ++I) {
+    Value *OrigHeaderVal = I;
+    Value *OrigPreHeaderVal = ValueMap[OrigHeaderVal];
 
-    // Before replacing uses, collect them first, so that iterator is
-    // not invalidated.
-    SmallVector<Instruction *, 16> AllUses;
-    for (Value::use_iterator UI = OldPhi->use_begin(), UE = OldPhi->use_end();
-         UI != UE; ++UI)
-      AllUses.push_back(cast<Instruction>(UI));
+    // The value now exits in two versions: the initial value in the preheader
+    // and the loop "next" value in the original header.
+    SSA.Initialize(OrigHeaderVal);
+    SSA.AddAvailableValue(OrigHeader, OrigHeaderVal);
+    SSA.AddAvailableValue(OrigPreHeader, OrigPreHeaderVal);
 
-    for (SmallVector<Instruction *, 16>::iterator UI = AllUses.begin(), 
-           UE = AllUses.end(); UI != UE; ++UI) {
-      Instruction *U = *UI;
-      BasicBlock *Parent = U->getParent();
+    // Visit each use of the OrigHeader instruction.
+    for (Value::use_iterator UI = OrigHeaderVal->use_begin(),
+         UE = OrigHeaderVal->use_end(); UI != UE; ) {
+      // Grab the use before incrementing the iterator.
+      Use &U = UI.getUse();
 
-      // Used inside original header
-      if (Parent == OrigHeader) {
-        // Do not rename uses inside original header non-phi instructions.
-        PHINode *PU = dyn_cast<PHINode>(U);
-        if (!PU)
+      // Increment the iterator before removing the use from the list.
+      ++UI;
+
+      // SSAUpdater can't handle a non-PHI use in the same block as an
+      // earlier def. We can easily handle those cases manually.
+      Instruction *UserInst = cast<Instruction>(U.getUser());
+      if (!isa<PHINode>(UserInst)) {
+        BasicBlock *UserBB = UserInst->getParent();
+
+        // The original users in the OrigHeader are already using the
+        // original definitions.
+        if (UserBB == OrigHeader)
           continue;
 
-        // Do not rename uses inside original header phi nodes, if the
-        // incoming value is for new header.
-        if (PU->getBasicBlockIndex(NewHeader) != -1
-            && PU->getIncomingValueForBlock(NewHeader) == U)
+        // Users in the OrigPreHeader need to use the value to which the
+        // original definitions are mapped.
+        if (UserBB == OrigPreHeader) {
+          U = OrigPreHeaderVal;
           continue;
-        
-       U->replaceUsesOfWith(OldPhi, NewPhi);
-       continue;
+        }
       }
 
-      // Used inside loop, but not in original header.
-      if (L->contains(U->getParent())) {
-        if (U != NewPhi)
-          U->replaceUsesOfWith(OldPhi, NewPhi);
-        continue;
-      }
-      
-      // Used inside Exit Block. Since we are in LCSSA form, U must be PHINode.
-      if (U->getParent() == Exit) {
-        assert(isa<PHINode>(U) && "Use in Exit Block that is not PHINode");
-        
-        PHINode *UPhi = cast<PHINode>(U);
-        // UPhi already has one incoming argument from original header. 
-        // Add second incoming argument from new Pre header.
-        UPhi->addIncoming(ILoopHeaderInfo.PreHeader, OrigPreHeader);
-      } else {
-        // Used outside Exit block. Create a new PHI node in the exit block
-        // to receive the value from the new header and pre-header.
-        PHINode *PN = PHINode::Create(U->getType(), U->getName(),
-                                      Exit->begin());
-        PN->addIncoming(ILoopHeaderInfo.PreHeader, OrigPreHeader);
-        PN->addIncoming(OldPhi, OrigHeader);
-        U->replaceUsesOfWith(OldPhi, PN);
-      }
+      // Anything else can be handled by SSAUpdater.
+      SSA.RewriteUse(U);
     }
   }
-  
-  /// Make sure all Exit block PHINodes have required incoming values.
-  updateExitBlock();
 
-  // Update CFG
-
-  // Removing incoming branch from loop preheader to original header.
-  // Now original header is inside the loop.
-  for (BasicBlock::iterator I = OrigHeader->begin();
-       (PN = dyn_cast<PHINode>(I)); ++I)
-    PN->removeIncomingValue(OrigPreHeader);
-
-  // Make NewHeader as the new header for the loop.
+  // NewHeader is now the header of the loop.
   L->moveToHeader(NewHeader);
 
   preserveCanonicalLoopForm(LPM);
 
   NumRotated++;
   return true;
-}
-
-/// Make sure all Exit block PHINodes have required incoming values.
-/// If an incoming value is constant or defined outside the loop then
-/// PHINode may not have an entry for the original pre-header.
-void LoopRotate::updateExitBlock() {
-
-  PHINode *PN;
-  for (BasicBlock::iterator I = Exit->begin();
-       (PN = dyn_cast<PHINode>(I)); ++I) {
-
-    // There is already one incoming value from original pre-header block.
-    if (PN->getBasicBlockIndex(OrigPreHeader) != -1)
-      continue;
-
-    const RenameData *ILoopHeaderInfo;
-    Value *V = PN->getIncomingValueForBlock(OrigHeader);
-    if (isa<Instruction>(V) &&
-        (ILoopHeaderInfo = findReplacementData(cast<Instruction>(V)))) {
-      assert(ILoopHeaderInfo->PreHeader && "Missing New Preheader Instruction");
-      PN->addIncoming(ILoopHeaderInfo->PreHeader, OrigPreHeader);
-    } else {
-      PN->addIncoming(V, OrigPreHeader);
-    }
-  }
 }
 
 /// Initialize local data
@@ -401,34 +273,6 @@ void LoopRotate::initialize() {
   OrigPreHeader = NULL;
   NewHeader = NULL;
   Exit = NULL;
-
-  LoopHeaderInfo.clear();
-}
-
-/// Return true if this instruction is used by any instructions in the loop that
-/// aren't in original header.
-bool LoopRotate::usedOutsideOriginalHeader(Instruction *In) {
-  for (Value::use_iterator UI = In->use_begin(), UE = In->use_end();
-       UI != UE; ++UI) {
-    BasicBlock *UserBB = cast<Instruction>(UI)->getParent();
-    if (UserBB != OrigHeader && L->contains(UserBB))
-      return true;
-  }
-
-  return false;
-}
-
-/// Find Replacement information for instruction. Return NULL if it is
-/// not available.
-const RenameData *LoopRotate::findReplacementData(Instruction *In) {
-
-  // Since LoopHeaderInfo is small, linear walk is OK.
-  for (unsigned LHI = 0, LHI_E = LoopHeaderInfo.size(); LHI != LHI_E; ++LHI) {
-    const RenameData &ILoopHeaderInfo = LoopHeaderInfo[LHI];
-    if (ILoopHeaderInfo.Original == In)
-      return &ILoopHeaderInfo;
-  }
-  return NULL;
 }
 
 /// After loop rotation, loop pre-header has multiple sucessors.
