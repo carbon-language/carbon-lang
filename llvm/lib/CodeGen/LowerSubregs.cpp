@@ -195,7 +195,9 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
     // Insert sub-register copy
     const TargetRegisterClass *TRC0= TRI.getPhysicalRegisterRegClass(DstSubReg);
     const TargetRegisterClass *TRC1= TRI.getPhysicalRegisterRegClass(InsReg);
-    TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
+    bool Emitted = TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
+    (void)Emitted;
+    assert(Emitted && "Subreg and Dst must be of compatible register class");
     // Transfer the kill/dead flags, if needed.
     if (MI->getOperand(0).isDead())
       TransferDeadFlag(MI, DstSubReg, TRI);
@@ -209,7 +211,7 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
 
   DEBUG(errs() << '\n');
   MBB->erase(MI);
-  return true;                    
+  return true;
 }
 
 bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
@@ -264,8 +266,11 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
       // KILL.
       BuildMI(*MBB, MI, MI->getDebugLoc(),
               TII.get(TargetInstrInfo::KILL), DstSubReg);
-    else
-      TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
+    else {
+      bool Emitted = TII.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC0, TRC1);
+      (void)Emitted;
+      assert(Emitted && "Subreg and Dst must be of compatible register class");
+    }
     MachineBasicBlock::iterator CopyMI = MI;
     --CopyMI;
 
