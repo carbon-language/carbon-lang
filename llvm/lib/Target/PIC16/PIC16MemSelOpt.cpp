@@ -144,7 +144,7 @@ bool MemSelOpt::processInstruction(MachineInstr *MI) {
   }
 
   // Get the section name(NewBank) for MemOp.
-  // This assumes that the section names for globals are already set by
+  // This assumes that the section names for globals are laready set by
   // AsmPrinter->doInitialization.
   std::string NewBank = CurBank;
   if (Op.getType() ==  MachineOperand::MO_GlobalAddress &&
@@ -156,11 +156,7 @@ bool MemSelOpt::processInstruction(MachineInstr *MI) {
     std::string Sym = Op.getSymbolName();
     NewBank = PAN::getSectionNameForSym(Sym);
   }
-
-  // If the section is shared section, do not emit banksel.
-  if (NewBank == PAN::getSharedUDataSectionName())
-    return Changed;
-
+ 
   // If the previous and new section names are same, we don't need to
   // emit banksel. 
   if (NewBank.compare(CurBank) != 0 ) {

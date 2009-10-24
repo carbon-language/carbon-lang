@@ -72,7 +72,6 @@ getPIC16DataSection(const std::string &Name, PIC16SectionType Ty,
   case UDATA: UDATASections_.push_back(Entry); break;
   case IDATA: IDATASections_.push_back(Entry); break;
   case ROMDATA: ROMDATASection_ = Entry; break;
-  case UDATA_SHR: SHAREDUDATASection_ = Entry; break;
   }
 
   return Entry;
@@ -280,10 +279,7 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
     std::string AddrStr = "Address=";
     if (SectName.compare(0, AddrStr.length(), AddrStr) == 0) {
       std::string SectAddr = SectName.substr(AddrStr.length());
-      if (SectAddr.compare("NEAR") == 0)
-        return allocateSHARED(GVar, Mang);
-      else
-        return allocateAtGivenAddress(GVar, SectAddr);
+      return allocateAtGivenAddress(GVar, SectAddr);
     }
      
     // Create the section specified with section attribute. 
@@ -292,25 +288,6 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 
   return getPIC16DataSection(GV->getSection().c_str(), UDATA);
 }
-
-const MCSection *
-PIC16TargetObjectFile::allocateSHARED(const GlobalVariable *GV,
-                                      Mangler *Mang) const {
-  // Make sure that this is an uninitialized global.
-  assert(GV->hasInitializer() && "This global doesn't need space");
-  if (!GV->getInitializer()->isNullValue()) {
-    // FIXME: Generate a warning in this case that near qualifier will be 
-    // ignored.
-    return SelectSectionForGlobal(GV, SectionKind::getDataRel(), Mang, *TM); 
-  } 
-  std::string Name = PAN::getSharedUDataSectionName(); 
-
-  PIC16Section *SharedUDataSect = getPIC16DataSection(Name.c_str(), UDATA_SHR); 
-  // Insert the GV into shared section.
-  SharedUDataSect->Items.push_back(GV);
-  return SharedUDataSect;
-}
-
 
 // Interface used by AsmPrinter to get a code section for a function.
 const PIC16Section *

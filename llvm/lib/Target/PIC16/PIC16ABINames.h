@@ -234,12 +234,6 @@ namespace llvm {
       return "romdata.#";
     }
 
-    static std::string getSharedUDataSectionName() {
-       std::ostringstream o;
-       o << getTagName(PREFIX_SYMBOL)  << "udata_shr" << ".#";
-       return o.str();
-    }
-
     static std::string getRomdataSectionName(unsigned num,
                                              std::string prefix = "") {
        std::ostringstream o;

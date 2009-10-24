@@ -55,7 +55,6 @@ namespace llvm {
     void EmitUData (Module &M);
     void EmitAllAutos (Module &M);
     void EmitRomData (Module &M);
-    void EmitSharedUdata(Module &M);
     void EmitUserSections (Module &M);
     void EmitFunctionFrame(MachineFunction &MF);
     void printLibcallDecls();
