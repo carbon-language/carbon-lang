@@ -161,6 +161,7 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
         return true;
 
       // Move to the next element of the struct.
+      CurPtr += NextEltOffset-CurEltOffset-ByteOffset;
       BytesLeft -= NextEltOffset-CurEltOffset-ByteOffset;
       ByteOffset = 0;
       CurEltOffset = NextEltOffset;

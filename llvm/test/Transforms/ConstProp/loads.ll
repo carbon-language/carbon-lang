@@ -2,88 +2,102 @@
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 
-@test1 = constant {{i32,i8},i32} {{i32,i8} { i32 -559038737, i8 186 }, i32 -889275714 }
-@test2 = constant double 1.0
-@test3 = constant {i64, i64} { i64 123, i64 112312312 }
+@g1 = constant {{i32,i8},i32} {{i32,i8} { i32 -559038737, i8 186 }, i32 -889275714 }
+@g2 = constant double 1.0
+@g3 = constant {i64, i64} { i64 123, i64 112312312 }
 
 ; Simple load
 define i32 @test1() {
-  %r = load i32* getelementptr ({{i32,i8},i32}* @test1, i32 0, i32 0, i32 0)
+  %r = load i32* getelementptr ({{i32,i8},i32}* @g1, i32 0, i32 0, i32 0)
   ret i32 %r
-; @test1
+; CHECK: @test1
 ; CHECK: ret i32 -559038737
 }
 
 ; PR3152
 ; Load of first 16 bits of 32-bit value.
 define i16 @test2() {
-  %r = load i16* bitcast(i32* getelementptr ({{i32,i8},i32}* @test1, i32 0, i32 0, i32 0) to i16*)
+  %r = load i16* bitcast(i32* getelementptr ({{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16*)
   ret i16 %r
 
-; @test2
+; CHECK: @test2
 ; CHECK: ret i16 -16657 
 }
 
 ; Load of second 16 bits of 32-bit value.
 define i16 @test3() {
-  %r = load i16* getelementptr(i16* bitcast(i32* getelementptr ({{i32,i8},i32}* @test1, i32 0, i32 0, i32 0) to i16*), i32 1)
+  %r = load i16* getelementptr(i16* bitcast(i32* getelementptr ({{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16*), i32 1)
   ret i16 %r
 
-; @test3
+; CHECK: @test3
 ; CHECK: ret i16 -8531
 }
 
 ; Load of 8 bit field + tail padding.
 define i16 @test4() {
-  %r = load i16* getelementptr(i16* bitcast(i32* getelementptr ({{i32,i8},i32}* @test1, i32 0, i32 0, i32 0) to i16*), i32 2)
+  %r = load i16* getelementptr(i16* bitcast(i32* getelementptr ({{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16*), i32 2)
   ret i16 %r
-; @test4
+; CHECK: @test4
 ; CHECK: ret i16 186
 }
 
 ; Load of double bits.
 define i64 @test6() {
-  %r = load i64* bitcast(double* @test2 to i64*)
+  %r = load i64* bitcast(double* @g2 to i64*)
   ret i64 %r
 
-; @test6
+; CHECK: @test6
 ; CHECK: ret i64 4607182418800017408
 }
 
 ; Load of double bits.
 define i16 @test7() {
-  %r = load i16* bitcast(double* @test2 to i16*)
+  %r = load i16* bitcast(double* @g2 to i16*)
   ret i16 %r
 
-; @test7
+; CHECK: @test7
 ; CHECK: ret i16 0
 }
 
 ; Double load.
 define double @test8() {
-  %r = load double* bitcast({{i32,i8},i32}* @test1 to double*)
+  %r = load double* bitcast({{i32,i8},i32}* @g1 to double*)
   ret double %r
 
-; @test8
-; CHECK: ret double 0xDEADBEBA
+; CHECK: @test8
+; CHECK: ret double 0xBADEADBEEF
 }
 
 
 ; i128 load.
 define i128 @test9() {
-  %r = load i128* bitcast({i64, i64}* @test3 to i128*)
+  %r = load i128* bitcast({i64, i64}* @g3 to i128*)
   ret i128 %r
 
-; @test9
-; CHECK: ret i128 112312312
+; CHECK: @test9
+; CHECK: ret i128 2071796475790618158476296315
 }
 
 ; vector load.
 define <2 x i64> @test10() {
-  %r = load <2 x i64>* bitcast({i64, i64}* @test3 to <2 x i64>*)
+  %r = load <2 x i64>* bitcast({i64, i64}* @g3 to <2 x i64>*)
   ret <2 x i64> %r
 
-; @test10
-; CHECK: ret <2 x i64> <i64 112312312, i64 0>
+; CHECK: @test10
+; CHECK: ret <2 x i64> <i64 123, i64 112312312>
 }
+
+
+; PR5287
+@g4 = internal constant { i8, i8 } { i8 -95, i8 8 }
+
+define i16 @test11() nounwind {
+entry:
+  %a = load i16* bitcast ({ i8, i8 }* @g4 to i16*)
+  ret i16 %a
+  
+; CHECK: @test11
+; CHECK: ret i16 2209
+}
+
 
