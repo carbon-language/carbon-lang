@@ -2565,7 +2565,7 @@ void SimpleRegisterCoalescing::CalculateSpillWeights() {
     LiveIndex MBBEnd = li_->getMBBEndIdx(MBB);
     MachineLoop* loop = loopInfo->getLoopFor(MBB);
     unsigned loopDepth = loop ? loop->getLoopDepth() : 0;
-    bool isExit = loop ? loop->isLoopExit(MBB) : false;
+    bool isExiting = loop ? loop->isLoopExiting(MBB) : false;
 
     for (MachineBasicBlock::const_iterator mii = MBB->begin(), mie = MBB->end();
          mii != mie; ++mii) {
@@ -2599,7 +2599,7 @@ void SimpleRegisterCoalescing::CalculateSpillWeights() {
 
         LiveInterval &RegInt = li_->getInterval(Reg);
         float Weight = li_->getSpillWeight(HasDef, HasUse, loopDepth);
-        if (HasDef && isExit) {
+        if (HasDef && isExiting) {
           // Looks like this is a loop count variable update.
           LiveIndex DefIdx =
             li_->getDefIndex(li_->getInstructionIndex(MI));

@@ -118,7 +118,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   // If the loop header is not one of the loop exiting blocks then
   // either this loop is already rotated or it is not
   // suitable for loop rotation transformations.
-  if (!L->isLoopExit(OrigHeader))
+  if (!L->isLoopExiting(OrigHeader))
     return false;
 
   BranchInst *BI = dyn_cast<BranchInst>(OrigHeader->getTerminator());
