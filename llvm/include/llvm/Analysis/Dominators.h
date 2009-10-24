@@ -905,9 +905,9 @@ public:
   iterator       find(BasicBlock *B)       { return Frontiers.find(B); }
   const_iterator find(BasicBlock *B) const { return Frontiers.find(B); }
 
-  void addBasicBlock(BasicBlock *BB, const DomSetType &frontier) {
+  iterator addBasicBlock(BasicBlock *BB, const DomSetType &frontier) {
     assert(find(BB) == end() && "Block already in DominanceFrontier!");
-    Frontiers.insert(std::make_pair(BB, frontier));
+    return Frontiers.insert(std::make_pair(BB, frontier)).first;
   }
 
   /// removeBlock - Remove basic block BB's frontier.
