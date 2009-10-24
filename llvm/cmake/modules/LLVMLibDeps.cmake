@@ -23,7 +23,6 @@ set(MSVC_LIB_DEPS_LLVMCodeGen LLVMAnalysis LLVMCore LLVMMC LLVMScalarOpts LLVMSu
 set(MSVC_LIB_DEPS_LLVMCore LLVMSupport LLVMSystem)
 set(MSVC_LIB_DEPS_LLVMCppBackend LLVMCore LLVMCppBackendInfo LLVMSupport LLVMSystem LLVMTarget)
 set(MSVC_LIB_DEPS_LLVMCppBackendInfo LLVMSupport)
-set(MSVC_LIB_DEPS_LLVMDebugger LLVMAnalysis LLVMBitReader LLVMCore LLVMSupport LLVMSystem)
 set(MSVC_LIB_DEPS_LLVMExecutionEngine LLVMCore LLVMSupport LLVMSystem LLVMTarget)
 set(MSVC_LIB_DEPS_LLVMHello LLVMCore LLVMSupport LLVMSystem)
 set(MSVC_LIB_DEPS_LLVMInstrumentation LLVMAnalysis LLVMCore LLVMScalarOpts LLVMSupport LLVMSystem LLVMTransformUtils)
