@@ -2337,6 +2337,7 @@ bool Sema::isImplicitMemberReference(const CXXScopeSpec *SS, NamedDecl *D,
       if (!Method && (FunTmpl = dyn_cast<FunctionTemplateDecl>(*Ovl)))
         Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
       
+      // FIXME: Do we have to know if there are explicit template arguments?
       if (Method && !Method->isStatic()) {
         Ctx = Method->getParent();
         if (isa<CXXMethodDecl>(D) && !FunTmpl)

@@ -4287,10 +4287,15 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(OvlExpr)) {
     Ovl = dyn_cast<OverloadedFunctionDecl>(DR->getDecl());
     FunctionTemplate = dyn_cast<FunctionTemplateDecl>(DR->getDecl());
+    HasExplicitTemplateArgs = DR->hasExplicitTemplateArgumentList();
+    ExplicitTemplateArgs = DR->getTemplateArgs();
+    NumExplicitTemplateArgs = DR->getNumTemplateArgs();
   } else if (MemberExpr *ME = dyn_cast<MemberExpr>(OvlExpr)) {
     Ovl = dyn_cast<OverloadedFunctionDecl>(ME->getMemberDecl());
     FunctionTemplate = dyn_cast<FunctionTemplateDecl>(ME->getMemberDecl());
-    // FIXME: Explicit template arguments
+    HasExplicitTemplateArgs = ME->hasExplicitTemplateArgumentList();
+    ExplicitTemplateArgs = ME->getTemplateArgs();
+    NumExplicitTemplateArgs = ME->getNumTemplateArgs();
   } else if (TemplateIdRefExpr *TIRE = dyn_cast<TemplateIdRefExpr>(OvlExpr)) {
     TemplateName Name = TIRE->getTemplateName();
     Ovl = Name.getAsOverloadedFunctionDecl();
@@ -4366,6 +4371,10 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       // Skip non-static functions when converting to pointer, and static
       // when converting to member pointer.
       if (Method->isStatic() == IsMember)
+        continue;
+      
+      // If we have explicit template arguments, skip non-templates.
+      if (HasExplicitTemplateArgs)
         continue;
     } else if (IsMember)
       continue;
@@ -4967,10 +4976,15 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
 
     for (OverloadIterator Func(MemExpr->getMemberDecl()), FuncEnd;
          Func != FuncEnd; ++Func) {
-      if ((Method = dyn_cast<CXXMethodDecl>(*Func)))
+      if ((Method = dyn_cast<CXXMethodDecl>(*Func))) {
+        // If explicit template arguments were provided, we can't call a
+        // non-template member function.
+        if (MemExpr->hasExplicitTemplateArgumentList())
+          continue;
+        
         AddMethodCandidate(Method, ObjectArg, Args, NumArgs, CandidateSet,
                            /*SuppressUserConversions=*/false);
-      else
+      } else
         AddMethodTemplateCandidate(cast<FunctionTemplateDecl>(*Func),
                                    MemExpr->hasExplicitTemplateArgumentList(),
                                    MemExpr->getTemplateArgs(),
