@@ -322,7 +322,7 @@ DominanceFrontier::calculate(const DominatorTree &DT,
 
 void DominanceFrontierBase::print(raw_ostream &OS, const Module* ) const {
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    OS << "  DomFrontier for BB";
+    OS << "  DomFrontier for BB ";
     if (I->first)
       WriteAsOperand(OS, I->first, false);
     else
@@ -332,11 +332,13 @@ void DominanceFrontierBase::print(raw_ostream &OS, const Module* ) const {
     const std::set<BasicBlock*> &BBs = I->second;
     
     for (std::set<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
-         I != E; ++I)
+         I != E; ++I) {
+      OS << ' ';
       if (*I)
         WriteAsOperand(OS, *I, false);
       else
-        OS << " <<exit node>>";
+        OS << "<<exit node>>";
+    }
     OS << "\n";
   }
 }
