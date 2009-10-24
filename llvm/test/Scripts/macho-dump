@@ -104,6 +104,9 @@ def dumpLoadCommand(f, i, opts):
       dumpSymtabCommand(f, opts)
    elif cmd == 11:
       dumpDysymtabCommand(f, opts)
+   elif cmd == 27:
+      import uuid
+      print "  ('uuid', %s)" % uuid.UUID(bytes=f.read(16))
    else:
       print >>sys.stderr,"%s: warning: unknown load command: %r" % (sys.argv[0], cmd)
       f.read(cmdSize - 8)
