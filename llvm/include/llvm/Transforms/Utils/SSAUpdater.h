@@ -50,7 +50,7 @@ class SSAUpdater {
 public:
   /// SSAUpdater constructor.  If InsertedPHIs is specified, it will be filled
   /// in with all PHI Nodes created by rewriting.
-  SSAUpdater(SmallVectorImpl<PHINode*> *InsertedPHIs = 0);
+  explicit SSAUpdater(SmallVectorImpl<PHINode*> *InsertedPHIs = 0);
   ~SSAUpdater();
 
   /// Initialize - Reset this object to get ready for a new set of SSA
