@@ -166,10 +166,20 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
       ARM::R4, ARM::R5, ARM::R6,
       ARM::R8, ARM::R9, ARM::R10,ARM::R11,ARM::R7 };
 
+    // For Thumb1 mode, we don't want to allocate hi regs at all, as we
+    // don't know how to spill them. If we make our prologue/epilogue code
+    // smarter at some point, we can go back to using the above allocation
+    // orders for the Thumb1 instructions that know how to use hi regs.
+    static const unsigned THUMB_GPR_AO[] = {
+      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
+      ARM::R4, ARM::R5, ARM::R6, ARM::R7 };
+
     GPRClass::iterator
     GPRClass::allocation_order_begin(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
+      if (Subtarget.isThumb1Only())
+        return THUMB_GPR_AO;
       if (Subtarget.isTargetDarwin()) {
         if (Subtarget.isR9Reserved())
           return ARM_GPR_AO_4;
@@ -191,6 +201,12 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
       GPRClass::iterator I;
+
+      if (Subtarget.isThumb1Only()) {
+        I = THUMB_GPR_AO + (sizeof(THUMB_GPR_AO)/sizeof(unsigned));
+        // Mac OS X requires FP not to be clobbered for backtracing purpose.
+        return (Subtarget.isTargetDarwin() || RI->hasFP(MF)) ? I-1 : I;
+      }
 
       if (Subtarget.isTargetDarwin()) {
         if (Subtarget.isR9Reserved())
