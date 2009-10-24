@@ -20,7 +20,6 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
@@ -329,8 +328,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
   SmallVector<Constant*, 8> Ops;
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
     if (Constant *Op = dyn_cast_or_null<Constant>(MapValue(I->getOperand(i),
-                                                           ValueMap,
-                                                           Context)))
+                                                           ValueMap)))
       Ops.push_back(Op);
     else
       return 0;  // All operands not constant!
@@ -366,7 +364,6 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                      ClonedCodeInfo *CodeInfo,
                                      const TargetData *TD) {
   assert(NameSuffix && "NameSuffix cannot be null!");
-  LLVMContext &Context = OldFunc->getContext();
   
 #ifndef NDEBUG
   for (Function::const_arg_iterator II = OldFunc->arg_begin(), 
@@ -437,7 +434,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
         if (BasicBlock *MappedBlock = 
             cast_or_null<BasicBlock>(ValueMap[PN->getIncomingBlock(pred)])) {
           Value *InVal = MapValue(PN->getIncomingValue(pred),
-                                  ValueMap, Context);
+                                  ValueMap);
           assert(InVal && "Unknown input value?");
           PN->setIncomingValue(pred, InVal);
           PN->setIncomingBlock(pred, MappedBlock);
