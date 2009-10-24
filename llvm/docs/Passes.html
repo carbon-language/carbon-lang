@@ -158,7 +158,6 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#memcpyopt">-memcpyopt</a></td><td>Optimize use of memcpy and friends</td></tr>
 <tr><td><a href="#mergereturn">-mergereturn</a></td><td>Unify function exit nodes</td></tr>
 <tr><td><a href="#prune-eh">-prune-eh</a></td><td>Remove unused exception handling info</td></tr>
-<tr><td><a href="#raiseallocs">-raiseallocs</a></td><td>Raise allocations from calls to instructions</td></tr>
 <tr><td><a href="#reassociate">-reassociate</a></td><td>Reassociate expressions</td></tr>
 <tr><td><a href="#reg2mem">-reg2mem</a></td><td>Demote all values to stack slots</td></tr>
 <tr><td><a href="#scalarrepl">-scalarrepl</a></td><td>Scalar Replacement of Aggregates</td></tr>
@@ -1499,17 +1498,6 @@ if (X &lt; 3) {</pre>
   turning <tt>invoke</tt> instructions into <tt>call</tt> instructions if and
   only if the callee cannot throw an exception. It implements this as a
   bottom-up traversal of the call-graph.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="raiseallocs">Raise allocations from calls to instructions</a>
-</div>
-<div class="doc_text">
-  <p>
-  Converts <tt>@malloc</tt> and <tt>@free</tt> calls to <tt>malloc</tt> and
-  <tt>free</tt> instructions.
   </p>
 </div>
 

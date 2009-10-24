@@ -2800,7 +2800,7 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   // Memory.
   case lltok::kw_alloca:         return ParseAlloc(Inst, PFS);
   case lltok::kw_malloc:         return ParseAlloc(Inst, PFS, BB, false);
-  case lltok::kw_free:           return ParseFree(Inst, PFS);
+  case lltok::kw_free:           return ParseFree(Inst, PFS, BB);
   case lltok::kw_load:           return ParseLoad(Inst, PFS, false);
   case lltok::kw_store:          return ParseStore(Inst, PFS, false);
   case lltok::kw_volatile:
@@ -3496,12 +3496,13 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
 
 /// ParseFree
 ///   ::= 'free' TypeAndValue
-bool LLParser::ParseFree(Instruction *&Inst, PerFunctionState &PFS) {
+bool LLParser::ParseFree(Instruction *&Inst, PerFunctionState &PFS,
+                         BasicBlock* BB) {
   Value *Val; LocTy Loc;
   if (ParseTypeAndValue(Val, Loc, PFS)) return true;
   if (!isa<PointerType>(Val->getType()))
     return Error(Loc, "operand to free must be a pointer");
-  Inst = new FreeInst(Val);
+  Inst = CallInst::CreateFree(Val, BB);
   return false;
 }
 

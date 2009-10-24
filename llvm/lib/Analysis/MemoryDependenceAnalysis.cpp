@@ -118,6 +118,10 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
       
       // FreeInsts erase the entire structure
       PointerSize = ~0ULL;
+    } else if (isFreeCall(Inst)) {
+      Pointer = Inst->getOperand(0);
+      // calls to free() erase the entire structure
+      PointerSize = ~0ULL;
     } else if (isa<CallInst>(Inst) || isa<InvokeInst>(Inst)) {
       // Debug intrinsics don't cause dependences.
       if (isa<DbgInfoIntrinsic>(Inst)) continue;
@@ -314,6 +318,10 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       MemPtr = LI->getPointerOperand();
       MemSize = AA->getTypeStoreSize(LI->getType());
     }
+  } else if (isFreeCall(QueryInst)) {
+    MemPtr = QueryInst->getOperand(0);
+    // calls to free() erase the entire structure, not just a field.
+    MemSize = ~0UL;
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
     CallSite QueryCS = CallSite::get(QueryInst);
     bool isReadOnly = AA->onlyReadsMemory(QueryCS);

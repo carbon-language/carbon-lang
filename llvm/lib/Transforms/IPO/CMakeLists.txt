@@ -19,7 +19,6 @@ add_llvm_library(LLVMipo
   PartialInlining.cpp
   PartialSpecialization.cpp
   PruneEH.cpp
-  RaiseAllocations.cpp
   StripDeadPrototypes.cpp
   StripSymbols.cpp
   StructRetPromotion.cpp

@@ -559,6 +559,51 @@ Instruction *CallInst::CreateMalloc(BasicBlock *InsertAtEnd,
                       ArraySize, MallocF, Name);
 }
 
+static Instruction* createFree(Value* Source, Instruction *InsertBefore,
+                               BasicBlock *InsertAtEnd) {
+  assert(((!InsertBefore && InsertAtEnd) || (InsertBefore && !InsertAtEnd)) &&
+         "createFree needs either InsertBefore or InsertAtEnd");
+  assert(isa<PointerType>(Source->getType()) &&
+         "Can not free something of nonpointer type!");
+
+  BasicBlock* BB = InsertBefore ? InsertBefore->getParent() : InsertAtEnd;
+  Module* M = BB->getParent()->getParent();
+
+  const Type *VoidTy = Type::getVoidTy(M->getContext());
+  const Type *IntPtrTy = Type::getInt8PtrTy(M->getContext());
+  // prototype free as "void free(void*)"
+  Constant *FreeFunc = M->getOrInsertFunction("free", VoidTy, IntPtrTy, NULL);
+
+  CallInst* Result = NULL;
+  Value *PtrCast = Source;
+  if (InsertBefore) {
+    if (Source->getType() != IntPtrTy)
+      PtrCast = new BitCastInst(Source, IntPtrTy, "", InsertBefore);
+    Result = CallInst::Create(FreeFunc, PtrCast, "", InsertBefore);
+  } else {
+    if (Source->getType() != IntPtrTy)
+      PtrCast = new BitCastInst(Source, IntPtrTy, "", InsertAtEnd);
+    Result = CallInst::Create(FreeFunc, PtrCast, "");
+  }
+  Result->setTailCall();
+
+  return Result;
+}
+
+/// CreateFree - Generate the IR for a call to the builtin free function.
+void CallInst::CreateFree(Value* Source, Instruction *InsertBefore) {
+  createFree(Source, InsertBefore, NULL);
+}
+
+/// CreateFree - Generate the IR for a call to the builtin free function.
+/// Note: This function does not add the call to the basic block, that is the
+/// responsibility of the caller.
+Instruction* CallInst::CreateFree(Value* Source, BasicBlock *InsertAtEnd) {
+  Instruction* FreeCall = createFree(Source, NULL, InsertAtEnd);
+  assert(FreeCall && "CreateFree did not create a CallInst");
+  return FreeCall;
+}
+
 //===----------------------------------------------------------------------===//
 //                        InvokeInst Implementation
 //===----------------------------------------------------------------------===//

@@ -280,7 +280,7 @@ namespace llvm {
     bool ParseCall(Instruction *&I, PerFunctionState &PFS, bool isTail);
     bool ParseAlloc(Instruction *&I, PerFunctionState &PFS,
                     BasicBlock *BB = 0, bool isAlloca = true);
-    bool ParseFree(Instruction *&I, PerFunctionState &PFS);
+    bool ParseFree(Instruction *&I, PerFunctionState &PFS, BasicBlock *BB);
     bool ParseLoad(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
     bool ParseStore(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
     bool ParseGetResult(Instruction *&I, PerFunctionState &PFS);

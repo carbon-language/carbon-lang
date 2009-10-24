@@ -286,6 +286,7 @@ namespace {
     Instruction *visitGetElementPtrInst(GetElementPtrInst &GEP);
     Instruction *visitAllocaInst(AllocaInst &AI);
     Instruction *visitFreeInst(FreeInst &FI);
+    Instruction *visitFree(Instruction &FI);
     Instruction *visitLoadInst(LoadInst &LI);
     Instruction *visitStoreInst(StoreInst &SI);
     Instruction *visitBranchInst(BranchInst &BI);
@@ -9747,6 +9748,9 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
 /// the heavy lifting.
 ///
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
+  if (isFreeCall(&CI))
+    return visitFree(CI);
+
   // If the caller function is nounwind, mark the call as nounwind, even if the
   // callee isn't.
   if (CI.getParent()->getParent()->doesNotThrow() &&
@@ -11337,6 +11341,42 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
   return 0;
 }
 
+Instruction *InstCombiner::visitFree(Instruction &FI) {
+  Value *Op = FI.getOperand(1);
+
+  // free undef -> unreachable.
+  if (isa<UndefValue>(Op)) {
+    // Insert a new store to null because we cannot modify the CFG here.
+    new StoreInst(ConstantInt::getTrue(*Context),
+           UndefValue::get(Type::getInt1PtrTy(*Context)), &FI);
+    return EraseInstFromFunction(FI);
+  }
+  
+  // If we have 'free null' delete the instruction.  This can happen in stl code
+  // when lots of inlining happens.
+  if (isa<ConstantPointerNull>(Op))
+    return EraseInstFromFunction(FI);
+
+  // FIXME: Bring back free (gep X, 0,0,0,0) into free(X) transform
+  
+  if (isMalloc(Op)) {
+    if (CallInst* CI = extractMallocCallFromBitCast(Op)) {
+      if (Op->hasOneUse() && CI->hasOneUse()) {
+        EraseInstFromFunction(FI);
+        EraseInstFromFunction(*CI);
+        return EraseInstFromFunction(*cast<Instruction>(Op));
+      }
+    } else {
+      // Op is a call to malloc
+      if (Op->hasOneUse()) {
+        EraseInstFromFunction(FI);
+        return EraseInstFromFunction(*cast<Instruction>(Op));
+      }
+    }
+  }
+
+  return 0;
+}
 
 /// InstCombineLoadCast - Fold 'load (cast P)' -> cast (load P)' when possible.
 static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,

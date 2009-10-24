@@ -1017,6 +1017,8 @@ bool Andersens::AnalyzeUsesOfFunction(Value *V) {
       }
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*UI)) {
       if (AnalyzeUsesOfFunction(GEP)) return true;
+    } else if (isa<FreeInst>(*UI) || isFreeCall(*UI)) {
+      return false;
     } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
       // Make sure that this is just the function being called, not that it is
       // passing into the function.
@@ -1038,8 +1040,6 @@ bool Andersens::AnalyzeUsesOfFunction(Value *V) {
     } else if (ICmpInst *ICI = dyn_cast<ICmpInst>(*UI)) {
       if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
         return true;  // Allow comparison against null.
-    } else if (isa<FreeInst>(*UI)) {
-      return false;
     } else {
       return true;
     }

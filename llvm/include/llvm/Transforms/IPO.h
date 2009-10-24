@@ -69,13 +69,6 @@ ModulePass *createGlobalOptimizerPass();
 
 
 //===----------------------------------------------------------------------===//
-/// createRaiseAllocationsPass - Return a new pass that transforms malloc and
-/// free function calls into malloc and free instructions.
-///
-ModulePass *createRaiseAllocationsPass();
-
-
-//===----------------------------------------------------------------------===//
 /// createDeadTypeEliminationPass - Return a new pass that eliminates symbol
 /// table entries for types that are never used.
 ///

@@ -102,12 +102,8 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
   // Loop over all of the instructions, looking for free instructions
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I) {
     if (FreeInst *FI = dyn_cast<FreeInst>(I)) {
-      Value *PtrCast = 
-        new BitCastInst(FI->getOperand(0),
-               Type::getInt8PtrTy(BB.getContext()), "", I);
-
       // Insert a call to the free function...
-      CallInst::Create(FreeFunc, PtrCast, "", I)->setTailCall();
+      CallInst::CreateFree(FI->getOperand(0), I);
 
       // Delete the old free instruction
       I = --BBIL.erase(I);

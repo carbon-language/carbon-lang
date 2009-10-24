@@ -54,7 +54,7 @@ void LLVMAddLowerSetJmpPass(LLVMPassManagerRef PM);
 /** See llvm::createPruneEHPass function. */
 void LLVMAddPruneEHPass(LLVMPassManagerRef PM);
 
-/** See llvm::createRaiseAllocationsPass function. */
+// FIXME: Remove in LLVM 3.0.
 void LLVMAddRaiseAllocationsPass(LLVMPassManagerRef PM);
 
 /** See llvm::createStripDeadPrototypesPass function. */

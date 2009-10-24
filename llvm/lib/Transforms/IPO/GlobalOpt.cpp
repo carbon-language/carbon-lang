@@ -1364,10 +1364,11 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV,
                                                OrigBB->getParent());
     BasicBlock *NextBlock = BasicBlock::Create(Context, "next",
                                                OrigBB->getParent());
-    BranchInst::Create(FreeBlock, NextBlock, Cmp, NullPtrBlock);
+    Instruction *BI = BranchInst::Create(FreeBlock, NextBlock,
+                                         Cmp, NullPtrBlock);
 
     // Fill in FreeBlock.
-    new FreeInst(GVVal, FreeBlock);
+    CallInst::CreateFree(GVVal, BI);
     new StoreInst(Constant::getNullValue(GVVal->getType()), FieldGlobals[i],
                   FreeBlock);
     BranchInst::Create(NextBlock, FreeBlock);

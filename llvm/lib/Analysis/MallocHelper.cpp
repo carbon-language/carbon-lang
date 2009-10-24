@@ -263,3 +263,29 @@ Value* llvm::getMallocArraySize(CallInst* CI, LLVMContext &Context,
   assert(BO && "getMallocArraySize not constant but not multiplication either");
   return BO->getOperand(0);
 }
+
+/// isFreeCall - Returns true if the the value is a call to the builtin free()
+bool llvm::isFreeCall(const Value* I) {
+  const CallInst *CI = dyn_cast<CallInst>(I);
+  if (!CI)
+    return false;
+
+  const Module* M = CI->getParent()->getParent()->getParent();
+  Function *FreeFunc = M->getFunction("free");
+
+  if (CI->getOperand(0) != FreeFunc)
+    return false;
+
+  // Check free prototype.
+  // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin 
+  // attribute will exist.
+  const FunctionType *FTy = FreeFunc->getFunctionType();
+  if (FTy->getReturnType() != Type::getVoidTy(M->getContext()))
+    return false;
+  if (FTy->getNumParams() != 1)
+    return false;
+  if (FTy->param_begin()->get() != Type::getInt8PtrTy(M->getContext()))
+    return false;
+
+  return true;
+}

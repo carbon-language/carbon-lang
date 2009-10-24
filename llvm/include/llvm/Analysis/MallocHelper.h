@@ -27,8 +27,8 @@ class Value;
 //  malloc Call Utility Functions.
 //
 
-/// isMalloc - Returns true if the the value is either a malloc call or a
-/// bitcast of the result of a malloc call
+/// isMalloc - Returns true if the value is either a malloc call or a bitcast of 
+/// the result of a malloc call
 bool isMalloc(const Value* I);
 
 /// extractMallocCall - Returns the corresponding CallInst if the instruction
@@ -79,6 +79,13 @@ const Type* getMallocAllocatedType(const CallInst* CI);
 /// determined.
 Value* getMallocArraySize(CallInst* CI, LLVMContext &Context,
                           const TargetData* TD);
+                          
+//===----------------------------------------------------------------------===//
+//  free Call Utility Functions.
+//
+
+/// isFreeCall - Returns true if the the value is a call to the builtin free()
+bool isFreeCall(const Value* I);
 
 } // End llvm namespace
 

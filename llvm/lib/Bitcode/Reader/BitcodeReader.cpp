@@ -2073,7 +2073,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, OpNum, NextValueNo, Op) ||
           OpNum != Record.size())
         return Error("Invalid FREE record");
-      I = new FreeInst(Op);
+      if (!CurBB) return Error("Invalid free instruction with no BB");
+      I = CallInst::CreateFree(Op, CurBB);
       InstructionList.push_back(I);
       break;
     }
