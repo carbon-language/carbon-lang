@@ -22,9 +22,10 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "RecordLayoutBuilder.h"
 
 using namespace clang;
@@ -2855,12 +2856,12 @@ QualType ASTContext::BuildByRefType(const char *DeclName, QualType Ty) {
 
   // FIXME: Move up
   static unsigned int UniqueBlockByRefTypeID = 0;
-  char * Name = 
-    (char*)alloca(strlen("__Block_byref_") + 10 + 1 + strlen(DeclName) + 1);
-  sprintf(Name, "__Block_byref_%d_%s", ++UniqueBlockByRefTypeID, DeclName);
+  llvm::SmallString<36> Name;
+  llvm::raw_svector_ostream(Name) << "__Block_byref_" <<
+                                  ++UniqueBlockByRefTypeID << '_' << DeclName;
   RecordDecl *T;
   T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
-                         &Idents.get(Name));
+                         &Idents.get(Name.str()));
   T->startDefinition();
   QualType Int32Ty = IntTy;
   assert(getIntWidth(IntTy) == 32 && "non-32bit int not supported");
@@ -2905,12 +2906,12 @@ QualType ASTContext::getBlockParmType(
   llvm::SmallVector<const Expr *, 8> &BlockDeclRefDecls) {
   // FIXME: Move up
   static unsigned int UniqueBlockParmTypeID = 0;
-  char * Name = 
-    (char*)alloca(strlen("__block_literal_") + 10 + 1);
-  sprintf(Name, "__block_literal_%u", ++UniqueBlockParmTypeID);
+  llvm::SmallString<36> Name;
+  llvm::raw_svector_ostream(Name) << "__block_literal_"
+                                  << ++UniqueBlockParmTypeID;
   RecordDecl *T;
   T = RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(),
-                         &Idents.get(Name));
+                         &Idents.get(Name.str()));
   QualType FieldTypes[] = {
     getPointerType(VoidPtrTy),
     IntTy,
