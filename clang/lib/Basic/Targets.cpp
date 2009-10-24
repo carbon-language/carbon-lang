@@ -1533,6 +1533,8 @@ namespace {
       Define(Defines, "ram", "__attribute__((address_space(0)))");
       Define(Defines, "_section(SectName)",
              "__attribute__((section(SectName)))");
+      Define(Defines, "near",
+             "__attribute__((section(\"Address=NEAR\")))");
       Define(Defines, "_address(Addr)",
              "__attribute__((section(\"Address=\"#Addr)))");
       Define(Defines, "_CONFIG(conf)", "asm(\"CONFIG \"#conf)");
