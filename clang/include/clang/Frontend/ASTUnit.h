@@ -52,7 +52,6 @@ class ASTUnit {
   
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
-  ASTUnit();
 
 public:
   ASTUnit(DiagnosticClient *diagClient = NULL);
