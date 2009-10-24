@@ -106,7 +106,7 @@ void PCHDeclWriter::VisitTypeDecl(TypeDecl *D) {
 
 void PCHDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
   VisitTypeDecl(D);
-  Writer.AddTypeRef(D->getUnderlyingType(), Record);
+  Writer.AddDeclaratorInfo(D->getTypeDeclaratorInfo(), Record);
   Code = pch::DECL_TYPEDEF;
 }
 

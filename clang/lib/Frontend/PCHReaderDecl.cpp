@@ -106,9 +106,9 @@ void PCHDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
   // set the underlying type of the typedef *before* we try to read
   // the type associated with the TypedefDecl.
   VisitNamedDecl(TD);
-  TD->setUnderlyingType(Reader.GetType(Record[Idx + 1]));
-  TD->setTypeForDecl(Reader.GetType(Record[Idx]).getTypePtr());
-  Idx += 2;
+  uint64_t TypeData = Record[Idx++];
+  TD->setTypeDeclaratorInfo(Reader.GetDeclaratorInfo(Record, Idx));
+  TD->setTypeForDecl(Reader.GetType(TypeData).getTypePtr());
 }
 
 void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
@@ -612,7 +612,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = Context->getTranslationUnitDecl();
     break;
   case pch::DECL_TYPEDEF:
-    D = TypedefDecl::Create(*Context, 0, SourceLocation(), 0, QualType());
+    D = TypedefDecl::Create(*Context, 0, SourceLocation(), 0, 0);
     break;
   case pch::DECL_ENUM:
     D = EnumDecl::Create(*Context, 0, SourceLocation(), 0, SourceLocation(), 0);

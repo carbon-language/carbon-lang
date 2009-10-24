@@ -178,9 +178,9 @@ void EnumConstantDecl::Destroy(ASTContext& C) {
 }
 
 TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
-                                 SourceLocation L,
-                                 IdentifierInfo *Id, QualType T) {
-  return new (C) TypedefDecl(DC, L, Id, T);
+                                 SourceLocation L, IdentifierInfo *Id,
+                                 DeclaratorInfo *DInfo) {
+  return new (C) TypedefDecl(DC, L, Id, DInfo);
 }
 
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,

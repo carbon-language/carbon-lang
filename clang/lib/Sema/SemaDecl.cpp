@@ -1986,11 +1986,8 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   if (D.getDeclSpec().isThreadSpecified())
     Diag(D.getDeclSpec().getThreadSpecLoc(), diag::err_invalid_thread);
 
-  TypedefDecl *NewTD = ParseTypedefDecl(S, D, R);
+  TypedefDecl *NewTD = ParseTypedefDecl(S, D, R, DInfo);
   if (!NewTD) return 0;
-
-  if (D.isInvalidType())
-    NewTD->setInvalidDecl();
 
   // Handle attributes prior to checking for duplicates in MergeVarDecl
   ProcessDeclAttributes(S, NewTD, D);
@@ -2013,7 +2010,7 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
           TryToFixInvalidVariablyModifiedType(T, Context, SizeIsNegative);
       if (!FixedTy.isNull()) {
         Diag(D.getIdentifierLoc(), diag::warn_illegal_constant_array_size);
-        NewTD->setUnderlyingType(FixedTy);
+        NewTD->setTypeDeclaratorInfo(Context.getTrivialDeclaratorInfo(FixedTy));
       } else {
         if (SizeIsNegative)
           Diag(D.getIdentifierLoc(), diag::err_typecheck_negative_array_size);
@@ -4097,15 +4094,21 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
   }
 }
 
-TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T) {
+TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
+                                    DeclaratorInfo *DInfo) {
   assert(D.getIdentifier() && "Wrong callback for declspec without declarator");
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
+
+  if (!DInfo) {
+    assert(D.isInvalidType() && "no declarator info for valid type");
+    DInfo = Context.getTrivialDeclaratorInfo(T);
+  }
 
   // Scope manipulation handled by caller.
   TypedefDecl *NewTD = TypedefDecl::Create(Context, CurContext,
                                            D.getIdentifierLoc(),
                                            D.getIdentifier(),
-                                           T);
+                                           DInfo);
 
   if (const TagType *TT = T->getAs<TagType>()) {
     TagDecl *TD = TT->getDecl();

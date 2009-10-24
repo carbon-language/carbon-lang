@@ -767,7 +767,8 @@ public:
 
 
   /// Subroutines of ActOnDeclarator().
-  TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T);
+  TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
+                                DeclaratorInfo *DInfo);
   void MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);

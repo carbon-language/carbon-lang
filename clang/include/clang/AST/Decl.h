@@ -1311,20 +1311,29 @@ public:
 
 class TypedefDecl : public TypeDecl {
   /// UnderlyingType - This is the type the typedef is set to.
-  QualType UnderlyingType;
+  DeclaratorInfo *DInfo;
+
   TypedefDecl(DeclContext *DC, SourceLocation L,
-              IdentifierInfo *Id, QualType T)
-    : TypeDecl(Typedef, DC, L, Id), UnderlyingType(T) {}
+              IdentifierInfo *Id, DeclaratorInfo *DInfo)
+    : TypeDecl(Typedef, DC, L, Id), DInfo(DInfo) {}
 
   virtual ~TypedefDecl() {}
 public:
 
   static TypedefDecl *Create(ASTContext &C, DeclContext *DC,
-                             SourceLocation L,IdentifierInfo *Id,
-                             QualType T);
+                             SourceLocation L, IdentifierInfo *Id,
+                             DeclaratorInfo *DInfo);
 
-  QualType getUnderlyingType() const { return UnderlyingType; }
-  void setUnderlyingType(QualType newType) { UnderlyingType = newType; }
+  DeclaratorInfo *getTypeDeclaratorInfo() const {
+    return DInfo;
+  }
+
+  QualType getUnderlyingType() const {
+    return DInfo->getType();
+  }
+  void setTypeDeclaratorInfo(DeclaratorInfo *newType) {
+    DInfo = newType;
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }

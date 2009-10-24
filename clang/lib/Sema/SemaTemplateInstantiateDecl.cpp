@@ -99,20 +99,20 @@ TemplateDeclInstantiator::VisitNamespaceDecl(NamespaceDecl *D) {
 
 Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   bool Invalid = false;
-  QualType T = D->getUnderlyingType();
-  if (T->isDependentType()) {
-    T = SemaRef.SubstType(T, TemplateArgs,
-                          D->getLocation(), D->getDeclName());
-    if (T.isNull()) {
+  DeclaratorInfo *DI = D->getTypeDeclaratorInfo();
+  if (DI->getType()->isDependentType()) {
+    DI = SemaRef.SubstType(DI, TemplateArgs,
+                           D->getLocation(), D->getDeclName());
+    if (!DI) {
       Invalid = true;
-      T = SemaRef.Context.IntTy;
+      DI = SemaRef.Context.getTrivialDeclaratorInfo(SemaRef.Context.IntTy);
     }
   }
 
   // Create the new typedef
   TypedefDecl *Typedef
     = TypedefDecl::Create(SemaRef.Context, Owner, D->getLocation(),
-                          D->getIdentifier(), T);
+                          D->getIdentifier(), DI);
   if (Invalid)
     Typedef->setInvalidDecl();
 

@@ -277,15 +277,20 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   PushDeclContext(S, Context.getTranslationUnitDecl());
 
   if (PP.getTargetInfo().getPointerWidth(0) >= 64) {
+    DeclaratorInfo *DInfo;
+
     // Install [u]int128_t for 64-bit targets.
+    DInfo = Context.getTrivialDeclaratorInfo(Context.Int128Ty);
     PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
                                           SourceLocation(),
                                           &Context.Idents.get("__int128_t"),
-                                          Context.Int128Ty), TUScope);
+                                          DInfo), TUScope);
+
+    DInfo = Context.getTrivialDeclaratorInfo(Context.UnsignedInt128Ty);
     PushOnScopeChains(TypedefDecl::Create(Context, CurContext,
                                           SourceLocation(),
                                           &Context.Idents.get("__uint128_t"),
-                                          Context.UnsignedInt128Ty), TUScope);
+                                          DInfo), TUScope);
   }
 
 
@@ -298,10 +303,10 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
     PushOnScopeChains(SelTag, TUScope);
 
     QualType SelT = Context.getPointerType(Context.getTagDeclType(SelTag));
-    TypedefDecl *SelTypedef = TypedefDecl::Create(Context, CurContext,
-                                                  SourceLocation(),
-                                                  &Context.Idents.get("SEL"),
-                                                  SelT);
+    DeclaratorInfo *SelInfo = Context.getTrivialDeclaratorInfo(SelT);
+    TypedefDecl *SelTypedef
+      = TypedefDecl::Create(Context, CurContext, SourceLocation(),
+                            &Context.Idents.get("SEL"), SelInfo);
     PushOnScopeChains(SelTypedef, TUScope);
     Context.setObjCSelType(Context.getTypeDeclType(SelTypedef));
   }
@@ -317,22 +322,23 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   }
   // Create the built-in typedef for 'id'.
   if (Context.getObjCIdType().isNull()) {
-    TypedefDecl *IdTypedef =
-      TypedefDecl::Create(
-        Context, CurContext, SourceLocation(), &Context.Idents.get("id"),
-        Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy)
-      );
+    QualType IdT = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy);
+    DeclaratorInfo *IdInfo = Context.getTrivialDeclaratorInfo(IdT);
+    TypedefDecl *IdTypedef
+      = TypedefDecl::Create(Context, CurContext, SourceLocation(),
+                            &Context.Idents.get("id"), IdInfo);
     PushOnScopeChains(IdTypedef, TUScope);
     Context.setObjCIdType(Context.getTypeDeclType(IdTypedef));
     Context.ObjCIdRedefinitionType = Context.getObjCIdType();
   }
   // Create the built-in typedef for 'Class'.
   if (Context.getObjCClassType().isNull()) {
-    TypedefDecl *ClassTypedef =
-      TypedefDecl::Create(
-        Context, CurContext, SourceLocation(), &Context.Idents.get("Class"),
-        Context.getObjCObjectPointerType(Context.ObjCBuiltinClassTy)
-      );
+    QualType ClassType
+      = Context.getObjCObjectPointerType(Context.ObjCBuiltinClassTy);
+    DeclaratorInfo *ClassInfo = Context.getTrivialDeclaratorInfo(ClassType);
+    TypedefDecl *ClassTypedef
+      = TypedefDecl::Create(Context, CurContext, SourceLocation(),
+                            &Context.Idents.get("Class"), ClassInfo);
     PushOnScopeChains(ClassTypedef, TUScope);
     Context.setObjCClassType(Context.getTypeDeclType(ClassTypedef));
     Context.ObjCClassRedefinitionType = Context.getObjCClassType();

@@ -2609,10 +2609,12 @@ Stmt *RewriteObjC::RewriteMessageExpr(ObjCMessageExpr *Exp) {
 // typedef struct objc_object Protocol;
 QualType RewriteObjC::getProtocolType() {
   if (!ProtocolTypeDecl) {
+    DeclaratorInfo *DInfo
+      = Context->getTrivialDeclaratorInfo(Context->getObjCIdType());
     ProtocolTypeDecl = TypedefDecl::Create(*Context, TUDecl,
                                            SourceLocation(),
                                            &Context->Idents.get("Protocol"),
-                                           Context->getObjCIdType());
+                                           DInfo);
   }
   return Context->getTypeDeclType(ProtocolTypeDecl);
 }

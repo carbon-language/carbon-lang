@@ -45,6 +45,9 @@ protected:
     if (DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D))
       if (ContainsLocation(DD->getDeclaratorInfo()))
         return ContainsLoc;
+    if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D))
+      if (ContainsLocation(TD->getTypeDeclaratorInfo()))
+        return ContainsLoc;
 
     return CheckRange(D->getSourceRange());
   }
@@ -109,6 +112,7 @@ public:
   ASTLocation VisitVarDecl(VarDecl *D);
   ASTLocation VisitFunctionDecl(FunctionDecl *D);
   ASTLocation VisitObjCMethodDecl(ObjCMethodDecl *D);
+  ASTLocation VisitTypedefDecl(TypedefDecl *D);
   ASTLocation VisitDecl(Decl *D);
 };
 
@@ -274,6 +278,16 @@ ASTLocation DeclLocResolver::VisitDeclaratorDecl(DeclaratorDecl *D) {
          "Should visit only after verifying that loc is in range");
   if (ContainsLocation(D->getDeclaratorInfo()))
     return ResolveInDeclarator(D, /*Stmt=*/0, D->getDeclaratorInfo());
+
+  return ASTLocation(D);
+}
+
+ASTLocation DeclLocResolver::VisitTypedefDecl(TypedefDecl *D) {
+  assert(ContainsLocation(D) &&
+         "Should visit only after verifying that loc is in range");
+
+  if (ContainsLocation(D->getTypeDeclaratorInfo()))
+    return ResolveInDeclarator(D, /*Stmt=*/0, D->getTypeDeclaratorInfo());
 
   return ASTLocation(D);
 }

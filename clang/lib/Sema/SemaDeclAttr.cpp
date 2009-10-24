@@ -193,7 +193,8 @@ static void HandleExtVectorTypeAttr(Scope *scope, Decl *d,
   // This will run the reguired checks.
   QualType T = S.BuildExtVectorType(curType, S.Owned(sizeExpr), Attr.getLoc());
   if (!T.isNull()) {
-    tDecl->setUnderlyingType(T);
+    // FIXME: preserve the old source info.
+    tDecl->setTypeDeclaratorInfo(S.Context.getTrivialDeclaratorInfo(T));
 
     // Remember this typedef decl, we will need it later for diagnostics.
     S.ExtVectorDecls.push_back(tDecl);
@@ -278,8 +279,11 @@ static void HandleVectorSizeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
     VD->setType(CurType);
-  else
-    cast<TypedefDecl>(D)->setUnderlyingType(CurType);
+  else {
+    // FIXME: preserve existing source info.
+    DeclaratorInfo *DInfo = S.Context.getTrivialDeclaratorInfo(CurType);
+    cast<TypedefDecl>(D)->setTypeDeclaratorInfo(DInfo);
+  }
 }
 
 static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1636,9 +1640,10 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   }
 
   // Install the new type.
-  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D))
-    TD->setUnderlyingType(NewTy);
-  else
+  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+    // FIXME: preserve existing source info.
+    TD->setTypeDeclaratorInfo(S.Context.getTrivialDeclaratorInfo(NewTy));
+  } else
     cast<ValueDecl>(D)->setType(NewTy);
 }
 
