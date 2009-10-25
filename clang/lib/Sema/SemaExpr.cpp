@@ -4406,6 +4406,10 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   if (!lex->getType()->isIntegerType() || !rex->getType()->isIntegerType())
     return InvalidOperands(Loc, lex, rex);
 
+  // Vector shifts promote their scalar inputs to vector type.
+  if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
+    return CheckVectorOperands(Loc, lex, rex);
+
   // Shifts don't perform usual arithmetic conversions, they just do integer
   // promotions on each operand. C99 6.5.7p3
   QualType LHSTy = Context.isPromotableBitField(lex);
