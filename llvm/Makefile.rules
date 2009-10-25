@@ -1238,7 +1238,7 @@ endif
 endif
 
 ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux NetBSD FreeBSD))
-LD.Flags += -Wl,--version-script=$(LLVM_SRC_ROOT)/autoconf/ExportMap.map
+  LD.Flags += -Wl,--version-script=$(LLVM_SRC_ROOT)/autoconf/ExportMap.map
 endif
 endif
 
