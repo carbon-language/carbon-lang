@@ -23,7 +23,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Support/Compiler.h"
 #include <set>
 using namespace llvm;
 

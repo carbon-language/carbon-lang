@@ -23,7 +23,6 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 

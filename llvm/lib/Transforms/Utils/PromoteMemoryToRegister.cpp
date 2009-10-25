@@ -32,7 +32,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Support/Compiler.h"
 #include <algorithm>
 using namespace llvm;
 

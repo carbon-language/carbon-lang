@@ -17,7 +17,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Constants.h"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Support/Compiler.h"
 #include <algorithm>
 using namespace llvm;
 

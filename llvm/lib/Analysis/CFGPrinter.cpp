@@ -20,7 +20,6 @@
 #include "llvm/Analysis/CFGPrinter.h"
 
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 namespace {

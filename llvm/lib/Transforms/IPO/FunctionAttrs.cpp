@@ -30,7 +30,6 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/UniqueVector.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstIterator.h"
 using namespace llvm;
 

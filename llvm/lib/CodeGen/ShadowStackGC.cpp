@@ -31,7 +31,6 @@
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/IRBuilder.h"
 
 using namespace llvm;

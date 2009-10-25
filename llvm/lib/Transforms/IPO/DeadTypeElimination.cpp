@@ -19,7 +19,6 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 STATISTIC(NumKilled, "Number of unused typenames removed from symtab");

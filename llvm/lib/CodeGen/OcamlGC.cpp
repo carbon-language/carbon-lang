@@ -16,7 +16,6 @@
 
 #include "llvm/CodeGen/GCs.h"
 #include "llvm/CodeGen/GCStrategy.h"
-#include "llvm/Support/Compiler.h"
 
 using namespace llvm;
 

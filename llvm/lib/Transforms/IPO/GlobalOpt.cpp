@@ -27,7 +27,6 @@
 #include "llvm/Analysis/MallocHelper.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"

@@ -21,7 +21,6 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Compiler.h"
 #include <set>
 using namespace llvm;
 

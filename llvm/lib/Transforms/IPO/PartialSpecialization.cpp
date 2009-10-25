@@ -27,7 +27,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/DenseSet.h"
 #include <map>
 using namespace llvm;

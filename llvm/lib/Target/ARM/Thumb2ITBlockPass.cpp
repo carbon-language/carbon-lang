@@ -14,7 +14,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 

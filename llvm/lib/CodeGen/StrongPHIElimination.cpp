@@ -32,7 +32,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 

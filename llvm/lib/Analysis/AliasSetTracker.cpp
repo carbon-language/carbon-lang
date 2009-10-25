@@ -19,7 +19,6 @@
 #include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/Format.h"

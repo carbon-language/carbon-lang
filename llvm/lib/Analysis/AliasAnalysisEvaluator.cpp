@@ -28,7 +28,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SetVector.h"
 using namespace llvm;

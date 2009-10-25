@@ -19,7 +19,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 STATISTIC(NumDeadPrototypes, "Number of dead prototypes removed");

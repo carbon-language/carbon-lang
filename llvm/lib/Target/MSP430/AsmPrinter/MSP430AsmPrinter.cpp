@@ -36,7 +36,6 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/ErrorHandling.h"

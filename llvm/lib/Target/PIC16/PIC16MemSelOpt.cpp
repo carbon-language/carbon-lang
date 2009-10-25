@@ -32,7 +32,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Support/Compiler.h"
 
 using namespace llvm;
 

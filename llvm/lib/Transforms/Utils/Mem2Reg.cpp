@@ -20,7 +20,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 STATISTIC(NumPromoted, "Number of alloca's promoted");
