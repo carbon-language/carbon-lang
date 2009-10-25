@@ -701,22 +701,6 @@ public:
   /// @brief Determine if the predicate is signed.
   static bool isSignedPredicate(Predicate pred);
 
-  /// @returns true if the specified compare predicate is
-  /// true when both operands are equal...
-  /// @brief Determine if the icmp is true when both operands are equal
-  static bool isTrueWhenEqual(ICmpInst::Predicate pred) {
-    return pred == ICmpInst::ICMP_EQ  || pred == ICmpInst::ICMP_UGE ||
-           pred == ICmpInst::ICMP_SGE || pred == ICmpInst::ICMP_ULE ||
-           pred == ICmpInst::ICMP_SLE;
-  }
-
-  /// @returns true if the specified compare instruction is
-  /// true when both operands are equal...
-  /// @brief Determine if the ICmpInst returns true when both operands are equal
-  bool isTrueWhenEqual() {
-    return isTrueWhenEqual(getPredicate());
-  }
-
   /// Initialize a set of values that all satisfy the predicate with C.
   /// @brief Make a ConstantRange for a relation with a constant value.
   static ConstantRange makeConstantRange(Predicate pred, const APInt &C);

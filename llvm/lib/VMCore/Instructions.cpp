@@ -2943,7 +2943,7 @@ bool CmpInst::isUnsigned(unsigned short predicate) {
   }
 }
 
-bool CmpInst::isSigned(unsigned short predicate){
+bool CmpInst::isSigned(unsigned short predicate) {
   switch (predicate) {
     default: return false;
     case ICmpInst::ICMP_SLT: case ICmpInst::ICMP_SLE: case ICmpInst::ICMP_SGT: 
@@ -2968,6 +2968,23 @@ bool CmpInst::isUnordered(unsigned short predicate) {
     case FCmpInst::FCMP_UNO: return true;
   }
 }
+
+bool CmpInst::isTrueWhenEqual(unsigned short predicate) {
+  switch(predicate) {
+    default: return false;
+    case ICMP_EQ:   case ICMP_UGE: case ICMP_ULE: case ICMP_SGE: case ICMP_SLE:
+    case FCMP_TRUE: case FCMP_UEQ: case FCMP_UGE: case FCMP_ULE: return true;
+  }
+}
+
+bool CmpInst::isFalseWhenEqual(unsigned short predicate) {
+  switch(predicate) {
+  case ICMP_NE:    case ICMP_UGT: case ICMP_ULT: case ICMP_SGT: case ICMP_SLT:
+  case FCMP_FALSE: case FCMP_ONE: case FCMP_OGT: case FCMP_OLT: return true;
+  default: return false;
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 //                        SwitchInst Implementation

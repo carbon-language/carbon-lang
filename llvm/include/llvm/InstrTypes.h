@@ -718,6 +718,18 @@ public:
   /// @brief Determine if this is an equals/not equals predicate.
   bool isEquality();
 
+  /// This is just a convenience.
+  /// @brief Determine if this is true when both operands are the same.
+  bool isTrueWhenEqual() const {
+    return isTrueWhenEqual(getPredicate());
+  }
+
+  /// This is just a convenience.
+  /// @brief Determine if this is false when both operands are the same.
+  bool isFalseWhenEqual() const {
+    return isFalseWhenEqual(getPredicate());
+  }
+
   /// @returns true if the predicate is unsigned, false otherwise.
   /// @brief Determine if the predicate is an unsigned operation.
   static bool isUnsigned(unsigned short predicate);
@@ -731,6 +743,12 @@ public:
 
   /// @brief Determine if the predicate is an unordered operation.
   static bool isUnordered(unsigned short predicate);
+
+  /// Determine if the predicate is true when comparing a value with itself.
+  static bool isTrueWhenEqual(unsigned short predicate);
+
+  /// Determine if the predicate is false when comparing a value with itself.
+  static bool isFalseWhenEqual(unsigned short predicate);
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CmpInst *) { return true; }
