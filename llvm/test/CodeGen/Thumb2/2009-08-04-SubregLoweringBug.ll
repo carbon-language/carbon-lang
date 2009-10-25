@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mattr=+neon -arm-use-neon-fp 
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mattr=+neon -arm-use-neon-fp | grep fcpys | count 1
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mattr=+neon -arm-use-neon-fp | not grep fcpys
 ; rdar://7117307
 
 	%struct.Hosp = type { i32, i32, i32, %struct.List, %struct.List, %struct.List, %struct.List }
