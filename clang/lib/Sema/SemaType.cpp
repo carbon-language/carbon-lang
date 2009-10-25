@@ -31,18 +31,18 @@ using namespace clang;
 /// C++ [dcl.fct]p3). The adjusted parameter type is returned.
 QualType Sema::adjustParameterType(QualType T) {
   // C99 6.7.5.3p7:
-  if (T->isArrayType()) {
-    // C99 6.7.5.3p7:
-    //   A declaration of a parameter as "array of type" shall be
-    //   adjusted to "qualified pointer to type", where the type
-    //   qualifiers (if any) are those specified within the [ and ] of
-    //   the array type derivation.
+  //   A declaration of a parameter as "array of type" shall be
+  //   adjusted to "qualified pointer to type", where the type
+  //   qualifiers (if any) are those specified within the [ and ] of
+  //   the array type derivation.
+  if (T->isArrayType())
     return Context.getArrayDecayedType(T);
-  } else if (T->isFunctionType())
-    // C99 6.7.5.3p8:
-    //   A declaration of a parameter as "function returning type"
-    //   shall be adjusted to "pointer to function returning type", as
-    //   in 6.3.2.1.
+  
+  // C99 6.7.5.3p8:
+  //   A declaration of a parameter as "function returning type"
+  //   shall be adjusted to "pointer to function returning type", as
+  //   in 6.3.2.1.
+  if (T->isFunctionType())
     return Context.getPointerType(T);
 
   return T;
@@ -815,6 +815,24 @@ QualType Sema::GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo) {
   return QT;
 }
 
+
+/// isOmittedBlockReturnType - Return true if this declarator is missing a
+/// return type because this is a omitted return type on a block literal. 
+static bool isOmittedBlockReturnType(const Declarator &D, unsigned Skip) {
+  if (D.getContext() != Declarator::BlockLiteralContext ||
+      Skip != 0 || D.getDeclSpec().hasTypeSpecifier())
+    return false;
+    
+  if (D.getNumTypeObjects() == 0)
+    return true;
+  
+  if (D.getNumTypeObjects() == 1 &&
+      D.getTypeObject(0).Kind == DeclaratorChunk::Function)
+    return true;
+  
+  return false;
+}
+
 /// GetTypeForDeclarator - Convert the type for the specified
 /// declarator to Type instances. Skip the outermost Skip type
 /// objects.
@@ -825,16 +843,6 @@ QualType Sema::GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo) {
 QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
                                     DeclaratorInfo **DInfo, unsigned Skip,
                                     TagDecl **OwnedDecl) {
-  bool OmittedReturnType = false;
-
-  if (D.getContext() == Declarator::BlockLiteralContext
-      && Skip == 0
-      && !D.getDeclSpec().hasTypeSpecifier()
-      && (D.getNumTypeObjects() == 0
-          || (D.getNumTypeObjects() == 1
-              && D.getTypeObject(0).Kind == DeclaratorChunk::Function)))
-    OmittedReturnType = true;
-
   // long long is a C99 feature.
   if (!getLangOptions().C99 && !getLangOptions().CPlusPlus0x &&
       D.getDeclSpec().getTypeSpecWidth() == DeclSpec::TSW_longlong)
@@ -850,7 +858,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   case Declarator::DK_Operator:
   case Declarator::DK_TemplateId: {
     const DeclSpec &DS = D.getDeclSpec();
-    if (OmittedReturnType) {
+    if (isOmittedBlockReturnType(D, Skip)) {
       // We default to a dependent type initially.  Can be modified by
       // the first return statement.
       T = Context.DependentTy;
@@ -1190,7 +1198,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
   if (getLangOptions().CPlusPlus && T->isFunctionType()) {
     const FunctionProtoType *FnTy = T->getAs<FunctionProtoType>();
-    assert(FnTy && "Why oh why is there not a FunctionProtoType here ?");
+    assert(FnTy && "Why oh why is there not a FunctionProtoType here?");
 
     // C++ 8.3.5p4: A cv-qualifier-seq shall only be part of the function type
     // for a nonstatic member function, the function type to which a pointer
