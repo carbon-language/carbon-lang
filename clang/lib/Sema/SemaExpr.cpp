@@ -71,6 +71,12 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
       Diag(Loc, diag::warn_deprecated) << D->getDeclName();
   }
 
+  // See if the decl is unavailable
+  if (D->getAttr<UnavailableAttr>()) {
+    Diag(Loc, diag::warn_unavailable) << D->getDeclName();
+    Diag(D->getLocation(), diag::note_unavailable_here) << 0;
+  }
+  
   // See if this is a deleted function.
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (FD->isDeleted()) {
@@ -78,12 +84,6 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
       Diag(D->getLocation(), diag::note_unavailable_here) << true;
       return true;
     }
-  }
-
-  // See if the decl is unavailable
-  if (D->getAttr<UnavailableAttr>()) {
-    Diag(Loc, diag::warn_unavailable) << D->getDeclName();
-    Diag(D->getLocation(), diag::note_unavailable_here) << 0;
   }
 
   return false;
