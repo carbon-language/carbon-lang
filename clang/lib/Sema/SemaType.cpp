@@ -184,14 +184,28 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, unsigned Skip,
       case DeclSpec::TSW_unspecified: Result = Context.IntTy; break;
       case DeclSpec::TSW_short:       Result = Context.ShortTy; break;
       case DeclSpec::TSW_long:        Result = Context.LongTy; break;
-      case DeclSpec::TSW_longlong:    Result = Context.LongLongTy; break;
+      case DeclSpec::TSW_longlong:
+        Result = Context.LongLongTy;
+          
+        // long long is a C99 feature.
+        if (!TheSema.getLangOptions().C99 &&
+            !TheSema.getLangOptions().CPlusPlus0x)
+          TheSema.Diag(DS.getTypeSpecWidthLoc(), diag::ext_longlong);
+        break;
       }
     } else {
       switch (DS.getTypeSpecWidth()) {
       case DeclSpec::TSW_unspecified: Result = Context.UnsignedIntTy; break;
       case DeclSpec::TSW_short:       Result = Context.UnsignedShortTy; break;
       case DeclSpec::TSW_long:        Result = Context.UnsignedLongTy; break;
-      case DeclSpec::TSW_longlong:    Result =Context.UnsignedLongLongTy; break;
+      case DeclSpec::TSW_longlong:
+        Result = Context.UnsignedLongLongTy;
+          
+        // long long is a C99 feature.
+        if (!TheSema.getLangOptions().C99 &&
+            !TheSema.getLangOptions().CPlusPlus0x)
+          TheSema.Diag(DS.getTypeSpecWidthLoc(), diag::ext_longlong);
+        break;
       }
     }
     break;
@@ -847,11 +861,6 @@ QualType Sema::GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo) {
 QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
                                     DeclaratorInfo **DInfo, unsigned Skip,
                                     TagDecl **OwnedDecl) {
-  // long long is a C99 feature.
-  if (!getLangOptions().C99 && !getLangOptions().CPlusPlus0x &&
-      D.getDeclSpec().getTypeSpecWidth() == DeclSpec::TSW_longlong)
-    Diag(D.getDeclSpec().getTypeSpecWidthLoc(), diag::ext_longlong);
-
   // Determine the type of the declarator. Not all forms of declarator
   // have a type.
   QualType T;
