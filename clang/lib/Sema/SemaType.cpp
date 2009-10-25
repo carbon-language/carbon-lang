@@ -48,21 +48,42 @@ QualType Sema::adjustParameterType(QualType T) {
   return T;
 }
 
+
+
+/// isOmittedBlockReturnType - Return true if this declarator is missing a
+/// return type because this is a omitted return type on a block literal. 
+static bool isOmittedBlockReturnType(const Declarator &D, unsigned Skip) {
+  if (D.getContext() != Declarator::BlockLiteralContext ||
+      Skip != 0 || D.getDeclSpec().hasTypeSpecifier())
+    return false;
+  
+  if (D.getNumTypeObjects() == 0)
+    return true;
+  
+  if (D.getNumTypeObjects() == 1 &&
+      D.getTypeObject(0).Kind == DeclaratorChunk::Function)
+    return true;
+  
+  return false;
+}
+
 /// \brief Convert the specified declspec to the appropriate type
 /// object.
-/// \param DS  the declaration specifiers
-/// \param DeclLoc The location of the declarator identifier or invalid if none.
+/// \param D  the declarator containing the declaration specifier.
 /// \returns The type described by the declaration specifiers.  This function
 /// never returns null.
-static QualType ConvertDeclSpecToType(const DeclSpec &DS,
-                                      SourceLocation DeclLoc,
-                                      bool &isInvalid, Sema &TheSema) {
+static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, unsigned Skip,
+                                      Sema &TheSema) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
-  QualType Result;
+  const DeclSpec &DS = TheDeclarator.getDeclSpec();
+  SourceLocation DeclLoc = TheDeclarator.getIdentifierLoc();
+  if (DeclLoc.isInvalid())
+    DeclLoc = DS.getSourceRange().getBegin();
   
   ASTContext &Context = TheSema.Context;
 
+  QualType Result;
   switch (DS.getTypeSpecType()) {
   case DeclSpec::TST_void:
     Result = Context.VoidTy;
@@ -111,6 +132,13 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS,
                                                 DS.getNumProtocolQualifiers());
       break;
     }
+    
+    // If this is a missing declspec in a block literal return context, then it
+    // is inferred from the return statements inside the block.
+    if (isOmittedBlockReturnType(TheDeclarator, Skip)) {
+      Result = Context.DependentTy;
+      break;
+    }
 
     // Unspecified typespec defaults to int in C90.  However, the C90 grammar
     // [C90 6.5] only allows a decl-spec if there was *some* type-specifier,
@@ -123,8 +151,6 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS,
       // In C89 mode, we only warn if there is a completely missing declspec
       // when one is not allowed.
       if (DS.isEmpty()) {
-        if (DeclLoc.isInvalid())
-          DeclLoc = DS.getSourceRange().getBegin();
         TheSema.Diag(DeclLoc, diag::ext_missing_declspec)
           << DS.getSourceRange()
         << CodeModificationHint::CreateInsertion(DS.getSourceRange().getBegin(),
@@ -136,9 +162,6 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS,
       // specifiers in each declaration, and in the specifier-qualifier list in
       // each struct declaration and type name."
       // FIXME: Does Microsoft really have the implicit int extension in C++?
-      if (DeclLoc.isInvalid())
-        DeclLoc = DS.getSourceRange().getBegin();
-
       if (TheSema.getLangOptions().CPlusPlus &&
           !TheSema.getLangOptions().Microsoft) {
         TheSema.Diag(DeclLoc, diag::err_missing_type_specifier)
@@ -147,7 +170,7 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS,
         // When this occurs in C++ code, often something is very broken with the
         // value being declared, poison it as invalid so we don't get chains of
         // errors.
-        isInvalid = true;
+        TheDeclarator.setInvalidType(true);
       } else {
         TheSema.Diag(DeclLoc, diag::ext_missing_type_specifier)
           << DS.getSourceRange();
@@ -186,7 +209,7 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS,
   case DeclSpec::TST_decimal128:   // _Decimal128
     TheSema.Diag(DS.getTypeSpecTypeLoc(), diag::err_decimal_unsupported);
     Result = Context.IntTy;
-    isInvalid = true;
+    TheDeclarator.setInvalidType(true);
     break;
   case DeclSpec::TST_class:
   case DeclSpec::TST_enum:
@@ -196,7 +219,7 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS,
     if (!D) {
       // This can happen in C++ with ambiguous lookups.
       Result = Context.IntTy;
-      isInvalid = true;
+      TheDeclarator.setInvalidType(true);
       break;
     }
 
@@ -214,7 +237,7 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS,
     }
 
     if (D->isInvalidDecl())
-      isInvalid = true;
+      TheDeclarator.setInvalidType(true);
     break;
   }
   case DeclSpec::TST_typename: {
@@ -243,24 +266,20 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS,
         Result = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy,
                         (ObjCProtocolDecl**)PQ, DS.getNumProtocolQualifiers());
       else if (Result->isObjCClassType()) {
-        if (DeclLoc.isInvalid())
-          DeclLoc = DS.getSourceRange().getBegin();
         // Class<protocol-list>
         Result = Context.getObjCObjectPointerType(Context.ObjCBuiltinClassTy,
                         (ObjCProtocolDecl**)PQ, DS.getNumProtocolQualifiers());
       } else {
-        if (DeclLoc.isInvalid())
-          DeclLoc = DS.getSourceRange().getBegin();
         TheSema.Diag(DeclLoc, diag::err_invalid_protocol_qualifiers)
           << DS.getSourceRange();
-        isInvalid = true;
+        TheDeclarator.setInvalidType(true);
       }
     }
 
     // If this is a reference to an invalid typedef, propagate the invalidity.
     if (TypedefType *TDT = dyn_cast<TypedefType>(Result))
       if (TDT->getDecl()->isInvalidDecl())
-        isInvalid = true;
+        TheDeclarator.setInvalidType(true);
 
     // TypeQuals handled by caller.
     break;
@@ -286,7 +305,7 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS,
     Result = TheSema.BuildDecltypeType(E);
     if (Result.isNull()) {
       Result = Context.IntTy;
-      isInvalid = true;
+      TheDeclarator.setInvalidType(true);
     }
     break;
   }
@@ -298,7 +317,7 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS,
 
   case DeclSpec::TST_error:
     Result = Context.IntTy;
-    isInvalid = true;
+    TheDeclarator.setInvalidType(true);
     break;
   }
 
@@ -818,24 +837,6 @@ QualType Sema::GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo) {
   return QT;
 }
 
-
-/// isOmittedBlockReturnType - Return true if this declarator is missing a
-/// return type because this is a omitted return type on a block literal. 
-static bool isOmittedBlockReturnType(const Declarator &D, unsigned Skip) {
-  if (D.getContext() != Declarator::BlockLiteralContext ||
-      Skip != 0 || D.getDeclSpec().hasTypeSpecifier())
-    return false;
-    
-  if (D.getNumTypeObjects() == 0)
-    return true;
-  
-  if (D.getNumTypeObjects() == 1 &&
-      D.getTypeObject(0).Kind == DeclaratorChunk::Function)
-    return true;
-  
-  return false;
-}
-
 /// GetTypeForDeclarator - Convert the type for the specified
 /// declarator to Type instances. Skip the outermost Skip type
 /// objects.
@@ -859,22 +860,12 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   case Declarator::DK_Abstract:
   case Declarator::DK_Normal:
   case Declarator::DK_Operator:
-  case Declarator::DK_TemplateId: {
-    const DeclSpec &DS = D.getDeclSpec();
-    if (isOmittedBlockReturnType(D, Skip)) {
-      // We default to a dependent type initially.  Can be modified by
-      // the first return statement.
-      T = Context.DependentTy;
-    } else {
-      bool isInvalid = false;
-      T = ConvertDeclSpecToType(DS, D.getIdentifierLoc(), isInvalid, *this);
-      if (isInvalid)
-        D.setInvalidType(true);
-      else if (OwnedDecl && DS.isTypeSpecOwned())
-        *OwnedDecl = cast<TagDecl>((Decl *)DS.getTypeRep());
-    }
+  case Declarator::DK_TemplateId:
+    T = ConvertDeclSpecToType(D, Skip, *this);
+    
+    if (!D.isInvalidType() && OwnedDecl && D.getDeclSpec().isTypeSpecOwned())
+      *OwnedDecl = cast<TagDecl>((Decl *)D.getDeclSpec().getTypeRep());
     break;
-  }
 
   case Declarator::DK_Constructor:
   case Declarator::DK_Destructor:
