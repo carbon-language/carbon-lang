@@ -298,6 +298,7 @@ bool PIC16AsmPrinter::doInitialization(Module &M) {
   EmitIData(M);
   EmitUData(M);
   EmitRomData(M);
+  EmitSharedUdata(M);
   EmitUserSections(M);
   return Result;
 }
@@ -368,6 +369,11 @@ void PIC16AsmPrinter::EmitDefinedVars(Module &M) {
 // Emit initialized data placed in ROM.
 void PIC16AsmPrinter::EmitRomData(Module &M) {
   EmitSingleSection(PTOF->ROMDATASection());
+}
+
+// Emit Shared section udata.
+void PIC16AsmPrinter::EmitSharedUdata(Module &M) {
+  EmitSingleSection(PTOF->SHAREDUDATASection());
 }
 
 bool PIC16AsmPrinter::doFinalization(Module &M) {
