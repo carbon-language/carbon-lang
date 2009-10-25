@@ -4940,12 +4940,16 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
   case CXXDefaultConstructor:
     if (RD->hasUserDeclaredConstructor()) {
       typedef CXXRecordDecl::ctor_iterator ctor_iter;
-      for (ctor_iter ci = RD->ctor_begin(), ce = RD->ctor_end(); ci != ce; ++ci)
-        if (!ci->isImplicitlyDefined(Context)) {
+      for (ctor_iter ci = RD->ctor_begin(), ce = RD->ctor_end(); ci != ce;++ci){
+        const FunctionDecl *body = 0;
+        ci->getBody(body);
+        if (!body ||
+            !cast<CXXConstructorDecl>(body)->isImplicitlyDefined(Context)) {
           SourceLocation CtorLoc = ci->getLocation();
           Diag(CtorLoc, diag::note_nontrivial_user_defined) << QT << member;
           return;
         }
+      }
 
       assert(0 && "found no user-declared constructors");
       return;
