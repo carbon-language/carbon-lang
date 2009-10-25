@@ -16,9 +16,13 @@ from TestingConfig import TestingConfig
 import LitConfig
 import Test
 
+# Configuration files to look for when discovering test suites. These can be
+# overridden with --config-prefix.
+#
 # FIXME: Rename to 'config.lit', 'site.lit', and 'local.lit' ?
-kConfigName = 'lit.cfg'
-kSiteConfigName = 'lit.site.cfg'
+gConfigName = 'lit.cfg'
+gSiteConfigName = 'lit.site.cfg'
+
 kLocalConfigName = 'lit.local.cfg'
 
 class TestingProgressDisplay:
@@ -134,10 +138,10 @@ class Tester(threading.Thread):
         self.display.update(test)
 
 def dirContainsTestSuite(path):
-    cfgpath = os.path.join(path, kSiteConfigName)
+    cfgpath = os.path.join(path, gSiteConfigName)
     if os.path.exists(cfgpath):
         return cfgpath
-    cfgpath = os.path.join(path, kConfigName)
+    cfgpath = os.path.join(path, gConfigName)
     if os.path.exists(cfgpath):
         return cfgpath
 
@@ -268,7 +272,7 @@ def getTestsInSuite(ts, path_in_suite, litConfig,
         file_sourcepath = os.path.join(source_path, filename)
         if not os.path.isdir(file_sourcepath):
             continue
-        
+
         # Check for nested test suites, first in the execpath in case there is a
         # site configuration and then in the source path.
         file_execpath = ts.getExecPath(path_in_suite + (filename,))
@@ -283,7 +287,7 @@ def getTestsInSuite(ts, path_in_suite, litConfig,
             subiter = getTestsInSuite(ts, path_in_suite + (filename,),
                                       litConfig, testSuiteCache,
                                       localConfigCache)
-        
+
         for res in subiter:
             yield res
 
@@ -314,6 +318,9 @@ def main():
     parser.add_option("-j", "--threads", dest="numThreads", metavar="N",
                       help="Number of testing threads",
                       type=int, action="store", default=None)
+    parser.add_option("", "--config-prefix", dest="configPrefix",
+                      metavar="NAME", help="Prefix for 'lit' config files",
+                      action="store", default=None)
 
     group = OptionGroup(parser, "Output Format")
     # FIXME: I find these names very confusing, although I like the
@@ -379,6 +386,11 @@ def main():
     if not args:
         parser.error('No inputs specified')
 
+    if opts.configPrefix is not None:
+        global gConfigName, gSiteConfigName
+        gConfigName = '%s.cfg' % opts.configPrefix
+        gSiteConfigName = '%s.site.cfg' % opts.configPrefix
+
     if opts.numThreads is None:
         opts.numThreads = Util.detectCPUs()
 
@@ -413,7 +425,8 @@ def main():
 
     if opts.showSuites:
         suitesAndTests = dict([(ts,[])
-                               for ts,_ in testSuiteCache.values()])
+                               for ts,_ in testSuiteCache.values()
+                               if ts])
         for t in tests:
             suitesAndTests[t.suite].append(t)
 

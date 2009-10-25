@@ -49,6 +49,11 @@ Show the B<lit> help message.
 Run I<N> tests in parallel. By default, this is automatically chose to match the
 number of detected available CPUs.
 
+=item B<--config-prefix>=I<NAME>
+
+Search for I<NAME.cfg> and I<NAME.site.cfg> when searching for test suites,
+instead I<lit.cfg> and I<lit.site.cfg>.
+
 =back 
 
 =head1 OUTPUT OPTIONS
