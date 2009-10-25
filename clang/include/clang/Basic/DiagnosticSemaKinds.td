@@ -1661,7 +1661,9 @@ def err_bad_new_type : Error<
 def err_new_incomplete_type : Error<
   "allocation of incomplete type %0">;
 def err_new_array_nonconst : Error<
-  "only the first dimension of an allocated array may be non-const">;
+  "only the first dimension of an allocated array may have dynamic size">;
+def err_new_paren_array_nonconst : Error<
+  "when type is in parentheses, array cannot have dynamic size">;
 def err_array_size_not_integral : Error<
   "array size expression must have integral or enumerated type, not %0">;
 def err_new_uninitialized_const : Error<

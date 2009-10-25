@@ -468,9 +468,8 @@ public:
                                  SourceLocation Loc, DeclarationName Entity);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S,
                                 DeclaratorInfo **DInfo = 0,
-                                unsigned Skip = 0, TagDecl **OwnedDecl = 0);
-  DeclaratorInfo *GetDeclaratorInfoForDeclarator(Declarator &D, QualType T,
-                                                 unsigned Skip);
+                                TagDecl **OwnedDecl = 0);
+  DeclaratorInfo *GetDeclaratorInfoForDeclarator(Declarator &D, QualType T);
   /// \brief Create a LocInfoType to hold the given QualType and DeclaratorInfo.
   QualType CreateLocInfoType(QualType T, DeclaratorInfo *DInfo);
   DeclarationName GetNameForDeclarator(Declarator &D);

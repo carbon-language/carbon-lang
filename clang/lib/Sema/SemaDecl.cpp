@@ -3619,8 +3619,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
 
   DeclaratorInfo *DInfo = 0;
   TagDecl *OwnedDecl = 0;
-  QualType parmDeclType = GetTypeForDeclarator(D, S, &DInfo, /*Skip=*/0,
-                                               &OwnedDecl);
+  QualType parmDeclType = GetTypeForDeclarator(D, S, &DInfo, &OwnedDecl);
 
   if (getLangOptions().CPlusPlus && OwnedDecl && OwnedDecl->isDefinition()) {
     // C++ [dcl.fct]p6:

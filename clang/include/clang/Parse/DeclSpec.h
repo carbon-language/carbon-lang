@@ -1069,6 +1069,13 @@ public:
     return DeclTypeInfo[i];
   }
 
+  void DropFirstTypeObject()
+  {
+    assert(!DeclTypeInfo.empty() && "No type chunks to drop.");
+    DeclTypeInfo.front().destroy();
+    DeclTypeInfo.erase(DeclTypeInfo.begin());
+  }
+
   /// isFunctionDeclarator - Once this declarator is fully parsed and formed,
   /// this method returns true if the identifier is a function declarator.
   bool isFunctionDeclarator() const {

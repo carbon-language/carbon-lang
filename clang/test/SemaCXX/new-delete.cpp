@@ -58,6 +58,7 @@ void bad_news(int *ip)
   (void)new int[1.1]; // expected-error {{array size expression must have integral or enumerated type, not 'double'}}
   (void)new int[1][i]; // expected-error {{only the first dimension}}
   (void)new (int[1][i]); // expected-error {{only the first dimension}}
+  (void)new (int[i]); // expected-error {{when type is in parentheses}}
   (void)new int(*(S*)0); // expected-error {{incompatible type initializing}}
   (void)new int(1, 2); // expected-error {{initializer of a builtin type can only take one argument}}
   (void)new S(1); // expected-error {{no matching constructor}}

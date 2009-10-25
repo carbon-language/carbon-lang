@@ -312,7 +312,6 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                   MultiExprArg ConstructorArgs,
                   SourceLocation ConstructorRParen) {
   Expr *ArraySize = 0;
-  unsigned Skip = 0;
   // If the specified type is an array, unwrap it and save the expression.
   if (D.getNumTypeObjects() > 0 &&
       D.getTypeObject(0).Kind == DeclaratorChunk::Array) {
@@ -323,14 +322,25 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     if (!Chunk.Arr.NumElts)
       return ExprError(Diag(Chunk.Loc, diag::err_array_new_needs_size)
         << D.getSourceRange());
+
+    if (ParenTypeId) {
+      // Can't have dynamic array size when the type-id is in parentheses.
+      Expr *NumElts = (Expr *)Chunk.Arr.NumElts;
+      if (!NumElts->isTypeDependent() && !NumElts->isValueDependent() &&
+          !NumElts->isIntegerConstantExpr(Context)) {
+        Diag(D.getTypeObject(0).Loc, diag::err_new_paren_array_nonconst)
+          << NumElts->getSourceRange();
+        return ExprError();
+      }
+    }
+
     ArraySize = static_cast<Expr*>(Chunk.Arr.NumElts);
-    Skip = 1;
+    D.DropFirstTypeObject();
   }
 
   // Every dimension shall be of constant size.
-  if (D.getNumTypeObjects() > 0 && 
-      D.getTypeObject(0).Kind == DeclaratorChunk::Array) {
-    for (unsigned I = 1, N = D.getNumTypeObjects(); I < N; ++I) {
+  if (ArraySize) {
+    for (unsigned I = 0, N = D.getNumTypeObjects(); I < N; ++I) {
       if (D.getTypeObject(I).Kind != DeclaratorChunk::Array)
         break;
 
@@ -345,10 +355,10 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
       }
     }
   }
-  
+
   //FIXME: Store DeclaratorInfo in CXXNew expression.
   DeclaratorInfo *DInfo = 0;
-  QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, &DInfo, Skip);
+  QualType AllocType = GetTypeForDeclarator(D, /*Scope=*/0, &DInfo);
   if (D.isInvalidType())
     return ExprError();
 
@@ -935,7 +945,7 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
   // FIXME: Store DeclaratorInfo in the expression.
   DeclaratorInfo *DInfo = 0;
   TagDecl *OwnedTag = 0;
-  QualType Ty = GetTypeForDeclarator(D, S, &DInfo, /*Skip=*/0, &OwnedTag);
+  QualType Ty = GetTypeForDeclarator(D, S, &DInfo, &OwnedTag);
 
   if (Ty->isFunctionType()) { // The declarator shall not specify a function...
     // We exit without creating a CXXConditionDeclExpr because a FunctionDecl

@@ -52,9 +52,9 @@ QualType Sema::adjustParameterType(QualType T) {
 
 /// isOmittedBlockReturnType - Return true if this declarator is missing a
 /// return type because this is a omitted return type on a block literal. 
-static bool isOmittedBlockReturnType(const Declarator &D, unsigned Skip) {
+static bool isOmittedBlockReturnType(const Declarator &D) {
   if (D.getContext() != Declarator::BlockLiteralContext ||
-      Skip != 0 || D.getDeclSpec().hasTypeSpecifier())
+      D.getDeclSpec().hasTypeSpecifier())
     return false;
   
   if (D.getNumTypeObjects() == 0)
@@ -72,8 +72,7 @@ static bool isOmittedBlockReturnType(const Declarator &D, unsigned Skip) {
 /// \param D  the declarator containing the declaration specifier.
 /// \returns The type described by the declaration specifiers.  This function
 /// never returns null.
-static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, unsigned Skip,
-                                      Sema &TheSema) {
+static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
   const DeclSpec &DS = TheDeclarator.getDeclSpec();
@@ -135,7 +134,7 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, unsigned Skip,
     
     // If this is a missing declspec in a block literal return context, then it
     // is inferred from the return statements inside the block.
-    if (isOmittedBlockReturnType(TheDeclarator, Skip)) {
+    if (isOmittedBlockReturnType(TheDeclarator)) {
       Result = Context.DependentTy;
       break;
     }
@@ -852,14 +851,13 @@ QualType Sema::GetTypeFromParser(TypeTy *Ty, DeclaratorInfo **DInfo) {
 }
 
 /// GetTypeForDeclarator - Convert the type for the specified
-/// declarator to Type instances. Skip the outermost Skip type
-/// objects.
+/// declarator to Type instances.
 ///
 /// If OwnedDecl is non-NULL, and this declarator's decl-specifier-seq
 /// owns the declaration of a type (e.g., the definition of a struct
 /// type), then *OwnedDecl will receive the owned declaration.
 QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
-                                    DeclaratorInfo **DInfo, unsigned Skip,
+                                    DeclaratorInfo **DInfo,
                                     TagDecl **OwnedDecl) {
   // Determine the type of the declarator. Not all forms of declarator
   // have a type.
@@ -870,7 +868,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   case Declarator::DK_Normal:
   case Declarator::DK_Operator:
   case Declarator::DK_TemplateId:
-    T = ConvertDeclSpecToType(D, Skip, *this);
+    T = ConvertDeclSpecToType(D, *this);
     
     if (!D.isInvalidType() && OwnedDecl && D.getDeclSpec().isTypeSpecOwned())
       *OwnedDecl = cast<TagDecl>((Decl *)D.getDeclSpec().getTypeRep());
@@ -937,8 +935,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   // Walk the DeclTypeInfo, building the recursive type as we go.
   // DeclTypeInfos are ordered from the identifier out, which is
   // opposite of what we want :).
-  for (unsigned i = Skip, e = D.getNumTypeObjects(); i != e; ++i) {
-    DeclaratorChunk &DeclType = D.getTypeObject(e-i-1+Skip);
+  for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
+    DeclaratorChunk &DeclType = D.getTypeObject(e-i-1);
     switch (DeclType.Kind) {
     default: assert(0 && "Unknown decltype!");
     case DeclaratorChunk::BlockPointer:
@@ -1235,7 +1233,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     if (D.isInvalidType())
       *DInfo = 0;
     else
-      *DInfo = GetDeclaratorInfoForDeclarator(D, T, Skip);
+      *DInfo = GetDeclaratorInfoForDeclarator(D, T);
   }
 
   return T;
@@ -1377,11 +1375,11 @@ namespace {
 ///
 /// \param T QualType referring to the type as written in source code.
 DeclaratorInfo *
-Sema::GetDeclaratorInfoForDeclarator(Declarator &D, QualType T, unsigned Skip) {
+Sema::GetDeclaratorInfoForDeclarator(Declarator &D, QualType T) {
   DeclaratorInfo *DInfo = Context.CreateDeclaratorInfo(T);
   UnqualTypeLoc CurrTL = DInfo->getTypeLoc().getUnqualifiedLoc();
 
-  for (unsigned i = Skip, e = D.getNumTypeObjects(); i != e; ++i) {
+  for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
     DeclaratorLocFiller(D.getTypeObject(i)).Visit(CurrTL);
     CurrTL = CurrTL.getNextTypeLoc().getUnqualifiedLoc();
   }
@@ -1474,7 +1472,7 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
 
   DeclaratorInfo *DInfo = 0;
   TagDecl *OwnedTag = 0;
-  QualType T = GetTypeForDeclarator(D, S, &DInfo, /*Skip=*/0, &OwnedTag);
+  QualType T = GetTypeForDeclarator(D, S, &DInfo, &OwnedTag);
   if (D.isInvalidType())
     return true;
 
