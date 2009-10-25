@@ -431,8 +431,16 @@ use TableGen inheritance instead.
 
 * Possible tests are:
 
-  - ``switch_on`` - Returns true if a given command-line switch is
-    provided by the user. Example: ``(switch_on "opt")``.
+  - ``switch_on`` - Returns true if a given command-line switch is provided by
+    the user. Can be given a list as argument, in that case ``(switch_on ["foo",
+    "bar", "baz"])`` is equivalent to ``(and (switch_on "foo"), (switch_on
+    "bar"), (switch_on "baz"))``.
+    Example: ``(switch_on "opt")``.
+
+  - ``any_switch_on`` - Given a list of switch options, returns true if any of
+    the switches is turned on.
+    Example: ``(any_switch_on ["foo", "bar", "baz"])`` is equivalent to ``(or
+    (switch_on "foo"), (switch_on "bar"), (switch_on "baz"))``.
 
   - ``parameter_equals`` - Returns true if a command-line parameter equals
     a given value.
@@ -446,18 +454,28 @@ use TableGen inheritance instead.
     belongs to the current input language set.
     Example: ``(input_languages_contain "c++")``.
 
-  - ``in_language`` - Evaluates to true if the input file language
-    equals to the argument. At the moment works only with ``cmd_line``
-    and ``actions`` (on non-join nodes).
+  - ``in_language`` - Evaluates to true if the input file language is equal to
+    the argument. At the moment works only with ``cmd_line`` and ``actions`` (on
+    non-join nodes).
     Example: ``(in_language "c++")``.
 
-  - ``not_empty`` - Returns true if a given option (which should be
-    either a parameter or a parameter list) is set by the
-    user.
+  - ``not_empty`` - Returns true if a given option (which should be either a
+    parameter or a parameter list) is set by the user. Like ``switch_on``, can
+    be also given a list as argument.
     Example: ``(not_empty "o")``.
 
+  - ``any_not_empty`` - Returns true if ``not_empty`` returns true for any of
+    the options in the list.
+    Example: ``(any_not_empty ["foo", "bar", "baz"])`` is equivalent to ``(or
+    (not_empty "foo"), (not_empty "bar"), (not_empty "baz"))``.
+
   - ``empty`` - The opposite of ``not_empty``. Equivalent to ``(not (not_empty
-    X))``. Provided for convenience.
+    X))``. Provided for convenience. Can be given a list as argument.
+
+  - ``any_not_empty`` - Returns true if ``not_empty`` returns true for any of
+    the options in the list.
+    Example: ``(any_empty ["foo", "bar", "baz"])`` is equivalent to ``(not (and
+    (not_empty "foo"), (not_empty "bar"), (not_empty "baz")))``.
 
   - ``single_input_file`` - Returns true if there was only one input file
     provided on the command-line. Used without arguments:
@@ -572,11 +590,13 @@ The list of all possible actions follows.
      Example: ``(case (switch_on "pthread"), (append_cmd
      "-lpthread"))``
 
-   - ``error` - exit with error.
+   - ``error`` - exit with error.
      Example: ``(error "Mixing -c and -S is not allowed!")``.
 
-   - ``forward`` - forward an option unchanged.
-     Example: ``(forward "Wall")``.
+   - ``warning`` - print a warning.
+     Example: ``(warning "Specifying both -O1 and -O2 is meaningless!")``.
+
+   - ``forward`` - forward an option unchanged.  Example: ``(forward "Wall")``.
 
    - ``forward_as`` - Change the name of an option, but forward the
      argument unchanged.
@@ -618,6 +638,36 @@ The language map entries should be added only for tools that are
 linked with the root node. Since tools are not allowed to have
 multiple output languages, for nodes "inside" the graph the input and
 output languages should match. This is enforced at compile-time.
+
+Option preprocessor
+===================
+
+It is sometimes useful to run error-checking code before processing the
+compilation graph. For example, if optimization options "-O1" and "-O2" are
+implemented as switches, we might want to output a warning if the user invokes
+the driver with both of these options enabled.
+
+The ``OptionPreprocessor`` feature is reserved specially for these
+occasions. Example (adapted from the built-in Base plugin)::
+
+   def Preprocess : OptionPreprocessor<
+   (case (and (switch_on "O3"), (any_switch_on ["O0", "O1", "O2"])),
+              [(unset_option ["O0", "O1", "O2"]),
+               (warning "Multiple -O options specified, defaulted to -O3.")],
+         (and (switch_on "O2"), (any_switch_on ["O0", "O1"])),
+              (unset_option ["O0", "O1"]),
+         (and (switch_on "O1"), (switch_on "O0")),
+              (unset_option "O0"))
+   >;
+
+Here, ``OptionPreprocessor`` is used to unset all spurious optimization options
+(so that they are not forwarded to the compiler).
+
+``OptionPreprocessor`` is basically a single big ``case`` expression, which is
+evaluated only once right after the plugin is loaded. The only allowed actions
+in ``OptionPreprocessor`` are ``error``, ``warning`` and a special action
+``unset_option``, which, as the name suggests, unsets a given option. For
+convenience, ``unset_option`` also works on lists.
 
 
 More advanced topics
