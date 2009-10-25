@@ -106,9 +106,9 @@ unsigned TargetInfo::getTypeWidth(IntType T) const {
   };
 }
 
-/// getTypeSigned - Return whether an integer types is signed. Returns true if
+/// isTypeSigned - Return whether an integer types is signed. Returns true if
 /// the type is signed; false otherwise.
-bool TargetInfo::getTypeSigned(IntType T) const {
+bool TargetInfo::isTypeSigned(IntType T) const {
   switch (T) {
   default: assert(0 && "not an integer!");
   case SignedShort:

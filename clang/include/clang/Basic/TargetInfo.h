@@ -103,9 +103,9 @@ public:
   /// enum. For example, SignedInt -> getIntWidth().
   unsigned getTypeWidth(IntType T) const;
 
-  /// getTypeSigned - Return whether an integer types is signed. Returns true if
+  /// isTypeSigned - Return whether an integer types is signed. Returns true if
   /// the type is signed; false otherwise.
-  bool getTypeSigned(IntType T) const;
+  bool isTypeSigned(IntType T) const;
 
   /// getPointerWidth - Return the width of pointers on this target, for the
   /// specified address space.
