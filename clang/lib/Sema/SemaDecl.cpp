@@ -142,7 +142,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     QualType T;
 
     if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
-      // Check whether we can use this type
+      // Check whether we can use this type.
       (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
 
       if (getLangOptions().CPlusPlus) {

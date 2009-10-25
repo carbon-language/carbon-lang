@@ -126,6 +126,7 @@ def err_expected_asm_operand : Error<
   "expected string literal or '[' for asm operand">;
 def err_expected_selector_for_method : Error<
   "expected selector for Objective-C method">;
+def err_expected_property_name : Error<"expected property name">;
 
 def err_unexpected_at : Error<"unexpected '@' in program">;
 
