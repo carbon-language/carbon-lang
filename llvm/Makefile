@@ -133,8 +133,7 @@ dist-hook::
 	$(Echo) Eliminating files constructed by configure
 	$(Verb) $(RM) -f \
 	  $(TopDistDir)/include/llvm/Config/config.h  \
-	  $(TopDistDir)/include/llvm/Support/DataTypes.h  \
-	  $(TopDistDir)/include/llvm/Support/ThreadSupport.h
+	  $(TopDistDir)/include/llvm/Support/DataTypes.h
 
 clang-only: all
 tools-only: all
