@@ -678,14 +678,13 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
     // If the initializer is an ExtVecEltExpr (a swizzle), and the swizzle's 
     // input is the same width as the vector being constructed, generate an
     // optimized shuffle of the swizzle input into the result.
+    unsigned Offset = (CurIdx == 0) ? 0 : ResElts;
     if (isa<ExtVectorElementExpr>(IE)) {
       llvm::ShuffleVectorInst *SVI = cast<llvm::ShuffleVectorInst>(Init);
       Value *SVOp = SVI->getOperand(0);
       const llvm::VectorType *OpTy = cast<llvm::VectorType>(SVOp->getType());
       
       if (OpTy->getNumElements() == ResElts) {
-        unsigned Offset = (CurIdx == 0) ? 0 : ResElts;
-        
         for (unsigned j = 0; j != CurIdx; ++j) {
           // If the current vector initializer is a shuffle with undef, merge
           // this shuffle directly into it.
@@ -717,13 +716,13 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
         Args.push_back(llvm::UndefValue::get(I32Ty));
       llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], ResElts);
       Init = Builder.CreateShuffleVector(Init, llvm::UndefValue::get(VVT),
-                                         Mask, "vecext");
+                                         Mask, "vext");
 
       Args.clear();
       for (unsigned j = 0; j != CurIdx; ++j)
         Args.push_back(llvm::ConstantInt::get(I32Ty, j));
       for (unsigned j = 0; j != InitElts; ++j)
-        Args.push_back(llvm::ConstantInt::get(I32Ty, j+ResElts));
+        Args.push_back(llvm::ConstantInt::get(I32Ty, j+Offset));
       for (unsigned j = CurIdx + InitElts; j != ResElts; ++j)
         Args.push_back(llvm::UndefValue::get(I32Ty));
     }
