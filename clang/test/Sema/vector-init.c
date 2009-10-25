@@ -8,7 +8,7 @@ float4 foo = (float4){ 1.0, 2.0, 3.0, 4.0 };
 float4 foo2 = (float4){ 1.0, 2.0, 3.0, 4.0 , 5.0 }; // expected-warning{{excess elements in vector initializer}}
 
 float4 array[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
-int array_sizecheck[(sizeof(array) / sizeof(float4)) == 3? 1 : -1];
+int array_sizecheck[(sizeof(array) / sizeof(float4)) == 3 ? 1 : -1];
 
 float4 array2[2] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 
                      9.0 }; // expected-warning {{excess elements in array initializer}}
@@ -26,5 +26,5 @@ float f1(void) {
 
 // PR5265
 typedef float __attribute__((ext_vector_type (3))) float3;
-int test2[(sizeof(float3) == sizeof(float4))*2-1];
+int test2[sizeof(float3) == sizeof(float4) ? 1 : -1];
 
