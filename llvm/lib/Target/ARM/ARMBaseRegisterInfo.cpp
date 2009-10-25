@@ -254,6 +254,33 @@ bool ARMBaseRegisterInfo::isReservedReg(const MachineFunction &MF,
 }
 
 const TargetRegisterClass *
+ARMBaseRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
+                                              const TargetRegisterClass *B,
+                                              unsigned SubIdx) const {
+  switch (SubIdx) {
+  default: return 0;
+  case 1:
+  case 2:
+  case 3:
+  case 4:
+    // S sub-registers.
+    if (A->getSize() == 8) {
+      if (A == &ARM::DPR_8RegClass)
+        return A;
+      return &ARM::DPR_VFP2RegClass;
+    }
+
+    assert(A->getSize() == 16 && "Expecting a Q register class!");
+    return &ARM::QPR_VFP2RegClass;
+  case 5:
+  case 6:
+    // D sub-registers.
+    return A;
+  }
+  return 0;
+}
+
+const TargetRegisterClass *
 ARMBaseRegisterInfo::getPointerRegClass(unsigned Kind) const {
   return ARM::GPRRegisterClass;
 }

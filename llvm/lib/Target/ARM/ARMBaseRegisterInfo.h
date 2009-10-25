@@ -74,6 +74,13 @@ public:
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
+  /// getMatchingSuperRegClass - Return a subclass of the specified register
+  /// class A so that each register in it has a sub-register of the
+  /// specified sub-register index which is in the specified register class B.
+  virtual const TargetRegisterClass *
+  getMatchingSuperRegClass(const TargetRegisterClass *A,
+                           const TargetRegisterClass *B, unsigned Idx) const;
+
   const TargetRegisterClass *getPointerRegClass(unsigned Kind = 0) const;
 
   std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>
