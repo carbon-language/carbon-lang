@@ -44,13 +44,22 @@ using namespace llvm;
 /// ConstantExpr if unfoldable.
 static Constant *FoldBitCast(Constant *C, const Type *DestTy,
                              const TargetData &TD) {
+  
+  // This only handles casts to vectors currently.
+  const VectorType *DestVTy = dyn_cast<VectorType>(DestTy);
+  if (DestVTy == 0)
+    return ConstantExpr::getBitCast(C, DestTy);
+  
+  // If this is a scalar -> vector cast, convert the input into a <1 x scalar>
+  // vector so the code below can handle it uniformly.
+  if (isa<ConstantFP>(C) || isa<ConstantInt>(C)) {
+    Constant *Ops = C; // don't take the address of C!
+    return FoldBitCast(ConstantVector::get(&Ops, 1), DestTy, TD);
+  }
+  
   // If this is a bitcast from constant vector -> vector, fold it.
   ConstantVector *CV = dyn_cast<ConstantVector>(C);
   if (CV == 0)
-    return ConstantExpr::getBitCast(C, DestTy);
-  
-  const VectorType *DestVTy = dyn_cast<VectorType>(DestTy);
-  if (DestVTy == 0)
     return ConstantExpr::getBitCast(C, DestTy);
   
   // If the element types match, VMCore can fold it.
