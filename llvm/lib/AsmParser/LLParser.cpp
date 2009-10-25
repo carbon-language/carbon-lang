@@ -603,8 +603,7 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 
   // See if this value already exists in the symbol table.  If so, it is either
   // a redefinition or a definition of a forward reference.
-  if (GlobalValue *Val =
-        cast_or_null<GlobalValue>(M->getValueSymbolTable().lookup(Name))) {
+  if (GlobalValue *Val = M->getNamedValue(Name)) {
     // See if this was a redefinition.  If so, there is no entry in
     // ForwardRefVals.
     std::map<std::string, std::pair<GlobalValue*, LocTy> >::iterator
@@ -671,9 +670,11 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
 
   // See if the global was forward referenced, if so, use the global.
   if (!Name.empty()) {
-    if ((GV = M->getGlobalVariable(Name, true)) &&
-        !ForwardRefVals.erase(Name))
-      return Error(NameLoc, "redefinition of global '@" + Name + "'");
+    if (GlobalValue *GVal = M->getNamedValue(Name)) {
+      if (!ForwardRefVals.erase(Name) || !isa<GlobalValue>(GVal))
+        return Error(NameLoc, "redefinition of global '@" + Name + "'");
+      GV = cast<GlobalVariable>(GVal);
+    }
   } else {
     std::map<unsigned, std::pair<GlobalValue*, LocTy> >::iterator
       I = ForwardRefValIDs.find(NumberedVals.size());
@@ -2563,6 +2564,8 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
              AI != AE; ++AI)
           AI->setName("");
       }
+    } else if (M->getNamedValue(FunctionName)) {
+      return Error(NameLoc, "redefinition of function '@" + FunctionName + "'");
     }
 
   } else {

@@ -273,7 +273,7 @@ define i32 @foozball(i32) {
 @A = global i32* @B		; <i32**> [#uses=0]
 @B = global i32 7		; <i32*> [#uses=1]
 
-define void @X() {
+define void @test12312() {
 	ret void
 }
 ; ModuleID = 'global_section.ll'

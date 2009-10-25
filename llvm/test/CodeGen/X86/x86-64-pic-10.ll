@@ -3,7 +3,7 @@
 
 @g = alias weak i32 ()* @f
 
-define void @g() {
+define void @h() {
 entry:
 	%tmp31 = call i32 @g()
         ret void
