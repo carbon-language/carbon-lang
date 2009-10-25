@@ -39,6 +39,129 @@ using namespace llvm;
 // Constant Folding internal helper functions
 //===----------------------------------------------------------------------===//
 
+/// FoldBitCast - Constant fold bitcast, symbolically evaluating it with 
+/// TargetData.  This always returns a non-null constant, but it may be a
+/// ConstantExpr if unfoldable.
+static Constant *FoldBitCast(Constant *C, const Type *DestTy,
+                             const TargetData &TD) {
+  // If this is a bitcast from constant vector -> vector, fold it.
+  ConstantVector *CV = dyn_cast<ConstantVector>(C);
+  if (CV == 0)
+    return ConstantExpr::getBitCast(C, DestTy);
+  
+  const VectorType *DestVTy = dyn_cast<VectorType>(DestTy);
+  if (DestVTy == 0)
+    return ConstantExpr::getBitCast(C, DestTy);
+  
+  // If the element types match, VMCore can fold it.
+  unsigned NumDstElt = DestVTy->getNumElements();
+  unsigned NumSrcElt = CV->getNumOperands();
+  if (NumDstElt == NumSrcElt)
+    return ConstantExpr::getBitCast(C, DestTy);
+  
+  const Type *SrcEltTy = CV->getType()->getElementType();
+  const Type *DstEltTy = DestVTy->getElementType();
+  
+  // Otherwise, we're changing the number of elements in a vector, which 
+  // requires endianness information to do the right thing.  For example,
+  //    bitcast (<2 x i64> <i64 0, i64 1> to <4 x i32>)
+  // folds to (little endian):
+  //    <4 x i32> <i32 0, i32 0, i32 1, i32 0>
+  // and to (big endian):
+  //    <4 x i32> <i32 0, i32 0, i32 0, i32 1>
+  
+  // First thing is first.  We only want to think about integer here, so if
+  // we have something in FP form, recast it as integer.
+  if (DstEltTy->isFloatingPoint()) {
+    // Fold to an vector of integers with same size as our FP type.
+    unsigned FPWidth = DstEltTy->getPrimitiveSizeInBits();
+    const Type *DestIVTy =
+      VectorType::get(IntegerType::get(C->getContext(), FPWidth), NumDstElt);
+    // Recursively handle this integer conversion, if possible.
+    C = FoldBitCast(C, DestIVTy, TD);
+    if (!C) return ConstantExpr::getBitCast(C, DestTy);
+    
+    // Finally, VMCore can handle this now that #elts line up.
+    return ConstantExpr::getBitCast(C, DestTy);
+  }
+  
+  // Okay, we know the destination is integer, if the input is FP, convert
+  // it to integer first.
+  if (SrcEltTy->isFloatingPoint()) {
+    unsigned FPWidth = SrcEltTy->getPrimitiveSizeInBits();
+    const Type *SrcIVTy =
+      VectorType::get(IntegerType::get(C->getContext(), FPWidth), NumSrcElt);
+    // Ask VMCore to do the conversion now that #elts line up.
+    C = ConstantExpr::getBitCast(C, SrcIVTy);
+    CV = dyn_cast<ConstantVector>(C);
+    if (!CV)  // If VMCore wasn't able to fold it, bail out.
+      return C;
+  }
+  
+  // Now we know that the input and output vectors are both integer vectors
+  // of the same size, and that their #elements is not the same.  Do the
+  // conversion here, which depends on whether the input or output has
+  // more elements.
+  bool isLittleEndian = TD.isLittleEndian();
+  
+  SmallVector<Constant*, 32> Result;
+  if (NumDstElt < NumSrcElt) {
+    // Handle: bitcast (<4 x i32> <i32 0, i32 1, i32 2, i32 3> to <2 x i64>)
+    Constant *Zero = Constant::getNullValue(DstEltTy);
+    unsigned Ratio = NumSrcElt/NumDstElt;
+    unsigned SrcBitSize = SrcEltTy->getPrimitiveSizeInBits();
+    unsigned SrcElt = 0;
+    for (unsigned i = 0; i != NumDstElt; ++i) {
+      // Build each element of the result.
+      Constant *Elt = Zero;
+      unsigned ShiftAmt = isLittleEndian ? 0 : SrcBitSize*(Ratio-1);
+      for (unsigned j = 0; j != Ratio; ++j) {
+        Constant *Src = dyn_cast<ConstantInt>(CV->getOperand(SrcElt++));
+        if (!Src)  // Reject constantexpr elements.
+          return ConstantExpr::getBitCast(C, DestTy);
+        
+        // Zero extend the element to the right size.
+        Src = ConstantExpr::getZExt(Src, Elt->getType());
+        
+        // Shift it to the right place, depending on endianness.
+        Src = ConstantExpr::getShl(Src, 
+                                   ConstantInt::get(Src->getType(), ShiftAmt));
+        ShiftAmt += isLittleEndian ? SrcBitSize : -SrcBitSize;
+        
+        // Mix it in.
+        Elt = ConstantExpr::getOr(Elt, Src);
+      }
+      Result.push_back(Elt);
+    }
+  } else {
+    // Handle: bitcast (<2 x i64> <i64 0, i64 1> to <4 x i32>)
+    unsigned Ratio = NumDstElt/NumSrcElt;
+    unsigned DstBitSize = DstEltTy->getPrimitiveSizeInBits();
+    
+    // Loop over each source value, expanding into multiple results.
+    for (unsigned i = 0; i != NumSrcElt; ++i) {
+      Constant *Src = dyn_cast<ConstantInt>(CV->getOperand(i));
+      if (!Src)  // Reject constantexpr elements.
+        return ConstantExpr::getBitCast(C, DestTy);
+      
+      unsigned ShiftAmt = isLittleEndian ? 0 : DstBitSize*(Ratio-1);
+      for (unsigned j = 0; j != Ratio; ++j) {
+        // Shift the piece of the value into the right place, depending on
+        // endianness.
+        Constant *Elt = ConstantExpr::getLShr(Src, 
+                                    ConstantInt::get(Src->getType(), ShiftAmt));
+        ShiftAmt += isLittleEndian ? DstBitSize : -DstBitSize;
+        
+        // Truncate and remember this piece.
+        Result.push_back(ConstantExpr::getTrunc(Elt, DstEltTy));
+      }
+    }
+  }
+  
+  return ConstantVector::get(Result.data(), Result.size());
+}
+
+
 /// IsConstantOffsetFromGlobal - If this constant is actually a constant offset
 /// from a global, return the global and the constant.  Because of
 /// constantexprs, this function is recursive.
@@ -125,11 +248,11 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
   
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
     if (CFP->getType()->isDoubleTy()) {
-      C = ConstantExpr::getBitCast(C, Type::getInt64Ty(C->getContext()));
+      C = FoldBitCast(C, Type::getInt64Ty(C->getContext()), TD);
       return ReadDataFromGlobal(C, ByteOffset, CurPtr, BytesLeft, TD);
     }
     if (CFP->getType()->isFloatTy()){
-      C = ConstantExpr::getBitCast(C, Type::getInt32Ty(C->getContext()));
+      C = FoldBitCast(C, Type::getInt32Ty(C->getContext()), TD);
       return ReadDataFromGlobal(C, ByteOffset, CurPtr, BytesLeft, TD);
     }
     return false;
@@ -235,9 +358,9 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
     } else
       return 0;
 
-    C = ConstantExpr::getBitCast(C, MapTy);
+    C = FoldBitCast(C, MapTy, TD);
     if (Constant *Res = FoldReinterpretLoadFromConstPtr(C, TD))
-      return ConstantExpr::getBitCast(Res, LoadTy);
+      return FoldBitCast(Res, LoadTy, TD);
     return 0;
   }
   
@@ -479,132 +602,11 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
   // If we ended up indexing a member with a type that doesn't match
   // the type of what the original indices indexed, add a cast.
   if (Ty != cast<PointerType>(ResultTy)->getElementType())
-    C = ConstantExpr::getBitCast(C, ResultTy);
+    C = FoldBitCast(C, ResultTy, *TD);
 
   return C;
 }
 
-/// FoldBitCast - Constant fold bitcast, symbolically evaluating it with 
-/// TargetData.  This always returns a non-null constant, but it may be a
-/// ConstantExpr if unfoldable.
-static Constant *FoldBitCast(Constant *C, const Type *DestTy,
-                             const TargetData &TD, LLVMContext &Context) {
-  // If this is a bitcast from constant vector -> vector, fold it.
-  ConstantVector *CV = dyn_cast<ConstantVector>(C);
-  if (CV == 0)
-    return ConstantExpr::getBitCast(C, DestTy);
-  
-  const VectorType *DestVTy = dyn_cast<VectorType>(DestTy);
-  if (DestVTy == 0)
-    return ConstantExpr::getBitCast(C, DestTy);
-    
-  // If the element types match, VMCore can fold it.
-  unsigned NumDstElt = DestVTy->getNumElements();
-  unsigned NumSrcElt = CV->getNumOperands();
-  if (NumDstElt == NumSrcElt)
-    return ConstantExpr::getBitCast(C, DestTy);
-  
-  const Type *SrcEltTy = CV->getType()->getElementType();
-  const Type *DstEltTy = DestVTy->getElementType();
-  
-  // Otherwise, we're changing the number of elements in a vector, which 
-  // requires endianness information to do the right thing.  For example,
-  //    bitcast (<2 x i64> <i64 0, i64 1> to <4 x i32>)
-  // folds to (little endian):
-  //    <4 x i32> <i32 0, i32 0, i32 1, i32 0>
-  // and to (big endian):
-  //    <4 x i32> <i32 0, i32 0, i32 0, i32 1>
-  
-  // First thing is first.  We only want to think about integer here, so if
-  // we have something in FP form, recast it as integer.
-  if (DstEltTy->isFloatingPoint()) {
-    // Fold to an vector of integers with same size as our FP type.
-    unsigned FPWidth = DstEltTy->getPrimitiveSizeInBits();
-    const Type *DestIVTy = VectorType::get(
-                             IntegerType::get(Context, FPWidth), NumDstElt);
-    // Recursively handle this integer conversion, if possible.
-    C = FoldBitCast(C, DestIVTy, TD, Context);
-    if (!C) return ConstantExpr::getBitCast(C, DestTy);
-    
-    // Finally, VMCore can handle this now that #elts line up.
-    return ConstantExpr::getBitCast(C, DestTy);
-  }
-  
-  // Okay, we know the destination is integer, if the input is FP, convert
-  // it to integer first.
-  if (SrcEltTy->isFloatingPoint()) {
-    unsigned FPWidth = SrcEltTy->getPrimitiveSizeInBits();
-    const Type *SrcIVTy = VectorType::get(
-                             IntegerType::get(Context, FPWidth), NumSrcElt);
-    // Ask VMCore to do the conversion now that #elts line up.
-    C = ConstantExpr::getBitCast(C, SrcIVTy);
-    CV = dyn_cast<ConstantVector>(C);
-    if (!CV)  // If VMCore wasn't able to fold it, bail out.
-      return C;
-  }
-  
-  // Now we know that the input and output vectors are both integer vectors
-  // of the same size, and that their #elements is not the same.  Do the
-  // conversion here, which depends on whether the input or output has
-  // more elements.
-  bool isLittleEndian = TD.isLittleEndian();
-  
-  SmallVector<Constant*, 32> Result;
-  if (NumDstElt < NumSrcElt) {
-    // Handle: bitcast (<4 x i32> <i32 0, i32 1, i32 2, i32 3> to <2 x i64>)
-    Constant *Zero = Constant::getNullValue(DstEltTy);
-    unsigned Ratio = NumSrcElt/NumDstElt;
-    unsigned SrcBitSize = SrcEltTy->getPrimitiveSizeInBits();
-    unsigned SrcElt = 0;
-    for (unsigned i = 0; i != NumDstElt; ++i) {
-      // Build each element of the result.
-      Constant *Elt = Zero;
-      unsigned ShiftAmt = isLittleEndian ? 0 : SrcBitSize*(Ratio-1);
-      for (unsigned j = 0; j != Ratio; ++j) {
-        Constant *Src = dyn_cast<ConstantInt>(CV->getOperand(SrcElt++));
-        if (!Src)  // Reject constantexpr elements.
-          return ConstantExpr::getBitCast(C, DestTy);
-        
-        // Zero extend the element to the right size.
-        Src = ConstantExpr::getZExt(Src, Elt->getType());
-        
-        // Shift it to the right place, depending on endianness.
-        Src = ConstantExpr::getShl(Src, 
-                         ConstantInt::get(Src->getType(), ShiftAmt));
-        ShiftAmt += isLittleEndian ? SrcBitSize : -SrcBitSize;
-        
-        // Mix it in.
-        Elt = ConstantExpr::getOr(Elt, Src);
-      }
-      Result.push_back(Elt);
-    }
-  } else {
-    // Handle: bitcast (<2 x i64> <i64 0, i64 1> to <4 x i32>)
-    unsigned Ratio = NumDstElt/NumSrcElt;
-    unsigned DstBitSize = DstEltTy->getPrimitiveSizeInBits();
-    
-    // Loop over each source value, expanding into multiple results.
-    for (unsigned i = 0; i != NumSrcElt; ++i) {
-      Constant *Src = dyn_cast<ConstantInt>(CV->getOperand(i));
-      if (!Src)  // Reject constantexpr elements.
-        return ConstantExpr::getBitCast(C, DestTy);
-
-      unsigned ShiftAmt = isLittleEndian ? 0 : DstBitSize*(Ratio-1);
-      for (unsigned j = 0; j != Ratio; ++j) {
-        // Shift the piece of the value into the right place, depending on
-        // endianness.
-        Constant *Elt = ConstantExpr::getLShr(Src, 
-                        ConstantInt::get(Src->getType(), ShiftAmt));
-        ShiftAmt += isLittleEndian ? DstBitSize : -DstBitSize;
-
-        // Truncate and remember this piece.
-        Result.push_back(ConstantExpr::getTrunc(Elt, DstEltTy));
-      }
-    }
-  }
-  
-  return ConstantVector::get(Result.data(), Result.size());
-}
 
 
 //===----------------------------------------------------------------------===//
@@ -730,11 +732,9 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
       if (TD &&
           TD->getPointerSizeInBits() <=
           CE->getType()->getScalarSizeInBits()) {
-        if (CE->getOpcode() == Instruction::PtrToInt) {
-          Constant *Input = CE->getOperand(0);
-          Constant *C = FoldBitCast(Input, DestTy, *TD, Context);
-          return C ? C : ConstantExpr::getBitCast(Input, DestTy);
-        }
+        if (CE->getOpcode() == Instruction::PtrToInt)
+          return FoldBitCast(CE->getOperand(0), DestTy, *TD);
+        
         // If there's a constant offset added to the integer value before
         // it is casted back to a pointer, see if the expression can be
         // converted into a GEP.
@@ -780,7 +780,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
       return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
   case Instruction::BitCast:
     if (TD)
-      return FoldBitCast(Ops[0], DestTy, *TD, Context);
+      return FoldBitCast(Ops[0], DestTy, *TD);
     return ConstantExpr::getBitCast(Ops[0], DestTy);
   case Instruction::Select:
     return ConstantExpr::getSelect(Ops[0], Ops[1], Ops[2]);
