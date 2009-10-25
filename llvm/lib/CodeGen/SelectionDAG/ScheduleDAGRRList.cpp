@@ -53,7 +53,7 @@ namespace {
 /// ScheduleDAGRRList - The actual register reduction list scheduler
 /// implementation.  This supports both top-down and bottom-up scheduling.
 ///
-class VISIBILITY_HIDDEN ScheduleDAGRRList : public ScheduleDAGSDNodes {
+class ScheduleDAGRRList : public ScheduleDAGSDNodes {
 private:
   /// isBottomUp - This is true if the scheduling problem is bottom-up, false if
   /// it is top-down.
@@ -965,8 +965,7 @@ CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
 
 namespace {
   template<class SF>
-  class VISIBILITY_HIDDEN RegReductionPriorityQueue
-   : public SchedulingPriorityQueue {
+  class RegReductionPriorityQueue : public SchedulingPriorityQueue {
     PriorityQueue<SUnit*, std::vector<SUnit*>, SF> Queue;
     unsigned currentQueueId;
 

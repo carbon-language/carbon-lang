@@ -31,7 +31,7 @@ STATISTIC(NumLowered, "Number of allocations lowered");
 namespace {
   /// LowerAllocations - Turn free instructions into @free calls.
   ///
-  class VISIBILITY_HIDDEN LowerAllocations : public BasicBlockPass {
+  class LowerAllocations : public BasicBlockPass {
     Constant *FreeFunc;   // Functions in the module we are processing
                           // Initialized by doInitialization
   public:

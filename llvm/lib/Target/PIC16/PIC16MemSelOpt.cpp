@@ -37,7 +37,7 @@
 using namespace llvm;
 
 namespace {
-  struct VISIBILITY_HIDDEN MemSelOpt : public MachineFunctionPass {
+  struct MemSelOpt : public MachineFunctionPass {
     static char ID;
     MemSelOpt() : MachineFunctionPass(&ID) {}
 

@@ -56,8 +56,7 @@ namespace {
   };
 
   template<class CodeEmitter>
-  class VISIBILITY_HIDDEN Emitter : public MachineFunctionPass,
-                                    public ARMCodeEmitter {
+  class Emitter : public MachineFunctionPass, public ARMCodeEmitter {
     ARMJITInfo                *JTI;
     const ARMInstrInfo        *II;
     const TargetData          *TD;

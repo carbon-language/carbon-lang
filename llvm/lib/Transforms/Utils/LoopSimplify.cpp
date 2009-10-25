@@ -57,7 +57,7 @@ STATISTIC(NumInserted, "Number of pre-header or exit blocks inserted");
 STATISTIC(NumNested  , "Number of nested loops split out");
 
 namespace {
-  struct VISIBILITY_HIDDEN LoopSimplify : public LoopPass {
+  struct LoopSimplify : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
     LoopSimplify() : LoopPass(&ID) {}
 

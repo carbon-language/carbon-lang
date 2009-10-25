@@ -23,7 +23,7 @@ using namespace llvm;
 
 namespace {
   /// @brief A pass to extract specific functions and their dependencies.
-  class VISIBILITY_HIDDEN GVExtractorPass : public ModulePass {
+  class GVExtractorPass : public ModulePass {
     std::vector<GlobalValue*> Named;
     bool deleteStuff;
     bool reLink;

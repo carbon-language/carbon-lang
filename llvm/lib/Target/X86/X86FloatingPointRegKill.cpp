@@ -30,7 +30,7 @@ using namespace llvm;
 STATISTIC(NumFPKill, "Number of FP_REG_KILL instructions added");
 
 namespace {
-  struct VISIBILITY_HIDDEN FPRegKiller : public MachineFunctionPass {
+  struct FPRegKiller : public MachineFunctionPass {
     static char ID;
     FPRegKiller() : MachineFunctionPass(&ID) {}
 

@@ -37,7 +37,7 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
-  struct VISIBILITY_HIDDEN AlphaAsmPrinter : public AsmPrinter {
+  struct AlphaAsmPrinter : public AsmPrinter {
     /// Unique incrementer for label values for referencing Global values.
     ///
 

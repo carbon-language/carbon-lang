@@ -33,7 +33,7 @@ using namespace llvm;
 STATISTIC(NumSunk, "Number of machine instructions sunk");
 
 namespace {
-  class VISIBILITY_HIDDEN MachineSinking : public MachineFunctionPass {
+  class MachineSinking : public MachineFunctionPass {
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     MachineRegisterInfo  *RegInfo; // Machine register information

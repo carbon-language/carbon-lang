@@ -396,7 +396,7 @@ static RegisterPass<SSI> X("ssi", "Static Single Information Construction");
 /// SSIEverything - A pass that runs createSSI on every non-void variable,
 /// intended for debugging.
 namespace {
-  struct VISIBILITY_HIDDEN SSIEverything : public FunctionPass {
+  struct SSIEverything : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     SSIEverything() : FunctionPass(&ID) {}
 

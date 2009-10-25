@@ -34,8 +34,7 @@ STATISTIC(TotalMemInst, "Number of memory instructions");
 
 
 namespace {
-  class VISIBILITY_HIDDEN InstCount 
-      : public FunctionPass, public InstVisitor<InstCount> {
+  class InstCount : public FunctionPass, public InstVisitor<InstCount> {
     friend class InstVisitor<InstCount>;
 
     void visitFunction  (Function &F) { ++TotalFuncs; }

@@ -623,8 +623,7 @@ void DAGTypeLegalizer::RemapValue(SDValue &N) {
 namespace {
   /// NodeUpdateListener - This class is a DAGUpdateListener that listens for
   /// updates to nodes and recomputes their ready state.
-  class VISIBILITY_HIDDEN NodeUpdateListener :
-    public SelectionDAG::DAGUpdateListener {
+  class NodeUpdateListener : public SelectionDAG::DAGUpdateListener {
     DAGTypeLegalizer &DTL;
     SmallSetVector<SDNode*, 16> &NodesToAnalyze;
   public:

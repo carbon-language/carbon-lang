@@ -33,7 +33,7 @@ using namespace llvm;
 STATISTIC(NumExtracted, "Number of loops extracted");
 
 namespace {
-  struct VISIBILITY_HIDDEN LoopExtractor : public LoopPass {
+  struct LoopExtractor : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
     unsigned NumLoops;
 

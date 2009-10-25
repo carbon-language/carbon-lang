@@ -29,7 +29,7 @@ using namespace llvm;
 
 namespace {
 
-  class VISIBILITY_HIDDEN SimpleInliner : public Inliner {
+  class SimpleInliner : public Inliner {
     // Functions that are never inlined
     SmallPtrSet<const Function*, 16> NeverInline; 
     InlineCostAnalyzer CA;

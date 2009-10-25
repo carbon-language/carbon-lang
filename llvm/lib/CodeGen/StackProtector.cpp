@@ -37,7 +37,7 @@ SSPBufferSize("stack-protector-buffer-size", cl::init(8),
                        "stack protection"));
 
 namespace {
-  class VISIBILITY_HIDDEN StackProtector : public FunctionPass {
+  class StackProtector : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// target type sizes.
     const TargetLowering *TLI;

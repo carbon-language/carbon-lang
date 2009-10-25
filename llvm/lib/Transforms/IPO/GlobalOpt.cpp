@@ -57,7 +57,7 @@ STATISTIC(NumAliasesResolved, "Number of global aliases resolved");
 STATISTIC(NumAliasesRemoved, "Number of global aliases eliminated");
 
 namespace {
-  struct VISIBILITY_HIDDEN GlobalOpt : public ModulePass {
+  struct GlobalOpt : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     }
     static char ID; // Pass identification, replacement for typeid
@@ -85,7 +85,7 @@ namespace {
 /// GlobalStatus - As we analyze each global, keep track of some information
 /// about it.  If we find out that the address of the global is taken, none of
 /// this info will be accurate.
-struct VISIBILITY_HIDDEN GlobalStatus {
+struct GlobalStatus {
   /// isLoaded - True if the global is ever loaded.  If the global isn't ever
   /// loaded it can be deleted.
   bool isLoaded;

@@ -16,7 +16,7 @@
 using namespace llvm;
 
 namespace {
-  class VISIBILITY_HIDDEN NEONPreAllocPass : public MachineFunctionPass {
+  class NEONPreAllocPass : public MachineFunctionPass {
     const TargetInstrInfo *TII;
 
   public:

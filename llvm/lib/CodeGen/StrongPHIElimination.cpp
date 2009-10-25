@@ -37,7 +37,7 @@
 using namespace llvm;
 
 namespace {
-  struct VISIBILITY_HIDDEN StrongPHIElimination : public MachineFunctionPass {
+  struct StrongPHIElimination : public MachineFunctionPass {
     static char ID; // Pass identification, replacement for typeid
     StrongPHIElimination() : MachineFunctionPass(&ID) {}
 

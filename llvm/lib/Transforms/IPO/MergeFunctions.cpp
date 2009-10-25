@@ -62,7 +62,7 @@ using namespace llvm;
 STATISTIC(NumFunctionsMerged, "Number of functions merged");
 
 namespace {
-  struct VISIBILITY_HIDDEN MergeFunctions : public ModulePass {
+  struct MergeFunctions : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
     MergeFunctions() : ModulePass(&ID) {}
 

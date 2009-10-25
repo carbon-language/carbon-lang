@@ -56,7 +56,7 @@ STATISTIC(NumSTRD2STR,  "Number of strd instructions turned back into str's");
 /// load / store instructions to form ldm / stm instructions.
 
 namespace {
-  struct VISIBILITY_HIDDEN ARMLoadStoreOpt : public MachineFunctionPass {
+  struct ARMLoadStoreOpt : public MachineFunctionPass {
     static char ID;
     ARMLoadStoreOpt() : MachineFunctionPass(&ID) {}
 
@@ -1106,7 +1106,7 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
 /// likely they will be combined later.
 
 namespace {
-  struct VISIBILITY_HIDDEN ARMPreAllocLoadStoreOpt : public MachineFunctionPass{
+  struct ARMPreAllocLoadStoreOpt : public MachineFunctionPass{
     static char ID;
     ARMPreAllocLoadStoreOpt() : MachineFunctionPass(&ID) {}
 

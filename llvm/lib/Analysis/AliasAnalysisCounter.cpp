@@ -28,8 +28,7 @@ static cl::opt<bool>
 PrintAllFailures("count-aa-print-all-failed-queries", cl::ReallyHidden);
 
 namespace {
-  class VISIBILITY_HIDDEN AliasAnalysisCounter 
-      : public ModulePass, public AliasAnalysis {
+  class AliasAnalysisCounter : public ModulePass, public AliasAnalysis {
     unsigned No, May, Must;
     unsigned NoMR, JustRef, JustMod, MR;
     const char *Name;

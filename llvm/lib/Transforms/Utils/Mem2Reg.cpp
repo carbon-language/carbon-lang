@@ -26,7 +26,7 @@ using namespace llvm;
 STATISTIC(NumPromoted, "Number of alloca's promoted");
 
 namespace {
-  struct VISIBILITY_HIDDEN PromotePass : public FunctionPass {
+  struct PromotePass : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     PromotePass() : FunctionPass(&ID) {}
 

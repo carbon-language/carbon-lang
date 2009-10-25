@@ -66,7 +66,7 @@ namespace {
 /// This class is intended for use with the new spilling framework only. It
 /// rewrites vreg def/uses to use the assigned preg, but does not insert any
 /// spill code.
-struct VISIBILITY_HIDDEN TrivialRewriter : public VirtRegRewriter {
+struct TrivialRewriter : public VirtRegRewriter {
 
   bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM,
                             LiveIntervals* LIs) {
@@ -125,7 +125,7 @@ namespace {
 /// on a per-stack-slot / remat id basis as the low bit in the value of the
 /// SpillSlotsAvailable entries.  The predicate 'canClobberPhysReg()' checks
 /// this bit and addAvailable sets it if.
-class VISIBILITY_HIDDEN AvailableSpills {
+class AvailableSpills {
   const TargetRegisterInfo *TRI;
   const TargetInstrInfo *TII;
 
@@ -340,7 +340,7 @@ struct ReusedOp {
 
 /// ReuseInfo - This maintains a collection of ReuseOp's for each operand that
 /// is reused instead of reloaded.
-class VISIBILITY_HIDDEN ReuseInfo {
+class ReuseInfo {
   MachineInstr &MI;
   std::vector<ReusedOp> Reuses;
   BitVector PhysRegsClobbered;
@@ -995,7 +995,7 @@ namespace {
 
 namespace {
 
-class VISIBILITY_HIDDEN LocalRewriter : public VirtRegRewriter {
+class LocalRewriter : public VirtRegRewriter {
   MachineRegisterInfo *RegInfo;
   const TargetRegisterInfo *TRI;
   const TargetInstrInfo *TII;

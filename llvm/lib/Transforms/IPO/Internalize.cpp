@@ -44,7 +44,7 @@ APIList("internalize-public-api-list", cl::value_desc("list"),
         cl::CommaSeparated);
 
 namespace {
-  class VISIBILITY_HIDDEN InternalizePass : public ModulePass {
+  class InternalizePass : public ModulePass {
     std::set<std::string> ExternalNames;
     /// If no api symbols were specified and a main function is defined,
     /// assume the main function is the only API

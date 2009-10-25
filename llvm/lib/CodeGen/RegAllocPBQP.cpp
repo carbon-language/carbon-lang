@@ -70,7 +70,7 @@ namespace {
   /// PBQP based allocators solve the register allocation problem by mapping
   /// register allocation problems to Partitioned Boolean Quadratic
   /// Programming problems.
-  class VISIBILITY_HIDDEN PBQPRegAlloc : public MachineFunctionPass {
+  class PBQPRegAlloc : public MachineFunctionPass {
   public:
 
     static char ID;

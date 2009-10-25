@@ -30,7 +30,7 @@ STATISTIC(NumFunctions, "Number of functions removed");
 STATISTIC(NumVariables, "Number of global variables removed");
 
 namespace {
-  struct VISIBILITY_HIDDEN GlobalDCE : public ModulePass {
+  struct GlobalDCE : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
     GlobalDCE() : ModulePass(&ID) {}
 

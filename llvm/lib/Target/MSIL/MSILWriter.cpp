@@ -30,7 +30,7 @@ using namespace llvm;
 
 namespace llvm {
   // TargetMachine for the MSIL 
-  struct VISIBILITY_HIDDEN MSILTarget : public TargetMachine {
+  struct MSILTarget : public TargetMachine {
     MSILTarget(const Target &T, const std::string &TT, const std::string &FS)
       : TargetMachine(T) {}
 

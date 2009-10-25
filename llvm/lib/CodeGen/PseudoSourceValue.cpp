@@ -55,8 +55,7 @@ namespace {
   /// FixedStackPseudoSourceValue - A specialized PseudoSourceValue
   /// for holding FixedStack values, which must include a frame
   /// index.
-  class VISIBILITY_HIDDEN FixedStackPseudoSourceValue
-    : public PseudoSourceValue {
+  class FixedStackPseudoSourceValue : public PseudoSourceValue {
     const int FI;
   public:
     explicit FixedStackPseudoSourceValue(int fi) : FI(fi) {}

@@ -46,7 +46,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 namespace {
 
-class VISIBILITY_HIDDEN MipsDAGToDAGISel : public SelectionDAGISel {
+class MipsDAGToDAGISel : public SelectionDAGISel {
 
   /// TM - Keep a reference to MipsTargetMachine.
   MipsTargetMachine &TM;

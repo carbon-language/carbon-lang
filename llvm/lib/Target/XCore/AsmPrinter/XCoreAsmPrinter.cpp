@@ -52,7 +52,7 @@ static cl::opt<unsigned> MaxThreads("xcore-max-threads", cl::Optional,
   cl::init(8));
 
 namespace {
-  class VISIBILITY_HIDDEN XCoreAsmPrinter : public AsmPrinter {
+  class XCoreAsmPrinter : public AsmPrinter {
     const XCoreSubtarget &Subtarget;
   public:
     explicit XCoreAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,

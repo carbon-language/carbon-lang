@@ -50,8 +50,7 @@ namespace {
   };
 
   template <class CodeEmitter>
-  class VISIBILITY_HIDDEN Emitter : public MachineFunctionPass,
-      public AlphaCodeEmitter
+  class Emitter : public MachineFunctionPass, public AlphaCodeEmitter
   {
     const AlphaInstrInfo  *II;
     TargetMachine         &TM;

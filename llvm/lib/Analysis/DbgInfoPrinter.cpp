@@ -35,7 +35,7 @@ PrintDirectory("print-fullpath",
                cl::Hidden);
 
 namespace {
-  class VISIBILITY_HIDDEN PrintDbgInfo : public FunctionPass {
+  class PrintDbgInfo : public FunctionPass {
     raw_ostream &Out;
     void printStopPoint(const DbgStopPointInst *DSI);
     void printFuncStart(const DbgFuncStartInst *FS);

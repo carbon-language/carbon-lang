@@ -30,8 +30,7 @@ LoopWeight(
 );
 
 namespace {
-  class VISIBILITY_HIDDEN ProfileEstimatorPass :
-      public FunctionPass, public ProfileInfo {
+  class ProfileEstimatorPass : public FunctionPass, public ProfileInfo {
     double ExecCount;
     LoopInfo *LI;
     std::set<BasicBlock*>  BBToVisit;

@@ -22,7 +22,7 @@ using namespace llvm;
 
 namespace {
 
-  class VISIBILITY_HIDDEN PrintModulePass : public ModulePass {
+  class PrintModulePass : public ModulePass {
     raw_ostream *Out;       // raw_ostream to print on
     bool DeleteStream;      // Delete the ostream in our dtor?
   public:

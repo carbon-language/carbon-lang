@@ -36,7 +36,7 @@
 using namespace llvm;
 
 namespace {
-  struct VISIBILITY_HIDDEN Printer : public MachineFunctionPass {
+  struct Printer : public MachineFunctionPass {
     static char ID;
 
     raw_ostream &OS;

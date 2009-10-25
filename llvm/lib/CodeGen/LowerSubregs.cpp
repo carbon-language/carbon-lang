@@ -30,8 +30,7 @@
 using namespace llvm;
 
 namespace {
-  struct VISIBILITY_HIDDEN LowerSubregsInstructionPass
-   : public MachineFunctionPass {
+  struct LowerSubregsInstructionPass : public MachineFunctionPass {
     static char ID; // Pass identification, replacement for typeid
     LowerSubregsInstructionPass() : MachineFunctionPass(&ID) {}
     

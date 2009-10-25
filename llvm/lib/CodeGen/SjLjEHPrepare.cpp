@@ -38,7 +38,7 @@ STATISTIC(NumUnwinds, "Number of unwinds replaced");
 STATISTIC(NumSpilled, "Number of registers live across unwind edges");
 
 namespace {
-  class VISIBILITY_HIDDEN SjLjEHPass : public FunctionPass {
+  class SjLjEHPass : public FunctionPass {
 
     const TargetLowering *TLI;
 

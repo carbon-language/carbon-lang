@@ -61,7 +61,7 @@ static cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support",
  cl::desc("Make the -lowerinvoke pass insert expensive, but correct, EH code"));
 
 namespace {
-  class VISIBILITY_HIDDEN LowerInvoke : public FunctionPass {
+  class LowerInvoke : public FunctionPass {
     // Used for both models.
     Constant *WriteFn;
     Constant *AbortFn;

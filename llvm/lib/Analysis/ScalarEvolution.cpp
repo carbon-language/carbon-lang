@@ -401,7 +401,7 @@ namespace {
   /// SCEVComplexityCompare - Return true if the complexity of the LHS is less
   /// than the complexity of the RHS.  This comparator is used to canonicalize
   /// expressions.
-  class VISIBILITY_HIDDEN SCEVComplexityCompare {
+  class SCEVComplexityCompare {
     LoopInfo *LI;
   public:
     explicit SCEVComplexityCompare(LoopInfo *li) : LI(li) {}

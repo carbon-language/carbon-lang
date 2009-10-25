@@ -70,7 +70,7 @@
 using namespace llvm;
 
 namespace {  // Anonymous namespace for class
-  struct VISIBILITY_HIDDEN PreVerifier : public FunctionPass {
+  struct PreVerifier : public FunctionPass {
     static char ID; // Pass ID, replacement for typeid
 
     PreVerifier() : FunctionPass(&ID) { }

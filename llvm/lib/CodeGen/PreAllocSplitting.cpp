@@ -50,7 +50,7 @@ STATISTIC(NumRenumbers, "Number of intervals renumbered into new registers");
 STATISTIC(NumDeadSpills, "Number of dead spills removed");
 
 namespace {
-  class VISIBILITY_HIDDEN PreAllocSplitting : public MachineFunctionPass {
+  class PreAllocSplitting : public MachineFunctionPass {
     MachineFunction       *CurrMF;
     const TargetMachine   *TM;
     const TargetInstrInfo *TII;

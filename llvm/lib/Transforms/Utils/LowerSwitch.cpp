@@ -31,7 +31,7 @@ namespace {
   /// LowerSwitch Pass - Replace all SwitchInst instructions with chained branch
   /// instructions.  Note that this cannot be a BasicBlock pass because it
   /// modifies the CFG!
-  class VISIBILITY_HIDDEN LowerSwitch : public FunctionPass {
+  class LowerSwitch : public FunctionPass {
   public:
     static char ID; // Pass identification, replacement for typeid
     LowerSwitch() : FunctionPass(&ID) {} 

@@ -42,7 +42,7 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
-  class VISIBILITY_HIDDEN SystemZAsmPrinter : public AsmPrinter {
+  class SystemZAsmPrinter : public AsmPrinter {
   public:
     SystemZAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                       const MCAsmInfo *MAI, bool V)

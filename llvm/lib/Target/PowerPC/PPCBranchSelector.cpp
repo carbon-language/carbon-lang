@@ -30,7 +30,7 @@ using namespace llvm;
 STATISTIC(NumExpanded, "Number of branches expanded to long format");
 
 namespace {
-  struct VISIBILITY_HIDDEN PPCBSel : public MachineFunctionPass {
+  struct PPCBSel : public MachineFunctionPass {
     static char ID;
     PPCBSel() : MachineFunctionPass(&ID) {}
 

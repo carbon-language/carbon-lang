@@ -105,8 +105,7 @@ namespace {
 /// BBPassManager manages BasicBlockPass. It batches all the
 /// pass together and sequence them to process one basic block before
 /// processing next basic block.
-class VISIBILITY_HIDDEN BBPassManager : public PMDataManager, 
-                                        public FunctionPass {
+class BBPassManager : public PMDataManager, public FunctionPass {
 
 public:
   static char ID;
@@ -367,7 +366,7 @@ namespace {
 
 static ManagedStatic<sys::SmartMutex<true> > TimingInfoMutex;
 
-class VISIBILITY_HIDDEN TimingInfo {
+class TimingInfo {
   std::map<Pass*, Timer> TimingData;
   TimerGroup TG;
 

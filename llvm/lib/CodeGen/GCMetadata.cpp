@@ -24,7 +24,7 @@ using namespace llvm;
 
 namespace {
   
-  class VISIBILITY_HIDDEN Printer : public FunctionPass {
+  class Printer : public FunctionPass {
     static char ID;
     raw_ostream &OS;
     
@@ -39,7 +39,7 @@ namespace {
     bool runOnFunction(Function &F);
   };
   
-  class VISIBILITY_HIDDEN Deleter : public FunctionPass {
+  class Deleter : public FunctionPass {
     static char ID;
     
   public:

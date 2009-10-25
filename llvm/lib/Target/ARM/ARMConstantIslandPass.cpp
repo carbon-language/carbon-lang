@@ -55,7 +55,7 @@ namespace {
   ///   Water   - Potential places where an island could be formed.
   ///   CPE     - A constant pool entry that has been placed somewhere, which
   ///             tracks a list of users.
-  class VISIBILITY_HIDDEN ARMConstantIslands : public MachineFunctionPass {
+  class ARMConstantIslands : public MachineFunctionPass {
     /// BBSizes - The size of each MachineBasicBlock in bytes of code, indexed
     /// by MBB Number.  The two-byte pads required for Thumb alignment are
     /// counted as part of the following block (i.e., the offset and size for

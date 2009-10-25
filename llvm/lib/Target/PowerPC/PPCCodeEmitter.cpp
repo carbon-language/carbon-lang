@@ -57,8 +57,7 @@ namespace {
   };
 
   template <class CodeEmitter>
-  class VISIBILITY_HIDDEN Emitter : public MachineFunctionPass,
-      public PPCCodeEmitter {
+  class Emitter : public MachineFunctionPass, public PPCCodeEmitter {
     TargetMachine &TM;
     CodeEmitter &MCE;
 

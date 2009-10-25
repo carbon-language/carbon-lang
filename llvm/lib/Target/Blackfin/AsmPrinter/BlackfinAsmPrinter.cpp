@@ -38,7 +38,7 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
-  class VISIBILITY_HIDDEN BlackfinAsmPrinter : public AsmPrinter {
+  class BlackfinAsmPrinter : public AsmPrinter {
   public:
     BlackfinAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                        const MCAsmInfo *MAI, bool V)

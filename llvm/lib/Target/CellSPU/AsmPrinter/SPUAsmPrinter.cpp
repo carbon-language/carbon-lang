@@ -50,7 +50,7 @@ namespace {
 
   const std::string bss_section(".bss");
 
-  class VISIBILITY_HIDDEN SPUAsmPrinter : public AsmPrinter {
+  class SPUAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs;
   public:
     explicit SPUAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
@@ -285,7 +285,7 @@ namespace {
   };
 
   /// LinuxAsmPrinter - SPU assembly printer, customized for Linux
-  class VISIBILITY_HIDDEN LinuxAsmPrinter : public SPUAsmPrinter {
+  class LinuxAsmPrinter : public SPUAsmPrinter {
   public:
     explicit LinuxAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                              const MCAsmInfo *T, bool V)

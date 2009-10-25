@@ -76,7 +76,7 @@ DebugMod("postra-sched-debugmod",
                       cl::init(0), cl::Hidden);
 
 namespace {
-  class VISIBILITY_HIDDEN PostRAScheduler : public MachineFunctionPass {
+  class PostRAScheduler : public MachineFunctionPass {
     AliasAnalysis *AA;
     CodeGenOpt::Level OptLevel;
 
@@ -103,7 +103,7 @@ namespace {
   };
   char PostRAScheduler::ID = 0;
 
-  class VISIBILITY_HIDDEN SchedulePostRATDList : public ScheduleDAGInstrs {
+  class SchedulePostRATDList : public ScheduleDAGInstrs {
     /// AvailableQueue - The priority queue to use for the available SUnits.
     ///
     LatencyPriorityQueue AvailableQueue;

@@ -36,7 +36,7 @@ STATISTIC(NumRemoved, "Number of invokes removed");
 STATISTIC(NumUnreach, "Number of noreturn calls optimized");
 
 namespace {
-  struct VISIBILITY_HIDDEN PruneEH : public CallGraphSCCPass {
+  struct PruneEH : public CallGraphSCCPass {
     static char ID; // Pass identification, replacement for typeid
     PruneEH() : CallGraphSCCPass(&ID) {}
 

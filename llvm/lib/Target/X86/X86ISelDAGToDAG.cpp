@@ -147,7 +147,7 @@ namespace {
   /// ISel - X86 specific code to select X86 machine instructions for
   /// SelectionDAG operations.
   ///
-  class VISIBILITY_HIDDEN X86DAGToDAGISel : public SelectionDAGISel {
+  class X86DAGToDAGISel : public SelectionDAGISel {
     /// X86Lowering - This object fully describes how to lower LLVM code to an
     /// X86-specific SelectionDAG.
     X86TargetLowering &X86Lowering;

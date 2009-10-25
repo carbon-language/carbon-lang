@@ -23,8 +23,7 @@
 using namespace llvm;
 
 namespace {
-  class VISIBILITY_HIDDEN DeadMachineInstructionElim : 
-        public MachineFunctionPass {
+  class DeadMachineInstructionElim : public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &MF);
     
     const TargetRegisterInfo *TRI;

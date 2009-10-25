@@ -70,7 +70,7 @@ linearscanRegAlloc("linearscan", "linear scan register allocator",
                    createLinearScanRegisterAllocator);
 
 namespace {
-  struct VISIBILITY_HIDDEN RALinScan : public MachineFunctionPass {
+  struct RALinScan : public MachineFunctionPass {
     static char ID;
     RALinScan() : MachineFunctionPass(&ID) {}
 

@@ -31,7 +31,7 @@ using namespace llvm;
 namespace {
 
   // AlwaysInliner only inlines functions that are mark as "always inline".
-  class VISIBILITY_HIDDEN AlwaysInliner : public Inliner {
+  class AlwaysInliner : public Inliner {
     // Functions that are never inlined
     SmallPtrSet<const Function*, 16> NeverInline; 
     InlineCostAnalyzer CA;

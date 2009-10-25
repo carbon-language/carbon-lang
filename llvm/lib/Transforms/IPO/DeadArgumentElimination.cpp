@@ -44,7 +44,7 @@ STATISTIC(NumRetValsEliminated  , "Number of unused return values removed");
 namespace {
   /// DAE - The dead argument elimination pass.
   ///
-  class VISIBILITY_HIDDEN DAE : public ModulePass {
+  class DAE : public ModulePass {
   public:
 
     /// Struct that represents (part of) either a return value or a function

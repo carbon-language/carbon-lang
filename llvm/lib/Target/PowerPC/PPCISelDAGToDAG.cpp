@@ -41,7 +41,7 @@ namespace {
   /// PPCDAGToDAGISel - PPC specific code to select PPC machine
   /// instructions for SelectionDAG operations.
   ///
-  class VISIBILITY_HIDDEN PPCDAGToDAGISel : public SelectionDAGISel {
+  class PPCDAGToDAGISel : public SelectionDAGISel {
     PPCTargetMachine &TM;
     PPCTargetLowering &PPCLowering;
     const PPCSubtarget &PPCSubTarget;

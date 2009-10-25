@@ -21,7 +21,7 @@
 using namespace llvm;
 
 namespace {
-  class VISIBILITY_HIDDEN OcamlGC : public GCStrategy {
+  class OcamlGC : public GCStrategy {
   public:
     OcamlGC();
   };

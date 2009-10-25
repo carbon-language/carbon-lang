@@ -33,7 +33,7 @@ using namespace llvm;
 STATISTIC(NumEdgesInserted, "The # of edges inserted.");
 
 namespace {
-  class VISIBILITY_HIDDEN OptimalEdgeProfiler : public ModulePass {
+  class OptimalEdgeProfiler : public ModulePass {
     bool runOnModule(Module &M);
   public:
     static char ID; // Pass identification, replacement for typeid

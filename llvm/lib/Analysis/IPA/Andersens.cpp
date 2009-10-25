@@ -126,8 +126,8 @@ namespace {
     static bool isPod() { return true; }
   };
 
-  class VISIBILITY_HIDDEN Andersens : public ModulePass, public AliasAnalysis,
-                                      private InstVisitor<Andersens> {
+  class Andersens : public ModulePass, public AliasAnalysis,
+                    private InstVisitor<Andersens> {
     struct Node;
 
     /// Constraint - Objects of this structure are used to represent the various

@@ -41,7 +41,7 @@ STATISTIC(NumHoisted, "Number of machine instructions hoisted out of loops");
 STATISTIC(NumCSEed,   "Number of hoisted machine instructions CSEed");
 
 namespace {
-  class VISIBILITY_HIDDEN MachineLICM : public MachineFunctionPass {
+  class MachineLICM : public MachineFunctionPass {
     const TargetMachine   *TM;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;

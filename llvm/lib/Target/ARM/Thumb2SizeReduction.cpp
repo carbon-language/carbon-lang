@@ -126,7 +126,7 @@ namespace {
     { ARM::t2STM,   ARM::tSTM,    ARM::tPUSH,    0,   0,    1,   1,  1,1, 1 },
   };
 
-  class VISIBILITY_HIDDEN Thumb2SizeReduce : public MachineFunctionPass {
+  class Thumb2SizeReduce : public MachineFunctionPass {
   public:
     static char ID;
     Thumb2SizeReduce();

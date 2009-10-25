@@ -35,7 +35,7 @@ STATISTIC(NumReturnValProped, "Number of return values turned into constants");
 namespace {
   /// IPCP - The interprocedural constant propagation pass
   ///
-  struct VISIBILITY_HIDDEN IPCP : public ModulePass {
+  struct IPCP : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
     IPCP() : ModulePass(&ID) {}
 

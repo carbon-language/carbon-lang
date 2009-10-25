@@ -40,7 +40,7 @@ STATISTIC(NumNoCapture, "Number of arguments marked nocapture");
 STATISTIC(NumNoAlias, "Number of function returns marked noalias");
 
 namespace {
-  struct VISIBILITY_HIDDEN FunctionAttrs : public CallGraphSCCPass {
+  struct FunctionAttrs : public CallGraphSCCPass {
     static char ID; // Pass identification, replacement for typeid
     FunctionAttrs() : CallGraphSCCPass(&ID) {}
 

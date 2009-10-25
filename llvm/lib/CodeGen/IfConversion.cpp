@@ -59,7 +59,7 @@ STATISTIC(NumIfConvBBs,    "Number of if-converted blocks");
 STATISTIC(NumDupBBs,       "Number of duplicated blocks");
 
 namespace {
-  class VISIBILITY_HIDDEN IfConverter : public MachineFunctionPass {
+  class IfConverter : public MachineFunctionPass {
     enum IfcvtKind {
       ICNotClassfied,  // BB data valid, but not classified.
       ICSimpleFalse,   // Same as ICSimple, but on the false path.

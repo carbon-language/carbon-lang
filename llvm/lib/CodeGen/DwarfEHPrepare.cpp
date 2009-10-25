@@ -33,7 +33,7 @@ STATISTIC(NumExceptionValuesMoved, "Number of eh.exception calls moved");
 STATISTIC(NumStackTempsIntroduced, "Number of stack temporaries introduced");
 
 namespace {
-  class VISIBILITY_HIDDEN DwarfEHPrepare : public FunctionPass {
+  class DwarfEHPrepare : public FunctionPass {
     const TargetLowering *TLI;
     bool CompileFast;
 

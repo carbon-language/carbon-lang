@@ -25,7 +25,7 @@ using namespace llvm;
 STATISTIC(NumKilled, "Number of unused typenames removed from symtab");
 
 namespace {
-  struct VISIBILITY_HIDDEN DTE : public ModulePass {
+  struct DTE : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
     DTE() : ModulePass(&ID) {}
 

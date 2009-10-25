@@ -53,7 +53,7 @@ STATISTIC(NumStoreElim,  "Number of stores eliminated");
 STATISTIC(NumDead,       "Number of trivially dead stack accesses eliminated");
 
 namespace {
-  class VISIBILITY_HIDDEN StackSlotColoring : public MachineFunctionPass {
+  class StackSlotColoring : public MachineFunctionPass {
     bool ColorWithRegs;
     LiveStacks* LS;
     VirtRegMap* VRM;

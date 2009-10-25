@@ -29,8 +29,7 @@ using namespace llvm;
 
 namespace {
   
-  class VISIBILITY_HIDDEN AliasDebugger 
-      : public ModulePass, public AliasAnalysis {
+  class AliasDebugger : public ModulePass, public AliasAnalysis {
 
     //What we do is simple.  Keep track of every value the AA could
     //know about, and verify that queries are one of those.

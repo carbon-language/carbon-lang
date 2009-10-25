@@ -43,7 +43,7 @@
 using namespace llvm;
 
 namespace {
-  struct VISIBILITY_HIDDEN MachineVerifier : public MachineFunctionPass {
+  struct MachineVerifier : public MachineFunctionPass {
     static char ID; // Pass ID, replacement for typeid
 
     MachineVerifier(bool allowDoubleDefs = false) :

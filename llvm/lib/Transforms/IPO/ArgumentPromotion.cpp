@@ -59,7 +59,7 @@ STATISTIC(NumArgumentsDead     , "Number of dead pointer args eliminated");
 namespace {
   /// ArgPromotion - The 'by reference' to 'by value' argument promotion pass.
   ///
-  struct VISIBILITY_HIDDEN ArgPromotion : public CallGraphSCCPass {
+  struct ArgPromotion : public CallGraphSCCPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();
       CallGraphSCCPass::getAnalysisUsage(AU);

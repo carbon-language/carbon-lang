@@ -48,7 +48,7 @@ namespace {
 /// ScheduleDAGList - The actual list scheduler implementation.  This supports
 /// top-down scheduling.
 ///
-class VISIBILITY_HIDDEN ScheduleDAGList : public ScheduleDAGSDNodes {
+class ScheduleDAGList : public ScheduleDAGSDNodes {
 private:
   /// AvailableQueue - The priority queue to use for the available SUnits.
   ///

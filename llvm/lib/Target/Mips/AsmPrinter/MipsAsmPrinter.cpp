@@ -51,7 +51,7 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
-  class VISIBILITY_HIDDEN MipsAsmPrinter : public AsmPrinter {
+  class MipsAsmPrinter : public AsmPrinter {
     const MipsSubtarget *Subtarget;
   public:
     explicit MipsAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM, 

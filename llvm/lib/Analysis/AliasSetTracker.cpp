@@ -599,7 +599,7 @@ AliasSetTracker::ASTCallbackVH::operator=(Value *V) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class VISIBILITY_HIDDEN AliasSetPrinter : public FunctionPass {
+  class AliasSetPrinter : public FunctionPass {
     AliasSetTracker *Tracker;
   public:
     static char ID; // Pass identification, replacement for typeid

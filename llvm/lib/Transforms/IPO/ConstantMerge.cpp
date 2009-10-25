@@ -29,7 +29,7 @@ using namespace llvm;
 STATISTIC(NumMerged, "Number of global constants merged");
 
 namespace {
-  struct VISIBILITY_HIDDEN ConstantMerge : public ModulePass {
+  struct ConstantMerge : public ModulePass {
     static char ID; // Pass identification, replacement for typeid
     ConstantMerge() : ModulePass(&ID) {}
 

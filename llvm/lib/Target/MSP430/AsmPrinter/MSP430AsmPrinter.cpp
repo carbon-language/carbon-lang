@@ -50,7 +50,7 @@ EnableMCInst("enable-msp430-mcinst-printer", cl::Hidden,
              cl::desc("enable experimental mcinst gunk in the msp430 backend"));
 
 namespace {
-  class VISIBILITY_HIDDEN MSP430AsmPrinter : public AsmPrinter {
+  class MSP430AsmPrinter : public AsmPrinter {
   public:
     MSP430AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                      const MCAsmInfo *MAI, bool V)

@@ -44,7 +44,7 @@ namespace {
   /// function in the program.  Later, the entries for these functions are
   /// removed if the function is found to call an external function (in which
   /// case we know nothing about it.
-  struct VISIBILITY_HIDDEN FunctionRecord {
+  struct FunctionRecord {
     /// GlobalInfo - Maintain mod/ref info for all of the globals without
     /// addresses taken that are read or written (transitively) by this
     /// function.
@@ -69,8 +69,7 @@ namespace {
   };
 
   /// GlobalsModRef - The actual analysis pass.
-  class VISIBILITY_HIDDEN GlobalsModRef
-      : public ModulePass, public AliasAnalysis {
+  class GlobalsModRef : public ModulePass, public AliasAnalysis {
     /// NonAddressTakenGlobals - The globals that do not have their addresses
     /// taken.
     std::set<GlobalValue*> NonAddressTakenGlobals;

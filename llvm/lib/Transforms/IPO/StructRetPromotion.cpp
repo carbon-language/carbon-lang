@@ -44,7 +44,7 @@ namespace {
   /// SRETPromotion - This pass removes sret parameter and updates
   /// function to use multiple return value.
   ///
-  struct VISIBILITY_HIDDEN SRETPromotion : public CallGraphSCCPass {
+  struct SRETPromotion : public CallGraphSCCPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       CallGraphSCCPass::getAnalysisUsage(AU);
     }

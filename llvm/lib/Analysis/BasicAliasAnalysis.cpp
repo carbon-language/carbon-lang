@@ -139,7 +139,7 @@ namespace {
   /// implementations, in that it does not chain to a previous analysis.  As
   /// such it doesn't follow many of the rules that other alias analyses must.
   ///
-  struct VISIBILITY_HIDDEN NoAA : public ImmutablePass, public AliasAnalysis {
+  struct NoAA : public ImmutablePass, public AliasAnalysis {
     static char ID; // Class identification, replacement for typeinfo
     NoAA() : ImmutablePass(&ID) {}
     explicit NoAA(void *PID) : ImmutablePass(PID) { }
@@ -194,7 +194,7 @@ namespace {
   /// BasicAliasAnalysis - This is the default alias analysis implementation.
   /// Because it doesn't chain to a previous alias analysis (like -no-aa), it
   /// derives from the NoAA class.
-  struct VISIBILITY_HIDDEN BasicAliasAnalysis : public NoAA {
+  struct BasicAliasAnalysis : public NoAA {
     static char ID; // Class identification, replacement for typeinfo
     BasicAliasAnalysis() : NoAA(&ID) {}
     AliasResult alias(const Value *V1, unsigned V1Size,

@@ -53,7 +53,7 @@ STATISTIC(NumFXCH, "Number of fxch instructions inserted");
 STATISTIC(NumFP  , "Number of floating point instructions");
 
 namespace {
-  struct VISIBILITY_HIDDEN FPS : public MachineFunctionPass {
+  struct FPS : public MachineFunctionPass {
     static char ID;
     FPS() : MachineFunctionPass(&ID) {}
 

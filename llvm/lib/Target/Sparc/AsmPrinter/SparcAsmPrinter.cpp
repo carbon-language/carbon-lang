@@ -44,7 +44,7 @@ using namespace llvm;
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 namespace {
-  class VISIBILITY_HIDDEN SparcAsmPrinter : public AsmPrinter {
+  class SparcAsmPrinter : public AsmPrinter {
     /// We name each basic block in a Function with a unique number, so
     /// that we can consistently refer to them later. This is cleared
     /// at the beginning of each call to runOnMachineFunction().

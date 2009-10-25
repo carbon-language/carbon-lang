@@ -44,7 +44,7 @@ static RegisterRegAlloc
                 createLocalRegisterAllocator);
 
 namespace {
-  class VISIBILITY_HIDDEN RALocal : public MachineFunctionPass {
+  class RALocal : public MachineFunctionPass {
   public:
     static char ID;
     RALocal() : MachineFunctionPass(&ID), StackSlotForVirtReg(-1) {}

@@ -21,7 +21,7 @@ using namespace llvm;
 STATISTIC(NumITs,     "Number of IT blocks inserted");
 
 namespace {
-  struct VISIBILITY_HIDDEN Thumb2ITBlockPass : public MachineFunctionPass {
+  struct Thumb2ITBlockPass : public MachineFunctionPass {
     static char ID;
     Thumb2ITBlockPass() : MachineFunctionPass(&ID) {}
 

@@ -30,7 +30,7 @@
 using namespace llvm;
 
 namespace {
-  class VISIBILITY_HIDDEN FunctionProfiler : public RSProfilers_std {
+  class FunctionProfiler : public RSProfilers_std {
   public:
     static char ID;
     bool runOnModule(Module &M);

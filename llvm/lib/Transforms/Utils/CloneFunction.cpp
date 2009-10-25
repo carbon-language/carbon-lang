@@ -175,7 +175,7 @@ Function *llvm::CloneFunction(const Function *F,
 namespace {
   /// PruningFunctionCloner - This class is a private class used to implement
   /// the CloneAndPruneFunctionInto method.
-  struct VISIBILITY_HIDDEN PruningFunctionCloner {
+  struct PruningFunctionCloner {
     Function *NewFunc;
     const Function *OldFunc;
     DenseMap<const Value*, Value*> &ValueMap;

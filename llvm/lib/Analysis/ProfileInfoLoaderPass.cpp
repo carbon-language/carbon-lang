@@ -38,7 +38,7 @@ ProfileInfoFilename("profile-info-file", cl::init("llvmprof.out"),
                     cl::desc("Profile file loaded by -profile-loader"));
 
 namespace {
-  class VISIBILITY_HIDDEN LoaderPass : public ModulePass, public ProfileInfo {
+  class LoaderPass : public ModulePass, public ProfileInfo {
     std::string Filename;
     std::set<Edge> SpanningTree;
     std::set<const BasicBlock*> BBisUnvisited;

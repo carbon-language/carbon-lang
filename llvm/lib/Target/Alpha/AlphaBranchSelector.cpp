@@ -21,7 +21,7 @@
 using namespace llvm;
 
 namespace {
-  struct VISIBILITY_HIDDEN AlphaBSel : public MachineFunctionPass {
+  struct AlphaBSel : public MachineFunctionPass {
     static char ID;
     AlphaBSel() : MachineFunctionPass(&ID) {}
 

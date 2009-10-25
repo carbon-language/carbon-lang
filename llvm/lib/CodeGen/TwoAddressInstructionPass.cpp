@@ -57,8 +57,7 @@ STATISTIC(NumReMats,           "Number of instructions re-materialized");
 STATISTIC(NumDeletes,          "Number of dead instructions deleted");
 
 namespace {
-  class VISIBILITY_HIDDEN TwoAddressInstructionPass
-    : public MachineFunctionPass {
+  class TwoAddressInstructionPass : public MachineFunctionPass {
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     MachineRegisterInfo *MRI;

@@ -40,7 +40,7 @@
 using namespace llvm;
 
 namespace {
-  class VISIBILITY_HIDDEN UnreachableBlockElim : public FunctionPass {
+  class UnreachableBlockElim : public FunctionPass {
     virtual bool runOnFunction(Function &F);
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -95,8 +95,7 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
 
 
 namespace {
-  class VISIBILITY_HIDDEN UnreachableMachineBlockElim :
-        public MachineFunctionPass {
+  class UnreachableMachineBlockElim : public MachineFunctionPass {
     virtual bool runOnMachineFunction(MachineFunction &F);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     MachineModuleInfo *MMI;

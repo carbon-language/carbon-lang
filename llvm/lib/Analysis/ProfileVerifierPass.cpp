@@ -30,7 +30,7 @@ ProfileVerifierDisableAssertions("profile-verifier-noassert",
      cl::desc("Disable assertions"));
 
 namespace {
-  class VISIBILITY_HIDDEN ProfileVerifierPass : public FunctionPass {
+  class ProfileVerifierPass : public FunctionPass {
 
     struct DetailedBlockInfo {
       const BasicBlock *BB;

@@ -178,8 +178,7 @@ raw_ostream& llvm::operator<<(raw_ostream &O, ProfileInfo::Edge E) {
 //
 
 namespace {
-  struct VISIBILITY_HIDDEN NoProfileInfo 
-    : public ImmutablePass, public ProfileInfo {
+  struct NoProfileInfo : public ImmutablePass, public ProfileInfo {
     static char ID; // Class identification, replacement for typeinfo
     NoProfileInfo() : ImmutablePass(&ID) {}
   };

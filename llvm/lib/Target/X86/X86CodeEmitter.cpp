@@ -43,7 +43,7 @@ STATISTIC(NumEmitted, "Number of machine instructions emitted");
 
 namespace {
   template<class CodeEmitter>
-  class VISIBILITY_HIDDEN Emitter : public MachineFunctionPass {
+  class Emitter : public MachineFunctionPass {
     const X86InstrInfo  *II;
     const TargetData    *TD;
     X86TargetMachine    &TM;

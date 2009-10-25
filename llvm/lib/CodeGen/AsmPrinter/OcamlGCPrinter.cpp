@@ -27,7 +27,7 @@ using namespace llvm;
 
 namespace {
 
-  class VISIBILITY_HIDDEN OcamlGCMetadataPrinter : public GCMetadataPrinter {
+  class OcamlGCMetadataPrinter : public GCMetadataPrinter {
   public:
     void beginAssembly(raw_ostream &OS, AsmPrinter &AP,
                        const MCAsmInfo &MAI);

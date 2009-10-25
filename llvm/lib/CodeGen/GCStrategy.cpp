@@ -39,7 +39,7 @@ namespace {
   /// llvm.gcwrite intrinsics, replacing them with simple loads and stores as 
   /// directed by the GCStrategy. It also performs automatic root initialization
   /// and custom intrinsic lowering.
-  class VISIBILITY_HIDDEN LowerIntrinsics : public FunctionPass {
+  class LowerIntrinsics : public FunctionPass {
     static bool NeedsDefaultLoweringPass(const GCStrategy &C);
     static bool NeedsCustomLoweringPass(const GCStrategy &C);
     static bool CouldBecomeSafePoint(Instruction *I);
@@ -63,7 +63,7 @@ namespace {
   /// function representation to identify safe points for the garbage collector
   /// in the machine code. It inserts labels at safe points and populates a
   /// GCMetadata record for each function.
-  class VISIBILITY_HIDDEN MachineCodeAnalysis : public MachineFunctionPass {
+  class MachineCodeAnalysis : public MachineFunctionPass {
     const TargetMachine *TM;
     GCFunctionInfo *FI;
     MachineModuleInfo *MMI;

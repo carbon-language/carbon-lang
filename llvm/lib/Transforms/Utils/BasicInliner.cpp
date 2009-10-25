@@ -34,7 +34,7 @@ namespace llvm {
 
   /// BasicInlinerImpl - BasicInliner implemantation class. This hides
   /// container info, used by basic inliner, from public interface.
-  struct VISIBILITY_HIDDEN BasicInlinerImpl {
+  struct BasicInlinerImpl {
     
     BasicInlinerImpl(const BasicInlinerImpl&); // DO NOT IMPLEMENT
     void operator=(const BasicInlinerImpl&); // DO NO IMPLEMENT
