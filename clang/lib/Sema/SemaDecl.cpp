@@ -1319,6 +1319,10 @@ Sema::DeclPtrTy Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   }
          
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
+    // If there are attributes in the DeclSpec, apply them to the record.
+    if (const AttributeList *AL = DS.getAttributes())
+      ProcessDeclAttributeList(S, Record, AL);
+    
     if (!Record->getDeclName() && Record->isDefinition() &&
         DS.getStorageClassSpec() != DeclSpec::SCS_typedef) {
       if (getLangOptions().CPlusPlus ||
@@ -4305,9 +4309,6 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   }
       
   if (PrevDecl) {
-    // Check whether the previous declaration is usable.
-    (void)DiagnoseUseOfDecl(PrevDecl, NameLoc);
-
     if (TagDecl *PrevTagDecl = dyn_cast<TagDecl>(PrevDecl)) {
       // If this is a use of a previous tag, or if the tag is already declared
       // in the same scope (so that the definition/declaration completes or
