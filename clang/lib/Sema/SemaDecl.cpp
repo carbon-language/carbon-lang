@@ -5034,7 +5034,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
   // Check for nontrivial bases (and recurse).
   for (base_iter bi = RD->bases_begin(), be = RD->bases_end(); bi != be; ++bi) {
     const RecordType *BaseRT = bi->getType()->getAs<RecordType>();
-    assert(BaseRT);
+    assert(BaseRT && "Don't know how to handle dependent bases");
     CXXRecordDecl *BaseRecTy = cast<CXXRecordDecl>(BaseRT->getDecl());
     if (!(BaseRecTy->*hasTrivial)()) {
       SourceLocation BaseLoc = bi->getSourceRange().getBegin();

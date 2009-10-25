@@ -3119,9 +3119,8 @@ static void AddBuiltinAssignmentOperatorCandidates(Sema &S,
   }
 }
 
-/// CollectVRQualifiers - This routine returns Volatile/Restrict qualifiers
-/// , if any, found in visible type conversion functions found in ArgExpr's
-/// type.
+/// CollectVRQualifiers - This routine returns Volatile/Restrict qualifiers,
+/// if any, found in visible type conversion functions found in ArgExpr's type.
 static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
     Qualifiers VRQuals;
     const RecordType *TyRec;
@@ -3139,7 +3138,7 @@ static  Qualifiers CollectVRQualifiers(ASTContext &Context, Expr* ArgExpr) {
     
     CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
     OverloadedFunctionDecl *Conversions =
-    ClassDecl->getVisibleConversionFunctions();
+      ClassDecl->getVisibleConversionFunctions();
     
     for (OverloadedFunctionDecl::function_iterator Func
          = Conversions->function_begin();

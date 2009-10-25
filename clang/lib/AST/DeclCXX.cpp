@@ -364,34 +364,36 @@ CXXRecordDecl::getNestedVisibleConversionFunctions(CXXRecordDecl *RD,
       }
     }
   }
-  
+
   if (getNumBases() == 0 && getNumVBases() == 0)
     return;
-  
+
   llvm::SmallPtrSet<CanQualType, 8> ConversionFunctions;
   if (!inTopClass)
     collectConversionFunctions(ConversionFunctions);
-  
+
   for (CXXRecordDecl::base_class_iterator VBase = vbases_begin(),
        E = vbases_end(); VBase != E; ++VBase) {
-    CXXRecordDecl *VBaseClassDecl
-      = cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
-    VBaseClassDecl->getNestedVisibleConversionFunctions(RD,
-                  TopConversionsTypeSet,
-                  (inTopClass ? TopConversionsTypeSet : ConversionFunctions));
-      
+    if (const RecordType *RT = VBase->getType()->getAs<RecordType>()) {
+      CXXRecordDecl *VBaseClassDecl
+        = cast<CXXRecordDecl>(RT->getDecl());
+      VBaseClassDecl->getNestedVisibleConversionFunctions(RD,
+                    TopConversionsTypeSet,
+                    (inTopClass ? TopConversionsTypeSet : ConversionFunctions));
+    }
   }
   for (CXXRecordDecl::base_class_iterator Base = bases_begin(),
        E = bases_end(); Base != E; ++Base) {
     if (Base->isVirtual())
       continue;
-    CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    
-    BaseClassDecl->getNestedVisibleConversionFunctions(RD,
-                  TopConversionsTypeSet,
-                  (inTopClass ? TopConversionsTypeSet : ConversionFunctions));
-    
+    if (const RecordType *RT = Base->getType()->getAs<RecordType>()) {
+      CXXRecordDecl *BaseClassDecl
+        = cast<CXXRecordDecl>(RT->getDecl());
+
+      BaseClassDecl->getNestedVisibleConversionFunctions(RD,
+                    TopConversionsTypeSet,
+                    (inTopClass ? TopConversionsTypeSet : ConversionFunctions));
+    }
   }
 }
 
