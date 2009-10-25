@@ -138,44 +138,40 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     break;
   }
 
-  if (IIDecl) {
-    QualType T;
+  assert(IIDecl && "Didn't find decl");
+  
+  QualType T;
+  if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
+    // Check whether we can use this type.
+    (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
 
-    if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
-      // Check whether we can use this type.
-      (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
+    // C++ [temp.local]p2:
+    //   Within the scope of a class template specialization or
+    //   partial specialization, when the injected-class-name is
+    //   not followed by a <, it is equivalent to the
+    //   injected-class-name followed by the template-argument s
+    //   of the class template specialization or partial
+    //   specialization enclosed in <>.
+    if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(TD))
+      if (RD->isInjectedClassName())
+        if (ClassTemplateDecl *Template = RD->getDescribedClassTemplate())
+          T = Template->getInjectedClassNameType(Context);
 
-      if (getLangOptions().CPlusPlus) {
-        // C++ [temp.local]p2:
-        //   Within the scope of a class template specialization or
-        //   partial specialization, when the injected-class-name is
-        //   not followed by a <, it is equivalent to the
-        //   injected-class-name followed by the template-argument s
-        //   of the class template specialization or partial
-        //   specialization enclosed in <>.
-        if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(TD))
-          if (RD->isInjectedClassName())
-            if (ClassTemplateDecl *Template = RD->getDescribedClassTemplate())
-              T = Template->getInjectedClassNameType(Context);
-      }
-
-      if (T.isNull())
-        T = Context.getTypeDeclType(TD);
-    } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
-      // Check whether we can use this interface.
-      (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
-
-      T = Context.getObjCInterfaceType(IDecl);
-    } else
-      return 0;
-
+    if (T.isNull())
+      T = Context.getTypeDeclType(TD);
+    
     if (SS)
       T = getQualifiedNameType(*SS, T);
+    
+  } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
+    // Check whether we can use this interface.
+    (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
 
-    return T.getAsOpaquePtr();
-  }
+    T = Context.getObjCInterfaceType(IDecl);
+  } else
+    return 0;
 
-  return 0;
+  return T.getAsOpaquePtr();
 }
 
 /// isTagName() - This method is called *for error recovery purposes only*

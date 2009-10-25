@@ -345,7 +345,7 @@ Parser::ParseRHSOfBinaryExpression(OwningExprResult LHS, unsigned MinPrec) {
          && Tok.is(tok::identifier)) {
       CXXScopeSpec SS;
       if (Actions.getTypeName(*Tok.getIdentifierInfo(),
-                                           Tok.getLocation(), CurScope, &SS)) {
+                              Tok.getLocation(), CurScope, &SS)) {
         const char *Opc = OpToken.is(tok::periodstar) ? "'.*'" : "'->*'";
         Diag(OpToken, diag::err_pointer_to_member_type) << Opc;
         return ExprError();
