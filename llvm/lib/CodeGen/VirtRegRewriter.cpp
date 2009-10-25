@@ -495,7 +495,7 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
   MachineOperand *DefOp = NULL;
   for (unsigned i = 0, e = DefMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = DefMI->getOperand(i);
-    if (!MO.isReg() || !MO.isUse() || !MO.isKill() || MO.isUndef())
+    if (!MO.isReg() || MO.isUse() || !MO.isKill() || MO.isUndef())
       continue;
     if (MO.getReg() == Reg)
       DefOp = &MO;
@@ -613,7 +613,7 @@ static void ReMaterialize(MachineBasicBlock &MBB,
     assert(MO.isUse());
     unsigned SubIdx = MO.getSubReg();
     unsigned Phys = VRM.getPhys(VirtReg);
-    assert(Phys);
+    assert(Phys && "Virtual register is not assigned a register?");
     unsigned RReg = SubIdx ? TRI->getSubReg(Phys, SubIdx) : Phys;
     MO.setReg(RReg);
     MO.setSubReg(0);
@@ -856,7 +856,7 @@ unsigned ReuseInfo::GetRegForReload(const TargetRegisterClass *RC,
         Spills.ClobberPhysReg(NewPhysReg);
         Spills.ClobberPhysReg(NewOp.PhysRegReused);
 
-        unsigned RReg = SubIdx ? TRI->getSubReg(NewPhysReg, SubIdx) : NewPhysReg;
+        unsigned RReg = SubIdx ? TRI->getSubReg(NewPhysReg, SubIdx) :NewPhysReg;
         MI->getOperand(NewOp.Operand).setReg(RReg);
         MI->getOperand(NewOp.Operand).setSubReg(0);
 
@@ -2258,7 +2258,7 @@ private:
           // eliminate this or else the undef marker is lost and it will
           // confuses the scavenger. This is extremely rare.
           unsigned Src, Dst, SrcSR, DstSR;
-          if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst &&
+          if (TII->isIdentityCopy(MI, Src, Dst, SrcSR, DstSR) &&
               !MI.findRegisterUseOperand(Src)->isUndef()) {
             ++NumDCE;
             DEBUG(errs() << "Removing now-noop copy: " << MI);
@@ -2347,7 +2347,7 @@ private:
           // instruction before considering the dest reg to be changed.
           {
             unsigned Src, Dst, SrcSR, DstSR;
-            if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst) {
+            if (TII->isIdentityCopy(MI, Src, Dst, SrcSR, DstSR)) {
               ++NumDCE;
               DEBUG(errs() << "Removing now-noop copy: " << MI);
               InvalidateKills(MI, TRI, RegKills, KillOps);
