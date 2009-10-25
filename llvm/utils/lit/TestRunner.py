@@ -15,6 +15,10 @@ class InternalShellError(Exception):
 
 # Don't use close_fds on Windows.
 kUseCloseFDs = platform.system() != 'Windows'
+
+# Use temporary files to replace /dev/null on Windows.
+kAvoidDevNull = platform.system() == 'Windows'
+
 def executeCommand(command, cwd=None, env=None):
     p = subprocess.Popen(command, cwd=cwd,
                          stdin=subprocess.PIPE,
@@ -104,7 +108,10 @@ def executeShCmd(cmd, cfg, cwd, results):
                 result = subprocess.PIPE
             else:
                 if r[2] is None:
-                    r[2] = open(r[0], r[1])
+                    if kAvoidDevNull and r[0] == '/dev/null':
+                        r[2] = tempfile.TemporaryFile(mode=r[1])
+                    else:
+                        r[2] = open(r[0], r[1])
                 result = r[2]
             final_redirects.append(result)
 
