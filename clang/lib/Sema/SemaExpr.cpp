@@ -37,20 +37,24 @@ using namespace clang;
 /// used, or produce an error (and return true) if a C++0x deleted
 /// function is being used.
 ///
+/// If IgnoreDeprecated is set to true, this should not want about deprecated
+/// decls.
+///
 /// \returns true if there was an error (this declaration cannot be
 /// referenced), false otherwise.
-bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc) {
+///
+bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
+                             bool IgnoreDeprecated) {
   // See if the decl is deprecated.
   if (D->getAttr<DeprecatedAttr>()) {
     // Implementing deprecated stuff requires referencing deprecated
-    // stuff. Don't warn if we are implementing a deprecated
-    // construct.
-    bool isSilenced = false;
+    // stuff. Don't warn if we are implementing a deprecated construct.
+    bool isSilenced = IgnoreDeprecated;
 
     if (NamedDecl *ND = getCurFunctionOrMethodDecl()) {
       // If this reference happens *in* a deprecated function or method, don't
       // warn.
-      isSilenced = ND->getAttr<DeprecatedAttr>();
+      isSilenced |= ND->getAttr<DeprecatedAttr>() != 0;
 
       // If this is an Objective-C method implementation, check to see if the
       // method was deprecated on the declaration, not the definition.

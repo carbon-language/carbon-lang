@@ -49,3 +49,9 @@ struct bar_dep __attribute__((deprecated,
 
 struct bar_dep *test3;   // expected-warning {{'bar_dep' is deprecated}}
 
+
+// These should not warn because the actually declaration itself is deprecated.
+// rdar://6756623
+foo_dep *test4 __attribute__((deprecated));
+struct bar_dep *test5 __attribute__((deprecated));
+
