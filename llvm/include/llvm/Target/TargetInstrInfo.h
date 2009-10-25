@@ -145,20 +145,30 @@ public:
   /// isIdentityCopy - Return true if the instruction is a copy (or
   /// extract_subreg, insert_subreg, subreg_to_reg) where the source and
   /// destination registers are the same.
-  bool isIdentityCopy(const MachineInstr &MI) const {
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
+  bool isIdentityCopy(const MachineInstr &MI,
+                      unsigned &SrcReg, unsigned &DstReg,
+                      unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
     if (isMoveInstr(MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
         SrcReg == DstReg)
       return true;
 
-    if (MI.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG &&
-        MI.getOperand(0).getReg() == MI.getOperand(1).getReg())
-    return true;
+    if (MI.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG) {
+      DstReg = MI.getOperand(0).getReg();
+      DstSubIdx = MI.getOperand(0).getSubReg();
+      SrcReg = MI.getOperand(1).getReg();
+      SrcSubIdx = MI.getOperand(1).getSubReg();
+      return DstReg == SrcReg;
+    }
 
-    if ((MI.getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
-         MI.getOpcode() == TargetInstrInfo::SUBREG_TO_REG) &&
-        MI.getOperand(0).getReg() == MI.getOperand(2).getReg())
-      return true;
+    if (MI.getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
+        MI.getOpcode() == TargetInstrInfo::SUBREG_TO_REG) {
+      DstReg = MI.getOperand(0).getReg();
+      DstSubIdx = MI.getOperand(0).getSubReg();
+      SrcReg = MI.getOperand(2).getReg();
+      SrcSubIdx = MI.getOperand(2).getSubReg();
+      return DstReg == SrcReg;
+    }
+
     return false;
   }
   
