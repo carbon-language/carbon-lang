@@ -15,7 +15,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/System/DynamicLibrary.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Config/config.h"
 #include <cstdio>
 #include <cstring>

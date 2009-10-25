@@ -13,7 +13,6 @@
 
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
-#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 #include <cstring>
 #include <ostream>
