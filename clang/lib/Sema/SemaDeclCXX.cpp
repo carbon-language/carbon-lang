@@ -4282,7 +4282,6 @@ Sema::DeclPtrTy Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   // friend templates because ActOnTag never produces a ClassTemplateDecl
   // for a TUK_Friend.
   Declarator TheDeclarator(DS, Declarator::MemberContext);
-  // TODO: Should use D.SetIdentifier() to specify where the identifier is?
   QualType T = GetTypeForDeclarator(TheDeclarator, S);
   if (TheDeclarator.isInvalidType())
     return DeclPtrTy();
