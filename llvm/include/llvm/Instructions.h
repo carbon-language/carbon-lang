@@ -693,14 +693,6 @@ public:
     return !isEquality(P);
   }
 
-  /// @returns true if the predicate of this ICmpInst is signed, false otherwise
-  /// @brief Determine if this instruction's predicate is signed.
-  bool isSignedPredicate() const { return isSignedPredicate(getPredicate()); }
-
-  /// @returns true if the predicate provided is signed, false otherwise
-  /// @brief Determine if the predicate is signed.
-  static bool isSignedPredicate(Predicate pred);
-
   /// Initialize a set of values that all satisfy the predicate with C.
   /// @brief Make a ConstantRange for a relation with a constant value.
   static ConstantRange makeConstantRange(Predicate pred, const APInt &C);

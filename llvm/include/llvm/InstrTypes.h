@@ -718,6 +718,18 @@ public:
   /// @brief Determine if this is an equals/not equals predicate.
   bool isEquality();
 
+  /// @returns true if the comparison is signed, false otherwise.
+  /// @brief Determine if this instruction is using a signed comparison.
+  bool isSigned() const {
+    return isSigned(getPredicate());
+  }
+
+  /// @returns true if the comparison is unsigned, false otherwise.
+  /// @brief Determine if this instruction is using an unsigned comparison.
+  bool isUnsigned() const {
+    return isUnsigned(getPredicate());
+  }
+
   /// This is just a convenience.
   /// @brief Determine if this is true when both operands are the same.
   bool isTrueWhenEqual() const {

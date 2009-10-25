@@ -1627,7 +1627,7 @@ void CWriter::writeOperandWithCast(Value* Operand, const ICmpInst &Cmp) {
   }
   
   // Should this be a signed comparison?  If so, convert to signed.
-  bool castIsSigned = Cmp.isSignedPredicate();
+  bool castIsSigned = Cmp.isSigned();
 
   // If the operand was a pointer, convert to a large integer type.
   const Type* OpTy = Operand->getType();

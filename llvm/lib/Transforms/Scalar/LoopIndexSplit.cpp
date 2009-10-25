@@ -426,7 +426,7 @@ bool LoopIndexSplit::processOneIterationLoop() {
   //      c1 = icmp uge i32 SplitValue, StartValue
   //      c2 = icmp ult i32 SplitValue, ExitValue
   //      and i32 c1, c2 
-  Instruction *C1 = new ICmpInst(BR, ExitCondition->isSignedPredicate() ? 
+  Instruction *C1 = new ICmpInst(BR, ExitCondition->isSigned() ? 
                                  ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE,
                                  SplitValue, StartValue, "lisplit");
 
@@ -478,7 +478,7 @@ bool LoopIndexSplit::processOneIterationLoop() {
 /// with a loop invariant value. Update loop's lower and upper bound based on 
 /// the loop invariant value.
 bool LoopIndexSplit::restrictLoopBound(ICmpInst &Op) {
-  bool Sign = Op.isSignedPredicate();
+  bool Sign = Op.isSigned();
   Instruction *PHTerm = L->getLoopPreheader()->getTerminator();
 
   if (IVisGT(*ExitCondition) || IVisGE(*ExitCondition)) {
@@ -933,7 +933,7 @@ bool LoopIndexSplit::splitLoop() {
     return false;
 
   // If the predicate sign does not match then skip.
-  if (ExitCondition->isSignedPredicate() != SplitCondition->isSignedPredicate())
+  if (ExitCondition->isSigned() != SplitCondition->isSigned())
     return false;
 
   unsigned EVOpNum = (ExitCondition->getOperand(1) == IVExitValue);
@@ -963,7 +963,7 @@ bool LoopIndexSplit::splitLoop() {
   //[*] Calculate new loop bounds.
   Value *AEV = SplitValue;
   Value *BSV = SplitValue;
-  bool Sign = SplitCondition->isSignedPredicate();
+  bool Sign = SplitCondition->isSigned();
   Instruction *PHTerm = L->getLoopPreheader()->getTerminator();
 
   if (IVisLT(*ExitCondition)) {

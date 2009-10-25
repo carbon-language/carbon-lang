@@ -3511,9 +3511,9 @@ static Value *getFCmpValue(bool isordered, unsigned code,
 /// PredicatesFoldable - Return true if both predicates match sign or if at
 /// least one of them is an equality comparison (which is signless).
 static bool PredicatesFoldable(ICmpInst::Predicate p1, ICmpInst::Predicate p2) {
-  return (ICmpInst::isSignedPredicate(p1) == ICmpInst::isSignedPredicate(p2)) ||
-         (ICmpInst::isSignedPredicate(p1) && ICmpInst::isEquality(p2)) ||
-         (ICmpInst::isSignedPredicate(p2) && ICmpInst::isEquality(p1));
+  return (CmpInst::isSigned(p1) == CmpInst::isSigned(p2)) ||
+         (CmpInst::isSigned(p1) && ICmpInst::isEquality(p2)) ||
+         (CmpInst::isSigned(p2) && ICmpInst::isEquality(p1));
 }
 
 namespace { 
@@ -3550,9 +3550,7 @@ struct FoldICmpLogical {
     default: llvm_unreachable("Illegal logical opcode!"); return 0;
     }
 
-    bool isSigned = ICmpInst::isSignedPredicate(RHSICI->getPredicate()) || 
-                    ICmpInst::isSignedPredicate(ICI->getPredicate());
-      
+    bool isSigned = RHSICI->isSigned() || ICI->isSigned();
     Value *RV = getICmpValue(isSigned, Code, LHS, RHS, IC.getContext());
     if (Instruction *I = dyn_cast<Instruction>(RV))
       return I;
@@ -3849,9 +3847,9 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     
   // Ensure that the larger constant is on the RHS.
   bool ShouldSwap;
-  if (ICmpInst::isSignedPredicate(LHSCC) ||
+  if (CmpInst::isSigned(LHSCC) ||
       (ICmpInst::isEquality(LHSCC) && 
-       ICmpInst::isSignedPredicate(RHSCC)))
+       CmpInst::isSigned(RHSCC)))
     ShouldSwap = LHSCst->getValue().sgt(RHSCst->getValue());
   else
     ShouldSwap = LHSCst->getValue().ugt(RHSCst->getValue());
@@ -4537,9 +4535,9 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
   
   // Ensure that the larger constant is on the RHS.
   bool ShouldSwap;
-  if (ICmpInst::isSignedPredicate(LHSCC) ||
+  if (CmpInst::isSigned(LHSCC) ||
       (ICmpInst::isEquality(LHSCC) && 
-       ICmpInst::isSignedPredicate(RHSCC)))
+       CmpInst::isSigned(RHSCC)))
     ShouldSwap = LHSCst->getValue().sgt(RHSCst->getValue());
   else
     ShouldSwap = LHSCst->getValue().ugt(RHSCst->getValue());
@@ -6088,7 +6086,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     // EQ and NE we use unsigned values.
     APInt Op0Min(BitWidth, 0), Op0Max(BitWidth, 0);
     APInt Op1Min(BitWidth, 0), Op1Max(BitWidth, 0);
-    if (ICmpInst::isSignedPredicate(I.getPredicate())) {
+    if (I.isSigned()) {
       ComputeSignedMinMaxValuesFromKnownBits(Op0KnownZero, Op0KnownOne,
                                              Op0Min, Op0Max);
       ComputeSignedMinMaxValuesFromKnownBits(Op1KnownZero, Op1KnownOne,
@@ -6218,7 +6216,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
     // Turn a signed comparison into an unsigned one if both operands
     // are known to have the same sign.
-    if (I.isSignedPredicate() &&
+    if (I.isSigned() &&
         ((Op0KnownZero.isNegative() && Op1KnownZero.isNegative()) ||
          (Op0KnownOne.isNegative() && Op1KnownOne.isNegative())))
       return new ICmpInst(I.getUnsignedPredicate(), Op0, Op1);
@@ -6398,7 +6396,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           // icmp u/s (a ^ signbit), (b ^ signbit) --> icmp s/u a, b
           if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
             if (CI->getValue().isSignBit()) {
-              ICmpInst::Predicate Pred = I.isSignedPredicate()
+              ICmpInst::Predicate Pred = I.isSigned()
                                              ? I.getUnsignedPredicate()
                                              : I.getSignedPredicate();
               return new ICmpInst(Pred, Op0I->getOperand(0),
@@ -6406,7 +6404,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
             }
             
             if (CI->getValue().isMaxSignedValue()) {
-              ICmpInst::Predicate Pred = I.isSignedPredicate()
+              ICmpInst::Predicate Pred = I.isSigned()
                                              ? I.getUnsignedPredicate()
                                              : I.getSignedPredicate();
               Pred = I.getSwappedPredicate(Pred);
@@ -6543,7 +6541,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
   // work. :(  The if statement below tests that condition and bails 
   // if it finds it. 
   bool DivIsSigned = DivI->getOpcode() == Instruction::SDiv;
-  if (!ICI.isEquality() && DivIsSigned != ICI.isSignedPredicate())
+  if (!ICI.isEquality() && DivIsSigned != ICI.isSigned())
     return 0;
   if (DivRHS->isZero())
     return 0; // The ProdOV computation fails on divide by zero.
@@ -6742,7 +6740,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // (icmp u/s (xor A SignBit), C) -> (icmp s/u A, (xor C SignBit))
         if (!ICI.isEquality() && XorCST->getValue().isSignBit()) {
           const APInt &SignBit = XorCST->getValue();
-          ICmpInst::Predicate Pred = ICI.isSignedPredicate()
+          ICmpInst::Predicate Pred = ICI.isSigned()
                                          ? ICI.getUnsignedPredicate()
                                          : ICI.getSignedPredicate();
           return new ICmpInst(Pred, LHSI->getOperand(0),
@@ -6752,7 +6750,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // (icmp u/s (xor A ~SignBit), C) -> (icmp s/u (xor C ~SignBit), A)
         if (!ICI.isEquality() && XorCST->getValue().isMaxSignedValue()) {
           const APInt &NotSignBit = XorCST->getValue();
-          ICmpInst::Predicate Pred = ICI.isSignedPredicate()
+          ICmpInst::Predicate Pred = ICI.isSigned()
                                          ? ICI.getUnsignedPredicate()
                                          : ICI.getSignedPredicate();
           Pred = ICI.getSwappedPredicate(Pred);
@@ -7010,7 +7008,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       ConstantRange CR = ICI.makeConstantRange(ICI.getPredicate(), RHSV)
                             .subtract(LHSV);
 
-      if (ICI.isSignedPredicate()) {
+      if (ICI.isSigned()) {
         if (CR.getLower().isSignBit()) {
           return new ICmpInst(ICmpInst::ICMP_SLT, LHSI->getOperand(0),
                               ConstantInt::get(*Context, CR.getUpper()));
@@ -7185,7 +7183,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
     return 0;
 
   bool isSignedExt = LHSCI->getOpcode() == Instruction::SExt;
-  bool isSignedCmp = ICI.isSignedPredicate();
+  bool isSignedCmp = ICI.isSigned();
 
   if (CastInst *CI = dyn_cast<CastInst>(ICI.getOperand(1))) {
     // Not an extension from the same type?

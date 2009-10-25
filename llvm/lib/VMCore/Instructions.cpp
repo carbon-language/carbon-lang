@@ -2859,17 +2859,6 @@ ICmpInst::Predicate ICmpInst::getUnsignedPredicate(Predicate pred) {
   }
 }
 
-bool ICmpInst::isSignedPredicate(Predicate pred) {
-  switch (pred) {
-    default: assert(! "Unknown icmp predicate!");
-    case ICMP_SGT: case ICMP_SLT: case ICMP_SGE: case ICMP_SLE: 
-      return true;
-    case ICMP_EQ:  case ICMP_NE: case ICMP_UGT: case ICMP_ULT: 
-    case ICMP_UGE: case ICMP_ULE:
-      return false;
-  }
-}
-
 /// Initialize a set of values that all satisfy the condition with C.
 ///
 ConstantRange 
