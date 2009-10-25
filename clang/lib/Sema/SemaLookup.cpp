@@ -1239,6 +1239,14 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
                                          BaseEnd = Class->bases_end();
          Base != BaseEnd; ++Base) {
       const RecordType *BaseType = Base->getType()->getAs<RecordType>();
+      // In dependent contexts, we do ADL twice, and the first time around,
+      // the base type might be a dependent TemplateSpecializationType, or a
+      // TemplateTypeParmType. If that happens, simply ignore it.
+      // FIXME: If we want to support export, we probably need to add the
+      // namespace of the template in a TemplateSpecializationType, or even
+      // the classes and namespaces of known non-dependent arguments.
+      if (!BaseType)
+        continue;
       CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(BaseType->getDecl());
       if (AssociatedClasses.insert(BaseDecl)) {
         // Find the associated namespace for this base class.
