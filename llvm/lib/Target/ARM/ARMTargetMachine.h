@@ -103,7 +103,7 @@ public:
   ThumbTargetMachine(const Target &T, const std::string &TT,
                      const std::string &FS);
 
-  /// returns either Thumb1RegisterInfo of Thumb2RegisterInfo
+  /// returns either Thumb1RegisterInfo or Thumb2RegisterInfo
   virtual const ARMBaseRegisterInfo *getRegisterInfo() const {
     return &InstrInfo->getRegisterInfo();
   }
