@@ -390,17 +390,20 @@ public:
   };
 
 
-  ObjCDeclSpec() : objcDeclQualifier(DQ_None), PropertyAttributes(DQ_PR_noattr),
-  GetterName(0), SetterName(0) { }
+  ObjCDeclSpec()
+    : objcDeclQualifier(DQ_None), PropertyAttributes(DQ_PR_noattr),
+      GetterName(0), SetterName(0) { }
   ObjCDeclQualifier getObjCDeclQualifier() const { return objcDeclQualifier; }
-  void setObjCDeclQualifier(ObjCDeclQualifier DQVal)
-    { objcDeclQualifier = (ObjCDeclQualifier) (objcDeclQualifier | DQVal); }
+  void setObjCDeclQualifier(ObjCDeclQualifier DQVal) {
+    objcDeclQualifier = (ObjCDeclQualifier) (objcDeclQualifier | DQVal);
+  }
 
-  ObjCPropertyAttributeKind getPropertyAttributes() const
-    { return ObjCPropertyAttributeKind(PropertyAttributes); }
+  ObjCPropertyAttributeKind getPropertyAttributes() const {
+    return ObjCPropertyAttributeKind(PropertyAttributes);
+  }
   void setPropertyAttributes(ObjCPropertyAttributeKind PRVal) {
     PropertyAttributes =
-      (ObjCPropertyAttributeKind) (PropertyAttributes | PRVal);
+      (ObjCPropertyAttributeKind)(PropertyAttributes | PRVal);
   }
 
   const IdentifierInfo *getGetterName() const { return GetterName; }
