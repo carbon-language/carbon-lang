@@ -1594,41 +1594,6 @@ int int_char(char m) {if(m>7) return 0; return m;}
 
 //===---------------------------------------------------------------------===//
 
-libanalysis is not aggressively folding vector bitcasts.  For example, the
-constant expressions generated when compiling this code:
-
-union vec2d {
-    double e[2];
-    double v __attribute__((vector_size(16)));
-};
-typedef union vec2d vec2d;
-
-static vec2d a={{1,2}}, b={{3,4}};
-    
-vec2d foo () {
-    return (vec2d){ .v = a.v + b.v * (vec2d){{5,5}}.v };
-}
-
-in X86-32 end up being:
-
-define void @foo(%union.vec2d* noalias nocapture sret %agg.result) nounwind ssp {
-entry:
-  %agg.result.0 = getelementptr %union.vec2d* %agg.result, i32 0, i32 0 ; <<2 x double>*> [#uses=1]
-  store <2 x double> fadd (<2 x double> bitcast (<1 x i128> <i128 85070591730234615870450834276742070272> to <2 x double>), <2 x double> fmul (<2 x double> bitcast (<1 x i128> <i128 85153668479971173112514077617450647552> to <2 x double>), <2 x double> <double 5.000000e+00, double 5.000000e+00>)), <2 x double>* %agg.result.0, align 16
-  ret void
-}
-
-and in X86-64 mode:
-
-define %0 @foo() nounwind readnone ssp {
-entry:
-  %mrv5 = insertvalue %0 undef, double extractelement (<2 x double> fadd (<2 x double> bitcast (<1 x i128> <i128 85070591730234615870450834276742070272> to <2 x double>), <2 x double> fmul (<2 x double> bitcast (<1 x i128> <i128 85153668479971173112514077617450647552> to <2 x double>), <2 x double> bitcast (<1 x i128> <i128 85174437667405312423031577302488055808> to <2 x double>))), i32 0), 0 ; <%0> [#uses=1]
-  %mrv6 = insertvalue %0 %mrv5, double extractelement (<2 x double> fadd (<2 x double> bitcast (<1 x i128> <i128 85070591730234615870450834276742070272> to <2 x double>), <2 x double> fmul (<2 x double> bitcast (<1 x i128> <i128 85153668479971173112514077617450647552> to <2 x double>), <2 x double> bitcast (<1 x i128> <i128 85174437667405312423031577302488055808> to <2 x double>))), i32 1), 1 ; <%0> [#uses=1]
-  ret %0 %mrv6
-}
-
-//===---------------------------------------------------------------------===//
-
 IPSCCP is propagating elements of first class aggregates, but is not propagating
 the entire aggregate itself.  This leads it to miss opportunities, for example
 in test/Transforms/SCCP/ipsccp-basic.ll:test5b.
