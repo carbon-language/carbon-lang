@@ -54,12 +54,14 @@ QualType Sema::adjustParameterType(QualType T) {
 /// \param DeclLoc The location of the declarator identifier or invalid if none.
 /// \returns The type described by the declaration specifiers.  This function
 /// never returns null.
-QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
-                                     SourceLocation DeclLoc,
-                                     bool &isInvalid) {
+static QualType ConvertDeclSpecToType(const DeclSpec &DS,
+                                      SourceLocation DeclLoc,
+                                      bool &isInvalid, Sema &TheSema) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
   QualType Result;
+  
+  ASTContext &Context = TheSema.Context;
 
   switch (DS.getTypeSpecType()) {
   case DeclSpec::TST_void:
@@ -80,13 +82,13 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     if (DS.getTypeSpecSign() == DeclSpec::TSS_unspecified)
       Result = Context.WCharTy;
     else if (DS.getTypeSpecSign() == DeclSpec::TSS_signed) {
-      Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec)
+      TheSema.Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec)
         << DS.getSpecifierName(DS.getTypeSpecType());
       Result = Context.getSignedWCharType();
     } else {
       assert(DS.getTypeSpecSign() == DeclSpec::TSS_unsigned &&
         "Unknown TSS value");
-      Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec)
+      TheSema.Diag(DS.getTypeSpecSignLoc(), diag::ext_invalid_sign_spec)
         << DS.getSpecifierName(DS.getTypeSpecType());
       Result = Context.getUnsignedWCharType();
     }
@@ -117,13 +119,13 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     // allowed to be completely missing a declspec.  This is handled in the
     // parser already though by it pretending to have seen an 'int' in this
     // case.
-    if (getLangOptions().ImplicitInt) {
+    if (TheSema.getLangOptions().ImplicitInt) {
       // In C89 mode, we only warn if there is a completely missing declspec
       // when one is not allowed.
       if (DS.isEmpty()) {
         if (DeclLoc.isInvalid())
           DeclLoc = DS.getSourceRange().getBegin();
-        Diag(DeclLoc, diag::ext_missing_declspec)
+        TheSema.Diag(DeclLoc, diag::ext_missing_declspec)
           << DS.getSourceRange()
         << CodeModificationHint::CreateInsertion(DS.getSourceRange().getBegin(),
                                                  "int");
@@ -137,8 +139,9 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
       if (DeclLoc.isInvalid())
         DeclLoc = DS.getSourceRange().getBegin();
 
-      if (getLangOptions().CPlusPlus && !getLangOptions().Microsoft) {
-        Diag(DeclLoc, diag::err_missing_type_specifier)
+      if (TheSema.getLangOptions().CPlusPlus &&
+          !TheSema.getLangOptions().Microsoft) {
+        TheSema.Diag(DeclLoc, diag::err_missing_type_specifier)
           << DS.getSourceRange();
 
         // When this occurs in C++ code, often something is very broken with the
@@ -146,7 +149,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
         // errors.
         isInvalid = true;
       } else {
-        Diag(DeclLoc, diag::ext_missing_type_specifier)
+        TheSema.Diag(DeclLoc, diag::ext_missing_type_specifier)
           << DS.getSourceRange();
       }
     }
@@ -181,7 +184,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
   case DeclSpec::TST_decimal32:    // _Decimal32
   case DeclSpec::TST_decimal64:    // _Decimal64
   case DeclSpec::TST_decimal128:   // _Decimal128
-    Diag(DS.getTypeSpecTypeLoc(), diag::err_decimal_unsupported);
+    TheSema.Diag(DS.getTypeSpecTypeLoc(), diag::err_decimal_unsupported);
     Result = Context.IntTy;
     isInvalid = true;
     break;
@@ -204,7 +207,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     Result = Context.getTypeDeclType(cast<TypeDecl>(D));
 
     // In C++, make an ElaboratedType.
-    if (getLangOptions().CPlusPlus) {
+    if (TheSema.getLangOptions().CPlusPlus) {
       TagDecl::TagKind Tag
         = TagDecl::getTagKindForTypeSpec(DS.getTypeSpecType());
       Result = Context.getElaboratedType(Result, Tag);
@@ -218,7 +221,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
-    Result = GetTypeFromParser(DS.getTypeRep());
+    Result = TheSema.GetTypeFromParser(DS.getTypeRep());
 
     if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
       if (const ObjCInterfaceType *
@@ -248,7 +251,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
       } else {
         if (DeclLoc.isInvalid())
           DeclLoc = DS.getSourceRange().getBegin();
-        Diag(DeclLoc, diag::err_invalid_protocol_qualifiers)
+        TheSema.Diag(DeclLoc, diag::err_invalid_protocol_qualifiers)
           << DS.getSourceRange();
         isInvalid = true;
       }
@@ -264,7 +267,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
   }
   case DeclSpec::TST_typeofType:
     // FIXME: Preserve type source info.
-    Result = GetTypeFromParser(DS.getTypeRep());
+    Result = TheSema.GetTypeFromParser(DS.getTypeRep());
     assert(!Result.isNull() && "Didn't get a type for typeof?");
     // TypeQuals handled by caller.
     Result = Context.getTypeOfType(Result);
@@ -280,7 +283,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     Expr *E = static_cast<Expr *>(DS.getTypeRep());
     assert(E && "Didn't get an expression for decltype?");
     // TypeQuals handled by caller.
-    Result = BuildDecltypeType(E);
+    Result = TheSema.BuildDecltypeType(E);
     if (Result.isNull()) {
       Result = Context.IntTy;
       isInvalid = true;
@@ -301,8 +304,8 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
 
   // Handle complex types.
   if (DS.getTypeSpecComplex() == DeclSpec::TSC_complex) {
-    if (getLangOptions().Freestanding)
-      Diag(DS.getTypeSpecComplexLoc(), diag::ext_freestanding_complex);
+    if (TheSema.getLangOptions().Freestanding)
+      TheSema.Diag(DS.getTypeSpecComplexLoc(), diag::ext_freestanding_complex);
     Result = Context.getComplexType(Result);
   }
 
@@ -312,7 +315,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
   // See if there are any attributes on the declspec that apply to the type (as
   // opposed to the decl).
   if (const AttributeList *AL = DS.getAttributes())
-    ProcessTypeAttributeList(Result, AL);
+    TheSema.ProcessTypeAttributeList(Result, AL);
 
   // Apply const/volatile/restrict qualifiers to T.
   if (unsigned TypeQuals = DS.getTypeQualifiers()) {
@@ -329,13 +332,13 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
         // If we have a pointer or reference, the pointee must have an object
         // incomplete type.
         if (!EltTy->isIncompleteOrObjectType()) {
-          Diag(DS.getRestrictSpecLoc(),
+          TheSema.Diag(DS.getRestrictSpecLoc(),
                diag::err_typecheck_invalid_restrict_invalid_pointee)
             << EltTy << DS.getSourceRange();
           TypeQuals &= ~DeclSpec::TQ_restrict; // Remove the restrict qualifier.
         }
       } else {
-        Diag(DS.getRestrictSpecLoc(),
+        TheSema.Diag(DS.getRestrictSpecLoc(),
              diag::err_typecheck_invalid_restrict_not_pointer)
           << Result << DS.getSourceRange();
         TypeQuals &= ~DeclSpec::TQ_restrict; // Remove the restrict qualifier.
@@ -357,7 +360,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
                "Has CVR quals but not C, V, or R?");
         Loc = DS.getRestrictSpecLoc();
       }
-      Diag(Loc, diag::warn_typecheck_function_qualifiers)
+      TheSema.Diag(Loc, diag::warn_typecheck_function_qualifiers)
         << Result << DS.getSourceRange();
     }
 
@@ -864,7 +867,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       T = Context.DependentTy;
     } else {
       bool isInvalid = false;
-      T = ConvertDeclSpecToType(DS, D.getIdentifierLoc(), isInvalid);
+      T = ConvertDeclSpecToType(DS, D.getIdentifierLoc(), isInvalid, *this);
       if (isInvalid)
         D.setInvalidType(true);
       else if (OwnedDecl && DS.isTypeSpecOwned())
