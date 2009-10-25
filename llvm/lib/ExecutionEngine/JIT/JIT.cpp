@@ -659,7 +659,7 @@ void *JIT::getPointerToFunction(Function *F) {
       return Addr;
   }
 
-  if (F->isDeclaration()) {
+  if (F->isDeclaration() || F->hasAvailableExternallyLinkage()) {
     bool AbortOnFailure =
       !areDlsymStubsEnabled() && !F->hasExternalWeakLinkage();
     void *Addr = getPointerToNamedFunction(F->getName(), AbortOnFailure);
