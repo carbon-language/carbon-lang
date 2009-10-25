@@ -29,4 +29,4 @@ void a_very_long_line(int *ip, float *FloatPointer) {
 
 
 // CHECK: FILE:23:78
-// CHECK: {{^  ...// some long comment text and a brace, eh {} $}}
+// CHECK: {{^  ...// some long comment text and a brace, eh {} }}
