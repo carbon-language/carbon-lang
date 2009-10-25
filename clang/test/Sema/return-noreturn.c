@@ -27,3 +27,11 @@ __attribute__((__noreturn__)) void* test3(int arg) {
 __attribute__((__noreturn__)) void* test3_positive(int arg) {
   while (0) foo_test_3();
 } // expected-warning{{function declared 'noreturn' should not return}}
+
+
+// PR5298 - -Wmissing-noreturn shouldn't warn if the function is already
+// declared noreturn.
+void __attribute__((noreturn))
+test4() {
+  test2_positive();
+}

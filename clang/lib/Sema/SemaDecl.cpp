@@ -1150,6 +1150,7 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
   // which this code would then warn about.
   if (getDiagnostics().hasErrorOccurred())
     return;
+  
   bool ReturnsVoid = false;
   bool HasNoReturn = false;
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
@@ -1192,7 +1193,7 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
         Diag(Compound->getRBracLoc(), diag::warn_falloff_nonvoid_function);
       break;
     case NeverFallThrough:
-      if (ReturnsVoid)
+      if (ReturnsVoid && !HasNoReturn)
         Diag(Compound->getLBracLoc(), diag::warn_suggest_noreturn_function);
       break;
     }
@@ -1214,7 +1215,7 @@ void Sema::CheckFallThroughForBlock(QualType BlockTy, Stmt *Body) {
     return;
   bool ReturnsVoid = false;
   bool HasNoReturn = false;
-  if (const FunctionType *FT = BlockTy->getPointeeType()->getAs<FunctionType>()) {
+  if (const FunctionType *FT =BlockTy->getPointeeType()->getAs<FunctionType>()){
     if (FT->getResultType()->isVoidType())
       ReturnsVoid = true;
     if (FT->getNoReturnAttr())
