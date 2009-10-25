@@ -58,11 +58,11 @@ static bool isOmittedBlockReturnType(const Declarator &D) {
     return false;
   
   if (D.getNumTypeObjects() == 0)
-    return true;
+    return true;   // ^{ ... }
   
   if (D.getNumTypeObjects() == 1 &&
       D.getTypeObject(0).Kind == DeclaratorChunk::Function)
-    return true;
+    return true;   // ^(int X, float Y) { ... }
   
   return false;
 }
@@ -228,7 +228,7 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
   case DeclSpec::TST_enum:
   case DeclSpec::TST_union:
   case DeclSpec::TST_struct: {
-    Decl *D = static_cast<Decl *>(DS.getTypeRep());
+    TypeDecl *D = cast_or_null<TypeDecl>(static_cast<Decl *>(DS.getTypeRep()));
     if (!D) {
       // This can happen in C++ with ambiguous lookups.
       Result = Context.IntTy;
@@ -236,11 +236,14 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
       break;
     }
 
+    // If the type is deprecated or unavailable, diagnose it.
+    TheSema.DiagnoseUseOfDecl(D, DS.getTypeSpecTypeLoc());
+    
     assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
-           DS.getTypeSpecSign() == 0 &&
-           "Can't handle qualifiers on typedef names yet!");
+           DS.getTypeSpecSign() == 0 && "No qualifiers on tag names!");
+    
     // TypeQuals handled by caller.
-    Result = Context.getTypeDeclType(cast<TypeDecl>(D));
+    Result = Context.getTypeDeclType(D);
 
     // In C++, make an ElaboratedType.
     if (TheSema.getLangOptions().CPlusPlus) {
@@ -290,9 +293,22 @@ static QualType ConvertDeclSpecToType(Declarator &TheDeclarator, Sema &TheSema){
     }
 
     // If this is a reference to an invalid typedef, propagate the invalidity.
-    if (TypedefType *TDT = dyn_cast<TypedefType>(Result))
+    if (TypedefType *TDT = dyn_cast<TypedefType>(Result)) {
       if (TDT->getDecl()->isInvalidDecl())
         TheDeclarator.setInvalidType(true);
+      
+      // If the type is deprecated or unavailable, diagnose it.
+      TheSema.DiagnoseUseOfDecl(TDT->getDecl(), DS.getTypeSpecTypeLoc());
+    } else if (ObjCInterfaceType *OIT = dyn_cast<ObjCInterfaceType>(Result)) {
+      // If the type is deprecated or unavailable, diagnose it.
+      TheSema.DiagnoseUseOfDecl(OIT->getDecl(), DS.getTypeSpecTypeLoc());
+    } else if (ObjCObjectPointerType *DPT =
+                 dyn_cast<ObjCObjectPointerType>(Result)) {
+      // If the type is deprecated or unavailable, diagnose it.
+      if (ObjCInterfaceDecl *D = DPT->getInterfaceDecl())
+        TheSema.DiagnoseUseOfDecl(D, DS.getTypeSpecTypeLoc());
+    }
+
 
     // TypeQuals handled by caller.
     break;

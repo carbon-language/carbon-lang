@@ -95,7 +95,7 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   case LookupResult::FoundOverloaded:
     return 0;
 
-  case LookupResult::Ambiguous: {
+  case LookupResult::Ambiguous:
     // Recover from type-hiding ambiguities by hiding the type.  We'll
     // do the lookup again when looking for an object, and we can
     // diagnose the error then.  If we don't do this, then the error
@@ -131,7 +131,6 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     // perform the name lookup again.
     DiagnoseAmbiguousLookup(Result, DeclarationName(&II), NameLoc);
     break;
-  }
 
   case LookupResult::Found:
     IIDecl = Result.getFoundDecl();
@@ -142,9 +141,6 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   
   QualType T;
   if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
-    // Check whether we can use this type.
-    (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
-
     // C++ [temp.local]p2:
     //   Within the scope of a class template specialization or
     //   partial specialization, when the injected-class-name is
@@ -164,9 +160,6 @@ Sema::TypeTy *Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
       T = getQualifiedNameType(*SS, T);
     
   } else if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(IIDecl)) {
-    // Check whether we can use this interface.
-    (void)DiagnoseUseOfDecl(IIDecl, NameLoc);
-
     T = Context.getObjCInterfaceType(IDecl);
   } else
     return 0;
