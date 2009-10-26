@@ -8,9 +8,8 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../../..
 TARGET = PIC16
-LIBRARYNAME = PIC16Passes
-LOADABLE_MODULE = 1
-
+LIBRARYNAME = LLVMpic16passes
+BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common
 
