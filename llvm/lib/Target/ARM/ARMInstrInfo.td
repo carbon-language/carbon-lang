@@ -398,6 +398,7 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
   def ri : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                IIC_iALUi, opc, "s $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]> {
+    let Inst{20} = 1;
     let Inst{25} = 1;
   }
   def rr : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
@@ -405,6 +406,7 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]> {
     let isCommutable = Commutable;
     let Inst{4} = 0;
+    let Inst{20} = 1;
     let Inst{25} = 0;
   }
   def rs : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
@@ -412,6 +414,7 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]> {
     let Inst{4} = 1;
     let Inst{7} = 0;
+    let Inst{20} = 1;
     let Inst{25} = 0;
   }
 }
@@ -512,6 +515,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
                Requires<[IsARM, CarryDefIsUsed]> {
     let Defs = [CPSR];
+    let Inst{20} = 1;
     let Inst{25} = 1;
   }
   def Srr : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
@@ -520,6 +524,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
                Requires<[IsARM, CarryDefIsUsed]> {
     let Defs = [CPSR];
     let Inst{4} = 0;
+    let Inst{20} = 1;
     let Inst{25} = 0;
   }
   def Srs : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
@@ -529,6 +534,7 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
     let Defs = [CPSR];
     let Inst{4} = 1;
     let Inst{7} = 0;
+    let Inst{20} = 1;
     let Inst{25} = 0;
   }
 }
@@ -1091,18 +1097,28 @@ def RSBri : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
 
 def RSBrs : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                   IIC_iALUsr, "rsb", " $dst, $a, $b",
-                  [(set GPR:$dst, (sub so_reg:$b, GPR:$a))]>;
+                  [(set GPR:$dst, (sub so_reg:$b, GPR:$a))]> {
+    let Inst{4} = 1;
+    let Inst{7} = 0;
+    let Inst{25} = 0;
+}
 
 // RSB with 's' bit set.
 let Defs = [CPSR] in {
 def RSBSri : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                  IIC_iALUi, "rsb", "s $dst, $a, $b",
                  [(set GPR:$dst, (subc so_imm:$b, GPR:$a))]> {
+    let Inst{20} = 1;
     let Inst{25} = 1;
 }
 def RSBSrs : AI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                  IIC_iALUsr, "rsb", "s $dst, $a, $b",
-                 [(set GPR:$dst, (subc so_reg:$b, GPR:$a))]>;
+                 [(set GPR:$dst, (subc so_reg:$b, GPR:$a))]> {
+    let Inst{4} = 1;
+    let Inst{7} = 0;
+    let Inst{20} = 1;
+    let Inst{25} = 0;
+}
 }
 
 let Uses = [CPSR] in {
