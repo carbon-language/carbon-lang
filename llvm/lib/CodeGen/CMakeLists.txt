@@ -1,6 +1,7 @@
 add_llvm_library(LLVMCodeGen
   BranchFolding.cpp
   CodePlacementOpt.cpp
+  CriticalAntiDepBreaker.cpp
   DeadMachineInstructionElim.cpp
   DwarfEHPrepare.cpp
   ELFCodeEmitter.cpp
