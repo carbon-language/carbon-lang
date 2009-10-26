@@ -24,6 +24,7 @@
 #include "ExactHazardRecognizer.h"
 #include "SimpleHazardRecognizer.h"
 #include "ScheduleDAGInstrs.h"
+#include "llvm/CodeGen/AntiDepBreaker.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
@@ -78,6 +79,8 @@ static cl::opt<int>
 DebugMod("postra-sched-debugmod",
                       cl::desc("Debug control MBBs that are scheduled"),
                       cl::init(0), cl::Hidden);
+
+AntiDepBreaker::~AntiDepBreaker() { }
 
 namespace {
   class PostRAScheduler : public MachineFunctionPass {
