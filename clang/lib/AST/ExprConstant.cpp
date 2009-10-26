@@ -875,11 +875,6 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
     return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
 
   case Builtin::BI__builtin_object_size: {
-    llvm::APSInt Result(32);
-    
-    if (!E->getArg(1)->isIntegerConstantExpr(Result, Info.Ctx))
-      assert(0 && "arg2 not ice in __builtin_object_size");
-
     const Expr *Arg = E->getArg(0)->IgnoreParens();
     Expr::EvalResult Base;
     if (Arg->Evaluate(Base, Info.Ctx)
@@ -895,7 +890,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
         }
 
     if (Base.HasSideEffects) {
-      if (Result.getSExtValue() < 2)
+      if (E->getArg(1)->EvaluateAsInt(Info.Ctx).getZExtValue() < 2)
         return Success(-1, E);
       return Success(0, E);
     }
