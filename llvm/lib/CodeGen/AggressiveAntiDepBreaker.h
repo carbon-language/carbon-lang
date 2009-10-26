@@ -28,11 +28,12 @@
 #include "llvm/ADT/SmallSet.h"
 
 namespace llvm {
-  class AggressiveAntiDepBreaker : public AntiDepBreaker {
-    MachineFunction& MF;
-    MachineRegisterInfo &MRI;
-    const TargetRegisterInfo *TRI;
-
+  /// Class AggressiveAntiDepState 
+  /// Contains all the state necessary for anti-dep breaking. We place
+  /// into a separate class so be can conveniently save/restore it to
+  /// enable multi-pass anti-dep breaking.
+  class AggressiveAntiDepState {
+  public:
     /// RegisterReference - Information about a register reference
     /// within a liverange
     typedef struct {
@@ -42,59 +43,43 @@ namespace llvm {
       const TargetRegisterClass *RC;
     } RegisterReference;
 
-    /// AllocatableSet - The set of allocatable registers.
-    /// We'll be ignoring anti-dependencies on non-allocatable registers,
-    /// because they may not be safe to break.
-    const BitVector AllocatableSet;
-
+  private:
     /// GroupNodes - Implements a disjoint-union data structure to
     /// form register groups. A node is represented by an index into
     /// the vector. A node can "point to" itself to indicate that it
     /// is the parent of a group, or point to another node to indicate
     /// that it is a member of the same group as that node.
     std::vector<unsigned> GroupNodes;
-
+  
     /// GroupNodeIndices - For each register, the index of the GroupNode
     /// currently representing the group that the register belongs to.
     /// Register 0 is always represented by the 0 group, a group
     /// composed of registers that are not eligible for anti-aliasing.
     unsigned GroupNodeIndices[TargetRegisterInfo::FirstVirtualRegister];
-
-    /// RegRegs - Map registers to all their references within a live range.
+  
+    /// RegRefs - Map registers to all their references within a live range.
     std::multimap<unsigned, RegisterReference> RegRefs;
-
+  
     /// KillIndices - The index of the most recent kill (proceding bottom-up),
     /// or ~0u if the register is not live.
     unsigned KillIndices[TargetRegisterInfo::FirstVirtualRegister];
-
+  
     /// DefIndices - The index of the most recent complete def (proceding bottom
     /// up), or ~0u if the register is live.
     unsigned DefIndices[TargetRegisterInfo::FirstVirtualRegister];
 
   public:
-    AggressiveAntiDepBreaker(MachineFunction& MFi);
-    ~AggressiveAntiDepBreaker();
+    AggressiveAntiDepState(MachineBasicBlock *BB);
     
-    /// Start - Initialize anti-dep breaking for a new basic block.
-    void StartBlock(MachineBasicBlock *BB);
+    /// GetKillIndices - Return the kill indices.
+    unsigned *GetKillIndices() { return KillIndices; }
 
-    /// BreakAntiDependencies - Identifiy anti-dependencies along the critical path
-    /// of the ScheduleDAG and break them by renaming registers.
-    ///
-    unsigned BreakAntiDependencies(std::vector<SUnit>& SUnits,
-                                   MachineBasicBlock::iterator& Begin,
-                                   MachineBasicBlock::iterator& End,
-                                   unsigned InsertPosIndex);
+    /// GetDefIndices - Return the define indices.
+    unsigned *GetDefIndices() { return DefIndices; }
 
-    /// Observe - Update liveness information to account for the current
-    /// instruction, which will not be scheduled.
-    ///
-    void Observe(MachineInstr *MI, unsigned Count, unsigned InsertPosIndex);
+    /// GetRegRefs - Return the RegRefs map.
+    std::multimap<unsigned, RegisterReference>& GetRegRefs() { return RegRefs; }
 
-    /// Finish - Finish anti-dep breaking for a basic block.
-    void FinishBlock();
-
-  private:
     // GetGroup - Get the group for a register. The returned value is
     // the index of the GroupNode representing the group.
     unsigned GetGroup(unsigned Reg);
@@ -115,7 +100,57 @@ namespace llvm {
 
     /// IsLive - Return true if Reg is live
     bool IsLive(unsigned Reg);
+  };
+
+
+  /// Class AggressiveAntiDepBreaker 
+  class AggressiveAntiDepBreaker : public AntiDepBreaker {
+    MachineFunction& MF;
+    MachineRegisterInfo &MRI;
+    const TargetRegisterInfo *TRI;
+
+    /// AllocatableSet - The set of allocatable registers.
+    /// We'll be ignoring anti-dependencies on non-allocatable registers,
+    /// because they may not be safe to break.
+    const BitVector AllocatableSet;
+
+    /// State - The state used to identify and rename anti-dependence
+    /// registers.
+    AggressiveAntiDepState *State;
+
+    /// SavedState - The state for the start of an anti-dep
+    /// region. Used to restore the state at the beginning of each
+    /// pass
+    AggressiveAntiDepState *SavedState;
+
+  public:
+    AggressiveAntiDepBreaker(MachineFunction& MFi);
+    ~AggressiveAntiDepBreaker();
     
+    /// GetMaxTrials - As anti-dependencies are broken, additional
+    /// dependencies may be exposed, so multiple passes are required.
+    unsigned GetMaxTrials();
+
+    /// Start - Initialize anti-dep breaking for a new basic block.
+    void StartBlock(MachineBasicBlock *BB);
+
+    /// BreakAntiDependencies - Identifiy anti-dependencies along the critical path
+    /// of the ScheduleDAG and break them by renaming registers.
+    ///
+    unsigned BreakAntiDependencies(std::vector<SUnit>& SUnits,
+                                   MachineBasicBlock::iterator& Begin,
+                                   MachineBasicBlock::iterator& End,
+                                   unsigned InsertPosIndex);
+
+    /// Observe - Update liveness information to account for the current
+    /// instruction, which will not be scheduled.
+    ///
+    void Observe(MachineInstr *MI, unsigned Count, unsigned InsertPosIndex);
+
+    /// Finish - Finish anti-dep breaking for a basic block.
+    void FinishBlock();
+
+  private:
     /// IsImplicitDefUse - Return true if MO represents a register
     /// that is both implicitly used and defined in MI
     bool IsImplicitDefUse(MachineInstr *MI, MachineOperand& MO);

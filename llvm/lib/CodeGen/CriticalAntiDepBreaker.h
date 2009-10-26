@@ -64,6 +64,10 @@ namespace llvm {
     CriticalAntiDepBreaker(MachineFunction& MFi);
     ~CriticalAntiDepBreaker();
     
+    /// GetMaxTrials - Critical path anti-dependence breaking requires
+    /// only a single pass
+    unsigned GetMaxTrials() { return 1; }
+
     /// Start - Initialize anti-dep breaking for a new basic block.
     void StartBlock(MachineBasicBlock *BB);
 

@@ -40,6 +40,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -315,16 +316,20 @@ void SchedulePostRATDList::StartBlock(MachineBasicBlock *BB) {
 /// Schedule - Schedule the instruction range using list scheduling.
 ///
 void SchedulePostRATDList::Schedule() {
-  DEBUG(errs() << "********** List Scheduling **********\n");
-  
   // Build the scheduling graph.
   BuildSchedGraph(AA);
 
   if (AntiDepBreak != NULL) {
-    unsigned Broken = 
-      AntiDepBreak->BreakAntiDependencies(SUnits, Begin, InsertPos,
-                                          InsertPosIndex);
-    if (Broken > 0) {
+    for (unsigned i = 0, Trials = AntiDepBreak->GetMaxTrials();
+         i < Trials; ++i) {
+      DEBUG(errs() << "********** Break Anti-Deps, Trial " << 
+            i << " **********\n");
+      unsigned Broken = 
+        AntiDepBreak->BreakAntiDependencies(SUnits, Begin, InsertPos,
+                                            InsertPosIndex);
+      if (Broken == 0)
+        break;
+
       // We made changes. Update the dependency graph.
       // Theoretically we could update the graph in place:
       // When a live range is changed to use a different register, remove
@@ -340,6 +345,8 @@ void SchedulePostRATDList::Schedule() {
     }
   }
 
+  DEBUG(errs() << "********** List Scheduling **********\n");
+  
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
 

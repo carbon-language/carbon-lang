@@ -31,6 +31,10 @@ class AntiDepBreaker {
 public:
   virtual ~AntiDepBreaker();
 
+  /// GetMaxTrials - Return the maximum number of anti-dependence
+  /// breaking attempts that will be made for a block.
+  virtual unsigned GetMaxTrials() =0;
+
   /// Start - Initialize anti-dep breaking for a new basic block.
   virtual void StartBlock(MachineBasicBlock *BB) =0;
 
