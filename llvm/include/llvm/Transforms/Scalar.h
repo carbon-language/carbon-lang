@@ -338,6 +338,12 @@ FunctionPass *createSSIEverythingPass();
 //
 FunctionPass *createGEPSplitterPass();
 
+//===----------------------------------------------------------------------===//
+//
+// SCCVN - Aggressively eliminate redundant scalar values
+//
+FunctionPass *createSCCVNPass();
+
 } // End llvm namespace
 
 #endif
