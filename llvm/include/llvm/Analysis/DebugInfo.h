@@ -514,6 +514,13 @@ namespace llvm {
                                 uint64_t OffsetInBits, unsigned Flags,
                                 unsigned Encoding);
 
+    /// CreateBasicType - Create a basic type like int, float, etc.
+    DIBasicType CreateBasicTypeEx(DIDescriptor Context, StringRef Name,
+                                DICompileUnit CompileUnit, unsigned LineNumber,
+                                Constant *SizeInBits, Constant *AlignInBits,
+                                Constant *OffsetInBits, unsigned Flags,
+                                unsigned Encoding);
+
     /// CreateDerivedType - Create a derived type like const qualified type,
     /// pointer, typedef, etc.
     DIDerivedType CreateDerivedType(unsigned Tag, DIDescriptor Context,
@@ -524,6 +531,16 @@ namespace llvm {
                                     uint64_t OffsetInBits, unsigned Flags,
                                     DIType DerivedFrom);
 
+    /// CreateDerivedType - Create a derived type like const qualified type,
+    /// pointer, typedef, etc.
+    DIDerivedType CreateDerivedTypeEx(unsigned Tag, DIDescriptor Context,
+                                        StringRef Name,
+                                    DICompileUnit CompileUnit,
+                                    unsigned LineNumber,
+                                    Constant *SizeInBits, Constant *AlignInBits,
+                                    Constant *OffsetInBits, unsigned Flags,
+                                    DIType DerivedFrom);
+
     /// CreateCompositeType - Create a composite type like array, struct, etc.
     DICompositeType CreateCompositeType(unsigned Tag, DIDescriptor Context,
                                         StringRef Name,
@@ -532,6 +549,18 @@ namespace llvm {
                                         uint64_t SizeInBits,
                                         uint64_t AlignInBits,
                                         uint64_t OffsetInBits, unsigned Flags,
+                                        DIType DerivedFrom,
+                                        DIArray Elements,
+                                        unsigned RunTimeLang = 0);
+
+    /// CreateCompositeType - Create a composite type like array, struct, etc.
+    DICompositeType CreateCompositeTypeEx(unsigned Tag, DIDescriptor Context,
+                                        StringRef Name,
+                                        DICompileUnit CompileUnit,
+                                        unsigned LineNumber,
+                                        Constant *SizeInBits,
+                                        Constant *AlignInBits,
+                                        Constant *OffsetInBits, unsigned Flags,
                                         DIType DerivedFrom,
                                         DIArray Elements,
                                         unsigned RunTimeLang = 0);
