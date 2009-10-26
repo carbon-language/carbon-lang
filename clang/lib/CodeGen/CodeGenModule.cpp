@@ -949,7 +949,7 @@ GetLinkageForVariable(ASTContext &Context, const VarDecl *VD) {
       return CodeGenModule::GVA_StrongExternal;
       
     case TSK_ExplicitInstantiationDeclaration:
-      assert(false && "Variable should not be instantiated");
+      llvm::llvm_unreachable("Variable should not be instantiated");
       // Fall through to treat this like any other instantiation.
         
     case TSK_ImplicitInstantiation:
