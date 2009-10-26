@@ -2262,6 +2262,10 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
 
       if (!C) continue;
 
+      // Ignore negative constants, as the code below doesn't handle them
+      // correctly. TODO: Remove this restriction.
+      if (!C->getValue().isStrictlyPositive()) continue;
+
       /* Add new PHINode. */
       PHINode *NewPH = PHINode::Create(DestTy, "IV.S.", PH);
 
