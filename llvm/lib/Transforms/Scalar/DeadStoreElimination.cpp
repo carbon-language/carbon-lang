@@ -89,7 +89,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     Instruction *Inst = BBI++;
     
     // If we find a store or a free, get its memory dependence.
-    if (!isa<StoreInst>(Inst) && !isa<FreeInst>(Inst) && !isFreeCall(Inst))
+    if (!isa<StoreInst>(Inst) && !isFreeCall(Inst))
       continue;
     
     // Don't molest volatile stores or do queries that will return "clobber".
@@ -104,7 +104,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     if (InstDep.isNonLocal()) continue;
   
     // Handle frees whose dependencies are non-trivial.
-    if (isa<FreeInst>(Inst) || isFreeCall(Inst)) {
+    if (isFreeCall(Inst)) {
       MadeChange |= handleFreeWithNonTrivialDependency(Inst, InstDep);
       continue;
     }
@@ -176,8 +176,7 @@ bool DSE::handleFreeWithNonTrivialDependency(Instruction *F, MemDepResult Dep) {
   Value *DepPointer = Dependency->getPointerOperand()->getUnderlyingObject();
 
   // Check for aliasing.
-  Value* FreeVal = isa<FreeInst>(F) ? F->getOperand(0) : F->getOperand(1);
-  if (AA.alias(FreeVal, 1, DepPointer, 1) !=
+  if (AA.alias(F->getOperand(1), 1, DepPointer, 1) !=
          AliasAnalysis::MustAlias)
     return false;
   

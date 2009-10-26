@@ -29,7 +29,6 @@ namespace llvm {
 class AliasAnalysis;
 class LoadInst;
 class StoreInst;
-class FreeInst;
 class VAArgInst;
 class AliasSetTracker;
 class AliasSet;
@@ -298,7 +297,6 @@ public:
   bool add(Value *Ptr, unsigned Size);  // Add a location
   bool add(LoadInst *LI);
   bool add(StoreInst *SI);
-  bool add(FreeInst *FI);
   bool add(VAArgInst *VAAI);
   bool add(CallSite CS);          // Call/Invoke instructions
   bool add(CallInst *CI)   { return add(CallSite(CI)); }
@@ -313,7 +311,6 @@ public:
   bool remove(Value *Ptr, unsigned Size);  // Remove a location
   bool remove(LoadInst *LI);
   bool remove(StoreInst *SI);
-  bool remove(FreeInst *FI);
   bool remove(VAArgInst *VAAI);
   bool remove(CallSite CS);
   bool remove(CallInst *CI)   { return remove(CallSite(CI)); }

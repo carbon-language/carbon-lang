@@ -117,7 +117,6 @@ public:
   static inline bool classof(const UnaryInstruction *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::Alloca ||
-           I->getOpcode() == Instruction::Free ||
            I->getOpcode() == Instruction::Load ||
            I->getOpcode() == Instruction::VAArg ||
            I->getOpcode() == Instruction::ExtractValue ||

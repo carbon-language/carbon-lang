@@ -13,6 +13,7 @@
 
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/MallocHelper.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
@@ -296,12 +297,6 @@ bool AliasSetTracker::add(StoreInst *SI) {
   return NewPtr;
 }
 
-bool AliasSetTracker::add(FreeInst *FI) {
-  bool NewPtr;
-  addPointer(FI->getOperand(0), ~0, AliasSet::Mods, NewPtr);
-  return NewPtr;
-}
-
 bool AliasSetTracker::add(VAArgInst *VAAI) {
   bool NewPtr;
   addPointer(VAAI->getOperand(0), ~0, AliasSet::ModRef, NewPtr);
@@ -310,6 +305,13 @@ bool AliasSetTracker::add(VAArgInst *VAAI) {
 
 
 bool AliasSetTracker::add(CallSite CS) {
+  Instruction* Inst = CS.getInstruction();
+  if (isFreeCall(Inst)) {
+    bool NewPtr;
+    addPointer(Inst->getOperand(1), ~0, AliasSet::Mods, NewPtr);
+    return NewPtr;
+  }
+  
   if (isa<DbgInfoIntrinsic>(CS.getInstruction())) 
     return true; // Ignore DbgInfo Intrinsics.
   if (AA.doesNotAccessMemory(CS))
@@ -337,8 +339,6 @@ bool AliasSetTracker::add(Instruction *I) {
     return add(CI);
   else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     return add(II);
-  else if (FreeInst *FI = dyn_cast<FreeInst>(I))
-    return add(FI);
   else if (VAArgInst *VAAI = dyn_cast<VAArgInst>(I))
     return add(VAAI);
   return true;
@@ -427,13 +427,6 @@ bool AliasSetTracker::remove(StoreInst *SI) {
   return true;
 }
 
-bool AliasSetTracker::remove(FreeInst *FI) {
-  AliasSet *AS = findAliasSetForPointer(FI->getOperand(0), ~0);
-  if (!AS) return false;
-  remove(*AS);
-  return true;
-}
-
 bool AliasSetTracker::remove(VAArgInst *VAAI) {
   AliasSet *AS = findAliasSetForPointer(VAAI->getOperand(0), ~0);
   if (!AS) return false;
@@ -442,6 +435,14 @@ bool AliasSetTracker::remove(VAArgInst *VAAI) {
 }
 
 bool AliasSetTracker::remove(CallSite CS) {
+  Instruction* Inst = CS.getInstruction();
+  if (isFreeCall(Inst)) {
+    AliasSet *AS = findAliasSetForPointer(Inst->getOperand(1), ~0);
+    if (!AS) return false;
+    remove(*AS);
+    return true;
+  }
+
   if (AA.doesNotAccessMemory(CS))
     return false; // doesn't alias anything
 
@@ -459,8 +460,6 @@ bool AliasSetTracker::remove(Instruction *I) {
     return remove(SI);
   else if (CallInst *CI = dyn_cast<CallInst>(I))
     return remove(CI);
-  else if (FreeInst *FI = dyn_cast<FreeInst>(I))
-    return remove(FI);
   else if (VAArgInst *VAAI = dyn_cast<VAArgInst>(I))
     return remove(VAAI);
   return true;

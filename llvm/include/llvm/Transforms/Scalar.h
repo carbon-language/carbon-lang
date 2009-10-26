@@ -225,15 +225,6 @@ extern const PassInfo *const LoopSimplifyID;
 
 //===----------------------------------------------------------------------===//
 //
-// LowerAllocations - Turn free instructions into @free calls.
-//
-//   AU.addRequiredID(LowerAllocationsID);
-//
-Pass *createLowerAllocationsPass();
-extern const PassInfo *const LowerAllocationsID;
-
-//===----------------------------------------------------------------------===//
-//
 // TailCallElimination - This pass eliminates call instructions to the current
 // function which occur immediately before return instructions.
 //

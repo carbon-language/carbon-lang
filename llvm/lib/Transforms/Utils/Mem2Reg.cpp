@@ -44,7 +44,6 @@ namespace {
       AU.addPreserved<UnifyFunctionExitNodes>();
       AU.addPreservedID(LowerSwitchID);
       AU.addPreservedID(LowerInvokePassID);
-      AU.addPreservedID(LowerAllocationsID);
     }
   };
 }  // end of anonymous namespace

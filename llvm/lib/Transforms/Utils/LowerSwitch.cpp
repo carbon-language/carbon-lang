@@ -43,7 +43,6 @@ namespace {
       AU.addPreserved<UnifyFunctionExitNodes>();
       AU.addPreservedID(PromoteMemoryToRegisterID);
       AU.addPreservedID(LowerInvokePassID);
-      AU.addPreservedID(LowerAllocationsID);
     }
 
     struct CaseRange {

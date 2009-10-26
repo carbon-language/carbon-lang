@@ -985,28 +985,6 @@ bool AllocaInst::isStaticAlloca() const {
 }
 
 //===----------------------------------------------------------------------===//
-//                             FreeInst Implementation
-//===----------------------------------------------------------------------===//
-
-void FreeInst::AssertOK() {
-  assert(isa<PointerType>(getOperand(0)->getType()) &&
-         "Can not free something of nonpointer type!");
-}
-
-FreeInst::FreeInst(Value *Ptr, Instruction *InsertBefore)
-  : UnaryInstruction(Type::getVoidTy(Ptr->getContext()),
-                     Free, Ptr, InsertBefore) {
-  AssertOK();
-}
-
-FreeInst::FreeInst(Value *Ptr, BasicBlock *InsertAtEnd)
-  : UnaryInstruction(Type::getVoidTy(Ptr->getContext()),
-                     Free, Ptr, InsertAtEnd) {
-  AssertOK();
-}
-
-
-//===----------------------------------------------------------------------===//
 //                           LoadInst Implementation
 //===----------------------------------------------------------------------===//
 
@@ -3173,16 +3151,6 @@ AllocaInst *AllocaInst::clone() const {
   AllocaInst *New = new AllocaInst(getAllocatedType(),
                                    (Value*)getOperand(0),
                                    getAlignment());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
-}
-
-FreeInst *FreeInst::clone() const {
-  FreeInst *New = new FreeInst(getOperand(0));
   New->SubclassOptionalData = SubclassOptionalData;
   if (hasMetadata()) {
     LLVMContext &Context = getContext();

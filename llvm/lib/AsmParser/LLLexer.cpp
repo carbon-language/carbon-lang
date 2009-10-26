@@ -606,6 +606,10 @@ lltok::Kind LLLexer::LexIdentifier() {
     // FIXME: Remove in LLVM 3.0.
     // Autoupgrade malloc instruction.
     return lltok::kw_malloc;
+  } else if (Len == 4 && !memcmp(StartChar, "free", 4)) {
+    // FIXME: Remove in LLVM 3.0.
+    // Autoupgrade malloc instruction.
+    return lltok::kw_free;
   }
 
   // Keywords for instructions.
@@ -646,7 +650,6 @@ lltok::Kind LLLexer::LexIdentifier() {
   INSTKEYWORD(unreachable, Unreachable);
 
   INSTKEYWORD(alloca,      Alloca);
-  INSTKEYWORD(free,        Free);
   INSTKEYWORD(load,        Load);
   INSTKEYWORD(store,       Store);
   INSTKEYWORD(getelementptr, GetElementPtr);

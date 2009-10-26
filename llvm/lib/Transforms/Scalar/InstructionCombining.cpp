@@ -285,7 +285,6 @@ namespace {
     Instruction *visitPHINode(PHINode &PN);
     Instruction *visitGetElementPtrInst(GetElementPtrInst &GEP);
     Instruction *visitAllocaInst(AllocaInst &AI);
-    Instruction *visitFreeInst(FreeInst &FI);
     Instruction *visitFree(Instruction &FI);
     Instruction *visitLoadInst(LoadInst &LI);
     Instruction *visitStoreInst(StoreInst &SI);
@@ -11328,56 +11327,6 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
   return 0;
 }
 
-Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
-  Value *Op = FI.getOperand(0);
-
-  // free undef -> unreachable.
-  if (isa<UndefValue>(Op)) {
-    // Insert a new store to null because we cannot modify the CFG here.
-    new StoreInst(ConstantInt::getTrue(*Context),
-           UndefValue::get(Type::getInt1PtrTy(*Context)), &FI);
-    return EraseInstFromFunction(FI);
-  }
-  
-  // If we have 'free null' delete the instruction.  This can happen in stl code
-  // when lots of inlining happens.
-  if (isa<ConstantPointerNull>(Op))
-    return EraseInstFromFunction(FI);
-  
-  // Change free <ty>* (cast <ty2>* X to <ty>*) into free <ty2>* X
-  if (BitCastInst *CI = dyn_cast<BitCastInst>(Op)) {
-    FI.setOperand(0, CI->getOperand(0));
-    return &FI;
-  }
-  
-  // Change free (gep X, 0,0,0,0) into free(X)
-  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {
-    if (GEPI->hasAllZeroIndices()) {
-      Worklist.Add(GEPI);
-      FI.setOperand(0, GEPI->getOperand(0));
-      return &FI;
-    }
-  }
-  
-  if (isMalloc(Op)) {
-    if (CallInst* CI = extractMallocCallFromBitCast(Op)) {
-      if (Op->hasOneUse() && CI->hasOneUse()) {
-        EraseInstFromFunction(FI);
-        EraseInstFromFunction(*CI);
-        return EraseInstFromFunction(*cast<Instruction>(Op));
-      }
-    } else {
-      // Op is a call to malloc
-      if (Op->hasOneUse()) {
-        EraseInstFromFunction(FI);
-        return EraseInstFromFunction(*cast<Instruction>(Op));
-      }
-    }
-  }
-
-  return 0;
-}
-
 Instruction *InstCombiner::visitFree(Instruction &FI) {
   Value *Op = FI.getOperand(1);
 
@@ -11394,9 +11343,8 @@ Instruction *InstCombiner::visitFree(Instruction &FI) {
   if (isa<ConstantPointerNull>(Op))
     return EraseInstFromFunction(FI);
 
-  // FIXME: Bring back free (gep X, 0,0,0,0) into free(X) transform
-  
-  if (isMalloc(Op)) {
+  // If we have a malloc call whose only use is a free call, delete both.
+  if (isMalloc(Op))
     if (CallInst* CI = extractMallocCallFromBitCast(Op)) {
       if (Op->hasOneUse() && CI->hasOneUse()) {
         EraseInstFromFunction(FI);
@@ -11410,7 +11358,6 @@ Instruction *InstCombiner::visitFree(Instruction &FI) {
         return EraseInstFromFunction(*cast<Instruction>(Op));
       }
     }
-  }
 
   return 0;
 }

@@ -117,8 +117,8 @@ void BrainF::header(LLVMContext& C) {
   //brainf.end:
   endbb = BasicBlock::Create(C, label, brainf_func);
 
-  //free i8 *%arr
-  new FreeInst(ptr_arr, endbb);
+  //call free(i8 *%arr)
+  endbb->getInstList().push_back(CallInst::CreateFree(ptr_arr, endbb));
 
   //ret void
   ReturnInst::Create(C, endbb);

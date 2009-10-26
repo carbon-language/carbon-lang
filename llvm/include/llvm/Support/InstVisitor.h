@@ -166,7 +166,6 @@ public:
   RetTy visitICmpInst(ICmpInst &I)                  { DELEGATE(CmpInst);}
   RetTy visitFCmpInst(FCmpInst &I)                  { DELEGATE(CmpInst);}
   RetTy visitAllocaInst(AllocaInst &I)              { DELEGATE(Instruction); }
-  RetTy visitFreeInst(FreeInst     &I)              { DELEGATE(Instruction); }
   RetTy visitLoadInst(LoadInst     &I)              { DELEGATE(Instruction); }
   RetTy visitStoreInst(StoreInst   &I)              { DELEGATE(Instruction); }
   RetTy visitGetElementPtrInst(GetElementPtrInst &I){ DELEGATE(Instruction); }

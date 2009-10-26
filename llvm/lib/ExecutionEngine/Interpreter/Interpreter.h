@@ -140,7 +140,6 @@ public:
   void visitICmpInst(ICmpInst &I);
   void visitFCmpInst(FCmpInst &I);
   void visitAllocaInst(AllocaInst &I);
-  void visitFreeInst(FreeInst &I);
   void visitLoadInst(LoadInst &I);
   void visitStoreInst(StoreInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);

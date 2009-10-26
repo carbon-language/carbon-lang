@@ -238,7 +238,7 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
     } else if (BitCastInst *BCI = dyn_cast<BitCastInst>(*UI)) {
       if (AnalyzeUsesOfPointer(BCI, Readers, Writers, OkayStoreDest))
         return true;
-    } else if (isa<FreeInst>(*UI) || isFreeCall(*UI)) {
+    } else if (isFreeCall(*UI)) {
       Writers.push_back(cast<Instruction>(*UI)->getParent()->getParent());
     } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
       // Make sure that this is just the function being called, not that it is
@@ -437,7 +437,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
           if (cast<StoreInst>(*II).isVolatile())
             // Treat volatile stores as reading memory somewhere.
             FunctionEffect |= Ref;
-        } else if (isMalloc(&cast<Instruction>(*II)) || isa<FreeInst>(*II) ||
+        } else if (isMalloc(&cast<Instruction>(*II)) ||
                    isFreeCall(&cast<Instruction>(*II))) {
           FunctionEffect |= ModRef;
         }

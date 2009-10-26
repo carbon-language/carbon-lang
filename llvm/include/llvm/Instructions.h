@@ -104,35 +104,6 @@ public:
 
 
 //===----------------------------------------------------------------------===//
-//                                 FreeInst Class
-//===----------------------------------------------------------------------===//
-
-/// FreeInst - an instruction to deallocate memory
-///
-class FreeInst : public UnaryInstruction {
-  void AssertOK();
-public:
-  explicit FreeInst(Value *Ptr, Instruction *InsertBefore = 0);
-  FreeInst(Value *Ptr, BasicBlock *InsertAfter);
-
-  virtual FreeInst *clone() const;
-
-  // Accessor methods for consistency with other memory operations
-  Value *getPointerOperand() { return getOperand(0); }
-  const Value *getPointerOperand() const { return getOperand(0); }
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const FreeInst *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return (I->getOpcode() == Instruction::Free);
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-};
-
-
-//===----------------------------------------------------------------------===//
 //                                LoadInst Class
 //===----------------------------------------------------------------------===//
 

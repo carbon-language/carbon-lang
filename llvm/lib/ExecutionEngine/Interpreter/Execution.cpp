@@ -749,14 +749,6 @@ void Interpreter::visitAllocaInst(AllocaInst &I) {
     ECStack.back().Allocas.add(Memory);
 }
 
-void Interpreter::visitFreeInst(FreeInst &I) {
-  ExecutionContext &SF = ECStack.back();
-  assert(isa<PointerType>(I.getOperand(0)->getType()) && "Freeing nonptr?");
-  GenericValue Value = getOperandValue(I.getOperand(0), SF);
-  // TODO: Check to make sure memory is allocated
-  free(GVTOP(Value));   // Free memory
-}
-
 // getElementOffset - The workhorse for getelementptr.
 //
 GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,

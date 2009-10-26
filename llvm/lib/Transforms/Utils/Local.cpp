@@ -60,9 +60,8 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
 
     // If we see a free or a call which may write to memory (i.e. which might do
     // a free) the pointer could be marked invalid.
-    if (isa<FreeInst>(BBI) || isFreeCall(BBI) ||
-        (isa<CallInst>(BBI) && BBI->mayWriteToMemory() &&
-         !isa<DbgInfoIntrinsic>(BBI)))
+    if (isFreeCall(BBI) || (isa<CallInst>(BBI) && BBI->mayWriteToMemory() &&
+                            !isa<DbgInfoIntrinsic>(BBI)))
       return false;
 
     if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {

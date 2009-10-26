@@ -470,7 +470,6 @@ void LLVMDisposeTypeHandle(LLVMTypeHandleRef TypeHandle);
         macro(UIToFPInst)                   \
         macro(ZExtInst)                     \
       macro(ExtractValueInst)               \
-      macro(FreeInst)                       \
       macro(LoadInst)                       \
       macro(VAArgInst)
 

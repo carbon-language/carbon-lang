@@ -1191,9 +1191,6 @@ void MSILWriter::printInstruction(const Instruction* Inst) {
   case Instruction::Alloca:
     printAllocaInstruction(cast<AllocaInst>(Inst));
     break;
-  case Instruction::Free:
-    llvm_unreachable("LowerAllocationsPass used");
-    break;
   case Instruction::Unreachable:
     printSimpleInstruction("ldstr", "\"Unreachable instruction\"");
     printSimpleInstruction("newobj",
@@ -1699,7 +1696,6 @@ bool MSILTarget::addPassesToEmitWholeFile(PassManager &PM,
   if (FileType != TargetMachine::AssemblyFile) return true;
   MSILWriter* Writer = new MSILWriter(o);
   PM.add(createGCLoweringPass());
-  PM.add(createLowerAllocationsPass());
   // FIXME: Handle switch trougth native IL instruction "switch"
   PM.add(createLowerSwitchPass());
   PM.add(createCFGSimplificationPass());

@@ -1016,7 +1016,7 @@ bool Andersens::AnalyzeUsesOfFunction(Value *V) {
       }
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(*UI)) {
       if (AnalyzeUsesOfFunction(GEP)) return true;
-    } else if (isa<FreeInst>(*UI) || isFreeCall(*UI)) {
+    } else if (isFreeCall(*UI)) {
       return false;
     } else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {
       // Make sure that this is just the function being called, not that it is
@@ -1156,7 +1156,6 @@ void Andersens::visitInstruction(Instruction &I) {
   case Instruction::Switch:
   case Instruction::Unwind:
   case Instruction::Unreachable:
-  case Instruction::Free:
   case Instruction::ICmp:
   case Instruction::FCmp:
     return;

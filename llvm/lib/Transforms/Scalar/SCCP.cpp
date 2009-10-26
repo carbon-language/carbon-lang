@@ -416,7 +416,6 @@ private:
   void visitAllocaInst    (Instruction &I) { markOverdefined(&I); }
   void visitVANextInst    (Instruction &I) { markOverdefined(&I); }
   void visitVAArgInst     (Instruction &I) { markOverdefined(&I); }
-  void visitFreeInst      (Instruction &I) { /*returns void*/ }
 
   void visitInstruction(Instruction &I) {
     // If a new instruction is added to LLVM that we don't handle...

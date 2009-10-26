@@ -86,7 +86,6 @@ namespace {
       // This is a cluster of orthogonal Transforms
       AU.addPreservedID(PromoteMemoryToRegisterID);
       AU.addPreservedID(LowerSwitchID);
-      AU.addPreservedID(LowerAllocationsID);
     }
 
   private:

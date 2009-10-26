@@ -130,10 +130,6 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
         NumInsts += InlineConstants::CallPenalty;
     }
     
-    // These, too, are calls.
-    if (isa<FreeInst>(II))
-      NumInsts += InlineConstants::CallPenalty;
-
     if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
       if (!AI->isStaticAlloca())
         this->usesDynamicAlloca = true;

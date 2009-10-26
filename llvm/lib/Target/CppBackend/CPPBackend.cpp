@@ -1258,11 +1258,6 @@ namespace {
       Out << "\");";
       break;
     }
-    case Instruction::Free: {
-      Out << "FreeInst* " << iName << " = new FreeInst("
-          << getCppName(I->getOperand(0)) << ", " << bbname << ");";
-      break;
-    }
     case Instruction::Alloca: {
       const AllocaInst* allocaI = cast<AllocaInst>(I);
       Out << "AllocaInst* " << iName << " = new AllocaInst("

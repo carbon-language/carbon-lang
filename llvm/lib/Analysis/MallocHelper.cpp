@@ -1,4 +1,4 @@
-//===-- MallocHelper.cpp - Functions to identify malloc calls -------------===//
+//===-- MallocFreeHelper.cpp - Identify calls to malloc and free builtins -===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This family of functions identifies calls to malloc, bitcasts of malloc
-// calls, and the types and array sizes associated with them.
+// calls, and the types and array sizes associated with them.  It also
+// identifies calls to the free builtin.
 //
 //===----------------------------------------------------------------------===//
 
@@ -263,6 +264,10 @@ Value* llvm::getMallocArraySize(CallInst* CI, LLVMContext &Context,
   assert(BO && "getMallocArraySize not constant but not multiplication either");
   return BO->getOperand(0);
 }
+
+//===----------------------------------------------------------------------===//
+//  free Call Utility Functions.
+//
 
 /// isFreeCall - Returns true if the the value is a call to the builtin free()
 bool llvm::isFreeCall(const Value* I) {

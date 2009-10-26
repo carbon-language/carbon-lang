@@ -113,10 +113,9 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
     } else if (VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
       Pointer = V->getOperand(0);
       PointerSize = AA->getTypeStoreSize(V->getType());
-    } else if (FreeInst *F = dyn_cast<FreeInst>(Inst)) {
-      Pointer = F->getPointerOperand();
-      
-      // FreeInsts erase the entire structure
+    } else if (isFreeCall(Inst)) {
+      Pointer = Inst->getOperand(1);
+      // calls to free() erase the entire structure
       PointerSize = ~0ULL;
     } else if (isFreeCall(Inst)) {
       Pointer = Inst->getOperand(0);
@@ -319,7 +318,7 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
       MemSize = AA->getTypeStoreSize(LI->getType());
     }
   } else if (isFreeCall(QueryInst)) {
-    MemPtr = QueryInst->getOperand(0);
+    MemPtr = QueryInst->getOperand(1);
     // calls to free() erase the entire structure, not just a field.
     MemSize = ~0UL;
   } else if (isa<CallInst>(QueryInst) || isa<InvokeInst>(QueryInst)) {
@@ -327,10 +326,6 @@ MemDepResult MemoryDependenceAnalysis::getDependency(Instruction *QueryInst) {
     bool isReadOnly = AA->onlyReadsMemory(QueryCS);
     LocalCache = getCallSiteDependencyFrom(QueryCS, isReadOnly, ScanPos,
                                            QueryParent);
-  } else if (FreeInst *FI = dyn_cast<FreeInst>(QueryInst)) {
-    MemPtr = FI->getPointerOperand();
-    // FreeInsts erase the entire structure, not just a field.
-    MemSize = ~0UL;
   } else {
     // Non-memory instruction.
     LocalCache = MemDepResult::getClobber(--BasicBlock::iterator(ScanPos));

@@ -91,7 +91,6 @@ namespace {
       (void) llvm::createLoopUnswitchPass();
       (void) llvm::createLoopRotatePass();
       (void) llvm::createLoopIndexSplitPass();
-      (void) llvm::createLowerAllocationsPass();
       (void) llvm::createLowerInvokePass();
       (void) llvm::createLowerSetJmpPass();
       (void) llvm::createLowerSwitchPass();

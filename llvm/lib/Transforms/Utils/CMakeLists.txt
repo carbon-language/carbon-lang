@@ -13,7 +13,6 @@ add_llvm_library(LLVMTransformUtils
   LCSSA.cpp
   Local.cpp
   LoopSimplify.cpp
-  LowerAllocations.cpp
   LowerInvoke.cpp
   LowerSwitch.cpp
   Mem2Reg.cpp

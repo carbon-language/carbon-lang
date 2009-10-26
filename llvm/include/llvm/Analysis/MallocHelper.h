@@ -1,4 +1,4 @@
-//===- llvm/Analysis/MallocHelper.h ---- Identify malloc calls --*- C++ -*-===//
+//===- llvm/Analysis/MallocFreeHelper.h - Identify malloc/free --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This family of functions identifies calls to malloc, bitcasts of malloc
-// calls, and the types and array sizes associated with them.
+// calls, and the types and array sizes associated with them.  It also
+// identifies calls to the free builtin.
 //
 //===----------------------------------------------------------------------===//
 

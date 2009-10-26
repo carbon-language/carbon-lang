@@ -433,9 +433,6 @@ public:
                            const Twine &Name = "") {
     return Insert(new AllocaInst(Ty, ArraySize), Name);
   }
-  FreeInst *CreateFree(Value *Ptr) {
-    return Insert(new FreeInst(Ptr));
-  }
   // Provided to resolve 'CreateLoad(Ptr, "...")' correctly, instead of
   // converting the string to 'bool' for the isVolatile parameter.
   LoadInst *CreateLoad(Value *Ptr, const char *Name) {

@@ -44,7 +44,6 @@ class FPExtInst;
 class FPToSIInst;
 class FPToUIInst;
 class FPTruncInst;
-class FreeInst;
 class Function;
 class GetElementPtrInst;
 class GCFunctionInfo;
@@ -528,7 +527,6 @@ private:
   void visitGetElementPtr(User &I);
   void visitSelect(User &I);
 
-  void visitFree(FreeInst &I);
   void visitAlloca(AllocaInst &I);
   void visitLoad(LoadInst &I);
   void visitStore(StoreInst &I);

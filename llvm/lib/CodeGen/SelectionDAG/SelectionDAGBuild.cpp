@@ -5486,26 +5486,6 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   DAG.setRoot(Chain);
 }
 
-void SelectionDAGLowering::visitFree(FreeInst &I) {
-  TargetLowering::ArgListTy Args;
-  TargetLowering::ArgListEntry Entry;
-  Entry.Node = getValue(I.getOperand(0));
-  Entry.Ty = TLI.getTargetData()->getIntPtrType(*DAG.getContext());
-  Args.push_back(Entry);
-  EVT IntPtr = TLI.getPointerTy();
-  bool isTailCall = PerformTailCallOpt &&
-                    isInTailCallPosition(&I, Attribute::None, TLI);
-  std::pair<SDValue,SDValue> Result =
-    TLI.LowerCallTo(getRoot(), Type::getVoidTy(*DAG.getContext()),
-                    false, false, false, false,
-                    0, CallingConv::C, isTailCall,
-                    /*isReturnValueUsed=*/true,
-                    DAG.getExternalSymbol("free", IntPtr), Args, DAG,
-                    getCurDebugLoc());
-  if (Result.second.getNode())
-    DAG.setRoot(Result.second);
-}
-
 void SelectionDAGLowering::visitVAStart(CallInst &I) {
   DAG.setRoot(DAG.getNode(ISD::VASTART, getCurDebugLoc(),
                           MVT::Other, getRoot(),
