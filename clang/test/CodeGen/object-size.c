@@ -47,3 +47,13 @@ void test6() {
   // CHECK:       call    ___inline_strcpy_chk
   strcpy((++i, gbuf), "Hi there");
 }
+
+void test7() {
+  char buf[57];
+
+  // CHECK:       movabsq $53, %rdx
+  // CHECK-NEXT:  movq    %rax, %rdi
+  // CHECK-NEXT:  movq    %rcx, %rsi
+  // CHECK-NEXT:  call    ___strcpy_chk
+  strcpy(&buf[4], "Hi there");
+}

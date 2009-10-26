@@ -877,7 +877,7 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
   case Builtin::BI__builtin_object_size: {
     const Expr *Arg = E->getArg(0)->IgnoreParens();
     Expr::EvalResult Base;
-    if (Arg->Evaluate(Base, Info.Ctx)
+    if (Arg->EvaluateAsAny(Base, Info.Ctx)
         && Base.Val.getKind() == APValue::LValue
         && !Base.HasSideEffects)
       if (const Expr *LVBase = Base.Val.getLValueBase())
@@ -1805,6 +1805,33 @@ APValue ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 /// in Result.
 bool Expr::Evaluate(EvalResult &Result, ASTContext &Ctx) const {
   EvalInfo Info(Ctx, Result);
+
+  if (getType()->isVectorType()) {
+    if (!EvaluateVector(this, Result.Val, Info))
+      return false;
+  } else if (getType()->isIntegerType()) {
+    if (!IntExprEvaluator(Info, Result.Val).Visit(const_cast<Expr*>(this)))
+      return false;
+  } else if (getType()->hasPointerRepresentation()) {
+    if (!EvaluatePointer(this, Result.Val, Info))
+      return false;
+  } else if (getType()->isRealFloatingType()) {
+    llvm::APFloat f(0.0);
+    if (!EvaluateFloat(this, f, Info))
+      return false;
+
+    Result.Val = APValue(f);
+  } else if (getType()->isAnyComplexType()) {
+    if (!EvaluateComplex(this, Result.Val, Info))
+      return false;
+  } else
+    return false;
+
+  return true;
+}
+
+bool Expr::EvaluateAsAny(EvalResult &Result, ASTContext &Ctx) const {
+  EvalInfo Info(Ctx, Result, true);
 
   if (getType()->isVectorType()) {
     if (!EvaluateVector(this, Result.Val, Info))

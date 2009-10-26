@@ -241,6 +241,10 @@ public:
   /// in Result.
   bool Evaluate(EvalResult &Result, ASTContext &Ctx) const;
 
+  /// EvaluateAsAny - The same as Evaluate, except that it also succeeds on
+  /// stack based objects.
+  bool EvaluateAsAny(EvalResult &Result, ASTContext &Ctx) const;
+
   /// isEvaluatable - Call Evaluate to see if this expression can be constant
   /// folded, but discard the result.
   bool isEvaluatable(ASTContext &Ctx) const;
