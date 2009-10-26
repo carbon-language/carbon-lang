@@ -7,6 +7,7 @@ add_llvm_library(LLVMScalarOpts
   ConstantProp.cpp
   DCE.cpp
   DeadStoreElimination.cpp
+  GEPSplitter.cpp
   GVN.cpp
   IndVarSimplify.cpp
   InstructionCombining.cpp
