@@ -1,5 +1,8 @@
-// RUN: clang-cc -emit-llvm -o - %s | grep -e "@g[0-9] " | count 2
+// RUN: clang-cc -emit-llvm -o - %s | FileCheck %s
 
 int g0, f0();
 int f1(), g1;
+
+// CHECK: @g0 = common global i32 0, align 4
+// CHECK: @g1 = common global i32 0, align 4
 

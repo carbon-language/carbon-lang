@@ -1,4 +1,5 @@
-// RUN: clang-cc -emit-llvm < %s -o - | grep -F "llvm.eh.unwind.init"
+// RUN: clang-cc -emit-llvm < %s -o - | FileCheck %s
 
-int a() { __builtin_unwind_init(); }
+void a() { __builtin_unwind_init(); }
 
+// CHECK:  call void @llvm.eh.unwind.init()
