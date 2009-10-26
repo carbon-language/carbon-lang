@@ -238,3 +238,18 @@ define i1 @test24(double %X, double %Y) {
 ; CHECK:   %bothcond = fcmp uno double %Y, %X              ; <i1> [#uses=1]
 ; CHECK:   ret i1 %bothcond
 }
+
+; PR3266 & PR5276
+define i1 @test25(i32 %A, i32 %B) {
+  %C = icmp eq i32 %A, 0
+  %D = icmp eq i32 %B, 57
+  %E = or i1 %C, %D
+  %F = xor i1 %E, -1
+  ret i1 %F
+
+; CHECK: @test25
+; CHECK: icmp ne i32 %A, 0
+; CHECK-NEXT: icmp ne i32 %B, 57
+; CHECK-NEXT:  %F = and i1 
+; CHECK-NEXT:  ret i1 %F
+}
