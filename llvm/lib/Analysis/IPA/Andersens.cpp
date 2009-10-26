@@ -63,7 +63,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/MallocHelper.h"
+#include "llvm/Analysis/MallocFreeHelper.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/System/Atomic.h"

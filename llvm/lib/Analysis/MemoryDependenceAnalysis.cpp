@@ -20,7 +20,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/MallocHelper.h"
+#include "llvm/Analysis/MallocFreeHelper.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/PredIteratorCache.h"

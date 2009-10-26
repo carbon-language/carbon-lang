@@ -15,7 +15,7 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CaptureTracking.h"
-#include "llvm/Analysis/MallocHelper.h"
+#include "llvm/Analysis/MallocFreeHelper.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
