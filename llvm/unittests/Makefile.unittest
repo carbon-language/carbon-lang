@@ -19,7 +19,7 @@ include $(LEVEL)/Makefile.common
 LLVMUnitTestExe = $(BuildMode)/$(TESTNAME)Tests$(EXEEXT)
 
 CPP.Flags += -I$(LLVM_SRC_ROOT)/utils/unittest/googletest/include/
-CPP.Flags += -Wno-variadic-macros
+CPP.Flags += $(NO_VARIADIC_MACROS)
 TESTLIBS = -lGoogleTest -lUnitTestMain
 
 $(LLVMUnitTestExe): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
