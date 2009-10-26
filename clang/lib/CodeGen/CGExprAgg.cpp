@@ -329,7 +329,8 @@ void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
 }
 
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
-  if (E->getOpcode() == BinaryOperator::PtrMemD)
+  if (E->getOpcode() == BinaryOperator::PtrMemD ||
+      E->getOpcode() == BinaryOperator::PtrMemI)
     VisitPointerToDataMemberBinaryOperator(E);
   else
     CGF.ErrorUnsupported(E, "aggregate binary expression");

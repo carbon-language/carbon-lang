@@ -51,6 +51,21 @@ void test_aggr_pdata(A& a1) {
   pr(a1.*af);
 }
 
+void test_aggr_pdata_1(A* pa) {
+  F A::* af = &A::Af;
+  pr(pa->*af);
+
+  (pa->*af).iF = 100;
+  (pa->*af).fF = 200.00;
+  printf(" %d %f\n", (pa->*af).iF, (pa->*af).fF);
+  pr(pa->*af);
+
+  (pa->*af).iF++;
+  (pa->*af).fF--;
+  --(pa->*af).fF;
+  pr(pa->*af);
+}
+
 int main() 
 {
   A a1;
@@ -67,4 +82,5 @@ int main()
   printf("%d\n", &A::B1::V::iV);
   printf("%d, %f, %f  \n", a1.*pa, a1.*pf, a1.*pd);
   test_aggr_pdata(a1);
+  test_aggr_pdata_1(&a1);
 }

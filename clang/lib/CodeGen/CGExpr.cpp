@@ -1378,7 +1378,8 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
     return EmitLValue(E->getRHS());
   }
 
-  if (E->getOpcode() == BinaryOperator::PtrMemD)
+  if (E->getOpcode() == BinaryOperator::PtrMemD ||
+      E->getOpcode() == BinaryOperator::PtrMemI)
     return EmitPointerToDataMemberBinaryExpr(E);
   
   // Can only get l-value for binary operator expressions which are a
@@ -1567,6 +1568,8 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee, QualType CalleeType,
 LValue CodeGenFunction::EmitPointerToDataMemberBinaryExpr(
                                                     const BinaryOperator *E) {
   llvm::Value *BaseV = EmitLValue(E->getLHS()).getAddress();
+  if (E->getOpcode() == BinaryOperator::PtrMemI)
+    BaseV = Builder.CreateLoad(BaseV, "indir.ptr");
   const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(getLLVMContext());
   BaseV = Builder.CreateBitCast(BaseV, i8Ty);
   LValue RHSLV = EmitLValue(E->getRHS());
