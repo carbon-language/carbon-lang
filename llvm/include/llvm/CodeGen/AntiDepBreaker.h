@@ -29,6 +29,8 @@ namespace llvm {
 /// anti-dependencies.
 class AntiDepBreaker {
 public:
+  virtual ~AntiDepBreaker() { };
+
   /// Start - Initialize anti-dep breaking for a new basic block.
   virtual void StartBlock(MachineBasicBlock *BB) =0;
 
