@@ -18,7 +18,7 @@
 #define LLVM_CLANG_FRONTEND_PCHBITCODES_H
 
 #include "llvm/Bitcode/BitCodes.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 
 namespace clang {
   namespace pch {

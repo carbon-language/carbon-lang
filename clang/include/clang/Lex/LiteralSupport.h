@@ -17,7 +17,7 @@
 
 #include <string>
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
   class APInt;

@@ -12,7 +12,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include <map>
 
 namespace clang {

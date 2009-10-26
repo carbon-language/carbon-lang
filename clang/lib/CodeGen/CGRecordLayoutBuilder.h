@@ -15,7 +15,7 @@
 #define CLANG_CODEGEN_CGRECORDLAYOUTBUILDER_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include <vector>
 
 namespace llvm {

@@ -26,7 +26,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"

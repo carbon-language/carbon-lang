@@ -16,7 +16,7 @@
 #define LLVM_CLANG_ANALYSIS_PROGRAM_POINT
 
 #include "clang/Analysis/CFG.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/Casting.h"
