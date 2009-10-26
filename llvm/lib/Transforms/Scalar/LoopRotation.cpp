@@ -211,7 +211,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   for (I = OrigHeader->begin(); PHINode *PN = dyn_cast<PHINode>(I); ++I)
     PN->removeIncomingValue(PN->getBasicBlockIndex(OrigPreHeader));
 
-  // Now fix up users of the instructions in OrigHeader, insertting PHI nodes
+  // Now fix up users of the instructions in OrigHeader, inserting PHI nodes
   // as necessary.
   SSAUpdater SSA;
   for (I = OrigHeader->begin(); I != E; ++I) {
