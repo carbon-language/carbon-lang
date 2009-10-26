@@ -2420,8 +2420,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
           ConstantExpr::getSExt(CI, I.getType()) == RHSC &&
           WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI)) {
         // Insert the new, smaller add.
-        Value *NewAdd = Builder->CreateAdd(LHSConv->getOperand(0), 
-                                           CI, "addconv");
+        Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0), 
+                                              CI, "addconv");
         return new SExtInst(NewAdd, I.getType());
       }
     }
@@ -2436,8 +2436,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
           WillNotOverflowSignedAdd(LHSConv->getOperand(0),
                                    RHSConv->getOperand(0))) {
         // Insert the new integer add.
-        Value *NewAdd = Builder->CreateAdd(LHSConv->getOperand(0), 
-                                           RHSConv->getOperand(0), "addconv");
+        Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0), 
+                                              RHSConv->getOperand(0), "addconv");
         return new SExtInst(NewAdd, I.getType());
       }
     }
@@ -2493,8 +2493,8 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
           ConstantExpr::getSIToFP(CI, I.getType()) == CFP &&
           WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI)) {
         // Insert the new integer add.
-        Value *NewAdd = Builder->CreateAdd(LHSConv->getOperand(0),
-                                           CI, "addconv");
+        Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0),
+                                              CI, "addconv");
         return new SIToFPInst(NewAdd, I.getType());
       }
     }
@@ -2509,8 +2509,8 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
           WillNotOverflowSignedAdd(LHSConv->getOperand(0),
                                    RHSConv->getOperand(0))) {
         // Insert the new integer add.
-        Value *NewAdd = Builder->CreateAdd(LHSConv->getOperand(0), 
-                                           RHSConv->getOperand(0), "addconv");
+        Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0), 
+                                              RHSConv->getOperand(0), "addconv");
         return new SIToFPInst(NewAdd, I.getType());
       }
     }
