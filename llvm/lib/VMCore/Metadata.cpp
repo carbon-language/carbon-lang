@@ -344,20 +344,22 @@ getMDs(const Instruction *Inst, SmallVectorImpl<MDPairTy> &MDs) const {
   MDStoreTy::iterator I = MetadataStore.find(Inst);
   if (I == MetadataStore.end())
     return;
+  MDs.resize(I->second.size());
   for (MDMapTy::iterator MI = I->second.begin(), ME = I->second.end();
        MI != ME; ++MI)
-    MDs.push_back(std::make_pair(MI->first, MI->second));
-  std::sort(MDs.begin(), MDs.end());
+    // MD kinds are numbered from 1.
+    MDs[MI->first - 1] = std::make_pair(MI->first, MI->second);
 }
 
 /// getHandlerNames - Populate client supplied smallvector using custome
 /// metadata name and ID.
 void MetadataContextImpl::
 getHandlerNames(SmallVectorImpl<std::pair<unsigned, StringRef> >&Names) const {
+  Names.resize(MDHandlerNames.size());
   for (StringMap<unsigned>::const_iterator I = MDHandlerNames.begin(),
          E = MDHandlerNames.end(); I != E; ++I) 
-    Names.push_back(std::make_pair(I->second, I->first()));
-  std::sort(Names.begin(), Names.end());
+    // MD Handlers are numbered from 1.
+    Names[I->second - 1] = std::make_pair(I->second, I->first());
 }
 
 /// ValueIsCloned - This handler is used to update metadata store
