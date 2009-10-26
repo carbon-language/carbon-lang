@@ -78,9 +78,13 @@ endif
 # Both AuroraUX & Solaris do not have the -m flag for ulimit
 ifeq ($(HOST_OS),SunOS)
 ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -v 512000 ;
-else
+else # !SunOS
+ifeq ($(HOST_OS),AuroraUX)
+ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -v 512000 ;
+else # !AuroraUX
 ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -m 512000 ; ulimit -v 512000 ;
-endif
+endif # AuroraUX
+endif # SunOS
 
 ifneq ($(RUNTEST),)
 check-local:: site.exp
