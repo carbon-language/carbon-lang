@@ -943,6 +943,12 @@ fi
 dnl Tool compatibility is okay if we make it here.
 AC_MSG_RESULT([ok])
 
+dnl Check optional compiler flags. 
+AC_MSG_CHECKING([optional compiler flags])
+CXX_FLAG_CHECK(NO_VARIADIC_MACROS, [-Wno-variadic-macros])
+CXX_FLAG_CHECK(NO_MISSING_FIELD_INITIALIZERS, [-Wno-missing-field-initializers])
+AC_MSG_RESULT([$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS])
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 5: Check for libraries

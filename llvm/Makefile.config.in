@@ -320,3 +320,9 @@ ENABLE_LLVMC_DYNAMIC = 0
 # support (via the -load option).
 ENABLE_LLVMC_DYNAMIC_PLUGINS = 1
 #@ENABLE_LLVMC_DYNAMIC_PLUGINS@
+
+# Optional flags supported by the compiler
+# -Wno-missing-field-initializers
+NO_MISSING_FIELD_INITIALIZERS = @NO_MISSING_FIELD_INITIALIZERS@
+# -Wno-variadic-macros
+NO_VARIADIC_MACROS = @NO_VARIADIC_MACROS@
