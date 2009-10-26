@@ -16,4 +16,8 @@
 // RUN: clang-cc -g -triple x86_64-apple-darwin9 -emit-llvm -o %t %s &&
 // RUN: clang-cc -g -triple x86_64-pc-linux-gnu -emit-llvm -o %t %s &&
 // RUN: clang-cc -g -triple x86_64-unknown-unknown -emit-llvm -o %t %s &&
+
+// <rdar://problem/7181838> clang 1.0 fails to compile Python 2.6
+// RUN: clang-cc -g -triple x86_64-apple-darwin9 -emit-llvm -o %t %s -mmacosx-version-min=10.4 &&
+
 // RUN: true

@@ -911,15 +911,6 @@ static void HandleMacOSVersionMin(llvm::Triple &Triple) {
   }
   
   unsigned VersionNum = MacOSVersionMin[3]-'0';
-
-  if (VersionNum <= 4 && Triple.getArch() == llvm::Triple::x86_64) {
-    fprintf(stderr,
-            "-mmacosx-version-min=%s is invalid with -arch x86_64.\n",
-            MacOSVersionMin.c_str());
-    exit(1);
-  }
-
-  
   llvm::SmallString<16> NewDarwinString;
   NewDarwinString += "darwin";
   
