@@ -109,7 +109,7 @@ public:
     // Add all arguments.
     for (unsigned i = 0, e = DiagStorage->NumDiagArgs; i != e; ++i) {
       DB.AddTaggedVal(DiagStorage->DiagArgumentsVal[i],
-                      (Diagnostic::ArgumentKind)DiagStorage->DiagArgumentsKind[i]);
+                   (Diagnostic::ArgumentKind)DiagStorage->DiagArgumentsKind[i]);
     }
     
     // Add all ranges.
@@ -129,13 +129,25 @@ public:
     PD.AddTaggedVal(I, Diagnostic::ak_uint);
     return PD;
   }
-  
+
+  friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                             int I) {
+    PD.AddTaggedVal(I, Diagnostic::ak_sint);
+    return PD;
+  }
+
+  friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                                    const char *S) {
+    PD.AddTaggedVal(reinterpret_cast<intptr_t>(S), Diagnostic::ak_c_string);
+    return PD;
+  }
+
   friend inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                                     const SourceRange &R) {
     PD.AddSourceRange(R);
     return PD;
   }
-  
+
   friend const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
                                              DeclarationName N);
 };

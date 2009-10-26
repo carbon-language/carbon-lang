@@ -5419,6 +5419,23 @@ static inline bool IsEqOrRel(int Opc) {
   return Opc >= BinaryOperator::LT && Opc <= BinaryOperator::NE;
 }
 
+static void SuggestParentheses(Sema &Self, SourceLocation Loc,
+                               const PartialDiagnostic &PD,
+                               SourceRange ParenRange)
+{
+  SourceLocation EndLoc = Self.PP.getLocForEndOfToken(ParenRange.getEnd());
+  if (!ParenRange.getEnd().isFileID() || EndLoc.isInvalid()) {
+    // We can't display the parentheses, so just dig the
+    // warning/error and return.
+    Self.Diag(Loc, PD);
+    return;
+  }
+
+  Self.Diag(Loc, PD)
+    << CodeModificationHint::CreateInsertion(ParenRange.getBegin(), "(")
+    << CodeModificationHint::CreateInsertion(EndLoc, ")");
+}
+
 static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperator::Opcode Opc,
                                       SourceLocation OpLoc,Expr *lhs,Expr *rhs){
   typedef BinaryOperator::Opcode Opcode;
@@ -5439,15 +5456,21 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperator::Opcode Opc,
     return;
 
   if (IsEqOrRel(lhsopc))
-    Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
-      << SourceRange(lhs->getLocStart(), OpLoc)
-      << BinaryOperator::getOpcodeStr(Opc)
-      << BinaryOperator::getOpcodeStr(static_cast<Opcode>(lhsopc));
+    SuggestParentheses(Self, OpLoc,
+      PDiag(diag::warn_precedence_bitwise_rel)
+        << SourceRange(lhs->getLocStart(), OpLoc)
+        << BinaryOperator::getOpcodeStr(Opc)
+        << BinaryOperator::getOpcodeStr(static_cast<Opcode>(lhsopc)),
+      SourceRange(cast<BinaryOperator>(lhs)->getRHS()->getLocStart(),
+                  rhs->getLocEnd()));
   else if (IsEqOrRel(rhsopc))
-    Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
-      << SourceRange(OpLoc, rhs->getLocEnd())
-      << BinaryOperator::getOpcodeStr(Opc)
-      << BinaryOperator::getOpcodeStr(static_cast<Opcode>(rhsopc));
+    SuggestParentheses(Self, OpLoc,
+      PDiag(diag::warn_precedence_bitwise_rel)
+        << SourceRange(OpLoc, rhs->getLocEnd())
+        << BinaryOperator::getOpcodeStr(Opc)
+        << BinaryOperator::getOpcodeStr(static_cast<Opcode>(rhsopc)),
+      SourceRange(lhs->getLocEnd(),
+                  cast<BinaryOperator>(rhs)->getLHS()->getLocStart()));
 }
 
 /// DiagnoseBinOpPrecedence - Emit warnings for expressions with tricky
