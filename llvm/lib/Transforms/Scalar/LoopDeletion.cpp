@@ -33,8 +33,6 @@ namespace {
     // Possibly eliminate loop L if it is dead.
     bool runOnLoop(Loop* L, LPPassManager& LPM);
     
-    bool SingleDominatingExit(Loop* L,
-                              SmallVector<BasicBlock*, 4>& exitingBlocks);
     bool IsLoopDead(Loop* L, SmallVector<BasicBlock*, 4>& exitingBlocks,
                     SmallVector<BasicBlock*, 4>& exitBlocks,
                     bool &Changed, BasicBlock *Preheader);
@@ -61,25 +59,6 @@ static RegisterPass<LoopDeletion> X("loop-deletion", "Delete dead loops");
 
 Pass* llvm::createLoopDeletionPass() {
   return new LoopDeletion();
-}
-
-/// SingleDominatingExit - Checks that there is only a single blocks that 
-/// branches out of the loop, and that it also g the latch block.  Loops
-/// with multiple or non-latch-dominating exiting blocks could be dead, but we'd
-/// have to do more extensive analysis to make sure, for instance, that the 
-/// control flow logic involved was or could be made loop-invariant.
-bool LoopDeletion::SingleDominatingExit(Loop* L,
-                                   SmallVector<BasicBlock*, 4>& exitingBlocks) {
-  
-  if (exitingBlocks.size() != 1)
-    return false;
-  
-  BasicBlock* latch = L->getLoopLatch();
-  if (!latch)
-    return false;
-  
-  DominatorTree& DT = getAnalysis<DominatorTree>();
-  return DT.dominates(exitingBlocks[0], latch);
 }
 
 /// IsLoopDead - Determined if a loop is dead.  This assumes that we've already
@@ -154,9 +133,8 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   if (exitBlocks.size() != 1)
     return false;
   
-  // Loops with multiple exits or exits that don't dominate the latch
-  // are too complicated to handle correctly.
-  if (!SingleDominatingExit(L, exitingBlocks))
+  // Loops with multiple exits are too complicated to handle correctly.
+  if (exitingBlocks.size() != 1)
     return false;
   
   // Finally, we have to check that the loop really is dead.
