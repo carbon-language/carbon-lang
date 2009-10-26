@@ -208,7 +208,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
           SUnit *DefSU = DefList[i];
           if (DefSU != SU &&
               (Kind != SDep::Output || !MO.isDead() ||
-               !DefSU->getInstr()->registerDefIsDead(Reg)))
+               !DefSU->getInstr()->registerDefIsDead(*Alias)))
             DefSU->addPred(SDep(SU, Kind, AOLatency, /*Reg=*/ *Alias));
         }
       }
