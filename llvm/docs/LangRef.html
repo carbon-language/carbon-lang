@@ -156,8 +156,6 @@
       </li>
       <li><a href="#memoryops">Memory Access and Addressing Operations</a>
         <ol>
-          <li><a href="#i_malloc">'<tt>malloc</tt>'   Instruction</a></li>
-          <li><a href="#i_free">'<tt>free</tt>'     Instruction</a></li>
           <li><a href="#i_alloca">'<tt>alloca</tt>'   Instruction</a></li>
          <li><a href="#i_load">'<tt>load</tt>'     Instruction</a></li>
          <li><a href="#i_store">'<tt>store</tt>'    Instruction</a></li>
@@ -3833,90 +3831,8 @@ Instruction</a> </div>
 
 <p>A key design point of an SSA-based representation is how it represents
    memory.  In LLVM, no memory locations are in SSA form, which makes things
-   very simple.  This section describes how to read, write, allocate, and free
+   very simple.  This section describes how to read, write, and allocate
    memory in LLVM.</p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="i_malloc">'<tt>malloc</tt>' Instruction</a>
-</div>
-
-<div class="doc_text">
-
-<h5>Syntax:</h5>
-<pre>
-  &lt;result&gt; = malloc &lt;type&gt;[, i32 &lt;NumElements&gt;][, align &lt;alignment&gt;]     <i>; yields {type*}:result</i>
-</pre>
-
-<h5>Overview:</h5>
-<p>The '<tt>malloc</tt>' instruction allocates memory from the system heap and
-   returns a pointer to it. The object is always allocated in the generic
-   address space (address space zero).</p>
-
-<h5>Arguments:</h5>
-<p>The '<tt>malloc</tt>' instruction allocates
-   <tt>sizeof(&lt;type&gt;)*NumElements</tt> bytes of memory from the operating
-   system and returns a pointer of the appropriate type to the program.  If
-   "NumElements" is specified, it is the number of elements allocated, otherwise
-   "NumElements" is defaulted to be one.  If a constant alignment is specified,
-   the value result of the allocation is guaranteed to be aligned to at least
-   that boundary.  If not specified, or if zero, the target can choose to align
-   the allocation on any convenient boundary compatible with the type.</p>
-
-<p>'<tt>type</tt>' must be a sized type.</p>
-
-<h5>Semantics:</h5>
-<p>Memory is allocated using the system "<tt>malloc</tt>" function, and a
-   pointer is returned.  The result of a zero byte allocation is undefined.  The
-   result is null if there is insufficient memory available.</p>
-
-<h5>Example:</h5>
-<pre>
-  %array  = malloc [4 x i8]                     <i>; yields {[%4 x i8]*}:array</i>
-
-  %size   = <a href="#i_add">add</a> i32 2, 2                        <i>; yields {i32}:size = i32 4</i>
-  %array1 = malloc i8, i32 4                    <i>; yields {i8*}:array1</i>
-  %array2 = malloc [12 x i8], i32 %size         <i>; yields {[12 x i8]*}:array2</i>
-  %array3 = malloc i32, i32 4, align 1024       <i>; yields {i32*}:array3</i>
-  %array4 = malloc i32, align 1024              <i>; yields {i32*}:array4</i>
-</pre>
-
-<p>Note that the code generator does not yet respect the alignment value.</p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="i_free">'<tt>free</tt>' Instruction</a>
-</div>
-
-<div class="doc_text">
-
-<h5>Syntax:</h5>
-<pre>
-  free &lt;type&gt; &lt;value&gt;                           <i>; yields {void}</i>
-</pre>
-
-<h5>Overview:</h5>
-<p>The '<tt>free</tt>' instruction returns memory back to the unused memory heap
-   to be reallocated in the future.</p>
-
-<h5>Arguments:</h5>
-<p>'<tt>value</tt>' shall be a pointer value that points to a value that was
-   allocated with the '<tt><a href="#i_malloc">malloc</a></tt>' instruction.</p>
-
-<h5>Semantics:</h5>
-<p>Access to the memory pointed to by the pointer is no longer defined after
-   this instruction executes.  If the pointer is null, the operation is a
-   noop.</p>
-
-<h5>Example:</h5>
-<pre>
-  %array  = <a href="#i_malloc">malloc</a> [4 x i8]                     <i>; yields {[4 x i8]*}:array</i>
-            free   [4 x i8]* %array
-</pre>
 
 </div>
 
@@ -6624,7 +6540,8 @@ LLVM</a>.</p>
 
 <h5>Example:</h5>
 <pre>
-%ptr      = malloc i32
+%mallocP  = tail call i8* @malloc(i32 ptrtoint (i32* getelementptr (i32* null, i32 1) to i32))
+%ptr      = bitcast i8* %mallocP to i32*
             store i32 4, %ptr
 
 %result1  = load i32* %ptr      <i>; yields {i32}:result1 = 4</i>
@@ -6675,7 +6592,8 @@ LLVM</a>.</p>
 
 <h5>Examples:</h5>
 <pre>
-%ptr      = malloc i32
+%mallocP  = tail call i8* @malloc(i32 ptrtoint (i32* getelementptr (i32* null, i32 1) to i32))
+%ptr      = bitcast i8* %mallocP to i32*
             store i32 4, %ptr
 
 %val1     = add i32 4, 4
@@ -6730,7 +6648,8 @@ LLVM</a>.</p>
 
 <h5>Examples:</h5>
 <pre>
-%ptr      = malloc i32
+%mallocP  = tail call i8* @malloc(i32 ptrtoint (i32* getelementptr (i32* null, i32 1) to i32))
+%ptr      = bitcast i8* %mallocP to i32*
             store i32 4, %ptr
 
 %val1     = add i32 4, 4
@@ -6785,8 +6704,9 @@ LLVM</a>.</p>
 
 <h5>Examples:</h5>
 <pre>
-%ptr      = malloc i32
-        store i32 4, %ptr
+%mallocP  = tail call i8* @malloc(i32 ptrtoint (i32* getelementptr (i32* null, i32 1) to i32))
+%ptr      = bitcast i8* %mallocP to i32*
+            store i32 4, %ptr
 %result1  = call i32 @llvm.atomic.load.add.i32.p0i32( i32* %ptr, i32 4 )
                                 <i>; yields {i32}:result1 = 4</i>
 %result2  = call i32 @llvm.atomic.load.add.i32.p0i32( i32* %ptr, i32 2 )
@@ -6836,8 +6756,9 @@ LLVM</a>.</p>
 
 <h5>Examples:</h5>
 <pre>
-%ptr      = malloc i32
-        store i32 8, %ptr
+%mallocP  = tail call i8* @malloc(i32 ptrtoint (i32* getelementptr (i32* null, i32 1) to i32))
+%ptr      = bitcast i8* %mallocP to i32*
+            store i32 8, %ptr
 %result1  = call i32 @llvm.atomic.load.sub.i32.p0i32( i32* %ptr, i32 4 )
                                 <i>; yields {i32}:result1 = 8</i>
 %result2  = call i32 @llvm.atomic.load.sub.i32.p0i32( i32* %ptr, i32 2 )
@@ -6913,8 +6834,9 @@ LLVM</a>.</p>
 
 <h5>Examples:</h5>
 <pre>
-%ptr      = malloc i32
-        store i32 0x0F0F, %ptr
+%mallocP  = tail call i8* @malloc(i32 ptrtoint (i32* getelementptr (i32* null, i32 1) to i32))
+%ptr      = bitcast i8* %mallocP to i32*
+            store i32 0x0F0F, %ptr
 %result0  = call i32 @llvm.atomic.load.nand.i32.p0i32( i32* %ptr, i32 0xFF )
                                 <i>; yields {i32}:result0 = 0x0F0F</i>
 %result1  = call i32 @llvm.atomic.load.and.i32.p0i32( i32* %ptr, i32 0xFF )
@@ -6991,8 +6913,9 @@ LLVM</a>.</p>
 
 <h5>Examples:</h5>
 <pre>
-%ptr      = malloc i32
-        store i32 7, %ptr
+%mallocP  = tail call i8* @malloc(i32 ptrtoint (i32* getelementptr (i32* null, i32 1) to i32))
+%ptr      = bitcast i8* %mallocP to i32*
+            store i32 7, %ptr
 %result0  = call i32 @llvm.atomic.load.min.i32.p0i32( i32* %ptr, i32 -2 )
                                 <i>; yields {i32}:result0 = 7</i>
 %result1  = call i32 @llvm.atomic.load.max.i32.p0i32( i32* %ptr, i32 8 )
