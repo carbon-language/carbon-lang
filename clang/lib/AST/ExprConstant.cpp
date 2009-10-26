@@ -884,7 +884,11 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
         if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(LVBase)) {
           if (const VarDecl *VD = dyn_cast<VarDecl>(DRE->getDecl())) {
             uint64_t Size = Info.Ctx.getTypeSize(VD->getType()) / 8;
-            Size -= Base.Val.getLValueOffset();
+            uint64_t Offset = Base.Val.getLValueOffset();
+            if (Offset <= Size)
+              Size -= Base.Val.getLValueOffset();
+            else
+              Size = 0;
             return Success(Size, E);
           }
         }

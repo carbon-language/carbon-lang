@@ -21,13 +21,29 @@ void test2() {
   strcpy(gbuf, "Hi there");
 }
 
-void test4() {
-  // CHECK:       call    ___inline_strcpy_chk
-  strcpy(gp, "Hi");
+void test3() {
+  // CHECK:       movabsq $0, %rdx
+  // CHECK-NEXT:  movq    %rax, %rdi
+  // CHECK-NEXT:  movq    %rcx, %rsi
+  // CHECK-NEXT:  call    ___strcpy_chk
+  strcpy(&gbuf[100], "Hi there");
 }
 
-void test3() {
+void test4() {
+  // CHECK:       movabsq $0, %rdx
+  // CHECK-NEXT:  movq    %rax, %rdi
+  // CHECK-NEXT:  movq    %rcx, %rsi
+  // CHECK-NEXT:  call    ___strcpy_chk
+  strcpy((char*)(void*)&gbuf[-1], "Hi there");
+}
+
+void test5() {
+  // CHECK:       call    ___inline_strcpy_chk
+  strcpy(gp, "Hi there");
+}
+
+void test6() {
   int i;
   // CHECK:       call    ___inline_strcpy_chk
-  strcpy((++i, gbuf), "Hi");
+  strcpy((++i, gbuf), "Hi there");
 }
