@@ -614,7 +614,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   mangleCXXVtable(CGM.getMangleContext(), RD, Out);
 
   llvm::GlobalVariable::LinkageTypes linktype;
-  linktype = llvm::GlobalValue::WeakAnyLinkage;
+  linktype = llvm::GlobalValue::LinkOnceODRLinkage;
   std::vector<llvm::Constant *> methods;
   llvm::Type *Ptr8Ty=llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext),0);
   int64_t AddressPoint;
