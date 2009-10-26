@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include <cstring>
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
   class raw_ostream;

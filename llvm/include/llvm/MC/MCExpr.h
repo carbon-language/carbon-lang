@@ -11,7 +11,7 @@
 #define LLVM_MC_MCEXPR_H
 
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
 class MCAsmInfo;

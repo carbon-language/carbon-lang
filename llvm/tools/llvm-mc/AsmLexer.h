@@ -17,7 +17,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmLexer.h"
 #include "llvm/MC/MCAsmInfo.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include <string>
 #include <cassert>
 

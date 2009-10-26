@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Unix.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include "llvm/System/Process.h"
 
 #ifdef HAVE_SYS_MMAN_H

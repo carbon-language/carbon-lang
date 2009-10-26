@@ -18,7 +18,7 @@
 
 #include <cassert>
 #include <string>
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
 
 namespace llvm {

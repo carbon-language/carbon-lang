@@ -22,7 +22,7 @@
 
 #include "llvm/CodeGen/BinaryObject.h"
 #include "llvm/CodeGen/MachineRelocation.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
   class GlobalValue;

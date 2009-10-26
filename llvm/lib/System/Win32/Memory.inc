@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include "llvm/System/Process.h"
 
 namespace llvm {

@@ -15,7 +15,7 @@
 #define LLVM_SUPPORT_ALLOCATOR_H
 
 #include "llvm/Support/AlignOf.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include <cassert>
 #include <cstdlib>
 

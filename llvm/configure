@@ -35260,7 +35260,7 @@ ac_config_files="$ac_config_files include/llvm/Config/AsmPrinters.def"
 
 ac_config_files="$ac_config_files include/llvm/Config/AsmParsers.def"
 
-ac_config_headers="$ac_config_headers include/llvm/Support/DataTypes.h"
+ac_config_headers="$ac_config_headers include/llvm/System/DataTypes.h"
 
 
 ac_config_files="$ac_config_files Makefile.config"
@@ -35887,7 +35887,7 @@ do
     "include/llvm/Config/Targets.def") CONFIG_FILES="$CONFIG_FILES include/llvm/Config/Targets.def" ;;
     "include/llvm/Config/AsmPrinters.def") CONFIG_FILES="$CONFIG_FILES include/llvm/Config/AsmPrinters.def" ;;
     "include/llvm/Config/AsmParsers.def") CONFIG_FILES="$CONFIG_FILES include/llvm/Config/AsmParsers.def" ;;
-    "include/llvm/Support/DataTypes.h") CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/Support/DataTypes.h" ;;
+    "include/llvm/System/DataTypes.h") CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/System/DataTypes.h" ;;
     "Makefile.config") CONFIG_FILES="$CONFIG_FILES Makefile.config" ;;
     "llvm.spec") CONFIG_FILES="$CONFIG_FILES llvm.spec" ;;
     "docs/doxygen.cfg") CONFIG_FILES="$CONFIG_FILES docs/doxygen.cfg" ;;

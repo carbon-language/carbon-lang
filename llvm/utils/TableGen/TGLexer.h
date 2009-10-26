@@ -14,7 +14,7 @@
 #ifndef TGLEXER_H
 #define TGLEXER_H
 
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include <vector>
 #include <string>
 #include <cassert>

@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 using namespace llvm;
 
 namespace {

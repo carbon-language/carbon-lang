@@ -16,7 +16,7 @@
 #define LLVM_EXECUTION_ENGINE_JIT_DEBUGREGISTERER_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include <string>
 
 // This must be kept in sync with gdb/gdb/jit.h .

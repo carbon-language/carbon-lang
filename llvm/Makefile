@@ -133,7 +133,7 @@ dist-hook::
 	$(Echo) Eliminating files constructed by configure
 	$(Verb) $(RM) -f \
 	  $(TopDistDir)/include/llvm/Config/config.h  \
-	  $(TopDistDir)/include/llvm/Support/DataTypes.h
+	  $(TopDistDir)/include/llvm/System/DataTypes.h
 
 clang-only: all
 tools-only: all
@@ -149,7 +149,7 @@ FilesToConfig := \
   include/llvm/Config/config.h \
   include/llvm/Config/Targets.def \
 	include/llvm/Config/AsmPrinters.def \
-  include/llvm/Support/DataTypes.h \
+  include/llvm/System/DataTypes.h \
 	tools/llvmc/plugins/Base/Base.td
 FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
 

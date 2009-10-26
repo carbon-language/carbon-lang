@@ -21,7 +21,7 @@
 #define LLVM_TARGET_TARGETDATA_H
 
 #include "llvm/Pass.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/SmallVector.h"
 #include <string>

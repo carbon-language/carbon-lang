@@ -11,7 +11,7 @@
 #define LLVM_MC_MCASMLEXER_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
 class MCAsmLexer;

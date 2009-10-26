@@ -17,7 +17,7 @@
 #define LLVM_MC_MCINST_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
 class raw_ostream;

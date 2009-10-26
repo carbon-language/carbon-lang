@@ -14,7 +14,7 @@
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include "llvm/System/Atomic.h"
 #include "llvm/ADT/GraphTraits.h"
 #include <string>

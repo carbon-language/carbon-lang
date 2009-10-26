@@ -18,7 +18,7 @@
 #include <cassert>
 #include <cstring>
 #include <iterator>
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 
 namespace llvm {

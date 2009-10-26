@@ -10,7 +10,7 @@
 #ifndef MEMORYOBJECT_H
 #define MEMORYOBJECT_H
 
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
 

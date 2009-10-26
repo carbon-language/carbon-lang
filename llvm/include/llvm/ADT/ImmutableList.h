@@ -16,7 +16,7 @@
 
 #include "llvm/Support/Allocator.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include <cassert>
 
 namespace llvm {

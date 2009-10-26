@@ -1,4 +1,4 @@
-/*===-- include/Support/DataTypes.h - Define fixed size types -----*- C -*-===*\
+/*===-- include/System/DataTypes.h - Define fixed size types -----*- C -*-===*\
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|
 |*                                                                            *|
@@ -24,11 +24,11 @@
 #ifndef SUPPORT_DATATYPES_H
 #define SUPPORT_DATATYPES_H
 
-#undef HAVE_SYS_TYPES_H
-#undef HAVE_INTTYPES_H
-#undef HAVE_STDINT_H
-#undef HAVE_UINT64_T
-#undef HAVE_U_INT64_T
+#cmakedefine HAVE_SYS_TYPES_H ${HAVE_SYS_TYPES_H}
+#cmakedefine HAVE_INTTYPES_H ${HAVE_INTTYPES_H}
+#cmakedefine HAVE_STDINT_H ${HAVE_STDINT_H}
+#cmakedefine HAVE_UINT64_T ${HAVE_UINT64_T}
+#cmakedefine HAVE_U_INT64_T ${HAVE_U_INT64_T}
 
 #ifdef __cplusplus
 #include <cmath>
@@ -43,12 +43,12 @@
    happening when system headers or C++ STL headers include stdint.h before we
    define it here, we define it on the g++ command line (in Makefile.rules). */
 #if !defined(__STDC_LIMIT_MACROS)
-# error "Must #define __STDC_LIMIT_MACROS before #including Support/DataTypes.h"
+# error "Must #define __STDC_LIMIT_MACROS before #including System/DataTypes.h"
 #endif
 
 #if !defined(__STDC_CONSTANT_MACROS)
 # error "Must #define __STDC_CONSTANT_MACROS before " \
-        "#including Support/DataTypes.h"
+        "#including System/DataTypes.h"
 #endif
 
 /* Note that <inttypes.h> includes <stdint.h>, if this is a C99 system. */
@@ -65,7 +65,7 @@
 #endif
 
 #ifdef _AIX
-#include "llvm/Support/AIXDataTypesFix.h"
+#include "llvm/System/AIXDataTypesFix.h"
 #endif
 
 /* Handle incorrect definition of uint64_t as u_int64_t */
@@ -95,6 +95,11 @@ typedef u_int64_t uint64_t;
 #include <stdlib.h>
 #include <stddef.h>
 #include <sys/types.h>
+#ifdef __cplusplus
+#include <cmath>
+#else
+#include <math.h>
+#endif
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 typedef signed int int32_t;

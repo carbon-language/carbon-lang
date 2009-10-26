@@ -14,7 +14,7 @@
 #ifndef LLVM_CODEGEN_MACHINERELOCATION_H
 #define LLVM_CODEGEN_MACHINERELOCATION_H
 
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include <cassert>
 
 namespace llvm {

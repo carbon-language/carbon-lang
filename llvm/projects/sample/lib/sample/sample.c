@@ -11,7 +11,7 @@
 #include <stdlib.h>
 
 /* LLVM Header File
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 */
 
 /* Header file global to this project */

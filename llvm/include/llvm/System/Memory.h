@@ -14,7 +14,7 @@
 #ifndef LLVM_SYSTEM_MEMORY_H
 #define LLVM_SYSTEM_MEMORY_H
 
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include <string>
 
 namespace llvm {

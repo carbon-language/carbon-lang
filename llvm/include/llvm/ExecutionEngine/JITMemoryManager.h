@@ -14,7 +14,7 @@
 #ifndef LLVM_EXECUTION_ENGINE_JIT_MEMMANAGER_H
 #define LLVM_EXECUTION_ENGINE_JIT_MEMMANAGER_H
 
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include <string>
 
 namespace llvm {

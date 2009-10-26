@@ -32,7 +32,7 @@
 #define LLVM_CODEGEN_MACHINEMODULEINFO_H
 
 #include "llvm/Support/Dwarf.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/UniqueVector.h"

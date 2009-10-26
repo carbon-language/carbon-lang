@@ -16,7 +16,7 @@
 #define GENERIC_VALUE_H
 
 #include "llvm/ADT/APInt.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/System/DataTypes.h"
 
 namespace llvm {
 
