@@ -341,6 +341,12 @@ FunctionPass *createSSIPass();
 //
 FunctionPass *createSSIEverythingPass();
 
+//===----------------------------------------------------------------------===//
+//
+// GEPSplitter - Split complex GEPs into simple ones
+//
+FunctionPass *createGEPSplitterPass();
+
 } // End llvm namespace
 
 #endif
