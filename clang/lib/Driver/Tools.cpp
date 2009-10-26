@@ -736,7 +736,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-g");
 
   Args.AddLastArg(CmdArgs, options::OPT_nostdinc);
-  Args.AddLastArg(CmdArgs, options::OPT_nostdclanginc);
+  Args.AddLastArg(CmdArgs, options::OPT_nobuiltininc);
 
   Args.AddLastArg(CmdArgs, options::OPT_isysroot);
 

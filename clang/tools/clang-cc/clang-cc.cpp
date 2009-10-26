@@ -1099,8 +1099,8 @@ static llvm::cl::opt<bool>
 nostdinc("nostdinc", llvm::cl::desc("Disable standard #include directories"));
 
 static llvm::cl::opt<bool>
-nostdclanginc("nostdclanginc",
-	      llvm::cl::desc("Disable standard clang #include directories"));
+nobuiltininc("nobuiltininc",
+             llvm::cl::desc("Disable builtin #include directories"));
 
 // Various command line options.  These four add directories to each chain.
 static llvm::cl::list<std::string>
@@ -1240,7 +1240,7 @@ void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
 
   Init.AddDefaultEnvVarPaths(Lang);
 
-  if (!nostdclanginc)
+  if (!nobuiltininc)
     AddClangIncludePaths(Argv0, &Init);
 
   if (!nostdinc)
