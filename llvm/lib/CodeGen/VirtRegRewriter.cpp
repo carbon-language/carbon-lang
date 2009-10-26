@@ -495,7 +495,7 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
   MachineOperand *DefOp = NULL;
   for (unsigned i = 0, e = DefMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = DefMI->getOperand(i);
-    if (!MO.isReg() || MO.isUse() || !MO.isKill() || MO.isUndef())
+    if (!MO.isReg() || !MO.isUse() || !MO.isKill() || MO.isUndef())
       continue;
     if (MO.getReg() == Reg)
       DefOp = &MO;
@@ -2258,7 +2258,7 @@ private:
           // eliminate this or else the undef marker is lost and it will
           // confuses the scavenger. This is extremely rare.
           unsigned Src, Dst, SrcSR, DstSR;
-          if (TII->isIdentityCopy(MI, Src, Dst, SrcSR, DstSR) &&
+          if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst &&
               !MI.findRegisterUseOperand(Src)->isUndef()) {
             ++NumDCE;
             DEBUG(errs() << "Removing now-noop copy: " << MI);
@@ -2347,7 +2347,7 @@ private:
           // instruction before considering the dest reg to be changed.
           {
             unsigned Src, Dst, SrcSR, DstSR;
-            if (TII->isIdentityCopy(MI, Src, Dst, SrcSR, DstSR)) {
+            if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst) {
               ++NumDCE;
               DEBUG(errs() << "Removing now-noop copy: " << MI);
               InvalidateKills(MI, TRI, RegKills, KillOps);

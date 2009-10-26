@@ -1853,7 +1853,7 @@ bool SimpleRegisterCoalescing::RangeIsDefinedByCopyFromReg(LiveInterval &li,
         tii_->isMoveInstr(*DefMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
         DstReg == li.reg && SrcReg == Reg) {
       // Cache computed info.
-      LR->valno->def = LR->start;
+      LR->valno->def  = LR->start;
       LR->valno->setCopy(DefMI);
       return true;
     }
@@ -2006,7 +2006,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
   // RHS into, update the value number info for the LHS to indicate that the
   // value number is defined where the RHS value number was.
   const VNInfo *VNI = RHS.getValNumInfo(0);
-  LHSValNo->def = VNI->def;
+  LHSValNo->def  = VNI->def;
   LHSValNo->setCopy(VNI->getCopy());
 
   // Okay, the final step is to loop over the RHS live intervals, adding them to
@@ -2489,7 +2489,8 @@ SimpleRegisterCoalescing::lastRegisterUse(LiveIndex Start,
       MachineOperand &Use = I.getOperand();
       MachineInstr *UseMI = Use.getParent();
       unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-      if (tii_->isIdentityCopy(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
+      if (tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
+          SrcReg == DstReg)
         // Ignore identity copies.
         continue;
       LiveIndex Idx = li_->getInstructionIndex(UseMI);
@@ -2515,7 +2516,8 @@ SimpleRegisterCoalescing::lastRegisterUse(LiveIndex Start,
 
     // Ignore identity copies.
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (!tii_->isIdentityCopy(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
+    if (!(tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
+          SrcReg == DstReg))
       for (unsigned i = 0, NumOps = MI->getNumOperands(); i != NumOps; ++i) {
         MachineOperand &Use = MI->getOperand(i);
         if (Use.isReg() && Use.isUse() && Use.getReg() &&
@@ -2568,8 +2570,7 @@ void SimpleRegisterCoalescing::CalculateSpillWeights() {
     for (MachineBasicBlock::const_iterator mii = MBB->begin(), mie = MBB->end();
          mii != mie; ++mii) {
       const MachineInstr *MI = mii;
-      unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-      if (tii_->isIdentityCopy(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
+      if (tii_->isIdentityCopy(*MI))
         continue;
 
       if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
@@ -2705,34 +2706,27 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
                   MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG) &&
                  "Unrecognized copy instruction");
           DstReg = MI->getOperand(0).getReg();
-          // Do not delete subreg_to_reg, insert_subreg with undef source unless
-          // the definition is dead. e.g.
-          // %DO<def> = INSERT_SUBREG %D0<undef>, %S0<kill>, 1
-          // or else the scavenger may complain. These will be eliminated by the
-          // rewriter or the subreg lowering pass.
           if (TargetRegisterInfo::isPhysicalRegister(DstReg))
-            // Don't delete extract_subreg of a physical register.
-            DoDelete = false;
-          else if (MI->getOpcode() == TargetInstrInfo::SUBREG_TO_REG ||
-                   (MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG &&
-                    MI->getOperand(1).isUndef()))
+            // Do not delete extract_subreg, insert_subreg of physical
+            // registers unless the definition is dead. e.g.
+            // %DO<def> = INSERT_SUBREG %D0<undef>, %S0<kill>, 1
+            // or else the scavenger may complain. LowerSubregs will
+            // delete them later.
             DoDelete = false;
         }
-
         if (MI->registerDefIsDead(DstReg)) {
           LiveInterval &li = li_->getInterval(DstReg);
           if (!ShortenDeadCopySrcLiveRange(li, MI))
             ShortenDeadCopyLiveRange(li, MI);
           DoDelete = true;
         }
-
-        if (!DoDelete) {
+        if (!DoDelete)
           mii = next(mii);
-        } else {
+        else {
           li_->RemoveMachineInstrFromMaps(MI);
           mii = mbbi->erase(mii);
+          ++numPeep;
         }
-        ++numPeep;
         continue;
       }
 
@@ -2770,7 +2764,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       }
 
       // If the move will be an identity move delete it
-      if (tii_->isIdentityCopy(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
+      bool isMove= tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx);
+      if (isMove && SrcReg == DstReg) {
         if (li_->hasInterval(SrcReg)) {
           LiveInterval &RegInt = li_->getInterval(SrcReg);
           // If def of this move instruction is dead, remove its live range

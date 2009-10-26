@@ -177,7 +177,24 @@ void RegScavenger::forward() {
     if (!Reg || isReserved(Reg))
       continue;
     if (MO.isUse()) {
-      assert(isUsed(Reg) && "Using an undefined register!");
+      if (!isUsed(Reg)) {
+        // Check if it's partial live: e.g.
+        // D0 = insert_subreg D0<undef>, S0
+        // ... D0
+        // The problem is the insert_subreg could be eliminated. The use of
+        // D0 is using a partially undef value. This is not *incorrect* since
+        // S1 is can be freely clobbered.
+        // Ideally we would like a way to model this, but leaving the
+        // insert_subreg around causes both correctness and performance issues.
+        bool SubUsed = false;
+        for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
+             unsigned SubReg = *SubRegs; ++SubRegs)
+          if (isUsed(SubReg)) {
+            SubUsed = true;
+            break;
+          }
+        assert(SubUsed && "Using an undefined register!");
+      }
       assert((!EarlyClobberRegs.test(Reg) || MI->isRegTiedToDefOperand(i)) &&
              "Using an early clobbered register!");
     } else {
