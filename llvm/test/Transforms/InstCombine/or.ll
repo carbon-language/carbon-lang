@@ -1,6 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
 ;
 ; RUN: opt < %s -instcombine -S | FileCheck %s
+; XFAIL: *
 
 define i32 @test1(i32 %A) {
         %B = or i32 %A, 0

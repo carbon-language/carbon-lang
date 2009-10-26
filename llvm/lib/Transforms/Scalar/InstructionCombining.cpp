@@ -631,40 +631,15 @@ static inline Value *dyn_castFNegVal(Value *V) {
   return 0;
 }
 
-/// isFreeToInvert - Return true if the specified value is free to invert (apply
-/// ~ to).  This happens in cases where the ~ can be eliminated.
-static inline bool isFreeToInvert(Value *V) {
-  // ~(~(X)) -> X.
-  if (BinaryOperator::isNot(V))
-    return true;
-  
-  // Constants can be considered to be not'ed values.
-  if (isa<ConstantInt>(V))
-    return true;
-  
-  // Compares can be inverted if they have a single use.
-  if (CmpInst *CI = dyn_cast<CmpInst>(V))
-    return CI->hasOneUse();
-  
-  return false;
-}
-
 static inline Value *dyn_castNotVal(Value *V) {
-  // If this is not(not(x)) don't return that this is a not: we want the two
-  // not's to be folded first.
-  if (BinaryOperator::isNot(V)) {
-    Value *Operand = BinaryOperator::getNotArgument(V);
-    if (!isFreeToInvert(Operand))
-      return Operand;
-  }
+  if (BinaryOperator::isNot(V))
+    return BinaryOperator::getNotArgument(V);
 
   // Constants can be considered to be not'ed values...
   if (ConstantInt *C = dyn_cast<ConstantInt>(V))
     return ConstantInt::get(C->getType(), ~C->getValue());
   return 0;
 }
-
-
 
 // dyn_castFoldableMul - If this value is a multiply that can be folded into
 // other computations (because it has a constant operand), return the
@@ -4191,7 +4166,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       if (Instruction *CastOp = dyn_cast<Instruction>(CI->getOperand(0))) {
         if ((isa<TruncInst>(CI) || isa<BitCastInst>(CI)) &&
             CastOp->getNumOperands() == 2)
-          if (ConstantInt *AndCI =dyn_cast<ConstantInt>(CastOp->getOperand(1))){
+          if (ConstantInt *AndCI = dyn_cast<ConstantInt>(CastOp->getOperand(1))) {
             if (CastOp->getOpcode() == Instruction::And) {
               // Change: and (cast (and X, C1) to T), C2
               // into  : and (cast X to T), trunc_or_bitcast(C1)&C2
@@ -5089,13 +5064,12 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
   // Is this a ~ operation?
   if (Value *NotOp = dyn_castNotVal(&I)) {
+    // ~(~X & Y) --> (X | ~Y) - De Morgan's Law
+    // ~(~X | Y) === (X & ~Y) - De Morgan's Law
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(NotOp)) {
       if (Op0I->getOpcode() == Instruction::And || 
           Op0I->getOpcode() == Instruction::Or) {
-        // ~(~X & Y) --> (X | ~Y) - De Morgan's Law
-        // ~(~X | Y) === (X & ~Y) - De Morgan's Law
-        if (dyn_castNotVal(Op0I->getOperand(1)))
-          Op0I->swapOperands();
+        if (dyn_castNotVal(Op0I->getOperand(1))) Op0I->swapOperands();
         if (Value *Op0NotVal = dyn_castNotVal(Op0I->getOperand(0))) {
           Value *NotY =
             Builder->CreateNot(Op0I->getOperand(1),
@@ -5103,19 +5077,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           if (Op0I->getOpcode() == Instruction::And)
             return BinaryOperator::CreateOr(Op0NotVal, NotY);
           return BinaryOperator::CreateAnd(Op0NotVal, NotY);
-        }
-        
-        // ~(X & Y) --> (~X | ~Y) - De Morgan's Law
-        // ~(X | Y) === (~X & ~Y) - De Morgan's Law
-        if (isFreeToInvert(Op0I->getOperand(0)) && 
-            isFreeToInvert(Op0I->getOperand(1))) {
-          Value *NotX =
-            Builder->CreateNot(Op0I->getOperand(0), "notlhs");
-          Value *NotY =
-            Builder->CreateNot(Op0I->getOperand(1), "notrhs");
-          if (Op0I->getOpcode() == Instruction::And)
-            return BinaryOperator::CreateOr(NotX, NotY);
-          return BinaryOperator::CreateAnd(NotX, NotY);
         }
       }
     }
