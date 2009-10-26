@@ -25,7 +25,8 @@ using namespace llvm;
 
 namespace llvm {
   char PIC16FrameOverlay::ID = 0;
-  ModulePass *createPIC16OverlayPass() { return new PIC16FrameOverlay(); }
+  static RegisterPass<PIC16FrameOverlay>
+  X("pic16overlay", "PIC16 Frame Overlay Analysis");
 }
 
 void PIC16FrameOverlay::getAnalysisUsage(AnalysisUsage &AU) const {
