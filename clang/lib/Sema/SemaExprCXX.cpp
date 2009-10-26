@@ -1404,7 +1404,8 @@ QualType Sema::CheckPointerToMemberOperands(
       LType = Ptr->getPointeeType().getNonReferenceType();
     else {
       Diag(Loc, diag::err_bad_memptr_lhs)
-        << OpSpelling << 1 << LType << lex->getSourceRange();
+        << OpSpelling << 1 << LType
+        << CodeModificationHint::CreateReplacement(SourceRange(Loc), ".*");
       return QualType();
     }
   }
@@ -1417,8 +1418,10 @@ QualType Sema::CheckPointerToMemberOperands(
     // overkill?
     if (!IsDerivedFrom(LType, Class, Paths) ||
         Paths.isAmbiguous(Context.getCanonicalType(Class))) {
+      const char *ReplaceStr = isIndirect ? ".*" : "->*";
       Diag(Loc, diag::err_bad_memptr_lhs) << OpSpelling
-        << (int)isIndirect << lex->getType() << lex->getSourceRange();
+        << (int)isIndirect << lex->getType() <<
+          CodeModificationHint::CreateReplacement(SourceRange(Loc), ReplaceStr);
       return QualType();
     }
   }
