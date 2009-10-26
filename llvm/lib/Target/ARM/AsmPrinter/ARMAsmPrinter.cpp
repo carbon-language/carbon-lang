@@ -419,7 +419,7 @@ void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
   printSOImm(O, V1, VerboseAsm, MAI);
   O << "\n\torr";
   printPredicateOperand(MI, 2);
-  O << " ";
+  O << "\t";
   printOperand(MI, 0);
   O << ", ";
   printOperand(MI, 0);
