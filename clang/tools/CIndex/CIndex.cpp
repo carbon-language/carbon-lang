@@ -380,10 +380,8 @@ CXTranslationUnit clang_createTranslationUnit(
                            CXXIdx->getOnlyLocalDecls(),
                            /* UseBumpAllocator = */ true);
   
-  if (!ErrMsg.empty()) {
-    (llvm::errs() << "clang_createTranslationUnit: " << ErrMsg 
-                  << '\n').flush();
-  }
+  if (!ErrMsg.empty())
+    llvm::errs() << "clang_createTranslationUnit: " << ErrMsg  << '\n';
   
   return TU;
 }
@@ -448,10 +446,11 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
     llvm::errs() << "clang_createTranslationUnitFromSourceFile: " << ErrMsg 
       << '\n' << "Arguments: \n";
     for (std::vector<const char*>::iterator I = argv.begin(), E = argv.end();
-         I!=E; ++I)
-      if (*I) llvm::errs() << ' ' << *I << '\n';
-     
-    (llvm::errs() << '\n').flush();
+         I!=E; ++I) {
+      if (*I)
+        llvm::errs() << ' ' << *I << '\n';
+    }
+    llvm::errs() << '\n';
   }
 #else
   // FIXME: I don't know what is the equivalent '/dev/null' redirect for
