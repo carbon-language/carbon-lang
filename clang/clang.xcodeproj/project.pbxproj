@@ -515,6 +515,13 @@
 		9012911C1048068D0083456D /* ASTUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTUnit.cpp; path = lib/Frontend/ASTUnit.cpp; sourceTree = "<group>"; };
 		9012911F104812F90083456D /* CIndex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CIndex.cpp; path = tools/CIndex/CIndex.cpp; sourceTree = "<group>"; };
 		90129120104812F90083456D /* CIndex.exports */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CIndex.exports; path = tools/CIndex/CIndex.exports; sourceTree = "<group>"; };
+		904753791096376F00CBDDDD /* CXXInheritance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CXXInheritance.h; path = clang/AST/CXXInheritance.h; sourceTree = "<group>"; };
+		9047537A1096376F00CBDDDD /* Redeclarable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Redeclarable.h; path = clang/AST/Redeclarable.h; sourceTree = "<group>"; };
+		9047537B1096376F00CBDDDD /* TypeLoc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TypeLoc.h; path = clang/AST/TypeLoc.h; sourceTree = "<group>"; };
+		9047537C1096376F00CBDDDD /* TypeLocBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TypeLocBuilder.h; path = clang/AST/TypeLocBuilder.h; sourceTree = "<group>"; };
+		9047537D1096376F00CBDDDD /* TypeLocNodes.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = TypeLocNodes.def; path = clang/AST/TypeLocNodes.def; sourceTree = "<group>"; };
+		9047537E1096376F00CBDDDD /* TypeLocVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TypeLocVisitor.h; path = clang/AST/TypeLocVisitor.h; sourceTree = "<group>"; };
+		9047537F1096376F00CBDDDD /* TypeVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TypeVisitor.h; path = clang/AST/TypeVisitor.h; sourceTree = "<group>"; };
 		9063F2210F9E8BDF002F7251 /* ExternalSemaSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExternalSemaSource.h; path = clang/Sema/ExternalSemaSource.h; sourceTree = "<group>"; };
 		9063F2220F9E8BDF002F7251 /* SemaConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaConsumer.h; path = clang/Sema/SemaConsumer.h; sourceTree = "<group>"; };
 		9063F2280F9E911F002F7251 /* OnDiskHashTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OnDiskHashTable.h; sourceTree = "<group>"; };
@@ -1298,6 +1305,13 @@
 		DEC8D98B0A9433BC00353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				904753791096376F00CBDDDD /* CXXInheritance.h */,
+				9047537A1096376F00CBDDDD /* Redeclarable.h */,
+				9047537B1096376F00CBDDDD /* TypeLoc.h */,
+				9047537C1096376F00CBDDDD /* TypeLocBuilder.h */,
+				9047537D1096376F00CBDDDD /* TypeLocNodes.def */,
+				9047537E1096376F00CBDDDD /* TypeLocVisitor.h */,
+				9047537F1096376F00CBDDDD /* TypeVisitor.h */,
 				DECB78540FA58F5500F5FBC7 /* AccessSpecifier.h */,
 				DE613EF30E0E148D00B05B79 /* APValue.h */,
 				DEC8D9A30A94346E00353FCA /* AST.h */,
