@@ -5412,6 +5412,53 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
                                                       OpLoc));
 }
 
+static inline bool IsBitwise(int Opc) {
+  return Opc >= BinaryOperator::And && Opc <= BinaryOperator::Or;
+}
+static inline bool IsEqOrRel(int Opc) {
+  return Opc >= BinaryOperator::LT && Opc <= BinaryOperator::NE;
+}
+
+static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperator::Opcode Opc,
+                                      SourceLocation OpLoc,Expr *lhs,Expr *rhs){
+  typedef BinaryOperator::Opcode Opcode;
+  int lhsopc = -1, rhsopc = -1;
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(lhs))
+    lhsopc = BO->getOpcode();
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(rhs))
+    rhsopc = BO->getOpcode();
+
+  // Subs are not binary operators.
+  if (lhsopc == -1 && rhsopc == -1)
+    return;
+
+  // Bitwise operations are sometimes used as eager logical ops.
+  // Don't diagnose this.
+  if ((IsEqOrRel(lhsopc) || IsBitwise(lhsopc)) &&
+      (IsEqOrRel(rhsopc) || IsBitwise(rhsopc)))
+    return;
+
+  if (IsEqOrRel(lhsopc))
+    Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
+      << SourceRange(lhs->getLocStart(), OpLoc)
+      << BinaryOperator::getOpcodeStr(Opc)
+      << BinaryOperator::getOpcodeStr(static_cast<Opcode>(lhsopc));
+  else if (IsEqOrRel(rhsopc))
+    Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
+      << SourceRange(OpLoc, rhs->getLocEnd())
+      << BinaryOperator::getOpcodeStr(Opc)
+      << BinaryOperator::getOpcodeStr(static_cast<Opcode>(rhsopc));
+}
+
+/// DiagnoseBinOpPrecedence - Emit warnings for expressions with tricky
+/// precedence. This currently diagnoses only "arg1 'bitwise' arg2 'eq' arg3".
+/// But it could also warn about arg1 && arg2 || arg3, as GCC 4.3+ does.
+static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperator::Opcode Opc,
+                                    SourceLocation OpLoc, Expr *lhs, Expr *rhs){
+  if (IsBitwise(Opc))
+    DiagnoseBitwisePrecedence(Self, Opc, OpLoc, lhs, rhs);
+}
+
 // Binary Operators.  'Tok' is the token for the operator.
 Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
                                           tok::TokenKind Kind,
@@ -5421,6 +5468,9 @@ Action::OwningExprResult Sema::ActOnBinOp(Scope *S, SourceLocation TokLoc,
 
   assert((lhs != 0) && "ActOnBinOp(): missing left expression");
   assert((rhs != 0) && "ActOnBinOp(): missing right expression");
+
+  // Emit warnings for tricky precedence issues, e.g. "bitfield & 0x4 == 0"
+  DiagnoseBinOpPrecedence(*this, Opc, TokLoc, lhs, rhs);
 
   if (getLangOptions().CPlusPlus &&
       (lhs->getType()->isOverloadableType() ||

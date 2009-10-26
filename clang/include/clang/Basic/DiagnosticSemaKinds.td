@@ -1385,6 +1385,10 @@ def warn_shift_negative : Warning<
 def warn_shift_gt_typewidth : Warning<
   "shift count >= width of type">;
 
+def warn_precedence_bitwise_rel : Warning<
+  "%0 has lower precedence than %1; %1 will be evaluated first">,
+  InGroup<Parentheses>;
+
 def err_sizeof_nonfragile_interface : Error<
   "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
   "non-fragile ABI">;
