@@ -434,8 +434,9 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   // Add the null terminator.
   argv.push_back(NULL);
 
-#ifndef LLVM_ON_WIN32
-  llvm::sys::Path DevNull("/dev/null");
+  // Invoke 'clang'.
+  llvm::sys::Path DevNull; // leave empty, causes redirection to /dev/null
+                           // on Unix or NUL (Windows).
   std::string ErrMsg;
   const llvm::sys::Path *Redirects[] = { &DevNull, &DevNull, &DevNull, NULL };
   llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0], /* env */ NULL,
@@ -452,11 +453,6 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
     }
     llvm::errs() << '\n';
   }
-#else
-  // FIXME: I don't know what is the equivalent '/dev/null' redirect for
-  // Windows for this API.
-  llvm::sys::Program::ExecuteAndWait(ClangPath, &argv[0]);
-#endif
 
   // Finally, we create the translation unit from the ast file.
   ASTUnit *ATU = static_cast<ASTUnit *>(
