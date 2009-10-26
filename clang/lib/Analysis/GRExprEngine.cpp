@@ -1454,17 +1454,10 @@ static void MarkNoReturnFunction(const FunctionDecl *FD, CallExpr *CE,
       break;
 
     case 5:
-      if (!memcmp(s, "panic", 5)) Builder->BuildSinks = true;
-      else if (!memcmp(s, "error", 5)) {
-        if (CE->getNumArgs() > 0) {
-          SVal X = state->getSVal(*CE->arg_begin());
-          // FIXME: use Assume to inspect the possible symbolic value of
-          // X. Also check the specific signature of error().
-          nonloc::ConcreteInt* CI = dyn_cast<nonloc::ConcreteInt>(&X);
-          if (CI && CI->getValue() != 0)
-            Builder->BuildSinks = true;
-        }
-      }
+      if (!memcmp(s, "panic", 5)) 
+        Builder->BuildSinks = true;
+      else if (!memcmp(s, "error", 5))
+        Builder->BuildSinks = true;
       break;
 
     case 6:
