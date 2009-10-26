@@ -1,4 +1,5 @@
 add_llvm_library(LLVMCodeGen
+  AggressiveAntiDepBreaker.cpp
   BranchFolding.cpp
   CodePlacementOpt.cpp
   CriticalAntiDepBreaker.cpp

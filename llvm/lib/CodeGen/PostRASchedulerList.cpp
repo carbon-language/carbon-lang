@@ -19,6 +19,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "post-RA-sched"
+#include "AggressiveAntiDepBreaker.h"
 #include "CriticalAntiDepBreaker.h"
 #include "ExactHazardRecognizer.h"
 #include "SimpleHazardRecognizer.h"
@@ -236,9 +237,10 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     (ScheduleHazardRecognizer *)new ExactHazardRecognizer(InstrItins) :
     (ScheduleHazardRecognizer *)new SimpleHazardRecognizer();
   AntiDepBreaker *ADB = 
-    (AntiDepMode == TargetSubtarget::ANTIDEP_ALL) ? NULL /* FIXME */ :
-    (AntiDepMode == TargetSubtarget::ANTIDEP_CRITICAL) ? 
-    new CriticalAntiDepBreaker(Fn) : NULL;
+    ((AntiDepMode == TargetSubtarget::ANTIDEP_ALL) ?
+     (AntiDepBreaker *)new AggressiveAntiDepBreaker(Fn) :
+     ((AntiDepMode == TargetSubtarget::ANTIDEP_CRITICAL) ? 
+      (AntiDepBreaker *)new CriticalAntiDepBreaker(Fn) : NULL));
 
   SchedulePostRATDList Scheduler(Fn, MLI, MDT, HR, ADB, AA);
 
