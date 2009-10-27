@@ -1,6 +1,8 @@
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 
+#include "../assembly.h"
+
 // long double __floatundixf(du_int a);
 
 #ifdef __x86_64__

@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../assembly.h"
 
 //
 // extern unsigned int __fixunssfsivfp(float a);

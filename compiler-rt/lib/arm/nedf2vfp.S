@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../assembly.h"
 
 //
 // extern double __nedf2vfp(double a, double b);

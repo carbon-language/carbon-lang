@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../assembly.h"
+
 //
 // When compiling switch statements in thumb mode, the compiler 
 // can use these __switch* helper functions  The compiler emits a blx to 

@@ -1,6 +1,8 @@
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 
+#include "../assembly.h"
+
 // du_int __umoddi3(du_int a, du_int b);
 
 // result = remainder of a / b.

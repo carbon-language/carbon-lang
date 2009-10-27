@@ -1,6 +1,8 @@
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 
+#include "../assembly.h"
+
 // di_int __lshrdi3(di_int input, int count);
 
 // This routine has some extra memory traffic, loading the 64-bit input via two

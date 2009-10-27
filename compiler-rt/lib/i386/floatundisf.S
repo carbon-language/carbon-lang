@@ -1,6 +1,8 @@
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 
+#include "../assembly.h"
+
 // float __floatundisf(du_int a);
 
 // Note that there is a hardware instruction, fildll, that does most of what

@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../assembly.h"
 
 //
 // Helper function used by compiler to restore ppc floating point registers at

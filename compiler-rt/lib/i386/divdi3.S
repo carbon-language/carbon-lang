@@ -1,6 +1,8 @@
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 
+#include "../assembly.h"
+
 // di_int __divdi3(di_int a, di_int b);
 
 // result = a / b.

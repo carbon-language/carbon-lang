@@ -17,6 +17,6 @@ ObjNames := $(Sources:%.c=%.o) $(AsmSources:%.S=%.o)
 Target := Optimized
 
 # FIXME: use automatic dependencies?
-Dependencies := $(wildcard $(Dir)/*.h)
+Dependencies := $(wildcard lib/*.h $(Dir)/*.h)
 
 include make/subdir.mk

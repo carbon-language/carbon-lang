@@ -1,6 +1,8 @@
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 
+#include "../assembly.h"
+
 // di_int __ashrdi3(di_int input, int count);
 
 #ifdef __i386__
