@@ -1969,9 +1969,17 @@ LBB1_2:
         movsbl  %al, %eax
 
 Better:
+
         movl    %esi, %eax
         orl     $-128, %eax
         andl    $-128, %esi
         testb   %dil, %dil
         cmovns  %esi, %eax
         movsbl  %al,%eax
+
+Best (recognize this as 'b = (b & ~0x80) | (a & 0x80)'):
+
+        andb    $-128, %dil
+        andb    $127, %sil
+        orb     %dil, %sil
+        movsbl  %sil, %eax
