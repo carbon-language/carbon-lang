@@ -166,7 +166,7 @@ void SparseSolver::getFeasibleSuccessors(TerminatorInst &TI,
     return;
   }
   
-  if (IndBrInst *IBI = dyn_cast<IndBrInst>(TI)) {
+  if (isa<IndBrInst>(TI)) {
     Succs.assign(Succs.size(), true);
     return;
   }
