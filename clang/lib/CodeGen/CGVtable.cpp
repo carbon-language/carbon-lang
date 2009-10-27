@@ -43,6 +43,9 @@ private:
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCall;
   llvm::DenseMap<const CXXMethodDecl *, Index_t> VCallOffset;
   llvm::DenseMap<const CXXRecordDecl *, Index_t> VBIndex;
+
+  typedef llvm::DenseMap<const CXXMethodDecl *, int> Pures_t;
+  Pures_t Pures;
   typedef std::pair<Index_t, Index_t>  CallOffset;
   typedef llvm::DenseMap<const CXXMethodDecl *, CallOffset> Thunks_t;
   Thunks_t Thunks;
@@ -58,6 +61,7 @@ private:
   Index_t extra;
   int CurrentVBaseOffset;
   typedef std::vector<std::pair<const CXXRecordDecl *, int64_t> > Path_t;
+  llvm::Constant *cxa_pure;
 public:
   VtableBuilder(std::vector<llvm::Constant *> &meth,
                 const CXXRecordDecl *c,
@@ -68,6 +72,8 @@ public:
       LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)),
       CurrentVBaseOffset(0) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
+    // FIXME: ___cxa_pure_virtual
+    cxa_pure = wrap((Index_t)0);
   }
 
   llvm::DenseMap<const CXXMethodDecl *, Index_t> &getIndex() { return Index; }
@@ -285,6 +291,13 @@ public:
                                                 v_r);
     }
     CovariantThunks.clear();
+    for (Pures_t::iterator i = Pures.begin(), e = Pures.end();
+         i != e; ++i) {
+      const CXXMethodDecl *MD = i->first;
+      Index_t idx = Index[MD];
+      submethods[idx] = cxa_pure;
+    }
+    Pures.clear();
   }
 
   llvm::Constant *WrapAddrOf(const CXXMethodDecl *MD) {
