@@ -1,4 +1,4 @@
-/* ===-- endianness.h - configuration header for libgcc replacement --------===
+/* ===-- endianness.h - configuration header for compiler-rt ---------------===
  *
  *		       The LLVM Compiler Infrastructure
  *
@@ -7,7 +7,7 @@
  *
  * ===----------------------------------------------------------------------===
  *
- * This file is a configuration header for libgcc replacement.
+ * This file is a configuration header for compiler-rt.
  * This file is not part of the interface of this library.
  *
  * ===----------------------------------------------------------------------===

@@ -5,9 +5,9 @@ REMOTE=0
 if test `uname` = "Darwin"; then
   if test "$1" = "armv6"; then
     ARCHS="armv6"
-	LIBS="-lSystem"
-	REMOTE=1
-	mkdir -p remote
+    LIBS="-lSystem"
+    REMOTE=1
+    mkdir -p remote
   else
     ARCHS="i386 x86_64 ppc"
     LIBS="-lSystem"
@@ -17,7 +17,7 @@ else
 fi
 
 for ARCH in $ARCHS; do
-  CFLAGS="-Os -nodefaultlibs"
+  CFLAGS="-Os -nodefaultlibs -I../../lib"
   if test "$ARCH" != '<host>'; then
     CFLAGS="-arch $ARCH $CFLAGS"
   fi
@@ -38,15 +38,15 @@ for ARCH in $ARCHS; do
       # this test requires an extra compiler option
       EXTRA="-fnested-functions"
     fi
-	if test $REMOTE
-	then 
+    if test "$REMOTE" = "1"
+    then 
       if gcc $CFLAGS $FILE ../../Release/libcompiler_rt.Optimized.a $LIBS $EXTRA -o ./remote/$FILE.exe
       then
         echo "Built $FILE.exe for $ARCH"
-	  else
+      else
         echo "$FILE failed to compile"
-	  fi
-	else
+      fi
+    else
       if gcc $CFLAGS $FILE ../../Release/libcompiler_rt.Optimized.a $LIBS $EXTRA
       then
         echo "Testing $FILE for $ARCH"
@@ -61,7 +61,7 @@ for ARCH in $ARCHS; do
         echo "$FILE failed to compile"
         exit 1
       fi
-	fi
+    fi
   done
 done
 echo "pass"

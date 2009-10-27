@@ -1,4 +1,4 @@
-/* ===-- int_lib.h - configuration header for libgcc replacement -----------===
+/* ===-- int_lib.h - configuration header for compiler-rt  -----------------===
  *
  *                     The LLVM Compiler Infrastructure
  *
@@ -7,7 +7,7 @@
  *
  * ===----------------------------------------------------------------------===
  *
- * This file is a configuration header for libgcc replacement.
+ * This file is a configuration header for compiler-rt.
  * This file is not part of the interface of this library.
  *
  * ===----------------------------------------------------------------------===
@@ -97,6 +97,20 @@ typedef union
 #endif /* _YUGA_LITTLE_ENDIAN */
     }s;
 } utwords;
+
+static inline ti_int make_ti(di_int h, di_int l) {
+    twords r;
+    r.s.high = h;
+    r.s.low = l;
+    return r.all;
+}
+
+static inline tu_int make_tu(du_int h, du_int l) {
+    utwords r;
+    r.s.high = h;
+    r.s.low = l;
+    return r.all;
+}
 
 #endif /* __x86_64 */
 
