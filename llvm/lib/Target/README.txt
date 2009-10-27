@@ -1633,3 +1633,38 @@ This can be generalized for other forms:
      b = (b & ~0x80) | (a & 0x40) << 1;
 
 //===---------------------------------------------------------------------===//
+
+These two functions produce different code. They shouldn't:
+
+#include <stdint.h>
+ 
+uint8_t p1(uint8_t b, uint8_t a) {
+  b = (b & ~0xc0) | (a & 0xc0);
+  return (b);
+}
+ 
+uint8_t p2(uint8_t b, uint8_t a) {
+  b = (b & ~0x40) | (a & 0x40);
+  b = (b & ~0x80) | (a & 0x80);
+  return (b);
+}
+
+define zeroext i8 @p1(i8 zeroext %b, i8 zeroext %a) nounwind readnone ssp {
+entry:
+  %0 = and i8 %b, 63                              ; <i8> [#uses=1]
+  %1 = and i8 %a, -64                             ; <i8> [#uses=1]
+  %2 = or i8 %1, %0                               ; <i8> [#uses=1]
+  ret i8 %2
+}
+
+define zeroext i8 @p2(i8 zeroext %b, i8 zeroext %a) nounwind readnone ssp {
+entry:
+  %0 = and i8 %b, 63                              ; <i8> [#uses=1]
+  %.masked = and i8 %a, 64                        ; <i8> [#uses=1]
+  %1 = and i8 %a, -128                            ; <i8> [#uses=1]
+  %2 = or i8 %1, %0                               ; <i8> [#uses=1]
+  %3 = or i8 %2, %.masked                         ; <i8> [#uses=1]
+  ret i8 %3
+}
+
+//===---------------------------------------------------------------------===//
