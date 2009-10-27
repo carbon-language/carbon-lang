@@ -1,6 +1,8 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2,+v7a | grep "clz " | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2,+v7a | FileCheck %s
 
 define i32 @f1(i32 %a) {
+; CHECK: f1:
+; CHECK: clz r
     %tmp = tail call i32 @llvm.ctlz.i32(i32 %a)
     ret i32 %tmp
 }
