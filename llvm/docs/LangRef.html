@@ -2179,8 +2179,8 @@ has undefined behavior.</p>
 <p><b><tt>blockaddress(@function, %block)</tt></b></p>
 
 <p>The '<tt>blockaddress</tt>' constant computes the address of the specified
-   basic block in the specified function, and always has an i8* type.</p>
-   
+   basic block in the specified function, and always has an i8* type.  Taking
+   the address of the entry block is illegal.</p>
      
 <p>This value only has defined behavior when used as an operand to the
    '<a href="#i_indbr"><tt>indbr</tt></a>' instruction or for comparisons
