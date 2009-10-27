@@ -24,3 +24,14 @@ Case4:          ; preds = %0
         ret i32 16
 }
 
+
+
+define i32 @indbrtest(i8* %P, i32* %Q) {
+  indbr i8* %P, [label %BB1, label %BB2, label %BB3]
+BB1:
+  indbr i32* %Q, []
+BB2:
+  indbr i32* %Q, [label %BB1, label %BB2]
+BB3:
+  ret i32 2
+}

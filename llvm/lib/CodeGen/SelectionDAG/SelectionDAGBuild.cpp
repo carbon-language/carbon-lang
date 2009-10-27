@@ -2131,6 +2131,11 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
   }
 }
 
+void SelectionDAGLowering::visitIndBr(IndBrInst &I) {
+  fprintf(stderr, "indbr codegen not implemented yet");
+  abort();
+}
+
 
 void SelectionDAGLowering::visitFSub(User &I) {
   // -0.0 - X --> fneg

@@ -1001,7 +1001,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::Br:
     {
       Code = bitc::FUNC_CODE_INST_BR;
-      BranchInst &II(cast<BranchInst>(I));
+      BranchInst &II = cast<BranchInst>(I);
       Vals.push_back(VE.getValueID(II.getSuccessor(0)));
       if (II.isConditional()) {
         Vals.push_back(VE.getValueID(II.getSuccessor(1)));
@@ -1015,6 +1015,13 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
       Vals.push_back(VE.getValueID(I.getOperand(i)));
     break;
+  case Instruction::IndBr:
+    Code = bitc::FUNC_CODE_INST_INDBR;
+    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
+    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+      Vals.push_back(VE.getValueID(I.getOperand(i)));
+    break;
+      
   case Instruction::Invoke: {
     const InvokeInst *II = cast<InvokeInst>(&I);
     const Value *Callee(II->getCalledValue());

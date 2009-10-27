@@ -2412,6 +2412,18 @@ bool LLParser::ParseTypeAndValue(Value *&V, PerFunctionState &PFS) {
          ParseValue(T, V, PFS);
 }
 
+bool LLParser::ParseTypeAndBasicBlock(BasicBlock *&BB, LocTy &Loc,
+                                      PerFunctionState &PFS) {
+  Value *V;
+  Loc = Lex.getLoc();
+  if (ParseTypeAndValue(V, PFS)) return true;
+  if (!isa<BasicBlock>(V))
+    return Error(Loc, "expected a basic block");
+  BB = cast<BasicBlock>(V);
+  return false;
+}
+
+
 /// FunctionHeader
 ///   ::= OptionalLinkage OptionalVisibility OptionalCallingConv OptRetAttrs
 ///       Type GlobalName '(' ArgList ')' OptFuncAttrs OptSection
@@ -2719,6 +2731,7 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_ret:         return ParseRet(Inst, BB, PFS);
   case lltok::kw_br:          return ParseBr(Inst, PFS);
   case lltok::kw_switch:      return ParseSwitch(Inst, PFS);
+  case lltok::kw_indbr:       return ParseIndBr(Inst, PFS);
   case lltok::kw_invoke:      return ParseInvoke(Inst, PFS);
   // Binary Operators.
   case lltok::kw_add:
@@ -2922,7 +2935,8 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
 ///   ::= 'br' TypeAndValue ',' TypeAndValue ',' TypeAndValue
 bool LLParser::ParseBr(Instruction *&Inst, PerFunctionState &PFS) {
   LocTy Loc, Loc2;
-  Value *Op0, *Op1, *Op2;
+  Value *Op0;
+  BasicBlock *Op1, *Op2;
   if (ParseTypeAndValue(Op0, Loc, PFS)) return true;
 
   if (BasicBlock *BB = dyn_cast<BasicBlock>(Op0)) {
@@ -2934,17 +2948,12 @@ bool LLParser::ParseBr(Instruction *&Inst, PerFunctionState &PFS) {
     return Error(Loc, "branch condition must have 'i1' type");
 
   if (ParseToken(lltok::comma, "expected ',' after branch condition") ||
-      ParseTypeAndValue(Op1, Loc, PFS) ||
+      ParseTypeAndBasicBlock(Op1, Loc, PFS) ||
       ParseToken(lltok::comma, "expected ',' after true destination") ||
-      ParseTypeAndValue(Op2, Loc2, PFS))
+      ParseTypeAndBasicBlock(Op2, Loc2, PFS))
     return true;
 
-  if (!isa<BasicBlock>(Op1))
-    return Error(Loc, "true destination of branch must be a basic block");
-  if (!isa<BasicBlock>(Op2))
-    return Error(Loc2, "true destination of branch must be a basic block");
-
-  Inst = BranchInst::Create(cast<BasicBlock>(Op1), cast<BasicBlock>(Op2), Op0);
+  Inst = BranchInst::Create(Op1, Op2, Op0);
   return false;
 }
 
@@ -2955,49 +2964,86 @@ bool LLParser::ParseBr(Instruction *&Inst, PerFunctionState &PFS) {
 ///    ::= (TypeAndValue ',' TypeAndValue)*
 bool LLParser::ParseSwitch(Instruction *&Inst, PerFunctionState &PFS) {
   LocTy CondLoc, BBLoc;
-  Value *Cond, *DefaultBB;
+  Value *Cond;
+  BasicBlock *DefaultBB;
   if (ParseTypeAndValue(Cond, CondLoc, PFS) ||
       ParseToken(lltok::comma, "expected ',' after switch condition") ||
-      ParseTypeAndValue(DefaultBB, BBLoc, PFS) ||
+      ParseTypeAndBasicBlock(DefaultBB, BBLoc, PFS) ||
       ParseToken(lltok::lsquare, "expected '[' with switch table"))
     return true;
 
   if (!isa<IntegerType>(Cond->getType()))
     return Error(CondLoc, "switch condition must have integer type");
-  if (!isa<BasicBlock>(DefaultBB))
-    return Error(BBLoc, "default destination must be a basic block");
 
   // Parse the jump table pairs.
   SmallPtrSet<Value*, 32> SeenCases;
   SmallVector<std::pair<ConstantInt*, BasicBlock*>, 32> Table;
   while (Lex.getKind() != lltok::rsquare) {
-    Value *Constant, *DestBB;
+    Value *Constant;
+    BasicBlock *DestBB;
 
     if (ParseTypeAndValue(Constant, CondLoc, PFS) ||
         ParseToken(lltok::comma, "expected ',' after case value") ||
-        ParseTypeAndValue(DestBB, BBLoc, PFS))
+        ParseTypeAndBasicBlock(DestBB, PFS))
       return true;
-
+    
     if (!SeenCases.insert(Constant))
       return Error(CondLoc, "duplicate case value in switch");
     if (!isa<ConstantInt>(Constant))
       return Error(CondLoc, "case value is not a constant integer");
-    if (!isa<BasicBlock>(DestBB))
-      return Error(BBLoc, "case destination is not a basic block");
 
-    Table.push_back(std::make_pair(cast<ConstantInt>(Constant),
-                                   cast<BasicBlock>(DestBB)));
+    Table.push_back(std::make_pair(cast<ConstantInt>(Constant), DestBB));
   }
 
   Lex.Lex();  // Eat the ']'.
 
-  SwitchInst *SI = SwitchInst::Create(Cond, cast<BasicBlock>(DefaultBB),
-                                      Table.size());
+  SwitchInst *SI = SwitchInst::Create(Cond, DefaultBB, Table.size());
   for (unsigned i = 0, e = Table.size(); i != e; ++i)
     SI->addCase(Table[i].first, Table[i].second);
   Inst = SI;
   return false;
 }
+
+/// ParseIndBr
+///  Instruction
+///    ::= 'indbr' TypeAndValue ',' '[' LabelList ']'
+bool LLParser::ParseIndBr(Instruction *&Inst, PerFunctionState &PFS) {
+  LocTy AddrLoc;
+  Value *Address;
+  if (ParseTypeAndValue(Address, AddrLoc, PFS) ||
+      ParseToken(lltok::comma, "expected ',' after indbr address") ||
+      ParseToken(lltok::lsquare, "expected '[' with indbr"))
+    return true;
+  
+  if (!isa<PointerType>(Address->getType()))
+    return Error(AddrLoc, "indbr address must have pointer type");
+  
+  // Parse the destination list.
+  SmallVector<BasicBlock*, 16> DestList;
+  
+  if (Lex.getKind() != lltok::rsquare) {
+    BasicBlock *DestBB;
+    if (ParseTypeAndBasicBlock(DestBB, PFS))
+      return true;
+    DestList.push_back(DestBB);
+    
+    while (EatIfPresent(lltok::comma)) {
+      if (ParseTypeAndBasicBlock(DestBB, PFS))
+        return true;
+      DestList.push_back(DestBB);
+    }
+  }
+  
+  if (ParseToken(lltok::rsquare, "expected ']' at end of block list"))
+    return true;
+
+  IndBrInst *IBI = IndBrInst::Create(Address, DestList.size());
+  for (unsigned i = 0, e = DestList.size(); i != e; ++i)
+    IBI->addDestination(DestList[i]);
+  Inst = IBI;
+  return false;
+}
+
 
 /// ParseInvoke
 ///   ::= 'invoke' OptionalCallingConv OptionalAttrs Type Value ParamList
@@ -3011,7 +3057,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   ValID CalleeID;
   SmallVector<ParamInfo, 16> ArgList;
 
-  Value *NormalBB, *UnwindBB;
+  BasicBlock *NormalBB, *UnwindBB;
   if (ParseOptionalCallingConv(CC) ||
       ParseOptionalAttrs(RetAttrs, 1) ||
       ParseType(RetType, RetTypeLoc, true /*void allowed*/) ||
@@ -3019,15 +3065,10 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
       ParseParameterList(ArgList, PFS) ||
       ParseOptionalAttrs(FnAttrs, 2) ||
       ParseToken(lltok::kw_to, "expected 'to' in invoke") ||
-      ParseTypeAndValue(NormalBB, PFS) ||
+      ParseTypeAndBasicBlock(NormalBB, PFS) ||
       ParseToken(lltok::kw_unwind, "expected 'unwind' in invoke") ||
-      ParseTypeAndValue(UnwindBB, PFS))
+      ParseTypeAndBasicBlock(UnwindBB, PFS))
     return true;
-
-  if (!isa<BasicBlock>(NormalBB))
-    return Error(CallLoc, "normal destination is not a basic block");
-  if (!isa<BasicBlock>(UnwindBB))
-    return Error(CallLoc, "unwind destination is not a basic block");
 
   // If RetType is a non-function pointer type, then this is the short syntax
   // for the call, which means that RetType is just the return type.  Infer the
@@ -3096,8 +3137,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   // Finish off the Attributes and check them
   AttrListPtr PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
 
-  InvokeInst *II = InvokeInst::Create(Callee, cast<BasicBlock>(NormalBB),
-                                      cast<BasicBlock>(UnwindBB),
+  InvokeInst *II = InvokeInst::Create(Callee, NormalBB, UnwindBB,
                                       Args.begin(), Args.end());
   II->setCallingConv(CC);
   II->setAttributes(PAL);

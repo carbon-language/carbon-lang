@@ -3086,6 +3086,118 @@ void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
   setSuccessor(idx, B);
 }
 
+//===----------------------------------------------------------------------===//
+//                        SwitchInst Implementation
+//===----------------------------------------------------------------------===//
+
+void IndBrInst::init(Value *Address, unsigned NumDests) {
+  assert(Address);
+  ReservedSpace = 1+NumDests;
+  NumOperands = 1;
+  OperandList = allocHungoffUses(ReservedSpace);
+  
+  OperandList[0] = Address;
+}
+
+
+/// resizeOperands - resize operands - This adjusts the length of the operands
+/// list according to the following behavior:
+///   1. If NumOps == 0, grow the operand list in response to a push_back style
+///      of operation.  This grows the number of ops by 2 times.
+///   2. If NumOps > NumOperands, reserve space for NumOps operands.
+///   3. If NumOps == NumOperands, trim the reserved space.
+///
+void IndBrInst::resizeOperands(unsigned NumOps) {
+  unsigned e = getNumOperands();
+  if (NumOps == 0) {
+    NumOps = e*2;
+  } else if (NumOps*2 > NumOperands) {
+    // No resize needed.
+    if (ReservedSpace >= NumOps) return;
+  } else if (NumOps == NumOperands) {
+    if (ReservedSpace == NumOps) return;
+  } else {
+    return;
+  }
+  
+  ReservedSpace = NumOps;
+  Use *NewOps = allocHungoffUses(NumOps);
+  Use *OldOps = OperandList;
+  for (unsigned i = 0; i != e; ++i)
+    NewOps[i] = OldOps[i];
+  OperandList = NewOps;
+  if (OldOps) Use::zap(OldOps, OldOps + e, true);
+}
+
+IndBrInst::IndBrInst(Value *Address, unsigned NumCases,
+                     Instruction *InsertBefore)
+: TerminatorInst(Type::getVoidTy(Address->getContext()), Instruction::IndBr,
+                 0, 0, InsertBefore) {
+  init(Address, NumCases);
+}
+
+IndBrInst::IndBrInst(Value *Address, unsigned NumCases, BasicBlock *InsertAtEnd)
+: TerminatorInst(Type::getVoidTy(Address->getContext()), Instruction::IndBr,
+                 0, 0, InsertAtEnd) {
+  init(Address, NumCases);
+}
+
+IndBrInst::IndBrInst(const IndBrInst &IBI)
+  : TerminatorInst(Type::getVoidTy(IBI.getContext()), Instruction::IndBr,
+                   allocHungoffUses(IBI.getNumOperands()),
+                   IBI.getNumOperands()) {
+  Use *OL = OperandList, *InOL = IBI.OperandList;
+  for (unsigned i = 0, E = IBI.getNumOperands(); i != E; ++i)
+    OL[i] = InOL[i];
+  SubclassOptionalData = IBI.SubclassOptionalData;
+}
+
+IndBrInst::~IndBrInst() {
+  dropHungoffUses(OperandList);
+}
+
+/// addDestination - Add a destination.
+///
+void IndBrInst::addDestination(BasicBlock *DestBB) {
+  unsigned OpNo = NumOperands;
+  if (OpNo+1 > ReservedSpace)
+    resizeOperands(0);  // Get more space!
+  // Initialize some new operands.
+  assert(OpNo < ReservedSpace && "Growing didn't work!");
+  NumOperands = OpNo+1;
+  OperandList[OpNo] = DestBB;
+}
+
+/// removeDestination - This method removes the specified successor from the
+/// indbr instruction.
+void IndBrInst::removeDestination(unsigned idx) {
+  assert(idx < getNumOperands()-1 && "Successor index out of range!");
+  
+  unsigned NumOps = getNumOperands();
+  Use *OL = OperandList;
+
+  // Replace this value with the last one.
+  OL[idx+1] = OL[NumOps-1];
+  
+  // Nuke the last value.
+  OL[NumOps-1].set(0);
+  NumOperands = NumOps-1;
+}
+
+BasicBlock *IndBrInst::getSuccessorV(unsigned idx) const {
+  return getSuccessor(idx);
+}
+unsigned IndBrInst::getNumSuccessorsV() const {
+  return getNumSuccessors();
+}
+void IndBrInst::setSuccessorV(unsigned idx, BasicBlock *B) {
+  setSuccessor(idx, B);
+}
+
+//===----------------------------------------------------------------------===//
+//                           clone() implementations
+//===----------------------------------------------------------------------===//
+
 // Define these methods here so vtables don't get emitted into every translation
 // unit that uses these classes.
 
@@ -3409,6 +3521,15 @@ SwitchInst *SwitchInst::clone() const {
   }
   return New;
 }
+
+IndBrInst *IndBrInst::clone() const {
+  IndBrInst *New = new IndBrInst(*this);
+  New->SubclassOptionalData = SubclassOptionalData;
+  if (hasMetadata())
+    getContext().pImpl->TheMetadata.ValueIsCloned(this, New);
+  return New;
+}
+
 
 InvokeInst *InvokeInst::clone() const {
   InvokeInst *New = new(getNumOperands()) InvokeInst(*this);

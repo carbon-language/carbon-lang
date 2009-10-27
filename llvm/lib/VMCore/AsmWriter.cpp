@@ -1832,7 +1832,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     writeOperand(BI.getSuccessor(1), true);
 
   } else if (isa<SwitchInst>(I)) {
-    // Special case switch statement to get formatting nice and correct...
+    // Special case switch instruction to get formatting nice and correct.
     Out << ' ';
     writeOperand(Operand        , true);
     Out << ", ";
@@ -1846,6 +1846,19 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(I.getOperand(op+1), true);
     }
     Out << "\n  ]";
+  } else if (isa<IndBrInst>(I)) {
+    // Special case indbr instruction to get formatting nice and correct.
+    Out << ' ';
+    writeOperand(Operand, true);
+    Out << ", ";
+    Out << " [";
+    
+    for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
+      if (i != 1)
+        Out << ", ";
+      writeOperand(I.getOperand(i), true);
+    }
+    Out << ']';
   } else if (isa<PHINode>(I)) {
     Out << ' ';
     TypePrinter.print(I.getType(), Out);

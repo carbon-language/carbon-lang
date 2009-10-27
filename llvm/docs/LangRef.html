@@ -110,6 +110,7 @@
           <li><a href="#i_ret">'<tt>ret</tt>' Instruction</a></li>
           <li><a href="#i_br">'<tt>br</tt>' Instruction</a></li>
           <li><a href="#i_switch">'<tt>switch</tt>' Instruction</a></li>
+          <li><a href="#i_indbr">'<tt>indbr</tt>' Instruction</a></li>
           <li><a href="#i_invoke">'<tt>invoke</tt>' Instruction</a></li>
           <li><a href="#i_unwind">'<tt>unwind</tt>'  Instruction</a></li>
           <li><a href="#i_unreachable">'<tt>unreachable</tt>' Instruction</a></li>
@@ -2511,6 +2512,7 @@ Instructions</a> </div>
    '<a href="#i_ret"><tt>ret</tt></a>' instruction, the
    '<a href="#i_br"><tt>br</tt></a>' instruction, the
    '<a href="#i_switch"><tt>switch</tt></a>' instruction, the
+   '<a href="#i_indbr">'<tt>indbr</tt>' Instruction, the
    '<a href="#i_invoke"><tt>invoke</tt></a>' instruction, the
    '<a href="#i_unwind"><tt>unwind</tt></a>' instruction, and the
    '<a href="#i_unreachable"><tt>unreachable</tt></a>' instruction.</p>
@@ -2668,6 +2670,54 @@ IfUnequal:
 </pre>
 
 </div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+   <a name="i_indbr">'<tt>indbr</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  indbr &lt;somety&gt;* &lt;address&gt;, [ label &lt;dest1&gt;, label &lt;dest2&gt;, ... ]
+</pre>
+
+<h5>Overview:</h5>
+
+<p>The '<tt>indbr</tt>' instruction implements an indirect branch to a label
+   within the current function, whose address is specified by
+   "<tt>address</tt>".</p>
+
+<h5>Arguments:</h5>
+
+<p>The '<tt>address</tt>' argument is the address of the label to jump to.  The
+   rest of the arguments indicate the full set of possible destinations that the
+   address may point to.  Blocks are allowed to occur multiple times in the
+   destination list, though this isn't particularly useful.</p>
+   
+<p>This destination list is required so that dataflow analysis has an accurate
+   understanding of the CFG.</p>
+
+<h5>Semantics:</h5>
+
+<p>Control transfers to the block specified in the address argument.  All
+   possible destination blocks must be listed in the label list, otherwise this
+   instruction has undefined behavior.  This implies that jumps to labels
+   defined in other functions have undefined behavior as well.</p>
+
+<h5>Implementation:</h5>
+
+<p>This is typically implemented with a jump through a register.</p>
+
+<h5>Example:</h5>
+<pre>
+ switch i8* %Addr, [ label %bb1, label %bb2, label %bb3 ]
+</pre>
+
+</div>
+
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">

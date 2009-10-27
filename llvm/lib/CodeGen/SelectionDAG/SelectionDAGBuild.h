@@ -49,6 +49,7 @@ class GetElementPtrInst;
 class GCFunctionInfo;
 class ICmpInst;
 class IntToPtrInst;
+class IndBrInst;
 class InvokeInst;
 class InsertElementInst;
 class InsertValueInst;
@@ -448,6 +449,7 @@ private:
   void visitRet(ReturnInst &I);
   void visitBr(BranchInst &I);
   void visitSwitch(SwitchInst &I);
+  void visitIndBr(IndBrInst &I);
   void visitUnreachable(UnreachableInst &I) { /* noop */ }
 
   // Helpers for visitSwitch

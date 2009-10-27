@@ -1951,7 +1951,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       }
       break;
     }
-    case bitc::FUNC_CODE_INST_SWITCH: { // SWITCH: [opty, opval, n, n x ops]
+    case bitc::FUNC_CODE_INST_SWITCH: { // SWITCH: [opty, op0, op1, ...]
       if (Record.size() < 3 || (Record.size() & 1) == 0)
         return Error("Invalid SWITCH record");
       const Type *OpTy = getTypeByID(Record[0]);
@@ -1975,7 +1975,28 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = SI;
       break;
     }
-
+    case bitc::FUNC_CODE_INST_INDBR: { // INDBR: [opty, op0, op1, ...]
+      if (Record.size() < 2)
+        return Error("Invalid INDBR record");
+      const Type *OpTy = getTypeByID(Record[0]);
+      Value *Address = getFnValueByID(Record[1], OpTy);
+      if (OpTy == 0 || Address == 0)
+        return Error("Invalid INDBR record");
+      unsigned NumDests = Record.size()-2;
+      IndBrInst *IBI = IndBrInst::Create(Address, NumDests);
+      InstructionList.push_back(IBI);
+      for (unsigned i = 0, e = NumDests; i != e; ++i) {
+        if (BasicBlock *DestBB = getBasicBlock(Record[2+i])) {
+          IBI->addDestination(DestBB);
+        } else {
+          delete IBI;
+          return Error("Invalid INDBR record!");
+        }
+      }
+      I = IBI;
+      break;
+    }
+        
     case bitc::FUNC_CODE_INST_INVOKE: {
       // INVOKE: [attrs, cc, normBB, unwindBB, fnty, op0,op1,op2, ...]
       if (Record.size() < 4) return Error("Invalid INVOKE record");

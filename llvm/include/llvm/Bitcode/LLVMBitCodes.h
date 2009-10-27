@@ -209,7 +209,7 @@ namespace bitc {
 
     FUNC_CODE_INST_RET         = 10, // RET:        [opty,opval<both optional>]
     FUNC_CODE_INST_BR          = 11, // BR:         [bb#, bb#, cond] or [bb#]
-    FUNC_CODE_INST_SWITCH      = 12, // SWITCH:     [opty, opval, n, n x ops]
+    FUNC_CODE_INST_SWITCH      = 12, // SWITCH:     [opty, operands...]
     FUNC_CODE_INST_INVOKE      = 13, // INVOKE:     [attr, fnty, op0,op1, ...]
     FUNC_CODE_INST_UNWIND      = 14, // UNWIND
     FUNC_CODE_INST_UNREACHABLE = 15, // UNREACHABLE
@@ -236,7 +236,8 @@ namespace bitc {
     FUNC_CODE_INST_CMP2        = 28, // CMP2:       [opty, opval, opval, pred]
     // new select on i1 or [N x i1]
     FUNC_CODE_INST_VSELECT     = 29, // VSELECT:    [ty,opval,opval,predty,pred]
-    FUNC_CODE_INST_INBOUNDS_GEP = 30 // INBOUNDS_GEP: [n x operands]
+    FUNC_CODE_INST_INBOUNDS_GEP= 30, // INBOUNDS_GEP: [n x operands]
+    FUNC_CODE_INST_INDBR       = 31  // INDBR:      [opty, operands...]
   };
 } // End bitc namespace
 } // End llvm namespace

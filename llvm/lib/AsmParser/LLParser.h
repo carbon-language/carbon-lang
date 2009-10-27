@@ -230,7 +230,13 @@ namespace llvm {
       Loc = Lex.getLoc();
       return ParseTypeAndValue(V, PFS);
     }
-
+    bool ParseTypeAndBasicBlock(BasicBlock *&BB, LocTy &Loc,
+                                PerFunctionState &PFS);
+    bool ParseTypeAndBasicBlock(BasicBlock *&BB, PerFunctionState &PFS) {
+      LocTy Loc;
+      return ParseTypeAndBasicBlock(BB, Loc, PFS);
+    }
+  
     struct ParamInfo {
       LocTy Loc;
       Value *V;
@@ -264,6 +270,7 @@ namespace llvm {
     bool ParseRet(Instruction *&Inst, BasicBlock *BB, PerFunctionState &PFS);
     bool ParseBr(Instruction *&Inst, PerFunctionState &PFS);
     bool ParseSwitch(Instruction *&Inst, PerFunctionState &PFS);
+    bool ParseIndBr(Instruction *&Inst, PerFunctionState &PFS);
     bool ParseInvoke(Instruction *&Inst, PerFunctionState &PFS);
 
     bool ParseArithmetic(Instruction *&I, PerFunctionState &PFS, unsigned Opc,

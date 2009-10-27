@@ -103,6 +103,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Ret:    return "ret";
   case Br:     return "br";
   case Switch: return "switch";
+  case IndBr:  return "indbr";
   case Invoke: return "invoke";
   case Unwind: return "unwind";
   case Unreachable: return "unreachable";

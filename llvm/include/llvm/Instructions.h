@@ -2076,7 +2076,7 @@ class SwitchInst : public TerminatorInst {
   // Operand[1]    = Default basic block destination
   // Operand[2n  ] = Value to match
   // Operand[2n+1] = BasicBlock to go to on match
-  SwitchInst(const SwitchInst &RI);
+  SwitchInst(const SwitchInst &SI);
   void init(Value *Value, BasicBlock *Default, unsigned NumCases);
   void resizeOperands(unsigned No);
   // allocate space for exactly zero operands
@@ -2088,7 +2088,7 @@ class SwitchInst : public TerminatorInst {
   /// be specified here to make memory allocation more efficient.  This
   /// constructor can also autoinsert before another instruction.
   SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
-             Instruction *InsertBefore = 0);
+             Instruction *InsertBefore);
 
   /// SwitchInst ctor - Create a new switch instruction, specifying a value to
   /// switch on and a default destination.  The number of additional cases can
@@ -2213,6 +2213,105 @@ struct OperandTraits<SwitchInst> : public HungoffOperandTraits<2> {
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SwitchInst, Value)
 
 
+//===----------------------------------------------------------------------===//
+//                               IndBrInst Class
+//===----------------------------------------------------------------------===//
+
+//===---------------------------------------------------------------------------
+/// IndBrInst - Indirect Branch Instruction.
+///
+class IndBrInst : public TerminatorInst {
+  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+  unsigned ReservedSpace;
+  // Operand[0]    = Value to switch on
+  // Operand[1]    = Default basic block destination
+  // Operand[2n  ] = Value to match
+  // Operand[2n+1] = BasicBlock to go to on match
+  IndBrInst(const IndBrInst &IBI);
+  void init(Value *Address, unsigned NumDests);
+  void resizeOperands(unsigned No);
+  // allocate space for exactly zero operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
+  /// IndBrInst ctor - Create a new indbr instruction, specifying an Address to
+  /// jump to.  The number of expected destinations can be specified here to
+  /// make memory allocation more efficient.  This constructor can also
+  /// autoinsert before another instruction.
+  IndBrInst(Value *Address, unsigned NumDests, Instruction *InsertBefore);
+  
+  /// IndBrInst ctor - Create a new indbr instruction, specifying an Address to
+  /// jump to.  The number of expected destinations can be specified here to
+  /// make memory allocation more efficient.  This constructor also autoinserts
+  /// at the end of the specified BasicBlock.
+  IndBrInst(Value *Address, unsigned NumDests, BasicBlock *InsertAtEnd);
+public:
+  static IndBrInst *Create(Value *Address, unsigned NumDests,
+                           Instruction *InsertBefore = 0) {
+    return new IndBrInst(Address, NumDests, InsertBefore);
+  }
+  static IndBrInst *Create(Value *Address, unsigned NumDests,
+                           BasicBlock *InsertAtEnd) {
+    return new IndBrInst(Address, NumDests, InsertAtEnd);
+  }
+  ~IndBrInst();
+  
+  /// Provide fast operand accessors.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+  
+  // Accessor Methods for IndBr instruction.
+  Value *getAddress() { return getOperand(0); }
+  const Value *getAddress() const { return getOperand(0); }
+  void setAddress(Value *V) { setOperand(0, V); }
+  
+  
+  /// getNumDestinations - return the number of possible destinations in this
+  /// indbr instruction.
+  unsigned getNumDestinations() const { return getNumOperands()-1; }
+  
+  /// getDestination - Return the specified destination.
+  BasicBlock *getDestination(unsigned i) { return getSuccessor(i); }
+  const BasicBlock *getDestination(unsigned i) const { return getSuccessor(i); }
+  
+  /// addDestination - Add a destination.
+  ///
+  void addDestination(BasicBlock *Dest);
+  
+  /// removeDestination - This method removes the specified successor from the
+  /// indbr instruction.
+  void removeDestination(unsigned i);
+  
+  virtual IndBrInst *clone() const;
+  
+  unsigned getNumSuccessors() const { return getNumOperands()-1; }
+  BasicBlock *getSuccessor(unsigned i) const {
+    return cast<BasicBlock>(getOperand(i+1));
+  }
+  void setSuccessor(unsigned i, BasicBlock *NewSucc) {
+    setOperand(i+1, (Value*)NewSucc);
+  }
+  
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const IndBrInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::IndBr;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+private:
+  virtual BasicBlock *getSuccessorV(unsigned idx) const;
+  virtual unsigned getNumSuccessorsV() const;
+  virtual void setSuccessorV(unsigned idx, BasicBlock *B);
+};
+
+template <>
+struct OperandTraits<IndBrInst> : public HungoffOperandTraits<1> {
+};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(IndBrInst, Value)
+  
+  
 //===----------------------------------------------------------------------===//
 //                               InvokeInst Class
 //===----------------------------------------------------------------------===//
