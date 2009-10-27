@@ -1127,7 +1127,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   //   to which they refer.
   if (Function->getTemplateSpecializationKind()
         == TSK_ExplicitInstantiationDeclaration &&
-      PatternDecl->isOutOfLine() && !PatternDecl->isInlineSpecified())
+      !PatternDecl->isInlined())
     return;
 
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Function);

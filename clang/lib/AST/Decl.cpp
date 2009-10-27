@@ -642,6 +642,10 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
   return NumRequiredArgs;
 }
 
+bool FunctionDecl::isInlined() const {
+  return isInlineSpecified() || (isa<CXXMethodDecl>(this) && !isOutOfLine());
+}
+
 /// \brief For an inline function definition in C, determine whether the 
 /// definition will be externally visible.
 ///
@@ -661,7 +665,7 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
 /// externally visible symbol.
 bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
   assert(isThisDeclarationADefinition() && "Must have the function definition");
-  assert(isInlineSpecified() && "Function must be inline");
+  assert(isInlined() && "Function must be inline");
   
   if (!getASTContext().getLangOptions().C99 || hasAttr<GNUInlineAttr>()) {
     // GNU inline semantics. Based on a number of examples, we came up with the
@@ -786,8 +790,7 @@ bool FunctionDecl::isImplicitlyInstantiable() const {
   if (!Pattern || !PatternDecl)
     return true;
 
-  return PatternDecl->isInlineSpecified() || 
-    (isa<CXXMethodDecl>(PatternDecl) && !PatternDecl->isOutOfLine());
+  return PatternDecl->isInlined();
 }                      
    
 FunctionDecl *FunctionDecl::getTemplateInstantiationPattern() const {

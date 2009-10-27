@@ -1051,6 +1051,11 @@ public:
   /// Set whether the "inline" keyword was specified for this function.
   void setInlineSpecified(bool I) { IsInline = I; }
 
+  /// \brief Determine whether this function should be inlined, because it is
+  /// either marked "inline" or is a member function of a C++ class that
+  /// was defined in the class body.
+  bool isInlined() const;
+                       
   bool isInlineDefinitionExternallyVisible() const;
                        
   /// isOverloadedOperator - Whether this function declaration
