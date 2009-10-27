@@ -1600,3 +1600,36 @@ in test/Transforms/SCCP/ipsccp-basic.ll:test5b.
 
 //===---------------------------------------------------------------------===//
 
+int func(int a, int b) { if (a & 0x80) b |= 0x80; else b &= ~0x80; return b; }
+
+Generates this:
+
+define i32 @func(i32 %a, i32 %b) nounwind readnone ssp {
+entry:
+  %0 = and i32 %a, 128                            ; <i32> [#uses=1]
+  %1 = icmp eq i32 %0, 0                          ; <i1> [#uses=1]
+  %2 = or i32 %b, 128                             ; <i32> [#uses=1]
+  %3 = and i32 %b, -129                           ; <i32> [#uses=1]
+  %b_addr.0 = select i1 %1, i32 %3, i32 %2        ; <i32> [#uses=1]
+  ret i32 %b_addr.0
+}
+
+However, it's functionally equivalent to:
+
+         b = (b & ~0x80) | (a & 0x80);
+
+Which generates this:
+
+define i32 @func(i32 %a, i32 %b) nounwind readnone ssp {
+entry:
+  %0 = and i32 %b, -129                           ; <i32> [#uses=1]
+  %1 = and i32 %a, 128                            ; <i32> [#uses=1]
+  %2 = or i32 %0, %1                              ; <i32> [#uses=1]
+  ret i32 %2
+}
+
+This can be generalized for other forms:
+
+     b = (b & ~0x80) | (a & 0x40) << 1;
+
+//===---------------------------------------------------------------------===//
