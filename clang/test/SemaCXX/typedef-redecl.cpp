@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s 
+// RUN: clang-cc -fsyntax-only -verify -fms-extensions=0 %s 
 typedef int INT;
 typedef INT REALLY_INT; // expected-note {{previous definition is here}}
 typedef REALLY_INT REALLY_REALLY_INT;
