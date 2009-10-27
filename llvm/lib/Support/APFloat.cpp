@@ -421,7 +421,7 @@ ulpsFromBoundary(const integerPart *parts, unsigned int bits, bool isNearest)
   unsigned int count, partBits;
   integerPart part, boundary;
 
-  assert (bits != 0);
+  assert(bits != 0);
 
   bits--;
   count = bits / integerPartWidth;
@@ -537,7 +537,7 @@ partAsHex (char *dst, integerPart part, unsigned int count,
 {
   unsigned int result = count;
 
-  assert (count != 0 && count <= integerPartWidth / 4);
+  assert(count != 0 && count <= integerPartWidth / 4);
 
   part >>= (integerPartWidth - 4 * count);
   while (count--) {
@@ -760,7 +760,7 @@ APFloat::significandParts()
 {
   assert(category == fcNormal || category == fcNaN);
 
-  if(partCount() > 1)
+  if (partCount() > 1)
     return significand.parts;
   else
     return &significand.part;
@@ -2289,8 +2289,8 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
 
     /* Both multiplySignificand and divideSignificand return the
        result with the integer bit set.  */
-    assert (APInt::tcExtractBit
-            (decSig.significandParts(), calcSemantics.precision - 1) == 1);
+    assert(APInt::tcExtractBit
+           (decSig.significandParts(), calcSemantics.precision - 1) == 1);
 
     HUerr = HUerrBound(calcLostFraction != lfExactlyZero, sigStatus != opOK,
                        powHUerr);
@@ -2593,7 +2593,7 @@ APFloat::convertNormalToHexString(char *dst, unsigned int hexDigits,
       q--;
       *q = hexDigitChars[hexDigitValue (*q) + 1];
     } while (*q == '0');
-    assert (q >= p);
+    assert(q >= p);
   } else {
     /* Add trailing zeroes.  */
     memset (dst, '0', outputDigits);
@@ -2632,6 +2632,56 @@ APFloat::getHashValue() const
   }
 }
 
+void APFloat::getIEEEFloatParts(bool &Sign, uint32_t &Exp,
+                                uint32_t &Significand) const {
+  assert(semantics == (const llvm::fltSemantics*)&IEEEsingle &&
+         "Float semantics are not IEEEsingle");
+  assert(partCount()==1);
+
+  if (category == fcNormal) {
+    Exp = exponent+127; // bias
+    Significand = (uint32_t)*significandParts();
+    if (Exp == 1 && !(Significand & 0x800000))
+      Exp = 0;   // denormal
+  } else if (category==fcZero) {
+    Exp = 0;
+    Significand = 0;
+  } else if (category==fcInfinity) {
+    Exp = 0xff;
+    Significand = 0;
+  } else {
+    assert(category == fcNaN && "Unknown category!");
+    Exp = 0xff;
+    Significand = (uint32_t)*significandParts();
+  }
+  Sign = sign;
+}
+
+void APFloat::getIEEEDoubleParts(bool &Sign, uint64_t &Exp,
+                                 uint64_t &Significand) const {
+  assert(semantics == (const llvm::fltSemantics*)&IEEEdouble &&
+         "Float semantics are not IEEEdouble");
+  assert(partCount()==1);
+
+  if (category == fcNormal) {
+    Exp = exponent+1023; // bias
+    Significand = *significandParts();
+    if (Exp == 1 && !(Significand & 0x10000000000000LL))
+      Exp = 0;   // denormal
+  } else if (category==fcZero) {
+    Exp = 0;
+    Significand = 0;
+  } else if (category==fcInfinity) {
+    Exp = 0x7ff;
+    Significand = 0;
+  } else {
+    assert(category == fcNaN && "Unknown category!");
+    Exp = 0x7ff;
+    Significand = *significandParts();
+  }
+  Sign = sign;
+}
+
 // Conversion from APFloat to/from host float/double.  It may eventually be
 // possible to eliminate these and have everybody deal with APFloats, but that
 // will take a while.  This approach will not easily extend to long double.
@@ -2645,7 +2695,7 @@ APInt
 APFloat::convertF80LongDoubleAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&x87DoubleExtended);
-  assert (partCount()==2);
+  assert(partCount()==2);
 
   uint64_t myexponent, mysignificand;
 
@@ -2677,7 +2727,7 @@ APInt
 APFloat::convertPPCDoubleDoubleAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&PPCDoubleDouble);
-  assert (partCount()==2);
+  assert(partCount()==2);
 
   uint64_t myexponent, mysignificand, myexponent2, mysignificand2;
 
@@ -2722,7 +2772,7 @@ APInt
 APFloat::convertQuadrupleAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&IEEEquad);
-  assert (partCount()==2);
+  assert(partCount()==2);
 
   uint64_t myexponent, mysignificand, mysignificand2;
 
@@ -2758,7 +2808,7 @@ APInt
 APFloat::convertDoubleAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&IEEEdouble);
-  assert (partCount()==1);
+  assert(partCount()==1);
 
   uint64_t myexponent, mysignificand;
 
@@ -2788,7 +2838,7 @@ APInt
 APFloat::convertFloatAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&IEEEsingle);
-  assert (partCount()==1);
+  assert(partCount()==1);
 
   uint32_t myexponent, mysignificand;
 
@@ -2817,7 +2867,7 @@ APInt
 APFloat::convertHalfAPFloatToAPInt() const
 {
   assert(semantics == (const llvm::fltSemantics*)&IEEEhalf);
-  assert (partCount()==1);
+  assert(partCount()==1);
 
   uint32_t myexponent, mysignificand;
 

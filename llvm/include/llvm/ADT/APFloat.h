@@ -277,6 +277,13 @@ namespace llvm {
     /* Return an arbitrary integer value usable for hashing. */
     uint32_t getHashValue() const;
 
+    /// getIEEEFloatParts / getIEEEDoubleParts - Return exponent, significant,
+    /// and sign bit of an IEEE float / IEEE double value.
+    void getIEEEFloatParts(bool &Sign, uint32_t &Exp,
+                           uint32_t &Significant) const;
+    void getIEEEDoubleParts(bool &Sign, uint64_t &Exp,
+                            uint64_t &Significant) const;
+
   private:
 
     /* Trivial queries.  */
