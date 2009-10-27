@@ -619,7 +619,16 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD,
                "Ret value not consistent in function!");
         PHI->addIncoming(RI->getReturnValue(), RI->getParent());
       }
+    
+      // Now that we inserted the PHI, check to see if it has a single value
+      // (e.g. all the entries are the same or undef).  If so, remove the PHI so
+      // it doesn't block other optimizations.
+      if (Value *V = PHI->hasConstantValue()) {
+        PHI->replaceAllUsesWith(V);
+        PHI->eraseFromParent();
+      }
     }
+
 
     // Add a branch to the merge points and remove return instructions.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
