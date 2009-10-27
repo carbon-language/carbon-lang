@@ -19,7 +19,6 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Attributes.h"
-#include "llvm/BasicBlock.h"
 #include "llvm/CallingConv.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1797,7 +1796,7 @@ public:
   
   
   void setIncomingBlock(unsigned i, BasicBlock *BB) {
-    setOperand(i*2+1, BB);
+    setOperand(i*2+1, (Value*)BB);
   }
   static unsigned getOperandNumForIncomingBlock(unsigned i) {
     return i*2+1;
@@ -1820,7 +1819,7 @@ public:
     // Initialize some new operands.
     NumOperands = OpNo+2;
     OperandList[OpNo] = V;
-    OperandList[OpNo+1] = BB;
+    OperandList[OpNo+1] = (Value*)BB;
   }
 
   /// removeIncomingValue - Remove an incoming value.  This is useful if a
@@ -1845,7 +1844,7 @@ public:
   int getBasicBlockIndex(const BasicBlock *BB) const {
     Use *OL = OperandList;
     for (unsigned i = 0, e = getNumOperands(); i != e; i += 2)
-      if (OL[i+1].get() == BB) return i/2;
+      if (OL[i+1].get() == (const Value*)BB) return i/2;
     return -1;
   }
 
@@ -2024,7 +2023,7 @@ public:
   // targeting the specified block.
   // FIXME: Eliminate this ugly method.
   void setUnconditionalDest(BasicBlock *Dest) {
-    Op<-1>() = Dest;
+    Op<-1>() = (Value*)Dest;
     if (isConditional()) {  // Convert this to an uncond branch.
       Op<-2>() = 0;
       Op<-3>() = 0;
@@ -2042,7 +2041,7 @@ public:
 
   void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < getNumSuccessors() && "Successor # out of range for Branch!");
-    *(&Op<-1>() - idx) = NewSucc;
+    *(&Op<-1>() - idx) = (Value*)NewSucc;
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -2184,7 +2183,7 @@ public:
   }
   void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < getNumSuccessors() && "Successor # out of range for switch!");
-    setOperand(idx*2+1, NewSucc);
+    setOperand(idx*2+1, (Value*)NewSucc);
   }
 
   // getSuccessorValue - Return the value associated with the specified
@@ -2393,11 +2392,11 @@ public:
     return cast<BasicBlock>(getOperand(2));
   }
   void setNormalDest(BasicBlock *B) {
-    setOperand(1, B);
+    setOperand(1, (Value*)B);
   }
 
   void setUnwindDest(BasicBlock *B) {
-    setOperand(2, B);
+    setOperand(2, (Value*)B);
   }
 
   BasicBlock *getSuccessor(unsigned i) const {
@@ -2407,7 +2406,7 @@ public:
 
   void setSuccessor(unsigned idx, BasicBlock *NewSucc) {
     assert(idx < 2 && "Successor # out of range for invoke!");
-    setOperand(idx+1, NewSucc);
+    setOperand(idx+1, (Value*)NewSucc);
   }
 
   unsigned getNumSuccessors() const { return 2; }
