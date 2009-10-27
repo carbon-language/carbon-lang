@@ -83,7 +83,7 @@
       <li><a href="#complexconstants">Complex Constants</a></li>
       <li><a href="#globalconstants">Global Variable and Function Addresses</a></li>
       <li><a href="#undefvalues">Undefined Values</a></li>
-      <li><a href="#blockaddress">Address of Basic Block</a></li>
+      <li><a href="#blockaddress">Addresses of Basic Blocks</a></li>
       <li><a href="#constantexprs">Constant Expressions</a></li>
       <li><a href="#metadata">Embedded Metadata</a></li>
     </ol>
@@ -2172,8 +2172,8 @@ has undefined behavior.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="blockaddress">Address of Basic
-    Block</a></div>
+<div class="doc_subsection"><a name="blockaddress">Addresses of Basic
+    Blocks</a></div>
 <div class="doc_text">
 
 <p><b><tt>blockaddress(@function, %block)</tt></b></p>
@@ -2186,7 +2186,12 @@ has undefined behavior.</p>
    '<a href="#i_indbr"><tt>indbr</tt></a>' instruction or for comparisons
    against null.  Pointer equality tests between labels addresses is undefined
    behavior - though, again, comparison against null is ok, and no label is
-   equal to the null pointer.  Some targets may provide defined semantics when
+   equal to the null pointer.  This may also be passed around as an opaque
+   pointer sized value as long as the bits are not inspected.  This allows
+   ptrtoint and arithmetic to be performed on these values so long as the
+   original value is reconsistituted before the <tt>indbr</tt>.</p>
+   
+<p>Finally, some targets may provide defined semantics when
    using the value as the operand to an inline assembly, but that is target
    specific.
    </p>
