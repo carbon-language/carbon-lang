@@ -157,11 +157,6 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
 
   setStackPointerRegisterToSaveRestore(Alpha::R30);
 
-  addLegalFPImmediate(APFloat(+0.0)); //F31
-  addLegalFPImmediate(APFloat(+0.0f)); //F31
-  addLegalFPImmediate(APFloat(-0.0)); //-F31
-  addLegalFPImmediate(APFloat(-0.0f)); //-F31
-
   setJumpBufSize(272);
   setJumpBufAlignment(16);
 
@@ -918,4 +913,12 @@ bool
 AlphaTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   // The Alpha target isn't yet aware of offsets.
   return false;
+}
+
+bool AlphaTargetLowering::isFPImmLegal(const APFloat &Imm) const {
+  // +0.0   F31
+  // +0.0f  F31
+  // -0.0  -F31
+  // -0.0f -F31
+  return Imm.isZero() || Imm.isNegZero();
 }

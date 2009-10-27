@@ -102,6 +102,11 @@ namespace llvm {
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
 
+    /// isFPImmLegal - Returns true if the target can instruction select the
+    /// specified FP immediate natively. If false, the legalizer will
+    /// materialize the FP immediate as a load from a constant pool.
+    virtual bool isFPImmLegal(const APFloat &Imm) const;
+
   private:
     // Helpers for custom lowering.
     void LowerVAARG(SDNode *N, SDValue &Chain, SDValue &DataPtr,

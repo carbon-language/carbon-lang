@@ -53,11 +53,6 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   if (!UseSoftFloat) {
     addRegisterClass(MVT::f32, SystemZ::FP32RegisterClass);
     addRegisterClass(MVT::f64, SystemZ::FP64RegisterClass);
-
-    addLegalFPImmediate(APFloat(+0.0));  // lzer
-    addLegalFPImmediate(APFloat(+0.0f)); // lzdr
-    addLegalFPImmediate(APFloat(-0.0));  // lzer + lner
-    addLegalFPImmediate(APFloat(-0.0f)); // lzdr + lndr
   }
 
   // Compute derived properties from the register classes
@@ -167,6 +162,17 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     llvm_unreachable("Should not custom lower this!");
     return SDValue();
   }
+}
+
+bool SystemZTargetLowering::isFPImmLegal(const APFloat &Imm) const {
+  if (UseSoftFloat)
+    return false;
+
+  // +0.0  lzer
+  // +0.0f lzdr
+  // -0.0  lzer + lner
+  // -0.0f lzdr + lndr
+  return Imm.isZero() || Imm.isNegZero();
 }
 
 //===----------------------------------------------------------------------===//

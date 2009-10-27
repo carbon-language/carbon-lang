@@ -325,12 +325,11 @@ public:
   /// scalarizing vs using the wider vector type.
   virtual EVT getWidenVectorType(EVT VT) const;
 
-  typedef std::vector<APFloat>::const_iterator legal_fpimm_iterator;
-  legal_fpimm_iterator legal_fpimm_begin() const {
-    return LegalFPImmediates.begin();
-  }
-  legal_fpimm_iterator legal_fpimm_end() const {
-    return LegalFPImmediates.end();
+  /// isFPImmLegal - Returns true if the target can instruction select the
+  /// specified FP immediate natively. If false, the legalizer will materialize
+  /// the FP immediate as a load from a constant pool.
+  virtual bool isFPImmLegal(const APFloat &Imm) const {
+    return false;
   }
   
   /// isShuffleMaskLegal - Targets can use this to indicate that they only
@@ -1051,12 +1050,6 @@ protected:
     PromoteToType[std::make_pair(Opc, OrigVT.SimpleTy)] = DestVT.SimpleTy;
   }
 
-  /// addLegalFPImmediate - Indicate that this target can instruction select
-  /// the specified FP immediate natively.
-  void addLegalFPImmediate(const APFloat& Imm) {
-    LegalFPImmediates.push_back(Imm);
-  }
-
   /// setTargetDAGCombine - Targets should invoke this method for each target
   /// independent node that they want to provide a custom DAG combiner for by
   /// implementing the PerformDAGCombine virtual method.
@@ -1695,8 +1688,6 @@ private:
   uint64_t CondCodeActions[ISD::SETCC_INVALID];
 
   ValueTypeActionImpl ValueTypeActions;
-
-  std::vector<APFloat> LegalFPImmediates;
 
   std::vector<std::pair<EVT, TargetRegisterClass*> > AvailableRegClasses;
 

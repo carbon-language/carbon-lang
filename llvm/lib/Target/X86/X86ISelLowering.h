@@ -499,6 +499,11 @@ namespace llvm {
     /// from i32 to i8 but not from i32 to i16.
     virtual bool isNarrowingProfitable(EVT VT1, EVT VT2) const;
 
+    /// isFPImmLegal - Returns true if the target can instruction select the
+    /// specified FP immediate natively. If false, the legalizer will
+    /// materialize the FP immediate as a load from a constant pool.
+    virtual bool isFPImmLegal(const APFloat &Imm) const;
+
     /// isShuffleMaskLegal - Targets can use this to indicate that they only
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
     /// By default, if a target supports the VECTOR_SHUFFLE node, all mask
@@ -583,6 +588,15 @@ namespace llvm {
     /// When SSE2 is available, use it for f64 operations.
     bool X86ScalarSSEf32;
     bool X86ScalarSSEf64;
+
+    /// LegalFPImmediates - A list of legal fp immediates.
+    std::vector<APFloat> LegalFPImmediates;
+
+    /// addLegalFPImmediate - Indicate that this x86 target can instruction
+    /// select the specified FP immediate natively.
+    void addLegalFPImmediate(const APFloat& Imm) {
+      LegalFPImmediates.push_back(Imm);
+    }
 
     SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
                             CallingConv::ID CallConv, bool isVarArg,

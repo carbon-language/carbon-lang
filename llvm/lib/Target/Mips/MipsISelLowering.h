@@ -146,6 +146,11 @@ namespace llvm {
               EVT VT) const;
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
+
+    /// isFPImmLegal - Returns true if the target can instruction select the
+    /// specified FP immediate natively. If false, the legalizer will
+    /// materialize the FP immediate as a load from a constant pool.
+    virtual bool isFPImmLegal(const APFloat &Imm) const;
   };
 }
 

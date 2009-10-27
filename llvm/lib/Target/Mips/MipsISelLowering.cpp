@@ -72,9 +72,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
     if (!Subtarget->isFP64bit())
       addRegisterClass(MVT::f64, Mips::AFGR64RegisterClass);
 
-  // Legal fp constants
-  addLegalFPImmediate(APFloat(+0.0f));
-
   // Load extented operations for i1 types must be promoted 
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1,  Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
@@ -1223,4 +1220,8 @@ bool
 MipsTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   // The Mips target isn't yet aware of offsets.
   return false;
+}
+
+bool MipsTargetLowering::isFPImmLegal(const APFloat &Imm) const {
+  return Imm.isZero();
 }

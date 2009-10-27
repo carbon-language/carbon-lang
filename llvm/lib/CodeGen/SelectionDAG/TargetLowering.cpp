@@ -481,7 +481,7 @@ TargetLowering::TargetLowering(TargetMachine &tm,TargetLoweringObjectFile *tlof)
   setOperationAction(ISD::PREFETCH, MVT::Other, Expand);
   
   // ConstantFP nodes default to expand.  Targets can either change this to 
-  // Legal, in which case all fp constants are legal, or use addLegalFPImmediate
+  // Legal, in which case all fp constants are legal, or use isFPImmLegal()
   // to optimize expansions for certain constants.
   setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);

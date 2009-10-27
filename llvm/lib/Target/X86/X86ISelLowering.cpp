@@ -2310,6 +2310,17 @@ static bool hasFPCMov(unsigned X86CC) {
   }
 }
 
+/// isFPImmLegal - Returns true if the target can instruction select the
+/// specified FP immediate natively. If false, the legalizer will
+/// materialize the FP immediate as a load from a constant pool.
+bool X86TargetLowering::isFPImmLegal(const APFloat &Imm) const {
+  for (unsigned i = 0, e = LegalFPImmediates.size(); i != e; ++i) {
+    if (Imm.bitwiseIsEqual(LegalFPImmediates[i]))
+      return true;
+  }
+  return false;
+}
+
 /// isUndefOrInRange - Return true if Val is undef or if its value falls within
 /// the specified range (L, H].
 static bool isUndefOrInRange(int Val, int Low, int Hi) {
