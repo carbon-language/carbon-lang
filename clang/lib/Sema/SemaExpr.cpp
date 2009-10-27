@@ -3525,7 +3525,10 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
       compositeType = Context.getObjCIdType();
     } else if (LHSTy->isObjCIdType() || RHSTy->isObjCIdType()) {
       compositeType = Context.getObjCIdType();
-    } else {
+    } else if (!(compositeType = 
+                 Context.areCommonBaseCompatible(LHSOPT, RHSOPT)).isNull())
+      ;
+    else {
       Diag(QuestionLoc, diag::ext_typecheck_cond_incompatible_operands)
         << LHSTy << RHSTy
         << LHS->getSourceRange() << RHS->getSourceRange();

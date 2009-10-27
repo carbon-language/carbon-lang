@@ -3846,6 +3846,28 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
   return false;
 }
 
+/// areCommonBaseCompatible - Returns common base class of the two classes if
+/// one found. Note that this is O'2 algorithm. But it will be called as the
+/// last type comparison in a ?-exp of ObjC pointer types before a 
+/// warning is issued. So, its invokation is extremely rare.
+QualType ASTContext::areCommonBaseCompatible(
+                                          const ObjCObjectPointerType *LHSOPT,
+                                          const ObjCObjectPointerType *RHSOPT) {
+  const ObjCInterfaceType* LHS = LHSOPT->getInterfaceType();
+  const ObjCInterfaceType* RHS = RHSOPT->getInterfaceType();
+  if (!LHS || !RHS)
+    return QualType();
+  
+  while (const ObjCInterfaceDecl *LHSIDecl = LHS->getDecl()->getSuperClass()) {
+    QualType LHSTy = getObjCInterfaceType(LHSIDecl);
+    LHS = LHSTy->getAs<ObjCInterfaceType>();
+    if (canAssignObjCInterfaces(LHS, RHS))
+      return getObjCObjectPointerType(LHSTy);
+  }
+    
+  return QualType();
+}
+
 bool ASTContext::canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
                                          const ObjCInterfaceType *RHS) {
   // Verify that the base decls are compatible: the RHS must be a subclass of

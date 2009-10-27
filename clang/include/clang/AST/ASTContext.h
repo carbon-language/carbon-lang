@@ -1019,7 +1019,9 @@ public:
   bool canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
                                const ObjCInterfaceType *RHS);
   bool areComparableObjCPointerTypes(QualType LHS, QualType RHS);
-
+  QualType areCommonBaseCompatible(const ObjCObjectPointerType *LHSOPT,
+                                   const ObjCObjectPointerType *RHSOPT);
+  
   // Functions for calculating composite types
   QualType mergeTypes(QualType, QualType);
   QualType mergeFunctionTypes(QualType, QualType);
