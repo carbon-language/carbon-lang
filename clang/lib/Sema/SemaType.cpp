@@ -1694,13 +1694,10 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
   if (const RecordType *Record = T->getAs<RecordType>()) {
     if (ClassTemplateSpecializationDecl *ClassTemplateSpec
           = dyn_cast<ClassTemplateSpecializationDecl>(Record->getDecl())) {
-      if (ClassTemplateSpec->getSpecializationKind() == TSK_Undeclared) {
-        if (Loc.isValid())
-          ClassTemplateSpec->setPointOfInstantiation(Loc);
-        return InstantiateClassTemplateSpecialization(ClassTemplateSpec,
+      if (ClassTemplateSpec->getSpecializationKind() == TSK_Undeclared)
+        return InstantiateClassTemplateSpecialization(Loc, ClassTemplateSpec,
                                                       TSK_ImplicitInstantiation,
                                                       /*Complain=*/diag != 0);
-      }
     } else if (CXXRecordDecl *Rec
                  = dyn_cast<CXXRecordDecl>(Record->getDecl())) {
       if (CXXRecordDecl *Pattern = Rec->getInstantiatedFromMemberClass()) {
@@ -1708,13 +1705,11 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
         assert(MSInfo && "Missing member specialization information?");
         // This record was instantiated from a class within a template.
         if (MSInfo->getTemplateSpecializationKind() 
-                                               != TSK_ExplicitSpecialization) {
-          MSInfo->setPointOfInstantiation(Loc);
+                                               != TSK_ExplicitSpecialization)
           return InstantiateClass(Loc, Rec, Pattern,
                                   getTemplateInstantiationArgs(Rec),
                                   TSK_ImplicitInstantiation,
                                   /*Complain=*/diag != 0);
-        }
       }
     }
   }

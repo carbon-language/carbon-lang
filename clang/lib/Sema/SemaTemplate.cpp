@@ -3726,8 +3726,6 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   Specialization->setLexicalDeclContext(CurContext);
   CurContext->addDecl(Specialization);
 
-  Specialization->setPointOfInstantiation(TemplateNameLoc);
-
   // C++ [temp.explicit]p3:
   //   A definition of a class template or class member template
   //   shall be in scope at the point of the explicit instantiation of
@@ -3739,7 +3737,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
     = cast_or_null<ClassTemplateSpecializationDecl>(
                                         Specialization->getDefinition(Context));
   if (!Def)
-    InstantiateClassTemplateSpecialization(Specialization, TSK);
+    InstantiateClassTemplateSpecialization(TemplateNameLoc, Specialization, TSK);
   else // Instantiate the members of this class template specialization.
     InstantiateClassTemplateSpecializationMembers(TemplateNameLoc, Def, TSK);
 
@@ -4280,6 +4278,13 @@ namespace {
     /// \brief Returns the name of the entity whose type is being rebuilt.
     DeclarationName getBaseEntity() { return Entity; }
 
+    /// \brief Sets the "base" location and entity when that
+    /// information is known based on another transformation.
+    void setBase(SourceLocation Loc, DeclarationName Entity) {
+      this->Loc = Loc;
+      this->Entity = Entity;
+    }
+      
     /// \brief Transforms an expression by returning the expression itself
     /// (an identity function).
     ///

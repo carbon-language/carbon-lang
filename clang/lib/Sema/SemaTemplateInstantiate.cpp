@@ -392,6 +392,13 @@ namespace {
     /// \brief Returns the name of the entity being instantiated, if any.
     DeclarationName getBaseEntity() { return Entity; }
 
+    /// \brief Sets the "base" location and entity when that
+    /// information is known based on another transformation.
+    void setBase(SourceLocation Loc, DeclarationName Entity) {
+      this->Loc = Loc;
+      this->Entity = Entity;
+    }
+      
     /// \brief Transform the given declaration by instantiating a reference to
     /// this declaration.
     Decl *TransformDecl(Decl *D);
@@ -849,6 +856,10 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
         = Instantiation->getMemberSpecializationInfo()) {
     MSInfo->setTemplateSpecializationKind(TSK);
     MSInfo->setPointOfInstantiation(PointOfInstantiation);
+  } else if (ClassTemplateSpecializationDecl *Spec 
+               = dyn_cast<ClassTemplateSpecializationDecl>(Instantiation)) {
+    Spec->setTemplateSpecializationKind(TSK);
+    Spec->setPointOfInstantiation(PointOfInstantiation);
   }
   
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Instantiation);
@@ -915,6 +926,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
 bool
 Sema::InstantiateClassTemplateSpecialization(
+                           SourceLocation PointOfInstantiation,
                            ClassTemplateSpecializationDecl *ClassTemplateSpec,
                            TemplateSpecializationKind TSK,
                            bool Complain) {
@@ -932,10 +944,9 @@ Sema::InstantiateClassTemplateSpecialization(
       // declaration (C++0x [temp.explicit]p10); go ahead and perform the
       // explicit instantiation.
       ClassTemplateSpec->setSpecializationKind(TSK);
-      InstantiateClassTemplateSpecializationMembers(
-                        /*FIXME?*/ClassTemplateSpec->getPointOfInstantiation(), 
-                                  ClassTemplateSpec,
-                                  TSK);
+      InstantiateClassTemplateSpecializationMembers(PointOfInstantiation,
+                                                    ClassTemplateSpec,
+                                                    TSK);
       return false;
     }
     
@@ -1019,8 +1030,7 @@ Sema::InstantiateClassTemplateSpecialization(
     if (Ambiguous) {
       // Partial ordering did not produce a clear winner. Complain.
       ClassTemplateSpec->setInvalidDecl();
-      Diag(ClassTemplateSpec->getPointOfInstantiation(),
-           diag::err_partial_spec_ordering_ambiguous)
+      Diag(PointOfInstantiation, diag::err_partial_spec_ordering_ambiguous)
         << ClassTemplateSpec;
       
       // Print the matching partial specializations.
@@ -1053,12 +1063,9 @@ Sema::InstantiateClassTemplateSpecialization(
     Pattern = OrigTemplate->getTemplatedDecl();
   }
 
-  // Note that this is an instantiation.
-  ClassTemplateSpec->setSpecializationKind(TSK);
-
-  bool Result = InstantiateClass(ClassTemplateSpec->getPointOfInstantiation(),
-                                 ClassTemplateSpec, Pattern,
-                              getTemplateInstantiationArgs(ClassTemplateSpec),
+  bool Result = InstantiateClass(PointOfInstantiation, ClassTemplateSpec, 
+                                 Pattern,
+                                getTemplateInstantiationArgs(ClassTemplateSpec),
                                  TSK,
                                  Complain);
 

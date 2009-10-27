@@ -3189,7 +3189,7 @@ public:
                    bool Complain = true);
 
   bool
-  InstantiateClassTemplateSpecialization(
+  InstantiateClassTemplateSpecialization(SourceLocation PointOfInstantiation,
                            ClassTemplateSpecializationDecl *ClassTemplateSpec,
                            TemplateSpecializationKind TSK,
                            bool Complain = true);

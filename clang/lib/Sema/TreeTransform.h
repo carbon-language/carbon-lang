@@ -1884,6 +1884,7 @@ TreeTransform<Derived>::TransformTemplateArgument(const TemplateArgument &Arg) {
     return Arg;
 
   case TemplateArgument::Type: {
+    TemporaryBase Rebase(*this, Arg.getLocation(), DeclarationName());
     QualType T = getDerived().TransformType(Arg.getAsType());
     if (T.isNull())
       return TemplateArgument();
@@ -1891,6 +1892,10 @@ TreeTransform<Derived>::TransformTemplateArgument(const TemplateArgument &Arg) {
   }
 
   case TemplateArgument::Declaration: {
+    DeclarationName Name;
+    if (NamedDecl *ND = dyn_cast<NamedDecl>(Arg.getAsDecl()))
+      Name = ND->getDeclName();
+    TemporaryBase Rebase(*this, Arg.getLocation(), Name);
     Decl *D = getDerived().TransformDecl(Arg.getAsDecl());
     if (!D)
       return TemplateArgument();
