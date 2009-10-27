@@ -20,7 +20,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/ValueMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringMap.h"
@@ -139,7 +139,7 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   DbgScope *FunctionDbgScope;
   
   /// DbgScopeMap - Tracks the scopes in the current function.
-  DenseMap<MDNode *, DbgScope *> DbgScopeMap;
+  ValueMap<MDNode *, DbgScope *> DbgScopeMap;
 
   /// ScopedGVs - Tracks global variables that are not at file scope.
   /// For example void f() { static int b = 42; }
@@ -156,16 +156,16 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
 
   /// DbgAbstractScopeMap - Tracks abstract instance scopes in the current
   /// function.
-  DenseMap<MDNode *, DbgScope *> DbgAbstractScopeMap;
+  ValueMap<MDNode *, DbgScope *> DbgAbstractScopeMap;
 
   /// DbgConcreteScopeMap - Tracks concrete instance scopes in the current
   /// function.
-  DenseMap<MDNode *,
+  ValueMap<MDNode *,
            SmallVector<DbgScope *, 8> > DbgConcreteScopeMap;
 
   /// InlineInfo - Keep track of inlined functions and their location.  This
   /// information is used to populate debug_inlined section.
-  DenseMap<MDNode *, SmallVector<unsigned, 4> > InlineInfo;
+  ValueMap<MDNode *, SmallVector<unsigned, 4> > InlineInfo;
 
   /// AbstractInstanceRootMap - Map of abstract instance roots of inlined
   /// functions. These are subroutine entries that contain a DW_AT_inline

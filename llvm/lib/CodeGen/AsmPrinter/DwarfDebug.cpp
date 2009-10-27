@@ -1304,15 +1304,16 @@ DIE *DwarfDebug::CreateDbgScopeVariable(DbgVariable *DV, CompileUnit *Unit) {
 ///
 DbgScope *DwarfDebug::getDbgScope(MDNode *N, const MachineInstr *MI,
                                   MDNode *InlinedAt) {
-  DbgScope *&Slot = DbgScopeMap[N];
-  if (Slot) return Slot;
+  ValueMap<MDNode *, DbgScope *>::iterator VI = DbgScopeMap.find(N);
+  if (VI != DbgScopeMap.end())
+    return VI->second;
 
   DbgScope *Parent = NULL;
 
   if (InlinedAt) {
     DILocation IL(InlinedAt);
     assert (!IL.isNull() && "Invalid InlindAt location!");
-    DenseMap<MDNode *, DbgScope *>::iterator DSI = 
+    ValueMap<MDNode *, DbgScope *>::iterator DSI = 
       DbgScopeMap.find(IL.getScope().getNode());
     assert (DSI != DbgScopeMap.end() && "Unable to find InlineAt scope!");
     Parent = DSI->second;
@@ -1334,17 +1335,18 @@ DbgScope *DwarfDebug::getDbgScope(MDNode *N, const MachineInstr *MI,
       assert (0 && "Unexpected scope info");
   }
 
-  Slot = new DbgScope(Parent, DIDescriptor(N), InlinedAt);
-  Slot->setFirstInsn(MI);
+  DbgScope *NScope = new DbgScope(Parent, DIDescriptor(N), InlinedAt);
+  NScope->setFirstInsn(MI);
 
   if (Parent)
-    Parent->AddScope(Slot);
+    Parent->AddScope(NScope);
   else
     // First function is top level function.
     if (!FunctionDbgScope)
-      FunctionDbgScope = Slot;
+      FunctionDbgScope = NScope;
 
-  return Slot;
+  DbgScopeMap.insert(std::make_pair(N, NScope));
+  return NScope;
 }
 
 
@@ -1812,7 +1814,7 @@ void DwarfDebug::CollectVariableInfo() {
     if (DV.isNull()) continue;
     unsigned VSlot = VI->second;
     DbgScope *Scope = NULL;
-    DenseMap<MDNode *, DbgScope *>::iterator DSI = 
+    ValueMap<MDNode *, DbgScope *>::iterator DSI = 
       DbgScopeMap.find(DV.getContext().getNode());
     if (DSI != DbgScopeMap.end()) 
       Scope = DSI->second;
@@ -1884,8 +1886,10 @@ bool DwarfDebug::ExtractScopeInformation(MachineFunction *MF) {
 
   // If a scope's last instruction is not set then use its child scope's
   // last instruction as this scope's last instrunction.
-  for (DenseMap<MDNode *, DbgScope *>::iterator DI = DbgScopeMap.begin(),
+  for (ValueMap<MDNode *, DbgScope *>::iterator DI = DbgScopeMap.begin(),
 	 DE = DbgScopeMap.end(); DI != DE; ++DI) {
+    DbgScope *S = DI->second;
+    if (!S) continue;
     assert (DI->second->getFirstInsn() && "Invalid first instruction!");
     DI->second->FixInstructionMarkers();
     assert (DI->second->getLastInsn() && "Invalid last instruction!");
@@ -1895,10 +1899,10 @@ bool DwarfDebug::ExtractScopeInformation(MachineFunction *MF) {
   // and end of a scope respectively. Create an inverse map that list scopes
   // starts (and ends) with an instruction. One instruction may start (or end)
   // multiple scopes.
-  for (DenseMap<MDNode *, DbgScope *>::iterator DI = DbgScopeMap.begin(),
+  for (ValueMap<MDNode *, DbgScope *>::iterator DI = DbgScopeMap.begin(),
 	 DE = DbgScopeMap.end(); DI != DE; ++DI) {
     DbgScope *S = DI->second;
-    assert (S && "DbgScope is missing!");
+    if (!S) continue;
     const MachineInstr *MI = S->getFirstInsn();
     assert (MI && "DbgScope does not have first instruction!");
 
@@ -2172,7 +2176,7 @@ void DwarfDebug::RecordVariable(MDNode *N, unsigned FrameIndex) {
     if (!SP.isNull()) {
       // SP is inserted into DbgAbstractScopeMap when inlined function
       // start was recorded by RecordInlineFnStart.
-      DenseMap<MDNode *, DbgScope *>::iterator
+      ValueMap<MDNode *, DbgScope *>::iterator
         I = DbgAbstractScopeMap.find(SP.getNode());
       if (I != DbgAbstractScopeMap.end()) {
         InlinedVar = true;
@@ -2249,7 +2253,7 @@ unsigned DwarfDebug::RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
   LexicalScopeStack.back()->AddConcreteInst(ConcreteScope);
 
   // Keep track of the concrete scope that's inlined into this function.
-  DenseMap<MDNode *, SmallVector<DbgScope *, 8> >::iterator
+  ValueMap<MDNode *, SmallVector<DbgScope *, 8> >::iterator
     SI = DbgConcreteScopeMap.find(Node);
 
   if (SI == DbgConcreteScopeMap.end())
@@ -2258,7 +2262,7 @@ unsigned DwarfDebug::RecordInlinedFnStart(DISubprogram &SP, DICompileUnit CU,
     SI->second.push_back(ConcreteScope);
 
   // Track the start label for this inlined function.
-  DenseMap<MDNode *, SmallVector<unsigned, 4> >::iterator
+  ValueMap<MDNode *, SmallVector<unsigned, 4> >::iterator
     I = InlineInfo.find(Node);
 
   if (I == InlineInfo.end())
@@ -2281,7 +2285,7 @@ unsigned DwarfDebug::RecordInlinedFnEnd(DISubprogram &SP) {
     DebugTimer->startTimer();
 
   MDNode *Node = SP.getNode();
-  DenseMap<MDNode *, SmallVector<DbgScope *, 8> >::iterator
+  ValueMap<MDNode *, SmallVector<DbgScope *, 8> >::iterator
     I = DbgConcreteScopeMap.find(Node);
 
   if (I == DbgConcreteScopeMap.end()) {
@@ -2989,7 +2993,7 @@ void DwarfDebug::EmitDebugInlineInfo() {
   Asm->EmitInt16(dwarf::DWARF_VERSION); Asm->EOL("Dwarf Version");
   Asm->EmitInt8(TD->getPointerSize()); Asm->EOL("Address Size (in bytes)");
 
-  for (DenseMap<MDNode *, SmallVector<unsigned, 4> >::iterator
+  for (ValueMap<MDNode *, SmallVector<unsigned, 4> >::iterator
          I = InlineInfo.begin(), E = InlineInfo.end(); I != E; ++I) {
     MDNode *Node = I->first;
     SmallVector<unsigned, 4> &Labels = I->second;
