@@ -199,7 +199,7 @@ private:
 template<typename KeyT, typename ValueT, typename Config, typename ValueInfoT>
 class ValueMapCallbackVH : public CallbackVH {
   friend class ValueMap<KeyT, ValueT, Config, ValueInfoT>;
-  friend class DenseMapInfo<ValueMapCallbackVH>;
+  friend struct DenseMapInfo<ValueMapCallbackVH>;
   typedef ValueMap<KeyT, ValueT, Config, ValueInfoT> ValueMapT;
   typedef typename llvm::remove_pointer<KeyT>::type KeySansPointerT;
 
