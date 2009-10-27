@@ -1,7 +1,8 @@
-; RUN: llc < %s -march=arm | grep {str r1, \\\[r.*, -r.*, lsl #2\}
+; RUN: llc < %s -march=arm | FileCheck %s
 
 define void @test(i32* %P, i32 %A, i32 %i) nounwind {
 entry:
+; CHECK: str r1, [{{r.*}}, -{{r.*}}, lsl #2]
         icmp eq i32 %i, 0               ; <i1>:0 [#uses=1]
         br i1 %0, label %return, label %bb
 
