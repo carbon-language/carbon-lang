@@ -16,8 +16,7 @@
 // Uses Darwin calling convention where a double precision result is 
 // return in GPR register pair.
 //
-	.globl ___floatsidfvfp
-___floatsidfvfp:
+DEFINE_COMPILERRT_FUNCTION(__floatsidfvfp)
 	fmsr	s15, r0		   // move int to float register s15
 	fsitod	d7, s15        // convert 32-bit int in s15 to double in d7
 	fmrrd	r0, r1, d7     // move d7 to result register pair r0/r1

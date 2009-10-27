@@ -18,8 +18,7 @@ twop84: .quad 0x4530000000000000
 
 .text
 .align 4
-.globl ___floatundixf
-___floatundixf:
+DEFINE_COMPILERRT_FUNCTION(__floatundixf)
 	calll	0f
 0:	popl	%eax
 	movss	8(%esp),			%xmm0	// hi 32 bits of input

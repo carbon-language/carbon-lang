@@ -16,8 +16,7 @@
 // Uses Darwin calling convention where double precision arguments are passsed 
 // like in GPR pairs.
 //
-	.globl ___gedf2vfp
-___gedf2vfp:
+DEFINE_COMPILERRT_FUNCTION(__gedf2vfp)
 	fmdrr	d6, r0, r1	// load r0/r1 pair in double register
 	fmdrr	d7, r2, r3	// load r2/r3 pair in double register
 	fcmpd	d6, d7		

@@ -16,8 +16,7 @@
 
 .text
 .align 4
-.globl ___floatdisf
-___floatdisf:
+DEFINE_COMPILERRT_FUNCTION(__floatdisf)
 #ifndef TRUST_CALLERS_USE_64_BIT_STORES
 	movd		4(%esp),	%xmm0
 	movd		8(%esp),	%xmm1

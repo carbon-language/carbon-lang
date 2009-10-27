@@ -29,9 +29,7 @@
 // The table contains unsigned byte sized elements which are 1/2 the distance
 // from lr to the target label.
 //
-	.globl ___switchu8
-	.private_extern ___switchu8
-___switchu8:
+DEFINE_COMPILERRT_PRIVATE_FUNCTION(__switchu8)
 	ldrb    ip, [lr, #-1]           // get first byte in table
 	cmp     r0, ip                  // compare with index
 	ldrbcc  r0, [lr, r0]            // get indexed byte out of table
@@ -45,9 +43,7 @@ ___switchu8:
 // The table contains signed byte sized elements which are 1/2 the distance
 // from lr to the target label.  
 //
-	.globl ___switch8
-	.private_extern ___switch8
-___switch8:
+DEFINE_COMPILERRT_PRIVATE_FUNCTION(__switch8)
 	ldrb    ip, [lr, #-1]           // get first byte in table
 	cmp     r0, ip                  // signed compare with index
 	ldrsbcc r0, [lr, r0]            // get indexed byte out of table
@@ -60,9 +56,7 @@ ___switch8:
 // The table contains signed 2-byte sized elements which are 1/2 the distance
 // from lr to the target label.    
 //
-	.globl ___switch16
-	.private_extern ___switch16
-___switch16:
+DEFINE_COMPILERRT_PRIVATE_FUNCTION(__switch16)
 	ldrh    ip, [lr, #-1]           // get first 16-bit word in table
 	cmp     r0, ip                  // compare with index
 	add     r0, lr, r0, lsl #1      // compute address of element in table
@@ -77,9 +71,7 @@ ___switch16:
 // The table contains signed 4-byte sized elements which are the distance
 // from lr to the target label.    
 //
-	.globl ___switch32
-	.private_extern ___switch32
-___switch32:
+DEFINE_COMPILERRT_PRIVATE_FUNCTION(__switch32)
 	ldr     ip, [lr, #-1]            // get first 32-bit word in table
 	cmp     r0, ip                   // compare with index
 	add     r0, lr, r0, lsl #2       // compute address of element in table

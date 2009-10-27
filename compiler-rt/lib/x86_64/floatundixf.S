@@ -15,8 +15,7 @@ twop64: .quad 0x43f0000000000000
 
 .text
 .align 4
-.globl ___floatundixf
-___floatundixf:
+DEFINE_COMPILERRT_FUNCTION(__floatundixf)
 	movq	%rdi,	 -8(%rsp)
 	fildq	-8(%rsp)
 	test	%rdi,		%rdi
@@ -44,8 +43,7 @@ twop84: .quad 0x4530000000000000
 
 .text
 .align 4
-.globl ___floatundixf
-___floatundixf:
+DEFINE_COMPILERRT_FUNCTION(__floatundixf)
 	movl	%edi,				%esi			// low 32 bits of input
 	shrq	$32,				%rdi			// hi 32 bits of input
 	orq		REL_ADDR(twop84),	%rdi			// 2^84 + hi (as a double)

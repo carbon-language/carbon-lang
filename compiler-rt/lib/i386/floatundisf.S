@@ -28,8 +28,7 @@ twop64:	.quad	0x0000000000000000
 
 .text
 .align 4
-.globl ___floatundisf
-___floatundisf:
+DEFINE_COMPILERRT_FUNCTION(__floatundisf)
 	movl		8(%esp),		%eax
 	movd		8(%esp),		%xmm1
 	movd		4(%esp),		%xmm0
@@ -65,8 +64,7 @@ twelve:	.long 0x00000000
 
 .text
 .align 4
-.globl ___floatundisf
-___floatundisf:
+DEFINE_COMPILERRT_FUNCTION(__floatundisf)
 	movl		8(%esp),		%eax
 	movd		8(%esp),		%xmm1
 	movd		4(%esp),		%xmm0

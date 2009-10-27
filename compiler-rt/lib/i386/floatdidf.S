@@ -16,8 +16,7 @@ twop32: .quad 0x41f0000000000000
 
 .text
 .align 4
-.globl ___floatdidf
-___floatdidf:
+DEFINE_COMPILERRT_FUNCTION(__floatdidf)
 	cvtsi2sd	8(%esp),			%xmm1
 	movss		4(%esp),			%xmm0 // low 32 bits of a
 	calll		0f

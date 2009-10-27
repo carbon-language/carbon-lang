@@ -10,8 +10,7 @@
 
 .text
 .align 4
-.globl ___ashrdi3
-___ashrdi3:
+DEFINE_COMPILERRT_FUNCTION(__ashrdi3)
 	movd	  12(%esp),		%xmm2	// Load count
 	movl	   8(%esp),		%eax
 #ifndef TRUST_CALLERS_USE_64_BIT_STORES
@@ -47,8 +46,7 @@ ___ashrdi3:
 
 .text
 .align 4
-.globl ___ashrdi3
-___ashrdi3:
+DEFINE_COMPILERRT_FUNCTION(__ashrdi3)
 	movl	  12(%esp),		%ecx	// Load count
 	movl	   8(%esp),		%edx	// Load high
 	movl	   4(%esp),		%eax	// Load low

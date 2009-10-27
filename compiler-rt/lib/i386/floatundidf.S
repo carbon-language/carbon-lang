@@ -28,8 +28,7 @@ twop84: .quad 0x4530000000000000
 
 .text
 .align 4
-.globl ___floatundidf
-___floatundidf:
+DEFINE_COMPILERRT_FUNCTION(__floatundidf)
 	movss	8(%esp),						%xmm1 // high 32 bits of a
 	movss	4(%esp),						%xmm0 // low 32 bits of a
 	calll	0f

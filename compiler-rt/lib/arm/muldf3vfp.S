@@ -15,8 +15,7 @@
 // Multiplies two double precision floating point numbers using the Darwin
 // calling convention where double arguments are passsed in GPR pairs
 //
-	.globl ___muldf3vfp
-___muldf3vfp:
+DEFINE_COMPILERRT_FUNCTION(__muldf3vfp)
 	fmdrr	d6, r0, r1		// move first param from r0/r1 pair into d6
 	fmdrr	d7, r2, r3		// move second param from r2/r3 pair into d7
 	fmuld	d6, d6, d7		

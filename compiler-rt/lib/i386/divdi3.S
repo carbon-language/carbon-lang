@@ -20,8 +20,7 @@
 
 .text
 .align 4
-.globl ___divdi3
-___divdi3:
+DEFINE_COMPILERRT_FUNCTION(__divdi3)
 
 /* This is currently implemented by wrapping the unsigned divide up in an absolute
    value, then restoring the correct sign at the end of the computation.  This could

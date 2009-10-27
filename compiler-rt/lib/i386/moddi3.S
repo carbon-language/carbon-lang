@@ -21,8 +21,7 @@
 
 .text
 .align 4
-.globl ___moddi3
-___moddi3:
+DEFINE_COMPILERRT_FUNCTION(__moddi3)
 
 /* This is currently implemented by wrapping the unsigned modulus up in an absolute
    value.  This could certainly be improved upon. */

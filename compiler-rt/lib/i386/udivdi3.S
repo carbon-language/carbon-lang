@@ -20,8 +20,7 @@
 
 .text
 .align 4
-.globl ___udivdi3
-___udivdi3:
+DEFINE_COMPILERRT_FUNCTION(__udivdi3)
 
 	pushl		%ebx
 	movl	 20(%esp),			%ebx	// Find the index i of the leading bit in b.

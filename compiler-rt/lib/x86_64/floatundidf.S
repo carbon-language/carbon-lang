@@ -28,8 +28,7 @@ twop84: .quad 0x4530000000000000
 
 .text
 .align 4
-.globl ___floatundidf
-___floatundidf:
+DEFINE_COMPILERRT_FUNCTION(__floatundidf)
 	movd	%edi,							%xmm0 // low 32 bits of a
 	shrq	$32,							%rdi  // high 32 bits of a
 	orq		REL_ADDR(twop84),				%rdi  // 0x1p84 + a_hi (no rounding occurs)

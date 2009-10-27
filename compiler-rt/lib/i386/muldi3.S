@@ -9,8 +9,7 @@
 
 .text
 .align 4
-.globl ___muldi3
-___muldi3:
+DEFINE_COMPILERRT_FUNCTION(__muldi3)
 	pushl	%ebx
 	movl  16(%esp),		%eax	// b.lo
 	movl  12(%esp),		%ecx	// a.hi

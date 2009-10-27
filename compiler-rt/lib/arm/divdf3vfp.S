@@ -15,8 +15,7 @@
 // Divides two double precision floating point numbers using the Darwin
 // calling convention where double arguments are passsed in GPR pairs
 //
-	.globl ___divdf3vfp
-___divdf3vfp:
+DEFINE_COMPILERRT_FUNCTION(__divdf3vfp)
 	fmdrr	d6, r0, r1		// move first param from r0/r1 pair into d6
 	fmdrr	d7, r2, r3		// move second param from r2/r3 pair into d7
 	fdivd	d5, d6, d7		

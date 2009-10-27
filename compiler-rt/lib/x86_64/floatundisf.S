@@ -14,8 +14,7 @@ two: .single 2.0
 
 .text
 .align 4
-.globl ___floatundisf
-___floatundisf:
+DEFINE_COMPILERRT_FUNCTION(__floatundisf)
 	movq		$1,			%rsi
 	testq		%rdi,		%rdi
 	js			1f

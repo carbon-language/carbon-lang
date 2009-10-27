@@ -17,9 +17,8 @@
 // This function should never be exported by a shared library.  Each linkage
 // unit carries its own copy of this function.
 //
-		.globl saveFP
-		.private_extern saveFP 
-saveFP:	stfd    f14,-144(r1)
+DEFINE_COMPILERRT_PRIVATE_FUNCTION(saveFP)
+	stfd    f14,-144(r1)
         stfd    f15,-136(r1)
         stfd    f16,-128(r1)
         stfd    f17,-120(r1)

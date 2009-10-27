@@ -16,8 +16,7 @@
 // Uses Darwin calling convention where a single precision result is 
 // return in a GPR..
 //
-	.globl ___floatsisfvfp
-___floatsisfvfp:
+DEFINE_COMPILERRT_FUNCTION(__floatsisfvfp)
 	fmsr	s15, r0	     // move int to float register s15
 	fsitos	s15, s15     // convert 32-bit int in s15 to float in s15
 	fmrs	r0, s15      // move s15 to result register
