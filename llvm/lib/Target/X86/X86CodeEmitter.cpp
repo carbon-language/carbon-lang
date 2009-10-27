@@ -19,6 +19,7 @@
 #include "X86TargetMachine.h"
 #include "X86Relocations.h"
 #include "X86.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
