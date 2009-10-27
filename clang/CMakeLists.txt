@@ -65,7 +65,7 @@ macro(add_clang_library name)
     set_target_properties(${name} PROPERTIES COMPILE_FLAGS ${cflag})
   endif(MSVC)
   install(TARGETS ${name}
-    LIBRARY DESTINATION lib
+    LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
     ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
 endmacro(add_clang_library)
 
