@@ -42,11 +42,11 @@ using namespace llvm;
 
 static cl::opt<bool>
 ScavengeFrameIndexVals("arm-virtual-frame-index-vals", cl::Hidden,
-          cl::init(false),
+          cl::init(true),
           cl::desc("Resolve frame index values via scavenging in PEI"));
 
 static cl::opt<bool>
-ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(false),
+ReuseFrameIndexVals("arm-reuse-frame-index-vals", cl::Hidden, cl::init(true),
           cl::desc("Reuse repeated frame index values"));
 
 static cl::opt<bool>
