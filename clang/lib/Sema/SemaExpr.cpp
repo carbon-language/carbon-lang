@@ -5412,13 +5412,8 @@ Action::OwningExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
                                                       OpLoc));
 }
 
-static inline bool IsBitwise(int Opc) {
-  return Opc >= BinaryOperator::And && Opc <= BinaryOperator::Or;
-}
-static inline bool IsEqOrRel(int Opc) {
-  return Opc >= BinaryOperator::LT && Opc <= BinaryOperator::NE;
-}
-
+/// SuggestParentheses - Emit a diagnostic together with a fixit hint that wraps
+/// ParenRange in parentheses.
 static void SuggestParentheses(Sema &Self, SourceLocation Loc,
                                const PartialDiagnostic &PD,
                                SourceRange ParenRange)
@@ -5436,13 +5431,18 @@ static void SuggestParentheses(Sema &Self, SourceLocation Loc,
     << CodeModificationHint::CreateInsertion(EndLoc, ")");
 }
 
+/// DiagnoseBitwisePrecedence - Emit a warning when bitwise and comparison
+/// operators are mixed in a way that suggests that the programmer forgot that
+/// comparison operators have higher precedence. The most typical example of
+/// such code is "flags & 0x0020 != 0", which is equivalent to "flags & 1".
 static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperator::Opcode Opc,
                                       SourceLocation OpLoc,Expr *lhs,Expr *rhs){
-  typedef BinaryOperator::Opcode Opcode;
-  int lhsopc = -1, rhsopc = -1;
-  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(lhs))
+  typedef BinaryOperator BinOp;
+  BinOp::Opcode lhsopc = static_cast<BinOp::Opcode>(-1),
+                rhsopc = static_cast<BinOp::Opcode>(-1);
+  if (BinOp *BO = dyn_cast<BinOp>(lhs))
     lhsopc = BO->getOpcode();
-  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(rhs))
+  if (BinOp *BO = dyn_cast<BinOp>(rhs))
     rhsopc = BO->getOpcode();
 
   // Subs are not binary operators.
@@ -5451,26 +5451,22 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperator::Opcode Opc,
 
   // Bitwise operations are sometimes used as eager logical ops.
   // Don't diagnose this.
-  if ((IsEqOrRel(lhsopc) || IsBitwise(lhsopc)) &&
-      (IsEqOrRel(rhsopc) || IsBitwise(rhsopc)))
+  if ((BinOp::isComparisonOp(lhsopc) || BinOp::isBitwiseOp(lhsopc)) &&
+      (BinOp::isComparisonOp(rhsopc) || BinOp::isBitwiseOp(rhsopc)))
     return;
 
-  if (IsEqOrRel(lhsopc))
+  if (BinOp::isComparisonOp(lhsopc))
     SuggestParentheses(Self, OpLoc,
       PDiag(diag::warn_precedence_bitwise_rel)
-        << SourceRange(lhs->getLocStart(), OpLoc)
-        << BinaryOperator::getOpcodeStr(Opc)
-        << BinaryOperator::getOpcodeStr(static_cast<Opcode>(lhsopc)),
-      SourceRange(cast<BinaryOperator>(lhs)->getRHS()->getLocStart(),
-                  rhs->getLocEnd()));
-  else if (IsEqOrRel(rhsopc))
+          << SourceRange(lhs->getLocStart(), OpLoc)
+          << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(lhsopc),
+      SourceRange(cast<BinOp>(lhs)->getRHS()->getLocStart(), rhs->getLocEnd()));
+  else if (BinOp::isComparisonOp(rhsopc))
     SuggestParentheses(Self, OpLoc,
       PDiag(diag::warn_precedence_bitwise_rel)
-        << SourceRange(OpLoc, rhs->getLocEnd())
-        << BinaryOperator::getOpcodeStr(Opc)
-        << BinaryOperator::getOpcodeStr(static_cast<Opcode>(rhsopc)),
-      SourceRange(lhs->getLocEnd(),
-                  cast<BinaryOperator>(rhs)->getLHS()->getLocStart()));
+          << SourceRange(OpLoc, rhs->getLocEnd())
+          << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(rhsopc),
+      SourceRange(lhs->getLocEnd(), cast<BinOp>(rhs)->getLHS()->getLocStart()));
 }
 
 /// DiagnoseBinOpPrecedence - Emit warnings for expressions with tricky
@@ -5478,7 +5474,7 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperator::Opcode Opc,
 /// But it could also warn about arg1 && arg2 || arg3, as GCC 4.3+ does.
 static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperator::Opcode Opc,
                                     SourceLocation OpLoc, Expr *lhs, Expr *rhs){
-  if (IsBitwise(Opc))
+  if (BinaryOperator::isBitwiseOp(Opc))
     DiagnoseBitwisePrecedence(Self, Opc, OpLoc, lhs, rhs);
 }
 

@@ -1830,13 +1830,18 @@ public:
   bool isAdditiveOp() const { return Opc == Add || Opc == Sub; }
   static bool isShiftOp(Opcode Opc) { return Opc == Shl || Opc == Shr; }
   bool isShiftOp() const { return isShiftOp(Opc); }
-  bool isBitwiseOp() const { return Opc >= And && Opc <= Or; }
+
+  static bool isBitwiseOp(Opcode Opc) { return Opc >= And && Opc <= Or; }
+  bool isBitwiseOp() const { return isBitwiseOp(Opc); }
 
   static bool isRelationalOp(Opcode Opc) { return Opc >= LT && Opc <= GE; }
   bool isRelationalOp() const { return isRelationalOp(Opc); }
 
   static bool isEqualityOp(Opcode Opc) { return Opc == EQ || Opc == NE; }
   bool isEqualityOp() const { return isEqualityOp(Opc); }
+
+  static bool isComparisonOp(Opcode Opc) { return Opc >= LT && Opc <= NE; }
+  bool isComparisonOp() const { return isComparisonOp(Opc); }
 
   static bool isLogicalOp(Opcode Opc) { return Opc == LAnd || Opc == LOr; }
   bool isLogicalOp() const { return isLogicalOp(Opc); }
