@@ -26,6 +26,7 @@ if(MSVC)
   # windows.h doesn't compile with /Za
   get_target_property(NON_ANSI_COMPILE_FLAGS CIndex COMPILE_FLAGS)
   string(REPLACE /Za "" NON_ANSI_COMPILE_FLAGS ${NON_ANSI_COMPILE_FLAGS})
+  set(NON_ANSI_COMPILE_FLAGS "${NON_ANSI_COMPILE_FLAGS} /D_CINDEX_LIB_")
   set_target_properties(CIndex PROPERTIES COMPILE_FLAGS ${NON_ANSI_COMPILE_FLAGS})
 endif(MSVC)
 

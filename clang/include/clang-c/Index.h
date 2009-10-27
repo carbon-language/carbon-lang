@@ -20,6 +20,17 @@
 extern "C" {
 #endif
 
+// MSVC DLL import/export.
+#ifdef _MSC_VER
+  #ifdef _CINDEX_LIB_
+    #define CINDEX_LINKAGE __declspec(dllexport)
+  #else
+    #define CINDEX_LINKAGE __declspec(dllimport)
+  #endif
+#else
+  #define CINDEX_LINKAGE
+#endif
+
 /*
    Clang indeX abstractions. The backing store for the following API's will be 
    clangs AST file (currently based on PCH). AST files are created as follows:
@@ -138,22 +149,22 @@ typedef void *CXEntity;
  * -include-pch) allows 'excludeDeclsFromPCH' to remove redundant callbacks
  * (which gives the indexer the same performance benefit as the compiler).
  */
-CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
+CINDEX_LINKAGE CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics);
-void clang_disposeIndex(CXIndex);
+CINDEX_LINKAGE void clang_disposeIndex(CXIndex);
 
-const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
+CINDEX_LINKAGE const char *clang_getTranslationUnitSpelling(CXTranslationUnit CTUnit);
 
 /* 
  * \brief Create a translation unit from an AST file (-emit-ast).
  */
-CXTranslationUnit clang_createTranslationUnit(
+CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnit(
   CXIndex, const char *ast_filename
 );
 /**
  * \brief Destroy the specified CXTranslationUnit object.
  */ 
-void clang_disposeTranslationUnit(CXTranslationUnit);
+CINDEX_LINKAGE void clang_disposeTranslationUnit(CXTranslationUnit);
 
 /**
  * \brief Return the CXTranslationUnit for a given source file and the provided
@@ -170,7 +181,7 @@ void clang_disposeTranslationUnit(CXTranslationUnit);
  *   '-o <output file>'  (both '-o' and '<output file>' are ignored)
  *
  */
-CXTranslationUnit clang_createTranslationUnitFromSourceFile(
+CINDEX_LINKAGE CXTranslationUnit clang_createTranslationUnitFromSourceFile(
   CXIndex CIdx, 
   const char *source_filename /* specify NULL if the source file is in clang_command_line_args */,
   int num_clang_command_line_args, 
@@ -197,7 +208,7 @@ CXTranslationUnit clang_createTranslationUnitFromSourceFile(
 typedef void *CXClientData;
 typedef void (*CXTranslationUnitIterator)(CXTranslationUnit, CXCursor, 
                                           CXClientData);
-void clang_loadTranslationUnit(CXTranslationUnit, CXTranslationUnitIterator,
+CINDEX_LINKAGE void clang_loadTranslationUnit(CXTranslationUnit, CXTranslationUnitIterator,
                                CXClientData);
 
 /*
@@ -227,23 +238,23 @@ void clang_loadTranslationUnit(CXTranslationUnit, CXTranslationUnitIterator,
 */
 typedef void (*CXDeclIterator)(CXDecl, CXCursor, CXClientData);
 
-void clang_loadDeclaration(CXDecl, CXDeclIterator, CXClientData);
+CINDEX_LINKAGE void clang_loadDeclaration(CXDecl, CXDeclIterator, CXClientData);
 
 /*
  * CXEntity Operations.
  */
-const char *clang_getDeclarationName(CXEntity);
-const char *clang_getURI(CXEntity);
-CXEntity clang_getEntity(const char *URI);
+CINDEX_LINKAGE const char *clang_getDeclarationName(CXEntity);
+CINDEX_LINKAGE const char *clang_getURI(CXEntity);
+CINDEX_LINKAGE CXEntity clang_getEntity(const char *URI);
 /*
  * CXDecl Operations.
  */
-CXCursor clang_getCursorFromDecl(CXDecl);
-CXEntity clang_getEntityFromDecl(CXDecl);
-const char *clang_getDeclSpelling(CXDecl);
-unsigned clang_getDeclLine(CXDecl);
-unsigned clang_getDeclColumn(CXDecl);
-const char *clang_getDeclSource(CXDecl);
+CINDEX_LINKAGE CXCursor clang_getCursorFromDecl(CXDecl);
+CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXDecl);
+CINDEX_LINKAGE const char *clang_getDeclSpelling(CXDecl);
+CINDEX_LINKAGE unsigned clang_getDeclLine(CXDecl);
+CINDEX_LINKAGE unsigned clang_getDeclColumn(CXDecl);
+CINDEX_LINKAGE const char *clang_getDeclSource(CXDecl);
 
 /*
  * CXCursor Operations.
@@ -252,7 +263,7 @@ const char *clang_getDeclSource(CXDecl);
    Usage: clang_getCursor() will translate a source/line/column position
    into an AST cursor (to derive semantic information from the source code).
  */
-CXCursor clang_getCursor(CXTranslationUnit, const char *source_name, 
+CINDEX_LINKAGE CXCursor clang_getCursor(CXTranslationUnit, const char *source_name, 
                          unsigned line, unsigned column);
 
 /**
@@ -264,26 +275,26 @@ CXCursor clang_getCursor(CXTranslationUnit, const char *source_name,
    FIXME: Add a better comment once getCursorWithHint() has more functionality.
  */                         
 typedef CXCursor CXLookupHint;
-CXCursor clang_getCursorWithHint(CXTranslationUnit, const char *source_name, 
+CINDEX_LINKAGE CXCursor clang_getCursorWithHint(CXTranslationUnit, const char *source_name, 
                                  unsigned line, unsigned column, 
                                  CXLookupHint *hint);
 
-void clang_initCXLookupHint(CXLookupHint *hint);
+CINDEX_LINKAGE void clang_initCXLookupHint(CXLookupHint *hint);
 
-enum CXCursorKind clang_getCursorKind(CXCursor);
-unsigned clang_isDeclaration(enum CXCursorKind);
-unsigned clang_isReference(enum CXCursorKind);
-unsigned clang_isDefinition(enum CXCursorKind);
-unsigned clang_isInvalid(enum CXCursorKind);
+CINDEX_LINKAGE enum CXCursorKind clang_getCursorKind(CXCursor);
+CINDEX_LINKAGE unsigned clang_isDeclaration(enum CXCursorKind);
+CINDEX_LINKAGE unsigned clang_isReference(enum CXCursorKind);
+CINDEX_LINKAGE unsigned clang_isDefinition(enum CXCursorKind);
+CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
 
-unsigned clang_getCursorLine(CXCursor);
-unsigned clang_getCursorColumn(CXCursor);
-const char *clang_getCursorSource(CXCursor);
-const char *clang_getCursorSpelling(CXCursor);
+CINDEX_LINKAGE unsigned clang_getCursorLine(CXCursor);
+CINDEX_LINKAGE unsigned clang_getCursorColumn(CXCursor);
+CINDEX_LINKAGE const char *clang_getCursorSource(CXCursor);
+CINDEX_LINKAGE const char *clang_getCursorSpelling(CXCursor);
 
 /* for debug/testing */
-const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); 
-void clang_getDefinitionSpellingAndExtent(CXCursor, 
+CINDEX_LINKAGE const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); 
+CINDEX_LINKAGE void clang_getDefinitionSpellingAndExtent(CXCursor, 
                                           const char **startBuf, 
                                           const char **endBuf,
                                           unsigned *startLine,
@@ -296,7 +307,7 @@ void clang_getDefinitionSpellingAndExtent(CXCursor,
  * declaration.
  * If CXCursorKind == Cursor_Declaration, then this will return the declaration.
  */
-CXDecl clang_getCursorDecl(CXCursor);
+CINDEX_LINKAGE CXDecl clang_getCursorDecl(CXCursor);
 
 #ifdef __cplusplus
 }

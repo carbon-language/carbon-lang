@@ -4,7 +4,23 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+char *basename(const char* path)
+{
+    char* base1 = (char*)strrchr(path, '/');
+    char* base2 = (char*)strrchr(path, '\\');
+    if (base1 && base2)
+        return((base1 > base2) ? base1 + 1 : base2 + 1);
+    else if (base1)
+        return(base1 + 1);
+    else if (base2)
+        return(base2 + 1);
+
+    return((char*)path);
+}
+#else
 extern char *basename(const char *);
+#endif
 
 static void PrintCursor(CXCursor Cursor) {
   if (clang_isInvalid(Cursor.kind))
