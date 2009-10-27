@@ -1,4 +1,4 @@
-; RUN: opt < %s -analyze -scalar-evolution -disable-output | grep -e {-->  %b}
+; RUN: opt < %s -analyze -scalar-evolution -disable-output | FileCheck %s
 ; PR1810
 
 define void @fun() {
@@ -16,3 +16,6 @@ body:
 exit:        
         ret void
 }
+
+; CHECK: -->  %b
+

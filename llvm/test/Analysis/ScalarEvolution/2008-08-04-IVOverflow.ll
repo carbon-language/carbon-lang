@@ -1,5 +1,5 @@
 ; RUN: opt < %s -analyze -scalar-evolution -disable-output \
-; RUN:   -scalar-evolution-max-iterations=0 | grep -F "Exits: 20028"
+; RUN:   -scalar-evolution-max-iterations=0 | FileCheck %s
 ; PR2621
 
 define i32 @a() nounwind  {
@@ -22,4 +22,6 @@ bb2:
 	zext i16 %x16.0 to i32
 	ret i32 %4
 }
+
+; CHECK: Exits: 20028
 

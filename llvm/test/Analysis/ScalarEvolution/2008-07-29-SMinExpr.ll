@@ -1,6 +1,5 @@
 ; RUN: opt < %s -analyze -scalar-evolution -disable-output \
-; RUN:   -scalar-evolution-max-iterations=0 | \
-; RUN: grep -F "backedge-taken count is (-2147483632 + ((-1 + (-1 * %x)) smax (-1 + (-1 * %y))))"
+; RUN:   -scalar-evolution-max-iterations=0 | FileCheck %s
 ; PR2607
 
 define i32 @b(i32 %x, i32 %y) nounwind {
@@ -22,3 +21,6 @@ afterfor:		; preds = %forinc, %entry
 	%j.0.lcssa = phi i32 [ -2147483632, %entry ], [ %dec, %forinc ]
 	ret i32 %j.0.lcssa
 }
+
+; CHECK: backedge-taken count is (-2147483632 + ((-1 + (-1 * %x)) smax (-1 + (-1 * %y))))
+

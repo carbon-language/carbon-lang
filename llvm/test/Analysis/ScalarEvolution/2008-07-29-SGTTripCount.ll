@@ -1,6 +1,5 @@
 ; RUN: opt < %s -analyze -scalar-evolution -disable-output \
-; RUN:   -scalar-evolution-max-iterations=0 | \
-; RUN: grep -F "backedge-taken count is (-1 + (-1 * %j))"
+; RUN:   -scalar-evolution-max-iterations=0 | FileCheck %s
 ; PR2607
 
 define i32 @_Z1aj(i32 %j) nounwind  {
@@ -24,4 +23,6 @@ return:		; preds = %return.loopexit, %entry
 	%i.0.lcssa = phi i32 [ 0, %entry ], [ %1, %return.loopexit ]		; <i32> [#uses=1]
 	ret i32 %i.0.lcssa
 }
+
+; CHECK: backedge-taken count is (-1 + (-1 * %j))
 
