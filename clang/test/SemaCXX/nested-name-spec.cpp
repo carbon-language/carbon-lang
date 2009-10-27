@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -std=c++98 -verify %s 
+// RUN: clang-cc -fsyntax-only -std=c++98 -verify -fms-extensions=0 %s 
 namespace A {
   struct C {
     static int cx;

@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify -fms-extensions=0 %s
 
 x; // expected-error{{C++ requires a type specifier for all declarations}}
 
