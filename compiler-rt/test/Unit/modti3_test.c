@@ -35,8 +35,8 @@ int test__modti3(ti_int a, ti_int b, ti_int expected)
         expectedt.all = expected;
         printf("error in __modti3: 0x%.16llX%.16llX %% 0x%.16llX%.16llX = "
                "0x%.16llX%.16llX, expected 0x%.16llX%.16llX\n",
-               at.high, at.low, bt.high, bt.low, xt.high, xt.low,
-               expectedt.high, expectedt.low);
+               at.s.high, at.s.low, bt.s.high, bt.s.low, xt.s.high, xt.s.low,
+               expectedt.s.high, expectedt.s.low);
     }
     return x != expected;
 }

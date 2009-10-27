@@ -29,7 +29,7 @@ int test__ffsti2(ti_int a, si_int expected)
         twords at;
         at.all = a;
         printf("error in __ffsti2(0x%llX%.16llX) = %d, expected %d\n",
-               at.high, at.low, x, expected);
+               at.s.high, at.s.low, x, expected);
     }
     return x != expected;
 }

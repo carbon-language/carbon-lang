@@ -32,7 +32,7 @@ int test__cmpti2(ti_int a, ti_int b, si_int expected)
         twords bt;
         bt.all = b;
         printf("error in __cmpti2(0x%llX%.16llX, 0x%llX%.16llX) = %d, expected %d\n",
-               at.high, at.low, bt.high, bt.low, x, expected);
+               at.s.high, at.s.low, bt.s.high, bt.s.low, x, expected);
     }
     return x != expected;
 }

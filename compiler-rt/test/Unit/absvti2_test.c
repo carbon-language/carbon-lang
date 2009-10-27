@@ -38,7 +38,8 @@ int test__absvti2(ti_int a)
         expectedt.all = expected;
         printf("error in __absvti2(0x%llX%.16llX) = "
                "0x%llX%.16llX, expected positive 0x%llX%.16llX\n",
-               at.high, at.low, xt.high, xt.low, expectedt.high, expectedt.low);
+               at.s.high, at.s.low, xt.s.high, xt.s.low,
+               expectedt.s.high, expectedt.s.low);
     }
     return x != expected;
 }

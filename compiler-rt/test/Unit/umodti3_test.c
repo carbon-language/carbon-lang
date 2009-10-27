@@ -35,8 +35,8 @@ int test__umodti3(tu_int a, tu_int b, tu_int expected_r)
         expected_rt.all = expected_r;
         printf("error in __umodti3: 0x%llX%.16llX %% 0x%llX%.16llX = "
                "0x%llX%.16llX, expected 0x%llX%.16llX\n",
-               at.high, at.low, bt.high, bt.low, rt.high, rt.low,
-               expected_rt.high, expected_rt.low);
+               at.s.high, at.s.low, bt.s.high, bt.s.low, rt.s.high, rt.s.low,
+               expected_rt.s.high, expected_rt.s.low);
     }
     return r != expected_r;
 }

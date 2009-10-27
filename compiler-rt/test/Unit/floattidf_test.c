@@ -34,7 +34,7 @@ int test__floattidf(ti_int a, double expected)
         twords at;
         at.all = a;
         printf("error in __floattidf(0x%.16llX%.16llX) = %a, expected %a\n",
-               at.high, at.low, x, expected);
+               at.s.high, at.s.low, x, expected);
     }
     return x != expected;
 }

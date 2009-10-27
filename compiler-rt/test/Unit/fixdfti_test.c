@@ -36,7 +36,7 @@ int test__fixdfti(double a, ti_int expected)
         twords expectedt;
         expectedt.all = expected;
         printf("error in __fixdfti(%A) = 0x%.16llX%.16llX, expected 0x%.16llX%.16llX\n",
-        a, xt.high, xt.low, expectedt.high, expectedt.low);
+        a, xt.s.high, xt.s.low, expectedt.s.high, expectedt.s.low);
     }
     return x != expected;
 }

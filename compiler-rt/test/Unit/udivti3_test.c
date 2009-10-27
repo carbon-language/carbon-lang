@@ -35,8 +35,8 @@ int test__udivti3(tu_int a, tu_int b, tu_int expected_q)
         expected_qt.all = expected_q;
         printf("error in __udivti3: 0x%llX%.16llX / 0x%llX%.16llX = "
                "0x%llX%.16llX, expected 0x%llX%.16llX\n",
-               at.high, at.low, bt.high, bt.low, qt.high, qt.low,
-               expected_qt.high, expected_qt.low);
+               at.s.high, at.s.low, bt.s.high, bt.s.low, qt.s.high, qt.s.low,
+               expected_qt.s.high, expected_qt.s.low);
     }
     return q != expected_q;
 }

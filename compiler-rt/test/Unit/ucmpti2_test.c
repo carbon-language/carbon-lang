@@ -33,7 +33,7 @@ int test__ucmpti2(tu_int a, tu_int b, si_int expected)
         bt.all = b;
         printf("error in __ucmpti2(0x%.16llX%.16llX, 0x%.16llX%.16llX) = %d, "
                "expected %d\n",
-               at.high, at.low, bt.high, bt.low, x, expected);
+               at.s.high, at.s.low, bt.s.high, bt.s.low, x, expected);
     }
     return x != expected;
 }

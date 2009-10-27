@@ -35,7 +35,7 @@ int test__floattixf(ti_int a, long double expected)
         twords at;
         at.all = a;
         printf("error in __floattixf(0x%.16llX%.16llX) = %LA, expected %LA\n",
-               at.high, at.low, x, expected);
+               at.s.high, at.s.low, x, expected);
     }
     return x != expected;
 }

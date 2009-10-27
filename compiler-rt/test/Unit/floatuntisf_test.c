@@ -34,7 +34,7 @@ int test__floatuntisf(tu_int a, float expected)
         utwords at;
         at.all = a;
         printf("error in __floatuntisf(0x%.16llX%.16llX) = %a, expected %a\n",
-               at.high, at.low, x, expected);
+               at.s.high, at.s.low, x, expected);
     }
     return x != expected;
 }

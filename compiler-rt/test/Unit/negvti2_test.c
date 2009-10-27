@@ -37,7 +37,7 @@ int test__negvti2(ti_int a)
         expectedt.all = expected;
         printf("error in __negvti2(0x%.16llX%.16llX) = 0x%.16llX%.16llX, "
                "expected 0x%.16llX%.16llX\n",
-               at.high, at.low, xt.high, xt.low, expectedt.high, expectedt.low);
+               at.s.high, at.s.low, xt.s.high, xt.s.low, expectedt.s.high, expectedt.s.low);
     }
     return x != expected;
 }

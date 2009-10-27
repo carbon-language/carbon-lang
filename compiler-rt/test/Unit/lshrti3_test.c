@@ -35,8 +35,8 @@ int test__lshrti3(ti_int a, si_int b, ti_int expected)
         expectedt.all = expected;
         printf("error in __lshrti3: 0x%llX%.16llX >> %d = 0x%llX%.16llX,"
                " expected 0x%llX%.16llX\n",
-                at.high, at.low, b, xt.high, xt.low,
-                expectedt.high, expectedt.low);
+                at.s.high, at.s.low, b, xt.s.high, xt.s.low,
+                expectedt.s.high, expectedt.s.low);
     }
     return x != expected;
 }

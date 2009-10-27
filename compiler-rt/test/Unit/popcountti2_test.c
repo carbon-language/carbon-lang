@@ -38,7 +38,7 @@ int test__popcountti2(ti_int a)
         twords at;
         at.all = a;
         printf("error in __popcountti2(0x%.16llX%.16llX) = %d, expected %d\n",
-               at.high, at.low, x, expected);
+               at.s.high, at.s.low, x, expected);
     }
     return x != expected;
 }
