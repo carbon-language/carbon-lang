@@ -1,6 +1,13 @@
-// RUN: clang-cc -triple x86_64-apple-darwin -S -D_FORTIFY_SOURCE=2 %s -o %t.s &&
-// RUN: FileCheck --input-file=%t.s %s
-#include <string.h>
+// RUN: clang-cc -triple x86_64-apple-darwin -S %s -o - | FileCheck %s
+
+#define strcpy(dest, src) \
+  ((__builtin_object_size(dest, 0) != -1ULL) \
+   ? __builtin___strcpy_chk (dest, src, __builtin_object_size(dest, 1)) \
+   : __inline_strcpy_chk(dest, src))
+
+static char *__inline_strcpy_chk (char *dest, const char *src) {
+  return __builtin___strcpy_chk(dest, src, __builtin_object_size(dest, 1));
+}
 
 char gbuf[63];
 char *gp;
