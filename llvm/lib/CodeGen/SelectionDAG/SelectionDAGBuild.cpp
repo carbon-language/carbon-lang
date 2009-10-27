@@ -4204,6 +4204,18 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(Result);
     return 0;
   }
+  case Intrinsic::objectsize: {
+    // If we don't know by now, we're never going to know.
+    ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand(2));
+
+    assert(CI && "Non-constant type in __builtin_object_size?");
+
+    if (CI->getZExtValue() < 2)
+      setValue(&I, DAG.getConstant(-1, MVT::i32));
+    else
+      setValue(&I, DAG.getConstant(0, MVT::i32));
+    return 0;
+  }
   case Intrinsic::var_annotation:
     // Discard annotate attributes
     return 0;

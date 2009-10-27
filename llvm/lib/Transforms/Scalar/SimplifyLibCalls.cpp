@@ -509,6 +509,27 @@ static bool IsOnlyUsedInZeroEqualityComparison(Value *V) {
 }
 
 //===----------------------------------------------------------------------===//
+// Miscellaneous LibCall/Intrinsic Optimizations
+//===----------------------------------------------------------------------===//
+
+namespace {
+struct SizeOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    // TODO: We can do more with this, but delaying to here should be no change
+    // in behavior.
+    ConstantInt *Const = dyn_cast<ConstantInt>(CI->getOperand(2));
+    
+    if (!Const) return 0;
+    
+    if (Const->getZExtValue() < 2)
+      return Constant::getAllOnesValue(Const->getType());
+    else
+      return ConstantInt::get(Const->getType(), 0);
+  }
+};
+}
+
+//===----------------------------------------------------------------------===//
 // String and Memory LibCall Optimizations
 //===----------------------------------------------------------------------===//
 
@@ -1548,6 +1569,7 @@ namespace {
     // Formatting and IO Optimizations
     SPrintFOpt SPrintF; PrintFOpt PrintF;
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
+    SizeOpt ObjectSize;
 
     bool Modified;  // This is only used by doInitialization.
   public:
@@ -1653,6 +1675,9 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["fwrite"] = &FWrite;
   Optimizations["fputs"] = &FPuts;
   Optimizations["fprintf"] = &FPrintF;
+  
+  // Miscellaneous
+  Optimizations["llvm.objectsize"] = &ObjectSize;
 }
 
 
