@@ -11344,7 +11344,7 @@ Instruction *InstCombiner::visitFree(Instruction &FI) {
     return EraseInstFromFunction(FI);
 
   // If we have a malloc call whose only use is a free call, delete both.
-  if (isMalloc(Op))
+  if (isMalloc(Op)) {
     if (CallInst* CI = extractMallocCallFromBitCast(Op)) {
       if (Op->hasOneUse() && CI->hasOneUse()) {
         EraseInstFromFunction(FI);
@@ -11358,6 +11358,7 @@ Instruction *InstCombiner::visitFree(Instruction &FI) {
         return EraseInstFromFunction(*cast<Instruction>(Op));
       }
     }
+  }
 
   return 0;
 }
