@@ -1,8 +1,6 @@
 // RUN: clang-cc -triple x86_64-apple-darwin10 -emit-llvm -o %t %s
 
 @interface I
-{
-}
 @property int IP;
 @end
 
@@ -24,4 +22,17 @@
 
 @implementation OrganizerViolatorView
 @synthesize bindingInfo;
+@end
+
+// <rdar://problem/7336352> [irgen] crash in synthesized property construction
+
+@interface I0 @end
+@protocol P0 @end
+@interface I1 {
+  I0<P0> *iv0;
+}
+@property (assign, readwrite) id p0;
+@end
+@implementation I1
+@synthesize p0 = iv0;
 @end

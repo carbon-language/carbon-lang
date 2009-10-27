@@ -14,6 +14,7 @@
 @interface A : Root <P1> {
   int iv0;
   B *iv1;
+  B<P1> *iv2;
 }
 
 @property(readonly) int p0;
@@ -21,11 +22,16 @@
 @property(copy) id p2;
 @property(retain) id p3;
 @property(assign, getter=getme, setter=setme:) id p4;
+@property(assign, readwrite) id p5;
 @end
 
 @implementation A
 @dynamic p0;
 @synthesize p1 = iv0;
+
+// Property type can differ from ivar type.
+@synthesize p5 = iv2;
+
 +(void) fm0 {
   [super fm0];
 }

@@ -280,17 +280,29 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     EmitCall(Types.getFunctionInfo(getContext().VoidTy, Args),
              SetPropertyFn, Args);
   } else {
+    // FIXME: Find a clean way to avoid AST node creation.
     SourceLocation Loc = PD->getLocation();
     ValueDecl *Self = OMD->getSelfDecl();
     ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
     DeclRefExpr Base(Self, Self->getType(), Loc);
     ParmVarDecl *ArgDecl = *OMD->param_begin();
     DeclRefExpr Arg(ArgDecl, ArgDecl->getType(), Loc);
-    ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base,
-                            true, true);
-    BinaryOperator Assign(&IvarRef, &Arg, BinaryOperator::Assign,
-                          Ivar->getType(), Loc);
-    EmitStmt(&Assign);
+    ObjCIvarRefExpr IvarRef(Ivar, Ivar->getType(), Loc, &Base, true, true);
+    
+    // The property type can differ from the ivar type in some situations with
+    // Objective-C pointer types, we can always bit cast the RHS in these cases.
+    if (getContext().getCanonicalType(Ivar->getType()) !=
+        getContext().getCanonicalType(ArgDecl->getType())) {
+      ImplicitCastExpr ArgCasted(Ivar->getType(), CastExpr::CK_BitCast, &Arg,
+                                 false);
+      BinaryOperator Assign(&IvarRef, &ArgCasted, BinaryOperator::Assign,
+                            Ivar->getType(), Loc);
+      EmitStmt(&Assign);
+    } else {
+      BinaryOperator Assign(&IvarRef, &Arg, BinaryOperator::Assign,
+                            Ivar->getType(), Loc);
+      EmitStmt(&Assign);
+    }
   }
 
   FinishFunction();
