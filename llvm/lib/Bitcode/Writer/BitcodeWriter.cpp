@@ -19,6 +19,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/Operator.h"

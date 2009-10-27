@@ -23,6 +23,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Operator.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"

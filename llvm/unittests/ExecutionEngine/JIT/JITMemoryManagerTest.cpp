@@ -13,6 +13,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalValue.h"
+#include "llvm/LLVMContext.h"
 
 using namespace llvm;
 

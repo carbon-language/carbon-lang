@@ -10,6 +10,7 @@
 #include "gtest/gtest.h"
 #include "llvm/Argument.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 
 using namespace llvm;
 

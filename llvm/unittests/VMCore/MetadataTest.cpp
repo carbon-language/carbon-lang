@@ -10,6 +10,7 @@
 #include "gtest/gtest.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"

@@ -12,7 +12,6 @@
 #define LLVM_TYPE_H
 
 #include "llvm/AbstractTypeUser.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/System/DataTypes.h"
 #include "llvm/System/Atomic.h"
@@ -28,6 +27,7 @@ class IntegerType;
 class TypeMapBase;
 class raw_ostream;
 class Module;
+class LLVMContext;
 
 /// This file contains the declaration of the Type class.  For more "Type" type
 /// stuff, look in DerivedTypes.h.

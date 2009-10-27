@@ -11,6 +11,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/ADT/OwningPtr.h"
 
 #include "gtest/gtest.h"
