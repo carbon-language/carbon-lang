@@ -287,6 +287,18 @@ public:
     CovariantThunks.clear();
   }
 
+  llvm::Constant *WrapAddrOf(const CXXMethodDecl *MD) {
+    if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
+      return wrap(CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete));
+
+    const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+    const llvm::Type *Ty =
+      CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
+                                     FPT->isVariadic());
+
+    return wrap(CGM.GetAddrOfFunction(MD, Ty));
+  }
+
   void OverrideMethods(Path_t *Path, bool MorallyVirtual, int64_t Offset) {
     for (Path_t::reverse_iterator i = Path->rbegin(),
            e = Path->rend(); i != e; ++i) {
@@ -298,37 +310,15 @@ public:
           continue;
 
         const CXXMethodDecl *MD = *mi;
-        llvm::Constant *m = 0;
-        if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
-          m = wrap(CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete));
-        else {
-          const FunctionProtoType *FPT = 
-            MD->getType()->getAs<FunctionProtoType>();
-          const llvm::Type *Ty =
-            CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
-                                           FPT->isVariadic());
-          
-          m = wrap(CGM.GetAddrOfFunction(MD, Ty));
-        }
-
+        llvm::Constant *m = WrapAddrOf(MD);
         OverrideMethod(MD, m, MorallyVirtual, OverrideOffset, Offset);
       }
     }
   }
 
   void AddMethod(const CXXMethodDecl *MD, bool MorallyVirtual, Index_t Offset) {
-    llvm::Constant *m = 0;
-    if (const CXXDestructorDecl *Dtor = dyn_cast<CXXDestructorDecl>(MD))
-      m = wrap(CGM.GetAddrOfCXXDestructor(Dtor, Dtor_Complete));
-    else {
-      const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-      const llvm::Type *Ty =
-        CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
-                                       FPT->isVariadic());
-      
-      m = wrap(CGM.GetAddrOfFunction(MD, Ty));
-    }
-    
+    llvm::Constant *m = WrapAddrOf(MD);
+
     // If we can find a previously allocated slot for this, reuse it.
     if (OverrideMethod(MD, m, MorallyVirtual, Offset, Offset))
       return;
