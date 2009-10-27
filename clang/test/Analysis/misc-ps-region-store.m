@@ -372,3 +372,17 @@ void doSomething_7312221_with_struct(struct rdar_7312221_container *Self) {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// <rdar://problem/7332673> - Just more tests cases for regions
+//===----------------------------------------------------------------------===//
+
+void rdar_7332673_test1() {
+    char value[1];
+    if ( *(value) != 1 ) {} // expected-warning{{The left operand of '!=' is a garbage value}}
+}
+void rdar_rdar_7332673_test2_aux(char *x);
+void rdar_7332673_test2() {
+    char *value;
+    if ( rdar_7332673_test2_aux(value) != 1 ) {} // expected-warning{{Pass-by-value argument in function call is undefined}}
+}
+
