@@ -303,7 +303,7 @@ bool Instruction::isUsedOutsideOfBlock(const BasicBlock *BB) const {
   return false;
 }
 
-// Code here matches isFreeCall from MallocFreeHelper, which is not in VMCore.
+// Code here matches isFreeCall from MemoryBuiltins, which is not in VMCore.
 static bool isFreeCall(const Value* I) {
   const CallInst *CI = dyn_cast<CallInst>(I);
   if (!CI)
@@ -408,7 +408,7 @@ bool Instruction::isCommutative(unsigned op) {
   }
 }
 
-// Code here matches isMalloc from MallocFreeHelper, which is not in VMCore.
+// Code here matches isMalloc from MemoryBuiltins, which is not in VMCore.
 static bool isMalloc(const Value* I) {
   const CallInst *CI = dyn_cast<CallInst>(I);
   if (!CI) {

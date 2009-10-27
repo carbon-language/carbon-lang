@@ -23,7 +23,7 @@ add_llvm_library(LLVMAnalysis
   LoopDependenceAnalysis.cpp
   LoopInfo.cpp
   LoopPass.cpp
-  MallocFreeHelper.cpp
+  MemoryBuiltins.cpp
   MemoryDependenceAnalysis.cpp
   PointerTracking.cpp
   PostDominators.cpp

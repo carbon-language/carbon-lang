@@ -1,4 +1,4 @@
-//===-- MallocFreeHelper.cpp - Identify calls to malloc and free builtins -===//
+//===------ MemoryBuiltins.cpp - Identify calls to memory builtins --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This family of functions identifies calls to malloc, bitcasts of malloc
-// calls, and the types and array sizes associated with them.  It also
-// identifies calls to the free builtin.
+// This family of functions identifies calls to builtin functions that allocate
+// or free memory.  
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/MallocFreeHelper.h"
+#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"

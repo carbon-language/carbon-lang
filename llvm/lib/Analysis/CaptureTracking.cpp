@@ -17,7 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CaptureTracking.h"
-#include "llvm/Analysis/MallocFreeHelper.h"
+#include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Instructions.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/SmallSet.h"
