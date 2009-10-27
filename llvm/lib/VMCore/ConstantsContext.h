@@ -332,7 +332,7 @@ struct ExprMapKeyType {
 // The number of operands for each ConstantCreator::create method is
 // determined by the ConstantTraits template.
 // ConstantCreator - A class that is used to create constants by
-// ValueMap*.  This class should be partially specialized if there is
+// ConstantUniqueMap*.  This class should be partially specialized if there is
 // something strange that needs to be done to interface to the ctor for the
 // constant.
 //
@@ -506,7 +506,7 @@ struct ConstantKeyData<UndefValue> {
 
 template<class ValType, class TypeClass, class ConstantClass,
          bool HasLargeKey = false /*true for arrays and structs*/ >
-class ValueMap : public AbstractTypeUser {
+class ConstantUniqueMap : public AbstractTypeUser {
 public:
   typedef std::pair<const TypeClass*, ValType> MapKey;
   typedef std::map<MapKey, ConstantClass *> MapTy;
@@ -529,8 +529,8 @@ private:
   ///
   AbstractTypeMapTy AbstractTypeMap;
     
-  /// ValueMapLock - Mutex for this map.
-  sys::SmartMutex<true> ValueMapLock;
+  /// ConstantUniqueMapLock - Mutex for this map.
+  sys::SmartMutex<true> ConstantUniqueMapLock;
 
 public:
   // NOTE: This function is not locked.  It is the caller's responsibility
@@ -619,7 +619,7 @@ public:
   /// getOrCreate - Return the specified constant from the map, creating it if
   /// necessary.
   ConstantClass *getOrCreate(const TypeClass *Ty, const ValType &V) {
-    sys::SmartScopedLock<true> Lock(ValueMapLock);
+    sys::SmartScopedLock<true> Lock(ConstantUniqueMapLock);
     MapKey Lookup(Ty, V);
     ConstantClass* Result = 0;
     
@@ -674,7 +674,7 @@ public:
   }
 
   void remove(ConstantClass *CP) {
-    sys::SmartScopedLock<true> Lock(ValueMapLock);
+    sys::SmartScopedLock<true> Lock(ConstantUniqueMapLock);
     typename MapTy::iterator I = FindExistingElement(CP);
     assert(I != Map.end() && "Constant not found in constant table!");
     assert(I->second == CP && "Didn't find correct element?");
@@ -725,7 +725,7 @@ public:
   }
     
   void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-    sys::SmartScopedLock<true> Lock(ValueMapLock);
+    sys::SmartScopedLock<true> Lock(ConstantUniqueMapLock);
     typename AbstractTypeMapTy::iterator I = AbstractTypeMap.find(OldTy);
 
     assert(I != AbstractTypeMap.end() &&
@@ -778,7 +778,7 @@ public:
   }
 
   void dump() const {
-    DEBUG(errs() << "Constant.cpp: ValueMap\n");
+    DEBUG(errs() << "Constant.cpp: ConstantUniqueMap\n");
   }
 };
 
