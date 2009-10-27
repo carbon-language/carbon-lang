@@ -1,4 +1,5 @@
 // RUN: %llvmgxx -emit-llvm -S %s
+// Radar 7328944
 
 typedef struct
 {
