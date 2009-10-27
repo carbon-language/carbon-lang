@@ -1901,7 +1901,8 @@ void EmitGenerateActionMethod (const ToolDescription& D,
 
   // For every understood option, emit handling code.
   if (D.Actions)
-    EmitCaseConstructHandler(D.Actions, Indent2, EmitActionHandlersCallback(OptDescs),
+    EmitCaseConstructHandler(D.Actions, Indent2,
+                             EmitActionHandlersCallback(OptDescs),
                              false, OptDescs, O);
 
   O << '\n';
