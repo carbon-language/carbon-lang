@@ -20,7 +20,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Attributes.h"
 #include "llvm/CallingConv.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/ADT/SmallVector.h"
 #include <iterator>
 
