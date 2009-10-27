@@ -3195,366 +3195,161 @@ void IndBrInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 }
 
 //===----------------------------------------------------------------------===//
-//                           clone() implementations
+//                           clone_impl() implementations
 //===----------------------------------------------------------------------===//
 
 // Define these methods here so vtables don't get emitted into every translation
 // unit that uses these classes.
 
-GetElementPtrInst *GetElementPtrInst::clone() const {
-  GetElementPtrInst *New = new(getNumOperands()) GetElementPtrInst(*this);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+GetElementPtrInst *GetElementPtrInst::clone_impl() const {
+  return new (getNumOperands()) GetElementPtrInst(*this);
 }
 
-BinaryOperator *BinaryOperator::clone() const {
-  BinaryOperator *New = Create(getOpcode(), Op<0>(), Op<1>());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+BinaryOperator *BinaryOperator::clone_impl() const {
+  return Create(getOpcode(), Op<0>(), Op<1>());
 }
 
-FCmpInst* FCmpInst::clone() const {
-  FCmpInst *New = new FCmpInst(getPredicate(), Op<0>(), Op<1>());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
-}
-ICmpInst* ICmpInst::clone() const {
-  ICmpInst *New = new ICmpInst(getPredicate(), Op<0>(), Op<1>());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+FCmpInst* FCmpInst::clone_impl() const {
+  return new FCmpInst(getPredicate(), Op<0>(), Op<1>());
 }
 
-ExtractValueInst *ExtractValueInst::clone() const {
-  ExtractValueInst *New = new ExtractValueInst(*this);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
-}
-InsertValueInst *InsertValueInst::clone() const {
-  InsertValueInst *New = new InsertValueInst(*this);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+ICmpInst* ICmpInst::clone_impl() const {
+  return new ICmpInst(getPredicate(), Op<0>(), Op<1>());
 }
 
-AllocaInst *AllocaInst::clone() const {
-  AllocaInst *New = new AllocaInst(getAllocatedType(),
-                                   (Value*)getOperand(0),
-                                   getAlignment());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+ExtractValueInst *ExtractValueInst::clone_impl() const {
+  return new ExtractValueInst(*this);
 }
 
-LoadInst *LoadInst::clone() const {
-  LoadInst *New = new LoadInst(getOperand(0),
-                               Twine(), isVolatile(),
-                               getAlignment());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+InsertValueInst *InsertValueInst::clone_impl() const {
+  return new InsertValueInst(*this);
 }
 
-StoreInst *StoreInst::clone() const {
-  StoreInst *New = new StoreInst(getOperand(0), getOperand(1),
-                                 isVolatile(), getAlignment());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+AllocaInst *AllocaInst::clone_impl() const {
+  return new AllocaInst(getAllocatedType(),
+                        (Value*)getOperand(0),
+                        getAlignment());
 }
 
-TruncInst *TruncInst::clone() const {
-  TruncInst *New = new TruncInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+LoadInst *LoadInst::clone_impl() const {
+  return new LoadInst(getOperand(0),
+                      Twine(), isVolatile(),
+                      getAlignment());
 }
 
-ZExtInst *ZExtInst::clone() const {
-  ZExtInst *New = new ZExtInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+StoreInst *StoreInst::clone_impl() const {
+  return new StoreInst(getOperand(0), getOperand(1),
+                       isVolatile(), getAlignment());
 }
 
-SExtInst *SExtInst::clone() const {
-  SExtInst *New = new SExtInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+TruncInst *TruncInst::clone_impl() const {
+  return new TruncInst(getOperand(0), getType());
 }
 
-FPTruncInst *FPTruncInst::clone() const {
-  FPTruncInst *New = new FPTruncInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+ZExtInst *ZExtInst::clone_impl() const {
+  return new ZExtInst(getOperand(0), getType());
 }
 
-FPExtInst *FPExtInst::clone() const {
-  FPExtInst *New = new FPExtInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+SExtInst *SExtInst::clone_impl() const {
+  return new SExtInst(getOperand(0), getType());
 }
 
-UIToFPInst *UIToFPInst::clone() const {
-  UIToFPInst *New = new UIToFPInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+FPTruncInst *FPTruncInst::clone_impl() const {
+  return new FPTruncInst(getOperand(0), getType());
 }
 
-SIToFPInst *SIToFPInst::clone() const {
-  SIToFPInst *New = new SIToFPInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+FPExtInst *FPExtInst::clone_impl() const {
+  return new FPExtInst(getOperand(0), getType());
 }
 
-FPToUIInst *FPToUIInst::clone() const {
-  FPToUIInst *New = new FPToUIInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+UIToFPInst *UIToFPInst::clone_impl() const {
+  return new UIToFPInst(getOperand(0), getType());
 }
 
-FPToSIInst *FPToSIInst::clone() const {
-  FPToSIInst *New = new FPToSIInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+SIToFPInst *SIToFPInst::clone_impl() const {
+  return new SIToFPInst(getOperand(0), getType());
 }
 
-PtrToIntInst *PtrToIntInst::clone() const {
-  PtrToIntInst *New = new PtrToIntInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+FPToUIInst *FPToUIInst::clone_impl() const {
+  return new FPToUIInst(getOperand(0), getType());
 }
 
-IntToPtrInst *IntToPtrInst::clone() const {
-  IntToPtrInst *New = new IntToPtrInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+FPToSIInst *FPToSIInst::clone_impl() const {
+  return new FPToSIInst(getOperand(0), getType());
 }
 
-BitCastInst *BitCastInst::clone() const {
-  BitCastInst *New = new BitCastInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+PtrToIntInst *PtrToIntInst::clone_impl() const {
+  return new PtrToIntInst(getOperand(0), getType());
 }
 
-CallInst *CallInst::clone() const {
-  CallInst *New = new(getNumOperands()) CallInst(*this);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+IntToPtrInst *IntToPtrInst::clone_impl() const {
+  return new IntToPtrInst(getOperand(0), getType());
 }
 
-SelectInst *SelectInst::clone() const {
-  SelectInst *New = SelectInst::Create(getOperand(0),
-                                       getOperand(1),
-                                       getOperand(2));
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+BitCastInst *BitCastInst::clone_impl() const {
+  return new BitCastInst(getOperand(0), getType());
 }
 
-VAArgInst *VAArgInst::clone() const {
-  VAArgInst *New = new VAArgInst(getOperand(0), getType());
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+CallInst *CallInst::clone_impl() const {
+  return  new(getNumOperands()) CallInst(*this);
 }
 
-ExtractElementInst *ExtractElementInst::clone() const {
-  ExtractElementInst *New = ExtractElementInst::Create(getOperand(0),
-                                                       getOperand(1));
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+SelectInst *SelectInst::clone_impl() const {
+  return SelectInst::Create(getOperand(0), getOperand(1), getOperand(2));
 }
 
-InsertElementInst *InsertElementInst::clone() const {
-  InsertElementInst *New = InsertElementInst::Create(getOperand(0),
-                                                     getOperand(1),
-                                                     getOperand(2));
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+VAArgInst *VAArgInst::clone_impl() const {
+  return new VAArgInst(getOperand(0), getType());
 }
 
-ShuffleVectorInst *ShuffleVectorInst::clone() const {
-  ShuffleVectorInst *New = new ShuffleVectorInst(getOperand(0),
-                                                 getOperand(1),
-                                                 getOperand(2));
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+ExtractElementInst *ExtractElementInst::clone_impl() const {
+  return ExtractElementInst::Create(getOperand(0), getOperand(1));
 }
 
-PHINode *PHINode::clone() const {
-  PHINode *New = new PHINode(*this);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+InsertElementInst *InsertElementInst::clone_impl() const {
+  return InsertElementInst::Create(getOperand(0),
+                                   getOperand(1),
+                                   getOperand(2));
 }
 
-ReturnInst *ReturnInst::clone() const {
-  ReturnInst *New = new(getNumOperands()) ReturnInst(*this);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+ShuffleVectorInst *ShuffleVectorInst::clone_impl() const {
+  return new ShuffleVectorInst(getOperand(0),
+                           getOperand(1),
+                           getOperand(2));
 }
 
-BranchInst *BranchInst::clone() const {
+PHINode *PHINode::clone_impl() const {
+  return new PHINode(*this);
+}
+
+ReturnInst *ReturnInst::clone_impl() const {
+  return new(getNumOperands()) ReturnInst(*this);
+}
+
+BranchInst *BranchInst::clone_impl() const {
   unsigned Ops(getNumOperands());
-  BranchInst *New = new(Ops, Ops == 1) BranchInst(*this);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+  return new(Ops, Ops == 1) BranchInst(*this);
 }
 
-SwitchInst *SwitchInst::clone() const {
-  SwitchInst *New = new SwitchInst(*this);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+SwitchInst *SwitchInst::clone_impl() const {
+  return new SwitchInst(*this);
 }
 
-IndBrInst *IndBrInst::clone() const {
-  IndBrInst *New = new IndBrInst(*this);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata())
-    getContext().pImpl->TheMetadata.ValueIsCloned(this, New);
-  return New;
+IndBrInst *IndBrInst::clone_impl() const {
+  return new IndBrInst(*this);
 }
 
 
-InvokeInst *InvokeInst::clone() const {
-  InvokeInst *New = new(getNumOperands()) InvokeInst(*this);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata()) {
-    LLVMContext &Context = getContext();
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  }
-  return New;
+InvokeInst *InvokeInst::clone_impl() const {
+  return new(getNumOperands()) InvokeInst(*this);
 }
 
-UnwindInst *UnwindInst::clone() const {
+UnwindInst *UnwindInst::clone_impl() const {
   LLVMContext &Context = getContext();
-  UnwindInst *New = new UnwindInst(Context);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata())
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  return New;
+  return new UnwindInst(Context);
 }
 
-UnreachableInst *UnreachableInst::clone() const {
+UnreachableInst *UnreachableInst::clone_impl() const {
   LLVMContext &Context = getContext();
-  UnreachableInst *New = new UnreachableInst(Context);
-  New->SubclassOptionalData = SubclassOptionalData;
-  if (hasMetadata())
-    Context.pImpl->TheMetadata.ValueIsCloned(this, New);
-  return New;
+  return new UnreachableInst(Context);
 }

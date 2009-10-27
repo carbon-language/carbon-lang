@@ -492,3 +492,11 @@ bool Instruction::isSafeToSpeculativelyExecute() const {
     return false; // Misc instructions which have effects
   }
 }
+
+Instruction *Instruction::clone() const {
+  Instruction *New = clone_impl();
+  New->SubclassOptionalData = SubclassOptionalData;
+  if (hasMetadata())
+    getContext().pImpl->TheMetadata.ValueIsCloned(this, New);
+  return New;
+}

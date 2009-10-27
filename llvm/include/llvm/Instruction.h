@@ -38,6 +38,7 @@ protected:
               Instruction *InsertBefore = 0);
   Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
               BasicBlock *InsertAtEnd);
+  virtual Instruction *clone_impl() const = 0;
 public:
   // Out of line virtual method, so the vtable, etc has a home.
   ~Instruction();
@@ -47,7 +48,7 @@ public:
   ///   * The instruction has no parent
   ///   * The instruction has no name
   ///
-  virtual Instruction *clone() const = 0;
+  Instruction *clone() const;
 
   /// isIdenticalTo - Return true if the specified instruction is exactly
   /// identical to the current one.  This means that all operands match and any
