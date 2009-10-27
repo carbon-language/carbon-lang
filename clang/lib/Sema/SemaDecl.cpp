@@ -1044,10 +1044,11 @@ void Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
 /// Statement that should return a value.
 ///
 /// \returns AlwaysFallThrough iff we always fall off the end of the statement,
-/// MaybeFallThroughOrReturn iff we might or might not fall off the end and
-/// MaybeFallThrough iff we might or might not fall off the end and
-/// NeverFallThrough iff we never fall off the end of the statement.  We assume
-/// that functions not marked noreturn will return.
+/// MaybeFallThrough iff we might or might not fall off the end,
+/// NeverFallThroughOrReturn iff we never fall off the end of the statement or
+/// return.  We assume NeverFallThrough iff we never fall off the end of the
+/// statement but we may return.  We assume that functions not marked noreturn
+/// will return.
 Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
   // FIXME: Eventually share this CFG object when we have other warnings based
   // of the CFG.  This can be done using AnalysisContext.
