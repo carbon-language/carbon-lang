@@ -127,10 +127,11 @@ namespace llvm {
   /// optimizations to delete branches to branches, eliminate branches to
   /// successor blocks (creating fall throughs), and eliminating branches over
   /// branches.
-  FunctionPass *createBranchFoldingPass(bool DefaultEnableTailMerge);
+  FunctionPass *createBranchFoldingPass(bool DefaultEnableTailMerge,
+                                        CodeGenOpt::Level OptLevel);
 
-  /// IfConverter Pass - This pass performs machine code if conversion.
-  FunctionPass *createIfConverterPass();
+  /// IfConverter Pass - This pass performs machine code if-conversion.
+  FunctionPass *createIfConverterPass(CodeGenOpt::Level OptLevel);
 
   /// Code Placement Pass - This pass optimize code placement and aligns loop
   /// headers to target specific alignment boundary.

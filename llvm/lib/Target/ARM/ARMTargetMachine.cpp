@@ -113,7 +113,7 @@ bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel) {
   // FIXME: temporarily disabling load / store optimization pass for Thumb1.
   if (OptLevel != CodeGenOpt::None && !Subtarget.isThumb1Only())
-    PM.add(createIfConverterPass());
+    PM.add(createIfConverterPass(OptLevel));
 
   if (Subtarget.isThumb2()) {
     PM.add(createThumb2ITBlockPass());

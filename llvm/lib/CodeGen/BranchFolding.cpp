@@ -50,8 +50,9 @@ TailMergeThreshold("tail-merge-threshold",
 
 char BranchFolderPass::ID = 0;
 
-FunctionPass *llvm::createBranchFoldingPass(bool DefaultEnableTailMerge) { 
-  return new BranchFolderPass(DefaultEnableTailMerge);
+FunctionPass *llvm::createBranchFoldingPass(bool DefaultEnableTailMerge,
+                                            CodeGenOpt::Level OptLevel) { 
+  return new BranchFolderPass(DefaultEnableTailMerge, OptLevel);
 }
 
 bool BranchFolderPass::runOnMachineFunction(MachineFunction &MF) {
@@ -63,7 +64,8 @@ bool BranchFolderPass::runOnMachineFunction(MachineFunction &MF) {
 
 
 
-BranchFolder::BranchFolder(bool defaultEnableTailMerge) {
+BranchFolder::BranchFolder(bool defaultEnableTailMerge, CodeGenOpt::Level OL) {
+  OptLevel = OL;
   switch (FlagEnableTailMerge) {
   case cl::BOU_UNSET: EnableTailMerge = defaultEnableTailMerge; break;
   case cl::BOU_TRUE: EnableTailMerge = true; break;
@@ -470,7 +472,8 @@ unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
                                         I->second,
                                         TrialBBI1, TrialBBI2);
       // If we will have to split a block, there should be at least
-      // minCommonTailLength instructions in common; if not, at worst
+      // minCommonTailLength instructions in common; if not, and if we are not
+      // optimizing for performance at the expense of code size, at worst
       // we will be replacing a fallthrough into the common tail with a
       // branch, which at worst breaks even with falling through into
       // the duplicated common tail, so 1 instruction in common is enough.
@@ -478,7 +481,8 @@ unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
       // tail if there is one.
       // (Empty blocks will get forwarded and need not be considered.)
       if (CommonTailLen >= minCommonTailLength ||
-          (CommonTailLen > 0 &&
+          (OptLevel != CodeGenOpt::Aggressive &&
+           CommonTailLen > 0 &&
            (TrialBBI1==CurMPIter->second->begin() ||
             TrialBBI2==I->second->begin()))) {
         if (CommonTailLen > maxCommonTailLength) {
