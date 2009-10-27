@@ -1,4 +1,4 @@
-//===-- floatundidf.s - Implement __floatundidf for i386 ------------------===//
+//===-- floatundidf.S - Implement __floatundidf for i386 ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

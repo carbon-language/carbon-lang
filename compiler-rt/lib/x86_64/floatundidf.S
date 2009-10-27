@@ -1,4 +1,4 @@
-//===-- floatundidf.s - Implement __floatundidf for x86_64 ----------------===//
+//===-- floatundidf.S - Implement __floatundidf for x86_64 ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

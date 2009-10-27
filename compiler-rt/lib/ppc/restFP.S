@@ -1,4 +1,4 @@
-//===-- restFP.s - Implement restFP ---------------------------------------===//
+//===-- restFP.S - Implement restFP ---------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

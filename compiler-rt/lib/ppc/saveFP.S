@@ -1,4 +1,4 @@
-//===-- saveFP.s - Implement saveFP ---------------------------------------===//
+//===-- saveFP.S - Implement saveFP ---------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
