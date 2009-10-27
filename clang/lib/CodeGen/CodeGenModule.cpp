@@ -601,6 +601,10 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
 void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {
   const ValueDecl *D = cast<ValueDecl>(GD.getDecl());
 
+  PrettyStackTraceDecl CrashInfo((ValueDecl *)D, D->getLocation(), 
+                                 Context.getSourceManager(),
+                                 "Generating code for declaration");
+  
   if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(D))
     EmitCXXConstructor(CD, GD.getCtorType());
   else if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D))
