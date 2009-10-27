@@ -1,6 +1,7 @@
 PROJECT( tests C )
 
 SET( CompilerRT_LIBRARY CompilerRT )
+INCLUDE_DIRECTORIES(${CompilerRT_SOURCE_DIR}/lib)
 
 # create test library
 # add_library(${CompilerRT_LIBRARY} STATIC support.c cmdline.c)
