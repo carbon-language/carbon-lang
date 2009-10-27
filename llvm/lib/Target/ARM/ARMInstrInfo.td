@@ -459,14 +459,15 @@ multiclass AI_unary_rrot<bits<8> opcod, string opc, PatFrag opnode> {
                  IIC_iUNAr, opc, "\t$dst, $src",
                  [(set GPR:$dst, (opnode GPR:$src))]>,
               Requires<[IsARM, HasV6]> {
-                let Inst{19-16} = 0b1111;
-              }
+    let Inst{11-10} = 0b00;
+    let Inst{19-16} = 0b1111;
+  }
   def r_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$src, i32imm:$rot),
                  IIC_iUNAsi, opc, "\t$dst, $src, ror $rot",
                  [(set GPR:$dst, (opnode (rotr GPR:$src, rot_imm:$rot)))]>,
               Requires<[IsARM, HasV6]> {
-                let Inst{19-16} = 0b1111;
-              }
+    let Inst{19-16} = 0b1111;
+  }
 }
 
 /// AI_bin_rrot - A binary operation with two forms: one whose operand is a
@@ -475,7 +476,9 @@ multiclass AI_bin_rrot<bits<8> opcod, string opc, PatFrag opnode> {
   def rr     : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS),
                   IIC_iALUr, opc, "\t$dst, $LHS, $RHS",
                   [(set GPR:$dst, (opnode GPR:$LHS, GPR:$RHS))]>,
-                  Requires<[IsARM, HasV6]>;
+               Requires<[IsARM, HasV6]> {
+    let Inst{11-10} = 0b00;
+  }
   def rr_rot : AExtI<opcod, (outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS, i32imm:$rot),
                   IIC_iALUsi, opc, "\t$dst, $LHS, $RHS, ror $rot",
                   [(set GPR:$dst, (opnode GPR:$LHS,
