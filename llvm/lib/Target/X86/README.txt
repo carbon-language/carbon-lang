@@ -1952,3 +1952,26 @@ fact these instructions are identical to the non-lock versions. We need a way to
 add target specific information to target nodes and have this information
 carried over to machine instructions. Asm printer (or JIT) can use this
 information to add the "lock" prefix.
+
+//===---------------------------------------------------------------------===//
+
+int func(int a, int b) { if (a & 0x80) b |= 0x80; else b &= 0x80; return b; }
+
+Current:
+
+        movb    %sil, %al
+        andb    $-128, %sil
+        orb     $-128, %al
+        testb   %dil, %dil
+        js      LBB1_2
+        movb    %sil, %al
+LBB1_2:
+        movsbl  %al, %eax
+
+Better:
+        movl    %esi, %eax
+        orl     $-128, %eax
+        andl    $-128, %esi
+        testb   %dil, %dil
+        cmovns  %esi, %eax
+        movsbl  %al,%eax
