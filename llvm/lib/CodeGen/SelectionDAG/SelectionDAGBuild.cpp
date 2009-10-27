@@ -2132,8 +2132,9 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
 }
 
 void SelectionDAGLowering::visitIndBr(IndBrInst &I) {
-  errs() << "indbr codegen not implemented yet!\n";
-  abort();
+  DAG.setRoot(DAG.getNode(ISD::BRIND, getCurDebugLoc(),
+                          MVT::Other, getControlRoot(),
+                          getValue(I.getAddress())));
 }
 
 
