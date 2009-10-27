@@ -1,4 +1,5 @@
-// RUN: clang-cc -E %s | FileCheck %s
+// RUN: clang-cc -E %s | FileCheck -strict-whitespace %s
+
 #define hash_hash # ## # 
 #define mkstr(a) # a 
 #define in_between(a) mkstr(a) 

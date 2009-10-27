@@ -1,4 +1,4 @@
-// RUN: clang-cc -E %s | FileCheck %s
+// RUN: clang-cc -E %s | FileCheck -strict-whitespace %s
 
 #define R_PAREN ) 
 
