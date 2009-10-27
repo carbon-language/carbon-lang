@@ -26,6 +26,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/GCMetadata.h"
