@@ -1131,7 +1131,6 @@ def RSCri : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
                  DPFrm, IIC_iALUi, "rsc", "\t$dst, $a, $b",
                  [(set GPR:$dst, (sube so_imm:$b, GPR:$a))]>,
                  Requires<[IsARM, CarryDefIsUnused]> {
-    let Inst{20} = 0;
     let Inst{25} = 1;
 }
 def RSCrs : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
@@ -1140,7 +1139,6 @@ def RSCrs : AsI1<0b0111, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                  Requires<[IsARM, CarryDefIsUnused]> {
     let Inst{4} = 1;
     let Inst{7} = 0;
-    let Inst{20} = 0;
     let Inst{25} = 0;
 }
 }
