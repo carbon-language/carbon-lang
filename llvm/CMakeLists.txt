@@ -319,16 +319,23 @@ if(LLVM_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif ()
 
-install(DIRECTORY include
-  DESTINATION .
+install(DIRECTORY include/
+  DESTINATION include
+  FILES_MATCHING
+  PATTERN "*.h"
+  PATTERN "*.td"
   PATTERN ".svn" EXCLUDE
-  PATTERN "*.cmake" EXCLUDE
-  PATTERN "*.in" EXCLUDE
-  PATTERN "*.tmp" EXCLUDE
   )
 
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include
-  DESTINATION .
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
+  DESTINATION include
+  FILES_MATCHING
+  PATTERN "*.def"
+  PATTERN "*.h"
+  PATTERN "*.gen"
+  # Exclude include/llvm/CMakeFiles/intrinsics_gen.dir, matched by "*.def"
+  PATTERN "CMakeFiles" EXCLUDE
+  PATTERN ".svn" EXCLUDE
   )
 
 # TODO: make and install documentation.
