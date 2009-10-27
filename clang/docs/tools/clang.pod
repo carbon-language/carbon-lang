@@ -424,6 +424,10 @@ Add the specified directory to the search path for framework include files.
 
 Do not search the standard system directories for include files.
 
+=item B<-nobuiltininc>
+
+Do not search clang's builtin directory for include files.
+
 =cut
 
 ## TODO, but do we really want people using this stuff?
