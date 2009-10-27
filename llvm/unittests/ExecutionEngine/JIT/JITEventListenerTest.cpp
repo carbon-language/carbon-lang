@@ -37,7 +37,6 @@ struct FunctionEmittedEvent {
 };
 struct FunctionFreedEvent {
   unsigned Index;
-  const Function *F;
   void *Code;
 };
 
@@ -56,8 +55,8 @@ struct RecordingJITEventListener : public JITEventListener {
     EmittedEvents.push_back(Event);
   }
 
-  virtual void NotifyFreeingMachineCode(const Function &F, void *OldPtr) {
-    FunctionFreedEvent Event = {NextIndex++, &F, OldPtr};
+  virtual void NotifyFreeingMachineCode(void *OldPtr) {
+    FunctionFreedEvent Event = {NextIndex++, OldPtr};
     FreedEvents.push_back(Event);
   }
 };
@@ -116,11 +115,9 @@ TEST_F(JITEventListenerTest, Simple) {
       << " contain some bytes.";
 
   EXPECT_EQ(2U, Listener.FreedEvents[0].Index);
-  EXPECT_EQ(F1, Listener.FreedEvents[0].F);
   EXPECT_EQ(F1_addr, Listener.FreedEvents[0].Code);
 
   EXPECT_EQ(3U, Listener.FreedEvents[1].Index);
-  EXPECT_EQ(F2, Listener.FreedEvents[1].F);
   EXPECT_EQ(F2_addr, Listener.FreedEvents[1].Code);
 
   F1->eraseFromParent();
@@ -164,7 +161,6 @@ TEST_F(JITEventListenerTest, MultipleListenersDontInterfere) {
       << " contain some bytes.";
 
   EXPECT_EQ(1U, Listener1.FreedEvents[0].Index);
-  EXPECT_EQ(F2, Listener1.FreedEvents[0].F);
   EXPECT_EQ(F2_addr, Listener1.FreedEvents[0].Code);
 
   // Listener 2.
@@ -186,7 +182,6 @@ TEST_F(JITEventListenerTest, MultipleListenersDontInterfere) {
       << " contain some bytes.";
 
   EXPECT_EQ(2U, Listener2.FreedEvents[0].Index);
-  EXPECT_EQ(F2, Listener2.FreedEvents[0].F);
   EXPECT_EQ(F2_addr, Listener2.FreedEvents[0].Code);
 
   // Listener 3.
@@ -201,7 +196,6 @@ TEST_F(JITEventListenerTest, MultipleListenersDontInterfere) {
       << " contain some bytes.";
 
   EXPECT_EQ(1U, Listener3.FreedEvents[0].Index);
-  EXPECT_EQ(F2, Listener3.FreedEvents[0].F);
   EXPECT_EQ(F2_addr, Listener3.FreedEvents[0].Code);
 
   F1->eraseFromParent();
@@ -228,7 +222,6 @@ TEST_F(JITEventListenerTest, MatchesMachineCodeInfo) {
   EXPECT_EQ(MCI.size(), Listener.EmittedEvents[0].Size);
 
   EXPECT_EQ(1U, Listener.FreedEvents[0].Index);
-  EXPECT_EQ(F, Listener.FreedEvents[0].F);
   EXPECT_EQ(F_addr, Listener.FreedEvents[0].Code);
 }
 

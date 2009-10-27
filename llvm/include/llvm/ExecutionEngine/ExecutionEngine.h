@@ -263,9 +263,8 @@ public:
   /// getPointerToFunction - The different EE's represent function bodies in
   /// different ways.  They should each implement this to say what a function
   /// pointer should look like.  When F is destroyed, the ExecutionEngine will
-  /// remove its global mapping but will not yet free its machine code.  Call
-  /// freeMachineCodeForFunction(F) explicitly to do that.  Note that global
-  /// optimizations can destroy Functions without notifying the ExecutionEngine.
+  /// remove its global mapping and free any machine code.  Be sure no threads
+  /// are running inside F when that happens.
   ///
   virtual void *getPointerToFunction(Function *F) = 0;
 

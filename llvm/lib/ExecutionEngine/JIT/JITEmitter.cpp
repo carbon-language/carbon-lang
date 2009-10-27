@@ -582,17 +582,24 @@ namespace {
     JITEvent_EmittedFunctionDetails EmissionDetails;
 
     struct EmittedCode {
-      void *FunctionBody;
+      void *FunctionBody;  // Beginning of the function's allocation.
+      void *Code;  // The address the function's code actually starts at.
       void *ExceptionTable;
-      EmittedCode() : FunctionBody(0), ExceptionTable(0) {}
+      EmittedCode() : FunctionBody(0), Code(0), ExceptionTable(0) {}
     };
-    DenseMap<const Function *, EmittedCode> EmittedFunctions;
+    struct EmittedFunctionConfig : public ValueMapConfig<const Function*> {
+      typedef JITEmitter *ExtraData;
+      static void onDelete(JITEmitter *, const Function*);
+      static void onRAUW(JITEmitter *, const Function*, const Function*);
+    };
+    ValueMap<const Function *, EmittedCode,
+             EmittedFunctionConfig> EmittedFunctions;
 
     // CurFnStubUses - For a given Function, a vector of stubs that it
     // references.  This facilitates the JIT detecting that a stub is no
     // longer used, so that it may be deallocated.
-    DenseMap<const Function *, SmallVector<void*, 1> > CurFnStubUses;
-    
+    DenseMap<AssertingVH<const Function>, SmallVector<void*, 1> > CurFnStubUses;
+
     // StubFnRefs - For a given pointer to a stub, a set of Functions which
     // reference the stub.  When the count of a stub's references drops to zero,
     // the stub is unused.
@@ -606,7 +613,8 @@ namespace {
 
   public:
     JITEmitter(JIT &jit, JITMemoryManager *JMM, TargetMachine &TM)
-        : SizeEstimate(0), Resolver(jit), MMI(0), CurFn(0) {
+        : SizeEstimate(0), Resolver(jit), MMI(0), CurFn(0),
+          EmittedFunctions(this) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
         MemMgr->AllocateGOT();
@@ -1062,6 +1070,7 @@ void JITEmitter::startFunction(MachineFunction &F) {
   // About to start emitting the machine code for the function.
   emitAlignment(std::max(F.getFunction()->getAlignment(), 8U));
   TheJIT->updateGlobalMapping(F.getFunction(), CurBufferPtr);
+  EmittedFunctions[F.getFunction()].Code = CurBufferPtr;
 
   MBBLocations.clear();
 
@@ -1285,12 +1294,15 @@ void JITEmitter::retryWithMoreMemory(MachineFunction &F) {
 
 /// deallocateMemForFunction - Deallocate all memory for the specified
 /// function body.  Also drop any references the function has to stubs.
+/// May be called while the Function is being destroyed inside ~Value().
 void JITEmitter::deallocateMemForFunction(const Function *F) {
-  DenseMap<const Function *, EmittedCode>::iterator Emitted =
-    EmittedFunctions.find(F);
+  ValueMap<const Function *, EmittedCode, EmittedFunctionConfig>::iterator
+    Emitted = EmittedFunctions.find(F);
   if (Emitted != EmittedFunctions.end()) {
     MemMgr->deallocateFunctionBody(Emitted->second.FunctionBody);
     MemMgr->deallocateExceptionTable(Emitted->second.ExceptionTable);
+    TheJIT->NotifyFreeingMachineCode(Emitted->second.Code);
+
     EmittedFunctions.erase(Emitted);
   }
 
@@ -1519,6 +1531,17 @@ uintptr_t JITEmitter::getJumpTableEntryAddress(unsigned Index) const {
   return (uintptr_t)((char *)JumpTableBase + Offset);
 }
 
+void JITEmitter::EmittedFunctionConfig::onDelete(
+  JITEmitter *Emitter, const Function *F) {
+  Emitter->deallocateMemForFunction(F);
+}
+void JITEmitter::EmittedFunctionConfig::onRAUW(
+  JITEmitter *, const Function*, const Function*) {
+  llvm_unreachable("The JIT doesn't know how to handle a"
+                   " RAUW on a value it has emitted.");
+}
+
+
 //===----------------------------------------------------------------------===//
 //  Public interface to this file
 //===----------------------------------------------------------------------===//
@@ -1657,13 +1680,9 @@ void JIT::updateDlsymStubTable() {
 /// freeMachineCodeForFunction - release machine code memory for given Function.
 ///
 void JIT::freeMachineCodeForFunction(Function *F) {
-
   // Delete translation for this from the ExecutionEngine, so it will get
   // retranslated next time it is used.
-  void *OldPtr = updateGlobalMapping(F, 0);
-
-  if (OldPtr)
-    TheJIT->NotifyFreeingMachineCode(*F, OldPtr);
+  updateGlobalMapping(F, 0);
 
   // Free the actual memory for the function body and related stuff.
   assert(isa<JITEmitter>(JCE) && "Unexpected MCE?");

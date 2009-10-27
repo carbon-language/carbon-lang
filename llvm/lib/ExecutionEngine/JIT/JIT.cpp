@@ -556,10 +556,10 @@ void JIT::NotifyFunctionEmitted(
   }
 }
 
-void JIT::NotifyFreeingMachineCode(const Function &F, void *OldPtr) {
+void JIT::NotifyFreeingMachineCode(void *OldPtr) {
   MutexGuard locked(lock);
   for (unsigned I = 0, S = EventListeners.size(); I < S; ++I) {
-    EventListeners[I]->NotifyFreeingMachineCode(F, OldPtr);
+    EventListeners[I]->NotifyFreeingMachineCode(OldPtr);
   }
 }
 

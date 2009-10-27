@@ -183,7 +183,7 @@ public:
   void NotifyFunctionEmitted(
       const Function &F, void *Code, size_t Size,
       const JITEvent_EmittedFunctionDetails &Details);
-  void NotifyFreeingMachineCode(const Function &F, void *OldPtr);
+  void NotifyFreeingMachineCode(void *OldPtr);
 
 private:
   static JITCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM,

@@ -63,8 +63,11 @@ public:
   /// NotifyFreeingMachineCode - This is called inside of
   /// freeMachineCodeForFunction(), after the global mapping is removed, but
   /// before the machine code is returned to the allocator.  OldPtr is the
-  /// address of the machine code.
-  virtual void NotifyFreeingMachineCode(const Function &F, void *OldPtr) {}
+  /// address of the machine code and will be the same as the Code parameter to
+  /// a previous NotifyFunctionEmitted call.  The Function passed to
+  /// NotifyFunctionEmitted may have been destroyed by the time of the matching
+  /// NotifyFreeingMachineCode call.
+  virtual void NotifyFreeingMachineCode(void *OldPtr) {}
 };
 
 // This returns NULL if support isn't available.
