@@ -295,11 +295,11 @@ void *JITResolver::getFunctionStub(Function *F) {
   void *&Stub = state.getFunctionToStubMap(locked)[F];
   if (Stub) return Stub;
 
-  // Call the lazy resolver function unless we are JIT'ing non-lazily, in which
-  // case we must resolve the symbol now.
-  void *Actual = TheJIT->isLazyCompilationDisabled()
-    ? (void *)0 : (void *)(intptr_t)LazyResolverFn;
-  
+  // Call the lazy resolver function if we are JIT'ing lazily.  Otherwise we
+  // must resolve the symbol now.
+  void *Actual = TheJIT->isCompilingLazily()
+    ? (void *)(intptr_t)LazyResolverFn : (void *)0;
+
   // If this is an external declaration, attempt to resolve the address now
   // to place in the stub.
   if (F->isDeclaration() && !F->hasNotBeenReadFromBitcode()) {
@@ -334,7 +334,7 @@ void *JITResolver::getFunctionStub(Function *F) {
   // If we are JIT'ing non-lazily but need to call a function that does not
   // exist yet, add it to the JIT's work list so that we can fill in the stub
   // address later.
-  if (!Actual && TheJIT->isLazyCompilationDisabled())
+  if (!Actual && !TheJIT->isCompilingLazily())
     if (!F->isDeclaration() || F->hasNotBeenReadFromBitcode())
       TheJIT->addPendingFunction(F);
 
@@ -471,7 +471,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
     // Otherwise we don't have it, do lazy compilation now.
     
     // If lazy compilation is disabled, emit a useful error message and abort.
-    if (TheJIT->isLazyCompilationDisabled()) {
+    if (!TheJIT->isCompilingLazily()) {
       llvm_report_error("LLVM JIT requested to do lazy compilation of function '"
                         + F->getName() + "' when lazy compiles are disabled!");
     }
@@ -769,7 +769,7 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
   // mechanism is capable of rewriting the instruction directly, prefer to do
   // that instead of emitting a stub.  This uses the lazy resolver, so is not
   // legal if lazy compilation is disabled.
-  if (DoesntNeedStub && !TheJIT->isLazyCompilationDisabled())
+  if (DoesntNeedStub && TheJIT->isCompilingLazily())
     return Resolver.AddCallbackAtLocation(F, Reference);
 
   // Otherwise, we have to emit a stub.

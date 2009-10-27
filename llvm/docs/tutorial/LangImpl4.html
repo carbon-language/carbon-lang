@@ -388,24 +388,19 @@ entry:
 </pre>
 </div>
 
-<p>This illustrates that we can now call user code, but there is something a bit subtle
-going on here.  Note that we only invoke the JIT on the anonymous functions
-that <em>call testfunc</em>, but we never invoked it on <em>testfunc
-</em>itself.</p>
+<p>This illustrates that we can now call user code, but there is something a bit
+subtle going on here.  Note that we only invoke the JIT on the anonymous
+functions that <em>call testfunc</em>, but we never invoked it
+on <em>testfunc</em> itself.  What actually happened here is that the JIT
+scanned for all non-JIT'd functions transitively called from the anonymous
+function and compiled all of them before returning
+from <tt>getPointerToFunction()</tt>.</p>
 
-<p>What actually happened here is that the anonymous function was
-JIT'd when requested.  When the Kaleidoscope app calls through the function
-pointer that is returned, the anonymous function starts executing.  It ends up
-making the call to the "testfunc" function, and ends up in a stub that invokes
-the JIT, lazily, on testfunc.  Once the JIT finishes lazily compiling testfunc,
-it returns and the code re-executes the call.</p>
-
-<p>In summary, the JIT will lazily JIT code, on the fly, as it is needed.  The
-JIT provides a number of other more advanced interfaces for things like freeing
-allocated machine code, rejit'ing functions to update them, etc.  However, even
-with this simple code, we get some surprisingly powerful capabilities - check
-this out (I removed the dump of the anonymous functions, you should get the idea
-by now :) :</p>
+<p>The JIT provides a number of other more advanced interfaces for things like
+freeing allocated machine code, rejit'ing functions to update them, etc.
+However, even with this simple code, we get some surprisingly powerful
+capabilities - check this out (I removed the dump of the anonymous functions,
+you should get the idea by now :) :</p>
 
 <div class="doc_code">
 <pre>
@@ -453,8 +448,8 @@ directly.</p>
 resolved.  It allows you to establish explicit mappings between IR objects and
 addresses (useful for LLVM global variables that you want to map to static
 tables, for example), allows you to dynamically decide on the fly based on the
-function name, and even allows you to have the JIT abort itself if any lazy
-compilation is attempted.</p>
+function name, and even allows you to have the JIT compile functions lazily the
+first time they're called.</p>
 
 <p>One interesting application of this is that we can now extend the language
 by writing arbitrary C++ code to implement operations.  For example, if we add:

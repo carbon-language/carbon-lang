@@ -599,7 +599,7 @@ void JIT::runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked) {
   isAlreadyCodeGenerating = false;
 
   // If the function referred to another function that had not yet been
-  // read from bitcode, but we are jitting non-lazily, emit it now.
+  // read from bitcode, and we are jitting non-lazily, emit it now.
   while (!jitstate->getPendingFunctions(locked).empty()) {
     Function *PF = jitstate->getPendingFunctions(locked).back();
     jitstate->getPendingFunctions(locked).pop_back();
@@ -616,7 +616,7 @@ void JIT::runJITOnFunctionUnlocked(Function *F, const MutexGuard &locked) {
   
   // If the JIT is configured to emit info so that dlsym can be used to
   // rewrite stubs to external globals, do so now.
-  if (areDlsymStubsEnabled() && isLazyCompilationDisabled())
+  if (areDlsymStubsEnabled() && !isCompilingLazily())
     updateDlsymStubTable();
 }
 

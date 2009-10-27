@@ -165,8 +165,7 @@ int main(int argc, char **argv, char * const *envp) {
 
   EE->RegisterJITEventListener(createOProfileJITEventListener());
 
-  if (NoLazyCompilation)
-    EE->DisableLazyCompilation();
+  EE->EnableLazyCompilation(!NoLazyCompilation);
 
   // If the user specifically requested an argv[0] to pass into the program,
   // do it now.

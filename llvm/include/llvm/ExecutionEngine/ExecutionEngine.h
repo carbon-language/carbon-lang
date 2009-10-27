@@ -88,7 +88,7 @@ public:
 class ExecutionEngine {
   const TargetData *TD;
   ExecutionEngineState EEState;
-  bool LazyCompilationDisabled;
+  bool CompilingLazily;
   bool GVCompilationDisabled;
   bool SymbolSearchingDisabled;
   bool DlsymStubsEnabled;
@@ -319,13 +319,24 @@ public:
   virtual void RegisterJITEventListener(JITEventListener *) {}
   virtual void UnregisterJITEventListener(JITEventListener *) {}
 
-  /// DisableLazyCompilation - If called, the JIT will abort if lazy compilation
-  /// is ever attempted.
-  void DisableLazyCompilation(bool Disabled = true) {
-    LazyCompilationDisabled = Disabled;
+  /// EnableLazyCompilation - When lazy compilation is off (the default), the
+  /// JIT will eagerly compile every function reachable from the argument to
+  /// getPointerToFunction.  If lazy compilation is turned on, the JIT will only
+  /// compile the one function and emit stubs to compile the rest when they're
+  /// first called.  If lazy compilation is turned off again while some lazy
+  /// stubs are still around, and one of those stubs is called, the program will
+  /// abort.
+  ///
+  /// In order to safely compile lazily in a threaded program, the user must
+  /// ensure that 1) only one thread at a time can call any particular lazy
+  /// stub, and 2) any thread modifying LLVM IR must hold the JIT's lock
+  /// (ExecutionEngine::lock) or otherwise ensure that no other thread calls a
+  /// lazy stub.  See http://llvm.org/PR5184 for details.
+  void EnableLazyCompilation(bool Enabled = true) {
+    CompilingLazily = Enabled;
   }
-  bool isLazyCompilationDisabled() const {
-    return LazyCompilationDisabled;
+  bool isCompilingLazily() const {
+    return CompilingLazily;
   }
 
   /// DisableGVCompilation - If called, the JIT will abort if it's asked to

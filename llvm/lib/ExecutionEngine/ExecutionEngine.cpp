@@ -49,7 +49,7 @@ ExecutionEngine::EERegisterFn ExecutionEngine::ExceptionTableRegister = 0;
 ExecutionEngine::ExecutionEngine(ModuleProvider *P)
   : EEState(*this),
     LazyFunctionCreator(0) {
-  LazyCompilationDisabled = false;
+  CompilingLazily         = false;
   GVCompilationDisabled   = false;
   SymbolSearchingDisabled = false;
   DlsymStubsEnabled       = false;
