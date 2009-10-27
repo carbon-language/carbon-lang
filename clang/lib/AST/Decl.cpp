@@ -753,6 +753,60 @@ FunctionDecl::setInstantiationOfMemberFunction(FunctionDecl *FD,
   TemplateOrSpecialization = Info;
 }
 
+bool FunctionDecl::isImplicitlyInstantiable() const {
+  // If this function already has a definition or is invalid, it can't be
+  // implicitly instantiated.
+  if (isInvalidDecl() || getBody())
+    return false;
+  
+  switch (getTemplateSpecializationKind()) {
+  case TSK_Undeclared:
+  case TSK_ExplicitSpecialization:
+  case TSK_ExplicitInstantiationDefinition:
+    return false;
+      
+  case TSK_ImplicitInstantiation:
+    return true;
+
+  case TSK_ExplicitInstantiationDeclaration:
+    // Handled below.
+    break;
+  }
+
+  // Find the actual template from which we will instantiate.
+  const FunctionDecl *PatternDecl = getTemplateInstantiationPattern();
+  Stmt *Pattern = 0;
+  if (PatternDecl)
+    Pattern = PatternDecl->getBody(PatternDecl);
+  
+  // C++0x [temp.explicit]p9:
+  //   Except for inline functions, other explicit instantiation declarations
+  //   have the effect of suppressing the implicit instantiation of the entity
+  //   to which they refer. 
+  if (!Pattern || !PatternDecl)
+    return true;
+
+  return PatternDecl->isInline() || 
+    (isa<CXXMethodDecl>(PatternDecl) && !PatternDecl->isOutOfLine());
+}                      
+   
+FunctionDecl *FunctionDecl::getTemplateInstantiationPattern() const {
+  if (FunctionTemplateDecl *Primary = getPrimaryTemplate()) {
+    while (Primary->getInstantiatedFromMemberTemplate()) {
+      // If we have hit a point where the user provided a specialization of
+      // this template, we're done looking.
+      if (Primary->isMemberSpecialization())
+        break;
+      
+      Primary = Primary->getInstantiatedFromMemberTemplate();
+    }
+    
+    return Primary->getTemplatedDecl();
+  } 
+    
+  return getInstantiatedFromMemberFunction();
+}
+
 FunctionTemplateDecl *FunctionDecl::getPrimaryTemplate() const {
   if (FunctionTemplateSpecializationInfo *Info
         = TemplateOrSpecialization

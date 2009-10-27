@@ -1097,20 +1097,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     return;
   
   // Find the function body that we'll be substituting.
-  const FunctionDecl *PatternDecl = 0;
-  if (FunctionTemplateDecl *Primary = Function->getPrimaryTemplate()) {
-    while (Primary->getInstantiatedFromMemberTemplate()) {
-      // If we have hit a point where the user provided a specialization of
-      // this template, we're done looking.
-      if (Primary->isMemberSpecialization())
-        break;
-      
-      Primary = Primary->getInstantiatedFromMemberTemplate();
-    }
-    
-    PatternDecl = Primary->getTemplatedDecl();
-  } else
-    PatternDecl = Function->getInstantiatedFromMemberFunction();
+  const FunctionDecl *PatternDecl = Function->getTemplateInstantiationPattern();
   Stmt *Pattern = 0;
   if (PatternDecl)
     Pattern = PatternDecl->getBody(PatternDecl);

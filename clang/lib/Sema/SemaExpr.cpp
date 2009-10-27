@@ -6295,21 +6295,21 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     // Implicit instantiation of function templates and member functions of
     // class templates.
-    if (!Function->getBody() &&
-        Function->getTemplateSpecializationKind() 
-                                                == TSK_ImplicitInstantiation) {
+    if (!Function->getBody() && Function->isImplicitlyInstantiable()) {
       bool AlreadyInstantiated = false;
       if (FunctionTemplateSpecializationInfo *SpecInfo
                                 = Function->getTemplateSpecializationInfo()) {
         if (SpecInfo->getPointOfInstantiation().isInvalid())
           SpecInfo->setPointOfInstantiation(Loc);
-        else
+        else if (SpecInfo->getTemplateSpecializationKind() 
+                   == TSK_ImplicitInstantiation)
           AlreadyInstantiated = true;
       } else if (MemberSpecializationInfo *MSInfo 
                                   = Function->getMemberSpecializationInfo()) {
         if (MSInfo->getPointOfInstantiation().isInvalid())
           MSInfo->setPointOfInstantiation(Loc);
-        else
+        else if (MSInfo->getTemplateSpecializationKind() 
+                   == TSK_ImplicitInstantiation)
           AlreadyInstantiated = true;
       }
       

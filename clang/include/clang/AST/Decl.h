@@ -1123,7 +1123,17 @@ public:
     return TemplateOrSpecialization.
              dyn_cast<FunctionTemplateSpecializationInfo*>();
   }
-                       
+
+  /// \brief Determines whether this function is a function template
+  /// specialization or a member of a class template specialization that can
+  /// be implicitly instantiated.
+  bool isImplicitlyInstantiable() const;
+              
+  /// \brief Retrieve the function declaration from which this function could
+  /// be instantiated, if it is an instantiation (rather than a non-template
+  /// or a specialization, for example).
+  FunctionDecl *getTemplateInstantiationPattern() const;
+
   /// \brief Retrieve the primary template that this function template
   /// specialization either specializes or was instantiated from.
   ///
@@ -1176,7 +1186,7 @@ public:
   /// instantiated from a template; otherwie, returns an invalid source 
   /// location.
   SourceLocation getPointOfInstantiation() const;
-
+                       
   /// \brief Determine whether this is or was instantiated from an out-of-line 
   /// definition of a member function.
   bool isOutOfLine() const;
