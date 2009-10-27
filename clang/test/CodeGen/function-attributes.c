@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm -o - %s | FileCheck %s
+// RUN: clang-cc -triple i386-unknown-unknown -emit-llvm -Os -o - %s | FileCheck %s
 // CHECK: define signext i8 @f0(i32 %x) nounwind
 // CHECK: define zeroext i8 @f1(i32 %x) nounwind
 // CHECK: define void @f2(i8 signext %x) nounwind
@@ -24,15 +24,22 @@ void f6(signed short x) { }
 
 void f7(unsigned short x) { }
 
-// CHECK: define void @f8() nounwind alwaysinline
+// CHECK: define void @f8()
+// CHECK: nounwind
+// CHECK: alwaysinline
+// CHECK: {
 void __attribute__((always_inline)) f8(void) { }
 
-// CHECK: call void @f9_t() noreturn
+// CHECK: call void @f9_t()
+// CHECK: noreturn
+// CHECK: {
 void __attribute__((noreturn)) f9_t(void);
 void f9(void) { f9_t(); }
 
 // FIXME: We should be setting nounwind on calls.
-// CHECK: call i32 @f10_t() readnone
+// CHECK: call i32 @f10_t()
+// CHECK: readnone
+// CHECK: {
 int __attribute__((const)) f10_t(void);
 int f10(void) { return f10_t(); }
 int f11(void) {
@@ -49,9 +56,9 @@ void f13(void){}
 
 
 // Ensure that these get inlined: rdar://6853279
-// CHECK: define i32 @f14
+// CHECK: define void @f14
 // CHECK-NOT: @ai_
-// CHECK: ret i32
+// CHECK: call void @f14_end
 static __inline__ __attribute__((always_inline))
 int ai_1() {  return 4; }
 
@@ -60,7 +67,17 @@ struct {
   int a, b, c, d, e;
 } ai_2() { while (1) {} }
 
-int f14() {
-  ai_2();
-  return ai_1();
+void f14(int a) {
+  extern void f14_end(void);
+  if (a)
+    ai_2();
+  ai_1();
+  f14_end();
+}
+
+// <rdar://problem/7102668> [irgen] clang isn't setting the optsize bit on functions
+// CHECK: define void @f15
+// CHECK: optsize
+// CHECK: {
+void f15(void) {
 }

@@ -441,6 +441,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
       RetAttrs |= llvm::Attribute::NoAlias;
   }
 
+  if (CompileOpts.OptimizeSize)
+    FuncAttrs |= llvm::Attribute::OptimizeForSize;
   if (CompileOpts.DisableRedZone)
     FuncAttrs |= llvm::Attribute::NoRedZone;
   if (CompileOpts.NoImplicitFloat)
