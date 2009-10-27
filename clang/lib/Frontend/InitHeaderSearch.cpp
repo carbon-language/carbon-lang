@@ -241,11 +241,9 @@ bool getVisualStudioDir(std::string &path) {
   return(false);
 }
 
-void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
-                                                    const llvm::Triple &triple) {
+void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple) {
   // FIXME: temporary hack: hard-coded paths.
   llvm::Triple::OSType os = triple.getOS();
-
   switch (os) {
   case llvm::Triple::Win32:
     {
@@ -276,160 +274,173 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
       }
     }
     break;
-  case llvm::Triple::Cygwin:
-    if (Lang.CPlusPlus) {
-      AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include",
-        System, false, false, false);
-      AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include/c++",
-        System, false, false, false);
-    }
-    AddPath("/usr/include", System, false, false, false);
-    break;
   case llvm::Triple::MinGW64:
-    if (Lang.CPlusPlus) { // I'm guessing here.
-      // Try gcc 4.4.0
-      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw64", "4.4.0");
-      // Try gcc 4.3.0
-      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw64", "4.3.0");
-    }
-    // Fall through.
   case llvm::Triple::MinGW32:
-    if (Lang.CPlusPlus) {
-      // Try gcc 4.4.0
-      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.4.0");
-      // Try gcc 4.3.0
-      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.3.0");
-    }
     AddPath("c:/mingw/include", System, true, false, false);
     break;
   default:
-    if (Lang.CPlusPlus) {
-      switch (os) {
-        case llvm::Triple::Darwin:
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
-                                      "i686-apple-darwin10",
-                                      "i686-apple-darwin10/x86_64",
-                                      triple);
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.0.0",
-                                      "i686-apple-darwin8",
-                                      "i686-apple-darwin8",
-                                      triple);
-          break;
-        case llvm::Triple::Linux:
-          // Ubuntu 7.10 - Gutsy Gibbon
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.3",
-                                      "i486-linux-gnu",
-                                      "i486-linux-gnu",
-                                      triple);
-          // Ubuntu 9.04
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.3",
-                                      "x86_64-linux-gnu/32",
-                                      "x86_64-linux-gnu",
-                                      triple);
-          // Fedora 8
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.2",
-                                      "i386-redhat-linux",
-                                      "i386-redhat-linux",
-                                      triple);
-          // Fedora 9
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.0",
-                                      "i386-redhat-linux",
-                                      "i386-redhat-linux",
-                                      triple);
-          // Fedora 10
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.2",
-                                      "i386-redhat-linux",
-                                      "i386-redhat-linux",
-                                      triple);
-          // openSUSE 11.1 32 bit
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3",
-                                      "i586-suse-linux",
-                                      "i586-suse-linux",
-                                      triple);
-          // openSUSE 11.1 64 bit
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3",
-                                      "x86_64-suse-linux/32",
-                                      "x86_64-suse-linux",
-                                      triple);
-          // openSUSE 11.2
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4",
-                                      "i586-suse-linux",
-                                      "i586-suse-linux",
-                                      triple);
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4",
-                                      "x86_64-suse-linux",
-                                      "x86_64-suse-linux",
-                                      triple);
-          // Arch Linux 2008-06-24
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.1",
-                                      "i686-pc-linux-gnu",
-                                      "i686-pc-linux-gnu",
-                                      triple);
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.1",
-                                      "x86_64-unknown-linux-gnu",
-                                      "x86_64-unknown-linux-gnu",
-                                      triple);
-          // Gentoo x86 2009.1 stable
-          AddGnuCPlusPlusIncludePaths(
-             "/usr/lib/gcc/i686-pc-linux-gnu/4.3.4/include/g++-v4",
-             "i686-pc-linux-gnu",
-             "i686-pc-linux-gnu",
-             triple);
-          // Gentoo x86 2009.0 stable
-          AddGnuCPlusPlusIncludePaths(
-             "/usr/lib/gcc/i686-pc-linux-gnu/4.3.2/include/g++-v4",
-             "i686-pc-linux-gnu",
-             "i686-pc-linux-gnu",
-             triple);
-          // Gentoo x86 2008.0 stable
-          AddGnuCPlusPlusIncludePaths(
-             "/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include/g++-v4",
-             "i686-pc-linux-gnu",
-             "i686-pc-linux-gnu",
-             triple);
-          // Ubuntu 8.10
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3",
-                                      "i486-pc-linux-gnu",
-                                      "i486-pc-linux-gnu",
-                                      triple);
-          // Ubuntu 9.04
-          AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3",
-                                      "i486-linux-gnu",
-                                      "i486-linux-gnu",
-                                      triple);
-          // Gentoo amd64 stable
-          AddGnuCPlusPlusIncludePaths(
-             "/usr/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/g++-v4",
-             "i686-pc-linux-gnu",
-             "i686-pc-linux-gnu",
-             triple);
-          break;
-        case llvm::Triple::FreeBSD:
-          // DragonFly
-          AddPath("/usr/include/c++/4.1", System, true, false, false);
-          // FreeBSD
-          AddPath("/usr/include/c++/4.2", System, true, false, false);
-          break;
-        case llvm::Triple::Solaris:
-          // Solaris - Fall though..
-        case llvm::Triple::AuroraUX:
-          // AuroraUX
-          AddGnuCPlusPlusIncludePaths("/opt/gcc4/include/c++/4.2.4",
-                                      "i386-pc-solaris2.11",
-                                      "i386-pc-solaris2.11",
-                                      triple);
-          break;
-        default:
-          break;
-      }
-    }
     break;
   }
 
   AddPath("/usr/local/include", System, false, false, false);
   AddPath("/usr/include", System, false, false, false);
+}
+
+void InitHeaderSearch::AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
+  llvm::Triple::OSType os = triple.getOS();
+  // FIXME: temporary hack: hard-coded paths.
+  switch (os) {
+  case llvm::Triple::Cygwin:
+    AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include",
+        System, true, false, false);
+    AddPath("/lib/gcc/i686-pc-cygwin/3.4.4/include/c++",
+        System, true, false, false);
+    break;
+  case llvm::Triple::MinGW64:
+    // Try gcc 4.4.0
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw64", "4.4.0");
+    // Try gcc 4.3.0
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw64", "4.3.0");
+    // Fall through.
+  case llvm::Triple::MinGW32:
+    // Try gcc 4.4.0
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.4.0");
+    // Try gcc 4.3.0
+    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.3.0");
+    break;
+  case llvm::Triple::Darwin:
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
+				"i686-apple-darwin10",
+				"i686-apple-darwin10/x86_64",
+				triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.0.0",
+				"i686-apple-darwin8",
+				"i686-apple-darwin8",
+				triple);
+    break;
+  case llvm::Triple::Linux:
+    // Ubuntu 7.10 - Gutsy Gibbon
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.3",
+				"i486-linux-gnu",
+				"i486-linux-gnu",
+				triple);
+    // Ubuntu 9.04
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.3",
+				"x86_64-linux-gnu/32",
+				"x86_64-linux-gnu",
+				triple);
+    // Fedora 8
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.2",
+				"i386-redhat-linux",
+				"i386-redhat-linux",
+				triple);
+    // Fedora 9
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.0",
+				"i386-redhat-linux",
+				"i386-redhat-linux",
+				triple);
+    // Fedora 10
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.2",
+				"i386-redhat-linux",
+				"i386-redhat-linux",
+				triple);
+    // openSUSE 11.1 32 bit
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3",
+				"i586-suse-linux",
+				"i586-suse-linux",
+				triple);
+    // openSUSE 11.1 64 bit
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3",
+				"x86_64-suse-linux/32",
+				"x86_64-suse-linux",
+				triple);
+    // openSUSE 11.2
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4",
+				"i586-suse-linux",
+				"i586-suse-linux",
+				triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.4",
+				"x86_64-suse-linux",
+				"x86_64-suse-linux",
+				triple);
+    // Arch Linux 2008-06-24
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.1",
+				"i686-pc-linux-gnu",
+				"i686-pc-linux-gnu",
+				triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3.1",
+				"x86_64-unknown-linux-gnu",
+				"x86_64-unknown-linux-gnu",
+				triple);
+    // Gentoo x86 2009.1 stable
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/lib/gcc/i686-pc-linux-gnu/4.3.4/include/g++-v4",
+	"i686-pc-linux-gnu",
+	"i686-pc-linux-gnu",
+	triple);
+    // Gentoo x86 2009.0 stable
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/lib/gcc/i686-pc-linux-gnu/4.3.2/include/g++-v4",
+	"i686-pc-linux-gnu",
+	"i686-pc-linux-gnu",
+	triple);
+    // Gentoo x86 2008.0 stable
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include/g++-v4",
+	"i686-pc-linux-gnu",
+	"i686-pc-linux-gnu",
+	triple);
+    // Ubuntu 8.10
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3",
+				"i486-pc-linux-gnu",
+				"i486-pc-linux-gnu",
+				triple);
+    // Ubuntu 9.04
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.3",
+				"i486-linux-gnu",
+				"i486-linux-gnu",
+				triple);
+    // Gentoo amd64 stable
+    AddGnuCPlusPlusIncludePaths(
+        "/usr/lib/gcc/x86_64-pc-linux-gnu/4.1.2/include/g++-v4",
+        "i686-pc-linux-gnu",
+        "i686-pc-linux-gnu",
+        triple);
+    break;
+  case llvm::Triple::FreeBSD:
+    // DragonFly
+    AddPath("/usr/include/c++/4.1", System, true, false, false);
+    // FreeBSD
+    AddPath("/usr/include/c++/4.2", System, true, false, false);
+    break;
+  case llvm::Triple::Solaris:
+    // Solaris - Fall though..
+  case llvm::Triple::AuroraUX:
+    // AuroraUX
+    AddGnuCPlusPlusIncludePaths("/opt/gcc4/include/c++/4.2.4",
+                                "i386-pc-solaris2.11",
+                                "i386-pc-solaris2.11",
+                                triple);
+    break;
+  default:
+    break;
+  }
+}
+
+void InitHeaderSearch::AddDefaultFrameworkIncludePaths(const llvm::Triple &triple) {
+  llvm::Triple::OSType os = triple.getOS();
+  if (os != llvm::Triple::Darwin)
+    return;
   AddPath("/System/Library/Frameworks", System, true, false, true);
   AddPath("/Library/Frameworks", System, true, false, true);
+}
+
+void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
+                                                    const llvm::Triple &triple) {
+  AddDefaultCIncludePaths(triple);
+  AddDefaultFrameworkIncludePaths(triple);
+  if (Lang.CPlusPlus)
+    AddDefaultCPlusPlusIncludePaths(triple);
 }
 
 void InitHeaderSearch::AddDefaultEnvVarPaths(const LangOptions &Lang) {

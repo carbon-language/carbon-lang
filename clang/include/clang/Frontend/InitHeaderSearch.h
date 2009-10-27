@@ -73,6 +73,16 @@ public:
   ///  variables such as CPATH.
   void AddDefaultEnvVarPaths(const LangOptions &Lang);
 
+  // AddDefaultCIncludePaths - Add paths that should always be searched.
+  void AddDefaultCIncludePaths(const llvm::Triple &triple);
+
+  // AddDefaultCPlusPlusIncludePaths -  Add paths that should be searched when
+  //  compiling c++.
+  void AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple);
+
+  // AddDefaultFrameworkIncludePaths - Add the framework paths. Used on darwin.
+  void AddDefaultFrameworkIncludePaths(const llvm::Triple &triple);
+
   /// AddDefaultSystemIncludePaths - Adds the default system include paths so
   ///  that e.g. stdio.h is found.
   void AddDefaultSystemIncludePaths(const LangOptions &Lang,
