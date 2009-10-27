@@ -35,4 +35,4 @@ add_custom_target(clang-headers ALL
 
 install(FILES ${files}
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-  DESTINATION lib/clang/${CLANG_VERSION}/include)
+  DESTINATION lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}/include)
