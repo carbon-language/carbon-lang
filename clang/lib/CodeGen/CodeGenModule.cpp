@@ -253,24 +253,16 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
   if (FD->isInAnonymousNamespace())
     return CodeGenModule::GVA_Internal;
 
+  // "static" functions get internal linkage.
+  if (FD->getStorageClass() == FunctionDecl::Static && !isa<CXXMethodDecl>(FD))
+    return CodeGenModule::GVA_Internal;
+  
   // The kind of external linkage this function will have, if it is not
   // inline or static.
   CodeGenModule::GVALinkage External = CodeGenModule::GVA_StrongExternal;
   if (Context.getLangOptions().CPlusPlus &&
       FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
     External = CodeGenModule::GVA_TemplateInstantiation;
-
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-    // C++ member functions defined inside the class are always inline.
-    if (MD->isInlined())
-      return CodeGenModule::GVA_CXXInline;
-
-    return External;
-  }
-
-  // "static" functions get internal linkage.
-  if (FD->getStorageClass() == FunctionDecl::Static)
-    return CodeGenModule::GVA_Internal;
 
   if (!FD->isInlined())
     return External;
@@ -285,8 +277,16 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
     return CodeGenModule::GVA_C99Inline;
   }
 
-  // C++ inline semantics
-  assert(Features.CPlusPlus && "Must be in C++ mode");
+  // C++0x [temp.explicit]p9:
+  //   [ Note: The intent is that an inline function that is the subject of 
+  //   an explicit instantiation declaration will still be implicitly 
+  //   instantiated when used so that the body can be considered for 
+  //   inlining, but that no out-of-line copy of the inline function would be
+  //   generated in the translation unit. -- end note ]
+  if (FD->getTemplateSpecializationKind() 
+                                       == TSK_ExplicitInstantiationDeclaration)
+    return CodeGenModule::GVA_C99Inline;
+  
   return CodeGenModule::GVA_CXXInline;
 }
 

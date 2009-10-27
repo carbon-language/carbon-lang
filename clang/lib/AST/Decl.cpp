@@ -643,10 +643,33 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
 }
 
 bool FunctionDecl::isInlined() const {
-  return isInlineSpecified() || (isa<CXXMethodDecl>(this) && !isOutOfLine());
+  if (isInlineSpecified() || (isa<CXXMethodDecl>(this) && !isOutOfLine()))
+    return true;
+
+  switch (getTemplateSpecializationKind()) {
+  case TSK_Undeclared:
+  case TSK_ExplicitSpecialization:
+    return false;
+
+  case TSK_ImplicitInstantiation:
+  case TSK_ExplicitInstantiationDeclaration:
+  case TSK_ExplicitInstantiationDefinition:
+    // Handle below.
+    break;
+  }
+
+  const FunctionDecl *PatternDecl = getTemplateInstantiationPattern();
+  Stmt *Pattern = 0;
+  if (PatternDecl)
+    Pattern = PatternDecl->getBody(PatternDecl);
+  
+  if (Pattern && PatternDecl)
+    return PatternDecl->isInlined();
+  
+  return false;
 }
 
-/// \brief For an inline function definition in C, determine whether the 
+/// \brief For an inline function definition in C or C++, determine whether the 
 /// definition will be externally visible.
 ///
 /// Inline function definitions are always available for inlining optimizations.
@@ -666,8 +689,9 @@ bool FunctionDecl::isInlined() const {
 bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
   assert(isThisDeclarationADefinition() && "Must have the function definition");
   assert(isInlined() && "Function must be inline");
+  ASTContext &Context = getASTContext();
   
-  if (!getASTContext().getLangOptions().C99 || hasAttr<GNUInlineAttr>()) {
+  if (!Context.getLangOptions().C99 || hasAttr<GNUInlineAttr>()) {
     // GNU inline semantics. Based on a number of examples, we came up with the
     // following heuristic: if the "inline" keyword is present on a
     // declaration of the function but "extern" is not present on that
