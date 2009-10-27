@@ -1,5 +1,5 @@
-// RUN: clang-cc -E %s | grep -F "1: F, (, 'a', 'b', );" &&
-// RUN: clang-cc -E %s | grep -F "2: 'a' + 'b';"
+// RUN: clang-cc -E %s | FileCheck -strict-whitespace %s
+
 #define LPAREN ( 
 #define RPAREN ) 
 #define F(x, y) x + y 
@@ -7,4 +7,7 @@
 
 1: ELLIP_FUNC(F, LPAREN, 'a', 'b', RPAREN); /* 1st invocation */ 
 2: ELLIP_FUNC(F LPAREN 'a', 'b' RPAREN); /* 2nd invocation */ 
+
+// CHECK: 1: F, (, 'a', 'b', );
+// CHECK: 2: 'a' + 'b';
 

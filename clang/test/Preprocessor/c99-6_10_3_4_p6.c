@@ -1,10 +1,6 @@
 // Example from C99 6.10.3.4p6
 
-// RUN: clang-cc -E %s | grep -F 'printf("x" "1" "= %d, x" "2" "= s" x1, x2);' &&
-// RUN: clang-cc -E %s | grep 'fputs("strncmp(\\"abc\\\\0d\\" \\"abc\\", .\\\\4.) == 0" ": @\\n", s);' &&
-// RUN: clang-cc -E %s | grep -F 'include "vers2.h"' &&
-// RUN: clang-cc -E %s | grep -F '"hello";' &&
-// RUN: clang-cc -E %s | grep -F '"hello" ", world"'
+// RUN: clang-cc -E %s | FileCheck -strict-whitespace %s
 
 #define str(s) # s 
 #define xstr(s) str(s) 
@@ -21,4 +17,11 @@ fputs(str(strncmp("abc\0d" "abc", '\4') // this goes away
 include xstr(INCFILE(2).h) 
 glue(HIGH, LOW); 
 xglue(HIGH, LOW) 
+
+
+// CHECK: printf("x" "1" "= %d, x" "2" "= s" x1, x2);
+// CHECK: fputs("strncmp(\"abc\\0d\" \"abc\", '\\4') == 0" ": @\n", s);
+// CHECK: include "vers2.h"
+// CHECK: "hello";
+// CHECK: "hello" ", world"
 

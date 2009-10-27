@@ -1,7 +1,8 @@
-// RUN: clang-cc -E -C %s | grep '^// foo$' &&
-// RUN: clang-cc -E -C %s | grep -F '^/* bar */$'
+// RUN: clang-cc -E -C %s | FileCheck -strict-whitespace %s
 
 // foo
-/* bar */
+// CHECK: // foo
 
+/* bar */
+// CHECK: /* bar */
 

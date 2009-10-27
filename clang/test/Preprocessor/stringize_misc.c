@@ -1,20 +1,23 @@
-// RUN: clang-cc -E %s | grep -F '"f(1, 2)" "g((x=y++, y))"' &&
-// RUN: clang-cc -E %s | grep -F '"{a=1" "b=2;}"' &&
-// RUN: clang-cc -E %s | grep -F '"<" "["' &&
-// RUN: clang-cc -E %s | grep -F '"(,)" "(...)"' &&
-// RUN: clang-cc -E %s | grep -F '{a=1 c=3; b=2;}' &&
-// RUN: clang-cc -E %s | grep -F '"a COMMA b" "(a, b)"'
+// RUN: clang-cc -E %s | FileCheck -strict-whitespace %s
 
 #define M(x, y) #x #y
 
 M( f(1, 2), g((x=y++, y))) 
+// CHECK: "f(1, 2)" "g((x=y++, y))"
+
 M( {a=1 , b=2;} ) /* A semicolon is not a comma */ 
+// CHECK: "{a=1" "b=2;}"
+
 M( <, [ ) /* Passes the arguments < and [ */ 
+// CHECK: "<" "["
+
 M( (,), (...) ) /* Passes the arguments (,) and (...) */ 
+// CHECK: "(,)" "(...)"
 
 #define START_END(start, end) start c=3; end 
 
 START_END( {a=1 , b=2;} ) /* braces are not parentheses */ 
+// CHECK: {a=1 c=3; b=2;}
 
 /* 
  * To pass a comma token as an argument it is 
@@ -23,4 +26,5 @@ START_END( {a=1 , b=2;} ) /* braces are not parentheses */
 #define COMMA , 
  
 M(a COMMA b, (a, b)) 
+// CHECK: "a COMMA b" "(a, b)"
 
