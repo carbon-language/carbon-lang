@@ -324,6 +324,7 @@ install(DIRECTORY include/
   FILES_MATCHING
   PATTERN "*.h"
   PATTERN "*.td"
+  PATTERN "*.inc"
   PATTERN ".svn" EXCLUDE
   )
 
@@ -333,6 +334,7 @@ install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
   PATTERN "*.def"
   PATTERN "*.h"
   PATTERN "*.gen"
+  PATTERN "*.inc"
   # Exclude include/llvm/CMakeFiles/intrinsics_gen.dir, matched by "*.def"
   PATTERN "CMakeFiles" EXCLUDE
   PATTERN ".svn" EXCLUDE
