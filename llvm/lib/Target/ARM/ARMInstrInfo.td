@@ -1099,7 +1099,6 @@ defm SBC : AI1_adde_sube_irs<0b0110, "sbc",
 def RSBri : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                   IIC_iALUi, "rsb", "\t$dst, $a, $b",
                   [(set GPR:$dst, (sub so_imm:$b, GPR:$a))]> {
-    let Inst{20} = 0;
     let Inst{25} = 1;
 }
 
@@ -1108,7 +1107,6 @@ def RSBrs : AsI1<0b0011, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                   [(set GPR:$dst, (sub so_reg:$b, GPR:$a))]> {
     let Inst{4} = 1;
     let Inst{7} = 0;
-    let Inst{20} = 0;
     let Inst{25} = 0;
 }
 
