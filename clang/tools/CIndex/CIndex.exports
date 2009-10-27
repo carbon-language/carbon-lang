@@ -30,3 +30,7 @@ _clang_getCursorSpelling
 _clang_getCursorKindSpelling
 _clang_getDefinitionSpellingAndExtent
 _clang_getTranslationUnitSpelling
+_clang_getCursorSourceFile
+_clang_getDeclSourceFile
+_clang_getFileName
+_clang_getFileTime

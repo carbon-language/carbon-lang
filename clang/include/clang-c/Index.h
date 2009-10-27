@@ -16,11 +16,13 @@
 #ifndef CLANG_C_INDEX_H
 #define CLANG_C_INDEX_H
 
+#include <sys/stat.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// MSVC DLL import/export.
+/* MSVC DLL import/export. */
 #ifdef _MSC_VER
   #ifdef _CINDEX_LIB_
     #define CINDEX_LINKAGE __declspec(dllexport)
@@ -44,6 +46,7 @@ typedef void *CXIndex;            /* An indexing instance. */
 
 typedef void *CXTranslationUnit;  /* A translation unit instance. */
 
+typedef void *CXFile;    /* A source file */
 typedef void *CXDecl;    /* A specific declaration within a translation unit. */
 typedef void *CXStmt;    /* A specific statement within a function/method */
 
@@ -241,6 +244,12 @@ typedef void (*CXDeclIterator)(CXDecl, CXCursor, CXClientData);
 CINDEX_LINKAGE void clang_loadDeclaration(CXDecl, CXDeclIterator, CXClientData);
 
 /*
+ * CXFile Operations.
+ */
+const char *clang_getFileName(CXFile SFile);
+time_t clang_getFileTime(CXFile SFile);
+
+/*
  * CXEntity Operations.
  */
 CINDEX_LINKAGE const char *clang_getDeclarationName(CXEntity);
@@ -254,7 +263,8 @@ CINDEX_LINKAGE CXEntity clang_getEntityFromDecl(CXDecl);
 CINDEX_LINKAGE const char *clang_getDeclSpelling(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclLine(CXDecl);
 CINDEX_LINKAGE unsigned clang_getDeclColumn(CXDecl);
-CINDEX_LINKAGE const char *clang_getDeclSource(CXDecl);
+CINDEX_LINKAGE const char *clang_getDeclSource(CXDecl); /* deprecate */
+CINDEX_LINKAGE CXFile clang_getDeclSourceFile(CXDecl);
 
 /*
  * CXCursor Operations.
@@ -289,8 +299,9 @@ CINDEX_LINKAGE unsigned clang_isInvalid(enum CXCursorKind);
 
 CINDEX_LINKAGE unsigned clang_getCursorLine(CXCursor);
 CINDEX_LINKAGE unsigned clang_getCursorColumn(CXCursor);
-CINDEX_LINKAGE const char *clang_getCursorSource(CXCursor);
 CINDEX_LINKAGE const char *clang_getCursorSpelling(CXCursor);
+CINDEX_LINKAGE const char *clang_getCursorSource(CXCursor); /* deprecate */
+CINDEX_LINKAGE CXFile clang_getCursorSourceFile(CXCursor);
 
 /* for debug/testing */
 CINDEX_LINKAGE const char *clang_getCursorKindSpelling(enum CXCursorKind Kind); 

@@ -571,9 +571,40 @@ unsigned clang_getDeclColumn(CXDecl AnonDecl)
 const char *clang_getDeclSource(CXDecl AnonDecl) 
 {
   assert(AnonDecl && "Passed null CXDecl");
+  FileEntry *FEnt = static_cast<FileEntry *>(clang_getDeclSourceFile(AnonDecl));
+  assert (FEnt && "Cannot find FileEntry for Decl");
+  return clang_getFileName(FEnt);
+}
+
+static const FileEntry *getFileEntryFromSourceLocation(SourceManager &SMgr,
+                                                       SourceLocation SLoc) 
+{
+  FileID FID;
+  if (SLoc.isFileID())
+    FID = SMgr.getFileID(SLoc);
+  else
+    FID = SMgr.getDecomposedSpellingLoc(SLoc).first;
+  return SMgr.getFileEntryForID(FID);
+}
+
+CXFile clang_getDeclSourceFile(CXDecl AnonDecl) 
+{
+  assert(AnonDecl && "Passed null CXDecl");
   NamedDecl *ND = static_cast<NamedDecl *>(AnonDecl);
   SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
-  return SourceMgr.getBufferName(ND->getLocation());
+  return (void *)getFileEntryFromSourceLocation(SourceMgr, ND->getLocation());
+}
+
+const char *clang_getFileName(CXFile SFile) {
+  assert(SFile && "Passed null CXFile");
+  FileEntry *FEnt = static_cast<FileEntry *>(SFile);
+  return FEnt->getName();
+}
+
+time_t clang_getFileTime(CXFile SFile) {
+  assert(SFile && "Passed null CXFile");
+  FileEntry *FEnt = static_cast<FileEntry *>(SFile);
+  return FEnt->getModificationTime();
 }
 
 const char *clang_getCursorSpelling(CXCursor C)
@@ -928,6 +959,16 @@ const char *clang_getCursorSource(CXCursor C)
     return 0;
 
   return Buffer->getBufferIdentifier();
+}
+
+CXFile clang_getCursorSourceFile(CXCursor C)
+{
+  assert(C.decl && "CXCursor has null decl");
+  NamedDecl *ND = static_cast<NamedDecl *>(C.decl);
+  SourceManager &SourceMgr = ND->getASTContext().getSourceManager();
+  
+  return (void *)getFileEntryFromSourceLocation(SourceMgr,
+                                        getLocationFromCursor(C,SourceMgr, ND));
 }
 
 void clang_getDefinitionSpellingAndExtent(CXCursor C, 
