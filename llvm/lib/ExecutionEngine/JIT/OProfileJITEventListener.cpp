@@ -43,7 +43,7 @@ public:
   virtual void NotifyFunctionEmitted(const Function &F,
                                      void *FnStart, size_t FnSize,
                                      const EmittedFunctionDetails &Details);
-  virtual void NotifyFreeingMachineCode(const Function &F, void *OldPtr);
+  virtual void NotifyFreeingMachineCode(void *OldPtr);
 };
 
 OProfileJITEventListener::OProfileJITEventListener()
