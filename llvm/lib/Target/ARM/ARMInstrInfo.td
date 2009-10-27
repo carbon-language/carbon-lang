@@ -675,7 +675,9 @@ let isCall = 1,
   def BL  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                 IIC_Br, "bl\t${func:call}",
                 [(ARMcall tglobaladdr:$func)]>,
-            Requires<[IsARM, IsNotDarwin]>;
+            Requires<[IsARM, IsNotDarwin]> {
+    let Inst{31-28} = 0b1110;
+  }
 
   def BL_pred : ABI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                    IIC_Br, "bl", "\t${func:call}",
@@ -711,7 +713,9 @@ let isCall = 1,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR, FPSCR] in {
   def BLr9  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                 IIC_Br, "bl\t${func:call}",
-                [(ARMcall tglobaladdr:$func)]>, Requires<[IsARM, IsDarwin]>;
+                [(ARMcall tglobaladdr:$func)]>, Requires<[IsARM, IsDarwin]> {
+    let Inst{31-28} = 0b1110;
+  }
 
   def BLr9_pred : ABI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                    IIC_Br, "bl", "\t${func:call}",
