@@ -304,7 +304,7 @@ TEST_F(JITTest, FarCallToKnownFunction) {
   Builder.CreateRet(result);
 
   TheJIT->EnableDlsymStubs(false);
-  TheJIT->EnableLazyCompilation(false);
+  TheJIT->DisableLazyCompilation(true);
   int (*TestFunctionPtr)() = reinterpret_cast<int(*)()>(
       (intptr_t)TheJIT->getPointerToFunction(TestFunction));
   // This used to crash in trying to call PlusOne().
@@ -314,7 +314,7 @@ TEST_F(JITTest, FarCallToKnownFunction) {
 #if !defined(__arm__) && !defined(__powerpc__) && !defined(__ppc__)
 // Test a function C which calls A and B which call each other.
 TEST_F(JITTest, NonLazyCompilationStillNeedsStubs) {
-  TheJIT->EnableLazyCompilation(false);
+  TheJIT->DisableLazyCompilation(true);
 
   const FunctionType *Func1Ty =
       cast<FunctionType>(TypeBuilder<void(void), false>::get(Context));
@@ -370,7 +370,7 @@ TEST_F(JITTest, NonLazyCompilationStillNeedsStubs) {
 // Regression test for PR5162.  This used to trigger an AssertingVH inside the
 // JIT's Function to stub mapping.
 TEST_F(JITTest, NonLazyLeaksNoStubs) {
-  TheJIT->EnableLazyCompilation(false);
+  TheJIT->DisableLazyCompilation(true);
 
   // Create two functions with a single basic block each.
   const FunctionType *FuncTy =

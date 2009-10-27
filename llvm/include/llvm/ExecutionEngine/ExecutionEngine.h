@@ -319,7 +319,7 @@ public:
   virtual void RegisterJITEventListener(JITEventListener *) {}
   virtual void UnregisterJITEventListener(JITEventListener *) {}
 
-  /// EnableLazyCompilation - When lazy compilation is off (the default), the
+  /// DisableLazyCompilation - When lazy compilation is off (the default), the
   /// JIT will eagerly compile every function reachable from the argument to
   /// getPointerToFunction.  If lazy compilation is turned on, the JIT will only
   /// compile the one function and emit stubs to compile the rest when they're
@@ -332,11 +332,16 @@ public:
   /// stub, and 2) any thread modifying LLVM IR must hold the JIT's lock
   /// (ExecutionEngine::lock) or otherwise ensure that no other thread calls a
   /// lazy stub.  See http://llvm.org/PR5184 for details.
-  void EnableLazyCompilation(bool Enabled = true) {
-    CompilingLazily = Enabled;
+  void DisableLazyCompilation(bool Disabled = true) {
+    CompilingLazily = !Disabled;
   }
   bool isCompilingLazily() const {
     return CompilingLazily;
+  }
+  // Deprecated in favor of isCompilingLazily (to reduce double-negatives).
+  // Remove this in LLVM 2.8.
+  bool isLazyCompilationDisabled() const {
+    return !CompilingLazily;
   }
 
   /// DisableGVCompilation - If called, the JIT will abort if it's asked to
