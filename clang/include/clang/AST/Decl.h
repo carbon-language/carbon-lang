@@ -1044,8 +1044,12 @@ public:
   StorageClass getStorageClass() const { return StorageClass(SClass); }
   void setStorageClass(StorageClass SC) { SClass = SC; }
 
-  bool isInline() const { return IsInline; }
-  void setInline(bool I) { IsInline = I; }
+  /// \brief Determine whether the "inline" keyword was specified for this
+  /// function.
+  bool isInlineSpecified() const { return IsInline; }
+                       
+  /// Set whether the "inline" keyword was specified for this function.
+  void setInlineSpecified(bool I) { IsInline = I; }
 
   bool isInlineDefinitionExternallyVisible() const;
                        

@@ -262,7 +262,7 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
 
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
     // C++ member functions defined inside the class are always inline.
-    if (MD->isInline() || !MD->isOutOfLine())
+    if (MD->isInlineSpecified() || !MD->isOutOfLine())
       return CodeGenModule::GVA_CXXInline;
 
     return External;
@@ -272,7 +272,7 @@ GetLinkageForFunction(ASTContext &Context, const FunctionDecl *FD,
   if (FD->getStorageClass() == FunctionDecl::Static)
     return CodeGenModule::GVA_Internal;
 
-  if (!FD->isInline())
+  if (!FD->isInlineSpecified())
     return External;
 
   if (!Features.CPlusPlus || FD->hasAttr<GNUInlineAttr>()) {

@@ -661,7 +661,7 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
 /// externally visible symbol.
 bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
   assert(isThisDeclarationADefinition() && "Must have the function definition");
-  assert(isInline() && "Function must be inline");
+  assert(isInlineSpecified() && "Function must be inline");
   
   if (!getASTContext().getLangOptions().C99 || hasAttr<GNUInlineAttr>()) {
     // GNU inline semantics. Based on a number of examples, we came up with the
@@ -673,7 +673,7 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
     for (redecl_iterator Redecl = redecls_begin(), RedeclEnd = redecls_end();
          Redecl != RedeclEnd;
          ++Redecl) {
-      if (Redecl->isInline() && Redecl->getStorageClass() != Extern)
+      if (Redecl->isInlineSpecified() && Redecl->getStorageClass() != Extern)
         return true;
     }
     
@@ -692,7 +692,7 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
     if (!Redecl->getLexicalDeclContext()->isTranslationUnit())
       continue;
     
-    if (!Redecl->isInline() || Redecl->getStorageClass() == Extern) 
+    if (!Redecl->isInlineSpecified() || Redecl->getStorageClass() == Extern) 
       return true; // Not an inline definition
   }
   
@@ -786,7 +786,7 @@ bool FunctionDecl::isImplicitlyInstantiable() const {
   if (!Pattern || !PatternDecl)
     return true;
 
-  return PatternDecl->isInline() || 
+  return PatternDecl->isInlineSpecified() || 
     (isa<CXXMethodDecl>(PatternDecl) && !PatternDecl->isOutOfLine());
 }                      
    

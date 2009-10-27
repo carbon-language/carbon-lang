@@ -3102,7 +3102,7 @@ void Sema::CheckMain(FunctionDecl* FD) {
   // C99 6.7.4p4:  In a hosted environment, the inline function specifier
   //   shall not appear in a declaration of main.
   // static main is not an error under C99, but we should warn about it.
-  bool isInline = FD->isInline();
+  bool isInline = FD->isInlineSpecified();
   bool isStatic = FD->getStorageClass() == FunctionDecl::Static;
   if (isInline || isStatic) {
     unsigned diagID = diag::warn_unusual_main_decl;

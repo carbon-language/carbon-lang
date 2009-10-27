@@ -323,7 +323,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     case FunctionDecl::PrivateExtern: Out << "__private_extern__ "; break;
     }
 
-    if (D->isInline())           Out << "inline ";
+    if (D->isInlineSpecified())           Out << "inline ";
     if (D->isVirtualAsWritten()) Out << "virtual ";
   }
 

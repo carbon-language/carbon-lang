@@ -530,7 +530,7 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
       FunctionDecl::Create(SemaRef.Context, DC, D->getLocation(),
                            D->getDeclName(), T, D->getDeclaratorInfo(),
                            D->getStorageClass(),
-                           D->isInline(), D->hasWrittenPrototype());
+                           D->isInlineSpecified(), D->hasWrittenPrototype());
   Function->setLexicalDeclContext(Owner);
 
   // Attach the parameters
@@ -666,14 +666,14 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                         Name, T,
                                         Constructor->getDeclaratorInfo(),
                                         Constructor->isExplicit(),
-                                        Constructor->isInline(), false);
+                                        Constructor->isInlineSpecified(), false);
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     QualType ClassTy = SemaRef.Context.getTypeDeclType(Record);
     Name = SemaRef.Context.DeclarationNames.getCXXDestructorName(
                                    SemaRef.Context.getCanonicalType(ClassTy));
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
                                        Destructor->getLocation(), Name,
-                                       T, Destructor->isInline(), false);
+                                       T, Destructor->isInlineSpecified(), false);
   } else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
     CanQualType ConvTy
       = SemaRef.Context.getCanonicalType(
@@ -683,12 +683,12 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     Method = CXXConversionDecl::Create(SemaRef.Context, Record,
                                        Conversion->getLocation(), Name,
                                        T, Conversion->getDeclaratorInfo(),
-                                       Conversion->isInline(),
+                                       Conversion->isInlineSpecified(),
                                        Conversion->isExplicit());
   } else {
     Method = CXXMethodDecl::Create(SemaRef.Context, Record, D->getLocation(),
                                    D->getDeclName(), T, D->getDeclaratorInfo(),
-                                   D->isStatic(), D->isInline());
+                                   D->isStatic(), D->isInlineSpecified());
   }
 
   if (TemplateParams) {
@@ -1127,7 +1127,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   //   to which they refer.
   if (Function->getTemplateSpecializationKind()
         == TSK_ExplicitInstantiationDeclaration &&
-      PatternDecl->isOutOfLine() && !PatternDecl->isInline())
+      PatternDecl->isOutOfLine() && !PatternDecl->isInlineSpecified())
     return;
 
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Function);

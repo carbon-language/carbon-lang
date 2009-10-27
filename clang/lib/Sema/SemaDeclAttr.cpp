@@ -901,7 +901,7 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Currently, the dllimport attribute is ignored for inlined functions.
   // Warning is emitted.
-  if (FD->isInline()) {
+  if (FD->isInlineSpecified()) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllimport";
     return;
   }
@@ -946,7 +946,7 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 
   // Currently, the dllexport attribute is ignored for inlined functions, unless
   // the -fkeep-inline-functions flag has been used. Warning is emitted;
-  if (FD->isInline()) {
+  if (FD->isInlineSpecified()) {
     // FIXME: ... unless the -fkeep-inline-functions flag has been used.
     S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << "dllexport";
     return;
@@ -1693,7 +1693,7 @@ static void HandleGNUInlineAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  if (!Fn->isInline()) {
+  if (!Fn->isInlineSpecified()) {
     S.Diag(Attr.getLoc(), diag::warn_gnu_inline_attribute_requires_inline);
     return;
   }
