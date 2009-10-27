@@ -1083,7 +1083,7 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
   bool HasLiveReturn = false;
   bool HasFakeEdge = false;
   bool HasPlainEdge = false;
-  for (CFGBlock::succ_iterator I=cfg->getExit().pred_begin(),
+  for (CFGBlock::pred_iterator I=cfg->getExit().pred_begin(),
          E = cfg->getExit().pred_end();
        I != E;
        ++I) {
