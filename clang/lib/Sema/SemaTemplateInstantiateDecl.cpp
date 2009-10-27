@@ -1231,24 +1231,17 @@ void Sema::InstantiateStaticDataMemberDefinition(
 
   // Find the out-of-line definition of this static data member.
   VarDecl *Def = Var->getInstantiatedFromStaticDataMember();
-  bool FoundOutOfLineDef = false;
   assert(Def && "This data member was not instantiated from a template?");
-  assert(Def->isStaticDataMember() && "Not a static data member?");
-  for (VarDecl::redecl_iterator RD = Def->redecls_begin(),
-                             RDEnd = Def->redecls_end();
-       RD != RDEnd; ++RD) {
-    if (RD->getLexicalDeclContext()->isFileContext()) {
-      Def = *RD;
-      FoundOutOfLineDef = true;
-    }
-  }
+  assert(Def->isStaticDataMember() && "Not a static data member?");  
+  Def = Def->getOutOfLineDefinition();
 
-  if (!FoundOutOfLineDef) {
+  if (!Def) {
     // We did not find an out-of-line definition of this static data member,
     // so we won't perform any instantiation. Rather, we rely on the user to
     // instantiate this definition (or provide a specialization for it) in
     // another translation unit.
     if (DefinitionRequired) {
+      Def = Var->getInstantiatedFromStaticDataMember();
       Diag(PointOfInstantiation, 
            diag::err_explicit_instantiation_undefined_member)
         << 2 << Var->getDeclName() << Var->getDeclContext();

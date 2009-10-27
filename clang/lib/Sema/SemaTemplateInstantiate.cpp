@@ -914,13 +914,6 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   if (!Invalid)
     Consumer.HandleTagDeclDefinition(Instantiation);
 
-  // If this is an explicit instantiation, instantiate our members, too.
-  if (!Invalid && TSK != TSK_ImplicitInstantiation) {
-    Inst.Clear();
-    InstantiateClassMembers(PointOfInstantiation, Instantiation, TemplateArgs,
-                            TSK);
-  }
-
   return Invalid;
 }
 
@@ -944,9 +937,6 @@ Sema::InstantiateClassTemplateSpecialization(
       // declaration (C++0x [temp.explicit]p10); go ahead and perform the
       // explicit instantiation.
       ClassTemplateSpec->setSpecializationKind(TSK);
-      InstantiateClassTemplateSpecializationMembers(PointOfInstantiation,
-                                                    ClassTemplateSpec,
-                                                    TSK);
       return false;
     }
     
@@ -1089,48 +1079,112 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
   for (DeclContext::decl_iterator D = Instantiation->decls_begin(),
                                DEnd = Instantiation->decls_end();
        D != DEnd; ++D) {
+    bool SuppressNew = false;
     if (FunctionDecl *Function = dyn_cast<FunctionDecl>(*D)) {
-      if (Function->getInstantiatedFromMemberFunction()) {
-        // If this member was explicitly specialized, do nothing.
-        if (Function->getTemplateSpecializationKind() ==
-              TSK_ExplicitSpecialization)
+      if (FunctionDecl *Pattern
+            = Function->getInstantiatedFromMemberFunction()) {
+        MemberSpecializationInfo *MSInfo 
+          = Function->getMemberSpecializationInfo();
+        assert(MSInfo && "No member specialization information?");
+        if (CheckSpecializationInstantiationRedecl(PointOfInstantiation, TSK, 
+                                                   Function, 
+                                        MSInfo->getTemplateSpecializationKind(),
+                                              MSInfo->getPointOfInstantiation(), 
+                                                   SuppressNew) ||
+            SuppressNew)
           continue;
         
-        Function->setTemplateSpecializationKind(TSK, PointOfInstantiation);
+        if (Function->getBody())
+          continue;
+
+        if (TSK == TSK_ExplicitInstantiationDefinition) {
+          // C++0x [temp.explicit]p8:
+          //   An explicit instantiation definition that names a class template
+          //   specialization explicitly instantiates the class template 
+          //   specialization and is only an explicit instantiation definition 
+          //   of members whose definition is visible at the point of 
+          //   instantiation.
+          if (!Pattern->getBody())
+            continue;
+        
+          Function->setTemplateSpecializationKind(TSK, PointOfInstantiation);
+                      
+          InstantiateFunctionDefinition(PointOfInstantiation, Function);
+        } else {
+          Function->setTemplateSpecializationKind(TSK, PointOfInstantiation);
+        }
       }
-      
-      if (!Function->getBody() && TSK == TSK_ExplicitInstantiationDefinition)
-        InstantiateFunctionDefinition(PointOfInstantiation, Function);
     } else if (VarDecl *Var = dyn_cast<VarDecl>(*D)) {
       if (Var->isStaticDataMember()) {
-        // If this member was explicitly specialized, do nothing.
-        if (Var->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+        MemberSpecializationInfo *MSInfo = Var->getMemberSpecializationInfo();
+        assert(MSInfo && "No member specialization information?");
+        if (CheckSpecializationInstantiationRedecl(PointOfInstantiation, TSK, 
+                                                   Var, 
+                                        MSInfo->getTemplateSpecializationKind(),
+                                              MSInfo->getPointOfInstantiation(), 
+                                                   SuppressNew) ||
+            SuppressNew)
           continue;
         
-        Var->setTemplateSpecializationKind(TSK, PointOfInstantiation);
-        
-        if (TSK == TSK_ExplicitInstantiationDefinition)
+        if (TSK == TSK_ExplicitInstantiationDefinition) {
+          // C++0x [temp.explicit]p8:
+          //   An explicit instantiation definition that names a class template
+          //   specialization explicitly instantiates the class template 
+          //   specialization and is only an explicit instantiation definition 
+          //   of members whose definition is visible at the point of 
+          //   instantiation.
+          if (!Var->getInstantiatedFromStaticDataMember()
+                                                     ->getOutOfLineDefinition())
+            continue;
+          
+          Var->setTemplateSpecializationKind(TSK, PointOfInstantiation);
           InstantiateStaticDataMemberDefinition(PointOfInstantiation, Var);
-      }        
+        } else {
+          Var->setTemplateSpecializationKind(TSK, PointOfInstantiation);
+        }
+      }      
     } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(*D)) {
       if (Record->isInjectedClassName())
         continue;
       
-      assert(Record->getInstantiatedFromMemberClass() &&
-             "Missing instantiated-from-template information");
-      
-      // If this member was explicitly specialized, do nothing.
-      if (Record->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+      MemberSpecializationInfo *MSInfo = Record->getMemberSpecializationInfo();
+      assert(MSInfo && "No member specialization information?");
+      if (CheckSpecializationInstantiationRedecl(PointOfInstantiation, TSK, 
+                                                 Record, 
+                                        MSInfo->getTemplateSpecializationKind(),
+                                              MSInfo->getPointOfInstantiation(), 
+                                                 SuppressNew) ||
+          SuppressNew)
         continue;
       
-      if (!Record->getDefinition(Context))
-        InstantiateClass(PointOfInstantiation, Record,
-                         Record->getInstantiatedFromMemberClass(),
+      CXXRecordDecl *Pattern = Record->getInstantiatedFromMemberClass();
+      assert(Pattern && "Missing instantiated-from-template information");
+      
+      if (!Record->getDefinition(Context)) {
+        if (!Pattern->getDefinition(Context)) {
+          // C++0x [temp.explicit]p8:
+          //   An explicit instantiation definition that names a class template
+          //   specialization explicitly instantiates the class template 
+          //   specialization and is only an explicit instantiation definition 
+          //   of members whose definition is visible at the point of 
+          //   instantiation.
+          if (TSK == TSK_ExplicitInstantiationDeclaration) {
+            MSInfo->setTemplateSpecializationKind(TSK);
+            MSInfo->setPointOfInstantiation(PointOfInstantiation);
+          }
+          
+          continue;
+        }
+        
+        InstantiateClass(PointOfInstantiation, Record, Pattern,
                          TemplateArgs,
                          TSK);
+      }
       
-      InstantiateClassMembers(PointOfInstantiation, Record, TemplateArgs, 
-                              TSK);
+      Pattern = cast_or_null<CXXRecordDecl>(Record->getDefinition(Context));
+      if (Pattern)
+        InstantiateClassMembers(PointOfInstantiation, Pattern, TemplateArgs, 
+                                TSK);
     }
   }
 }

@@ -2577,6 +2577,14 @@ public:
                                                     MultiTemplateParamsArg TemplateParameterLists,
                                                     Declarator &D);
 
+  bool
+  CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
+                                         TemplateSpecializationKind NewTSK,
+                                         NamedDecl *PrevDecl,
+                                         TemplateSpecializationKind PrevTSK,
+                                         SourceLocation PrevPointOfInstantiation,
+                                         bool &SuppressNew);
+    
   bool CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                                            bool HasExplicitTemplateArgs,
                                            SourceLocation LAngleLoc,

@@ -605,6 +605,9 @@ public:
   /// \brief Determine whether this is or was instantiated from an out-of-line 
   /// definition of a static data member.
   bool isOutOfLine() const;
+
+  /// \brief If this is a static data member, find its out-of-line definition.
+  VarDecl *getOutOfLineDefinition();
   
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member

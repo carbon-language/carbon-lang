@@ -3073,8 +3073,6 @@ Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
 /// for those cases where they are required and determining whether the 
 /// new specialization/instantiation will have any effect.
 ///
-/// \param S the semantic analysis object.
-///
 /// \param NewLoc the location of the new explicit specialization or 
 /// instantiation.
 ///
@@ -3092,14 +3090,13 @@ Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
 ///
 /// \returns true if there was an error that should prevent the introduction of
 /// the new declaration into the AST, false otherwise.
-static bool 
-CheckSpecializationInstantiationRedecl(Sema &S,
-                                       SourceLocation NewLoc,
-                                       TemplateSpecializationKind NewTSK,
-                                       NamedDecl *PrevDecl,
-                                       TemplateSpecializationKind PrevTSK,
-                                       SourceLocation PrevPointOfInstantiation,
-                                       bool &SuppressNew) {
+bool
+Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
+                                             TemplateSpecializationKind NewTSK,
+                                             NamedDecl *PrevDecl,
+                                             TemplateSpecializationKind PrevTSK,
+                                        SourceLocation PrevPointOfInstantiation,
+                                             bool &SuppressNew) {
   SuppressNew = false;
   
   switch (NewTSK) {
@@ -3137,9 +3134,9 @@ CheckSpecializationInstantiationRedecl(Sema &S,
       //   before the first use of that specialization that would cause an 
       //   implicit instantiation to take place, in every translation unit in
       //   which such a use occurs; no diagnostic is required.
-      S.Diag(NewLoc, diag::err_specialization_after_instantiation)
+      Diag(NewLoc, diag::err_specialization_after_instantiation)
         << PrevDecl;
-      S.Diag(PrevPointOfInstantiation, diag::note_instantiation_required_here)
+      Diag(PrevPointOfInstantiation, diag::note_instantiation_required_here)
         << (PrevTSK != TSK_ImplicitInstantiation);
       
       return true;
@@ -3172,10 +3169,10 @@ CheckSpecializationInstantiationRedecl(Sema &S,
       //   If an entity is the subject of both an explicit instantiation 
       //   declaration and an explicit instantiation definition in the same 
       //   translation unit, the definition shall follow the declaration.
-      S.Diag(NewLoc, 
-             diag::err_explicit_instantiation_declaration_after_definition);
-      S.Diag(PrevPointOfInstantiation, 
-             diag::note_explicit_instantiation_definition_here);
+      Diag(NewLoc, 
+           diag::err_explicit_instantiation_declaration_after_definition);
+      Diag(PrevPointOfInstantiation, 
+           diag::note_explicit_instantiation_definition_here);
       assert(PrevPointOfInstantiation.isValid() &&
              "Explicit instantiation without point of instantiation?");
       SuppressNew = true;
@@ -3201,10 +3198,10 @@ CheckSpecializationInstantiationRedecl(Sema &S,
       // In C++98/03 mode, we only give an extension warning here, because it 
       // is not not harmful to try to explicitly instantiate something that
       // has been explicitly specialized.
-      if (!S.getLangOptions().CPlusPlus0x) {
-        S.Diag(NewLoc, diag::ext_explicit_instantiation_after_specialization)
+      if (!getLangOptions().CPlusPlus0x) {
+        Diag(NewLoc, diag::ext_explicit_instantiation_after_specialization)
           << PrevDecl;
-        S.Diag(PrevDecl->getLocation(),
+        Diag(PrevDecl->getLocation(),
              diag::note_previous_template_specialization);
       }
       SuppressNew = true;
@@ -3220,10 +3217,10 @@ CheckSpecializationInstantiationRedecl(Sema &S,
       //   For a given template and a given set of template-arguments,
       //     - an explicit instantiation definition shall appear at most once
       //       in a program,
-      S.Diag(NewLoc, diag::err_explicit_instantiation_duplicate)
+      Diag(NewLoc, diag::err_explicit_instantiation_duplicate)
         << PrevDecl;
-      S.Diag(PrevPointOfInstantiation, 
-             diag::note_previous_explicit_instantiation);
+      Diag(PrevPointOfInstantiation, 
+           diag::note_previous_explicit_instantiation);
       SuppressNew = true;
       return false;        
     }
@@ -3336,7 +3333,7 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
 
   // C++ [temp.expl.spec]p6:
   //   If a template, a member template or the member of a class template is
-  //   explicitly specialized then that spe- cialization shall be declared 
+  //   explicitly specialized then that specialization shall be declared 
   //   before the first use of that specialization that would cause an implicit
   //   instantiation to take place, in every translation unit in which such a 
   //   use occurs; no diagnostic is required.
@@ -3662,7 +3659,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
 
   if (PrevDecl) {
     bool SuppressNew = false;
-    if (CheckSpecializationInstantiationRedecl(*this, TemplateNameLoc, TSK,
+    if (CheckSpecializationInstantiationRedecl(TemplateNameLoc, TSK,
                                                PrevDecl, 
                                               PrevDecl->getSpecializationKind(), 
                                             PrevDecl->getPointOfInstantiation(),
@@ -3738,7 +3735,11 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                                         Specialization->getDefinition(Context));
   if (!Def)
     InstantiateClassTemplateSpecialization(TemplateNameLoc, Specialization, TSK);
-  else // Instantiate the members of this class template specialization.
+  
+  // Instantiate the members of this class template specialization.
+  Def = cast_or_null<ClassTemplateSpecializationDecl>(
+                                       Specialization->getDefinition(Context));
+  if (Def)
     InstantiateClassTemplateSpecializationMembers(TemplateNameLoc, Def, TSK);
 
   return DeclPtrTy::make(Specialization);
@@ -3820,7 +3821,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
     MemberSpecializationInfo *MSInfo = PrevDecl->getMemberSpecializationInfo();
     bool SuppressNew = false;
     assert(MSInfo && "No member specialization information?");
-    if (CheckSpecializationInstantiationRedecl(*this, TemplateLoc, TSK, 
+    if (CheckSpecializationInstantiationRedecl(TemplateLoc, TSK, 
                                                PrevDecl,
                                         MSInfo->getTemplateSpecializationKind(),
                                              MSInfo->getPointOfInstantiation(), 
@@ -3844,13 +3845,21 @@ Sema::ActOnExplicitInstantiation(Scope *S,
       Diag(Pattern->getLocation(), diag::note_forward_declaration)
         << Pattern;
       return true;
-    } else if (InstantiateClass(NameLoc, Record, Def,
-                                getTemplateInstantiationArgs(Record),
-                                TSK))
-      return true;
-  } else // Instantiate all of the members of the class.
-    InstantiateClassMembers(NameLoc, RecordDef,
-                            getTemplateInstantiationArgs(Record), TSK);
+    } else {
+      if (InstantiateClass(NameLoc, Record, Def,
+                           getTemplateInstantiationArgs(Record),
+                           TSK))
+        return true;
+
+      RecordDef = cast_or_null<CXXRecordDecl>(Record->getDefinition(Context));
+      if (!RecordDef)
+        return true;
+    }
+  } 
+  
+  // Instantiate all of the members of the class.
+  InstantiateClassMembers(NameLoc, RecordDef,
+                          getTemplateInstantiationArgs(Record), TSK);
 
   // FIXME: We don't have any representation for explicit instantiations of
   // member classes. Such a representation is not needed for compilation, but it
@@ -3969,8 +3978,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     MemberSpecializationInfo *MSInfo = Prev->getMemberSpecializationInfo();
     assert(MSInfo && "Missing static data member specialization info?");
     bool SuppressNew = false;
-    if (CheckSpecializationInstantiationRedecl(*this, D.getIdentifierLoc(), TSK, 
-                                               Prev,
+    if (CheckSpecializationInstantiationRedecl(D.getIdentifierLoc(), TSK, Prev,
                                         MSInfo->getTemplateSpecializationKind(),
                                               MSInfo->getPointOfInstantiation(), 
                                                SuppressNew))
@@ -4069,7 +4077,7 @@ Sema::DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
 
   if (PrevDecl) {
     bool SuppressNew = false;
-    if (CheckSpecializationInstantiationRedecl(*this, D.getIdentifierLoc(), TSK,
+    if (CheckSpecializationInstantiationRedecl(D.getIdentifierLoc(), TSK,
                                                PrevDecl, 
                                      PrevDecl->getTemplateSpecializationKind(), 
                                           PrevDecl->getPointOfInstantiation(),

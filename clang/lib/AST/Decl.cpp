@@ -383,6 +383,19 @@ bool VarDecl::isOutOfLine() const {
   return false;
 }
 
+VarDecl *VarDecl::getOutOfLineDefinition() {
+  if (!isStaticDataMember())
+    return 0;
+  
+  for (VarDecl::redecl_iterator RD = redecls_begin(), RDEnd = redecls_end();
+       RD != RDEnd; ++RD) {
+    if (RD->getLexicalDeclContext()->isFileContext())
+      return *RD;
+  }
+  
+  return 0;
+}
+
 VarDecl *VarDecl::getInstantiatedFromStaticDataMember() const {
   if (MemberSpecializationInfo *MSI = getMemberSpecializationInfo())
     return cast<VarDecl>(MSI->getInstantiatedFrom());
