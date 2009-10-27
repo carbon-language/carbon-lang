@@ -203,11 +203,13 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 #if 0
     // We pass this builtin onto the optimizer so that it can
     // figure out the object size in more complex cases.
-    Value *F = CGM.getIntrinsic(Intrinsic::objectsize, 0, 0);
-    Builder.CreateCall2(F,
-                        EmitScalarExpr(E->getArg(0)));
-                        EmitScalarExpr(E->getArg(1)));
-    return RValue::get(Address);
+    const llvm::Type *ResType[] = {
+      ConvertType(E->getType())
+    };
+    Value *F = CGM.getIntrinsic(Intrinsic::objectsize, ResType, 1);
+    return RValue::get(Builder.CreateCall2(F,
+                                           EmitScalarExpr(E->getArg(0)),
+                                           EmitScalarExpr(E->getArg(1))));
 #else
     // FIXME: Implement. For now we just always fail and pretend we
     // don't know the object size.

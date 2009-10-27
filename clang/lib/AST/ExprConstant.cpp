@@ -151,6 +151,66 @@ static APFloat HandleIntToFloatCast(QualType DestType, QualType SrcType,
   return Result;
 }
 
+namespace {
+class VISIBILITY_HIDDEN HasSideEffect
+  : public StmtVisitor<HasSideEffect, bool> {
+  EvalInfo &Info;
+public:
+
+  HasSideEffect(EvalInfo &info) : Info(info) {}
+
+  // Unhandled nodes conservatively default to having side effects.
+  bool VisitStmt(Stmt *S) {
+    return true;
+  }
+
+  bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitDeclRefExpr(DeclRefExpr *E) {
+    if (E->getType().isVolatileQualified())
+      return true;
+    return false;
+  }
+  // We don't want to evaluate BlockExprs multiple times, as they generate
+  // a ton of code.
+  bool VisitBlockExpr(BlockExpr *E) { return true; }
+  bool VisitPredefinedExpr(PredefinedExpr *E) { return false; }
+  bool VisitCompoundLiteralExpr(CompoundLiteralExpr *E)
+    { return Visit(E->getInitializer()); }
+  bool VisitMemberExpr(MemberExpr *E) { return Visit(E->getBase()); }
+  bool VisitIntegerLiteral(IntegerLiteral *E) { return false; }
+  bool VisitFloatingLiteral(FloatingLiteral *E) { return false; }
+  bool VisitStringLiteral(StringLiteral *E) { return false; }
+  bool VisitCharacterLiteral(CharacterLiteral *E) { return false; }
+  bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) { return false; }
+  bool VisitArraySubscriptExpr(ArraySubscriptExpr *E)
+    { return Visit(E->getLHS()) && Visit(E->getRHS()); }
+  bool VisitChooseExpr(ChooseExpr *E)
+    { return Visit(E->getChosenSubExpr(Info.Ctx)); }
+  bool VisitCastExpr(CastExpr *E) { return Visit(E->getSubExpr()); }
+  bool VisitBinAssign(BinaryOperator *E) { return true; }
+  bool VisitCompoundAssign(BinaryOperator *E) { return true; }
+  bool VisitBinaryOperator(BinaryOperator *E) { return false; }
+  bool VisitUnaryPreInc(UnaryOperator *E) { return true; }
+  bool VisitUnaryPostInc(UnaryOperator *E) { return true; }
+  bool VisitUnaryPreDec(UnaryOperator *E) { return true; }
+  bool VisitUnaryPostDec(UnaryOperator *E) { return true; }
+  bool VisitUnaryDeref(UnaryOperator *E) {
+    if (E->getType().isVolatileQualified())
+      return true;
+    return false;
+  }
+  bool VisitUnaryOperator(UnaryOperator *E) { return Visit(E->getSubExpr()); }
+};
+
+bool HasSideEffects(const Expr* E, ASTContext &Ctx) {
+  Expr::EvalResult Result;
+  EvalInfo Info(Ctx, Result);
+
+  return HasSideEffect(Info).Visit(const_cast<Expr*>(E));
+}
+
+} // end anonymous namespace
+
 //===----------------------------------------------------------------------===//
 // LValue Evaluation
 //===----------------------------------------------------------------------===//
@@ -893,12 +953,12 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
           }
         }
 
-    if (Base.HasSideEffects) {
+    if (HasSideEffects(E->getArg(0), Info.Ctx)) {
       if (E->getArg(1)->EvaluateAsInt(Info.Ctx).getZExtValue() < 2)
         return Success(-1, E);
       return Success(0, E);
     }
-    
+
     return Error(E->getLocStart(), diag::note_invalid_subexpr_in_ice, E);
   }
 
