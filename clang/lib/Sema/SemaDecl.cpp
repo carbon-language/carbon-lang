@@ -1044,6 +1044,7 @@ void Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
 /// Statement that should return a value.
 ///
 /// \returns AlwaysFallThrough iff we always fall off the end of the statement,
+/// MaybeFallThroughOrReturn iff we might or might not fall off the end and
 /// MaybeFallThrough iff we might or might not fall off the end and
 /// NeverFallThrough iff we never fall off the end of the statement.  We assume
 /// that functions not marked noreturn will return.
@@ -1054,7 +1055,8 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
 
   // FIXME: They should never return 0, fix that, delete this code.
   if (cfg == 0)
-    return NeverFallThrough;
+    // FIXME: This should be NeverFallThrough
+    return NeverFallThroughOrReturn;
   // The CFG leaves in dead things, and we don't want to dead code paths to
   // confuse us, so we mark all live things first.
   std::queue<CFGBlock*> workq;
@@ -1127,8 +1129,11 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
     if (NoReturnEdge == false)
       HasPlainEdge = true;
   }
-  if (!HasPlainEdge)
-    return NeverFallThrough;
+  if (!HasPlainEdge) {
+    if (HasLiveReturn)
+      return NeverFallThrough;
+    return NeverFallThroughOrReturn;
+  }
   if (HasFakeEdge || HasLiveReturn)
     return MaybeFallThrough;
   // This says AlwaysFallThrough for calls to functions that are not marked
@@ -1192,9 +1197,11 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
       else if (!ReturnsVoid)
         Diag(Compound->getRBracLoc(), diag::warn_falloff_nonvoid_function);
       break;
-    case NeverFallThrough:
+    case NeverFallThroughOrReturn:
       if (ReturnsVoid && !HasNoReturn)
         Diag(Compound->getLBracLoc(), diag::warn_suggest_noreturn_function);
+      break;
+    case NeverFallThrough:
       break;
     }
   }
@@ -1243,9 +1250,11 @@ void Sema::CheckFallThroughForBlock(QualType BlockTy, Stmt *Body) {
       else if (!ReturnsVoid)
         Diag(Compound->getRBracLoc(), diag::err_falloff_nonvoid_block);
       break;
-    case NeverFallThrough:
+    case NeverFallThroughOrReturn:
       if (ReturnsVoid)
         Diag(Compound->getLBracLoc(), diag::warn_suggest_noreturn_block);
+      break;
+    case NeverFallThrough:
       break;
     }
   }

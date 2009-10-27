@@ -988,7 +988,7 @@ public:
   void CheckCXXDefaultArguments(FunctionDecl *FD);
   void CheckExtraCXXDefaultArguments(Declarator &D);
   enum ControlFlowKind { NeverFallThrough = 0, MaybeFallThrough = 1,
-                         AlwaysFallThrough = 2 };
+                         AlwaysFallThrough = 2, NeverFallThroughOrReturn = 3 };
   ControlFlowKind CheckFallThrough(Stmt *);
 
   Scope *getNonFieldDeclScope(Scope *S);
