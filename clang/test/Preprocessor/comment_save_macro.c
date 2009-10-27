@@ -1,7 +1,7 @@
-// RUN: clang-cc -E -C %s | FileCheck -strict-whitespace %s
+// RUN: clang-cc -E -C %s | FileCheck -strict-whitespace %s &&
 // CHECK: boo bork bar // zot
 
-// RUN: clang-cc -E -CC %s | FileCheck -strict-whitespace %s
+// RUN: clang-cc -E -CC %s | FileCheck -strict-whitespace %s &&
 // CHECK: boo bork /* blah*/ bar // zot
 
 // RUN: clang-cc -E %s | FileCheck -strict-whitespace %s
