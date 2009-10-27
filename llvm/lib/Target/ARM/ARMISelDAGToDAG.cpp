@@ -284,7 +284,7 @@ bool ARMDAGToDAGISel::SelectAddrMode2(SDValue Op, SDValue N,
       }
     }
 
-  // Otherwise this is R +/- [possibly shifted] R
+  // Otherwise this is R +/- [possibly shifted] R.
   ARM_AM::AddrOpc AddSub = N.getOpcode() == ISD::ADD ? ARM_AM::add:ARM_AM::sub;
   ARM_AM::ShiftOpc ShOpcVal = ARM_AM::getShiftOpcForNode(N.getOperand(1));
   unsigned ShAmt = 0;
