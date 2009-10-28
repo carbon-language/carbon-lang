@@ -16,6 +16,21 @@ entry:
   ret i8 %2
 }
 
+define i8 @test2(i8* %P) nounwind {
+; CHECK: @test2
+; CHECK: store i8 1
+; CHECK: store i8 2
+; CHECK: ret i8 0
+entry:
+  store i8 1, i8* %P
+  %0 = call {}* @llvm.invariant.start(i64 32, i8* %P)
+  %1 = tail call i32 @bar(i8* %P)
+  call void @llvm.invariant.end({}* %0, i64 32, i8* %P)
+  store i8 2, i8* %P
+  ret i8 0
+}
+
 declare i32 @foo(i8*) nounwind 
+declare i32 @bar(i8*) nounwind readonly
 declare {}* @llvm.invariant.start(i64 %S, i8* nocapture %P) readonly
 declare void @llvm.invariant.end({}* %S, i64 %SS, i8* nocapture %P)

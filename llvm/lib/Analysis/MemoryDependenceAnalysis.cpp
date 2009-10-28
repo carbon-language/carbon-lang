@@ -230,12 +230,11 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
       return MemDepResult::getDef(Inst);
     }
     
-    // If we're querying on a store and we're in an invariant region, we're done
-    // at this point. The only things that stores depend on that could exist in
-    // an invariant region are loads, which we've already checked.
-    if (invariantTag) continue;
-    
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+      // There can't be stores to the value we care about inside an 
+      // invariant region.
+      if (invariantTag) continue;
+      
       // If alias analysis can tell that this store is guaranteed to not modify
       // the query pointer, ignore it.  Use getModRefInfo to handle cases where
       // the query pointer points to constant memory etc.
@@ -280,12 +279,16 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     case AliasAnalysis::NoModRef:
       // If the call has no effect on the queried pointer, just ignore it.
       continue;
+    case AliasAnalysis::Mod:
+      // If we're in an invariant region, we can ignore calls that ONLY
+      // modify the pointer.
+      if (invariantTag) continue;
+      return MemDepResult::getClobber(Inst);
     case AliasAnalysis::Ref:
       // If the call is known to never store to the pointer, and if this is a
       // load query, we can safely ignore it (scan past it).
       if (isLoad)
         continue;
-      // FALL THROUGH.
     default:
       // Otherwise, there is a potential dependence.  Return a clobber.
       return MemDepResult::getClobber(Inst);
