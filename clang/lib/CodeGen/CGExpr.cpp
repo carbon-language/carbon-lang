@@ -1088,12 +1088,12 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   llvm::Constant *BaseElts = Base.getExtVectorElts();
   llvm::SmallVector<llvm::Constant *, 4> CElts;
 
+  const llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
   for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
     if (isa<llvm::ConstantAggregateZero>(BaseElts))
-      CElts.push_back(llvm::ConstantInt::get(
-                                         llvm::Type::getInt32Ty(VMContext), 0));
+      CElts.push_back(llvm::ConstantInt::get(Int32Ty, 0));
     else
-      CElts.push_back(BaseElts->getOperand(Indices[i]));
+      CElts.push_back(cast<llvm::Constant>(BaseElts->getOperand(Indices[i])));
   }
   llvm::Constant *CV = llvm::ConstantVector::get(&CElts[0], CElts.size());
   return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), CV,
