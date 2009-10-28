@@ -401,7 +401,7 @@ void MachineLICM::Hoist(MachineInstr *MI) {
     const TargetRegisterClass *RC = TID.OpInfo[0].getRegClass(TRI);
     // Ok, we're unfolding. Create a temporary register and do the unfold.
     unsigned Reg = RegInfo->createVirtualRegister(RC);
-    SmallVector<MachineInstr *, 1> NewMIs;
+    SmallVector<MachineInstr *, 2> NewMIs;
     bool Success =
       TII->unfoldMemoryOperand(MF, MI, Reg,
                                /*UnfoldLoad=*/true, /*UnfoldStore=*/false,
@@ -415,28 +415,15 @@ void MachineLICM::Hoist(MachineInstr *MI) {
     MachineBasicBlock *MBB = MI->getParent();
     MBB->insert(MI, NewMIs[0]);
     MBB->insert(MI, NewMIs[1]);
-    MI->eraseFromParent();
     // If unfolding produced a load that wasn't loop-invariant or profitable to
-    // hoist, re-fold it to undo the damage.
+    // hoist, discard the new instructions and bail.
     if (!IsLoopInvariantInst(*NewMIs[0]) || !IsProfitableToHoist(*NewMIs[0])) {
-      SmallVector<unsigned, 1> Ops;
-      for (unsigned i = 0, e = NewMIs[1]->getNumOperands(); i != e; ++i) {
-        MachineOperand &MO = NewMIs[1]->getOperand(i);
-        if (MO.isReg() && MO.getReg() == Reg) {
-          assert(MO.isUse() &&
-                 "Register defined by unfolded load is redefined "
-                 "instead of just used!");
-          Ops.push_back(i);
-        }
-      }
-      MI = TII->foldMemoryOperand(MF, NewMIs[1], Ops, NewMIs[0]);
-      assert(MI && "Re-fold failed!");
-      MBB->insert(NewMIs[1], MI);
       NewMIs[0]->eraseFromParent();
       NewMIs[1]->eraseFromParent();
       return;
     }
     // Otherwise we successfully unfolded a load that we can hoist.
+    MI->eraseFromParent();
     MI = NewMIs[0];
   }
 
