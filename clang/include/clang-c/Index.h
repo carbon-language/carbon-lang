@@ -276,21 +276,6 @@ CINDEX_LINKAGE CXFile clang_getDeclSourceFile(CXDecl);
 CINDEX_LINKAGE CXCursor clang_getCursor(CXTranslationUnit, const char *source_name, 
                          unsigned line, unsigned column);
 
-/**
-   Usage: clang_getCursorWithHint() provides the same functionality as
-   clang_getCursor() except that it takes an option 'hint' argument.
-   The 'hint' is a temporary CXLookupHint object (whose lifetime is managed by 
-   the caller) that should be initialized with clang_initCXLookupHint().
-
-   FIXME: Add a better comment once getCursorWithHint() has more functionality.
- */                         
-typedef CXCursor CXLookupHint;
-CINDEX_LINKAGE CXCursor clang_getCursorWithHint(CXTranslationUnit, const char *source_name, 
-                                 unsigned line, unsigned column, 
-                                 CXLookupHint *hint);
-
-CINDEX_LINKAGE void clang_initCXLookupHint(CXLookupHint *hint);
-
 CINDEX_LINKAGE enum CXCursorKind clang_getCursorKind(CXCursor);
 CINDEX_LINKAGE unsigned clang_isDeclaration(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isReference(enum CXCursorKind);

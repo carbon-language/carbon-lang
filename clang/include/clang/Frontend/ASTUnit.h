@@ -18,6 +18,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Index/ASTLocation.h"
 #include <string>
 
 namespace clang {
@@ -31,6 +32,8 @@ namespace clang {
   class Preprocessor;
   class ASTContext;
   class Decl;
+
+using namespace idx;
 
 /// \brief Utility class for loading a ASTContext from a PCH file.
 ///
@@ -49,6 +52,9 @@ class ASTUnit {
   // that come from the AST itself, not from included precompiled headers.
   // FIXME: This is temporary; eventually, CIndex will always do this.
   bool                              OnlyLocalDecls;
+  
+  // Critical optimization when using clang_getCursor().
+  ASTLocation LastLoc;
   
   ASTUnit(const ASTUnit&); // DO NOT IMPLEMENT
   ASTUnit &operator=(const ASTUnit &); // DO NOT IMPLEMENT
@@ -78,6 +84,9 @@ public:
   void unlinkTemporaryFile() { tempFile = true; }
   
   bool getOnlyLocalDecls() const { return OnlyLocalDecls; }
+  
+  void setLastASTLocation(ASTLocation ALoc) { LastLoc = ALoc; }
+  ASTLocation getLastASTLocation() const { return LastLoc; }
   
   /// \brief Create a ASTUnit from a PCH file.
   ///

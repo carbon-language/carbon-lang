@@ -116,6 +116,10 @@ class TUVisitor : public DeclVisitor<TUVisitor> {
     if (ND->getPCHLevel() > MaxPCHLevel)
       return;
     
+    // Filter any implicit declarations (since the source info will be bogus).
+    if (ND->isImplicit())
+      return;
+      
     CXCursor C = { CK, ND, 0 };
     Callback(TUnit, C, CData);
   }
@@ -721,25 +725,11 @@ static enum CXCursorKind TranslateKind(Decl *D) {
 //
 // CXCursor Operations.
 //
-void clang_initCXLookupHint(CXLookupHint *hint) {
-  memset(hint, 0, sizeof(*hint));
-}
-
 CXCursor clang_getCursor(CXTranslationUnit CTUnit, const char *source_name, 
-                         unsigned line, unsigned column) {
-  return clang_getCursorWithHint(CTUnit, source_name, line, column, NULL);
-}
-  
-CXCursor clang_getCursorWithHint(CXTranslationUnit CTUnit,
-                                 const char *source_name, 
-                                 unsigned line, unsigned column, 
-                                 CXLookupHint *hint)
+                         unsigned line, unsigned column)
 {
   assert(CTUnit && "Passed null CXTranslationUnit");
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(CTUnit);
-  
-  // FIXME: Make this better.
-  CXDecl RelativeToDecl = hint ? hint->decl : NULL;
   
   FileManager &FMgr = CXXUnit->getFileManager();
   const FileEntry *File = FMgr.getFile(source_name, 
@@ -751,9 +741,13 @@ CXCursor clang_getCursorWithHint(CXTranslationUnit CTUnit,
   SourceLocation SLoc = 
     CXXUnit->getSourceManager().getLocation(File, line, column);
                                                                 
-  ASTLocation ALoc = ResolveLocationInAST(CXXUnit->getASTContext(), SLoc,
-                                      static_cast<NamedDecl *>(RelativeToDecl));
-  
+  ASTLocation LastLoc = CXXUnit->getLastASTLocation();
+
+  ASTLocation ALoc = ResolveLocationInAST(CXXUnit->getASTContext(), SLoc, 
+                                          &LastLoc);
+  if (ALoc.isValid())
+    CXXUnit->setLastASTLocation(ALoc);
+    
   Decl *Dcl = ALoc.getParentDecl();
   if (ALoc.isNamedRef())
     Dcl = ALoc.AsNamedRef().ND;

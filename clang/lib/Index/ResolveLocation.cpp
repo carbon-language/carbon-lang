@@ -60,11 +60,6 @@ protected:
   }
 
   template <typename T>
-  bool ContainsLocation(T Node) {
-    return CheckRange(Node) == ContainsLoc;
-  }
-
-  template <typename T>
   bool isAfterLocation(T Node) {
     return CheckRange(Node) == AfterLoc;
   }
@@ -72,6 +67,11 @@ protected:
 public:
   LocResolverBase(ASTContext &ctx, SourceLocation loc)
     : Ctx(ctx), Loc(loc) {}
+    
+  template <typename T>
+  bool ContainsLocation(T Node) {
+    return CheckRange(Node) == ContainsLoc;
+  }
 
 #ifndef NDEBUG
   /// \brief Debugging output.
@@ -543,11 +543,40 @@ void LocResolverBase::print(Stmt *Node) {
 /// \brief Returns the AST node that a source location points to.
 ///
 ASTLocation idx::ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc,
-                                      Decl *RelativeToDecl) {
+                                      ASTLocation *LastLoc) {
   if (Loc.isInvalid())
     return ASTLocation();
 
-  if (RelativeToDecl)
-    return DeclLocResolver(Ctx, Loc).Visit(RelativeToDecl);    
+  if (LastLoc && LastLoc->isValid()) {
+    DeclContext *DC = 0;
+  
+    if (Decl *Dcl = LastLoc->dyn_AsDecl()) {
+      DC = Dcl->getDeclContext();
+    } else if (LastLoc->isStmt()) {
+      Decl *Parent = LastLoc->getParentDecl();
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(Parent))
+        DC = FD;
+      else { 
+        // This is needed to handle statements within an initializer.
+        // Example:
+        //   void func() { long double fabsf = __builtin_fabsl(__x); }
+        // In this case, the 'parent' of __builtin_fabsl is fabsf.
+        DC = Parent->getDeclContext();
+      }
+    } else { // We have 'N_NamedRef' or 'N_Type'
+      DC = LastLoc->getParentDecl()->getDeclContext();
+    } 
+    assert(DC && "Missing DeclContext");
+    
+    FunctionDecl *FD = dyn_cast<FunctionDecl>(DC);
+    DeclLocResolver DLocResolver(Ctx, Loc);
+    
+    if (FD && FD->isThisDeclarationADefinition() &&
+        DLocResolver.ContainsLocation(FD)) {
+      return DLocResolver.VisitFunctionDecl(FD);
+    }
+    // Fall through and try the slow path...
+    // FIXME: Optimize more cases.
+  }
   return DeclLocResolver(Ctx, Loc).Visit(Ctx.getTranslationUnitDecl());
 }

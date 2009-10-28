@@ -70,7 +70,6 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
         CXCursor Ref;
 
         while (startBuf < endBuf) {
-          CXLookupHint hint;
           if (*startBuf == '\n') {
             startBuf++;
             curLine++;
@@ -78,11 +77,8 @@ static void TranslationUnitVisitor(CXTranslationUnit Unit, CXCursor Cursor,
           } else if (*startBuf != '\t')
             curColumn++;
           
-          clang_initCXLookupHint(&hint);
-          hint.decl = Cursor.decl;
-
-          Ref = clang_getCursorWithHint(Unit, clang_getCursorSource(Cursor),
-                                        curLine, curColumn, &hint);
+          Ref = clang_getCursor(Unit, clang_getCursorSource(Cursor),
+                                curLine, curColumn);
           if (Ref.kind == CXCursor_NoDeclFound) {
             /* Nothing found here; that's fine. */
           } else if (Ref.kind != CXCursor_FunctionDecl) {
