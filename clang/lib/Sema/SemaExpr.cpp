@@ -2860,24 +2860,29 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Fn->IgnoreParens())) {
       if (BO->getOpcode() == BinaryOperator::PtrMemD ||
           BO->getOpcode() == BinaryOperator::PtrMemI) {
-        const FunctionProtoType *FPT = cast<FunctionProtoType>(BO->getType());
-        QualType ResultTy = FPT->getResultType().getNonReferenceType();
+        if (const FunctionProtoType *FPT = 
+              dyn_cast<FunctionProtoType>(BO->getType())) {
+          QualType ResultTy = FPT->getResultType().getNonReferenceType();
       
-        ExprOwningPtr<CXXMemberCallExpr> 
-          TheCall(this, new (Context) CXXMemberCallExpr(Context, BO, Args, 
-                                                        NumArgs, ResultTy,
-                                                        RParenLoc));
+          ExprOwningPtr<CXXMemberCallExpr> 
+            TheCall(this, new (Context) CXXMemberCallExpr(Context, BO, Args, 
+                                                          NumArgs, ResultTy,
+                                                          RParenLoc));
         
-        if (CheckCallReturnType(FPT->getResultType(), 
-                                BO->getRHS()->getSourceRange().getBegin(), 
-                                TheCall.get(), 0))
-          return ExprError();
+          if (CheckCallReturnType(FPT->getResultType(), 
+                                  BO->getRHS()->getSourceRange().getBegin(), 
+                                  TheCall.get(), 0))
+            return ExprError();
 
-        if (ConvertArgumentsForCall(&*TheCall, BO, 0, FPT, Args, NumArgs, 
-                                    RParenLoc))
-          return ExprError();
+          if (ConvertArgumentsForCall(&*TheCall, BO, 0, FPT, Args, NumArgs, 
+                                      RParenLoc))
+            return ExprError();
 
-        return Owned(MaybeBindToTemporary(TheCall.release()).release());
+          return Owned(MaybeBindToTemporary(TheCall.release()).release());
+        }
+        return ExprError(Diag(Fn->getLocStart(), 
+                              diag::err_typecheck_call_not_function)
+                              << Fn->getType() << Fn->getSourceRange());
       }
     }
   }
