@@ -3236,7 +3236,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
   // class type.
   QualType DeclInitType = VDecl->getType();
   if (const ArrayType *Array = Context.getAsArrayType(DeclInitType))
-    DeclInitType = Array->getElementType();
+    DeclInitType = Context.getBaseElementType(Array);
 
   // FIXME: This isn't the right place to complete the type.
   if (RequireCompleteType(VDecl->getLocation(), VDecl->getType(),

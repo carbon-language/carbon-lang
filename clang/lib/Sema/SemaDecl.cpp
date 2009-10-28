@@ -3443,7 +3443,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
     if (getLangOptions().CPlusPlus) {
       QualType InitType = Type;
       if (const ArrayType *Array = Context.getAsArrayType(Type))
-        InitType = Array->getElementType();
+        InitType = Context.getBaseElementType(Array);
       if ((!Var->hasExternalStorage() && !Var->isExternC()) &&
           InitType->isRecordType() && !InitType->isDependentType()) {
         if (!RequireCompleteType(Var->getLocation(), InitType,
