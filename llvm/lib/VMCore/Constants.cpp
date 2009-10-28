@@ -182,6 +182,9 @@ Constant::PossibleRelocationsTy Constant::getRelocationInfo() const {
     return GlobalRelocations;    // Global reference.
   }
   
+  if (const BlockAddress *BA = dyn_cast<BlockAddress>(this))
+    return BA->getFunction()->getRelocationInfo();
+  
   PossibleRelocationsTy Result = NoRelocation;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     Result = std::max(Result, getOperand(i)->getRelocationInfo());
