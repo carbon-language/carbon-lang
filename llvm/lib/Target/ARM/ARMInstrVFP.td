@@ -431,6 +431,7 @@ def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT, "fmstat", "",
 
 
 // Materialize FP immediates. VFP3 only.
+let isReMaterializable = 1 in 
 def FCONSTS : VFPAI<(outs SPR:$dst), (ins vfp_f32imm:$imm),
                     VFPMiscFrm, IIC_VMOVImm,
                     "fconsts", "\t$dst, $imm",
@@ -442,6 +443,7 @@ def FCONSTS : VFPAI<(outs SPR:$dst), (ins vfp_f32imm:$imm),
   let Inst{7-4}   = 0b0000;
 }
 
+let isReMaterializable = 1 in 
 def FCONSTD : VFPAI<(outs DPR:$dst), (ins vfp_f64imm:$imm),
                     VFPMiscFrm, IIC_VMOVImm,
                     "fconstd", "\t$dst, $imm",
