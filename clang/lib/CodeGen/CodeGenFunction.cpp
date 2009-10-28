@@ -496,9 +496,10 @@ llvm::BasicBlock *CodeGenFunction::GetIndirectGotoBlock() {
   
   EmitBlock(createBasicBlock("indirectgoto"));
   
+  const llvm::IntegerType *Int32Ty = llvm::Type::getInt32Ty(VMContext);
+
   // Create the PHI node that indirect gotos will add entries to.
-  llvm::Value *DestVal =
-    Builder.CreatePHI(llvm::Type::getInt32Ty(VMContext), "indirect.goto.dest");
+  llvm::Value *DestVal = Builder.CreatePHI(Int32Ty, "indirect.goto.dest");
   
   // Create the switch instruction.  For now, set the insert block to this block
   // which will be fixed as labels are added.
@@ -523,8 +524,6 @@ llvm::BasicBlock *CodeGenFunction::GetIndirectGotoBlock() {
     // Set the default entry as the first block.
     IndirectGotoSwitch->setSuccessor(0,
                                 getBasicBlockForLabel(AddrTakenLabelsByID[0]));
-    
-    const llvm::IntegerType *Int32Ty = llvm::Type::getInt32Ty(VMContext);
     
     // FIXME: The iteration order of this is nondeterminstic!
     for (unsigned i = 1, e = AddrTakenLabelsByID.size(); i != e; ++i)
