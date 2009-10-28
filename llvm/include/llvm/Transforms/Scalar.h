@@ -344,6 +344,12 @@ FunctionPass *createGEPSplitterPass();
 //
 FunctionPass *createSCCVNPass();
 
+//===----------------------------------------------------------------------===//
+//
+// ABCD - Elimination of Array Bounds Checks on Demand
+//
+FunctionPass *createABCDPass();
+
 } // End llvm namespace
 
 #endif

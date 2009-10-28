@@ -142,6 +142,7 @@ namespace {
       (void) llvm::createSSIEverythingPass();
       (void) llvm::createGEPSplitterPass();
       (void) llvm::createSCCVNPass();
+      (void) llvm::createABCDPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();
