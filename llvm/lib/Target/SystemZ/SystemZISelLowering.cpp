@@ -75,7 +75,13 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setLoadExtAction(ISD::EXTLOAD,  MVT::f64, Expand);
 
   setStackPointerRegisterToSaveRestore(SystemZ::R15D);
-  setSchedulingPreference(SchedulingForLatency);
+
+  // TODO: It may be better to default to latency-oriented scheduling, however
+  // LLVM's current latency-oriented scheduler can't handle physreg definitions
+  // such as SystemZ has with PSW, so set this to the register-pressure
+  // scheduler, because it can.
+  setSchedulingPreference(SchedulingForRegPressure);
+
   setBooleanContents(ZeroOrOneBooleanContent);
 
   setOperationAction(ISD::BR_JT,            MVT::Other, Expand);
@@ -663,7 +669,7 @@ SDValue SystemZTargetLowering::EmitCmp(SDValue LHS, SDValue RHS,
 
   DebugLoc dl = LHS.getDebugLoc();
   return DAG.getNode((isUnsigned ? SystemZISD::UCMP : SystemZISD::CMP),
-                     dl, MVT::Flag, LHS, RHS);
+                     dl, MVT::i64, LHS, RHS);
 }
 
 
