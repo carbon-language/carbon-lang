@@ -3419,7 +3419,10 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       return;
     }
 
-    if (OPT->isObjCClassType()) {
+    if (OPT->isObjCClassType() || OPT->isObjCQualifiedClassType()) {
+      // FIXME: Consider if we need to output qualifiers for 'Class<p>'.
+      // Since this is a binary compatibility issue, need to consult with runtime
+      // folks. Fortunately, this is a *very* obsure construct.
       S += '#';
       return;
     }
@@ -3457,9 +3460,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     }
 
     S += '@';
-    if (FD || EncodingProperty) {
+    if (OPT->getInterfaceDecl() && (FD || EncodingProperty)) {
       S += '"';
-      S += OPT->getInterfaceDecl()->getNameAsCString();
+      S += OPT->getInterfaceDecl()->getIdentifier()->getName();
       for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
            E = OPT->qual_end(); I != E; ++I) {
         S += '<';
