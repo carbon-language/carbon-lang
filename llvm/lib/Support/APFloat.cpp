@@ -2632,56 +2632,6 @@ APFloat::getHashValue() const
   }
 }
 
-void APFloat::getIEEEFloatParts(bool &Sign, uint32_t &Exp,
-                                uint32_t &Significand) const {
-  assert(semantics == (const llvm::fltSemantics*)&IEEEsingle &&
-         "Float semantics are not IEEEsingle");
-  assert(partCount()==1);
-
-  if (category == fcNormal) {
-    Exp = exponent+127; // bias
-    Significand = (uint32_t)*significandParts();
-    if (Exp == 1 && !(Significand & 0x800000))
-      Exp = 0;   // denormal
-  } else if (category==fcZero) {
-    Exp = 0;
-    Significand = 0;
-  } else if (category==fcInfinity) {
-    Exp = 0xff;
-    Significand = 0;
-  } else {
-    assert(category == fcNaN && "Unknown category!");
-    Exp = 0xff;
-    Significand = (uint32_t)*significandParts();
-  }
-  Sign = sign;
-}
-
-void APFloat::getIEEEDoubleParts(bool &Sign, uint64_t &Exp,
-                                 uint64_t &Significand) const {
-  assert(semantics == (const llvm::fltSemantics*)&IEEEdouble &&
-         "Float semantics are not IEEEdouble");
-  assert(partCount()==1);
-
-  if (category == fcNormal) {
-    Exp = exponent+1023; // bias
-    Significand = *significandParts();
-    if (Exp == 1 && !(Significand & 0x10000000000000LL))
-      Exp = 0;   // denormal
-  } else if (category==fcZero) {
-    Exp = 0;
-    Significand = 0;
-  } else if (category==fcInfinity) {
-    Exp = 0x7ff;
-    Significand = 0;
-  } else {
-    assert(category == fcNaN && "Unknown category!");
-    Exp = 0x7ff;
-    Significand = *significandParts();
-  }
-  Sign = sign;
-}
-
 // Conversion from APFloat to/from host float/double.  It may eventually be
 // possible to eliminate these and have everybody deal with APFloats, but that
 // will take a while.  This approach will not easily extend to long double.
