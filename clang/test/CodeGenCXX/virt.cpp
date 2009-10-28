@@ -1049,6 +1049,41 @@ struct test16_D : test16_NV1, virtual test16_B2 {
 // CHECK-LP32-NEXT: .long __ZN10test16_NV28foo_NV2bEv
 
 
+class test17_B1 {
+  virtual void foo() = 0;
+  virtual void bar() { }
+};
+
+class test17_B2 : public test17_B1 {
+  void foo() { }
+  virtual void bar() = 0;
+};
+
+class test17_D : public test17_B2 {
+  void bar() { }
+} test17_d;
+
+
+// CHECK-LP64:__ZTV8test17_D:
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI8test17_D
+// CHECK-LP64-NEXT: .quad __ZN9test17_B23fooEv
+// CHECK-LP64-NEXT: .quad __ZN8test17_D3barEv
+
+// CHECK-LP64:__ZTV9test17_B2:
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI9test17_B2
+// CHECK-LP64-NEXT: .quad __ZN9test17_B23fooEv
+// CHECK-LP64-NEXT: .quad ___cxa_pure_virtual
+
+// CHECK-LP64:__ZTV9test17_B1:
+// CHECK-LP64-NEXT: .space 8
+// CHECK-LP64-NEXT: .quad __ZTI9test17_B1
+// CHECK-LP64-NEXT: .quad ___cxa_pure_virtual
+// CHECK-LP64-NEXT: .quad __ZN9test17_B13barEv
+
+
+
 // CHECK-LP64: __ZTV1B:
 // CHECK-LP64-NEXT: .space 8
 // CHECK-LP64-NEXT: .quad __ZTI1B

@@ -72,8 +72,13 @@ public:
       LLVMPointerWidth(cgm.getContext().Target.getPointerWidth(0)),
       CurrentVBaseOffset(0) {
     Ptr8Ty = llvm::PointerType::get(llvm::Type::getInt8Ty(VMContext), 0);
-    // FIXME: ___cxa_pure_virtual
-    cxa_pure = wrap((Index_t)0);
+
+    // Calculate pointer for ___cxa_pure_virtual.
+    const llvm::FunctionType *FTy;
+    std::vector<const llvm::Type*> ArgTys;
+    const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
+    FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
+    cxa_pure = wrap(CGM.CreateRuntimeFunction(FTy, "__cxa_pure_virtual"));
   }
 
   llvm::DenseMap<const CXXMethodDecl *, Index_t> &getIndex() { return Index; }
@@ -183,6 +188,7 @@ public:
   bool OverrideMethod(const CXXMethodDecl *MD, llvm::Constant *m,
                       bool MorallyVirtual, Index_t OverrideOffset,
                       Index_t Offset) {
+    const bool isPure = MD->isPure();
     typedef CXXMethodDecl::method_iterator meth_iter;
     // FIXME: Should OverrideOffset's be Offset?
 
@@ -221,7 +227,9 @@ public:
         }
         Index[MD] = i;
         submethods[i] = m;
-
+        if (isPure)
+          Pures[MD] = 1;
+        Pures.erase(OMD);
         Thunks.erase(OMD);
         if (MorallyVirtual) {
           Index_t &idx = VCall[OMD];
@@ -243,7 +251,7 @@ public:
             CovariantThunks[MD] = std::make_pair(std::make_pair(ThisOffset,
                                                                 ReturnOffset),
                                                  oret);
-          else
+          else if (!isPure)
             Thunks[MD] = ThisOffset;
           return true;
         }
@@ -258,7 +266,7 @@ public:
             CovariantThunks[MD] = std::make_pair(std::make_pair(ThisOffset,
                                                                 ReturnOffset),
                                                  oret);
-          else
+          else if (!isPure)
             Thunks[MD] = ThisOffset;
         }
         return true;
@@ -272,6 +280,7 @@ public:
     for (Thunks_t::iterator i = Thunks.begin(), e = Thunks.end();
          i != e; ++i) {
       const CXXMethodDecl *MD = i->first;
+      assert(!MD->isPure() && "Trying to thunk a pure");
       Index_t idx = Index[MD];
       Index_t nv_O = i->second.first;
       Index_t v_O = i->second.second;
@@ -282,6 +291,8 @@ public:
            e = CovariantThunks.end();
          i != e; ++i) {
       const CXXMethodDecl *MD = i->first;
+      if (MD->isPure())
+        continue;
       Index_t idx = Index[MD];
       Index_t nv_t = i->second.first.first.first;
       Index_t v_t = i->second.first.first.second;
@@ -339,6 +350,8 @@ public:
     // else allocate a new slot.
     Index[MD] = submethods.size();
     submethods.push_back(m);
+    if (MD->isPure())
+      Pures[MD] = 1;
     if (MorallyVirtual) {
       VCallOffset[MD] = Offset/8;
       Index_t &idx = VCall[MD];
