@@ -19,12 +19,12 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "post-RA-sched"
+#include "AntiDepBreaker.h"
 #include "AggressiveAntiDepBreaker.h"
 #include "CriticalAntiDepBreaker.h"
 #include "ExactHazardRecognizer.h"
 #include "SimpleHazardRecognizer.h"
 #include "ScheduleDAGInstrs.h"
-#include "llvm/CodeGen/AntiDepBreaker.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"

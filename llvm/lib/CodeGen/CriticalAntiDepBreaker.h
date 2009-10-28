@@ -16,7 +16,7 @@
 #ifndef LLVM_CODEGEN_CRITICALANTIDEPBREAKER_H
 #define LLVM_CODEGEN_CRITICALANTIDEPBREAKER_H
 
-#include "llvm/CodeGen/AntiDepBreaker.h"
+#include "AntiDepBreaker.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
