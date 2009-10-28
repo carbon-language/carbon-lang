@@ -135,11 +135,16 @@ public:
   }
   Value *VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
   Value *VisitAddrLabelExpr(const AddrLabelExpr *E) {
+#ifndef USEINDIRECTBRANCH
     llvm::Value *V =
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(CGF.getLLVMContext()),
                              CGF.GetIDForAddrOfLabel(E->getLabel()));
 
     return Builder.CreateIntToPtr(V, ConvertType(E->getType()));
+#else
+    llvm::Value *V = CGF.GetAddrOfLabel(E->getLabel());
+    return Builder.CreateBitCast(V, ConvertType(E->getType()));
+#endif
   }
 
   // l-values.

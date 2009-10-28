@@ -58,7 +58,12 @@ struct EvalInfo {
 static bool EvaluateLValue(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluatePointer(const Expr *E, APValue &Result, EvalInfo &Info);
 static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
+#ifndef USEINDIRECTBRANCH
 static bool EvaluateIntegerOrLValue(const Expr *E, APValue  &Result, EvalInfo &Info);
+#else
+static bool EvaluateIntegerOrLValue(const Expr *E, APValue  &Result,
+                                    EvalInfo &Info);
+#endif
 static bool EvaluateFloat(const Expr *E, APFloat &Result, EvalInfo &Info);
 static bool EvaluateComplex(const Expr *E, APValue &Result, EvalInfo &Info);
 

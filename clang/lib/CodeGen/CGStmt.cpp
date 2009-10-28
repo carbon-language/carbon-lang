@@ -287,8 +287,13 @@ void CodeGenFunction::EmitIndirectGotoStmt(const IndirectGotoStmt &S) {
   // Emit initial switch which will be patched up later by
   // EmitIndirectSwitches(). We need a default dest, so we use the
   // current BB, but this is overwritten.
+#ifndef USEINDIRECTBRANCH
   llvm::Value *V = Builder.CreatePtrToInt(EmitScalarExpr(S.getTarget()),
                                           llvm::Type::getInt32Ty(VMContext),
+#else
+  llvm::Value *V = Builder.CreateBitCast(EmitScalarExpr(S.getTarget()),
+                                         llvm::Type::getInt8PtrTy(VMContext),
+#endif
                                           "addr");
   llvm::BasicBlock *CurBB = Builder.GetInsertBlock();
   
