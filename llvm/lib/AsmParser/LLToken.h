@@ -117,7 +117,7 @@ namespace lltok {
     kw_malloc, kw_alloca, kw_free, kw_load, kw_store, kw_getelementptr,
 
     kw_extractelement, kw_insertelement, kw_shufflevector, kw_getresult,
-    kw_extractvalue, kw_insertvalue,
+    kw_extractvalue, kw_insertvalue, kw_blockaddress,
 
     // Unsigned Valued tokens (UIntVal).
     GlobalID,          // @42

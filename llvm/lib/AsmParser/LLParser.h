@@ -31,8 +31,41 @@ namespace llvm {
   class MetadataBase;
   class MDString;
   class MDNode;
-  struct ValID;
 
+  /// ValID - Represents a reference of a definition of some sort with no type.
+  /// There are several cases where we have to parse the value but where the
+  /// type can depend on later context.  This may either be a numeric reference
+  /// or a symbolic (%var) reference.  This is just a discriminated union.
+  struct ValID {
+    enum {
+      t_LocalID, t_GlobalID,      // ID in UIntVal.
+      t_LocalName, t_GlobalName,  // Name in StrVal.
+      t_APSInt, t_APFloat,        // Value in APSIntVal/APFloatVal.
+      t_Null, t_Undef, t_Zero,    // No value.
+      t_EmptyArray,               // No value:  []
+      t_Constant,                 // Value in ConstantVal.
+      t_InlineAsm,                // Value in StrVal/StrVal2/UIntVal.
+      t_Metadata                  // Value in MetadataVal.
+    } Kind;
+    
+    LLLexer::LocTy Loc;
+    unsigned UIntVal;
+    std::string StrVal, StrVal2;
+    APSInt APSIntVal;
+    APFloat APFloatVal;
+    Constant *ConstantVal;
+    MetadataBase *MetadataVal;
+    ValID() : APFloatVal(0.0) {}
+    
+    bool operator<(const ValID &RHS) const {
+      if (Kind == t_LocalID || Kind == t_GlobalID)
+        return UIntVal < RHS.UIntVal;
+      assert((Kind == t_LocalName || Kind == t_GlobalName) && 
+             "Ordering not defined for this ValID kind yet");
+      return StrVal < RHS.StrVal;
+    }
+  };
+  
   class LLParser {
   public:
     typedef LLLexer::LocTy LocTy;
@@ -75,7 +108,13 @@ namespace llvm {
     std::map<std::string, std::pair<GlobalValue*, LocTy> > ForwardRefVals;
     std::map<unsigned, std::pair<GlobalValue*, LocTy> > ForwardRefValIDs;
     std::vector<GlobalValue*> NumberedVals;
-    Function* MallocF;
+    
+    // References to blockaddress.  The key is the function ValID, the value is
+    // a list of references to blocks in that function.
+    std::map<ValID, std::vector<std::pair<ValID, GlobalValue*> > >
+      ForwardRefBlockAddresses;
+    
+    Function *MallocF;
   public:
     LLParser(MemoryBuffer *F, SourceMgr &SM, SMDiagnostic &Err, Module *m) : 
       Context(m->getContext()), Lex(F, SM, Err, m->getContext()),
@@ -184,13 +223,17 @@ namespace llvm {
       std::map<std::string, std::pair<Value*, LocTy> > ForwardRefVals;
       std::map<unsigned, std::pair<Value*, LocTy> > ForwardRefValIDs;
       std::vector<Value*> NumberedVals;
+      
+      /// FunctionNumber - If this is an unnamed function, this is the slot
+      /// number of it, otherwise it is -1.
+      int FunctionNumber;
     public:
-      PerFunctionState(LLParser &p, Function &f);
+      PerFunctionState(LLParser &p, Function &f, int FunctionNumber);
       ~PerFunctionState();
 
       Function &getFunction() const { return F; }
 
-      bool VerifyFunctionComplete();
+      bool FinishFunction();
 
       /// GetVal - Get a value with the specified name or ID, creating a
       /// forward reference record if needed.  This can return null if the value
@@ -294,6 +337,10 @@ namespace llvm {
     bool ParseGetElementPtr(Instruction *&I, PerFunctionState &PFS);
     bool ParseExtractValue(Instruction *&I, PerFunctionState &PFS);
     bool ParseInsertValue(Instruction *&I, PerFunctionState &PFS);
+    
+    bool ResolveForwardRefBlockAddresses(Function *TheFn, 
+                             std::vector<std::pair<ValID, GlobalValue*> > &Refs,
+                                         PerFunctionState *PFS);
   };
 } // End llvm namespace
 
