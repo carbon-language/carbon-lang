@@ -35,21 +35,21 @@ int func2()
 
 int main()
 {
-	unsigned char execution_buffer[128];
-	// mark stack page containing execution_buffer to be executable
-	__enable_execute_stack(execution_buffer);
+    unsigned char execution_buffer[128];
+    // mark stack page containing execution_buffer to be executable
+    __enable_execute_stack(execution_buffer);
 	
     // verify you can copy and execute a function
-    memcpy(execution_buffer, &func1, 128);
+    memcpy(execution_buffer, (void *)(uintptr_t)&func1, 128);
     __clear_cache(execution_buffer, &execution_buffer[128]);
-    pfunc f1 = (pfunc)execution_buffer;
+    pfunc f1 = (pfunc)(uintptr_t)execution_buffer;
     if ( (*f1)() != 1 )
         return 1;
 
     // verify you can overwrite a function with another
-    memcpy(execution_buffer, &func2, 128);
+    memcpy(execution_buffer, (void *)(uintptr_t)&func2, 128);
     __clear_cache(execution_buffer, &execution_buffer[128]);
-    pfunc f2 = (pfunc)execution_buffer;
+    pfunc f2 = (pfunc)(uintptr_t)execution_buffer;
     if ( (*f2)() != 2 )
         return 1;
 
