@@ -571,6 +571,8 @@ void InstrEmitter::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
         unsigned Reg = II.getImplicitDefs()[i - II.getNumDefs()];
         if (Node->hasAnyUseOfValue(i))
           EmitCopyFromReg(Node, i, IsClone, IsCloned, Reg, VRBaseMap);
+        else
+          MI->addRegisterDead(Reg, TRI);
       }
     }
     return;

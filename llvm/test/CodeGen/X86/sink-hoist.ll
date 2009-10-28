@@ -41,3 +41,18 @@ bb:
 return:
   ret void
 }
+
+; Sink instructions with dead EFLAGS defs.
+
+; CHECK:      je
+; CHECK-NEXT: orb
+
+define zeroext i8 @zzz(i8 zeroext %a, i8 zeroext %b) nounwind readnone {
+entry:
+  %tmp = zext i8 %a to i32                        ; <i32> [#uses=1]
+  %tmp2 = icmp eq i8 %a, 0                    ; <i1> [#uses=1]
+  %tmp3 = or i8 %b, -128                          ; <i8> [#uses=1]
+  %tmp4 = and i8 %b, 127                          ; <i8> [#uses=1]
+  %b_addr.0 = select i1 %tmp2, i8 %tmp4, i8 %tmp3 ; <i8> [#uses=1]
+  ret i8 %b_addr.0
+}
