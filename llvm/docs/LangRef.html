@@ -438,8 +438,8 @@
 
 <div class="doc_code">
 <pre>
-<a href="#i_add">add</a> i32 %X, %X           <i>; yields {i32}:%0</i>
-<a href="#i_add">add</a> i32 %0, %0           <i>; yields {i32}:%1</i>
+<a href="#i_add">%0 = add</a> i32 %X, %X           <i>; yields {i32}:%0</i>
+<a href="#i_add">%1 = add</a> i32 %0, %0           <i>; yields {i32}:%1</i>
 %result = <a href="#i_add">add</a> i32 %1, %1
 </pre>
 </div>
@@ -4249,7 +4249,7 @@ entry:
 <pre>
   %X = trunc i32 257 to i8              <i>; yields i8:1</i>
   %Y = trunc i32 123 to i1              <i>; yields i1:true</i>
-  %Y = trunc i32 122 to i1              <i>; yields i1:false</i>
+  %Z = trunc i32 122 to i1              <i>; yields i1:false</i>
 </pre>
 
 </div>
@@ -4433,7 +4433,7 @@ entry:
 <pre>
   %X = fptoui double 123.0 to i32      <i>; yields i32:123</i>
   %Y = fptoui float 1.0E+300 to i1     <i>; yields undefined:1</i>
-  %X = fptoui float 1.04E+17 to i8     <i>; yields undefined:1</i>
+  %Z = fptoui float 1.04E+17 to i8     <i>; yields undefined:1</i>
 </pre>
 
 </div>
@@ -4471,7 +4471,7 @@ entry:
 <pre>
   %X = fptosi double -123.0 to i32      <i>; yields i32:-123</i>
   %Y = fptosi float 1.0E-247 to i1      <i>; yields undefined:1</i>
-  %X = fptosi float 1.04E+17 to i8      <i>; yields undefined:1</i>
+  %Z = fptosi float 1.04E+17 to i8      <i>; yields undefined:1</i>
 </pre>
 
 </div>
@@ -4615,8 +4615,8 @@ entry:
 <h5>Example:</h5>
 <pre>
   %X = inttoptr i32 255 to i32*          <i>; yields zero extension on 64-bit architecture</i>
-  %X = inttoptr i32 255 to i32*          <i>; yields no-op on 32-bit architecture</i>
-  %Y = inttoptr i64 0 to i32*            <i>; yields truncation on 32-bit architecture</i>
+  %Y = inttoptr i32 255 to i32*          <i>; yields no-op on 32-bit architecture</i>
+  %Z = inttoptr i64 0 to i32*            <i>; yields truncation on 32-bit architecture</i>
 </pre>
 
 </div>
