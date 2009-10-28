@@ -46,9 +46,6 @@ namespace {
   int api_version = 0;
   int gold_version = 0;
 
-  bool generate_api_file = false;
-  const char *as_path = NULL;
-
   struct claimed_file {
     lto_module_t M;
     void *handle;
@@ -58,6 +55,37 @@ namespace {
   lto_codegen_model output_type = LTO_CODEGEN_PIC_MODEL_STATIC;
   std::list<claimed_file> Modules;
   std::vector<sys::Path> Cleanup;
+}
+
+namespace options {
+  bool generate_api_file = false;
+  const char *as_path = NULL;
+  // Additional options to pass into the code generator.
+  // Note: This array will contain all plugin options which are not claimed 
+  // as plugin exclusive to pass to the code generator.
+  // For example, "generate-api-file" and "as"options are for the plugin 
+  // use only and will not be passed.
+  std::vector<std::string> extra;
+
+  void process_plugin_option(const char* opt)
+  {
+    if (opt == NULL)
+      return;
+
+    if (strcmp("generate-api-file", opt) == 0) {
+      generate_api_file = true;
+    } else if (strncmp("as=", opt, 3) == 0) {
+      if (as_path) {
+        (*message)(LDPL_WARNING, "Path to as specified twice. "
+                   "Discarding %s", opt);
+      } else {
+        as_path = strdup(opt + 3);
+      }
+    } else {
+      // Save this option to pass to the code generator.
+      extra.push_back(std::string(opt));
+    }
+  }
 }
 
 ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
@@ -103,18 +131,7 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
         //output_type = LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC;
         break;
       case LDPT_OPTION:
-        if (strcmp("generate-api-file", tv->tv_u.tv_string) == 0) {
-          generate_api_file = true;
-        } else if (strncmp("as=", tv->tv_u.tv_string, 3) == 0) {
-          if (as_path) {
-            (*message)(LDPL_WARNING, "Path to as specified twice. "
-                       "Discarding %s", tv->tv_u.tv_string);
-          } else {
-            as_path = strdup(tv->tv_u.tv_string + 3);
-          }
-        } else {
-          (*message)(LDPL_WARNING, "Ignoring flag %s", tv->tv_u.tv_string);
-        }
+        options::process_plugin_option(tv->tv_u.tv_string);
         break;
       case LDPT_REGISTER_CLAIM_FILE_HOOK: {
         ld_plugin_register_claim_file callback;
@@ -307,7 +324,7 @@ ld_plugin_status all_symbols_read_hook(void) {
     lto_codegen_add_module(cg, I->M);
 
   std::ofstream api_file;
-  if (generate_api_file) {
+  if (options::generate_api_file) {
     api_file.open("apifile.txt", std::ofstream::out | std::ofstream::trunc);
     if (!api_file.is_open()) {
       (*message)(LDPL_FATAL, "Unable to open apifile.txt for writing.");
@@ -329,13 +346,13 @@ ld_plugin_status all_symbols_read_hook(void) {
           lto_codegen_add_must_preserve_symbol(cg, I->syms[i].name);
           anySymbolsPreserved = true;
 
-          if (generate_api_file)
+          if (options::generate_api_file)
             api_file << I->syms[i].name << "\n";
         }
       }
     }
 
-    if (generate_api_file)
+    if (options::generate_api_file)
       api_file.close();
 
     if (!anySymbolsPreserved) {
@@ -347,9 +364,16 @@ ld_plugin_status all_symbols_read_hook(void) {
 
   lto_codegen_set_pic_model(cg, output_type);
   lto_codegen_set_debug_model(cg, LTO_DEBUG_MODEL_DWARF);
-  if (as_path) {
-    sys::Path p = sys::Program::FindProgramByName(as_path);
+  if (options::as_path) {
+    sys::Path p = sys::Program::FindProgramByName(options::as_path);
     lto_codegen_set_assembler_path(cg, p.c_str());
+  }
+  // Pass through extra options to the code generator.
+  if (!options::extra.empty()) {
+    for (std::vector<std::string>::iterator it = options::extra.begin();
+         it != options::extra.end(); ++it) {
+      lto_codegen_debug_options(cg, (*it).c_str());
+    }
   }
 
   size_t bufsize = 0;
