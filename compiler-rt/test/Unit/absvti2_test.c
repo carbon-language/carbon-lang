@@ -15,6 +15,7 @@
 
 #include "int_lib.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 // Returns: absolute value
 
