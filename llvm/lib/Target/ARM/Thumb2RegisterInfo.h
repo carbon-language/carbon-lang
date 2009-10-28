@@ -35,8 +35,6 @@ public:
                          unsigned DestReg, unsigned SubIdx, int Val,
                          ARMCC::CondCodes Pred = ARMCC::AL,
                          unsigned PredReg = 0) const;
-
-  bool requiresRegisterScavenging(const MachineFunction &MF) const;
 };
 }
 
