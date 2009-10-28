@@ -12,7 +12,6 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Target/TargetMachine.h"
 #include <vector>
 
 namespace llvm {
@@ -24,7 +23,7 @@ namespace llvm {
 
   class BranchFolder {
   public:
-    explicit BranchFolder(bool defaultEnableTailMerge, CodeGenOpt::Level OL);
+    explicit BranchFolder(bool defaultEnableTailMerge);
 
     bool OptimizeFunction(MachineFunction &MF,
                           const TargetInstrInfo *tii,
@@ -38,7 +37,6 @@ namespace llvm {
     typedef std::pair<MPIterator, MachineBasicBlock::iterator> SameTailElt;
     std::vector<SameTailElt> SameTails;
 
-    CodeGenOpt::Level OptLevel;
     bool EnableTailMerge;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
@@ -75,10 +73,8 @@ namespace llvm {
                            public BranchFolder {
   public:
     static char ID;
-    explicit BranchFolderPass(bool defaultEnableTailMerge,
-                              CodeGenOpt::Level OptLevel)
-      :  MachineFunctionPass(&ID),
-      BranchFolder(defaultEnableTailMerge, OptLevel) {}
+    explicit BranchFolderPass(bool defaultEnableTailMerge)
+      :  MachineFunctionPass(&ID), BranchFolder(defaultEnableTailMerge) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "Control Flow Optimizer"; }

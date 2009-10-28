@@ -148,11 +148,9 @@ namespace {
     const TargetInstrInfo *TII;
     bool MadeChange;
     int FnNum;
-    CodeGenOpt::Level OptLevel;
   public:
     static char ID;
-    IfConverter(CodeGenOpt::Level OL) :
-      MachineFunctionPass(&ID), FnNum(-1), OptLevel(OL) {}
+    IfConverter() : MachineFunctionPass(&ID), FnNum(-1) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "If Converter"; }
@@ -221,9 +219,10 @@ namespace {
   char IfConverter::ID = 0;
 }
 
-FunctionPass *llvm::createIfConverterPass(CodeGenOpt::Level OptLevel) {
-  return new IfConverter(OptLevel);
-}
+static RegisterPass<IfConverter>
+X("if-converter", "If Converter");
+
+FunctionPass *llvm::createIfConverterPass() { return new IfConverter(); }
 
 bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TLI = MF.getTarget().getTargetLowering();
@@ -363,7 +362,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   BBAnalysis.clear();
 
   if (MadeChange) {
-    BranchFolder BF(false, OptLevel);
+    BranchFolder BF(false);
     BF.OptimizeFunction(MF, TII,
                         MF.getTarget().getRegisterInfo(),
                         getAnalysisIfAvailable<MachineModuleInfo>());

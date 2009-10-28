@@ -329,7 +329,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (OptLevel != CodeGenOpt::None) {
-    PM.add(createBranchFoldingPass(getEnableTailMergeDefault(), OptLevel));
+    PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
     printAndVerify(PM);
   }
 
