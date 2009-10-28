@@ -57,7 +57,18 @@ DebugOnly("debug-only", cl::desc("Enable a specific type of debug output"),
 bool llvm::isCurrentDebugType(const char *DebugType) {
   return CurrentDebugType.empty() || DebugType == CurrentDebugType;
 }
+
+/// SetCurrentDebugType - Set the current debug type, as if the -debug-only=X
+/// option were specified.  Note that DebugFlag also needs to be set to true for
+/// debug output to be produced.
+///
+void SetCurrentDebugType(const char *Type) {
+  CurrentDebugType = Type;
+}
+
 #else
 // Avoid "has no symbols" warning.
+namespace llvm {
 int Debug_dummy = 0;
+}
 #endif
