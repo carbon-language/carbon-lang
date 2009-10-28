@@ -410,6 +410,7 @@ TEST_F(JITTest, NonLazyLeaksNoStubs) {
 #endif
 
 TEST_F(JITTest, ModuleDeletion) {
+  TheJIT->DisableLazyCompilation(false);
   LoadAssembly("define void @main() { "
                "  call i32 @computeVal() "
                "  ret void "
