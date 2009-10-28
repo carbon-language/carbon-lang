@@ -171,12 +171,41 @@ getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
 /// location depends.  If isLoad is true, this routine ignore may-aliases with
 /// read-only operations.
 MemDepResult MemoryDependenceAnalysis::
-getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
+getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad, 
                          BasicBlock::iterator ScanIt, BasicBlock *BB) {
+
+  Value* invariantTag = 0;
 
   // Walk backwards through the basic block, looking for dependencies.
   while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
+
+    // If we're in an invariant region, no dependencies can be found before
+    // we pass an invariant-begin marker.
+    if (invariantTag == Inst) {
+      invariantTag = 0;
+      continue;
+    
+    // If we pass an invariant-end marker, then we've just entered an invariant
+    // region and can start ignoring dependencies.
+    } else if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(Inst)) {
+      if (II->getIntrinsicID() == Intrinsic::invariant_end) {
+        uint64_t invariantSize = ~0ULL;
+        if (ConstantInt* CI = dyn_cast<ConstantInt>(II->getOperand(2)))
+          invariantSize = CI->getZExtValue();
+        
+        AliasAnalysis::AliasResult R =
+          AA->alias(II->getOperand(3), invariantSize, MemPtr, MemSize);
+        if (R == AliasAnalysis::MustAlias) {
+          invariantTag = II->getOperand(1);
+          continue;
+        }
+      }
+    }
+
+    // If we're querying on a load and we're in an invariant region, we're done
+    // at this point. Nothing a load depends on can live in an invariant region.
+    if (isLoad && invariantTag) continue;
 
     // Debug intrinsics don't cause dependences.
     if (isa<DbgInfoIntrinsic>(Inst)) continue;
@@ -200,6 +229,11 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
       // loads.
       return MemDepResult::getDef(Inst);
     }
+    
+    // If we're querying on a store and we're in an invariant region, we're done
+    // at this point. The only things that stores depend on that could exist in
+    // an invariant region are loads, which we've already checked.
+    if (invariantTag) continue;
     
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       // If alias analysis can tell that this store is guaranteed to not modify
