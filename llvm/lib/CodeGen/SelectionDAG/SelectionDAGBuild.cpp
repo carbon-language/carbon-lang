@@ -4220,10 +4220,13 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
     assert(CI && "Non-constant type in __builtin_object_size?");
 
+    SDValue Arg = getValue(I.getOperand(0));
+    EVT Ty = Arg.getValueType();
+
     if (CI->getZExtValue() < 2)
-      setValue(&I, DAG.getConstant(-1, MVT::i32));
+      setValue(&I, DAG.getConstant(-1, Ty));
     else
-      setValue(&I, DAG.getConstant(0, MVT::i32));
+      setValue(&I, DAG.getConstant(0, Ty));
     return 0;
   }
   case Intrinsic::var_annotation:
