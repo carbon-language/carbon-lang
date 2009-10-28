@@ -94,7 +94,7 @@ public:
 class BitcodeReaderMDValueList {
   std::vector<WeakVH> MDValuePtrs;
   
-  LLVMContext& Context;
+  LLVMContext &Context;
 public:
   BitcodeReaderMDValueList(LLVMContext& C) : Context(C) {}
 
@@ -122,7 +122,7 @@ public:
 };
 
 class BitcodeReader : public ModuleProvider {
-  LLVMContext& Context;
+  LLVMContext &Context;
   MemoryBuffer *Buffer;
   BitstreamReader StreamFile;
   BitstreamCursor Stream;
@@ -163,6 +163,12 @@ class BitcodeReader : public ModuleProvider {
   /// map contains info about where to find deferred function body (in the
   /// stream) and what linkage the original function had.
   DenseMap<Function*, std::pair<uint64_t, unsigned> > DeferredFunctionInfo;
+  
+  /// BlockAddrFwdRefs - These are blockaddr references to basic blocks.  These
+  /// are resolved lazily when functions are loaded.
+  typedef std::pair<unsigned, GlobalVariable*> BlockAddrRefTy;
+  DenseMap<Function*, std::vector<BlockAddrRefTy> > BlockAddrFwdRefs;
+  
 public:
   explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext& C)
     : Context(C), Buffer(buffer), ErrorString(0), ValueList(C), MDValueList(C) {

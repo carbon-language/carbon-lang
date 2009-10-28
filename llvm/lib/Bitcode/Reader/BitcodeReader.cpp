@@ -1192,6 +1192,22 @@ bool BitcodeReader::ParseConstants() {
                          AsmStr, ConstrStr, HasSideEffects, IsAlignStack);
       break;
     }
+    case bitc::CST_CODE_BLOCKADDRESS:{
+      if (Record.size() < 3) return Error("Invalid CE_BLOCKADDRESS record");
+      const Type *FnTy = getTypeByID(Record[0]);
+      if (FnTy == 0) return Error("Invalid CE_BLOCKADDRESS record");
+      Function *Fn =
+        dyn_cast_or_null<Function>(ValueList.getConstantFwdRef(Record[1],FnTy));
+      if (Fn == 0) return Error("Invalid CE_BLOCKADDRESS record");
+      
+      GlobalVariable *FwdRef = new GlobalVariable(*Fn->getParent(),
+                                                  Type::getInt8Ty(Context),
+                                            false, GlobalValue::InternalLinkage,
+                                                  0, "");
+      BlockAddrFwdRefs[Fn].push_back(std::make_pair(Record[2], FwdRef));
+      V = FwdRef;
+      break;
+    }  
     }
 
     ValueList.AssignValue(V, NextCstNo);
@@ -2248,6 +2264,27 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     }
   }
 
+  // See if anything took the address of blocks in this function.  If so,
+  // resolve them now.
+  /// BlockAddrFwdRefs - These are blockaddr references to basic blocks.  These
+  /// are resolved lazily when functions are loaded.
+  DenseMap<Function*, std::vector<BlockAddrRefTy> >::iterator BAFRI =
+    BlockAddrFwdRefs.find(F);
+  if (BAFRI != BlockAddrFwdRefs.end()) {
+    std::vector<BlockAddrRefTy> &RefList = BAFRI->second;
+    for (unsigned i = 0, e = RefList.size(); i != e; ++i) {
+      unsigned BlockIdx = RefList[i].first;
+      if (BlockIdx >= FunctionBBs.size())
+        return Error("Invalid blockaddress block #");
+    
+      GlobalVariable *FwdRef = RefList[i].second;
+      FwdRef->replaceAllUsesWith(BlockAddress::get(F, FunctionBBs[BlockIdx]));
+      FwdRef->eraseFromParent();
+    }
+    
+    BlockAddrFwdRefs.erase(BAFRI);
+  }
+  
   // Trim the value list down to the size it was before we parsed this function.
   ValueList.shrinkTo(ModuleValueListSize);
   std::vector<BasicBlock*>().swap(FunctionBBs);

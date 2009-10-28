@@ -25,13 +25,19 @@ Case4:          ; preds = %0
 }
 
 
+@Addr = global i8* blockaddress(@indbrtest, %BB1)
+@Addr3 = global i8* blockaddress(@squared, %Case1)
+
 
 define i32 @indbrtest(i8* %P, i32* %Q) {
   indirectbr i8* %P, [label %BB1, label %BB2, label %BB3]
 BB1:
   indirectbr i32* %Q, []
 BB2:
-  indirectbr i32* %Q, [label %BB1, label %BB2]
+  %R = bitcast i8* blockaddress(@indbrtest, %BB3) to i8*
+  indirectbr i8* %R, [label %BB1, label %BB2, label %BB3]
 BB3:
   ret i32 2
 }
+
+
