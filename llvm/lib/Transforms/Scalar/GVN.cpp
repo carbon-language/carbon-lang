@@ -1248,6 +1248,15 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
                                              UndefValue::get(LI->getType())));
       continue;
     }
+    
+    // Loading immediately after lifetime begin or end -> undef.
+    if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(DepInst)) {
+      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+          II->getIntrinsicID() == Intrinsic::lifetime_end) {
+        ValuesPerBlock.push_back(AvailableValueInBlock::get(DepBB,
+                                             UndefValue::get(LI->getType())));
+      }
+    }
 
     if (StoreInst *S = dyn_cast<StoreInst>(DepInst)) {
       // Reject loads and stores that are to the same address but are of
@@ -1590,6 +1599,18 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
     toErase.push_back(L);
     NumGVNLoad++;
     return true;
+  }
+  
+  // If this load occurs either right after a lifetime begin or a lifetime end,
+  // then the loaded value is undefined.
+  if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(DepInst)) {
+    if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+        II->getIntrinsicID() == Intrinsic::lifetime_end) {
+      L->replaceAllUsesWith(UndefValue::get(L->getType()));
+      toErase.push_back(L);
+      NumGVNLoad++;
+      return true;
+    }
   }
 
   return false;

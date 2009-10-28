@@ -185,10 +185,9 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
     if (invariantTag == Inst) {
       invariantTag = 0;
       continue;
-    
-    // If we pass an invariant-end marker, then we've just entered an invariant
-    // region and can start ignoring dependencies.
     } else if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(Inst)) {
+      // If we pass an invariant-end marker, then we've just entered an
+      // invariant region and can start ignoring dependencies.
       if (II->getIntrinsicID() == Intrinsic::invariant_end) {
         uint64_t invariantSize = ~0ULL;
         if (ConstantInt* CI = dyn_cast<ConstantInt>(II->getOperand(2)))
@@ -200,6 +199,19 @@ getPointerDependencyFrom(Value *MemPtr, uint64_t MemSize, bool isLoad,
           invariantTag = II->getOperand(1);
           continue;
         }
+      
+      // If we reach a lifetime begin or end marker, then the query ends here
+      // because the value is undefined.
+      } else if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+                   II->getIntrinsicID() == Intrinsic::lifetime_end) {
+        uint64_t invariantSize = ~0ULL;
+        if (ConstantInt* CI = dyn_cast<ConstantInt>(II->getOperand(1)))
+          invariantSize = CI->getZExtValue();
+
+        AliasAnalysis::AliasResult R =
+          AA->alias(II->getOperand(2), invariantSize, MemPtr, MemSize);
+        if (R == AliasAnalysis::MustAlias)
+          return MemDepResult::getDef(II);
       }
     }
 

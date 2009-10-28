@@ -154,6 +154,26 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
         continue;
       }
     }
+    
+    // If this is a lifetime end marker, we can throw away the store.
+    if (IntrinsicInst* II = dyn_cast<IntrinsicInst>(InstDep.getInst())) {
+      if (II->getIntrinsicID() == Intrinsic::lifetime_end) {
+        // Delete the store and now-dead instructions that feed it.
+        // DeleteDeadInstruction can delete the current instruction.  Save BBI
+        // in case we need it.
+        WeakVH NextInst(BBI);
+        
+        DeleteDeadInstruction(SI);
+        
+        if (NextInst == 0)  // Next instruction deleted.
+          BBI = BB.begin();
+        else if (BBI != BB.begin())  // Revisit this instruction if possible.
+          --BBI;
+        NumFastStores++;
+        MadeChange = true;
+        continue;
+      }
+    }
   }
   
   // If this block ends in a return, unwind, or unreachable, all allocas are
