@@ -6,7 +6,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-darwin8"
 	%struct.BoundaryAlignment = type { [3 x i8], i8, i16, i16, i8, [2 x i8] }
 
-define void @passing2(i64 %str.0, i64 %str.1, i16 signext  %s, i32 %j, i8 signext  %c, i16 signext  %t, i16 signext  %u, i8 signext  %d) nounwind  {
+define void @passing2(i64 %str.0, i64 %str.1, i16 signext  %s, i32 %j, i8 signext  %c, i16 signext  %t, i16 signext  %u, i8 signext  %d) nounwind optsize {
 entry:
 	%str_addr = alloca %struct.BoundaryAlignment		; <%struct.BoundaryAlignment*> [#uses=7]
 	%s_addr = alloca i16		; <i16*> [#uses=1]

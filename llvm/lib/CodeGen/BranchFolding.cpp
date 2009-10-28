@@ -18,6 +18,7 @@
 
 #define DEBUG_TYPE "branchfolding"
 #include "BranchFolding.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -465,22 +466,23 @@ unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
        CurMPIter!=B && CurMPIter->first==CurHash;
        --CurMPIter) {
     for (MPIterator I = prior(CurMPIter); I->first==CurHash ; --I) {
-      unsigned CommonTailLen = ComputeCommonTailLength(
-                                        CurMPIter->second,
-                                        I->second,
-                                        TrialBBI1, TrialBBI2);
+      unsigned CommonTailLen = ComputeCommonTailLength(CurMPIter->second,
+                                                       I->second,
+                                                       TrialBBI1, TrialBBI2);
       // If we will have to split a block, there should be at least
-      // minCommonTailLength instructions in common; if not, at worst
-      // we will be replacing a fallthrough into the common tail with a
-      // branch, which at worst breaks even with falling through into
-      // the duplicated common tail, so 1 instruction in common is enough.
-      // We will always pick a block we do not have to split as the common
-      // tail if there is one.
-      // (Empty blocks will get forwarded and need not be considered.)
+      // minCommonTailLength instructions in common.  Otherwise, if we are
+      // optimizing for code size, 1 instruction in common is enough.  At
+      // worst we will be replacing a fallthrough into the common tail with a
+      // branch, which at worst breaks even with falling through into the
+      // duplicated common tail.  We will always pick a block we do not have
+      // to split as the common tail if there is one.  (Empty blocks will get
+      // forwarded and need not be considered.)
+      MachineFunction *MF = CurMPIter->second->getParent();
       if (CommonTailLen >= minCommonTailLength ||
           (CommonTailLen > 0 &&
-           (TrialBBI1==CurMPIter->second->begin() ||
-            TrialBBI2==I->second->begin()))) {
+           MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize) &&
+           (TrialBBI1 == CurMPIter->second->begin() ||
+            TrialBBI2 == I->second->begin()))) {
         if (CommonTailLen > maxCommonTailLength) {
           SameTails.clear();
           maxCommonTailLength = CommonTailLen;

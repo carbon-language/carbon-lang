@@ -3,7 +3,7 @@
 
 @.str = internal constant [48 x i8] c"transformed bounds: (%.2f, %.2f), (%.2f, %.2f)\0A\00"		; <[48 x i8]*> [#uses=1]
 
-define void @minmax(float* %result) nounwind  {
+define void @minmax(float* %result) nounwind optsize {
 entry:
 	%tmp2 = load float* %result, align 4		; <float> [#uses=6]
 	%tmp4 = getelementptr float* %result, i32 2		; <float*> [#uses=5]

@@ -2,7 +2,7 @@
 ; RUN:   grep {asm-printer} | grep {Number of machine instrs printed} | grep 5
 ; RUN: grep {leal	1(\%rsi),} %t
 
-define fastcc zeroext i8 @fullGtU(i32 %i1, i32 %i2) nounwind {
+define fastcc zeroext i8 @fullGtU(i32 %i1, i32 %i2) nounwind optsize {
 entry:
   %0 = add i32 %i2, 1           ; <i32> [#uses=1]
   %1 = sext i32 %0 to i64               ; <i64> [#uses=1]
