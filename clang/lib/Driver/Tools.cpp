@@ -2345,9 +2345,12 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  std::string Triple = getToolChain().getTripleString();
+  if (Triple.substr(0, 6) == "x86_64")
+	Triple.replace(0, 6, "amd64");
   CmdArgs.push_back(MakeFormattedString(Args,
                            llvm::format("-L/usr/lib/gcc-lib/%s/3.3.5",
-                                    getToolChain().getTripleString().c_str())));
+                                    Triple.c_str())));
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
