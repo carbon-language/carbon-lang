@@ -210,6 +210,7 @@ public:
     GlobalAliasVal,           // This is an instance of GlobalAlias
     GlobalVariableVal,        // This is an instance of GlobalVariable
     UndefValueVal,            // This is an instance of UndefValue
+    BlockAddressVal,          // This is an instance of BlockAddress
     ConstantExprVal,          // This is an instance of ConstantExpr
     ConstantAggregateZeroVal, // This is an instance of ConstantAggregateNull
     ConstantIntVal,           // This is an instance of ConstantInt

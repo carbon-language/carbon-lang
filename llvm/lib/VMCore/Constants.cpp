@@ -987,7 +987,7 @@ Constant *ConstantVector::getSplatValue() {
   return Elt;
 }
 
-//---- ConstantPointerNull::get() implementation...
+//---- ConstantPointerNull::get() implementation.
 //
 
 ConstantPointerNull *ConstantPointerNull::get(const PointerType *Ty) {
@@ -1004,23 +1004,90 @@ void ConstantPointerNull::destroyConstant() {
 }
 
 
-//---- UndefValue::get() implementation...
+//---- UndefValue::get() implementation.
 //
 
 UndefValue *UndefValue::get(const Type *Ty) {
-  // Implicitly locked.
   return Ty->getContext().pImpl->UndefValueConstants.getOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table.
 //
 void UndefValue::destroyConstant() {
-  // Implicitly locked.
   getType()->getContext().pImpl->UndefValueConstants.remove(this);
   destroyConstantImpl();
 }
 
-//---- ConstantExpr::get() implementations...
+//---- BlockAddress::get() implementation.
+//
+
+BlockAddress *BlockAddress::get(BasicBlock *BB) {
+  assert(BB->getParent() != 0 && "Block must have a parent");
+  return get(BB->getParent(), BB);
+}
+
+BlockAddress *BlockAddress::get(Function *F, BasicBlock *BB) {
+  BlockAddress *&BA =
+    F->getContext().pImpl->BlockAddresses[std::make_pair(F, BB)];
+  if (BA == 0)
+    BA = new BlockAddress(F, BB);
+  
+  assert(BA->getFunction() == F && "Basic block moved between functions");
+  return BA;
+}
+
+BlockAddress::BlockAddress(Function *F, BasicBlock *BB)
+: Constant(Type::getInt8PtrTy(F->getContext()), Value::BlockAddressVal,
+           &Op<0>(), 2) {
+  Op<0>() = F;
+  Op<1>() = BB;
+}
+
+
+// destroyConstant - Remove the constant from the constant table.
+//
+void BlockAddress::destroyConstant() {
+  getFunction()->getType()->getContext().pImpl
+    ->BlockAddresses.erase(std::make_pair(getFunction(), getBasicBlock()));
+  destroyConstantImpl();
+}
+
+void BlockAddress::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
+  // This could be replacing either the Basic Block or the Function.  In either
+  // case, we have to remove the map entry.
+  Function *NewF = getFunction();
+  BasicBlock *NewBB = getBasicBlock();
+  
+  if (U == &Op<0>())
+    NewF = cast<Function>(To);
+  else
+    NewBB = cast<BasicBlock>(To);
+  
+  // See if the 'new' entry already exists, if not, just update this in place
+  // and return early.
+  BlockAddress *&NewBA =
+    getContext().pImpl->BlockAddresses[std::make_pair(NewF, NewBB)];
+  if (NewBA == 0) {
+    // Remove the old entry, this can't cause the map to rehash (just a
+    // tombstone will get added).
+    getContext().pImpl->BlockAddresses.erase(std::make_pair(getFunction(),
+                                                            getBasicBlock()));
+    NewBA = this;
+    Op<0>() = NewF;
+    Op<1>() = NewBB;
+    return;
+  }
+
+  // Otherwise, I do need to replace this with an existing value.
+  assert(NewBA != this && "I didn't contain From!");
+  
+  // Everyone using this now uses the replacement.
+  uncheckedReplaceAllUsesWith(NewBA);
+  
+  destroyConstant();
+}
+
+//---- ConstantExpr::get() implementations.
 //
 
 /// This is a utility function to handle folding of casts and lookup of the
@@ -1838,7 +1905,7 @@ const char *ConstantExpr::getOpcodeName() const {
 /// single invocation handles all 1000 uses.  Handling them one at a time would
 /// work, but would be really slow because it would have to unique each updated
 /// array instance.
-
+///
 void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                 Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");

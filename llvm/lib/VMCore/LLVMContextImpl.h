@@ -126,6 +126,7 @@ public:
   
   ConstantUniqueMap<char, Type, UndefValue> UndefValueConstants;
   
+  DenseMap<std::pair<Function*, BasicBlock*> , BlockAddress*> BlockAddresses;
   ConstantUniqueMap<ExprMapKeyType, Type, ConstantExpr> ExprConstants;
   
   ConstantInt *TheTrueVal;

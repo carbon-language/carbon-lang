@@ -549,7 +549,47 @@ public:
   }
 };
 
+/// BlockAddress - The address of a basic block.
+///
+class BlockAddress : public Constant {
+  void *operator new(size_t, unsigned);                  // DO NOT IMPLEMENT
+  void *operator new(size_t s) { return User::operator new(s, 2); }
+  BlockAddress(Function *F, BasicBlock *BB);
+public:
+  /// get - Return a BlockAddress for the specified function and basic block.
+  static BlockAddress *get(Function *F, BasicBlock *BB);
+  
+  /// get - Return a BlockAddress for the specified basic block.  The basic
+  /// block must be embedded into a function.
+  static BlockAddress *get(BasicBlock *BB);
+  
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
+  
+  Function *getFunction() const { return (Function*)Op<0>().get(); }
+  BasicBlock *getBasicBlock() const { return (BasicBlock*)Op<1>().get(); }
+  
+  /// isNullValue - Return true if this is the value that would be returned by
+  /// getNullValue.
+  virtual bool isNullValue() const { return false; }
+  
+  virtual void destroyConstant();
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
+  
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const BlockAddress *) { return true; }
+  static inline bool classof(const Value *V) {
+    return V->getValueID() == BlockAddressVal;
+  }
+};
 
+template <>
+struct OperandTraits<BlockAddress> : public FixedNumOperandTraits<2> {
+};
+
+DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(BlockAddress, Constant)
+  
+//===----------------------------------------------------------------------===//
 /// ConstantExpr - a constant value that is initialized with an expression using
 /// other constant values.
 ///
