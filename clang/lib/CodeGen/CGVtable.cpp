@@ -509,15 +509,7 @@ public:
     if (ForVirtualBase)
       extra = offsets.size();
 
-    // vtables are composed from the chain of primaries.
-    if (PrimaryBase) {
-      if (PrimaryBaseWasVirtual)
-        IndirectPrimary.insert(PrimaryBase);
-      Primaries(PrimaryBase, PrimaryBaseWasVirtual|MorallyVirtual, Offset);
-    }
-
-    // And add the virtuals for the class to the primary vtable.
-    AddMethods(RD, MorallyVirtual, Offset);
+    Primaries(RD, MorallyVirtual, Offset);
 
     if (Path)
       OverrideMethods(Path, MorallyVirtual, Offset);
