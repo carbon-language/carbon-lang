@@ -52,6 +52,7 @@ namespace {
     void mangleGuardVariable(const VarDecl *D);
 
     void mangleCXXVtable(const CXXRecordDecl *RD);
+    void mangleCXXVTT(const CXXRecordDecl *RD);
     void mangleCXXRtti(const CXXRecordDecl *RD);
     void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type);
     void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type);
@@ -201,6 +202,12 @@ void CXXNameMangler::mangleCXXDtor(const CXXDestructorDecl *D,
 void CXXNameMangler::mangleCXXVtable(const CXXRecordDecl *RD) {
   // <special-name> ::= TV <type>  # virtual table
   Out << "_ZTV";
+  mangleName(RD);
+}
+
+void CXXNameMangler::mangleCXXVTT(const CXXRecordDecl *RD) {
+  // <special-name> ::= TT <type>  # VTT structure
+  Out << "_ZTT";
   mangleName(RD);
 }
 
