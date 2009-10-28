@@ -1,21 +1,19 @@
-// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o %t %s &&
-// RUN: grep '@_Z2f0i' %t &&
-// RUN: grep '@_Z2f0l' %t &&
+// RUN: clang-cc -triple i386-pc-linux-gnu -emit-llvm -o - %s | FileCheck %s
+
+// CHECK: @"\01foo"
 
 // Make sure we mangle overloadable, even in C system headers.
-
 # 1 "somesystemheader.h" 1 3 4
+// CHECK: @_Z2f0i
 void __attribute__((__overloadable__)) f0(int a) {}
+// CHECK: @_Z2f0l
 void __attribute__((__overloadable__)) f0(long b) {}
 
-
+// CHECK: @"\01bar"
 
 // These should get merged.
 void foo() __asm__("bar");
 void foo2() __asm__("bar");
-
-// RUN: grep '@"\\01foo"' %t &&
-// RUN: grep '@"\\01bar"' %t
 
 int nux __asm__("foo");
 extern float nux2 __asm__("foo");
@@ -52,3 +50,12 @@ void foo6() {
 
 int foo7 __asm__("foo7") __attribute__((used));
 float foo8 __asm__("foo7") = 42;
+
+// PR4412
+int func(void);
+extern int func (void) __asm__ ("FUNC");
+
+// CHECK: @"\01FUNC"
+int func(void) {
+  return 42;
+}

@@ -88,6 +88,11 @@ public:
     return D;
   }
 
+  /// \brief Returns the most recent (re)declaration of this declaration.
+  const decl_type *getMostRecentDeclaration() const {
+    return getFirstDeclaration()->RedeclLink.getNext();
+  }
+  
   /// \brief Set the previous declaration. If PrevDecl is NULL, set this as the
   /// first and only declaration.
   void setPreviousDeclaration(decl_type *PrevDecl) {

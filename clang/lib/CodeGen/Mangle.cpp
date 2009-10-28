@@ -115,6 +115,7 @@ namespace {
 }
 
 static bool isInCLinkageSpecification(const Decl *D) {
+  D = D->getCanonicalDecl();
   for (const DeclContext *DC = D->getDeclContext();
        !DC->isTranslationUnit(); DC = DC->getParent()) {
     if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))
@@ -1362,7 +1363,7 @@ namespace clang {
                                    "Mangling declaration");
     
     CXXNameMangler Mangler(Context, os);
-    if (!Mangler.mangle(cast<NamedDecl>(D->getCanonicalDecl())))
+    if (!Mangler.mangle(D))
       return false;
 
     os.flush();
