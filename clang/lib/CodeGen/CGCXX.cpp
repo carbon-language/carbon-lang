@@ -591,11 +591,13 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
                                       const CXXConstructExpr *E) {
   assert(Dest && "Must have a destination!");
   const CXXConstructorDecl *CD = E->getConstructor();
+  const ConstantArrayType *Array =
+    getContext().getAsConstantArrayType(E->getType());
   // For a copy constructor, even if it is trivial, must fall thru so
   // its argument is code-gen'ed.
   if (!CD->isCopyConstructor(getContext())) {
     QualType InitType = E->getType();
-    if (const ArrayType *Array = getContext().getAsArrayType(InitType))
+    if (Array)
       InitType = getContext().getBaseElementType(Array);
     const CXXRecordDecl *RD =
       cast<CXXRecordDecl>(InitType->getAs<RecordType>()->getDecl());
@@ -609,8 +611,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
     EmitAggExpr((*i), Dest, false);
     return;
   }
-  if (const ConstantArrayType *Array =
-      getContext().getAsConstantArrayType(E->getType())) {
+  if (Array) {
     QualType BaseElementTy = getContext().getBaseElementType(Array);
     const llvm::Type *BasePtr = ConvertType(BaseElementTy);
     BasePtr = llvm::PointerType::getUnqual(BasePtr);
