@@ -5307,31 +5307,26 @@ bool SDValue::reachesChainWithoutSideEffects(SDValue Dest,
   return false;
 }
 
-
-static void findPredecessor(SDNode *N, const SDNode *P, bool &found,
-                            SmallPtrSet<SDNode *, 32> &Visited) {
-  if (found || !Visited.insert(N))
-    return;
-
-  for (unsigned i = 0, e = N->getNumOperands(); !found && i != e; ++i) {
-    SDNode *Op = N->getOperand(i).getNode();
-    if (Op == P) {
-      found = true;
-      return;
-    }
-    findPredecessor(Op, P, found, Visited);
-  }
-}
-
 /// isPredecessorOf - Return true if this node is a predecessor of N. This node
-/// is either an operand of N or it can be reached by recursively traversing
-/// up the operands.
+/// is either an operand of N or it can be reached by traversing up the operands.
 /// NOTE: this is an expensive method. Use it carefully.
 bool SDNode::isPredecessorOf(SDNode *N) const {
   SmallPtrSet<SDNode *, 32> Visited;
-  bool found = false;
-  findPredecessor(N, this, found, Visited);
-  return found;
+  SmallVector<SDNode *, 16> Worklist;
+  Worklist.push_back(N);
+
+  do {
+    N = Worklist.pop_back_val();
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+      SDNode *Op = N->getOperand(i).getNode();
+      if (Op == this)
+        return true;
+      if (Visited.insert(Op))
+        Worklist.push_back(Op);
+    }
+  } while (!Worklist.empty());
+
+  return false;
 }
 
 uint64_t SDNode::getConstantOperandVal(unsigned Num) const {
