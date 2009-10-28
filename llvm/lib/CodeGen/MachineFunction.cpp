@@ -581,6 +581,47 @@ MachineConstantPool::~MachineConstantPool() {
       delete Constants[i].Val.MachineCPVal;
 }
 
+/// CanShareConstantPoolEntry - Test whether the given two constants
+/// can be allocated the same constant pool entry.
+static bool CanShareConstantPoolEntry(Constant *A, Constant *B,
+                                      const TargetData *TD) {
+  // Handle the trivial case quickly.
+  if (A == B) return true;
+
+  // If they have the same type but weren't the same constant, quickly
+  // reject them.
+  if (A->getType() == B->getType()) return false;
+
+  // For now, only support constants with the same size.
+  if (TD->getTypeStoreSize(A->getType()) != TD->getTypeStoreSize(B->getType()))
+    return false;
+
+  // If a floating-point value and an integer value have the same encoding,
+  // they can share a constant-pool entry.
+  if (ConstantFP *AFP = dyn_cast<ConstantFP>(A))
+    if (ConstantInt *BI = dyn_cast<ConstantInt>(B))
+      return AFP->getValueAPF().bitcastToAPInt() == BI->getValue();
+  if (ConstantFP *BFP = dyn_cast<ConstantFP>(B))
+    if (ConstantInt *AI = dyn_cast<ConstantInt>(A))
+      return BFP->getValueAPF().bitcastToAPInt() == AI->getValue();
+
+  // Two vectors can share an entry if each pair of corresponding
+  // elements could.
+  if (ConstantVector *AV = dyn_cast<ConstantVector>(A))
+    if (ConstantVector *BV = dyn_cast<ConstantVector>(B)) {
+      if (AV->getType()->getNumElements() != BV->getType()->getNumElements())
+        return false;
+      for (unsigned i = 0, e = AV->getType()->getNumElements(); i != e; ++i)
+        if (!CanShareConstantPoolEntry(AV->getOperand(i), BV->getOperand(i), TD))
+          return false;
+      return true;
+    }
+
+  // TODO: Handle other cases.
+
+  return false;
+}
+
 /// getConstantPoolIndex - Create a new entry in the constant pool or return
 /// an existing one.  User must specify the log2 of the minimum required
 /// alignment for the object.
@@ -589,14 +630,17 @@ unsigned MachineConstantPool::getConstantPoolIndex(Constant *C,
                                                    unsigned Alignment) {
   assert(Alignment && "Alignment must be specified!");
   if (Alignment > PoolAlignment) PoolAlignment = Alignment;
-  
+
   // Check to see if we already have this constant.
   //
   // FIXME, this could be made much more efficient for large constant pools.
   for (unsigned i = 0, e = Constants.size(); i != e; ++i)
-    if (Constants[i].Val.ConstVal == C &&
-        (Constants[i].getAlignment() & (Alignment - 1)) == 0)
+    if (!Constants[i].isMachineConstantPoolEntry() &&
+        CanShareConstantPoolEntry(Constants[i].Val.ConstVal, C, TD)) {
+      if ((unsigned)Constants[i].getAlignment() < Alignment)
+        Constants[i].Alignment = Alignment;
       return i;
+    }
   
   Constants.push_back(MachineConstantPoolEntry(C, Alignment));
   return Constants.size()-1;
