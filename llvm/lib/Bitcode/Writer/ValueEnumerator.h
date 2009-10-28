@@ -53,6 +53,10 @@ private:
   AttributeMapType AttributeMap;
   std::vector<AttrListPtr> Attributes;
   
+  /// GlobalBasicBlockIDs - This map memoizes the basic block ID's referenced by
+  /// the "getGlobalBasicBlockID" method.
+  mutable DenseMap<const BasicBlock*, unsigned> GlobalBasicBlockIDs;
+  
   typedef DenseMap<const Instruction*, unsigned> InstructionMapType;
   InstructionMapType InstructionMap;
   unsigned InstructionCount;
@@ -106,6 +110,11 @@ public:
   const std::vector<AttrListPtr> &getAttributes() const {
     return Attributes;
   }
+  
+  /// getGlobalBasicBlockID - This returns the function-specific ID for the
+  /// specified basic block.  This is relatively expensive information, so it
+  /// should only be used by rare constructs such as address-of-label.
+  unsigned getGlobalBasicBlockID(const BasicBlock *BB) const;
 
   /// incorporateFunction/purgeFunction - If you'd like to deal with a function,
   /// use these two methods to get its data into the ValueEnumerator!
