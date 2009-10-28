@@ -253,6 +253,13 @@ public:
     return Insert(SwitchInst::Create(V, Dest, NumCases));
   }
 
+  /// CreateIndirectBr - Create an indirect branch instruction with the
+  /// specified address operand, with an optional hint for the number of
+  /// destinations that will be added (for efficient allocation).
+  IndirectBrInst *CreateIndirectBr(Value *Addr, unsigned NumDests = 10) {
+    return Insert(IndirectBrInst::Create(Addr, NumDests));
+  }
+
   /// CreateInvoke - Create an invoke instruction.
   template<typename InputIterator>
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
