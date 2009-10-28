@@ -62,6 +62,21 @@ static void Scan(IvarUsageMap& M, const ObjCPropertyImplDecl* D) {
     I->second = Used;
 }
 
+static void Scan(IvarUsageMap& M, const ObjCContainerDecl* D) {
+  // Scan the methods for accesses.
+  for (ObjCContainerDecl::instmeth_iterator I = D->instmeth_begin(),
+       E = D->instmeth_end(); I!=E; ++I)
+    Scan(M, (*I)->getBody());
+  
+  if (const ObjCImplementationDecl *ID = dyn_cast<ObjCImplementationDecl>(D)) {    
+    // Scan for @synthesized property methods that act as setters/getters
+    // to an ivar.
+    for (ObjCImplementationDecl::propimpl_iterator I = ID->propimpl_begin(),
+         E = ID->propimpl_end(); I!=E; ++I)
+      Scan(M, *I);
+  }
+}
+
 void clang::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
                                 BugReporter &BR) {
 
@@ -88,16 +103,8 @@ void clang::CheckObjCUnusedIvar(const ObjCImplementationDecl *D,
   if (M.empty())
     return;
 
-  // Now scan the methods for accesses.
-  for (ObjCImplementationDecl::instmeth_iterator I = D->instmeth_begin(),
-        E = D->instmeth_end(); I!=E; ++I)
-    Scan(M, (*I)->getBody());
-
-  // Scan for @synthesized property methods that act as setters/getters
-  // to an ivar.
-  for (ObjCImplementationDecl::propimpl_iterator I = D->propimpl_begin(),
-       E = D->propimpl_end(); I!=E; ++I)
-    Scan(M, *I);
+  // Now scan the implementation declaration.
+  Scan(M, D);
 
   // Find ivars that are unused.
   for (IvarUsageMap::iterator I = M.begin(), E = M.end(); I!=E; ++I)
