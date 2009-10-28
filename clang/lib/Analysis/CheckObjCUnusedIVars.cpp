@@ -74,6 +74,14 @@ static void Scan(IvarUsageMap& M, const ObjCContainerDecl* D) {
     for (ObjCImplementationDecl::propimpl_iterator I = ID->propimpl_begin(),
          E = ID->propimpl_end(); I!=E; ++I)
       Scan(M, *I);
+    
+    // Scan the associated categories as well.
+    for (const ObjCCategoryDecl *CD =
+          ID->getClassInterface()->getCategoryList(); CD ;
+          CD = CD->getNextClassCategory()) {
+      if (const ObjCCategoryImplDecl *CID = CD->getImplementation())
+        Scan(M, CID);
+    }
   }
 }
 
