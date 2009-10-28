@@ -1529,7 +1529,7 @@ void MSILWriter::printStaticConstant(const Constant* C, uint64_t& Offset) {
   case Type::StructTyID:
     for (unsigned I = 0, E = C->getNumOperands(); I<E; I++) {
       if (I!=0) Out << ",\n";
-      printStaticConstant(C->getOperand(I),Offset);
+      printStaticConstant(cast<Constant>(C->getOperand(I)), Offset);
     }
     break;
   case Type::PointerTyID:

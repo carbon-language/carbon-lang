@@ -140,7 +140,7 @@ bool Constant::canTrap() const {
   
   // ConstantExpr traps if any operands can trap. 
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (getOperand(i)->canTrap()) 
+    if (CE->getOperand(i)->canTrap()) 
       return true;
 
   // Otherwise, only specific operations can trap.
@@ -154,7 +154,7 @@ bool Constant::canTrap() const {
   case Instruction::SRem:
   case Instruction::FRem:
     // Div and rem can trap if the RHS is not known to be non-zero.
-    if (!isa<ConstantInt>(getOperand(1)) || getOperand(1)->isNullValue())
+    if (!isa<ConstantInt>(CE->getOperand(1)) ||CE->getOperand(1)->isNullValue())
       return true;
     return false;
   }
@@ -187,7 +187,8 @@ Constant::PossibleRelocationsTy Constant::getRelocationInfo() const {
   
   PossibleRelocationsTy Result = NoRelocation;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    Result = std::max(Result, getOperand(i)->getRelocationInfo());
+    Result = std::max(Result,
+                      cast<Constant>(getOperand(i))->getRelocationInfo());
   
   return Result;
 }

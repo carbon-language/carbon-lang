@@ -564,7 +564,7 @@ public:
   static BlockAddress *get(BasicBlock *BB);
   
   /// Transparently provide more efficient getOperand methods.
-  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
   
   Function *getFunction() const { return (Function*)Op<0>().get(); }
   BasicBlock *getBasicBlock() const { return (BasicBlock*)Op<1>().get(); }
@@ -587,7 +587,7 @@ template <>
 struct OperandTraits<BlockAddress> : public FixedNumOperandTraits<2> {
 };
 
-DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(BlockAddress, Constant)
+DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(BlockAddress, Value)
   
 //===----------------------------------------------------------------------===//
 /// ConstantExpr - a constant value that is initialized with an expression using

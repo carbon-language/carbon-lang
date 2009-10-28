@@ -48,6 +48,10 @@ protected:
     : User(ty, vty, Ops, NumOps) {}
 
   void destroyConstantImpl();
+  
+  void setOperand(unsigned i, Value *V) {
+    User::setOperand(i, V);
+  }
 public:
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
@@ -83,16 +87,13 @@ public:
   /// FIXME: This really should not be in VMCore.
   PossibleRelocationsTy getRelocationInfo() const;
   
-  // Specialize get/setOperand for Constants as their operands are always
-  // constants as well.
-  Constant *getOperand(unsigned i) {
-    return static_cast<Constant*>(User::getOperand(i));
+  // Specialize get/setOperand for Users as their operands are always
+  // constants or BasicBlocks as well.
+  User *getOperand(unsigned i) {
+    return static_cast<User*>(User::getOperand(i));
   }
-  const Constant *getOperand(unsigned i) const {
-    return static_cast<const Constant*>(User::getOperand(i));
-  }
-  void setOperand(unsigned i, Constant *C) {
-    User::setOperand(i, C);
+  const User *getOperand(unsigned i) const {
+    return static_cast<const User*>(User::getOperand(i));
   }
   
   /// getVectorElements - This method, which is only valid on constant of vector

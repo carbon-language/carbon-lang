@@ -751,10 +751,11 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         assert (0 && "Unknown FP type!");
       }
     } else if (isa<ConstantArray>(C) && cast<ConstantArray>(C)->isString()) {
+      const ConstantArray *CA = cast<ConstantArray>(C);
       // Emit constant strings specially.
-      unsigned NumOps = C->getNumOperands();
+      unsigned NumOps = CA->getNumOperands();
       // If this is a null-terminated string, use the denser CSTRING encoding.
-      if (C->getOperand(NumOps-1)->isNullValue()) {
+      if (CA->getOperand(NumOps-1)->isNullValue()) {
         Code = bitc::CST_CODE_CSTRING;
         --NumOps;  // Don't encode the null, which isn't allowed by char6.
       } else {
@@ -764,7 +765,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       bool isCStr7 = Code == bitc::CST_CODE_CSTRING;
       bool isCStrChar6 = Code == bitc::CST_CODE_CSTRING;
       for (unsigned i = 0; i != NumOps; ++i) {
-        unsigned char V = cast<ConstantInt>(C->getOperand(i))->getZExtValue();
+        unsigned char V = cast<ConstantInt>(CA->getOperand(i))->getZExtValue();
         Record.push_back(V);
         isCStr7 &= (V & 128) == 0;
         if (isCStrChar6)

@@ -112,11 +112,11 @@ static bool OnlyUsedBy(Value *V, Value *Usr) {
 
 static void RemoveDeadConstant(Constant *C) {
   assert(C->use_empty() && "Constant is not dead!");
-  SmallPtrSet<Constant *, 4> Operands;
+  SmallPtrSet<Constant*, 4> Operands;
   for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
     if (isa<DerivedType>(C->getOperand(i)->getType()) &&
         OnlyUsedBy(C->getOperand(i), C)) 
-      Operands.insert(C->getOperand(i));
+      Operands.insert(cast<Constant>(C->getOperand(i)));
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
     if (!GV->hasLocalLinkage()) return;   // Don't delete non static globals.
     GV->eraseFromParent();
@@ -126,7 +126,7 @@ static void RemoveDeadConstant(Constant *C) {
       C->destroyConstant();
 
   // If the constant referenced anything, see if we can delete it as well.
-  for (SmallPtrSet<Constant *, 4>::iterator OI = Operands.begin(),
+  for (SmallPtrSet<Constant*, 4>::iterator OI = Operands.begin(),
          OE = Operands.end(); OI != OE; ++OI)
     RemoveDeadConstant(*OI);
 }
@@ -305,8 +305,7 @@ bool StripDebugDeclare::runOnModule(Module &M) {
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
       if (GV->hasLocalLinkage())
         RemoveDeadConstant(GV);
-    }
-    else
+    } else
       RemoveDeadConstant(C);
   }
 
