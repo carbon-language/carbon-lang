@@ -594,8 +594,11 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
   // For a copy constructor, even if it is trivial, must fall thru so
   // its argument is code-gen'ed.
   if (!CD->isCopyConstructor(getContext())) {
+    QualType InitType = E->getType();
+    if (const ArrayType *Array = getContext().getAsArrayType(InitType))
+      InitType = getContext().getBaseElementType(Array);
     const CXXRecordDecl *RD =
-      cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
+      cast<CXXRecordDecl>(InitType->getAs<RecordType>()->getDecl());
     if (RD->hasTrivialConstructor())
     return;
   }
@@ -606,9 +609,19 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
     EmitAggExpr((*i), Dest, false);
     return;
   }
-  // Call the constructor.
-  EmitCXXConstructorCall(CD, Ctor_Complete, Dest,
-                         E->arg_begin(), E->arg_end());
+  if (const ConstantArrayType *Array =
+      getContext().getAsConstantArrayType(E->getType())) {
+    QualType BaseElementTy = getContext().getBaseElementType(Array);
+    const llvm::Type *BasePtr = ConvertType(BaseElementTy);
+    BasePtr = llvm::PointerType::getUnqual(BasePtr);
+    llvm::Value *BaseAddrPtr =
+      Builder.CreateBitCast(Dest, BasePtr);
+    EmitCXXAggrConstructorCall(CD, Array, BaseAddrPtr);
+  }
+  else
+    // Call the constructor.
+    EmitCXXConstructorCall(CD, Ctor_Complete, Dest,
+                           E->arg_begin(), E->arg_end());
 }
 
 void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
