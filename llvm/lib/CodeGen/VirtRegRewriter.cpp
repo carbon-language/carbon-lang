@@ -1430,6 +1430,7 @@ private:
                            std::vector<MachineOperand*> &KillOps,
                            VirtRegMap &VRM) {
 
+    MachineBasicBlock::iterator oldNextMII = next(MII);
     TII->storeRegToStackSlot(MBB, next(MII), PhysReg, true, StackSlot, RC);
     MachineInstr *StoreMI = next(MII);
     VRM.addSpillSlotUse(StackSlot, StoreMI);
@@ -1466,7 +1467,9 @@ private:
       }
     }
 
-    LastStore = next(MII);
+    // Allow for multi-instruction spill sequences, as on PPC Altivec.  Presume
+    // the last of multiple instructions is the actual store.
+    LastStore = prior(oldNextMII);
 
     // If the stack slot value was previously available in some other
     // register, change it now.  Otherwise, make the register available,
