@@ -68,10 +68,8 @@ CallGraph::~CallGraph() {
   }
 }
 
-void CallGraph::addTU(ASTUnit &AST) {
-  ASTContext &Ctx = AST.getASTContext();
+void CallGraph::addTU(ASTContext& Ctx) {
   DeclContext *DC = Ctx.getTranslationUnitDecl();
-
   for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
        I != E; ++I) {
 

@@ -17,7 +17,6 @@
 #include "clang/Index/ASTLocation.h"
 #include "clang/Index/Entity.h"
 #include "clang/Index/Program.h"
-#include "clang/Frontend/ASTUnit.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/STLExtras.h"
@@ -87,7 +86,7 @@ public:
 
   CallGraphNode *getExternalCallingNode() { return ExternalCallingNode; }
 
-  void addTU(ASTUnit &AST);
+  void addTU(ASTContext &AST);
 
   idx::Program &getProgram() { return Prog; }
 

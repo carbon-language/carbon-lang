@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/CallGraph.h"
-
+#include "clang/Frontend/ASTUnit.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
   CG.reset(new CallGraph());
 
   for (unsigned i = 0, e = ASTUnits.size(); i != e; ++i)
-    CG->addTU(*ASTUnits[i]);
+    CG->addTU(ASTUnits[i]->getASTContext());
 
   CG->ViewCallGraph();
 }
