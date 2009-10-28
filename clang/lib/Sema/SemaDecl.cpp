@@ -3466,7 +3466,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
           else {
             // FIXME: Cope with initialization of arrays
             if (!Constructor->isTrivial() &&
-                InitializeVarWithConstructor(Var, Constructor, InitType, 
+                InitializeVarWithConstructor(Var, Constructor, 
                                              move_arg(ConstructorArgs)))
               Var->setInvalidDecl();
             

@@ -1899,7 +1899,6 @@ public:
   /// and sets it as the initializer for the the passed in VarDecl.
   bool InitializeVarWithConstructor(VarDecl *VD,
                                     CXXConstructorDecl *Constructor,
-                                    QualType DeclInitType,
                                     MultiExprArg Exprs);
 
   /// BuildCXXConstructExpr - Creates a complete call to a constructor,

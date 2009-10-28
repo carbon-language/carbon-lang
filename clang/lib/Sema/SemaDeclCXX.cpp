@@ -3154,10 +3154,9 @@ Sema::BuildCXXTemporaryObjectExpr(CXXConstructorDecl *Constructor,
 
 bool Sema::InitializeVarWithConstructor(VarDecl *VD,
                                         CXXConstructorDecl *Constructor,
-                                        QualType DeclInitType,
                                         MultiExprArg Exprs) {
   OwningExprResult TempResult =
-    BuildCXXConstructExpr(VD->getLocation(), DeclInitType, Constructor,
+    BuildCXXConstructExpr(VD->getLocation(), VD->getType(), Constructor,
                           move(Exprs));
   if (TempResult.isInvalid())
     return true;
@@ -3262,7 +3261,7 @@ void Sema::AddCXXDirectInitializerToDecl(DeclPtrTy Dcl,
       RealDecl->setInvalidDecl();
     else {
       VDecl->setCXXDirectInitializer(true);
-      if (InitializeVarWithConstructor(VDecl, Constructor, DeclInitType,
+      if (InitializeVarWithConstructor(VDecl, Constructor, 
                                        move_arg(ConstructorArgs)))
         RealDecl->setInvalidDecl();
       FinalizeVarWithDestructor(VDecl, DeclInitType);
