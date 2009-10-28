@@ -170,8 +170,8 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   }
 }
 
-bool SystemZTargetLowering::isFPImmLegal(const APFloat &Imm) const {
-  if (UseSoftFloat)
+bool SystemZTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
+  if (UseSoftFloat || (VT != MVT::f32 && VT != MVT::f64))
     return false;
 
   // +0.0  lzer

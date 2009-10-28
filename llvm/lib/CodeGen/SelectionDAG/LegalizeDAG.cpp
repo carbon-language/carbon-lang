@@ -2574,7 +2574,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Node);
     // Check to see if this FP immediate is already legal.
     // If this is a legal constant, turn it into a TargetConstantFP node.
-    if (TLI.isFPImmLegal(CFP->getValueAPF()))
+    if (TLI.isFPImmLegal(CFP->getValueAPF(), Node->getValueType(0)))
       Results.push_back(SDValue(Node, 0));
     else
       Results.push_back(ExpandConstantFP(CFP, true, DAG, TLI));
