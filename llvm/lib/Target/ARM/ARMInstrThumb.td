@@ -180,6 +180,12 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   def tBX_RET_vararg : TI<(outs), (ins tGPR:$target), IIC_Br, "bx\t$target", []>;
 }
 
+// Indirect branches
+let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
+  def tBRIND : TI<(outs), (ins GPR:$dst), IIC_Br, "bx\t$dst",
+                  [(brind GPR:$dst)]>;
+}
+
 // FIXME: remove when we have a way to marking a MI with these properties.
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in

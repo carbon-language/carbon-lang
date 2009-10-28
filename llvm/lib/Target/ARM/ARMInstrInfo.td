@@ -659,7 +659,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in
 
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
-  def BRIND : AXI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br, "bx $dst",
+  def BRIND : AXI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br, "bx\t$dst",
                   [(brind GPR:$dst)]> {
     let Inst{7-4}   = 0b0001;
     let Inst{19-8}  = 0b111111111111;

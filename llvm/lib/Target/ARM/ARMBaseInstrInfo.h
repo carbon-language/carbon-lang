@@ -293,6 +293,11 @@ bool isJumpTableBranchOpcode(int Opc) {
     Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT;
 }
 
+static inline
+bool isIndirectBranchOpcode(int Opc) {
+  return Opc == ARM::BRIND || Opc == ARM::tBRIND;
+}
+
 /// getInstrPredicate - If instruction is predicated, returns its predicate
 /// condition, otherwise returns AL. It also returns the condition code
 /// register by reference.

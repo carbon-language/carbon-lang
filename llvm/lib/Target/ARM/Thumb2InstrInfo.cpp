@@ -46,6 +46,7 @@ Thumb2InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   case ARM::tBX_RET_vararg:
   case ARM::tPOP_RET:
   case ARM::tB:
+  case ARM::tBRIND:
     return true;
   default:
     break;
