@@ -290,15 +290,6 @@ bool StripDebugDeclare::runOnModule(Module &M) {
     Declare->eraseFromParent();
   }
 
-  // Delete all llvm.dbg.global_variables.
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
-       I != E; ++I) {
-    GlobalVariable *GV = dyn_cast<GlobalVariable>(I);
-    if (!GV) continue;
-    if (GV->use_empty() && GV->getName().startswith("llvm.dbg.global_variable"))
-      DeadConstants.push_back(GV);
-  }
-
   while (!DeadConstants.empty()) {
     Constant *C = DeadConstants.back();
     DeadConstants.pop_back();
