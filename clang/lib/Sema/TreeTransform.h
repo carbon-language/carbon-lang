@@ -3365,6 +3365,8 @@ template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   if (E->isArgumentType()) {
+    TemporaryBase Rebase(*this, E->getOperatorLoc(), DeclarationName());
+
     QualType T = getDerived().TransformType(E->getArgumentType());
     if (T.isNull())
       return SemaRef.ExprError();
@@ -3563,6 +3565,10 @@ TreeTransform<Derived>::TransformConditionalOperator(ConditionalOperator *E) {
 template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformImplicitCastExpr(ImplicitCastExpr *E) {
+  TemporaryBase Rebase(*this, E->getLocStart(), DeclarationName());
+
+  // FIXME: Will we ever have type information here? It seems like we won't,
+  // so do we even need to transform the type?
   QualType T = getDerived().TransformType(E->getType());
   if (T.isNull())
     return SemaRef.ExprError();
@@ -3759,6 +3765,10 @@ template<typename Derived>
 Sema::OwningExprResult
 TreeTransform<Derived>::TransformImplicitValueInitExpr(
                                                     ImplicitValueInitExpr *E) {
+  TemporaryBase Rebase(*this, E->getLocStart(), DeclarationName());
+  
+  // FIXME: Will we ever have proper type location here? Will we actually
+  // need to transform the type?
   QualType T = getDerived().TransformType(E->getType());
   if (T.isNull())
     return SemaRef.ExprError();
