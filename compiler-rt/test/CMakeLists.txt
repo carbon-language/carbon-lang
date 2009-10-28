@@ -28,7 +28,7 @@ MACRO_ADD_CHECK_TEST( popcountdi2_test Unit/popcountdi2_test.c ${TEST_TARGET_LIB
 MACRO_ADD_CHECK_TEST( negti2_test Unit/negti2_test.c ${TEST_TARGET_LIBRARIES} )
 # MACRO_ADD_CHECK_TEST( divsc3_test Unit/divsc3_test.c ${TEST_TARGET_LIBRARIES} )
 MACRO_ADD_CHECK_TEST( cmpti2_test Unit/cmpti2_test.c ${TEST_TARGET_LIBRARIES} )
-MACRO_ADD_CHECK_TEST( trampoline_setup_test Unit/trampoline_setup_test.c ${TEST_TARGET_LIBRARIES} )
+# MACRO_ADD_CHECK_TEST( trampoline_setup_test Unit/trampoline_setup_test.c ${TEST_TARGET_LIBRARIES} )
 MACRO_ADD_CHECK_TEST( mulvti3_test Unit/mulvti3_test.c ${TEST_TARGET_LIBRARIES} )
 MACRO_ADD_CHECK_TEST( fixunsxfdi_test Unit/fixunsxfdi_test.c ${TEST_TARGET_LIBRARIES} )
 MACRO_ADD_CHECK_TEST( fixunsxfti_test Unit/fixunsxfti_test.c ${TEST_TARGET_LIBRARIES} )
