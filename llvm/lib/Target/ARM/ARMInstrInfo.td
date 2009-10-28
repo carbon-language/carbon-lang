@@ -657,6 +657,16 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in
   let Inst{27-20} = 0b00010010;
 }
 
+// Indirect branches
+let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
+  def BRIND : AXI<(outs), (ins GPR:$dst), BrMiscFrm, IIC_Br, "bx $dst",
+                  [(brind GPR:$dst)]> {
+    let Inst{7-4}   = 0b0001;
+    let Inst{19-8}  = 0b111111111111;
+    let Inst{27-20} = 0b00010010;
+  }
+}
+
 // FIXME: remove when we have a way to marking a MI with these properties.
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
