@@ -5737,8 +5737,10 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
         if (TheSelect->getOpcode() == ISD::SELECT) {
           // Check that the condition doesn't reach either load.  If so, folding
           // this will induce a cycle into the DAG.
-          if (!LLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
-              !RLD->isPredecessorOf(TheSelect->getOperand(0).getNode())) {
+          if ((!LLD->hasAnyUseOfValue(1) ||
+               !LLD->isPredecessorOf(TheSelect->getOperand(0).getNode())) &&
+              (!RLD->hasAnyUseOfValue(1) ||
+               !RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()))) {
             Addr = DAG.getNode(ISD::SELECT, TheSelect->getDebugLoc(),
                                LLD->getBasePtr().getValueType(),
                                TheSelect->getOperand(0), LLD->getBasePtr(),
@@ -5747,10 +5749,12 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
         } else {
           // Check that the condition doesn't reach either load.  If so, folding
           // this will induce a cycle into the DAG.
-          if (!LLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
-              !RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
-              !LLD->isPredecessorOf(TheSelect->getOperand(1).getNode()) &&
-              !RLD->isPredecessorOf(TheSelect->getOperand(1).getNode())) {
+          if ((!LLD->hasAnyUseOfValue(1) ||
+               (!LLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
+                !LLD->isPredecessorOf(TheSelect->getOperand(1).getNode()))) &&
+              (!RLD->hasAnyUseOfValue(1) ||
+               (!RLD->isPredecessorOf(TheSelect->getOperand(0).getNode()) &&
+                !RLD->isPredecessorOf(TheSelect->getOperand(1).getNode())))) {
             Addr = DAG.getNode(ISD::SELECT_CC, TheSelect->getDebugLoc(),
                                LLD->getBasePtr().getValueType(),
                                TheSelect->getOperand(0),
