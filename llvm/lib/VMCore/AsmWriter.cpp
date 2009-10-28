@@ -1846,8 +1846,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(I.getOperand(op+1), true);
     }
     Out << "\n  ]";
-  } else if (isa<IndBrInst>(I)) {
-    // Special case indbr instruction to get formatting nice and correct.
+  } else if (isa<IndirectBrInst>(I)) {
+    // Special case indirectbr instruction to get formatting nice and correct.
     Out << ' ';
     writeOperand(Operand, true);
     Out << ", ";

@@ -1132,9 +1132,9 @@ namespace {
       }
       break;
     }
-    case Instruction::IndBr: {
-      const IndBrInst *IBI = cast<IndBrInst>(I);
-      Out << "IndBrInst *" << iName << " = IndBrInst::Create("
+    case Instruction::IndirectBr: {
+      const IndirectBrInst *IBI = cast<IndirectBrInst>(I);
+      Out << "IndirectBrInst *" << iName << " = IndirectBrInst::Create("
           << opNames[0] << ", " << IBI->getNumDestinations() << ");";
       nl(Out);
       for (unsigned i = 1; i != IBI->getNumOperands(); ++i) {

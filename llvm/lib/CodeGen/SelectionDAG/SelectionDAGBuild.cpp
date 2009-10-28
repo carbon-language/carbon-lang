@@ -2131,7 +2131,7 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
   }
 }
 
-void SelectionDAGLowering::visitIndBr(IndBrInst &I) {
+void SelectionDAGLowering::visitIndirectBr(IndirectBrInst &I) {
   // Update machine-CFG edges.
   for (unsigned i = 0, e = I.getNumSuccessors(); i != e; ++i)
     CurMBB->addSuccessor(FuncInfo.MBBMap[I.getSuccessor(i)]);

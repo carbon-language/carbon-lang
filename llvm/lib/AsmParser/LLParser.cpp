@@ -2731,7 +2731,7 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_ret:         return ParseRet(Inst, BB, PFS);
   case lltok::kw_br:          return ParseBr(Inst, PFS);
   case lltok::kw_switch:      return ParseSwitch(Inst, PFS);
-  case lltok::kw_indbr:       return ParseIndBr(Inst, PFS);
+  case lltok::kw_indirectbr:  return ParseIndirectBr(Inst, PFS);
   case lltok::kw_invoke:      return ParseInvoke(Inst, PFS);
   // Binary Operators.
   case lltok::kw_add:
@@ -3004,19 +3004,19 @@ bool LLParser::ParseSwitch(Instruction *&Inst, PerFunctionState &PFS) {
   return false;
 }
 
-/// ParseIndBr
+/// ParseIndirectBr
 ///  Instruction
-///    ::= 'indbr' TypeAndValue ',' '[' LabelList ']'
-bool LLParser::ParseIndBr(Instruction *&Inst, PerFunctionState &PFS) {
+///    ::= 'indirectbr' TypeAndValue ',' '[' LabelList ']'
+bool LLParser::ParseIndirectBr(Instruction *&Inst, PerFunctionState &PFS) {
   LocTy AddrLoc;
   Value *Address;
   if (ParseTypeAndValue(Address, AddrLoc, PFS) ||
-      ParseToken(lltok::comma, "expected ',' after indbr address") ||
-      ParseToken(lltok::lsquare, "expected '[' with indbr"))
+      ParseToken(lltok::comma, "expected ',' after indirectbr address") ||
+      ParseToken(lltok::lsquare, "expected '[' with indirectbr"))
     return true;
   
   if (!isa<PointerType>(Address->getType()))
-    return Error(AddrLoc, "indbr address must have pointer type");
+    return Error(AddrLoc, "indirectbr address must have pointer type");
   
   // Parse the destination list.
   SmallVector<BasicBlock*, 16> DestList;
@@ -3037,7 +3037,7 @@ bool LLParser::ParseIndBr(Instruction *&Inst, PerFunctionState &PFS) {
   if (ParseToken(lltok::rsquare, "expected ']' at end of block list"))
     return true;
 
-  IndBrInst *IBI = IndBrInst::Create(Address, DestList.size());
+  IndirectBrInst *IBI = IndirectBrInst::Create(Address, DestList.size());
   for (unsigned i = 0, e = DestList.size(); i != e; ++i)
     IBI->addDestination(DestList[i]);
   Inst = IBI;

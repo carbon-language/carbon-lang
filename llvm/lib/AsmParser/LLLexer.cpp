@@ -645,7 +645,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   INSTKEYWORD(ret,         Ret);
   INSTKEYWORD(br,          Br);
   INSTKEYWORD(switch,      Switch);
-  INSTKEYWORD(indbr,       IndBr);
+  INSTKEYWORD(indirectbr,  IndirectBr);
   INSTKEYWORD(invoke,      Invoke);
   INSTKEYWORD(unwind,      Unwind);
   INSTKEYWORD(unreachable, Unreachable);

@@ -97,7 +97,7 @@
 HANDLE_TERM_INST  ( 1, Ret        , ReturnInst)
 HANDLE_TERM_INST  ( 2, Br         , BranchInst)
 HANDLE_TERM_INST  ( 3, Switch     , SwitchInst)
-HANDLE_TERM_INST  ( 4, IndBr      , IndBrInst)
+HANDLE_TERM_INST  ( 4, IndirectBr , IndirectBrInst)
 HANDLE_TERM_INST  ( 5, Invoke     , InvokeInst)
 HANDLE_TERM_INST  ( 6, Unwind     , UnwindInst)
 HANDLE_TERM_INST  ( 7, Unreachable, UnreachableInst)

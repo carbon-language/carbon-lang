@@ -111,7 +111,7 @@
           <li><a href="#i_ret">'<tt>ret</tt>' Instruction</a></li>
           <li><a href="#i_br">'<tt>br</tt>' Instruction</a></li>
           <li><a href="#i_switch">'<tt>switch</tt>' Instruction</a></li>
-          <li><a href="#i_indbr">'<tt>indbr</tt>' Instruction</a></li>
+          <li><a href="#i_indirectbr">'<tt>indirectbr</tt>' Instruction</a></li>
           <li><a href="#i_invoke">'<tt>invoke</tt>' Instruction</a></li>
           <li><a href="#i_unwind">'<tt>unwind</tt>'  Instruction</a></li>
           <li><a href="#i_unreachable">'<tt>unreachable</tt>' Instruction</a></li>
@@ -2183,13 +2183,13 @@ has undefined behavior.</p>
    the address of the entry block is illegal.</p>
      
 <p>This value only has defined behavior when used as an operand to the
-   '<a href="#i_indbr"><tt>indbr</tt></a>' instruction or for comparisons
+   '<a href="#i_indirectbr"><tt>indirectbr</tt></a>' instruction or for comparisons
    against null.  Pointer equality tests between labels addresses is undefined
    behavior - though, again, comparison against null is ok, and no label is
    equal to the null pointer.  This may also be passed around as an opaque
    pointer sized value as long as the bits are not inspected.  This allows
    <tt>ptrtoint</tt> and arithmetic to be performed on these values so long as
-   the original value is reconstituted before the <tt>indbr</tt>.</p>
+   the original value is reconstituted before the <tt>indirectbr</tt>.</p>
    
 <p>Finally, some targets may provide defined semantics when
    using the value as the operand to an inline assembly, but that is target
@@ -2541,7 +2541,7 @@ Instructions</a> </div>
    '<a href="#i_ret"><tt>ret</tt></a>' instruction, the
    '<a href="#i_br"><tt>br</tt></a>' instruction, the
    '<a href="#i_switch"><tt>switch</tt></a>' instruction, the
-   '<a href="#i_indbr">'<tt>indbr</tt>' Instruction, the
+   '<a href="#i_indirectbr">'<tt>indirectbr</tt>' Instruction, the
    '<a href="#i_invoke"><tt>invoke</tt></a>' instruction, the
    '<a href="#i_unwind"><tt>unwind</tt></a>' instruction, and the
    '<a href="#i_unreachable"><tt>unreachable</tt></a>' instruction.</p>
@@ -2703,19 +2703,19 @@ IfUnequal:
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-   <a name="i_indbr">'<tt>indbr</tt>' Instruction</a>
+   <a name="i_indirectbr">'<tt>indirectbr</tt>' Instruction</a>
 </div>
 
 <div class="doc_text">
 
 <h5>Syntax:</h5>
 <pre>
-  indbr &lt;somety&gt;* &lt;address&gt;, [ label &lt;dest1&gt;, label &lt;dest2&gt;, ... ]
+  indirectbr &lt;somety&gt;* &lt;address&gt;, [ label &lt;dest1&gt;, label &lt;dest2&gt;, ... ]
 </pre>
 
 <h5>Overview:</h5>
 
-<p>The '<tt>indbr</tt>' instruction implements an indirect branch to a label
+<p>The '<tt>indirectbr</tt>' instruction implements an indirect branch to a label
    within the current function, whose address is specified by
    "<tt>address</tt>".  Address must be derived from a <a
    href="#blockaddress">blockaddress</a> constant.</p>
@@ -2743,7 +2743,7 @@ IfUnequal:
 
 <h5>Example:</h5>
 <pre>
- indbr i8* %Addr, [ label %bb1, label %bb2, label %bb3 ]
+ indirectbr i8* %Addr, [ label %bb1, label %bb2, label %bb3 ]
 </pre>
 
 </div>

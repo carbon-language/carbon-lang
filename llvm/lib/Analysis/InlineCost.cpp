@@ -31,7 +31,7 @@ unsigned InlineCostAnalyzer::FunctionInfo::
       // Eliminating a switch is a big win, proportional to the number of edges
       // deleted.
       Reduction += (SI->getNumSuccessors()-1) * 40;
-    else if (isa<IndBrInst>(*UI))
+    else if (isa<IndirectBrInst>(*UI))
       // Eliminating an indirect branch is a big win.
       Reduction += 200;
     else if (CallInst *CI = dyn_cast<CallInst>(*UI)) {

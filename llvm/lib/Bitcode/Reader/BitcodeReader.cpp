@@ -1975,22 +1975,22 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = SI;
       break;
     }
-    case bitc::FUNC_CODE_INST_INDBR: { // INDBR: [opty, op0, op1, ...]
+    case bitc::FUNC_CODE_INST_INDIRECTBR: { // INDIRECTBR: [opty, op0, op1, ...]
       if (Record.size() < 2)
-        return Error("Invalid INDBR record");
+        return Error("Invalid INDIRECTBR record");
       const Type *OpTy = getTypeByID(Record[0]);
       Value *Address = getFnValueByID(Record[1], OpTy);
       if (OpTy == 0 || Address == 0)
-        return Error("Invalid INDBR record");
+        return Error("Invalid INDIRECTBR record");
       unsigned NumDests = Record.size()-2;
-      IndBrInst *IBI = IndBrInst::Create(Address, NumDests);
+      IndirectBrInst *IBI = IndirectBrInst::Create(Address, NumDests);
       InstructionList.push_back(IBI);
       for (unsigned i = 0, e = NumDests; i != e; ++i) {
         if (BasicBlock *DestBB = getBasicBlock(Record[2+i])) {
           IBI->addDestination(DestBB);
         } else {
           delete IBI;
-          return Error("Invalid INDBR record!");
+          return Error("Invalid INDIRECTBR record!");
         }
       }
       I = IBI;

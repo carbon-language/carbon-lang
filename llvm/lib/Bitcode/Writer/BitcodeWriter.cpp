@@ -1015,8 +1015,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
       Vals.push_back(VE.getValueID(I.getOperand(i)));
     break;
-  case Instruction::IndBr:
-    Code = bitc::FUNC_CODE_INST_INDBR;
+  case Instruction::IndirectBr:
+    Code = bitc::FUNC_CODE_INST_INDIRECTBR;
     Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
     for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
       Vals.push_back(VE.getValueID(I.getOperand(i)));

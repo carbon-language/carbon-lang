@@ -282,7 +282,7 @@ namespace {
     void visitReturnInst(ReturnInst &I);
     void visitBranchInst(BranchInst &I);
     void visitSwitchInst(SwitchInst &I);
-    void visitIndBrInst(IndBrInst &I);
+    void visitIndirectBrInst(IndirectBrInst &I);
     void visitInvokeInst(InvokeInst &I) {
       llvm_unreachable("Lowerinvoke pass didn't work!");
     }
@@ -2579,7 +2579,7 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
   Out << "  }\n";
 }
 
-void CWriter::visitIndBrInst(IndBrInst &IBI) {
+void CWriter::visitIndirectBrInst(IndirectBrInst &IBI) {
   Out << "  goto *(void*)(";
   writeOperand(IBI.getOperand(0));
   Out << ");\n";

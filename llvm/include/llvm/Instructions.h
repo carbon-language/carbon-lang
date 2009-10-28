@@ -2220,61 +2220,61 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SwitchInst, Value)
 
 
 //===----------------------------------------------------------------------===//
-//                               IndBrInst Class
+//                             IndirectBrInst Class
 //===----------------------------------------------------------------------===//
 
 //===---------------------------------------------------------------------------
-/// IndBrInst - Indirect Branch Instruction.
+/// IndirectBrInst - Indirect Branch Instruction.
 ///
-class IndBrInst : public TerminatorInst {
+class IndirectBrInst : public TerminatorInst {
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
   unsigned ReservedSpace;
   // Operand[0]    = Value to switch on
   // Operand[1]    = Default basic block destination
   // Operand[2n  ] = Value to match
   // Operand[2n+1] = BasicBlock to go to on match
-  IndBrInst(const IndBrInst &IBI);
+  IndirectBrInst(const IndirectBrInst &IBI);
   void init(Value *Address, unsigned NumDests);
   void resizeOperands(unsigned No);
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
     return User::operator new(s, 0);
   }
-  /// IndBrInst ctor - Create a new indbr instruction, specifying an Address to
-  /// jump to.  The number of expected destinations can be specified here to
-  /// make memory allocation more efficient.  This constructor can also
+  /// IndirectBrInst ctor - Create a new indirectbr instruction, specifying an
+  /// Address to jump to.  The number of expected destinations can be specified
+  /// here to make memory allocation more efficient.  This constructor can also
   /// autoinsert before another instruction.
-  IndBrInst(Value *Address, unsigned NumDests, Instruction *InsertBefore);
+  IndirectBrInst(Value *Address, unsigned NumDests, Instruction *InsertBefore);
   
-  /// IndBrInst ctor - Create a new indbr instruction, specifying an Address to
-  /// jump to.  The number of expected destinations can be specified here to
-  /// make memory allocation more efficient.  This constructor also autoinserts
-  /// at the end of the specified BasicBlock.
-  IndBrInst(Value *Address, unsigned NumDests, BasicBlock *InsertAtEnd);
+  /// IndirectBrInst ctor - Create a new indirectbr instruction, specifying an
+  /// Address to jump to.  The number of expected destinations can be specified
+  /// here to make memory allocation more efficient.  This constructor also
+  /// autoinserts at the end of the specified BasicBlock.
+  IndirectBrInst(Value *Address, unsigned NumDests, BasicBlock *InsertAtEnd);
 protected:
-  virtual IndBrInst *clone_impl() const;
+  virtual IndirectBrInst *clone_impl() const;
 public:
-  static IndBrInst *Create(Value *Address, unsigned NumDests,
-                           Instruction *InsertBefore = 0) {
-    return new IndBrInst(Address, NumDests, InsertBefore);
+  static IndirectBrInst *Create(Value *Address, unsigned NumDests,
+                                Instruction *InsertBefore = 0) {
+    return new IndirectBrInst(Address, NumDests, InsertBefore);
   }
-  static IndBrInst *Create(Value *Address, unsigned NumDests,
-                           BasicBlock *InsertAtEnd) {
-    return new IndBrInst(Address, NumDests, InsertAtEnd);
+  static IndirectBrInst *Create(Value *Address, unsigned NumDests,
+                                BasicBlock *InsertAtEnd) {
+    return new IndirectBrInst(Address, NumDests, InsertAtEnd);
   }
-  ~IndBrInst();
+  ~IndirectBrInst();
   
   /// Provide fast operand accessors.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
   
-  // Accessor Methods for IndBr instruction.
+  // Accessor Methods for IndirectBrInst instruction.
   Value *getAddress() { return getOperand(0); }
   const Value *getAddress() const { return getOperand(0); }
   void setAddress(Value *V) { setOperand(0, V); }
   
   
   /// getNumDestinations - return the number of possible destinations in this
-  /// indbr instruction.
+  /// indirectbr instruction.
   unsigned getNumDestinations() const { return getNumOperands()-1; }
   
   /// getDestination - Return the specified destination.
@@ -2286,7 +2286,7 @@ public:
   void addDestination(BasicBlock *Dest);
   
   /// removeDestination - This method removes the specified successor from the
-  /// indbr instruction.
+  /// indirectbr instruction.
   void removeDestination(unsigned i);
   
   unsigned getNumSuccessors() const { return getNumOperands()-1; }
@@ -2298,9 +2298,9 @@ public:
   }
   
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const IndBrInst *) { return true; }
+  static inline bool classof(const IndirectBrInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == Instruction::IndBr;
+    return I->getOpcode() == Instruction::IndirectBr;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
@@ -2312,10 +2312,10 @@ private:
 };
 
 template <>
-struct OperandTraits<IndBrInst> : public HungoffOperandTraits<1> {
+struct OperandTraits<IndirectBrInst> : public HungoffOperandTraits<1> {
 };
 
-DEFINE_TRANSPARENT_OPERAND_ACCESSORS(IndBrInst, Value)
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(IndirectBrInst, Value)
   
   
 //===----------------------------------------------------------------------===//
