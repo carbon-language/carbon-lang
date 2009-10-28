@@ -1787,8 +1787,8 @@ if (X &lt; 3) {</pre>
         integrals f.e.</li>
     <li>All of the constants in a switch statement are of the correct type.</li>
     <li>The code is in valid SSA form.</li>
-    <li>It should be illegal to put a label into any other type (like a
-        structure) or to return one. [except constant arrays!]</li>
+    <li>It is illegal to put a label into any other type (like a structure) or 
+        to return one.</li>
     <li>Only phi nodes can be self referential: <tt>%x = add i32 %x, %x</tt> is
         invalid.</li>
     <li>PHI nodes must have an entry for each predecessor, with no extras.</li>
