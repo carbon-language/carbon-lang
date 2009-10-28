@@ -31,6 +31,26 @@ def arm_cmpfp0 : SDNode<"ARMISD::CMPFPw0",SDT_CMPFP0, [SDNPOutFlag]>;
 def arm_fmdrr  : SDNode<"ARMISD::FMDRR",  SDT_FMDRR>;
 
 //===----------------------------------------------------------------------===//
+// Operand Definitions.
+//
+
+
+def vfp_f32imm : Operand<f32>,
+                 PatLeaf<(f32 fpimm), [{
+      return ARM::getVFPf32Imm(N->getValueAPF()) != -1;
+    }]> {
+  let PrintMethod = "printVFPf32ImmOperand";
+}
+
+def vfp_f64imm : Operand<f64>,
+                 PatLeaf<(f64 fpimm), [{
+      return ARM::getVFPf64Imm(N->getValueAPF()) != -1;
+    }]> {
+  let PrintMethod = "printVFPf64ImmOperand";
+}
+
+
+//===----------------------------------------------------------------------===//
 //  Load / store Instructions.
 //
 
@@ -407,4 +427,28 @@ def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, IIC_fpSTAT, "fmstat", "",
   let Inst{11-8}  = 0b1010;
   let Inst{7}     = 0;
   let Inst{4}     = 1;
+}
+
+
+// Materialize FP immediates. VFP3 only.
+def FCONSTS : VFPAI<(outs SPR:$dst), (ins vfp_f32imm:$imm),
+                    VFPMiscFrm, IIC_VMOVImm,
+                    "fconsts", "\t$dst, $imm",
+                    [(set SPR:$dst, vfp_f32imm:$imm)]>, Requires<[HasVFP3]> {
+  let Inst{27-23} = 0b11101;
+  let Inst{21-20} = 0b11;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 0;
+  let Inst{7-4}   = 0b0000;
+}
+
+def FCONSTD : VFPAI<(outs DPR:$dst), (ins vfp_f64imm:$imm),
+                    VFPMiscFrm, IIC_VMOVImm,
+                    "fconstd", "\t$dst, $imm",
+                    [(set DPR:$dst, vfp_f64imm:$imm)]>, Requires<[HasVFP3]> {
+  let Inst{27-23} = 0b11101;
+  let Inst{21-20} = 0b11;
+  let Inst{11-9}  = 0b101;
+  let Inst{8}     = 1;
+  let Inst{7-4}   = 0b0000;
 }

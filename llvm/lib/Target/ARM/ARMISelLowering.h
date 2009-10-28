@@ -137,6 +137,13 @@ namespace llvm {
     /// return the constant being splatted.  The ByteSize field indicates the
     /// number of bytes of each element [1248].
     SDValue getVMOVImm(SDNode *N, unsigned ByteSize, SelectionDAG &DAG);
+
+    /// getVFPf32Imm / getVFPf64Imm - If the given fp immediate can be
+    /// materialized with a VMOV.f32 / VMOV.f64 (i.e. fconsts / fconstd)
+    /// instruction, returns its 8-bit integer representation. Otherwise,
+    /// returns -1.
+    int getVFPf32Imm(const APFloat &FPImm);
+    int getVFPf64Imm(const APFloat &FPImm);
   }
 
   //===--------------------------------------------------------------------===//
@@ -224,6 +231,12 @@ namespace llvm {
 
     bool isShuffleMaskLegal(const SmallVectorImpl<int> &M, EVT VT) const;
     bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
+
+    /// isFPImmLegal - Returns true if the target can instruction select the
+    /// specified FP immediate natively. If false, the legalizer will
+    /// materialize the FP immediate as a load from a constant pool.
+    virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
+
   private:
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
     /// make the right decision when generating code for different targets.

@@ -78,6 +78,8 @@ public:
   void printJT2BlockOperand(const MCInst *MI, unsigned OpNum) {}
   void printTBAddrMode(const MCInst *MI, unsigned OpNum) {}
   void printNoHashImmediate(const MCInst *MI, unsigned OpNum);
+  void printVFPf32ImmOperand(const MCInst *MI, int OpNum) {}
+  void printVFPf64ImmOperand(const MCInst *MI, int OpNum) {}
 
   void printPCLabel(const MCInst *MI, unsigned OpNum);  
   // FIXME: Implement.
