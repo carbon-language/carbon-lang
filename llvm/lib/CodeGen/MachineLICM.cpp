@@ -24,7 +24,9 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -106,7 +108,7 @@ namespace {
     /// Hoist - When an instruction is found to only use loop invariant operands
     /// that is safe to hoist, this instruction is called to do the dirty work.
     ///
-    void Hoist(MachineInstr &MI);
+    void Hoist(MachineInstr *MI);
   };
 } // end anonymous namespace
 
@@ -185,7 +187,7 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
     MachineBasicBlock::iterator NextMII = MII; ++NextMII;
     MachineInstr &MI = *MII;
 
-    Hoist(MI);
+    Hoist(&MI);
 
     MII = NextMII;
   }
@@ -370,39 +372,103 @@ static const MachineInstr *LookForDuplicate(const MachineInstr *MI,
 /// Hoist - When an instruction is found to use only loop invariant operands
 /// that are safe to hoist, this instruction is called to do the dirty work.
 ///
-void MachineLICM::Hoist(MachineInstr &MI) {
-  if (!IsLoopInvariantInst(MI)) return;
-  if (!IsProfitableToHoist(MI)) return;
+void MachineLICM::Hoist(MachineInstr *MI) {
+  // First check whether we should hoist this instruction.
+  if (!IsLoopInvariantInst(*MI) || !IsProfitableToHoist(*MI)) {
+    // If not, we may be able to unfold a load and hoist that.
+    // First test whether the instruction is loading from an amenable
+    // memory location.
+    if (!MI->getDesc().mayLoad()) return;
+    if (!MI->hasOneMemOperand()) return;
+    MachineMemOperand *MMO = *MI->memoperands_begin();
+    if (MMO->isVolatile()) return;
+    MachineFunction &MF = *MI->getParent()->getParent();
+    if (!MMO->getValue()) return;
+    if (const PseudoSourceValue *PSV =
+          dyn_cast<PseudoSourceValue>(MMO->getValue())) {
+      if (!PSV->isConstant(MF.getFrameInfo())) return;
+    } else {
+      if (!AA->pointsToConstantMemory(MMO->getValue())) return;
+    }
+    // Next determine the register class for a temporary register.
+    unsigned NewOpc =
+      TII->getOpcodeAfterMemoryUnfold(MI->getOpcode(),
+                                      /*UnfoldLoad=*/true,
+                                      /*UnfoldStore=*/false);
+    if (NewOpc == 0) return;
+    const TargetInstrDesc &TID = TII->get(NewOpc);
+    if (TID.getNumDefs() != 1) return;
+    const TargetRegisterClass *RC = TID.OpInfo[0].getRegClass(TRI);
+    // Ok, we're unfolding. Create a temporary register and do the unfold.
+    unsigned Reg = RegInfo->createVirtualRegister(RC);
+    SmallVector<MachineInstr *, 1> NewMIs;
+    bool Success =
+      TII->unfoldMemoryOperand(MF, MI, Reg,
+                               /*UnfoldLoad=*/true, /*UnfoldStore=*/false,
+                               NewMIs);
+    (void)Success;
+    assert(Success &&
+           "unfoldMemoryOperand failed when getOpcodeAfterMemoryUnfold "
+           "succeeded!");
+    assert(NewMIs.size() == 2 &&
+           "Unfolded a load into multiple instructions!");
+    MachineBasicBlock *MBB = MI->getParent();
+    MBB->insert(MI, NewMIs[0]);
+    MBB->insert(MI, NewMIs[1]);
+    MI->eraseFromParent();
+    // If unfolding produced a load that wasn't loop-invariant or profitable to
+    // hoist, re-fold it to undo the damage.
+    if (!IsLoopInvariantInst(*NewMIs[0]) || !IsProfitableToHoist(*NewMIs[0])) {
+      SmallVector<unsigned, 1> Ops;
+      for (unsigned i = 0, e = NewMIs[1]->getNumOperands(); i != e; ++i) {
+        MachineOperand &MO = NewMIs[1]->getOperand(i);
+        if (MO.isReg() && MO.getReg() == Reg) {
+          assert(MO.isUse() &&
+                 "Register defined by unfolded load is redefined "
+                 "instead of just used!");
+          Ops.push_back(i);
+        }
+      }
+      MI = TII->foldMemoryOperand(MF, NewMIs[1], Ops, NewMIs[0]);
+      assert(MI && "Re-fold failed!");
+      MBB->insert(NewMIs[1], MI);
+      NewMIs[0]->eraseFromParent();
+      NewMIs[1]->eraseFromParent();
+      return;
+    }
+    // Otherwise we successfully unfolded a load that we can hoist.
+    MI = NewMIs[0];
+  }
 
   // Now move the instructions to the predecessor, inserting it before any
   // terminator instructions.
   DEBUG({
-      errs() << "Hoisting " << MI;
+      errs() << "Hoisting " << *MI;
       if (CurPreheader->getBasicBlock())
         errs() << " to MachineBasicBlock "
                << CurPreheader->getBasicBlock()->getName();
-      if (MI.getParent()->getBasicBlock())
+      if (MI->getParent()->getBasicBlock())
         errs() << " from MachineBasicBlock "
-               << MI.getParent()->getBasicBlock()->getName();
+               << MI->getParent()->getBasicBlock()->getName();
       errs() << "\n";
     });
 
   // Look for opportunity to CSE the hoisted instruction.
   std::pair<unsigned, unsigned> BBOpcPair =
-    std::make_pair(CurPreheader->getNumber(), MI.getOpcode());
+    std::make_pair(CurPreheader->getNumber(), MI->getOpcode());
   DenseMap<std::pair<unsigned, unsigned>,
     std::vector<const MachineInstr*> >::iterator CI = CSEMap.find(BBOpcPair);
   bool DoneCSE = false;
   if (CI != CSEMap.end()) {
-    const MachineInstr *Dup = LookForDuplicate(&MI, CI->second, RegInfo);
+    const MachineInstr *Dup = LookForDuplicate(MI, CI->second, RegInfo);
     if (Dup) {
-      DEBUG(errs() << "CSEing " << MI << " with " << *Dup);
-      for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
-        const MachineOperand &MO = MI.getOperand(i);
+      DEBUG(errs() << "CSEing " << *MI << " with " << *Dup);
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        const MachineOperand &MO = MI->getOperand(i);
         if (MO.isReg() && MO.isDef())
           RegInfo->replaceRegWith(MO.getReg(), Dup->getOperand(i).getReg());
       }
-      MI.eraseFromParent();
+      MI->eraseFromParent();
       DoneCSE = true;
       ++NumCSEed;
     }
@@ -411,13 +477,13 @@ void MachineLICM::Hoist(MachineInstr &MI) {
   // Otherwise, splice the instruction to the preheader.
   if (!DoneCSE) {
     CurPreheader->splice(CurPreheader->getFirstTerminator(),
-                         MI.getParent(), &MI);
+                         MI->getParent(), MI);
     // Add to the CSE map.
     if (CI != CSEMap.end())
-      CI->second.push_back(&MI);
+      CI->second.push_back(MI);
     else {
       std::vector<const MachineInstr*> CSEMIs;
-      CSEMIs.push_back(&MI);
+      CSEMIs.push_back(MI);
       CSEMap.insert(std::make_pair(BBOpcPair, CSEMIs));
     }
   }
