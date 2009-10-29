@@ -21,40 +21,26 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 using namespace llvm;
 
-STATISTIC(NumExceptionValuesMoved, "Number of eh.exception calls moved");
-STATISTIC(NumLonelyLandingPads,    "Number of landing pads with no selector");
-STATISTIC(NumLonelySelectors,      "Number of lonely selectors lowered");
 STATISTIC(NumLandingPadsSplit,     "Number of landing pads split");
-STATISTIC(NumSelectorsAdjusted,    "Number of selector results adjusted");
-STATISTIC(NumSelectorsSimplified,  "Number of selectors truncated");
-STATISTIC(NumStackTempsIntroduced, "Number of stack temporaries introduced");
 STATISTIC(NumUnwindsLowered,       "Number of unwind instructions lowered");
+STATISTIC(NumExceptionValuesMoved, "Number of eh.exception calls moved");
+STATISTIC(NumStackTempsIntroduced, "Number of stack temporaries introduced");
 
 namespace {
   class DwarfEHPrepare : public FunctionPass {
     const TargetLowering *TLI;
+    bool CompileFast;
 
     // The eh.exception intrinsic.
-    Function *ExceptionIntrinsic;
-
-    // The eh.selector intrinsic.
-    Function *SelectorIntrinsic;
-
-    // The eh.typeid.for intrinsic.
-    Function *TypeIdIntrinsic;
+    Function *ExceptionValueIntrinsic;
 
     // _Unwind_Resume or the target equivalent.
     Constant *RewindFunction;
-
-    // _Unwind_RaiseException.
-    Constant *UnwindFunction;
 
     // Dominator info is used when turning stack temporaries into registers.
     DominatorTree *DT;
@@ -62,13 +48,6 @@ namespace {
 
     // The function we are running on.
     Function *F;
-
-    // The current context.
-    LLVMContext *Context;
-
-    // The personality and catch-all value for this function.
-    Constant *Personality;
-    Constant *CatchAll;
 
     // The landing pads for this function.
     typedef SmallPtrSet<BasicBlock*, 8> BBSet;
@@ -79,10 +58,7 @@ namespace {
 
     bool NormalizeLandingPads();
     bool LowerUnwinds();
-    bool MoveSelectorCalls();
-    bool RectifySelectorCalls();
     bool MoveExceptionValueCalls();
-    bool AddMissingSelectors();
     bool FinishStackTemporaries();
     bool PromoteStackTemporaries();
 
@@ -99,12 +75,21 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid.
-    DwarfEHPrepare(const TargetLowering *tli) :
-      FunctionPass(&ID), TLI(tli), ExceptionIntrinsic(0),
-      SelectorIntrinsic(0), TypeIdIntrinsic(0), RewindFunction(0),
-      UnwindFunction(0) {}
+    DwarfEHPrepare(const TargetLowering *tli, bool fast) :
+      FunctionPass(&ID), TLI(tli), CompileFast(fast),
+      ExceptionValueIntrinsic(0), RewindFunction(0) {}
 
     virtual bool runOnFunction(Function &Fn);
+
+    // getAnalysisUsage - We need dominance frontiers for memory promotion.
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      if (!CompileFast)
+        AU.addRequired<DominatorTree>();
+      AU.addPreserved<DominatorTree>();
+      if (!CompileFast)
+        AU.addRequired<DominanceFrontier>();
+      AU.addPreserved<DominanceFrontier>();
+    }
 
     const char *getPassName() const {
       return "Exception handling preparation";
@@ -115,8 +100,8 @@ namespace {
 
 char DwarfEHPrepare::ID = 0;
 
-FunctionPass *llvm::createDwarfEHPass(const TargetLowering *tli) {
-  return new DwarfEHPrepare(tli);
+FunctionPass *llvm::createDwarfEHPass(const TargetLowering *tli, bool fast) {
+  return new DwarfEHPrepare(tli, fast);
 }
 
 /// NormalizeLandingPads - Normalize and discover landing pads, noting them
@@ -159,7 +144,7 @@ bool DwarfEHPrepare::NormalizeLandingPads() {
     // edges to a new basic block which falls through into this one.
 
     // Create the new basic block.
-    BasicBlock *NewBB = BasicBlock::Create(*Context,
+    BasicBlock *NewBB = BasicBlock::Create(F->getContext(),
                                            LPad->getName() + "_unwind_edge");
 
     // Insert it into the function right before the original landing pad.
@@ -248,13 +233,16 @@ bool DwarfEHPrepare::LowerUnwinds() {
 
   // Find the rewind function if we didn't already.
   if (!RewindFunction) {
+    LLVMContext &Ctx = UnwindInsts[0]->getContext();
     std::vector<const Type*>
-      Params(1, Type::getInt8PtrTy(*Context));
-    FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Context),
+      Params(1, Type::getInt8PtrTy(Ctx));
+    FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
                                           Params, false);
     const char *RewindName = TLI->getLibcallName(RTLIB::UNWIND_RESUME);
     RewindFunction = F->getParent()->getOrInsertFunction(RewindName, FTy);
   }
+
+  bool Changed = false;
 
   for (SmallVectorImpl<TerminatorInst*>::iterator
          I = UnwindInsts.begin(), E = UnwindInsts.end(); I != E; ++I) {
@@ -269,244 +257,11 @@ bool DwarfEHPrepare::LowerUnwinds() {
                                     "", TI);
     CI->setCallingConv(TLI->getLibcallCallingConv(RTLIB::UNWIND_RESUME));
     // ...followed by an UnreachableInst.
-    new UnreachableInst(*Context, TI);
+    new UnreachableInst(TI->getContext(), TI);
 
     // Nuke the unwind instruction.
     TI->eraseFromParent();
     ++NumUnwindsLowered;
-  }
-
-  return true;
-}
-
-/// MoveSelectorCalls - Make sure that every call to eh.selector occurs in its
-/// own landing pad, the landing pad corresponding to the exception object.
-bool DwarfEHPrepare::MoveSelectorCalls() {
-  // If the eh.selector intrinsic is not declared in the module then there is
-  // nothing to do.  Speed up compilation by checking for this common case.
-  if (!F->getParent()->getFunction(Intrinsic::getName(Intrinsic::eh_selector)))
-    return false;
-
-  // TODO: There is a lot of room for optimization here.
-
-  bool Changed = false;
-  BasicBlock *UnrBB = 0;
-
-  for (Function::iterator BB = F->begin(); BB != F->end(); ++BB) {
-    // If this basic block is not a landing pad then synthesize a landing pad
-    // for every selector in it.
-    bool SynthesizeLandingPad = !LandingPads.count(BB);
-
-    for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE; ++II) {
-      EHSelectorInst *SI = dyn_cast<EHSelectorInst>(II);
-      // Only interested in eh.selector calls.
-      if (!SI)
-        continue;
-
-      // Note the personality and catch-all for later use.
-      Personality = cast<Constant>(SI->getOperand(2));
-      CatchAll = cast<Constant>(SI->getOperand(SI->getNumOperands() - 1)
-                                ->stripPointerCasts());
-
-      // The exception object.
-      Value *Exception = SI->getOperand(1);
-
-      if (!SynthesizeLandingPad) {
-        // Did the exception come from unwinding to this landing pad or another?
-        // If it comes from a different landing pad then we need to synthesize a
-        // new landing pad for the selector.
-        EHExceptionInst *EI = dyn_cast<EHExceptionInst>(Exception);
-        SynthesizeLandingPad = !EI || EI->getParent() != BB;
-      }
-
-      if (!SynthesizeLandingPad) {
-        // This is the first selector in this landing pad, and it is the landing
-        // pad corresponding to the exception object.  No need to do anything to
-        // this selector, but any subsequent selectors in this landing pad will
-        // need their own invoke in order to make them independent of this one.
-        SynthesizeLandingPad = true;
-        continue;
-      }
-
-      // Rethrow the exception and catch it again, generating a landing pad for
-      // this selector to live in.
-
-      // Find _Unwind_RaiseException if we didn't already.
-      if (!UnwindFunction) {
-        std::vector<const Type*> ArgTys(1, Type::getInt8PtrTy(*Context));
-        const FunctionType *FTy =
-          FunctionType::get(Type::getInt32Ty(*Context), ArgTys, true);
-
-        const char *Name = "_Unwind_RaiseException";
-        UnwindFunction = F->getParent()->getOrInsertFunction(Name, FTy);
-      }
-
-      // Create a basic block containing only an unreachable instruction if we
-      // didn't already.
-      if (!UnrBB) {
-        UnrBB = BasicBlock::Create(*Context, "unreachable", F);
-        new UnreachableInst(*Context, UnrBB);
-      }
-
-      // Split the basic block before the selector.
-      BasicBlock *NewBB = SplitBlock(BB, SI, this);
-
-      // Replace the terminator with an invoke of _Unwind_RaiseException.
-      BB->getTerminator()->eraseFromParent();
-      InvokeInst::Create(UnwindFunction, UnrBB, NewBB, &Exception,
-                         1 + &Exception, "", BB);
-
-      // The split off basic block is now a landing pad.
-      LandingPads.insert(NewBB);
-
-      // Replace the exception argument in the selector call with a call to
-      // eh.exception.  This is not really necessary but it makes things more
-      // regular.
-      Exception = CreateExceptionValueCall(NewBB);
-      SI->setOperand(1, Exception);
-
-      ++NumLonelySelectors;
-      Changed = true;
-
-      // All instructions still in the original basic block have been scanned.
-      // Move on to the next basic block.
-      break;
-    }
-  }
-
-  return Changed;
-}
-
-/// RectifySelectorCalls - Remove useless catch-all clauses from the ends of
-/// selectors, or correct the selector result for the presence of the catch-all
-/// if it is really needed.
-bool DwarfEHPrepare::RectifySelectorCalls() {
-  // If the eh.selector intrinsic is not declared in the module then there is
-  // nothing to do.  Speed up compilation by checking for this common case.
-  if (!F->getParent()->getFunction(Intrinsic::getName(Intrinsic::eh_selector)))
-    return false;
-
-  bool Changed = false;
-
-  for (BBSet::iterator I = LandingPads.begin(), E = LandingPads.end(); I != E;
-       ++I)
-    for (BasicBlock::iterator II = (*I)->begin(), IE = (*I)->end(); II != IE; )
-      if (EHSelectorInst *SI = dyn_cast<EHSelectorInst>(II++)) {
-        // Found a call to eh.selector.  Check whether it has a catch-all in the
-        // middle.
-        unsigned LastIndex = 0;
-        for (unsigned i = 3, e = SI->getNumOperands() - 1; i < e; ++i) {
-          Value *V = SI->getOperand(i);
-          if (V->stripPointerCasts() == CatchAll) {
-            // A catch-all.  The catch-all at the end was not needed.
-            LastIndex = i;
-            break;
-          } else if (ConstantInt *FilterLength = dyn_cast<ConstantInt>(V)) {
-            // A cleanup or a filter.
-            unsigned Length = FilterLength->getZExtValue();
-            if (Length == 0)
-              // A cleanup - skip it.
-              continue;
-            if (Length == 1) {
-              // A catch-all filter.  Drop everything that follows.
-              LastIndex = i;
-              break;
-            }
-            // A filter, skip over the typeinfos.
-            i += Length - 1;
-          }
-        }
-
-        if (LastIndex) {
-          // Drop the pointless catch-all from the end.  In fact drop everything
-          // after LastIndex as an optimization.
-          SmallVector<Value*, 16> Args;
-          Args.reserve(LastIndex);
-          for (unsigned i = 1; i <= LastIndex; ++i)
-            Args.push_back(SI->getOperand(i));
-          CallInst *CI = CallInst::Create(SI->getOperand(0), Args.begin(),
-                                          Args.end(), "", SI);
-          CI->takeName(SI);
-          SI->replaceAllUsesWith(CI);
-          SI->eraseFromParent();
-          ++NumSelectorsSimplified;
-        } else if (!isa<ConstantInt>(CatchAll) && // Not a cleanup.
-                   !SI->use_empty()) {
-          // Correct the selector value to return zero if the catch-all matches.
-          Constant *Zero = ConstantInt::getNullValue(Type::getInt32Ty(*Context));
-
-          // Create the new selector value, with placeholders instead of the
-          // real operands and make everyone use it.  The reason for this round
-          // about approach is that the computation of the new value makes use
-          // of the old value, so we can't just compute it then do RAUW.
-          SelectInst *S = SelectInst::Create(ConstantInt::getFalse(*Context),
-                                             Zero, Zero, "", II);
-          SI->replaceAllUsesWith(S);
-
-          // Now calculate the operands of the select.
-          IRBuilder<> Builder(*I, S);
-
-          // Find the eh.typeid.for intrinsic if we didn't already.
-          if (!TypeIdIntrinsic)
-            TypeIdIntrinsic = Intrinsic::getDeclaration(F->getParent(),
-                                                      Intrinsic::eh_typeid_for);
-
-          // Obtain the id of the catch-all.
-          Value *CatchAllId = Builder.CreateCall(TypeIdIntrinsic,
-              ConstantExpr::getBitCast(CatchAll, Type::getInt8PtrTy(*Context)));
-
-          // Compare it with the original selector result.  If it matched then
-          // the selector result is zero, otherwise it is the original selector.
-          Value *MatchesCatchAll = Builder.CreateICmpEQ(SI, CatchAllId);
-          S->setOperand(0, MatchesCatchAll);
-          S->setOperand(2, SI);
-          ++NumSelectorsAdjusted;
-        }
-
-        Changed = true;
-        break;
-      }
-
-  return Changed;
-}
-
-/// Make sure every landing pad has a selector in it.
-bool DwarfEHPrepare::AddMissingSelectors() {
-  if (!Personality)
-    // We only know how to codegen invokes if there is a personality.
-    // FIXME: This results in wrong code.
-    return false;
-
-  bool Changed = false;
-
-  for (BBSet::iterator I = LandingPads.begin(), E = LandingPads.end(); I != E;
-       ++I) {
-    bool FoundSelector = false;
-
-    // Check whether the landing pad already contains a call to eh.selector.
-    for (BasicBlock::iterator II = (*I)->begin(), IE = (*I)->end(); II != IE;
-         ++II)
-      if (isa<EHSelectorInst>(II)) {
-        FoundSelector = true;
-        break;
-      }
-
-    if (FoundSelector)
-      continue;
-
-    // Find the eh.selector intrinsic if we didn't already.
-    if (!SelectorIntrinsic)
-      SelectorIntrinsic = Intrinsic::getDeclaration(F->getParent(),
-                                                    Intrinsic::eh_selector);
-
-    // Get the exception object.
-    Instruction *Exception = CreateExceptionValueCall(*I);
-
-    Value *Args[3] = { Exception, Personality, CatchAll };
-    CallInst *Selector = CallInst::Create(SelectorIntrinsic, Args, Args + 3);
-    Selector->insertAfter(Exception);
-
-    ++NumLonelyLandingPads;
     Changed = true;
   }
 
@@ -520,7 +275,7 @@ bool DwarfEHPrepare::AddMissingSelectors() {
 bool DwarfEHPrepare::MoveExceptionValueCalls() {
   // If the eh.exception intrinsic is not declared in the module then there is
   // nothing to do.  Speed up compilation by checking for this common case.
-  if (!ExceptionIntrinsic &&
+  if (!ExceptionValueIntrinsic &&
       !F->getParent()->getFunction(Intrinsic::getName(Intrinsic::eh_exception)))
     return false;
 
@@ -577,7 +332,7 @@ bool DwarfEHPrepare::PromoteStackTemporaries() {
   if (ExceptionValueVar && DT && DF && isAllocaPromotable(ExceptionValueVar)) {
     // Turn the exception temporary into registers and phi nodes if possible.
     std::vector<AllocaInst*> Allocas(1, ExceptionValueVar);
-    PromoteMemToReg(Allocas, *DT, *DF, *Context);
+    PromoteMemToReg(Allocas, *DT, *DF, ExceptionValueVar->getContext());
     return true;
   }
   return false;
@@ -595,12 +350,12 @@ Instruction *DwarfEHPrepare::CreateExceptionValueCall(BasicBlock *BB) {
       return Start;
 
   // Find the eh.exception intrinsic if we didn't already.
-  if (!ExceptionIntrinsic)
-    ExceptionIntrinsic = Intrinsic::getDeclaration(F->getParent(),
+  if (!ExceptionValueIntrinsic)
+    ExceptionValueIntrinsic = Intrinsic::getDeclaration(F->getParent(),
                                                        Intrinsic::eh_exception);
 
   // Create the call.
-  return CallInst::Create(ExceptionIntrinsic, "eh.value.call", Start);
+  return CallInst::Create(ExceptionValueIntrinsic, "eh.value.call", Start);
 }
 
 /// CreateValueLoad - Insert a load of the exception value stack variable
@@ -618,7 +373,7 @@ Instruction *DwarfEHPrepare::CreateValueLoad(BasicBlock *BB) {
   // Create the temporary if we didn't already.
   if (!ExceptionValueVar) {
     ExceptionValueVar = new AllocaInst(PointerType::getUnqual(
-           Type::getInt8Ty(*Context)), "eh.value", F->begin()->begin());
+           Type::getInt8Ty(BB->getContext())), "eh.value", F->begin()->begin());
     ++NumStackTempsIntroduced;
   }
 
@@ -633,9 +388,6 @@ bool DwarfEHPrepare::runOnFunction(Function &Fn) {
   DT = getAnalysisIfAvailable<DominatorTree>();
   DF = getAnalysisIfAvailable<DominanceFrontier>();
   ExceptionValueVar = 0;
-  Personality = 0;
-  CatchAll = 0;
-  Context = &Fn.getContext();
   F = &Fn;
 
   // Ensure that only unwind edges end at landing pads (a landing pad is a
@@ -645,15 +397,7 @@ bool DwarfEHPrepare::runOnFunction(Function &Fn) {
   // Turn unwind instructions into libcalls.
   Changed |= LowerUnwinds();
 
-  // Make sure that every call to eh.selector occurs in its own landing pad.
-  Changed |= MoveSelectorCalls();
-
-  // Remove useless catch-all clauses from the ends of selectors, or correct the
-  // selector result for the presence of the catch-all if it is really needed.
-  Changed |= RectifySelectorCalls();
-
-  // Make sure every landing pad has a selector in it.
-  Changed |= AddMissingSelectors();
+  // TODO: Move eh.selector calls to landing pads and combine them.
 
   // Move eh.exception calls to landing pads.
   Changed |= MoveExceptionValueCalls();
@@ -662,8 +406,8 @@ bool DwarfEHPrepare::runOnFunction(Function &Fn) {
   Changed |= FinishStackTemporaries();
 
   // Turn any stack temporaries into registers if possible.
-//TODO  if (!CompileFast)
-//TODO    Changed |= PromoteStackTemporaries();
+  if (!CompileFast)
+    Changed |= PromoteStackTemporaries();
 
   LandingPads.clear();
 
