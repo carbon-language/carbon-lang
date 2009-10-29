@@ -105,6 +105,12 @@ namespace {
     ///
     void HoistRegion(MachineDomTreeNode *N);
 
+    /// ExtractHoistableLoad - Unfold a load from the given machineinstr if
+    /// the load itself could be hoisted. Return the unfolded and hoistable
+    /// load, or null if the load couldn't be unfolded or if it wouldn't
+    /// be hoistable.
+    MachineInstr *ExtractHoistableLoad(MachineInstr *MI);
+
     /// Hoist - When an instruction is found to only use loop invariant operands
     /// that is safe to hoist, this instruction is called to do the dirty work.
     ///
@@ -369,62 +375,68 @@ static const MachineInstr *LookForDuplicate(const MachineInstr *MI,
   return 0;
 }
 
+MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
+  // If not, we may be able to unfold a load and hoist that.
+  // First test whether the instruction is loading from an amenable
+  // memory location.
+  if (!MI->getDesc().mayLoad()) return 0;
+  if (!MI->hasOneMemOperand()) return 0;
+  MachineMemOperand *MMO = *MI->memoperands_begin();
+  if (MMO->isVolatile()) return 0;
+  MachineFunction &MF = *MI->getParent()->getParent();
+  if (!MMO->getValue()) return 0;
+  if (const PseudoSourceValue *PSV =
+        dyn_cast<PseudoSourceValue>(MMO->getValue())) {
+    if (!PSV->isConstant(MF.getFrameInfo())) return 0;
+  } else {
+    if (!AA->pointsToConstantMemory(MMO->getValue())) return 0;
+  }
+  // Next determine the register class for a temporary register.
+  unsigned NewOpc =
+    TII->getOpcodeAfterMemoryUnfold(MI->getOpcode(),
+                                    /*UnfoldLoad=*/true,
+                                    /*UnfoldStore=*/false);
+  if (NewOpc == 0) return 0;
+  const TargetInstrDesc &TID = TII->get(NewOpc);
+  if (TID.getNumDefs() != 1) return 0;
+  const TargetRegisterClass *RC = TID.OpInfo[0].getRegClass(TRI);
+  // Ok, we're unfolding. Create a temporary register and do the unfold.
+  unsigned Reg = RegInfo->createVirtualRegister(RC);
+  SmallVector<MachineInstr *, 2> NewMIs;
+  bool Success =
+    TII->unfoldMemoryOperand(MF, MI, Reg,
+                             /*UnfoldLoad=*/true, /*UnfoldStore=*/false,
+                             NewMIs);
+  (void)Success;
+  assert(Success &&
+         "unfoldMemoryOperand failed when getOpcodeAfterMemoryUnfold "
+         "succeeded!");
+  assert(NewMIs.size() == 2 &&
+         "Unfolded a load into multiple instructions!");
+  MachineBasicBlock *MBB = MI->getParent();
+  MBB->insert(MI, NewMIs[0]);
+  MBB->insert(MI, NewMIs[1]);
+  // If unfolding produced a load that wasn't loop-invariant or profitable to
+  // hoist, discard the new instructions and bail.
+  if (!IsLoopInvariantInst(*NewMIs[0]) || !IsProfitableToHoist(*NewMIs[0])) {
+    NewMIs[0]->eraseFromParent();
+    NewMIs[1]->eraseFromParent();
+    return 0;
+  }
+  // Otherwise we successfully unfolded a load that we can hoist.
+  MI->eraseFromParent();
+  return NewMIs[0];
+}
+
 /// Hoist - When an instruction is found to use only loop invariant operands
 /// that are safe to hoist, this instruction is called to do the dirty work.
 ///
 void MachineLICM::Hoist(MachineInstr *MI) {
   // First check whether we should hoist this instruction.
   if (!IsLoopInvariantInst(*MI) || !IsProfitableToHoist(*MI)) {
-    // If not, we may be able to unfold a load and hoist that.
-    // First test whether the instruction is loading from an amenable
-    // memory location.
-    if (!MI->getDesc().mayLoad()) return;
-    if (!MI->hasOneMemOperand()) return;
-    MachineMemOperand *MMO = *MI->memoperands_begin();
-    if (MMO->isVolatile()) return;
-    MachineFunction &MF = *MI->getParent()->getParent();
-    if (!MMO->getValue()) return;
-    if (const PseudoSourceValue *PSV =
-          dyn_cast<PseudoSourceValue>(MMO->getValue())) {
-      if (!PSV->isConstant(MF.getFrameInfo())) return;
-    } else {
-      if (!AA->pointsToConstantMemory(MMO->getValue())) return;
-    }
-    // Next determine the register class for a temporary register.
-    unsigned NewOpc =
-      TII->getOpcodeAfterMemoryUnfold(MI->getOpcode(),
-                                      /*UnfoldLoad=*/true,
-                                      /*UnfoldStore=*/false);
-    if (NewOpc == 0) return;
-    const TargetInstrDesc &TID = TII->get(NewOpc);
-    if (TID.getNumDefs() != 1) return;
-    const TargetRegisterClass *RC = TID.OpInfo[0].getRegClass(TRI);
-    // Ok, we're unfolding. Create a temporary register and do the unfold.
-    unsigned Reg = RegInfo->createVirtualRegister(RC);
-    SmallVector<MachineInstr *, 2> NewMIs;
-    bool Success =
-      TII->unfoldMemoryOperand(MF, MI, Reg,
-                               /*UnfoldLoad=*/true, /*UnfoldStore=*/false,
-                               NewMIs);
-    (void)Success;
-    assert(Success &&
-           "unfoldMemoryOperand failed when getOpcodeAfterMemoryUnfold "
-           "succeeded!");
-    assert(NewMIs.size() == 2 &&
-           "Unfolded a load into multiple instructions!");
-    MachineBasicBlock *MBB = MI->getParent();
-    MBB->insert(MI, NewMIs[0]);
-    MBB->insert(MI, NewMIs[1]);
-    // If unfolding produced a load that wasn't loop-invariant or profitable to
-    // hoist, discard the new instructions and bail.
-    if (!IsLoopInvariantInst(*NewMIs[0]) || !IsProfitableToHoist(*NewMIs[0])) {
-      NewMIs[0]->eraseFromParent();
-      NewMIs[1]->eraseFromParent();
-      return;
-    }
-    // Otherwise we successfully unfolded a load that we can hoist.
-    MI->eraseFromParent();
-    MI = NewMIs[0];
+    // If not, try unfolding a hoistable load.
+    MI = ExtractHoistableLoad(MI);
+    if (!MI) return;
   }
 
   // Now move the instructions to the predecessor, inserting it before any
