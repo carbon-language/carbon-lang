@@ -5748,7 +5748,7 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
     OS << ":" << N->getVT().getEVTString();
   }
   else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(this)) {
-    OS << " <" << *LD->getMemOperand();
+    OS << "<" << *LD->getMemOperand();
 
     bool doExt = true;
     switch (LD->getExtensionType()) {
@@ -5766,7 +5766,7 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
 
     OS << ">";
   } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(this)) {
-    OS << " <" << *ST->getMemOperand();
+    OS << "<" << *ST->getMemOperand();
 
     if (ST->isTruncatingStore())
       OS << ", trunc to " << ST->getMemoryVT().getEVTString();
@@ -5777,7 +5777,7 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
     
     OS << ">";
   } else if (const MemSDNode* M = dyn_cast<MemSDNode>(this)) {
-    OS << " <" << *M->getMemOperand() << ">";
+    OS << "<" << *M->getMemOperand() << ">";
   }
 }
 
