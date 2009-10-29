@@ -1304,9 +1304,10 @@ namespace llvm {
       // Look for the bitcast.
       for (Value::use_const_iterator I = V->use_begin(), E =V->use_end();
             I != E; ++I)
-        if (isa<BitCastInst>(I))
-          return findDbgDeclare(*I, false);
-
+        if (isa<BitCastInst>(I)) {
+          const DbgDeclareInst *DDI = findDbgDeclare(*I, false);
+          if (DDI) return DDI;
+        }
       return 0;
     }
 
