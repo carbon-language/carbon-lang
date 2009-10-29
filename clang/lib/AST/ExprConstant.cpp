@@ -189,7 +189,7 @@ public:
     { return Visit(E->getChosenSubExpr(Info.Ctx)); }
   bool VisitCastExpr(CastExpr *E) { return Visit(E->getSubExpr()); }
   bool VisitBinAssign(BinaryOperator *E) { return true; }
-  bool VisitCompoundAssign(BinaryOperator *E) { return true; }
+  bool VisitCompoundAssignOperator(BinaryOperator *E) { return true; }
   bool VisitBinaryOperator(BinaryOperator *E)
   { return Visit(E->getLHS()) || Visit(E->getRHS()); }
   bool VisitUnaryPreInc(UnaryOperator *E) { return true; }

@@ -118,3 +118,9 @@ void test15() {
   // CHECK:       call    ___inline_strcpy_chk
   strcpy(gp--, "Hi there");
 }
+
+void test16() {
+  // CHECK-NOT:   call    ___strcpy_chk
+  // CHECK:       call    ___inline_strcpy_chk
+  strcpy(gp += 1, "Hi there");
+}
