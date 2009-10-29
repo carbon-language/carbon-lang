@@ -3091,7 +3091,8 @@ void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 //===----------------------------------------------------------------------===//
 
 void IndirectBrInst::init(Value *Address, unsigned NumDests) {
-  assert(Address);
+  assert(Address && isa<PointerType>(Address->getType()) &&
+         "Address of indirectbr must be a pointer");
   ReservedSpace = 1+NumDests;
   NumOperands = 1;
   OperandList = allocHungoffUses(ReservedSpace);
