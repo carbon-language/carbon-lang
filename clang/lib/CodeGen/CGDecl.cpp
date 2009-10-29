@@ -492,16 +492,25 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   // Handle CXX destruction of variables.
   QualType DtorTy(Ty);
   if (const ArrayType *Array = DtorTy->getAs<ArrayType>())
-    DtorTy = Array->getElementType();
+    DtorTy = getContext().getBaseElementType(Array);
   if (const RecordType *RT = DtorTy->getAs<RecordType>())
     if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
       if (!ClassDecl->hasTrivialDestructor()) {
         const CXXDestructorDecl *D = ClassDecl->getDestructor(getContext());
         assert(D && "EmitLocalBlockVarDecl - destructor is nul");
-        assert(!Ty->getAs<ArrayType>() && "FIXME - destruction of arrays NYI");
-
+        
         CleanupScope scope(*this);
-        EmitCXXDestructorCall(D, Dtor_Complete, DeclPtr);
+        if (const ConstantArrayType *Array = 
+              getContext().getAsConstantArrayType(Ty)) {
+          QualType BaseElementTy = getContext().getBaseElementType(Array);
+          const llvm::Type *BasePtr = ConvertType(BaseElementTy);
+          BasePtr = llvm::PointerType::getUnqual(BasePtr);
+          llvm::Value *BaseAddrPtr =
+            Builder.CreateBitCast(DeclPtr, BasePtr);
+          EmitCXXAggrDestructorCall(D, Array, BaseAddrPtr);
+        }
+        else
+          EmitCXXDestructorCall(D, Dtor_Complete, DeclPtr);
       }
   }
 
