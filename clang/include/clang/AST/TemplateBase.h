@@ -274,10 +274,6 @@ public:
 
 #ifndef NDEBUG
   void validateForArgument(const TemplateArgument &Arg) {
-    // We permit empty data.  This should be removed when source info
-    // is being uniformly preserved.
-    if (Kind == K_None) return;
-
     switch (Arg.getKind()) {
     case TemplateArgument::Type:
       assert(Kind == K_DeclaratorInfo);
