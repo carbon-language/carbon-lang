@@ -551,7 +551,10 @@ const char *clang_getDeclSpelling(CXDecl AnonDecl)
     return OMD->getSelector().getAsString().c_str();
   }
   if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
-    return CIMP->getCategoryClass()->getName().data();
+    // No, this isn't the same as the code below. getIdentifier() is non-virtual
+    // and returns different names. NamedDecl returns the class name and
+    // ObjCCategoryImplDecl returns the category name.
+    return CIMP->getIdentifier()->getNameStart();
     
   if (ND->getIdentifier())
     return ND->getIdentifier()->getNameStart();

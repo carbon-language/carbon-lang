@@ -288,7 +288,7 @@ ObjCMethodDecl *ObjCMethodDecl::getNextRedeclaration() {
 
   } else if (ObjCCategoryImplDecl *CImplD =
                dyn_cast<ObjCCategoryImplDecl>(CtxD)) {
-    if (ObjCCategoryDecl *CatD = CImplD->getCategoryClass())
+    if (ObjCCategoryDecl *CatD = CImplD->getCategoryDecl())
       Redecl = CatD->getMethod(getSelector(), isInstanceMethod());
   }
 
@@ -306,7 +306,7 @@ ObjCMethodDecl *ObjCMethodDecl::getCanonicalDecl() {
 
   } else if (ObjCCategoryImplDecl *CImplD =
                dyn_cast<ObjCCategoryImplDecl>(CtxD)) {
-    if (ObjCCategoryDecl *CatD = CImplD->getCategoryClass())
+    if (ObjCCategoryDecl *CatD = CImplD->getCategoryDecl())
       if (ObjCMethodDecl *MD = CatD->getMethod(getSelector(),
                                                isInstanceMethod()))
         return MD;
@@ -635,7 +635,7 @@ ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ObjCCategoryImplDecl(DC, L, Id, ClassInterface);
 }
 
-ObjCCategoryDecl *ObjCCategoryImplDecl::getCategoryClass() const {
+ObjCCategoryDecl *ObjCCategoryImplDecl::getCategoryDecl() const {
   return getClassInterface()->FindCategoryDeclaration(getIdentifier());
 }
 
