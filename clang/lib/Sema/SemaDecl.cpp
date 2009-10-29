@@ -3769,6 +3769,9 @@ Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope,
 }
 
 Sema::DeclPtrTy Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclPtrTy D) {
+  // Clear the last template instantiation error context.
+  LastTemplateInstantiationErrorContext = ActiveTemplateInstantiation();
+  
   if (!D)
     return D;
   FunctionDecl *FD = 0;

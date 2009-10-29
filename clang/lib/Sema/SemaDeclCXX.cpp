@@ -1123,7 +1123,7 @@ Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
 }
 
 void
-Sema::setBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
+Sema::SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                               CXXBaseOrMemberInitializer **Initializers,
                               unsigned NumInitializers,
                               llvm::SmallVectorImpl<CXXBaseSpecifier *>& Bases,
@@ -1179,7 +1179,7 @@ Sema::setBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
           AllBaseFields.lookup(VBase->getType()->getAs<RecordType>())) {
         CXXRecordDecl *BaseDecl =
           cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
-        assert(BaseDecl && "setBaseOrMemberInitializers - BaseDecl null");
+        assert(BaseDecl && "SetBaseOrMemberInitializers - BaseDecl null");
         if (CXXConstructorDecl *Ctor = BaseDecl->getDefaultConstructor(Context))
           MarkDeclarationReferenced(Value->getSourceLocation(), Ctor);
         AllToInit.push_back(Value);
@@ -1187,18 +1187,26 @@ Sema::setBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       else {
         CXXRecordDecl *VBaseDecl =
         cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
-        assert(VBaseDecl && "setBaseOrMemberInitializers - VBaseDecl null");
+        assert(VBaseDecl && "SetBaseOrMemberInitializers - VBaseDecl null");
         CXXConstructorDecl *Ctor = VBaseDecl->getDefaultConstructor(Context);
-        if (!Ctor)
+        if (!Ctor) {
           Bases.push_back(VBase);
-        else
-          MarkDeclarationReferenced(Constructor->getLocation(), Ctor);
+          continue;
+        }
 
+        ASTOwningVector<&ActionBase::DeleteExpr> CtorArgs(*this);
+        if (CompleteConstructorCall(Ctor, MultiExprArg(*this, 0, 0), 
+                                    Constructor->getLocation(), CtorArgs))
+          continue;
+        
+        MarkDeclarationReferenced(Constructor->getLocation(), Ctor);
+        
         CXXBaseOrMemberInitializer *Member =
-        new (Context) CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,
-                                    Ctor,
-                                    SourceLocation(),
-                                    SourceLocation());
+          new (Context) CXXBaseOrMemberInitializer(VBase->getType(),
+                                                   CtorArgs.takeAs<Expr>(),
+                                                   CtorArgs.size(), Ctor,
+                                                   SourceLocation(),
+                                                   SourceLocation());
         AllToInit.push_back(Member);
       }
     }
@@ -1216,7 +1224,7 @@ Sema::setBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
           AllBaseFields.lookup(Base->getType()->getAs<RecordType>())) {
         CXXRecordDecl *BaseDecl =
           cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-        assert(BaseDecl && "setBaseOrMemberInitializers - BaseDecl null");
+        assert(BaseDecl && "SetBaseOrMemberInitializers - BaseDecl null");
         if (CXXConstructorDecl *Ctor = BaseDecl->getDefaultConstructor(Context))
           MarkDeclarationReferenced(Value->getSourceLocation(), Ctor);
         AllToInit.push_back(Value);
@@ -1224,18 +1232,26 @@ Sema::setBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       else {
         CXXRecordDecl *BaseDecl =
           cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-        assert(BaseDecl && "setBaseOrMemberInitializers - BaseDecl null");
+        assert(BaseDecl && "SetBaseOrMemberInitializers - BaseDecl null");
          CXXConstructorDecl *Ctor = BaseDecl->getDefaultConstructor(Context);
-        if (!Ctor)
+        if (!Ctor) {
           Bases.push_back(Base);
-        else
-          MarkDeclarationReferenced(Constructor->getLocation(), Ctor);
+          continue;
+        }
+
+        ASTOwningVector<&ActionBase::DeleteExpr> CtorArgs(*this);
+        if (CompleteConstructorCall(Ctor, MultiExprArg(*this, 0, 0), 
+                                     Constructor->getLocation(), CtorArgs))
+          continue;
+        
+        MarkDeclarationReferenced(Constructor->getLocation(), Ctor);
 
         CXXBaseOrMemberInitializer *Member =
-        new (Context) CXXBaseOrMemberInitializer(Base->getType(), 0, 0,
-                                      BaseDecl->getDefaultConstructor(Context),
-                                      SourceLocation(),
-                                      SourceLocation());
+          new (Context) CXXBaseOrMemberInitializer(Base->getType(),
+                                                   CtorArgs.takeAs<Expr>(),
+                                                   CtorArgs.size(), Ctor,
+                                                   SourceLocation(),
+                                                   SourceLocation());
         AllToInit.push_back(Member);
       }
     }
@@ -1268,7 +1284,7 @@ Sema::setBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
       QualType FT = (*Field)->getType();
       if (const RecordType* RT = FT->getAs<RecordType>()) {
         CXXRecordDecl *FieldRecDecl = cast<CXXRecordDecl>(RT->getDecl());
-        assert(FieldRecDecl && "setBaseOrMemberInitializers - BaseDecl null");
+        assert(FieldRecDecl && "SetBaseOrMemberInitializers - BaseDecl null");
         if (CXXConstructorDecl *Ctor =
               FieldRecDecl->getDefaultConstructor(Context))
           MarkDeclarationReferenced(Value->getSourceLocation(), Ctor);
@@ -1281,13 +1297,22 @@ Sema::setBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
     if (const RecordType* RT = FT->getAs<RecordType>()) {
       CXXConstructorDecl *Ctor =
         cast<CXXRecordDecl>(RT->getDecl())->getDefaultConstructor(Context);
-      if (!Ctor && !FT->isDependentType())
+      if (!Ctor && !FT->isDependentType()) {
         Fields.push_back(*Field);
+        continue;
+      }
+      
+      ASTOwningVector<&ActionBase::DeleteExpr> CtorArgs(*this);
+      if (CompleteConstructorCall(Ctor, MultiExprArg(*this, 0, 0), 
+                                  Constructor->getLocation(), CtorArgs))
+        continue;
+      
       CXXBaseOrMemberInitializer *Member =
-      new (Context) CXXBaseOrMemberInitializer((*Field), 0, 0,
-                                         Ctor,
-                                         SourceLocation(),
-                                         SourceLocation());
+        new (Context) CXXBaseOrMemberInitializer(*Field,CtorArgs.takeAs<Expr>(),
+                                                 CtorArgs.size(), Ctor,
+                                                 SourceLocation(),
+                                                 SourceLocation());
+
       AllToInit.push_back(Member);
       if (Ctor)
         MarkDeclarationReferenced(Constructor->getLocation(), Ctor);
@@ -1327,10 +1352,10 @@ Sema::BuildBaseOrMemberInitializers(ASTContext &C,
                                  CXXBaseOrMemberInitializer **Initializers,
                                  unsigned NumInitializers
                                  ) {
-  llvm::SmallVector<CXXBaseSpecifier *, 4>Bases;
-  llvm::SmallVector<FieldDecl *, 4>Members;
+  llvm::SmallVector<CXXBaseSpecifier *, 4> Bases;
+  llvm::SmallVector<FieldDecl *, 4> Members;
 
-  setBaseOrMemberInitializers(Constructor,
+  SetBaseOrMemberInitializers(Constructor,
                               Initializers, NumInitializers, Bases, Members);
   for (unsigned int i = 0; i < Bases.size(); i++)
     Diag(Bases[i]->getSourceRange().getBegin(),

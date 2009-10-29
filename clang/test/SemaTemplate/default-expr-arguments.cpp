@@ -84,3 +84,27 @@ struct X1 {
 void test_X1() {
   X1<int> x1;
 }
+
+// PR5283
+namespace PR5283 {
+template<typename T> struct A {
+  A(T = 1); // expected-error 3 {{incompatible type initializing 'int', expected 'int *'}}
+};
+
+struct B : A<int*> { 
+  B();
+};
+B::B() { } // expected-note {{in instantiation of default function argument expression for 'A<int *>' required he}}
+
+struct C : virtual A<int*> {
+  C();
+};
+C::C() { } // expected-note {{in instantiation of default function argument expression for 'A<int *>' required he}}
+
+struct D {
+  D();
+  
+  A<int*> a;
+};
+D::D() { } // expected-note {{in instantiation of default function argument expression for 'A<int *>' required he}}
+}

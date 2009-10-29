@@ -2304,7 +2304,7 @@ public:
                                      SourceLocation RParenLoc,
                                      CXXRecordDecl *ClassDecl);
 
-  void setBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
+  void SetBaseOrMemberInitializers(CXXConstructorDecl *Constructor,
                               CXXBaseOrMemberInitializer **Initializers,
                               unsigned NumInitializers,
                               llvm::SmallVectorImpl<CXXBaseSpecifier *>& Bases,
