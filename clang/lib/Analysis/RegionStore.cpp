@@ -1630,6 +1630,8 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   // Process the "intermediate" roots to find if they are referenced by
   // real roots.
   llvm::SmallVector<RBDNode, 10> WorkList;
+  llvm::SmallVector<RBDNode, 10> Postponed;
+
   llvm::DenseSet<const MemRegion*> IntermediateVisited;
   
   while (!IntermediateRoots.empty()) {
@@ -1647,8 +1649,11 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
     }
     
     if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
-      if (SymReaper.isLive(SR->getSymbol()))
-        WorkList.push_back(std::make_pair(&state, SR));
+      llvm::SmallVectorImpl<RBDNode> &Q =      
+        SymReaper.isLive(SR->getSymbol()) ? WorkList : Postponed;
+      
+        Q.push_back(std::make_pair(&state, SR));
+
       continue;
     }
     
@@ -1667,6 +1672,7 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
   
   llvm::DenseSet<RBDNode> Visited;
   
+tryAgain:
   while (!WorkList.empty()) {
     RBDNode N = WorkList.back();
     WorkList.pop_back();
@@ -1739,6 +1745,21 @@ void RegionStoreManager::RemoveDeadBindings(GRState &state, Stmt* Loc,
       }
     }
   }
+  
+  // See if any postponed SymbolicRegions are actually live now, after
+  // having done a scan.
+  for (llvm::SmallVectorImpl<RBDNode>::iterator I = Postponed.begin(),
+       E = Postponed.end() ; I != E ; ++I) {    
+    if (const SymbolicRegion *SR = cast_or_null<SymbolicRegion>(I->second)) {
+      if (SymReaper.isLive(SR->getSymbol())) {
+        WorkList.push_back(*I);
+        I->second = NULL;
+      }
+    }
+  }
+  
+  if (!WorkList.empty())
+    goto tryAgain;
   
   // We have now scanned the store, marking reachable regions and symbols
   // as live.  We now remove all the regions that are dead from the store
