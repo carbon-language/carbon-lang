@@ -287,34 +287,6 @@ SourceLocation TemplateTemplateParmDecl::getDefaultArgumentLoc() const {
 }
 
 //===----------------------------------------------------------------------===//
-// TemplateArgument Implementation
-//===----------------------------------------------------------------------===//
-
-TemplateArgument::TemplateArgument(Expr *E) : Kind(Expression) {
-  TypeOrValue = reinterpret_cast<uintptr_t>(E);
-  StartLoc = E->getSourceRange().getBegin();
-}
-
-/// \brief Construct a template argument pack.
-void TemplateArgument::setArgumentPack(TemplateArgument *args, unsigned NumArgs,
-                                       bool CopyArgs) {
-  assert(isNull() && "Must call setArgumentPack on a null argument");
-
-  Kind = Pack;
-  Args.NumArgs = NumArgs;
-  Args.CopyArgs = CopyArgs;
-  if (!Args.CopyArgs) {
-    Args.Args = args;
-    return;
-  }
-
-  // FIXME: Allocate in ASTContext
-  Args.Args = new TemplateArgument[NumArgs];
-  for (unsigned I = 0; I != Args.NumArgs; ++I)
-    Args.Args[I] = args[I];
-}
-
-//===----------------------------------------------------------------------===//
 // TemplateArgumentListBuilder Implementation
 //===----------------------------------------------------------------------===//
 

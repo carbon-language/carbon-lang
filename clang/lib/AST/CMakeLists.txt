@@ -26,6 +26,7 @@ add_clang_library(clangAST
   StmtPrinter.cpp
   StmtProfile.cpp
   StmtViz.cpp
+  TemplateBase.cpp
   TemplateName.cpp
   Type.cpp
   TypeLoc.cpp
