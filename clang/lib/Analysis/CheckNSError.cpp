@@ -210,6 +210,7 @@ void NSErrorCheck::CheckParamDeref(const VarDecl *Param,
 
   // Iterate over the implicit-null dereferences.
   NullDerefChecker *Checker = Eng.getChecker<NullDerefChecker>();
+  assert(Checker && "NullDerefChecker not exist.");
   for (NullDerefChecker::iterator I = Checker->implicit_nodes_begin(),
          E = Checker->implicit_nodes_end(); I != E; ++I) {
 
