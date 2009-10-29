@@ -9,6 +9,7 @@
 
 #include "clang/Driver/Types.h"
 
+#include "llvm/ADT/StringSwitch.h"
 #include <string.h>
 #include <cassert>
 
@@ -102,51 +103,42 @@ bool types::isCXX(ID Id) {
 }
 
 types::ID types::lookupTypeForExtension(const char *Ext) {
-  unsigned N = strlen(Ext);
-
-  switch (N) {
-  case 1:
-    if (memcmp(Ext, "c", 1) == 0) return TY_C;
-    if (memcmp(Ext, "i", 1) == 0) return TY_PP_C;
-    if (memcmp(Ext, "m", 1) == 0) return TY_ObjC;
-    if (memcmp(Ext, "M", 1) == 0) return TY_ObjCXX;
-    if (memcmp(Ext, "h", 1) == 0) return TY_CHeader;
-    if (memcmp(Ext, "C", 1) == 0) return TY_CXX;
-    if (memcmp(Ext, "H", 1) == 0) return TY_CXXHeader;
-    if (memcmp(Ext, "f", 1) == 0) return TY_PP_Fortran;
-    if (memcmp(Ext, "F", 1) == 0) return TY_Fortran;
-    if (memcmp(Ext, "s", 1) == 0) return TY_PP_Asm;
-    if (memcmp(Ext, "S", 1) == 0) return TY_Asm;
-  case 2:
-    if (memcmp(Ext, "ii", 2) == 0) return TY_PP_CXX;
-    if (memcmp(Ext, "mi", 2) == 0) return TY_PP_ObjC;
-    if (memcmp(Ext, "mm", 2) == 0) return TY_ObjCXX;
-    if (memcmp(Ext, "cc", 2) == 0) return TY_CXX;
-    if (memcmp(Ext, "cc", 2) == 0) return TY_CXX;
-    if (memcmp(Ext, "cp", 2) == 0) return TY_CXX;
-    if (memcmp(Ext, "hh", 2) == 0) return TY_CXXHeader;
-    break;
-  case 3:
-    if (memcmp(Ext, "ads", 3) == 0) return TY_Ada;
-    if (memcmp(Ext, "adb", 3) == 0) return TY_Ada;
-    if (memcmp(Ext, "ast", 3) == 0) return TY_AST;
-    if (memcmp(Ext, "cxx", 3) == 0) return TY_CXX;
-    if (memcmp(Ext, "cpp", 3) == 0) return TY_CXX;
-    if (memcmp(Ext, "CPP", 3) == 0) return TY_CXX;
-    if (memcmp(Ext, "cXX", 3) == 0) return TY_CXX;
-    if (memcmp(Ext, "for", 3) == 0) return TY_PP_Fortran;
-    if (memcmp(Ext, "FOR", 3) == 0) return TY_PP_Fortran;
-    if (memcmp(Ext, "fpp", 3) == 0) return TY_Fortran;
-    if (memcmp(Ext, "FPP", 3) == 0) return TY_Fortran;
-    if (memcmp(Ext, "f90", 3) == 0) return TY_PP_Fortran;
-    if (memcmp(Ext, "f95", 3) == 0) return TY_PP_Fortran;
-    if (memcmp(Ext, "F90", 3) == 0) return TY_Fortran;
-    if (memcmp(Ext, "F95", 3) == 0) return TY_Fortran;
-    if (memcmp(Ext, "mii", 3) == 0) return TY_PP_ObjCXX;
-    break;
-  }
-
-  return TY_INVALID;
+  return llvm::StringSwitch<types::ID>(Ext)
+           .Case("c", TY_C)
+           .Case("i", TY_PP_C)
+           .Case("m", TY_ObjC)
+           .Case("M", TY_ObjCXX)
+           .Case("h", TY_CHeader)
+           .Case("C", TY_CXX)
+           .Case("H", TY_CXXHeader)
+           .Case("f", TY_PP_Fortran)
+           .Case("F", TY_Fortran)
+           .Case("s", TY_PP_Asm)
+           .Case("S", TY_Asm)
+           .Case("ii", TY_PP_CXX)
+           .Case("mi", TY_PP_ObjC)
+           .Case("mm", TY_ObjCXX)
+           .Case("cc", TY_CXX)
+           .Case("CC", TY_CXX)
+           .Case("cp", TY_CXX)
+           .Case("hh", TY_CXXHeader)
+           .Case("ads", TY_Ada)
+           .Case("adb", TY_Ada)
+           .Case("ast", TY_AST)
+           .Case("cxx", TY_CXX)
+           .Case("cpp", TY_CXX)
+           .Case("CPP", TY_CXX)
+           .Case("CXX", TY_CXX)
+           .Case("for", TY_PP_Fortran)
+           .Case("FOR", TY_PP_Fortran)
+           .Case("fpp", TY_Fortran)
+           .Case("FPP", TY_Fortran)
+           .Case("f90", TY_PP_Fortran)
+           .Case("f95", TY_PP_Fortran)
+           .Case("F90", TY_Fortran)
+           .Case("F95", TY_Fortran)
+           .Case("mii", TY_PP_ObjCXX)
+           .Default(TY_INVALID);
 }
 
 types::ID types::lookupTypeForTypeSpecifier(const char *Name) {

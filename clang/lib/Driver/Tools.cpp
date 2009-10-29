@@ -22,6 +22,7 @@
 #include "clang/Driver/Util.h"
 
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1667,23 +1668,18 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 static bool isSourceSuffix(const char *Str) {
   // match: 'C', 'CPP', 'c', 'cc', 'cp', 'c++', 'cpp', 'cxx', 'm',
   // 'mm'.
-  switch (strlen(Str)) {
-  default:
-    return false;
-  case 1:
-    return (memcmp(Str, "C", 1) == 0 ||
-            memcmp(Str, "c", 1) == 0 ||
-            memcmp(Str, "m", 1) == 0);
-  case 2:
-    return (memcmp(Str, "cc", 2) == 0 ||
-            memcmp(Str, "cp", 2) == 0 ||
-            memcmp(Str, "mm", 2) == 0);
-  case 3:
-    return (memcmp(Str, "CPP", 3) == 0 ||
-            memcmp(Str, "c++", 3) == 0 ||
-            memcmp(Str, "cpp", 3) == 0 ||
-            memcmp(Str, "cxx", 3) == 0);
-  }
+  return llvm::StringSwitch<bool>(Str)
+           .Case("C", true)
+           .Case("c", true)
+           .Case("m", true)
+           .Case("cc", true)
+           .Case("cp", true)
+           .Case("mm", true)
+           .Case("CPP", true)
+           .Case("c++", true)
+           .Case("cpp", true)
+           .Case("cxx", true)
+           .Default(false);
 }
 
 // FIXME: Can we tablegen this?
