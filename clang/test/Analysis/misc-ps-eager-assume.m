@@ -77,3 +77,46 @@ void pr3836(int *a, int *b) {
   *a = 1; // no-warning
   *b = 1; // no-warning
 }
+
+
+//===---------------------------------------------------------------------===//
+// <rdar://problem/7342806>
+// This false positive occured because the symbolic constraint on a short was
+// not maintained via sign extension.  The analyzer doesn't properly handle
+// the sign extension, but now tracks the constraint.  This particular
+// case relies on -analyzer-eagerly-assume because of the expression
+// 'Flag1 != Count > 0'.
+//===---------------------------------------------------------------------===//
+
+void rdar7342806_aux(short x);
+
+void rdar7342806() {
+  extern short Count;
+  extern short Flag1;
+
+  short *Pointer = 0;
+  short  Flag2   = !!Pointer;   // Flag2 is false (0).
+  short  Ok      = 1;
+  short  Which;
+
+  if( Flag1 != Count > 0 )
+    // Static analyzer skips this so either
+    //   Flag1 is true and Count > 0
+    // or
+    //   Flag1 is false and Count <= 0
+    Ok = 0;
+
+  if( Flag1 != Flag2 )
+    // Analyzer skips this so Flag1 and Flag2 have the
+    // same value, both are false because Flag2 is false. And
+    // from that we know Count must be <= 0.
+    Ok = 0;
+
+  for( Which = 0;
+         Which < Count && Ok;
+           Which++ )
+    // This statement can only execute if Count > 0 which can only
+    // happen when Flag1 and Flag2 are both true and Flag2 will only
+    // be true when Pointer is not NULL.
+    rdar7342806_aux(*Pointer); // no-warning
+}
