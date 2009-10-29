@@ -277,29 +277,55 @@ static void AntiDepPathStep(SUnit *SU, std::vector<SDep*>& Edges) {
   }
 }
 
+void AggressiveAntiDepBreaker::HandleLastUse(unsigned Reg, unsigned KillIdx,
+                                             const char *tag) {
+  unsigned *KillIndices = State->GetKillIndices();
+  unsigned *DefIndices = State->GetDefIndices();
+  std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>& 
+    RegRefs = State->GetRegRefs();
+
+  if (!State->IsLive(Reg)) {
+    KillIndices[Reg] = KillIdx;
+    DefIndices[Reg] = ~0u;
+    RegRefs.erase(Reg);
+    State->LeaveGroup(Reg);
+    DEBUG(errs() << "->g" << State->GetGroup(Reg) << tag);
+  }
+  // Repeat for subregisters.
+  for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+       *Subreg; ++Subreg) {
+    unsigned SubregReg = *Subreg;
+    if (!State->IsLive(SubregReg)) {
+      KillIndices[SubregReg] = KillIdx;
+      DefIndices[SubregReg] = ~0u;
+      RegRefs.erase(SubregReg);
+      State->LeaveGroup(SubregReg);
+      DEBUG(errs() << " " << TRI->getName(SubregReg) << "->g" <<
+            State->GetGroup(SubregReg) << tag);
+    }
+  }
+}
+
 void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI, unsigned Count,
                                               std::set<unsigned>& PassthruRegs) {
   unsigned *DefIndices = State->GetDefIndices();
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>& 
     RegRefs = State->GetRegRefs();
 
-  // Scan the register defs for this instruction and update
-  // live-ranges, groups and RegRefs.
+  // Handle dead defs by simulating a last-use of the register just
+  // after the def. A dead def can occur because the def is truely
+  // dead, or because only a subregister is live at the def. If we
+  // don't do this the dead def will be incorrectly merged into the
+  // previous def.
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg() || !MO.isDef()) continue;
     unsigned Reg = MO.getReg();
     if (Reg == 0) continue;
-    // Ignore passthru registers for liveness...
-    if (PassthruRegs.count(Reg) != 0) continue;
-
-    // Update Def for Reg and subregs.
-    DefIndices[Reg] = Count;
-    for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
-         *Subreg; ++Subreg) {
-      unsigned SubregReg = *Subreg;
-      DefIndices[SubregReg] = Count;
-    }
+    
+    DEBUG(errs() << "\tDead Def: " << TRI->getName(Reg));
+    HandleLastUse(Reg, Count + 1, "");
+    DEBUG(errs() << '\n');
   }
 
   DEBUG(errs() << "\tDef Groups:");
@@ -311,7 +337,7 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI, unsigned Cou
 
     DEBUG(errs() << " " << TRI->getName(Reg) << "=g" << State->GetGroup(Reg)); 
 
-    // If MI's defs have special allocation requirement, don't allow
+    // If MI's defs have a special allocation requirement, don't allow
     // any def registers to be changed. Also assume all registers
     // defined in a call must not be changed (ABI).
     if (MI->getDesc().isCall() || MI->getDesc().hasExtraDefRegAllocReq()) {
@@ -320,7 +346,7 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI, unsigned Cou
     }
 
     // Any aliased that are live at this point are completely or
-    // partially defined here, so group those subregisters with Reg.
+    // partially defined here, so group those aliases with Reg.
     for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
       unsigned AliasReg = *Alias;
       if (State->IsLive(AliasReg)) {
@@ -339,13 +365,30 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI, unsigned Cou
   }
 
   DEBUG(errs() << '\n');
+
+  // Scan the register defs for this instruction and update
+  // live-ranges.
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || !MO.isDef()) continue;
+    unsigned Reg = MO.getReg();
+    if (Reg == 0) continue;
+    // Ignore passthru registers for liveness...
+    if (PassthruRegs.count(Reg) != 0) continue;
+
+    // Update def for Reg and subregs.
+    DefIndices[Reg] = Count;
+    for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+         *Subreg; ++Subreg) {
+      unsigned SubregReg = *Subreg;
+      DefIndices[SubregReg] = Count;
+    }
+  }
 }
 
 void AggressiveAntiDepBreaker::ScanInstruction(MachineInstr *MI,
                                            unsigned Count) {
   DEBUG(errs() << "\tUse Groups:");
-  unsigned *KillIndices = State->GetKillIndices();
-  unsigned *DefIndices = State->GetDefIndices();
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>& 
     RegRefs = State->GetRegRefs();
 
@@ -363,26 +406,7 @@ void AggressiveAntiDepBreaker::ScanInstruction(MachineInstr *MI,
     // It wasn't previously live but now it is, this is a kill. Forget
     // the previous live-range information and start a new live-range
     // for the register.
-    if (!State->IsLive(Reg)) {
-      KillIndices[Reg] = Count;
-      DefIndices[Reg] = ~0u;
-      RegRefs.erase(Reg);
-      State->LeaveGroup(Reg);
-      DEBUG(errs() << "->g" << State->GetGroup(Reg) << "(last-use)");
-    }
-    // Repeat, for subregisters.
-    for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
-         *Subreg; ++Subreg) {
-      unsigned SubregReg = *Subreg;
-      if (!State->IsLive(SubregReg)) {
-        KillIndices[SubregReg] = Count;
-        DefIndices[SubregReg] = ~0u;
-        RegRefs.erase(SubregReg);
-        State->LeaveGroup(SubregReg);
-        DEBUG(errs() << " " << TRI->getName(SubregReg) << "->g" <<
-              State->GetGroup(SubregReg) << "(last-use)");
-      }
-    }
+    HandleLastUse(Reg, Count, "(last-use)");
 
     // If MI's uses have special allocation requirement, don't allow
     // any use registers to be changed. Also assume all registers
@@ -511,6 +535,7 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
   }
 
   // FIXME: for now just handle single register in group case...
+  // FIXME: check only regs that have references...
   if (Regs.size() > 1)
     return false;
 

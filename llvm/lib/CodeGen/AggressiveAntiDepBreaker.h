@@ -159,6 +159,7 @@ namespace llvm {
     /// return that register and all subregisters.
     void GetPassthruRegs(MachineInstr *MI, std::set<unsigned>& PassthruRegs);
 
+    void HandleLastUse(unsigned Reg, unsigned KillIdx, const char *tag);
     void PrescanInstruction(MachineInstr *MI, unsigned Count,
                             std::set<unsigned>& PassthruRegs);
     void ScanInstruction(MachineInstr *MI, unsigned Count);
