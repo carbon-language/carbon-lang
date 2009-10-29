@@ -106,8 +106,6 @@ static bool ResolveParsedLocation(ParsedSourceLocation &ParsedLoc,
 /// anything.
 llvm::Timer *ClangFrontendTimer = 0;
 
-static bool HadErrors = false;
-
 static llvm::cl::opt<bool>
 Verbose("v", llvm::cl::desc("Enable verbose output"));
 static llvm::cl::opt<bool>
@@ -1853,8 +1851,8 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                                         Features, Context));
 
     if (!Consumer.get()) {
-      fprintf(stderr, "Unexpected program action!\n");
-      HadErrors = true;
+      PP.getDiagnostics().Report(FullSourceLoc(),
+                                 diag::err_fe_invalid_ast_action);
       return;
     }
 
@@ -2165,11 +2163,9 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   // handles.  Also, we don't want to try to erase an open file.
   OS.reset();
 
-  if ((HadErrors || (PP.getDiagnostics().getNumErrors() != 0)) &&
-      !OutPath.isEmpty()) {
-    // If we had errors, try to erase the output file.
+  // If we had errors, try to erase the output file.
+  if (PP.getDiagnostics().getNumErrors() && !OutPath.isEmpty())
     OutPath.eraseFromDisk();
-  }
 }
 
 /// ProcessInputFile - Process a single AST input file with the specified state.
@@ -2224,11 +2220,9 @@ static void ProcessASTInputFile(const std::string &InFile, ProgActions PA,
   // handles.  Also, we don't want to try to erase an open file.
   OS.reset();
 
-  if ((HadErrors || (PP.getDiagnostics().getNumErrors() != 0)) &&
-      !OutPath.isEmpty()) {
-    // If we had errors, try to erase the output file.
+  // If we had errors, try to erase the output file.
+  if (PP.getDiagnostics().getNumErrors() && !OutPath.isEmpty())
     OutPath.eraseFromDisk();
-  }
 }
 
 static llvm::cl::list<std::string>
@@ -2290,9 +2284,9 @@ int main(int argc, char **argv) {
     if (MessageLength.getNumOccurrences() == 0)
       MessageLength.setValue(llvm::sys::Process::StandardErrColumns());
 
-    if (!NoColorDiagnostic) {
-      NoColorDiagnostic.setValue(!llvm::sys::Process::StandardErrHasColors());
-    }
+    // Disable color diagnostics if not supported on stderr.
+    if (!NoColorDiagnostic && !llvm::sys::Process::StandardErrHasColors())
+      NoColorDiagnostic.setValue(true);
 
     DiagClient.reset(new TextDiagnosticPrinter(llvm::errs(),
                                                !NoShowColumn,
@@ -2397,26 +2391,21 @@ int main(int argc, char **argv) {
                                         *SourceMgr.get(), HeaderInfo);
 
     llvm::OwningPtr<Preprocessor> PP(PPFactory.CreatePreprocessor());
-
     if (!PP)
       continue;
 
-    // Handle generating dependencies, if requested
+    // Handle generating dependencies, if requested.
     if (!DependencyFile.empty()) {
-      llvm::raw_ostream *DependencyOS;
       if (DependencyTargets.empty()) {
-        // FIXME: Use a proper diagnostic
-        llvm::errs() << "-dependency-file requires at least one -MT option\n";
-        HadErrors = true;
+        Diags.Report(FullSourceLoc(), diag::err_fe_dependency_file_requires_MT);
         continue;
       }
       std::string ErrStr;
-      DependencyOS =
+      llvm::raw_ostream *DependencyOS =
           new llvm::raw_fd_ostream(DependencyFile.c_str(), ErrStr);
       if (!ErrStr.empty()) {
-        // FIXME: Use a proper diagnostic
-        llvm::errs() << "unable to open dependency file: " + ErrStr;
-        HadErrors = true;
+        Diags.Report(FullSourceLoc(), diag::err_fe_error_opening)
+          << DependencyFile << ErrStr;
         continue;
       }
 
@@ -2465,5 +2454,5 @@ int main(int argc, char **argv) {
   // -time-passes usable.
   llvm::llvm_shutdown();
 
-  return HadErrors || (Diags.getNumErrors() != 0);
+  return (Diags.getNumErrors() != 0);
 }

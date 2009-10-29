@@ -12,6 +12,7 @@ let Component = "Frontend" in {
 def err_fe_unknown_triple : Error<
   "unknown target triple '%0', please use -triple or -arch">;
 def err_fe_unknown_target_abi : Error<"unknown target ABI '%0'">;
+def err_fe_error_opening : Error<"error opening '%0': %1">;
 def err_fe_error_reading : Error<"error reading '%0'">;
 def err_fe_error_reading_stdin : Error<"error reading stdin">;
 def err_fe_error_backend : Error<"error in backend: %0">, DefaultFatal;
@@ -19,6 +20,8 @@ def err_fe_invalid_ast_file : Error<"invalid AST file: '%0'">, DefaultFatal;
 def err_fe_invalid_ast_action : Error<"invalid action for AST input">, DefaultFatal;
 def err_fe_invalid_code_complete_file 
   : Error<"cannot locate code-completion file %0">, DefaultFatal;
+def err_fe_dependency_file_requires_MT : Error<
+    "-dependency-file requires at least one -MT option">;
 
 def note_fixit_applied : Note<"FIX-IT applied suggested code changes">;
 def note_fixit_in_macro : Note<
