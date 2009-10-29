@@ -1919,7 +1919,7 @@ void TreeTransform<Derived>::InventTemplateArgumentLoc(
   case TemplateArgument::Declaration:
   case TemplateArgument::Integral:
   case TemplateArgument::Pack:
-    Output = TemplateArgumentLoc(Arg);
+    Output = TemplateArgumentLoc(Arg, TemplateArgumentLocInfo());
     break;
   }
 }
@@ -1956,7 +1956,20 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     Decl *D = getDerived().TransformDecl(Arg.getAsDecl());
     if (!D) return true;
 
-    Output = TemplateArgumentLoc(TemplateArgument(D));
+    Expr *SourceExpr = Input.getSourceDeclExpression();
+    if (SourceExpr) {
+      EnterExpressionEvaluationContext Unevaluated(getSema(),
+                                                   Action::Unevaluated);
+      Sema::OwningExprResult E = getDerived().TransformExpr(SourceExpr);
+      if (E.isInvalid())
+        SourceExpr = NULL;
+      else {
+        SourceExpr = E.takeAs<Expr>();
+        SourceExpr->Retain();
+      }
+    }
+
+    Output = TemplateArgumentLoc(TemplateArgument(D), SourceExpr);
     return false;
   }
 
@@ -1973,6 +1986,7 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     if (E.isInvalid()) return true;
 
     Expr *ETaken = E.takeAs<Expr>();
+    ETaken->Retain();
     Output = TemplateArgumentLoc(TemplateArgument(ETaken), ETaken);
     return false;
   }
@@ -1987,18 +2001,18 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
       // FIXME: preserve source information here when we start
       // caring about parameter packs.
 
-      TemplateArgumentLoc Input;
-      TemplateArgumentLoc Output;
-      getDerived().InventTemplateArgumentLoc(*A, Input);
-      if (getDerived().TransformTemplateArgument(Input, Output))
+      TemplateArgumentLoc InputArg;
+      TemplateArgumentLoc OutputArg;
+      getDerived().InventTemplateArgumentLoc(*A, InputArg);
+      if (getDerived().TransformTemplateArgument(InputArg, OutputArg))
         return true;
 
-      TransformedArgs.push_back(Output.getArgument());
+      TransformedArgs.push_back(OutputArg.getArgument());
     }
     TemplateArgument Result;
     Result.setArgumentPack(TransformedArgs.data(), TransformedArgs.size(),
                            true);
-    Output = TemplateArgumentLoc(Result);
+    Output = TemplateArgumentLoc(Result, Input.getLocInfo());
     return false;
   }
   }
@@ -2764,9 +2778,11 @@ QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
   TemplateSpecializationTypeLoc TL
     = TLB.push<TemplateSpecializationTypeLoc>(QualType(TST, 0));
 
-  TL.setTemplateNameLoc(getDerived().getBaseLocation());
-  TL.setLAngleLoc(SourceLocation());
-  TL.setRAngleLoc(SourceLocation());
+  SourceLocation BaseLoc = getDerived().getBaseLocation();
+
+  TL.setTemplateNameLoc(BaseLoc);
+  TL.setLAngleLoc(BaseLoc);
+  TL.setRAngleLoc(BaseLoc);
   for (unsigned i = 0, e = TL.getNumArgs(); i != e; ++i) {
     const TemplateArgument &TA = TST->getArg(i);
     TemplateArgumentLoc TAL;

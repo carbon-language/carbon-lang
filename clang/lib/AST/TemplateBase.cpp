@@ -78,20 +78,20 @@ void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
 // TemplateArgumentLoc Implementation
 //===----------------------------------------------------------------------===//
 
-SourceLocation TemplateArgumentLoc::getLocation() const {
+SourceRange TemplateArgumentLoc::getSourceRange() const {
   switch (Argument.getKind()) {
   case TemplateArgument::Expression:
-    return getSourceExpression()->getExprLoc();
-  case TemplateArgument::Type:
-    return getSourceDeclaratorInfo()->
-      getTypeLoc().getFullSourceRange().getBegin();
+    return getSourceExpression()->getSourceRange();
   case TemplateArgument::Declaration:
+    return getSourceDeclExpression()->getSourceRange();
+  case TemplateArgument::Type:
+    return getSourceDeclaratorInfo()->getTypeLoc().getFullSourceRange();
   case TemplateArgument::Integral:
   case TemplateArgument::Pack:
   case TemplateArgument::Null:
-    return SourceLocation();
+    return SourceRange();
   }
 
   // Silence bonus gcc warning.
-  return SourceLocation();
+  return SourceRange();
 }

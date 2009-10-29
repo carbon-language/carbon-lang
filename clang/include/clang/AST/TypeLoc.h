@@ -900,8 +900,30 @@ public:
     setRAngleLoc(Loc);
     setTemplateNameLoc(Loc);
 
-    for (unsigned i = 0, e = getNumArgs(); i != e; ++i)
-      getArgInfos()[i] = TemplateArgumentLocInfo();
+    for (unsigned i = 0, e = getNumArgs(); i != e; ++i) {
+      TemplateArgumentLocInfo Info;
+#ifndef NDEBUG
+      // If asserts are enabled, be sure to initialize the argument
+      // loc with the right kind of pointer.
+      switch (getTypePtr()->getArg(i).getKind()) {
+      case TemplateArgument::Expression:
+      case TemplateArgument::Declaration:
+        Info = TemplateArgumentLocInfo((Expr*) 0);
+        break;
+
+      case TemplateArgument::Type:
+        Info = TemplateArgumentLocInfo((DeclaratorInfo*) 0);
+        break;
+
+      case TemplateArgument::Integral:
+      case TemplateArgument::Pack:
+      case TemplateArgument::Null:
+        // K_None is fine.
+        break;
+      }
+#endif
+      getArgInfos()[i] = Info;
+    }
   }
 
   unsigned getExtraLocalDataSize() const {

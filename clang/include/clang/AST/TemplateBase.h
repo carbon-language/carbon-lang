@@ -239,7 +239,10 @@ public:
 /// Location information for a TemplateArgument.
 struct TemplateArgumentLocInfo {
 private:
-  void *Union;
+  union {
+    Expr *Expression;
+    DeclaratorInfo *Declarator;
+  };
 
 #ifndef NDEBUG
   enum Kind {
@@ -251,39 +254,33 @@ private:
 
 public:
   TemplateArgumentLocInfo()
-    : Union()
 #ifndef NDEBUG
-      , Kind(K_None) 
+    : Kind(K_None) 
 #endif
     {}
   
   TemplateArgumentLocInfo(DeclaratorInfo *DInfo)
-    : Union(DInfo)
+    : Declarator(DInfo)
 #ifndef NDEBUG
       , Kind(K_DeclaratorInfo) 
 #endif
     {}
   
   TemplateArgumentLocInfo(Expr *E)
-    : Union(E)
+    : Expression(E)
 #ifndef NDEBUG
       , Kind(K_Expression) 
 #endif
     {}
 
-  /// \brief Returns whether this 
-  bool empty() const {
-    return Union == NULL;
-  }
-
   DeclaratorInfo *getAsDeclaratorInfo() const {
     assert(Kind == K_DeclaratorInfo);
-    return reinterpret_cast<DeclaratorInfo*>(Union);
+    return Declarator;
   }
 
   Expr *getAsExpr() const {
     assert(Kind == K_Expression);
-    return reinterpret_cast<Expr*>(Union);
+    return Expression;
   }
 
 #ifndef NDEBUG
@@ -293,9 +290,9 @@ public:
       assert(Kind == K_DeclaratorInfo);
       break;
     case TemplateArgument::Expression:
+    case TemplateArgument::Declaration:
       assert(Kind == K_Expression);
       break;
-    case TemplateArgument::Declaration:
     case TemplateArgument::Integral:
     case TemplateArgument::Pack:
       assert(Kind == K_None);
@@ -313,14 +310,13 @@ class TemplateArgumentLoc {
   TemplateArgument Argument;
   TemplateArgumentLocInfo LocInfo;
 
-  friend class TemplateSpecializationTypeLoc;
+public:
+  TemplateArgumentLoc() {}
+
   TemplateArgumentLoc(const TemplateArgument &Argument,
                       TemplateArgumentLocInfo Opaque)
     : Argument(Argument), LocInfo(Opaque) {
   }
-
-public:
-  TemplateArgumentLoc() {}
 
   TemplateArgumentLoc(const TemplateArgument &Argument, DeclaratorInfo *DInfo)
     : Argument(Argument), LocInfo(DInfo) {
@@ -332,15 +328,13 @@ public:
     assert(Argument.getKind() == TemplateArgument::Expression);
   }
 
-  /// This is a temporary measure.
-  TemplateArgumentLoc(const TemplateArgument &Argument)
-    : Argument(Argument), LocInfo() {
-    assert(Argument.getKind() != TemplateArgument::Expression &&
-           Argument.getKind() != TemplateArgument::Type);
+  /// \brief - Fetches the start location of the argument.
+  SourceLocation getLocation() const {
+    return getSourceRange().getBegin();
   }
 
-  /// \brief - Fetches the start location of the argument, if possible.
-  SourceLocation getLocation() const;
+  /// \brief - Fetches the full source range of the argument.
+  SourceRange getSourceRange() const;
 
   const TemplateArgument &getArgument() const {
     return Argument;
@@ -352,13 +346,16 @@ public:
 
   DeclaratorInfo *getSourceDeclaratorInfo() const {
     assert(Argument.getKind() == TemplateArgument::Type);
-    if (LocInfo.empty()) return 0;
     return LocInfo.getAsDeclaratorInfo();
   }
 
   Expr *getSourceExpression() const {
     assert(Argument.getKind() == TemplateArgument::Expression);
-    if (LocInfo.empty()) return 0;
+    return LocInfo.getAsExpr();
+  }
+
+  Expr *getSourceDeclExpression() const {
+    assert(Argument.getKind() == TemplateArgument::Declaration);
     return LocInfo.getAsExpr();
   }
 };

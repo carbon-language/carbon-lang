@@ -1425,7 +1425,8 @@ bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
 
     // We have a template type parameter but the template argument
     // is not a type.
-    Diag(AL.getLocation(), diag::err_template_arg_must_be_type);
+    SourceRange SR = AL.getSourceRange();
+    Diag(SR.getBegin(), diag::err_template_arg_must_be_type) << SR;
     Diag(Param->getLocation(), diag::note_template_param_here);
 
     return true;
@@ -1558,8 +1559,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
           break;
 
         // FIXME: Subst default argument
-        // FIXME: preserve source information
-        Arg = TemplateArgumentLoc(TemplateArgument(TempParm->getDefaultArgument()));
+        Arg = TemplateArgumentLoc(TemplateArgument(TempParm->getDefaultArgument()),
+                                  TempParm->getDefaultArgument());
       }
     } else {
       // Retrieve the template argument produced by the user.
@@ -1646,11 +1647,12 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         // We warn specifically about this case, since it can be rather
         // confusing for users.
         QualType T = Arg.getArgument().getAsType();
+        SourceRange SR = Arg.getSourceRange();
         if (T->isFunctionType())
-          Diag(Arg.getLocation(), diag::err_template_arg_nontype_ambig)
-            << T;
+          Diag(SR.getBegin(), diag::err_template_arg_nontype_ambig)
+            << SR << T;
         else
-          Diag(Arg.getLocation(), diag::err_template_arg_must_be_expr);
+          Diag(SR.getBegin(), diag::err_template_arg_must_be_expr) << SR;
         Diag((*Param)->getLocation(), diag::note_template_param_here);
         Invalid = true;
         break;
