@@ -14,7 +14,7 @@
 // languages. This implementation expands the idea and removes any conditional
 // branches that can be proved redundant, not only those used in array bound
 // checks. With the SSI representation, each variable has a
-// constraint. By analyzing these constraints we can proof that a branch is
+// constraint. By analyzing these constraints we can prove that a branch is
 // redundant. When a branch is proved redundant it means that
 // one direction will always be taken; thus, we can change this branch into an
 // unconditional jump.
@@ -43,7 +43,7 @@ using namespace llvm;
 STATISTIC(NumBranchTested, "Number of conditional branches analyzed");
 STATISTIC(NumBranchRemoved, "Number of conditional branches removed");
 
-//namespace {
+namespace {
 
 class ABCD : public FunctionPass {
  public:
@@ -57,6 +57,7 @@ class ABCD : public FunctionPass {
   bool runOnFunction(Function &F);
 
  private:
+  /// Keep track of whether we've modified the program yet.
   bool modified;
 
   enum ProveResult {
@@ -151,8 +152,8 @@ class ABCD : public FunctionPass {
   /// minimum true and minimum reduced results are stored
   class MemoizedResultChart {
    public:
-     MemoizedResultChart() : max_false(NULL), min_true(NULL),
-			     min_reduced(NULL) {}
+     MemoizedResultChart()
+       : max_false(NULL), min_true(NULL), min_reduced(NULL) {}
 
     /// Returns the max false
     Bound *getFalse() const { return max_false; }
@@ -192,7 +193,7 @@ class ABCD : public FunctionPass {
   };
 
   /// This class stores the result found for a node of the graph,
-  /// so these results do not need to be recalculate and only searched for.
+  /// so these results do not need to be recalculated, only searched for.
   class MemoizedResult {
   public:
     /// Test if there is true result stored from b to a
@@ -244,9 +245,8 @@ class ABCD : public FunctionPass {
   /// we could infer a constraint v <= u + c in the source program.
   class Edge {
   public:
-    Edge(Value *V, APInt val, bool upper) : vertex(V), value(val),
-					    upper_bound(upper)
-    {}
+    Edge(Value *V, APInt val, bool upper)
+      : vertex(V), value(val), upper_bound(upper) {}
 
     Value *getVertex() const { return vertex; }
     const APInt &getValue() const { return value; }
@@ -439,7 +439,7 @@ class ABCD : public FunctionPass {
   SmallVector<PHINode *, 16> phis_to_remove;
 };
 
-//}  // end anonymous namespace.
+}  // end anonymous namespace.
 
 char ABCD::ID = 0;
 static RegisterPass<ABCD> X("abcd", "ABCD: Eliminating Array Bounds Checks on Demand");
@@ -600,7 +600,7 @@ void ABCD::fixPhi(BasicBlock *BB, BasicBlock *Succ) {
 
 /// Removes phis that have no predecessor
 void ABCD::removePhis() {
-  for (unsigned i = 0, end = phis_to_remove.size(); i < end; ++i) {
+  for (unsigned i = 0, e = phis_to_remove.size(); i != e; ++i) {
     PHINode *PN = phis_to_remove[i];
     PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
     PN->eraseFromParent();
@@ -666,9 +666,8 @@ void ABCD::createConstraintBinaryOperator(BinaryOperator *BO) {
       return;
   }
 
-  APInt MinusOne = APInt::getAllOnesValue(value.getBitWidth());
   inequality_graph.addEdge(I, BO, value, true);
-  inequality_graph.addEdge(BO, I, value * MinusOne, false);
+  inequality_graph.addEdge(BO, I, -value, false);
   createConstraintInstruction(I);
 }
 
@@ -728,10 +727,8 @@ void ABCD::createConstraintCmpInst(ICmpInst *ICI, TerminatorInst *TI) {
   PHINode *SIG_op1_t = NULL, *SIG_op1_f = NULL,
           *SIG_op2_t = NULL, *SIG_op2_f = NULL;
 
-  createConstraintSigInst(I_op1, BB_succ_t, BB_succ_f,
-                          &SIG_op1_t, &SIG_op1_f);
-  createConstraintSigInst(I_op2, BB_succ_t, BB_succ_f,
-                          &SIG_op2_t, &SIG_op2_f);
+  createConstraintSigInst(I_op1, BB_succ_t, BB_succ_f, &SIG_op1_t, &SIG_op1_f);
+  createConstraintSigInst(I_op2, BB_succ_t, BB_succ_f, &SIG_op2_t, &SIG_op2_f);
 
   int32_t width = cast<IntegerType>(V_op1->getType())->getBitWidth();
   APInt MinusOne = APInt::getAllOnesValue(width);
@@ -739,22 +736,22 @@ void ABCD::createConstraintCmpInst(ICmpInst *ICI, TerminatorInst *TI) {
 
   CmpInst::Predicate Pred = ICI->getPredicate();
   switch (Pred) {
-  case CmpInst::ICMP_SGT: // signed greater than
+  case CmpInst::ICMP_SGT:  // signed greater than
     createConstraintSigSig(SIG_op2_t, SIG_op1_t, MinusOne);
     createConstraintSigSig(SIG_op1_f, SIG_op2_f, Zero);
     break;
 
-  case CmpInst::ICMP_SGE: // signed greater or equal
+  case CmpInst::ICMP_SGE:  // signed greater or equal
     createConstraintSigSig(SIG_op2_t, SIG_op1_t, Zero);
     createConstraintSigSig(SIG_op1_f, SIG_op2_f, MinusOne);
     break;
 
-  case CmpInst::ICMP_SLT: // signed less than
+  case CmpInst::ICMP_SLT:  // signed less than
     createConstraintSigSig(SIG_op1_t, SIG_op2_t, MinusOne);
     createConstraintSigSig(SIG_op2_f, SIG_op1_f, Zero);
     break;
 
-  case CmpInst::ICMP_SLE: // signed less or equal
+  case CmpInst::ICMP_SLE:  // signed less or equal
     createConstraintSigSig(SIG_op1_t, SIG_op2_t, Zero);
     createConstraintSigSig(SIG_op2_f, SIG_op1_f, MinusOne);
     break;
@@ -776,7 +773,7 @@ void ABCD::createConstraintCmpInst(ICmpInst *ICI, TerminatorInst *TI) {
 /// a->b and a->c with weight 0 in the upper bound graph.
 void ABCD::createConstraintPHINode(PHINode *PN) {
   int32_t width = cast<IntegerType>(PN->getType())->getBitWidth();
-  for (unsigned i = 0, end = PN->getNumIncomingValues(); i < end; ++i) {
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     Value *V = PN->getIncomingValue(i);
     if (Instruction *I = dyn_cast<Instruction>(V)) {
       createConstraintInstruction(I);
@@ -815,9 +812,8 @@ void ABCD::createConstraintSigInst(Instruction *I_op, BasicBlock *BB_succ_t,
 void ABCD::createConstraintSigSig(PHINode *SIG_op1, PHINode *SIG_op2,
                                   APInt value) {
   if (SIG_op1 && SIG_op2) {
-    APInt MinusOne = APInt::getAllOnesValue(value.getBitWidth());
     inequality_graph.addEdge(SIG_op2, SIG_op1, value, true);
-    inequality_graph.addEdge(SIG_op1, SIG_op2, value * MinusOne, false);
+    inequality_graph.addEdge(SIG_op1, SIG_op2, -value, false);
   }
 }
 
@@ -918,7 +914,7 @@ void ABCD::updateMemDistance(Value *a, Value *b, Bound *bound, unsigned level,
   for (; begin != end ; ++begin) {
     if (((res >= Reduced) && (meet == max)) ||
        ((res == False) && (meet == min))) {
-        break;
+      break;
     }
     Edge *in = *begin;
     if (in->isUpperBound() == bound->isUpperBound()) {
@@ -1006,7 +1002,7 @@ void ABCD::MemoizedResult::updateBound(Value *b, Bound *bound,
 
 /// Adds an edge from V_from to V_to with weight value
 void ABCD::InequalityGraph::addEdge(Value *V_to, Value *V_from,
-                              APInt value, bool upper) {
+                                    APInt value, bool upper) {
   assert(V_from->getType() == V_to->getType());
   assert(cast<IntegerType>(V_from->getType())->getBitWidth() ==
          value.getBitWidth());
@@ -1093,9 +1089,9 @@ void ABCD::InequalityGraph::printEdge(raw_ostream &OS, Value *source,
 
 void ABCD::InequalityGraph::printName(raw_ostream &OS, Value *info) const {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(info)) {
-    OS << *CI->getValue().getRawData();
+    OS << *CI;
   } else {
-    if (info->getName() == "") {
+    if (!info->hasName()) {
       info->setName("V");
     }
     OS << info->getNameStr();
