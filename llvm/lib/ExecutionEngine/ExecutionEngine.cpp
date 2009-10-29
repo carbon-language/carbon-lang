@@ -760,8 +760,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       Result.PointerVal = 0;
     else if (const Function *F = dyn_cast<Function>(C))
       Result = PTOGV(getPointerToFunctionOrStub(const_cast<Function*>(F)));
-    else if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(C))
+    else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
       Result = PTOGV(getOrEmitGlobalVariable(const_cast<GlobalVariable*>(GV)));
+    else if (const BlockAddress *BA = dyn_cast<BlockAddress>(C))
+      Result = PTOGV(getPointerToBasicBlock(const_cast<BasicBlock*>(
+                                                        BA->getBasicBlock())));
     else
       llvm_unreachable("Unknown constant pointer type!");
     break;

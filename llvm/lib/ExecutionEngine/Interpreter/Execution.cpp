@@ -572,9 +572,9 @@ void Interpreter::exitCalled(GenericValue GV) {
   // runAtExitHandlers() assumes there are no stack frames, but
   // if exit() was called, then it had a stack frame. Blow away
   // the stack before interpreting atexit handlers.
-  ECStack.clear ();
-  runAtExitHandlers ();
-  exit (GV.IntVal.zextOrTrunc(32).getZExtValue());
+  ECStack.clear();
+  runAtExitHandlers();
+  exit(GV.IntVal.zextOrTrunc(32).getZExtValue());
 }
 
 /// Pop the last stack frame off of ECStack and then copy the result
@@ -585,8 +585,8 @@ void Interpreter::exitCalled(GenericValue GV) {
 /// care of switching to the normal destination BB, if we are returning
 /// from an invoke.
 ///
-void Interpreter::popStackAndReturnValueToCaller (const Type *RetTy,
-                                                  GenericValue Result) {
+void Interpreter::popStackAndReturnValueToCaller(const Type *RetTy,
+                                                 GenericValue Result) {
   // Pop the current stack frame.
   ECStack.pop_back();
 
@@ -629,15 +629,15 @@ void Interpreter::visitUnwindInst(UnwindInst &I) {
   // Unwind stack
   Instruction *Inst;
   do {
-    ECStack.pop_back ();
-    if (ECStack.empty ())
+    ECStack.pop_back();
+    if (ECStack.empty())
       llvm_report_error("Empty stack during unwind!");
-    Inst = ECStack.back ().Caller.getInstruction ();
-  } while (!(Inst && isa<InvokeInst> (Inst)));
+    Inst = ECStack.back().Caller.getInstruction();
+  } while (!(Inst && isa<InvokeInst>(Inst)));
 
   // Return from invoke
-  ExecutionContext &InvokingSF = ECStack.back ();
-  InvokingSF.Caller = CallSite ();
+  ExecutionContext &InvokingSF = ECStack.back();
+  InvokingSF.Caller = CallSite();
 
   // Go to exceptional destination BB of invoke instruction
   SwitchToNewBasicBlock(cast<InvokeInst>(Inst)->getUnwindDest(), InvokingSF);
@@ -677,6 +677,13 @@ void Interpreter::visitSwitchInst(SwitchInst &I) {
   if (!Dest) Dest = I.getDefaultDest();   // No cases matched: use default
   SwitchToNewBasicBlock(Dest, SF);
 }
+
+void Interpreter::visitIndirectBrInst(IndirectBrInst &I) {
+  ExecutionContext &SF = ECStack.back();
+  void *Dest = GVTOP(getOperandValue(I.getAddress(), SF));
+  SwitchToNewBasicBlock((BasicBlock*)Dest, SF);
+}
+
 
 // SwitchToNewBasicBlock - This method is used to jump to a new basic block.
 // This function handles the actual updating of block and instruction iterators
@@ -827,7 +834,7 @@ void Interpreter::visitCallSite(CallSite CS) {
 
   // Check to see if this is an intrinsic function call...
   Function *F = CS.getCalledFunction();
-  if (F && F->isDeclaration ())
+  if (F && F->isDeclaration())
     switch (F->getIntrinsicID()) {
     case Intrinsic::not_intrinsic:
       break;

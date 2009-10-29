@@ -128,6 +128,10 @@ public:
   ///
   void *getPointerToFunction(Function *F);
 
+  void *getPointerToBasicBlock(BasicBlock *BB) {
+    assert(0 && "JIT does not support address-of-label yet!");
+  }
+  
   /// getOrEmitGlobalVariable - Return the address of the specified global
   /// variable, possibly emitting it to memory if needed.  This is used by the
   /// Emitter.

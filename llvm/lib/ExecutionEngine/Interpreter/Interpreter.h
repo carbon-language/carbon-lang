@@ -135,6 +135,7 @@ public:
   void visitReturnInst(ReturnInst &I);
   void visitBranchInst(BranchInst &I);
   void visitSwitchInst(SwitchInst &I);
+  void visitIndirectBrInst(IndirectBrInst &I);
 
   void visitBinaryOperator(BinaryOperator &I);
   void visitICmpInst(ICmpInst &I);
@@ -202,6 +203,7 @@ private:  // Helper functions
   void SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF);
 
   void *getPointerToFunction(Function *F) { return (void*)F; }
+  void *getPointerToBasicBlock(BasicBlock *BB) { return (void*)BB; }
 
   void initializeExecutionEngine() { }
   void initializeExternalFunctions();
