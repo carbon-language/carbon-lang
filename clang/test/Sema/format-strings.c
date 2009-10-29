@@ -8,6 +8,10 @@
 
 char * global_fmt;
 
+#if defined(_WIN32) || defined(_WIN64)
+extern int snprintf(char*, size_t, const char*, ...);
+#endif
+
 void check_string_literal( FILE* fp, const char* s, char *buf, ... ) {
 
   char * b;
@@ -83,7 +87,7 @@ void check_wide_string(char* b, ...)
   va_start(ap,b);
 
   printf(L"foo %d",2); // expected-warning {{incompatible pointer types}}, expected-warning {{should not be a wide string}}
-  vasprintf(&b,L"bar %d",ap); // expected-warning {{incompatible pointer types}}, expected-warning {{should not be a wide string}}
+  vsprintf(b,L"bar %d",ap); // expected-warning {{incompatible pointer types}}, expected-warning {{should not be a wide string}}
 }
 
 void check_asterisk_precision_width(int x) {
