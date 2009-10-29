@@ -901,7 +901,7 @@ public:
     setTemplateNameLoc(Loc);
 
     for (unsigned i = 0, e = getNumArgs(); i != e; ++i) {
-      TemplateArgumentLocInfo Info;
+      TemplateArgumentLocInfo Info = TemplateArgumentLocInfo();
 #ifndef NDEBUG
       // If asserts are enabled, be sure to initialize the argument
       // loc with the right kind of pointer.
