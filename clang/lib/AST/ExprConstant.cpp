@@ -184,13 +184,14 @@ public:
   bool VisitCharacterLiteral(CharacterLiteral *E) { return false; }
   bool VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) { return false; }
   bool VisitArraySubscriptExpr(ArraySubscriptExpr *E)
-    { return Visit(E->getLHS()) && Visit(E->getRHS()); }
+    { return Visit(E->getLHS()) || Visit(E->getRHS()); }
   bool VisitChooseExpr(ChooseExpr *E)
     { return Visit(E->getChosenSubExpr(Info.Ctx)); }
   bool VisitCastExpr(CastExpr *E) { return Visit(E->getSubExpr()); }
   bool VisitBinAssign(BinaryOperator *E) { return true; }
   bool VisitCompoundAssign(BinaryOperator *E) { return true; }
-  bool VisitBinaryOperator(BinaryOperator *E) { return false; }
+  bool VisitBinaryOperator(BinaryOperator *E)
+  { return Visit(E->getLHS()) || Visit(E->getRHS()); }
   bool VisitUnaryPreInc(UnaryOperator *E) { return true; }
   bool VisitUnaryPostInc(UnaryOperator *E) { return true; }
   bool VisitUnaryPreDec(UnaryOperator *E) { return true; }
@@ -198,7 +199,7 @@ public:
   bool VisitUnaryDeref(UnaryOperator *E) {
     if (E->getType().isVolatileQualified())
       return true;
-    return false;
+    return Visit(E->getSubExpr());
   }
   bool VisitUnaryOperator(UnaryOperator *E) { return Visit(E->getSubExpr()); }
 };
