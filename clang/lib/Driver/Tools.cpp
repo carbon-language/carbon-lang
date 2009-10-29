@@ -33,13 +33,6 @@
 using namespace clang::driver;
 using namespace clang::driver::tools;
 
-static const char *MakeFormattedString(const ArgList &Args,
-                                       const llvm::format_object_base &Fmt) {
-  llvm::SmallString<256> Str;
-  llvm::raw_svector_ostream(Str) << Fmt;
-  return Args.MakeArgString(Str.str());
-}
-
 /// CheckPreprocessingOptions - Perform some validation of preprocessing
 /// arguments that is shared with gcc.
 static void CheckPreprocessingOptions(const Driver &D, const ArgList &Args) {
@@ -2212,14 +2205,13 @@ void auroraux::Link::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbegin.o")));
     } else {
       CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crti.o")));
-//      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtbeginS.o")));
     }
     CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtn.o")));
   }
 
-  CmdArgs.push_back(MakeFormattedString(Args,
-                           llvm::format("-L/opt/gcc4/lib/gcc/%s/4.2.4",
-                           getToolChain().getTripleString().c_str())));
+  CmdArgs.push_back(Args.MakeArgString("-L/opt/gcc4/lib/gcc/" 
+                                       + getToolChain().getTripleString() 
+                                       + "/4.2.4"));
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
@@ -2348,9 +2340,8 @@ void openbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   std::string Triple = getToolChain().getTripleString();
   if (Triple.substr(0, 6) == "x86_64")
 	Triple.replace(0, 6, "amd64");
-  CmdArgs.push_back(MakeFormattedString(Args,
-                           llvm::format("-L/usr/lib/gcc-lib/%s/3.3.5",
-                                    Triple.c_str())));
+  CmdArgs.push_back(Args.MakeArgString("-L/usr/lib/gcc-lib/" + Triple +
+                                       "/3.3.5"));
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
