@@ -113,8 +113,8 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
   
   if (BlockAddress *BA = dyn_cast<BlockAddress>(C)) {
     Function *F = cast<Function>(MapValue(BA->getFunction(), VM));
-    BasicBlock *BB = cast<BasicBlock>(MapValue(BA->getBasicBlock(), VM));
-    return VM[V] = BlockAddress::get(F, BB);
+    BasicBlock *BB = cast_or_null<BasicBlock>(MapValue(BA->getBasicBlock(),VM));
+    return VM[V] = BlockAddress::get(F, BB ? BB : BA->getBasicBlock());
   }
   
   llvm_unreachable("Unknown type of constant!");

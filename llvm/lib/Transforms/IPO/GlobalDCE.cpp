@@ -191,13 +191,13 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
 
 void GlobalDCE::MarkUsedGlobalsAsNeeded(Constant *C) {
   if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
-    GlobalIsNeeded(GV);
-  else {
-    // Loop over all of the operands of the constant, adding any globals they
-    // use to the list of needed globals.
-    for (User::op_iterator I = C->op_begin(), E = C->op_end(); I != E; ++I)
-      MarkUsedGlobalsAsNeeded(cast<Constant>(*I));
-  }
+    return GlobalIsNeeded(GV);
+  
+  // Loop over all of the operands of the constant, adding any globals they
+  // use to the list of needed globals.
+  for (User::op_iterator I = C->op_begin(), E = C->op_end(); I != E; ++I)
+    if (Constant *OpC = dyn_cast<Constant>(*I))
+      MarkUsedGlobalsAsNeeded(OpC);
 }
 
 // RemoveUnusedGlobalValue - Loop over all of the uses of the specified
